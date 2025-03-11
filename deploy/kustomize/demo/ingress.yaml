@@ -1,0 +1,32 @@
+# https://kubernetes.io/docs/concepts/services-networking/ingress/
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: green-ecolution-demo
+  annotations:
+    cert-manager.io/cluster-issuer: cert-manager
+    kubernetes.io/ingress.class: traefik
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: demo.green-ecolution.de
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+  tls:
+  - hosts:
+    - demo.green-ecolution.de
+    secretName: demo-green-ecolution-de-tls

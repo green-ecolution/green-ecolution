@@ -1,0 +1,32 @@
+# https://kubernetes.io/docs/concepts/configuration/configmap/
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+data:
+  GE_SERVER_APP_URL: "https://demo.green-ecolution.de"
+  GE_SERVER_DEVELOPMENT: "true"
+
+  GE_SERVER_DATABASE_HOST: "postgresql.postgres.svc.cluster.local"
+  GE_SERVER_DATABASE_PORT: "5432"
+  GE_SERVER_DATABASE_TIMEOUT: "30s"
+  GE_SERVER_DATABASE_NAME: "green-ecolution-demo"
+
+  GE_MQTT_ENABLE: "false"
+  GE_AUTH_ENABLE: "false"
+
+  GE_ROUTING_START_POINT: "9.434764259345679,54.768731253913806"
+  GE_ROUTING_END_POINT: "9.434764259345679,54.768731253913806"
+  GE_ROUTING_WATERING_POINT: "9.434764259345679,54.768731253913806"
+  GE_ROUTING_VALHALLA_HOST: "http://valhalla.routing.svc.cluster.local"
+  GE_ROUTING_VALHALLA_OPTIMIZATION_VROOM_HOST: "http://vroom.routing.svc.cluster.local"
+  GE_ROUTING_ORS_HOST: "http://ors.routing.svc.local"
+  GE_ROUTING_ORS_OPTIMIZATION_VROOM_HOST: "http://vroom.routing.svc.cluster.local"
+
+  GE_S3_ENDPOINT: "minio.minio.svc.cluster.local:9000"
+  GE_S3_REGION: "us-east-1"
+  GE_S3_USE_SSL: "false"
+  GE_S3_ROUTE-GPX_BUCKET: "routes-gpx-demo"
+  GE_S3_ROUTE-GPX_ACCESSKEY: "routes-gpx-demo"
+
+  TZ: "Europe/Berlin"
