@@ -4,6 +4,9 @@ set -e
 MIGRATION_WITH_SEED=${MIGRATION_WITH_SEED:-false}
 MIGRATION_WITH_DB_RESET=${MIGRATION_WITH_DB_RESET:-false}
 
+# Create goose_db if not present
+goose -dir /migrations postgres "postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB" status
+
 if [ "$MIGRATION_WITH_DB_RESET" = "true" ]; then
   echo "Resetting database"
   goose -dir /migrations postgres "postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB" reset
