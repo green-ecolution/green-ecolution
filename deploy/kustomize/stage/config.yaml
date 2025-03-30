@@ -13,7 +13,7 @@ data:
   GE_SERVER_DATABASE_NAME: "green-ecolution-stage"
 
   GE_MQTT_BROKER: "eu1.cloud.thethings.industries:1883"
-  GE_MQTT_TOPIC: "v3/sgr-students@zde/devices/tree-sensor/up" 
+  GE_MQTT_TOPIC: "v3/sgr-students@zde/devices/+/up" 
 
   GE_AUTH_KEYCLOAK_BASEURL: "https://auth.green-ecolution.de"
   # GE_AUTH_KEYCLOAK_REALM: "green-ecolution-stage"
