@@ -7,10 +7,10 @@ resources:
 images:
 - name: backend-image
   newName: ghcr.io/green-ecolution/green-ecolution-backend-dev
-  newTag: "0324576"
+  newTag: 5fd70a4
 - name: frontend-image
   newName: ghcr.io/green-ecolution/green-ecolution-frontend-dev
-  newTag: 506d57c
+  newTag: 923e21f
 - name: init-migrations-image
   newName: ghcr.io/green-ecolution/migrations-postgres
   newTag: latest
