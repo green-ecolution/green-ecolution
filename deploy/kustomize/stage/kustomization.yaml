@@ -9,11 +9,11 @@ images:
   newName: ghcr.io/green-ecolution/backend
   newTag: v1.2.0-8-g97f2a826-stage
 - name: frontend-image
-  newName: ghcr.io/green-ecolution/green-ecolution-frontend-stage
-  newTag: c0345f0
+  newName: ghcr.io/green-ecolution/frontend
+  newTag: v1.2.0-3-g8b7f175-stage
 - name: init-migrations-image
   newName: ghcr.io/green-ecolution/migrations-postgres
-  newTag: v1.2.0-8-g97f2a826-stage
+  newTag: v1.2.0-3-g8b7f175-stage
 generators:
 - ./secret-generator.yaml
 patches:
