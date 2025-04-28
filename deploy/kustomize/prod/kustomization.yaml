@@ -6,10 +6,10 @@ resources:
 - ../base/frontend
 images:
 - name: backend-image
-  newName: ghcr.io/green-ecolution/green-ecolution-backend
+  newName: ghcr.io/green-ecolution/backend
   newTag: v1.2.0
 - name: frontend-image
-  newName: ghcr.io/green-ecolution/green-ecolution-frontend
+  newName: ghcr.io/green-ecolution/frontend
   newTag: v1.2.0
 - name: init-migrations-image
   newName: ghcr.io/green-ecolution/migrations-postgres

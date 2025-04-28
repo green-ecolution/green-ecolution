@@ -14,9 +14,9 @@ spec:
           imagePullPolicy: Always
           env:
             - name: MIGRATION_WITH_SEED
-              value: "false"
+              value: "true"
             - name: MIGRATION_WITH_DB_RESET
-              value: "false"
+              value: "true"
             - name: POSTGRES_DB
               valueFrom:
                 configMapKeyRef:
