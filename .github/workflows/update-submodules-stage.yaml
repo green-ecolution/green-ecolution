@@ -8,6 +8,7 @@ on:
 jobs:
   build-and-push-migrations:
     runs-on: ubuntu-latest
+    if : github.event.client_payload.from == 'backend'
     permissions:
       contents: write
       packages: write
@@ -81,6 +82,7 @@ jobs:
           kustomize edit set image backend-image=ghcr.io/green-ecolution/backend:${{ github.event.client_payload.version }}-stage
 
       - name: Dump stage init migrations image tag
+        if : github.event.client_payload.from == 'backend'
         run: |
           cd ./deploy/kustomize/stage
           kustomize edit set image init-migrations-image=ghcr.io/green-ecolution/migrations-postgres:${{ github.event.client_payload.version }}-stage
