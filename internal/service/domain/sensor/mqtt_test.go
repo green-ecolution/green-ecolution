@@ -5,12 +5,12 @@ import (
 	"errors"
 	"testing"
 
-	domain "github.com/green-ecolution/green-ecolution-backend/internal/entities"
-	"github.com/green-ecolution/green-ecolution-backend/internal/service/domain/sensor"
-	"github.com/green-ecolution/green-ecolution-backend/internal/worker"
+	domain "github.com/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/backend/internal/service/domain/sensor"
+	"github.com/green-ecolution/backend/internal/worker"
 	"github.com/stretchr/testify/mock"
 
-	storageMock "github.com/green-ecolution/green-ecolution-backend/internal/storage/_mock"
+	storageMock "github.com/green-ecolution/backend/internal/storage/_mock"
 	"github.com/stretchr/testify/assert"
 )
 

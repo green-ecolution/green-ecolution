@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/entities"
+	"github.com/green-ecolution/backend/internal/entities"
 	"github.com/stretchr/testify/assert"
 )
 

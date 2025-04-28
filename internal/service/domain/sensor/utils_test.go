@@ -3,7 +3,7 @@ package sensor_test
 import (
 	"time"
 
-	domain "github.com/green-ecolution/green-ecolution-backend/internal/entities"
+	domain "github.com/green-ecolution/backend/internal/entities"
 )
 
 var (

@@ -1,12 +1,12 @@
 <p>
-  <a href="https://github.com/green-ecolution/green-ecolution-backend/releases">
-    <img alt="GitHub Release" src="https://img.shields.io/github/v/release/green-ecolution/green-ecolution-backend"/>
+  <a href="https://github.com/green-ecolution/backend/releases">
+    <img alt="GitHub Release" src="https://img.shields.io/github/v/release/green-ecolution/backend"/>
   </a>
-  <a href="https://pkg.go.dev/github.com/green-ecolution/green-ecolution-backend">
-    <img src="https://pkg.go.dev/badge/github.com/green-ecolution/green-ecolution-backend.svg" alt="Go Reference">
+  <a href="https://pkg.go.dev/github.com/green-ecolution/backend">
+    <img src="https://pkg.go.dev/badge/github.com/green-ecolution/backend.svg" alt="Go Reference">
   </a>
-  <a href=""><img alt="Code coverage" src="https://raw.githubusercontent.com/green-ecolution/green-ecolution-backend/badges/.badges/develop/coverage.svg"/></a>
-  <a href=""><img alt="License" src="https://img.shields.io/github/license/green-ecolution/green-ecolution-backend.svg"/></a>
+  <a href=""><img alt="Code coverage" src="https://raw.githubusercontent.com/green-ecolution/backend/badges/.badges/develop/coverage.svg"/></a>
+  <a href=""><img alt="License" src="https://img.shields.io/github/license/green-ecolution/backend.svg"/></a>
   <a href=""><img alt="Maintained yes" src="https://img.shields.io/badge/Maintained%3F-yes-green.svg"/></a>
 </p>
 
@@ -18,7 +18,7 @@
 
 Smart irrigation is essential to saving water, reducing staff workload, and cutting costs. This project provides the backend for **Green Ecolution** — a digital system to manage urban greenery efficiently.
 
-👉 For the frontend implementation, visit the [Green Ecolution Frontend](https://github.com/green-ecolution/green-ecolution-frontend).
+👉 For the frontend implementation, visit the [Green Ecolution Frontend](https://github.com/green-ecolution/frontend).
 
 The backend acts as the interface between the website and the database, managing data about:
 
@@ -46,7 +46,7 @@ To quickly run the application locally:
 1. Download the Docker Compose configuration:
 
 ```bash
-wget https://raw.githubusercontent.com/green-ecolution/green-ecolution-backend/refs/heads/develop/.docker/docker-compose.yaml
+wget https://raw.githubusercontent.com/green-ecolution/backend/refs/heads/develop/.docker/docker-compose.yaml
 ```
 
 2. Build and launch the application containers:
@@ -55,7 +55,7 @@ wget https://raw.githubusercontent.com/green-ecolution/green-ecolution-backend/r
 docker compose up
 ```
 
-By default, external services like `auth`, `mqtt`, `routing`, and `s3` are disabled but can be enabled via configuration. See the [Demo Setup](https://github.com/green-ecolution/green-ecolution-backend/wiki/Demo-Setup) for more details.
+By default, external services like `auth`, `mqtt`, `routing`, and `s3` are disabled but can be enabled via configuration. See the [Demo Setup](https://github.com/green-ecolution/backend/wiki/Demo-Setup) for more details.
 
 👉 Once the service is up and running, you can access it at: [http://localhost:8123](http://localhost:8123)
 
@@ -69,7 +69,7 @@ By default, external services like `auth`, `mqtt`, `routing`, and `s3` are disab
 
 ## Local Development Setup 💻
 
-For a detailed step-by-step guide on setting up your local development environment, refer to the [Local Development Wiki](https://github.com/green-ecolution/green-ecolution-backend/wiki/Local-Development) 📖.
+For a detailed step-by-step guide on setting up your local development environment, refer to the [Local Development Wiki](https://github.com/green-ecolution/backend/wiki/Local-Development) 📖.
 
 ### Prerequisites
 

@@ -5,12 +5,12 @@ import (
 	"errors"
 	"time"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/entities"
-	"github.com/green-ecolution/green-ecolution-backend/internal/logger"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage"
-	sqlc "github.com/green-ecolution/green-ecolution-backend/internal/storage/postgres/_sqlc"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage/postgres/store"
-	"github.com/green-ecolution/green-ecolution-backend/internal/utils"
+	"github.com/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/backend/internal/storage"
+	sqlc "github.com/green-ecolution/backend/internal/storage/postgres/_sqlc"
+	"github.com/green-ecolution/backend/internal/storage/postgres/store"
+	"github.com/green-ecolution/backend/internal/utils"
 )
 
 func (w *WateringPlanRepository) Update(ctx context.Context, id int32, updateFn func(*entities.WateringPlan, storage.WateringPlanRepository) (bool, error)) error {

@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/green-ecolution/green-ecolution-backend/internal/entities"
-	"github.com/green-ecolution/green-ecolution-backend/internal/logger"
-	"github.com/green-ecolution/green-ecolution-backend/internal/service"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage"
-	"github.com/green-ecolution/green-ecolution-backend/internal/worker"
+	"github.com/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/backend/internal/service"
+	"github.com/green-ecolution/backend/internal/storage"
+	"github.com/green-ecolution/backend/internal/worker"
 )
 
 type PluginManagerConfig struct {

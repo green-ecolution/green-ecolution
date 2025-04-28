@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/entities"
-	sqlc "github.com/green-ecolution/green-ecolution-backend/internal/storage/postgres/_sqlc"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage/postgres/mapper"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage/postgres/mapper/generated"
-	"github.com/green-ecolution/green-ecolution-backend/internal/utils"
+	"github.com/green-ecolution/backend/internal/entities"
+	sqlc "github.com/green-ecolution/backend/internal/storage/postgres/_sqlc"
+	"github.com/green-ecolution/backend/internal/storage/postgres/mapper"
+	"github.com/green-ecolution/backend/internal/storage/postgres/mapper/generated"
+	"github.com/green-ecolution/backend/internal/utils"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 )

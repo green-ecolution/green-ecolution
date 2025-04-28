@@ -3,10 +3,10 @@ package sensor
 import (
 	"context"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/entities"
-	"github.com/green-ecolution/green-ecolution-backend/internal/logger"
-	sqlc "github.com/green-ecolution/green-ecolution-backend/internal/storage/postgres/_sqlc"
-	"github.com/green-ecolution/green-ecolution-backend/internal/utils/pagination"
+	"github.com/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/backend/internal/logger"
+	sqlc "github.com/green-ecolution/backend/internal/storage/postgres/_sqlc"
+	"github.com/green-ecolution/backend/internal/utils/pagination"
 )
 
 func (r *SensorRepository) GetAll(ctx context.Context, query entities.Query) ([]*entities.Sensor, int64, error) {

@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	domain "github.com/green-ecolution/green-ecolution-backend/internal/entities"
-	"github.com/green-ecolution/green-ecolution-backend/internal/logger"
-	"github.com/green-ecolution/green-ecolution-backend/internal/service"
+	domain "github.com/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/backend/internal/service"
 )
 
 func (s *AuthService) RetrospectToken(ctx context.Context, token string) (*domain.IntroSpectTokenResult, error) {

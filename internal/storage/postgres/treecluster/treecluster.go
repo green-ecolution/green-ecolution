@@ -3,9 +3,9 @@ package treecluster
 import (
 	"context"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/logger"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage/postgres/mapper"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage/postgres/store"
+	"github.com/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/backend/internal/storage/postgres/mapper"
+	"github.com/green-ecolution/backend/internal/storage/postgres/store"
 )
 
 type TreeClusterRepository struct {

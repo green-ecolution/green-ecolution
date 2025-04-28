@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/logger"
+	"github.com/green-ecolution/backend/internal/logger"
 )
 
 type DatabaseConfig struct {

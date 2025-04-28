@@ -9,10 +9,10 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/entities"
-	"github.com/green-ecolution/green-ecolution-backend/internal/logger"
-	"github.com/green-ecolution/green-ecolution-backend/internal/service"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage"
+	"github.com/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/backend/internal/service"
+	"github.com/green-ecolution/backend/internal/storage"
 	"github.com/spf13/viper"
 )
 

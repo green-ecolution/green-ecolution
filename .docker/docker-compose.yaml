@@ -1,6 +1,6 @@
 services:
   backend:
-    image: ghcr.io/green-ecolution/green-ecolution-backend-dev:latest # TODO: remove ...-dev when it's ready for production
+    image: ghcr.io/green-ecolution/backend:latest 
     depends_on: 
       migrations:
         condition: service_completed_successfully
@@ -24,7 +24,7 @@ services:
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
 
   frontend:
-    image: ghcr.io/green-ecolution/green-ecolution-frontend-dev:latest # TODO: remove ...-dev when it's ready for production
+    image: ghcr.io/green-ecolution/frontend:latest
     depends_on: 
       backend:
         condition: service_started

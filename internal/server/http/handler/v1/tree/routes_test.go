@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/green-ecolution/green-ecolution-backend/internal/entities"
+	"github.com/green-ecolution/backend/internal/entities"
 	"net/http"
 	"testing"
 
@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/server/http/handler/v1/tree"
-	serviceMock "github.com/green-ecolution/green-ecolution-backend/internal/service/_mock"
+	"github.com/green-ecolution/backend/internal/server/http/handler/v1/tree"
+	serviceMock "github.com/green-ecolution/backend/internal/service/_mock"
 )
 
 func TestRegisterTreeRoutes(t *testing.T) {

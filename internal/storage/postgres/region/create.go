@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/entities"
-	"github.com/green-ecolution/green-ecolution-backend/internal/logger"
-	sqlc "github.com/green-ecolution/green-ecolution-backend/internal/storage/postgres/_sqlc"
+	"github.com/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/backend/internal/logger"
+	sqlc "github.com/green-ecolution/backend/internal/storage/postgres/_sqlc"
 )
 
 func defaultRegion() *entities.Region {

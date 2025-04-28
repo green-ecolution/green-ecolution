@@ -7,14 +7,14 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/config"
-	"github.com/green-ecolution/green-ecolution-backend/internal/entities"
-	"github.com/green-ecolution/green-ecolution-backend/internal/logger"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage/routing"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage/routing/openrouteservice/ors"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage/routing/vroom"
-	"github.com/green-ecolution/green-ecolution-backend/internal/utils"
+	"github.com/green-ecolution/backend/internal/config"
+	"github.com/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/backend/internal/storage"
+	"github.com/green-ecolution/backend/internal/storage/routing"
+	"github.com/green-ecolution/backend/internal/storage/routing/openrouteservice/ors"
+	"github.com/green-ecolution/backend/internal/storage/routing/vroom"
+	"github.com/green-ecolution/backend/internal/utils"
 )
 
 // validate is RouteRepo implements storage.RoutingRepository

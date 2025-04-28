@@ -3,9 +3,9 @@ package auth
 import (
 	"log/slog"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/config"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage/auth/keycloak"
+	"github.com/green-ecolution/backend/internal/config"
+	"github.com/green-ecolution/backend/internal/storage"
+	"github.com/green-ecolution/backend/internal/storage/auth/keycloak"
 )
 
 func NewRepository(cfg *config.IdentityAuthConfig) *storage.Repository {

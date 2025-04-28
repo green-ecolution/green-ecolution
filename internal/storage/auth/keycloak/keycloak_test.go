@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage/auth/keycloak/testutils"
+	"github.com/green-ecolution/backend/internal/storage/auth/keycloak/testutils"
 	"github.com/stretchr/testify/assert"
 )
 

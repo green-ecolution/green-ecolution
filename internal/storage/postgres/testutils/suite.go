@@ -7,8 +7,8 @@ import (
 	"log/slog"
 	"testing"
 
-	sqlc "github.com/green-ecolution/green-ecolution-backend/internal/storage/postgres/_sqlc"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage/postgres/store"
+	sqlc "github.com/green-ecolution/backend/internal/storage/postgres/_sqlc"
+	"github.com/green-ecolution/backend/internal/storage/postgres/store"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"

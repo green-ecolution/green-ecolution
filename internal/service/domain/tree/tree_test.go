@@ -6,15 +6,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/utils"
+	"github.com/green-ecolution/backend/internal/utils"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/service/domain/tree"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage"
-	"github.com/green-ecolution/green-ecolution-backend/internal/worker"
+	"github.com/green-ecolution/backend/internal/service/domain/tree"
+	"github.com/green-ecolution/backend/internal/storage"
+	"github.com/green-ecolution/backend/internal/worker"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/entities"
-	storageMock "github.com/green-ecolution/green-ecolution-backend/internal/storage/_mock"
+	"github.com/green-ecolution/backend/internal/entities"
+	storageMock "github.com/green-ecolution/backend/internal/storage/_mock"
 	"github.com/stretchr/testify/assert"
 )
 

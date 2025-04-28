@@ -3,8 +3,8 @@ package routing
 import (
 	"fmt"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/config"
-	"github.com/green-ecolution/green-ecolution-backend/internal/entities"
+	"github.com/green-ecolution/backend/internal/config"
+	"github.com/green-ecolution/backend/internal/entities"
 )
 
 func ConvertLocations(cfg *config.RoutingConfig) (*entities.GeoJSONMetadata, error) {

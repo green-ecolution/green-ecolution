@@ -3,7 +3,7 @@ package s3
 import (
 	"io"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage"
+	"github.com/green-ecolution/backend/internal/storage"
 	"golang.org/x/net/context"
 )
 

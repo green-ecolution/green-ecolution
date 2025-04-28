@@ -30,7 +30,7 @@ jobs:
         uses: vladopajic/go-test-coverage@v2
         with:
           profile: cover.out
-          local-prefix: github.com/green-ecolution/green-ecolution-backend
+          local-prefix: github.com/green-ecolution/backend
           git-token: ${{ github.ref_name == 'develop' && secrets.GITHUB_TOKEN || '' }}
           git-branch: badges
 

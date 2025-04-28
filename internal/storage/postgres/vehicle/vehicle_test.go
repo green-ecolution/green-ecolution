@@ -6,9 +6,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage/postgres/mapper/generated"
-	store "github.com/green-ecolution/green-ecolution-backend/internal/storage/postgres/store"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage/postgres/testutils"
+	"github.com/green-ecolution/backend/internal/storage/postgres/mapper/generated"
+	store "github.com/green-ecolution/backend/internal/storage/postgres/store"
+	"github.com/green-ecolution/backend/internal/storage/postgres/testutils"
 	"github.com/stretchr/testify/assert"
 )
 

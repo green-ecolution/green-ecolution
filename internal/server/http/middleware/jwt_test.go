@@ -12,10 +12,10 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	golangJwt "github.com/golang-jwt/jwt/v5"
-	"github.com/green-ecolution/green-ecolution-backend/internal/config"
-	"github.com/green-ecolution/green-ecolution-backend/internal/entities"
-	serviceMock "github.com/green-ecolution/green-ecolution-backend/internal/service/_mock"
-	"github.com/green-ecolution/green-ecolution-backend/internal/utils"
+	"github.com/green-ecolution/backend/internal/config"
+	"github.com/green-ecolution/backend/internal/entities"
+	serviceMock "github.com/green-ecolution/backend/internal/service/_mock"
+	"github.com/green-ecolution/backend/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

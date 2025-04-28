@@ -5,11 +5,11 @@ import (
 	"errors"
 	"slices"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/entities"
-	"github.com/green-ecolution/green-ecolution-backend/internal/logger"
-	svcUtils "github.com/green-ecolution/green-ecolution-backend/internal/service/domain/utils"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage"
-	"github.com/green-ecolution/green-ecolution-backend/internal/utils"
+	"github.com/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/backend/internal/logger"
+	svcUtils "github.com/green-ecolution/backend/internal/service/domain/utils"
+	"github.com/green-ecolution/backend/internal/storage"
+	"github.com/green-ecolution/backend/internal/utils"
 )
 
 // HandleNewSensorData processes new sensor data and updates the watering status of a tree cluster if necessary.

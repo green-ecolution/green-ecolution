@@ -7,7 +7,7 @@ info:
   description: This is the API for the Green Ecolution Management System.
   license:
     name: AGPL
-    url: https://raw.githubusercontent.com/green-ecolution/green-ecolution-management/develop/LICENSE
+    url: https://raw.githubusercontent.com/green-ecolution/green-ecolution/develop/LICENSE
   termsOfService: http://swagger.io/terms/
   title: Green Space Management API
   version: develop

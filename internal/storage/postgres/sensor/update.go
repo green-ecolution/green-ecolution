@@ -5,14 +5,14 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage/postgres/store"
-	"github.com/green-ecolution/green-ecolution-backend/internal/utils"
+	"github.com/green-ecolution/backend/internal/storage/postgres/store"
+	"github.com/green-ecolution/backend/internal/utils"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/logger"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage"
+	"github.com/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/backend/internal/storage"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/entities"
-	sqlc "github.com/green-ecolution/green-ecolution-backend/internal/storage/postgres/_sqlc"
+	"github.com/green-ecolution/backend/internal/entities"
+	sqlc "github.com/green-ecolution/backend/internal/storage/postgres/_sqlc"
 )
 
 func (r *SensorRepository) Update(ctx context.Context, id string, updateFn func(*entities.Sensor, storage.SensorRepository) (bool, error)) (*entities.Sensor, error) {

@@ -1,15 +1,15 @@
 package mapper
 
 import (
-	domain "github.com/green-ecolution/green-ecolution-backend/internal/entities"
-	"github.com/green-ecolution/green-ecolution-backend/internal/server/http/entities"
+	domain "github.com/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/backend/internal/server/http/entities"
 )
 
 // goverter:converter
-// goverter:extend github.com/green-ecolution/green-ecolution-backend/internal/utils:TimeToTime
-// goverter:extend github.com/green-ecolution/green-ecolution-backend/internal/utils:TimeToTimePtr
-// goverter:extend github.com/green-ecolution/green-ecolution-backend/internal/utils:TimeToPtrTime
-// goverter:extend github.com/green-ecolution/green-ecolution-backend/internal/utils:MapKeyValueInterface
+// goverter:extend github.com/green-ecolution/backend/internal/utils:TimeToTime
+// goverter:extend github.com/green-ecolution/backend/internal/utils:TimeToTimePtr
+// goverter:extend github.com/green-ecolution/backend/internal/utils:TimeToPtrTime
+// goverter:extend github.com/green-ecolution/backend/internal/utils:MapKeyValueInterface
 // goverter:extend MapVehicleStatus MapVehicleType MapVehicleStatusReq MapVehicleTypeReq MapDrivingLicense MapDrivingLicenseReq
 type VehicleHTTPMapper interface {
 	FromResponse(*domain.Vehicle) *entities.VehicleResponse

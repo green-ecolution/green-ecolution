@@ -2,16 +2,16 @@ package mapper
 
 import (
 	"github.com/google/uuid"
-	domain "github.com/green-ecolution/green-ecolution-backend/internal/entities"
-	"github.com/green-ecolution/green-ecolution-backend/internal/server/http/entities"
+	domain "github.com/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/backend/internal/server/http/entities"
 )
 
 // goverter:converter
-// goverter:extend github.com/green-ecolution/green-ecolution-backend/internal/utils:TimeToTime
-// goverter:extend github.com/green-ecolution/green-ecolution-backend/internal/utils:TimeToTimePtr
-// goverter:extend github.com/green-ecolution/green-ecolution-backend/internal/utils:TimeToPtrTime
-// goverter:extend github.com/green-ecolution/green-ecolution-backend/internal/utils:DurationToPtrFloat64
-// goverter:extend github.com/green-ecolution/green-ecolution-backend/internal/utils:MapKeyValueInterface
+// goverter:extend github.com/green-ecolution/backend/internal/utils:TimeToTime
+// goverter:extend github.com/green-ecolution/backend/internal/utils:TimeToTimePtr
+// goverter:extend github.com/green-ecolution/backend/internal/utils:TimeToPtrTime
+// goverter:extend github.com/green-ecolution/backend/internal/utils:DurationToPtrFloat64
+// goverter:extend github.com/green-ecolution/backend/internal/utils:MapKeyValueInterface
 // goverter:extend MapWateringPlanStatus MapVehicleStatus MapVehicleType MapDrivingLicense MapWateringPlanStatusReq
 // goverter:extend MapWateringStatus MapSensorStatus MapSoilCondition MapTreesToIDs MapUUIDs MapUUIDReq
 type WateringPlanHTTPMapper interface {

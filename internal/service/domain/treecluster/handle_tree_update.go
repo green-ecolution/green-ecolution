@@ -3,9 +3,9 @@ package treecluster
 import (
 	"context"
 
-	"github.com/green-ecolution/green-ecolution-backend/internal/entities"
-	"github.com/green-ecolution/green-ecolution-backend/internal/logger"
-	"github.com/green-ecolution/green-ecolution-backend/internal/storage"
+	"github.com/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/backend/internal/storage"
 )
 
 // HandleCreateTree processes a tree creation event and updates the associated tree cluster if necessary.

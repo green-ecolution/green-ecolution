@@ -4,17 +4,17 @@ BINARY_NAME := green-ecolution-backend
 APP_VERSION ?= $(shell git describe --tags --always --dirty)
 APP_GIT_COMMIT ?= $(shell git rev-parse HEAD)
 APP_GIT_BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
-APP_GIT_REPOSITORY ?= https://github.com/green-ecolution/green-ecolution-backend
+APP_GIT_REPOSITORY ?= https://github.com/green-ecolution/backend
 APP_BUILD_TIME ?= $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 define GOFLAGS
 -ldflags=" \
 	-s -w \
   -X main.version=$(APP_VERSION) \
-  -X github.com/green-ecolution/green-ecolution-backend/internal/storage/local/info.version=$(APP_VERSION) \
-  -X github.com/green-ecolution/green-ecolution-backend/internal/storage/local/info.gitCommit=$(APP_GIT_COMMIT) \
-  -X github.com/green-ecolution/green-ecolution-backend/internal/storage/local/info.gitBranch=$(APP_GIT_BRANCH) \
-  -X github.com/green-ecolution/green-ecolution-backend/internal/storage/local/info.gitRepository=$(APP_GIT_REPOSITORY) \
-  -X github.com/green-ecolution/green-ecolution-backend/internal/storage/local/info.buildTime=$(APP_BUILD_TIME) \
+  -X github.com/green-ecolution/backend/internal/storage/local/info.version=$(APP_VERSION) \
+  -X github.com/green-ecolution/backend/internal/storage/local/info.gitCommit=$(APP_GIT_COMMIT) \
+  -X github.com/green-ecolution/backend/internal/storage/local/info.gitBranch=$(APP_GIT_BRANCH) \
+  -X github.com/green-ecolution/backend/internal/storage/local/info.gitRepository=$(APP_GIT_REPOSITORY) \
+  -X github.com/green-ecolution/backend/internal/storage/local/info.buildTime=$(APP_BUILD_TIME) \
 "
 endef
 MOCKERY_VERSION := v2.43.2

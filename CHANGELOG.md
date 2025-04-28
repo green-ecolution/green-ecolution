@@ -105,7 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Use pgxpool for concurrency-safe connection pool for pgx (#94)
 
-[Unreleased]: https://github.com/green-ecolution/green-ecolution-backend/compare/v1.0.0...HEAD
-[v1.0.0]: https://github.com/green-ecolution/green-ecolution-backend/compare/dfdebe...v1.0.0
-[v1.1.0]: https://github.com/green-ecolution/green-ecolution-backend/compare/v1.0.0...v1.1.0
-[v1.2.0]: https://github.com/green-ecolution/green-ecolution-backend/compare/v1.1.0...v1.2.0
+[Unreleased]: https://github.com/green-ecolution/backend/compare/v1.0.0...HEAD
+[v1.0.0]: https://github.com/green-ecolution/backend/compare/dfdebe...v1.0.0
+[v1.1.0]: https://github.com/green-ecolution/backend/compare/v1.0.0...v1.1.0
+[v1.2.0]: https://github.com/green-ecolution/backend/compare/v1.1.0...v1.2.0

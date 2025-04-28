@@ -22,7 +22,7 @@ FROM preparer_go AS builder
 ARG APP_VERSION="v0.0.0-stage"
 ARG APP_GIT_COMMIT="unknown"
 ARG APP_GIT_BRANCH="stage-deployment"
-ARG APP_GIT_REPOSITORY="https://github.com/green-ecolution/green-ecolution-backend"
+ARG APP_GIT_REPOSITORY="https://github.com/green-ecolution/backend"
 ARG APP_BUILD_TIME="unknown"
 
 RUN make build \
