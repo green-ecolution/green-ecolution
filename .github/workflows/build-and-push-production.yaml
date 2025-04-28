@@ -103,7 +103,7 @@ jobs:
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.GREEN_ECOLUTION_PAT }}
-          repository: green-ecolution/green-ecolution-management
+          repository: green-ecolution/green-ecolution
           event-type: "update-submodules-production"
           client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ env.COMMIT_SHA }}", "version": "${{ env.RELEASE_VERSION }}", "from": "backend"}'
 

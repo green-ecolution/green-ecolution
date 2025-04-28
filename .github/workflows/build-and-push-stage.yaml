@@ -3,12 +3,13 @@ name: Build and Push Docker Image Staging
   workflow_dispatch:
     inputs:
       version:
-        description: "The release version"
+        description: "The release version ('stage' prefix will be set from pipeline)"
         required: true
   push:
     branches:
       - release/*
       - hotfix/*
+      - develop
 
 jobs:
   build_and_deploy_stage:
@@ -20,6 +21,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+            fetch-depth: 0
+            fetch-tags: true
 
       - name: Extract branch name
         shell: bash
@@ -31,7 +35,6 @@ jobs:
         run: |
           BRANCH_NAME="${{ steps.extract_branch.outputs.branch }}"
           VERSION=${BRANCH_NAME#release/}
-
           echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Extract version from branch name (for hotfix branches)
@@ -39,7 +42,13 @@ jobs:
         run: |
           BRANCH_NAME="${{ steps.extract_branch.outputs.branch }}"
           VERSION=${BRANCH_NAME#hotfix/}
+          echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
 
+      - name: Extract version from branch name (for develop branche)
+        if: startsWith(steps.extract_branch.outputs.branch, 'develop')
+        run: |
+          BRANCH_NAME="${{ steps.extract_branch.outputs.branch }}"
+          VERSION=$(git describe --tags --always)
           echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Extract version from input (for manual workflow dispatch)
@@ -84,18 +93,18 @@ jobs:
           file: ./.docker/Dockerfile.stage
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/${{ env.REPO_LC }}-stage:${{ env.RELEASE_VERSION }}-stage,ghcr.io/${{ env.REPO_LC }}-stage:${{ env.RELEASE_VERSION }}-preview, ghcr.io/${{ env.REPO_LC }}-stage:latest, ghcr.io/${{ env.REPO_LC }}-stage:${{ env.COMMIT_SHA }}
+          tags: ghcr.io/${{ env.REPO_LC }}:${{ env.RELEASE_VERSION }}-stage,ghcr.io/${{ env.REPO_LC }}:${{ env.COMMIT_SHA }}-stage
 
       - name: Notify management repo to update submodules
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.GREEN_ECOLUTION_PAT }}
-          repository: green-ecolution/green-ecolution-management
-          event-type: "update-submodules-staging"
+          repository: green-ecolution/green-ecolution
+          event-type: "update-submodules-stage"
           client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ env.COMMIT_SHA }}", "version": "${{ env.RELEASE_VERSION }}", "from": "backend"}'
 
-  upload_api_docs_stage:
-    name: Upload API Docs Stage
+  check_api_docs:
+    name: Check API Docs
     needs: build_and_deploy_stage
     env:
       COMMIT_SHA: ${{ needs.build_and_deploy_stage.outputs.COMMIT_SHA }}
@@ -113,10 +122,39 @@ jobs:
         run: make generate
 
       - name: Move swagger docs
-        run: mv ./docs/swagger.json ./docs/api-docs-stage.json
+        run: mv ./docs/swagger.json ./docs/api-docs.json
+
+      - name: Get api docs artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
+        run: |
+          gh run download -R green-ecolution/backend -n api-docs.json
+
+      - name: Check API Docs exist
+        run: |
+          if [ ! -f ./api-docs.json ]; then
+            echo "api-docs.json not found"
+            touch api-docs.json
+          else
+            echo "api-docs.json found"
+          fi
+
+      - name: Check API Docs Diff
+        run: |
+          diff ./docs/api-docs.json ./api-docs.json && echo "up-to-date=true" >> $GITHUB_ENV || echo "up-to-date=false" >> $GITHUB_ENV
 
       - name: Upload API Docs
+        if: env.up-to-date == 'false'
         uses: actions/upload-artifact@v4
         with:
-          name: api-docs-stage.json
-          path: ./docs/api-docs-stage.json
+          name: api-docs.json
+          path: ./docs/api-docs.json
+
+      - name: Create PR in frontend repo
+        if: env.up-to-date == 'false'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GREEN_ECOLUTION_PAT }}
+          repository: green-ecolution/frontend
+          event-type: "api-docs-update"
+          client-payload: '{"hash": "${{ env.COMMIT_SHA }}"}'

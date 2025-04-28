@@ -3,7 +3,7 @@
 #############################################
 FROM golang:1.24-alpine AS preparer_go
 
-ARG MOCKER_VERSION="v2.43.2"
+ARG MOCKER_VERSION="v2.52.2"
 
 WORKDIR /app/build
 
