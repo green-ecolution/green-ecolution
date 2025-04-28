@@ -8,8 +8,8 @@ RUN curl -fsSL \
     https://raw.githubusercontent.com/pressly/goose/master/install.sh |\
     sh
 
-COPY ./green-ecolution-backend/internal/storage/postgres/migrations /migrations
-COPY ./green-ecolution-backend/internal/storage/postgres/seed /seed
+COPY ./backend/internal/storage/postgres/migrations /migrations
+COPY ./backend/internal/storage/postgres/seed /seed
 COPY ./.docker/migrations/migration.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh

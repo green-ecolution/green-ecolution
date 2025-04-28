@@ -67,13 +67,13 @@ jobs:
         if : github.event.client_payload.from == 'frontend'
         run: |
           cd ./deploy/kustomize/prod
-          kustomize edit set image frontend-image=ghcr.io/green-ecolution/green-ecolution-frontend:${{ github.event.client_payload.version }}
+          kustomize edit set image frontend-image=ghcr.io/green-ecolution/frontend:${{ github.event.client_payload.version }}
 
       - name: Dump backend prod image tag
         if : github.event.client_payload.from == 'backend'
         run: |
           cd ./deploy/kustomize/prod
-          kustomize edit set image backend-image=ghcr.io/green-ecolution/green-ecolution-backend:${{ github.event.client_payload.version }}
+          kustomize edit set image backend-image=ghcr.io/green-ecolution/backend:${{ github.event.client_payload.version }}
 
       - name: Dump prod init migrations image tag
         run: |

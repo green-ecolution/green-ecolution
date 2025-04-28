@@ -2,7 +2,7 @@ name: "Update submodules stage"
 
 on:
   repository_dispatch:
-    types: [update-submodules-staging]
+    types: [update-submodules-stage]
   workflow_dispatch:
 
 jobs:
@@ -18,6 +18,11 @@ jobs:
         with:
           token: ${{ secrets.GREEN_ECOLUTION_PAT }}
           submodules: "true"
+
+      - name: Update submodules
+        env:
+          GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
+        run: git submodule update --init --recursive --remote -f
 
       - name: Login to Container Registry
         uses: docker/login-action@v3
@@ -36,7 +41,7 @@ jobs:
           push: true
           tags: ghcr.io/green-ecolution/migrations-postgres:${{ github.event.client_payload.version }}-stage
 
-  update-submodules-stage:
+  update-submodules:
     needs: build-and-push-migrations
     runs-on: ubuntu-latest
     steps:
@@ -63,26 +68,26 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
         run: git submodule update  --init --recursive --remote -f
 
-      - name: Dump frontend stage image tag
+      - name: Bump frontend stage image tag
         if : github.event.client_payload.from == 'frontend'
         run: |
           cd ./deploy/kustomize/stage
-          kustomize edit set image frontend-image=ghcr.io/green-ecolution/green-ecolution-frontend-stage:${{ github.event.client_payload.sha }}
+          kustomize edit set image frontend-image=ghcr.io/green-ecolution/frontend:${{ github.event.client_payload.version }}-stage
 
-      - name: Dump backend stage image tag
+      - name: Bump backend stage image tag
         if : github.event.client_payload.from == 'backend'
         run: |
           cd ./deploy/kustomize/stage
-          kustomize edit set image backend-image=ghcr.io/green-ecolution/green-ecolution-backend-stage:${{ github.event.client_payload.sha }}
+          kustomize edit set image backend-image=ghcr.io/green-ecolution/backend:${{ github.event.client_payload.version }}-stage
 
       - name: Dump stage init migrations image tag
         run: |
-          cd ./deploy/kustomize/dev
-          kustomize edit set image backend-image=ghcr.io/green-ecolution/migrations-postgres:${{ github.event.client_payload.version }}-stage
+          cd ./deploy/kustomize/stage
+          kustomize edit set image init-migrations-image=ghcr.io/green-ecolution/migrations-postgres:${{ github.event.client_payload.version }}-stage
 
       - name: Commit changes
         env:
           GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
         run: |
-          git add green-ecolution-frontend green-ecolution-backend deploy/kustomize/stage/kustomization.yaml
-          git commit -m "chore: update submodules and dump stage image tag to version ${{ github.event.client_payload.version }}" && git push origin develop || echo "No changes to commit"
+          git add frontend backend deploy/kustomize/stage/kustomization.yaml
+          git commit -m "chore: update submodules and bump stage image tag to version ${{ github.event.client_payload.version }}" && git push origin develop || echo "No changes to commit"
