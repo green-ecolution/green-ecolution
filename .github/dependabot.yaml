@@ -1,0 +1,34 @@
+version: 2
+updates:
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "go"
+    reviewers:
+      - "green-ecolution/backend-maintainers"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 5
+    labels:
+      - "ci"
+      - "github-actions"
+    reviewers:
+      - "green-ecolution/devops"
+
+  - package-ecosystem: "docker"
+    directory: ".docker"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "docker"
+    reviewers:
+      - "green-ecolution/devops"
