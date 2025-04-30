@@ -36,7 +36,7 @@ RUN make build \
 #############################################
 # Runner go
 #############################################
-FROM alpine:3.20 AS runner
+FROM alpine:3.21 AS runner
 
 ENV PORT=3000
 ENV ENV=prod
