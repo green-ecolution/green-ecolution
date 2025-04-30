@@ -37,7 +37,7 @@ jobs:
           echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Create Release
-        uses: thomaseizinger/create-release@1.0.0
+        uses: thomaseizinger/create-release@2.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }} 
         with:
