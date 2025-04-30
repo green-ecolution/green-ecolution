@@ -2,6 +2,14 @@ name: "Build and test project on PR"
 
 on:
   pull_request:
+    paths:
+      - 'internal/**'
+      - 'pkg/**'
+      - 'main.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'sqlc.yaml'
+      - '.mockery.yaml'
     branches:
       - develop
 

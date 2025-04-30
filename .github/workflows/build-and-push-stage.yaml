@@ -3,9 +3,19 @@ name: Build and Push Docker Image Staging
   workflow_dispatch:
     inputs:
       version:
-        description: "The release version ('stage' prefix will be set from pipeline)"
+        description: "The release version"
         required: true
   push:
+    paths:
+      - '.docker/**'
+      - 'internal/**'
+      - 'pkg/**'
+      - 'config/**'
+      - 'main.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'sqlc.yaml'
+      - '.mockery.yaml'
     branches:
       - release/*
       - hotfix/*

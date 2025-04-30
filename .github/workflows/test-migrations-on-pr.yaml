@@ -2,6 +2,8 @@ name: "Test Postgres Migrations and Seed on PR"
 
 on:
   pull_request:
+    paths:
+      - 'internal/storage/postgres/migrations/**'
     branches:
       - develop
 

@@ -2,6 +2,8 @@ name: "Generate Green Ecolution Client Package"
 
 on:
   push:
+    paths:
+      - 'pkg/**'
     branches:
       - develop
 
