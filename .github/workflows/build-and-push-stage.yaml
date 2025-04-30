@@ -91,7 +91,7 @@ jobs:
           echo "BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >>${GITHUB_ENV}
 
       - name: Build and push Version
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           build-args: |
@@ -103,7 +103,9 @@ jobs:
           file: ./.docker/Dockerfile.stage
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/${{ env.REPO_LC }}:${{ env.RELEASE_VERSION }}-stage,ghcr.io/${{ env.REPO_LC }}:${{ env.COMMIT_SHA }}-stage
+          tags: |
+            ghcr.io/${{ env.REPO_LC }}:${{ env.RELEASE_VERSION }}-stage
+            ghcr.io/${{ env.REPO_LC }}:${{ env.COMMIT_SHA }}-stage
 
       - name: Notify management repo to update submodules
         uses: peter-evans/repository-dispatch@v3
