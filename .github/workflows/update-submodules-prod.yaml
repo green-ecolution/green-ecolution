@@ -8,6 +8,7 @@ on:
 jobs:
   build-and-push-migrations:
     runs-on: ubuntu-latest
+    if : github.event.client_payload.from == 'backend'
     permissions:
       contents: write
       packages: write
@@ -38,6 +39,7 @@ jobs:
 
   update-submodules-prod:
     needs: build-and-push-migrations
+    if: always() && needs.build-and-push-migrations.result != 'failure'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -84,5 +86,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
         run: |
-          git add green-ecolution-frontend green-ecolution-backend deploy/kustomize/prod/kustomization.yaml
+          git add frontend backend deploy/kustomize/prod/kustomization.yaml
           git commit -m "chore: update submodules and dump prod image tag to version ${{ github.event.client_payload.version }}" && git push origin develop || echo "No changes to commit"
+
+      - name: Create Release
+        if : github.event.client_payload.from == 'frontend'
+        uses: thomaseizinger/create-release@2.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }} 
+        with:
+          target_commitish: ${{ github.event.pull_request.merge_commit_sha }}
+          tag_name: ${{ github.event.client_payload.version }}
+          name: ${{ github.event.client_payload.version }}
+          draft: false
+          prerelease: false
+
