@@ -80,6 +80,10 @@ jobs:
         env:
           REPO: "${{ github.repository }}"
 
+      - name: Set commit sha
+        run: |
+          echo "COMMIT_SHA=$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_ENV
+
       - name: get build time
         run: |
           echo "BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >>${GITHUB_ENV}
