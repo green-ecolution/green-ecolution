@@ -38,7 +38,7 @@ authors:
     family-names: "Sophia"
     given-names: "Anthopoilos"
     email: sophia.anthopoilos@stud.hs-flensburg.de
-version: 1.2.0
+version: v1.2.1
 date-released: 2025-04-03
 url: "https://green-ecolution.de"
 repository-code: "https://github.com/green-ecolution/backend"
