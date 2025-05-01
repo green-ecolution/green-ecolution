@@ -1,0 +1,81 @@
+name: "Draft New Release"
+
+on:
+  repository_dispatch:
+    types: [draft-new-release]
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The release version"
+        required: true
+
+jobs:
+  draft_new_release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      actions: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup yq
+        uses: dcarbone/install-yq-action@v1.1.1
+        with:
+          version: "v4.42.1"
+          force: true
+
+      - name: Initialize mandatory git config
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email noreply@github.com
+
+      - name: Determine release version
+        id: set-version
+        run: |
+          echo "RELEASE_VERSION=${{ github.event.client_payload.version || github.event.inputs.version }}" >> $GITHUB_ENV
+
+      - name: Create release branch
+        run: git checkout -b release/${{ env.RELEASE_VERSION }}
+
+      - name: Update changelog
+        uses: thomaseizinger/keep-a-changelog-new-release@1.1.0
+        with:
+          version: ${{ env.RELEASE_VERSION }}
+
+      - name : Bump version in CITATION.cff
+        run: |
+          yq -i '.version="${{ env.RELEASE_VERSION }}"' CITATION.cff
+
+      - name: Commit changes
+        id: make-commit
+        run: |
+          git add CHANGELOG.md CITATION.cff
+          git commit --message "ci: prepare release ${{ env.RELEASE_VERSION }}"
+          echo "commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Push new branch
+        run: git push origin release/${{ env.RELEASE_VERSION }}
+
+      - name: Create pull request
+        uses: thomaseizinger/create-pull-request@1.4.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          head: release/${{ env.RELEASE_VERSION }}
+          base: main
+          title: Release version ${{ env.RELEASE_VERSION }}
+          reviewers: ${{ github.actor }}
+          body: |
+            Hi @${{ github.actor }}! 👋
+
+            This PR was created in response to a trigger of the release workflow here: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}.
+            I've updated the changelog and bumped the versions in the manifest files in this commit: ${{ steps.make-commit.outputs.commit }}.
+
+            Merging this PR will create a GitHub release and upload any assets that are created as part of the release build.
+            
+            **NOTE:** Please make sure to merge the backend release first before the [frontend](https://github.com/green-ecolution/frontend)!
+
