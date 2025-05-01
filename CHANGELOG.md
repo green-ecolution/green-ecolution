@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Configure Dependabot (#486)
+- Issue templates (#484)
+- CI/CD: release pipeline
+
+### Changed
+
+- CI/CD: only run workflows when necessary (#485)
+- Rename repository from `github.com/green-ecolution/green-ecolution-backend` to `github.com/green-ecolution/backend`
+- Remove dev deploy environment (`stage` will be used to deploy the develop branch, while `dev` is used to run it locally)
+- Dependency updates from dependabot
+- Update README.md
+
 ## [v1.2.0] - 2025-04-03
 
 ### Added
