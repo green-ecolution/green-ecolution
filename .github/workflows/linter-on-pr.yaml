@@ -14,15 +14,6 @@ on:
       - develop
       - main
   pull_request:
-    paths:
-      - 'internal/**'
-      - 'pkg/**'
-      - 'main.go'
-      - 'go.mod'
-      - 'go.sum'
-      - 'sqlc.yaml'
-      - '.mockery.yaml'
-      - '.golangci.yml'
 
 permissions:
   contents: read
