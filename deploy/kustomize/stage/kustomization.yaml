@@ -10,7 +10,7 @@ images:
   newTag: v1.2.0-16-g996fffbe-stage
 - name: frontend-image
   newName: ghcr.io/green-ecolution/frontend
-  newTag: v1.2.0-25-geb4e779-stage
+  newTag: v1.2.0-26-g8c77b13-stage
 - name: init-migrations-image
   newName: ghcr.io/green-ecolution/migrations-postgres
   newTag: v1.2.0-16-g996fffbe-stage
