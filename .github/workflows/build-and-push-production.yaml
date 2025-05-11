@@ -93,12 +93,13 @@ jobs:
         with:
           context: .
           build-args: |
+            ENV=prod
             APP_VERSION=${{env.RELEASE_VERSION}}
             APP_GIT_COMMIT=${{env.COMMIT_SHA}}
             APP_GIT_BRANCH=main
             APP_BUILD_TIME=${{env.BUILD_TIME}}
             APP_GIT_REPOSITORY=${{github.repository}}
-          file: ./.docker/Dockerfile.prod
+          file: Dockerfile
           platforms: linux/amd64
           push: true
           tags: |

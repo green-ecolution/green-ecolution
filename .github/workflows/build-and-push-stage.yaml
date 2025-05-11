@@ -95,12 +95,13 @@ jobs:
         with:
           context: .
           build-args: |
+            ENV=stage
             APP_VERSION="${{env.RELEASE_VERSION}}-stage"
             APP_GIT_COMMIT=${{env.COMMIT_SHA}}
             APP_GIT_BRANCH=${{steps.extract_branch.outputs.branch}}
             APP_BUILD_TIME=${{env.BUILD_TIME}}
             APP_GIT_REPOSITORY=${{github.repository}}
-          file: ./.docker/Dockerfile.stage
+          file: Dockerfile
           platforms: linux/amd64
           push: true
           tags: |
