@@ -19,7 +19,7 @@ COPY . .
 #############################################
 FROM preparer_go AS builder
 
-ARG APP_VERSION="v0.0.0-stage"
+ARG APP_VERSION="v0.0.0"
 ARG APP_GIT_COMMIT="unknown"
 ARG APP_GIT_BRANCH="develop"
 ARG APP_GIT_REPOSITORY="https://github.com/green-ecolution/backend"
@@ -37,17 +37,16 @@ RUN make build \
 #############################################
 FROM alpine:3.21 AS runner
 
-ENV PORT=3000
-ENV ENV=stage
 EXPOSE 3000
+ARG ENV="stage"
 
 RUN adduser -D gorunner
-RUN apk add --no-cache geos proj
+RUN apk add --no-cache geos proj curl
 
 USER gorunner
 WORKDIR /app
 
-COPY --chown=gorunner:gorunner --from=builder /app/build/.docker/config.default.yaml /app/config/config.stage.yaml
+COPY --chown=gorunner:gorunner --from=builder /app/build/config/config.default.yaml /app/config/config.${ENV}.yaml
 COPY --chown=gorunner:gorunner --from=builder /app/build/bin/green-ecolution-backend /app/backend
 
 ENTRYPOINT [ "/app/backend" ]

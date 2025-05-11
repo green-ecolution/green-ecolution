@@ -1,8 +1,7 @@
-export ENV ?= dev
 MAIN_PACKAGE_PATH := .
 BINARY_NAME := green-ecolution-backend
 APP_VERSION ?= $(shell git describe --tags --always --dirty)
-APP_GIT_COMMIT ?= $(shell git rev-parse HEAD)
+APP_GIT_COMMIT ?= $(shell git rev-parse --short HEAD)
 APP_GIT_BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
 APP_GIT_REPOSITORY ?= https://github.com/green-ecolution/backend
 APP_BUILD_TIME ?= $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
@@ -17,7 +16,7 @@ define GOFLAGS
   -X github.com/green-ecolution/backend/internal/storage/local/info.buildTime=$(APP_BUILD_TIME) \
 "
 endef
-MOCKERY_VERSION := v2.43.2
+MOCKERY_VERSION := v2.52.2
 POSTGRES_USER ?= postgres
 POSTGRES_PASSWORD ?= postgres
 POSTGRES_DB ?= postgres
@@ -150,28 +149,17 @@ run/live: generate
 	@echo "Running live..."
 	go tool air
 
-.PHONY: run/docker/prepare
-run/docker/prepare:
-	@echo "Preparing docker..."
-	@if [ -z "$(ENV)" ]; then \
-		echo "error: env is required"; \
-		echo "usage: make run/docker ENV=[dev,stage,prod]"; \
-		exit 1; \
-	fi
-	$(MAKE) config/dec; \
-	yq e -r '.' "config/config.$(ENV).yaml" -os | sed -e 's/\(.*\)=/GE_\U\1=/' | sed -e "s/='\(.*\)'/=\1/" > "./.docker/.env.$(ENV)"; \
-
 .PHONY: run/docker
-run/docker: run/docker/prepare
-	@echo "Running docker..."
-	docker build -t $(BINARY_NAME)-docker-$(ENV) \
-		--build-arg APP_VERSION=$(APP_VERSION) \
-		--build-arg APP_GIT_COMMIT=$(APP_GIT_COMMIT) \
-		--build-arg APP_GIT_BRANCH=$(APP_GIT_BRANCH) \
-		--build-arg APP_GIT_REPOSITORY=$(APP_GIT_REPOSITORY) \
-		--build-arg APP_BUILD_TIME=$(APP_BUILD_TIME) \
-		-f ./.docker/Dockerfile.$(ENV) .
-	docker run -it --env-file "./.docker/.env.$(ENV)" --rm -p 3000:3000 $(BINARY_NAME)-docker-dev
+run/docker: 
+	@echo "Running infra..."
+	mkdir -p .docker/infra/valhalla/custom_files
+	test -f .docker/infra/valhalla/custom_files/sh.osm.pbf || wget https://download.geofabrik.de/europe/germany/schleswig-holstein-latest.osm.pbf -O .docker/infra/valhalla/custom_files/sh.osm.pbf
+
+	APP_VERSION=$(APP_VERSION) \
+	APP_GIT_COMMIT=$(APP_GIT_COMMIT) \
+	APP_GIT_BRANCH=$(APP_GIT_BRANCH) \
+	APP_BUILD_TIME=$(APP_BUILD_TIME) \
+	docker compose -f compose.yaml -f compose.app.yaml up -d --build
 
 .PHONY: infra/up
 infra/up:

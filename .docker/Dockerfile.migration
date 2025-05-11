@@ -1,0 +1,17 @@
+FROM alpine:3.18
+
+ARG MIGRATION_WITH_SEED
+ARG MIGRATION_WITH_DB_RESET
+
+RUN apk add --no-cache bash curl
+RUN curl -fsSL \
+    https://raw.githubusercontent.com/pressly/goose/master/install.sh |\
+    sh
+
+COPY ../internal/storage/postgres/migrations /migrations
+COPY ../internal/storage/postgres/seed /seed
+COPY ../scripts/run-migration.sh /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh
+
+CMD ["/entrypoint.sh", "/migrations", "/seed"]
