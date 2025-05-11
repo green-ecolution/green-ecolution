@@ -26,3 +26,13 @@ updates:
     labels:
       - "dependencies"
       - "docker"
+
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "docker-compose"
+      - "infra"
