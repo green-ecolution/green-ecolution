@@ -8,8 +8,6 @@ updates:
     labels:
       - "dependencies"
       - "go"
-    reviewers:
-      - "green-ecolution/backend-maintainers"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -19,8 +17,6 @@ updates:
     labels:
       - "ci"
       - "github-actions"
-    reviewers:
-      - "green-ecolution/devops"
 
   - package-ecosystem: "docker"
     directory: ".docker"
@@ -30,5 +26,3 @@ updates:
     labels:
       - "dependencies"
       - "docker"
-    reviewers:
-      - "green-ecolution/devops"
