@@ -130,6 +130,7 @@ clean:
 	rm -rf bin
 	rm -rf docs
 	rm -rf tmp
+	rm -rf .docker/infra/valhalla/custom_files
 	rm -rf internal/server/http/entities/info/generated
 	rm -rf internal/server/http/entities/sensor/generated
 	rm -rf internal/server/http/entities/tree/generated
@@ -175,24 +176,20 @@ run/docker: run/docker/prepare
 .PHONY: infra/up
 infra/up:
 	@echo "Running infra..."
-	mkdir -p .docker/infra/ors/{config,elevation_cache,files,graphs,logs}
 	mkdir -p .docker/infra/valhalla/custom_files
-	chown -R $(USER_ID) .docker/infra/ors
-	yq e -i '.services."ors-app".user = env(USER_ID)' .docker/docker-compose.infra.yaml
-	test -f .docker/infra/ors/files/sh.osm.pbf || wget https://download.geofabrik.de/europe/germany/schleswig-holstein-latest.osm.pbf -O .docker/infra/ors/files/sh.osm.pbf
 	test -f .docker/infra/valhalla/custom_files/sh.osm.pbf || wget https://download.geofabrik.de/europe/germany/schleswig-holstein-latest.osm.pbf -O .docker/infra/valhalla/custom_files/sh.osm.pbf
 
-	docker compose -f .docker/docker-compose.infra.yaml up -d
+	docker compose up -d
 
 .PHONY: infra/stop
 infra/stop:
 	@echo "Running infra stop..."
-	docker compose -f .docker/docker-compose.infra.yaml stop
+	docker compose -f compose.yaml stop
 
 .PHONY: infra/down
 infra/down:
 	@echo "Running infra delete..."
-	docker compose -f .docker/docker-compose.infra.yaml down
+	docker compose -f compose.yaml down -v
 
 .PHONY: migrate/new
 migrate/new:

@@ -6,9 +6,13 @@ air.toml
 
 .env
 .env.example
+flake.nix
+flake.lock
 
+bin/
 tmp/
 docs/
+.docker/infra
 .git/
 .github/
 .gitignore
