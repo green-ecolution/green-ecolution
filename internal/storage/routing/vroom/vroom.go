@@ -180,7 +180,7 @@ func (v *VroomClient) toVroomShipments(cluster []*entities.TreeCluster) []VroomS
 }
 
 func (v *VroomClient) toVroomVehicle(vehicle *entities.Vehicle) (*VroomVehicle, error) {
-	vehicleType, err := v.toOrsVehicleType(vehicle.Type)
+	vehicleType, err := v.toVehicleType(vehicle.Type)
 	if err != nil {
 		return nil, err
 	}
@@ -196,10 +196,10 @@ func (v *VroomClient) toVroomVehicle(vehicle *entities.Vehicle) (*VroomVehicle, 
 	}, nil
 }
 
-func (v *VroomClient) toOrsVehicleType(vehicle entities.VehicleType) (string, error) {
+func (v *VroomClient) toVehicleType(vehicle entities.VehicleType) (string, error) {
 	if vehicle == entities.VehicleTypeUnknown {
 		return "", storage.ErrUnknownVehicleType
 	}
 
-	return "driving-car", nil // It doesn't matter which type is used here
+	return "auto", nil // It doesn't matter which type is used here
 }
