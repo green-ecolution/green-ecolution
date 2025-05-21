@@ -43,21 +43,36 @@ For further information, visit:
 
 To quickly run the application locally:
 
-1. Download the Docker Compose configuration:
+1. Clone this repository
+2. Copy the `env.example` to `.env`
+3. Build and launch the application containers
 
 ```bash
-wget https://raw.githubusercontent.com/green-ecolution/backend/refs/heads/develop/.docker/docker-compose.yaml
+make run/docker
 ```
 
-2. Build and launch the application containers:
+make will download a `pbf` file of the open street map geographical tileset from Germany Schleswig-Holstein and place it in a directory where `vahalla` can access it via docker. If you don't want to download this part or want to load a different location into valhalla, you can download it yourself and place the file in `.docker/infra/valhalla/custom_files/<file-osm.pbf>`. After that you can start the docker services with the backend using this command:
 
 ```bash
-docker compose up
+docker compose -f compose.yaml -f compose.app.yaml up -d --build
 ```
 
-By default, external services like `auth`, `mqtt`, `routing`, and `s3` are disabled but can be enabled via configuration. See the [Demo Setup](https://github.com/green-ecolution/backend/wiki/Demo-Setup) for more details.
+By default, all services such as auth, routing and s3 are enabled and running with docker, except mqtt. This service is currently disabled by default and must be configured manually.
 
-👉 Once the service is up and running, you can access it at: [http://localhost:8123](http://localhost:8123)
+👉 Once the service is up and running, the backend is available at: [http://localhost:3000](http://localhost:3000)
+
+The other services can be accessed via the following URLs:
+
+| Service       | URL                              |
+| ------------- | -------------------------------- |
+| Minio         | `http://minio.localhost:3000`    |
+| S3            | `http://s3.localhost:3000`       |
+| Keycloak      | `http://auth.localhost:3000`     |
+| Valhalla      | `http://valhalla.localhost:3000` |
+| Vroom         | `http://vroom.localhost:3000`    |
+| pgadmin       | `http://pgadmin.localhost:3000`  |
+| reverse-proxy | `http://traefik.localhost:3000`  |
+| backend       | `http://localhost:3000`          |
 
 ## Technologies Used ⚙️
 
