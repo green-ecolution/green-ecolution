@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 API_DOCS_SOURCE=$1
-SERVER=$2 
+SERVER=$2
 API_DOCS_PATH="swagger/doc.json"
 API_DOCS_FILE="./api-docs.json"
 
 function fetch_api_docs() {
   echo "🌎 Fetching api docs from $SERVER/$API_DOCS_PATH"
-  curl "$SERVER/$API_DOCS_PATH" > $API_DOCS_FILE 2> /dev/null 
+  curl "$SERVER/$API_DOCS_PATH" > $API_DOCS_FILE 2> /dev/null
   exit_on_error "Error during polling. Has the server been started?"
 }
 
@@ -20,7 +20,7 @@ function clean_up() {
 }
 
 function generate_client_docker() {
-  docker run --rm -v ${PWD}:/local -u `id -u`:`id -g` openapitools/openapi-generator-cli generate \
+  docker run --rm -v "$PWD":/local -u "$(id -u)":"$(id -g)" openapitools/openapi-generator-cli generate \
     -i /local/$API_DOCS_FILE \
     -o /local/src/ \
     -g typescript-fetch \
