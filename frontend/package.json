@@ -19,7 +19,7 @@
     "@hookform/resolvers": "^5.0.1",
     "@module-federation/enhanced": "^0.13.1",
     "@splidejs/react-splide": "^0.7.12",
-    "@tanstack/react-query": "^5.50.1",
+    "@tanstack/react-query": "^5.81.5",
     "@tanstack/react-router": "^1.119.0",
     "date-fns": "^4.1.0",
     "immer": "^10.1.1",
