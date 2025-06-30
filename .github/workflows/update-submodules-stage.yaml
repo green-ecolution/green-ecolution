@@ -47,10 +47,18 @@ jobs:
     if: always() && needs.build-and-push-migrations.result != 'failure'
     runs-on: ubuntu-latest
     steps:
+      - name: Get Green Ecolution App Token
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GREEN_ECOLUTION_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           submodules: "recursive"
 
       - name: Setup kube tools
@@ -60,14 +68,20 @@ jobs:
             kustomize
           kustomize: "5.4.3"
 
+      - name: Get Green Ecolution App User ID
+        id: get-user-id
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+
       - name: Initialize mandatory git config
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email noreply@github.com
+          git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
 
       - name: Update submodules
         env:
-          GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: git submodule update  --init --recursive --remote -f
 
       - name: Bump frontend stage image tag
@@ -90,7 +104,7 @@ jobs:
 
       - name: Commit changes
         env:
-          GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           git add frontend backend deploy/kustomize/stage/kustomization.yaml
-          git commit -m "chore: update submodules and bump stage image tag to version ${{ github.event.client_payload.version }}" && git push origin develop || echo "No changes to commit"
+          git commit -m "chore: update submodules and bump stage image tag to version ${{ github.event.client_payload.version }} [skip ci]" && git push origin develop || echo "No changes to commit"
