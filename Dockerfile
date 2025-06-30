@@ -35,7 +35,7 @@ RUN make build \
 #############################################
 # Runner go
 #############################################
-FROM alpine:3.21 AS runner
+FROM alpine:3.22 AS runner
 
 EXPOSE 3000
 ARG ENV="stage"
