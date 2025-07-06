@@ -2,52 +2,47 @@ import FormForTreecluster from '../general/form/FormForTreecluster'
 import BackLink from '../general/links/BackLink'
 import DeleteSection from './DeleteSection'
 import { TreeCluster } from '@green-ecolution/backend-client'
-import { TreeclusterForm, TreeclusterSchema } from '@/schema/treeclusterSchema'
+import { clusterSchemaBase, TreeclusterForm } from '@/schema/treeclusterSchema'
 import { useInitFormQuery } from '@/hooks/form/useInitForm'
 import { treeClusterIdQuery } from '@/api/queries'
 import { clusterApi } from '@/api/backendApi'
-import { useFormSync } from '@/hooks/form/useFormSync'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
-import { SubmitHandler } from 'react-hook-form'
+import { FormProvider, SubmitHandler } from 'react-hook-form'
 import useStore from '@/store/store'
 import { Suspense } from 'react'
 import LoadingInfo from '../general/error/LoadingInfo'
 import { useTreeClusterForm } from '@/hooks/form/useTreeClusterForm'
+import { safeJsonStorageParse } from '@/lib/utils'
 
 interface TreeClusterUpdateProps {
   clusterId: string
 }
 
 const TreeClusterUpdate = ({ clusterId }: TreeClusterUpdateProps) => {
-  const navigate = useNavigate()
-  const { mutate, isError, error, formStore } = useTreeClusterForm('update', clusterId)
-  const { initForm, loadedData } = useInitFormQuery<TreeCluster, TreeclusterForm>(
-    treeClusterIdQuery(clusterId),
-    (data) => ({
-      name: data.name,
-      address: data.address,
-      description: data.description,
-      soilCondition: data.soilCondition,
-      treeIds: data.trees?.map((tree) => tree.id) ?? [],
-    }),
-  )
-
   const mapPosition = useStore((state) => ({
     lat: state.map.center[0],
     lng: state.map.center[1],
     zoom: state.map.zoom,
   }))
-
-  const { register, setValue, handleSubmit, formState } = useFormSync<TreeclusterForm>(
-    initForm,
-    zodResolver(TreeclusterSchema),
+  const navigate = useNavigate()
+  const { data: formState } = safeJsonStorageParse('update-cluster', { schema: clusterSchemaBase })
+  const { initForm, loadedData } = useInitFormQuery<TreeCluster, TreeclusterForm>(
+    treeClusterIdQuery(clusterId),
+    (data) =>
+      formState ?? {
+        name: data.name,
+        address: data.address,
+        description: data.description,
+        soilCondition: data.soilCondition,
+        treeIds: data.trees?.map((tree) => tree.id) ?? [],
+      },
   )
+  const { mutate, isError, error, form } = useTreeClusterForm('update', { clusterId, initForm })
 
   const onSubmit: SubmitHandler<TreeclusterForm> = (data) => {
     mutate({
       ...data,
-      treeIds: formStore.form?.treeIds ?? [],
+      treeIds: data.treeIds,
     })
   }
 
@@ -65,12 +60,10 @@ const TreeClusterUpdate = ({ clusterId }: TreeClusterUpdateProps) => {
         lng: mapPosition.lng,
         zoom: mapPosition.zoom,
         clusterId: Number(clusterId),
+        treeIds: form.getValues('treeIds'),
+        formType: 'update',
       },
     }).catch((error) => console.error('Navigation failed:', error))
-  }
-
-  const handleDeleteTree = (treeId: number) => {
-    setValue('treeIds', formStore.form?.treeIds?.filter((id) => id !== treeId) ?? [])
   }
 
   return (
@@ -93,16 +86,14 @@ const TreeClusterUpdate = ({ clusterId }: TreeClusterUpdateProps) => {
       </article>
 
       <section className="mt-10">
-        <FormForTreecluster
-          register={register}
-          formState={formState}
-          handleSubmit={handleSubmit}
-          displayError={isError}
-          onSubmit={onSubmit}
-          onAddTrees={navigateToTreeSelect}
-          onDeleteTree={handleDeleteTree}
-          errorMessage={error?.message}
-        />
+        <FormProvider {...form}>
+          <FormForTreecluster
+            displayError={isError}
+            onSubmit={onSubmit}
+            onAddTrees={navigateToTreeSelect}
+            errorMessage={error?.message}
+          />
+        </FormProvider>
       </section>
 
       <Suspense fallback={<LoadingInfo label="Die Bewässerungsgruppe wird gelöscht" />}>

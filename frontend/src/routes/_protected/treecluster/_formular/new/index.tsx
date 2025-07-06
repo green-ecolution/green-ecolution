@@ -1,33 +1,34 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { SoilCondition } from '@/api/backendApi'
-import { SubmitHandler } from 'react-hook-form'
-import { TreeclusterForm, TreeclusterSchema } from '@/schema/treeclusterSchema'
+import { DefaultValues, FormProvider, SubmitHandler } from 'react-hook-form'
+import { clusterSchemaBase, TreeclusterForm } from '@/schema/treeclusterSchema'
 import FormForTreecluster from '@/components/general/form/FormForTreecluster'
-import useFormStore from '@/store/form/useFormStore'
-import { useFormSync } from '@/hooks/form/useFormSync'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useInitForm } from '@/hooks/form/useInitForm'
 import useStore from '@/store/store'
 import BackLink from '@/components/general/links/BackLink'
 import { useTreeClusterForm } from '@/hooks/form/useTreeClusterForm'
+import { safeJsonStorageParse } from '@/lib/utils'
 
 export const Route = createFileRoute('/_protected/treecluster/_formular/new/')({
-  beforeLoad: () => {
-    useFormStore.getState().setType('new')
+  loader: () => {
+    const { data } = safeJsonStorageParse('create-cluster', { schema: clusterSchemaBase })
+    return {
+      formState: data,
+    }
   },
   component: NewTreecluster,
 })
 
+const defaultForm: DefaultValues<TreeclusterForm> = {
+  soilCondition: SoilCondition.TreeSoilConditionUnknown,
+  treeIds: [],
+}
+
 function NewTreecluster() {
-  const { mutate, isError, error, formStore } = useTreeClusterForm('create')
-  const navigate = useNavigate({ from: Route.fullPath })
-  const { initForm } = useInitForm<TreeclusterForm>({
-    name: '',
-    address: '',
-    description: '',
-    soilCondition: SoilCondition.TreeSoilConditionUnknown,
-    treeIds: [],
+  const { formState } = Route.useLoaderData()
+  const { mutate, isError, error, form } = useTreeClusterForm('create', {
+    initForm: formState ?? defaultForm,
   })
+  const navigate = useNavigate({ from: Route.fullPath })
 
   const mapPosition = useStore((state) => ({
     lat: state.map.center[0],
@@ -35,15 +36,10 @@ function NewTreecluster() {
     zoom: state.map.zoom,
   }))
 
-  const { register, setValue, handleSubmit, formState } = useFormSync<TreeclusterForm>(
-    initForm,
-    zodResolver(TreeclusterSchema),
-  )
-
   const onSubmit: SubmitHandler<TreeclusterForm> = (data) => {
     mutate({
       ...data,
-      treeIds: formStore.form?.treeIds ?? [],
+      treeIds: data.treeIds ?? [],
     })
   }
 
@@ -54,12 +50,10 @@ function NewTreecluster() {
         lat: mapPosition.lat,
         lng: mapPosition.lng,
         zoom: mapPosition.zoom,
+        formType: 'create',
+        treeIds: form.getValues('treeIds'),
       },
     }).catch((error) => console.error('Navigation failed:', error))
-  }
-
-  const handleDeleteTree = (treeId: number) => {
-    setValue('treeIds', formStore.form?.treeIds?.filter((id) => id !== treeId) ?? [])
   }
 
   return (
@@ -76,16 +70,14 @@ function NewTreecluster() {
       </article>
 
       <section className="mt-10">
-        <FormForTreecluster
-          register={register}
-          handleSubmit={handleSubmit}
-          displayError={isError}
-          formState={formState}
-          onSubmit={onSubmit}
-          onAddTrees={navigateToTreeSelect}
-          onDeleteTree={handleDeleteTree}
-          errorMessage={error?.message}
-        />
+        <FormProvider {...form}>
+          <FormForTreecluster
+            displayError={isError}
+            onSubmit={onSubmit}
+            onAddTrees={navigateToTreeSelect}
+            errorMessage={error?.message}
+          />
+        </FormProvider>
       </section>
     </div>
   )

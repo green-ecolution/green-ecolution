@@ -1,21 +1,48 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { treeClusterIdQuery, treeClusterQuery } from '@/api/queries'
 import useToast from '@/hooks/useToast'
-import { useNavigate } from '@tanstack/react-router'
+import { useBlocker, useNavigate } from '@tanstack/react-router'
 import { TreeCluster, TreeClusterCreate, TreeClusterUpdate } from '@green-ecolution/backend-client'
 import { clusterApi } from '@/api/backendApi'
-import useFormStore, { FormStore } from '@/store/form/useFormStore'
-import { TreeclusterForm } from '@/schema/treeclusterSchema'
+import { clusterSchema, TreeclusterForm } from '@/schema/treeclusterSchema'
+import { DefaultValues, useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import useFormPersist from './usePersistForm'
 
-export const useTreeClusterForm = (mutationType: 'create' | 'update', clusterId?: string) => {
+export const useTreeClusterForm = (
+  mutationType: 'create' | 'update',
+  opts: { clusterId?: string; initForm?: DefaultValues<TreeclusterForm> },
+) => {
   const showToast = useToast()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
-  const formStore = useFormStore((state: FormStore<TreeclusterForm>) => ({
-    form: state.form,
-    reset: state.reset,
-  }))
+  const form = useForm<TreeclusterForm>({
+    defaultValues: opts.initForm,
+    resolver: zodResolver(clusterSchema),
+  })
+
+  const { clear: resetPersist } = useFormPersist(`${mutationType}-cluster`, { watch: form.watch })
+
+  // TODO: only on isDirty
+  useBlocker({
+    shouldBlockFn: ({ next }) => {
+      if (next.pathname === '/map/treecluster/select/tree') return false
+
+      const shouldLeave = confirm(
+        mutationType === 'create'
+          ? 'Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen der Bewässerungsgruppe gehen verloren, wenn du jetzt gehst.'
+          : 'Möchtest du die Seite wirklich verlassen? Deine Änderungen an der Bewässerungsgruppe gehen verloren, wenn du jetzt gehst.',
+      )
+
+      if (shouldLeave) {
+        window.sessionStorage.removeItem('create-cluster')
+        window.sessionStorage.removeItem('update-cluster')
+      }
+
+      return !shouldLeave
+    },
+  })
 
   const { mutate, isError, error } = useMutation({
     mutationFn: (cluster: TreeClusterCreate | TreeClusterUpdate) => {
@@ -23,9 +50,9 @@ export const useTreeClusterForm = (mutationType: 'create' | 'update', clusterId?
         return clusterApi.createTreeCluster({
           body: cluster as TreeClusterCreate,
         })
-      } else if (mutationType === 'update' && clusterId) {
+      } else if (mutationType === 'update' && opts.clusterId) {
         return clusterApi.updateTreeCluster({
-          clusterId: Number(clusterId),
+          clusterId: Number(opts.clusterId),
           body: cluster as TreeClusterUpdate,
         })
       }
@@ -33,7 +60,7 @@ export const useTreeClusterForm = (mutationType: 'create' | 'update', clusterId?
     },
 
     onSuccess: (data: TreeCluster) => {
-      formStore.reset()
+      resetPersist()
       queryClient
         .invalidateQueries(treeClusterIdQuery(String(data.id)))
         .catch((error) => console.error('Invalidate "treeClusterIdQuery" failed:', error))
@@ -62,6 +89,6 @@ export const useTreeClusterForm = (mutationType: 'create' | 'update', clusterId?
     mutate: mutate,
     isError: isError,
     error: error,
-    formStore: formStore,
+    form,
   }
 }

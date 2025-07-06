@@ -4,6 +4,7 @@ import SelectedCard from '../../cards/SelectedCard'
 
 interface SelectEntitiesProps {
   onDelete: (itemId: number) => void
+  onChange?: (entries: number[]) => void // TODO: make not optinal after refactoring
   entityIds: number[]
   onAdd: () => void
   label: string
@@ -12,7 +13,7 @@ interface SelectEntitiesProps {
 }
 
 const SelectEntities: React.FC<SelectEntitiesProps> = ({
-  onDelete,
+  onChange,
   entityIds,
   onAdd,
   label,
@@ -38,7 +39,13 @@ const SelectEntities: React.FC<SelectEntitiesProps> = ({
         ) : (
           entityIds.map((entityId) => (
             <li key={entityId}>
-              <SelectedCard type={type} id={entityId} onClick={onDelete} />
+              <SelectedCard
+                type={type}
+                id={entityId}
+                onClick={(id) => {
+                  onChange?.(entityIds.filter((i) => i !== id))
+                }}
+              />
             </li>
           ))
         )}
