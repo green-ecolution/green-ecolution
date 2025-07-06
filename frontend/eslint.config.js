@@ -54,6 +54,12 @@ export default tseslint.config(
         'error',
         { allowInterfaces: 'with-single-extends' },
       ],
+      '@typescript-eslint/no-misused-promises': [
+        'error',
+        {
+          checksVoidReturn: false,
+        },
+      ],
     },
   },
 )
