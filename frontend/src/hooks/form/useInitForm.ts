@@ -6,23 +6,8 @@ export const useInitFormQuery = <TData, TSchema>(
   queryOptions: UseSuspenseQueryOptions<TData>,
   handler: (v: TData) => TSchema,
 ) => {
-  const { init, isEmpty, form } = useFormStore((state: FormStore<TSchema>) => ({
-    init: state.commit,
-    isEmpty: state.isEmpty,
-    form: state.form,
-  }))
-  const initForm = useRef<TSchema | undefined>(form)
-
   const { data } = useSuspenseQuery(queryOptions)
-
-  useEffect(() => {
-    if (isEmpty()) {
-      initForm.current = handler(data)
-      init(initForm.current)
-    }
-  }, [data, handler, init, isEmpty])
-
-  return { initForm: initForm.current, loadedData: data }
+  return { initForm: handler(data), loadedData: data }
 }
 
 export const useInitForm = <T>(defaulForm: T) => {

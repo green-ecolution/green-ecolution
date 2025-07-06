@@ -1,21 +1,47 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { treeClusterIdQuery, treeIdQuery, treeQuery } from '@/api/queries'
 import useToast from '@/hooks/useToast'
-import { useNavigate } from '@tanstack/react-router'
+import { useBlocker, useNavigate } from '@tanstack/react-router'
 import { Tree, TreeCreate, TreeUpdate } from '@green-ecolution/backend-client'
 import { treeApi } from '@/api/backendApi'
-import useFormStore, { FormStore } from '@/store/form/useFormStore'
-import { TreeForm } from '@/schema/treeSchema'
+import { TreeForm, treeSchema } from '@/schema/treeSchema'
+import { DefaultValues, useForm } from 'react-hook-form'
+import useFormPersist from './usePersistForm'
+import { zodResolver } from '@hookform/resolvers/zod'
 
-export const useTreeForm = (mutationType: 'create' | 'update', treeId?: string) => {
+export const useTreeForm = (
+  mutationType: 'create' | 'update',
+  opts: { treeId?: string; initForm?: DefaultValues<TreeForm> },
+) => {
   const showToast = useToast()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
-  const formStore = useFormStore((state: FormStore<TreeForm>) => ({
-    form: state.form,
-    reset: state.reset,
-  }))
+  const form = useForm<TreeForm>({
+    defaultValues: opts.initForm,
+    resolver: zodResolver(treeSchema),
+  })
+
+  const { clear: resetPersist } = useFormPersist(`${mutationType}-tree`, { watch: form.watch })
+
+  useBlocker({
+    shouldBlockFn: ({ next }) => {
+      if (next.pathname === '/map/tree/edit/') return false
+
+      const shouldLeave = confirm(
+        mutationType === 'create'
+          ? 'Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen des Baums gehen verloren, wenn du jetzt gehst.'
+          : 'Möchtest du die Seite wirklich verlassen? Deine Änderungen am Baum gehen verloren, wenn du jetzt gehst.',
+      )
+
+      if (shouldLeave) {
+        window.sessionStorage.removeItem('create-tree')
+        window.sessionStorage.removeItem('update-tree')
+      }
+
+      return !shouldLeave
+    },
+  })
 
   const { mutate, isError, error } = useMutation({
     mutationFn: (tree: TreeCreate | TreeUpdate) => {
@@ -23,9 +49,9 @@ export const useTreeForm = (mutationType: 'create' | 'update', treeId?: string) 
         return treeApi.createTree({
           body: tree as TreeCreate,
         })
-      } else if (mutationType === 'update' && treeId) {
+      } else if (mutationType === 'update' && opts.treeId) {
         return treeApi.updateTree({
-          treeId: Number(treeId),
+          treeId: Number(opts.treeId),
           body: tree as TreeUpdate,
         })
       }
@@ -33,7 +59,7 @@ export const useTreeForm = (mutationType: 'create' | 'update', treeId?: string) 
     },
 
     onSuccess: (data: Tree) => {
-      formStore.reset()
+      resetPersist()
       queryClient
         .invalidateQueries(treeIdQuery(String(data.id)))
         .catch((error) => console.error('Invalidate "treeIdQuery" failed:', error))
@@ -45,11 +71,10 @@ export const useTreeForm = (mutationType: 'create' | 'update', treeId?: string) 
           .invalidateQueries(treeClusterIdQuery(String(data.treeClusterId)))
           .catch((error) => console.error('Invalidate "treeClusterIdQuery" failed:', error))
       }
+
       navigate({
         to: '/trees/$treeId',
         params: { treeId: data.id.toString() },
-        search: { resetStore: false },
-        replace: true,
       }).catch((error) => console.error('Navigation failed:', error))
 
       const msg =
@@ -67,9 +92,9 @@ export const useTreeForm = (mutationType: 'create' | 'update', treeId?: string) 
   })
 
   return {
-    mutate: mutate,
-    isError: isError,
-    error: error,
-    formStore: formStore,
+    mutate,
+    isError,
+    error,
+    form,
   }
 }

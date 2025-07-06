@@ -1,33 +1,35 @@
 import { TreeForm } from '@/schema/treeSchema'
-import { FormForProps } from './FormForTreecluster'
 import Input from './types/Input'
 import Select from './types/Select'
 import { Sensor, TreeCluster } from '@/api/backendApi'
 import Textarea from './types/Textarea'
 import { MapPin } from 'lucide-react'
 import PrimaryButton from '../buttons/PrimaryButton'
-import useFormStore, { FormStore } from '@/store/form/useFormStore'
 import FormError from './FormError'
+import { SubmitHandler, useFormContext } from 'react-hook-form'
 
-interface FormForTreeProps extends FormForProps<TreeForm> {
+interface FormForTreeProps {
   isReadonly: boolean
   treeClusters: TreeCluster[]
   sensors: Sensor[]
+  displayError: boolean
+  errorMessage?: string
   onChangeLocation: () => void
+  onSubmit: SubmitHandler<TreeForm>
 }
 
 const FormForTree = (props: FormForTreeProps) => {
-  const { lat, lng } = useFormStore((state: FormStore<TreeForm>) => ({
-    lat: state.form?.latitude ?? 0,
-    lng: state.form?.longitude ?? 0,
-  }))
-
-  const { errors, isValid } = props.formState
+  const {
+    register,
+    handleSubmit,
+    getValues,
+    formState: { isValid, errors },
+  } = useFormContext<TreeForm>()
 
   return (
     <form
       className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-11"
-      onSubmit={() => void props.handleSubmit(props.onSubmit)}
+      onSubmit={handleSubmit(props.onSubmit)}
     >
       <div className="space-y-6">
         {!props.isReadonly && (
@@ -36,7 +38,7 @@ const FormForTree = (props: FormForTreeProps) => {
             label="Baumnummer"
             required
             error={errors.number?.message}
-            {...props.register('number')}
+            {...register('number')}
           />
         )}
         {!props.isReadonly && (
@@ -45,7 +47,7 @@ const FormForTree = (props: FormForTreeProps) => {
             label="Baumart"
             required
             error={errors.species?.message}
-            {...props.register('species')}
+            {...register('species')}
           />
         )}
         {!props.isReadonly && (
@@ -55,7 +57,7 @@ const FormForTree = (props: FormForTreeProps) => {
             type="number"
             error={errors.plantingYear?.message}
             required
-            {...props.register('plantingYear')}
+            {...register('plantingYear', { valueAsNumber: true })}
           />
         )}
         {!props.isReadonly && (
@@ -70,7 +72,7 @@ const FormForTree = (props: FormForTreeProps) => {
             placeholder="Wählen Sie eine Bewässerungsgruppe aus"
             label="Bewässerungsgruppe"
             error={errors.treeClusterId?.message}
-            {...props.register('treeClusterId')}
+            {...register('treeClusterId')}
           />
         )}
         <Select
@@ -84,13 +86,13 @@ const FormForTree = (props: FormForTreeProps) => {
           placeholder="Wählen Sie einen Sensor aus, sofern vorhanden"
           label="Verknüpfter Sensor"
           error={errors.sensorId?.message}
-          {...props.register('sensorId')}
+          {...register('sensorId')}
         />
         <Textarea
           placeholder="Hier ist Platz für Notizen"
           label="Kurze Beschreibung"
           error={errors.description?.message}
-          {...props.register('description')}
+          {...register('description')}
         />
       </div>
 
@@ -99,10 +101,11 @@ const FormForTree = (props: FormForTreeProps) => {
           <p className="block font-semibold text-dark-800 mb-2.5">Standort des Baumes</p>
           <div>
             <p className="block mb-2.5">
-              <strong className="text-dark-800">Breitengrad:</strong> {lat}
+              <strong className="text-dark-800">Breitengrad:</strong> {getValues('latitude')}
             </p>
             <p className="block mb-2.5">
-              <strong className="text-dark-800 font-semibold">Längengrad:</strong> {lng}
+              <strong className="text-dark-800 font-semibold">Längengrad:</strong>{' '}
+              {getValues('longitude')}
             </p>
           </div>
 

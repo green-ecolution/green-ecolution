@@ -1,54 +1,72 @@
 import { DragableMarker } from '@/components/map/MapMarker'
 import MapSelectEntitiesModal from '@/components/map/MapSelectEntitiesModal'
-import { TreeForm } from '@/schema/treeSchema'
-import useFormStore, { FormStore } from '@/store/form/useFormStore'
+import { safeJsonStorageParse } from '@/lib/utils'
+import { TreeForm, treeSchemaBase } from '@/schema/treeSchema'
 import { useMapStore } from '@/store/store'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { LatLng } from 'leaflet'
 import { useCallback, useState } from 'react'
+import { z } from 'zod'
+
+const editTreeParams = z.object({
+  treeLat: z.number(),
+  treeLng: z.number(),
+  treeId: z.number().optional(),
+  formType: z.enum(['create', 'update']),
+})
 
 export const Route = createFileRoute('/_protected/map/tree/edit/')({
   component: EditTree,
+  validateSearch: editTreeParams,
+  loaderDeps: ({ search: { treeLat, treeLng, treeId, formType } }) => ({
+    treeLat,
+    treeLng,
+    treeId,
+    formType,
+  }),
 })
 
 function EditTree() {
   const navigate = useNavigate({ from: Route.fullPath })
-  const { treeId } = Route.useSearch()
-  const { commit, form, type } = useFormStore((state: FormStore<TreeForm>) => ({
-    form: state.form!,
-    commit: state.commit,
-    type: state.type,
-  }))
+  const { treeId, treeLat, treeLng, formType } = Route.useSearch()
   const { zoom } = useMapStore()
-  const [treeLatLng, setTreeLatLng] = useState<LatLng>(new LatLng(form.latitude, form.longitude))
+  const [treeLatLng, setTreeLatLng] = useState<LatLng>(new LatLng(treeLat, treeLng))
 
   const handleNavigateBack = useCallback(() => {
-    switch (type) {
-      case 'new':
+    switch (formType) {
+      case 'create':
         return navigate({
           to: '/trees/new',
-          search: {
-            resetStore: false,
-            lat: treeLatLng.lat,
-            lng: treeLatLng.lng,
-          },
+          search: { lat: treeLatLng.lat, lng: treeLatLng.lng },
         })
-      case 'edit':
-        return navigate({
-          to: `/trees/$treeId/edit`,
-          params: { treeId: treeId?.toString() ?? '' },
-          search: { resetStore: false },
-        })
+      case 'update':
+        if (treeId) {
+          return navigate({
+            to: `/trees/$treeId/edit`,
+            params: { treeId: treeId.toString() },
+          })
+        } else {
+          throw new Error('treeId is undefined in update tree step')
+        }
       default:
         return navigate({
           to: '/map',
           search: { lat: treeLatLng.lat, lng: treeLatLng.lng, zoom },
         })
     }
-  }, [type, navigate, treeLatLng.lat, treeLatLng.lng, treeId, zoom])
+  }, [formType, navigate, treeLatLng.lat, treeLatLng.lng, treeId, zoom])
 
   const handleSave = () => {
-    commit({ ...form, latitude: treeLatLng.lat, longitude: treeLatLng.lng })
+    const { data, success, error } = safeJsonStorageParse<TreeForm>(`${formType}-tree`, {
+      schema: treeSchemaBase,
+    })
+    if (success) {
+      data.latitude = treeLatLng.lat
+      data.longitude = treeLatLng.lng
+      window.sessionStorage.setItem(`${formType}-tree`, JSON.stringify(data))
+    } else {
+      console.error(error)
+    }
     handleNavigateBack().catch((error) => console.error('Navigation failed:', error))
   }
 
