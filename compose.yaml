@@ -93,7 +93,7 @@ services:
       - "127.0.0.1:5432:5432"
 
   pgadmin:
-    image: dpage/pgadmin4:9.3.0
+    image: dpage/pgadmin4:9.5.0
     entrypoint: /bin/sh
     command: >
       -c "echo \"$$SERVERS_JSON\" > /tmp/servers.json &&
