@@ -103,7 +103,7 @@ services:
         {
           "Servers": {
             "1": {
-              "Name": "Mrija-Manager",
+              "Name": "Green Ecolution",
               "Group": "Servers",
               "Port": 5432,
               "Username": "${POSTGRES_USER}",
