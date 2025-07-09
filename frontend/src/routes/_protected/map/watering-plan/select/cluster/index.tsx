@@ -1,8 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { TreeCluster } from '@green-ecolution/backend-client'
 import { useCallback, useMemo, useState } from 'react'
-import useFormStore, { FormStore } from '@/store/form/useFormStore'
-import { WateringPlanForm } from '@/schema/wateringPlanSchema'
+import { wateringPlanSchemaBase } from '@/schema/wateringPlanSchema'
 import MapSelectEntitiesModal from '@/components/map/MapSelectEntitiesModal'
 import WithAllClusters from '@/components/map/marker/WithAllClusters'
 import ShowRoutePreview from '@/components/map/marker/ShowRoutePreview'
@@ -10,72 +9,74 @@ import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { treeClusterQuery, vehicleIdQuery } from '@/api/queries'
 import Notice from '@/components/general/Notice'
 import SelectedCard from '@/components/general/cards/SelectedCard'
+import { z } from 'zod'
+import { safeJsonStorageParse } from '@/lib/utils'
+
+const mapSelectClusterSchema = z.object({
+  transporterId: z.coerce.number().optional(),
+  trailerId: z.coerce.number().optional(),
+  formType: z.enum(['create', 'update']),
+  clusterIds: z.array(z.number().int()),
+  wateringPlanId: z.number().optional(),
+})
 
 export const Route = createFileRoute('/_protected/map/watering-plan/select/cluster/')({
   component: SelectCluster,
+  validateSearch: mapSelectClusterSchema,
   loader: ({ context: { queryClient } }) => {
     return queryClient.prefetchQuery(treeClusterQuery())
   },
 })
 
 function SelectCluster() {
-  const { form, storeClusterIds, set, type } = useFormStore(
-    (state: FormStore<WateringPlanForm>) => ({
-      form: state.form,
-      storeClusterIds: state.form?.treeClusterIds ?? [],
-      set: state.commit,
-      type: state.type,
-    }),
-  )
-  const [clusterIds, setClusterIds] = useState<number[]>(storeClusterIds)
+  const { trailerId, transporterId, formType, clusterIds: searchClusterIds } = Route.useSearch()
+  const [clusterIds, setClusterIds] = useState<number[]>(searchClusterIds)
   const [showError, setShowError] = useState(false)
   const navigate = useNavigate({ from: Route.fullPath })
   const { wateringPlanId } = Route.useSearch()
   const { data: clusters } = useSuspenseQuery(treeClusterQuery())
   const { data: transporter } = useQuery({
-    ...vehicleIdQuery(form?.transporterId.toString() ?? '-1'),
-    enabled: !!form?.transporterId && form?.transporterId !== -1,
+    ...vehicleIdQuery(transporterId?.toString() ?? '-1'),
+    enabled: !!transporterId && transporterId !== -1,
   })
   const { data: trailer } = useQuery({
-    ...vehicleIdQuery(form?.trailerId?.toString() ?? '-1'),
-    enabled: !!form?.trailerId && form?.trailerId !== -1,
+    ...vehicleIdQuery(trailerId?.toString() ?? '-1'),
+    enabled: !!trailerId && trailerId !== -1,
   })
 
   const handleNavigateBack = useCallback(() => {
-    switch (type) {
-      case 'edit':
+    switch (formType) {
+      case 'update':
         return navigate({
           to: `/watering-plans/$wateringPlanId/edit`,
           params: { wateringPlanId: String(wateringPlanId) },
           search: { resetStore: false },
         })
-      case 'new':
-        return navigate({
-          to: '/watering-plans/new',
-          search: { resetStore: false },
-        })
-      default:
+      case 'create':
         return navigate({
           to: '/watering-plans/new',
           search: { resetStore: false },
         })
     }
-  }, [navigate, type, wateringPlanId])
+  }, [navigate, formType, wateringPlanId])
 
   const handleSave = () => {
     if (clusterIds.length === 0) {
       setShowError(true)
       return
     }
+    const { success, data, error } = safeJsonStorageParse(`${formType}-wateringplan`, {
+      schema: wateringPlanSchemaBase,
+    })
 
-    if (form) {
-      set({
-        ...form,
-        treeClusterIds: clusterIds,
-      })
-
-      handleNavigateBack().catch((error) => console.error('Navigation failed:', error))
+    if (success) {
+      data.cluserIds = clusterIds
+      window.sessionStorage.setItem(`${formType}-wateringplan`, JSON.stringify(data))
+    } else {
+      console.error(error)
     }
+
+    handleNavigateBack().catch((error) => console.error('Navigation failed:', error))
   }
 
   const handleDelete = (clusterId: number) => {
@@ -108,7 +109,7 @@ function SelectCluster() {
   const { showNotice, notice } = useMemo(() => {
     const errors = []
 
-    if (!form?.transporterId || form?.transporterId === -1) {
+    if (!transporterId || transporterId === -1) {
       errors.push('Um eine Route generieren zu können, muss ein Fahrzeug ausgewählt werden.')
     }
 
@@ -122,7 +123,7 @@ function SelectCluster() {
       showNotice: errors.length > 0,
       notice: errors,
     }
-  }, [form?.transporterId, disabledClusters])
+  }, [transporterId, disabledClusters])
 
   return (
     <>
@@ -154,11 +155,11 @@ function SelectCluster() {
         disabledClusters={disabledClusters}
       />
 
-      {clusterIds.length > 0 && form?.transporterId && form?.transporterId != -1 && (
+      {clusterIds.length > 0 && transporterId && transporterId != -1 && (
         <ShowRoutePreview
           selectedClustersIds={clusterIds}
-          transporterId={form?.transporterId}
-          trailerId={form.trailerId}
+          transporterId={transporterId}
+          trailerId={trailerId}
         />
       )}
     </>

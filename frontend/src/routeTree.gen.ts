@@ -134,11 +134,12 @@ const ProtectedDashboardRoute = ProtectedDashboardImport.update({
   getParentRoute: () => ProtectedRoute,
 } as any)
 
-const ProtectedWateringPlansRouteRoute = ProtectedWateringPlansRouteImport.update({
-  id: '/watering-plans',
-  path: '/watering-plans',
-  getParentRoute: () => ProtectedRoute,
-} as any)
+const ProtectedWateringPlansRouteRoute =
+  ProtectedWateringPlansRouteImport.update({
+    id: '/watering-plans',
+    path: '/watering-plans',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
 
 const ProtectedVehiclesRouteRoute = ProtectedVehiclesRouteImport.update({
   id: '/vehicles',
@@ -200,11 +201,12 @@ const ProtectedDebugRouteRoute = ProtectedDebugRouteImport.update({
   getParentRoute: () => ProtectedRoute,
 } as any)
 
-const ProtectedWateringPlansIndexRoute = ProtectedWateringPlansIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProtectedWateringPlansRouteRoute,
-} as any)
+const ProtectedWateringPlansIndexRoute =
+  ProtectedWateringPlansIndexImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProtectedWateringPlansRouteRoute,
+  } as any)
 
 const ProtectedVehiclesIndexRoute = ProtectedVehiclesIndexImport.update({
   id: '/',
@@ -271,10 +273,11 @@ const ProtectedTreesFormularRoute = ProtectedTreesFormularImport.update({
   getParentRoute: () => ProtectedTreesRouteRoute,
 } as any)
 
-const ProtectedWateringPlansFormularRouteRoute = ProtectedWateringPlansFormularRouteImport.update({
-  id: '/_formular',
-  getParentRoute: () => ProtectedWateringPlansRouteRoute,
-} as any)
+const ProtectedWateringPlansFormularRouteRoute =
+  ProtectedWateringPlansFormularRouteImport.update({
+    id: '/_formular',
+    getParentRoute: () => ProtectedWateringPlansRouteRoute,
+  } as any)
 
 const ProtectedWateringPlansWateringPlanIdRouteRoute =
   ProtectedWateringPlansWateringPlanIdRouteImport.update({
@@ -283,16 +286,18 @@ const ProtectedWateringPlansWateringPlanIdRouteRoute =
     getParentRoute: () => ProtectedWateringPlansRouteRoute,
   } as any)
 
-const ProtectedVehiclesFormularRouteRoute = ProtectedVehiclesFormularRouteImport.update({
-  id: '/_formular',
-  getParentRoute: () => ProtectedVehiclesRouteRoute,
-} as any)
+const ProtectedVehiclesFormularRouteRoute =
+  ProtectedVehiclesFormularRouteImport.update({
+    id: '/_formular',
+    getParentRoute: () => ProtectedVehiclesRouteRoute,
+  } as any)
 
-const ProtectedVehiclesVehicleIdRouteRoute = ProtectedVehiclesVehicleIdRouteImport.update({
-  id: '/$vehicleId',
-  path: '/$vehicleId',
-  getParentRoute: () => ProtectedVehiclesRouteRoute,
-} as any)
+const ProtectedVehiclesVehicleIdRouteRoute =
+  ProtectedVehiclesVehicleIdRouteImport.update({
+    id: '/$vehicleId',
+    path: '/$vehicleId',
+    getParentRoute: () => ProtectedVehiclesRouteRoute,
+  } as any)
 
 const ProtectedTreesTreeIdRouteRoute = ProtectedTreesTreeIdRouteImport.update({
   id: '/$treeId',
@@ -300,10 +305,11 @@ const ProtectedTreesTreeIdRouteRoute = ProtectedTreesTreeIdRouteImport.update({
   getParentRoute: () => ProtectedTreesRouteRoute,
 } as any)
 
-const ProtectedTreeclusterFormularRouteRoute = ProtectedTreeclusterFormularRouteImport.update({
-  id: '/_formular',
-  getParentRoute: () => ProtectedTreeclusterRouteRoute,
-} as any)
+const ProtectedTreeclusterFormularRouteRoute =
+  ProtectedTreeclusterFormularRouteImport.update({
+    id: '/_formular',
+    getParentRoute: () => ProtectedTreeclusterRouteRoute,
+  } as any)
 
 const ProtectedTreeclusterTreeclusterIdRouteRoute =
   ProtectedTreeclusterTreeclusterIdRouteImport.update({
@@ -312,17 +318,19 @@ const ProtectedTreeclusterTreeclusterIdRouteRoute =
     getParentRoute: () => ProtectedTreeclusterRouteRoute,
   } as any)
 
-const ProtectedSettingsPluginRouteRoute = ProtectedSettingsPluginRouteImport.update({
-  id: '/plugin',
-  path: '/plugin',
-  getParentRoute: () => ProtectedSettingsRouteRoute,
-} as any)
+const ProtectedSettingsPluginRouteRoute =
+  ProtectedSettingsPluginRouteImport.update({
+    id: '/plugin',
+    path: '/plugin',
+    getParentRoute: () => ProtectedSettingsRouteRoute,
+  } as any)
 
-const ProtectedSensorsSensorIdRouteRoute = ProtectedSensorsSensorIdRouteImport.update({
-  id: '/$sensorId',
-  path: '/$sensorId',
-  getParentRoute: () => ProtectedSensorsRouteRoute,
-} as any)
+const ProtectedSensorsSensorIdRouteRoute =
+  ProtectedSensorsSensorIdRouteImport.update({
+    id: '/$sensorId',
+    path: '/$sensorId',
+    getParentRoute: () => ProtectedSensorsRouteRoute,
+  } as any)
 
 const ProtectedWateringPlansWateringPlanIdIndexRoute =
   ProtectedWateringPlansWateringPlanIdIndexImport.update({
@@ -331,11 +339,12 @@ const ProtectedWateringPlansWateringPlanIdIndexRoute =
     getParentRoute: () => ProtectedWateringPlansWateringPlanIdRouteRoute,
   } as any)
 
-const ProtectedVehiclesVehicleIdIndexRoute = ProtectedVehiclesVehicleIdIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProtectedVehiclesVehicleIdRouteRoute,
-} as any)
+const ProtectedVehiclesVehicleIdIndexRoute =
+  ProtectedVehiclesVehicleIdIndexImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProtectedVehiclesVehicleIdRouteRoute,
+  } as any)
 
 const ProtectedTreesTreeIdIndexRoute = ProtectedTreesTreeIdIndexImport.update({
   id: '/',
@@ -350,17 +359,19 @@ const ProtectedTreeclusterTreeclusterIdIndexRoute =
     getParentRoute: () => ProtectedTreeclusterTreeclusterIdRouteRoute,
   } as any)
 
-const ProtectedSettingsPluginIndexRoute = ProtectedSettingsPluginIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProtectedSettingsPluginRouteRoute,
-} as any)
+const ProtectedSettingsPluginIndexRoute =
+  ProtectedSettingsPluginIndexImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProtectedSettingsPluginRouteRoute,
+  } as any)
 
-const ProtectedSensorsSensorIdIndexRoute = ProtectedSensorsSensorIdIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProtectedSensorsSensorIdRouteRoute,
-} as any)
+const ProtectedSensorsSensorIdIndexRoute =
+  ProtectedSensorsSensorIdIndexImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProtectedSensorsSensorIdRouteRoute,
+  } as any)
 
 const ProtectedWateringPlansFormularNewRouteRoute =
   ProtectedWateringPlansFormularNewRouteImport.update({
@@ -376,11 +387,12 @@ const ProtectedWateringPlansFormularWateringPlanIdRouteRoute =
     getParentRoute: () => ProtectedWateringPlansFormularRouteRoute,
   } as any)
 
-const ProtectedVehiclesFormularNewRouteRoute = ProtectedVehiclesFormularNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => ProtectedVehiclesFormularRouteRoute,
-} as any)
+const ProtectedVehiclesFormularNewRouteRoute =
+  ProtectedVehiclesFormularNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => ProtectedVehiclesFormularRouteRoute,
+  } as any)
 
 const ProtectedVehiclesFormularVehicleIdRouteRoute =
   ProtectedVehiclesFormularVehicleIdRouteImport.update({
@@ -389,25 +401,26 @@ const ProtectedVehiclesFormularVehicleIdRouteRoute =
     getParentRoute: () => ProtectedVehiclesFormularRouteRoute,
   } as any)
 
-const ProtectedTreesFormularNewRouteRoute = ProtectedTreesFormularNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => ProtectedTreesFormularRoute,
-} as any)
+const ProtectedTreesFormularNewRouteRoute =
+  ProtectedTreesFormularNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => ProtectedTreesFormularRoute,
+  } as any)
 
-const ProtectedTreesFormularTreeIdRouteRoute = ProtectedTreesFormularTreeIdRouteImport.update({
-  id: '/$treeId',
-  path: '/$treeId',
-  getParentRoute: () => ProtectedTreesFormularRoute,
-} as any)
+const ProtectedTreesFormularTreeIdRouteRoute =
+  ProtectedTreesFormularTreeIdRouteImport.update({
+    id: '/$treeId',
+    path: '/$treeId',
+    getParentRoute: () => ProtectedTreesFormularRoute,
+  } as any)
 
-const ProtectedTreeclusterFormularNewRouteRoute = ProtectedTreeclusterFormularNewRouteImport.update(
-  {
+const ProtectedTreeclusterFormularNewRouteRoute =
+  ProtectedTreeclusterFormularNewRouteImport.update({
     id: '/new',
     path: '/new',
     getParentRoute: () => ProtectedTreeclusterFormularRouteRoute,
-  } as any,
-)
+  } as any)
 
 const ProtectedTreeclusterFormularTreeclusterIdRouteRoute =
   ProtectedTreeclusterFormularTreeclusterIdRouteImport.update({
@@ -442,25 +455,26 @@ const ProtectedWateringPlansFormularNewIndexRoute =
     getParentRoute: () => ProtectedWateringPlansFormularNewRouteRoute,
   } as any)
 
-const ProtectedVehiclesFormularNewIndexRoute = ProtectedVehiclesFormularNewIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProtectedVehiclesFormularNewRouteRoute,
-} as any)
+const ProtectedVehiclesFormularNewIndexRoute =
+  ProtectedVehiclesFormularNewIndexImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProtectedVehiclesFormularNewRouteRoute,
+  } as any)
 
-const ProtectedTreesFormularNewIndexRoute = ProtectedTreesFormularNewIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProtectedTreesFormularNewRouteRoute,
-} as any)
+const ProtectedTreesFormularNewIndexRoute =
+  ProtectedTreesFormularNewIndexImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProtectedTreesFormularNewRouteRoute,
+  } as any)
 
-const ProtectedTreeclusterFormularNewIndexRoute = ProtectedTreeclusterFormularNewIndexImport.update(
-  {
+const ProtectedTreeclusterFormularNewIndexRoute =
+  ProtectedTreeclusterFormularNewIndexImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedTreeclusterFormularNewRouteRoute,
-  } as any,
-)
+  } as any)
 
 const ProtectedSettingsPluginPluginNameIndexRoute =
   ProtectedSettingsPluginPluginNameIndexImport.update({
@@ -485,7 +499,8 @@ const ProtectedWateringPlansFormularWateringPlanIdEditRouteRoute =
   ProtectedWateringPlansFormularWateringPlanIdEditRouteImport.update({
     id: '/edit',
     path: '/edit',
-    getParentRoute: () => ProtectedWateringPlansFormularWateringPlanIdRouteRoute,
+    getParentRoute: () =>
+      ProtectedWateringPlansFormularWateringPlanIdRouteRoute,
   } as any)
 
 const ProtectedVehiclesFormularVehicleIdEditRouteRoute =
@@ -523,17 +538,19 @@ const ProtectedMapTreeclusterSelectTreeRouteRoute =
     getParentRoute: () => ProtectedMapRouteRoute,
   } as any)
 
-const ProtectedMapSensorSelectTreeRouteRoute = ProtectedMapSensorSelectTreeRouteImport.update({
-  id: '/sensor/select/tree',
-  path: '/sensor/select/tree',
-  getParentRoute: () => ProtectedMapRouteRoute,
-} as any)
+const ProtectedMapSensorSelectTreeRouteRoute =
+  ProtectedMapSensorSelectTreeRouteImport.update({
+    id: '/sensor/select/tree',
+    path: '/sensor/select/tree',
+    getParentRoute: () => ProtectedMapRouteRoute,
+  } as any)
 
 const ProtectedWateringPlansFormularWateringPlanIdEditIndexRoute =
   ProtectedWateringPlansFormularWateringPlanIdEditIndexImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => ProtectedWateringPlansFormularWateringPlanIdEditRouteRoute,
+    getParentRoute: () =>
+      ProtectedWateringPlansFormularWateringPlanIdEditRouteRoute,
   } as any)
 
 const ProtectedVehiclesFormularVehicleIdEditIndexRoute =
@@ -554,7 +571,8 @@ const ProtectedTreeclusterFormularTreeclusterIdEditIndexRoute =
   ProtectedTreeclusterFormularTreeclusterIdEditIndexImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => ProtectedTreeclusterFormularTreeclusterIdEditRouteRoute,
+    getParentRoute: () =>
+      ProtectedTreeclusterFormularTreeclusterIdEditRouteRoute,
   } as any)
 
 const ProtectedMapWateringPlanSelectClusterIndexRoute =
@@ -571,24 +589,27 @@ const ProtectedMapTreeclusterSelectTreeIndexRoute =
     getParentRoute: () => ProtectedMapTreeclusterSelectTreeRouteRoute,
   } as any)
 
-const ProtectedMapSensorSelectTreeIndexRoute = ProtectedMapSensorSelectTreeIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProtectedMapSensorSelectTreeRouteRoute,
-} as any)
+const ProtectedMapSensorSelectTreeIndexRoute =
+  ProtectedMapSensorSelectTreeIndexImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProtectedMapSensorSelectTreeRouteRoute,
+  } as any)
 
 const ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteRoute =
   ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteImport.update({
     id: '/status/edit',
     path: '/status/edit',
-    getParentRoute: () => ProtectedWateringPlansFormularWateringPlanIdRouteRoute,
+    getParentRoute: () =>
+      ProtectedWateringPlansFormularWateringPlanIdRouteRoute,
   } as any)
 
 const ProtectedWateringPlansFormularWateringPlanIdStatusEditIndexRoute =
   ProtectedWateringPlansFormularWateringPlanIdStatusEditIndexImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteRoute,
+    getParentRoute: () =>
+      ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteRoute,
   } as any)
 
 // Populate the FileRoutesByPath interface
@@ -1161,45 +1182,50 @@ const ProtectedDebugRouteRouteChildren: ProtectedDebugRouteRouteChildren = {
   ProtectedDebugIndexRoute: ProtectedDebugIndexRoute,
 }
 
-const ProtectedDebugRouteRouteWithChildren = ProtectedDebugRouteRoute._addFileChildren(
-  ProtectedDebugRouteRouteChildren,
-)
+const ProtectedDebugRouteRouteWithChildren =
+  ProtectedDebugRouteRoute._addFileChildren(ProtectedDebugRouteRouteChildren)
 
 interface ProtectedEvaluationsRouteRouteChildren {
   ProtectedEvaluationsIndexRoute: typeof ProtectedEvaluationsIndexRoute
 }
 
-const ProtectedEvaluationsRouteRouteChildren: ProtectedEvaluationsRouteRouteChildren = {
-  ProtectedEvaluationsIndexRoute: ProtectedEvaluationsIndexRoute,
-}
+const ProtectedEvaluationsRouteRouteChildren: ProtectedEvaluationsRouteRouteChildren =
+  {
+    ProtectedEvaluationsIndexRoute: ProtectedEvaluationsIndexRoute,
+  }
 
-const ProtectedEvaluationsRouteRouteWithChildren = ProtectedEvaluationsRouteRoute._addFileChildren(
-  ProtectedEvaluationsRouteRouteChildren,
-)
+const ProtectedEvaluationsRouteRouteWithChildren =
+  ProtectedEvaluationsRouteRoute._addFileChildren(
+    ProtectedEvaluationsRouteRouteChildren,
+  )
 
 interface ProtectedMapTreeEditRouteRouteChildren {
   ProtectedMapTreeEditIndexRoute: typeof ProtectedMapTreeEditIndexRoute
 }
 
-const ProtectedMapTreeEditRouteRouteChildren: ProtectedMapTreeEditRouteRouteChildren = {
-  ProtectedMapTreeEditIndexRoute: ProtectedMapTreeEditIndexRoute,
-}
+const ProtectedMapTreeEditRouteRouteChildren: ProtectedMapTreeEditRouteRouteChildren =
+  {
+    ProtectedMapTreeEditIndexRoute: ProtectedMapTreeEditIndexRoute,
+  }
 
-const ProtectedMapTreeEditRouteRouteWithChildren = ProtectedMapTreeEditRouteRoute._addFileChildren(
-  ProtectedMapTreeEditRouteRouteChildren,
-)
+const ProtectedMapTreeEditRouteRouteWithChildren =
+  ProtectedMapTreeEditRouteRoute._addFileChildren(
+    ProtectedMapTreeEditRouteRouteChildren,
+  )
 
 interface ProtectedMapTreeNewRouteRouteChildren {
   ProtectedMapTreeNewIndexRoute: typeof ProtectedMapTreeNewIndexRoute
 }
 
-const ProtectedMapTreeNewRouteRouteChildren: ProtectedMapTreeNewRouteRouteChildren = {
-  ProtectedMapTreeNewIndexRoute: ProtectedMapTreeNewIndexRoute,
-}
+const ProtectedMapTreeNewRouteRouteChildren: ProtectedMapTreeNewRouteRouteChildren =
+  {
+    ProtectedMapTreeNewIndexRoute: ProtectedMapTreeNewIndexRoute,
+  }
 
-const ProtectedMapTreeNewRouteRouteWithChildren = ProtectedMapTreeNewRouteRoute._addFileChildren(
-  ProtectedMapTreeNewRouteRouteChildren,
-)
+const ProtectedMapTreeNewRouteRouteWithChildren =
+  ProtectedMapTreeNewRouteRoute._addFileChildren(
+    ProtectedMapTreeNewRouteRouteChildren,
+  )
 
 interface ProtectedMapSensorSelectTreeRouteRouteChildren {
   ProtectedMapSensorSelectTreeIndexRoute: typeof ProtectedMapSensorSelectTreeIndexRoute
@@ -1207,7 +1233,8 @@ interface ProtectedMapSensorSelectTreeRouteRouteChildren {
 
 const ProtectedMapSensorSelectTreeRouteRouteChildren: ProtectedMapSensorSelectTreeRouteRouteChildren =
   {
-    ProtectedMapSensorSelectTreeIndexRoute: ProtectedMapSensorSelectTreeIndexRoute,
+    ProtectedMapSensorSelectTreeIndexRoute:
+      ProtectedMapSensorSelectTreeIndexRoute,
   }
 
 const ProtectedMapSensorSelectTreeRouteRouteWithChildren =
@@ -1221,7 +1248,8 @@ interface ProtectedMapTreeclusterSelectTreeRouteRouteChildren {
 
 const ProtectedMapTreeclusterSelectTreeRouteRouteChildren: ProtectedMapTreeclusterSelectTreeRouteRouteChildren =
   {
-    ProtectedMapTreeclusterSelectTreeIndexRoute: ProtectedMapTreeclusterSelectTreeIndexRoute,
+    ProtectedMapTreeclusterSelectTreeIndexRoute:
+      ProtectedMapTreeclusterSelectTreeIndexRoute,
   }
 
 const ProtectedMapTreeclusterSelectTreeRouteRouteWithChildren =
@@ -1257,16 +1285,16 @@ const ProtectedMapRouteRouteChildren: ProtectedMapRouteRouteChildren = {
   ProtectedMapIndexRoute: ProtectedMapIndexRoute,
   ProtectedMapTreeEditRouteRoute: ProtectedMapTreeEditRouteRouteWithChildren,
   ProtectedMapTreeNewRouteRoute: ProtectedMapTreeNewRouteRouteWithChildren,
-  ProtectedMapSensorSelectTreeRouteRoute: ProtectedMapSensorSelectTreeRouteRouteWithChildren,
+  ProtectedMapSensorSelectTreeRouteRoute:
+    ProtectedMapSensorSelectTreeRouteRouteWithChildren,
   ProtectedMapTreeclusterSelectTreeRouteRoute:
     ProtectedMapTreeclusterSelectTreeRouteRouteWithChildren,
   ProtectedMapWateringPlanSelectClusterRouteRoute:
     ProtectedMapWateringPlanSelectClusterRouteRouteWithChildren,
 }
 
-const ProtectedMapRouteRouteWithChildren = ProtectedMapRouteRoute._addFileChildren(
-  ProtectedMapRouteRouteChildren,
-)
+const ProtectedMapRouteRouteWithChildren =
+  ProtectedMapRouteRoute._addFileChildren(ProtectedMapRouteRouteChildren)
 
 interface ProtectedProfileRouteRouteChildren {
   ProtectedProfileIndexRoute: typeof ProtectedProfileIndexRoute
@@ -1276,20 +1304,24 @@ const ProtectedProfileRouteRouteChildren: ProtectedProfileRouteRouteChildren = {
   ProtectedProfileIndexRoute: ProtectedProfileIndexRoute,
 }
 
-const ProtectedProfileRouteRouteWithChildren = ProtectedProfileRouteRoute._addFileChildren(
-  ProtectedProfileRouteRouteChildren,
-)
+const ProtectedProfileRouteRouteWithChildren =
+  ProtectedProfileRouteRoute._addFileChildren(
+    ProtectedProfileRouteRouteChildren,
+  )
 
 interface ProtectedSensorsSensorIdRouteRouteChildren {
   ProtectedSensorsSensorIdIndexRoute: typeof ProtectedSensorsSensorIdIndexRoute
 }
 
-const ProtectedSensorsSensorIdRouteRouteChildren: ProtectedSensorsSensorIdRouteRouteChildren = {
-  ProtectedSensorsSensorIdIndexRoute: ProtectedSensorsSensorIdIndexRoute,
-}
+const ProtectedSensorsSensorIdRouteRouteChildren: ProtectedSensorsSensorIdRouteRouteChildren =
+  {
+    ProtectedSensorsSensorIdIndexRoute: ProtectedSensorsSensorIdIndexRoute,
+  }
 
 const ProtectedSensorsSensorIdRouteRouteWithChildren =
-  ProtectedSensorsSensorIdRouteRoute._addFileChildren(ProtectedSensorsSensorIdRouteRouteChildren)
+  ProtectedSensorsSensorIdRouteRoute._addFileChildren(
+    ProtectedSensorsSensorIdRouteRouteChildren,
+  )
 
 interface ProtectedSensorsRouteRouteChildren {
   ProtectedSensorsSensorIdRouteRoute: typeof ProtectedSensorsSensorIdRouteRouteWithChildren
@@ -1297,13 +1329,15 @@ interface ProtectedSensorsRouteRouteChildren {
 }
 
 const ProtectedSensorsRouteRouteChildren: ProtectedSensorsRouteRouteChildren = {
-  ProtectedSensorsSensorIdRouteRoute: ProtectedSensorsSensorIdRouteRouteWithChildren,
+  ProtectedSensorsSensorIdRouteRoute:
+    ProtectedSensorsSensorIdRouteRouteWithChildren,
   ProtectedSensorsIndexRoute: ProtectedSensorsIndexRoute,
 }
 
-const ProtectedSensorsRouteRouteWithChildren = ProtectedSensorsRouteRoute._addFileChildren(
-  ProtectedSensorsRouteRouteChildren,
-)
+const ProtectedSensorsRouteRouteWithChildren =
+  ProtectedSensorsRouteRoute._addFileChildren(
+    ProtectedSensorsRouteRouteChildren,
+  )
 
 interface ProtectedSettingsPluginPluginNameRouteRouteChildren {
   ProtectedSettingsPluginPluginNameIndexRoute: typeof ProtectedSettingsPluginPluginNameIndexRoute
@@ -1311,7 +1345,8 @@ interface ProtectedSettingsPluginPluginNameRouteRouteChildren {
 
 const ProtectedSettingsPluginPluginNameRouteRouteChildren: ProtectedSettingsPluginPluginNameRouteRouteChildren =
   {
-    ProtectedSettingsPluginPluginNameIndexRoute: ProtectedSettingsPluginPluginNameIndexRoute,
+    ProtectedSettingsPluginPluginNameIndexRoute:
+      ProtectedSettingsPluginPluginNameIndexRoute,
   }
 
 const ProtectedSettingsPluginPluginNameRouteRouteWithChildren =
@@ -1324,28 +1359,34 @@ interface ProtectedSettingsPluginRouteRouteChildren {
   ProtectedSettingsPluginIndexRoute: typeof ProtectedSettingsPluginIndexRoute
 }
 
-const ProtectedSettingsPluginRouteRouteChildren: ProtectedSettingsPluginRouteRouteChildren = {
-  ProtectedSettingsPluginPluginNameRouteRoute:
-    ProtectedSettingsPluginPluginNameRouteRouteWithChildren,
-  ProtectedSettingsPluginIndexRoute: ProtectedSettingsPluginIndexRoute,
-}
+const ProtectedSettingsPluginRouteRouteChildren: ProtectedSettingsPluginRouteRouteChildren =
+  {
+    ProtectedSettingsPluginPluginNameRouteRoute:
+      ProtectedSettingsPluginPluginNameRouteRouteWithChildren,
+    ProtectedSettingsPluginIndexRoute: ProtectedSettingsPluginIndexRoute,
+  }
 
 const ProtectedSettingsPluginRouteRouteWithChildren =
-  ProtectedSettingsPluginRouteRoute._addFileChildren(ProtectedSettingsPluginRouteRouteChildren)
+  ProtectedSettingsPluginRouteRoute._addFileChildren(
+    ProtectedSettingsPluginRouteRouteChildren,
+  )
 
 interface ProtectedSettingsRouteRouteChildren {
   ProtectedSettingsPluginRouteRoute: typeof ProtectedSettingsPluginRouteRouteWithChildren
   ProtectedSettingsIndexRoute: typeof ProtectedSettingsIndexRoute
 }
 
-const ProtectedSettingsRouteRouteChildren: ProtectedSettingsRouteRouteChildren = {
-  ProtectedSettingsPluginRouteRoute: ProtectedSettingsPluginRouteRouteWithChildren,
-  ProtectedSettingsIndexRoute: ProtectedSettingsIndexRoute,
-}
+const ProtectedSettingsRouteRouteChildren: ProtectedSettingsRouteRouteChildren =
+  {
+    ProtectedSettingsPluginRouteRoute:
+      ProtectedSettingsPluginRouteRouteWithChildren,
+    ProtectedSettingsIndexRoute: ProtectedSettingsIndexRoute,
+  }
 
-const ProtectedSettingsRouteRouteWithChildren = ProtectedSettingsRouteRoute._addFileChildren(
-  ProtectedSettingsRouteRouteChildren,
-)
+const ProtectedSettingsRouteRouteWithChildren =
+  ProtectedSettingsRouteRoute._addFileChildren(
+    ProtectedSettingsRouteRouteChildren,
+  )
 
 interface ProtectedTeamRouteRouteChildren {
   ProtectedTeamIndexRoute: typeof ProtectedTeamIndexRoute
@@ -1355,9 +1396,8 @@ const ProtectedTeamRouteRouteChildren: ProtectedTeamRouteRouteChildren = {
   ProtectedTeamIndexRoute: ProtectedTeamIndexRoute,
 }
 
-const ProtectedTeamRouteRouteWithChildren = ProtectedTeamRouteRoute._addFileChildren(
-  ProtectedTeamRouteRouteChildren,
-)
+const ProtectedTeamRouteRouteWithChildren =
+  ProtectedTeamRouteRoute._addFileChildren(ProtectedTeamRouteRouteChildren)
 
 interface ProtectedTreeclusterTreeclusterIdRouteRouteChildren {
   ProtectedTreeclusterTreeclusterIdIndexRoute: typeof ProtectedTreeclusterTreeclusterIdIndexRoute
@@ -1365,7 +1405,8 @@ interface ProtectedTreeclusterTreeclusterIdRouteRouteChildren {
 
 const ProtectedTreeclusterTreeclusterIdRouteRouteChildren: ProtectedTreeclusterTreeclusterIdRouteRouteChildren =
   {
-    ProtectedTreeclusterTreeclusterIdIndexRoute: ProtectedTreeclusterTreeclusterIdIndexRoute,
+    ProtectedTreeclusterTreeclusterIdIndexRoute:
+      ProtectedTreeclusterTreeclusterIdIndexRoute,
   }
 
 const ProtectedTreeclusterTreeclusterIdRouteRouteWithChildren =
@@ -1409,7 +1450,8 @@ interface ProtectedTreeclusterFormularNewRouteRouteChildren {
 
 const ProtectedTreeclusterFormularNewRouteRouteChildren: ProtectedTreeclusterFormularNewRouteRouteChildren =
   {
-    ProtectedTreeclusterFormularNewIndexRoute: ProtectedTreeclusterFormularNewIndexRoute,
+    ProtectedTreeclusterFormularNewIndexRoute:
+      ProtectedTreeclusterFormularNewIndexRoute,
   }
 
 const ProtectedTreeclusterFormularNewRouteRouteWithChildren =
@@ -1441,28 +1483,33 @@ interface ProtectedTreeclusterRouteRouteChildren {
   ProtectedTreeclusterIndexRoute: typeof ProtectedTreeclusterIndexRoute
 }
 
-const ProtectedTreeclusterRouteRouteChildren: ProtectedTreeclusterRouteRouteChildren = {
-  ProtectedTreeclusterTreeclusterIdRouteRoute:
-    ProtectedTreeclusterTreeclusterIdRouteRouteWithChildren,
-  ProtectedTreeclusterFormularRouteRoute: ProtectedTreeclusterFormularRouteRouteWithChildren,
-  ProtectedTreeclusterIndexRoute: ProtectedTreeclusterIndexRoute,
-}
+const ProtectedTreeclusterRouteRouteChildren: ProtectedTreeclusterRouteRouteChildren =
+  {
+    ProtectedTreeclusterTreeclusterIdRouteRoute:
+      ProtectedTreeclusterTreeclusterIdRouteRouteWithChildren,
+    ProtectedTreeclusterFormularRouteRoute:
+      ProtectedTreeclusterFormularRouteRouteWithChildren,
+    ProtectedTreeclusterIndexRoute: ProtectedTreeclusterIndexRoute,
+  }
 
-const ProtectedTreeclusterRouteRouteWithChildren = ProtectedTreeclusterRouteRoute._addFileChildren(
-  ProtectedTreeclusterRouteRouteChildren,
-)
+const ProtectedTreeclusterRouteRouteWithChildren =
+  ProtectedTreeclusterRouteRoute._addFileChildren(
+    ProtectedTreeclusterRouteRouteChildren,
+  )
 
 interface ProtectedTreesTreeIdRouteRouteChildren {
   ProtectedTreesTreeIdIndexRoute: typeof ProtectedTreesTreeIdIndexRoute
 }
 
-const ProtectedTreesTreeIdRouteRouteChildren: ProtectedTreesTreeIdRouteRouteChildren = {
-  ProtectedTreesTreeIdIndexRoute: ProtectedTreesTreeIdIndexRoute,
-}
+const ProtectedTreesTreeIdRouteRouteChildren: ProtectedTreesTreeIdRouteRouteChildren =
+  {
+    ProtectedTreesTreeIdIndexRoute: ProtectedTreesTreeIdIndexRoute,
+  }
 
-const ProtectedTreesTreeIdRouteRouteWithChildren = ProtectedTreesTreeIdRouteRoute._addFileChildren(
-  ProtectedTreesTreeIdRouteRouteChildren,
-)
+const ProtectedTreesTreeIdRouteRouteWithChildren =
+  ProtectedTreesTreeIdRouteRoute._addFileChildren(
+    ProtectedTreesTreeIdRouteRouteChildren,
+  )
 
 interface ProtectedTreesFormularTreeIdEditRouteRouteChildren {
   ProtectedTreesFormularTreeIdEditIndexRoute: typeof ProtectedTreesFormularTreeIdEditIndexRoute
@@ -1470,7 +1517,8 @@ interface ProtectedTreesFormularTreeIdEditRouteRouteChildren {
 
 const ProtectedTreesFormularTreeIdEditRouteRouteChildren: ProtectedTreesFormularTreeIdEditRouteRouteChildren =
   {
-    ProtectedTreesFormularTreeIdEditIndexRoute: ProtectedTreesFormularTreeIdEditIndexRoute,
+    ProtectedTreesFormularTreeIdEditIndexRoute:
+      ProtectedTreesFormularTreeIdEditIndexRoute,
   }
 
 const ProtectedTreesFormularTreeIdEditRouteRouteWithChildren =
@@ -1497,26 +1545,33 @@ interface ProtectedTreesFormularNewRouteRouteChildren {
   ProtectedTreesFormularNewIndexRoute: typeof ProtectedTreesFormularNewIndexRoute
 }
 
-const ProtectedTreesFormularNewRouteRouteChildren: ProtectedTreesFormularNewRouteRouteChildren = {
-  ProtectedTreesFormularNewIndexRoute: ProtectedTreesFormularNewIndexRoute,
-}
+const ProtectedTreesFormularNewRouteRouteChildren: ProtectedTreesFormularNewRouteRouteChildren =
+  {
+    ProtectedTreesFormularNewIndexRoute: ProtectedTreesFormularNewIndexRoute,
+  }
 
 const ProtectedTreesFormularNewRouteRouteWithChildren =
-  ProtectedTreesFormularNewRouteRoute._addFileChildren(ProtectedTreesFormularNewRouteRouteChildren)
+  ProtectedTreesFormularNewRouteRoute._addFileChildren(
+    ProtectedTreesFormularNewRouteRouteChildren,
+  )
 
 interface ProtectedTreesFormularRouteChildren {
   ProtectedTreesFormularTreeIdRouteRoute: typeof ProtectedTreesFormularTreeIdRouteRouteWithChildren
   ProtectedTreesFormularNewRouteRoute: typeof ProtectedTreesFormularNewRouteRouteWithChildren
 }
 
-const ProtectedTreesFormularRouteChildren: ProtectedTreesFormularRouteChildren = {
-  ProtectedTreesFormularTreeIdRouteRoute: ProtectedTreesFormularTreeIdRouteRouteWithChildren,
-  ProtectedTreesFormularNewRouteRoute: ProtectedTreesFormularNewRouteRouteWithChildren,
-}
+const ProtectedTreesFormularRouteChildren: ProtectedTreesFormularRouteChildren =
+  {
+    ProtectedTreesFormularTreeIdRouteRoute:
+      ProtectedTreesFormularTreeIdRouteRouteWithChildren,
+    ProtectedTreesFormularNewRouteRoute:
+      ProtectedTreesFormularNewRouteRouteWithChildren,
+  }
 
-const ProtectedTreesFormularRouteWithChildren = ProtectedTreesFormularRoute._addFileChildren(
-  ProtectedTreesFormularRouteChildren,
-)
+const ProtectedTreesFormularRouteWithChildren =
+  ProtectedTreesFormularRoute._addFileChildren(
+    ProtectedTreesFormularRouteChildren,
+  )
 
 interface ProtectedTreesRouteRouteChildren {
   ProtectedTreesTreeIdRouteRoute: typeof ProtectedTreesTreeIdRouteRouteWithChildren
@@ -1530,17 +1585,17 @@ const ProtectedTreesRouteRouteChildren: ProtectedTreesRouteRouteChildren = {
   ProtectedTreesIndexRoute: ProtectedTreesIndexRoute,
 }
 
-const ProtectedTreesRouteRouteWithChildren = ProtectedTreesRouteRoute._addFileChildren(
-  ProtectedTreesRouteRouteChildren,
-)
+const ProtectedTreesRouteRouteWithChildren =
+  ProtectedTreesRouteRoute._addFileChildren(ProtectedTreesRouteRouteChildren)
 
 interface ProtectedVehiclesVehicleIdRouteRouteChildren {
   ProtectedVehiclesVehicleIdIndexRoute: typeof ProtectedVehiclesVehicleIdIndexRoute
 }
 
-const ProtectedVehiclesVehicleIdRouteRouteChildren: ProtectedVehiclesVehicleIdRouteRouteChildren = {
-  ProtectedVehiclesVehicleIdIndexRoute: ProtectedVehiclesVehicleIdIndexRoute,
-}
+const ProtectedVehiclesVehicleIdRouteRouteChildren: ProtectedVehiclesVehicleIdRouteRouteChildren =
+  {
+    ProtectedVehiclesVehicleIdIndexRoute: ProtectedVehiclesVehicleIdIndexRoute,
+  }
 
 const ProtectedVehiclesVehicleIdRouteRouteWithChildren =
   ProtectedVehiclesVehicleIdRouteRoute._addFileChildren(
@@ -1583,7 +1638,8 @@ interface ProtectedVehiclesFormularNewRouteRouteChildren {
 
 const ProtectedVehiclesFormularNewRouteRouteChildren: ProtectedVehiclesFormularNewRouteRouteChildren =
   {
-    ProtectedVehiclesFormularNewIndexRoute: ProtectedVehiclesFormularNewIndexRoute,
+    ProtectedVehiclesFormularNewIndexRoute:
+      ProtectedVehiclesFormularNewIndexRoute,
   }
 
 const ProtectedVehiclesFormularNewRouteRouteWithChildren =
@@ -1596,14 +1652,18 @@ interface ProtectedVehiclesFormularRouteRouteChildren {
   ProtectedVehiclesFormularNewRouteRoute: typeof ProtectedVehiclesFormularNewRouteRouteWithChildren
 }
 
-const ProtectedVehiclesFormularRouteRouteChildren: ProtectedVehiclesFormularRouteRouteChildren = {
-  ProtectedVehiclesFormularVehicleIdRouteRoute:
-    ProtectedVehiclesFormularVehicleIdRouteRouteWithChildren,
-  ProtectedVehiclesFormularNewRouteRoute: ProtectedVehiclesFormularNewRouteRouteWithChildren,
-}
+const ProtectedVehiclesFormularRouteRouteChildren: ProtectedVehiclesFormularRouteRouteChildren =
+  {
+    ProtectedVehiclesFormularVehicleIdRouteRoute:
+      ProtectedVehiclesFormularVehicleIdRouteRouteWithChildren,
+    ProtectedVehiclesFormularNewRouteRoute:
+      ProtectedVehiclesFormularNewRouteRouteWithChildren,
+  }
 
 const ProtectedVehiclesFormularRouteRouteWithChildren =
-  ProtectedVehiclesFormularRouteRoute._addFileChildren(ProtectedVehiclesFormularRouteRouteChildren)
+  ProtectedVehiclesFormularRouteRoute._addFileChildren(
+    ProtectedVehiclesFormularRouteRouteChildren,
+  )
 
 interface ProtectedVehiclesRouteRouteChildren {
   ProtectedVehiclesVehicleIdRouteRoute: typeof ProtectedVehiclesVehicleIdRouteRouteWithChildren
@@ -1611,15 +1671,19 @@ interface ProtectedVehiclesRouteRouteChildren {
   ProtectedVehiclesIndexRoute: typeof ProtectedVehiclesIndexRoute
 }
 
-const ProtectedVehiclesRouteRouteChildren: ProtectedVehiclesRouteRouteChildren = {
-  ProtectedVehiclesVehicleIdRouteRoute: ProtectedVehiclesVehicleIdRouteRouteWithChildren,
-  ProtectedVehiclesFormularRouteRoute: ProtectedVehiclesFormularRouteRouteWithChildren,
-  ProtectedVehiclesIndexRoute: ProtectedVehiclesIndexRoute,
-}
+const ProtectedVehiclesRouteRouteChildren: ProtectedVehiclesRouteRouteChildren =
+  {
+    ProtectedVehiclesVehicleIdRouteRoute:
+      ProtectedVehiclesVehicleIdRouteRouteWithChildren,
+    ProtectedVehiclesFormularRouteRoute:
+      ProtectedVehiclesFormularRouteRouteWithChildren,
+    ProtectedVehiclesIndexRoute: ProtectedVehiclesIndexRoute,
+  }
 
-const ProtectedVehiclesRouteRouteWithChildren = ProtectedVehiclesRouteRoute._addFileChildren(
-  ProtectedVehiclesRouteRouteChildren,
-)
+const ProtectedVehiclesRouteRouteWithChildren =
+  ProtectedVehiclesRouteRoute._addFileChildren(
+    ProtectedVehiclesRouteRouteChildren,
+  )
 
 interface ProtectedWateringPlansWateringPlanIdRouteRouteChildren {
   ProtectedWateringPlansWateringPlanIdIndexRoute: typeof ProtectedWateringPlansWateringPlanIdIndexRoute
@@ -1627,7 +1691,8 @@ interface ProtectedWateringPlansWateringPlanIdRouteRouteChildren {
 
 const ProtectedWateringPlansWateringPlanIdRouteRouteChildren: ProtectedWateringPlansWateringPlanIdRouteRouteChildren =
   {
-    ProtectedWateringPlansWateringPlanIdIndexRoute: ProtectedWateringPlansWateringPlanIdIndexRoute,
+    ProtectedWateringPlansWateringPlanIdIndexRoute:
+      ProtectedWateringPlansWateringPlanIdIndexRoute,
   }
 
 const ProtectedWateringPlansWateringPlanIdRouteRouteWithChildren =
@@ -1689,7 +1754,8 @@ interface ProtectedWateringPlansFormularNewRouteRouteChildren {
 
 const ProtectedWateringPlansFormularNewRouteRouteChildren: ProtectedWateringPlansFormularNewRouteRouteChildren =
   {
-    ProtectedWateringPlansFormularNewIndexRoute: ProtectedWateringPlansFormularNewIndexRoute,
+    ProtectedWateringPlansFormularNewIndexRoute:
+      ProtectedWateringPlansFormularNewIndexRoute,
   }
 
 const ProtectedWateringPlansFormularNewRouteRouteWithChildren =
@@ -1721,15 +1787,19 @@ interface ProtectedWateringPlansRouteRouteChildren {
   ProtectedWateringPlansIndexRoute: typeof ProtectedWateringPlansIndexRoute
 }
 
-const ProtectedWateringPlansRouteRouteChildren: ProtectedWateringPlansRouteRouteChildren = {
-  ProtectedWateringPlansWateringPlanIdRouteRoute:
-    ProtectedWateringPlansWateringPlanIdRouteRouteWithChildren,
-  ProtectedWateringPlansFormularRouteRoute: ProtectedWateringPlansFormularRouteRouteWithChildren,
-  ProtectedWateringPlansIndexRoute: ProtectedWateringPlansIndexRoute,
-}
+const ProtectedWateringPlansRouteRouteChildren: ProtectedWateringPlansRouteRouteChildren =
+  {
+    ProtectedWateringPlansWateringPlanIdRouteRoute:
+      ProtectedWateringPlansWateringPlanIdRouteRouteWithChildren,
+    ProtectedWateringPlansFormularRouteRoute:
+      ProtectedWateringPlansFormularRouteRouteWithChildren,
+    ProtectedWateringPlansIndexRoute: ProtectedWateringPlansIndexRoute,
+  }
 
 const ProtectedWateringPlansRouteRouteWithChildren =
-  ProtectedWateringPlansRouteRoute._addFileChildren(ProtectedWateringPlansRouteRouteChildren)
+  ProtectedWateringPlansRouteRoute._addFileChildren(
+    ProtectedWateringPlansRouteRouteChildren,
+  )
 
 interface ProtectedRouteChildren {
   ProtectedDebugRouteRoute: typeof ProtectedDebugRouteRouteWithChildren
@@ -1758,12 +1828,15 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedTreeclusterRouteRoute: ProtectedTreeclusterRouteRouteWithChildren,
   ProtectedTreesRouteRoute: ProtectedTreesRouteRouteWithChildren,
   ProtectedVehiclesRouteRoute: ProtectedVehiclesRouteRouteWithChildren,
-  ProtectedWateringPlansRouteRoute: ProtectedWateringPlansRouteRouteWithChildren,
+  ProtectedWateringPlansRouteRoute:
+    ProtectedWateringPlansRouteRouteWithChildren,
   ProtectedDashboardRoute: ProtectedDashboardRoute,
   ProtectedInfoRoute: ProtectedInfoRoute,
 }
 
-const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(ProtectedRouteChildren)
+const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
+  ProtectedRouteChildren,
+)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute

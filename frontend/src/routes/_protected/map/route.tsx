@@ -14,7 +14,6 @@ const mapSearchParamsSchema = z.object({
   lng: z.number().catch(useMapStore.getState().map.center[1]),
   clusterId: z.number().optional(),
   sensorId: z.string().optional(),
-  wateringPlanId: z.number().optional(),
   zoom: z
     .number()
     .int()

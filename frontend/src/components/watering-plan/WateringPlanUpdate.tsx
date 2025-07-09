@@ -14,30 +14,35 @@ import { Suspense } from 'react'
 import DeleteSection from '../treecluster/DeleteSection'
 import { wateringPlanApi } from '@/api/backendApi'
 import { useWaterinPlanForm } from '@/hooks/form/useWateringPlanForm'
-import { useFormSync } from '@/hooks/form/useFormSync'
-import { WateringPlanForm, WateringPlanSchema } from '@/schema/wateringPlanSchema'
-import { SubmitHandler } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { WateringPlanForm, wateringPlanSchemaBase } from '@/schema/wateringPlanSchema'
+import { FormProvider, SubmitHandler } from 'react-hook-form'
+import { safeJsonStorageParse } from '@/lib/utils'
 
 interface WateringPlanUpdateProps {
   wateringPlanId: string
 }
 
 const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
-  const { mutate, isError, error } = useWaterinPlanForm('update', wateringPlanId)
+  const { data: formState } = safeJsonStorageParse('update-wateringplan', {
+    schema: wateringPlanSchemaBase,
+  })
   const { initForm, loadedData } = useInitFormQuery(
     wateringPlanIdQuery(wateringPlanId),
-    (data) => ({
-      date: new Date(data.date), //.toISOString().substring(0, 10),
-      description: data.description,
-      transporterId: data.transporter.id,
-      trailerId: data.trailer?.id,
-      treeClusterIds: data.treeclusters.map((cluster) => cluster.id),
-      status: data.status,
-      cancellationNote: data.cancellationNote,
-      userIds: data.userIds,
-    }),
+    (data) =>
+      formState ?? {
+        date: new Date(data.date),
+        description: data.description,
+        transporterId: data.transporter.id,
+        trailerId: data.trailer?.id,
+        cluserIds: data.treeclusters.map((cluster) => cluster.id),
+        status: data.status,
+        driverIds: data.userIds,
+      },
   )
+  const { mutate, isError, error, form } = useWaterinPlanForm('update', {
+    wateringPlanId,
+    initForm,
+  })
 
   const navigate = useNavigate({ from: Route.fullPath })
   const date = loadedData?.date ? format(new Date(loadedData?.date), 'dd.MM.yyyy') : 'Keine Angabe'
@@ -46,16 +51,14 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
   const { data: trailers } = useSuspenseQuery(vehicleQuery({ type: 'trailer' }))
   const { data: transporters } = useSuspenseQuery(vehicleQuery({ type: 'transporter' }))
 
-  const { register, handleSubmit, formState } = useFormSync<WateringPlanForm>(
-    initForm,
-    zodResolver(WateringPlanSchema('update')),
-  )
-
   const onSubmit: SubmitHandler<WateringPlanForm> = (data) => {
     mutate({
       ...data,
       date: data.date.toISOString(),
       trailerId: data.trailerId && data.trailerId !== -1 ? data.trailerId : undefined,
+      treeClusterIds: data.cluserIds,
+      userIds: data.driverIds,
+      cancellationNote: '', // TODO: why cancel note in update ???
     })
   }
 
@@ -73,6 +76,10 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         lng: mapPosition.lng,
         zoom: mapPosition.zoom,
         wateringPlanId: Number(wateringPlanId),
+        trailerId: form.getValues('trailerId'),
+        transporterId: form.getValues('transporterId'),
+        clusterIds: form.getValues('cluserIds'),
+        formType: 'update',
       },
     }).catch((error) => console.error('Navigation failed:', error))
   }
@@ -118,18 +125,17 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
       </article>
 
       <section className="mt-10">
-        <FormForWateringPlan
-          register={register}
-          handleSubmit={handleSubmit}
-          displayError={isError}
-          formState={formState}
-          onSubmit={onSubmit}
-          users={users.data}
-          trailers={trailers.data}
-          transporters={transporters.data}
-          onAddCluster={navigateToClusterSelect}
-          errorMessage={error?.message}
-        />
+        <FormProvider {...form}>
+          <FormForWateringPlan
+            displayError={isError}
+            onSubmit={onSubmit}
+            users={users.data}
+            trailers={trailers.data}
+            transporters={transporters.data}
+            onAddCluster={navigateToClusterSelect}
+            errorMessage={error?.message}
+          />
+        </FormProvider>
       </section>
 
       <Suspense fallback={<LoadingInfo label="Der Einsatzplan wird gelöscht" />}>

@@ -1,27 +1,37 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { WateringPlanStatus } from '@/api/backendApi'
-import { SubmitHandler } from 'react-hook-form'
+import { DefaultValues, FormProvider, SubmitHandler } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import useFormStore from '@/store/form/useFormStore'
-import { useFormSync } from '@/hooks/form/useFormSync'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useInitForm } from '@/hooks/form/useInitForm'
 import BackLink from '@/components/general/links/BackLink'
 import { userRoleQuery, vehicleQuery } from '@/api/queries'
-import { WateringPlanForm, WateringPlanSchema } from '@/schema/wateringPlanSchema'
+import { WateringPlanForm, wateringPlanSchemaBase } from '@/schema/wateringPlanSchema'
 import FormForWateringPlan from '@/components/general/form/FormForWateringPlan'
 import useStore from '@/store/store'
 import { useWaterinPlanForm } from '@/hooks/form/useWateringPlanForm'
+import { safeJsonStorageParse } from '@/lib/utils'
 
 export const Route = createFileRoute('/_protected/watering-plans/_formular/new/')({
-  beforeLoad: () => {
-    useFormStore.getState().setType('new')
+  loader: () => {
+    const { data } = safeJsonStorageParse('create-wateringplan', { schema: wateringPlanSchemaBase })
+    return {
+      formState: data,
+    }
   },
   component: NewWateringPlan,
 })
 
+const defaultForm: DefaultValues<WateringPlanForm> = {
+  date: new Date(),
+  description: '',
+  transporterId: -1,
+  trailerId: undefined,
+  cluserIds: [],
+  status: WateringPlanStatus.WateringPlanStatusPlanned,
+  driverIds: [],
+}
+
 function NewWateringPlan() {
-  const { mutate, isError, error } = useWaterinPlanForm('create')
+  const { formState } = Route.useLoaderData()
   const navigate = useNavigate({ from: Route.fullPath })
   const { data: users } = useSuspenseQuery(userRoleQuery('tbz'))
   const { data: trailers } = useSuspenseQuery(
@@ -34,17 +44,10 @@ function NewWateringPlan() {
       type: 'transporter',
     }),
   )
-  const { initForm } = useInitForm<WateringPlanForm>({
-    date: new Date(), // .toISOString().substring(0, 10),
-    description: '',
-    transporterId: -1,
-    trailerId: undefined,
-    treeClusterIds: [],
-    status: WateringPlanStatus.WateringPlanStatusPlanned,
-    cancellationNote: '',
-    userIds: [],
-    evaluation: [],
+  const { mutate, isError, error, form } = useWaterinPlanForm('create', {
+    initForm: formState ?? defaultForm,
   })
+  const { getValues } = form
 
   const mapPosition = useStore((state) => ({
     lat: state.map.center[0],
@@ -52,16 +55,13 @@ function NewWateringPlan() {
     zoom: state.map.zoom,
   }))
 
-  const { register, handleSubmit, formState } = useFormSync<WateringPlanForm>(
-    initForm,
-    zodResolver(WateringPlanSchema('create')),
-  )
-
   const onSubmit: SubmitHandler<WateringPlanForm> = (data) => {
     mutate({
       ...data,
       date: data.date.toISOString(),
       trailerId: data.trailerId && data.trailerId !== -1 ? data.trailerId : undefined,
+      userIds: data.driverIds,
+      treeClusterIds: data.cluserIds,
     })
   }
 
@@ -72,6 +72,10 @@ function NewWateringPlan() {
         lat: mapPosition.lat,
         lng: mapPosition.lng,
         zoom: mapPosition.zoom,
+        transporterId: getValues('transporterId'),
+        trailerId: getValues('trailerId'),
+        formType: 'create',
+        clusterIds: form.getValues('cluserIds'),
       },
     }).catch((error) => console.error('Navigation failed:', error))
   }
@@ -94,18 +98,17 @@ function NewWateringPlan() {
       </article>
 
       <section className="mt-10">
-        <FormForWateringPlan
-          register={register}
-          handleSubmit={handleSubmit}
-          displayError={isError}
-          formState={formState}
-          onSubmit={onSubmit}
-          trailers={trailers.data}
-          transporters={transporters.data}
-          users={users.data}
-          onAddCluster={navigateToClusterSelect}
-          errorMessage={error?.message}
-        />
+        <FormProvider {...form}>
+          <FormForWateringPlan
+            displayError={isError}
+            onSubmit={onSubmit}
+            trailers={trailers.data}
+            transporters={transporters.data}
+            users={users.data}
+            onAddCluster={navigateToClusterSelect}
+            errorMessage={error?.message}
+          />
+        </FormProvider>
       </section>
     </div>
   )

@@ -8,28 +8,44 @@ import {
   WateringPlanUpdate,
 } from '@green-ecolution/backend-client'
 import { wateringPlanApi } from '@/api/backendApi'
-import useFormStore, { FormStore } from '@/store/form/useFormStore'
-import { WateringPlanForm } from '@/schema/wateringPlanSchema'
+import { WateringPlanForm, wateringPlanSchema } from '@/schema/wateringPlanSchema'
+import { DefaultValues, useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import useFormPersist from './usePersistForm'
 
-export const useWaterinPlanForm = (mutationType: 'create' | 'update', wateringPlanId?: string) => {
+type MutationOption = 'create' | 'update'
+type MutationType<T> = T extends 'create'
+  ? WateringPlanCreate
+  : T extends 'update'
+    ? WateringPlanUpdate
+    : never
+
+export const useWaterinPlanForm = <T extends MutationOption>(
+  mutationType: T,
+  opts: { wateringPlanId?: string; initForm?: DefaultValues<WateringPlanForm> },
+) => {
   const showToast = useToast()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
-  const formStore = useFormStore((state: FormStore<WateringPlanForm>) => ({
-    form: state.form,
-    reset: state.reset,
-  }))
+  const form = useForm<WateringPlanForm>({
+    defaultValues: opts.initForm,
+    resolver: zodResolver(wateringPlanSchema),
+  })
 
-  const { mutate, isError, error } = useMutation({
-    mutationFn: (wateringPlan: WateringPlanCreate | WateringPlanUpdate) => {
+  const { clear: resetPersist } = useFormPersist(`${mutationType}-wateringplan`, {
+    watch: form.watch,
+  })
+
+  const { mutate, isError, error } = useMutation<WateringPlan, Error, MutationType<T>>({
+    mutationFn: (wateringPlan: MutationType<T>) => {
       if (mutationType === 'create') {
         return wateringPlanApi.createWateringPlan({
-          body: wateringPlan as WateringPlanCreate,
+          body: wateringPlan,
         })
-      } else if (mutationType === 'update' && wateringPlanId) {
+      } else if (mutationType === 'update' && opts.wateringPlanId) {
         return wateringPlanApi.updateWateringPlan({
-          id: wateringPlanId,
+          id: opts.wateringPlanId,
           body: wateringPlan as WateringPlanUpdate,
         })
       }
@@ -37,7 +53,7 @@ export const useWaterinPlanForm = (mutationType: 'create' | 'update', wateringPl
     },
 
     onSuccess: (data: WateringPlan) => {
-      formStore.reset()
+      resetPersist()
       queryClient
         .invalidateQueries(wateringPlanIdQuery(String(data.id)))
         .catch((error) => console.error('Invalidate "waterinPlanIdQuery" failed', error))
@@ -58,14 +74,15 @@ export const useWaterinPlanForm = (mutationType: 'create' | 'update', wateringPl
 
     onError: (error) => {
       console.error('Error with vehicle mutation:', error)
-      showToast(`Fehlermeldung: ${error.message || 'Unbekannter Fehler'}`, 'error')
+      showToast(`Fehlermeldung: ${error.message || 'Unbekannter Fehler'}`, 'error') // TODO: Parse API ResponseError
     },
     throwOnError: true,
   })
 
   return {
-    mutate: mutate,
-    isError: isError,
-    error: error,
+    mutate,
+    isError,
+    error,
+    form,
   }
 }

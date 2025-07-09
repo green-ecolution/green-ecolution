@@ -5,24 +5,27 @@ import Textarea from './types/Textarea'
 import FormError from './FormError'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import { User, Vehicle } from '@green-ecolution/backend-client'
-import { FormForProps } from './FormForTreecluster'
 import SelectEntities from './types/SelectEntities'
-import useFormStore, { FormStore } from '@/store/form/useFormStore'
 import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
+import { Controller, SubmitHandler, useFormContext } from 'react-hook-form'
 
-interface FormForWateringPlanProps extends FormForProps<WateringPlanForm> {
+interface FormForWateringPlanProps {
+  displayError: boolean
+  errorMessage?: string
   transporters: Vehicle[]
   trailers: Vehicle[]
   users: User[]
   onAddCluster: () => void
+  onSubmit: SubmitHandler<WateringPlanForm>
 }
 
 const FormForWateringPlan = (props: FormForWateringPlanProps) => {
-  const { form } = useFormStore((state: FormStore<WateringPlanForm>) => ({
-    form: state.form,
-  }))
-
-  const { errors, isValid } = props.formState
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { isValid, errors },
+  } = useFormContext<WateringPlanForm>()
 
   const getDrivingLicensesString = (user: User) => {
     if (!user.drivingLicenses || user.drivingLicenses.length === 0) {
@@ -37,15 +40,22 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
   return (
     <form
       className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-11"
-      onSubmit={() => void props.handleSubmit(props.onSubmit)}
+      onSubmit={handleSubmit(props.onSubmit)}
     >
       <div className="space-y-6">
-        <Input
-          label="Datum des Einsatzes"
-          error={errors.date?.message}
-          required
-          type="date"
-          {...props.register('date')}
+        <Controller
+          control={control}
+          name="date"
+          render={({ field: { value, onChange } }) => (
+            <Input
+              label="Datum des Einsatzes"
+              error={errors.date?.message}
+              required
+              type="date"
+              onChange={onChange}
+              value={new Date(value).toISOString().split('T')[0]}
+            />
+          )}
         />
         <Select
           options={[
@@ -59,7 +69,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
           label="Verknüpftes Fahrzeug"
           required
           error={errors.transporterId?.message}
-          {...props.register('transporterId')}
+          {...register('transporterId')}
         />
         <Select
           options={[
@@ -72,7 +82,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
           placeholder="Wählen Sie einen Anhänger aus, sofern vorhanden"
           label="Verknüpfter Anhänger"
           error={errors.trailerId?.message}
-          {...props.register('trailerId')}
+          {...register('trailerId')}
         />
         <Select
           options={[
@@ -86,24 +96,31 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
           label="Verknüpfte Mitarbeitende"
           description="Indem Sie die Taste »Shift« gedrückt halten, können Sie eine Mehrauswahl tätigen."
           required
-          error={errors.userIds?.message}
-          {...props.register('userIds')}
+          error={errors.driverIds?.message}
+          {...register('driverIds')}
         />
         <Textarea
           placeholder="Hier ist Platz für Notizen"
           label="Kurze Beschreibung"
           error={errors.description?.message}
-          {...props.register('description')}
+          {...register('description')}
         />
       </div>
 
-      <SelectEntities
-        onDelete={props.onAddCluster}
-        entityIds={form?.treeClusterIds ?? []}
-        onAdd={props.onAddCluster}
-        type="cluster"
-        required
-        label="Bewässerungsgruppen"
+      <Controller
+        control={control}
+        name="cluserIds"
+        render={({ field: { value, onChange } }) => (
+          <SelectEntities
+            // eslint-disable-next-line
+            onDelete={() => {}} // TODO: remove
+            onChange={onChange}
+            entityIds={value}
+            onAdd={props.onAddCluster}
+            type="tree"
+            label="Bäume"
+          />
+        )}
       />
 
       <FormError show={props.displayError} error={props.errorMessage} />
