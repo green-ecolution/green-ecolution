@@ -1,4 +1,3 @@
-import useFormStore from '@/store/form/useFormStore'
 import { createFileRoute } from '@tanstack/react-router'
 import LoadingInfo from '@/components/general/error/LoadingInfo'
 import TreeUpdate from '@/components/tree/TreeUpdate'
@@ -8,9 +7,6 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 export const Route = createFileRoute('/_protected/trees/_formular/$treeId/edit/')({
   component: EditTree,
   pendingComponent: () => <LoadingInfo label="Baumdaten werden geladen …" />,
-  beforeLoad: () => {
-    useFormStore.getState().setType('edit')
-  },
   loader: ({ context: { queryClient } }) => {
     queryClient
       .prefetchQuery(sensorQuery())

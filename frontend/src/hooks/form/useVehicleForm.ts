@@ -48,7 +48,6 @@ export const useVehicleForm = (
       navigate({
         to: `/vehicles/$vehicleId`,
         params: { vehicleId: data.id.toString() },
-        search: { resetStore: false },
         replace: true,
       }).catch((error) => console.error('Navigation failed:', error))
 

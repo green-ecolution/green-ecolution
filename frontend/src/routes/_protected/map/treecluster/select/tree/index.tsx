@@ -31,18 +31,11 @@ function SelectTrees() {
       case 'create':
         return navigate({
           to: '/treecluster/new',
-          search: { resetStore: false },
         })
       case 'update':
         return navigate({
           to: `/treecluster/$treeclusterId/edit`,
           params: { treeclusterId: clusterId?.toString() ?? '' },
-          search: { resetStore: false },
-        })
-      default:
-        return navigate({
-          to: '/treecluster/new',
-          search: { resetStore: false },
         })
     }
   }, [navigate, formType, clusterId])

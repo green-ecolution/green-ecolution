@@ -55,7 +55,6 @@ function LinkTreeToSensor() {
     return navigate({
       to: `/sensors/$sensorId`,
       params: { sensorId: sensorId?.toString() ?? '' },
-      search: { resetStore: false },
     })
   }, [navigate, sensorId])
 

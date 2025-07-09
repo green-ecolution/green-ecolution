@@ -50,12 +50,10 @@ function SelectCluster() {
         return navigate({
           to: `/watering-plans/$wateringPlanId/edit`,
           params: { wateringPlanId: String(wateringPlanId) },
-          search: { resetStore: false },
         })
       case 'create':
         return navigate({
           to: '/watering-plans/new',
-          search: { resetStore: false },
         })
     }
   }, [navigate, formType, wateringPlanId])

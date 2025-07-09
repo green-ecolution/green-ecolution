@@ -60,7 +60,6 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
       navigate({
         to: `/watering-plans/$wateringPlanId`,
         params: { wateringPlanId: data.id.toString() },
-        search: { resetStore: false },
         replace: true,
       }).catch((error) => console.error('Navigation failed:', error))
 

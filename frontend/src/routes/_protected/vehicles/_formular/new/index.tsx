@@ -2,15 +2,11 @@ import { VehicleType, DrivingLicense, VehicleStatus } from '@green-ecolution/bac
 import FormForVehicle from '@/components/general/form/FormForVehicle'
 import BackLink from '@/components/general/links/BackLink'
 import { VehicleForm } from '@/schema/vehicleSchema'
-import useFormStore from '@/store/form/useFormStore'
 import { createFileRoute } from '@tanstack/react-router'
 import { useVehicleForm } from '@/hooks/form/useVehicleForm'
 import { DefaultValues, FormProvider } from 'react-hook-form'
 
 export const Route = createFileRoute('/_protected/vehicles/_formular/new/')({
-  beforeLoad: () => {
-    useFormStore.getState().setType('new')
-  },
   component: NewVehicle,
 })
 

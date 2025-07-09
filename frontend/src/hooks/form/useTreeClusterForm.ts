@@ -70,7 +70,6 @@ export const useTreeClusterForm = (
       navigate({
         to: '/treecluster/$treeclusterId',
         params: { treeclusterId: data.id.toString() },
-        search: { resetStore: false },
         replace: true,
       }).catch((error) => console.error('Navigation failed:', error))
 
