@@ -8,7 +8,7 @@ const defaultSelectedTrees: number[] = []
 interface WithTreesAndClustersProps {
   onClickTree?: (tree: Tree) => void
   onClickCluster?: (cluster: TreeClusterInList | TreeCluster) => void
-  selectedTrees: number[]
+  selectedTrees?: number[]
   zoomThreshold?: number
   activeFilter?: boolean
   hasHighlightedTree?: number

@@ -21,6 +21,9 @@ const router = createRouter({
     <ErrorFallback error={error} resetErrorBoundary={reset} />
   ),
   defaultNotFoundComponent: () => <NotFound />,
+  defaultPreload: 'intent',
+  defaultPreloadStaleTime: 0,
+  scrollRestoration: true,
 })
 
 declare module '@tanstack/react-router' {

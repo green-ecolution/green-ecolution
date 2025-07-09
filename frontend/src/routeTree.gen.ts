@@ -8,1171 +8,1497 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-// Import Routes
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as LogoutRouteImport } from './routes/logout'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ProtectedRouteImport } from './routes/_protected'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as ProtectedInfoRouteImport } from './routes/_protected/info'
+import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard'
+import { Route as ProtectedWateringPlansRouteRouteImport } from './routes/_protected/watering-plans/route'
+import { Route as ProtectedVehiclesRouteRouteImport } from './routes/_protected/vehicles/route'
+import { Route as ProtectedTreesRouteRouteImport } from './routes/_protected/trees/route'
+import { Route as ProtectedTreeclusterRouteRouteImport } from './routes/_protected/treecluster/route'
+import { Route as ProtectedTeamRouteRouteImport } from './routes/_protected/team/route'
+import { Route as ProtectedSettingsRouteRouteImport } from './routes/_protected/settings/route'
+import { Route as ProtectedSensorsRouteRouteImport } from './routes/_protected/sensors/route'
+import { Route as ProtectedProfileRouteRouteImport } from './routes/_protected/profile/route'
+import { Route as ProtectedMapRouteRouteImport } from './routes/_protected/map/route'
+import { Route as ProtectedEvaluationsRouteRouteImport } from './routes/_protected/evaluations/route'
+import { Route as ProtectedDebugRouteRouteImport } from './routes/_protected/debug/route'
+import { Route as ProtectedWateringPlansIndexRouteImport } from './routes/_protected/watering-plans/index'
+import { Route as ProtectedVehiclesIndexRouteImport } from './routes/_protected/vehicles/index'
+import { Route as ProtectedTreesIndexRouteImport } from './routes/_protected/trees/index'
+import { Route as ProtectedTreeclusterIndexRouteImport } from './routes/_protected/treecluster/index'
+import { Route as ProtectedTeamIndexRouteImport } from './routes/_protected/team/index'
+import { Route as ProtectedSettingsIndexRouteImport } from './routes/_protected/settings/index'
+import { Route as ProtectedSensorsIndexRouteImport } from './routes/_protected/sensors/index'
+import { Route as ProtectedProfileIndexRouteImport } from './routes/_protected/profile/index'
+import { Route as ProtectedMapIndexRouteImport } from './routes/_protected/map/index'
+import { Route as ProtectedEvaluationsIndexRouteImport } from './routes/_protected/evaluations/index'
+import { Route as ProtectedDebugIndexRouteImport } from './routes/_protected/debug/index'
+import { Route as ProtectedTreesFormularRouteImport } from './routes/_protected/trees/_formular'
+import { Route as ProtectedWateringPlansFormularRouteRouteImport } from './routes/_protected/watering-plans/_formular/route'
+import { Route as ProtectedWateringPlansWateringPlanIdRouteRouteImport } from './routes/_protected/watering-plans/$wateringPlanId/route'
+import { Route as ProtectedVehiclesFormularRouteRouteImport } from './routes/_protected/vehicles/_formular/route'
+import { Route as ProtectedVehiclesVehicleIdRouteRouteImport } from './routes/_protected/vehicles/$vehicleId/route'
+import { Route as ProtectedTreesTreeIdRouteRouteImport } from './routes/_protected/trees/$treeId/route'
+import { Route as ProtectedTreeclusterFormularRouteRouteImport } from './routes/_protected/treecluster/_formular/route'
+import { Route as ProtectedTreeclusterTreeclusterIdRouteRouteImport } from './routes/_protected/treecluster/$treeclusterId/route'
+import { Route as ProtectedSettingsPluginRouteRouteImport } from './routes/_protected/settings/plugin/route'
+import { Route as ProtectedSensorsSensorIdRouteRouteImport } from './routes/_protected/sensors/$sensorId/route'
+import { Route as ProtectedWateringPlansWateringPlanIdIndexRouteImport } from './routes/_protected/watering-plans/$wateringPlanId/index'
+import { Route as ProtectedVehiclesVehicleIdIndexRouteImport } from './routes/_protected/vehicles/$vehicleId/index'
+import { Route as ProtectedTreesTreeIdIndexRouteImport } from './routes/_protected/trees/$treeId/index'
+import { Route as ProtectedTreeclusterTreeclusterIdIndexRouteImport } from './routes/_protected/treecluster/$treeclusterId/index'
+import { Route as ProtectedSettingsPluginIndexRouteImport } from './routes/_protected/settings/plugin/index'
+import { Route as ProtectedSensorsSensorIdIndexRouteImport } from './routes/_protected/sensors/$sensorId/index'
+import { Route as ProtectedWateringPlansFormularNewRouteRouteImport } from './routes/_protected/watering-plans/_formular/new/route'
+import { Route as ProtectedWateringPlansFormularWateringPlanIdRouteRouteImport } from './routes/_protected/watering-plans/_formular/$wateringPlanId/route'
+import { Route as ProtectedVehiclesFormularNewRouteRouteImport } from './routes/_protected/vehicles/_formular/new/route'
+import { Route as ProtectedVehiclesFormularVehicleIdRouteRouteImport } from './routes/_protected/vehicles/_formular/$vehicleId/route'
+import { Route as ProtectedTreesFormularNewRouteRouteImport } from './routes/_protected/trees/_formular/new/route'
+import { Route as ProtectedTreesFormularTreeIdRouteRouteImport } from './routes/_protected/trees/_formular/$treeId/route'
+import { Route as ProtectedTreeclusterFormularNewRouteRouteImport } from './routes/_protected/treecluster/_formular/new/route'
+import { Route as ProtectedTreeclusterFormularTreeclusterIdRouteRouteImport } from './routes/_protected/treecluster/_formular/$treeclusterId/route'
+import { Route as ProtectedSettingsPluginPluginNameRouteRouteImport } from './routes/_protected/settings/plugin/$pluginName/route'
+import { Route as ProtectedMapTreeNewRouteRouteImport } from './routes/_protected/map/tree/new/route'
+import { Route as ProtectedMapTreeEditRouteRouteImport } from './routes/_protected/map/tree/edit/route'
+import { Route as ProtectedWateringPlansFormularNewIndexRouteImport } from './routes/_protected/watering-plans/_formular/new/index'
+import { Route as ProtectedVehiclesFormularNewIndexRouteImport } from './routes/_protected/vehicles/_formular/new/index'
+import { Route as ProtectedTreesFormularNewIndexRouteImport } from './routes/_protected/trees/_formular/new/index'
+import { Route as ProtectedTreeclusterFormularNewIndexRouteImport } from './routes/_protected/treecluster/_formular/new/index'
+import { Route as ProtectedSettingsPluginPluginNameIndexRouteImport } from './routes/_protected/settings/plugin/$pluginName/index'
+import { Route as ProtectedMapTreeNewIndexRouteImport } from './routes/_protected/map/tree/new/index'
+import { Route as ProtectedMapTreeEditIndexRouteImport } from './routes/_protected/map/tree/edit/index'
+import { Route as ProtectedWateringPlansFormularWateringPlanIdEditRouteRouteImport } from './routes/_protected/watering-plans/_formular/$wateringPlanId/edit/route'
+import { Route as ProtectedVehiclesFormularVehicleIdEditRouteRouteImport } from './routes/_protected/vehicles/_formular/$vehicleId/edit/route'
+import { Route as ProtectedTreesFormularTreeIdEditRouteRouteImport } from './routes/_protected/trees/_formular/$treeId/edit/route'
+import { Route as ProtectedTreeclusterFormularTreeclusterIdEditRouteRouteImport } from './routes/_protected/treecluster/_formular/$treeclusterId/edit/route'
+import { Route as ProtectedMapWateringPlanSelectClusterRouteRouteImport } from './routes/_protected/map/watering-plan/select/cluster/route'
+import { Route as ProtectedMapTreeclusterSelectTreeRouteRouteImport } from './routes/_protected/map/treecluster/select/tree/route'
+import { Route as ProtectedMapSensorSelectTreeRouteRouteImport } from './routes/_protected/map/sensor/select/tree/route'
+import { Route as ProtectedWateringPlansFormularWateringPlanIdEditIndexRouteImport } from './routes/_protected/watering-plans/_formular/$wateringPlanId/edit/index'
+import { Route as ProtectedVehiclesFormularVehicleIdEditIndexRouteImport } from './routes/_protected/vehicles/_formular/$vehicleId/edit/index'
+import { Route as ProtectedTreesFormularTreeIdEditIndexRouteImport } from './routes/_protected/trees/_formular/$treeId/edit/index'
+import { Route as ProtectedTreeclusterFormularTreeclusterIdEditIndexRouteImport } from './routes/_protected/treecluster/_formular/$treeclusterId/edit/index'
+import { Route as ProtectedMapWateringPlanSelectClusterIndexRouteImport } from './routes/_protected/map/watering-plan/select/cluster/index'
+import { Route as ProtectedMapTreeclusterSelectTreeIndexRouteImport } from './routes/_protected/map/treecluster/select/tree/index'
+import { Route as ProtectedMapSensorSelectTreeIndexRouteImport } from './routes/_protected/map/sensor/select/tree/index'
+import { Route as ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteRouteImport } from './routes/_protected/watering-plans/_formular/$wateringPlanId/status/edit/route'
+import { Route as ProtectedWateringPlansFormularWateringPlanIdStatusEditIndexRouteImport } from './routes/_protected/watering-plans/_formular/$wateringPlanId/status/edit/index'
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as LogoutImport } from './routes/logout'
-import { Route as LoginImport } from './routes/login'
-import { Route as ProtectedImport } from './routes/_protected'
-import { Route as IndexImport } from './routes/index'
-import { Route as AuthCallbackImport } from './routes/auth/callback'
-import { Route as ProtectedInfoImport } from './routes/_protected/info'
-import { Route as ProtectedDashboardImport } from './routes/_protected/dashboard'
-import { Route as ProtectedWateringPlansRouteImport } from './routes/_protected/watering-plans/route'
-import { Route as ProtectedVehiclesRouteImport } from './routes/_protected/vehicles/route'
-import { Route as ProtectedTreesRouteImport } from './routes/_protected/trees/route'
-import { Route as ProtectedTreeclusterRouteImport } from './routes/_protected/treecluster/route'
-import { Route as ProtectedTeamRouteImport } from './routes/_protected/team/route'
-import { Route as ProtectedSettingsRouteImport } from './routes/_protected/settings/route'
-import { Route as ProtectedSensorsRouteImport } from './routes/_protected/sensors/route'
-import { Route as ProtectedProfileRouteImport } from './routes/_protected/profile/route'
-import { Route as ProtectedMapRouteImport } from './routes/_protected/map/route'
-import { Route as ProtectedEvaluationsRouteImport } from './routes/_protected/evaluations/route'
-import { Route as ProtectedDebugRouteImport } from './routes/_protected/debug/route'
-import { Route as ProtectedWateringPlansIndexImport } from './routes/_protected/watering-plans/index'
-import { Route as ProtectedVehiclesIndexImport } from './routes/_protected/vehicles/index'
-import { Route as ProtectedTreesIndexImport } from './routes/_protected/trees/index'
-import { Route as ProtectedTreeclusterIndexImport } from './routes/_protected/treecluster/index'
-import { Route as ProtectedTeamIndexImport } from './routes/_protected/team/index'
-import { Route as ProtectedSettingsIndexImport } from './routes/_protected/settings/index'
-import { Route as ProtectedSensorsIndexImport } from './routes/_protected/sensors/index'
-import { Route as ProtectedProfileIndexImport } from './routes/_protected/profile/index'
-import { Route as ProtectedMapIndexImport } from './routes/_protected/map/index'
-import { Route as ProtectedEvaluationsIndexImport } from './routes/_protected/evaluations/index'
-import { Route as ProtectedDebugIndexImport } from './routes/_protected/debug/index'
-import { Route as ProtectedTreesFormularImport } from './routes/_protected/trees/_formular'
-import { Route as ProtectedWateringPlansFormularRouteImport } from './routes/_protected/watering-plans/_formular/route'
-import { Route as ProtectedWateringPlansWateringPlanIdRouteImport } from './routes/_protected/watering-plans/$wateringPlanId/route'
-import { Route as ProtectedVehiclesFormularRouteImport } from './routes/_protected/vehicles/_formular/route'
-import { Route as ProtectedVehiclesVehicleIdRouteImport } from './routes/_protected/vehicles/$vehicleId/route'
-import { Route as ProtectedTreesTreeIdRouteImport } from './routes/_protected/trees/$treeId/route'
-import { Route as ProtectedTreeclusterFormularRouteImport } from './routes/_protected/treecluster/_formular/route'
-import { Route as ProtectedTreeclusterTreeclusterIdRouteImport } from './routes/_protected/treecluster/$treeclusterId/route'
-import { Route as ProtectedSettingsPluginRouteImport } from './routes/_protected/settings/plugin/route'
-import { Route as ProtectedSensorsSensorIdRouteImport } from './routes/_protected/sensors/$sensorId/route'
-import { Route as ProtectedWateringPlansWateringPlanIdIndexImport } from './routes/_protected/watering-plans/$wateringPlanId/index'
-import { Route as ProtectedVehiclesVehicleIdIndexImport } from './routes/_protected/vehicles/$vehicleId/index'
-import { Route as ProtectedTreesTreeIdIndexImport } from './routes/_protected/trees/$treeId/index'
-import { Route as ProtectedTreeclusterTreeclusterIdIndexImport } from './routes/_protected/treecluster/$treeclusterId/index'
-import { Route as ProtectedSettingsPluginIndexImport } from './routes/_protected/settings/plugin/index'
-import { Route as ProtectedSensorsSensorIdIndexImport } from './routes/_protected/sensors/$sensorId/index'
-import { Route as ProtectedWateringPlansFormularNewRouteImport } from './routes/_protected/watering-plans/_formular/new/route'
-import { Route as ProtectedWateringPlansFormularWateringPlanIdRouteImport } from './routes/_protected/watering-plans/_formular/$wateringPlanId/route'
-import { Route as ProtectedVehiclesFormularNewRouteImport } from './routes/_protected/vehicles/_formular/new/route'
-import { Route as ProtectedVehiclesFormularVehicleIdRouteImport } from './routes/_protected/vehicles/_formular/$vehicleId/route'
-import { Route as ProtectedTreesFormularNewRouteImport } from './routes/_protected/trees/_formular/new/route'
-import { Route as ProtectedTreesFormularTreeIdRouteImport } from './routes/_protected/trees/_formular/$treeId/route'
-import { Route as ProtectedTreeclusterFormularNewRouteImport } from './routes/_protected/treecluster/_formular/new/route'
-import { Route as ProtectedTreeclusterFormularTreeclusterIdRouteImport } from './routes/_protected/treecluster/_formular/$treeclusterId/route'
-import { Route as ProtectedSettingsPluginPluginNameRouteImport } from './routes/_protected/settings/plugin/$pluginName/route'
-import { Route as ProtectedMapTreeNewRouteImport } from './routes/_protected/map/tree/new/route'
-import { Route as ProtectedMapTreeEditRouteImport } from './routes/_protected/map/tree/edit/route'
-import { Route as ProtectedWateringPlansFormularNewIndexImport } from './routes/_protected/watering-plans/_formular/new/index'
-import { Route as ProtectedVehiclesFormularNewIndexImport } from './routes/_protected/vehicles/_formular/new/index'
-import { Route as ProtectedTreesFormularNewIndexImport } from './routes/_protected/trees/_formular/new/index'
-import { Route as ProtectedTreeclusterFormularNewIndexImport } from './routes/_protected/treecluster/_formular/new/index'
-import { Route as ProtectedSettingsPluginPluginNameIndexImport } from './routes/_protected/settings/plugin/$pluginName/index'
-import { Route as ProtectedMapTreeNewIndexImport } from './routes/_protected/map/tree/new/index'
-import { Route as ProtectedMapTreeEditIndexImport } from './routes/_protected/map/tree/edit/index'
-import { Route as ProtectedWateringPlansFormularWateringPlanIdEditRouteImport } from './routes/_protected/watering-plans/_formular/$wateringPlanId/edit/route'
-import { Route as ProtectedVehiclesFormularVehicleIdEditRouteImport } from './routes/_protected/vehicles/_formular/$vehicleId/edit/route'
-import { Route as ProtectedTreesFormularTreeIdEditRouteImport } from './routes/_protected/trees/_formular/$treeId/edit/route'
-import { Route as ProtectedTreeclusterFormularTreeclusterIdEditRouteImport } from './routes/_protected/treecluster/_formular/$treeclusterId/edit/route'
-import { Route as ProtectedMapWateringPlanSelectClusterRouteImport } from './routes/_protected/map/watering-plan/select/cluster/route'
-import { Route as ProtectedMapTreeclusterSelectTreeRouteImport } from './routes/_protected/map/treecluster/select/tree/route'
-import { Route as ProtectedMapSensorSelectTreeRouteImport } from './routes/_protected/map/sensor/select/tree/route'
-import { Route as ProtectedWateringPlansFormularWateringPlanIdEditIndexImport } from './routes/_protected/watering-plans/_formular/$wateringPlanId/edit/index'
-import { Route as ProtectedVehiclesFormularVehicleIdEditIndexImport } from './routes/_protected/vehicles/_formular/$vehicleId/edit/index'
-import { Route as ProtectedTreesFormularTreeIdEditIndexImport } from './routes/_protected/trees/_formular/$treeId/edit/index'
-import { Route as ProtectedTreeclusterFormularTreeclusterIdEditIndexImport } from './routes/_protected/treecluster/_formular/$treeclusterId/edit/index'
-import { Route as ProtectedMapWateringPlanSelectClusterIndexImport } from './routes/_protected/map/watering-plan/select/cluster/index'
-import { Route as ProtectedMapTreeclusterSelectTreeIndexImport } from './routes/_protected/map/treecluster/select/tree/index'
-import { Route as ProtectedMapSensorSelectTreeIndexImport } from './routes/_protected/map/sensor/select/tree/index'
-import { Route as ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteImport } from './routes/_protected/watering-plans/_formular/$wateringPlanId/status/edit/route'
-import { Route as ProtectedWateringPlansFormularWateringPlanIdStatusEditIndexImport } from './routes/_protected/watering-plans/_formular/$wateringPlanId/status/edit/index'
-
-// Create/Update Routes
-
-const LogoutRoute = LogoutImport.update({
+const LogoutRoute = LogoutRouteImport.update({
   id: '/logout',
   path: '/logout',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const LoginRoute = LoginImport.update({
+const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const ProtectedRoute = ProtectedImport.update({
+const ProtectedRoute = ProtectedRouteImport.update({
   id: '/_protected',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const IndexRoute = IndexImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const AuthCallbackRoute = AuthCallbackImport.update({
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const ProtectedInfoRoute = ProtectedInfoImport.update({
+const ProtectedInfoRoute = ProtectedInfoRouteImport.update({
   id: '/info',
   path: '/info',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedDashboardRoute = ProtectedDashboardImport.update({
+const ProtectedDashboardRoute = ProtectedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
 const ProtectedWateringPlansRouteRoute =
-  ProtectedWateringPlansRouteImport.update({
+  ProtectedWateringPlansRouteRouteImport.update({
     id: '/watering-plans',
     path: '/watering-plans',
     getParentRoute: () => ProtectedRoute,
   } as any)
-
-const ProtectedVehiclesRouteRoute = ProtectedVehiclesRouteImport.update({
+const ProtectedVehiclesRouteRoute = ProtectedVehiclesRouteRouteImport.update({
   id: '/vehicles',
   path: '/vehicles',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedTreesRouteRoute = ProtectedTreesRouteImport.update({
+const ProtectedTreesRouteRoute = ProtectedTreesRouteRouteImport.update({
   id: '/trees',
   path: '/trees',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedTreeclusterRouteRoute = ProtectedTreeclusterRouteImport.update({
-  id: '/treecluster',
-  path: '/treecluster',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-
-const ProtectedTeamRouteRoute = ProtectedTeamRouteImport.update({
+const ProtectedTreeclusterRouteRoute =
+  ProtectedTreeclusterRouteRouteImport.update({
+    id: '/treecluster',
+    path: '/treecluster',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedTeamRouteRoute = ProtectedTeamRouteRouteImport.update({
   id: '/team',
   path: '/team',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedSettingsRouteRoute = ProtectedSettingsRouteImport.update({
+const ProtectedSettingsRouteRoute = ProtectedSettingsRouteRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedSensorsRouteRoute = ProtectedSensorsRouteImport.update({
+const ProtectedSensorsRouteRoute = ProtectedSensorsRouteRouteImport.update({
   id: '/sensors',
   path: '/sensors',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedProfileRouteRoute = ProtectedProfileRouteImport.update({
+const ProtectedProfileRouteRoute = ProtectedProfileRouteRouteImport.update({
   id: '/profile',
   path: '/profile',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedMapRouteRoute = ProtectedMapRouteImport.update({
+const ProtectedMapRouteRoute = ProtectedMapRouteRouteImport.update({
   id: '/map',
   path: '/map',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedEvaluationsRouteRoute = ProtectedEvaluationsRouteImport.update({
-  id: '/evaluations',
-  path: '/evaluations',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-
-const ProtectedDebugRouteRoute = ProtectedDebugRouteImport.update({
+const ProtectedEvaluationsRouteRoute =
+  ProtectedEvaluationsRouteRouteImport.update({
+    id: '/evaluations',
+    path: '/evaluations',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedDebugRouteRoute = ProtectedDebugRouteRouteImport.update({
   id: '/debug',
   path: '/debug',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
 const ProtectedWateringPlansIndexRoute =
-  ProtectedWateringPlansIndexImport.update({
+  ProtectedWateringPlansIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedWateringPlansRouteRoute,
   } as any)
-
-const ProtectedVehiclesIndexRoute = ProtectedVehiclesIndexImport.update({
+const ProtectedVehiclesIndexRoute = ProtectedVehiclesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProtectedVehiclesRouteRoute,
 } as any)
-
-const ProtectedTreesIndexRoute = ProtectedTreesIndexImport.update({
+const ProtectedTreesIndexRoute = ProtectedTreesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProtectedTreesRouteRoute,
 } as any)
-
-const ProtectedTreeclusterIndexRoute = ProtectedTreeclusterIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProtectedTreeclusterRouteRoute,
-} as any)
-
-const ProtectedTeamIndexRoute = ProtectedTeamIndexImport.update({
+const ProtectedTreeclusterIndexRoute =
+  ProtectedTreeclusterIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProtectedTreeclusterRouteRoute,
+  } as any)
+const ProtectedTeamIndexRoute = ProtectedTeamIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProtectedTeamRouteRoute,
 } as any)
-
-const ProtectedSettingsIndexRoute = ProtectedSettingsIndexImport.update({
+const ProtectedSettingsIndexRoute = ProtectedSettingsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProtectedSettingsRouteRoute,
 } as any)
-
-const ProtectedSensorsIndexRoute = ProtectedSensorsIndexImport.update({
+const ProtectedSensorsIndexRoute = ProtectedSensorsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProtectedSensorsRouteRoute,
 } as any)
-
-const ProtectedProfileIndexRoute = ProtectedProfileIndexImport.update({
+const ProtectedProfileIndexRoute = ProtectedProfileIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProtectedProfileRouteRoute,
 } as any)
-
-const ProtectedMapIndexRoute = ProtectedMapIndexImport.update({
+const ProtectedMapIndexRoute = ProtectedMapIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProtectedMapRouteRoute,
 } as any)
-
-const ProtectedEvaluationsIndexRoute = ProtectedEvaluationsIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProtectedEvaluationsRouteRoute,
-} as any)
-
-const ProtectedDebugIndexRoute = ProtectedDebugIndexImport.update({
+const ProtectedEvaluationsIndexRoute =
+  ProtectedEvaluationsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProtectedEvaluationsRouteRoute,
+  } as any)
+const ProtectedDebugIndexRoute = ProtectedDebugIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProtectedDebugRouteRoute,
 } as any)
-
-const ProtectedTreesFormularRoute = ProtectedTreesFormularImport.update({
+const ProtectedTreesFormularRoute = ProtectedTreesFormularRouteImport.update({
   id: '/_formular',
   getParentRoute: () => ProtectedTreesRouteRoute,
 } as any)
-
 const ProtectedWateringPlansFormularRouteRoute =
-  ProtectedWateringPlansFormularRouteImport.update({
+  ProtectedWateringPlansFormularRouteRouteImport.update({
     id: '/_formular',
     getParentRoute: () => ProtectedWateringPlansRouteRoute,
   } as any)
-
 const ProtectedWateringPlansWateringPlanIdRouteRoute =
-  ProtectedWateringPlansWateringPlanIdRouteImport.update({
+  ProtectedWateringPlansWateringPlanIdRouteRouteImport.update({
     id: '/$wateringPlanId',
     path: '/$wateringPlanId',
     getParentRoute: () => ProtectedWateringPlansRouteRoute,
   } as any)
-
 const ProtectedVehiclesFormularRouteRoute =
-  ProtectedVehiclesFormularRouteImport.update({
+  ProtectedVehiclesFormularRouteRouteImport.update({
     id: '/_formular',
     getParentRoute: () => ProtectedVehiclesRouteRoute,
   } as any)
-
 const ProtectedVehiclesVehicleIdRouteRoute =
-  ProtectedVehiclesVehicleIdRouteImport.update({
+  ProtectedVehiclesVehicleIdRouteRouteImport.update({
     id: '/$vehicleId',
     path: '/$vehicleId',
     getParentRoute: () => ProtectedVehiclesRouteRoute,
   } as any)
-
-const ProtectedTreesTreeIdRouteRoute = ProtectedTreesTreeIdRouteImport.update({
-  id: '/$treeId',
-  path: '/$treeId',
-  getParentRoute: () => ProtectedTreesRouteRoute,
-} as any)
-
+const ProtectedTreesTreeIdRouteRoute =
+  ProtectedTreesTreeIdRouteRouteImport.update({
+    id: '/$treeId',
+    path: '/$treeId',
+    getParentRoute: () => ProtectedTreesRouteRoute,
+  } as any)
 const ProtectedTreeclusterFormularRouteRoute =
-  ProtectedTreeclusterFormularRouteImport.update({
+  ProtectedTreeclusterFormularRouteRouteImport.update({
     id: '/_formular',
     getParentRoute: () => ProtectedTreeclusterRouteRoute,
   } as any)
-
 const ProtectedTreeclusterTreeclusterIdRouteRoute =
-  ProtectedTreeclusterTreeclusterIdRouteImport.update({
+  ProtectedTreeclusterTreeclusterIdRouteRouteImport.update({
     id: '/$treeclusterId',
     path: '/$treeclusterId',
     getParentRoute: () => ProtectedTreeclusterRouteRoute,
   } as any)
-
 const ProtectedSettingsPluginRouteRoute =
-  ProtectedSettingsPluginRouteImport.update({
+  ProtectedSettingsPluginRouteRouteImport.update({
     id: '/plugin',
     path: '/plugin',
     getParentRoute: () => ProtectedSettingsRouteRoute,
   } as any)
-
 const ProtectedSensorsSensorIdRouteRoute =
-  ProtectedSensorsSensorIdRouteImport.update({
+  ProtectedSensorsSensorIdRouteRouteImport.update({
     id: '/$sensorId',
     path: '/$sensorId',
     getParentRoute: () => ProtectedSensorsRouteRoute,
   } as any)
-
 const ProtectedWateringPlansWateringPlanIdIndexRoute =
-  ProtectedWateringPlansWateringPlanIdIndexImport.update({
+  ProtectedWateringPlansWateringPlanIdIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedWateringPlansWateringPlanIdRouteRoute,
   } as any)
-
 const ProtectedVehiclesVehicleIdIndexRoute =
-  ProtectedVehiclesVehicleIdIndexImport.update({
+  ProtectedVehiclesVehicleIdIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedVehiclesVehicleIdRouteRoute,
   } as any)
-
-const ProtectedTreesTreeIdIndexRoute = ProtectedTreesTreeIdIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProtectedTreesTreeIdRouteRoute,
-} as any)
-
+const ProtectedTreesTreeIdIndexRoute =
+  ProtectedTreesTreeIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProtectedTreesTreeIdRouteRoute,
+  } as any)
 const ProtectedTreeclusterTreeclusterIdIndexRoute =
-  ProtectedTreeclusterTreeclusterIdIndexImport.update({
+  ProtectedTreeclusterTreeclusterIdIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedTreeclusterTreeclusterIdRouteRoute,
   } as any)
-
 const ProtectedSettingsPluginIndexRoute =
-  ProtectedSettingsPluginIndexImport.update({
+  ProtectedSettingsPluginIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedSettingsPluginRouteRoute,
   } as any)
-
 const ProtectedSensorsSensorIdIndexRoute =
-  ProtectedSensorsSensorIdIndexImport.update({
+  ProtectedSensorsSensorIdIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedSensorsSensorIdRouteRoute,
   } as any)
-
 const ProtectedWateringPlansFormularNewRouteRoute =
-  ProtectedWateringPlansFormularNewRouteImport.update({
+  ProtectedWateringPlansFormularNewRouteRouteImport.update({
     id: '/new',
     path: '/new',
     getParentRoute: () => ProtectedWateringPlansFormularRouteRoute,
   } as any)
-
 const ProtectedWateringPlansFormularWateringPlanIdRouteRoute =
-  ProtectedWateringPlansFormularWateringPlanIdRouteImport.update({
+  ProtectedWateringPlansFormularWateringPlanIdRouteRouteImport.update({
     id: '/$wateringPlanId',
     path: '/$wateringPlanId',
     getParentRoute: () => ProtectedWateringPlansFormularRouteRoute,
   } as any)
-
 const ProtectedVehiclesFormularNewRouteRoute =
-  ProtectedVehiclesFormularNewRouteImport.update({
+  ProtectedVehiclesFormularNewRouteRouteImport.update({
     id: '/new',
     path: '/new',
     getParentRoute: () => ProtectedVehiclesFormularRouteRoute,
   } as any)
-
 const ProtectedVehiclesFormularVehicleIdRouteRoute =
-  ProtectedVehiclesFormularVehicleIdRouteImport.update({
+  ProtectedVehiclesFormularVehicleIdRouteRouteImport.update({
     id: '/$vehicleId',
     path: '/$vehicleId',
     getParentRoute: () => ProtectedVehiclesFormularRouteRoute,
   } as any)
-
 const ProtectedTreesFormularNewRouteRoute =
-  ProtectedTreesFormularNewRouteImport.update({
+  ProtectedTreesFormularNewRouteRouteImport.update({
     id: '/new',
     path: '/new',
     getParentRoute: () => ProtectedTreesFormularRoute,
   } as any)
-
 const ProtectedTreesFormularTreeIdRouteRoute =
-  ProtectedTreesFormularTreeIdRouteImport.update({
+  ProtectedTreesFormularTreeIdRouteRouteImport.update({
     id: '/$treeId',
     path: '/$treeId',
     getParentRoute: () => ProtectedTreesFormularRoute,
   } as any)
-
 const ProtectedTreeclusterFormularNewRouteRoute =
-  ProtectedTreeclusterFormularNewRouteImport.update({
+  ProtectedTreeclusterFormularNewRouteRouteImport.update({
     id: '/new',
     path: '/new',
     getParentRoute: () => ProtectedTreeclusterFormularRouteRoute,
   } as any)
-
 const ProtectedTreeclusterFormularTreeclusterIdRouteRoute =
-  ProtectedTreeclusterFormularTreeclusterIdRouteImport.update({
+  ProtectedTreeclusterFormularTreeclusterIdRouteRouteImport.update({
     id: '/$treeclusterId',
     path: '/$treeclusterId',
     getParentRoute: () => ProtectedTreeclusterFormularRouteRoute,
   } as any)
-
 const ProtectedSettingsPluginPluginNameRouteRoute =
-  ProtectedSettingsPluginPluginNameRouteImport.update({
+  ProtectedSettingsPluginPluginNameRouteRouteImport.update({
     id: '/$pluginName',
     path: '/$pluginName',
     getParentRoute: () => ProtectedSettingsPluginRouteRoute,
   } as any)
-
-const ProtectedMapTreeNewRouteRoute = ProtectedMapTreeNewRouteImport.update({
-  id: '/tree/new',
-  path: '/tree/new',
-  getParentRoute: () => ProtectedMapRouteRoute,
-} as any)
-
-const ProtectedMapTreeEditRouteRoute = ProtectedMapTreeEditRouteImport.update({
-  id: '/tree/edit',
-  path: '/tree/edit',
-  getParentRoute: () => ProtectedMapRouteRoute,
-} as any)
-
+const ProtectedMapTreeNewRouteRoute =
+  ProtectedMapTreeNewRouteRouteImport.update({
+    id: '/tree/new',
+    path: '/tree/new',
+    getParentRoute: () => ProtectedMapRouteRoute,
+  } as any)
+const ProtectedMapTreeEditRouteRoute =
+  ProtectedMapTreeEditRouteRouteImport.update({
+    id: '/tree/edit',
+    path: '/tree/edit',
+    getParentRoute: () => ProtectedMapRouteRoute,
+  } as any)
 const ProtectedWateringPlansFormularNewIndexRoute =
-  ProtectedWateringPlansFormularNewIndexImport.update({
+  ProtectedWateringPlansFormularNewIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedWateringPlansFormularNewRouteRoute,
   } as any)
-
 const ProtectedVehiclesFormularNewIndexRoute =
-  ProtectedVehiclesFormularNewIndexImport.update({
+  ProtectedVehiclesFormularNewIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedVehiclesFormularNewRouteRoute,
   } as any)
-
 const ProtectedTreesFormularNewIndexRoute =
-  ProtectedTreesFormularNewIndexImport.update({
+  ProtectedTreesFormularNewIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedTreesFormularNewRouteRoute,
   } as any)
-
 const ProtectedTreeclusterFormularNewIndexRoute =
-  ProtectedTreeclusterFormularNewIndexImport.update({
+  ProtectedTreeclusterFormularNewIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedTreeclusterFormularNewRouteRoute,
   } as any)
-
 const ProtectedSettingsPluginPluginNameIndexRoute =
-  ProtectedSettingsPluginPluginNameIndexImport.update({
+  ProtectedSettingsPluginPluginNameIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedSettingsPluginPluginNameRouteRoute,
   } as any)
-
-const ProtectedMapTreeNewIndexRoute = ProtectedMapTreeNewIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProtectedMapTreeNewRouteRoute,
-} as any)
-
-const ProtectedMapTreeEditIndexRoute = ProtectedMapTreeEditIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProtectedMapTreeEditRouteRoute,
-} as any)
-
+const ProtectedMapTreeNewIndexRoute =
+  ProtectedMapTreeNewIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProtectedMapTreeNewRouteRoute,
+  } as any)
+const ProtectedMapTreeEditIndexRoute =
+  ProtectedMapTreeEditIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProtectedMapTreeEditRouteRoute,
+  } as any)
 const ProtectedWateringPlansFormularWateringPlanIdEditRouteRoute =
-  ProtectedWateringPlansFormularWateringPlanIdEditRouteImport.update({
+  ProtectedWateringPlansFormularWateringPlanIdEditRouteRouteImport.update({
     id: '/edit',
     path: '/edit',
     getParentRoute: () =>
       ProtectedWateringPlansFormularWateringPlanIdRouteRoute,
   } as any)
-
 const ProtectedVehiclesFormularVehicleIdEditRouteRoute =
-  ProtectedVehiclesFormularVehicleIdEditRouteImport.update({
+  ProtectedVehiclesFormularVehicleIdEditRouteRouteImport.update({
     id: '/edit',
     path: '/edit',
     getParentRoute: () => ProtectedVehiclesFormularVehicleIdRouteRoute,
   } as any)
-
 const ProtectedTreesFormularTreeIdEditRouteRoute =
-  ProtectedTreesFormularTreeIdEditRouteImport.update({
+  ProtectedTreesFormularTreeIdEditRouteRouteImport.update({
     id: '/edit',
     path: '/edit',
     getParentRoute: () => ProtectedTreesFormularTreeIdRouteRoute,
   } as any)
-
 const ProtectedTreeclusterFormularTreeclusterIdEditRouteRoute =
-  ProtectedTreeclusterFormularTreeclusterIdEditRouteImport.update({
+  ProtectedTreeclusterFormularTreeclusterIdEditRouteRouteImport.update({
     id: '/edit',
     path: '/edit',
     getParentRoute: () => ProtectedTreeclusterFormularTreeclusterIdRouteRoute,
   } as any)
-
 const ProtectedMapWateringPlanSelectClusterRouteRoute =
-  ProtectedMapWateringPlanSelectClusterRouteImport.update({
+  ProtectedMapWateringPlanSelectClusterRouteRouteImport.update({
     id: '/watering-plan/select/cluster',
     path: '/watering-plan/select/cluster',
     getParentRoute: () => ProtectedMapRouteRoute,
   } as any)
-
 const ProtectedMapTreeclusterSelectTreeRouteRoute =
-  ProtectedMapTreeclusterSelectTreeRouteImport.update({
+  ProtectedMapTreeclusterSelectTreeRouteRouteImport.update({
     id: '/treecluster/select/tree',
     path: '/treecluster/select/tree',
     getParentRoute: () => ProtectedMapRouteRoute,
   } as any)
-
 const ProtectedMapSensorSelectTreeRouteRoute =
-  ProtectedMapSensorSelectTreeRouteImport.update({
+  ProtectedMapSensorSelectTreeRouteRouteImport.update({
     id: '/sensor/select/tree',
     path: '/sensor/select/tree',
     getParentRoute: () => ProtectedMapRouteRoute,
   } as any)
-
 const ProtectedWateringPlansFormularWateringPlanIdEditIndexRoute =
-  ProtectedWateringPlansFormularWateringPlanIdEditIndexImport.update({
+  ProtectedWateringPlansFormularWateringPlanIdEditIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () =>
       ProtectedWateringPlansFormularWateringPlanIdEditRouteRoute,
   } as any)
-
 const ProtectedVehiclesFormularVehicleIdEditIndexRoute =
-  ProtectedVehiclesFormularVehicleIdEditIndexImport.update({
+  ProtectedVehiclesFormularVehicleIdEditIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedVehiclesFormularVehicleIdEditRouteRoute,
   } as any)
-
 const ProtectedTreesFormularTreeIdEditIndexRoute =
-  ProtectedTreesFormularTreeIdEditIndexImport.update({
+  ProtectedTreesFormularTreeIdEditIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedTreesFormularTreeIdEditRouteRoute,
   } as any)
-
 const ProtectedTreeclusterFormularTreeclusterIdEditIndexRoute =
-  ProtectedTreeclusterFormularTreeclusterIdEditIndexImport.update({
+  ProtectedTreeclusterFormularTreeclusterIdEditIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () =>
       ProtectedTreeclusterFormularTreeclusterIdEditRouteRoute,
   } as any)
-
 const ProtectedMapWateringPlanSelectClusterIndexRoute =
-  ProtectedMapWateringPlanSelectClusterIndexImport.update({
+  ProtectedMapWateringPlanSelectClusterIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedMapWateringPlanSelectClusterRouteRoute,
   } as any)
-
 const ProtectedMapTreeclusterSelectTreeIndexRoute =
-  ProtectedMapTreeclusterSelectTreeIndexImport.update({
+  ProtectedMapTreeclusterSelectTreeIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedMapTreeclusterSelectTreeRouteRoute,
   } as any)
-
 const ProtectedMapSensorSelectTreeIndexRoute =
-  ProtectedMapSensorSelectTreeIndexImport.update({
+  ProtectedMapSensorSelectTreeIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedMapSensorSelectTreeRouteRoute,
   } as any)
-
 const ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteRoute =
-  ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteImport.update({
-    id: '/status/edit',
-    path: '/status/edit',
-    getParentRoute: () =>
-      ProtectedWateringPlansFormularWateringPlanIdRouteRoute,
-  } as any)
-
+  ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteRouteImport.update(
+    {
+      id: '/status/edit',
+      path: '/status/edit',
+      getParentRoute: () =>
+        ProtectedWateringPlansFormularWateringPlanIdRouteRoute,
+    } as any,
+  )
 const ProtectedWateringPlansFormularWateringPlanIdStatusEditIndexRoute =
-  ProtectedWateringPlansFormularWateringPlanIdStatusEditIndexImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () =>
-      ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteRoute,
-  } as any)
+  ProtectedWateringPlansFormularWateringPlanIdStatusEditIndexRouteImport.update(
+    {
+      id: '/',
+      path: '/',
+      getParentRoute: () =>
+        ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteRoute,
+    } as any,
+  )
 
-// Populate the FileRoutesByPath interface
+export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
+  '/debug': typeof ProtectedDebugRouteRouteWithChildren
+  '/evaluations': typeof ProtectedEvaluationsRouteRouteWithChildren
+  '/map': typeof ProtectedMapRouteRouteWithChildren
+  '/profile': typeof ProtectedProfileRouteRouteWithChildren
+  '/sensors': typeof ProtectedSensorsRouteRouteWithChildren
+  '/settings': typeof ProtectedSettingsRouteRouteWithChildren
+  '/team': typeof ProtectedTeamRouteRouteWithChildren
+  '/treecluster': typeof ProtectedTreeclusterFormularRouteRouteWithChildren
+  '/trees': typeof ProtectedTreesFormularRouteWithChildren
+  '/vehicles': typeof ProtectedVehiclesFormularRouteRouteWithChildren
+  '/watering-plans': typeof ProtectedWateringPlansFormularRouteRouteWithChildren
+  '/dashboard': typeof ProtectedDashboardRoute
+  '/info': typeof ProtectedInfoRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/sensors/$sensorId': typeof ProtectedSensorsSensorIdRouteRouteWithChildren
+  '/settings/plugin': typeof ProtectedSettingsPluginRouteRouteWithChildren
+  '/treecluster/$treeclusterId': typeof ProtectedTreeclusterFormularTreeclusterIdRouteRouteWithChildren
+  '/trees/$treeId': typeof ProtectedTreesFormularTreeIdRouteRouteWithChildren
+  '/vehicles/$vehicleId': typeof ProtectedVehiclesFormularVehicleIdRouteRouteWithChildren
+  '/watering-plans/$wateringPlanId': typeof ProtectedWateringPlansFormularWateringPlanIdRouteRouteWithChildren
+  '/debug/': typeof ProtectedDebugIndexRoute
+  '/evaluations/': typeof ProtectedEvaluationsIndexRoute
+  '/map/': typeof ProtectedMapIndexRoute
+  '/profile/': typeof ProtectedProfileIndexRoute
+  '/sensors/': typeof ProtectedSensorsIndexRoute
+  '/settings/': typeof ProtectedSettingsIndexRoute
+  '/team/': typeof ProtectedTeamIndexRoute
+  '/treecluster/': typeof ProtectedTreeclusterIndexRoute
+  '/trees/': typeof ProtectedTreesIndexRoute
+  '/vehicles/': typeof ProtectedVehiclesIndexRoute
+  '/watering-plans/': typeof ProtectedWateringPlansIndexRoute
+  '/map/tree/edit': typeof ProtectedMapTreeEditRouteRouteWithChildren
+  '/map/tree/new': typeof ProtectedMapTreeNewRouteRouteWithChildren
+  '/settings/plugin/$pluginName': typeof ProtectedSettingsPluginPluginNameRouteRouteWithChildren
+  '/treecluster/new': typeof ProtectedTreeclusterFormularNewRouteRouteWithChildren
+  '/trees/new': typeof ProtectedTreesFormularNewRouteRouteWithChildren
+  '/vehicles/new': typeof ProtectedVehiclesFormularNewRouteRouteWithChildren
+  '/watering-plans/new': typeof ProtectedWateringPlansFormularNewRouteRouteWithChildren
+  '/sensors/$sensorId/': typeof ProtectedSensorsSensorIdIndexRoute
+  '/settings/plugin/': typeof ProtectedSettingsPluginIndexRoute
+  '/treecluster/$treeclusterId/': typeof ProtectedTreeclusterTreeclusterIdIndexRoute
+  '/trees/$treeId/': typeof ProtectedTreesTreeIdIndexRoute
+  '/vehicles/$vehicleId/': typeof ProtectedVehiclesVehicleIdIndexRoute
+  '/watering-plans/$wateringPlanId/': typeof ProtectedWateringPlansWateringPlanIdIndexRoute
+  '/map/sensor/select/tree': typeof ProtectedMapSensorSelectTreeRouteRouteWithChildren
+  '/map/treecluster/select/tree': typeof ProtectedMapTreeclusterSelectTreeRouteRouteWithChildren
+  '/map/watering-plan/select/cluster': typeof ProtectedMapWateringPlanSelectClusterRouteRouteWithChildren
+  '/treecluster/$treeclusterId/edit': typeof ProtectedTreeclusterFormularTreeclusterIdEditRouteRouteWithChildren
+  '/trees/$treeId/edit': typeof ProtectedTreesFormularTreeIdEditRouteRouteWithChildren
+  '/vehicles/$vehicleId/edit': typeof ProtectedVehiclesFormularVehicleIdEditRouteRouteWithChildren
+  '/watering-plans/$wateringPlanId/edit': typeof ProtectedWateringPlansFormularWateringPlanIdEditRouteRouteWithChildren
+  '/map/tree/edit/': typeof ProtectedMapTreeEditIndexRoute
+  '/map/tree/new/': typeof ProtectedMapTreeNewIndexRoute
+  '/settings/plugin/$pluginName/': typeof ProtectedSettingsPluginPluginNameIndexRoute
+  '/treecluster/new/': typeof ProtectedTreeclusterFormularNewIndexRoute
+  '/trees/new/': typeof ProtectedTreesFormularNewIndexRoute
+  '/vehicles/new/': typeof ProtectedVehiclesFormularNewIndexRoute
+  '/watering-plans/new/': typeof ProtectedWateringPlansFormularNewIndexRoute
+  '/watering-plans/$wateringPlanId/status/edit': typeof ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteRouteWithChildren
+  '/map/sensor/select/tree/': typeof ProtectedMapSensorSelectTreeIndexRoute
+  '/map/treecluster/select/tree/': typeof ProtectedMapTreeclusterSelectTreeIndexRoute
+  '/map/watering-plan/select/cluster/': typeof ProtectedMapWateringPlanSelectClusterIndexRoute
+  '/treecluster/$treeclusterId/edit/': typeof ProtectedTreeclusterFormularTreeclusterIdEditIndexRoute
+  '/trees/$treeId/edit/': typeof ProtectedTreesFormularTreeIdEditIndexRoute
+  '/vehicles/$vehicleId/edit/': typeof ProtectedVehiclesFormularVehicleIdEditIndexRoute
+  '/watering-plans/$wateringPlanId/edit/': typeof ProtectedWateringPlansFormularWateringPlanIdEditIndexRoute
+  '/watering-plans/$wateringPlanId/status/edit/': typeof ProtectedWateringPlansFormularWateringPlanIdStatusEditIndexRoute
+}
+export interface FileRoutesByTo {
+  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
+  '/dashboard': typeof ProtectedDashboardRoute
+  '/info': typeof ProtectedInfoRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/treecluster': typeof ProtectedTreeclusterIndexRoute
+  '/vehicles': typeof ProtectedVehiclesIndexRoute
+  '/watering-plans': typeof ProtectedWateringPlansIndexRoute
+  '/trees': typeof ProtectedTreesIndexRoute
+  '/debug': typeof ProtectedDebugIndexRoute
+  '/evaluations': typeof ProtectedEvaluationsIndexRoute
+  '/map': typeof ProtectedMapIndexRoute
+  '/profile': typeof ProtectedProfileIndexRoute
+  '/sensors': typeof ProtectedSensorsIndexRoute
+  '/settings': typeof ProtectedSettingsIndexRoute
+  '/team': typeof ProtectedTeamIndexRoute
+  '/treecluster/$treeclusterId': typeof ProtectedTreeclusterTreeclusterIdIndexRoute
+  '/trees/$treeId': typeof ProtectedTreesTreeIdIndexRoute
+  '/vehicles/$vehicleId': typeof ProtectedVehiclesVehicleIdIndexRoute
+  '/watering-plans/$wateringPlanId': typeof ProtectedWateringPlansWateringPlanIdIndexRoute
+  '/sensors/$sensorId': typeof ProtectedSensorsSensorIdIndexRoute
+  '/settings/plugin': typeof ProtectedSettingsPluginIndexRoute
+  '/map/tree/edit': typeof ProtectedMapTreeEditIndexRoute
+  '/map/tree/new': typeof ProtectedMapTreeNewIndexRoute
+  '/settings/plugin/$pluginName': typeof ProtectedSettingsPluginPluginNameIndexRoute
+  '/treecluster/new': typeof ProtectedTreeclusterFormularNewIndexRoute
+  '/trees/new': typeof ProtectedTreesFormularNewIndexRoute
+  '/vehicles/new': typeof ProtectedVehiclesFormularNewIndexRoute
+  '/watering-plans/new': typeof ProtectedWateringPlansFormularNewIndexRoute
+  '/map/sensor/select/tree': typeof ProtectedMapSensorSelectTreeIndexRoute
+  '/map/treecluster/select/tree': typeof ProtectedMapTreeclusterSelectTreeIndexRoute
+  '/map/watering-plan/select/cluster': typeof ProtectedMapWateringPlanSelectClusterIndexRoute
+  '/treecluster/$treeclusterId/edit': typeof ProtectedTreeclusterFormularTreeclusterIdEditIndexRoute
+  '/trees/$treeId/edit': typeof ProtectedTreesFormularTreeIdEditIndexRoute
+  '/vehicles/$vehicleId/edit': typeof ProtectedVehiclesFormularVehicleIdEditIndexRoute
+  '/watering-plans/$wateringPlanId/edit': typeof ProtectedWateringPlansFormularWateringPlanIdEditIndexRoute
+  '/watering-plans/$wateringPlanId/status/edit': typeof ProtectedWateringPlansFormularWateringPlanIdStatusEditIndexRoute
+}
+export interface FileRoutesById {
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/_protected': typeof ProtectedRouteWithChildren
+  '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
+  '/_protected/debug': typeof ProtectedDebugRouteRouteWithChildren
+  '/_protected/evaluations': typeof ProtectedEvaluationsRouteRouteWithChildren
+  '/_protected/map': typeof ProtectedMapRouteRouteWithChildren
+  '/_protected/profile': typeof ProtectedProfileRouteRouteWithChildren
+  '/_protected/sensors': typeof ProtectedSensorsRouteRouteWithChildren
+  '/_protected/settings': typeof ProtectedSettingsRouteRouteWithChildren
+  '/_protected/team': typeof ProtectedTeamRouteRouteWithChildren
+  '/_protected/treecluster': typeof ProtectedTreeclusterRouteRouteWithChildren
+  '/_protected/trees': typeof ProtectedTreesRouteRouteWithChildren
+  '/_protected/vehicles': typeof ProtectedVehiclesRouteRouteWithChildren
+  '/_protected/watering-plans': typeof ProtectedWateringPlansRouteRouteWithChildren
+  '/_protected/dashboard': typeof ProtectedDashboardRoute
+  '/_protected/info': typeof ProtectedInfoRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/_protected/sensors/$sensorId': typeof ProtectedSensorsSensorIdRouteRouteWithChildren
+  '/_protected/settings/plugin': typeof ProtectedSettingsPluginRouteRouteWithChildren
+  '/_protected/treecluster/$treeclusterId': typeof ProtectedTreeclusterTreeclusterIdRouteRouteWithChildren
+  '/_protected/treecluster/_formular': typeof ProtectedTreeclusterFormularRouteRouteWithChildren
+  '/_protected/trees/$treeId': typeof ProtectedTreesTreeIdRouteRouteWithChildren
+  '/_protected/vehicles/$vehicleId': typeof ProtectedVehiclesVehicleIdRouteRouteWithChildren
+  '/_protected/vehicles/_formular': typeof ProtectedVehiclesFormularRouteRouteWithChildren
+  '/_protected/watering-plans/$wateringPlanId': typeof ProtectedWateringPlansWateringPlanIdRouteRouteWithChildren
+  '/_protected/watering-plans/_formular': typeof ProtectedWateringPlansFormularRouteRouteWithChildren
+  '/_protected/trees/_formular': typeof ProtectedTreesFormularRouteWithChildren
+  '/_protected/debug/': typeof ProtectedDebugIndexRoute
+  '/_protected/evaluations/': typeof ProtectedEvaluationsIndexRoute
+  '/_protected/map/': typeof ProtectedMapIndexRoute
+  '/_protected/profile/': typeof ProtectedProfileIndexRoute
+  '/_protected/sensors/': typeof ProtectedSensorsIndexRoute
+  '/_protected/settings/': typeof ProtectedSettingsIndexRoute
+  '/_protected/team/': typeof ProtectedTeamIndexRoute
+  '/_protected/treecluster/': typeof ProtectedTreeclusterIndexRoute
+  '/_protected/trees/': typeof ProtectedTreesIndexRoute
+  '/_protected/vehicles/': typeof ProtectedVehiclesIndexRoute
+  '/_protected/watering-plans/': typeof ProtectedWateringPlansIndexRoute
+  '/_protected/map/tree/edit': typeof ProtectedMapTreeEditRouteRouteWithChildren
+  '/_protected/map/tree/new': typeof ProtectedMapTreeNewRouteRouteWithChildren
+  '/_protected/settings/plugin/$pluginName': typeof ProtectedSettingsPluginPluginNameRouteRouteWithChildren
+  '/_protected/treecluster/_formular/$treeclusterId': typeof ProtectedTreeclusterFormularTreeclusterIdRouteRouteWithChildren
+  '/_protected/treecluster/_formular/new': typeof ProtectedTreeclusterFormularNewRouteRouteWithChildren
+  '/_protected/trees/_formular/$treeId': typeof ProtectedTreesFormularTreeIdRouteRouteWithChildren
+  '/_protected/trees/_formular/new': typeof ProtectedTreesFormularNewRouteRouteWithChildren
+  '/_protected/vehicles/_formular/$vehicleId': typeof ProtectedVehiclesFormularVehicleIdRouteRouteWithChildren
+  '/_protected/vehicles/_formular/new': typeof ProtectedVehiclesFormularNewRouteRouteWithChildren
+  '/_protected/watering-plans/_formular/$wateringPlanId': typeof ProtectedWateringPlansFormularWateringPlanIdRouteRouteWithChildren
+  '/_protected/watering-plans/_formular/new': typeof ProtectedWateringPlansFormularNewRouteRouteWithChildren
+  '/_protected/sensors/$sensorId/': typeof ProtectedSensorsSensorIdIndexRoute
+  '/_protected/settings/plugin/': typeof ProtectedSettingsPluginIndexRoute
+  '/_protected/treecluster/$treeclusterId/': typeof ProtectedTreeclusterTreeclusterIdIndexRoute
+  '/_protected/trees/$treeId/': typeof ProtectedTreesTreeIdIndexRoute
+  '/_protected/vehicles/$vehicleId/': typeof ProtectedVehiclesVehicleIdIndexRoute
+  '/_protected/watering-plans/$wateringPlanId/': typeof ProtectedWateringPlansWateringPlanIdIndexRoute
+  '/_protected/map/sensor/select/tree': typeof ProtectedMapSensorSelectTreeRouteRouteWithChildren
+  '/_protected/map/treecluster/select/tree': typeof ProtectedMapTreeclusterSelectTreeRouteRouteWithChildren
+  '/_protected/map/watering-plan/select/cluster': typeof ProtectedMapWateringPlanSelectClusterRouteRouteWithChildren
+  '/_protected/treecluster/_formular/$treeclusterId/edit': typeof ProtectedTreeclusterFormularTreeclusterIdEditRouteRouteWithChildren
+  '/_protected/trees/_formular/$treeId/edit': typeof ProtectedTreesFormularTreeIdEditRouteRouteWithChildren
+  '/_protected/vehicles/_formular/$vehicleId/edit': typeof ProtectedVehiclesFormularVehicleIdEditRouteRouteWithChildren
+  '/_protected/watering-plans/_formular/$wateringPlanId/edit': typeof ProtectedWateringPlansFormularWateringPlanIdEditRouteRouteWithChildren
+  '/_protected/map/tree/edit/': typeof ProtectedMapTreeEditIndexRoute
+  '/_protected/map/tree/new/': typeof ProtectedMapTreeNewIndexRoute
+  '/_protected/settings/plugin/$pluginName/': typeof ProtectedSettingsPluginPluginNameIndexRoute
+  '/_protected/treecluster/_formular/new/': typeof ProtectedTreeclusterFormularNewIndexRoute
+  '/_protected/trees/_formular/new/': typeof ProtectedTreesFormularNewIndexRoute
+  '/_protected/vehicles/_formular/new/': typeof ProtectedVehiclesFormularNewIndexRoute
+  '/_protected/watering-plans/_formular/new/': typeof ProtectedWateringPlansFormularNewIndexRoute
+  '/_protected/watering-plans/_formular/$wateringPlanId/status/edit': typeof ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteRouteWithChildren
+  '/_protected/map/sensor/select/tree/': typeof ProtectedMapSensorSelectTreeIndexRoute
+  '/_protected/map/treecluster/select/tree/': typeof ProtectedMapTreeclusterSelectTreeIndexRoute
+  '/_protected/map/watering-plan/select/cluster/': typeof ProtectedMapWateringPlanSelectClusterIndexRoute
+  '/_protected/treecluster/_formular/$treeclusterId/edit/': typeof ProtectedTreeclusterFormularTreeclusterIdEditIndexRoute
+  '/_protected/trees/_formular/$treeId/edit/': typeof ProtectedTreesFormularTreeIdEditIndexRoute
+  '/_protected/vehicles/_formular/$vehicleId/edit/': typeof ProtectedVehiclesFormularVehicleIdEditIndexRoute
+  '/_protected/watering-plans/_formular/$wateringPlanId/edit/': typeof ProtectedWateringPlansFormularWateringPlanIdEditIndexRoute
+  '/_protected/watering-plans/_formular/$wateringPlanId/status/edit/': typeof ProtectedWateringPlansFormularWateringPlanIdStatusEditIndexRoute
+}
+export interface FileRouteTypes {
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/logout'
+    | '/debug'
+    | '/evaluations'
+    | '/map'
+    | '/profile'
+    | '/sensors'
+    | '/settings'
+    | '/team'
+    | '/treecluster'
+    | '/trees'
+    | '/vehicles'
+    | '/watering-plans'
+    | '/dashboard'
+    | '/info'
+    | '/auth/callback'
+    | '/sensors/$sensorId'
+    | '/settings/plugin'
+    | '/treecluster/$treeclusterId'
+    | '/trees/$treeId'
+    | '/vehicles/$vehicleId'
+    | '/watering-plans/$wateringPlanId'
+    | '/debug/'
+    | '/evaluations/'
+    | '/map/'
+    | '/profile/'
+    | '/sensors/'
+    | '/settings/'
+    | '/team/'
+    | '/treecluster/'
+    | '/trees/'
+    | '/vehicles/'
+    | '/watering-plans/'
+    | '/map/tree/edit'
+    | '/map/tree/new'
+    | '/settings/plugin/$pluginName'
+    | '/treecluster/new'
+    | '/trees/new'
+    | '/vehicles/new'
+    | '/watering-plans/new'
+    | '/sensors/$sensorId/'
+    | '/settings/plugin/'
+    | '/treecluster/$treeclusterId/'
+    | '/trees/$treeId/'
+    | '/vehicles/$vehicleId/'
+    | '/watering-plans/$wateringPlanId/'
+    | '/map/sensor/select/tree'
+    | '/map/treecluster/select/tree'
+    | '/map/watering-plan/select/cluster'
+    | '/treecluster/$treeclusterId/edit'
+    | '/trees/$treeId/edit'
+    | '/vehicles/$vehicleId/edit'
+    | '/watering-plans/$wateringPlanId/edit'
+    | '/map/tree/edit/'
+    | '/map/tree/new/'
+    | '/settings/plugin/$pluginName/'
+    | '/treecluster/new/'
+    | '/trees/new/'
+    | '/vehicles/new/'
+    | '/watering-plans/new/'
+    | '/watering-plans/$wateringPlanId/status/edit'
+    | '/map/sensor/select/tree/'
+    | '/map/treecluster/select/tree/'
+    | '/map/watering-plan/select/cluster/'
+    | '/treecluster/$treeclusterId/edit/'
+    | '/trees/$treeId/edit/'
+    | '/vehicles/$vehicleId/edit/'
+    | '/watering-plans/$wateringPlanId/edit/'
+    | '/watering-plans/$wateringPlanId/status/edit/'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/login'
+    | '/logout'
+    | '/dashboard'
+    | '/info'
+    | '/auth/callback'
+    | '/treecluster'
+    | '/vehicles'
+    | '/watering-plans'
+    | '/trees'
+    | '/debug'
+    | '/evaluations'
+    | '/map'
+    | '/profile'
+    | '/sensors'
+    | '/settings'
+    | '/team'
+    | '/treecluster/$treeclusterId'
+    | '/trees/$treeId'
+    | '/vehicles/$vehicleId'
+    | '/watering-plans/$wateringPlanId'
+    | '/sensors/$sensorId'
+    | '/settings/plugin'
+    | '/map/tree/edit'
+    | '/map/tree/new'
+    | '/settings/plugin/$pluginName'
+    | '/treecluster/new'
+    | '/trees/new'
+    | '/vehicles/new'
+    | '/watering-plans/new'
+    | '/map/sensor/select/tree'
+    | '/map/treecluster/select/tree'
+    | '/map/watering-plan/select/cluster'
+    | '/treecluster/$treeclusterId/edit'
+    | '/trees/$treeId/edit'
+    | '/vehicles/$vehicleId/edit'
+    | '/watering-plans/$wateringPlanId/edit'
+    | '/watering-plans/$wateringPlanId/status/edit'
+  id:
+    | '__root__'
+    | '/'
+    | '/_protected'
+    | '/login'
+    | '/logout'
+    | '/_protected/debug'
+    | '/_protected/evaluations'
+    | '/_protected/map'
+    | '/_protected/profile'
+    | '/_protected/sensors'
+    | '/_protected/settings'
+    | '/_protected/team'
+    | '/_protected/treecluster'
+    | '/_protected/trees'
+    | '/_protected/vehicles'
+    | '/_protected/watering-plans'
+    | '/_protected/dashboard'
+    | '/_protected/info'
+    | '/auth/callback'
+    | '/_protected/sensors/$sensorId'
+    | '/_protected/settings/plugin'
+    | '/_protected/treecluster/$treeclusterId'
+    | '/_protected/treecluster/_formular'
+    | '/_protected/trees/$treeId'
+    | '/_protected/vehicles/$vehicleId'
+    | '/_protected/vehicles/_formular'
+    | '/_protected/watering-plans/$wateringPlanId'
+    | '/_protected/watering-plans/_formular'
+    | '/_protected/trees/_formular'
+    | '/_protected/debug/'
+    | '/_protected/evaluations/'
+    | '/_protected/map/'
+    | '/_protected/profile/'
+    | '/_protected/sensors/'
+    | '/_protected/settings/'
+    | '/_protected/team/'
+    | '/_protected/treecluster/'
+    | '/_protected/trees/'
+    | '/_protected/vehicles/'
+    | '/_protected/watering-plans/'
+    | '/_protected/map/tree/edit'
+    | '/_protected/map/tree/new'
+    | '/_protected/settings/plugin/$pluginName'
+    | '/_protected/treecluster/_formular/$treeclusterId'
+    | '/_protected/treecluster/_formular/new'
+    | '/_protected/trees/_formular/$treeId'
+    | '/_protected/trees/_formular/new'
+    | '/_protected/vehicles/_formular/$vehicleId'
+    | '/_protected/vehicles/_formular/new'
+    | '/_protected/watering-plans/_formular/$wateringPlanId'
+    | '/_protected/watering-plans/_formular/new'
+    | '/_protected/sensors/$sensorId/'
+    | '/_protected/settings/plugin/'
+    | '/_protected/treecluster/$treeclusterId/'
+    | '/_protected/trees/$treeId/'
+    | '/_protected/vehicles/$vehicleId/'
+    | '/_protected/watering-plans/$wateringPlanId/'
+    | '/_protected/map/sensor/select/tree'
+    | '/_protected/map/treecluster/select/tree'
+    | '/_protected/map/watering-plan/select/cluster'
+    | '/_protected/treecluster/_formular/$treeclusterId/edit'
+    | '/_protected/trees/_formular/$treeId/edit'
+    | '/_protected/vehicles/_formular/$vehicleId/edit'
+    | '/_protected/watering-plans/_formular/$wateringPlanId/edit'
+    | '/_protected/map/tree/edit/'
+    | '/_protected/map/tree/new/'
+    | '/_protected/settings/plugin/$pluginName/'
+    | '/_protected/treecluster/_formular/new/'
+    | '/_protected/trees/_formular/new/'
+    | '/_protected/vehicles/_formular/new/'
+    | '/_protected/watering-plans/_formular/new/'
+    | '/_protected/watering-plans/_formular/$wateringPlanId/status/edit'
+    | '/_protected/map/sensor/select/tree/'
+    | '/_protected/map/treecluster/select/tree/'
+    | '/_protected/map/watering-plan/select/cluster/'
+    | '/_protected/treecluster/_formular/$treeclusterId/edit/'
+    | '/_protected/trees/_formular/$treeId/edit/'
+    | '/_protected/vehicles/_formular/$vehicleId/edit/'
+    | '/_protected/watering-plans/_formular/$wateringPlanId/edit/'
+    | '/_protected/watering-plans/_formular/$wateringPlanId/status/edit/'
+  fileRoutesById: FileRoutesById
+}
+export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
+  ProtectedRoute: typeof ProtectedRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  LogoutRoute: typeof LogoutRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
+}
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/_protected': {
-      id: '/_protected'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof ProtectedImport
-      parentRoute: typeof rootRoute
+    '/logout': {
+      id: '/logout'
+      path: '/logout'
+      fullPath: '/logout'
+      preLoaderRoute: typeof LogoutRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
-      preLoaderRoute: typeof LoginImport
-      parentRoute: typeof rootRoute
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/logout': {
-      id: '/logout'
-      path: '/logout'
-      fullPath: '/logout'
-      preLoaderRoute: typeof LogoutImport
-      parentRoute: typeof rootRoute
+    '/_protected': {
+      id: '/_protected'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof ProtectedRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_protected/debug': {
-      id: '/_protected/debug'
-      path: '/debug'
-      fullPath: '/debug'
-      preLoaderRoute: typeof ProtectedDebugRouteImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/evaluations': {
-      id: '/_protected/evaluations'
-      path: '/evaluations'
-      fullPath: '/evaluations'
-      preLoaderRoute: typeof ProtectedEvaluationsRouteImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/map': {
-      id: '/_protected/map'
-      path: '/map'
-      fullPath: '/map'
-      preLoaderRoute: typeof ProtectedMapRouteImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/profile': {
-      id: '/_protected/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProtectedProfileRouteImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/sensors': {
-      id: '/_protected/sensors'
-      path: '/sensors'
-      fullPath: '/sensors'
-      preLoaderRoute: typeof ProtectedSensorsRouteImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/settings': {
-      id: '/_protected/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof ProtectedSettingsRouteImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/team': {
-      id: '/_protected/team'
-      path: '/team'
-      fullPath: '/team'
-      preLoaderRoute: typeof ProtectedTeamRouteImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/treecluster': {
-      id: '/_protected/treecluster'
-      path: '/treecluster'
-      fullPath: '/treecluster'
-      preLoaderRoute: typeof ProtectedTreeclusterRouteImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/trees': {
-      id: '/_protected/trees'
-      path: '/trees'
-      fullPath: '/trees'
-      preLoaderRoute: typeof ProtectedTreesRouteImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/vehicles': {
-      id: '/_protected/vehicles'
-      path: '/vehicles'
-      fullPath: '/vehicles'
-      preLoaderRoute: typeof ProtectedVehiclesRouteImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/watering-plans': {
-      id: '/_protected/watering-plans'
-      path: '/watering-plans'
-      fullPath: '/watering-plans'
-      preLoaderRoute: typeof ProtectedWateringPlansRouteImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/dashboard': {
-      id: '/_protected/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof ProtectedDashboardImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/info': {
-      id: '/_protected/info'
-      path: '/info'
-      fullPath: '/info'
-      preLoaderRoute: typeof ProtectedInfoImport
-      parentRoute: typeof ProtectedImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/auth/callback'
       fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackImport
-      parentRoute: typeof rootRoute
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_protected/sensors/$sensorId': {
-      id: '/_protected/sensors/$sensorId'
-      path: '/$sensorId'
-      fullPath: '/sensors/$sensorId'
-      preLoaderRoute: typeof ProtectedSensorsSensorIdRouteImport
-      parentRoute: typeof ProtectedSensorsRouteImport
+    '/_protected/info': {
+      id: '/_protected/info'
+      path: '/info'
+      fullPath: '/info'
+      preLoaderRoute: typeof ProtectedInfoRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/_protected/settings/plugin': {
-      id: '/_protected/settings/plugin'
-      path: '/plugin'
-      fullPath: '/settings/plugin'
-      preLoaderRoute: typeof ProtectedSettingsPluginRouteImport
-      parentRoute: typeof ProtectedSettingsRouteImport
+    '/_protected/dashboard': {
+      id: '/_protected/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof ProtectedDashboardRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/_protected/treecluster/$treeclusterId': {
-      id: '/_protected/treecluster/$treeclusterId'
-      path: '/$treeclusterId'
-      fullPath: '/treecluster/$treeclusterId'
-      preLoaderRoute: typeof ProtectedTreeclusterTreeclusterIdRouteImport
-      parentRoute: typeof ProtectedTreeclusterRouteImport
-    }
-    '/_protected/treecluster/_formular': {
-      id: '/_protected/treecluster/_formular'
-      path: ''
-      fullPath: '/treecluster'
-      preLoaderRoute: typeof ProtectedTreeclusterFormularRouteImport
-      parentRoute: typeof ProtectedTreeclusterRouteImport
-    }
-    '/_protected/trees/$treeId': {
-      id: '/_protected/trees/$treeId'
-      path: '/$treeId'
-      fullPath: '/trees/$treeId'
-      preLoaderRoute: typeof ProtectedTreesTreeIdRouteImport
-      parentRoute: typeof ProtectedTreesRouteImport
-    }
-    '/_protected/vehicles/$vehicleId': {
-      id: '/_protected/vehicles/$vehicleId'
-      path: '/$vehicleId'
-      fullPath: '/vehicles/$vehicleId'
-      preLoaderRoute: typeof ProtectedVehiclesVehicleIdRouteImport
-      parentRoute: typeof ProtectedVehiclesRouteImport
-    }
-    '/_protected/vehicles/_formular': {
-      id: '/_protected/vehicles/_formular'
-      path: ''
-      fullPath: '/vehicles'
-      preLoaderRoute: typeof ProtectedVehiclesFormularRouteImport
-      parentRoute: typeof ProtectedVehiclesRouteImport
-    }
-    '/_protected/watering-plans/$wateringPlanId': {
-      id: '/_protected/watering-plans/$wateringPlanId'
-      path: '/$wateringPlanId'
-      fullPath: '/watering-plans/$wateringPlanId'
-      preLoaderRoute: typeof ProtectedWateringPlansWateringPlanIdRouteImport
-      parentRoute: typeof ProtectedWateringPlansRouteImport
-    }
-    '/_protected/watering-plans/_formular': {
-      id: '/_protected/watering-plans/_formular'
-      path: ''
+    '/_protected/watering-plans': {
+      id: '/_protected/watering-plans'
+      path: '/watering-plans'
       fullPath: '/watering-plans'
-      preLoaderRoute: typeof ProtectedWateringPlansFormularRouteImport
-      parentRoute: typeof ProtectedWateringPlansRouteImport
+      preLoaderRoute: typeof ProtectedWateringPlansRouteRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/_protected/trees/_formular': {
-      id: '/_protected/trees/_formular'
-      path: ''
+    '/_protected/vehicles': {
+      id: '/_protected/vehicles'
+      path: '/vehicles'
+      fullPath: '/vehicles'
+      preLoaderRoute: typeof ProtectedVehiclesRouteRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/trees': {
+      id: '/_protected/trees'
+      path: '/trees'
       fullPath: '/trees'
-      preLoaderRoute: typeof ProtectedTreesFormularImport
-      parentRoute: typeof ProtectedTreesRouteImport
+      preLoaderRoute: typeof ProtectedTreesRouteRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/_protected/debug/': {
-      id: '/_protected/debug/'
-      path: '/'
-      fullPath: '/debug/'
-      preLoaderRoute: typeof ProtectedDebugIndexImport
-      parentRoute: typeof ProtectedDebugRouteImport
+    '/_protected/treecluster': {
+      id: '/_protected/treecluster'
+      path: '/treecluster'
+      fullPath: '/treecluster'
+      preLoaderRoute: typeof ProtectedTreeclusterRouteRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/_protected/evaluations/': {
-      id: '/_protected/evaluations/'
-      path: '/'
-      fullPath: '/evaluations/'
-      preLoaderRoute: typeof ProtectedEvaluationsIndexImport
-      parentRoute: typeof ProtectedEvaluationsRouteImport
+    '/_protected/team': {
+      id: '/_protected/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof ProtectedTeamRouteRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/_protected/map/': {
-      id: '/_protected/map/'
-      path: '/'
-      fullPath: '/map/'
-      preLoaderRoute: typeof ProtectedMapIndexImport
-      parentRoute: typeof ProtectedMapRouteImport
+    '/_protected/settings': {
+      id: '/_protected/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof ProtectedSettingsRouteRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/_protected/profile/': {
-      id: '/_protected/profile/'
-      path: '/'
-      fullPath: '/profile/'
-      preLoaderRoute: typeof ProtectedProfileIndexImport
-      parentRoute: typeof ProtectedProfileRouteImport
+    '/_protected/sensors': {
+      id: '/_protected/sensors'
+      path: '/sensors'
+      fullPath: '/sensors'
+      preLoaderRoute: typeof ProtectedSensorsRouteRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/_protected/sensors/': {
-      id: '/_protected/sensors/'
-      path: '/'
-      fullPath: '/sensors/'
-      preLoaderRoute: typeof ProtectedSensorsIndexImport
-      parentRoute: typeof ProtectedSensorsRouteImport
+    '/_protected/profile': {
+      id: '/_protected/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProtectedProfileRouteRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/_protected/settings/': {
-      id: '/_protected/settings/'
-      path: '/'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof ProtectedSettingsIndexImport
-      parentRoute: typeof ProtectedSettingsRouteImport
+    '/_protected/map': {
+      id: '/_protected/map'
+      path: '/map'
+      fullPath: '/map'
+      preLoaderRoute: typeof ProtectedMapRouteRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/_protected/team/': {
-      id: '/_protected/team/'
-      path: '/'
-      fullPath: '/team/'
-      preLoaderRoute: typeof ProtectedTeamIndexImport
-      parentRoute: typeof ProtectedTeamRouteImport
+    '/_protected/evaluations': {
+      id: '/_protected/evaluations'
+      path: '/evaluations'
+      fullPath: '/evaluations'
+      preLoaderRoute: typeof ProtectedEvaluationsRouteRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/_protected/treecluster/': {
-      id: '/_protected/treecluster/'
-      path: '/'
-      fullPath: '/treecluster/'
-      preLoaderRoute: typeof ProtectedTreeclusterIndexImport
-      parentRoute: typeof ProtectedTreeclusterRouteImport
-    }
-    '/_protected/trees/': {
-      id: '/_protected/trees/'
-      path: '/'
-      fullPath: '/trees/'
-      preLoaderRoute: typeof ProtectedTreesIndexImport
-      parentRoute: typeof ProtectedTreesRouteImport
-    }
-    '/_protected/vehicles/': {
-      id: '/_protected/vehicles/'
-      path: '/'
-      fullPath: '/vehicles/'
-      preLoaderRoute: typeof ProtectedVehiclesIndexImport
-      parentRoute: typeof ProtectedVehiclesRouteImport
+    '/_protected/debug': {
+      id: '/_protected/debug'
+      path: '/debug'
+      fullPath: '/debug'
+      preLoaderRoute: typeof ProtectedDebugRouteRouteImport
+      parentRoute: typeof ProtectedRoute
     }
     '/_protected/watering-plans/': {
       id: '/_protected/watering-plans/'
       path: '/'
       fullPath: '/watering-plans/'
-      preLoaderRoute: typeof ProtectedWateringPlansIndexImport
-      parentRoute: typeof ProtectedWateringPlansRouteImport
+      preLoaderRoute: typeof ProtectedWateringPlansIndexRouteImport
+      parentRoute: typeof ProtectedWateringPlansRouteRoute
     }
-    '/_protected/map/tree/edit': {
-      id: '/_protected/map/tree/edit'
-      path: '/tree/edit'
-      fullPath: '/map/tree/edit'
-      preLoaderRoute: typeof ProtectedMapTreeEditRouteImport
-      parentRoute: typeof ProtectedMapRouteImport
+    '/_protected/vehicles/': {
+      id: '/_protected/vehicles/'
+      path: '/'
+      fullPath: '/vehicles/'
+      preLoaderRoute: typeof ProtectedVehiclesIndexRouteImport
+      parentRoute: typeof ProtectedVehiclesRouteRoute
     }
-    '/_protected/map/tree/new': {
-      id: '/_protected/map/tree/new'
-      path: '/tree/new'
-      fullPath: '/map/tree/new'
-      preLoaderRoute: typeof ProtectedMapTreeNewRouteImport
-      parentRoute: typeof ProtectedMapRouteImport
+    '/_protected/trees/': {
+      id: '/_protected/trees/'
+      path: '/'
+      fullPath: '/trees/'
+      preLoaderRoute: typeof ProtectedTreesIndexRouteImport
+      parentRoute: typeof ProtectedTreesRouteRoute
     }
-    '/_protected/settings/plugin/$pluginName': {
-      id: '/_protected/settings/plugin/$pluginName'
-      path: '/$pluginName'
-      fullPath: '/settings/plugin/$pluginName'
-      preLoaderRoute: typeof ProtectedSettingsPluginPluginNameRouteImport
-      parentRoute: typeof ProtectedSettingsPluginRouteImport
+    '/_protected/treecluster/': {
+      id: '/_protected/treecluster/'
+      path: '/'
+      fullPath: '/treecluster/'
+      preLoaderRoute: typeof ProtectedTreeclusterIndexRouteImport
+      parentRoute: typeof ProtectedTreeclusterRouteRoute
     }
-    '/_protected/treecluster/_formular/$treeclusterId': {
-      id: '/_protected/treecluster/_formular/$treeclusterId'
-      path: '/$treeclusterId'
-      fullPath: '/treecluster/$treeclusterId'
-      preLoaderRoute: typeof ProtectedTreeclusterFormularTreeclusterIdRouteImport
-      parentRoute: typeof ProtectedTreeclusterFormularRouteImport
+    '/_protected/team/': {
+      id: '/_protected/team/'
+      path: '/'
+      fullPath: '/team/'
+      preLoaderRoute: typeof ProtectedTeamIndexRouteImport
+      parentRoute: typeof ProtectedTeamRouteRoute
     }
-    '/_protected/treecluster/_formular/new': {
-      id: '/_protected/treecluster/_formular/new'
-      path: '/new'
-      fullPath: '/treecluster/new'
-      preLoaderRoute: typeof ProtectedTreeclusterFormularNewRouteImport
-      parentRoute: typeof ProtectedTreeclusterFormularRouteImport
+    '/_protected/settings/': {
+      id: '/_protected/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof ProtectedSettingsIndexRouteImport
+      parentRoute: typeof ProtectedSettingsRouteRoute
     }
-    '/_protected/trees/_formular/$treeId': {
-      id: '/_protected/trees/_formular/$treeId'
-      path: '/$treeId'
-      fullPath: '/trees/$treeId'
-      preLoaderRoute: typeof ProtectedTreesFormularTreeIdRouteImport
-      parentRoute: typeof ProtectedTreesFormularImport
+    '/_protected/sensors/': {
+      id: '/_protected/sensors/'
+      path: '/'
+      fullPath: '/sensors/'
+      preLoaderRoute: typeof ProtectedSensorsIndexRouteImport
+      parentRoute: typeof ProtectedSensorsRouteRoute
     }
-    '/_protected/trees/_formular/new': {
-      id: '/_protected/trees/_formular/new'
-      path: '/new'
-      fullPath: '/trees/new'
-      preLoaderRoute: typeof ProtectedTreesFormularNewRouteImport
-      parentRoute: typeof ProtectedTreesFormularImport
+    '/_protected/profile/': {
+      id: '/_protected/profile/'
+      path: '/'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof ProtectedProfileIndexRouteImport
+      parentRoute: typeof ProtectedProfileRouteRoute
     }
-    '/_protected/vehicles/_formular/$vehicleId': {
-      id: '/_protected/vehicles/_formular/$vehicleId'
-      path: '/$vehicleId'
-      fullPath: '/vehicles/$vehicleId'
-      preLoaderRoute: typeof ProtectedVehiclesFormularVehicleIdRouteImport
-      parentRoute: typeof ProtectedVehiclesFormularRouteImport
+    '/_protected/map/': {
+      id: '/_protected/map/'
+      path: '/'
+      fullPath: '/map/'
+      preLoaderRoute: typeof ProtectedMapIndexRouteImport
+      parentRoute: typeof ProtectedMapRouteRoute
     }
-    '/_protected/vehicles/_formular/new': {
-      id: '/_protected/vehicles/_formular/new'
-      path: '/new'
-      fullPath: '/vehicles/new'
-      preLoaderRoute: typeof ProtectedVehiclesFormularNewRouteImport
-      parentRoute: typeof ProtectedVehiclesFormularRouteImport
+    '/_protected/evaluations/': {
+      id: '/_protected/evaluations/'
+      path: '/'
+      fullPath: '/evaluations/'
+      preLoaderRoute: typeof ProtectedEvaluationsIndexRouteImport
+      parentRoute: typeof ProtectedEvaluationsRouteRoute
     }
-    '/_protected/watering-plans/_formular/$wateringPlanId': {
-      id: '/_protected/watering-plans/_formular/$wateringPlanId'
+    '/_protected/debug/': {
+      id: '/_protected/debug/'
+      path: '/'
+      fullPath: '/debug/'
+      preLoaderRoute: typeof ProtectedDebugIndexRouteImport
+      parentRoute: typeof ProtectedDebugRouteRoute
+    }
+    '/_protected/trees/_formular': {
+      id: '/_protected/trees/_formular'
+      path: ''
+      fullPath: '/trees'
+      preLoaderRoute: typeof ProtectedTreesFormularRouteImport
+      parentRoute: typeof ProtectedTreesRouteRoute
+    }
+    '/_protected/watering-plans/_formular': {
+      id: '/_protected/watering-plans/_formular'
+      path: ''
+      fullPath: '/watering-plans'
+      preLoaderRoute: typeof ProtectedWateringPlansFormularRouteRouteImport
+      parentRoute: typeof ProtectedWateringPlansRouteRoute
+    }
+    '/_protected/watering-plans/$wateringPlanId': {
+      id: '/_protected/watering-plans/$wateringPlanId'
       path: '/$wateringPlanId'
       fullPath: '/watering-plans/$wateringPlanId'
-      preLoaderRoute: typeof ProtectedWateringPlansFormularWateringPlanIdRouteImport
-      parentRoute: typeof ProtectedWateringPlansFormularRouteImport
+      preLoaderRoute: typeof ProtectedWateringPlansWateringPlanIdRouteRouteImport
+      parentRoute: typeof ProtectedWateringPlansRouteRoute
     }
-    '/_protected/watering-plans/_formular/new': {
-      id: '/_protected/watering-plans/_formular/new'
-      path: '/new'
-      fullPath: '/watering-plans/new'
-      preLoaderRoute: typeof ProtectedWateringPlansFormularNewRouteImport
-      parentRoute: typeof ProtectedWateringPlansFormularRouteImport
+    '/_protected/vehicles/_formular': {
+      id: '/_protected/vehicles/_formular'
+      path: ''
+      fullPath: '/vehicles'
+      preLoaderRoute: typeof ProtectedVehiclesFormularRouteRouteImport
+      parentRoute: typeof ProtectedVehiclesRouteRoute
     }
-    '/_protected/sensors/$sensorId/': {
-      id: '/_protected/sensors/$sensorId/'
-      path: '/'
-      fullPath: '/sensors/$sensorId/'
-      preLoaderRoute: typeof ProtectedSensorsSensorIdIndexImport
-      parentRoute: typeof ProtectedSensorsSensorIdRouteImport
+    '/_protected/vehicles/$vehicleId': {
+      id: '/_protected/vehicles/$vehicleId'
+      path: '/$vehicleId'
+      fullPath: '/vehicles/$vehicleId'
+      preLoaderRoute: typeof ProtectedVehiclesVehicleIdRouteRouteImport
+      parentRoute: typeof ProtectedVehiclesRouteRoute
     }
-    '/_protected/settings/plugin/': {
-      id: '/_protected/settings/plugin/'
-      path: '/'
-      fullPath: '/settings/plugin/'
-      preLoaderRoute: typeof ProtectedSettingsPluginIndexImport
-      parentRoute: typeof ProtectedSettingsPluginRouteImport
+    '/_protected/trees/$treeId': {
+      id: '/_protected/trees/$treeId'
+      path: '/$treeId'
+      fullPath: '/trees/$treeId'
+      preLoaderRoute: typeof ProtectedTreesTreeIdRouteRouteImport
+      parentRoute: typeof ProtectedTreesRouteRoute
     }
-    '/_protected/treecluster/$treeclusterId/': {
-      id: '/_protected/treecluster/$treeclusterId/'
-      path: '/'
-      fullPath: '/treecluster/$treeclusterId/'
-      preLoaderRoute: typeof ProtectedTreeclusterTreeclusterIdIndexImport
-      parentRoute: typeof ProtectedTreeclusterTreeclusterIdRouteImport
+    '/_protected/treecluster/_formular': {
+      id: '/_protected/treecluster/_formular'
+      path: ''
+      fullPath: '/treecluster'
+      preLoaderRoute: typeof ProtectedTreeclusterFormularRouteRouteImport
+      parentRoute: typeof ProtectedTreeclusterRouteRoute
     }
-    '/_protected/trees/$treeId/': {
-      id: '/_protected/trees/$treeId/'
-      path: '/'
-      fullPath: '/trees/$treeId/'
-      preLoaderRoute: typeof ProtectedTreesTreeIdIndexImport
-      parentRoute: typeof ProtectedTreesTreeIdRouteImport
+    '/_protected/treecluster/$treeclusterId': {
+      id: '/_protected/treecluster/$treeclusterId'
+      path: '/$treeclusterId'
+      fullPath: '/treecluster/$treeclusterId'
+      preLoaderRoute: typeof ProtectedTreeclusterTreeclusterIdRouteRouteImport
+      parentRoute: typeof ProtectedTreeclusterRouteRoute
     }
-    '/_protected/vehicles/$vehicleId/': {
-      id: '/_protected/vehicles/$vehicleId/'
-      path: '/'
-      fullPath: '/vehicles/$vehicleId/'
-      preLoaderRoute: typeof ProtectedVehiclesVehicleIdIndexImport
-      parentRoute: typeof ProtectedVehiclesVehicleIdRouteImport
+    '/_protected/settings/plugin': {
+      id: '/_protected/settings/plugin'
+      path: '/plugin'
+      fullPath: '/settings/plugin'
+      preLoaderRoute: typeof ProtectedSettingsPluginRouteRouteImport
+      parentRoute: typeof ProtectedSettingsRouteRoute
+    }
+    '/_protected/sensors/$sensorId': {
+      id: '/_protected/sensors/$sensorId'
+      path: '/$sensorId'
+      fullPath: '/sensors/$sensorId'
+      preLoaderRoute: typeof ProtectedSensorsSensorIdRouteRouteImport
+      parentRoute: typeof ProtectedSensorsRouteRoute
     }
     '/_protected/watering-plans/$wateringPlanId/': {
       id: '/_protected/watering-plans/$wateringPlanId/'
       path: '/'
       fullPath: '/watering-plans/$wateringPlanId/'
-      preLoaderRoute: typeof ProtectedWateringPlansWateringPlanIdIndexImport
-      parentRoute: typeof ProtectedWateringPlansWateringPlanIdRouteImport
+      preLoaderRoute: typeof ProtectedWateringPlansWateringPlanIdIndexRouteImport
+      parentRoute: typeof ProtectedWateringPlansWateringPlanIdRouteRoute
     }
-    '/_protected/map/sensor/select/tree': {
-      id: '/_protected/map/sensor/select/tree'
-      path: '/sensor/select/tree'
-      fullPath: '/map/sensor/select/tree'
-      preLoaderRoute: typeof ProtectedMapSensorSelectTreeRouteImport
-      parentRoute: typeof ProtectedMapRouteImport
-    }
-    '/_protected/map/treecluster/select/tree': {
-      id: '/_protected/map/treecluster/select/tree'
-      path: '/treecluster/select/tree'
-      fullPath: '/map/treecluster/select/tree'
-      preLoaderRoute: typeof ProtectedMapTreeclusterSelectTreeRouteImport
-      parentRoute: typeof ProtectedMapRouteImport
-    }
-    '/_protected/map/watering-plan/select/cluster': {
-      id: '/_protected/map/watering-plan/select/cluster'
-      path: '/watering-plan/select/cluster'
-      fullPath: '/map/watering-plan/select/cluster'
-      preLoaderRoute: typeof ProtectedMapWateringPlanSelectClusterRouteImport
-      parentRoute: typeof ProtectedMapRouteImport
-    }
-    '/_protected/treecluster/_formular/$treeclusterId/edit': {
-      id: '/_protected/treecluster/_formular/$treeclusterId/edit'
-      path: '/edit'
-      fullPath: '/treecluster/$treeclusterId/edit'
-      preLoaderRoute: typeof ProtectedTreeclusterFormularTreeclusterIdEditRouteImport
-      parentRoute: typeof ProtectedTreeclusterFormularTreeclusterIdRouteImport
-    }
-    '/_protected/trees/_formular/$treeId/edit': {
-      id: '/_protected/trees/_formular/$treeId/edit'
-      path: '/edit'
-      fullPath: '/trees/$treeId/edit'
-      preLoaderRoute: typeof ProtectedTreesFormularTreeIdEditRouteImport
-      parentRoute: typeof ProtectedTreesFormularTreeIdRouteImport
-    }
-    '/_protected/vehicles/_formular/$vehicleId/edit': {
-      id: '/_protected/vehicles/_formular/$vehicleId/edit'
-      path: '/edit'
-      fullPath: '/vehicles/$vehicleId/edit'
-      preLoaderRoute: typeof ProtectedVehiclesFormularVehicleIdEditRouteImport
-      parentRoute: typeof ProtectedVehiclesFormularVehicleIdRouteImport
-    }
-    '/_protected/watering-plans/_formular/$wateringPlanId/edit': {
-      id: '/_protected/watering-plans/_formular/$wateringPlanId/edit'
-      path: '/edit'
-      fullPath: '/watering-plans/$wateringPlanId/edit'
-      preLoaderRoute: typeof ProtectedWateringPlansFormularWateringPlanIdEditRouteImport
-      parentRoute: typeof ProtectedWateringPlansFormularWateringPlanIdRouteImport
-    }
-    '/_protected/map/tree/edit/': {
-      id: '/_protected/map/tree/edit/'
+    '/_protected/vehicles/$vehicleId/': {
+      id: '/_protected/vehicles/$vehicleId/'
       path: '/'
-      fullPath: '/map/tree/edit/'
-      preLoaderRoute: typeof ProtectedMapTreeEditIndexImport
-      parentRoute: typeof ProtectedMapTreeEditRouteImport
+      fullPath: '/vehicles/$vehicleId/'
+      preLoaderRoute: typeof ProtectedVehiclesVehicleIdIndexRouteImport
+      parentRoute: typeof ProtectedVehiclesVehicleIdRouteRoute
     }
-    '/_protected/map/tree/new/': {
-      id: '/_protected/map/tree/new/'
+    '/_protected/trees/$treeId/': {
+      id: '/_protected/trees/$treeId/'
       path: '/'
-      fullPath: '/map/tree/new/'
-      preLoaderRoute: typeof ProtectedMapTreeNewIndexImport
-      parentRoute: typeof ProtectedMapTreeNewRouteImport
+      fullPath: '/trees/$treeId/'
+      preLoaderRoute: typeof ProtectedTreesTreeIdIndexRouteImport
+      parentRoute: typeof ProtectedTreesTreeIdRouteRoute
     }
-    '/_protected/settings/plugin/$pluginName/': {
-      id: '/_protected/settings/plugin/$pluginName/'
+    '/_protected/treecluster/$treeclusterId/': {
+      id: '/_protected/treecluster/$treeclusterId/'
       path: '/'
-      fullPath: '/settings/plugin/$pluginName/'
-      preLoaderRoute: typeof ProtectedSettingsPluginPluginNameIndexImport
-      parentRoute: typeof ProtectedSettingsPluginPluginNameRouteImport
+      fullPath: '/treecluster/$treeclusterId/'
+      preLoaderRoute: typeof ProtectedTreeclusterTreeclusterIdIndexRouteImport
+      parentRoute: typeof ProtectedTreeclusterTreeclusterIdRouteRoute
     }
-    '/_protected/treecluster/_formular/new/': {
-      id: '/_protected/treecluster/_formular/new/'
+    '/_protected/settings/plugin/': {
+      id: '/_protected/settings/plugin/'
       path: '/'
-      fullPath: '/treecluster/new/'
-      preLoaderRoute: typeof ProtectedTreeclusterFormularNewIndexImport
-      parentRoute: typeof ProtectedTreeclusterFormularNewRouteImport
+      fullPath: '/settings/plugin/'
+      preLoaderRoute: typeof ProtectedSettingsPluginIndexRouteImport
+      parentRoute: typeof ProtectedSettingsPluginRouteRoute
     }
-    '/_protected/trees/_formular/new/': {
-      id: '/_protected/trees/_formular/new/'
+    '/_protected/sensors/$sensorId/': {
+      id: '/_protected/sensors/$sensorId/'
       path: '/'
-      fullPath: '/trees/new/'
-      preLoaderRoute: typeof ProtectedTreesFormularNewIndexImport
-      parentRoute: typeof ProtectedTreesFormularNewRouteImport
+      fullPath: '/sensors/$sensorId/'
+      preLoaderRoute: typeof ProtectedSensorsSensorIdIndexRouteImport
+      parentRoute: typeof ProtectedSensorsSensorIdRouteRoute
     }
-    '/_protected/vehicles/_formular/new/': {
-      id: '/_protected/vehicles/_formular/new/'
-      path: '/'
-      fullPath: '/vehicles/new/'
-      preLoaderRoute: typeof ProtectedVehiclesFormularNewIndexImport
-      parentRoute: typeof ProtectedVehiclesFormularNewRouteImport
+    '/_protected/watering-plans/_formular/new': {
+      id: '/_protected/watering-plans/_formular/new'
+      path: '/new'
+      fullPath: '/watering-plans/new'
+      preLoaderRoute: typeof ProtectedWateringPlansFormularNewRouteRouteImport
+      parentRoute: typeof ProtectedWateringPlansFormularRouteRoute
+    }
+    '/_protected/watering-plans/_formular/$wateringPlanId': {
+      id: '/_protected/watering-plans/_formular/$wateringPlanId'
+      path: '/$wateringPlanId'
+      fullPath: '/watering-plans/$wateringPlanId'
+      preLoaderRoute: typeof ProtectedWateringPlansFormularWateringPlanIdRouteRouteImport
+      parentRoute: typeof ProtectedWateringPlansFormularRouteRoute
+    }
+    '/_protected/vehicles/_formular/new': {
+      id: '/_protected/vehicles/_formular/new'
+      path: '/new'
+      fullPath: '/vehicles/new'
+      preLoaderRoute: typeof ProtectedVehiclesFormularNewRouteRouteImport
+      parentRoute: typeof ProtectedVehiclesFormularRouteRoute
+    }
+    '/_protected/vehicles/_formular/$vehicleId': {
+      id: '/_protected/vehicles/_formular/$vehicleId'
+      path: '/$vehicleId'
+      fullPath: '/vehicles/$vehicleId'
+      preLoaderRoute: typeof ProtectedVehiclesFormularVehicleIdRouteRouteImport
+      parentRoute: typeof ProtectedVehiclesFormularRouteRoute
+    }
+    '/_protected/trees/_formular/new': {
+      id: '/_protected/trees/_formular/new'
+      path: '/new'
+      fullPath: '/trees/new'
+      preLoaderRoute: typeof ProtectedTreesFormularNewRouteRouteImport
+      parentRoute: typeof ProtectedTreesFormularRoute
+    }
+    '/_protected/trees/_formular/$treeId': {
+      id: '/_protected/trees/_formular/$treeId'
+      path: '/$treeId'
+      fullPath: '/trees/$treeId'
+      preLoaderRoute: typeof ProtectedTreesFormularTreeIdRouteRouteImport
+      parentRoute: typeof ProtectedTreesFormularRoute
+    }
+    '/_protected/treecluster/_formular/new': {
+      id: '/_protected/treecluster/_formular/new'
+      path: '/new'
+      fullPath: '/treecluster/new'
+      preLoaderRoute: typeof ProtectedTreeclusterFormularNewRouteRouteImport
+      parentRoute: typeof ProtectedTreeclusterFormularRouteRoute
+    }
+    '/_protected/treecluster/_formular/$treeclusterId': {
+      id: '/_protected/treecluster/_formular/$treeclusterId'
+      path: '/$treeclusterId'
+      fullPath: '/treecluster/$treeclusterId'
+      preLoaderRoute: typeof ProtectedTreeclusterFormularTreeclusterIdRouteRouteImport
+      parentRoute: typeof ProtectedTreeclusterFormularRouteRoute
+    }
+    '/_protected/settings/plugin/$pluginName': {
+      id: '/_protected/settings/plugin/$pluginName'
+      path: '/$pluginName'
+      fullPath: '/settings/plugin/$pluginName'
+      preLoaderRoute: typeof ProtectedSettingsPluginPluginNameRouteRouteImport
+      parentRoute: typeof ProtectedSettingsPluginRouteRoute
+    }
+    '/_protected/map/tree/new': {
+      id: '/_protected/map/tree/new'
+      path: '/tree/new'
+      fullPath: '/map/tree/new'
+      preLoaderRoute: typeof ProtectedMapTreeNewRouteRouteImport
+      parentRoute: typeof ProtectedMapRouteRoute
+    }
+    '/_protected/map/tree/edit': {
+      id: '/_protected/map/tree/edit'
+      path: '/tree/edit'
+      fullPath: '/map/tree/edit'
+      preLoaderRoute: typeof ProtectedMapTreeEditRouteRouteImport
+      parentRoute: typeof ProtectedMapRouteRoute
     }
     '/_protected/watering-plans/_formular/new/': {
       id: '/_protected/watering-plans/_formular/new/'
       path: '/'
       fullPath: '/watering-plans/new/'
-      preLoaderRoute: typeof ProtectedWateringPlansFormularNewIndexImport
-      parentRoute: typeof ProtectedWateringPlansFormularNewRouteImport
+      preLoaderRoute: typeof ProtectedWateringPlansFormularNewIndexRouteImport
+      parentRoute: typeof ProtectedWateringPlansFormularNewRouteRoute
     }
-    '/_protected/watering-plans/_formular/$wateringPlanId/status/edit': {
-      id: '/_protected/watering-plans/_formular/$wateringPlanId/status/edit'
-      path: '/status/edit'
-      fullPath: '/watering-plans/$wateringPlanId/status/edit'
-      preLoaderRoute: typeof ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteImport
-      parentRoute: typeof ProtectedWateringPlansFormularWateringPlanIdRouteImport
-    }
-    '/_protected/map/sensor/select/tree/': {
-      id: '/_protected/map/sensor/select/tree/'
+    '/_protected/vehicles/_formular/new/': {
+      id: '/_protected/vehicles/_formular/new/'
       path: '/'
-      fullPath: '/map/sensor/select/tree/'
-      preLoaderRoute: typeof ProtectedMapSensorSelectTreeIndexImport
-      parentRoute: typeof ProtectedMapSensorSelectTreeRouteImport
+      fullPath: '/vehicles/new/'
+      preLoaderRoute: typeof ProtectedVehiclesFormularNewIndexRouteImport
+      parentRoute: typeof ProtectedVehiclesFormularNewRouteRoute
     }
-    '/_protected/map/treecluster/select/tree/': {
-      id: '/_protected/map/treecluster/select/tree/'
+    '/_protected/trees/_formular/new/': {
+      id: '/_protected/trees/_formular/new/'
       path: '/'
-      fullPath: '/map/treecluster/select/tree/'
-      preLoaderRoute: typeof ProtectedMapTreeclusterSelectTreeIndexImport
-      parentRoute: typeof ProtectedMapTreeclusterSelectTreeRouteImport
+      fullPath: '/trees/new/'
+      preLoaderRoute: typeof ProtectedTreesFormularNewIndexRouteImport
+      parentRoute: typeof ProtectedTreesFormularNewRouteRoute
     }
-    '/_protected/map/watering-plan/select/cluster/': {
-      id: '/_protected/map/watering-plan/select/cluster/'
+    '/_protected/treecluster/_formular/new/': {
+      id: '/_protected/treecluster/_formular/new/'
       path: '/'
-      fullPath: '/map/watering-plan/select/cluster/'
-      preLoaderRoute: typeof ProtectedMapWateringPlanSelectClusterIndexImport
-      parentRoute: typeof ProtectedMapWateringPlanSelectClusterRouteImport
+      fullPath: '/treecluster/new/'
+      preLoaderRoute: typeof ProtectedTreeclusterFormularNewIndexRouteImport
+      parentRoute: typeof ProtectedTreeclusterFormularNewRouteRoute
     }
-    '/_protected/treecluster/_formular/$treeclusterId/edit/': {
-      id: '/_protected/treecluster/_formular/$treeclusterId/edit/'
+    '/_protected/settings/plugin/$pluginName/': {
+      id: '/_protected/settings/plugin/$pluginName/'
       path: '/'
-      fullPath: '/treecluster/$treeclusterId/edit/'
-      preLoaderRoute: typeof ProtectedTreeclusterFormularTreeclusterIdEditIndexImport
-      parentRoute: typeof ProtectedTreeclusterFormularTreeclusterIdEditRouteImport
+      fullPath: '/settings/plugin/$pluginName/'
+      preLoaderRoute: typeof ProtectedSettingsPluginPluginNameIndexRouteImport
+      parentRoute: typeof ProtectedSettingsPluginPluginNameRouteRoute
     }
-    '/_protected/trees/_formular/$treeId/edit/': {
-      id: '/_protected/trees/_formular/$treeId/edit/'
+    '/_protected/map/tree/new/': {
+      id: '/_protected/map/tree/new/'
       path: '/'
-      fullPath: '/trees/$treeId/edit/'
-      preLoaderRoute: typeof ProtectedTreesFormularTreeIdEditIndexImport
-      parentRoute: typeof ProtectedTreesFormularTreeIdEditRouteImport
+      fullPath: '/map/tree/new/'
+      preLoaderRoute: typeof ProtectedMapTreeNewIndexRouteImport
+      parentRoute: typeof ProtectedMapTreeNewRouteRoute
     }
-    '/_protected/vehicles/_formular/$vehicleId/edit/': {
-      id: '/_protected/vehicles/_formular/$vehicleId/edit/'
+    '/_protected/map/tree/edit/': {
+      id: '/_protected/map/tree/edit/'
       path: '/'
-      fullPath: '/vehicles/$vehicleId/edit/'
-      preLoaderRoute: typeof ProtectedVehiclesFormularVehicleIdEditIndexImport
-      parentRoute: typeof ProtectedVehiclesFormularVehicleIdEditRouteImport
+      fullPath: '/map/tree/edit/'
+      preLoaderRoute: typeof ProtectedMapTreeEditIndexRouteImport
+      parentRoute: typeof ProtectedMapTreeEditRouteRoute
+    }
+    '/_protected/watering-plans/_formular/$wateringPlanId/edit': {
+      id: '/_protected/watering-plans/_formular/$wateringPlanId/edit'
+      path: '/edit'
+      fullPath: '/watering-plans/$wateringPlanId/edit'
+      preLoaderRoute: typeof ProtectedWateringPlansFormularWateringPlanIdEditRouteRouteImport
+      parentRoute: typeof ProtectedWateringPlansFormularWateringPlanIdRouteRoute
+    }
+    '/_protected/vehicles/_formular/$vehicleId/edit': {
+      id: '/_protected/vehicles/_formular/$vehicleId/edit'
+      path: '/edit'
+      fullPath: '/vehicles/$vehicleId/edit'
+      preLoaderRoute: typeof ProtectedVehiclesFormularVehicleIdEditRouteRouteImport
+      parentRoute: typeof ProtectedVehiclesFormularVehicleIdRouteRoute
+    }
+    '/_protected/trees/_formular/$treeId/edit': {
+      id: '/_protected/trees/_formular/$treeId/edit'
+      path: '/edit'
+      fullPath: '/trees/$treeId/edit'
+      preLoaderRoute: typeof ProtectedTreesFormularTreeIdEditRouteRouteImport
+      parentRoute: typeof ProtectedTreesFormularTreeIdRouteRoute
+    }
+    '/_protected/treecluster/_formular/$treeclusterId/edit': {
+      id: '/_protected/treecluster/_formular/$treeclusterId/edit'
+      path: '/edit'
+      fullPath: '/treecluster/$treeclusterId/edit'
+      preLoaderRoute: typeof ProtectedTreeclusterFormularTreeclusterIdEditRouteRouteImport
+      parentRoute: typeof ProtectedTreeclusterFormularTreeclusterIdRouteRoute
+    }
+    '/_protected/map/watering-plan/select/cluster': {
+      id: '/_protected/map/watering-plan/select/cluster'
+      path: '/watering-plan/select/cluster'
+      fullPath: '/map/watering-plan/select/cluster'
+      preLoaderRoute: typeof ProtectedMapWateringPlanSelectClusterRouteRouteImport
+      parentRoute: typeof ProtectedMapRouteRoute
+    }
+    '/_protected/map/treecluster/select/tree': {
+      id: '/_protected/map/treecluster/select/tree'
+      path: '/treecluster/select/tree'
+      fullPath: '/map/treecluster/select/tree'
+      preLoaderRoute: typeof ProtectedMapTreeclusterSelectTreeRouteRouteImport
+      parentRoute: typeof ProtectedMapRouteRoute
+    }
+    '/_protected/map/sensor/select/tree': {
+      id: '/_protected/map/sensor/select/tree'
+      path: '/sensor/select/tree'
+      fullPath: '/map/sensor/select/tree'
+      preLoaderRoute: typeof ProtectedMapSensorSelectTreeRouteRouteImport
+      parentRoute: typeof ProtectedMapRouteRoute
     }
     '/_protected/watering-plans/_formular/$wateringPlanId/edit/': {
       id: '/_protected/watering-plans/_formular/$wateringPlanId/edit/'
       path: '/'
       fullPath: '/watering-plans/$wateringPlanId/edit/'
-      preLoaderRoute: typeof ProtectedWateringPlansFormularWateringPlanIdEditIndexImport
-      parentRoute: typeof ProtectedWateringPlansFormularWateringPlanIdEditRouteImport
+      preLoaderRoute: typeof ProtectedWateringPlansFormularWateringPlanIdEditIndexRouteImport
+      parentRoute: typeof ProtectedWateringPlansFormularWateringPlanIdEditRouteRoute
+    }
+    '/_protected/vehicles/_formular/$vehicleId/edit/': {
+      id: '/_protected/vehicles/_formular/$vehicleId/edit/'
+      path: '/'
+      fullPath: '/vehicles/$vehicleId/edit/'
+      preLoaderRoute: typeof ProtectedVehiclesFormularVehicleIdEditIndexRouteImport
+      parentRoute: typeof ProtectedVehiclesFormularVehicleIdEditRouteRoute
+    }
+    '/_protected/trees/_formular/$treeId/edit/': {
+      id: '/_protected/trees/_formular/$treeId/edit/'
+      path: '/'
+      fullPath: '/trees/$treeId/edit/'
+      preLoaderRoute: typeof ProtectedTreesFormularTreeIdEditIndexRouteImport
+      parentRoute: typeof ProtectedTreesFormularTreeIdEditRouteRoute
+    }
+    '/_protected/treecluster/_formular/$treeclusterId/edit/': {
+      id: '/_protected/treecluster/_formular/$treeclusterId/edit/'
+      path: '/'
+      fullPath: '/treecluster/$treeclusterId/edit/'
+      preLoaderRoute: typeof ProtectedTreeclusterFormularTreeclusterIdEditIndexRouteImport
+      parentRoute: typeof ProtectedTreeclusterFormularTreeclusterIdEditRouteRoute
+    }
+    '/_protected/map/watering-plan/select/cluster/': {
+      id: '/_protected/map/watering-plan/select/cluster/'
+      path: '/'
+      fullPath: '/map/watering-plan/select/cluster/'
+      preLoaderRoute: typeof ProtectedMapWateringPlanSelectClusterIndexRouteImport
+      parentRoute: typeof ProtectedMapWateringPlanSelectClusterRouteRoute
+    }
+    '/_protected/map/treecluster/select/tree/': {
+      id: '/_protected/map/treecluster/select/tree/'
+      path: '/'
+      fullPath: '/map/treecluster/select/tree/'
+      preLoaderRoute: typeof ProtectedMapTreeclusterSelectTreeIndexRouteImport
+      parentRoute: typeof ProtectedMapTreeclusterSelectTreeRouteRoute
+    }
+    '/_protected/map/sensor/select/tree/': {
+      id: '/_protected/map/sensor/select/tree/'
+      path: '/'
+      fullPath: '/map/sensor/select/tree/'
+      preLoaderRoute: typeof ProtectedMapSensorSelectTreeIndexRouteImport
+      parentRoute: typeof ProtectedMapSensorSelectTreeRouteRoute
+    }
+    '/_protected/watering-plans/_formular/$wateringPlanId/status/edit': {
+      id: '/_protected/watering-plans/_formular/$wateringPlanId/status/edit'
+      path: '/status/edit'
+      fullPath: '/watering-plans/$wateringPlanId/status/edit'
+      preLoaderRoute: typeof ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteRouteImport
+      parentRoute: typeof ProtectedWateringPlansFormularWateringPlanIdRouteRoute
     }
     '/_protected/watering-plans/_formular/$wateringPlanId/status/edit/': {
       id: '/_protected/watering-plans/_formular/$wateringPlanId/status/edit/'
       path: '/'
       fullPath: '/watering-plans/$wateringPlanId/status/edit/'
-      preLoaderRoute: typeof ProtectedWateringPlansFormularWateringPlanIdStatusEditIndexImport
-      parentRoute: typeof ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteImport
+      preLoaderRoute: typeof ProtectedWateringPlansFormularWateringPlanIdStatusEditIndexRouteImport
+      parentRoute: typeof ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteRoute
     }
   }
 }
-
-// Create and export the route tree
 
 interface ProtectedDebugRouteRouteChildren {
   ProtectedDebugIndexRoute: typeof ProtectedDebugIndexRoute
@@ -1838,412 +2164,6 @@ const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
   ProtectedRouteChildren,
 )
 
-export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '': typeof ProtectedRouteWithChildren
-  '/login': typeof LoginRoute
-  '/logout': typeof LogoutRoute
-  '/debug': typeof ProtectedDebugRouteRouteWithChildren
-  '/evaluations': typeof ProtectedEvaluationsRouteRouteWithChildren
-  '/map': typeof ProtectedMapRouteRouteWithChildren
-  '/profile': typeof ProtectedProfileRouteRouteWithChildren
-  '/sensors': typeof ProtectedSensorsRouteRouteWithChildren
-  '/settings': typeof ProtectedSettingsRouteRouteWithChildren
-  '/team': typeof ProtectedTeamRouteRouteWithChildren
-  '/treecluster': typeof ProtectedTreeclusterFormularRouteRouteWithChildren
-  '/trees': typeof ProtectedTreesFormularRouteWithChildren
-  '/vehicles': typeof ProtectedVehiclesFormularRouteRouteWithChildren
-  '/watering-plans': typeof ProtectedWateringPlansFormularRouteRouteWithChildren
-  '/dashboard': typeof ProtectedDashboardRoute
-  '/info': typeof ProtectedInfoRoute
-  '/auth/callback': typeof AuthCallbackRoute
-  '/sensors/$sensorId': typeof ProtectedSensorsSensorIdRouteRouteWithChildren
-  '/settings/plugin': typeof ProtectedSettingsPluginRouteRouteWithChildren
-  '/treecluster/$treeclusterId': typeof ProtectedTreeclusterFormularTreeclusterIdRouteRouteWithChildren
-  '/trees/$treeId': typeof ProtectedTreesFormularTreeIdRouteRouteWithChildren
-  '/vehicles/$vehicleId': typeof ProtectedVehiclesFormularVehicleIdRouteRouteWithChildren
-  '/watering-plans/$wateringPlanId': typeof ProtectedWateringPlansFormularWateringPlanIdRouteRouteWithChildren
-  '/debug/': typeof ProtectedDebugIndexRoute
-  '/evaluations/': typeof ProtectedEvaluationsIndexRoute
-  '/map/': typeof ProtectedMapIndexRoute
-  '/profile/': typeof ProtectedProfileIndexRoute
-  '/sensors/': typeof ProtectedSensorsIndexRoute
-  '/settings/': typeof ProtectedSettingsIndexRoute
-  '/team/': typeof ProtectedTeamIndexRoute
-  '/treecluster/': typeof ProtectedTreeclusterIndexRoute
-  '/trees/': typeof ProtectedTreesIndexRoute
-  '/vehicles/': typeof ProtectedVehiclesIndexRoute
-  '/watering-plans/': typeof ProtectedWateringPlansIndexRoute
-  '/map/tree/edit': typeof ProtectedMapTreeEditRouteRouteWithChildren
-  '/map/tree/new': typeof ProtectedMapTreeNewRouteRouteWithChildren
-  '/settings/plugin/$pluginName': typeof ProtectedSettingsPluginPluginNameRouteRouteWithChildren
-  '/treecluster/new': typeof ProtectedTreeclusterFormularNewRouteRouteWithChildren
-  '/trees/new': typeof ProtectedTreesFormularNewRouteRouteWithChildren
-  '/vehicles/new': typeof ProtectedVehiclesFormularNewRouteRouteWithChildren
-  '/watering-plans/new': typeof ProtectedWateringPlansFormularNewRouteRouteWithChildren
-  '/sensors/$sensorId/': typeof ProtectedSensorsSensorIdIndexRoute
-  '/settings/plugin/': typeof ProtectedSettingsPluginIndexRoute
-  '/treecluster/$treeclusterId/': typeof ProtectedTreeclusterTreeclusterIdIndexRoute
-  '/trees/$treeId/': typeof ProtectedTreesTreeIdIndexRoute
-  '/vehicles/$vehicleId/': typeof ProtectedVehiclesVehicleIdIndexRoute
-  '/watering-plans/$wateringPlanId/': typeof ProtectedWateringPlansWateringPlanIdIndexRoute
-  '/map/sensor/select/tree': typeof ProtectedMapSensorSelectTreeRouteRouteWithChildren
-  '/map/treecluster/select/tree': typeof ProtectedMapTreeclusterSelectTreeRouteRouteWithChildren
-  '/map/watering-plan/select/cluster': typeof ProtectedMapWateringPlanSelectClusterRouteRouteWithChildren
-  '/treecluster/$treeclusterId/edit': typeof ProtectedTreeclusterFormularTreeclusterIdEditRouteRouteWithChildren
-  '/trees/$treeId/edit': typeof ProtectedTreesFormularTreeIdEditRouteRouteWithChildren
-  '/vehicles/$vehicleId/edit': typeof ProtectedVehiclesFormularVehicleIdEditRouteRouteWithChildren
-  '/watering-plans/$wateringPlanId/edit': typeof ProtectedWateringPlansFormularWateringPlanIdEditRouteRouteWithChildren
-  '/map/tree/edit/': typeof ProtectedMapTreeEditIndexRoute
-  '/map/tree/new/': typeof ProtectedMapTreeNewIndexRoute
-  '/settings/plugin/$pluginName/': typeof ProtectedSettingsPluginPluginNameIndexRoute
-  '/treecluster/new/': typeof ProtectedTreeclusterFormularNewIndexRoute
-  '/trees/new/': typeof ProtectedTreesFormularNewIndexRoute
-  '/vehicles/new/': typeof ProtectedVehiclesFormularNewIndexRoute
-  '/watering-plans/new/': typeof ProtectedWateringPlansFormularNewIndexRoute
-  '/watering-plans/$wateringPlanId/status/edit': typeof ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteRouteWithChildren
-  '/map/sensor/select/tree/': typeof ProtectedMapSensorSelectTreeIndexRoute
-  '/map/treecluster/select/tree/': typeof ProtectedMapTreeclusterSelectTreeIndexRoute
-  '/map/watering-plan/select/cluster/': typeof ProtectedMapWateringPlanSelectClusterIndexRoute
-  '/treecluster/$treeclusterId/edit/': typeof ProtectedTreeclusterFormularTreeclusterIdEditIndexRoute
-  '/trees/$treeId/edit/': typeof ProtectedTreesFormularTreeIdEditIndexRoute
-  '/vehicles/$vehicleId/edit/': typeof ProtectedVehiclesFormularVehicleIdEditIndexRoute
-  '/watering-plans/$wateringPlanId/edit/': typeof ProtectedWateringPlansFormularWateringPlanIdEditIndexRoute
-  '/watering-plans/$wateringPlanId/status/edit/': typeof ProtectedWateringPlansFormularWateringPlanIdStatusEditIndexRoute
-}
-
-export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '': typeof ProtectedRouteWithChildren
-  '/login': typeof LoginRoute
-  '/logout': typeof LogoutRoute
-  '/dashboard': typeof ProtectedDashboardRoute
-  '/info': typeof ProtectedInfoRoute
-  '/auth/callback': typeof AuthCallbackRoute
-  '/treecluster': typeof ProtectedTreeclusterIndexRoute
-  '/vehicles': typeof ProtectedVehiclesIndexRoute
-  '/watering-plans': typeof ProtectedWateringPlansIndexRoute
-  '/trees': typeof ProtectedTreesIndexRoute
-  '/debug': typeof ProtectedDebugIndexRoute
-  '/evaluations': typeof ProtectedEvaluationsIndexRoute
-  '/map': typeof ProtectedMapIndexRoute
-  '/profile': typeof ProtectedProfileIndexRoute
-  '/sensors': typeof ProtectedSensorsIndexRoute
-  '/settings': typeof ProtectedSettingsIndexRoute
-  '/team': typeof ProtectedTeamIndexRoute
-  '/treecluster/$treeclusterId': typeof ProtectedTreeclusterTreeclusterIdIndexRoute
-  '/trees/$treeId': typeof ProtectedTreesTreeIdIndexRoute
-  '/vehicles/$vehicleId': typeof ProtectedVehiclesVehicleIdIndexRoute
-  '/watering-plans/$wateringPlanId': typeof ProtectedWateringPlansWateringPlanIdIndexRoute
-  '/sensors/$sensorId': typeof ProtectedSensorsSensorIdIndexRoute
-  '/settings/plugin': typeof ProtectedSettingsPluginIndexRoute
-  '/map/tree/edit': typeof ProtectedMapTreeEditIndexRoute
-  '/map/tree/new': typeof ProtectedMapTreeNewIndexRoute
-  '/settings/plugin/$pluginName': typeof ProtectedSettingsPluginPluginNameIndexRoute
-  '/treecluster/new': typeof ProtectedTreeclusterFormularNewIndexRoute
-  '/trees/new': typeof ProtectedTreesFormularNewIndexRoute
-  '/vehicles/new': typeof ProtectedVehiclesFormularNewIndexRoute
-  '/watering-plans/new': typeof ProtectedWateringPlansFormularNewIndexRoute
-  '/map/sensor/select/tree': typeof ProtectedMapSensorSelectTreeIndexRoute
-  '/map/treecluster/select/tree': typeof ProtectedMapTreeclusterSelectTreeIndexRoute
-  '/map/watering-plan/select/cluster': typeof ProtectedMapWateringPlanSelectClusterIndexRoute
-  '/treecluster/$treeclusterId/edit': typeof ProtectedTreeclusterFormularTreeclusterIdEditIndexRoute
-  '/trees/$treeId/edit': typeof ProtectedTreesFormularTreeIdEditIndexRoute
-  '/vehicles/$vehicleId/edit': typeof ProtectedVehiclesFormularVehicleIdEditIndexRoute
-  '/watering-plans/$wateringPlanId/edit': typeof ProtectedWateringPlansFormularWateringPlanIdEditIndexRoute
-  '/watering-plans/$wateringPlanId/status/edit': typeof ProtectedWateringPlansFormularWateringPlanIdStatusEditIndexRoute
-}
-
-export interface FileRoutesById {
-  __root__: typeof rootRoute
-  '/': typeof IndexRoute
-  '/_protected': typeof ProtectedRouteWithChildren
-  '/login': typeof LoginRoute
-  '/logout': typeof LogoutRoute
-  '/_protected/debug': typeof ProtectedDebugRouteRouteWithChildren
-  '/_protected/evaluations': typeof ProtectedEvaluationsRouteRouteWithChildren
-  '/_protected/map': typeof ProtectedMapRouteRouteWithChildren
-  '/_protected/profile': typeof ProtectedProfileRouteRouteWithChildren
-  '/_protected/sensors': typeof ProtectedSensorsRouteRouteWithChildren
-  '/_protected/settings': typeof ProtectedSettingsRouteRouteWithChildren
-  '/_protected/team': typeof ProtectedTeamRouteRouteWithChildren
-  '/_protected/treecluster': typeof ProtectedTreeclusterRouteRouteWithChildren
-  '/_protected/trees': typeof ProtectedTreesRouteRouteWithChildren
-  '/_protected/vehicles': typeof ProtectedVehiclesRouteRouteWithChildren
-  '/_protected/watering-plans': typeof ProtectedWateringPlansRouteRouteWithChildren
-  '/_protected/dashboard': typeof ProtectedDashboardRoute
-  '/_protected/info': typeof ProtectedInfoRoute
-  '/auth/callback': typeof AuthCallbackRoute
-  '/_protected/sensors/$sensorId': typeof ProtectedSensorsSensorIdRouteRouteWithChildren
-  '/_protected/settings/plugin': typeof ProtectedSettingsPluginRouteRouteWithChildren
-  '/_protected/treecluster/$treeclusterId': typeof ProtectedTreeclusterTreeclusterIdRouteRouteWithChildren
-  '/_protected/treecluster/_formular': typeof ProtectedTreeclusterFormularRouteRouteWithChildren
-  '/_protected/trees/$treeId': typeof ProtectedTreesTreeIdRouteRouteWithChildren
-  '/_protected/vehicles/$vehicleId': typeof ProtectedVehiclesVehicleIdRouteRouteWithChildren
-  '/_protected/vehicles/_formular': typeof ProtectedVehiclesFormularRouteRouteWithChildren
-  '/_protected/watering-plans/$wateringPlanId': typeof ProtectedWateringPlansWateringPlanIdRouteRouteWithChildren
-  '/_protected/watering-plans/_formular': typeof ProtectedWateringPlansFormularRouteRouteWithChildren
-  '/_protected/trees/_formular': typeof ProtectedTreesFormularRouteWithChildren
-  '/_protected/debug/': typeof ProtectedDebugIndexRoute
-  '/_protected/evaluations/': typeof ProtectedEvaluationsIndexRoute
-  '/_protected/map/': typeof ProtectedMapIndexRoute
-  '/_protected/profile/': typeof ProtectedProfileIndexRoute
-  '/_protected/sensors/': typeof ProtectedSensorsIndexRoute
-  '/_protected/settings/': typeof ProtectedSettingsIndexRoute
-  '/_protected/team/': typeof ProtectedTeamIndexRoute
-  '/_protected/treecluster/': typeof ProtectedTreeclusterIndexRoute
-  '/_protected/trees/': typeof ProtectedTreesIndexRoute
-  '/_protected/vehicles/': typeof ProtectedVehiclesIndexRoute
-  '/_protected/watering-plans/': typeof ProtectedWateringPlansIndexRoute
-  '/_protected/map/tree/edit': typeof ProtectedMapTreeEditRouteRouteWithChildren
-  '/_protected/map/tree/new': typeof ProtectedMapTreeNewRouteRouteWithChildren
-  '/_protected/settings/plugin/$pluginName': typeof ProtectedSettingsPluginPluginNameRouteRouteWithChildren
-  '/_protected/treecluster/_formular/$treeclusterId': typeof ProtectedTreeclusterFormularTreeclusterIdRouteRouteWithChildren
-  '/_protected/treecluster/_formular/new': typeof ProtectedTreeclusterFormularNewRouteRouteWithChildren
-  '/_protected/trees/_formular/$treeId': typeof ProtectedTreesFormularTreeIdRouteRouteWithChildren
-  '/_protected/trees/_formular/new': typeof ProtectedTreesFormularNewRouteRouteWithChildren
-  '/_protected/vehicles/_formular/$vehicleId': typeof ProtectedVehiclesFormularVehicleIdRouteRouteWithChildren
-  '/_protected/vehicles/_formular/new': typeof ProtectedVehiclesFormularNewRouteRouteWithChildren
-  '/_protected/watering-plans/_formular/$wateringPlanId': typeof ProtectedWateringPlansFormularWateringPlanIdRouteRouteWithChildren
-  '/_protected/watering-plans/_formular/new': typeof ProtectedWateringPlansFormularNewRouteRouteWithChildren
-  '/_protected/sensors/$sensorId/': typeof ProtectedSensorsSensorIdIndexRoute
-  '/_protected/settings/plugin/': typeof ProtectedSettingsPluginIndexRoute
-  '/_protected/treecluster/$treeclusterId/': typeof ProtectedTreeclusterTreeclusterIdIndexRoute
-  '/_protected/trees/$treeId/': typeof ProtectedTreesTreeIdIndexRoute
-  '/_protected/vehicles/$vehicleId/': typeof ProtectedVehiclesVehicleIdIndexRoute
-  '/_protected/watering-plans/$wateringPlanId/': typeof ProtectedWateringPlansWateringPlanIdIndexRoute
-  '/_protected/map/sensor/select/tree': typeof ProtectedMapSensorSelectTreeRouteRouteWithChildren
-  '/_protected/map/treecluster/select/tree': typeof ProtectedMapTreeclusterSelectTreeRouteRouteWithChildren
-  '/_protected/map/watering-plan/select/cluster': typeof ProtectedMapWateringPlanSelectClusterRouteRouteWithChildren
-  '/_protected/treecluster/_formular/$treeclusterId/edit': typeof ProtectedTreeclusterFormularTreeclusterIdEditRouteRouteWithChildren
-  '/_protected/trees/_formular/$treeId/edit': typeof ProtectedTreesFormularTreeIdEditRouteRouteWithChildren
-  '/_protected/vehicles/_formular/$vehicleId/edit': typeof ProtectedVehiclesFormularVehicleIdEditRouteRouteWithChildren
-  '/_protected/watering-plans/_formular/$wateringPlanId/edit': typeof ProtectedWateringPlansFormularWateringPlanIdEditRouteRouteWithChildren
-  '/_protected/map/tree/edit/': typeof ProtectedMapTreeEditIndexRoute
-  '/_protected/map/tree/new/': typeof ProtectedMapTreeNewIndexRoute
-  '/_protected/settings/plugin/$pluginName/': typeof ProtectedSettingsPluginPluginNameIndexRoute
-  '/_protected/treecluster/_formular/new/': typeof ProtectedTreeclusterFormularNewIndexRoute
-  '/_protected/trees/_formular/new/': typeof ProtectedTreesFormularNewIndexRoute
-  '/_protected/vehicles/_formular/new/': typeof ProtectedVehiclesFormularNewIndexRoute
-  '/_protected/watering-plans/_formular/new/': typeof ProtectedWateringPlansFormularNewIndexRoute
-  '/_protected/watering-plans/_formular/$wateringPlanId/status/edit': typeof ProtectedWateringPlansFormularWateringPlanIdStatusEditRouteRouteWithChildren
-  '/_protected/map/sensor/select/tree/': typeof ProtectedMapSensorSelectTreeIndexRoute
-  '/_protected/map/treecluster/select/tree/': typeof ProtectedMapTreeclusterSelectTreeIndexRoute
-  '/_protected/map/watering-plan/select/cluster/': typeof ProtectedMapWateringPlanSelectClusterIndexRoute
-  '/_protected/treecluster/_formular/$treeclusterId/edit/': typeof ProtectedTreeclusterFormularTreeclusterIdEditIndexRoute
-  '/_protected/trees/_formular/$treeId/edit/': typeof ProtectedTreesFormularTreeIdEditIndexRoute
-  '/_protected/vehicles/_formular/$vehicleId/edit/': typeof ProtectedVehiclesFormularVehicleIdEditIndexRoute
-  '/_protected/watering-plans/_formular/$wateringPlanId/edit/': typeof ProtectedWateringPlansFormularWateringPlanIdEditIndexRoute
-  '/_protected/watering-plans/_formular/$wateringPlanId/status/edit/': typeof ProtectedWateringPlansFormularWateringPlanIdStatusEditIndexRoute
-}
-
-export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | ''
-    | '/login'
-    | '/logout'
-    | '/debug'
-    | '/evaluations'
-    | '/map'
-    | '/profile'
-    | '/sensors'
-    | '/settings'
-    | '/team'
-    | '/treecluster'
-    | '/trees'
-    | '/vehicles'
-    | '/watering-plans'
-    | '/dashboard'
-    | '/info'
-    | '/auth/callback'
-    | '/sensors/$sensorId'
-    | '/settings/plugin'
-    | '/treecluster/$treeclusterId'
-    | '/trees/$treeId'
-    | '/vehicles/$vehicleId'
-    | '/watering-plans/$wateringPlanId'
-    | '/debug/'
-    | '/evaluations/'
-    | '/map/'
-    | '/profile/'
-    | '/sensors/'
-    | '/settings/'
-    | '/team/'
-    | '/treecluster/'
-    | '/trees/'
-    | '/vehicles/'
-    | '/watering-plans/'
-    | '/map/tree/edit'
-    | '/map/tree/new'
-    | '/settings/plugin/$pluginName'
-    | '/treecluster/new'
-    | '/trees/new'
-    | '/vehicles/new'
-    | '/watering-plans/new'
-    | '/sensors/$sensorId/'
-    | '/settings/plugin/'
-    | '/treecluster/$treeclusterId/'
-    | '/trees/$treeId/'
-    | '/vehicles/$vehicleId/'
-    | '/watering-plans/$wateringPlanId/'
-    | '/map/sensor/select/tree'
-    | '/map/treecluster/select/tree'
-    | '/map/watering-plan/select/cluster'
-    | '/treecluster/$treeclusterId/edit'
-    | '/trees/$treeId/edit'
-    | '/vehicles/$vehicleId/edit'
-    | '/watering-plans/$wateringPlanId/edit'
-    | '/map/tree/edit/'
-    | '/map/tree/new/'
-    | '/settings/plugin/$pluginName/'
-    | '/treecluster/new/'
-    | '/trees/new/'
-    | '/vehicles/new/'
-    | '/watering-plans/new/'
-    | '/watering-plans/$wateringPlanId/status/edit'
-    | '/map/sensor/select/tree/'
-    | '/map/treecluster/select/tree/'
-    | '/map/watering-plan/select/cluster/'
-    | '/treecluster/$treeclusterId/edit/'
-    | '/trees/$treeId/edit/'
-    | '/vehicles/$vehicleId/edit/'
-    | '/watering-plans/$wateringPlanId/edit/'
-    | '/watering-plans/$wateringPlanId/status/edit/'
-  fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | ''
-    | '/login'
-    | '/logout'
-    | '/dashboard'
-    | '/info'
-    | '/auth/callback'
-    | '/treecluster'
-    | '/vehicles'
-    | '/watering-plans'
-    | '/trees'
-    | '/debug'
-    | '/evaluations'
-    | '/map'
-    | '/profile'
-    | '/sensors'
-    | '/settings'
-    | '/team'
-    | '/treecluster/$treeclusterId'
-    | '/trees/$treeId'
-    | '/vehicles/$vehicleId'
-    | '/watering-plans/$wateringPlanId'
-    | '/sensors/$sensorId'
-    | '/settings/plugin'
-    | '/map/tree/edit'
-    | '/map/tree/new'
-    | '/settings/plugin/$pluginName'
-    | '/treecluster/new'
-    | '/trees/new'
-    | '/vehicles/new'
-    | '/watering-plans/new'
-    | '/map/sensor/select/tree'
-    | '/map/treecluster/select/tree'
-    | '/map/watering-plan/select/cluster'
-    | '/treecluster/$treeclusterId/edit'
-    | '/trees/$treeId/edit'
-    | '/vehicles/$vehicleId/edit'
-    | '/watering-plans/$wateringPlanId/edit'
-    | '/watering-plans/$wateringPlanId/status/edit'
-  id:
-    | '__root__'
-    | '/'
-    | '/_protected'
-    | '/login'
-    | '/logout'
-    | '/_protected/debug'
-    | '/_protected/evaluations'
-    | '/_protected/map'
-    | '/_protected/profile'
-    | '/_protected/sensors'
-    | '/_protected/settings'
-    | '/_protected/team'
-    | '/_protected/treecluster'
-    | '/_protected/trees'
-    | '/_protected/vehicles'
-    | '/_protected/watering-plans'
-    | '/_protected/dashboard'
-    | '/_protected/info'
-    | '/auth/callback'
-    | '/_protected/sensors/$sensorId'
-    | '/_protected/settings/plugin'
-    | '/_protected/treecluster/$treeclusterId'
-    | '/_protected/treecluster/_formular'
-    | '/_protected/trees/$treeId'
-    | '/_protected/vehicles/$vehicleId'
-    | '/_protected/vehicles/_formular'
-    | '/_protected/watering-plans/$wateringPlanId'
-    | '/_protected/watering-plans/_formular'
-    | '/_protected/trees/_formular'
-    | '/_protected/debug/'
-    | '/_protected/evaluations/'
-    | '/_protected/map/'
-    | '/_protected/profile/'
-    | '/_protected/sensors/'
-    | '/_protected/settings/'
-    | '/_protected/team/'
-    | '/_protected/treecluster/'
-    | '/_protected/trees/'
-    | '/_protected/vehicles/'
-    | '/_protected/watering-plans/'
-    | '/_protected/map/tree/edit'
-    | '/_protected/map/tree/new'
-    | '/_protected/settings/plugin/$pluginName'
-    | '/_protected/treecluster/_formular/$treeclusterId'
-    | '/_protected/treecluster/_formular/new'
-    | '/_protected/trees/_formular/$treeId'
-    | '/_protected/trees/_formular/new'
-    | '/_protected/vehicles/_formular/$vehicleId'
-    | '/_protected/vehicles/_formular/new'
-    | '/_protected/watering-plans/_formular/$wateringPlanId'
-    | '/_protected/watering-plans/_formular/new'
-    | '/_protected/sensors/$sensorId/'
-    | '/_protected/settings/plugin/'
-    | '/_protected/treecluster/$treeclusterId/'
-    | '/_protected/trees/$treeId/'
-    | '/_protected/vehicles/$vehicleId/'
-    | '/_protected/watering-plans/$wateringPlanId/'
-    | '/_protected/map/sensor/select/tree'
-    | '/_protected/map/treecluster/select/tree'
-    | '/_protected/map/watering-plan/select/cluster'
-    | '/_protected/treecluster/_formular/$treeclusterId/edit'
-    | '/_protected/trees/_formular/$treeId/edit'
-    | '/_protected/vehicles/_formular/$vehicleId/edit'
-    | '/_protected/watering-plans/_formular/$wateringPlanId/edit'
-    | '/_protected/map/tree/edit/'
-    | '/_protected/map/tree/new/'
-    | '/_protected/settings/plugin/$pluginName/'
-    | '/_protected/treecluster/_formular/new/'
-    | '/_protected/trees/_formular/new/'
-    | '/_protected/vehicles/_formular/new/'
-    | '/_protected/watering-plans/_formular/new/'
-    | '/_protected/watering-plans/_formular/$wateringPlanId/status/edit'
-    | '/_protected/map/sensor/select/tree/'
-    | '/_protected/map/treecluster/select/tree/'
-    | '/_protected/map/watering-plan/select/cluster/'
-    | '/_protected/treecluster/_formular/$treeclusterId/edit/'
-    | '/_protected/trees/_formular/$treeId/edit/'
-    | '/_protected/vehicles/_formular/$vehicleId/edit/'
-    | '/_protected/watering-plans/_formular/$wateringPlanId/edit/'
-    | '/_protected/watering-plans/_formular/$wateringPlanId/status/edit/'
-  fileRoutesById: FileRoutesById
-}
-
-export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  ProtectedRoute: typeof ProtectedRouteWithChildren
-  LoginRoute: typeof LoginRoute
-  LogoutRoute: typeof LogoutRoute
-  AuthCallbackRoute: typeof AuthCallbackRoute
-}
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ProtectedRoute: ProtectedRouteWithChildren,
@@ -2251,491 +2171,6 @@ const rootRouteChildren: RootRouteChildren = {
   LogoutRoute: LogoutRoute,
   AuthCallbackRoute: AuthCallbackRoute,
 }
-
-export const routeTree = rootRoute
+export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-/* ROUTE_MANIFEST_START
-{
-  "routes": {
-    "__root__": {
-      "filePath": "__root.tsx",
-      "children": [
-        "/",
-        "/_protected",
-        "/login",
-        "/logout",
-        "/auth/callback"
-      ]
-    },
-    "/": {
-      "filePath": "index.tsx"
-    },
-    "/_protected": {
-      "filePath": "_protected.tsx",
-      "children": [
-        "/_protected/debug",
-        "/_protected/evaluations",
-        "/_protected/map",
-        "/_protected/profile",
-        "/_protected/sensors",
-        "/_protected/settings",
-        "/_protected/team",
-        "/_protected/treecluster",
-        "/_protected/trees",
-        "/_protected/vehicles",
-        "/_protected/watering-plans",
-        "/_protected/dashboard",
-        "/_protected/info"
-      ]
-    },
-    "/login": {
-      "filePath": "login.tsx"
-    },
-    "/logout": {
-      "filePath": "logout.tsx"
-    },
-    "/_protected/debug": {
-      "filePath": "_protected/debug/route.tsx",
-      "parent": "/_protected",
-      "children": [
-        "/_protected/debug/"
-      ]
-    },
-    "/_protected/evaluations": {
-      "filePath": "_protected/evaluations/route.tsx",
-      "parent": "/_protected",
-      "children": [
-        "/_protected/evaluations/"
-      ]
-    },
-    "/_protected/map": {
-      "filePath": "_protected/map/route.tsx",
-      "parent": "/_protected",
-      "children": [
-        "/_protected/map/",
-        "/_protected/map/tree/edit",
-        "/_protected/map/tree/new",
-        "/_protected/map/sensor/select/tree",
-        "/_protected/map/treecluster/select/tree",
-        "/_protected/map/watering-plan/select/cluster"
-      ]
-    },
-    "/_protected/profile": {
-      "filePath": "_protected/profile/route.tsx",
-      "parent": "/_protected",
-      "children": [
-        "/_protected/profile/"
-      ]
-    },
-    "/_protected/sensors": {
-      "filePath": "_protected/sensors/route.tsx",
-      "parent": "/_protected",
-      "children": [
-        "/_protected/sensors/$sensorId",
-        "/_protected/sensors/"
-      ]
-    },
-    "/_protected/settings": {
-      "filePath": "_protected/settings/route.tsx",
-      "parent": "/_protected",
-      "children": [
-        "/_protected/settings/plugin",
-        "/_protected/settings/"
-      ]
-    },
-    "/_protected/team": {
-      "filePath": "_protected/team/route.tsx",
-      "parent": "/_protected",
-      "children": [
-        "/_protected/team/"
-      ]
-    },
-    "/_protected/treecluster": {
-      "filePath": "_protected/treecluster/route.tsx",
-      "parent": "/_protected",
-      "children": [
-        "/_protected/treecluster/$treeclusterId",
-        "/_protected/treecluster/_formular",
-        "/_protected/treecluster/"
-      ]
-    },
-    "/_protected/trees": {
-      "filePath": "_protected/trees/route.tsx",
-      "parent": "/_protected",
-      "children": [
-        "/_protected/trees/$treeId",
-        "/_protected/trees/_formular",
-        "/_protected/trees/"
-      ]
-    },
-    "/_protected/vehicles": {
-      "filePath": "_protected/vehicles/route.tsx",
-      "parent": "/_protected",
-      "children": [
-        "/_protected/vehicles/$vehicleId",
-        "/_protected/vehicles/_formular",
-        "/_protected/vehicles/"
-      ]
-    },
-    "/_protected/watering-plans": {
-      "filePath": "_protected/watering-plans/route.tsx",
-      "parent": "/_protected",
-      "children": [
-        "/_protected/watering-plans/$wateringPlanId",
-        "/_protected/watering-plans/_formular",
-        "/_protected/watering-plans/"
-      ]
-    },
-    "/_protected/dashboard": {
-      "filePath": "_protected/dashboard.tsx",
-      "parent": "/_protected"
-    },
-    "/_protected/info": {
-      "filePath": "_protected/info.tsx",
-      "parent": "/_protected"
-    },
-    "/auth/callback": {
-      "filePath": "auth/callback.tsx"
-    },
-    "/_protected/sensors/$sensorId": {
-      "filePath": "_protected/sensors/$sensorId/route.tsx",
-      "parent": "/_protected/sensors",
-      "children": [
-        "/_protected/sensors/$sensorId/"
-      ]
-    },
-    "/_protected/settings/plugin": {
-      "filePath": "_protected/settings/plugin/route.tsx",
-      "parent": "/_protected/settings",
-      "children": [
-        "/_protected/settings/plugin/$pluginName",
-        "/_protected/settings/plugin/"
-      ]
-    },
-    "/_protected/treecluster/$treeclusterId": {
-      "filePath": "_protected/treecluster/$treeclusterId/route.tsx",
-      "parent": "/_protected/treecluster",
-      "children": [
-        "/_protected/treecluster/$treeclusterId/"
-      ]
-    },
-    "/_protected/treecluster/_formular": {
-      "filePath": "_protected/treecluster/_formular/route.tsx",
-      "parent": "/_protected/treecluster",
-      "children": [
-        "/_protected/treecluster/_formular/$treeclusterId",
-        "/_protected/treecluster/_formular/new"
-      ]
-    },
-    "/_protected/trees/$treeId": {
-      "filePath": "_protected/trees/$treeId/route.tsx",
-      "parent": "/_protected/trees",
-      "children": [
-        "/_protected/trees/$treeId/"
-      ]
-    },
-    "/_protected/vehicles/$vehicleId": {
-      "filePath": "_protected/vehicles/$vehicleId/route.tsx",
-      "parent": "/_protected/vehicles",
-      "children": [
-        "/_protected/vehicles/$vehicleId/"
-      ]
-    },
-    "/_protected/vehicles/_formular": {
-      "filePath": "_protected/vehicles/_formular/route.tsx",
-      "parent": "/_protected/vehicles",
-      "children": [
-        "/_protected/vehicles/_formular/$vehicleId",
-        "/_protected/vehicles/_formular/new"
-      ]
-    },
-    "/_protected/watering-plans/$wateringPlanId": {
-      "filePath": "_protected/watering-plans/$wateringPlanId/route.tsx",
-      "parent": "/_protected/watering-plans",
-      "children": [
-        "/_protected/watering-plans/$wateringPlanId/"
-      ]
-    },
-    "/_protected/watering-plans/_formular": {
-      "filePath": "_protected/watering-plans/_formular/route.tsx",
-      "parent": "/_protected/watering-plans",
-      "children": [
-        "/_protected/watering-plans/_formular/$wateringPlanId",
-        "/_protected/watering-plans/_formular/new"
-      ]
-    },
-    "/_protected/trees/_formular": {
-      "filePath": "_protected/trees/_formular.tsx",
-      "parent": "/_protected/trees",
-      "children": [
-        "/_protected/trees/_formular/$treeId",
-        "/_protected/trees/_formular/new"
-      ]
-    },
-    "/_protected/debug/": {
-      "filePath": "_protected/debug/index.tsx",
-      "parent": "/_protected/debug"
-    },
-    "/_protected/evaluations/": {
-      "filePath": "_protected/evaluations/index.tsx",
-      "parent": "/_protected/evaluations"
-    },
-    "/_protected/map/": {
-      "filePath": "_protected/map/index.tsx",
-      "parent": "/_protected/map"
-    },
-    "/_protected/profile/": {
-      "filePath": "_protected/profile/index.tsx",
-      "parent": "/_protected/profile"
-    },
-    "/_protected/sensors/": {
-      "filePath": "_protected/sensors/index.tsx",
-      "parent": "/_protected/sensors"
-    },
-    "/_protected/settings/": {
-      "filePath": "_protected/settings/index.tsx",
-      "parent": "/_protected/settings"
-    },
-    "/_protected/team/": {
-      "filePath": "_protected/team/index.tsx",
-      "parent": "/_protected/team"
-    },
-    "/_protected/treecluster/": {
-      "filePath": "_protected/treecluster/index.tsx",
-      "parent": "/_protected/treecluster"
-    },
-    "/_protected/trees/": {
-      "filePath": "_protected/trees/index.tsx",
-      "parent": "/_protected/trees"
-    },
-    "/_protected/vehicles/": {
-      "filePath": "_protected/vehicles/index.tsx",
-      "parent": "/_protected/vehicles"
-    },
-    "/_protected/watering-plans/": {
-      "filePath": "_protected/watering-plans/index.tsx",
-      "parent": "/_protected/watering-plans"
-    },
-    "/_protected/map/tree/edit": {
-      "filePath": "_protected/map/tree/edit/route.tsx",
-      "parent": "/_protected/map",
-      "children": [
-        "/_protected/map/tree/edit/"
-      ]
-    },
-    "/_protected/map/tree/new": {
-      "filePath": "_protected/map/tree/new/route.tsx",
-      "parent": "/_protected/map",
-      "children": [
-        "/_protected/map/tree/new/"
-      ]
-    },
-    "/_protected/settings/plugin/$pluginName": {
-      "filePath": "_protected/settings/plugin/$pluginName/route.tsx",
-      "parent": "/_protected/settings/plugin",
-      "children": [
-        "/_protected/settings/plugin/$pluginName/"
-      ]
-    },
-    "/_protected/treecluster/_formular/$treeclusterId": {
-      "filePath": "_protected/treecluster/_formular/$treeclusterId/route.tsx",
-      "parent": "/_protected/treecluster/_formular",
-      "children": [
-        "/_protected/treecluster/_formular/$treeclusterId/edit"
-      ]
-    },
-    "/_protected/treecluster/_formular/new": {
-      "filePath": "_protected/treecluster/_formular/new/route.tsx",
-      "parent": "/_protected/treecluster/_formular",
-      "children": [
-        "/_protected/treecluster/_formular/new/"
-      ]
-    },
-    "/_protected/trees/_formular/$treeId": {
-      "filePath": "_protected/trees/_formular/$treeId/route.tsx",
-      "parent": "/_protected/trees/_formular",
-      "children": [
-        "/_protected/trees/_formular/$treeId/edit"
-      ]
-    },
-    "/_protected/trees/_formular/new": {
-      "filePath": "_protected/trees/_formular/new/route.tsx",
-      "parent": "/_protected/trees/_formular",
-      "children": [
-        "/_protected/trees/_formular/new/"
-      ]
-    },
-    "/_protected/vehicles/_formular/$vehicleId": {
-      "filePath": "_protected/vehicles/_formular/$vehicleId/route.tsx",
-      "parent": "/_protected/vehicles/_formular",
-      "children": [
-        "/_protected/vehicles/_formular/$vehicleId/edit"
-      ]
-    },
-    "/_protected/vehicles/_formular/new": {
-      "filePath": "_protected/vehicles/_formular/new/route.tsx",
-      "parent": "/_protected/vehicles/_formular",
-      "children": [
-        "/_protected/vehicles/_formular/new/"
-      ]
-    },
-    "/_protected/watering-plans/_formular/$wateringPlanId": {
-      "filePath": "_protected/watering-plans/_formular/$wateringPlanId/route.tsx",
-      "parent": "/_protected/watering-plans/_formular",
-      "children": [
-        "/_protected/watering-plans/_formular/$wateringPlanId/edit",
-        "/_protected/watering-plans/_formular/$wateringPlanId/status/edit"
-      ]
-    },
-    "/_protected/watering-plans/_formular/new": {
-      "filePath": "_protected/watering-plans/_formular/new/route.tsx",
-      "parent": "/_protected/watering-plans/_formular",
-      "children": [
-        "/_protected/watering-plans/_formular/new/"
-      ]
-    },
-    "/_protected/sensors/$sensorId/": {
-      "filePath": "_protected/sensors/$sensorId/index.tsx",
-      "parent": "/_protected/sensors/$sensorId"
-    },
-    "/_protected/settings/plugin/": {
-      "filePath": "_protected/settings/plugin/index.tsx",
-      "parent": "/_protected/settings/plugin"
-    },
-    "/_protected/treecluster/$treeclusterId/": {
-      "filePath": "_protected/treecluster/$treeclusterId/index.tsx",
-      "parent": "/_protected/treecluster/$treeclusterId"
-    },
-    "/_protected/trees/$treeId/": {
-      "filePath": "_protected/trees/$treeId/index.tsx",
-      "parent": "/_protected/trees/$treeId"
-    },
-    "/_protected/vehicles/$vehicleId/": {
-      "filePath": "_protected/vehicles/$vehicleId/index.tsx",
-      "parent": "/_protected/vehicles/$vehicleId"
-    },
-    "/_protected/watering-plans/$wateringPlanId/": {
-      "filePath": "_protected/watering-plans/$wateringPlanId/index.tsx",
-      "parent": "/_protected/watering-plans/$wateringPlanId"
-    },
-    "/_protected/map/sensor/select/tree": {
-      "filePath": "_protected/map/sensor/select/tree/route.tsx",
-      "parent": "/_protected/map",
-      "children": [
-        "/_protected/map/sensor/select/tree/"
-      ]
-    },
-    "/_protected/map/treecluster/select/tree": {
-      "filePath": "_protected/map/treecluster/select/tree/route.tsx",
-      "parent": "/_protected/map",
-      "children": [
-        "/_protected/map/treecluster/select/tree/"
-      ]
-    },
-    "/_protected/map/watering-plan/select/cluster": {
-      "filePath": "_protected/map/watering-plan/select/cluster/route.tsx",
-      "parent": "/_protected/map",
-      "children": [
-        "/_protected/map/watering-plan/select/cluster/"
-      ]
-    },
-    "/_protected/treecluster/_formular/$treeclusterId/edit": {
-      "filePath": "_protected/treecluster/_formular/$treeclusterId/edit/route.tsx",
-      "parent": "/_protected/treecluster/_formular/$treeclusterId",
-      "children": [
-        "/_protected/treecluster/_formular/$treeclusterId/edit/"
-      ]
-    },
-    "/_protected/trees/_formular/$treeId/edit": {
-      "filePath": "_protected/trees/_formular/$treeId/edit/route.tsx",
-      "parent": "/_protected/trees/_formular/$treeId",
-      "children": [
-        "/_protected/trees/_formular/$treeId/edit/"
-      ]
-    },
-    "/_protected/vehicles/_formular/$vehicleId/edit": {
-      "filePath": "_protected/vehicles/_formular/$vehicleId/edit/route.tsx",
-      "parent": "/_protected/vehicles/_formular/$vehicleId",
-      "children": [
-        "/_protected/vehicles/_formular/$vehicleId/edit/"
-      ]
-    },
-    "/_protected/watering-plans/_formular/$wateringPlanId/edit": {
-      "filePath": "_protected/watering-plans/_formular/$wateringPlanId/edit/route.tsx",
-      "parent": "/_protected/watering-plans/_formular/$wateringPlanId",
-      "children": [
-        "/_protected/watering-plans/_formular/$wateringPlanId/edit/"
-      ]
-    },
-    "/_protected/map/tree/edit/": {
-      "filePath": "_protected/map/tree/edit/index.tsx",
-      "parent": "/_protected/map/tree/edit"
-    },
-    "/_protected/map/tree/new/": {
-      "filePath": "_protected/map/tree/new/index.tsx",
-      "parent": "/_protected/map/tree/new"
-    },
-    "/_protected/settings/plugin/$pluginName/": {
-      "filePath": "_protected/settings/plugin/$pluginName/index.tsx",
-      "parent": "/_protected/settings/plugin/$pluginName"
-    },
-    "/_protected/treecluster/_formular/new/": {
-      "filePath": "_protected/treecluster/_formular/new/index.tsx",
-      "parent": "/_protected/treecluster/_formular/new"
-    },
-    "/_protected/trees/_formular/new/": {
-      "filePath": "_protected/trees/_formular/new/index.tsx",
-      "parent": "/_protected/trees/_formular/new"
-    },
-    "/_protected/vehicles/_formular/new/": {
-      "filePath": "_protected/vehicles/_formular/new/index.tsx",
-      "parent": "/_protected/vehicles/_formular/new"
-    },
-    "/_protected/watering-plans/_formular/new/": {
-      "filePath": "_protected/watering-plans/_formular/new/index.tsx",
-      "parent": "/_protected/watering-plans/_formular/new"
-    },
-    "/_protected/watering-plans/_formular/$wateringPlanId/status/edit": {
-      "filePath": "_protected/watering-plans/_formular/$wateringPlanId/status/edit/route.tsx",
-      "parent": "/_protected/watering-plans/_formular/$wateringPlanId",
-      "children": [
-        "/_protected/watering-plans/_formular/$wateringPlanId/status/edit/"
-      ]
-    },
-    "/_protected/map/sensor/select/tree/": {
-      "filePath": "_protected/map/sensor/select/tree/index.tsx",
-      "parent": "/_protected/map/sensor/select/tree"
-    },
-    "/_protected/map/treecluster/select/tree/": {
-      "filePath": "_protected/map/treecluster/select/tree/index.tsx",
-      "parent": "/_protected/map/treecluster/select/tree"
-    },
-    "/_protected/map/watering-plan/select/cluster/": {
-      "filePath": "_protected/map/watering-plan/select/cluster/index.tsx",
-      "parent": "/_protected/map/watering-plan/select/cluster"
-    },
-    "/_protected/treecluster/_formular/$treeclusterId/edit/": {
-      "filePath": "_protected/treecluster/_formular/$treeclusterId/edit/index.tsx",
-      "parent": "/_protected/treecluster/_formular/$treeclusterId/edit"
-    },
-    "/_protected/trees/_formular/$treeId/edit/": {
-      "filePath": "_protected/trees/_formular/$treeId/edit/index.tsx",
-      "parent": "/_protected/trees/_formular/$treeId/edit"
-    },
-    "/_protected/vehicles/_formular/$vehicleId/edit/": {
-      "filePath": "_protected/vehicles/_formular/$vehicleId/edit/index.tsx",
-      "parent": "/_protected/vehicles/_formular/$vehicleId/edit"
-    },
-    "/_protected/watering-plans/_formular/$wateringPlanId/edit/": {
-      "filePath": "_protected/watering-plans/_formular/$wateringPlanId/edit/index.tsx",
-      "parent": "/_protected/watering-plans/_formular/$wateringPlanId/edit"
-    },
-    "/_protected/watering-plans/_formular/$wateringPlanId/status/edit/": {
-      "filePath": "_protected/watering-plans/_formular/$wateringPlanId/status/edit/index.tsx",
-      "parent": "/_protected/watering-plans/_formular/$wateringPlanId/status/edit"
-    }
-  }
-}
-ROUTE_MANIFEST_END */
