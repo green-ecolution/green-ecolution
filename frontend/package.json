@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc -b && vite build",
     "build:stage": "tsc && NODE_ENV=development vite build --mode staging",
     "lint": "tsc --noEmit && eslint . --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --fix",
