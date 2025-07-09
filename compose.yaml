@@ -203,7 +203,7 @@ services:
       - "traefik.http.routers.valhalla.entrypoints=web"
 
   reverse-proxy:
-    image: traefik:v3.4.0
+    image: traefik:3.4.3
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command:
