@@ -2,3 +2,4 @@
 **/node_modules
 backend-client/**
 frontend/src/animations/**
+frontend/src/routeTree.gen.ts
