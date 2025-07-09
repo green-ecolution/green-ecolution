@@ -1,5 +1,4 @@
 import { VehicleForm } from '@/schema/vehicleSchema'
-import { FormForProps } from './FormForTreecluster'
 import FormError from './FormError'
 import PrimaryButton from '../buttons/PrimaryButton'
 import Input from './types/Input'
@@ -8,28 +7,42 @@ import Select from './types/Select'
 import { VehicleTypeOptions } from '@/hooks/details/useDetailsForVehicleType'
 import { DrivingLicenseOptions } from '@/hooks/details/useDetailsForDrivingLicense'
 import { VehicleStatusOptions } from '@/hooks/details/useDetailsForVehicleStatus'
+import { SubmitHandler, useFormContext } from 'react-hook-form'
 
-const FormForVehicle = (props: FormForProps<VehicleForm>) => {
-  const { errors, isValid } = props.formState
+interface FormForVehicleProps {
+  displayError: boolean
+  errorMessage?: string
+  onSubmit: SubmitHandler<VehicleForm>
+}
+
+const FormForVehicle = (props: FormForVehicleProps) => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid },
+  } = useFormContext<VehicleForm>()
+
+  const translateNum = (e: React.ChangeEvent<HTMLInputElement>) =>
+    (e.target.value = e.target.value.replace(',', '.'))
 
   return (
     <form
       className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-y-6 lg:gap-x-11"
-      onSubmit={() => void props.handleSubmit(props.onSubmit)}
+      onSubmit={handleSubmit(props.onSubmit)}
     >
       <Input
         placeholder="Kennzeichen"
         label="Kennzeichen"
         required
         error={errors.numberPlate?.message}
-        {...props.register('numberPlate')}
+        {...register('numberPlate')}
       />
       <Input
         placeholder="Fahrzeugmodell"
         label="Fahrzeugmodell"
         required
         error={errors.model?.message}
-        {...props.register('model')}
+        {...register('model')}
       />
       <Select
         options={VehicleTypeOptions}
@@ -37,7 +50,7 @@ const FormForVehicle = (props: FormForProps<VehicleForm>) => {
         label="Fahrzeugtyp"
         required
         error={errors.type?.message}
-        {...props.register('type')}
+        {...register('type')}
       />
       <Input
         placeholder="Wasserkapazität"
@@ -45,7 +58,7 @@ const FormForVehicle = (props: FormForProps<VehicleForm>) => {
         type="number"
         required
         error={errors.waterCapacity?.message}
-        {...props.register('waterCapacity')}
+        {...register('waterCapacity')}
       />
       <Select
         options={VehicleStatusOptions}
@@ -53,7 +66,7 @@ const FormForVehicle = (props: FormForProps<VehicleForm>) => {
         label="Aktueller Status"
         required
         error={errors.status?.message}
-        {...props.register('status')}
+        {...register('status')}
       />
       <Select
         options={DrivingLicenseOptions}
@@ -61,49 +74,53 @@ const FormForVehicle = (props: FormForProps<VehicleForm>) => {
         label="Führerscheinklasse"
         required
         error={errors.drivingLicense?.message}
-        {...props.register('drivingLicense')}
+        {...register('drivingLicense')}
       />
       <Input
         placeholder="Höhe des Fahrzeugs"
         label="Höhe des Fahrzeugs (in Metern)"
-        type="number"
         step="0.1"
         required
         error={errors.height?.message}
-        {...props.register('height')}
+        {...register('height', {
+          onChange: translateNum,
+        })}
       />
       <Input
         placeholder="Breite des Fahrzeugs"
         label="Breite des Fahrzeugs (in Metern)"
-        type="number"
         step="0.1"
         required
         error={errors.width?.message}
-        {...props.register('width')}
+        {...register('width', {
+          onChange: translateNum,
+        })}
       />
       <Input
         placeholder="Länge des Fahrzeugs"
         label="Länge des Fahrzeugs (in Metern)"
-        type="number"
         step="0.1"
         required
         error={errors.length?.message}
-        {...props.register('length')}
+        {...register('length', {
+          onChange: translateNum,
+        })}
       />
       <Input
         placeholder="Gewicht des Fahrzeugs"
         label="Gewicht des Fahrzeugs (in Tonnen)"
-        type="number"
         step="0.1"
         required
         error={errors.weight?.message}
-        {...props.register('weight')}
+        {...register('weight', {
+          onChange: translateNum,
+        })}
       />
       <Textarea
         placeholder="Hier ist Platz für Notizen"
         label="Kurze Beschreibung"
         error={errors.description?.message}
-        {...props.register('description')}
+        {...register('description')}
       />
 
       <FormError show={props.displayError} error={props.errorMessage} />

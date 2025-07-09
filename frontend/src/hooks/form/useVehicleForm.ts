@@ -4,18 +4,23 @@ import useToast from '@/hooks/useToast'
 import { useNavigate } from '@tanstack/react-router'
 import { Vehicle, VehicleCreate, VehicleUpdate } from '@green-ecolution/backend-client'
 import { vehicleApi } from '@/api/backendApi'
-import useFormStore, { FormStore } from '@/store/form/useFormStore'
-import { VehicleForm } from '@/schema/vehicleSchema'
+import { VehicleForm, vehicleSchema } from '@/schema/vehicleSchema'
+import { DefaultValues, useForm } from 'react-hook-form'
+import { TreeForm } from '@/schema/treeSchema'
+import { zodResolver } from '@hookform/resolvers/zod'
 
-export const useVehicleForm = (mutationType: 'create' | 'update', vehicleId?: string) => {
+export const useVehicleForm = (
+  mutationType: 'create' | 'update',
+  opts: { vehicleId?: string; initForm?: DefaultValues<TreeForm> },
+) => {
   const showToast = useToast()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
-  const formStore = useFormStore((state: FormStore<VehicleForm>) => ({
-    form: state.form,
-    reset: state.reset,
-  }))
+  const form = useForm<VehicleForm>({
+    defaultValues: opts.initForm,
+    resolver: zodResolver(vehicleSchema),
+  })
 
   const { mutate, isError, error } = useMutation({
     mutationFn: (vehicle: VehicleCreate | VehicleUpdate) => {
@@ -23,9 +28,9 @@ export const useVehicleForm = (mutationType: 'create' | 'update', vehicleId?: st
         return vehicleApi.createVehicle({
           body: vehicle as VehicleCreate,
         })
-      } else if (mutationType === 'update' && vehicleId) {
+      } else if (mutationType === 'update' && opts.vehicleId) {
         return vehicleApi.updateVehicle({
-          id: vehicleId,
+          id: opts.vehicleId,
           body: vehicle as VehicleUpdate,
         })
       }
@@ -33,7 +38,6 @@ export const useVehicleForm = (mutationType: 'create' | 'update', vehicleId?: st
     },
 
     onSuccess: (data: Vehicle) => {
-      formStore.reset()
       queryClient
         .invalidateQueries(vehicleIdQuery(String(data.id)))
         .catch((error) => console.error('Invalidate "vehicleIdQuery" failed:', error))
@@ -60,8 +64,9 @@ export const useVehicleForm = (mutationType: 'create' | 'update', vehicleId?: st
   })
 
   return {
-    mutate: mutate,
-    isError: isError,
-    error: error,
+    mutate,
+    isError,
+    error,
+    form,
   }
 }

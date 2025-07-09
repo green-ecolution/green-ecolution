@@ -1,13 +1,11 @@
 import { VehicleType, DrivingLicense, VehicleStatus } from '@green-ecolution/backend-client'
 import FormForVehicle from '@/components/general/form/FormForVehicle'
 import BackLink from '@/components/general/links/BackLink'
-import { useFormSync } from '@/hooks/form/useFormSync'
-import { useInitForm } from '@/hooks/form/useInitForm'
-import { VehicleForm, VehicleSchema } from '@/schema/vehicleSchema'
+import { VehicleForm } from '@/schema/vehicleSchema'
 import useFormStore from '@/store/form/useFormStore'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { createFileRoute } from '@tanstack/react-router'
 import { useVehicleForm } from '@/hooks/form/useVehicleForm'
+import { DefaultValues, FormProvider } from 'react-hook-form'
 
 export const Route = createFileRoute('/_protected/vehicles/_formular/new/')({
   beforeLoad: () => {
@@ -16,27 +14,20 @@ export const Route = createFileRoute('/_protected/vehicles/_formular/new/')({
   component: NewVehicle,
 })
 
+const defaultForm: DefaultValues<VehicleForm> = {
+  numberPlate: '',
+  type: VehicleType.VehicleTypeTransporter,
+  drivingLicense: DrivingLicense.DrivingLicenseB,
+  status: VehicleStatus.VehicleStatusUnknown,
+  height: 2.5,
+  width: 2,
+  length: 6,
+  weight: 3.5,
+  waterCapacity: 300,
+}
+
 function NewVehicle() {
-  const { mutate, isError, error } = useVehicleForm('create')
-  const { initForm } = useInitForm<VehicleForm>({
-    numberPlate: '',
-    type: VehicleType.VehicleTypeUnknown,
-    drivingLicense: DrivingLicense.DrivingLicenseB,
-    status: VehicleStatus.VehicleStatusUnknown,
-    height: 1,
-    width: 1,
-    length: 1,
-    weight: 1,
-    model: '',
-    waterCapacity: 80,
-    description: '',
-  })
-
-  const { register, handleSubmit, formState } = useFormSync<VehicleForm>(
-    initForm,
-    zodResolver(VehicleSchema),
-  )
-
+  const { mutate, isError, error, form } = useVehicleForm('create', { initForm: defaultForm })
   const onSubmit = (data: VehicleForm) => {
     mutate({ ...data })
   }
@@ -58,14 +49,13 @@ function NewVehicle() {
       </article>
 
       <section className="mt-10">
-        <FormForVehicle
-          register={register}
-          handleSubmit={handleSubmit}
-          formState={formState}
-          onSubmit={onSubmit}
-          displayError={isError}
-          errorMessage={error?.message}
-        />
+        <FormProvider {...form}>
+          <FormForVehicle
+            onSubmit={onSubmit}
+            displayError={isError}
+            errorMessage={error?.message}
+          />
+        </FormProvider>
       </section>
     </div>
   )

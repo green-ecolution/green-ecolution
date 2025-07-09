@@ -4,13 +4,11 @@ import { Vehicle } from '@green-ecolution/backend-client'
 import { useInitFormQuery } from '@/hooks/form/useInitForm'
 import { vehicleIdQuery } from '@/api/queries'
 import { vehicleApi } from '@/api/backendApi'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { SubmitHandler } from 'react-hook-form'
+import { FormProvider, SubmitHandler } from 'react-hook-form'
 import { Suspense } from 'react'
 import LoadingInfo from '../general/error/LoadingInfo'
-import { VehicleForm, VehicleSchema } from '@/schema/vehicleSchema'
+import { VehicleForm } from '@/schema/vehicleSchema'
 import FormForVehicle from '../general/form/FormForVehicle'
-import { useFormSync } from '@/hooks/form/useFormSync'
 import { useVehicleForm } from '@/hooks/form/useVehicleForm'
 
 interface VehicleUpdateProps {
@@ -18,7 +16,6 @@ interface VehicleUpdateProps {
 }
 
 const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
-  const { mutate, isError, error } = useVehicleForm('update', vehicleId)
   const { initForm, loadedData } = useInitFormQuery<Vehicle, VehicleForm>(
     vehicleIdQuery(vehicleId),
     (data) => ({
@@ -35,14 +32,9 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
       description: data.description,
     }),
   )
-
-  const { register, handleSubmit, formState } = useFormSync<VehicleForm>(
-    initForm,
-    zodResolver(VehicleSchema),
-  )
-
+  const { mutate, isError, error, form } = useVehicleForm('update', { vehicleId, initForm })
   const onSubmit: SubmitHandler<VehicleForm> = (data) => {
-    mutate({ ...data })
+    mutate(data)
   }
 
   const handleArchiveVehicle = () => {
@@ -68,14 +60,13 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
       </article>
 
       <section className="mt-10">
-        <FormForVehicle
-          register={register}
-          handleSubmit={handleSubmit}
-          formState={formState}
-          onSubmit={onSubmit}
-          displayError={isError}
-          errorMessage={error?.message}
-        />
+        <FormProvider {...form}>
+          <FormForVehicle
+            onSubmit={onSubmit}
+            displayError={isError}
+            errorMessage={error?.message}
+          />
+        </FormProvider>
       </section>
 
       <Suspense fallback={<LoadingInfo label="Das Fahrzeug wird gelöscht" />}>

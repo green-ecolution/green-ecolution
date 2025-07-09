@@ -1,60 +1,24 @@
 import { VehicleType, DrivingLicense, VehicleStatus } from '@green-ecolution/backend-client'
 import { z } from 'zod'
 
-export const VehicleSchema = z.object({
-  numberPlate: z.string().min(1, 'Kennzeichen ist erforderlich.').default(''),
-  type: z
-    .nativeEnum(VehicleType)
-    .refine((value) => Object.values(VehicleType).includes(value), {
-      message: 'Kein korrekter Fahrzeugtyp.',
-    })
-    .default(VehicleType.VehicleTypeUnknown),
-  drivingLicense: z
-    .nativeEnum(DrivingLicense)
-    .refine((value) => Object.values(DrivingLicense).includes(value), {
-      message: 'Keine korrekte Fahrzeugerlaubnis.',
-    })
-    .default(DrivingLicense.DrivingLicenseB),
+export const vehicleSchema = z.object({
+  numberPlate: z.string().min(1, 'Kennzeichen ist erforderlich.'),
+  model: z.string().min(1, 'Modell ist erforderlich.'),
+  type: z.nativeEnum(VehicleType, { message: 'Kein korrekter Fahrzeugtyp.' }),
+  drivingLicense: z.nativeEnum(DrivingLicense, { message: 'Keine korrekte Fahrzeugerlaubnis.' }),
   status: z
     .nativeEnum(VehicleStatus)
     .refine((value) => Object.values(VehicleStatus).includes(value), {
       message: 'Keine korrekter Fahrzeugstatus.',
-    })
-    .default(VehicleStatus.VehicleStatusUnknown),
-  height: z.preprocess((value) => {
-    if (typeof value === 'string' && value.trim() !== '') {
-      return parseFloat(value.replace(',', '.'))
-    }
-    return value
-  }, z.number().min(1, 'Höhe ist erforderlich.').default(1)),
-  width: z.preprocess((value) => {
-    if (typeof value === 'string' && value.trim() !== '') {
-      return parseFloat(value.replace(',', '.'))
-    }
-    return value
-  }, z.number().min(1, 'Breite ist erforderlich.').default(1)),
-  length: z.preprocess((value) => {
-    if (typeof value === 'string' && value.trim() !== '') {
-      return parseFloat(value.replace(',', '.'))
-    }
-    return value
-  }, z.number().min(1, 'Länge ist erforderlich.').default(1)),
-  weight: z.preprocess((value) => {
-    if (typeof value === 'string' && value.trim() !== '') {
-      return parseFloat(value.replace(',', '.'))
-    }
-    return value
-  }, z.number().min(1, 'Gewicht ist erforderlich.').default(1)),
-  model: z.string().optional().default(''),
-  waterCapacity: z.preprocess(
-    (value) => parseInt(value as string, 10),
-    z
-      .number()
-      .int()
-      .min(80, 'Wasserkapazität ist erforderlich und darf nicht unter 80 Litern liegen.')
-      .default(80),
-  ),
-  description: z.string().optional().default(''),
+    }),
+  height: z.coerce.number().positive().min(1, 'Höhe ist erforderlich.'),
+  width: z.coerce.number().min(1, 'Breite ist erforderlich.'),
+  length: z.coerce.number().min(1, 'Länge ist erforderlich.'),
+  weight: z.coerce.number().min(1, 'Gewicht ist erforderlich.'),
+  waterCapacity: z.coerce.number().min(1, 'Wasserkapazität ist erforderlich.').gte(80, {
+    message: 'Kapazität muss mindestens 80 Liter betragen und eine ganze Zahl sein.',
+  }),
+  description: z.string(),
 })
 
-export type VehicleForm = z.infer<typeof VehicleSchema>
+export type VehicleForm = z.infer<typeof vehicleSchema>
