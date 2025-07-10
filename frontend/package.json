@@ -50,7 +50,7 @@
     "@vitejs/plugin-react": "^4.4.1",
     "autoprefixer": "^10.4.19",
     "eslint": "^8.57.0",
-    "eslint-plugin-react-dom": "^1.49.0",
+    "eslint-plugin-react-dom": "^1.52.2",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.7",
     "eslint-plugin-react-x": "^1.49.0",
