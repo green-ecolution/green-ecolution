@@ -1,0 +1,13 @@
+packages:
+  - 'frontend'
+  - 'backend-client'
+  - 'plugin-interface'
+
+syncInjectedDepsAfterScripts:
+  - build
+injectWorkspacePackages: true
+
+catalogs:
+  react19:
+    react: ^19.1.0
+    react-dom: ^19.1.0

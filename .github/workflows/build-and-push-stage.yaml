@@ -12,7 +12,7 @@ name: Build and Push Docker Image Staging
       - 'plugin-interface/**'
       - 'backend-client/**'
       - 'packages.json'
-      - 'yarn.lock'
+      - 'pnpm-lock.yaml'
     branches:
       - release/*
       - hotfix/*
@@ -99,12 +99,12 @@ jobs:
         with:
           context: .
           build-args: |
+            ENV="dev"
             VITE_APP_VERSION="${{env.RELEASE_VERSION}}-stage"
             VITE_APP_GIT_COMMIT=${{env.COMMIT_SHA}}
             VITE_APP_GIT_BRANCH=${{steps.extract_branch.outputs.branch}}
             VITE_APP_BUILD_TIME=${{env.BUILD_TIME}}
             VITE_APP_GIT_REPOSITORY=${{github.repository}}
-          file: ./.docker/Dockerfile.stage
           platforms: linux/amd64 #,linux/arm64
           push: true
           tags: ghcr.io/${{ env.REPO_LC }}:${{ env.RELEASE_VERSION }}-stage,ghcr.io/${{ env.REPO_LC }}:${{ env.COMMIT_SHA }}-stage

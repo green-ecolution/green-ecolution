@@ -1,8 +1,9 @@
 import { routePreviewQuery } from '@/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { GeoJSON } from 'react-leaflet/GeoJSON'
-import { BBox } from 'geojson'
 import RouteMarker from './RouteMarker'
+
+type BBox = [number, number, number, number] | [number, number, number, number, number, number]
 
 export interface ShowRoutePreview {
   transporterId: number

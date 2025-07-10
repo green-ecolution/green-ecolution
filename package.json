@@ -1,36 +1,27 @@
 {
-  "workspaces": [
-    "backend-client",
-    "frontend",
-    "plugin-interface"
-  ],
   "name": "green-ecolution-frontend",
   "private": true,
   "version": "1.2.1",
   "license": "AGPL-3.0-only",
   "scripts": {
-    "dev": "yarn workspace @green-ecolution/frontend dev",
-    "build": "yarn build:backend-client && yarn build:plugin-interface && yarn build:frontend",
-    "build:frontend": "yarn workspace @green-ecolution/frontend build",
-    "build:frontend:stage": "yarn workspace @green-ecolution/frontend build:stage",
-    "build:backend-client": "yarn workspace @green-ecolution/backend-client build",
-    "build:plugin-interface": "yarn workspace @green-ecolution/plugin-interface build",
-    "generate": "yarn generate:backend-client",
-    "generate:stage": "yarn generate:backend-client:stage",
-    "generate:local": "yarn generate:backend-client:local",
-    "generate:backend-client": "yarn workspace @green-ecolution/backend-client generate",
-    "generate:backend-client:local": "yarn workspace @green-ecolution/backend-client generate:local",
-    "generate:backend-client:stage": "yarn workspace @green-ecolution/backend-client generate:stage",
-    "ci": "yarn workspace @green-ecolution/backend-client generate:ci",
-    "lint": "prettier --check . && yarn workspace @green-ecolution/frontend lint",
-    "lint:fix": "yarn fmt && yarn workspace @green-ecolution/frontend lint:fix",
+    "start": "pnpm build && pnpm preview",
+    "dev": "pnpm --filter frontend dev",
+    "dev:remote": "VITE_BACKEND_BASEURL=/api-stage pnpm --filter frontend dev",
+    "build": "pnpm --filter=!frontend -r build && pnpm --filter frontend build",
+    "build:stage": "pnpm --filter=!frontend -r build && pnpm --filter frontend build:stage",
+    "build:backend-client": "pnpm --filter backend-client build",
+    "build:plugin-interface": "pnpm --filter plugin-interface build",
+    "generate": "pnpm --filter backend-client generate",
+    "generate:stage": "pnpm --filter backend-client generate:stage",
+    "generate:local": "pnpm --filter backend-client generate:local",
+    "ci": "pnpm --filter backend-client generate:ci",
+    "lint": "prettier --check . && pnpm --filter frontend lint",
     "test": "echo \"It works!\"",
-    "preview": "yarn workspace @green-ecolution/frontend preview",
-    "rebuild": "yarn build:backend-client && yarn build:plugin-interface && rm -rf frontend/node_modules && yarn install",
+    "preview": "pnpm --filter frontend preview",
     "fmt": "prettier --write ."
   },
   "devDependencies": {
-    "prettier": "^3.5.3"
+    "prettier": "^3.6.2"
   },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "pnpm@10.0.0"
 }

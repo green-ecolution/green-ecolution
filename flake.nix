@@ -36,10 +36,6 @@
               args = ["--bail" "--findRelatedTests"];
               files = ["src/**/*.{test.js,test.ts,test.jsx,test.tsx}"];
             };
-            yarn-install = {
-              args = ["install"];
-              files = ["package.json" "yarn.lock"];
-            };
           };
         };
       in {
@@ -47,14 +43,13 @@
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
             nodejs_24
-            yarn
+            pnpm
             eslint
             prettierd
             docker
           ];
 
           shellHook = ''
-            yarn install
             ${pre-commit-check.shellHook}
           '';
         };

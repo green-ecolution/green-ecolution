@@ -14,11 +14,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'yarn'
+          node-version: '24'
+          cache: 'pnpm'
 
       - name: Get api docs artifacts
         env:
@@ -29,18 +33,18 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          yarn install --frozen-lockfile
-          yarn ci
+          pnpm install --frozen-lockfile
+          pnpm run ci
 
       - name: Build
         run: |
-          yarn build
+          pnpm build
 
       - name: Linter
         continue-on-error: false
         run: |
-          yarn lint
+          pnpm lint
 
       - name: Test
         run: |
-          yarn test
+          pnpm test

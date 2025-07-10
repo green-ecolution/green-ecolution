@@ -39,7 +39,7 @@ For further information, visit:
 - [Vite](https://vitejs.dev/) for fast development and HMR
 - [TypeScript](https://www.typescriptlang.org/)
 - [ESLint](https://eslint.org/) for code linting
-- [Yarn](https://yarnpkg.com/) for dependency management
+- [PnPM](https://pnpm.io/) for dependency management
 - [fnm](https://github.com/Schniz/fnm) for Node.js version management
 
 ## Local development 💻
@@ -47,27 +47,23 @@ For further information, visit:
 ### Requirements
 
 - [Node.js](https://github.com/nodejs/node)
-- [Yarn](https://github.com/yarnpkg)
+- [PnPM](https://pnpm.io/)
 - [fnm](https://github.com/Schniz/fnm)
 
 ### Initial Setup ⚙️
 
-Install the required Node.js version:
+1. Install the required Node.js version:
 
 ```bash
 fnm use
 ```
 
-Install Yarn globally:
+2. Install pnpm globally: <https://pnpm.io/installation>
+
+3. Install dependencies:
 
 ```bash
-npm install --global yarn
-```
-
-Install dependencies:
-
-```bash
-yarn
+pnpm install
 ```
 
 ## Running the Project ▶️
@@ -75,15 +71,15 @@ yarn
 Build the local backend-client and start the frontend:
 
 ```bash
-yarn generate:local
-yarn rebuild
-yarn dev
+pnpm generate:local
+pnpm rebuild
+pnpm dev
 ```
 
 By default, the app connects to the local running backend `localhost:3000`. If you want to use the deployed stage backend instance instead, adjust the `VITE_BACKEND_BASEURL` environment variable:
 
 ```bash
-VITE_BACKEND_BASEURL=/api-stage yarn dev
+pnpm dev:remote
 ```
 
 ### How to Contribute 🤝
