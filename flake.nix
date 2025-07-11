@@ -25,7 +25,7 @@
       nodejs = final."nodejs_${toString nodeVersion}";
     };
 
-    packages = let
+    packages = forEachSupportedSystem ({pkgs}: let
       meta = {
         description = "Green Ecolution – Smart irrigation system to optimize water use, reduce operational workload, and lower costs.";
         longDescription = ''
@@ -47,89 +47,89 @@
           }
         ];
         mainProgram = "green-ecolution";
+        platforms = pkgs.lib.platforms.linux ++ pkgs.lib.platforms.darwin;
       };
-    in
-      forEachSupportedSystem ({pkgs}: rec {
-        frontend = pkgs.stdenv.mkDerivation rec {
-          inherit meta;
-          pname = "frontend";
-          version = "1.2.1";
-          src = pkgs.fetchFromGitHub {
-            owner = "green-ecolution";
-            repo = "frontend";
-            rev = "85096d4ccb0366803d64164152f25c2303709093"; # TODO: Change to release version
-            hash = "sha256-aDFKssU20C12sirQXSe+ukEk7RpNSxHBQJd7eav+43U=";
-          };
-
-          nativeBuildInputs = with pkgs; [
-            nodejs
-            pnpm.configHook
-          ];
-
-          VITE_BACKEND_BASEURL = "/api";
-          pnpmDeps = pkgs.pnpm.fetchDeps {
-            inherit pname version src;
-            hash = "sha256-NFOMw449NIz2pNeQUqsx9uiApwiVnH437X8xU2UQANo=";
-          };
-
-          buildPhase = ''
-            runHook preBuild
-            pnpm build
-            runHook postBuild
-          '';
-
-          installPhase = ''
-            mkdir -p $out
-            cp -r app/dist/* $out/
-          '';
-
-          dontFixup = true;
+    in rec {
+      frontend = pkgs.stdenv.mkDerivation rec {
+        inherit meta;
+        pname = "frontend";
+        version = "1.2.1";
+        src = pkgs.fetchFromGitHub {
+          owner = "green-ecolution";
+          repo = "frontend";
+          rev = "85096d4ccb0366803d64164152f25c2303709093"; # TODO: Change to release version
+          hash = "sha256-aDFKssU20C12sirQXSe+ukEk7RpNSxHBQJd7eav+43U=";
         };
 
-        backend = pkgs.buildGoModule rec {
-          inherit meta;
-          pname = "green-ecolution";
-          version = "1.2.1";
-          src = pkgs.fetchFromGitHub {
-            owner = "green-ecolution";
-            repo = "backend";
-            rev = "5886b46319b9"; # TODO: Change to release version
-            hash = "sha256-VACsVns+mHhmAOdy6KYEK9tLwDxP3YaTTPhm2qEcWCY=";
-          };
-          ldflags = [
-            "-s"
-            "-w"
-            "-X main.version=${version}"
-            "-X github.com/green-ecolution/backend/internal/storage/local/info.version=${version}"
-            "-X github.com/green-ecolution/backend/internal/storage/local/info.gitCommit=${src.rev}"
-            "-X github.com/green-ecolution/backend/internal/storage/local/info.gitBranch=${src.rev}"
-            "-X github.com/green-ecolution/backend/internal/storage/local/info.gitRepository=${src.url}"
-            "-X github.com/green-ecolution/backend/internal/storage/local/info.buildTime=${"unkown"}"
-          ];
+        nativeBuildInputs = with pkgs; [
+          nodejs
+          pnpm.configHook
+        ];
 
-          nativeBuildInputs = with pkgs; [proj pkg-config];
-          buildInputs = [pkgs.geos];
-          preBuild = ''
-            ${pkgs.sqlc}/bin/sqlc generate
-            go generate
-          '';
-
-          doCheck = false;
-          excludedPackages = "pkg/*";
-          vendorHash = "sha256-V4Swf+TycYP/4qTJcjmx497spZfpRQlN/hsrs1vlauk=";
-          env.CGO_ENABLED = 1;
+        VITE_BACKEND_BASEURL = "/api";
+        pnpmDeps = pkgs.pnpm.fetchDeps {
+          inherit pname version src;
+          hash = "sha256-NFOMw449NIz2pNeQUqsx9uiApwiVnH437X8xU2UQANo=";
         };
 
-        default = backend.overrideAttrs (old: final: {
-          preBuild = ''
-            ${pkgs.sqlc}/bin/sqlc generate
-            go generate
+        buildPhase = ''
+          runHook preBuild
+          pnpm build
+          runHook postBuild
+        '';
 
-            mkdir -p frontend/dist
-            cp -r ${frontend}/* frontend/dist/
-          '';
-        });
+        installPhase = ''
+          mkdir -p $out
+          cp -r app/dist/* $out/
+        '';
+
+        dontFixup = true;
+      };
+
+      backend = pkgs.buildGoModule rec {
+        inherit meta;
+        pname = "green-ecolution";
+        version = "1.2.1";
+        src = pkgs.fetchFromGitHub {
+          owner = "green-ecolution";
+          repo = "backend";
+          rev = "5886b46319b9"; # TODO: Change to release version
+          hash = "sha256-VACsVns+mHhmAOdy6KYEK9tLwDxP3YaTTPhm2qEcWCY=";
+        };
+        ldflags = [
+          "-s"
+          "-w"
+          "-X main.version=${version}"
+          "-X github.com/green-ecolution/backend/internal/storage/local/info.version=${version}"
+          "-X github.com/green-ecolution/backend/internal/storage/local/info.gitCommit=${src.rev}"
+          "-X github.com/green-ecolution/backend/internal/storage/local/info.gitBranch=${src.rev}"
+          "-X github.com/green-ecolution/backend/internal/storage/local/info.gitRepository=${src.url}"
+          "-X github.com/green-ecolution/backend/internal/storage/local/info.buildTime=${"unkown"}"
+        ];
+
+        nativeBuildInputs = with pkgs; [proj pkg-config];
+        buildInputs = [pkgs.geos];
+        preBuild = ''
+          ${pkgs.sqlc}/bin/sqlc generate
+          go generate
+        '';
+
+        doCheck = false;
+        excludedPackages = "pkg/*";
+        vendorHash = "sha256-V4Swf+TycYP/4qTJcjmx497spZfpRQlN/hsrs1vlauk=";
+        env.CGO_ENABLED = 1;
+      };
+
+      default = backend.overrideAttrs (old: final: {
+        preBuild = ''
+          ${pkgs.sqlc}/bin/sqlc generate
+          go generate
+
+          mkdir -p frontend/dist
+          cp -r ${frontend}/* frontend/dist/
+        '';
       });
+    });
 
     devShells = forEachSupportedSystem ({pkgs}: {
       default = pkgs.mkShell {
