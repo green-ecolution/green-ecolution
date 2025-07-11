@@ -9,6 +9,7 @@ package main
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"log"
 	"log/slog"
@@ -42,6 +43,9 @@ import (
 	"github.com/twpayne/go-geos"
 	pgxgeos "github.com/twpayne/pgx-geos"
 )
+
+//go:embed all:frontend
+var frontendFS embed.FS
 
 var version = "develop"
 
@@ -118,7 +122,7 @@ func startAppServices(ctx context.Context, cfg *config.Config) {
 	em := initializeEventManager()
 
 	services := domain.NewService(cfg, repositories, em)
-	httpServer := http.NewServer(cfg, services)
+	httpServer := http.NewServer(cfg, services, frontendFS)
 	mqttServer := mqtt.NewMqtt(cfg, services)
 
 	runServices(ctx, httpServer, mqttServer, em, services)

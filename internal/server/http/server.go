@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"time"
 
@@ -22,14 +23,16 @@ type HTTPError struct {
 } // @Name HTTPError
 
 type Server struct {
-	cfg      *config.Config
-	services *service.Services
+	cfg        *config.Config
+	frontendFs fs.FS
+	services   *service.Services
 }
 
-func NewServer(cfg *config.Config, services *service.Services) *Server {
+func NewServer(cfg *config.Config, services *service.Services, frontendFs fs.FS) *Server {
 	return &Server{
-		cfg:      cfg,
-		services: services,
+		cfg:        cfg,
+		frontendFs: frontendFs,
+		services:   services,
 	}
 }
 

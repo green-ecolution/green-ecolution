@@ -281,3 +281,4 @@ config/config.dev.yaml
 .docker/infra/ors
 .docker/infra/vroom/access.log
 .docker/infra/valhalla/custom_files
+frontend/dist

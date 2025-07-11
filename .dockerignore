@@ -2,6 +2,7 @@
 
 !internal/
 !pkg/
+!frontend/
 !scripts/run-migration.sh
 !config/config.default.yaml
 !Makefile

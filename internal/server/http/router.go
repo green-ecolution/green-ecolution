@@ -1,7 +1,10 @@
 package http
 
 import (
+	"net/http"
+
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/swagger"
 	"github.com/green-ecolution/backend/internal/server/http/handler/v1/evaluation"
 	"github.com/green-ecolution/backend/internal/server/http/handler/v1/info"
@@ -17,10 +20,18 @@ import (
 )
 
 func (s *Server) root(router fiber.Router, authMiddlewares ...fiber.Handler) {
-	router.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World!")
-	})
 	s.api(router, authMiddlewares...)
+
+	router.Use("/api", func(_ *fiber.Ctx) error {
+		return fiber.ErrNotFound
+	})
+
+	router.Use("/", filesystem.New(filesystem.Config{
+		PathPrefix:   "frontend/dist",
+		Index:        "index.html",
+		NotFoundFile: "frontend/dist/index.html",
+		Root:         http.FS(s.frontendFs),
+	}))
 }
 
 func (s *Server) api(router fiber.Router, authMiddlewares ...fiber.Handler) {
