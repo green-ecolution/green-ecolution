@@ -1,7 +1,6 @@
-* @choffmann @green-ecolution/backend-maintainers
+* @choffmann
 
 .github/** @green-ecolution/devops
 .docker/** @green-ecolution/devops
 .dockerignore @green-ecolution/devops
 compose.* @green-ecolution/devops
-flake.* @green-ecolution/devops
