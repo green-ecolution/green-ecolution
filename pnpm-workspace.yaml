@@ -2,10 +2,6 @@ packages:
   - 'app'
   - 'packages/*'
 
-syncInjectedDepsAfterScripts:
-  - build
-injectWorkspacePackages: true
-
 catalogs:
   react19:
     react: ^19.1.0
