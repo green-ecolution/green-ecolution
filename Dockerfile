@@ -8,7 +8,7 @@ RUN echo "java -jar /opt/openapi-generator/modules/openapi-generator-cli/target/
     && chmod +x /usr/local/bin/openapi-generator-cli
 
 WORKDIR /app
-COPY ./backend-client/api-docs.json ./backend-client/openapi-generator.sh ./
+COPY ./packages/backend-client/api-docs.json ./packages/backend-client/openapi-generator.sh ./
 RUN ./openapi-generator.sh local
 
 #############################################
@@ -19,7 +19,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 COPY . /app
-COPY --from=openapi-builder /app/src /app/backend-client/src
+COPY --from=openapi-builder /app/src /app/packages/backend-client/src
 WORKDIR /app
 
 #############################################
@@ -57,4 +57,4 @@ server {
 }
 EOF
 
-COPY --from=build /app/frontend/dist /usr/share/nginx/html
+COPY --from=build /app/app/dist /usr/share/nginx/html

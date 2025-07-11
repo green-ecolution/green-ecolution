@@ -29,7 +29,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
         run: |
           gh run download -R green-ecolution/backend -n api-docs.json 
-          mv api-docs.json ./backend-client/api-docs.json
+          mv api-docs.json ./packages/backend-client/api-docs.json
 
       - name: Install Dependencies
         run: |

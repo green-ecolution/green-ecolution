@@ -25,9 +25,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-backend-client/src
-backend-client/openapitools.json
-backend-client/api-docs.json
-frontend/.__mf__temp/app
+packages/backend-client/src
+packages/backend-client/openapitools.json
+packages/backend-client/api-docs.json
+app/.__mf__temp/app
 .direnv
 .pre-commit-config.yaml

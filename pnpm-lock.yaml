@@ -21,26 +21,14 @@ importers:
         specifier: ^3.6.2
         version: 3.6.2
 
-  backend-client:
-    devDependencies:
-      '@openapitools/openapi-generator-cli':
-        specifier: ^2.20.0
-        version: 2.21.0
-      '@types/node':
-        specifier: ^24.0.13
-        version: 24.0.13
-      typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
-
-  frontend:
+  app:
     dependencies:
       '@green-ecolution/backend-client':
         specifier: workspace:*
-        version: link:../backend-client
+        version: link:../packages/backend-client
       '@green-ecolution/plugin-interface':
         specifier: workspace:*
-        version: link:../plugin-interface
+        version: link:../packages/plugin-interface
       '@hookform/resolvers':
         specifier: ^5.0.1
         version: 5.1.1(react-hook-form@7.60.0(react@19.1.0))
@@ -166,7 +154,19 @@ importers:
         specifier: ^6.3.4
         version: 6.3.5(@types/node@24.0.13)(jiti@1.21.7)(tsx@4.20.3)(yaml@2.8.0)
 
-  plugin-interface:
+  packages/backend-client:
+    devDependencies:
+      '@openapitools/openapi-generator-cli':
+        specifier: ^2.20.0
+        version: 2.21.0
+      '@types/node':
+        specifier: ^24.0.13
+        version: 24.0.13
+      typescript:
+        specifier: ^5.8.3
+        version: 5.8.3
+
+  packages/plugin-interface:
     devDependencies:
       '@types/node':
         specifier: ^24.0.13

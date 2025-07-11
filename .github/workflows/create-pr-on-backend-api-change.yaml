@@ -36,14 +36,14 @@ jobs:
 
       - name: Bump version in package.json
         run: |
-          cd backend-client
+          cd packages/backend-client
           yarn version --patch --no-git-tag-version
           cd ..
 
       - name: Commit changelog and manifest files
         id: make-commit
         run: |
-          git add backend-client/package.json
+          git add packages/backend-client/package.json
           git commit --message "chore: update backend client to commit ${{ github.event.client_payload.hash }}"
 
           echo "::set-output name=commit::$(git rev-parse HEAD)"

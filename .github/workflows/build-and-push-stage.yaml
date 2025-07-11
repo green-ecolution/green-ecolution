@@ -8,9 +8,8 @@ name: Build and Push Docker Image Staging
   push:
     paths:
       - '.docker/**'
-      - 'frontend/**'
-      - 'plugin-interface/**'
-      - 'backend-client/**'
+      - 'app/**'
+      - 'packages/**'
       - 'packages.json'
       - 'pnpm-lock.yaml'
     branches:
@@ -92,7 +91,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
         run: |
           gh run download -R green-ecolution/backend -n api-docs.json 
-          mv api-docs.json ./backend-client/api-docs.json
+          mv api-docs.json ./packages/backend-client/api-docs.json
 
       - name: Build and push
         uses: docker/build-push-action@v6

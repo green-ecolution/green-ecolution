@@ -1,7 +1,6 @@
 packages:
-  - 'frontend'
-  - 'backend-client'
-  - 'plugin-interface'
+  - 'app'
+  - 'packages/*'
 
 syncInjectedDepsAfterScripts:
   - build

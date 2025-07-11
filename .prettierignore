@@ -1,6 +1,6 @@
 **/dist
 **/node_modules
-backend-client/**
-frontend/src/animations/**
-frontend/src/routeTree.gen.ts
+packages/backend-client/**
+app/src/animations/**
+app/src/routeTree.gen.ts
 pnpm-lock.yaml

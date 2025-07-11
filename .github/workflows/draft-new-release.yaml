@@ -49,8 +49,8 @@ jobs:
       - name: Bump version in package.json
         run: yarn version --new-version ${{ env.RELEASE_VERSION }} --no-git-tag-version
 
-      - name: Bump version in frontend/package.json
-        working-directory: frontend
+      - name: Bump version in app/package.json
+        working-directory: app
         run: yarn version --new-version ${{ env.RELEASE_VERSION }} --no-git-tag-version
 
       - name: Bump version in CITATION.cff
@@ -60,7 +60,7 @@ jobs:
       - name: Commit changes
         id: make-commit
         run: |
-          git add CHANGELOG.md CITATION.cff package.json frontend/package.json
+          git add CHANGELOG.md CITATION.cff package.json app/package.json
           git commit --message "ci: prepare release ${{ env.RELEASE_VERSION }}"
           echo "commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
