@@ -50,6 +50,11 @@ function revise_generation() {
     echo " Nothing to do here for now"
 }
 
+function update_packages_version () {
+  VERSION=$(yq -r '.info.version' api-docs.json)
+  echo "📝 Update version in packages.json to version $VERSION"
+  version="$VERSION" yq -i '.version=env(version)' package.json
+}
 
 function exit_on_error() {
   if [ $? -ne 0 ]; then
@@ -81,6 +86,8 @@ function main() {
     generate_client_docker
   fi
   revise_generation
+
+  update_packages_version
 
   echo "✨ Done"
 }

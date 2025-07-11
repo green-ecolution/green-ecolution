@@ -86,13 +86,6 @@ jobs:
         run: |
           echo "BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >>${GITHUB_ENV}
 
-      - name: Get api docs artifacts
-        env:
-          GH_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
-        run: |
-          gh run download -R green-ecolution/backend -n api-docs.json 
-          mv api-docs.json ./packages/backend-client/api-docs.json
-
       - name: Build and push
         uses: docker/build-push-action@v6
         with:

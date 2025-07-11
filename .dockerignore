@@ -7,9 +7,9 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-**/node_modules
-**/dist
-**/dist-ssr
+node_modules
+dist
+dist-ssr
 *.local
 
 # Editor directories and files
@@ -24,7 +24,6 @@ lerna-debug.log*
 *.sw?
 
 packages/backend-client/**
-!packages/backend-client/openapi-generator.sh
-!packages/backend-client/api-docs.json
+!packages/backend-client/src
 !packages/backend-client/package.json
 !packages/backend-client/tsconfig.json

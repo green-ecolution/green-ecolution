@@ -1,17 +1,4 @@
 #############################################
-# Builder web
-#############################################
-FROM openapitools/openapi-generator-cli:v7.14.0 AS openapi-builder
-
-USER root
-RUN echo "java -jar /opt/openapi-generator/modules/openapi-generator-cli/target/openapi-generator-cli.jar \$@" > /usr/local/bin/openapi-generator-cli \
-    && chmod +x /usr/local/bin/openapi-generator-cli
-
-WORKDIR /app
-COPY ./packages/backend-client/api-docs.json ./packages/backend-client/openapi-generator.sh ./
-RUN ./openapi-generator.sh local
-
-#############################################
 # base
 #############################################
 FROM node:24-alpine AS base
@@ -19,7 +6,6 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 COPY . /app
-COPY --from=openapi-builder /app/src /app/packages/backend-client/src
 WORKDIR /app
 
 #############################################

@@ -47,11 +47,11 @@ jobs:
           tag: ${{ env.RELEASE_VERSION }}
 
       - name: Bump version in package.json
-        run: yarn version --new-version ${{ env.RELEASE_VERSION }} --no-git-tag-version
+        run: yq -i '.version="${{ env.RELEASE_VERSION }}"' packages.json
 
       - name: Bump version in app/package.json
         working-directory: app
-        run: yarn version --new-version ${{ env.RELEASE_VERSION }} --no-git-tag-version
+        run: yq -i '.version="${{ env.RELEASE_VERSION }}"' packages.json
 
       - name: Bump version in CITATION.cff
         run: |
