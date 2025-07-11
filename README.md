@@ -41,6 +41,33 @@ git submodule update --remote --merge
 └── deploy/kustomize/   # Kubernetes deployment configurations
 ```
 
+## Nix & Flakes 🧊
+
+If you want a fully reproducible development setup or prefer to avoid installing tools globally, you can use [Nix](https://nixos.org/) with Flakes.
+
+### What does it provide?
+
+- Reproducible build environments for backend and frontend
+- Automatic shell environments (with [direnv](https://direnv.net/))
+- Consistent dependency pinning via Go modules and pnpm lockfiles
+
+### Build
+
+To build everything in one reproducible step:
+
+```bash
+# Build only the backend
+nix build github:green-ecolution/green-ecolution#backend
+
+# Build only the frontend
+nix build github:green-ecolution/green-ecolution#frontend
+
+# Build a single backend binary that includes the compiled frontend assets
+nix build github:green-ecolution/green-ecolution
+```
+
+💡 Tip: Using Nix ensures fully reproducible builds across all supported systems.
+
 ## Useful Links 🔗
 
 - 🌐 [Green Ecolution Website](https://green-ecolution.de)
