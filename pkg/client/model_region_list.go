@@ -22,8 +22,8 @@ var _ MappedNullable = &RegionList{}
 
 // RegionList struct for RegionList
 type RegionList struct {
+	Data       []Region    `json:"data"`
 	Pagination *Pagination `json:"pagination,omitempty"`
-	Regions    []Region    `json:"regions"`
 }
 
 type _RegionList RegionList
@@ -32,9 +32,9 @@ type _RegionList RegionList
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewRegionList(regions []Region) *RegionList {
+func NewRegionList(data []Region) *RegionList {
 	this := RegionList{}
-	this.Regions = regions
+	this.Data = data
 	return &this
 }
 
@@ -44,6 +44,30 @@ func NewRegionList(regions []Region) *RegionList {
 func NewRegionListWithDefaults() *RegionList {
 	this := RegionList{}
 	return &this
+}
+
+// GetData returns the Data field value
+func (o *RegionList) GetData() []Region {
+	if o == nil {
+		var ret []Region
+		return ret
+	}
+
+	return o.Data
+}
+
+// GetDataOk returns a tuple with the Data field value
+// and a boolean to check if the value has been set.
+func (o *RegionList) GetDataOk() ([]Region, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Data, true
+}
+
+// SetData sets field value
+func (o *RegionList) SetData(v []Region) {
+	o.Data = v
 }
 
 // GetPagination returns the Pagination field value if set, zero value otherwise.
@@ -78,30 +102,6 @@ func (o *RegionList) SetPagination(v Pagination) {
 	o.Pagination = &v
 }
 
-// GetRegions returns the Regions field value
-func (o *RegionList) GetRegions() []Region {
-	if o == nil {
-		var ret []Region
-		return ret
-	}
-
-	return o.Regions
-}
-
-// GetRegionsOk returns a tuple with the Regions field value
-// and a boolean to check if the value has been set.
-func (o *RegionList) GetRegionsOk() ([]Region, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.Regions, true
-}
-
-// SetRegions sets field value
-func (o *RegionList) SetRegions(v []Region) {
-	o.Regions = v
-}
-
 func (o RegionList) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -112,10 +112,10 @@ func (o RegionList) MarshalJSON() ([]byte, error) {
 
 func (o RegionList) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["data"] = o.Data
 	if !IsNil(o.Pagination) {
 		toSerialize["pagination"] = o.Pagination
 	}
-	toSerialize["regions"] = o.Regions
 	return toSerialize, nil
 }
 
@@ -124,7 +124,7 @@ func (o *RegionList) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"regions",
+		"data",
 	}
 
 	allProperties := make(map[string]interface{})

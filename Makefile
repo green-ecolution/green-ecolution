@@ -67,29 +67,29 @@ help:
 all: build
 
 .PHONY: build/all
-build/all: generate
+build/all: 
 	@echo "Building for all..."
 	GOARCH=amd64 GOOS=darwin CGO_ENABLED=1 go build $(GOFLAGS) -o bin/$(BINARY_NAME)-darwin $(MAIN_PACKAGE_PATH)
 	GOARCH=amd64 GOOS=linux CGO_ENABLED=1 go build $(GOFLAGS) -o bin/$(BINARY_NAME)-linux $(MAIN_PACKAGE_PATH)
 	GOARCH=amd64 GOOS=windows CGO_ENABLED=1 go build $(GOFLAGS) -o bin/$(BINARY_NAME)-windows $(MAIN_PACKAGE_PATH)
 
 .PHONY: build/darwin
-build/darwin: generate
+build/darwin: 
 	@echo "Building for darwin..."
 	GOARCH=amd64 GOOS=darwin CGO_ENABLED=1 go build $(GOFLAGS) -o bin/$(BINARY_NAME)-darwin $(MAIN_PACKAGE_PATH)
 
 .PHONY: build/linux
-build/linux: generate
+build/linux: 
 	@echo "Building for linux..."
 	GOARCH=amd64 GOOS=linux CGO_ENABLED=1 go build $(GOFLAGS) -o bin/$(BINARY_NAME)-linux $(MAIN_PACKAGE_PATH)
 
 .PHONY: build/windows
-build/windows: generate
+build/windows: 
 	@echo "Building for windows..."
 	GOARCH=amd64 GOOS=windows CGO_ENABLED=1 go build $(GOFLAGS) -o bin/$(BINARY_NAME)-windows $(MAIN_PACKAGE_PATH)
 
 .PHONY: build
-build: generate
+build: 
 	@echo "Building..."
 	CGO_ENABLED=1 go build $(GOFLAGS) -o bin/$(BINARY_NAME) $(MAIN_PACKAGE_PATH)
 
@@ -100,9 +100,10 @@ generate:
 	go generate 
 
 .PHONY: generate/client
-generate/client: generate
+generate/client:
 	@echo "Generating client..."
 	@./scripts/openapi-generator.sh client docs/swagger.yaml pkg/client
+	cd pkg/client && go fmt ./... && go mod tidy
 
 .PHONY: setup
 setup:
@@ -145,7 +146,7 @@ run: build
 	./bin/$(BINARY_NAME)
 
 .PHONY: run/live
-run/live: generate
+run/live:
 	@echo "Running live..."
 	go tool air
 

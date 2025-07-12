@@ -336,21 +336,24 @@ func (a *TreeAPIService) DeleteTreeExecute(r ApiDeleteTreeRequest) (*http.Respon
 }
 
 type ApiGetAllTreesRequest struct {
-	ctx        context.Context
-	ApiService *TreeAPIService
-	page       *string
-	limit      *string
-	provider   *string
+	ctx              context.Context
+	ApiService       *TreeAPIService
+	page             *int32
+	limit            *int32
+	provider         *string
+	wateringStatuses *[]string
+	plantingYears    *[]int32
+	hasCluster       *bool
 }
 
 // Page
-func (r ApiGetAllTreesRequest) Page(page string) ApiGetAllTreesRequest {
+func (r ApiGetAllTreesRequest) Page(page int32) ApiGetAllTreesRequest {
 	r.page = &page
 	return r
 }
 
 // Limit
-func (r ApiGetAllTreesRequest) Limit(limit string) ApiGetAllTreesRequest {
+func (r ApiGetAllTreesRequest) Limit(limit int32) ApiGetAllTreesRequest {
 	r.limit = &limit
 	return r
 }
@@ -358,6 +361,24 @@ func (r ApiGetAllTreesRequest) Limit(limit string) ApiGetAllTreesRequest {
 // Provider
 func (r ApiGetAllTreesRequest) Provider(provider string) ApiGetAllTreesRequest {
 	r.provider = &provider
+	return r
+}
+
+// watering status (good, moderate, bad)
+func (r ApiGetAllTreesRequest) WateringStatuses(wateringStatuses []string) ApiGetAllTreesRequest {
+	r.wateringStatuses = &wateringStatuses
+	return r
+}
+
+// planting_years
+func (r ApiGetAllTreesRequest) PlantingYears(plantingYears []int32) ApiGetAllTreesRequest {
+	r.plantingYears = &plantingYears
+	return r
+}
+
+// has cluster
+func (r ApiGetAllTreesRequest) HasCluster(hasCluster bool) ApiGetAllTreesRequest {
+	r.hasCluster = &hasCluster
 	return r
 }
 
@@ -410,6 +431,15 @@ func (a *TreeAPIService) GetAllTreesExecute(r ApiGetAllTreesRequest) (*TreeList,
 	}
 	if r.provider != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "provider", r.provider, "", "")
+	}
+	if r.wateringStatuses != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "watering_statuses", r.wateringStatuses, "form", "csv")
+	}
+	if r.plantingYears != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "planting_years", r.plantingYears, "form", "csv")
+	}
+	if r.hasCluster != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "has_cluster", r.hasCluster, "", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}

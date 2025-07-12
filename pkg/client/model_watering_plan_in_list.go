@@ -22,19 +22,21 @@ var _ MappedNullable = &WateringPlanInList{}
 
 // WateringPlanInList struct for WateringPlanInList
 type WateringPlanInList struct {
-	CancellationNote   string              `json:"cancellation_note"`
-	CreatedAt          string              `json:"created_at"`
-	Date               string              `json:"date"`
-	Description        string              `json:"description"`
-	Distance           float32             `json:"distance"`
-	Id                 int32               `json:"id"`
-	Status             WateringPlanStatus  `json:"status"`
-	TotalWaterRequired float32             `json:"total_water_required"`
-	Trailer            *Vehicle            `json:"trailer,omitempty"`
-	Transporter        Vehicle             `json:"transporter"`
-	Treeclusters       []TreeClusterInList `json:"treeclusters"`
-	UpdatedAt          string              `json:"updated_at"`
-	UserIds            []string            `json:"user_ids"`
+	AdditionalInformation map[string]interface{} `json:"additional_information,omitempty"`
+	CancellationNote      string                 `json:"cancellation_note"`
+	CreatedAt             string                 `json:"created_at"`
+	Date                  string                 `json:"date"`
+	Description           string                 `json:"description"`
+	Distance              float32                `json:"distance"`
+	Id                    int32                  `json:"id"`
+	Provider              string                 `json:"provider"`
+	Status                WateringPlanStatus     `json:"status"`
+	TotalWaterRequired    float32                `json:"total_water_required"`
+	Trailer               *Vehicle               `json:"trailer,omitempty"`
+	Transporter           Vehicle                `json:"transporter"`
+	Treeclusters          []TreeClusterInList    `json:"treeclusters"`
+	UpdatedAt             string                 `json:"updated_at"`
+	UserIds               []string               `json:"user_ids"`
 }
 
 type _WateringPlanInList WateringPlanInList
@@ -43,7 +45,7 @@ type _WateringPlanInList WateringPlanInList
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewWateringPlanInList(cancellationNote string, createdAt string, date string, description string, distance float32, id int32, status WateringPlanStatus, totalWaterRequired float32, transporter Vehicle, treeclusters []TreeClusterInList, updatedAt string, userIds []string) *WateringPlanInList {
+func NewWateringPlanInList(cancellationNote string, createdAt string, date string, description string, distance float32, id int32, provider string, status WateringPlanStatus, totalWaterRequired float32, transporter Vehicle, treeclusters []TreeClusterInList, updatedAt string, userIds []string) *WateringPlanInList {
 	this := WateringPlanInList{}
 	this.CancellationNote = cancellationNote
 	this.CreatedAt = createdAt
@@ -51,6 +53,7 @@ func NewWateringPlanInList(cancellationNote string, createdAt string, date strin
 	this.Description = description
 	this.Distance = distance
 	this.Id = id
+	this.Provider = provider
 	this.Status = status
 	this.TotalWaterRequired = totalWaterRequired
 	this.Transporter = transporter
@@ -66,6 +69,38 @@ func NewWateringPlanInList(cancellationNote string, createdAt string, date strin
 func NewWateringPlanInListWithDefaults() *WateringPlanInList {
 	this := WateringPlanInList{}
 	return &this
+}
+
+// GetAdditionalInformation returns the AdditionalInformation field value if set, zero value otherwise.
+func (o *WateringPlanInList) GetAdditionalInformation() map[string]interface{} {
+	if o == nil || IsNil(o.AdditionalInformation) {
+		var ret map[string]interface{}
+		return ret
+	}
+	return o.AdditionalInformation
+}
+
+// GetAdditionalInformationOk returns a tuple with the AdditionalInformation field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *WateringPlanInList) GetAdditionalInformationOk() (map[string]interface{}, bool) {
+	if o == nil || IsNil(o.AdditionalInformation) {
+		return map[string]interface{}{}, false
+	}
+	return o.AdditionalInformation, true
+}
+
+// HasAdditionalInformation returns a boolean if a field has been set.
+func (o *WateringPlanInList) HasAdditionalInformation() bool {
+	if o != nil && !IsNil(o.AdditionalInformation) {
+		return true
+	}
+
+	return false
+}
+
+// SetAdditionalInformation gets a reference to the given map[string]interface{} and assigns it to the AdditionalInformation field.
+func (o *WateringPlanInList) SetAdditionalInformation(v map[string]interface{}) {
+	o.AdditionalInformation = v
 }
 
 // GetCancellationNote returns the CancellationNote field value
@@ -210,6 +245,30 @@ func (o *WateringPlanInList) GetIdOk() (*int32, bool) {
 // SetId sets field value
 func (o *WateringPlanInList) SetId(v int32) {
 	o.Id = v
+}
+
+// GetProvider returns the Provider field value
+func (o *WateringPlanInList) GetProvider() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Provider
+}
+
+// GetProviderOk returns a tuple with the Provider field value
+// and a boolean to check if the value has been set.
+func (o *WateringPlanInList) GetProviderOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Provider, true
+}
+
+// SetProvider sets field value
+func (o *WateringPlanInList) SetProvider(v string) {
+	o.Provider = v
 }
 
 // GetStatus returns the Status field value
@@ -398,12 +457,16 @@ func (o WateringPlanInList) MarshalJSON() ([]byte, error) {
 
 func (o WateringPlanInList) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.AdditionalInformation) {
+		toSerialize["additional_information"] = o.AdditionalInformation
+	}
 	toSerialize["cancellation_note"] = o.CancellationNote
 	toSerialize["created_at"] = o.CreatedAt
 	toSerialize["date"] = o.Date
 	toSerialize["description"] = o.Description
 	toSerialize["distance"] = o.Distance
 	toSerialize["id"] = o.Id
+	toSerialize["provider"] = o.Provider
 	toSerialize["status"] = o.Status
 	toSerialize["total_water_required"] = o.TotalWaterRequired
 	if !IsNil(o.Trailer) {
@@ -427,6 +490,7 @@ func (o *WateringPlanInList) UnmarshalJSON(data []byte) (err error) {
 		"description",
 		"distance",
 		"id",
+		"provider",
 		"status",
 		"total_water_required",
 		"transporter",

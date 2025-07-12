@@ -336,22 +336,36 @@ func (a *TreeClusterAPIService) DeleteTreeClusterExecute(r ApiDeleteTreeClusterR
 }
 
 type ApiGetAllTreeClustersRequest struct {
-	ctx        context.Context
-	ApiService *TreeClusterAPIService
-	page       *string
-	limit      *string
-	provider   *string
+	ctx              context.Context
+	ApiService       *TreeClusterAPIService
+	page             *int32
+	limit            *int32
+	wateringStatuses *[]string
+	regions          *[]string
+	provider         *string
 }
 
 // Page
-func (r ApiGetAllTreeClustersRequest) Page(page string) ApiGetAllTreeClustersRequest {
+func (r ApiGetAllTreeClustersRequest) Page(page int32) ApiGetAllTreeClustersRequest {
 	r.page = &page
 	return r
 }
 
 // Limit
-func (r ApiGetAllTreeClustersRequest) Limit(limit string) ApiGetAllTreeClustersRequest {
+func (r ApiGetAllTreeClustersRequest) Limit(limit int32) ApiGetAllTreeClustersRequest {
 	r.limit = &limit
+	return r
+}
+
+// Watering statuses
+func (r ApiGetAllTreeClustersRequest) WateringStatuses(wateringStatuses []string) ApiGetAllTreeClustersRequest {
+	r.wateringStatuses = &wateringStatuses
+	return r
+}
+
+// Regions
+func (r ApiGetAllTreeClustersRequest) Regions(regions []string) ApiGetAllTreeClustersRequest {
+	r.regions = &regions
 	return r
 }
 
@@ -407,6 +421,12 @@ func (a *TreeClusterAPIService) GetAllTreeClustersExecute(r ApiGetAllTreeCluster
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "", "")
+	}
+	if r.wateringStatuses != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "watering_statuses", r.wateringStatuses, "form", "csv")
+	}
+	if r.regions != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "regions", r.regions, "form", "csv")
 	}
 	if r.provider != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "provider", r.provider, "", "")

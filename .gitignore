@@ -1,7 +1,6 @@
 .env
 tmp
 
-**/_mock
 # Created by https://www.toptal.com/developers/gitignore/api/windows,linux,macos,go,goland+all,jetbrains+all,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows,linux,macos,go,goland+all,jetbrains+all,visualstudiocode
 
@@ -266,12 +265,8 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,linux,macos,go,goland+all,jetbrains+all,visualstudiocode
 .secrets
-data/mongo
-generated
-docs
 config.yaml
 bin
-_sqlc
 .docker/.env*
 config/config.stage.yaml
 config/config.prod.yaml

@@ -26,28 +26,7 @@ type UserAPIService service
 type ApiGetAllUsersRequest struct {
 	ctx        context.Context
 	ApiService *UserAPIService
-	page       *string
-	limit      *string
-	limit2     *string
 	userIds    *string
-}
-
-// Page
-func (r ApiGetAllUsersRequest) Page(page string) ApiGetAllUsersRequest {
-	r.page = &page
-	return r
-}
-
-// Limit
-func (r ApiGetAllUsersRequest) Limit(limit string) ApiGetAllUsersRequest {
-	r.limit = &limit
-	return r
-}
-
-// Limit
-func (r ApiGetAllUsersRequest) Limit2(limit2 string) ApiGetAllUsersRequest {
-	r.limit2 = &limit2
-	return r
 }
 
 // User IDs
@@ -97,15 +76,6 @@ func (a *UserAPIService) GetAllUsersExecute(r ApiGetAllUsersRequest) (*UserList,
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
-	if r.page != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "page", r.page, "", "")
-	}
-	if r.limit != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "", "")
-	}
-	if r.limit2 != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit2, "", "")
-	}
 	if r.userIds != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "user_ids", r.userIds, "", "")
 	}
@@ -188,20 +158,6 @@ type ApiGetUsersByRoleRequest struct {
 	ctx        context.Context
 	ApiService *UserAPIService
 	role       string
-	page       *string
-	limit      *string
-}
-
-// Page
-func (r ApiGetUsersByRoleRequest) Page(page string) ApiGetUsersByRoleRequest {
-	r.page = &page
-	return r
-}
-
-// Limit
-func (r ApiGetUsersByRoleRequest) Limit(limit string) ApiGetUsersByRoleRequest {
-	r.limit = &limit
-	return r
 }
 
 func (r ApiGetUsersByRoleRequest) Execute() (*UserList, *http.Response, error) {
@@ -248,12 +204,6 @@ func (a *UserAPIService) GetUsersByRoleExecute(r ApiGetUsersByRoleRequest) (*Use
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
-	if r.page != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "page", r.page, "", "")
-	}
-	if r.limit != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "", "")
-	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 

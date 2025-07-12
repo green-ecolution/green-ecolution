@@ -22,21 +22,23 @@ var _ MappedNullable = &TreeClusterInList{}
 
 // TreeClusterInList struct for TreeClusterInList
 type TreeClusterInList struct {
-	Address        string         `json:"address"`
-	Archived       bool           `json:"archived"`
-	CreatedAt      string         `json:"created_at"`
-	Description    string         `json:"description"`
-	Id             int32          `json:"id"`
-	LastWatered    *string        `json:"last_watered,omitempty"`
-	Latitude       float32        `json:"latitude"`
-	Longitude      float32        `json:"longitude"`
-	MoistureLevel  float32        `json:"moisture_level"`
-	Name           string         `json:"name"`
-	Region         *Region        `json:"region,omitempty"`
-	SoilCondition  SoilCondition  `json:"soil_condition"`
-	TreeIds        []int32        `json:"tree_ids,omitempty"`
-	UpdatedAt      string         `json:"updated_at"`
-	WateringStatus WateringStatus `json:"watering_status"`
+	AdditionalInformation map[string]interface{} `json:"additional_information,omitempty"`
+	Address               string                 `json:"address"`
+	Archived              bool                   `json:"archived"`
+	CreatedAt             string                 `json:"created_at"`
+	Description           string                 `json:"description"`
+	Id                    int32                  `json:"id"`
+	LastWatered           *string                `json:"last_watered,omitempty"`
+	Latitude              float32                `json:"latitude"`
+	Longitude             float32                `json:"longitude"`
+	MoistureLevel         float32                `json:"moisture_level"`
+	Name                  string                 `json:"name"`
+	Provider              string                 `json:"provider"`
+	Region                *Region                `json:"region,omitempty"`
+	SoilCondition         SoilCondition          `json:"soil_condition"`
+	TreeIds               []int32                `json:"tree_ids,omitempty"`
+	UpdatedAt             string                 `json:"updated_at"`
+	WateringStatus        WateringStatus         `json:"watering_status"`
 }
 
 type _TreeClusterInList TreeClusterInList
@@ -45,7 +47,7 @@ type _TreeClusterInList TreeClusterInList
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewTreeClusterInList(address string, archived bool, createdAt string, description string, id int32, latitude float32, longitude float32, moistureLevel float32, name string, soilCondition SoilCondition, updatedAt string, wateringStatus WateringStatus) *TreeClusterInList {
+func NewTreeClusterInList(address string, archived bool, createdAt string, description string, id int32, latitude float32, longitude float32, moistureLevel float32, name string, provider string, soilCondition SoilCondition, updatedAt string, wateringStatus WateringStatus) *TreeClusterInList {
 	this := TreeClusterInList{}
 	this.Address = address
 	this.Archived = archived
@@ -56,6 +58,7 @@ func NewTreeClusterInList(address string, archived bool, createdAt string, descr
 	this.Longitude = longitude
 	this.MoistureLevel = moistureLevel
 	this.Name = name
+	this.Provider = provider
 	this.SoilCondition = soilCondition
 	this.UpdatedAt = updatedAt
 	this.WateringStatus = wateringStatus
@@ -68,6 +71,38 @@ func NewTreeClusterInList(address string, archived bool, createdAt string, descr
 func NewTreeClusterInListWithDefaults() *TreeClusterInList {
 	this := TreeClusterInList{}
 	return &this
+}
+
+// GetAdditionalInformation returns the AdditionalInformation field value if set, zero value otherwise.
+func (o *TreeClusterInList) GetAdditionalInformation() map[string]interface{} {
+	if o == nil || IsNil(o.AdditionalInformation) {
+		var ret map[string]interface{}
+		return ret
+	}
+	return o.AdditionalInformation
+}
+
+// GetAdditionalInformationOk returns a tuple with the AdditionalInformation field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *TreeClusterInList) GetAdditionalInformationOk() (map[string]interface{}, bool) {
+	if o == nil || IsNil(o.AdditionalInformation) {
+		return map[string]interface{}{}, false
+	}
+	return o.AdditionalInformation, true
+}
+
+// HasAdditionalInformation returns a boolean if a field has been set.
+func (o *TreeClusterInList) HasAdditionalInformation() bool {
+	if o != nil && !IsNil(o.AdditionalInformation) {
+		return true
+	}
+
+	return false
+}
+
+// SetAdditionalInformation gets a reference to the given map[string]interface{} and assigns it to the AdditionalInformation field.
+func (o *TreeClusterInList) SetAdditionalInformation(v map[string]interface{}) {
+	o.AdditionalInformation = v
 }
 
 // GetAddress returns the Address field value
@@ -318,6 +353,30 @@ func (o *TreeClusterInList) SetName(v string) {
 	o.Name = v
 }
 
+// GetProvider returns the Provider field value
+func (o *TreeClusterInList) GetProvider() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Provider
+}
+
+// GetProviderOk returns a tuple with the Provider field value
+// and a boolean to check if the value has been set.
+func (o *TreeClusterInList) GetProviderOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Provider, true
+}
+
+// SetProvider sets field value
+func (o *TreeClusterInList) SetProvider(v string) {
+	o.Provider = v
+}
+
 // GetRegion returns the Region field value if set, zero value otherwise.
 func (o *TreeClusterInList) GetRegion() Region {
 	if o == nil || IsNil(o.Region) {
@@ -464,6 +523,9 @@ func (o TreeClusterInList) MarshalJSON() ([]byte, error) {
 
 func (o TreeClusterInList) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.AdditionalInformation) {
+		toSerialize["additional_information"] = o.AdditionalInformation
+	}
 	toSerialize["address"] = o.Address
 	toSerialize["archived"] = o.Archived
 	toSerialize["created_at"] = o.CreatedAt
@@ -476,6 +538,7 @@ func (o TreeClusterInList) ToMap() (map[string]interface{}, error) {
 	toSerialize["longitude"] = o.Longitude
 	toSerialize["moisture_level"] = o.MoistureLevel
 	toSerialize["name"] = o.Name
+	toSerialize["provider"] = o.Provider
 	if !IsNil(o.Region) {
 		toSerialize["region"] = o.Region
 	}
@@ -502,6 +565,7 @@ func (o *TreeClusterInList) UnmarshalJSON(data []byte) (err error) {
 		"longitude",
 		"moisture_level",
 		"name",
+		"provider",
 		"soil_condition",
 		"updated_at",
 		"watering_status",

@@ -51,6 +51,8 @@ type APIClient struct {
 
 	// API Services
 
+	EvaluationAPI *EvaluationAPIService
+
 	InfoAPI *InfoAPIService
 
 	PluginAPI *PluginAPIService
@@ -88,6 +90,7 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.common.client = c
 
 	// API Services
+	c.EvaluationAPI = (*EvaluationAPIService)(&c.common)
 	c.InfoAPI = (*InfoAPIService)(&c.common)
 	c.PluginAPI = (*PluginAPIService)(&c.common)
 	c.RegionAPI = (*RegionAPIService)(&c.common)
@@ -156,6 +159,10 @@ func typeCheckParameter(obj interface{}, expected string, name string) error {
 
 func parameterValueToString(obj interface{}, key string) string {
 	if reflect.TypeOf(obj).Kind() != reflect.Ptr {
+		if actualObj, ok := obj.(interface{ GetActualInstanceValue() interface{} }); ok {
+			return fmt.Sprintf("%v", actualObj.GetActualInstanceValue())
+		}
+
 		return fmt.Sprintf("%v", obj)
 	}
 	var param, ok = obj.(MappedNullable)

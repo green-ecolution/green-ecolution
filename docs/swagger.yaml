@@ -1,0 +1,3235 @@
+definitions:
+  AppInfo:
+    properties:
+      buildTime:
+        type: string
+      git:
+        $ref: '#/definitions/GitInfo'
+      goVersion:
+        type: string
+      map:
+        $ref: '#/definitions/MapInfo'
+      server:
+        $ref: '#/definitions/ServerInfo'
+      version:
+        type: string
+    required:
+    - buildTime
+    - git
+    - goVersion
+    - map
+    - server
+    - version
+    type: object
+  ClientToken:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+      expiry:
+        type: string
+      id_token:
+        type: string
+      not_before_policy:
+        type: integer
+      refresh_expires_in:
+        type: integer
+      refresh_token:
+        type: string
+      scope:
+        type: string
+      session_state:
+        type: string
+      token_type:
+        type: string
+    required:
+    - access_token
+    - expires_in
+    - expiry
+    - id_token
+    - not_before_policy
+    - refresh_expires_in
+    - refresh_token
+    - scope
+    - session_state
+    - token_type
+    type: object
+  DrivingLicense:
+    enum:
+    - B
+    - BE
+    - C
+    - CE
+    type: string
+    x-enum-varnames:
+    - DrivingLicenseB
+    - DrivingLicenseBE
+    - DrivingLicenseC
+    - DrivingLicenseCE
+  Evaluation:
+    properties:
+      region_evaluation:
+        items:
+          $ref: '#/definitions/RegionEvaluation'
+        type: array
+      sensor_count:
+        type: integer
+      total_water_consumption:
+        type: integer
+      tree_count:
+        type: integer
+      treecluster_count:
+        type: integer
+      user_watering_plan_count:
+        type: integer
+      vehicle_evaluation:
+        items:
+          $ref: '#/definitions/VehicleEvaluation'
+        type: array
+      watering_plan_count:
+        type: integer
+    required:
+    - region_evaluation
+    - sensor_count
+    - total_water_consumption
+    - tree_count
+    - treecluster_count
+    - user_watering_plan_count
+    - vehicle_evaluation
+    - watering_plan_count
+    type: object
+  EvaluationValue:
+    properties:
+      consumed_water:
+        type: number
+      tree_cluster_id:
+        type: integer
+      watering_plan_id:
+        type: integer
+    required:
+    - consumed_water
+    - tree_cluster_id
+    - watering_plan_id
+    type: object
+  GeoJSONLocation:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+    required:
+    - latitude
+    - longitude
+    type: object
+  GeoJSONMetadata:
+    properties:
+      end_point:
+        $ref: '#/definitions/GeoJSONLocation'
+      start_point:
+        $ref: '#/definitions/GeoJSONLocation'
+      watering_point:
+        $ref: '#/definitions/GeoJSONLocation'
+    required:
+    - end_point
+    - start_point
+    - watering_point
+    type: object
+  GeoJson:
+    properties:
+      bbox:
+        items:
+          type: number
+        type: array
+      features:
+        items:
+          $ref: '#/definitions/GeoJsonFeature'
+        type: array
+      metadata:
+        $ref: '#/definitions/GeoJSONMetadata'
+      type:
+        $ref: '#/definitions/GeoJsonType'
+    required:
+    - bbox
+    - features
+    - metadata
+    - type
+    type: object
+  GeoJsonFeature:
+    properties:
+      bbox:
+        items:
+          type: number
+        type: array
+      geometry:
+        $ref: '#/definitions/GeoJsonGeometry'
+      properties:
+        additionalProperties: {}
+        type: object
+      type:
+        $ref: '#/definitions/GeoJsonType'
+    required:
+    - bbox
+    - geometry
+    - properties
+    - type
+    type: object
+  GeoJsonGeometry:
+    properties:
+      coordinates:
+        items:
+          items:
+            type: number
+          type: array
+        type: array
+      type:
+        $ref: '#/definitions/GeoJsonType'
+    required:
+    - coordinates
+    - type
+    type: object
+  GeoJsonType:
+    enum:
+    - FeatureCollection
+    type: string
+    x-enum-varnames:
+    - FeatureCollection
+  GitInfo:
+    properties:
+      branch:
+        type: string
+      commit:
+        type: string
+      repository:
+        type: string
+    required:
+    - branch
+    - commit
+    - repository
+    type: object
+  HTTPError:
+    properties:
+      code:
+        type: integer
+      error:
+        type: string
+      method:
+        type: string
+      path:
+        type: string
+    required:
+    - code
+    - error
+    - method
+    - path
+    type: object
+  LoginResponse:
+    properties:
+      login_url:
+        type: string
+    required:
+    - login_url
+    type: object
+  LoginTokenRequest:
+    properties:
+      code:
+        type: string
+    required:
+    - code
+    type: object
+  LogoutRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  MapInfo:
+    properties:
+      bbox:
+        items:
+          type: number
+        type: array
+      center:
+        items:
+          type: number
+        type: array
+    required:
+    - bbox
+    - center
+    type: object
+  Pagination:
+    properties:
+      current_page:
+        type: integer
+      next_page:
+        type: integer
+      prev_page:
+        type: integer
+      total_pages:
+        type: integer
+      total_records:
+        type: integer
+    required:
+    - current_page
+    - next_page
+    - prev_page
+    - total_pages
+    - total_records
+    type: object
+  Plugin:
+    properties:
+      description:
+        type: string
+      host_path:
+        type: string
+      name:
+        type: string
+      slug:
+        type: string
+      version:
+        type: string
+    required:
+    - description
+    - host_path
+    - name
+    - slug
+    - version
+    type: object
+  PluginAuth:
+    properties:
+      client_id:
+        type: string
+      client_secret:
+        type: string
+    required:
+    - client_id
+    - client_secret
+    type: object
+  PluginListResponse:
+    properties:
+      plugins:
+        items:
+          $ref: '#/definitions/Plugin'
+        type: array
+    required:
+    - plugins
+    type: object
+  PluginRegisterRequest:
+    properties:
+      auth:
+        $ref: '#/definitions/PluginAuth'
+      description:
+        type: string
+      name:
+        type: string
+      path:
+        type: string
+      slug:
+        type: string
+      version:
+        type: string
+    required:
+    - auth
+    - description
+    - name
+    - path
+    - slug
+    - version
+    type: object
+  RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  Region:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    required:
+    - id
+    - name
+    type: object
+  RegionEvaluation:
+    properties:
+      name:
+        type: string
+      watering_plan_count:
+        type: integer
+    required:
+    - name
+    - watering_plan_count
+    type: object
+  RegionList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/Region'
+        type: array
+      pagination:
+        $ref: '#/definitions/Pagination'
+    required:
+    - data
+    type: object
+  RouteRequest:
+    properties:
+      cluster_ids:
+        items:
+          type: integer
+        type: array
+      trailer_id:
+        type: integer
+      transporter_id:
+        type: integer
+    required:
+    - cluster_ids
+    - transporter_id
+    type: object
+  Sensor:
+    properties:
+      additional_information:
+        additionalProperties: true
+        type: object
+      created_at:
+        type: string
+      id:
+        type: string
+      latest_data:
+        $ref: '#/definitions/SensorData'
+      latitude:
+        type: number
+      longitude:
+        type: number
+      provider:
+        type: string
+      status:
+        $ref: '#/definitions/SensorStatus'
+      updated_at:
+        type: string
+    required:
+    - created_at
+    - id
+    - latest_data
+    - latitude
+    - longitude
+    - provider
+    - status
+    - updated_at
+    type: object
+  SensorData:
+    properties:
+      battery:
+        type: number
+      created_at:
+        type: string
+      humidity:
+        type: number
+      temperature:
+        type: number
+      updated_at:
+        type: string
+      watermarks:
+        items:
+          $ref: '#/definitions/WatermarkResponse'
+        type: array
+    required:
+    - battery
+    - created_at
+    - humidity
+    - temperature
+    - updated_at
+    - watermarks
+    type: object
+  SensorDataList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/SensorData'
+        type: array
+    required:
+    - data
+    type: object
+  SensorList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/Sensor'
+        type: array
+      pagination:
+        $ref: '#/definitions/Pagination'
+    required:
+    - data
+    type: object
+  SensorStatus:
+    enum:
+    - online
+    - offline
+    - unknown
+    type: string
+    x-enum-varnames:
+    - SensorStatusOnline
+    - SensorStatusOffline
+    - SensorStatusUnknown
+  ServerInfo:
+    properties:
+      arch:
+        type: string
+      hostname:
+        type: string
+      interface:
+        type: string
+      ip:
+        type: string
+      os:
+        type: string
+      port:
+        type: integer
+      uptime:
+        type: string
+      url:
+        type: string
+    required:
+    - arch
+    - hostname
+    - interface
+    - ip
+    - os
+    - port
+    - uptime
+    - url
+    type: object
+  SoilCondition:
+    enum:
+    - schluffig
+    - sandig
+    - lehmig
+    - tonig
+    - unknown
+    type: string
+    x-enum-varnames:
+    - TreeSoilConditionSchluffig
+    - TreeSoilConditionSandig
+    - TreeSoilConditionLehmig
+    - TreeSoilConditionTonig
+    - TreeSoilConditionUnknown
+  Tree:
+    properties:
+      additional_information:
+        additionalProperties: true
+        type: object
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      last_watered:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      number:
+        type: string
+      planting_year:
+        type: integer
+      provider:
+        type: string
+      sensor:
+        $ref: '#/definitions/Sensor'
+      species:
+        type: string
+      tree_cluster_id:
+        type: integer
+      updated_at:
+        type: string
+      watering_status:
+        $ref: '#/definitions/WateringStatus'
+    required:
+    - created_at
+    - description
+    - id
+    - latitude
+    - longitude
+    - number
+    - planting_year
+    - provider
+    - species
+    - updated_at
+    - watering_status
+    type: object
+  TreeCluster:
+    properties:
+      additional_information:
+        additionalProperties: true
+        type: object
+      address:
+        type: string
+      archived:
+        type: boolean
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      last_watered:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      moisture_level:
+        type: number
+      name:
+        type: string
+      provider:
+        type: string
+      region:
+        $ref: '#/definitions/Region'
+      soil_condition:
+        $ref: '#/definitions/SoilCondition'
+      trees:
+        items:
+          $ref: '#/definitions/Tree'
+        type: array
+      updated_at:
+        type: string
+      watering_status:
+        $ref: '#/definitions/WateringStatus'
+    required:
+    - address
+    - archived
+    - created_at
+    - description
+    - id
+    - latitude
+    - longitude
+    - moisture_level
+    - name
+    - provider
+    - soil_condition
+    - updated_at
+    - watering_status
+    type: object
+  TreeClusterCreate:
+    properties:
+      additional_information:
+        additionalProperties: true
+        type: object
+      address:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      provider:
+        type: string
+      soil_condition:
+        $ref: '#/definitions/SoilCondition'
+      tree_ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - address
+    - description
+    - name
+    - soil_condition
+    - tree_ids
+    type: object
+  TreeClusterInList:
+    properties:
+      additional_information:
+        additionalProperties: true
+        type: object
+      address:
+        type: string
+      archived:
+        type: boolean
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      last_watered:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      moisture_level:
+        type: number
+      name:
+        type: string
+      provider:
+        type: string
+      region:
+        $ref: '#/definitions/Region'
+      soil_condition:
+        $ref: '#/definitions/SoilCondition'
+      tree_ids:
+        items:
+          type: integer
+        type: array
+      updated_at:
+        type: string
+      watering_status:
+        $ref: '#/definitions/WateringStatus'
+    required:
+    - address
+    - archived
+    - created_at
+    - description
+    - id
+    - latitude
+    - longitude
+    - moisture_level
+    - name
+    - provider
+    - soil_condition
+    - updated_at
+    - watering_status
+    type: object
+  TreeClusterList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/TreeClusterInList'
+        type: array
+      pagination:
+        $ref: '#/definitions/Pagination'
+    required:
+    - data
+    type: object
+  TreeClusterUpdate:
+    properties:
+      additional_information:
+        additionalProperties: true
+        type: object
+      address:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      provider:
+        type: string
+      soil_condition:
+        $ref: '#/definitions/SoilCondition'
+      tree_ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - address
+    - description
+    - name
+    - soil_condition
+    - tree_ids
+    type: object
+  TreeCreate:
+    properties:
+      additional_information:
+        additionalProperties: true
+        type: object
+      description:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      number:
+        type: string
+      planting_year:
+        type: integer
+      provider:
+        type: string
+      sensor_id:
+        type: string
+      species:
+        type: string
+      tree_cluster_id:
+        type: integer
+    required:
+    - description
+    - latitude
+    - longitude
+    - number
+    - planting_year
+    - species
+    type: object
+  TreeList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/Tree'
+        type: array
+      pagination:
+        $ref: '#/definitions/Pagination'
+    required:
+    - data
+    type: object
+  TreeUpdate:
+    properties:
+      additional_information:
+        additionalProperties: true
+        type: object
+      description:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      number:
+        type: string
+      planting_year:
+        type: integer
+      provider:
+        type: string
+      sensor_id:
+        type: string
+      species:
+        type: string
+      tree_cluster_id:
+        type: integer
+    required:
+    - description
+    - latitude
+    - longitude
+    - number
+    - planting_year
+    - species
+    type: object
+  User:
+    properties:
+      avatar_url:
+        type: string
+      created_at:
+        type: string
+      driving_licenses:
+        items:
+          $ref: '#/definitions/DrivingLicense'
+        type: array
+      email:
+        type: string
+      email_verified:
+        type: boolean
+      employee_id:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      phone_number:
+        type: string
+      roles:
+        items:
+          $ref: '#/definitions/UserRole'
+        type: array
+      status:
+        $ref: '#/definitions/UserStatus'
+      username:
+        type: string
+    required:
+    - avatar_url
+    - created_at
+    - driving_licenses
+    - email
+    - email_verified
+    - employee_id
+    - first_name
+    - id
+    - last_name
+    - phone_number
+    - roles
+    - status
+    - username
+    type: object
+  UserList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/User'
+        type: array
+    required:
+    - data
+    type: object
+  UserRegister:
+    properties:
+      avatar_url:
+        type: string
+      email:
+        type: string
+      employee_id:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        type: string
+      phone_number:
+        type: string
+      roles:
+        items:
+          type: string
+        type: array
+      username:
+        type: string
+    required:
+    - avatar_url
+    - email
+    - employee_id
+    - first_name
+    - last_name
+    - password
+    - phone_number
+    - roles
+    - username
+    type: object
+  UserRole:
+    enum:
+    - tbz
+    - green-ecolution
+    - smarte-grenzregion
+    - unknown
+    type: string
+    x-enum-varnames:
+    - UserRoleTbz
+    - UserRoleGreenEcolution
+    - UserRoleSmarteGrenzregion
+    - UserRoleUnknown
+  UserStatus:
+    enum:
+    - available
+    - absent
+    - unknown
+    type: string
+    x-enum-varnames:
+    - UserStatusAvailable
+    - UserStatusAbsent
+    - UserStatusUnknown
+  Vehicle:
+    properties:
+      additional_information:
+        additionalProperties: true
+        type: object
+      archived_at:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      driving_license:
+        $ref: '#/definitions/DrivingLicense'
+      height:
+        type: number
+      id:
+        type: integer
+      length:
+        type: number
+      model:
+        type: string
+      number_plate:
+        type: string
+      provider:
+        type: string
+      status:
+        $ref: '#/definitions/VehicleStatus'
+      type:
+        $ref: '#/definitions/VehicleType'
+      updated_at:
+        type: string
+      water_capacity:
+        type: number
+      weight:
+        type: number
+      width:
+        type: number
+    required:
+    - archived_at
+    - created_at
+    - description
+    - driving_license
+    - height
+    - id
+    - length
+    - model
+    - number_plate
+    - provider
+    - status
+    - type
+    - updated_at
+    - water_capacity
+    - weight
+    - width
+    type: object
+  VehicleCreate:
+    properties:
+      additional_information:
+        additionalProperties: true
+        type: object
+      description:
+        type: string
+      driving_license:
+        $ref: '#/definitions/DrivingLicense'
+      height:
+        type: number
+      length:
+        type: number
+      model:
+        type: string
+      number_plate:
+        type: string
+      provider:
+        type: string
+      status:
+        $ref: '#/definitions/VehicleStatus'
+      type:
+        $ref: '#/definitions/VehicleType'
+      water_capacity:
+        type: number
+      weight:
+        type: number
+      width:
+        type: number
+    required:
+    - description
+    - driving_license
+    - height
+    - length
+    - model
+    - number_plate
+    - status
+    - type
+    - water_capacity
+    - weight
+    - width
+    type: object
+  VehicleEvaluation:
+    properties:
+      number_plate:
+        type: string
+      watering_plan_count:
+        type: integer
+    required:
+    - number_plate
+    - watering_plan_count
+    type: object
+  VehicleList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/Vehicle'
+        type: array
+      pagination:
+        $ref: '#/definitions/Pagination'
+    required:
+    - data
+    type: object
+  VehicleStatus:
+    enum:
+    - active
+    - available
+    - not available
+    - unknown
+    type: string
+    x-enum-varnames:
+    - VehicleStatusActive
+    - VehicleStatusAvailable
+    - VehicleStatusNotAvailable
+    - VehicleStatusUnknown
+  VehicleType:
+    enum:
+    - transporter
+    - trailer
+    - unknown
+    type: string
+    x-enum-varnames:
+    - VehicleTypeTransporter
+    - VehicleTypeTrailer
+    - VehicleTypeUnknown
+  VehicleUpdate:
+    properties:
+      additional_information:
+        additionalProperties: true
+        type: object
+      description:
+        type: string
+      driving_license:
+        $ref: '#/definitions/DrivingLicense'
+      height:
+        type: number
+      length:
+        type: number
+      model:
+        type: string
+      number_plate:
+        type: string
+      provider:
+        type: string
+      status:
+        $ref: '#/definitions/VehicleStatus'
+      type:
+        $ref: '#/definitions/VehicleType'
+      water_capacity:
+        type: number
+      weight:
+        type: number
+      width:
+        type: number
+    required:
+    - description
+    - driving_license
+    - height
+    - length
+    - model
+    - number_plate
+    - status
+    - type
+    - water_capacity
+    - weight
+    - width
+    type: object
+  WateringPlan:
+    properties:
+      additional_information:
+        additionalProperties: true
+        type: object
+      cancellation_note:
+        type: string
+      created_at:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      distance:
+        type: number
+      duration:
+        type: number
+      evaluation:
+        items:
+          $ref: '#/definitions/EvaluationValue'
+        type: array
+      gpx_url:
+        type: string
+      id:
+        type: integer
+      provider:
+        type: string
+      refill_count:
+        type: integer
+      status:
+        $ref: '#/definitions/WateringPlanStatus'
+      total_water_required:
+        type: number
+      trailer:
+        $ref: '#/definitions/Vehicle'
+      transporter:
+        $ref: '#/definitions/Vehicle'
+      treeclusters:
+        items:
+          $ref: '#/definitions/TreeClusterInList'
+        type: array
+      updated_at:
+        type: string
+      user_ids:
+        items:
+          type: string
+        type: array
+    required:
+    - cancellation_note
+    - created_at
+    - date
+    - description
+    - distance
+    - duration
+    - evaluation
+    - gpx_url
+    - id
+    - provider
+    - refill_count
+    - status
+    - total_water_required
+    - transporter
+    - treeclusters
+    - updated_at
+    - user_ids
+    type: object
+  WateringPlanCreate:
+    properties:
+      additional_information:
+        additionalProperties: true
+        type: object
+      date:
+        type: string
+      description:
+        type: string
+      provider:
+        type: string
+      trailer_id:
+        type: integer
+      transporter_id:
+        type: integer
+      tree_cluster_ids:
+        items:
+          type: integer
+        type: array
+      user_ids:
+        items:
+          type: string
+        type: array
+    required:
+    - date
+    - description
+    - transporter_id
+    - tree_cluster_ids
+    - user_ids
+    type: object
+  WateringPlanInList:
+    properties:
+      additional_information:
+        additionalProperties: true
+        type: object
+      cancellation_note:
+        type: string
+      created_at:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      distance:
+        type: number
+      id:
+        type: integer
+      provider:
+        type: string
+      status:
+        $ref: '#/definitions/WateringPlanStatus'
+      total_water_required:
+        type: number
+      trailer:
+        $ref: '#/definitions/Vehicle'
+      transporter:
+        $ref: '#/definitions/Vehicle'
+      treeclusters:
+        items:
+          $ref: '#/definitions/TreeClusterInList'
+        type: array
+      updated_at:
+        type: string
+      user_ids:
+        items:
+          type: string
+        type: array
+    required:
+    - cancellation_note
+    - created_at
+    - date
+    - description
+    - distance
+    - id
+    - provider
+    - status
+    - total_water_required
+    - transporter
+    - treeclusters
+    - updated_at
+    - user_ids
+    type: object
+  WateringPlanList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/WateringPlanInList'
+        type: array
+      pagination:
+        $ref: '#/definitions/Pagination'
+    required:
+    - data
+    type: object
+  WateringPlanStatus:
+    enum:
+    - planned
+    - active
+    - canceled
+    - finished
+    - not competed
+    - unknown
+    type: string
+    x-enum-varnames:
+    - WateringPlanStatusPlanned
+    - WateringPlanStatusActive
+    - WateringPlanStatusCanceled
+    - WateringPlanStatusFinished
+    - WateringPlanStatusNotCompeted
+    - WateringPlanStatusUnknown
+  WateringPlanUpdate:
+    properties:
+      additional_information:
+        additionalProperties: true
+        type: object
+      cancellation_note:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      evaluation:
+        items:
+          $ref: '#/definitions/EvaluationValue'
+        type: array
+      provider:
+        type: string
+      status:
+        $ref: '#/definitions/WateringPlanStatus'
+      trailer_id:
+        type: integer
+      transporter_id:
+        type: integer
+      tree_cluster_ids:
+        items:
+          type: integer
+        type: array
+      user_ids:
+        items:
+          type: string
+        type: array
+    required:
+    - cancellation_note
+    - date
+    - description
+    - status
+    - transporter_id
+    - tree_cluster_ids
+    - user_ids
+    type: object
+  WateringStatus:
+    enum:
+    - good
+    - moderate
+    - bad
+    - just watered
+    - unknown
+    type: string
+    x-enum-varnames:
+    - WateringStatusGood
+    - WateringStatusModerate
+    - WateringStatusBad
+    - WateringStatusJustWatered
+    - WateringStatusUnknown
+  WatermarkResponse:
+    properties:
+      centibar:
+        type: integer
+      depth:
+        type: integer
+      resistance:
+        type: integer
+    required:
+    - centibar
+    - depth
+    - resistance
+    type: object
+info:
+  contact:
+    email: info@green-ecolution.de
+    name: Green Ecolution
+    url: https://green-ecolution.de
+  description: This is the API for the Green Ecolution Management System.
+  license:
+    name: AGPL
+    url: https://raw.githubusercontent.com/green-ecolution/green-ecolution/develop/LICENSE
+  termsOfService: http://swagger.io/terms/
+  title: Green Space Management API
+  version: develop
+paths:
+  /v1/cluster:
+    get:
+      description: Get all tree clusters
+      operationId: get-all-tree-clusters
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - collectionFormat: csv
+        description: Watering statuses
+        in: query
+        items:
+          type: string
+        name: watering_statuses
+        type: array
+      - collectionFormat: csv
+        description: Regions
+        in: query
+        items:
+          type: string
+        name: regions
+        type: array
+      - description: Provider
+        in: query
+        name: provider
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TreeClusterList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get all tree clusters
+      tags:
+      - Tree Cluster
+    post:
+      description: Create tree cluster
+      operationId: create-tree-cluster
+      parameters:
+      - description: Tree Cluster Create Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/TreeClusterCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/TreeCluster'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Create tree cluster
+      tags:
+      - Tree Cluster
+  /v1/cluster/{cluster_id}:
+    delete:
+      description: Delete tree cluster
+      operationId: delete-tree-cluster
+      parameters:
+      - description: Tree Cluster ID
+        in: path
+        name: cluster_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Delete tree cluster
+      tags:
+      - Tree Cluster
+    get:
+      description: Get tree cluster by ID
+      operationId: get-tree-cluster-by-id
+      parameters:
+      - description: Tree Cluster ID
+        in: path
+        name: cluster_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TreeCluster'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get tree cluster by ID
+      tags:
+      - Tree Cluster
+    put:
+      description: Update tree cluster
+      operationId: update-tree-cluster
+      parameters:
+      - description: Tree Cluster ID
+        in: path
+        name: cluster_id
+        required: true
+        type: integer
+      - description: Tree Cluster Update Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/TreeClusterUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TreeCluster'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Update tree cluster
+      tags:
+      - Tree Cluster
+  /v1/evaluation:
+    get:
+      description: Get evaluation values such as tree count, sensor count, etc.
+      operationId: get-evaluation
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Evaluation'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get evaluation data
+      tags:
+      - Evaluation
+  /v1/info:
+    get:
+      description: Get info about the app and the server
+      operationId: get-app-info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AppInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get info about the app
+      tags:
+      - Info
+  /v1/plugin:
+    get:
+      description: Get a list of all registered plugins
+      operationId: get-plugins-list
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/PluginListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get a list of all registered plugins
+      tags:
+      - Plugin
+    post:
+      description: Register a plugin
+      operationId: register-plugin
+      parameters:
+      - description: Plugin registration request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/PluginRegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ClientToken'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      summary: Register a plugin
+      tags:
+      - Plugin
+  /v1/plugin/{plugin_slug}:
+    get:
+      description: Get a plugin info
+      operationId: get-plugin-info
+      parameters:
+      - description: Slug of the plugin
+        in: path
+        name: plugin_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Plugin'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get a plugin info
+      tags:
+      - Plugin
+  /v1/plugin/{plugin_slug}/heartbeat:
+    post:
+      description: Heartbeat for a plugin
+      operationId: plugin-heartbeat
+      parameters:
+      - description: Name of the plugin specified by slug during registration
+        in: path
+        name: plugin_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Heartbeat for a plugin
+      tags:
+      - Plugin
+  /v1/plugin/{plugin_slug}/token/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh plugin token
+      operationId: refresh-plugin-token
+      parameters:
+      - description: Plugin authentication
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/PluginAuth'
+      - description: Slug of the plugin
+        in: path
+        name: plugin_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ClientToken'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      summary: Refresh plugin token
+      tags:
+      - Plugin
+  /v1/plugin/{plugin_slug}/unregister:
+    post:
+      description: Unregister a plugin
+      operationId: unregister-plugin
+      parameters:
+      - description: Slug of the plugin
+        in: path
+        name: plugin_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Unregister a plugin
+      tags:
+      - Plugin
+  /v1/region:
+    get:
+      description: Get all regions
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/RegionList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get all regions
+      tags:
+      - Region
+  /v1/region/{id}:
+    get:
+      description: Get a region by ID
+      parameters:
+      - description: Region ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Region'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get a region by ID
+      tags:
+      - Region
+  /v1/sensor:
+    get:
+      description: Get all sensors
+      operationId: get-all-sensors
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Provider
+        in: query
+        name: provider
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SensorList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get all sensors
+      tags:
+      - Sensor
+  /v1/sensor/{sensor_id}:
+    delete:
+      description: Delete sensor
+      operationId: delete-sensor
+      parameters:
+      - description: Sensor ID
+        in: path
+        name: sensor_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Delete sensor
+      tags:
+      - Sensor
+    get:
+      description: Get sensor by ID
+      operationId: get-sensor-by-id
+      parameters:
+      - description: Sensor ID
+        in: path
+        name: sensor_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Sensor'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get sensor by ID
+      tags:
+      - Sensor
+  /v1/sensor/data/{sensor_id}:
+    get:
+      description: Get all sensor data by id
+      operationId: get-all-sensor-data-by-id
+      parameters:
+      - description: Sensor ID
+        in: path
+        name: sensor_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SensorDataList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get all sensor data by id
+      tags:
+      - Sensor
+  /v1/tree:
+    get:
+      description: Get all trees
+      operationId: get-all-trees
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Provider
+        in: query
+        name: provider
+        type: string
+      - collectionFormat: csv
+        description: watering status (good, moderate, bad)
+        in: query
+        items:
+          type: string
+        name: watering_statuses
+        type: array
+      - collectionFormat: csv
+        description: planting_years
+        in: query
+        items:
+          type: integer
+        name: planting_years
+        type: array
+      - description: has cluster
+        in: query
+        name: has_cluster
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TreeList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get all trees
+      tags:
+      - Tree
+    post:
+      description: Create tree
+      operationId: create-tree
+      parameters:
+      - description: Tree to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/TreeCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Tree'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Create tree
+      tags:
+      - Tree
+  /v1/tree/{tree_id}:
+    delete:
+      description: Delete tree
+      operationId: delete-tree
+      parameters:
+      - description: Tree ID
+        in: path
+        name: tree_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Delete tree
+      tags:
+      - Tree
+    get:
+      description: Get tree by ID
+      operationId: get-trees
+      parameters:
+      - description: Tree ID
+        in: path
+        name: tree_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Tree'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get tree by ID
+      tags:
+      - Tree
+    put:
+      description: Update tree
+      operationId: update-tree
+      parameters:
+      - description: Tree ID
+        in: path
+        name: tree_id
+        type: integer
+      - description: Tree to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/TreeUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Tree'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Update tree
+      tags:
+      - Tree
+  /v1/tree/sensor/{sensor_id}:
+    get:
+      description: Get tree by sensor ID
+      operationId: get-tree-by-sensor-id
+      parameters:
+      - description: Sensor ID
+        in: path
+        name: sensor_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Tree'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get tree by sensor ID
+      tags:
+      - Tree Sensor
+  /v1/user:
+    get:
+      description: Get all users
+      operationId: get-all-users
+      parameters:
+      - description: User IDs
+        in: query
+        name: user_ids
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/UserList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get all users
+      tags:
+      - User
+    post:
+      consumes:
+      - application/json
+      description: Register a new user
+      parameters:
+      - description: User information
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/UserRegister'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Register a new user
+      tags:
+      - User
+  /v1/user/login:
+    get:
+      parameters:
+      - description: Redirect URL
+        in: query
+        name: redirect_url
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      summary: Request to login
+      tags:
+      - User
+  /v1/user/login/token:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Callback information
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/LoginTokenRequest'
+      - description: Redirect URL
+        in: query
+        name: redirect_url
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ClientToken'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      summary: Validate login code and request a access token
+      tags:
+      - User
+  /v1/user/logout:
+    post:
+      parameters:
+      - description: Logout information
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/LogoutRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      summary: Logout from the system
+      tags:
+      - User
+  /v1/user/role/{role}:
+    get:
+      description: Get users by role
+      operationId: get-users-by-role
+      parameters:
+      - description: Role
+        in: path
+        name: role
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/UserList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get users by role
+      tags:
+      - User
+  /v1/user/token/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh token
+      parameters:
+      - description: Refresh token information
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ClientToken'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      summary: Refresh token
+      tags:
+      - User
+  /v1/vehicle:
+    get:
+      description: Get all vehicles
+      operationId: get-all-vehicles
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Vehicle Type
+        in: query
+        name: type
+        type: string
+      - description: Provider
+        in: query
+        name: provider
+        type: string
+      - description: With archived vehicles
+        in: query
+        name: archived
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/VehicleList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get all vehicles
+      tags:
+      - Vehicle
+    post:
+      description: Create vehicle
+      operationId: create-vehicle
+      parameters:
+      - description: Vehicle Create Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/VehicleCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/Vehicle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Create vehicle
+      tags:
+      - Vehicle
+  /v1/vehicle/{id}:
+    delete:
+      description: Delete vehicle
+      operationId: delete-vehicle
+      parameters:
+      - description: Vehicle ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Delete vehicle
+      tags:
+      - Vehicle
+    get:
+      description: Get vehicle by ID
+      operationId: get-vehicle-by-id
+      parameters:
+      - description: Vehicle ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Vehicle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get vehicle by ID
+      tags:
+      - Vehicle
+    put:
+      description: Update vehicle
+      operationId: update-vehicle
+      parameters:
+      - description: Vehicle ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Vehicle Update Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/VehicleUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Vehicle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Update vehicle
+      tags:
+      - Vehicle
+  /v1/vehicle/archive:
+    get:
+      description: Get archived vehicle
+      operationId: get-archive-vehicle
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/Vehicle'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get archived vehicle
+      tags:
+      - Vehicle
+  /v1/vehicle/archive/{id}:
+    post:
+      description: Archive vehicle
+      operationId: archive-vehicle
+      parameters:
+      - description: Vehicle ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Archive vehicle
+      tags:
+      - Vehicle
+  /v1/vehicle/plate/{plate}:
+    get:
+      description: Get vehicle by plate
+      operationId: get-vehicle-by-plate
+      parameters:
+      - description: Vehicle plate number
+        in: path
+        name: plate
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Vehicle'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get vehicle by plate
+      tags:
+      - Vehicle
+  /v1/watering-plan:
+    get:
+      description: Get all watering plans
+      operationId: get-all-watering-plans
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Provider
+        in: query
+        name: provider
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/WateringPlanList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get all watering plans
+      tags:
+      - Watering Plan
+    post:
+      description: Create watering plan
+      operationId: create-watering-plan
+      parameters:
+      - description: Watering Plan Create Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/WateringPlanCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/WateringPlan'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Create watering plan
+      tags:
+      - Watering Plan
+  /v1/watering-plan/{id}:
+    delete:
+      description: Delete watering plan
+      operationId: delete-watering-plan
+      parameters:
+      - description: Watering Plan ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Delete watering plan
+      tags:
+      - Watering Plan
+    get:
+      description: Get watering plan by ID
+      operationId: get-watering-plan-by-id
+      parameters:
+      - description: Watering Plan ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/WateringPlan'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get watering plan by ID
+      tags:
+      - Watering Plan
+    put:
+      description: Update watering plan
+      operationId: update-watering-plan
+      parameters:
+      - description: Watering Plan ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Watering Plan Update Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/WateringPlanUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/WateringPlan'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Update watering plan
+      tags:
+      - Watering Plan
+  /v1/watering-plan/route/gpx/{gpx_name}:
+    get:
+      consumes:
+      - application/json
+      description: Generate route
+      parameters:
+      - description: gpx file name
+        in: path
+        name: gpx_name
+        required: true
+        type: string
+      produces:
+      - application/gpx+xml
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Generate route
+      tags:
+      - Watering Plan
+  /v1/watering-plan/route/preview:
+    post:
+      consumes:
+      - application/json
+      description: Generate preview route
+      parameters:
+      - description: Route Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/RouteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/GeoJson'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Generate preview route
+      tags:
+      - Watering Plan
+securityDefinitions:
+  Keycloak:
+    authorizationUrl: https://auth.green-ecolution.de/realms/green-ecolution-dev/protocol/openid-connect/auth
+    flow: accessCode
+    tokenUrl: https://auth.green-ecolution.de/realms/green-ecolution-dev/protocol/openid-connect/token
+    type: oauth2
+swagger: "2.0"

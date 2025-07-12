@@ -23,12 +23,30 @@ paths:
         in: query
         name: page
         schema:
-          type: string
+          type: integer
       - description: Limit
         in: query
         name: limit
         schema:
-          type: string
+          type: integer
+      - description: Watering statuses
+        explode: false
+        in: query
+        name: watering_statuses
+        schema:
+          items:
+            type: string
+          type: array
+        style: form
+      - description: Regions
+        explode: false
+        in: query
+        name: regions
+        schema:
+          items:
+            type: string
+          type: array
+        style: form
       - description: Provider
         in: query
         name: provider
@@ -39,37 +57,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeClusterList'
+                $ref: "#/components/schemas/TreeClusterList"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -83,7 +101,7 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/TreeClusterCreate'
+              $ref: "#/components/schemas/TreeClusterCreate"
         description: Tree Cluster Create Request
         required: true
       responses:
@@ -91,37 +109,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeCluster'
+                $ref: "#/components/schemas/TreeCluster"
           description: Created
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -148,31 +166,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -194,37 +212,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeCluster'
+                $ref: "#/components/schemas/TreeCluster"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -245,7 +263,7 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/TreeClusterUpdate'
+              $ref: "#/components/schemas/TreeClusterUpdate"
         description: Tree Cluster Update Request
         required: true
       responses:
@@ -253,37 +271,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeCluster'
+                $ref: "#/components/schemas/TreeCluster"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -291,6 +309,34 @@ paths:
       tags:
       - Tree Cluster
       x-codegen-request-body-name: body
+  /v1/evaluation:
+    get:
+      description: "Get evaluation values such as tree count, sensor count, etc."
+      operationId: get-evaluation
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evaluation"
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Internal Server Error
+      security:
+      - Keycloak: []
+      summary: Get evaluation data
+      tags:
+      - Evaluation
   /v1/info:
     get:
       description: Get info about the app and the server
@@ -300,37 +346,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppInfo'
+                $ref: "#/components/schemas/AppInfo"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -346,37 +392,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PluginListResponse'
+                $ref: "#/components/schemas/PluginListResponse"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -390,7 +436,7 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/PluginRegisterRequest'
+              $ref: "#/components/schemas/PluginRegisterRequest"
         description: Plugin registration request
         required: true
       responses:
@@ -398,37 +444,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ClientToken'
+                $ref: "#/components/schemas/ClientToken"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       summary: Register a plugin
       tags:
@@ -450,37 +496,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Plugin'
+                $ref: "#/components/schemas/Plugin"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -509,31 +555,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -555,7 +601,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PluginAuth'
+              $ref: "#/components/schemas/PluginAuth"
         description: Plugin authentication
         required: true
       responses:
@@ -563,19 +609,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ClientToken'
+                $ref: "#/components/schemas/ClientToken"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       summary: Refresh plugin token
       tags:
@@ -600,19 +646,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -627,30 +673,30 @@ paths:
         in: query
         name: page
         schema:
-          type: string
+          type: integer
       - description: Limit
         in: query
         name: limit
         schema:
-          type: string
+          type: integer
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RegionList'
+                $ref: "#/components/schemas/RegionList"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -672,25 +718,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Region'
+                $ref: "#/components/schemas/Region"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -722,37 +768,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SensorList'
+                $ref: "#/components/schemas/SensorList"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -778,31 +824,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -824,37 +870,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Sensor'
+                $ref: "#/components/schemas/Sensor"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -877,37 +923,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SensorDataList'
+                $ref: "#/components/schemas/SensorDataList"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -923,53 +969,76 @@ paths:
         in: query
         name: page
         schema:
-          type: string
+          type: integer
       - description: Limit
         in: query
         name: limit
         schema:
-          type: string
+          type: integer
       - description: Provider
         in: query
         name: provider
         schema:
           type: string
+      - description: "watering status (good, moderate, bad)"
+        explode: false
+        in: query
+        name: watering_statuses
+        schema:
+          items:
+            type: string
+          type: array
+        style: form
+      - description: planting_years
+        explode: false
+        in: query
+        name: planting_years
+        schema:
+          items:
+            type: integer
+          type: array
+        style: form
+      - description: has cluster
+        in: query
+        name: has_cluster
+        schema:
+          type: boolean
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeList'
+                $ref: "#/components/schemas/TreeList"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -983,7 +1052,7 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/TreeCreate'
+              $ref: "#/components/schemas/TreeCreate"
         description: Tree to create
         required: true
       responses:
@@ -991,37 +1060,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tree'
+                $ref: "#/components/schemas/Tree"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -1048,31 +1117,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -1094,37 +1163,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tree'
+                $ref: "#/components/schemas/Tree"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -1145,7 +1214,7 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/TreeUpdate'
+              $ref: "#/components/schemas/TreeUpdate"
         description: Tree to update
         required: true
       responses:
@@ -1153,37 +1222,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tree'
+                $ref: "#/components/schemas/Tree"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -1207,37 +1276,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tree'
+                $ref: "#/components/schemas/Tree"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -1249,21 +1318,6 @@ paths:
       description: Get all users
       operationId: get-all-users
       parameters:
-      - description: Page
-        in: query
-        name: page
-        schema:
-          type: string
-      - description: Limit
-        in: query
-        name: limit
-        schema:
-          type: string
-      - description: Limit
-        in: query
-        name: limit
-        schema:
-          type: string
       - description: User IDs
         in: query
         name: user_ids
@@ -1274,19 +1328,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserList'
+                $ref: "#/components/schemas/UserList"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -1299,7 +1353,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserRegister'
+              $ref: "#/components/schemas/UserRegister"
         description: User information
         required: true
       responses:
@@ -1307,19 +1361,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: "#/components/schemas/User"
           description: Created
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -1341,19 +1395,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoginResponse'
+                $ref: "#/components/schemas/LoginResponse"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       summary: Request to login
       tags:
@@ -1371,7 +1425,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginTokenRequest'
+              $ref: "#/components/schemas/LoginTokenRequest"
         description: Callback information
         required: true
       responses:
@@ -1379,19 +1433,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ClientToken'
+                $ref: "#/components/schemas/ClientToken"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       summary: Validate login code and request a access token
       tags:
@@ -1403,7 +1457,7 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/LogoutRequest'
+              $ref: "#/components/schemas/LogoutRequest"
         description: Logout information
         required: true
       responses:
@@ -1417,13 +1471,13 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "500":
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       summary: Logout from the system
       tags:
@@ -1434,16 +1488,6 @@ paths:
       description: Get users by role
       operationId: get-users-by-role
       parameters:
-      - description: Page
-        in: query
-        name: page
-        schema:
-          type: string
-      - description: Limit
-        in: query
-        name: limit
-        schema:
-          type: string
       - description: Role
         in: path
         name: role
@@ -1455,19 +1499,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserList'
+                $ref: "#/components/schemas/UserList"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -1481,7 +1525,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RefreshTokenRequest'
+              $ref: "#/components/schemas/RefreshTokenRequest"
         description: Refresh token information
         required: true
       responses:
@@ -1489,19 +1533,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ClientToken'
+                $ref: "#/components/schemas/ClientToken"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       summary: Refresh token
       tags:
@@ -1542,37 +1586,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VehicleList'
+                $ref: "#/components/schemas/VehicleList"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -1586,7 +1630,7 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/VehicleCreate'
+              $ref: "#/components/schemas/VehicleCreate"
         description: Vehicle Create Request
         required: true
       responses:
@@ -1594,37 +1638,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Vehicle'
+                $ref: "#/components/schemas/Vehicle"
           description: Created
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -1651,31 +1695,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -1697,37 +1741,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Vehicle'
+                $ref: "#/components/schemas/Vehicle"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -1748,7 +1792,7 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/VehicleUpdate'
+              $ref: "#/components/schemas/VehicleUpdate"
         description: Vehicle Update Request
         required: true
       responses:
@@ -1756,37 +1800,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Vehicle'
+                $ref: "#/components/schemas/Vehicle"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -1804,38 +1848,38 @@ paths:
             application/json:
               schema:
                 items:
-                  $ref: '#/components/schemas/Vehicle'
+                  $ref: "#/components/schemas/Vehicle"
                 type: array
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -1861,37 +1905,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "409":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Conflict
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -1914,37 +1958,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Vehicle'
+                $ref: "#/components/schemas/Vehicle"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -1976,37 +2020,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WateringPlanList'
+                $ref: "#/components/schemas/WateringPlanList"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -2020,7 +2064,7 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/WateringPlanCreate'
+              $ref: "#/components/schemas/WateringPlanCreate"
         description: Watering Plan Create Request
         required: true
       responses:
@@ -2028,37 +2072,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WateringPlan'
+                $ref: "#/components/schemas/WateringPlan"
           description: Created
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -2085,31 +2129,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -2131,37 +2175,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WateringPlan'
+                $ref: "#/components/schemas/WateringPlan"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -2182,7 +2226,7 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/WateringPlanUpdate'
+              $ref: "#/components/schemas/WateringPlanUpdate"
         description: Watering Plan Update Request
         required: true
       responses:
@@ -2190,37 +2234,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WateringPlan'
+                $ref: "#/components/schemas/WateringPlan"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Forbidden
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Not Found
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -2254,19 +2298,19 @@ paths:
           content:
             application/gpx+xml:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "500":
           content:
             application/gpx+xml:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -2280,7 +2324,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RouteRequest'
+              $ref: "#/components/schemas/RouteRequest"
         description: Route Request
         required: true
       responses:
@@ -2288,19 +2332,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GeoJson'
+                $ref: "#/components/schemas/GeoJson"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Bad Request
         "500":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPError'
+                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
@@ -2339,13 +2383,13 @@ components:
         buildTime:
           type: string
         git:
-          $ref: '#/components/schemas/GitInfo'
+          $ref: "#/components/schemas/GitInfo"
         goVersion:
           type: string
         map:
-          $ref: '#/components/schemas/MapInfo'
+          $ref: "#/components/schemas/MapInfo"
         server:
-          $ref: '#/components/schemas/ServerInfo'
+          $ref: "#/components/schemas/ServerInfo"
         version:
           type: string
       required:
@@ -2413,6 +2457,55 @@ components:
       - DrivingLicenseBE
       - DrivingLicenseC
       - DrivingLicenseCE
+    Evaluation:
+      example:
+        vehicle_evaluation:
+        - number_plate: number_plate
+          watering_plan_count: 7
+        - number_plate: number_plate
+          watering_plan_count: 7
+        total_water_consumption: 1
+        region_evaluation:
+        - name: name
+          watering_plan_count: 0
+        - name: name
+          watering_plan_count: 0
+        user_watering_plan_count: 2
+        watering_plan_count: 9
+        sensor_count: 6
+        tree_count: 5
+        treecluster_count: 5
+      properties:
+        region_evaluation:
+          items:
+            $ref: "#/components/schemas/RegionEvaluation"
+          type: array
+        sensor_count:
+          type: integer
+        total_water_consumption:
+          type: integer
+        tree_count:
+          type: integer
+        treecluster_count:
+          type: integer
+        user_watering_plan_count:
+          type: integer
+        vehicle_evaluation:
+          items:
+            $ref: "#/components/schemas/VehicleEvaluation"
+          type: array
+        watering_plan_count:
+          type: integer
+      required:
+      - region_evaluation
+      - sensor_count
+      - total_water_consumption
+      - tree_count
+      - treecluster_count
+      - user_watering_plan_count
+      - vehicle_evaluation
+      - watering_plan_count
+      type: object
     EvaluationValue:
       example:
         consumed_water: 1.4658129805029452
@@ -2456,11 +2549,11 @@ components:
           longitude: 5.637376656633329
       properties:
         end_point:
-          $ref: '#/components/schemas/GeoJSONLocation'
+          $ref: "#/components/schemas/GeoJSONLocation"
         start_point:
-          $ref: '#/components/schemas/GeoJSONLocation'
+          $ref: "#/components/schemas/GeoJSONLocation"
         watering_point:
-          $ref: '#/components/schemas/GeoJSONLocation'
+          $ref: "#/components/schemas/GeoJSONLocation"
       required:
       - end_point
       - start_point
@@ -2516,12 +2609,12 @@ components:
           type: array
         features:
           items:
-            $ref: '#/components/schemas/GeoJsonFeature'
+            $ref: "#/components/schemas/GeoJsonFeature"
           type: array
         metadata:
-          $ref: '#/components/schemas/GeoJSONMetadata'
+          $ref: "#/components/schemas/GeoJSONMetadata"
         type:
-          $ref: '#/components/schemas/GeoJsonType'
+          $ref: "#/components/schemas/GeoJsonType"
       required:
       - bbox
       - features
@@ -2549,13 +2642,13 @@ components:
             type: number
           type: array
         geometry:
-          $ref: '#/components/schemas/GeoJsonGeometry'
+          $ref: "#/components/schemas/GeoJsonGeometry"
         properties:
           additionalProperties:
             type: object
           type: object
         type:
-          $ref: '#/components/schemas/GeoJsonType'
+          $ref: "#/components/schemas/GeoJsonType"
       required:
       - bbox
       - geometry
@@ -2578,7 +2671,7 @@ components:
             type: array
           type: array
         type:
-          $ref: '#/components/schemas/GeoJsonType'
+          $ref: "#/components/schemas/GeoJsonType"
       required:
       - coordinates
       - type
@@ -2754,7 +2847,7 @@ components:
       properties:
         plugins:
           items:
-            $ref: '#/components/schemas/Plugin'
+            $ref: "#/components/schemas/Plugin"
           type: array
       required:
       - plugins
@@ -2771,7 +2864,7 @@ components:
         slug: slug
       properties:
         auth:
-          $ref: '#/components/schemas/PluginAuth'
+          $ref: "#/components/schemas/PluginAuth"
         description:
           type: string
         name:
@@ -2812,6 +2905,19 @@ components:
       - id
       - name
       type: object
+    RegionEvaluation:
+      example:
+        name: name
+        watering_plan_count: 0
+      properties:
+        name:
+          type: string
+        watering_plan_count:
+          type: integer
+      required:
+      - name
+      - watering_plan_count
+      type: object
     RegionList:
       example:
         pagination:
@@ -2820,20 +2926,20 @@ components:
           total_pages: 2
           prev_page: 3
           current_page: 7
-        regions:
+        data:
         - name: name
           id: 5
         - name: name
           id: 5
       properties:
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-        regions:
+        data:
           items:
-            $ref: '#/components/schemas/Region'
+            $ref: "#/components/schemas/Region"
           type: array
+        pagination:
+          $ref: "#/components/schemas/Pagination"
       required:
-      - regions
+      - data
       type: object
     RouteRequest:
       example:
@@ -2888,7 +2994,7 @@ components:
         id:
           type: string
         latest_data:
-          $ref: '#/components/schemas/SensorData'
+          $ref: "#/components/schemas/SensorData"
         latitude:
           type: number
         longitude:
@@ -2896,7 +3002,7 @@ components:
         provider:
           type: string
         status:
-          $ref: '#/components/schemas/SensorStatus'
+          $ref: "#/components/schemas/SensorStatus"
         updated_at:
           type: string
       required:
@@ -2936,7 +3042,7 @@ components:
           type: string
         watermarks:
           items:
-            $ref: '#/components/schemas/WatermarkResponse'
+            $ref: "#/components/schemas/WatermarkResponse"
           type: array
       required:
       - battery
@@ -2976,7 +3082,7 @@ components:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/SensorData'
+            $ref: "#/components/schemas/SensorData"
           type: array
       required:
       - data
@@ -3037,10 +3143,10 @@ components:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/Sensor'
+            $ref: "#/components/schemas/Sensor"
           type: array
         pagination:
-          $ref: '#/components/schemas/Pagination'
+          $ref: "#/components/schemas/Pagination"
       required:
       - data
       type: object
@@ -3168,7 +3274,7 @@ components:
         provider:
           type: string
         sensor:
-          $ref: '#/components/schemas/Sensor'
+          $ref: "#/components/schemas/Sensor"
         species:
           type: string
         tree_cluster_id:
@@ -3176,7 +3282,7 @@ components:
         updated_at:
           type: string
         watering_status:
-          $ref: '#/components/schemas/WateringStatus'
+          $ref: "#/components/schemas/WateringStatus"
       required:
       - created_at
       - description
@@ -3315,17 +3421,17 @@ components:
         provider:
           type: string
         region:
-          $ref: '#/components/schemas/Region'
+          $ref: "#/components/schemas/Region"
         soil_condition:
-          $ref: '#/components/schemas/SoilCondition'
+          $ref: "#/components/schemas/SoilCondition"
         trees:
           items:
-            $ref: '#/components/schemas/Tree'
+            $ref: "#/components/schemas/Tree"
           type: array
         updated_at:
           type: string
         watering_status:
-          $ref: '#/components/schemas/WateringStatus'
+          $ref: "#/components/schemas/WateringStatus"
       required:
       - address
       - archived
@@ -3366,7 +3472,7 @@ components:
         provider:
           type: string
         soil_condition:
-          $ref: '#/components/schemas/SoilCondition'
+          $ref: "#/components/schemas/SoilCondition"
         tree_ids:
           items:
             type: integer
@@ -3386,12 +3492,15 @@ components:
         description: description
         last_watered: last_watered
         soil_condition: schluffig
+        additional_information:
+          key: ""
         archived: true
         tree_ids:
         - 2
         - 2
         updated_at: updated_at
         watering_status: good
+        provider: provider
         name: name
         moisture_level: 5.962133916683182
         id: 0
@@ -3400,6 +3509,9 @@ components:
           id: 5
         longitude: 1.4658129805029452
       properties:
+        additional_information:
+          additionalProperties: true
+          type: object
         address:
           type: string
         archived:
@@ -3420,10 +3532,12 @@ components:
           type: number
         name:
           type: string
+        provider:
+          type: string
         region:
-          $ref: '#/components/schemas/Region'
+          $ref: "#/components/schemas/Region"
         soil_condition:
-          $ref: '#/components/schemas/SoilCondition'
+          $ref: "#/components/schemas/SoilCondition"
         tree_ids:
           items:
             type: integer
@@ -3431,7 +3545,7 @@ components:
         updated_at:
           type: string
         watering_status:
-          $ref: '#/components/schemas/WateringStatus'
+          $ref: "#/components/schemas/WateringStatus"
       required:
       - address
       - archived
@@ -3442,6 +3556,7 @@ components:
       - longitude
       - moisture_level
       - name
+      - provider
       - soil_condition
       - updated_at
       - watering_status
@@ -3461,12 +3576,15 @@ components:
           description: description
           last_watered: last_watered
           soil_condition: schluffig
+          additional_information:
+            key: ""
           archived: true
           tree_ids:
           - 2
           - 2
           updated_at: updated_at
           watering_status: good
+          provider: provider
           name: name
           moisture_level: 5.962133916683182
           id: 0
@@ -3480,12 +3598,15 @@ components:
           description: description
           last_watered: last_watered
           soil_condition: schluffig
+          additional_information:
+            key: ""
           archived: true
           tree_ids:
           - 2
           - 2
           updated_at: updated_at
           watering_status: good
+          provider: provider
           name: name
           moisture_level: 5.962133916683182
           id: 0
@@ -3496,10 +3617,10 @@ components:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/TreeClusterInList'
+            $ref: "#/components/schemas/TreeClusterInList"
           type: array
         pagination:
-          $ref: '#/components/schemas/Pagination'
+          $ref: "#/components/schemas/Pagination"
       required:
       - data
       type: object
@@ -3528,7 +3649,7 @@ components:
         provider:
           type: string
         soil_condition:
-          $ref: '#/components/schemas/SoilCondition'
+          $ref: "#/components/schemas/SoilCondition"
         tree_ids:
           items:
             type: integer
@@ -3671,10 +3792,10 @@ components:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/Tree'
+            $ref: "#/components/schemas/Tree"
           type: array
         pagination:
-          $ref: '#/components/schemas/Pagination'
+          $ref: "#/components/schemas/Pagination"
       required:
       - data
       type: object
@@ -3747,7 +3868,7 @@ components:
           type: string
         driving_licenses:
           items:
-            $ref: '#/components/schemas/DrivingLicense'
+            $ref: "#/components/schemas/DrivingLicense"
           type: array
         email:
           type: string
@@ -3765,10 +3886,10 @@ components:
           type: string
         roles:
           items:
-            $ref: '#/components/schemas/UserRole'
+            $ref: "#/components/schemas/UserRole"
           type: array
         status:
-          $ref: '#/components/schemas/UserStatus'
+          $ref: "#/components/schemas/UserStatus"
         username:
           type: string
       required:
@@ -3826,7 +3947,7 @@ components:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/User'
+            $ref: "#/components/schemas/User"
           type: array
       required:
       - data
@@ -3929,7 +4050,7 @@ components:
         description:
           type: string
         driving_license:
-          $ref: '#/components/schemas/DrivingLicense'
+          $ref: "#/components/schemas/DrivingLicense"
         height:
           type: number
         id:
@@ -3943,9 +4064,9 @@ components:
         provider:
           type: string
         status:
-          $ref: '#/components/schemas/VehicleStatus'
+          $ref: "#/components/schemas/VehicleStatus"
         type:
-          $ref: '#/components/schemas/VehicleType'
+          $ref: "#/components/schemas/VehicleType"
         updated_at:
           type: string
         water_capacity:
@@ -3995,7 +4116,7 @@ components:
         description:
           type: string
         driving_license:
-          $ref: '#/components/schemas/DrivingLicense'
+          $ref: "#/components/schemas/DrivingLicense"
         height:
           type: number
         length:
@@ -4007,9 +4128,9 @@ components:
         provider:
           type: string
         status:
-          $ref: '#/components/schemas/VehicleStatus'
+          $ref: "#/components/schemas/VehicleStatus"
         type:
-          $ref: '#/components/schemas/VehicleType'
+          $ref: "#/components/schemas/VehicleType"
         water_capacity:
           type: number
         weight:
@@ -4028,6 +4149,19 @@ components:
       - water_capacity
       - weight
       - width
+      type: object
+    VehicleEvaluation:
+      example:
+        number_plate: number_plate
+        watering_plan_count: 7
+      properties:
+        number_plate:
+          type: string
+        watering_plan_count:
+          type: integer
+      required:
+      - number_plate
+      - watering_plan_count
       type: object
     VehicleList:
       example:
@@ -4077,10 +4211,10 @@ components:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/Vehicle'
+            $ref: "#/components/schemas/Vehicle"
           type: array
         pagination:
-          $ref: '#/components/schemas/Pagination'
+          $ref: "#/components/schemas/Pagination"
       required:
       - data
       type: object
@@ -4129,7 +4263,7 @@ components:
         description:
           type: string
         driving_license:
-          $ref: '#/components/schemas/DrivingLicense'
+          $ref: "#/components/schemas/DrivingLicense"
         height:
           type: number
         length:
@@ -4141,9 +4275,9 @@ components:
         provider:
           type: string
         status:
-          $ref: '#/components/schemas/VehicleStatus'
+          $ref: "#/components/schemas/VehicleStatus"
         type:
-          $ref: '#/components/schemas/VehicleType'
+          $ref: "#/components/schemas/VehicleType"
         water_capacity:
           type: number
         weight:
@@ -4173,12 +4307,15 @@ components:
           description: description
           last_watered: last_watered
           soil_condition: schluffig
+          additional_information:
+            key: ""
           archived: true
           tree_ids:
           - 2
           - 2
           updated_at: updated_at
           watering_status: good
+          provider: provider
           name: name
           moisture_level: 5.962133916683182
           id: 0
@@ -4192,12 +4329,15 @@ components:
           description: description
           last_watered: last_watered
           soil_condition: schluffig
+          additional_information:
+            key: ""
           archived: true
           tree_ids:
           - 2
           - 2
           updated_at: updated_at
           watering_status: good
+          provider: provider
           name: name
           moisture_level: 5.962133916683182
           id: 0
@@ -4285,7 +4425,7 @@ components:
           type: number
         evaluation:
           items:
-            $ref: '#/components/schemas/EvaluationValue'
+            $ref: "#/components/schemas/EvaluationValue"
           type: array
         gpx_url:
           type: string
@@ -4296,16 +4436,16 @@ components:
         refill_count:
           type: integer
         status:
-          $ref: '#/components/schemas/WateringPlanStatus'
+          $ref: "#/components/schemas/WateringPlanStatus"
         total_water_required:
           type: number
         trailer:
-          $ref: '#/components/schemas/Vehicle'
+          $ref: "#/components/schemas/Vehicle"
         transporter:
-          $ref: '#/components/schemas/Vehicle'
+          $ref: "#/components/schemas/Vehicle"
         treeclusters:
           items:
-            $ref: '#/components/schemas/TreeClusterInList'
+            $ref: "#/components/schemas/TreeClusterInList"
           type: array
         updated_at:
           type: string
@@ -4386,12 +4526,15 @@ components:
           description: description
           last_watered: last_watered
           soil_condition: schluffig
+          additional_information:
+            key: ""
           archived: true
           tree_ids:
           - 2
           - 2
           updated_at: updated_at
           watering_status: good
+          provider: provider
           name: name
           moisture_level: 5.962133916683182
           id: 0
@@ -4405,12 +4548,15 @@ components:
           description: description
           last_watered: last_watered
           soil_condition: schluffig
+          additional_information:
+            key: ""
           archived: true
           tree_ids:
           - 2
           - 2
           updated_at: updated_at
           watering_status: good
+          provider: provider
           name: name
           moisture_level: 5.962133916683182
           id: 0
@@ -4445,7 +4591,10 @@ components:
           id: 6
           height: 0.8008281904610115
           status: active
+        additional_information:
+          key: ""
         updated_at: updated_at
+        provider: provider
         transporter:
           water_capacity: 5.962133916683182
           archived_at: archived_at
@@ -4468,6 +4617,9 @@ components:
         id: 6
         status: planned
       properties:
+        additional_information:
+          additionalProperties: true
+          type: object
         cancellation_note:
           type: string
         created_at:
@@ -4480,17 +4632,19 @@ components:
           type: number
         id:
           type: integer
+        provider:
+          type: string
         status:
-          $ref: '#/components/schemas/WateringPlanStatus'
+          $ref: "#/components/schemas/WateringPlanStatus"
         total_water_required:
           type: number
         trailer:
-          $ref: '#/components/schemas/Vehicle'
+          $ref: "#/components/schemas/Vehicle"
         transporter:
-          $ref: '#/components/schemas/Vehicle'
+          $ref: "#/components/schemas/Vehicle"
         treeclusters:
           items:
-            $ref: '#/components/schemas/TreeClusterInList'
+            $ref: "#/components/schemas/TreeClusterInList"
           type: array
         updated_at:
           type: string
@@ -4505,6 +4659,7 @@ components:
       - description
       - distance
       - id
+      - provider
       - status
       - total_water_required
       - transporter
@@ -4529,12 +4684,15 @@ components:
             description: description
             last_watered: last_watered
             soil_condition: schluffig
+            additional_information:
+              key: ""
             archived: true
             tree_ids:
             - 2
             - 2
             updated_at: updated_at
             watering_status: good
+            provider: provider
             name: name
             moisture_level: 5.962133916683182
             id: 0
@@ -4548,12 +4706,15 @@ components:
             description: description
             last_watered: last_watered
             soil_condition: schluffig
+            additional_information:
+              key: ""
             archived: true
             tree_ids:
             - 2
             - 2
             updated_at: updated_at
             watering_status: good
+            provider: provider
             name: name
             moisture_level: 5.962133916683182
             id: 0
@@ -4588,7 +4749,10 @@ components:
             id: 6
             height: 0.8008281904610115
             status: active
+          additional_information:
+            key: ""
           updated_at: updated_at
+          provider: provider
           transporter:
             water_capacity: 5.962133916683182
             archived_at: archived_at
@@ -4618,12 +4782,15 @@ components:
             description: description
             last_watered: last_watered
             soil_condition: schluffig
+            additional_information:
+              key: ""
             archived: true
             tree_ids:
             - 2
             - 2
             updated_at: updated_at
             watering_status: good
+            provider: provider
             name: name
             moisture_level: 5.962133916683182
             id: 0
@@ -4637,12 +4804,15 @@ components:
             description: description
             last_watered: last_watered
             soil_condition: schluffig
+            additional_information:
+              key: ""
             archived: true
             tree_ids:
             - 2
             - 2
             updated_at: updated_at
             watering_status: good
+            provider: provider
             name: name
             moisture_level: 5.962133916683182
             id: 0
@@ -4677,7 +4847,10 @@ components:
             id: 6
             height: 0.8008281904610115
             status: active
+          additional_information:
+            key: ""
           updated_at: updated_at
+          provider: provider
           transporter:
             water_capacity: 5.962133916683182
             archived_at: archived_at
@@ -4702,10 +4875,10 @@ components:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/WateringPlanInList'
+            $ref: "#/components/schemas/WateringPlanInList"
           type: array
         pagination:
-          $ref: '#/components/schemas/Pagination'
+          $ref: "#/components/schemas/Pagination"
       required:
       - data
       type: object
@@ -4761,12 +4934,12 @@ components:
           type: string
         evaluation:
           items:
-            $ref: '#/components/schemas/EvaluationValue'
+            $ref: "#/components/schemas/EvaluationValue"
           type: array
         provider:
           type: string
         status:
-          $ref: '#/components/schemas/WateringPlanStatus'
+          $ref: "#/components/schemas/WateringPlanStatus"
         trailer_id:
           type: integer
         transporter_id:

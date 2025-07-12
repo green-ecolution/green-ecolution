@@ -26,18 +26,18 @@ type RegionAPIService service
 type ApiV1RegionGetRequest struct {
 	ctx        context.Context
 	ApiService *RegionAPIService
-	page       *string
-	limit      *string
+	page       *int32
+	limit      *int32
 }
 
 // Page
-func (r ApiV1RegionGetRequest) Page(page string) ApiV1RegionGetRequest {
+func (r ApiV1RegionGetRequest) Page(page int32) ApiV1RegionGetRequest {
 	r.page = &page
 	return r
 }
 
 // Limit
-func (r ApiV1RegionGetRequest) Limit(limit string) ApiV1RegionGetRequest {
+func (r ApiV1RegionGetRequest) Limit(limit int32) ApiV1RegionGetRequest {
 	r.limit = &limit
 	return r
 }
