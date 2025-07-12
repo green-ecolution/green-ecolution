@@ -99,8 +99,11 @@ export class WateringPlanApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/watering-plan`;
+
         const response = await this.request({
-            path: `/v1/watering-plan`,
+            path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -140,8 +143,12 @@ export class WateringPlanApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/watering-plan/{id}`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
         const response = await this.request({
-            path: `/v1/watering-plan/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
@@ -184,8 +191,11 @@ export class WateringPlanApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/watering-plan`;
+
         const response = await this.request({
-            path: `/v1/watering-plan`,
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -224,8 +234,12 @@ export class WateringPlanApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/watering-plan/{id}`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
         const response = await this.request({
-            path: `/v1/watering-plan/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -273,8 +287,12 @@ export class WateringPlanApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/watering-plan/{id}`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
         const response = await this.request({
-            path: `/v1/watering-plan/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
@@ -314,8 +332,12 @@ export class WateringPlanApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/watering-plan/route/gpx/{gpx_name}`;
+        urlPath = urlPath.replace(`{${"gpx_name"}}`, encodeURIComponent(String(requestParameters['gpxName'])));
+
         const response = await this.request({
-            path: `/v1/watering-plan/route/gpx/{gpx_name}`.replace(`{${"gpx_name"}}`, encodeURIComponent(String(requestParameters['gpxName']))),
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -356,8 +378,11 @@ export class WateringPlanApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/watering-plan/route/preview`;
+
         const response = await this.request({
-            path: `/v1/watering-plan/route/preview`,
+            path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,

@@ -20,7 +20,7 @@ function clean_up() {
 }
 
 function generate_client_docker() {
-  docker run --rm -v "$PWD":/local -u "$(id -u)":"$(id -g)" openapitools/openapi-generator-cli generate \
+  docker run --rm -v "$PWD":/local -u "$(id -u)":"$(id -g)" openapitools/openapi-generator-cli:v7.14.0 generate \
     -i /local/$API_DOCS_FILE \
     -o /local/src/ \
     -g typescript-fetch \

@@ -88,8 +88,11 @@ export class TreeApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/tree`;
+
         const response = await this.request({
-            path: `/v1/tree`,
+            path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -129,8 +132,12 @@ export class TreeApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/tree/{tree_id}`;
+        urlPath = urlPath.replace(`{${"tree_id"}}`, encodeURIComponent(String(requestParameters['treeId'])));
+
         const response = await this.request({
-            path: `/v1/tree/{tree_id}`.replace(`{${"tree_id"}}`, encodeURIComponent(String(requestParameters['treeId']))),
+            path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
@@ -185,8 +192,11 @@ export class TreeApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/tree`;
+
         const response = await this.request({
-            path: `/v1/tree`,
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -225,8 +235,12 @@ export class TreeApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/tree/{tree_id}`;
+        urlPath = urlPath.replace(`{${"tree_id"}}`, encodeURIComponent(String(requestParameters['treeId'])));
+
         const response = await this.request({
-            path: `/v1/tree/{tree_id}`.replace(`{${"tree_id"}}`, encodeURIComponent(String(requestParameters['treeId']))),
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -274,8 +288,12 @@ export class TreeApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/tree/{tree_id}`;
+        urlPath = urlPath.replace(`{${"tree_id"}}`, encodeURIComponent(String(requestParameters['treeId'])));
+
         const response = await this.request({
-            path: `/v1/tree/{tree_id}`.replace(`{${"tree_id"}}`, encodeURIComponent(String(requestParameters['treeId']))),
+            path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,

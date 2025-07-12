@@ -84,8 +84,12 @@ export class PluginApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/plugin/{plugin_slug}`;
+        urlPath = urlPath.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug'])));
+
         const response = await this.request({
-            path: `/v1/plugin/{plugin_slug}`.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug']))),
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -117,8 +121,11 @@ export class PluginApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/plugin`;
+
         const response = await this.request({
-            path: `/v1/plugin`,
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -157,8 +164,12 @@ export class PluginApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/plugin/{plugin_slug}/heartbeat`;
+        urlPath = urlPath.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug'])));
+
         const response = await this.request({
-            path: `/v1/plugin/{plugin_slug}/heartbeat`.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug']))),
+            path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -205,8 +216,12 @@ export class PluginApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+
+        let urlPath = `/v1/plugin/{plugin_slug}/token/refresh`;
+        urlPath = urlPath.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug'])));
+
         const response = await this.request({
-            path: `/v1/plugin/{plugin_slug}/token/refresh`.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug']))),
+            path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -243,8 +258,11 @@ export class PluginApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+
+        let urlPath = `/v1/plugin`;
+
         const response = await this.request({
-            path: `/v1/plugin`,
+            path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -284,8 +302,12 @@ export class PluginApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/plugin/{plugin_slug}/unregister`;
+        urlPath = urlPath.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug'])));
+
         const response = await this.request({
-            path: `/v1/plugin/{plugin_slug}/unregister`.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug']))),
+            path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,

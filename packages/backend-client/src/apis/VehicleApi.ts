@@ -93,8 +93,12 @@ export class VehicleApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/vehicle/archive/{id}`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
         const response = await this.request({
-            path: `/v1/vehicle/archive/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -134,8 +138,11 @@ export class VehicleApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/vehicle`;
+
         const response = await this.request({
-            path: `/v1/vehicle`,
+            path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -175,8 +182,12 @@ export class VehicleApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/vehicle/{id}`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
         const response = await this.request({
-            path: `/v1/vehicle/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
@@ -227,8 +238,11 @@ export class VehicleApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/vehicle`;
+
         const response = await this.request({
-            path: `/v1/vehicle`,
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -260,8 +274,11 @@ export class VehicleApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/vehicle/archive`;
+
         const response = await this.request({
-            path: `/v1/vehicle/archive`,
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -300,8 +317,12 @@ export class VehicleApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/vehicle/{id}`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
         const response = await this.request({
-            path: `/v1/vehicle/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -340,8 +361,12 @@ export class VehicleApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/vehicle/plate/{plate}`;
+        urlPath = urlPath.replace(`{${"plate"}}`, encodeURIComponent(String(requestParameters['plate'])));
+
         const response = await this.request({
-            path: `/v1/vehicle/plate/{plate}`.replace(`{${"plate"}}`, encodeURIComponent(String(requestParameters['plate']))),
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -389,8 +414,12 @@ export class VehicleApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/vehicle/{id}`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
         const response = await this.request({
-            path: `/v1/vehicle/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,

@@ -87,8 +87,11 @@ export class TreeClusterApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/cluster`;
+
         const response = await this.request({
-            path: `/v1/cluster`,
+            path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -128,8 +131,12 @@ export class TreeClusterApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/cluster/{cluster_id}`;
+        urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
+
         const response = await this.request({
-            path: `/v1/cluster/{cluster_id}`.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId']))),
+            path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
@@ -180,8 +187,11 @@ export class TreeClusterApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/cluster`;
+
         const response = await this.request({
-            path: `/v1/cluster`,
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -220,8 +230,12 @@ export class TreeClusterApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/cluster/{cluster_id}`;
+        urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
+
         const response = await this.request({
-            path: `/v1/cluster/{cluster_id}`.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId']))),
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -269,8 +283,12 @@ export class TreeClusterApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/cluster/{cluster_id}`;
+        urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
+
         const response = await this.request({
-            path: `/v1/cluster/{cluster_id}`.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId']))),
+            path: urlPath,
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,

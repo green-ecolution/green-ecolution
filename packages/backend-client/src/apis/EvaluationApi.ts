@@ -44,8 +44,11 @@ export class EvaluationApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/evaluation`;
+
         const response = await this.request({
-            path: `/v1/evaluation`,
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,

@@ -44,8 +44,11 @@ export class InfoApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/info`;
+
         const response = await this.request({
-            path: `/v1/info`,
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,

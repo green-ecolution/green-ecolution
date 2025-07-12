@@ -75,8 +75,12 @@ export class SensorApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/sensor/{sensor_id}`;
+        urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
+
         const response = await this.request({
-            path: `/v1/sensor/{sensor_id}`.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId']))),
+            path: urlPath,
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
@@ -114,8 +118,12 @@ export class SensorApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/sensor/data/{sensor_id}`;
+        urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
+
         const response = await this.request({
-            path: `/v1/sensor/data/{sensor_id}`.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId']))),
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -159,8 +167,11 @@ export class SensorApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/sensor`;
+
         const response = await this.request({
-            path: `/v1/sensor`,
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -199,8 +210,12 @@ export class SensorApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/sensor/{sensor_id}`;
+        urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
+
         const response = await this.request({
-            path: `/v1/sensor/{sensor_id}`.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId']))),
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,

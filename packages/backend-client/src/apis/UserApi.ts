@@ -98,8 +98,11 @@ export class UserApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/user`;
+
         const response = await this.request({
-            path: `/v1/user`,
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -138,8 +141,12 @@ export class UserApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/user/role/{role}`;
+        urlPath = urlPath.replace(`{${"role"}}`, encodeURIComponent(String(requestParameters['role'])));
+
         const response = await this.request({
-            path: `/v1/user/role/{role}`.replace(`{${"role"}}`, encodeURIComponent(String(requestParameters['role']))),
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -176,8 +183,11 @@ export class UserApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+
+        let urlPath = `/v1/user/login`;
+
         const response = await this.request({
-            path: `/v1/user/login`,
+            path: urlPath,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -222,8 +232,11 @@ export class UserApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+
+        let urlPath = `/v1/user/login/token`;
+
         const response = await this.request({
-            path: `/v1/user/login/token`,
+            path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -258,8 +271,11 @@ export class UserApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+
+        let urlPath = `/v1/user/logout`;
+
         const response = await this.request({
-            path: `/v1/user/logout`,
+            path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -304,8 +320,11 @@ export class UserApi extends runtime.BaseAPI {
             headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
         }
 
+
+        let urlPath = `/v1/user`;
+
         const response = await this.request({
-            path: `/v1/user`,
+            path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -342,8 +361,11 @@ export class UserApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+
+        let urlPath = `/v1/user/token/refresh`;
+
         const response = await this.request({
-            path: `/v1/user/token/refresh`,
+            path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
