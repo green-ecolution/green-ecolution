@@ -972,8 +972,8 @@ github.com/tommy-muehle/go-mnd/v2 v2.5.1 h1:NowYhSdyE/1zwK9QCLeRb6USWdoif80Ie+v+
 github.com/tommy-muehle/go-mnd/v2 v2.5.1/go.mod h1:WsUAkMJMYww6l/ufffCD3m+P7LEvr8TnZn9lwVDlgzw=
 github.com/tursodatabase/libsql-client-go v0.0.0-20240416075003-747366ff79c4 h1:wNN8t3qiLLzFiETD4jL086WemAgQLfARClUx2Jfk78w=
 github.com/tursodatabase/libsql-client-go v0.0.0-20240416075003-747366ff79c4/go.mod h1:2Fu26tjM011BLeR5+jwTfs6DX/fNMEWV/3CBZvggrA4=
-github.com/twpayne/go-geos v0.18.1 h1:dzUHvkxcJHXTSPDqYBA39M+OE2myyqZO9ytBSMjS370=
-github.com/twpayne/go-geos v0.18.1/go.mod h1:H5qP0wfgtZOl2g+KT0WGKn2z2mr5XPnGbgGlUefaCOM=
+github.com/twpayne/go-geos v0.20.1 h1:Z1Itw0ms7bQGkXh7nLo+qrrv5Op3jBJoWmyZ2PMxxr8=
+github.com/twpayne/go-geos v0.20.1/go.mod h1:hskdKNFpfyQY4hVP+pDrakL31KedL5G+CU1H/k8JxQ8=
 github.com/twpayne/pgx-geos v0.0.3 h1:9MLiYEJI3gGuI/kksNi6JShM4wqSFaezlybR6PAbmg8=
 github.com/twpayne/pgx-geos v0.0.3/go.mod h1:eX/Ml2k0dlor5uZ+K2sxYcccOMWS1/9hiw7IcWaqWSQ=
 github.com/ultraware/funlen v0.2.0 h1:gCHmCn+d2/1SemTdYMiKLAHFYxTYz7z9VIDRaTGyLkI=

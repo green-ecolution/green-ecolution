@@ -1,6 +1,6 @@
 module github.com/green-ecolution/backend
 
-go 1.24
+go 1.24.0
 
 tool (
 	github.com/air-verse/air
@@ -32,7 +32,7 @@ require (
 	github.com/swaggo/swag v1.16.4
 	github.com/testcontainers/testcontainers-go v0.34.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.34.0
-	github.com/twpayne/go-geos v0.18.1
+	github.com/twpayne/go-geos v0.20.1
 	github.com/twpayne/pgx-geos v0.0.3
 	golang.org/x/net v0.35.0
 	golang.org/x/sync v0.11.0
