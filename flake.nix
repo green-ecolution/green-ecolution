@@ -53,12 +53,12 @@
       frontend = pkgs.stdenv.mkDerivation rec {
         inherit meta;
         pname = "frontend";
-        version = "1.2.1";
+        version = "1.2.1-unstable-2025-07-12";
         src = pkgs.fetchFromGitHub {
           owner = "green-ecolution";
           repo = "frontend";
-          rev = "85096d4ccb0366803d64164152f25c2303709093"; # TODO: Change to release version
-          hash = "sha256-aDFKssU20C12sirQXSe+ukEk7RpNSxHBQJd7eav+43U=";
+          rev = "d4dbf41dcaf66667fd72f0147ca1f933e98f1f06";
+          hash = "sha256-3plbIV3r85yJ3mq4ECUqzbzznFzaA/yzjdtJo6N+Rm0=";
         };
 
         nativeBuildInputs = with pkgs; [
@@ -88,13 +88,13 @@
 
       backend = pkgs.buildGoModule rec {
         inherit meta;
-        pname = "green-ecolution";
-        version = "1.2.1";
+        pname = "backend";
+        version = "1.2.1-unstable-2025-07-12";
         src = pkgs.fetchFromGitHub {
           owner = "green-ecolution";
           repo = "backend";
-          rev = "5886b46319b9"; # TODO: Change to release version
-          hash = "sha256-VACsVns+mHhmAOdy6KYEK9tLwDxP3YaTTPhm2qEcWCY=";
+          rev = "b60fcf111db0a19523e0ade899f2fd05a30b648a";
+          hash = "sha256-5NRUBynONJ+DeY0CWiIpddzMqoWrG03up7fqfXdWe9w=";
         };
         ldflags = [
           "-s"
@@ -109,10 +109,6 @@
 
         nativeBuildInputs = with pkgs; [proj pkg-config];
         buildInputs = [pkgs.geos];
-        preBuild = ''
-          ${pkgs.sqlc}/bin/sqlc generate
-          go generate
-        '';
 
         doCheck = false;
         excludedPackages = "pkg/*";
@@ -121,21 +117,43 @@
       };
 
       default = backend.overrideAttrs (old: final: {
+        name = "green-ecolution";
         preBuild = ''
-          ${pkgs.sqlc}/bin/sqlc generate
-          go generate
-
           mkdir -p frontend/dist
           cp -r ${frontend}/* frontend/dist/
         '';
       });
     });
 
-    devShells = forEachSupportedSystem ({pkgs}: {
+    devShells = forEachSupportedSystem ({pkgs}: let
+      update = pkgs.pkgs.writeShellApplication {
+        name = "update";
+        text = ''
+          if [ $# -ge 1 ] && [ -n "$1" ]; then
+              version_arg="branch"
+            if [ "$1" == "unstable" ]; then
+                version_arg="branch"
+            elif [ "$1" == "branch" ] && [ -n "$2" ]; then
+                version_arg="branch=$2"
+            elif [ "$1" == "version" ] && [ -n "$2" ]; then
+                version_arg="$2"
+            else
+                echo "Usage: "
+            fi
+          else
+              version_arg="branch"
+          fi
+
+          ${pkgs.nix-update}/bin/nix-update backend --flake "--version=$version_arg" --build
+          ${pkgs.nix-update}/bin/nix-update frontend --flake "--version=$version_arg" --build
+        '';
+      };
+    in {
       default = pkgs.mkShell {
         name = "root-shell";
         packages = with pkgs; [
           git
+          update
         ];
 
         shellHook = ''
