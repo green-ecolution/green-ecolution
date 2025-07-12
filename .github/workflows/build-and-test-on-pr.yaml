@@ -23,13 +23,58 @@ jobs:
       - name: Test
         run: make test
 
-  test_pkg_client:
+  check_generated_code:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Dependencies
-        run: sudo apt-get update && sudo apt-get install -y make build-essential libgeos-dev libproj-dev
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ./go.mod
+
+      - name: Generate Code
+        run: make generate
+
+      - name: Check generated code is fresh
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "❌ Error: Changes were detected after running 'make generate'!"
+            echo
+            echo "Please run 'make generate' locally and commit the updated files."
+            echo
+            echo "Modified files:"
+            git status --short
+            echo
+            echo "Failing the workflow."
+            exit 1
+          else
+            echo "✅ Generated code is up to date. No changes detected."
+          fi
+
+      - name: Generate client pkg
+        run: make generate/client
+
+      - name: Check generated client package is fresh
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "❌ Error: Changes were detected after running 'make generate/client'!"
+            echo
+            echo "Please run 'make generate/client' locally and commit the updated files."
+            echo
+            echo "Modified files:"
+            git status --short
+            echo
+            echo "Failing the workflow."
+            exit 1
+          else
+            echo "✅ Generated code is up to date. No changes detected."
+          fi
+
+  test_pkg_client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -37,5 +82,6 @@ jobs:
           go-version-file: ./go.mod
 
       - name: Test
-        run: cd pkg/client && go test ./...
+        working-directory: pkg/client
+        run: go test ./...
 
