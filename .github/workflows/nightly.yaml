@@ -1,0 +1,184 @@
+name: "nightly builds"
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 1 * * *'
+
+jobs:
+  prepare-nightly:
+    name: Prepare nightly build
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    strategy:
+      fail-fast: false
+      matrix:
+        repo: [ "green-ecolution/green-ecolution", "green-ecolution/backend", "green-ecolution/frontend" ]
+        include:
+          - repo: "green-ecolution/green-ecolution"
+            release_notes: RELEASE_ROOT.md
+          - repo: "green-ecolution/backend"
+            release_notes: RELEASE_BACKEND.md
+          - repo: "green-ecolution/frontend"
+            release_notes: RELEASE_FRONTEND.md
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repo }}
+          token: ${{ secrets.GREEN_ECOLUTION_PAT }} 
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Define tag
+        id: tag
+        run: |
+          DESCRIBE=`git tag -l --sort=-v:refname | grep -v nightly | head -n 1`
+          MAJOR_VERSION=`echo $DESCRIBE | awk '{split($0,a,"."); print a[1]}'`
+          MINOR_VERSION=`echo $DESCRIBE | awk '{split($0,a,"."); print a[2]}'`
+          MINOR_VERSION="$((${MINOR_VERSION} + 1))"
+          TAG="${MAJOR_VERSION}.${MINOR_VERSION}.0-nightly.$(date +'%Y%m%d')"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Push nightly release
+        env:
+          GH_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }} 
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          curl -o RELEASE.md https://raw.githubusercontent.com/green-ecolution/green-ecolution/develop/.github/release-notes/nightly/${{ matrix.release_notes }}
+          gh -R ${{ matrix.repo }} release create ${{ env.TAG }} --title ${{ env.TAG }} --latest=false --prerelease --notes-file RELEASE.md
+
+      - name: 'Clean up nightly releases'
+        uses: dev-drprasad/delete-older-releases@v0.3.4
+        with:
+          repo: ${{ matrix.repo }}
+          keep_latest: 5
+          delete_tags: true
+          delete_tag_pattern: nightly
+          delete_prerelease_only: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }} 
+
+      - name: Delete nightly containers older than a week
+        if: ${{ false }}
+        uses: snok/container-retention-policy@v3.0.0
+        with:
+          account: green-ecolution
+          image-names: 'frontend* backend*'
+          image-tags: '*-nightly*'
+          cut-off: 1w
+          token: ${{ secrets.GREEN_ECOLUTION_PAT }} 
+          dry-run: true # TODO: remove when validated
+
+  update-nix-flake:
+    runs-on: ubuntu-latest
+    needs: prepare-nightly
+    env:
+      tag: ${{ needs.prepare-nightly.outputs.tag }}
+    steps:
+      - name: Get Green Ecolution App Token
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Get Green Ecolution App User ID
+        id: get-user-id
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+
+      - name: Initialize mandatory git config
+        run: |
+          git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
+   
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          submodules: "recursive"
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - uses: cachix/cachix-action@v16
+        with:
+          name: green-ecolution
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+
+      - name: Update backend in flake
+        run:
+          nix-shell -p nix-update --run "nix-update backend --flake --version=${{ env.tag }} --commit"
+
+      - name: Update frontend in flake
+        run:
+          nix-shell -p nix-update --run "nix-update frontend --flake --version=${{ env.tag }} --commit"
+
+      - name: Push changes
+        run: 
+          git push origin develop || echo "No changes to commit"
+
+  nightly:
+    name: Deploy nightly
+    needs: [prepare-nightly, update-nix-flake]
+    env:
+      tag: ${{ needs.prepare-nightly.outputs.tag }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macOS-latest ]
+        include:
+          - os: ubuntu-latest
+            name: linux_amd64
+          - os: macOS-latest
+            name: darwin_amd64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+          fetch-depth: 0
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - uses: cachix/cachix-action@v16
+        with:
+          name: green-ecolution
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+
+      - name: Build and upload frontend
+        env:
+          GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
+          NAME: "frontend_${{ matrix.name }}-${{ env.tag }}.tar.gz"
+        run: |
+          nix build .#frontend
+          tar -czvf ${{ env.NAME }} -C result .
+          gh release upload ${{ env.tag }} ${{ env.NAME }}#"Frontend (${{ matrix.name }}) — nightly build" -R green-ecolution/green-ecolution --clobber
+          gh release upload ${{ env.tag }} ${{ env.NAME }}#"Frontend (${{ matrix.name }}) — nightly build" -R green-ecolution/frontend --clobber
+          
+      - name: Build backend
+        env:
+          GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
+          NAME: "backend_${{ matrix.name }}-${{ env.tag }}"
+        run: |
+          nix build .#backend
+          cp result/bin/backend ${{ env.NAME }}
+          gh release upload ${{ env.tag }} ${{ env.NAME }}#"Backend (${{ matrix.name }}) — nightly build" -R green-ecolution/green-ecolution --clobber
+          gh release upload ${{ env.tag }} ${{ env.NAME }}#"Backend (${{ matrix.name }}) — nightly build" -R green-ecolution/backend --clobber
+
+      - name: Build backend with frontend embedded
+        env:
+          GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
+          NAME: "green-ecolution_${{ matrix.name }}-${{ env.tag }}"
+        run: |
+          nix build
+          cp result/bin/backend ${{ env.NAME }}
+          gh release upload ${{ env.tag }} ${{ env.NAME }}#"Green Ecolution App (${{ matrix.name }}) — nightly build" -R green-ecolution/green-ecolution --clobber
