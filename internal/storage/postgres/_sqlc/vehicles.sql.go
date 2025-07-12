@@ -7,8 +7,7 @@ package sqlc
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
+	"time"
 )
 
 const archiveVehicle = `-- name: ArchiveVehicle :one
@@ -17,7 +16,7 @@ UPDATE vehicles SET archived_at = $2 WHERE id = $1 RETURNING id
 
 type ArchiveVehicleParams struct {
 	ID         int32
-	ArchivedAt pgtype.Timestamp
+	ArchivedAt *time.Time
 }
 
 func (q *Queries) ArchiveVehicle(ctx context.Context, arg *ArchiveVehicleParams) (int32, error) {

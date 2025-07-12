@@ -6,8 +6,8 @@ import (
 )
 
 // goverter:converter
-// goverter:extend github.com/green-ecolution/backend/internal/utils:PgTimestampToTime
-// goverter:extend github.com/green-ecolution/backend/internal/utils:PgTimestampToTimePtr
+// goverter:extend github.com/green-ecolution/backend/internal/utils:TimeToTime
+// goverter:extend github.com/green-ecolution/backend/internal/utils:TimePtrToTime
 // goverter:extend github.com/green-ecolution/backend/internal/utils:StringPtrToString
 // goverter:extend MapDrivingLicense MapVehicleStatus MapVehicleType
 type InternalVehicleRepoMapper interface {

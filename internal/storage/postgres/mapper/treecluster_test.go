@@ -10,7 +10,6 @@ import (
 	"github.com/green-ecolution/backend/internal/storage/postgres/mapper"
 	"github.com/green-ecolution/backend/internal/storage/postgres/mapper/generated"
 	"github.com/green-ecolution/backend/internal/utils"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,10 +27,10 @@ func TestTreeclusterMapper_FromSql(t *testing.T) {
 		assert.NotNil(t, got)
 		assert.NoError(t, err)
 		assert.Equal(t, src.ID, got.ID)
-		assert.Equal(t, src.CreatedAt.Time, got.CreatedAt)
-		assert.Equal(t, src.UpdatedAt.Time, got.UpdatedAt)
+		assert.Equal(t, src.CreatedAt, got.CreatedAt)
+		assert.Equal(t, src.UpdatedAt, got.UpdatedAt)
 		assert.Equal(t, src.WateringStatus, sqlc.WateringStatus(got.WateringStatus))
-		assert.Equal(t, src.LastWatered.Time, *got.LastWatered)
+		assert.Equal(t, src.LastWatered, got.LastWatered)
 		assert.Equal(t, src.MoistureLevel, got.MoistureLevel)
 		assert.Equal(t, src.Address, got.Address)
 		assert.Equal(t, src.Archived, got.Archived)
@@ -72,10 +71,10 @@ func TestTreeclusterMapper_FromSqlList(t *testing.T) {
 
 		for i, src := range src {
 			assert.Equal(t, src.ID, got[i].ID)
-			assert.Equal(t, src.CreatedAt.Time, got[i].CreatedAt)
-			assert.Equal(t, src.UpdatedAt.Time, got[i].UpdatedAt)
+			assert.Equal(t, src.CreatedAt, got[i].CreatedAt)
+			assert.Equal(t, src.UpdatedAt, got[i].UpdatedAt)
 			assert.Equal(t, src.WateringStatus, sqlc.WateringStatus(got[i].WateringStatus))
-			assert.Equal(t, src.LastWatered.Time, *got[i].LastWatered)
+			assert.Equal(t, src.LastWatered, got[i].LastWatered)
 			assert.Equal(t, src.MoistureLevel, got[i].MoistureLevel)
 			assert.Equal(t, src.Address, got[i].Address)
 			assert.Equal(t, src.Archived, got[i].Archived)
@@ -100,13 +99,15 @@ func TestTreeclusterMapper_FromSqlList(t *testing.T) {
 	})
 }
 
+var now = time.Now()
+
 var allTestTreecluster = []*sqlc.TreeCluster{
 	{
 		ID:             1,
-		CreatedAt:      pgtype.Timestamp{Time: time.Now()},
-		UpdatedAt:      pgtype.Timestamp{Time: time.Now()},
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
 		WateringStatus: sqlc.WateringStatusGood,
-		LastWatered:    pgtype.Timestamp{Time: time.Now()},
+		LastWatered:    &now,
 		MoistureLevel:  4.10,
 		Address:        "123 Garden Lane",
 		Description:    "Cluster with newly planted trees",
@@ -118,10 +119,10 @@ var allTestTreecluster = []*sqlc.TreeCluster{
 	},
 	{
 		ID:             2,
-		CreatedAt:      pgtype.Timestamp{Time: time.Now()},
-		UpdatedAt:      pgtype.Timestamp{Time: time.Now()},
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
 		WateringStatus: sqlc.WateringStatusGood,
-		LastWatered:    pgtype.Timestamp{Time: time.Now()},
+		LastWatered:    &now,
 		MoistureLevel:  4.10,
 		Address:        "345 Garden Lane",
 		Description:    "Cluster needs a lot of care",

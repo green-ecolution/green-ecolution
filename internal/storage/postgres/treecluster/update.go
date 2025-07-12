@@ -63,7 +63,7 @@ func (r *TreeClusterRepository) updateEntity(ctx context.Context, tc *entities.T
 		MoistureLevel:          tc.MoistureLevel,
 		WateringStatus:         sqlc.WateringStatus(tc.WateringStatus),
 		SoilCondition:          sqlc.TreeSoilCondition(tc.SoilCondition),
-		LastWatered:            utils.TimeToPgTimestamp(tc.LastWatered),
+		LastWatered:            tc.LastWatered,
 		Archived:               tc.Archived,
 		Name:                   tc.Name,
 		Provider:               &tc.Provider,

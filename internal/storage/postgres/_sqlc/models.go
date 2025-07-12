@@ -7,8 +7,9 @@ package sqlc
 import (
 	"database/sql/driver"
 	"fmt"
+	"time"
 
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/google/uuid"
 	geos "github.com/twpayne/go-geos"
 )
 
@@ -325,15 +326,15 @@ func (ns NullWateringStatus) Value() (driver.Value, error) {
 type Region struct {
 	ID        int32
 	Name      string
-	CreatedAt pgtype.Timestamp
-	UpdatedAt pgtype.Timestamp
+	CreatedAt time.Time
+	UpdatedAt time.Time
 	Geometry  *geos.Geom
 }
 
 type Sensor struct {
 	ID                     string
-	CreatedAt              pgtype.Timestamp
-	UpdatedAt              pgtype.Timestamp
+	CreatedAt              time.Time
+	UpdatedAt              time.Time
 	Status                 SensorStatus
 	Latitude               float64
 	Longitude              float64
@@ -344,16 +345,16 @@ type Sensor struct {
 
 type SensorDatum struct {
 	ID        int32
-	CreatedAt pgtype.Timestamp
-	UpdatedAt pgtype.Timestamp
+	CreatedAt time.Time
+	UpdatedAt time.Time
 	Data      []byte
 	SensorID  string
 }
 
 type Tree struct {
 	ID                     int32
-	CreatedAt              pgtype.Timestamp
-	UpdatedAt              pgtype.Timestamp
+	CreatedAt              time.Time
+	UpdatedAt              time.Time
 	TreeClusterID          *int32
 	SensorID               *string
 	PlantingYear           int32
@@ -366,15 +367,15 @@ type Tree struct {
 	Description            *string
 	Provider               *string
 	AdditionalInformations []byte
-	LastWatered            pgtype.Timestamp
+	LastWatered            *time.Time
 }
 
 type TreeCluster struct {
 	ID                     int32
-	CreatedAt              pgtype.Timestamp
-	UpdatedAt              pgtype.Timestamp
+	CreatedAt              time.Time
+	UpdatedAt              time.Time
 	WateringStatus         WateringStatus
-	LastWatered            pgtype.Timestamp
+	LastWatered            *time.Time
 	MoistureLevel          float64
 	Address                string
 	Description            string
@@ -396,14 +397,14 @@ type TreeClusterWateringPlan struct {
 }
 
 type UserWateringPlan struct {
-	UserID         pgtype.UUID
+	UserID         uuid.UUID
 	WateringPlanID int32
 }
 
 type Vehicle struct {
 	ID                     int32
-	CreatedAt              pgtype.Timestamp
-	UpdatedAt              pgtype.Timestamp
+	CreatedAt              time.Time
+	UpdatedAt              time.Time
 	NumberPlate            string
 	Description            string
 	WaterCapacity          float64
@@ -417,7 +418,7 @@ type Vehicle struct {
 	Weight                 float64
 	Provider               *string
 	AdditionalInformations []byte
-	ArchivedAt             pgtype.Timestamp
+	ArchivedAt             *time.Time
 }
 
 type VehicleWateringPlan struct {
@@ -427,9 +428,9 @@ type VehicleWateringPlan struct {
 
 type WateringPlan struct {
 	ID                     int32
-	CreatedAt              pgtype.Timestamp
-	UpdatedAt              pgtype.Timestamp
-	Date                   pgtype.Date
+	CreatedAt              time.Time
+	UpdatedAt              time.Time
+	Date                   time.Time
 	Description            string
 	Status                 WateringPlanStatus
 	Distance               *float64

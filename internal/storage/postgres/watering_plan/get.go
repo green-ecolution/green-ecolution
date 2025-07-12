@@ -148,19 +148,15 @@ func (w *WateringPlanRepository) GetEvaluationValues(ctx context.Context, id int
 
 func (w *WateringPlanRepository) GetLinkedUsersByID(ctx context.Context, id int32) ([]*uuid.UUID, error) {
 	log := logger.GetLogger(ctx)
-	pgUUIDS, err := w.store.GetUsersByWateringPlanID(ctx, id)
+	UUIDs, err := w.store.GetUsersByWateringPlanID(ctx, id)
 	if err != nil {
 		log.Error("failed to get linked user entities by watering plan id", "error", err, "watering_plan_id", id)
 		return nil, err
 	}
 
-	// Convert pgtype.UUID to uuid.UUID
 	var userUUIDs []*uuid.UUID
-	for _, pgUUID := range pgUUIDS {
-		if pgUUID.Valid {
-			uuidVal := uuid.UUID(pgUUID.Bytes)
-			userUUIDs = append(userUUIDs, &uuidVal)
-		}
+	for _, UUID := range UUIDs {
+		userUUIDs = append(userUUIDs, &UUID)
 	}
 
 	return userUUIDs, nil

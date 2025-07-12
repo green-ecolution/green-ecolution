@@ -6,7 +6,7 @@ import (
 )
 
 // goverter:converter
-// goverter:extend github.com/green-ecolution/backend/internal/utils:PgTimestampToTime
+// goverter:extend github.com/green-ecolution/backend/internal/utils:TimeToTime
 type InternalRegionRepoMapper interface {
 	FromSql(src *sqlc.Region) *entities.Region
 	FromSqlList(src []*sqlc.Region) []*entities.Region

@@ -10,7 +10,6 @@ import (
 	"github.com/green-ecolution/backend/internal/storage/postgres/mapper"
 	"github.com/green-ecolution/backend/internal/storage/postgres/mapper/generated"
 	"github.com/green-ecolution/backend/internal/utils"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,9 +27,9 @@ func TestWateringPlanMapper_FromSql(t *testing.T) {
 		assert.NotNil(t, got)
 		assert.NoError(t, err)
 		assert.Equal(t, src.ID, got.ID)
-		assert.Equal(t, src.CreatedAt.Time, got.CreatedAt)
-		assert.Equal(t, src.UpdatedAt.Time, got.UpdatedAt)
-		assert.Equal(t, src.Date.Time, got.Date)
+		assert.Equal(t, src.CreatedAt, got.CreatedAt)
+		assert.Equal(t, src.UpdatedAt, got.UpdatedAt)
+		assert.Equal(t, src.Date, got.Date)
 		assert.Equal(t, src.Description, got.Description)
 		assert.Equal(t, src.Distance, got.Distance)
 		assert.Equal(t, src.TotalWaterRequired, got.TotalWaterRequired)
@@ -68,9 +67,9 @@ func TestWateringPlanMapper_FromSqlList(t *testing.T) {
 		for i, src := range src {
 			assert.NotNil(t, got)
 			assert.Equal(t, src.ID, got[i].ID)
-			assert.Equal(t, src.CreatedAt.Time, got[i].CreatedAt)
-			assert.Equal(t, src.UpdatedAt.Time, got[i].UpdatedAt)
-			assert.Equal(t, src.Date.Time, got[i].Date)
+			assert.Equal(t, src.CreatedAt, got[i].CreatedAt)
+			assert.Equal(t, src.UpdatedAt, got[i].UpdatedAt)
+			assert.Equal(t, src.Date, got[i].Date)
 			assert.Equal(t, src.Description, got[i].Description)
 			assert.Equal(t, src.Distance, got[i].Distance)
 			assert.Equal(t, src.TotalWaterRequired, got[i].TotalWaterRequired)
@@ -93,55 +92,40 @@ func TestWateringPlanMapper_FromSqlList(t *testing.T) {
 
 var allTestWateringPlans = []*sqlc.WateringPlan{
 	{
-		ID: 1,
-		Date: pgtype.Date{
-			Time:  time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
-			Valid: true,
-		},
+		ID:                 1,
+		Date:               time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
 		Description:        "New watering plan for the west side of the city",
 		Status:             sqlc.WateringPlanStatus(entities.WateringPlanStatusPlanned),
 		Distance:           utils.P(63.0),
 		TotalWaterRequired: utils.P(6000.0),
 	},
 	{
-		ID: 2,
-		Date: pgtype.Date{
-			Time:  time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
-			Valid: true,
-		},
+		ID:                 2,
+		Date:               time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
 		Description:        "New watering plan for the east side of the city",
 		Status:             sqlc.WateringPlanStatus(entities.WateringPlanStatusActive),
 		Distance:           utils.P(63.0),
 		TotalWaterRequired: utils.P(6000.0),
 	},
 	{
-		ID: 3,
-		Date: pgtype.Date{
-			Time:  time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
-			Valid: true,
-		},
+		ID:                 3,
+		Date:               time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
 		Description:        "Very important watering plan due to no rainfall",
 		Status:             sqlc.WateringPlanStatus(entities.WateringPlanStatusFinished),
 		Distance:           utils.P(63.0),
 		TotalWaterRequired: utils.P(6000.0),
 	},
 	{
-		ID: 4,
-		Date: pgtype.Date{
-			Time:  time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
-			Valid: true,
-		},
+		ID:                 4,
+		Date:               time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
 		Description:        "New watering plan for the south side of the city",
 		Status:             sqlc.WateringPlanStatus(entities.WateringPlanStatusNotCompeted),
 		Distance:           utils.P(63.0),
 		TotalWaterRequired: utils.P(6000.0),
 	},
 	{
-		ID: 5,
-		Date: pgtype.Date{
-			Time:  time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
-			Valid: true,
-		},
+		ID:                 5,
+		Date:               time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
 		Description:        "Canceled due to flood",
 		Status:             sqlc.WateringPlanStatus(entities.WateringPlanStatusCanceled),
 		Distance:           utils.P(63.0),

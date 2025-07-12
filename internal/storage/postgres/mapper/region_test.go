@@ -6,7 +6,6 @@ import (
 
 	sqlc "github.com/green-ecolution/backend/internal/storage/postgres/_sqlc"
 	"github.com/green-ecolution/backend/internal/storage/postgres/mapper/generated"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,8 +22,8 @@ func TestRegionMapper_FromSql(t *testing.T) {
 		// then
 		assert.NotNil(t, got)
 		assert.Equal(t, src.ID, got.ID)
-		assert.Equal(t, src.CreatedAt.Time, got.CreatedAt)
-		assert.Equal(t, src.UpdatedAt.Time, got.UpdatedAt)
+		assert.Equal(t, src.CreatedAt, got.CreatedAt)
+		assert.Equal(t, src.UpdatedAt, got.UpdatedAt)
 		assert.Equal(t, src.Name, got.Name)
 	})
 
@@ -57,8 +56,8 @@ func TestRegionMapper_FromSqlList(t *testing.T) {
 		for i, src := range src {
 			assert.NotNil(t, got)
 			assert.Equal(t, src.ID, got[i].ID)
-			assert.Equal(t, src.CreatedAt.Time, got[i].CreatedAt)
-			assert.Equal(t, src.UpdatedAt.Time, got[i].UpdatedAt)
+			assert.Equal(t, src.CreatedAt, got[i].CreatedAt)
+			assert.Equal(t, src.UpdatedAt, got[i].UpdatedAt)
 			assert.Equal(t, src.Name, got[i].Name)
 		}
 	})
@@ -78,14 +77,14 @@ func TestRegionMapper_FromSqlList(t *testing.T) {
 var allTestRegions = []*sqlc.Region{
 	{
 		ID:        1,
-		CreatedAt: pgtype.Timestamp{Time: time.Now()},
-		UpdatedAt: pgtype.Timestamp{Time: time.Now()},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 		Name:      "Mürwik",
 	},
 	{
 		ID:        1,
-		CreatedAt: pgtype.Timestamp{Time: time.Now()},
-		UpdatedAt: pgtype.Timestamp{Time: time.Now()},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 		Name:      "Innenstadt",
 	},
 }

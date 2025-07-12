@@ -9,6 +9,7 @@ import (
 	mapper "github.com/green-ecolution/backend/internal/storage/postgres/mapper"
 	entities1 "github.com/green-ecolution/backend/internal/storage/postgres/sensor/entities"
 	utils "github.com/green-ecolution/backend/internal/utils"
+	"time"
 )
 
 type InternalRegionRepoMapperImpl struct{}
@@ -18,8 +19,8 @@ func (c *InternalRegionRepoMapperImpl) FromSql(source *sqlc.Region) *entities.Re
 	if source != nil {
 		var entitiesRegion entities.Region
 		entitiesRegion.ID = (*source).ID
-		entitiesRegion.CreatedAt = utils.PgTimestampToTime((*source).CreatedAt)
-		entitiesRegion.UpdatedAt = utils.PgTimestampToTime((*source).UpdatedAt)
+		entitiesRegion.CreatedAt = utils.TimeToTime((*source).CreatedAt)
+		entitiesRegion.UpdatedAt = utils.TimeToTime((*source).UpdatedAt)
 		entitiesRegion.Name = (*source).Name
 		pEntitiesRegion = &entitiesRegion
 	}
@@ -61,8 +62,8 @@ func (c *InternalSensorRepoMapperImpl) FromSql(source *sqlc.Sensor) (*entities.S
 	if source != nil {
 		var entitiesSensor entities.Sensor
 		entitiesSensor.ID = (*source).ID
-		entitiesSensor.CreatedAt = utils.PgTimestampToTime((*source).CreatedAt)
-		entitiesSensor.UpdatedAt = utils.PgTimestampToTime((*source).UpdatedAt)
+		entitiesSensor.CreatedAt = utils.TimeToTime((*source).CreatedAt)
+		entitiesSensor.UpdatedAt = utils.TimeToTime((*source).UpdatedAt)
 		entitiesSensor.Status = mapper.MapSensorStatus((*source).Status)
 		entitiesSensor.Latitude = (*source).Latitude
 		entitiesSensor.Longitude = (*source).Longitude
@@ -96,8 +97,8 @@ func (c *InternalSensorRepoMapperImpl) FromSqlSensorData(source *sqlc.SensorDatu
 		var entitiesSensorData entities.SensorData
 		entitiesSensorData.ID = (*source).ID
 		entitiesSensorData.SensorID = (*source).SensorID
-		entitiesSensorData.CreatedAt = utils.PgTimestampToTime((*source).CreatedAt)
-		entitiesSensorData.UpdatedAt = utils.PgTimestampToTime((*source).UpdatedAt)
+		entitiesSensorData.CreatedAt = utils.TimeToTime((*source).CreatedAt)
+		entitiesSensorData.UpdatedAt = utils.TimeToTime((*source).UpdatedAt)
 		pEntitiesMqttPayload, err := mapper.MapSensorData((*source).Data)
 		if err != nil {
 			return nil, err
@@ -136,10 +137,10 @@ func (c *InternalTreeClusterRepoMapperImpl) FromSql(source *sqlc.TreeCluster) (*
 	if source != nil {
 		var entitiesTreeCluster entities.TreeCluster
 		entitiesTreeCluster.ID = (*source).ID
-		entitiesTreeCluster.CreatedAt = utils.PgTimestampToTime((*source).CreatedAt)
-		entitiesTreeCluster.UpdatedAt = utils.PgTimestampToTime((*source).UpdatedAt)
+		entitiesTreeCluster.CreatedAt = utils.TimeToTime((*source).CreatedAt)
+		entitiesTreeCluster.UpdatedAt = utils.TimeToTime((*source).UpdatedAt)
 		entitiesTreeCluster.WateringStatus = mapper.MapWateringStatus((*source).WateringStatus)
-		entitiesTreeCluster.LastWatered = utils.PgTimestampToTimePtr((*source).LastWatered)
+		entitiesTreeCluster.LastWatered = c.pTimeTimeToPTimeTime((*source).LastWatered)
 		entitiesTreeCluster.MoistureLevel = (*source).MoistureLevel
 		entitiesTreeCluster.Address = (*source).Address
 		entitiesTreeCluster.Description = (*source).Description
@@ -202,6 +203,14 @@ func (c *InternalTreeClusterRepoMapperImpl) FromSqlRegionWithCount(source *sqlc.
 	}
 	return pEntitiesRegionEvaluation, nil
 }
+func (c *InternalTreeClusterRepoMapperImpl) pTimeTimeToPTimeTime(source *time.Time) *time.Time {
+	var pTimeTime *time.Time
+	if source != nil {
+		timeTime := utils.TimeToTime((*source))
+		pTimeTime = &timeTime
+	}
+	return pTimeTime
+}
 
 type InternalTreeRepoMapperImpl struct{}
 
@@ -210,8 +219,8 @@ func (c *InternalTreeRepoMapperImpl) FromSql(source *sqlc.Tree) (*entities.Tree,
 	if source != nil {
 		var entitiesTree entities.Tree
 		entitiesTree.ID = (*source).ID
-		entitiesTree.CreatedAt = utils.PgTimestampToTime((*source).CreatedAt)
-		entitiesTree.UpdatedAt = utils.PgTimestampToTime((*source).UpdatedAt)
+		entitiesTree.CreatedAt = utils.TimeToTime((*source).CreatedAt)
+		entitiesTree.UpdatedAt = utils.TimeToTime((*source).UpdatedAt)
 		entitiesTree.PlantingYear = (*source).PlantingYear
 		entitiesTree.Species = (*source).Species
 		entitiesTree.Number = (*source).Number
@@ -219,7 +228,7 @@ func (c *InternalTreeRepoMapperImpl) FromSql(source *sqlc.Tree) (*entities.Tree,
 		entitiesTree.Longitude = (*source).Longitude
 		entitiesTree.WateringStatus = mapper.MapWateringStatus((*source).WateringStatus)
 		entitiesTree.Description = utils.StringPtrToString((*source).Description)
-		entitiesTree.LastWatered = utils.PgTimestampToTimePtr((*source).LastWatered)
+		entitiesTree.LastWatered = c.pTimeTimeToPTimeTime2((*source).LastWatered)
 		entitiesTree.Provider = utils.StringPtrToString((*source).Provider)
 		mapStringUnknown, err := utils.MapAdditionalInfo((*source).AdditionalInformations)
 		if err != nil {
@@ -244,6 +253,14 @@ func (c *InternalTreeRepoMapperImpl) FromSqlList(source []*sqlc.Tree) ([]*entiti
 	}
 	return pEntitiesTreeList, nil
 }
+func (c *InternalTreeRepoMapperImpl) pTimeTimeToPTimeTime2(source *time.Time) *time.Time {
+	var pTimeTime *time.Time
+	if source != nil {
+		timeTime := utils.TimeToTime((*source))
+		pTimeTime = &timeTime
+	}
+	return pTimeTime
+}
 
 type InternalVehicleRepoMapperImpl struct{}
 
@@ -252,9 +269,9 @@ func (c *InternalVehicleRepoMapperImpl) FromSql(source *sqlc.Vehicle) (*entities
 	if source != nil {
 		var entitiesVehicle entities.Vehicle
 		entitiesVehicle.ID = (*source).ID
-		entitiesVehicle.CreatedAt = utils.PgTimestampToTime((*source).CreatedAt)
-		entitiesVehicle.UpdatedAt = utils.PgTimestampToTime((*source).UpdatedAt)
-		entitiesVehicle.ArchivedAt = utils.PgTimestampToTime((*source).ArchivedAt)
+		entitiesVehicle.CreatedAt = utils.TimeToTime((*source).CreatedAt)
+		entitiesVehicle.UpdatedAt = utils.TimeToTime((*source).UpdatedAt)
+		entitiesVehicle.ArchivedAt = utils.TimePtrToTime((*source).ArchivedAt)
 		entitiesVehicle.NumberPlate = (*source).NumberPlate
 		entitiesVehicle.Description = (*source).Description
 		entitiesVehicle.WaterCapacity = (*source).WaterCapacity
@@ -332,9 +349,9 @@ func (c *InternalWateringPlanRepoMapperImpl) FromSql(source *sqlc.WateringPlan) 
 	if source != nil {
 		var entitiesWateringPlan entities.WateringPlan
 		entitiesWateringPlan.ID = (*source).ID
-		entitiesWateringPlan.CreatedAt = utils.PgTimestampToTime((*source).CreatedAt)
-		entitiesWateringPlan.UpdatedAt = utils.PgTimestampToTime((*source).UpdatedAt)
-		entitiesWateringPlan.Date = utils.PgDateToTime((*source).Date)
+		entitiesWateringPlan.CreatedAt = utils.TimeToTime((*source).CreatedAt)
+		entitiesWateringPlan.UpdatedAt = utils.TimeToTime((*source).UpdatedAt)
+		entitiesWateringPlan.Date = utils.TimeToTime((*source).Date)
 		entitiesWateringPlan.Description = (*source).Description
 		entitiesWateringPlan.Status = mapper.MapWateringPlanStatus((*source).Status)
 		if (*source).Distance != nil {

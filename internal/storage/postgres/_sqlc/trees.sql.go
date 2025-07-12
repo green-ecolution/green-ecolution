@@ -7,8 +7,7 @@ package sqlc
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
+	"time"
 )
 
 const calculateGroupedCentroids = `-- name: CalculateGroupedCentroids :one
@@ -553,7 +552,7 @@ type UpdateTreeParams struct {
 	Description            *string
 	Provider               *string
 	AdditionalInformations []byte
-	LastWatered            pgtype.Timestamp
+	LastWatered            *time.Time
 }
 
 func (q *Queries) UpdateTree(ctx context.Context, arg *UpdateTreeParams) error {

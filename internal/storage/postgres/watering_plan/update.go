@@ -57,8 +57,8 @@ func (w *WateringPlanRepository) updateEntity(ctx context.Context, entity *entit
 		return err
 	}
 
-	date, err := utils.TimeToPgDate(entity.Date)
-	if err != nil {
+	// this resembles the old behavior for zero dates
+	if entity.Date.IsZero() {
 		return errors.New("failed to convert date")
 	}
 
@@ -68,7 +68,7 @@ func (w *WateringPlanRepository) updateEntity(ctx context.Context, entity *entit
 
 	params := sqlc.UpdateWateringPlanParams{
 		ID:                     entity.ID,
-		Date:                   date,
+		Date:                   entity.Date,
 		Description:            entity.Description,
 		Distance:               entity.Distance,
 		TotalWaterRequired:     entity.TotalWaterRequired,

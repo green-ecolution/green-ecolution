@@ -7,7 +7,7 @@ package sqlc
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/google/uuid"
 )
 
 type Querier interface {
@@ -76,7 +76,7 @@ type Querier interface {
 	GetTreesBySensorIDs(ctx context.Context, dollar_1 []string) ([]*Tree, error)
 	GetTreesByTreeClusterID(ctx context.Context, treeClusterID *int32) ([]*Tree, error)
 	GetTreesClustersByIDs(ctx context.Context, dollar_1 []int32) ([]*TreeCluster, error)
-	GetUsersByWateringPlanID(ctx context.Context, wateringPlanID int32) ([]pgtype.UUID, error)
+	GetUsersByWateringPlanID(ctx context.Context, wateringPlanID int32) ([]uuid.UUID, error)
 	GetVehicleByID(ctx context.Context, id int32) (*Vehicle, error)
 	GetVehicleByPlate(ctx context.Context, numberPlate string) (*Vehicle, error)
 	GetVehicleByWateringPlanID(ctx context.Context, arg *GetVehicleByWateringPlanIDParams) (*Vehicle, error)

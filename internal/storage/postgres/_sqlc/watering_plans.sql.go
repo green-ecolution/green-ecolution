@@ -7,8 +7,9 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/google/uuid"
 )
 
 const createWateringPlan = `-- name: CreateWateringPlan :one
@@ -20,7 +21,7 @@ INSERT INTO watering_plans (
 `
 
 type CreateWateringPlanParams struct {
-	Date                   pgtype.Date
+	Date                   time.Time
 	Description            string
 	Status                 WateringPlanStatus
 	Distance               *float64
@@ -247,15 +248,15 @@ FROM user_watering_plans
 WHERE watering_plan_id = $1
 `
 
-func (q *Queries) GetUsersByWateringPlanID(ctx context.Context, wateringPlanID int32) ([]pgtype.UUID, error) {
+func (q *Queries) GetUsersByWateringPlanID(ctx context.Context, wateringPlanID int32) ([]uuid.UUID, error) {
 	rows, err := q.db.Query(ctx, getUsersByWateringPlanID, wateringPlanID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []pgtype.UUID{}
+	items := []uuid.UUID{}
 	for rows.Next() {
-		var user_id pgtype.UUID
+		var user_id uuid.UUID
 		if err := rows.Scan(&user_id); err != nil {
 			return nil, err
 		}
@@ -351,7 +352,7 @@ VALUES ($1, $2)
 `
 
 type SetUserToWateringPlanParams struct {
-	UserID         pgtype.UUID
+	UserID         uuid.UUID
 	WateringPlanID int32
 }
 
@@ -411,7 +412,7 @@ WHERE id = $1
 
 type UpdateWateringPlanParams struct {
 	ID                     int32
-	Date                   pgtype.Date
+	Date                   time.Time
 	Description            string
 	Status                 WateringPlanStatus
 	Distance               *float64

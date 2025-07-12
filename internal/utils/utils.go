@@ -9,7 +9,6 @@ import (
 	"runtime"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // P returns a pointer to the value passed as an argument.
@@ -45,11 +44,4 @@ func URLToString(u *url.URL) string {
 		return ""
 	}
 	return u.String()
-}
-
-func UUIDToPGUUID(userID uuid.UUID) pgtype.UUID {
-	return pgtype.UUID{
-		Bytes: userID,
-		Valid: true,
-	}
 }

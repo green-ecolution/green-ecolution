@@ -10,6 +10,13 @@ func TimeToTime(t time.Time) time.Time {
 	return t
 }
 
+func TimePtrToTime(t *time.Time) time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return *t
+}
+
 func TimeToPtrTime(t time.Time) *time.Time {
 	if t.IsZero() {
 		return nil

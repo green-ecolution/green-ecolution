@@ -7,8 +7,7 @@ package sqlc
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
+	"time"
 )
 
 const archiveTreeCluster = `-- name: ArchiveTreeCluster :one
@@ -450,7 +449,7 @@ type UpdateTreeClusterParams struct {
 	MoistureLevel          float64
 	WateringStatus         WateringStatus
 	SoilCondition          TreeSoilCondition
-	LastWatered            pgtype.Timestamp
+	LastWatered            *time.Time
 	Archived               bool
 	Provider               *string
 	AdditionalInformations []byte

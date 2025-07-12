@@ -92,13 +92,13 @@ func (w *WateringPlanRepository) createEntity(ctx context.Context, entity *entit
 		return nil, err
 	}
 
-	date, err := utils.TimeToPgDate(entity.Date)
-	if err != nil {
+	// this resembles the old behavior for zero dates
+	if entity.Date.IsZero() {
 		return nil, errors.New("failed to convert date")
 	}
 
 	args := sqlc.CreateWateringPlanParams{
-		Date:                   date,
+		Date:                   entity.Date,
 		Description:            entity.Description,
 		Distance:               entity.Distance,
 		TotalWaterRequired:     entity.TotalWaterRequired,
@@ -189,7 +189,7 @@ func (w *WateringPlanRepository) setLinkedUsers(ctx context.Context, entity *ent
 	for _, userID := range entity.UserIDs {
 		err := w.store.SetUserToWateringPlan(ctx, &sqlc.SetUserToWateringPlanParams{
 			WateringPlanID: id,
-			UserID:         utils.UUIDToPGUUID(*userID),
+			UserID:         *userID,
 		})
 		if err != nil {
 			log.Error("failed to link users to watering plan", "error", err, "watering_plan_id", id, "user_ids", entity.UserIDs)
