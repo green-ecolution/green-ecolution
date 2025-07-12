@@ -33,7 +33,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.34.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.34.0
 	github.com/twpayne/go-geos v0.20.1
-	github.com/twpayne/pgx-geos v0.0.3
+	github.com/twpayne/pgx-geos v0.0.4
 	golang.org/x/net v0.35.0
 	golang.org/x/sync v0.11.0
 )
