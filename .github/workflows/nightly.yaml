@@ -155,14 +155,15 @@ jobs:
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
 
       - name: Build and upload frontend
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
-          NAME: "frontend_${{ matrix.name }}-${{ env.tag }}.tar.gz"
+          NAME: "frontend_${{ env.tag }}.tar.gz"
         run: |
           nix build .#frontend
           tar -czvf ${{ env.NAME }} -C result .
-          gh release upload ${{ env.tag }} ${{ env.NAME }}#"Frontend (${{ matrix.name }}) — nightly build" -R green-ecolution/green-ecolution --clobber
-          gh release upload ${{ env.tag }} ${{ env.NAME }}#"Frontend (${{ matrix.name }}) — nightly build" -R green-ecolution/frontend --clobber
+          gh release upload ${{ env.tag }} ${{ env.NAME }}#"Frontend — nightly build" -R green-ecolution/green-ecolution --clobber
+          gh release upload ${{ env.tag }} ${{ env.NAME }}#"Frontend — nightly build" -R green-ecolution/frontend --clobber
           
       - name: Build backend
         env:
