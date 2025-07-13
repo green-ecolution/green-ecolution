@@ -7,7 +7,7 @@ on:
       - release/*
 
 jobs:
-  build_and_test:
+  build:
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -21,26 +21,54 @@ jobs:
           node-version: '24'
           cache: 'pnpm'
 
-      - name: Get api docs artifacts
-        env:
-          GH_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
-        run: |
-          gh run download -R green-ecolution/backend -n api-docs.json 
-          mv api-docs.json ./packages/backend-client/api-docs.json
-
       - name: Install Dependencies
         run: |
           pnpm install --frozen-lockfile
-          pnpm run ci
 
       - name: Build
         run: |
           pnpm build
 
+  lint:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: |
+          pnpm install --frozen-lockfile
+
       - name: Linter
         continue-on-error: false
         run: |
           pnpm lint
+
+  test:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: |
+          pnpm install --frozen-lockfile
 
       - name: Test
         run: |
