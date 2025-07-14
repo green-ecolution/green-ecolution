@@ -375,8 +375,8 @@ github.com/gobwas/glob v0.2.3/go.mod h1:d3Ez4x06l9bZtSvzIay5+Yzi0fmZzPgnTbPcKjJA
 github.com/goccy/go-json v0.10.4 h1:JSwxQzIqKfmFX1swYPpUThQZp/Ka4wzJdK0LWVytLPM=
 github.com/goccy/go-json v0.10.4/go.mod h1:oq7eo15ShAhp70Anwd5lgX2pLfOS3QCiwU/PULtXL6M=
 github.com/godbus/dbus/v5 v5.0.4/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
-github.com/gofiber/contrib/jwt v1.0.10 h1:/ilGepl6i0Bntl0Zcd+lAzagY8BiS1+fEiAj32HMApk=
-github.com/gofiber/contrib/jwt v1.0.10/go.mod h1:1qBENE6sZ6PPT4xIpBzx1VxeyROQO7sj48OlM1I9qdU=
+github.com/gofiber/contrib/jwt v1.1.2 h1:GmWnOqT4A15EkA8IPXwSpvNUXZR4u5SMj+geBmyLAjs=
+github.com/gofiber/contrib/jwt v1.1.2/go.mod h1:CpIwrkUQ3Q6IP8y9n3f0wP9bOnSKx39EDp2fBVgMFVk=
 github.com/gofiber/fiber/v2 v2.52.8 h1:xl4jJQ0BV5EJTA2aWiKw/VddRpHrKeZLF0QPUxqn0x4=
 github.com/gofiber/fiber/v2 v2.52.8/go.mod h1:YEcBbO/FB+5M1IZNBP9FO3J9281zgPAreiI1oqg8nDw=
 github.com/gofiber/swagger v1.1.0 h1:ff3rg1fB+Rp5JN/N8jfxTiZtMKe/9tB9QDc79fPiJKQ=
