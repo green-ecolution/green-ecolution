@@ -19,7 +19,7 @@ require (
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/gofiber/contrib/jwt v1.1.2
 	github.com/gofiber/fiber/v2 v2.52.8
-	github.com/gofiber/swagger v1.1.0
+	github.com/gofiber/swagger v1.1.1
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.5
@@ -298,7 +298,7 @@ require (
 	github.com/stoewer/go-strcase v1.2.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/swaggo/files/v2 v2.0.1 // indirect
+	github.com/swaggo/files/v2 v2.0.2 // indirect
 	github.com/tdakkota/asciicheck v0.4.0 // indirect
 	github.com/tdewolff/parse/v2 v2.7.15 // indirect
 	github.com/tetafro/godot v1.4.20 // indirect
