@@ -916,8 +916,8 @@ github.com/ssgreg/nlreturn/v2 v2.2.1 h1:X4XDI7jstt3ySqGU86YGAURbxw3oTDPK9sPEi6YE
 github.com/ssgreg/nlreturn/v2 v2.2.1/go.mod h1:E/iiPB78hV7Szg2YfRgyIrk1AD6JVMTRkkxBiELzh2I=
 github.com/stbenjam/no-sprintf-host-port v0.2.0 h1:i8pxvGrt1+4G0czLr/WnmyH7zbZ8Bg8etvARQ1rpyl4=
 github.com/stbenjam/no-sprintf-host-port v0.2.0/go.mod h1:eL0bQ9PasS0hsyTyfTjjG+E80QIyPnBVQbYZyv20Jfk=
-github.com/stillya/testcontainers-keycloak v0.3.2 h1:6CEtUW2IX8O+UIoohyvn4V129ErXd2WqKEhCYEsKxpQ=
-github.com/stillya/testcontainers-keycloak v0.3.2/go.mod h1:jVkcb6gxRSlulwe76yv3MlBvqVzXhJO4W/4kF1covOc=
+github.com/stillya/testcontainers-keycloak v0.3.3 h1:olXmnxHkr8c8DCtU0IxnFX2xa168DdkvHABRInEWMzY=
+github.com/stillya/testcontainers-keycloak v0.3.3/go.mod h1:b/hv+APEfnlTNkhktriKvjEX4UfW3asUby1P7DG8PHo=
 github.com/stoewer/go-strcase v1.2.0 h1:Z2iHWqGXH00XYgqDmNgQbIBxf3wrNq0F3feEy0ainaU=
 github.com/stoewer/go-strcase v1.2.0/go.mod h1:IBiWB2sKIp3wVVQ3Y035++gc+knqhUQag1KpM8ahLw8=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=

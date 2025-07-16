@@ -27,7 +27,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/spf13/viper v1.20.1
-	github.com/stillya/testcontainers-keycloak v0.3.2
+	github.com/stillya/testcontainers-keycloak v0.3.3
 	github.com/stretchr/testify v1.10.0
 	github.com/swaggo/swag v1.16.4
 	github.com/testcontainers/testcontainers-go v0.38.0
