@@ -15,7 +15,7 @@ Name | Type | Description | Notes
 **Longitude** | **float32** |  | 
 **MoistureLevel** | **float32** |  | 
 **Name** | **string** |  | 
-**Provider** | **string** |  | 
+**Provider** | Pointer to **string** |  | [optional] 
 **Region** | Pointer to [**Region**](Region.md) |  | [optional] 
 **SoilCondition** | [**SoilCondition**](SoilCondition.md) |  | 
 **TreeIds** | Pointer to **[]int32** |  | [optional] 
@@ -26,7 +26,7 @@ Name | Type | Description | Notes
 
 ### NewTreeClusterInList
 
-`func NewTreeClusterInList(address string, archived bool, createdAt string, description string, id int32, latitude float32, longitude float32, moistureLevel float32, name string, provider string, soilCondition SoilCondition, updatedAt string, wateringStatus WateringStatus, ) *TreeClusterInList`
+`func NewTreeClusterInList(address string, archived bool, createdAt string, description string, id int32, latitude float32, longitude float32, moistureLevel float32, name string, soilCondition SoilCondition, updatedAt string, wateringStatus WateringStatus, ) *TreeClusterInList`
 
 NewTreeClusterInList instantiates a new TreeClusterInList object
 This constructor will assign default values to properties that have it defined,
@@ -290,6 +290,11 @@ and a boolean to check if the value has been set.
 
 SetProvider sets Provider field to given value.
 
+### HasProvider
+
+`func (o *TreeClusterInList) HasProvider() bool`
+
+HasProvider returns a boolean if a field has been set.
 
 ### GetRegion
 

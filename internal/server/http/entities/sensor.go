@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type SensorStatus string // @Name SensorStatus
+type SensorStatus string //	@Name	SensorStatus
 
 const (
 	SensorStatusOnline  SensorStatus = "online"
@@ -22,12 +22,12 @@ type SensorResponse struct {
 	Longitude      float64                `json:"longitude"`
 	Provider       string                 `json:"provider,omitempty"`
 	AdditionalInfo map[string]interface{} `json:"additional_information,omitempty" validate:"optional"`
-} // @Name Sensor
+} //	@Name	Sensor
 
 type SensorListResponse struct {
 	Data       []*SensorResponse `json:"data"`
 	Pagination *Pagination       `json:"pagination,omitempty" validate:"optional"`
-} // @Name SensorList
+} //	@Name	SensorList
 
 type SensorDataResponse struct {
 	CreatedAt   time.Time            `json:"created_at"`
@@ -36,14 +36,14 @@ type SensorDataResponse struct {
 	Humidity    float64              `json:"humidity"`
 	Temperature float64              `json:"temperature"`
 	Watermarks  []*WatermarkResponse `json:"watermarks"`
-} // @Name SensorData
+} //	@Name	SensorData
 
 type SensorDataListResponse struct {
 	Data []*SensorDataResponse `json:"data"`
-} // @Name SensorDataList
+} //	@Name	SensorDataList
 
 type WatermarkResponse struct {
 	Centibar   int `json:"centibar"`
 	Resistance int `json:"resistance"`
 	Depth      int `json:"depth"`
-} // @Name WatermarkResponse
+} //	@Name	WatermarkResponse

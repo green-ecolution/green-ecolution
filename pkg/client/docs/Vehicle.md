@@ -5,7 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **AdditionalInformation** | Pointer to **map[string]interface{}** |  | [optional] 
-**ArchivedAt** | **string** |  | 
+**ArchivedAt** | Pointer to **string** |  | [optional] 
 **CreatedAt** | **string** |  | 
 **Description** | **string** |  | 
 **DrivingLicense** | [**DrivingLicense**](DrivingLicense.md) |  | 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 **Length** | **float32** |  | 
 **Model** | **string** |  | 
 **NumberPlate** | **string** |  | 
-**Provider** | **string** |  | 
+**Provider** | Pointer to **string** |  | [optional] 
 **Status** | [**VehicleStatus**](VehicleStatus.md) |  | 
 **Type** | [**VehicleType**](VehicleType.md) |  | 
 **UpdatedAt** | **string** |  | 
@@ -26,7 +26,7 @@ Name | Type | Description | Notes
 
 ### NewVehicle
 
-`func NewVehicle(archivedAt string, createdAt string, description string, drivingLicense DrivingLicense, height float32, id int32, length float32, model string, numberPlate string, provider string, status VehicleStatus, type_ VehicleType, updatedAt string, waterCapacity float32, weight float32, width float32, ) *Vehicle`
+`func NewVehicle(createdAt string, description string, drivingLicense DrivingLicense, height float32, id int32, length float32, model string, numberPlate string, status VehicleStatus, type_ VehicleType, updatedAt string, waterCapacity float32, weight float32, width float32, ) *Vehicle`
 
 NewVehicle instantiates a new Vehicle object
 This constructor will assign default values to properties that have it defined,
@@ -85,6 +85,11 @@ and a boolean to check if the value has been set.
 
 SetArchivedAt sets ArchivedAt field to given value.
 
+### HasArchivedAt
+
+`func (o *Vehicle) HasArchivedAt() bool`
+
+HasArchivedAt returns a boolean if a field has been set.
 
 ### GetCreatedAt
 
@@ -265,6 +270,11 @@ and a boolean to check if the value has been set.
 
 SetProvider sets Provider field to given value.
 
+### HasProvider
+
+`func (o *Vehicle) HasProvider() bool`
+
+HasProvider returns a boolean if a field has been set.
 
 ### GetStatus
 

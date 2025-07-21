@@ -20,7 +20,7 @@ type HTTPError struct {
 	Code   int    `json:"code"`
 	Path   string `json:"path"`
 	Method string `json:"method"`
-} // @Name HTTPError
+} //	@Name	HTTPError
 
 type Server struct {
 	cfg        *config.Config

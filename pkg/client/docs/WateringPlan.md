@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 **Evaluation** | [**[]EvaluationValue**](EvaluationValue.md) |  | 
 **GpxUrl** | **string** |  | 
 **Id** | **int32** |  | 
-**Provider** | **string** |  | 
+**Provider** | Pointer to **string** |  | [optional] 
 **RefillCount** | **int32** |  | 
 **Status** | [**WateringPlanStatus**](WateringPlanStatus.md) |  | 
 **TotalWaterRequired** | **float32** |  | 
@@ -28,7 +28,7 @@ Name | Type | Description | Notes
 
 ### NewWateringPlan
 
-`func NewWateringPlan(cancellationNote string, createdAt string, date string, description string, distance float32, duration float32, evaluation []EvaluationValue, gpxUrl string, id int32, provider string, refillCount int32, status WateringPlanStatus, totalWaterRequired float32, transporter Vehicle, treeclusters []TreeClusterInList, updatedAt string, userIds []string, ) *WateringPlan`
+`func NewWateringPlan(cancellationNote string, createdAt string, date string, description string, distance float32, duration float32, evaluation []EvaluationValue, gpxUrl string, id int32, refillCount int32, status WateringPlanStatus, totalWaterRequired float32, transporter Vehicle, treeclusters []TreeClusterInList, updatedAt string, userIds []string, ) *WateringPlan`
 
 NewWateringPlan instantiates a new WateringPlan object
 This constructor will assign default values to properties that have it defined,
@@ -267,6 +267,11 @@ and a boolean to check if the value has been set.
 
 SetProvider sets Provider field to given value.
 
+### HasProvider
+
+`func (o *WateringPlan) HasProvider() bool`
+
+HasProvider returns a boolean if a field has been set.
 
 ### GetRefillCount
 

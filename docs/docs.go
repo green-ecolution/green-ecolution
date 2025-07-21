@@ -3181,7 +3181,8 @@ const docTemplate = `{
                     "items": {
                         "type": "array",
                         "items": {
-                            "type": "number"
+                            "type": "number",
+                            "format": "float64"
                         }
                     }
                 },
@@ -3496,7 +3497,6 @@ const docTemplate = `{
                 "latest_data",
                 "latitude",
                 "longitude",
-                "provider",
                 "status",
                 "updated_at"
             ],
@@ -3675,7 +3675,6 @@ const docTemplate = `{
                 "longitude",
                 "number",
                 "planting_year",
-                "provider",
                 "species",
                 "updated_at",
                 "watering_status"
@@ -3741,7 +3740,6 @@ const docTemplate = `{
                 "longitude",
                 "moisture_level",
                 "name",
-                "provider",
                 "soil_condition",
                 "updated_at",
                 "watering_status"
@@ -3853,7 +3851,6 @@ const docTemplate = `{
                 "longitude",
                 "moisture_level",
                 "name",
-                "provider",
                 "soil_condition",
                 "updated_at",
                 "watering_status"
@@ -4157,13 +4154,10 @@ const docTemplate = `{
         "UserRegister": {
             "type": "object",
             "required": [
-                "avatar_url",
                 "email",
-                "employee_id",
                 "first_name",
                 "last_name",
                 "password",
-                "phone_number",
                 "roles",
                 "username"
             ],
@@ -4231,7 +4225,6 @@ const docTemplate = `{
         "Vehicle": {
             "type": "object",
             "required": [
-                "archived_at",
                 "created_at",
                 "description",
                 "driving_license",
@@ -4240,7 +4233,6 @@ const docTemplate = `{
                 "length",
                 "model",
                 "number_plate",
-                "provider",
                 "status",
                 "type",
                 "updated_at",
@@ -4491,7 +4483,6 @@ const docTemplate = `{
                 "evaluation",
                 "gpx_url",
                 "id",
-                "provider",
                 "refill_count",
                 "status",
                 "total_water_required",
@@ -4622,7 +4613,6 @@ const docTemplate = `{
                 "description",
                 "distance",
                 "id",
-                "provider",
                 "status",
                 "total_water_required",
                 "transporter",

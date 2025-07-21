@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 **Description** | **string** |  | 
 **Distance** | **float32** |  | 
 **Id** | **int32** |  | 
-**Provider** | **string** |  | 
+**Provider** | Pointer to **string** |  | [optional] 
 **Status** | [**WateringPlanStatus**](WateringPlanStatus.md) |  | 
 **TotalWaterRequired** | **float32** |  | 
 **Trailer** | Pointer to [**Vehicle**](Vehicle.md) |  | [optional] 
@@ -24,7 +24,7 @@ Name | Type | Description | Notes
 
 ### NewWateringPlanInList
 
-`func NewWateringPlanInList(cancellationNote string, createdAt string, date string, description string, distance float32, id int32, provider string, status WateringPlanStatus, totalWaterRequired float32, transporter Vehicle, treeclusters []TreeClusterInList, updatedAt string, userIds []string, ) *WateringPlanInList`
+`func NewWateringPlanInList(cancellationNote string, createdAt string, date string, description string, distance float32, id int32, status WateringPlanStatus, totalWaterRequired float32, transporter Vehicle, treeclusters []TreeClusterInList, updatedAt string, userIds []string, ) *WateringPlanInList`
 
 NewWateringPlanInList instantiates a new WateringPlanInList object
 This constructor will assign default values to properties that have it defined,
@@ -203,6 +203,11 @@ and a boolean to check if the value has been set.
 
 SetProvider sets Provider field to given value.
 
+### HasProvider
+
+`func (o *WateringPlanInList) HasProvider() bool`
+
+HasProvider returns a boolean if a field has been set.
 
 ### GetStatus
 

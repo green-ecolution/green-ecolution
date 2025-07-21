@@ -4,13 +4,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AvatarUrl** | **string** |  | 
+**AvatarUrl** | Pointer to **string** |  | [optional] 
 **Email** | **string** |  | 
-**EmployeeId** | **string** |  | 
+**EmployeeId** | Pointer to **string** |  | [optional] 
 **FirstName** | **string** |  | 
 **LastName** | **string** |  | 
 **Password** | **string** |  | 
-**PhoneNumber** | **string** |  | 
+**PhoneNumber** | Pointer to **string** |  | [optional] 
 **Roles** | **[]string** |  | 
 **Username** | **string** |  | 
 
@@ -18,7 +18,7 @@ Name | Type | Description | Notes
 
 ### NewUserRegister
 
-`func NewUserRegister(avatarUrl string, email string, employeeId string, firstName string, lastName string, password string, phoneNumber string, roles []string, username string, ) *UserRegister`
+`func NewUserRegister(email string, firstName string, lastName string, password string, roles []string, username string, ) *UserRegister`
 
 NewUserRegister instantiates a new UserRegister object
 This constructor will assign default values to properties that have it defined,
@@ -52,6 +52,11 @@ and a boolean to check if the value has been set.
 
 SetAvatarUrl sets AvatarUrl field to given value.
 
+### HasAvatarUrl
+
+`func (o *UserRegister) HasAvatarUrl() bool`
+
+HasAvatarUrl returns a boolean if a field has been set.
 
 ### GetEmail
 
@@ -92,6 +97,11 @@ and a boolean to check if the value has been set.
 
 SetEmployeeId sets EmployeeId field to given value.
 
+### HasEmployeeId
+
+`func (o *UserRegister) HasEmployeeId() bool`
+
+HasEmployeeId returns a boolean if a field has been set.
 
 ### GetFirstName
 
@@ -172,6 +182,11 @@ and a boolean to check if the value has been set.
 
 SetPhoneNumber sets PhoneNumber field to given value.
 
+### HasPhoneNumber
+
+`func (o *UserRegister) HasPhoneNumber() bool`
+
+HasPhoneNumber returns a boolean if a field has been set.
 
 ### GetRoles
 

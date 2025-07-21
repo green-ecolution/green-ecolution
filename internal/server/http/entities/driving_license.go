@@ -1,6 +1,6 @@
 package entities
 
-type DrivingLicense string // @Name DrivingLicense
+type DrivingLicense string //	@Name	DrivingLicense
 
 const (
 	DrivingLicenseB  DrivingLicense = "B"

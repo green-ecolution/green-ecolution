@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type TreeSoilCondition string // @Name SoilCondition
+type TreeSoilCondition string //	@Name	SoilCondition
 
 const (
 	TreeSoilConditionSchluffig TreeSoilCondition = "schluffig"
@@ -32,7 +32,7 @@ type TreeClusterResponse struct {
 	Name           string                 `json:"name"`
 	Provider       string                 `json:"provider,omitempty"`
 	AdditionalInfo map[string]interface{} `json:"additional_information,omitempty" validate:"optional"`
-} // @Name TreeCluster
+} //	@Name	TreeCluster
 
 type TreeClusterInListResponse struct {
 	ID             int32                  `json:"id"`
@@ -52,12 +52,12 @@ type TreeClusterInListResponse struct {
 	Name           string                 `json:"name"`
 	Provider       string                 `json:"provider,omitempty"`
 	AdditionalInfo map[string]interface{} `json:"additional_information,omitempty" validate:"optional"`
-} // @Name TreeClusterInList
+} //	@Name	TreeClusterInList
 
 type TreeClusterListResponse struct {
 	Data       []*TreeClusterInListResponse `json:"data"`
 	Pagination *Pagination                  `json:"pagination,omitempty" validate:"optional"`
-} // @Name TreeClusterList
+} //	@Name	TreeClusterList
 
 type TreeClusterCreateRequest struct {
 	Address        string                 `json:"address"`
@@ -67,7 +67,7 @@ type TreeClusterCreateRequest struct {
 	Name           string                 `json:"name"`
 	Provider       string                 `json:"provider" validate:"optional"`
 	AdditionalInfo map[string]interface{} `json:"additional_information" validate:"optional"`
-} // @Name TreeClusterCreate
+} //	@Name	TreeClusterCreate
 
 type TreeClusterUpdateRequest struct {
 	Address        string                 `json:"address"`
@@ -77,8 +77,8 @@ type TreeClusterUpdateRequest struct {
 	Name           string                 `json:"name"`
 	Provider       string                 `json:"provider" validate:"optional"`
 	AdditionalInfo map[string]interface{} `json:"additional_information" validate:"optional"`
-} // @Name TreeClusterUpdate
+} //	@Name	TreeClusterUpdate
 
 type TreeClusterAddTreesRequest struct {
 	TreeIDs []*int32 `json:"tree_ids"`
-} // @Name TreeClusterAddTrees
+} //	@Name	TreeClusterAddTrees

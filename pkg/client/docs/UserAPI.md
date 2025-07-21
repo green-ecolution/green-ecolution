@@ -365,7 +365,7 @@ import (
 )
 
 func main() {
-	user := *openapiclient.NewUserRegister("AvatarUrl_example", "Email_example", "EmployeeId_example", "FirstName_example", "LastName_example", "Password_example", "PhoneNumber_example", []string{"Roles_example"}, "Username_example") // UserRegister | User information
+	user := *openapiclient.NewUserRegister("Email_example", "FirstName_example", "LastName_example", "Password_example", []string{"Roles_example"}, "Username_example") // UserRegister | User information
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)

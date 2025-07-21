@@ -4,15 +4,15 @@ import "time"
 
 type LoginResponse struct {
 	LoginURL string `json:"login_url"`
-} // @Name LoginResponse
+} //	@Name	LoginResponse
 
 type LoginTokenRequest struct {
 	Code string `json:"code"`
-} // @Name LoginTokenRequest
+} //	@Name	LoginTokenRequest
 
 type LogoutRequest struct {
 	RefreshToken string `json:"refresh_token"`
-} // @Name LogoutRequest
+} //	@Name	LogoutRequest
 
 type ClientTokenResponse struct {
 	AccessToken      string    `json:"access_token"`
@@ -25,8 +25,8 @@ type ClientTokenResponse struct {
 	NotBeforePolicy  int       `json:"not_before_policy"`
 	SessionState     string    `json:"session_state"`
 	Scope            string    `json:"scope"`
-} // @Name ClientToken
+} //	@Name	ClientToken
 
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token"`
-} // @Name RefreshTokenRequest
+} //	@Name	RefreshTokenRequest

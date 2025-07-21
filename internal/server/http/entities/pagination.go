@@ -6,4 +6,4 @@ type Pagination struct {
 	TotalPages  int32  `json:"total_pages"`
 	NextPage    *int32 `json:"next_page"`
 	PrevPage    *int32 `json:"prev_page"`
-} // @Name Pagination
+} //	@Name	Pagination

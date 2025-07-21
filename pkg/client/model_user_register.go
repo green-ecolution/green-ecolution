@@ -22,13 +22,13 @@ var _ MappedNullable = &UserRegister{}
 
 // UserRegister struct for UserRegister
 type UserRegister struct {
-	AvatarUrl   string   `json:"avatar_url"`
+	AvatarUrl   *string  `json:"avatar_url,omitempty"`
 	Email       string   `json:"email"`
-	EmployeeId  string   `json:"employee_id"`
+	EmployeeId  *string  `json:"employee_id,omitempty"`
 	FirstName   string   `json:"first_name"`
 	LastName    string   `json:"last_name"`
 	Password    string   `json:"password"`
-	PhoneNumber string   `json:"phone_number"`
+	PhoneNumber *string  `json:"phone_number,omitempty"`
 	Roles       []string `json:"roles"`
 	Username    string   `json:"username"`
 }
@@ -39,15 +39,12 @@ type _UserRegister UserRegister
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewUserRegister(avatarUrl string, email string, employeeId string, firstName string, lastName string, password string, phoneNumber string, roles []string, username string) *UserRegister {
+func NewUserRegister(email string, firstName string, lastName string, password string, roles []string, username string) *UserRegister {
 	this := UserRegister{}
-	this.AvatarUrl = avatarUrl
 	this.Email = email
-	this.EmployeeId = employeeId
 	this.FirstName = firstName
 	this.LastName = lastName
 	this.Password = password
-	this.PhoneNumber = phoneNumber
 	this.Roles = roles
 	this.Username = username
 	return &this
@@ -61,28 +58,36 @@ func NewUserRegisterWithDefaults() *UserRegister {
 	return &this
 }
 
-// GetAvatarUrl returns the AvatarUrl field value
+// GetAvatarUrl returns the AvatarUrl field value if set, zero value otherwise.
 func (o *UserRegister) GetAvatarUrl() string {
-	if o == nil {
+	if o == nil || IsNil(o.AvatarUrl) {
 		var ret string
 		return ret
 	}
-
-	return o.AvatarUrl
+	return *o.AvatarUrl
 }
 
-// GetAvatarUrlOk returns a tuple with the AvatarUrl field value
+// GetAvatarUrlOk returns a tuple with the AvatarUrl field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *UserRegister) GetAvatarUrlOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.AvatarUrl) {
 		return nil, false
 	}
-	return &o.AvatarUrl, true
+	return o.AvatarUrl, true
 }
 
-// SetAvatarUrl sets field value
+// HasAvatarUrl returns a boolean if a field has been set.
+func (o *UserRegister) HasAvatarUrl() bool {
+	if o != nil && !IsNil(o.AvatarUrl) {
+		return true
+	}
+
+	return false
+}
+
+// SetAvatarUrl gets a reference to the given string and assigns it to the AvatarUrl field.
 func (o *UserRegister) SetAvatarUrl(v string) {
-	o.AvatarUrl = v
+	o.AvatarUrl = &v
 }
 
 // GetEmail returns the Email field value
@@ -109,28 +114,36 @@ func (o *UserRegister) SetEmail(v string) {
 	o.Email = v
 }
 
-// GetEmployeeId returns the EmployeeId field value
+// GetEmployeeId returns the EmployeeId field value if set, zero value otherwise.
 func (o *UserRegister) GetEmployeeId() string {
-	if o == nil {
+	if o == nil || IsNil(o.EmployeeId) {
 		var ret string
 		return ret
 	}
-
-	return o.EmployeeId
+	return *o.EmployeeId
 }
 
-// GetEmployeeIdOk returns a tuple with the EmployeeId field value
+// GetEmployeeIdOk returns a tuple with the EmployeeId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *UserRegister) GetEmployeeIdOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.EmployeeId) {
 		return nil, false
 	}
-	return &o.EmployeeId, true
+	return o.EmployeeId, true
 }
 
-// SetEmployeeId sets field value
+// HasEmployeeId returns a boolean if a field has been set.
+func (o *UserRegister) HasEmployeeId() bool {
+	if o != nil && !IsNil(o.EmployeeId) {
+		return true
+	}
+
+	return false
+}
+
+// SetEmployeeId gets a reference to the given string and assigns it to the EmployeeId field.
 func (o *UserRegister) SetEmployeeId(v string) {
-	o.EmployeeId = v
+	o.EmployeeId = &v
 }
 
 // GetFirstName returns the FirstName field value
@@ -205,28 +218,36 @@ func (o *UserRegister) SetPassword(v string) {
 	o.Password = v
 }
 
-// GetPhoneNumber returns the PhoneNumber field value
+// GetPhoneNumber returns the PhoneNumber field value if set, zero value otherwise.
 func (o *UserRegister) GetPhoneNumber() string {
-	if o == nil {
+	if o == nil || IsNil(o.PhoneNumber) {
 		var ret string
 		return ret
 	}
-
-	return o.PhoneNumber
+	return *o.PhoneNumber
 }
 
-// GetPhoneNumberOk returns a tuple with the PhoneNumber field value
+// GetPhoneNumberOk returns a tuple with the PhoneNumber field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *UserRegister) GetPhoneNumberOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.PhoneNumber) {
 		return nil, false
 	}
-	return &o.PhoneNumber, true
+	return o.PhoneNumber, true
 }
 
-// SetPhoneNumber sets field value
+// HasPhoneNumber returns a boolean if a field has been set.
+func (o *UserRegister) HasPhoneNumber() bool {
+	if o != nil && !IsNil(o.PhoneNumber) {
+		return true
+	}
+
+	return false
+}
+
+// SetPhoneNumber gets a reference to the given string and assigns it to the PhoneNumber field.
 func (o *UserRegister) SetPhoneNumber(v string) {
-	o.PhoneNumber = v
+	o.PhoneNumber = &v
 }
 
 // GetRoles returns the Roles field value
@@ -287,13 +308,19 @@ func (o UserRegister) MarshalJSON() ([]byte, error) {
 
 func (o UserRegister) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["avatar_url"] = o.AvatarUrl
+	if !IsNil(o.AvatarUrl) {
+		toSerialize["avatar_url"] = o.AvatarUrl
+	}
 	toSerialize["email"] = o.Email
-	toSerialize["employee_id"] = o.EmployeeId
+	if !IsNil(o.EmployeeId) {
+		toSerialize["employee_id"] = o.EmployeeId
+	}
 	toSerialize["first_name"] = o.FirstName
 	toSerialize["last_name"] = o.LastName
 	toSerialize["password"] = o.Password
-	toSerialize["phone_number"] = o.PhoneNumber
+	if !IsNil(o.PhoneNumber) {
+		toSerialize["phone_number"] = o.PhoneNumber
+	}
 	toSerialize["roles"] = o.Roles
 	toSerialize["username"] = o.Username
 	return toSerialize, nil
@@ -304,13 +331,10 @@ func (o *UserRegister) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"avatar_url",
 		"email",
-		"employee_id",
 		"first_name",
 		"last_name",
 		"password",
-		"phone_number",
 		"roles",
 		"username",
 	}

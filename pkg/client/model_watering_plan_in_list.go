@@ -29,7 +29,7 @@ type WateringPlanInList struct {
 	Description           string                 `json:"description"`
 	Distance              float32                `json:"distance"`
 	Id                    int32                  `json:"id"`
-	Provider              string                 `json:"provider"`
+	Provider              *string                `json:"provider,omitempty"`
 	Status                WateringPlanStatus     `json:"status"`
 	TotalWaterRequired    float32                `json:"total_water_required"`
 	Trailer               *Vehicle               `json:"trailer,omitempty"`
@@ -45,7 +45,7 @@ type _WateringPlanInList WateringPlanInList
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewWateringPlanInList(cancellationNote string, createdAt string, date string, description string, distance float32, id int32, provider string, status WateringPlanStatus, totalWaterRequired float32, transporter Vehicle, treeclusters []TreeClusterInList, updatedAt string, userIds []string) *WateringPlanInList {
+func NewWateringPlanInList(cancellationNote string, createdAt string, date string, description string, distance float32, id int32, status WateringPlanStatus, totalWaterRequired float32, transporter Vehicle, treeclusters []TreeClusterInList, updatedAt string, userIds []string) *WateringPlanInList {
 	this := WateringPlanInList{}
 	this.CancellationNote = cancellationNote
 	this.CreatedAt = createdAt
@@ -53,7 +53,6 @@ func NewWateringPlanInList(cancellationNote string, createdAt string, date strin
 	this.Description = description
 	this.Distance = distance
 	this.Id = id
-	this.Provider = provider
 	this.Status = status
 	this.TotalWaterRequired = totalWaterRequired
 	this.Transporter = transporter
@@ -247,28 +246,36 @@ func (o *WateringPlanInList) SetId(v int32) {
 	o.Id = v
 }
 
-// GetProvider returns the Provider field value
+// GetProvider returns the Provider field value if set, zero value otherwise.
 func (o *WateringPlanInList) GetProvider() string {
-	if o == nil {
+	if o == nil || IsNil(o.Provider) {
 		var ret string
 		return ret
 	}
-
-	return o.Provider
+	return *o.Provider
 }
 
-// GetProviderOk returns a tuple with the Provider field value
+// GetProviderOk returns a tuple with the Provider field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *WateringPlanInList) GetProviderOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.Provider) {
 		return nil, false
 	}
-	return &o.Provider, true
+	return o.Provider, true
 }
 
-// SetProvider sets field value
+// HasProvider returns a boolean if a field has been set.
+func (o *WateringPlanInList) HasProvider() bool {
+	if o != nil && !IsNil(o.Provider) {
+		return true
+	}
+
+	return false
+}
+
+// SetProvider gets a reference to the given string and assigns it to the Provider field.
 func (o *WateringPlanInList) SetProvider(v string) {
-	o.Provider = v
+	o.Provider = &v
 }
 
 // GetStatus returns the Status field value
@@ -466,7 +473,9 @@ func (o WateringPlanInList) ToMap() (map[string]interface{}, error) {
 	toSerialize["description"] = o.Description
 	toSerialize["distance"] = o.Distance
 	toSerialize["id"] = o.Id
-	toSerialize["provider"] = o.Provider
+	if !IsNil(o.Provider) {
+		toSerialize["provider"] = o.Provider
+	}
 	toSerialize["status"] = o.Status
 	toSerialize["total_water_required"] = o.TotalWaterRequired
 	if !IsNil(o.Trailer) {
@@ -490,7 +499,6 @@ func (o *WateringPlanInList) UnmarshalJSON(data []byte) (err error) {
 		"description",
 		"distance",
 		"id",
-		"provider",
 		"status",
 		"total_water_required",
 		"transporter",

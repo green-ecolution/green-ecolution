@@ -31,7 +31,7 @@ type Tree struct {
 	Longitude             float32                `json:"longitude"`
 	Number                string                 `json:"number"`
 	PlantingYear          int32                  `json:"planting_year"`
-	Provider              string                 `json:"provider"`
+	Provider              *string                `json:"provider,omitempty"`
 	Sensor                *Sensor                `json:"sensor,omitempty"`
 	Species               string                 `json:"species"`
 	TreeClusterId         *int32                 `json:"tree_cluster_id,omitempty"`
@@ -45,7 +45,7 @@ type _Tree Tree
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewTree(createdAt string, description string, id int32, latitude float32, longitude float32, number string, plantingYear int32, provider string, species string, updatedAt string, wateringStatus WateringStatus) *Tree {
+func NewTree(createdAt string, description string, id int32, latitude float32, longitude float32, number string, plantingYear int32, species string, updatedAt string, wateringStatus WateringStatus) *Tree {
 	this := Tree{}
 	this.CreatedAt = createdAt
 	this.Description = description
@@ -54,7 +54,6 @@ func NewTree(createdAt string, description string, id int32, latitude float32, l
 	this.Longitude = longitude
 	this.Number = number
 	this.PlantingYear = plantingYear
-	this.Provider = provider
 	this.Species = species
 	this.UpdatedAt = updatedAt
 	this.WateringStatus = wateringStatus
@@ -301,28 +300,36 @@ func (o *Tree) SetPlantingYear(v int32) {
 	o.PlantingYear = v
 }
 
-// GetProvider returns the Provider field value
+// GetProvider returns the Provider field value if set, zero value otherwise.
 func (o *Tree) GetProvider() string {
-	if o == nil {
+	if o == nil || IsNil(o.Provider) {
 		var ret string
 		return ret
 	}
-
-	return o.Provider
+	return *o.Provider
 }
 
-// GetProviderOk returns a tuple with the Provider field value
+// GetProviderOk returns a tuple with the Provider field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *Tree) GetProviderOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.Provider) {
 		return nil, false
 	}
-	return &o.Provider, true
+	return o.Provider, true
 }
 
-// SetProvider sets field value
+// HasProvider returns a boolean if a field has been set.
+func (o *Tree) HasProvider() bool {
+	if o != nil && !IsNil(o.Provider) {
+		return true
+	}
+
+	return false
+}
+
+// SetProvider gets a reference to the given string and assigns it to the Provider field.
 func (o *Tree) SetProvider(v string) {
-	o.Provider = v
+	o.Provider = &v
 }
 
 // GetSensor returns the Sensor field value if set, zero value otherwise.
@@ -484,7 +491,9 @@ func (o Tree) ToMap() (map[string]interface{}, error) {
 	toSerialize["longitude"] = o.Longitude
 	toSerialize["number"] = o.Number
 	toSerialize["planting_year"] = o.PlantingYear
-	toSerialize["provider"] = o.Provider
+	if !IsNil(o.Provider) {
+		toSerialize["provider"] = o.Provider
+	}
 	if !IsNil(o.Sensor) {
 		toSerialize["sensor"] = o.Sensor
 	}
@@ -509,7 +518,6 @@ func (o *Tree) UnmarshalJSON(data []byte) (err error) {
 		"longitude",
 		"number",
 		"planting_year",
-		"provider",
 		"species",
 		"updated_at",
 		"watering_status",

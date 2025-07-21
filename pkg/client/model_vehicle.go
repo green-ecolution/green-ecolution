@@ -23,7 +23,7 @@ var _ MappedNullable = &Vehicle{}
 // Vehicle struct for Vehicle
 type Vehicle struct {
 	AdditionalInformation map[string]interface{} `json:"additional_information,omitempty"`
-	ArchivedAt            string                 `json:"archived_at"`
+	ArchivedAt            *string                `json:"archived_at,omitempty"`
 	CreatedAt             string                 `json:"created_at"`
 	Description           string                 `json:"description"`
 	DrivingLicense        DrivingLicense         `json:"driving_license"`
@@ -32,7 +32,7 @@ type Vehicle struct {
 	Length                float32                `json:"length"`
 	Model                 string                 `json:"model"`
 	NumberPlate           string                 `json:"number_plate"`
-	Provider              string                 `json:"provider"`
+	Provider              *string                `json:"provider,omitempty"`
 	Status                VehicleStatus          `json:"status"`
 	Type                  VehicleType            `json:"type"`
 	UpdatedAt             string                 `json:"updated_at"`
@@ -47,9 +47,8 @@ type _Vehicle Vehicle
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewVehicle(archivedAt string, createdAt string, description string, drivingLicense DrivingLicense, height float32, id int32, length float32, model string, numberPlate string, provider string, status VehicleStatus, type_ VehicleType, updatedAt string, waterCapacity float32, weight float32, width float32) *Vehicle {
+func NewVehicle(createdAt string, description string, drivingLicense DrivingLicense, height float32, id int32, length float32, model string, numberPlate string, status VehicleStatus, type_ VehicleType, updatedAt string, waterCapacity float32, weight float32, width float32) *Vehicle {
 	this := Vehicle{}
-	this.ArchivedAt = archivedAt
 	this.CreatedAt = createdAt
 	this.Description = description
 	this.DrivingLicense = drivingLicense
@@ -58,7 +57,6 @@ func NewVehicle(archivedAt string, createdAt string, description string, driving
 	this.Length = length
 	this.Model = model
 	this.NumberPlate = numberPlate
-	this.Provider = provider
 	this.Status = status
 	this.Type = type_
 	this.UpdatedAt = updatedAt
@@ -108,28 +106,36 @@ func (o *Vehicle) SetAdditionalInformation(v map[string]interface{}) {
 	o.AdditionalInformation = v
 }
 
-// GetArchivedAt returns the ArchivedAt field value
+// GetArchivedAt returns the ArchivedAt field value if set, zero value otherwise.
 func (o *Vehicle) GetArchivedAt() string {
-	if o == nil {
+	if o == nil || IsNil(o.ArchivedAt) {
 		var ret string
 		return ret
 	}
-
-	return o.ArchivedAt
+	return *o.ArchivedAt
 }
 
-// GetArchivedAtOk returns a tuple with the ArchivedAt field value
+// GetArchivedAtOk returns a tuple with the ArchivedAt field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *Vehicle) GetArchivedAtOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.ArchivedAt) {
 		return nil, false
 	}
-	return &o.ArchivedAt, true
+	return o.ArchivedAt, true
 }
 
-// SetArchivedAt sets field value
+// HasArchivedAt returns a boolean if a field has been set.
+func (o *Vehicle) HasArchivedAt() bool {
+	if o != nil && !IsNil(o.ArchivedAt) {
+		return true
+	}
+
+	return false
+}
+
+// SetArchivedAt gets a reference to the given string and assigns it to the ArchivedAt field.
 func (o *Vehicle) SetArchivedAt(v string) {
-	o.ArchivedAt = v
+	o.ArchivedAt = &v
 }
 
 // GetCreatedAt returns the CreatedAt field value
@@ -324,28 +330,36 @@ func (o *Vehicle) SetNumberPlate(v string) {
 	o.NumberPlate = v
 }
 
-// GetProvider returns the Provider field value
+// GetProvider returns the Provider field value if set, zero value otherwise.
 func (o *Vehicle) GetProvider() string {
-	if o == nil {
+	if o == nil || IsNil(o.Provider) {
 		var ret string
 		return ret
 	}
-
-	return o.Provider
+	return *o.Provider
 }
 
-// GetProviderOk returns a tuple with the Provider field value
+// GetProviderOk returns a tuple with the Provider field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *Vehicle) GetProviderOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.Provider) {
 		return nil, false
 	}
-	return &o.Provider, true
+	return o.Provider, true
 }
 
-// SetProvider sets field value
+// HasProvider returns a boolean if a field has been set.
+func (o *Vehicle) HasProvider() bool {
+	if o != nil && !IsNil(o.Provider) {
+		return true
+	}
+
+	return false
+}
+
+// SetProvider gets a reference to the given string and assigns it to the Provider field.
 func (o *Vehicle) SetProvider(v string) {
-	o.Provider = v
+	o.Provider = &v
 }
 
 // GetStatus returns the Status field value
@@ -505,7 +519,9 @@ func (o Vehicle) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.AdditionalInformation) {
 		toSerialize["additional_information"] = o.AdditionalInformation
 	}
-	toSerialize["archived_at"] = o.ArchivedAt
+	if !IsNil(o.ArchivedAt) {
+		toSerialize["archived_at"] = o.ArchivedAt
+	}
 	toSerialize["created_at"] = o.CreatedAt
 	toSerialize["description"] = o.Description
 	toSerialize["driving_license"] = o.DrivingLicense
@@ -514,7 +530,9 @@ func (o Vehicle) ToMap() (map[string]interface{}, error) {
 	toSerialize["length"] = o.Length
 	toSerialize["model"] = o.Model
 	toSerialize["number_plate"] = o.NumberPlate
-	toSerialize["provider"] = o.Provider
+	if !IsNil(o.Provider) {
+		toSerialize["provider"] = o.Provider
+	}
 	toSerialize["status"] = o.Status
 	toSerialize["type"] = o.Type
 	toSerialize["updated_at"] = o.UpdatedAt
@@ -529,7 +547,6 @@ func (o *Vehicle) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"archived_at",
 		"created_at",
 		"description",
 		"driving_license",
@@ -538,7 +555,6 @@ func (o *Vehicle) UnmarshalJSON(data []byte) (err error) {
 		"length",
 		"model",
 		"number_plate",
-		"provider",
 		"status",
 		"type",
 		"updated_at",

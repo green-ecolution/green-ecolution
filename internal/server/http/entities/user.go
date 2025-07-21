@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type UserStatus string // @Name UserStatus
+type UserStatus string //	@Name	UserStatus
 
 const (
 	UserStatusAvailable UserStatus = "available"
@@ -12,7 +12,7 @@ const (
 	UserStatusUnknown   UserStatus = "unknown"
 )
 
-type UserRole string // @Name UserRole
+type UserRole string //	@Name	UserRole
 
 const (
 	UserRoleTbz               UserRole = "tbz"
@@ -35,11 +35,11 @@ type UserResponse struct {
 	Roles           []UserRole       `json:"roles"`
 	DrivingLicenses []DrivingLicense `json:"driving_licenses"`
 	Status          UserStatus       `json:"status"`
-} // @Name User
+} //	@Name	User
 
 type UserListResponse struct {
 	Data []*UserResponse `json:"data"`
-} // @Name UserList
+} //	@Name	UserList
 
 type UserRegisterRequest struct {
 	Username    string   `json:"username"`
@@ -51,7 +51,7 @@ type UserRegisterRequest struct {
 	Password    string   `json:"password"`
 	Roles       []string `json:"roles"`
 	Avatar      string   `json:"avatar_url,omitempty"`
-} // @Name UserRegister
+} //	@Name	UserRegister
 
 type UserUpdateRequest struct {
 	Username    string `json:"username,omitempty"`
@@ -61,4 +61,4 @@ type UserUpdateRequest struct {
 	EmployeeID  string `json:"employee_id,omitempty"`
 	PhoneNumber string `json:"phone_number,omitempty"`
 	Avatar      string `json:"avatar_url,omitempty"`
-} // @Name UserUpdate
+} //	@Name	UserUpdate

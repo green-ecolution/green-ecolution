@@ -179,6 +179,7 @@ definitions:
       coordinates:
         items:
           items:
+            format: float64
             type: number
           type: array
         type: array
@@ -416,7 +417,6 @@ definitions:
     - latest_data
     - latitude
     - longitude
-    - provider
     - status
     - updated_at
     type: object
@@ -557,7 +557,6 @@ definitions:
     - longitude
     - number
     - planting_year
-    - provider
     - species
     - updated_at
     - watering_status
@@ -611,7 +610,6 @@ definitions:
     - longitude
     - moisture_level
     - name
-    - provider
     - soil_condition
     - updated_at
     - watering_status
@@ -691,7 +689,6 @@ definitions:
     - longitude
     - moisture_level
     - name
-    - provider
     - soil_condition
     - updated_at
     - watering_status
@@ -885,13 +882,10 @@ definitions:
       username:
         type: string
     required:
-    - avatar_url
     - email
-    - employee_id
     - first_name
     - last_name
     - password
-    - phone_number
     - roles
     - username
     type: object
@@ -955,7 +949,6 @@ definitions:
       width:
         type: number
     required:
-    - archived_at
     - created_at
     - description
     - driving_license
@@ -964,7 +957,6 @@ definitions:
     - length
     - model
     - number_plate
-    - provider
     - status
     - type
     - updated_at
@@ -1156,7 +1148,6 @@ definitions:
     - evaluation
     - gpx_url
     - id
-    - provider
     - refill_count
     - status
     - total_water_required
@@ -1239,7 +1230,6 @@ definitions:
     - description
     - distance
     - id
-    - provider
     - status
     - total_water_required
     - transporter

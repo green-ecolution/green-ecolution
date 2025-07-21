@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 **Longitude** | **float32** |  | 
 **Number** | **string** |  | 
 **PlantingYear** | **int32** |  | 
-**Provider** | **string** |  | 
+**Provider** | Pointer to **string** |  | [optional] 
 **Sensor** | Pointer to [**Sensor**](Sensor.md) |  | [optional] 
 **Species** | **string** |  | 
 **TreeClusterId** | Pointer to **int32** |  | [optional] 
@@ -24,7 +24,7 @@ Name | Type | Description | Notes
 
 ### NewTree
 
-`func NewTree(createdAt string, description string, id int32, latitude float32, longitude float32, number string, plantingYear int32, provider string, species string, updatedAt string, wateringStatus WateringStatus, ) *Tree`
+`func NewTree(createdAt string, description string, id int32, latitude float32, longitude float32, number string, plantingYear int32, species string, updatedAt string, wateringStatus WateringStatus, ) *Tree`
 
 NewTree instantiates a new Tree object
 This constructor will assign default values to properties that have it defined,
@@ -248,6 +248,11 @@ and a boolean to check if the value has been set.
 
 SetProvider sets Provider field to given value.
 
+### HasProvider
+
+`func (o *Tree) HasProvider() bool`
+
+HasProvider returns a boolean if a field has been set.
 
 ### GetSensor
 

@@ -7,13 +7,13 @@ type AppInfoResponse struct {
 	Git       GitResponse    `json:"git"`
 	Server    ServerResponse `json:"server"`
 	Map       MapResponse    `json:"map"`
-} // @Name AppInfo
+} //	@Name	AppInfo
 
 type GitResponse struct {
 	Branch     string `json:"branch"`
 	Commit     string `json:"commit"`
 	Repository string `json:"repository"`
-} // @Name GitInfo
+} //	@Name	GitInfo
 
 type ServerResponse struct {
 	OS        string `json:"os"`
@@ -24,9 +24,9 @@ type ServerResponse struct {
 	Port      int    `json:"port"`
 	Interface string `json:"interface"`
 	Uptime    string `json:"uptime"`
-} // @Name ServerInfo
+} //	@Name	ServerInfo
 
 type MapResponse struct {
 	Center [2]float64 `json:"center"`
 	BBox   [4]float64 `json:"bbox"`
-} // @Name MapInfo
+} //	@Name	MapInfo

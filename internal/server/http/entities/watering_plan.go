@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type WateringPlanStatus string // @Name WateringPlanStatus
+type WateringPlanStatus string //	@Name	WateringPlanStatus
 
 const (
 	WateringPlanStatusPlanned     WateringPlanStatus = "planned"
@@ -37,7 +37,7 @@ type WateringPlanResponse struct {
 	RefillCount        int32                        `json:"refill_count"`
 	Provider           string                       `json:"provider,omitempty"`
 	AdditionalInfo     map[string]interface{}       `json:"additional_information,omitempty" validate:"optional"`
-} // @Name WateringPlan
+} //	@Name	WateringPlan
 
 type WateringPlanInListResponse struct {
 	ID                 int32                        `json:"id"`
@@ -55,12 +55,12 @@ type WateringPlanInListResponse struct {
 	CancellationNote   string                       `json:"cancellation_note"`
 	Provider           string                       `json:"provider,omitempty"`
 	AdditionalInfo     map[string]interface{}       `json:"additional_information,omitempty" validate:"optional"`
-} // @Name WateringPlanInList
+} //	@Name	WateringPlanInList
 
 type WateringPlanListResponse struct {
 	Data       []*WateringPlanInListResponse `json:"data"`
 	Pagination *Pagination                   `json:"pagination,omitempty" validate:"optional"`
-} // @Name WateringPlanList
+} //	@Name	WateringPlanList
 
 type WateringPlanCreateRequest struct {
 	Date           time.Time              `json:"date"`
@@ -71,7 +71,7 @@ type WateringPlanCreateRequest struct {
 	UserIDs        []string               `json:"user_ids"`
 	Provider       string                 `json:"provider" validate:"optional"`
 	AdditionalInfo map[string]interface{} `json:"additional_information" validate:"optional"`
-} // @Name WateringPlanCreate
+} //	@Name	WateringPlanCreate
 
 type WateringPlanUpdateRequest struct {
 	Date             time.Time              `json:"date"`
@@ -85,10 +85,10 @@ type WateringPlanUpdateRequest struct {
 	Evaluation       []*EvaluationValue     `json:"evaluation" validate:"optional"`
 	Provider         string                 `json:"provider" validate:"optional"`
 	AdditionalInfo   map[string]interface{} `json:"additional_information" validate:"optional"`
-} // @Name WateringPlanUpdate
+} //	@Name	WateringPlanUpdate
 
 type EvaluationValue struct {
 	WateringPlanID int32    `json:"watering_plan_id"`
 	TreeClusterID  int32    `json:"tree_cluster_id"`
 	ConsumedWater  *float64 `json:"consumed_water"`
-} // @Name EvaluationValue
+} //	@Name	EvaluationValue

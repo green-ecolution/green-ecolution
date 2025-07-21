@@ -20,12 +20,12 @@ type TreeResponse struct {
 	Description    string                 `json:"description"`
 	Provider       string                 `json:"provider,omitempty"`
 	AdditionalInfo map[string]interface{} `json:"additional_information,omitempty" validate:"optional"`
-} // @Name Tree
+} //	@Name	Tree
 
 type TreeListResponse struct {
 	Data       []*TreeResponse `json:"data"`
 	Pagination *Pagination     `json:"pagination,omitempty" validate:"optional"`
-} // @Name TreeList
+} //	@Name	TreeList
 
 type TreeCreateRequest struct {
 	TreeClusterID  *int32                 `json:"tree_cluster_id" validate:"optional"`
@@ -38,7 +38,7 @@ type TreeCreateRequest struct {
 	Description    string                 `json:"description"`
 	Provider       string                 `json:"provider" validate:"optional"`
 	AdditionalInfo map[string]interface{} `json:"additional_information" validate:"optional"`
-} // @Name TreeCreate
+} //	@Name	TreeCreate
 
 type TreeUpdateRequest struct {
 	TreeClusterID  *int32                 `json:"tree_cluster_id" validate:"optional"`
@@ -51,8 +51,8 @@ type TreeUpdateRequest struct {
 	Description    string                 `json:"description"`
 	Provider       string                 `json:"provider" validate:"optional"`
 	AdditionalInfo map[string]interface{} `json:"additional_information" validate:"optional"`
-} // @Name TreeUpdate
+} //	@Name	TreeUpdate
 
 type TreeAddSensorRequest struct {
 	SensorID *string `json:"sensor_id"`
-} // @Name TreeAddSensor
+} //	@Name	TreeAddSensor

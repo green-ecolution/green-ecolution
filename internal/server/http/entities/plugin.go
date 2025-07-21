@@ -6,12 +6,12 @@ type PluginResponse struct {
 	Version     string `json:"version"`
 	Description string `json:"description"`
 	HostPath    string `json:"host_path"`
-} // @name Plugin
+} //	@name	Plugin
 
 type PluginAuth struct {
 	ClientID     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
-} // @name PluginAuth
+} //	@name	PluginAuth
 
 type PluginRegisterRequest struct {
 	Slug        string     `json:"slug"`
@@ -20,13 +20,13 @@ type PluginRegisterRequest struct {
 	Version     string     `json:"version"`
 	Path        string     `json:"path"`
 	Auth        PluginAuth `json:"auth"`
-} // @name PluginRegisterRequest
+} //	@name	PluginRegisterRequest
 
 type PluginRegisterResponse struct {
 	Success bool                `json:"success"`
 	Token   ClientTokenResponse `json:"token"`
-} // @name PluginRegister
+} //	@name	PluginRegister
 
 type PluginListResponse struct {
 	Plugins []PluginResponse `json:"plugins"`
-} // @name PluginListResponse
+} //	@name	PluginListResponse

@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 **LatestData** | [**SensorData**](SensorData.md) |  | 
 **Latitude** | **float32** |  | 
 **Longitude** | **float32** |  | 
-**Provider** | **string** |  | 
+**Provider** | Pointer to **string** |  | [optional] 
 **Status** | [**SensorStatus**](SensorStatus.md) |  | 
 **UpdatedAt** | **string** |  | 
 
@@ -18,7 +18,7 @@ Name | Type | Description | Notes
 
 ### NewSensor
 
-`func NewSensor(createdAt string, id string, latestData SensorData, latitude float32, longitude float32, provider string, status SensorStatus, updatedAt string, ) *Sensor`
+`func NewSensor(createdAt string, id string, latestData SensorData, latitude float32, longitude float32, status SensorStatus, updatedAt string, ) *Sensor`
 
 NewSensor instantiates a new Sensor object
 This constructor will assign default values to properties that have it defined,
@@ -177,6 +177,11 @@ and a boolean to check if the value has been set.
 
 SetProvider sets Provider field to given value.
 
+### HasProvider
+
+`func (o *Sensor) HasProvider() bool`
+
+HasProvider returns a boolean if a field has been set.
 
 ### GetStatus
 

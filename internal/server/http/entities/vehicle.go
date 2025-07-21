@@ -2,7 +2,7 @@ package entities
 
 import "time"
 
-type VehicleStatus string // @Name VehicleStatus
+type VehicleStatus string //	@Name	VehicleStatus
 
 const (
 	VehicleStatusActive       VehicleStatus = "active"
@@ -11,7 +11,7 @@ const (
 	VehicleStatusUnknown      VehicleStatus = "unknown"
 )
 
-type VehicleType string // @Name VehicleType
+type VehicleType string //	@Name	VehicleType
 
 const (
 	VehicleTypeTransporter VehicleType = "transporter"
@@ -37,12 +37,12 @@ type VehicleResponse struct {
 	Weight         float64                `json:"weight"`
 	Provider       string                 `json:"provider,omitempty"`
 	AdditionalInfo map[string]interface{} `json:"additional_information,omitempty" validate:"optional"`
-} // @Name Vehicle
+} //	@Name	Vehicle
 
 type VehicleListResponse struct {
 	Data       []*VehicleResponse `json:"data"`
 	Pagination *Pagination        `json:"pagination,omitempty" validate:"optional"`
-} // @Name VehicleList
+} //	@Name	VehicleList
 
 type VehicleCreateRequest struct {
 	NumberPlate    string                 `json:"number_plate"`
@@ -58,7 +58,7 @@ type VehicleCreateRequest struct {
 	Weight         float64                `json:"weight"`
 	Provider       string                 `json:"provider" validate:"optional"`
 	AdditionalInfo map[string]interface{} `json:"additional_information" validate:"optional"`
-} // @Name VehicleCreate
+} //	@Name	VehicleCreate
 
 type VehicleUpdateRequest struct {
 	NumberPlate    string                 `json:"number_plate"`
@@ -74,4 +74,4 @@ type VehicleUpdateRequest struct {
 	Weight         float64                `json:"weight"`
 	Provider       string                 `json:"provider" validate:"optional"`
 	AdditionalInfo map[string]interface{} `json:"additional_information" validate:"optional"`
-} // @Name VehicleUpdate
+} //	@Name	VehicleUpdate

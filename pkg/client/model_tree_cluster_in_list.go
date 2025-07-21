@@ -33,7 +33,7 @@ type TreeClusterInList struct {
 	Longitude             float32                `json:"longitude"`
 	MoistureLevel         float32                `json:"moisture_level"`
 	Name                  string                 `json:"name"`
-	Provider              string                 `json:"provider"`
+	Provider              *string                `json:"provider,omitempty"`
 	Region                *Region                `json:"region,omitempty"`
 	SoilCondition         SoilCondition          `json:"soil_condition"`
 	TreeIds               []int32                `json:"tree_ids,omitempty"`
@@ -47,7 +47,7 @@ type _TreeClusterInList TreeClusterInList
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewTreeClusterInList(address string, archived bool, createdAt string, description string, id int32, latitude float32, longitude float32, moistureLevel float32, name string, provider string, soilCondition SoilCondition, updatedAt string, wateringStatus WateringStatus) *TreeClusterInList {
+func NewTreeClusterInList(address string, archived bool, createdAt string, description string, id int32, latitude float32, longitude float32, moistureLevel float32, name string, soilCondition SoilCondition, updatedAt string, wateringStatus WateringStatus) *TreeClusterInList {
 	this := TreeClusterInList{}
 	this.Address = address
 	this.Archived = archived
@@ -58,7 +58,6 @@ func NewTreeClusterInList(address string, archived bool, createdAt string, descr
 	this.Longitude = longitude
 	this.MoistureLevel = moistureLevel
 	this.Name = name
-	this.Provider = provider
 	this.SoilCondition = soilCondition
 	this.UpdatedAt = updatedAt
 	this.WateringStatus = wateringStatus
@@ -353,28 +352,36 @@ func (o *TreeClusterInList) SetName(v string) {
 	o.Name = v
 }
 
-// GetProvider returns the Provider field value
+// GetProvider returns the Provider field value if set, zero value otherwise.
 func (o *TreeClusterInList) GetProvider() string {
-	if o == nil {
+	if o == nil || IsNil(o.Provider) {
 		var ret string
 		return ret
 	}
-
-	return o.Provider
+	return *o.Provider
 }
 
-// GetProviderOk returns a tuple with the Provider field value
+// GetProviderOk returns a tuple with the Provider field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *TreeClusterInList) GetProviderOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.Provider) {
 		return nil, false
 	}
-	return &o.Provider, true
+	return o.Provider, true
 }
 
-// SetProvider sets field value
+// HasProvider returns a boolean if a field has been set.
+func (o *TreeClusterInList) HasProvider() bool {
+	if o != nil && !IsNil(o.Provider) {
+		return true
+	}
+
+	return false
+}
+
+// SetProvider gets a reference to the given string and assigns it to the Provider field.
 func (o *TreeClusterInList) SetProvider(v string) {
-	o.Provider = v
+	o.Provider = &v
 }
 
 // GetRegion returns the Region field value if set, zero value otherwise.
@@ -538,7 +545,9 @@ func (o TreeClusterInList) ToMap() (map[string]interface{}, error) {
 	toSerialize["longitude"] = o.Longitude
 	toSerialize["moisture_level"] = o.MoistureLevel
 	toSerialize["name"] = o.Name
-	toSerialize["provider"] = o.Provider
+	if !IsNil(o.Provider) {
+		toSerialize["provider"] = o.Provider
+	}
 	if !IsNil(o.Region) {
 		toSerialize["region"] = o.Region
 	}
@@ -565,7 +574,6 @@ func (o *TreeClusterInList) UnmarshalJSON(data []byte) (err error) {
 		"longitude",
 		"moisture_level",
 		"name",
-		"provider",
 		"soil_condition",
 		"updated_at",
 		"watering_status",

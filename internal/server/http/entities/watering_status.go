@@ -1,6 +1,6 @@
 package entities
 
-type WateringStatus string // @Name WateringStatus
+type WateringStatus string //	@Name	WateringStatus
 
 const (
 	WateringStatusGood        WateringStatus = "good"
