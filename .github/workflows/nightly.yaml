@@ -135,8 +135,6 @@ jobs:
         include:
           - os: ubuntu-latest
             name: linux_amd64
-          - os: macOS-latest
-            name: darwin_amd64
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
