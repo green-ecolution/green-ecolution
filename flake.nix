@@ -53,12 +53,12 @@
       frontend = pkgs.stdenv.mkDerivation rec {
         inherit meta;
         pname = "frontend";
-        version = "1.3.0-nightly.20250725";
+        version = "1.3.0-nightly.20250725-unstable-2025-07-13";
         src = pkgs.fetchFromGitHub {
           owner = "green-ecolution";
           repo = "frontend";
-          rev = "d4dbf41dcaf66667fd72f0147ca1f933e98f1f06";
-          hash = "sha256-3plbIV3r85yJ3mq4ECUqzbzznFzaA/yzjdtJo6N+Rm0=";
+          rev = "965eb919deb05aa89bbb4676fcdaedd103832295";
+          hash = "sha256-sO78KtCnfJxonFQV2gpPV7GmNrJpeDilqbv8+RMuUgE=";
         };
 
         nativeBuildInputs = with pkgs; [
@@ -69,7 +69,7 @@
         VITE_BACKEND_BASEURL = "/api";
         pnpmDeps = pkgs.pnpm.fetchDeps {
           inherit pname version src;
-          hash = "sha256-NFOMw449NIz2pNeQUqsx9uiApwiVnH437X8xU2UQANo=";
+          hash = "sha256-uJmF5lhlryDuu5Me0Y4UUuxfWv6+2aymHmPT6YHf3bE=";
         };
 
         buildPhase = ''
