@@ -89,12 +89,12 @@
       backend = pkgs.buildGoModule rec {
         inherit meta;
         pname = "backend";
-        version = "1.3.0-nightly.20250725-unstable-2025-07-21";
+        version = "1.3.0-nightly.20250725-unstable-2025-07-25";
         src = pkgs.fetchFromGitHub {
           owner = "green-ecolution";
           repo = "backend";
-          rev = "7ae906b48497a38295709ff531fd8f9923d1dfce";
-          hash = "sha256-N9nUKD/5b0UeqBbIDWCt2p5Rn6MmUyRtFdNa0JVN4Kg=";
+          rev = "778d0973a18779316e3e89932827671fcf152881";
+          hash = "sha256-GMPPXneCuc5m3ghfZzhHnmc2+fCJNZzWMmbgmYPBqC0=";
         };
         ldflags = [
           "-s"
