@@ -108,3 +108,25 @@ jobs:
         run: |
           git add frontend backend deploy/kustomize/stage/kustomization.yaml
           git commit -m "chore: update submodules and bump stage image tag to version ${{ github.event.client_payload.version }} [skip ci]" && git push origin develop || echo "No changes to commit"
+
+      # Update nix flake to develop rev
+      - uses: cachix/install-nix-action@v31
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - uses: cachix/cachix-action@v16
+        with:
+          name: green-ecolution
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+
+      - name: Update backend in flake
+        run:
+          nix-shell -p nix-update --run "nix-update backend --flake --version=branch --commit"
+
+      - name: Update frontend in flake
+        run:
+          nix-shell -p nix-update --run "nix-update frontend --flake --version=branch --commit"
+
+      - name: Push changes
+        run:
+          git push origin develop || echo "No changes to commit"
