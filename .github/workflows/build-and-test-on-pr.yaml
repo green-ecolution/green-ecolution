@@ -34,33 +34,14 @@ jobs:
           go-version-file: ./go.mod
 
       - name: Generate Code
-        run: make generate
+        run: make generate && make generate/client
 
       - name: Check generated code is fresh
         run: |
           if [[ -n $(git status --porcelain) ]]; then
-            echo "❌ Error: Changes were detected after running 'make generate'!"
+            echo "❌ Error: Changes were detected after running 'make generate && make generate/client'!"
             echo
-            echo "Please run 'make generate' locally and commit the updated files."
-            echo
-            echo "Modified files:"
-            git status --short
-            echo
-            echo "Failing the workflow."
-            exit 1
-          else
-            echo "✅ Generated code is up to date. No changes detected."
-          fi
-
-      - name: Generate client pkg
-        run: make generate/client
-
-      - name: Check generated client package is fresh
-        run: |
-          if [[ -n $(git status --porcelain) ]]; then
-            echo "❌ Error: Changes were detected after running 'make generate/client'!"
-            echo
-            echo "Please run 'make generate/client' locally and commit the updated files."
+            echo "Please run 'make generate && make generate/client' locally and commit the updated files."
             echo
             echo "Modified files:"
             git status --short
