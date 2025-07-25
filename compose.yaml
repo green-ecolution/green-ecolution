@@ -27,7 +27,7 @@ services:
       - "traefik.http.services.s3.loadbalancer.server.port=9000"
 
   keycloak:
-    image: bitnami/keycloak:26.3.1
+    image: bitnami/keycloak:26.3.2
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: $KC_USER
       KC_BOOTSTRAP_ADMIN_PASSWORD: $KC_PASSWORD
