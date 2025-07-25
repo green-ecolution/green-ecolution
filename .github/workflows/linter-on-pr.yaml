@@ -39,4 +39,4 @@ jobs:
         run: make generate
 
       - name: golangci-lint
-        run: make lint
+        run: go tool golangci-lint run
