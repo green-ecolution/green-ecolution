@@ -29,7 +29,7 @@ require (
 	github.com/spf13/viper v1.20.1
 	github.com/stillya/testcontainers-keycloak v0.3.3
 	github.com/stretchr/testify v1.10.0
-	github.com/swaggo/swag v1.16.5
+	github.com/swaggo/swag v1.16.6
 	github.com/testcontainers/testcontainers-go v0.38.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.38.0
 	github.com/twpayne/go-geos v0.20.1
