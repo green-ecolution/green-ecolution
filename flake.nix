@@ -89,7 +89,7 @@
       backend = pkgs.buildGoModule rec {
         inherit meta;
         pname = "backend";
-        version = "1.3.0-nightly.20250808-unstable-2025-08-08";
+        version = "1.3.0-nightly.20250809";
         src = pkgs.fetchFromGitHub {
           owner = "green-ecolution";
           repo = "backend";
