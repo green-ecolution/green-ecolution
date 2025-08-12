@@ -7,7 +7,7 @@ jobs:
   build_and_test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Dependencies
         run: sudo apt-get update && sudo apt-get install -y make build-essential libgeos-dev libproj-dev
@@ -26,7 +26,7 @@ jobs:
   check_generated_code:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -55,7 +55,7 @@ jobs:
   test_pkg_client:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Go
         uses: actions/setup-go@v5
