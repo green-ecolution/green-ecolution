@@ -93,8 +93,8 @@
         src = pkgs.fetchFromGitHub {
           owner = "green-ecolution";
           repo = "backend";
-          rev = "1e752f45e6d17b3a972ae778f576586b0d9bea51";
-          hash = "sha256-ZTUeGXC1Q5PKJ4XQvWyBfbQ6PW0LDbktEoFx1k2g7A8=";
+          rev = "27b1648a5212ddeb9e1cf530536093a8383861e3";
+          hash = "sha256-9IM1vovwZ3bHGPqTzrIy1Mcp6cL0Tnxtkyjm8qw+ngs=";
         };
         ldflags = [
           "-s"
@@ -112,7 +112,7 @@
 
         doCheck = false;
         excludedPackages = "pkg/*";
-        vendorHash = "sha256-MdjrycpW47F0nxYARrjqlN9NtdXV5rZDy99+ZP7ReUQ=";
+        vendorHash = "sha256-cxebpAs9jl89KW36n56fiSh9XaUcUKZ12tRjpKhg/7w=";
         env.CGO_ENABLED = 1;
       };
 
