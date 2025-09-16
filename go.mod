@@ -15,7 +15,7 @@ tool (
 require (
 	github.com/Nerzal/gocloak/v13 v13.9.0
 	github.com/docker/go-connections v0.6.0
-	github.com/eclipse/paho.mqtt.golang v1.5.0
+	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/gofiber/contrib/jwt v1.1.2
 	github.com/gofiber/fiber/v2 v2.52.9
