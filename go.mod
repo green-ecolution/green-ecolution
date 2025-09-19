@@ -31,7 +31,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/swaggo/swag v1.16.6
 	github.com/testcontainers/testcontainers-go v0.39.0
-	github.com/testcontainers/testcontainers-go/modules/postgres v0.38.0
+	github.com/testcontainers/testcontainers-go/modules/postgres v0.39.0
 	github.com/twpayne/go-geos v0.20.1
 	github.com/twpayne/pgx-geos v1.0.0
 	golang.org/x/net v0.44.0
