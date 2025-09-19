@@ -30,7 +30,7 @@ require (
 	github.com/stillya/testcontainers-keycloak v0.3.3
 	github.com/stretchr/testify v1.11.1
 	github.com/swaggo/swag v1.16.6
-	github.com/testcontainers/testcontainers-go v0.38.0
+	github.com/testcontainers/testcontainers-go v0.39.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.38.0
 	github.com/twpayne/go-geos v0.20.1
 	github.com/twpayne/pgx-geos v1.0.0
@@ -42,7 +42,7 @@ require (
 	4d63.com/gocheckcompilerdirectives v1.2.1 // indirect
 	4d63.com/gochecknoglobals v0.2.2 // indirect
 	cel.dev/expr v0.19.1 // indirect
-	dario.cat/mergo v1.0.1 // indirect
+	dario.cat/mergo v1.0.2 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/4meepo/tagalign v1.4.1 // indirect
 	github.com/Abirdcfly/dupword v0.1.3 // indirect
@@ -284,7 +284,7 @@ require (
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/sethvargo/go-retry v0.3.0 // indirect
-	github.com/shirou/gopsutil/v4 v4.25.5 // indirect
+	github.com/shirou/gopsutil/v4 v4.25.6 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sivchari/containedctx v1.0.3 // indirect
