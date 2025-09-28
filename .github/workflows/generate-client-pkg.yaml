@@ -19,7 +19,7 @@ jobs:
         run: sudo apt update && sudo apt install -y make build-essential
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: ./go.mod
 
