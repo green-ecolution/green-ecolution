@@ -62,7 +62,7 @@ jobs:
 
       - name: Delete nightly containers older than a week
         if: ${{ false }}
-        uses: snok/container-retention-policy@v3.0.1
+        uses: snok/container-retention-policy@v3.0.0
         with:
           account: green-ecolution
           image-names: 'frontend* backend*'
