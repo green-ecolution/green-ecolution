@@ -53,7 +53,7 @@
       frontend = pkgs.stdenv.mkDerivation rec {
         inherit meta;
         pname = "frontend";
-        version = "1.3.0-nightly.20250928";
+        version = "1.3.0-nightly.20251003";
         src = pkgs.fetchFromGitHub {
           owner = "green-ecolution";
           repo = "frontend";
