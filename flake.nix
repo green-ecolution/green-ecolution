@@ -89,12 +89,12 @@
       backend = pkgs.buildGoModule rec {
         inherit meta;
         pname = "backend";
-        version = "1.3.0-nightly.20251008";
+        version = "1.3.0-nightly.20251008-unstable-2025-10-08";
         src = pkgs.fetchFromGitHub {
           owner = "green-ecolution";
           repo = "backend";
-          rev = "eadabbc8d9593c0508fc70ab0ad675b3e314ad60";
-          hash = "sha256-m/8njCii6NsBhg3E3mMaYw56k1Z5FbLq5hiFC2O4E2I=";
+          rev = "f494a8c2cc41a84806a9f545372e5fa087f44a5f";
+          hash = "sha256-YPWgqScGNhn6+76i4lu7D0Cy7mTJIo57/Kb5xDcZiBU=";
         };
         ldflags = [
           "-s"
@@ -112,7 +112,7 @@
 
         doCheck = false;
         excludedPackages = "pkg/*";
-        vendorHash = "sha256-oTvTd1q/f6tEaWbOpqgHmDkMo2UN53uBzZUhPNOeVA8=";
+        vendorHash = "sha256-FCVwxn9L64mvyR0ORBvMSipoyIjoLmHCrLmbiqZSkmA=";
         env.CGO_ENABLED = 1;
       };
 
