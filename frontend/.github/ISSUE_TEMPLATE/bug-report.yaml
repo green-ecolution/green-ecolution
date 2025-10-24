@@ -1,0 +1,65 @@
+name: Bug Report
+description: Report a bug to help us improve the project.
+labels: [bug]
+type: Bug
+projects:
+  - green-ecolution/5
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! :bug: Please provide a short summary of the bug,
+        along with any information you feel relevant to replicating the bug.
+
+  - type: textarea
+    attributes:
+      label: Describe the bug
+      description: What happened? What did you expect to happen instead?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Steps to Reproduce
+      description: Include steps, commands or code snippets to reproduce.
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Environment
+      description: e.g. OS, Node.js version, Docker, etc.
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: Add any other context, logs, screenshots, etc.
+
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: What browsers are you seeing the problem on?
+      multiple: true
+      options:
+        - Firefox
+        - Chrome
+        - Safari
+        - Microsoft Edge
+
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: What version of our software are you running?
+      options:
+        - 1.2.0
+        - 1.1.0
+        - 1.0.0
+      default: 0
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell

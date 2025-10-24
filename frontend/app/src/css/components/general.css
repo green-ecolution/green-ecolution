@@ -1,0 +1,21 @@
+:focus-visible {
+  @apply outline outline-2 outline-offset-4 outline-green-light-900;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+select[multiple] > option {
+  @apply px-3 py-1.5 rounded-md mb-1;
+}
+
+select[multiple] > option:checked {
+  @apply bg-green-dark-200;
+}

@@ -1,0 +1,93 @@
+name: 'Create PR on backend API change'
+
+on:
+  repository_dispatch:
+    types: [api-docs-update]
+
+jobs:
+  create_pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      actions: write
+      pull-requests: write
+    steps:
+      - name: Get Green Ecolution App Token
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Get Green Ecolution App User ID
+        id: get-user-id
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Setup yq
+        uses: dcarbone/install-yq-action@v1.3.1
+        with:
+          version: 'v4.42.1'
+          force: true
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Create branch
+        run: git checkout -b feature/update-backend-client-${{ github.event.client_payload.hash }}
+
+      - name: Initialize mandatory git config
+        run: |
+          git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
+
+      - name: Get api docs artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }} # TODO: Can do with app user?
+        run: |
+          gh run download -R green-ecolution/backend -n api-docs-${{ env.RELEASE_VERSION }}.json 
+          mv api-docs-${{ env.RELEASE_VERSION }}.json ./packages/backend-client/api-docs.json
+
+      - name: Update backend api package
+        working-directory: packages/backend-client
+        run: |
+          pnpm generate:ci
+
+      - name: Bump version in package.json
+        working-directory: packages/backend-client
+        run: |
+          VERSION=$(yq -r '.info.version' api-docs.json) yq -i '.version=env(VERSION)' package.json
+
+      - name: Commit changelog and manifest files
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git add packages/backend-client
+          git commit --message "chore: update backend client to commit ${{ github.event.client_payload.hash }} [skip ci]"
+          git push origin feature/update-backend-client-${{ github.event.client_payload.hash }}
+
+      - name: Create pull request
+        uses: thomaseizinger/create-pull-request@1.4.0
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        with:
+          head: feature/update-backend-client-${{ github.event.client_payload.hash }}
+          base: develop
+          title: Update Backend API Client
+          body: |
+            API Docs have been updated in the backend green-ecolution/backend@${{ github.event.client_payload.hash }}. Please review if the changes are compatible with the frontend.
+          labels: api-docs-update
+          draft: false

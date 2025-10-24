@@ -1,0 +1,28 @@
+name: Feature Request
+description: Suggest an idea to improve the project.
+labels: [enhancement]
+type: Feature
+projects:
+  - green-ecolution/5
+body:
+  - type: textarea
+    attributes:
+      label: Describe the feature
+      description: What problem would this feature solve or improve?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Proposed solution
+      description: Describe how you think this feature could work.
+
+  - type: textarea
+    attributes:
+      label: Alternatives considered
+      description: Have you considered any alternative solutions or workarounds?
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: Add any other relevant context or diagrams.

@@ -1,0 +1,28 @@
+/* Override default styles from splide slider package */
+.splide.splide--grid > .splide__track {
+  @apply lg:pb-7 !important;
+}
+
+.splide.splide--grid > .splide__track > .splide__list {
+  @apply lg:grid lg:grid-cols-2 lg:gap-x-6 lg:gap-y-8 xl:grid-cols-4 !important;
+}
+
+.splide.splide--grid-small > .splide__track > .splide__list {
+  @apply lg:grid lg:grid-cols-2 lg:gap-x-6 lg:gap-y-8 xl:grid-cols-3 !important;
+}
+
+.splide__pagination {
+  @apply bottom-0 lg:-bottom-4 !important;
+}
+
+.splide__pagination .splide__pagination__page {
+  @apply w-2.5 h-2.5 !important;
+}
+
+.splide__pagination .splide__pagination__page.is-active {
+  @apply bg-green-dark-900 scale-100 !important;
+}
+
+.splide__pagination__page:focus-visible {
+  @apply outline outline-2 outline-offset-2 outline-green-light-900 !important;
+}
