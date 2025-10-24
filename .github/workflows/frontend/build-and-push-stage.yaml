@@ -1,17 +1,17 @@
 name: Build and Push Docker Image Staging
-'on':
+"on":
   workflow_dispatch:
     inputs:
       version:
-        description: 'The release version'
+        description: "The release version"
         required: true
   push:
     paths:
-      - '.docker/**'
-      - 'app/**'
-      - 'packages/**'
-      - 'packages.json'
-      - 'pnpm-lock.yaml'
+      - ".docker/**"
+      - "app/**"
+      - "packages/**"
+      - "packages.json"
+      - "pnpm-lock.yaml"
     branches:
       - release/*
       - hotfix/*
@@ -20,6 +20,9 @@ name: Build and Push Docker Image Staging
 jobs:
   build_and_deploy_stage:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
     permissions:
       contents: write
       packages: write
@@ -80,7 +83,7 @@ jobs:
         run: |
           echo "REPO_LC=${REPO,,}" >>${GITHUB_ENV}
         env:
-          REPO: '${{ github.repository }}'
+          REPO: "${{ github.repository }}"
 
       - name: get build time
         run: |
@@ -106,5 +109,5 @@ jobs:
         with:
           token: ${{ secrets.GREEN_ECOLUTION_PAT }}
           repository: green-ecolution/green-ecolution
-          event-type: 'update-submodules-stage'
+          event-type: "update-submodules-stage"
           client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ env.COMMIT_SHA }}", "version": "${{ env.RELEASE_VERSION }}", "from": "frontend"}'

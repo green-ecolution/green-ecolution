@@ -1,4 +1,4 @@
-name: 'Build and test project on PR'
+name: "Build and test project on PR"
 
 on:
   pull_request:
@@ -8,6 +8,9 @@ on:
 
 jobs:
   build:
+    defaults:
+      run:
+        working-directory: ./frontend
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -18,8 +21,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
-          cache: 'pnpm'
+          node-version: "24"
+          cache: "pnpm"
 
       - name: Install Dependencies
         run: |
@@ -30,6 +33,9 @@ jobs:
           pnpm build
 
   lint:
+    defaults:
+      run:
+        working-directory: ./frontend
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -40,8 +46,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
-          cache: 'pnpm'
+          node-version: "24"
+          cache: "pnpm"
 
       - name: Install Dependencies
         run: |
@@ -53,6 +59,9 @@ jobs:
           pnpm lint
 
   test:
+    defaults:
+      run:
+        working-directory: ./frontend
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -63,8 +72,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
-          cache: 'pnpm'
+          node-version: "24"
+          cache: "pnpm"
 
       - name: Install Dependencies
         run: |

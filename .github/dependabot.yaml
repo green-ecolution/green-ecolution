@@ -1,10 +1,28 @@
 version: 2
 updates:
-  - package-ecosystem: 'github-actions'
-    directory: '/'
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
       interval: daily
     open-pull-requests-limit: 5
     labels:
-      - 'ci'
-      - 'github-actions'
+      - "dependencies"
+
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "frontend"
+
+  - package-ecosystem: "gomod"
+    directory: "/backend"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "backend"
+      - "go"

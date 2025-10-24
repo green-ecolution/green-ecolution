@@ -6,6 +6,9 @@ on:
 jobs:
   build_and_test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
     steps:
       - uses: actions/checkout@v5
 
@@ -25,6 +28,9 @@ jobs:
 
   check_generated_code:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
     steps:
       - uses: actions/checkout@v5
 
@@ -54,6 +60,9 @@ jobs:
 
   test_pkg_client:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
     steps:
       - uses: actions/checkout@v5
 
@@ -65,4 +74,3 @@ jobs:
       - name: Test
         working-directory: pkg/client
         run: go test ./...
-

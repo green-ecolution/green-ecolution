@@ -1,4 +1,4 @@
-# Based on: https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/automating-dependabot-with-github-actions#enable-auto-merge-on-a-pull-request 
+# Based on: https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/automating-dependabot-with-github-actions#enable-auto-merge-on-a-pull-request
 
 name: Dependabot auto-merge
 on:
@@ -34,4 +34,4 @@ jobs:
         run: gh pr merge --auto --rebase "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }} 
+          GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}

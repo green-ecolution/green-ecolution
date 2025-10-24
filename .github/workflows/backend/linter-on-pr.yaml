@@ -2,14 +2,14 @@ name: golangci-lint
 on:
   push:
     paths:
-      - 'internal/**'
-      - 'pkg/**'
-      - 'main.go'
-      - 'go.mod'
-      - 'go.sum'
-      - 'sqlc.yaml'
-      - '.mockery.yaml'
-      - '.golangci.yml'
+      - "internal/**"
+      - "pkg/**"
+      - "main.go"
+      - "go.mod"
+      - "go.sum"
+      - "sqlc.yaml"
+      - ".mockery.yaml"
+      - ".golangci.yml"
     branches:
       - develop
       - main
@@ -22,6 +22,9 @@ permissions:
 
 jobs:
   golangci:
+    defaults:
+      run:
+        working-directory: ./backend
     name: lint
     runs-on: ubuntu-latest
     steps:

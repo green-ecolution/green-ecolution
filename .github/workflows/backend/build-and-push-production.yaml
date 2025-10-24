@@ -8,8 +8,11 @@ on:
       - closed
 
 jobs:
-  build_and_deploy_prod:
+  merge_and_publish_prod:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
     if: github.event.pull_request.merged == true &&
       (startsWith(github.event.pull_request.head.ref, 'release/') || startsWith(github.event.pull_request.head.ref, 'hotfix/'))
     permissions:
@@ -17,6 +20,8 @@ jobs:
       packages: write
       actions: write
       pull-requests: write
+    outputs:
+      RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
     steps:
       - name: Extract version from branch name (for release branches)
         if: startsWith(github.event.pull_request.head.ref, 'release/')
@@ -58,7 +63,7 @@ jobs:
             This happens to ensure that the updates that happend on the release branch, i.e. CHANGELOG and manifest updates are also present on the develop branch.
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: true
 
@@ -76,7 +81,11 @@ jobs:
         run: |
           echo "REPO_LC=${REPO,,}" >>${GITHUB_ENV}
         env:
-          REPO: '${{ github.repository }}'
+          REPO: "${{ github.repository }}"
+
+      - name: Set commit sha
+        run: |
+          echo "COMMIT_SHA=$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_ENV
 
       - name: get build time
         run: |
@@ -87,20 +96,53 @@ jobs:
         with:
           context: .
           build-args: |
-            ENV="prod"
+            ENV=prod
             APP_VERSION=${{env.RELEASE_VERSION}}
             APP_GIT_COMMIT=${{env.COMMIT_SHA}}
             APP_GIT_BRANCH=main
             APP_BUILD_TIME=${{env.BUILD_TIME}}
             APP_GIT_REPOSITORY=${{github.repository}}
+          file: Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/${{ env.REPO_LC }}:${{ env.RELEASE_VERSION }}, ghcr.io/${{ env.REPO_LC }}:latest
+          tags: |
+            ghcr.io/${{ env.REPO_LC }}:${{ env.RELEASE_VERSION }}
+            ghcr.io/${{ env.REPO_LC }}:latest
 
       - name: Notify management repo to update submodules
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.GREEN_ECOLUTION_PAT }}
           repository: green-ecolution/green-ecolution
-          event-type: 'update-submodules-production'
-          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ env.COMMIT_SHA }}", "version": "${{ env.RELEASE_VERSION }}", "from": "frontend"}'
+          event-type: "update-submodules-production"
+          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ env.COMMIT_SHA }}", "version": "${{ env.RELEASE_VERSION }}", "from": "backend"}'
+
+  upload_api_docs_prod:
+    name: Upload API Docs Production
+    defaults:
+      run:
+        working-directory: ./backend
+    needs: merge_and_publish_prod
+    env:
+      RELEASE_VERSION: ${{ needs.merge_and_publish_prod.outputs.RELEASE_VERSION }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: ./go.mod
+
+      - name: Go generate
+        run: make generate
+
+      - name: Move swagger docs
+        run: mv ./docs/swagger.json ./docs/api-docs-${{ env.RELEASE_VERSION }}.json
+
+      - name: Upload API Docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-docs-${{ env.RELEASE_VERSION }}.json
+          path: ./docs/api-docs-${{ env.RELEASE_VERSION }}.json

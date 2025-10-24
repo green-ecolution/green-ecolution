@@ -3,13 +3,16 @@ name: "Test Postgres Migrations and Seed on PR"
 on:
   pull_request:
     paths:
-      - 'internal/storage/postgres/migrations/**'
+      - "internal/storage/postgres/migrations/**"
     branches:
       - develop
 
 jobs:
   test_migrations_and_seed:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
     services:
       postgres:
         image: postgis/postgis

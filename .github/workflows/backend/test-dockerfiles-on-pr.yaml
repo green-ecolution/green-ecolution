@@ -3,13 +3,16 @@ name: "Test Dockerfile on PR"
 on:
   pull_request:
     paths:
-      - 'Dockerfile'
+      - "Dockerfile"
     branches:
       - develop
 
 jobs:
   test_dockerfile:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
     strategy:
       matrix:
         env: [stage, prod]

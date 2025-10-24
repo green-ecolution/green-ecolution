@@ -7,15 +7,15 @@ name: Build and Push Docker Image Staging
         required: true
   push:
     paths:
-      - '.docker/**'
-      - 'internal/**'
-      - 'pkg/**'
-      - 'config/**'
-      - 'main.go'
-      - 'go.mod'
-      - 'go.sum'
-      - 'sqlc.yaml'
-      - '.mockery.yaml'
+      - ".docker/**"
+      - "internal/**"
+      - "pkg/**"
+      - "config/**"
+      - "main.go"
+      - "go.mod"
+      - "go.sum"
+      - "sqlc.yaml"
+      - ".mockery.yaml"
     branches:
       - release/*
       - hotfix/*
@@ -24,6 +24,9 @@ name: Build and Push Docker Image Staging
 jobs:
   build_and_deploy_stage:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
     permissions:
       contents: write
       packages: write
@@ -32,8 +35,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
         with:
-            fetch-depth: 0
-            fetch-tags: true
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Extract branch name
         shell: bash
@@ -118,6 +121,9 @@ jobs:
 
   check_api_docs:
     name: Check API Docs
+    defaults:
+      run:
+        working-directory: ./backend
     needs: build_and_deploy_stage
     env:
       COMMIT_SHA: ${{ needs.build_and_deploy_stage.outputs.COMMIT_SHA }}
