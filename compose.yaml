@@ -81,6 +81,7 @@ services:
     command:
       - --verbose
       - start-dev
+      - --import-realm
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_USER:-root}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_PASSWORD:-admin}
@@ -106,8 +107,7 @@ services:
       - "traefik.http.routers.keycloak.service=keycloak"
       - "traefik.http.services.keycloak.loadbalancer.server.port=3000"
     volumes:
-      - "./.docker/infra/keycloak/green-ecolution-realm.json:/opt/bitnami/keycloak/data/import/green-ecolution-realm.json"
-      - "./.docker/infra/keycloak/init-scripts:/docker-entrypoint-initdb.d"
+      - "./.docker/infra/keycloak/green-ecolution-realm.json:/opt/keycloak/data/import/green-ecolution-realm.json"
     networks:
       default:
         aliases:
