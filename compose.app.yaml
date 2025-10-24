@@ -1,14 +1,14 @@
 services:
   backend:
     build:
-      context: .
+      context: ./backend/
       args:
         - ENV=docker
         - APP_VERSION=${APP_VERSION}
         - APP_GIT_COMMIT=${APP_GIT_COMMIT}
         - APP_GIT_BRANCH=${APP_GIT_BRANCH}
         - APP_BUILD_TIME=${APP_BUILD_TIME}
-    depends_on: 
+    depends_on:
       db:
         condition: service_healthy
       storage:
