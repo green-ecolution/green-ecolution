@@ -1,15 +1,3 @@
-<p>
-  <a href="https://github.com/green-ecolution/backend/releases">
-    <img alt="GitHub Release" src="https://img.shields.io/github/v/release/green-ecolution/backend"/>
-  </a>
-  <a href="https://pkg.go.dev/github.com/green-ecolution/backend">
-    <img src="https://pkg.go.dev/badge/github.com/green-ecolution/backend.svg" alt="Go Reference">
-  </a>
-  <a href=""><img alt="Code coverage" src="https://raw.githubusercontent.com/green-ecolution/backend/badges/.badges/develop/coverage.svg"/></a>
-  <a href=""><img alt="License" src="https://img.shields.io/github/license/green-ecolution/backend.svg"/></a>
-  <a href=""><img alt="Maintained yes" src="https://img.shields.io/badge/Maintained%3F-yes-green.svg"/></a>
-</p>
-
 # Green Ecolution Backend 🌿
 
 <p align="center">
@@ -18,20 +6,22 @@
 
 Smart irrigation is essential to saving water, reducing staff workload, and cutting costs. This project provides the backend for **Green Ecolution** — a digital system to manage urban greenery efficiently.
 
-👉 For the frontend implementation, visit the [Green Ecolution Frontend](https://github.com/green-ecolution/frontend).
+👉 For the frontend implementation, see the [frontend folder](../frontend).
 
-The backend acts as the interface between the website and the database, managing data about:
+## Overview 🧠
 
-- 🌳 Trees
-- 🌿 Tree clusters
-- 📡 Sensors
-- 🗺️ Watering plans
-- 🚛 Vehicles
-- 👤 Users
+The backend provides APIs and services for:
 
-In the current setup, sensors are connected to a microcontroller with an LoRaWAN modules. Sensor data is transmitted via LoRaWAN to an MQTT gateway, then forwarded to the server for processing.
+- 🌳 Tree and vegetation management  
+- 🌿 Tree clusters and spatial grouping  
+- 📡 Sensor data ingestion (via MQTT / LoRaWAN)  
+- 🗺️ Watering route optimization and scheduling  
+- 🚛 Vehicle tracking  
+- 👤 User and authentication management
 
-Developed in collaboration with **TBZ Flensburg**, this software is designed to be adaptable for other cities. It originated as a research project within the **Applied Computer Science Master's program** at the **University of Applied Sciences Flensburg**.
+Sensors are connected to LoRaWAN-based microcontrollers. Sensor data is transmitted via MQTT gateways and processed by the backend for analysis and route calculation.
+
+Developed in collaboration with **TBZ Flensburg**, this system was originally created as part of the **Applied Computer Science Master's program** at the **University of Applied Sciences Flensburg**, and is designed to be easily adaptable for other municipalities and organizations.
 
 For further information, visit:
 
@@ -39,40 +29,45 @@ For further information, visit:
 - 🖥️ [Live demo](https://demo.green-ecolution.de)
 - 🎓 [University of Applied Sciences Flensburg](https://hs-flensburg.de/en)
 
-## Quick Start Guide 🚀
+## Quick Start 🚀
 
-To quickly run the application locally:
+### 1. Build and run the backend (with Docker Compose)
 
-1. Clone this repository
-2. Copy the `env.example` to `.env`
-3. Build and launch the application containers
+The easiest way to start the full stack (backend + infrastructure) locally is via **Make**:
 
 ```bash
 make run/docker
 ```
 
-make will download a `pbf` file of the open street map geographical tileset from Germany Schleswig-Holstein and place it in a directory where `vahalla` can access it via docker. If you don't want to download this part or want to load a different location into valhalla, you can download it yourself and place the file in `.docker/infra/valhalla/custom_files/<file-osm.pbf>`. After that you can start the docker services with the backend using this command:
+This command:
+
+- Downloads the Schleswig-Holstein OpenStreetMap tileset (for Valhalla routing)
+- Builds the backend and frontend
+- Starts all services (Postgres, Keycloak, MinIO, Valhalla, Vroom, Traefik, etc.)
+
+If you want to manually manage containers:
 
 ```bash
 docker compose -f compose.yaml -f compose.app.yaml up -d --build
 ```
 
-By default, all services such as auth, routing and s3 are enabled and running with docker, except mqtt. This service is currently disabled by default and must be configured manually.
+By default, all core services (auth, routing, S3, database) are enabled.
+MQTT is disabled by default and can be configured manually if needed.
 
 👉 Once the service is up and running, the backend is available at: [http://localhost:3000](http://localhost:3000)
 
-The other services can be accessed via the following URLs:
+**Service Endpoints**
 
-| Service       | URL                              |
-| ------------- | -------------------------------- |
-| Minio         | `http://minio.localhost:3000`    |
-| S3            | `http://s3.localhost:3000`       |
-| Keycloak      | `http://auth.localhost:3000`     |
-| Valhalla      | `http://valhalla.localhost:3000` |
-| Vroom         | `http://vroom.localhost:3000`    |
-| pgadmin       | `http://pgadmin.localhost:3000`  |
-| reverse-proxy | `http://traefik.localhost:3000`  |
-| backend       | `http://localhost:3000`          |
+| Service         | URL                                                              |
+| --------------- | ---------------------------------------------------------------- |
+| Backend API     | [http://localhost:3000](http://localhost:3000)                   |
+| Traefik (proxy) | [http://traefik.localhost:3000](http://traefik.localhost:3000)   |
+| Keycloak        | [http://auth.localhost:3000](http://auth.localhost:3000)         |
+| MinIO Console   | [http://minio.localhost:3000](http://minio.localhost:3000)       |
+| S3 API          | [http://s3.localhost:3000](http://s3.localhost:3000)             |
+| pgAdmin         | [http://pgadmin.localhost:3000](http://pgadmin.localhost:3000)   |
+| Valhalla        | [http://valhalla.localhost:3000](http://valhalla.localhost:3000) |
+| Vroom           | [http://vroom.localhost:3000](http://vroom.localhost:3000)       |
 
 ## Technologies Used ⚙️
 
@@ -82,10 +77,6 @@ The other services can be accessed via the following URLs:
 - [Fiber](https://docs.gofiber.io/) as the web framework
 - [Testify](https://github.com/stretchr/testify) for unit testing
 
-## Local Development Setup 💻
-
-For a detailed step-by-step guide on setting up your local development environment, refer to the [Local Development Wiki](https://github.com/green-ecolution/backend/wiki/Local-Development) 📖.
-
 ### Prerequisites
 
 - [Golang](https://go.dev/)
@@ -94,6 +85,7 @@ For a detailed step-by-step guide on setting up your local development environme
 - [Make](https://www.gnu.org/software/make/)
 - [Docker](https://github.com/docker)
 - [Docker Compose](https://github.com/docker/compose)
+- Optional: [Nix](https://nixos.org/) (for fully reproducible environments)
 
 ### Initial Setup ⚙️
 
@@ -109,10 +101,7 @@ Generate code:
 make generate
 ```
 
-Start the infrastructure services using Docker Compose. This setup includes:
-
-- a local PostgreSQL database,
-- routing services such as Valhalla, ORS and VROOM for route and vehicle scheduling calculations
+Start the local infrastructure (Postgres, Valhalla, Keycloak, etc.):
 
 ```bash
 make infra/up
@@ -134,7 +123,57 @@ make run
 
 👉 Once the service is up and running, you can access it at: [http://localhost:3000](http://localhost:3000)
 
-### How to Contribute 🤝
+### Testing 🧪
+
+```bash
+make test
+```
+
+Verbose mode:
+
+```bash
+make test/verbose
+```
+
+### Code Quality 🧹
+
+Format and tidy Go modules:
+
+```bash
+make tidy
+```
+
+```bash
+make lint
+```
+
+### Database Migrations 🧱
+
+Create a new migration:
+
+```bash
+make migrate/new name=create_users_table
+```
+
+Apply migrations:
+
+```bash
+make migrate/up
+```
+
+Rollback:
+
+```bash
+make migrate/down
+```
+
+Seed example data:
+
+```bash
+make seed/up
+```
+
+## How to Contribute 🤝
 
 We welcome contributions! Please follow these guidelines:
 

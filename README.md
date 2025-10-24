@@ -1,76 +1,205 @@
+<p>
+  <a href="https://github.com/green-ecolution/green-ecolution/releases">
+    <img alt="GitHub Release" src="https://img.shields.io/github/v/release/green-ecolution/green-ecolution"/>
+  </a>
+  <a href=""><img alt="License" src="https://img.shields.io/github/license/green-ecolution/green-ecolution.svg"/></a>
+  <a href=""><img alt="Maintained yes" src="https://img.shields.io/badge/Maintained%3F-yes-green.svg"/></a>
+  <a href=""><img alt="Code coverage" src="https://raw.githubusercontent.com/green-ecolution/backend/badges/.badges/develop/coverage.svg"/></a>
+  <a href="https://pkg.go.dev/github.com/green-ecolution/backend">
+    <img src="https://pkg.go.dev/badge/github.com/green-ecolution/backend.svg" alt="Go Reference">
+  </a>
+</p>
+
 # Green Ecolution 🌿
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/4ea25141-135a-493c-b9f6-e1cbc7a7aa41"/>
 </p>
 
-## Project Overview 🚀
+**Green Ecolution** is a smart irrigation and green-space management platform that uses IoT sensor data to optimize water usage, automate maintenance, and reduce operational costs.
 
-Green Ecolution is a smart urban irrigation system that uses IoT sensor data to efficiently manage green spaces like parks and urban trees.
-This repository serves as the central management point for the Green Ecolution ecosystem:
-
-- Holds the backend and frontend as Git submodules
-- Provides Kubernetes configurations and deployment files
-- Supports local development setups
-
-If you're looking to dive into the backend or frontend development specifically, refer to the respective submodules for detailed instructions.
-
-## Local Deployment ⚙️
-
-To set up a local development environment:
-
-1. Clone the repository along with its submodules:
-
-```bash
-git clone git@github.com:green-ecolution/green-ecolution.git
-git submodule update --init --recursive
-```
-
-2. Update submodules as needed when changes are pushed:
-
-```bash
-git submodule update --remote --merge
-```
-
-## Repository Structure 📂
+## Repository Structure 📁
 
 ```
 .
-├── backend/            # Backend service (as submodule)
-├── frontend/           # Frontend application (as submodule)
-└── deploy/kustomize/   # Kubernetes deployment configurations
+├── backend/ # Go backend (API, Auth, Routing, Storage, MQTT)
+├── frontend/ # Web frontend (Vite + pnpm)
+├── deploy/kustomize/ # Kubernetes deployment manifests
+├── compose.yaml # Local dev infrastructure (Postgres, S3, Keycloak, etc.)
+├── compose.app.yaml # Application container definitions
+├── flake.nix # Nix Flake for builds, DevShell, and Dev VM
+└── Makefile # Unified build, test, and infra automation
 ```
 
-## Nix & Flakes 🧊
+## Getting Started ⚡
 
-If you want a fully reproducible development setup or prefer to avoid installing tools globally, you can use [Nix](https://nixos.org/) with Flakes.
+### Option A: Using **Make** (local toolchain)
 
-### What does it provide?
+**Requirements**
 
-- Reproducible build environments for backend and frontend
-- Automatic shell environments (with [direnv](https://direnv.net/))
-- Consistent dependency pinning via Go modules and pnpm lockfiles
+- Go (with CGO enabled)
+- Node.js and **pnpm** (use `corepack enable`)
+- Docker + Docker Compose
 
-### Build
-
-To build everything in one reproducible step:
+**Setup**
 
 ```bash
-# Build only the backend
-nix build github:green-ecolution/green-ecolution#backend
-
-# Build only the frontend
-nix build github:green-ecolution/green-ecolution#frontend
-
-# Build a single backend binary that includes the compiled frontend assets
-nix build github:green-ecolution/green-ecolution
+# Install dependencies for backend and frontend
+make setup
 ```
 
-💡 Tip: Using Nix ensures fully reproducible builds across all supported systems.
+**Build**
 
-## Useful Links 🔗
+```bash
+# Build both frontend and backend (frontend assets are embedded)
+make build
+```
 
-- 🌐 [Green Ecolution Website](https://green-ecolution.de)
+**Run the backend**
+
+```bash
+make run
+```
+
+**Run backend with live reload**
+
+```bash
+make run/live
+```
+
+**Run with Docker Compose**
+
+```bash
+# Run full local stack (infra + app)
+make run/docker
+
+# Or just bring up the infrastructure
+make infra/up
+```
+
+**Common tasks**
+
+```bash
+make generate            # Run code generation (sqlc, go:generate)
+make migrate/up          # Run DB migrations
+make migrate/new name=...# Create a new migration
+make lint                # Lint Go and frontend code
+make test                # Run tests
+make clean               # Remove build artifacts
+```
+
+### Option B: Using Nix & Flakes 🧊
+
+Use Nix for a reproducible and dependency-free dev environment.
+
+**Enter development shell**
+
+```bash
+nix develop
+```
+
+**Build artifacts**
+
+```bash
+# Build backend only
+nix build .#backend
+
+# Build frontend only
+nix build .#frontend
+
+# Build backend binary with embedded frontend
+nix build .
+```
+
+**Run the development VM (includes backend + services)**
+
+```bash
+# Launch with QEMU GUI
+nix run .#dev-vm
+
+# Headless (no graphical window)
+nix run .#dev-vm -- -nographic
+```
+
+### Available services (via Traefik reverse proxy)
+
+| Service           | URL                                                              |
+| ----------------- | ---------------------------------------------------------------- |
+| Backend API       | [http://localhost:3000](http://localhost:3000)                   |
+| Traefik Dashboard | [http://traefik.localhost:3000](http://traefik.localhost:3000)   |
+| Keycloak          | [http://auth.localhost:3000](http://auth.localhost:3000)         |
+| MinIO Console     | [http://minio.localhost:3000](http://minio.localhost:3000)       |
+| pgAdmin           | [http://pgadmin.localhost:3000](http://pgadmin.localhost:3000)   |
+| Vroom             | [http://vroom.localhost:3000](http://vroom.localhost:3000)       |
+| Valhalla          | [http://valhalla.localhost:3000](http://valhalla.localhost:3000) |
+
+## Configuration ⚙️
+
+All configuration is managed via environment variables — see `compose.app.yaml` and the NixOS module for examples.
+
+### Common Variables
+
+| Category                   | Example                                                                                                                                   |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Database**               | `GE_SERVER_DATABASE_HOST`, `GE_SERVER_DATABASE_PORT`, `GE_SERVER_DATABASE_NAME`, `GE_SERVER_DATABASE_USER`, `GE_SERVER_DATABASE_PASSWORD` |
+| **Auth (OIDC / Keycloak)** | `GE_AUTH_ENABLE`, `GE_AUTH_OIDC_PROVIDER_BASE_URL`, `GE_AUTH_OIDC_PROVIDER_TOKEN_URL`, etc.                                               |
+| **Storage (S3 / MinIO)**   | `GE_S3_ENABLE`, `GE_S3_ENDPOINT`, `GE_S3_REGION`, `GE_S3_USE_SSL`, `GE_S3_ROUTE-GPX_BUCKET`                                               |
+| **Routing**                | `GE_ROUTING_ENABLE`, `GE_ROUTING_VALHALLA_HOST`, `GE_ROUTING_VALHALLA_OPTIMIZATION_VROOM_HOST`                                            |
+
+The `compose.yaml` and Nix setup include defaults for local development.
+
+## Development 🧑‍💻
+
+**Backend (Go)**
+
+```bash
+make tidy      # Format and tidy Go modules
+make lint      # Lint Go code
+make test      # Run tests
+```
+
+**Frontend (pnpm)**
+
+```bash
+make fe/dev        # Start dev server
+make build/frontend
+make fe/preview    # Preview after build
+```
+
+**Database**
+
+```bash
+make migrate/new name=create_users_table
+make migrate/up
+make seed/up
+```
+
+## Deployment 🚀
+
+- Docker Compose: for local and testing deployments (`compose.yaml`, `compose.app.yaml`)
+- Kubernetes: deployment manifests in `deploy/kustomize/`
+- Nix Flakes: can produce reproducible builds and dev/test VMs
+
+### How to Contribute 🤝
+
+We welcome contributions! Please follow these guidelines:
+
+1. Fork this repository.
+1. Create a topic branch off develop.
+1. Commit your changes.
+1. Push your branch to your fork.
+1. Open a Pull Request.
+
+This project follows:
+
+- [Git-Flow Workflow](https://danielkummer.github.io/git-flow-cheatsheet/) for branching and releases.
+- [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for commit messages.
+
+Thank you for helping us improve Green Ecolution! 🌿
+
+## Links 🔗
+
+- 🌐 [Official Website](https://green-ecolution.de)
 - 🖥️ [Live Demo](https://demo.green-ecolution.de)
-- 📚 [Backend Repository](https://github.com/green-ecolution/backend)
-- 📚 [Frontend Repository](https://github.com/green-ecolution/frontend)
+- 🧑‍💻 [GitHub Repository](https://github.com/green-ecolution)
+- 📘 [Documentation](https://github.com/green-ecolution/frontend)
