@@ -31,7 +31,7 @@ type InfoRepository struct {
 }
 
 func init() {
-	if buildTime == "" || buildTime == "unknown" {
+	if buildTime == "" || buildTime == "unknown" || buildTime == "now" {
 		buildTime = time.Now().Format("2006-01-02T15:04:05Z")
 	}
 }

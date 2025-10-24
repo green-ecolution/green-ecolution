@@ -163,7 +163,7 @@ run/docker:
 	APP_VERSION="$(APP_VERSION)" \
 	APP_GIT_COMMIT="$(APP_GIT_COMMIT)" \
 	APP_GIT_BRANCH="$(APP_GIT_BRANCH)" \
-	APP_BUILD_TIME="$(APP_BUILD_TIME)" \
+	APP_BUILD_TIME="now" \
 	docker compose -f compose.yaml -f compose.app.yaml up -d --build
 
 .PHONY: infra/up
