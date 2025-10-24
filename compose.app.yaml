@@ -63,6 +63,35 @@ services:
       - "traefik.http.routers.backend.rule=Host(`localhost`)"
       - "traefik.http.routers.backend.entrypoints=web"
 
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - ENV=dev
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "--silent",
+          "--fail-with-body",
+          "--max-time",
+          "5",
+          "http://localhost:8080/status",
+        ]
+      interval: 2s
+      timeout: 10s
+      retries: 5
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`localhost`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+
   migrations:
     build:
       context: .
