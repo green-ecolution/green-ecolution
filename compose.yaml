@@ -1,42 +1,104 @@
 services:
   storage:
-    image: bitnami/minio:2025.4.22
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    entrypoint: [/bin/bash]
+    command:
+      - "-c"
+      - |
+        function fatal() {
+          echo "[ERROR]" "$$@"
+          exit 1
+        }
+
+        [[ -z "$$MINIO_ROOT_USER" || -z "$$MINIO_ROOT_PASSWORD" ]] && fatal "variable MINIO_ROOT_USER or MINIO_ROOT_PASSWORD not set"
+
+        if [[ -n "$$MINIO_DEFAULT_BUCKETS" ]]; then
+          minio server /data --address "127.0.0.1:9000" &
+          pid=$$!
+
+          trap "kill $$pid" SIGINT SIGTERM ERR
+
+          until curl -sf --max-time 5 http://localhost:9000/minio/health/live; do
+            sleep 1
+          done
+
+          mc alias set local "http://localhost:9000" "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"
+
+          IFS="," read -a buckets <<< "$$MINIO_DEFAULT_BUCKETS"
+
+          for bucket in "$${buckets[@]}"; do
+            bucket=$${bucket#* }
+            echo "BUCKET: $$bucket"
+            if mc stat local/$$bucket >/dev/null 2>&1; then
+              echo "Bucket already exists"
+            else
+              mc mb local/$$bucket
+              mc anonymous set download local/$$bucket
+            fi
+          done
+
+          kill $$pid
+        fi
+
+        exec minio server /data --address ":3000" --console-address ":9001"
     environment:
       - MINIO_BROWSER=on
-      - MINIO_ROOT_USER=${S3_ACCESS_KEY}
-      - MINIO_ROOT_PASSWORD=${S3_SECRET_KEY}
-      - MINIO_SERVER_ACCESS_KEY=${S3_ACCESS_KEY}
-      - MINIO_SERVER_SECRET_KEY=${S3_SECRET_KEY}
-      - MINIO_DEFAULT_BUCKETS=${S3_ROUTE_BUCKET}
+      - MINIO_ROOT_USER=${S3_ACCESS_KEY:-s3}
+      - MINIO_ROOT_PASSWORD=${S3_SECRET_KEY:-secret}
+      - MINIO_DEFAULT_BUCKETS=${S3_BUCKET:-gpx-routes}
     healthcheck:
-      test: ["CMD", "curl", "--silent", "--fail-with-body", "--max-time", "5", "http://localhost:9000/minio/health/live"]
+      test:
+        [
+          "CMD",
+          "curl",
+          "-sf",
+          "--max-time",
+          "5",
+          "http://localhost:3000/minio/health/live",
+        ]
       interval: 2s
       timeout: 10s
       retries: 5
+    networks:
+      default:
+        aliases:
+          - s3.localhost
     volumes:
-      - minio_store:/bitnami/minio/data
+      - minio_store:/data
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.minio.rule=Host(`minio.localhost`)"
       - "traefik.http.routers.minio.entrypoints=web"
       - "traefik.http.routers.minio.service=minio"
       - "traefik.http.services.minio.loadbalancer.server.port=9001"
-      - "traefik.http.routers.s3.rule=Host(`s3.localhost`)"
+      - "traefik.http.routers.s3.rule=Host(`s3.localhost`) || ( Host(`localhost`) && PathPrefix(`/${S3_BUCKET:-gpx-routes}`) )"
       - "traefik.http.routers.s3.entrypoints=web"
       - "traefik.http.routers.s3.service=s3"
-      - "traefik.http.services.s3.loadbalancer.server.port=9000"
+      - "traefik.http.services.s3.loadbalancer.server.port=3000"
 
   keycloak:
-    image: bitnami/keycloak:26.3.3
+    image: quay.io/keycloak/keycloak:26.2
+    command:
+      - --verbose
+      - start-dev
     environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: $KC_USER
-      KC_BOOTSTRAP_ADMIN_PASSWORD: $KC_PASSWORD
-      KEYCLOAK_DATABASE_HOST: db
-      KEYCLOAK_DATABASE_USER: ${POSTGRES_USER}
-      KEYCLOAK_DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
-      KEYCLOAK_DATABASE_NAME: bitnami_keycloak
-      KEYCLOAK_ENABLE_HEALTH_ENDPOINTS: true
-      KEYCLOAK_HTTP_PORT: "3000"
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_USER:-root}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_PASSWORD:-admin}
+      KC_DB: postgres
+      KC_DB_USERNAME: ${POSTGRES_USER:-postgres}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      KC_DB_URL: jdbc:postgresql://db:5432/keycloak
+      KC_HOSTNAME_STRICT: false
+      KC_FEATURES: persistent-user-sessions
+      KC_HTTP_ENABLED: true
+      KC_HTTP_MANAGEMENT_PORT: 9000
+      KC_HTTP_PORT: 3000
+      KC_LOG_LEVEL: INFO
+      KC_HEALTH_ENABLED: true
+      KC_METRICS_ENABLED: true
+      KC_PROXY_HEADERS: xforwarded
+      KC_TRANSACTION_JTA_ENABLED: false
+      KC_TRANSACTION_XA_ENABLED: false
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.keycloak.rule=Host(`auth.localhost`)"
@@ -44,14 +106,29 @@ services:
       - "traefik.http.routers.keycloak.service=keycloak"
       - "traefik.http.services.keycloak.loadbalancer.server.port=3000"
     volumes:
-      - './.docker/infra/keycloak/green-ecolution-realm.json:/opt/bitnami/keycloak/data/import/green-ecolution-realm.json'
-      - './.docker/infra/keycloak/init-scripts:/docker-entrypoint-initdb.d'
+      - "./.docker/infra/keycloak/green-ecolution-realm.json:/opt/bitnami/keycloak/data/import/green-ecolution-realm.json"
+      - "./.docker/infra/keycloak/init-scripts:/docker-entrypoint-initdb.d"
     networks:
       default:
         aliases:
           - auth.localhost
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/health/ready"]
+      test:
+        - "CMD"
+        - "/bin/bash"
+        - "-c"
+        - |
+          exec 3<>/dev/tcp/localhost/9000;
+          echo -e "GET /health/ready HTTP/1.1\r\nhost: localhost\r\nConnection: close\r\n\r\n" >&3;
+          while IFS= read -r line; do
+              if [[ "$$line" =~ "200 OK" ]]; then
+                  echo "HTTP 200 OK response received from localhost";
+                  exit 0;
+              fi
+          done <&3;
+
+          echo "No HTTP 200 OK response received from localhost";
+          exit 1;
       interval: 5s
       timeout: 5s
       retries: 10
@@ -60,11 +137,12 @@ services:
         condition: service_completed_successfully
 
   keycloak-init-db:
-    image: bitnami/postgresql:17
+    image: postgres:18
+    user: "1001:1001"
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: bitnami_keycloak
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: keycloak
     entrypoint: /bin/sh
     command: >
       -c "
@@ -79,9 +157,9 @@ services:
   db:
     image: postgis/postgis:17-3.5-alpine
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-postgres}
     healthcheck:
       test: pg_isready -U $$POSTGRES_USER -h localhost
       interval: 5s
@@ -106,8 +184,8 @@ services:
               "Name": "Green Ecolution",
               "Group": "Servers",
               "Port": 5432,
-              "Username": "${POSTGRES_USER}",
-              "PasswordExecCommand": "echo '${POSTGRES_PASSWORD}'",
+              "Username": "${POSTGRES_USER:-postgres}",
+              "PasswordExecCommand": "echo '${POSTGRES_PASSWORD:-postgres}'",
               "Host": "db",
               "SSLMode": "prefer",
               "MaintenanceDB": "postgres"
@@ -161,7 +239,16 @@ services:
     environment:
       VROOM_ROUTER: valhalla
     healthcheck:
-      test: ["CMD", "curl", "--silent", "--fail-with-body", "--max-time", "5", "http://localhost:3000/health"]
+      test:
+        [
+          "CMD",
+          "curl",
+          "--silent",
+          "--fail-with-body",
+          "--max-time",
+          "5",
+          "http://localhost:3000/health",
+        ]
       interval: 2s
       timeout: 10s
       retries: 5
@@ -185,7 +272,16 @@ services:
     environment:
       server_threads: 20
     healthcheck:
-      test: ["CMD", "curl", "--silent", "--fail-with-body", "--max-time", "5", "http://localhost:8002/status"]
+      test:
+        [
+          "CMD",
+          "curl",
+          "--silent",
+          "--fail-with-body",
+          "--max-time",
+          "5",
+          "http://localhost:8002/status",
+        ]
       interval: 5s
       timeout: 5s
       retries: 10

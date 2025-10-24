@@ -4,10 +4,10 @@ services:
       context: ./backend/
       args:
         - ENV=docker
-        - APP_VERSION=${APP_VERSION}
-        - APP_GIT_COMMIT=${APP_GIT_COMMIT}
-        - APP_GIT_BRANCH=${APP_GIT_BRANCH}
-        - APP_BUILD_TIME=${APP_BUILD_TIME}
+        - APP_VERSION=${APP_VERSION:-$(git describe --tags --always --dirty)}
+        - APP_GIT_COMMIT=${APP_GIT_COMMIT:-$(git rev-parse --short HEAD)}
+        - APP_GIT_BRANCH=${APP_GIT_BRANCH:-$(git rev-parse --abbrev-ref HEAD)}
+        - APP_BUILD_TIME=${APP_BUILD_TIME:-$(date +'%Y%m%d')}
     depends_on:
       db:
         condition: service_healthy
@@ -27,9 +27,9 @@ services:
       - GE_SERVER_DATABASE_HOST=db
       - GE_SERVER_DATABASE_PORT=5432
       - GE_SERVER_DATABASE_TIMEOUT=30s
-      - GE_SERVER_DATABASE_NAME=${POSTGRES_DB}
-      - GE_SERVER_DATABASE_USER=${POSTGRES_USER}
-      - GE_SERVER_DATABASE_PASSWORD=${POSTGRES_PASSWORD}
+      - GE_SERVER_DATABASE_NAME=${POSTGRES_DB:-green-ecolution}
+      - GE_SERVER_DATABASE_USER=${POSTGRES_USER:-postgres}
+      - GE_SERVER_DATABASE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
 
       - GE_AUTH_ENABLE=true
       - GE_AUTH_OIDC_PROVIDER_BASE_URL=http://auth.localhost:3000
@@ -53,9 +53,9 @@ services:
       - GE_S3_ENDPOINT=storage:9000
       - GE_S3_REGION=us-east-1
       - GE_S3_USE_SSL=false
-      - GE_S3_ROUTE-GPX_BUCKET=${S3_ROUTE_BUCKET}
-      - GE_S3_ROUTE-GPX_ACCESSKEY=${S3_ACCESS_KEY}
-      - GE_S3_ROUTE-GPX_SECRETACCESSKEY=${S3_SECRET_KEY}
+      - GE_S3_ROUTE-GPX_BUCKET=${S3_ROUTE_BUCKET:-gpx-routes}
+      - GE_S3_ROUTE-GPX_ACCESSKEY=${S3_ACCESS_KEY:-s3}
+      - GE_S3_ROUTE-GPX_SECRETACCESSKEY=${S3_SECRET_KEY:-secret}
 
       - GE_MQTT_ENABLE=false
     labels:
@@ -66,7 +66,7 @@ services:
   migrations:
     build:
       context: .
-      dockerfile: ./.docker/Dockerfile.migration
+      dockerfile: ./.docker/migrations/Dockerfile.postgres
     depends_on:
       db:
         condition: service_healthy
@@ -75,6 +75,6 @@ services:
       MIGRATION_WITH_DB_RESET: true
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-green-ecolution}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
