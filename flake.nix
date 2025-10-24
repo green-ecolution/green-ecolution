@@ -1,5 +1,5 @@
 {
-  description = "Development enviroment for go";
+  description = "development enviroment for green-ecolution";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
@@ -7,25 +7,44 @@
     pre-commit-hooks.url = "github:cachix/git-hooks.nix";
   };
 
-  outputs = inputs: let
+  outputs = {
+    self,
+    nixpkgs,
+    ...
+  } @ inputs: let
     goVersion = 24;
     nodeVersion = 24;
-    supportedSystems = ["x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin"];
+
+    supportedSystems = [
+      "x86_64-linux"
+      "aarch64-linux"
+      "x86_64-darwin"
+      "aarch64-darwin"
+    ];
+
     forEachSupportedSystem = f:
-      inputs.nixpkgs.lib.genAttrs supportedSystems (system:
+      nixpkgs.lib.genAttrs supportedSystems (system:
         f {
-          pkgs = import inputs.nixpkgs {
+          pkgs = import nixpkgs {
             inherit system;
-            overlays = [inputs.self.overlays.default];
+            overlays = [self.overlays.default];
           };
         });
   in {
+    ########################################
+    # Overlays (fixe Go/Node Versionen)
+    ########################################
     overlays.default = final: prev: {
       go = final."go_1_${toString goVersion}";
       nodejs = final."nodejs_${toString nodeVersion}";
     };
 
+    ########################################
+    # Packages (Frontend/Backend/Default)
+    ########################################
     packages = forEachSupportedSystem ({pkgs}: let
+      lib = pkgs.lib;
+
       meta = {
         description = "Green Ecolution – Smart irrigation system to optimize water use, reduce operational workload, and lower costs.";
         longDescription = ''
@@ -49,27 +68,36 @@
         mainProgram = "green-ecolution";
         platforms = pkgs.lib.platforms.linux ++ pkgs.lib.platforms.darwin;
       };
+
+      # Git-/Zeit-Metadaten aus der Flake-Quelle (Eval-Zeit, reproduzierbar)
+      si = self.sourceInfo or {};
+      gitCommit = si.rev or "local";
+      gitBranch = si.ref or "local";
+      gitRepo = si.url or "local";
+
+      # Builddatum YYMMDD aus YYYYMMDDhhmmss
+      buildDate = let
+        d = si.lastModifiedDate or si.lastModified or null;
+      in
+        if d == null
+        then "000000"
+        else builtins.substring 2 6 d;
     in rec {
       frontend = pkgs.stdenv.mkDerivation rec {
         inherit meta;
         pname = "frontend";
         version = "1.3.0-nightly.20251024";
-        src = pkgs.fetchFromGitHub {
-          owner = "green-ecolution";
-          repo = "frontend";
-          rev = "965eb919deb05aa89bbb4676fcdaedd103832295";
-          hash = "sha256-sO78KtCnfJxonFQV2gpPV7GmNrJpeDilqbv8+RMuUgE=";
-        };
+        src = lib.cleanSource ./frontend;
 
-        nativeBuildInputs = with pkgs; [
-          nodejs
-          pnpm.configHook
-        ];
+        nativeBuildInputs = with pkgs; [nodejs pnpm.configHook];
 
         VITE_BACKEND_BASEURL = "/api";
+
         pnpmDeps = pkgs.pnpm.fetchDeps {
           inherit pname version src;
-          hash = "sha256-uJmF5lhlryDuu5Me0Y4UUuxfWv6+2aymHmPT6YHf3bE=";
+          fetcherVersion = 2;
+          # <- Wenn das mal driftet: einmal `nix build .#frontend` laufen lassen
+          hash = "sha256-9r9W+cbwZ5HZPgcuYfHjsNDJBldUyEE6jCmWgC+jt1Y=";
         };
 
         buildPhase = ''
@@ -88,23 +116,22 @@
 
       backend = pkgs.buildGoModule rec {
         inherit meta;
-        pname = "backend";
+        pname = "green-ecolution"; # -> Binärname in $out/bin/green-ecolution (per postInstall, siehe unten)
         version = "1.3.0-nightly.20251024";
-        src = pkgs.fetchFromGitHub {
-          owner = "green-ecolution";
-          repo = "backend";
-          rev = "7716cb35a2f08ced22fe2199a4791348be70fea9";
-          hash = "sha256-HRC5ozYzdu6fZMQJcfedcdx/QWri5oN9fbOFUTbNNYY=";
-        };
+        src = lib.cleanSource ./backend;
+
+        # dein Main liegt im Root von ./backend
+        subPackages = ["."];
+
         ldflags = [
           "-s"
           "-w"
           "-X main.version=${version}"
           "-X github.com/green-ecolution/backend/internal/storage/local/info.version=${version}"
-          "-X github.com/green-ecolution/backend/internal/storage/local/info.gitCommit=${src.rev}"
-          "-X github.com/green-ecolution/backend/internal/storage/local/info.gitBranch=${src.rev}"
-          "-X github.com/green-ecolution/backend/internal/storage/local/info.gitRepository=${src.url}"
-          "-X github.com/green-ecolution/backend/internal/storage/local/info.buildTime=${"unkown"}"
+          "-X github.com/green-ecolution/backend/internal/storage/local/info.gitCommit=${gitCommit}"
+          "-X github.com/green-ecolution/backend/internal/storage/local/info.gitBranch=${gitBranch}"
+          "-X github.com/green-ecolution/backend/internal/storage/local/info.gitRepository=${gitRepo}"
+          "-X github.com/green-ecolution/backend/internal/storage/local/info.buildTime=${buildDate}"
         ];
 
         nativeBuildInputs = with pkgs; [proj pkg-config];
@@ -114,9 +141,17 @@
         excludedPackages = "pkg/*";
         vendorHash = "sha256-YSEm5ZqRdx8Qc83gch15daJxMFW67lz1FAjF0+g+vkI=";
         env.CGO_ENABLED = 1;
+
+        # Falls Go das Binary "backend" nennt, benennen wir es um:
+        postInstall = ''
+          if [ -e "$out/bin/backend" ]; then
+            mv "$out/bin/backend" "$out/bin/green-ecolution"
+          fi
+        '';
       };
 
-      default = backend.overrideAttrs (old: final: {
+      # Backend + eingebettete Frontend-Assets
+      default = backend.overrideAttrs (_: {
         name = "green-ecolution";
         preBuild = ''
           mkdir -p frontend/dist
@@ -125,46 +160,26 @@
       });
     });
 
+    ########################################
+    # DevShell (eine für FE+BE)
+    ########################################
     devShells = forEachSupportedSystem ({pkgs}: let
-      update = pkgs.pkgs.writeShellApplication {
-        name = "update";
-        text = ''
-          if [ $# -ge 1 ] && [ -n "$1" ]; then
-              version_arg="branch"
-            if [ "$1" == "unstable" ]; then
-                version_arg="branch"
-            elif [ "$1" == "branch" ] && [ -n "$2" ]; then
-                version_arg="branch=$2"
-            elif [ "$1" == "version" ] && [ -n "$2" ]; then
-                version_arg="$2"
-            else
-                echo "Usage: "
-            fi
-          else
-              version_arg="branch"
-          fi
-
-          ${pkgs.nix-update}/bin/nix-update backend --flake "--version=$version_arg" --build
-          ${pkgs.nix-update}/bin/nix-update frontend --flake "--version=$version_arg" --build
+      ksops = pkgs.kustomize-sops.overrideAttrs (old: {
+        installPhase = ''
+          runHook preInstall
+          mkdir -p $out
+          dir="$GOPATH/bin"
+          mv "$dir/kustomize-sops" "$dir/ksops" || true
+          [ -e "$dir" ] && cp -r $dir $out
+          runHook postInstall
         '';
-      };
+      });
     in {
       default = pkgs.mkShell {
-        name = "root-shell";
+        name = "dev-shell";
         packages = with pkgs; [
           git
-          update
-        ];
-
-        shellHook = ''
-          echo "Welcome to the root shell 🚀"
-          export PS1="(root-shell) $PS1"
-        '';
-      };
-
-      backend = pkgs.mkShell {
-        name = "backend-shell";
-        packages = with pkgs; [
+          # Backend/Go
           go
           gotools
           golangci-lint
@@ -174,26 +189,33 @@
           pkg-config
           yq-go
           delve
-        ];
-
-        shellHook = ''
-          echo "Backend dev shell loaded 🐳"
-          export PS1="(backend-shell) $PS1"
-        '';
-      };
-
-      frontend = pkgs.mkShell {
-        name = "frontend-shell";
-        packages = with pkgs; [
+          # Frontend/Node
           nodejs
           pnpm
+          # Deploy tooling
+          kustomize
+          ksops
         ];
-
         shellHook = ''
-          echo "Frontend dev shell loaded 🌿"
-          export PS1="(frontend-shell) $PS1"
+          echo "Dev shell loaded 🧪"
+          export PS1="(dev) $PS1"
         '';
       };
     });
+
+    ########################################
+    # NixOS Dev-VM + App-Launcher
+    ########################################
+    nixosConfigurations.ge-dev = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      specialArgs = {inherit inputs self;}; # damit das Modul self.packages nutzen kann
+      modules = [./nixos/ge-dev.nix];
+    };
+
+    # Start mit: nix run .#ge-dev-vm
+    apps.x86_64-linux.dev-vm = {
+      type = "app";
+      program = "${self.nixosConfigurations.ge-dev.config.system.build.vm}/bin/run-ge-dev-vm";
+    };
   };
 }
