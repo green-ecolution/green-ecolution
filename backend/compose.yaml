@@ -1,0 +1,227 @@
+services:
+  storage:
+    image: bitnami/minio:2025.4.22
+    environment:
+      - MINIO_BROWSER=on
+      - MINIO_ROOT_USER=${S3_ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${S3_SECRET_KEY}
+      - MINIO_SERVER_ACCESS_KEY=${S3_ACCESS_KEY}
+      - MINIO_SERVER_SECRET_KEY=${S3_SECRET_KEY}
+      - MINIO_DEFAULT_BUCKETS=${S3_ROUTE_BUCKET}
+    healthcheck:
+      test: ["CMD", "curl", "--silent", "--fail-with-body", "--max-time", "5", "http://localhost:9000/minio/health/live"]
+      interval: 2s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - minio_store:/bitnami/minio/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.minio.rule=Host(`minio.localhost`)"
+      - "traefik.http.routers.minio.entrypoints=web"
+      - "traefik.http.routers.minio.service=minio"
+      - "traefik.http.services.minio.loadbalancer.server.port=9001"
+      - "traefik.http.routers.s3.rule=Host(`s3.localhost`)"
+      - "traefik.http.routers.s3.entrypoints=web"
+      - "traefik.http.routers.s3.service=s3"
+      - "traefik.http.services.s3.loadbalancer.server.port=9000"
+
+  keycloak:
+    image: bitnami/keycloak:26.3.3
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: $KC_USER
+      KC_BOOTSTRAP_ADMIN_PASSWORD: $KC_PASSWORD
+      KEYCLOAK_DATABASE_HOST: db
+      KEYCLOAK_DATABASE_USER: ${POSTGRES_USER}
+      KEYCLOAK_DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      KEYCLOAK_DATABASE_NAME: bitnami_keycloak
+      KEYCLOAK_ENABLE_HEALTH_ENDPOINTS: true
+      KEYCLOAK_HTTP_PORT: "3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.keycloak.rule=Host(`auth.localhost`)"
+      - "traefik.http.routers.keycloak.entrypoints=web"
+      - "traefik.http.routers.keycloak.service=keycloak"
+      - "traefik.http.services.keycloak.loadbalancer.server.port=3000"
+    volumes:
+      - './.docker/infra/keycloak/green-ecolution-realm.json:/opt/bitnami/keycloak/data/import/green-ecolution-realm.json'
+      - './.docker/infra/keycloak/init-scripts:/docker-entrypoint-initdb.d'
+    networks:
+      default:
+        aliases:
+          - auth.localhost
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health/ready"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      keycloak-init-db:
+        condition: service_completed_successfully
+
+  keycloak-init-db:
+    image: bitnami/postgresql:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: bitnami_keycloak
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      export PGPASSWORD=$$POSTGRES_PASSWORD;
+      echo \"SELECT 'CREATE DATABASE $$POSTGRES_DB' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$$POSTGRES_DB')\\gexec\" |
+      psql -U $$POSTGRES_USER -h db
+      "
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgis/postgis:17-3.5-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    healthcheck:
+      test: pg_isready -U $$POSTGRES_USER -h localhost
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - db_data:/bitnami/postgresql
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  pgadmin:
+    image: dpage/pgadmin4:9.6.0
+    entrypoint: /bin/sh
+    command: >
+      -c "echo \"$$SERVERS_JSON\" > /tmp/servers.json &&
+      exec /entrypoint.sh"
+    environment:
+      SERVERS_JSON: |
+        {
+          "Servers": {
+            "1": {
+              "Name": "Green Ecolution",
+              "Group": "Servers",
+              "Port": 5432,
+              "Username": "${POSTGRES_USER}",
+              "PasswordExecCommand": "echo '${POSTGRES_PASSWORD}'",
+              "Host": "db",
+              "SSLMode": "prefer",
+              "MaintenanceDB": "postgres"
+            }
+          }
+        }
+      PGADMIN_SERVER_JSON_FILE: /tmp/servers.json
+      PGADMIN_DEFAULT_EMAIL: 1@1.com
+      PGADMIN_DEFAULT_PASSWORD: "1"
+      PGADMIN_DISABLE_POSTFIX: "true"
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    depends_on:
+      db:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.localhost`)"
+      - "traefik.http.routers.pgadmin.entrypoints=web"
+
+  # ors-app:
+  #   image: openrouteservice/openrouteservice:v9.0.0
+  #   ports:
+  #     - "8080:8082"
+  #     - "9001:9001"
+  #   user: "1000:1000" # Default is 1000:1000. make infra/up will override this to the actual user values
+  #   volumes:
+  #     - ./.docker/infra/ors:/home/ors
+  #   environment:
+  #     ors.engine.profile_default.build.source_file: /home/ors/files/sh.osm.pbf
+  #     REBUILD_GRAPHS: false
+  #     CONTAINER_LOG_LAVEL: INFO
+  #     XMS: 256m
+  #     XMX: 512m
+  #     ADDITIONAL_JAVA_OPTS: ""
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         cpus: "1"
+  #         memory: 256m
+  #       limits:
+  #         cpus: "1"
+  #         memory: 512m
+  #   networks:
+  #     - app-network
+
+  vroom:
+    image: ghcr.io/vroom-project/vroom-docker:v1.14.0
+    volumes:
+      - ./.docker/infra/vroom:/conf
+    environment:
+      VROOM_ROUTER: valhalla
+    healthcheck:
+      test: ["CMD", "curl", "--silent", "--fail-with-body", "--max-time", "5", "http://localhost:3000/health"]
+      interval: 2s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        reservations:
+          cpus: "1"
+          memory: 150m
+        limits:
+          cpus: "1"
+          memory: 150m
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vroom.rule=Host(`vroom.localhost`)"
+      - "traefik.http.routers.vroom.entrypoints=web"
+
+  valhalla:
+    image: ghcr.io/gis-ops/docker-valhalla/valhalla:3.5.1
+    volumes:
+      - ./.docker/infra/valhalla/custom_files:/custom_files
+    environment:
+      server_threads: 20
+    healthcheck:
+      test: ["CMD", "curl", "--silent", "--fail-with-body", "--max-time", "5", "http://localhost:8002/status"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        reservations:
+          cpus: "1"
+          memory: 256m
+        limits:
+          cpus: "2"
+          memory: 1536m
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.valhalla.rule=Host(`valhalla.localhost`)"
+      - "traefik.http.routers.valhalla.entrypoints=web"
+
+  reverse-proxy:
+    image: traefik:3.5.1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.web.address=:3000"
+    ports:
+      - "127.0.0.1:3000:3000/tcp"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.traefik.entrypoints=web"
+      - "traefik.http.routers.traefik.service=traefik"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+
+volumes:
+  minio_store:
+  db_data:

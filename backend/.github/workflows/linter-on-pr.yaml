@@ -1,0 +1,42 @@
+name: golangci-lint
+on:
+  push:
+    paths:
+      - 'internal/**'
+      - 'pkg/**'
+      - 'main.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'sqlc.yaml'
+      - '.mockery.yaml'
+      - '.golangci.yml'
+    branches:
+      - develop
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+
+jobs:
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Dependencies
+        run: sudo apt-get update && sudo apt-get install -y make build-essential libgeos-dev libproj-dev
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: ./go.mod
+
+      - name: Generate
+        run: make generate
+
+      - name: golangci-lint
+        run: go tool golangci-lint run

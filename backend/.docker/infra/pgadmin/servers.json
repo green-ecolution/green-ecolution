@@ -1,0 +1,14 @@
+{
+        "Servers": {
+                "1": {
+                        "Name": "local db",
+                        "Group": "Green Ecolution",
+                        "Port": 5432,
+                        "Username": "postgres",
+                        "Host": "db",
+                        "SSLMode": "prefer",
+                        "MaintenanceDB": "postgres",
+                        "PasswordExecCommand": "echo 'postgres'"
+                }
+        }
+}

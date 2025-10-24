@@ -1,0 +1,80 @@
+services:
+  backend:
+    build:
+      context: .
+      args:
+        - ENV=docker
+        - APP_VERSION=${APP_VERSION}
+        - APP_GIT_COMMIT=${APP_GIT_COMMIT}
+        - APP_GIT_BRANCH=${APP_GIT_BRANCH}
+        - APP_BUILD_TIME=${APP_BUILD_TIME}
+    depends_on: 
+      db:
+        condition: service_healthy
+      storage:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    environment:
+      - ENV=docker
+      - GE_SERVER_APP_URL=http://localhost:3000
+      - GE_SERVER_PORT=3000
+      - GE_SERVER_DATABASE_HOST=db
+      - GE_SERVER_DATABASE_PORT=5432
+      - GE_SERVER_DATABASE_TIMEOUT=30s
+      - GE_SERVER_DATABASE_NAME=${POSTGRES_DB}
+      - GE_SERVER_DATABASE_USER=${POSTGRES_USER}
+      - GE_SERVER_DATABASE_PASSWORD=${POSTGRES_PASSWORD}
+
+      - GE_AUTH_ENABLE=true
+      - GE_AUTH_OIDC_PROVIDER_BASE_URL=http://auth.localhost:3000
+      - GE_AUTH_OIDC_PROVIDER_DOMAIN_NAME=green-ecolution
+      - GE_AUTH_OIDC_PROVIDER_AUTH_URL=http://auth.localhost:3000/realms/green-ecolution/protocol/openid-connect/auth
+      - GE_AUTH_OIDC_PROVIDER_TOKEN_URL=http://auth.localhost:3000/realms/green-ecolution/protocol/openid-connect/token
+      - GE_AUTH_OIDC_PROVIDER_PUBLIC_KEY_STATIC=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsr2iJerMHstjk88ffPAnqwJ8owifZu1iFzdGeruYU2COAYaIANzj0COEAjEu7qiEL9wusA7QI/N/bBIOiRTJIbiIFF/wv6Jn3xUc0CdZTTTDpeYthDLJQJCdokSW4bBSxtx2T4iONGMwC51Hle7COhJ+ueZnT6aPefVpk4Nel4PmCpAOyy7vvVvwavmXcXKnZmxscF9shThGtzDf1Uq5bocO0QhYQxOy+Gz+ngcqQvCC6bZACJrTru1pDvk66EVYahRBu6cOwYtv2otyP69+LxjEFo+5wlZ6x4oc3kg8Ls48qaJg6POUvNHli/2SZk/l5uTrmDeOIvWUZsYpJB/TBQIDAQAB
+      - GE_AUTH_OIDC_PROVIDER_FRONTEND_CLIENT_ID=frontend
+      - GE_AUTH_OIDC_PROVIDER_FRONTEND_CLIENT_SECRET=EJogoaQSrW7vlo9CK3zIo2ieC8guy9Mm
+      - GE_AUTH_OIDC_PROVIDER_BACKEND_CLIENT_ID=backend
+      - GE_AUTH_OIDC_PROVIDER_BACKEND_CLIENT_SECRET=cVBGgWNlbwSLydLZfZMvTvmNCeiSmLGP
+
+      - GE_ROUTING_ENABLE=true
+      - GE_ROUTING_START_POINT=9.434764259345679,54.768731253913806
+      - GE_ROUTING_END_POINT=9.434764259345679,54.768731253913806
+      - GE_ROUTING_WATERING_POINT=9.434764259345679,54.768731253913806
+      - GE_ROUTING_VALHALLA_HOST=http://valhalla:8002
+      - GE_ROUTING_VALHALLA_OPTIMIZATION_VROOM_HOST=http://vroom:3000
+
+      - GE_S3_ENABLE=true
+      - GE_S3_ENDPOINT=storage:9000
+      - GE_S3_REGION=us-east-1
+      - GE_S3_USE_SSL=false
+      - GE_S3_ROUTE-GPX_BUCKET=${S3_ROUTE_BUCKET}
+      - GE_S3_ROUTE-GPX_ACCESSKEY=${S3_ACCESS_KEY}
+      - GE_S3_ROUTE-GPX_SECRETACCESSKEY=${S3_SECRET_KEY}
+
+      - GE_MQTT_ENABLE=false
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`localhost`)"
+      - "traefik.http.routers.backend.entrypoints=web"
+
+  migrations:
+    build:
+      context: .
+      dockerfile: ./.docker/Dockerfile.migration
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      MIGRATION_WITH_SEED: true
+      MIGRATION_WITH_DB_RESET: true
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

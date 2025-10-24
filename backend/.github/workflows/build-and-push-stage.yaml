@@ -1,0 +1,173 @@
+name: Build and Push Docker Image Staging
+"on":
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The release version"
+        required: true
+  push:
+    paths:
+      - '.docker/**'
+      - 'internal/**'
+      - 'pkg/**'
+      - 'config/**'
+      - 'main.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'sqlc.yaml'
+      - '.mockery.yaml'
+    branches:
+      - release/*
+      - hotfix/*
+      - develop
+
+jobs:
+  build_and_deploy_stage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      actions: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+            fetch-depth: 0
+            fetch-tags: true
+
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract_branch
+
+      - name: Extract version from branch name (for release branches)
+        if: startsWith(steps.extract_branch.outputs.branch, 'release/')
+        run: |
+          BRANCH_NAME="${{ steps.extract_branch.outputs.branch }}"
+          VERSION=${BRANCH_NAME#release/}
+          echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Extract version from branch name (for hotfix branches)
+        if: startsWith(steps.extract_branch.outputs.branch, 'hotfix/')
+        run: |
+          BRANCH_NAME="${{ steps.extract_branch.outputs.branch }}"
+          VERSION=${BRANCH_NAME#hotfix/}
+          echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Extract version from branch name (for develop branche)
+        if: startsWith(steps.extract_branch.outputs.branch, 'develop')
+        run: |
+          BRANCH_NAME="${{ steps.extract_branch.outputs.branch }}"
+          VERSION=$(git describe --tags --always)
+          echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Extract version from input (for manual workflow dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "RELEASE_VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set lower case owner name
+        run: |
+          echo "REPO_LC=${REPO,,}" >>${GITHUB_ENV}
+        env:
+          REPO: "${{ github.repository }}"
+
+      - name: Set commit sha
+        run: |
+          echo "COMMIT_SHA=$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_ENV
+
+      - name: get build time
+        run: |
+          echo "BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >>${GITHUB_ENV}
+
+      - name: Build and push Version
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          build-args: |
+            ENV=stage
+            APP_VERSION="${{env.RELEASE_VERSION}}-stage"
+            APP_GIT_COMMIT=${{env.COMMIT_SHA}}
+            APP_GIT_BRANCH=${{steps.extract_branch.outputs.branch}}
+            APP_BUILD_TIME=${{env.BUILD_TIME}}
+            APP_GIT_REPOSITORY=${{github.repository}}
+          file: Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/${{ env.REPO_LC }}:${{ env.RELEASE_VERSION }}-stage
+            ghcr.io/${{ env.REPO_LC }}:${{ env.COMMIT_SHA }}-stage
+
+      - name: Notify management repo to update submodules
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GREEN_ECOLUTION_PAT }}
+          repository: green-ecolution/green-ecolution
+          event-type: "update-submodules-stage"
+          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ env.COMMIT_SHA }}", "version": "${{ env.RELEASE_VERSION }}", "from": "backend"}'
+
+  check_api_docs:
+    name: Check API Docs
+    needs: build_and_deploy_stage
+    env:
+      COMMIT_SHA: ${{ needs.build_and_deploy_stage.outputs.COMMIT_SHA }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: ./go.mod
+
+      - name: Go generate
+        run: make generate
+
+      - name: Move swagger docs
+        run: mv ./docs/swagger.json ./docs/api-docs.json
+
+      - name: Get api docs artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
+        run: |
+          gh run download -R green-ecolution/backend -n api-docs.json
+
+      - name: Check API Docs exist
+        run: |
+          if [ ! -f ./api-docs.json ]; then
+            echo "api-docs.json not found"
+            touch api-docs.json
+          else
+            echo "api-docs.json found"
+          fi
+
+      - name: Check API Docs Diff
+        run: |
+          diff ./docs/api-docs.json ./api-docs.json && echo "up-to-date=true" >> $GITHUB_ENV || echo "up-to-date=false" >> $GITHUB_ENV
+
+      - name: Upload API Docs
+        if: env.up-to-date == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-docs.json
+          path: ./docs/api-docs.json
+
+      - name: Create PR in frontend repo
+        if: env.up-to-date == 'false'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GREEN_ECOLUTION_PAT }}
+          repository: green-ecolution/frontend
+          event-type: "api-docs-update"
+          client-payload: '{"hash": "${{ env.COMMIT_SHA }}"}'

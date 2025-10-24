@@ -1,0 +1,68 @@
+name: "Build and test project on PR"
+
+on:
+  pull_request:
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Dependencies
+        run: sudo apt-get update && sudo apt-get install -y make build-essential libgeos-dev libproj-dev
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: ./go.mod
+
+      - name: Build
+        run: make build
+
+      - name: Test
+        run: make test
+
+  check_generated_code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: ./go.mod
+
+      - name: Generate Code
+        run: make generate && make generate/client
+
+      - name: Check generated code is fresh
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "❌ Error: Changes were detected after running 'make generate && make generate/client'!"
+            echo
+            echo "Please run 'make generate && make generate/client' locally and commit the updated files."
+            echo
+            echo "Modified files:"
+            git status --short
+            echo
+            echo "Failing the workflow."
+            exit 1
+          else
+            echo "✅ Generated code is up to date. No changes detected."
+          fi
+
+  test_pkg_client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: ./go.mod
+
+      - name: Test
+        working-directory: pkg/client
+        run: go test ./...
+

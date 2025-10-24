@@ -1,0 +1,57 @@
+version: "2"
+sql:
+  - engine: postgresql
+    queries: "internal/storage/postgres/queries"
+    schema: "internal/storage/postgres/migrations"
+    gen:
+      go:
+        package: "sqlc"
+        out: "internal/storage/postgres/_sqlc"
+        sql_package: "pgx/v5"
+        emit_interface: true
+        emit_pointers_for_null_types: true
+        emit_result_struct_pointers: true
+        emit_params_struct_pointers: true
+        emit_empty_slices: true
+        overrides:
+          - db_type: "pg_catalog.timestamptz"
+            go_type:
+              import: "time"
+              type: "Time"
+          - db_type: "pg_catalog.timestamptz"
+            nullable: true
+            go_type:
+              import: "time"
+              pointer: true
+              type: "Time"
+          - db_type: "pg_catalog.timestamp"
+            go_type:
+              import: "time"
+              type: "Time"
+          - db_type: "pg_catalog.timestamp"
+            nullable: true
+            go_type:
+              import: "time"
+              pointer: true
+              type: "Time"
+          - db_type: "date"
+            go_type:
+              import: "time"
+              type: "Time"
+          - db_type: "date"
+            nullable: true
+            go_type:
+              import: "time"
+              pointer: true
+              type: "Time"
+          - db_type: "geometry"
+            go_type: 
+              import: "github.com/twpayne/go-geos"
+              package: "geos"
+              pointer: true
+              type: "Geom"
+            nullable: true
+          - db_type: "uuid"
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"

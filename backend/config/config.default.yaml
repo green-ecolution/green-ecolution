@@ -1,0 +1,62 @@
+dashboard:
+  title: Green Ecolution Dashboard
+
+server:
+  port: 3000
+  development: false
+  app_url: http://localhost:3030
+  logs:
+    level: info
+    format: text
+  database:
+    host: localhost
+    port: 5432
+    username: postgres
+    password: super_secret_password
+    name: green_ecolution_db
+
+auth:
+  oidc_provider:
+    base_url: https://auth.green-ecolution.de
+    domain_name: green-ecolution-dev
+    auth_url: https://auth.green-ecolution.de/realms/green-ecolution-dev/protocol/openid-connect/auth
+    token_url: https://auth.green-ecolution.de/realms/green-ecolution-dev/protocol/openid-connect/token
+    public_key:
+      static: secret_secret_secret
+    frontend:
+      client_id: green-ecolution-frontend
+      client_secret: secret_secret_secret
+    backend:
+      client_id: green-ecolution-backend
+      client_secret: secret_secret_secret
+routing:
+    start_point: [9.434764259345679, 54.768731253913806]
+    end_point: [9.434764259345679, 54.768731253913806]
+    watering_point: [9.434764259345679, 54.768731253913806]
+    valhalla:
+        host: http://localhost:8002
+        optimization:
+            vroom:
+                host: http://localhost:2525
+    ors:
+        host: http://localhost:8080/ors
+        optimization:
+            vroom:
+                host: http://localhost:2525
+s3:
+    endpoint: s3.green-ecolution.de
+    region: us-east-1
+    use_ssl: true
+    route-gpx:
+        bucket: routes-gpx
+        accessKey: routes-gpx
+        secretAccessKey: secret_secret_secret
+map:
+    center: [54.792277136221905, 9.43580607453268]
+    bbox: [54.714822,9.285796,54.860127,9.583800]
+mqtt:
+  broker: eu1.cloud.thethings.industries:1883
+  client_id: tree-sensor
+  username: sgr-students@zde
+  password: secret_secret_secret
+  topic: v3/sgr-students@zde/devices/+/up
