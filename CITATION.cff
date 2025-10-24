@@ -3,45 +3,45 @@ title: "Green Ecolution"
 message: "If you use this software, please cite it as below."
 authors:
   - affiliation: Flensburg University of Applied Sciences
-    family-names: "Cedrik"
-    given-names: "Hoffmann"
+    family-names: "Hoffmann"
+    given-names: "Cedrik"
     email: cedrik.hoffmann@stud.hs-flensburg.de
   - affiliation: Flensburg University of Applied Sciences
-    family-names: "Christopher"
-    given-names: "Otto"
+    given-names: "Christopher"
+    family-names: "Otto"
     email: christopher.otto@stud.hs-flensburg.de
   - affiliation: Flensburg University of Applied Sciences
-    family-names: "Dorien"
-    given-names: "Grönwald"
+    given-names: "Dorien"
+    family-names: "Grönwald"
     email: dorien.groenwald@stud.hs-flensburg.de
   - affiliation: Flensburg University of Applied Sciences
-    family-names: "Konstantin"
-    given-names: "Müller"
+    given-names: "Konstantin"
+    family-names: "Müller"
     email: konstantin.mueller@stud.hs-flensburg.de
   - affiliation: Flensburg University of Applied Sciences
-    family-names: "Linus"
-    given-names: "Bumann-Buzuk"
+    given-names: "Linus"
+    family-names: "Bumann-Buzuk"
     email: linus.bumann@stud.hs-flensburg.de
   - affiliation: Flensburg University of Applied Sciences
-    family-names: "Michael"
-    given-names: "Sievers"
+    given-names: "Michael"
+    family-names: "Sievers"
     email: michael.sievers@stud.hs-flensburg.de
   - affiliation: Flensburg University of Applied Sciences
-    family-names: "Mohammad"
-    given-names: "Assaf"
+    given-names: "Mohammad"
+    family-names: "Assaf"
     email: mohammad.assaf@stud.hs-flensburg.de
   - affiliation: Flensburg University of Applied Sciences
-    family-names: "Niklas"
-    given-names: "Hargarter"
+    given-names: "Niklas"
+    family-names: "Hargarter"
     email: niklas.hargarter@stud.hs-flensburg.de
   - affiliation: Flensburg University of Applied Sciences
-    family-names: "Sophia"
-    given-names: "Anthopoilos"
+    given-names: "Sophia"
+    family-names: "Anthopoilos"
     email: sophia.anthopoilos@stud.hs-flensburg.de
 version: v1.2.1
 date-released: 2025-04-03
 url: "https://green-ecolution.de"
-repository-code: "https://github.com/green-ecolution/backend"
+repository-code: "https://github.com/green-ecolution"
 license: AGPL-3.0-only
 abstract: >-
   Smart irrigation systems are essential for optimizing water consumption, reducing labor requirements, and minimizing operational costs. This repository contains the backend of Green Ecolution, a system designed to manage urban green spaces efficiently. The backend serves as a bridge between the web interface and the database, facilitating data management for trees, tree clusters, sensors, watering plans (including route planning), vehicles, and users. Initially developed as a research project within the Applied Computer Science master’s program at the University of Applied Sciences Flensburg, the software was created in collaboration with the local green space management authority (TBZ Flensburg). While tailored to the specific needs of Flensburg, the system is designed to be adaptable for implementation in other cities, promoting scalable and data-driven urban irrigation solutions.

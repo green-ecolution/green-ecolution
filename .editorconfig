@@ -1,0 +1,50 @@
+# Top-most EditorConfig file
+root = true
+
+# === Default ===
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# === Markdown, JSON, YAML ===
+[*.{md,json,yml,yaml}]
+indent_size = 2
+trim_trailing_whitespace = false  # Allow intentional trailing whitespace in Markdown
+
+# === TypeScript / JavaScript ===
+[*.{ts,tsx,js,jsx}]
+indent_size = 2
+quote_type = double
+max_line_length = 100
+
+# === Shell scripts ===
+[*.sh]
+indent_style = space
+indent_size = 2
+
+# === Go (Backend) ===
+[*.go]
+indent_style = tab          # Go always uses tabs
+indent_size = 4             # purely visual; tabs = 4 spaces in editors
+tab_width = 4
+max_line_length = 120
+
+# Go module/sum files
+[{go.mod,go.sum}]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+
+# === Makefiles ===
+[Makefile]
+indent_style = tab
+
+# === Ignore generated / dist ===
+[{bin,dist,frontend/dist,backend/frontend/dist}/**]
+insert_final_newline = false
+trim_trailing_whitespace = false
+
