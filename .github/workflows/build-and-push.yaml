@@ -1,0 +1,314 @@
+name: "Build and Push Images"
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - stage
+          - prod
+          - demo
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: green-ecolution/green-ecolution
+
+jobs:
+  determine-environment:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+      tag-suffix: ${{ steps.set-env.outputs.tag-suffix }}
+      is-release: ${{ steps.set-env.outputs.is-release }}
+    steps:
+      - name: Determine environment and tag suffix
+        id: set-env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            ENV="${{ github.event.inputs.environment }}"
+            if [[ "$ENV" == "prod" ]]; then
+              TAG_SUFFIX=""
+              IS_RELEASE="true"
+            else
+              TAG_SUFFIX="-${ENV}"
+              IS_RELEASE="false"
+            fi
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            ENV="prod"
+            TAG_SUFFIX=""
+            IS_RELEASE="true"
+          elif [[ "${{ github.ref_name }}" == "main" ]]; then
+            ENV="prod"
+            TAG_SUFFIX=""
+            IS_RELEASE="true"
+          elif [[ "${{ github.ref_name }}" == "develop" ]]; then
+            ENV="stage"
+            TAG_SUFFIX="-stage"
+            IS_RELEASE="false"
+          else
+            ENV="stage"
+            TAG_SUFFIX="-stage"
+            IS_RELEASE="false"
+          fi
+
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+          echo "tag-suffix=$TAG_SUFFIX" >> $GITHUB_OUTPUT
+          echo "is-release=$IS_RELEASE" >> $GITHUB_OUTPUT
+          echo "Environment: $ENV, Tag Suffix: $TAG_SUFFIX, Is Release: $IS_RELEASE"
+
+  build-migrations:
+    runs-on: ubuntu-latest
+    needs: determine-environment
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres
+          tags: |
+            type=sha,prefix={{branch}}-,suffix=${{ needs.determine-environment.outputs.tag-suffix }}
+            type=ref,event=branch,suffix=${{ needs.determine-environment.outputs.tag-suffix }}
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build and push postgres migrations
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./.docker/migrations/Dockerfile.postgres
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-backend:
+    runs-on: ubuntu-latest
+    needs: determine-environment
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend
+          tags: |
+            type=sha,prefix={{branch}}-,suffix=${{ needs.determine-environment.outputs.tag-suffix }}
+            type=ref,event=branch,suffix=${{ needs.determine-environment.outputs.tag-suffix }}
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            ENV=${{ needs.determine-environment.outputs.environment }}
+            APP_VERSION=${{ github.ref_name }}
+            APP_GIT_COMMIT=${{ github.sha }}
+            APP_GIT_BRANCH=${{ github.ref_name }}
+            APP_GIT_REPOSITORY=${{ github.repository }}
+            APP_BUILD_TIME=${{ github.event.head_commit.timestamp }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    needs: determine-environment
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend
+          tags: |
+            type=sha,prefix={{branch}}-,suffix=${{ needs.determine-environment.outputs.tag-suffix }}
+            type=ref,event=branch,suffix=${{ needs.determine-environment.outputs.tag-suffix }}
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            ENV=${{ needs.determine-environment.outputs.environment == 'stage' && 'dev' || 'prod' }}
+            BASEURL=/api
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  update-kustomize:
+    runs-on: ubuntu-latest
+    needs: [determine-environment, build-migrations, build-backend, build-frontend]
+    if: needs.determine-environment.outputs.environment != 'demo'
+    permissions:
+      contents: write
+    steps:
+      - name: Get Green Ecolution App Token
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Setup kustomize
+        uses: yokawasa/action-setup-kube-tools@v0.13.1
+        with:
+          setup-tools: |
+            kustomize
+          kustomize: "5.4.3"
+
+      - name: Get Green Ecolution App User ID
+        id: get-user-id
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+
+      - name: Initialize git config
+        run: |
+          git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
+
+      - name: Extract image tag
+        id: image-tag
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            TAG="${{ github.ref_name }}"
+          else
+            TAG="${{ github.ref_name }}-${{ github.sha }}"
+          fi
+          echo "tag=$TAG${{ needs.determine-environment.outputs.tag-suffix }}" >> $GITHUB_OUTPUT
+
+      - name: Update kustomize images
+        run: |
+          ENV="${{ needs.determine-environment.outputs.environment }}"
+          TAG="${{ steps.image-tag.outputs.tag }}"
+
+          cd ./deploy/kustomize/${ENV}
+          kustomize edit set image backend-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}
+          kustomize edit set image frontend-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${TAG}
+          kustomize edit set image init-migrations-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:${TAG}
+
+      - name: Commit and push changes
+        run: |
+          ENV="${{ needs.determine-environment.outputs.environment }}"
+          TAG="${{ steps.image-tag.outputs.tag }}"
+
+          git add deploy/kustomize/${ENV}/kustomization.yaml
+          if git commit -m "chore: update ${ENV} image tags to ${TAG} [skip ci]"; then
+            git push origin ${{ github.ref_name }}
+            echo "✅ Kustomize updated successfully"
+          else
+            echo "ℹ️ No changes to commit"
+          fi
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs: [determine-environment, build-migrations, build-backend, build-frontend, update-kustomize]
+    if: needs.determine-environment.outputs.is-release == 'true' && github.ref_type == 'tag'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            ## 🌿 Green Ecolution Release ${{ github.ref_name }}
+
+            This release of the Green Ecolution platform marks a new version of our complete smart irrigation system.
+
+            ### 📦 What's Included
+
+            * 🚀 Backend and Frontend components
+            * 🗄️ Database migrations
+            * 🛠️ Infrastructure and deployment manifests via Kubernetes
+            * 📚 Updated documentation
+
+            ### 🐳 Docker Images
+
+            * Backend: `${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${{ github.ref_name }}`
+            * Frontend: `${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ github.ref_name }}`
+            * Migrations: `${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:${{ github.ref_name }}`

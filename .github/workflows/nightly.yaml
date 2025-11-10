@@ -1,183 +1,307 @@
-name: "nightly builds"
+name: "Nightly Builds"
 
 on:
   workflow_dispatch:
   schedule:
+    # Daily at 01:30 UTC
     - cron: '30 1 * * *'
+    # Weekly on Sunday at 02:00 UTC (force build for dependency checks)
+    - cron: '0 2 * * 0'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: green-ecolution
 
 jobs:
-  prepare-nightly:
-    name: Prepare nightly build
+  check-changes:
+    name: Check for changes
     runs-on: ubuntu-latest
     outputs:
+      should-build: ${{ steps.check.outputs.should-build }}
       tag: ${{ steps.tag.outputs.tag }}
-    strategy:
-      fail-fast: false
-      matrix:
-        repo: [ "green-ecolution/green-ecolution", "green-ecolution/backend", "green-ecolution/frontend" ]
-        include:
-          - repo: "green-ecolution/green-ecolution"
-            release_notes: RELEASE_ROOT.md
-          - repo: "green-ecolution/backend"
-            release_notes: RELEASE_BACKEND.md
-          - repo: "green-ecolution/frontend"
-            release_notes: RELEASE_FRONTEND.md
+      is-weekly: ${{ steps.check.outputs.is-weekly }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
-          repository: ${{ matrix.repo }}
-          token: ${{ secrets.GREEN_ECOLUTION_PAT }} 
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Check if weekly forced build
+        id: weekly-check
+        run: |
+          # Check if this is the Sunday cron job or workflow_dispatch
+          if [[ "${{ github.event.schedule }}" == "0 2 * * 0" ]]; then
+            echo "is-weekly=true" >> $GITHUB_OUTPUT
+            echo "🗓️ Weekly forced build triggered"
+          else
+            echo "is-weekly=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check for changes since last nightly
+        id: check
+        run: |
+          IS_WEEKLY="${{ steps.weekly-check.outputs.is-weekly }}"
+
+          # Get last nightly tag
+          LAST_NIGHTLY=$(git tag -l --sort=-v:refname "*-nightly.*" | head -n 1)
+
+          if [ -z "$LAST_NIGHTLY" ]; then
+            echo "No previous nightly build found, building..."
+            echo "should-build=true" >> $GITHUB_OUTPUT
+            echo "is-weekly=$IS_WEEKLY" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Check if there are commits since last nightly
+          COMMITS_SINCE=$(git rev-list ${LAST_NIGHTLY}..HEAD --count)
+
+          echo "Last nightly: $LAST_NIGHTLY"
+          echo "Commits since: $COMMITS_SINCE"
+
+          if [ "$COMMITS_SINCE" -gt 0 ] || [ "$IS_WEEKLY" == "true" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            if [ "$IS_WEEKLY" == "true" ]; then
+              echo "🗓️ Weekly forced build (dependency check)"
+            elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+              echo "👤 Manual trigger"
+            else
+              echo "✅ Found $COMMITS_SINCE new commits, building nightly..."
+            fi
+            echo "should-build=true" >> $GITHUB_OUTPUT
+          else
+            echo "ℹ️ No changes since last nightly, skipping build"
+            echo "should-build=false" >> $GITHUB_OUTPUT
+          fi
+
+          echo "is-weekly=$IS_WEEKLY" >> $GITHUB_OUTPUT
+
       - name: Define tag
         id: tag
+        if: steps.check.outputs.should-build == 'true'
         run: |
-          DESCRIBE=`git tag -l --sort=-v:refname | grep -v nightly | head -n 1`
-          MAJOR_VERSION=`echo $DESCRIBE | awk '{split($0,a,"."); print a[1]}'`
-          MINOR_VERSION=`echo $DESCRIBE | awk '{split($0,a,"."); print a[2]}'`
+          DESCRIBE=$(git tag -l --sort=-v:refname | grep -v nightly | head -n 1)
+          MAJOR_VERSION=$(echo $DESCRIBE | awk '{split($0,a,"."); print a[1]}')
+          MINOR_VERSION=$(echo $DESCRIBE | awk '{split($0,a,"."); print a[2]}')
           MINOR_VERSION="$((${MINOR_VERSION} + 1))"
           TAG="${MAJOR_VERSION}.${MINOR_VERSION}.0-nightly.$(date +'%Y%m%d')"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Generated nightly tag: $TAG"
 
-      - name: Push nightly release
-        env:
-          GH_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }} 
-          TAG: ${{ steps.tag.outputs.tag }}
+  build-nightly-images:
+    name: Build nightly Docker images
+    needs: check-changes
+    if: needs.check-changes.outputs.should-build == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [backend, frontend, migrations]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend
+        if: matrix.component == 'backend'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${{ needs.check-changes.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:nightly
+          build-args: |
+            ENV=stage
+            APP_VERSION=${{ needs.check-changes.outputs.tag }}
+            APP_GIT_COMMIT=${{ github.sha }}
+            APP_GIT_BRANCH=develop
+            APP_GIT_REPOSITORY=${{ github.repository }}
+            APP_BUILD_TIME=${{ github.event.head_commit.timestamp }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push frontend
+        if: matrix.component == 'frontend'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ needs.check-changes.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:nightly
+          build-args: |
+            ENV=dev
+            BASEURL=/api
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push migrations
+        if: matrix.component == 'migrations'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./.docker/migrations/Dockerfile.postgres
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:${{ needs.check-changes.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:nightly
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-nix-artifacts:
+    name: Build Nix artifacts
+    needs: check-changes
+    if: needs.check-changes.outputs.should-build == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [backend, frontend, default]
+        include:
+          - target: backend
+            output: backend
+          - target: frontend
+            output: frontend
+          - target: default
+            output: green-ecolution
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - uses: cachix/cachix-action@v16
+        with:
+          name: green-ecolution
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+
+      - name: Build ${{ matrix.target }}
         run: |
-          curl -o RELEASE.md https://raw.githubusercontent.com/green-ecolution/green-ecolution/develop/.github/release-notes/nightly/${{ matrix.release_notes }}
-          gh -R ${{ matrix.repo }} release create ${{ env.TAG }} --title ${{ env.TAG }} --latest=false --prerelease --notes-file RELEASE.md
+          if [ "${{ matrix.target }}" = "default" ]; then
+            nix build
+          else
+            nix build .#${{ matrix.target }}
+          fi
 
-      - name: 'Clean up nightly releases'
+      - name: Package artifacts
+        id: package
+        run: |
+          TAG="${{ needs.check-changes.outputs.tag }}"
+
+          if [ "${{ matrix.target }}" = "frontend" ]; then
+            tar -czvf "${{ matrix.output }}_${TAG}.tar.gz" -C result .
+            echo "artifact=${{ matrix.output }}_${TAG}.tar.gz" >> $GITHUB_OUTPUT
+          else
+            cp result/bin/backend "${{ matrix.output }}_linux_amd64-${TAG}"
+            echo "artifact=${{ matrix.output }}_linux_amd64-${TAG}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.output }}-nightly
+          path: ${{ steps.package.outputs.artifact }}
+          retention-days: 7
+
+  create-release:
+    name: Create nightly release
+    needs: [check-changes, build-nightly-images, build-nix-artifacts]
+    if: needs.check-changes.outputs.should-build == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Create nightly release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.check-changes.outputs.tag }}
+          IS_WEEKLY: ${{ needs.check-changes.outputs.is-weekly }}
+        run: |
+          RELEASE_NOTES="## 🌙 Nightly Build ${TAG}
+
+          This is an automated nightly build of the Green Ecolution platform.
+
+          "
+
+          if [ "$IS_WEEKLY" == "true" ]; then
+            RELEASE_NOTES+="**🗓️ Weekly Build** - Built for dependency verification
+
+          "
+          fi
+
+          RELEASE_NOTES+="### 📦 What's Included
+
+          * 🚀 Backend and Frontend components
+          * 🗄️ Database migrations
+          * 🐳 Docker images available in GitHub Container Registry
+
+          ### 🐳 Docker Images
+
+          * Backend: \`${REGISTRY}/${IMAGE_PREFIX}/backend:${TAG}\`
+          * Frontend: \`${REGISTRY}/${IMAGE_PREFIX}/frontend:${TAG}\`
+          * Migrations: \`${REGISTRY}/${IMAGE_PREFIX}/migrations-postgres:${TAG}\`
+
+          ### ⚠️ Warning
+
+          This is a nightly build and may be unstable. Use at your own risk!
+          "
+
+          echo "$RELEASE_NOTES" > release_notes.md
+
+          # Create release with all artifacts
+          gh release create ${TAG} \
+            --title "Nightly Build ${TAG}" \
+            --notes-file release_notes.md \
+            --prerelease \
+            --latest=false \
+            ./artifacts/**/*
+
+  cleanup-old-releases:
+    name: Cleanup old nightly releases
+    needs: create-release
+    if: needs.check-changes.outputs.should-build == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Clean up old nightly releases
         uses: dev-drprasad/delete-older-releases@v0.3.4
         with:
-          repo: ${{ matrix.repo }}
           keep_latest: 5
           delete_tags: true
           delete_tag_pattern: nightly
           delete_prerelease_only: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }} 
-
-      - name: Delete nightly containers older than a week
-        if: ${{ false }}
-        uses: snok/container-retention-policy@v3.0.0
-        with:
-          account: green-ecolution
-          image-names: 'frontend* backend*'
-          image-tags: '*-nightly*'
-          cut-off: 1w
-          token: ${{ secrets.GREEN_ECOLUTION_PAT }} 
-          dry-run: true # TODO: remove when validated
-
-  update-nix-flake:
-    runs-on: ubuntu-latest
-    needs: prepare-nightly
-    env:
-      tag: ${{ needs.prepare-nightly.outputs.tag }}
-    steps:
-      - name: Get Green Ecolution App Token
-        uses: actions/create-github-app-token@v2
-        id: app-token
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          permission-contents: write
-
-      - name: Get Green Ecolution App User ID
-        id: get-user-id
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
-
-      - name: Initialize mandatory git config
-        run: |
-          git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
-          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
-   
-      - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          token: ${{ steps.app-token.outputs.token }}
-          submodules: "recursive"
-
-      - uses: cachix/install-nix-action@v31
-        with:
-          nix_path: nixpkgs=channel:nixos-unstable
-
-      - uses: cachix/cachix-action@v16
-        with:
-          name: green-ecolution
-          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-
-      - name: Update backend in flake
-        run:
-          nix-shell -p nix-update --run "nix-update backend --flake --version=${{ env.tag }} --commit"
-
-      - name: Update frontend in flake
-        run:
-          nix-shell -p nix-update --run "nix-update frontend --flake --version=${{ env.tag }} --commit"
-
-      - name: Push changes
-        run: 
-          git push origin develop || echo "No changes to commit"
-
-  nightly:
-    name: Deploy nightly
-    needs: [prepare-nightly, update-nix-flake]
-    env:
-      tag: ${{ needs.prepare-nightly.outputs.tag }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest ]
-        include:
-          - os: ubuntu-latest
-            name: linux_amd64
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          submodules: "recursive"
-          fetch-depth: 0
-
-      - uses: cachix/install-nix-action@v31
-        with:
-          nix_path: nixpkgs=channel:nixos-unstable
-
-      - uses: cachix/cachix-action@v16
-        with:
-          name: green-ecolution
-          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-
-      - name: Build and upload frontend
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
-          NAME: "frontend_${{ env.tag }}.tar.gz"
-        run: |
-          nix build .#frontend
-          tar -czvf ${{ env.NAME }} -C result .
-          gh release upload ${{ env.tag }} ${{ env.NAME }}#"Frontend — nightly build" -R green-ecolution/green-ecolution --clobber
-          gh release upload ${{ env.tag }} ${{ env.NAME }}#"Frontend — nightly build" -R green-ecolution/frontend --clobber
-          
-      - name: Build backend
-        env:
-          GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
-          NAME: "backend_${{ matrix.name }}-${{ env.tag }}"
-        run: |
-          nix build .#backend
-          cp result/bin/backend ${{ env.NAME }}
-          gh release upload ${{ env.tag }} ${{ env.NAME }}#"Backend (${{ matrix.name }}) — nightly build" -R green-ecolution/green-ecolution --clobber
-          gh release upload ${{ env.tag }} ${{ env.NAME }}#"Backend (${{ matrix.name }}) — nightly build" -R green-ecolution/backend --clobber
-
-      - name: Build backend with frontend embedded
-        env:
-          GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
-          NAME: "green-ecolution_${{ matrix.name }}-${{ env.tag }}"
-        run: |
-          nix build
-          cp result/bin/backend ${{ env.NAME }}
-          gh release upload ${{ env.tag }} ${{ env.NAME }}#"Green Ecolution App (${{ matrix.name }}) — nightly build" -R green-ecolution/green-ecolution --clobber
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

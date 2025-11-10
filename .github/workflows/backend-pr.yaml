@@ -1,7 +1,10 @@
-name: "Build and test project on PR"
+name: "Backend - Pull Request Checks"
 
 on:
   pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-pr.yaml"
 
 jobs:
   build_and_test:
@@ -18,7 +21,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
-          go-version-file: ./go.mod
+          go-version-file: ./backend/go.mod
 
       - name: Build
         run: make build
@@ -37,7 +40,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
-          go-version-file: ./go.mod
+          go-version-file: ./backend/go.mod
 
       - name: Generate Code
         run: make generate && make generate/client
@@ -69,8 +72,59 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
-          go-version-file: ./go.mod
+          go-version-file: ./backend/go.mod
 
-      - name: Test
-        working-directory: pkg/client
+      - name: Test pkg/client
+        working-directory: ./backend/pkg/client
         run: go test ./...
+
+  lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: ./backend/go.mod
+
+      - name: Run golangci-lint
+        run: make lint
+
+  test_migrations:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: ./backend/go.mod
+
+      - name: Test migrations up
+        run: make migrate/up
+
+      - name: Test migrations down
+        run: make migrate/down
+
+  test_dockerfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Test backend Dockerfile
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: backend:test

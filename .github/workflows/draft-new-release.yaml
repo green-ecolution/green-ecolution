@@ -4,28 +4,153 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "The release version"
+        description: "The release version (e.g., v1.2.0)"
         required: true
+      prerelease:
+        description: "Mark as pre-release"
+        required: false
+        type: boolean
+        default: false
 
 jobs:
-  draft_new_release_backend:
+  create-release-branch:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
-      - name: Notify backend repo to draft new release
-        uses: peter-evans/repository-dispatch@v3
+      - name: Get Green Ecolution App Token
+        uses: actions/create-github-app-token@v2
+        id: app-token
         with:
-          token: ${{ secrets.GREEN_ECOLUTION_PAT }}
-          repository: green-ecolution/backend
-          event-type: "draft-new-release"
-          client-payload: '{"version": "${{ github.event.inputs.version }}"}'
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
-  draft_new_release_frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Notify frontend repo to draft new release
-        uses: peter-evans/repository-dispatch@v3
+      - name: Checkout repository
+        uses: actions/checkout@v5
         with:
-          token: ${{ secrets.GREEN_ECOLUTION_PAT }}
-          repository: green-ecolution/frontend
-          event-type: "draft-new-release"
-          client-payload: '{"version": "${{ github.event.inputs.version }}"}'
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Get Green Ecolution App User ID
+        id: get-user-id
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+
+      - name: Initialize git config
+        run: |
+          git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
+
+      - name: Validate version format
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+            echo "❌ Invalid version format: $VERSION"
+            echo "Expected format: v1.2.3 or v1.2.3-beta.1"
+            exit 1
+          fi
+          echo "✅ Version format valid: $VERSION"
+
+      - name: Check if version already exists
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "❌ Version $VERSION already exists!"
+            exit 1
+          fi
+          echo "✅ Version $VERSION is available"
+
+      - name: Create release branch
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          BRANCH_NAME="release/${VERSION}"
+
+          git checkout -b "$BRANCH_NAME"
+          git push -u origin "$BRANCH_NAME"
+
+          echo "✅ Created release branch: $BRANCH_NAME"
+
+      - name: Create pull request
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          VERSION: ${{ github.event.inputs.version }}
+        run: |
+          BRANCH_NAME="release/${VERSION}"
+
+          gh pr create \
+            --title "Release ${VERSION}" \
+            --body "## 🚀 Release ${VERSION}
+
+          This PR prepares the release ${VERSION}.
+
+          ### Checklist
+
+          - [ ] All tests pass
+          - [ ] Documentation is updated
+          - [ ] CHANGELOG.md is updated
+          - [ ] Version numbers are bumped
+
+          ### Next Steps
+
+          1. Review and approve this PR
+          2. Merge to \`main\` branch
+          3. Tag will be created automatically, triggering the release build
+
+          " \
+            --base main \
+            --head "$BRANCH_NAME"
+
+          echo "✅ Created pull request for release ${VERSION}"
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ github.event.inputs.version }}
+          PRERELEASE: ${{ github.event.inputs.prerelease }}
+        run: |
+          RELEASE_NOTES="## 🌿 Green Ecolution ${VERSION}
+
+          > **Note:** This is a draft release. The final release will be published when the release PR is merged to main.
+
+          ### 📦 What's New
+
+          <!-- Add release notes here -->
+
+          ### 🔄 Changes Since Last Release
+
+          "
+
+          # Get commits since last release
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$LAST_TAG" ]; then
+            RELEASE_NOTES+="$(git log ${LAST_TAG}..HEAD --pretty=format:'* %s (%h)' --no-merges)"
+          fi
+
+          RELEASE_NOTES+="
+
+          ### 🐳 Docker Images
+
+          Docker images will be available after merge:
+          * Backend: \`ghcr.io/green-ecolution/backend:${VERSION}\`
+          * Frontend: \`ghcr.io/green-ecolution/frontend:${VERSION}\`
+          * Migrations: \`ghcr.io/green-ecolution/migrations-postgres:${VERSION}\`
+
+          "
+
+          echo "$RELEASE_NOTES" > release_notes.md
+
+          PRERELEASE_FLAG=""
+          if [ "$PRERELEASE" == "true" ]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          gh release create ${VERSION} \
+            --draft \
+            --title "${VERSION}" \
+            --notes-file release_notes.md \
+            $PRERELEASE_FLAG \
+            --target main
+
+          echo "✅ Created draft release ${VERSION}"
