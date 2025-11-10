@@ -208,7 +208,7 @@ in {
 
     themes = {};
     realmFiles = [
-      ../backend/.docker/infra/keycloak/green-ecolution-realm.json
+      ../.docker/infra/keycloak/green-ecolution-realm.json
     ];
   };
 

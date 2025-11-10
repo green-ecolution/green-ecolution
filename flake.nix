@@ -212,7 +212,7 @@
       modules = [./nixos/ge-dev.nix];
     };
 
-    # Start mit: nix run .#ge-dev-vm
+    # Start mit: nix run .#dev-vm
     apps.x86_64-linux.dev-vm = {
       type = "app";
       program = "${self.nixosConfigurations.ge-dev.config.system.build.vm}/bin/run-ge-dev-vm";
