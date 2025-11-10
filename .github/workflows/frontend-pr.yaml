@@ -1,10 +1,10 @@
-name: "Build and test project on PR"
+name: "Frontend - Pull Request Checks"
 
 on:
   pull_request:
-    branches:
-      - develop
-      - release/*
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-pr.yaml"
 
 jobs:
   build:
@@ -15,7 +15,7 @@ jobs:
       contents: read
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
 
       - name: Set up Node.js
@@ -23,14 +23,13 @@ jobs:
         with:
           node-version: "24"
           cache: "pnpm"
+          cache-dependency-path: "./frontend/pnpm-lock.yaml"
 
       - name: Install Dependencies
-        run: |
-          pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: |
-          pnpm build
+        run: pnpm build
 
   lint:
     defaults:
@@ -40,7 +39,7 @@ jobs:
       contents: read
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
 
       - name: Set up Node.js
@@ -48,15 +47,14 @@ jobs:
         with:
           node-version: "24"
           cache: "pnpm"
+          cache-dependency-path: "./frontend/pnpm-lock.yaml"
 
       - name: Install Dependencies
-        run: |
-          pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Linter
         continue-on-error: false
-        run: |
-          pnpm lint
+        run: pnpm lint
 
   test:
     defaults:
@@ -66,7 +64,7 @@ jobs:
       contents: read
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
 
       - name: Set up Node.js
@@ -74,11 +72,26 @@ jobs:
         with:
           node-version: "24"
           cache: "pnpm"
+          cache-dependency-path: "./frontend/pnpm-lock.yaml"
 
       - name: Install Dependencies
-        run: |
-          pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Test
-        run: |
-          pnpm test
+        run: pnpm test
+
+  test_dockerfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Test frontend Dockerfile
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: false
+          tags: frontend:test
