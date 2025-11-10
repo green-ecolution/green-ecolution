@@ -56,6 +56,12 @@ MQTT is disabled by default and can be configured manually if needed.
 
 👉 Once the service is up and running, the backend is available at: [http://localhost:3000](http://localhost:3000)
 
+**API Documentation**
+
+- 📘 [Swagger UI (local)](http://localhost:3000/api/v1/swagger/index.html)
+- 📘 [Swagger UI (production)](https://app.green-ecolution.de/api/v1/swagger/index.html)
+- 📘 [OpenAPI Spec](http://localhost:3000/api/v1/swagger/doc.json)
+
 **Service Endpoints**
 
 | Service         | URL                                                              |
@@ -69,13 +75,66 @@ MQTT is disabled by default and can be configured manually if needed.
 | Valhalla        | [http://valhalla.localhost:3000](http://valhalla.localhost:3000) |
 | Vroom           | [http://vroom.localhost:3000](http://vroom.localhost:3000)       |
 
+## Architecture Overview 🏗️
+
+The backend follows a **layered architecture** with clear separation of concerns:
+
+```
+┌─────────────────────────────────────┐
+│  HTTP Server (Fiber) / MQTT Server  │  ← Entry points
+├─────────────────────────────────────┤
+│         Handlers (v1/*)             │  ← HTTP request handlers
+├─────────────────────────────────────┤
+│    Services (domain logic)          │  ← Business logic layer
+├─────────────────────────────────────┤
+│    Repositories (data access)       │  ← Data abstraction layer
+├─────────────────────────────────────┤
+│  Storage (Postgres, S3, Keycloak)   │  ← Data stores
+└─────────────────────────────────────┘
+```
+
+**Key Components:**
+
+- **Entities** (`internal/entities/`) - Core domain models (Tree, Sensor, Vehicle, etc.)
+- **Handlers** (`internal/server/http/handler/v1/`) - HTTP request handlers organized by domain
+- **Services** (`internal/service/domain/`) - Business logic orchestration
+- **Repositories** (`internal/storage/postgres/`) - Database access layer (using sqlc)
+- **Event System** (`internal/worker/`) - Pub/sub for domain events and side effects
+- **MQTT Server** (`internal/server/mqtt/`) - IoT sensor data ingestion
+- **Mappers** (`internal/server/http/entities/mapper/`) - DTO conversions (auto-generated with goverter)
+
+**Database:**
+
+- PostgreSQL with PostGIS extensions for spatial data
+- `sqlc` for type-safe SQL query generation
+- `goose` for database migrations
+- Queries defined in `storage/postgres/queries/*.sql`
+
+**Authentication:**
+
+- OIDC via Keycloak
+- JWT middleware for protected endpoints
+- Can be disabled for local development
+
+**External Integrations:**
+
+- **Valhalla** - Route calculation engine
+- **Vroom** - Vehicle routing optimization
+- **MinIO/S3** - Object storage for GPX files
+- **MQTT** - Sensor data ingestion (optional)
+
 ## Technologies Used ⚙️
 
 - [Go (Golang)](https://go.dev/) as the main language
+- [Fiber](https://docs.gofiber.io/) as the web framework
+- [sqlc](https://sqlc.dev/) for type-safe SQL queries
+- [goose](https://github.com/pressly/goose) for database migrations
+- [goverter](https://goverter.jmattheis.de/) for type conversions
+- [swag](https://github.com/swaggo/swag) for OpenAPI/Swagger docs
 - [env](https://github.com/caarlos0/env) for environment configuration
 - [godotenv](https://github.com/joho/godotenv) for `.env` file handling
-- [Fiber](https://docs.gofiber.io/) as the web framework
 - [Testify](https://github.com/stretchr/testify) for unit testing
+- [Mockery](https://github.com/vektra/mockery) for mock generation
 
 ### Prerequisites
 

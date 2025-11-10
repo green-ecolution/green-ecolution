@@ -18,6 +18,17 @@
 
 **Green Ecolution** is a smart irrigation and green-space management platform that uses IoT sensor data to optimize water usage, automate maintenance, and reduce operational costs.
 
+## Key Features ✨
+
+- 🌳 **Tree & Vegetation Management** - Comprehensive inventory and monitoring of urban greenery
+- 📡 **IoT Sensor Integration** - Real-time data collection via LoRaWAN sensors and MQTT
+- 🗺️ **Smart Route Optimization** - Automated watering route planning using Valhalla and Vroom
+- 💧 **Water Usage Optimization** - Data-driven irrigation scheduling to reduce water waste
+- 🚛 **Fleet Management** - Vehicle tracking and maintenance task planning
+- 📊 **Analytics & Reporting** - Comprehensive evaluation and insights dashboard
+- 🔌 **Plugin System** - Extensible architecture for custom integrations
+- 🔐 **Enterprise Authentication** - OIDC/Keycloak integration with role-based access control
+
 ## Repository Structure 📁
 
 ```
@@ -202,4 +213,5 @@ Thank you for helping us improve Green Ecolution! 🌿
 - 🌐 [Official Website](https://green-ecolution.de)
 - 🖥️ [Live Demo](https://demo.green-ecolution.de)
 - 🧑‍💻 [GitHub Repository](https://github.com/green-ecolution)
-- 📘 [Documentation](https://github.com/green-ecolution/frontend)
+- 📘 [API Documentation](https://app.green-ecolution.de/api/v1/swagger/index.html)
+- 🎓 [University of Applied Sciences Flensburg](https://hs-flensburg.de/en)
