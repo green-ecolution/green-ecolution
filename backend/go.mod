@@ -35,7 +35,7 @@ require (
 	github.com/twpayne/go-geos v0.20.1
 	github.com/twpayne/pgx-geos v1.0.0
 	golang.org/x/net v0.46.0
-	golang.org/x/sync v0.17.0
+	golang.org/x/sync v0.18.0
 )
 
 require (
