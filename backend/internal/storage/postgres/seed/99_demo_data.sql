@@ -6,21 +6,21 @@ VALUES
   (2, 'B-2222', 'Test vehicle 2', 1000.0, 'transporter', 'unknown', 'C', 'Actros L Mercedes Benz', 2.4, 2.1, 5.0, 2.5),
   (3, 'B-3333', 'Test vehicle 3', 2800.0, 'transporter', 'available', 'C', 'Ford Ranger XL', 2.55, 4.0, 9.09, 26),
   (4, 'B-4444', 'Test vehicle 4', 1000.0, 'trailer', 'available', 'BE', 'VW Crafter Pritsche', 2.4, 2.1, 5.0, 5.5);
-ALTER SEQUENCE vehicles_id_seq RESTART WITH 5;
+SELECT setval('vehicles_id_seq', (SELECT MAX(id) FROM vehicles));
 
 INSERT INTO tree_clusters (id, name, watering_status, moisture_level, region_id, address, description, soil_condition, latitude, longitude, geometry)
-VALUES 
-  (1, 'Solitüde Strand', 'good', 0.75, 1, 'Solitüde Strand', 'Alle Bäume am Strand', 'sandig', 54.82128536520703, 9.488152515892045, ST_SetSRID(ST_MakePoint(54.82128536520703, 9.488152515892045), 4326)),
+VALUES
+  (1, 'Solitüde Strand', 'just watered', 0.85, 1, 'Solitüde Strand', 'Alle Bäume am Strand', 'sandig', 54.82128536520703, 9.488152515892045, ST_SetSRID(ST_MakePoint(54.82128536520703, 9.488152515892045), 4326)),
   (2, 'Sankt-Jürgen-Platz', 'moderate', 0.5, 1, 'Ulmenstraße', 'Bäume beim Sankt-Jürgen-Platz', 'schluffig', 54.78805731048199, 9.44400186680097, ST_SetSRID(ST_MakePoint(54.78805731048199, 9.44400186680097), 4326)),
   (3, 'Flensburger Stadion', 'unknown', 0.7, 1, 'Flensburger Stadion', 'Alle Bäume in der Gegend des Stadions in Mürwik', 'schluffig', 54.802163, 9.446398, ST_SetSRID(ST_MakePoint(54.802163, 9.446398), 4326)),
   (4, 'Campus Hochschule', 'bad', 0.1, 4, 'Thomas-Finke Straße', 'Gruppe ist besonders anfällig', 'schluffig', 54.77576059694547, 9.450720736264868, ST_SetSRID(ST_MakePoint(54.77576059694547, 9.450720736264868), 4326)),
   (5, 'Mathildenstraße', 'bad', 0.4, 10, 'Mathildenstraße', 'Sehr enge Straße und dadurch schlecht zu bewässern.', 'schluffig', 54.78219253876479, 9.423978982828825, ST_SetSRID(ST_MakePoint(54.78219253876479, 9.423978982828825), 4326)),
-  (6, 'Nordstadt', 'unknown', 0.6, 13, 'Apenrader Straße', 'Guter Baumbestand mit großen Kronen.', 'sandig', 54.807162, 9.423138, ST_SetSRID(ST_MakePoint(54.807162, 9.423138), 4326)),
-  (7, 'TSB Neustadt', 'good', 0.75, 13, 'Ecknerstraße', 'Kleiner Baumbestand.', 'sandig', 54.797162, 9.419620, ST_SetSRID(ST_MakePoint(54.797162, 9.419620), 4326)),
-  (8, 'Seniorenanlage Valentinerhof', 'bad', 0.1, 13, 'Auf dem Geländer der Seniorenanlage', 'Sehr viel versiegelter Boden.', 'sandig', 54.76994251235151, 9.441111747447234, ST_SetSRID(ST_MakePoint(54.76994251235151, 9.441111747447234), 4326)),
-  (9, 'Peelwatt', 'unknown', 0.1, 13, 'Peelwatt halt', 'Sehr viel versiegelter Boden.', 'sandig', 54.76671656688957, 9.456136954289867, ST_SetSRID(ST_MakePoint(54.76671656688957, 9.456136954289867), 4326)),
-  (10, 'Lautrupsbach', 'moderate', 0.1, 13, 'An der Nordstraße', 'Sehr viel versiegelter Boden.', 'sandig', 54.79265065021804, 9.454269041383837, ST_SetSRID(ST_MakePoint(54.76671656688957, 9.454269041383837), 4326));
-ALTER SEQUENCE tree_clusters_id_seq RESTART WITH 11;
+  (6, 'Nordstadt', 'good', 0.8, 13, 'Apenrader Straße', 'Guter Baumbestand mit großen Kronen.', 'sandig', 54.807162, 9.423138, ST_SetSRID(ST_MakePoint(54.807162, 9.423138), 4326)),
+  (7, 'TSB Neustadt', 'just watered', 0.9, 13, 'Ecknerstraße', 'Kleiner Baumbestand.', 'sandig', 54.797162, 9.419620, ST_SetSRID(ST_MakePoint(54.797162, 9.419620), 4326)),
+  (8, 'Seniorenanlage Valentinerhof', 'bad', 0.15, 13, 'Auf dem Geländer der Seniorenanlage', 'Sehr viel versiegelter Boden.', 'sandig', 54.76994251235151, 9.441111747447234, ST_SetSRID(ST_MakePoint(54.76994251235151, 9.441111747447234), 4326)),
+  (9, 'Peelwatt', 'unknown', 0.3, 13, 'Peelwatt halt', 'Sehr viel versiegelter Boden.', 'sandig', 54.76671656688957, 9.456136954289867, ST_SetSRID(ST_MakePoint(54.76671656688957, 9.456136954289867), 4326)),
+  (10, 'Lautrupsbach', 'moderate', 0.45, 13, 'An der Nordstraße', 'Sehr viel versiegelter Boden.', 'sandig', 54.79265065021804, 9.454269041383837, ST_SetSRID(ST_MakePoint(54.76671656688957, 9.454269041383837), 4326));
+SELECT setval('tree_clusters_id_seq', (SELECT MAX(id) FROM tree_clusters));
 
 INSERT INTO sensors (id, status, latitude, longitude, geometry)
 VALUES
@@ -116,7 +116,7 @@ INSERT INTO trees (tree_cluster_id, sensor_id, planting_year, species, number, l
 VALUES
   (NULL, NULL, 2023, 'Quercus robur', 1065, 54.780394213230196, 9.417514801025392, ST_SetSRID(ST_MakePoint(54.780394213230196, 9.417514801025392), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '2025-02-14 12:34:56');
 
-ALTER SEQUENCE trees_id_seq RESTART WITH 68;
+SELECT setval('trees_id_seq', (SELECT MAX(id) FROM trees));
 
 INSERT INTO sensor_data (sensor_id, data)
 VALUES
@@ -327,7 +327,7 @@ VALUES
   (3, '2025-06-12', 'Very important watering plan due to no rainfall', 'finished', 63.0, 1320.0, ''),
   (4, '2025-06-10', 'New watering plan for the south side of the city', 'not competed', 63.0, 600.0, ''),
   (5, '2025-06-04', 'Canceled due to flood', 'canceled', 63.0, 600.0, 'The watering plan was cancelled due to various reasons.');
-ALTER SEQUENCE watering_plans_id_seq RESTART WITH 6;
+SELECT setval('watering_plans_id_seq', (SELECT MAX(id) FROM watering_plans));
 
 INSERT INTO vehicle_watering_plans (vehicle_id, watering_plan_id) 
 VALUES 
