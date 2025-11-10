@@ -29,12 +29,71 @@ For further information, visit:
 
 ## Technologies ⚙️
 
-- [React](https://react.dev/) — UI library
-- [Vite](https://vitejs.dev/) — fast dev server and bundler
+**Core Stack:**
+- [React 19](https://react.dev/) — UI library
 - [TypeScript](https://www.typescriptlang.org/) — type safety
-- [ESLint](https://eslint.org/) + [Prettier](https://prettier.io/) — code linting and formatting
-- [pnpm](https://pnpm.io/) — fast and space-efficient package manager
-- [Vite Environment Variables](https://vitejs.dev/guide/env-and-mode.html) — for backend endpoint configuration
+- [Vite](https://vitejs.dev/) — fast dev server and bundler
+- [pnpm](https://pnpm.io/) — workspace-based package manager (required)
+
+**Routing & State Management:**
+- [TanStack Router](https://tanstack.com/router) — type-safe file-based routing
+- [TanStack Query](https://tanstack.com/query) — server state management
+- [Zustand](https://github.com/pmndrs/zustand) — client state management
+
+**Forms & Validation:**
+- [React Hook Form](https://react-hook-form.com/) — form handling
+- [Zod](https://zod.dev/) — schema validation
+
+**UI & Visualization:**
+- [Leaflet](https://leafletjs.com/) — interactive maps
+- [shadcn/ui](https://ui.shadcn.com/) — UI components
+- [Tailwind CSS](https://tailwindcss.com/) — utility-first CSS
+
+**Development Tools:**
+- [ESLint](https://eslint.org/) + [Prettier](https://prettier.io/) — code quality
+- [OpenAPI Generator](https://openapi-generator.tech/) — auto-generated API client
+- [Module Federation](https://module-federation.io/) — plugin system
+
+## Project Structure 📁
+
+This is a **pnpm workspace** monorepo with three packages:
+
+```
+frontend/
+├── app/                      # Main React application
+│   ├── src/
+│   │   ├── routes/          # File-based routing (TanStack Router)
+│   │   │   ├── _protected/  # Protected routes (requires auth)
+│   │   │   └── index.tsx    # Public routes
+│   │   ├── components/      # React components
+│   │   ├── store/           # Zustand stores (auth, map, user)
+│   │   ├── hooks/           # Custom React hooks
+│   │   ├── api/             # API client wrappers
+│   │   └── lib/             # Utilities and helpers
+│   └── package.json
+│
+├── packages/
+│   ├── backend-client/      # Auto-generated OpenAPI client
+│   │   └── src/             # Generated from backend Swagger spec
+│   │
+│   └── plugin-interface/    # Plugin system types and interfaces
+│       └── src/             # Shared plugin contracts
+│
+└── pnpm-workspace.yaml      # Workspace configuration
+```
+
+**Build Order:** `backend-client` and `plugin-interface` must be built before the main `app`.
+
+## Plugin System 🔌
+
+The frontend supports **runtime plugins** using **Module Federation**:
+
+- Plugins are loaded dynamically at runtime
+- Each plugin can contribute routes, components, and functionality
+- Plugin interface is defined in `packages/plugin-interface/`
+- Plugins register via backend API and communicate via typed contracts
+
+See [`packages/plugin-interface/README.md`](packages/plugin-interface/README.md) for plugin development guide.
 
 ## Local development 💻
 
@@ -97,6 +156,23 @@ frontend/dist/
 ```
 
 When running `make build` from the repository root, the build artifacts are automatically embedded into the backend binary for unified deployment.
+
+### Regenerating API Client 🔄
+
+The `packages/backend-client` is auto-generated from the backend's OpenAPI specification:
+
+```bash
+# From frontend/ directory
+pnpm run generate          # Generate from running local backend
+pnpm run generate:stage    # Generate from staging API
+pnpm run generate:local    # Generate from local API (explicit)
+```
+
+After regenerating, rebuild the client:
+
+```bash
+pnpm run build:backend-client
+```
 
 ### Linting & Testing ✅
 
