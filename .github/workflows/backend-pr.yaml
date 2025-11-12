@@ -2,9 +2,9 @@ name: "Backend - Pull Request Checks"
 
 on:
   pull_request:
-    paths:
-      - "backend/**"
-      - ".github/workflows/backend-pr.yaml"
+    # paths:
+    #   - "backend/**"
+    #   - ".github/workflows/backend-pr.yaml"
 
 jobs:
   build_and_test:

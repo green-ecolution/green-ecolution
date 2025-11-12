@@ -2,9 +2,9 @@ name: "Frontend - Pull Request Checks"
 
 on:
   pull_request:
-    paths:
-      - "frontend/**"
-      - ".github/workflows/frontend-pr.yaml"
+    # paths:
+    #   - "frontend/**"
+    #   - ".github/workflows/frontend-pr.yaml"
 
 jobs:
   build:
