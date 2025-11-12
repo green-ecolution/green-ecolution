@@ -20,9 +20,19 @@ jobs:
         with:
           github-token: ${{ secrets.GREEN_ECOLUTION_PAT }}
 
+      - name: Check if already approved
+        id: check-approval
+        run: |
+          # Check if the PR is already approved by this workflow
+          APPROVALS=$(gh pr view "$PR_URL" --json reviews --jq '[.reviews[] | select(.state == "APPROVED")] | length')
+          echo "approvals=$APPROVALS" >> $GITHUB_OUTPUT
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GREEN_ECOLUTION_PAT }}
+
       - name: Approve PR
-        # Approve only patch and minor updates
-        if: ${{ steps.metadata.outputs.update-type != 'version-update:semver-major' }}
+        # Approve only patch and minor updates and only if not already approved
+        if: ${{ steps.metadata.outputs.update-type != 'version-update:semver-major' && steps.check-approval.outputs.approvals == '0' }}
         run: gh pr review --approve "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
