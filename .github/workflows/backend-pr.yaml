@@ -9,9 +9,6 @@ on:
 jobs:
   build_and_test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend
     steps:
       - uses: actions/checkout@v5
 
@@ -23,19 +20,32 @@ jobs:
         with:
           go-version-file: ./backend/go.mod
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: "./frontend/package.json"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+          cache-dependency-path: "./frontend/pnpm-lock.yaml"
+
       - name: Build
         run: make build
 
       - name: Test
-        run: make test
+        working-directory: ./backend
+        run: go test -cover ./...
 
   check_generated_code:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend
     steps:
       - uses: actions/checkout@v5
+
+      - name: Setup Dependencies
+        run: sudo apt-get update && sudo apt-get install -y libgeos-dev libproj-dev
 
       - name: Setup Go
         uses: actions/setup-go@v6
@@ -63,9 +73,6 @@ jobs:
 
   test_pkg_client:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend
     steps:
       - uses: actions/checkout@v5
 
@@ -80,25 +87,54 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend
     steps:
       - uses: actions/checkout@v5
+
+      - name: Setup Dependencies
+        run: sudo apt-get update && sudo apt-get install -y libgeos-dev libproj-dev
 
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
           go-version-file: ./backend/go.mod
+          cache-dependency-path: ./backend/go.sum
 
-      - name: Run golangci-lint
-        run: make lint
+      - name: Download Go modules
+        working-directory: ./backend
+        run: go mod download
+
+      - name: Setup golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: ./backend
+          args: --timeout=5m
+
+      - name: Run go fmt check
+        working-directory: ./backend
+        run: |
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "Go code is not formatted. Please run 'go fmt ./...'"
+            gofmt -d .
+            exit 1
+          fi
 
   test_migrations:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v5
 
@@ -108,9 +144,21 @@ jobs:
           go-version-file: ./backend/go.mod
 
       - name: Test migrations up
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
         run: make migrate/up
 
       - name: Test migrations down
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
         run: make migrate/down
 
   test_dockerfile:
