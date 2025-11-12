@@ -8,15 +8,14 @@ on:
 
 jobs:
   build:
-    defaults:
-      run:
-        working-directory: ./frontend
     permissions:
       contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: "./frontend/package.json"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -26,21 +25,22 @@ jobs:
           cache-dependency-path: "./frontend/pnpm-lock.yaml"
 
       - name: Install Dependencies
+        working-directory: ./frontend
         run: pnpm install --frozen-lockfile
 
       - name: Build
+        working-directory: ./frontend
         run: pnpm build
 
   lint:
-    defaults:
-      run:
-        working-directory: ./frontend
     permissions:
       contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: "./frontend/package.json"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -50,22 +50,23 @@ jobs:
           cache-dependency-path: "./frontend/pnpm-lock.yaml"
 
       - name: Install Dependencies
+        working-directory: ./frontend
         run: pnpm install --frozen-lockfile
 
       - name: Linter
         continue-on-error: false
+        working-directory: ./frontend
         run: pnpm lint
 
   test:
-    defaults:
-      run:
-        working-directory: ./frontend
     permissions:
       contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: "./frontend/package.json"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -75,9 +76,11 @@ jobs:
           cache-dependency-path: "./frontend/pnpm-lock.yaml"
 
       - name: Install Dependencies
+        working-directory: ./frontend
         run: pnpm install --frozen-lockfile
 
       - name: Test
+        working-directory: ./frontend
         run: pnpm test
 
   test_dockerfile:
