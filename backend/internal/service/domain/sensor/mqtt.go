@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	domain "github.com/green-ecolution/backend/internal/entities"
-	"github.com/green-ecolution/backend/internal/logger"
-	"github.com/green-ecolution/backend/internal/storage"
+	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 )
 
 func (s *SensorService) HandleMessage(ctx context.Context, payload *domain.MqttPayload) (*domain.SensorData, error) {

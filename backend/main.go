@@ -1,10 +1,10 @@
 //go:generate go tool mockery
 //go:generate go tool swag fmt
 //go:generate go tool swag init --requiredByDefault
-//go:generate go tool goverter gen github.com/green-ecolution/backend/internal/server/http/entities/...
-//go:generate go tool goverter gen github.com/green-ecolution/backend/internal/server/mqtt/entities/...
-//go:generate go tool goverter gen github.com/green-ecolution/backend/internal/storage/mongodb/entities/...
-//go:generate go tool goverter gen github.com/green-ecolution/backend/internal/storage/postgres/mapper/...
+//go:generate go tool goverter gen github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/...
+//go:generate go tool goverter gen github.com/green-ecolution/green-ecolution/backend/internal/server/mqtt/entities/...
+//go:generate go tool goverter gen github.com/green-ecolution/green-ecolution/backend/internal/storage/mongodb/entities/...
+//go:generate go tool goverter gen github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper/...
 package main
 
 import (
@@ -19,24 +19,24 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/green-ecolution/backend/docs"
-	"github.com/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/backend/internal/entities"
-	"github.com/green-ecolution/backend/internal/logger"
-	"github.com/green-ecolution/backend/internal/server/http"
-	"github.com/green-ecolution/backend/internal/server/mqtt"
-	"github.com/green-ecolution/backend/internal/service"
-	"github.com/green-ecolution/backend/internal/service/domain"
-	"github.com/green-ecolution/backend/internal/storage"
-	"github.com/green-ecolution/backend/internal/storage/auth"
-	"github.com/green-ecolution/backend/internal/storage/local"
-	"github.com/green-ecolution/backend/internal/storage/postgres"
-	"github.com/green-ecolution/backend/internal/storage/routing"
-	_ "github.com/green-ecolution/backend/internal/storage/routing/openrouteservice"
-	"github.com/green-ecolution/backend/internal/storage/routing/valhalla"
-	"github.com/green-ecolution/backend/internal/storage/s3"
-	"github.com/green-ecolution/backend/internal/worker"
-	"github.com/green-ecolution/backend/internal/worker/subscriber"
+	"github.com/green-ecolution/green-ecolution/backend/docs"
+	"github.com/green-ecolution/green-ecolution/backend/internal/config"
+	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/mqtt"
+	"github.com/green-ecolution/green-ecolution/backend/internal/service"
+	"github.com/green-ecolution/green-ecolution/backend/internal/service/domain"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/auth"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/local"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/routing"
+	_ "github.com/green-ecolution/green-ecolution/backend/internal/storage/routing/openrouteservice"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/routing/valhalla"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/s3"
+	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
+	"github.com/green-ecolution/green-ecolution/backend/internal/worker/subscriber"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/viper"

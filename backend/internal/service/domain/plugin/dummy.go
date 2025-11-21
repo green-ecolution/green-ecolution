@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/green-ecolution/backend/internal/entities"
-	"github.com/green-ecolution/backend/internal/service"
+	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 )
 
 var _ service.PluginService = (*DummyPluginManager)(nil)

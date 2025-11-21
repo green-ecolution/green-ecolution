@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/green-ecolution/backend/internal/entities"
-	"github.com/green-ecolution/backend/internal/storage"
-	storageMock "github.com/green-ecolution/backend/internal/storage/_mock"
-	"github.com/green-ecolution/backend/internal/worker"
+	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
+	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/storage/_mock"
+	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

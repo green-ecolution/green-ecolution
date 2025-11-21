@@ -9,11 +9,11 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
-	domain "github.com/green-ecolution/backend/internal/entities"
-	"github.com/green-ecolution/backend/internal/server/http/entities"
-	"github.com/green-ecolution/backend/internal/server/http/handler/v1/errorhandler"
-	"github.com/green-ecolution/backend/internal/service"
-	"github.com/green-ecolution/backend/internal/utils"
+	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/errorhandler"
+	"github.com/green-ecolution/green-ecolution/backend/internal/service"
+	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
 func getPluginFiles(svc service.PluginService) fiber.Handler {

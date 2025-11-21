@@ -4,8 +4,8 @@
 package generated
 
 import (
-	entities "github.com/green-ecolution/backend/internal/entities"
-	sensor "github.com/green-ecolution/backend/internal/server/mqtt/entities/sensor"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	sensor "github.com/green-ecolution/green-ecolution/backend/internal/server/mqtt/entities/sensor"
 )
 
 type MqttMqttMapperImpl struct{}

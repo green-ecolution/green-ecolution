@@ -1,4 +1,4 @@
-module github.com/green-ecolution/backend/pkg/client
+module github.com/green-ecolution/green-ecolution/backend/pkg/client
 
 go 1.18
 

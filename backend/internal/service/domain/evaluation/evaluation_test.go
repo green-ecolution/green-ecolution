@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/green-ecolution/backend/internal/entities"
-	"github.com/green-ecolution/backend/internal/service/domain/evaluation"
-	storageMock "github.com/green-ecolution/backend/internal/storage/_mock"
+	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/service/domain/evaluation"
+	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/storage/_mock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )

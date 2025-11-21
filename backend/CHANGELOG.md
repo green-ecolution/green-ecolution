@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 -   CI/CD: only run workflows when necessary (#485)
--   Rename repository from `github.com/green-ecolution/green-ecolution-backend` to `github.com/green-ecolution/backend`
+-   Rename repository from `github.com/green-ecolution/green-ecolution-backend` to `github.com/green-ecolution/green-ecolution/backend`
 -   Remove dev deploy environment (`stage` will be used to deploy the develop branch, while `dev` is used to run it locally)
 -   Dependency updates from dependabot
 -   Update README.md
@@ -121,12 +121,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 -   Use pgxpool for concurrency-safe connection pool for pgx (#94)
 
-[Unreleased]: https://github.com/green-ecolution/backend/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/green-ecolution/green-ecolution/backend/compare/v1.2.1...HEAD
 
-[v1.2.1]: https://github.com/green-ecolution/backend/compare/v1.2.0...v1.2.1
+[v1.2.1]: https://github.com/green-ecolution/green-ecolution/backend/compare/v1.2.0...v1.2.1
 
-[v1.0.0]: https://github.com/green-ecolution/backend/compare/dfdebe...v1.0.0
+[v1.0.0]: https://github.com/green-ecolution/green-ecolution/backend/compare/dfdebe...v1.0.0
 
-[v1.1.0]: https://github.com/green-ecolution/backend/compare/v1.0.0...v1.1.0
+[v1.1.0]: https://github.com/green-ecolution/green-ecolution/backend/compare/v1.0.0...v1.1.0
 
-[v1.2.0]: https://github.com/green-ecolution/backend/compare/v1.1.0...v1.2.0
+[v1.2.0]: https://github.com/green-ecolution/green-ecolution/backend/compare/v1.1.0...v1.2.0

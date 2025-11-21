@@ -12,7 +12,7 @@ images:
   newName: ghcr.io/green-ecolution/green-ecolution-frontend-dev
   newTag: dcf94c8
 - name: init-migrations-image
-  newName: ghcr.io/green-ecolution/migrations-postgres
+  newName: ghcr.io/green-ecolution/green-ecolution/migrations-postgres
   newTag: latest
 generators:
 - ./secret-generator.yaml

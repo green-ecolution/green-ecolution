@@ -3,18 +3,18 @@ package mapper
 import (
 	"encoding/json"
 
-	"github.com/green-ecolution/backend/internal/entities"
-	sqlc "github.com/green-ecolution/backend/internal/storage/postgres/_sqlc"
-	mqtt "github.com/green-ecolution/backend/internal/storage/postgres/sensor/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc"
+	mqtt "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/sensor/entities"
 )
 
 // goverter:converter
-// goverter:extend github.com/green-ecolution/backend/internal/utils:TimeToTime
-// goverter:extend github.com/green-ecolution/backend/internal/utils:StringPtrToString
+// goverter:extend github.com/green-ecolution/green-ecolution/backend/internal/utils:TimeToTime
+// goverter:extend github.com/green-ecolution/green-ecolution/backend/internal/utils:StringPtrToString
 // goverter:extend MapSensorStatus MapSensorData
 type InternalSensorRepoMapper interface {
 	// goverter:ignore LatestData
-	// goverter:map AdditionalInformations AdditionalInfo  | github.com/green-ecolution/backend/internal/utils:MapAdditionalInfo
+	// goverter:map AdditionalInformations AdditionalInfo  | github.com/green-ecolution/green-ecolution/backend/internal/utils:MapAdditionalInfo
 	FromSql(src *sqlc.Sensor) (*entities.Sensor, error)
 	FromSqlList(src []*sqlc.Sensor) ([]*entities.Sensor, error)
 	// goverter:map Data | MapSensorData

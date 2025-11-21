@@ -5,11 +5,11 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	domain "github.com/green-ecolution/backend/internal/entities"
-	"github.com/green-ecolution/backend/internal/server/http/entities"
-	"github.com/green-ecolution/backend/internal/server/http/entities/mapper/generated"
-	"github.com/green-ecolution/backend/internal/server/http/handler/v1/errorhandler"
-	"github.com/green-ecolution/backend/internal/service"
+	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper/generated"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/errorhandler"
+	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/singleflight"
 )

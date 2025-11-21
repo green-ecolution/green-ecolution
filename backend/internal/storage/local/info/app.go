@@ -8,16 +8,16 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/backend/internal/entities"
-	"github.com/green-ecolution/backend/internal/logger"
-	"github.com/green-ecolution/backend/internal/storage"
+	"github.com/green-ecolution/green-ecolution/backend/internal/config"
+	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 )
 
 var version = "development"
 var gitCommit = "unknown"
 var gitBranch = "develop"
-var gitRepository = "https://github.com/green-ecolution/backend"
+var gitRepository = "https://github.com/green-ecolution/green-ecolution/backend"
 var buildTime = ""
 var runTime = time.Now()
 

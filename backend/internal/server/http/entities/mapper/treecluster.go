@@ -1,14 +1,14 @@
 package mapper
 
 import (
-	domain "github.com/green-ecolution/backend/internal/entities"
-	"github.com/green-ecolution/backend/internal/server/http/entities"
+	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
 )
 
 // goverter:converter
-// goverter:extend github.com/green-ecolution/backend/internal/utils:TimeToTime
-// goverter:extend github.com/green-ecolution/backend/internal/utils:TimeToTimePtr
-// goverter:extend github.com/green-ecolution/backend/internal/utils:MapKeyValueInterface
+// goverter:extend github.com/green-ecolution/green-ecolution/backend/internal/utils:TimeToTime
+// goverter:extend github.com/green-ecolution/green-ecolution/backend/internal/utils:TimeToTimePtr
+// goverter:extend github.com/green-ecolution/green-ecolution/backend/internal/utils:MapKeyValueInterface
 // goverter:extend MapWateringStatus MapSoilCondition MapSoilConditionReq MapTreesToIDs MapSensorStatus
 // goverter:ignoreMissing
 type TreeClusterHTTPMapper interface {

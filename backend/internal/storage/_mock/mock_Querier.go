@@ -5,7 +5,7 @@ package storage
 import (
 	context "context"
 
-	sqlc "github.com/green-ecolution/backend/internal/storage/postgres/_sqlc"
+	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc"
 	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/google/uuid"

@@ -24,7 +24,7 @@ go get golang.org/x/net/context
 Put the package under your project folder and add the following in import:
 
 ```go
-import client "github.com/green-ecolution/backend/pkg/client"
+import client "github.com/green-ecolution/green-ecolution/backend/pkg/client"
 ```
 
 To use a proxy, set the environment variable `HTTP_PROXY`:

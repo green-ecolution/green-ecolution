@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/green-ecolution/backend/internal/utils"
+	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
 type LogFormat string

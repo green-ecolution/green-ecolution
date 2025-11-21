@@ -6,9 +6,9 @@ import (
 	"os"
 	"testing"
 
-	sqlc "github.com/green-ecolution/backend/internal/storage/postgres/_sqlc"
-	"github.com/green-ecolution/backend/internal/storage/postgres/store"
-	"github.com/green-ecolution/backend/internal/storage/postgres/testutils"
+	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/store"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/testutils"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"

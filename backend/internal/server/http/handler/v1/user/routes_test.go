@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	domain "github.com/green-ecolution/backend/internal/entities"
-	"github.com/green-ecolution/backend/internal/server/http/entities"
-	serviceMock "github.com/green-ecolution/backend/internal/service/_mock"
+	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
+	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/service/_mock"
 )
 
 func TestRegisterRoutes(t *testing.T) {

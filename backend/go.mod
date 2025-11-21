@@ -1,4 +1,4 @@
-module github.com/green-ecolution/backend
+module github.com/green-ecolution/green-ecolution/backend
 
 go 1.24.0
 

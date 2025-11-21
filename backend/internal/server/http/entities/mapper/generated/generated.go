@@ -4,10 +4,10 @@
 package generated
 
 import (
-	entities "github.com/green-ecolution/backend/internal/entities"
-	entities1 "github.com/green-ecolution/backend/internal/server/http/entities"
-	mapper "github.com/green-ecolution/backend/internal/server/http/entities/mapper"
-	utils "github.com/green-ecolution/backend/internal/utils"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	entities1 "github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
+	mapper "github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper"
+	utils "github.com/green-ecolution/green-ecolution/backend/internal/utils"
 	"time"
 )
 

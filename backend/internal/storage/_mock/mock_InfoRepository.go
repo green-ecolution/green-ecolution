@@ -5,7 +5,7 @@ package storage
 import (
 	context "context"
 
-	entities "github.com/green-ecolution/backend/internal/entities"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	mock "github.com/stretchr/testify/mock"
 )
 

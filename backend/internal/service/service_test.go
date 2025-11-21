@@ -3,7 +3,7 @@ package service
 import (
 	"testing"
 
-	serviceMock "github.com/green-ecolution/backend/internal/service/_mock"
+	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/service/_mock"
 	"github.com/stretchr/testify/assert"
 )
 

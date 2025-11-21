@@ -4,11 +4,11 @@
 package generated
 
 import (
-	entities "github.com/green-ecolution/backend/internal/entities"
-	sqlc "github.com/green-ecolution/backend/internal/storage/postgres/_sqlc"
-	mapper "github.com/green-ecolution/backend/internal/storage/postgres/mapper"
-	entities1 "github.com/green-ecolution/backend/internal/storage/postgres/sensor/entities"
-	utils "github.com/green-ecolution/backend/internal/utils"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc"
+	mapper "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper"
+	entities1 "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/sensor/entities"
+	utils "github.com/green-ecolution/green-ecolution/backend/internal/utils"
 	"time"
 )
 

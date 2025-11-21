@@ -3,9 +3,9 @@ package treecluster_test
 import (
 	"time"
 
-	"github.com/green-ecolution/backend/internal/entities"
-	serverEntities "github.com/green-ecolution/backend/internal/server/http/entities"
-	"github.com/green-ecolution/backend/internal/utils"
+	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	serverEntities "github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
 var (

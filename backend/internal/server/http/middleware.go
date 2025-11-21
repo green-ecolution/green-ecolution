@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/green-ecolution/backend/internal/logger"
-	"github.com/green-ecolution/backend/internal/server/http/middleware"
+	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/middleware"
 	"github.com/spf13/viper"
 )
 

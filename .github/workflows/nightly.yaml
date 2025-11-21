@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: green-ecolution
+  IMAGE_PREFIX: green-ecolution/green-ecolution
 
 jobs:
   check-changes:

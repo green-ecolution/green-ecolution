@@ -6,8 +6,8 @@ import (
 	"slices"
 	"time"
 
-	"github.com/green-ecolution/backend/internal/entities"
-	"github.com/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
 var mapWateringStatus = map[int]entities.WateringStatus{

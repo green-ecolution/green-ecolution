@@ -4,8 +4,8 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/backend/internal/storage"
+	"github.com/green-ecolution/green-ecolution/backend/internal/config"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 )
 
 func NewRepository(cfg *config.Config) (*storage.Repository, error) {

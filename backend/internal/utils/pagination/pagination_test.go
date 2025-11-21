@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/green-ecolution/backend/internal/server/http/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
 	"github.com/stretchr/testify/assert"
 )
 

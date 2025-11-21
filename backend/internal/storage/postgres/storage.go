@@ -3,16 +3,16 @@ package postgres
 import (
 	"log/slog"
 
-	"github.com/green-ecolution/backend/internal/storage"
-	sqlc "github.com/green-ecolution/backend/internal/storage/postgres/_sqlc"
-	mapper "github.com/green-ecolution/backend/internal/storage/postgres/mapper/generated"
-	"github.com/green-ecolution/backend/internal/storage/postgres/region"
-	"github.com/green-ecolution/backend/internal/storage/postgres/sensor"
-	"github.com/green-ecolution/backend/internal/storage/postgres/store"
-	"github.com/green-ecolution/backend/internal/storage/postgres/tree"
-	"github.com/green-ecolution/backend/internal/storage/postgres/treecluster"
-	"github.com/green-ecolution/backend/internal/storage/postgres/vehicle"
-	wateringplan "github.com/green-ecolution/backend/internal/storage/postgres/watering_plan"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
+	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc"
+	mapper "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper/generated"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/region"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/sensor"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/store"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/tree"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/treecluster"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/vehicle"
+	wateringplan "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/watering_plan"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 

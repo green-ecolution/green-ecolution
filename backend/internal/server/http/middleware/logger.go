@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
 func AppLogger(createLoggerFn func() *slog.Logger) fiber.Handler {

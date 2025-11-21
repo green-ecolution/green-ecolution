@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/green-ecolution/backend/internal/server/http/handler/v1/treecluster"
-	"github.com/green-ecolution/backend/internal/server/http/middleware"
-	serviceMock "github.com/green-ecolution/backend/internal/service/_mock"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/treecluster"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/middleware"
+	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/service/_mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/green-ecolution/backend/internal/logger"
-	sqlc "github.com/green-ecolution/backend/internal/storage/postgres/_sqlc"
-	"github.com/green-ecolution/backend/internal/storage/postgres/mapper"
+	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
+	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper"
 
-	"github.com/green-ecolution/backend/internal/storage"
-	store "github.com/green-ecolution/backend/internal/storage/postgres/store"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
+	store "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/store"
 )
 
 var _ storage.VehicleRepository = (*VehicleRepository)(nil)

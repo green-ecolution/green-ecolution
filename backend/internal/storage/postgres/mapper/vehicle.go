@@ -1,17 +1,17 @@
 package mapper
 
 import (
-	"github.com/green-ecolution/backend/internal/entities"
-	sqlc "github.com/green-ecolution/backend/internal/storage/postgres/_sqlc"
+	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc"
 )
 
 // goverter:converter
-// goverter:extend github.com/green-ecolution/backend/internal/utils:TimeToTime
-// goverter:extend github.com/green-ecolution/backend/internal/utils:TimePtrToTime
-// goverter:extend github.com/green-ecolution/backend/internal/utils:StringPtrToString
+// goverter:extend github.com/green-ecolution/green-ecolution/backend/internal/utils:TimeToTime
+// goverter:extend github.com/green-ecolution/green-ecolution/backend/internal/utils:TimePtrToTime
+// goverter:extend github.com/green-ecolution/green-ecolution/backend/internal/utils:StringPtrToString
 // goverter:extend MapDrivingLicense MapVehicleStatus MapVehicleType
 type InternalVehicleRepoMapper interface {
-	// goverter:map AdditionalInformations AdditionalInfo | github.com/green-ecolution/backend/internal/utils:MapAdditionalInfo
+	// goverter:map AdditionalInformations AdditionalInfo | github.com/green-ecolution/green-ecolution/backend/internal/utils:MapAdditionalInfo
 	FromSql(src *sqlc.Vehicle) (*entities.Vehicle, error)
 	FromSqlList(src []*sqlc.Vehicle) ([]*entities.Vehicle, error)
 

@@ -1,11 +1,11 @@
 package tree_test
 
 import (
-	"github.com/green-ecolution/backend/internal/utils"
+	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 	"time"
 
-	"github.com/green-ecolution/backend/internal/entities"
-	httpEntities "github.com/green-ecolution/backend/internal/server/http/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	httpEntities "github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
 )
 
 var (

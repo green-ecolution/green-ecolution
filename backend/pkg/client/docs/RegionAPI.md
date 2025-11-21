@@ -26,7 +26,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/green-ecolution/backend/pkg/client"
+	openapiclient "github.com/green-ecolution/green-ecolution/backend/pkg/client"
 )
 
 func main() {
@@ -94,7 +94,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/green-ecolution/backend/pkg/client"
+	openapiclient "github.com/green-ecolution/green-ecolution/backend/pkg/client"
 )
 
 func main() {

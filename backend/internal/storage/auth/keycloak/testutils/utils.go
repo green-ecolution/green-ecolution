@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/Nerzal/gocloak/v13"
-	"github.com/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 )
 
 func (s *KeycloakTestSuite) LoginAdminAndGetToken(t testing.TB) *gocloak.JWT {

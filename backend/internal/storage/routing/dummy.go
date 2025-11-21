@@ -4,8 +4,8 @@ import (
 	"context"
 	"io"
 
-	"github.com/green-ecolution/backend/internal/entities"
-	"github.com/green-ecolution/backend/internal/storage"
+	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 )
 
 // DummyRoutingRepo is used to disable the routing service by configuration

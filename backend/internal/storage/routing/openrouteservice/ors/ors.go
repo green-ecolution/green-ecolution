@@ -11,8 +11,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/green-ecolution/backend/internal/entities"
-	"github.com/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
 type OrsClientConfig struct {

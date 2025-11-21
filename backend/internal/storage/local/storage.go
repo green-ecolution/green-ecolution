@@ -3,9 +3,9 @@ package local
 import (
 	"log/slog"
 
-	"github.com/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/backend/internal/storage"
-	"github.com/green-ecolution/backend/internal/storage/local/info"
+	"github.com/green-ecolution/green-ecolution/backend/internal/config"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/local/info"
 )
 
 func NewRepository(cfg *config.Config) (*storage.Repository, error) {

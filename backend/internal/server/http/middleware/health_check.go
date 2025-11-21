@@ -3,7 +3,7 @@ package middleware
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/healthcheck"
-	"github.com/green-ecolution/backend/internal/service"
+	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 )
 
 func HealthCheck(svc service.ServicesInterface) fiber.Handler {

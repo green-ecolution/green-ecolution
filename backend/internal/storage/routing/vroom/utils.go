@@ -1,6 +1,6 @@
 package vroom
 
-import "github.com/green-ecolution/backend/internal/utils"
+import "github.com/green-ecolution/green-ecolution/backend/internal/utils"
 
 type VroomType string
 

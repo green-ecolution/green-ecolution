@@ -3,9 +3,9 @@ package pagination
 import (
 	"context"
 
-	"github.com/green-ecolution/backend/internal/logger"
-	"github.com/green-ecolution/backend/internal/server/http/entities"
-	"github.com/green-ecolution/backend/internal/storage"
+	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 )
 
 func GetValues(ctx context.Context) (page, limit int32, err error) {

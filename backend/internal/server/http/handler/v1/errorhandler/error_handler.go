@@ -5,7 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/green-ecolution/backend/internal/service"
+	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 )
 
 func HandleError(err error) error {

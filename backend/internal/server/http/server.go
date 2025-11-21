@@ -8,11 +8,11 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/green-ecolution/backend/internal/worker"
+	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/backend/internal/service"
+	"github.com/green-ecolution/green-ecolution/backend/internal/config"
+	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 )
 
 type HTTPError struct {
