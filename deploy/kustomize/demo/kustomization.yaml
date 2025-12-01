@@ -14,7 +14,7 @@ images:
   newTag: v1.2.0
 - name: init-migrations-image
   newName: ghcr.io/green-ecolution/green-ecolution/migrations-postgres
-  newTag: latest
+  newTag: develop-stage
 generators:
 - ./secret-generator.yaml
 patches:
