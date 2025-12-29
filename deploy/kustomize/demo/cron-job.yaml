@@ -9,38 +9,37 @@ spec:
       template:
         spec:
           containers:
-          - name: init-migrations
-            image: init-migrations-image
-            imagePullPolicy: Always
-            env:
-              - name: MIGRATION_WITH_SEED
-                value: "true"
-              - name: MIGRATION_WITH_DB_RESET
-                value: "true"
-              - name: POSTGRES_DB
-                valueFrom:
-                  configMapKeyRef:
-                    name: backend-config
-                    key: GE_SERVER_DATABASE_NAME
-              - name: POSTGRES_HOST
-                valueFrom:
-                  configMapKeyRef:
-                    name: backend-config
-                    key: GE_SERVER_DATABASE_HOST
-              - name: POSTGRES_PORT
-                valueFrom:
-                  configMapKeyRef:
-                    name: backend-config
-                    key: GE_SERVER_DATABASE_PORT
-              - name: POSTGRES_USER
-                valueFrom:
-                  secretKeyRef:
-                    name: backend-secrets
-                    key: GE_SERVER_DATABASE_USER
-              - name: POSTGRES_PASSWORD
-                valueFrom:
-                  secretKeyRef:
-                    name: backend-secrets
-                    key: GE_SERVER_DATABASE_PASSWORD
+            - name: init-migrations
+              image: init-migrations-image
+              imagePullPolicy: Always
+              env:
+                - name: MIGRATION_WITH_SEED
+                  value: "true"
+                - name: MIGRATION_WITH_DB_RESET
+                  value: "true"
+                - name: POSTGRES_DB
+                  valueFrom:
+                    configMapKeyRef:
+                      name: backend-config
+                      key: GE_SERVER_DATABASE_NAME
+                - name: POSTGRES_HOST
+                  valueFrom:
+                    configMapKeyRef:
+                      name: backend-config
+                      key: GE_SERVER_DATABASE_HOST
+                - name: POSTGRES_PORT
+                  valueFrom:
+                    configMapKeyRef:
+                      name: backend-config
+                      key: GE_SERVER_DATABASE_PORT
+                - name: POSTGRES_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: backend-secrets
+                      key: GE_SERVER_DATABASE_USERNAME
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: backend-secrets
+                      key: GE_SERVER_DATABASE_PASSWORD
           restartPolicy: OnFailure
-
