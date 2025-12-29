@@ -5,8 +5,13 @@ All notable changes to Green Ecolution will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.1.0 (2025-12-29)
+> **Note on Versioning:** This project was reset to v0.1.0 starting from the consolidated
+> monorepo structure. Previous versions (v1.0.0 - v1.2.1) are preserved as legacy releases
+> from the early development phase before the backend and frontend were merged into a
+> single repository. For legacy releases, see the
+> [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## 0.1.0 (2025-12-29)
 
 ### Features
 
@@ -37,7 +42,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * update vehicle schema and formular (create and update) ([c5901cf](https://github.com/green-ecolution/green-ecolution/commit/c5901cf13cb291715b05870202939dcba08bd499))
 * update wateringplan schema and formular (create, update and update status) ([a027b9d](https://github.com/green-ecolution/green-ecolution/commit/a027b9dec2e40eef46aaf3c19afa2bae0020c883))
 
-
 ### Bug Fixes
 
 * backend docker run ([b8896bd](https://github.com/green-ecolution/green-ecolution/commit/b8896bd47ebe6c6bbb2c0c0313b322ee49a3ba50))
@@ -52,13 +56,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * stage deployment missing env ([e4cf8f4](https://github.com/green-ecolution/green-ecolution/commit/e4cf8f4efd2dfc8480ff2ba258eaef6983a55d34))
 * use static release-please PR header ([feb906e](https://github.com/green-ecolution/green-ecolution/commit/feb906ee248ed6a8b7416e92b3fed06d99dcece5))
 * vehicle type in vroom repository ([a374d8c](https://github.com/green-ecolution/green-ecolution/commit/a374d8cc3c7205a6d75328bd8d6e38a60771ee83))
-
-## [Unreleased]
-
-### Note on Versioning
-
-This project was reset to v0.1.0 starting from the consolidated monorepo structure.
-Previous versions (v1.0.0 - v1.2.1) are preserved as legacy releases from the early
-development phase before the backend and frontend were merged into a single repository.
-
-For legacy releases, see the [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
