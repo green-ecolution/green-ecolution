@@ -57,6 +57,7 @@ func TestSchedulerWithStruct(t *testing.T) {
 
 		time.Sleep(150 * time.Millisecond)
 		cancel()
+		time.Sleep(20 * time.Millisecond)
 		countAfterStop := task.callCount
 
 		time.Sleep(150 * time.Millisecond)
