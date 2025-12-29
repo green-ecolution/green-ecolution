@@ -38,7 +38,7 @@ authors:
     given-names: "Sophia"
     family-names: "Anthopoilos"
     email: sophia.anthopoilos@stud.hs-flensburg.de
-version: 0.0.0 # x-release-please-version
+version: 1.0.0 # x-release-please-version
 date-released: 2025-04-03
 url: "https://green-ecolution.de"
 repository-code: "https://github.com/green-ecolution"
