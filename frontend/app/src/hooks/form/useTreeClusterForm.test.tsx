@@ -165,7 +165,7 @@ describe('useTreeClusterForm', () => {
       id: 1,
       name: 'Cluster with Trees',
       treeIds: [1, 2, 3],
-    } as TreeCluster
+    } as unknown as TreeCluster
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const createMock = vi.mocked(clusterApi.createTreeCluster)
     createMock.mockResolvedValueOnce(mockResponse)
