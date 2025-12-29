@@ -27,14 +27,13 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pressly/goose/v3 v3.26.0
 	github.com/spf13/viper v1.21.0
-	github.com/stillya/testcontainers-keycloak v0.3.3
+	github.com/stillya/testcontainers-keycloak v0.3.5
 	github.com/stretchr/testify v1.11.1
 	github.com/swaggo/swag v1.16.6
 	github.com/testcontainers/testcontainers-go v0.40.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.40.0
 	github.com/twpayne/go-geos v0.20.1
 	github.com/twpayne/pgx-geos v1.0.0
-	golang.org/x/net v0.47.0
 	golang.org/x/sync v0.19.0
 )
 
@@ -351,6 +350,7 @@ require (
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
 	golang.org/x/exp/typeparams v0.0.0-20250210185358-939b2ce775ac // indirect
 	golang.org/x/mod v0.30.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/term v0.38.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
