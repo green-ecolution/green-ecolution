@@ -16,7 +16,7 @@
   "dependencies": {
     "@green-ecolution/backend-client": "workspace:*",
     "@green-ecolution/plugin-interface": "workspace:*",
-    "@hookform/resolvers": "^5.0.1",
+    "@hookform/resolvers": "^5.2.2",
     "@module-federation/enhanced": "^0.16.0",
     "@splidejs/react-splide": "^0.7.12",
     "@tanstack/react-query": "^5.90.15",
