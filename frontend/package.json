@@ -17,7 +17,7 @@
     "generate:local": "pnpm --filter backend-client generate:local",
     "ci": "pnpm --filter backend-client generate:ci",
     "lint": "prettier --check . && pnpm --filter frontend lint",
-    "test": "echo \"It works!\"",
+    "test": "pnpm --filter frontend test:run",
     "preview": "pnpm --filter frontend preview",
     "fmt": "prettier --write ."
   },
