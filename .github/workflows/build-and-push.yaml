@@ -1,12 +1,18 @@
 name: "Build and Push Images"
 
 on:
-  push:
+  # Build stage images when release PR is created/updated
+  pull_request:
+    types: [opened, synchronize, labeled]
     branches:
       - develop
-      - main
+
+  # Build prod images when tag is pushed
+  push:
     tags:
       - "v*"
+
+  # Manual trigger for any environment
   workflow_dispatch:
     inputs:
       environment:
@@ -23,12 +29,37 @@ env:
   IMAGE_PREFIX: green-ecolution/green-ecolution
 
 jobs:
+  check-release-pr:
+    runs-on: ubuntu-latest
+    outputs:
+      should-build: ${{ steps.check.outputs.should-build }}
+    steps:
+      - name: Check if should build
+        id: check
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            if [[ "${{ contains(github.event.pull_request.labels.*.name, 'autorelease: pending') }}" == "true" ]]; then
+              echo "should-build=true" >> $GITHUB_OUTPUT
+              echo "✅ Release PR detected, will build"
+            else
+              echo "should-build=false" >> $GITHUB_OUTPUT
+              echo "ℹ️ Not a release PR, skipping build"
+            fi
+          else
+            # Tag push or workflow_dispatch - always build
+            echo "should-build=true" >> $GITHUB_OUTPUT
+            echo "✅ Tag or manual trigger, will build"
+          fi
+
   determine-environment:
     runs-on: ubuntu-latest
+    needs: check-release-pr
+    if: needs.check-release-pr.outputs.should-build == 'true'
     outputs:
       environment: ${{ steps.set-env.outputs.environment }}
       tag-suffix: ${{ steps.set-env.outputs.tag-suffix }}
       is-release: ${{ steps.set-env.outputs.is-release }}
+      image-tag: ${{ steps.set-env.outputs.image-tag }}
     steps:
       - name: Determine environment and tag suffix
         id: set-env
@@ -42,38 +73,42 @@ jobs:
               TAG_SUFFIX="-${ENV}"
               IS_RELEASE="false"
             fi
+            IMAGE_TAG="${{ github.ref_name }}-$(echo ${{ github.sha }} | cut -c1-7)${TAG_SUFFIX}"
           elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             ENV="prod"
             TAG_SUFFIX=""
             IS_RELEASE="true"
-          elif [[ "${{ github.ref_name }}" == "main" ]]; then
-            ENV="prod"
-            TAG_SUFFIX=""
-            IS_RELEASE="true"
-          elif [[ "${{ github.ref_name }}" == "develop" ]]; then
+            IMAGE_TAG="${{ github.ref_name }}"
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
             ENV="stage"
             TAG_SUFFIX="-stage"
             IS_RELEASE="false"
+            IMAGE_TAG="pr-${{ github.event.pull_request.number }}-$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)-stage"
           else
             ENV="stage"
             TAG_SUFFIX="-stage"
             IS_RELEASE="false"
+            IMAGE_TAG="${{ github.ref_name }}-$(echo ${{ github.sha }} | cut -c1-7)${TAG_SUFFIX}"
           fi
 
           echo "environment=$ENV" >> $GITHUB_OUTPUT
           echo "tag-suffix=$TAG_SUFFIX" >> $GITHUB_OUTPUT
           echo "is-release=$IS_RELEASE" >> $GITHUB_OUTPUT
-          echo "Environment: $ENV, Tag Suffix: $TAG_SUFFIX, Is Release: $IS_RELEASE"
+          echo "image-tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "Environment: $ENV, Tag Suffix: $TAG_SUFFIX, Is Release: $IS_RELEASE, Image Tag: $IMAGE_TAG"
 
   build-migrations:
     runs-on: ubuntu-latest
-    needs: determine-environment
+    needs: [check-release-pr, determine-environment]
+    if: needs.check-release-pr.outputs.should-build == 'true'
     permissions:
       contents: read
       packages: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -84,18 +119,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres
-          tags: |
-            type=sha,prefix={{branch}}-,suffix=${{ needs.determine-environment.outputs.tag-suffix }},format=short
-            type=ref,event=branch,suffix=${{ needs.determine-environment.outputs.tag-suffix }}
-            type=ref,event=tag
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
 
       - name: Build and push postgres migrations
         uses: docker/build-push-action@v6
@@ -104,20 +127,22 @@ jobs:
           file: ./.docker/migrations/Dockerfile.postgres
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:${{ needs.determine-environment.outputs.image-tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   build-backend:
     runs-on: ubuntu-latest
-    needs: determine-environment
+    needs: [check-release-pr, determine-environment]
+    if: needs.check-release-pr.outputs.should-build == 'true'
     permissions:
       contents: read
       packages: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -128,18 +153,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend
-          tags: |
-            type=sha,prefix={{branch}}-,suffix=${{ needs.determine-environment.outputs.tag-suffix }},format=short
-            type=ref,event=branch,suffix=${{ needs.determine-environment.outputs.tag-suffix }}
-            type=ref,event=tag
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
 
       - name: Build and push backend
         uses: docker/build-push-action@v6
@@ -148,27 +161,29 @@ jobs:
           file: ./backend/Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${{ needs.determine-environment.outputs.image-tag }}
           build-args: |
             ENV=${{ needs.determine-environment.outputs.environment }}
-            APP_VERSION=${{ github.ref_name }}
-            APP_GIT_COMMIT=${{ github.sha }}
-            APP_GIT_BRANCH=${{ github.ref_name }}
+            APP_VERSION=${{ needs.determine-environment.outputs.image-tag }}
+            APP_GIT_COMMIT=${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+            APP_GIT_BRANCH=${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
             APP_GIT_REPOSITORY=${{ github.repository }}
-            APP_BUILD_TIME=${{ github.event.head_commit.timestamp }}
+            APP_BUILD_TIME=${{ github.event.head_commit.timestamp || github.event.pull_request.updated_at }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   build-frontend:
     runs-on: ubuntu-latest
-    needs: determine-environment
+    needs: [check-release-pr, determine-environment]
+    if: needs.check-release-pr.outputs.should-build == 'true'
     permissions:
       contents: read
       packages: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -180,18 +195,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend
-          tags: |
-            type=sha,prefix={{branch}}-,suffix=${{ needs.determine-environment.outputs.tag-suffix }},format=short
-            type=ref,event=branch,suffix=${{ needs.determine-environment.outputs.tag-suffix }}
-            type=ref,event=tag
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-
       - name: Build and push frontend
         uses: docker/build-push-action@v6
         with:
@@ -199,8 +202,7 @@ jobs:
           file: ./frontend/Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ needs.determine-environment.outputs.image-tag }}
           build-args: |
             ENV=${{ needs.determine-environment.outputs.environment == 'stage' && 'dev' || 'prod' }}
             BASEURL=/api
@@ -209,10 +211,18 @@ jobs:
 
   update-kustomize:
     runs-on: ubuntu-latest
-    needs: [determine-environment, build-migrations, build-backend, build-frontend]
-    if: needs.determine-environment.outputs.environment != 'demo'
+    needs:
+      [
+        check-release-pr,
+        determine-environment,
+        build-migrations,
+        build-backend,
+        build-frontend,
+      ]
+    if: needs.check-release-pr.outputs.should-build == 'true'
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - name: Get Green Ecolution App Token
         uses: actions/create-github-app-token@v2
@@ -225,6 +235,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           token: ${{ steps.app-token.outputs.token }}
+          ref: ${{ github.event_name == 'pull_request' && 'develop' || github.ref }}
 
       - name: Setup kustomize
         uses: yokawasa/action-setup-kube-tools@v0.13.1
@@ -244,21 +255,10 @@ jobs:
           git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
           git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
 
-      - name: Extract image tag
-        id: image-tag
-        run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            TAG="${{ github.ref_name }}"
-          else
-            SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-            TAG="${{ github.ref_name }}-${SHORT_SHA}${{ needs.determine-environment.outputs.tag-suffix }}"
-          fi
-          echo "tag=${TAG}" >> $GITHUB_OUTPUT
-
       - name: Update kustomize images
         run: |
           ENV="${{ needs.determine-environment.outputs.environment }}"
-          TAG="${{ steps.image-tag.outputs.tag }}"
+          TAG="${{ needs.determine-environment.outputs.image-tag }}"
 
           cd ./deploy/kustomize/${ENV}
           kustomize edit set image backend-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}
@@ -268,48 +268,68 @@ jobs:
       - name: Commit and push changes
         run: |
           ENV="${{ needs.determine-environment.outputs.environment }}"
-          TAG="${{ steps.image-tag.outputs.tag }}"
+          TAG="${{ needs.determine-environment.outputs.image-tag }}"
 
           git add deploy/kustomize/${ENV}/kustomization.yaml
           if git commit -m "chore: update ${ENV} image tags to ${TAG} [skip ci]"; then
-            git push origin ${{ github.ref_name }}
-            echo "✅ Kustomize updated successfully"
+            git push origin develop
+            echo "✅ Kustomize ${ENV} updated successfully"
           else
             echo "ℹ️ No changes to commit"
           fi
 
-  create-release:
+      - name: Add comment to PR
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          TAG="${{ needs.determine-environment.outputs.image-tag }}"
+          gh pr comment ${{ github.event.pull_request.number }} --body "## 🚀 Stage Deployment Ready
+
+          Docker images have been built and stage environment has been updated.
+
+          ### 🐳 Docker Images
+          - Backend: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}\`
+          - Frontend: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${TAG}\`
+          - Migrations: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:${TAG}\`
+
+          The stage environment will be updated automatically via GitOps."
+
+  log-build-info:
     runs-on: ubuntu-latest
-    needs: [determine-environment, build-migrations, build-backend, build-frontend, update-kustomize]
-    if: needs.determine-environment.outputs.is-release == 'true' && github.ref_type == 'tag'
-    permissions:
-      contents: write
+    needs:
+      [
+        check-release-pr,
+        determine-environment,
+        build-migrations,
+        build-backend,
+        build-frontend,
+        update-kustomize,
+      ]
+    if: needs.check-release-pr.outputs.should-build == 'true' && always()
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
+      - name: Log build information
+        run: |
+          ENV="${{ needs.determine-environment.outputs.environment }}"
+          TAG="${{ needs.determine-environment.outputs.image-tag }}"
+          IS_RELEASE="${{ needs.determine-environment.outputs.is-release }}"
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-          body: |
-            ## 🌿 Green Ecolution Release ${{ github.ref_name }}
+          if [[ "$IS_RELEASE" == "true" ]]; then
+            echo "## 🌿 Production Release Build Complete" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## 🧪 Stage Build Complete" >> $GITHUB_STEP_SUMMARY
+          fi
 
-            This release of the Green Ecolution platform marks a new version of our complete smart irrigation system.
-
-            ### 📦 What's Included
-
-            * 🚀 Backend and Frontend components
-            * 🗄️ Database migrations
-            * 🛠️ Infrastructure and deployment manifests via Kubernetes
-            * 📚 Updated documentation
-
-            ### 🐳 Docker Images
-
-            * Backend: `${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${{ github.ref_name }}`
-            * Frontend: `${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ github.ref_name }}`
-            * Migrations: `${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:${{ github.ref_name }}`
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${ENV}" >> $GITHUB_STEP_SUMMARY
+          echo "**Image Tag:** ${TAG}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🐳 Docker Images" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "* Backend: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}\`" >> $GITHUB_STEP_SUMMARY
+          echo "* Frontend: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${TAG}\`" >> $GITHUB_STEP_SUMMARY
+          echo "* Migrations: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:${TAG}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Kustomize" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Updated \`deploy/kustomize/${ENV}/kustomization.yaml\`" >> $GITHUB_STEP_SUMMARY
