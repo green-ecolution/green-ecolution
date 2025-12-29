@@ -40,7 +40,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const showToast = useToast()
-  const [status, setStatus] = useState(getWateringPlanStatusDetails(loadedData.status))
+  const [status, setStatus] = useState(() => getWateringPlanStatusDetails(loadedData.status))
 
   const { mutate, isError, error } = useMutation({
     mutationFn: (wateringPlan: WateringPlanUpdate) =>
