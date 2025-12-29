@@ -83,7 +83,17 @@ jobs:
             ENV="stage"
             TAG_SUFFIX="-stage"
             IS_RELEASE="false"
-            IMAGE_TAG="pr-${{ github.event.pull_request.number }}-$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)-stage"
+
+            # Extract version from PR title
+            PR_TITLE="${{ github.event.pull_request.title }}"
+            VERSION=$(echo "$PR_TITLE" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+
+            if [[ -n "$VERSION" ]]; then
+              SHORT_SHA=$(echo "${{ github.event.pull_request.head.sha }}" | cut -c1-7)
+              IMAGE_TAG="${VERSION}-${SHORT_SHA}-stage"
+            else
+              IMAGE_TAG="pr-${{ github.event.pull_request.number }}-$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)-stage"
+            fi
           else
             ENV="stage"
             TAG_SUFFIX="-stage"
