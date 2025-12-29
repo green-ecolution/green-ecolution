@@ -19,7 +19,7 @@
     "@hookform/resolvers": "^5.0.1",
     "@module-federation/enhanced": "^0.16.0",
     "@splidejs/react-splide": "^0.7.12",
-    "@tanstack/react-query": "^5.81.5",
+    "@tanstack/react-query": "^5.90.15",
     "@tanstack/react-router": "1.120.20",
     "@tanstack/router-generator": "1.120.20",
     "@tanstack/react-query-devtools": "^5.50.1",
