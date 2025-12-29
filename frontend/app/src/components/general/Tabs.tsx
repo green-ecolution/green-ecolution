@@ -1,5 +1,4 @@
-import { ReactNode } from '@tanstack/react-router'
-import React, { useState } from 'react'
+import React, { ReactNode, useState } from 'react'
 
 interface Tabs {
   tabs: { label: string; icon: ReactNode; view: ReactNode }[]
