@@ -86,7 +86,7 @@
       frontend = pkgs.stdenv.mkDerivation rec {
         inherit meta;
         pname = "frontend";
-        version = "1.3.0-nightly.20251024";
+        version = "0.0.0"; # x-release-please-version
         src = lib.cleanSource ./frontend;
 
         nativeBuildInputs = with pkgs; [nodejs pnpm.configHook];
@@ -117,7 +117,7 @@
       backend = pkgs.buildGoModule rec {
         inherit meta;
         pname = "green-ecolution"; # -> Binärname in $out/bin/green-ecolution (per postInstall, siehe unten)
-        version = "1.3.0-nightly.20251024";
+        version = "0.0.0"; # x-release-please-version
         src = lib.cleanSource ./backend;
 
         # dein Main liegt im Root von ./backend
