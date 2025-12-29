@@ -30,7 +30,7 @@ function EditTree() {
   const navigate = useNavigate({ from: Route.fullPath })
   const { treeId, treeLat, treeLng, formType } = Route.useSearch()
   const { zoom } = useMapStore()
-  const [treeLatLng, setTreeLatLng] = useState<LatLng>(new LatLng(treeLat, treeLng))
+  const [treeLatLng, setTreeLatLng] = useState<LatLng>(() => new LatLng(treeLat, treeLng))
 
   const handleNavigateBack = useCallback(() => {
     switch (formType) {
