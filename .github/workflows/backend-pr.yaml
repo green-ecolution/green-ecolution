@@ -10,7 +10,7 @@ jobs:
   build_and_test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Setup Dependencies
         run: sudo apt-get update && sudo apt-get install -y make build-essential libgeos-dev libproj-dev
@@ -42,7 +42,7 @@ jobs:
   check_generated_code:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Setup Dependencies
         run: sudo apt-get update && sudo apt-get install -y libgeos-dev libproj-dev
@@ -74,7 +74,7 @@ jobs:
   test_pkg_client:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Setup Go
         uses: actions/setup-go@v6
@@ -88,7 +88,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Setup Dependencies
         run: sudo apt-get update && sudo apt-get install -y libgeos-dev libproj-dev
@@ -136,7 +136,7 @@ jobs:
         ports:
           - 5432:5432
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Setup Go
         uses: actions/setup-go@v6
@@ -164,7 +164,7 @@ jobs:
   test_dockerfile:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
