@@ -1,12 +1,12 @@
 package s3
 
 import (
+	"context"
 	"io"
 	"log/slog"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"golang.org/x/net/context"
 )
 
 type S3RepoCfg struct {
