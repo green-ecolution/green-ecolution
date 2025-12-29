@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
 import { useTreeClusterForm } from './useTreeClusterForm'
 import ToastProvider from '@/context/ToastContext'
-import { SoilCondition } from '@green-ecolution/backend-client'
+import { SoilCondition, WateringStatus } from '@green-ecolution/backend-client'
 
 vi.mock('@/api/backendApi', () => ({
   clusterApi: {
@@ -48,6 +48,25 @@ const defaultInitForm = {
   treeIds: [] as number[],
 }
 
+function createMockTreeCluster(overrides: Partial<TreeCluster> = {}): TreeCluster {
+  return {
+    id: 1,
+    name: 'Test Cluster',
+    address: 'Test Address 123',
+    description: '',
+    soilCondition: SoilCondition.TreeSoilConditionSandig,
+    wateringStatus: WateringStatus.WateringStatusGood,
+    trees: [],
+    archived: false,
+    region: null,
+    latitude: 54.7937,
+    longitude: 9.4469,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...overrides,
+  } as TreeCluster
+}
+
 describe('useTreeClusterForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -67,25 +86,22 @@ describe('useTreeClusterForm', () => {
     expect(result.current.form.getValues('treeIds')).toEqual([])
   })
 
-  it('returns form methods', () => {
+  it('returns form methods and mutation state', () => {
     const { result } = renderHook(
       () => useTreeClusterForm('create', { initForm: defaultInitForm }),
       { wrapper: createWrapper() },
     )
 
     expect(result.current.form).toBeDefined()
+    expect(result.current.form.getValues).toBeDefined()
+    expect(result.current.form.setValue).toBeDefined()
     expect(result.current.mutate).toBeDefined()
     expect(result.current.isError).toBe(false)
     expect(result.current.error).toBeNull()
   })
 
   it('calls createTreeCluster API when mutationType is create', async () => {
-    const mockResponse = {
-      id: 1,
-      name: 'Test Cluster',
-      address: 'Test Address 123',
-      soilCondition: SoilCondition.TreeSoilConditionSandig,
-    } as TreeCluster
+    const mockResponse = createMockTreeCluster()
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const createMock = vi.mocked(clusterApi.createTreeCluster)
     createMock.mockResolvedValueOnce(mockResponse)
@@ -106,24 +122,26 @@ describe('useTreeClusterForm', () => {
     })
 
     await waitFor(() => {
-      expect(createMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          body: expect.objectContaining({
-            name: 'Test Cluster',
-            address: 'Test Address 123',
-          }) as unknown,
-        }),
-      )
+      expect(createMock).toHaveBeenCalledTimes(1)
+      expect(createMock).toHaveBeenCalledWith({
+        body: {
+          name: 'Test Cluster',
+          address: 'Test Address 123',
+          description: '',
+          soilCondition: SoilCondition.TreeSoilConditionSandig,
+          treeIds: [],
+        },
+      })
     })
   })
 
   it('calls updateTreeCluster API when mutationType is update', async () => {
-    const mockResponse = {
+    const mockResponse = createMockTreeCluster({
       id: 5,
       name: 'Updated Cluster',
       address: 'Updated Address',
       soilCondition: SoilCondition.TreeSoilConditionLehmig,
-    } as TreeCluster
+    })
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const updateMock = vi.mocked(clusterApi.updateTreeCluster)
     updateMock.mockResolvedValueOnce(mockResponse)
@@ -151,53 +169,15 @@ describe('useTreeClusterForm', () => {
     })
 
     await waitFor(() => {
-      expect(updateMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          clusterId: 5,
-          body: expect.objectContaining({ name: 'Updated Cluster' }) as unknown,
+      expect(updateMock).toHaveBeenCalledTimes(1)
+      expect(updateMock).toHaveBeenCalledWith({
+        clusterId: 5,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        body: expect.objectContaining({
+          name: 'Updated Cluster',
+          address: 'Updated Address',
         }),
-      )
-    })
-  })
-
-  it('passes treeIds correctly to API', async () => {
-    const mockResponse = {
-      id: 1,
-      name: 'Cluster with Trees',
-      treeIds: [1, 2, 3],
-    } as unknown as TreeCluster
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const createMock = vi.mocked(clusterApi.createTreeCluster)
-    createMock.mockResolvedValueOnce(mockResponse)
-
-    const initFormWithTrees = {
-      ...defaultInitForm,
-      treeIds: [1, 2, 3],
-    }
-
-    const { result } = renderHook(
-      () => useTreeClusterForm('create', { initForm: initFormWithTrees }),
-      { wrapper: createWrapper() },
-    )
-
-    act(() => {
-      result.current.mutate({
-        name: 'Cluster with Trees',
-        address: 'Test Address',
-        description: '',
-        soilCondition: SoilCondition.TreeSoilConditionSandig,
-        treeIds: [1, 2, 3],
       })
-    })
-
-    await waitFor(() => {
-      expect(createMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          body: expect.objectContaining({
-            treeIds: [1, 2, 3],
-          }) as unknown,
-        }),
-      )
     })
   })
 })
