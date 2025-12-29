@@ -83,6 +83,10 @@ jobs:
         working-directory: ./frontend
         run: pnpm install --frozen-lockfile
 
+      - name: Build backend-client and plugin-interface
+        working-directory: ./frontend
+        run: pnpm --filter=!frontend -r build
+
       - name: Test
         working-directory: ./frontend
         run: pnpm test

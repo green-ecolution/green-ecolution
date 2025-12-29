@@ -12,7 +12,7 @@ export const handlers = [
   }),
 
   http.post(`${baseUrl}/v1/tree`, async ({ request }) => {
-    const body = await request.json()
+    const body = (await request.json()) as Record<string, unknown>
     return HttpResponse.json(
       {
         id: 1,
@@ -20,7 +20,7 @@ export const handlers = [
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
-      { status: 201 }
+      { status: 201 },
     )
   }),
 

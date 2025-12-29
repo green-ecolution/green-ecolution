@@ -15,12 +15,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       include: ['src/**/*.{ts,tsx}'],
-      exclude: [
-        'src/test/**',
-        'src/routes/**',
-        '**/*.d.ts',
-        'src/routeTree.gen.ts',
-      ],
+      exclude: ['src/test/**', 'src/routes/**', '**/*.d.ts', 'src/routeTree.gen.ts'],
     },
   },
   resolve: {

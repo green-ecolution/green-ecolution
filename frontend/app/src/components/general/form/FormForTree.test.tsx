@@ -47,47 +47,15 @@ const defaultFormValues: TreeForm = {
   description: '',
 }
 
-const mockTreeClusters: TreeCluster[] = [
-  {
-    id: 1,
-    name: 'Cluster A',
-    address: 'Address A',
-    description: '',
-    soilCondition: 'good',
-    treeIds: [],
-    wateringStatus: 'good',
-    region: { id: 1, name: 'Region 1' },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    name: 'Cluster B',
-    address: 'Address B',
-    description: '',
-    soilCondition: 'good',
-    treeIds: [],
-    wateringStatus: 'good',
-    region: { id: 1, name: 'Region 1' },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-]
+const mockTreeClusters = [
+  { id: 1, name: 'Cluster A' },
+  { id: 2, name: 'Cluster B' },
+] as TreeCluster[]
 
-const mockSensors: Sensor[] = [
-  {
-    id: 'sensor-1',
-    status: 'online',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'sensor-2',
-    status: 'offline',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-]
+const mockSensors = [
+  { id: 'sensor-1', status: 'online' },
+  { id: 'sensor-2', status: 'offline' },
+] as Sensor[]
 
 describe('FormForTree', () => {
   const mockOnSubmit = vi.fn()
@@ -156,9 +124,9 @@ describe('FormForTree', () => {
       </TestWrapper>,
     )
 
-    const clusterSelect = screen.getByLabelText(/bewässerungsgruppe/i) as HTMLSelectElement
+    const clusterSelect = screen.getByRole('combobox', { name: /bewässerungsgruppe/i })
 
-    const options = Array.from(clusterSelect.options).map((opt) => opt.text)
+    const options = Array.from((clusterSelect as HTMLSelectElement).options).map((opt) => opt.text)
     expect(options).toContain('Keine Bewässerungsgruppe')
     expect(options).toContain('Cluster A')
     expect(options).toContain('Cluster B')
@@ -178,9 +146,9 @@ describe('FormForTree', () => {
       </TestWrapper>,
     )
 
-    const sensorSelect = screen.getByLabelText(/verknüpfter sensor/i) as HTMLSelectElement
+    const sensorSelect = screen.getByRole('combobox', { name: /verknüpfter sensor/i })
 
-    const options = Array.from(sensorSelect.options).map((opt) => opt.text)
+    const options = Array.from((sensorSelect as HTMLSelectElement).options).map((opt) => opt.text)
     expect(options).toContain('Kein Sensor')
     expect(options).toContain('Sensor sensor-1')
     expect(options).toContain('Sensor sensor-2')

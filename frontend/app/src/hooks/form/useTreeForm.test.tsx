@@ -22,6 +22,7 @@ vi.mock('./usePersistForm', () => ({
 }))
 
 import { treeApi } from '@/api/backendApi'
+import type { Tree } from '@green-ecolution/backend-client'
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -84,8 +85,10 @@ describe('useTreeForm', () => {
       latitude: 53.5511,
       longitude: 9.9937,
       plantingYear: 2023,
-    }
-    vi.mocked(treeApi.createTree).mockResolvedValueOnce(mockResponse)
+    } as Tree
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const createTreeMock = vi.mocked(treeApi.createTree)
+    createTreeMock.mockResolvedValueOnce(mockResponse)
 
     const { result } = renderHook(() => useTreeForm('create', { initForm: defaultInitForm }), {
       wrapper: createWrapper(),
@@ -98,16 +101,19 @@ describe('useTreeForm', () => {
         number: 'T-001',
         species: 'Oak',
         plantingYear: 2023,
+        description: '',
       })
     })
 
     await waitFor(() => {
-      expect(treeApi.createTree).toHaveBeenCalledWith({
-        body: expect.objectContaining({
-          number: 'T-001',
-          species: 'Oak',
+      expect(createTreeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            number: 'T-001',
+            species: 'Oak',
+          }) as unknown,
         }),
-      })
+      )
     })
   })
 
@@ -119,8 +125,10 @@ describe('useTreeForm', () => {
       latitude: 53.5511,
       longitude: 9.9937,
       plantingYear: 2022,
-    }
-    vi.mocked(treeApi.updateTree).mockResolvedValueOnce(mockResponse)
+    } as Tree
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const updateTreeMock = vi.mocked(treeApi.updateTree)
+    updateTreeMock.mockResolvedValueOnce(mockResponse)
 
     const updateInitForm = {
       ...defaultInitForm,
@@ -131,7 +139,7 @@ describe('useTreeForm', () => {
 
     const { result } = renderHook(
       () => useTreeForm('update', { treeId: '5', initForm: updateInitForm }),
-      { wrapper: createWrapper() }
+      { wrapper: createWrapper() },
     )
 
     act(() => {
@@ -141,14 +149,17 @@ describe('useTreeForm', () => {
         number: 'T-005',
         species: 'Maple',
         plantingYear: 2022,
+        description: '',
       })
     })
 
     await waitFor(() => {
-      expect(treeApi.updateTree).toHaveBeenCalledWith({
-        treeId: 5,
-        body: expect.objectContaining({ species: 'Maple' }),
-      })
+      expect(updateTreeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          treeId: 5,
+          body: expect.objectContaining({ species: 'Maple' }) as unknown,
+        }),
+      )
     })
   })
 
