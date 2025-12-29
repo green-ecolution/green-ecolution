@@ -1,10 +1,14 @@
-name: "Draft New Release"
+name: "Manual Release (Override)"
+
+# NOTE: Prefer using the automated release-please workflow.
+# This workflow is for manual overrides only (e.g., hotfixes, special releases).
+# For normal releases, just merge to develop and release-please will handle it.
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: "The release version (e.g., v1.2.0)"
+        description: "The release version (e.g., v0.2.0)"
         required: true
       prerelease:
         description: "Mark as pre-release"
@@ -95,11 +99,11 @@ jobs:
           ### Next Steps
 
           1. Review and approve this PR
-          2. Merge to \`main\` branch
+          2. Merge to \`develop\` branch
           3. Tag will be created automatically, triggering the release build
 
           " \
-            --base main \
+            --base develop \
             --head "$BRANCH_NAME"
 
           echo "✅ Created pull request for release ${VERSION}"
@@ -151,6 +155,6 @@ jobs:
             --title "${VERSION}" \
             --notes-file release_notes.md \
             $PRERELEASE_FLAG \
-            --target main
+            --target develop
 
           echo "✅ Created draft release ${VERSION}"
