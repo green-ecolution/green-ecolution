@@ -32,8 +32,8 @@ require (
 	github.com/swaggo/swag v1.16.6
 	github.com/testcontainers/testcontainers-go v0.40.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.40.0
-	github.com/twpayne/go-geos v0.20.1
-	github.com/twpayne/pgx-geos v1.0.0
+	github.com/twpayne/go-geos v0.20.2
+	github.com/twpayne/pgx-geos v1.0.1
 	golang.org/x/sync v0.19.0
 )
 
