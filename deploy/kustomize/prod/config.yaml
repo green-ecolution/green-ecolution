@@ -13,7 +13,7 @@ data:
   GE_SERVER_DATABASE_NAME: "green-ecolution-prod"
 
   GE_MQTT_BROKER: "eu1.cloud.thethings.industries:1883"
-  GE_MQTT_TOPIC: "v3/sgr-students@zde/devices/+/up" 
+  GE_MQTT_TOPIC: "v3/sgr-students@zde/devices/+/up"
 
   GE_AUTH_KEYCLOAK_BASEURL: "https://auth.green-ecolution.de"
   # GE_AUTH_KEYCLOAK_REALM: "green-ecolution-prod"
@@ -31,7 +31,7 @@ data:
   GE_ROUTING_VALHALLA_OPTIMIZATION_VROOM_HOST: "http://vroom.routing.svc.cluster.local"
   GE_ROUTING_ORS_HOST: "http://ors.routing.svc.local"
   GE_ROUTING_ORS_OPTIMIZATION_VROOM_HOST: "http://vroom.routing.svc.cluster.local"
-  GE_S3_ENDPOINT: "minio.minio.svc.cluster.local:9000"
+  GE_S3_ENDPOINT: "minio-hl.minio.svc.cluster.local:9000"
   GE_S3_REGION: "us-east-1"
   GE_S3_USE_SSL: "false"
   GE_S3_ROUTE-GPX_BUCKET: "routes-gpx-prod"

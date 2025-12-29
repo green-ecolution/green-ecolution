@@ -6,7 +6,6 @@
   self,
   ...
 }: let
-  # ---- DEV SECRETS / PARAMS (Demo-Defaults, bitte anpassen/übersteuern) ----
   POSTGRES_USER = "ge";
   POSTGRES_PASSWORD = "ge";
   POSTGRES_DB = "ge";
@@ -54,9 +53,6 @@
     MQTT_ENABLE = "false";
   };
 in {
-  ########################################
-  # Basis
-  ########################################
   networking.hostName = "ge-dev";
   services.openssh.enable = false;
   time.timeZone = "Europe/Berlin";
@@ -67,9 +63,6 @@ in {
     initialPassword = "";
   };
 
-  ########################################
-  # Traefik (ersetzt reverse-proxy)
-  ########################################
   services.traefik = {
     enable = true;
     staticConfigOptions = {
@@ -131,9 +124,6 @@ in {
           loadBalancer: { servers: [ { url: "http://127.0.0.1:3000" } ] }
   '';
 
-  ########################################
-  # Postgres 17 + PostGIS (ersetzt db:)
-  ########################################
   services.postgresql = {
     enable = true;
     package = pkgs.postgresql_17;
@@ -157,9 +147,6 @@ in {
   };
   networking.firewall.allowedTCPPorts = [5432];
 
-  ########################################
-  # MinIO (ersetzt storage:)
-  ########################################
   services.minio = {
     enable = true;
     listenAddress = "127.0.0.1:9000";
@@ -182,9 +169,6 @@ in {
     '';
   };
 
-  ########################################
-  # Keycloak (ersetzt keycloak:)
-  ########################################
   services.keycloak = {
     enable = true;
     package = pkgs.keycloak;
@@ -192,7 +176,7 @@ in {
     settings = {
       http-enabled = true;
       hostname = "auth.localhost";
-      http-port = 3001; # intern; Traefik mapped 3000->3001
+      http-port = 3001;
     };
 
     database = {
@@ -214,9 +198,6 @@ in {
 
   environment.etc."kc-db-pass".text = "${POSTGRES_PASSWORD}\n";
 
-  ########################################
-  # pgAdmin / vroom / valhalla (OCI-Container via Podman)
-  ########################################
   virtualisation.podman.enable = true;
   virtualisation.oci-containers = {
     backend = "podman";
@@ -245,9 +226,6 @@ in {
     };
   };
 
-  ########################################
-  # Backend als systemd-Service
-  ########################################
   systemd.services.green-ecolution = {
     description = "Green Ecolution";
     after = ["postgresql.service" "minio.service" "keycloak.service"];
@@ -264,7 +242,7 @@ in {
         "GE_SERVER_DATABASE_PORT=${GE.SERVER_DATABASE_PORT}"
         "GE_SERVER_DATABASE_TIMEOUT=${GE.SERVER_DATABASE_TIMEOUT}"
         "GE_SERVER_DATABASE_NAME=${GE.SERVER_DATABASE_NAME}"
-        "GE_SERVER_DATABASE_USER=${GE.SERVER_DATABASE_USER}"
+        "GE_SERVER_DATABASE_USERNAME=${GE.SERVER_DATABASE_USER}"
         "GE_SERVER_DATABASE_PASSWORD=${GE.SERVER_DATABASE_PASSWORD}"
 
         "GE_AUTH_ENABLE=${GE.AUTH_ENABLE}"
@@ -298,9 +276,6 @@ in {
     };
   };
 
-  ########################################
-  # Bequeme VM (QEMU) bauen/booten
-  ########################################
   virtualisation.vmVariant = {
     virtualisation.forwardPorts = [
       {

@@ -152,7 +152,7 @@ All configuration is managed via environment variables — see `compose.app.yaml
 
 | Category                   | Example                                                                                                                                   |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **Database**               | `GE_SERVER_DATABASE_HOST`, `GE_SERVER_DATABASE_PORT`, `GE_SERVER_DATABASE_NAME`, `GE_SERVER_DATABASE_USER`, `GE_SERVER_DATABASE_PASSWORD` |
+| **Database**               | `GE_SERVER_DATABASE_HOST`, `GE_SERVER_DATABASE_PORT`, `GE_SERVER_DATABASE_NAME`, `GE_SERVER_DATABASE_USERNAME`, `GE_SERVER_DATABASE_PASSWORD` |
 | **Auth (OIDC / Keycloak)** | `GE_AUTH_ENABLE`, `GE_AUTH_OIDC_PROVIDER_BASE_URL`, `GE_AUTH_OIDC_PROVIDER_TOKEN_URL`, etc.                                               |
 | **Storage (S3 / MinIO)**   | `GE_S3_ENABLE`, `GE_S3_ENDPOINT`, `GE_S3_REGION`, `GE_S3_USE_SSL`, `GE_S3_ROUTE-GPX_BUCKET`                                               |
 | **Routing**                | `GE_ROUTING_ENABLE`, `GE_ROUTING_VALHALLA_HOST`, `GE_ROUTING_VALHALLA_OPTIMIZATION_VROOM_HOST`                                            |

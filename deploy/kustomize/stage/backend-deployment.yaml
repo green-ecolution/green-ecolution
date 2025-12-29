@@ -36,7 +36,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: backend-secrets
-                  key: GE_SERVER_DATABASE_USER
+                  key: GE_SERVER_DATABASE_USERNAME
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
