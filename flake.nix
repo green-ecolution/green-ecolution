@@ -12,7 +12,7 @@
     nixpkgs,
     ...
   } @ inputs: let
-    goVersion = 24;
+    goVersion = 25;
     nodeVersion = 24;
 
     supportedSystems = [
@@ -31,17 +31,11 @@
           };
         });
   in {
-    ########################################
-    # Overlays (fixe Go/Node Versionen)
-    ########################################
     overlays.default = final: prev: {
       go = final."go_1_${toString goVersion}";
       nodejs = final."nodejs_${toString nodeVersion}";
     };
 
-    ########################################
-    # Packages (Frontend/Backend/Default)
-    ########################################
     packages = forEachSupportedSystem ({pkgs}: let
       lib = pkgs.lib;
 
@@ -69,13 +63,11 @@
         platforms = pkgs.lib.platforms.linux ++ pkgs.lib.platforms.darwin;
       };
 
-      # Git-/Zeit-Metadaten aus der Flake-Quelle (Eval-Zeit, reproduzierbar)
       si = self.sourceInfo or {};
       gitCommit = si.rev or "local";
       gitBranch = si.ref or "local";
       gitRepo = si.url or "local";
 
-      # Builddatum YYMMDD aus YYYYMMDDhhmmss
       buildDate = let
         d = si.lastModifiedDate or si.lastModified or null;
       in
@@ -96,7 +88,6 @@
         pnpmDeps = pkgs.pnpm.fetchDeps {
           inherit pname version src;
           fetcherVersion = 2;
-          # <- Wenn das mal driftet: einmal `nix build .#frontend` laufen lassen
           hash = "sha256-9r9W+cbwZ5HZPgcuYfHjsNDJBldUyEE6jCmWgC+jt1Y=";
         };
 
@@ -116,13 +107,11 @@
 
       backend = pkgs.buildGoModule rec {
         inherit meta;
-        pname = "green-ecolution"; # -> Binärname in $out/bin/green-ecolution (per postInstall, siehe unten)
+        pname = "green-ecolution";
         version = "0.0.0"; # x-release-please-version
         src = lib.cleanSource ./backend;
 
-        # dein Main liegt im Root von ./backend
         subPackages = ["."];
-
         ldflags = [
           "-s"
           "-w"
@@ -142,7 +131,6 @@
         vendorHash = "sha256-YSEm5ZqRdx8Qc83gch15daJxMFW67lz1FAjF0+g+vkI=";
         env.CGO_ENABLED = 1;
 
-        # Falls Go das Binary "backend" nennt, benennen wir es um:
         postInstall = ''
           if [ -e "$out/bin/backend" ]; then
             mv "$out/bin/backend" "$out/bin/green-ecolution"
@@ -150,7 +138,6 @@
         '';
       };
 
-      # Backend + eingebettete Frontend-Assets
       default = backend.overrideAttrs (_: {
         name = "green-ecolution";
         preBuild = ''
@@ -160,9 +147,6 @@
       });
     });
 
-    ########################################
-    # DevShell (eine für FE+BE)
-    ########################################
     devShells = forEachSupportedSystem ({pkgs}: let
       ksops = pkgs.kustomize-sops.overrideAttrs (old: {
         installPhase = ''
@@ -203,16 +187,13 @@
       };
     });
 
-    ########################################
-    # NixOS Dev-VM + App-Launcher
-    ########################################
     nixosConfigurations.ge-dev = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
-      specialArgs = {inherit inputs self;}; # damit das Modul self.packages nutzen kann
+      specialArgs = {inherit inputs self;};
       modules = [./nixos/ge-dev.nix];
     };
 
-    # Start mit: nix run .#dev-vm
+    # nix run .#dev-vm
     apps.x86_64-linux.dev-vm = {
       type = "app";
       program = "${self.nixosConfigurations.ge-dev.config.system.build.vm}/bin/run-ge-dev-vm";
