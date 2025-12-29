@@ -72,7 +72,7 @@ const FormForTree = (props: FormForTreeProps) => {
             placeholder="Wählen Sie eine Bewässerungsgruppe aus"
             label="Bewässerungsgruppe"
             error={errors.treeClusterId?.message}
-            {...register('treeClusterId')}
+            {...register('treeClusterId', { valueAsNumber: true })}
           />
         )}
         <Select
