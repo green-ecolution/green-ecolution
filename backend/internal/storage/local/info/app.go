@@ -22,12 +22,10 @@ var buildTime = ""
 var runTime = time.Now()
 
 type InfoRepository struct {
-	cfg            *config.Config
-	localIP        net.IP
-	localInterface string
-	buildTime      time.Time
-	gitRepository  *url.URL
-	mapInfo        entities.Map
+	cfg           *config.Config
+	buildTime     time.Time
+	gitRepository *url.URL
+	mapInfo       entities.Map
 }
 
 func init() {
@@ -47,28 +45,16 @@ func NewInfoRepository(cfg *config.Config) (*InfoRepository, error) {
 		return nil, err
 	}
 
-	localIP, err := getIP()
-	if err != nil {
-		return nil, err
-	}
-
-	localInterface, err := getInterface(localIP)
-	if err != nil {
-		return nil, err
-	}
-
 	mapInfo, err := getMapInfo(cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	return &InfoRepository{
-		cfg:            cfg,
-		localIP:        localIP,
-		localInterface: localInterface,
-		buildTime:      buildTime,
-		gitRepository:  gitRepository,
-		mapInfo:        mapInfo,
+		cfg:           cfg,
+		buildTime:     buildTime,
+		gitRepository: gitRepository,
+		mapInfo:       mapInfo,
 	}, nil
 }
 
@@ -86,6 +72,16 @@ func (r *InfoRepository) GetAppInfo(ctx context.Context) (*entities.App, error) 
 		return nil, storage.ErrCannotGetAppURL
 	}
 
+	localIP, err := getIP(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	localInterface, err := getInterface(localIP)
+	if err != nil {
+		return nil, err
+	}
+
 	return &entities.App{
 		Version:   version,
 		GoVersion: r.getGoVersion(),
@@ -100,9 +96,9 @@ func (r *InfoRepository) GetAppInfo(ctx context.Context) (*entities.App, error) 
 			Arch:      r.getArch(),
 			Hostname:  hostname,
 			URL:       appURL,
-			IP:        r.localIP,
+			IP:        localIP,
 			Port:      r.getPort(),
-			Interface: r.localInterface,
+			Interface: localInterface,
 			Uptime:    r.getUptime(),
 		},
 		Map: r.mapInfo,
@@ -156,8 +152,9 @@ func getGitRepository() (*url.URL, error) {
 	return url.Parse(gitRepository)
 }
 
-func getIP() (net.IP, error) {
-	conn, err := net.Dial("udp", "green-ecolution.de:80")
+func getIP(ctx context.Context) (net.IP, error) {
+	var d net.Dialer
+	conn, err := d.DialContext(ctx, "udp", "green-ecolution.de:80")
 	if err != nil {
 		return nil, storage.ErrIPNotFound
 	}
