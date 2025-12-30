@@ -24,16 +24,15 @@ const Modal: React.FC<ModalProps> = ({
   showButtons = true,
   children,
 }) => {
+  if (!isOpen) return null
+
   return (
     <>
-      <div
-        onClick={onCancel}
-        className={`bg-dark-900/90 fixed inset-0 z-[1000] ${isOpen ? 'block' : 'hidden'}`}
-      ></div>
+      <div onClick={onCancel} className="bg-dark-900/90 fixed inset-0 z-[1000]" />
       <div
         role="dialog"
         aria-modal="true"
-        className={`fixed font-nunito-sans z-[1010] inset-x-4 shadow-xl bg-white top-1/2 -translate-y-1/2 p-6 rounded-xl mx-auto max-w-[30rem] ${isOpen ? 'block' : 'hidden'}`}
+        className="fixed font-nunito-sans z-[1010] inset-x-4 shadow-xl bg-white top-1/2 -translate-y-1/2 p-6 rounded-xl mx-auto max-w-[30rem]"
       >
         <div className="flex items-center justify-between gap-x-5 mb-5">
           <h2 className="text-xl font-lato font-semibold">{title}</h2>

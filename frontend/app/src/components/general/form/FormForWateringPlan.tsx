@@ -109,7 +109,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
 
       <Controller
         control={control}
-        name="cluserIds"
+        name="clusterIds"
         render={({ field: { value, onChange } }) => (
           <SelectEntities
             // eslint-disable-next-line

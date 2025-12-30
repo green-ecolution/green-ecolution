@@ -20,7 +20,7 @@ type MutationType<T> = T extends 'create'
     ? WateringPlanUpdate
     : never
 
-export const useWaterinPlanForm = <T extends MutationOption>(
+export const useWateringPlanForm = <T extends MutationOption>(
   mutationType: T,
   opts: { wateringPlanId?: string; initForm?: DefaultValues<WateringPlanForm> },
 ) => {
@@ -56,7 +56,7 @@ export const useWaterinPlanForm = <T extends MutationOption>(
       resetPersist()
       queryClient
         .invalidateQueries(wateringPlanIdQuery(String(data.id)))
-        .catch((error) => console.error('Invalidate "waterinPlanIdQuery" failed', error))
+        .catch((error) => console.error('Invalidate "wateringPlanIdQuery" failed', error))
       queryClient
         .invalidateQueries(wateringPlanQuery())
         .catch((error) => console.error('Invalidate "wateringPlanQuery" failed:', error))

@@ -11,7 +11,7 @@ export const wateringPlanSchemaBase = z.object({
   transporterId: z.coerce.number().int().positive(),
   trailerId: z.coerce.number().int().positive().optional(),
   driverIds: z.array(z.string().uuid()),
-  cluserIds: z.array(z.number()),
+  clusterIds: z.array(z.number()),
   description: z.string(),
 })
 
@@ -20,7 +20,7 @@ export const wateringPlanSchema = wateringPlanSchemaBase.extend({
   driverIds: z
     .array(z.string().uuid())
     .min(1, { message: 'Es muss mindestens ein Mitwarbeiter ausgewählt werden' }),
-  cluserIds: z.array(z.number()).min(1),
+  clusterIds: z.array(z.number()).min(1),
 })
 
 export const wateringPlanFinishedSchema = z.object({

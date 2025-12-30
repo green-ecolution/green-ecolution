@@ -7,7 +7,7 @@ import { userRoleQuery, vehicleQuery } from '@/api/queries'
 import { WateringPlanForm, wateringPlanSchemaBase } from '@/schema/wateringPlanSchema'
 import FormForWateringPlan from '@/components/general/form/FormForWateringPlan'
 import useStore from '@/store/store'
-import { useWaterinPlanForm } from '@/hooks/form/useWateringPlanForm'
+import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
 import { safeJsonStorageParse } from '@/lib/utils'
 
 export const Route = createFileRoute('/_protected/watering-plans/_formular/new/')({
@@ -25,7 +25,7 @@ const defaultForm: DefaultValues<WateringPlanForm> = {
   description: '',
   transporterId: -1,
   trailerId: undefined,
-  cluserIds: [],
+  clusterIds: [],
   status: WateringPlanStatus.WateringPlanStatusPlanned,
   driverIds: [],
 }
@@ -44,7 +44,7 @@ function NewWateringPlan() {
       type: 'transporter',
     }),
   )
-  const { mutate, isError, error, form } = useWaterinPlanForm('create', {
+  const { mutate, isError, error, form } = useWateringPlanForm('create', {
     initForm: formState ?? defaultForm,
   })
   const { getValues } = form
@@ -61,7 +61,7 @@ function NewWateringPlan() {
       date: data.date.toISOString(),
       trailerId: data.trailerId && data.trailerId !== -1 ? data.trailerId : undefined,
       userIds: data.driverIds,
-      treeClusterIds: data.cluserIds,
+      treeClusterIds: data.clusterIds,
     })
   }
 
@@ -75,7 +75,7 @@ function NewWateringPlan() {
         transporterId: getValues('transporterId'),
         trailerId: getValues('trailerId'),
         formType: 'create',
-        clusterIds: form.getValues('cluserIds'),
+        clusterIds: form.getValues('clusterIds'),
       },
     }).catch((error) => console.error('Navigation failed:', error))
   }

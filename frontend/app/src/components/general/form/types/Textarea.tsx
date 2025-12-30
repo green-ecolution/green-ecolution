@@ -14,6 +14,7 @@ const Textarea = ({ ref, ...props }: TextareaProps) => {
       </label>
       <textarea
         ref={ref}
+        id={props.name}
         rows={4}
         cols={40}
         className="w-full text-dark-800 border border-green-light rounded-lg bg-white px-4 py-3 focus:outline-green-dark"

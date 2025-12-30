@@ -68,7 +68,7 @@ function SelectCluster() {
     })
 
     if (success) {
-      data.cluserIds = clusterIds
+      data.clusterIds = clusterIds
       window.sessionStorage.setItem(`${formType}-wateringplan`, JSON.stringify(data))
     } else {
       console.error(error)

@@ -6,12 +6,11 @@ import { Vehicle, VehicleCreate, VehicleUpdate } from '@green-ecolution/backend-
 import { vehicleApi } from '@/api/backendApi'
 import { VehicleForm, vehicleSchema } from '@/schema/vehicleSchema'
 import { DefaultValues, useForm } from 'react-hook-form'
-import { TreeForm } from '@/schema/treeSchema'
 import { zodResolver } from '@hookform/resolvers/zod'
 
 export const useVehicleForm = (
   mutationType: 'create' | 'update',
-  opts: { vehicleId?: string; initForm?: DefaultValues<TreeForm> },
+  opts: { vehicleId?: string; initForm?: DefaultValues<VehicleForm> },
 ) => {
   const showToast = useToast()
   const queryClient = useQueryClient()
