@@ -1,11 +1,12 @@
 import { DragableMarker } from '@/components/map/MapMarker'
 import MapSelectEntitiesModal from '@/components/map/MapSelectEntitiesModal'
+import Modal from '@/components/general/Modal'
 import { safeJsonStorageParse } from '@/lib/utils'
 import { TreeForm, treeSchemaBase } from '@/schema/treeSchema'
 import { useMapStore } from '@/store/store'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
 import { LatLng } from 'leaflet'
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { z } from 'zod'
 
 const editTreeParams = z.object({
@@ -31,8 +32,34 @@ function EditTree() {
   const { treeId, treeLat, treeLng, formType } = Route.useSearch()
   const { zoom } = useMapStore()
   const [treeLatLng, setTreeLatLng] = useState<LatLng>(() => new LatLng(treeLat, treeLng))
+  const allowNavigationRef = useRef(false)
+
+  const { proceed, reset, status } = useBlocker({
+    shouldBlockFn: ({ next }) => {
+      if (allowNavigationRef.current) {
+        allowNavigationRef.current = false
+        return false
+      }
+
+      const isFormPath =
+        next.pathname.startsWith('/trees/new') || next.pathname.startsWith('/trees/')
+      if (isFormPath) {
+        return false
+      }
+
+      return true
+    },
+    withResolver: true,
+  })
+
+  const handleConfirmLeave = useCallback(() => {
+    window.sessionStorage.removeItem('create-tree')
+    window.sessionStorage.removeItem('update-tree')
+    proceed?.()
+  }, [proceed])
 
   const handleNavigateBack = useCallback(() => {
+    allowNavigationRef.current = true
     switch (formType) {
       case 'create':
         return navigate({
@@ -95,6 +122,15 @@ function EditTree() {
       {treeLatLng && (
         <DragableMarker position={treeLatLng} onMove={(latlng) => setTreeLatLng(latlng)} />
       )}
+
+      <Modal
+        title="Seite verlassen?"
+        description="Möchtest du die Seite wirklich verlassen? Deine Eingaben gehen verloren, wenn du jetzt gehst."
+        confirmText="Verlassen"
+        isOpen={status === 'blocked'}
+        onConfirm={handleConfirmLeave}
+        onCancel={() => reset?.()}
+      />
     </>
   )
 }

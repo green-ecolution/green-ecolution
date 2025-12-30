@@ -1,9 +1,10 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
 import { Tree } from '@green-ecolution/backend-client'
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import SelectedCard from '@/components/general/cards/SelectedCard'
 import WithAllTrees from '@/components/map/marker/WithAllTrees'
 import MapSelectEntitiesModal from '@/components/map/MapSelectEntitiesModal'
+import Modal from '@/components/general/Modal'
 import { z } from 'zod'
 import { safeJsonStorageParse } from '@/lib/utils'
 import { clusterSchemaBase } from '@/schema/treeclusterSchema'
@@ -25,8 +26,34 @@ function SelectTrees() {
   const [showError, setShowError] = useState(false)
   const navigate = useNavigate({ from: Route.fullPath })
   const { clusterId } = Route.useSearch()
+  const allowNavigationRef = useRef(false)
+
+  const { proceed, reset, status } = useBlocker({
+    shouldBlockFn: ({ next }) => {
+      if (allowNavigationRef.current) {
+        allowNavigationRef.current = false
+        return false
+      }
+
+      const isFormPath =
+        next.pathname.startsWith('/treecluster/new') || next.pathname.startsWith('/treecluster/')
+      if (isFormPath) {
+        return false
+      }
+
+      return true
+    },
+    withResolver: true,
+  })
+
+  const handleConfirmLeave = useCallback(() => {
+    window.sessionStorage.removeItem('create-cluster')
+    window.sessionStorage.removeItem('update-cluster')
+    proceed?.()
+  }, [proceed])
 
   const handleNavigateBack = useCallback(() => {
+    allowNavigationRef.current = true
     switch (formType) {
       case 'create':
         return navigate({
@@ -95,6 +122,15 @@ function SelectTrees() {
         }
       />
       <WithAllTrees selectedTrees={treeIds} onClick={handleTreeClick} />
+
+      <Modal
+        title="Seite verlassen?"
+        description="Möchtest du die Seite wirklich verlassen? Deine Eingaben gehen verloren, wenn du jetzt gehst."
+        confirmText="Verlassen"
+        isOpen={status === 'blocked'}
+        onConfirm={handleConfirmLeave}
+        onCancel={() => reset?.()}
+      />
     </>
   )
 }
