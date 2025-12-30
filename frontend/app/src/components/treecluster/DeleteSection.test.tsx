@@ -127,14 +127,13 @@ describe('DeleteSection', () => {
       )
 
       await user.click(screen.getByRole('button', { name: /löschen/i }))
-      const modal = screen.getByRole('dialog')
-      expect(modal).not.toHaveClass('hidden')
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
 
       const cancelButton = screen.getByRole('button', { name: /abbrechen/i })
       await user.click(cancelButton)
 
       await waitFor(() => {
-        expect(modal).toHaveClass('hidden')
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
       })
     })
   })
@@ -259,6 +258,7 @@ describe('DeleteSection', () => {
       const error = new Error('Delete failed')
       mockMutationFn.mockRejectedValueOnce(error)
 
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       render(

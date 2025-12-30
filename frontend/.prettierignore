@@ -4,3 +4,4 @@ packages/backend-client/**
 app/src/animations/**
 app/src/routeTree.gen.ts
 pnpm-lock.yaml
+**/.__mf__temp
