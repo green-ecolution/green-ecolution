@@ -12,6 +12,7 @@ import { WateringPlanForm, wateringPlanSchema } from '@/schema/wateringPlanSchem
 import { DefaultValues, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import useFormPersist from './usePersistForm'
+import { useFormNavigationBlocker } from './useFormNavigationBlocker'
 
 type MutationOption = 'create' | 'update'
 type MutationType<T> = T extends 'create'
@@ -35,6 +36,19 @@ export const useWateringPlanForm = <T extends MutationOption>(
 
   const { clear: resetPersist } = useFormPersist(`${mutationType}-wateringplan`, {
     watch: form.watch,
+  })
+
+  const navigationBlocker = useFormNavigationBlocker({
+    isDirty: form.formState.isDirty,
+    allowedPaths: ['/map/watering-plan/select/cluster'],
+    onLeave: () => {
+      window.sessionStorage.removeItem('create-wateringplan')
+      window.sessionStorage.removeItem('update-wateringplan')
+    },
+    message:
+      mutationType === 'create'
+        ? 'Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen des Einsatzplans gehen verloren, wenn du jetzt gehst.'
+        : 'Möchtest du die Seite wirklich verlassen? Deine Änderungen am Einsatzplan gehen verloren, wenn du jetzt gehst.',
   })
 
   const { mutate, isError, error } = useMutation<WateringPlan, Error, MutationType<T>>({
@@ -61,6 +75,7 @@ export const useWateringPlanForm = <T extends MutationOption>(
         .invalidateQueries(wateringPlanQuery())
         .catch((error) => console.error('Invalidate "wateringPlanQuery" failed:', error))
 
+      navigationBlocker.allowNavigation()
       navigate({
         to: `/watering-plans/$wateringPlanId`,
         params: { wateringPlanId: data.id.toString() },
@@ -83,5 +98,6 @@ export const useWateringPlanForm = <T extends MutationOption>(
     isError,
     error,
     form,
+    navigationBlocker,
   }
 }

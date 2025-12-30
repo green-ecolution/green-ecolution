@@ -15,6 +15,7 @@ vi.mock('@/api/backendApi', () => ({
 
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn().mockResolvedValue(undefined),
+  useBlocker: () => ({ proceed: vi.fn(), reset: vi.fn(), status: 'idle' }),
 }))
 
 vi.mock('./usePersistForm', () => ({

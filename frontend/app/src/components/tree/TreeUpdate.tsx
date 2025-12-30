@@ -11,6 +11,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useTreeForm } from '@/hooks/form/useTreeForm'
 import { safeJsonStorageParse } from '@/lib/utils'
 import { FormProvider } from 'react-hook-form'
+import Modal from '../general/Modal'
 
 interface TreeUpdateProps {
   treeId: string
@@ -37,7 +38,10 @@ const TreeUpdate = ({ treeId, clusters, sensors }: TreeUpdateProps) => {
         provider: data.provider,
       },
   )
-  const { mutate, isError, error, form } = useTreeForm('update', { initForm, treeId })
+  const { mutate, isError, error, form, navigationBlocker } = useTreeForm('update', {
+    initForm,
+    treeId,
+  })
 
   const onSubmit = (data: TreeForm) => {
     mutate({
@@ -99,6 +103,15 @@ const TreeUpdate = ({ treeId, clusters, sensors }: TreeUpdateProps) => {
           redirectUrl={{ to: '/map' }}
         />
       )}
+
+      <Modal
+        title="Seite verlassen?"
+        description={navigationBlocker.message}
+        confirmText="Verlassen"
+        isOpen={navigationBlocker.isModalOpen}
+        onConfirm={navigationBlocker.confirmLeave}
+        onCancel={navigationBlocker.closeModal}
+      />
     </>
   )
 }

@@ -9,6 +9,7 @@ import { useCallback } from 'react'
 import { z } from 'zod'
 import { safeJsonStorageParse } from '@/lib/utils'
 import { FormProvider } from 'react-hook-form'
+import Modal from '@/components/general/Modal'
 
 const newTreeSearchSchema = z.object({
   lat: z.number(),
@@ -48,7 +49,7 @@ const defaultForm = (lat: number, lng: number) => ({
 
 function NewTree() {
   const { lat, lng, formState } = Route.useLoaderData()
-  const { mutate, isError, error, form } = useTreeForm('create', {
+  const { mutate, isError, error, form, navigationBlocker } = useTreeForm('create', {
     initForm: formState ?? defaultForm(lat, lng),
   })
   const navigate = useNavigate({ from: Route.fullPath })
@@ -103,6 +104,15 @@ function NewTree() {
           />
         </FormProvider>
       </section>
+
+      <Modal
+        title="Seite verlassen?"
+        description={navigationBlocker.message}
+        confirmText="Verlassen"
+        isOpen={navigationBlocker.isModalOpen}
+        onConfirm={navigationBlocker.confirmLeave}
+        onCancel={navigationBlocker.closeModal}
+      />
     </div>
   )
 }

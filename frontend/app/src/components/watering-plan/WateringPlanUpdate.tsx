@@ -17,6 +17,7 @@ import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
 import { WateringPlanForm, wateringPlanSchemaBase } from '@/schema/wateringPlanSchema'
 import { FormProvider, SubmitHandler } from 'react-hook-form'
 import { safeJsonStorageParse } from '@/lib/utils'
+import Modal from '../general/Modal'
 
 interface WateringPlanUpdateProps {
   wateringPlanId: string
@@ -39,7 +40,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         driverIds: data.userIds,
       },
   )
-  const { mutate, isError, error, form } = useWateringPlanForm('update', {
+  const { mutate, isError, error, form, navigationBlocker } = useWateringPlanForm('update', {
     wateringPlanId,
     initForm,
   })
@@ -145,6 +146,15 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
           redirectUrl={{ to: '/watering-plans' }}
         />
       </Suspense>
+
+      <Modal
+        title="Seite verlassen?"
+        description={navigationBlocker.message}
+        confirmText="Verlassen"
+        isOpen={navigationBlocker.isModalOpen}
+        onConfirm={navigationBlocker.confirmLeave}
+        onCancel={navigationBlocker.closeModal}
+      />
     </>
   )
 }
