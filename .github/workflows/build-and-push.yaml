@@ -230,6 +230,8 @@ jobs:
         build-frontend,
       ]
     if: needs.check-release-pr.outputs.should-build == 'true'
+    outputs:
+      target-branch: ${{ steps.target.outputs.branch }}
     permissions:
       contents: write
       pull-requests: write
@@ -270,8 +272,8 @@ jobs:
         id: target
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            # Stage: push to dedicated 'stage' branch
-            echo "branch=stage" >> $GITHUB_OUTPUT
+            # Stage: push directly to the release PR branch
+            echo "branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
             echo "env=stage" >> $GITHUB_OUTPUT
           else
             # Prod: push to develop
@@ -314,15 +316,31 @@ jobs:
             echo "ℹ️ No changes to commit"
           fi
 
-      - name: Add comment to PR
+      - name: Update deployment comment on PR
         if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           TAG="${{ needs.determine-environment.outputs.image-tag }}"
-          gh pr comment ${{ github.event.pull_request.number }} --body "## 🚀 Stage Deployment Ready
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          MARKER="<!-- stage-deployment-comment -->"
 
-          Docker images have been built and pushed to \`stage\` branch.
+          # Find and delete existing deployment comments
+          COMMENT_IDS=$(gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
+            --jq ".[] | select(.body | contains(\"${MARKER}\")) | .id")
+
+          for COMMENT_ID in $COMMENT_IDS; do
+            echo "Deleting old deployment comment: ${COMMENT_ID}"
+            gh api -X DELETE "repos/${{ github.repository }}/issues/comments/${COMMENT_ID}"
+          done
+
+          # Create new comment at the bottom
+          PR_BRANCH="${{ github.event.pull_request.head.ref }}"
+          gh pr comment ${PR_NUMBER} --body "${MARKER}
+          ## 🚀 Stage Deployment Ready
+
+          Docker images have been built and the kustomize config has been updated in this PR branch.
+          Preview the changes at https://app.stage.green-ecolution.de
 
           ### 🐳 Docker Images
           - Backend: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}\`
@@ -330,10 +348,13 @@ jobs:
           - Migrations: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:${TAG}\`
 
           ### 🔄 ArgoCD
-          The \`stage\` branch has been updated with the new image tags.
-          ArgoCD will automatically sync the stage environment.
+          ArgoCD is configured to track the \`${PR_BRANCH}\` branch for stage deployments.
+          The stage environment will sync automatically.
 
-          **After merging this PR**, the prod environment will be updated via the \`develop\` branch."
+          **After merging this PR**, the stage kustomize updates will be included in \`develop\`.
+
+          ---
+          *Last updated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')*"
 
   log-build-info:
     runs-on: ubuntu-latest
@@ -354,12 +375,11 @@ jobs:
           TAG="${{ needs.determine-environment.outputs.image-tag }}"
           IS_RELEASE="${{ needs.determine-environment.outputs.is-release }}"
 
+          BRANCH="${{ needs.update-kustomize.outputs.target-branch }}"
           if [[ "$IS_RELEASE" == "true" ]]; then
             echo "## 🌿 Production Release Build Complete" >> $GITHUB_STEP_SUMMARY
-            BRANCH="develop"
           else
             echo "## 🧪 Stage Build Complete" >> $GITHUB_STEP_SUMMARY
-            BRANCH="stage"
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
