@@ -14,7 +14,7 @@ describe('wateringPlanSchemaBase', () => {
     transporterId: 1,
     trailerId: 2,
     driverIds: ['550e8400-e29b-41d4-a716-446655440000'],
-    cluserIds: [1, 2, 3],
+    clusterIds: [1, 2, 3],
     description: 'Test watering plan',
   }
 
@@ -69,8 +69,8 @@ describe('wateringPlanSchemaBase', () => {
     expect(result.success).toBe(true)
   })
 
-  it('accepts empty cluserIds array in base schema', () => {
-    const result = wateringPlanSchemaBase.safeParse({ ...validWateringPlan, cluserIds: [] })
+  it('accepts empty clusterIds array in base schema', () => {
+    const result = wateringPlanSchemaBase.safeParse({ ...validWateringPlan, clusterIds: [] })
     expect(result.success).toBe(true)
   })
 
@@ -106,7 +106,7 @@ describe('wateringPlanSchema (extended)', () => {
     status: WateringPlanStatus.WateringPlanStatusPlanned,
     transporterId: 1,
     driverIds: ['550e8400-e29b-41d4-a716-446655440000'],
-    cluserIds: [1],
+    clusterIds: [1],
     description: '',
   }
 
@@ -130,7 +130,7 @@ describe('wateringPlanSchema (extended)', () => {
   })
 
   it('requires at least one cluster', () => {
-    const result = wateringPlanSchema.safeParse({ ...validWateringPlan, cluserIds: [] })
+    const result = wateringPlanSchema.safeParse({ ...validWateringPlan, clusterIds: [] })
     expect(result.success).toBe(false)
   })
 
@@ -145,7 +145,7 @@ describe('wateringPlanSchema (extended)', () => {
   it('accepts multiple clusters', () => {
     const result = wateringPlanSchema.safeParse({
       ...validWateringPlan,
-      cluserIds: [1, 2, 3, 4, 5],
+      clusterIds: [1, 2, 3, 4, 5],
     })
     expect(result.success).toBe(true)
   })

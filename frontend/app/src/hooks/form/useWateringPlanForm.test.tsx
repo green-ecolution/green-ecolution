@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
-import { useWaterinPlanForm } from './useWateringPlanForm'
+import { useWateringPlanForm } from './useWateringPlanForm'
 import ToastProvider from '@/context/ToastContext'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 
@@ -48,7 +48,7 @@ const defaultInitForm = {
   transporterId: 1,
   trailerId: 2,
   driverIds: ['550e8400-e29b-41d4-a716-446655440000'],
-  cluserIds: [1, 2],
+  clusterIds: [1, 2],
   description: '',
 }
 
@@ -73,14 +73,14 @@ function createMockWateringPlan(overrides: Partial<WateringPlan> = {}): Watering
   } as WateringPlan
 }
 
-describe('useWaterinPlanForm', () => {
+describe('useWateringPlanForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it('initializes form with provided default values', () => {
     const { result } = renderHook(
-      () => useWaterinPlanForm('create', { initForm: defaultInitForm }),
+      () => useWateringPlanForm('create', { initForm: defaultInitForm }),
       { wrapper: createWrapper() },
     )
 
@@ -91,12 +91,12 @@ describe('useWaterinPlanForm', () => {
     expect(result.current.form.getValues('driverIds')).toEqual([
       '550e8400-e29b-41d4-a716-446655440000',
     ])
-    expect(result.current.form.getValues('cluserIds')).toEqual([1, 2])
+    expect(result.current.form.getValues('clusterIds')).toEqual([1, 2])
   })
 
   it('returns form methods and mutation state', () => {
     const { result } = renderHook(
-      () => useWaterinPlanForm('create', { initForm: defaultInitForm }),
+      () => useWateringPlanForm('create', { initForm: defaultInitForm }),
       { wrapper: createWrapper() },
     )
 
@@ -115,7 +115,7 @@ describe('useWaterinPlanForm', () => {
     createMock.mockResolvedValueOnce(mockResponse)
 
     const { result } = renderHook(
-      () => useWaterinPlanForm('create', { initForm: defaultInitForm }),
+      () => useWateringPlanForm('create', { initForm: defaultInitForm }),
       { wrapper: createWrapper() },
     )
 
@@ -158,7 +158,7 @@ describe('useWaterinPlanForm', () => {
     }
 
     const { result } = renderHook(
-      () => useWaterinPlanForm('update', { wateringPlanId: '5', initForm: updateInitForm }),
+      () => useWateringPlanForm('update', { wateringPlanId: '5', initForm: updateInitForm }),
       { wrapper: createWrapper() },
     )
 

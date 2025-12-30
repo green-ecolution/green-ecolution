@@ -13,7 +13,7 @@ import LoadingInfo from '../general/error/LoadingInfo'
 import { Suspense } from 'react'
 import DeleteSection from '../treecluster/DeleteSection'
 import { wateringPlanApi } from '@/api/backendApi'
-import { useWaterinPlanForm } from '@/hooks/form/useWateringPlanForm'
+import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
 import { WateringPlanForm, wateringPlanSchemaBase } from '@/schema/wateringPlanSchema'
 import { FormProvider, SubmitHandler } from 'react-hook-form'
 import { safeJsonStorageParse } from '@/lib/utils'
@@ -34,12 +34,12 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         description: data.description,
         transporterId: data.transporter.id,
         trailerId: data.trailer?.id,
-        cluserIds: data.treeclusters.map((cluster) => cluster.id),
+        clusterIds: data.treeclusters.map((cluster) => cluster.id),
         status: data.status,
         driverIds: data.userIds,
       },
   )
-  const { mutate, isError, error, form } = useWaterinPlanForm('update', {
+  const { mutate, isError, error, form } = useWateringPlanForm('update', {
     wateringPlanId,
     initForm,
   })
@@ -56,7 +56,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
       ...data,
       date: data.date.toISOString(),
       trailerId: data.trailerId && data.trailerId !== -1 ? data.trailerId : undefined,
-      treeClusterIds: data.cluserIds,
+      treeClusterIds: data.clusterIds,
       userIds: data.driverIds,
       cancellationNote: '', // TODO: why cancel note in update ???
     })
@@ -78,7 +78,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         wateringPlanId: Number(wateringPlanId),
         trailerId: form.getValues('trailerId'),
         transporterId: form.getValues('transporterId'),
-        clusterIds: form.getValues('cluserIds'),
+        clusterIds: form.getValues('clusterIds'),
         formType: 'update',
       },
     }).catch((error) => console.error('Navigation failed:', error))

@@ -52,7 +52,7 @@ const defaultFormValues: WateringPlanForm = {
   transporterId: -1,
   trailerId: -1,
   driverIds: [],
-  cluserIds: [],
+  clusterIds: [],
   description: '',
 }
 
