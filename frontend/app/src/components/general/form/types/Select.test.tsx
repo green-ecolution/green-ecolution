@@ -51,6 +51,31 @@ describe('Select', () => {
       expect(figure).toBeInTheDocument()
       expect(figure).toHaveAttribute('aria-hidden', 'true')
     })
+
+    it('hides native browser arrow with appearance-none', () => {
+      render(<Select label="Test Label" options={defaultOptions} />)
+      const select = screen.getByRole('combobox')
+      expect(select).toHaveClass('appearance-none')
+    })
+
+    it('has padding-right for icon space', () => {
+      render(<Select label="Test Label" options={defaultOptions} />)
+      const select = screen.getByRole('combobox')
+      expect(select).toHaveClass('pr-12')
+    })
+
+    it('does not render chevron icon when multiple is true', () => {
+      render(<Select label="Test Label" options={defaultOptions} multiple />)
+      const figure = document.querySelector('figure')
+      expect(figure).not.toBeInTheDocument()
+    })
+
+    it('does not apply appearance-none when multiple is true', () => {
+      render(<Select label="Test Label" options={defaultOptions} multiple />)
+      const select = screen.getByRole('listbox')
+      expect(select).not.toHaveClass('appearance-none')
+      expect(select).not.toHaveClass('pr-12')
+    })
   })
 
   describe('Interaction', () => {
@@ -96,6 +121,26 @@ describe('Select', () => {
 
       const select = screen.getByRole('combobox')
       expect(select).toHaveAttribute('id', 'test-select')
+    })
+
+    it('uses id prop over name prop when both provided', () => {
+      render(
+        <Select label="Test Label" id="custom-id" name="test-select" options={defaultOptions} />,
+      )
+
+      const select = screen.getByRole('combobox')
+      expect(select).toHaveAttribute('id', 'custom-id')
+    })
+
+    it('generates id when neither id nor name provided', () => {
+      render(<Select label="Test Label" options={defaultOptions} />)
+
+      const select = screen.getByRole('combobox')
+      const label = screen.getByText('Test Label')
+
+      expect(select).toHaveAttribute('id')
+      expect(select.id).not.toBe('')
+      expect(label).toHaveAttribute('for', select.id)
     })
 
     it('marks icon as aria-hidden', () => {
