@@ -38,7 +38,7 @@ const Select = ({ ref, ...props }: SelectProps) => {
             </option>
           ))}
         </select>
-        <figure aria-hidden="true" className="absolute right-4 top-[1.125rem]">
+        <figure aria-hidden="true" className="pointer-events-none absolute right-4 top-[1.125rem]">
           <ChevronDown className="w-4 h-4 text-dark-800" />
         </figure>
       </div>
