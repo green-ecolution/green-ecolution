@@ -25,12 +25,17 @@ export const useTreeForm = (
 
   const { clear: resetPersist } = useFormPersist(`${mutationType}-tree`, { watch: form.watch })
 
+  const coordsChanged =
+    window.sessionStorage.getItem(`${mutationType}-tree-coords-changed`) === 'true'
+
   const navigationBlocker = useFormNavigationBlocker({
-    isDirty: form.formState.isDirty,
+    isDirty: form.formState.isDirty || coordsChanged,
     allowedPaths: ['/map/tree/edit'],
     onLeave: () => {
       window.sessionStorage.removeItem('create-tree')
       window.sessionStorage.removeItem('update-tree')
+      window.sessionStorage.removeItem('create-tree-coords-changed')
+      window.sessionStorage.removeItem('update-tree-coords-changed')
     },
     message:
       mutationType === 'create'
@@ -55,6 +60,8 @@ export const useTreeForm = (
 
     onSuccess: (data: Tree) => {
       resetPersist()
+      window.sessionStorage.removeItem('create-tree-coords-changed')
+      window.sessionStorage.removeItem('update-tree-coords-changed')
       queryClient
         .invalidateQueries(treeIdQuery(String(data.id)))
         .catch((error) => console.error('Invalidate "treeIdQuery" failed:', error))

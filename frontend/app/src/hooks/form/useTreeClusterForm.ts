@@ -25,12 +25,17 @@ export const useTreeClusterForm = (
 
   const { clear: resetPersist } = useFormPersist(`${mutationType}-cluster`, { watch: form.watch })
 
+  const treesChanged =
+    window.sessionStorage.getItem(`${mutationType}-cluster-trees-changed`) === 'true'
+
   const navigationBlocker = useFormNavigationBlocker({
-    isDirty: form.formState.isDirty,
+    isDirty: form.formState.isDirty || treesChanged,
     allowedPaths: ['/map/treecluster/select/tree'],
     onLeave: () => {
       window.sessionStorage.removeItem('create-cluster')
       window.sessionStorage.removeItem('update-cluster')
+      window.sessionStorage.removeItem('create-cluster-trees-changed')
+      window.sessionStorage.removeItem('update-cluster-trees-changed')
     },
     message:
       mutationType === 'create'
@@ -55,6 +60,8 @@ export const useTreeClusterForm = (
 
     onSuccess: (data: TreeCluster) => {
       resetPersist()
+      window.sessionStorage.removeItem('create-cluster-trees-changed')
+      window.sessionStorage.removeItem('update-cluster-trees-changed')
       queryClient
         .invalidateQueries(treeClusterIdQuery(String(data.id)))
         .catch((error) => console.error('Invalidate "treeClusterIdQuery" failed:', error))

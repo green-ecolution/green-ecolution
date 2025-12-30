@@ -55,6 +55,8 @@ function EditTree() {
   const handleConfirmLeave = useCallback(() => {
     window.sessionStorage.removeItem('create-tree')
     window.sessionStorage.removeItem('update-tree')
+    window.sessionStorage.removeItem('create-tree-coords-changed')
+    window.sessionStorage.removeItem('update-tree-coords-changed')
     proceed?.()
   }, [proceed])
 
@@ -88,6 +90,10 @@ function EditTree() {
       schema: treeSchemaBase,
     })
     if (success) {
+      const coordsChanged = data.latitude !== treeLatLng.lat || data.longitude !== treeLatLng.lng
+      if (coordsChanged) {
+        window.sessionStorage.setItem(`${formType}-tree-coords-changed`, 'true')
+      }
       data.latitude = treeLatLng.lat
       data.longitude = treeLatLng.lng
       window.sessionStorage.setItem(`${formType}-tree`, JSON.stringify(data))

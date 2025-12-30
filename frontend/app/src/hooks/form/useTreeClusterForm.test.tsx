@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
@@ -13,9 +13,16 @@ vi.mock('@/api/backendApi', () => ({
   },
 }))
 
+const mockUseBlocker = vi.fn().mockReturnValue({
+  proceed: vi.fn(),
+  reset: vi.fn(),
+  status: 'idle',
+})
+
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn().mockResolvedValue(undefined),
-  useBlocker: () => ({ proceed: vi.fn(), reset: vi.fn(), status: 'idle' }),
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  useBlocker: (...args: unknown[]) => mockUseBlocker(...args),
 }))
 
 vi.mock('./usePersistForm', () => ({
@@ -70,6 +77,11 @@ function createMockTreeCluster(overrides: Partial<TreeCluster> = {}): TreeCluste
 describe('useTreeClusterForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    sessionStorage.clear()
+  })
+
+  afterEach(() => {
+    sessionStorage.clear()
   })
 
   it('initializes form with provided default values', () => {
@@ -177,6 +189,77 @@ describe('useTreeClusterForm', () => {
           name: 'Updated Cluster',
           address: 'Updated Address',
         }),
+      })
+    })
+  })
+
+  describe('map trees changed flag', () => {
+    it('detects trees changed flag for create mutation', () => {
+      sessionStorage.setItem('create-cluster-trees-changed', 'true')
+
+      renderHook(() => useTreeClusterForm('create', { initForm: defaultInitForm }), {
+        wrapper: createWrapper(),
+      })
+
+      expect(mockUseBlocker).toHaveBeenCalledWith(
+        expect.objectContaining({
+          shouldBlockFn: expect.any(Function) as unknown,
+        }),
+      )
+    })
+
+    it('detects trees changed flag for update mutation', () => {
+      sessionStorage.setItem('update-cluster-trees-changed', 'true')
+
+      renderHook(
+        () => useTreeClusterForm('update', { clusterId: '1', initForm: defaultInitForm }),
+        {
+          wrapper: createWrapper(),
+        },
+      )
+
+      expect(mockUseBlocker).toHaveBeenCalledWith(
+        expect.objectContaining({
+          shouldBlockFn: expect.any(Function) as unknown,
+        }),
+      )
+    })
+
+    it('does not detect trees changed when flag is not set', () => {
+      renderHook(() => useTreeClusterForm('create', { initForm: defaultInitForm }), {
+        wrapper: createWrapper(),
+      })
+
+      expect(mockUseBlocker).toHaveBeenCalled()
+    })
+
+    it('clears trees changed flags on successful mutation', async () => {
+      sessionStorage.setItem('create-cluster-trees-changed', 'true')
+      sessionStorage.setItem('update-cluster-trees-changed', 'true')
+
+      const mockResponse = createMockTreeCluster()
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      const createMock = vi.mocked(clusterApi.createTreeCluster)
+      createMock.mockResolvedValueOnce(mockResponse)
+
+      const { result } = renderHook(
+        () => useTreeClusterForm('create', { initForm: defaultInitForm }),
+        { wrapper: createWrapper() },
+      )
+
+      act(() => {
+        result.current.mutate({
+          name: 'Test Cluster',
+          address: 'Test Address 123',
+          description: '',
+          soilCondition: SoilCondition.TreeSoilConditionSandig,
+          treeIds: [],
+        })
+      })
+
+      await waitFor(() => {
+        expect(sessionStorage.getItem('create-cluster-trees-changed')).toBeNull()
+        expect(sessionStorage.getItem('update-cluster-trees-changed')).toBeNull()
       })
     })
   })

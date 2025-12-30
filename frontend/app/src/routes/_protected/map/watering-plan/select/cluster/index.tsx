@@ -57,6 +57,8 @@ function SelectCluster() {
   const handleConfirmLeave = useCallback(() => {
     window.sessionStorage.removeItem('create-wateringplan')
     window.sessionStorage.removeItem('update-wateringplan')
+    window.sessionStorage.removeItem('create-wateringplan-clusters-changed')
+    window.sessionStorage.removeItem('update-wateringplan-clusters-changed')
     proceed?.()
   }, [proceed])
   const { data: clusters } = useSuspenseQuery(treeClusterQuery())
@@ -94,6 +96,13 @@ function SelectCluster() {
     })
 
     if (success) {
+      const originalClusterIds = data.clusterIds ?? []
+      const clustersChanged =
+        clusterIds.length !== originalClusterIds.length ||
+        clusterIds.some((id) => !originalClusterIds.includes(id))
+      if (clustersChanged) {
+        window.sessionStorage.setItem(`${formType}-wateringplan-clusters-changed`, 'true')
+      }
       data.clusterIds = clusterIds
       window.sessionStorage.setItem(`${formType}-wateringplan`, JSON.stringify(data))
     } else {

@@ -38,12 +38,17 @@ export const useWateringPlanForm = <T extends MutationOption>(
     watch: form.watch,
   })
 
+  const clustersChanged =
+    window.sessionStorage.getItem(`${mutationType}-wateringplan-clusters-changed`) === 'true'
+
   const navigationBlocker = useFormNavigationBlocker({
-    isDirty: form.formState.isDirty,
+    isDirty: form.formState.isDirty || clustersChanged,
     allowedPaths: ['/map/watering-plan/select/cluster'],
     onLeave: () => {
       window.sessionStorage.removeItem('create-wateringplan')
       window.sessionStorage.removeItem('update-wateringplan')
+      window.sessionStorage.removeItem('create-wateringplan-clusters-changed')
+      window.sessionStorage.removeItem('update-wateringplan-clusters-changed')
     },
     message:
       mutationType === 'create'
@@ -68,6 +73,8 @@ export const useWateringPlanForm = <T extends MutationOption>(
 
     onSuccess: (data: WateringPlan) => {
       resetPersist()
+      window.sessionStorage.removeItem('create-wateringplan-clusters-changed')
+      window.sessionStorage.removeItem('update-wateringplan-clusters-changed')
       queryClient
         .invalidateQueries(wateringPlanIdQuery(String(data.id)))
         .catch((error) => console.error('Invalidate "wateringPlanIdQuery" failed', error))

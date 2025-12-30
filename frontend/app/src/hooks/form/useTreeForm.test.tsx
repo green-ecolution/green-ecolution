@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
@@ -12,9 +12,16 @@ vi.mock('@/api/backendApi', () => ({
   },
 }))
 
+const mockUseBlocker = vi.fn().mockReturnValue({
+  proceed: vi.fn(),
+  reset: vi.fn(),
+  status: 'idle',
+})
+
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn().mockResolvedValue(undefined),
-  useBlocker: () => ({ proceed: vi.fn(), reset: vi.fn(), status: 'idle' }),
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  useBlocker: (...args: unknown[]) => mockUseBlocker(...args),
 }))
 
 vi.mock('./usePersistForm', () => ({
@@ -53,6 +60,11 @@ const defaultInitForm = {
 describe('useTreeForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    sessionStorage.clear()
+  })
+
+  afterEach(() => {
+    sessionStorage.clear()
   })
 
   it('initializes form with provided default values', () => {
@@ -171,5 +183,80 @@ describe('useTreeForm', () => {
     // Verify the form is configured with validation
     expect(result.current.form).toBeDefined()
     // Form validation is already tested extensively in treeSchema.test.ts
+  })
+
+  describe('map coords changed flag', () => {
+    it('detects coords changed flag for create mutation', () => {
+      sessionStorage.setItem('create-tree-coords-changed', 'true')
+
+      renderHook(() => useTreeForm('create', { initForm: defaultInitForm }), {
+        wrapper: createWrapper(),
+      })
+
+      expect(mockUseBlocker).toHaveBeenCalledWith(
+        expect.objectContaining({
+          shouldBlockFn: expect.any(Function) as unknown,
+        }),
+      )
+    })
+
+    it('detects coords changed flag for update mutation', () => {
+      sessionStorage.setItem('update-tree-coords-changed', 'true')
+
+      renderHook(() => useTreeForm('update', { treeId: '1', initForm: defaultInitForm }), {
+        wrapper: createWrapper(),
+      })
+
+      expect(mockUseBlocker).toHaveBeenCalledWith(
+        expect.objectContaining({
+          shouldBlockFn: expect.any(Function) as unknown,
+        }),
+      )
+    })
+
+    it('does not detect coords changed when flag is not set', () => {
+      renderHook(() => useTreeForm('create', { initForm: defaultInitForm }), {
+        wrapper: createWrapper(),
+      })
+
+      expect(mockUseBlocker).toHaveBeenCalled()
+    })
+
+    it('clears coords changed flags on successful mutation', async () => {
+      sessionStorage.setItem('create-tree-coords-changed', 'true')
+      sessionStorage.setItem('update-tree-coords-changed', 'true')
+
+      const mockResponse = {
+        id: 1,
+        number: 'T-001',
+        species: 'Oak',
+        latitude: 53.5511,
+        longitude: 9.9937,
+        plantingYear: 2023,
+      } as Tree
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      const createTreeMock = vi.mocked(treeApi.createTree)
+      createTreeMock.mockResolvedValueOnce(mockResponse)
+
+      const { result } = renderHook(() => useTreeForm('create', { initForm: defaultInitForm }), {
+        wrapper: createWrapper(),
+      })
+
+      act(() => {
+        result.current.mutate({
+          latitude: 53.5511,
+          longitude: 9.9937,
+          number: 'T-001',
+          species: 'Oak',
+          plantingYear: 2023,
+          description: '',
+        })
+      })
+
+      await waitFor(() => {
+        expect(sessionStorage.getItem('create-tree-coords-changed')).toBeNull()
+        expect(sessionStorage.getItem('update-tree-coords-changed')).toBeNull()
+      })
+    })
   })
 })

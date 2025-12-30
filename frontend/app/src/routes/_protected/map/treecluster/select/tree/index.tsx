@@ -49,6 +49,8 @@ function SelectTrees() {
   const handleConfirmLeave = useCallback(() => {
     window.sessionStorage.removeItem('create-cluster')
     window.sessionStorage.removeItem('update-cluster')
+    window.sessionStorage.removeItem('create-cluster-trees-changed')
+    window.sessionStorage.removeItem('update-cluster-trees-changed')
     proceed?.()
   }, [proceed])
 
@@ -78,6 +80,13 @@ function SelectTrees() {
     })
 
     if (success) {
+      const originalTreeIds = data.treeIds ?? []
+      const treesChanged =
+        treeIds.length !== originalTreeIds.length ||
+        treeIds.some((id) => !originalTreeIds.includes(id))
+      if (treesChanged) {
+        window.sessionStorage.setItem(`${formType}-cluster-trees-changed`, 'true')
+      }
       data.treeIds = treeIds
       window.sessionStorage.setItem(`${formType}-cluster`, JSON.stringify(data))
     } else {
