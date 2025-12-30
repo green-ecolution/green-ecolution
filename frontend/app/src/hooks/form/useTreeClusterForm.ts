@@ -1,13 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { treeClusterIdQuery, treeClusterQuery } from '@/api/queries'
 import useToast from '@/hooks/useToast'
-import { useBlocker, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { TreeCluster, TreeClusterCreate, TreeClusterUpdate } from '@green-ecolution/backend-client'
 import { clusterApi } from '@/api/backendApi'
 import { clusterSchema, TreeclusterForm } from '@/schema/treeclusterSchema'
 import { DefaultValues, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import useFormPersist from './usePersistForm'
+import { useFormNavigationBlocker } from './useFormNavigationBlocker'
 
 export const useTreeClusterForm = (
   mutationType: 'create' | 'update',
@@ -24,24 +25,22 @@ export const useTreeClusterForm = (
 
   const { clear: resetPersist } = useFormPersist(`${mutationType}-cluster`, { watch: form.watch })
 
-  // TODO: only on isDirty
-  useBlocker({
-    shouldBlockFn: ({ next }) => {
-      if (next.pathname === '/map/treecluster/select/tree') return false
+  const treesChanged =
+    window.sessionStorage.getItem(`${mutationType}-cluster-trees-changed`) === 'true'
 
-      const shouldLeave = confirm(
-        mutationType === 'create'
-          ? 'Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen der Bewässerungsgruppe gehen verloren, wenn du jetzt gehst.'
-          : 'Möchtest du die Seite wirklich verlassen? Deine Änderungen an der Bewässerungsgruppe gehen verloren, wenn du jetzt gehst.',
-      )
-
-      if (shouldLeave) {
-        window.sessionStorage.removeItem('create-cluster')
-        window.sessionStorage.removeItem('update-cluster')
-      }
-
-      return !shouldLeave
+  const navigationBlocker = useFormNavigationBlocker({
+    isDirty: form.formState.isDirty || treesChanged,
+    allowedPaths: ['/map/treecluster/select/tree'],
+    onLeave: () => {
+      window.sessionStorage.removeItem('create-cluster')
+      window.sessionStorage.removeItem('update-cluster')
+      window.sessionStorage.removeItem('create-cluster-trees-changed')
+      window.sessionStorage.removeItem('update-cluster-trees-changed')
     },
+    message:
+      mutationType === 'create'
+        ? 'Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen der Bewässerungsgruppe gehen verloren, wenn du jetzt gehst.'
+        : 'Möchtest du die Seite wirklich verlassen? Deine Änderungen an der Bewässerungsgruppe gehen verloren, wenn du jetzt gehst.',
   })
 
   const { mutate, isError, error } = useMutation({
@@ -61,12 +60,15 @@ export const useTreeClusterForm = (
 
     onSuccess: (data: TreeCluster) => {
       resetPersist()
+      window.sessionStorage.removeItem('create-cluster-trees-changed')
+      window.sessionStorage.removeItem('update-cluster-trees-changed')
       queryClient
         .invalidateQueries(treeClusterIdQuery(String(data.id)))
         .catch((error) => console.error('Invalidate "treeClusterIdQuery" failed:', error))
       queryClient
         .invalidateQueries(treeClusterQuery())
         .catch((error) => console.error('Invalidate "treeClusterQuery" failed:', error))
+      navigationBlocker.allowNavigation()
       navigate({
         to: '/treecluster/$treeclusterId',
         params: { treeclusterId: data.id.toString() },
@@ -85,9 +87,10 @@ export const useTreeClusterForm = (
   })
 
   return {
-    mutate: mutate,
-    isError: isError,
-    error: error,
+    mutate,
+    isError,
+    error,
     form,
+    navigationBlocker,
   }
 }

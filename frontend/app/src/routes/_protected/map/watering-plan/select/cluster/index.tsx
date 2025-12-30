@@ -1,6 +1,7 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
 import { TreeCluster } from '@green-ecolution/backend-client'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import Modal from '@/components/general/Modal'
 import { wateringPlanSchemaBase } from '@/schema/wateringPlanSchema'
 import MapSelectEntitiesModal from '@/components/map/MapSelectEntitiesModal'
 import WithAllClusters from '@/components/map/marker/WithAllClusters'
@@ -34,6 +35,32 @@ function SelectCluster() {
   const [showError, setShowError] = useState(false)
   const navigate = useNavigate({ from: Route.fullPath })
   const { wateringPlanId } = Route.useSearch()
+  const allowNavigationRef = useRef(false)
+
+  const { proceed, reset, status } = useBlocker({
+    shouldBlockFn: ({ next }) => {
+      if (allowNavigationRef.current) {
+        allowNavigationRef.current = false
+        return false
+      }
+
+      const isFormPath = next.pathname.startsWith('/watering-plans/')
+      if (isFormPath) {
+        return false
+      }
+
+      return true
+    },
+    withResolver: true,
+  })
+
+  const handleConfirmLeave = useCallback(() => {
+    window.sessionStorage.removeItem('create-wateringplan')
+    window.sessionStorage.removeItem('update-wateringplan')
+    window.sessionStorage.removeItem('create-wateringplan-clusters-changed')
+    window.sessionStorage.removeItem('update-wateringplan-clusters-changed')
+    proceed?.()
+  }, [proceed])
   const { data: clusters } = useSuspenseQuery(treeClusterQuery())
   const { data: transporter } = useQuery({
     ...vehicleIdQuery(transporterId?.toString() ?? '-1'),
@@ -45,6 +72,7 @@ function SelectCluster() {
   })
 
   const handleNavigateBack = useCallback(() => {
+    allowNavigationRef.current = true
     switch (formType) {
       case 'update':
         return navigate({
@@ -68,6 +96,13 @@ function SelectCluster() {
     })
 
     if (success) {
+      const originalClusterIds = data.clusterIds ?? []
+      const clustersChanged =
+        clusterIds.length !== originalClusterIds.length ||
+        clusterIds.some((id) => !originalClusterIds.includes(id))
+      if (clustersChanged) {
+        window.sessionStorage.setItem(`${formType}-wateringplan-clusters-changed`, 'true')
+      }
       data.clusterIds = clusterIds
       window.sessionStorage.setItem(`${formType}-wateringplan`, JSON.stringify(data))
     } else {
@@ -160,6 +195,15 @@ function SelectCluster() {
           trailerId={trailerId}
         />
       )}
+
+      <Modal
+        title="Seite verlassen?"
+        description="Möchtest du die Seite wirklich verlassen? Deine Eingaben gehen verloren, wenn du jetzt gehst."
+        confirmText="Verlassen"
+        isOpen={status === 'blocked'}
+        onConfirm={handleConfirmLeave}
+        onCancel={() => reset?.()}
+      />
     </>
   )
 }

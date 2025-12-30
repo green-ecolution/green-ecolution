@@ -13,6 +13,7 @@ import { Suspense } from 'react'
 import LoadingInfo from '../general/error/LoadingInfo'
 import { useTreeClusterForm } from '@/hooks/form/useTreeClusterForm'
 import { safeJsonStorageParse } from '@/lib/utils'
+import Modal from '../general/Modal'
 
 interface TreeClusterUpdateProps {
   clusterId: string
@@ -37,7 +38,10 @@ const TreeClusterUpdate = ({ clusterId }: TreeClusterUpdateProps) => {
         treeIds: data.trees?.map((tree) => tree.id) ?? [],
       },
   )
-  const { mutate, isError, error, form } = useTreeClusterForm('update', { clusterId, initForm })
+  const { mutate, isError, error, form, navigationBlocker } = useTreeClusterForm('update', {
+    clusterId,
+    initForm,
+  })
 
   const onSubmit: SubmitHandler<TreeclusterForm> = (data) => {
     mutate({
@@ -103,6 +107,15 @@ const TreeClusterUpdate = ({ clusterId }: TreeClusterUpdateProps) => {
           redirectUrl={{ to: '/treecluster' }}
         />
       </Suspense>
+
+      <Modal
+        title="Seite verlassen?"
+        description={navigationBlocker.message}
+        confirmText="Verlassen"
+        isOpen={navigationBlocker.isModalOpen}
+        onConfirm={navigationBlocker.confirmLeave}
+        onCancel={navigationBlocker.closeModal}
+      />
     </>
   )
 }

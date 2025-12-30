@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
@@ -13,8 +13,16 @@ vi.mock('@/api/backendApi', () => ({
   },
 }))
 
+const mockUseBlocker = vi.fn().mockReturnValue({
+  proceed: vi.fn(),
+  reset: vi.fn(),
+  status: 'idle',
+})
+
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn().mockResolvedValue(undefined),
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  useBlocker: (...args: unknown[]) => mockUseBlocker(...args),
 }))
 
 vi.mock('./usePersistForm', () => ({
@@ -76,6 +84,11 @@ function createMockWateringPlan(overrides: Partial<WateringPlan> = {}): Watering
 describe('useWateringPlanForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    sessionStorage.clear()
+  })
+
+  afterEach(() => {
+    sessionStorage.clear()
   })
 
   it('initializes form with provided default values', () => {
@@ -183,6 +196,75 @@ describe('useWateringPlanForm', () => {
           status: WateringPlanStatus.WateringPlanStatusActive,
           transporterId: 1,
         }),
+      })
+    })
+  })
+
+  describe('map clusters changed flag', () => {
+    it('detects clusters changed flag for create mutation', () => {
+      sessionStorage.setItem('create-wateringplan-clusters-changed', 'true')
+
+      renderHook(() => useWateringPlanForm('create', { initForm: defaultInitForm }), {
+        wrapper: createWrapper(),
+      })
+
+      expect(mockUseBlocker).toHaveBeenCalledWith(
+        expect.objectContaining({
+          shouldBlockFn: expect.any(Function) as unknown,
+        }),
+      )
+    })
+
+    it('detects clusters changed flag for update mutation', () => {
+      sessionStorage.setItem('update-wateringplan-clusters-changed', 'true')
+
+      renderHook(
+        () => useWateringPlanForm('update', { wateringPlanId: '1', initForm: defaultInitForm }),
+        { wrapper: createWrapper() },
+      )
+
+      expect(mockUseBlocker).toHaveBeenCalledWith(
+        expect.objectContaining({
+          shouldBlockFn: expect.any(Function) as unknown,
+        }),
+      )
+    })
+
+    it('does not detect clusters changed when flag is not set', () => {
+      renderHook(() => useWateringPlanForm('create', { initForm: defaultInitForm }), {
+        wrapper: createWrapper(),
+      })
+
+      expect(mockUseBlocker).toHaveBeenCalled()
+    })
+
+    it('clears clusters changed flags on successful mutation', async () => {
+      sessionStorage.setItem('create-wateringplan-clusters-changed', 'true')
+      sessionStorage.setItem('update-wateringplan-clusters-changed', 'true')
+
+      const mockResponse = createMockWateringPlan()
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      const createMock = vi.mocked(wateringPlanApi.createWateringPlan)
+      createMock.mockResolvedValueOnce(mockResponse)
+
+      const { result } = renderHook(
+        () => useWateringPlanForm('create', { initForm: defaultInitForm }),
+        { wrapper: createWrapper() },
+      )
+
+      act(() => {
+        result.current.mutate({
+          date: futureDate.toISOString(),
+          transporterId: 1,
+          userIds: ['550e8400-e29b-41d4-a716-446655440000'],
+          treeClusterIds: [1, 2],
+          description: '',
+        })
+      })
+
+      await waitFor(() => {
+        expect(sessionStorage.getItem('create-wateringplan-clusters-changed')).toBeNull()
+        expect(sessionStorage.getItem('update-wateringplan-clusters-changed')).toBeNull()
       })
     })
   })

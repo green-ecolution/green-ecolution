@@ -9,6 +9,7 @@ import FormForWateringPlan from '@/components/general/form/FormForWateringPlan'
 import useStore from '@/store/store'
 import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
 import { safeJsonStorageParse } from '@/lib/utils'
+import Modal from '@/components/general/Modal'
 
 export const Route = createFileRoute('/_protected/watering-plans/_formular/new/')({
   loader: () => {
@@ -44,7 +45,7 @@ function NewWateringPlan() {
       type: 'transporter',
     }),
   )
-  const { mutate, isError, error, form } = useWateringPlanForm('create', {
+  const { mutate, isError, error, form, navigationBlocker } = useWateringPlanForm('create', {
     initForm: formState ?? defaultForm,
   })
   const { getValues } = form
@@ -110,6 +111,15 @@ function NewWateringPlan() {
           />
         </FormProvider>
       </section>
+
+      <Modal
+        title="Seite verlassen?"
+        description={navigationBlocker.message}
+        confirmText="Verlassen"
+        isOpen={navigationBlocker.isModalOpen}
+        onConfirm={navigationBlocker.confirmLeave}
+        onCancel={navigationBlocker.closeModal}
+      />
     </div>
   )
 }

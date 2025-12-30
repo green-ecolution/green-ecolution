@@ -7,6 +7,7 @@ import useStore from '@/store/store'
 import BackLink from '@/components/general/links/BackLink'
 import { useTreeClusterForm } from '@/hooks/form/useTreeClusterForm'
 import { safeJsonStorageParse } from '@/lib/utils'
+import Modal from '@/components/general/Modal'
 
 export const Route = createFileRoute('/_protected/treecluster/_formular/new/')({
   loader: () => {
@@ -25,7 +26,7 @@ const defaultForm: DefaultValues<TreeclusterForm> = {
 
 function NewTreecluster() {
   const { formState } = Route.useLoaderData()
-  const { mutate, isError, error, form } = useTreeClusterForm('create', {
+  const { mutate, isError, error, form, navigationBlocker } = useTreeClusterForm('create', {
     initForm: formState ?? defaultForm,
   })
   const navigate = useNavigate({ from: Route.fullPath })
@@ -79,6 +80,15 @@ function NewTreecluster() {
           />
         </FormProvider>
       </section>
+
+      <Modal
+        title="Seite verlassen?"
+        description={navigationBlocker.message}
+        confirmText="Verlassen"
+        isOpen={navigationBlocker.isModalOpen}
+        onConfirm={navigationBlocker.confirmLeave}
+        onCancel={navigationBlocker.closeModal}
+      />
     </div>
   )
 }
