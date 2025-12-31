@@ -6,7 +6,7 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     labels:
-      - "dependencies"
+      - "dependencies: github-actions"
 
   - package-ecosystem: "npm"
     directory: "/frontend"
@@ -14,8 +14,7 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     labels:
-      - "dependencies"
-      - "frontend"
+      - "dependencies: frontend"
 
   - package-ecosystem: "gomod"
     directory: "/backend"
@@ -23,6 +22,4 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     labels:
-      - "dependencies"
-      - "backend"
-      - "go"
+      - "dependencies: backend"
