@@ -32,7 +32,7 @@
     "immer": "^10.1.1",
     "leaflet": "^1.9.4",
     "lottie-react": "^2.4.0",
-    "lucide-react": "^0.503.0",
+    "lucide-react": "^0.562.0",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "react-hook-form": "^7.69.0",
