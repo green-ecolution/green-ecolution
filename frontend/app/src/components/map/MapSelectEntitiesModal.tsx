@@ -3,6 +3,7 @@ import PrimaryButton from '../general/buttons/PrimaryButton'
 import SecondaryButton from '../general/buttons/SecondaryButton'
 import { MoveRight, X } from 'lucide-react'
 import useMapInteractions from '@/hooks/useMapInteractions'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface MapSelectEntitiesModalProps {
   onSave: () => void
@@ -24,22 +25,14 @@ const MapSelectEntitiesModal = ({
 }: MapSelectEntitiesModalProps) => {
   const [openModal, setOpenModal] = useState(false)
   const { enableDragging, disableDragging } = useMapInteractions()
+  const isLargeScreen = useMediaQuery('(min-width: 1024px)')
 
   useEffect(() => {
-    const handleResize = () => {
-      if (window.matchMedia('(min-width: 1024px)').matches) {
-        setOpenModal(false)
-        enableDragging()
-      }
+    if (isLargeScreen) {
+      setOpenModal(false)
+      enableDragging()
     }
-
-    window.addEventListener('resize', handleResize)
-    handleResize()
-
-    return () => {
-      window.removeEventListener('resize', handleResize)
-    }
-  }, [enableDragging])
+  }, [isLargeScreen, enableDragging])
 
   useEffect(() => {
     if (openModal) {

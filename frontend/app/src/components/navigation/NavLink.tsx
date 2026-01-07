@@ -10,7 +10,14 @@ interface NavLinkProps extends LinkProps {
 }
 
 const NavLink = (props: NavLinkProps) => {
-  const { label, icon, isExternalLink = false, navIsOpen = false, closeSidebar } = props
+  const {
+    label,
+    icon,
+    isExternalLink = false,
+    navIsOpen = false,
+    closeSidebar,
+    ...linkProps
+  } = props
 
   return (
     <li className="relative">
@@ -22,7 +29,7 @@ const NavLink = (props: NavLinkProps) => {
         }}
         onClick={closeSidebar}
         className="text-light border border-transparent text-base block p-3.5 rounded-2xl transition-all ease-in-out duration-300 hover:bg-green-light/20 hover:text-green-light-200 aria-[current]:border-green-dark aria-[current]:bg-green-dark/30"
-        {...props}
+        {...linkProps}
       >
         {icon}
         <span
