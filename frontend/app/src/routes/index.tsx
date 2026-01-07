@@ -38,7 +38,11 @@ function Startpage() {
             {isAuthenticated ? (
               <ButtonLink link={{ to: '/dashboard' }} label="Zum Dashboard" icon={MoveRight} />
             ) : (
-              <ButtonLink link={{ to: '/login' }} label="Anmelden" icon={MoveRight} />
+              <ButtonLink
+                link={{ to: '/login', preload: false }}
+                label="Anmelden"
+                icon={MoveRight}
+              />
             )}
             <a
               href="mailto:info@green-ecolution.de"

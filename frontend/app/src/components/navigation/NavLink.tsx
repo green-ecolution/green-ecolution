@@ -1,35 +1,28 @@
-import { Link } from '@tanstack/react-router'
-import React, { ReactNode } from 'react'
+import { Link, LinkProps } from '@tanstack/react-router'
+import { ReactNode } from 'react'
 
-interface NavLink {
+interface NavLinkProps extends LinkProps {
   label: string
-  url: string
   icon: ReactNode
   isExternalLink?: boolean
   navIsOpen?: boolean
   closeSidebar: () => void
 }
 
-const NavLink: React.FC<NavLink> = ({
-  label,
-  url,
-  icon,
-  isExternalLink = false,
-  navIsOpen = false,
-  closeSidebar,
-}) => {
+const NavLink = (props: NavLinkProps) => {
+  const { label, icon, isExternalLink = false, navIsOpen = false, closeSidebar } = props
+
   return (
     <li className="relative">
       <Link
-        to={url}
         target={isExternalLink ? '_blank' : '_self'}
         activeOptions={{ exact: false }}
         activeProps={{
           'aria-current': true,
         }}
         onClick={closeSidebar}
-        className="text-light border border-transparent text-base block p-3.5 rounded-2xl transition-all ease-in-out duration-300 hover:bg-green-light/20 hover:text-green-light-200 
-            aria-[current]:border-green-dark aria-[current]:bg-green-dark/30"
+        className="text-light border border-transparent text-base block p-3.5 rounded-2xl transition-all ease-in-out duration-300 hover:bg-green-light/20 hover:text-green-light-200 aria-[current]:border-green-dark aria-[current]:bg-green-dark/30"
+        {...props}
       >
         {icon}
         <span

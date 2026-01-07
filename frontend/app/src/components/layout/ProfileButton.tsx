@@ -14,24 +14,35 @@ function ProfileButton() {
   const userInitials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`
 
   const linksLoggedIn = [
-    {
-      label: 'Ihr Profil',
-      icon: <Settings className="w-5 h-5" />,
-      to: '/profile',
-    },
-    {
-      label: 'Abmelden',
-      icon: <LogOut className="w-5 h-5" />,
-      to: '/logout',
-    },
+    <NavLink
+      key="nav-your-profile"
+      label="Ihr Profil"
+      icon={<Settings className="w-5 h-5" />}
+      to="/profile"
+      navIsOpen={true}
+      closeSidebar={() => toggleOverlay(false)}
+    />,
+    <NavLink
+      key="nav-logout"
+      label="Abmelden"
+      icon={<LogOut className="w-5 h-5" />}
+      to="/logout"
+      preload={false}
+      navIsOpen={true}
+      closeSidebar={() => toggleOverlay(false)}
+    />,
   ]
 
   const linksLoggedOut = [
-    {
-      label: 'Anmelden',
-      icon: <LogIn className="w-5 h-5" />,
-      to: '/login',
-    },
+    <NavLink
+      key="nav-header-login"
+      label="Anmelden"
+      icon={<LogIn className="w-5 h-5" />}
+      to="/login"
+      preload={false}
+      navIsOpen={true}
+      closeSidebar={() => toggleOverlay(false)}
+    />,
   ]
 
   function toggleOverlay(state: boolean) {
@@ -72,18 +83,7 @@ function ProfileButton() {
           <strong className="block truncate">{user.email}</strong>
         </p>
 
-        <ul className="py-2">
-          {links.map((link) => (
-            <NavLink
-              key={link.label}
-              label={link.label}
-              icon={link.icon}
-              url={link.to}
-              navIsOpen={true}
-              closeSidebar={() => toggleOverlay(false)}
-            />
-          ))}
-        </ul>
+        <ul className="py-2">{links.map((link) => link)}</ul>
       </div>
     </div>
   )
