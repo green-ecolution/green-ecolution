@@ -1,34 +1,220 @@
-name: Sync Project Status
+name: Sync PR Status to Project
 
 on:
   pull_request:
-    types: [opened, ready_for_review, closed]
+    types: [opened, reopened, ready_for_review, converted_to_draft, closed]
   pull_request_review:
     types: [submitted]
 
 jobs:
-  sync-status:
+  sync-pr-status:
     runs-on: ubuntu-latest
     steps:
-      - name: Update project item status
+      - name: Sync PR to Project with Status
         uses: actions/github-script@v7
+        env:
+          PROJECT_NUMBER: "10"
+          ORG_NAME: "green-ecolution"
         with:
           github-token: ${{ secrets.PROJECT_TOKEN }}
           script: |
-            // Determine new status based on event
             const pr = context.payload.pull_request;
-            let newStatus;
+            const projectNumber = parseInt(process.env.PROJECT_NUMBER);
+            const orgName = process.env.ORG_NAME;
 
-            if (context.payload.action === 'opened') {
-              newStatus = 'In Progress';
-            } else if (context.payload.action === 'ready_for_review') {
-              newStatus = 'In Review';
-            } else if (context.payload.action === 'closed' && pr.merged) {
-              newStatus = 'Done';
+            // Determine PR status
+            async function getPRStatus() {
+              // Check if merged
+              if (pr.merged) {
+                return 'Merged';
+              }
+
+              // Check if closed without merge
+              if (pr.state === 'closed') {
+                return 'Closed';
+              }
+
+              // Check if draft
+              if (pr.draft) {
+                return 'Draft';
+              }
+
+              // Check reviews
+              const { data: reviews } = await github.rest.pulls.listReviews({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number
+              });
+
+              // Get latest review per user
+              const latestReviews = {};
+              for (const review of reviews) {
+                if (review.state !== 'COMMENTED') {
+                  latestReviews[review.user.login] = review.state;
+                }
+              }
+
+              const reviewStates = Object.values(latestReviews);
+
+              if (reviewStates.includes('APPROVED') && !reviewStates.includes('CHANGES_REQUESTED')) {
+                return 'Approved';
+              }
+
+              if (reviewStates.includes('CHANGES_REQUESTED')) {
+                return 'Changes Requested';
+              }
+
+              if (reviewStates.length > 0 || context.payload.action === 'submitted') {
+                return 'In Review';
+              }
+
+              return 'Ready for Review';
             }
 
-            if (newStatus) {
-              console.log(`PR #${pr.number}: Status -> ${newStatus}`);
-              // Note: Full project status update requires GraphQL mutation
-              // This is a placeholder - actual implementation needs project ID
+            const status = await getPRStatus();
+            console.log(`PR #${pr.number}: "${pr.title}" -> Status: ${status}`);
+
+            // Get project ID
+            const projectQuery = `
+              query($org: String!, $number: Int!) {
+                organization(login: $org) {
+                  projectV2(number: $number) {
+                    id
+                    fields(first: 20) {
+                      nodes {
+                        ... on ProjectV2SingleSelectField {
+                          id
+                          name
+                          options {
+                            id
+                            name
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+
+            const projectResult = await github.graphql(projectQuery, {
+              org: orgName,
+              number: projectNumber
+            });
+
+            const project = projectResult.organization.projectV2;
+            const projectId = project.id;
+
+            // Find PR Status field
+            const prStatusField = project.fields.nodes.find(f => f.name === 'PR Status');
+            if (!prStatusField) {
+              console.log('PR Status field not found in project. Please create a Single Select field named "PR Status" with options: Draft, Ready for Review, In Review, Changes Requested, Approved, Merged, Closed');
+              return;
             }
+
+            const statusOption = prStatusField.options.find(o => o.name === status);
+            if (!statusOption) {
+              console.log(`Status option "${status}" not found. Available options: ${prStatusField.options.map(o => o.name).join(', ')}`);
+              return;
+            }
+
+            // Find or add PR to project
+            const contentQuery = `
+              query($org: String!, $number: Int!, $cursor: String) {
+                organization(login: $org) {
+                  projectV2(number: $number) {
+                    items(first: 100, after: $cursor) {
+                      pageInfo {
+                        hasNextPage
+                        endCursor
+                      }
+                      nodes {
+                        id
+                        content {
+                          ... on PullRequest {
+                            number
+                            repository {
+                              name
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+
+            let itemId = null;
+            let cursor = null;
+
+            // Search for existing item
+            while (true) {
+              const itemsResult = await github.graphql(contentQuery, {
+                org: orgName,
+                number: projectNumber,
+                cursor: cursor
+              });
+
+              const items = itemsResult.organization.projectV2.items;
+              const found = items.nodes.find(item =>
+                item.content?.number === pr.number &&
+                item.content?.repository?.name === context.repo.repo
+              );
+
+              if (found) {
+                itemId = found.id;
+                break;
+              }
+
+              if (!items.pageInfo.hasNextPage) break;
+              cursor = items.pageInfo.endCursor;
+            }
+
+            // Add PR to project if not found
+            if (!itemId) {
+              console.log(`Adding PR #${pr.number} to project...`);
+
+              const addMutation = `
+                mutation($projectId: ID!, $contentId: ID!) {
+                  addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) {
+                    item {
+                      id
+                    }
+                  }
+                }
+              `;
+
+              const addResult = await github.graphql(addMutation, {
+                projectId: projectId,
+                contentId: pr.node_id
+              });
+
+              itemId = addResult.addProjectV2ItemById.item.id;
+              console.log(`Added PR to project with item ID: ${itemId}`);
+            }
+
+            // Update PR Status field
+            const updateMutation = `
+              mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: $projectId
+                  itemId: $itemId
+                  fieldId: $fieldId
+                  value: { singleSelectOptionId: $optionId }
+                }) {
+                  projectV2Item {
+                    id
+                  }
+                }
+              }
+            `;
+
+            await github.graphql(updateMutation, {
+              projectId: projectId,
+              itemId: itemId,
+              fieldId: prStatusField.id,
+              optionId: statusOption.id
+            });
+
+            console.log(`Updated PR #${pr.number} status to: ${status}`);
