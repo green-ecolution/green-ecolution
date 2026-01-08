@@ -77,7 +77,7 @@ services:
       - "traefik.http.services.s3.loadbalancer.server.port=3000"
 
   keycloak:
-    image: quay.io/keycloak/keycloak:26.2
+    image: quay.io/keycloak/keycloak:26.5
     command:
       - --verbose
       - start-dev
@@ -171,7 +171,7 @@ services:
       - "127.0.0.1:5432:5432"
 
   pgadmin:
-    image: dpage/pgadmin4:9.6.0
+    image: dpage/pgadmin4:9.11.0
     entrypoint: /bin/sh
     command: >
       -c "echo \"$$SERVERS_JSON\" > /tmp/servers.json &&
@@ -299,7 +299,7 @@ services:
       - "traefik.http.routers.valhalla.entrypoints=web"
 
   reverse-proxy:
-    image: traefik:3.5.1
+    image: traefik:3.6.6
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command:
