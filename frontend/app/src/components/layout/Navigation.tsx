@@ -11,12 +11,16 @@ import {
   Users,
 } from 'lucide-react'
 import * as React from 'react'
+import { useCallback, useMemo } from 'react'
+import { useShallow } from 'zustand/react/shallow'
+import { LinkProps } from '@tanstack/react-router'
 import NavLink from '../navigation/NavLink'
 import NavHeadline from '../navigation/NavHeadline'
 import NavHeader from '../navigation/NavHeader'
 import useStore from '@/store/store'
 import Tree from '../icons/Tree'
 import SensorIcon from '../icons/Sensor'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface NavigationProps {
   isOpen: boolean
@@ -24,170 +28,155 @@ interface NavigationProps {
   closeSidebar: () => void
 }
 
-interface NavLinkOpts {
-  id: number
-  headline: string
-  links: React.ReactElement[]
+interface NavLinkData extends LinkProps {
+  key: string
+  label: string
+  icon: React.ReactNode
 }
 
+interface NavSectionData {
+  id: number
+  headline: string
+  links: NavLinkData[]
+}
+
+const publicNavData: NavSectionData[] = [
+  {
+    id: 1,
+    headline: '',
+    links: [
+      {
+        key: 'nav-login',
+        label: 'Anmelden',
+        icon: <LogIn className="w-5 h-5" />,
+        to: '/login',
+        preload: false,
+      },
+    ],
+  },
+]
+
 const Navigation: React.FC<NavigationProps> = ({ isOpen, openSidebar, closeSidebar }) => {
-  const isLargeScreen = () => window.matchMedia('(min-width: 1024px)').matches
+  const isLargeScreen = useMediaQuery('(min-width: 1024px)')
   const isLoggedIn = useStore((state) => state.auth.isAuthenticated)
-  const mapPosition = useStore((state) => ({
-    lat: state.map.center[0],
-    lng: state.map.center[1],
-    zoom: state.map.zoom,
-  }))
+  const mapPosition = useStore(
+    useShallow((state) => ({
+      lat: state.map.center[0],
+      lng: state.map.center[1],
+      zoom: state.map.zoom,
+    })),
+  )
 
-  const handleMouseOver = () => {
-    if (isLargeScreen()) openSidebar()
-  }
+  const handleMouseOver = useCallback(() => {
+    if (isLargeScreen) openSidebar()
+  }, [isLargeScreen, openSidebar])
 
-  const handleMouseOut = () => {
-    if (isLargeScreen()) closeSidebar()
-  }
+  const handleMouseOut = useCallback(() => {
+    if (isLargeScreen) closeSidebar()
+  }, [isLargeScreen, closeSidebar])
 
-  const handleNavLinkClick = () => {
-    if (!isLargeScreen()) closeSidebar()
-  }
+  const handleNavLinkClick = useCallback(() => {
+    if (!isLargeScreen) closeSidebar()
+  }, [isLargeScreen, closeSidebar])
 
-  const protectedNavLinks: NavLinkOpts[] = [
-    {
-      id: 1,
-      headline: 'Grünflächen',
-      links: [
-        <NavLink
-          key="nav-green-spaces-map"
-          label="Karte"
-          icon={<Map className="w-5 h-5" />}
-          to="/map"
-          search={{ lat: mapPosition.lat, lng: mapPosition.lng, zoom: mapPosition.zoom }}
-          navIsOpen={isOpen}
-          closeSidebar={handleNavLinkClick}
-        />,
-        <NavLink
-          key="nav-green-spaces-clusters"
-          label="Bewässerungsgruppen"
-          icon={<FolderClosed className="w-5 h-5" />}
-          to="/treecluster"
-          navIsOpen={isOpen}
-          closeSidebar={handleNavLinkClick}
-        />,
-        <NavLink
-          key="nav-green-spaces-trees"
-          label="Bäume"
-          icon={<Tree className="w-5 h-5" />}
-          to="/trees"
-          navIsOpen={isOpen}
-          closeSidebar={handleNavLinkClick}
-        />,
-      ],
-    },
-    {
-      id: 2,
-      headline: 'Einsatzplanung',
-      links: [
-        <NavLink
-          key="nav-watering-plans"
-          label="Einsätze"
-          icon={<ArrowLeftRight className="w-5 h-5" />}
-          to="/watering-plans"
-          navIsOpen={isOpen}
-          closeSidebar={handleNavLinkClick}
-        />,
-        <NavLink
-          key="nav-watering-plan-vehicle"
-          label="Fahrzeuge"
-          icon={<Car className="w-5 h-5" />}
-          to="/vehicles"
-          navIsOpen={isOpen}
-          closeSidebar={handleNavLinkClick}
-        />,
-        <NavLink
-          key="nav-more-team"
-          label="Mitarbeitende"
-          icon={<Users className="w-5 h-5" />}
-          to="/team"
-          navIsOpen={isOpen}
-          closeSidebar={handleNavLinkClick}
-        />,
-      ],
-    },
-    {
-      id: 3,
-      headline: 'Weiteres',
-      links: [
-        <NavLink
-          key="nav-more-sensor"
-          label="Sensoren"
-          icon={<SensorIcon className="w-5 h-5" />}
-          to="/sensors"
-          navIsOpen={isOpen}
-          closeSidebar={handleNavLinkClick}
-        />,
-        <NavLink
-          key="nav-more-evaluation"
-          label="Auswertung"
-          icon={<PieChart className="w-5 h-5" />}
-          to="/evaluations"
-          navIsOpen={isOpen}
-          closeSidebar={handleNavLinkClick}
-        />,
-        <NavLink
-          key="nav-more-settings"
-          label="Einstellungen"
-          icon={<Settings className="w-5 h-5" />}
-          to="/settings"
-          navIsOpen={isOpen}
-          closeSidebar={handleNavLinkClick}
-        />,
-        // Hide the debug navigation entry in the production build
-        ...(process.env.NODE_ENV !== 'production'
-          ? [
-              <NavLink
-                key="nav-more-debug"
-                label="Debug"
-                icon={<Bug className="w-5 h-5" />}
-                to="/debug"
-                navIsOpen={isOpen}
-                closeSidebar={handleNavLinkClick}
-              />,
-            ]
-          : []),
-        <NavLink
-          key="nav-more-logout"
-          label="Ausloggen"
-          icon={<LogOut className="w-5 h-5" />}
-          to="/logout"
-          navIsOpen={isOpen}
-          closeSidebar={handleNavLinkClick}
-          preload={false}
-        />,
-      ],
-    },
-  ]
+  const protectedNavData: NavSectionData[] = useMemo(
+    () => [
+      {
+        id: 1,
+        headline: 'Grünflächen',
+        links: [
+          {
+            key: 'nav-green-spaces-map',
+            label: 'Karte',
+            icon: <Map className="w-5 h-5" />,
+            to: '/map',
+            search: { lat: mapPosition.lat, lng: mapPosition.lng, zoom: mapPosition.zoom },
+          },
+          {
+            key: 'nav-green-spaces-clusters',
+            label: 'Bewässerungsgruppen',
+            icon: <FolderClosed className="w-5 h-5" />,
+            to: '/treecluster',
+          },
+          {
+            key: 'nav-green-spaces-trees',
+            label: 'Bäume',
+            icon: <Tree className="w-5 h-5" />,
+            to: '/trees',
+          },
+        ],
+      },
+      {
+        id: 2,
+        headline: 'Einsatzplanung',
+        links: [
+          {
+            key: 'nav-watering-plans',
+            label: 'Einsätze',
+            icon: <ArrowLeftRight className="w-5 h-5" />,
+            to: '/watering-plans',
+          },
+          {
+            key: 'nav-watering-plan-vehicle',
+            label: 'Fahrzeuge',
+            icon: <Car className="w-5 h-5" />,
+            to: '/vehicles',
+          },
+          {
+            key: 'nav-more-team',
+            label: 'Mitarbeitende',
+            icon: <Users className="w-5 h-5" />,
+            to: '/team',
+          },
+        ],
+      },
+      {
+        id: 3,
+        headline: 'Weiteres',
+        links: [
+          {
+            key: 'nav-more-sensor',
+            label: 'Sensoren',
+            icon: <SensorIcon className="w-5 h-5" />,
+            to: '/sensors',
+          },
+          {
+            key: 'nav-more-evaluation',
+            label: 'Auswertung',
+            icon: <PieChart className="w-5 h-5" />,
+            to: '/evaluations',
+          },
+          {
+            key: 'nav-more-settings',
+            label: 'Einstellungen',
+            icon: <Settings className="w-5 h-5" />,
+            to: '/settings',
+          },
+          // Hide the debug navigation entry in the production build
+          ...(process.env.NODE_ENV !== 'production'
+            ? [
+                {
+                  key: 'nav-more-debug',
+                  label: 'Debug',
+                  icon: <Bug className="w-5 h-5" />,
+                  to: '/debug',
+                } as NavLinkData,
+              ]
+            : []),
+          {
+            key: 'nav-more-logout',
+            label: 'Ausloggen',
+            icon: <LogOut className="w-5 h-5" />,
+            to: '/logout',
+            preload: false,
+          },
+        ],
+      },
+    ],
+    [mapPosition.lat, mapPosition.lng, mapPosition.zoom],
+  )
 
-  // This is currently invisible to the user as the application is redirected directly to the login page.
-  // Maybe for future use.
-  const publicNavLinks: NavLinkOpts[] = [
-    {
-      id: 1,
-      headline: '',
-      links: [
-        <NavLink
-          key="nav-login"
-          label="Anmelden"
-          icon={<LogIn className="w-5 h-5" />}
-          to="/login"
-          navIsOpen={isOpen}
-          preload={false}
-          closeSidebar={handleNavLinkClick}
-        />,
-      ],
-    },
-  ]
-
-  const navigationLinks = isLoggedIn ? protectedNavLinks : publicNavLinks
+  const navigationData = isLoggedIn ? protectedNavData : publicNavData
 
   return (
     <nav
@@ -201,10 +190,21 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, openSidebar, closeSideb
       <div className="relative px-4 py-5 h-full overflow-y-auto no-scrollbar">
         <NavHeader isOpen={isOpen} closeSidebar={closeSidebar} />
 
-        {navigationLinks.map((section) => (
+        {navigationData.map((section) => (
           <React.Fragment key={section.id}>
             <NavHeadline label={section.headline} navIsOpen={isOpen} />
-            <ul className="mb-10">{section.links.map((link) => link)}</ul>
+            <ul className="mb-10">
+              {section.links.map(({ key, label, icon, ...linkProps }) => (
+                <NavLink
+                  key={key}
+                  label={label}
+                  icon={icon}
+                  navIsOpen={isOpen}
+                  closeSidebar={handleNavLinkClick}
+                  {...linkProps}
+                />
+              ))}
+            </ul>
           </React.Fragment>
         ))}
       </div>

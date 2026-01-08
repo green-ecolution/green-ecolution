@@ -1,23 +1,28 @@
 import { AlignJustifyIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import Navigation from './Navigation'
 import Breadcrumb from './Breadcrumb'
 import ProfileButton from './ProfileButton'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 function Header() {
   const [open, setOpen] = useState(false)
   const isStartPage = location.pathname === '/'
+  const isLargeScreen = useMediaQuery('(min-width: 1024px)')
 
-  function toggleSidebar(state: boolean) {
-    setOpen(state)
+  const toggleSidebar = useCallback(
+    (state: boolean) => {
+      setOpen(state)
 
-    if (window.matchMedia('(min-width: 1024px)')) return
-    if (state) {
-      document.body.classList.add('overflow-y-hidden')
-    } else {
-      document.body.classList.remove('overflow-y-hidden')
-    }
-  }
+      if (isLargeScreen) return
+      if (state) {
+        document.body.classList.add('overflow-y-hidden')
+      } else {
+        document.body.classList.remove('overflow-y-hidden')
+      }
+    },
+    [isLargeScreen],
+  )
 
   return (
     <header className="relative z-10 bg-white lg:pl-20">
