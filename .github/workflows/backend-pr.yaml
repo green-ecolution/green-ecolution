@@ -2,12 +2,29 @@ name: "Backend - Pull Request Checks"
 
 on:
   pull_request:
-    # paths:
-    #   - "backend/**"
-    #   - ".github/workflows/backend-pr.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - '.github/workflows/backend-pr.yaml'
+
   build_and_test:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -40,6 +57,8 @@ jobs:
         run: go test -cover ./...
 
   check_generated_code:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -58,7 +77,7 @@ jobs:
       - name: Check generated code is fresh
         run: |
           if [[ -n $(git status --porcelain) ]]; then
-            echo "❌ Error: Changes were detected after running 'make generate && make generate/client'!"
+            echo "Error: Changes were detected after running 'make generate && make generate/client'!"
             echo
             echo "Please run 'make generate && make generate/client' locally and commit the updated files."
             echo
@@ -68,10 +87,12 @@ jobs:
             echo "Failing the workflow."
             exit 1
           else
-            echo "✅ Generated code is up to date. No changes detected."
+            echo "Generated code is up to date. No changes detected."
           fi
 
   test_pkg_client:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -86,6 +107,8 @@ jobs:
         run: go test ./...
 
   lint:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -120,6 +143,8 @@ jobs:
           fi
 
   test_migrations:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -162,6 +187,8 @@ jobs:
         run: make migrate/down
 
   test_dockerfile:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
