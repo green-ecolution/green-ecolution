@@ -1,6 +1,6 @@
 name: Bug Report
 description: Report a bug
-labels: ["type: bug", "priority: high"]
+type: Bug
 body:
   - type: markdown
     attributes:
