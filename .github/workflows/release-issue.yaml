@@ -24,7 +24,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Create Release Issue
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           VERSION: ${{ steps.version.outputs.version }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -97,7 +97,7 @@ jobs:
       issues: write
     steps:
       - name: Close Release Issue
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
           RELEASE_URL: ${{ github.event.release.html_url }}

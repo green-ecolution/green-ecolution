@@ -23,7 +23,7 @@ jobs:
       issues: write
     steps:
       - name: Process Sprint End
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.PROJECT_TOKEN }}
           script: |
