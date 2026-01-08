@@ -1,0 +1,137 @@
+name: Release Issue
+
+on:
+  pull_request:
+    types: [opened]
+    branches: [develop]
+  release:
+    types: [published]
+
+jobs:
+  create-release-issue:
+    if: "github.event_name == 'pull_request' && startsWith(github.event.pull_request.title, 'chore: release v')"
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Extract version from PR title
+        id: version
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          VERSION=$(echo "$PR_TITLE" | grep -oP 'v\d+\.\d+\.\d+')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create Release Issue
+        uses: actions/github-script@v7
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        with:
+          script: |
+            const version = process.env.VERSION;
+            const prNumber = process.env.PR_NUMBER;
+
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'release'
+            });
+
+            const existingIssue = existingIssues.data.find(i =>
+              i.title.includes(version)
+            );
+
+            if (existingIssue) {
+              console.log(`Release issue for ${version} already exists: #${existingIssue.number}`);
+              return;
+            }
+
+            const body = [
+              `## Release ${version}`,
+              '',
+              '### Release PR',
+              `- #${prNumber}`,
+              '',
+              '### Pre-Release Tasks',
+              '- [ ] All PRs for this release are merged',
+              '- [ ] CI/CD pipeline is green',
+              '- [ ] Changelog reviewed',
+              '',
+              '### Testing',
+              '- [ ] Staging deployment tested',
+              '- [ ] Critical user flows verified',
+              '- [ ] No blocking bugs',
+              '',
+              '### Release Tasks',
+              `- [ ] Merge release PR #${prNumber}`,
+              '- [ ] Verify production deployment',
+              '- [ ] Verify Docker images published',
+              '',
+              '### Post-Release',
+              '- [ ] Release notes published',
+              '- [ ] Team notified',
+              '- [ ] Documentation updated (if needed)',
+              '',
+              '---',
+              '_This issue was automatically created by the release workflow._',
+              '_Close this issue after all tasks are completed._'
+            ].join('\n');
+
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Release ${version}`,
+              labels: ['release'],
+              body: body
+            });
+
+            console.log(`Created release issue #${issue.data.number}`);
+
+  close-release-issue:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Close Release Issue
+        uses: actions/github-script@v7
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+          RELEASE_URL: ${{ github.event.release.html_url }}
+        with:
+          script: |
+            const version = process.env.TAG_NAME;
+            const releaseUrl = process.env.RELEASE_URL;
+
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'release'
+            });
+
+            const releaseIssue = issues.data.find(i =>
+              i.title.includes(version)
+            );
+
+            if (releaseIssue) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: releaseIssue.number,
+                body: `## Release ${version} published!\n\n[View Release](${releaseUrl})`
+              });
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: releaseIssue.number,
+                state: 'closed',
+                state_reason: 'completed'
+              });
+
+              console.log(`Closed release issue #${releaseIssue.number}`);
+            }
