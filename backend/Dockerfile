@@ -39,7 +39,7 @@ RUN CGO_ENABLED=1 go build -o "bin/green-ecolution" \
 #############################################
 # Runner go
 #############################################
-FROM alpine:3.22 AS runner
+FROM alpine:3.23 AS runner
 
 EXPOSE 3000
 ARG ENV="stage"
