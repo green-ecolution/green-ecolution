@@ -4,7 +4,7 @@ import { treeClusterQuery } from '@/api/queries'
 import MarkerList from './MarkerList'
 import { ClusterIcon } from '../MapMarker'
 import { getStatusColor } from '../utils'
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useCallback, useDeferredValue, useMemo } from 'react'
 
 const defaultHighlighted: number[] = []
 const defaultDisabled: number[] = []
@@ -39,6 +39,7 @@ const WithAllClusters = memo(
         ),
       [data.data],
     )
+    const deferredData = useDeferredValue(filteredData)
 
     const highlightedSet = useMemo(() => new Set(highlightedClusters), [highlightedClusters])
     const disabledSet = useMemo(() => new Set(disabledClusters), [disabledClusters])
@@ -59,7 +60,7 @@ const WithAllClusters = memo(
 
     return (
       <MarkerList
-        data={filteredData}
+        data={deferredData}
         onClick={onClick}
         icon={getIcon}
         getId={getId}

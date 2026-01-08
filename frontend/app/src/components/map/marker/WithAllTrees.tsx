@@ -4,7 +4,7 @@ import { treeQuery } from '@/api/queries'
 import { TreeMarkerIcon } from '../MapMarker'
 import MarkerList from './MarkerList'
 import { getStatusColor } from '../utils'
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useCallback, useDeferredValue, useMemo } from 'react'
 
 const defaultSelectedTrees: number[] = []
 
@@ -23,6 +23,7 @@ export interface WithAllTreesProps {
 const WithAllTrees = memo(
   ({ onClick, selectedTrees = defaultSelectedTrees, hasHighlightedTree }: WithAllTreesProps) => {
     const { data } = useSuspenseQuery(treeQuery())
+    const deferredData = useDeferredValue(data.data)
 
     const selectedSet = useMemo(() => new Set(selectedTrees), [selectedTrees])
 
@@ -41,7 +42,7 @@ const WithAllTrees = memo(
 
     return (
       <MarkerList
-        data={data.data}
+        data={deferredData}
         onClick={onClick}
         icon={getIcon}
         getId={getId}

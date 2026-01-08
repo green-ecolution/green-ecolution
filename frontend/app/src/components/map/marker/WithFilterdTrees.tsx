@@ -2,7 +2,7 @@ import { Tree } from '@green-ecolution/backend-client'
 import MarkerList from './MarkerList'
 import { TreeMarkerIcon } from '../MapMarker'
 import { getStatusColor } from '../utils'
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useCallback, useDeferredValue, useMemo } from 'react'
 
 const defaultSelectedTrees: number[] = []
 
@@ -26,6 +26,7 @@ const WithFilterdTrees = memo(
     hasHighlightedTree,
     filterdTrees,
   }: WithFilterdTreesProps) => {
+    const deferredTrees = useDeferredValue(filterdTrees)
     const selectedSet = useMemo(() => new Set(selectedTrees), [selectedTrees])
 
     const getIcon = useCallback(
@@ -43,7 +44,7 @@ const WithFilterdTrees = memo(
 
     return (
       <MarkerList
-        data={filterdTrees}
+        data={deferredTrees}
         onClick={onClick}
         icon={getIcon}
         getId={getId}
