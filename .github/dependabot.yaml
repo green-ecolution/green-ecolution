@@ -19,13 +19,61 @@ updates:
     directory: "/frontend"
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 10
     labels:
       - "dependencies: frontend"
     groups:
-      minor-and-patch:
+      tanstack:
+        patterns:
+          - "@tanstack/*"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      eslint:
+        patterns:
+          - "eslint*"
+          - "@eslint/*"
+          - "typescript-eslint"
+      vite:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+      vitest:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "@testing-library/*"
+      leaflet:
+        patterns:
+          - "leaflet"
+          - "react-leaflet"
+          - "@types/leaflet"
+      module-federation:
+        patterns:
+          - "@module-federation/*"
+      other-minor-patch:
         patterns:
           - "*"
+        exclude-patterns:
+          - "@tanstack/*"
+          - "react"
+          - "react-dom"
+          - "@types/react*"
+          - "eslint*"
+          - "@eslint/*"
+          - "typescript-eslint"
+          - "vite"
+          - "@vitejs/*"
+          - "vitest"
+          - "@vitest/*"
+          - "@testing-library/*"
+          - "leaflet"
+          - "react-leaflet"
+          - "@types/leaflet"
+          - "@module-federation/*"
         update-types:
           - "minor"
           - "patch"
