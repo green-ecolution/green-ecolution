@@ -8,11 +8,22 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import TreeIcon from '../icons/Tree'
 import SensorIcon from '../icons/Sensor'
 
-const iconToSvg = (IconComponent: React.FC<React.SVGProps<SVGSVGElement>>) => {
-  return renderToStaticMarkup(
-    <IconComponent className="text-white w-[1.125rem] h-[1.125rem]" strokeWidth={3} />,
-  )
+const SVG_CACHE = {
+  tree: renderToStaticMarkup(
+    <TreeIcon className="text-white w-[1.125rem] h-[1.125rem]" strokeWidth={3} />,
+  ),
+  check: renderToStaticMarkup(
+    <Check className="text-white w-[1.125rem] h-[1.125rem]" strokeWidth={3} />,
+  ),
+  sensor: renderToStaticMarkup(
+    <SensorIcon className="text-white w-[1.125rem] h-[1.125rem]" strokeWidth={3} />,
+  ),
+  paintBucket: renderToStaticMarkup(
+    <PaintBucket className="text-white w-[1.125rem] h-[1.125rem]" strokeWidth={3} />,
+  ),
 }
+
+const iconCache = new Map<string, L.DivIcon>()
 
 const defaultIcon = new Icon({
   iconUrl: defaultIconPng,
@@ -115,60 +126,83 @@ const makerRouteWrapperStyles = () => `
   font-family: Nunito, sans-serif;
 `
 
-export const TreeMarkerIcon = (color: string, isSelected: boolean, isHighlighted: boolean) =>
-  L.divIcon({
-    iconAnchor: [0, 24],
-    popupAnchor: [0, -36],
-    html: `<figure style="${makerWrapperStyles(isSelected, isHighlighted)}">
+export const TreeMarkerIcon = (color: string, isSelected: boolean, isHighlighted: boolean) => {
+  const key = `tree-${color}-${isSelected}-${isHighlighted}`
+  let icon = iconCache.get(key)
+  if (!icon) {
+    icon = L.divIcon({
+      iconAnchor: [0, 24],
+      popupAnchor: [0, -36],
+      html: `<figure style="${makerWrapperStyles(isSelected, isHighlighted)}">
         <span style="${markerHtmlStyles(color)}">
-          ${isSelected ? iconToSvg(Check) : iconToSvg(TreeIcon)}
+          ${isSelected ? SVG_CACHE.check : SVG_CACHE.tree}
         </span>
       </figure>`,
-  })
+    })
+    iconCache.set(key, icon)
+  }
+  return icon
+}
 
 export const ClusterIcon = (
   color: string,
   isHighlighted: boolean,
   isDisabled: boolean,
   includedTrees: number,
-) =>
-  L.divIcon({
-    iconAnchor: [0, 24],
-    popupAnchor: [0, -36],
-    html: `<figure style="${makerClusterWrapperStyles(isHighlighted, isDisabled)}">
+) => {
+  const key = `cluster-${color}-${isHighlighted}-${isDisabled}-${includedTrees}`
+  let icon = iconCache.get(key)
+  if (!icon) {
+    icon = L.divIcon({
+      iconAnchor: [0, 24],
+      popupAnchor: [0, -36],
+      html: `<figure style="${makerClusterWrapperStyles(isHighlighted, isDisabled)}">
         <span style="${markerClusterHtmlStyles(color, isDisabled)}">
           ${includedTrees}
         </span>
       </figure>`,
-  })
+    })
+    iconCache.set(key, icon)
+  }
+  return icon
+}
 
-export const SensorMarkerIcon = () =>
-  L.divIcon({
-    iconAnchor: [0, 24],
-    html: `<figure style="${makerWrapperStyles(false, true)}">
+const sensorMarkerIconCached = L.divIcon({
+  iconAnchor: [0, 24],
+  html: `<figure style="${makerWrapperStyles(false, true)}">
         <span style="${markerHtmlStyles('#454545')}">
-          ${iconToSvg(SensorIcon)}
+          ${SVG_CACHE.sensor}
         </span>
       </figure>`,
-  })
+})
 
-export const RouteIcon = (label: string) =>
-  L.divIcon({
-    iconAnchor: [12, 12],
-    html: `<span style="${makerRouteWrapperStyles()}">
+export const SensorMarkerIcon = () => sensorMarkerIconCached
+
+export const RouteIcon = (label: string) => {
+  const key = `route-${label}`
+  let icon = iconCache.get(key)
+  if (!icon) {
+    icon = L.divIcon({
+      iconAnchor: [12, 12],
+      html: `<span style="${makerRouteWrapperStyles()}">
       ${label}
     </span>`,
-  })
+    })
+    iconCache.set(key, icon)
+  }
+  return icon
+}
 
-export const RefillIcon = () =>
-  L.divIcon({
-    iconAnchor: [12, 12],
-    html: `<figure style="${makerWrapperStyles(false, false)}">
+const refillIconCached = L.divIcon({
+  iconAnchor: [12, 12],
+  html: `<figure style="${makerWrapperStyles(false, false)}">
       <span style="${markerHtmlStyles('#454545')}">
-        ${iconToSvg(PaintBucket)}
+        ${SVG_CACHE.paintBucket}
       </span>
     </figure>`,
-  })
+})
+
+export const RefillIcon = () => refillIconCached
 
 interface DragableMarkerProps {
   position: L.LatLng

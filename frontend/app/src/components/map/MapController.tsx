@@ -1,28 +1,55 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useMapEvents } from 'react-leaflet/hooks'
 import useMapStore from '@/store/store'
+import { useCallback, useEffect, useRef } from 'react'
 
-const MapConroller = () => {
+const DEBOUNCE_MS = 400
+
+const MapController = () => {
   const navigate = useNavigate()
-  const { setCenter, setZoom } = useMapStore((state) => ({
-    setCenter: state.map.setCenter,
-    setZoom: state.map.setZoom,
-  }))
+  const setCenter = useMapStore((state) => state.map.setCenter)
+  const setZoom = useMapStore((state) => state.map.setZoom)
+
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const scheduleUpdate = useCallback(
+    (lat: number, lng: number, zoom: number) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+      timeoutRef.current = setTimeout(() => {
+        setCenter([lat, lng])
+        setZoom(zoom)
+        navigate({
+          to: '.',
+          search: (prev) => ({ ...prev, lat, lng, zoom }),
+          replace: true,
+        }).catch((error) => console.error('Navigation failed:', error))
+      }, DEBOUNCE_MS)
+    },
+    [navigate, setCenter, setZoom],
+  )
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [])
+
   const map = useMapEvents({
-    moveend: () => {
+    dragend: () => {
       const center = map.getCenter()
-      const zoom = map.getZoom()
-      setCenter([center.lat, center.lng])
-      setZoom(zoom)
-      navigate({
-        to: '.',
-        search: (prev) => ({ ...prev, lat: center.lat, lng: center.lng, zoom }),
-        replace: true,
-      }).catch((error) => console.error('Navigation failed:', error))
+      scheduleUpdate(center.lat, center.lng, map.getZoom())
+    },
+    zoomend: () => {
+      const center = map.getCenter()
+      scheduleUpdate(center.lat, center.lng, map.getZoom())
     },
   })
 
   return null
 }
 
-export default MapConroller
+export default MapController

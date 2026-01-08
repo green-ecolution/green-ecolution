@@ -2,6 +2,7 @@ import { Tree, TreeClusterInList, TreeCluster } from '@green-ecolution/backend-c
 import useStore from '@/store/store'
 import WithAllTrees from './WithAllTrees'
 import WithAllClusters from './WithAllClusters'
+import { useDeferredValue } from 'react'
 
 const defaultSelectedTrees: number[] = []
 
@@ -27,10 +28,12 @@ export const WithTreesAndClusters = ({
   const { zoom } = useStore((state) => ({
     zoom: state.map.zoom,
   }))
+  const deferredZoom = useDeferredValue(zoom)
+  const showTrees = deferredZoom >= zoomThreshold || activeFilter
 
   return (
     <>
-      {zoom >= zoomThreshold || activeFilter ? (
+      {showTrees ? (
         <WithAllTrees
           onClick={onClickTree}
           selectedTrees={selectedTrees}

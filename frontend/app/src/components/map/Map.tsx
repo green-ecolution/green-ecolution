@@ -41,6 +41,7 @@ const Map = ({ width = '100%', height = 'calc(100dvh - 4.563rem)', children }: M
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        keepBuffer={4}
       />
       {children}
     </MapContainer>
