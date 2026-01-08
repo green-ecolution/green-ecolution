@@ -94,21 +94,6 @@ updates:
           - "patch"
 
   - package-ecosystem: "gomod"
-    directory: "/backend/pkg/client"
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies: backend"
-    groups:
-      minor-and-patch:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "gomod"
     directory: "/backend/pkg/plugin"
     schedule:
       interval: weekly
