@@ -103,13 +103,25 @@ const MarkerList = <T extends WithLocation>({
 
   useEffect(() => {
     const currentMarkerMap = markerMapRef.current
+    let lastUpdate = 0
+    const THROTTLE_MS = 150
+
+    const throttledUpdate = () => {
+      const now = Date.now()
+      if (now - lastUpdate >= THROTTLE_MS) {
+        lastUpdate = now
+        updateVisibleMarkers()
+      }
+    }
 
     if (map) {
+      map.on('move', throttledUpdate)
       map.on('moveend', updateVisibleMarkers)
     }
 
     return () => {
       if (map) {
+        map.off('move', throttledUpdate)
         map.off('moveend', updateVisibleMarkers)
         currentMarkerMap.forEach(({ marker }) => map.removeLayer(marker))
         currentMarkerMap.clear()
