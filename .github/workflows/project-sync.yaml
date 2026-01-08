@@ -8,6 +8,7 @@ on:
 
 jobs:
   sync-pr-status:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Sync PR to Project with Status
