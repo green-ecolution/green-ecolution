@@ -29,7 +29,7 @@
     "@tanstack/react-router-devtools": "1.144.0",
     "@tanstack/router-generator": "1.144.0",
     "date-fns": "^4.1.0",
-    "immer": "^10.1.1",
+    "immer": "^11.1.3",
     "leaflet": "^1.9.4",
     "lottie-react": "^2.4.0",
     "lucide-react": "^0.562.0",
