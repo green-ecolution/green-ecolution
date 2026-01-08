@@ -22,7 +22,7 @@
     "fmt": "prettier --write ."
   },
   "devDependencies": {
-    "prettier": "^3.6.2"
+    "prettier": "^3.7.4"
   },
   "packageManager": "pnpm@10.20.0"
 }
