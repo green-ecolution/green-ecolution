@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Sync PR to Project with Status
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PROJECT_NUMBER: "10"
           ORG_NAME: "green-ecolution"
