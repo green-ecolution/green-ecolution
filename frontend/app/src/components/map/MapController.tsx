@@ -3,29 +3,31 @@ import { useMapEvents } from 'react-leaflet/hooks'
 import useMapStore from '@/store/store'
 import { useCallback, useEffect, useRef } from 'react'
 
+const DEBOUNCE_MS = 400
+
 const MapController = () => {
   const navigate = useNavigate()
-  const { setCenter, setZoom } = useMapStore((state) => ({
-    setCenter: state.map.setCenter,
-    setZoom: state.map.setZoom,
-  }))
+  const setCenter = useMapStore((state) => state.map.setCenter)
+  const setZoom = useMapStore((state) => state.map.setZoom)
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const debouncedNavigate = useCallback(
+  const scheduleUpdate = useCallback(
     (lat: number, lng: number, zoom: number) => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
       timeoutRef.current = setTimeout(() => {
+        setCenter([lat, lng])
+        setZoom(zoom)
         navigate({
           to: '.',
           search: (prev) => ({ ...prev, lat, lng, zoom }),
           replace: true,
         }).catch((error) => console.error('Navigation failed:', error))
-      }, 150)
+      }, DEBOUNCE_MS)
     },
-    [navigate],
+    [navigate, setCenter, setZoom],
   )
 
   useEffect(() => {
@@ -37,12 +39,13 @@ const MapController = () => {
   }, [])
 
   const map = useMapEvents({
-    moveend: () => {
+    dragend: () => {
       const center = map.getCenter()
-      const zoom = map.getZoom()
-      setCenter([center.lat, center.lng])
-      setZoom(zoom)
-      debouncedNavigate(center.lat, center.lng, zoom)
+      scheduleUpdate(center.lat, center.lng, map.getZoom())
+    },
+    zoomend: () => {
+      const center = map.getCenter()
+      scheduleUpdate(center.lat, center.lng, map.getZoom())
     },
   })
 
