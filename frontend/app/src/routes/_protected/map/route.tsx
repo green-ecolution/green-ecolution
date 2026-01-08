@@ -2,7 +2,7 @@ import useMapStore from '@/store/store'
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { z } from 'zod'
 import Map from '@/components/map/Map'
-import MapConroller from '@/components/map/MapController'
+import MapController from '@/components/map/MapController'
 import ZoomControls from '@/components/map/ZoomControls'
 import { treeClusterQuery, treeQuery } from '@/api/queries'
 import LoadingInfo from '@/components/general/error/LoadingInfo'
@@ -53,7 +53,7 @@ function MapRoot() {
   return (
     <div className="relative">
       <Map>
-        <MapConroller />
+        <MapController />
         <ZoomControls />
         <Suspense fallback={<LoadingInfo label="Lade Karte..." />}>
           <Outlet />

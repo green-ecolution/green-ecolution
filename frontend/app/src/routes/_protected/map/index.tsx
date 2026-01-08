@@ -3,7 +3,7 @@ import MapButtons from '@/components/map/MapButtons'
 import { Tree, TreeCluster } from '@green-ecolution/backend-client'
 import { useQuery } from '@tanstack/react-query'
 import { treeQuery } from '@/api/queries'
-import { useRef } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import Dialog from '@/components/general/filter/Dialog'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
 import FilterProvider from '@/context/FilterContext'
@@ -28,17 +28,16 @@ function MapView() {
   const { enableDragging, disableDragging } = useMapInteractions()
   const dialogRef = useRef<HTMLDivElement>(null)
 
-  const hasActiveFilter = () => {
-    return search.wateringStatuses || search.hasCluster !== undefined || search.plantingYears
-      ? true
-      : false
-  }
-
-  const { data: treesRes } = useQuery({
-    enabled:
+  const hasActiveFilter = useMemo(
+    () =>
       search.wateringStatuses !== undefined ||
       search.hasCluster !== undefined ||
       search.plantingYears !== undefined,
+    [search.wateringStatuses, search.hasCluster, search.plantingYears],
+  )
+
+  const { data: treesRes } = useQuery({
+    enabled: hasActiveFilter,
     ...treeQuery({
       wateringStatuses: search.wateringStatuses,
       hasCluster: search.hasCluster,
@@ -46,26 +45,35 @@ function MapView() {
     }),
   })
 
-  const handleTreeClick = (tree: Tree) => {
-    navigate({ to: `/trees/$treeId`, params: { treeId: tree.id.toString() } }).catch((error) =>
-      console.error('Navigation failed:', error),
-    )
-  }
+  const handleTreeClick = useCallback(
+    (tree: Tree) => {
+      navigate({ to: `/trees/$treeId`, params: { treeId: tree.id.toString() } }).catch((error) =>
+        console.error('Navigation failed:', error),
+      )
+    },
+    [navigate],
+  )
 
-  const handleClusterClick = (cluster: TreeCluster) => {
-    navigate({
-      to: `/treecluster/$treeclusterId`,
-      params: { treeclusterId: cluster.id.toString() },
-    }).catch((error) => console.error('Navigation failed:', error))
-  }
+  const handleClusterClick = useCallback(
+    (cluster: TreeCluster) => {
+      navigate({
+        to: `/treecluster/$treeclusterId`,
+        params: { treeclusterId: cluster.id.toString() },
+      }).catch((error) => console.error('Navigation failed:', error))
+    },
+    [navigate],
+  )
 
-  const handleMapInteractions = (isOpen: boolean) => {
-    if (isOpen) {
-      disableDragging()
-    } else {
-      enableDragging()
-    }
-  }
+  const handleMapInteractions = useCallback(
+    (isOpen: boolean) => {
+      if (isOpen) {
+        disableDragging()
+      } else {
+        enableDragging()
+      }
+    },
+    [disableDragging, enableDragging],
+  )
 
   return (
     <>
@@ -83,7 +91,7 @@ function MapView() {
         </Dialog>
       </div>
       <MapButtons />
-      {hasActiveFilter() ? (
+      {hasActiveFilter ? (
         <WithFilterdTrees
           onClick={handleTreeClick}
           selectedTrees={search.tree ? [search.tree] : []}

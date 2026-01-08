@@ -4,43 +4,54 @@ import { treeQuery } from '@/api/queries'
 import { TreeMarkerIcon } from '../MapMarker'
 import MarkerList from './MarkerList'
 import { getStatusColor } from '../utils'
+import { memo, useCallback, useMemo } from 'react'
 
 const defaultSelectedTrees: number[] = []
 
+const tooltipOptions = {
+  direction: 'top' as const,
+  offset: [5, -40] as [number, number],
+  className: 'font-nunito-sans font-semibold',
+}
+
 export interface WithAllTreesProps {
   onClick?: (tree: Tree) => void
-  selectedTrees: number[]
+  selectedTrees?: number[]
   hasHighlightedTree?: number
 }
 
-const WithAllTrees = ({
-  onClick,
-  selectedTrees = defaultSelectedTrees,
-  hasHighlightedTree,
-}: WithAllTreesProps) => {
-  const { data } = useSuspenseQuery(treeQuery())
+const WithAllTrees = memo(
+  ({ onClick, selectedTrees = defaultSelectedTrees, hasHighlightedTree }: WithAllTreesProps) => {
+    const { data } = useSuspenseQuery(treeQuery())
 
-  const defineIcon = (t: Tree) => {
-    return TreeMarkerIcon(
-      getStatusColor(t.wateringStatus),
-      selectedTrees?.includes(t.id) ?? false,
-      hasHighlightedTree === t.id,
+    const selectedSet = useMemo(() => new Set(selectedTrees), [selectedTrees])
+
+    const getIcon = useCallback(
+      (t: Tree) =>
+        TreeMarkerIcon(
+          getStatusColor(t.wateringStatus),
+          selectedSet.has(t.id),
+          hasHighlightedTree === t.id,
+        ),
+      [selectedSet, hasHighlightedTree],
     )
-  }
 
-  return (
-    <MarkerList
-      data={data.data}
-      onClick={onClick}
-      icon={defineIcon}
-      tooltipContent={(t) => t.number}
-      tooltipOptions={{
-        direction: 'top',
-        offset: [5, -40],
-        className: 'font-nunito-sans font-semibold',
-      }}
-    />
-  )
-}
+    const getId = useCallback((t: Tree) => t.id, [])
+    const getTooltip = useCallback((t: Tree) => t.number, [])
+
+    return (
+      <MarkerList
+        data={data.data}
+        onClick={onClick}
+        icon={getIcon}
+        getId={getId}
+        tooltipContent={getTooltip}
+        tooltipOptions={tooltipOptions}
+      />
+    )
+  },
+)
+
+WithAllTrees.displayName = 'WithAllTrees'
 
 export default WithAllTrees
