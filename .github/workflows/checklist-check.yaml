@@ -1,0 +1,38 @@
+name: PR Checklist Check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, ready_for_review]
+
+jobs:
+  check-checklist:
+    runs-on: ubuntu-latest
+    # Skip for draft PRs
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Check Definition of Done
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+
+            // Find DoD section
+            const dodMatch = body.match(/## Definition of Done[\s\S]*?(?=##|$)/i);
+            if (!dodMatch) {
+              core.setFailed('PR is missing "Definition of Done" section');
+              return;
+            }
+
+            const dodSection = dodMatch[0];
+            const unchecked = (dodSection.match(/- \[ \]/g) || []).length;
+            const checked = (dodSection.match(/- \[x\]/gi) || []).length;
+
+            console.log(`DoD Progress: ${checked}/${checked + unchecked} items checked`);
+
+            if (unchecked > 0) {
+              core.setFailed(`${unchecked} Definition of Done items not checked. Please complete all items before merging.`);
+            } else if (checked === 0) {
+              core.warning('No DoD checklist items found. Consider adding acceptance criteria.');
+            } else {
+              console.log('All Definition of Done items completed!');
+            }

@@ -1,0 +1,121 @@
+name: Sprint End
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'What to do'
+        required: true
+        type: choice
+        options:
+          - report-only
+          - close-milestone
+          - rollover-issues
+      milestone:
+        description: 'Milestone to process (leave empty for current)'
+        required: false
+        type: string
+
+jobs:
+  sprint-end:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Process Sprint End
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PROJECT_TOKEN }}
+          script: |
+            const action = '${{ inputs.action }}';
+            const milestoneInput = '${{ inputs.milestone }}';
+
+            // Get milestone (input or first open)
+            let milestone;
+            if (milestoneInput) {
+              const allMilestones = await github.rest.issues.listMilestones({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'all'
+              });
+              milestone = allMilestones.data.find(m => m.title === milestoneInput);
+            } else {
+              const openMilestones = await github.rest.issues.listMilestones({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                sort: 'due_on',
+                direction: 'asc'
+              });
+              milestone = openMilestones.data[0];
+            }
+
+            if (!milestone) {
+              core.setFailed('No milestone found');
+              return;
+            }
+
+            // Get issues in milestone
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              milestone: milestone.number,
+              state: 'all'
+            });
+
+            const closed = issues.data.filter(i => i.state === 'closed').length;
+            const open = issues.data.filter(i => i.state === 'open');
+
+            // Sprint Report
+            console.log(`\n📊 Sprint Report: ${milestone.title}`);
+            console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            console.log(`✅ Closed: ${closed}`);
+            console.log(`🔴 Open: ${open.length}`);
+            const total = closed + open.length;
+            const completion = total > 0 ? Math.round(closed / total * 100) : 0;
+            console.log(`📈 Completion: ${completion}%`);
+
+            if (open.length > 0) {
+              console.log(`\n🔴 Open Issues:`);
+              open.forEach(i => console.log(`   - #${i.number}: ${i.title}`));
+            }
+
+            // Close milestone
+            if (action === 'close-milestone') {
+              await github.rest.issues.updateMilestone({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                milestone_number: milestone.number,
+                state: 'closed'
+              });
+              console.log(`\n✅ Milestone "${milestone.title}" closed`);
+            }
+
+            // Rollover open issues to next milestone
+            if (action === 'rollover-issues' && open.length > 0) {
+              const openMilestones = await github.rest.issues.listMilestones({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                sort: 'due_on',
+                direction: 'asc'
+              });
+
+              // Find next milestone (not current one)
+              const nextMilestone = openMilestones.data.find(m => m.number !== milestone.number);
+
+              if (nextMilestone) {
+                for (const issue of open) {
+                  await github.rest.issues.update({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issue.number,
+                    milestone: nextMilestone.number
+                  });
+                  console.log(`   Moved #${issue.number} → ${nextMilestone.title}`);
+                }
+                console.log(`\n✅ ${open.length} issues moved to "${nextMilestone.title}"`);
+              } else {
+                core.warning('No next milestone found for rollover');
+              }
+            }

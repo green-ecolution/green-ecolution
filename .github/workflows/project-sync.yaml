@@ -1,0 +1,34 @@
+name: Sync Project Status
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, closed]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  sync-status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update project item status
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PROJECT_TOKEN }}
+          script: |
+            // Determine new status based on event
+            const pr = context.payload.pull_request;
+            let newStatus;
+
+            if (context.payload.action === 'opened') {
+              newStatus = 'In Progress';
+            } else if (context.payload.action === 'ready_for_review') {
+              newStatus = 'In Review';
+            } else if (context.payload.action === 'closed' && pr.merged) {
+              newStatus = 'Done';
+            }
+
+            if (newStatus) {
+              console.log(`PR #${pr.number}: Status -> ${newStatus}`);
+              // Note: Full project status update requires GraphQL mutation
+              // This is a placeholder - actual implementation needs project ID
+            }
