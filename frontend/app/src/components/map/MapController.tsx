@@ -3,7 +3,7 @@ import { useMapEvents } from 'react-leaflet/hooks'
 import useMapStore from '@/store/store'
 import { useCallback, useEffect, useRef } from 'react'
 
-const DEBOUNCE_MS = 400
+const DEBOUNCE_MS = 150
 
 const MapController = () => {
   const navigate = useNavigate()
