@@ -1,9 +1,10 @@
-import React, { useEffect, useState, Ref } from 'react'
+import React, { useEffect, useState, Ref, useCallback, useId } from 'react'
 import PrimaryButton from '../general/buttons/PrimaryButton'
 import SecondaryButton from '../general/buttons/SecondaryButton'
 import { MoveRight, X } from 'lucide-react'
 import useMapInteractions from '@/hooks/useMapInteractions'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 interface MapSelectEntitiesModalProps {
   onSave: () => void
@@ -26,6 +27,21 @@ const MapSelectEntitiesModal = ({
   const [openModal, setOpenModal] = useState(false)
   const { enableDragging, disableDragging } = useMapInteractions()
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
+  const titleId = useId()
+
+  const focusTrapRef = useFocusTrap<HTMLDivElement>({
+    enabled: openModal && !isLargeScreen,
+    returnFocusOnDeactivate: true,
+  })
+
+  const handleEscapeKey = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && openModal && !isLargeScreen) {
+        setOpenModal(false)
+      }
+    },
+    [openModal, isLargeScreen],
+  )
 
   useEffect(() => {
     if (isLargeScreen) {
@@ -35,19 +51,65 @@ const MapSelectEntitiesModal = ({
   }, [isLargeScreen, enableDragging])
 
   useEffect(() => {
-    if (openModal) {
+    if (openModal && !isLargeScreen) {
       disableDragging()
-    } else {
+    } else if (!isLargeScreen) {
       enableDragging()
     }
-  }, [disableDragging, enableDragging, openModal])
+  }, [disableDragging, enableDragging, openModal, isLargeScreen])
 
-  return (
-    <div ref={ref} className="text-base font-nunito-sans">
+  useEffect(() => {
+    if (openModal && !isLargeScreen) {
+      document.addEventListener('keydown', handleEscapeKey)
+      return () => document.removeEventListener('keydown', handleEscapeKey)
+    }
+  }, [openModal, isLargeScreen, handleEscapeKey])
+
+  const modalContent = (
+    <>
+      <div className="max-h-[40vh] overflow-y-auto">{content}</div>
+      <div className="flex flex-wrap gap-5 mt-6">
+        <PrimaryButton type="submit" label="Speichern" onClick={onSave} disabled={disabled} />
+        <SecondaryButton label="Zurück" onClick={onCancel} />
+      </div>
+    </>
+  )
+
+  const mobileModal = (
+    <>
       <div
         onClick={() => setOpenModal(false)}
         className={`bg-dark-900/90 fixed inset-0 z-[1020] lg:hidden ${openModal ? 'block' : 'hidden'}`}
-      ></div>
+        aria-hidden="true"
+      />
+      <div
+        ref={focusTrapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className={`space-y-6 fixed z-[1030] top-20 inset-x-4 bg-white border-dark-50 shadow-xl p-5 rounded-xl font-nunito-sans lg:hidden ${openModal ? 'block' : 'hidden'}`}
+      >
+        <div className="flex justify-between gap-x-6">
+          <h2 id={titleId} className="text-lg font-lato font-semibold">
+            {title}
+          </h2>
+          <button
+            aria-label="Dialog schließen"
+            className="text-dark-400 hover:text-dark-600 stroke-1"
+            type="button"
+            onClick={() => setOpenModal(false)}
+          >
+            <X />
+          </button>
+        </div>
+        {modalContent}
+      </div>
+    </>
+  )
+
+  return (
+    <div ref={ref} className="text-base font-nunito-sans">
+      {/* Mobile: Button to open modal */}
       <button
         type="button"
         onClick={() => setOpenModal(true)}
@@ -58,33 +120,24 @@ const MapSelectEntitiesModal = ({
         <MoveRight className="transition-all ease-in-out duration-300 group-hover:translate-x-2" />
       </button>
 
-      <div
-        role="dialog"
-        onMouseEnter={disableDragging}
-        onMouseLeave={enableDragging}
-        aria-modal="true"
-        className={`space-y-6 absolute z-[1030] top-4 inset-x-4 lg:w-[35rem] lg:left-auto lg:right-10 bg-white border-dark-50 shadow-xl p-5 rounded-xl
-          ${openModal ? 'block' : 'hidden lg:block'}`}
-      >
-        <div className="flex justify-between gap-x-6">
-          <h2 className="text-lg font-lato font-semibold lg:text-xl">{title}</h2>
-          <button
-            aria-label="Dialog schließen"
-            className="text-dark-400 hover:text-dark-600 stroke-1 lg:hidden"
-            type="button"
-            onClick={() => setOpenModal(false)}
-          >
-            <X />
-          </button>
-        </div>
+      {/* Mobile: Modal */}
+      {mobileModal}
 
-        <div className="max-h-[40vh] overflow-y-auto">{content}</div>
-
-        <div className="flex flex-wrap gap-5">
-          <PrimaryButton type="submit" label="Speichern" onClick={onSave} disabled={disabled} />
-          <SecondaryButton label="Zurück" onClick={onCancel} />
+      {/* Desktop: Always visible sidebar */}
+      {isLargeScreen && (
+        <div
+          role="dialog"
+          onMouseEnter={disableDragging}
+          onMouseLeave={enableDragging}
+          aria-modal="false"
+          className="space-y-6 absolute z-[1030] top-4 w-[35rem] right-10 bg-white border-dark-50 shadow-xl p-5 rounded-xl"
+        >
+          <div className="flex justify-between gap-x-6">
+            <h2 className="text-lg font-lato font-semibold lg:text-xl">{title}</h2>
+          </div>
+          {modalContent}
         </div>
-      </div>
+      )}
     </div>
   )
 }

@@ -2,10 +2,10 @@ import { Ref, useEffect, useState } from 'react'
 import FilterButton from '../buttons/FilterButton'
 import PrimaryButton from '../buttons/PrimaryButton'
 import SecondaryButton from '../buttons/SecondaryButton'
-import { X } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
 import { useFilter, Filters } from '@/context/FilterContext'
 import useStore from '@/store/store'
+import { BaseModal } from '../modal'
 
 interface DialogProps {
   headline: string
@@ -21,7 +21,6 @@ const Dialog = ({
   fullUrlPath,
   children,
   isOnMap = false,
-  ref,
   onToggleOpen,
 }: DialogProps) => {
   const [isOpen, setIsOpen] = useState(false)
@@ -42,7 +41,6 @@ const Dialog = ({
   const { filters, resetFilters, applyOldStateToTags } = useFilter()
 
   const handleSubmit = () => {
-    setIsOpen(false)
     setIsOpen(false)
     navigate({
       to: fullUrlPath,
@@ -111,11 +109,6 @@ const Dialog = ({
 
   return (
     <div className="font-nunito-sans text-base">
-      <div
-        onClick={() => handleClose()}
-        className={`bg-dark-900/90 fixed inset-0 z-[1020] ${isOpen ? 'block' : 'hidden'}`}
-      ></div>
-
       <FilterButton
         activeCount={count}
         ariaLabel={headline}
@@ -129,31 +122,19 @@ const Dialog = ({
         }}
       />
 
-      <section
-        ref={ref}
-        role="dialog"
-        aria-modal="true"
-        className={`fixed max-h-[80dvh] overflow-y-auto z-[1030] inset-x-4 shadow-xl bg-white top-1/2 -translate-y-1/2 p-6 rounded-xl mx-auto max-w-[30rem] ${isOpen ? 'block' : 'hidden'}`}
+      <BaseModal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title={headline}
+        className="max-h-[80dvh] overflow-y-auto"
       >
-        <div className="flex items-center justify-between gap-x-5 mb-5">
-          <h2 className="text-xl font-lato font-semibold">{headline}</h2>
-          <button
-            aria-label="Close Dialog"
-            type="reset"
-            className="text-dark-400 hover:text-dark-600 stroke-1"
-            onClick={handleClose}
-          >
-            <X />
-          </button>
-        </div>
-
         {children}
 
         <div className="flex flex-wrap gap-5 mt-6">
           <PrimaryButton label="Anwenden" type="button" onClick={handleSubmit} />
           <SecondaryButton label="Zurücksetzen" onClick={handleReset} />
         </div>
-      </section>
+      </BaseModal>
     </div>
   )
 }

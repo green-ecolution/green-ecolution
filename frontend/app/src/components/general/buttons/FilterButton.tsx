@@ -19,7 +19,7 @@ const FilterButton: React.FC<FilterButtonProps> = ({
       aria-label={ariaLabel}
       id="filter-button"
       aria-selected={activeCount > 0}
-      className={`relative font-nunito-sans text-base ${isOnMap ? 'z-[1000] shadow-cards' : ''} bg-white border border-green-light px-5 py-2 font-medium rounded-full flex items-center gap-x-2 transition-colors ease-in-out duration-300 ${activeCount > 0 ? 'bg-green-light-200' : ''} hover:bg-green-light-200`}
+      className={`relative font-nunito-sans text-base ${isOnMap ? 'z-[1000] shadow-cards' : ''} bg-white border border-green-light px-5 py-2 font-medium rounded-full flex items-center gap-x-2 transition-colors ease-in-out duration-300 ${activeCount > 0 ? 'bg-green-light-200' : ''} hover:bg-green-light-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-dark`}
       onClick={onClick}
     >
       Filter
