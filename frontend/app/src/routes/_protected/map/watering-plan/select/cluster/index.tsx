@@ -44,8 +44,10 @@ function SelectCluster() {
         return false
       }
 
-      const isFormPath = next.pathname.startsWith('/watering-plans/')
-      if (isFormPath) {
+      const isAllowedPath =
+        next.pathname.startsWith('/watering-plans/') ||
+        next.pathname.startsWith('/map/watering-plan/select/cluster')
+      if (isAllowedPath) {
         return false
       }
 

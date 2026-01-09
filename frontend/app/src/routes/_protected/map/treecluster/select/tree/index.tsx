@@ -35,9 +35,11 @@ function SelectTrees() {
         return false
       }
 
-      const isFormPath =
-        next.pathname.startsWith('/treecluster/new') || next.pathname.startsWith('/treecluster/')
-      if (isFormPath) {
+      const isAllowedPath =
+        next.pathname.startsWith('/treecluster/new') ||
+        next.pathname.startsWith('/treecluster/') ||
+        next.pathname.startsWith('/map/treecluster/select/tree')
+      if (isAllowedPath) {
         return false
       }
 
