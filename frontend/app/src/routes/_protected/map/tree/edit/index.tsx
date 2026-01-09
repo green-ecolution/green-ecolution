@@ -41,9 +41,11 @@ function EditTree() {
         return false
       }
 
-      const isFormPath =
-        next.pathname.startsWith('/trees/new') || next.pathname.startsWith('/trees/')
-      if (isFormPath) {
+      const isAllowedPath =
+        next.pathname.startsWith('/trees/new') ||
+        next.pathname.startsWith('/trees/') ||
+        next.pathname.startsWith('/map/tree/edit')
+      if (isAllowedPath) {
         return false
       }
 
