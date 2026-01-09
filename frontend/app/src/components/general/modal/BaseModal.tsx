@@ -77,7 +77,7 @@ export function BaseModal({
           </h2>
           <button
             aria-label="Dialog schließen"
-            className="text-dark-400 hover:text-dark-600 stroke-1"
+            className="text-dark-400 hover:text-dark-600 stroke-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-dark"
             onClick={onClose}
             type="button"
           >

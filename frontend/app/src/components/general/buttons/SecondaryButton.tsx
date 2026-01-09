@@ -10,7 +10,7 @@ const SecondaryButton: React.FC<SecondaryButtonProps> = ({ label, type = 'button
   <button
     type={type}
     {...props}
-    className={`border border-green-dark text-green-dark px-5 py-2 group flex gap-x-3 rounded-xl items-center transition-all ease-in-out duration-300 hover:border-green-light hover:text-green-light ${props.className}`}
+    className={`border border-green-dark text-green-dark px-5 py-2 group flex gap-x-3 rounded-xl items-center transition-all ease-in-out duration-300 hover:border-green-light hover:text-green-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-dark ${props.className}`}
   >
     <span className="font-medium text-base">{label}</span>
     <X />

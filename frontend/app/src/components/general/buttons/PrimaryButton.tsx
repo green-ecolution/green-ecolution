@@ -16,7 +16,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   <button
     type={type}
     {...props}
-    className={`${isDanger ? 'bg-red' : 'bg-green-dark hover:bg-green-light'} text-white w-fit px-5 py-2 group flex gap-x-3 rounded-xl items-center transition-all ease-in-out duration-300 disabled:bg-dark-400 ${props.className}`}
+    className={`${isDanger ? 'bg-red' : 'bg-green-dark hover:bg-green-light'} text-white w-fit px-5 py-2 group flex gap-x-3 rounded-xl items-center transition-all ease-in-out duration-300 disabled:bg-dark-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-dark ${props.className}`}
   >
     <span className="font-medium text-base">{label}</span>
     <MoveRight className="transition-all ease-in-out duration-300 group-hover:translate-x-2 group-disabled:translate-x-0" />
