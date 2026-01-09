@@ -113,6 +113,7 @@ func (s *TreeService) Create(ctx context.Context, treeCreate *entities.TreeCreat
 		tree.Number = treeCreate.Number
 		tree.Latitude = treeCreate.Latitude
 		tree.Longitude = treeCreate.Longitude
+		tree.Description = treeCreate.Description
 		tree.Provider = treeCreate.Provider
 		tree.AdditionalInfo = treeCreate.AdditionalInfo
 

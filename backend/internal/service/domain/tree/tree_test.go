@@ -307,6 +307,16 @@ func TestTreeService_Create(t *testing.T) {
 					return nil, err
 				}
 
+				// verify that all fields are correctly set on the tree entity
+				assert.Equal(t, TestTreeCreate.PlantingYear, testTree.PlantingYear)
+				assert.Equal(t, TestTreeCreate.Species, testTree.Species)
+				assert.Equal(t, TestTreeCreate.Number, testTree.Number)
+				assert.Equal(t, TestTreeCreate.Latitude, testTree.Latitude)
+				assert.Equal(t, TestTreeCreate.Longitude, testTree.Longitude)
+				assert.Equal(t, TestTreeCreate.Description, testTree.Description)
+				assert.Equal(t, expectedCluster, testTree.TreeCluster)
+				assert.Equal(t, expectedSensor, testTree.Sensor)
+
 				return expectedTree, nil
 			},
 		)
