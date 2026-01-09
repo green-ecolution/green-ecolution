@@ -125,6 +125,7 @@ var (
 		Longitude:     testLongitude,
 		PlantingYear:  2023,
 		Number:        "T001",
+		Description:   "Test tree description",
 		TreeClusterID: utils.P(int32(1)),
 		SensorID:      utils.P("sensor-1"),
 	}
