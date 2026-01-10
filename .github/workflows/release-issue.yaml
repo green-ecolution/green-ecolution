@@ -3,7 +3,7 @@ name: Release Issue
 on:
   pull_request:
     types: [opened]
-    branches: [develop]
+    branches: [main]
   release:
     types: [published]
 
