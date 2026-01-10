@@ -128,7 +128,7 @@ jobs:
             ENV=stage
             APP_VERSION=${{ needs.check-changes.outputs.tag }}
             APP_GIT_COMMIT=${{ github.sha }}
-            APP_GIT_BRANCH=develop
+            APP_GIT_BRANCH=main
             APP_GIT_REPOSITORY=${{ github.repository }}
             APP_BUILD_TIME=${{ github.event.head_commit.timestamp }}
           cache-from: type=gha

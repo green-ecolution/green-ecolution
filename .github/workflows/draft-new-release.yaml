@@ -99,11 +99,11 @@ jobs:
           ### Next Steps
 
           1. Review and approve this PR
-          2. Merge to \`develop\` branch
+          2. Merge to \`main\` branch
           3. Tag will be created automatically, triggering the release build
 
           " \
-            --base develop \
+            --base main \
             --head "$BRANCH_NAME"
 
           echo "✅ Created pull request for release ${VERSION}"
@@ -155,6 +155,6 @@ jobs:
             --title "${VERSION}" \
             --notes-file release_notes.md \
             $PRERELEASE_FLAG \
-            --target develop
+            --target main
 
           echo "✅ Created draft release ${VERSION}"

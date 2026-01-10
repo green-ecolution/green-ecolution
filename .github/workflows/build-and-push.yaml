@@ -5,7 +5,7 @@ on:
   pull_request:
     types: [opened, synchronize, labeled]
     branches:
-      - develop
+      - main
 
   # Build prod images when tag is pushed
   push:
@@ -247,7 +247,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           token: ${{ steps.app-token.outputs.token }}
-          ref: develop
+          ref: main
           fetch-depth: 0
 
       - name: Setup kustomize
@@ -276,8 +276,8 @@ jobs:
             echo "branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
             echo "env=stage" >> $GITHUB_OUTPUT
           else
-            # Prod: push to develop
-            echo "branch=develop" >> $GITHUB_OUTPUT
+            # Prod: push to main
+            echo "branch=main" >> $GITHUB_OUTPUT
             echo "env=prod" >> $GITHUB_OUTPUT
           fi
 
@@ -351,7 +351,7 @@ jobs:
           ArgoCD is configured to track the \`${PR_BRANCH}\` branch for stage deployments.
           The stage environment will sync automatically.
 
-          **After merging this PR**, the stage kustomize updates will be included in \`develop\`.
+          **After merging this PR**, the stage kustomize updates will be included in \`main\`.
 
           ---
           *Last updated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')*"
