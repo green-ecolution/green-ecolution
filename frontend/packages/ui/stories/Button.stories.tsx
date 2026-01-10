@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { ArrowRight, Loader2 } from 'lucide-react'
+import { ArrowRight, MoveRight, MoveLeft, Loader2 } from 'lucide-react'
 import { Button } from '../src/components/ui/button'
 
 const meta: Meta<typeof Button> = {
@@ -9,7 +9,7 @@ const meta: Meta<typeof Button> = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['default', 'destructive', 'outline', 'secondary', 'ghost', 'link'],
+      options: ['default', 'destructive', 'outline', 'secondary', 'ghost', 'link', 'nav'],
       description: 'The visual style of the button',
     },
     size: {
@@ -133,6 +133,7 @@ export const AllVariants: Story = {
       <Button variant="outline">Outline</Button>
       <Button variant="ghost">Ghost</Button>
       <Button variant="link">Link</Button>
+      <Button variant="nav">Nav</Button>
     </div>
   ),
 }
@@ -143,6 +144,45 @@ export const AllSizes: Story = {
       <Button size="sm">Small</Button>
       <Button size="default">Default</Button>
       <Button size="lg">Large</Button>
+    </div>
+  ),
+}
+
+export const BackLink: Story = {
+  render: () => (
+    <Button variant="nav" className="group p-0 h-auto">
+      <MoveLeft className="mr-2 h-4 w-4 transition-all duration-300 group-hover:-translate-x-1" />
+      Zu allen Bewässerungsgruppen
+    </Button>
+  ),
+}
+
+export const LinkWithArrow: Story = {
+  render: () => (
+    <Button variant="nav" className="group p-0 h-auto">
+      Auf der Karte anzeigen
+      <MoveRight className="ml-2 h-4 w-4 transition-all duration-300 group-hover:translate-x-1" />
+    </Button>
+  ),
+}
+
+export const NavigationLinks: Story = {
+  render: () => (
+    <div className="space-y-4">
+      <div>
+        <Button variant="nav" className="group p-0 h-auto">
+          <MoveLeft className="mr-2 h-4 w-4 transition-all duration-300 group-hover:-translate-x-1" />
+          Zu allen Bewässerungsgruppen
+        </Button>
+      </div>
+      <h1 className="text-2xl font-bold font-lato">Bewässerungsgruppe: Alsterbogen</h1>
+      <p className="text-muted-foreground">Straßenbäume mit regelmäßiger Pflege</p>
+      <div>
+        <Button variant="nav" className="group p-0 h-auto">
+          Auf der Karte anzeigen
+          <MoveRight className="ml-2 h-4 w-4 transition-all duration-300 group-hover:translate-x-1" />
+        </Button>
+      </div>
     </div>
   ),
 }
