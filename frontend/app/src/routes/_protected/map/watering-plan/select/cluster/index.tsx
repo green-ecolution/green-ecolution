@@ -129,6 +129,7 @@ function SelectCluster() {
     })
   }
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- complex filter logic
   const disabledClusters = useMemo(() => {
     if (!transporter) return clusters.data.map((cluster) => cluster.id)
 

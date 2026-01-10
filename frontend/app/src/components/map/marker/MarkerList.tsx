@@ -33,8 +33,10 @@ const MarkerList = <T extends WithLocation>({
   const iconRef = useRef(icon)
   const onClickRef = useRef(onClick)
 
-  onClickRef.current = onClick
-  iconRef.current = icon
+  useEffect(() => {
+    onClickRef.current = onClick
+    iconRef.current = icon
+  })
 
   const updateVisibleMarkers = useCallback(() => {
     if (!map) return

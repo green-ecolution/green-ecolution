@@ -36,6 +36,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary
   }, [error])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data fetching pattern
     checkResponseErrorMessage().catch((e) => setErrorMessage(String(e)))
   }, [checkResponseErrorMessage])
 

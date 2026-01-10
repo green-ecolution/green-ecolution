@@ -14,6 +14,7 @@ init({
   remotes: [],
 })
 
+/* eslint-disable react-hooks/static-components -- dynamic module federation plugin */
 function PluginView() {
   const pluginName = Route.useParams().pluginName
   const { authToken } = useStore((state) => ({
