@@ -9,6 +9,12 @@ import {
   BreadcrumbSeparator,
   BreadcrumbEllipsis,
 } from '../src/components/ui/breadcrumb'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../src/components/ui/dropdown-menu'
 
 const meta: Meta<typeof Breadcrumb> = {
   title: 'UI/Breadcrumb',
@@ -71,7 +77,19 @@ export const WithEllipsis: Story = {
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbEllipsis />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <BreadcrumbEllipsis />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem>
+                <a href="/trees">Bäume</a>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <a href="/trees/region-north">Region Nord</a>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
@@ -79,7 +97,7 @@ export const WithEllipsis: Story = {
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbPage>Oak Tree #1234</BreadcrumbPage>
+          <BreadcrumbPage>Eiche #1234</BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
