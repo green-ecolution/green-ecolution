@@ -10,6 +10,11 @@ function ProfileButton() {
   const { isAuthenticated } = useStore((state) => ({
     isAuthenticated: state.auth.isAuthenticated,
   }))
+
+  const toggleOverlay = (state: boolean) => {
+    setOpen(state)
+  }
+
   const overlayRef = useOutsideClick<HTMLDivElement>(() => toggleOverlay(false))
   const userInitials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`
 
@@ -44,10 +49,6 @@ function ProfileButton() {
       closeSidebar={() => toggleOverlay(false)}
     />,
   ]
-
-  function toggleOverlay(state: boolean) {
-    setOpen(state)
-  }
 
   const links = isAuthenticated ? linksLoggedIn : linksLoggedOut
 

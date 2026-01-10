@@ -1,4 +1,4 @@
-import { Ref, useEffect, useState } from 'react'
+import { Ref, useEffect, useMemo, useState } from 'react'
 import FilterButton from '../buttons/FilterButton'
 import PrimaryButton from '../buttons/PrimaryButton'
 import SecondaryButton from '../buttons/SecondaryButton'
@@ -30,7 +30,6 @@ const Dialog = ({
     hasCluster: undefined,
     plantingYears: [],
   })
-  const [count, setCount] = useState(0)
   const navigate = useNavigate()
   const mapPosition = useStore((state) => ({
     lat: state.map.center[0],
@@ -93,14 +92,14 @@ const Dialog = ({
     setIsOpen(true)
   }
 
-  useEffect(() => {
-    setCount(
+  const count = useMemo(
+    () =>
       filters.statusTags.length +
-        filters.regionTags.length +
-        (filters.hasCluster !== undefined ? 1 : 0) +
-        filters.plantingYears.length,
-    )
-  }, [filters])
+      filters.regionTags.length +
+      (filters.hasCluster !== undefined ? 1 : 0) +
+      filters.plantingYears.length,
+    [filters],
+  )
 
   useEffect(() => {
     if (!onToggleOpen) return

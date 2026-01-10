@@ -45,6 +45,7 @@ const MapSelectEntitiesModal = ({
 
   useEffect(() => {
     if (isLargeScreen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync state with media query
       setOpenModal(false)
       enableDragging()
     }
