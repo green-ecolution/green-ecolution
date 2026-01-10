@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
+import { Bluetooth, Trash2, LogOut, MoveRight, X } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -7,6 +8,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
+  AlertDialogIcon,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '../src/components/ui/alert-dialog'
@@ -25,19 +27,24 @@ export const Default: Story = {
   render: () => (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="outline">Open Dialog</Button>
+        <Button variant="outline">Dialog öffnen</Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogTitle>Bist du sicher?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete your
-            account and remove your data from our servers.
+            Diese Aktion kann nicht rückgängig gemacht werden.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction>Continue</AlertDialogAction>
+        <AlertDialogFooter className="sm:justify-start">
+          <AlertDialogAction>
+            Bestätigen
+            <MoveRight className="transition-all ease-in-out duration-300 group-hover:translate-x-2" />
+          </AlertDialogAction>
+          <AlertDialogCancel>
+            Abbrechen
+            <X />
+          </AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -48,22 +55,24 @@ export const DeleteTree: Story = {
   render: () => (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive">Delete Tree</Button>
+        <Button variant="destructive">Baum löschen</Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete Tree?</AlertDialogTitle>
+          <AlertDialogTitle>Soll der Baum wirklich gelöscht werden?</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete &quot;Oak Tree #1234&quot;? This action
-            cannot be undone. All associated sensor data and watering history
-            will also be deleted.
+            Sobald der Baum gelöscht wurde, können die Daten nicht wieder hergestellt werden.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-            Delete
+        <AlertDialogFooter className="sm:justify-start">
+          <AlertDialogAction>
+            Bestätigen
+            <MoveRight className="transition-all ease-in-out duration-300 group-hover:translate-x-2" />
           </AlertDialogAction>
+          <AlertDialogCancel>
+            Abbrechen
+            <X />
+          </AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -74,21 +83,24 @@ export const DeleteWateringPlan: Story = {
   render: () => (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm">Cancel Plan</Button>
+        <Button variant="destructive" size="sm">Bewässerungsgruppe löschen</Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Cancel Watering Plan?</AlertDialogTitle>
+          <AlertDialogTitle>Soll die Bewässerungsgruppe wirklich gelöscht werden?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will cancel the watering plan &quot;Route WP-2024-001&quot;. The assigned
-            vehicle will be released and all scheduled stops will be removed.
+            Sobald die Bewässerungsgruppe gelöscht wurde, können die Daten nicht wieder hergestellt werden.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Keep Plan</AlertDialogCancel>
-          <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-            Cancel Plan
+        <AlertDialogFooter className="sm:justify-start">
+          <AlertDialogAction>
+            Bestätigen
+            <MoveRight className="transition-all ease-in-out duration-300 group-hover:translate-x-2" />
           </AlertDialogAction>
+          <AlertDialogCancel>
+            Abbrechen
+            <X />
+          </AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -99,20 +111,25 @@ export const ConfirmAction: Story = {
   render: () => (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button>Start Watering Route</Button>
+        <Button>Einsatz starten</Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Start Watering Route?</AlertDialogTitle>
+          <AlertDialogTitle>Soll der Einsatz wirklich gestartet werden?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will start the watering route with 15 trees. The estimated
-            completion time is 2 hours 30 minutes. Make sure the vehicle tank
-            is full before proceeding.
+            Der Einsatzplan enthält 15 Bäume. Die geschätzte Dauer beträgt 2 Stunden 30 Minuten.
+            Stelle sicher, dass der Tank des Fahrzeugs voll ist.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Not Yet</AlertDialogCancel>
-          <AlertDialogAction>Start Route</AlertDialogAction>
+        <AlertDialogFooter className="sm:justify-start">
+          <AlertDialogAction>
+            Bestätigen
+            <MoveRight className="transition-all ease-in-out duration-300 group-hover:translate-x-2" />
+          </AlertDialogAction>
+          <AlertDialogCancel>
+            Abbrechen
+            <X />
+          </AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -123,19 +140,24 @@ export const LogoutConfirm: Story = {
   render: () => (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost">Logout</Button>
+        <Button variant="ghost">Abmelden</Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Log out?</AlertDialogTitle>
+          <AlertDialogTitle>Möchtest du dich wirklich abmelden?</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to log out? You will need to sign in again
-            to access the system.
+            Du musst dich erneut anmelden, um auf das System zugreifen zu können.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Stay Logged In</AlertDialogCancel>
-          <AlertDialogAction>Log Out</AlertDialogAction>
+        <AlertDialogFooter className="sm:justify-start">
+          <AlertDialogAction>
+            Abmelden
+            <MoveRight className="transition-all ease-in-out duration-300 group-hover:translate-x-2" />
+          </AlertDialogAction>
+          <AlertDialogCancel>
+            Abbrechen
+            <X />
+          </AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -146,21 +168,117 @@ export const UnsavedChanges: Story = {
   render: () => (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="outline">Leave Page</Button>
+        <Button variant="outline">Seite verlassen</Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+          <AlertDialogTitle>Möchtest du die Seite wirklich verlassen?</AlertDialogTitle>
           <AlertDialogDescription>
-            You have unsaved changes. Are you sure you want to leave this page?
-            Your changes will be lost.
+            Deine Änderungen gehen verloren, wenn du jetzt gehst.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Stay on Page</AlertDialogCancel>
-          <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-            Leave Without Saving
+        <AlertDialogFooter className="sm:justify-start">
+          <AlertDialogAction>
+            Verlassen
+            <MoveRight className="transition-all ease-in-out duration-300 group-hover:translate-x-2" />
           </AlertDialogAction>
+          <AlertDialogCancel>
+            Auf Seite bleiben
+            <X />
+          </AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  ),
+}
+
+export const WithIcon: Story = {
+  render: () => (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline">Gerät verbinden</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogIcon>
+          <Bluetooth />
+        </AlertDialogIcon>
+        <AlertDialogHeader className="text-center sm:text-center">
+          <AlertDialogTitle>Gerät verbinden?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Möchtest du die Verbindung mit diesem Gerät herstellen?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="sm:justify-center">
+          <AlertDialogAction>
+            Bestätigen
+            <MoveRight className="transition-all ease-in-out duration-300 group-hover:translate-x-2" />
+          </AlertDialogAction>
+          <AlertDialogCancel>
+            Abbrechen
+            <X />
+          </AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  ),
+}
+
+export const DeleteWithIcon: Story = {
+  render: () => (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive">Bewässerungsgruppe löschen</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogIcon className="bg-red-50 [&>svg]:text-destructive">
+          <Trash2 />
+        </AlertDialogIcon>
+        <AlertDialogHeader className="text-center sm:text-center">
+          <AlertDialogTitle>Soll die Bewässerungsgruppe wirklich gelöscht werden?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Sobald die Bewässerungsgruppe gelöscht wurde, können die Daten nicht wieder hergestellt werden.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="sm:justify-center">
+          <AlertDialogAction>
+            Bestätigen
+            <MoveRight className="transition-all ease-in-out duration-300 group-hover:translate-x-2" />
+          </AlertDialogAction>
+          <AlertDialogCancel>
+            Abbrechen
+            <X />
+          </AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  ),
+}
+
+export const LogoutWithIcon: Story = {
+  render: () => (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost">Abmelden</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogIcon>
+          <LogOut />
+        </AlertDialogIcon>
+        <AlertDialogHeader className="text-center sm:text-center">
+          <AlertDialogTitle>Möchtest du dich wirklich abmelden?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Du musst dich erneut anmelden, um auf das System zugreifen zu können.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="sm:justify-center">
+          <AlertDialogAction>
+            Abmelden
+            <MoveRight className="transition-all ease-in-out duration-300 group-hover:translate-x-2" />
+          </AlertDialogAction>
+          <AlertDialogCancel>
+            Abbrechen
+            <X />
+          </AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

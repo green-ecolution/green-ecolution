@@ -43,6 +43,22 @@ const AlertDialogContent = React.forwardRef<
 ))
 AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName
 
+const AlertDialogIcon = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className="flex justify-center mb-4">
+    <div
+      className={cn(
+        'flex items-center justify-center h-16 w-16 rounded-xl bg-muted [&>svg]:h-8 [&>svg]:w-8 [&>svg]:text-muted-foreground',
+        className
+      )}
+      {...props}
+    />
+  </div>
+)
+AlertDialogIcon.displayName = 'AlertDialogIcon'
+
 const AlertDialogHeader = ({
   className,
   ...props
@@ -77,7 +93,7 @@ const AlertDialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Title
     ref={ref}
-    className={cn('text-lg font-semibold', className)}
+    className={cn('font-lato text-lg font-semibold leading-tight tracking-tight text-foreground', className)}
     {...props}
   />
 ))
@@ -89,7 +105,7 @@ const AlertDialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Description
     ref={ref}
-    className={cn('text-sm text-muted-foreground', className)}
+    className={cn('text-base text-muted-foreground', className)}
     {...props}
   />
 ))
@@ -102,7 +118,10 @@ const AlertDialogAction = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Action
     ref={ref}
-    className={cn(buttonVariants(), className)}
+    className={cn(
+      'bg-red text-white px-5 py-2 group flex gap-x-3 rounded-xl items-center cursor-pointer transition-all ease-in-out duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-red [&>svg]:h-5 [&>svg]:w-5',
+      className
+    )}
     {...props}
   />
 ))
@@ -115,8 +134,7 @@ const AlertDialogCancel = React.forwardRef<
   <AlertDialogPrimitive.Cancel
     ref={ref}
     className={cn(
-      buttonVariants({ variant: 'outline' }),
-      'mt-2 sm:mt-0',
+      'border border-green-dark text-green-dark px-5 py-2 group flex gap-x-3 rounded-xl items-center cursor-pointer transition-all ease-in-out duration-300 hover:border-green-light hover:text-green-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-dark [&>svg]:h-5 [&>svg]:w-5 mt-2 sm:mt-0',
       className
     )}
     {...props}
@@ -130,6 +148,7 @@ export {
   AlertDialogOverlay,
   AlertDialogTrigger,
   AlertDialogContent,
+  AlertDialogIcon,
   AlertDialogHeader,
   AlertDialogFooter,
   AlertDialogTitle,
