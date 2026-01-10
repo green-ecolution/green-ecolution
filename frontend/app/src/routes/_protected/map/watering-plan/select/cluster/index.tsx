@@ -121,9 +121,12 @@ function SelectCluster() {
   const handleClick = (cluster: TreeCluster) => {
     if (disabledClusters.includes(cluster.id)) return
 
-    if (clusterIds.includes(cluster.id))
-      setClusterIds((prev) => prev.filter((id) => id !== cluster.id))
-    else setClusterIds((prev) => [...prev, cluster.id])
+    setClusterIds((prev) => {
+      if (prev.includes(cluster.id)) {
+        return prev.filter((id) => id !== cluster.id)
+      }
+      return [...prev, cluster.id]
+    })
   }
 
   const disabledClusters = useMemo(() => {
