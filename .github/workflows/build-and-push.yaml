@@ -296,22 +296,39 @@ jobs:
         run: |
           ENV="${{ steps.target.outputs.env }}"
           TAG="${{ needs.determine-environment.outputs.image-tag }}"
+          IS_RELEASE="${{ needs.determine-environment.outputs.is-release }}"
 
           cd ./deploy/kustomize/${ENV}
           kustomize edit set image backend-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}
           kustomize edit set image frontend-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${TAG}
           kustomize edit set image init-migrations-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:${TAG}
 
+          # Also update demo environment on release
+          if [[ "$IS_RELEASE" == "true" ]]; then
+            cd ../demo
+            kustomize edit set image backend-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}
+            kustomize edit set image frontend-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${TAG}
+            kustomize edit set image init-migrations-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:${TAG}
+          fi
+
       - name: Commit and push changes
         run: |
           ENV="${{ steps.target.outputs.env }}"
           TAG="${{ needs.determine-environment.outputs.image-tag }}"
           TARGET_BRANCH="${{ steps.target.outputs.branch }}"
+          IS_RELEASE="${{ needs.determine-environment.outputs.is-release }}"
 
           git add deploy/kustomize/${ENV}/kustomization.yaml
+          if [[ "$IS_RELEASE" == "true" ]]; then
+            git add deploy/kustomize/demo/kustomization.yaml
+          fi
+
           if git commit -m "chore: update ${ENV} image tags to ${TAG} [skip ci]"; then
             git push origin ${TARGET_BRANCH}
             echo "✅ Kustomize ${ENV} updated on branch ${TARGET_BRANCH}"
+            if [[ "$IS_RELEASE" == "true" ]]; then
+              echo "✅ Kustomize demo also updated"
+            fi
           else
             echo "ℹ️ No changes to commit"
           fi
