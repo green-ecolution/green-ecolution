@@ -67,7 +67,7 @@ export const FormSections: Story = {
       <div className="space-y-2">
         <h3 className="text-lg font-medium">Allgemeine Informationen</h3>
         <p className="text-sm text-muted-foreground">
-          Geben Sie die grundlegenden Informationen zum Baum ein.
+          Gib die grundlegenden Informationen zum Baum ein.
         </p>
         <div className="h-10 rounded bg-muted" />
         <div className="h-10 rounded bg-muted" />
@@ -78,7 +78,7 @@ export const FormSections: Story = {
       <div className="space-y-2">
         <h3 className="text-lg font-medium">Standort</h3>
         <p className="text-sm text-muted-foreground">
-          Geben Sie den Standort des Baums an.
+          Gib den Standort des Baums an.
         </p>
         <div className="h-10 rounded bg-muted" />
       </div>

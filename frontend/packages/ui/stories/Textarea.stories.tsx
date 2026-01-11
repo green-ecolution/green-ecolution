@@ -13,15 +13,15 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   args: {
-    placeholder: 'Geben Sie hier Ihre Nachricht ein.',
+    placeholder: 'Gib hier deine Nachricht ein.',
   },
 }
 
 export const WithLabel: Story = {
   render: () => (
     <div className="grid w-full gap-1.5">
-      <Label htmlFor="message">Ihre Nachricht</Label>
-      <Textarea placeholder="Geben Sie hier Ihre Nachricht ein." id="message" />
+      <Label htmlFor="message">Deine Nachricht</Label>
+      <Textarea placeholder="Gib hier deine Nachricht ein." id="message" />
     </div>
   ),
 }

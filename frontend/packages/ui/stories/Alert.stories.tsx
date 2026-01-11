@@ -35,7 +35,7 @@ export const Destructive: Story = {
       <AlertCircle />
       <AlertTitle>Fehler</AlertTitle>
       <AlertDescription>
-        Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.
+        Ein Fehler ist aufgetreten. Bitte versuche es später erneut.
       </AlertDescription>
     </Alert>
   ),
@@ -47,7 +47,7 @@ export const Warning: Story = {
       <TriangleAlert />
       <AlertTitle>Warnung</AlertTitle>
       <AlertDescription>
-        Bitte überprüfen Sie Ihre Eingaben, bevor Sie fortfahren.
+        Bitte überprüfe deine Eingaben, bevor du fortfährst.
       </AlertDescription>
     </Alert>
   ),
@@ -59,7 +59,7 @@ export const Success: Story = {
       <CheckCircle2 />
       <AlertTitle>Erfolg</AlertTitle>
       <AlertDescription>
-        Ihre Änderungen wurden erfolgreich gespeichert.
+        Deine Änderungen wurden erfolgreich gespeichert.
       </AlertDescription>
     </Alert>
   ),
@@ -113,7 +113,7 @@ export const WateringAlert: Story = {
       <AlertTitle>Bewässerung erforderlich</AlertTitle>
       <AlertDescription>
         Die Bodenfeuchtigkeit liegt unter dem kritischen Schwellenwert.
-        Bitte planen Sie eine Bewässerung für diesen Standort ein.
+        Bitte plane eine Bewässerung für diesen Standort ein.
       </AlertDescription>
     </Alert>
   ),

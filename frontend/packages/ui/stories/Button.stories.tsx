@@ -39,7 +39,7 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   args: {
-    children: 'Primary Button',
+    children: 'Primärer Button',
     variant: 'default',
   },
 }
@@ -48,7 +48,7 @@ export const WithIcon: Story = {
   args: {
     children: (
       <>
-        Next Step
+        Nächster Schritt
         <ArrowRight className="ml-2 h-4 w-4" />
       </>
     ),
@@ -58,21 +58,21 @@ export const WithIcon: Story = {
 
 export const Destructive: Story = {
   args: {
-    children: 'Delete',
+    children: 'Löschen',
     variant: 'destructive',
   },
 }
 
 export const Outline: Story = {
   args: {
-    children: 'Outline',
+    children: 'Umrandet',
     variant: 'outline',
   },
 }
 
 export const Secondary: Story = {
   args: {
-    children: 'Secondary',
+    children: 'Sekundär',
     variant: 'secondary',
   },
 }
@@ -86,21 +86,21 @@ export const Ghost: Story = {
 
 export const Link: Story = {
   args: {
-    children: 'Link Button',
+    children: 'Link-Button',
     variant: 'link',
   },
 }
 
 export const Small: Story = {
   args: {
-    children: 'Small',
+    children: 'Klein',
     size: 'sm',
   },
 }
 
 export const Large: Story = {
   args: {
-    children: 'Large',
+    children: 'Groß',
     size: 'lg',
   },
 }
@@ -110,7 +110,7 @@ export const Loading: Story = {
     children: (
       <>
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        Loading...
+        Wird geladen...
       </>
     ),
     disabled: true,
@@ -119,7 +119,7 @@ export const Loading: Story = {
 
 export const Disabled: Story = {
   args: {
-    children: 'Disabled',
+    children: 'Deaktiviert',
     disabled: true,
   },
 }
@@ -127,13 +127,13 @@ export const Disabled: Story = {
 export const AllVariants: Story = {
   render: () => (
     <div className="flex flex-wrap gap-4">
-      <Button variant="default">Default</Button>
-      <Button variant="secondary">Secondary</Button>
-      <Button variant="destructive">Destructive</Button>
-      <Button variant="outline">Outline</Button>
+      <Button variant="default">Standard</Button>
+      <Button variant="secondary">Sekundär</Button>
+      <Button variant="destructive">Destruktiv</Button>
+      <Button variant="outline">Umrandet</Button>
       <Button variant="ghost">Ghost</Button>
       <Button variant="link">Link</Button>
-      <Button variant="nav">Nav</Button>
+      <Button variant="nav">Navigation</Button>
     </div>
   ),
 }
@@ -141,9 +141,9 @@ export const AllVariants: Story = {
 export const AllSizes: Story = {
   render: () => (
     <div className="flex items-center gap-4">
-      <Button size="sm">Small</Button>
-      <Button size="default">Default</Button>
-      <Button size="lg">Large</Button>
+      <Button size="sm">Klein</Button>
+      <Button size="default">Standard</Button>
+      <Button size="lg">Groß</Button>
     </div>
   ),
 }

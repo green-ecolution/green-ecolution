@@ -25,14 +25,14 @@ export const Default: Story = {
   render: () => (
     <Card className="w-[350px]">
       <CardHeader>
-        <CardTitle>Card Title</CardTitle>
-        <CardDescription>Card description goes here.</CardDescription>
+        <CardTitle>Kartentitel</CardTitle>
+        <CardDescription>Hier kommt die Beschreibung.</CardDescription>
       </CardHeader>
       <CardContent>
-        <p>Card content goes here.</p>
+        <p>Hier kommt der Inhalt.</p>
       </CardContent>
       <CardFooter>
-        <Button>Action</Button>
+        <Button>Aktion</Button>
       </CardFooter>
     </Card>
   ),
@@ -42,9 +42,9 @@ export const WithForm: Story = {
   render: () => (
     <Card className="w-[350px]">
       <CardHeader>
-        <CardTitle>Create Account</CardTitle>
+        <CardTitle>Konto erstellen</CardTitle>
         <CardDescription>
-          Enter your details to create a new account.
+          Gib deine Daten ein, um ein neues Konto zu erstellen.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -55,15 +55,15 @@ export const WithForm: Story = {
               <Input id="name" placeholder="Name" />
             </div>
             <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="Email" />
+              <Label htmlFor="email">E-Mail</Label>
+              <Input id="email" type="email" placeholder="E-Mail" />
             </div>
           </div>
         </form>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button variant="outline">Cancel</Button>
-        <Button>Create</Button>
+        <Button variant="outline">Abbrechen</Button>
+        <Button>Erstellen</Button>
       </CardFooter>
     </Card>
   ),

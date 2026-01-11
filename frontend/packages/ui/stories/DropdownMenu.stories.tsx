@@ -245,7 +245,7 @@ export const UserProfileDropdown: Story = {
           </div>
           <DropdownMenuItem className="text-light text-base p-3.5 rounded-2xl transition-all duration-300 hover:bg-green-light/20 hover:text-green-light-200 focus:bg-green-light/20 focus:text-green-light-200 cursor-pointer">
             <Settings className="mr-2 h-5 w-5" />
-            <span className="font-lato font-semibold tracking-[0.1]">Ihr Profil</span>
+            <span className="font-lato font-semibold tracking-[0.1]">Dein Profil</span>
           </DropdownMenuItem>
           <DropdownMenuItem className="text-light text-base p-3.5 rounded-2xl transition-all duration-300 hover:bg-green-light/20 hover:text-green-light-200 focus:bg-green-light/20 focus:text-green-light-200 cursor-pointer">
             <LogOut className="mr-2 h-5 w-5" />

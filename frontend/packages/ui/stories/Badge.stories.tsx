@@ -60,42 +60,42 @@ export const Outline: Story = {
 
 export const Success: Story = {
   args: {
-    children: 'Active',
+    children: 'Aktiv',
     variant: 'success',
   },
 }
 
 export const Warning: Story = {
   args: {
-    children: 'Pending',
+    children: 'Ausstehend',
     variant: 'warning',
   },
 }
 
 export const Error: Story = {
   args: {
-    children: 'Inactive',
+    children: 'Inaktiv',
     variant: 'error',
   },
 }
 
 export const Muted: Story = {
   args: {
-    children: 'Unknown',
+    children: 'Unbekannt',
     variant: 'muted',
   },
 }
 
 export const GreenDark: Story = {
   args: {
-    children: 'Healthy',
+    children: 'Gesund',
     variant: 'green-dark',
   },
 }
 
 export const GreenLight: Story = {
   args: {
-    children: 'Growing',
+    children: 'Wachsend',
     variant: 'green-light',
   },
 }
@@ -121,20 +121,20 @@ export const StatusExamples: Story = {
   render: () => (
     <div className="space-y-4">
       <div>
-        <h4 className="text-sm font-medium mb-2">Tree Status</h4>
+        <h4 className="text-sm font-medium mb-2">Baumstatus</h4>
         <div className="flex gap-2">
-          <Badge variant="success">Healthy</Badge>
-          <Badge variant="warning">Needs Water</Badge>
-          <Badge variant="error">Critical</Badge>
-          <Badge variant="muted">Unknown</Badge>
+          <Badge variant="success">Gesund</Badge>
+          <Badge variant="warning">Bewässerung nötig</Badge>
+          <Badge variant="error">Kritisch</Badge>
+          <Badge variant="muted">Unbekannt</Badge>
         </div>
       </div>
       <div>
-        <h4 className="text-sm font-medium mb-2">Sensor Status</h4>
+        <h4 className="text-sm font-medium mb-2">Sensorstatus</h4>
         <div className="flex gap-2">
           <Badge variant="green-dark">Online</Badge>
           <Badge variant="error">Offline</Badge>
-          <Badge variant="warning">Low Battery</Badge>
+          <Badge variant="warning">Niedriger Akkustand</Badge>
         </div>
       </div>
     </div>

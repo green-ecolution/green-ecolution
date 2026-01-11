@@ -28,7 +28,7 @@ export const WithError: Story = {
     label: 'E-Mail',
     type: 'email',
     placeholder: 'E-Mail eingeben',
-    error: 'Bitte geben Sie eine gültige E-Mail-Adresse ein',
+    error: 'Bitte gib eine gültige E-Mail-Adresse ein',
     defaultValue: 'ungueltige-email',
   },
 }
@@ -37,7 +37,7 @@ export const WithDescription: Story = {
   args: {
     label: 'Benutzername',
     placeholder: 'Benutzername eingeben',
-    description: 'Dies wird Ihr öffentlicher Anzeigename sein.',
+    description: 'Dies wird dein öffentlicher Anzeigename sein.',
   },
 }
 

@@ -33,7 +33,7 @@ export const Default: Story = {
         <DialogHeader>
           <DialogTitle>Profil bearbeiten</DialogTitle>
           <DialogDescription>
-            Nehmen Sie hier Änderungen an Ihrem Profil vor. Klicken Sie auf Speichern, wenn Sie fertig sind.
+            Nimm hier Änderungen an deinem Profil vor. Klick auf Speichern, wenn du fertig bist.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -70,7 +70,7 @@ export const WithIcon: Story = {
         <DialogHeader className="text-center sm:text-center">
           <DialogTitle>Einstellungen</DialogTitle>
           <DialogDescription>
-            Passen Sie hier Ihre Anwendungseinstellungen an.
+            Pass hier deine Anwendungseinstellungen an.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -106,7 +106,7 @@ export const SimpleInfo: Story = {
           </DialogDescription>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">
-          Hier können zusätzliche Informationen angezeigt werden, die für den Benutzer wichtig sind.
+          Hier können zusätzliche Informationen angezeigt werden, die für dich wichtig sind.
         </p>
         <DialogFooter>
           <Button>Verstanden</Button>
@@ -133,7 +133,7 @@ export const InfoDialog: Story = {
           </DialogDescription>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">
-          Hier können zusätzliche Informationen angezeigt werden, die für den Benutzer wichtig sind.
+          Hier können zusätzliche Informationen angezeigt werden, die für dich wichtig sind.
         </p>
         <DialogFooter>
           <Button>Verstanden</Button>
@@ -159,7 +159,7 @@ export const AddUserDialog: Story = {
         <DialogHeader className="text-center sm:text-center">
           <DialogTitle>Neuen Benutzer hinzufügen</DialogTitle>
           <DialogDescription>
-            Geben Sie die Daten des neuen Benutzers ein.
+            Gib die Daten des neuen Benutzers ein.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
