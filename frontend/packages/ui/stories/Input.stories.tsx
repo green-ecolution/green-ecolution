@@ -20,7 +20,7 @@ const meta: Meta<typeof Input> = {
   },
   args: {
     type: 'text',
-    placeholder: 'Enter text...',
+    placeholder: 'Text eingeben...',
   },
 }
 
@@ -29,15 +29,15 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   args: {
-    placeholder: 'Enter your name',
+    placeholder: 'Name eingeben',
   },
 }
 
 export const WithLabel: Story = {
   render: () => (
     <div className="grid w-full max-w-sm items-center gap-1.5">
-      <Label htmlFor="email">Email</Label>
-      <Input type="email" id="email" placeholder="Email" />
+      <Label htmlFor="input-email">E-Mail</Label>
+      <Input type="email" id="input-email" placeholder="beispiel@email.de" />
     </div>
   ),
 }
@@ -45,27 +45,27 @@ export const WithLabel: Story = {
 export const Disabled: Story = {
   args: {
     disabled: true,
-    placeholder: 'Disabled input',
+    placeholder: 'Deaktiviertes Feld',
   },
 }
 
 export const WithValue: Story = {
   args: {
-    defaultValue: 'Default value',
+    defaultValue: 'Vorausgefüllter Wert',
   },
 }
 
 export const Password: Story = {
   args: {
     type: 'password',
-    placeholder: 'Enter password',
+    placeholder: 'Passwort eingeben',
   },
 }
 
 export const Search: Story = {
   args: {
     type: 'search',
-    placeholder: 'Search...',
+    placeholder: 'Suchen...',
   },
 }
 
@@ -79,8 +79,8 @@ export const Number: Story = {
 export const File: Story = {
   render: () => (
     <div className="grid w-full max-w-sm items-center gap-1.5">
-      <Label htmlFor="file">Upload file</Label>
-      <Input id="file" type="file" />
+      <Label htmlFor="input-file">Datei hochladen</Label>
+      <Input id="input-file" type="file" />
     </div>
   ),
 }

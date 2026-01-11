@@ -19,48 +19,48 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   args: {
     label: 'Name',
-    placeholder: 'Enter your name',
+    placeholder: 'Name eingeben',
   },
 }
 
 export const WithError: Story = {
   args: {
-    label: 'Email',
+    label: 'E-Mail',
     type: 'email',
-    placeholder: 'Enter your email',
-    error: 'Please enter a valid email address',
-    defaultValue: 'invalid-email',
+    placeholder: 'E-Mail eingeben',
+    error: 'Bitte geben Sie eine gültige E-Mail-Adresse ein',
+    defaultValue: 'ungueltige-email',
   },
 }
 
 export const WithDescription: Story = {
   args: {
-    label: 'Username',
-    placeholder: 'Enter username',
-    description: 'This will be your public display name.',
+    label: 'Benutzername',
+    placeholder: 'Benutzername eingeben',
+    description: 'Dies wird Ihr öffentlicher Anzeigename sein.',
   },
 }
 
 export const Required: Story = {
   args: {
-    label: 'Full Name',
-    placeholder: 'Enter your full name',
+    label: 'Vollständiger Name',
+    placeholder: 'Vollständigen Namen eingeben',
     required: true,
   },
 }
 
 export const Disabled: Story = {
   args: {
-    label: 'Readonly Field',
-    defaultValue: 'This value cannot be changed',
+    label: 'Schreibgeschütztes Feld',
+    defaultValue: 'Dieser Wert kann nicht geändert werden',
     disabled: true,
   },
 }
 
 export const HiddenLabel: Story = {
   args: {
-    label: 'Search',
-    placeholder: 'Search...',
+    label: 'Suche',
+    placeholder: 'Suchen...',
     hideLabel: true,
   },
 }
@@ -68,9 +68,9 @@ export const HiddenLabel: Story = {
 export const TextareaExample: Story = {
   render: () => (
     <TextareaField
-      label="Description"
-      placeholder="Enter a description..."
-      description="Maximum 500 characters."
+      label="Beschreibung"
+      placeholder="Beschreibung eingeben..."
+      description="Maximal 500 Zeichen."
     />
   ),
 }
@@ -78,9 +78,9 @@ export const TextareaExample: Story = {
 export const TextareaWithError: Story = {
   render: () => (
     <TextareaField
-      label="Notes"
-      placeholder="Enter notes..."
-      error="Notes are required"
+      label="Notizen"
+      placeholder="Notizen eingeben..."
+      error="Notizen sind erforderlich"
       required
     />
   ),
@@ -90,25 +90,25 @@ export const FormExample: Story = {
   render: () => (
     <form className="space-y-4 max-w-md">
       <FormField
-        label="Tree Name"
-        placeholder="e.g., Oak Tree #123"
+        label="Baumname"
+        placeholder="z.B. Eiche #123"
         required
       />
       <FormField
-        label="Location"
-        placeholder="Street address or coordinates"
-        description="Enter the exact location of the tree."
+        label="Standort"
+        placeholder="Straßenadresse oder Koordinaten"
+        description="Geben Sie den genauen Standort des Baumes ein."
       />
       <FormField
-        label="Planting Year"
+        label="Pflanzjahr"
         type="number"
-        placeholder="e.g., 2020"
+        placeholder="z.B. 2020"
         min={1900}
         max={new Date().getFullYear()}
       />
       <TextareaField
-        label="Notes"
-        placeholder="Additional information about the tree..."
+        label="Notizen"
+        placeholder="Zusätzliche Informationen zum Baum..."
         rows={4}
       />
     </form>
