@@ -52,15 +52,15 @@ export const AllSizes: Story = {
 }
 
 export const LoadingWithLabel: Story = {
-  render: () => <Loading label="Loading trees..." />,
+  render: () => <Loading label="Bäume werden geladen..." />,
 }
 
 export const LoadingVariants: Story = {
   render: () => (
     <div className="space-y-4">
-      <Loading label="Loading data..." size="sm" />
-      <Loading label="Processing request..." size="default" />
-      <Loading label="Please wait..." size="lg" />
+      <Loading label="Daten werden geladen..." size="sm" />
+      <Loading label="Anfrage wird verarbeitet..." size="default" />
+      <Loading label="Bitte warten..." size="lg" />
     </div>
   ),
 }
@@ -68,19 +68,15 @@ export const LoadingVariants: Story = {
 export const CenteredLoading: Story = {
   render: () => (
     <div className="flex h-64 items-center justify-center border rounded-lg">
-      <Loading label="Fetching sensor data..." size="lg" />
+      <Loading label="Sensordaten werden abgerufen..." size="lg" />
     </div>
   ),
 }
 
-export const InButton: Story = {
+export const FullPageLoading: Story = {
   render: () => (
-    <button
-      disabled
-      className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground opacity-70"
-    >
-      <Spinner size="sm" className="text-primary-foreground" />
-      Saving...
-    </button>
+    <div className="mt-20 flex flex-wrap items-center justify-center gap-x-4">
+      <Loading label="Seite wird geladen..." size="default" />
+    </div>
   ),
 }
