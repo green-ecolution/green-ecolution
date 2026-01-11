@@ -22,7 +22,10 @@ on:
         options:
           - stage
           - prod
-          - demo
+      version:
+        description: "Version tag for prod (e.g. v0.1.1)"
+        required: false
+        type: string
 
 env:
   REGISTRY: ghcr.io
@@ -60,6 +63,7 @@ jobs:
       tag-suffix: ${{ steps.set-env.outputs.tag-suffix }}
       is-release: ${{ steps.set-env.outputs.is-release }}
       image-tag: ${{ steps.set-env.outputs.image-tag }}
+      checkout-ref: ${{ steps.set-env.outputs.checkout-ref }}
     steps:
       - name: Determine environment and tag suffix
         id: set-env
@@ -69,20 +73,30 @@ jobs:
             if [[ "$ENV" == "prod" ]]; then
               TAG_SUFFIX=""
               IS_RELEASE="true"
+              VERSION="${{ github.event.inputs.version }}"
+              if [[ -z "$VERSION" ]]; then
+                echo "❌ Version is required for prod builds"
+                exit 1
+              fi
+              IMAGE_TAG="${VERSION}"
+              CHECKOUT_REF="${VERSION}"
             else
               TAG_SUFFIX="-${ENV}"
               IS_RELEASE="false"
+              IMAGE_TAG="${{ github.ref_name }}-$(echo ${{ github.sha }} | cut -c1-7)${TAG_SUFFIX}"
+              CHECKOUT_REF="${{ github.sha }}"
             fi
-            IMAGE_TAG="${{ github.ref_name }}-$(echo ${{ github.sha }} | cut -c1-7)${TAG_SUFFIX}"
           elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             ENV="prod"
             TAG_SUFFIX=""
             IS_RELEASE="true"
             IMAGE_TAG="${{ github.ref_name }}"
+            CHECKOUT_REF="${{ github.ref }}"
           elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
             ENV="stage"
             TAG_SUFFIX="-stage"
             IS_RELEASE="false"
+            CHECKOUT_REF="${{ github.event.pull_request.head.sha }}"
 
             # Extract version from PR title
             PR_TITLE="${{ github.event.pull_request.title }}"
@@ -99,11 +113,13 @@ jobs:
             TAG_SUFFIX="-stage"
             IS_RELEASE="false"
             IMAGE_TAG="${{ github.ref_name }}-$(echo ${{ github.sha }} | cut -c1-7)${TAG_SUFFIX}"
+            CHECKOUT_REF="${{ github.sha }}"
           fi
 
           echo "environment=$ENV" >> $GITHUB_OUTPUT
           echo "tag-suffix=$TAG_SUFFIX" >> $GITHUB_OUTPUT
           echo "is-release=$IS_RELEASE" >> $GITHUB_OUTPUT
+          echo "checkout-ref=$CHECKOUT_REF" >> $GITHUB_OUTPUT
           echo "image-tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
           echo "Environment: $ENV, Tag Suffix: $TAG_SUFFIX, Is Release: $IS_RELEASE, Image Tag: $IMAGE_TAG"
 
@@ -118,7 +134,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ needs.determine-environment.outputs.checkout-ref }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -152,7 +168,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ needs.determine-environment.outputs.checkout-ref }}
+
+      - name: Set build time
+        id: build-time
+        run: echo "timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -178,7 +198,7 @@ jobs:
             APP_GIT_COMMIT=${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
             APP_GIT_BRANCH=${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
             APP_GIT_REPOSITORY=${{ github.repository }}
-            APP_BUILD_TIME=${{ github.event.head_commit.timestamp || github.event.pull_request.updated_at }}
+            APP_BUILD_TIME=${{ steps.build-time.outputs.timestamp }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -193,7 +213,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ needs.determine-environment.outputs.checkout-ref }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
