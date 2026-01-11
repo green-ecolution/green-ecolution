@@ -14,16 +14,16 @@ export const Horizontal: Story = {
   render: () => (
     <div className="space-y-4">
       <div>
-        <h4 className="text-sm font-medium">Tree Information</h4>
+        <h4 className="text-sm font-medium">Bauminformationen</h4>
         <p className="text-sm text-muted-foreground">
-          Basic details about the selected tree.
+          Grundlegende Details zum ausgewählten Baum.
         </p>
       </div>
       <Separator />
       <div>
-        <h4 className="text-sm font-medium">Sensor Data</h4>
+        <h4 className="text-sm font-medium">Sensordaten</h4>
         <p className="text-sm text-muted-foreground">
-          Live readings from connected sensors.
+          Live-Messwerte der verbundenen Sensoren.
         </p>
       </div>
     </div>
@@ -33,13 +33,13 @@ export const Horizontal: Story = {
 export const Vertical: Story = {
   render: () => (
     <div className="flex h-5 items-center space-x-4 text-sm">
-      <div>Trees</div>
+      <div>Bäume</div>
       <Separator orientation="vertical" />
-      <div>Vehicles</div>
+      <div>Fahrzeuge</div>
       <Separator orientation="vertical" />
-      <div>Sensors</div>
+      <div>Sensoren</div>
       <Separator orientation="vertical" />
-      <div>Plans</div>
+      <div>Pläne</div>
     </div>
   ),
 }
@@ -48,14 +48,14 @@ export const InCard: Story = {
   render: () => (
     <div className="rounded-lg border p-4">
       <div className="space-y-1">
-        <h4 className="text-sm font-medium leading-none">Oak Tree #1234</h4>
-        <p className="text-sm text-muted-foreground">Main Street 42</p>
+        <h4 className="text-sm font-medium leading-none">Eiche #1234</h4>
+        <p className="text-sm text-muted-foreground">Hauptstraße 42</p>
       </div>
       <Separator className="my-4" />
       <div className="flex h-5 items-center space-x-4 text-sm">
-        <div>Status: Healthy</div>
+        <div>Status: Gesund</div>
         <Separator orientation="vertical" />
-        <div>Last watered: 3 days ago</div>
+        <div>Zuletzt bewässert: vor 3 Tagen</div>
       </div>
     </div>
   ),
@@ -65,9 +65,9 @@ export const FormSections: Story = {
   render: () => (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h3 className="text-lg font-medium">General Information</h3>
+        <h3 className="text-lg font-medium">Allgemeine Informationen</h3>
         <p className="text-sm text-muted-foreground">
-          Enter the basic information about the tree.
+          Geben Sie die grundlegenden Informationen zum Baum ein.
         </p>
         <div className="h-10 rounded bg-muted" />
         <div className="h-10 rounded bg-muted" />
@@ -76,9 +76,9 @@ export const FormSections: Story = {
       <Separator />
 
       <div className="space-y-2">
-        <h3 className="text-lg font-medium">Location</h3>
+        <h3 className="text-lg font-medium">Standort</h3>
         <p className="text-sm text-muted-foreground">
-          Specify the tree&apos;s location.
+          Geben Sie den Standort des Baums an.
         </p>
         <div className="h-10 rounded bg-muted" />
       </div>
@@ -86,9 +86,9 @@ export const FormSections: Story = {
       <Separator />
 
       <div className="space-y-2">
-        <h3 className="text-lg font-medium">Additional Details</h3>
+        <h3 className="text-lg font-medium">Zusätzliche Details</h3>
         <p className="text-sm text-muted-foreground">
-          Optional information about the tree.
+          Optionale Informationen zum Baum.
         </p>
         <div className="h-20 rounded bg-muted" />
       </div>
@@ -100,13 +100,13 @@ export const MenuDivider: Story = {
   render: () => (
     <div className="w-48 rounded-lg border p-2">
       <div className="px-2 py-1.5 text-sm">Dashboard</div>
-      <div className="px-2 py-1.5 text-sm">Trees</div>
-      <div className="px-2 py-1.5 text-sm">Vehicles</div>
+      <div className="px-2 py-1.5 text-sm">Bäume</div>
+      <div className="px-2 py-1.5 text-sm">Fahrzeuge</div>
       <Separator className="my-2" />
-      <div className="px-2 py-1.5 text-sm">Settings</div>
-      <div className="px-2 py-1.5 text-sm">Help</div>
+      <div className="px-2 py-1.5 text-sm">Einstellungen</div>
+      <div className="px-2 py-1.5 text-sm">Hilfe</div>
       <Separator className="my-2" />
-      <div className="px-2 py-1.5 text-sm text-destructive">Logout</div>
+      <div className="px-2 py-1.5 text-sm text-destructive">Abmelden</div>
     </div>
   ),
 }
