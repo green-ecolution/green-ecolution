@@ -22,6 +22,20 @@ func Map[T, K any](slice []T, fn func(T) K) []K {
 	return result
 }
 
+func MapError[T, K any](slice []T, fn func(T) (K, error)) ([]K, error) {
+	result := make([]K, len(slice))
+	var err error
+
+	for i, item := range slice {
+		result[i], err = fn(item)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return result, nil
+}
+
 func MapIdx[T, K any](slice []T, fn func(T, int) K) []K {
 	result := make([]K, len(slice))
 

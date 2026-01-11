@@ -33,7 +33,7 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/routing"
 	_ "github.com/green-ecolution/green-ecolution/backend/internal/storage/routing/openrouteservice"
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage/routing/valhalla"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/routing/streamlet"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/s3"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker/subscriber"
@@ -138,7 +138,11 @@ func initializeRepositories(ctx context.Context, cfg *config.Config) (repos *sto
 	// routingRepo, err := openrouteservice.NewRepository(cfg)
 	var routingRepo *storage.Repository
 	if cfg.Routing.Enable {
-		routingRepo, err = valhalla.NewRepository(cfg)
+		// routingRepo, err = valhalla.NewRepository(cfg)
+		// if err != nil {
+		// 	panic(err)
+		// }
+		routingRepo, err = streamlet.NewRepository(cfg)
 		if err != nil {
 			panic(err)
 		}
