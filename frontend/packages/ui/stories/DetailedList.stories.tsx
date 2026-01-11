@@ -20,22 +20,22 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   args: {
     details: [
-      { label: 'Name', value: 'Oak Tree #1234' },
-      { label: 'Species', value: 'Quercus robur' },
-      { label: 'Location', value: 'Main Street 42' },
-      { label: 'Planting Year', value: '2019' },
+      { label: 'Name', value: 'Eiche #1234' },
+      { label: 'Art', value: 'Quercus robur' },
+      { label: 'Standort', value: 'Hauptstraße 42' },
+      { label: 'Pflanzjahr', value: '2019' },
     ],
   },
 }
 
 export const WithHeadline: Story = {
   args: {
-    headline: 'Tree Information',
+    headline: 'Bauminformationen',
     details: [
-      { label: 'Name', value: 'Oak Tree #1234' },
-      { label: 'Species', value: 'Quercus robur' },
-      { label: 'Location', value: 'Main Street 42' },
-      { label: 'Planting Year', value: '2019' },
+      { label: 'Name', value: 'Eiche #1234' },
+      { label: 'Art', value: 'Quercus robur' },
+      { label: 'Standort', value: 'Hauptstraße 42' },
+      { label: 'Pflanzjahr', value: '2019' },
     ],
   },
 }
@@ -43,12 +43,12 @@ export const WithHeadline: Story = {
 export const SingleColumn: Story = {
   args: {
     columns: 1,
-    headline: 'Sensor Data',
+    headline: 'Sensordaten',
     details: [
-      { label: 'Temperature', value: '24°C' },
-      { label: 'Soil Moisture', value: '45%' },
-      { label: 'Battery Level', value: '87%' },
-      { label: 'Last Reading', value: '2 minutes ago' },
+      { label: 'Temperatur', value: '24°C' },
+      { label: 'Bodenfeuchtigkeit', value: '45%' },
+      { label: 'Akkustand', value: '87%' },
+      { label: 'Letzte Messung', value: 'vor 2 Minuten' },
     ],
   },
 }
@@ -56,12 +56,12 @@ export const SingleColumn: Story = {
 export const WithCustomValues: Story = {
   render: () => (
     <DetailedList
-      headline="Tree Status"
+      headline="Baumstatus"
       details={[
-        { label: 'Status', value: <Badge variant="success">Healthy</Badge> },
-        { label: 'Watering Need', value: <Badge variant="warning">Medium</Badge> },
-        { label: 'Last Watered', value: '3 days ago' },
-        { label: 'Next Scheduled', value: 'Tomorrow, 8:00 AM' },
+        { label: 'Status', value: <Badge variant="success">Gesund</Badge> },
+        { label: 'Bewässerungsbedarf', value: <Badge variant="warning">Mittel</Badge> },
+        { label: 'Zuletzt gegossen', value: 'vor 3 Tagen' },
+        { label: 'Nächste Bewässerung', value: 'Morgen, 8:00 Uhr' },
       ]}
     />
   ),
@@ -69,14 +69,14 @@ export const WithCustomValues: Story = {
 
 export const VehicleDetails: Story = {
   args: {
-    headline: 'Vehicle Information',
+    headline: 'Fahrzeuginformationen',
     details: [
-      { label: 'Vehicle ID', value: 'WTR-001' },
-      { label: 'Type', value: 'Water Truck' },
-      { label: 'Capacity', value: '5000 L' },
-      { label: 'Current Load', value: '3200 L' },
-      { label: 'Driver', value: 'Max Mustermann' },
-      { label: 'Status', value: 'On Route' },
+      { label: 'Fahrzeug-ID', value: 'WTR-001' },
+      { label: 'Typ', value: 'Wassertankwagen' },
+      { label: 'Kapazität', value: '5000 L' },
+      { label: 'Aktuelle Ladung', value: '3200 L' },
+      { label: 'Fahrer', value: 'Max Mustermann' },
+      { label: 'Status', value: 'Unterwegs' },
     ],
   },
 }
@@ -86,13 +86,13 @@ export const SensorDetails: Story = {
     headline: 'Sensor #SN-2024-0042',
     columns: 1,
     details: [
-      { label: 'Device ID', value: 'SN-2024-0042' },
-      { label: 'Model', value: 'LoRaWAN Soil Sensor v2' },
-      { label: 'Assigned Tree', value: 'Oak Tree #1234' },
-      { label: 'Battery', value: '92%' },
-      { label: 'Signal Strength', value: 'Excellent (-65 dBm)' },
+      { label: 'Geräte-ID', value: 'SN-2024-0042' },
+      { label: 'Modell', value: 'LoRaWAN Bodensensor v2' },
+      { label: 'Zugewiesener Baum', value: 'Eiche #1234' },
+      { label: 'Akku', value: '92%' },
+      { label: 'Signalstärke', value: 'Ausgezeichnet (-65 dBm)' },
       { label: 'Firmware', value: 'v2.1.3' },
-      { label: 'Last Communication', value: '5 minutes ago' },
+      { label: 'Letzte Kommunikation', value: 'vor 5 Minuten' },
     ],
   },
 }
