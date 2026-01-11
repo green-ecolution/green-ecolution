@@ -11,6 +11,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.1.1](https://github.com/green-ecolution/green-ecolution/compare/v0.1.0...v0.1.1) (2026-01-11)
+
+
+### Features
+
+* **ci:** add PR status tracking to GitHub Project ([b68b011](https://github.com/green-ecolution/green-ecolution/commit/b68b011f04c843f3d4342a24d4dfdf515a081153))
+* **frontend:** update footer links and add version display ([#586](https://github.com/green-ecolution/green-ecolution/issues/586)) ([adda771](https://github.com/green-ecolution/green-ecolution/commit/adda77152bc6cbd0d396e4c19b18c5ceb7e8aeb2)), closes [#585](https://github.com/green-ecolution/green-ecolution/issues/585)
+
+
+### Bug Fixes
+
+* **backend:** save description when creating a tree ([#578](https://github.com/green-ecolution/green-ecolution/issues/578)) ([fffbb79](https://github.com/green-ecolution/green-ecolution/commit/fffbb797ee2e66f6c0859e47b730eeb9d7b19a33)), closes [#570](https://github.com/green-ecolution/green-ecolution/issues/570)
+* **deploy:** update staging OIDC configuration for Keycloak ([#567](https://github.com/green-ecolution/green-ecolution/issues/567)) ([5804a37](https://github.com/green-ecolution/green-ecolution/commit/5804a37fdac12104143dd8a0472a05048758716b)), closes [#566](https://github.com/green-ecolution/green-ecolution/issues/566)
+* **frontend:** convert treeClusterId to number on form submit ([#514](https://github.com/green-ecolution/green-ecolution/issues/514)) ([05890d4](https://github.com/green-ecolution/green-ecolution/commit/05890d413982e847f4a17690da1fae070d926ddc))
+* **frontend:** correct form navigation blocker logic to only block unsaved changes ([#517](https://github.com/green-ecolution/green-ecolution/issues/517)) ([04b3114](https://github.com/green-ecolution/green-ecolution/commit/04b311418b9658ed7aa210fd0a823f9d23b93818))
+* **frontend:** improve Select component click handling and accessibility ([#524](https://github.com/green-ecolution/green-ecolution/issues/524)) ([7b929be](https://github.com/green-ecolution/green-ecolution/commit/7b929bee1458a04c8d826aa41ac8970400a51319))
+* **frontend:** prevent duplicate treecluster selection on rapid clicks ([#580](https://github.com/green-ecolution/green-ecolution/issues/580)) ([9162330](https://github.com/green-ecolution/green-ecolution/commit/916233077e2ea27fc3e6c1803617850001ac7704)), closes [#85](https://github.com/green-ecolution/green-ecolution/issues/85)
+* **frontend:** prevent route preloading for login and logout links ([#531](https://github.com/green-ecolution/green-ecolution/issues/531)) ([97f9a23](https://github.com/green-ecolution/green-ecolution/commit/97f9a23d4ceb4bfb7a3546467bd8f070bdfa039f))
+* **frontend:** prevent search engine indexing ([#532](https://github.com/green-ecolution/green-ecolution/issues/532)) ([bcd0c70](https://github.com/green-ecolution/green-ecolution/commit/bcd0c706525339bd964db98bdbc09efefb4a0dd7))
+* remove component prefix from release tags ([85c2744](https://github.com/green-ecolution/green-ecolution/commit/85c2744cf8fc95a45e701fa7ebdada7165269dcf))
+
+
+### Performance Improvements
+
+* **frontend:** optimize matchMedia usage with reactive hook ([#533](https://github.com/green-ecolution/green-ecolution/issues/533)) ([258e88c](https://github.com/green-ecolution/green-ecolution/commit/258e88c706dde6060e9e922dc762bc4478eb9521))
+* **map:** optimize marker rendering and map interaction performance ([#561](https://github.com/green-ecolution/green-ecolution/issues/561)) ([a653f85](https://github.com/green-ecolution/green-ecolution/commit/a653f85278442e2cc765839cd160ad10b07f9846))
+
 ## 0.1.0 (2025-12-29)
 
 ### Features
