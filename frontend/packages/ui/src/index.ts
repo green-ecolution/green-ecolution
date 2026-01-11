@@ -66,6 +66,7 @@ export {
   DialogClose,
   DialogTrigger,
   DialogContent,
+  DialogIcon,
   DialogHeader,
   DialogFooter,
   DialogTitle,

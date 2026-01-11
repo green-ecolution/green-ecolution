@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
+import { Info, Settings, UserPlus } from 'lucide-react'
 import { Button } from '../src/components/ui/button'
 import { Input } from '../src/components/ui/input'
 import { Label } from '../src/components/ui/label'
@@ -8,6 +9,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogIcon,
   DialogTitle,
   DialogTrigger,
 } from '../src/components/ui/dialog'
@@ -25,76 +27,158 @@ export const Default: Story = {
   render: () => (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">Open Dialog</Button>
+        <Button variant="outline">Dialog öffnen</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit Profile</DialogTitle>
+          <DialogTitle>Profil bearbeiten</DialogTitle>
           <DialogDescription>
-            Make changes to your profile here. Click save when you're done.
+            Nehmen Sie hier Änderungen an Ihrem Profil vor. Klicken Sie auf Speichern, wenn Sie fertig sind.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
-            </Label>
-            <Input id="name" defaultValue="John Doe" className="col-span-3" />
+          <div className="grid gap-2">
+            <Label htmlFor="dialog-name">Name</Label>
+            <Input id="dialog-name" defaultValue="Max Mustermann" />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="email" className="text-right">
-              Email
-            </Label>
-            <Input id="email" defaultValue="john@example.com" className="col-span-3" />
+          <div className="grid gap-2">
+            <Label htmlFor="dialog-email">E-Mail</Label>
+            <Input id="dialog-email" defaultValue="max@beispiel.de" />
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit">Save changes</Button>
+          <Button type="submit">Speichern</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   ),
 }
 
-export const SimpleDialog: Story = {
+export const WithIcon: Story = {
   render: () => (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>Show Info</Button>
+        <Button variant="outline">
+          <Settings className="mr-2 h-4 w-4" />
+          Einstellungen
+        </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Information</DialogTitle>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogIcon>
+          <Settings />
+        </DialogIcon>
+        <DialogHeader className="text-center sm:text-center">
+          <DialogTitle>Einstellungen</DialogTitle>
           <DialogDescription>
-            This is a simple informational dialog with just text content.
+            Passen Sie hier Ihre Anwendungseinstellungen an.
           </DialogDescription>
         </DialogHeader>
-        <p className="text-sm text-muted-foreground">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-          eiusmod tempor incididunt ut labore et dolore magna aliqua.
-        </p>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="settings-theme">Theme</Label>
+            <Input id="settings-theme" defaultValue="Hell" />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="settings-lang">Sprache</Label>
+            <Input id="settings-lang" defaultValue="Deutsch" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline">Abbrechen</Button>
+          <Button type="submit">Speichern</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   ),
 }
 
-export const ConfirmDialog: Story = {
+export const SimpleInfo: Story = {
   render: () => (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="destructive">Delete Item</Button>
+        <Button variant="outline">Info anzeigen</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Are you sure?</DialogTitle>
+          <DialogTitle>Information</DialogTitle>
           <DialogDescription>
-            This action cannot be undone. This will permanently delete the
-            selected item from your account.
+            Dies ist ein einfacher informativer Dialog ohne Icon.
           </DialogDescription>
         </DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          Hier können zusätzliche Informationen angezeigt werden, die für den Benutzer wichtig sind.
+        </p>
         <DialogFooter>
-          <Button variant="outline">Cancel</Button>
-          <Button variant="destructive">Delete</Button>
+          <Button>Verstanden</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  ),
+}
+
+export const InfoDialog: Story = {
+  render: () => (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button>Info anzeigen</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogIcon className="bg-blue-100 [&>svg]:text-blue-600">
+          <Info />
+        </DialogIcon>
+        <DialogHeader>
+          <DialogTitle>Information</DialogTitle>
+          <DialogDescription>
+            Dies ist ein informativer Dialog mit Icon. Der Text ist linksbündig für bessere Lesbarkeit.
+          </DialogDescription>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          Hier können zusätzliche Informationen angezeigt werden, die für den Benutzer wichtig sind.
+        </p>
+        <DialogFooter>
+          <Button>Verstanden</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  ),
+}
+
+export const AddUserDialog: Story = {
+  render: () => (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button>
+          <UserPlus className="mr-2 h-4 w-4" />
+          Benutzer hinzufügen
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogIcon className="bg-green-dark/10 [&>svg]:text-green-dark">
+          <UserPlus />
+        </DialogIcon>
+        <DialogHeader className="text-center sm:text-center">
+          <DialogTitle>Neuen Benutzer hinzufügen</DialogTitle>
+          <DialogDescription>
+            Geben Sie die Daten des neuen Benutzers ein.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="add-firstname">Vorname</Label>
+            <Input id="add-firstname" placeholder="Max" />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="add-lastname">Nachname</Label>
+            <Input id="add-lastname" placeholder="Mustermann" />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="add-email">E-Mail</Label>
+            <Input id="add-email" type="email" placeholder="max@beispiel.de" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline">Abbrechen</Button>
+          <Button type="submit">Hinzufügen</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

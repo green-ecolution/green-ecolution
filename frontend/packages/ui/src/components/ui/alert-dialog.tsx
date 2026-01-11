@@ -46,7 +46,7 @@ const AlertDialogIcon = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className="flex justify-center mb-4">
+  <div className="flex justify-center">
     <div
       className={cn(
         'flex items-center justify-center h-16 w-16 rounded-xl bg-muted [&>svg]:h-8 [&>svg]:w-8 [&>svg]:text-muted-foreground',
