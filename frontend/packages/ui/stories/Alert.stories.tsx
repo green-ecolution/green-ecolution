@@ -23,7 +23,7 @@ export const Default: Story = {
       <Info />
       <AlertTitle>Information</AlertTitle>
       <AlertDescription>
-        This is an informational alert message.
+        Dies ist eine informative Hinweismeldung.
       </AlertDescription>
     </Alert>
   ),
@@ -33,9 +33,9 @@ export const Destructive: Story = {
   render: () => (
     <Alert variant="destructive">
       <AlertCircle />
-      <AlertTitle>Error</AlertTitle>
+      <AlertTitle>Fehler</AlertTitle>
       <AlertDescription>
-        Something went wrong. Please try again later.
+        Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.
       </AlertDescription>
     </Alert>
   ),
@@ -45,9 +45,9 @@ export const Warning: Story = {
   render: () => (
     <Alert variant="warning">
       <TriangleAlert />
-      <AlertTitle>Warning</AlertTitle>
+      <AlertTitle>Warnung</AlertTitle>
       <AlertDescription>
-        Please review your input before proceeding.
+        Bitte überprüfen Sie Ihre Eingaben, bevor Sie fortfahren.
       </AlertDescription>
     </Alert>
   ),
@@ -57,9 +57,9 @@ export const Success: Story = {
   render: () => (
     <Alert variant="success">
       <CheckCircle2 />
-      <AlertTitle>Success</AlertTitle>
+      <AlertTitle>Erfolg</AlertTitle>
       <AlertDescription>
-        Your changes have been saved successfully.
+        Ihre Änderungen wurden erfolgreich gespeichert.
       </AlertDescription>
     </Alert>
   ),
@@ -70,23 +70,23 @@ export const AllVariants: Story = {
     <div className="space-y-4">
       <Alert>
         <Info />
-        <AlertTitle>Default</AlertTitle>
-        <AlertDescription>Default alert variant.</AlertDescription>
+        <AlertTitle>Standard</AlertTitle>
+        <AlertDescription>Standard-Hinweismeldung.</AlertDescription>
       </Alert>
       <Alert variant="success">
         <CheckCircle2 />
-        <AlertTitle>Success</AlertTitle>
-        <AlertDescription>Success alert variant.</AlertDescription>
+        <AlertTitle>Erfolg</AlertTitle>
+        <AlertDescription>Erfolgs-Hinweismeldung.</AlertDescription>
       </Alert>
       <Alert variant="warning">
         <TriangleAlert />
-        <AlertTitle>Warning</AlertTitle>
-        <AlertDescription>Warning alert variant.</AlertDescription>
+        <AlertTitle>Warnung</AlertTitle>
+        <AlertDescription>Warnungs-Hinweismeldung.</AlertDescription>
       </Alert>
       <Alert variant="destructive">
         <AlertCircle />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>Destructive alert variant.</AlertDescription>
+        <AlertTitle>Fehler</AlertTitle>
+        <AlertDescription>Fehler-Hinweismeldung.</AlertDescription>
       </Alert>
     </div>
   ),
@@ -101,6 +101,32 @@ export const SensorNotice: Story = {
         Dieser Baum wurde bisher nicht mit einem Sensor ausgestattet, sodass keine
         Informationen über den aktuellen Bewässerungszustand angezeigt werden können.
         Aus diesem Grund wird der Bewässerungszustand als unbekannt ausgezeichnet.
+      </AlertDescription>
+    </Alert>
+  ),
+}
+
+export const WateringAlert: Story = {
+  render: () => (
+    <Alert variant="warning">
+      <TriangleAlert />
+      <AlertTitle>Bewässerung erforderlich</AlertTitle>
+      <AlertDescription>
+        Die Bodenfeuchtigkeit liegt unter dem kritischen Schwellenwert.
+        Bitte planen Sie eine Bewässerung für diesen Standort ein.
+      </AlertDescription>
+    </Alert>
+  ),
+}
+
+export const RouteCompleted: Story = {
+  render: () => (
+    <Alert variant="success">
+      <CheckCircle2 />
+      <AlertTitle>Route abgeschlossen</AlertTitle>
+      <AlertDescription>
+        Die Bewässerungsroute wurde erfolgreich abgeschlossen.
+        Alle 24 Bäume wurden bewässert.
       </AlertDescription>
     </Alert>
   ),
