@@ -130,7 +130,7 @@ export const TreeListPagination: Story = {
     return (
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Showing trees {(currentPage - 1) * 20 + 1} - {Math.min(currentPage * 20, 1000)} of 1000
+          Zeige Bäume {(currentPage - 1) * 20 + 1} - {Math.min(currentPage * 20, 1000)} von 1000
         </p>
         <SimplePagination
           pagination={{
