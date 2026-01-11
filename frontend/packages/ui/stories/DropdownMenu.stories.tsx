@@ -1,21 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import {
-  Cloud,
-  CreditCard,
-  Github,
-  Keyboard,
-  LifeBuoy,
   LogOut,
   LogIn,
   Mail,
   MessageSquare,
   Plus,
-  PlusCircle,
   Settings,
   User,
   UserPlus,
   UserRound,
-  Users,
   Trees,
   Truck,
   Edit,
@@ -56,27 +49,27 @@ export const Default: Story = {
   render: () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline">Open Menu</Button>
+        <Button variant="outline">Menü öffnen</Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuLabel>Mein Konto</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem>
             <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
+            <span>Profil</span>
             <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuItem>
             <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
+            <span>Einstellungen</span>
             <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem>
           <LogOut className="mr-2 h-4 w-4" />
-          <span>Log out</span>
+          <span>Abmelden</span>
           <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -88,30 +81,30 @@ export const WithSubMenu: Story = {
   render: () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline">Open Menu</Button>
+        <Button variant="outline">Menü öffnen</Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
-        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        <DropdownMenuLabel>Aktionen</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem>
             <Plus className="mr-2 h-4 w-4" />
-            <span>New Item</span>
+            <span>Neues Element</span>
           </DropdownMenuItem>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <UserPlus className="mr-2 h-4 w-4" />
-              <span>Invite users</span>
+              <span>Benutzer einladen</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
                 <DropdownMenuItem>
                   <Mail className="mr-2 h-4 w-4" />
-                  <span>Email</span>
+                  <span>Per E-Mail</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <MessageSquare className="mr-2 h-4 w-4" />
-                  <span>Message</span>
+                  <span>Per Nachricht</span>
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
@@ -128,28 +121,28 @@ export const TreeActionsMenu: Story = {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon">
           <MoreHorizontal className="h-4 w-4" />
-          <span className="sr-only">Open menu</span>
+          <span className="sr-only">Menü öffnen</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Tree Actions</DropdownMenuLabel>
+        <DropdownMenuLabel>Baum-Aktionen</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem>
           <Edit className="mr-2 h-4 w-4" />
-          Edit Tree
+          Baum bearbeiten
         </DropdownMenuItem>
         <DropdownMenuItem>
           <Trees className="mr-2 h-4 w-4" />
-          View Details
+          Details anzeigen
         </DropdownMenuItem>
         <DropdownMenuItem>
           <Truck className="mr-2 h-4 w-4" />
-          Add to Watering Plan
+          Zum Bewässerungsplan hinzufügen
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="text-destructive focus:text-destructive">
           <Trash2 className="mr-2 h-4 w-4" />
-          Delete Tree
+          Baum löschen
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -160,22 +153,22 @@ export const WithCheckboxItems: Story = {
   render: () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline">Filter Status</Button>
+        <Button variant="outline">Status filtern</Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
-        <DropdownMenuLabel>Tree Status</DropdownMenuLabel>
+        <DropdownMenuLabel>Baumstatus</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuCheckboxItem checked>
-          Healthy
+          Gesund
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem checked>
-          Needs Water
+          Bewässerung nötig
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem>
-          Critical
+          Kritisch
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem>
-          Unknown
+          Unbekannt
         </DropdownMenuCheckboxItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -186,16 +179,16 @@ export const WithRadioItems: Story = {
   render: () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline">Sort By</Button>
+        <Button variant="outline">Sortieren nach</Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
-        <DropdownMenuLabel>Sort Trees</DropdownMenuLabel>
+        <DropdownMenuLabel>Bäume sortieren</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuRadioGroup value="name">
           <DropdownMenuRadioItem value="name">Name</DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="status">Status</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="date">Planting Date</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="location">Location</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="date">Pflanzjahr</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="location">Standort</DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -206,8 +199,8 @@ export const TableRowActions: Story = {
   render: () => (
     <div className="flex items-center justify-between rounded-lg border p-4">
       <div>
-        <p className="font-medium">Oak Tree #1234</p>
-        <p className="text-sm text-muted-foreground">Main Street 42</p>
+        <p className="font-medium">Eiche #1234</p>
+        <p className="text-sm text-muted-foreground">Hauptstraße 42</p>
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -216,11 +209,11 @@ export const TableRowActions: Story = {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem>View details</DropdownMenuItem>
-          <DropdownMenuItem>Edit</DropdownMenuItem>
-          <DropdownMenuItem>Assign sensor</DropdownMenuItem>
+          <DropdownMenuItem>Details anzeigen</DropdownMenuItem>
+          <DropdownMenuItem>Bearbeiten</DropdownMenuItem>
+          <DropdownMenuItem>Sensor zuweisen</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+          <DropdownMenuItem className="text-destructive">Löschen</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
