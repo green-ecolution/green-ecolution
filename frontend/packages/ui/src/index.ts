@@ -4,6 +4,9 @@ import './styles/globals.css'
 // Alert
 export { Alert, AlertTitle, AlertDescription } from './components/ui/alert'
 
+// Avatar
+export { Avatar, AvatarImage, AvatarFallback } from './components/ui/avatar'
+
 // AlertDialog
 export {
   AlertDialog,

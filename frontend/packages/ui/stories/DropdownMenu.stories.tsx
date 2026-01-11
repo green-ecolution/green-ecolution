@@ -6,6 +6,7 @@ import {
   Keyboard,
   LifeBuoy,
   LogOut,
+  LogIn,
   Mail,
   MessageSquare,
   Plus,
@@ -13,13 +14,16 @@ import {
   Settings,
   User,
   UserPlus,
+  UserRound,
   Users,
   Trees,
   Truck,
   Edit,
   Trash2,
   MoreHorizontal,
+  ChevronDown,
 } from 'lucide-react'
+import { Avatar, AvatarFallback } from '../src/components/ui/avatar'
 import { Button } from '../src/components/ui/button'
 import {
   DropdownMenu,
@@ -217,6 +221,77 @@ export const TableRowActions: Story = {
           <DropdownMenuItem>Assign sensor</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  ),
+}
+
+export const UserProfileDropdown: Story = {
+  render: () => (
+    <div className="flex justify-end">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="group flex items-center gap-x-1"
+          >
+            <Avatar>
+              <AvatarFallback variant="user">CH</AvatarFallback>
+            </Avatar>
+            <ChevronDown className="w-5 h-5 text-dark transition-transform duration-300 group-data-[state=open]:rotate-180" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          className="w-72 bg-dark border-none shadow-cards text-white text-sm pt-5 px-2"
+        >
+          <div className="border-b border-dark-800 mx-3 pb-4 mb-2">
+            <p>Angemeldet als:</p>
+            <p className="font-semibold truncate">choffmann@green-ecolution.de</p>
+          </div>
+          <DropdownMenuItem className="text-light text-base p-3.5 rounded-2xl transition-all duration-300 hover:bg-green-light/20 hover:text-green-light-200 focus:bg-green-light/20 focus:text-green-light-200 cursor-pointer">
+            <Settings className="mr-2 h-5 w-5" />
+            <span className="font-lato font-semibold tracking-[0.1]">Ihr Profil</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem className="text-light text-base p-3.5 rounded-2xl transition-all duration-300 hover:bg-green-light/20 hover:text-green-light-200 focus:bg-green-light/20 focus:text-green-light-200 cursor-pointer">
+            <LogOut className="mr-2 h-5 w-5" />
+            <span className="font-lato font-semibold tracking-[0.1]">Abmelden</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  ),
+}
+
+export const UserProfileLoggedOut: Story = {
+  render: () => (
+    <div className="flex justify-end">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="group flex items-center gap-x-1"
+          >
+            <Avatar>
+              <AvatarFallback variant="guest">
+                <UserRound className="w-5 h-5 stroke-2" />
+              </AvatarFallback>
+            </Avatar>
+            <ChevronDown className="w-5 h-5 text-dark transition-transform duration-300 group-data-[state=open]:rotate-180" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          className="w-72 bg-dark border-none shadow-cards text-white text-sm pt-5 px-2"
+        >
+          <div className="border-b border-dark-800 mx-3 pb-4 mb-2">
+            <p>Nicht angemeldet</p>
+          </div>
+          <DropdownMenuItem className="text-light text-base p-3.5 rounded-2xl transition-all duration-300 hover:bg-green-light/20 hover:text-green-light-200 focus:bg-green-light/20 focus:text-green-light-200 cursor-pointer">
+            <LogIn className="mr-2 h-5 w-5" />
+            <span className="font-lato font-semibold tracking-[0.1]">Anmelden</span>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
