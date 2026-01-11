@@ -7,13 +7,13 @@ resources:
 images:
 - name: backend-image
   newName: ghcr.io/green-ecolution/green-ecolution/backend
-  newTag: v0.1.0
+  newTag: v0.1.1
 - name: frontend-image
   newName: ghcr.io/green-ecolution/green-ecolution/frontend
-  newTag: v0.1.0
+  newTag: v0.1.1
 - name: init-migrations-image
   newName: ghcr.io/green-ecolution/green-ecolution/migrations-postgres
-  newTag: v0.1.0
+  newTag: v0.1.1
 generators:
 - ./secret-generator.yaml
 patches:
