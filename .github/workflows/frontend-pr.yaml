@@ -129,3 +129,25 @@ jobs:
           file: ./frontend/Dockerfile
           push: false
           tags: frontend:test
+
+  # Summary job that always reports a status for required checks
+  frontend-checks:
+    if: always()
+    needs: [changes, build, lint, test, test_dockerfile]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check results
+        run: |
+          if [[ "${{ needs.changes.outputs.frontend }}" != "true" ]]; then
+            echo "✅ No frontend changes - checks skipped"
+            exit 0
+          fi
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "❌ Some checks failed"
+            exit 1
+          fi
+          if [[ "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "⚠️ Some checks were cancelled"
+            exit 1
+          fi
+          echo "✅ All frontend checks passed"

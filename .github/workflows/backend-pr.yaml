@@ -203,3 +203,25 @@ jobs:
           file: ./backend/Dockerfile
           push: false
           tags: backend:test
+
+  # Summary job that always reports a status for required checks
+  backend-checks:
+    if: always()
+    needs: [changes, build_and_test, check_generated_code, lint, test_migrations, test_dockerfile, test_pkg_client]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check results
+        run: |
+          if [[ "${{ needs.changes.outputs.backend }}" != "true" ]]; then
+            echo "✅ No backend changes - checks skipped"
+            exit 0
+          fi
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "❌ Some checks failed"
+            exit 1
+          fi
+          if [[ "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "⚠️ Some checks were cancelled"
+            exit 1
+          fi
+          echo "✅ All backend checks passed"

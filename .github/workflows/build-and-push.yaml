@@ -34,10 +34,25 @@ jobs:
     outputs:
       should-build: ${{ steps.check.outputs.should-build }}
     steps:
+      - name: Checkout for commit message check
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 1
+
       - name: Check if should build
         id: check
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # Check if last commit contains [skip build]
+            COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null || echo "")
+            if [[ "$COMMIT_MSG" == *"[skip build]"* ]]; then
+              echo "should-build=false" >> $GITHUB_OUTPUT
+              echo "ℹ️ [skip build] found in commit message, skipping build"
+              exit 0
+            fi
+
             if [[ "${{ contains(github.event.pull_request.labels.*.name, 'autorelease: pending') }}" == "true" ]]; then
               echo "should-build=true" >> $GITHUB_OUTPUT
               echo "✅ Release PR detected, will build"
@@ -323,7 +338,7 @@ jobs:
             git add deploy/kustomize/demo/kustomization.yaml
           fi
 
-          if git commit -m "chore: update ${ENV} image tags to ${TAG} [skip ci]"; then
+          if git commit -m "chore: update ${ENV} image tags to ${TAG} [skip build]"; then
             git push origin ${TARGET_BRANCH}
             echo "✅ Kustomize ${ENV} updated on branch ${TARGET_BRANCH}"
             if [[ "$IS_RELEASE" == "true" ]]; then
