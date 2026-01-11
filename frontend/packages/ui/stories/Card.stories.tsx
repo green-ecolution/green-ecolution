@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MoveRight, Bell, Droplets, TreeDeciduous, AlertTriangle } from 'lucide-react'
 import { Button } from '../src/components/ui/button'
 import {

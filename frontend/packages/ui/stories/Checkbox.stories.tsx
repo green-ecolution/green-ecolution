@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Checkbox } from '../src/components/ui/checkbox'
 import { Label } from '../src/components/ui/label'
 

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { UserRound } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '../src/components/ui/avatar'
 

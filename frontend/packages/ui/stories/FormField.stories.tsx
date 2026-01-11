@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { FormField, TextareaField } from '../src/components/ui/form-field'
 
 const meta: Meta<typeof FormField> = {

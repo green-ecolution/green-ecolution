@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Bluetooth, Trash2, LogOut, MoveRight, X } from 'lucide-react'
 import {
   AlertDialog,

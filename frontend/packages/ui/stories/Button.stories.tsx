@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { ArrowRight, MoveRight, MoveLeft, Loader2 } from 'lucide-react'
 import { Button } from '../src/components/ui/button'
 
