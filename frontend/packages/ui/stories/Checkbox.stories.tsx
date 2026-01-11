@@ -14,8 +14,8 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   render: () => (
     <div className="flex items-center space-x-2">
-      <Checkbox id="terms" />
-      <Label htmlFor="terms">Accept terms and conditions</Label>
+      <Checkbox id="default-terms" />
+      <Label htmlFor="default-terms">Nutzungsbedingungen akzeptieren</Label>
     </div>
   ),
 }
@@ -23,8 +23,8 @@ export const Default: Story = {
 export const Checked: Story = {
   render: () => (
     <div className="flex items-center space-x-2">
-      <Checkbox id="checked" defaultChecked />
-      <Label htmlFor="checked">Checked by default</Label>
+      <Checkbox id="checked-example" defaultChecked />
+      <Label htmlFor="checked-example">Standardmäßig aktiviert</Label>
     </div>
   ),
 }
@@ -33,15 +33,15 @@ export const Disabled: Story = {
   render: () => (
     <div className="space-y-2">
       <div className="flex items-center space-x-2">
-        <Checkbox id="disabled" disabled />
-        <Label htmlFor="disabled" className="text-muted-foreground">
-          Disabled
+        <Checkbox id="disabled-unchecked" disabled />
+        <Label htmlFor="disabled-unchecked" className="text-muted-foreground">
+          Deaktiviert
         </Label>
       </div>
       <div className="flex items-center space-x-2">
         <Checkbox id="disabled-checked" disabled defaultChecked />
         <Label htmlFor="disabled-checked" className="text-muted-foreground">
-          Disabled & Checked
+          Deaktiviert & ausgewählt
         </Label>
       </div>
     </div>
@@ -51,23 +51,23 @@ export const Disabled: Story = {
 export const FilterExample: Story = {
   render: () => (
     <div className="space-y-4">
-      <h4 className="text-sm font-medium">Filter by Status</h4>
+      <h4 className="text-sm font-medium">Nach Status filtern</h4>
       <div className="space-y-2">
         <div className="flex items-center space-x-2">
-          <Checkbox id="healthy" defaultChecked />
-          <Label htmlFor="healthy">Healthy</Label>
+          <Checkbox id="filter-healthy" defaultChecked />
+          <Label htmlFor="filter-healthy">In Ordnung</Label>
         </div>
         <div className="flex items-center space-x-2">
-          <Checkbox id="needs-water" defaultChecked />
-          <Label htmlFor="needs-water">Needs Water</Label>
+          <Checkbox id="filter-needs-water" defaultChecked />
+          <Label htmlFor="filter-needs-water">Mäßig trocken</Label>
         </div>
         <div className="flex items-center space-x-2">
-          <Checkbox id="critical" />
-          <Label htmlFor="critical">Critical</Label>
+          <Checkbox id="filter-critical" />
+          <Label htmlFor="filter-critical">Kritisch</Label>
         </div>
         <div className="flex items-center space-x-2">
-          <Checkbox id="unknown" />
-          <Label htmlFor="unknown">Unknown</Label>
+          <Checkbox id="filter-unknown" />
+          <Label htmlFor="filter-unknown">Unbekannt</Label>
         </div>
       </div>
     </div>
@@ -77,11 +77,11 @@ export const FilterExample: Story = {
 export const WithDescription: Story = {
   render: () => (
     <div className="items-top flex space-x-2">
-      <Checkbox id="notifications" />
+      <Checkbox id="desc-notifications" />
       <div className="grid gap-1.5 leading-none">
-        <Label htmlFor="notifications">Enable notifications</Label>
+        <Label htmlFor="desc-notifications">Benachrichtigungen aktivieren</Label>
         <p className="text-sm text-muted-foreground">
-          You will receive daily updates about your trees.
+          Du erhältst tägliche Updates über deine Bäume.
         </p>
       </div>
     </div>
