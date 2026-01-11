@@ -4,6 +4,7 @@ kind: ConfigMap
 metadata:
   name: backend-config
 data:
+  ENV: "prod"
   GE_SERVER_APP_URL: "https://demo.green-ecolution.de"
   GE_SERVER_DEVELOPMENT: "true"
 
