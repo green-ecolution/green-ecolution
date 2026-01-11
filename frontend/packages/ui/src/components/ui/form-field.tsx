@@ -5,8 +5,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
-export interface FormFieldProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface FormFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string
   error?: string
   description?: string
@@ -48,12 +47,11 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
         )}
       </div>
     )
-  }
+  },
 )
 FormField.displayName = 'FormField'
 
-export interface TextareaFieldProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface TextareaFieldProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label: string
   error?: string
   description?: string
@@ -95,7 +93,7 @@ const TextareaField = React.forwardRef<HTMLTextAreaElement, TextareaFieldProps>(
         )}
       </div>
     )
-  }
+  },
 )
 TextareaField.displayName = 'TextareaField'
 

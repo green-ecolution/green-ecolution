@@ -69,7 +69,7 @@ const Toaster = ({ className, ...props }: ToasterProps) => {
   )
 }
 
-const toast = Object.assign(
+const toast: typeof sonnerToast = Object.assign(
   (message: string, data?: ExternalToast) => {
     return sonnerToast(message, {
       ...data,
@@ -86,7 +86,7 @@ const toast = Object.assign(
     dismiss: sonnerToast.dismiss,
     custom: sonnerToast.custom,
     message: sonnerToast.message,
-  }
-)
+  },
+) as typeof sonnerToast
 
 export { Toaster, toast }

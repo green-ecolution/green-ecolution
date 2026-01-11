@@ -15,16 +15,12 @@ export const Horizontal: Story = {
     <div className="space-y-4">
       <div>
         <h4 className="text-sm font-medium">Bauminformationen</h4>
-        <p className="text-sm text-muted-foreground">
-          Grundlegende Details zum ausgewählten Baum.
-        </p>
+        <p className="text-sm text-muted-foreground">Grundlegende Details zum ausgewählten Baum.</p>
       </div>
       <Separator />
       <div>
         <h4 className="text-sm font-medium">Sensordaten</h4>
-        <p className="text-sm text-muted-foreground">
-          Live-Messwerte der verbundenen Sensoren.
-        </p>
+        <p className="text-sm text-muted-foreground">Live-Messwerte der verbundenen Sensoren.</p>
       </div>
     </div>
   ),
@@ -77,9 +73,7 @@ export const FormSections: Story = {
 
       <div className="space-y-2">
         <h3 className="text-lg font-medium">Standort</h3>
-        <p className="text-sm text-muted-foreground">
-          Gib den Standort des Baums an.
-        </p>
+        <p className="text-sm text-muted-foreground">Gib den Standort des Baums an.</p>
         <div className="h-10 rounded bg-muted" />
       </div>
 
@@ -87,9 +81,7 @@ export const FormSections: Story = {
 
       <div className="space-y-2">
         <h3 className="text-lg font-medium">Zusätzliche Details</h3>
-        <p className="text-sm text-muted-foreground">
-          Optionale Informationen zum Baum.
-        </p>
+        <p className="text-sm text-muted-foreground">Optionale Informationen zum Baum.</p>
         <div className="h-20 rounded bg-muted" />
       </div>
     </div>

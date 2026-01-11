@@ -69,9 +69,7 @@ export const WithIcon: Story = {
         </DialogIcon>
         <DialogHeader className="text-center sm:text-center">
           <DialogTitle>Einstellungen</DialogTitle>
-          <DialogDescription>
-            Pass hier deine Anwendungseinstellungen an.
-          </DialogDescription>
+          <DialogDescription>Pass hier deine Anwendungseinstellungen an.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
@@ -129,7 +127,8 @@ export const InfoDialog: Story = {
         <DialogHeader>
           <DialogTitle>Information</DialogTitle>
           <DialogDescription>
-            Dies ist ein informativer Dialog mit Icon. Der Text ist linksbündig für bessere Lesbarkeit.
+            Dies ist ein informativer Dialog mit Icon. Der Text ist linksbündig für bessere
+            Lesbarkeit.
           </DialogDescription>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">
@@ -158,9 +157,7 @@ export const AddUserDialog: Story = {
         </DialogIcon>
         <DialogHeader className="text-center sm:text-center">
           <DialogTitle>Neuen Benutzer hinzufügen</DialogTitle>
-          <DialogDescription>
-            Gib die Daten des neuen Benutzers ein.
-          </DialogDescription>
+          <DialogDescription>Gib die Daten des neuen Benutzers ein.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">

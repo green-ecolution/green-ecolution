@@ -89,11 +89,7 @@ export const TextareaWithError: Story = {
 export const FormExample: Story = {
   render: () => (
     <form className="space-y-4 max-w-md">
-      <FormField
-        label="Baumname"
-        placeholder="z.B. Eiche #123"
-        required
-      />
+      <FormField label="Baumname" placeholder="z.B. Eiche #123" required />
       <FormField
         label="Standort"
         placeholder="Straßenadresse oder Koordinaten"
@@ -106,11 +102,7 @@ export const FormExample: Story = {
         min={1900}
         max={new Date().getFullYear()}
       />
-      <TextareaField
-        label="Notizen"
-        placeholder="Zusätzliche Informationen zum Baum..."
-        rows={4}
-      />
+      <TextareaField label="Notizen" placeholder="Zusätzliche Informationen zum Baum..." rows={4} />
     </form>
   ),
 }

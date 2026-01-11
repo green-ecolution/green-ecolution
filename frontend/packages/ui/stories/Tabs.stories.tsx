@@ -47,9 +47,7 @@ export const Default: Story = {
       <TabsContent value="sensors">
         <div className="space-y-4">
           <h3 className="font-semibold">Sensormesswerte</h3>
-          <p className="text-muted-foreground">
-            Live-Daten der verbundenen Sensoren.
-          </p>
+          <p className="text-muted-foreground">Live-Daten der verbundenen Sensoren.</p>
         </div>
       </TabsContent>
     </Tabs>
@@ -142,25 +140,19 @@ export const VehicleTabs: Story = {
       <TabsContent value="info">
         <div className="space-y-4">
           <h3 className="font-semibold">Fahrzeuginformationen</h3>
-          <p className="text-muted-foreground">
-            Details zum ausgewählten Fahrzeug.
-          </p>
+          <p className="text-muted-foreground">Details zum ausgewählten Fahrzeug.</p>
         </div>
       </TabsContent>
       <TabsContent value="routes">
         <div className="space-y-4">
           <h3 className="font-semibold">Zugewiesene Routen</h3>
-          <p className="text-muted-foreground">
-            Aktive und geplante Bewässerungsrouten.
-          </p>
+          <p className="text-muted-foreground">Aktive und geplante Bewässerungsrouten.</p>
         </div>
       </TabsContent>
       <TabsContent value="settings">
         <div className="space-y-4">
           <h3 className="font-semibold">Fahrzeugeinstellungen</h3>
-          <p className="text-muted-foreground">
-            Konfiguration und Wartungsintervalle.
-          </p>
+          <p className="text-muted-foreground">Konfiguration und Wartungsintervalle.</p>
         </div>
       </TabsContent>
     </Tabs>
@@ -181,9 +173,7 @@ export const Disabled: Story = {
         </TabsTrigger>
       </TabsList>
       <TabsContent value="active">
-        <p className="text-muted-foreground">
-          Der zweite Tab ist deaktiviert.
-        </p>
+        <p className="text-muted-foreground">Der zweite Tab ist deaktiviert.</p>
       </TabsContent>
     </Tabs>
   ),

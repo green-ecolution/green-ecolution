@@ -5,8 +5,10 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 
-export interface FileUploadProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
+export interface FileUploadProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  'onChange' | 'value'
+> {
   label?: string
   description?: string
   error?: string
@@ -17,19 +19,8 @@ export interface FileUploadProps
 
 const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
   (
-    {
-      className,
-      label,
-      description,
-      error,
-      value,
-      onChange,
-      onClear,
-      accept,
-      id,
-      ...props
-    },
-    ref
+    { className, label, description, error, value, onChange, onClear, accept, id, ...props },
+    ref,
   ) => {
     const inputId = id || React.useId()
     const inputRef = React.useRef<HTMLInputElement>(null)
@@ -67,7 +58,7 @@ const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
             'relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors',
             'hover:border-primary/50 hover:bg-accent/50',
             error ? 'border-destructive' : 'border-input',
-            value && 'border-solid border-primary bg-primary/5'
+            value && 'border-solid border-primary bg-primary/5',
           )}
         >
           <input
@@ -110,9 +101,7 @@ const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
             >
               <Upload className="h-8 w-8 text-muted-foreground" />
               <span className="text-sm font-medium">Klicken zum Hochladen</span>
-              {description && (
-                <span className="text-xs text-muted-foreground">{description}</span>
-              )}
+              {description && <span className="text-xs text-muted-foreground">{description}</span>}
             </button>
           )}
         </div>
@@ -124,7 +113,7 @@ const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
         )}
       </div>
     )
-  }
+  },
 )
 FileUpload.displayName = 'FileUpload'
 

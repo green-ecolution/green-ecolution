@@ -18,8 +18,7 @@ const spinnerVariants = cva('animate-spin', {
 })
 
 export interface SpinnerProps
-  extends React.SVGAttributes<SVGSVGElement>,
-    VariantProps<typeof spinnerVariants> {}
+  extends React.SVGAttributes<SVGSVGElement>, VariantProps<typeof spinnerVariants> {}
 
 const Spinner = React.forwardRef<SVGSVGElement, SpinnerProps>(
   ({ className, size, ...props }, ref) => {
@@ -27,11 +26,7 @@ const Spinner = React.forwardRef<SVGSVGElement, SpinnerProps>(
       <svg
         ref={ref}
         aria-hidden="true"
-        className={cn(
-          spinnerVariants({ size }),
-          'text-green-dark-500 fill-green-dark',
-          className
-        )}
+        className={cn(spinnerVariants({ size }), 'text-green-dark-500 fill-green-dark', className)}
         viewBox="0 0 100 101"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -47,7 +42,7 @@ const Spinner = React.forwardRef<SVGSVGElement, SpinnerProps>(
         />
       </svg>
     )
-  }
+  },
 )
 Spinner.displayName = 'Spinner'
 
@@ -59,16 +54,12 @@ export interface LoadingProps extends React.HTMLAttributes<HTMLDivElement> {
 const Loading = React.forwardRef<HTMLDivElement, LoadingProps>(
   ({ className, label, size, ...props }, ref) => {
     return (
-      <div
-        ref={ref}
-        className={cn('flex items-center gap-3', className)}
-        {...props}
-      >
+      <div ref={ref} className={cn('flex items-center gap-3', className)} {...props}>
         <Spinner size={size} />
         {label && <span className="text-lg text-dark-600">{label}</span>}
       </div>
     )
-  }
+  },
 )
 Loading.displayName = 'Loading'
 

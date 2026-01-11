@@ -26,9 +26,7 @@ export const Default: Story = {
     <Alert>
       <Info />
       <AlertTitle>Information</AlertTitle>
-      <AlertDescription>
-        Dies ist eine informative Hinweismeldung.
-      </AlertDescription>
+      <AlertDescription>Dies ist eine informative Hinweismeldung.</AlertDescription>
     </Alert>
   ),
 }
@@ -50,9 +48,7 @@ export const Warning: Story = {
     <Alert variant="warning">
       <TriangleAlert />
       <AlertTitle>Warnung</AlertTitle>
-      <AlertDescription>
-        Bitte überprüfe deine Eingaben, bevor du fortfährst.
-      </AlertDescription>
+      <AlertDescription>Bitte überprüfe deine Eingaben, bevor du fortfährst.</AlertDescription>
     </Alert>
   ),
 }
@@ -62,9 +58,7 @@ export const Success: Story = {
     <Alert variant="success">
       <CheckCircle2 />
       <AlertTitle>Erfolg</AlertTitle>
-      <AlertDescription>
-        Deine Änderungen wurden erfolgreich gespeichert.
-      </AlertDescription>
+      <AlertDescription>Deine Änderungen wurden erfolgreich gespeichert.</AlertDescription>
     </Alert>
   ),
 }
@@ -102,9 +96,9 @@ export const SensorNotice: Story = {
       <Info />
       <AlertTitle>Hinweis: Dieser Baum ist nicht mit einem Sensor ausgestattet.</AlertTitle>
       <AlertDescription>
-        Dieser Baum wurde bisher nicht mit einem Sensor ausgestattet, sodass keine
-        Informationen über den aktuellen Bewässerungszustand angezeigt werden können.
-        Aus diesem Grund wird der Bewässerungszustand als unbekannt ausgezeichnet.
+        Dieser Baum wurde bisher nicht mit einem Sensor ausgestattet, sodass keine Informationen
+        über den aktuellen Bewässerungszustand angezeigt werden können. Aus diesem Grund wird der
+        Bewässerungszustand als unbekannt ausgezeichnet.
       </AlertDescription>
     </Alert>
   ),
@@ -116,8 +110,8 @@ export const WateringAlert: Story = {
       <TriangleAlert />
       <AlertTitle>Bewässerung erforderlich</AlertTitle>
       <AlertDescription>
-        Die Bodenfeuchtigkeit liegt unter dem kritischen Schwellenwert.
-        Bitte plane eine Bewässerung für diesen Standort ein.
+        Die Bodenfeuchtigkeit liegt unter dem kritischen Schwellenwert. Bitte plane eine Bewässerung
+        für diesen Standort ein.
       </AlertDescription>
     </Alert>
   ),
@@ -129,8 +123,7 @@ export const RouteCompleted: Story = {
       <CheckCircle2 />
       <AlertTitle>Route abgeschlossen</AlertTitle>
       <AlertDescription>
-        Die Bewässerungsroute wurde erfolgreich abgeschlossen.
-        Alle 24 Bäume wurden bewässert.
+        Die Bewässerungsroute wurde erfolgreich abgeschlossen. Alle 24 Bäume wurden bewässert.
       </AlertDescription>
     </Alert>
   ),
@@ -146,9 +139,7 @@ export const Compact: Story = {
 }
 
 export const InlineAlertExample: Story = {
-  render: () => (
-    <InlineAlert description="Bitte füllen Sie alle Pflichtfelder aus." />
-  ),
+  render: () => <InlineAlert description="Bitte füllen Sie alle Pflichtfelder aus." />,
 }
 
 export const InlineAlertExamples: Story = {
@@ -177,11 +168,7 @@ export const InFormContext: Story = {
       <InlineAlert description="Dieser Baum hat seit 14 Tagen keine Bewässerung erhalten." />
       <div className="space-y-2">
         <label className="text-sm font-medium">Baumart</label>
-        <input
-          type="text"
-          className="w-full rounded-md border px-3 py-2"
-          defaultValue="Eiche"
-        />
+        <input type="text" className="w-full rounded-md border px-3 py-2" defaultValue="Eiche" />
       </div>
     </div>
   ),

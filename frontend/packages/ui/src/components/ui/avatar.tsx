@@ -18,7 +18,7 @@ const avatarVariants = cva(
     defaultVariants: {
       size: 'default',
     },
-  }
+  },
 )
 
 const avatarFallbackVariants = cva(
@@ -34,24 +34,24 @@ const avatarFallbackVariants = cva(
     defaultVariants: {
       variant: 'default',
     },
-  }
+  },
 )
 
 interface AvatarProps
-  extends React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>,
+  extends
+    React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>,
     VariantProps<typeof avatarVariants> {}
 
-const Avatar = React.forwardRef<
-  React.ComponentRef<typeof AvatarPrimitive.Root>,
-  AvatarProps
->(({ className, size, ...props }, ref) => (
-  <AvatarPrimitive.Root
-    ref={ref}
-    data-slot="avatar"
-    className={cn(avatarVariants({ size, className }))}
-    {...props}
-  />
-))
+const Avatar = React.forwardRef<React.ComponentRef<typeof AvatarPrimitive.Root>, AvatarProps>(
+  ({ className, size, ...props }, ref) => (
+    <AvatarPrimitive.Root
+      ref={ref}
+      data-slot="avatar"
+      className={cn(avatarVariants({ size, className }))}
+      {...props}
+    />
+  ),
+)
 Avatar.displayName = AvatarPrimitive.Root.displayName
 
 const AvatarImage = React.forwardRef<
@@ -68,7 +68,8 @@ const AvatarImage = React.forwardRef<
 AvatarImage.displayName = AvatarPrimitive.Image.displayName
 
 interface AvatarFallbackProps
-  extends React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>,
+  extends
+    React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>,
     VariantProps<typeof avatarFallbackVariants> {}
 
 const AvatarFallback = React.forwardRef<

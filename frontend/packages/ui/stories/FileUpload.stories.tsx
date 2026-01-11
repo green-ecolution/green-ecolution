@@ -14,13 +14,7 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   render: function Render() {
     const [file, setFile] = useState<File | null>(null)
-    return (
-      <FileUpload
-        label="Datei hochladen"
-        value={file}
-        onChange={setFile}
-      />
-    )
+    return <FileUpload label="Datei hochladen" value={file} onChange={setFile} />
   },
 }
 

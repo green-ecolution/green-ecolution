@@ -47,7 +47,8 @@ export const Disabled: Story = {
 
 export const WithDefaultValue: Story = {
   args: {
-    defaultValue: 'Dieser Baum wurde 2019 im Rahmen der städtischen Begrünungsinitiative gepflanzt. Er benötigt in den Sommermonaten regelmäßige Bewässerung.',
+    defaultValue:
+      'Dieser Baum wurde 2019 im Rahmen der städtischen Begrünungsinitiative gepflanzt. Er benötigt in den Sommermonaten regelmäßige Bewässerung.',
   },
 }
 

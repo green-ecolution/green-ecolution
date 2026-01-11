@@ -173,11 +173,21 @@ export const OutlineVariants: Story = {
 export const OutlineLarge: Story = {
   render: () => (
     <div className="flex flex-wrap gap-2">
-      <Badge variant="outline-red" size="lg">Kritisch</Badge>
-      <Badge variant="outline-yellow" size="lg">Warnung</Badge>
-      <Badge variant="outline-dark" size="lg">Inaktiv</Badge>
-      <Badge variant="outline-green-dark" size="lg">Aktiv</Badge>
-      <Badge variant="outline-green-light" size="lg">Abgeschlossen</Badge>
+      <Badge variant="outline-red" size="lg">
+        Kritisch
+      </Badge>
+      <Badge variant="outline-yellow" size="lg">
+        Warnung
+      </Badge>
+      <Badge variant="outline-dark" size="lg">
+        Inaktiv
+      </Badge>
+      <Badge variant="outline-green-dark" size="lg">
+        Aktiv
+      </Badge>
+      <Badge variant="outline-green-light" size="lg">
+        Abgeschlossen
+      </Badge>
     </div>
   ),
 }
@@ -188,10 +198,18 @@ export const WateringPlanStatus: Story = {
       <div>
         <h4 className="mb-2 text-sm font-medium">Bewässerungsplan-Status (Outline/Large)</h4>
         <div className="flex flex-wrap gap-2">
-          <Badge variant="outline-dark" size="lg">Geplant</Badge>
-          <Badge variant="outline-yellow" size="lg">In Bearbeitung</Badge>
-          <Badge variant="outline-green-light" size="lg">Abgeschlossen</Badge>
-          <Badge variant="outline-red" size="lg">Abgebrochen</Badge>
+          <Badge variant="outline-dark" size="lg">
+            Geplant
+          </Badge>
+          <Badge variant="outline-yellow" size="lg">
+            In Bearbeitung
+          </Badge>
+          <Badge variant="outline-green-light" size="lg">
+            Abgeschlossen
+          </Badge>
+          <Badge variant="outline-red" size="lg">
+            Abgebrochen
+          </Badge>
         </div>
       </div>
     </div>

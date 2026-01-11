@@ -158,18 +158,10 @@ export const WithCheckboxItems: Story = {
       <DropdownMenuContent className="w-56">
         <DropdownMenuLabel>Baumstatus</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuCheckboxItem checked>
-          Gesund
-        </DropdownMenuCheckboxItem>
-        <DropdownMenuCheckboxItem checked>
-          Bewässerung nötig
-        </DropdownMenuCheckboxItem>
-        <DropdownMenuCheckboxItem>
-          Kritisch
-        </DropdownMenuCheckboxItem>
-        <DropdownMenuCheckboxItem>
-          Unbekannt
-        </DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem checked>Gesund</DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem checked>Bewässerung nötig</DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem>Kritisch</DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem>Unbekannt</DropdownMenuCheckboxItem>
       </DropdownMenuContent>
     </DropdownMenu>
   ),
@@ -225,10 +217,7 @@ export const UserProfileDropdown: Story = {
     <div className="flex justify-end">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            className="group flex items-center gap-x-1"
-          >
+          <button type="button" className="group flex items-center gap-x-1">
             <Avatar>
               <AvatarFallback variant="user">CH</AvatarFallback>
             </Avatar>
@@ -262,10 +251,7 @@ export const UserProfileLoggedOut: Story = {
     <div className="flex justify-end">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            className="group flex items-center gap-x-1"
-          >
+          <button type="button" className="group flex items-center gap-x-1">
             <Avatar>
               <AvatarFallback variant="guest">
                 <UserRound className="w-5 h-5 stroke-2" />

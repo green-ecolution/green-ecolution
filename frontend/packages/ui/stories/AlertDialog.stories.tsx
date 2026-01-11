@@ -83,13 +83,16 @@ export const DeleteWateringPlan: Story = {
   render: () => (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm">Bewässerungsgruppe löschen</Button>
+        <Button variant="destructive" size="sm">
+          Bewässerungsgruppe löschen
+        </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Soll die Bewässerungsgruppe wirklich gelöscht werden?</AlertDialogTitle>
           <AlertDialogDescription>
-            Sobald die Bewässerungsgruppe gelöscht wurde, können die Daten nicht wieder hergestellt werden.
+            Sobald die Bewässerungsgruppe gelöscht wurde, können die Daten nicht wieder hergestellt
+            werden.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="sm:justify-start">
@@ -236,7 +239,8 @@ export const DeleteWithIcon: Story = {
         <AlertDialogHeader className="text-center sm:text-center">
           <AlertDialogTitle>Soll die Bewässerungsgruppe wirklich gelöscht werden?</AlertDialogTitle>
           <AlertDialogDescription>
-            Sobald die Bewässerungsgruppe gelöscht wurde, können die Daten nicht wieder hergestellt werden.
+            Sobald die Bewässerungsgruppe gelöscht wurde, können die Daten nicht wieder hergestellt
+            werden.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="sm:justify-center">

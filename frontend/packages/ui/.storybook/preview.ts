@@ -13,16 +13,16 @@ const preview: Preview = {
       options: {
         light: { name: 'light', value: '#FFFFFF' },
         dark: { name: 'dark', value: '#171717' },
-        gray: { name: 'gray', value: '#F3F3F3' }
-      }
+        gray: { name: 'gray', value: '#F3F3F3' },
+      },
     },
   },
 
   initialGlobals: {
     backgrounds: {
-      value: 'light'
-    }
-  }
+      value: 'light',
+    },
+  },
 }
 
 export default preview

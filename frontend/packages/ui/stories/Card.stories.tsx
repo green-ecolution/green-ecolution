@@ -43,9 +43,7 @@ export const WithForm: Story = {
     <Card className="w-[350px]">
       <CardHeader>
         <CardTitle>Konto erstellen</CardTitle>
-        <CardDescription>
-          Gib deine Daten ein, um ein neues Konto zu erstellen.
-        </CardDescription>
+        <CardDescription>Gib deine Daten ein, um ein neues Konto zu erstellen.</CardDescription>
       </CardHeader>
       <CardContent>
         <form>
@@ -165,7 +163,9 @@ export const StatusCardsGrid: Story = {
         <CardContent className="p-6 space-y-3">
           <p className="text-sm text-dark-700 font-medium">Datum der letzten Bewässerung</p>
           <p className="font-bold text-xl">Keine Angabe</p>
-          <p className="text-sm">Wird aktualisiert, sobald ein Einsatzplan mit dieser Gruppe als »Beendet« markiert wird.</p>
+          <p className="text-sm">
+            Wird aktualisiert, sobald ein Einsatzplan mit dieser Gruppe als »Beendet« markiert wird.
+          </p>
         </CardContent>
       </Card>
     </div>

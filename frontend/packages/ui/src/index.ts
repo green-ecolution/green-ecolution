@@ -2,7 +2,13 @@
 import './styles/globals.css'
 
 // Alert
-export { Alert, AlertTitle, AlertDescription, InlineAlert, alertVariants } from './components/ui/alert'
+export {
+  Alert,
+  AlertTitle,
+  AlertDescription,
+  InlineAlert,
+  alertVariants,
+} from './components/ui/alert'
 export type { InlineAlertProps } from './components/ui/alert'
 
 // Avatar

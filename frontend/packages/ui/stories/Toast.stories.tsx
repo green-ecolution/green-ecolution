@@ -20,26 +20,18 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
-  render: () => (
-    <Button onClick={() => toast('Nachricht wurde gesendet')}>
-      Toast anzeigen
-    </Button>
-  ),
+  render: () => <Button onClick={() => toast('Nachricht wurde gesendet')}>Toast anzeigen</Button>,
 }
 
 export const Success: Story = {
   render: () => (
-    <Button onClick={() => toast.success('Erfolgreich gespeichert!')}>
-      Erfolg anzeigen
-    </Button>
+    <Button onClick={() => toast.success('Erfolgreich gespeichert!')}>Erfolg anzeigen</Button>
   ),
 }
 
 export const Error: Story = {
   render: () => (
-    <Button onClick={() => toast.error('Ein Fehler ist aufgetreten')}>
-      Fehler anzeigen
-    </Button>
+    <Button onClick={() => toast.error('Ein Fehler ist aufgetreten')}>Fehler anzeigen</Button>
   ),
 }
 
@@ -60,34 +52,19 @@ export const WithDescription: Story = {
 export const AllVariants: Story = {
   render: () => (
     <div className="flex flex-wrap gap-2">
-      <Button
-        variant="outline"
-        onClick={() => toast('Standard-Benachrichtigung')}
-      >
+      <Button variant="outline" onClick={() => toast('Standard-Benachrichtigung')}>
         Standard
       </Button>
-      <Button
-        variant="outline"
-        onClick={() => toast.success('Daten wurden gespeichert')}
-      >
+      <Button variant="outline" onClick={() => toast.success('Daten wurden gespeichert')}>
         Erfolg
       </Button>
-      <Button
-        variant="outline"
-        onClick={() => toast.error('Speichern fehlgeschlagen')}
-      >
+      <Button variant="outline" onClick={() => toast.error('Speichern fehlgeschlagen')}>
         Fehler
       </Button>
-      <Button
-        variant="outline"
-        onClick={() => toast.warning('Achtung: Niedriger Akkustand')}
-      >
+      <Button variant="outline" onClick={() => toast.warning('Achtung: Niedriger Akkustand')}>
         Warnung
       </Button>
-      <Button
-        variant="outline"
-        onClick={() => toast.info('Neue Updates verfügbar')}
-      >
+      <Button variant="outline" onClick={() => toast.info('Neue Updates verfügbar')}>
         Info
       </Button>
     </div>
@@ -106,10 +83,7 @@ export const ExampleUseCases: Story = {
           >
             Baum anlegen
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => toast.success('Baum wurde aktualisiert')}
-          >
+          <Button variant="outline" onClick={() => toast.success('Baum wurde aktualisiert')}>
             Baum aktualisieren
           </Button>
           <Button
@@ -125,17 +99,13 @@ export const ExampleUseCases: Story = {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() =>
-              toast.success('Bewässerungsplan wurde gespeichert')
-            }
+            onClick={() => toast.success('Bewässerungsplan wurde gespeichert')}
           >
             Plan speichern
           </Button>
           <Button
             variant="outline"
-            onClick={() =>
-              toast.error('Route konnte nicht berechnet werden')
-            }
+            onClick={() => toast.error('Route konnte nicht berechnet werden')}
           >
             Route berechnen
           </Button>
