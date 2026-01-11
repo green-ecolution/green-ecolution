@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { AlertCircle, CheckCircle2, Info, TriangleAlert } from 'lucide-react'
-import { Alert, AlertDescription, AlertTitle } from '../src/components/ui/alert'
+import { Alert, AlertDescription, AlertTitle, InlineAlert } from '../src/components/ui/alert'
 
 const meta: Meta<typeof Alert> = {
   title: 'UI/Alert',
@@ -10,6 +10,10 @@ const meta: Meta<typeof Alert> = {
     variant: {
       control: 'select',
       options: ['default', 'destructive', 'warning', 'success'],
+    },
+    size: {
+      control: 'select',
+      options: ['default', 'compact'],
     },
   },
 }
@@ -129,5 +133,56 @@ export const RouteCompleted: Story = {
         Alle 24 Bäume wurden bewässert.
       </AlertDescription>
     </Alert>
+  ),
+}
+
+export const Compact: Story = {
+  render: () => (
+    <Alert variant="destructive" size="compact">
+      <TriangleAlert />
+      <p>Dies ist eine kompakte Warnmeldung.</p>
+    </Alert>
+  ),
+}
+
+export const InlineAlertExample: Story = {
+  render: () => (
+    <InlineAlert description="Bitte füllen Sie alle Pflichtfelder aus." />
+  ),
+}
+
+export const InlineAlertExamples: Story = {
+  render: () => (
+    <div className="space-y-4">
+      <div>
+        <h4 className="mb-2 text-sm font-medium">Validierungsfehler</h4>
+        <InlineAlert description="Bitte füllen Sie alle Pflichtfelder aus." />
+      </div>
+      <div>
+        <h4 className="mb-2 text-sm font-medium">Systemwarnung</h4>
+        <InlineAlert description="Die Verbindung zum Server konnte nicht hergestellt werden." />
+      </div>
+      <div>
+        <h4 className="mb-2 text-sm font-medium">Kritischer Zustand</h4>
+        <InlineAlert description="Der Wasserstand ist kritisch niedrig. Sofortige Bewässerung erforderlich." />
+      </div>
+    </div>
+  ),
+}
+
+export const InFormContext: Story = {
+  render: () => (
+    <div className="max-w-md space-y-4 rounded-xl border p-6">
+      <h3 className="text-lg font-semibold">Baum bearbeiten</h3>
+      <InlineAlert description="Dieser Baum hat seit 14 Tagen keine Bewässerung erhalten." />
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Baumart</label>
+        <input
+          type="text"
+          className="w-full rounded-md border px-3 py-2"
+          defaultValue="Eiche"
+        />
+      </div>
+    </div>
   ),
 }

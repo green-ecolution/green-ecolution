@@ -2,7 +2,8 @@
 import './styles/globals.css'
 
 // Alert
-export { Alert, AlertTitle, AlertDescription } from './components/ui/alert'
+export { Alert, AlertTitle, AlertDescription, InlineAlert, alertVariants } from './components/ui/alert'
+export type { InlineAlertProps } from './components/ui/alert'
 
 // Avatar
 export { Avatar, AvatarImage, AvatarFallback } from './components/ui/avatar'
@@ -145,6 +146,9 @@ export { Tabs, TabsList, TabsTrigger, TabsContent } from './components/ui/tabs'
 
 // Textarea
 export { Textarea } from './components/ui/textarea'
+
+// Sonner/Toast
+export { Toaster, toast } from './components/ui/sonner'
 
 // Utils
 export { cn } from './lib/utils'
