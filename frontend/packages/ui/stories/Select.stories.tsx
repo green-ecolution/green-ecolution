@@ -23,16 +23,16 @@ export const Default: Story = {
   render: () => (
     <Select>
       <SelectTrigger className="w-[280px]">
-        <SelectValue placeholder="Select a fruit" />
+        <SelectValue placeholder="Baumart auswählen" />
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectLabel>Fruits</SelectLabel>
-          <SelectItem value="apple">Apple</SelectItem>
-          <SelectItem value="banana">Banana</SelectItem>
-          <SelectItem value="orange">Orange</SelectItem>
-          <SelectItem value="grape">Grape</SelectItem>
-          <SelectItem value="mango">Mango</SelectItem>
+          <SelectLabel>Baumarten</SelectLabel>
+          <SelectItem value="oak">Eiche</SelectItem>
+          <SelectItem value="beech">Buche</SelectItem>
+          <SelectItem value="maple">Ahorn</SelectItem>
+          <SelectItem value="linden">Linde</SelectItem>
+          <SelectItem value="birch">Birke</SelectItem>
         </SelectGroup>
       </SelectContent>
     </Select>
@@ -42,16 +42,16 @@ export const Default: Story = {
 export const WithLabel: Story = {
   render: () => (
     <div className="grid w-full max-w-sm items-center gap-1.5">
-      <Label htmlFor="tree-status">Tree Status</Label>
+      <Label htmlFor="tree-status">Baumstatus</Label>
       <Select>
         <SelectTrigger id="tree-status">
-          <SelectValue placeholder="Select status" />
+          <SelectValue placeholder="Status auswählen" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="healthy">Healthy</SelectItem>
-          <SelectItem value="needs-water">Needs Water</SelectItem>
-          <SelectItem value="critical">Critical</SelectItem>
-          <SelectItem value="unknown">Unknown</SelectItem>
+          <SelectItem value="healthy">Gesund</SelectItem>
+          <SelectItem value="needs-water">Bewässerung nötig</SelectItem>
+          <SelectItem value="critical">Kritisch</SelectItem>
+          <SelectItem value="unknown">Unbekannt</SelectItem>
         </SelectContent>
       </Select>
     </div>
@@ -62,18 +62,18 @@ export const WithGroups: Story = {
   render: () => (
     <Select>
       <SelectTrigger className="w-[280px]">
-        <SelectValue placeholder="Select a vehicle" />
+        <SelectValue placeholder="Fahrzeug auswählen" />
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectLabel>Trucks</SelectLabel>
-          <SelectItem value="truck-1">Water Truck 1</SelectItem>
-          <SelectItem value="truck-2">Water Truck 2</SelectItem>
+          <SelectLabel>LKW</SelectLabel>
+          <SelectItem value="truck-1">Wassertank-LKW 1</SelectItem>
+          <SelectItem value="truck-2">Wassertank-LKW 2</SelectItem>
         </SelectGroup>
         <SelectGroup>
-          <SelectLabel>Vans</SelectLabel>
-          <SelectItem value="van-1">Service Van 1</SelectItem>
-          <SelectItem value="van-2">Service Van 2</SelectItem>
+          <SelectLabel>Transporter</SelectLabel>
+          <SelectItem value="van-1">Service-Transporter 1</SelectItem>
+          <SelectItem value="van-2">Service-Transporter 2</SelectItem>
         </SelectGroup>
       </SelectContent>
     </Select>
@@ -84,7 +84,7 @@ export const Disabled: Story = {
   render: () => (
     <Select disabled>
       <SelectTrigger className="w-[280px]">
-        <SelectValue placeholder="Select option" />
+        <SelectValue placeholder="Option auswählen" />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="1">Option 1</SelectItem>
@@ -101,9 +101,9 @@ export const WithDefaultValue: Story = {
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="healthy">Healthy</SelectItem>
-        <SelectItem value="needs-water">Needs Water</SelectItem>
-        <SelectItem value="critical">Critical</SelectItem>
+        <SelectItem value="healthy">Gesund</SelectItem>
+        <SelectItem value="needs-water">Bewässerung nötig</SelectItem>
+        <SelectItem value="critical">Kritisch</SelectItem>
       </SelectContent>
     </Select>
   ),
