@@ -16,7 +16,7 @@ export const Default: Story = {
     const [file, setFile] = useState<File | null>(null)
     return (
       <FileUpload
-        label="Upload File"
+        label="Datei hochladen"
         value={file}
         onChange={setFile}
       />
@@ -29,8 +29,8 @@ export const WithDescription: Story = {
     const [file, setFile] = useState<File | null>(null)
     return (
       <FileUpload
-        label="Tree Photo"
-        description="PNG, JPG up to 10MB"
+        label="Baumfoto"
+        description="PNG, JPG bis zu 10MB"
         accept="image/png,image/jpeg"
         value={file}
         onChange={setFile}
@@ -44,8 +44,8 @@ export const Required: Story = {
     const [file, setFile] = useState<File | null>(null)
     return (
       <FileUpload
-        label="Document"
-        description="PDF files only"
+        label="Dokument"
+        description="Nur PDF-Dateien"
         accept="application/pdf"
         required
         value={file}
@@ -60,9 +60,9 @@ export const WithError: Story = {
     const [file, setFile] = useState<File | null>(null)
     return (
       <FileUpload
-        label="Upload Image"
-        description="PNG, JPG up to 5MB"
-        error="File size must be less than 5MB"
+        label="Bild hochladen"
+        description="PNG, JPG bis zu 5MB"
+        error="Dateigröße darf 5MB nicht überschreiten"
         value={file}
         onChange={setFile}
       />
@@ -80,8 +80,8 @@ export const WithFile: Story = {
     const [file, setFile] = useState<File | null>(mockFile)
     return (
       <FileUpload
-        label="Tree Photo"
-        description="PNG, JPG up to 10MB"
+        label="Baumfoto"
+        description="PNG, JPG bis zu 10MB"
         value={file}
         onChange={setFile}
       />
@@ -94,14 +94,36 @@ export const ImportDataExample: Story = {
     const [file, setFile] = useState<File | null>(null)
     return (
       <div className="max-w-md space-y-4">
-        <h3 className="text-lg font-semibold">Import Tree Data</h3>
+        <h3 className="text-lg font-semibold">Baumdaten importieren</h3>
         <p className="text-sm text-muted-foreground">
-          Upload a CSV file containing tree data to import into the system.
+          Laden Sie eine CSV-Datei mit Baumdaten hoch, um diese in das System zu importieren.
         </p>
         <FileUpload
-          label="CSV File"
-          description="Supported format: .csv"
+          label="CSV-Datei"
+          description="Unterstütztes Format: .csv"
           accept=".csv"
+          required
+          value={file}
+          onChange={setFile}
+        />
+      </div>
+    )
+  },
+}
+
+export const SensorDataImport: Story = {
+  render: function Render() {
+    const [file, setFile] = useState<File | null>(null)
+    return (
+      <div className="max-w-md space-y-4">
+        <h3 className="text-lg font-semibold">Sensordaten importieren</h3>
+        <p className="text-sm text-muted-foreground">
+          Importieren Sie historische Sensordaten als JSON-Datei.
+        </p>
+        <FileUpload
+          label="JSON-Datei"
+          description="Unterstützte Formate: .json"
+          accept=".json,application/json"
           required
           value={file}
           onChange={setFile}

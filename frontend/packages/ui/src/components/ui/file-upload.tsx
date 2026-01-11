@@ -99,7 +99,7 @@ const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
                 className="ml-2"
               >
                 <X className="h-4 w-4" />
-                <span className="sr-only">Remove file</span>
+                <span className="sr-only">Datei entfernen</span>
               </Button>
             </div>
           ) : (
@@ -109,7 +109,7 @@ const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
               className="flex flex-col items-center gap-2 text-center"
             >
               <Upload className="h-8 w-8 text-muted-foreground" />
-              <span className="text-sm font-medium">Click to upload</span>
+              <span className="text-sm font-medium">Klicken zum Hochladen</span>
               {description && (
                 <span className="text-xs text-muted-foreground">{description}</span>
               )}
