@@ -30,15 +30,15 @@ export const Default: Story = {
     <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink href="/">Home</BreadcrumbLink>
+          <BreadcrumbLink href="/">Startseite</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbLink href="/trees">Trees</BreadcrumbLink>
+          <BreadcrumbLink href="/trees">Bäume</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbPage>Oak Tree #1234</BreadcrumbPage>
+          <BreadcrumbPage>Eiche #1234</BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
@@ -52,16 +52,16 @@ export const WithHomeIcon: Story = {
         <BreadcrumbItem>
           <BreadcrumbLink href="/" className="flex items-center gap-1">
             <Home className="h-4 w-4" />
-            <span className="sr-only">Home</span>
+            <span className="sr-only">Startseite</span>
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbLink href="/trees">Trees</BreadcrumbLink>
+          <BreadcrumbLink href="/trees">Bäume</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbPage>Oak Tree #1234</BreadcrumbPage>
+          <BreadcrumbPage>Eiche #1234</BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
@@ -73,7 +73,7 @@ export const WithEllipsis: Story = {
     <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink href="/">Home</BreadcrumbLink>
+          <BreadcrumbLink href="/">Startseite</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
@@ -109,15 +109,15 @@ export const CustomSeparator: Story = {
     <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink href="/">Home</BreadcrumbLink>
+          <BreadcrumbLink href="/">Startseite</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator>/</BreadcrumbSeparator>
         <BreadcrumbItem>
-          <BreadcrumbLink href="/vehicles">Vehicles</BreadcrumbLink>
+          <BreadcrumbLink href="/vehicles">Fahrzeuge</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator>/</BreadcrumbSeparator>
         <BreadcrumbItem>
-          <BreadcrumbPage>Water Truck 1</BreadcrumbPage>
+          <BreadcrumbPage>Gießfahrzeug 1</BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
@@ -135,15 +135,15 @@ export const TreeDetailPath: Story = {
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbLink href="/trees">Trees</BreadcrumbLink>
+          <BreadcrumbLink href="/trees">Bäume</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbLink href="/trees?region=north">North Region</BreadcrumbLink>
+          <BreadcrumbLink href="/trees?region=north">Region Nord</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbPage>Oak Tree #1234</BreadcrumbPage>
+          <BreadcrumbPage>Eiche #1234</BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
@@ -159,11 +159,11 @@ export const WateringPlanPath: Story = {
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbLink href="/watering">Watering Plans</BreadcrumbLink>
+          <BreadcrumbLink href="/watering">Bewässerungspläne</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbLink href="/watering/active">Active Plans</BreadcrumbLink>
+          <BreadcrumbLink href="/watering/active">Aktive Pläne</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
