@@ -1,6 +1,7 @@
 package config
 
 import (
+	"flag"
 	"log/slog"
 	"reflect"
 	"strconv"
@@ -11,9 +12,11 @@ import (
 )
 
 func InitViper() (*Config, error) {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath("./config")
+	configPath := flag.String("config", "./config/config.yaml", "path to configuratione file")
+	flag.Parse()
+
+	viper.SetConfigFile(*configPath)
+
 	viper.SetEnvPrefix("GE")
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))

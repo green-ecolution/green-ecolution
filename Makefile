@@ -119,7 +119,7 @@ build/windows:
 .PHONY: run
 run: build/backend
 	@echo "Running backend..."
-	./bin/$(BINARY_NAME)
+	./bin/$(BINARY_NAME) -config ./backend/config/config.yaml
 
 .PHONY: run/live
 run/live:
