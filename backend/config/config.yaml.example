@@ -22,7 +22,10 @@ auth:
     auth_url: https://auth.green-ecolution.de/realms/green-ecolution-dev/protocol/openid-connect/auth
     token_url: https://auth.green-ecolution.de/realms/green-ecolution-dev/protocol/openid-connect/token
     public_key:
-      static: secret_secret_secret
+      static: ""  # Base64-encoded RSA public key (fallback, leave empty to use JWKS only)
+      jwks_url: ""  # Optional: Direct JWKS URL (overrides auto-discovery from base_url/domain_name)
+      refresh_interval: 15m  # JWKS cache refresh interval
+      refresh_timeout: 10s  # HTTP timeout for JWKS fetch
     frontend:
       client_id: green-ecolution-frontend
       client_secret: secret_secret_secret
