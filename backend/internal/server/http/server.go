@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/middleware"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 
 	"github.com/gofiber/fiber/v2"
@@ -68,6 +69,10 @@ func (s *Server) Run(ctx context.Context) error {
 	go func() {
 		<-ctx.Done()
 		slog.Info("shutting down http server")
+
+		// Close JWKS provider to stop background refresh
+		middleware.CloseJWKSProvider()
+
 		if err := app.Shutdown(); err != nil {
 			slog.Error("error while shutting down http server", "error", err, "service", "fiber")
 		}
