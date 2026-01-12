@@ -14,7 +14,7 @@
             "name": "AGPL",
             "url": "https://raw.githubusercontent.com/green-ecolution/green-ecolution/develop/LICENSE"
         },
-        "version": "v1.2.0-37-g1c5af7f8-stage"
+        "version": "v0.1.1-1237e5c-stage"
     },
     "host": "app.stage.green-ecolution.de",
     "basePath": "/api",
@@ -3176,7 +3176,8 @@
                     "items": {
                         "type": "array",
                         "items": {
-                            "type": "number"
+                            "type": "number",
+                            "format": "float64"
                         }
                     }
                 },
@@ -3491,7 +3492,6 @@
                 "latest_data",
                 "latitude",
                 "longitude",
-                "provider",
                 "status",
                 "updated_at"
             ],
@@ -3670,7 +3670,6 @@
                 "longitude",
                 "number",
                 "planting_year",
-                "provider",
                 "species",
                 "updated_at",
                 "watering_status"
@@ -3736,7 +3735,6 @@
                 "longitude",
                 "moisture_level",
                 "name",
-                "provider",
                 "soil_condition",
                 "updated_at",
                 "watering_status"
@@ -3848,7 +3846,6 @@
                 "longitude",
                 "moisture_level",
                 "name",
-                "provider",
                 "soil_condition",
                 "updated_at",
                 "watering_status"
@@ -4152,13 +4149,10 @@
         "UserRegister": {
             "type": "object",
             "required": [
-                "avatar_url",
                 "email",
-                "employee_id",
                 "first_name",
                 "last_name",
                 "password",
-                "phone_number",
                 "roles",
                 "username"
             ],
@@ -4226,7 +4220,6 @@
         "Vehicle": {
             "type": "object",
             "required": [
-                "archived_at",
                 "created_at",
                 "description",
                 "driving_license",
@@ -4235,7 +4228,6 @@
                 "length",
                 "model",
                 "number_plate",
-                "provider",
                 "status",
                 "type",
                 "updated_at",
@@ -4486,7 +4478,6 @@
                 "evaluation",
                 "gpx_url",
                 "id",
-                "provider",
                 "refill_count",
                 "status",
                 "total_water_required",
@@ -4617,7 +4608,6 @@
                 "description",
                 "distance",
                 "id",
-                "provider",
                 "status",
                 "total_water_required",
                 "transporter",

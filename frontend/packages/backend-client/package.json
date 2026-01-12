@@ -1,6 +1,6 @@
 {
   "name": "@green-ecolution/backend-client",
-  "version": "v1.2.0-37-g1c5af7f8-stage",
+  "version": "v0.1.1-1237e5c-stage",
   "description": "api client for the Green Ecolution backend",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
