@@ -2,20 +2,21 @@ package middleware
 
 import (
 	"context"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/base64"
+	"log/slog"
 
 	contribJwt "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	golangJwt "github.com/golang-jwt/jwt/v5"
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/errorhandler"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/middleware/jwks"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/wrapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils/enums"
-	"github.com/pkg/errors"
 )
+
+// jwksProvider holds the JWKS provider instance for cleanup on shutdown
+var jwksProvider *jwks.Provider
 
 func NewJWTMiddleware(cfg *config.IdentityAuthConfig, svc service.AuthService) fiber.Handler {
 	if !cfg.Enable {
@@ -26,19 +27,20 @@ func NewJWTMiddleware(cfg *config.IdentityAuthConfig, svc service.AuthService) f
 		}
 	}
 
-	base64Str := cfg.OidcProvider.PublicKey.StaticKey
-	publicKey, err := parsePublicKey(base64Str)
+	// Initialize JWKS provider
+	provider, err := jwks.NewProvider(cfg)
 	if err != nil {
+		slog.Error("failed to initialize JWKS provider", "error", err)
 		return func(c *fiber.Ctx) error {
-			return c.Status(fiber.StatusInternalServerError).SendString("failed to parse public key")
+			return c.Status(fiber.StatusInternalServerError).SendString("failed to initialize authentication")
 		}
 	}
 
+	// Store for cleanup on shutdown
+	jwksProvider = provider
+
 	return contribJwt.New(contribJwt.Config{
-		SigningKey: contribJwt.SigningKey{
-			JWTAlg: contribJwt.RS256,
-			Key:    publicKey,
-		},
+		KeyFunc: provider.Keyfunc,
 		SuccessHandler: func(c *fiber.Ctx) error {
 			return successHandler(c, svc)
 		},
@@ -49,23 +51,11 @@ func NewJWTMiddleware(cfg *config.IdentityAuthConfig, svc service.AuthService) f
 	})
 }
 
-func parsePublicKey(base64Str string) (*rsa.PublicKey, error) {
-	buf, err := base64.StdEncoding.DecodeString(base64Str)
-	if err != nil {
-		return nil, err
+// CloseJWKSProvider should be called on application shutdown to stop background refresh
+func CloseJWKSProvider() {
+	if jwksProvider != nil {
+		jwksProvider.Close()
 	}
-
-	parsedKey, err := x509.ParsePKIXPublicKey(buf)
-	if err != nil {
-		return nil, err
-	}
-
-	publicKey, ok := parsedKey.(*rsa.PublicKey)
-	if !ok {
-		return nil, errors.New("failed to parse public key")
-	}
-
-	return publicKey, nil
 }
 
 func successHandler(c *fiber.Ctx, svc service.AuthService) error {

@@ -1,5 +1,7 @@
 package config
 
+import "time"
+
 type OidcProvider struct {
 	BaseURL    string        `mapstructure:"base_url"`
 	DomainName string        `mapstructure:"domain_name"`
@@ -11,7 +13,10 @@ type OidcProvider struct {
 }
 
 type OidcPublicKey struct {
-	StaticKey string `mapstructure:"static"`
+	StaticKey       string        `mapstructure:"static"`
+	JwksURL         string        `mapstructure:"jwks_url"`
+	RefreshInterval time.Duration `mapstructure:"refresh_interval"`
+	RefreshTimeout  time.Duration `mapstructure:"refresh_timeout"`
 }
 
 type OidcClient struct {
