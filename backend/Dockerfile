@@ -42,7 +42,6 @@ RUN CGO_ENABLED=1 go build -o "bin/green-ecolution" \
 FROM alpine:3.23 AS runner
 
 EXPOSE 3000
-ARG ENV="stage"
 
 RUN adduser -D gorunner
 RUN apk add --no-cache geos proj curl
@@ -50,7 +49,6 @@ RUN apk add --no-cache geos proj curl
 USER gorunner
 WORKDIR /app
 
-COPY --chown=gorunner:gorunner --from=builder /app/build/config/config.default.yaml /app/config/config.${ENV}.yaml
 COPY --chown=gorunner:gorunner --from=builder /app/build/bin/green-ecolution /app/backend
 
 ENTRYPOINT [ "/app/backend" ]

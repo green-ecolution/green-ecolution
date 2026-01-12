@@ -62,8 +62,8 @@ type RoutingVroomConfig struct {
 }
 
 type MapConfig struct {
-	Center [2]float64 `mapstructure:"center"`
-	BBox   [4]float64 `mapstructure:"bbox"`
+	Center []float64 `mapstructure:"center"`
+	BBox   []float64 `mapstructure:"bbox"`
 }
 
 type S3Config struct {

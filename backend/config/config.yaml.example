@@ -4,7 +4,7 @@ dashboard:
 server:
   port: 3000
   development: false
-  app_url: http://localhost:3030
+  app_url: http://localhost:3000
   logs:
     level: info
     format: text

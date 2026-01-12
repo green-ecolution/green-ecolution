@@ -106,13 +106,13 @@ func (c *InfoHTTPMapperImpl) entitiesGitToEntitiesGitResponse(source entities.Gi
 }
 func (c *InfoHTTPMapperImpl) entitiesMapResponseToEntitiesMap(source entities1.MapResponse) entities.Map {
 	var entitiesMap entities.Map
-	entitiesMap.Center = mapper.MapCenter(source.Center)
+	entitiesMap.Center = mapper.MapBbox(source.Center)
 	entitiesMap.BBox = mapper.MapBbox(source.BBox)
 	return entitiesMap
 }
 func (c *InfoHTTPMapperImpl) entitiesMapToEntitiesMapResponse(source entities.Map) entities1.MapResponse {
 	var entitiesMapResponse entities1.MapResponse
-	entitiesMapResponse.Center = mapper.MapCenter(source.Center)
+	entitiesMapResponse.Center = mapper.MapBbox(source.Center)
 	entitiesMapResponse.BBox = mapper.MapBbox(source.BBox)
 	return entitiesMapResponse
 }

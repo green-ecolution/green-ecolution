@@ -79,8 +79,7 @@ func main() {
 	logg := logger.CreateLogger(os.Stdout, "console", cfg.Server.Logs.Level)
 	slog.SetDefault(logg())
 
-	osEnv := os.Getenv("ENV")
-	slog.Info("starting green ecolution Server", "version", version, "debug_mode", cfg.Server.Development, "env", osEnv)
+	slog.Info("starting green ecolution Server", "version", version, "debug_mode", cfg.Server.Development)
 
 	setSwaggerInfo(cfg.Server.AppURL)
 

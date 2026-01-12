@@ -3,7 +3,6 @@ services:
     build:
       context: ./backend/
       args:
-        - ENV=docker
         - APP_VERSION=${APP_VERSION:-$(git describe --tags --always --dirty)}
         - APP_GIT_COMMIT=${APP_GIT_COMMIT:-$(git rev-parse --short HEAD)}
         - APP_GIT_BRANCH=${APP_GIT_BRANCH:-$(git rev-parse --abbrev-ref HEAD)}
@@ -21,7 +20,6 @@ services:
       timeout: 5s
       retries: 10
     environment:
-      - ENV=docker
       - GE_SERVER_APP_URL=http://localhost:3000
       - GE_SERVER_PORT=3000
       - GE_SERVER_DATABASE_HOST=db
@@ -53,11 +51,14 @@ services:
       - GE_S3_ENDPOINT=s3.localhost:3000
       - GE_S3_REGION=us-east-1
       - GE_S3_USE_SSL=false
-      - GE_S3_ROUTE-GPX_BUCKET=${S3_ROUTE_BUCKET:-gpx-routes}
-      - GE_S3_ROUTE-GPX_ACCESSKEY=${S3_ACCESS_KEY:-root}
-      - GE_S3_ROUTE-GPX_SECRETACCESSKEY=${S3_SECRET_KEY:-secret1234}
+      - GE_S3_ROUTE_GPX_BUCKET=${S3_ROUTE_BUCKET:-gpx-routes}
+      - GE_S3_ROUTE_GPX_ACCESSKEY=${S3_ACCESS_KEY:-root}
+      - GE_S3_ROUTE_GPX_SECRETACCESSKEY=${S3_SECRET_KEY:-secret1234}
 
       - GE_MQTT_ENABLE=false
+
+      - GE_MAP_CENTER=54.792277136221905,9.43580607453268
+      - GE_MAP_BBOX=54.714822,9.285796,54.860127,9.583800
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`localhost`) && PathPrefix(`/api`)"
