@@ -18,7 +18,7 @@ var (
 )
 
 // @Summary		Get all vehicles
-// @Description	Get all vehicles
+// @Description	Retrieves a paginated list of all vehicles. Supports filtering by type, provider, and archive status.
 // @Id				get-all-vehicles
 // @Tags			Vehicle
 // @Produce		json
@@ -26,14 +26,13 @@ var (
 // @Failure		400	{object}	HTTPError
 // @Failure		401	{object}	HTTPError
 // @Failure		403	{object}	HTTPError
-// @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/vehicle [get]
-// @Param			page		query	int		false	"Page"
-// @Param			limit		query	int		false	"Limit"
-// @Param			type		query	string	false	"Vehicle Type"
-// @Param			provider	query	string	false	"Provider"
-// @Param			archived	query	bool	false	"With archived vehicles"
+// @Param			page		query	int		false	"Page number for pagination"
+// @Param			limit		query	int		false	"Number of items per page"
+// @Param			type		query	string	false	"Filter by vehicle type"
+// @Param			provider	query	string	false	"Filter by data provider"
+// @Param			archived	query	bool	false	"Include archived vehicles"
 // @Security		Keycloak
 func GetAllVehicles(svc service.VehicleService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -67,7 +66,7 @@ func GetAllVehicles(svc service.VehicleService) fiber.Handler {
 }
 
 // @Summary		Get vehicle by ID
-// @Description	Get vehicle by ID
+// @Description	Retrieves detailed information about a specific vehicle including its type and water capacity.
 // @Id				get-vehicle-by-id
 // @Tags			Vehicle
 // @Produce		json
@@ -100,7 +99,7 @@ func GetVehicleByID(svc service.VehicleService) fiber.Handler {
 }
 
 // @Summary		Get vehicle by plate
-// @Description	Get vehicle by plate
+// @Description	Retrieves a vehicle by its license plate number.
 // @Id				get-vehicle-by-plate
 // @Tags			Vehicle
 // @Produce		json
@@ -111,7 +110,7 @@ func GetVehicleByID(svc service.VehicleService) fiber.Handler {
 // @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/vehicle/plate/{plate} [get]
-// @Param			plate	path	string	true	"Vehicle plate number"
+// @Param			plate	path	string	true	"Vehicle license plate number"
 // @Security		Keycloak
 func GetVehicleByPlate(svc service.VehicleService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -133,18 +132,18 @@ func GetVehicleByPlate(svc service.VehicleService) fiber.Handler {
 }
 
 // @Summary		Create vehicle
-// @Description	Create vehicle
+// @Description	Creates a new vehicle with the provided data including type, plate number, and water capacity.
 // @Id				create-vehicle
 // @Tags			Vehicle
+// @Accept			json
 // @Produce		json
 // @Success		201	{object}	entities.VehicleResponse
 // @Failure		400	{object}	HTTPError
 // @Failure		401	{object}	HTTPError
 // @Failure		403	{object}	HTTPError
-// @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/vehicle [post]
-// @Param			body	body	entities.VehicleCreateRequest	true	"Vehicle Create Request"
+// @Param			body	body	entities.VehicleCreateRequest	true	"Vehicle data to create"
 // @Security		Keycloak
 func CreateVehicle(svc service.VehicleService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -167,9 +166,10 @@ func CreateVehicle(svc service.VehicleService) fiber.Handler {
 }
 
 // @Summary		Update vehicle
-// @Description	Update vehicle
+// @Description	Updates an existing vehicle with the provided data.
 // @Id				update-vehicle
 // @Tags			Vehicle
+// @Accept			json
 // @Produce		json
 // @Success		200	{object}	entities.VehicleResponse
 // @Failure		400	{object}	HTTPError
@@ -178,8 +178,8 @@ func CreateVehicle(svc service.VehicleService) fiber.Handler {
 // @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/vehicle/{id} [put]
-// @Param			id		path	string							true	"Vehicle ID"
-// @Param			body	body	entities.VehicleUpdateRequest	true	"Vehicle Update Request"
+// @Param			id		path	int								true	"Vehicle ID"
+// @Param			body	body	entities.VehicleUpdateRequest	true	"Vehicle data to update"
 // @Security		Keycloak
 func UpdateVehicle(svc service.VehicleService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -205,16 +205,15 @@ func UpdateVehicle(svc service.VehicleService) fiber.Handler {
 	}
 }
 
-// @Summary		Get archived vehicle
-// @Description	Get archived vehicle
-// @Id				get-archive-vehicle
+// @Summary		Get archived vehicles
+// @Description	Retrieves a list of all archived vehicles.
+// @Id				get-archived-vehicles
 // @Tags			Vehicle
 // @Produce		json
 // @Success		200	{object}	[]entities.VehicleResponse
 // @Failure		400	{object}	HTTPError
 // @Failure		401	{object}	HTTPError
 // @Failure		403	{object}	HTTPError
-// @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/vehicle/archive [get]
 // @Security		Keycloak
@@ -231,7 +230,7 @@ func GetArchiveVehicles(svc service.VehicleService) fiber.Handler {
 }
 
 // @Summary		Archive vehicle
-// @Description	Archive vehicle
+// @Description	Archives a vehicle. Archived vehicles are hidden from the default list but can still be retrieved. Returns 409 if vehicle is in use by active watering plans.
 // @Id				archive-vehicle
 // @Tags			Vehicle
 // @Produce		json
@@ -264,7 +263,7 @@ func ArchiveVehicle(svc service.VehicleService) fiber.Handler {
 }
 
 // @Summary		Delete vehicle
-// @Description	Delete vehicle
+// @Description	Permanently deletes a vehicle. Consider archiving instead if the vehicle might be needed for historical records.
 // @Id				delete-vehicle
 // @Tags			Vehicle
 // @Produce		json

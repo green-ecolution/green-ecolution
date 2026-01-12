@@ -8,7 +8,7 @@ Method | HTTP request | Description
 [**CreateVehicle**](VehicleAPI.md#CreateVehicle) | **Post** /v1/vehicle | Create vehicle
 [**DeleteVehicle**](VehicleAPI.md#DeleteVehicle) | **Delete** /v1/vehicle/{id} | Delete vehicle
 [**GetAllVehicles**](VehicleAPI.md#GetAllVehicles) | **Get** /v1/vehicle | Get all vehicles
-[**GetArchiveVehicle**](VehicleAPI.md#GetArchiveVehicle) | **Get** /v1/vehicle/archive | Get archived vehicle
+[**GetArchivedVehicles**](VehicleAPI.md#GetArchivedVehicles) | **Get** /v1/vehicle/archive | Get archived vehicles
 [**GetVehicleById**](VehicleAPI.md#GetVehicleById) | **Get** /v1/vehicle/{id} | Get vehicle by ID
 [**GetVehicleByPlate**](VehicleAPI.md#GetVehicleByPlate) | **Get** /v1/vehicle/plate/{plate} | Get vehicle by plate
 [**UpdateVehicle**](VehicleAPI.md#UpdateVehicle) | **Put** /v1/vehicle/{id} | Update vehicle
@@ -104,7 +104,7 @@ import (
 )
 
 func main() {
-	body := *openapiclient.NewVehicleCreate("Description_example", openapiclient.DrivingLicense("B"), float32(123), float32(123), "Model_example", "NumberPlate_example", openapiclient.VehicleStatus("active"), openapiclient.VehicleType("transporter"), float32(123), float32(123), float32(123)) // VehicleCreate | Vehicle Create Request
+	body := *openapiclient.NewVehicleCreate("Description_example", openapiclient.DrivingLicense("B"), float32(123), float32(123), "Model_example", "NumberPlate_example", openapiclient.VehicleStatus("active"), openapiclient.VehicleType("transporter"), float32(123), float32(123), float32(123)) // VehicleCreate | Vehicle data to create
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -129,7 +129,7 @@ Other parameters are passed through a pointer to a apiCreateVehicleRequest struc
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**VehicleCreate**](VehicleCreate.md) | Vehicle Create Request | 
+ **body** | [**VehicleCreate**](VehicleCreate.md) | Vehicle data to create | 
 
 ### Return type
 
@@ -141,7 +141,7 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -238,11 +238,11 @@ import (
 )
 
 func main() {
-	page := int32(56) // int32 | Page (optional)
-	limit := int32(56) // int32 | Limit (optional)
-	type_ := "type__example" // string | Vehicle Type (optional)
-	provider := "provider_example" // string | Provider (optional)
-	archived := true // bool | With archived vehicles (optional)
+	page := int32(56) // int32 | Page number for pagination (optional)
+	limit := int32(56) // int32 | Number of items per page (optional)
+	type_ := "type__example" // string | Filter by vehicle type (optional)
+	provider := "provider_example" // string | Filter by data provider (optional)
+	archived := true // bool | Include archived vehicles (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -267,11 +267,11 @@ Other parameters are passed through a pointer to a apiGetAllVehiclesRequest stru
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **page** | **int32** | Page | 
- **limit** | **int32** | Limit | 
- **type_** | **string** | Vehicle Type | 
- **provider** | **string** | Provider | 
- **archived** | **bool** | With archived vehicles | 
+ **page** | **int32** | Page number for pagination | 
+ **limit** | **int32** | Number of items per page | 
+ **type_** | **string** | Filter by vehicle type | 
+ **provider** | **string** | Filter by data provider | 
+ **archived** | **bool** | Include archived vehicles | 
 
 ### Return type
 
@@ -291,11 +291,11 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
-## GetArchiveVehicle
+## GetArchivedVehicles
 
-> []Vehicle GetArchiveVehicle(ctx).Execute()
+> []Vehicle GetArchivedVehicles(ctx).Execute()
 
-Get archived vehicle
+Get archived vehicles
 
 
 
@@ -315,13 +315,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.VehicleAPI.GetArchiveVehicle(context.Background()).Execute()
+	resp, r, err := apiClient.VehicleAPI.GetArchivedVehicles(context.Background()).Execute()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `VehicleAPI.GetArchiveVehicle``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error when calling `VehicleAPI.GetArchivedVehicles``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `GetArchiveVehicle`: []Vehicle
-	fmt.Fprintf(os.Stdout, "Response from `VehicleAPI.GetArchiveVehicle`: %v\n", resp)
+	// response from `GetArchivedVehicles`: []Vehicle
+	fmt.Fprintf(os.Stdout, "Response from `VehicleAPI.GetArchivedVehicles`: %v\n", resp)
 }
 ```
 
@@ -331,7 +331,7 @@ This endpoint does not need any parameter.
 
 ### Other Parameters
 
-Other parameters are passed through a pointer to a apiGetArchiveVehicleRequest struct via the builder pattern
+Other parameters are passed through a pointer to a apiGetArchivedVehiclesRequest struct via the builder pattern
 
 
 ### Return type
@@ -443,7 +443,7 @@ import (
 )
 
 func main() {
-	plate := "plate_example" // string | Vehicle plate number
+	plate := "plate_example" // string | Vehicle license plate number
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -463,7 +463,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**plate** | **string** | Vehicle plate number | 
+**plate** | **string** | Vehicle license plate number | 
 
 ### Other Parameters
 
@@ -513,8 +513,8 @@ import (
 )
 
 func main() {
-	id := "id_example" // string | Vehicle ID
-	body := *openapiclient.NewVehicleUpdate("Description_example", openapiclient.DrivingLicense("B"), float32(123), float32(123), "Model_example", "NumberPlate_example", openapiclient.VehicleStatus("active"), openapiclient.VehicleType("transporter"), float32(123), float32(123), float32(123)) // VehicleUpdate | Vehicle Update Request
+	id := int32(56) // int32 | Vehicle ID
+	body := *openapiclient.NewVehicleUpdate("Description_example", openapiclient.DrivingLicense("B"), float32(123), float32(123), "Model_example", "NumberPlate_example", openapiclient.VehicleStatus("active"), openapiclient.VehicleType("transporter"), float32(123), float32(123), float32(123)) // VehicleUpdate | Vehicle data to update
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -534,7 +534,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**id** | **string** | Vehicle ID | 
+**id** | **int32** | Vehicle ID | 
 
 ### Other Parameters
 
@@ -544,7 +544,7 @@ Other parameters are passed through a pointer to a apiUpdateVehicleRequest struc
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **body** | [**VehicleUpdate**](VehicleUpdate.md) | Vehicle Update Request | 
+ **body** | [**VehicleUpdate**](VehicleUpdate.md) | Vehicle data to update | 
 
 ### Return type
 
@@ -556,7 +556,7 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

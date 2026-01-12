@@ -36,7 +36,7 @@ func (r ApiDeleteSensorRequest) Execute() (*http.Response, error) {
 /*
 DeleteSensor Delete sensor
 
-Delete sensor
+Permanently deletes a sensor and all its associated data readings.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param sensorId Sensor ID
@@ -180,9 +180,9 @@ func (r ApiGetAllSensorDataByIdRequest) Execute() (*SensorDataList, *http.Respon
 }
 
 /*
-GetAllSensorDataById Get all sensor data by id
+GetAllSensorDataById Get all sensor data by ID
 
-Get all sensor data by id
+Retrieves the complete history of data readings for a specific sensor.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param sensorId Sensor ID
@@ -335,19 +335,19 @@ type ApiGetAllSensorsRequest struct {
 	provider   *string
 }
 
-// Page
+// Page number for pagination
 func (r ApiGetAllSensorsRequest) Page(page int32) ApiGetAllSensorsRequest {
 	r.page = &page
 	return r
 }
 
-// Limit
+// Number of items per page
 func (r ApiGetAllSensorsRequest) Limit(limit int32) ApiGetAllSensorsRequest {
 	r.limit = &limit
 	return r
 }
 
-// Provider
+// Filter by data provider
 func (r ApiGetAllSensorsRequest) Provider(provider string) ApiGetAllSensorsRequest {
 	r.provider = &provider
 	return r
@@ -360,7 +360,7 @@ func (r ApiGetAllSensorsRequest) Execute() (*SensorList, *http.Response, error) 
 /*
 GetAllSensors Get all sensors
 
-Get all sensors
+Retrieves a paginated list of all sensors. Supports filtering by provider.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiGetAllSensorsRequest
@@ -475,17 +475,6 @@ func (a *SensorAPIService) GetAllSensorsExecute(r ApiGetAllSensorsRequest) (*Sen
 			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v HTTPError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v HTTPError
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
@@ -524,7 +513,7 @@ func (r ApiGetSensorByIdRequest) Execute() (*Sensor, *http.Response, error) {
 /*
 GetSensorById Get sensor by ID
 
-Get sensor by ID
+Retrieves detailed information about a specific sensor including its latest data readings.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param sensorId Sensor ID

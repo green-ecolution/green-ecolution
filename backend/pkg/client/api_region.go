@@ -23,39 +23,39 @@ import (
 // RegionAPIService RegionAPI service
 type RegionAPIService service
 
-type ApiV1RegionGetRequest struct {
+type ApiGetAllRegionsRequest struct {
 	ctx        context.Context
 	ApiService *RegionAPIService
 	page       *int32
 	limit      *int32
 }
 
-// Page
-func (r ApiV1RegionGetRequest) Page(page int32) ApiV1RegionGetRequest {
+// Page number for pagination
+func (r ApiGetAllRegionsRequest) Page(page int32) ApiGetAllRegionsRequest {
 	r.page = &page
 	return r
 }
 
-// Limit
-func (r ApiV1RegionGetRequest) Limit(limit int32) ApiV1RegionGetRequest {
+// Number of items per page
+func (r ApiGetAllRegionsRequest) Limit(limit int32) ApiGetAllRegionsRequest {
 	r.limit = &limit
 	return r
 }
 
-func (r ApiV1RegionGetRequest) Execute() (*RegionList, *http.Response, error) {
-	return r.ApiService.V1RegionGetExecute(r)
+func (r ApiGetAllRegionsRequest) Execute() (*RegionList, *http.Response, error) {
+	return r.ApiService.GetAllRegionsExecute(r)
 }
 
 /*
-V1RegionGet Get all regions
+GetAllRegions Get all regions
 
-Get all regions
+Retrieves a list of all available regions for tree cluster assignment.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiV1RegionGetRequest
+	@return ApiGetAllRegionsRequest
 */
-func (a *RegionAPIService) V1RegionGet(ctx context.Context) ApiV1RegionGetRequest {
-	return ApiV1RegionGetRequest{
+func (a *RegionAPIService) GetAllRegions(ctx context.Context) ApiGetAllRegionsRequest {
+	return ApiGetAllRegionsRequest{
 		ApiService: a,
 		ctx:        ctx,
 	}
@@ -64,7 +64,7 @@ func (a *RegionAPIService) V1RegionGet(ctx context.Context) ApiV1RegionGetReques
 // Execute executes the request
 //
 //	@return RegionList
-func (a *RegionAPIService) V1RegionGetExecute(r ApiV1RegionGetRequest) (*RegionList, *http.Response, error) {
+func (a *RegionAPIService) GetAllRegionsExecute(r ApiGetAllRegionsRequest) (*RegionList, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
@@ -72,7 +72,7 @@ func (a *RegionAPIService) V1RegionGetExecute(r ApiV1RegionGetRequest) (*RegionL
 		localVarReturnValue *RegionList
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "RegionAPIService.V1RegionGet")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "RegionAPIService.GetAllRegions")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -139,6 +139,28 @@ func (a *RegionAPIService) V1RegionGetExecute(r ApiV1RegionGetRequest) (*RegionL
 			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v HTTPError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v HTTPError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v HTTPError
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
@@ -164,27 +186,27 @@ func (a *RegionAPIService) V1RegionGetExecute(r ApiV1RegionGetRequest) (*RegionL
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiV1RegionIdGetRequest struct {
+type ApiGetRegionByIdRequest struct {
 	ctx        context.Context
 	ApiService *RegionAPIService
-	id         string
+	id         int32
 }
 
-func (r ApiV1RegionIdGetRequest) Execute() (*Region, *http.Response, error) {
-	return r.ApiService.V1RegionIdGetExecute(r)
+func (r ApiGetRegionByIdRequest) Execute() (*Region, *http.Response, error) {
+	return r.ApiService.GetRegionByIdExecute(r)
 }
 
 /*
-V1RegionIdGet Get a region by ID
+GetRegionById Get a region by ID
 
-Get a region by ID
+Retrieves detailed information about a specific region.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param id Region ID
-	@return ApiV1RegionIdGetRequest
+	@return ApiGetRegionByIdRequest
 */
-func (a *RegionAPIService) V1RegionIdGet(ctx context.Context, id string) ApiV1RegionIdGetRequest {
-	return ApiV1RegionIdGetRequest{
+func (a *RegionAPIService) GetRegionById(ctx context.Context, id int32) ApiGetRegionByIdRequest {
+	return ApiGetRegionByIdRequest{
 		ApiService: a,
 		ctx:        ctx,
 		id:         id,
@@ -194,7 +216,7 @@ func (a *RegionAPIService) V1RegionIdGet(ctx context.Context, id string) ApiV1Re
 // Execute executes the request
 //
 //	@return Region
-func (a *RegionAPIService) V1RegionIdGetExecute(r ApiV1RegionIdGetRequest) (*Region, *http.Response, error) {
+func (a *RegionAPIService) GetRegionByIdExecute(r ApiGetRegionByIdRequest) (*Region, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
@@ -202,7 +224,7 @@ func (a *RegionAPIService) V1RegionIdGetExecute(r ApiV1RegionIdGetRequest) (*Reg
 		localVarReturnValue *Region
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "RegionAPIService.V1RegionIdGet")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "RegionAPIService.GetRegionById")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -254,6 +276,28 @@ func (a *RegionAPIService) V1RegionIdGetExecute(r ApiV1RegionIdGetRequest) (*Reg
 			error: localVarHTTPResponse.Status,
 		}
 		if localVarHTTPResponse.StatusCode == 400 {
+			var v HTTPError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v HTTPError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
 			var v HTTPError
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {

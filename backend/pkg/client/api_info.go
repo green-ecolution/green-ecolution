@@ -32,9 +32,9 @@ func (r ApiGetAppInfoRequest) Execute() (*AppInfo, *http.Response, error) {
 }
 
 /*
-GetAppInfo Get info about the app
+GetAppInfo Get application info
 
-Get info about the app and the server
+Retrieves information about the application including version, server configuration, and map settings.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiGetAppInfoRequest
@@ -130,17 +130,6 @@ func (a *InfoAPIService) GetAppInfoExecute(r ApiGetAppInfoRequest) (*AppInfo, *h
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 403 {
-			var v HTTPError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
 			var v HTTPError
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {

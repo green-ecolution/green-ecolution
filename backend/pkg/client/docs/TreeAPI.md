@@ -7,7 +7,7 @@ Method | HTTP request | Description
 [**CreateTree**](TreeAPI.md#CreateTree) | **Post** /v1/tree | Create tree
 [**DeleteTree**](TreeAPI.md#DeleteTree) | **Delete** /v1/tree/{tree_id} | Delete tree
 [**GetAllTrees**](TreeAPI.md#GetAllTrees) | **Get** /v1/tree | Get all trees
-[**GetTrees**](TreeAPI.md#GetTrees) | **Get** /v1/tree/{tree_id} | Get tree by ID
+[**GetTreeById**](TreeAPI.md#GetTreeById) | **Get** /v1/tree/{tree_id} | Get tree by ID
 [**UpdateTree**](TreeAPI.md#UpdateTree) | **Put** /v1/tree/{tree_id} | Update tree
 
 
@@ -33,7 +33,7 @@ import (
 )
 
 func main() {
-	body := *openapiclient.NewTreeCreate("Description_example", float32(123), float32(123), "Number_example", int32(123), "Species_example") // TreeCreate | Tree to create
+	body := *openapiclient.NewTreeCreate("Description_example", float32(123), float32(123), "Number_example", int32(123), "Species_example") // TreeCreate | Tree data to create
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -58,7 +58,7 @@ Other parameters are passed through a pointer to a apiCreateTreeRequest struct v
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**TreeCreate**](TreeCreate.md) | Tree to create | 
+ **body** | [**TreeCreate**](TreeCreate.md) | Tree data to create | 
 
 ### Return type
 
@@ -70,7 +70,7 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -167,12 +167,12 @@ import (
 )
 
 func main() {
-	page := int32(56) // int32 | Page (optional)
-	limit := int32(56) // int32 | Limit (optional)
-	provider := "provider_example" // string | Provider (optional)
-	wateringStatuses := []string{"Inner_example"} // []string | watering status (good, moderate, bad) (optional)
-	plantingYears := []int32{int32(123)} // []int32 | planting_years (optional)
-	hasCluster := true // bool | has cluster (optional)
+	page := int32(56) // int32 | Page number for pagination (optional)
+	limit := int32(56) // int32 | Number of items per page (optional)
+	provider := "provider_example" // string | Filter by data provider (optional)
+	wateringStatuses := []string{"Inner_example"} // []string | Filter by watering status (good, moderate, bad) (optional)
+	plantingYears := []int32{int32(123)} // []int32 | Filter by planting years (optional)
+	hasCluster := true // bool | Filter trees that belong to a cluster (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -197,12 +197,12 @@ Other parameters are passed through a pointer to a apiGetAllTreesRequest struct 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **page** | **int32** | Page | 
- **limit** | **int32** | Limit | 
- **provider** | **string** | Provider | 
- **wateringStatuses** | **[]string** | watering status (good, moderate, bad) | 
- **plantingYears** | **[]int32** | planting_years | 
- **hasCluster** | **bool** | has cluster | 
+ **page** | **int32** | Page number for pagination | 
+ **limit** | **int32** | Number of items per page | 
+ **provider** | **string** | Filter by data provider | 
+ **wateringStatuses** | **[]string** | Filter by watering status (good, moderate, bad) | 
+ **plantingYears** | **[]int32** | Filter by planting years | 
+ **hasCluster** | **bool** | Filter trees that belong to a cluster | 
 
 ### Return type
 
@@ -222,9 +222,9 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
-## GetTrees
+## GetTreeById
 
-> Tree GetTrees(ctx, treeId).Execute()
+> Tree GetTreeById(ctx, treeId).Execute()
 
 Get tree by ID
 
@@ -247,13 +247,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.TreeAPI.GetTrees(context.Background(), treeId).Execute()
+	resp, r, err := apiClient.TreeAPI.GetTreeById(context.Background(), treeId).Execute()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `TreeAPI.GetTrees``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error when calling `TreeAPI.GetTreeById``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `GetTrees`: Tree
-	fmt.Fprintf(os.Stdout, "Response from `TreeAPI.GetTrees`: %v\n", resp)
+	// response from `GetTreeById`: Tree
+	fmt.Fprintf(os.Stdout, "Response from `TreeAPI.GetTreeById`: %v\n", resp)
 }
 ```
 
@@ -267,7 +267,7 @@ Name | Type | Description  | Notes
 
 ### Other Parameters
 
-Other parameters are passed through a pointer to a apiGetTreesRequest struct via the builder pattern
+Other parameters are passed through a pointer to a apiGetTreeByIdRequest struct via the builder pattern
 
 
 Name | Type | Description  | Notes
@@ -314,7 +314,7 @@ import (
 
 func main() {
 	treeId := int32(56) // int32 | Tree ID
-	body := *openapiclient.NewTreeUpdate("Description_example", float32(123), float32(123), "Number_example", int32(123), "Species_example") // TreeUpdate | Tree to update
+	body := *openapiclient.NewTreeUpdate("Description_example", float32(123), float32(123), "Number_example", int32(123), "Species_example") // TreeUpdate | Tree data to update
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -344,7 +344,7 @@ Other parameters are passed through a pointer to a apiUpdateTreeRequest struct v
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **body** | [**TreeUpdate**](TreeUpdate.md) | Tree to update | 
+ **body** | [**TreeUpdate**](TreeUpdate.md) | Tree data to update | 
 
 ### Return type
 
@@ -356,7 +356,7 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

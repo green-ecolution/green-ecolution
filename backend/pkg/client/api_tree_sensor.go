@@ -36,7 +36,7 @@ func (r ApiGetTreeBySensorIdRequest) Execute() (*Tree, *http.Response, error) {
 /*
 GetTreeBySensorId Get tree by sensor ID
 
-Get tree by sensor ID
+Retrieves the tree associated with a specific sensor. Useful for looking up tree information from sensor data.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param sensorId Sensor ID

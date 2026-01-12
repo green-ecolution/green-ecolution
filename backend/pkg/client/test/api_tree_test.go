@@ -59,13 +59,13 @@ func Test_client_TreeAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test TreeAPIService GetTrees", func(t *testing.T) {
+	t.Run("Test TreeAPIService GetTreeById", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
 
 		var treeId int32
 
-		resp, httpRes, err := apiClient.TreeAPI.GetTrees(context.Background(), treeId).Execute()
+		resp, httpRes, err := apiClient.TreeAPI.GetTreeById(context.Background(), treeId).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)

@@ -72,11 +72,11 @@ func Test_client_VehicleAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test VehicleAPIService GetArchiveVehicle", func(t *testing.T) {
+	t.Run("Test VehicleAPIService GetArchivedVehicles", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
 
-		resp, httpRes, err := apiClient.VehicleAPI.GetArchiveVehicle(context.Background()).Execute()
+		resp, httpRes, err := apiClient.VehicleAPI.GetArchivedVehicles(context.Background()).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)
@@ -116,7 +116,7 @@ func Test_client_VehicleAPIService(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
 
-		var id string
+		var id int32
 
 		resp, httpRes, err := apiClient.VehicleAPI.UpdateVehicle(context.Background(), id).Execute()
 

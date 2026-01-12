@@ -81,23 +81,23 @@ All URIs are relative to *http://localhost*
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *EvaluationAPI* | [**GetEvaluation**](docs/EvaluationAPI.md#getevaluation) | **Get** /v1/evaluation | Get evaluation data
-*InfoAPI* | [**GetAppInfo**](docs/InfoAPI.md#getappinfo) | **Get** /v1/info | Get info about the app
-*PluginAPI* | [**GetPluginInfo**](docs/PluginAPI.md#getplugininfo) | **Get** /v1/plugin/{plugin_slug} | Get a plugin info
-*PluginAPI* | [**GetPluginsList**](docs/PluginAPI.md#getpluginslist) | **Get** /v1/plugin | Get a list of all registered plugins
-*PluginAPI* | [**PluginHeartbeat**](docs/PluginAPI.md#pluginheartbeat) | **Post** /v1/plugin/{plugin_slug}/heartbeat | Heartbeat for a plugin
+*InfoAPI* | [**GetAppInfo**](docs/InfoAPI.md#getappinfo) | **Get** /v1/info | Get application info
+*PluginAPI* | [**GetPluginInfo**](docs/PluginAPI.md#getplugininfo) | **Get** /v1/plugin/{plugin_slug} | Get plugin info
+*PluginAPI* | [**GetPluginsList**](docs/PluginAPI.md#getpluginslist) | **Get** /v1/plugin | Get all registered plugins
+*PluginAPI* | [**PluginHeartbeat**](docs/PluginAPI.md#pluginheartbeat) | **Post** /v1/plugin/{plugin_slug}/heartbeat | Plugin heartbeat
 *PluginAPI* | [**RefreshPluginToken**](docs/PluginAPI.md#refreshplugintoken) | **Post** /v1/plugin/{plugin_slug}/token/refresh | Refresh plugin token
 *PluginAPI* | [**RegisterPlugin**](docs/PluginAPI.md#registerplugin) | **Post** /v1/plugin | Register a plugin
 *PluginAPI* | [**UnregisterPlugin**](docs/PluginAPI.md#unregisterplugin) | **Post** /v1/plugin/{plugin_slug}/unregister | Unregister a plugin
-*RegionAPI* | [**V1RegionGet**](docs/RegionAPI.md#v1regionget) | **Get** /v1/region | Get all regions
-*RegionAPI* | [**V1RegionIdGet**](docs/RegionAPI.md#v1regionidget) | **Get** /v1/region/{id} | Get a region by ID
+*RegionAPI* | [**GetAllRegions**](docs/RegionAPI.md#getallregions) | **Get** /v1/region | Get all regions
+*RegionAPI* | [**GetRegionById**](docs/RegionAPI.md#getregionbyid) | **Get** /v1/region/{id} | Get a region by ID
 *SensorAPI* | [**DeleteSensor**](docs/SensorAPI.md#deletesensor) | **Delete** /v1/sensor/{sensor_id} | Delete sensor
-*SensorAPI* | [**GetAllSensorDataById**](docs/SensorAPI.md#getallsensordatabyid) | **Get** /v1/sensor/data/{sensor_id} | Get all sensor data by id
+*SensorAPI* | [**GetAllSensorDataById**](docs/SensorAPI.md#getallsensordatabyid) | **Get** /v1/sensor/data/{sensor_id} | Get all sensor data by ID
 *SensorAPI* | [**GetAllSensors**](docs/SensorAPI.md#getallsensors) | **Get** /v1/sensor | Get all sensors
 *SensorAPI* | [**GetSensorById**](docs/SensorAPI.md#getsensorbyid) | **Get** /v1/sensor/{sensor_id} | Get sensor by ID
 *TreeAPI* | [**CreateTree**](docs/TreeAPI.md#createtree) | **Post** /v1/tree | Create tree
 *TreeAPI* | [**DeleteTree**](docs/TreeAPI.md#deletetree) | **Delete** /v1/tree/{tree_id} | Delete tree
 *TreeAPI* | [**GetAllTrees**](docs/TreeAPI.md#getalltrees) | **Get** /v1/tree | Get all trees
-*TreeAPI* | [**GetTrees**](docs/TreeAPI.md#gettrees) | **Get** /v1/tree/{tree_id} | Get tree by ID
+*TreeAPI* | [**GetTreeById**](docs/TreeAPI.md#gettreebyid) | **Get** /v1/tree/{tree_id} | Get tree by ID
 *TreeAPI* | [**UpdateTree**](docs/TreeAPI.md#updatetree) | **Put** /v1/tree/{tree_id} | Update tree
 *TreeClusterAPI* | [**CreateTreeCluster**](docs/TreeClusterAPI.md#createtreecluster) | **Post** /v1/cluster | Create tree cluster
 *TreeClusterAPI* | [**DeleteTreeCluster**](docs/TreeClusterAPI.md#deletetreecluster) | **Delete** /v1/cluster/{cluster_id} | Delete tree cluster
@@ -107,26 +107,26 @@ Class | Method | HTTP request | Description
 *TreeSensorAPI* | [**GetTreeBySensorId**](docs/TreeSensorAPI.md#gettreebysensorid) | **Get** /v1/tree/sensor/{sensor_id} | Get tree by sensor ID
 *UserAPI* | [**GetAllUsers**](docs/UserAPI.md#getallusers) | **Get** /v1/user | Get all users
 *UserAPI* | [**GetUsersByRole**](docs/UserAPI.md#getusersbyrole) | **Get** /v1/user/role/{role} | Get users by role
-*UserAPI* | [**V1UserLoginGet**](docs/UserAPI.md#v1userloginget) | **Get** /v1/user/login | Request to login
-*UserAPI* | [**V1UserLoginTokenPost**](docs/UserAPI.md#v1userlogintokenpost) | **Post** /v1/user/login/token | Validate login code and request a access token
-*UserAPI* | [**V1UserLogoutPost**](docs/UserAPI.md#v1userlogoutpost) | **Post** /v1/user/logout | Logout from the system
-*UserAPI* | [**V1UserPost**](docs/UserAPI.md#v1userpost) | **Post** /v1/user | Register a new user
-*UserAPI* | [**V1UserTokenRefreshPost**](docs/UserAPI.md#v1usertokenrefreshpost) | **Post** /v1/user/token/refresh | Refresh token
+*UserAPI* | [**Login**](docs/UserAPI.md#login) | **Get** /v1/user/login | Request to login
+*UserAPI* | [**Logout**](docs/UserAPI.md#logout) | **Post** /v1/user/logout | Logout from the system
+*UserAPI* | [**RefreshToken**](docs/UserAPI.md#refreshtoken) | **Post** /v1/user/token/refresh | Refresh token
+*UserAPI* | [**RegisterUser**](docs/UserAPI.md#registeruser) | **Post** /v1/user | Register a new user
+*UserAPI* | [**RequestToken**](docs/UserAPI.md#requesttoken) | **Post** /v1/user/login/token | Request access token
 *VehicleAPI* | [**ArchiveVehicle**](docs/VehicleAPI.md#archivevehicle) | **Post** /v1/vehicle/archive/{id} | Archive vehicle
 *VehicleAPI* | [**CreateVehicle**](docs/VehicleAPI.md#createvehicle) | **Post** /v1/vehicle | Create vehicle
 *VehicleAPI* | [**DeleteVehicle**](docs/VehicleAPI.md#deletevehicle) | **Delete** /v1/vehicle/{id} | Delete vehicle
 *VehicleAPI* | [**GetAllVehicles**](docs/VehicleAPI.md#getallvehicles) | **Get** /v1/vehicle | Get all vehicles
-*VehicleAPI* | [**GetArchiveVehicle**](docs/VehicleAPI.md#getarchivevehicle) | **Get** /v1/vehicle/archive | Get archived vehicle
+*VehicleAPI* | [**GetArchivedVehicles**](docs/VehicleAPI.md#getarchivedvehicles) | **Get** /v1/vehicle/archive | Get archived vehicles
 *VehicleAPI* | [**GetVehicleById**](docs/VehicleAPI.md#getvehiclebyid) | **Get** /v1/vehicle/{id} | Get vehicle by ID
 *VehicleAPI* | [**GetVehicleByPlate**](docs/VehicleAPI.md#getvehiclebyplate) | **Get** /v1/vehicle/plate/{plate} | Get vehicle by plate
 *VehicleAPI* | [**UpdateVehicle**](docs/VehicleAPI.md#updatevehicle) | **Put** /v1/vehicle/{id} | Update vehicle
+*WateringPlanAPI* | [**CreatePreviewRoute**](docs/WateringPlanAPI.md#createpreviewroute) | **Post** /v1/watering-plan/route/preview | Generate preview route
 *WateringPlanAPI* | [**CreateWateringPlan**](docs/WateringPlanAPI.md#createwateringplan) | **Post** /v1/watering-plan | Create watering plan
 *WateringPlanAPI* | [**DeleteWateringPlan**](docs/WateringPlanAPI.md#deletewateringplan) | **Delete** /v1/watering-plan/{id} | Delete watering plan
 *WateringPlanAPI* | [**GetAllWateringPlans**](docs/WateringPlanAPI.md#getallwateringplans) | **Get** /v1/watering-plan | Get all watering plans
+*WateringPlanAPI* | [**GetGpxFile**](docs/WateringPlanAPI.md#getgpxfile) | **Get** /v1/watering-plan/route/gpx/{gpx_name} | Download GPX file
 *WateringPlanAPI* | [**GetWateringPlanById**](docs/WateringPlanAPI.md#getwateringplanbyid) | **Get** /v1/watering-plan/{id} | Get watering plan by ID
 *WateringPlanAPI* | [**UpdateWateringPlan**](docs/WateringPlanAPI.md#updatewateringplan) | **Put** /v1/watering-plan/{id} | Update watering plan
-*WateringPlanAPI* | [**V1WateringPlanRouteGpxGpxNameGet**](docs/WateringPlanAPI.md#v1wateringplanroutegpxgpxnameget) | **Get** /v1/watering-plan/route/gpx/{gpx_name} | Generate route
-*WateringPlanAPI* | [**V1WateringPlanRoutePreviewPost**](docs/WateringPlanAPI.md#v1wateringplanroutepreviewpost) | **Post** /v1/watering-plan/route/preview | Generate preview route
 
 
 ## Documentation For Models

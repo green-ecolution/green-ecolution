@@ -36,7 +36,7 @@ func (r ApiArchiveVehicleRequest) Execute() (*http.Response, error) {
 /*
 ArchiveVehicle Archive vehicle
 
-Archive vehicle
+Archives a vehicle. Archived vehicles are hidden from the default list but can still be retrieved. Returns 409 if vehicle is in use by active watering plans.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param id Vehicle ID
@@ -186,7 +186,7 @@ type ApiCreateVehicleRequest struct {
 	body       *VehicleCreate
 }
 
-// Vehicle Create Request
+// Vehicle data to create
 func (r ApiCreateVehicleRequest) Body(body VehicleCreate) ApiCreateVehicleRequest {
 	r.body = &body
 	return r
@@ -199,7 +199,7 @@ func (r ApiCreateVehicleRequest) Execute() (*Vehicle, *http.Response, error) {
 /*
 CreateVehicle Create vehicle
 
-Create vehicle
+Creates a new vehicle with the provided data including type, plate number, and water capacity.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiCreateVehicleRequest
@@ -237,7 +237,7 @@ func (a *VehicleAPIService) CreateVehicleExecute(r ApiCreateVehicleRequest) (*Ve
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -310,17 +310,6 @@ func (a *VehicleAPIService) CreateVehicleExecute(r ApiCreateVehicleRequest) (*Ve
 			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v HTTPError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v HTTPError
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
@@ -359,7 +348,7 @@ func (r ApiDeleteVehicleRequest) Execute() (*http.Response, error) {
 /*
 DeleteVehicle Delete vehicle
 
-Delete vehicle
+Permanently deletes a vehicle. Consider archiving instead if the vehicle might be needed for historical records.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param id Vehicle ID
@@ -502,31 +491,31 @@ type ApiGetAllVehiclesRequest struct {
 	archived   *bool
 }
 
-// Page
+// Page number for pagination
 func (r ApiGetAllVehiclesRequest) Page(page int32) ApiGetAllVehiclesRequest {
 	r.page = &page
 	return r
 }
 
-// Limit
+// Number of items per page
 func (r ApiGetAllVehiclesRequest) Limit(limit int32) ApiGetAllVehiclesRequest {
 	r.limit = &limit
 	return r
 }
 
-// Vehicle Type
+// Filter by vehicle type
 func (r ApiGetAllVehiclesRequest) Type_(type_ string) ApiGetAllVehiclesRequest {
 	r.type_ = &type_
 	return r
 }
 
-// Provider
+// Filter by data provider
 func (r ApiGetAllVehiclesRequest) Provider(provider string) ApiGetAllVehiclesRequest {
 	r.provider = &provider
 	return r
 }
 
-// With archived vehicles
+// Include archived vehicles
 func (r ApiGetAllVehiclesRequest) Archived(archived bool) ApiGetAllVehiclesRequest {
 	r.archived = &archived
 	return r
@@ -539,7 +528,7 @@ func (r ApiGetAllVehiclesRequest) Execute() (*VehicleList, *http.Response, error
 /*
 GetAllVehicles Get all vehicles
 
-Get all vehicles
+Retrieves a paginated list of all vehicles. Supports filtering by type, provider, and archive status.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiGetAllVehiclesRequest
@@ -660,17 +649,6 @@ func (a *VehicleAPIService) GetAllVehiclesExecute(r ApiGetAllVehiclesRequest) (*
 			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v HTTPError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v HTTPError
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
@@ -696,25 +674,25 @@ func (a *VehicleAPIService) GetAllVehiclesExecute(r ApiGetAllVehiclesRequest) (*
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiGetArchiveVehicleRequest struct {
+type ApiGetArchivedVehiclesRequest struct {
 	ctx        context.Context
 	ApiService *VehicleAPIService
 }
 
-func (r ApiGetArchiveVehicleRequest) Execute() ([]Vehicle, *http.Response, error) {
-	return r.ApiService.GetArchiveVehicleExecute(r)
+func (r ApiGetArchivedVehiclesRequest) Execute() ([]Vehicle, *http.Response, error) {
+	return r.ApiService.GetArchivedVehiclesExecute(r)
 }
 
 /*
-GetArchiveVehicle Get archived vehicle
+GetArchivedVehicles Get archived vehicles
 
-Get archived vehicle
+Retrieves a list of all archived vehicles.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiGetArchiveVehicleRequest
+	@return ApiGetArchivedVehiclesRequest
 */
-func (a *VehicleAPIService) GetArchiveVehicle(ctx context.Context) ApiGetArchiveVehicleRequest {
-	return ApiGetArchiveVehicleRequest{
+func (a *VehicleAPIService) GetArchivedVehicles(ctx context.Context) ApiGetArchivedVehiclesRequest {
+	return ApiGetArchivedVehiclesRequest{
 		ApiService: a,
 		ctx:        ctx,
 	}
@@ -723,7 +701,7 @@ func (a *VehicleAPIService) GetArchiveVehicle(ctx context.Context) ApiGetArchive
 // Execute executes the request
 //
 //	@return []Vehicle
-func (a *VehicleAPIService) GetArchiveVehicleExecute(r ApiGetArchiveVehicleRequest) ([]Vehicle, *http.Response, error) {
+func (a *VehicleAPIService) GetArchivedVehiclesExecute(r ApiGetArchivedVehiclesRequest) ([]Vehicle, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
@@ -731,7 +709,7 @@ func (a *VehicleAPIService) GetArchiveVehicleExecute(r ApiGetArchiveVehicleReque
 		localVarReturnValue []Vehicle
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "VehicleAPIService.GetArchiveVehicle")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "VehicleAPIService.GetArchivedVehicles")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -814,17 +792,6 @@ func (a *VehicleAPIService) GetArchiveVehicleExecute(r ApiGetArchiveVehicleReque
 			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v HTTPError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v HTTPError
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
@@ -863,7 +830,7 @@ func (r ApiGetVehicleByIdRequest) Execute() (*Vehicle, *http.Response, error) {
 /*
 GetVehicleById Get vehicle by ID
 
-Get vehicle by ID
+Retrieves detailed information about a specific vehicle including its type and water capacity.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param id Vehicle ID
@@ -1021,10 +988,10 @@ func (r ApiGetVehicleByPlateRequest) Execute() (*Vehicle, *http.Response, error)
 /*
 GetVehicleByPlate Get vehicle by plate
 
-Get vehicle by plate
+Retrieves a vehicle by its license plate number.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param plate Vehicle plate number
+	@param plate Vehicle license plate number
 	@return ApiGetVehicleByPlateRequest
 */
 func (a *VehicleAPIService) GetVehicleByPlate(ctx context.Context, plate string) ApiGetVehicleByPlateRequest {
@@ -1169,11 +1136,11 @@ func (a *VehicleAPIService) GetVehicleByPlateExecute(r ApiGetVehicleByPlateReque
 type ApiUpdateVehicleRequest struct {
 	ctx        context.Context
 	ApiService *VehicleAPIService
-	id         string
+	id         int32
 	body       *VehicleUpdate
 }
 
-// Vehicle Update Request
+// Vehicle data to update
 func (r ApiUpdateVehicleRequest) Body(body VehicleUpdate) ApiUpdateVehicleRequest {
 	r.body = &body
 	return r
@@ -1186,13 +1153,13 @@ func (r ApiUpdateVehicleRequest) Execute() (*Vehicle, *http.Response, error) {
 /*
 UpdateVehicle Update vehicle
 
-Update vehicle
+Updates an existing vehicle with the provided data.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param id Vehicle ID
 	@return ApiUpdateVehicleRequest
 */
-func (a *VehicleAPIService) UpdateVehicle(ctx context.Context, id string) ApiUpdateVehicleRequest {
+func (a *VehicleAPIService) UpdateVehicle(ctx context.Context, id int32) ApiUpdateVehicleRequest {
 	return ApiUpdateVehicleRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1227,7 +1194,7 @@ func (a *VehicleAPIService) UpdateVehicleExecute(r ApiUpdateVehicleRequest) (*Ve
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)

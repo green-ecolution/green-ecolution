@@ -29,7 +29,7 @@ type ApiCreateTreeClusterRequest struct {
 	body       *TreeClusterCreate
 }
 
-// Tree Cluster Create Request
+// Tree cluster data to create
 func (r ApiCreateTreeClusterRequest) Body(body TreeClusterCreate) ApiCreateTreeClusterRequest {
 	r.body = &body
 	return r
@@ -42,7 +42,7 @@ func (r ApiCreateTreeClusterRequest) Execute() (*TreeCluster, *http.Response, er
 /*
 CreateTreeCluster Create tree cluster
 
-Create tree cluster
+Creates a new tree cluster with the provided data. Optionally assigns trees to the cluster.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiCreateTreeClusterRequest
@@ -80,7 +80,7 @@ func (a *TreeClusterAPIService) CreateTreeClusterExecute(r ApiCreateTreeClusterR
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -153,17 +153,6 @@ func (a *TreeClusterAPIService) CreateTreeClusterExecute(r ApiCreateTreeClusterR
 			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v HTTPError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v HTTPError
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
@@ -202,7 +191,7 @@ func (r ApiDeleteTreeClusterRequest) Execute() (*http.Response, error) {
 /*
 DeleteTreeCluster Delete tree cluster
 
-Delete tree cluster
+Permanently deletes a tree cluster. Trees in the cluster are not deleted but unassigned from the cluster.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param clusterId Tree Cluster ID
@@ -345,31 +334,31 @@ type ApiGetAllTreeClustersRequest struct {
 	provider         *string
 }
 
-// Page
+// Page number for pagination
 func (r ApiGetAllTreeClustersRequest) Page(page int32) ApiGetAllTreeClustersRequest {
 	r.page = &page
 	return r
 }
 
-// Limit
+// Number of items per page
 func (r ApiGetAllTreeClustersRequest) Limit(limit int32) ApiGetAllTreeClustersRequest {
 	r.limit = &limit
 	return r
 }
 
-// Watering statuses
+// Filter by watering statuses (good, moderate, bad)
 func (r ApiGetAllTreeClustersRequest) WateringStatuses(wateringStatuses []string) ApiGetAllTreeClustersRequest {
 	r.wateringStatuses = &wateringStatuses
 	return r
 }
 
-// Regions
+// Filter by region names
 func (r ApiGetAllTreeClustersRequest) Regions(regions []string) ApiGetAllTreeClustersRequest {
 	r.regions = &regions
 	return r
 }
 
-// Provider
+// Filter by data provider
 func (r ApiGetAllTreeClustersRequest) Provider(provider string) ApiGetAllTreeClustersRequest {
 	r.provider = &provider
 	return r
@@ -382,7 +371,7 @@ func (r ApiGetAllTreeClustersRequest) Execute() (*TreeClusterList, *http.Respons
 /*
 GetAllTreeClusters Get all tree clusters
 
-Get all tree clusters
+Retrieves a paginated list of all tree clusters. Supports filtering by watering status, region, and provider.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiGetAllTreeClustersRequest
@@ -503,17 +492,6 @@ func (a *TreeClusterAPIService) GetAllTreeClustersExecute(r ApiGetAllTreeCluster
 			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v HTTPError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v HTTPError
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
@@ -552,7 +530,7 @@ func (r ApiGetTreeClusterByIdRequest) Execute() (*TreeCluster, *http.Response, e
 /*
 GetTreeClusterById Get tree cluster by ID
 
-Get tree cluster by ID
+Retrieves detailed information about a specific tree cluster including its trees and calculated watering status.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param clusterId Tree Cluster ID
@@ -704,7 +682,7 @@ type ApiUpdateTreeClusterRequest struct {
 	body       *TreeClusterUpdate
 }
 
-// Tree Cluster Update Request
+// Tree cluster data to update
 func (r ApiUpdateTreeClusterRequest) Body(body TreeClusterUpdate) ApiUpdateTreeClusterRequest {
 	r.body = &body
 	return r
@@ -717,7 +695,7 @@ func (r ApiUpdateTreeClusterRequest) Execute() (*TreeCluster, *http.Response, er
 /*
 UpdateTreeCluster Update tree cluster
 
-Update tree cluster
+Updates an existing tree cluster with the provided data. Can modify cluster properties and tree assignments.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param clusterId Tree Cluster ID
@@ -758,7 +736,7 @@ func (a *TreeClusterAPIService) UpdateTreeClusterExecute(r ApiUpdateTreeClusterR
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)

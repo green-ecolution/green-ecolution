@@ -5,7 +5,7 @@ All URIs are relative to *http://localhost*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**DeleteSensor**](SensorAPI.md#DeleteSensor) | **Delete** /v1/sensor/{sensor_id} | Delete sensor
-[**GetAllSensorDataById**](SensorAPI.md#GetAllSensorDataById) | **Get** /v1/sensor/data/{sensor_id} | Get all sensor data by id
+[**GetAllSensorDataById**](SensorAPI.md#GetAllSensorDataById) | **Get** /v1/sensor/data/{sensor_id} | Get all sensor data by ID
 [**GetAllSensors**](SensorAPI.md#GetAllSensors) | **Get** /v1/sensor | Get all sensors
 [**GetSensorById**](SensorAPI.md#GetSensorById) | **Get** /v1/sensor/{sensor_id} | Get sensor by ID
 
@@ -83,7 +83,7 @@ Name | Type | Description  | Notes
 
 > SensorDataList GetAllSensorDataById(ctx, sensorId).Execute()
 
-Get all sensor data by id
+Get all sensor data by ID
 
 
 
@@ -170,9 +170,9 @@ import (
 )
 
 func main() {
-	page := int32(56) // int32 | Page (optional)
-	limit := int32(56) // int32 | Limit (optional)
-	provider := "provider_example" // string | Provider (optional)
+	page := int32(56) // int32 | Page number for pagination (optional)
+	limit := int32(56) // int32 | Number of items per page (optional)
+	provider := "provider_example" // string | Filter by data provider (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -197,9 +197,9 @@ Other parameters are passed through a pointer to a apiGetAllSensorsRequest struc
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **page** | **int32** | Page | 
- **limit** | **int32** | Limit | 
- **provider** | **string** | Provider | 
+ **page** | **int32** | Page number for pagination | 
+ **limit** | **int32** | Number of items per page | 
+ **provider** | **string** | Filter by data provider | 
 
 ### Return type
 

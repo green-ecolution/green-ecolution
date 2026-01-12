@@ -22,6 +22,18 @@ func Test_client_WateringPlanAPIService(t *testing.T) {
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
 
+	t.Run("Test WateringPlanAPIService CreatePreviewRoute", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		resp, httpRes, err := apiClient.WateringPlanAPI.CreatePreviewRoute(context.Background()).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
 	t.Run("Test WateringPlanAPIService CreateWateringPlan", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
@@ -59,6 +71,20 @@ func Test_client_WateringPlanAPIService(t *testing.T) {
 
 	})
 
+	t.Run("Test WateringPlanAPIService GetGpxFile", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var gpxName string
+
+		resp, httpRes, err := apiClient.WateringPlanAPI.GetGpxFile(context.Background(), gpxName).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
 	t.Run("Test WateringPlanAPIService GetWateringPlanById", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
@@ -77,35 +103,9 @@ func Test_client_WateringPlanAPIService(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
 
-		var id string
+		var id int32
 
 		resp, httpRes, err := apiClient.WateringPlanAPI.UpdateWateringPlan(context.Background(), id).Execute()
-
-		require.Nil(t, err)
-		require.NotNil(t, resp)
-		assert.Equal(t, 200, httpRes.StatusCode)
-
-	})
-
-	t.Run("Test WateringPlanAPIService V1WateringPlanRouteGpxGpxNameGet", func(t *testing.T) {
-
-		t.Skip("skip test") // remove to run test
-
-		var gpxName string
-
-		resp, httpRes, err := apiClient.WateringPlanAPI.V1WateringPlanRouteGpxGpxNameGet(context.Background(), gpxName).Execute()
-
-		require.Nil(t, err)
-		require.NotNil(t, resp)
-		assert.Equal(t, 200, httpRes.StatusCode)
-
-	})
-
-	t.Run("Test WateringPlanAPIService V1WateringPlanRoutePreviewPost", func(t *testing.T) {
-
-		t.Skip("skip test") // remove to run test
-
-		resp, httpRes, err := apiClient.WateringPlanAPI.V1WateringPlanRoutePreviewPost(context.Background()).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)

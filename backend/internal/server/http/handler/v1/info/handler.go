@@ -9,8 +9,8 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 )
 
-// @Summary		Get info about the app
-// @Description	Get info about the app and the server
+// @Summary		Get application info
+// @Description	Retrieves information about the application including version, server configuration, and map settings.
 // @Id				get-app-info
 // @Tags			Info
 // @Produce		json
@@ -18,7 +18,6 @@ import (
 // @Failure		400	{object}	HTTPError
 // @Failure		401	{object}	HTTPError
 // @Failure		403	{object}	HTTPError
-// @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/info [get]
 // @Security		Keycloak
