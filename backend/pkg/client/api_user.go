@@ -29,7 +29,7 @@ type ApiGetAllUsersRequest struct {
 	userIds    *string
 }
 
-// User IDs
+// Comma-separated list of user IDs to filter
 func (r ApiGetAllUsersRequest) UserIds(userIds string) ApiGetAllUsersRequest {
 	r.userIds = &userIds
 	return r
@@ -42,7 +42,7 @@ func (r ApiGetAllUsersRequest) Execute() (*UserList, *http.Response, error) {
 /*
 GetAllUsers Get all users
 
-Get all users
+Retrieves a list of all users. Optionally filter by specific user IDs.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiGetAllUsersRequest
@@ -129,6 +129,28 @@ func (a *UserAPIService) GetAllUsersExecute(r ApiGetAllUsersRequest) (*UserList,
 			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v HTTPError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v HTTPError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v HTTPError
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
@@ -167,10 +189,10 @@ func (r ApiGetUsersByRoleRequest) Execute() (*UserList, *http.Response, error) {
 /*
 GetUsersByRole Get users by role
 
-Get users by role
+Retrieves a list of users that have the specified role assigned.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param role Role
+	@param role Role name to filter users by
 	@return ApiGetUsersByRoleRequest
 */
 func (a *UserAPIService) GetUsersByRole(ctx context.Context, role string) ApiGetUsersByRoleRequest {
@@ -254,6 +276,28 @@ func (a *UserAPIService) GetUsersByRoleExecute(r ApiGetUsersByRoleRequest) (*Use
 			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v HTTPError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v HTTPError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v HTTPError
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
@@ -279,30 +323,32 @@ func (a *UserAPIService) GetUsersByRoleExecute(r ApiGetUsersByRoleRequest) (*Use
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiV1UserLoginGetRequest struct {
+type ApiLoginRequest struct {
 	ctx         context.Context
 	ApiService  *UserAPIService
 	redirectUrl *string
 }
 
-// Redirect URL
-func (r ApiV1UserLoginGetRequest) RedirectUrl(redirectUrl string) ApiV1UserLoginGetRequest {
+// URL to redirect back after authentication
+func (r ApiLoginRequest) RedirectUrl(redirectUrl string) ApiLoginRequest {
 	r.redirectUrl = &redirectUrl
 	return r
 }
 
-func (r ApiV1UserLoginGetRequest) Execute() (*LoginResponse, *http.Response, error) {
-	return r.ApiService.V1UserLoginGetExecute(r)
+func (r ApiLoginRequest) Execute() (*LoginResponse, *http.Response, error) {
+	return r.ApiService.LoginExecute(r)
 }
 
 /*
-V1UserLoginGet Request to login
+Login Request to login
+
+Initiates the OAuth2 login flow. Returns a URL to redirect the user to for authentication.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiV1UserLoginGetRequest
+	@return ApiLoginRequest
 */
-func (a *UserAPIService) V1UserLoginGet(ctx context.Context) ApiV1UserLoginGetRequest {
-	return ApiV1UserLoginGetRequest{
+func (a *UserAPIService) Login(ctx context.Context) ApiLoginRequest {
+	return ApiLoginRequest{
 		ApiService: a,
 		ctx:        ctx,
 	}
@@ -311,7 +357,7 @@ func (a *UserAPIService) V1UserLoginGet(ctx context.Context) ApiV1UserLoginGetRe
 // Execute executes the request
 //
 //	@return LoginResponse
-func (a *UserAPIService) V1UserLoginGetExecute(r ApiV1UserLoginGetRequest) (*LoginResponse, *http.Response, error) {
+func (a *UserAPIService) LoginExecute(r ApiLoginRequest) (*LoginResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
@@ -319,7 +365,7 @@ func (a *UserAPIService) V1UserLoginGetExecute(r ApiV1UserLoginGetRequest) (*Log
 		localVarReturnValue *LoginResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.V1UserLoginGet")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.Login")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -409,172 +455,32 @@ func (a *UserAPIService) V1UserLoginGetExecute(r ApiV1UserLoginGetRequest) (*Log
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiV1UserLoginTokenPostRequest struct {
-	ctx         context.Context
-	ApiService  *UserAPIService
-	redirectUrl *string
-	body        *LoginTokenRequest
-}
-
-// Redirect URL
-func (r ApiV1UserLoginTokenPostRequest) RedirectUrl(redirectUrl string) ApiV1UserLoginTokenPostRequest {
-	r.redirectUrl = &redirectUrl
-	return r
-}
-
-// Callback information
-func (r ApiV1UserLoginTokenPostRequest) Body(body LoginTokenRequest) ApiV1UserLoginTokenPostRequest {
-	r.body = &body
-	return r
-}
-
-func (r ApiV1UserLoginTokenPostRequest) Execute() (*ClientToken, *http.Response, error) {
-	return r.ApiService.V1UserLoginTokenPostExecute(r)
-}
-
-/*
-V1UserLoginTokenPost Validate login code and request a access token
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiV1UserLoginTokenPostRequest
-*/
-func (a *UserAPIService) V1UserLoginTokenPost(ctx context.Context) ApiV1UserLoginTokenPostRequest {
-	return ApiV1UserLoginTokenPostRequest{
-		ApiService: a,
-		ctx:        ctx,
-	}
-}
-
-// Execute executes the request
-//
-//	@return ClientToken
-func (a *UserAPIService) V1UserLoginTokenPostExecute(r ApiV1UserLoginTokenPostRequest) (*ClientToken, *http.Response, error) {
-	var (
-		localVarHTTPMethod  = http.MethodPost
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue *ClientToken
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.V1UserLoginTokenPost")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/v1/user/login/token"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-	if r.redirectUrl == nil {
-		return localVarReturnValue, nil, reportError("redirectUrl is required and must be specified")
-	}
-	if r.body == nil {
-		return localVarReturnValue, nil, reportError("body is required and must be specified")
-	}
-
-	parameterAddToHeaderOrQuery(localVarQueryParams, "redirect_url", r.redirectUrl, "", "")
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// body params
-	localVarPostBody = r.body
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v HTTPError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v HTTPError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ApiV1UserLogoutPostRequest struct {
+type ApiLogoutRequest struct {
 	ctx        context.Context
 	ApiService *UserAPIService
 	body       *LogoutRequest
 }
 
-// Logout information
-func (r ApiV1UserLogoutPostRequest) Body(body LogoutRequest) ApiV1UserLogoutPostRequest {
+// Logout request with refresh token
+func (r ApiLogoutRequest) Body(body LogoutRequest) ApiLogoutRequest {
 	r.body = &body
 	return r
 }
 
-func (r ApiV1UserLogoutPostRequest) Execute() (string, *http.Response, error) {
-	return r.ApiService.V1UserLogoutPostExecute(r)
+func (r ApiLogoutRequest) Execute() (string, *http.Response, error) {
+	return r.ApiService.LogoutExecute(r)
 }
 
 /*
-V1UserLogoutPost Logout from the system
+Logout Logout from the system
+
+Logs out the user by invalidating the refresh token.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiV1UserLogoutPostRequest
+	@return ApiLogoutRequest
 */
-func (a *UserAPIService) V1UserLogoutPost(ctx context.Context) ApiV1UserLogoutPostRequest {
-	return ApiV1UserLogoutPostRequest{
+func (a *UserAPIService) Logout(ctx context.Context) ApiLogoutRequest {
+	return ApiLogoutRequest{
 		ApiService: a,
 		ctx:        ctx,
 	}
@@ -583,7 +489,7 @@ func (a *UserAPIService) V1UserLogoutPost(ctx context.Context) ApiV1UserLogoutPo
 // Execute executes the request
 //
 //	@return string
-func (a *UserAPIService) V1UserLogoutPostExecute(r ApiV1UserLogoutPostRequest) (string, *http.Response, error) {
+func (a *UserAPIService) LogoutExecute(r ApiLogoutRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
 		localVarPostBody    interface{}
@@ -591,7 +497,7 @@ func (a *UserAPIService) V1UserLogoutPostExecute(r ApiV1UserLogoutPostRequest) (
 		localVarReturnValue string
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.V1UserLogoutPost")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.Logout")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -606,7 +512,7 @@ func (a *UserAPIService) V1UserLogoutPostExecute(r ApiV1UserLogoutPostRequest) (
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -682,32 +588,176 @@ func (a *UserAPIService) V1UserLogoutPostExecute(r ApiV1UserLogoutPostRequest) (
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiV1UserPostRequest struct {
+type ApiRefreshTokenRequest struct {
+	ctx        context.Context
+	ApiService *UserAPIService
+	body       *RefreshTokenRequest
+}
+
+// Refresh token to exchange
+func (r ApiRefreshTokenRequest) Body(body RefreshTokenRequest) ApiRefreshTokenRequest {
+	r.body = &body
+	return r
+}
+
+func (r ApiRefreshTokenRequest) Execute() (*ClientToken, *http.Response, error) {
+	return r.ApiService.RefreshTokenExecute(r)
+}
+
+/*
+RefreshToken Refresh token
+
+Exchanges a valid refresh token for a new access token. Use this when the access token has expired.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiRefreshTokenRequest
+*/
+func (a *UserAPIService) RefreshToken(ctx context.Context) ApiRefreshTokenRequest {
+	return ApiRefreshTokenRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return ClientToken
+func (a *UserAPIService) RefreshTokenExecute(r ApiRefreshTokenRequest) (*ClientToken, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ClientToken
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.RefreshToken")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/user/token/refresh"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.body == nil {
+		return localVarReturnValue, nil, reportError("body is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.body
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v HTTPError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v HTTPError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v HTTPError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiRegisterUserRequest struct {
 	ctx        context.Context
 	ApiService *UserAPIService
 	user       *UserRegister
 }
 
-// User information
-func (r ApiV1UserPostRequest) User(user UserRegister) ApiV1UserPostRequest {
+// User registration data
+func (r ApiRegisterUserRequest) User(user UserRegister) ApiRegisterUserRequest {
 	r.user = &user
 	return r
 }
 
-func (r ApiV1UserPostRequest) Execute() (*User, *http.Response, error) {
-	return r.ApiService.V1UserPostExecute(r)
+func (r ApiRegisterUserRequest) Execute() (*User, *http.Response, error) {
+	return r.ApiService.RegisterUserExecute(r)
 }
 
 /*
-V1UserPost Register a new user
+RegisterUser Register a new user
 
-Register a new user
+Creates a new user account with the specified information and roles. Requires admin privileges.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiV1UserPostRequest
+	@return ApiRegisterUserRequest
 */
-func (a *UserAPIService) V1UserPost(ctx context.Context) ApiV1UserPostRequest {
-	return ApiV1UserPostRequest{
+func (a *UserAPIService) RegisterUser(ctx context.Context) ApiRegisterUserRequest {
+	return ApiRegisterUserRequest{
 		ApiService: a,
 		ctx:        ctx,
 	}
@@ -716,7 +766,7 @@ func (a *UserAPIService) V1UserPost(ctx context.Context) ApiV1UserPostRequest {
 // Execute executes the request
 //
 //	@return User
-func (a *UserAPIService) V1UserPostExecute(r ApiV1UserPostRequest) (*User, *http.Response, error) {
+func (a *UserAPIService) RegisterUserExecute(r ApiRegisterUserRequest) (*User, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
 		localVarPostBody    interface{}
@@ -724,7 +774,7 @@ func (a *UserAPIService) V1UserPostExecute(r ApiV1UserPostRequest) (*User, *http
 		localVarReturnValue *User
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.V1UserPost")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.RegisterUser")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -790,6 +840,28 @@ func (a *UserAPIService) V1UserPostExecute(r ApiV1UserPostRequest) (*User, *http
 			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v HTTPError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v HTTPError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v HTTPError
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
@@ -815,32 +887,39 @@ func (a *UserAPIService) V1UserPostExecute(r ApiV1UserPostRequest) (*User, *http
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiV1UserTokenRefreshPostRequest struct {
-	ctx        context.Context
-	ApiService *UserAPIService
-	body       *RefreshTokenRequest
+type ApiRequestTokenRequest struct {
+	ctx         context.Context
+	ApiService  *UserAPIService
+	redirectUrl *string
+	body        *LoginTokenRequest
 }
 
-// Refresh token information
-func (r ApiV1UserTokenRefreshPostRequest) Body(body RefreshTokenRequest) ApiV1UserTokenRefreshPostRequest {
+// Same redirect URL used in login request
+func (r ApiRequestTokenRequest) RedirectUrl(redirectUrl string) ApiRequestTokenRequest {
+	r.redirectUrl = &redirectUrl
+	return r
+}
+
+// Authorization code from OAuth2 callback
+func (r ApiRequestTokenRequest) Body(body LoginTokenRequest) ApiRequestTokenRequest {
 	r.body = &body
 	return r
 }
 
-func (r ApiV1UserTokenRefreshPostRequest) Execute() (*ClientToken, *http.Response, error) {
-	return r.ApiService.V1UserTokenRefreshPostExecute(r)
+func (r ApiRequestTokenRequest) Execute() (*ClientToken, *http.Response, error) {
+	return r.ApiService.RequestTokenExecute(r)
 }
 
 /*
-V1UserTokenRefreshPost Refresh token
+RequestToken Request access token
 
-Refresh token
+Exchanges the authorization code from OAuth2 callback for access and refresh tokens.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiV1UserTokenRefreshPostRequest
+	@return ApiRequestTokenRequest
 */
-func (a *UserAPIService) V1UserTokenRefreshPost(ctx context.Context) ApiV1UserTokenRefreshPostRequest {
-	return ApiV1UserTokenRefreshPostRequest{
+func (a *UserAPIService) RequestToken(ctx context.Context) ApiRequestTokenRequest {
+	return ApiRequestTokenRequest{
 		ApiService: a,
 		ctx:        ctx,
 	}
@@ -849,7 +928,7 @@ func (a *UserAPIService) V1UserTokenRefreshPost(ctx context.Context) ApiV1UserTo
 // Execute executes the request
 //
 //	@return ClientToken
-func (a *UserAPIService) V1UserTokenRefreshPostExecute(r ApiV1UserTokenRefreshPostRequest) (*ClientToken, *http.Response, error) {
+func (a *UserAPIService) RequestTokenExecute(r ApiRequestTokenRequest) (*ClientToken, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
 		localVarPostBody    interface{}
@@ -857,20 +936,24 @@ func (a *UserAPIService) V1UserTokenRefreshPostExecute(r ApiV1UserTokenRefreshPo
 		localVarReturnValue *ClientToken
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.V1UserTokenRefreshPost")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAPIService.RequestToken")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/v1/user/token/refresh"
+	localVarPath := localBasePath + "/v1/user/login/token"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.redirectUrl == nil {
+		return localVarReturnValue, nil, reportError("redirectUrl is required and must be specified")
+	}
 	if r.body == nil {
 		return localVarReturnValue, nil, reportError("body is required and must be specified")
 	}
 
+	parameterAddToHeaderOrQuery(localVarQueryParams, "redirect_url", r.redirectUrl, "", "")
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{"application/json"}
 

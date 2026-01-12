@@ -13,12 +13,14 @@ var (
 )
 
 // @Summary		Get evaluation data
-// @Description	Get evaluation values such as tree count, sensor count, etc.
+// @Description	Retrieves aggregated statistics including tree count, sensor count, cluster count, and watering plan metrics.
 // @Id				get-evaluation
 // @Tags			Evaluation
 // @Produce		json
 // @Success		200	{object}	entities.EvaluationResponse
 // @Failure		400	{object}	HTTPError
+// @Failure		401	{object}	HTTPError
+// @Failure		403	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/evaluation [get]
 // @Security		Keycloak

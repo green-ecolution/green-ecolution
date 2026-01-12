@@ -4,7 +4,7 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**GetAppInfo**](InfoAPI.md#GetAppInfo) | **Get** /v1/info | Get info about the app
+[**GetAppInfo**](InfoAPI.md#GetAppInfo) | **Get** /v1/info | Get application info
 
 
 
@@ -12,7 +12,7 @@ Method | HTTP request | Description
 
 > AppInfo GetAppInfo(ctx).Execute()
 
-Get info about the app
+Get application info
 
 
 

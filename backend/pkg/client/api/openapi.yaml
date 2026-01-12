@@ -16,20 +16,21 @@ servers:
 paths:
   /v1/cluster:
     get:
-      description: Get all tree clusters
+      description: "Retrieves a paginated list of all tree clusters. Supports filtering\
+        \ by watering status, region, and provider."
       operationId: get-all-tree-clusters
       parameters:
-      - description: Page
+      - description: Page number for pagination
         in: query
         name: page
         schema:
           type: integer
-      - description: Limit
+      - description: Number of items per page
         in: query
         name: limit
         schema:
           type: integer
-      - description: Watering statuses
+      - description: "Filter by watering statuses (good, moderate, bad)"
         explode: false
         in: query
         name: watering_statuses
@@ -38,7 +39,7 @@ paths:
             type: string
           type: array
         style: form
-      - description: Regions
+      - description: Filter by region names
         explode: false
         in: query
         name: regions
@@ -47,7 +48,7 @@ paths:
             type: string
           type: array
         style: form
-      - description: Provider
+      - description: Filter by data provider
         in: query
         name: provider
         schema:
@@ -77,12 +78,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
-          description: Not Found
         "500":
           content:
             application/json:
@@ -95,14 +90,15 @@ paths:
       tags:
       - Tree Cluster
     post:
-      description: Create tree cluster
+      description: Creates a new tree cluster with the provided data. Optionally assigns
+        trees to the cluster.
       operationId: create-tree-cluster
       requestBody:
         content:
-          '*/*':
+          application/json:
             schema:
               $ref: "#/components/schemas/TreeClusterCreate"
-        description: Tree Cluster Create Request
+        description: Tree cluster data to create
         required: true
       responses:
         "201":
@@ -129,12 +125,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
-          description: Not Found
         "500":
           content:
             application/json:
@@ -149,7 +139,8 @@ paths:
       x-codegen-request-body-name: body
   /v1/cluster/{cluster_id}:
     delete:
-      description: Delete tree cluster
+      description: Permanently deletes a tree cluster. Trees in the cluster are not
+        deleted but unassigned from the cluster.
       operationId: delete-tree-cluster
       parameters:
       - description: Tree Cluster ID
@@ -198,7 +189,8 @@ paths:
       tags:
       - Tree Cluster
     get:
-      description: Get tree cluster by ID
+      description: Retrieves detailed information about a specific tree cluster including
+        its trees and calculated watering status.
       operationId: get-tree-cluster-by-id
       parameters:
       - description: Tree Cluster ID
@@ -250,7 +242,8 @@ paths:
       tags:
       - Tree Cluster
     put:
-      description: Update tree cluster
+      description: Updates an existing tree cluster with the provided data. Can modify
+        cluster properties and tree assignments.
       operationId: update-tree-cluster
       parameters:
       - description: Tree Cluster ID
@@ -261,10 +254,10 @@ paths:
           type: integer
       requestBody:
         content:
-          '*/*':
+          application/json:
             schema:
               $ref: "#/components/schemas/TreeClusterUpdate"
-        description: Tree Cluster Update Request
+        description: Tree cluster data to update
         required: true
       responses:
         "200":
@@ -311,7 +304,8 @@ paths:
       x-codegen-request-body-name: body
   /v1/evaluation:
     get:
-      description: "Get evaluation values such as tree count, sensor count, etc."
+      description: "Retrieves aggregated statistics including tree count, sensor count,\
+        \ cluster count, and watering plan metrics."
       operationId: get-evaluation
       responses:
         "200":
@@ -326,6 +320,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Forbidden
         "500":
           content:
             application/json:
@@ -339,7 +345,8 @@ paths:
       - Evaluation
   /v1/info:
     get:
-      description: Get info about the app and the server
+      description: "Retrieves information about the application including version,\
+        \ server configuration, and map settings."
       operationId: get-app-info
       responses:
         "200":
@@ -366,12 +373,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
-          description: Not Found
         "500":
           content:
             application/json:
@@ -380,12 +381,12 @@ paths:
           description: Internal Server Error
       security:
       - Keycloak: []
-      summary: Get info about the app
+      summary: Get application info
       tags:
       - Info
   /v1/plugin:
     get:
-      description: Get a list of all registered plugins
+      description: Retrieves a list of all plugins currently registered with the system.
       operationId: get-plugins-list
       responses:
         "200":
@@ -412,12 +413,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
-          description: Not Found
         "500":
           content:
             application/json:
@@ -426,18 +421,19 @@ paths:
           description: Internal Server Error
       security:
       - Keycloak: []
-      summary: Get a list of all registered plugins
+      summary: Get all registered plugins
       tags:
       - Plugin
     post:
-      description: Register a plugin
+      description: Registers a new plugin with the system. Returns authentication
+        tokens for plugin API access.
       operationId: register-plugin
       requestBody:
         content:
-          '*/*':
+          application/json:
             schema:
               $ref: "#/components/schemas/PluginRegisterRequest"
-        description: Plugin registration request
+        description: Plugin registration data
         required: true
       responses:
         "200":
@@ -452,24 +448,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
-          description: Not Found
         "500":
           content:
             application/json:
@@ -482,10 +460,10 @@ paths:
       x-codegen-request-body-name: body
   /v1/plugin/{plugin_slug}:
     get:
-      description: Get a plugin info
+      description: Retrieves detailed information about a specific registered plugin.
       operationId: get-plugin-info
       parameters:
-      - description: Slug of the plugin
+      - description: Unique slug identifier of the plugin
         in: path
         name: plugin_slug
         required: true
@@ -530,15 +508,16 @@ paths:
           description: Internal Server Error
       security:
       - Keycloak: []
-      summary: Get a plugin info
+      summary: Get plugin info
       tags:
       - Plugin
   /v1/plugin/{plugin_slug}/heartbeat:
     post:
-      description: Heartbeat for a plugin
+      description: Sends a heartbeat signal to indicate the plugin is still active.
+        Should be called periodically.
       operationId: plugin-heartbeat
       parameters:
-      - description: Name of the plugin specified by slug during registration
+      - description: Unique slug identifier of the plugin
         in: path
         name: plugin_slug
         required: true
@@ -583,15 +562,16 @@ paths:
           description: Internal Server Error
       security:
       - Keycloak: []
-      summary: Heartbeat for a plugin
+      summary: Plugin heartbeat
       tags:
       - Plugin
   /v1/plugin/{plugin_slug}/token/refresh:
     post:
-      description: Refresh plugin token
+      description: Exchanges plugin credentials for a new access token. Use when the
+        previous token has expired.
       operationId: refresh-plugin-token
       parameters:
-      - description: Slug of the plugin
+      - description: Unique slug identifier of the plugin
         in: path
         name: plugin_slug
         required: true
@@ -602,7 +582,7 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/PluginAuth"
-        description: Plugin authentication
+        description: Plugin client credentials
         required: true
       responses:
         "200":
@@ -617,6 +597,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Not Found
         "500":
           content:
             application/json:
@@ -629,10 +621,11 @@ paths:
       x-codegen-request-body-name: body
   /v1/plugin/{plugin_slug}/unregister:
     post:
-      description: Unregister a plugin
+      description: Removes a plugin registration from the system. The plugin will
+        no longer be able to access the API.
       operationId: unregister-plugin
       parameters:
-      - description: Slug of the plugin
+      - description: Unique slug identifier of the plugin
         in: path
         name: plugin_slug
         required: true
@@ -648,6 +641,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Forbidden
         "404":
           content:
             application/json:
@@ -667,14 +666,15 @@ paths:
       - Plugin
   /v1/region:
     get:
-      description: Get all regions
+      description: Retrieves a list of all available regions for tree cluster assignment.
+      operationId: get-all-regions
       parameters:
-      - description: Page
+      - description: Page number for pagination
         in: query
         name: page
         schema:
           type: integer
-      - description: Limit
+      - description: Number of items per page
         in: query
         name: limit
         schema:
@@ -692,6 +692,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Forbidden
         "500":
           content:
             application/json:
@@ -705,70 +717,21 @@ paths:
       - Region
   /v1/region/{id}:
     get:
-      description: Get a region by ID
+      description: Retrieves detailed information about a specific region.
+      operationId: get-region-by-id
       parameters:
       - description: Region ID
         in: path
         name: id
         required: true
         schema:
-          type: string
+          type: integer
       responses:
         "200":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Region"
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
-          description: Bad Request
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
-          description: Internal Server Error
-      security:
-      - Keycloak: []
-      summary: Get a region by ID
-      tags:
-      - Region
-  /v1/sensor:
-    get:
-      description: Get all sensors
-      operationId: get-all-sensors
-      parameters:
-      - description: Page
-        in: query
-        name: page
-        schema:
-          type: integer
-      - description: Limit
-        in: query
-        name: limit
-        schema:
-          type: integer
-      - description: Provider
-        in: query
-        name: provider
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SensorList"
           description: OK
         "400":
           content:
@@ -802,12 +765,69 @@ paths:
           description: Internal Server Error
       security:
       - Keycloak: []
+      summary: Get a region by ID
+      tags:
+      - Region
+  /v1/sensor:
+    get:
+      description: Retrieves a paginated list of all sensors. Supports filtering by
+        provider.
+      operationId: get-all-sensors
+      parameters:
+      - description: Page number for pagination
+        in: query
+        name: page
+        schema:
+          type: integer
+      - description: Number of items per page
+        in: query
+        name: limit
+        schema:
+          type: integer
+      - description: Filter by data provider
+        in: query
+        name: provider
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SensorList"
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Internal Server Error
+      security:
+      - Keycloak: []
       summary: Get all sensors
       tags:
       - Sensor
   /v1/sensor/{sensor_id}:
     delete:
-      description: Delete sensor
+      description: Permanently deletes a sensor and all its associated data readings.
       operationId: delete-sensor
       parameters:
       - description: Sensor ID
@@ -856,7 +876,8 @@ paths:
       tags:
       - Sensor
     get:
-      description: Get sensor by ID
+      description: Retrieves detailed information about a specific sensor including
+        its latest data readings.
       operationId: get-sensor-by-id
       parameters:
       - description: Sensor ID
@@ -909,7 +930,8 @@ paths:
       - Sensor
   /v1/sensor/data/{sensor_id}:
     get:
-      description: Get all sensor data by id
+      description: Retrieves the complete history of data readings for a specific
+        sensor.
       operationId: get-all-sensor-data-by-id
       parameters:
       - description: Sensor ID
@@ -957,30 +979,31 @@ paths:
           description: Internal Server Error
       security:
       - Keycloak: []
-      summary: Get all sensor data by id
+      summary: Get all sensor data by ID
       tags:
       - Sensor
   /v1/tree:
     get:
-      description: Get all trees
+      description: "Retrieves a paginated list of all trees. Supports filtering by\
+        \ provider, watering status, planting year, and cluster association."
       operationId: get-all-trees
       parameters:
-      - description: Page
+      - description: Page number for pagination
         in: query
         name: page
         schema:
           type: integer
-      - description: Limit
+      - description: Number of items per page
         in: query
         name: limit
         schema:
           type: integer
-      - description: Provider
+      - description: Filter by data provider
         in: query
         name: provider
         schema:
           type: string
-      - description: "watering status (good, moderate, bad)"
+      - description: "Filter by watering status (good, moderate, bad)"
         explode: false
         in: query
         name: watering_statuses
@@ -989,7 +1012,7 @@ paths:
             type: string
           type: array
         style: form
-      - description: planting_years
+      - description: Filter by planting years
         explode: false
         in: query
         name: planting_years
@@ -998,7 +1021,7 @@ paths:
             type: integer
           type: array
         style: form
-      - description: has cluster
+      - description: Filter trees that belong to a cluster
         in: query
         name: has_cluster
         schema:
@@ -1028,12 +1051,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
-          description: Not Found
         "500":
           content:
             application/json:
@@ -1046,22 +1063,23 @@ paths:
       tags:
       - Tree
     post:
-      description: Create tree
+      description: Creates a new tree with the provided data. Optionally associates
+        a sensor and cluster.
       operationId: create-tree
       requestBody:
         content:
-          '*/*':
+          application/json:
             schema:
               $ref: "#/components/schemas/TreeCreate"
-        description: Tree to create
+        description: Tree data to create
         required: true
       responses:
-        "200":
+        "201":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Tree"
-          description: OK
+          description: Created
         "400":
           content:
             application/json:
@@ -1080,12 +1098,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
-          description: Not Found
         "500":
           content:
             application/json:
@@ -1100,7 +1112,8 @@ paths:
       x-codegen-request-body-name: body
   /v1/tree/{tree_id}:
     delete:
-      description: Delete tree
+      description: Permanently deletes a tree and removes its sensor association if
+        present.
       operationId: delete-tree
       parameters:
       - description: Tree ID
@@ -1149,8 +1162,9 @@ paths:
       tags:
       - Tree
     get:
-      description: Get tree by ID
-      operationId: get-trees
+      description: Retrieves detailed information about a specific tree including
+        its sensor data and cluster association.
+      operationId: get-tree-by-id
       parameters:
       - description: Tree ID
         in: path
@@ -1201,7 +1215,8 @@ paths:
       tags:
       - Tree
     put:
-      description: Update tree
+      description: Updates an existing tree with the provided data. All fields in
+        the request body will overwrite existing values.
       operationId: update-tree
       parameters:
       - description: Tree ID
@@ -1212,10 +1227,10 @@ paths:
           type: integer
       requestBody:
         content:
-          '*/*':
+          application/json:
             schema:
               $ref: "#/components/schemas/TreeUpdate"
-        description: Tree to update
+        description: Tree data to update
         required: true
       responses:
         "200":
@@ -1262,7 +1277,8 @@ paths:
       x-codegen-request-body-name: body
   /v1/tree/sensor/{sensor_id}:
     get:
-      description: Get tree by sensor ID
+      description: Retrieves the tree associated with a specific sensor. Useful for
+        looking up tree information from sensor data.
       operationId: get-tree-by-sensor-id
       parameters:
       - description: Sensor ID
@@ -1315,10 +1331,11 @@ paths:
       - Tree Sensor
   /v1/user:
     get:
-      description: Get all users
+      description: Retrieves a list of all users. Optionally filter by specific user
+        IDs.
       operationId: get-all-users
       parameters:
-      - description: User IDs
+      - description: Comma-separated list of user IDs to filter
         in: query
         name: user_ids
         schema:
@@ -1336,6 +1353,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Forbidden
         "500":
           content:
             application/json:
@@ -1348,13 +1377,15 @@ paths:
       tags:
       - User
     post:
-      description: Register a new user
+      description: Creates a new user account with the specified information and roles.
+        Requires admin privileges.
+      operationId: register-user
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/UserRegister"
-        description: User information
+        description: User registration data
         required: true
       responses:
         "201":
@@ -1369,6 +1400,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Forbidden
         "500":
           content:
             application/json:
@@ -1383,8 +1426,11 @@ paths:
       x-codegen-request-body-name: user
   /v1/user/login:
     get:
+      description: Initiates the OAuth2 login flow. Returns a URL to redirect the
+        user to for authentication.
+      operationId: login
       parameters:
-      - description: Redirect URL
+      - description: URL to redirect back after authentication
         in: query
         name: redirect_url
         required: true
@@ -1414,8 +1460,11 @@ paths:
       - User
   /v1/user/login/token:
     post:
+      description: Exchanges the authorization code from OAuth2 callback for access
+        and refresh tokens.
+      operationId: request-token
       parameters:
-      - description: Redirect URL
+      - description: Same redirect URL used in login request
         in: query
         name: redirect_url
         required: true
@@ -1426,7 +1475,7 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/LoginTokenRequest"
-        description: Callback information
+        description: Authorization code from OAuth2 callback
         required: true
       responses:
         "200":
@@ -1447,18 +1496,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
-      summary: Validate login code and request a access token
+      summary: Request access token
       tags:
       - User
       x-codegen-request-body-name: body
   /v1/user/logout:
     post:
+      description: Logs out the user by invalidating the refresh token.
+      operationId: logout
       requestBody:
         content:
-          '*/*':
+          application/json:
             schema:
               $ref: "#/components/schemas/LogoutRequest"
-        description: Logout information
+        description: Logout request with refresh token
         required: true
       responses:
         "200":
@@ -1485,10 +1536,10 @@ paths:
       x-codegen-request-body-name: body
   /v1/user/role/{role}:
     get:
-      description: Get users by role
+      description: Retrieves a list of users that have the specified role assigned.
       operationId: get-users-by-role
       parameters:
-      - description: Role
+      - description: Role name to filter users by
         in: path
         name: role
         required: true
@@ -1507,6 +1558,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Forbidden
         "500":
           content:
             application/json:
@@ -1520,13 +1583,15 @@ paths:
       - User
   /v1/user/token/refresh:
     post:
-      description: Refresh token
+      description: Exchanges a valid refresh token for a new access token. Use this
+        when the access token has expired.
+      operationId: refresh-token
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/RefreshTokenRequest"
-        description: Refresh token information
+        description: Refresh token to exchange
         required: true
       responses:
         "200":
@@ -1541,6 +1606,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Unauthorized
         "500":
           content:
             application/json:
@@ -1553,30 +1624,31 @@ paths:
       x-codegen-request-body-name: body
   /v1/vehicle:
     get:
-      description: Get all vehicles
+      description: "Retrieves a paginated list of all vehicles. Supports filtering\
+        \ by type, provider, and archive status."
       operationId: get-all-vehicles
       parameters:
-      - description: Page
+      - description: Page number for pagination
         in: query
         name: page
         schema:
           type: integer
-      - description: Limit
+      - description: Number of items per page
         in: query
         name: limit
         schema:
           type: integer
-      - description: Vehicle Type
+      - description: Filter by vehicle type
         in: query
         name: type
         schema:
           type: string
-      - description: Provider
+      - description: Filter by data provider
         in: query
         name: provider
         schema:
           type: string
-      - description: With archived vehicles
+      - description: Include archived vehicles
         in: query
         name: archived
         schema:
@@ -1606,12 +1678,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
-          description: Not Found
         "500":
           content:
             application/json:
@@ -1624,14 +1690,15 @@ paths:
       tags:
       - Vehicle
     post:
-      description: Create vehicle
+      description: "Creates a new vehicle with the provided data including type, plate\
+        \ number, and water capacity."
       operationId: create-vehicle
       requestBody:
         content:
-          '*/*':
+          application/json:
             schema:
               $ref: "#/components/schemas/VehicleCreate"
-        description: Vehicle Create Request
+        description: Vehicle data to create
         required: true
       responses:
         "201":
@@ -1658,12 +1725,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
-          description: Not Found
         "500":
           content:
             application/json:
@@ -1678,7 +1739,8 @@ paths:
       x-codegen-request-body-name: body
   /v1/vehicle/{id}:
     delete:
-      description: Delete vehicle
+      description: Permanently deletes a vehicle. Consider archiving instead if the
+        vehicle might be needed for historical records.
       operationId: delete-vehicle
       parameters:
       - description: Vehicle ID
@@ -1727,7 +1789,8 @@ paths:
       tags:
       - Vehicle
     get:
-      description: Get vehicle by ID
+      description: Retrieves detailed information about a specific vehicle including
+        its type and water capacity.
       operationId: get-vehicle-by-id
       parameters:
       - description: Vehicle ID
@@ -1779,7 +1842,7 @@ paths:
       tags:
       - Vehicle
     put:
-      description: Update vehicle
+      description: Updates an existing vehicle with the provided data.
       operationId: update-vehicle
       parameters:
       - description: Vehicle ID
@@ -1787,13 +1850,13 @@ paths:
         name: id
         required: true
         schema:
-          type: string
+          type: integer
       requestBody:
         content:
-          '*/*':
+          application/json:
             schema:
               $ref: "#/components/schemas/VehicleUpdate"
-        description: Vehicle Update Request
+        description: Vehicle data to update
         required: true
       responses:
         "200":
@@ -1840,8 +1903,8 @@ paths:
       x-codegen-request-body-name: body
   /v1/vehicle/archive:
     get:
-      description: Get archived vehicle
-      operationId: get-archive-vehicle
+      description: Retrieves a list of all archived vehicles.
+      operationId: get-archived-vehicles
       responses:
         "200":
           content:
@@ -1869,12 +1932,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
-          description: Not Found
         "500":
           content:
             application/json:
@@ -1883,12 +1940,14 @@ paths:
           description: Internal Server Error
       security:
       - Keycloak: []
-      summary: Get archived vehicle
+      summary: Get archived vehicles
       tags:
       - Vehicle
   /v1/vehicle/archive/{id}:
     post:
-      description: Archive vehicle
+      description: Archives a vehicle. Archived vehicles are hidden from the default
+        list but can still be retrieved. Returns 409 if vehicle is in use by active
+        watering plans.
       operationId: archive-vehicle
       parameters:
       - description: Vehicle ID
@@ -1944,10 +2003,10 @@ paths:
       - Vehicle
   /v1/vehicle/plate/{plate}:
     get:
-      description: Get vehicle by plate
+      description: Retrieves a vehicle by its license plate number.
       operationId: get-vehicle-by-plate
       parameters:
-      - description: Vehicle plate number
+      - description: Vehicle license plate number
         in: path
         name: plate
         required: true
@@ -1997,20 +2056,21 @@ paths:
       - Vehicle
   /v1/watering-plan:
     get:
-      description: Get all watering plans
+      description: Retrieves a paginated list of all watering plans. Supports filtering
+        by provider.
       operationId: get-all-watering-plans
       parameters:
-      - description: Page
+      - description: Page number for pagination
         in: query
         name: page
         schema:
           type: integer
-      - description: Limit
+      - description: Number of items per page
         in: query
         name: limit
         schema:
           type: integer
-      - description: Provider
+      - description: Filter by data provider
         in: query
         name: provider
         schema:
@@ -2040,12 +2100,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
-          description: Not Found
         "500":
           content:
             application/json:
@@ -2058,14 +2112,15 @@ paths:
       tags:
       - Watering Plan
     post:
-      description: Create watering plan
+      description: "Creates a new watering plan with specified tree clusters, vehicles,\
+        \ and generates an optimized route."
       operationId: create-watering-plan
       requestBody:
         content:
-          '*/*':
+          application/json:
             schema:
               $ref: "#/components/schemas/WateringPlanCreate"
-        description: Watering Plan Create Request
+        description: Watering plan data to create
         required: true
       responses:
         "201":
@@ -2092,12 +2147,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
-          description: Not Found
         "500":
           content:
             application/json:
@@ -2112,7 +2161,7 @@ paths:
       x-codegen-request-body-name: body
   /v1/watering-plan/{id}:
     delete:
-      description: Delete watering plan
+      description: Permanently deletes a watering plan and its associated route data.
       operationId: delete-watering-plan
       parameters:
       - description: Watering Plan ID
@@ -2161,7 +2210,8 @@ paths:
       tags:
       - Watering Plan
     get:
-      description: Get watering plan by ID
+      description: "Retrieves detailed information about a specific watering plan\
+        \ including assigned clusters, vehicles, and route."
       operationId: get-watering-plan-by-id
       parameters:
       - description: Watering Plan ID
@@ -2213,7 +2263,8 @@ paths:
       tags:
       - Watering Plan
     put:
-      description: Update watering plan
+      description: "Updates an existing watering plan. Can modify clusters, vehicles,\
+        \ and regenerates the route if needed."
       operationId: update-watering-plan
       parameters:
       - description: Watering Plan ID
@@ -2221,13 +2272,13 @@ paths:
         name: id
         required: true
         schema:
-          type: string
+          type: integer
       requestBody:
         content:
-          '*/*':
+          application/json:
             schema:
               $ref: "#/components/schemas/WateringPlanUpdate"
-        description: Watering Plan Update Request
+        description: Watering plan data to update
         required: true
       responses:
         "200":
@@ -2274,9 +2325,11 @@ paths:
       x-codegen-request-body-name: body
   /v1/watering-plan/route/gpx/{gpx_name}:
     get:
-      description: Generate route
+      description: Downloads the GPX route file for a watering plan. Can be imported
+        into GPS navigation devices.
+      operationId: get-gpx-file
       parameters:
-      - description: gpx file name
+      - description: GPX file name
         in: path
         name: gpx_name
         required: true
@@ -2289,43 +2342,53 @@ paths:
               schema:
                 format: binary
                 type: string
-            application/json:
-              schema:
-                format: binary
-                type: string
           description: OK
         "400":
           content:
             application/gpx+xml:
               schema:
                 $ref: "#/components/schemas/HTTPError"
-            application/json:
+          description: Bad Request
+        "401":
+          content:
+            application/gpx+xml:
               schema:
                 $ref: "#/components/schemas/HTTPError"
-          description: Bad Request
+          description: Unauthorized
+        "403":
+          content:
+            application/gpx+xml:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Forbidden
+        "404":
+          content:
+            application/gpx+xml:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Not Found
         "500":
           content:
             application/gpx+xml:
               schema:
                 $ref: "#/components/schemas/HTTPError"
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
           description: Internal Server Error
       security:
       - Keycloak: []
-      summary: Generate route
+      summary: Download GPX file
       tags:
       - Watering Plan
   /v1/watering-plan/route/preview:
     post:
-      description: Generate preview route
+      description: Generates a preview of the optimized route for the given vehicles
+        and tree clusters without creating a watering plan.
+      operationId: create-preview-route
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/RouteRequest"
-        description: Route Request
+        description: Route preview request with vehicles and clusters
         required: true
       responses:
         "200":
@@ -2340,6 +2403,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Forbidden
         "500":
           content:
             application/json:

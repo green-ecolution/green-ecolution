@@ -34,12 +34,12 @@ func (r ApiGetPluginInfoRequest) Execute() (*Plugin, *http.Response, error) {
 }
 
 /*
-GetPluginInfo Get a plugin info
+GetPluginInfo Get plugin info
 
-Get a plugin info
+Retrieves detailed information about a specific registered plugin.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param pluginSlug Slug of the plugin
+	@param pluginSlug Unique slug identifier of the plugin
 	@return ApiGetPluginInfoRequest
 */
 func (a *PluginAPIService) GetPluginInfo(ctx context.Context, pluginSlug string) ApiGetPluginInfoRequest {
@@ -191,9 +191,9 @@ func (r ApiGetPluginsListRequest) Execute() (*PluginListResponse, *http.Response
 }
 
 /*
-GetPluginsList Get a list of all registered plugins
+GetPluginsList Get all registered plugins
 
-Get a list of all registered plugins
+Retrieves a list of all plugins currently registered with the system.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiGetPluginsListRequest
@@ -299,17 +299,6 @@ func (a *PluginAPIService) GetPluginsListExecute(r ApiGetPluginsListRequest) (*P
 			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v HTTPError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v HTTPError
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
@@ -346,12 +335,12 @@ func (r ApiPluginHeartbeatRequest) Execute() (string, *http.Response, error) {
 }
 
 /*
-PluginHeartbeat Heartbeat for a plugin
+PluginHeartbeat Plugin heartbeat
 
-Heartbeat for a plugin
+Sends a heartbeat signal to indicate the plugin is still active. Should be called periodically.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param pluginSlug Name of the plugin specified by slug during registration
+	@param pluginSlug Unique slug identifier of the plugin
 	@return ApiPluginHeartbeatRequest
 */
 func (a *PluginAPIService) PluginHeartbeat(ctx context.Context, pluginSlug string) ApiPluginHeartbeatRequest {
@@ -500,7 +489,7 @@ type ApiRefreshPluginTokenRequest struct {
 	body       *PluginAuth
 }
 
-// Plugin authentication
+// Plugin client credentials
 func (r ApiRefreshPluginTokenRequest) Body(body PluginAuth) ApiRefreshPluginTokenRequest {
 	r.body = &body
 	return r
@@ -513,10 +502,10 @@ func (r ApiRefreshPluginTokenRequest) Execute() (*ClientToken, *http.Response, e
 /*
 RefreshPluginToken Refresh plugin token
 
-Refresh plugin token
+Exchanges plugin credentials for a new access token. Use when the previous token has expired.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param pluginSlug Slug of the plugin
+	@param pluginSlug Unique slug identifier of the plugin
 	@return ApiRefreshPluginTokenRequest
 */
 func (a *PluginAPIService) RefreshPluginToken(ctx context.Context, pluginSlug string) ApiRefreshPluginTokenRequest {
@@ -605,6 +594,28 @@ func (a *PluginAPIService) RefreshPluginTokenExecute(r ApiRefreshPluginTokenRequ
 			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v HTTPError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v HTTPError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v HTTPError
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
@@ -636,7 +647,7 @@ type ApiRegisterPluginRequest struct {
 	body       *PluginRegisterRequest
 }
 
-// Plugin registration request
+// Plugin registration data
 func (r ApiRegisterPluginRequest) Body(body PluginRegisterRequest) ApiRegisterPluginRequest {
 	r.body = &body
 	return r
@@ -649,7 +660,7 @@ func (r ApiRegisterPluginRequest) Execute() (*ClientToken, *http.Response, error
 /*
 RegisterPlugin Register a plugin
 
-Register a plugin
+Registers a new plugin with the system. Returns authentication tokens for plugin API access.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiRegisterPluginRequest
@@ -687,7 +698,7 @@ func (a *PluginAPIService) RegisterPluginExecute(r ApiRegisterPluginRequest) (*C
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -738,39 +749,6 @@ func (a *PluginAPIService) RegisterPluginExecute(r ApiRegisterPluginRequest) (*C
 			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v HTTPError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v HTTPError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v HTTPError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v HTTPError
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
@@ -809,10 +787,10 @@ func (r ApiUnregisterPluginRequest) Execute() (*http.Response, error) {
 /*
 UnregisterPlugin Unregister a plugin
 
-Unregister a plugin
+Removes a plugin registration from the system. The plugin will no longer be able to access the API.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param pluginSlug Slug of the plugin
+	@param pluginSlug Unique slug identifier of the plugin
 	@return ApiUnregisterPluginRequest
 */
 func (a *PluginAPIService) UnregisterPlugin(ctx context.Context, pluginSlug string) ApiUnregisterPluginRequest {
@@ -883,6 +861,17 @@ func (a *PluginAPIService) UnregisterPluginExecute(r ApiUnregisterPluginRequest)
 			error: localVarHTTPResponse.Status,
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
+			var v HTTPError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
 			var v HTTPError
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {

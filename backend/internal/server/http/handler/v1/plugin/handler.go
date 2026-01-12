@@ -39,19 +39,16 @@ func getPluginFiles(svc service.PluginService) fiber.Handler {
 }
 
 // @Summary		Register a plugin
-// @Description	Register a plugin
+// @Description	Registers a new plugin with the system. Returns authentication tokens for plugin API access.
 // @Id				register-plugin
 // @Tags			Plugin
+// @Accept			json
 // @Produce		json
 // @Success		200	{object}	entities.ClientTokenResponse
 // @Failure		400	{object}	HTTPError
-// @Failure		401	{object}	HTTPError
-// @Failure		403	{object}	HTTPError
-// @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/plugin [post]
-//
-// @Param			body	body	entities.PluginRegisterRequest	true	"Plugin registration request"
+// @Param			body	body	entities.PluginRegisterRequest	true	"Plugin registration data"
 func RegisterPlugin(svc service.PluginService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var req entities.PluginRegisterRequest
@@ -102,16 +99,17 @@ func RegisterPlugin(svc service.PluginService) fiber.Handler {
 }
 
 // @Summary		Unregister a plugin
-// @Description	Unregister a plugin
+// @Description	Removes a plugin registration from the system. The plugin will no longer be able to access the API.
 // @Id				unregister-plugin
 // @Tags			Plugin
 // @Produce		json
 // @Success		204
 // @Failure		401	{object}	HTTPError
+// @Failure		403	{object}	HTTPError
 // @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/plugin/{plugin_slug}/unregister [post]
-// @Param			plugin_slug	path	string	true	"Slug of the plugin"
+// @Param			plugin_slug	path	string	true	"Unique slug identifier of the plugin"
 // @Security		Keycloak
 func UnregisterPlugin(svc service.PluginService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -123,8 +121,8 @@ func UnregisterPlugin(svc service.PluginService) fiber.Handler {
 	}
 }
 
-// @Summary		Heartbeat for a plugin
-// @Description	Heartbeat for a plugin
+// @Summary		Plugin heartbeat
+// @Description	Sends a heartbeat signal to indicate the plugin is still active. Should be called periodically.
 // @Id				plugin-heartbeat
 // @Tags			Plugin
 // @Produce		json
@@ -135,7 +133,7 @@ func UnregisterPlugin(svc service.PluginService) fiber.Handler {
 // @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/plugin/{plugin_slug}/heartbeat [post]
-// @Param			plugin_slug	path	string	true	"Name of the plugin specified by slug during registration"
+// @Param			plugin_slug	path	string	true	"Unique slug identifier of the plugin"
 // @Security		Keycloak
 func PluginHeartbeat(svc service.PluginService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -150,8 +148,8 @@ func PluginHeartbeat(svc service.PluginService) fiber.Handler {
 	}
 }
 
-// @Summary		Get a list of all registered plugins
-// @Description	Get a list of all registered plugins
+// @Summary		Get all registered plugins
+// @Description	Retrieves a list of all plugins currently registered with the system.
 // @Id				get-plugins-list
 // @Tags			Plugin
 // @Produce		json
@@ -159,7 +157,6 @@ func PluginHeartbeat(svc service.PluginService) fiber.Handler {
 // @Failure		400	{object}	HTTPError
 // @Failure		401	{object}	HTTPError
 // @Failure		403	{object}	HTTPError
-// @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/plugin [get]
 // @Security		Keycloak
@@ -184,8 +181,8 @@ func GetPluginsList(svc service.PluginService) fiber.Handler {
 	}
 }
 
-// @Summary		Get a plugin info
-// @Description	Get a plugin info
+// @Summary		Get plugin info
+// @Description	Retrieves detailed information about a specific registered plugin.
 // @Id				get-plugin-info
 // @Tags			Plugin
 // @Produce		json
@@ -196,7 +193,7 @@ func GetPluginsList(svc service.PluginService) fiber.Handler {
 // @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/plugin/{plugin_slug} [get]
-// @Param			plugin_slug	path	string	true	"Slug of the plugin"
+// @Param			plugin_slug	path	string	true	"Unique slug identifier of the plugin"
 // @Security		Keycloak
 func GetPluginInfo(svc service.PluginService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -218,17 +215,19 @@ func GetPluginInfo(svc service.PluginService) fiber.Handler {
 }
 
 // @Summary		Refresh plugin token
-// @Description	Refresh plugin token
+// @Description	Exchanges plugin credentials for a new access token. Use when the previous token has expired.
 // @Id				refresh-plugin-token
 // @Tags			Plugin
 // @Accept			json
 // @Produce		json
-// @Param			body	body		entities.PluginAuth	true	"Plugin authentication"
+// @Param			body	body		entities.PluginAuth	true	"Plugin client credentials"
 // @Success		200		{object}	entities.ClientTokenResponse
 // @Failure		400		{object}	HTTPError
+// @Failure		401		{object}	HTTPError
+// @Failure		404		{object}	HTTPError
 // @Failure		500		{object}	HTTPError
 // @Router			/v1/plugin/{plugin_slug}/token/refresh [post]
-// @Param			plugin_slug	path	string	true	"Slug of the plugin"
+// @Param			plugin_slug	path	string	true	"Unique slug identifier of the plugin"
 func RefreshToken(svc service.PluginService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var req entities.PluginAuth

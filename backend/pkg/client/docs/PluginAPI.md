@@ -4,9 +4,9 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**GetPluginInfo**](PluginAPI.md#GetPluginInfo) | **Get** /v1/plugin/{plugin_slug} | Get a plugin info
-[**GetPluginsList**](PluginAPI.md#GetPluginsList) | **Get** /v1/plugin | Get a list of all registered plugins
-[**PluginHeartbeat**](PluginAPI.md#PluginHeartbeat) | **Post** /v1/plugin/{plugin_slug}/heartbeat | Heartbeat for a plugin
+[**GetPluginInfo**](PluginAPI.md#GetPluginInfo) | **Get** /v1/plugin/{plugin_slug} | Get plugin info
+[**GetPluginsList**](PluginAPI.md#GetPluginsList) | **Get** /v1/plugin | Get all registered plugins
+[**PluginHeartbeat**](PluginAPI.md#PluginHeartbeat) | **Post** /v1/plugin/{plugin_slug}/heartbeat | Plugin heartbeat
 [**RefreshPluginToken**](PluginAPI.md#RefreshPluginToken) | **Post** /v1/plugin/{plugin_slug}/token/refresh | Refresh plugin token
 [**RegisterPlugin**](PluginAPI.md#RegisterPlugin) | **Post** /v1/plugin | Register a plugin
 [**UnregisterPlugin**](PluginAPI.md#UnregisterPlugin) | **Post** /v1/plugin/{plugin_slug}/unregister | Unregister a plugin
@@ -17,7 +17,7 @@ Method | HTTP request | Description
 
 > Plugin GetPluginInfo(ctx, pluginSlug).Execute()
 
-Get a plugin info
+Get plugin info
 
 
 
@@ -34,7 +34,7 @@ import (
 )
 
 func main() {
-	pluginSlug := "pluginSlug_example" // string | Slug of the plugin
+	pluginSlug := "pluginSlug_example" // string | Unique slug identifier of the plugin
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -54,7 +54,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**pluginSlug** | **string** | Slug of the plugin | 
+**pluginSlug** | **string** | Unique slug identifier of the plugin | 
 
 ### Other Parameters
 
@@ -87,7 +87,7 @@ Name | Type | Description  | Notes
 
 > PluginListResponse GetPluginsList(ctx).Execute()
 
-Get a list of all registered plugins
+Get all registered plugins
 
 
 
@@ -148,7 +148,7 @@ Other parameters are passed through a pointer to a apiGetPluginsListRequest stru
 
 > string PluginHeartbeat(ctx, pluginSlug).Execute()
 
-Heartbeat for a plugin
+Plugin heartbeat
 
 
 
@@ -165,7 +165,7 @@ import (
 )
 
 func main() {
-	pluginSlug := "pluginSlug_example" // string | Name of the plugin specified by slug during registration
+	pluginSlug := "pluginSlug_example" // string | Unique slug identifier of the plugin
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -185,7 +185,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**pluginSlug** | **string** | Name of the plugin specified by slug during registration | 
+**pluginSlug** | **string** | Unique slug identifier of the plugin | 
 
 ### Other Parameters
 
@@ -235,8 +235,8 @@ import (
 )
 
 func main() {
-	pluginSlug := "pluginSlug_example" // string | Slug of the plugin
-	body := *openapiclient.NewPluginAuth("ClientId_example", "ClientSecret_example") // PluginAuth | Plugin authentication
+	pluginSlug := "pluginSlug_example" // string | Unique slug identifier of the plugin
+	body := *openapiclient.NewPluginAuth("ClientId_example", "ClientSecret_example") // PluginAuth | Plugin client credentials
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -256,7 +256,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**pluginSlug** | **string** | Slug of the plugin | 
+**pluginSlug** | **string** | Unique slug identifier of the plugin | 
 
 ### Other Parameters
 
@@ -266,7 +266,7 @@ Other parameters are passed through a pointer to a apiRefreshPluginTokenRequest 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **body** | [**PluginAuth**](PluginAuth.md) | Plugin authentication | 
+ **body** | [**PluginAuth**](PluginAuth.md) | Plugin client credentials | 
 
 ### Return type
 
@@ -307,7 +307,7 @@ import (
 )
 
 func main() {
-	body := *openapiclient.NewPluginRegisterRequest(*openapiclient.NewPluginAuth("ClientId_example", "ClientSecret_example"), "Description_example", "Name_example", "Path_example", "Slug_example", "Version_example") // PluginRegisterRequest | Plugin registration request
+	body := *openapiclient.NewPluginRegisterRequest(*openapiclient.NewPluginAuth("ClientId_example", "ClientSecret_example"), "Description_example", "Name_example", "Path_example", "Slug_example", "Version_example") // PluginRegisterRequest | Plugin registration data
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -332,7 +332,7 @@ Other parameters are passed through a pointer to a apiRegisterPluginRequest stru
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**PluginRegisterRequest**](PluginRegisterRequest.md) | Plugin registration request | 
+ **body** | [**PluginRegisterRequest**](PluginRegisterRequest.md) | Plugin registration data | 
 
 ### Return type
 
@@ -344,7 +344,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -373,7 +373,7 @@ import (
 )
 
 func main() {
-	pluginSlug := "pluginSlug_example" // string | Slug of the plugin
+	pluginSlug := "pluginSlug_example" // string | Unique slug identifier of the plugin
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -391,7 +391,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**pluginSlug** | **string** | Slug of the plugin | 
+**pluginSlug** | **string** | Unique slug identifier of the plugin | 
 
 ### Other Parameters
 

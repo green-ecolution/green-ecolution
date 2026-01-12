@@ -18,15 +18,16 @@ var (
 	userMapper = generated.UserHTTPMapperImpl{}
 )
 
-// @Summary	Request to login
-// @Descriptio	Request to login to the system. Returns a Login URL
-// @Tags		User
-// @Produce	json
-// @Param		redirect_url	query		string	true	"Redirect URL"
-// @Success	200				{object}	entities.LoginResponse
-// @Failure	400				{object}	HTTPError
-// @Failure	500				{object}	HTTPError
-// @Router		/v1/user/login [get]
+// @Summary		Request to login
+// @Description	Initiates the OAuth2 login flow. Returns a URL to redirect the user to for authentication.
+// @Id				login
+// @Tags			User
+// @Produce		json
+// @Param			redirect_url	query		string	true	"URL to redirect back after authentication"
+// @Success		200				{object}	entities.LoginResponse
+// @Failure		400				{object}	HTTPError
+// @Failure		500				{object}	HTTPError
+// @Router			/v1/user/login [get]
 func Login(svc service.AuthService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
@@ -48,14 +49,16 @@ func Login(svc service.AuthService) fiber.Handler {
 	}
 }
 
-// @Summary	Logout from the system
-// @Descriptio	Logout from the system
-// @Tags		User
-// @Param		body	body		entities.LogoutRequest	true	"Logout information"
-// @Success	200		{string}	string					"OK"
-// @Failure	400		{object}	HTTPError
-// @Failure	500		{object}	HTTPError
-// @Router		/v1/user/logout [post]
+// @Summary		Logout from the system
+// @Description	Logs out the user by invalidating the refresh token.
+// @Id				logout
+// @Tags			User
+// @Accept			json
+// @Param			body	body		entities.LogoutRequest	true	"Logout request with refresh token"
+// @Success		200		{string}	string					"OK"
+// @Failure		400		{object}	HTTPError
+// @Failure		500		{object}	HTTPError
+// @Router			/v1/user/logout [post]
 func Logout(svc service.AuthService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
@@ -77,17 +80,18 @@ func Logout(svc service.AuthService) fiber.Handler {
 	}
 }
 
-// @Summary	Validate login code and request a access token
-// @Descriptio	Validate login code and request a access token
-// @Tags		User
-// @Accept		json
-// @Produce	json
-// @Param		body			body		entities.LoginTokenRequest	true	"Callback information"
-// @Param		redirect_url	query		string						true	"Redirect URL"
-// @Success	200				{object}	entities.ClientTokenResponse
-// @Failure	400				{object}	HTTPError
-// @Failure	500				{object}	HTTPError
-// @Router		/v1/user/login/token [post]
+// @Summary		Request access token
+// @Description	Exchanges the authorization code from OAuth2 callback for access and refresh tokens.
+// @Id				request-token
+// @Tags			User
+// @Accept			json
+// @Produce		json
+// @Param			body			body		entities.LoginTokenRequest	true	"Authorization code from OAuth2 callback"
+// @Param			redirect_url	query		string						true	"Same redirect URL used in login request"
+// @Success		200				{object}	entities.ClientTokenResponse
+// @Failure		400				{object}	HTTPError
+// @Failure		500				{object}	HTTPError
+// @Router			/v1/user/login/token [post]
 func RequestToken(svc service.AuthService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
@@ -124,13 +128,16 @@ func RequestToken(svc service.AuthService) fiber.Handler {
 }
 
 // @Summary		Register a new user
-// @Description	Register a new user
+// @Description	Creates a new user account with the specified information and roles. Requires admin privileges.
+// @Id				register-user
 // @Tags			User
 // @Accept			json
 // @Produce		json
-// @Param			user	body		entities.UserRegisterRequest	true	"User information"
+// @Param			user	body		entities.UserRegisterRequest	true	"User registration data"
 // @Success		201		{object}	entities.UserResponse
 // @Failure		400		{object}	HTTPError
+// @Failure		401		{object}	HTTPError
+// @Failure		403		{object}	HTTPError
 // @Failure		500		{object}	HTTPError
 // @Router			/v1/user [post]
 // @Security		Keycloak
@@ -169,14 +176,16 @@ func parseURL(rawURL string) (*url.URL, error) {
 }
 
 // @Summary		Get all users
-// @Description	Get all users
+// @Description	Retrieves a list of all users. Optionally filter by specific user IDs.
 // @Id				get-all-users
 // @Tags			User
 // @Produce		json
 // @Success		200			{object}	entities.UserListResponse
 // @Failure		400			{object}	HTTPError
+// @Failure		401			{object}	HTTPError
+// @Failure		403			{object}	HTTPError
 // @Failure		500			{object}	HTTPError
-// @Param			user_ids	query		string	false	"User IDs"
+// @Param			user_ids	query		string	false	"Comma-separated list of user IDs to filter"
 // @Router			/v1/user [get]
 // @Security		Keycloak
 func GetAllUsers(svc service.AuthService) fiber.Handler {
@@ -211,15 +220,17 @@ func GetAllUsers(svc service.AuthService) fiber.Handler {
 }
 
 // @Summary		Get users by role
-// @Description	Get users by role
+// @Description	Retrieves a list of users that have the specified role assigned.
 // @Id				get-users-by-role
 // @Tags			User
 // @Produce		json
 // @Success		200	{object}	entities.UserListResponse
 // @Failure		400	{object}	HTTPError
+// @Failure		401	{object}	HTTPError
+// @Failure		403	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/user/role/{role} [get]
-// @Param			role	path	string	true	"Role"
+// @Param			role	path	string	true	"Role name to filter users by"
 // @Security		Keycloak
 func GetUsersByRole(svc service.AuthService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -254,13 +265,15 @@ func GetUsersByRole(svc service.AuthService) fiber.Handler {
 var group singleflight.Group
 
 // @Summary		Refresh token
-// @Description	Refresh token
+// @Description	Exchanges a valid refresh token for a new access token. Use this when the access token has expired.
+// @Id				refresh-token
 // @Tags			User
 // @Accept			json
 // @Produce		json
-// @Param			body	body		entities.RefreshTokenRequest	true	"Refresh token information"
+// @Param			body	body		entities.RefreshTokenRequest	true	"Refresh token to exchange"
 // @Success		200		{object}	entities.ClientTokenResponse
 // @Failure		400		{object}	HTTPError
+// @Failure		401		{object}	HTTPError
 // @Failure		500		{object}	HTTPError
 // @Router			/v1/user/token/refresh [post]
 func RefreshToken(svc service.AuthService) fiber.Handler {

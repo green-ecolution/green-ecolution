@@ -33,7 +33,7 @@ import (
 )
 
 func main() {
-	body := *openapiclient.NewTreeClusterCreate("Address_example", "Description_example", "Name_example", openapiclient.SoilCondition("schluffig"), []int32{int32(123)}) // TreeClusterCreate | Tree Cluster Create Request
+	body := *openapiclient.NewTreeClusterCreate("Address_example", "Description_example", "Name_example", openapiclient.SoilCondition("schluffig"), []int32{int32(123)}) // TreeClusterCreate | Tree cluster data to create
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -58,7 +58,7 @@ Other parameters are passed through a pointer to a apiCreateTreeClusterRequest s
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**TreeClusterCreate**](TreeClusterCreate.md) | Tree Cluster Create Request | 
+ **body** | [**TreeClusterCreate**](TreeClusterCreate.md) | Tree cluster data to create | 
 
 ### Return type
 
@@ -70,7 +70,7 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -167,11 +167,11 @@ import (
 )
 
 func main() {
-	page := int32(56) // int32 | Page (optional)
-	limit := int32(56) // int32 | Limit (optional)
-	wateringStatuses := []string{"Inner_example"} // []string | Watering statuses (optional)
-	regions := []string{"Inner_example"} // []string | Regions (optional)
-	provider := "provider_example" // string | Provider (optional)
+	page := int32(56) // int32 | Page number for pagination (optional)
+	limit := int32(56) // int32 | Number of items per page (optional)
+	wateringStatuses := []string{"Inner_example"} // []string | Filter by watering statuses (good, moderate, bad) (optional)
+	regions := []string{"Inner_example"} // []string | Filter by region names (optional)
+	provider := "provider_example" // string | Filter by data provider (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -196,11 +196,11 @@ Other parameters are passed through a pointer to a apiGetAllTreeClustersRequest 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **page** | **int32** | Page | 
- **limit** | **int32** | Limit | 
- **wateringStatuses** | **[]string** | Watering statuses | 
- **regions** | **[]string** | Regions | 
- **provider** | **string** | Provider | 
+ **page** | **int32** | Page number for pagination | 
+ **limit** | **int32** | Number of items per page | 
+ **wateringStatuses** | **[]string** | Filter by watering statuses (good, moderate, bad) | 
+ **regions** | **[]string** | Filter by region names | 
+ **provider** | **string** | Filter by data provider | 
 
 ### Return type
 
@@ -312,7 +312,7 @@ import (
 
 func main() {
 	clusterId := int32(56) // int32 | Tree Cluster ID
-	body := *openapiclient.NewTreeClusterUpdate("Address_example", "Description_example", "Name_example", openapiclient.SoilCondition("schluffig"), []int32{int32(123)}) // TreeClusterUpdate | Tree Cluster Update Request
+	body := *openapiclient.NewTreeClusterUpdate("Address_example", "Description_example", "Name_example", openapiclient.SoilCondition("schluffig"), []int32{int32(123)}) // TreeClusterUpdate | Tree cluster data to update
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -342,7 +342,7 @@ Other parameters are passed through a pointer to a apiUpdateTreeClusterRequest s
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **body** | [**TreeClusterUpdate**](TreeClusterUpdate.md) | Tree Cluster Update Request | 
+ **body** | [**TreeClusterUpdate**](TreeClusterUpdate.md) | Tree cluster data to update | 
 
 ### Return type
 
@@ -354,7 +354,7 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

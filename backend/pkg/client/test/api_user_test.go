@@ -48,11 +48,11 @@ func Test_client_UserAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test UserAPIService V1UserLoginGet", func(t *testing.T) {
+	t.Run("Test UserAPIService Login", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
 
-		resp, httpRes, err := apiClient.UserAPI.V1UserLoginGet(context.Background()).Execute()
+		resp, httpRes, err := apiClient.UserAPI.Login(context.Background()).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)
@@ -60,11 +60,11 @@ func Test_client_UserAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test UserAPIService V1UserLoginTokenPost", func(t *testing.T) {
+	t.Run("Test UserAPIService Logout", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
 
-		resp, httpRes, err := apiClient.UserAPI.V1UserLoginTokenPost(context.Background()).Execute()
+		resp, httpRes, err := apiClient.UserAPI.Logout(context.Background()).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)
@@ -72,11 +72,11 @@ func Test_client_UserAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test UserAPIService V1UserLogoutPost", func(t *testing.T) {
+	t.Run("Test UserAPIService RefreshToken", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
 
-		resp, httpRes, err := apiClient.UserAPI.V1UserLogoutPost(context.Background()).Execute()
+		resp, httpRes, err := apiClient.UserAPI.RefreshToken(context.Background()).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)
@@ -84,11 +84,11 @@ func Test_client_UserAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test UserAPIService V1UserPost", func(t *testing.T) {
+	t.Run("Test UserAPIService RegisterUser", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
 
-		resp, httpRes, err := apiClient.UserAPI.V1UserPost(context.Background()).Execute()
+		resp, httpRes, err := apiClient.UserAPI.RegisterUser(context.Background()).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)
@@ -96,11 +96,11 @@ func Test_client_UserAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test UserAPIService V1UserTokenRefreshPost", func(t *testing.T) {
+	t.Run("Test UserAPIService RequestToken", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
 
-		resp, httpRes, err := apiClient.UserAPI.V1UserTokenRefreshPost(context.Background()).Execute()
+		resp, httpRes, err := apiClient.UserAPI.RequestToken(context.Background()).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)

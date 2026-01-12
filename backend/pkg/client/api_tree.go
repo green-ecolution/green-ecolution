@@ -29,7 +29,7 @@ type ApiCreateTreeRequest struct {
 	body       *TreeCreate
 }
 
-// Tree to create
+// Tree data to create
 func (r ApiCreateTreeRequest) Body(body TreeCreate) ApiCreateTreeRequest {
 	r.body = &body
 	return r
@@ -42,7 +42,7 @@ func (r ApiCreateTreeRequest) Execute() (*Tree, *http.Response, error) {
 /*
 CreateTree Create tree
 
-Create tree
+Creates a new tree with the provided data. Optionally associates a sensor and cluster.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiCreateTreeRequest
@@ -80,7 +80,7 @@ func (a *TreeAPIService) CreateTreeExecute(r ApiCreateTreeRequest) (*Tree, *http
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -153,17 +153,6 @@ func (a *TreeAPIService) CreateTreeExecute(r ApiCreateTreeRequest) (*Tree, *http
 			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v HTTPError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v HTTPError
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
@@ -202,7 +191,7 @@ func (r ApiDeleteTreeRequest) Execute() (*http.Response, error) {
 /*
 DeleteTree Delete tree
 
-Delete tree
+Permanently deletes a tree and removes its sensor association if present.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param treeId Tree ID
@@ -346,37 +335,37 @@ type ApiGetAllTreesRequest struct {
 	hasCluster       *bool
 }
 
-// Page
+// Page number for pagination
 func (r ApiGetAllTreesRequest) Page(page int32) ApiGetAllTreesRequest {
 	r.page = &page
 	return r
 }
 
-// Limit
+// Number of items per page
 func (r ApiGetAllTreesRequest) Limit(limit int32) ApiGetAllTreesRequest {
 	r.limit = &limit
 	return r
 }
 
-// Provider
+// Filter by data provider
 func (r ApiGetAllTreesRequest) Provider(provider string) ApiGetAllTreesRequest {
 	r.provider = &provider
 	return r
 }
 
-// watering status (good, moderate, bad)
+// Filter by watering status (good, moderate, bad)
 func (r ApiGetAllTreesRequest) WateringStatuses(wateringStatuses []string) ApiGetAllTreesRequest {
 	r.wateringStatuses = &wateringStatuses
 	return r
 }
 
-// planting_years
+// Filter by planting years
 func (r ApiGetAllTreesRequest) PlantingYears(plantingYears []int32) ApiGetAllTreesRequest {
 	r.plantingYears = &plantingYears
 	return r
 }
 
-// has cluster
+// Filter trees that belong to a cluster
 func (r ApiGetAllTreesRequest) HasCluster(hasCluster bool) ApiGetAllTreesRequest {
 	r.hasCluster = &hasCluster
 	return r
@@ -389,7 +378,7 @@ func (r ApiGetAllTreesRequest) Execute() (*TreeList, *http.Response, error) {
 /*
 GetAllTrees Get all trees
 
-Get all trees
+Retrieves a paginated list of all trees. Supports filtering by provider, watering status, planting year, and cluster association.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiGetAllTreesRequest
@@ -513,17 +502,6 @@ func (a *TreeAPIService) GetAllTreesExecute(r ApiGetAllTreesRequest) (*TreeList,
 			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v HTTPError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v HTTPError
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
@@ -549,27 +527,27 @@ func (a *TreeAPIService) GetAllTreesExecute(r ApiGetAllTreesRequest) (*TreeList,
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiGetTreesRequest struct {
+type ApiGetTreeByIdRequest struct {
 	ctx        context.Context
 	ApiService *TreeAPIService
 	treeId     int32
 }
 
-func (r ApiGetTreesRequest) Execute() (*Tree, *http.Response, error) {
-	return r.ApiService.GetTreesExecute(r)
+func (r ApiGetTreeByIdRequest) Execute() (*Tree, *http.Response, error) {
+	return r.ApiService.GetTreeByIdExecute(r)
 }
 
 /*
-GetTrees Get tree by ID
+GetTreeById Get tree by ID
 
-Get tree by ID
+Retrieves detailed information about a specific tree including its sensor data and cluster association.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param treeId Tree ID
-	@return ApiGetTreesRequest
+	@return ApiGetTreeByIdRequest
 */
-func (a *TreeAPIService) GetTrees(ctx context.Context, treeId int32) ApiGetTreesRequest {
-	return ApiGetTreesRequest{
+func (a *TreeAPIService) GetTreeById(ctx context.Context, treeId int32) ApiGetTreeByIdRequest {
+	return ApiGetTreeByIdRequest{
 		ApiService: a,
 		ctx:        ctx,
 		treeId:     treeId,
@@ -579,7 +557,7 @@ func (a *TreeAPIService) GetTrees(ctx context.Context, treeId int32) ApiGetTrees
 // Execute executes the request
 //
 //	@return Tree
-func (a *TreeAPIService) GetTreesExecute(r ApiGetTreesRequest) (*Tree, *http.Response, error) {
+func (a *TreeAPIService) GetTreeByIdExecute(r ApiGetTreeByIdRequest) (*Tree, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
@@ -587,7 +565,7 @@ func (a *TreeAPIService) GetTreesExecute(r ApiGetTreesRequest) (*Tree, *http.Res
 		localVarReturnValue *Tree
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TreeAPIService.GetTrees")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TreeAPIService.GetTreeById")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -714,7 +692,7 @@ type ApiUpdateTreeRequest struct {
 	body       *TreeUpdate
 }
 
-// Tree to update
+// Tree data to update
 func (r ApiUpdateTreeRequest) Body(body TreeUpdate) ApiUpdateTreeRequest {
 	r.body = &body
 	return r
@@ -727,7 +705,7 @@ func (r ApiUpdateTreeRequest) Execute() (*Tree, *http.Response, error) {
 /*
 UpdateTree Update tree
 
-Update tree
+Updates an existing tree with the provided data. All fields in the request body will overwrite existing values.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param treeId Tree ID
@@ -768,7 +746,7 @@ func (a *TreeAPIService) UpdateTreeExecute(r ApiUpdateTreeRequest) (*Tree, *http
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)

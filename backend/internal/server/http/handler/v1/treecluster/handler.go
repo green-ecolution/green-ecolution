@@ -18,7 +18,7 @@ var (
 )
 
 // @Summary		Get all tree clusters
-// @Description	Get all tree clusters
+// @Description	Retrieves a paginated list of all tree clusters. Supports filtering by watering status, region, and provider.
 // @Id				get-all-tree-clusters
 // @Tags			Tree Cluster
 // @Produce		json
@@ -26,14 +26,13 @@ var (
 // @Failure		400	{object}	HTTPError
 // @Failure		401	{object}	HTTPError
 // @Failure		403	{object}	HTTPError
-// @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/cluster [get]
-// @Param			page				query	int			false	"Page"
-// @Param			limit				query	int			false	"Limit"
-// @Param			watering_statuses	query	[]string	false	"Watering statuses"
-// @Param			regions				query	[]string	false	"Regions"
-// @Param			provider			query	string		false	"Provider"
+// @Param			page				query	int			false	"Page number for pagination"
+// @Param			limit				query	int			false	"Number of items per page"
+// @Param			watering_statuses	query	[]string	false	"Filter by watering statuses (good, moderate, bad)"
+// @Param			regions				query	[]string	false	"Filter by region names"
+// @Param			provider			query	string		false	"Filter by data provider"
 // @Security		Keycloak
 func GetAllTreeClusters(svc service.TreeClusterService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -62,7 +61,7 @@ func GetAllTreeClusters(svc service.TreeClusterService) fiber.Handler {
 }
 
 // @Summary		Get tree cluster by ID
-// @Description	Get tree cluster by ID
+// @Description	Retrieves detailed information about a specific tree cluster including its trees and calculated watering status.
 // @Id				get-tree-cluster-by-id
 // @Tags			Tree Cluster
 // @Produce		json
@@ -95,18 +94,18 @@ func GetTreeClusterByID(svc service.TreeClusterService) fiber.Handler {
 }
 
 // @Summary		Create tree cluster
-// @Description	Create tree cluster
+// @Description	Creates a new tree cluster with the provided data. Optionally assigns trees to the cluster.
 // @Id				create-tree-cluster
 // @Tags			Tree Cluster
+// @Accept			json
 // @Produce		json
 // @Success		201	{object}	entities.TreeClusterResponse
 // @Failure		400	{object}	HTTPError
 // @Failure		401	{object}	HTTPError
 // @Failure		403	{object}	HTTPError
-// @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/cluster [post]
-// @Param			body	body	entities.TreeClusterCreateRequest	true	"Tree Cluster Create Request"
+// @Param			body	body	entities.TreeClusterCreateRequest	true	"Tree cluster data to create"
 // @Security		Keycloak
 func CreateTreeCluster(svc service.TreeClusterService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -129,9 +128,10 @@ func CreateTreeCluster(svc service.TreeClusterService) fiber.Handler {
 }
 
 // @Summary		Update tree cluster
-// @Description	Update tree cluster
+// @Description	Updates an existing tree cluster with the provided data. Can modify cluster properties and tree assignments.
 // @Id				update-tree-cluster
 // @Tags			Tree Cluster
+// @Accept			json
 // @Produce		json
 // @Success		200	{object}	entities.TreeClusterResponse
 // @Failure		400	{object}	HTTPError
@@ -141,7 +141,7 @@ func CreateTreeCluster(svc service.TreeClusterService) fiber.Handler {
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/cluster/{cluster_id} [put]
 // @Param			cluster_id	path	int									true	"Tree Cluster ID"
-// @Param			body		body	entities.TreeClusterUpdateRequest	true	"Tree Cluster Update Request"
+// @Param			body		body	entities.TreeClusterUpdateRequest	true	"Tree cluster data to update"
 // @Security		Keycloak
 func UpdateTreeCluster(svc service.TreeClusterService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -168,7 +168,7 @@ func UpdateTreeCluster(svc service.TreeClusterService) fiber.Handler {
 }
 
 // @Summary		Delete tree cluster
-// @Description	Delete tree cluster
+// @Description	Permanently deletes a tree cluster. Trees in the cluster are not deleted but unassigned from the cluster.
 // @Id				delete-tree-cluster
 // @Tags			Tree Cluster
 // @Produce		json

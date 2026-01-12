@@ -19,7 +19,7 @@ var (
 )
 
 // @Summary		Get all trees
-// @Description	Get all trees
+// @Description	Retrieves a paginated list of all trees. Supports filtering by provider, watering status, planting year, and cluster association.
 // @Id				get-all-trees
 // @Tags			Tree
 // @Produce		json
@@ -27,15 +27,14 @@ var (
 // @Failure		400	{object}	HTTPError
 // @Failure		401	{object}	HTTPError
 // @Failure		403	{object}	HTTPError
-// @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/tree [get]
-// @Param			page				query	int			false	"Page"
-// @Param			limit				query	int			false	"Limit"
-// @Param			provider			query	string		false	"Provider"
-// @Param			watering_statuses	query	[]string	false	"watering status (good, moderate, bad)"
-// @Param			planting_years		query	[]int		false	"planting_years"
-// @Param			has_cluster			query	bool		false	"has cluster"
+// @Param			page				query	int			false	"Page number for pagination"
+// @Param			limit				query	int			false	"Number of items per page"
+// @Param			provider			query	string		false	"Filter by data provider"
+// @Param			watering_statuses	query	[]string	false	"Filter by watering status (good, moderate, bad)"
+// @Param			planting_years		query	[]int		false	"Filter by planting years"
+// @Param			has_cluster			query	bool		false	"Filter trees that belong to a cluster"
 // @Security		Keycloak
 func GetAllTrees(svc service.TreeService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -64,8 +63,8 @@ func GetAllTrees(svc service.TreeService) fiber.Handler {
 }
 
 // @Summary		Get tree by ID
-// @Description	Get tree by ID
-// @Id				get-trees
+// @Description	Retrieves detailed information about a specific tree including its sensor data and cluster association.
+// @Id				get-tree-by-id
 // @Tags			Tree
 // @Produce		json
 // @Success		200	{object}	entities.TreeResponse
@@ -75,7 +74,7 @@ func GetAllTrees(svc service.TreeService) fiber.Handler {
 // @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/tree/{tree_id} [get]
-// @Param			tree_id	path	int	false	"Tree ID"
+// @Param			tree_id	path	int	true	"Tree ID"
 // @Security		Keycloak
 func GetTreeByID(svc service.TreeService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -100,7 +99,7 @@ func GetTreeByID(svc service.TreeService) fiber.Handler {
 }
 
 // @Summary		Get tree by sensor ID
-// @Description	Get tree by sensor ID
+// @Description	Retrieves the tree associated with a specific sensor. Useful for looking up tree information from sensor data.
 // @Id				get-tree-by-sensor-id
 // @Tags			Tree Sensor
 // @Produce		json
@@ -111,7 +110,7 @@ func GetTreeByID(svc service.TreeService) fiber.Handler {
 // @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/tree/sensor/{sensor_id} [get]
-// @Param			sensor_id	path	string	false	"Sensor ID"
+// @Param			sensor_id	path	string	true	"Sensor ID"
 // @Security		Keycloak
 func GetTreeBySensorID(svc service.TreeService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -129,19 +128,19 @@ func GetTreeBySensorID(svc service.TreeService) fiber.Handler {
 }
 
 // @Summary		Create tree
-// @Description	Create tree
+// @Description	Creates a new tree with the provided data. Optionally associates a sensor and cluster.
 // @Id				create-tree
 // @Tags			Tree
+// @Accept			json
 // @Produce		json
-// @Success		200	{object}	entities.TreeResponse
+// @Success		201	{object}	entities.TreeResponse
 // @Failure		400	{object}	HTTPError
 // @Failure		401	{object}	HTTPError
 // @Failure		403	{object}	HTTPError
-// @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/tree [post]
 // @Security		Keycloak
-// @Param			body	body	entities.TreeCreateRequest	true	"Tree to create"
+// @Param			body	body	entities.TreeCreateRequest	true	"Tree data to create"
 func CreateTree(svc service.TreeService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
@@ -162,9 +161,10 @@ func CreateTree(svc service.TreeService) fiber.Handler {
 }
 
 // @Summary		Update tree
-// @Description	Update tree
+// @Description	Updates an existing tree with the provided data. All fields in the request body will overwrite existing values.
 // @Id				update-tree
 // @Tags			Tree
+// @Accept			json
 // @Produce		json
 // @Success		200	{object}	entities.TreeResponse
 // @Failure		400	{object}	HTTPError
@@ -174,8 +174,8 @@ func CreateTree(svc service.TreeService) fiber.Handler {
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/tree/{tree_id} [put]
 // @Security		Keycloak
-// @Param			tree_id	path	int							false	"Tree ID"
-// @Param			body	body	entities.TreeUpdateRequest	true	"Tree to update"
+// @Param			tree_id	path	int							true	"Tree ID"
+// @Param			body	body	entities.TreeUpdateRequest	true	"Tree data to update"
 func UpdateTree(svc service.TreeService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
@@ -199,7 +199,7 @@ func UpdateTree(svc service.TreeService) fiber.Handler {
 }
 
 // @Summary		Delete tree
-// @Description	Delete tree
+// @Description	Permanently deletes a tree and removes its sensor association if present.
 // @Id				delete-tree
 // @Tags			Tree
 // @Produce		json
@@ -210,7 +210,7 @@ func UpdateTree(svc service.TreeService) fiber.Handler {
 // @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/tree/{tree_id} [delete]
-// @Param			tree_id	path	int	false	"Tree ID"
+// @Param			tree_id	path	int	true	"Tree ID"
 // @Security		Keycloak
 func DeleteTree(svc service.TreeService) fiber.Handler {
 	return func(c *fiber.Ctx) error {

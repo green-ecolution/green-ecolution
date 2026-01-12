@@ -31,7 +31,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get all tree clusters",
+                "description": "Retrieves a paginated list of all tree clusters. Supports filtering by watering status, region, and provider.",
                 "produces": [
                     "application/json"
                 ],
@@ -43,13 +43,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Page",
+                        "description": "Page number for pagination",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Limit",
+                        "description": "Number of items per page",
                         "name": "limit",
                         "in": "query"
                     },
@@ -59,7 +59,7 @@ const docTemplate = `{
                             "type": "string"
                         },
                         "collectionFormat": "csv",
-                        "description": "Watering statuses",
+                        "description": "Filter by watering statuses (good, moderate, bad)",
                         "name": "watering_statuses",
                         "in": "query"
                     },
@@ -69,13 +69,13 @@ const docTemplate = `{
                             "type": "string"
                         },
                         "collectionFormat": "csv",
-                        "description": "Regions",
+                        "description": "Filter by region names",
                         "name": "regions",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Provider",
+                        "description": "Filter by data provider",
                         "name": "provider",
                         "in": "query"
                     }
@@ -105,12 +105,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/HTTPError"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -125,7 +119,10 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Create tree cluster",
+                "description": "Creates a new tree cluster with the provided data. Optionally assigns trees to the cluster.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -136,7 +133,7 @@ const docTemplate = `{
                 "operationId": "create-tree-cluster",
                 "parameters": [
                     {
-                        "description": "Tree Cluster Create Request",
+                        "description": "Tree cluster data to create",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -170,12 +167,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/HTTPError"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -192,7 +183,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get tree cluster by ID",
+                "description": "Retrieves detailed information about a specific tree cluster including its trees and calculated watering status.",
                 "produces": [
                     "application/json"
                 ],
@@ -255,7 +246,10 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Update tree cluster",
+                "description": "Updates an existing tree cluster with the provided data. Can modify cluster properties and tree assignments.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -273,7 +267,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Tree Cluster Update Request",
+                        "description": "Tree cluster data to update",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -327,7 +321,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Delete tree cluster",
+                "description": "Permanently deletes a tree cluster. Trees in the cluster are not deleted but unassigned from the cluster.",
                 "produces": [
                     "application/json"
                 ],
@@ -389,7 +383,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get evaluation values such as tree count, sensor count, etc.",
+                "description": "Retrieves aggregated statistics including tree count, sensor count, cluster count, and watering plan metrics.",
                 "produces": [
                     "application/json"
                 ],
@@ -411,6 +405,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -427,14 +433,14 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get info about the app and the server",
+                "description": "Retrieves information about the application including version, server configuration, and map settings.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Info"
                 ],
-                "summary": "Get info about the app",
+                "summary": "Get application info",
                 "operationId": "get-app-info",
                 "responses": {
                     "200": {
@@ -461,12 +467,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/HTTPError"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -483,14 +483,14 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get a list of all registered plugins",
+                "description": "Retrieves a list of all plugins currently registered with the system.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Plugin"
                 ],
-                "summary": "Get a list of all registered plugins",
+                "summary": "Get all registered plugins",
                 "operationId": "get-plugins-list",
                 "responses": {
                     "200": {
@@ -517,12 +517,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/HTTPError"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -532,7 +526,10 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Register a plugin",
+                "description": "Registers a new plugin with the system. Returns authentication tokens for plugin API access.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -543,7 +540,7 @@ const docTemplate = `{
                 "operationId": "register-plugin",
                 "parameters": [
                     {
-                        "description": "Plugin registration request",
+                        "description": "Plugin registration data",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -565,24 +562,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/HTTPError"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/HTTPError"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/HTTPError"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -599,19 +578,19 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get a plugin info",
+                "description": "Retrieves detailed information about a specific registered plugin.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Plugin"
                 ],
-                "summary": "Get a plugin info",
+                "summary": "Get plugin info",
                 "operationId": "get-plugin-info",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Slug of the plugin",
+                        "description": "Unique slug identifier of the plugin",
                         "name": "plugin_slug",
                         "in": "path",
                         "required": true
@@ -664,19 +643,19 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Heartbeat for a plugin",
+                "description": "Sends a heartbeat signal to indicate the plugin is still active. Should be called periodically.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Plugin"
                 ],
-                "summary": "Heartbeat for a plugin",
+                "summary": "Plugin heartbeat",
                 "operationId": "plugin-heartbeat",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Name of the plugin specified by slug during registration",
+                        "description": "Unique slug identifier of the plugin",
                         "name": "plugin_slug",
                         "in": "path",
                         "required": true
@@ -724,7 +703,7 @@ const docTemplate = `{
         },
         "/v1/plugin/{plugin_slug}/token/refresh": {
             "post": {
-                "description": "Refresh plugin token",
+                "description": "Exchanges plugin credentials for a new access token. Use when the previous token has expired.",
                 "consumes": [
                     "application/json"
                 ],
@@ -738,7 +717,7 @@ const docTemplate = `{
                 "operationId": "refresh-plugin-token",
                 "parameters": [
                     {
-                        "description": "Plugin authentication",
+                        "description": "Plugin client credentials",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -748,7 +727,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Slug of the plugin",
+                        "description": "Unique slug identifier of the plugin",
                         "name": "plugin_slug",
                         "in": "path",
                         "required": true
@@ -763,6 +742,18 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/HTTPError"
                         }
@@ -783,7 +774,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Unregister a plugin",
+                "description": "Removes a plugin registration from the system. The plugin will no longer be able to access the API.",
                 "produces": [
                     "application/json"
                 ],
@@ -795,7 +786,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Slug of the plugin",
+                        "description": "Unique slug identifier of the plugin",
                         "name": "plugin_slug",
                         "in": "path",
                         "required": true
@@ -807,6 +798,12 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/HTTPError"
                         }
@@ -833,7 +830,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get all regions",
+                "description": "Retrieves a list of all available regions for tree cluster assignment.",
                 "produces": [
                     "application/json"
                 ],
@@ -841,16 +838,17 @@ const docTemplate = `{
                     "Region"
                 ],
                 "summary": "Get all regions",
+                "operationId": "get-all-regions",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Page",
+                        "description": "Page number for pagination",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Limit",
+                        "description": "Number of items per page",
                         "name": "limit",
                         "in": "query"
                     }
@@ -864,6 +862,18 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/HTTPError"
                         }
@@ -884,7 +894,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get a region by ID",
+                "description": "Retrieves detailed information about a specific region.",
                 "produces": [
                     "application/json"
                 ],
@@ -892,9 +902,10 @@ const docTemplate = `{
                     "Region"
                 ],
                 "summary": "Get a region by ID",
+                "operationId": "get-region-by-id",
                 "parameters": [
                     {
-                        "type": "string",
+                        "type": "integer",
                         "description": "Region ID",
                         "name": "id",
                         "in": "path",
@@ -906,70 +917,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/Region"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/HTTPError"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/HTTPError"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/HTTPError"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/sensor": {
-            "get": {
-                "security": [
-                    {
-                        "Keycloak": []
-                    }
-                ],
-                "description": "Get all sensors",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Sensor"
-                ],
-                "summary": "Get all sensors",
-                "operationId": "get-all-sensors",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Page",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Limit",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Provider",
-                        "name": "provider",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/SensorList"
                         }
                     },
                     "400": {
@@ -1005,6 +952,76 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/sensor": {
+            "get": {
+                "security": [
+                    {
+                        "Keycloak": []
+                    }
+                ],
+                "description": "Retrieves a paginated list of all sensors. Supports filtering by provider.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sensor"
+                ],
+                "summary": "Get all sensors",
+                "operationId": "get-all-sensors",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number for pagination",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by data provider",
+                        "name": "provider",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/SensorList"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/sensor/data/{sensor_id}": {
             "get": {
                 "security": [
@@ -1012,14 +1029,14 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get all sensor data by id",
+                "description": "Retrieves the complete history of data readings for a specific sensor.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Sensor"
                 ],
-                "summary": "Get all sensor data by id",
+                "summary": "Get all sensor data by ID",
                 "operationId": "get-all-sensor-data-by-id",
                 "parameters": [
                     {
@@ -1077,7 +1094,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get sensor by ID",
+                "description": "Retrieves detailed information about a specific sensor including its latest data readings.",
                 "produces": [
                     "application/json"
                 ],
@@ -1140,7 +1157,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Delete sensor",
+                "description": "Permanently deletes a sensor and all its associated data readings.",
                 "produces": [
                     "application/json"
                 ],
@@ -1202,7 +1219,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get all trees",
+                "description": "Retrieves a paginated list of all trees. Supports filtering by provider, watering status, planting year, and cluster association.",
                 "produces": [
                     "application/json"
                 ],
@@ -1214,19 +1231,19 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Page",
+                        "description": "Page number for pagination",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Limit",
+                        "description": "Number of items per page",
                         "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Provider",
+                        "description": "Filter by data provider",
                         "name": "provider",
                         "in": "query"
                     },
@@ -1236,7 +1253,7 @@ const docTemplate = `{
                             "type": "string"
                         },
                         "collectionFormat": "csv",
-                        "description": "watering status (good, moderate, bad)",
+                        "description": "Filter by watering status (good, moderate, bad)",
                         "name": "watering_statuses",
                         "in": "query"
                     },
@@ -1246,13 +1263,13 @@ const docTemplate = `{
                             "type": "integer"
                         },
                         "collectionFormat": "csv",
-                        "description": "planting_years",
+                        "description": "Filter by planting years",
                         "name": "planting_years",
                         "in": "query"
                     },
                     {
                         "type": "boolean",
-                        "description": "has cluster",
+                        "description": "Filter trees that belong to a cluster",
                         "name": "has_cluster",
                         "in": "query"
                     }
@@ -1282,12 +1299,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/HTTPError"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -1302,7 +1313,10 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Create tree",
+                "description": "Creates a new tree with the provided data. Optionally associates a sensor and cluster.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1313,7 +1327,7 @@ const docTemplate = `{
                 "operationId": "create-tree",
                 "parameters": [
                     {
-                        "description": "Tree to create",
+                        "description": "Tree data to create",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -1323,8 +1337,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/Tree"
                         }
@@ -1347,12 +1361,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/HTTPError"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -1369,7 +1377,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get tree by sensor ID",
+                "description": "Retrieves the tree associated with a specific sensor. Useful for looking up tree information from sensor data.",
                 "produces": [
                     "application/json"
                 ],
@@ -1383,7 +1391,8 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Sensor ID",
                         "name": "sensor_id",
-                        "in": "path"
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1433,7 +1442,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get tree by ID",
+                "description": "Retrieves detailed information about a specific tree including its sensor data and cluster association.",
                 "produces": [
                     "application/json"
                 ],
@@ -1441,13 +1450,14 @@ const docTemplate = `{
                     "Tree"
                 ],
                 "summary": "Get tree by ID",
-                "operationId": "get-trees",
+                "operationId": "get-tree-by-id",
                 "parameters": [
                     {
                         "type": "integer",
                         "description": "Tree ID",
                         "name": "tree_id",
-                        "in": "path"
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1495,7 +1505,10 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Update tree",
+                "description": "Updates an existing tree with the provided data. All fields in the request body will overwrite existing values.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1509,10 +1522,11 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Tree ID",
                         "name": "tree_id",
-                        "in": "path"
+                        "in": "path",
+                        "required": true
                     },
                     {
-                        "description": "Tree to update",
+                        "description": "Tree data to update",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -1566,7 +1580,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Delete tree",
+                "description": "Permanently deletes a tree and removes its sensor association if present.",
                 "produces": [
                     "application/json"
                 ],
@@ -1580,7 +1594,8 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Tree ID",
                         "name": "tree_id",
-                        "in": "path"
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1627,7 +1642,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get all users",
+                "description": "Retrieves a list of all users. Optionally filter by specific user IDs.",
                 "produces": [
                     "application/json"
                 ],
@@ -1639,7 +1654,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User IDs",
+                        "description": "Comma-separated list of user IDs to filter",
                         "name": "user_ids",
                         "in": "query"
                     }
@@ -1653,6 +1668,18 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/HTTPError"
                         }
@@ -1671,7 +1698,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Register a new user",
+                "description": "Creates a new user account with the specified information and roles. Requires admin privileges.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1682,9 +1709,10 @@ const docTemplate = `{
                     "User"
                 ],
                 "summary": "Register a new user",
+                "operationId": "register-user",
                 "parameters": [
                     {
-                        "description": "User information",
+                        "description": "User registration data",
                         "name": "user",
                         "in": "body",
                         "required": true,
@@ -1706,6 +1734,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -1717,6 +1757,7 @@ const docTemplate = `{
         },
         "/v1/user/login": {
             "get": {
+                "description": "Initiates the OAuth2 login flow. Returns a URL to redirect the user to for authentication.",
                 "produces": [
                     "application/json"
                 ],
@@ -1724,10 +1765,11 @@ const docTemplate = `{
                     "User"
                 ],
                 "summary": "Request to login",
+                "operationId": "login",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Redirect URL",
+                        "description": "URL to redirect back after authentication",
                         "name": "redirect_url",
                         "in": "query",
                         "required": true
@@ -1757,6 +1799,7 @@ const docTemplate = `{
         },
         "/v1/user/login/token": {
             "post": {
+                "description": "Exchanges the authorization code from OAuth2 callback for access and refresh tokens.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1766,10 +1809,11 @@ const docTemplate = `{
                 "tags": [
                     "User"
                 ],
-                "summary": "Validate login code and request a access token",
+                "summary": "Request access token",
+                "operationId": "request-token",
                 "parameters": [
                     {
-                        "description": "Callback information",
+                        "description": "Authorization code from OAuth2 callback",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -1779,7 +1823,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Redirect URL",
+                        "description": "Same redirect URL used in login request",
                         "name": "redirect_url",
                         "in": "query",
                         "required": true
@@ -1809,13 +1853,18 @@ const docTemplate = `{
         },
         "/v1/user/logout": {
             "post": {
+                "description": "Logs out the user by invalidating the refresh token.",
+                "consumes": [
+                    "application/json"
+                ],
                 "tags": [
                     "User"
                 ],
                 "summary": "Logout from the system",
+                "operationId": "logout",
                 "parameters": [
                     {
-                        "description": "Logout information",
+                        "description": "Logout request with refresh token",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -1853,7 +1902,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get users by role",
+                "description": "Retrieves a list of users that have the specified role assigned.",
                 "produces": [
                     "application/json"
                 ],
@@ -1865,7 +1914,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Role",
+                        "description": "Role name to filter users by",
                         "name": "role",
                         "in": "path",
                         "required": true
@@ -1884,6 +1933,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -1895,7 +1956,7 @@ const docTemplate = `{
         },
         "/v1/user/token/refresh": {
             "post": {
-                "description": "Refresh token",
+                "description": "Exchanges a valid refresh token for a new access token. Use this when the access token has expired.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1906,9 +1967,10 @@ const docTemplate = `{
                     "User"
                 ],
                 "summary": "Refresh token",
+                "operationId": "refresh-token",
                 "parameters": [
                     {
-                        "description": "Refresh token information",
+                        "description": "Refresh token to exchange",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -1930,6 +1992,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -1946,7 +2014,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get all vehicles",
+                "description": "Retrieves a paginated list of all vehicles. Supports filtering by type, provider, and archive status.",
                 "produces": [
                     "application/json"
                 ],
@@ -1958,31 +2026,31 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Page",
+                        "description": "Page number for pagination",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Limit",
+                        "description": "Number of items per page",
                         "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Vehicle Type",
+                        "description": "Filter by vehicle type",
                         "name": "type",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Provider",
+                        "description": "Filter by data provider",
                         "name": "provider",
                         "in": "query"
                     },
                     {
                         "type": "boolean",
-                        "description": "With archived vehicles",
+                        "description": "Include archived vehicles",
                         "name": "archived",
                         "in": "query"
                     }
@@ -2012,12 +2080,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/HTTPError"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -2032,7 +2094,10 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Create vehicle",
+                "description": "Creates a new vehicle with the provided data including type, plate number, and water capacity.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -2043,7 +2108,7 @@ const docTemplate = `{
                 "operationId": "create-vehicle",
                 "parameters": [
                     {
-                        "description": "Vehicle Create Request",
+                        "description": "Vehicle data to create",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -2077,12 +2142,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/HTTPError"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -2099,15 +2158,15 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get archived vehicle",
+                "description": "Retrieves a list of all archived vehicles.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Vehicle"
                 ],
-                "summary": "Get archived vehicle",
-                "operationId": "get-archive-vehicle",
+                "summary": "Get archived vehicles",
+                "operationId": "get-archived-vehicles",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2136,12 +2195,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/HTTPError"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -2158,7 +2211,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Archive vehicle",
+                "description": "Archives a vehicle. Archived vehicles are hidden from the default list but can still be retrieved. Returns 409 if vehicle is in use by active watering plans.",
                 "produces": [
                     "application/json"
                 ],
@@ -2226,7 +2279,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get vehicle by plate",
+                "description": "Retrieves a vehicle by its license plate number.",
                 "produces": [
                     "application/json"
                 ],
@@ -2238,7 +2291,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Vehicle plate number",
+                        "description": "Vehicle license plate number",
                         "name": "plate",
                         "in": "path",
                         "required": true
@@ -2291,7 +2344,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get vehicle by ID",
+                "description": "Retrieves detailed information about a specific vehicle including its type and water capacity.",
                 "produces": [
                     "application/json"
                 ],
@@ -2354,7 +2407,10 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Update vehicle",
+                "description": "Updates an existing vehicle with the provided data.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -2365,14 +2421,14 @@ const docTemplate = `{
                 "operationId": "update-vehicle",
                 "parameters": [
                     {
-                        "type": "string",
+                        "type": "integer",
                         "description": "Vehicle ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Vehicle Update Request",
+                        "description": "Vehicle data to update",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -2426,7 +2482,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Delete vehicle",
+                "description": "Permanently deletes a vehicle. Consider archiving instead if the vehicle might be needed for historical records.",
                 "produces": [
                     "application/json"
                 ],
@@ -2488,7 +2544,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get all watering plans",
+                "description": "Retrieves a paginated list of all watering plans. Supports filtering by provider.",
                 "produces": [
                     "application/json"
                 ],
@@ -2500,19 +2556,19 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Page",
+                        "description": "Page number for pagination",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Limit",
+                        "description": "Number of items per page",
                         "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Provider",
+                        "description": "Filter by data provider",
                         "name": "provider",
                         "in": "query"
                     }
@@ -2542,12 +2598,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/HTTPError"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -2562,7 +2612,10 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Create watering plan",
+                "description": "Creates a new watering plan with specified tree clusters, vehicles, and generates an optimized route.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -2573,7 +2626,7 @@ const docTemplate = `{
                 "operationId": "create-watering-plan",
                 "parameters": [
                     {
-                        "description": "Watering Plan Create Request",
+                        "description": "Watering plan data to create",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -2607,12 +2660,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/HTTPError"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -2629,22 +2676,19 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Generate route",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Downloads the GPX route file for a watering plan. Can be imported into GPS navigation devices.",
                 "produces": [
-                    "application/gpx+xml",
-                    "application/json"
+                    "application/gpx+xml"
                 ],
                 "tags": [
                     "Watering Plan"
                 ],
-                "summary": "Generate route",
+                "summary": "Download GPX file",
+                "operationId": "get-gpx-file",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "gpx file name",
+                        "description": "GPX file name",
                         "name": "gpx_name",
                         "in": "path",
                         "required": true
@@ -2659,6 +2703,24 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/HTTPError"
                         }
@@ -2679,7 +2741,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Generate preview route",
+                "description": "Generates a preview of the optimized route for the given vehicles and tree clusters without creating a watering plan.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2690,9 +2752,10 @@ const docTemplate = `{
                     "Watering Plan"
                 ],
                 "summary": "Generate preview route",
+                "operationId": "create-preview-route",
                 "parameters": [
                     {
-                        "description": "Route Request",
+                        "description": "Route preview request with vehicles and clusters",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -2714,6 +2777,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -2730,7 +2805,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Get watering plan by ID",
+                "description": "Retrieves detailed information about a specific watering plan including assigned clusters, vehicles, and route.",
                 "produces": [
                     "application/json"
                 ],
@@ -2793,7 +2868,10 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Update watering plan",
+                "description": "Updates an existing watering plan. Can modify clusters, vehicles, and regenerates the route if needed.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -2804,14 +2882,14 @@ const docTemplate = `{
                 "operationId": "update-watering-plan",
                 "parameters": [
                     {
-                        "type": "string",
+                        "type": "integer",
                         "description": "Watering Plan ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Watering Plan Update Request",
+                        "description": "Watering plan data to update",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -2865,7 +2943,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Delete watering plan",
+                "description": "Permanently deletes a watering plan and its associated route data.",
                 "produces": [
                     "application/json"
                 ],

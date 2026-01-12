@@ -17,7 +17,7 @@ var (
 )
 
 // @Summary		Get all sensors
-// @Description	Get all sensors
+// @Description	Retrieves a paginated list of all sensors. Supports filtering by provider.
 // @Id				get-all-sensors
 // @Tags			Sensor
 // @Produce		json
@@ -25,12 +25,11 @@ var (
 // @Failure		400	{object}	HTTPError
 // @Failure		401	{object}	HTTPError
 // @Failure		403	{object}	HTTPError
-// @Failure		404	{object}	HTTPError
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/sensor [get]
-// @Param			page		query	int		false	"Page"
-// @Param			limit		query	int		false	"Limit"
-// @Param			provider	query	string	false	"Provider"
+// @Param			page		query	int		false	"Page number for pagination"
+// @Param			limit		query	int		false	"Number of items per page"
+// @Param			provider	query	string	false	"Filter by data provider"
 // @Security		Keycloak
 func GetAllSensors(svc service.SensorService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -59,7 +58,7 @@ func GetAllSensors(svc service.SensorService) fiber.Handler {
 }
 
 // @Summary		Get sensor by ID
-// @Description	Get sensor by ID
+// @Description	Retrieves detailed information about a specific sensor including its latest data readings.
 // @Id				get-sensor-by-id
 // @Tags			Sensor
 // @Produce		json
@@ -90,8 +89,8 @@ func GetSensorByID(svc service.SensorService) fiber.Handler {
 	}
 }
 
-// @Summary		Get all sensor data by id
-// @Description	Get all sensor data by id
+// @Summary		Get all sensor data by ID
+// @Description	Retrieves the complete history of data readings for a specific sensor.
 // @Id				get-all-sensor-data-by-id
 // @Tags			Sensor
 // @Produce		json
@@ -130,7 +129,7 @@ func GetAllSensorDataByID(svc service.SensorService) fiber.Handler {
 }
 
 // @Summary		Delete sensor
-// @Description	Delete sensor
+// @Description	Permanently deletes a sensor and all its associated data readings.
 // @Id				delete-sensor
 // @Tags			Sensor
 // @Produce		json

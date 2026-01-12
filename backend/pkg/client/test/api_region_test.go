@@ -22,11 +22,11 @@ func Test_client_RegionAPIService(t *testing.T) {
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
 
-	t.Run("Test RegionAPIService V1RegionGet", func(t *testing.T) {
+	t.Run("Test RegionAPIService GetAllRegions", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
 
-		resp, httpRes, err := apiClient.RegionAPI.V1RegionGet(context.Background()).Execute()
+		resp, httpRes, err := apiClient.RegionAPI.GetAllRegions(context.Background()).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)
@@ -34,13 +34,13 @@ func Test_client_RegionAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test RegionAPIService V1RegionIdGet", func(t *testing.T) {
+	t.Run("Test RegionAPIService GetRegionById", func(t *testing.T) {
 
 		t.Skip("skip test") // remove to run test
 
-		var id string
+		var id int32
 
-		resp, httpRes, err := apiClient.RegionAPI.V1RegionIdGet(context.Background(), id).Execute()
+		resp, httpRes, err := apiClient.RegionAPI.GetRegionById(context.Background(), id).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)
