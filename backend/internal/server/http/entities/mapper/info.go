@@ -14,10 +14,10 @@ type InfoHTTPMapper interface {
 	FromResponse(src *entities.AppInfoResponse) *domain.App
 }
 
-func MapCenter(src [2]float64) [2]float64 {
+func MapCenter(src []float64) []float64 {
 	return src
 }
 
-func MapBbox(src [4]float64) [4]float64 {
+func MapBbox(src []float64) []float64 {
 	return src
 }
