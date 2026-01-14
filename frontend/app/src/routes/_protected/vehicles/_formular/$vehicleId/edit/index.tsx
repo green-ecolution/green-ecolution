@@ -7,7 +7,7 @@ export const Route = createFileRoute('/_protected/vehicles/_formular/$vehicleId/
   component: EditVehicle,
   pendingComponent: () => <LoadingInfo label="Fahrzeug wird geladen …" />,
   loader: () => {
-    if (!useStore.getState().auth.isAuthenticated) return
+    if (!useStore.getState().isAuthenticated) return
   },
 })
 

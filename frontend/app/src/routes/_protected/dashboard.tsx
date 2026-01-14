@@ -1,13 +1,13 @@
 import DashboardCard from '@/components/general/cards/DashboardCard'
 import { createFileRoute } from '@tanstack/react-router'
-import useStore from '@/store/store'
+import { useUserStore } from '@/store/store'
 
 export const Route = createFileRoute('/_protected/dashboard')({
   component: Dashboard,
 })
 
 function Dashboard() {
-  const user = useStore((state) => state.user)
+  const user = useUserStore()
 
   const cards = [
     {

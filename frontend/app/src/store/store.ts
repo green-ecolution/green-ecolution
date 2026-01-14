@@ -1,40 +1,189 @@
-import { create } from 'zustand'
+import { create, StateCreator } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
-import { AuthStore } from './auth/types'
-import { UserStore } from './user/types'
-import { WritableDraft } from 'immer'
-import { userStore } from './user/userStore'
-import { authStore } from './auth/authStore'
-import { MapStore } from './map/types'
-import { mapStore } from './map/mapStore'
+import { ClientToken, DrivingLicense, UserRole, UserStatus } from '@green-ecolution/backend-client'
+import { decodeJWT } from '@/lib/utils'
+import { KeycloakJWT } from '@/lib/types/keycloak'
+import { parseUserRole } from '@/hooks/details/useDetailsForUserRole'
+import { parseUserStatus } from '@/hooks/details/useDetailsForUserStatus'
+import { parseDrivingLicense } from '@/hooks/details/useDetailsForDrivingLicense'
 
-export interface Store {
-  auth: AuthStore
-  user: UserStore
-  map: MapStore
+// =============================================================================
+// Types
+// =============================================================================
+
+interface AuthSlice {
+  isAuthenticated: boolean
+  token: ClientToken | null
+  setToken: (token: ClientToken) => void
+  clearAuth: () => void
 }
 
-export type SubStore<T> = (
-  set: (
-    nextStateOrUpdater: Store | Partial<Store> | ((state: WritableDraft<Store>) => void),
-    shouldReplace?: false,
-  ) => void,
-  get: () => Store,
-) => T
+interface UserSlice {
+  username: string
+  email: string
+  firstName: string
+  lastName: string
+  drivingLicenses: DrivingLicense[]
+  userRoles: UserRole[]
+  userStatus: UserStatus
+  setUserFromJwt: (jwt: string) => void
+  isUserEmpty: () => boolean
+  clearUser: () => void
+}
+
+interface MapSlice {
+  mapCenter: [number, number]
+  mapZoom: number
+  mapMinZoom: number
+  mapMaxZoom: number
+  showSelectModal: boolean
+  setMapCenter: (center: [number, number]) => void
+  setMapZoom: (zoom: number) => void
+  setShowSelectModal: (show: boolean) => void
+}
+
+type Store = AuthSlice & UserSlice & MapSlice
+type Mutators = [['zustand/devtools', never], ['zustand/immer', never]]
+
+// =============================================================================
+// Slices
+// =============================================================================
+
+const createAuthSlice: StateCreator<Store, Mutators, [], AuthSlice> = (set) => ({
+  isAuthenticated: !!localStorage.getItem('refreshToken'),
+  token: null,
+  setToken: (token) =>
+    set((state) => {
+      localStorage.setItem('refreshToken', token.refreshToken)
+      state.isAuthenticated = true
+      state.token = token
+    }),
+  clearAuth: () =>
+    set((state) => {
+      localStorage.removeItem('refreshToken')
+      state.isAuthenticated = false
+      state.token = null
+    }),
+})
+
+const createUserSlice: StateCreator<Store, Mutators, [], UserSlice> = (set, get) => ({
+  username: '',
+  email: '',
+  firstName: '',
+  lastName: '',
+  drivingLicenses: [],
+  userRoles: [],
+  userStatus: UserStatus.UserStatusUnknown,
+  setUserFromJwt: (jwt) =>
+    set((state) => {
+      const jwtInfo = decodeJWT<KeycloakJWT>(jwt)
+      if (jwtInfo) {
+        state.username = jwtInfo.preferred_username
+        state.email = jwtInfo.email
+        state.firstName = jwtInfo.given_name
+        state.lastName = jwtInfo.family_name
+        state.drivingLicenses = jwtInfo.driving_licenses
+          ? jwtInfo.driving_licenses.map(parseDrivingLicense)
+          : []
+        state.userRoles = jwtInfo.user_roles ? jwtInfo.user_roles.map(parseUserRole) : []
+        state.userStatus = parseUserStatus(jwtInfo.status)
+      }
+    }),
+  isUserEmpty: () => {
+    const s = get()
+    return (
+      !s.username ||
+      !s.email ||
+      !s.firstName ||
+      !s.lastName ||
+      s.drivingLicenses.length === 0 ||
+      s.userRoles.length === 0 ||
+      s.userStatus === UserStatus.UserStatusUnknown
+    )
+  },
+  clearUser: () =>
+    set((state) => {
+      state.username = ''
+      state.email = ''
+      state.firstName = ''
+      state.lastName = ''
+      state.drivingLicenses = []
+      state.userRoles = []
+      state.userStatus = UserStatus.UserStatusUnknown
+    }),
+})
+
+const createMapSlice: StateCreator<Store, Mutators, [], MapSlice> = (set) => ({
+  mapCenter: [54.792277136221905, 9.43580607453268],
+  mapZoom: 13,
+  mapMinZoom: 13,
+  mapMaxZoom: 18,
+  showSelectModal: false,
+  setMapCenter: (center) =>
+    set((state) => {
+      state.mapCenter = center
+    }),
+  setMapZoom: (zoom) =>
+    set((state) => {
+      state.mapZoom = zoom
+    }),
+  setShowSelectModal: (show) =>
+    set((state) => {
+      state.showSelectModal = show
+    }),
+})
+
+// =============================================================================
+// Store
+// =============================================================================
 
 const useStore = create<Store>()(
   devtools(
-    immer((set, get) => ({
-      auth: authStore(set, get),
-      user: userStore(set, get),
-      map: mapStore(set, get),
+    immer((...a) => ({
+      ...createAuthSlice(...a),
+      ...createUserSlice(...a),
+      ...createMapSlice(...a),
     })),
   ),
 )
 
-export const useAuthStore = () => useStore((state) => state.auth)
-export const useUserStore = () => useStore((state) => state.user)
-export const useMapStore = () => useStore((state) => state.map)
+// =============================================================================
+// Selector Hooks
+// =============================================================================
+
+export const useAuthStore = () =>
+  useStore((s) => ({
+    isAuthenticated: s.isAuthenticated,
+    token: s.token,
+    setToken: s.setToken,
+    clearAuth: s.clearAuth,
+  }))
+
+export const useUserStore = () =>
+  useStore((s) => ({
+    username: s.username,
+    email: s.email,
+    firstName: s.firstName,
+    lastName: s.lastName,
+    drivingLicenses: s.drivingLicenses,
+    userRoles: s.userRoles,
+    userStatus: s.userStatus,
+    setUserFromJwt: s.setUserFromJwt,
+    isUserEmpty: s.isUserEmpty,
+    clearUser: s.clearUser,
+  }))
+
+export const useMapStore = () =>
+  useStore((s) => ({
+    mapCenter: s.mapCenter,
+    mapZoom: s.mapZoom,
+    mapMinZoom: s.mapMinZoom,
+    mapMaxZoom: s.mapMaxZoom,
+    showSelectModal: s.showSelectModal,
+    setMapCenter: s.setMapCenter,
+    setMapZoom: s.setMapZoom,
+    setShowSelectModal: s.setShowSelectModal,
+  }))
 
 export default useStore

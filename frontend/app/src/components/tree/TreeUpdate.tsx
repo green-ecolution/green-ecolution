@@ -67,7 +67,7 @@ const TreeUpdate = ({ treeId, clusters, sensors }: TreeUpdateProps) => {
         treeLat: form.getValues('latitude'),
         treeLng: form.getValues('longitude'),
         formType: 'update',
-        zoom: map.zoom,
+        zoom: map.mapZoom,
       },
     }).catch((error) => console.error('Navigation failed:', error))
   }

@@ -7,7 +7,7 @@ export const Route = createFileRoute('/_protected/treecluster/_formular/$treeclu
   component: EditTreeCluster,
   pendingComponent: () => <LoadingInfo label="Bewässerungsgruppe wird geladen …" />,
   loader: () => {
-    if (!useStore.getState().auth.isAuthenticated) return
+    if (!useStore.getState().isAuthenticated) return
   },
 })
 

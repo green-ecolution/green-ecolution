@@ -1,16 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router'
-import useStore from '@/store/store'
+import { useUserStore } from '@/store/store'
 import { UserRound } from 'lucide-react'
 import { getUserRoleDetails } from '@/hooks/details/useDetailsForUserRole'
 import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
 import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
+import { DrivingLicense, UserRole } from '@green-ecolution/backend-client'
 
 export const Route = createFileRoute('/_protected/profile/')({
   component: Profile,
 })
 
 function Profile() {
-  const user = useStore((state) => state.user)
+  const user = useUserStore()
 
   return (
     <div className="container mt-6">
@@ -35,7 +36,7 @@ function Profile() {
             </h2>
             <ul className="mt-2 flex flex-col gap-2 xl:mt-4">
               {user.userRoles?.length > 0 &&
-                user.userRoles.map((role) => (
+                user.userRoles.map((role: UserRole) => (
                   <li
                     key={getUserRoleDetails(role).label}
                     className="border w-fit border-green-light px-3 py-2 rounded-full text-dark-800 font-medium text-sm"
@@ -71,14 +72,14 @@ function Profile() {
         <div>
           <div className="py-4 border-b border-b-dark-200">
             <dt className="font-bold sm:inline">Verfügbarkeit:</dt>
-            <dd className="sm:inline sm:px-2">{getUserStatusDetails(user.status).label}</dd>
+            <dd className="sm:inline sm:px-2">{getUserStatusDetails(user.userStatus).label}</dd>
           </div>
           <div className="py-4 border-b border-b-dark-200">
             <dt className="font-bold sm:inline">Führerscheinklasse:</dt>
             <dd className="sm:inline sm:px-2">
               {user.drivingLicenses && user.drivingLicenses.length > 0 ? (
                 <>
-                  {user.drivingLicenses.map((drivingLicense, index) => (
+                  {user.drivingLicenses.map((drivingLicense: DrivingLicense, index: number) => (
                     <span key={getDrivingLicenseDetails(drivingLicense).label}>
                       {getDrivingLicenseDetails(drivingLicense).label}
                       {index < user.drivingLicenses.length - 1 ? ', ' : ''}
@@ -93,7 +94,7 @@ function Profile() {
           <div className="py-4 border-b border-b-dark-200 md:border-b-transparent">
             <dt className="font-bold sm:inline">Rollen:</dt>
             <dd className="sm:inline sm:px-2">
-              {user.userRoles.map((role, index) => (
+              {user.userRoles.map((role: UserRole, index: number) => (
                 <span key={getUserRoleDetails(role).label}>
                   {getUserRoleDetails(role).label}
                   {index < user.userRoles.length - 1 ? ', ' : ''}

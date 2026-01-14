@@ -6,9 +6,11 @@ import useOutsideClick from '@/hooks/useOutsideClick'
 
 function ProfileButton() {
   const [open, setOpen] = useState(false)
-  const user = useStore((state) => state.user)
-  const { isAuthenticated } = useStore((state) => ({
-    isAuthenticated: state.auth.isAuthenticated,
+  const { firstName, lastName, email, isAuthenticated } = useStore((state) => ({
+    firstName: state.firstName,
+    lastName: state.lastName,
+    email: state.email,
+    isAuthenticated: state.isAuthenticated,
   }))
 
   const toggleOverlay = (state: boolean) => {
@@ -16,7 +18,7 @@ function ProfileButton() {
   }
 
   const overlayRef = useOutsideClick<HTMLDivElement>(() => toggleOverlay(false))
-  const userInitials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`
+  const userInitials = `${firstName.charAt(0)}${lastName.charAt(0)}`
 
   const linksLoggedIn = [
     <NavLink
@@ -81,7 +83,7 @@ function ProfileButton() {
         <p className="border-b border-b-dark-800 mx-3 pb-4">
           {isAuthenticated ? <span>Angemeldet als:</span> : <span>Nicht angemeldet</span>}
           <br />
-          <strong className="block truncate">{user.email}</strong>
+          <strong className="block truncate">{email}</strong>
         </p>
 
         <ul className="py-2">{links.map((link) => link)}</ul>

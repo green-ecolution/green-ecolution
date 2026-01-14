@@ -21,9 +21,9 @@ interface TreeClusterUpdateProps {
 
 const TreeClusterUpdate = ({ clusterId }: TreeClusterUpdateProps) => {
   const mapPosition = useStore((state) => ({
-    lat: state.map.center[0],
-    lng: state.map.center[1],
-    zoom: state.map.zoom,
+    lat: state.mapCenter[0],
+    lng: state.mapCenter[1],
+    zoom: state.mapZoom,
   }))
   const navigate = useNavigate()
   const { data: formState } = safeJsonStorageParse('update-cluster', { schema: clusterSchemaBase })

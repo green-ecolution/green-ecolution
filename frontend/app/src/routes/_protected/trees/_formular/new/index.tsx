@@ -53,7 +53,7 @@ function NewTree() {
     initForm: formState ?? defaultForm(lat, lng),
   })
   const navigate = useNavigate({ from: Route.fullPath })
-  const map = useMapStore()
+  const { mapZoom } = useMapStore()
   const { data: sensors } = useSuspenseQuery(sensorQuery())
   const { data: treeClusters } = useSuspenseQuery(treeClusterQuery())
 
@@ -74,10 +74,10 @@ function NewTree() {
         treeLat: form.getValues('latitude'),
         treeLng: form.getValues('longitude'),
         formType: 'create',
-        zoom: map.zoom,
+        zoom: mapZoom,
       },
     }).catch((error) => console.error('Navigation failed:', error))
-  }, [form, map.zoom, navigate])
+  }, [form, mapZoom, navigate])
 
   return (
     <div className="container mt-6">

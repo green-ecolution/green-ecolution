@@ -9,7 +9,7 @@ export const Route = createFileRoute(
   component: StatusEditWateringPlan,
   pendingComponent: () => <LoadingInfo label="Einsatzplan wird geladen …" />,
   loader: () => {
-    if (!useStore.getState().auth.isAuthenticated) return
+    if (!useStore.getState().isAuthenticated) return
   },
 })
 

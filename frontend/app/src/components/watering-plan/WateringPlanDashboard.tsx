@@ -26,9 +26,7 @@ interface WateringPlanDashboardProps {
 
 const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => {
   const statusDetails = getWateringPlanStatusDetails(wateringPlan.status)
-  const { accessToken } = useStore((state) => ({
-    accessToken: state.auth.token?.accessToken,
-  }))
+  const accessToken = useStore((state) => state.token?.accessToken)
   const showToast = useToast()
 
   const date = wateringPlan?.date

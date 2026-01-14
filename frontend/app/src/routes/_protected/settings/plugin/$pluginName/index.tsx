@@ -17,9 +17,7 @@ init({
 /* eslint-disable react-hooks/static-components -- dynamic module federation plugin */
 function PluginView() {
   const pluginName = Route.useParams().pluginName
-  const { authToken } = useStore((state) => ({
-    authToken: state.auth.token,
-  }))
+  const authToken = useStore((state) => state.token)
 
   const Plugin = useMemo(
     () =>
