@@ -13,12 +13,10 @@ export interface MapProps extends React.PropsWithChildren {
 const Map = ({ width = '100%', height = 'calc(100dvh - 4.563rem)', children }: MapProps) => {
   const { data: appInfo } = useSuspenseQuery(infoQuery())
 
-  const { center, zoom, maxZoom, minZoom } = useStore((state) => ({
-    center: state.mapCenter,
-    zoom: state.mapZoom,
-    maxZoom: state.mapMaxZoom,
-    minZoom: state.mapMinZoom,
-  }))
+  const center = useStore((state) => state.mapCenter)
+  const zoom = useStore((state) => state.mapZoom)
+  const maxZoom = useStore((state) => state.mapMaxZoom)
+  const minZoom = useStore((state) => state.mapMinZoom)
 
   const time = useMemo(() => new Date().getTime(), [])
 

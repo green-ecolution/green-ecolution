@@ -6,12 +6,10 @@ import useOutsideClick from '@/hooks/useOutsideClick'
 
 function ProfileButton() {
   const [open, setOpen] = useState(false)
-  const { firstName, lastName, email, isAuthenticated } = useStore((state) => ({
-    firstName: state.firstName,
-    lastName: state.lastName,
-    email: state.email,
-    isAuthenticated: state.isAuthenticated,
-  }))
+  const firstName = useStore((state) => state.firstName)
+  const lastName = useStore((state) => state.lastName)
+  const email = useStore((state) => state.email)
+  const isAuthenticated = useStore((state) => state.isAuthenticated)
 
   const toggleOverlay = (state: boolean) => {
     setOpen(state)

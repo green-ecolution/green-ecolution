@@ -50,11 +50,9 @@ function NewWateringPlan() {
   })
   const { getValues } = form
 
-  const mapPosition = useStore((state) => ({
-    lat: state.mapCenter[0],
-    lng: state.mapCenter[1],
-    zoom: state.mapZoom,
-  }))
+  const mapCenter = useStore((state) => state.mapCenter)
+  const mapZoom = useStore((state) => state.mapZoom)
+  const mapPosition = { lat: mapCenter[0], lng: mapCenter[1], zoom: mapZoom }
 
   const onSubmit: SubmitHandler<WateringPlanForm> = (data) => {
     mutate({

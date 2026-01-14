@@ -1,6 +1,7 @@
 import { create, StateCreator } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
+import { useShallow } from 'zustand/react/shallow'
 import { ClientToken, DrivingLicense, UserRole, UserStatus } from '@green-ecolution/backend-client'
 import { decodeJWT } from '@/lib/utils'
 import { KeycloakJWT } from '@/lib/types/keycloak'
@@ -149,41 +150,46 @@ const useStore = create<Store>()(
 )
 
 // =============================================================================
+// Selectors (defined outside hooks for stable references)
+// =============================================================================
+
+const authSelector = (s: Store) => ({
+  isAuthenticated: s.isAuthenticated,
+  token: s.token,
+  setToken: s.setToken,
+  clearAuth: s.clearAuth,
+})
+
+const userSelector = (s: Store) => ({
+  username: s.username,
+  email: s.email,
+  firstName: s.firstName,
+  lastName: s.lastName,
+  drivingLicenses: s.drivingLicenses,
+  userRoles: s.userRoles,
+  userStatus: s.userStatus,
+  setUserFromJwt: s.setUserFromJwt,
+  isUserEmpty: s.isUserEmpty,
+  clearUser: s.clearUser,
+})
+
+const mapSelector = (s: Store) => ({
+  mapCenter: s.mapCenter,
+  mapZoom: s.mapZoom,
+  mapMinZoom: s.mapMinZoom,
+  mapMaxZoom: s.mapMaxZoom,
+  showSelectModal: s.showSelectModal,
+  setMapCenter: s.setMapCenter,
+  setMapZoom: s.setMapZoom,
+  setShowSelectModal: s.setShowSelectModal,
+})
+
+// =============================================================================
 // Selector Hooks
 // =============================================================================
 
-export const useAuthStore = () =>
-  useStore((s) => ({
-    isAuthenticated: s.isAuthenticated,
-    token: s.token,
-    setToken: s.setToken,
-    clearAuth: s.clearAuth,
-  }))
-
-export const useUserStore = () =>
-  useStore((s) => ({
-    username: s.username,
-    email: s.email,
-    firstName: s.firstName,
-    lastName: s.lastName,
-    drivingLicenses: s.drivingLicenses,
-    userRoles: s.userRoles,
-    userStatus: s.userStatus,
-    setUserFromJwt: s.setUserFromJwt,
-    isUserEmpty: s.isUserEmpty,
-    clearUser: s.clearUser,
-  }))
-
-export const useMapStore = () =>
-  useStore((s) => ({
-    mapCenter: s.mapCenter,
-    mapZoom: s.mapZoom,
-    mapMinZoom: s.mapMinZoom,
-    mapMaxZoom: s.mapMaxZoom,
-    showSelectModal: s.showSelectModal,
-    setMapCenter: s.setMapCenter,
-    setMapZoom: s.setMapZoom,
-    setShowSelectModal: s.setShowSelectModal,
-  }))
+export const useAuthStore = () => useStore(useShallow(authSelector))
+export const useUserStore = () => useStore(useShallow(userSelector))
+export const useMapStore = () => useStore(useShallow(mapSelector))
 
 export default useStore
