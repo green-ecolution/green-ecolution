@@ -18,7 +18,7 @@ export interface Store {
 export type SubStore<T> = (
   set: (
     nextStateOrUpdater: Store | Partial<Store> | ((state: WritableDraft<Store>) => void),
-    shouldReplace?: boolean,
+    shouldReplace?: false,
   ) => void,
   get: () => Store,
 ) => T
