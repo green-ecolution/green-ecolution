@@ -233,7 +233,7 @@ export const DeleteWithIcon: Story = {
         <Button variant="destructive">Bewässerungsgruppe löschen</Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
-        <AlertDialogIcon className="bg-red-50 [&>svg]:text-destructive">
+        <AlertDialogIcon variant="destructive">
           <Trash2 />
         </AlertDialogIcon>
         <AlertDialogHeader className="text-center sm:text-center">

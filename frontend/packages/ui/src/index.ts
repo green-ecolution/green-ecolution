@@ -24,13 +24,16 @@ export {
   AlertDialogOverlay,
   AlertDialogTrigger,
   AlertDialogContent,
+  AlertDialogIcon,
   AlertDialogHeader,
   AlertDialogFooter,
   AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogAction,
   AlertDialogCancel,
+  alertDialogIconVariants,
 } from './components/ui/alert-dialog'
+export type { AlertDialogIconProps } from './components/ui/alert-dialog'
 
 // Badge
 export { Badge, badgeVariants } from './components/ui/badge'
