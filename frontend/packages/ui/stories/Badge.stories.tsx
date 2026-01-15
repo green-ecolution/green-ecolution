@@ -150,12 +150,13 @@ export const StatusExamples: Story = {
   ),
 }
 
-export const Large: Story = {
-  args: {
-    children: 'Groß',
-    size: 'lg',
-    variant: 'default',
-  },
+export const Sizes: Story = {
+  render: () => (
+    <div className="flex items-center gap-2">
+      <Badge size="default" variant="success">Standard</Badge>
+      <Badge size="lg" variant="success">Groß</Badge>
+    </div>
+  ),
 }
 
 export const OutlineVariants: Story = {

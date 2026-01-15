@@ -4,7 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const badgeVariants = cva(
-  'inline-flex items-center rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+  'inline-flex items-center rounded-full border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
   {
     variants: {
       variant: {
@@ -18,7 +18,6 @@ const badgeVariants = cva(
         muted: 'border-dark-400 bg-dark-50 text-dark-600',
         'green-dark': 'border-green-dark bg-green-dark-50 text-green-dark',
         'green-light': 'border-green-light bg-green-light-50 text-green-light-900',
-        // Outline variants (formerly Pill)
         'outline-red': 'border-red text-red',
         'outline-yellow': 'border-yellow text-yellow',
         'outline-dark': 'border-dark-600 text-dark-600',
@@ -26,8 +25,8 @@ const badgeVariants = cva(
         'outline-green-light': 'border-green-light bg-green-light-200 text-green-dark',
       },
       size: {
-        default: 'px-2.5 py-0.5 text-xs font-semibold',
-        lg: 'px-4 py-1 text-sm font-medium',
+        default: 'px-2.5 py-0.5 text-xs',
+        lg: 'px-4 py-1.5 text-sm',
       },
     },
     defaultVariants: {
@@ -38,10 +37,14 @@ const badgeVariants = cva(
 )
 
 export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {}
+  extends React.HTMLAttributes<HTMLSpanElement>,
+    VariantProps<typeof badgeVariants> {}
 
-function Badge({ className, variant, size, ...props }: BadgeProps) {
-  return <div className={cn(badgeVariants({ variant, size }), className)} {...props} />
-}
+const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
+  ({ className, variant, size, ...props }, ref) => (
+    <span ref={ref} className={cn(badgeVariants({ variant, size }), className)} {...props} />
+  ),
+)
+Badge.displayName = 'Badge'
 
 export { Badge, badgeVariants }
