@@ -25,6 +25,7 @@ const Spinner = React.forwardRef<SVGSVGElement, SpinnerProps>(
     return (
       <svg
         ref={ref}
+        data-slot="spinner"
         aria-hidden="true"
         className={cn(spinnerVariants({ size }), 'text-green-dark-500 fill-green-dark', className)}
         viewBox="0 0 100 101"
@@ -54,9 +55,9 @@ export interface LoadingProps extends React.HTMLAttributes<HTMLDivElement> {
 const Loading = React.forwardRef<HTMLDivElement, LoadingProps>(
   ({ className, label, size, ...props }, ref) => {
     return (
-      <div ref={ref} className={cn('flex items-center gap-3', className)} {...props}>
+      <div ref={ref} data-slot="loading" className={cn('flex items-center gap-3', className)} {...props}>
         <Spinner size={size} />
-        {label && <span className="text-lg text-dark-600">{label}</span>}
+        {label && <span data-slot="loading-label" className="text-lg text-dark-600">{label}</span>}
       </div>
     )
   },
