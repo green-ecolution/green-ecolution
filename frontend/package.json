@@ -12,14 +12,18 @@
     "build:stage": "pnpm --filter=!frontend -r build && pnpm --filter frontend build:stage",
     "build:backend-client": "pnpm --filter backend-client build",
     "build:plugin-interface": "pnpm --filter plugin-interface build",
+    "build:ui": "pnpm --filter @green-ecolution/ui build",
     "generate": "pnpm --filter backend-client generate",
     "generate:stage": "pnpm --filter backend-client generate:stage",
     "generate:local": "pnpm --filter backend-client generate:local",
     "ci": "pnpm --filter backend-client generate:ci",
     "lint": "prettier --check . && pnpm --filter frontend lint",
+    "lint:ui": "pnpm --filter @green-ecolution/ui lint",
     "test": "pnpm --filter frontend test:run",
     "preview": "pnpm --filter frontend preview",
-    "fmt": "prettier --write ."
+    "fmt": "prettier --write .",
+    "storybook": "pnpm --filter @green-ecolution/ui storybook",
+    "build-storybook": "pnpm --filter @green-ecolution/ui build-storybook"
   },
   "devDependencies": {
     "prettier": "^3.7.4"
