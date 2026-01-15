@@ -5,7 +5,7 @@ import { createFileRoute, Outlet } from '@tanstack/react-router'
 export const Route = createFileRoute('/_protected/trees/_formular')({
   component: () => <Outlet />,
   loader: ({ context: { queryClient } }) => {
-    if (!useStore.getState().auth.isAuthenticated) return
+    if (!useStore.getState().isAuthenticated) return
 
     queryClient
       .prefetchQuery(treeClusterQuery())

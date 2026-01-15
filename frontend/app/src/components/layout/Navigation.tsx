@@ -58,12 +58,12 @@ const publicNavData: NavSectionData[] = [
 
 const Navigation: React.FC<NavigationProps> = ({ isOpen, openSidebar, closeSidebar }) => {
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
-  const isLoggedIn = useStore((state) => state.auth.isAuthenticated)
+  const isLoggedIn = useStore((state) => state.isAuthenticated)
   const mapPosition = useStore(
     useShallow((state) => ({
-      lat: state.map.center[0],
-      lng: state.map.center[1],
-      zoom: state.map.zoom,
+      lat: state.mapCenter[0],
+      lng: state.mapCenter[1],
+      zoom: state.mapZoom,
     })),
   )
 

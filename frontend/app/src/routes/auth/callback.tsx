@@ -36,8 +36,8 @@ export const Route = createFileRoute('/auth/callback')({
       throw new Error('Error while fetching token')
     }
 
-    useStore.getState().auth.setToken(token)
-    useStore.getState().user.setFromJwt(token.accessToken)
+    useStore.getState().setToken(token)
+    useStore.getState().setUserFromJwt(token.accessToken)
 
     throw routerRedirect({
       to: redirect,

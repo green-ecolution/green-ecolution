@@ -36,20 +36,20 @@ const backendFetch: FetchAPI = async (...args) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        refresh_token: useStore.getState().auth.token?.refreshToken ?? '',
+        refresh_token: useStore.getState().token?.refreshToken ?? '',
       }),
     }
     const res = await fetch(`${basePath}/v1/user/token/refresh`, params)
     if (res.status !== 200) {
-      useStore.getState().auth.clear()
+      useStore.getState().clearAuth()
       throw redirect({
         to: '/login',
         search: { redirect: window.location.pathname + window.location.search },
       })
     }
     const data = ClientTokenFromJSON(await res.json())
-    useStore.getState().auth.setToken(data)
-    useStore.getState().user.setFromJwt(data.accessToken)
+    useStore.getState().setToken(data)
+    useStore.getState().setUserFromJwt(data.accessToken)
 
     response = await fetch(resource, {
       ...config,
@@ -67,7 +67,7 @@ const configParams: ConfigurationParameters = {
   headers,
   fetchApi: backendFetch,
   accessToken() {
-    const token = useStore.getState().auth.token?.accessToken
+    const token = useStore.getState().token?.accessToken
     if (!token) {
       return ''
     }

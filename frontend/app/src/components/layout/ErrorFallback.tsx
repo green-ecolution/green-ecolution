@@ -20,9 +20,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary
     }
   })
 
-  const { isAuthenticated } = useStore((state) => ({
-    isAuthenticated: state.auth.isAuthenticated,
-  }))
+  const isAuthenticated = useStore((state) => state.isAuthenticated)
 
   const checkResponseErrorMessage = useCallback(async () => {
     if (error instanceof ResponseError) {

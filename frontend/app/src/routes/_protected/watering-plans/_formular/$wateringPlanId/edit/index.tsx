@@ -7,7 +7,7 @@ export const Route = createFileRoute('/_protected/watering-plans/_formular/$wate
   component: StatusEditWateringPlan,
   pendingComponent: () => <LoadingInfo label="Einsatzplan wird geladen …" />,
   loader: () => {
-    if (!useStore.getState().auth.isAuthenticated) return
+    if (!useStore.getState().isAuthenticated) return
   },
 })
 

@@ -25,9 +25,7 @@ export const WithTreesAndClusters = ({
   hasHighlightedTree,
   hasHighlightedCluster,
 }: WithTreesAndClustersProps) => {
-  const { zoom } = useStore((state) => ({
-    zoom: state.map.zoom,
-  }))
+  const zoom = useStore((state) => state.mapZoom)
   const deferredZoom = useDeferredValue(zoom)
   const showTrees = deferredZoom >= zoomThreshold || activeFilter
 

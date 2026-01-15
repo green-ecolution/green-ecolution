@@ -13,9 +13,7 @@ export const Route = createFileRoute('/')({
 })
 
 function Startpage() {
-  const { isAuthenticated } = useStore((state) => ({
-    isAuthenticated: state.auth.isAuthenticated,
-  }))
+  const isAuthenticated = useStore((state) => state.isAuthenticated)
 
   return (
     <>

@@ -3,22 +3,22 @@ import useStore from '@/store/store'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 
 const logout = () => {
-  useStore.getState().auth.clear()
-  useStore.getState().user.clear()
+  useStore.getState().clearAuth()
+  useStore.getState().clearUser()
 }
 
 export const Route = createFileRoute('/logout')({
   beforeLoad: async () => {
-    const store = useStore.getState()
+    const state = useStore.getState()
 
-    if (!store.auth.isAuthenticated) {
+    if (!state.isAuthenticated) {
       throw redirect({ to: '/', replace: true })
     }
 
     await userApi
       .v1UserLogoutPost({
         body: {
-          refreshToken: store.auth.token?.refreshToken ?? '',
+          refreshToken: state.token?.refreshToken ?? '',
         },
       })
       .then(logout)

@@ -31,11 +31,9 @@ const Dialog = ({
     plantingYears: [],
   })
   const navigate = useNavigate()
-  const mapPosition = useStore((state) => ({
-    lat: state.map.center[0],
-    lng: state.map.center[1],
-    zoom: state.map.zoom,
-  }))
+  const mapCenter = useStore((state) => state.mapCenter)
+  const mapZoom = useStore((state) => state.mapZoom)
+  const mapPosition = { lat: mapCenter[0], lng: mapCenter[1], zoom: mapZoom }
 
   const { filters, resetFilters, applyOldStateToTags } = useFilter()
 

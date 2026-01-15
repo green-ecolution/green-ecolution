@@ -1,14 +1,14 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useMapEvents } from 'react-leaflet/hooks'
-import useMapStore from '@/store/store'
+import useStore from '@/store/store'
 import { useCallback, useEffect, useRef } from 'react'
 
 const DEBOUNCE_MS = 150
 
 const MapController = () => {
   const navigate = useNavigate()
-  const setCenter = useMapStore((state) => state.map.setCenter)
-  const setZoom = useMapStore((state) => state.map.setZoom)
+  const setCenter = useStore((state) => state.setMapCenter)
+  const setZoom = useStore((state) => state.setMapZoom)
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 

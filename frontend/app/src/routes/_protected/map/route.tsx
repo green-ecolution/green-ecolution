@@ -1,4 +1,4 @@
-import useMapStore from '@/store/store'
+import useStore from '@/store/store'
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { z } from 'zod'
 import Map from '@/components/map/Map'
@@ -10,16 +10,16 @@ import { Suspense } from 'react'
 
 const mapSearchParamsSchema = z.object({
   selected: z.string().optional(),
-  lat: z.number().catch(useMapStore.getState().map.center[0]),
-  lng: z.number().catch(useMapStore.getState().map.center[1]),
+  lat: z.number().catch(useStore.getState().mapCenter[0]),
+  lng: z.number().catch(useStore.getState().mapCenter[1]),
   clusterId: z.number().optional(),
   sensorId: z.string().optional(),
   zoom: z
     .number()
     .int()
-    .max(useMapStore.getState().map.maxZoom)
-    .min(useMapStore.getState().map.minZoom)
-    .catch(useMapStore.getState().map.minZoom),
+    .max(useStore.getState().mapMaxZoom)
+    .min(useStore.getState().mapMinZoom)
+    .catch(useStore.getState().mapMinZoom),
 })
 
 export const Route = createFileRoute('/_protected/map')({
@@ -38,9 +38,7 @@ export const Route = createFileRoute('/_protected/map')({
       .prefetchQuery(treeQuery())
       .catch((error) => console.error('Prefetching "treeQuery" failed:', error))
 
-    useMapStore.setState((state) => ({
-      map: { ...state.map, center: [lat, lng], zoom },
-    }))
+    useStore.setState({ mapCenter: [lat, lng], mapZoom: zoom })
 
     return {
       crumb: { title: 'Karte' },

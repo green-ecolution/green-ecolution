@@ -5,9 +5,7 @@ import { MoveRight } from 'lucide-react'
 import useStore from '@/store/store'
 
 function NotFound() {
-  const { isAuthenticated } = useStore((state) => ({
-    isAuthenticated: state.auth.isAuthenticated,
-  }))
+  const isAuthenticated = useStore((state) => state.isAuthenticated)
 
   return (
     <>
