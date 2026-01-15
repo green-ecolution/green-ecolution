@@ -69,7 +69,7 @@
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "storybook": "^10.1.11",
-    "tailwindcss": "^4.0.0",
+    "tailwindcss": "^4.1.18",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.24.1",
     "vite": "^6.2.0",
