@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.1.2](https://github.com/green-ecolution/green-ecolution/compare/v0.1.1...v0.1.2) (2026-01-15)
+
+
+### Features
+
+* **config:** make config file optional, use env vars as primary source ([#594](https://github.com/green-ecolution/green-ecolution/issues/594)) ([75e0851](https://github.com/green-ecolution/green-ecolution/commit/75e0851296430ca6b58d832d62d6bbd513af7b19))
+* **ui:** add @green-ecolution/ui package with shared components and Storybook ([#591](https://github.com/green-ecolution/green-ecolution/issues/591)) ([443ce11](https://github.com/green-ecolution/green-ecolution/commit/443ce115d668ea5d495d48a5504f9a46985a04b1))
+
 ## [0.1.1](https://github.com/green-ecolution/green-ecolution/compare/v0.1.0...v0.1.1) (2026-01-11)
 
 
