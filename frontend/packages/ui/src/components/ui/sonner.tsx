@@ -10,7 +10,7 @@ type ToasterProps = React.ComponentProps<typeof Sonner>
 const DefaultIcon = () => (
   <figure
     aria-hidden="true"
-    className="relative flex h-6 w-6 items-center justify-center rounded-full bg-slate-500 before:absolute before:-z-10 before:h-8 before:w-8 before:rounded-full before:bg-slate-500/50"
+    className="relative flex h-6 w-6 items-center justify-center rounded-full bg-dark-400 before:absolute before:-z-10 before:h-8 before:w-8 before:rounded-full before:bg-dark-400/50"
   >
     <CircleCheck className="h-4 w-4 text-white" />
   </figure>
@@ -34,7 +34,7 @@ const Toaster = ({ className, ...props }: ToasterProps) => {
         success: (
           <figure
             aria-hidden="true"
-            className="relative flex h-6 w-6 items-center justify-center rounded-full bg-green-light before:absolute before:-z-10 before:h-8 before:w-8 before:rounded-full before:bg-green-light/50"
+            className="relative flex h-6 w-6 items-center justify-center rounded-full bg-green-dark before:absolute before:-z-10 before:h-8 before:w-8 before:rounded-full before:bg-green-dark/50"
           >
             <Check className="h-4 w-4 text-white" />
           </figure>
@@ -58,7 +58,7 @@ const Toaster = ({ className, ...props }: ToasterProps) => {
         info: (
           <figure
             aria-hidden="true"
-            className="relative flex h-6 w-6 items-center justify-center rounded-full bg-slate-500 before:absolute before:-z-10 before:h-8 before:w-8 before:rounded-full before:bg-slate-500/50"
+            className="relative flex h-6 w-6 items-center justify-center rounded-full bg-green-light before:absolute before:-z-10 before:h-8 before:w-8 before:rounded-full before:bg-green-light/50"
           >
             <Info className="h-4 w-4 text-white" />
           </figure>
