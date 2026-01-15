@@ -121,7 +121,7 @@ export const InfoDialog: Story = {
         <Button>Info anzeigen</Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogIcon className="bg-blue-100 [&>svg]:text-blue-600">
+        <DialogIcon variant="info">
           <Info />
         </DialogIcon>
         <DialogHeader>
@@ -152,7 +152,7 @@ export const AddUserDialog: Story = {
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
-        <DialogIcon className="bg-green-dark/10 [&>svg]:text-green-dark">
+        <DialogIcon variant="success">
           <UserPlus />
         </DialogIcon>
         <DialogHeader className="text-center sm:text-center">

@@ -92,7 +92,9 @@ export {
   DialogFooter,
   DialogTitle,
   DialogDescription,
+  dialogIconVariants,
 } from './components/ui/dialog'
+export type { DialogIconProps } from './components/ui/dialog'
 
 // DropdownMenu
 export {
