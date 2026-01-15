@@ -1,0 +1,292 @@
+/* Font Faces */
+@font-face {
+  font-family: 'Lato';
+  src: url('/fonts/lato/Lato-Regular.ttf');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lato';
+  src: url('/fonts/lato/Lato-SemiBold.ttf');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lato';
+  src: url('/fonts/lato/Lato-Bold.ttf');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito Sans';
+  src: url('/fonts/nunito-sans/NunitoSans-Regular.ttf');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito Sans';
+  src: url('/fonts/nunito-sans/NunitoSans-Medium.ttf');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito Sans';
+  src: url('/fonts/nunito-sans/NunitoSans-SemiBold.ttf');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito Sans';
+  src: url('/fonts/nunito-sans/NunitoSans-Bold.ttf');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Green Ecolution Brand Colors (OKLCH) */
+  --green-dark-50: oklch(0.978 0.008 140);
+  --green-dark-100: oklch(0.956 0.014 139);
+  --green-dark-200: oklch(0.915 0.03 139.2);
+  --green-dark-300: oklch(0.87 0.045 139.1);
+  --green-dark-400: oklch(0.828 0.062 140);
+  --green-dark-500: oklch(0.783 0.077 139.7);
+  --green-dark-600: oklch(0.741 0.095 139.3);
+  --green-dark-700: oklch(0.697 0.11 139.3);
+  --green-dark-800: oklch(0.651 0.12 139.4);
+  --green-dark-900: oklch(0.588 0.107 139.8);
+  --green-dark: oklch(0.524 0.094 139.5);
+
+  --green-light-50: oklch(0.988 0.009 113.4);
+  --green-light-100: oklch(0.975 0.017 110.4);
+  --green-light-200: oklch(0.952 0.037 110.5);
+  --green-light-300: oklch(0.927 0.054 110.9);
+  --green-light-400: oklch(0.905 0.072 112.1);
+  --green-light-500: oklch(0.88 0.089 112.3);
+  --green-light-600: oklch(0.856 0.105 112);
+  --green-light-700: oklch(0.834 0.121 112.9);
+  --green-light-800: oklch(0.81 0.134 113.3);
+  --green-light-900: oklch(0.789 0.146 113.7);
+  --green-light: oklch(0.745 0.144 113.9);
+
+  --dark-50: oklch(0.964 0 0);
+  --dark-100: oklch(0.931 0 0);
+  --dark-200: oklch(0.861 0 0);
+  --dark-300: oklch(0.786 0 0);
+  --dark-400: oklch(0.712 0 0);
+  --dark-500: oklch(0.62 0 0);
+  --dark-600: oklch(0.559 0 0);
+  --dark-700: oklch(0.478 0 0);
+  --dark-800: oklch(0.39 0 0);
+  --dark-900: oklch(0.301 0 0);
+  --dark: oklch(0.205 0 0);
+
+  --red-50: oklch(0.979 0.009 16.8);
+  --red-100: oklch(0.958 0.016 17.2);
+  --red-200: oklch(0.919 0.033 19.9);
+  --red: oklch(0.63 0.186 24.5);
+
+  --yellow-50: oklch(0.991 0.01 87.5);
+  --yellow-100: oklch(0.983 0.019 87.5);
+  --yellow-200: oklch(0.966 0.04 88.2);
+  --yellow: oklch(0.851 0.161 84.4);
+
+  --light: oklch(0.991 0 0);
+  --white: oklch(1 0 0);
+
+  /* Shadcn Semantic Colors - Light Mode */
+  --background: var(--white);
+  --foreground: var(--dark);
+  --card: var(--white);
+  --card-foreground: var(--dark);
+  --popover: var(--white);
+  --popover-foreground: var(--dark);
+  --primary: var(--green-dark);
+  --primary-foreground: var(--white);
+  --secondary: var(--green-light);
+  --secondary-foreground: var(--dark);
+  --muted: var(--dark-100);
+  --muted-foreground: var(--dark-600);
+  --accent: var(--green-light-100);
+  --accent-foreground: var(--dark);
+  --destructive: var(--red);
+  --destructive-foreground: var(--white);
+  --border: var(--dark-200);
+  --input: var(--dark-200);
+  --ring: var(--green-dark);
+  --radius: 0.75rem;
+
+  /* Chart Colors */
+  --chart-1: var(--green-dark);
+  --chart-2: var(--green-light);
+  --chart-3: var(--yellow);
+  --chart-4: var(--red);
+  --chart-5: var(--dark-500);
+}
+
+.dark {
+  --background: var(--dark);
+  --foreground: var(--light);
+  --card: var(--dark-900);
+  --card-foreground: var(--light);
+  --popover: var(--dark-900);
+  --popover-foreground: var(--light);
+  --primary: var(--green-light);
+  --primary-foreground: var(--dark);
+  --secondary: var(--green-dark-800);
+  --secondary-foreground: var(--light);
+  --muted: var(--dark-800);
+  --muted-foreground: var(--dark-400);
+  --accent: var(--dark-800);
+  --accent-foreground: var(--light);
+  --destructive: var(--red);
+  --destructive-foreground: var(--white);
+  --border: var(--dark-700);
+  --input: var(--dark-700);
+  --ring: var(--green-light);
+}
+
+@theme inline {
+  /* Fonts */
+  --font-lato: 'Lato', sans-serif;
+  --font-nunito-sans: 'Nunito Sans', sans-serif;
+
+  /* Green Ecolution Color Palette */
+  --color-green-dark-50: var(--green-dark-50);
+  --color-green-dark-100: var(--green-dark-100);
+  --color-green-dark-200: var(--green-dark-200);
+  --color-green-dark-300: var(--green-dark-300);
+  --color-green-dark-400: var(--green-dark-400);
+  --color-green-dark-500: var(--green-dark-500);
+  --color-green-dark-600: var(--green-dark-600);
+  --color-green-dark-700: var(--green-dark-700);
+  --color-green-dark-800: var(--green-dark-800);
+  --color-green-dark-900: var(--green-dark-900);
+  --color-green-dark: var(--green-dark);
+
+  --color-green-light-50: var(--green-light-50);
+  --color-green-light-100: var(--green-light-100);
+  --color-green-light-200: var(--green-light-200);
+  --color-green-light-300: var(--green-light-300);
+  --color-green-light-400: var(--green-light-400);
+  --color-green-light-500: var(--green-light-500);
+  --color-green-light-600: var(--green-light-600);
+  --color-green-light-700: var(--green-light-700);
+  --color-green-light-800: var(--green-light-800);
+  --color-green-light-900: var(--green-light-900);
+  --color-green-light: var(--green-light);
+
+  --color-dark-50: var(--dark-50);
+  --color-dark-100: var(--dark-100);
+  --color-dark-200: var(--dark-200);
+  --color-dark-300: var(--dark-300);
+  --color-dark-400: var(--dark-400);
+  --color-dark-500: var(--dark-500);
+  --color-dark-600: var(--dark-600);
+  --color-dark-700: var(--dark-700);
+  --color-dark-800: var(--dark-800);
+  --color-dark-900: var(--dark-900);
+  --color-dark: var(--dark);
+
+  --color-red-50: var(--red-50);
+  --color-red-100: var(--red-100);
+  --color-red-200: var(--red-200);
+  --color-red: var(--red);
+
+  --color-yellow-50: var(--yellow-50);
+  --color-yellow-100: var(--yellow-100);
+  --color-yellow-200: var(--yellow-200);
+  --color-yellow: var(--yellow);
+
+  --color-light: var(--light);
+  --color-white: var(--white);
+
+  /* Shadcn Semantic Colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Chart Colors */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Border Radius */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Font Sizes */
+  --font-size-2xs: 0.625rem;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.75rem;
+  --font-size-4xl: 2rem;
+  --font-size-5xl: 2.25rem;
+  --font-size-6xl: 3rem;
+
+  /* Shadows */
+  --shadow-cards: 0px 5px 10px 0px rgba(23, 23, 23, 5%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-nunito-sans;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-lato;
+  }
+
+  ::selection {
+    @apply bg-green-light-300 text-dark;
+  }
+}
