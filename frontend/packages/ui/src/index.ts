@@ -4,12 +4,15 @@ import './styles/globals.css'
 // Alert
 export {
   Alert,
+  AlertIcon,
+  AlertContent,
   AlertTitle,
   AlertDescription,
   InlineAlert,
   alertVariants,
+  alertIconVariants,
 } from './components/ui/alert'
-export type { InlineAlertProps } from './components/ui/alert'
+export type { AlertProps, AlertIconProps, InlineAlertProps } from './components/ui/alert'
 
 // Avatar
 export { Avatar, AvatarImage, AvatarFallback } from './components/ui/avatar'
