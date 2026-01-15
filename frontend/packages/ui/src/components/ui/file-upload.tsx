@@ -45,7 +45,7 @@ const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
     }
 
     return (
-      <div className={cn('space-y-2', className)}>
+      <div data-slot="file-upload" className={cn('space-y-2', className)}>
         {label && (
           <Label htmlFor={inputId} className={cn(error && 'text-destructive')}>
             {label}
@@ -54,6 +54,7 @@ const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
         )}
 
         <div
+          data-slot="file-upload-dropzone"
           className={cn(
             'relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors',
             'hover:border-primary/50 hover:bg-accent/50',
@@ -74,7 +75,7 @@ const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
           />
 
           {value ? (
-            <div className="flex items-center gap-3">
+            <div data-slot="file-upload-preview" className="flex items-center gap-3">
               <FileIcon className="h-8 w-8 text-primary" />
               <div className="flex flex-col">
                 <span className="text-sm font-medium">{value.name}</span>
@@ -97,6 +98,7 @@ const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
             <button
               type="button"
               onClick={handleClick}
+              data-slot="file-upload-trigger"
               className="flex flex-col items-center gap-2 text-center"
             >
               <Upload className="h-8 w-8 text-muted-foreground" />
@@ -107,7 +109,7 @@ const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
         </div>
 
         {error && (
-          <p id={`${inputId}-error`} className="text-sm text-destructive">
+          <p id={`${inputId}-error`} data-slot="file-upload-error" className="text-sm text-destructive">
             {error}
           </p>
         )}
