@@ -15,7 +15,13 @@ export {
 export type { AlertProps, AlertIconProps, InlineAlertProps } from './components/ui/alert'
 
 // Avatar
-export { Avatar, AvatarImage, AvatarFallback } from './components/ui/avatar'
+export {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+  avatarVariants,
+  avatarFallbackVariants,
+} from './components/ui/avatar'
 
 // AlertDialog
 export {

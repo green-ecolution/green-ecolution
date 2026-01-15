@@ -5,14 +5,15 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const avatarVariants = cva(
-  'relative flex shrink-0 overflow-hidden rounded-full transition-colors duration-300',
+  'relative flex shrink-0 overflow-hidden rounded-full transition-all duration-300',
   {
     variants: {
       size: {
-        default: 'h-10 w-10',
-        sm: 'h-8 w-8',
-        lg: 'h-12 w-12',
-        xl: 'h-16 w-16',
+        xs: 'size-6 text-[0.5rem]',
+        sm: 'size-8 text-xs',
+        default: 'size-10 text-sm',
+        lg: 'size-12 text-base',
+        xl: 'size-16 text-lg',
       },
     },
     defaultVariants: {
@@ -22,7 +23,7 @@ const avatarVariants = cva(
 )
 
 const avatarFallbackVariants = cva(
-  'flex h-full w-full items-center justify-center rounded-full font-semibold leading-none transition-colors duration-300 ease-in-out',
+  'flex size-full items-center justify-center rounded-full font-semibold leading-none transition-colors duration-300 ease-in-out',
   {
     variants: {
       variant: {
@@ -85,4 +86,4 @@ const AvatarFallback = React.forwardRef<
 ))
 AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName
 
-export { Avatar, AvatarImage, AvatarFallback }
+export { Avatar, AvatarImage, AvatarFallback, avatarVariants, avatarFallbackVariants }

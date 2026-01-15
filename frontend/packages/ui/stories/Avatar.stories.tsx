@@ -9,7 +9,7 @@ const meta: Meta<typeof Avatar> = {
   argTypes: {
     size: {
       control: 'select',
-      options: ['sm', 'default', 'lg', 'xl'],
+      options: ['xs', 'sm', 'default', 'lg', 'xl'],
     },
   },
 }
@@ -59,6 +59,9 @@ export const GuestVariant: Story = {
 export const Sizes: Story = {
   render: () => (
     <div className="flex items-center gap-4">
+      <Avatar size="xs">
+        <AvatarFallback variant="user">XS</AvatarFallback>
+      </Avatar>
       <Avatar size="sm">
         <AvatarFallback variant="user">SM</AvatarFallback>
       </Avatar>
