@@ -17,7 +17,7 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
     const inputId = id || React.useId()
 
     return (
-      <div className={cn('space-y-2', className)}>
+      <div data-slot="form-field" className={cn('space-y-2', className)}>
         <Label
           htmlFor={inputId}
           className={cn(hideLabel && 'sr-only', error && 'text-destructive')}
@@ -36,12 +36,12 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
           {...props}
         />
         {description && !error && (
-          <p id={`${inputId}-description`} className="text-sm text-muted-foreground">
+          <p id={`${inputId}-description`} data-slot="form-field-description" className="text-sm text-muted-foreground">
             {description}
           </p>
         )}
         {error && (
-          <p id={`${inputId}-error`} className="text-sm text-destructive">
+          <p id={`${inputId}-error`} data-slot="form-field-error" className="text-sm text-destructive">
             {error}
           </p>
         )}
@@ -63,7 +63,7 @@ const TextareaField = React.forwardRef<HTMLTextAreaElement, TextareaFieldProps>(
     const inputId = id || React.useId()
 
     return (
-      <div className={cn('space-y-2', className)}>
+      <div data-slot="textarea-field" className={cn('space-y-2', className)}>
         <Label
           htmlFor={inputId}
           className={cn(hideLabel && 'sr-only', error && 'text-destructive')}
@@ -82,12 +82,12 @@ const TextareaField = React.forwardRef<HTMLTextAreaElement, TextareaFieldProps>(
           {...props}
         />
         {description && !error && (
-          <p id={`${inputId}-description`} className="text-sm text-muted-foreground">
+          <p id={`${inputId}-description`} data-slot="textarea-field-description" className="text-sm text-muted-foreground">
             {description}
           </p>
         )}
         {error && (
-          <p id={`${inputId}-error`} className="text-sm text-destructive">
+          <p id={`${inputId}-error`} data-slot="textarea-field-error" className="text-sm text-destructive">
             {error}
           </p>
         )}
