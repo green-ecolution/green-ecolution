@@ -126,6 +126,18 @@ export type { FormFieldProps, TextareaFieldProps } from './components/ui/form-fi
 // Input
 export { Input } from './components/ui/input'
 
+// InputGroup
+export {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupText,
+  InputGroupInput,
+  InputGroupTextarea,
+  inputGroupAddonVariants,
+  inputGroupButtonVariants,
+} from './components/ui/input-group'
+
 // Label
 export { Label } from './components/ui/label'
 

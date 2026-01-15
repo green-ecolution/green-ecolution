@@ -1,5 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { Search } from 'lucide-react'
 import { FormField, TextareaField } from '../src/components/ui/form-field'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '../src/components/ui/input-group'
+import { Label } from '../src/components/ui/label'
 
 const meta: Meta<typeof FormField> = {
   title: 'UI/FormField',
@@ -63,6 +66,22 @@ export const HiddenLabel: Story = {
     placeholder: 'Suchen...',
     hideLabel: true,
   },
+}
+
+export const SearchWithInputGroup: Story = {
+  render: () => (
+    <div className="space-y-2 max-w-sm">
+      <Label htmlFor="search" className="sr-only">
+        Suche
+      </Label>
+      <InputGroup>
+        <InputGroupInput id="search" placeholder="Bäume suchen..." />
+        <InputGroupAddon>
+          <Search />
+        </InputGroupAddon>
+      </InputGroup>
+    </div>
+  ),
 }
 
 export const TextareaExample: Story = {
