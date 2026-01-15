@@ -32,8 +32,7 @@ const alertVariants = cva(
 )
 
 export interface AlertProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof alertVariants> {
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof alertVariants> {
   /** For dynamic alerts, set to "polite" or "assertive" for screen reader announcements */
   'aria-live'?: 'polite' | 'assertive' | 'off'
 }
@@ -75,8 +74,7 @@ const variantIcons = {
 } as const
 
 export interface AlertIconProps
-  extends React.HTMLAttributes<SVGElement>,
-    VariantProps<typeof alertIconVariants> {}
+  extends React.HTMLAttributes<SVGElement>, VariantProps<typeof alertIconVariants> {}
 
 const AlertIcon = React.forwardRef<SVGSVGElement, AlertIconProps>(
   ({ className, variant = 'default', ...props }, ref) => {
@@ -126,27 +124,23 @@ const AlertDescription = React.forwardRef<
 ))
 AlertDescription.displayName = 'AlertDescription'
 
-const inlineAlertVariants = cva(
-  'inline-flex items-center gap-2 text-sm font-medium',
-  {
-    variants: {
-      variant: {
-        default: 'bg-dark-100 text-foreground',
-        info: 'bg-green-light-100 text-green-light-900',
-        destructive: 'bg-red-100 text-red',
-        warning: 'bg-yellow-100 text-yellow-900',
-        success: 'bg-green-dark-100 text-green-dark-900',
-      },
-    },
-    defaultVariants: {
-      variant: 'destructive',
+const inlineAlertVariants = cva('inline-flex items-center gap-2 text-sm font-medium', {
+  variants: {
+    variant: {
+      default: 'bg-dark-100 text-foreground',
+      info: 'bg-green-light-100 text-green-light-900',
+      destructive: 'bg-red-100 text-red',
+      warning: 'bg-yellow-100 text-yellow-900',
+      success: 'bg-green-dark-100 text-green-dark-900',
     },
   },
-)
+  defaultVariants: {
+    variant: 'destructive',
+  },
+})
 
 export interface InlineAlertProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof inlineAlertVariants> {
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof inlineAlertVariants> {
   description: string
 }
 

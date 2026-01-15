@@ -71,8 +71,7 @@ const alertDialogIconVariants = cva(
 )
 
 export interface AlertDialogIconProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof alertDialogIconVariants> {}
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof alertDialogIconVariants> {}
 
 const AlertDialogIcon = React.forwardRef<HTMLDivElement, AlertDialogIconProps>(
   ({ className, variant, ...props }, ref) => (

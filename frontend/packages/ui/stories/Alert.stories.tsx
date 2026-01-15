@@ -73,9 +73,7 @@ export const Warning: Story = {
       <AlertIcon variant="warning" />
       <AlertContent>
         <AlertTitle>Warnung</AlertTitle>
-        <AlertDescription>
-          Bitte überprüfe deine Eingaben, bevor du fortfährst.
-        </AlertDescription>
+        <AlertDescription>Bitte überprüfe deine Eingaben, bevor du fortfährst.</AlertDescription>
       </AlertContent>
     </Alert>
   ),
@@ -142,8 +140,8 @@ export const SensorNotice: Story = {
       <AlertContent>
         <AlertTitle>Dieser Baum ist nicht mit einem Sensor ausgestattet</AlertTitle>
         <AlertDescription>
-          Es können keine Informationen über den aktuellen Bewässerungszustand angezeigt werden.
-          Der Bewässerungszustand wird als unbekannt ausgezeichnet.
+          Es können keine Informationen über den aktuellen Bewässerungszustand angezeigt werden. Der
+          Bewässerungszustand wird als unbekannt ausgezeichnet.
         </AlertDescription>
       </AlertContent>
     </Alert>

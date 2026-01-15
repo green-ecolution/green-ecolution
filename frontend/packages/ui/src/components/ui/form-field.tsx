@@ -36,12 +36,20 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
           {...props}
         />
         {description && !error && (
-          <p id={`${inputId}-description`} data-slot="form-field-description" className="text-sm text-muted-foreground">
+          <p
+            id={`${inputId}-description`}
+            data-slot="form-field-description"
+            className="text-sm text-muted-foreground"
+          >
             {description}
           </p>
         )}
         {error && (
-          <p id={`${inputId}-error`} data-slot="form-field-error" className="text-sm text-destructive">
+          <p
+            id={`${inputId}-error`}
+            data-slot="form-field-error"
+            className="text-sm text-destructive"
+          >
             {error}
           </p>
         )}
@@ -82,12 +90,20 @@ const TextareaField = React.forwardRef<HTMLTextAreaElement, TextareaFieldProps>(
           {...props}
         />
         {description && !error && (
-          <p id={`${inputId}-description`} data-slot="textarea-field-description" className="text-sm text-muted-foreground">
+          <p
+            id={`${inputId}-description`}
+            data-slot="textarea-field-description"
+            className="text-sm text-muted-foreground"
+          >
             {description}
           </p>
         )}
         {error && (
-          <p id={`${inputId}-error`} data-slot="textarea-field-error" className="text-sm text-destructive">
+          <p
+            id={`${inputId}-error`}
+            data-slot="textarea-field-error"
+            className="text-sm text-destructive"
+          >
             {error}
           </p>
         )}

@@ -55,9 +55,18 @@ export interface LoadingProps extends React.HTMLAttributes<HTMLDivElement> {
 const Loading = React.forwardRef<HTMLDivElement, LoadingProps>(
   ({ className, label, size, ...props }, ref) => {
     return (
-      <div ref={ref} data-slot="loading" className={cn('flex items-center gap-3', className)} {...props}>
+      <div
+        ref={ref}
+        data-slot="loading"
+        className={cn('flex items-center gap-3', className)}
+        {...props}
+      >
         <Spinner size={size} />
-        {label && <span data-slot="loading-label" className="text-lg text-dark-600">{label}</span>}
+        {label && (
+          <span data-slot="loading-label" className="text-lg text-dark-600">
+            {label}
+          </span>
+        )}
       </div>
     )
   },

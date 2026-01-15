@@ -84,8 +84,7 @@ const dialogIconVariants = cva(
 )
 
 export interface DialogIconProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof dialogIconVariants> {}
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof dialogIconVariants> {}
 
 const DialogIcon = React.forwardRef<HTMLDivElement, DialogIconProps>(
   ({ className, variant, ...props }, ref) => (

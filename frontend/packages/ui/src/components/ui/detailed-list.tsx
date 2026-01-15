@@ -34,7 +34,10 @@ const DetailedList = React.forwardRef<HTMLDListElement, DetailedListProps>(
         >
           {details.map((detail, index) => (
             <div key={index} data-slot="detailed-list-item" className="flex flex-col">
-              <dt data-slot="detailed-list-label" className="text-sm font-medium text-muted-foreground">
+              <dt
+                data-slot="detailed-list-label"
+                className="text-sm font-medium text-muted-foreground"
+              >
                 {detail.label}
               </dt>
               <dd data-slot="detailed-list-value" className="mt-1 text-sm text-foreground">

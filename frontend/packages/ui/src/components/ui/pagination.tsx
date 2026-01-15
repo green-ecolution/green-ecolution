@@ -17,13 +17,20 @@ Pagination.displayName = 'Pagination'
 
 const PaginationContent = React.forwardRef<HTMLUListElement, React.ComponentProps<'ul'>>(
   ({ className, ...props }, ref) => (
-    <ul ref={ref} data-slot="pagination-content" className={cn('flex flex-row items-center gap-1', className)} {...props} />
+    <ul
+      ref={ref}
+      data-slot="pagination-content"
+      className={cn('flex flex-row items-center gap-1', className)}
+      {...props}
+    />
   ),
 )
 PaginationContent.displayName = 'PaginationContent'
 
 const PaginationItem = React.forwardRef<HTMLLIElement, React.ComponentProps<'li'>>(
-  ({ className, ...props }, ref) => <li ref={ref} data-slot="pagination-item" className={cn('', className)} {...props} />,
+  ({ className, ...props }, ref) => (
+    <li ref={ref} data-slot="pagination-item" className={cn('', className)} {...props} />
+  ),
 )
 PaginationItem.displayName = 'PaginationItem'
 
@@ -52,7 +59,13 @@ const PaginationPrevious = ({
   className,
   ...props
 }: React.ComponentProps<typeof PaginationLink>) => (
-  <PaginationLink data-slot="pagination-previous" aria-label="Zur vorherigen Seite" size="icon" className={className} {...props}>
+  <PaginationLink
+    data-slot="pagination-previous"
+    aria-label="Zur vorherigen Seite"
+    size="icon"
+    className={className}
+    {...props}
+  >
     <ChevronLeft className="h-4 w-4" />
     <span className="sr-only">Zurück</span>
   </PaginationLink>
@@ -60,7 +73,13 @@ const PaginationPrevious = ({
 PaginationPrevious.displayName = 'PaginationPrevious'
 
 const PaginationNext = ({ className, ...props }: React.ComponentProps<typeof PaginationLink>) => (
-  <PaginationLink data-slot="pagination-next" aria-label="Zur nächsten Seite" size="icon" className={className} {...props}>
+  <PaginationLink
+    data-slot="pagination-next"
+    aria-label="Zur nächsten Seite"
+    size="icon"
+    className={className}
+    {...props}
+  >
     <ChevronRight className="h-4 w-4" />
     <span className="sr-only">Weiter</span>
   </PaginationLink>

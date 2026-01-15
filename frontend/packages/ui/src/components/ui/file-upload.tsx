@@ -109,7 +109,11 @@ const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
         </div>
 
         {error && (
-          <p id={`${inputId}-error`} data-slot="file-upload-error" className="text-sm text-destructive">
+          <p
+            id={`${inputId}-error`}
+            data-slot="file-upload-error"
+            className="text-sm text-destructive"
+          >
             {error}
           </p>
         )}
