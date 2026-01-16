@@ -1,6 +1,7 @@
 import { MoveRight, Settings } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogHeader,
@@ -14,13 +15,14 @@ const MapButtons = () => {
   return (
     <div className="relative">
       <div className="absolute z-[1000] space-y-2 top-6 left-36 flex space-x-2">
-        <button
-          type="button"
+        <Button
+          variant="outline"
+          size="icon"
           onClick={() => setIsModalOpen(!isModalOpen)}
-          className={`bg-white shadow-cards w-10 h-10 rounded-full flex items-center justify-center transition-all ease-in-out duration-300`}
+          className="rounded-full shadow-cards bg-white"
         >
-          <Settings className="w-6 h-6 text-dark-800" />
-        </button>
+          <Settings className="!size-6 text-dark-800" />
+        </Button>
       </div>
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>

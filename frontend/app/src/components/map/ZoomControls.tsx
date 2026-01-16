@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Minus, Plus } from 'lucide-react'
 import { useMap } from 'react-leaflet'
+import { Button } from '@green-ecolution/ui'
 
 const ZoomControls = () => {
   const map = useMap()
@@ -35,26 +36,24 @@ const ZoomControls = () => {
 
   return (
     <div className="absolute z-[1000] space-y-2 bottom-6 right-4 lg:right-10 lg:bottom-10">
-      <button
-        type="button"
-        className={`bg-white shadow-cards w-10 h-10 rounded-full flex items-center justify-center transition-all ease-in-out duration-300 ${
-          !canZoomIn ? 'bg-dark-200 cursor-not-allowed' : ''
-        }`}
+      <Button
+        variant="outline"
+        size="icon"
         onClick={handleZoomIn}
         disabled={!canZoomIn}
+        className="rounded-full shadow-cards bg-white"
       >
-        <Plus className="w-6 h-6 text-dark-800" />
-      </button>
-      <button
-        type="button"
-        className={`bg-white shadow-cards w-10 h-10 rounded-full flex items-center justify-center transition-all ease-in-out duration-300 ${
-          !canZoomOut ? 'bg-dark-200 cursor-not-allowed' : ''
-        }`}
+        <Plus className="!size-6 text-dark-800" />
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
         onClick={handleZoomOut}
         disabled={!canZoomOut}
+        className="rounded-full shadow-cards bg-white"
       >
-        <Minus className="w-6 h-6 text-dark-800" />
-      </button>
+        <Minus className="!size-6 text-dark-800" />
+      </Button>
     </div>
   )
 }

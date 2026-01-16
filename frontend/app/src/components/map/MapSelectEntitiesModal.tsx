@@ -99,14 +99,15 @@ const MapSelectEntitiesModal = ({
           <h2 id={titleId} className="text-lg font-lato font-semibold">
             {title}
           </h2>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             aria-label="Dialog schließen"
-            className="text-dark-400 hover:text-dark-600 stroke-1"
-            type="button"
+            className="text-dark-400 hover:text-dark-600"
             onClick={() => setOpenModal(false)}
           >
             <X />
-          </button>
+          </Button>
         </div>
         {modalContent}
       </div>
@@ -116,15 +117,15 @@ const MapSelectEntitiesModal = ({
   return (
     <div ref={ref} className="text-base font-nunito-sans">
       {/* Mobile: Button to open modal */}
-      <button
-        type="button"
+      <Button
+        variant="ghost"
         onClick={() => setOpenModal(true)}
-        className={`bg-white absolute flex items-center group gap-x-3 rounded-xl px-5 py-2 z-[1000] left-4 bottom-6 transition-all ease-in-out duration-300 hover:bg-dark-100 lg:hidden
+        className={`bg-white absolute z-[1000] left-4 bottom-6 group lg:hidden hover:bg-dark-100
           ${openModal ? 'hidden' : ''}`}
       >
-        <span className="font-medium text-base">Auswahl anzeigen</span>
-        <MoveRight className="transition-all ease-in-out duration-300 group-hover:translate-x-2" />
-      </button>
+        Auswahl anzeigen
+        <MoveRight className="transition-all duration-300 group-hover:translate-x-2" />
+      </Button>
 
       {/* Mobile: Modal */}
       {mobileModal}

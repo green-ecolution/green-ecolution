@@ -144,14 +144,15 @@ const FormForTree = (props: FormForTreeProps) => {
             </p>
           </div>
 
-          <button
+          <Button
             type="button"
-            className="mt-6 w-fit border border-green-light text-dark-800 px-5 py-2 group flex gap-x-3 rounded-xl items-center transition-all ease-in-out duration-300 hover:border-green-dark hover:text-dark"
+            variant="outline"
             onClick={props.onChangeLocation}
+            className="mt-6"
           >
-            <span className="font-medium">Standort des Baumes anpassen</span>
-            <MapPin className="text-current" />
-          </button>
+            Standort des Baumes anpassen
+            <MapPin />
+          </Button>
         </div>
       )}
 
