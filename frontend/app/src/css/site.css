@@ -2,6 +2,9 @@
 @import '@green-ecolution/ui/styles';
 @import './frontend.css';
 
+/* Scan UI package for Tailwind classes */
+@source "../../../packages/ui/src/**/*.{ts,tsx}";
+
 @utility container {
   margin-inline: auto;
   padding-inline: 1rem;
