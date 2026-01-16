@@ -77,7 +77,7 @@ function MapView() {
 
   return (
     <>
-      <div className="absolute top-6 left-4">
+      <div className="absolute top-6 left-4 z-[1000]">
         <Dialog
           ref={dialogRef}
           headline="Bäume filtern"

@@ -20,7 +20,8 @@ const StatusFieldset = () => {
           onChange={handleStatusChange}
         >
           <div
-            className={`bg-${getWateringStatusDetails(statusValue).color} w-4 h-4 rounded-full`}
+            className="w-4 h-4 rounded-full"
+            style={{ backgroundColor: getWateringStatusDetails(statusValue).colorHex }}
           />
         </Option>
       ))}
