@@ -5,7 +5,7 @@ import GeneralLink from '../general/links/GeneralLink'
 import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
 import { format, formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
-import DetailedList from '../general/DetailedList'
+import { DetailedList } from '@green-ecolution/ui'
 import { Sensor, Tree } from '@green-ecolution/backend-client'
 
 interface SensorDashboardProps {
@@ -94,7 +94,7 @@ const SensorDashboard = ({ sensor, sensorTree: linkedTree }: SensorDashboardProp
 
       <section className="mt-16 md:grid md:gap-x-11 md:grid-cols-2">
         <div>
-          <DetailedList headline="Daten zum Sensor" details={generalSensorData} hasNoGrid />
+          <DetailedList headline="Daten zum Sensor" details={generalSensorData} columns={1} />
         </div>
 
         <div

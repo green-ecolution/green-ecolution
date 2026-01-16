@@ -1,6 +1,6 @@
 import React from 'react'
 import { User } from '@green-ecolution/backend-client'
-import Pill from '../Pill'
+import { Badge } from '@green-ecolution/ui'
 import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
 import { getUserRoleDetails } from '@/hooks/details/useDetailsForUserRole'
 import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
@@ -14,10 +14,9 @@ const UserCard: React.FC<UserCard> = ({ user }) => {
 
   return (
     <div className="bg-white border border-dark-50 p-6 rounded-xl shadow-cards flex flex-col gap-y-4 lg:py-4 lg:grid lg:grid-cols-[1fr,1.25fr,1fr,1fr] lg:items-center lg:gap-5 xl:px-10">
-      <Pill
-        label={statusDetails?.label ?? 'Keine Angabe'}
-        theme={statusDetails?.color ?? 'dark-400'}
-      />
+      <Badge variant={statusDetails?.color ?? 'outline-dark'} size="lg">
+        {statusDetails?.label ?? 'Keine Angabe'}
+      </Badge>
 
       <h2 className="text-dark font-bold text-md mb-0.5">
         {user.firstName} {user.lastName}

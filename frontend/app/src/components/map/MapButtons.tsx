@@ -1,6 +1,12 @@
 import { MoveRight, Settings } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
-import Modal from '../general/Modal'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@green-ecolution/ui'
 import { useState } from 'react'
 
 const MapButtons = () => {
@@ -16,24 +22,25 @@ const MapButtons = () => {
           <Settings className="w-6 h-6 text-dark-800" />
         </button>
       </div>
-      <Modal
-        title="Weitere Kataster-Einstellungen"
-        description="In dieser Ansicht können weitere Einstellungen vorgenommen werden. Es können zum Beispiel manuell Bäume zum Kataster hinzugefügt werden."
-        confirmText="Import fortfahren"
-        showButtons={false}
-        onCancel={() => setIsModalOpen(false)}
-        isOpen={isModalOpen}
-      >
-        <Link
-          to="/map/tree/new"
-          preload="intent"
-          search={(prev) => prev}
-          className="group flex items-center gap-x-2 !text-green-dark font-medium text-base mb-4"
-        >
-          Neuen Baum manuell hinzufügen
-          <MoveRight className="w-4 h-4 transition-all ease-in-out duration-300 group-hover:translate-x-1" />
-        </Link>
-      </Modal>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Weitere Kataster-Einstellungen</DialogTitle>
+            <DialogDescription>
+              In dieser Ansicht können weitere Einstellungen vorgenommen werden. Es können zum Beispiel manuell Bäume zum Kataster hinzugefügt werden.
+            </DialogDescription>
+          </DialogHeader>
+          <Link
+            to="/map/tree/new"
+            preload="intent"
+            search={(prev) => prev}
+            className="group flex items-center gap-x-2 !text-green-dark font-medium text-base mb-4"
+          >
+            Neuen Baum manuell hinzufügen
+            <MoveRight className="w-4 h-4 transition-all ease-in-out duration-300 group-hover:translate-x-1" />
+          </Link>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

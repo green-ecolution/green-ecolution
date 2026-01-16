@@ -1,11 +1,16 @@
 import { Ref, useEffect, useMemo, useState } from 'react'
 import FilterButton from '../buttons/FilterButton'
-import PrimaryButton from '../buttons/PrimaryButton'
-import SecondaryButton from '../buttons/SecondaryButton'
+import {
+  Button,
+  Dialog as DialogRoot,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@green-ecolution/ui'
+import { MoveRight, X } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
 import { useFilter, Filters } from '@/context/FilterContext'
 import useStore from '@/store/store'
-import { BaseModal } from '../modal'
 
 interface DialogProps {
   headline: string
@@ -119,19 +124,25 @@ const Dialog = ({
         }}
       />
 
-      <BaseModal
-        isOpen={isOpen}
-        onClose={handleClose}
-        title={headline}
-        className="max-h-[80dvh] overflow-y-auto"
-      >
-        {children}
+      <DialogRoot open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+        <DialogContent className="max-h-[80dvh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{headline}</DialogTitle>
+          </DialogHeader>
+          {children}
 
-        <div className="flex flex-wrap gap-5 mt-6">
-          <PrimaryButton label="Anwenden" type="button" onClick={handleSubmit} />
-          <SecondaryButton label="Zurücksetzen" onClick={handleReset} />
-        </div>
-      </BaseModal>
+          <div className="flex flex-wrap gap-5 mt-6">
+            <Button type="button" onClick={handleSubmit}>
+              Anwenden
+              <MoveRight />
+            </Button>
+            <Button variant="outline" onClick={handleReset}>
+              Zurücksetzen
+              <X />
+            </Button>
+          </div>
+        </DialogContent>
+      </DialogRoot>
     </div>
   )
 }

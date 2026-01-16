@@ -1,12 +1,12 @@
 import BackLink from '../general/links/BackLink'
-import Pill from '../general/Pill'
+import { Badge } from '@green-ecolution/ui'
 import ButtonLink from '../general/links/ButtonLink'
 import { Pencil } from 'lucide-react'
 import { getVehicleStatusDetails } from '@/hooks/details/useDetailsForVehicleStatus'
 import GeneralLink from '../general/links/GeneralLink'
 import { Vehicle, VehicleStatus } from '@green-ecolution/backend-client'
 import { getVehicleType } from '@/hooks/details/useDetailsForVehicleType'
-import DetailedList from '../general/DetailedList'
+import { DetailedList } from '@green-ecolution/ui'
 
 interface VehicleDashboardProps {
   vehicle: Vehicle
@@ -62,10 +62,9 @@ const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
         <div className="2xl:w-4/5">
           <h1 className="font-lato font-bold text-3xl mb-4 flex flex-wrap items-center gap-4 lg:text-4xl xl:text-5xl">
             Fahrzeug: {vehicle.numberPlate}
-            <Pill
-              label={statusDetails?.label ?? 'Keine Angabe'}
-              theme={statusDetails?.color ?? 'dark-400'}
-            />
+            <Badge variant={statusDetails?.color ?? 'outline-dark'} size="lg">
+              {statusDetails?.label ?? 'Keine Angabe'}
+            </Badge>
           </h1>
           {vehicle.description && <p className="mb-4">{vehicle.description}</p>}
         </div>
