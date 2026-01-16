@@ -65,7 +65,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
 
       <section className="mt-10">
         <ul className="space-y-5 md:space-y-0 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-4">
-          <li>
+          <li className="h-full">
             <StatusCard
               status={wateringStatus.color}
               indicator="dot"
@@ -74,7 +74,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
               description={wateringStatus.description}
             />
           </li>
-          <li>
+          <li className="h-full">
             <StatusCard
               label="Baumanzahl in der Gruppe"
               value={
@@ -85,13 +85,13 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
               description="Nicht alle Bäume haben Sensoren, da Rückschlüsse möglich sind."
             />
           </li>
-          <li>
+          <li className="h-full">
             <StatusCard
               label="Standort der Gruppe"
               value={`${treecluster.address}, ${treecluster.region?.name ?? '-'}`}
             />
           </li>
-          <li>
+          <li className="h-full">
             <StatusCard
               label="Datum der letzten Bewässerung"
               value={lastWateredDate}
@@ -104,7 +104,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
       <section className="mt-16">
         <h2 className="text-xl font-bold font-lato mb-10">Alle zugehörigen Bäume</h2>
 
-        <header className="hidden border-b pb-2 text-sm text-dark-800 px-6 border-b-dark-200 mb-5 lg:grid lg:grid-cols-[1.5fr,2fr,1fr] lg:gap-5">
+        <header className="hidden border-b pb-2 text-sm text-dark-800 px-6 border-b-dark-200 mb-5 lg:grid lg:grid-cols-[1.5fr_2fr_1fr] lg:gap-5">
           <p>Status</p>
           <p>Baumart</p>
           <p>Baumnummer</p>
