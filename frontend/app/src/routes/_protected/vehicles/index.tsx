@@ -7,6 +7,7 @@ import { Plus } from 'lucide-react'
 import Pagination from '@/components/general/Pagination'
 import { z } from 'zod'
 import { vehicleQuery } from '@/api/queries'
+import { ListCardHeader } from '@green-ecolution/ui'
 
 export const Route = createFileRoute('/_protected/vehicles/')({
   component: Vehicles,
@@ -40,13 +41,13 @@ function Vehicles() {
       </article>
 
       <section className="mt-10">
-        <header className="hidden border-b pb-2 text-sm text-dark-800 px-8 border-b-dark-200 mb-5 lg:grid lg:grid-cols-5 lg:gap-5 xl:px-10">
+        <ListCardHeader columns="repeat(5, 1fr)">
           <p>Status</p>
           <p>Kennzeichen</p>
           <p>Wasserkapazität</p>
           <p>Modell</p>
           <p>Führerscheinklasse</p>
-        </header>
+        </ListCardHeader>
         <ul>
           {vehicleRes.data?.length === 0 ? (
             <li className="text-center text-dark-600 mt-10">

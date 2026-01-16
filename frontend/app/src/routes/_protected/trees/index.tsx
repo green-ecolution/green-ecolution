@@ -13,6 +13,7 @@ import ClusterFieldset from '@/components/general/filter/fieldsets/ClusterFields
 import PlantingYearFieldset from '@/components/general/filter/fieldsets/PlantingYearFieldset'
 import FilterProvider from '@/context/FilterContext'
 import { treeQuery } from '@/api/queries'
+import { ListCardHeader } from '@green-ecolution/ui'
 
 const treeFilterSchema = z.object({
   wateringStatuses: z.array(z.string()).optional(),
@@ -62,12 +63,12 @@ function Trees() {
             <PlantingYearFieldset />
           </Dialog>
         </div>
-        <header className="hidden border-b pb-2 text-sm text-dark-800 px-6 border-b-dark-200 mb-5 lg:grid lg:grid-cols-[1fr,1.5fr,1fr,1fr] lg:gap-5 lg:px-10">
+        <ListCardHeader columns="1fr 1.5fr 1fr 1fr">
           <p>Status</p>
           <p>Baumart</p>
           <p>Baumnummer</p>
           <p>Bewässerungsgruppe</p>
-        </header>
+        </ListCardHeader>
         <ul>
           {treesRes.data?.length === 0 ? (
             <li className="text-center text-dark-600 mt-10">
