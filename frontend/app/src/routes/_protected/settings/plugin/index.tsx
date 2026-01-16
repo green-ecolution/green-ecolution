@@ -1,8 +1,13 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { Suspense } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { pluginApi } from '@/api/backendApi'
-import DashboardCard from '@/components/general/cards/DashboardCard'
+import {
+  LinkCard,
+  LinkCardTitle,
+  LinkCardDescription,
+  LinkCardFooter,
+} from '@green-ecolution/ui'
 
 export const Route = createFileRoute('/_protected/settings/plugin/')({
   component: PluginView,
@@ -40,13 +45,17 @@ const PluginList = () => {
       <ul className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
         {pluginList?.plugins.map((plugin, key) => (
           <li key={plugin.slug}>
-            <DashboardCard
-              headline={plugin.name}
-              description={plugin.description}
-              linkLabel={`${plugin.name} starten`}
-              url={`/settings/plugin/${plugin.slug}`}
-              theme={key % 2 ? 'dark' : 'light'}
-            />
+            <LinkCard variant={key % 2 ? 'dark' : 'light'} asChild>
+              <Link
+                to="/settings/plugin/$pluginSlug"
+                params={{ pluginSlug: plugin.slug }}
+                aria-label={`${plugin.name} starten`}
+              >
+                <LinkCardTitle>{plugin.name}</LinkCardTitle>
+                <LinkCardDescription>{plugin.description}</LinkCardDescription>
+                <LinkCardFooter>{`${plugin.name} starten`}</LinkCardFooter>
+              </Link>
+            </LinkCard>
           </li>
         ))}
       </ul>

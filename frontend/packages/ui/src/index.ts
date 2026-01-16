@@ -141,6 +141,16 @@ export {
 // Label
 export { Label } from './components/ui/label'
 
+// LinkCard
+export {
+  LinkCard,
+  LinkCardTitle,
+  LinkCardDescription,
+  LinkCardFooter,
+  linkCardVariants,
+} from './components/ui/link-card'
+export type { LinkCardProps, LinkCardFooterProps } from './components/ui/link-card'
+
 // ListCard
 export {
   ListCard,
