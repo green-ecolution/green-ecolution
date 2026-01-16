@@ -425,7 +425,7 @@ describe('NavLink', () => {
       await waitFor(() => {
         const label = screen.getByText('Einstellungen')
         expect(label).toBeInTheDocument()
-        expect(label).toHaveClass('lg:opacity-full', 'lg:block')
+        expect(label).toHaveClass('lg:opacity-100', 'lg:block')
       })
     })
 

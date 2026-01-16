@@ -27,18 +27,20 @@ function Header() {
   return (
     <header className="relative z-10 bg-white lg:pl-20">
       <div className="container text-sm border-b border-dark-50 py-4 flex justify-between items-center">
-        <button
-          id="main-navigation-toggle"
-          type="button"
-          aria-expanded={open}
-          aria-controls="main-navigation"
-          aria-haspopup="menu"
-          aria-label="Hauptnavigation öffnen"
-          className="w-8 h-8 flex items-center justify-center bg-dark rounded-full transition-colors ease-in-out duration-300 hover:bg-dark-600 lg:hidden"
-          onClick={() => toggleSidebar(!open)}
-        >
-          <AlignJustifyIcon className="text-light w-5 h-5" />
-        </button>
+        {!isLargeScreen && (
+          <button
+            id="main-navigation-toggle"
+            type="button"
+            aria-expanded={open}
+            aria-controls="main-navigation"
+            aria-haspopup="menu"
+            aria-label="Hauptnavigation öffnen"
+            className="flex w-8 h-8 items-center justify-center bg-dark rounded-full transition-colors ease-in-out duration-300 hover:bg-dark-600"
+            onClick={() => toggleSidebar(!open)}
+          >
+            <AlignJustifyIcon className="text-light w-5 h-5" />
+          </button>
+        )}
         {!isStartPage && <Breadcrumb />}
         <ProfileButton />
       </div>
