@@ -1,11 +1,9 @@
-import EntitiesStatusCard from '@/components/general/cards/EntitiesStatusCard'
-import GeneralStatusCard from '@/components/general/cards/GeneralStatusCard'
 import BackLink from '@/components/general/links/BackLink'
 import GeneralLink from '../general/links/GeneralLink'
 import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
 import { format, formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { DetailedList } from '@green-ecolution/ui'
+import { DetailedList, StatusCard } from '@green-ecolution/ui'
 import { Sensor, Tree } from '@green-ecolution/backend-client'
 
 interface SensorDashboardProps {
@@ -65,17 +63,25 @@ const SensorDashboard = ({ sensor, sensorTree: linkedTree }: SensorDashboardProp
       <section className="mt-10">
         <ul className="space-y-5 md:space-y-0 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
           <li>
-            <EntitiesStatusCard
-              statusDetails={getSensorStatusDetails(sensor.status)}
-              label="Status des Sensors"
-            />
+            {(() => {
+              const statusDetails = getSensorStatusDetails(sensor.status)
+              return (
+                <StatusCard
+                  status={statusDetails.color}
+                  indicator="dot"
+                  label="Status des Sensors"
+                  value={statusDetails.label}
+                  description={statusDetails.description}
+                />
+              )
+            })()}
           </li>
           <li>
-            <GeneralStatusCard
-              overline="Akkustand"
+            <StatusCard
+              label="Akkustand"
               value={
                 sensor?.latestData?.battery
-                  ? `${sensor?.latestData?.battery.toFixed(2)} V`
+                  ? `${sensor.latestData.battery.toFixed(2)} V`
                   : 'Keine Angabe'
               }
               isLarge
@@ -83,8 +89,8 @@ const SensorDashboard = ({ sensor, sensorTree: linkedTree }: SensorDashboardProp
             />
           </li>
           <li>
-            <GeneralStatusCard
-              overline="Letztes Update"
+            <StatusCard
+              label="Letztes Update"
               value={updatedDate}
               description="Letzte Datenübermittlung"
             />

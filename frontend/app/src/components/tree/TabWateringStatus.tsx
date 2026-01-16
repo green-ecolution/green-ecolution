@@ -2,8 +2,7 @@ import { WateringStatus, Tree } from '@green-ecolution/backend-client'
 import React from 'react'
 import { TreeDeciduous } from 'lucide-react'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
-import GeneralStatusCard from '../general/cards/GeneralStatusCard'
-import EntitiesStatusCard from '../general/cards/EntitiesStatusCard'
+import { StatusCard } from '@green-ecolution/ui'
 import ChartWateringData from './ChartWateringData'
 import { format } from 'date-fns'
 import { roundTo } from '@/lib/utils'
@@ -13,56 +12,53 @@ interface TabWateringStatusProps {
 }
 
 const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
-  const statusCards = [
-    {
-      id: 1,
-      overline: 'Bodenfeuchte',
-      value: tree?.sensor?.latestData
-        ? `${roundTo(tree.sensor.latestData.humidity, 2)} %`
-        : 'Keine Daten',
-      isLarge: true,
-      description: 'Wert bezeichnet den Wassergehalt im Boden.',
-    },
-    {
-      id: 2,
-      overline: 'Bodentemperatur',
-      value: tree?.sensor?.latestData
-        ? `${roundTo(tree?.sensor?.latestData.temperature, 2)} °C`
-        : 'Keine Daten',
-      isLarge: true,
-      description: 'Wert bezeichnet die Temperatur in der oberflächlichen Bodenschicht.',
-    },
-    {
-      id: 3,
-      overline: 'Datum der letzten Bewässerung',
-      value: tree?.lastWatered ? format(new Date(tree.lastWatered), 'dd.MM.yyyy') : 'Keine Angabe',
-      isLarge: false,
-      description:
-        'Wird aktualisiert, sobald ein Einsatzplan mit diesem Baum als »Beendet« markiert wird.',
-    },
-  ]
+  const wateringStatus = getWateringStatusDetails(
+    tree?.wateringStatus ?? WateringStatus.WateringStatusUnknown
+  )
 
   return (
     <>
       <ul className="space-y-5 md:space-y-0 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-4">
         <li>
-          <EntitiesStatusCard
-            statusDetails={getWateringStatusDetails(
-              tree?.wateringStatus ?? WateringStatus.WateringStatusUnknown,
-            )}
+          <StatusCard
+            status={wateringStatus.color}
+            indicator="dot"
             label="Bewässerungszustand (ø)"
+            value={wateringStatus.label}
+            description={wateringStatus.description}
           />
         </li>
-        {statusCards.map((card) => (
-          <li key={card.id}>
-            <GeneralStatusCard
-              overline={card.overline}
-              value={card.value}
-              isLarge={card.isLarge}
-              description={card.description}
-            />
-          </li>
-        ))}
+        <li>
+          <StatusCard
+            label="Bodenfeuchte"
+            value={
+              tree?.sensor?.latestData
+                ? `${roundTo(tree.sensor.latestData.humidity, 2)} %`
+                : 'Keine Daten'
+            }
+            isLarge
+            description="Wert bezeichnet den Wassergehalt im Boden."
+          />
+        </li>
+        <li>
+          <StatusCard
+            label="Bodentemperatur"
+            value={
+              tree?.sensor?.latestData
+                ? `${roundTo(tree.sensor.latestData.temperature, 2)} °C`
+                : 'Keine Daten'
+            }
+            isLarge
+            description="Wert bezeichnet die Temperatur in der oberflächlichen Bodenschicht."
+          />
+        </li>
+        <li>
+          <StatusCard
+            label="Datum der letzten Bewässerung"
+            value={tree?.lastWatered ? format(new Date(tree.lastWatered), 'dd.MM.yyyy') : 'Keine Angabe'}
+            description="Wird aktualisiert, sobald ein Einsatzplan mit diesem Baum als »Beendet« markiert wird."
+          />
+        </li>
       </ul>
 
       {tree?.sensor?.latestData && (

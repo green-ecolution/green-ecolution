@@ -175,6 +175,10 @@ export {
 // Separator
 export { Separator } from './components/ui/separator'
 
+// StatusCard
+export { StatusCard, statusCardVariants } from './components/ui/status-card'
+export type { StatusCardProps, StatusVariant } from './components/ui/status-card'
+
 // Spinner/Loading
 export { Spinner, Loading, spinnerVariants } from './components/ui/spinner'
 export type { SpinnerProps, LoadingProps } from './components/ui/spinner'
