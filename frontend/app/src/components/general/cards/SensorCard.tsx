@@ -1,12 +1,7 @@
 import { Sensor } from '@green-ecolution/backend-client'
 import { format, formatDistanceToNow } from 'date-fns'
 import React from 'react'
-import {
-  Badge,
-  ListCard,
-  ListCardTitle,
-  ListCardDescription,
-} from '@green-ecolution/ui'
+import { Badge, ListCard, ListCardTitle, ListCardDescription } from '@green-ecolution/ui'
 import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
 import { useQuery } from '@tanstack/react-query'
 import { treeSensorIdQuery } from '@/api/queries'
@@ -38,14 +33,18 @@ const SensorCard: React.FC<SensorCardProps> = ({ sensor }) => {
         }}
       >
         <div>
-          <Badge variant={statusDetails.color} size="lg">{statusDetails.label}</Badge>
+          <Badge variant={statusDetails.color} size="lg">
+            {statusDetails.label}
+          </Badge>
         </div>
 
         <div>
           <ListCardTitle className="mb-0.5">ID: {sensor.id}</ListCardTitle>
           {treeRes ? (
             <p className="text-dark-800 text-sm">
-              <span className={`${treeRes.number ? 'block' : 'hidden'}`}>Baum: {treeRes.number}</span>
+              <span className={`${treeRes.number ? 'block' : 'hidden'}`}>
+                Baum: {treeRes.number}
+              </span>
               <span className={`${treeRes.number ? 'block' : 'hidden'}`}>
                 Ort: {treeRes.latitude}, {treeRes.longitude}
               </span>

@@ -65,9 +65,7 @@ export const WithPreselectedValues: Story = {
             { value: 'user-4', label: 'Anna Müller' },
           ]}
         />
-        <p className="text-sm text-muted-foreground">
-          Ausgewählt: {value.join(', ') || 'Keine'}
-        </p>
+        <p className="text-sm text-muted-foreground">Ausgewählt: {value.join(', ') || 'Keine'}</p>
       </div>
     )
   },

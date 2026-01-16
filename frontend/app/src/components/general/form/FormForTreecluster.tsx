@@ -39,7 +39,12 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
     >
       <div className="space-y-6">
         <FormField label="Name" error={errors.name?.message} required {...register('name')} />
-        <FormField label="Adresse" required error={errors.address?.message} {...register('address')} />
+        <FormField
+          label="Adresse"
+          required
+          error={errors.address?.message}
+          {...register('address')}
+        />
         <Controller
           name="soilCondition"
           control={control}
@@ -93,11 +98,7 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
 
       <FormError show={props.displayError} error={props.errorMessage} />
 
-      <Button
-        type="submit"
-        disabled={!isValid}
-        className="mt-10 lg:col-span-full lg:w-fit"
-      >
+      <Button type="submit" disabled={!isValid} className="mt-10 lg:col-span-full lg:w-fit">
         Speichern
         <MoveRight />
       </Button>

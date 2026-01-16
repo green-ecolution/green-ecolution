@@ -146,7 +146,8 @@ function EditTree() {
           <AlertDialogHeader>
             <AlertDialogTitle>Seite verlassen?</AlertDialogTitle>
             <AlertDialogDescription>
-              Möchtest du die Seite wirklich verlassen? Deine Eingaben gehen verloren, wenn du jetzt gehst.
+              Möchtest du die Seite wirklich verlassen? Deine Eingaben gehen verloren, wenn du jetzt
+              gehst.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

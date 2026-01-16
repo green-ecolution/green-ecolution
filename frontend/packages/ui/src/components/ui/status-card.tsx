@@ -86,8 +86,7 @@ const statusToBadgeVariant: Record<StatusVariant, BadgeProps['variant']> = {
 }
 
 interface StatusCardProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof statusCardVariants> {
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof statusCardVariants> {
   label: string
   value: string | number
   description?: string
@@ -97,8 +96,17 @@ interface StatusCardProps
 
 const StatusCard = React.forwardRef<HTMLDivElement, StatusCardProps>(
   (
-    { className, status = 'default', label, value, description, indicator = 'none', isLarge = false, ...props },
-    ref
+    {
+      className,
+      status = 'default',
+      label,
+      value,
+      description,
+      indicator = 'none',
+      isLarge = false,
+      ...props
+    },
+    ref,
   ) => {
     const showDot = indicator === 'dot'
     const showBadge = indicator === 'badge'
@@ -107,7 +115,9 @@ const StatusCard = React.forwardRef<HTMLDivElement, StatusCardProps>(
     return (
       <div ref={ref} className={cn(statusCardVariants({ status }), className)} {...props}>
         <p className="text-sm text-dark-700 font-medium">{label}</p>
-        <p className={cn('font-bold', isLarge ? 'text-3xl' : 'text-xl', showDot && 'pl-7 relative')}>
+        <p
+          className={cn('font-bold', isLarge ? 'text-3xl' : 'text-xl', showDot && 'pl-7 relative')}
+        >
           {showDot && <span className={dotVariants({ status })} />}
           {showBadge ? (
             <>
@@ -123,7 +133,7 @@ const StatusCard = React.forwardRef<HTMLDivElement, StatusCardProps>(
         {description && <p className="text-sm">{description}</p>}
       </div>
     )
-  }
+  },
 )
 StatusCard.displayName = 'StatusCard'
 

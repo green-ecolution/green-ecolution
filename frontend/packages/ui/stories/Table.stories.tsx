@@ -25,15 +25,48 @@ type Story = StoryObj<typeof meta>
 
 const treeData = [
   { id: 1, status: 'In Ordnung', species: 'Quercus robur', number: '1001', cluster: 'Alsterbogen' },
-  { id: 2, status: 'Leicht trocken', species: 'Tilia cordata', number: '1002', cluster: 'Alte Zob-Brücke' },
-  { id: 3, status: 'Unbekannt', species: 'Acer platanoides', number: '1003', cluster: 'Nicht zugeordnet' },
+  {
+    id: 2,
+    status: 'Leicht trocken',
+    species: 'Tilia cordata',
+    number: '1002',
+    cluster: 'Alte Zob-Brücke',
+  },
+  {
+    id: 3,
+    status: 'Unbekannt',
+    species: 'Acer platanoides',
+    number: '1003',
+    cluster: 'Nicht zugeordnet',
+  },
   { id: 4, status: 'Kritisch', species: 'Fagus sylvatica', number: '1004', cluster: 'Nordpark' },
 ]
 
 const clusterData = [
-  { id: 1, status: 'green-dark', statusLabel: 'In Ordnung', name: 'Alsterbogen', address: 'Alsterbogen 60, Fruerlund', trees: 1 },
-  { id: 2, status: 'green-light', statusLabel: 'Leicht trocken', name: 'Alte Zob-Brücke', address: 'Alte Zob-Brücke, Weiche', trees: 8 },
-  { id: 3, status: 'yellow', statusLabel: 'Mäßig trocken', name: 'Nordpark', address: 'Nordstraße 12, Zentrum', trees: 15 },
+  {
+    id: 1,
+    status: 'green-dark',
+    statusLabel: 'In Ordnung',
+    name: 'Alsterbogen',
+    address: 'Alsterbogen 60, Fruerlund',
+    trees: 1,
+  },
+  {
+    id: 2,
+    status: 'green-light',
+    statusLabel: 'Leicht trocken',
+    name: 'Alte Zob-Brücke',
+    address: 'Alte Zob-Brücke, Weiche',
+    trees: 8,
+  },
+  {
+    id: 3,
+    status: 'yellow',
+    statusLabel: 'Mäßig trocken',
+    name: 'Nordpark',
+    address: 'Nordstraße 12, Zentrum',
+    trees: 15,
+  },
 ]
 
 const invoiceData = [

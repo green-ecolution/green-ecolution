@@ -78,7 +78,7 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
   ]
 
   const statusDetails = getWateringPlanStatusDetails(
-    wateringPlan?.status ?? WateringPlanStatus.WateringPlanStatusUnknown
+    wateringPlan?.status ?? WateringPlanStatus.WateringPlanStatusUnknown,
   )
 
   return (

@@ -29,7 +29,8 @@ const MapButtons = () => {
           <DialogHeader>
             <DialogTitle>Weitere Kataster-Einstellungen</DialogTitle>
             <DialogDescription>
-              In dieser Ansicht können weitere Einstellungen vorgenommen werden. Es können zum Beispiel manuell Bäume zum Kataster hinzugefügt werden.
+              In dieser Ansicht können weitere Einstellungen vorgenommen werden. Es können zum
+              Beispiel manuell Bäume zum Kataster hinzugefügt werden.
             </DialogDescription>
           </DialogHeader>
           <Link

@@ -2,12 +2,7 @@ import { getWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWater
 import { WateringPlanInList } from '@green-ecolution/backend-client'
 import { Link } from '@tanstack/react-router'
 import React from 'react'
-import {
-  Badge,
-  ListCard,
-  ListCardTitle,
-  ListCardDescription,
-} from '@green-ecolution/ui'
+import { Badge, ListCard, ListCardTitle, ListCardDescription } from '@green-ecolution/ui'
 import { format } from 'date-fns'
 import { roundTo } from '@/lib/utils'
 
@@ -30,7 +25,9 @@ const WateringPlanCard: React.FC<WateringPlanCardProps> = ({ wateringPlan }) => 
         }}
       >
         <div>
-          <Badge variant={statusDetails.color ?? 'outline-dark'} size="lg">{statusDetails.label}</Badge>
+          <Badge variant={statusDetails.color ?? 'outline-dark'} size="lg">
+            {statusDetails.label}
+          </Badge>
         </div>
 
         <div>

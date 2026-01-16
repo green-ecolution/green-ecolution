@@ -56,16 +56,65 @@ const treeclusterData = [
 ]
 
 const treeData = [
-  { id: 1, status: 'green-dark', statusLabel: 'In Ordnung', species: 'Quercus robur', number: '1001', cluster: 'Alsterbogen' },
-  { id: 2, status: 'green-light', statusLabel: 'Leicht trocken', species: 'Tilia cordata', number: '1002', cluster: 'Alte Zob-Brücke' },
-  { id: 3, status: 'yellow', statusLabel: 'Mäßig trocken', species: 'Acer platanoides', number: '1003', cluster: 'Nordpark' },
-  { id: 4, status: 'red', statusLabel: 'Kritisch', species: 'Fagus sylvatica', number: '1004', cluster: 'Nicht zugeordnet' },
+  {
+    id: 1,
+    status: 'green-dark',
+    statusLabel: 'In Ordnung',
+    species: 'Quercus robur',
+    number: '1001',
+    cluster: 'Alsterbogen',
+  },
+  {
+    id: 2,
+    status: 'green-light',
+    statusLabel: 'Leicht trocken',
+    species: 'Tilia cordata',
+    number: '1002',
+    cluster: 'Alte Zob-Brücke',
+  },
+  {
+    id: 3,
+    status: 'yellow',
+    statusLabel: 'Mäßig trocken',
+    species: 'Acer platanoides',
+    number: '1003',
+    cluster: 'Nordpark',
+  },
+  {
+    id: 4,
+    status: 'red',
+    statusLabel: 'Kritisch',
+    species: 'Fagus sylvatica',
+    number: '1004',
+    cluster: 'Nicht zugeordnet',
+  },
 ]
 
 const vehicleData = [
-  { id: 1, status: 'Verfügbar', plate: 'FL-GE 123', capacity: '10.000 Liter', model: 'MAN TGS', license: 'C' },
-  { id: 2, status: 'Im Einsatz', plate: 'FL-GE 456', capacity: '3.000 Liter', model: 'Mercedes Sprinter', license: 'B' },
-  { id: 3, status: 'Wartung', plate: 'FL-GE 789', capacity: '5.000 Liter', model: 'Anhänger', license: 'BE' },
+  {
+    id: 1,
+    status: 'Verfügbar',
+    plate: 'FL-GE 123',
+    capacity: '10.000 Liter',
+    model: 'MAN TGS',
+    license: 'C',
+  },
+  {
+    id: 2,
+    status: 'Im Einsatz',
+    plate: 'FL-GE 456',
+    capacity: '3.000 Liter',
+    model: 'Mercedes Sprinter',
+    license: 'B',
+  },
+  {
+    id: 3,
+    status: 'Wartung',
+    plate: 'FL-GE 789',
+    capacity: '5.000 Liter',
+    model: 'Anhänger',
+    license: 'BE',
+  },
 ]
 
 export const TreeclusterList: Story = {
@@ -81,18 +130,14 @@ export const TreeclusterList: Story = {
         {treeclusterData.map((cluster) => (
           <li key={cluster.id}>
             <ListCard columns="1fr 2fr 1.5fr 1fr">
-              <ListCardStatus status={cluster.status}>
-                {cluster.statusLabel}
-              </ListCardStatus>
+              <ListCardStatus status={cluster.status}>{cluster.statusLabel}</ListCardStatus>
               <ListCardTitle>{cluster.name}</ListCardTitle>
               <ListCardMeta>
                 <MapPin className="w-5 h-5" />
                 <p>
                   <span>{cluster.address}, </span>
                   <br />
-                  <span className="text-dark-600 lg:block lg:text-sm">
-                    {cluster.region}
-                  </span>
+                  <span className="text-dark-600 lg:block lg:text-sm">{cluster.region}</span>
                 </p>
               </ListCardMeta>
               <ListCardMeta>
@@ -122,9 +167,7 @@ export const TreeList: Story = {
         {treeData.map((tree) => (
           <li key={tree.id}>
             <ListCard columns="1fr 1.5fr 1fr 1fr">
-              <ListCardStatus status={tree.status}>
-                {tree.statusLabel}
-              </ListCardStatus>
+              <ListCardStatus status={tree.status}>{tree.statusLabel}</ListCardStatus>
               <ListCardTitle>{tree.species}</ListCardTitle>
               <ListCardDescription>
                 <span className="lg:sr-only">Baumnummer: </span>
@@ -188,9 +231,33 @@ export const VehicleListWithBadges: Story = {
 export const WateringPlanList: Story = {
   render: () => {
     const wateringPlans = [
-      { id: 1, status: 'Geplant', date: '15.01.2026', vehicle: 'FL-GE 123', distance: '12.5 km', staff: 2, clusters: 5 },
-      { id: 2, status: 'Aktiv', date: '14.01.2026', vehicle: 'FL-GE 456', distance: '8.3 km', staff: 3, clusters: 3 },
-      { id: 3, status: 'Abgeschlossen', date: '13.01.2026', vehicle: 'FL-GE 123', distance: '15.2 km', staff: 2, clusters: 7 },
+      {
+        id: 1,
+        status: 'Geplant',
+        date: '15.01.2026',
+        vehicle: 'FL-GE 123',
+        distance: '12.5 km',
+        staff: 2,
+        clusters: 5,
+      },
+      {
+        id: 2,
+        status: 'Aktiv',
+        date: '14.01.2026',
+        vehicle: 'FL-GE 456',
+        distance: '8.3 km',
+        staff: 3,
+        clusters: 3,
+      },
+      {
+        id: 3,
+        status: 'Abgeschlossen',
+        date: '13.01.2026',
+        vehicle: 'FL-GE 123',
+        distance: '15.2 km',
+        staff: 2,
+        clusters: 7,
+      },
     ]
 
     return (
@@ -279,7 +346,8 @@ export const CompactWithActions: Story = {
             <ListCardStatus status={tree.status} />
             <ListCardContent>
               <span className="font-medium">
-                <strong className="font-semibold">Baum:</strong> {tree.species} · {tree.id} · {tree.year}
+                <strong className="font-semibold">Baum:</strong> {tree.species} · {tree.id} ·{' '}
+                {tree.year}
               </span>
             </ListCardContent>
             <ListCardActions>
@@ -315,7 +383,8 @@ export const CompactTreeClusterWithActions: Story = {
             <ListCardStatus status={cluster.status} />
             <ListCardContent>
               <span className="font-medium">
-                <strong className="font-semibold">Bewässerungsgruppe:</strong> {cluster.name} · {cluster.id}
+                <strong className="font-semibold">Bewässerungsgruppe:</strong> {cluster.name} ·{' '}
+                {cluster.id}
               </span>
             </ListCardContent>
             <ListCardActions>

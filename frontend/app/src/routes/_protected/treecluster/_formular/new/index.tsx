@@ -89,7 +89,10 @@ function NewTreecluster() {
         </FormProvider>
       </section>
 
-      <AlertDialog open={navigationBlocker.isModalOpen} onOpenChange={(open) => !open && navigationBlocker.closeModal()}>
+      <AlertDialog
+        open={navigationBlocker.isModalOpen}
+        onOpenChange={(open) => !open && navigationBlocker.closeModal()}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Seite verlassen?</AlertDialogTitle>

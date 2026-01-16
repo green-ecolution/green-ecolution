@@ -1,10 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import {
-  LinkCard,
-  LinkCardTitle,
-  LinkCardDescription,
-  LinkCardFooter,
-} from '@green-ecolution/ui'
+import { LinkCard, LinkCardTitle, LinkCardDescription, LinkCardFooter } from '@green-ecolution/ui'
 
 export const Route = createFileRoute('/_protected/settings/')({
   component: Settings,

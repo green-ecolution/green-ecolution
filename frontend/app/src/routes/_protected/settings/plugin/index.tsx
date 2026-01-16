@@ -2,12 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { Suspense } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { pluginApi } from '@/api/backendApi'
-import {
-  LinkCard,
-  LinkCardTitle,
-  LinkCardDescription,
-  LinkCardFooter,
-} from '@green-ecolution/ui'
+import { LinkCard, LinkCardTitle, LinkCardDescription, LinkCardFooter } from '@green-ecolution/ui'
 
 export const Route = createFileRoute('/_protected/settings/plugin/')({
   component: PluginView,
@@ -47,8 +42,8 @@ const PluginList = () => {
           <li key={plugin.slug}>
             <LinkCard variant={key % 2 ? 'dark' : 'light'} asChild>
               <Link
-                to="/settings/plugin/$pluginSlug"
-                params={{ pluginSlug: plugin.slug }}
+                to="/settings/plugin/$pluginName"
+                params={{ pluginName: plugin.slug }}
                 aria-label={`${plugin.name} starten`}
               >
                 <LinkCardTitle>{plugin.name}</LinkCardTitle>

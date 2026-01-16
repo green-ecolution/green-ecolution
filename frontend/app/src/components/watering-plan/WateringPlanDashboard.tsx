@@ -128,11 +128,15 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
         <TabsList>
           <TabsTrigger value="general">
             <File className="w-5 h-5" />
-            <span className="hidden group-data-[state=active]:block lg:block">Allgemeine Daten</span>
+            <span className="hidden group-data-[state=active]:block lg:block">
+              Allgemeine Daten
+            </span>
           </TabsTrigger>
           <TabsTrigger value="clusters">
             <FolderClosed className="w-5 h-5" />
-            <span className="hidden group-data-[state=active]:block lg:block">Bewässerungsgruppen</span>
+            <span className="hidden group-data-[state=active]:block lg:block">
+              Bewässerungsgruppen
+            </span>
           </TabsTrigger>
           {wateringPlan.distance > 0 && (
             <TabsTrigger value="route">
