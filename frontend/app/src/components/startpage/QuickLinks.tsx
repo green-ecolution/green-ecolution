@@ -1,10 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import {
-  LinkCard,
-  LinkCardTitle,
-  LinkCardDescription,
-  LinkCardFooter,
-} from '@green-ecolution/ui'
+import { LinkCard, LinkCardTitle, LinkCardDescription, LinkCardFooter } from '@green-ecolution/ui'
 
 const QuickLinks = () => {
   const cards = [

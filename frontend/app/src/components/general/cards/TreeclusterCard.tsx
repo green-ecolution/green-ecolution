@@ -4,12 +4,7 @@ import { TreeClusterInList } from '@green-ecolution/backend-client'
 import { Link } from '@tanstack/react-router'
 import { MapPin } from 'lucide-react'
 import React from 'react'
-import {
-  ListCard,
-  ListCardStatus,
-  ListCardTitle,
-  ListCardMeta,
-} from '@green-ecolution/ui'
+import { ListCard, ListCardStatus, ListCardTitle, ListCardMeta } from '@green-ecolution/ui'
 
 interface TreeclusterCardProps {
   treecluster: TreeClusterInList
@@ -26,9 +21,7 @@ const TreeclusterCard: React.FC<TreeclusterCardProps> = ({ treecluster }) => {
           treeclusterId: treecluster.id.toString(),
         }}
       >
-        <ListCardStatus status={statusDetails.color}>
-          {statusDetails.label}
-        </ListCardStatus>
+        <ListCardStatus status={statusDetails.color}>{statusDetails.label}</ListCardStatus>
 
         <ListCardTitle>{treecluster.name}</ListCardTitle>
 

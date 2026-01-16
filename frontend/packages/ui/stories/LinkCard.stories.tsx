@@ -32,8 +32,7 @@ export const Default: Story = {
     <LinkCard {...args}>
       <LinkCardTitle>Bäume verwalten</LinkCardTitle>
       <LinkCardDescription>
-        Übersicht aller Bäume im System, Sensordaten einsehen und Bewässerungsstatus
-        prüfen.
+        Übersicht aller Bäume im System, Sensordaten einsehen und Bewässerungsstatus prüfen.
       </LinkCardDescription>
       <LinkCardFooter>Zur Übersicht</LinkCardFooter>
     </LinkCard>
@@ -62,9 +61,7 @@ export const Light: Story = {
   render: (args) => (
     <LinkCard {...args}>
       <LinkCardTitle>Einsatzpläne</LinkCardTitle>
-      <LinkCardDescription>
-        Bewässerungseinsätze planen und Routen optimieren.
-      </LinkCardDescription>
+      <LinkCardDescription>Bewässerungseinsätze planen und Routen optimieren.</LinkCardDescription>
       <LinkCardFooter>Pläne verwalten</LinkCardFooter>
     </LinkCard>
   ),
@@ -78,9 +75,7 @@ export const WithLink: Story = {
     <LinkCard {...args} asChild>
       <a href="/trees">
         <LinkCardTitle>Bäume</LinkCardTitle>
-        <LinkCardDescription>
-          Alle Bäume im System anzeigen und verwalten.
-        </LinkCardDescription>
+        <LinkCardDescription>Alle Bäume im System anzeigen und verwalten.</LinkCardDescription>
         <LinkCardFooter>Zur Baumübersicht</LinkCardFooter>
       </a>
     </LinkCard>
@@ -94,9 +89,7 @@ export const WithoutArrow: Story = {
   render: (args) => (
     <LinkCard {...args}>
       <LinkCardTitle>Statistiken</LinkCardTitle>
-      <LinkCardDescription>
-        Übersicht über Bewässerungsstatistiken und Trends.
-      </LinkCardDescription>
+      <LinkCardDescription>Übersicht über Bewässerungsstatistiken und Trends.</LinkCardDescription>
       <LinkCardFooter showArrow={false}>Mehr erfahren</LinkCardFooter>
     </LinkCard>
   ),
@@ -110,23 +103,17 @@ export const AllVariants: Story = {
     <div className="grid gap-6 md:grid-cols-3">
       <LinkCard variant="white">
         <LinkCardTitle>White Variant</LinkCardTitle>
-        <LinkCardDescription>
-          Standard-Variante mit weißem Hintergrund.
-        </LinkCardDescription>
+        <LinkCardDescription>Standard-Variante mit weißem Hintergrund.</LinkCardDescription>
         <LinkCardFooter>Mehr erfahren</LinkCardFooter>
       </LinkCard>
       <LinkCard variant="light">
         <LinkCardTitle>Light Variant</LinkCardTitle>
-        <LinkCardDescription>
-          Hellgrüne Variante für Aktionen.
-        </LinkCardDescription>
+        <LinkCardDescription>Hellgrüne Variante für Aktionen.</LinkCardDescription>
         <LinkCardFooter>Mehr erfahren</LinkCardFooter>
       </LinkCard>
       <LinkCard variant="dark">
         <LinkCardTitle>Dark Variant</LinkCardTitle>
-        <LinkCardDescription>
-          Dunkelgrüne Variante für wichtige Bereiche.
-        </LinkCardDescription>
+        <LinkCardDescription>Dunkelgrüne Variante für wichtige Bereiche.</LinkCardDescription>
         <LinkCardFooter>Mehr erfahren</LinkCardFooter>
       </LinkCard>
     </div>
@@ -140,8 +127,7 @@ export const DashboardExample: Story = {
         <a href="/trees">
           <LinkCardTitle>Alle Bäume</LinkCardTitle>
           <LinkCardDescription>
-            Verwalten Sie alle Bäume im System und prüfen Sie deren
-            Bewässerungsstatus.
+            Verwalten Sie alle Bäume im System und prüfen Sie deren Bewässerungsstatus.
           </LinkCardDescription>
           <LinkCardFooter>Zur Baumübersicht</LinkCardFooter>
         </a>

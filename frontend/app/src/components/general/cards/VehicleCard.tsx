@@ -1,12 +1,7 @@
 import { getVehicleStatusDetails } from '@/hooks/details/useDetailsForVehicleStatus'
 import { Vehicle } from '@green-ecolution/backend-client'
 import { Link } from '@tanstack/react-router'
-import {
-  Badge,
-  ListCard,
-  ListCardTitle,
-  ListCardDescription,
-} from '@green-ecolution/ui'
+import { Badge, ListCard, ListCardTitle, ListCardDescription } from '@green-ecolution/ui'
 import React from 'react'
 import { getVehicleType } from '@/hooks/details/useDetailsForVehicleType'
 

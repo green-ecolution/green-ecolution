@@ -23,7 +23,9 @@ const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
         <div className="2xl:w-4/5">
           <h1 className="font-lato font-bold text-3xl mb-4 flex flex-wrap items-center gap-4 lg:text-4xl xl:text-5xl">
             Baum: {tree.number}
-            <Badge variant="outline-green-light" size="lg">{tree.provider ?? 'manuell erstellt'}</Badge>
+            <Badge variant="outline-green-light" size="lg">
+              {tree.provider ?? 'manuell erstellt'}
+            </Badge>
           </h1>
           {tree.treeClusterId && treeCluster ? (
             <p className="text-dark-600 text-lg">
@@ -80,11 +82,15 @@ const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
           <TabsList>
             <TabsTrigger value="watering">
               <TreeIcon className="w-5 h-5" />
-              <span className="hidden group-data-[state=active]:block lg:block">Bewässerungsdaten</span>
+              <span className="hidden group-data-[state=active]:block lg:block">
+                Bewässerungsdaten
+              </span>
             </TabsTrigger>
             <TabsTrigger value="general">
               <File className="w-5 h-5" />
-              <span className="hidden group-data-[state=active]:block lg:block">Allgemeine Daten</span>
+              <span className="hidden group-data-[state=active]:block lg:block">
+                Allgemeine Daten
+              </span>
             </TabsTrigger>
             <TabsTrigger value="sensor">
               <SensorIcon className="w-5 h-5" />

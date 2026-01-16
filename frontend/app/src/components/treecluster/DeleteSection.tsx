@@ -76,9 +76,12 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
       <AlertDialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Soll {entityName} wirklich {actionText} werden?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Soll {entityName} wirklich {actionText} werden?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Sobald {entityName} {actionText} wurde, können die Daten nicht wieder hergestellt werden.
+              Sobald {entityName} {actionText} wurde, können die Daten nicht wieder hergestellt
+              werden.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

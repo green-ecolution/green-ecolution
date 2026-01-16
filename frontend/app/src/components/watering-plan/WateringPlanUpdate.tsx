@@ -155,7 +155,10 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         />
       </Suspense>
 
-      <AlertDialog open={navigationBlocker.isModalOpen} onOpenChange={(open) => !open && navigationBlocker.closeModal()}>
+      <AlertDialog
+        open={navigationBlocker.isModalOpen}
+        onOpenChange={(open) => !open && navigationBlocker.closeModal()}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Seite verlassen?</AlertDialogTitle>

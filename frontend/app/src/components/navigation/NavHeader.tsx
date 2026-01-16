@@ -5,11 +5,10 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { Button } from '@green-ecolution/ui'
 
 interface NavHeader {
-  isOpen: boolean
   closeSidebar: () => void
 }
 
-const NavHeader: React.FC<NavHeader> = ({ isOpen, closeSidebar }) => {
+const NavHeader: React.FC<NavHeader> = ({ closeSidebar }) => {
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
 
   return (

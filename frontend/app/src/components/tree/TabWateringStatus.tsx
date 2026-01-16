@@ -13,7 +13,7 @@ interface TabWateringStatusProps {
 
 const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
   const wateringStatus = getWateringStatusDetails(
-    tree?.wateringStatus ?? WateringStatus.WateringStatusUnknown
+    tree?.wateringStatus ?? WateringStatus.WateringStatusUnknown,
   )
 
   return (
@@ -55,7 +55,9 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
         <li>
           <StatusCard
             label="Datum der letzten Bewässerung"
-            value={tree?.lastWatered ? format(new Date(tree.lastWatered), 'dd.MM.yyyy') : 'Keine Angabe'}
+            value={
+              tree?.lastWatered ? format(new Date(tree.lastWatered), 'dd.MM.yyyy') : 'Keine Angabe'
+            }
             description="Wird aktualisiert, sobald ein Einsatzplan mit diesem Baum als »Beendet« markiert wird."
           />
         </li>

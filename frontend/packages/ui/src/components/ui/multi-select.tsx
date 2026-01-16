@@ -8,8 +8,10 @@ export interface MultiSelectOption {
   disabled?: boolean
 }
 
-export interface MultiSelectProps
-  extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'value' | 'onChange'> {
+export interface MultiSelectProps extends Omit<
+  React.SelectHTMLAttributes<HTMLSelectElement>,
+  'value' | 'onChange'
+> {
   value?: string[]
   onChange?: (value: string[]) => void
   options?: MultiSelectOption[]

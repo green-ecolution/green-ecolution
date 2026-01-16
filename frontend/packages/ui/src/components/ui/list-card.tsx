@@ -20,12 +20,11 @@ const listCardVariants = cva(
       hoverable: true,
       size: 'default',
     },
-  }
+  },
 )
 
 interface ListCardProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof listCardVariants> {
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof listCardVariants> {
   asChild?: boolean
   columns?: string
 }
@@ -35,7 +34,7 @@ const ListCard = React.forwardRef<HTMLDivElement, ListCardProps>(
     const Comp = asChild ? Slot : 'div'
 
     const gridStyle = columns
-      ? { '--list-card-columns': columns } as React.CSSProperties
+      ? ({ '--list-card-columns': columns } as React.CSSProperties)
       : undefined
 
     return (
@@ -43,8 +42,10 @@ const ListCard = React.forwardRef<HTMLDivElement, ListCardProps>(
         ref={ref}
         className={cn(
           listCardVariants({ hoverable, size }),
-          columns && size !== 'compact' && 'lg:grid lg:items-center lg:gap-5 lg:py-5 xl:px-10 lg:[grid-template-columns:var(--list-card-columns)]',
-          className
+          columns &&
+            size !== 'compact' &&
+            'lg:grid lg:items-center lg:gap-5 lg:py-5 xl:px-10 lg:[grid-template-columns:var(--list-card-columns)]',
+          className,
         )}
         style={gridStyle}
         {...props}
@@ -52,7 +53,7 @@ const ListCard = React.forwardRef<HTMLDivElement, ListCardProps>(
         {children}
       </Comp>
     )
-  }
+  },
 )
 ListCard.displayName = 'ListCard'
 
@@ -63,7 +64,7 @@ interface ListCardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
 const ListCardHeader = React.forwardRef<HTMLDivElement, ListCardHeaderProps>(
   ({ className, columns, ...props }, ref) => {
     const gridStyle = columns
-      ? { '--list-card-columns': columns } as React.CSSProperties
+      ? ({ '--list-card-columns': columns } as React.CSSProperties)
       : undefined
 
     return (
@@ -71,23 +72,21 @@ const ListCardHeader = React.forwardRef<HTMLDivElement, ListCardHeaderProps>(
         ref={ref}
         className={cn(
           'hidden border-b pb-2 text-sm text-dark-800 px-6 border-b-dark-200 mb-5',
-          columns && 'lg:grid lg:gap-5 xl:px-10 lg:[grid-template-columns:var(--list-card-columns)]',
-          className
+          columns &&
+            'lg:grid lg:gap-5 xl:px-10 lg:[grid-template-columns:var(--list-card-columns)]',
+          className,
         )}
         style={gridStyle}
         {...props}
       />
     )
-  }
+  },
 )
 ListCardHeader.displayName = 'ListCardHeader'
 
-const ListCardCell = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn('', className)} {...props} />
-))
+const ListCardCell = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => <div ref={ref} className={cn('', className)} {...props} />,
+)
 ListCardCell.displayName = 'ListCardCell'
 
 interface ListCardStatusProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -110,16 +109,12 @@ const ListCardStatus = React.forwardRef<HTMLDivElement, ListCardStatusProps>(
     const dotClass = statusColorMap[normalizedStatus] || 'bg-dark-400'
 
     return (
-      <div
-        ref={ref}
-        className={cn('flex items-center gap-3 font-medium', className)}
-        {...props}
-      >
+      <div ref={ref} className={cn('flex items-center gap-3 font-medium', className)} {...props}>
         <span className={cn('w-4 h-4 rounded-full shrink-0', dotClass)} />
         {children}
       </div>
     )
-  }
+  },
 )
 ListCardStatus.displayName = 'ListCardStatus'
 
@@ -139,28 +134,25 @@ const ListCardDescription = React.forwardRef<
 ))
 ListCardDescription.displayName = 'ListCardDescription'
 
-const ListCardMeta = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn('text-dark-800 flex gap-x-2', className)} {...props} />
-))
+const ListCardMeta = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn('text-dark-800 flex gap-x-2', className)} {...props} />
+  ),
+)
 ListCardMeta.displayName = 'ListCardMeta'
 
-const ListCardContent = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn('flex-1 min-w-0', className)} {...props} />
-))
+const ListCardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn('flex-1 min-w-0', className)} {...props} />
+  ),
+)
 ListCardContent.displayName = 'ListCardContent'
 
-const ListCardActions = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn('flex items-center gap-2 shrink-0', className)} {...props} />
-))
+const ListCardActions = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn('flex items-center gap-2 shrink-0', className)} {...props} />
+  ),
+)
 ListCardActions.displayName = 'ListCardActions'
 
 export {

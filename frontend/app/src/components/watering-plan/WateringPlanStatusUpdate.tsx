@@ -127,11 +127,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
           )
         default:
           return (
-            <Button
-              onClick={() => onSubmitOtherStatus(status)}
-              type="submit"
-              className="mt-10"
-            >
+            <Button onClick={() => onSubmitOtherStatus(status)} type="submit" className="mt-10">
               Speichern
               <MoveRight />
             </Button>
@@ -156,7 +152,9 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
         </h1>
         <p className="space-x-3 mb-5">
           <strong>Aktueller Status:</strong>
-          <Badge variant={statusDetails.color} size="lg">{statusDetails.label}</Badge>
+          <Badge variant={statusDetails.color} size="lg">
+            {statusDetails.label}
+          </Badge>
         </p>
         <p>
           Der Status eines Einsatzes beschreibt, ob der Einsatz beispielsweise aktiv ausgeführt

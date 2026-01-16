@@ -191,11 +191,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
 
       <FormError show={props.displayError} error={props.errorMessage} />
 
-      <Button
-        type="submit"
-        className="mt-10 lg:col-span-full lg:w-fit"
-        disabled={!isValid}
-      >
+      <Button type="submit" className="mt-10 lg:col-span-full lg:w-fit" disabled={!isValid}>
         Speichern
         <MoveRight />
       </Button>

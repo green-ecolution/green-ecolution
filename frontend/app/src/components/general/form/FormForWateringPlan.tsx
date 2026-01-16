@@ -75,7 +75,10 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
                 Verknüpftes Fahrzeug
                 <span className="text-destructive ml-1">*</span>
               </Label>
-              <Select value={field.value?.toString()} onValueChange={(val) => field.onChange(Number(val))}>
+              <Select
+                value={field.value?.toString()}
+                onValueChange={(val) => field.onChange(Number(val))}
+              >
                 <SelectTrigger id="transporterId">
                   <SelectValue placeholder="Wählen Sie ein Fahrzeug aus" />
                 </SelectTrigger>
@@ -83,7 +86,8 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
                   <SelectItem value="-1">Kein Fahrzeug</SelectItem>
                   {props.transporters.map((transporter) => (
                     <SelectItem key={transporter.id} value={transporter.id.toString()}>
-                      {transporter.numberPlate} · {getDrivingLicenseDetails(transporter.drivingLicense).label}
+                      {transporter.numberPlate} ·{' '}
+                      {getDrivingLicenseDetails(transporter.drivingLicense).label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -100,7 +104,10 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
           render={({ field }) => (
             <div className="space-y-2">
               <Label htmlFor="trailerId">Verknüpfter Anhänger</Label>
-              <Select value={field.value?.toString() ?? '-1'} onValueChange={(val) => field.onChange(val === '-1' ? undefined : Number(val))}>
+              <Select
+                value={field.value?.toString() ?? '-1'}
+                onValueChange={(val) => field.onChange(val === '-1' ? undefined : Number(val))}
+              >
                 <SelectTrigger id="trailerId">
                   <SelectValue placeholder="Wählen Sie einen Anhänger aus, sofern vorhanden" />
                 </SelectTrigger>
@@ -108,7 +115,8 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
                   <SelectItem value="-1">Keinen Anhänger</SelectItem>
                   {props.trailers.map((trailer) => (
                     <SelectItem key={trailer.id} value={trailer.id.toString()}>
-                      {trailer.numberPlate} · {getDrivingLicenseDetails(trailer.drivingLicense).label}
+                      {trailer.numberPlate} ·{' '}
+                      {getDrivingLicenseDetails(trailer.drivingLicense).label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -172,11 +180,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
 
       <FormError show={props.displayError} error={props.errorMessage} />
 
-      <Button
-        type="submit"
-        disabled={!isValid}
-        className="mt-10 lg:col-span-full lg:w-fit"
-      >
+      <Button type="submit" disabled={!isValid} className="mt-10 lg:col-span-full lg:w-fit">
         Speichern
         <MoveRight />
       </Button>

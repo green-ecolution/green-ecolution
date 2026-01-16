@@ -22,8 +22,7 @@ const linkCardVariants = cva(
 )
 
 export interface LinkCardProps
-  extends React.HTMLAttributes<HTMLElement>,
-    VariantProps<typeof linkCardVariants> {
+  extends React.HTMLAttributes<HTMLElement>, VariantProps<typeof linkCardVariants> {
   asChild?: boolean
 }
 
@@ -45,11 +44,7 @@ const LinkCardTitle = React.forwardRef<
   HTMLHeadingElement,
   React.HTMLAttributes<HTMLHeadingElement>
 >(({ className, ...props }, ref) => (
-  <h3
-    ref={ref}
-    className={cn('font-lato text-lg text-dark font-semibold', className)}
-    {...props}
-  />
+  <h3 ref={ref} className={cn('font-lato text-lg text-dark font-semibold', className)} {...props} />
 ))
 LinkCardTitle.displayName = 'LinkCardTitle'
 
@@ -61,8 +56,7 @@ const LinkCardDescription = React.forwardRef<
 ))
 LinkCardDescription.displayName = 'LinkCardDescription'
 
-export interface LinkCardFooterProps
-  extends React.HTMLAttributes<HTMLParagraphElement> {
+export interface LinkCardFooterProps extends React.HTMLAttributes<HTMLParagraphElement> {
   showArrow?: boolean
 }
 

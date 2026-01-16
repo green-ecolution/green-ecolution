@@ -4,12 +4,7 @@ import { WateringStatus, Tree } from '@green-ecolution/backend-client'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import React from 'react'
-import {
-  ListCard,
-  ListCardStatus,
-  ListCardTitle,
-  ListCardDescription,
-} from '@green-ecolution/ui'
+import { ListCard, ListCardStatus, ListCardTitle, ListCardDescription } from '@green-ecolution/ui'
 
 interface TreeCardProps {
   tree: Tree
@@ -36,9 +31,7 @@ const TreeCard: React.FC<TreeCardProps> = ({ tree, showTreeClusterInfo = true })
           treeId: tree.id.toString(),
         }}
       >
-        <ListCardStatus status={statusDetails.color}>
-          {statusDetails.label}
-        </ListCardStatus>
+        <ListCardStatus status={statusDetails.color}>{statusDetails.label}</ListCardStatus>
 
         <ListCardTitle>{tree.species}</ListCardTitle>
 

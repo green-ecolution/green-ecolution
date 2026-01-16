@@ -1,11 +1,6 @@
 import React from 'react'
 import { User } from '@green-ecolution/backend-client'
-import {
-  Badge,
-  ListCard,
-  ListCardTitle,
-  ListCardDescription,
-} from '@green-ecolution/ui'
+import { Badge, ListCard, ListCardTitle, ListCardDescription } from '@green-ecolution/ui'
 import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
 import { getUserRoleDetails } from '@/hooks/details/useDetailsForUserRole'
 import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'

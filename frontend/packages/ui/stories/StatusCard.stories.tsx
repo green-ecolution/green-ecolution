@@ -120,10 +120,7 @@ export const DashboardGrid: Story = {
         value="8 Bäume"
         description="Nicht alle Bäume haben Sensoren, da Rückschlüsse möglich sind."
       />
-      <StatusCard
-        label="Standort der Gruppe"
-        value="Alte Zob-Brücke, Weiche"
-      />
+      <StatusCard label="Standort der Gruppe" value="Alte Zob-Brücke, Weiche" />
       <StatusCard
         label="Datum der letzten Bewässerung"
         value="Keine Angabe"

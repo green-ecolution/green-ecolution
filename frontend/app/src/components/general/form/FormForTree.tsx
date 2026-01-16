@@ -144,12 +144,7 @@ const FormForTree = (props: FormForTreeProps) => {
             </p>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={props.onChangeLocation}
-            className="mt-6"
-          >
+          <Button type="button" variant="outline" onClick={props.onChangeLocation} className="mt-6">
             Standort des Baumes anpassen
             <MapPin />
           </Button>
@@ -158,11 +153,7 @@ const FormForTree = (props: FormForTreeProps) => {
 
       <FormError show={props.displayError} error={props.errorMessage} />
 
-      <Button
-        type="submit"
-        className="mt-10 lg:col-span-full lg:w-fit"
-        disabled={!isValid}
-      >
+      <Button type="submit" className="mt-10 lg:col-span-full lg:w-fit" disabled={!isValid}>
         Speichern
         <MoveRight />
       </Button>
