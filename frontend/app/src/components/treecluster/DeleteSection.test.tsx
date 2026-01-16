@@ -127,13 +127,13 @@ describe('DeleteSection', () => {
       )
 
       await user.click(screen.getByRole('button', { name: /löschen/i }))
-      expect(screen.getByRole('dialog')).toBeInTheDocument()
+      expect(screen.getByRole('alertdialog')).toBeInTheDocument()
 
       const cancelButton = screen.getByRole('button', { name: /abbrechen/i })
       await user.click(cancelButton)
 
       await waitFor(() => {
-        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+        expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
       })
     })
   })

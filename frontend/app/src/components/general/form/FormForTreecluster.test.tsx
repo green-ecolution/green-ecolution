@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import FormForTreecluster from './FormForTreecluster'
 import { clusterSchema, TreeclusterForm } from '@/schema/treeclusterSchema'
@@ -69,7 +69,9 @@ describe('FormForTreecluster', () => {
     expect(screen.getByLabelText(/kurze beschreibung/i)).toBeInTheDocument()
   })
 
-  it('renders soil condition select with options', () => {
+  it('renders soil condition select with options', async () => {
+    const user = userEvent.setup()
+
     render(
       <TestWrapper defaultValues={defaultFormValues}>
         <FormForTreecluster
@@ -81,13 +83,14 @@ describe('FormForTreecluster', () => {
     )
 
     const soilSelect = screen.getByRole('combobox', { name: /bodenbeschaffenheit/i })
-    const options = Array.from((soilSelect as HTMLSelectElement).options).map((opt) => opt.text)
+    await user.click(soilSelect)
 
-    expect(options).toContain('Schluffig')
-    expect(options).toContain('Sandig')
-    expect(options).toContain('Lehmig')
-    expect(options).toContain('Tonig')
-    expect(options).toContain('Unbekannt')
+    const listbox = await screen.findByRole('listbox')
+    expect(within(listbox).getByText('Schluffig')).toBeInTheDocument()
+    expect(within(listbox).getByText('Sandig')).toBeInTheDocument()
+    expect(within(listbox).getByText('Lehmig')).toBeInTheDocument()
+    expect(within(listbox).getByText('Tonig')).toBeInTheDocument()
+    expect(within(listbox).getByText('Unbekannt')).toBeInTheDocument()
   })
 
   it('renders add trees button', () => {
@@ -218,10 +221,17 @@ describe('FormForTreecluster', () => {
       </TestWrapper>,
     )
 
-    const soilSelect = screen.getByLabelText(/bodenbeschaffenheit/i)
-    await user.selectOptions(soilSelect, SoilCondition.TreeSoilConditionSandig)
+    const soilSelect = screen.getByRole('combobox', { name: /bodenbeschaffenheit/i })
+    await user.click(soilSelect)
 
-    expect((soilSelect as HTMLSelectElement).value).toBe(SoilCondition.TreeSoilConditionSandig)
+    const listbox = await screen.findByRole('listbox')
+    await user.click(within(listbox).getByText('Sandig'))
+
+    await waitFor(() => {
+      expect(screen.getByRole('combobox', { name: /bodenbeschaffenheit/i })).toHaveTextContent(
+        /sandig/i,
+      )
+    })
   })
 
   it('displays empty trees message when no trees selected', () => {

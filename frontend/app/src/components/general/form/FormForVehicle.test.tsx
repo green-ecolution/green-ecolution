@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import FormForVehicle from './FormForVehicle'
 import { vehicleSchema, VehicleForm } from '@/schema/vehicleSchema'
@@ -77,7 +77,9 @@ describe('FormForVehicle', () => {
     expect(screen.getByLabelText(/kurze beschreibung/i)).toBeInTheDocument()
   })
 
-  it('renders vehicle type select with options', () => {
+  it('renders vehicle type select with options', async () => {
+    const user = userEvent.setup()
+
     render(
       <TestWrapper defaultValues={defaultFormValues}>
         <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
@@ -85,14 +87,17 @@ describe('FormForVehicle', () => {
     )
 
     const typeSelect = screen.getByRole('combobox', { name: /fahrzeugtyp/i })
-    const options = Array.from((typeSelect as HTMLSelectElement).options).map((opt) => opt.text)
+    await user.click(typeSelect)
 
-    expect(options).toContain('Anhänger')
-    expect(options).toContain('Transporter')
-    expect(options).toContain('Unbekannt')
+    const listbox = await screen.findByRole('listbox')
+    expect(within(listbox).getByText('Anhänger')).toBeInTheDocument()
+    expect(within(listbox).getByText('Transporter')).toBeInTheDocument()
+    expect(within(listbox).getByText('Unbekannt')).toBeInTheDocument()
   })
 
-  it('renders driving license select with options', () => {
+  it('renders driving license select with options', async () => {
+    const user = userEvent.setup()
+
     render(
       <TestWrapper defaultValues={defaultFormValues}>
         <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
@@ -100,15 +105,18 @@ describe('FormForVehicle', () => {
     )
 
     const licenseSelect = screen.getByRole('combobox', { name: /führerscheinklasse/i })
-    const options = Array.from((licenseSelect as HTMLSelectElement).options).map((opt) => opt.text)
+    await user.click(licenseSelect)
 
-    expect(options).toContain('B')
-    expect(options).toContain('BE')
-    expect(options).toContain('C')
-    expect(options).toContain('CE')
+    const listbox = await screen.findByRole('listbox')
+    expect(within(listbox).getByText('B')).toBeInTheDocument()
+    expect(within(listbox).getByText('BE')).toBeInTheDocument()
+    expect(within(listbox).getByText('C')).toBeInTheDocument()
+    expect(within(listbox).getByText('CE')).toBeInTheDocument()
   })
 
-  it('renders vehicle status select with options', () => {
+  it('renders vehicle status select with options', async () => {
+    const user = userEvent.setup()
+
     render(
       <TestWrapper defaultValues={defaultFormValues}>
         <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
@@ -116,12 +124,13 @@ describe('FormForVehicle', () => {
     )
 
     const statusSelect = screen.getByRole('combobox', { name: /aktueller status/i })
-    const options = Array.from((statusSelect as HTMLSelectElement).options).map((opt) => opt.text)
+    await user.click(statusSelect)
 
-    expect(options).toContain('Verfügbar')
-    expect(options).toContain('Nicht Verfügbar')
-    expect(options).toContain('Im Einsatz')
-    expect(options).toContain('Unbekannt')
+    const listbox = await screen.findByRole('listbox')
+    expect(within(listbox).getByText('Verfügbar')).toBeInTheDocument()
+    expect(within(listbox).getByText('Nicht Verfügbar')).toBeInTheDocument()
+    expect(within(listbox).getByText('Im Einsatz')).toBeInTheDocument()
+    expect(within(listbox).getByText('Unbekannt')).toBeInTheDocument()
   })
 
   it('shows error message when displayError is true', () => {
@@ -226,9 +235,14 @@ describe('FormForVehicle', () => {
       </TestWrapper>,
     )
 
-    const typeSelect = screen.getByLabelText(/fahrzeugtyp/i)
-    await user.selectOptions(typeSelect, VehicleType.VehicleTypeTrailer)
+    const typeSelect = screen.getByRole('combobox', { name: /fahrzeugtyp/i })
+    await user.click(typeSelect)
 
-    expect((typeSelect as HTMLSelectElement).value).toBe(VehicleType.VehicleTypeTrailer)
+    const listbox = await screen.findByRole('listbox')
+    await user.click(within(listbox).getByText('Anhänger'))
+
+    await waitFor(() => {
+      expect(screen.getByRole('combobox', { name: /fahrzeugtyp/i })).toHaveTextContent(/anhänger/i)
+    })
   })
 })
