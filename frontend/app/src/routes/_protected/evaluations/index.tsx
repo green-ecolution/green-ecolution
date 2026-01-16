@@ -1,5 +1,5 @@
 import { evaluationQuery } from '@/api/queries'
-import GeneralStatusCard from '@/components/general/cards/GeneralStatusCard'
+import { StatusCard } from '@green-ecolution/ui'
 import LoadingInfo from '@/components/general/error/LoadingInfo'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
@@ -36,22 +36,22 @@ function Evaluation() {
           </h2>
           <ul className="space-y-5 md:space-y-0 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
             <li>
-              <GeneralStatusCard
-                overline="Anzahl an Bewässerungsgruppen"
+              <StatusCard
+                label="Anzahl an Bewässerungsgruppen"
                 value={`${data.treeclusterCount} ${data.treeclusterCount === 1 ? 'Gruppe' : 'Gruppen'}`}
                 description="Die Bewässerungsgruppen bilden Gruppen von Bäumen ab mit gleichen Standortbedingungen."
               />
             </li>
             <li>
-              <GeneralStatusCard
-                overline="Anzahl an Bäumen"
+              <StatusCard
+                label="Anzahl an Bäumen"
                 value={`${data.treeCount} ${data.treeCount === 1 ? 'Baum' : 'Bäume'}`}
                 description="inkl. manuell erstellte oder importierte Bäume aus anderen Systemen (z.B. Datenbank)."
               />
             </li>
             <li>
-              <GeneralStatusCard
-                overline="Anzahl an Sensoren"
+              <StatusCard
+                label="Anzahl an Sensoren"
                 value={`${data.sensorCount} ${data.sensorCount === 1 ? 'Sensor' : 'Sensoren'}`}
                 description="Es werden auch Sensoren einberechnet, die nicht mit einer Vegetation verknüpft sind.."
               />
@@ -65,22 +65,22 @@ function Evaluation() {
           </h2>
           <ul className="space-y-5 md:space-y-0 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
             <li>
-              <GeneralStatusCard
-                overline="Anzahl an Einsatzfahrten"
+              <StatusCard
+                label="Anzahl an Einsatzfahrten"
                 value={`${data.wateringPlanCount} ${data.wateringPlanCount === 1 ? 'Fahrt' : 'Fahrten'}`}
                 description="Dies beschreibt die Anzahl aller Einsatzfahrten, die aktuell im System hinterlegt sind."
               />
             </li>
             <li>
-              <GeneralStatusCard
-                overline="Wasserverbrauch"
+              <StatusCard
+                label="Wasserverbrauch"
                 value={`${data.totalWaterConsumption} Liter`}
                 description="Der Wasserverbrauch bezieht sich auf alle Einsatzfahrten, die in dem angegebenen Zeitraum durchgeführt worden sind."
               />
             </li>
             <li>
-              <GeneralStatusCard
-                overline="Anzahl Mitarbeitende für Einsatzpläne"
+              <StatusCard
+                label="Anzahl Mitarbeitende für Einsatzpläne"
                 value={`${data.userWateringPlanCount} Mitarbeitende`}
                 description="Dies beschreibt die Anzahl aller Mitarbeitenden, die zu Einsatzplänen verlinkt wurden. Dopplungen wurden nicht exkludiert."
               />

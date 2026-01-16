@@ -1,5 +1,3 @@
-import EntitiesStatusCard from '@/components/general/cards/EntitiesStatusCard'
-import GeneralStatusCard from '@/components/general/cards/GeneralStatusCard'
 import TreeCard from '@/components/general/cards/TreeCard'
 import BackLink from '@/components/general/links/BackLink'
 import ButtonLink from '@/components/general/links/ButtonLink'
@@ -7,7 +5,7 @@ import { Pencil } from 'lucide-react'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import GeneralLink from '../general/links/GeneralLink'
 import { format } from 'date-fns'
-import { Alert, AlertIcon, AlertContent, AlertDescription } from '@green-ecolution/ui'
+import { Alert, AlertIcon, AlertContent, AlertDescription, StatusCard } from '@green-ecolution/ui'
 import { TreeCluster } from '@green-ecolution/backend-client'
 
 interface TreeClusterDashboardProps {
@@ -68,11 +66,17 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
       <section className="mt-10">
         <ul className="space-y-5 md:space-y-0 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-4">
           <li>
-            <EntitiesStatusCard statusDetails={wateringStatus} label="Bewässerungszustand (ø)" />
+            <StatusCard
+              status={wateringStatus.color}
+              indicator="dot"
+              label="Bewässerungszustand (ø)"
+              value={wateringStatus.label}
+              description={wateringStatus.description}
+            />
           </li>
           <li>
-            <GeneralStatusCard
-              overline="Baumanzahl in der Gruppe"
+            <StatusCard
+              label="Baumanzahl in der Gruppe"
               value={
                 treecluster.trees?.length
                   ? `${treecluster.trees.length} ${treecluster.trees.length > 1 ? 'Bäume' : 'Baum'}`
@@ -82,14 +86,14 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
             />
           </li>
           <li>
-            <GeneralStatusCard
-              overline="Standort der Gruppe"
+            <StatusCard
+              label="Standort der Gruppe"
               value={`${treecluster.address}, ${treecluster.region?.name ?? '-'}`}
             />
           </li>
           <li>
-            <GeneralStatusCard
-              overline="Datum der letzten Bewässerung"
+            <StatusCard
+              label="Datum der letzten Bewässerung"
               value={lastWateredDate}
               description="Wird aktualisiert, sobald ein Einsatzplan mit dieser Gruppe als »Beendet« markiert wird."
             />
