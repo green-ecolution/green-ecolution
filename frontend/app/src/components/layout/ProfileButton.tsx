@@ -61,7 +61,7 @@ function ProfileButton() {
         aria-expanded={open}
         aria-controls="profile-informations"
         aria-haspopup="grid"
-        className="group flex items-center gap-x-1"
+        className="group flex items-center gap-x-1 cursor-pointer"
         onClick={() => toggleOverlay(!open)}
       >
         <Avatar>
@@ -78,7 +78,10 @@ function ProfileButton() {
         id="profile-informations"
         className={`bg-dark shadow-cards w-72 z-50 text-sm text-white pt-5 px-2 right-0 rounded-lg absolute top-14 ${open ? 'block' : 'hidden'}`}
       >
-        <p className="border-b border-b-dark-800 mx-3 pb-4">
+        <p
+          className="border-b mx-3 pb-4"
+          style={{ borderColor: 'color-mix(in srgb, var(--dark-800) 100%, transparent)' }}
+        >
           {isAuthenticated ? <span>Angemeldet als:</span> : <span>Nicht angemeldet</span>}
           <br />
           <strong className="block truncate">{email}</strong>
