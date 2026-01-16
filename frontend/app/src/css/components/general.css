@@ -1,10 +1,3 @@
-:focus-visible {
-  outline-style: solid;
-  outline-width: 2px;
-  outline-offset: 4px;
-  outline-color: var(--green-light-900);
-}
-
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
