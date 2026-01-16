@@ -1,6 +1,7 @@
 import { WateringPlan, WateringPlanStatus } from '@green-ecolution/backend-client'
+import type { BadgeProps } from '@green-ecolution/ui'
 
-export type StatusColor = 'red' | 'yellow' | 'dark-400' | 'dark-600' | 'green-dark' | 'green-light'
+export type StatusColor = NonNullable<BadgeProps['variant']>
 
 export const WateringPlanStatusOptions: {
   value: WateringPlanStatus
@@ -11,37 +12,37 @@ export const WateringPlanStatusOptions: {
   {
     value: WateringPlanStatus.WateringPlanStatusUnknown,
     label: 'Unbekannt',
-    color: 'dark-400',
+    color: 'outline-dark',
     description: 'Der Status der Einsatzplanung ist unbekannt.',
   },
   {
     value: WateringPlanStatus.WateringPlanStatusActive,
     label: 'Aktiv',
-    color: 'green-light',
+    color: 'outline-green-light',
     description: 'Der Einsatzplan ist aktiv und wird aktuell ausgeführt.',
   },
   {
     value: WateringPlanStatus.WateringPlanStatusCanceled,
     label: 'Abgebrochen',
-    color: 'red',
+    color: 'outline-red',
     description: 'Der Einsatzplan wurde abgebrochen und ist nicht fertig gestellt.',
   },
   {
     value: WateringPlanStatus.WateringPlanStatusFinished,
     label: 'Beendet',
-    color: 'green-dark',
+    color: 'outline-green-dark',
     description: 'Der Einsatzplan wurde erfolgreich beendet.',
   },
   {
     value: WateringPlanStatus.WateringPlanStatusNotCompeted,
     label: 'Nicht angetreten',
-    color: 'dark-400',
+    color: 'outline-dark',
     description: 'Der Einsatzplan wurde nicht angetreten.',
   },
   {
     value: WateringPlanStatus.WateringPlanStatusPlanned,
     label: 'Geplant',
-    color: 'dark-400',
+    color: 'outline-dark',
     description: 'Der Einsatzplan ist geplant und kann gestartet werden.',
   },
 ]

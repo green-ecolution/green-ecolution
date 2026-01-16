@@ -141,6 +141,10 @@ export {
 // Label
 export { Label } from './components/ui/label'
 
+// MultiSelect
+export { MultiSelect } from './components/ui/multi-select'
+export type { MultiSelectProps, MultiSelectOption } from './components/ui/multi-select'
+
 // Pagination
 export {
   Pagination,

@@ -2,7 +2,7 @@ import { getWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWater
 import { WateringPlanInList } from '@green-ecolution/backend-client'
 import { Link } from '@tanstack/react-router'
 import React from 'react'
-import Pill from '../Pill'
+import { Badge } from '@green-ecolution/ui'
 import { format } from 'date-fns'
 import { roundTo } from '@/lib/utils'
 
@@ -24,7 +24,7 @@ const WateringPlanCard: React.FC<WateringPlanCardProps> = ({ wateringPlan }) => 
       }}
       className="bg-white border border-dark-50 p-6 rounded-xl shadow-cards flex flex-col gap-y-4 transition-all ease-in-out duration-300 hover:bg-green-dark-50 hover:border-green-dark lg:grid lg:grid-cols-[1.3fr,1.5fr,1fr,1.5fr,1.5fr] lg:items-center lg:gap-5 lg:py-10 xl:px-10"
     >
-      <Pill label={statusDetails.label} theme={statusDetails.color ?? 'grey'}></Pill>
+      <Badge variant={statusDetails.color ?? 'outline-dark'} size="lg">{statusDetails.label}</Badge>
       <div>
         <h2 className="text-dark font-bold text-lg mb-0.5">
           <span className="lg:sr-only">Einsatzplan: </span>

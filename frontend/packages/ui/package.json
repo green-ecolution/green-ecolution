@@ -11,8 +11,7 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./styles": "./dist/styles/globals.css",
-    "./styles/*": "./dist/styles/*"
+    "./styles": "./dist/index.css"
   },
   "files": [
     "dist"

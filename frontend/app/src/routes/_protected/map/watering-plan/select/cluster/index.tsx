@@ -1,14 +1,24 @@
 import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
 import { TreeCluster } from '@green-ecolution/backend-client'
 import { useCallback, useMemo, useRef, useState } from 'react'
-import Modal from '@/components/general/Modal'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+  InlineAlert,
+} from '@green-ecolution/ui'
+import { MoveRight, X } from 'lucide-react'
 import { wateringPlanSchemaBase } from '@/schema/wateringPlanSchema'
 import MapSelectEntitiesModal from '@/components/map/MapSelectEntitiesModal'
 import WithAllClusters from '@/components/map/marker/WithAllClusters'
 import ShowRoutePreview from '@/components/map/marker/ShowRoutePreview'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { treeClusterQuery, vehicleIdQuery } from '@/api/queries'
-import Notice from '@/components/general/Notice'
 import SelectedCard from '@/components/general/cards/SelectedCard'
 import { z } from 'zod'
 import { safeJsonStorageParse } from '@/lib/utils'
@@ -173,7 +183,7 @@ function SelectCluster() {
         title="Ausgewählte Bewässerungsgruppen:"
         content={
           <ul>
-            {showNotice && <Notice classes="mb-4" description={notice.join(' ')} />}
+            {showNotice && <InlineAlert className="mb-4" description={notice.join(' ')} />}
             {(clusterIds?.length || 0) === 0 || showError ? (
               <li className="text-dark-600 font-semibold text-sm">
                 <p>Hier können Sie zugehörigen Gruppen verlinken.</p>
@@ -202,14 +212,26 @@ function SelectCluster() {
         />
       )}
 
-      <Modal
-        title="Seite verlassen?"
-        description="Möchtest du die Seite wirklich verlassen? Deine Eingaben gehen verloren, wenn du jetzt gehst."
-        confirmText="Verlassen"
-        isOpen={status === 'blocked'}
-        onConfirm={handleConfirmLeave}
-        onCancel={() => reset?.()}
-      />
+      <AlertDialog open={status === 'blocked'} onOpenChange={(open) => !open && reset?.()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Seite verlassen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchtest du die Seite wirklich verlassen? Deine Eingaben gehen verloren, wenn du jetzt gehst.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => reset?.()}>
+              Abbrechen
+              <X />
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmLeave}>
+              Verlassen
+              <MoveRight />
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

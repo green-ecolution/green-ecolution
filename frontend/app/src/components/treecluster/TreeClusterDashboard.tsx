@@ -7,7 +7,7 @@ import { Pencil } from 'lucide-react'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import GeneralLink from '../general/links/GeneralLink'
 import { format } from 'date-fns'
-import Notice from '../general/Notice'
+import { Alert, AlertIcon, AlertContent, AlertDescription } from '@green-ecolution/ui'
 import { TreeCluster } from '@green-ecolution/backend-client'
 
 interface TreeClusterDashboardProps {
@@ -30,10 +30,14 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
           </h1>
           {treecluster.description && <p className="mb-4">{treecluster.description}</p>}
           {treecluster.trees?.length === 0 ? (
-            <Notice
-              description="Diese Baumgruppe enthält keine Bäume und hat daher keinen
-                Standort."
-            />
+            <Alert variant="destructive" className="flex items-center gap-3">
+              <AlertIcon variant="destructive" />
+              <AlertContent>
+                <AlertDescription>
+                  Diese Baumgruppe enthält keine Bäume und hat daher keinen Standort.
+                </AlertDescription>
+              </AlertContent>
+            </Alert>
           ) : (
             <GeneralLink
               link={{

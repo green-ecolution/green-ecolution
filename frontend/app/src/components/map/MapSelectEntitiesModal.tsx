@@ -1,6 +1,5 @@
 import React, { useEffect, useState, Ref, useCallback, useId } from 'react'
-import PrimaryButton from '../general/buttons/PrimaryButton'
-import SecondaryButton from '../general/buttons/SecondaryButton'
+import { Button } from '@green-ecolution/ui'
 import { MoveRight, X } from 'lucide-react'
 import useMapInteractions from '@/hooks/useMapInteractions'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -70,8 +69,14 @@ const MapSelectEntitiesModal = ({
     <>
       <div className="max-h-[40vh] overflow-y-auto">{content}</div>
       <div className="flex flex-wrap gap-5 mt-6">
-        <PrimaryButton type="submit" label="Speichern" onClick={onSave} disabled={disabled} />
-        <SecondaryButton label="Zurück" onClick={onCancel} />
+        <Button type="submit" onClick={onSave} disabled={disabled}>
+          Speichern
+          <MoveRight />
+        </Button>
+        <Button variant="outline" onClick={onCancel}>
+          Zurück
+          <X />
+        </Button>
       </div>
     </>
   )

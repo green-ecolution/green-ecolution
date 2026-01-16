@@ -13,7 +13,17 @@ import { Suspense } from 'react'
 import LoadingInfo from '../general/error/LoadingInfo'
 import { useTreeClusterForm } from '@/hooks/form/useTreeClusterForm'
 import { safeJsonStorageParse } from '@/lib/utils'
-import Modal from '../general/Modal'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@green-ecolution/ui'
+import { MoveRight, X } from 'lucide-react'
 
 interface TreeClusterUpdateProps {
   clusterId: string
@@ -106,14 +116,24 @@ const TreeClusterUpdate = ({ clusterId }: TreeClusterUpdateProps) => {
         />
       </Suspense>
 
-      <Modal
-        title="Seite verlassen?"
-        description={navigationBlocker.message}
-        confirmText="Verlassen"
-        isOpen={navigationBlocker.isModalOpen}
-        onConfirm={navigationBlocker.confirmLeave}
-        onCancel={navigationBlocker.closeModal}
-      />
+      <AlertDialog open={navigationBlocker.isModalOpen} onOpenChange={(open) => !open && navigationBlocker.closeModal()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Seite verlassen?</AlertDialogTitle>
+            <AlertDialogDescription>{navigationBlocker.message}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={navigationBlocker.closeModal}>
+              Abbrechen
+              <X />
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={navigationBlocker.confirmLeave}>
+              Verlassen
+              <MoveRight />
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

@@ -1,13 +1,21 @@
 import { VehicleForm } from '@/schema/vehicleSchema'
 import FormError from './FormError'
-import PrimaryButton from '../buttons/PrimaryButton'
-import Input from './types/Input'
-import Textarea from './types/Textarea'
-import Select from './types/Select'
+import { MoveRight } from 'lucide-react'
+import {
+  FormField,
+  TextareaField,
+  Label,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  Button,
+} from '@green-ecolution/ui'
 import { VehicleTypeOptions } from '@/hooks/details/useDetailsForVehicleType'
 import { DrivingLicenseOptions } from '@/hooks/details/useDetailsForDrivingLicense'
 import { VehicleStatusOptions } from '@/hooks/details/useDetailsForVehicleStatus'
-import { SubmitHandler, useFormContext } from 'react-hook-form'
+import { Controller, SubmitHandler, useFormContext } from 'react-hook-form'
 
 interface FormForVehicleProps {
   displayError: boolean
@@ -19,6 +27,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isValid },
   } = useFormContext<VehicleForm>()
 
@@ -30,29 +39,48 @@ const FormForVehicle = (props: FormForVehicleProps) => {
       className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-y-6 lg:gap-x-11"
       onSubmit={handleSubmit(props.onSubmit)}
     >
-      <Input
+      <FormField
         placeholder="Kennzeichen"
         label="Kennzeichen"
         required
         error={errors.numberPlate?.message}
         {...register('numberPlate')}
       />
-      <Input
+      <FormField
         placeholder="Fahrzeugmodell"
         label="Fahrzeugmodell"
         required
         error={errors.model?.message}
         {...register('model')}
       />
-      <Select
-        options={VehicleTypeOptions}
-        placeholder="Fahrzeugtyp"
-        label="Fahrzeugtyp"
-        required
-        error={errors.type?.message}
-        {...register('type')}
+      <Controller
+        name="type"
+        control={control}
+        render={({ field }) => (
+          <div className="space-y-2">
+            <Label htmlFor="type">
+              Fahrzeugtyp
+              <span className="text-destructive ml-1">*</span>
+            </Label>
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger id="type">
+                <SelectValue placeholder="Fahrzeugtyp" />
+              </SelectTrigger>
+              <SelectContent>
+                {VehicleTypeOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.type?.message && (
+              <p className="text-sm text-destructive">{errors.type.message}</p>
+            )}
+          </div>
+        )}
       />
-      <Input
+      <FormField
         placeholder="Wasserkapazität"
         label="Wasserkapazität"
         type="number"
@@ -60,23 +88,61 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         error={errors.waterCapacity?.message}
         {...register('waterCapacity')}
       />
-      <Select
-        options={VehicleStatusOptions}
-        placeholder="Aktueller Fahrzeugstatus"
-        label="Aktueller Status"
-        required
-        error={errors.status?.message}
-        {...register('status')}
+      <Controller
+        name="status"
+        control={control}
+        render={({ field }) => (
+          <div className="space-y-2">
+            <Label htmlFor="status">
+              Aktueller Status
+              <span className="text-destructive ml-1">*</span>
+            </Label>
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger id="status">
+                <SelectValue placeholder="Aktueller Fahrzeugstatus" />
+              </SelectTrigger>
+              <SelectContent>
+                {VehicleStatusOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.status?.message && (
+              <p className="text-sm text-destructive">{errors.status.message}</p>
+            )}
+          </div>
+        )}
       />
-      <Select
-        options={DrivingLicenseOptions}
-        placeholder="Wählen Sie eine Führerscheinklasse aus"
-        label="Führerscheinklasse"
-        required
-        error={errors.drivingLicense?.message}
-        {...register('drivingLicense')}
+      <Controller
+        name="drivingLicense"
+        control={control}
+        render={({ field }) => (
+          <div className="space-y-2">
+            <Label htmlFor="drivingLicense">
+              Führerscheinklasse
+              <span className="text-destructive ml-1">*</span>
+            </Label>
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger id="drivingLicense">
+                <SelectValue placeholder="Wählen Sie eine Führerscheinklasse aus" />
+              </SelectTrigger>
+              <SelectContent>
+                {DrivingLicenseOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.drivingLicense?.message && (
+              <p className="text-sm text-destructive">{errors.drivingLicense.message}</p>
+            )}
+          </div>
+        )}
       />
-      <Input
+      <FormField
         placeholder="Höhe des Fahrzeugs"
         label="Höhe des Fahrzeugs (in Metern)"
         step="0.1"
@@ -86,7 +152,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
           onChange: translateNum,
         })}
       />
-      <Input
+      <FormField
         placeholder="Breite des Fahrzeugs"
         label="Breite des Fahrzeugs (in Metern)"
         step="0.1"
@@ -96,7 +162,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
           onChange: translateNum,
         })}
       />
-      <Input
+      <FormField
         placeholder="Länge des Fahrzeugs"
         label="Länge des Fahrzeugs (in Metern)"
         step="0.1"
@@ -106,7 +172,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
           onChange: translateNum,
         })}
       />
-      <Input
+      <FormField
         placeholder="Gewicht des Fahrzeugs"
         label="Gewicht des Fahrzeugs (in Tonnen)"
         step="0.1"
@@ -116,7 +182,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
           onChange: translateNum,
         })}
       />
-      <Textarea
+      <TextareaField
         placeholder="Hier ist Platz für Notizen"
         label="Kurze Beschreibung"
         error={errors.description?.message}
@@ -125,12 +191,14 @@ const FormForVehicle = (props: FormForVehicleProps) => {
 
       <FormError show={props.displayError} error={props.errorMessage} />
 
-      <PrimaryButton
+      <Button
         type="submit"
-        label="Speichern"
         className="mt-10 lg:col-span-full lg:w-fit"
         disabled={!isValid}
-      />
+      >
+        Speichern
+        <MoveRight />
+      </Button>
     </form>
   )
 }

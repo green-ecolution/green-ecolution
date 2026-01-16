@@ -1,5 +1,5 @@
 import { WateringPlan, WateringPlanStatus } from '@green-ecolution/backend-client'
-import DetailedList from '../general/DetailedList'
+import { DetailedList } from '@green-ecolution/ui'
 import { format, formatDuration, intervalToDuration } from 'date-fns'
 import GeneralStatusCard from '../general/cards/GeneralStatusCard'
 import EntitiesStatusCard from '../general/cards/EntitiesStatusCard'

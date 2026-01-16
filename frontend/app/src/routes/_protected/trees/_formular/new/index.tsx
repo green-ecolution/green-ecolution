@@ -9,7 +9,17 @@ import { useCallback } from 'react'
 import { z } from 'zod'
 import { safeJsonStorageParse } from '@/lib/utils'
 import { FormProvider } from 'react-hook-form'
-import Modal from '@/components/general/Modal'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@green-ecolution/ui'
+import { MoveRight, X } from 'lucide-react'
 
 const newTreeSearchSchema = z.object({
   lat: z.number(),
@@ -105,14 +115,24 @@ function NewTree() {
         </FormProvider>
       </section>
 
-      <Modal
-        title="Seite verlassen?"
-        description={navigationBlocker.message}
-        confirmText="Verlassen"
-        isOpen={navigationBlocker.isModalOpen}
-        onConfirm={navigationBlocker.confirmLeave}
-        onCancel={navigationBlocker.closeModal}
-      />
+      <AlertDialog open={navigationBlocker.isModalOpen} onOpenChange={(open) => !open && navigationBlocker.closeModal()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Seite verlassen?</AlertDialogTitle>
+            <AlertDialogDescription>{navigationBlocker.message}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={navigationBlocker.closeModal}>
+              Abbrechen
+              <X />
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={navigationBlocker.confirmLeave}>
+              Verlassen
+              <MoveRight />
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

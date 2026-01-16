@@ -1,7 +1,16 @@
-import { MoveRight } from 'lucide-react'
+import { MoveRight, X } from 'lucide-react'
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import Modal from '../general/Modal'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@green-ecolution/ui'
 import useToast from '@/hooks/useToast'
 import { LinkProps, useNavigate } from '@tanstack/react-router'
 
@@ -63,14 +72,26 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
         <MoveRight className="w-4 h-4 transition-all ease-in-out duration-300 group-hover:translate-x-1" />
       </button>
 
-      <Modal
-        title={`Soll ${entityName} wirklich ${actionText} werden?`}
-        description={`Sobald ${entityName} ${actionText} wurde, können die Daten nicht wieder hergestellt werden.`}
-        confirmText="Bestätigen"
-        onConfirm={() => mutate()}
-        onCancel={() => setIsModalOpen(false)}
-        isOpen={isModalOpen}
-      />
+      <AlertDialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Soll {entityName} wirklich {actionText} werden?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sobald {entityName} {actionText} wurde, können die Daten nicht wieder hergestellt werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              Abbrechen
+              <X />
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => mutate()}>
+              Bestätigen
+              <MoveRight />
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
