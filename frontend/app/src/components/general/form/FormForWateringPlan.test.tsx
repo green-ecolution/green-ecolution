@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import FormForWateringPlan from './FormForWateringPlan'
 import { wateringPlanSchema, WateringPlanForm } from '@/schema/wateringPlanSchema'
@@ -127,7 +127,9 @@ describe('FormForWateringPlan', () => {
     expect(screen.getByLabelText(/kurze beschreibung/i)).toBeInTheDocument()
   })
 
-  it('renders transporter select with options', () => {
+  it('renders transporter select with options', async () => {
+    const user = userEvent.setup()
+
     render(
       <TestWrapper defaultValues={defaultFormValues}>
         <FormForWateringPlan
@@ -142,16 +144,17 @@ describe('FormForWateringPlan', () => {
     )
 
     const transporterSelect = screen.getByRole('combobox', { name: /verknüpftes fahrzeug/i })
-    const options = Array.from((transporterSelect as HTMLSelectElement).options).map(
-      (opt) => opt.text,
-    )
+    await user.click(transporterSelect)
 
-    expect(options).toContain('Kein Fahrzeug')
-    expect(options.some((opt) => opt.includes('HH-AB-1234'))).toBe(true)
-    expect(options.some((opt) => opt.includes('HH-XY-5678'))).toBe(true)
+    const listbox = await screen.findByRole('listbox')
+    expect(within(listbox).getByText('Kein Fahrzeug')).toBeInTheDocument()
+    expect(within(listbox).getByText(/HH-AB-1234/)).toBeInTheDocument()
+    expect(within(listbox).getByText(/HH-XY-5678/)).toBeInTheDocument()
   })
 
-  it('renders trailer select with options', () => {
+  it('renders trailer select with options', async () => {
+    const user = userEvent.setup()
+
     render(
       <TestWrapper defaultValues={defaultFormValues}>
         <FormForWateringPlan
@@ -166,10 +169,11 @@ describe('FormForWateringPlan', () => {
     )
 
     const trailerSelect = screen.getByRole('combobox', { name: /verknüpfter anhänger/i })
-    const options = Array.from((trailerSelect as HTMLSelectElement).options).map((opt) => opt.text)
+    await user.click(trailerSelect)
 
-    expect(options).toContain('Keinen Anhänger')
-    expect(options.some((opt) => opt.includes('HH-TR-0001'))).toBe(true)
+    const listbox = await screen.findByRole('listbox')
+    expect(within(listbox).getByText('Keinen Anhänger')).toBeInTheDocument()
+    expect(within(listbox).getByText(/HH-TR-0001/)).toBeInTheDocument()
   })
 
   it('renders user select with options', () => {
@@ -306,9 +310,16 @@ describe('FormForWateringPlan', () => {
       </TestWrapper>,
     )
 
-    const transporterSelect = screen.getByLabelText(/verknüpftes fahrzeug/i)
-    await user.selectOptions(transporterSelect, '1')
+    const transporterSelect = screen.getByRole('combobox', { name: /verknüpftes fahrzeug/i })
+    await user.click(transporterSelect)
 
-    expect((transporterSelect as HTMLSelectElement).value).toBe('1')
+    const listbox = await screen.findByRole('listbox')
+    await user.click(within(listbox).getByText(/HH-AB-1234/))
+
+    await waitFor(() => {
+      expect(screen.getByRole('combobox', { name: /verknüpftes fahrzeug/i })).toHaveTextContent(
+        /HH-AB-1234/i,
+      )
+    })
   })
 })
