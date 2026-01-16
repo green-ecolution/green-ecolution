@@ -3,6 +3,7 @@ import useStore from '@/store/store'
 import { useState } from 'react'
 import NavLink from '../navigation/NavLink'
 import useOutsideClick from '@/hooks/useOutsideClick'
+import { Avatar, AvatarFallback } from '@green-ecolution/ui'
 
 function ProfileButton() {
   const [open, setOpen] = useState(false)
@@ -63,12 +64,11 @@ function ProfileButton() {
         className="group flex items-center gap-x-1"
         onClick={() => toggleOverlay(!open)}
       >
-        <p
-          className={`leading-none font-semibold rounded-full w-10 h-10 flex items-center justify-center transition-color ease-in-out duration-300
-          ${isAuthenticated ? 'bg-green-dark text-white group-hover:bg-green-light ' : 'bg-dark-200 border-dark group-hover:bg-dark-300'}`}
-        >
-          {isAuthenticated ? <span>{userInitials}</span> : <UserRound className="stroke-2" />}
-        </p>
+        <Avatar>
+          <AvatarFallback variant={isAuthenticated ? 'user' : 'guest'}>
+            {isAuthenticated ? userInitials : <UserRound className="w-5 h-5 stroke-2" />}
+          </AvatarFallback>
+        </Avatar>
         <ChevronDown
           className={`w-5 h-5 text-dark transition-all ease-in-out duration-300 ${open ? 'rotate-180' : ''}`}
         />
