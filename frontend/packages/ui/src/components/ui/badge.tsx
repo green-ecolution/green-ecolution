@@ -22,7 +22,7 @@ const badgeVariants = cva(
         'outline-yellow': 'border-yellow text-yellow',
         'outline-dark': 'border-dark-600 text-dark-600',
         'outline-green-dark': 'border-green-dark text-green-dark',
-        'outline-green-light': 'border-green-light bg-green-light-200 text-green-dark',
+        'outline-green-light': 'border-green-light text-green-light-900',
       },
       size: {
         default: 'px-2.5 py-0.5 text-xs',

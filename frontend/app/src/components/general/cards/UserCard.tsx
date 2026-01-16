@@ -1,6 +1,11 @@
 import React from 'react'
 import { User } from '@green-ecolution/backend-client'
-import { Badge } from '@green-ecolution/ui'
+import {
+  Badge,
+  ListCard,
+  ListCardTitle,
+  ListCardDescription,
+} from '@green-ecolution/ui'
 import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
 import { getUserRoleDetails } from '@/hooks/details/useDetailsForUserRole'
 import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
@@ -13,16 +18,18 @@ const UserCard: React.FC<UserCard> = ({ user }) => {
   const statusDetails = getUserStatusDetails(user.status)
 
   return (
-    <div className="bg-white border border-dark-50 p-6 rounded-xl shadow-cards flex flex-col gap-y-4 lg:py-4 lg:grid lg:grid-cols-[1fr,1.25fr,1fr,1fr] lg:items-center lg:gap-5 xl:px-10">
-      <Badge variant={statusDetails?.color ?? 'outline-dark'} size="lg">
-        {statusDetails?.label ?? 'Keine Angabe'}
-      </Badge>
+    <ListCard columns="1fr 1.25fr 1fr 1fr" hoverable={false} className="lg:py-4">
+      <div>
+        <Badge variant={statusDetails?.color ?? 'outline-dark'} size="lg">
+          {statusDetails?.label ?? 'Keine Angabe'}
+        </Badge>
+      </div>
 
-      <h2 className="text-dark font-bold text-md mb-0.5">
+      <ListCardTitle className="text-md">
         {user.firstName} {user.lastName}
-      </h2>
+      </ListCardTitle>
 
-      <p className="text-dark-800">
+      <ListCardDescription>
         <span className="lg:sr-only">Organisation:&nbsp;</span>
         {user.roles.map((role, index) => (
           <span key={getUserRoleDetails(role).label}>
@@ -30,9 +37,9 @@ const UserCard: React.FC<UserCard> = ({ user }) => {
             {index < user.roles.length - 1 ? ', ' : ''}
           </span>
         ))}
-      </p>
+      </ListCardDescription>
 
-      <p className="text-dark-800">
+      <ListCardDescription>
         <span className="lg:sr-only">Führerscheinklasse:&nbsp;</span>
         {user.drivingLicenses && user.drivingLicenses.length > 0 ? (
           <>
@@ -46,8 +53,8 @@ const UserCard: React.FC<UserCard> = ({ user }) => {
         ) : (
           'Keine Angabe'
         )}
-      </p>
-    </div>
+      </ListCardDescription>
+    </ListCard>
   )
 }
 

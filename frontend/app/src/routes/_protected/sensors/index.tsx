@@ -5,6 +5,7 @@ import SensorList from '@/components/sensor/SensorList'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useLoaderData } from '@tanstack/react-router'
 import { z } from 'zod'
+import { ListCardHeader } from '@green-ecolution/ui'
 
 export const Route = createFileRoute('/_protected/sensors/')({
   component: Sensors,
@@ -49,12 +50,12 @@ function Sensors() {
       </article>
 
       <section className="mt-10">
-        <header className="hidden border-b pb-2 text-sm text-dark-800 px-8 border-b-dark-200 mb-5 lg:grid lg:grid-cols-[1fr,2fr,1fr,1fr] lg:gap-5 xl:px-10">
+        <ListCardHeader columns="1fr 2fr 1fr 1fr">
           <p>Status</p>
           <p>Name und Verknüpfung</p>
           <p>Erstelldatum</p>
           <p>Letztes Datenupdate</p>
-        </header>
+        </ListCardHeader>
 
         <SensorList data={sensorsRes.data} />
         {sensorsRes.pagination && sensorsRes.pagination?.totalPages > 1 && (
