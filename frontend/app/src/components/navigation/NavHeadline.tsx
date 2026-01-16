@@ -1,4 +1,5 @@
 import React from 'react'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface NavHeadline {
   label: string
@@ -6,14 +7,17 @@ interface NavHeadline {
 }
 
 const NavHeadline: React.FC<NavHeadline> = ({ label, navIsOpen = false }) => {
+  const isLargeScreen = useMediaQuery('(min-width: 1024px)')
+  const showSeparator = isLargeScreen && !navIsOpen
+
   return (
     <p
-      className={`mb-3 font-bold text-sm text-dark-400 tracking-[0.3]
-        ${navIsOpen ? '' : 'lg:border-t lg:border-t-dark-100/30 lg:pb-[1.17rem]'}`}
+      className="mb-3 font-bold text-sm text-dark-400 tracking-[0.3]"
+      style={showSeparator ? { borderTop: '1px solid color-mix(in oklch, var(--dark-400) 30%, transparent)', paddingBottom: '1.17rem' } : undefined}
     >
       <span
-        className={`opacity-full transition-opacity ease-in-out duration-300 
-          ${navIsOpen ? 'lg:block' : 'lg:opacity-0 lg:hidden'}`}
+        className="transition-opacity ease-in-out duration-300"
+        style={showSeparator ? { opacity: 0, display: 'none' } : { opacity: 1 }}
       >
         {label}
       </span>
