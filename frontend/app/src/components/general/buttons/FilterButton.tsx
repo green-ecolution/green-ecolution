@@ -1,4 +1,5 @@
 import React from 'react'
+import { Button } from '@green-ecolution/ui'
 
 interface FilterButtonProps {
   ariaLabel: string
@@ -14,17 +15,17 @@ const FilterButton: React.FC<FilterButtonProps> = ({
   isOnMap,
 }) => {
   return (
-    <button
-      type="button"
+    <Button
+      variant="outline"
       aria-label={ariaLabel}
       id="filter-button"
       aria-selected={activeCount > 0}
-      className={`relative font-nunito-sans text-base ${isOnMap ? 'z-[1000] shadow-cards' : ''} bg-white border border-green-light px-5 py-2 font-medium rounded-full flex items-center gap-x-2 transition-colors ease-in-out duration-300 ${activeCount > 0 ? 'bg-green-light-200' : ''} hover:bg-green-light-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-dark`}
+      className={`rounded-full border-green-light ${isOnMap ? 'z-[1000] shadow-cards' : ''} ${activeCount > 0 ? 'bg-green-light-200' : 'bg-white'} hover:bg-green-light-200`}
       onClick={onClick}
     >
       Filter
-      <span className="block bg-green-dark/20 w-6 h-6 rounded-full">{activeCount}</span>
-    </button>
+      <span className="block bg-green-dark/20 w-6 h-6 rounded-full text-sm">{activeCount}</span>
+    </Button>
   )
 }
 

@@ -10,6 +10,7 @@ import {
   AlertDialogFooter,
   AlertDialogAction,
   AlertDialogCancel,
+  Button,
 } from '@green-ecolution/ui'
 import useToast from '@/hooks/useToast'
 import { LinkProps, useNavigate } from '@tanstack/react-router'
@@ -63,14 +64,14 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
 
   return (
     <>
-      <button
-        type="submit"
+      <Button
+        variant="link-destructive"
         onClick={() => setIsModalOpen(true)}
-        className="mt-10 group flex items-center gap-x-2 text-red font-medium text-base mb-4"
+        className="mt-10 mb-4 px-0 group"
       >
         {type === 'archive' ? 'Archivieren' : 'Löschen'}
-        <MoveRight className="w-4 h-4 transition-all ease-in-out duration-300 group-hover:translate-x-1" />
-      </button>
+        <MoveRight className="transition-all duration-300 group-hover:translate-x-1" />
+      </Button>
 
       <AlertDialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <AlertDialogContent>

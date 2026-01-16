@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { X } from 'lucide-react'
 import React from 'react'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { Button } from '@green-ecolution/ui'
 
 interface NavHeader {
   isOpen: boolean
@@ -31,14 +32,15 @@ const NavHeader: React.FC<NavHeader> = ({ isOpen, closeSidebar }) => {
         />
       </Link>
       {!isLargeScreen && (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon"
           aria-label="Hauptnavigation schließen"
-          className="mr-2 w-8 h-8 flex items-center justify-center transition-colors ease-in-out duration-300 bg-dark-600 rounded-full"
+          className="mr-2 size-8 rounded-full bg-dark-600 hover:bg-dark-500"
           onClick={closeSidebar}
         >
-          <X className="w-5 h-5 text-white" />
-        </button>
+          <X className="text-white" />
+        </Button>
       )}
     </div>
   )

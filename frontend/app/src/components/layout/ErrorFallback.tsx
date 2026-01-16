@@ -6,6 +6,7 @@ import { MoveRight, RefreshCw } from 'lucide-react'
 import useStore from '@/store/store'
 import { ResponseError } from '@green-ecolution/backend-client'
 import { isHTTPError } from '@/lib/utils'
+import { Button } from '@green-ecolution/ui'
 
 interface ErrorFallbackProps {
   error: Error
@@ -51,16 +52,10 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary
           <p className="lg:text-center">Folgender Fehler ist aufgetreten: {errorMessage}.</p>
           {errorCode && <p className="lg:text-center mb-5">Fehlercode: {errorCode}</p>}
           <div className="lg:flex lg:items-center lg:justify-center lg:gap-x-4 space-y-4 lg:space-y-0">
-            <button
-              type="button"
-              onClick={resetErrorBoundary}
-              className={
-                'bg-green-dark hover:bg-green-light text-white w-fit px-5 py-2 group flex gap-x-3 rounded-xl items-center transition-all ease-in-out duration-300'
-              }
-            >
-              <span className="font-medium text-base">Zurück</span>
+            <Button onClick={resetErrorBoundary}>
+              Zurück
               <RefreshCw />
-            </button>
+            </Button>
             {isAuthenticated ? (
               <ButtonLink link={{ to: '/dashboard' }} label="Zum Dashboard" icon={MoveRight} />
             ) : (

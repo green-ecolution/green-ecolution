@@ -1,6 +1,7 @@
 import React from 'react'
 import { Plus } from 'lucide-react'
 import SelectedCard from '../../cards/SelectedCard'
+import { Button } from '@green-ecolution/ui'
 
 interface SelectEntitiesProps {
   onDelete: (itemId: number) => void
@@ -51,17 +52,18 @@ const SelectEntities: React.FC<SelectEntitiesProps> = ({
         )}
       </ul>
 
-      <button
+      <Button
         type="button"
+        variant="outline"
         onClick={(e) => {
           e.preventDefault()
           onAdd()
         }}
-        className="mt-6 w-fit border border-green-light text-dark-800 px-5 py-2 group flex gap-x-3 rounded-xl items-center transition-all ease-in-out duration-300 hover:border-green-dark hover:text-dark"
+        className="mt-6"
       >
-        <span className="font-medium">{label} hinzufügen</span>
-        <Plus className="text-current" />
-      </button>
+        {label} hinzufügen
+        <Plus />
+      </Button>
     </div>
   )
 }

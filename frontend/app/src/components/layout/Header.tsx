@@ -4,6 +4,7 @@ import Navigation from './Navigation'
 import Breadcrumb from './Breadcrumb'
 import ProfileButton from './ProfileButton'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { Button } from '@green-ecolution/ui'
 
 function Header() {
   const [open, setOpen] = useState(false)
@@ -28,18 +29,19 @@ function Header() {
     <header className="relative z-10 bg-white lg:pl-20">
       <div className="container text-sm border-b border-dark-50 py-4 flex justify-between items-center">
         {!isLargeScreen && (
-          <button
+          <Button
             id="main-navigation-toggle"
-            type="button"
+            variant="ghost"
+            size="icon"
             aria-expanded={open}
             aria-controls="main-navigation"
             aria-haspopup="menu"
             aria-label="Hauptnavigation öffnen"
-            className="flex w-8 h-8 items-center justify-center bg-dark rounded-full transition-colors ease-in-out duration-300 hover:bg-dark-600"
+            className="size-8 rounded-full bg-dark hover:bg-dark-600"
             onClick={() => toggleSidebar(!open)}
           >
-            <AlignJustifyIcon className="text-light w-5 h-5" />
-          </button>
+            <AlignJustifyIcon className="text-light" />
+          </Button>
         )}
         {!isStartPage && <Breadcrumb />}
         <ProfileButton />
