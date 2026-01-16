@@ -35,7 +35,7 @@ const ZoomControls = () => {
   }
 
   return (
-    <div className="absolute z-[1000] space-y-2 bottom-6 right-4 lg:right-10 lg:bottom-10">
+    <div className="absolute z-[1000] flex flex-col gap-2 bottom-6 right-4 lg:right-10 lg:bottom-10">
       <Button
         variant="outline"
         size="icon"
