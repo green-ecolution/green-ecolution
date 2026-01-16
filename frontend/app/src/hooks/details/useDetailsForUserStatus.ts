@@ -9,17 +9,17 @@ export const UserStatusOptions: {
   {
     value: UserStatus.UserStatusUnknown,
     label: 'Unbekannt',
-    color: 'dark-400',
+    color: 'outline-dark',
   },
   {
     value: UserStatus.UserStatusAbsent,
     label: 'Nicht verfügbar',
-    color: 'red',
+    color: 'outline-red',
   },
   {
     value: UserStatus.UserStatusAvailable,
     label: 'Verfügbar',
-    color: 'green-dark',
+    color: 'outline-green-dark',
   },
 ]
 

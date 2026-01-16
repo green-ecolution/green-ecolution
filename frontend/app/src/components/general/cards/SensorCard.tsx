@@ -1,7 +1,7 @@
 import { Sensor } from '@green-ecolution/backend-client'
 import { format, formatDistanceToNow } from 'date-fns'
 import React from 'react'
-import Pill from '../Pill'
+import { Badge, ListCard, ListCardTitle, ListCardDescription } from '@green-ecolution/ui'
 import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
 import { useQuery } from '@tanstack/react-query'
 import { treeSensorIdQuery } from '@/api/queries'
@@ -25,36 +25,46 @@ const SensorCard: React.FC<SensorCardProps> = ({ sensor }) => {
     : 'Keine Angabe'
 
   return (
-    <Link
-      to={`/sensors/$sensorId`}
-      params={{
-        sensorId: sensor.id,
-      }}
-      className="bg-white border border-dark-50 p-6 rounded-xl shadow-cards flex flex-col gap-y-4 transition-all ease-in-out duration-300 hover:bg-green-dark-50 hover:border-green-dark lg:grid lg:grid-cols-[1fr,2fr,1fr,1fr] lg:items-center lg:gap-5 lg:py-10 xl:px-10"
-    >
-      <Pill label={statusDetails.label} theme={statusDetails.color} />
-      <div>
-        <h2 className="font-bold text-lg mb-0.5">ID: {sensor.id}</h2>
-        {treeRes ? (
-          <p className="text-dark-800 text-sm">
-            <span className={`${treeRes.number ? 'block' : 'hidden'}`}>Baum: {treeRes.number}</span>
-            <span className={`${treeRes.number ? 'block' : 'hidden'}`}>
-              Ort: {treeRes.latitude}, {treeRes.longitude}
-            </span>
-          </p>
-        ) : (
-          <p className="text-red">Keine Verknüpfung</p>
-        )}
-      </div>
-      <p className="text-dark-800">
-        <span className="lg:sr-only">Erstellt am:&nbsp;</span>
-        {createdDate}
-      </p>
-      <p className="text-dark-800">
-        <span className="lg:sr-only">Letztes Update:&nbsp;</span>
-        {updatedDate}
-      </p>
-    </Link>
+    <ListCard asChild columns="1fr 2fr 1fr 1fr" className="lg:py-10">
+      <Link
+        to={`/sensors/$sensorId`}
+        params={{
+          sensorId: sensor.id,
+        }}
+      >
+        <div>
+          <Badge variant={statusDetails.color} size="lg">
+            {statusDetails.label}
+          </Badge>
+        </div>
+
+        <div>
+          <ListCardTitle className="mb-0.5">ID: {sensor.id}</ListCardTitle>
+          {treeRes ? (
+            <p className="text-dark-800 text-sm">
+              <span className={`${treeRes.number ? 'block' : 'hidden'}`}>
+                Baum: {treeRes.number}
+              </span>
+              <span className={`${treeRes.number ? 'block' : 'hidden'}`}>
+                Ort: {treeRes.latitude}, {treeRes.longitude}
+              </span>
+            </p>
+          ) : (
+            <p className="text-red">Keine Verknüpfung</p>
+          )}
+        </div>
+
+        <ListCardDescription>
+          <span className="lg:sr-only">Erstellt am:&nbsp;</span>
+          {createdDate}
+        </ListCardDescription>
+
+        <ListCardDescription>
+          <span className="lg:sr-only">Letztes Update:&nbsp;</span>
+          {updatedDate}
+        </ListCardDescription>
+      </Link>
+    </ListCard>
   )
 }
 

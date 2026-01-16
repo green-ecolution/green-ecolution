@@ -3,6 +3,20 @@ import { cleanup } from '@testing-library/react'
 import { afterEach, beforeAll, afterAll, vi } from 'vitest'
 import { server } from './mocks/server'
 
+// Mock PointerEvent methods for Radix UI components (not available in jsdom)
+Element.prototype.hasPointerCapture = vi.fn(() => false)
+Element.prototype.setPointerCapture = vi.fn()
+Element.prototype.releasePointerCapture = vi.fn()
+Element.prototype.scrollIntoView = vi.fn()
+
+// Mock ResizeObserver (not available in jsdom)
+class ResizeObserverMock {
+  observe = vi.fn()
+  unobserve = vi.fn()
+  disconnect = vi.fn()
+}
+global.ResizeObserver = ResizeObserverMock
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

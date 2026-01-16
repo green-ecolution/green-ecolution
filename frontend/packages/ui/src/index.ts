@@ -141,6 +141,39 @@ export {
 // Label
 export { Label } from './components/ui/label'
 
+// LinkCard
+export {
+  LinkCard,
+  LinkCardTitle,
+  LinkCardDescription,
+  LinkCardFooter,
+  linkCardVariants,
+} from './components/ui/link-card'
+export type { LinkCardProps, LinkCardFooterProps } from './components/ui/link-card'
+
+// ListCard
+export {
+  ListCard,
+  ListCardHeader,
+  ListCardCell,
+  ListCardStatus,
+  ListCardTitle,
+  ListCardDescription,
+  ListCardMeta,
+  ListCardContent,
+  ListCardActions,
+  listCardVariants,
+} from './components/ui/list-card'
+export type {
+  ListCardProps,
+  ListCardHeaderProps,
+  ListCardStatusProps,
+} from './components/ui/list-card'
+
+// MultiSelect
+export { MultiSelect } from './components/ui/multi-select'
+export type { MultiSelectProps, MultiSelectOption } from './components/ui/multi-select'
+
 // Pagination
 export {
   Pagination,
@@ -170,6 +203,22 @@ export {
 
 // Separator
 export { Separator } from './components/ui/separator'
+
+// StatusCard
+export { StatusCard, statusCardVariants } from './components/ui/status-card'
+export type { StatusCardProps, StatusVariant } from './components/ui/status-card'
+
+// Table
+export {
+  Table,
+  TableHeader,
+  TableBody,
+  TableFooter,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableCaption,
+} from './components/ui/table'
 
 // Spinner/Loading
 export { Spinner, Loading, spinnerVariants } from './components/ui/spinner'

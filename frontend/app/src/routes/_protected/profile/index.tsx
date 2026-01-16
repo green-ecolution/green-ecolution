@@ -5,6 +5,7 @@ import { getUserRoleDetails } from '@/hooks/details/useDetailsForUserRole'
 import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
 import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
 import { DrivingLicense, UserRole } from '@green-ecolution/backend-client'
+import { Avatar, AvatarFallback, Badge, DetailedList } from '@green-ecolution/ui'
 
 export const Route = createFileRoute('/_protected/profile/')({
   component: Profile,
@@ -27,9 +28,11 @@ function Profile() {
 
       <section className="mt-16 grid grid-cols-1 gap-y-10 lg:grid-cols-2 lg:gap-x-11">
         <div className="flex items-center gap-x-6">
-          <div className="w-32 h-32 bg-dark-200 rounded-full flex items-center justify-center 2xl:w-48 2xl:h-48">
-            <UserRound className="text-white w-12 h-12 2xl:w-16 2xl:h-16" />
-          </div>
+          <Avatar size="2xl" className="2xl:size-48">
+            <AvatarFallback variant="guest" className="2xl:text-4xl">
+              <UserRound className="w-12 h-12 2xl:w-16 2xl:h-16 text-white" />
+            </AvatarFallback>
+          </Avatar>
           <div>
             <h2 className="text-xl font-bold font-lato xl:text-2xl">
               {user.firstName} {user.lastName}
@@ -37,11 +40,10 @@ function Profile() {
             <ul className="mt-2 flex flex-col gap-2 xl:mt-4">
               {user.userRoles?.length > 0 &&
                 user.userRoles.map((role: UserRole) => (
-                  <li
-                    key={getUserRoleDetails(role).label}
-                    className="border w-fit border-green-light px-3 py-2 rounded-full text-dark-800 font-medium text-sm"
-                  >
-                    {getUserRoleDetails(role).label}
+                  <li key={getUserRoleDetails(role).label}>
+                    <Badge variant="outline-green-light" size="lg">
+                      {getUserRoleDetails(role).label}
+                    </Badge>
                   </li>
                 ))}
             </ul>
@@ -49,61 +51,35 @@ function Profile() {
         </div>
       </section>
 
-      <dl className="mt-10 text-lg md:grid md:grid-cols-2 md:gap-x-11 lg:mt-16">
-        <div>
-          <div className="pb-4 border-b border-b-dark-200">
-            <dt className="font-bold inline">Username:</dt>
-            <dd className="sm:inline sm:px-2">{user.username ?? 'Keine Angabe'}</dd>
-          </div>
-          <div className="py-4 border-b border-b-dark-200">
-            <dt className="font-bold sm:inline">Vorname:</dt>
-            <dd className="sm:inline sm:px-2">{user.firstName ?? 'Keine Angabe'}</dd>
-          </div>
-          <div className="py-4 border-b border-b-dark-200">
-            <dt className="font-bold sm:inline">Nachname:</dt>
-            <dd className="sm:inline sm:px-2">{user.lastName ?? 'Keine Angabe'}</dd>
-          </div>
-          <div className="py-4 border-b border-b-dark-200 md:border-b-transparent">
-            <dt className="font-bold sm:inline">E-Mail:</dt>
-            <dd className="sm:inline sm:px-2">{user.email ?? 'Keine Angabe'}</dd>
-          </div>
-        </div>
-
-        <div>
-          <div className="py-4 border-b border-b-dark-200">
-            <dt className="font-bold sm:inline">Verfügbarkeit:</dt>
-            <dd className="sm:inline sm:px-2">{getUserStatusDetails(user.userStatus).label}</dd>
-          </div>
-          <div className="py-4 border-b border-b-dark-200">
-            <dt className="font-bold sm:inline">Führerscheinklasse:</dt>
-            <dd className="sm:inline sm:px-2">
-              {user.drivingLicenses && user.drivingLicenses.length > 0 ? (
-                <>
-                  {user.drivingLicenses.map((drivingLicense: DrivingLicense, index: number) => (
-                    <span key={getDrivingLicenseDetails(drivingLicense).label}>
-                      {getDrivingLicenseDetails(drivingLicense).label}
-                      {index < user.drivingLicenses.length - 1 ? ', ' : ''}
-                    </span>
-                  ))}
-                </>
-              ) : (
-                'Keine Angabe'
-              )}
-            </dd>
-          </div>
-          <div className="py-4 border-b border-b-dark-200 md:border-b-transparent">
-            <dt className="font-bold sm:inline">Rollen:</dt>
-            <dd className="sm:inline sm:px-2">
-              {user.userRoles.map((role: UserRole, index: number) => (
-                <span key={getUserRoleDetails(role).label}>
-                  {getUserRoleDetails(role).label}
-                  {index < user.userRoles.length - 1 ? ', ' : ''}
-                </span>
-              ))}
-            </dd>
-          </div>
-        </div>
-      </dl>
+      <DetailedList
+        columns={2}
+        className="mt-10 lg:mt-16"
+        details={[
+          { label: 'Username:', value: user.username ?? 'Keine Angabe' },
+          {
+            label: 'Verfügbarkeit:',
+            value: getUserStatusDetails(user.userStatus).label,
+          },
+          { label: 'Vorname:', value: user.firstName ?? 'Keine Angabe' },
+          {
+            label: 'Führerscheinklasse:',
+            value:
+              user.drivingLicenses && user.drivingLicenses.length > 0
+                ? user.drivingLicenses
+                    .map((dl: DrivingLicense) => getDrivingLicenseDetails(dl).label)
+                    .join(', ')
+                : 'Keine Angabe',
+          },
+          { label: 'Nachname:', value: user.lastName ?? 'Keine Angabe' },
+          {
+            label: 'Rollen:',
+            value: user.userRoles
+              .map((role: UserRole) => getUserRoleDetails(role).label)
+              .join(', '),
+          },
+          { label: 'E-Mail:', value: user.email ?? 'Keine Angabe' },
+        ]}
+      />
     </div>
   )
 }

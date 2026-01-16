@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import FormForTree from './FormForTree'
 import { treeSchema, TreeForm } from '@/schema/treeSchema'
@@ -110,7 +110,9 @@ describe('FormForTree', () => {
     expect(screen.getByLabelText(/kurze beschreibung/i)).toBeInTheDocument()
   })
 
-  it('populates tree cluster select with options', () => {
+  it('populates tree cluster select with options', async () => {
+    const user = userEvent.setup()
+
     render(
       <TestWrapper defaultValues={defaultFormValues}>
         <FormForTree
@@ -125,14 +127,17 @@ describe('FormForTree', () => {
     )
 
     const clusterSelect = screen.getByRole('combobox', { name: /bewässerungsgruppe/i })
+    await user.click(clusterSelect)
 
-    const options = Array.from((clusterSelect as HTMLSelectElement).options).map((opt) => opt.text)
-    expect(options).toContain('Keine Bewässerungsgruppe')
-    expect(options).toContain('Cluster A')
-    expect(options).toContain('Cluster B')
+    const listbox = await screen.findByRole('listbox')
+    expect(within(listbox).getByText('Keine Bewässerungsgruppe')).toBeInTheDocument()
+    expect(within(listbox).getByText('Cluster A')).toBeInTheDocument()
+    expect(within(listbox).getByText('Cluster B')).toBeInTheDocument()
   })
 
-  it('populates sensor select with options', () => {
+  it('populates sensor select with options', async () => {
+    const user = userEvent.setup()
+
     render(
       <TestWrapper defaultValues={defaultFormValues}>
         <FormForTree
@@ -147,11 +152,12 @@ describe('FormForTree', () => {
     )
 
     const sensorSelect = screen.getByRole('combobox', { name: /verknüpfter sensor/i })
+    await user.click(sensorSelect)
 
-    const options = Array.from((sensorSelect as HTMLSelectElement).options).map((opt) => opt.text)
-    expect(options).toContain('Kein Sensor')
-    expect(options).toContain('Sensor sensor-1')
-    expect(options).toContain('Sensor sensor-2')
+    const listbox = await screen.findByRole('listbox')
+    expect(within(listbox).getByText('Kein Sensor')).toBeInTheDocument()
+    expect(within(listbox).getByText('Sensor sensor-1')).toBeInTheDocument()
+    expect(within(listbox).getByText('Sensor sensor-2')).toBeInTheDocument()
   })
 
   it('displays coordinates', () => {
@@ -298,10 +304,11 @@ describe('FormForTree', () => {
       expect(submitButton).not.toBeDisabled()
     })
 
-    const clusterSelect = screen.getByLabelText(/bewässerungsgruppe/i)
-    await user.selectOptions(clusterSelect, '1')
+    const clusterSelect = screen.getByRole('combobox', { name: /bewässerungsgruppe/i })
+    await user.click(clusterSelect)
 
-    expect((clusterSelect as HTMLSelectElement).value).toBe('1')
+    const listbox = await screen.findByRole('listbox')
+    await user.click(within(listbox).getByText('Cluster A'))
 
     await waitFor(() => {
       const submitButton = screen.getByRole('button', { name: /speichern/i })

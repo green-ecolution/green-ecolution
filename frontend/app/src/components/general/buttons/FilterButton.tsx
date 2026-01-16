@@ -19,11 +19,23 @@ const FilterButton: React.FC<FilterButtonProps> = ({
       aria-label={ariaLabel}
       id="filter-button"
       aria-selected={activeCount > 0}
-      className={`relative font-nunito-sans text-base ${isOnMap ? 'z-[1000] shadow-cards' : ''} bg-white border border-green-light px-5 py-2 font-medium rounded-full flex items-center gap-x-2 transition-colors ease-in-out duration-300 ${activeCount > 0 ? 'bg-green-light-200' : ''} hover:bg-green-light-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-dark`}
+      className={`cursor-pointer font-medium rounded-full flex items-center gap-x-2 px-5 py-2 transition-colors duration-300 ${isOnMap ? 'z-[1000] shadow-cards' : ''} hover:bg-green-light-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring`}
+      style={{
+        backgroundColor: activeCount > 0 ? '#e8f0c8' : '#ffffff',
+        borderWidth: '1px',
+        borderStyle: 'solid',
+        borderColor: '#acb63b',
+        color: '#333333',
+      }}
       onClick={onClick}
     >
       Filter
-      <span className="block bg-green-dark/20 w-6 h-6 rounded-full">{activeCount}</span>
+      <span
+        className="flex items-center justify-center w-6 h-6 rounded-full text-sm"
+        style={{ backgroundColor: 'color-mix(in srgb, var(--green-dark) 20%, transparent)' }}
+      >
+        {activeCount}
+      </span>
     </button>
   )
 }

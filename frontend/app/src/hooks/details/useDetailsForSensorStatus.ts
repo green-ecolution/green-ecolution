@@ -1,22 +1,26 @@
 import { SensorStatus } from '@green-ecolution/backend-client'
+import type { StatusColor } from './useDetailsForWateringPlanStatus'
 
-const SensorStatusProperties = {
+const SensorStatusProperties: Record<
+  SensorStatus,
+  { color: StatusColor; label: string; description: string }
+> = {
   [SensorStatus.SensorStatusUnknown]: {
-    color: 'dark-400',
+    color: 'outline-dark',
     label: 'Unbekannt',
     description: 'Der Status ist unbekannt.',
   },
   [SensorStatus.SensorStatusOffline]: {
-    color: 'red',
+    color: 'outline-red',
     label: 'Offline',
     description: 'Der Sensorbaukasten hat Probleme und benötigen eine Wartung.',
   },
   [SensorStatus.SensorStatusOnline]: {
-    color: 'green-dark',
+    color: 'outline-green-dark',
     label: 'Online',
     description: 'Der Sensorbaukasten kann Daten senden.',
   },
-} as const
+}
 
 type SensorStatusDetails = (typeof SensorStatusProperties)[SensorStatus]
 

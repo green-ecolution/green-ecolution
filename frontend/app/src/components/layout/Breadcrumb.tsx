@@ -1,6 +1,13 @@
 import { Link } from '@tanstack/react-router'
-import { ChevronRight } from 'lucide-react'
 import { useBreadcrumbs } from '@/hooks/useBreadcrumb'
+import {
+  Breadcrumb as BreadcrumbRoot,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@green-ecolution/ui'
 
 function Breadcrumb() {
   const breadcrumbs = useBreadcrumbs()
@@ -10,26 +17,30 @@ function Breadcrumb() {
     path: '/dashboard',
   }
 
+  const isLastItem = (index: number) => index === breadcrumbs.length - 1
+
   return (
-    <nav
-      aria-label="Seitennavigation"
-      className="hidden text-xs text-dark-800 lg:block data-[status=active]:text-dark transition-all ease-in-out duration-300 hover:text-green-dark hover:data-[status=active]:text-green-dark"
-    >
-      <ul className="flex flex-wrap items-center">
-        <li className="flex items-center">
-          <Link to={rootBreadcrumb.path}>{rootBreadcrumb.title}</Link>
-        </li>
-        {breadcrumbs.map((breadcrumb) => (
-          <li
-            key={breadcrumb.path}
-            className="flex items-center data-[status=active]:text-dark transition-all ease-in-out duration-300 hover:text-green-dark hover:data-[status=active]:text-green-dark last:font-semibold"
-          >
-            <ChevronRight className="w-3.5 stroke-1" />
-            <Link to={breadcrumb.path}>{breadcrumb.title}</Link>
-          </li>
+    <BreadcrumbRoot aria-label="Seitennavigation" className="hidden lg:block">
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link to={rootBreadcrumb.path}>{rootBreadcrumb.title}</Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        {breadcrumbs.map((breadcrumb, index) => (
+          <BreadcrumbItem key={breadcrumb.path}>
+            <BreadcrumbSeparator />
+            {isLastItem(index) ? (
+              <BreadcrumbPage>{breadcrumb.title}</BreadcrumbPage>
+            ) : (
+              <BreadcrumbLink asChild>
+                <Link to={breadcrumb.path}>{breadcrumb.title}</Link>
+              </BreadcrumbLink>
+            )}
+          </BreadcrumbItem>
         ))}
-      </ul>
-    </nav>
+      </BreadcrumbList>
+    </BreadcrumbRoot>
   )
 }
 

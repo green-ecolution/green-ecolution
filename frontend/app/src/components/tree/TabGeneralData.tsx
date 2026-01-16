@@ -1,6 +1,6 @@
 import { Tree } from '@green-ecolution/backend-client'
 import { format } from 'date-fns'
-import DetailedList from '../general/DetailedList'
+import { DetailedList } from '@green-ecolution/ui'
 
 interface TabGeneralDataProps {
   tree?: Tree

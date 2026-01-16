@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 import tanstackRouter from '@tanstack/router-plugin/vite'
 import { federation } from '@module-federation/vite'
@@ -13,6 +14,7 @@ export default defineConfig({
       autoCodeSplitting: true,
       quoteStyle: 'single',
     }),
+    tailwindcss(),
     react(),
     federation({
       name: 'app',
