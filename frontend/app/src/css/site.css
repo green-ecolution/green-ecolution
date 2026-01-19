@@ -18,3 +18,17 @@
   }
 }
 
+@utility icon-arrow-animate {
+  transition-property: transform;
+  transition-timing-function: ease-in-out;
+  transition-duration: 300ms;
+
+  .group:hover & {
+    transform: translateX(0.5rem);
+  }
+
+  .group:disabled & {
+    transform: translateX(0);
+  }
+}
+

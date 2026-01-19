@@ -171,7 +171,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
             </AlertDialogCancel>
             <AlertDialogAction onClick={navigationBlocker.confirmLeave}>
               Verlassen
-              <MoveRight />
+              <MoveRight className="icon-arrow-animate" />
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

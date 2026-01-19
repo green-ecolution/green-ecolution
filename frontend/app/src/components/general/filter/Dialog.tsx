@@ -134,7 +134,7 @@ const Dialog = ({
           <div className="flex flex-wrap gap-5 mt-6">
             <Button type="button" onClick={handleSubmit}>
               Anwenden
-              <MoveRight />
+              <MoveRight className="icon-arrow-animate" />
             </Button>
             <Button variant="outline" onClick={handleReset}>
               Zurücksetzen

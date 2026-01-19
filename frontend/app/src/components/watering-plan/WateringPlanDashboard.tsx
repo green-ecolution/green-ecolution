@@ -96,7 +96,7 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
             )}
             <Button variant="link" onClick={() => mutate()}>
               Route herunterladen
-              <MoveRight />
+              <MoveRight className="icon-arrow-animate" />
             </Button>
           </div>
           {wateringPlan.distance == 0 && (

@@ -186,3 +186,18 @@ export const NavigationLinks: Story = {
     </div>
   ),
 }
+
+export const WithAnimatedArrow: Story = {
+  render: () => (
+    <div className="flex flex-col gap-4">
+      <Button>
+        Anwenden
+        <MoveRight className="transition-transform duration-300 ease-in-out group-hover:translate-x-2" />
+      </Button>
+      <Button variant="outline">
+        Weiter
+        <MoveRight className="transition-transform duration-300 ease-in-out group-hover:translate-x-2" />
+      </Button>
+    </div>
+  ),
+}

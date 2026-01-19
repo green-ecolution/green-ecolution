@@ -100,7 +100,7 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
 
       <Button type="submit" disabled={!isValid} className="mt-10 lg:col-span-full lg:w-fit">
         Speichern
-        <MoveRight />
+        <MoveRight className="icon-arrow-animate" />
       </Button>
     </form>
   )

@@ -71,7 +71,7 @@ const MapSelectEntitiesModal = ({
       <div className="flex flex-wrap gap-5 mt-6">
         <Button type="submit" onClick={onSave} disabled={disabled}>
           Speichern
-          <MoveRight />
+          <MoveRight className="icon-arrow-animate" />
         </Button>
         <Button variant="outline" onClick={onCancel}>
           Zurück

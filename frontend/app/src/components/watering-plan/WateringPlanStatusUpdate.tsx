@@ -129,7 +129,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
           return (
             <Button onClick={() => onSubmitOtherStatus(status)} type="submit" className="mt-10">
               Speichern
-              <MoveRight />
+              <MoveRight className="icon-arrow-animate" />
             </Button>
           )
       }
@@ -223,7 +223,7 @@ const CancelWateringPlan = ({ onSubmit }: CancelPlanProps) => {
 
       <Button type="submit" disabled={!isValid} className="mt-10">
         Speichern
-        <MoveRight />
+        <MoveRight className="icon-arrow-animate" />
       </Button>
     </form>
   )
@@ -288,7 +288,7 @@ const FinishedWateringPlan = ({ wateringPlanId, onSubmit, loadedData }: Finished
 
       <Button type="submit" disabled={!isValid} className="mt-10">
         Speichern
-        <MoveRight />
+        <MoveRight className="icon-arrow-animate" />
       </Button>
     </form>
   )

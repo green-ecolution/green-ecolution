@@ -193,7 +193,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
 
       <Button type="submit" className="mt-10 lg:col-span-full lg:w-fit" disabled={!isValid}>
         Speichern
-        <MoveRight />
+        <MoveRight className="icon-arrow-animate" />
       </Button>
     </form>
   )

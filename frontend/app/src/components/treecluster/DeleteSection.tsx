@@ -91,7 +91,7 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
             </AlertDialogCancel>
             <AlertDialogAction onClick={() => mutate()}>
               Bestätigen
-              <MoveRight />
+              <MoveRight className="icon-arrow-animate" />
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

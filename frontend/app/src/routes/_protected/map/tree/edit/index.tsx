@@ -157,7 +157,7 @@ function EditTree() {
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmLeave}>
               Verlassen
-              <MoveRight />
+              <MoveRight className="icon-arrow-animate" />
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
