@@ -26,7 +26,7 @@ const DetailedList = React.forwardRef<HTMLDListElement, DetailedListProps>(
           ref={ref}
           data-slot="detailed-list-content"
           className={cn(
-            'space-y-3',
+            'flex flex-col gap-y-3',
             columns === 2 && 'grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2',
             className,
           )}

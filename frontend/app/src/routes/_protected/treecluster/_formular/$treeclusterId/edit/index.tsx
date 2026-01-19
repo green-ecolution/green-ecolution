@@ -1,11 +1,13 @@
-import LoadingInfo from '@/components/general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import TreeClusterUpdate from '@/components/treecluster/TreeClusterUpdate'
 import useStore from '@/store/store'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_protected/treecluster/_formular/$treeclusterId/edit/')({
   component: EditTreeCluster,
-  pendingComponent: () => <LoadingInfo label="Bewässerungsgruppe wird geladen …" />,
+  pendingComponent: () => (
+    <Loading className="mt-20 justify-center" label="Bewässerungsgruppe wird geladen …" />
+  ),
   loader: () => {
     if (!useStore.getState().isAuthenticated) return
   },

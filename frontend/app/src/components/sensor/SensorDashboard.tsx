@@ -1,11 +1,9 @@
-import EntitiesStatusCard from '@/components/general/cards/EntitiesStatusCard'
-import GeneralStatusCard from '@/components/general/cards/GeneralStatusCard'
 import BackLink from '@/components/general/links/BackLink'
 import GeneralLink from '../general/links/GeneralLink'
 import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
 import { format, formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
-import DetailedList from '../general/DetailedList'
+import { DetailedList, StatusCard } from '@green-ecolution/ui'
 import { Sensor, Tree } from '@green-ecolution/backend-client'
 
 interface SensorDashboardProps {
@@ -47,7 +45,7 @@ const SensorDashboard = ({ sensor, sensorTree: linkedTree }: SensorDashboardProp
   return (
     <>
       <BackLink link={{ to: '/sensors' }} label="Zu allen Sensoren" />
-      <article className="space-y-6 2xl:space-y-0 2xl:flex 2xl:items-center 2xl:space-x-10">
+      <article className="flex flex-col gap-y-6 2xl:flex-row 2xl:items-center 2xl:gap-x-10">
         <div className="2xl:w-4/5">
           <h1 className="font-lato font-bold text-3xl mb-4 flex flex-wrap items-center gap-4 lg:text-4xl xl:text-5xl">
             Sensor ID: {sensor.id}
@@ -63,19 +61,27 @@ const SensorDashboard = ({ sensor, sensorTree: linkedTree }: SensorDashboardProp
       </article>
 
       <section className="mt-10">
-        <ul className="space-y-5 md:space-y-0 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <ul className="flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
           <li>
-            <EntitiesStatusCard
-              statusDetails={getSensorStatusDetails(sensor.status)}
-              label="Status des Sensors"
-            />
+            {(() => {
+              const statusDetails = getSensorStatusDetails(sensor.status)
+              return (
+                <StatusCard
+                  status={statusDetails.color}
+                  indicator="dot"
+                  label="Status des Sensors"
+                  value={statusDetails.label}
+                  description={statusDetails.description}
+                />
+              )
+            })()}
           </li>
           <li>
-            <GeneralStatusCard
-              overline="Akkustand"
+            <StatusCard
+              label="Akkustand"
               value={
                 sensor?.latestData?.battery
-                  ? `${sensor?.latestData?.battery.toFixed(2)} V`
+                  ? `${sensor.latestData.battery.toFixed(2)} V`
                   : 'Keine Angabe'
               }
               isLarge
@@ -83,8 +89,8 @@ const SensorDashboard = ({ sensor, sensorTree: linkedTree }: SensorDashboardProp
             />
           </li>
           <li>
-            <GeneralStatusCard
-              overline="Letztes Update"
+            <StatusCard
+              label="Letztes Update"
               value={updatedDate}
               description="Letzte Datenübermittlung"
             />
@@ -93,12 +99,12 @@ const SensorDashboard = ({ sensor, sensorTree: linkedTree }: SensorDashboardProp
       </section>
 
       <section className="mt-16 md:grid md:gap-x-11 md:grid-cols-2">
-        <div>
-          <DetailedList headline="Daten zum Sensor" details={generalSensorData} hasNoGrid />
+        <div className="mb-6 md:mb-0">
+          <DetailedList headline="Daten zum Sensor" details={generalSensorData} columns={1} />
         </div>
 
         <div
-          className={`h-max space-y-3 rounded-xl p-6 ${linkedTree ? 'bg-dark-50' : 'bg-red-50'}`}
+          className={`h-max flex flex-col gap-y-3 rounded-xl p-6 ${linkedTree ? 'bg-dark-50' : 'bg-red-50'}`}
         >
           <h2 className="text-sm text-dark-700 font-medium">Verknüpfte Vegetation</h2>
           {linkedTree ? (

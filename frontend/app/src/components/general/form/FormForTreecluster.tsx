@@ -1,7 +1,15 @@
-import PrimaryButton from '../buttons/PrimaryButton'
-import Input from './types/Input'
-import Select from './types/Select'
-import Textarea from './types/Textarea'
+import { MoveRight } from 'lucide-react'
+import {
+  FormField,
+  TextareaField,
+  Label,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  Button,
+} from '@green-ecolution/ui'
 import { Controller, SubmitHandler, useFormContext } from 'react-hook-form'
 import { SoilConditionOptions } from '@/hooks/details/useDetailsForSoilCondition'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
@@ -26,21 +34,45 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
   return (
     <form
       key="cluster-register"
-      className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-11"
+      className="flex flex-col gap-y-6 lg:grid lg:grid-cols-2 lg:gap-11"
       onSubmit={handleSubmit(props.onSubmit)}
     >
-      <div className="space-y-6">
-        <Input label="Name" error={errors.name?.message} required {...register('name')} />
-        <Input label="Adresse" required error={errors.address?.message} {...register('address')} />
-        <Select
-          options={SoilConditionOptions}
-          placeholder="Wählen Sie eine Bodenbeschaffenheit aus"
-          label="Bodenbeschaffenheit"
+      <div className="flex flex-col gap-y-6">
+        <FormField label="Name" error={errors.name?.message} required {...register('name')} />
+        <FormField
+          label="Adresse"
           required
-          error={errors.soilCondition?.message}
-          {...register('soilCondition')}
+          error={errors.address?.message}
+          {...register('address')}
         />
-        <Textarea
+        <Controller
+          name="soilCondition"
+          control={control}
+          render={({ field }) => (
+            <div className="flex flex-col gap-y-2">
+              <Label htmlFor="soilCondition">
+                Bodenbeschaffenheit
+                <span className="text-destructive ml-1">*</span>
+              </Label>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger id="soilCondition">
+                  <SelectValue placeholder="Wählen Sie eine Bodenbeschaffenheit aus" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SoilConditionOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.soilCondition?.message && (
+                <p className="text-sm text-destructive">{errors.soilCondition.message}</p>
+              )}
+            </div>
+          )}
+        />
+        <TextareaField
           placeholder="Hier ist Platz für Notizen"
           label="Kurze Beschreibung"
           error={errors.description?.message}
@@ -66,12 +98,10 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
 
       <FormError show={props.displayError} error={props.errorMessage} />
 
-      <PrimaryButton
-        type="submit"
-        label="Speichern"
-        disabled={!isValid}
-        className="mt-10 lg:col-span-full lg:w-fit"
-      />
+      <Button type="submit" disabled={!isValid} className="mt-10 lg:col-span-full lg:w-fit">
+        Speichern
+        <MoveRight className="icon-arrow-animate" />
+      </Button>
     </form>
   )
 }

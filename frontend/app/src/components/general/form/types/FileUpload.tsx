@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { Trash2 } from 'lucide-react'
+import { Button } from '@green-ecolution/ui'
 
 interface FileUploadProps {
   fileType: string
@@ -48,10 +49,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
         />
 
         {isFileSelected && (
-          <button type="button" onClick={handleClearInput} className="flex items-center">
+          <Button variant="ghost" size="icon" onClick={handleClearInput}>
             <Trash2 className="text-dark-600" />
             <span className="sr-only">Datei unselektieren</span>
-          </button>
+          </Button>
         )}
       </div>
 

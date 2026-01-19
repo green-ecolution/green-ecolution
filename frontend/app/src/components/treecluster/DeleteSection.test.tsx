@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import DeleteSection from './DeleteSection'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import ToastProvider from '@/context/ToastContext'
+import { Toaster } from '@green-ecolution/ui'
 import { ReactNode } from 'react'
 
 vi.mock('@tanstack/react-router', () => ({
@@ -20,7 +20,8 @@ function createWrapper() {
 
   return ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <ToastProvider>{children}</ToastProvider>
+      {children}
+      <Toaster />
     </QueryClientProvider>
   )
 }
@@ -127,13 +128,13 @@ describe('DeleteSection', () => {
       )
 
       await user.click(screen.getByRole('button', { name: /löschen/i }))
-      expect(screen.getByRole('dialog')).toBeInTheDocument()
+      expect(screen.getByRole('alertdialog')).toBeInTheDocument()
 
       const cancelButton = screen.getByRole('button', { name: /abbrechen/i })
       await user.click(cancelButton)
 
       await waitFor(() => {
-        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+        expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
       })
     })
   })

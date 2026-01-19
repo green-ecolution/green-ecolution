@@ -1,8 +1,6 @@
 import { WateringPlan, WateringPlanStatus } from '@green-ecolution/backend-client'
-import DetailedList from '../general/DetailedList'
+import { DetailedList, StatusCard } from '@green-ecolution/ui'
 import { format, formatDuration, intervalToDuration } from 'date-fns'
-import GeneralStatusCard from '../general/cards/GeneralStatusCard'
-import EntitiesStatusCard from '../general/cards/EntitiesStatusCard'
 import { getWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { userQuery } from '@/api/queries'
@@ -79,31 +77,36 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
     },
   ]
 
+  const statusDetails = getWateringPlanStatusDetails(
+    wateringPlan?.status ?? WateringPlanStatus.WateringPlanStatusUnknown,
+  )
+
   return (
     <>
-      <ul className="space-y-5 md:space-y-0 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
+      <ul className="flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
         <li>
-          <EntitiesStatusCard
-            statusDetails={getWateringPlanStatusDetails(
-              wateringPlan?.status ?? WateringPlanStatus.WateringPlanStatusUnknown,
-            )}
+          <StatusCard
+            status={statusDetails.color}
+            indicator="badge"
             label="Aktueller Status des Einsatzes"
-            hasPill
+            value={statusDetails.label}
+            description={statusDetails.description}
           />
         </li>
         {wateringPlan?.status === WateringPlanStatus.WateringPlanStatusCanceled &&
           wateringPlan.cancellationNote && (
             <li>
-              <div className="h-full space-y-3 bg-dark-50 rounded-xl p-6">
-                <h2 className="text-sm text-dark-700 font-medium">Notiz zum Abbruch</h2>
-                <p className="text-sm">{wateringPlan.cancellationNote}</p>
-              </div>
+              <StatusCard
+                label="Notiz zum Abbruch"
+                value=""
+                description={wateringPlan.cancellationNote}
+              />
             </li>
           )}
         {wateringPlan?.status === WateringPlanStatus.WateringPlanStatusFinished && (
           <li>
-            <GeneralStatusCard
-              overline="Verbrauchtes Wasser"
+            <StatusCard
+              label="Verbrauchtes Wasser"
               value={`${wateringPlan.evaluation.reduce((sum, item) => sum + item.consumedWater, 0)} Liter`}
               isLarge
               description={`bei ${wateringPlan.treeclusters.length} ${wateringPlan.treeclusters.length === 1 ? 'Bewässerungsgruppe' : 'Bewässerungsgruppen'}`}
@@ -111,8 +114,8 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
           </li>
         )}
         <li>
-          <GeneralStatusCard
-            overline="Länge der Route"
+          <StatusCard
+            label="Länge der Route"
             value={`${roundTo(wateringPlan.distance, 2)} km`}
             isLarge
             description="Einsatz startet in der Schleswiger Straße"

@@ -188,7 +188,7 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, openSidebar, closeSideb
         ${isOpen ? 'visible block left-0 lg:w-[17rem] lg:rounded-r-xl' : 'invisible -left-full lg:visible lg:w-[5rem] lg:left-0'}`}
     >
       <div className="relative px-4 py-5 h-full overflow-y-auto no-scrollbar">
-        <NavHeader isOpen={isOpen} closeSidebar={closeSidebar} />
+        <NavHeader closeSidebar={closeSidebar} />
 
         {navigationData.map((section) => (
           <React.Fragment key={section.id}>

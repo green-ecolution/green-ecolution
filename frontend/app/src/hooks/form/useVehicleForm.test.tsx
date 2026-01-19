@@ -3,7 +3,7 @@ import { renderHook, waitFor, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
 import { useVehicleForm } from './useVehicleForm'
-import ToastProvider from '@/context/ToastContext'
+import { Toaster } from '@green-ecolution/ui'
 import { VehicleType, DrivingLicense, VehicleStatus } from '@green-ecolution/backend-client'
 
 vi.mock('@/api/backendApi', () => ({
@@ -30,7 +30,8 @@ function createWrapper() {
 
   return ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <ToastProvider>{children}</ToastProvider>
+      {children}
+      <Toaster />
     </QueryClientProvider>
   )
 }

@@ -1,23 +1,24 @@
 import { Link, LinkProps } from '@tanstack/react-router'
 import { MoveRight } from 'lucide-react'
-import React from 'react'
+import { Button } from '@green-ecolution/ui'
 
-interface GeneralLink {
+interface GeneralLinkProps {
   label: string
   link: LinkProps
   theme?: 'grey' | 'green'
 }
 
-const GeneralLink: React.FC<GeneralLink> = ({ label, link, theme = 'green' }) => {
-  return (
-    <Link
-      {...link}
-      className={`group flex items-center gap-x-2 font-medium text-base ${theme === 'green' ? 'text-green-dark' : 'text-dark-600'}`}
-    >
+const GeneralLink = ({ label, link, theme = 'green' }: GeneralLinkProps) => (
+  <Button
+    variant="nav"
+    asChild
+    className={`p-0 h-auto [&_svg]:size-4 ${theme === 'green' ? 'text-green-dark' : 'text-dark-600'}`}
+  >
+    <Link {...link}>
       {label}
-      <MoveRight className="w-4 h-4 transition-all ease-in-out duration-300 group-hover:translate-x-1" />
+      <MoveRight className="icon-arrow-animate" />
     </Link>
-  )
-}
+  </Button>
+)
 
 export default GeneralLink

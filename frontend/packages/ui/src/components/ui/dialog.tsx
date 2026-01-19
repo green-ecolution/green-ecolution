@@ -41,7 +41,7 @@ const DialogContent = React.forwardRef<
       ref={ref}
       data-slot="dialog-content"
       className={cn(
-        'fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2',
+        'fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2',
         'gap-4 border border-dark-100 bg-background p-6 shadow-cards rounded-xl',
         'duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out',
         'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
@@ -102,7 +102,7 @@ DialogIcon.displayName = 'DialogIcon'
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     data-slot="dialog-header"
-    className={cn('flex flex-col space-y-2 text-center sm:text-left', className)}
+    className={cn('flex flex-col gap-y-2 text-center sm:text-left', className)}
     {...props}
   />
 )

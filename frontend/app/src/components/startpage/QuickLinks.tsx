@@ -1,4 +1,5 @@
-import DashboardCard from '../general/cards/DashboardCard'
+import { Link } from '@tanstack/react-router'
+import { LinkCard, LinkCardTitle, LinkCardDescription, LinkCardFooter } from '@green-ecolution/ui'
 
 const QuickLinks = () => {
   const cards = [
@@ -42,13 +43,13 @@ const QuickLinks = () => {
       <ul className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
         {cards.map((card, key) => (
           <li key={card.id}>
-            <DashboardCard
-              headline={card.headline}
-              description={card.description}
-              linkLabel={card.linkLabel}
-              url={card.url}
-              theme={key % 2 ? 'dark' : 'light'}
-            />
+            <LinkCard variant={key % 2 ? 'dark' : 'light'} asChild>
+              <Link to={card.url} aria-label={card.linkLabel}>
+                <LinkCardTitle>{card.headline}</LinkCardTitle>
+                <LinkCardDescription>{card.description}</LinkCardDescription>
+                <LinkCardFooter>{card.linkLabel}</LinkCardFooter>
+              </Link>
+            </LinkCard>
           </li>
         ))}
       </ul>

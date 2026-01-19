@@ -128,7 +128,7 @@ export const AllVariants: Story = {
 
 export const StatusExamples: Story = {
   render: () => (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-y-4">
       <div>
         <h4 className="text-sm font-medium mb-2">Baumstatus</h4>
         <div className="flex gap-2">
@@ -199,7 +199,7 @@ export const OutlineLarge: Story = {
 
 export const WateringPlanStatus: Story = {
   render: () => (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-y-4">
       <div>
         <h4 className="mb-2 text-sm font-medium">Bewässerungsplan-Status (Outline/Large)</h4>
         <div className="flex flex-wrap gap-2">

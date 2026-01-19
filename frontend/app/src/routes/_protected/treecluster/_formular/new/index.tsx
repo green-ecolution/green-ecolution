@@ -7,7 +7,17 @@ import useStore from '@/store/store'
 import BackLink from '@/components/general/links/BackLink'
 import { useTreeClusterForm } from '@/hooks/form/useTreeClusterForm'
 import { safeJsonStorageParse } from '@/lib/utils'
-import Modal from '@/components/general/Modal'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@green-ecolution/ui'
+import { MoveRight, X } from 'lucide-react'
 
 export const Route = createFileRoute('/_protected/treecluster/_formular/new/')({
   loader: () => {
@@ -79,14 +89,27 @@ function NewTreecluster() {
         </FormProvider>
       </section>
 
-      <Modal
-        title="Seite verlassen?"
-        description={navigationBlocker.message}
-        confirmText="Verlassen"
-        isOpen={navigationBlocker.isModalOpen}
-        onConfirm={navigationBlocker.confirmLeave}
-        onCancel={navigationBlocker.closeModal}
-      />
+      <AlertDialog
+        open={navigationBlocker.isModalOpen}
+        onOpenChange={(open) => !open && navigationBlocker.closeModal()}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Seite verlassen?</AlertDialogTitle>
+            <AlertDialogDescription>{navigationBlocker.message}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={navigationBlocker.closeModal}>
+              Abbrechen
+              <X />
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={navigationBlocker.confirmLeave}>
+              Verlassen
+              <MoveRight className="icon-arrow-animate" />
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

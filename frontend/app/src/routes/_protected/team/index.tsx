@@ -1,12 +1,13 @@
 import UserCard from '@/components/general/cards/UserCard'
-import LoadingInfo from '@/components/general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import { createFileRoute } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { userRoleQuery } from '@/api/queries'
+import { ListCardHeader } from '@green-ecolution/ui'
 
 export const Route = createFileRoute('/_protected/team/')({
   component: Team,
-  pendingComponent: () => <LoadingInfo label="Daten werden geladen" />,
+  pendingComponent: () => <Loading className="mt-20 justify-center" label="Daten werden geladen" />,
   loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(userRoleQuery('tbz')),
 })
 
@@ -27,12 +28,12 @@ function Team() {
       </article>
 
       <section className="mt-10">
-        <header className="hidden border-b pb-2 text-sm text-dark-800 px-8 border-b-dark-200 mb-5 lg:grid lg:grid-cols-[1fr,1.25fr,1fr,1fr] lg:gap-5 xl:px-10">
+        <ListCardHeader columns="1fr 1.25fr 1fr 1fr">
           <p>Verfügbarkeit</p>
           <p>Name</p>
           <p>Organisation</p>
           <p>Führerscheinklasse</p>
-        </header>
+        </ListCardHeader>
         <ul>
           {userRes.data.length === 0 ? (
             <li className="text-center text-dark-600 mt-10">

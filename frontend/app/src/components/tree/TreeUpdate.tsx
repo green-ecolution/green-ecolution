@@ -11,7 +11,17 @@ import { useNavigate } from '@tanstack/react-router'
 import { useTreeForm } from '@/hooks/form/useTreeForm'
 import { safeJsonStorageParse } from '@/lib/utils'
 import { FormProvider } from 'react-hook-form'
-import Modal from '../general/Modal'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@green-ecolution/ui'
+import { MoveRight, X } from 'lucide-react'
 
 interface TreeUpdateProps {
   treeId: string
@@ -104,14 +114,27 @@ const TreeUpdate = ({ treeId, clusters, sensors }: TreeUpdateProps) => {
         />
       )}
 
-      <Modal
-        title="Seite verlassen?"
-        description={navigationBlocker.message}
-        confirmText="Verlassen"
-        isOpen={navigationBlocker.isModalOpen}
-        onConfirm={navigationBlocker.confirmLeave}
-        onCancel={navigationBlocker.closeModal}
-      />
+      <AlertDialog
+        open={navigationBlocker.isModalOpen}
+        onOpenChange={(open) => !open && navigationBlocker.closeModal()}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Seite verlassen?</AlertDialogTitle>
+            <AlertDialogDescription>{navigationBlocker.message}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={navigationBlocker.closeModal}>
+              Abbrechen
+              <X />
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={navigationBlocker.confirmLeave}>
+              Verlassen
+              <MoveRight className="icon-arrow-animate" />
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

@@ -7,15 +7,24 @@ import {
 } from '@green-ecolution/backend-client'
 import { wateringPlanIdQuery, wateringPlanQuery } from '@/api/queries'
 import { format } from 'date-fns'
-import PrimaryButton from '../general/buttons/PrimaryButton'
+import { MoveRight } from 'lucide-react'
 import FormError from '../general/form/FormError'
-import Select from '../general/form/types/Select'
 import {
   getWateringPlanStatusDetails,
   WateringPlanStatusOptions,
 } from '@/hooks/details/useDetailsForWateringPlanStatus'
-import Pill from '../general/Pill'
-import Textarea from '../general/form/types/Textarea'
+import {
+  Badge,
+  TextareaField,
+  FormField,
+  Label,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  Button,
+} from '@green-ecolution/ui'
 import {
   WateringPlanFinishedForm,
   wateringPlanFinishedSchema,
@@ -24,12 +33,11 @@ import {
 } from '@/schema/wateringPlanSchema'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { SubmitHandler, useFieldArray, useForm } from 'react-hook-form'
-import Input from '../general/form/types/Input'
 import SelectedCard from '../general/cards/SelectedCard'
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { wateringPlanApi } from '@/api/backendApi'
 import { useNavigate } from '@tanstack/react-router'
-import useToast from '@/hooks/useToast'
+import createToast from '@/hooks/createToast'
 
 interface WateringPlanStatusUpdateProps {
   wateringPlanId: string
@@ -39,7 +47,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const { data: loadedData } = useSuspenseQuery(wateringPlanIdQuery(wateringPlanId))
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const showToast = useToast()
+  const showToast = createToast()
   const [status, setStatus] = useState(() => getWateringPlanStatusDetails(loadedData.status))
 
   const { mutate, isError, error } = useMutation({
@@ -119,12 +127,10 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
           )
         default:
           return (
-            <PrimaryButton
-              onClick={() => onSubmitOtherStatus(status)}
-              type="submit"
-              label="Speichern"
-              className="mt-10"
-            />
+            <Button onClick={() => onSubmitOtherStatus(status)} type="submit" className="mt-10">
+              Speichern
+              <MoveRight className="icon-arrow-animate" />
+            </Button>
           )
       }
     },
@@ -144,9 +150,11 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
         <h1 className="font-lato font-bold text-3xl mb-4 lg:text-4xl xl:text-5xl">
           Status vom Einsatzplan {date} bearbeiten
         </h1>
-        <p className="space-x-3 mb-5">
+        <p className="flex gap-x-3 mb-5">
           <strong>Aktueller Status:</strong>
-          <Pill label={statusDetails.label} theme={statusDetails.color} />
+          <Badge variant={statusDetails.color} size="lg">
+            {statusDetails.label}
+          </Badge>
         </p>
         <p>
           Der Status eines Einsatzes beschreibt, ob der Einsatz beispielsweise aktiv ausgeführt
@@ -158,18 +166,30 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
       </article>
 
       <section className="mt-10">
-        <div className="space-y-6 md:w-1/2">
-          <Select
-            options={WateringPlanStatusOptions}
-            placeholder="Wählen Sie einen Status aus"
-            label="Status des Einsatzes"
-            required
-            value={status.value}
-            onChange={(e) => {
-              console.log(e.target.value)
-              setStatus(getWateringPlanStatusDetails(e.target.value as WateringPlanStatus))
-            }}
-          />
+        <div className="flex flex-col gap-y-6 md:w-1/2">
+          <div className="flex flex-col gap-y-2">
+            <Label htmlFor="status">
+              Status des Einsatzes
+              <span className="text-destructive ml-1">*</span>
+            </Label>
+            <Select
+              value={status.value}
+              onValueChange={(value) => {
+                setStatus(getWateringPlanStatusDetails(value as WateringPlanStatus))
+              }}
+            >
+              <SelectTrigger id="status">
+                <SelectValue placeholder="Wählen Sie einen Status aus" />
+              </SelectTrigger>
+              <SelectContent>
+                {WateringPlanStatusOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         {formByStatus(status.value)}
         <FormError show={isError} error={error?.message} />
@@ -193,7 +213,7 @@ const CancelWateringPlan = ({ onSubmit }: CancelPlanProps) => {
 
   return (
     <form className="md:w-1/2" onSubmit={handleSubmit(onSubmit)}>
-      <Textarea
+      <TextareaField
         placeholder="Warum wurde der Einsatz abgebrochen?"
         label="Grund des Abbruchs"
         error={errors.cancellationNote?.message}
@@ -201,7 +221,10 @@ const CancelWateringPlan = ({ onSubmit }: CancelPlanProps) => {
         {...register('cancellationNote')}
       />
 
-      <PrimaryButton type="submit" label="Speichern" disabled={!isValid} className="mt-10" />
+      <Button type="submit" disabled={!isValid} className="mt-10">
+        Speichern
+        <MoveRight className="icon-arrow-animate" />
+      </Button>
     </form>
   )
 }
@@ -235,7 +258,7 @@ const FinishedWateringPlan = ({ wateringPlanId, onSubmit, loadedData }: Finished
   })
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+    <form className="flex flex-col gap-y-6" onSubmit={handleSubmit(onSubmit)}>
       <fieldset className="mt-6">
         <legend className="block font-semibold text-dark-800 mb-2.5">
           Wasservergabe pro Bewässerungsgruppe:
@@ -243,16 +266,16 @@ const FinishedWateringPlan = ({ wateringPlanId, onSubmit, loadedData }: Finished
         <p className="-mt-2 text-sm text-dark-600 mb-2.5">
           Die Standardwerte ergeben sich aus 80 Litern pro Baum einer Bewässerungsgruppe.
         </p>
-        <ul className="space-y-5">
+        <ul className="flex flex-col gap-y-5">
           {fields.map((field, index) => (
             <li key={field.treeClusterId} className="grid grid-cols-1 gap-y-2 md:grid-cols-2">
               <SelectedCard type="cluster" id={loadedData?.treeclusters[index].id} />
               <div className="relative flex flex-wrap items-center md:mb-3 md:ml-6">
-                <Input
+                <FormField
                   type="number"
                   label="Liter"
                   defaultValue={field.consumedWater}
-                  small
+                  className="max-w-32"
                   hideLabel
                   {...register(`evaluation.${index}.consumedWater`)}
                 />
@@ -263,7 +286,10 @@ const FinishedWateringPlan = ({ wateringPlanId, onSubmit, loadedData }: Finished
         </ul>
       </fieldset>
 
-      <PrimaryButton type="submit" label="Speichern" disabled={!isValid} className="mt-10" />
+      <Button type="submit" disabled={!isValid} className="mt-10">
+        Speichern
+        <MoveRight className="icon-arrow-animate" />
+      </Button>
     </form>
   )
 }

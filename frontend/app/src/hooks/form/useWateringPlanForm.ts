@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { wateringPlanIdQuery, wateringPlanQuery } from '@/api/queries'
-import useToast from '@/hooks/useToast'
+import createToast from '@/hooks/createToast'
 import { useNavigate } from '@tanstack/react-router'
 import {
   WateringPlan,
@@ -25,7 +25,7 @@ export const useWateringPlanForm = <T extends MutationOption>(
   mutationType: T,
   opts: { wateringPlanId?: string; initForm?: DefaultValues<WateringPlanForm> },
 ) => {
-  const showToast = useToast()
+  const showToast = createToast()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 

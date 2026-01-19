@@ -1,7 +1,16 @@
-import PrimaryButton from '../buttons/PrimaryButton'
-import Input from './types/Input'
-import Select from './types/Select'
-import Textarea from './types/Textarea'
+import { MoveRight } from 'lucide-react'
+import {
+  FormField,
+  TextareaField,
+  Label,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  MultiSelect,
+  Button,
+} from '@green-ecolution/ui'
 import FormError from './FormError'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import { User, Vehicle } from '@green-ecolution/backend-client'
@@ -39,15 +48,15 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
 
   return (
     <form
-      className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-11"
+      className="flex flex-col gap-y-6 lg:grid lg:grid-cols-2 lg:gap-11"
       onSubmit={handleSubmit(props.onSubmit)}
     >
-      <div className="space-y-6">
+      <div className="flex flex-col gap-y-6">
         <Controller
           control={control}
           name="date"
           render={({ field: { value, onChange } }) => (
-            <Input
+            <FormField
               label="Datum des Einsatzes"
               error={errors.date?.message}
               required
@@ -57,49 +66,95 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
             />
           )}
         />
-        <Select
-          options={[
-            { label: 'Kein Fahrzeug', value: '-1' },
-            ...props.transporters.map((transporter) => ({
-              label: `${transporter.numberPlate.toString()} · ${getDrivingLicenseDetails(transporter.drivingLicense).label}`,
-              value: transporter.id.toString(),
-            })),
-          ]}
-          placeholder="Wählen Sie ein Fahrzeug aus"
-          label="Verknüpftes Fahrzeug"
-          required
-          error={errors.transporterId?.message}
-          {...register('transporterId')}
+        <Controller
+          name="transporterId"
+          control={control}
+          render={({ field }) => (
+            <div className="flex flex-col gap-y-2">
+              <Label htmlFor="transporterId">
+                Verknüpftes Fahrzeug
+                <span className="text-destructive ml-1">*</span>
+              </Label>
+              <Select
+                value={field.value?.toString()}
+                onValueChange={(val) => field.onChange(Number(val))}
+              >
+                <SelectTrigger id="transporterId">
+                  <SelectValue placeholder="Wählen Sie ein Fahrzeug aus" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="-1">Kein Fahrzeug</SelectItem>
+                  {props.transporters.map((transporter) => (
+                    <SelectItem key={transporter.id} value={transporter.id.toString()}>
+                      {transporter.numberPlate} ·{' '}
+                      {getDrivingLicenseDetails(transporter.drivingLicense).label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.transporterId?.message && (
+                <p className="text-sm text-destructive">{errors.transporterId.message}</p>
+              )}
+            </div>
+          )}
         />
-        <Select
-          options={[
-            { label: 'Keinen Anhänger', value: '-1' },
-            ...props.trailers.map((trailer) => ({
-              label: `${trailer.numberPlate.toString()} · ${getDrivingLicenseDetails(trailer.drivingLicense).label}`,
-              value: trailer.id.toString(),
-            })),
-          ]}
-          placeholder="Wählen Sie einen Anhänger aus, sofern vorhanden"
-          label="Verknüpfter Anhänger"
-          error={errors.trailerId?.message}
-          {...register('trailerId')}
+        <Controller
+          name="trailerId"
+          control={control}
+          render={({ field }) => (
+            <div className="flex flex-col gap-y-2">
+              <Label htmlFor="trailerId">Verknüpfter Anhänger</Label>
+              <Select
+                value={field.value?.toString() ?? '-1'}
+                onValueChange={(val) => field.onChange(val === '-1' ? undefined : Number(val))}
+              >
+                <SelectTrigger id="trailerId">
+                  <SelectValue placeholder="Wählen Sie einen Anhänger aus, sofern vorhanden" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="-1">Keinen Anhänger</SelectItem>
+                  {props.trailers.map((trailer) => (
+                    <SelectItem key={trailer.id} value={trailer.id.toString()}>
+                      {trailer.numberPlate} ·{' '}
+                      {getDrivingLicenseDetails(trailer.drivingLicense).label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.trailerId?.message && (
+                <p className="text-sm text-destructive">{errors.trailerId.message}</p>
+              )}
+            </div>
+          )}
         />
-        <Select
-          options={[
-            ...props.users.map((user) => ({
-              label: `${user.firstName} ${user.lastName} · ${getDrivingLicensesString(user)}`,
-              value: user.id,
-            })),
-          ]}
-          multiple
-          placeholder="Wählen Sie Mitarbeitende aus"
-          label="Verknüpfte Mitarbeitende"
-          description="Indem Sie die Taste »Shift« gedrückt halten, können Sie eine Mehrauswahl tätigen."
-          required
-          error={errors.driverIds?.message}
-          {...register('driverIds')}
+        <Controller
+          name="driverIds"
+          control={control}
+          render={({ field }) => (
+            <div className="flex flex-col gap-y-2">
+              <Label htmlFor="driverIds">
+                Verknüpfte Mitarbeitende
+                <span className="text-destructive ml-1">*</span>
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Indem Sie die Taste »Shift« gedrückt halten, können Sie eine Mehrauswahl tätigen.
+              </p>
+              <MultiSelect
+                id="driverIds"
+                value={field.value}
+                onChange={field.onChange}
+                options={props.users.map((user) => ({
+                  value: user.id,
+                  label: `${user.firstName} ${user.lastName} · ${getDrivingLicensesString(user)}`,
+                }))}
+              />
+              {errors.driverIds?.message && (
+                <p className="text-sm text-destructive">{errors.driverIds.message}</p>
+              )}
+            </div>
+          )}
         />
-        <Textarea
+        <TextareaField
           placeholder="Hier ist Platz für Notizen"
           label="Kurze Beschreibung"
           error={errors.description?.message}
@@ -125,12 +180,10 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
 
       <FormError show={props.displayError} error={props.errorMessage} />
 
-      <PrimaryButton
-        type="submit"
-        label="Speichern"
-        disabled={!isValid}
-        className="mt-10 lg:col-span-full lg:w-fit"
-      />
+      <Button type="submit" disabled={!isValid} className="mt-10 lg:col-span-full lg:w-fit">
+        Speichern
+        <MoveRight className="icon-arrow-animate" />
+      </Button>
     </form>
   )
 }

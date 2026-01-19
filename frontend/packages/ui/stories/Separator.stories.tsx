@@ -12,7 +12,7 @@ type Story = StoryObj<typeof meta>
 
 export const Horizontal: Story = {
   render: () => (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-y-4">
       <div>
         <h4 className="text-sm font-medium">Bauminformationen</h4>
         <p className="text-sm text-muted-foreground">Grundlegende Details zum ausgewählten Baum.</p>
@@ -28,7 +28,7 @@ export const Horizontal: Story = {
 
 export const Vertical: Story = {
   render: () => (
-    <div className="flex h-5 items-center space-x-4 text-sm">
+    <div className="flex h-5 items-center gap-x-4 text-sm">
       <div>Bäume</div>
       <Separator orientation="vertical" />
       <div>Fahrzeuge</div>
@@ -43,12 +43,12 @@ export const Vertical: Story = {
 export const InCard: Story = {
   render: () => (
     <div className="rounded-lg border p-4">
-      <div className="space-y-1">
+      <div className="flex flex-col gap-y-1">
         <h4 className="text-sm font-medium leading-none">Eiche #1234</h4>
         <p className="text-sm text-muted-foreground">Hauptstraße 42</p>
       </div>
       <Separator className="my-4" />
-      <div className="flex h-5 items-center space-x-4 text-sm">
+      <div className="flex h-5 items-center gap-x-4 text-sm">
         <div>Status: Gesund</div>
         <Separator orientation="vertical" />
         <div>Zuletzt bewässert: vor 3 Tagen</div>
@@ -59,8 +59,8 @@ export const InCard: Story = {
 
 export const FormSections: Story = {
   render: () => (
-    <div className="space-y-6">
-      <div className="space-y-2">
+    <div className="flex flex-col gap-y-6">
+      <div className="flex flex-col gap-y-2">
         <h3 className="text-lg font-medium">Allgemeine Informationen</h3>
         <p className="text-sm text-muted-foreground">
           Gib die grundlegenden Informationen zum Baum ein.
@@ -71,7 +71,7 @@ export const FormSections: Story = {
 
       <Separator />
 
-      <div className="space-y-2">
+      <div className="flex flex-col gap-y-2">
         <h3 className="text-lg font-medium">Standort</h3>
         <p className="text-sm text-muted-foreground">Gib den Standort des Baums an.</p>
         <div className="h-10 rounded bg-muted" />
@@ -79,7 +79,7 @@ export const FormSections: Story = {
 
       <Separator />
 
-      <div className="space-y-2">
+      <div className="flex flex-col gap-y-2">
         <h3 className="text-lg font-medium">Zusätzliche Details</h3>
         <p className="text-sm text-muted-foreground">Optionale Informationen zum Baum.</p>
         <div className="h-20 rounded bg-muted" />

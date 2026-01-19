@@ -1,8 +1,18 @@
-import { MoveRight } from 'lucide-react'
+import { MoveRight, X } from 'lucide-react'
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import Modal from '../general/Modal'
-import useToast from '@/hooks/useToast'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+  Button,
+} from '@green-ecolution/ui'
+import createToast from '@/hooks/createToast'
 import { LinkProps, useNavigate } from '@tanstack/react-router'
 
 interface DeleteSectionProps {
@@ -20,7 +30,7 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const navigate = useNavigate()
-  const showToast = useToast()
+  const showToast = createToast()
 
   const actionText = type === 'archive' ? 'archiviert' : 'gelöscht'
 
@@ -54,23 +64,38 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
 
   return (
     <>
-      <button
-        type="submit"
+      <Button
+        variant="link-destructive"
         onClick={() => setIsModalOpen(true)}
-        className="mt-10 group flex items-center gap-x-2 text-red font-medium text-base mb-4"
+        className="mt-10 mb-4 px-0 group"
       >
         {type === 'archive' ? 'Archivieren' : 'Löschen'}
-        <MoveRight className="w-4 h-4 transition-all ease-in-out duration-300 group-hover:translate-x-1" />
-      </button>
+        <MoveRight className="transition-all duration-300 group-hover:translate-x-1" />
+      </Button>
 
-      <Modal
-        title={`Soll ${entityName} wirklich ${actionText} werden?`}
-        description={`Sobald ${entityName} ${actionText} wurde, können die Daten nicht wieder hergestellt werden.`}
-        confirmText="Bestätigen"
-        onConfirm={() => mutate()}
-        onCancel={() => setIsModalOpen(false)}
-        isOpen={isModalOpen}
-      />
+      <AlertDialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Soll {entityName} wirklich {actionText} werden?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Sobald {entityName} {actionText} wurde, können die Daten nicht wieder hergestellt
+              werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              Abbrechen
+              <X />
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => mutate()}>
+              Bestätigen
+              <MoveRight className="icon-arrow-animate" />
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

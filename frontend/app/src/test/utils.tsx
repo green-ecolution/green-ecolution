@@ -2,7 +2,7 @@
 import { ReactElement, ReactNode } from 'react'
 import { render, RenderOptions } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import ToastProvider from '@/context/ToastContext'
+import { Toaster } from '@green-ecolution/ui'
 
 function createTestQueryClient() {
   return new QueryClient({
@@ -27,7 +27,8 @@ function AllProviders({ children }: ProvidersProps) {
   const queryClient = createTestQueryClient()
   return (
     <QueryClientProvider client={queryClient}>
-      <ToastProvider>{children}</ToastProvider>
+      {children}
+      <Toaster />
     </QueryClientProvider>
   )
 }

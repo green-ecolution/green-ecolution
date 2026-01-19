@@ -70,7 +70,7 @@ export const HiddenLabel: Story = {
 
 export const SearchWithInputGroup: Story = {
   render: () => (
-    <div className="space-y-2 max-w-sm">
+    <div className="flex flex-col gap-y-2 max-w-sm">
       <Label htmlFor="search" className="sr-only">
         Suche
       </Label>
@@ -107,7 +107,7 @@ export const TextareaWithError: Story = {
 
 export const FormExample: Story = {
   render: () => (
-    <form className="space-y-4 max-w-md">
+    <form className="flex flex-col gap-y-4 max-w-md">
       <FormField label="Baumname" placeholder="z.B. Eiche #123" required />
       <FormField
         label="Standort"

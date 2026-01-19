@@ -1,12 +1,19 @@
 import { TreeForm } from '@/schema/treeSchema'
-import Input from './types/Input'
-import Select from './types/Select'
+import {
+  FormField,
+  TextareaField,
+  Label,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  Button,
+} from '@green-ecolution/ui'
 import { Sensor, TreeCluster } from '@/api/backendApi'
-import Textarea from './types/Textarea'
-import { MapPin } from 'lucide-react'
-import PrimaryButton from '../buttons/PrimaryButton'
+import { MapPin, MoveRight } from 'lucide-react'
 import FormError from './FormError'
-import { SubmitHandler, useFormContext } from 'react-hook-form'
+import { Controller, SubmitHandler, useFormContext } from 'react-hook-form'
 
 interface FormForTreeProps {
   isReadonly: boolean
@@ -23,17 +30,18 @@ const FormForTree = (props: FormForTreeProps) => {
     register,
     handleSubmit,
     getValues,
+    control,
     formState: { isValid, errors },
   } = useFormContext<TreeForm>()
 
   return (
     <form
-      className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-11"
+      className="flex flex-col gap-y-6 lg:grid lg:grid-cols-2 lg:gap-11"
       onSubmit={handleSubmit(props.onSubmit)}
     >
-      <div className="space-y-6">
+      <div className="flex flex-col gap-y-6">
         {!props.isReadonly && (
-          <Input
+          <FormField
             placeholder="Baumnummer"
             label="Baumnummer"
             required
@@ -42,7 +50,7 @@ const FormForTree = (props: FormForTreeProps) => {
           />
         )}
         {!props.isReadonly && (
-          <Input
+          <FormField
             placeholder="Baumart"
             label="Baumart"
             required
@@ -51,7 +59,7 @@ const FormForTree = (props: FormForTreeProps) => {
           />
         )}
         {!props.isReadonly && (
-          <Input
+          <FormField
             placeholder="Pflanzjahr"
             label="Pflanzjahr"
             type="number"
@@ -61,34 +69,61 @@ const FormForTree = (props: FormForTreeProps) => {
           />
         )}
         {!props.isReadonly && (
-          <Select
-            options={[
-              { label: 'Keine Bewässerungsgruppe', value: '-1' },
-              ...props.treeClusters.map((cluster) => ({
-                label: cluster.name,
-                value: cluster.id.toString(),
-              })),
-            ]}
-            placeholder="Wählen Sie eine Bewässerungsgruppe aus"
-            label="Bewässerungsgruppe"
-            error={errors.treeClusterId?.message}
-            {...register('treeClusterId', { valueAsNumber: true })}
+          <Controller
+            name="treeClusterId"
+            control={control}
+            render={({ field }) => (
+              <div className="flex flex-col gap-y-2">
+                <Label htmlFor="treeClusterId">Bewässerungsgruppe</Label>
+                <Select
+                  value={field.value?.toString() ?? '-1'}
+                  onValueChange={(val) => field.onChange(Number(val))}
+                >
+                  <SelectTrigger id="treeClusterId">
+                    <SelectValue placeholder="Wählen Sie eine Bewässerungsgruppe aus" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="-1">Keine Bewässerungsgruppe</SelectItem>
+                    {props.treeClusters.map((cluster) => (
+                      <SelectItem key={cluster.id} value={cluster.id.toString()}>
+                        {cluster.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.treeClusterId?.message && (
+                  <p className="text-sm text-destructive">{errors.treeClusterId.message}</p>
+                )}
+              </div>
+            )}
           />
         )}
-        <Select
-          options={[
-            { label: 'Kein Sensor', value: '-1' },
-            ...props.sensors.map((sensor) => ({
-              label: `Sensor ${sensor.id.toString()}`,
-              value: sensor.id.toString(),
-            })),
-          ]}
-          placeholder="Wählen Sie einen Sensor aus, sofern vorhanden"
-          label="Verknüpfter Sensor"
-          error={errors.sensorId?.message}
-          {...register('sensorId')}
+        <Controller
+          name="sensorId"
+          control={control}
+          render={({ field }) => (
+            <div className="flex flex-col gap-y-2">
+              <Label htmlFor="sensorId">Verknüpfter Sensor</Label>
+              <Select value={field.value ?? '-1'} onValueChange={field.onChange}>
+                <SelectTrigger id="sensorId">
+                  <SelectValue placeholder="Wählen Sie einen Sensor aus, sofern vorhanden" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="-1">Kein Sensor</SelectItem>
+                  {props.sensors.map((sensor) => (
+                    <SelectItem key={sensor.id} value={sensor.id.toString()}>
+                      Sensor {sensor.id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.sensorId?.message && (
+                <p className="text-sm text-destructive">{errors.sensorId.message}</p>
+              )}
+            </div>
+          )}
         />
-        <Textarea
+        <TextareaField
           placeholder="Hier ist Platz für Notizen"
           label="Kurze Beschreibung"
           error={errors.description?.message}
@@ -109,25 +144,19 @@ const FormForTree = (props: FormForTreeProps) => {
             </p>
           </div>
 
-          <button
-            type="button"
-            className="mt-6 w-fit border border-green-light text-dark-800 px-5 py-2 group flex gap-x-3 rounded-xl items-center transition-all ease-in-out duration-300 hover:border-green-dark hover:text-dark"
-            onClick={props.onChangeLocation}
-          >
-            <span className="font-medium">Standort des Baumes anpassen</span>
-            <MapPin className="text-current" />
-          </button>
+          <Button type="button" variant="outline" onClick={props.onChangeLocation} className="mt-6">
+            Standort des Baumes anpassen
+            <MapPin />
+          </Button>
         </div>
       )}
 
       <FormError show={props.displayError} error={props.errorMessage} />
 
-      <PrimaryButton
-        type="submit"
-        label="Speichern"
-        className="mt-10 lg:col-span-full lg:w-fit"
-        disabled={!isValid}
-      />
+      <Button type="submit" className="mt-10 lg:col-span-full lg:w-fit" disabled={!isValid}>
+        Speichern
+        <MoveRight className="icon-arrow-animate" />
+      </Button>
     </form>
   )
 }

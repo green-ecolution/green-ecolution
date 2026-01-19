@@ -2,7 +2,7 @@ import { createFileRoute, useLoaderData } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import ButtonLink from '@/components/general/links/ButtonLink'
 import { Plus } from 'lucide-react'
-import LoadingInfo from '@/components/general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import FilterProvider from '@/context/FilterContext'
 import TreeClusterList from '@/components/treecluster/TreeClusterList'
 import Pagination from '@/components/general/Pagination'
@@ -12,6 +12,7 @@ import RegionFieldset from '@/components/general/filter/fieldsets/RegionFieldset
 import { GetAllTreeClustersRequest } from '@green-ecolution/backend-client'
 import { z } from 'zod'
 import { treeClusterQuery } from '@/api/queries'
+import { ListCardHeader } from '@green-ecolution/ui'
 
 const treeclusterFilterSchema = z.object({
   wateringStatuses: z.array(z.string()).optional(),
@@ -55,12 +56,12 @@ function Treecluster() {
           </Dialog>
         </div>
 
-        <header className="hidden border-b pb-2 text-sm text-dark-800 px-8 border-b-dark-200 mb-5 lg:grid lg:grid-cols-[1fr,2fr,1.5fr,1fr] lg:gap-5 xl:px-10">
+        <ListCardHeader columns="1fr 2fr 1.5fr 1fr">
           <p>Status</p>
           <p>Name</p>
           <p>Standort</p>
           <p>Anzahl d. Bäume</p>
-        </header>
+        </ListCardHeader>
 
         <TreeClusterList data={clustersRes.data} />
         {clustersRes.pagination && clustersRes.pagination?.totalPages > 1 && (
@@ -87,7 +88,7 @@ const TreeclusterWithProvider = () => {
 export const Route = createFileRoute('/_protected/treecluster/')({
   component: TreeclusterWithProvider,
   validateSearch: treeclusterFilterSchema,
-  pendingComponent: () => <LoadingInfo label="Daten werden geladen" />,
+  pendingComponent: () => <Loading className="mt-20 justify-center" label="Daten werden geladen" />,
   loaderDeps: ({ search }: { search: GetAllTreeClustersRequest }) => ({
     wateringStatuses:
       search.wateringStatuses && search.wateringStatuses.length > 0

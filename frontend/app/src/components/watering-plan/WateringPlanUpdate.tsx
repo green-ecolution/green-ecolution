@@ -9,7 +9,7 @@ import { Route } from '@/routes'
 import useStore from '@/store/store'
 import GeneralLink from '../general/links/GeneralLink'
 import { showWateringPlanStatusButton } from '@/hooks/details/useDetailsForWateringPlanStatus'
-import LoadingInfo from '../general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import { Suspense } from 'react'
 import DeleteSection from '../treecluster/DeleteSection'
 import { wateringPlanApi } from '@/api/backendApi'
@@ -17,7 +17,17 @@ import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
 import { WateringPlanForm, wateringPlanSchemaBase } from '@/schema/wateringPlanSchema'
 import { FormProvider, SubmitHandler } from 'react-hook-form'
 import { safeJsonStorageParse } from '@/lib/utils'
-import Modal from '../general/Modal'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@green-ecolution/ui'
+import { MoveRight, X } from 'lucide-react'
 
 interface WateringPlanUpdateProps {
   wateringPlanId: string
@@ -137,7 +147,11 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         </FormProvider>
       </section>
 
-      <Suspense fallback={<LoadingInfo label="Der Einsatzplan wird gelöscht" />}>
+      <Suspense
+        fallback={
+          <Loading className="mt-20 justify-center" label="Der Einsatzplan wird gelöscht" />
+        }
+      >
         <DeleteSection
           mutationFn={handleDeleteWateringPlan}
           entityName="der Einsatzplan"
@@ -145,14 +159,27 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         />
       </Suspense>
 
-      <Modal
-        title="Seite verlassen?"
-        description={navigationBlocker.message}
-        confirmText="Verlassen"
-        isOpen={navigationBlocker.isModalOpen}
-        onConfirm={navigationBlocker.confirmLeave}
-        onCancel={navigationBlocker.closeModal}
-      />
+      <AlertDialog
+        open={navigationBlocker.isModalOpen}
+        onOpenChange={(open) => !open && navigationBlocker.closeModal()}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Seite verlassen?</AlertDialogTitle>
+            <AlertDialogDescription>{navigationBlocker.message}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={navigationBlocker.closeModal}>
+              Abbrechen
+              <X />
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={navigationBlocker.confirmLeave}>
+              Verlassen
+              <MoveRight className="icon-arrow-animate" />
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

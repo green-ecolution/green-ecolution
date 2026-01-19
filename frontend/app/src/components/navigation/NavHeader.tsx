@@ -1,13 +1,16 @@
 import { Link } from '@tanstack/react-router'
 import { X } from 'lucide-react'
 import React from 'react'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { Button } from '@green-ecolution/ui'
 
 interface NavHeader {
-  isOpen: boolean
   closeSidebar: () => void
 }
 
-const NavHeader: React.FC<NavHeader> = ({ isOpen, closeSidebar }) => {
+const NavHeader: React.FC<NavHeader> = ({ closeSidebar }) => {
+  const isLargeScreen = useMediaQuery('(min-width: 1024px)')
+
   return (
     <div className="relative mb-10 flex items-center justify-between">
       <Link
@@ -27,15 +30,17 @@ const NavHeader: React.FC<NavHeader> = ({ isOpen, closeSidebar }) => {
           alt="Logo von Green Ecolution"
         />
       </Link>
-      <button
-        type="button"
-        aria-label="Hauptnavigation schließen"
-        className={`mr-2 w-8 h-8 flex items-center justify-center transition-colors ease-in-out duration-300 bg-dark-600 rounded-full lg:hidden 
-            ${isOpen ? 'lg:flex' : 'lg:hidden'}`}
-        onClick={closeSidebar}
-      >
-        <X className="w-5 h-5 text-white" />
-      </button>
+      {!isLargeScreen && (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Hauptnavigation schließen"
+          className="mr-2 size-8 rounded-full bg-dark-600 hover:bg-dark-500"
+          onClick={closeSidebar}
+        >
+          <X className="text-white" />
+        </Button>
+      )}
     </div>
   )
 }

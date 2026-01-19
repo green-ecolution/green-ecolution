@@ -1,12 +1,12 @@
 import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { AlertCircle, CheckCircle2, Info, TriangleAlert } from 'lucide-react'
+import { CheckCircle2, Info, TriangleAlert } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
 const alertVariants = cva(
   [
-    'relative rounded-xl border shadow-cards',
+    'relative rounded-2xl border shadow-cards',
     'transition-all duration-200 ease-out',
     'animate-in fade-in-0 slide-in-from-top-1',
   ],
@@ -14,14 +14,14 @@ const alertVariants = cva(
     variants: {
       variant: {
         default: 'border-dark-100 bg-white text-foreground',
-        info: 'border-green-light-200 bg-green-light-50 border-l-4 border-l-green-light',
-        destructive: 'border-red-100 bg-red-50 border-l-4 border-l-red',
-        warning: 'border-yellow-100 bg-yellow-50 border-l-4 border-l-yellow',
-        success: 'border-green-dark-100 bg-green-dark-50 border-l-4 border-l-green-dark',
+        info: 'border-green-light-200 bg-green-light-50',
+        destructive: 'border-red-100 bg-red-50',
+        warning: 'border-yellow-100 bg-yellow-50',
+        success: 'border-green-dark-100 bg-green-dark-50',
       },
       size: {
-        default: 'w-full p-6',
-        compact: 'w-fit px-4 py-3 rounded-2xl border-l-0 shadow-none',
+        default: 'w-fit p-4',
+        compact: 'w-fit px-3 py-2 rounded-xl shadow-none',
       },
     },
     defaultVariants: {
@@ -68,7 +68,7 @@ const alertIconVariants = cva('size-5 shrink-0', {
 const variantIcons = {
   default: Info,
   info: Info,
-  destructive: AlertCircle,
+  destructive: TriangleAlert,
   warning: TriangleAlert,
   success: CheckCircle2,
 } as const
@@ -93,7 +93,7 @@ AlertIcon.displayName = 'AlertIcon'
 
 const AlertContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('flex-1 space-y-1', className)} {...props} />
+    <div ref={ref} className={cn('flex-1 flex flex-col gap-y-1', className)} {...props} />
   ),
 )
 AlertContent.displayName = 'AlertContent'

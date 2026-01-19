@@ -1,10 +1,19 @@
 import BackLink from '../general/links/BackLink'
-import Pill from '../general/Pill'
+import {
+  Alert,
+  AlertContent,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
+  Badge,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from '@green-ecolution/ui'
 import GeneralLink from '../general/links/GeneralLink'
 import ButtonLink from '../general/links/ButtonLink'
-import { File, Info, Pencil } from 'lucide-react'
-import Tabs from '../general/Tabs'
-import { useMemo } from 'react'
+import { File, Pencil } from 'lucide-react'
 import TreeIcon from '../icons/Tree'
 import SensorIcon from '../icons/Sensor'
 import TabWateringStatus from './TabWateringStatus'
@@ -18,35 +27,16 @@ interface TreeDashboardProps {
 }
 
 const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
-  const tabs = useMemo(
-    () => [
-      {
-        label: 'Bewässerungsdaten',
-        icon: <TreeIcon className="w-5 h-5" />,
-        view: <TabWateringStatus tree={tree} />,
-      },
-      {
-        label: 'Allgemeine Daten',
-        icon: <File className="w-5 h-5" />,
-        view: <TabGeneralData tree={tree} />,
-      },
-      {
-        label: 'Sensordaten',
-        icon: <SensorIcon className="w-5 h-5" />,
-        view: <TabSensorData tree={tree} />,
-      },
-    ],
-    [tree],
-  )
-
   return (
     <>
       <BackLink link={{ to: '/trees' }} label="Zu allen Bäumen" />
-      <article className="space-y-6 2xl:space-y-0 2xl:flex 2xl:items-center 2xl:space-x-10">
+      <article className="flex flex-col gap-y-6 2xl:flex-row 2xl:items-center 2xl:gap-x-10">
         <div className="2xl:w-4/5">
           <h1 className="font-lato font-bold text-3xl mb-4 flex flex-wrap items-center gap-4 lg:text-4xl xl:text-5xl">
             Baum: {tree.number}
-            <Pill label={tree.provider ?? 'manuell erstellt'} theme="green-light" />
+            <Badge variant="green-dark" size="lg">
+              {tree.provider ?? 'manuell erstellt'}
+            </Badge>
           </h1>
           {tree.treeClusterId && treeCluster ? (
             <p className="text-dark-600 text-lg">
@@ -99,20 +89,47 @@ const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
       </article>
 
       {tree?.sensor ? (
-        <Tabs tabs={tabs} />
+        <Tabs defaultValue="watering" className="mt-10">
+          <TabsList>
+            <TabsTrigger value="watering">
+              <TreeIcon className="w-5 h-5" />
+              <span className="hidden group-data-[state=active]:block lg:block">
+                Bewässerungsdaten
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="general">
+              <File className="w-5 h-5" />
+              <span className="hidden group-data-[state=active]:block lg:block">
+                Allgemeine Daten
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="sensor">
+              <SensorIcon className="w-5 h-5" />
+              <span className="hidden group-data-[state=active]:block lg:block">Sensordaten</span>
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="watering">
+            <TabWateringStatus tree={tree} />
+          </TabsContent>
+          <TabsContent value="general">
+            <TabGeneralData tree={tree} />
+          </TabsContent>
+          <TabsContent value="sensor">
+            <TabSensorData tree={tree} />
+          </TabsContent>
+        </Tabs>
       ) : (
         <section className="mt-10">
-          <div className="bg-white mb-10 border-dark-50 shadow-cards h-full p-6 rounded-xl group flex flex-col gap-4 border">
-            <h3 className="font-lato text-lg text-dark font-semibold flex items-center gap-x-3">
-              <Info className="text-dark-600 w-5 h-5" />
-              Hinweis: Dieser Baum ist nicht mit einem Sensor ausgestattet.
-            </h3>
-            <p>
-              Dieser Baum wurde bisher nicht mit einem Sensor ausgestattet, sodass keine
-              Informationen über den aktuellen Bewässerungszustand angezeigt werden können. Aus
-              diesem Grund wird der Bewässerungszustand als unbekannt ausgezeichnet.
-            </p>
-          </div>
+          <Alert variant="info" className="flex gap-4 mb-10">
+            <AlertIcon variant="info" />
+            <AlertContent>
+              <AlertTitle>Dieser Baum ist nicht mit einem Sensor ausgestattet</AlertTitle>
+              <AlertDescription>
+                Es können keine Informationen über den aktuellen Bewässerungszustand angezeigt
+                werden. Der Bewässerungszustand wird als unbekannt ausgezeichnet.
+              </AlertDescription>
+            </AlertContent>
+          </Alert>
           <TabGeneralData tree={tree} />
         </section>
       )}

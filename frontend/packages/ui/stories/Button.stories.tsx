@@ -168,7 +168,7 @@ export const LinkWithArrow: Story = {
 
 export const NavigationLinks: Story = {
   render: () => (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-y-4">
       <div>
         <Button variant="nav" className="group p-0 h-auto">
           <MoveLeft className="mr-2 h-4 w-4 transition-all duration-300 group-hover:-translate-x-1" />
@@ -183,6 +183,21 @@ export const NavigationLinks: Story = {
           <MoveRight className="ml-2 h-4 w-4 transition-all duration-300 group-hover:translate-x-1" />
         </Button>
       </div>
+    </div>
+  ),
+}
+
+export const WithAnimatedArrow: Story = {
+  render: () => (
+    <div className="flex flex-col gap-4">
+      <Button>
+        Anwenden
+        <MoveRight className="transition-transform duration-300 ease-in-out group-hover:translate-x-2" />
+      </Button>
+      <Button variant="outline">
+        Weiter
+        <MoveRight className="transition-transform duration-300 ease-in-out group-hover:translate-x-2" />
+      </Button>
     </div>
   ),
 }

@@ -73,7 +73,7 @@ export const AllVariants: Story = {
 
 export const ExampleUseCases: Story = {
   render: () => (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-y-4">
       <div>
         <h4 className="mb-2 text-sm font-medium">Baum-Aktionen</h4>
         <div className="flex gap-2">

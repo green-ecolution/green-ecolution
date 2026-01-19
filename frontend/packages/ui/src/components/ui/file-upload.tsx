@@ -45,7 +45,7 @@ const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
     }
 
     return (
-      <div data-slot="file-upload" className={cn('space-y-2', className)}>
+      <div data-slot="file-upload" className={cn('flex flex-col gap-y-2', className)}>
         {label && (
           <Label htmlFor={inputId} className={cn(error && 'text-destructive')}>
             {label}

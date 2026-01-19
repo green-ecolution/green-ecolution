@@ -1,11 +1,13 @@
 import { treeClusterIdQuery, treeIdQuery } from '@/api/queries'
-import LoadingInfo from '@/components/general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import TreeDashboard from '@/components/tree/TreeDashboard'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_protected/trees/$treeId/')({
-  pendingComponent: () => <LoadingInfo label="Baumdaten werden geladen …" />,
+  pendingComponent: () => (
+    <Loading className="mt-20 justify-center" label="Baumdaten werden geladen …" />
+  ),
   component: SingleTree,
   loader: ({ context: { queryClient }, params }) =>
     queryClient.prefetchQuery(treeIdQuery(params.treeId)),

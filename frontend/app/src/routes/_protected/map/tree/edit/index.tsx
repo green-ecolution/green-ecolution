@@ -1,6 +1,16 @@
 import { DragableMarker } from '@/components/map/MapMarker'
 import MapSelectEntitiesModal from '@/components/map/MapSelectEntitiesModal'
-import Modal from '@/components/general/Modal'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@green-ecolution/ui'
+import { MoveRight, X } from 'lucide-react'
 import { safeJsonStorageParse } from '@/lib/utils'
 import { TreeForm, treeSchemaBase } from '@/schema/treeSchema'
 import { useMapStore } from '@/store/store'
@@ -112,7 +122,7 @@ function EditTree() {
         onCancel={() => void handleNavigateBack()}
         title="Baum erfassen:"
         content={
-          <ul className="space-y-3">
+          <ul className="flex flex-col gap-y-3">
             <li className="text-dark-600">
               {treeLatLng ? (
                 <>
@@ -131,14 +141,27 @@ function EditTree() {
         <DragableMarker position={treeLatLng} onMove={(latlng) => setTreeLatLng(latlng)} />
       )}
 
-      <Modal
-        title="Seite verlassen?"
-        description="Möchtest du die Seite wirklich verlassen? Deine Eingaben gehen verloren, wenn du jetzt gehst."
-        confirmText="Verlassen"
-        isOpen={status === 'blocked'}
-        onConfirm={handleConfirmLeave}
-        onCancel={() => reset?.()}
-      />
+      <AlertDialog open={status === 'blocked'} onOpenChange={(open) => !open && reset?.()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Seite verlassen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchtest du die Seite wirklich verlassen? Deine Eingaben gehen verloren, wenn du jetzt
+              gehst.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => reset?.()}>
+              Abbrechen
+              <X />
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmLeave}>
+              Verlassen
+              <MoveRight className="icon-arrow-animate" />
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

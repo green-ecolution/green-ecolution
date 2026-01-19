@@ -1,6 +1,5 @@
 import React from 'react'
-import GeneralStatusCard from '../general/cards/GeneralStatusCard'
-import EntitiesStatusCard from '../general/cards/EntitiesStatusCard'
+import { StatusCard } from '@green-ecolution/ui'
 import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
 import { format } from 'date-fns'
 import GeneralLink from '../general/links/GeneralLink'
@@ -19,23 +18,28 @@ const TabSensorData: React.FC<TabSensorDataProps> = ({ tree }) => {
     ? format(new Date(tree?.sensor?.latestData?.updatedAt).getTime(), 'HH:mm')
     : 'Keine Angabe'
 
-  const sensorStatus = tree?.sensor?.status ?? SensorStatus.SensorStatusUnknown
+  const sensorStatusDetails = getSensorStatusDetails(
+    tree?.sensor?.status ?? SensorStatus.SensorStatusUnknown,
+  )
 
   return (
     <>
-      <ul className="mb-5 space-y-5 md:space-y-0 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
+      <ul className="mb-5 flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
         <li>
-          <EntitiesStatusCard
-            statusDetails={getSensorStatusDetails(sensorStatus)}
+          <StatusCard
+            status={sensorStatusDetails.color}
+            indicator="dot"
             label="Status der Sensoren"
+            value={sensorStatusDetails.label}
+            description={sensorStatusDetails.description}
           />
         </li>
         <li>
-          <GeneralStatusCard
-            overline="Akkustand"
+          <StatusCard
+            label="Akkustand"
             value={
               tree?.sensor?.latestData?.battery
-                ? `${tree?.sensor?.latestData?.battery.toFixed(2)} V`
+                ? `${tree.sensor.latestData.battery.toFixed(2)} V`
                 : 'Keine Angabe'
             }
             isLarge
@@ -43,9 +47,9 @@ const TabSensorData: React.FC<TabSensorDataProps> = ({ tree }) => {
           />
         </li>
         <li>
-          <GeneralStatusCard
-            overline="Letzte Messung"
-            value={tree?.sensor?.latestData?.updatedAt ? `${updatedTime} Uhr` : `Keine Angabe`}
+          <StatusCard
+            label="Letzte Messung"
+            value={tree?.sensor?.latestData?.updatedAt ? `${updatedTime} Uhr` : 'Keine Angabe'}
             isLarge
             description={`am ${updatedDate}`}
           />

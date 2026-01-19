@@ -1,16 +1,17 @@
 import { wateringPlanQuery } from '@/api/queries'
 import WateringPlanCard from '@/components/general/cards/WateringPlanCard'
-import LoadingInfo from '@/components/general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import ButtonLink from '@/components/general/links/ButtonLink'
 import Pagination from '@/components/general/Pagination'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useLoaderData } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { z } from 'zod'
+import { ListCardHeader } from '@green-ecolution/ui'
 
 export const Route = createFileRoute('/_protected/watering-plans/')({
   component: WateringPlans,
-  pendingComponent: () => <LoadingInfo label="Daten werden geladen" />,
+  pendingComponent: () => <Loading className="mt-20 justify-center" label="Daten werden geladen" />,
   validateSearch: z.object({
     page: z.number().default(1),
   }),
@@ -50,13 +51,13 @@ function WateringPlans() {
       </article>
 
       <section className="mt-10">
-        <header className="hidden border-b pb-2 text-sm text-dark-800 px-8 border-b-dark-200 mb-5 lg:grid lg:grid-cols-[1.3fr,1.5fr,1fr,1.5fr,1.5fr] lg:gap-5 xl:px-10">
+        <ListCardHeader columns="1.3fr 1.5fr 1fr 1.5fr 1.5fr">
           <p>Status</p>
           <p>Datum & Fahrzeug</p>
           <p>Länge</p>
           <p>Mitarbeitenden</p>
           <p>Bewässerungsgruppen</p>
-        </header>
+        </ListCardHeader>
         <ul>
           {wateringPlanRes.data?.length === 0 ? (
             <li className="text-center text-dark-600 mt-10">

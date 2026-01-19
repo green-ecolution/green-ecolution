@@ -1,6 +1,6 @@
 import ZoomControls from '@/components/map/ZoomControls'
 import { Suspense } from 'react'
-import LoadingInfo from '@/components/general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import ShowRoutePreview from '../map/marker/ShowRoutePreview'
 import { WithTreesAndClusters } from '../map/marker/WithAllClusterAndTrees'
 import { Tree, TreeCluster, WateringPlan } from '@green-ecolution/backend-client'
@@ -30,7 +30,7 @@ const WateringPlanPreviewRoute = ({ wateringPlan }: WateringPlanPreviewRouteProp
   return (
     <Map width="100%" height="40rem">
       <ZoomControls />
-      <Suspense fallback={<LoadingInfo label="Lade Karte..." />}>
+      <Suspense fallback={<Loading className="mt-20 justify-center" label="Lade Karte..." />}>
         <ShowRoutePreview
           selectedClustersIds={wateringPlan.treeclusters.map((tc) => tc.id)}
           transporterId={wateringPlan.transporter.id}
