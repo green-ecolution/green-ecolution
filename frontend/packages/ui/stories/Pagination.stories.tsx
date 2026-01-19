@@ -128,7 +128,7 @@ export const TreeListPagination: Story = {
     const totalPages = 50
 
     return (
-      <div className="space-y-4">
+      <div className="flex flex-col gap-y-4">
         <p className="text-sm text-muted-foreground">
           Zeige Bäume {(currentPage - 1) * 20 + 1} - {Math.min(currentPage * 20, 1000)} von 1000
         </p>

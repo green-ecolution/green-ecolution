@@ -93,7 +93,7 @@ export const Success: Story = {
 
 export const AllVariants: Story = {
   render: () => (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-y-4">
       <Alert className="flex gap-4">
         <AlertIcon variant="default" />
         <AlertContent>
@@ -183,7 +183,7 @@ export const InlineAlertExample: Story = {
 
 export const InlineAlertVariants: Story = {
   render: () => (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-y-4">
       <div>
         <h4 className="mb-2 text-sm font-medium text-muted-foreground">Standard</h4>
         <InlineAlert variant="default" description="Eine neutrale Inline-Meldung." />
@@ -210,7 +210,7 @@ export const InlineAlertVariants: Story = {
 
 export const InlineAlertUseCases: Story = {
   render: () => (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-y-4">
       <div>
         <h4 className="mb-2 text-sm font-medium">Validierungsfehler</h4>
         <InlineAlert description="Bitte füllen Sie alle Pflichtfelder aus." />
@@ -239,13 +239,13 @@ export const InlineAlertUseCases: Story = {
 
 export const InFormContext: Story = {
   render: () => (
-    <div className="max-w-md space-y-4 rounded-xl border border-dark-100 p-6">
+    <div className="max-w-md flex flex-col gap-y-4 rounded-xl border border-dark-100 p-6">
       <h3 className="font-lato text-lg font-semibold">Baum bearbeiten</h3>
       <InlineAlert
         variant="warning"
         description="Dieser Baum hat seit 14 Tagen keine Bewässerung erhalten."
       />
-      <div className="space-y-2">
+      <div className="flex flex-col gap-y-2">
         <label className="text-sm font-medium">Baumart</label>
         <input
           type="text"
@@ -253,7 +253,7 @@ export const InFormContext: Story = {
           defaultValue="Eiche"
         />
       </div>
-      <div className="space-y-2">
+      <div className="flex flex-col gap-y-2">
         <label className="text-sm font-medium">Standort</label>
         <input
           type="text"

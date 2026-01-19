@@ -30,7 +30,7 @@ const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
   return (
     <>
       <BackLink link={{ to: '/trees' }} label="Zu allen Bäumen" />
-      <article className="space-y-6 2xl:space-y-0 2xl:flex 2xl:items-center 2xl:space-x-10">
+      <article className="flex flex-col gap-y-6 2xl:flex-row 2xl:items-center 2xl:gap-x-10">
         <div className="2xl:w-4/5">
           <h1 className="font-lato font-bold text-3xl mb-4 flex flex-wrap items-center gap-4 lg:text-4xl xl:text-5xl">
             Baum: {tree.number}

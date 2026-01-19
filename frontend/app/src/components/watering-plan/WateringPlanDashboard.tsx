@@ -74,7 +74,7 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
   return (
     <>
       <BackLink link={{ to: '/watering-plans' }} label="Alle Einsatzpläne" />
-      <article className="space-y-6 xl:space-y-0 xl:flex xl:items-start xl:space-x-10">
+      <article className="flex flex-col gap-y-6 xl:flex-row xl:items-start xl:gap-x-10">
         <div className="xl:w-4/5">
           <h1 className="font-lato font-bold text-3xl mb-4 flex flex-wrap items-center gap-4 lg:text-4xl xl:text-5xl">
             Einsatzplan für den {date}

@@ -150,7 +150,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
         <h1 className="font-lato font-bold text-3xl mb-4 lg:text-4xl xl:text-5xl">
           Status vom Einsatzplan {date} bearbeiten
         </h1>
-        <p className="space-x-3 mb-5">
+        <p className="flex gap-x-3 mb-5">
           <strong>Aktueller Status:</strong>
           <Badge variant={statusDetails.color} size="lg">
             {statusDetails.label}
@@ -166,8 +166,8 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
       </article>
 
       <section className="mt-10">
-        <div className="space-y-6 md:w-1/2">
-          <div className="space-y-2">
+        <div className="flex flex-col gap-y-6 md:w-1/2">
+          <div className="flex flex-col gap-y-2">
             <Label htmlFor="status">
               Status des Einsatzes
               <span className="text-destructive ml-1">*</span>
@@ -258,7 +258,7 @@ const FinishedWateringPlan = ({ wateringPlanId, onSubmit, loadedData }: Finished
   })
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+    <form className="flex flex-col gap-y-6" onSubmit={handleSubmit(onSubmit)}>
       <fieldset className="mt-6">
         <legend className="block font-semibold text-dark-800 mb-2.5">
           Wasservergabe pro Bewässerungsgruppe:
@@ -266,7 +266,7 @@ const FinishedWateringPlan = ({ wateringPlanId, onSubmit, loadedData }: Finished
         <p className="-mt-2 text-sm text-dark-600 mb-2.5">
           Die Standardwerte ergeben sich aus 80 Litern pro Baum einer Bewässerungsgruppe.
         </p>
-        <ul className="space-y-5">
+        <ul className="flex flex-col gap-y-5">
           {fields.map((field, index) => (
             <li key={field.treeClusterId} className="grid grid-cols-1 gap-y-2 md:grid-cols-2">
               <SelectedCard type="cluster" id={loadedData?.treeclusters[index].id} />

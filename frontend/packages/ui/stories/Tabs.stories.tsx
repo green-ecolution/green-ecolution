@@ -29,7 +29,7 @@ export const Default: Story = {
         </TabsTrigger>
       </TabsList>
       <TabsContent value="watering">
-        <div className="space-y-4">
+        <div className="flex flex-col gap-y-4">
           <h3 className="font-semibold">Bewässerungsstatus</h3>
           <p className="text-muted-foreground">
             Aktuelle Informationen zum Bewässerungszustand des Baums.
@@ -37,7 +37,7 @@ export const Default: Story = {
         </div>
       </TabsContent>
       <TabsContent value="general">
-        <div className="space-y-4">
+        <div className="flex flex-col gap-y-4">
           <h3 className="font-semibold">Allgemeine Informationen</h3>
           <p className="text-muted-foreground">
             Stammdaten und allgemeine Eigenschaften des Baums.
@@ -45,7 +45,7 @@ export const Default: Story = {
         </div>
       </TabsContent>
       <TabsContent value="sensors">
-        <div className="space-y-4">
+        <div className="flex flex-col gap-y-4">
           <h3 className="font-semibold">Sensormesswerte</h3>
           <p className="text-muted-foreground">Live-Daten der verbundenen Sensoren.</p>
         </div>
@@ -138,19 +138,19 @@ export const VehicleTabs: Story = {
         </TabsTrigger>
       </TabsList>
       <TabsContent value="info">
-        <div className="space-y-4">
+        <div className="flex flex-col gap-y-4">
           <h3 className="font-semibold">Fahrzeuginformationen</h3>
           <p className="text-muted-foreground">Details zum ausgewählten Fahrzeug.</p>
         </div>
       </TabsContent>
       <TabsContent value="routes">
-        <div className="space-y-4">
+        <div className="flex flex-col gap-y-4">
           <h3 className="font-semibold">Zugewiesene Routen</h3>
           <p className="text-muted-foreground">Aktive und geplante Bewässerungsrouten.</p>
         </div>
       </TabsContent>
       <TabsContent value="settings">
-        <div className="space-y-4">
+        <div className="flex flex-col gap-y-4">
           <h3 className="font-semibold">Fahrzeugeinstellungen</h3>
           <p className="text-muted-foreground">Konfiguration und Wartungsintervalle.</p>
         </div>

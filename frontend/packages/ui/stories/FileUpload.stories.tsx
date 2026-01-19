@@ -87,7 +87,7 @@ export const ImportDataExample: Story = {
   render: function Render() {
     const [file, setFile] = useState<File | null>(null)
     return (
-      <div className="max-w-md space-y-4">
+      <div className="max-w-md flex flex-col gap-y-4">
         <h3 className="text-lg font-semibold">Baumdaten importieren</h3>
         <p className="text-sm text-muted-foreground">
           Laden Sie eine CSV-Datei mit Baumdaten hoch, um diese in das System zu importieren.
@@ -109,7 +109,7 @@ export const SensorDataImport: Story = {
   render: function Render() {
     const [file, setFile] = useState<File | null>(null)
     return (
-      <div className="max-w-md space-y-4">
+      <div className="max-w-md flex flex-col gap-y-4">
         <h3 className="text-lg font-semibold">Sensordaten importieren</h3>
         <p className="text-sm text-muted-foreground">
           Importieren Sie historische Sensordaten als JSON-Datei.

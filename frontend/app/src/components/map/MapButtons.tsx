@@ -14,7 +14,7 @@ const MapButtons = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   return (
     <div className="relative">
-      <div className="absolute z-[1000] space-y-2 top-6 left-36 flex space-x-2">
+      <div className="absolute z-[1000] top-6 left-36 flex gap-2">
         <Button
           variant="outline"
           size="icon"

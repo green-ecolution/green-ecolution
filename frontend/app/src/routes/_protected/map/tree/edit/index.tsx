@@ -122,7 +122,7 @@ function EditTree() {
         onCancel={() => void handleNavigateBack()}
         title="Baum erfassen:"
         content={
-          <ul className="space-y-3">
+          <ul className="flex flex-col gap-y-3">
             <li className="text-dark-600">
               {treeLatLng ? (
                 <>

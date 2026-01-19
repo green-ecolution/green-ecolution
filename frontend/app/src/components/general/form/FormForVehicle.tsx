@@ -36,7 +36,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
 
   return (
     <form
-      className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-y-6 lg:gap-x-11"
+      className="flex flex-col gap-y-6 lg:grid lg:grid-cols-2 lg:gap-y-6 lg:gap-x-11"
       onSubmit={handleSubmit(props.onSubmit)}
     >
       <FormField
@@ -57,7 +57,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         name="type"
         control={control}
         render={({ field }) => (
-          <div className="space-y-2">
+          <div className="flex flex-col gap-y-2">
             <Label htmlFor="type">
               Fahrzeugtyp
               <span className="text-destructive ml-1">*</span>
@@ -92,7 +92,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         name="status"
         control={control}
         render={({ field }) => (
-          <div className="space-y-2">
+          <div className="flex flex-col gap-y-2">
             <Label htmlFor="status">
               Aktueller Status
               <span className="text-destructive ml-1">*</span>
@@ -119,7 +119,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         name="drivingLicense"
         control={control}
         render={({ field }) => (
-          <div className="space-y-2">
+          <div className="flex flex-col gap-y-2">
             <Label htmlFor="drivingLicense">
               Führerscheinklasse
               <span className="text-destructive ml-1">*</span>

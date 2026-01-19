@@ -93,7 +93,7 @@ AlertIcon.displayName = 'AlertIcon'
 
 const AlertContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('flex-1 space-y-1', className)} {...props} />
+    <div ref={ref} className={cn('flex-1 flex flex-col gap-y-1', className)} {...props} />
   ),
 )
 AlertContent.displayName = 'AlertContent'

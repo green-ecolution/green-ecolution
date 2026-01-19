@@ -18,7 +18,7 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
 
   return (
     <>
-      <ul className="space-y-5 md:space-y-0 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-4">
+      <ul className="flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-4">
         <li>
           <StatusCard
             status={wateringStatus.color}
@@ -78,7 +78,7 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
           <div className="lg:grid lg:grid-cols-[auto_15rem] lg:items-end lg:gap-x-10 xl:gap-x-20 xl:grid-cols-[auto_20rem]">
             <div aria-hidden="true" className="mb-10 lg:mb-0 lg:w-60 lg:col-start-2 xl:w-80">
               <TreeDeciduous className="w-11 h-11 mx-auto mb-4" />
-              <ul className="space-y-3">
+              <ul className="flex flex-col gap-y-3">
                 {tree?.sensor.latestData.watermarks.map((watermark) => (
                   <li key={watermark.depth} className={`rounded-xl text-center py-3 bg-dark-50`}>
                     <p className={`inline relative pl-8`}>
@@ -100,11 +100,11 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
                 <p>Ohmscher Widerstand</p>
               </header>
 
-              <ul className="space-y-3 lg:space-y-0">
+              <ul className="flex flex-col gap-y-3 lg:contents">
                 {tree?.sensor.latestData.watermarks.map((watermark) => (
                   <li
                     key={watermark.depth}
-                    className="space-y-3 border-b border-b-dark-300 pb-3 lg:py-3 lg:space-y-0 lg:grid lg:grid-cols-3 lg:gap-5"
+                    className="flex flex-col gap-y-3 border-b border-b-dark-300 pb-3 lg:py-3 lg:grid lg:grid-cols-3 lg:gap-5"
                   >
                     <h3 className="font-medium text-lg">
                       <span className="lg:hidden">Bodentiefe von </span>

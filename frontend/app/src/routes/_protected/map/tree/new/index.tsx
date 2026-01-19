@@ -45,7 +45,7 @@ function NewTree() {
         title="Baum erfassen:"
         disabled={!treeLatLng}
         content={
-          <ul className="space-y-3">
+          <ul className="flex flex-col gap-y-3">
             <li className="text-dark-600">
               {treeLatLng ? (
                 <>

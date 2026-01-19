@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 import { Badge, type BadgeProps } from './badge'
 
-const statusCardVariants = cva('h-full space-y-3 rounded-xl p-6', {
+const statusCardVariants = cva('h-full flex flex-col gap-y-3 rounded-xl p-6', {
   variants: {
     status: {
       // Base variants

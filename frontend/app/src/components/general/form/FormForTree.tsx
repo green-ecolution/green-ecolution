@@ -36,10 +36,10 @@ const FormForTree = (props: FormForTreeProps) => {
 
   return (
     <form
-      className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-11"
+      className="flex flex-col gap-y-6 lg:grid lg:grid-cols-2 lg:gap-11"
       onSubmit={handleSubmit(props.onSubmit)}
     >
-      <div className="space-y-6">
+      <div className="flex flex-col gap-y-6">
         {!props.isReadonly && (
           <FormField
             placeholder="Baumnummer"
@@ -73,7 +73,7 @@ const FormForTree = (props: FormForTreeProps) => {
             name="treeClusterId"
             control={control}
             render={({ field }) => (
-              <div className="space-y-2">
+              <div className="flex flex-col gap-y-2">
                 <Label htmlFor="treeClusterId">Bewässerungsgruppe</Label>
                 <Select
                   value={field.value?.toString() ?? '-1'}
@@ -102,7 +102,7 @@ const FormForTree = (props: FormForTreeProps) => {
           name="sensorId"
           control={control}
           render={({ field }) => (
-            <div className="space-y-2">
+            <div className="flex flex-col gap-y-2">
               <Label htmlFor="sensorId">Verknüpfter Sensor</Label>
               <Select value={field.value ?? '-1'} onValueChange={field.onChange}>
                 <SelectTrigger id="sensorId">

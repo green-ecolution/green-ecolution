@@ -17,7 +17,7 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
     const inputId = id || React.useId()
 
     return (
-      <div data-slot="form-field" className={cn('space-y-2', className)}>
+      <div data-slot="form-field" className={cn('flex flex-col gap-y-2', className)}>
         <Label
           htmlFor={inputId}
           className={cn(hideLabel && 'sr-only', error && 'text-destructive')}
@@ -71,7 +71,7 @@ const TextareaField = React.forwardRef<HTMLTextAreaElement, TextareaFieldProps>(
     const inputId = id || React.useId()
 
     return (
-      <div data-slot="textarea-field" className={cn('space-y-2', className)}>
+      <div data-slot="textarea-field" className={cn('flex flex-col gap-y-2', className)}>
         <Label
           htmlFor={inputId}
           className={cn(hideLabel && 'sr-only', error && 'text-destructive')}

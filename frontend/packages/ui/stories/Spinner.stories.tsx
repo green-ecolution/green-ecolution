@@ -57,7 +57,7 @@ export const LoadingWithLabel: Story = {
 
 export const LoadingVariants: Story = {
   render: () => (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-y-4">
       <Loading label="Daten werden geladen..." size="sm" />
       <Loading label="Anfrage wird verarbeitet..." size="default" />
       <Loading label="Bitte warten..." size="lg" />

@@ -93,7 +93,7 @@ const MapSelectEntitiesModal = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`space-y-6 fixed z-[1030] top-20 inset-x-4 bg-white border-dark-50 shadow-xl p-5 rounded-xl font-nunito-sans lg:hidden ${openModal ? 'block' : 'hidden'}`}
+        className={`flex flex-col gap-y-6 fixed z-[1030] top-20 inset-x-4 bg-white border-dark-50 shadow-xl p-5 rounded-xl font-nunito-sans lg:hidden ${openModal ? 'block' : 'hidden'}`}
       >
         <div className="flex justify-between gap-x-6">
           <h2 id={titleId} className="text-lg font-lato font-semibold">
@@ -137,7 +137,7 @@ const MapSelectEntitiesModal = ({
           onMouseEnter={disableDragging}
           onMouseLeave={enableDragging}
           aria-modal="false"
-          className="space-y-6 absolute z-[1030] top-4 w-[35rem] right-10 bg-white border-dark-50 shadow-xl p-5 rounded-xl"
+          className="flex flex-col gap-y-6 absolute z-[1030] top-4 w-[35rem] right-10 bg-white border-dark-50 shadow-xl p-5 rounded-xl"
         >
           <div className="flex justify-between gap-x-6">
             <h2 className="text-lg font-lato font-semibold lg:text-xl">{title}</h2>

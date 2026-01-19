@@ -51,7 +51,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary
           </h1>
           <p className="lg:text-center">Folgender Fehler ist aufgetreten: {errorMessage}.</p>
           {errorCode && <p className="lg:text-center mb-5">Fehlercode: {errorCode}</p>}
-          <div className="lg:flex lg:items-center lg:justify-center lg:gap-x-4 space-y-4 lg:space-y-0">
+          <div className="flex flex-col gap-y-4 lg:flex-row lg:items-center lg:justify-center lg:gap-x-4">
             <Button onClick={resetErrorBoundary}>
               Zurück
               <RefreshCw />

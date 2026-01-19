@@ -55,11 +55,11 @@ export const WithForm: Story = {
       <CardContent>
         <form>
           <div className="grid w-full items-center gap-4">
-            <div className="flex flex-col space-y-1.5">
+            <div className="flex flex-col gap-y-1.5">
               <Label htmlFor="name">Name</Label>
               <Input id="name" placeholder="Name" />
             </div>
-            <div className="flex flex-col space-y-1.5">
+            <div className="flex flex-col gap-y-1.5">
               <Label htmlFor="email">E-Mail</Label>
               <Input id="email" type="email" placeholder="E-Mail" />
             </div>
@@ -88,7 +88,7 @@ export const NotificationCard: Story = {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="flex flex-col gap-y-3">
         <div className="flex items-start gap-3 p-3 rounded-lg bg-dark-50">
           <Droplets className="h-5 w-5 text-green-light mt-0.5" />
           <div>
@@ -142,7 +142,7 @@ export const Variants: Story = {
 
 export const SemanticHeadings: Story = {
   render: () => (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-y-4">
       <Card className="w-[350px]">
         <CardHeader>
           <CardTitle asChild>

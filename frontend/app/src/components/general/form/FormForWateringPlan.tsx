@@ -48,10 +48,10 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
 
   return (
     <form
-      className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-11"
+      className="flex flex-col gap-y-6 lg:grid lg:grid-cols-2 lg:gap-11"
       onSubmit={handleSubmit(props.onSubmit)}
     >
-      <div className="space-y-6">
+      <div className="flex flex-col gap-y-6">
         <Controller
           control={control}
           name="date"
@@ -70,7 +70,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
           name="transporterId"
           control={control}
           render={({ field }) => (
-            <div className="space-y-2">
+            <div className="flex flex-col gap-y-2">
               <Label htmlFor="transporterId">
                 Verknüpftes Fahrzeug
                 <span className="text-destructive ml-1">*</span>
@@ -102,7 +102,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
           name="trailerId"
           control={control}
           render={({ field }) => (
-            <div className="space-y-2">
+            <div className="flex flex-col gap-y-2">
               <Label htmlFor="trailerId">Verknüpfter Anhänger</Label>
               <Select
                 value={field.value?.toString() ?? '-1'}
@@ -131,7 +131,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
           name="driverIds"
           control={control}
           render={({ field }) => (
-            <div className="space-y-2">
+            <div className="flex flex-col gap-y-2">
               <Label htmlFor="driverIds">
                 Verknüpfte Mitarbeitende
                 <span className="text-destructive ml-1">*</span>

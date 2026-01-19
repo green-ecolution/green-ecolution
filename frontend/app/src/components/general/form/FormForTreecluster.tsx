@@ -34,10 +34,10 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
   return (
     <form
       key="cluster-register"
-      className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-11"
+      className="flex flex-col gap-y-6 lg:grid lg:grid-cols-2 lg:gap-11"
       onSubmit={handleSubmit(props.onSubmit)}
     >
-      <div className="space-y-6">
+      <div className="flex flex-col gap-y-6">
         <FormField label="Name" error={errors.name?.message} required {...register('name')} />
         <FormField
           label="Adresse"
@@ -49,7 +49,7 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
           name="soilCondition"
           control={control}
           render={({ field }) => (
-            <div className="space-y-2">
+            <div className="flex flex-col gap-y-2">
               <Label htmlFor="soilCondition">
                 Bodenbeschaffenheit
                 <span className="text-destructive ml-1">*</span>

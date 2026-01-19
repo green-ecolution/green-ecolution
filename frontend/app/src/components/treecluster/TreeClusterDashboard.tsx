@@ -28,7 +28,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
   return (
     <>
       <BackLink link={{ to: '/treecluster' }} label="Zu allen Bewässerungsgruppen" />
-      <article className="space-y-6 2xl:space-y-0 2xl:flex 2xl:items-center 2xl:space-x-10">
+      <article className="flex flex-col gap-y-6 2xl:flex-row 2xl:items-center 2xl:gap-x-10">
         <div className="2xl:w-4/5">
           <h1 className="font-lato font-bold text-3xl mb-4 lg:text-4xl xl:text-5xl">
             Bewässerungsgruppe: {treecluster.name}
@@ -72,7 +72,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
       </article>
 
       <section className="mt-10">
-        <ul className="space-y-5 md:space-y-0 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-4">
+        <ul className="flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-4">
           <li className="h-full">
             <StatusCard
               status={wateringStatus.color}
@@ -118,7 +118,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
           <p>Baumnummer</p>
         </header>
 
-        <ul className="space-y-5">
+        <ul className="flex flex-col gap-y-5">
           {treecluster.trees?.length === 0 ? (
             <li className="text-center text-dark-600 mt-4">
               <p>Der Bewässerungsgruppe wurden keine Bäume hinzugefügt.</p>

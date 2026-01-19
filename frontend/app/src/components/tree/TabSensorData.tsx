@@ -24,7 +24,7 @@ const TabSensorData: React.FC<TabSensorDataProps> = ({ tree }) => {
 
   return (
     <>
-      <ul className="mb-5 space-y-5 md:space-y-0 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
+      <ul className="mb-5 flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
         <li>
           <StatusCard
             status={sensorStatusDetails.color}

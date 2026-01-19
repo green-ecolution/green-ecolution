@@ -54,7 +54,7 @@ export const WithDefaultValue: Story = {
 
 export const CustomRows: Story = {
   render: () => (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-y-4">
       <div className="grid gap-1.5">
         <Label>Klein (2 Zeilen)</Label>
         <Textarea placeholder="Kurze Eingabe..." rows={2} />
@@ -73,7 +73,7 @@ export const CustomRows: Story = {
 
 export const TreeNotesExample: Story = {
   render: () => (
-    <div className="max-w-md space-y-4">
+    <div className="max-w-md flex flex-col gap-y-4">
       <div className="grid gap-1.5">
         <Label htmlFor="tree-notes">Baumnotizen</Label>
         <Textarea
@@ -91,7 +91,7 @@ export const TreeNotesExample: Story = {
 
 export const WateringReportExample: Story = {
   render: () => (
-    <div className="max-w-md space-y-4">
+    <div className="max-w-md flex flex-col gap-y-4">
       <div className="grid gap-1.5">
         <Label htmlFor="report">Bewässerungsbericht</Label>
         <Textarea

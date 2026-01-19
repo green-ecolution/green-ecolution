@@ -28,7 +28,7 @@ const SelectEntities: React.FC<SelectEntitiesProps> = ({
         {required && <span className="text-red">&nbsp;*</span>}
       </p>
 
-      <ul className="space-y-3">
+      <ul className="flex flex-col gap-y-3">
         {entityIds.length === 0 ? (
           <li className="text-dark-600 font-semibold text-sm">
             {required ? (

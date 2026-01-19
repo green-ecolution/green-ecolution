@@ -58,7 +58,7 @@ const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
   return (
     <>
       <BackLink link={{ to: '/vehicles' }} label="Alle Fahrzeuge" />
-      <article className="space-y-6 2xl:space-y-0 2xl:flex 2xl:items-center 2xl:space-x-10">
+      <article className="flex flex-col gap-y-6 2xl:flex-row 2xl:items-center 2xl:gap-x-10">
         <div className="2xl:w-4/5">
           <h1 className="font-lato font-bold text-3xl mb-4 flex flex-wrap items-center gap-4 lg:text-4xl xl:text-5xl">
             Fahrzeug: {vehicle.numberPlate}
@@ -81,7 +81,7 @@ const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
       </article>
 
       {vehicle.status == VehicleStatus.VehicleStatusActive && (
-        <div className="h-full shadow-cards space-y-3 rounded-xl border border-green-light bg-green-light-50 p-6 mt-6">
+        <div className="h-full shadow-cards flex flex-col gap-y-3 rounded-xl border border-green-light bg-green-light-50 p-6 mt-6">
           <div className="flex items-center justify-between">
             <p className="text-lg font-semibold">Dieses Fahrzeug befindet sich im Einsatz.</p>
             <GeneralLink

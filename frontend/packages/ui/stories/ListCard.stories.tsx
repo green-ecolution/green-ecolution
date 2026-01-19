@@ -126,7 +126,7 @@ export const TreeclusterList: Story = {
         <p>Standort</p>
         <p>Anzahl d. Bäume</p>
       </ListCardHeader>
-      <ul className="space-y-5">
+      <ul className="flex flex-col gap-y-5">
         {treeclusterData.map((cluster) => (
           <li key={cluster.id}>
             <ListCard columns="1fr 2fr 1.5fr 1fr">
@@ -163,7 +163,7 @@ export const TreeList: Story = {
         <p>Baumnummer</p>
         <p>Bewässerungsgruppe</p>
       </ListCardHeader>
-      <ul className="space-y-5">
+      <ul className="flex flex-col gap-y-5">
         {treeData.map((tree) => (
           <li key={tree.id}>
             <ListCard columns="1fr 1.5fr 1fr 1fr">
@@ -195,7 +195,7 @@ export const VehicleListWithBadges: Story = {
         <p>Modell</p>
         <p>Führerschein</p>
       </ListCardHeader>
-      <ul className="space-y-5">
+      <ul className="flex flex-col gap-y-5">
         {vehicleData.map((vehicle) => (
           <li key={vehicle.id}>
             <ListCard columns="repeat(5, 1fr)">
@@ -269,7 +269,7 @@ export const WateringPlanList: Story = {
           <p>Mitarbeitende</p>
           <p>Bewässerungsgruppen</p>
         </ListCardHeader>
-        <ul className="space-y-5">
+        <ul className="flex flex-col gap-y-5">
           {wateringPlans.map((plan) => (
             <li key={plan.id}>
               <ListCard columns="1.3fr 1.5fr 1fr 1.5fr 1.5fr">
@@ -339,7 +339,7 @@ export const CompactWithActions: Story = {
     ]
 
     return (
-      <div className="space-y-3">
+      <div className="flex flex-col gap-y-3">
         <p className="text-sm font-medium text-dark-800">Zugehörige Bäume</p>
         {selectedTrees.map((tree) => (
           <ListCard key={tree.id} size="compact" hoverable={false}>
@@ -376,7 +376,7 @@ export const CompactTreeClusterWithActions: Story = {
     ]
 
     return (
-      <div className="space-y-3">
+      <div className="flex flex-col gap-y-3">
         <p className="text-sm font-medium text-dark-800">Ausgewählte Bewässerungsgruppen</p>
         {selectedClusters.map((cluster) => (
           <ListCard key={cluster.id} size="compact" hoverable={false}>

@@ -34,7 +34,7 @@ function Evaluation() {
           <h2 className="font-lato font-bold text-2xl mb-4">
             Erhobene Daten zu Bäumen, Bewässerungsgruppen & Sensoren:
           </h2>
-          <ul className="space-y-5 md:space-y-0 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <ul className="flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
             <li>
               <StatusCard
                 label="Anzahl an Bewässerungsgruppen"
@@ -63,7 +63,7 @@ function Evaluation() {
           <h2 className="font-lato font-bold text-2xl mb-4">
             Erhobene Daten zu den Einsatzplänen:
           </h2>
-          <ul className="space-y-5 md:space-y-0 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <ul className="flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
             <li>
               <StatusCard
                 label="Anzahl an Einsatzfahrten"
@@ -129,7 +129,7 @@ const EvaluationList: React.FC<EvaluationListProps> = ({ title, data, label }) =
         <p>{label}</p>
         <p>Anzahl der Bewässerungen</p>
       </header>
-      <ul className="space-y-3 md:space-y-0">
+      <ul className="flex flex-col gap-y-3 md:contents">
         {data.map((item) => (
           <li
             key={item.name}

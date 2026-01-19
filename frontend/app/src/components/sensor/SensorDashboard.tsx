@@ -45,7 +45,7 @@ const SensorDashboard = ({ sensor, sensorTree: linkedTree }: SensorDashboardProp
   return (
     <>
       <BackLink link={{ to: '/sensors' }} label="Zu allen Sensoren" />
-      <article className="space-y-6 2xl:space-y-0 2xl:flex 2xl:items-center 2xl:space-x-10">
+      <article className="flex flex-col gap-y-6 2xl:flex-row 2xl:items-center 2xl:gap-x-10">
         <div className="2xl:w-4/5">
           <h1 className="font-lato font-bold text-3xl mb-4 flex flex-wrap items-center gap-4 lg:text-4xl xl:text-5xl">
             Sensor ID: {sensor.id}
@@ -61,7 +61,7 @@ const SensorDashboard = ({ sensor, sensorTree: linkedTree }: SensorDashboardProp
       </article>
 
       <section className="mt-10">
-        <ul className="space-y-5 md:space-y-0 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <ul className="flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
           <li>
             {(() => {
               const statusDetails = getSensorStatusDetails(sensor.status)
@@ -104,7 +104,7 @@ const SensorDashboard = ({ sensor, sensorTree: linkedTree }: SensorDashboardProp
         </div>
 
         <div
-          className={`h-max space-y-3 rounded-xl p-6 ${linkedTree ? 'bg-dark-50' : 'bg-red-50'}`}
+          className={`h-max flex flex-col gap-y-3 rounded-xl p-6 ${linkedTree ? 'bg-dark-50' : 'bg-red-50'}`}
         >
           <h2 className="text-sm text-dark-700 font-medium">Verknüpfte Vegetation</h2>
           {linkedTree ? (
