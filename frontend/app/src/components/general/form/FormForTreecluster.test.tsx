@@ -7,7 +7,7 @@ import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import ToastProvider from '@/context/ToastContext'
+import { Toaster } from '@green-ecolution/ui'
 import { SoilCondition } from '@green-ecolution/backend-client'
 
 function TestWrapper({
@@ -29,9 +29,8 @@ function TestWrapper({
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <FormProvider {...methods}>{children}</FormProvider>
-      </ToastProvider>
+      <FormProvider {...methods}>{children}</FormProvider>
+      <Toaster />
     </QueryClientProvider>
   )
 }

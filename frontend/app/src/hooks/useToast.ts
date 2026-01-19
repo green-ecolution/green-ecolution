@@ -1,12 +1,11 @@
-import { ToastContext } from '@/context/ToastContext'
-import { use } from 'react'
+import { toast } from '@green-ecolution/ui'
+
+type ToastType = 'success' | 'error'
 
 const useToast = () => {
-  const context = use(ToastContext)
-  if (context === undefined) {
-    throw new Error('useToast must be used within a ToastProvider')
+  return (message: string, type: ToastType = 'success') => {
+    toast[type](message)
   }
-  return context.showToast
 }
 
 export default useToast
