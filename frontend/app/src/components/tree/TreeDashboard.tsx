@@ -1,8 +1,19 @@
 import BackLink from '../general/links/BackLink'
-import { Badge, Tabs, TabsList, TabsTrigger, TabsContent } from '@green-ecolution/ui'
+import {
+  Alert,
+  AlertContent,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
+  Badge,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from '@green-ecolution/ui'
 import GeneralLink from '../general/links/GeneralLink'
 import ButtonLink from '../general/links/ButtonLink'
-import { File, Info, Pencil } from 'lucide-react'
+import { File, Pencil } from 'lucide-react'
 import TreeIcon from '../icons/Tree'
 import SensorIcon from '../icons/Sensor'
 import TabWateringStatus from './TabWateringStatus'
@@ -109,17 +120,16 @@ const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
         </Tabs>
       ) : (
         <section className="mt-10">
-          <div className="bg-white mb-10 border-dark-50 shadow-cards h-full p-6 rounded-xl group flex flex-col gap-4 border">
-            <h3 className="font-lato text-lg text-dark font-semibold flex items-center gap-x-3">
-              <Info className="text-dark-600 w-5 h-5" />
-              Hinweis: Dieser Baum ist nicht mit einem Sensor ausgestattet.
-            </h3>
-            <p>
-              Dieser Baum wurde bisher nicht mit einem Sensor ausgestattet, sodass keine
-              Informationen über den aktuellen Bewässerungszustand angezeigt werden können. Aus
-              diesem Grund wird der Bewässerungszustand als unbekannt ausgezeichnet.
-            </p>
-          </div>
+          <Alert variant="info" className="flex gap-4 mb-10">
+            <AlertIcon variant="info" />
+            <AlertContent>
+              <AlertTitle>Dieser Baum ist nicht mit einem Sensor ausgestattet</AlertTitle>
+              <AlertDescription>
+                Es können keine Informationen über den aktuellen Bewässerungszustand angezeigt
+                werden. Der Bewässerungszustand wird als unbekannt ausgezeichnet.
+              </AlertDescription>
+            </AlertContent>
+          </Alert>
           <TabGeneralData tree={tree} />
         </section>
       )}
