@@ -3,6 +3,7 @@ import IntroductionSlider from '@/components/startpage/IntroductionSlider'
 import KeyFacts from '@/components/startpage/KeyFacts'
 import { createFileRoute } from '@tanstack/react-router'
 import { Mail, MoveRight } from 'lucide-react'
+import { Button } from '@green-ecolution/ui'
 import Lottie from 'lottie-react'
 import dashboardAnimation from '../../src/animations/dashboardAnimation.json'
 import QuickLinks from '@/components/startpage/QuickLinks'
@@ -32,7 +33,7 @@ function Startpage() {
             Anhand dieser Handlungsempfehlungen können Einsätze zu einer Bewässerungstour erstellt
             werden.
           </p>
-          <div className="flex flex-wrap justify-center items-center gap-6 mt-10 xl:justify-start">
+          <div className="flex flex-wrap items-center gap-6 mt-10">
             {isAuthenticated ? (
               <ButtonLink link={{ to: '/dashboard' }} label="Zum Dashboard" icon={MoveRight} />
             ) : (
@@ -42,13 +43,12 @@ function Startpage() {
                 icon={MoveRight}
               />
             )}
-            <a
-              href="mailto:info@green-ecolution.de"
-              className="bg-green-dark w-fit text-white px-5 py-2 group flex gap-x-3 rounded-xl items-center transition-all ease-in-out duration-300 hover:bg-green-light"
-            >
-              Kontakt
-              <Mail />
-            </a>
+            <Button asChild>
+              <a href="mailto:info@green-ecolution.de">
+                Kontakt
+                <Mail />
+              </a>
+            </Button>
           </div>
         </div>
 

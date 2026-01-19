@@ -30,10 +30,7 @@ const FilterButton: React.FC<FilterButtonProps> = ({
       onClick={onClick}
     >
       Filter
-      <span
-        className="flex items-center justify-center w-6 h-6 rounded-full text-sm"
-        style={{ backgroundColor: 'color-mix(in srgb, var(--green-dark) 20%, transparent)' }}
-      >
+      <span className="flex items-center justify-center w-6 h-6 rounded-full text-sm bg-green-dark/20">
         {activeCount}
       </span>
     </button>

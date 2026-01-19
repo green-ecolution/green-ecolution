@@ -26,8 +26,7 @@ const NavLink = (props: NavLinkProps) => {
         activeOptions={{ exact: false }}
         activeProps={{
           'aria-current': 'page',
-          className: 'border-green-dark',
-          style: { backgroundColor: 'color-mix(in oklch, var(--green-dark) 30%, transparent)' },
+          className: 'border-green-dark bg-green-dark/30',
         }}
         inactiveProps={{
           className: 'border-transparent',

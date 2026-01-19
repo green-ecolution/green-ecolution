@@ -12,15 +12,7 @@ const NavHeadline: React.FC<NavHeadline> = ({ label, navIsOpen = false }) => {
 
   return (
     <p
-      className="mb-3 font-bold text-sm text-dark-400 tracking-[0.3]"
-      style={
-        showSeparator
-          ? {
-              borderTop: '1px solid color-mix(in oklch, var(--dark-400) 30%, transparent)',
-              paddingBottom: '1.17rem',
-            }
-          : undefined
-      }
+      className={`mb-3 font-bold text-sm text-dark-400 tracking-[0.3] ${showSeparator ? 'border-t border-dark-400/30 pb-5' : ''}`}
     >
       <span
         className="transition-opacity ease-in-out duration-300"

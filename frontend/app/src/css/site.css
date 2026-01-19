@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-@import '@green-ecolution/ui/styles';
+@import '../../../packages/ui/src/styles/globals.css';
 @import './frontend.css';
 
 /* Scan UI package for Tailwind classes */
@@ -17,3 +17,4 @@
     padding-inline: 2rem;
   }
 }
+

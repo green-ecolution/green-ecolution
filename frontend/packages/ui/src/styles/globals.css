@@ -18,7 +18,15 @@
 @font-face {
   font-family: 'Lato';
   src: url('/fonts/lato/Lato-Bold.ttf');
-  font-weight: bold;
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lato';
+  src: url('/fonts/lato/Lato-Bold.ttf');
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -50,7 +58,15 @@
 @font-face {
   font-family: 'Nunito Sans';
   src: url('/fonts/nunito-sans/NunitoSans-Bold.ttf');
-  font-weight: bold;
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito Sans';
+  src: url('/fonts/nunito-sans/NunitoSans-Bold.ttf');
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -167,17 +183,6 @@
   --font-lato: 'Lato', sans-serif;
   --font-nunito-sans: 'Nunito Sans', sans-serif;
 
-  /* Font Weights */
-  --font-weight-thin: 100;
-  --font-weight-extralight: 200;
-  --font-weight-light: 300;
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
-  --font-weight-extrabold: 800;
-  --font-weight-black: 900;
-
   /* Green Ecolution Color Palette */
   --color-green-dark-50: var(--green-dark-50);
   --color-green-dark-100: var(--green-dark-100);
@@ -262,18 +267,18 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* Font Sizes (Tailwind defaults) */
-  --font-size-2xs: 0.625rem;
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  --font-size-3xl: 1.875rem;
-  --font-size-4xl: 2.25rem;
-  --font-size-5xl: 3rem;
-  --font-size-6xl: 3.75rem;
+  /* Font Sizes (matching original Tailwind v3 config) */
+  --text-2xs: 0.625rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.75rem;
+  --text-4xl: 2rem;
+  --text-5xl: 2.25rem;
+  --text-6xl: 3rem;
 
   /* Shadows */
   --shadow-cards: 0px 5px 10px 0px rgba(23, 23, 23, 5%);
