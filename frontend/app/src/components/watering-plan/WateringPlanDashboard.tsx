@@ -23,7 +23,7 @@ import ButtonLink from '../general/links/ButtonLink'
 import { useMutation } from '@tanstack/react-query'
 import useStore from '@/store/store'
 import { basePath, WateringPlan } from '@/api/backendApi'
-import useToast from '@/hooks/useToast'
+import createToast from '@/hooks/createToast'
 import WateringPlanPreviewRoute from './WateringPlanRoutePreview'
 import { isHTTPError } from '@/lib/utils'
 
@@ -34,7 +34,7 @@ interface WateringPlanDashboardProps {
 const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => {
   const statusDetails = getWateringPlanStatusDetails(wateringPlan.status)
   const accessToken = useStore((state) => state.token?.accessToken)
-  const showToast = useToast()
+  const showToast = createToast()
 
   const date = wateringPlan?.date
     ? format(new Date(wateringPlan?.date), 'dd.MM.yyyy')

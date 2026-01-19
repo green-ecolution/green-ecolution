@@ -37,7 +37,7 @@ import SelectedCard from '../general/cards/SelectedCard'
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { wateringPlanApi } from '@/api/backendApi'
 import { useNavigate } from '@tanstack/react-router'
-import useToast from '@/hooks/useToast'
+import createToast from '@/hooks/createToast'
 
 interface WateringPlanStatusUpdateProps {
   wateringPlanId: string
@@ -47,7 +47,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const { data: loadedData } = useSuspenseQuery(wateringPlanIdQuery(wateringPlanId))
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const showToast = useToast()
+  const showToast = createToast()
   const [status, setStatus] = useState(() => getWateringPlanStatusDetails(loadedData.status))
 
   const { mutate, isError, error } = useMutation({

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { treeClusterIdQuery, treeIdQuery, treeQuery } from '@/api/queries'
-import useToast from '@/hooks/useToast'
+import createToast from '@/hooks/createToast'
 import { useNavigate } from '@tanstack/react-router'
 import { Tree, TreeCreate, TreeUpdate } from '@green-ecolution/backend-client'
 import { treeApi } from '@/api/backendApi'
@@ -14,7 +14,7 @@ export const useTreeForm = (
   mutationType: 'create' | 'update',
   opts: { treeId?: string; initForm?: DefaultValues<TreeForm> },
 ) => {
-  const showToast = useToast()
+  const showToast = createToast()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 

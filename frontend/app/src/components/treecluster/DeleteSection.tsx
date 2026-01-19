@@ -12,7 +12,7 @@ import {
   AlertDialogCancel,
   Button,
 } from '@green-ecolution/ui'
-import useToast from '@/hooks/useToast'
+import createToast from '@/hooks/createToast'
 import { LinkProps, useNavigate } from '@tanstack/react-router'
 
 interface DeleteSectionProps {
@@ -30,7 +30,7 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const navigate = useNavigate()
-  const showToast = useToast()
+  const showToast = createToast()
 
   const actionText = type === 'archive' ? 'archiviert' : 'gelöscht'
 

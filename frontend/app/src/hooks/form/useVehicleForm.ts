@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { vehicleIdQuery, vehicleQuery } from '@/api/queries'
-import useToast from '@/hooks/useToast'
+import createToast from '@/hooks/createToast'
 import { useNavigate } from '@tanstack/react-router'
 import { Vehicle, VehicleCreate, VehicleUpdate } from '@green-ecolution/backend-client'
 import { vehicleApi } from '@/api/backendApi'
@@ -12,7 +12,7 @@ export const useVehicleForm = (
   mutationType: 'create' | 'update',
   opts: { vehicleId?: string; initForm?: DefaultValues<VehicleForm> },
 ) => {
-  const showToast = useToast()
+  const showToast = createToast()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 

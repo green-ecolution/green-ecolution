@@ -4,7 +4,7 @@ import SelectedCard from '@/components/general/cards/SelectedCard'
 import MapSelectEntitiesModal from '@/components/map/MapSelectEntitiesModal'
 import SensorMarker from '@/components/map/marker/SensorMarker'
 import WithAllTrees from '@/components/map/marker/WithAllTrees'
-import useToast from '@/hooks/useToast'
+import createToast from '@/hooks/createToast'
 import { Tree, TreeUpdate as TreeUpdateReq } from '@green-ecolution/backend-client'
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
@@ -28,7 +28,7 @@ function LinkTreeToSensor() {
   const [showDefault, setShowDefault] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const navigate = useNavigate({ from: Route.fullPath })
-  const showToast = useToast()
+  const showToast = createToast()
   const { sensorId } = Route.useSearch()
   const { data: sensor } = useSuspenseQuery(sensorIdQuery(String(sensorId)))
 
