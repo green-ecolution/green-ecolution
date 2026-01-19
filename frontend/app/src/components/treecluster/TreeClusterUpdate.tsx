@@ -108,7 +108,11 @@ const TreeClusterUpdate = ({ clusterId }: TreeClusterUpdateProps) => {
         </FormProvider>
       </section>
 
-      <Suspense fallback={<Loading className="mt-20 justify-center" label="Die Bewässerungsgruppe wird gelöscht" />}>
+      <Suspense
+        fallback={
+          <Loading className="mt-20 justify-center" label="Die Bewässerungsgruppe wird gelöscht" />
+        }
+      >
         <DeleteSection
           mutationFn={handleDeleteTreeCluster}
           entityName="die Bewässerungsgruppe"

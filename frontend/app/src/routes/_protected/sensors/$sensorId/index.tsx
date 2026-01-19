@@ -6,7 +6,9 @@ import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_protected/sensors/$sensorId/')({
   component: SingleSensor,
-  pendingComponent: () => <Loading className="mt-20 justify-center" label="Sensoren werden geladen …" />,
+  pendingComponent: () => (
+    <Loading className="mt-20 justify-center" label="Sensoren werden geladen …" />
+  ),
   loader: ({ params, context }) =>
     context.queryClient.prefetchQuery(sensorIdQuery(params.sensorId)),
 })

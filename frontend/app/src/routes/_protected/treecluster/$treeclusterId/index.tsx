@@ -6,7 +6,9 @@ import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_protected/treecluster/$treeclusterId/')({
   component: SingleTreecluster,
-  pendingComponent: () => <Loading className="mt-20 justify-center" label="Bewässerungsgruppe wird geladen …" />,
+  pendingComponent: () => (
+    <Loading className="mt-20 justify-center" label="Bewässerungsgruppe wird geladen …" />
+  ),
   loader: ({ context: { queryClient }, params }) =>
     queryClient.prefetchQuery(treeClusterIdQuery(params.treeclusterId)),
 })

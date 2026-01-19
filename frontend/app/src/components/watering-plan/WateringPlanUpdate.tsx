@@ -147,7 +147,11 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         </FormProvider>
       </section>
 
-      <Suspense fallback={<Loading className="mt-20 justify-center" label="Der Einsatzplan wird gelöscht" />}>
+      <Suspense
+        fallback={
+          <Loading className="mt-20 justify-center" label="Der Einsatzplan wird gelöscht" />
+        }
+      >
         <DeleteSection
           mutationFn={handleDeleteWateringPlan}
           entityName="der Einsatzplan"

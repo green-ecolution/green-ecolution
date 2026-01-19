@@ -5,7 +5,9 @@ import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_protected/watering-plans/_formular/$wateringPlanId/edit/')({
   component: StatusEditWateringPlan,
-  pendingComponent: () => <Loading className="mt-20 justify-center" label="Einsatzplan wird geladen …" />,
+  pendingComponent: () => (
+    <Loading className="mt-20 justify-center" label="Einsatzplan wird geladen …" />
+  ),
   loader: () => {
     if (!useStore.getState().isAuthenticated) return
   },

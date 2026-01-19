@@ -9,7 +9,9 @@ import { ListCardHeader } from '@green-ecolution/ui'
 
 export const Route = createFileRoute('/_protected/sensors/')({
   component: Sensors,
-  pendingComponent: () => <Loading className="mt-20 justify-center" label="Sensoren werden geladen" />,
+  pendingComponent: () => (
+    <Loading className="mt-20 justify-center" label="Sensoren werden geladen" />
+  ),
   validateSearch: z.object({
     page: z.number().catch(1),
   }),

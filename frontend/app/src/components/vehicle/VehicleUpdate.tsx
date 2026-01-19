@@ -69,7 +69,9 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
         </FormProvider>
       </section>
 
-      <Suspense fallback={<Loading className="mt-20 justify-center" label="Das Fahrzeug wird gelöscht" />}>
+      <Suspense
+        fallback={<Loading className="mt-20 justify-center" label="Das Fahrzeug wird gelöscht" />}
+      >
         <DeleteSection
           mutationFn={handleArchiveVehicle}
           type="archive"

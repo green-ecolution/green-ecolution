@@ -6,7 +6,9 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 
 export const Route = createFileRoute('/_protected/trees/_formular/$treeId/edit/')({
   component: EditTree,
-  pendingComponent: () => <Loading className="mt-20 justify-center" label="Baumdaten werden geladen …" />,
+  pendingComponent: () => (
+    <Loading className="mt-20 justify-center" label="Baumdaten werden geladen …" />
+  ),
   loader: ({ context: { queryClient } }) => {
     queryClient
       .prefetchQuery(sensorQuery())

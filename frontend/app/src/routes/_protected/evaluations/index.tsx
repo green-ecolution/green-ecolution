@@ -6,7 +6,9 @@ import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_protected/evaluations/')({
   component: Evaluation,
-  pendingComponent: () => <Loading className="mt-20 justify-center" label="Auswertungen werden geladen" />,
+  pendingComponent: () => (
+    <Loading className="mt-20 justify-center" label="Auswertungen werden geladen" />
+  ),
   loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(evaluationQuery()),
 })
 
