@@ -94,7 +94,7 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
                 icon={MoveRight}
               />
             )}
-            <Button variant="link" onClick={() => mutate()}>
+            <Button variant="nav" onClick={() => mutate()} className="p-0 h-auto [&_svg]:size-4">
               Route herunterladen
               <MoveRight className="icon-arrow-animate" />
             </Button>
