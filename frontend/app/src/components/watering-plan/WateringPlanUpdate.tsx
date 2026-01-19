@@ -9,7 +9,7 @@ import { Route } from '@/routes'
 import useStore from '@/store/store'
 import GeneralLink from '../general/links/GeneralLink'
 import { showWateringPlanStatusButton } from '@/hooks/details/useDetailsForWateringPlanStatus'
-import LoadingInfo from '../general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import { Suspense } from 'react'
 import DeleteSection from '../treecluster/DeleteSection'
 import { wateringPlanApi } from '@/api/backendApi'
@@ -147,7 +147,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         </FormProvider>
       </section>
 
-      <Suspense fallback={<LoadingInfo label="Der Einsatzplan wird gelöscht" />}>
+      <Suspense fallback={<Loading className="mt-20 justify-center" label="Der Einsatzplan wird gelöscht" />}>
         <DeleteSection
           mutationFn={handleDeleteWateringPlan}
           entityName="der Einsatzplan"

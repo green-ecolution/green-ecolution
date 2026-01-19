@@ -1,4 +1,4 @@
-import LoadingInfo from '@/components/general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useLoaderData } from '@tanstack/react-router'
 import ButtonLink from '@/components/general/links/ButtonLink'
@@ -107,7 +107,7 @@ const TreesWithProvider = () => {
 export const Route = createFileRoute('/_protected/trees/')({
   component: TreesWithProvider,
   validateSearch: treeFilterSchema,
-  pendingComponent: () => <LoadingInfo label="Daten werden geladen" />,
+  pendingComponent: () => <Loading className="mt-20 justify-center" label="Daten werden geladen" />,
   loaderDeps: ({ search }: { search: GetAllTreesRequest }) => ({
     wateringStatuses: search.wateringStatuses ?? undefined,
     hasCluster: search.hasCluster ?? undefined,

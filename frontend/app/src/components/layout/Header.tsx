@@ -40,7 +40,7 @@ function Header() {
             className="size-8 rounded-full bg-dark hover:bg-dark-600"
             onClick={() => toggleSidebar(!open)}
           >
-            <AlignJustifyIcon className="text-light" />
+            <AlignJustifyIcon className="!size-5 text-light" />
           </Button>
         )}
         {!isStartPage && <Breadcrumb />}

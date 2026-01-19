@@ -1,12 +1,12 @@
 import { treeClusterIdQuery } from '@/api/queries'
-import LoadingInfo from '@/components/general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import TreeClusterDashboard from '@/components/treecluster/TreeClusterDashboard'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_protected/treecluster/$treeclusterId/')({
   component: SingleTreecluster,
-  pendingComponent: () => <LoadingInfo label="Bewässerungsgruppe wird geladen …" />,
+  pendingComponent: () => <Loading className="mt-20 justify-center" label="Bewässerungsgruppe wird geladen …" />,
   loader: ({ context: { queryClient }, params }) =>
     queryClient.prefetchQuery(treeClusterIdQuery(params.treeclusterId)),
 })

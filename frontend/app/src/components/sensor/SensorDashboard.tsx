@@ -99,7 +99,7 @@ const SensorDashboard = ({ sensor, sensorTree: linkedTree }: SensorDashboardProp
       </section>
 
       <section className="mt-16 md:grid md:gap-x-11 md:grid-cols-2">
-        <div>
+        <div className="mb-6 md:mb-0">
           <DetailedList headline="Daten zum Sensor" details={generalSensorData} columns={1} />
         </div>
 

@@ -1,5 +1,5 @@
 import VehicleCard from '@/components/general/cards/VehicleCard'
-import LoadingInfo from '@/components/general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useLoaderData } from '@tanstack/react-router'
 import ButtonLink from '@/components/general/links/ButtonLink'
@@ -11,7 +11,7 @@ import { ListCardHeader } from '@green-ecolution/ui'
 
 export const Route = createFileRoute('/_protected/vehicles/')({
   component: Vehicles,
-  pendingComponent: () => <LoadingInfo label="Fahrzeuge wird geladen …" />,
+  pendingComponent: () => <Loading className="mt-20 justify-center" label="Fahrzeuge wird geladen …" />,
   validateSearch: z.object({
     page: z.number().default(1),
   }),

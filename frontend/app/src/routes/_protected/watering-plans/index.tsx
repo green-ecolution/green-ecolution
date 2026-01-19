@@ -1,6 +1,6 @@
 import { wateringPlanQuery } from '@/api/queries'
 import WateringPlanCard from '@/components/general/cards/WateringPlanCard'
-import LoadingInfo from '@/components/general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import ButtonLink from '@/components/general/links/ButtonLink'
 import Pagination from '@/components/general/Pagination'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -11,7 +11,7 @@ import { ListCardHeader } from '@green-ecolution/ui'
 
 export const Route = createFileRoute('/_protected/watering-plans/')({
   component: WateringPlans,
-  pendingComponent: () => <LoadingInfo label="Daten werden geladen" />,
+  pendingComponent: () => <Loading className="mt-20 justify-center" label="Daten werden geladen" />,
   validateSearch: z.object({
     page: z.number().default(1),
   }),

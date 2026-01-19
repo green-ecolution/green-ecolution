@@ -1,12 +1,12 @@
 import { sensorIdQuery, treeSensorIdQuery } from '@/api/queries'
-import LoadingInfo from '@/components/general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import SensorDashboard from '@/components/sensor/SensorDashboard'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_protected/sensors/$sensorId/')({
   component: SingleSensor,
-  pendingComponent: () => <LoadingInfo label="Sensoren werden geladen …" />,
+  pendingComponent: () => <Loading className="mt-20 justify-center" label="Sensoren werden geladen …" />,
   loader: ({ params, context }) =>
     context.queryClient.prefetchQuery(sensorIdQuery(params.sensorId)),
 })

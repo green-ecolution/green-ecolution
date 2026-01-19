@@ -5,7 +5,7 @@ import Map from '@/components/map/Map'
 import MapController from '@/components/map/MapController'
 import ZoomControls from '@/components/map/ZoomControls'
 import { treeClusterQuery, treeQuery } from '@/api/queries'
-import LoadingInfo from '@/components/general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import { Suspense } from 'react'
 
 const mapSearchParamsSchema = z.object({
@@ -44,7 +44,7 @@ export const Route = createFileRoute('/_protected/map')({
       crumb: { title: 'Karte' },
     }
   },
-  pendingComponent: () => <LoadingInfo label="Lade Karte..." />,
+  pendingComponent: () => <Loading className="mt-20 justify-center" label="Lade Karte..." />,
 })
 
 function MapRoot() {
@@ -53,7 +53,7 @@ function MapRoot() {
       <Map>
         <MapController />
         <ZoomControls />
-        <Suspense fallback={<LoadingInfo label="Lade Karte..." />}>
+        <Suspense fallback={<Loading className="mt-20 justify-center" label="Lade Karte..." />}>
           <Outlet />
         </Suspense>
       </Map>

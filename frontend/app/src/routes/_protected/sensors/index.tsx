@@ -1,5 +1,5 @@
 import { sensorQuery } from '@/api/queries'
-import LoadingInfo from '@/components/general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import Pagination from '@/components/general/Pagination'
 import SensorList from '@/components/sensor/SensorList'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -9,7 +9,7 @@ import { ListCardHeader } from '@green-ecolution/ui'
 
 export const Route = createFileRoute('/_protected/sensors/')({
   component: Sensors,
-  pendingComponent: () => <LoadingInfo label="Sensoren werden geladen" />,
+  pendingComponent: () => <Loading className="mt-20 justify-center" label="Sensoren werden geladen" />,
   validateSearch: z.object({
     page: z.number().catch(1),
   }),

@@ -1,12 +1,12 @@
 import { evaluationQuery } from '@/api/queries'
 import { StatusCard } from '@green-ecolution/ui'
-import LoadingInfo from '@/components/general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_protected/evaluations/')({
   component: Evaluation,
-  pendingComponent: () => <LoadingInfo label="Auswertungen werden geladen" />,
+  pendingComponent: () => <Loading className="mt-20 justify-center" label="Auswertungen werden geladen" />,
   loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(evaluationQuery()),
 })
 

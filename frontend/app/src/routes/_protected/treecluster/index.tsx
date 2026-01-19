@@ -2,7 +2,7 @@ import { createFileRoute, useLoaderData } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import ButtonLink from '@/components/general/links/ButtonLink'
 import { Plus } from 'lucide-react'
-import LoadingInfo from '@/components/general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import FilterProvider from '@/context/FilterContext'
 import TreeClusterList from '@/components/treecluster/TreeClusterList'
 import Pagination from '@/components/general/Pagination'
@@ -88,7 +88,7 @@ const TreeclusterWithProvider = () => {
 export const Route = createFileRoute('/_protected/treecluster/')({
   component: TreeclusterWithProvider,
   validateSearch: treeclusterFilterSchema,
-  pendingComponent: () => <LoadingInfo label="Daten werden geladen" />,
+  pendingComponent: () => <Loading className="mt-20 justify-center" label="Daten werden geladen" />,
   loaderDeps: ({ search }: { search: GetAllTreeClustersRequest }) => ({
     wateringStatuses:
       search.wateringStatuses && search.wateringStatuses.length > 0

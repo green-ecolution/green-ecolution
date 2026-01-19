@@ -1,11 +1,11 @@
 import { infoQuery } from '@/api/queries'
-import LoadingInfo from '@/components/general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_protected/info')({
   component: Info,
-  pendingComponent: () => <LoadingInfo label="Loading App Info" />,
+  pendingComponent: () => <Loading className="mt-20 justify-center" label="Loading App Info" />,
   loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(infoQuery()),
 })
 

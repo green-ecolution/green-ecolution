@@ -6,7 +6,7 @@ import { vehicleIdQuery } from '@/api/queries'
 import { vehicleApi } from '@/api/backendApi'
 import { FormProvider, SubmitHandler } from 'react-hook-form'
 import { Suspense } from 'react'
-import LoadingInfo from '../general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import { VehicleForm } from '@/schema/vehicleSchema'
 import FormForVehicle from '../general/form/FormForVehicle'
 import { useVehicleForm } from '@/hooks/form/useVehicleForm'
@@ -69,7 +69,7 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
         </FormProvider>
       </section>
 
-      <Suspense fallback={<LoadingInfo label="Das Fahrzeug wird gelöscht" />}>
+      <Suspense fallback={<Loading className="mt-20 justify-center" label="Das Fahrzeug wird gelöscht" />}>
         <DeleteSection
           mutationFn={handleArchiveVehicle}
           type="archive"

@@ -10,7 +10,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { FormProvider, SubmitHandler } from 'react-hook-form'
 import useStore from '@/store/store'
 import { Suspense } from 'react'
-import LoadingInfo from '../general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import { useTreeClusterForm } from '@/hooks/form/useTreeClusterForm'
 import { safeJsonStorageParse } from '@/lib/utils'
 import {
@@ -108,7 +108,7 @@ const TreeClusterUpdate = ({ clusterId }: TreeClusterUpdateProps) => {
         </FormProvider>
       </section>
 
-      <Suspense fallback={<LoadingInfo label="Die Bewässerungsgruppe wird gelöscht" />}>
+      <Suspense fallback={<Loading className="mt-20 justify-center" label="Die Bewässerungsgruppe wird gelöscht" />}>
         <DeleteSection
           mutationFn={handleDeleteTreeCluster}
           entityName="die Bewässerungsgruppe"

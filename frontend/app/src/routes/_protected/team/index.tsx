@@ -1,5 +1,5 @@
 import UserCard from '@/components/general/cards/UserCard'
-import LoadingInfo from '@/components/general/error/LoadingInfo'
+import { Loading } from '@green-ecolution/ui'
 import { createFileRoute } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { userRoleQuery } from '@/api/queries'
@@ -7,7 +7,7 @@ import { ListCardHeader } from '@green-ecolution/ui'
 
 export const Route = createFileRoute('/_protected/team/')({
   component: Team,
-  pendingComponent: () => <LoadingInfo label="Daten werden geladen" />,
+  pendingComponent: () => <Loading className="mt-20 justify-center" label="Daten werden geladen" />,
   loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(userRoleQuery('tbz')),
 })
 
