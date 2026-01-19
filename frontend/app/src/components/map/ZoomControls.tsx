@@ -41,7 +41,7 @@ const ZoomControls = () => {
         size="icon"
         onClick={handleZoomIn}
         disabled={!canZoomIn}
-        className="rounded-full shadow-cards bg-white"
+        className="rounded-full shadow-cards bg-white border-0"
       >
         <Plus className="!size-6 text-dark-800" />
       </Button>
@@ -50,7 +50,7 @@ const ZoomControls = () => {
         size="icon"
         onClick={handleZoomOut}
         disabled={!canZoomOut}
-        className="rounded-full shadow-cards bg-white"
+        className="rounded-full shadow-cards bg-white border-0"
       >
         <Minus className="!size-6 text-dark-800" />
       </Button>

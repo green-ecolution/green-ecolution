@@ -23,7 +23,7 @@ const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
         <div className="2xl:w-4/5">
           <h1 className="font-lato font-bold text-3xl mb-4 flex flex-wrap items-center gap-4 lg:text-4xl xl:text-5xl">
             Baum: {tree.number}
-            <Badge variant="outline-green-light" size="lg">
+            <Badge variant="green-dark" size="lg">
               {tree.provider ?? 'manuell erstellt'}
             </Badge>
           </h1>

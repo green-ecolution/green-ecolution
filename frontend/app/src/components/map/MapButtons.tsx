@@ -19,7 +19,7 @@ const MapButtons = () => {
           variant="outline"
           size="icon"
           onClick={() => setIsModalOpen(!isModalOpen)}
-          className="rounded-full shadow-cards bg-white"
+          className="rounded-full shadow-cards bg-white border-0"
         >
           <Settings className="!size-6 text-dark-800" />
         </Button>
