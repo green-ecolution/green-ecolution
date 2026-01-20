@@ -1,5 +1,4 @@
 import { HTTPError } from '@green-ecolution/backend-client'
-import { z } from 'zod'
 
 export function decodeJWT<T>(token: string): T {
   const payload = token.split('.')[1]
@@ -24,31 +23,4 @@ export function isHTTPError(data: unknown): data is HTTPError {
   return (
     typeof data === 'object' && data !== null && 'error' in data && typeof data.error === 'string'
   )
-}
-
-type ParseResult<T> =
-  | { data: T; success: true; error?: undefined }
-  | { data?: undefined; success: false; error?: unknown }
-
-export const safeJsonStorageParse = <T>(
-  key: string,
-  opts: { storage?: Storage; schema: z.ZodSchema<T> },
-): ParseResult<T> => {
-  const storage = opts.storage ?? window.sessionStorage
-  const text = storage.getItem(key)
-
-  if (!text) {
-    return { success: false }
-  }
-
-  try {
-    const { success, data, error } = opts.schema.safeParse(JSON.parse(text))
-    if (success) {
-      return { data: data, success: true }
-    } else {
-      return { success: false, error: error }
-    }
-  } catch (err) {
-    return { success: false, error: err }
-  }
 }
