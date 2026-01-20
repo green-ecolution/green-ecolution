@@ -62,7 +62,7 @@ function NewTree() {
   const initForm = draft.data ?? defaultForm(lat, lng)
   const formKey = `${draft.data?.latitude ?? lat}-${draft.data?.longitude ?? lng}`
 
-  const { mutate, isError, error, form, navigationBlocker } = useTreeForm('create', {
+  const { mutate, isError, error, form, navigationBlocker, saveDraft } = useTreeForm('create', {
     initForm,
   })
   const navigate = useNavigate({ from: Route.fullPath })
@@ -114,6 +114,7 @@ function NewTree() {
             onChangeLocation={handleOnChangeLocation}
             errorMessage={error?.message}
             onSubmit={onSubmit}
+            onBlur={saveDraft}
           />
         </FormProvider>
       </section>

@@ -13,7 +13,7 @@ import { DefaultValues, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useFormNavigationBlocker } from './useFormNavigationBlocker'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
-import { useEffect } from 'react'
+import { useCallback } from 'react'
 
 type MutationOption = 'create' | 'update'
 type MutationType<T> = T extends 'create'
@@ -36,14 +36,11 @@ export const useWateringPlanForm = <T extends MutationOption>(
     resolver: zodResolver(wateringPlanSchema),
   })
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/incompatible-library -- React Hook Form watch subscription pattern
-    const { unsubscribe } = form.watch((data) => {
-      if (data && Object.keys(data).length > 0) {
-        draft.setData(data as WateringPlanForm)
-      }
-    })
-    return () => unsubscribe()
+  const saveDraft = useCallback(() => {
+    const data = form.getValues()
+    if (data && Object.keys(data).length > 0) {
+      draft.setData(data)
+    }
   }, [form, draft])
 
   const navigationBlocker = useFormNavigationBlocker({
@@ -104,5 +101,6 @@ export const useWateringPlanForm = <T extends MutationOption>(
     error,
     form,
     navigationBlocker,
+    saveDraft,
   }
 }

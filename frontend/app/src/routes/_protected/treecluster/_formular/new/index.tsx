@@ -33,9 +33,12 @@ function NewTreecluster() {
   const initForm = draft.data ?? defaultForm
   const formKey = draft.data?.treeIds?.join(',') ?? 'initial'
 
-  const { mutate, isError, error, form, navigationBlocker } = useTreeClusterForm('create', {
-    initForm,
-  })
+  const { mutate, isError, error, form, navigationBlocker, saveDraft } = useTreeClusterForm(
+    'create',
+    {
+      initForm,
+    },
+  )
   const navigate = useNavigate({ from: Route.fullPath })
 
   const mapCenter = useStore((state) => state.mapCenter)
@@ -82,6 +85,7 @@ function NewTreecluster() {
             onSubmit={onSubmit}
             onAddTrees={navigateToTreeSelect}
             errorMessage={error?.message}
+            onBlur={saveDraft}
           />
         </FormProvider>
       </section>

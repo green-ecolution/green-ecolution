@@ -21,6 +21,7 @@ interface FormForTreeClusterProps {
   onSubmit: SubmitHandler<TreeclusterForm>
   displayError: boolean
   errorMessage?: string
+  onBlur?: () => void
 }
 
 const FormForTreecluster = (props: FormForTreeClusterProps) => {
@@ -36,6 +37,7 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
       key="cluster-register"
       className="flex flex-col gap-y-6 lg:grid lg:grid-cols-2 lg:gap-11"
       onSubmit={handleSubmit(props.onSubmit)}
+      onBlur={props.onBlur}
     >
       <div className="flex flex-col gap-y-6">
         <FormField label="Name" error={errors.name?.message} required {...register('name')} />

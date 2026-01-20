@@ -198,57 +198,23 @@ describe('useWateringPlanForm', () => {
     })
   })
 
-  describe('map clusters changed flag', () => {
-    it('detects clusters changed flag for create mutation', () => {
-      useStore.getState().markFormDraftChanged('wateringplan-create')
-
-      renderHook(() => useWateringPlanForm('create', { initForm: defaultInitForm }), {
-        wrapper: createWrapper(),
-      })
-
-      expect(mockUseBlocker).toHaveBeenCalledWith(
-        expect.objectContaining({
-          shouldBlockFn: expect.any(Function) as unknown,
-        }),
-      )
-    })
-
-    it('detects clusters changed flag for update mutation', () => {
-      useStore.getState().markFormDraftChanged('wateringplan-update')
-
-      renderHook(
-        () => useWateringPlanForm('update', { wateringPlanId: '1', initForm: defaultInitForm }),
-        { wrapper: createWrapper() },
-      )
-
-      expect(mockUseBlocker).toHaveBeenCalledWith(
-        expect.objectContaining({
-          shouldBlockFn: expect.any(Function) as unknown,
-        }),
-      )
-    })
-
-    it('does not detect clusters changed when flag is not set', () => {
-      renderHook(() => useWateringPlanForm('create', { initForm: defaultInitForm }), {
-        wrapper: createWrapper(),
-      })
-
-      expect(mockUseBlocker).toHaveBeenCalled()
-    })
-
-    it('clears clusters changed flags on successful mutation', async () => {
-      useStore.getState().markFormDraftChanged('wateringplan-create')
-      useStore.getState().markFormDraftChanged('wateringplan-update')
-
+  describe('draft management', () => {
+    it('clears draft on successful mutation', async () => {
       const mockResponse = createMockWateringPlan()
       // eslint-disable-next-line @typescript-eslint/unbound-method
       const createMock = vi.mocked(wateringPlanApi.createWateringPlan)
       createMock.mockResolvedValueOnce(mockResponse)
 
+      // Pre-populate draft
+      useStore.getState().setFormDraft('wateringplan-create', defaultInitForm)
+
       const { result } = renderHook(
         () => useWateringPlanForm('create', { initForm: defaultInitForm }),
         { wrapper: createWrapper() },
       )
+
+      // Verify draft exists before mutation
+      expect(useStore.getState().formDrafts['wateringplan-create']).toBeDefined()
 
       act(() => {
         result.current.mutate({
@@ -263,6 +229,16 @@ describe('useWateringPlanForm', () => {
       await waitFor(() => {
         expect(useStore.getState().formDrafts['wateringplan-create']).toBeUndefined()
       })
+    })
+
+    it('returns navigationBlocker with correct message', () => {
+      const { result } = renderHook(
+        () => useWateringPlanForm('create', { initForm: defaultInitForm }),
+        { wrapper: createWrapper() },
+      )
+
+      expect(result.current.navigationBlocker).toBeDefined()
+      expect(result.current.navigationBlocker.message).toContain('Einsatzplan')
     })
   })
 })

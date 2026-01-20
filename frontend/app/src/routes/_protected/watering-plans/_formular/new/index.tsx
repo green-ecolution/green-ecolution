@@ -52,9 +52,12 @@ function NewWateringPlan() {
       type: 'transporter',
     }),
   )
-  const { mutate, isError, error, form, navigationBlocker } = useWateringPlanForm('create', {
-    initForm,
-  })
+  const { mutate, isError, error, form, navigationBlocker, saveDraft } = useWateringPlanForm(
+    'create',
+    {
+      initForm,
+    },
+  )
   const { getValues } = form
 
   const mapCenter = useStore((state) => state.mapCenter)
@@ -113,6 +116,7 @@ function NewWateringPlan() {
             users={users.data}
             onAddCluster={navigateToClusterSelect}
             errorMessage={error?.message}
+            onBlur={saveDraft}
           />
         </FormProvider>
       </section>

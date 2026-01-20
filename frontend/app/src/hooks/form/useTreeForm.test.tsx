@@ -183,47 +183,8 @@ describe('useTreeForm', () => {
     // Form validation is already tested extensively in treeSchema.test.ts
   })
 
-  describe('map coords changed flag', () => {
-    it('detects coords changed flag for create mutation', () => {
-      useStore.getState().markFormDraftChanged('tree-create')
-
-      renderHook(() => useTreeForm('create', { initForm: defaultInitForm }), {
-        wrapper: createWrapper(),
-      })
-
-      expect(mockUseBlocker).toHaveBeenCalledWith(
-        expect.objectContaining({
-          shouldBlockFn: expect.any(Function) as unknown,
-        }),
-      )
-    })
-
-    it('detects coords changed flag for update mutation', () => {
-      useStore.getState().markFormDraftChanged('tree-update')
-
-      renderHook(() => useTreeForm('update', { treeId: '1', initForm: defaultInitForm }), {
-        wrapper: createWrapper(),
-      })
-
-      expect(mockUseBlocker).toHaveBeenCalledWith(
-        expect.objectContaining({
-          shouldBlockFn: expect.any(Function) as unknown,
-        }),
-      )
-    })
-
-    it('does not detect coords changed when flag is not set', () => {
-      renderHook(() => useTreeForm('create', { initForm: defaultInitForm }), {
-        wrapper: createWrapper(),
-      })
-
-      expect(mockUseBlocker).toHaveBeenCalled()
-    })
-
-    it('clears coords changed flags on successful mutation', async () => {
-      useStore.getState().markFormDraftChanged('tree-create')
-      useStore.getState().markFormDraftChanged('tree-update')
-
+  describe('draft management', () => {
+    it('clears draft on successful mutation', async () => {
       const mockResponse = {
         id: 1,
         number: 'T-001',
@@ -236,9 +197,16 @@ describe('useTreeForm', () => {
       const createTreeMock = vi.mocked(treeApi.createTree)
       createTreeMock.mockResolvedValueOnce(mockResponse)
 
-      const { result } = renderHook(() => useTreeForm('create', { initForm: defaultInitForm }), {
-        wrapper: createWrapper(),
-      })
+      // Pre-populate draft
+      useStore.getState().setFormDraft('tree-create', defaultInitForm)
+
+      const { result } = renderHook(
+        () => useTreeForm('create', { initForm: defaultInitForm }),
+        { wrapper: createWrapper() },
+      )
+
+      // Verify draft exists before mutation
+      expect(useStore.getState().formDrafts['tree-create']).toBeDefined()
 
       act(() => {
         result.current.mutate({
@@ -254,6 +222,16 @@ describe('useTreeForm', () => {
       await waitFor(() => {
         expect(useStore.getState().formDrafts['tree-create']).toBeUndefined()
       })
+    })
+
+    it('returns navigationBlocker with correct message', () => {
+      const { result } = renderHook(
+        () => useTreeForm('create', { initForm: defaultInitForm }),
+        { wrapper: createWrapper() },
+      )
+
+      expect(result.current.navigationBlocker).toBeDefined()
+      expect(result.current.navigationBlocker.message).toContain('Baum')
     })
   })
 })

@@ -45,10 +45,13 @@ const TreeClusterUpdate = ({ clusterId, formState }: TreeClusterUpdateProps) => 
         treeIds: data.trees?.map((tree) => tree.id) ?? [],
       },
   )
-  const { mutate, isError, error, form, navigationBlocker } = useTreeClusterForm('update', {
-    clusterId,
-    initForm,
-  })
+  const { mutate, isError, error, form, navigationBlocker, saveDraft } = useTreeClusterForm(
+    'update',
+    {
+      clusterId,
+      initForm,
+    },
+  )
 
   const onSubmit: SubmitHandler<TreeclusterForm> = (data) => {
     mutate({
@@ -103,6 +106,7 @@ const TreeClusterUpdate = ({ clusterId, formState }: TreeClusterUpdateProps) => 
             onSubmit={onSubmit}
             onAddTrees={navigateToTreeSelect}
             errorMessage={error?.message}
+            onBlur={saveDraft}
           />
         </FormProvider>
       </section>

@@ -191,59 +191,23 @@ describe('useTreeClusterForm', () => {
     })
   })
 
-  describe('map trees changed flag', () => {
-    it('detects trees changed flag for create mutation', () => {
-      useStore.getState().markFormDraftChanged('cluster-create')
-
-      renderHook(() => useTreeClusterForm('create', { initForm: defaultInitForm }), {
-        wrapper: createWrapper(),
-      })
-
-      expect(mockUseBlocker).toHaveBeenCalledWith(
-        expect.objectContaining({
-          shouldBlockFn: expect.any(Function) as unknown,
-        }),
-      )
-    })
-
-    it('detects trees changed flag for update mutation', () => {
-      useStore.getState().markFormDraftChanged('cluster-update')
-
-      renderHook(
-        () => useTreeClusterForm('update', { clusterId: '1', initForm: defaultInitForm }),
-        {
-          wrapper: createWrapper(),
-        },
-      )
-
-      expect(mockUseBlocker).toHaveBeenCalledWith(
-        expect.objectContaining({
-          shouldBlockFn: expect.any(Function) as unknown,
-        }),
-      )
-    })
-
-    it('does not detect trees changed when flag is not set', () => {
-      renderHook(() => useTreeClusterForm('create', { initForm: defaultInitForm }), {
-        wrapper: createWrapper(),
-      })
-
-      expect(mockUseBlocker).toHaveBeenCalled()
-    })
-
-    it('clears trees changed flags on successful mutation', async () => {
-      useStore.getState().markFormDraftChanged('cluster-create')
-      useStore.getState().markFormDraftChanged('cluster-update')
-
+  describe('draft management', () => {
+    it('clears draft on successful mutation', async () => {
       const mockResponse = createMockTreeCluster()
       // eslint-disable-next-line @typescript-eslint/unbound-method
       const createMock = vi.mocked(clusterApi.createTreeCluster)
       createMock.mockResolvedValueOnce(mockResponse)
 
+      // Pre-populate draft
+      useStore.getState().setFormDraft('cluster-create', defaultInitForm)
+
       const { result } = renderHook(
         () => useTreeClusterForm('create', { initForm: defaultInitForm }),
         { wrapper: createWrapper() },
       )
+
+      // Verify draft exists before mutation
+      expect(useStore.getState().formDrafts['cluster-create']).toBeDefined()
 
       act(() => {
         result.current.mutate({
@@ -258,6 +222,16 @@ describe('useTreeClusterForm', () => {
       await waitFor(() => {
         expect(useStore.getState().formDrafts['cluster-create']).toBeUndefined()
       })
+    })
+
+    it('returns navigationBlocker with correct message', () => {
+      const { result } = renderHook(
+        () => useTreeClusterForm('create', { initForm: defaultInitForm }),
+        { wrapper: createWrapper() },
+      )
+
+      expect(result.current.navigationBlocker).toBeDefined()
+      expect(result.current.navigationBlocker.message).toContain('Bewässerungsgruppe')
     })
   })
 })

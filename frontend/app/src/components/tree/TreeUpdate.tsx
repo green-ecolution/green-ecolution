@@ -48,7 +48,7 @@ const TreeUpdate = ({ treeId, clusters, sensors }: TreeUpdateProps) => {
         provider: data.provider,
       },
   )
-  const { mutate, isError, error, form, navigationBlocker } = useTreeForm('update', {
+  const { mutate, isError, error, form, navigationBlocker, saveDraft } = useTreeForm('update', {
     initForm,
     treeId,
   })
@@ -102,6 +102,7 @@ const TreeUpdate = ({ treeId, clusters, sensors }: TreeUpdateProps) => {
             sensors={sensors}
             onChangeLocation={handleOnChangeLocation}
             errorMessage={error?.message}
+            onBlur={saveDraft}
           />
         </FormProvider>
       </section>

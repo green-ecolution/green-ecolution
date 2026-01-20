@@ -48,10 +48,13 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         driverIds: data.userIds,
       },
   )
-  const { mutate, isError, error, form, navigationBlocker } = useWateringPlanForm('update', {
-    wateringPlanId,
-    initForm,
-  })
+  const { mutate, isError, error, form, navigationBlocker, saveDraft } = useWateringPlanForm(
+    'update',
+    {
+      wateringPlanId,
+      initForm,
+    },
+  )
 
   const navigate = useNavigate({ from: Route.fullPath })
   const date = loadedData?.date ? format(new Date(loadedData?.date), 'dd.MM.yyyy') : 'Keine Angabe'
@@ -141,6 +144,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
             transporters={transporters.data}
             onAddCluster={navigateToClusterSelect}
             errorMessage={error?.message}
+            onBlur={saveDraft}
           />
         </FormProvider>
       </section>
