@@ -3,6 +3,8 @@ import { Loading } from '@green-ecolution/ui'
 import TreeUpdate from '@/components/tree/TreeUpdate'
 import { sensorQuery, treeClusterQuery } from '@/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
+import { useTreeDraft } from '@/store/form/useFormDraft'
+import { TreeForm } from '@/schema/treeSchema'
 
 export const Route = createFileRoute('/_protected/trees/_formular/$treeId/edit/')({
   component: EditTree,
@@ -21,12 +23,20 @@ export const Route = createFileRoute('/_protected/trees/_formular/$treeId/edit/'
 
 function EditTree() {
   const treeId = Route.useParams().treeId
+  const draft = useTreeDraft<TreeForm>('update')
   const { data: sensors } = useSuspenseQuery(sensorQuery())
   const { data: treeClusters } = useSuspenseQuery(treeClusterQuery())
 
+  const formKey = `${draft.data?.latitude ?? 'initial'}-${draft.data?.longitude ?? 'initial'}`
+
   return (
     <div className="container mt-6">
-      <TreeUpdate treeId={treeId} clusters={treeClusters.data} sensors={sensors.data} />
+      <TreeUpdate
+        key={formKey}
+        treeId={treeId}
+        clusters={treeClusters.data}
+        sensors={sensors.data}
+      />
     </div>
   )
 }

@@ -2,7 +2,7 @@ import FormForTreecluster from '../general/form/FormForTreecluster'
 import BackLink from '../general/links/BackLink'
 import DeleteSection from './DeleteSection'
 import { TreeCluster } from '@green-ecolution/backend-client'
-import { clusterSchemaBase, TreeclusterForm } from '@/schema/treeclusterSchema'
+import { TreeclusterForm } from '@/schema/treeclusterSchema'
 import { useInitFormQuery } from '@/hooks/form/useInitForm'
 import { treeClusterIdQuery } from '@/api/queries'
 import { clusterApi } from '@/api/backendApi'
@@ -12,7 +12,6 @@ import useStore from '@/store/store'
 import { Suspense } from 'react'
 import { Loading } from '@green-ecolution/ui'
 import { useTreeClusterForm } from '@/hooks/form/useTreeClusterForm'
-import { safeJsonStorageParse } from '@/lib/utils'
 import {
   AlertDialog,
   AlertDialogContent,
@@ -27,14 +26,14 @@ import { MoveRight, X } from 'lucide-react'
 
 interface TreeClusterUpdateProps {
   clusterId: string
+  formState: TreeclusterForm | null
 }
 
-const TreeClusterUpdate = ({ clusterId }: TreeClusterUpdateProps) => {
+const TreeClusterUpdate = ({ clusterId, formState }: TreeClusterUpdateProps) => {
   const mapCenter = useStore((state) => state.mapCenter)
   const mapZoom = useStore((state) => state.mapZoom)
   const mapPosition = { lat: mapCenter[0], lng: mapCenter[1], zoom: mapZoom }
   const navigate = useNavigate()
-  const { data: formState } = safeJsonStorageParse('update-cluster', { schema: clusterSchemaBase })
   const { initForm, loadedData } = useInitFormQuery<TreeCluster, TreeclusterForm>(
     treeClusterIdQuery(clusterId),
     (data) =>

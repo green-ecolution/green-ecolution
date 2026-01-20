@@ -5,6 +5,7 @@ import { ReactNode } from 'react'
 import { useTreeClusterForm } from './useTreeClusterForm'
 import { Toaster } from '@green-ecolution/ui'
 import { SoilCondition, WateringStatus } from '@green-ecolution/backend-client'
+import useStore from '@/store/store'
 
 vi.mock('@/api/backendApi', () => ({
   clusterApi: {
@@ -23,10 +24,6 @@ vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn().mockResolvedValue(undefined),
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   useBlocker: (...args: unknown[]) => mockUseBlocker(...args),
-}))
-
-vi.mock('./usePersistForm', () => ({
-  default: () => ({ clear: vi.fn() }),
 }))
 
 import { clusterApi } from '@/api/backendApi'
@@ -78,11 +75,11 @@ function createMockTreeCluster(overrides: Partial<TreeCluster> = {}): TreeCluste
 describe('useTreeClusterForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    sessionStorage.clear()
+    useStore.getState().clearAllFormDrafts()
   })
 
   afterEach(() => {
-    sessionStorage.clear()
+    useStore.getState().clearAllFormDrafts()
   })
 
   it('initializes form with provided default values', () => {
@@ -196,7 +193,7 @@ describe('useTreeClusterForm', () => {
 
   describe('map trees changed flag', () => {
     it('detects trees changed flag for create mutation', () => {
-      sessionStorage.setItem('create-cluster-trees-changed', 'true')
+      useStore.getState().markFormDraftChanged('cluster-create')
 
       renderHook(() => useTreeClusterForm('create', { initForm: defaultInitForm }), {
         wrapper: createWrapper(),
@@ -210,7 +207,7 @@ describe('useTreeClusterForm', () => {
     })
 
     it('detects trees changed flag for update mutation', () => {
-      sessionStorage.setItem('update-cluster-trees-changed', 'true')
+      useStore.getState().markFormDraftChanged('cluster-update')
 
       renderHook(
         () => useTreeClusterForm('update', { clusterId: '1', initForm: defaultInitForm }),
@@ -235,8 +232,8 @@ describe('useTreeClusterForm', () => {
     })
 
     it('clears trees changed flags on successful mutation', async () => {
-      sessionStorage.setItem('create-cluster-trees-changed', 'true')
-      sessionStorage.setItem('update-cluster-trees-changed', 'true')
+      useStore.getState().markFormDraftChanged('cluster-create')
+      useStore.getState().markFormDraftChanged('cluster-update')
 
       const mockResponse = createMockTreeCluster()
       // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -259,8 +256,7 @@ describe('useTreeClusterForm', () => {
       })
 
       await waitFor(() => {
-        expect(sessionStorage.getItem('create-cluster-trees-changed')).toBeNull()
-        expect(sessionStorage.getItem('update-cluster-trees-changed')).toBeNull()
+        expect(useStore.getState().formDrafts['cluster-create']).toBeUndefined()
       })
     })
   })

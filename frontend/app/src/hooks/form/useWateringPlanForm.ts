@@ -11,8 +11,9 @@ import { wateringPlanApi } from '@/api/backendApi'
 import { WateringPlanForm, wateringPlanSchema } from '@/schema/wateringPlanSchema'
 import { DefaultValues, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import useFormPersist from './usePersistForm'
 import { useFormNavigationBlocker } from './useFormNavigationBlocker'
+import { useWateringPlanDraft } from '@/store/form/useFormDraft'
+import { useEffect } from 'react'
 
 type MutationOption = 'create' | 'update'
 type MutationType<T> = T extends 'create'
@@ -28,28 +29,27 @@ export const useWateringPlanForm = <T extends MutationOption>(
   const showToast = createToast()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const draft = useWateringPlanDraft<WateringPlanForm>(mutationType)
 
   const form = useForm<WateringPlanForm>({
     defaultValues: opts.initForm,
     resolver: zodResolver(wateringPlanSchema),
   })
 
-  const { clear: resetPersist } = useFormPersist(`${mutationType}-wateringplan`, {
-    watch: form.watch,
-  })
-
-  const clustersChanged =
-    window.sessionStorage.getItem(`${mutationType}-wateringplan-clusters-changed`) === 'true'
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/incompatible-library -- React Hook Form watch subscription pattern
+    const { unsubscribe } = form.watch((data) => {
+      if (data && Object.keys(data).length > 0) {
+        draft.setData(data as WateringPlanForm)
+      }
+    })
+    return () => unsubscribe()
+  }, [form, draft])
 
   const navigationBlocker = useFormNavigationBlocker({
-    isDirty: form.formState.isDirty || clustersChanged,
+    isDirty: form.formState.isDirty || draft.hasChanges,
     allowedPaths: ['/map/watering-plan/select/cluster'],
-    onLeave: () => {
-      window.sessionStorage.removeItem('create-wateringplan')
-      window.sessionStorage.removeItem('update-wateringplan')
-      window.sessionStorage.removeItem('create-wateringplan-clusters-changed')
-      window.sessionStorage.removeItem('update-wateringplan-clusters-changed')
-    },
+    onLeave: () => draft.clear(),
     message:
       mutationType === 'create'
         ? 'Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen des Einsatzplans gehen verloren, wenn du jetzt gehst.'
@@ -72,9 +72,7 @@ export const useWateringPlanForm = <T extends MutationOption>(
     },
 
     onSuccess: (data: WateringPlan) => {
-      resetPersist()
-      window.sessionStorage.removeItem('create-wateringplan-clusters-changed')
-      window.sessionStorage.removeItem('update-wateringplan-clusters-changed')
+      draft.clear()
       queryClient
         .invalidateQueries(wateringPlanIdQuery(String(data.id)))
         .catch((error) => console.error('Invalidate "wateringPlanIdQuery" failed', error))

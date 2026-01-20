@@ -6,9 +6,10 @@ import { Tree, TreeCreate, TreeUpdate } from '@green-ecolution/backend-client'
 import { treeApi } from '@/api/backendApi'
 import { TreeForm, treeSchema } from '@/schema/treeSchema'
 import { DefaultValues, useForm } from 'react-hook-form'
-import useFormPersist from './usePersistForm'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useFormNavigationBlocker } from './useFormNavigationBlocker'
+import { useTreeDraft } from '@/store/form/useFormDraft'
+import { useEffect } from 'react'
 
 export const useTreeForm = (
   mutationType: 'create' | 'update',
@@ -17,26 +18,27 @@ export const useTreeForm = (
   const showToast = createToast()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const draft = useTreeDraft<TreeForm>(mutationType)
 
   const form = useForm<TreeForm>({
     defaultValues: opts.initForm,
     resolver: zodResolver(treeSchema),
   })
 
-  const { clear: resetPersist } = useFormPersist(`${mutationType}-tree`, { watch: form.watch })
-
-  const coordsChanged =
-    window.sessionStorage.getItem(`${mutationType}-tree-coords-changed`) === 'true'
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/incompatible-library -- React Hook Form watch subscription pattern
+    const { unsubscribe } = form.watch((data) => {
+      if (data && Object.keys(data).length > 0) {
+        draft.setData(data as TreeForm)
+      }
+    })
+    return () => unsubscribe()
+  }, [form, draft])
 
   const navigationBlocker = useFormNavigationBlocker({
-    isDirty: form.formState.isDirty || coordsChanged,
+    isDirty: form.formState.isDirty || draft.hasChanges,
     allowedPaths: ['/map/tree/edit'],
-    onLeave: () => {
-      window.sessionStorage.removeItem('create-tree')
-      window.sessionStorage.removeItem('update-tree')
-      window.sessionStorage.removeItem('create-tree-coords-changed')
-      window.sessionStorage.removeItem('update-tree-coords-changed')
-    },
+    onLeave: () => draft.clear(),
     message:
       mutationType === 'create'
         ? 'Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen des Baums gehen verloren, wenn du jetzt gehst.'
@@ -59,9 +61,7 @@ export const useTreeForm = (
     },
 
     onSuccess: (data: Tree) => {
-      resetPersist()
-      window.sessionStorage.removeItem('create-tree-coords-changed')
-      window.sessionStorage.removeItem('update-tree-coords-changed')
+      draft.clear()
       queryClient
         .invalidateQueries(treeIdQuery(String(data.id)))
         .catch((error) => console.error('Invalidate "treeIdQuery" failed:', error))

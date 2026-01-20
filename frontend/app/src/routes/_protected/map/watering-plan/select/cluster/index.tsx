@@ -13,7 +13,7 @@ import {
   InlineAlert,
 } from '@green-ecolution/ui'
 import { MoveRight, X } from 'lucide-react'
-import { wateringPlanSchemaBase } from '@/schema/wateringPlanSchema'
+import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import MapSelectEntitiesModal from '@/components/map/MapSelectEntitiesModal'
 import WithAllClusters from '@/components/map/marker/WithAllClusters'
 import ShowRoutePreview from '@/components/map/marker/ShowRoutePreview'
@@ -21,7 +21,7 @@ import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { treeClusterQuery, vehicleIdQuery } from '@/api/queries'
 import SelectedCard from '@/components/general/cards/SelectedCard'
 import { z } from 'zod'
-import { safeJsonStorageParse } from '@/lib/utils'
+import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 
 const mapSelectClusterSchema = z.object({
   transporterId: z.coerce.number().optional(),
@@ -46,6 +46,7 @@ function SelectCluster() {
   const navigate = useNavigate({ from: Route.fullPath })
   const { wateringPlanId } = Route.useSearch()
   const allowNavigationRef = useRef(false)
+  const draft = useWateringPlanDraft<WateringPlanForm>(formType)
 
   const { proceed, reset, status } = useBlocker({
     shouldBlockFn: ({ next }) => {
@@ -67,12 +68,10 @@ function SelectCluster() {
   })
 
   const handleConfirmLeave = useCallback(() => {
-    window.sessionStorage.removeItem('create-wateringplan')
-    window.sessionStorage.removeItem('update-wateringplan')
-    window.sessionStorage.removeItem('create-wateringplan-clusters-changed')
-    window.sessionStorage.removeItem('update-wateringplan-clusters-changed')
+    draft.clear()
     proceed?.()
-  }, [proceed])
+  }, [proceed, draft])
+
   const { data: clusters } = useSuspenseQuery(treeClusterQuery())
   const { data: transporter } = useQuery({
     ...vehicleIdQuery(transporterId?.toString() ?? '-1'),
@@ -103,22 +102,22 @@ function SelectCluster() {
       setShowError(true)
       return
     }
-    const { success, data, error } = safeJsonStorageParse(`${formType}-wateringplan`, {
-      schema: wateringPlanSchemaBase,
-    })
 
-    if (success) {
-      const originalClusterIds = data.clusterIds ?? []
+    const currentData = draft.data
+    if (currentData) {
+      const originalClusterIds = currentData.clusterIds ?? []
       const clustersChanged =
         clusterIds.length !== originalClusterIds.length ||
         clusterIds.some((id) => !originalClusterIds.includes(id))
+
+      draft.updateData((prev) => ({
+        ...(prev ?? ({} as WateringPlanForm)),
+        clusterIds,
+      }))
+
       if (clustersChanged) {
-        window.sessionStorage.setItem(`${formType}-wateringplan-clusters-changed`, 'true')
+        draft.markChanged()
       }
-      data.clusterIds = clusterIds
-      window.sessionStorage.setItem(`${formType}-wateringplan`, JSON.stringify(data))
-    } else {
-      console.error(error)
     }
 
     handleNavigateBack().catch((error) => console.error('Navigation failed:', error))

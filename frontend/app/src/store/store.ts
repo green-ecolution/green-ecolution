@@ -8,6 +8,7 @@ import { KeycloakJWT } from '@/lib/types/keycloak'
 import { parseUserRole } from '@/hooks/details/useDetailsForUserRole'
 import { parseUserStatus } from '@/hooks/details/useDetailsForUserStatus'
 import { parseDrivingLicense } from '@/hooks/details/useDetailsForDrivingLicense'
+import { FormDraftSlice } from './form/formDraftSlice'
 
 // =============================================================================
 // Types
@@ -44,7 +45,7 @@ interface MapSlice {
   setShowSelectModal: (show: boolean) => void
 }
 
-type Store = AuthSlice & UserSlice & MapSlice
+type Store = AuthSlice & UserSlice & MapSlice & FormDraftSlice
 type Mutators = [['zustand/devtools', never], ['zustand/immer', never]]
 
 // =============================================================================
@@ -135,6 +136,40 @@ const createMapSlice: StateCreator<Store, Mutators, [], MapSlice> = (set) => ({
     }),
 })
 
+const createFormDraftSlice: StateCreator<Store, Mutators, [], FormDraftSlice> = (set) => ({
+  formDrafts: {},
+
+  setFormDraft: (key, data) =>
+    set((state) => {
+      state.formDrafts[key] = { data, hasChanges: false }
+    }),
+
+  updateFormDraft: (key, updater) =>
+    set((state) => {
+      const current = (state.formDrafts[key]?.data as Parameters<typeof updater>[0]) ?? null
+      state.formDrafts[key] = { data: updater(current), hasChanges: true }
+    }),
+
+  markFormDraftChanged: (key) =>
+    set((state) => {
+      if (state.formDrafts[key]) {
+        state.formDrafts[key].hasChanges = true
+      } else {
+        state.formDrafts[key] = { data: null, hasChanges: true }
+      }
+    }),
+
+  clearFormDraft: (key) =>
+    set((state) => {
+      delete state.formDrafts[key]
+    }),
+
+  clearAllFormDrafts: () =>
+    set((state) => {
+      state.formDrafts = {}
+    }),
+})
+
 // =============================================================================
 // Store
 // =============================================================================
@@ -145,6 +180,7 @@ const useStore = create<Store>()(
       ...createAuthSlice(...a),
       ...createUserSlice(...a),
       ...createMapSlice(...a),
+      ...createFormDraftSlice(...a),
     })),
   ),
 )

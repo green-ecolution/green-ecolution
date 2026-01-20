@@ -7,8 +7,9 @@ import { clusterApi } from '@/api/backendApi'
 import { clusterSchema, TreeclusterForm } from '@/schema/treeclusterSchema'
 import { DefaultValues, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import useFormPersist from './usePersistForm'
 import { useFormNavigationBlocker } from './useFormNavigationBlocker'
+import { useClusterDraft } from '@/store/form/useFormDraft'
+import { useEffect } from 'react'
 
 export const useTreeClusterForm = (
   mutationType: 'create' | 'update',
@@ -17,26 +18,27 @@ export const useTreeClusterForm = (
   const showToast = createToast()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const draft = useClusterDraft<TreeclusterForm>(mutationType)
 
   const form = useForm<TreeclusterForm>({
     defaultValues: opts.initForm,
     resolver: zodResolver(clusterSchema),
   })
 
-  const { clear: resetPersist } = useFormPersist(`${mutationType}-cluster`, { watch: form.watch })
-
-  const treesChanged =
-    window.sessionStorage.getItem(`${mutationType}-cluster-trees-changed`) === 'true'
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/incompatible-library -- React Hook Form watch subscription pattern
+    const { unsubscribe } = form.watch((data) => {
+      if (data && Object.keys(data).length > 0) {
+        draft.setData(data as TreeclusterForm)
+      }
+    })
+    return () => unsubscribe()
+  }, [form, draft])
 
   const navigationBlocker = useFormNavigationBlocker({
-    isDirty: form.formState.isDirty || treesChanged,
+    isDirty: form.formState.isDirty || draft.hasChanges,
     allowedPaths: ['/map/treecluster/select/tree'],
-    onLeave: () => {
-      window.sessionStorage.removeItem('create-cluster')
-      window.sessionStorage.removeItem('update-cluster')
-      window.sessionStorage.removeItem('create-cluster-trees-changed')
-      window.sessionStorage.removeItem('update-cluster-trees-changed')
-    },
+    onLeave: () => draft.clear(),
     message:
       mutationType === 'create'
         ? 'Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen der Bewässerungsgruppe gehen verloren, wenn du jetzt gehst.'
@@ -59,9 +61,7 @@ export const useTreeClusterForm = (
     },
 
     onSuccess: (data: TreeCluster) => {
-      resetPersist()
-      window.sessionStorage.removeItem('create-cluster-trees-changed')
-      window.sessionStorage.removeItem('update-cluster-trees-changed')
+      draft.clear()
       queryClient
         .invalidateQueries(treeClusterIdQuery(String(data.id)))
         .catch((error) => console.error('Invalidate "treeClusterIdQuery" failed:', error))

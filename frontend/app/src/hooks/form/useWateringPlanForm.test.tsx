@@ -5,6 +5,7 @@ import { ReactNode } from 'react'
 import { useWateringPlanForm } from './useWateringPlanForm'
 import { Toaster } from '@green-ecolution/ui'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
+import useStore from '@/store/store'
 
 vi.mock('@/api/backendApi', () => ({
   wateringPlanApi: {
@@ -23,10 +24,6 @@ vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn().mockResolvedValue(undefined),
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   useBlocker: (...args: unknown[]) => mockUseBlocker(...args),
-}))
-
-vi.mock('./usePersistForm', () => ({
-  default: () => ({ clear: vi.fn() }),
 }))
 
 import { wateringPlanApi } from '@/api/backendApi'
@@ -85,11 +82,11 @@ function createMockWateringPlan(overrides: Partial<WateringPlan> = {}): Watering
 describe('useWateringPlanForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    sessionStorage.clear()
+    useStore.getState().clearAllFormDrafts()
   })
 
   afterEach(() => {
-    sessionStorage.clear()
+    useStore.getState().clearAllFormDrafts()
   })
 
   it('initializes form with provided default values', () => {
@@ -203,7 +200,7 @@ describe('useWateringPlanForm', () => {
 
   describe('map clusters changed flag', () => {
     it('detects clusters changed flag for create mutation', () => {
-      sessionStorage.setItem('create-wateringplan-clusters-changed', 'true')
+      useStore.getState().markFormDraftChanged('wateringplan-create')
 
       renderHook(() => useWateringPlanForm('create', { initForm: defaultInitForm }), {
         wrapper: createWrapper(),
@@ -217,7 +214,7 @@ describe('useWateringPlanForm', () => {
     })
 
     it('detects clusters changed flag for update mutation', () => {
-      sessionStorage.setItem('update-wateringplan-clusters-changed', 'true')
+      useStore.getState().markFormDraftChanged('wateringplan-update')
 
       renderHook(
         () => useWateringPlanForm('update', { wateringPlanId: '1', initForm: defaultInitForm }),
@@ -240,8 +237,8 @@ describe('useWateringPlanForm', () => {
     })
 
     it('clears clusters changed flags on successful mutation', async () => {
-      sessionStorage.setItem('create-wateringplan-clusters-changed', 'true')
-      sessionStorage.setItem('update-wateringplan-clusters-changed', 'true')
+      useStore.getState().markFormDraftChanged('wateringplan-create')
+      useStore.getState().markFormDraftChanged('wateringplan-update')
 
       const mockResponse = createMockWateringPlan()
       // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -264,8 +261,7 @@ describe('useWateringPlanForm', () => {
       })
 
       await waitFor(() => {
-        expect(sessionStorage.getItem('create-wateringplan-clusters-changed')).toBeNull()
-        expect(sessionStorage.getItem('update-wateringplan-clusters-changed')).toBeNull()
+        expect(useStore.getState().formDrafts['wateringplan-create']).toBeUndefined()
       })
     })
   })

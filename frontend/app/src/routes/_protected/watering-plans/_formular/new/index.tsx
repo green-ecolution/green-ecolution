@@ -4,11 +4,11 @@ import { DefaultValues, FormProvider, SubmitHandler } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import BackLink from '@/components/general/links/BackLink'
 import { userRoleQuery, vehicleQuery } from '@/api/queries'
-import { WateringPlanForm, wateringPlanSchemaBase } from '@/schema/wateringPlanSchema'
+import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import FormForWateringPlan from '@/components/general/form/FormForWateringPlan'
 import useStore from '@/store/store'
 import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
-import { safeJsonStorageParse } from '@/lib/utils'
+import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import {
   AlertDialog,
   AlertDialogContent,
@@ -22,12 +22,6 @@ import {
 import { MoveRight, X } from 'lucide-react'
 
 export const Route = createFileRoute('/_protected/watering-plans/_formular/new/')({
-  loader: () => {
-    const { data } = safeJsonStorageParse('create-wateringplan', { schema: wateringPlanSchemaBase })
-    return {
-      formState: data,
-    }
-  },
   component: NewWateringPlan,
 })
 
@@ -42,7 +36,10 @@ const defaultForm: DefaultValues<WateringPlanForm> = {
 }
 
 function NewWateringPlan() {
-  const { formState } = Route.useLoaderData()
+  const draft = useWateringPlanDraft<WateringPlanForm>('create')
+  const initForm = draft.data ?? defaultForm
+  const formKey = draft.data?.clusterIds?.join(',') ?? 'initial'
+
   const navigate = useNavigate({ from: Route.fullPath })
   const { data: users } = useSuspenseQuery(userRoleQuery('tbz'))
   const { data: trailers } = useSuspenseQuery(
@@ -56,7 +53,7 @@ function NewWateringPlan() {
     }),
   )
   const { mutate, isError, error, form, navigationBlocker } = useWateringPlanForm('create', {
-    initForm: formState ?? defaultForm,
+    initForm,
   })
   const { getValues } = form
 
@@ -107,7 +104,7 @@ function NewWateringPlan() {
       </article>
 
       <section className="mt-10">
-        <FormProvider {...form}>
+        <FormProvider key={formKey} {...form}>
           <FormForWateringPlan
             displayError={isError}
             onSubmit={onSubmit}

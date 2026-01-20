@@ -1,4 +1,4 @@
-import { TreeForm, treeSchemaBase } from '@/schema/treeSchema'
+import { TreeForm } from '@/schema/treeSchema'
 import FormForTree from '../general/form/FormForTree'
 import BackLink from '../general/links/BackLink'
 import DeleteSection from '../treecluster/DeleteSection'
@@ -9,7 +9,7 @@ import { treeApi } from '@/api/backendApi'
 import { useMapStore } from '@/store/store'
 import { useNavigate } from '@tanstack/react-router'
 import { useTreeForm } from '@/hooks/form/useTreeForm'
-import { safeJsonStorageParse } from '@/lib/utils'
+import { useTreeDraft } from '@/store/form/useFormDraft'
 import { FormProvider } from 'react-hook-form'
 import {
   AlertDialog,
@@ -32,11 +32,11 @@ interface TreeUpdateProps {
 const TreeUpdate = ({ treeId, clusters, sensors }: TreeUpdateProps) => {
   const navigate = useNavigate()
   const map = useMapStore()
-  const { data: formState } = safeJsonStorageParse('update-tree', { schema: treeSchemaBase })
+  const draft = useTreeDraft<TreeForm>('update')
   const { initForm, loadedData } = useInitFormQuery<Tree, TreeForm>(
     treeIdQuery(treeId),
     (data) =>
-      formState ?? {
+      draft.data ?? {
         latitude: data.latitude,
         longitude: data.longitude,
         number: data.number,

@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
 import { useTreeForm } from './useTreeForm'
 import { Toaster } from '@green-ecolution/ui'
+import useStore from '@/store/store'
 
 vi.mock('@/api/backendApi', () => ({
   treeApi: {
@@ -22,10 +23,6 @@ vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn().mockResolvedValue(undefined),
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   useBlocker: (...args: unknown[]) => mockUseBlocker(...args),
-}))
-
-vi.mock('./usePersistForm', () => ({
-  default: () => ({ clear: vi.fn() }),
 }))
 
 import { treeApi } from '@/api/backendApi'
@@ -61,11 +58,11 @@ const defaultInitForm = {
 describe('useTreeForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    sessionStorage.clear()
+    useStore.getState().clearAllFormDrafts()
   })
 
   afterEach(() => {
-    sessionStorage.clear()
+    useStore.getState().clearAllFormDrafts()
   })
 
   it('initializes form with provided default values', () => {
@@ -188,7 +185,7 @@ describe('useTreeForm', () => {
 
   describe('map coords changed flag', () => {
     it('detects coords changed flag for create mutation', () => {
-      sessionStorage.setItem('create-tree-coords-changed', 'true')
+      useStore.getState().markFormDraftChanged('tree-create')
 
       renderHook(() => useTreeForm('create', { initForm: defaultInitForm }), {
         wrapper: createWrapper(),
@@ -202,7 +199,7 @@ describe('useTreeForm', () => {
     })
 
     it('detects coords changed flag for update mutation', () => {
-      sessionStorage.setItem('update-tree-coords-changed', 'true')
+      useStore.getState().markFormDraftChanged('tree-update')
 
       renderHook(() => useTreeForm('update', { treeId: '1', initForm: defaultInitForm }), {
         wrapper: createWrapper(),
@@ -224,8 +221,8 @@ describe('useTreeForm', () => {
     })
 
     it('clears coords changed flags on successful mutation', async () => {
-      sessionStorage.setItem('create-tree-coords-changed', 'true')
-      sessionStorage.setItem('update-tree-coords-changed', 'true')
+      useStore.getState().markFormDraftChanged('tree-create')
+      useStore.getState().markFormDraftChanged('tree-update')
 
       const mockResponse = {
         id: 1,
@@ -255,8 +252,7 @@ describe('useTreeForm', () => {
       })
 
       await waitFor(() => {
-        expect(sessionStorage.getItem('create-tree-coords-changed')).toBeNull()
-        expect(sessionStorage.getItem('update-tree-coords-changed')).toBeNull()
+        expect(useStore.getState().formDrafts['tree-create']).toBeUndefined()
       })
     })
   })

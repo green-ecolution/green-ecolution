@@ -14,9 +14,9 @@ import { Suspense } from 'react'
 import DeleteSection from '../treecluster/DeleteSection'
 import { wateringPlanApi } from '@/api/backendApi'
 import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
-import { WateringPlanForm, wateringPlanSchemaBase } from '@/schema/wateringPlanSchema'
+import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import { FormProvider, SubmitHandler } from 'react-hook-form'
-import { safeJsonStorageParse } from '@/lib/utils'
+import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import {
   AlertDialog,
   AlertDialogContent,
@@ -34,13 +34,11 @@ interface WateringPlanUpdateProps {
 }
 
 const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
-  const { data: formState } = safeJsonStorageParse('update-wateringplan', {
-    schema: wateringPlanSchemaBase,
-  })
+  const draft = useWateringPlanDraft<WateringPlanForm>('update')
   const { initForm, loadedData } = useInitFormQuery(
     wateringPlanIdQuery(wateringPlanId),
     (data) =>
-      formState ?? {
+      draft.data ?? {
         date: new Date(data.date),
         description: data.description,
         transporterId: data.transporter.id,

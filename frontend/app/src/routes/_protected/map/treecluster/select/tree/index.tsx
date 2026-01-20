@@ -16,8 +16,8 @@ import {
 } from '@green-ecolution/ui'
 import { MoveRight, X } from 'lucide-react'
 import { z } from 'zod'
-import { safeJsonStorageParse } from '@/lib/utils'
-import { clusterSchemaBase } from '@/schema/treeclusterSchema'
+import { useClusterDraft } from '@/store/form/useFormDraft'
+import { TreeclusterForm } from '@/schema/treeclusterSchema'
 
 const selectTreesInClusterParams = z.object({
   formType: z.enum(['create', 'update']),
@@ -37,6 +37,7 @@ function SelectTrees() {
   const navigate = useNavigate({ from: Route.fullPath })
   const { clusterId } = Route.useSearch()
   const allowNavigationRef = useRef(false)
+  const draft = useClusterDraft<TreeclusterForm>(formType)
 
   const { proceed, reset, status } = useBlocker({
     shouldBlockFn: ({ next }) => {
@@ -59,12 +60,9 @@ function SelectTrees() {
   })
 
   const handleConfirmLeave = useCallback(() => {
-    window.sessionStorage.removeItem('create-cluster')
-    window.sessionStorage.removeItem('update-cluster')
-    window.sessionStorage.removeItem('create-cluster-trees-changed')
-    window.sessionStorage.removeItem('update-cluster-trees-changed')
+    draft.clear()
     proceed?.()
-  }, [proceed])
+  }, [proceed, draft])
 
   const handleNavigateBack = useCallback(() => {
     allowNavigationRef.current = true
@@ -87,22 +85,21 @@ function SelectTrees() {
       return
     }
 
-    const { data, success, error } = safeJsonStorageParse(`${formType}-cluster`, {
-      schema: clusterSchemaBase,
-    })
-
-    if (success) {
-      const originalTreeIds = data.treeIds ?? []
+    const currentData = draft.data
+    if (currentData) {
+      const originalTreeIds = currentData.treeIds ?? []
       const treesChanged =
         treeIds.length !== originalTreeIds.length ||
         treeIds.some((id) => !originalTreeIds.includes(id))
+
+      draft.updateData((prev) => ({
+        ...(prev ?? ({} as TreeclusterForm)),
+        treeIds,
+      }))
+
       if (treesChanged) {
-        window.sessionStorage.setItem(`${formType}-cluster-trees-changed`, 'true')
+        draft.markChanged()
       }
-      data.treeIds = treeIds
-      window.sessionStorage.setItem(`${formType}-cluster`, JSON.stringify(data))
-    } else {
-      console.error(error)
     }
 
     handleNavigateBack().catch((error) => console.error('Navigation failed:', error))
