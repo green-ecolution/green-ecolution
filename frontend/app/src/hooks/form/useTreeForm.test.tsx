@@ -200,10 +200,9 @@ describe('useTreeForm', () => {
       // Pre-populate draft
       useStore.getState().setFormDraft('tree-create', defaultInitForm)
 
-      const { result } = renderHook(
-        () => useTreeForm('create', { initForm: defaultInitForm }),
-        { wrapper: createWrapper() },
-      )
+      const { result } = renderHook(() => useTreeForm('create', { initForm: defaultInitForm }), {
+        wrapper: createWrapper(),
+      })
 
       // Verify draft exists before mutation
       expect(useStore.getState().formDrafts['tree-create']).toBeDefined()
@@ -225,10 +224,9 @@ describe('useTreeForm', () => {
     })
 
     it('returns navigationBlocker with correct message', () => {
-      const { result } = renderHook(
-        () => useTreeForm('create', { initForm: defaultInitForm }),
-        { wrapper: createWrapper() },
-      )
+      const { result } = renderHook(() => useTreeForm('create', { initForm: defaultInitForm }), {
+        wrapper: createWrapper(),
+      })
 
       expect(result.current.navigationBlocker).toBeDefined()
       expect(result.current.navigationBlocker.message).toContain('Baum')

@@ -1,102 +1,54 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { QueryClient } from '@tanstack/react-query'
 import { treeClusterIdQuery, treeIdQuery, treeQuery } from '@/api/queries'
-import createToast from '@/hooks/createToast'
-import { useNavigate } from '@tanstack/react-router'
 import { Tree, TreeCreate, TreeUpdate } from '@green-ecolution/backend-client'
 import { treeApi } from '@/api/backendApi'
 import { TreeForm, treeSchema } from '@/schema/treeSchema'
-import { DefaultValues, useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useFormNavigationBlocker } from './useFormNavigationBlocker'
-import { useTreeDraft } from '@/store/form/useFormDraft'
-import { useCallback } from 'react'
+import { DefaultValues } from 'react-hook-form'
+import { EntityFormConfig, useEntityForm } from './useEntityForm'
+
+const treeConfig: EntityFormConfig<TreeForm, TreeCreate, TreeUpdate, Tree> = {
+  formType: 'tree',
+  schema: treeSchema,
+
+  createFn: (body) => treeApi.createTree({ body }),
+  updateFn: (id, body) => treeApi.updateTree({ treeId: Number(id), body }),
+
+  invalidateQueries: (data, queryClient: QueryClient) => {
+    queryClient
+      .invalidateQueries(treeIdQuery(String(data.id)))
+      .catch((error) => console.error('Invalidate "treeIdQuery" failed:', error))
+    queryClient
+      .invalidateQueries(treeQuery())
+      .catch((error) => console.error('Invalidate "treeQuery" failed:', error))
+    if (data.treeClusterId) {
+      queryClient
+        .invalidateQueries(treeClusterIdQuery(String(data.treeClusterId)))
+        .catch((error) => console.error('Invalidate "treeClusterIdQuery" failed:', error))
+    }
+  },
+
+  successRoute: (id) => ({
+    to: '/trees/$treeId',
+    params: { treeId: id.toString() },
+  }),
+  allowedPaths: ['/map/tree/edit'],
+
+  messages: {
+    createLeave:
+      'Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen des Baums gehen verloren, wenn du jetzt gehst.',
+    updateLeave:
+      'Möchtest du die Seite wirklich verlassen? Deine Änderungen am Baum gehen verloren, wenn du jetzt gehst.',
+    createSuccess: 'Der Baum wurde erfolgreich erstellt.',
+    updateSuccess: 'Der Baum wurde erfolgreich bearbeitet.',
+  },
+}
 
 export const useTreeForm = (
   mutationType: 'create' | 'update',
   opts: { treeId?: string; initForm?: DefaultValues<TreeForm> },
 ) => {
-  const showToast = createToast()
-  const queryClient = useQueryClient()
-  const navigate = useNavigate()
-  const draft = useTreeDraft<TreeForm>(mutationType)
-
-  const form = useForm<TreeForm>({
-    defaultValues: opts.initForm,
-    resolver: zodResolver(treeSchema),
+  return useEntityForm<TreeForm, TreeCreate, TreeUpdate, Tree>(treeConfig, mutationType, {
+    entityId: opts.treeId,
+    initForm: opts.initForm,
   })
-
-  const saveDraft = useCallback(() => {
-    const data = form.getValues()
-    if (data && Object.keys(data).length > 0) {
-      draft.setData(data)
-    }
-  }, [form, draft])
-
-  const navigationBlocker = useFormNavigationBlocker({
-    isDirty: form.formState.isDirty || draft.hasChanges,
-    allowedPaths: ['/map/tree/edit'],
-    onLeave: () => draft.clear(),
-    message:
-      mutationType === 'create'
-        ? 'Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen des Baums gehen verloren, wenn du jetzt gehst.'
-        : 'Möchtest du die Seite wirklich verlassen? Deine Änderungen am Baum gehen verloren, wenn du jetzt gehst.',
-  })
-
-  const { mutate, isError, error } = useMutation({
-    mutationFn: (tree: TreeCreate | TreeUpdate) => {
-      if (mutationType === 'create') {
-        return treeApi.createTree({
-          body: tree as TreeCreate,
-        })
-      } else if (mutationType === 'update' && opts.treeId) {
-        return treeApi.updateTree({
-          treeId: Number(opts.treeId),
-          body: tree as TreeUpdate,
-        })
-      }
-      return Promise.reject(Error('Invalid mutation type or missing treeId for update'))
-    },
-
-    onSuccess: (data: Tree) => {
-      draft.clear()
-      queryClient
-        .invalidateQueries(treeIdQuery(String(data.id)))
-        .catch((error) => console.error('Invalidate "treeIdQuery" failed:', error))
-      queryClient
-        .invalidateQueries(treeQuery())
-        .catch((error) => console.error('Invalidate "treeQuery" failed:', error))
-      if (data.treeClusterId) {
-        queryClient
-          .invalidateQueries(treeClusterIdQuery(String(data.treeClusterId)))
-          .catch((error) => console.error('Invalidate "treeClusterIdQuery" failed:', error))
-      }
-
-      navigationBlocker.allowNavigation()
-      navigate({
-        to: '/trees/$treeId',
-        params: { treeId: data.id.toString() },
-      }).catch((error) => console.error('Navigation failed:', error))
-
-      const msg =
-        mutationType === 'create'
-          ? 'Der Baum wurde erfolgreich erstellt.'
-          : 'Der Baum wurde erfolgreich bearbeitet.'
-      showToast(msg)
-    },
-
-    onError: (error) => {
-      console.error('Error with tree mutation:', error)
-      showToast(`Fehlermeldung: ${error.message || 'Unbekannter Fehler'}`, 'error')
-    },
-    throwOnError: true,
-  })
-
-  return {
-    mutate,
-    isError,
-    error,
-    form,
-    navigationBlocker,
-    saveDraft,
-  }
 }
