@@ -178,22 +178,79 @@ describe('Form → Map → Form roundtrip (Bug Prevention)', () => {
     useStore.getState().clearAllFormDrafts()
   })
 
+  describe('Map saves when no prior draft exists (edit flow)', () => {
+    it('should save treeIds when no prior draft exists', () => {
+      expect(useStore.getState().formDrafts['cluster-update']).toBeUndefined()
+
+      useStore.getState().updateFormDraft<TestClusterForm>('cluster-update', (prev) => ({
+        ...(prev ?? ({} as TestClusterForm)),
+        treeIds: [101, 102, 103],
+      }))
+
+      const draft = getDraft<TestClusterForm>('cluster-update')
+      expect(draft?.data?.treeIds).toEqual([101, 102, 103])
+      expect(draft?.hasChanges).toBe(true)
+    })
+
+    it('should save clusterIds when no prior draft exists', () => {
+      expect(useStore.getState().formDrafts['wateringplan-update']).toBeUndefined()
+
+      useStore.getState().updateFormDraft<TestWateringPlanForm>('wateringplan-update', (prev) => ({
+        ...(prev ?? ({} as TestWateringPlanForm)),
+        clusterIds: [10, 20, 30],
+      }))
+
+      const draft = getDraft<TestWateringPlanForm>('wateringplan-update')
+      expect(draft?.data?.clusterIds).toEqual([10, 20, 30])
+    })
+
+    it('should save coordinates when no prior draft exists', () => {
+      expect(useStore.getState().formDrafts['tree-update']).toBeUndefined()
+
+      useStore.getState().updateFormDraft<TestTreeForm>('tree-update', (prev) => ({
+        ...(prev ?? ({} as TestTreeForm)),
+        latitude: 54.123,
+        longitude: 9.456,
+      }))
+
+      const draft = getDraft<TestTreeForm>('tree-update')
+      expect(draft?.data?.latitude).toBe(54.123)
+      expect(draft?.data?.longitude).toBe(9.456)
+    })
+  })
+
+  describe('Form saves draft before map navigation', () => {
+    it('should preserve all form fields after map updates only treeIds', () => {
+      useStore.getState().setFormDraft('cluster-update', {
+        name: 'Existing Cluster',
+        address: 'Existing Address',
+        treeIds: [1, 2],
+      })
+
+      useStore.getState().updateFormDraft<TestClusterForm>('cluster-update', (prev) => ({
+        ...prev,
+        treeIds: [1, 2, 3, 4, 5],
+      }))
+
+      const draft = getDraft<TestClusterForm>('cluster-update')
+      expect(draft?.data?.name).toBe('Existing Cluster')
+      expect(draft?.data?.address).toBe('Existing Address')
+      expect(draft?.data?.treeIds).toEqual([1, 2, 3, 4, 5])
+    })
+  })
+
   it('TreeCluster: treeIds should be preserved after map selection', () => {
-    // 1. User fills form on /treecluster/new
     useStore.getState().setFormDraft('cluster-create', {
       name: 'Stadtpark Gruppe',
       address: 'Musterstraße 1',
       treeIds: [],
     })
 
-    // 2. User navigates to map to select trees
-    // 3. On map page, user selects trees and saves
     useStore.getState().updateFormDraft<TestClusterForm>('cluster-create', (prev) => ({
       ...prev,
       treeIds: [101, 102, 103],
     }))
 
-    // 4. User returns to form - THIS IS WHERE THE BUG WAS!
     const draft = getDraft<TestClusterForm>('cluster-create')
 
     expect(draft?.data?.treeIds).toEqual([101, 102, 103])
@@ -278,25 +335,21 @@ describe('Form → Map → Form roundtrip (Bug Prevention)', () => {
   })
 
   it('Multiple navigations: data should persist through multiple map visits', () => {
-    // Initial form data
     useStore.getState().setFormDraft('cluster-create', {
       name: 'Test',
       treeIds: [],
     })
 
-    // First map visit - select some trees
     useStore.getState().updateFormDraft<TestClusterForm>('cluster-create', (prev) => ({
       ...prev,
       treeIds: [1, 2],
     }))
 
-    // Second map visit - select more trees
     useStore.getState().updateFormDraft<TestClusterForm>('cluster-create', (prev) => ({
       ...prev,
       treeIds: [1, 2, 3, 4],
     }))
 
-    // Third map visit - remove some trees
     useStore.getState().updateFormDraft<TestClusterForm>('cluster-create', (prev) => ({
       ...prev,
       treeIds: [1, 3],

@@ -75,6 +75,7 @@ function NewWateringPlan() {
   }
 
   const navigateToClusterSelect = () => {
+    saveDraft()
     navigate({
       to: '/map/watering-plan/select/cluster',
       search: {

@@ -67,6 +67,7 @@ const TreeClusterUpdate = ({ clusterId, formState }: TreeClusterUpdateProps) => 
   }
 
   const navigateToTreeSelect = () => {
+    saveDraft()
     navigate({
       to: '/map/treecluster/select/tree',
       search: {

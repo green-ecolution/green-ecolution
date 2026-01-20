@@ -68,6 +68,7 @@ const TreeUpdate = ({ treeId, clusters, sensors }: TreeUpdateProps) => {
   }
 
   const handleOnChangeLocation = () => {
+    saveDraft()
     navigate({
       to: '/map/tree/edit',
       search: {

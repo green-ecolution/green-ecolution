@@ -85,21 +85,18 @@ function SelectTrees() {
       return
     }
 
-    const currentData = draft.data
-    if (currentData) {
-      const originalTreeIds = currentData.treeIds ?? []
-      const treesChanged =
-        treeIds.length !== originalTreeIds.length ||
-        treeIds.some((id) => !originalTreeIds.includes(id))
+    const originalTreeIds = draft.data?.treeIds ?? searchTreeIds
+    const treesChanged =
+      treeIds.length !== originalTreeIds.length ||
+      treeIds.some((id) => !originalTreeIds.includes(id))
 
-      draft.updateData((prev) => ({
-        ...(prev ?? ({} as TreeclusterForm)),
-        treeIds,
-      }))
+    draft.updateData((prev) => ({
+      ...(prev ?? ({} as TreeclusterForm)),
+      treeIds,
+    }))
 
-      if (treesChanged) {
-        draft.markChanged()
-      }
+    if (treesChanged) {
+      draft.markChanged()
     }
 
     handleNavigateBack().catch((error) => console.error('Navigation failed:', error))

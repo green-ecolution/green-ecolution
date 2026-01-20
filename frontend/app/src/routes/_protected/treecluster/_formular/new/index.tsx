@@ -53,6 +53,7 @@ function NewTreecluster() {
   }
 
   const navigateToTreeSelect = () => {
+    saveDraft()
     navigate({
       to: '/map/treecluster/select/tree',
       search: {

@@ -103,21 +103,18 @@ function SelectCluster() {
       return
     }
 
-    const currentData = draft.data
-    if (currentData) {
-      const originalClusterIds = currentData.clusterIds ?? []
-      const clustersChanged =
-        clusterIds.length !== originalClusterIds.length ||
-        clusterIds.some((id) => !originalClusterIds.includes(id))
+    const originalClusterIds = draft.data?.clusterIds ?? searchClusterIds
+    const clustersChanged =
+      clusterIds.length !== originalClusterIds.length ||
+      clusterIds.some((id) => !originalClusterIds.includes(id))
 
-      draft.updateData((prev) => ({
-        ...(prev ?? ({} as WateringPlanForm)),
-        clusterIds,
-      }))
+    draft.updateData((prev) => ({
+      ...(prev ?? ({} as WateringPlanForm)),
+      clusterIds,
+    }))
 
-      if (clustersChanged) {
-        draft.markChanged()
-      }
+    if (clustersChanged) {
+      draft.markChanged()
     }
 
     handleNavigateBack().catch((error) => console.error('Navigation failed:', error))

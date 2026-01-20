@@ -96,21 +96,20 @@ function EditTree() {
   }, [formType, navigate, treeLatLng.lat, treeLatLng.lng, treeId, zoom])
 
   const handleSave = () => {
-    const currentData = draft.data
-    if (currentData) {
-      const coordsChanged =
-        currentData.latitude !== treeLatLng.lat || currentData.longitude !== treeLatLng.lng
+    const originalLat = draft.data?.latitude ?? treeLat
+    const originalLng = draft.data?.longitude ?? treeLng
+    const coordsChanged = originalLat !== treeLatLng.lat || originalLng !== treeLatLng.lng
 
-      draft.updateData((prev) => ({
-        ...(prev ?? ({} as TreeForm)),
-        latitude: treeLatLng.lat,
-        longitude: treeLatLng.lng,
-      }))
+    draft.updateData((prev) => ({
+      ...(prev ?? ({} as TreeForm)),
+      latitude: treeLatLng.lat,
+      longitude: treeLatLng.lng,
+    }))
 
-      if (coordsChanged) {
-        draft.markChanged()
-      }
+    if (coordsChanged) {
+      draft.markChanged()
     }
+
     handleNavigateBack().catch((error) => console.error('Navigation failed:', error))
   }
 

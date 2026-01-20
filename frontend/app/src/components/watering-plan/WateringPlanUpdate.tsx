@@ -79,6 +79,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
   const mapPosition = { lat: mapCenter[0], lng: mapCenter[1], zoom: mapZoom }
 
   const navigateToClusterSelect = () => {
+    saveDraft()
     navigate({
       to: '/map/watering-plan/select/cluster',
       search: {

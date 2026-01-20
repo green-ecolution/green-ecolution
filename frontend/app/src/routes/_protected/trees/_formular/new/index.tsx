@@ -79,6 +79,7 @@ function NewTree() {
   }
 
   const handleOnChangeLocation = useCallback(() => {
+    saveDraft()
     navigate({
       to: '/map/tree/edit',
       search: {
@@ -90,7 +91,7 @@ function NewTree() {
         zoom: mapZoom,
       },
     }).catch((error) => console.error('Navigation failed:', error))
-  }, [form, mapZoom, navigate])
+  }, [form, mapZoom, navigate, saveDraft])
 
   return (
     <div className="container mt-6">
