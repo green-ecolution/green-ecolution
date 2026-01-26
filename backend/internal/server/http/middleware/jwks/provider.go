@@ -1,9 +1,11 @@
 package jwks
 
 import (
+	"context"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -53,26 +55,21 @@ func NewProvider(cfg *config.IdentityAuthConfig) (*Provider, error) {
 		},
 	}
 
-	// Initialize static key fallback if configured
 	if cfg.OidcProvider.PublicKey.StaticKey != "" {
 		key, err := parseStaticKey(cfg.OidcProvider.PublicKey.StaticKey)
 		if err != nil {
-			slog.Warn("static key parsing failed, will rely on JWKS", "error", err)
-		} else {
-			p.staticKey = key
-			slog.Debug("static key initialized as fallback")
+			slog.Error("static key parsing failed, will rely on JWKS", "error", err)
+			return nil, err
+		}
+		p.staticKey = key
+		slog.Debug("static key initialized as fallback")
+	} else {
+		if err := p.initJWKS(); err != nil {
+			slog.Error("JWKS initialization failed, using static key fallback", "error", err)
+			return nil, err
 		}
 	}
 
-	// Initialize JWKS
-	if err := p.initJWKS(); err != nil {
-		if p.staticKey == nil {
-			return nil, fmt.Errorf("%w: %v", ErrNoKeySource, err)
-		}
-		slog.Warn("JWKS initialization failed, using static key fallback", "error", err)
-	}
-
-	// Final check: ensure we have at least one key source
 	if p.jwks == nil && p.staticKey == nil {
 		return nil, ErrNoKeySource
 	}
@@ -121,10 +118,10 @@ func (p *Provider) Close() {
 }
 
 func (p *Provider) initJWKS() error {
-	jwksURL := p.resolveJWKSURL()
-	if jwksURL == "" {
-		slog.Info("no JWKS URL configured, using static key only")
-		return nil
+	jwksURL, err := p.resolveJWKSURL()
+	if err != nil {
+		slog.Error("no JWKS URL resolved", "error", err)
+		return err
 	}
 
 	opts := keyfunc.Options{
@@ -153,18 +150,42 @@ func (p *Provider) initJWKS() error {
 	return nil
 }
 
-func (p *Provider) resolveJWKSURL() string {
-	// Direct URL takes precedence
+func (p *Provider) resolveJWKSURL() (string, error) {
 	if p.cfg.JwksURL != "" {
-		return p.cfg.JwksURL
+		return p.cfg.JwksURL, nil
+	}
+	if p.baseURL == "" || p.realm == "" {
+		return "", ErrNoKeySource
 	}
 
-	// Construct Keycloak JWKS URL from base URL and realm
-	if p.baseURL != "" && p.realm != "" {
-		return fmt.Sprintf("%s/realms/%s/protocol/openid-connect/certs", p.baseURL, p.realm)
+	oidcBaseURL := fmt.Sprintf("%s/realms/%s", p.baseURL, p.realm)
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, fmt.Sprintf("%s/.well-known/openid-configuration", oidcBaseURL), http.NoBody)
+	if err != nil {
+		return "", err
 	}
 
-	return ""
+	res, err := p.httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("oidc provider `%s` returned error statuscode: %s", oidcBaseURL, res.Status)
+	}
+
+	var openIDCfg struct {
+		JWKsURI string `json:"jwks_uri"`
+	}
+	if err = json.NewDecoder(res.Body).Decode(&openIDCfg); err != nil {
+		return "", fmt.Errorf("error decoding openid config of oidc provider `%s`: %w", oidcBaseURL, err)
+	}
+	if openIDCfg.JWKsURI == "" {
+		return "", fmt.Errorf("jwksURI of oidc provider `%s` is empty", oidcBaseURL)
+	}
+
+	return openIDCfg.JWKsURI, nil
 }
 
 func parseStaticKey(base64Str string) (*rsa.PublicKey, error) {

@@ -6,8 +6,10 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -122,36 +124,6 @@ func TestNewProvider_WithJWKSURL(t *testing.T) {
 	require.NotNil(t, provider)
 	assert.NotNil(t, provider.jwks)
 	assert.Nil(t, provider.staticKey)
-
-	provider.Close()
-}
-
-func TestNewProvider_WithBothJWKSAndStaticKey(t *testing.T) {
-	// given
-	key := generateTestKey(t)
-	base64Key := base64EncodePublicKey(t, &key.PublicKey)
-	server := createJWKSServer(t, &key.PublicKey, "test-kid")
-
-	cfg := &config.IdentityAuthConfig{
-		Enable: true,
-		OidcProvider: config.OidcProvider{
-			PublicKey: config.OidcPublicKey{
-				StaticKey:       base64Key,
-				JwksURL:         server.URL,
-				RefreshInterval: 1 * time.Hour,
-				RefreshTimeout:  5 * time.Second,
-			},
-		},
-	}
-
-	// when
-	provider, err := NewProvider(cfg)
-
-	// then
-	require.NoError(t, err)
-	require.NotNil(t, provider)
-	assert.NotNil(t, provider.jwks)
-	assert.NotNil(t, provider.staticKey)
 
 	provider.Close()
 }
@@ -312,7 +284,47 @@ func TestProvider_Keyfunc_FallbackToStaticKey(t *testing.T) {
 	assert.True(t, token.Valid)
 }
 
+type MockRoundTripper struct {
+}
+
+var _ http.RoundTripper = (*MockRoundTripper)(nil)
+
+func (*MockRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	res := &http.Response{
+		Proto:            "HTTP/1.1",
+		ProtoMajor:       1,
+		ProtoMinor:       1,
+		Header:           http.Header{},
+		TransferEncoding: []string{},
+		Close:            false,
+		Uncompressed:     false,
+		Trailer:          http.Header{},
+		Request:          req,
+		TLS:              nil,
+	}
+	var data string
+	var statusCode int
+	if strings.HasPrefix(req.URL.Hostname(), "auth.example.com") {
+		data = `{"jwks_uri":"https://auth.example.com/realms/test-realm/protocol/openid-connect/certs"}`
+		statusCode = http.StatusOK
+	} else {
+		data = ""
+		statusCode = http.StatusInternalServerError
+	}
+
+	res.Status = http.StatusText(statusCode)
+	res.StatusCode = statusCode
+	res.Body = io.NopCloser(strings.NewReader(data))
+	res.ContentLength = int64(len(data))
+
+	return res, nil
+}
+
 func TestResolveJWKSURL(t *testing.T) {
+	client := http.Client{
+		Transport: &MockRoundTripper{},
+	}
+
 	tests := []struct {
 		name     string
 		cfg      *config.OidcPublicKey
@@ -348,12 +360,13 @@ func TestResolveJWKSURL(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := &Provider{
-				cfg:     tt.cfg,
-				baseURL: tt.baseURL,
-				realm:   tt.realm,
+				httpClient: &client,
+				cfg:        tt.cfg,
+				baseURL:    tt.baseURL,
+				realm:      tt.realm,
 			}
 
-			result := p.resolveJWKSURL()
+			result, _ := p.resolveJWKSURL()
 			assert.Equal(t, tt.expected, result)
 		})
 	}
