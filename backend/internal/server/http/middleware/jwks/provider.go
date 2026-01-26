@@ -19,9 +19,7 @@ import (
 )
 
 const (
-	defaultRefreshInterval = 15 * time.Minute
-	defaultRefreshTimeout  = 10 * time.Second
-	refreshRateLimit       = 5 * time.Second
+	refreshRateLimit = 5 * time.Second
 )
 
 var (
@@ -51,7 +49,7 @@ func NewProvider(cfg *config.IdentityAuthConfig) (*Provider, error) {
 		baseURL: cfg.OidcProvider.BaseURL,
 		realm:   cfg.OidcProvider.DomainName,
 		httpClient: &http.Client{
-			Timeout: getTimeout(cfg.OidcProvider.PublicKey.RefreshTimeout),
+			Timeout: cfg.OidcProvider.PublicKey.RefreshTimeout,
 		},
 	}
 
@@ -126,8 +124,8 @@ func (p *Provider) initJWKS() error {
 
 	opts := keyfunc.Options{
 		Client:            p.httpClient,
-		RefreshInterval:   getInterval(p.cfg.RefreshInterval),
-		RefreshTimeout:    getTimeout(p.cfg.RefreshTimeout),
+		RefreshInterval:   p.cfg.RefreshInterval,
+		RefreshTimeout:    p.cfg.RefreshTimeout,
 		RefreshRateLimit:  refreshRateLimit,
 		RefreshUnknownKID: true,
 		RefreshErrorHandler: func(err error) {
@@ -205,18 +203,4 @@ func parseStaticKey(base64Str string) (*rsa.PublicKey, error) {
 	}
 
 	return publicKey, nil
-}
-
-func getInterval(d time.Duration) time.Duration {
-	if d == 0 {
-		return defaultRefreshInterval
-	}
-	return d
-}
-
-func getTimeout(d time.Duration) time.Duration {
-	if d == 0 {
-		return defaultRefreshTimeout
-	}
-	return d
 }

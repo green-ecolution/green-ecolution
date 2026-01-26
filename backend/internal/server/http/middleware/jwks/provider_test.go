@@ -401,13 +401,3 @@ func TestParseStaticKey(t *testing.T) {
 		assert.ErrorIs(t, err, ErrStaticKeyParseFailed)
 	})
 }
-
-func TestGetInterval(t *testing.T) {
-	assert.Equal(t, defaultRefreshInterval, getInterval(0))
-	assert.Equal(t, 5*time.Minute, getInterval(5*time.Minute))
-}
-
-func TestGetTimeout(t *testing.T) {
-	assert.Equal(t, defaultRefreshTimeout, getTimeout(0))
-	assert.Equal(t, 30*time.Second, getTimeout(30*time.Second))
-}
