@@ -1,7 +1,9 @@
 import { Loading } from '@green-ecolution/ui'
 import useStore from '@/store/store'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import VehicleUpdate from '@/components/vehicle/VehicleUpdate'
+
+const vehicleFormRoute = getRouteApi('/_protected/vehicles/_formular/$vehicleId')
 
 export const Route = createFileRoute('/_protected/vehicles/_formular/$vehicleId/edit/')({
   component: EditVehicle,
@@ -14,11 +16,11 @@ export const Route = createFileRoute('/_protected/vehicles/_formular/$vehicleId/
 })
 
 function EditVehicle() {
-  const vehicleId = Route.useParams().vehicleId
+  const { vehicle } = vehicleFormRoute.useLoaderData()
 
   return (
     <div className="container mt-6">
-      <VehicleUpdate vehicleId={vehicleId} />
+      <VehicleUpdate vehicleId={vehicle.id.toString()} />
     </div>
   )
 }
