@@ -5,6 +5,7 @@ import { ReactNode } from 'react'
 import { useWateringPlanForm } from './useWateringPlanForm'
 import { Toaster } from '@green-ecolution/ui'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
+import useStore from '@/store/store'
 
 vi.mock('@/api/backendApi', () => ({
   wateringPlanApi: {
@@ -23,10 +24,6 @@ vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn().mockResolvedValue(undefined),
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   useBlocker: (...args: unknown[]) => mockUseBlocker(...args),
-}))
-
-vi.mock('./usePersistForm', () => ({
-  default: () => ({ clear: vi.fn() }),
 }))
 
 import { wateringPlanApi } from '@/api/backendApi'
@@ -85,11 +82,11 @@ function createMockWateringPlan(overrides: Partial<WateringPlan> = {}): Watering
 describe('useWateringPlanForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    sessionStorage.clear()
+    useStore.getState().clearAllFormDrafts()
   })
 
   afterEach(() => {
-    sessionStorage.clear()
+    useStore.getState().clearAllFormDrafts()
   })
 
   it('initializes form with provided default values', () => {
@@ -201,57 +198,23 @@ describe('useWateringPlanForm', () => {
     })
   })
 
-  describe('map clusters changed flag', () => {
-    it('detects clusters changed flag for create mutation', () => {
-      sessionStorage.setItem('create-wateringplan-clusters-changed', 'true')
-
-      renderHook(() => useWateringPlanForm('create', { initForm: defaultInitForm }), {
-        wrapper: createWrapper(),
-      })
-
-      expect(mockUseBlocker).toHaveBeenCalledWith(
-        expect.objectContaining({
-          shouldBlockFn: expect.any(Function) as unknown,
-        }),
-      )
-    })
-
-    it('detects clusters changed flag for update mutation', () => {
-      sessionStorage.setItem('update-wateringplan-clusters-changed', 'true')
-
-      renderHook(
-        () => useWateringPlanForm('update', { wateringPlanId: '1', initForm: defaultInitForm }),
-        { wrapper: createWrapper() },
-      )
-
-      expect(mockUseBlocker).toHaveBeenCalledWith(
-        expect.objectContaining({
-          shouldBlockFn: expect.any(Function) as unknown,
-        }),
-      )
-    })
-
-    it('does not detect clusters changed when flag is not set', () => {
-      renderHook(() => useWateringPlanForm('create', { initForm: defaultInitForm }), {
-        wrapper: createWrapper(),
-      })
-
-      expect(mockUseBlocker).toHaveBeenCalled()
-    })
-
-    it('clears clusters changed flags on successful mutation', async () => {
-      sessionStorage.setItem('create-wateringplan-clusters-changed', 'true')
-      sessionStorage.setItem('update-wateringplan-clusters-changed', 'true')
-
+  describe('draft management', () => {
+    it('clears draft on successful mutation', async () => {
       const mockResponse = createMockWateringPlan()
       // eslint-disable-next-line @typescript-eslint/unbound-method
       const createMock = vi.mocked(wateringPlanApi.createWateringPlan)
       createMock.mockResolvedValueOnce(mockResponse)
 
+      // Pre-populate draft
+      useStore.getState().setFormDraft('wateringplan-create', defaultInitForm)
+
       const { result } = renderHook(
         () => useWateringPlanForm('create', { initForm: defaultInitForm }),
         { wrapper: createWrapper() },
       )
+
+      // Verify draft exists before mutation
+      expect(useStore.getState().formDrafts['wateringplan-create']).toBeDefined()
 
       act(() => {
         result.current.mutate({
@@ -264,9 +227,18 @@ describe('useWateringPlanForm', () => {
       })
 
       await waitFor(() => {
-        expect(sessionStorage.getItem('create-wateringplan-clusters-changed')).toBeNull()
-        expect(sessionStorage.getItem('update-wateringplan-clusters-changed')).toBeNull()
+        expect(useStore.getState().formDrafts['wateringplan-create']).toBeUndefined()
       })
+    })
+
+    it('returns navigationBlocker with correct message', () => {
+      const { result } = renderHook(
+        () => useWateringPlanForm('create', { initForm: defaultInitForm }),
+        { wrapper: createWrapper() },
+      )
+
+      expect(result.current.navigationBlocker).toBeDefined()
+      expect(result.current.navigationBlocker.message).toContain('Einsatzplan')
     })
   })
 })

@@ -26,6 +26,7 @@ interface FormForWateringPlanProps {
   users: User[]
   onAddCluster: () => void
   onSubmit: SubmitHandler<WateringPlanForm>
+  onBlur?: () => void
 }
 
 const FormForWateringPlan = (props: FormForWateringPlanProps) => {
@@ -50,6 +51,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
     <form
       className="flex flex-col gap-y-6 lg:grid lg:grid-cols-2 lg:gap-11"
       onSubmit={handleSubmit(props.onSubmit)}
+      onBlur={props.onBlur}
     >
       <div className="flex flex-col gap-y-6">
         <Controller
@@ -172,8 +174,8 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
             onChange={onChange}
             entityIds={value}
             onAdd={props.onAddCluster}
-            type="tree"
-            label="Bäume"
+            type="cluster"
+            label="Bewässerungsgruppen"
           />
         )}
       />

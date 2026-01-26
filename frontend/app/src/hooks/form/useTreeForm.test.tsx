@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
 import { useTreeForm } from './useTreeForm'
 import { Toaster } from '@green-ecolution/ui'
+import useStore from '@/store/store'
 
 vi.mock('@/api/backendApi', () => ({
   treeApi: {
@@ -22,10 +23,6 @@ vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn().mockResolvedValue(undefined),
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   useBlocker: (...args: unknown[]) => mockUseBlocker(...args),
-}))
-
-vi.mock('./usePersistForm', () => ({
-  default: () => ({ clear: vi.fn() }),
 }))
 
 import { treeApi } from '@/api/backendApi'
@@ -61,11 +58,11 @@ const defaultInitForm = {
 describe('useTreeForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    sessionStorage.clear()
+    useStore.getState().clearAllFormDrafts()
   })
 
   afterEach(() => {
-    sessionStorage.clear()
+    useStore.getState().clearAllFormDrafts()
   })
 
   it('initializes form with provided default values', () => {
@@ -186,47 +183,8 @@ describe('useTreeForm', () => {
     // Form validation is already tested extensively in treeSchema.test.ts
   })
 
-  describe('map coords changed flag', () => {
-    it('detects coords changed flag for create mutation', () => {
-      sessionStorage.setItem('create-tree-coords-changed', 'true')
-
-      renderHook(() => useTreeForm('create', { initForm: defaultInitForm }), {
-        wrapper: createWrapper(),
-      })
-
-      expect(mockUseBlocker).toHaveBeenCalledWith(
-        expect.objectContaining({
-          shouldBlockFn: expect.any(Function) as unknown,
-        }),
-      )
-    })
-
-    it('detects coords changed flag for update mutation', () => {
-      sessionStorage.setItem('update-tree-coords-changed', 'true')
-
-      renderHook(() => useTreeForm('update', { treeId: '1', initForm: defaultInitForm }), {
-        wrapper: createWrapper(),
-      })
-
-      expect(mockUseBlocker).toHaveBeenCalledWith(
-        expect.objectContaining({
-          shouldBlockFn: expect.any(Function) as unknown,
-        }),
-      )
-    })
-
-    it('does not detect coords changed when flag is not set', () => {
-      renderHook(() => useTreeForm('create', { initForm: defaultInitForm }), {
-        wrapper: createWrapper(),
-      })
-
-      expect(mockUseBlocker).toHaveBeenCalled()
-    })
-
-    it('clears coords changed flags on successful mutation', async () => {
-      sessionStorage.setItem('create-tree-coords-changed', 'true')
-      sessionStorage.setItem('update-tree-coords-changed', 'true')
-
+  describe('draft management', () => {
+    it('clears draft on successful mutation', async () => {
       const mockResponse = {
         id: 1,
         number: 'T-001',
@@ -239,9 +197,15 @@ describe('useTreeForm', () => {
       const createTreeMock = vi.mocked(treeApi.createTree)
       createTreeMock.mockResolvedValueOnce(mockResponse)
 
+      // Pre-populate draft
+      useStore.getState().setFormDraft('tree-create', defaultInitForm)
+
       const { result } = renderHook(() => useTreeForm('create', { initForm: defaultInitForm }), {
         wrapper: createWrapper(),
       })
+
+      // Verify draft exists before mutation
+      expect(useStore.getState().formDrafts['tree-create']).toBeDefined()
 
       act(() => {
         result.current.mutate({
@@ -255,9 +219,17 @@ describe('useTreeForm', () => {
       })
 
       await waitFor(() => {
-        expect(sessionStorage.getItem('create-tree-coords-changed')).toBeNull()
-        expect(sessionStorage.getItem('update-tree-coords-changed')).toBeNull()
+        expect(useStore.getState().formDrafts['tree-create']).toBeUndefined()
       })
+    })
+
+    it('returns navigationBlocker with correct message', () => {
+      const { result } = renderHook(() => useTreeForm('create', { initForm: defaultInitForm }), {
+        wrapper: createWrapper(),
+      })
+
+      expect(result.current.navigationBlocker).toBeDefined()
+      expect(result.current.navigationBlocker.message).toContain('Baum')
     })
   })
 })

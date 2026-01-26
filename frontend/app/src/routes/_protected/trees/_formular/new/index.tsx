@@ -1,5 +1,5 @@
 import FormForTree from '@/components/general/form/FormForTree'
-import { TreeForm, treeSchemaBase } from '@/schema/treeSchema'
+import { TreeForm } from '@/schema/treeSchema'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMapStore } from '@/store/store'
@@ -7,7 +7,7 @@ import { sensorQuery, treeClusterQuery } from '@/api/queries'
 import { useTreeForm } from '@/hooks/form/useTreeForm'
 import { useCallback } from 'react'
 import { z } from 'zod'
-import { safeJsonStorageParse } from '@/lib/utils'
+import { useTreeDraft } from '@/store/form/useFormDraft'
 import { FormProvider } from 'react-hook-form'
 import {
   AlertDialog,
@@ -40,11 +40,9 @@ export const Route = createFileRoute('/_protected/trees/_formular/new/')({
       .prefetchQuery(treeClusterQuery())
       .catch((error) => console.error('Prefetching "treeClusterQuery" failed:', error))
 
-    const { data, success } = safeJsonStorageParse('create-tree', { schema: treeSchemaBase })
     return {
-      lat: success ? data.latitude : deps.lat,
-      lng: success ? data.longitude : deps.lng,
-      formState: data,
+      lat: deps.lat,
+      lng: deps.lng,
     }
   },
 })
@@ -58,9 +56,14 @@ const defaultForm = (lat: number, lng: number) => ({
 })
 
 function NewTree() {
-  const { lat, lng, formState } = Route.useLoaderData()
-  const { mutate, isError, error, form, navigationBlocker } = useTreeForm('create', {
-    initForm: formState ?? defaultForm(lat, lng),
+  const { lat, lng } = Route.useLoaderData()
+  const draft = useTreeDraft<TreeForm>('create')
+
+  const initForm = draft.data ?? defaultForm(lat, lng)
+  const formKey = `${draft.data?.latitude ?? lat}-${draft.data?.longitude ?? lng}`
+
+  const { mutate, isError, error, form, navigationBlocker, saveDraft } = useTreeForm('create', {
+    initForm,
   })
   const navigate = useNavigate({ from: Route.fullPath })
   const { mapZoom } = useMapStore()
@@ -76,6 +79,7 @@ function NewTree() {
   }
 
   const handleOnChangeLocation = useCallback(() => {
+    saveDraft()
     navigate({
       to: '/map/tree/edit',
       search: {
@@ -87,7 +91,7 @@ function NewTree() {
         zoom: mapZoom,
       },
     }).catch((error) => console.error('Navigation failed:', error))
-  }, [form, mapZoom, navigate])
+  }, [form, mapZoom, navigate, saveDraft])
 
   return (
     <div className="container mt-6">
@@ -102,7 +106,7 @@ function NewTree() {
       </article>
 
       <section className="mt-10">
-        <FormProvider {...form}>
+        <FormProvider key={formKey} {...form}>
           <FormForTree
             isReadonly={false}
             treeClusters={treeClusters.data}
@@ -111,6 +115,7 @@ function NewTree() {
             onChangeLocation={handleOnChangeLocation}
             errorMessage={error?.message}
             onSubmit={onSubmit}
+            onBlur={saveDraft}
           />
         </FormProvider>
       </section>

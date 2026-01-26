@@ -23,6 +23,7 @@ interface FormForTreeProps {
   errorMessage?: string
   onChangeLocation: () => void
   onSubmit: SubmitHandler<TreeForm>
+  onBlur?: () => void
 }
 
 const FormForTree = (props: FormForTreeProps) => {
@@ -38,6 +39,7 @@ const FormForTree = (props: FormForTreeProps) => {
     <form
       className="flex flex-col gap-y-6 lg:grid lg:grid-cols-2 lg:gap-11"
       onSubmit={handleSubmit(props.onSubmit)}
+      onBlur={props.onBlur}
     >
       <div className="flex flex-col gap-y-6">
         {!props.isReadonly && (

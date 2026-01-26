@@ -5,6 +5,7 @@ import { ReactNode } from 'react'
 import { useTreeClusterForm } from './useTreeClusterForm'
 import { Toaster } from '@green-ecolution/ui'
 import { SoilCondition, WateringStatus } from '@green-ecolution/backend-client'
+import useStore from '@/store/store'
 
 vi.mock('@/api/backendApi', () => ({
   clusterApi: {
@@ -23,10 +24,6 @@ vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn().mockResolvedValue(undefined),
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   useBlocker: (...args: unknown[]) => mockUseBlocker(...args),
-}))
-
-vi.mock('./usePersistForm', () => ({
-  default: () => ({ clear: vi.fn() }),
 }))
 
 import { clusterApi } from '@/api/backendApi'
@@ -78,11 +75,11 @@ function createMockTreeCluster(overrides: Partial<TreeCluster> = {}): TreeCluste
 describe('useTreeClusterForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    sessionStorage.clear()
+    useStore.getState().clearAllFormDrafts()
   })
 
   afterEach(() => {
-    sessionStorage.clear()
+    useStore.getState().clearAllFormDrafts()
   })
 
   it('initializes form with provided default values', () => {
@@ -194,59 +191,23 @@ describe('useTreeClusterForm', () => {
     })
   })
 
-  describe('map trees changed flag', () => {
-    it('detects trees changed flag for create mutation', () => {
-      sessionStorage.setItem('create-cluster-trees-changed', 'true')
-
-      renderHook(() => useTreeClusterForm('create', { initForm: defaultInitForm }), {
-        wrapper: createWrapper(),
-      })
-
-      expect(mockUseBlocker).toHaveBeenCalledWith(
-        expect.objectContaining({
-          shouldBlockFn: expect.any(Function) as unknown,
-        }),
-      )
-    })
-
-    it('detects trees changed flag for update mutation', () => {
-      sessionStorage.setItem('update-cluster-trees-changed', 'true')
-
-      renderHook(
-        () => useTreeClusterForm('update', { clusterId: '1', initForm: defaultInitForm }),
-        {
-          wrapper: createWrapper(),
-        },
-      )
-
-      expect(mockUseBlocker).toHaveBeenCalledWith(
-        expect.objectContaining({
-          shouldBlockFn: expect.any(Function) as unknown,
-        }),
-      )
-    })
-
-    it('does not detect trees changed when flag is not set', () => {
-      renderHook(() => useTreeClusterForm('create', { initForm: defaultInitForm }), {
-        wrapper: createWrapper(),
-      })
-
-      expect(mockUseBlocker).toHaveBeenCalled()
-    })
-
-    it('clears trees changed flags on successful mutation', async () => {
-      sessionStorage.setItem('create-cluster-trees-changed', 'true')
-      sessionStorage.setItem('update-cluster-trees-changed', 'true')
-
+  describe('draft management', () => {
+    it('clears draft on successful mutation', async () => {
       const mockResponse = createMockTreeCluster()
       // eslint-disable-next-line @typescript-eslint/unbound-method
       const createMock = vi.mocked(clusterApi.createTreeCluster)
       createMock.mockResolvedValueOnce(mockResponse)
 
+      // Pre-populate draft
+      useStore.getState().setFormDraft('cluster-create', defaultInitForm)
+
       const { result } = renderHook(
         () => useTreeClusterForm('create', { initForm: defaultInitForm }),
         { wrapper: createWrapper() },
       )
+
+      // Verify draft exists before mutation
+      expect(useStore.getState().formDrafts['cluster-create']).toBeDefined()
 
       act(() => {
         result.current.mutate({
@@ -259,9 +220,18 @@ describe('useTreeClusterForm', () => {
       })
 
       await waitFor(() => {
-        expect(sessionStorage.getItem('create-cluster-trees-changed')).toBeNull()
-        expect(sessionStorage.getItem('update-cluster-trees-changed')).toBeNull()
+        expect(useStore.getState().formDrafts['cluster-create']).toBeUndefined()
       })
+    })
+
+    it('returns navigationBlocker with correct message', () => {
+      const { result } = renderHook(
+        () => useTreeClusterForm('create', { initForm: defaultInitForm }),
+        { wrapper: createWrapper() },
+      )
+
+      expect(result.current.navigationBlocker).toBeDefined()
+      expect(result.current.navigationBlocker.message).toContain('Bewässerungsgruppe')
     })
   })
 })

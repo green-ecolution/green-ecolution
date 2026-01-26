@@ -11,8 +11,8 @@ import {
   AlertDialogCancel,
 } from '@green-ecolution/ui'
 import { MoveRight, X } from 'lucide-react'
-import { safeJsonStorageParse } from '@/lib/utils'
-import { TreeForm, treeSchemaBase } from '@/schema/treeSchema'
+import { useTreeDraft } from '@/store/form/useFormDraft'
+import { TreeForm } from '@/schema/treeSchema'
 import { useMapStore } from '@/store/store'
 import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
 import { LatLng } from 'leaflet'
@@ -43,6 +43,7 @@ function EditTree() {
   const { mapZoom: zoom } = useMapStore()
   const [treeLatLng, setTreeLatLng] = useState<LatLng>(() => new LatLng(treeLat, treeLng))
   const allowNavigationRef = useRef(false)
+  const draft = useTreeDraft<TreeForm>(formType)
 
   const { proceed, reset, status } = useBlocker({
     shouldBlockFn: ({ next }) => {
@@ -65,12 +66,9 @@ function EditTree() {
   })
 
   const handleConfirmLeave = useCallback(() => {
-    window.sessionStorage.removeItem('create-tree')
-    window.sessionStorage.removeItem('update-tree')
-    window.sessionStorage.removeItem('create-tree-coords-changed')
-    window.sessionStorage.removeItem('update-tree-coords-changed')
+    draft.clear()
     proceed?.()
-  }, [proceed])
+  }, [proceed, draft])
 
   const handleNavigateBack = useCallback(() => {
     allowNavigationRef.current = true
@@ -98,20 +96,20 @@ function EditTree() {
   }, [formType, navigate, treeLatLng.lat, treeLatLng.lng, treeId, zoom])
 
   const handleSave = () => {
-    const { data, success, error } = safeJsonStorageParse<TreeForm>(`${formType}-tree`, {
-      schema: treeSchemaBase,
-    })
-    if (success) {
-      const coordsChanged = data.latitude !== treeLatLng.lat || data.longitude !== treeLatLng.lng
-      if (coordsChanged) {
-        window.sessionStorage.setItem(`${formType}-tree-coords-changed`, 'true')
-      }
-      data.latitude = treeLatLng.lat
-      data.longitude = treeLatLng.lng
-      window.sessionStorage.setItem(`${formType}-tree`, JSON.stringify(data))
-    } else {
-      console.error(error)
+    const originalLat = draft.data?.latitude ?? treeLat
+    const originalLng = draft.data?.longitude ?? treeLng
+    const coordsChanged = originalLat !== treeLatLng.lat || originalLng !== treeLatLng.lng
+
+    draft.updateData((prev) => ({
+      ...(prev ?? ({} as TreeForm)),
+      latitude: treeLatLng.lat,
+      longitude: treeLatLng.lng,
+    }))
+
+    if (coordsChanged) {
+      draft.markChanged()
     }
+
     handleNavigateBack().catch((error) => console.error('Navigation failed:', error))
   }
 

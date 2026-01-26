@@ -1,12 +1,12 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { SoilCondition } from '@/api/backendApi'
 import { DefaultValues, FormProvider, SubmitHandler } from 'react-hook-form'
-import { clusterSchemaBase, TreeclusterForm } from '@/schema/treeclusterSchema'
+import { TreeclusterForm } from '@/schema/treeclusterSchema'
 import FormForTreecluster from '@/components/general/form/FormForTreecluster'
 import useStore from '@/store/store'
 import BackLink from '@/components/general/links/BackLink'
 import { useTreeClusterForm } from '@/hooks/form/useTreeClusterForm'
-import { safeJsonStorageParse } from '@/lib/utils'
+import { useClusterDraft } from '@/store/form/useFormDraft'
 import {
   AlertDialog,
   AlertDialogContent,
@@ -20,12 +20,6 @@ import {
 import { MoveRight, X } from 'lucide-react'
 
 export const Route = createFileRoute('/_protected/treecluster/_formular/new/')({
-  loader: () => {
-    const { data } = safeJsonStorageParse('create-cluster', { schema: clusterSchemaBase })
-    return {
-      formState: data,
-    }
-  },
   component: NewTreecluster,
 })
 
@@ -35,10 +29,16 @@ const defaultForm: DefaultValues<TreeclusterForm> = {
 }
 
 function NewTreecluster() {
-  const { formState } = Route.useLoaderData()
-  const { mutate, isError, error, form, navigationBlocker } = useTreeClusterForm('create', {
-    initForm: formState ?? defaultForm,
-  })
+  const draft = useClusterDraft<TreeclusterForm>('create')
+  const initForm = draft.data ?? defaultForm
+  const formKey = draft.data?.treeIds?.join(',') ?? 'initial'
+
+  const { mutate, isError, error, form, navigationBlocker, saveDraft } = useTreeClusterForm(
+    'create',
+    {
+      initForm,
+    },
+  )
   const navigate = useNavigate({ from: Route.fullPath })
 
   const mapCenter = useStore((state) => state.mapCenter)
@@ -53,6 +53,7 @@ function NewTreecluster() {
   }
 
   const navigateToTreeSelect = () => {
+    saveDraft()
     navigate({
       to: '/map/treecluster/select/tree',
       search: {
@@ -79,12 +80,13 @@ function NewTreecluster() {
       </article>
 
       <section className="mt-10">
-        <FormProvider {...form}>
+        <FormProvider key={formKey} {...form}>
           <FormForTreecluster
             displayError={isError}
             onSubmit={onSubmit}
             onAddTrees={navigateToTreeSelect}
             errorMessage={error?.message}
+            onBlur={saveDraft}
           />
         </FormProvider>
       </section>

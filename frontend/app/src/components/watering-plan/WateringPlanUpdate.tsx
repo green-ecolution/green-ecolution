@@ -14,9 +14,9 @@ import { Suspense } from 'react'
 import DeleteSection from '../treecluster/DeleteSection'
 import { wateringPlanApi } from '@/api/backendApi'
 import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
-import { WateringPlanForm, wateringPlanSchemaBase } from '@/schema/wateringPlanSchema'
+import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import { FormProvider, SubmitHandler } from 'react-hook-form'
-import { safeJsonStorageParse } from '@/lib/utils'
+import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import {
   AlertDialog,
   AlertDialogContent,
@@ -34,13 +34,11 @@ interface WateringPlanUpdateProps {
 }
 
 const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
-  const { data: formState } = safeJsonStorageParse('update-wateringplan', {
-    schema: wateringPlanSchemaBase,
-  })
+  const draft = useWateringPlanDraft<WateringPlanForm>('update')
   const { initForm, loadedData } = useInitFormQuery(
     wateringPlanIdQuery(wateringPlanId),
     (data) =>
-      formState ?? {
+      draft.data ?? {
         date: new Date(data.date),
         description: data.description,
         transporterId: data.transporter.id,
@@ -50,10 +48,13 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         driverIds: data.userIds,
       },
   )
-  const { mutate, isError, error, form, navigationBlocker } = useWateringPlanForm('update', {
-    wateringPlanId,
-    initForm,
-  })
+  const { mutate, isError, error, form, navigationBlocker, saveDraft } = useWateringPlanForm(
+    'update',
+    {
+      wateringPlanId,
+      initForm,
+    },
+  )
 
   const navigate = useNavigate({ from: Route.fullPath })
   const date = loadedData?.date ? format(new Date(loadedData?.date), 'dd.MM.yyyy') : 'Keine Angabe'
@@ -78,6 +79,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
   const mapPosition = { lat: mapCenter[0], lng: mapCenter[1], zoom: mapZoom }
 
   const navigateToClusterSelect = () => {
+    saveDraft()
     navigate({
       to: '/map/watering-plan/select/cluster',
       search: {
@@ -143,6 +145,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
             transporters={transporters.data}
             onAddCluster={navigateToClusterSelect}
             errorMessage={error?.message}
+            onBlur={saveDraft}
           />
         </FormProvider>
       </section>
