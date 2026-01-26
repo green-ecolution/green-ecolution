@@ -10,8 +10,8 @@ import { Suspense } from 'react'
 
 const mapSearchParamsSchema = z.object({
   selected: z.string().optional(),
-  lat: z.number().catch(useStore.getState().mapCenter[0]),
-  lng: z.number().catch(useStore.getState().mapCenter[1]),
+  lat: z.number().default(useStore.getState().mapCenter[0]).catch(useStore.getState().mapCenter[0]),
+  lng: z.number().default(useStore.getState().mapCenter[1]).catch(useStore.getState().mapCenter[1]),
   clusterId: z.number().optional(),
   sensorId: z.string().optional(),
   zoom: z
@@ -19,6 +19,7 @@ const mapSearchParamsSchema = z.object({
     .int()
     .max(useStore.getState().mapMaxZoom)
     .min(useStore.getState().mapMinZoom)
+    .default(useStore.getState().mapMinZoom)
     .catch(useStore.getState().mapMinZoom),
 })
 
