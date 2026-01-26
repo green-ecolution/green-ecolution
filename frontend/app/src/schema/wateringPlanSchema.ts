@@ -15,8 +15,16 @@ export const wateringPlanSchemaBase = z.object({
   description: z.string(),
 })
 
+const startOfToday = () => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return today
+}
+
 export const wateringPlanSchema = wateringPlanSchemaBase.extend({
-  date: z.date().min(new Date(), { message: 'Datum muss in der Zukunft liegen' }),
+  date: z.coerce.date().refine((date) => date >= startOfToday(), {
+    message: 'Datum muss heute oder in der Zukunft liegen',
+  }),
   driverIds: z
     .array(z.string().uuid())
     .min(1, { message: 'Es muss mindestens ein Mitwarbeiter ausgewählt werden' }),

@@ -210,7 +210,9 @@ describe('FormForWateringPlan', () => {
       </TestWrapper>,
     )
 
-    expect(screen.getByRole('button', { name: /bäume hinzufügen/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /bewässerungsgruppen hinzufügen/i }),
+    ).toBeInTheDocument()
   })
 
   it('calls onAddCluster when add cluster button is clicked', async () => {
@@ -229,7 +231,7 @@ describe('FormForWateringPlan', () => {
       </TestWrapper>,
     )
 
-    const addButton = screen.getByRole('button', { name: /bäume hinzufügen/i })
+    const addButton = screen.getByRole('button', { name: /bewässerungsgruppen hinzufügen/i })
     await user.click(addButton)
 
     expect(mockOnAddCluster).toHaveBeenCalled()

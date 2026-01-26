@@ -174,8 +174,8 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
             onChange={onChange}
             entityIds={value}
             onAdd={props.onAddCluster}
-            type="tree"
-            label="Bäume"
+            type="cluster"
+            label="Bewässerungsgruppen"
           />
         )}
       />
