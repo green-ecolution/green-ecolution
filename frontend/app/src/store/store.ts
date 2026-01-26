@@ -19,6 +19,7 @@ interface AuthSlice {
   token: ClientToken | null
   setToken: (token: ClientToken) => void
   clearAuth: () => void
+  isTokenExpiringSoon: (bufferSeconds?: number) => boolean
 }
 
 interface UserSlice {
@@ -67,6 +68,15 @@ const createAuthSlice: StateCreator<Store, Mutators, [], AuthSlice> = (set) => (
       state.isAuthenticated = false
       state.token = null
     }),
+  isTokenExpiringSoon: (bufferSeconds = 60) => {
+    const token = useStore.getState().token
+    if (!token?.expiry) {
+      return true // No token = treat as expiring
+    }
+    const expiryTime = new Date(token.expiry).getTime()
+    const now = Date.now()
+    return now >= expiryTime - bufferSeconds * 1000
+  },
 })
 
 const createUserSlice: StateCreator<Store, Mutators, [], UserSlice> = (set, get) => ({
@@ -94,15 +104,7 @@ const createUserSlice: StateCreator<Store, Mutators, [], UserSlice> = (set, get)
     }),
   isUserEmpty: () => {
     const s = get()
-    return (
-      !s.username ||
-      !s.email ||
-      !s.firstName ||
-      !s.lastName ||
-      s.drivingLicenses.length === 0 ||
-      s.userRoles.length === 0 ||
-      s.userStatus === UserStatus.UserStatusUnknown
-    )
+    return !s.username || !s.email || !s.firstName || !s.lastName
   },
   clearUser: () =>
     set((state) => {
@@ -194,6 +196,7 @@ const authSelector = (s: Store) => ({
   token: s.token,
   setToken: s.setToken,
   clearAuth: s.clearAuth,
+  isTokenExpiringSoon: s.isTokenExpiringSoon,
 })
 
 const userSelector = (s: Store) => ({

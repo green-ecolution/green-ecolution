@@ -152,15 +152,15 @@ describe('Store - User Slice', () => {
     expect(useStore.getState().isUserEmpty()).toBe(true)
   })
 
-  it('isUserEmpty returns false when all required fields are set', () => {
+  it('isUserEmpty returns false when required identity fields are set', () => {
     useStore.setState({
       username: 'testuser',
       email: 'test@example.com',
       firstName: 'Test',
       lastName: 'User',
-      drivingLicenses: [DrivingLicense.DrivingLicenseB],
-      userRoles: [UserRole.UserRoleTbz],
-      userStatus: UserStatus.UserStatusAvailable,
+      drivingLicenses: [], // Empty - should NOT affect result
+      userRoles: [], // Empty - should NOT affect result
+      userStatus: UserStatus.UserStatusUnknown, // Unknown - should NOT affect result
     })
 
     expect(useStore.getState().isUserEmpty()).toBe(false)
@@ -186,5 +186,58 @@ describe('Store - User Slice', () => {
     expect(useStore.getState().drivingLicenses).toEqual([])
     expect(useStore.getState().userRoles).toEqual([])
     expect(useStore.getState().userStatus).toBe(UserStatus.UserStatusUnknown)
+  })
+})
+
+describe('Store - Auth Slice - Token Expiry', () => {
+  const mockToken = {
+    accessToken: 'access-token',
+    refreshToken: 'refresh-token',
+    expiresIn: 3600,
+    tokenType: 'Bearer',
+    expiry: '2025-01-01T00:00:00Z',
+    idToken: 'id-token',
+    notBeforePolicy: 0,
+    refreshExpiresIn: 7200,
+    scope: 'openid',
+    sessionState: 'session-state',
+  }
+
+  beforeEach(() => {
+    localStorageMock.clear()
+    vi.clearAllMocks()
+    useStore.setState({
+      isAuthenticated: false,
+      token: null,
+    })
+  })
+
+  it('isTokenExpiringSoon returns true when no token exists', () => {
+    expect(useStore.getState().isTokenExpiringSoon()).toBe(true)
+  })
+
+  it('isTokenExpiringSoon returns false when token has >60s remaining', () => {
+    useStore.setState({
+      isAuthenticated: true,
+      token: { ...mockToken, expiry: new Date(Date.now() + 120000).toISOString() },
+    })
+    expect(useStore.getState().isTokenExpiringSoon()).toBe(false)
+  })
+
+  it('isTokenExpiringSoon returns true when token has <60s remaining', () => {
+    useStore.setState({
+      isAuthenticated: true,
+      token: { ...mockToken, expiry: new Date(Date.now() + 30000).toISOString() },
+    })
+    expect(useStore.getState().isTokenExpiringSoon()).toBe(true)
+  })
+
+  it('isTokenExpiringSoon respects custom buffer', () => {
+    useStore.setState({
+      isAuthenticated: true,
+      token: { ...mockToken, expiry: new Date(Date.now() + 90000).toISOString() },
+    })
+    expect(useStore.getState().isTokenExpiringSoon(60)).toBe(false)
+    expect(useStore.getState().isTokenExpiringSoon(120)).toBe(true)
   })
 })
