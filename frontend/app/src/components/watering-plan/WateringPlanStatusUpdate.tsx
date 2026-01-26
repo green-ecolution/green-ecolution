@@ -31,7 +31,7 @@ import {
   WateringPlanCancelForm,
   wateringPlanCancelSchema,
 } from '@/schema/wateringPlanSchema'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { zodResolver } from '@/lib/zodResolver'
 import { SubmitHandler, useFieldArray, useForm } from 'react-hook-form'
 import SelectedCard from '../general/cards/SelectedCard'
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'

@@ -6,7 +6,7 @@ import { Vehicle, VehicleCreate, VehicleUpdate } from '@green-ecolution/backend-
 import { vehicleApi } from '@/api/backendApi'
 import { VehicleForm, vehicleSchema } from '@/schema/vehicleSchema'
 import { DefaultValues, useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { zodResolver } from '@/lib/zodResolver'
 
 export const useVehicleForm = (
   mutationType: 'create' | 'update',
