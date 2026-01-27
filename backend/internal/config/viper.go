@@ -2,8 +2,8 @@ package config
 
 import (
 	"flag"
+	"io/fs"
 	"log/slog"
-	"path"
 	"reflect"
 	"strconv"
 	"strings"
@@ -16,18 +16,8 @@ func InitViper() (*Config, error) {
 	configPath := flag.String("config", "./config/config.yaml", "path to configuratione file")
 	flag.Parse()
 
-	configName := path.Base(*configPath)
-	configDir := path.Dir(*configPath)
-	configType := path.Ext(*configPath)
-	if len(configType) < 1 {
-		configType = configType[1:]
-	} else {
-		configType = "yaml"
-	}
+	viper.SetConfigFile(*configPath)
 
-	viper.SetConfigName(configName)
-	viper.SetConfigType(configType)
-	viper.AddConfigPath(configDir)
 	viper.SetEnvPrefix("GE")
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
@@ -35,7 +25,10 @@ func InitViper() (*Config, error) {
 	setDefaults()
 
 	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+		switch err.(type) {
+		case viper.ConfigFileNotFoundError:
+		case *fs.PathError:
+		default:
 			return nil, err
 		}
 		slog.Info("No config file found, using environment variables only")
@@ -107,6 +100,9 @@ func setDefaults() {
 	viper.SetDefault("auth.oidc_provider.auth_url", "")
 	viper.SetDefault("auth.oidc_provider.token_url", "")
 	viper.SetDefault("auth.oidc_provider.public_key.static", "")
+	viper.SetDefault("auth.oidc_provider.public_key.jwks_url", "")
+	viper.SetDefault("auth.oidc_provider.public_key.refresh_interval", "15m")
+	viper.SetDefault("auth.oidc_provider.public_key.refresh_timeout", "10s")
 	viper.SetDefault("auth.oidc_provider.frontend.client_id", "")
 	viper.SetDefault("auth.oidc_provider.frontend.client_secret", "")
 	viper.SetDefault("auth.oidc_provider.backend.client_id", "")

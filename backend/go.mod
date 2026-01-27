@@ -13,6 +13,7 @@ tool (
 )
 
 require (
+	github.com/MicahParks/keyfunc/v2 v2.1.0
 	github.com/Nerzal/gocloak/v13 v13.9.0
 	github.com/docker/go-connections v0.6.0
 	github.com/eclipse/paho.mqtt.golang v1.5.1
@@ -58,7 +59,6 @@ require (
 	github.com/GaijinEntertainment/go-exhaustruct/v3 v3.3.0 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/Masterminds/semver/v3 v3.3.0 // indirect
-	github.com/MicahParks/keyfunc/v2 v2.1.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/OpenPeeDeeP/depguard/v2 v2.2.0 // indirect
 	github.com/air-verse/air v1.61.7 // indirect

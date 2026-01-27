@@ -34,7 +34,6 @@ services:
       - GE_AUTH_OIDC_PROVIDER_DOMAIN_NAME=green-ecolution
       - GE_AUTH_OIDC_PROVIDER_AUTH_URL=http://auth.localhost:3000/realms/green-ecolution/protocol/openid-connect/auth
       - GE_AUTH_OIDC_PROVIDER_TOKEN_URL=http://auth.localhost:3000/realms/green-ecolution/protocol/openid-connect/token
-      - GE_AUTH_OIDC_PROVIDER_PUBLIC_KEY_STATIC=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsr2iJerMHstjk88ffPAnqwJ8owifZu1iFzdGeruYU2COAYaIANzj0COEAjEu7qiEL9wusA7QI/N/bBIOiRTJIbiIFF/wv6Jn3xUc0CdZTTTDpeYthDLJQJCdokSW4bBSxtx2T4iONGMwC51Hle7COhJ+ueZnT6aPefVpk4Nel4PmCpAOyy7vvVvwavmXcXKnZmxscF9shThGtzDf1Uq5bocO0QhYQxOy+Gz+ngcqQvCC6bZACJrTru1pDvk66EVYahRBu6cOwYtv2otyP69+LxjEFo+5wlZ6x4oc3kg8Ls48qaJg6POUvNHli/2SZk/l5uTrmDeOIvWUZsYpJB/TBQIDAQAB
       - GE_AUTH_OIDC_PROVIDER_FRONTEND_CLIENT_ID=frontend
       - GE_AUTH_OIDC_PROVIDER_FRONTEND_CLIENT_SECRET=EJogoaQSrW7vlo9CK3zIo2ieC8guy9Mm
       - GE_AUTH_OIDC_PROVIDER_BACKEND_CLIENT_ID=backend
