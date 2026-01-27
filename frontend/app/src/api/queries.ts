@@ -33,6 +33,27 @@ import {
   GetAllUsersRequest,
 } from './backendApi'
 
+/**
+ * Check if a string ID is a valid positive integer.
+ */
+const isValidNumericId = (id: string | undefined): boolean => {
+  if (id === undefined || id === null || id === '') return false
+  const num = Number(id)
+  return !isNaN(num) && Number.isInteger(num) && num > 0
+}
+
+/**
+ * Parse a string ID to a positive integer.
+ * Throws an error for invalid IDs.
+ */
+const parseNumericId = (id: string): number => {
+  const num = Number(id)
+  if (isNaN(num) || !Number.isInteger(num) || num <= 0) {
+    throw new Error(`Invalid ID: ${id}`)
+  }
+  return num
+}
+
 export const treeClusterQuery = (params?: GetAllTreeClustersRequest) =>
   queryOptions<TreeClusterList>({
     queryKey: ['treeclusters', params?.page, params?.regions, params?.wateringStatuses].filter(
@@ -44,10 +65,8 @@ export const treeClusterQuery = (params?: GetAllTreeClustersRequest) =>
 export const treeClusterIdQuery = (id: string) =>
   queryOptions<TreeCluster>({
     queryKey: ['treecluster', id],
-    queryFn: () =>
-      clusterApi.getTreeClusterById({
-        clusterId: Number(id),
-      }),
+    queryFn: () => clusterApi.getTreeClusterById({ clusterId: parseNumericId(id) }),
+    enabled: isValidNumericId(id),
   })
 
 export const sensorQuery = (params?: GetAllSensorsRequest) =>
@@ -85,10 +104,8 @@ export const treeQuery = (params?: GetAllTreesRequest) =>
 export const treeIdQuery = (id: string) =>
   queryOptions<Tree>({
     queryKey: ['tree', id],
-    queryFn: () =>
-      treeApi.getTrees({
-        treeId: Number(id),
-      }),
+    queryFn: () => treeApi.getTrees({ treeId: parseNumericId(id) }),
+    enabled: isValidNumericId(id),
   })
 
 export const treeSensorIdQuery = (id: string) =>
@@ -128,10 +145,8 @@ export const vehicleQuery = (params?: GetAllVehiclesRequest) => {
 export const vehicleIdQuery = (id: string) =>
   queryOptions<Vehicle>({
     queryKey: ['vehicle', id],
-    queryFn: () =>
-      vehicleApi.getVehicleById({
-        id: Number(id),
-      }),
+    queryFn: () => vehicleApi.getVehicleById({ id: parseNumericId(id) }),
+    enabled: isValidNumericId(id),
   })
 
 export const wateringPlanQuery = (params?: GetAllWateringPlansRequest) =>
@@ -143,10 +158,8 @@ export const wateringPlanQuery = (params?: GetAllWateringPlansRequest) =>
 export const wateringPlanIdQuery = (id: string) =>
   queryOptions<WateringPlan>({
     queryKey: ['watering-plan', id],
-    queryFn: () =>
-      wateringPlanApi.getWateringPlanById({
-        id: Number(id),
-      }),
+    queryFn: () => wateringPlanApi.getWateringPlanById({ id: parseNumericId(id) }),
+    enabled: isValidNumericId(id),
   })
 
 export const userQuery = (params?: GetAllUsersRequest) => {

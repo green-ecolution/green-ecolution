@@ -26,11 +26,13 @@ const headers: HTTPHeaders = {
   Accept: 'application/json',
 }
 
-// Module-level refresh promise to prevent race conditions
 let refreshPromise: Promise<void> | null = null
+let lastRefreshTime = 0
+const MIN_REFRESH_INTERVAL = 5000
 
 async function performTokenRefresh(): Promise<void> {
-  const refreshToken = useStore.getState().token?.refreshToken
+  const refreshToken =
+    useStore.getState().token?.refreshToken ?? localStorage.getItem('refreshToken')
   if (!refreshToken) {
     useStore.getState().clearAuth()
     throw redirect({
@@ -56,12 +58,15 @@ async function performTokenRefresh(): Promise<void> {
   const data = ClientTokenFromJSON(await res.json())
   useStore.getState().setToken(data)
   useStore.getState().setUserFromJwt(data.accessToken)
+  lastRefreshTime = Date.now()
 }
 
 async function ensureFreshToken(): Promise<void> {
   const store = useStore.getState()
-  if (!store.isAuthenticated || !store.token) return
-  if (!store.isTokenExpiringSoon()) return
+  if (!store.isAuthenticated) return
+
+  if (store.token && !store.isTokenExpiringSoon()) return
+  if (Date.now() - lastRefreshTime < MIN_REFRESH_INTERVAL && store.token) return
 
   if (refreshPromise) {
     await refreshPromise
@@ -77,27 +82,25 @@ async function ensureFreshToken(): Promise<void> {
 const backendFetch: FetchAPI = async (...args) => {
   const [resource, config] = args
 
-  // Proactive refresh before request
   await ensureFreshToken()
 
-  let response = await fetch(resource, config)
+  const currentToken = useStore.getState().token?.accessToken
+  const updatedConfig = currentToken
+    ? { ...config, headers: { ...config?.headers, Authorization: `Bearer ${currentToken}` } }
+    : config
 
-  // Reactive refresh as fallback (token revoked server-side)
-  if (response.status === 401) {
-    if (refreshPromise) {
-      await refreshPromise
-    } else {
-      refreshPromise = performTokenRefresh().finally(() => {
-        refreshPromise = null
+  const response = await fetch(resource, updatedConfig)
+
+  const resourceUrl =
+    typeof resource === 'string' ? resource : resource instanceof URL ? resource.href : ''
+  if (response.status === 401 && !resourceUrl.includes('/token/refresh')) {
+    if (!refreshPromise) {
+      useStore.getState().clearAuth()
+      throw redirect({
+        to: '/login',
+        search: { redirect: window.location.pathname + window.location.search },
       })
-      await refreshPromise
     }
-
-    const newToken = useStore.getState().token?.accessToken
-    response = await fetch(resource, {
-      ...config,
-      headers: { ...config?.headers, Authorization: `Bearer ${newToken}` },
-    })
   }
 
   return response

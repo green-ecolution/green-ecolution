@@ -1,7 +1,9 @@
 import { Loading } from '@green-ecolution/ui'
 import WateringPlanStatusUpdate from '@/components/watering-plan/WateringPlanStatusUpdate'
 import useStore from '@/store/store'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, getRouteApi } from '@tanstack/react-router'
+
+const wateringPlanFormRoute = getRouteApi('/_protected/watering-plans/_formular/$wateringPlanId')
 
 export const Route = createFileRoute(
   '/_protected/watering-plans/_formular/$wateringPlanId/status/edit/',
@@ -16,11 +18,11 @@ export const Route = createFileRoute(
 })
 
 function StatusEditWateringPlan() {
-  const wateringPlanId = Route.useParams().wateringPlanId
+  const { wateringPlan } = wateringPlanFormRoute.useLoaderData()
 
   return (
     <div className="container mt-6">
-      <WateringPlanStatusUpdate wateringPlanId={wateringPlanId} />
+      <WateringPlanStatusUpdate wateringPlanId={wateringPlan.id.toString()} />
     </div>
   )
 }

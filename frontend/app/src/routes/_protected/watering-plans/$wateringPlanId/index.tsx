@@ -1,21 +1,18 @@
-import { wateringPlanIdQuery } from '@/api/queries'
 import { Loading } from '@green-ecolution/ui'
 import WateringPlanDashboard from '@/components/watering-plan/WateringPlanDashboard'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, getRouteApi } from '@tanstack/react-router'
+
+const wateringPlanRoute = getRouteApi('/_protected/watering-plans/$wateringPlanId')
 
 export const Route = createFileRoute('/_protected/watering-plans/$wateringPlanId/')({
   component: SingleWateringPlan,
   pendingComponent: () => (
     <Loading className="mt-20 justify-center" label="Einsatzplan wird geladen..." />
   ),
-  loader: async ({ context: { queryClient }, params }) =>
-    queryClient.prefetchQuery(wateringPlanIdQuery(params.wateringPlanId)),
 })
 
 function SingleWateringPlan() {
-  const wateringPlanId = Route.useParams().wateringPlanId
-  const { data: wateringPlan } = useSuspenseQuery(wateringPlanIdQuery(wateringPlanId))
+  const { wateringPlan } = wateringPlanRoute.useLoaderData()
 
   return (
     <div className="container mt-6">
@@ -24,4 +21,4 @@ function SingleWateringPlan() {
   )
 }
 
-export default WateringPlanDashboard
+export default SingleWateringPlan
