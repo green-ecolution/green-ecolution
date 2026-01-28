@@ -326,34 +326,42 @@ func TestResolveJWKSURL(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		cfg      *config.OidcPublicKey
-		baseURL  string
-		realm    string
-		expected string
+		name           string
+		cfg            *config.OidcPublicKey
+		baseURL        string
+		realm          string
+		expected       string
+		expectedStatic bool
+		expectedError  bool
 	}{
 		{
 			name: "direct JWKS URL takes precedence",
 			cfg: &config.OidcPublicKey{
 				JwksURL: "https://direct.example.com/jwks",
 			},
-			baseURL:  "https://auth.example.com",
-			realm:    "test-realm",
-			expected: "https://direct.example.com/jwks",
+			baseURL:        "https://auth.example.com",
+			realm:          "test-realm",
+			expected:       "https://direct.example.com/jwks",
+			expectedStatic: true,
+			expectedError:  false,
 		},
 		{
-			name:     "construct from base URL and realm",
-			cfg:      &config.OidcPublicKey{},
-			baseURL:  "https://auth.example.com",
-			realm:    "test-realm",
-			expected: "https://auth.example.com/realms/test-realm/protocol/openid-connect/certs",
+			name:           "construct from base URL and realm",
+			cfg:            &config.OidcPublicKey{},
+			baseURL:        "https://auth.example.com",
+			realm:          "test-realm",
+			expected:       "https://auth.example.com/realms/test-realm/.well-known/openid-configuration",
+			expectedStatic: false,
+			expectedError:  false,
 		},
 		{
-			name:     "empty when no URL can be constructed",
-			cfg:      &config.OidcPublicKey{},
-			baseURL:  "",
-			realm:    "",
-			expected: "",
+			name:           "empty when no URL can be constructed",
+			cfg:            &config.OidcPublicKey{},
+			baseURL:        "",
+			realm:          "",
+			expected:       "",
+			expectedStatic: false,
+			expectedError:  true,
 		},
 	}
 
@@ -366,8 +374,10 @@ func TestResolveJWKSURL(t *testing.T) {
 				realm:      tt.realm,
 			}
 
-			result, _ := p.resolveJWKSURL()
+			result, static, err := p.resolveJWKSURL()
 			assert.Equal(t, tt.expected, result)
+			assert.Equal(t, tt.expectedStatic, static)
+			assert.Equal(t, tt.expectedError, err != nil)
 		})
 	}
 }

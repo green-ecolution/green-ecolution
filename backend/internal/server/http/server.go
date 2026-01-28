@@ -45,7 +45,11 @@ func (s *Server) Run(ctx context.Context) error {
 		EnableSplittingOnParsers: true,
 	})
 
-	app.Mount("/", s.middleware())
+	middlewareApp, err := s.middleware()
+	if err != nil {
+		return err
+	}
+	app.Mount("/", middlewareApp)
 
 	go func() {
 		slog.Info("starting plugin cleanup service: cleaning up unhealthy plugins")

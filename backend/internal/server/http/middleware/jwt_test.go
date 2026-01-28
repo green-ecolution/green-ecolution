@@ -1,13 +1,13 @@
 package middleware
 
 import (
-	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -74,11 +74,26 @@ func createJWKSServer(t *testing.T, key *rsa.PublicKey, kid string) *httptest.Se
 		"e":   "AQAB",
 	}
 	jwks := map[string]interface{}{"keys": []interface{}{jwk}}
+	createOpenIDConfig := func(serverAddr string) map[string]any {
+		return map[string]any{"jwks_uri": fmt.Sprintf("%s/jwks", serverAddr)}
+	}
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	var serverAddr string
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/realms/test-realm/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(createOpenIDConfig(serverAddr))
+	})
+	mux.HandleFunc("/jwks", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(jwks)
-	}))
+	})
+
+	server := httptest.NewServer(mux)
+
+	serverAddr = server.URL
+
 	t.Cleanup(server.Close)
 	return server
 }
@@ -99,13 +114,14 @@ func Test_NewJWTMiddleware(t *testing.T) {
 		}
 
 		// when
-		got := NewJWTMiddleware(cfg, authSvc)
+		got, err := NewJWTMiddleware(cfg, authSvc)
 
 		// then
 		assert.NotNil(t, got)
+		assert.NoError(t, err)
 	})
 
-	t.Run("should return a handler with error on no key source configured", func(t *testing.T) {
+	t.Run("should return error on no key source configured", func(t *testing.T) {
 		// given
 		authSvc := serviceMock.NewMockAuthService(t)
 		cfg := &config.IdentityAuthConfig{
@@ -119,26 +135,11 @@ func Test_NewJWTMiddleware(t *testing.T) {
 		}
 
 		// when
-		middleware := NewJWTMiddleware(cfg, authSvc)
-		app := fiber.New()
-		app.Use(middleware)
-		app.Get("/", func(c *fiber.Ctx) error {
-			return c.SendString("Hello, World!")
-		})
-
-		req := httptest.NewRequest(fiber.MethodGet, "/", nil)
-		resp, _ := app.Test(req)
-		defer resp.Body.Close()
-
-		body := new(bytes.Buffer)
-		_, err := body.ReadFrom(resp.Body)
-		if err != nil {
-			t.Fatalf("Failed to read response body: %v", err)
-		}
+		middleware, err := NewJWTMiddleware(cfg, authSvc)
 
 		// then
-		assert.Equal(t, fiber.StatusInternalServerError, resp.StatusCode)
-		assert.Contains(t, body.String(), "failed to initialize authentication")
+		assert.Nil(t, middleware)
+		assert.Error(t, err)
 	})
 }
 
@@ -159,7 +160,8 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 
 		// when
 		authSvc.EXPECT().RetrospectToken(mock.Anything, mock.Anything).Return(&entities.IntroSpectTokenResult{Active: utils.P(true)}, nil)
-		got := NewJWTMiddleware(cfg, authSvc)
+		got, err := NewJWTMiddleware(cfg, authSvc)
+		assert.NoError(t, err)
 		app := fiber.New()
 		app.Use(got)
 		app.Get("/", func(c *fiber.Ctx) error {
@@ -192,7 +194,8 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 
 		// when
 		authSvc.EXPECT().RetrospectToken(mock.Anything, mock.Anything).Return(&entities.IntroSpectTokenResult{Active: utils.P(false)}, nil)
-		got := NewJWTMiddleware(cfg, authSvc)
+		got, err := NewJWTMiddleware(cfg, authSvc)
+		assert.NoError(t, err)
 		app := fiber.New()
 		app.Use(got)
 		app.Get("/", func(c *fiber.Ctx) error {
@@ -217,7 +220,8 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 		}
 
 		// when
-		middleware := NewJWTMiddleware(cfg, authSvc)
+		middleware, err := NewJWTMiddleware(cfg, authSvc)
+		assert.NoError(t, err)
 		app := fiber.New()
 		app.Use(middleware)
 		app.Get("/", func(c *fiber.Ctx) error {
@@ -249,7 +253,9 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 		}
 
 		// when
-		middleware := NewJWTMiddleware(cfg, authSvc)
+		middleware, err := NewJWTMiddleware(cfg, authSvc)
+		assert.NoError(t, err)
+
 		app := fiber.New()
 		app.Use(middleware)
 		app.Get("/", func(c *fiber.Ctx) error {
@@ -280,7 +286,9 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 		}
 
 		// when
-		middleware := NewJWTMiddleware(cfg, authSvc)
+		middleware, err := NewJWTMiddleware(cfg, authSvc)
+		assert.NoError(t, err)
+
 		app := fiber.New()
 		app.Use(middleware)
 		app.Get("/", func(c *fiber.Ctx) error {
@@ -310,7 +318,9 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 			},
 		}
 
-		middleware := NewJWTMiddleware(cfg, authSvc)
+		middleware, err := NewJWTMiddleware(cfg, authSvc)
+		assert.NoError(t, err)
+
 		app := fiber.New()
 		app.Use(middleware)
 		app.Get("/", func(c *fiber.Ctx) error {
@@ -354,7 +364,9 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 
 		// when
 		authSvc.EXPECT().RetrospectToken(mock.Anything, mock.Anything).Return(nil, errors.New("keycloak unavailable"))
-		middleware := NewJWTMiddleware(cfg, authSvc)
+		middleware, err := NewJWTMiddleware(cfg, authSvc)
+		assert.NoError(t, err)
+
 		app := fiber.New()
 		app.Use(middleware)
 		app.Get("/", func(c *fiber.Ctx) error {
@@ -381,7 +393,7 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 			Enable: true,
 			OidcProvider: config.OidcProvider{
 				PublicKey: config.OidcPublicKey{
-					JwksURL:         jwksServer.URL,
+					JwksURL:         jwksServer.URL + "/jwks",
 					RefreshInterval: 1 * time.Hour,
 					RefreshTimeout:  5 * time.Second,
 				},
@@ -390,7 +402,49 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 
 		// when
 		authSvc.EXPECT().RetrospectToken(mock.Anything, mock.Anything).Return(&entities.IntroSpectTokenResult{Active: utils.P(true)}, nil)
-		middleware := NewJWTMiddleware(cfg, authSvc)
+		middleware, err := NewJWTMiddleware(cfg, authSvc)
+		assert.NoError(t, err)
+
+		app := fiber.New()
+		app.Use(middleware)
+		app.Get("/", func(c *fiber.Ctx) error {
+			return c.SendString("Hello, World!")
+		})
+
+		req := httptest.NewRequest(fiber.MethodGet, "/", nil)
+		req.Header.Set("Authorization", "Bearer "+signJWTWithKid(t, testKey, kid))
+		resp, _ := app.Test(req)
+		defer resp.Body.Close()
+
+		// then
+		assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("should work with OIDC-Config instead of static key and static url", func(t *testing.T) {
+		// given
+		authSvc := serviceMock.NewMockAuthService(t)
+		testKey := validKey(t)
+		kid := "test-key-id"
+		jwksServer := createJWKSServer(t, &testKey.PublicKey, kid)
+
+		cfg := &config.IdentityAuthConfig{
+			Enable: true,
+
+			OidcProvider: config.OidcProvider{
+				BaseURL:    jwksServer.URL,
+				DomainName: "test-realm",
+				PublicKey: config.OidcPublicKey{
+					RefreshInterval: 1 * time.Hour,
+					RefreshTimeout:  5 * time.Second,
+				},
+			},
+		}
+
+		// when
+		authSvc.EXPECT().RetrospectToken(mock.Anything, mock.Anything).Return(&entities.IntroSpectTokenResult{Active: utils.P(true)}, nil)
+		middleware, err := NewJWTMiddleware(cfg, authSvc)
+		assert.NoError(t, err)
+
 		app := fiber.New()
 		app.Use(middleware)
 		app.Get("/", func(c *fiber.Ctx) error {

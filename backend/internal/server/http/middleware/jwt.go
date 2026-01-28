@@ -18,22 +18,20 @@ import (
 // jwksProvider holds the JWKS provider instance for cleanup on shutdown
 var jwksProvider *jwks.Provider
 
-func NewJWTMiddleware(cfg *config.IdentityAuthConfig, svc service.AuthService) fiber.Handler {
+func NewJWTMiddleware(cfg *config.IdentityAuthConfig, svc service.AuthService) (fiber.Handler, error) {
 	if !cfg.Enable {
 		return func(c *fiber.Ctx) error {
 			fiberCtx := wrapper.NewFiberCtx(c)
 			_ = fiberCtx.WithLogger("user_id", -1)
 			return c.Next()
-		}
+		}, nil
 	}
 
 	// Initialize JWKS provider
 	provider, err := jwks.NewProvider(cfg)
 	if err != nil {
 		slog.Error("failed to initialize JWKS provider", "error", err)
-		return func(c *fiber.Ctx) error {
-			return c.Status(fiber.StatusInternalServerError).SendString("failed to initialize authentication")
-		}
+		return nil, err
 	}
 
 	// Store for cleanup on shutdown
@@ -48,7 +46,7 @@ func NewJWTMiddleware(cfg *config.IdentityAuthConfig, svc service.AuthService) f
 			err = service.NewError(service.Unauthorized, err.Error())
 			return errorhandler.HandleError(err)
 		},
-	})
+	}), nil
 }
 
 // CloseJWKSProvider should be called on application shutdown to stop background refresh
