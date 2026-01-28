@@ -116,23 +116,15 @@ func (p *Provider) Close() {
 }
 
 func (p *Provider) initJWKS() error {
-	jwksURL, err := p.resolveJWKSURL()
+	jwksURL, static, err := p.resolveJWKSURL()
 	if err != nil {
 		slog.Error("no JWKS URL resolved", "error", err)
 		return err
 	}
 
-	opts := keyfunc.Options{
-		Client:                      p.httpClient,
-		RefreshInterval:             p.cfg.RefreshInterval,
-		RefreshTimeout:              p.cfg.RefreshTimeout,
-		RefreshRateLimit:            refreshRateLimit,
-		TolerateInitialJWKHTTPError: true,
-		RefreshUnknownKID:           true,
-		RefreshErrorHandler: func(err error) {
-			slog.Error("JWKS refresh failed", "error", err, "url", jwksURL)
-		},
-		ResponseExtractor: func(ctx context.Context, res *http.Response) (json.RawMessage, error) {
+	jwksExtractor := keyfunc.ResponseExtractorStatusOK
+	if !static {
+		jwksExtractor = func(ctx context.Context, res *http.Response) (json.RawMessage, error) {
 			var err error
 			defer res.Body.Close()
 
@@ -159,7 +151,20 @@ func (p *Provider) initJWKS() error {
 			defer res2.Body.Close()
 
 			return keyfunc.ResponseExtractorStatusOK(ctx, res2)
+		}
+	}
+
+	opts := keyfunc.Options{
+		Client:                      p.httpClient,
+		RefreshInterval:             p.cfg.RefreshInterval,
+		RefreshTimeout:              p.cfg.RefreshTimeout,
+		RefreshRateLimit:            refreshRateLimit,
+		TolerateInitialJWKHTTPError: true,
+		RefreshUnknownKID:           true,
+		RefreshErrorHandler: func(err error) {
+			slog.Error("JWKS refresh failed", "error", err, "url", jwksURL)
 		},
+		ResponseExtractor: jwksExtractor,
 	}
 
 	slog.Info("initializing JWKS provider", "url", jwksURL, "refresh_interval", opts.RefreshInterval)
@@ -177,16 +182,16 @@ func (p *Provider) initJWKS() error {
 	return nil
 }
 
-func (p *Provider) resolveJWKSURL() (string, error) {
+func (p *Provider) resolveJWKSURL() (jwksURL string, static bool, err error) {
 	if p.cfg.JwksURL != "" {
-		return p.cfg.JwksURL, nil
+		return p.cfg.JwksURL, true, nil
 	}
 	if p.baseURL == "" || p.realm == "" {
-		return "", ErrNoKeySource
+		return "", false, ErrNoKeySource
 	}
 
 	oidcBaseURL := fmt.Sprintf("%s/realms/%s", p.baseURL, p.realm)
-	return fmt.Sprintf("%s/.well-known/openid-configuration", oidcBaseURL), nil
+	return fmt.Sprintf("%s/.well-known/openid-configuration", oidcBaseURL), false, nil
 }
 
 func parseStaticKey(base64Str string) (*rsa.PublicKey, error) {
