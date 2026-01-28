@@ -95,9 +95,13 @@ export const sensorIdQuery = (id: string) =>
 
 export const treeQuery = (params?: GetAllTreesRequest) =>
   queryOptions<TreeList>({
-    queryKey: ['trees', params?.page, params?.wateringStatuses, params?.plantingYears].filter(
-      (e) => e != undefined || e != null,
-    ),
+    queryKey: [
+      'trees',
+      params?.page,
+      params?.wateringStatuses,
+      params?.plantingYears,
+      params?.hasCluster,
+    ].filter((e) => e != undefined || e != null),
     queryFn: () => treeApi.getAllTrees(params),
   })
 

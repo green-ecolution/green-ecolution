@@ -55,8 +55,12 @@ const FilterProvider: React.FC<FilterProviderProps> = ({
   }
 
   const handleClusterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = event.target
-    setHasCluster(value === 'true')
+    const { checked, value } = event.target
+    if (checked) {
+      setHasCluster(value === 'true')
+    } else {
+      setHasCluster(undefined)
+    }
   }
 
   const handlePlantingYearChange = (event: React.ChangeEvent<HTMLInputElement>) => {
