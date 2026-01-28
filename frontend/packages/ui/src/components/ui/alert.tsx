@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { CheckCircle2, Info, TriangleAlert } from 'lucide-react'
+import { CheckCircle2, Info, TriangleAlert, type LucideProps } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
@@ -74,7 +74,7 @@ const variantIcons = {
 } as const
 
 export interface AlertIconProps
-  extends React.HTMLAttributes<SVGElement>, VariantProps<typeof alertIconVariants> {}
+  extends Omit<LucideProps, 'ref'>, VariantProps<typeof alertIconVariants> {}
 
 const AlertIcon = React.forwardRef<SVGSVGElement, AlertIconProps>(
   ({ className, variant = 'default', ...props }, ref) => {
