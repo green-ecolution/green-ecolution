@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.1.2](https://github.com/green-ecolution/green-ecolution/compare/v0.1.1...v0.1.2) (2026-01-28)
+
+
+### Features
+
+* **auth:** fetch OIDC public key dynamically from JWKS endpoint ([#595](https://github.com/green-ecolution/green-ecolution/issues/595)) ([c43bfc4](https://github.com/green-ecolution/green-ecolution/commit/c43bfc43b1b3b89434701e906d0d00f02783831e))
+* **config:** make config file optional, use env vars as primary source ([#594](https://github.com/green-ecolution/green-ecolution/issues/594)) ([75e0851](https://github.com/green-ecolution/green-ecolution/commit/75e0851296430ca6b58d832d62d6bbd513af7b19))
+* **ui:** add @green-ecolution/ui package with shared components and Storybook ([#591](https://github.com/green-ecolution/green-ecolution/issues/591)) ([443ce11](https://github.com/green-ecolution/green-ecolution/commit/443ce115d668ea5d495d48a5504f9a46985a04b1))
+* **ui:** migrate components to shared UI package and Tailwind v4 compatibility ([#608](https://github.com/green-ecolution/green-ecolution/issues/608)) ([a78695e](https://github.com/green-ecolution/green-ecolution/commit/a78695e187af770cc1afb3b261fa9c28cc45cff4))
+
+
+### Bug Fixes
+
+* **frontend:** improve auth token handling with proactive refresh ([#618](https://github.com/green-ecolution/green-ecolution/issues/618)) ([3b74d5a](https://github.com/green-ecolution/green-ecolution/commit/3b74d5afef223cd88470b8fa26675f9ef6e8ec89)), closes [#607](https://github.com/green-ecolution/green-ecolution/issues/607)
+* **frontend:** resolve map filter for cluster membership ([#628](https://github.com/green-ecolution/green-ecolution/issues/628)) ([5d860bc](https://github.com/green-ecolution/green-ecolution/commit/5d860bc19905d1d1415545b2369b384a47277f74))
+* **frontend:** resolve NaN entity ID on page refresh ([#619](https://github.com/green-ecolution/green-ecolution/issues/619)) ([ec7172b](https://github.com/green-ecolution/green-ecolution/commit/ec7172bdbbd6959ef9d26f9ed9f367a9f5f49a17))
+
 ## [0.1.1](https://github.com/green-ecolution/green-ecolution/compare/v0.1.0...v0.1.1) (2026-01-11)
 
 
