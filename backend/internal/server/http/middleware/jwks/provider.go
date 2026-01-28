@@ -127,7 +127,7 @@ func (p *Provider) initJWKS() error {
 		RefreshInterval:             p.cfg.RefreshInterval,
 		RefreshTimeout:              p.cfg.RefreshTimeout,
 		RefreshRateLimit:            refreshRateLimit,
-		TolerateInitialJWKHTTPError: false,
+		TolerateInitialJWKHTTPError: true,
 		RefreshUnknownKID:           true,
 		RefreshErrorHandler: func(err error) {
 			slog.Error("JWKS refresh failed", "error", err, "url", jwksURL)
