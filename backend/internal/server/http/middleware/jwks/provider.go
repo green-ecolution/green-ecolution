@@ -123,13 +123,42 @@ func (p *Provider) initJWKS() error {
 	}
 
 	opts := keyfunc.Options{
-		Client:            p.httpClient,
-		RefreshInterval:   p.cfg.RefreshInterval,
-		RefreshTimeout:    p.cfg.RefreshTimeout,
-		RefreshRateLimit:  refreshRateLimit,
-		RefreshUnknownKID: true,
+		Client:                      p.httpClient,
+		RefreshInterval:             p.cfg.RefreshInterval,
+		RefreshTimeout:              p.cfg.RefreshTimeout,
+		RefreshRateLimit:            refreshRateLimit,
+		TolerateInitialJWKHTTPError: false,
+		RefreshUnknownKID:           true,
 		RefreshErrorHandler: func(err error) {
 			slog.Error("JWKS refresh failed", "error", err, "url", jwksURL)
+		},
+		ResponseExtractor: func(ctx context.Context, res *http.Response) (json.RawMessage, error) {
+			var err error
+			defer res.Body.Close()
+
+			var openIDCfg struct {
+				JWKsURI string `json:"jwks_uri"`
+			}
+			if err = json.NewDecoder(res.Body).Decode(&openIDCfg); err != nil {
+				return nil, fmt.Errorf("error decoding openid config: %w", err)
+			}
+
+			if openIDCfg.JWKsURI == "" {
+				return nil, fmt.Errorf("jwksURI of openid config is empty")
+			}
+
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, openIDCfg.JWKsURI, http.NoBody)
+			if err != nil {
+				return nil, fmt.Errorf("jwksURI of openid config is invalid: %w", err)
+			}
+
+			res2, err := p.httpClient.Do(req)
+			if err != nil {
+				return nil, err
+			}
+			defer res2.Body.Close()
+
+			return keyfunc.ResponseExtractorStatusOK(ctx, res2)
 		},
 	}
 
@@ -157,33 +186,7 @@ func (p *Provider) resolveJWKSURL() (string, error) {
 	}
 
 	oidcBaseURL := fmt.Sprintf("%s/realms/%s", p.baseURL, p.realm)
-
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, fmt.Sprintf("%s/.well-known/openid-configuration", oidcBaseURL), http.NoBody)
-	if err != nil {
-		return "", err
-	}
-
-	res, err := p.httpClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("oidc provider `%s` returned error statuscode: %s", oidcBaseURL, res.Status)
-	}
-
-	var openIDCfg struct {
-		JWKsURI string `json:"jwks_uri"`
-	}
-	if err = json.NewDecoder(res.Body).Decode(&openIDCfg); err != nil {
-		return "", fmt.Errorf("error decoding openid config of oidc provider `%s`: %w", oidcBaseURL, err)
-	}
-	if openIDCfg.JWKsURI == "" {
-		return "", fmt.Errorf("jwksURI of oidc provider `%s` is empty", oidcBaseURL)
-	}
-
-	return openIDCfg.JWKsURI, nil
+	return fmt.Sprintf("%s/.well-known/openid-configuration", oidcBaseURL), nil
 }
 
 func parseStaticKey(base64Str string) (*rsa.PublicKey, error) {
