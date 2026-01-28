@@ -68,6 +68,29 @@ describe('Query Functions', () => {
         expect(options.queryKey).toContain('trees')
       })
 
+      it('includes hasCluster in query key when true', () => {
+        const options = treeQuery({ hasCluster: true })
+
+        expect(options.queryKey).toContain(true)
+      })
+
+      it('includes hasCluster in query key when false', () => {
+        const options = treeQuery({ hasCluster: false })
+
+        expect(options.queryKey).toContain(false)
+      })
+
+      it('uses different query keys for different hasCluster values', () => {
+        const optionsTrue = treeQuery({ hasCluster: true })
+        const optionsFalse = treeQuery({ hasCluster: false })
+        const optionsUndefined = treeQuery({})
+
+        // All should have different query keys
+        expect(optionsTrue.queryKey).not.toEqual(optionsFalse.queryKey)
+        expect(optionsTrue.queryKey).not.toEqual(optionsUndefined.queryKey)
+        expect(optionsFalse.queryKey).not.toEqual(optionsUndefined.queryKey)
+      })
+
       it('calls treeApi.getAllTrees when queryFn is executed', async () => {
         const mockResponse = { data: [] } as TreeList
         // eslint-disable-next-line @typescript-eslint/unbound-method
