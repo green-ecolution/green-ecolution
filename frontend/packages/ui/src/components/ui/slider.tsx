@@ -8,9 +8,18 @@ export interface SliderProps extends React.ComponentPropsWithoutRef<typeof Slide
 }
 
 const Slider = React.forwardRef<React.ComponentRef<typeof SliderPrimitive.Root>, SliderProps>(
-  ({ className, showLabels, value, defaultValue, min = 0, max = 100, ...props }, ref) => {
+  ({ className, showLabels, value, defaultValue, min = 0, max = 100, disabled, ...props }, ref) => {
     const currentValue = value ?? defaultValue ?? [min]
     const isRange = currentValue.length === 2
+    const [isDragging, setIsDragging] = React.useState(false)
+
+    React.useEffect(() => {
+      if (!isDragging) return
+
+      const handlePointerUp = () => setIsDragging(false)
+      document.addEventListener('pointerup', handlePointerUp)
+      return () => document.removeEventListener('pointerup', handlePointerUp)
+    }, [isDragging])
 
     return (
       <div className="w-full">
@@ -21,12 +30,20 @@ const Slider = React.forwardRef<React.ComponentRef<typeof SliderPrimitive.Root>,
           max={max}
           value={value}
           defaultValue={defaultValue}
-          className={cn('relative flex w-full touch-none select-none items-center', className)}
+          disabled={disabled}
+          className={cn(
+            'relative flex w-full touch-none select-none items-center',
+            disabled && 'cursor-not-allowed opacity-50',
+            className,
+          )}
           {...props}
         >
           <SliderPrimitive.Track
             data-slot="slider-track"
-            className="relative h-2 w-full grow overflow-hidden rounded-full bg-dark-200"
+            className={cn(
+              'relative h-2 w-full grow overflow-hidden rounded-full bg-dark-200',
+              disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+            )}
           >
             <SliderPrimitive.Range
               data-slot="slider-range"
@@ -37,7 +54,11 @@ const Slider = React.forwardRef<React.ComponentRef<typeof SliderPrimitive.Root>,
             <SliderPrimitive.Thumb
               key={index}
               data-slot="slider-thumb"
-              className="block h-5 w-5 rounded-full border-2 border-green-dark bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-dark focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+              onPointerDown={() => !disabled && setIsDragging(true)}
+              className={cn(
+                'block h-5 w-5 rounded-full border-2 border-green-dark bg-white transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-green-dark/50',
+                disabled ? 'cursor-not-allowed' : isDragging ? 'cursor-grabbing' : 'cursor-grab',
+              )}
             />
           ))}
         </SliderPrimitive.Root>
