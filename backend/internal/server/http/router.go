@@ -16,6 +16,7 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/user"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/vehicle"
 	wateringplan "github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/watering_plan"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/middleware"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
@@ -46,6 +47,7 @@ func (s *Server) v1(router fiber.Router, authMiddlewares ...fiber.Handler) {
 	app.Get("/swagger/*", swagger.HandlerDefault)
 
 	app.Route("/info", func(router fiber.Router) {
+		router.Use(middleware.NewAllowUnauthorizedMiddleware())
 		router.Use(authMiddleware...)
 		info.RegisterRoutes(router, s.services.InfoService)
 	})

@@ -76,6 +76,9 @@ func NetURLToString(u *url.URL) string {
 }
 
 func TimeDurationToString(t time.Duration) string {
+	if t == 0 {
+		return ""
+	}
 	return t.String()
 }
 

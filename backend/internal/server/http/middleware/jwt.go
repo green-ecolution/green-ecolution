@@ -74,6 +74,7 @@ func successHandler(c *fiber.Ctx, svc service.AuthService) error {
 	ctx := c.Context()
 	contextWithClaims := context.WithValue(ctx, enums.ContextKeyClaims, claims)
 	c.SetUserContext(contextWithClaims)
+	c.Locals(enums.ContextKeyClaims, claims)
 
 	rptResult, err := svc.RetrospectToken(ctx, jwtToken.Raw)
 	if err != nil {
