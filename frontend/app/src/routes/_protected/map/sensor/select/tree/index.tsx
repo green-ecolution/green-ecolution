@@ -3,7 +3,7 @@ import { sensorIdQuery, treeIdQuery } from '@/api/queries'
 import SelectedCard from '@/components/general/cards/SelectedCard'
 import MapSelectEntitiesModal from '@/components/map/MapSelectEntitiesModal'
 import SensorMarker from '@/components/map/marker/SensorMarker'
-import WithAllTrees from '@/components/map/marker/WithAllTrees'
+import WithFilterableTrees from '@/components/map/marker/WithFilterableTrees'
 import createToast from '@/hooks/createToast'
 import { Tree, TreeUpdate as TreeUpdateReq } from '@green-ecolution/backend-client'
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
@@ -100,7 +100,7 @@ function LinkTreeToSensor() {
           </>
         }
       />
-      <WithAllTrees
+      <WithFilterableTrees
         selectedTrees={treeId ? [treeId] : []}
         onClick={(tree: Tree) => setTreeId(tree.id)}
       />

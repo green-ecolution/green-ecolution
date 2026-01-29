@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
-import { TreeCluster } from '@green-ecolution/backend-client'
+import { TreeClusterInList } from '@green-ecolution/backend-client'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import {
   AlertDialog,
@@ -15,7 +15,7 @@ import {
 import { MoveRight, X } from 'lucide-react'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import MapSelectEntitiesModal from '@/components/map/MapSelectEntitiesModal'
-import WithAllClusters from '@/components/map/marker/WithAllClusters'
+import WithFilterableClusters from '@/components/map/marker/WithFilterableClusters'
 import ShowRoutePreview from '@/components/map/marker/ShowRoutePreview'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { treeClusterQuery, vehicleIdQuery } from '@/api/queries'
@@ -124,7 +124,7 @@ function SelectCluster() {
     setClusterIds((prev) => prev.filter((id) => id !== clusterId))
   }
 
-  const handleClick = (cluster: TreeCluster) => {
+  const handleClick = (cluster: TreeClusterInList) => {
     if (disabledClusters.includes(cluster.id)) return
 
     setClusterIds((prev) => {
@@ -194,7 +194,7 @@ function SelectCluster() {
           </ul>
         }
       />
-      <WithAllClusters
+      <WithFilterableClusters
         onClick={handleClick}
         highlightedClusters={clusterIds}
         disabledClusters={disabledClusters}
