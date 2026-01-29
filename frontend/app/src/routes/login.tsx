@@ -13,7 +13,7 @@ export const Route = createFileRoute('/login')({
   }),
   loader: async ({ deps: { redirect } }) => {
     const loginUrl = await userApi
-      .v1UserLoginGet({
+      .login({
         redirectUrl: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}`,
       })
       .then((res) => res.loginUrl)

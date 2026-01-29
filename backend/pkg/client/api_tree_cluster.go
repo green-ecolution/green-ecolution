@@ -56,7 +56,7 @@ func (a *TreeClusterAPIService) CreateTreeCluster(ctx context.Context) ApiCreate
 
 // Execute executes the request
 //
-//	@return TreeCluster
+//	@return	TreeCluster
 func (a *TreeClusterAPIService) CreateTreeClusterExecute(r ApiCreateTreeClusterRequest) (*TreeCluster, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -385,7 +385,7 @@ func (a *TreeClusterAPIService) GetAllTreeClusters(ctx context.Context) ApiGetAl
 
 // Execute executes the request
 //
-//	@return TreeClusterList
+//	@return	TreeClusterList
 func (a *TreeClusterAPIService) GetAllTreeClustersExecute(r ApiGetAllTreeClustersRequest) (*TreeClusterList, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -546,7 +546,7 @@ func (a *TreeClusterAPIService) GetTreeClusterById(ctx context.Context, clusterI
 
 // Execute executes the request
 //
-//	@return TreeCluster
+//	@return	TreeCluster
 func (a *TreeClusterAPIService) GetTreeClusterByIdExecute(r ApiGetTreeClusterByIdRequest) (*TreeCluster, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -711,7 +711,7 @@ func (a *TreeClusterAPIService) UpdateTreeCluster(ctx context.Context, clusterId
 
 // Execute executes the request
 //
-//	@return TreeCluster
+//	@return	TreeCluster
 func (a *TreeClusterAPIService) UpdateTreeClusterExecute(r ApiUpdateTreeClusterRequest) (*TreeCluster, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPut

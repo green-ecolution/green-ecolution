@@ -188,7 +188,7 @@ describe('useWateringPlanForm', () => {
     await waitFor(() => {
       expect(updateMock).toHaveBeenCalledTimes(1)
       expect(updateMock).toHaveBeenCalledWith({
-        id: '5',
+        id: 5,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         body: expect.objectContaining({
           status: WateringPlanStatus.WateringPlanStatusActive,

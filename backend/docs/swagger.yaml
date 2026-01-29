@@ -2366,6 +2366,37 @@ paths:
       summary: Update tree
       tags:
       - Tree
+  /v1/tree/planting-years:
+    get:
+      description: Retrieves a list of all distinct planting years from trees in the
+        database.
+      operationId: get-planting-years
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: integer
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get distinct planting years
+      tags:
+      - Tree
   /v1/tree/sensor/{sensor_id}:
     get:
       description: Retrieves the tree associated with a specific sensor. Useful for

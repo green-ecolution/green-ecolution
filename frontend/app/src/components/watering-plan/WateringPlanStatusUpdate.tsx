@@ -53,7 +53,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const { mutate, isError, error } = useMutation({
     mutationFn: (wateringPlan: WateringPlanUpdate) =>
       wateringPlanApi.updateWateringPlan({
-        id: wateringPlanId,
+        id: Number(wateringPlanId),
         body: wateringPlan,
       }),
 

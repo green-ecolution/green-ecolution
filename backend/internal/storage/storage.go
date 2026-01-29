@@ -199,6 +199,7 @@ type TreeRepository interface {
 	UnlinkTreeClusterID(ctx context.Context, treeClusterID int32) error
 	UnlinkSensorID(ctx context.Context, sensorID string) error
 	FindNearestTree(ctx context.Context, latitude, longitude float64) (*entities.Tree, error)
+	GetDistinctPlantingYears(ctx context.Context) ([]int32, error)
 }
 
 type SensorRepository interface {

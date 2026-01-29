@@ -123,6 +123,7 @@ type TreeService interface {
 	GetBySensorID(ctx context.Context, id string) (*domain.Tree, error)
 	HandleNewSensorData(context.Context, *domain.EventNewSensorData) error
 	UpdateWateringStatuses(ctx context.Context) error
+	GetPlantingYears(ctx context.Context) ([]int32, error)
 }
 
 type EvaluationService interface {

@@ -23,7 +23,7 @@ import type {
 vi.mock('./backendApi', () => ({
   treeApi: {
     getAllTrees: vi.fn(),
-    getTrees: vi.fn(),
+    getTreeById: vi.fn(),
   },
   vehicleApi: {
     getAllVehicles: vi.fn(),
@@ -126,28 +126,28 @@ describe('Query Functions', () => {
         expect(options.queryFn).toBeDefined()
       })
 
-      it('calls treeApi.getTrees with correct id', async () => {
+      it('calls treeApi.getTreeById with correct id', async () => {
         const mockTree = { id: 123, latitude: 54.0, longitude: 9.0 } as Tree
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        vi.mocked(treeApi.getTrees).mockResolvedValueOnce(mockTree)
+        vi.mocked(treeApi.getTreeById).mockResolvedValueOnce(mockTree)
 
         const options = treeIdQuery('123')
         const result = await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(treeApi.getTrees).toHaveBeenCalledWith({ treeId: 123 })
+        expect(treeApi.getTreeById).toHaveBeenCalledWith({ treeId: 123 })
         expect(result).toEqual(mockTree)
       })
 
       it('converts string id to number', async () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        vi.mocked(treeApi.getTrees).mockResolvedValueOnce({} as Tree)
+        vi.mocked(treeApi.getTreeById).mockResolvedValueOnce({} as Tree)
 
         const options = treeIdQuery('456')
         await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(treeApi.getTrees).toHaveBeenCalledWith({ treeId: 456 })
+        expect(treeApi.getTreeById).toHaveBeenCalledWith({ treeId: 456 })
       })
     })
   })

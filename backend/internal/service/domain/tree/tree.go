@@ -282,6 +282,16 @@ func (s *TreeService) UpdateWateringStatuses(ctx context.Context) error {
 	return nil
 }
 
+func (s *TreeService) GetPlantingYears(ctx context.Context) ([]int32, error) {
+	log := logger.GetLogger(ctx)
+	years, err := s.treeRepo.GetDistinctPlantingYears(ctx)
+	if err != nil {
+		log.Debug("failed to fetch planting years", "error", err)
+		return nil, service.MapError(ctx, err, service.ErrorLogAll)
+	}
+	return years, nil
+}
+
 func (s *TreeService) Ready() bool {
 	return s.treeRepo != nil && s.sensorRepo != nil
 }
