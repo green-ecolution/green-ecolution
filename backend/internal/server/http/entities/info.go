@@ -1,11 +1,21 @@
 package entities
 
 type ServiceStatusResponse struct {
-	Name    string `json:"name"`
-	Enabled bool   `json:"enabled"`
-	Healthy bool   `json:"healthy"`
-	Message string `json:"message,omitempty"`
+	Name           string  `json:"name"`
+	Enabled        bool    `json:"enabled"`
+	Healthy        bool    `json:"healthy"`
+	ResponseTimeMs float64 `json:"responseTimeMs,omitempty"`
+	LastChecked    string  `json:"lastChecked,omitempty"`
+	Message        string  `json:"message,omitempty"`
 } //	@Name	ServiceStatus
+
+type DataStatisticsResponse struct {
+	TreeCount         int64 `json:"treeCount"`
+	SensorCount       int64 `json:"sensorCount"`
+	VehicleCount      int64 `json:"vehicleCount"`
+	TreeClusterCount  int64 `json:"treeClusterCount"`
+	WateringPlanCount int64 `json:"wateringPlanCount"`
+} //	@Name	DataStatistics
 
 type ServicesResponse struct {
 	Items []ServiceStatusResponse `json:"items"`

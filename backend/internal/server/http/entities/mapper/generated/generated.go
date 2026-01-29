@@ -78,6 +78,31 @@ func (c *InfoHTTPMapperImpl) FromResponse(source *entities1.AppInfoResponse) *en
 	}
 	return pEntitiesApp
 }
+func (c *InfoHTTPMapperImpl) ServerToResponse(source *entities.Server) *entities1.ServerResponse {
+	var pEntitiesServerResponse *entities1.ServerResponse
+	if source != nil {
+		var entitiesServerResponse entities1.ServerResponse
+		entitiesServerResponse.OS = (*source).OS
+		entitiesServerResponse.Arch = (*source).Arch
+		entitiesServerResponse.Hostname = (*source).Hostname
+		entitiesServerResponse.URL = utils.NetURLToString((*source).URL)
+		entitiesServerResponse.IP = utils.NetIPToString((*source).IP)
+		entitiesServerResponse.Port = (*source).Port
+		entitiesServerResponse.Interface = (*source).Interface
+		entitiesServerResponse.Uptime = utils.TimeDurationToString((*source).Uptime)
+		pEntitiesServerResponse = &entitiesServerResponse
+	}
+	return pEntitiesServerResponse
+}
+func (c *InfoHTTPMapperImpl) ServicesToResponse(source *entities.Services) *entities1.ServicesResponse {
+	var pEntitiesServicesResponse *entities1.ServicesResponse
+	if source != nil {
+		var entitiesServicesResponse entities1.ServicesResponse
+		entitiesServicesResponse.Items = mapper.MapServiceStatusItems((*source).Items)
+		pEntitiesServicesResponse = &entitiesServicesResponse
+	}
+	return pEntitiesServicesResponse
+}
 func (c *InfoHTTPMapperImpl) ToResponse(source *entities.App) *entities1.AppInfoResponse {
 	var pEntitiesAppInfoResponse *entities1.AppInfoResponse
 	if source != nil {
@@ -144,22 +169,9 @@ func (c *InfoHTTPMapperImpl) entitiesServerToEntitiesServerResponse(source entit
 	entitiesServerResponse.Uptime = utils.TimeDurationToString(source.Uptime)
 	return entitiesServerResponse
 }
-func (c *InfoHTTPMapperImpl) entitiesServiceStatusResponseToEntitiesServiceStatus(source entities1.ServiceStatusResponse) entities.ServiceStatus {
-	var entitiesServiceStatus entities.ServiceStatus
-	entitiesServiceStatus.Name = source.Name
-	entitiesServiceStatus.Enabled = source.Enabled
-	entitiesServiceStatus.Healthy = source.Healthy
-	entitiesServiceStatus.Message = source.Message
-	return entitiesServiceStatus
-}
 func (c *InfoHTTPMapperImpl) entitiesServicesResponseToEntitiesServices(source entities1.ServicesResponse) entities.Services {
 	var entitiesServices entities.Services
-	if source.Items != nil {
-		entitiesServices.Items = make([]entities.ServiceStatus, len(source.Items))
-		for i := 0; i < len(source.Items); i++ {
-			entitiesServices.Items[i] = c.entitiesServiceStatusResponseToEntitiesServiceStatus(source.Items[i])
-		}
-	}
+	entitiesServices.Items = mapper.MapServiceStatusItemsReverse(source.Items)
 	return entitiesServices
 }
 func (c *InfoHTTPMapperImpl) entitiesServicesToEntitiesServicesResponse(source entities.Services) entities1.ServicesResponse {

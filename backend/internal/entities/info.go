@@ -7,10 +7,20 @@ import (
 )
 
 type ServiceStatus struct {
-	Name    string
-	Enabled bool
-	Healthy bool
-	Message string
+	Name         string
+	Enabled      bool
+	Healthy      bool
+	ResponseTime time.Duration
+	LastChecked  time.Time
+	Message      string
+}
+
+type DataStatistics struct {
+	TreeCount         int64
+	SensorCount       int64
+	VehicleCount      int64
+	TreeClusterCount  int64
+	WateringPlanCount int64
 }
 
 type Services struct {

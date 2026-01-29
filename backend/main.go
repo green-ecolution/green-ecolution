@@ -30,6 +30,7 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/auth"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/local"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/local/info"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/routing"
 	_ "github.com/green-ecolution/green-ecolution/backend/internal/storage/routing/openrouteservice"
@@ -89,7 +90,7 @@ func main() {
 	startAppServices(ctx, cfg)
 }
 
-func postgresRepo(ctx context.Context, cfg *config.Config) (repo *storage.Repository, closeFn func()) {
+func postgresRepo(ctx context.Context, cfg *config.Config) (repo *storage.Repository, pool *pgxpool.Pool, closeFn func()) {
 	dbCfg := cfg.Server.Database
 	slog.Info("try to connect to PostgreSQL database")
 	slog.Debug("try to connect to PostgreSQL database with the current configurations", "host", dbCfg.Host, "port", dbCfg.Port, "db_name", dbCfg.Name, "user", dbCfg.Username, "password", "*******")
@@ -105,13 +106,13 @@ func postgresRepo(ctx context.Context, cfg *config.Config) (repo *storage.Reposi
 		return pgxgeos.Register(ctx, conn, geos.NewContext())
 	}
 
-	pool, err := pgxpool.NewWithConfig(ctx, pgxConfig)
+	pool, err = pgxpool.NewWithConfig(ctx, pgxConfig)
 	if err != nil {
 		slog.Error("error while connecting to PostgreSQL", "error", err)
 		panic(err)
 	}
 
-	return postgres.NewRepository(pool), pool.Close
+	return postgres.NewRepository(pool), pool, pool.Close
 }
 
 func startAppServices(ctx context.Context, cfg *config.Config) {
@@ -128,8 +129,8 @@ func startAppServices(ctx context.Context, cfg *config.Config) {
 }
 
 func initializeRepositories(ctx context.Context, cfg *config.Config) (repos *storage.Repository, closeFn func()) {
-	postgresRepo, closeFn := postgresRepo(ctx, cfg)
-	localRepo, err := local.NewRepository(cfg)
+	pgRepo, pool, closeFn := postgresRepo(ctx, cfg)
+	localRepo, infoRepo, err := local.NewRepository(cfg)
 	if err != nil {
 		panic(err)
 	}
@@ -164,17 +165,28 @@ func initializeRepositories(ctx context.Context, cfg *config.Config) (repos *sto
 		}
 	}
 
+	// Set InfoRepository dependencies for statistics and health checks
+	infoRepo.SetDependencies(&info.InfoRepositoryDeps{
+		TreeRepo:         pgRepo.Tree,
+		SensorRepo:       pgRepo.Sensor,
+		VehicleRepo:      pgRepo.Vehicle,
+		TreeClusterRepo:  pgRepo.TreeCluster,
+		WateringPlanRepo: pgRepo.WateringPlan,
+		DBPool:           pool,
+		S3Repo:           s3Repos.GpxBucket,
+	})
+
 	repositories := &storage.Repository{
 		Auth: keycloakRepo.Auth,
 		User: keycloakRepo.User,
 
 		Info:         localRepo.Info,
-		Sensor:       postgresRepo.Sensor,
-		Tree:         postgresRepo.Tree,
-		TreeCluster:  postgresRepo.TreeCluster,
-		Vehicle:      postgresRepo.Vehicle,
-		Region:       postgresRepo.Region,
-		WateringPlan: postgresRepo.WateringPlan,
+		Sensor:       pgRepo.Sensor,
+		Tree:         pgRepo.Tree,
+		TreeCluster:  pgRepo.TreeCluster,
+		Vehicle:      pgRepo.Vehicle,
+		Region:       pgRepo.Region,
+		WateringPlan: pgRepo.WateringPlan,
 		Routing:      routingRepo.Routing,
 		GpxBucket:    s3Repos.GpxBucket,
 	}

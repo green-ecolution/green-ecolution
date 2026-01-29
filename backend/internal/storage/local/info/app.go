@@ -23,11 +23,42 @@ var buildTime = ""
 var runTime = time.Now()
 
 type InfoRepository struct {
-	cfg           *config.Config
-	buildTime     time.Time
-	gitRepository *url.URL
-	mapInfo       entities.Map
-	versionRepo   versionpkg.VersionRepository
+	cfg              *config.Config
+	buildTime        time.Time
+	gitRepository    *url.URL
+	mapInfo          entities.Map
+	versionRepo      versionpkg.VersionRepository
+	treeRepo         TreeCountRepo
+	sensorRepo       SensorCountRepo
+	vehicleRepo      VehicleCountRepo
+	treeClusterRepo  TreeClusterCountRepo
+	wateringPlanRepo WateringPlanCountRepo
+	dbPool           DBPool
+	s3Repo           S3HealthChecker
+}
+
+type TreeCountRepo interface {
+	GetCount(ctx context.Context, query entities.TreeQuery) (int64, error)
+}
+
+type SensorCountRepo interface {
+	GetCount(ctx context.Context, query entities.Query) (int64, error)
+}
+
+type VehicleCountRepo interface {
+	GetCount(ctx context.Context, query entities.Query) (int64, error)
+}
+
+type TreeClusterCountRepo interface {
+	GetCount(ctx context.Context, query entities.TreeClusterQuery) (int64, error)
+}
+
+type WateringPlanCountRepo interface {
+	GetCount(ctx context.Context, query entities.Query) (int64, error)
+}
+
+type DBPool interface {
+	Ping(ctx context.Context) error
 }
 
 func init() {
@@ -36,7 +67,17 @@ func init() {
 	}
 }
 
-func NewInfoRepository(cfg *config.Config, versionRepo versionpkg.VersionRepository) (*InfoRepository, error) {
+type InfoRepositoryDeps struct {
+	TreeRepo         TreeCountRepo
+	SensorRepo       SensorCountRepo
+	VehicleRepo      VehicleCountRepo
+	TreeClusterRepo  TreeClusterCountRepo
+	WateringPlanRepo WateringPlanCountRepo
+	DBPool           DBPool
+	S3Repo           S3HealthChecker
+}
+
+func NewInfoRepository(cfg *config.Config, versionRepo versionpkg.VersionRepository, deps *InfoRepositoryDeps) (*InfoRepository, error) {
 	gitRepository, err := getGitRepository()
 	if err != nil {
 		return nil, err
@@ -52,13 +93,38 @@ func NewInfoRepository(cfg *config.Config, versionRepo versionpkg.VersionReposit
 		return nil, err
 	}
 
-	return &InfoRepository{
+	repo := &InfoRepository{
 		cfg:           cfg,
 		buildTime:     buildTime,
 		gitRepository: gitRepository,
 		mapInfo:       mapInfo,
 		versionRepo:   versionRepo,
-	}, nil
+	}
+
+	if deps != nil {
+		repo.treeRepo = deps.TreeRepo
+		repo.sensorRepo = deps.SensorRepo
+		repo.vehicleRepo = deps.VehicleRepo
+		repo.treeClusterRepo = deps.TreeClusterRepo
+		repo.wateringPlanRepo = deps.WateringPlanRepo
+		repo.dbPool = deps.DBPool
+		repo.s3Repo = deps.S3Repo
+	}
+
+	return repo, nil
+}
+
+func (r *InfoRepository) SetDependencies(deps *InfoRepositoryDeps) {
+	if deps == nil {
+		return
+	}
+	r.treeRepo = deps.TreeRepo
+	r.sensorRepo = deps.SensorRepo
+	r.vehicleRepo = deps.VehicleRepo
+	r.treeClusterRepo = deps.TreeClusterRepo
+	r.wateringPlanRepo = deps.WateringPlanRepo
+	r.dbPool = deps.DBPool
+	r.s3Repo = deps.S3Repo
 }
 
 func (r *InfoRepository) GetAppInfo(ctx context.Context) (*entities.App, error) {
@@ -106,60 +172,101 @@ func (r *InfoRepository) GetAppInfo(ctx context.Context) (*entities.App, error) 
 			Uptime:    r.getUptime(),
 		},
 		Map:      r.mapInfo,
-		Services: r.getServices(),
+		Services: r.getServices(ctx),
 	}, nil
 }
 
-func (r *InfoRepository) getServices() entities.Services {
-	vroomEnabled := r.cfg.Routing.Enable && r.cfg.Routing.Valhalla.Optimization.Vroom.Host != ""
-
-	services := []entities.ServiceStatus{
-		{
-			Name:    "database",
-			Enabled: true,
-			Healthy: true,
-			Message: "Verbunden",
-		},
-		{
-			Name:    "auth",
-			Enabled: r.cfg.IdentityAuth.Enable,
-			Healthy: r.cfg.IdentityAuth.Enable,
-			Message: getServiceMessage(r.cfg.IdentityAuth.Enable),
-		},
-		{
-			Name:    "mqtt",
-			Enabled: r.cfg.MQTT.Enable,
-			Healthy: r.cfg.MQTT.Enable,
-			Message: getServiceMessage(r.cfg.MQTT.Enable),
-		},
-		{
-			Name:    "s3",
-			Enabled: r.cfg.S3.Enable,
-			Healthy: r.cfg.S3.Enable,
-			Message: getServiceMessage(r.cfg.S3.Enable),
-		},
-		{
-			Name:    "routing",
-			Enabled: r.cfg.Routing.Enable,
-			Healthy: r.cfg.Routing.Enable,
-			Message: getServiceMessage(r.cfg.Routing.Enable),
-		},
-		{
-			Name:    "vroom",
-			Enabled: vroomEnabled,
-			Healthy: vroomEnabled,
-			Message: getServiceMessage(vroomEnabled),
-		},
-	}
-
-	return entities.Services{Items: services}
+func (r *InfoRepository) GetMapInfo(_ context.Context) (*entities.Map, error) {
+	return &r.mapInfo, nil
 }
 
-func getServiceMessage(enabled bool) string {
-	if enabled {
-		return "Aktiviert"
+func (r *InfoRepository) GetServerInfo(ctx context.Context) (*entities.Server, error) {
+	log := logger.GetLogger(ctx)
+
+	hostname, err := r.getHostname()
+	if err != nil {
+		log.Error("failed to get hostname from host", "error", err)
+		return nil, storage.ErrHostnameNotFound
 	}
-	return "Deaktiviert"
+
+	appURL, err := r.getAppURL()
+	if err != nil {
+		log.Error("failed to parse configured app url", "error", err, "app_url", r.cfg.Server.AppURL)
+		return nil, storage.ErrCannotGetAppURL
+	}
+
+	localIP, err := getIP(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	localInterface, err := getInterface(localIP)
+	if err != nil {
+		return nil, err
+	}
+
+	return &entities.Server{
+		OS:        r.getOS(),
+		Arch:      r.getArch(),
+		Hostname:  hostname,
+		URL:       appURL,
+		IP:        localIP,
+		Port:      r.getPort(),
+		Interface: localInterface,
+		Uptime:    r.getUptime(),
+	}, nil
+}
+
+func (r *InfoRepository) GetServices(ctx context.Context) (*entities.Services, error) {
+	services := r.getServices(ctx)
+	return &services, nil
+}
+
+func (r *InfoRepository) GetStatistics(ctx context.Context) (*entities.DataStatistics, error) {
+	stats := &entities.DataStatistics{}
+
+	if r.treeRepo != nil {
+		count, err := r.treeRepo.GetCount(ctx, entities.TreeQuery{})
+		if err == nil {
+			stats.TreeCount = count
+		}
+	}
+
+	if r.sensorRepo != nil {
+		count, err := r.sensorRepo.GetCount(ctx, entities.Query{})
+		if err == nil {
+			stats.SensorCount = count
+		}
+	}
+
+	if r.vehicleRepo != nil {
+		count, err := r.vehicleRepo.GetCount(ctx, entities.Query{})
+		if err == nil {
+			stats.VehicleCount = count
+		}
+	}
+
+	if r.treeClusterRepo != nil {
+		count, err := r.treeClusterRepo.GetCount(ctx, entities.TreeClusterQuery{})
+		if err == nil {
+			stats.TreeClusterCount = count
+		}
+	}
+
+	if r.wateringPlanRepo != nil {
+		count, err := r.wateringPlanRepo.GetCount(ctx, entities.Query{})
+		if err == nil {
+			stats.WateringPlanCount = count
+		}
+	}
+
+	return stats, nil
+}
+
+func (r *InfoRepository) getServices(ctx context.Context) entities.Services {
+	checker := newHealthChecker(r)
+	services := checker.checkAll(ctx)
+	return entities.Services{Items: services}
 }
 
 func (r *InfoRepository) getVersionInfo(ctx context.Context) entities.VersionInfo {

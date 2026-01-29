@@ -96,6 +96,7 @@ func setDefaults() {
 	// Auth
 	viper.SetDefault("auth.enable", true)
 	viper.SetDefault("auth.oidc_provider.base_url", "")
+	viper.SetDefault("auth.oidc_provider.health_url", "")
 	viper.SetDefault("auth.oidc_provider.domain_name", "")
 	viper.SetDefault("auth.oidc_provider.auth_url", "")
 	viper.SetDefault("auth.oidc_provider.token_url", "")
