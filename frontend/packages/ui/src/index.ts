@@ -204,6 +204,10 @@ export {
 // Separator
 export { Separator } from './components/ui/separator'
 
+// Slider
+export { Slider } from './components/ui/slider'
+export type { SliderProps } from './components/ui/slider'
+
 // StatusCard
 export { StatusCard, statusCardVariants } from './components/ui/status-card'
 export type { StatusCardProps, StatusVariant } from './components/ui/status-card'
