@@ -9,10 +9,6 @@ definitions:
         type: string
       map:
         $ref: '#/definitions/MapInfo'
-      server:
-        $ref: '#/definitions/ServerInfo'
-      services:
-        $ref: '#/definitions/ServicesInfo'
       version:
         type: string
       versionInfo:
@@ -22,8 +18,6 @@ definitions:
     - git
     - goVersion
     - map
-    - server
-    - services
     - version
     - versionInfo
     type: object
@@ -540,7 +534,7 @@ definitions:
       name:
         type: string
       responseTimeMs:
-        type: integer
+        type: number
     required:
     - enabled
     - healthy

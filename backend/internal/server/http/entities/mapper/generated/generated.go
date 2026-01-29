@@ -62,22 +62,6 @@ func (c *EvaluationHTTPMapperImpl) pEntitiesVehicleEvaluationToPEntitiesVehicleE
 
 type InfoHTTPMapperImpl struct{}
 
-func (c *InfoHTTPMapperImpl) FromResponse(source *entities1.AppInfoResponse) *entities.App {
-	var pEntitiesApp *entities.App
-	if source != nil {
-		var entitiesApp entities.App
-		entitiesApp.Version = (*source).Version
-		entitiesApp.VersionInfo = c.entitiesVersionInfoResponseToEntitiesVersionInfo((*source).VersionInfo)
-		entitiesApp.GoVersion = (*source).GoVersion
-		entitiesApp.BuildTime = utils.StringToTime((*source).BuildTime)
-		entitiesApp.Git = c.entitiesGitResponseToEntitiesGit((*source).Git)
-		entitiesApp.Server = c.entitiesServerResponseToEntitiesServer((*source).Server)
-		entitiesApp.Map = c.entitiesMapResponseToEntitiesMap((*source).Map)
-		entitiesApp.Services = c.entitiesServicesResponseToEntitiesServices((*source).Services)
-		pEntitiesApp = &entitiesApp
-	}
-	return pEntitiesApp
-}
 func (c *InfoHTTPMapperImpl) ServerToResponse(source *entities.Server) *entities1.ServerResponse {
 	var pEntitiesServerResponse *entities1.ServerResponse
 	if source != nil {
@@ -112,19 +96,10 @@ func (c *InfoHTTPMapperImpl) ToResponse(source *entities.App) *entities1.AppInfo
 		entitiesAppInfoResponse.BuildTime = utils.TimeToString((*source).BuildTime)
 		entitiesAppInfoResponse.GoVersion = (*source).GoVersion
 		entitiesAppInfoResponse.Git = c.entitiesGitToEntitiesGitResponse((*source).Git)
-		entitiesAppInfoResponse.Server = c.entitiesServerToEntitiesServerResponse((*source).Server)
 		entitiesAppInfoResponse.Map = c.entitiesMapToEntitiesMapResponse((*source).Map)
-		entitiesAppInfoResponse.Services = c.entitiesServicesToEntitiesServicesResponse((*source).Services)
 		pEntitiesAppInfoResponse = &entitiesAppInfoResponse
 	}
 	return pEntitiesAppInfoResponse
-}
-func (c *InfoHTTPMapperImpl) entitiesGitResponseToEntitiesGit(source entities1.GitResponse) entities.Git {
-	var entitiesGit entities.Git
-	entitiesGit.Branch = source.Branch
-	entitiesGit.Commit = source.Commit
-	entitiesGit.Repository = utils.StringToURL(source.Repository)
-	return entitiesGit
 }
 func (c *InfoHTTPMapperImpl) entitiesGitToEntitiesGitResponse(source entities.Git) entities1.GitResponse {
 	var entitiesGitResponse entities1.GitResponse
@@ -133,61 +108,11 @@ func (c *InfoHTTPMapperImpl) entitiesGitToEntitiesGitResponse(source entities.Gi
 	entitiesGitResponse.Repository = utils.NetURLToString(source.Repository)
 	return entitiesGitResponse
 }
-func (c *InfoHTTPMapperImpl) entitiesMapResponseToEntitiesMap(source entities1.MapResponse) entities.Map {
-	var entitiesMap entities.Map
-	entitiesMap.Center = mapper.MapBbox(source.Center)
-	entitiesMap.BBox = mapper.MapBbox(source.BBox)
-	return entitiesMap
-}
 func (c *InfoHTTPMapperImpl) entitiesMapToEntitiesMapResponse(source entities.Map) entities1.MapResponse {
 	var entitiesMapResponse entities1.MapResponse
 	entitiesMapResponse.Center = mapper.MapBbox(source.Center)
 	entitiesMapResponse.BBox = mapper.MapBbox(source.BBox)
 	return entitiesMapResponse
-}
-func (c *InfoHTTPMapperImpl) entitiesServerResponseToEntitiesServer(source entities1.ServerResponse) entities.Server {
-	var entitiesServer entities.Server
-	entitiesServer.OS = source.OS
-	entitiesServer.Arch = source.Arch
-	entitiesServer.Hostname = source.Hostname
-	entitiesServer.URL = utils.StringToURL(source.URL)
-	entitiesServer.IP = utils.StringToNetIP(source.IP)
-	entitiesServer.Port = source.Port
-	entitiesServer.Interface = source.Interface
-	entitiesServer.Uptime = utils.StringToDuration(source.Uptime)
-	return entitiesServer
-}
-func (c *InfoHTTPMapperImpl) entitiesServerToEntitiesServerResponse(source entities.Server) entities1.ServerResponse {
-	var entitiesServerResponse entities1.ServerResponse
-	entitiesServerResponse.OS = source.OS
-	entitiesServerResponse.Arch = source.Arch
-	entitiesServerResponse.Hostname = source.Hostname
-	entitiesServerResponse.URL = utils.NetURLToString(source.URL)
-	entitiesServerResponse.IP = utils.NetIPToString(source.IP)
-	entitiesServerResponse.Port = source.Port
-	entitiesServerResponse.Interface = source.Interface
-	entitiesServerResponse.Uptime = utils.TimeDurationToString(source.Uptime)
-	return entitiesServerResponse
-}
-func (c *InfoHTTPMapperImpl) entitiesServicesResponseToEntitiesServices(source entities1.ServicesResponse) entities.Services {
-	var entitiesServices entities.Services
-	entitiesServices.Items = mapper.MapServiceStatusItemsReverse(source.Items)
-	return entitiesServices
-}
-func (c *InfoHTTPMapperImpl) entitiesServicesToEntitiesServicesResponse(source entities.Services) entities1.ServicesResponse {
-	var entitiesServicesResponse entities1.ServicesResponse
-	entitiesServicesResponse.Items = mapper.MapServiceStatusItems(source.Items)
-	return entitiesServicesResponse
-}
-func (c *InfoHTTPMapperImpl) entitiesVersionInfoResponseToEntitiesVersionInfo(source entities1.VersionInfoResponse) entities.VersionInfo {
-	var entitiesVersionInfo entities.VersionInfo
-	entitiesVersionInfo.Current = source.Current
-	entitiesVersionInfo.Latest = source.Latest
-	entitiesVersionInfo.UpdateAvailable = source.UpdateAvailable
-	entitiesVersionInfo.IsDevelopment = source.IsDevelopment
-	entitiesVersionInfo.IsStage = source.IsStage
-	entitiesVersionInfo.ReleaseURL = source.ReleaseURL
-	return entitiesVersionInfo
 }
 func (c *InfoHTTPMapperImpl) entitiesVersionInfoToEntitiesVersionInfoResponse(source entities.VersionInfo) entities1.VersionInfoResponse {
 	var entitiesVersionInfoResponse entities1.VersionInfoResponse
