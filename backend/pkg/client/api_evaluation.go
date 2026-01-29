@@ -48,7 +48,7 @@ func (a *EvaluationAPIService) GetEvaluation(ctx context.Context) ApiGetEvaluati
 
 // Execute executes the request
 //
-//	@return	Evaluation
+//	@return Evaluation
 func (a *EvaluationAPIService) GetEvaluationExecute(r ApiGetEvaluationRequest) (*Evaluation, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet

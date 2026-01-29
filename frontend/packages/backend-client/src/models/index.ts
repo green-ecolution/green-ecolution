@@ -2,6 +2,7 @@
 /* eslint-disable */
 export * from './AppInfo';
 export * from './ClientToken';
+export * from './DataStatistics';
 export * from './DrivingLicense';
 export * from './Evaluation';
 export * from './EvaluationValue';

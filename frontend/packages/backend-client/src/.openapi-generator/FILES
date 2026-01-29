@@ -14,6 +14,7 @@ apis/index.ts
 index.ts
 models/AppInfo.ts
 models/ClientToken.ts
+models/DataStatistics.ts
 models/DrivingLicense.ts
 models/Evaluation.ts
 models/EvaluationValue.ts
