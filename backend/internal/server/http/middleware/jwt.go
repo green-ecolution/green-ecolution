@@ -18,6 +18,13 @@ import (
 // jwksProvider holds the JWKS provider instance for cleanup on shutdown
 var jwksProvider *jwks.Provider
 
+func NewAllowUnauthorizedMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		c.Locals(enums.ContextKeyAllowUnauthorized, true)
+		return c.Next()
+	}
+}
+
 func NewJWTMiddleware(cfg *config.IdentityAuthConfig, svc service.AuthService) (fiber.Handler, error) {
 	if !cfg.Enable {
 		return func(c *fiber.Ctx) error {
@@ -42,7 +49,11 @@ func NewJWTMiddleware(cfg *config.IdentityAuthConfig, svc service.AuthService) (
 		SuccessHandler: func(c *fiber.Ctx) error {
 			return successHandler(c, svc)
 		},
-		ErrorHandler: func(_ *fiber.Ctx, err error) error {
+
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			if c.Locals(enums.ContextKeyAllowUnauthorized) != nil {
+				return c.Next()
+			}
 			err = service.NewError(service.Unauthorized, err.Error())
 			return errorhandler.HandleError(err)
 		},
@@ -63,6 +74,7 @@ func successHandler(c *fiber.Ctx, svc service.AuthService) error {
 	ctx := c.Context()
 	contextWithClaims := context.WithValue(ctx, enums.ContextKeyClaims, claims)
 	c.SetUserContext(contextWithClaims)
+	c.Locals(enums.ContextKeyClaims, claims)
 
 	rptResult, err := svc.RetrospectToken(ctx, jwtToken.Raw)
 	if err != nil {

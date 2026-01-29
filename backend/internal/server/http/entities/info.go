@@ -5,7 +5,7 @@ type AppInfoResponse struct {
 	BuildTime string         `json:"buildTime"`
 	GoVersion string         `json:"goVersion"`
 	Git       GitResponse    `json:"git"`
-	Server    ServerResponse `json:"server"`
+	Server    ServerResponse `json:"server,omitzero"`
 	Map       MapResponse    `json:"map"`
 } //	@Name	AppInfo
 

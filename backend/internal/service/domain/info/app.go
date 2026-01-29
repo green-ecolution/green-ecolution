@@ -8,6 +8,7 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
+	"github.com/green-ecolution/green-ecolution/backend/internal/utils/enums"
 )
 
 type InfoService struct {
@@ -22,6 +23,9 @@ func NewInfoService(infoRepository storage.InfoRepository) *InfoService {
 
 func (s *InfoService) GetAppInfo(ctx context.Context) (*domain.App, error) {
 	log := logger.GetLogger(ctx)
+
+	isAuth := ctx.Value(enums.ContextKeyClaims) != nil
+
 	appInfo, err := s.infoRepository.GetAppInfo(ctx)
 	if err != nil {
 		if errors.Is(err, storage.ErrIPNotFound) {
@@ -38,6 +42,10 @@ func (s *InfoService) GetAppInfo(ctx context.Context) (*domain.App, error) {
 		}
 
 		return nil, service.MapError(ctx, err, service.ErrorLogAll)
+	}
+
+	if !isAuth {
+		appInfo.Server = domain.Server{}
 	}
 
 	return appInfo, nil
