@@ -2,12 +2,11 @@ package ws
 
 import (
 	"encoding/json"
-	"os"
+	"log/slog"
 	"runtime"
 	"time"
 
 	"github.com/gofiber/contrib/websocket"
-	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
 // RuntimeStats represents Go runtime metrics
@@ -55,7 +54,10 @@ func collectRuntimeStats() RuntimeStats {
 
 // StatsHandler handles WebSocket connections for runtime stats
 func StatsHandler(c *websocket.Conn) {
-	log := logger.CreateLogger(os.Stdout, logger.Console, logger.Debug)()
+	log, ok := c.Locals("logger").(*slog.Logger)
+	if !ok {
+		log = slog.Default()
+	}
 	log.Debug("WebSocket connection established for runtime stats")
 
 	ticker := time.NewTicker(2 * time.Second)

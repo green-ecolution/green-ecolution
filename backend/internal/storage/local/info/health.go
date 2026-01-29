@@ -23,9 +23,10 @@ type S3HealthChecker interface {
 }
 
 type healthChecker struct {
-	cfg    healthConfig
-	dbPool DBPool
-	s3Repo S3HealthChecker
+	cfg        healthConfig
+	dbPool     DBPool
+	s3Repo     S3HealthChecker
+	httpClient *http.Client
 }
 
 type healthConfig struct {
@@ -82,8 +83,9 @@ func newHealthChecker(r *InfoRepository) *healthChecker {
 			vroomEnabled:   vroomEnabled,
 			vroomURL:       vroomURL,
 		},
-		dbPool: r.dbPool,
-		s3Repo: r.s3Repo,
+		dbPool:     r.dbPool,
+		s3Repo:     r.s3Repo,
+		httpClient: &http.Client{Timeout: 5 * time.Second},
 	}
 }
 
@@ -286,10 +288,6 @@ func (h *healthChecker) httpHealthCheck(ctx context.Context, url string) (bool, 
 		return false, 0
 	}
 
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
-
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
 		slog.Debug("health check: failed to create request", "url", url, "error", err)
@@ -297,7 +295,7 @@ func (h *healthChecker) httpHealthCheck(ctx context.Context, url string) (bool, 
 	}
 
 	start := time.Now()
-	resp, err := client.Do(req)
+	resp, err := h.httpClient.Do(req)
 	responseTime := time.Since(start)
 
 	if err != nil {

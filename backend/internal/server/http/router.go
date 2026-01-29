@@ -98,7 +98,6 @@ func (s *Server) v1(router fiber.Router, authMiddlewares ...fiber.Handler) {
 		plugin.RegisterRoutes(router, s.services.PluginService, authMiddlewares...)
 	})
 
-	// WebSocket routes (public - only non-sensitive runtime metrics)
 	app.Route("/ws", func(router fiber.Router) {
 		ws.RegisterRoutes(router)
 	})

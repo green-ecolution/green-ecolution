@@ -50,6 +50,8 @@ function formatBytes(bytes: number): string {
   return `${mb.toFixed(1)} MB`
 }
 
+const MAX_RECONNECT_ATTEMPTS = 5
+
 function formatTime(timestamp: number): string {
   const date = new Date(timestamp)
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`
@@ -66,10 +68,15 @@ export function RuntimeStats() {
   const mountedRef = useRef(true)
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const reconnectAttemptsRef = useRef(0)
-  // eslint-disable-next-line @typescript-eslint/no-empty-function -- initialized in useEffect
-  const connectRef = useRef<() => void>(() => {})
+  const connectRef = useRef<(() => void) | null>(null)
 
   const scheduleReconnect = useCallback(() => {
+    if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
+      setConnectionStatus('disconnected')
+      setError('Maximale Verbindungsversuche erreicht')
+      return
+    }
+
     // Auto-reconnect with exponential backoff (max 30s)
     const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000)
     reconnectAttemptsRef.current++
@@ -78,7 +85,7 @@ export function RuntimeStats() {
     setError(`Verbindung unterbrochen, reconnect in ${delay / 1000}s...`)
 
     reconnectTimeoutRef.current = setTimeout(() => {
-      if (mountedRef.current) {
+      if (mountedRef.current && connectRef.current) {
         connectRef.current()
       }
     }, delay)
@@ -120,6 +127,10 @@ export function RuntimeStats() {
       if (!mountedRef.current) return
       try {
         const data = JSON.parse(event.data) as RuntimeStats
+        if (typeof data.alloc !== 'number') {
+          console.error('Invalid WebSocket data format')
+          return
+        }
         setStats(data)
 
         setChartData((prev) => {
@@ -196,12 +207,17 @@ export function RuntimeStats() {
     )
   }
 
+  const handleManualReconnect = () => {
+    reconnectAttemptsRef.current = 0
+    connect()
+  }
+
   if (connectionStatus === 'disconnected') {
     return (
       <div className="text-dark-600">
         <p>
           WebSocket-Verbindung getrennt.{' '}
-          <button onClick={connect} className="text-green-dark hover:underline">
+          <button onClick={handleManualReconnect} className="text-green-dark hover:underline">
             Erneut verbinden
           </button>
         </p>
