@@ -2,7 +2,7 @@ import { MapContainer, TileLayer } from 'react-leaflet'
 import React, { useMemo } from 'react'
 import useStore from '@/store/store'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { infoQuery } from '@/api/queries'
+import { mapInfoQuery } from '@/api/queries'
 import L from 'leaflet'
 
 export interface MapProps extends React.PropsWithChildren {
@@ -11,7 +11,7 @@ export interface MapProps extends React.PropsWithChildren {
 }
 
 const Map = ({ width = '100%', height = 'calc(100dvh - 4.563rem)', children }: MapProps) => {
-  const { data: appInfo } = useSuspenseQuery(infoQuery())
+  const { data: mapInfo } = useSuspenseQuery(mapInfoQuery())
 
   const center = useStore((state) => state.mapCenter)
   const zoom = useStore((state) => state.mapZoom)
@@ -32,8 +32,8 @@ const Map = ({ width = '100%', height = 'calc(100dvh - 4.563rem)', children }: M
       maxZoom={maxZoom}
       minZoom={minZoom}
       maxBounds={L.latLngBounds(
-        [appInfo?.map?.bbox[0], appInfo.map.bbox[1]],
-        [appInfo?.map?.bbox[2], appInfo.map.bbox[3]],
+        [mapInfo.bbox[0], mapInfo.bbox[1]],
+        [mapInfo.bbox[2], mapInfo.bbox[3]],
       )}
     >
       <TileLayer
