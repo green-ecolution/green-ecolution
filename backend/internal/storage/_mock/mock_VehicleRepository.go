@@ -677,6 +677,63 @@ func (_c *MockVehicleRepository_GetByPlate_Call) RunAndReturn(run func(context.C
 	return _c
 }
 
+// GetCount provides a mock function with given fields: ctx, query
+func (_m *MockVehicleRepository) GetCount(ctx context.Context, query entities.Query) (int64, error) {
+	ret := _m.Called(ctx, query)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCount")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, entities.Query) (int64, error)); ok {
+		return rf(ctx, query)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, entities.Query) int64); ok {
+		r0 = rf(ctx, query)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, entities.Query) error); ok {
+		r1 = rf(ctx, query)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockVehicleRepository_GetCount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCount'
+type MockVehicleRepository_GetCount_Call struct {
+	*mock.Call
+}
+
+// GetCount is a helper method to define mock.On call
+//   - ctx context.Context
+//   - query entities.Query
+func (_e *MockVehicleRepository_Expecter) GetCount(ctx interface{}, query interface{}) *MockVehicleRepository_GetCount_Call {
+	return &MockVehicleRepository_GetCount_Call{Call: _e.mock.On("GetCount", ctx, query)}
+}
+
+func (_c *MockVehicleRepository_GetCount_Call) Run(run func(ctx context.Context, query entities.Query)) *MockVehicleRepository_GetCount_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(entities.Query))
+	})
+	return _c
+}
+
+func (_c *MockVehicleRepository_GetCount_Call) Return(_a0 int64, _a1 error) *MockVehicleRepository_GetCount_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockVehicleRepository_GetCount_Call) RunAndReturn(run func(context.Context, entities.Query) (int64, error)) *MockVehicleRepository_GetCount_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Update provides a mock function with given fields: ctx, id, fn
 func (_m *MockVehicleRepository) Update(ctx context.Context, id int32, fn func(*entities.Vehicle, storage.VehicleRepository) (bool, error)) error {
 	ret := _m.Called(ctx, id, fn)

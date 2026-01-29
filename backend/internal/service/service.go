@@ -110,6 +110,10 @@ type InfoService interface {
 	Service
 	GetAppInfo(context.Context) (*domain.App, error)
 	GetAppInfoResponse(context.Context) (*domain.App, error)
+	GetMapInfo(context.Context) (*domain.Map, error)
+	GetServerInfo(context.Context) (*domain.Server, error)
+	GetServices(context.Context) (*domain.Services, error)
+	GetStatistics(context.Context) (*domain.DataStatistics, error)
 }
 
 type TreeService interface {
