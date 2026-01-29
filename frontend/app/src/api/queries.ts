@@ -31,6 +31,10 @@ import {
   GetAllVehiclesRequest,
   GetAllWateringPlansRequest,
   GetAllUsersRequest,
+  MapInfo,
+  ServerInfo,
+  ServicesInfo,
+  DataStatistics,
 } from './backendApi'
 
 /**
@@ -131,6 +135,30 @@ export const infoQuery = () =>
   queryOptions<AppInfo>({
     queryKey: ['info'],
     queryFn: () => infoApi.getAppInfo(),
+  })
+
+export const mapInfoQuery = () =>
+  queryOptions<MapInfo>({
+    queryKey: ['info', 'map'],
+    queryFn: () => infoApi.getMapInfo(),
+  })
+
+export const serverInfoQuery = () =>
+  queryOptions<ServerInfo>({
+    queryKey: ['info', 'server'],
+    queryFn: () => infoApi.getServerInfo(),
+  })
+
+export const servicesInfoQuery = () =>
+  queryOptions<ServicesInfo>({
+    queryKey: ['info', 'services'],
+    queryFn: () => infoApi.getServicesStatus(),
+  })
+
+export const statisticsQuery = () =>
+  queryOptions<DataStatistics>({
+    queryKey: ['info', 'statistics'],
+    queryFn: () => infoApi.getDataStatistics(),
   })
 
 export const evaluationQuery = () =>
