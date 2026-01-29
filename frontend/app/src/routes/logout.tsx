@@ -16,13 +16,13 @@ export const Route = createFileRoute('/logout')({
     }
 
     await userApi
-      .v1UserLogoutPost({
+      .logout({
         body: {
           refreshToken: state.token?.refreshToken ?? '',
         },
       })
       .then(logout)
-      .catch((err) => {
+      .catch((err: unknown) => {
         if (err instanceof Error) {
           console.error(err.message)
           throw new Error(err.message)

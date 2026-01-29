@@ -105,3 +105,6 @@ SELECT * FROM trees
 WHERE ST_Distance(geometry::geography, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) <= 3
 ORDER BY ST_Distance(geometry::geography, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) ASC
     LIMIT 1;
+
+-- name: GetDistinctPlantingYears :many
+SELECT DISTINCT planting_year FROM trees WHERE planting_year IS NOT NULL ORDER BY planting_year ASC;

@@ -78,3 +78,7 @@ func (r *TreeRepository) UnlinkSensorID(ctx context.Context, sensorID string) er
 	}
 	return r.store.UnlinkSensorIDFromTrees(ctx, &sensorID)
 }
+
+func (r *TreeRepository) GetDistinctPlantingYears(ctx context.Context) ([]int32, error) {
+	return r.store.GetDistinctPlantingYears(ctx)
+}

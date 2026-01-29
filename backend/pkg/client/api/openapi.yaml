@@ -1275,6 +1275,43 @@ paths:
       tags:
       - Tree
       x-codegen-request-body-name: body
+  /v1/tree/planting-years:
+    get:
+      description: Retrieves a list of all distinct planting years from trees in the
+        database.
+      operationId: get-planting-years
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  type: integer
+                type: array
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Internal Server Error
+      security:
+      - Keycloak: []
+      summary: Get distinct planting years
+      tags:
+      - Tree
   /v1/tree/sensor/{sensor_id}:
     get:
       description: Retrieves the tree associated with a specific sensor. Useful for

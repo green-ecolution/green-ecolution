@@ -20,7 +20,7 @@ const wateringPlanConfig: EntityFormConfig<
   schema: wateringPlanSchema,
 
   createFn: (body) => wateringPlanApi.createWateringPlan({ body }),
-  updateFn: (id, body) => wateringPlanApi.updateWateringPlan({ id, body }),
+  updateFn: (id, body) => wateringPlanApi.updateWateringPlan({ id: Number(id), body }),
 
   invalidateQueries: (data, queryClient: QueryClient) => {
     queryClient

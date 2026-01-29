@@ -13,6 +13,7 @@ interface FilterContextType {
   handleRegionChange: (event: React.ChangeEvent<HTMLInputElement>) => void
   handleClusterChange: (event: React.ChangeEvent<HTMLInputElement>) => void
   handlePlantingYearChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+  handlePlantingYearRangeChange: (range: number[]) => void
   resetFilters: () => void
   applyOldStateToTags: (oldValues: Filters) => void
 }
@@ -70,6 +71,13 @@ const FilterProvider: React.FC<FilterProviderProps> = ({
     )
   }
 
+  const handlePlantingYearRangeChange = (range: number[]) => {
+    if (range.length !== 2) return
+    const [min, max] = range
+    const years = Array.from({ length: max - min + 1 }, (_, i) => min + i)
+    setPlantingYears(years)
+  }
+
   const applyOldStateToTags = (oldValues: Filters) => {
     setStatusTags(oldValues.statusTags)
     setRegionTags(oldValues.regionTags)
@@ -91,6 +99,7 @@ const FilterProvider: React.FC<FilterProviderProps> = ({
       handleRegionChange,
       handleClusterChange,
       handlePlantingYearChange,
+      handlePlantingYearRangeChange,
       resetFilters,
       applyOldStateToTags,
     }),

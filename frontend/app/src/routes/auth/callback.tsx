@@ -15,13 +15,13 @@ export const Route = createFileRoute('/auth/callback')({
   loaderDeps: ({ search: { code } }) => ({ code }),
   beforeLoad: async ({ search: { code, redirect } }) => {
     const token = await userApi
-      .v1UserLoginTokenPost({
+      .requestToken({
         redirectUrl: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}`,
         body: {
           code,
         },
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         if (err instanceof Error) {
           console.error(err.message)
           throw new Error(err.message)

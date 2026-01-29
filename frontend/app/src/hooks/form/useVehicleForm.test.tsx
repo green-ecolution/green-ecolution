@@ -159,7 +159,7 @@ describe('useVehicleForm', () => {
     await waitFor(() => {
       expect(updateMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          id: '5',
+          id: 5,
           body: expect.objectContaining({ numberPlate: 'HH-XY-5678' }) as unknown,
         }),
       )

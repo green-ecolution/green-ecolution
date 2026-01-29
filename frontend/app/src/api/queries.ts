@@ -108,7 +108,7 @@ export const treeQuery = (params?: GetAllTreesRequest) =>
 export const treeIdQuery = (id: string) =>
   queryOptions<Tree>({
     queryKey: ['tree', id],
-    queryFn: () => treeApi.getTrees({ treeId: parseNumericId(id) }),
+    queryFn: () => treeApi.getTreeById({ treeId: parseNumericId(id) }),
     enabled: isValidNumericId(id),
   })
 
@@ -124,7 +124,7 @@ export const treeSensorIdQuery = (id: string) =>
 export const regionsQuery = () =>
   queryOptions({
     queryKey: ['regions'],
-    queryFn: () => regionApi.v1RegionGet(),
+    queryFn: () => regionApi.getAllRegions(),
   })
 
 export const infoQuery = () =>
@@ -190,11 +190,17 @@ export const routePreviewQuery = (
   queryOptions<GeoJson>({
     queryKey: ['route', 'preview', `transporter:${transporterId}`, ...clusterIds],
     queryFn: () =>
-      wateringPlanApi.v1WateringPlanRoutePreviewPost({
+      wateringPlanApi.createPreviewRoute({
         body: {
           transporterId: Number(transporterId),
           trailerId: Number(trailerId),
           clusterIds,
         },
       }),
+  })
+
+export const plantingYearsQuery = () =>
+  queryOptions<number[]>({
+    queryKey: ['planting-years'],
+    queryFn: () => treeApi.getPlantingYears(),
   })

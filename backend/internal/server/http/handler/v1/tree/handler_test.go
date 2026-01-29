@@ -484,3 +484,70 @@ func TestDeleteTree(t *testing.T) {
 		mockTreeService.AssertExpectations(t)
 	})
 }
+
+func TestGetPlantingYears(t *testing.T) {
+	t.Run("should return planting years successfully", func(t *testing.T) {
+		app := fiber.New()
+		mockTreeService := serviceMock.NewMockTreeService(t)
+		app.Get("/v1/tree/planting-years", tree.GetPlantingYears(mockTreeService))
+
+		expectedYears := []int32{2022, 2023, 2024, 2025}
+		mockTreeService.EXPECT().GetPlantingYears(mock.Anything).Return(expectedYears, nil)
+
+		// when
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/tree/planting-years", nil)
+		resp, err := app.Test(req, -1)
+		defer resp.Body.Close()
+
+		// then
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var response []int32
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedYears, response)
+		mockTreeService.AssertExpectations(t)
+	})
+
+	t.Run("should return empty list when no planting years exist", func(t *testing.T) {
+		app := fiber.New()
+		mockTreeService := serviceMock.NewMockTreeService(t)
+		app.Get("/v1/tree/planting-years", tree.GetPlantingYears(mockTreeService))
+
+		mockTreeService.EXPECT().GetPlantingYears(mock.Anything).Return([]int32{}, nil)
+
+		// when
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/tree/planting-years", nil)
+		resp, err := app.Test(req, -1)
+		defer resp.Body.Close()
+
+		// then
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var response []int32
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		assert.NoError(t, err)
+		assert.Empty(t, response)
+		mockTreeService.AssertExpectations(t)
+	})
+
+	t.Run("should return 500 when internal server error occurs", func(t *testing.T) {
+		app := fiber.New()
+		mockTreeService := serviceMock.NewMockTreeService(t)
+		app.Get("/v1/tree/planting-years", tree.GetPlantingYears(mockTreeService))
+
+		mockTreeService.EXPECT().GetPlantingYears(mock.Anything).Return(nil, fiber.NewError(fiber.StatusInternalServerError, "internal server error"))
+
+		// when
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/tree/planting-years", nil)
+		resp, err := app.Test(req, -1)
+		defer resp.Body.Close()
+
+		// then
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		mockTreeService.AssertExpectations(t)
+	})
+}

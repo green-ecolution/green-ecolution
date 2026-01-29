@@ -210,6 +210,30 @@ func (q *Queries) GetAllTreesCount(ctx context.Context, arg *GetAllTreesCountPar
 	return count, err
 }
 
+const getDistinctPlantingYears = `-- name: GetDistinctPlantingYears :many
+SELECT DISTINCT planting_year FROM trees WHERE planting_year IS NOT NULL ORDER BY planting_year ASC
+`
+
+func (q *Queries) GetDistinctPlantingYears(ctx context.Context) ([]int32, error) {
+	rows, err := q.db.Query(ctx, getDistinctPlantingYears)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []int32{}
+	for rows.Next() {
+		var planting_year int32
+		if err := rows.Scan(&planting_year); err != nil {
+			return nil, err
+		}
+		items = append(items, planting_year)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getSensorByTreeID = `-- name: GetSensorByTreeID :one
 SELECT sensors.id, sensors.created_at, sensors.updated_at, sensors.status, sensors.latitude, sensors.longitude, sensors.geometry, sensors.provider, sensors.additional_informations FROM sensors JOIN trees ON sensors.id = trees.sensor_id WHERE trees.id = $1
 `

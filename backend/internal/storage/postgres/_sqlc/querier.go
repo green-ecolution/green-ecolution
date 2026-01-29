@@ -55,6 +55,7 @@ type Querier interface {
 	GetAllVehiclesWithWateringPlanCount(ctx context.Context) ([]*GetAllVehiclesWithWateringPlanCountRow, error)
 	GetAllWateringPlans(ctx context.Context, arg *GetAllWateringPlansParams) ([]*WateringPlan, error)
 	GetAllWateringPlansCount(ctx context.Context, provider interface{}) (int64, error)
+	GetDistinctPlantingYears(ctx context.Context) ([]int32, error)
 	GetLatestSensorDataByID(ctx context.Context, sensorID string) (*SensorDatum, error)
 	GetLinkedTreesByTreeClusterID(ctx context.Context, id int32) ([]*Tree, error)
 	GetRegionById(ctx context.Context, id int32) (*Region, error)

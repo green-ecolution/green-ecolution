@@ -312,6 +312,64 @@ func (_c *MockTreeService_GetBySensorID_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
+// GetPlantingYears provides a mock function with given fields: ctx
+func (_m *MockTreeService) GetPlantingYears(ctx context.Context) ([]int32, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPlantingYears")
+	}
+
+	var r0 []int32
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]int32, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []int32); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]int32)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockTreeService_GetPlantingYears_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPlantingYears'
+type MockTreeService_GetPlantingYears_Call struct {
+	*mock.Call
+}
+
+// GetPlantingYears is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockTreeService_Expecter) GetPlantingYears(ctx interface{}) *MockTreeService_GetPlantingYears_Call {
+	return &MockTreeService_GetPlantingYears_Call{Call: _e.mock.On("GetPlantingYears", ctx)}
+}
+
+func (_c *MockTreeService_GetPlantingYears_Call) Run(run func(ctx context.Context)) *MockTreeService_GetPlantingYears_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockTreeService_GetPlantingYears_Call) Return(_a0 []int32, _a1 error) *MockTreeService_GetPlantingYears_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockTreeService_GetPlantingYears_Call) RunAndReturn(run func(context.Context) ([]int32, error)) *MockTreeService_GetPlantingYears_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // HandleNewSensorData provides a mock function with given fields: _a0, _a1
 func (_m *MockTreeService) HandleNewSensorData(_a0 context.Context, _a1 *entities.EventNewSensorData) error {
 	ret := _m.Called(_a0, _a1)

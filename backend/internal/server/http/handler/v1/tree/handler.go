@@ -228,6 +228,28 @@ func DeleteTree(svc service.TreeService) fiber.Handler {
 	}
 }
 
+// @Summary		Get distinct planting years
+// @Description	Retrieves a list of all distinct planting years from trees in the database.
+// @Id				get-planting-years
+// @Tags			Tree
+// @Produce		json
+// @Success		200	{array}		int
+// @Failure		401	{object}	HTTPError
+// @Failure		403	{object}	HTTPError
+// @Failure		500	{object}	HTTPError
+// @Router			/v1/tree/planting-years [get]
+// @Security		Keycloak
+func GetPlantingYears(svc service.TreeService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		ctx := c.Context()
+		years, err := svc.GetPlantingYears(ctx)
+		if err != nil {
+			return errorhandler.HandleError(err)
+		}
+		return c.JSON(years)
+	}
+}
+
 func mapTreeToDto(t *domain.Tree) *entities.TreeResponse {
 	dto := treeMapper.FromResponse(t)
 	dto.Sensor = sensorMapper.FromResponse(t.Sensor)

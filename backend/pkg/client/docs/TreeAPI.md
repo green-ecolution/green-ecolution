@@ -7,6 +7,7 @@ Method | HTTP request | Description
 [**CreateTree**](TreeAPI.md#CreateTree) | **Post** /v1/tree | Create tree
 [**DeleteTree**](TreeAPI.md#DeleteTree) | **Delete** /v1/tree/{tree_id} | Delete tree
 [**GetAllTrees**](TreeAPI.md#GetAllTrees) | **Get** /v1/tree | Get all trees
+[**GetPlantingYears**](TreeAPI.md#GetPlantingYears) | **Get** /v1/tree/planting-years | Get distinct planting years
 [**GetTreeById**](TreeAPI.md#GetTreeById) | **Get** /v1/tree/{tree_id} | Get tree by ID
 [**UpdateTree**](TreeAPI.md#UpdateTree) | **Put** /v1/tree/{tree_id} | Update tree
 
@@ -207,6 +208,67 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**TreeList**](TreeList.md)
+
+### Authorization
+
+[Keycloak](../README.md#Keycloak)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GetPlantingYears
+
+> []int32 GetPlantingYears(ctx).Execute()
+
+Get distinct planting years
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/green-ecolution/green-ecolution/backend/pkg/client"
+)
+
+func main() {
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.TreeAPI.GetPlantingYears(context.Background()).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `TreeAPI.GetPlantingYears``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GetPlantingYears`: []int32
+	fmt.Fprintf(os.Stdout, "Response from `TreeAPI.GetPlantingYears`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+This endpoint does not need any parameter.
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGetPlantingYearsRequest struct via the builder pattern
+
+
+### Return type
+
+**[]int32**
 
 ### Authorization
 
