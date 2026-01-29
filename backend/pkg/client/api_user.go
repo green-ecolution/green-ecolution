@@ -56,7 +56,7 @@ func (a *UserAPIService) GetAllUsers(ctx context.Context) ApiGetAllUsersRequest 
 
 // Execute executes the request
 //
-//	@return UserList
+//	@return	UserList
 func (a *UserAPIService) GetAllUsersExecute(r ApiGetAllUsersRequest) (*UserList, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -205,7 +205,7 @@ func (a *UserAPIService) GetUsersByRole(ctx context.Context, role string) ApiGet
 
 // Execute executes the request
 //
-//	@return UserList
+//	@return	UserList
 func (a *UserAPIService) GetUsersByRoleExecute(r ApiGetUsersByRoleRequest) (*UserList, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -356,7 +356,7 @@ func (a *UserAPIService) Login(ctx context.Context) ApiLoginRequest {
 
 // Execute executes the request
 //
-//	@return LoginResponse
+//	@return	LoginResponse
 func (a *UserAPIService) LoginExecute(r ApiLoginRequest) (*LoginResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -488,7 +488,7 @@ func (a *UserAPIService) Logout(ctx context.Context) ApiLogoutRequest {
 
 // Execute executes the request
 //
-//	@return string
+//	@return	string
 func (a *UserAPIService) LogoutExecute(r ApiLogoutRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -621,7 +621,7 @@ func (a *UserAPIService) RefreshToken(ctx context.Context) ApiRefreshTokenReques
 
 // Execute executes the request
 //
-//	@return ClientToken
+//	@return	ClientToken
 func (a *UserAPIService) RefreshTokenExecute(r ApiRefreshTokenRequest) (*ClientToken, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -765,7 +765,7 @@ func (a *UserAPIService) RegisterUser(ctx context.Context) ApiRegisterUserReques
 
 // Execute executes the request
 //
-//	@return User
+//	@return	User
 func (a *UserAPIService) RegisterUserExecute(r ApiRegisterUserRequest) (*User, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -927,7 +927,7 @@ func (a *UserAPIService) RequestToken(ctx context.Context) ApiRequestTokenReques
 
 // Execute executes the request
 //
-//	@return ClientToken
+//	@return	ClientToken
 func (a *UserAPIService) RequestTokenExecute(r ApiRequestTokenRequest) (*ClientToken, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost

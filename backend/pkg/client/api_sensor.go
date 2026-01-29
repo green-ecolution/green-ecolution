@@ -198,7 +198,7 @@ func (a *SensorAPIService) GetAllSensorDataById(ctx context.Context, sensorId st
 
 // Execute executes the request
 //
-//	@return SensorDataList
+//	@return	SensorDataList
 func (a *SensorAPIService) GetAllSensorDataByIdExecute(r ApiGetAllSensorDataByIdRequest) (*SensorDataList, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -374,7 +374,7 @@ func (a *SensorAPIService) GetAllSensors(ctx context.Context) ApiGetAllSensorsRe
 
 // Execute executes the request
 //
-//	@return SensorList
+//	@return	SensorList
 func (a *SensorAPIService) GetAllSensorsExecute(r ApiGetAllSensorsRequest) (*SensorList, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -529,7 +529,7 @@ func (a *SensorAPIService) GetSensorById(ctx context.Context, sensorId string) A
 
 // Execute executes the request
 //
-//	@return Sensor
+//	@return	Sensor
 func (a *SensorAPIService) GetSensorByIdExecute(r ApiGetSensorByIdRequest) (*Sensor, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet

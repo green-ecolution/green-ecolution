@@ -12,12 +12,13 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
+	versionpkg "github.com/green-ecolution/green-ecolution/backend/internal/storage/version"
 )
 
 var version = "development"
 var gitCommit = "unknown"
 var gitBranch = "develop"
-var gitRepository = "https://github.com/green-ecolution/green-ecolution/backend"
+var gitRepository = "https://github.com/green-ecolution/green-ecolution"
 var buildTime = ""
 var runTime = time.Now()
 
@@ -26,6 +27,7 @@ type InfoRepository struct {
 	buildTime     time.Time
 	gitRepository *url.URL
 	mapInfo       entities.Map
+	versionRepo   versionpkg.VersionRepository
 }
 
 func init() {
@@ -34,7 +36,7 @@ func init() {
 	}
 }
 
-func NewInfoRepository(cfg *config.Config) (*InfoRepository, error) {
+func NewInfoRepository(cfg *config.Config, versionRepo versionpkg.VersionRepository) (*InfoRepository, error) {
 	gitRepository, err := getGitRepository()
 	if err != nil {
 		return nil, err
@@ -55,6 +57,7 @@ func NewInfoRepository(cfg *config.Config) (*InfoRepository, error) {
 		buildTime:     buildTime,
 		gitRepository: gitRepository,
 		mapInfo:       mapInfo,
+		versionRepo:   versionRepo,
 	}, nil
 }
 
@@ -83,9 +86,10 @@ func (r *InfoRepository) GetAppInfo(ctx context.Context) (*entities.App, error) 
 	}
 
 	return &entities.App{
-		Version:   version,
-		GoVersion: r.getGoVersion(),
-		BuildTime: r.buildTime,
+		Version:     version,
+		VersionInfo: r.getVersionInfo(ctx),
+		GoVersion:   r.getGoVersion(),
+		BuildTime:   r.buildTime,
 		Git: entities.Git{
 			Branch:     gitBranch,
 			Commit:     gitCommit,
@@ -101,8 +105,76 @@ func (r *InfoRepository) GetAppInfo(ctx context.Context) (*entities.App, error) 
 			Interface: localInterface,
 			Uptime:    r.getUptime(),
 		},
-		Map: r.mapInfo,
+		Map:      r.mapInfo,
+		Services: r.getServices(),
 	}, nil
+}
+
+func (r *InfoRepository) getServices() entities.Services {
+	vroomEnabled := r.cfg.Routing.Enable && r.cfg.Routing.Valhalla.Optimization.Vroom.Host != ""
+
+	services := []entities.ServiceStatus{
+		{
+			Name:    "database",
+			Enabled: true,
+			Healthy: true,
+			Message: "Verbunden",
+		},
+		{
+			Name:    "auth",
+			Enabled: r.cfg.IdentityAuth.Enable,
+			Healthy: r.cfg.IdentityAuth.Enable,
+			Message: getServiceMessage(r.cfg.IdentityAuth.Enable),
+		},
+		{
+			Name:    "mqtt",
+			Enabled: r.cfg.MQTT.Enable,
+			Healthy: r.cfg.MQTT.Enable,
+			Message: getServiceMessage(r.cfg.MQTT.Enable),
+		},
+		{
+			Name:    "s3",
+			Enabled: r.cfg.S3.Enable,
+			Healthy: r.cfg.S3.Enable,
+			Message: getServiceMessage(r.cfg.S3.Enable),
+		},
+		{
+			Name:    "routing",
+			Enabled: r.cfg.Routing.Enable,
+			Healthy: r.cfg.Routing.Enable,
+			Message: getServiceMessage(r.cfg.Routing.Enable),
+		},
+		{
+			Name:    "vroom",
+			Enabled: vroomEnabled,
+			Healthy: vroomEnabled,
+			Message: getServiceMessage(vroomEnabled),
+		},
+	}
+
+	return entities.Services{Items: services}
+}
+
+func getServiceMessage(enabled bool) string {
+	if enabled {
+		return "Aktiviert"
+	}
+	return "Deaktiviert"
+}
+
+func (r *InfoRepository) getVersionInfo(ctx context.Context) entities.VersionInfo {
+	if r.versionRepo == nil {
+		return versionpkg.CompareVersions(version, "")
+	}
+
+	latestInfo, err := r.versionRepo.GetLatestVersion(ctx)
+	if err != nil {
+		return versionpkg.CompareVersions(version, "")
+	}
+
+	result := versionpkg.CompareVersions(version, latestInfo.Version)
+	result.ReleaseURL = latestInfo.ReleaseURL
+	return result
 }
 
 func getMapInfo(cfg *config.Config) (entities.Map, error) {

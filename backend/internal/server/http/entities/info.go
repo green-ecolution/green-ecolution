@@ -1,12 +1,34 @@
 package entities
 
+type ServiceStatusResponse struct {
+	Name    string `json:"name"`
+	Enabled bool   `json:"enabled"`
+	Healthy bool   `json:"healthy"`
+	Message string `json:"message,omitempty"`
+} //	@Name	ServiceStatus
+
+type ServicesResponse struct {
+	Items []ServiceStatusResponse `json:"items"`
+} //	@Name	ServicesInfo
+
+type VersionInfoResponse struct {
+	Current         string `json:"current"`
+	Latest          string `json:"latest,omitempty"`
+	UpdateAvailable bool   `json:"updateAvailable"`
+	IsDevelopment   bool   `json:"isDevelopment"`
+	IsStage         bool   `json:"isStage"`
+	ReleaseURL      string `json:"releaseUrl,omitempty"`
+} //	@Name	VersionInfo
+
 type AppInfoResponse struct {
-	Version   string         `json:"version"`
-	BuildTime string         `json:"buildTime"`
-	GoVersion string         `json:"goVersion"`
-	Git       GitResponse    `json:"git"`
-	Server    ServerResponse `json:"server,omitzero"`
-	Map       MapResponse    `json:"map"`
+	Version     string              `json:"version"`
+	VersionInfo VersionInfoResponse `json:"versionInfo"`
+	BuildTime   string              `json:"buildTime"`
+	GoVersion   string              `json:"goVersion"`
+	Git         GitResponse         `json:"git"`
+	Server      ServerResponse      `json:"server,omitzero"`
+	Map         MapResponse         `json:"map"`
+	Services    ServicesResponse    `json:"services"`
 } //	@Name	AppInfo
 
 type GitResponse struct {

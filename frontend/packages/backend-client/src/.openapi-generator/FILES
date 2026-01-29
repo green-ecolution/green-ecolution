@@ -45,6 +45,8 @@ models/SensorDataList.ts
 models/SensorList.ts
 models/SensorStatus.ts
 models/ServerInfo.ts
+models/ServiceStatus.ts
+models/ServicesInfo.ts
 models/SoilCondition.ts
 models/Tree.ts
 models/TreeCluster.ts
@@ -67,6 +69,7 @@ models/VehicleList.ts
 models/VehicleStatus.ts
 models/VehicleType.ts
 models/VehicleUpdate.ts
+models/VersionInfo.ts
 models/WateringPlan.ts
 models/WateringPlanCreate.ts
 models/WateringPlanInList.ts

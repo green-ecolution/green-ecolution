@@ -52,7 +52,7 @@ func (a *TreeSensorAPIService) GetTreeBySensorId(ctx context.Context, sensorId s
 
 // Execute executes the request
 //
-//	@return Tree
+//	@return	Tree
 func (a *TreeSensorAPIService) GetTreeBySensorIdExecute(r ApiGetTreeBySensorIdRequest) (*Tree, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet

@@ -11,15 +11,21 @@ definitions:
         $ref: '#/definitions/MapInfo'
       server:
         $ref: '#/definitions/ServerInfo'
+      services:
+        $ref: '#/definitions/ServicesInfo'
       version:
         type: string
+      versionInfo:
+        $ref: '#/definitions/VersionInfo'
     required:
     - buildTime
     - git
     - goVersion
     - map
     - server
+    - services
     - version
+    - versionInfo
     type: object
   ClientToken:
     properties:
@@ -501,6 +507,30 @@ definitions:
     - port
     - uptime
     - url
+    type: object
+  ServiceStatus:
+    properties:
+      enabled:
+        type: boolean
+      healthy:
+        type: boolean
+      message:
+        type: string
+      name:
+        type: string
+    required:
+    - enabled
+    - healthy
+    - name
+    type: object
+  ServicesInfo:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/ServiceStatus'
+        type: array
+    required:
+    - items
     type: object
   SoilCondition:
     enum:
@@ -1090,6 +1120,26 @@ definitions:
     - water_capacity
     - weight
     - width
+    type: object
+  VersionInfo:
+    properties:
+      current:
+        type: string
+      isDevelopment:
+        type: boolean
+      isStage:
+        type: boolean
+      latest:
+        type: string
+      releaseUrl:
+        type: string
+      updateAvailable:
+        type: boolean
+    required:
+    - current
+    - isDevelopment
+    - isStage
+    - updateAvailable
     type: object
   WateringPlan:
     properties:

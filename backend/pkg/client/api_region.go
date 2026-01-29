@@ -63,7 +63,7 @@ func (a *RegionAPIService) GetAllRegions(ctx context.Context) ApiGetAllRegionsRe
 
 // Execute executes the request
 //
-//	@return RegionList
+//	@return	RegionList
 func (a *RegionAPIService) GetAllRegionsExecute(r ApiGetAllRegionsRequest) (*RegionList, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -215,7 +215,7 @@ func (a *RegionAPIService) GetRegionById(ctx context.Context, id int32) ApiGetRe
 
 // Execute executes the request
 //
-//	@return Region
+//	@return	Region
 func (a *RegionAPIService) GetRegionByIdExecute(r ApiGetRegionByIdRequest) (*Region, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
