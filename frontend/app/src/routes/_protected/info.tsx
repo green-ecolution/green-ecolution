@@ -160,11 +160,11 @@ function getVersionStatusProps(versionInfo: VersionInfo) {
 function Info() {
   const { tab } = useSearch({ from: '/_protected/info' })
   const { data } = useSuspenseQuery(infoQuery())
-  const { data: servicesData } = useSuspenseQuery(servicesInfoQuery())
+  const { data: servicesData, isLoading: servicesLoading } = useQuery(servicesInfoQuery())
   const { data: serverData } = useQuery(serverInfoQuery())
   const { data: statsData } = useQuery(statisticsQuery())
 
-  const totalServices = servicesData.items.length
+  const totalServices = servicesData?.items.length ?? 0
   const versionProps = getVersionStatusProps(data.versionInfo)
   const hasServerInfo = serverData?.hostname
 
@@ -225,6 +225,7 @@ function Info() {
           <SystemTabContent
             data={data}
             servicesData={servicesData}
+            servicesLoading={servicesLoading}
             serverData={serverData}
             versionProps={versionProps}
             totalServices={totalServices}
@@ -501,9 +502,12 @@ interface SystemTabContentProps {
     versionInfo: VersionInfo
     goVersion: string
   }
-  servicesData: {
-    items: ServiceStatus[]
-  }
+  servicesData:
+    | {
+        items: ServiceStatus[]
+      }
+    | undefined
+  servicesLoading: boolean
   serverData:
     | {
         uptime: string
@@ -530,14 +534,14 @@ const serviceIconMap: Record<string, React.ReactNode> = {
 function SystemTabContent({
   data,
   servicesData,
+  servicesLoading,
   serverData,
   versionProps,
   totalServices,
   formatUptime,
 }: SystemTabContentProps) {
-  const healthyServices = servicesData.items.filter(
-    (s: ServiceStatus) => s.enabled && s.healthy,
-  ).length
+  const healthyServices =
+    servicesData?.items.filter((s: ServiceStatus) => s.enabled && s.healthy).length ?? 0
 
   const version = data.versionInfo.current
   const isDev = data.versionInfo.isDevelopment || data.versionInfo.isStage
@@ -653,59 +657,69 @@ function SystemTabContent({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {servicesData.items.map((service: ServiceStatus) => {
-              const isHealthy = service.enabled && service.healthy
-              const isDisabled = !service.enabled
+          {servicesLoading ? (
+            <div className="flex items-center justify-center py-8 text-dark-500">
+              <Loading label="Lade Services..." />
+            </div>
+          ) : servicesData ? (
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {servicesData.items.map((service: ServiceStatus) => {
+                const isHealthy = service.enabled && service.healthy
+                const isDisabled = !service.enabled
 
-              return (
-                <div
-                  key={service.name}
-                  className={`flex items-center gap-3 p-4 rounded-lg border transition-colors ${
-                    isHealthy
-                      ? 'bg-green-dark/5 border-green-dark/20'
-                      : isDisabled
-                        ? 'bg-dark-100/50 border-dark-200'
-                        : 'bg-red/5 border-red/20'
-                  }`}
-                >
+                return (
                   <div
-                    className={`p-2 rounded-lg ${
+                    key={service.name}
+                    className={`flex items-center gap-3 p-4 rounded-lg border transition-colors ${
                       isHealthy
-                        ? 'bg-green-dark/10 text-green-dark'
+                        ? 'bg-green-dark/5 border-green-dark/20'
                         : isDisabled
-                          ? 'bg-dark-200 text-dark-400'
-                          : 'bg-red/10 text-red'
+                          ? 'bg-dark-100/50 border-dark-200'
+                          : 'bg-red/5 border-red/20'
                     }`}
                   >
-                    {serviceIconMap[service.name] ?? <Settings className="size-4" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium truncate">{getServiceDisplayName(service.name)}</p>
-                      {isHealthy ? (
-                        <CheckCircle2 className="size-4 text-green-dark shrink-0" />
-                      ) : isDisabled ? (
-                        <span className="text-xs text-dark-400">Deaktiviert</span>
-                      ) : (
-                        <XCircle className="size-4 text-red shrink-0" />
-                      )}
+                    <div
+                      className={`p-2 rounded-lg ${
+                        isHealthy
+                          ? 'bg-green-dark/10 text-green-dark'
+                          : isDisabled
+                            ? 'bg-dark-200 text-dark-400'
+                            : 'bg-red/10 text-red'
+                      }`}
+                    >
+                      {serviceIconMap[service.name] ?? <Settings className="size-4" />}
                     </div>
-                    <p className="text-xs text-dark-500 truncate">{service.message}</p>
-                    {service.enabled &&
-                      service.responseTimeMs !== undefined &&
-                      service.responseTimeMs > 0 && (
-                        <p className="text-xs text-dark-400 mt-0.5">
-                          {service.responseTimeMs < 1
-                            ? `${(service.responseTimeMs * 1000).toFixed(0)}µs`
-                            : `${service.responseTimeMs.toFixed(1)}ms`}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium truncate">
+                          {getServiceDisplayName(service.name)}
                         </p>
-                      )}
+                        {isHealthy ? (
+                          <CheckCircle2 className="size-4 text-green-dark shrink-0" />
+                        ) : isDisabled ? (
+                          <span className="text-xs text-dark-400">Deaktiviert</span>
+                        ) : (
+                          <XCircle className="size-4 text-red shrink-0" />
+                        )}
+                      </div>
+                      <p className="text-xs text-dark-500 truncate">{service.message}</p>
+                      {service.enabled &&
+                        service.responseTimeMs !== undefined &&
+                        service.responseTimeMs > 0 && (
+                          <p className="text-xs text-dark-400 mt-0.5">
+                            {service.responseTimeMs < 1
+                              ? `${(service.responseTimeMs * 1000).toFixed(0)}µs`
+                              : `${service.responseTimeMs.toFixed(1)}ms`}
+                          </p>
+                        )}
+                    </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-dark-500">Keine Services verfügbar</div>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -732,8 +746,12 @@ interface SoftwareTabContentProps {
 
 function SoftwareTabContent({ data }: SoftwareTabContentProps) {
   const copyToClipboard = async (text: string) => {
-    await navigator.clipboard.writeText(text)
-    toast.success('In Zwischenablage kopiert')
+    try {
+      await navigator.clipboard.writeText(text)
+      toast.success('In Zwischenablage kopiert')
+    } catch {
+      toast.error('Kopieren fehlgeschlagen')
+    }
   }
 
   const buildDate = new Date(data.buildTime)
@@ -939,8 +957,12 @@ interface ServerTabContentProps {
 
 function ServerTabContent({ serverData, formatUptime }: ServerTabContentProps) {
   const copyToClipboard = async (text: string) => {
-    await navigator.clipboard.writeText(text)
-    toast.success('In Zwischenablage kopiert')
+    try {
+      await navigator.clipboard.writeText(text)
+      toast.success('In Zwischenablage kopiert')
+    } catch {
+      toast.error('Kopieren fehlgeschlagen')
+    }
   }
 
   return (
