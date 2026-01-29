@@ -472,3 +472,39 @@ func Test_CloseJWKSProvider(t *testing.T) {
 		})
 	})
 }
+
+func Test_AllowUnauthorizedMiddleware(t *testing.T) {
+	t.Run("should allow request without token when AllowUnauthorized middleware is used", func(t *testing.T) {
+		// given
+		authSvc := serviceMock.NewMockAuthService(t)
+		validKey := validKey(t)
+		base64Key := base64EncodePublicKey(t, &validKey.PublicKey)
+		cfg := &config.IdentityAuthConfig{
+			Enable: true,
+			OidcProvider: config.OidcProvider{
+				PublicKey: config.OidcPublicKey{
+					StaticKey: base64Key,
+				},
+			},
+		}
+
+		// when
+		jwtMiddleware, err := NewJWTMiddleware(cfg, authSvc)
+		assert.NoError(t, err)
+
+		app := fiber.New()
+		app.Use(NewAllowUnauthorizedMiddleware())
+		app.Use(jwtMiddleware)
+		app.Get("/", func(c *fiber.Ctx) error {
+			return c.SendString("Hello, World!")
+		})
+
+		req := httptest.NewRequest(fiber.MethodGet, "/", nil)
+		resp, err := app.Test(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		// then
+		assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+	})
+}
