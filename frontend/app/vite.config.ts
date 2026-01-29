@@ -39,11 +39,13 @@ export default defineConfig({
         target: 'http://localhost:3000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api-local/, '/api'),
+        ws: true,
       },
       '/api-stage': {
         target: 'https://app.stage.green-ecolution.de',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api-stage/, '/api'),
+        ws: true,
       },
     },
   },
