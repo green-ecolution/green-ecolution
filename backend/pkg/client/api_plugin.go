@@ -52,7 +52,7 @@ func (a *PluginAPIService) GetPluginInfo(ctx context.Context, pluginSlug string)
 
 // Execute executes the request
 //
-//	@return	Plugin
+//	@return Plugin
 func (a *PluginAPIService) GetPluginInfoExecute(r ApiGetPluginInfoRequest) (*Plugin, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -207,7 +207,7 @@ func (a *PluginAPIService) GetPluginsList(ctx context.Context) ApiGetPluginsList
 
 // Execute executes the request
 //
-//	@return	PluginListResponse
+//	@return PluginListResponse
 func (a *PluginAPIService) GetPluginsListExecute(r ApiGetPluginsListRequest) (*PluginListResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -353,7 +353,7 @@ func (a *PluginAPIService) PluginHeartbeat(ctx context.Context, pluginSlug strin
 
 // Execute executes the request
 //
-//	@return	string
+//	@return string
 func (a *PluginAPIService) PluginHeartbeatExecute(r ApiPluginHeartbeatRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -518,7 +518,7 @@ func (a *PluginAPIService) RefreshPluginToken(ctx context.Context, pluginSlug st
 
 // Execute executes the request
 //
-//	@return	ClientToken
+//	@return ClientToken
 func (a *PluginAPIService) RefreshPluginTokenExecute(r ApiRefreshPluginTokenRequest) (*ClientToken, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -674,7 +674,7 @@ func (a *PluginAPIService) RegisterPlugin(ctx context.Context) ApiRegisterPlugin
 
 // Execute executes the request
 //
-//	@return	ClientToken
+//	@return ClientToken
 func (a *PluginAPIService) RegisterPluginExecute(r ApiRegisterPluginRequest) (*ClientToken, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost

@@ -57,7 +57,7 @@ func (a *WateringPlanAPIService) CreatePreviewRoute(ctx context.Context) ApiCrea
 
 // Execute executes the request
 //
-//	@return	GeoJson
+//	@return GeoJson
 func (a *WateringPlanAPIService) CreatePreviewRouteExecute(r ApiCreatePreviewRouteRequest) (*GeoJson, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -212,7 +212,7 @@ func (a *WateringPlanAPIService) CreateWateringPlan(ctx context.Context) ApiCrea
 
 // Execute executes the request
 //
-//	@return	WateringPlan
+//	@return WateringPlan
 func (a *WateringPlanAPIService) CreateWateringPlanExecute(r ApiCreateWateringPlanRequest) (*WateringPlan, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -527,7 +527,7 @@ func (a *WateringPlanAPIService) GetAllWateringPlans(ctx context.Context) ApiGet
 
 // Execute executes the request
 //
-//	@return	WateringPlanList
+//	@return WateringPlanList
 func (a *WateringPlanAPIService) GetAllWateringPlansExecute(r ApiGetAllWateringPlansRequest) (*WateringPlanList, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -682,7 +682,7 @@ func (a *WateringPlanAPIService) GetGpxFile(ctx context.Context, gpxName string)
 
 // Execute executes the request
 //
-//	@return	*os.File
+//	@return *os.File
 func (a *WateringPlanAPIService) GetGpxFileExecute(r ApiGetGpxFileRequest) (*os.File, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -840,7 +840,7 @@ func (a *WateringPlanAPIService) GetWateringPlanById(ctx context.Context, id int
 
 // Execute executes the request
 //
-//	@return	WateringPlan
+//	@return WateringPlan
 func (a *WateringPlanAPIService) GetWateringPlanByIdExecute(r ApiGetWateringPlanByIdRequest) (*WateringPlan, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1005,7 +1005,7 @@ func (a *WateringPlanAPIService) UpdateWateringPlan(ctx context.Context, id int3
 
 // Execute executes the request
 //
-//	@return	WateringPlan
+//	@return WateringPlan
 func (a *WateringPlanAPIService) UpdateWateringPlanExecute(r ApiUpdateWateringPlanRequest) (*WateringPlan, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPut

@@ -97,6 +97,7 @@ Class | Method | HTTP request | Description
 *TreeAPI* | [**CreateTree**](docs/TreeAPI.md#createtree) | **Post** /v1/tree | Create tree
 *TreeAPI* | [**DeleteTree**](docs/TreeAPI.md#deletetree) | **Delete** /v1/tree/{tree_id} | Delete tree
 *TreeAPI* | [**GetAllTrees**](docs/TreeAPI.md#getalltrees) | **Get** /v1/tree | Get all trees
+*TreeAPI* | [**GetPlantingYears**](docs/TreeAPI.md#getplantingyears) | **Get** /v1/tree/planting-years | Get distinct planting years
 *TreeAPI* | [**GetTreeById**](docs/TreeAPI.md#gettreebyid) | **Get** /v1/tree/{tree_id} | Get tree by ID
 *TreeAPI* | [**UpdateTree**](docs/TreeAPI.md#updatetree) | **Put** /v1/tree/{tree_id} | Update tree
 *TreeClusterAPI* | [**CreateTreeCluster**](docs/TreeClusterAPI.md#createtreecluster) | **Post** /v1/cluster | Create tree cluster
