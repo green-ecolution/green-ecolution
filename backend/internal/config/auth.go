@@ -4,6 +4,7 @@ import "time"
 
 type OidcProvider struct {
 	BaseURL    string        `mapstructure:"base_url"`
+	HealthURL  string        `mapstructure:"health_url"`
 	DomainName string        `mapstructure:"domain_name"`
 	AuthURL    string        `mapstructure:"auth_url"`
 	TokenURL   string        `mapstructure:"token_url"`
