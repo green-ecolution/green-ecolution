@@ -4,4 +4,5 @@ type contextKey int
 
 const (
 	ContextKeyClaims contextKey = iota
+	ContextKeyAllowUnauthorized
 )
