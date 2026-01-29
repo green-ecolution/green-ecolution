@@ -3165,8 +3165,6 @@
                 "git",
                 "goVersion",
                 "map",
-                "server",
-                "services",
                 "version",
                 "versionInfo"
             ],
@@ -3182,12 +3180,6 @@
                 },
                 "map": {
                     "$ref": "#/definitions/MapInfo"
-                },
-                "server": {
-                    "$ref": "#/definitions/ServerInfo"
-                },
-                "services": {
-                    "$ref": "#/definitions/ServicesInfo"
                 },
                 "version": {
                     "type": "string"
@@ -3943,7 +3935,7 @@
                     "type": "string"
                 },
                 "responseTimeMs": {
-                    "type": "integer"
+                    "type": "number"
                 }
             }
         },

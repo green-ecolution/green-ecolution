@@ -3173,8 +3173,6 @@ const docTemplate = `{
                 "git",
                 "goVersion",
                 "map",
-                "server",
-                "services",
                 "version",
                 "versionInfo"
             ],
@@ -3190,12 +3188,6 @@ const docTemplate = `{
                 },
                 "map": {
                     "$ref": "#/definitions/MapInfo"
-                },
-                "server": {
-                    "$ref": "#/definitions/ServerInfo"
-                },
-                "services": {
-                    "$ref": "#/definitions/ServicesInfo"
                 },
                 "version": {
                     "type": "string"
@@ -3951,7 +3943,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "responseTimeMs": {
-                    "type": "integer"
+                    "type": "number"
                 }
             }
         },

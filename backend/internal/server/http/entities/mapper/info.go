@@ -13,7 +13,6 @@ import (
 // goverter:extend MapCenter MapBbox MapServiceStatusItems MapServiceStatusItemsReverse
 type InfoHTTPMapper interface {
 	ToResponse(src *domain.App) *entities.AppInfoResponse
-	FromResponse(src *entities.AppInfoResponse) *domain.App
 	ServerToResponse(src *domain.Server) *entities.ServerResponse
 	ServicesToResponse(src *domain.Services) *entities.ServicesResponse
 }

@@ -128,29 +128,6 @@ func (r *InfoRepository) SetDependencies(deps *InfoRepositoryDeps) {
 }
 
 func (r *InfoRepository) GetAppInfo(ctx context.Context) (*entities.App, error) {
-	log := logger.GetLogger(ctx)
-	hostname, err := r.getHostname()
-	if err != nil {
-		log.Error("failed to get hostname from host", "error", err)
-		return nil, storage.ErrHostnameNotFound
-	}
-
-	appURL, err := r.getAppURL()
-	if err != nil {
-		log.Error("failed to parse configured app url", "error", err, "app_url", r.cfg.Server.AppURL)
-		return nil, storage.ErrCannotGetAppURL
-	}
-
-	localIP, err := getIP(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	localInterface, err := getInterface(localIP)
-	if err != nil {
-		return nil, err
-	}
-
 	return &entities.App{
 		Version:     version,
 		VersionInfo: r.getVersionInfo(ctx),
@@ -161,18 +138,7 @@ func (r *InfoRepository) GetAppInfo(ctx context.Context) (*entities.App, error) 
 			Commit:     gitCommit,
 			Repository: r.gitRepository,
 		},
-		Server: entities.Server{
-			OS:        r.getOS(),
-			Arch:      r.getArch(),
-			Hostname:  hostname,
-			URL:       appURL,
-			IP:        localIP,
-			Port:      r.getPort(),
-			Interface: localInterface,
-			Uptime:    r.getUptime(),
-		},
-		Map:      r.mapInfo,
-		Services: r.getServices(ctx),
+		Map: r.mapInfo,
 	}, nil
 }
 
