@@ -12,6 +12,7 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/storage/_mock"
+	"github.com/green-ecolution/green-ecolution/backend/internal/utils/enums"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -54,7 +55,65 @@ func TestGetAppInfo(t *testing.T) {
 		}
 	})
 
-	t.Run("should return app info", func(t *testing.T) {
+	t.Run("should return app info without server info when unauthenticated", func(t *testing.T) {
+		// given
+		repo := storageMock.NewMockInfoRepository(t)
+		svc := NewInfoService(repo)
+		buildTime := time.Now()
+		expectedAppInfo := domain.App{
+			Version:   "1.0.0",
+			GoVersion: "1.16",
+			BuildTime: buildTime,
+			Git: domain.Git{
+				Commit: "123456",
+				Branch: "main",
+				Repository: &url.URL{
+					Scheme: "https",
+					Host:   "github.com",
+					Path:   "/green-ecolution/green-space-management",
+				},
+			},
+			Server: domain.Server{},
+		}
+
+		givenAppInfo := domain.App{
+			Version:   "1.0.0",
+			GoVersion: "1.16",
+			BuildTime: buildTime,
+			Git: domain.Git{
+				Commit: "123456",
+				Branch: "main",
+				Repository: &url.URL{
+					Scheme: "https",
+					Host:   "github.com",
+					Path:   "/green-ecolution/green-space-management",
+				},
+			},
+			Server: domain.Server{
+				OS:       "linux",
+				Arch:     "amd64",
+				Hostname: "localhost",
+				URL: &url.URL{
+					Scheme: "http",
+					Host:   "localhost:8080",
+				},
+				IP:        net.IPv4(127, 0, 0, 1),
+				Port:      8080,
+				Interface: "eth0",
+				Uptime:    time.Hour,
+			},
+		}
+
+		// when
+		repo.EXPECT().GetAppInfo(rootCtx).Return(&givenAppInfo, nil)
+		appInfo, err := svc.GetAppInfo(rootCtx)
+
+		// then
+		assert.NoError(t, err)
+		assert.EqualValues(t, expectedAppInfo, *appInfo)
+	})
+
+	t.Run("should return app info with server info when authenticated", func(t *testing.T) {
 		// given
 		repo := storageMock.NewMockInfoRepository(t)
 		svc := NewInfoService(repo)
@@ -116,8 +175,9 @@ func TestGetAppInfo(t *testing.T) {
 		}
 
 		// when
-		repo.EXPECT().GetAppInfo(rootCtx).Return(&givenAppInfo, nil)
-		appInfo, err := svc.GetAppInfo(rootCtx)
+		authCtx := context.WithValue(rootCtx, enums.ContextKeyClaims, map[string]interface{}{})
+		repo.EXPECT().GetAppInfo(authCtx).Return(&givenAppInfo, nil)
+		appInfo, err := svc.GetAppInfo(authCtx)
 
 		// then
 		assert.NoError(t, err)
