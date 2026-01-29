@@ -16,6 +16,7 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/user"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/vehicle"
 	wateringplan "github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/watering_plan"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/ws"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/middleware"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
@@ -95,5 +96,10 @@ func (s *Server) v1(router fiber.Router, authMiddlewares ...fiber.Handler) {
 
 	app.Route("/plugin", func(router fiber.Router) {
 		plugin.RegisterRoutes(router, s.services.PluginService, authMiddlewares...)
+	})
+
+	// WebSocket routes (public - only non-sensitive runtime metrics)
+	app.Route("/ws", func(router fiber.Router) {
+		ws.RegisterRoutes(router)
 	})
 }
