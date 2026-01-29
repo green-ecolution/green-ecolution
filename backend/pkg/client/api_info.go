@@ -48,7 +48,7 @@ func (a *InfoAPIService) GetAppInfo(ctx context.Context) ApiGetAppInfoRequest {
 
 // Execute executes the request
 //
-//	@return AppInfo
+//	@return	AppInfo
 func (a *InfoAPIService) GetAppInfoExecute(r ApiGetAppInfoRequest) (*AppInfo, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet

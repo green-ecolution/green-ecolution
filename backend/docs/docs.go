@@ -3055,7 +3055,9 @@ const docTemplate = `{
                 "goVersion",
                 "map",
                 "server",
-                "version"
+                "services",
+                "version",
+                "versionInfo"
             ],
             "properties": {
                 "buildTime": {
@@ -3073,8 +3075,14 @@ const docTemplate = `{
                 "server": {
                     "$ref": "#/definitions/ServerInfo"
                 },
+                "services": {
+                    "$ref": "#/definitions/ServicesInfo"
+                },
                 "version": {
                     "type": "string"
+                },
+                "versionInfo": {
+                    "$ref": "#/definitions/VersionInfo"
                 }
             }
         },
@@ -3770,6 +3778,42 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string"
+                }
+            }
+        },
+        "ServiceStatus": {
+            "type": "object",
+            "required": [
+                "enabled",
+                "healthy",
+                "name"
+            ],
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "healthy": {
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "ServicesInfo": {
+            "type": "object",
+            "required": [
+                "items"
+            ],
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ServiceStatus"
+                    }
                 }
             }
         },
@@ -4593,6 +4637,35 @@ const docTemplate = `{
                 },
                 "width": {
                     "type": "number"
+                }
+            }
+        },
+        "VersionInfo": {
+            "type": "object",
+            "required": [
+                "current",
+                "isDevelopment",
+                "isStage",
+                "updateAvailable"
+            ],
+            "properties": {
+                "current": {
+                    "type": "string"
+                },
+                "isDevelopment": {
+                    "type": "boolean"
+                },
+                "isStage": {
+                    "type": "boolean"
+                },
+                "latest": {
+                    "type": "string"
+                },
+                "releaseUrl": {
+                    "type": "string"
+                },
+                "updateAvailable": {
+                    "type": "boolean"
                 }
             }
         },

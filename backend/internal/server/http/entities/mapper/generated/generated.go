@@ -67,11 +67,13 @@ func (c *InfoHTTPMapperImpl) FromResponse(source *entities1.AppInfoResponse) *en
 	if source != nil {
 		var entitiesApp entities.App
 		entitiesApp.Version = (*source).Version
+		entitiesApp.VersionInfo = c.entitiesVersionInfoResponseToEntitiesVersionInfo((*source).VersionInfo)
 		entitiesApp.GoVersion = (*source).GoVersion
 		entitiesApp.BuildTime = utils.StringToTime((*source).BuildTime)
 		entitiesApp.Git = c.entitiesGitResponseToEntitiesGit((*source).Git)
 		entitiesApp.Server = c.entitiesServerResponseToEntitiesServer((*source).Server)
 		entitiesApp.Map = c.entitiesMapResponseToEntitiesMap((*source).Map)
+		entitiesApp.Services = c.entitiesServicesResponseToEntitiesServices((*source).Services)
 		pEntitiesApp = &entitiesApp
 	}
 	return pEntitiesApp
@@ -81,11 +83,13 @@ func (c *InfoHTTPMapperImpl) ToResponse(source *entities.App) *entities1.AppInfo
 	if source != nil {
 		var entitiesAppInfoResponse entities1.AppInfoResponse
 		entitiesAppInfoResponse.Version = (*source).Version
+		entitiesAppInfoResponse.VersionInfo = c.entitiesVersionInfoToEntitiesVersionInfoResponse((*source).VersionInfo)
 		entitiesAppInfoResponse.BuildTime = utils.TimeToString((*source).BuildTime)
 		entitiesAppInfoResponse.GoVersion = (*source).GoVersion
 		entitiesAppInfoResponse.Git = c.entitiesGitToEntitiesGitResponse((*source).Git)
 		entitiesAppInfoResponse.Server = c.entitiesServerToEntitiesServerResponse((*source).Server)
 		entitiesAppInfoResponse.Map = c.entitiesMapToEntitiesMapResponse((*source).Map)
+		entitiesAppInfoResponse.Services = c.entitiesServicesToEntitiesServicesResponse((*source).Services)
 		pEntitiesAppInfoResponse = &entitiesAppInfoResponse
 	}
 	return pEntitiesAppInfoResponse
@@ -139,6 +143,49 @@ func (c *InfoHTTPMapperImpl) entitiesServerToEntitiesServerResponse(source entit
 	entitiesServerResponse.Interface = source.Interface
 	entitiesServerResponse.Uptime = utils.TimeDurationToString(source.Uptime)
 	return entitiesServerResponse
+}
+func (c *InfoHTTPMapperImpl) entitiesServiceStatusResponseToEntitiesServiceStatus(source entities1.ServiceStatusResponse) entities.ServiceStatus {
+	var entitiesServiceStatus entities.ServiceStatus
+	entitiesServiceStatus.Name = source.Name
+	entitiesServiceStatus.Enabled = source.Enabled
+	entitiesServiceStatus.Healthy = source.Healthy
+	entitiesServiceStatus.Message = source.Message
+	return entitiesServiceStatus
+}
+func (c *InfoHTTPMapperImpl) entitiesServicesResponseToEntitiesServices(source entities1.ServicesResponse) entities.Services {
+	var entitiesServices entities.Services
+	if source.Items != nil {
+		entitiesServices.Items = make([]entities.ServiceStatus, len(source.Items))
+		for i := 0; i < len(source.Items); i++ {
+			entitiesServices.Items[i] = c.entitiesServiceStatusResponseToEntitiesServiceStatus(source.Items[i])
+		}
+	}
+	return entitiesServices
+}
+func (c *InfoHTTPMapperImpl) entitiesServicesToEntitiesServicesResponse(source entities.Services) entities1.ServicesResponse {
+	var entitiesServicesResponse entities1.ServicesResponse
+	entitiesServicesResponse.Items = mapper.MapServiceStatusItems(source.Items)
+	return entitiesServicesResponse
+}
+func (c *InfoHTTPMapperImpl) entitiesVersionInfoResponseToEntitiesVersionInfo(source entities1.VersionInfoResponse) entities.VersionInfo {
+	var entitiesVersionInfo entities.VersionInfo
+	entitiesVersionInfo.Current = source.Current
+	entitiesVersionInfo.Latest = source.Latest
+	entitiesVersionInfo.UpdateAvailable = source.UpdateAvailable
+	entitiesVersionInfo.IsDevelopment = source.IsDevelopment
+	entitiesVersionInfo.IsStage = source.IsStage
+	entitiesVersionInfo.ReleaseURL = source.ReleaseURL
+	return entitiesVersionInfo
+}
+func (c *InfoHTTPMapperImpl) entitiesVersionInfoToEntitiesVersionInfoResponse(source entities.VersionInfo) entities1.VersionInfoResponse {
+	var entitiesVersionInfoResponse entities1.VersionInfoResponse
+	entitiesVersionInfoResponse.Current = source.Current
+	entitiesVersionInfoResponse.Latest = source.Latest
+	entitiesVersionInfoResponse.UpdateAvailable = source.UpdateAvailable
+	entitiesVersionInfoResponse.IsDevelopment = source.IsDevelopment
+	entitiesVersionInfoResponse.IsStage = source.IsStage
+	entitiesVersionInfoResponse.ReleaseURL = source.ReleaseURL
+	return entitiesVersionInfoResponse
 }
 
 type RegionHTTPMapperImpl struct{}

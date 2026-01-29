@@ -3047,7 +3047,9 @@
                 "goVersion",
                 "map",
                 "server",
-                "version"
+                "services",
+                "version",
+                "versionInfo"
             ],
             "properties": {
                 "buildTime": {
@@ -3065,8 +3067,14 @@
                 "server": {
                     "$ref": "#/definitions/ServerInfo"
                 },
+                "services": {
+                    "$ref": "#/definitions/ServicesInfo"
+                },
                 "version": {
                     "type": "string"
+                },
+                "versionInfo": {
+                    "$ref": "#/definitions/VersionInfo"
                 }
             }
         },
@@ -3762,6 +3770,42 @@
                 },
                 "url": {
                     "type": "string"
+                }
+            }
+        },
+        "ServiceStatus": {
+            "type": "object",
+            "required": [
+                "enabled",
+                "healthy",
+                "name"
+            ],
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "healthy": {
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "ServicesInfo": {
+            "type": "object",
+            "required": [
+                "items"
+            ],
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ServiceStatus"
+                    }
                 }
             }
         },
@@ -4585,6 +4629,35 @@
                 },
                 "width": {
                     "type": "number"
+                }
+            }
+        },
+        "VersionInfo": {
+            "type": "object",
+            "required": [
+                "current",
+                "isDevelopment",
+                "isStage",
+                "updateAvailable"
+            ],
+            "properties": {
+                "current": {
+                    "type": "string"
+                },
+                "isDevelopment": {
+                    "type": "boolean"
+                },
+                "isStage": {
+                    "type": "boolean"
+                },
+                "latest": {
+                    "type": "string"
+                },
+                "releaseUrl": {
+                    "type": "string"
+                },
+                "updateAvailable": {
+                    "type": "boolean"
                 }
             }
         },

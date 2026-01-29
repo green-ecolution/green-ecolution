@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { StatusCard } from '../src/components/ui/status-card'
+import { ArrowUp, Code, FlaskConical, Circle } from 'lucide-react'
 
 const meta: Meta<typeof StatusCard> = {
   title: 'UI/StatusCard',
@@ -156,6 +157,55 @@ export const SensorData: Story = {
         label="Datum der letzten Bewässerung"
         value="15.01.2025"
         description="Wird aktualisiert, sobald ein Einsatzplan als »Beendet« markiert wird."
+      />
+    </div>
+  ),
+}
+
+export const WithCustomIcon: Story = {
+  args: {
+    label: 'Version',
+    value: 'v1.2.1',
+    description: 'Eine neue Version v1.3.0 ist verfügbar',
+    status: 'yellow',
+    indicator: 'dot',
+    icon: <ArrowUp className="text-yellow" />,
+  },
+}
+
+export const VersionStatusVariants: Story = {
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <StatusCard
+        status="green-dark"
+        indicator="dot"
+        label="Version"
+        value="v1.2.1"
+        description="Software ist auf dem neuesten Stand"
+      />
+      <StatusCard
+        status="yellow"
+        indicator="dot"
+        icon={<ArrowUp className="text-yellow" />}
+        label="Version"
+        value="v1.2.1"
+        description="Version v1.3.0 ist verfügbar"
+      />
+      <StatusCard
+        status="default"
+        indicator="dot"
+        icon={<Code className="text-dark-400" />}
+        label="Version"
+        value="v1.2.1-49-g0b049dce"
+        description="Development-Version"
+      />
+      <StatusCard
+        status="default"
+        indicator="dot"
+        icon={<FlaskConical className="text-dark-400" />}
+        label="Version"
+        value="v1.2.1-608bd4e-stage"
+        description="Stage-Version"
       />
     </div>
   ),
