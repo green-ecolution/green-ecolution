@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	githubReleaseURL = "https://api.github.com/repos/green-ecolution/green-ecolution/releases/latest"
-	cacheTTL         = 1 * time.Hour
+	defaultGitHubReleaseURL = "https://api.github.com/repos/green-ecolution/green-ecolution/releases/latest"
+	cacheTTL                = 1 * time.Hour
 )
 
 type githubRelease struct {
@@ -23,6 +23,7 @@ type githubRelease struct {
 
 type GitHubVersionRepository struct {
 	httpClient *http.Client
+	apiURL     string
 
 	cacheMu    sync.RWMutex
 	cachedInfo *LatestVersionInfo
@@ -34,6 +35,7 @@ func NewGitHubVersionRepository() *GitHubVersionRepository {
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},
+		apiURL: defaultGitHubReleaseURL,
 	}
 }
 
@@ -71,7 +73,7 @@ func (r *GitHubVersionRepository) GetLatestVersion(ctx context.Context) (*Latest
 }
 
 func (r *GitHubVersionRepository) fetchFromGitHub(ctx context.Context) (*LatestVersionInfo, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, githubReleaseURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, r.apiURL, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
