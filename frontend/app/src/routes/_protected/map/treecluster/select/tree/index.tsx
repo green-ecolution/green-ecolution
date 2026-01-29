@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router
 import { Tree } from '@green-ecolution/backend-client'
 import { useCallback, useRef, useState } from 'react'
 import SelectedCard from '@/components/general/cards/SelectedCard'
-import WithAllTrees from '@/components/map/marker/WithAllTrees'
+import WithFilterableTrees from '@/components/map/marker/WithFilterableTrees'
 import MapSelectEntitiesModal from '@/components/map/MapSelectEntitiesModal'
 import {
   AlertDialog,
@@ -136,7 +136,7 @@ function SelectTrees() {
           </ul>
         }
       />
-      <WithAllTrees selectedTrees={treeIds} onClick={handleTreeClick} />
+      <WithFilterableTrees selectedTrees={treeIds} onClick={handleTreeClick} />
 
       <AlertDialog open={status === 'blocked'} onOpenChange={(open) => !open && reset?.()}>
         <AlertDialogContent>
