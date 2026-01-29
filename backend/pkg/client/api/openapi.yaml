@@ -345,8 +345,8 @@ paths:
       - Evaluation
   /v1/info:
     get:
-      description: "Retrieves information about the application including version,\
-        \ server configuration, and map settings."
+      description: Retrieves basic application information including version and git
+        info.
       operationId: get-app-info
       responses:
         "200":
@@ -382,6 +382,95 @@ paths:
       security:
       - Keycloak: []
       summary: Get application info
+      tags:
+      - Info
+  /v1/info/map:
+    get:
+      description: Retrieves map center and bounding box configuration.
+      operationId: get-map-info
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MapInfo"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Internal Server Error
+      summary: Get map configuration
+      tags:
+      - Info
+  /v1/info/server:
+    get:
+      description: "Retrieves server details including hostname, IP, and uptime. Requires\
+        \ authentication."
+      operationId: get-server-info
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerInfo"
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Internal Server Error
+      security:
+      - Keycloak: []
+      summary: Get server information
+      tags:
+      - Info
+  /v1/info/services:
+    get:
+      description: Retrieves health status of all backend services with response times.
+      operationId: get-services-status
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServicesInfo"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Internal Server Error
+      summary: Get services status
+      tags:
+      - Info
+  /v1/info/statistics:
+    get:
+      description: Retrieves counts of various entities in the system.
+      operationId: get-data-statistics
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataStatistics"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPError"
+          description: Internal Server Error
+      summary: Get data statistics
       tags:
       - Info
   /v1/plugin:
@@ -2468,21 +2557,19 @@ components:
   schemas:
     AppInfo:
       example:
-        server:
-          hostname: hostname
-          os: os
-          port: 1
-          ip: ip
-          arch: arch
-          interface: interface
-          url: url
-          uptime: uptime
         git:
           commit: commit
           repository: repository
           branch: branch
         buildTime: buildTime
         goVersion: goVersion
+        versionInfo:
+          current: current
+          isStage: true
+          releaseUrl: releaseUrl
+          updateAvailable: true
+          isDevelopment: true
+          latest: latest
         map:
           bbox:
           - 0.8008281904610115
@@ -2500,17 +2587,17 @@ components:
           type: string
         map:
           $ref: "#/components/schemas/MapInfo"
-        server:
-          $ref: "#/components/schemas/ServerInfo"
         version:
           type: string
+        versionInfo:
+          $ref: "#/components/schemas/VersionInfo"
       required:
       - buildTime
       - git
       - goVersion
       - map
-      - server
       - version
+      - versionInfo
       type: object
     ClientToken:
       example:
@@ -2556,6 +2643,31 @@ components:
       - scope
       - session_state
       - token_type
+      type: object
+    DataStatistics:
+      example:
+        sensorCount: 0
+        treeClusterCount: 6
+        vehicleCount: 5
+        treeCount: 1
+        wateringPlanCount: 5
+      properties:
+        sensorCount:
+          type: integer
+        treeClusterCount:
+          type: integer
+        treeCount:
+          type: integer
+        vehicleCount:
+          type: integer
+        wateringPlanCount:
+          type: integer
+      required:
+      - sensorCount
+      - treeClusterCount
+      - treeCount
+      - vehicleCount
+      - wateringPlanCount
       type: object
     DrivingLicense:
       enum:
@@ -3276,7 +3388,7 @@ components:
       example:
         hostname: hostname
         os: os
-        port: 1
+        port: 0
         ip: ip
         arch: arch
         interface: interface
@@ -3308,6 +3420,55 @@ components:
       - port
       - uptime
       - url
+      type: object
+    ServiceStatus:
+      example:
+        healthy: true
+        name: name
+        responseTimeMs: 0.8008281904610115
+        message: message
+        lastChecked: lastChecked
+        enabled: true
+      properties:
+        enabled:
+          type: boolean
+        healthy:
+          type: boolean
+        lastChecked:
+          type: string
+        message:
+          type: string
+        name:
+          type: string
+        responseTimeMs:
+          type: number
+      required:
+      - enabled
+      - healthy
+      - name
+      type: object
+    ServicesInfo:
+      example:
+        items:
+        - healthy: true
+          name: name
+          responseTimeMs: 0.8008281904610115
+          message: message
+          lastChecked: lastChecked
+          enabled: true
+        - healthy: true
+          name: name
+          responseTimeMs: 0.8008281904610115
+          message: message
+          lastChecked: lastChecked
+          enabled: true
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/ServiceStatus"
+          type: array
+      required:
+      - items
       type: object
     SoilCondition:
       enum:
@@ -4400,6 +4561,33 @@ components:
       - water_capacity
       - weight
       - width
+      type: object
+    VersionInfo:
+      example:
+        current: current
+        isStage: true
+        releaseUrl: releaseUrl
+        updateAvailable: true
+        isDevelopment: true
+        latest: latest
+      properties:
+        current:
+          type: string
+        isDevelopment:
+          type: boolean
+        isStage:
+          type: boolean
+        latest:
+          type: string
+        releaseUrl:
+          type: string
+        updateAvailable:
+          type: boolean
+      required:
+      - current
+      - isDevelopment
+      - isStage
+      - updateAvailable
       type: object
     WateringPlan:
       example:

@@ -8,14 +8,14 @@ Name | Type | Description | Notes
 **Git** | [**GitInfo**](GitInfo.md) |  | 
 **GoVersion** | **string** |  | 
 **Map** | [**MapInfo**](MapInfo.md) |  | 
-**Server** | [**ServerInfo**](ServerInfo.md) |  | 
 **Version** | **string** |  | 
+**VersionInfo** | [**VersionInfo**](VersionInfo.md) |  | 
 
 ## Methods
 
 ### NewAppInfo
 
-`func NewAppInfo(buildTime string, git GitInfo, goVersion string, map_ MapInfo, server ServerInfo, version string, ) *AppInfo`
+`func NewAppInfo(buildTime string, git GitInfo, goVersion string, map_ MapInfo, version string, versionInfo VersionInfo, ) *AppInfo`
 
 NewAppInfo instantiates a new AppInfo object
 This constructor will assign default values to properties that have it defined,
@@ -110,26 +110,6 @@ and a boolean to check if the value has been set.
 SetMap sets Map field to given value.
 
 
-### GetServer
-
-`func (o *AppInfo) GetServer() ServerInfo`
-
-GetServer returns the Server field if non-nil, zero value otherwise.
-
-### GetServerOk
-
-`func (o *AppInfo) GetServerOk() (*ServerInfo, bool)`
-
-GetServerOk returns a tuple with the Server field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetServer
-
-`func (o *AppInfo) SetServer(v ServerInfo)`
-
-SetServer sets Server field to given value.
-
-
 ### GetVersion
 
 `func (o *AppInfo) GetVersion() string`
@@ -148,6 +128,26 @@ and a boolean to check if the value has been set.
 `func (o *AppInfo) SetVersion(v string)`
 
 SetVersion sets Version field to given value.
+
+
+### GetVersionInfo
+
+`func (o *AppInfo) GetVersionInfo() VersionInfo`
+
+GetVersionInfo returns the VersionInfo field if non-nil, zero value otherwise.
+
+### GetVersionInfoOk
+
+`func (o *AppInfo) GetVersionInfoOk() (*VersionInfo, bool)`
+
+GetVersionInfoOk returns a tuple with the VersionInfo field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetVersionInfo
+
+`func (o *AppInfo) SetVersionInfo(v VersionInfo)`
+
+SetVersionInfo sets VersionInfo field to given value.
 
 
 

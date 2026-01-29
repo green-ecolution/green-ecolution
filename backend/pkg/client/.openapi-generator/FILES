@@ -18,6 +18,7 @@ client.go
 configuration.go
 docs/AppInfo.md
 docs/ClientToken.md
+docs/DataStatistics.md
 docs/DrivingLicense.md
 docs/Evaluation.md
 docs/EvaluationAPI.md
@@ -54,6 +55,8 @@ docs/SensorDataList.md
 docs/SensorList.md
 docs/SensorStatus.md
 docs/ServerInfo.md
+docs/ServiceStatus.md
+docs/ServicesInfo.md
 docs/SoilCondition.md
 docs/Tree.md
 docs/TreeAPI.md
@@ -81,6 +84,7 @@ docs/VehicleList.md
 docs/VehicleStatus.md
 docs/VehicleType.md
 docs/VehicleUpdate.md
+docs/VersionInfo.md
 docs/WateringPlan.md
 docs/WateringPlanAPI.md
 docs/WateringPlanCreate.md
@@ -95,6 +99,7 @@ go.mod
 go.sum
 model_app_info.go
 model_client_token.go
+model_data_statistics.go
 model_driving_license.go
 model_evaluation.go
 model_evaluation_value.go
@@ -126,6 +131,8 @@ model_sensor_data_list.go
 model_sensor_list.go
 model_sensor_status.go
 model_server_info.go
+model_service_status.go
+model_services_info.go
 model_soil_condition.go
 model_tree.go
 model_tree_cluster.go
@@ -148,6 +155,7 @@ model_vehicle_list.go
 model_vehicle_status.go
 model_vehicle_type.go
 model_vehicle_update.go
+model_version_info.go
 model_watering_plan.go
 model_watering_plan_create.go
 model_watering_plan_in_list.go
