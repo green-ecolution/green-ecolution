@@ -1,11 +1,22 @@
 -- +goose Up
 -- +goose StatementBegin
-INSERT INTO vehicles (id, number_plate, description, water_capacity, type, status, driving_license, model, width, height, length, weight) 
-VALUES 
-  (1, 'B-1111', 'Test vehicle 1', 1000.0, 'trailer', 'active', 'BE', 'LK1615/17 - Conrad - MAN TGE 3.180', 2.0, 1.5, 2.0, 3.5),
-  (2, 'B-2222', 'Test vehicle 2', 1000.0, 'transporter', 'unknown', 'C', 'Actros L Mercedes Benz', 2.4, 2.1, 5.0, 2.5),
-  (3, 'B-3333', 'Test vehicle 3', 2800.0, 'transporter', 'available', 'C', 'Ford Ranger XL', 2.55, 4.0, 9.09, 26),
-  (4, 'B-4444', 'Test vehicle 4', 1000.0, 'trailer', 'available', 'BE', 'VW Crafter Pritsche', 2.4, 2.1, 5.0, 5.5);
+INSERT INTO vehicles (id, number_plate, description, water_capacity, type, status, driving_license, model, width, height, length, weight)
+VALUES
+  -- Realistic transporters
+  (1, 'FL-GE-101', 'Kleintransporter für Stadtgebiete', 500.0, 'transporter', 'active', 'B', 'VW Transporter T6.1', 1.90, 1.99, 5.30, 2.0),
+  (2, 'FL-GE-201', 'Transporter für mittlere Einsätze', 800.0, 'transporter', 'available', 'B', 'Ford Transit Custom', 2.06, 2.52, 5.53, 2.3),
+  (3, 'FL-GE-301', 'Pritschenwagen für Anhängerbetrieb', 300.0, 'transporter', 'active', 'BE', 'MAN TGE 3.180 Pritsche', 2.04, 2.35, 5.99, 3.5),
+  (4, 'FL-GE-401', 'Mittlerer Tankwagen', 5000.0, 'transporter', 'available', 'C', 'Mercedes Atego 1218', 2.30, 3.20, 7.50, 12.0),
+  (5, 'FL-GE-501', 'Großer Tankwagen für Außenbereiche', 10000.0, 'transporter', 'available', 'CE', 'MAN TGS 18.320', 2.55, 3.50, 9.50, 18.0),
+  -- Realistic trailers
+  (6, 'FL-GE-A01', 'Kleiner Wassertankanhänger für Stadtgebiete', 1000.0, 'trailer', 'available', 'B', 'Humbaur HA 132513', 1.32, 1.50, 2.50, 0.75),
+  (7, 'FL-GE-A02', 'Mittlerer Wassertankanhänger', 2000.0, 'trailer', 'active', 'BE', 'Unsinn WEB 30', 1.80, 1.80, 4.00, 1.2),
+  (8, 'FL-GE-A03', 'Großer Wassertankanhänger für Außeneinsätze', 4000.0, 'trailer', 'available', 'BE', 'Humbaur HTK 3500', 2.10, 2.00, 5.50, 2.5),
+  -- Unrealistic test vehicles for edge-case and boundary testing
+  (9, 'FL-TEST-01', '[TEST] Unrealistisch: Viel zu groß und schwer für Routing-Tests', 50000.0, 'transporter', 'available', 'CE', 'Test Mega Truck', 3.50, 5.00, 25.0, 80.0),
+  (10, 'FL-TEST-02', '[TEST] Unrealistisch: Viel zu klein für Edge-Case-Tests', 100.0, 'transporter', 'available', 'B', 'Test Mini Van', 1.20, 1.00, 2.0, 0.3),
+  (11, 'FL-TEST-03', '[TEST] Unrealistisch: Extreme Werte für Grenzwert-Tests', 99999.0, 'transporter', 'not available', 'CE', 'Test Heavy Loader', 4.00, 6.00, 30.0, 150.0),
+  (12, 'FL-TEST-A01', '[TEST] Unrealistisch: Riesiger Testanhänger', 30000.0, 'trailer', 'available', 'CE', 'Test Giant Trailer', 3.00, 4.00, 15.0, 25.0);
 SELECT setval('vehicles_id_seq', (SELECT MAX(id) FROM vehicles));
 
 INSERT INTO tree_clusters (id, name, watering_status, moisture_level, region_id, address, description, soil_condition, latitude, longitude, geometry)
