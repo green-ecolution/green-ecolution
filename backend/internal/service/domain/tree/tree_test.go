@@ -1108,3 +1108,63 @@ func TestTreeService_Ready(t *testing.T) {
 		assert.False(t, result)
 	})
 }
+
+func TestTreeService_GetPlantingYears(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("should return planting years successfully", func(t *testing.T) {
+		// given
+		treeRepo := storageMock.NewMockTreeRepository(t)
+		sensorRepo := storageMock.NewMockSensorRepository(t)
+		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
+		eventManager := worker.NewEventManager(entities.EventTypeUpdateTree)
+		svc := tree.NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager)
+
+		expectedYears := []int32{2022, 2023, 2024, 2025}
+		treeRepo.EXPECT().GetDistinctPlantingYears(ctx).Return(expectedYears, nil)
+
+		// when
+		years, err := svc.GetPlantingYears(ctx)
+
+		// then
+		assert.NoError(t, err)
+		assert.Equal(t, expectedYears, years)
+	})
+
+	t.Run("should return empty slice when no planting years exist", func(t *testing.T) {
+		// given
+		treeRepo := storageMock.NewMockTreeRepository(t)
+		sensorRepo := storageMock.NewMockSensorRepository(t)
+		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
+		eventManager := worker.NewEventManager(entities.EventTypeUpdateTree)
+		svc := tree.NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager)
+
+		treeRepo.EXPECT().GetDistinctPlantingYears(ctx).Return([]int32{}, nil)
+
+		// when
+		years, err := svc.GetPlantingYears(ctx)
+
+		// then
+		assert.NoError(t, err)
+		assert.Empty(t, years)
+	})
+
+	t.Run("should return error when repository fails", func(t *testing.T) {
+		// given
+		treeRepo := storageMock.NewMockTreeRepository(t)
+		sensorRepo := storageMock.NewMockSensorRepository(t)
+		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
+		eventManager := worker.NewEventManager(entities.EventTypeUpdateTree)
+		svc := tree.NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager)
+
+		expectedError := errors.New("database error")
+		treeRepo.EXPECT().GetDistinctPlantingYears(ctx).Return(nil, expectedError)
+
+		// when
+		years, err := svc.GetPlantingYears(ctx)
+
+		// then
+		assert.Error(t, err)
+		assert.Nil(t, years)
+	})
+}
