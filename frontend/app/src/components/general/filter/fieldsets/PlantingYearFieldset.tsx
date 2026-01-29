@@ -37,14 +37,7 @@ const PlantingYearFieldset = () => {
   }
 
   if (minYear === maxYear) {
-    return (
-      <fieldset className="mt-4">
-        <legend className="font-lato font-semibold text-dark-600 mb-2">
-          Pflanzjahr: {minYear}
-        </legend>
-        <p className="text-sm text-dark-400">Nur ein Pflanzjahr verfügbar</p>
-      </fieldset>
-    )
+    return null
   }
 
   return (
