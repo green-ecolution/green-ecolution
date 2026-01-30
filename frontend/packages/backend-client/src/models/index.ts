@@ -2,6 +2,7 @@
 /* eslint-disable */
 export * from './AppInfo';
 export * from './ClientToken';
+export * from './DataStatistics';
 export * from './DrivingLicense';
 export * from './Evaluation';
 export * from './EvaluationValue';
@@ -33,6 +34,8 @@ export * from './SensorDataList';
 export * from './SensorList';
 export * from './SensorStatus';
 export * from './ServerInfo';
+export * from './ServiceStatus';
+export * from './ServicesInfo';
 export * from './SoilCondition';
 export * from './Tree';
 export * from './TreeCluster';
@@ -55,6 +58,7 @@ export * from './VehicleList';
 export * from './VehicleStatus';
 export * from './VehicleType';
 export * from './VehicleUpdate';
+export * from './VersionInfo';
 export * from './WateringPlan';
 export * from './WateringPlanCreate';
 export * from './WateringPlanInList';

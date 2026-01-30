@@ -72,6 +72,18 @@ export {
 } from './components/ui/card'
 export type { CardProps, CardTitleProps } from './components/ui/card'
 
+// Chart
+export {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  ChartStyle,
+  useChart,
+} from './components/ui/chart'
+export type { ChartConfig } from './components/ui/chart'
+
 // Checkbox
 export { Checkbox } from './components/ui/checkbox'
 

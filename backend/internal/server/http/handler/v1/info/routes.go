@@ -7,4 +7,8 @@ import (
 
 func RegisterRoutes(r fiber.Router, svc service.InfoService) {
 	r.Get("/", GetAppInfo(svc))
+	r.Get("/map", GetMapInfo(svc))
+	r.Get("/server", GetServerInfo(svc))
+	r.Get("/services", GetServicesStatus(svc))
+	r.Get("/statistics", GetStatistics(svc))
 }

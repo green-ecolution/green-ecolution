@@ -433,7 +433,7 @@ const docTemplate = `{
                         "Keycloak": []
                     }
                 ],
-                "description": "Retrieves information about the application including version, server configuration, and map settings.",
+                "description": "Retrieves basic application information including version and git info.",
                 "produces": [
                     "application/json"
                 ],
@@ -465,6 +465,125 @@ const docTemplate = `{
                         "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/info/map": {
+            "get": {
+                "description": "Retrieves map center and bounding box configuration.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Info"
+                ],
+                "summary": "Get map configuration",
+                "operationId": "get-map-info",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/MapInfo"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/info/server": {
+            "get": {
+                "security": [
+                    {
+                        "Keycloak": []
+                    }
+                ],
+                "description": "Retrieves server details including hostname, IP, and uptime. Requires authentication.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Info"
+                ],
+                "summary": "Get server information",
+                "operationId": "get-server-info",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ServerInfo"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/info/services": {
+            "get": {
+                "description": "Retrieves health status of all backend services with response times.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Info"
+                ],
+                "summary": "Get services status",
+                "operationId": "get-services-status",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ServicesInfo"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/info/statistics": {
+            "get": {
+                "description": "Retrieves counts of various entities in the system.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Info"
+                ],
+                "summary": "Get data statistics",
+                "operationId": "get-data-statistics",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/DataStatistics"
                         }
                     },
                     "500": {
@@ -3054,8 +3173,8 @@ const docTemplate = `{
                 "git",
                 "goVersion",
                 "map",
-                "server",
-                "version"
+                "version",
+                "versionInfo"
             ],
             "properties": {
                 "buildTime": {
@@ -3070,11 +3189,11 @@ const docTemplate = `{
                 "map": {
                     "$ref": "#/definitions/MapInfo"
                 },
-                "server": {
-                    "$ref": "#/definitions/ServerInfo"
-                },
                 "version": {
                     "type": "string"
+                },
+                "versionInfo": {
+                    "$ref": "#/definitions/VersionInfo"
                 }
             }
         },
@@ -3122,6 +3241,33 @@ const docTemplate = `{
                 },
                 "token_type": {
                     "type": "string"
+                }
+            }
+        },
+        "DataStatistics": {
+            "type": "object",
+            "required": [
+                "sensorCount",
+                "treeClusterCount",
+                "treeCount",
+                "vehicleCount",
+                "wateringPlanCount"
+            ],
+            "properties": {
+                "sensorCount": {
+                    "type": "integer"
+                },
+                "treeClusterCount": {
+                    "type": "integer"
+                },
+                "treeCount": {
+                    "type": "integer"
+                },
+                "vehicleCount": {
+                    "type": "integer"
+                },
+                "wateringPlanCount": {
+                    "type": "integer"
                 }
             }
         },
@@ -3770,6 +3916,48 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string"
+                }
+            }
+        },
+        "ServiceStatus": {
+            "type": "object",
+            "required": [
+                "enabled",
+                "healthy",
+                "name"
+            ],
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "healthy": {
+                    "type": "boolean"
+                },
+                "lastChecked": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "responseTimeMs": {
+                    "type": "number"
+                }
+            }
+        },
+        "ServicesInfo": {
+            "type": "object",
+            "required": [
+                "items"
+            ],
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ServiceStatus"
+                    }
                 }
             }
         },
@@ -4593,6 +4781,35 @@ const docTemplate = `{
                 },
                 "width": {
                     "type": "number"
+                }
+            }
+        },
+        "VersionInfo": {
+            "type": "object",
+            "required": [
+                "current",
+                "isDevelopment",
+                "isStage",
+                "updateAvailable"
+            ],
+            "properties": {
+                "current": {
+                    "type": "string"
+                },
+                "isDevelopment": {
+                    "type": "boolean"
+                },
+                "isStage": {
+                    "type": "boolean"
+                },
+                "latest": {
+                    "type": "string"
+                },
+                "releaseUrl": {
+                    "type": "string"
+                },
+                "updateAvailable": {
+                    "type": "boolean"
                 }
             }
         },

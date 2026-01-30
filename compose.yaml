@@ -106,6 +106,11 @@ services:
       - "traefik.http.routers.keycloak.entrypoints=web"
       - "traefik.http.routers.keycloak.service=keycloak"
       - "traefik.http.services.keycloak.loadbalancer.server.port=3000"
+      # Health endpoint on management port
+      - "traefik.http.routers.keycloak-health.rule=Host(`auth.localhost`) && PathPrefix(`/health`)"
+      - "traefik.http.routers.keycloak-health.entrypoints=web"
+      - "traefik.http.routers.keycloak-health.service=keycloak-health"
+      - "traefik.http.services.keycloak-health.loadbalancer.server.port=9000"
     volumes:
       - "./.docker/infra/keycloak/green-ecolution-realm.json:/opt/keycloak/data/import/green-ecolution-realm.json"
     networks:
