@@ -82,6 +82,10 @@ Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *EvaluationAPI* | [**GetEvaluation**](docs/EvaluationAPI.md#getevaluation) | **Get** /v1/evaluation | Get evaluation data
 *InfoAPI* | [**GetAppInfo**](docs/InfoAPI.md#getappinfo) | **Get** /v1/info | Get application info
+*InfoAPI* | [**GetDataStatistics**](docs/InfoAPI.md#getdatastatistics) | **Get** /v1/info/statistics | Get data statistics
+*InfoAPI* | [**GetMapInfo**](docs/InfoAPI.md#getmapinfo) | **Get** /v1/info/map | Get map configuration
+*InfoAPI* | [**GetServerInfo**](docs/InfoAPI.md#getserverinfo) | **Get** /v1/info/server | Get server information
+*InfoAPI* | [**GetServicesStatus**](docs/InfoAPI.md#getservicesstatus) | **Get** /v1/info/services | Get services status
 *PluginAPI* | [**GetPluginInfo**](docs/PluginAPI.md#getplugininfo) | **Get** /v1/plugin/{plugin_slug} | Get plugin info
 *PluginAPI* | [**GetPluginsList**](docs/PluginAPI.md#getpluginslist) | **Get** /v1/plugin | Get all registered plugins
 *PluginAPI* | [**PluginHeartbeat**](docs/PluginAPI.md#pluginheartbeat) | **Post** /v1/plugin/{plugin_slug}/heartbeat | Plugin heartbeat
@@ -134,6 +138,7 @@ Class | Method | HTTP request | Description
 
  - [AppInfo](docs/AppInfo.md)
  - [ClientToken](docs/ClientToken.md)
+ - [DataStatistics](docs/DataStatistics.md)
  - [DrivingLicense](docs/DrivingLicense.md)
  - [Evaluation](docs/Evaluation.md)
  - [EvaluationValue](docs/EvaluationValue.md)
@@ -165,6 +170,8 @@ Class | Method | HTTP request | Description
  - [SensorList](docs/SensorList.md)
  - [SensorStatus](docs/SensorStatus.md)
  - [ServerInfo](docs/ServerInfo.md)
+ - [ServiceStatus](docs/ServiceStatus.md)
+ - [ServicesInfo](docs/ServicesInfo.md)
  - [SoilCondition](docs/SoilCondition.md)
  - [Tree](docs/Tree.md)
  - [TreeCluster](docs/TreeCluster.md)
@@ -187,6 +194,7 @@ Class | Method | HTTP request | Description
  - [VehicleStatus](docs/VehicleStatus.md)
  - [VehicleType](docs/VehicleType.md)
  - [VehicleUpdate](docs/VehicleUpdate.md)
+ - [VersionInfo](docs/VersionInfo.md)
  - [WateringPlan](docs/WateringPlan.md)
  - [WateringPlanCreate](docs/WateringPlanCreate.md)
  - [WateringPlanInList](docs/WateringPlanInList.md)

@@ -60,10 +60,21 @@ func TestGetAppInfo(t *testing.T) {
 		repo := storageMock.NewMockInfoRepository(t)
 		svc := NewInfoService(repo)
 		buildTime := time.Now()
+		services := domain.Services{
+			Items: []domain.ServiceStatus{
+				{Name: "database", Enabled: true, Healthy: true, Message: "Verbunden"},
+			},
+		}
+		versionInfo := domain.VersionInfo{
+			Current:         "1.0.0",
+			Latest:          "1.0.0",
+			UpdateAvailable: false,
+		}
 		expectedAppInfo := domain.App{
-			Version:   "1.0.0",
-			GoVersion: "1.16",
-			BuildTime: buildTime,
+			Version:     "1.0.0",
+			VersionInfo: versionInfo,
+			GoVersion:   "1.16",
+			BuildTime:   buildTime,
 			Git: domain.Git{
 				Commit: "123456",
 				Branch: "main",
@@ -73,13 +84,15 @@ func TestGetAppInfo(t *testing.T) {
 					Path:   "/green-ecolution/green-space-management",
 				},
 			},
-			Server: domain.Server{},
+			Server:   domain.Server{},
+			Services: services,
 		}
 
 		givenAppInfo := domain.App{
-			Version:   "1.0.0",
-			GoVersion: "1.16",
-			BuildTime: buildTime,
+			Version:     "1.0.0",
+			VersionInfo: versionInfo,
+			GoVersion:   "1.16",
+			BuildTime:   buildTime,
 			Git: domain.Git{
 				Commit: "123456",
 				Branch: "main",
@@ -102,6 +115,7 @@ func TestGetAppInfo(t *testing.T) {
 				Interface: "eth0",
 				Uptime:    time.Hour,
 			},
+			Services: services,
 		}
 
 		// when
@@ -118,10 +132,21 @@ func TestGetAppInfo(t *testing.T) {
 		repo := storageMock.NewMockInfoRepository(t)
 		svc := NewInfoService(repo)
 		buildTime := time.Now()
+		services := domain.Services{
+			Items: []domain.ServiceStatus{
+				{Name: "database", Enabled: true, Healthy: true, Message: "Verbunden"},
+			},
+		}
+		versionInfo := domain.VersionInfo{
+			Current:         "1.0.0",
+			Latest:          "1.0.0",
+			UpdateAvailable: false,
+		}
 		expectedAppInfo := domain.App{
-			Version:   "1.0.0",
-			GoVersion: "1.16",
-			BuildTime: buildTime,
+			Version:     "1.0.0",
+			VersionInfo: versionInfo,
+			GoVersion:   "1.16",
+			BuildTime:   buildTime,
 			Git: domain.Git{
 				Commit: "123456",
 				Branch: "main",
@@ -144,12 +169,14 @@ func TestGetAppInfo(t *testing.T) {
 				Interface: "eth0",
 				Uptime:    time.Hour,
 			},
+			Services: services,
 		}
 
 		givenAppInfo := domain.App{
-			Version:   "1.0.0",
-			GoVersion: "1.16",
-			BuildTime: buildTime,
+			Version:     "1.0.0",
+			VersionInfo: versionInfo,
+			GoVersion:   "1.16",
+			BuildTime:   buildTime,
 			Git: domain.Git{
 				Commit: "123456",
 				Branch: "main",
@@ -172,6 +199,7 @@ func TestGetAppInfo(t *testing.T) {
 				Interface: "eth0",
 				Uptime:    time.Hour,
 			},
+			Services: services,
 		}
 
 		// when

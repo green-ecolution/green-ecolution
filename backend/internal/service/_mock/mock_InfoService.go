@@ -138,6 +138,238 @@ func (_c *MockInfoService_GetAppInfoResponse_Call) RunAndReturn(run func(context
 	return _c
 }
 
+// GetMapInfo provides a mock function with given fields: _a0
+func (_m *MockInfoService) GetMapInfo(_a0 context.Context) (*entities.Map, error) {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMapInfo")
+	}
+
+	var r0 *entities.Map
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*entities.Map, error)); ok {
+		return rf(_a0)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *entities.Map); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entities.Map)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockInfoService_GetMapInfo_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMapInfo'
+type MockInfoService_GetMapInfo_Call struct {
+	*mock.Call
+}
+
+// GetMapInfo is a helper method to define mock.On call
+//   - _a0 context.Context
+func (_e *MockInfoService_Expecter) GetMapInfo(_a0 interface{}) *MockInfoService_GetMapInfo_Call {
+	return &MockInfoService_GetMapInfo_Call{Call: _e.mock.On("GetMapInfo", _a0)}
+}
+
+func (_c *MockInfoService_GetMapInfo_Call) Run(run func(_a0 context.Context)) *MockInfoService_GetMapInfo_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockInfoService_GetMapInfo_Call) Return(_a0 *entities.Map, _a1 error) *MockInfoService_GetMapInfo_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockInfoService_GetMapInfo_Call) RunAndReturn(run func(context.Context) (*entities.Map, error)) *MockInfoService_GetMapInfo_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetServerInfo provides a mock function with given fields: _a0
+func (_m *MockInfoService) GetServerInfo(_a0 context.Context) (*entities.Server, error) {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetServerInfo")
+	}
+
+	var r0 *entities.Server
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*entities.Server, error)); ok {
+		return rf(_a0)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *entities.Server); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entities.Server)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockInfoService_GetServerInfo_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetServerInfo'
+type MockInfoService_GetServerInfo_Call struct {
+	*mock.Call
+}
+
+// GetServerInfo is a helper method to define mock.On call
+//   - _a0 context.Context
+func (_e *MockInfoService_Expecter) GetServerInfo(_a0 interface{}) *MockInfoService_GetServerInfo_Call {
+	return &MockInfoService_GetServerInfo_Call{Call: _e.mock.On("GetServerInfo", _a0)}
+}
+
+func (_c *MockInfoService_GetServerInfo_Call) Run(run func(_a0 context.Context)) *MockInfoService_GetServerInfo_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockInfoService_GetServerInfo_Call) Return(_a0 *entities.Server, _a1 error) *MockInfoService_GetServerInfo_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockInfoService_GetServerInfo_Call) RunAndReturn(run func(context.Context) (*entities.Server, error)) *MockInfoService_GetServerInfo_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetServices provides a mock function with given fields: _a0
+func (_m *MockInfoService) GetServices(_a0 context.Context) (*entities.Services, error) {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetServices")
+	}
+
+	var r0 *entities.Services
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*entities.Services, error)); ok {
+		return rf(_a0)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *entities.Services); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entities.Services)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockInfoService_GetServices_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetServices'
+type MockInfoService_GetServices_Call struct {
+	*mock.Call
+}
+
+// GetServices is a helper method to define mock.On call
+//   - _a0 context.Context
+func (_e *MockInfoService_Expecter) GetServices(_a0 interface{}) *MockInfoService_GetServices_Call {
+	return &MockInfoService_GetServices_Call{Call: _e.mock.On("GetServices", _a0)}
+}
+
+func (_c *MockInfoService_GetServices_Call) Run(run func(_a0 context.Context)) *MockInfoService_GetServices_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockInfoService_GetServices_Call) Return(_a0 *entities.Services, _a1 error) *MockInfoService_GetServices_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockInfoService_GetServices_Call) RunAndReturn(run func(context.Context) (*entities.Services, error)) *MockInfoService_GetServices_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetStatistics provides a mock function with given fields: _a0
+func (_m *MockInfoService) GetStatistics(_a0 context.Context) (*entities.DataStatistics, error) {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetStatistics")
+	}
+
+	var r0 *entities.DataStatistics
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*entities.DataStatistics, error)); ok {
+		return rf(_a0)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *entities.DataStatistics); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entities.DataStatistics)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockInfoService_GetStatistics_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetStatistics'
+type MockInfoService_GetStatistics_Call struct {
+	*mock.Call
+}
+
+// GetStatistics is a helper method to define mock.On call
+//   - _a0 context.Context
+func (_e *MockInfoService_Expecter) GetStatistics(_a0 interface{}) *MockInfoService_GetStatistics_Call {
+	return &MockInfoService_GetStatistics_Call{Call: _e.mock.On("GetStatistics", _a0)}
+}
+
+func (_c *MockInfoService_GetStatistics_Call) Run(run func(_a0 context.Context)) *MockInfoService_GetStatistics_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockInfoService_GetStatistics_Call) Return(_a0 *entities.DataStatistics, _a1 error) *MockInfoService_GetStatistics_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockInfoService_GetStatistics_Call) RunAndReturn(run func(context.Context) (*entities.DataStatistics, error)) *MockInfoService_GetStatistics_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Ready provides a mock function with no fields
 func (_m *MockInfoService) Ready() bool {
 	ret := _m.Called()

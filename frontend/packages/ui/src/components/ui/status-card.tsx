@@ -33,7 +33,7 @@ const statusCardVariants = cva('h-full flex flex-col gap-y-3 rounded-xl p-6', {
   },
 })
 
-const dotVariants = cva('absolute w-4 h-4 rounded-full left-0 top-1', {
+const dotVariants = cva('w-4 h-4 rounded-full', {
   variants: {
     status: {
       // Base variants
@@ -89,9 +89,10 @@ interface StatusCardProps
   extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof statusCardVariants> {
   label: string
   value: string | number
-  description?: string
+  description?: React.ReactNode
   indicator?: 'dot' | 'badge' | 'none'
   isLarge?: boolean
+  icon?: React.ReactNode
 }
 
 const StatusCard = React.forwardRef<HTMLDivElement, StatusCardProps>(
@@ -104,21 +105,22 @@ const StatusCard = React.forwardRef<HTMLDivElement, StatusCardProps>(
       description,
       indicator = 'none',
       isLarge = false,
+      icon,
       ...props
     },
     ref,
   ) => {
-    const showDot = indicator === 'dot'
+    const showDot = indicator === 'dot' && !icon
+    const showIcon = indicator === 'dot' && icon
     const showBadge = indicator === 'badge'
     const badgeVariant = statusToBadgeVariant[status ?? 'default']
 
     return (
       <div ref={ref} className={cn(statusCardVariants({ status }), className)} {...props}>
         <p className="text-sm text-dark-700 font-medium">{label}</p>
-        <p
-          className={cn('font-bold', isLarge ? 'text-3xl' : 'text-xl', showDot && 'pl-7 relative')}
-        >
-          {showDot && <span className={dotVariants({ status })} />}
+        <div className={cn('font-bold flex items-start gap-2', isLarge ? 'text-3xl' : 'text-xl')}>
+          {showDot && <span className={cn(dotVariants({ status }), 'mt-1.5 shrink-0')} />}
+          {showIcon && <span className="mt-0.5 shrink-0 [&>svg]:size-5">{icon}</span>}
           {showBadge ? (
             <>
               <Badge variant={badgeVariant} size="lg">
@@ -127,9 +129,9 @@ const StatusCard = React.forwardRef<HTMLDivElement, StatusCardProps>(
               <span className="sr-only">{value}</span>
             </>
           ) : (
-            value
+            <span>{value}</span>
           )}
-        </p>
+        </div>
         {description && <p className="text-sm">{description}</p>}
       </div>
     )
