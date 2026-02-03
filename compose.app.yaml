@@ -7,6 +7,8 @@ services:
         - APP_GIT_COMMIT=${APP_GIT_COMMIT:-$(git rev-parse --short HEAD)}
         - APP_GIT_BRANCH=${APP_GIT_BRANCH:-$(git rev-parse --abbrev-ref HEAD)}
         - APP_BUILD_TIME=${APP_BUILD_TIME:-$(date +'%Y%m%d')}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       db:
         condition: service_healthy
@@ -43,7 +45,7 @@ services:
       - GE_ROUTING_START_POINT=9.434764259345679,54.768731253913806
       - GE_ROUTING_END_POINT=9.434764259345679,54.768731253913806
       - GE_ROUTING_WATERING_POINT=9.434764259345679,54.768731253913806
-      - GE_ROUTING_VALHALLA_HOST=http://valhalla:8002
+      - GE_ROUTING_VALHALLA_HOST=http://host.docker.internal:8080
       - GE_ROUTING_VALHALLA_OPTIMIZATION_VROOM_HOST=http://vroom:3000
 
       - GE_S3_ENABLE=true
