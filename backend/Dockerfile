@@ -25,16 +25,16 @@ ARG APP_GIT_BRANCH="develop"
 ARG APP_GIT_REPOSITORY="https://github.com/green-ecolution/green-ecolution/backend"
 ARG APP_BUILD_TIME="unknown"
 
-RUN CGO_ENABLED=1 go build -o "bin/green-ecolution" \
-    -ldflags=" \
-      -s -w \
-      -X main.version=${APP_VERSION} \
-      -X github.com/green-ecolution/green-ecolution/backend/internal/storage/local/info.version=${APP_VERSION} \
-      -X github.com/green-ecolution/green-ecolution/backend/internal/storage/local/info.gitCommit=${APP_GIT_COMMIT} \
-      -X github.com/green-ecolution/green-ecolution/backend/internal/storage/local/info.gitBranch=${APP_GIT_BRANCH} \
-      -X github.com/green-ecolution/green-ecolution/backend/internal/storage/local/info.gitRepository=${APP_GIT_REPOSITORY} \
-      -X github.com/green-ecolution/green-ecolution/backend/internal/storage/local/info.buildTime=${APP_BUILD_TIME} \
-    "
+RUN CGO_ENABLED=1 go build -o "bin/green-ecolution"
+    # -ldflags=" \
+    #   -s -w \
+    #   -X main.version=${APP_VERSION} \
+    #   -X github.com/green-ecolution/green-ecolution/backend/internal/storage/local/info.version=${APP_VERSION} \
+    #   -X github.com/green-ecolution/green-ecolution/backend/internal/storage/local/info.gitCommit=${APP_GIT_COMMIT} \
+    #   -X github.com/green-ecolution/green-ecolution/backend/internal/storage/local/info.gitBranch=${APP_GIT_BRANCH} \
+    #   -X github.com/green-ecolution/green-ecolution/backend/internal/storage/local/info.gitRepository=${APP_GIT_REPOSITORY} \
+    #   -X github.com/green-ecolution/green-ecolution/backend/internal/storage/local/info.buildTime=${APP_BUILD_TIME} \
+    # "
 
 #############################################
 # Runner go
