@@ -27,7 +27,10 @@ data:
   GE_S3_ENDPOINT: "minio-hl.minio.svc.cluster.local:9000"
   GE_S3_REGION: "us-east-1"
   GE_S3_USE_SSL: "false"
-  GE_S3_ROUTE-GPX_BUCKET: "routes-gpx-demo"
-  GE_S3_ROUTE-GPX_ACCESSKEY: "routes-gpx-demo"
+  GE_S3_ROUTE_GPX_BUCKET: "routes-gpx-demo"
+  GE_S3_ROUTE_GPX_ACCESSKEY: "routes-gpx-demo"
+
+  GE_MAP_CENTER: "54.792277136221905,9.43580607453268"
+  GE_MAP_BBOX: "54.714822,9.285796,54.860127,9.583800"
 
   TZ: "Europe/Berlin"
