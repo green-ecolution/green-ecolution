@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.1.3](https://github.com/green-ecolution/green-ecolution/compare/v0.1.2...v0.1.3) (2026-02-11)
+
+
+### Features
+
+* **frontend:** enable React Compiler ([#658](https://github.com/green-ecolution/green-ecolution/issues/658)) ([a2741b8](https://github.com/green-ecolution/green-ecolution/commit/a2741b87232e90485c48d9e0e971e4039bd7dc97))
+
 ## [0.1.2](https://github.com/green-ecolution/green-ecolution/compare/v0.1.1...v0.1.2) (2026-02-03)
 
 
