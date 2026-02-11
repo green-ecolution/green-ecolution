@@ -46,6 +46,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@module-federation/vite": "1.11.0",
+    "@tailwindcss/vite": "^4.1.8",
     "@tanstack/router-plugin": "1.159.5",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -57,7 +58,7 @@
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/coverage-v8": "^4.0.17",
     "@vitest/ui": "^4.0.17",
-    "@tailwindcss/vite": "^4.1.8",
+    "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9.39.2",
     "eslint-plugin-react-dom": "^2.7.4",
     "eslint-plugin-react-hooks": "^7.0.1",

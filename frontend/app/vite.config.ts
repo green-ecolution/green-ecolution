@@ -15,7 +15,11 @@ export default defineConfig({
       quoteStyle: 'single',
     }),
     tailwindcss(),
-    react(),
+    react({
+      babel: {
+        plugins: ['babel-plugin-react-compiler'],
+      },
+    }),
     federation({
       name: 'app',
       remotes: {
