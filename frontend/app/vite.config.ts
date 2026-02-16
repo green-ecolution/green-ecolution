@@ -29,6 +29,7 @@ export default defineConfig({
       },
       filename: 'plugin.js',
       shared: ['react', 'react-dom', '@green-ecolution/plugin-interface'],
+      dts: false,
     }),
   ],
   server: {
