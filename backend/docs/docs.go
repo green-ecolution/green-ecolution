@@ -3930,9 +3930,11 @@ const docTemplate = `{
         "TreeClusterCreate": {
             "type": "object",
             "required": [
+                "additional_information",
                 "address",
                 "description",
                 "name",
+                "provider",
                 "soil_condition",
                 "tree_ids"
             ],
@@ -4058,9 +4060,11 @@ const docTemplate = `{
         "TreeClusterUpdate": {
             "type": "object",
             "required": [
+                "additional_information",
                 "address",
                 "description",
                 "name",
+                "provider",
                 "soil_condition",
                 "tree_ids"
             ],
@@ -4095,12 +4099,16 @@ const docTemplate = `{
         "TreeCreate": {
             "type": "object",
             "required": [
+                "additional_information",
                 "description",
                 "latitude",
                 "longitude",
                 "number",
                 "planting_year",
-                "species"
+                "provider",
+                "sensor_id",
+                "species",
+                "tree_cluster_id"
             ],
             "properties": {
                 "additional_information": {
@@ -4111,10 +4119,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "latitude": {
-                    "type": "number"
+                    "type": "number",
+                    "maximum": 90,
+                    "minimum": -90
                 },
                 "longitude": {
-                    "type": "number"
+                    "type": "number",
+                    "maximum": 180,
+                    "minimum": -180
                 },
                 "number": {
                     "type": "string"
@@ -4156,12 +4168,16 @@ const docTemplate = `{
         "TreeUpdate": {
             "type": "object",
             "required": [
+                "additional_information",
                 "description",
                 "latitude",
                 "longitude",
                 "number",
                 "planting_year",
-                "species"
+                "provider",
+                "sensor_id",
+                "species",
+                "tree_cluster_id"
             ],
             "properties": {
                 "additional_information": {
@@ -4172,10 +4188,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "latitude": {
-                    "type": "number"
+                    "type": "number",
+                    "maximum": 90,
+                    "minimum": -90
                 },
                 "longitude": {
-                    "type": "number"
+                    "type": "number",
+                    "maximum": 180,
+                    "minimum": -180
                 },
                 "number": {
                     "type": "string"
@@ -4297,10 +4317,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "first_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 30,
+                    "minLength": 3
                 },
                 "last_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 30,
+                    "minLength": 3
                 },
                 "password": {
                     "type": "string"
@@ -4315,7 +4339,9 @@ const docTemplate = `{
                     }
                 },
                 "username": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 15,
+                    "minLength": 3
                 }
             }
         },
@@ -4423,12 +4449,14 @@ const docTemplate = `{
         "VehicleCreate": {
             "type": "object",
             "required": [
+                "additional_information",
                 "description",
                 "driving_license",
                 "height",
                 "length",
                 "model",
                 "number_plate",
+                "provider",
                 "status",
                 "type",
                 "water_capacity",
@@ -4444,7 +4472,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "driving_license": {
-                    "$ref": "#/definitions/DrivingLicense"
+                    "enum": [
+                        "B",
+                        "BE",
+                        "C",
+                        "CE"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/DrivingLicense"
+                        }
+                    ]
                 },
                 "height": {
                     "type": "number"
@@ -4462,10 +4500,29 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "$ref": "#/definitions/VehicleStatus"
+                    "enum": [
+                        "active",
+                        "available",
+                        "not available",
+                        "unknown"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/VehicleStatus"
+                        }
+                    ]
                 },
                 "type": {
-                    "$ref": "#/definitions/VehicleType"
+                    "enum": [
+                        "transporter",
+                        "trailer",
+                        "unknown"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/VehicleType"
+                        }
+                    ]
                 },
                 "water_capacity": {
                     "type": "number"
@@ -4541,12 +4598,14 @@ const docTemplate = `{
         "VehicleUpdate": {
             "type": "object",
             "required": [
+                "additional_information",
                 "description",
                 "driving_license",
                 "height",
                 "length",
                 "model",
                 "number_plate",
+                "provider",
                 "status",
                 "type",
                 "water_capacity",
@@ -4562,7 +4621,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "driving_license": {
-                    "$ref": "#/definitions/DrivingLicense"
+                    "enum": [
+                        "B",
+                        "BE",
+                        "C",
+                        "CE"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/DrivingLicense"
+                        }
+                    ]
                 },
                 "height": {
                     "type": "number"
@@ -4580,10 +4649,29 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "$ref": "#/definitions/VehicleStatus"
+                    "enum": [
+                        "active",
+                        "available",
+                        "not available",
+                        "unknown"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/VehicleStatus"
+                        }
+                    ]
                 },
                 "type": {
-                    "$ref": "#/definitions/VehicleType"
+                    "enum": [
+                        "transporter",
+                        "trailer",
+                        "unknown"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/VehicleType"
+                        }
+                    ]
                 },
                 "water_capacity": {
                     "type": "number"
@@ -4689,8 +4777,11 @@ const docTemplate = `{
         "WateringPlanCreate": {
             "type": "object",
             "required": [
+                "additional_information",
                 "date",
                 "description",
+                "provider",
+                "trailer_id",
                 "transporter_id",
                 "tree_cluster_ids",
                 "user_ids"
@@ -4717,12 +4808,14 @@ const docTemplate = `{
                 },
                 "tree_cluster_ids": {
                     "type": "array",
+                    "minItems": 1,
                     "items": {
                         "type": "integer"
                     }
                 },
                 "user_ids": {
                     "type": "array",
+                    "minItems": 1,
                     "items": {
                         "type": "string"
                     }
@@ -4839,10 +4932,14 @@ const docTemplate = `{
         "WateringPlanUpdate": {
             "type": "object",
             "required": [
+                "additional_information",
                 "cancellation_note",
                 "date",
                 "description",
+                "evaluation",
+                "provider",
                 "status",
+                "trailer_id",
                 "transporter_id",
                 "tree_cluster_ids",
                 "user_ids"
@@ -4871,7 +4968,19 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "$ref": "#/definitions/WateringPlanStatus"
+                    "enum": [
+                        "planned",
+                        "active",
+                        "canceled",
+                        "finished",
+                        "not competed",
+                        "unknown"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/WateringPlanStatus"
+                        }
+                    ]
                 },
                 "trailer_id": {
                     "type": "integer"
@@ -4881,12 +4990,14 @@ const docTemplate = `{
                 },
                 "tree_cluster_ids": {
                     "type": "array",
+                    "minItems": 1,
                     "items": {
                         "type": "integer"
                     }
                 },
                 "user_ids": {
                     "type": "array",
+                    "minItems": 1,
                     "items": {
                         "type": "string"
                     }

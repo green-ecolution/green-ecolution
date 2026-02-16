@@ -4,11 +4,11 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AdditionalInformation** | Pointer to **map[string]interface{}** |  | [optional] 
+**AdditionalInformation** | **map[string]interface{}** |  | 
 **Date** | **string** |  | 
 **Description** | **string** |  | 
-**Provider** | Pointer to **string** |  | [optional] 
-**TrailerId** | Pointer to **int32** |  | [optional] 
+**Provider** | **string** |  | 
+**TrailerId** | **int32** |  | 
 **TransporterId** | **int32** |  | 
 **TreeClusterIds** | **[]int32** |  | 
 **UserIds** | **[]string** |  | 
@@ -17,7 +17,7 @@ Name | Type | Description | Notes
 
 ### NewWateringPlanCreate
 
-`func NewWateringPlanCreate(date string, description string, transporterId int32, treeClusterIds []int32, userIds []string, ) *WateringPlanCreate`
+`func NewWateringPlanCreate(additionalInformation map[string]interface{}, date string, description string, provider string, trailerId int32, transporterId int32, treeClusterIds []int32, userIds []string, ) *WateringPlanCreate`
 
 NewWateringPlanCreate instantiates a new WateringPlanCreate object
 This constructor will assign default values to properties that have it defined,
@@ -51,11 +51,6 @@ and a boolean to check if the value has been set.
 
 SetAdditionalInformation sets AdditionalInformation field to given value.
 
-### HasAdditionalInformation
-
-`func (o *WateringPlanCreate) HasAdditionalInformation() bool`
-
-HasAdditionalInformation returns a boolean if a field has been set.
 
 ### GetDate
 
@@ -116,11 +111,6 @@ and a boolean to check if the value has been set.
 
 SetProvider sets Provider field to given value.
 
-### HasProvider
-
-`func (o *WateringPlanCreate) HasProvider() bool`
-
-HasProvider returns a boolean if a field has been set.
 
 ### GetTrailerId
 
@@ -141,11 +131,6 @@ and a boolean to check if the value has been set.
 
 SetTrailerId sets TrailerId field to given value.
 
-### HasTrailerId
-
-`func (o *WateringPlanCreate) HasTrailerId() bool`
-
-HasTrailerId returns a boolean if a field has been set.
 
 ### GetTransporterId
 
