@@ -34,7 +34,7 @@ import (
 )
 
 func main() {
-	body := *openapiclient.NewTreeCreate("Description_example", float32(123), float32(123), "Number_example", int32(123), "Species_example") // TreeCreate | Tree data to create
+	body := *openapiclient.NewTreeCreate(map[string]interface{}{"key": interface{}(123)}, "Description_example", float32(123), float32(123), "Number_example", int32(123), "Provider_example", "SensorId_example", "Species_example", int32(123)) // TreeCreate | Tree data to create
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -376,7 +376,7 @@ import (
 
 func main() {
 	treeId := int32(56) // int32 | Tree ID
-	body := *openapiclient.NewTreeUpdate("Description_example", float32(123), float32(123), "Number_example", int32(123), "Species_example") // TreeUpdate | Tree data to update
+	body := *openapiclient.NewTreeUpdate(map[string]interface{}{"key": interface{}(123)}, "Description_example", float32(123), float32(123), "Number_example", int32(123), "Provider_example", "SensorId_example", "Species_example", int32(123)) // TreeUpdate | Tree data to update
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
