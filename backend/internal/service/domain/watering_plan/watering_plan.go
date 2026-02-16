@@ -132,6 +132,10 @@ func (w *WateringPlanService) Create(ctx context.Context, createWp *entities.Wat
 		return nil, service.MapError(ctx, errors.Join(err, service.ErrValidation), service.ErrorLogValidation)
 	}
 
+	if err := w.validateDate(ctx, createWp.Date); err != nil {
+		return nil, err
+	}
+
 	treeClusters, err := w.fetchTreeClusters(ctx, createWp.TreeClusterIDs)
 	if err != nil {
 		return nil, service.MapError(ctx, err, service.ErrorLogEntityNotFound)
@@ -249,6 +253,10 @@ func (w *WateringPlanService) Update(ctx context.Context, id int32, updateWp *en
 	if err := w.validator.Struct(updateWp); err != nil {
 		log.Debug("failed to validate struct from update watering plan", "error", err, "raw_watering_plan", fmt.Sprintf("%+v", updateWp))
 		return nil, service.MapError(ctx, errors.Join(err, service.ErrValidation), service.ErrorLogValidation)
+	}
+
+	if err := w.validateDate(ctx, updateWp.Date); err != nil {
+		return nil, err
 	}
 
 	prevWp, err := w.GetByID(ctx, id)
@@ -497,6 +505,16 @@ func (w *WateringPlanService) validateUserDrivingLicenses(users []*entities.User
 	}
 
 	return service.NewError(service.BadRequest, "no user has all the required licenses")
+}
+
+func (w *WateringPlanService) validateDate(ctx context.Context, date time.Time) error {
+	log := logger.GetLogger(ctx)
+	today := time.Now().Truncate(24 * time.Hour)
+	if date.Before(today) {
+		log.Debug("date must be today or in the future", "date", date)
+		return service.NewError(service.BadRequest, "date must be today or in the future")
+	}
+	return nil
 }
 
 func (w *WateringPlanService) validateStatusDependentValues(ctx context.Context, entity *entities.WateringPlanUpdate) error {

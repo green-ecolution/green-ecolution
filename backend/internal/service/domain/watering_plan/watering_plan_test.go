@@ -165,8 +165,10 @@ func TestWateringPlanService_Create(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	futureDate := time.Now().Add(24 * time.Hour).Truncate(24 * time.Hour)
+
 	newWateringPlan := &entities.WateringPlanCreate{
-		Date:           time.Date(2024, 9, 26, 0, 0, 0, 0, time.UTC),
+		Date:           futureDate,
 		Description:    "New watering plan",
 		TransporterID:  utils.P(int32(2)),
 		TrailerID:      utils.P(int32(1)),
@@ -238,7 +240,7 @@ func TestWateringPlanService_Create(t *testing.T) {
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
 		newWateringPlan := &entities.WateringPlanCreate{
-			Date:           time.Date(2024, 9, 26, 0, 0, 0, 0, time.UTC),
+			Date:           futureDate,
 			Description:    "New watering plan",
 			TransporterID:  utils.P(int32(2)),
 			TreeClusterIDs: []*int32{utils.P(int32(1)), utils.P(int32(2))},
@@ -280,6 +282,33 @@ func TestWateringPlanService_Create(t *testing.T) {
 		// then
 		assert.NoError(t, err)
 		assert.Equal(t, allTestWateringPlans[0], result)
+	})
+
+	t.Run("should return error when date is in the past", func(t *testing.T) {
+		wateringPlanRepo := storageMock.NewMockWateringPlanRepository(t)
+		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
+		vehicleRepo := storageMock.NewMockVehicleRepository(t)
+		userRepo := storageMock.NewMockUserRepository(t)
+		routingRepo := storageMock.NewMockRoutingRepository(t)
+		s3Repo := storageMock.NewMockS3Repository(t)
+
+		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
+
+		pastPlan := &entities.WateringPlanCreate{
+			Date:           time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+			Description:    "Past date plan",
+			TransporterID:  utils.P(int32(2)),
+			TreeClusterIDs: []*int32{utils.P(int32(1))},
+			UserIDs:        []*uuid.UUID{&testUUID},
+		}
+
+		// when
+		result, err := svc.Create(ctx, pastPlan)
+
+		// then
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "date must be today or in the future")
 	})
 
 	t.Run("should return an error when finding treeclusters fails", func(t *testing.T) {
@@ -764,8 +793,10 @@ func TestWateringPlanService_Update(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	futureDate := time.Now().Add(24 * time.Hour).Truncate(24 * time.Hour)
+
 	updatedWateringPlan := &entities.WateringPlanUpdate{
-		Date:             time.Date(2024, 8, 3, 0, 0, 0, 0, time.UTC),
+		Date:             futureDate,
 		Description:      "New watering plan for the east side of the city",
 		TransporterID:    utils.P(int32(2)),
 		TrailerID:        utils.P(int32(1)),
@@ -844,7 +875,7 @@ func TestWateringPlanService_Update(t *testing.T) {
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
 		updatedWateringPlan := &entities.WateringPlanUpdate{
-			Date:             time.Date(2024, 8, 3, 0, 0, 0, 0, time.UTC),
+			Date:             futureDate,
 			Status:           entities.WateringPlanStatusFinished,
 			CancellationNote: "",
 			Description:      "New watering plan for the east side of the city",
@@ -913,7 +944,7 @@ func TestWateringPlanService_Update(t *testing.T) {
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
 		updatedWateringPlan := &entities.WateringPlanUpdate{
-			Date:             time.Date(2024, 8, 3, 0, 0, 0, 0, time.UTC),
+			Date:             futureDate,
 			Status:           entities.WateringPlanStatusActive,
 			CancellationNote: "",
 			Description:      "New watering plan for the east side of the city",
@@ -962,6 +993,34 @@ func TestWateringPlanService_Update(t *testing.T) {
 		// then
 		assert.NoError(t, err)
 		assert.Equal(t, allTestWateringPlans[0], result)
+	})
+
+	t.Run("should return error when date is in the past", func(t *testing.T) {
+		wateringPlanRepo := storageMock.NewMockWateringPlanRepository(t)
+		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
+		vehicleRepo := storageMock.NewMockVehicleRepository(t)
+		userRepo := storageMock.NewMockUserRepository(t)
+		routingRepo := storageMock.NewMockRoutingRepository(t)
+		s3Repo := storageMock.NewMockS3Repository(t)
+
+		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
+
+		pastPlan := &entities.WateringPlanUpdate{
+			Date:           time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+			Description:    "Past date update",
+			TransporterID:  utils.P(int32(2)),
+			TreeClusterIDs: []*int32{utils.P(int32(1))},
+			UserIDs:        []*uuid.UUID{&testUUID},
+			Status:         entities.WateringPlanStatusPlanned,
+		}
+
+		// when
+		result, err := svc.Update(ctx, int32(1), pastPlan)
+
+		// then
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "date must be today or in the future")
 	})
 
 	t.Run("should return an error when finding treeclusters fails", func(t *testing.T) {
@@ -1672,16 +1731,18 @@ func TestWateringPlanService_EventSystem(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		futureDate := time.Now().Add(24 * time.Hour).Truncate(24 * time.Hour)
+
 		prevWp := entities.WateringPlan{
 			ID:           1,
-			Date:         time.Date(2024, 8, 3, 0, 0, 0, 0, time.UTC),
+			Date:         futureDate,
 			TreeClusters: []*entities.TreeCluster{{ID: 1}},
 			Status:       entities.WateringPlanStatusActive,
 			UserIDs:      []*uuid.UUID{&testUUID},
 		}
 
 		updatedWateringPlan := &entities.WateringPlanUpdate{
-			Date:           time.Date(2024, 8, 3, 0, 0, 0, 0, time.UTC),
+			Date:           futureDate,
 			TransporterID:  utils.P(int32(2)),
 			TreeClusterIDs: []*int32{utils.P(int32(1)), utils.P(int32(2))},
 			UserIDs:        []*uuid.UUID{&testUUID},
@@ -1690,7 +1751,7 @@ func TestWateringPlanService_EventSystem(t *testing.T) {
 
 		expectedWp := entities.WateringPlan{
 			ID:           1,
-			Date:         time.Date(2024, 8, 3, 0, 0, 0, 0, time.UTC),
+			Date:         futureDate,
 			TreeClusters: []*entities.TreeCluster{{ID: 1}},
 			Status:       entities.WateringPlanStatusActive,
 			UserIDs:      []*uuid.UUID{&testUUID},
