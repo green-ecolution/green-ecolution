@@ -202,12 +202,13 @@ interface CancelPlanProps {
   onSubmit: SubmitHandler<WateringPlanCancelForm>
 }
 
-const CancelWateringPlan = ({ onSubmit }: CancelPlanProps) => {
+export const CancelWateringPlan = ({ onSubmit }: CancelPlanProps) => {
   const {
     register,
     handleSubmit,
     formState: { isValid, errors },
   } = useForm({
+    mode: 'onChange',
     resolver: zodResolver(wateringPlanCancelSchema),
   })
 
@@ -235,13 +236,18 @@ interface FinishedPlanProps {
   loadedData: WateringPlan
 }
 
-const FinishedWateringPlan = ({ wateringPlanId, onSubmit, loadedData }: FinishedPlanProps) => {
+export const FinishedWateringPlan = ({
+  wateringPlanId,
+  onSubmit,
+  loadedData,
+}: FinishedPlanProps) => {
   const {
     register,
     handleSubmit,
     formState: { isValid },
     control,
   } = useForm({
+    mode: 'onChange',
     resolver: zodResolver(wateringPlanFinishedSchema),
     defaultValues: {
       evaluation: loadedData.treeclusters.map((cluster) => ({
