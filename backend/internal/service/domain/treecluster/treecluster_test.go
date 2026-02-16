@@ -331,29 +331,6 @@ func TestTreeClusterService_Create(t *testing.T) {
 		// assert.EqualError(t, err, "500: Failed to create cluster")
 	})
 
-	t.Run("should return validation error on empty name", func(t *testing.T) {
-		// given
-		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
-		treeRepo := storageMock.NewMockTreeRepository(t)
-		regionRepo := storageMock.NewMockRegionRepository(t)
-		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, globalEventManager)
-
-		newCluster := &entities.TreeClusterCreate{
-			Name:          "",
-			Address:       "123 Main St",
-			Description:   "Test description",
-			SoilCondition: entities.TreeSoilConditionLehmig,
-			TreeIDs:       []*int32{},
-		}
-
-		// when
-		result, err := svc.Create(ctx, newCluster)
-
-		// then
-		assert.Error(t, err)
-		assert.Nil(t, result)
-		//assert.EqualError(t, err, "400: validation error: Key: 'TreeClusterCreate.Name' Error:Field validation for 'Name' failed on the 'required' tag")
-	})
 }
 
 func TestTreeClusterService_Update(t *testing.T) {
@@ -532,29 +509,6 @@ func TestTreeClusterService_Update(t *testing.T) {
 		// assert.EqualError(t, err, "404: treecluster not found")
 	})
 
-	t.Run("should return validation error on empty name", func(t *testing.T) {
-		// given
-		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
-		treeRepo := storageMock.NewMockTreeRepository(t)
-		regionRepo := storageMock.NewMockRegionRepository(t)
-		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, globalEventManager)
-
-		updateCluster := &entities.TreeClusterUpdate{
-			Name:          "",
-			Address:       "123 Main St",
-			Description:   "Test description",
-			SoilCondition: entities.TreeSoilConditionLehmig,
-			TreeIDs:       []*int32{},
-		}
-
-		// when
-		result, err := svc.Update(ctx, int32(1), updateCluster)
-
-		// then
-		assert.Error(t, err)
-		assert.Nil(t, result)
-		// assert.Contains(t, err.Error(), "400: validation error")
-	})
 }
 
 func TestTreeClusterService_EventSystem(t *testing.T) {

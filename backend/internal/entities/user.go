@@ -27,10 +27,10 @@ const (
 type User struct {
 	ID              uuid.UUID
 	CreatedAt       time.Time
-	Username        string `validate:"required,min=3,max=15"`
-	FirstName       string `validate:"required,min=3,max=30"`
-	LastName        string `validate:"required,min=3,max=30"`
-	Email           string `validate:"required,email"`
+	Username        string
+	FirstName       string
+	LastName        string
+	Email           string
 	EmployeeID      string
 	PhoneNumber     string
 	EmailVerified   bool
@@ -42,7 +42,7 @@ type User struct {
 
 type RegisterUser struct {
 	User     User
-	Password string `validate:"required"`
+	Password string
 	Roles    []string
 }
 

@@ -34,10 +34,10 @@ type LoginResp struct {
 }
 
 type LoginCallback struct {
-	Code        string `validate:"required"`
+	Code        string
 	RedirectURL *url.URL
 }
 
 type Logout struct {
-	RefreshToken string `validate:"required"`
+	RefreshToken string
 }

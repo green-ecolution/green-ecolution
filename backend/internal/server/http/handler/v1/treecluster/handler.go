@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper/generated"
+	handler "github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/errorhandler"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils/pagination"
@@ -111,12 +112,12 @@ func CreateTreeCluster(svc service.TreeClusterService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
 
-		var req entities.TreeClusterCreateRequest
-		if err := c.BodyParser(&req); err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		req, err := handler.BindAndValidate[entities.TreeClusterCreateRequest](c)
+		if err != nil {
+			return err
 		}
 
-		domainReq := treeClusterMapper.FromCreateRequest(&req)
+		domainReq := treeClusterMapper.FromCreateRequest(req)
 		domainData, err := svc.Create(ctx, domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)
@@ -152,12 +153,12 @@ func UpdateTreeCluster(svc service.TreeClusterService) fiber.Handler {
 			return errorhandler.HandleError(err)
 		}
 
-		var req entities.TreeClusterUpdateRequest
-		if err = c.BodyParser(&req); err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		req, err := handler.BindAndValidate[entities.TreeClusterUpdateRequest](c)
+		if err != nil {
+			return err
 		}
 
-		domainReq := treeClusterMapper.FromUpdateRequest(&req)
+		domainReq := treeClusterMapper.FromUpdateRequest(req)
 		domainData, err := svc.Update(ctx, int32(id), domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)

@@ -40,26 +40,26 @@ type WateringPlan struct {
 }
 
 type WateringPlanCreate struct {
-	Date           time.Time `validate:"required"`
+	Date           time.Time
 	Description    string
-	TreeClusterIDs []*int32 `validate:"required,min=1,dive,required"`
-	TransporterID  *int32   `validate:"required"`
+	TreeClusterIDs []*int32
+	TransporterID  *int32
 	TrailerID      *int32
-	UserIDs        []*uuid.UUID `validate:"required,min=1,dive,required"`
+	UserIDs        []*uuid.UUID
 	Provider       string
 	AdditionalInfo map[string]interface{}
 }
 
 type WateringPlanUpdate struct {
-	Date             time.Time `validate:"required"`
+	Date             time.Time
 	Description      string
-	TreeClusterIDs   []*int32 `validate:"required,min=1,dive,required"`
-	TransporterID    *int32   `validate:"required"`
+	TreeClusterIDs   []*int32
+	TransporterID    *int32
 	TrailerID        *int32
 	CancellationNote string
-	Status           WateringPlanStatus `validate:"oneof=planned active canceled finished 'not competed' unknown"`
+	Status           WateringPlanStatus
 	Evaluation       []*EvaluationValue
-	UserIDs          []*uuid.UUID `validate:"required,min=1,dive,required"`
+	UserIDs          []*uuid.UUID
 	Provider         string
 	AdditionalInfo   map[string]interface{}
 }
