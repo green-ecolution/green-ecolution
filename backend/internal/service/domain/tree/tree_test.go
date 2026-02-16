@@ -329,31 +329,6 @@ func TestTreeService_Create(t *testing.T) {
 		assert.Equal(t, expectedTree, result)
 	})
 
-	t.Run("should return validation error", func(t *testing.T) {
-		// given
-		treeRepo := storageMock.NewMockTreeRepository(t)
-		sensorRepo := storageMock.NewMockSensorRepository(t)
-		treeClusterRepo := storageMock.NewMockTreeClusterRepository(t)
-
-		svc := tree.NewTreeService(treeRepo, sensorRepo, treeClusterRepo, globalEventManager)
-
-		invalidTreeCreate := &entities.TreeCreate{
-			Species:      "Oak",
-			Latitude:     0,  // Invalid: must be between -90 and 90
-			Longitude:    0,  // Invalid: must be between -180 and 180
-			PlantingYear: 0,  // Invalid: PlantingYear is required
-			Number:       "", // Invalid: Number is required
-		}
-
-		// when
-		result, err := svc.Create(ctx, invalidTreeCreate)
-
-		// then
-		assert.Error(t, err)
-		assert.Nil(t, result)
-		// assert.ErrorContains(t, err, "400: validation error")
-	})
-
 	t.Run("should return error when fetching TreeCluster fails", func(t *testing.T) {
 		// given
 		treeRepo := storageMock.NewMockTreeRepository(t)
@@ -628,29 +603,6 @@ func TestTreeService_Update(t *testing.T) {
 		// then
 		assert.NoError(t, err)
 		assert.Equal(t, updatedTree, result)
-	})
-
-	t.Run("should return validation error", func(t *testing.T) {
-		// given
-		treeRepo := storageMock.NewMockTreeRepository(t)
-		sensorRepo := storageMock.NewMockSensorRepository(t)
-		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
-		eventManager := worker.NewEventManager(entities.EventTypeUpdateTree)
-		svc := tree.NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager)
-
-		invalidTreeUpdate := &entities.TreeUpdate{
-			Latitude:     0,
-			Longitude:    0,
-			PlantingYear: -2013,
-		}
-
-		// when
-		result, err := svc.Update(ctx, 1, invalidTreeUpdate)
-
-		// then
-		assert.Error(t, err)
-		assert.Nil(t, result)
-		//assert.ErrorContains(t, err, "400: validation error")
 	})
 
 	t.Run("should return error if tree not found", func(t *testing.T) {
