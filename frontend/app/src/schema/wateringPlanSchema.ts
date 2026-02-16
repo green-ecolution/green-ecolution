@@ -34,7 +34,7 @@ export const wateringPlanSchema = wateringPlanSchemaBase.extend({
 export const wateringPlanFinishedSchema = z.object({
   evaluation: z.array(
     z.object({
-      consumedWater: z.number().positive(),
+      consumedWater: z.coerce.number().positive(),
       treeClusterId: z.number(),
       wateringPlanId: z.number(),
     }),

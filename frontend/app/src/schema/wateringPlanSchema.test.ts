@@ -175,6 +175,23 @@ describe('wateringPlanFinishedSchema', () => {
     })
     expect(result.success).toBe(true)
   })
+
+  it('coerces string consumedWater to number', () => {
+    const result = wateringPlanFinishedSchema.safeParse({
+      evaluation: [{ consumedWater: '100', treeClusterId: 1, wateringPlanId: 1 }],
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.evaluation[0].consumedWater).toBe(100)
+    }
+  })
+
+  it('rejects negative consumedWater', () => {
+    const result = wateringPlanFinishedSchema.safeParse({
+      evaluation: [{ consumedWater: '-50', treeClusterId: 1, wateringPlanId: 1 }],
+    })
+    expect(result.success).toBe(false)
+  })
 })
 
 describe('wateringPlanCancelSchema', () => {
