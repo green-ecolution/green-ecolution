@@ -2,31 +2,29 @@
   <a href="https://github.com/green-ecolution/green-ecolution/releases">
     <img alt="GitHub Release" src="https://img.shields.io/github/v/release/green-ecolution/green-ecolution"/>
   </a>
-  <a href=""><img alt="License" src="https://img.shields.io/github/license/green-ecolution/green-ecolution.svg"/></a>
-  <a href=""><img alt="Maintained yes" src="https://img.shields.io/badge/Maintained%3F-yes-green.svg"/></a>
-  <a href=""><img alt="Code coverage" src="https://raw.githubusercontent.com/green-ecolution/backend/badges/.badges/develop/coverage.svg"/></a>
-  <a href="https://pkg.go.dev/github.com/green-ecolution/backend">
-    <img src="https://pkg.go.dev/badge/github.com/green-ecolution/backend.svg" alt="Go Reference">
+  <img alt="License" src="https://img.shields.io/github/license/green-ecolution/green-ecolution.svg"/>
+  <img alt="Maintained yes" src="https://img.shields.io/badge/Maintained%3F-yes-green.svg"/>
+  <img alt="Code coverage" src="https://raw.githubusercontent.com/green-ecolution/green-ecolution/badges/.badges/main/coverage.svg"/>
+  <a href="https://pkg.go.dev/github.com/green-ecolution/green-ecolution/backend">
+    <img src="https://pkg.go.dev/badge/github.com/green-ecolution/green-ecolution/backend.svg" alt="Go Reference">
   </a>
 </p>
 
 # :seedling: Green Ecolution
 
-Urban green spaces need water — but how much, and when? City maintenance teams often drive fixed routes, watering trees on schedule rather than based on actual need. This wastes water, fuel, and staff time.
+Urban green spaces need water - but how much, and when? City maintenance teams often drive fixed routes, watering trees on schedule rather than based on actual need. This wastes water, fuel, and staff time.
 
-**Green Ecolution** changes that. Soil moisture sensors (LoRaWAN) report real-time data to our platform, which calculates optimized watering routes. Teams see exactly which trees need attention, plan efficient routes, and manage their fleet — all in one place.
+**Green Ecolution** changes that. Soil moisture sensors (LoRaWAN) report real-time data to our platform, which calculates optimized watering routes. Teams see exactly which trees need attention, plan efficient routes, and manage their fleet - all in one place.
 
 ![Dashboard Preview](assets/dashboard-preview.png)
 
-Developed by [PROGEEK GmbH](https://progeek.de) in collaboration with [TBZ Flensburg](https://www.flensburg.de/Rathaus-Politik/Verwaltung/Eigenbetriebe-Beteiligungen/TBZ-Technisches-Betriebszentrum). The system is designed to adapt to any city's needs.
-
 ## What it does
 
-- 🌳 **Tree management** — Track trees and tree clusters, monitor their watering status
-- 📡 **Sensor integration** — Receive soil moisture data via LoRaWAN/MQTT in real-time
-- 🗺️ **Route optimization** — Generate efficient watering routes using Valhalla + Vroom
-- 🚛 **Fleet management** — Manage vehicles, assign drivers, track watering plans
-- 📊 **Analytics** — Evaluate water consumption and team performance
+- 🌳 **Tree management** - Track trees and tree clusters, monitor their watering status
+- 📡 **Sensor integration** - Receive soil moisture data via LoRaWAN/MQTT in real-time
+- 🗺️ **Route optimization** - Generate efficient watering routes using Valhalla + Vroom
+- 🚛 **Fleet management** - Manage vehicles, assign drivers, track watering plans
+- 📊 **Analytics** - Evaluate water consumption and team performance
 
 ## Quick Start
 
@@ -89,7 +87,7 @@ When running `make infra/up`, these services are available via Traefik:
 ## Architecture
 
 ```
-backend/    → Go (Fiber, sqlc, pgx) — REST API, MQTT subscriber, auth
+backend/    → Go (Fiber, sqlc, pgx) - REST API, MQTT subscriber, auth
 frontend/   → React (Vite, TanStack Router/Query, Zustand, Tailwind)
 ```
 
@@ -106,7 +104,7 @@ See `compose.app.yaml` for examples.
 ## Contributing
 
 1. Fork this repository
-2. Create a branch from `develop`
+2. Create a branch from `main`
 3. Commit using [Conventional Commits](https://www.conventionalcommits.org/)
 4. Open a Pull Request
 

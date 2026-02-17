@@ -1,0 +1,46 @@
+name: "Coverage Badge"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - ".github/workflows/coverage.yaml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Dependencies
+        run: sudo apt-get update && sudo apt-get install -y libgeos-dev libproj-dev
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: ./backend/go.mod
+
+      - name: Run tests with coverage
+        working-directory: ./backend
+        run: |
+          PKGS=$(go list ./... | grep -v '/docs')
+          go test $PKGS -coverprofile=./cover.out -covermode=atomic -coverpkg=$(echo "$PKGS" | tr '\n' ',')
+
+      - name: Generate coverage badge
+        uses: vladopajic/go-test-coverage@v2
+        with:
+          profile: ./backend/cover.out
+          source-dir: ./backend
+          local-prefix: github.com/green-ecolution/green-ecolution/backend
+          git-token: ${{ github.token }}
+          git-branch: badges
+          git-file-name: .badges/${{ github.ref_name }}/coverage.svg
