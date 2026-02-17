@@ -22,12 +22,12 @@ var _ MappedNullable = &AppInfo{}
 
 // AppInfo struct for AppInfo
 type AppInfo struct {
-	BuildTime string     `json:"buildTime"`
-	Git       GitInfo    `json:"git"`
-	GoVersion string     `json:"goVersion"`
-	Map       MapInfo    `json:"map"`
-	Server    ServerInfo `json:"server"`
-	Version   string     `json:"version"`
+	BuildTime   string      `json:"buildTime"`
+	Git         GitInfo     `json:"git"`
+	GoVersion   string      `json:"goVersion"`
+	Map         MapInfo     `json:"map"`
+	Version     string      `json:"version"`
+	VersionInfo VersionInfo `json:"versionInfo"`
 }
 
 type _AppInfo AppInfo
@@ -36,14 +36,14 @@ type _AppInfo AppInfo
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewAppInfo(buildTime string, git GitInfo, goVersion string, map_ MapInfo, server ServerInfo, version string) *AppInfo {
+func NewAppInfo(buildTime string, git GitInfo, goVersion string, map_ MapInfo, version string, versionInfo VersionInfo) *AppInfo {
 	this := AppInfo{}
 	this.BuildTime = buildTime
 	this.Git = git
 	this.GoVersion = goVersion
 	this.Map = map_
-	this.Server = server
 	this.Version = version
+	this.VersionInfo = versionInfo
 	return &this
 }
 
@@ -151,30 +151,6 @@ func (o *AppInfo) SetMap(v MapInfo) {
 	o.Map = v
 }
 
-// GetServer returns the Server field value
-func (o *AppInfo) GetServer() ServerInfo {
-	if o == nil {
-		var ret ServerInfo
-		return ret
-	}
-
-	return o.Server
-}
-
-// GetServerOk returns a tuple with the Server field value
-// and a boolean to check if the value has been set.
-func (o *AppInfo) GetServerOk() (*ServerInfo, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Server, true
-}
-
-// SetServer sets field value
-func (o *AppInfo) SetServer(v ServerInfo) {
-	o.Server = v
-}
-
 // GetVersion returns the Version field value
 func (o *AppInfo) GetVersion() string {
 	if o == nil {
@@ -199,6 +175,30 @@ func (o *AppInfo) SetVersion(v string) {
 	o.Version = v
 }
 
+// GetVersionInfo returns the VersionInfo field value
+func (o *AppInfo) GetVersionInfo() VersionInfo {
+	if o == nil {
+		var ret VersionInfo
+		return ret
+	}
+
+	return o.VersionInfo
+}
+
+// GetVersionInfoOk returns a tuple with the VersionInfo field value
+// and a boolean to check if the value has been set.
+func (o *AppInfo) GetVersionInfoOk() (*VersionInfo, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.VersionInfo, true
+}
+
+// SetVersionInfo sets field value
+func (o *AppInfo) SetVersionInfo(v VersionInfo) {
+	o.VersionInfo = v
+}
+
 func (o AppInfo) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -213,8 +213,8 @@ func (o AppInfo) ToMap() (map[string]interface{}, error) {
 	toSerialize["git"] = o.Git
 	toSerialize["goVersion"] = o.GoVersion
 	toSerialize["map"] = o.Map
-	toSerialize["server"] = o.Server
 	toSerialize["version"] = o.Version
+	toSerialize["versionInfo"] = o.VersionInfo
 	return toSerialize, nil
 }
 
@@ -227,8 +227,8 @@ func (o *AppInfo) UnmarshalJSON(data []byte) (err error) {
 		"git",
 		"goVersion",
 		"map",
-		"server",
 		"version",
+		"versionInfo",
 	}
 
 	allProperties := make(map[string]interface{})

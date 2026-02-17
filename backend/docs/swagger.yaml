@@ -9,17 +9,17 @@ definitions:
         type: string
       map:
         $ref: '#/definitions/MapInfo'
-      server:
-        $ref: '#/definitions/ServerInfo'
       version:
         type: string
+      versionInfo:
+        $ref: '#/definitions/VersionInfo'
     required:
     - buildTime
     - git
     - goVersion
     - map
-    - server
     - version
+    - versionInfo
     type: object
   ClientToken:
     properties:
@@ -54,6 +54,25 @@ definitions:
     - scope
     - session_state
     - token_type
+    type: object
+  DataStatistics:
+    properties:
+      sensorCount:
+        type: integer
+      treeClusterCount:
+        type: integer
+      treeCount:
+        type: integer
+      vehicleCount:
+        type: integer
+      wateringPlanCount:
+        type: integer
+    required:
+    - sensorCount
+    - treeClusterCount
+    - treeCount
+    - vehicleCount
+    - wateringPlanCount
     type: object
   DrivingLicense:
     enum:
@@ -501,6 +520,34 @@ definitions:
     - port
     - uptime
     - url
+    type: object
+  ServiceStatus:
+    properties:
+      enabled:
+        type: boolean
+      healthy:
+        type: boolean
+      lastChecked:
+        type: string
+      message:
+        type: string
+      name:
+        type: string
+      responseTimeMs:
+        type: number
+    required:
+    - enabled
+    - healthy
+    - name
+    type: object
+  ServicesInfo:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/ServiceStatus'
+        type: array
+    required:
+    - items
     type: object
   SoilCondition:
     enum:
@@ -1091,6 +1138,26 @@ definitions:
     - weight
     - width
     type: object
+  VersionInfo:
+    properties:
+      current:
+        type: string
+      isDevelopment:
+        type: boolean
+      isStage:
+        type: boolean
+      latest:
+        type: string
+      releaseUrl:
+        type: string
+      updateAvailable:
+        type: boolean
+    required:
+    - current
+    - isDevelopment
+    - isStage
+    - updateAvailable
+    type: object
   WateringPlan:
     properties:
       additional_information:
@@ -1613,8 +1680,8 @@ paths:
       - Evaluation
   /v1/info:
     get:
-      description: Retrieves information about the application including version,
-        server configuration, and map settings.
+      description: Retrieves basic application information including version and git
+        info.
       operationId: get-app-info
       produces:
       - application/json
@@ -1642,6 +1709,85 @@ paths:
       security:
       - Keycloak: []
       summary: Get application info
+      tags:
+      - Info
+  /v1/info/map:
+    get:
+      description: Retrieves map center and bounding box configuration.
+      operationId: get-map-info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/MapInfo'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      summary: Get map configuration
+      tags:
+      - Info
+  /v1/info/server:
+    get:
+      description: Retrieves server details including hostname, IP, and uptime. Requires
+        authentication.
+      operationId: get-server-info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ServerInfo'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get server information
+      tags:
+      - Info
+  /v1/info/services:
+    get:
+      description: Retrieves health status of all backend services with response times.
+      operationId: get-services-status
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ServicesInfo'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      summary: Get services status
+      tags:
+      - Info
+  /v1/info/statistics:
+    get:
+      description: Retrieves counts of various entities in the system.
+      operationId: get-data-statistics
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/DataStatistics'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      summary: Get data statistics
       tags:
       - Info
   /v1/plugin:

@@ -60,6 +60,16 @@ func (r *VehicleRepository) GetAll(ctx context.Context, query entities.Query) ([
 	)
 }
 
+func (r *VehicleRepository) GetCount(ctx context.Context, query entities.Query) (int64, error) {
+	log := logger.GetLogger(ctx)
+	count, err := r.store.GetAllVehiclesCount(ctx, query.Provider)
+	if err != nil {
+		log.Debug("failed to get total vehicles count in db", "error", err)
+		return 0, err
+	}
+	return count, nil
+}
+
 func (r *VehicleRepository) GetAllWithArchived(ctx context.Context, provider string) ([]*entities.Vehicle, int64, error) {
 	return r.getHelper(
 		ctx,

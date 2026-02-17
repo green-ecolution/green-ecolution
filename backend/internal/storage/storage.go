@@ -70,7 +70,11 @@ type BasicCrudRepository[T entities.Entities] interface {
 }
 
 type InfoRepository interface {
-	GetAppInfo(context.Context) (*entities.App, error)
+	GetAppInfo(ctx context.Context) (*entities.App, error)
+	GetMapInfo(ctx context.Context) (*entities.Map, error)
+	GetServerInfo(ctx context.Context) (*entities.Server, error)
+	GetServices(ctx context.Context) (*entities.Services, error)
+	GetStatistics(ctx context.Context) (*entities.DataStatistics, error)
 }
 
 type RegionRepository interface {
@@ -99,6 +103,8 @@ type UserRepository interface {
 type VehicleRepository interface {
 	// GetAll returns all vehicles that are not archived
 	GetAll(ctx context.Context, query entities.Query) ([]*entities.Vehicle, int64, error)
+	// GetCount returns count of all vehicles
+	GetCount(ctx context.Context, query entities.Query) (int64, error)
 	// GetAllWithArchived returns all vehicles and archived as well
 	GetAllWithArchived(ctx context.Context, provider string) ([]*entities.Vehicle, int64, error)
 	// GetAllByType returns all vehicles by vehicle type that are not archived
