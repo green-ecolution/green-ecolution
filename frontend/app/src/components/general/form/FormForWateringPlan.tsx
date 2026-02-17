@@ -1,6 +1,6 @@
 import { MoveRight } from 'lucide-react'
 import {
-  FormField,
+  DatePickerField,
   TextareaField,
   Label,
   Select,
@@ -58,13 +58,12 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
           control={control}
           name="date"
           render={({ field: { value, onChange } }) => (
-            <FormField
+            <DatePickerField
               label="Datum des Einsatzes"
               error={errors.date?.message}
               required
-              type="date"
-              onChange={onChange}
-              value={new Date(value).toISOString().split('T')[0]}
+              value={value ? new Date(value) : undefined}
+              onChange={(date) => onChange(date)}
             />
           )}
         />

@@ -60,6 +60,10 @@ export {
 export { Button, buttonVariants } from './components/ui/button'
 export type { ButtonProps } from './components/ui/button'
 
+// Calendar
+export { Calendar } from './components/ui/calendar'
+export type { CalendarProps } from './components/ui/calendar'
+
 // Card
 export {
   Card,
@@ -86,6 +90,10 @@ export type { ChartConfig } from './components/ui/chart'
 
 // Checkbox
 export { Checkbox } from './components/ui/checkbox'
+
+// DatePickerField
+export { DatePickerField } from './components/ui/date-picker-field'
+export type { DatePickerFieldProps } from './components/ui/date-picker-field'
 
 // DetailedList
 export { DetailedList } from './components/ui/detailed-list'
@@ -185,6 +193,9 @@ export type {
 // MultiSelect
 export { MultiSelect } from './components/ui/multi-select'
 export type { MultiSelectProps, MultiSelectOption } from './components/ui/multi-select'
+
+// Popover
+export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor } from './components/ui/popover'
 
 // Pagination
 export {
