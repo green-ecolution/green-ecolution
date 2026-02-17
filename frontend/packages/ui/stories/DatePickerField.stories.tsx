@@ -17,11 +17,7 @@ export const Default: Story = {
     const [date, setDate] = useState<Date | undefined>()
     return (
       <div className="max-w-sm">
-        <DatePickerField
-          label="Datum"
-          value={date}
-          onChange={setDate}
-        />
+        <DatePickerField label="Datum" value={date} onChange={setDate} />
       </div>
     )
   },
@@ -32,12 +28,7 @@ export const WithPreselectedDate: Story = {
     const [date, setDate] = useState<Date | undefined>(new Date())
     return (
       <div className="max-w-sm">
-        <DatePickerField
-          label="Datum des Einsatzes"
-          value={date}
-          onChange={setDate}
-          required
-        />
+        <DatePickerField label="Datum des Einsatzes" value={date} onChange={setDate} required />
       </div>
     )
   },
@@ -98,11 +89,7 @@ export const WithDateConstraints: Story = {
 export const Disabled: Story = {
   render: () => (
     <div className="max-w-sm">
-      <DatePickerField
-        label="Datum"
-        value={new Date()}
-        disabled
-      />
+      <DatePickerField label="Datum" value={new Date()} disabled />
     </div>
   ),
 }

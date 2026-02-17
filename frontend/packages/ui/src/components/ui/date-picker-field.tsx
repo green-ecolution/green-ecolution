@@ -46,10 +46,7 @@ function DatePickerField({
 
   return (
     <div data-slot="date-picker-field" className={cn('flex flex-col gap-y-2', className)}>
-      <Label
-        htmlFor={inputId}
-        className={cn(hideLabel && 'sr-only', error && 'text-destructive')}
-      >
+      <Label htmlFor={inputId} className={cn(hideLabel && 'sr-only', error && 'text-destructive')}>
         {label}
         {required && <span className="text-destructive ml-1">*</span>}
       </Label>

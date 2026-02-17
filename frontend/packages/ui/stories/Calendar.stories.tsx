@@ -16,28 +16,14 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   render: () => {
     const [date, setDate] = useState<Date | undefined>(new Date())
-    return (
-      <Calendar
-        mode="single"
-        selected={date}
-        onSelect={setDate}
-        locale={de}
-      />
-    )
+    return <Calendar mode="single" selected={date} onSelect={setDate} locale={de} />
   },
 }
 
 export const WithoutSelectedDate: Story = {
   render: () => {
     const [date, setDate] = useState<Date | undefined>()
-    return (
-      <Calendar
-        mode="single"
-        selected={date}
-        onSelect={setDate}
-        locale={de}
-      />
-    )
+    return <Calendar mode="single" selected={date} onSelect={setDate} locale={de} />
   },
 }
 
@@ -64,13 +50,7 @@ export const DateRange: Story = {
       to: addDays(new Date(), 7),
     })
     return (
-      <Calendar
-        mode="range"
-        selected={range}
-        onSelect={setRange}
-        locale={de}
-        numberOfMonths={2}
-      />
+      <Calendar mode="range" selected={range} onSelect={setRange} locale={de} numberOfMonths={2} />
     )
   },
 }
