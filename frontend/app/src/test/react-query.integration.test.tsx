@@ -53,6 +53,15 @@ function createWrapper(queryClient?: QueryClient) {
   )
 }
 
+function createSuspenseWrapper() {
+  const queryClient = createTestQueryClient()
+  return ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+    </QueryClientProvider>
+  )
+}
+
 describe('React Query Integration Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -473,15 +482,6 @@ describe('React Query Integration Tests', () => {
         }),
       )
 
-      const SuspenseWrapper = ({ children }: { children: ReactNode }) => {
-        const queryClient = createTestQueryClient()
-        return (
-          <QueryClientProvider client={queryClient}>
-            <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
-          </QueryClientProvider>
-        )
-      }
-
       const { result } = renderHook(
         () =>
           useSuspenseQuery({
@@ -491,7 +491,7 @@ describe('React Query Integration Tests', () => {
               return res.json() as Promise<PaginatedResponse<TreeData>>
             },
           }),
-        { wrapper: SuspenseWrapper },
+        { wrapper: createSuspenseWrapper() },
       )
 
       await waitFor(() => {

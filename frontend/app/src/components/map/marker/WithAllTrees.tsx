@@ -1,7 +1,7 @@
 import { Tree } from '@green-ecolution/backend-client'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { treeQuery } from '@/api/queries'
-import { TreeMarkerIcon } from '../MapMarker'
+import { TreeMarkerIcon } from '../markerIcons'
 import MarkerList from './MarkerList'
 import { getStatusColor } from '../utils'
 import { memo, useCallback, useDeferredValue, useMemo } from 'react'

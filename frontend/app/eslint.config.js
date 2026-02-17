@@ -37,7 +37,10 @@ export default tseslint.config(
       ...reactX.configs['recommended-typescript'].rules,
       ...reactDom.configs.recommended.rules,
       ...reactHooks.configs['recommended-latest'].rules,
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true, allowExportNames: ['Route', 'loader'] },
+      ],
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
@@ -64,6 +67,12 @@ export default tseslint.config(
           checksVoidReturn: false,
         },
       ],
+    },
+  },
+  {
+    files: ['src/routes/**/*.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
     },
   },
 )

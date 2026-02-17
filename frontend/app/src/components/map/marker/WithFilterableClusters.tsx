@@ -8,7 +8,7 @@ import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset
 import RegionFieldset from '@/components/general/filter/fieldsets/RegionFieldset'
 import useMapInteractions from '@/hooks/useMapInteractions'
 import MarkerList from './MarkerList'
-import { ClusterIcon } from '../MapMarker'
+import { ClusterIcon } from '../markerIcons'
 import { getStatusColor } from '../utils'
 import {
   Button,

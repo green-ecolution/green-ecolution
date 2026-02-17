@@ -1,5 +1,5 @@
 import { Marker } from 'react-leaflet'
-import { RefillIcon, RouteIcon } from '../MapMarker'
+import { RefillIcon, RouteIcon } from '../markerIcons'
 
 export interface RouteMarkerProps {
   label?: string

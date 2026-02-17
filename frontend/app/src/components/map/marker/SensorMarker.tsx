@@ -1,6 +1,6 @@
 import { Marker, Tooltip } from 'react-leaflet'
 import { Sensor } from '@green-ecolution/backend-client'
-import { SensorMarkerIcon } from '../MapMarker'
+import { SensorMarkerIcon } from '../markerIcons'
 
 export interface SensorMarkerProps {
   sensor: Sensor
