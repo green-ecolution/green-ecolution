@@ -1,6 +1,6 @@
 import { Tree } from '@green-ecolution/backend-client'
 import MarkerList from './MarkerList'
-import { TreeMarkerIcon } from '../MapMarker'
+import { TreeMarkerIcon } from '../markerIcons'
 import { getStatusColor } from '../utils'
 import { memo, useCallback, useDeferredValue, useMemo } from 'react'
 
