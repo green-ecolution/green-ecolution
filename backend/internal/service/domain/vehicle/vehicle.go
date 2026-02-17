@@ -3,9 +3,7 @@ package vehicle
 import (
 	"context"
 	"errors"
-	"fmt"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
@@ -14,13 +12,11 @@ import (
 
 type VehicleService struct {
 	vehicleRepo storage.VehicleRepository
-	validator   *validator.Validate
 }
 
 func NewVehicleService(vehicleRepository storage.VehicleRepository) service.VehicleService {
 	return &VehicleService{
 		vehicleRepo: vehicleRepository,
-		validator:   validator.New(),
 	}
 }
 
@@ -93,10 +89,6 @@ func (v *VehicleService) GetByPlate(ctx context.Context, plate string) (*entitie
 
 func (v *VehicleService) Create(ctx context.Context, createData *entities.VehicleCreate) (*entities.Vehicle, error) {
 	log := logger.GetLogger(ctx)
-	if err := v.validator.Struct(createData); err != nil {
-		log.Debug("failed to validate struct from create vehicle", "error", err, "raw_vehicle", fmt.Sprintf("%+v", createData))
-		return nil, service.MapError(ctx, errors.Join(err, service.ErrValidation), service.ErrorLogValidation)
-	}
 
 	if isTaken, err := v.isVehicleNumberPlateTaken(ctx, createData.NumberPlate); err != nil {
 		log.Debug("failed to request if vehicle plate is already taken", "error", err, "vehicle_plate", createData.NumberPlate)
@@ -134,10 +126,6 @@ func (v *VehicleService) Create(ctx context.Context, createData *entities.Vehicl
 
 func (v *VehicleService) Update(ctx context.Context, id int32, updateData *entities.VehicleUpdate) (*entities.Vehicle, error) {
 	log := logger.GetLogger(ctx)
-	if err := v.validator.Struct(updateData); err != nil {
-		log.Debug("failed to validate struct from update vehicle", "error", err, "raw_vehicle", fmt.Sprintf("%+v", updateData))
-		return nil, service.MapError(ctx, errors.Join(err, service.ErrValidation), service.ErrorLogValidation)
-	}
 
 	oldValue, err := v.GetByID(ctx, id)
 	if err != nil {

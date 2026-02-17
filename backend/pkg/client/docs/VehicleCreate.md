@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AdditionalInformation** | Pointer to **map[string]interface{}** |  | [optional] 
+**AdditionalInformation** | **map[string]interface{}** |  | 
 **Description** | **string** |  | 
 **DrivingLicense** | [**DrivingLicense**](DrivingLicense.md) |  | 
 **Height** | **float32** |  | 
 **Length** | **float32** |  | 
 **Model** | **string** |  | 
 **NumberPlate** | **string** |  | 
-**Provider** | Pointer to **string** |  | [optional] 
+**Provider** | **string** |  | 
 **Status** | [**VehicleStatus**](VehicleStatus.md) |  | 
 **Type** | [**VehicleType**](VehicleType.md) |  | 
 **WaterCapacity** | **float32** |  | 
@@ -22,7 +22,7 @@ Name | Type | Description | Notes
 
 ### NewVehicleCreate
 
-`func NewVehicleCreate(description string, drivingLicense DrivingLicense, height float32, length float32, model string, numberPlate string, status VehicleStatus, type_ VehicleType, waterCapacity float32, weight float32, width float32, ) *VehicleCreate`
+`func NewVehicleCreate(additionalInformation map[string]interface{}, description string, drivingLicense DrivingLicense, height float32, length float32, model string, numberPlate string, provider string, status VehicleStatus, type_ VehicleType, waterCapacity float32, weight float32, width float32, ) *VehicleCreate`
 
 NewVehicleCreate instantiates a new VehicleCreate object
 This constructor will assign default values to properties that have it defined,
@@ -56,11 +56,6 @@ and a boolean to check if the value has been set.
 
 SetAdditionalInformation sets AdditionalInformation field to given value.
 
-### HasAdditionalInformation
-
-`func (o *VehicleCreate) HasAdditionalInformation() bool`
-
-HasAdditionalInformation returns a boolean if a field has been set.
 
 ### GetDescription
 
@@ -201,11 +196,6 @@ and a boolean to check if the value has been set.
 
 SetProvider sets Provider field to given value.
 
-### HasProvider
-
-`func (o *VehicleCreate) HasProvider() bool`
-
-HasProvider returns a boolean if a field has been set.
 
 ### GetStatus
 

@@ -101,7 +101,7 @@ import (
 )
 
 func main() {
-	body := *openapiclient.NewWateringPlanCreate("Date_example", "Description_example", int32(123), []int32{int32(123)}, []string{"UserIds_example"}) // WateringPlanCreate | Watering plan data to create
+	body := *openapiclient.NewWateringPlanCreate(map[string]interface{}{"key": interface{}(123)}, "Date_example", "Description_example", "Provider_example", int32(123), int32(123), []int32{int32(123)}, []string{"UserIds_example"}) // WateringPlanCreate | Watering plan data to create
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -446,7 +446,7 @@ import (
 
 func main() {
 	id := int32(56) // int32 | Watering Plan ID
-	body := *openapiclient.NewWateringPlanUpdate("CancellationNote_example", "Date_example", "Description_example", openapiclient.WateringPlanStatus("planned"), int32(123), []int32{int32(123)}, []string{"UserIds_example"}) // WateringPlanUpdate | Watering plan data to update
+	body := *openapiclient.NewWateringPlanUpdate(map[string]interface{}{"key": interface{}(123)}, "CancellationNote_example", "Date_example", "Description_example", []openapiclient.EvaluationValue{*openapiclient.NewEvaluationValue(float32(123), int32(123), int32(123))}, "Provider_example", openapiclient.WateringPlanStatus("planned"), int32(123), int32(123), []int32{int32(123)}, []string{"UserIds_example"}) // WateringPlanUpdate | Watering plan data to update
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)

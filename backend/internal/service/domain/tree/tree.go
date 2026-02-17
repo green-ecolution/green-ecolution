@@ -2,12 +2,10 @@ package tree
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
@@ -20,7 +18,6 @@ type TreeService struct {
 	treeRepo        storage.TreeRepository
 	sensorRepo      storage.SensorRepository
 	treeClusterRepo storage.TreeClusterRepository
-	validator       *validator.Validate
 	eventManager    *worker.EventManager
 }
 
@@ -34,7 +31,6 @@ func NewTreeService(
 		treeRepo:        repoTree,
 		sensorRepo:      repoSensor,
 		treeClusterRepo: treeClusterRepo,
-		validator:       validator.New(),
 		eventManager:    eventManager,
 	}
 }
@@ -101,10 +97,6 @@ func (s *TreeService) publishDeleteTreeEvent(ctx context.Context, prevTree *enti
 
 func (s *TreeService) Create(ctx context.Context, treeCreate *entities.TreeCreate) (*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
-	if err := s.validator.Struct(treeCreate); err != nil {
-		log.Debug("failed to validate tree struct to create", "error", err, "raw_tree", fmt.Sprintf("%+v", treeCreate))
-		return nil, service.MapError(ctx, errors.Join(err, service.ErrValidation), service.ErrorLogValidation)
-	}
 
 	var prevTreeOfSensor *entities.Tree
 	newTree, err := s.treeRepo.Create(ctx, func(tree *entities.Tree, repo storage.TreeRepository) (bool, error) {
@@ -176,10 +168,6 @@ func (s *TreeService) Delete(ctx context.Context, id int32) error {
 
 func (s *TreeService) Update(ctx context.Context, id int32, tu *entities.TreeUpdate) (*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
-	if err := s.validator.Struct(tu); err != nil {
-		log.Debug("failed to validate struct from tree update", "error", err, "raw_tree", fmt.Sprintf("%+v", tu))
-		return nil, service.MapError(ctx, errors.Join(err, service.ErrValidation), service.ErrorLogValidation)
-	}
 
 	prevTree, err := s.treeRepo.GetByID(ctx, id)
 	if err != nil {

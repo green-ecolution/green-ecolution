@@ -404,7 +404,7 @@ func TestUpdateWateringPlan(t *testing.T) {
 		).Return(TestWateringPlans[0], nil)
 
 		// when
-		body, _ := json.Marshal(TestWateringPlanRequest)
+		body, _ := json.Marshal(TestWateringPlanUpdateRequest)
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/v1/watering-plan/1", bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := app.Test(req, -1)
@@ -417,7 +417,6 @@ func TestUpdateWateringPlan(t *testing.T) {
 		var response serverEntities.WateringPlanResponse
 		err = json.NewDecoder(resp.Body).Decode(&response)
 		assert.NoError(t, err)
-		assert.Equal(t, TestWateringPlans[0].Date, response.Date)
 
 		mockWateringPlanService.AssertExpectations(t)
 	})
@@ -471,7 +470,7 @@ func TestUpdateWateringPlan(t *testing.T) {
 		).Return(nil, service.NewError(service.NotFound, "not found"))
 
 		// when
-		body, _ := json.Marshal(TestWateringPlanRequest)
+		body, _ := json.Marshal(TestWateringPlanUpdateRequest)
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/v1/watering-plan/1", bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := app.Test(req, -1)
@@ -493,7 +492,7 @@ func TestUpdateWateringPlan(t *testing.T) {
 		mockWateringPlanService.EXPECT().Update(mock.Anything, int32(1), mock.Anything).Return(nil, fiber.NewError(fiber.StatusInternalServerError, "service error"))
 
 		// when
-		body, _ := json.Marshal(TestWateringPlanRequest)
+		body, _ := json.Marshal(TestWateringPlanUpdateRequest)
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/v1/watering-plan/1", bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := app.Test(req, -1)

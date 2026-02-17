@@ -22,16 +22,16 @@ var _ MappedNullable = &TreeCreate{}
 
 // TreeCreate struct for TreeCreate
 type TreeCreate struct {
-	AdditionalInformation map[string]interface{} `json:"additional_information,omitempty"`
+	AdditionalInformation map[string]interface{} `json:"additional_information"`
 	Description           string                 `json:"description"`
 	Latitude              float32                `json:"latitude"`
 	Longitude             float32                `json:"longitude"`
 	Number                string                 `json:"number"`
 	PlantingYear          int32                  `json:"planting_year"`
-	Provider              *string                `json:"provider,omitempty"`
-	SensorId              *string                `json:"sensor_id,omitempty"`
+	Provider              string                 `json:"provider"`
+	SensorId              string                 `json:"sensor_id"`
 	Species               string                 `json:"species"`
-	TreeClusterId         *int32                 `json:"tree_cluster_id,omitempty"`
+	TreeClusterId         int32                  `json:"tree_cluster_id"`
 }
 
 type _TreeCreate TreeCreate
@@ -40,14 +40,18 @@ type _TreeCreate TreeCreate
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewTreeCreate(description string, latitude float32, longitude float32, number string, plantingYear int32, species string) *TreeCreate {
+func NewTreeCreate(additionalInformation map[string]interface{}, description string, latitude float32, longitude float32, number string, plantingYear int32, provider string, sensorId string, species string, treeClusterId int32) *TreeCreate {
 	this := TreeCreate{}
+	this.AdditionalInformation = additionalInformation
 	this.Description = description
 	this.Latitude = latitude
 	this.Longitude = longitude
 	this.Number = number
 	this.PlantingYear = plantingYear
+	this.Provider = provider
+	this.SensorId = sensorId
 	this.Species = species
+	this.TreeClusterId = treeClusterId
 	return &this
 }
 
@@ -59,34 +63,26 @@ func NewTreeCreateWithDefaults() *TreeCreate {
 	return &this
 }
 
-// GetAdditionalInformation returns the AdditionalInformation field value if set, zero value otherwise.
+// GetAdditionalInformation returns the AdditionalInformation field value
 func (o *TreeCreate) GetAdditionalInformation() map[string]interface{} {
-	if o == nil || IsNil(o.AdditionalInformation) {
+	if o == nil {
 		var ret map[string]interface{}
 		return ret
 	}
+
 	return o.AdditionalInformation
 }
 
-// GetAdditionalInformationOk returns a tuple with the AdditionalInformation field value if set, nil otherwise
+// GetAdditionalInformationOk returns a tuple with the AdditionalInformation field value
 // and a boolean to check if the value has been set.
 func (o *TreeCreate) GetAdditionalInformationOk() (map[string]interface{}, bool) {
-	if o == nil || IsNil(o.AdditionalInformation) {
+	if o == nil {
 		return map[string]interface{}{}, false
 	}
 	return o.AdditionalInformation, true
 }
 
-// HasAdditionalInformation returns a boolean if a field has been set.
-func (o *TreeCreate) HasAdditionalInformation() bool {
-	if o != nil && !IsNil(o.AdditionalInformation) {
-		return true
-	}
-
-	return false
-}
-
-// SetAdditionalInformation gets a reference to the given map[string]interface{} and assigns it to the AdditionalInformation field.
+// SetAdditionalInformation sets field value
 func (o *TreeCreate) SetAdditionalInformation(v map[string]interface{}) {
 	o.AdditionalInformation = v
 }
@@ -211,68 +207,52 @@ func (o *TreeCreate) SetPlantingYear(v int32) {
 	o.PlantingYear = v
 }
 
-// GetProvider returns the Provider field value if set, zero value otherwise.
+// GetProvider returns the Provider field value
 func (o *TreeCreate) GetProvider() string {
-	if o == nil || IsNil(o.Provider) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.Provider
+
+	return o.Provider
 }
 
-// GetProviderOk returns a tuple with the Provider field value if set, nil otherwise
+// GetProviderOk returns a tuple with the Provider field value
 // and a boolean to check if the value has been set.
 func (o *TreeCreate) GetProviderOk() (*string, bool) {
-	if o == nil || IsNil(o.Provider) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Provider, true
+	return &o.Provider, true
 }
 
-// HasProvider returns a boolean if a field has been set.
-func (o *TreeCreate) HasProvider() bool {
-	if o != nil && !IsNil(o.Provider) {
-		return true
-	}
-
-	return false
-}
-
-// SetProvider gets a reference to the given string and assigns it to the Provider field.
+// SetProvider sets field value
 func (o *TreeCreate) SetProvider(v string) {
-	o.Provider = &v
+	o.Provider = v
 }
 
-// GetSensorId returns the SensorId field value if set, zero value otherwise.
+// GetSensorId returns the SensorId field value
 func (o *TreeCreate) GetSensorId() string {
-	if o == nil || IsNil(o.SensorId) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.SensorId
+
+	return o.SensorId
 }
 
-// GetSensorIdOk returns a tuple with the SensorId field value if set, nil otherwise
+// GetSensorIdOk returns a tuple with the SensorId field value
 // and a boolean to check if the value has been set.
 func (o *TreeCreate) GetSensorIdOk() (*string, bool) {
-	if o == nil || IsNil(o.SensorId) {
+	if o == nil {
 		return nil, false
 	}
-	return o.SensorId, true
+	return &o.SensorId, true
 }
 
-// HasSensorId returns a boolean if a field has been set.
-func (o *TreeCreate) HasSensorId() bool {
-	if o != nil && !IsNil(o.SensorId) {
-		return true
-	}
-
-	return false
-}
-
-// SetSensorId gets a reference to the given string and assigns it to the SensorId field.
+// SetSensorId sets field value
 func (o *TreeCreate) SetSensorId(v string) {
-	o.SensorId = &v
+	o.SensorId = v
 }
 
 // GetSpecies returns the Species field value
@@ -299,36 +279,28 @@ func (o *TreeCreate) SetSpecies(v string) {
 	o.Species = v
 }
 
-// GetTreeClusterId returns the TreeClusterId field value if set, zero value otherwise.
+// GetTreeClusterId returns the TreeClusterId field value
 func (o *TreeCreate) GetTreeClusterId() int32 {
-	if o == nil || IsNil(o.TreeClusterId) {
+	if o == nil {
 		var ret int32
 		return ret
 	}
-	return *o.TreeClusterId
+
+	return o.TreeClusterId
 }
 
-// GetTreeClusterIdOk returns a tuple with the TreeClusterId field value if set, nil otherwise
+// GetTreeClusterIdOk returns a tuple with the TreeClusterId field value
 // and a boolean to check if the value has been set.
 func (o *TreeCreate) GetTreeClusterIdOk() (*int32, bool) {
-	if o == nil || IsNil(o.TreeClusterId) {
+	if o == nil {
 		return nil, false
 	}
-	return o.TreeClusterId, true
+	return &o.TreeClusterId, true
 }
 
-// HasTreeClusterId returns a boolean if a field has been set.
-func (o *TreeCreate) HasTreeClusterId() bool {
-	if o != nil && !IsNil(o.TreeClusterId) {
-		return true
-	}
-
-	return false
-}
-
-// SetTreeClusterId gets a reference to the given int32 and assigns it to the TreeClusterId field.
+// SetTreeClusterId sets field value
 func (o *TreeCreate) SetTreeClusterId(v int32) {
-	o.TreeClusterId = &v
+	o.TreeClusterId = v
 }
 
 func (o TreeCreate) MarshalJSON() ([]byte, error) {
@@ -341,24 +313,16 @@ func (o TreeCreate) MarshalJSON() ([]byte, error) {
 
 func (o TreeCreate) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.AdditionalInformation) {
-		toSerialize["additional_information"] = o.AdditionalInformation
-	}
+	toSerialize["additional_information"] = o.AdditionalInformation
 	toSerialize["description"] = o.Description
 	toSerialize["latitude"] = o.Latitude
 	toSerialize["longitude"] = o.Longitude
 	toSerialize["number"] = o.Number
 	toSerialize["planting_year"] = o.PlantingYear
-	if !IsNil(o.Provider) {
-		toSerialize["provider"] = o.Provider
-	}
-	if !IsNil(o.SensorId) {
-		toSerialize["sensor_id"] = o.SensorId
-	}
+	toSerialize["provider"] = o.Provider
+	toSerialize["sensor_id"] = o.SensorId
 	toSerialize["species"] = o.Species
-	if !IsNil(o.TreeClusterId) {
-		toSerialize["tree_cluster_id"] = o.TreeClusterId
-	}
+	toSerialize["tree_cluster_id"] = o.TreeClusterId
 	return toSerialize, nil
 }
 
@@ -367,12 +331,16 @@ func (o *TreeCreate) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"additional_information",
 		"description",
 		"latitude",
 		"longitude",
 		"number",
 		"planting_year",
+		"provider",
+		"sensor_id",
 		"species",
+		"tree_cluster_id",
 	}
 
 	allProperties := make(map[string]interface{})

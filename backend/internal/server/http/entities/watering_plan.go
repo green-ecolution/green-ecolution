@@ -63,28 +63,28 @@ type WateringPlanListResponse struct {
 } //	@Name	WateringPlanList
 
 type WateringPlanCreateRequest struct {
-	Date           time.Time              `json:"date"`
+	Date           time.Time              `json:"date" validate:"required,datetoday"`
 	Description    string                 `json:"description"`
-	TreeClusterIDs []*int32               `json:"tree_cluster_ids"`
-	TransporterID  *int32                 `json:"transporter_id"`
-	TrailerID      *int32                 `json:"trailer_id" validate:"optional"`
-	UserIDs        []string               `json:"user_ids"`
-	Provider       string                 `json:"provider" validate:"optional"`
-	AdditionalInfo map[string]interface{} `json:"additional_information" validate:"optional"`
+	TreeClusterIDs []*int32               `json:"tree_cluster_ids" validate:"required,min=1,dive,required"`
+	TransporterID  *int32                 `json:"transporter_id" validate:"required"`
+	TrailerID      *int32                 `json:"trailer_id"`
+	UserIDs        []string               `json:"user_ids" validate:"required,min=1,dive,required"`
+	Provider       string                 `json:"provider"`
+	AdditionalInfo map[string]interface{} `json:"additional_information"`
 } //	@Name	WateringPlanCreate
 
 type WateringPlanUpdateRequest struct {
-	Date             time.Time              `json:"date"`
+	Date             time.Time              `json:"date" validate:"required,datetoday"`
 	Description      string                 `json:"description"`
-	TreeClusterIDs   []*int32               `json:"tree_cluster_ids"`
-	TransporterID    *int32                 `json:"transporter_id"`
-	TrailerID        *int32                 `json:"trailer_id" validate:"optional"`
-	UserIDs          []string               `json:"user_ids"`
+	TreeClusterIDs   []*int32               `json:"tree_cluster_ids" validate:"required,min=1,dive,required"`
+	TransporterID    *int32                 `json:"transporter_id" validate:"required"`
+	TrailerID        *int32                 `json:"trailer_id"`
+	UserIDs          []string               `json:"user_ids" validate:"required,min=1,dive,required"`
 	CancellationNote string                 `json:"cancellation_note"`
-	Status           WateringPlanStatus     `json:"status"`
-	Evaluation       []*EvaluationValue     `json:"evaluation" validate:"optional"`
-	Provider         string                 `json:"provider" validate:"optional"`
-	AdditionalInfo   map[string]interface{} `json:"additional_information" validate:"optional"`
+	Status           WateringPlanStatus     `json:"status" validate:"oneof=planned active canceled finished 'not competed' unknown"`
+	Evaluation       []*EvaluationValue     `json:"evaluation"`
+	Provider         string                 `json:"provider"`
+	AdditionalInfo   map[string]interface{} `json:"additional_information"`
 } //	@Name	WateringPlanUpdate
 
 type EvaluationValue struct {

@@ -64,9 +64,9 @@ type TreeClusterCreateRequest struct {
 	Description    string                 `json:"description"`
 	TreeIDs        []*int32               `json:"tree_ids"`
 	SoilCondition  TreeSoilCondition      `json:"soil_condition"`
-	Name           string                 `json:"name"`
-	Provider       string                 `json:"provider" validate:"optional"`
-	AdditionalInfo map[string]interface{} `json:"additional_information" validate:"optional"`
+	Name           string                 `json:"name" validate:"required"`
+	Provider       string                 `json:"provider"`
+	AdditionalInfo map[string]interface{} `json:"additional_information"`
 } //	@Name	TreeClusterCreate
 
 type TreeClusterUpdateRequest struct {
@@ -74,9 +74,9 @@ type TreeClusterUpdateRequest struct {
 	Description    string                 `json:"description"`
 	TreeIDs        []*int32               `json:"tree_ids"`
 	SoilCondition  TreeSoilCondition      `json:"soil_condition"`
-	Name           string                 `json:"name"`
-	Provider       string                 `json:"provider" validate:"optional"`
-	AdditionalInfo map[string]interface{} `json:"additional_information" validate:"optional"`
+	Name           string                 `json:"name" validate:"required"`
+	Provider       string                 `json:"provider"`
+	AdditionalInfo map[string]interface{} `json:"additional_information"`
 } //	@Name	TreeClusterUpdate
 
 type TreeClusterAddTreesRequest struct {

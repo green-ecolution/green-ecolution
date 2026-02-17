@@ -42,13 +42,13 @@ type UserListResponse struct {
 } //	@Name	UserList
 
 type UserRegisterRequest struct {
-	Username    string   `json:"username"`
-	FirstName   string   `json:"first_name"`
-	LastName    string   `json:"last_name"`
-	Email       string   `json:"email"`
+	Username    string   `json:"username" validate:"required,min=3,max=15"`
+	FirstName   string   `json:"first_name" validate:"required,min=3,max=30"`
+	LastName    string   `json:"last_name" validate:"required,min=3,max=30"`
+	Email       string   `json:"email" validate:"required,email"`
 	EmployeeID  string   `json:"employee_id,omitempty"`
 	PhoneNumber string   `json:"phone_number,omitempty"`
-	Password    string   `json:"password"`
+	Password    string   `json:"password" validate:"required"`
 	Roles       []string `json:"roles"`
 	Avatar      string   `json:"avatar_url,omitempty"`
 } //	@Name	UserRegister

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	serverEntities "github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
@@ -164,11 +165,22 @@ var (
 		},
 	}
 
-	TestWateringPlanRequest = &entities.WateringPlanCreate{
-		Date:           time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
+	TestWateringPlanRequest = &serverEntities.WateringPlanCreateRequest{
+		Date:           time.Now().Add(24 * time.Hour).Truncate(24 * time.Hour),
 		Description:    "New watering plan for the west side of the city",
 		TransporterID:  utils.P(int32(1)),
 		TrailerID:      utils.P(int32(2)),
 		TreeClusterIDs: []*int32{utils.P(int32(1)), utils.P(int32(2))},
+		UserIDs:        []string{"6a1078e8-80fd-458f-b74e-e388fe2dd6ab"},
+	}
+
+	TestWateringPlanUpdateRequest = &serverEntities.WateringPlanUpdateRequest{
+		Date:           time.Now().Add(24 * time.Hour).Truncate(24 * time.Hour),
+		Description:    "Updated watering plan for the west side of the city",
+		TransporterID:  utils.P(int32(1)),
+		TrailerID:      utils.P(int32(2)),
+		TreeClusterIDs: []*int32{utils.P(int32(1)), utils.P(int32(2))},
+		UserIDs:        []string{"6a1078e8-80fd-458f-b74e-e388fe2dd6ab"},
+		Status:         serverEntities.WateringPlanStatusPlanned,
 	}
 )

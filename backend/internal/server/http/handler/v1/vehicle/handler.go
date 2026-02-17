@@ -8,6 +8,7 @@ import (
 	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper/generated"
+	handler "github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/errorhandler"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils/pagination"
@@ -149,12 +150,12 @@ func CreateVehicle(svc service.VehicleService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
 
-		var req entities.VehicleCreateRequest
-		if err := c.BodyParser(&req); err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		req, err := handler.BindAndValidate[entities.VehicleCreateRequest](c)
+		if err != nil {
+			return err
 		}
 
-		domainReq := vehicleMapper.FromCreateRequest(&req)
+		domainReq := vehicleMapper.FromCreateRequest(req)
 		domainData, err := svc.Create(ctx, domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)
@@ -190,12 +191,12 @@ func UpdateVehicle(svc service.VehicleService) fiber.Handler {
 			return errorhandler.HandleError(err)
 		}
 
-		var req entities.VehicleUpdateRequest
-		if err = c.BodyParser(&req); err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		req, err := handler.BindAndValidate[entities.VehicleUpdateRequest](c)
+		if err != nil {
+			return err
 		}
 
-		domainReq := vehicleMapper.FromUpdateRequest(&req)
+		domainReq := vehicleMapper.FromUpdateRequest(req)
 		domainData, err := svc.Update(ctx, int32(id), domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)

@@ -25,11 +25,11 @@ type Tree struct {
 type TreeCreate struct {
 	TreeClusterID  *int32
 	SensorID       *string
-	PlantingYear   int32 `validate:"required"`
+	PlantingYear   int32
 	Species        string
-	Number         string  `validate:"required"`
-	Latitude       float64 `validate:"required,max=90,min=-90"`
-	Longitude      float64 `validate:"required,max=180,min=-180"`
+	Number         string
+	Latitude       float64
+	Longitude      float64
 	Description    string
 	Provider       string
 	AdditionalInfo map[string]interface{}
@@ -38,11 +38,11 @@ type TreeCreate struct {
 type TreeUpdate struct {
 	TreeClusterID  *int32
 	SensorID       *string
-	PlantingYear   int32 `validate:"gt=0"`
+	PlantingYear   int32
 	Species        string
 	Number         string
-	Latitude       float64 `validate:"omitempty,min=-90,max=90"`
-	Longitude      float64 `validate:"omitempty,min=-180,max=180"`
+	Latitude       float64
+	Longitude      float64
 	Description    string
 	Provider       string
 	AdditionalInfo map[string]interface{}

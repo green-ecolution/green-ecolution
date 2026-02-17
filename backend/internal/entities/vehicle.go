@@ -42,33 +42,33 @@ type Vehicle struct {
 }
 
 type VehicleCreate struct {
-	NumberPlate    string `validate:"required"`
+	NumberPlate    string
 	Description    string
-	WaterCapacity  float64        `validate:"gt=0"`
-	Status         VehicleStatus  `validate:"oneof=active available 'not available' unknown"`
-	Type           VehicleType    `validate:"oneof=transporter trailer unknown"`
-	Model          string         `validate:"required"`
-	DrivingLicense DrivingLicense `validate:"oneof=B BE C CE"`
-	Height         float64        `validate:"gt=0"`
-	Width          float64        `validate:"gt=0"`
-	Length         float64        `validate:"gt=0"`
-	Weight         float64        `validate:"gt=0"`
+	WaterCapacity  float64
+	Status         VehicleStatus
+	Type           VehicleType
+	Model          string
+	DrivingLicense DrivingLicense
+	Height         float64
+	Width          float64
+	Length         float64
+	Weight         float64
 	Provider       string
 	AdditionalInfo map[string]interface{}
 }
 
 type VehicleUpdate struct {
-	NumberPlate    string `validate:"required"`
+	NumberPlate    string
 	Description    string
-	WaterCapacity  float64        `validate:"gt=0"`
-	Status         VehicleStatus  `validate:"oneof=active available 'not available' unknown"`
-	Type           VehicleType    `validate:"oneof=transporter trailer unknown"`
-	Model          string         `validate:"required"`
-	DrivingLicense DrivingLicense `validate:"oneof=B BE C CE"`
-	Height         float64        `validate:"gt=0"`
-	Width          float64        `validate:"gt=0"`
-	Length         float64        `validate:"gt=0"`
-	Weight         float64        `validate:"gt=0"`
+	WaterCapacity  float64
+	Status         VehicleStatus
+	Type           VehicleType
+	Model          string
+	DrivingLicense DrivingLicense
+	Height         float64
+	Width          float64
+	Length         float64
+	Weight         float64
 	Provider       string
 	AdditionalInfo map[string]interface{}
 }
