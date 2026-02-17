@@ -11,11 +11,14 @@ import (
 )
 
 const (
-	msgDisabled      = "Deaktiviert"
-	msgConnected     = "Verbunden"
-	msgNoConnection  = "Keine Verbindung"
-	msgURLNotConfig  = "URL nicht konfiguriert"
-	msgNotConfigured = "Nicht konfiguriert"
+	msgDisabled        = "service.status.disabled"
+	msgConnected       = "service.status.connected"
+	msgNoConnection    = "service.status.no_connection"
+	msgURLNotConfig    = "service.status.url_not_configured"
+	msgNotConfigured   = "service.status.not_configured"
+	msgEnabled         = "service.status.enabled"
+	msgConnectionError = "service.status.connection_error"
+	msgBucketNotFound  = "service.status.bucket_not_found"
 )
 
 type S3HealthChecker interface {
@@ -170,7 +173,7 @@ func (h *healthChecker) checkMQTT(now time.Time) entities.ServiceStatus {
 		LastChecked: now,
 	}
 	if h.cfg.mqttEnabled {
-		status.Message = "Aktiviert"
+		status.Message = msgEnabled
 	} else {
 		status.Message = msgDisabled
 	}
@@ -206,14 +209,14 @@ func (h *healthChecker) checkS3(ctx context.Context, now time.Time) entities.Ser
 	if err != nil {
 		slog.Debug("s3 health check: bucket exists failed", "error", err, "responseTime", status.ResponseTime)
 		status.Healthy = false
-		status.Message = "Verbindungsfehler"
+		status.Message = msgConnectionError
 		return status
 	}
 
 	if !exists {
 		slog.Debug("s3 health check: bucket does not exist", "responseTime", status.ResponseTime)
 		status.Healthy = false
-		status.Message = "Bucket nicht gefunden"
+		status.Message = msgBucketNotFound
 		return status
 	}
 

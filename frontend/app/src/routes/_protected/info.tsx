@@ -89,6 +89,22 @@ function getServiceDisplayName(name: string): string {
   return serviceNameMap[name] || name
 }
 
+const serviceMessageMap: Record<string, string> = {
+  'service.status.disabled': 'Deaktiviert',
+  'service.status.connected': 'Verbunden',
+  'service.status.no_connection': 'Keine Verbindung',
+  'service.status.url_not_configured': 'URL nicht konfiguriert',
+  'service.status.not_configured': 'Nicht konfiguriert',
+  'service.status.enabled': 'Aktiviert',
+  'service.status.connection_error': 'Verbindungsfehler',
+  'service.status.bucket_not_found': 'Bucket nicht gefunden',
+}
+
+function translateServiceMessage(key?: string): string {
+  if (!key) return ''
+  return serviceMessageMap[key] ?? key
+}
+
 function formatUptime(uptime: string): string {
   // Parse Go duration format: "1h2m3.456s", "53m56.204970015s", "2h30m", etc.
   let totalSeconds = 0
@@ -697,12 +713,16 @@ function SystemTabContent({
                         {isHealthy ? (
                           <CheckCircle2 className="size-4 text-green-dark shrink-0" />
                         ) : isDisabled ? (
-                          <span className="text-xs text-dark-400">Deaktiviert</span>
+                          <span className="text-xs text-dark-400">
+                            {translateServiceMessage('service.status.disabled')}
+                          </span>
                         ) : (
                           <XCircle className="size-4 text-red shrink-0" />
                         )}
                       </div>
-                      <p className="text-xs text-dark-500 truncate">{service.message}</p>
+                      <p className="text-xs text-dark-500 truncate">
+                        {translateServiceMessage(service.message)}
+                      </p>
                       {service.enabled &&
                         service.responseTimeMs !== undefined &&
                         service.responseTimeMs > 0 && (
