@@ -16,7 +16,8 @@ import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import { User, Vehicle } from '@green-ecolution/backend-client'
 import SelectEntities from './types/SelectEntities'
 import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
-import { Controller, SubmitHandler, useFormContext } from 'react-hook-form'
+import { validateDriverLicenses } from '@/hooks/details/useLicenseValidation'
+import { Controller, SubmitHandler, useFormContext, useWatch } from 'react-hook-form'
 
 interface FormForWateringPlanProps {
   displayError: boolean
@@ -36,6 +37,21 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
     control,
     formState: { isValid, errors },
   } = useFormContext<WateringPlanForm>()
+
+  const watchedTransporterId = useWatch<WateringPlanForm, 'transporterId'>({
+    name: 'transporterId',
+  })
+  const watchedTrailerId = useWatch<WateringPlanForm, 'trailerId'>({ name: 'trailerId' })
+  const watchedDriverIds = useWatch<WateringPlanForm, 'driverIds'>({ name: 'driverIds' })
+
+  const licenseCheck = validateDriverLicenses(
+    watchedDriverIds ?? [],
+    props.users,
+    props.transporters,
+    props.trailers,
+    watchedTransporterId,
+    watchedTrailerId,
+  )
 
   const getDrivingLicensesString = (user: User) => {
     if (!user.drivingLicenses || user.drivingLicenses.length === 0) {
@@ -152,6 +168,9 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
               {errors.driverIds?.message && (
                 <p className="text-sm text-destructive">{errors.driverIds.message}</p>
               )}
+              {!licenseCheck.valid && (
+                <p className="text-sm text-destructive">{licenseCheck.message}</p>
+              )}
             </div>
           )}
         />
@@ -181,7 +200,11 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
 
       <FormError show={props.displayError} error={props.errorMessage} />
 
-      <Button type="submit" disabled={!isValid} className="mt-10 lg:col-span-full lg:w-fit">
+      <Button
+        type="submit"
+        disabled={!isValid || !licenseCheck.valid}
+        className="mt-10 lg:col-span-full lg:w-fit"
+      >
         Speichern
         <MoveRight className="icon-arrow-animate" />
       </Button>
