@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.1.3](https://github.com/green-ecolution/green-ecolution/compare/v0.1.2...v0.1.3) (2026-02-23)
+
+
+### Features
+
+* **frontend:** enable React Compiler ([#658](https://github.com/green-ecolution/green-ecolution/issues/658)) ([a2741b8](https://github.com/green-ecolution/green-ecolution/commit/a2741b87232e90485c48d9e0e971e4039bd7dc97))
+* **info:** add system info page with service status and version check ([#638](https://github.com/green-ecolution/green-ecolution/issues/638)) ([64860f8](https://github.com/green-ecolution/green-ecolution/commit/64860f8d6ab36de9dfcd3394821c26997b4c855c)), closes [#69](https://github.com/green-ecolution/green-ecolution/issues/69)
+* **ui:** add date picker component for date input fields ([#673](https://github.com/green-ecolution/green-ecolution/issues/673)) ([1ce260b](https://github.com/green-ecolution/green-ecolution/commit/1ce260b04935711a304e4639dd013b5bc8a95777)), closes [#120](https://github.com/green-ecolution/green-ecolution/issues/120)
+
+
+### Bug Fixes
+
+* **backend:** reject past dates in watering plan create and update ([#662](https://github.com/green-ecolution/green-ecolution/issues/662)) ([b1636eb](https://github.com/green-ecolution/green-ecolution/commit/b1636eba7d0bdb62d7dacf4ef12fa986447c5055)), closes [#642](https://github.com/green-ecolution/green-ecolution/issues/642)
+* **frontend:** fix save button disabled on finished watering plan ([#663](https://github.com/green-ecolution/green-ecolution/issues/663)) ([ae9b892](https://github.com/green-ecolution/green-ecolution/commit/ae9b892f69edf1344bd90f35529670e34ca10b75)), closes [#641](https://github.com/green-ecolution/green-ecolution/issues/641)
+
 ## [0.1.2](https://github.com/green-ecolution/green-ecolution/compare/v0.1.1...v0.1.2) (2026-02-03)
 
 
