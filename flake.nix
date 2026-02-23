@@ -78,7 +78,7 @@
       frontend = pkgs.stdenv.mkDerivation rec {
         inherit meta;
         pname = "frontend";
-        version = "0.1.2"; # x-release-please-version
+        version = "0.1.3"; # x-release-please-version
         src = lib.cleanSource ./frontend;
 
         nativeBuildInputs = with pkgs; [nodejs pnpm.configHook];
@@ -108,7 +108,7 @@
       backend = pkgs.buildGoModule rec {
         inherit meta;
         pname = "green-ecolution";
-        version = "0.1.2"; # x-release-please-version
+        version = "0.1.3"; # x-release-please-version
         src = lib.cleanSource ./backend;
 
         subPackages = ["."];
