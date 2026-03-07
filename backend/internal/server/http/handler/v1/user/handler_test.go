@@ -290,7 +290,7 @@ func TestRegister(t *testing.T) {
 
 		domainEntity := domain.RegisterUser{
 			User: domain.User{
-				Email:     "valid_email",
+				Email:     "toni@test.com",
 				FirstName: "Toni",
 				LastName:  "Tester",
 				Username:  "toni.tester",
@@ -302,7 +302,7 @@ func TestRegister(t *testing.T) {
 		expectedResponse := &domain.User{
 			ID:        uuid.New(),
 			CreatedAt: time.Now(),
-			Email:     "valid_email",
+			Email:     "toni@test.com",
 			FirstName: "Toni",
 			LastName:  "Tester",
 			Username:  "toni.tester",
@@ -311,7 +311,7 @@ func TestRegister(t *testing.T) {
 		// when
 		mockAuthService.EXPECT().Register(mock.Anything, &domainEntity).Return(expectedResponse, nil)
 		reqBody, _ := json.Marshal(entities.UserRegisterRequest{
-			Email:     "valid_email",
+			Email:     "toni@test.com",
 			FirstName: "Toni",
 			LastName:  "Tester",
 			Username:  "toni.tester",
@@ -363,7 +363,7 @@ func TestRegister(t *testing.T) {
 
 		domainEntity := domain.RegisterUser{
 			User: domain.User{
-				Email:     "valid_email",
+				Email:     "toni@test.com",
 				FirstName: "Toni",
 				LastName:  "Tester",
 				Username:  "toni.tester",
@@ -375,7 +375,7 @@ func TestRegister(t *testing.T) {
 		// when
 		mockAuthService.EXPECT().Register(mock.Anything, &domainEntity).Return(nil, errors.New("service error"))
 		reqBody, _ := json.Marshal(entities.UserRegisterRequest{
-			Email:     "valid_email",
+			Email:     "toni@test.com",
 			FirstName: "Toni",
 			LastName:  "Tester",
 			Username:  "toni.tester",
@@ -399,18 +399,7 @@ func TestRegister(t *testing.T) {
 		mockAuthService := serviceMock.NewMockAuthService(t)
 		app.Post("/v1/user/register", Register(mockAuthService))
 
-		domainEntity := domain.RegisterUser{
-			User: domain.User{
-				FirstName: "Toni",
-				LastName:  "Tester",
-				Username:  "toni.tester",
-			},
-			Password: "valid_password",
-			Roles:    []string{"admin"},
-		}
-
 		// when
-		mockAuthService.EXPECT().Register(mock.Anything, &domainEntity).Return(nil, service.NewError(service.BadRequest, errors.New("validation error").Error()))
 		reqBody, _ := json.Marshal(entities.UserRegisterRequest{
 			FirstName: "Toni",
 			LastName:  "Tester",
@@ -426,7 +415,6 @@ func TestRegister(t *testing.T) {
 		// then
 		assert.Nil(t, err)
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		mockAuthService.AssertExpectations(t)
 	})
 }
 

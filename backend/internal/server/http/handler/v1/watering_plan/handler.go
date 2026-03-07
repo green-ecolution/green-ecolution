@@ -10,6 +10,7 @@ import (
 	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper/generated"
+	handler "github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/errorhandler"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
@@ -112,12 +113,12 @@ func CreateWateringPlan(svc service.WateringPlanService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
 
-		var req entities.WateringPlanCreateRequest
-		if err := c.BodyParser(&req); err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		req, err := handler.BindAndValidate[entities.WateringPlanCreateRequest](c)
+		if err != nil {
+			return err
 		}
 
-		domainReq := wateringPlanMapper.FromCreateRequest(&req)
+		domainReq := wateringPlanMapper.FromCreateRequest(req)
 		domainData, err := svc.Create(ctx, domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)
@@ -153,12 +154,12 @@ func UpdateWateringPlan(svc service.WateringPlanService) fiber.Handler {
 			return errorhandler.HandleError(err)
 		}
 
-		var req entities.WateringPlanUpdateRequest
-		if err = c.BodyParser(&req); err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		req, err := handler.BindAndValidate[entities.WateringPlanUpdateRequest](c)
+		if err != nil {
+			return err
 		}
 
-		domainReq := wateringPlanMapper.FromUpdateRequest(&req)
+		domainReq := wateringPlanMapper.FromUpdateRequest(req)
 		domainData, err := svc.Update(ctx, int32(id), domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)
