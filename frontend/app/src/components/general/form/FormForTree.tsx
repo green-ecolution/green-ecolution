@@ -13,7 +13,7 @@ import {
 import { Sensor, TreeCluster } from '@/api/backendApi'
 import { MapPin, MoveRight } from 'lucide-react'
 import FormError from './FormError'
-import { Controller, SubmitHandler, useFormContext } from 'react-hook-form'
+import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-hook-form'
 
 interface FormForTreeProps {
   isReadonly: boolean
@@ -27,13 +27,8 @@ interface FormForTreeProps {
 }
 
 const FormForTree = (props: FormForTreeProps) => {
-  const {
-    register,
-    handleSubmit,
-    getValues,
-    control,
-    formState: { isValid, errors },
-  } = useFormContext<TreeForm>()
+  const { register, handleSubmit, getValues, control } = useFormContext<TreeForm>()
+  const { isValid, errors } = useFormState({ control })
 
   return (
     <form

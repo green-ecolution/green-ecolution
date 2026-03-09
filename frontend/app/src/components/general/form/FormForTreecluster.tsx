@@ -10,7 +10,7 @@ import {
   SelectItem,
   Button,
 } from '@green-ecolution/ui'
-import { Controller, SubmitHandler, useFormContext } from 'react-hook-form'
+import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-hook-form'
 import { SoilConditionOptions } from '@/hooks/details/useDetailsForSoilCondition'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
 import FormError from './FormError'
@@ -25,12 +25,8 @@ interface FormForTreeClusterProps {
 }
 
 const FormForTreecluster = (props: FormForTreeClusterProps) => {
-  const {
-    handleSubmit,
-    register,
-    formState: { isValid, errors },
-    control,
-  } = useFormContext<TreeclusterForm>()
+  const { handleSubmit, register, control } = useFormContext<TreeclusterForm>()
+  const { isValid, errors } = useFormState({ control })
 
   return (
     <form
