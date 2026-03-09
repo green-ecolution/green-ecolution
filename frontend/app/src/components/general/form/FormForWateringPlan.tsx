@@ -17,7 +17,7 @@ import { User, Vehicle } from '@green-ecolution/backend-client'
 import SelectEntities from './types/SelectEntities'
 import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
 import { validateDriverLicenses } from '@/hooks/details/useLicenseValidation'
-import { Controller, SubmitHandler, useFormContext, useWatch } from 'react-hook-form'
+import { Controller, SubmitHandler, useFormContext, useFormState, useWatch } from 'react-hook-form'
 
 interface FormForWateringPlanProps {
   displayError: boolean
@@ -31,18 +31,17 @@ interface FormForWateringPlanProps {
 }
 
 const FormForWateringPlan = (props: FormForWateringPlanProps) => {
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { isValid, errors },
-  } = useFormContext<WateringPlanForm>()
+  const { register, handleSubmit, control } = useFormContext<WateringPlanForm>()
+  const { isValid, errors } = useFormState({ control })
 
   const watchedTransporterId = useWatch<WateringPlanForm, 'transporterId'>({
     name: 'transporterId',
   })
   const watchedTrailerId = useWatch<WateringPlanForm, 'trailerId'>({ name: 'trailerId' })
   const watchedDriverIds = useWatch<WateringPlanForm, 'driverIds'>({ name: 'driverIds' })
+
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
 
   const licenseCheck = validateDriverLicenses(
     watchedDriverIds ?? [],
@@ -80,6 +79,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
               required
               value={value ? new Date(value) : undefined}
               onChange={(date) => onChange(date)}
+              fromDate={startOfToday}
             />
           )}
         />
