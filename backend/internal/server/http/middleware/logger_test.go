@@ -31,7 +31,7 @@ func TestHTTPLogger_EdgeCases(t *testing.T) {
 			}
 		})
 
-		req := httptest.NewRequest(http.MethodGet, "/timeout", nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/timeout", nil)
 		resp, err := app.Test(req, -1)
 
 		assert.NoError(t, err)
@@ -47,7 +47,7 @@ func TestHTTPLogger_EdgeCases(t *testing.T) {
 			return c.SendStatus(http.StatusOK)
 		})
 
-		req := httptest.NewRequest(http.MethodTrace, "/trace", nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodTrace, "/trace", nil)
 		resp, err := app.Test(req, -1)
 
 		assert.NoError(t, err)
@@ -65,7 +65,7 @@ func TestHTTPLogger_EdgeCases(t *testing.T) {
 
 		for i := 0; i < concurrency; i++ {
 			go func() {
-				req := httptest.NewRequest(http.MethodGet, "/test", nil)
+				req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/test", nil)
 				resp, err := app.Test(req, -1)
 				results <- err == nil && resp.StatusCode == http.StatusOK
 				defer resp.Body.Close()
@@ -86,7 +86,7 @@ func TestHTTPLogger_EdgeCases(t *testing.T) {
 			return c.SendStatus(http.StatusOK)
 		})
 
-		req := httptest.NewRequest(http.MethodGet, "/test", nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/test", nil)
 		req.Header.Set("X-Unusual-Header", "UnusualHeaderValue")
 		resp, err := app.Test(req, -1)
 
@@ -100,7 +100,7 @@ func TestHTTPLogger_EdgeCases(t *testing.T) {
 		app.Use(AppLogger(slog.Default))
 
 		longPath := "/" + strings.Repeat("pathsegment/", 50)
-		req := httptest.NewRequest(http.MethodGet, longPath, nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, longPath, nil)
 		resp, err := app.Test(req, -1)
 
 		assert.NoError(t, err)
@@ -116,7 +116,7 @@ func TestHTTPLogger_EdgeCases(t *testing.T) {
 			return c.SendStatus(http.StatusOK)
 		})
 
-		req := httptest.NewRequest(http.MethodGet, "/multilingual/こんにちは", nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/multilingual/こんにちは", nil)
 		resp, err := app.Test(req, -1)
 
 		assert.NoError(t, err)

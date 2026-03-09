@@ -2,6 +2,7 @@ package user
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -41,7 +42,7 @@ func TestLogin(t *testing.T) {
 		mockAuthService.EXPECT().LoginRequest(mock.Anything, loginRequest).Return(loginResponse)
 
 		// when
-		req := httptest.NewRequest(http.MethodGet, "/v1/user/login?redirect_url="+parsedURLRedirect.String(), nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/user/login?redirect_url="+parsedURLRedirect.String(), nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 
@@ -58,7 +59,7 @@ func TestLogin(t *testing.T) {
 		app.Get("/v1/user/login", Login(mockAuthService))
 
 		// when
-		req := httptest.NewRequest(http.MethodGet, "/v1/user/login", nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/user/login", nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 
@@ -75,7 +76,7 @@ func TestLogin(t *testing.T) {
 		app.Get("/v1/user/login", Login(mockAuthService))
 
 		// when
-		req := httptest.NewRequest(http.MethodGet, "/v1/user/login?redirect_url=invalid-url", nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/user/login?redirect_url=invalid-url", nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 
@@ -102,7 +103,7 @@ func TestLogout(t *testing.T) {
 		reqBody, _ := json.Marshal(entities.LogoutRequest{
 			RefreshToken: "valid_refresh_token",
 		})
-		req := httptest.NewRequest(http.MethodPost, "/v1/user/logout", bytes.NewReader(reqBody))
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/user/logout", bytes.NewReader(reqBody))
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
@@ -120,7 +121,7 @@ func TestLogout(t *testing.T) {
 		app.Post("/v1/user/logout", Logout(mockAuthService))
 
 		// when
-		req := httptest.NewRequest(http.MethodPost, "/v1/user/logout", nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/user/logout", nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 
@@ -145,7 +146,7 @@ func TestLogout(t *testing.T) {
 		reqBody, _ := json.Marshal(entities.LogoutRequest{
 			RefreshToken: "valid_refresh_token",
 		})
-		req := httptest.NewRequest(http.MethodPost, "/v1/user/logout", bytes.NewReader(reqBody))
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/user/logout", bytes.NewReader(reqBody))
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
@@ -182,7 +183,7 @@ func TestRequestToken(t *testing.T) {
 		reqBody, _ := json.Marshal(entities.LoginTokenRequest{
 			Code: "valid_code",
 		})
-		req := httptest.NewRequest(http.MethodPost, "/v1/user/token?redirect_url="+redirectURL.String(), bytes.NewReader(reqBody))
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/user/token?redirect_url="+redirectURL.String(), bytes.NewReader(reqBody))
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
@@ -208,7 +209,7 @@ func TestRequestToken(t *testing.T) {
 		app.Post("/v1/user/token", RequestToken(mockAuthService))
 
 		// when
-		req := httptest.NewRequest(http.MethodPost, "/v1/user/token", nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/user/token", nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 
@@ -235,7 +236,7 @@ func TestRequestToken(t *testing.T) {
 		reqBody, _ := json.Marshal(entities.LoginTokenRequest{
 			Code: "valid_code",
 		})
-		req := httptest.NewRequest(http.MethodPost, "/v1/user/token?redirect_url="+redirectURL.String(), bytes.NewReader(reqBody))
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/user/token?redirect_url="+redirectURL.String(), bytes.NewReader(reqBody))
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
@@ -253,7 +254,7 @@ func TestRequestToken(t *testing.T) {
 		app.Post("/v1/user/token", RequestToken(mockAuthService))
 
 		// when
-		req := httptest.NewRequest(http.MethodPost, "/v1/user/token?redirect_url=invalid-url", nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/user/token?redirect_url=invalid-url", nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 
@@ -270,7 +271,7 @@ func TestRequestToken(t *testing.T) {
 		app.Post("/v1/user/token", RequestToken(mockAuthService))
 
 		// when
-		req := httptest.NewRequest(http.MethodPost, "/v1/user/token", nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/user/token", nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 
@@ -318,7 +319,7 @@ func TestRegister(t *testing.T) {
 			Password:  "valid_password",
 			Roles:     []string{"admin"},
 		})
-		req := httptest.NewRequest(http.MethodPost, "/v1/user/register", bytes.NewReader(reqBody))
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/user/register", bytes.NewReader(reqBody))
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
@@ -345,7 +346,7 @@ func TestRegister(t *testing.T) {
 		app.Post("/v1/user/register", Register(mockAuthService))
 
 		// when
-		req := httptest.NewRequest(http.MethodPost, "/v1/user/register", nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/user/register", nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 
@@ -382,7 +383,7 @@ func TestRegister(t *testing.T) {
 			Password:  "valid_password",
 			Roles:     []string{"admin"},
 		})
-		req := httptest.NewRequest(http.MethodPost, "/v1/user/register", bytes.NewReader(reqBody))
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/user/register", bytes.NewReader(reqBody))
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
@@ -418,7 +419,7 @@ func TestRegister(t *testing.T) {
 			Password:  "valid_password",
 			Roles:     []string{"admin"},
 		})
-		req := httptest.NewRequest(http.MethodPost, "/v1/user/register", bytes.NewReader(reqBody))
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/user/register", bytes.NewReader(reqBody))
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
@@ -450,7 +451,7 @@ func TestRefreshToken(t *testing.T) {
 		reqBody, _ := json.Marshal(entities.RefreshTokenRequest{
 			RefreshToken: refreshToken,
 		})
-		req := httptest.NewRequest(http.MethodPost, "/v1/user/refresh", bytes.NewReader(reqBody))
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/user/refresh", bytes.NewReader(reqBody))
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
@@ -476,7 +477,7 @@ func TestRefreshToken(t *testing.T) {
 		app.Post("/v1/user/refresh", RefreshToken(mockAuthService))
 
 		// when
-		req := httptest.NewRequest(http.MethodPost, "/v1/user/refresh", nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/user/refresh", nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 
@@ -499,7 +500,7 @@ func TestRefreshToken(t *testing.T) {
 		reqBody, _ := json.Marshal(entities.RefreshTokenRequest{
 			RefreshToken: refreshToken,
 		})
-		req := httptest.NewRequest(http.MethodPost, "/v1/user/refresh", bytes.NewReader(reqBody))
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/user/refresh", bytes.NewReader(reqBody))
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
@@ -547,7 +548,7 @@ func TestGetAllUsers(t *testing.T) {
 		mockAuthService.EXPECT().GetAll(mock.Anything).Return(expectedUsers, nil)
 
 		// when
-		req := httptest.NewRequest(http.MethodGet, "/v1/user", nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/user", nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 
@@ -594,7 +595,7 @@ func TestGetAllUsers(t *testing.T) {
 		mockAuthService.EXPECT().GetByIDs(mock.Anything, []string{mockUUID1.String()}).Return(expectedUsers, nil)
 
 		// when
-		req := httptest.NewRequest(http.MethodGet, "/v1/user?user_ids="+mockUUID1.String(), nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/user?user_ids="+mockUUID1.String(), nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 
@@ -626,7 +627,7 @@ func TestGetAllUsers(t *testing.T) {
 		mockAuthService.EXPECT().GetAll(mock.Anything).Return(nil, service.NewError(service.InternalError, "service error"))
 
 		// when
-		req := httptest.NewRequest(http.MethodGet, "/v1/user", nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/user", nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 
@@ -644,7 +645,7 @@ func TestGetAllUsers(t *testing.T) {
 		mockAuthService.EXPECT().GetAll(mock.Anything).Return([]*domain.User{}, nil)
 
 		// when
-		req := httptest.NewRequest(http.MethodGet, "/v1/user", nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/user", nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 
@@ -698,7 +699,7 @@ func TestGetUsersByRole(t *testing.T) {
 		mockAuthService.EXPECT().GetAllByRole(mock.Anything, domain.UserRoleGreenEcolution).Return(expectedUsers, nil)
 
 		// when
-		req := httptest.NewRequest(http.MethodGet, string("/v1/user/role/"+domain.UserRoleGreenEcolution), nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, string("/v1/user/role/"+domain.UserRoleGreenEcolution), nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 
@@ -728,7 +729,7 @@ func TestGetUsersByRole(t *testing.T) {
 		app.Get("/v1/user/role/:role", GetUsersByRole(mockAuthService))
 
 		// when
-		req := httptest.NewRequest(http.MethodGet, "/v1/user/role/InvalidRole", nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/user/role/InvalidRole", nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 
@@ -747,7 +748,7 @@ func TestGetUsersByRole(t *testing.T) {
 			Return(nil, service.NewError(service.InternalError, "service error"))
 
 		// when
-		req := httptest.NewRequest(http.MethodGet, string("/v1/user/role/"+domain.UserRoleTbz), nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, string("/v1/user/role/"+domain.UserRoleTbz), nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 
@@ -765,7 +766,7 @@ func TestGetUsersByRole(t *testing.T) {
 		mockAuthService.EXPECT().GetAllByRole(mock.Anything, domain.UserRoleTbz).Return([]*domain.User{}, nil)
 
 		// when
-		req := httptest.NewRequest(http.MethodGet, string("/v1/user/role/"+domain.UserRoleTbz), nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, string("/v1/user/role/"+domain.UserRoleTbz), nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 

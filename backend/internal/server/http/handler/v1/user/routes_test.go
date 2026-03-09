@@ -2,6 +2,7 @@ package user
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -45,7 +46,7 @@ func TestRegisterRoutes(t *testing.T) {
 			).Return(expected, nil)
 
 			// when
-			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
 
 			// then
 			resp, err := app.Test(req)
@@ -86,7 +87,7 @@ func TestRegisterRoutes(t *testing.T) {
 				PhoneNumber: "+49 123456",
 				Password:    "test",
 			})
-			req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(body))
+			req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/", bytes.NewBuffer(body))
 			req.Header.Set("Content-Type", "application/json")
 
 			// then
@@ -131,7 +132,7 @@ func TestRegisterRoutes(t *testing.T) {
 			mockUserService.EXPECT().GetAllByRole(mock.Anything, domain.UserRoleGreenEcolution).Return(expected, nil)
 
 			// when
-			req := httptest.NewRequest(http.MethodGet, string("/role/"+domain.UserRoleGreenEcolution), nil)
+			req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, string("/role/"+domain.UserRoleGreenEcolution), nil)
 			resp, err := app.Test(req, -1)
 			defer resp.Body.Close()
 
@@ -168,7 +169,7 @@ func TestRegisterPublicRoutes(t *testing.T) {
 		body, _ := json.Marshal(entities.LogoutRequest{
 			RefreshToken: "refresh-token",
 		})
-		req := httptest.NewRequest(http.MethodPost, "/logout", bytes.NewBuffer(body))
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/logout", bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 
 		// then
@@ -194,7 +195,7 @@ func TestRegisterPublicRoutes(t *testing.T) {
 		).Return(expected)
 
 		// when
-		req := httptest.NewRequest(http.MethodGet, "/login?redirect_url=http%3A%2F%2Flocalhost%3A3000%2Flogin", nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/login?redirect_url=http%3A%2F%2Flocalhost%3A3000%2Flogin", nil)
 		req.Header.Set("Content-Type", "application/json")
 
 		// then
@@ -229,7 +230,7 @@ func TestRegisterPublicRoutes(t *testing.T) {
 		body, _ := json.Marshal(entities.LoginTokenRequest{
 			Code: "code",
 		})
-		req := httptest.NewRequest(http.MethodPost, "/login/token?redirect_url=http%3A%2F%2Flocalhost%3A3000%2Flogin", bytes.NewBuffer(body))
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/login/token?redirect_url=http%3A%2F%2Flocalhost%3A3000%2Flogin", bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 
 		// then
@@ -265,7 +266,7 @@ func TestRegisterPublicRoutes(t *testing.T) {
 		body, _ := json.Marshal(entities.RefreshTokenRequest{
 			RefreshToken: refreshToken,
 		})
-		req := httptest.NewRequest(http.MethodPost, "/token/refresh", bytes.NewBuffer(body))
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/token/refresh", bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 
 		// then

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
@@ -22,7 +23,7 @@ func TestPaginationMiddleware(t *testing.T) {
 	})
 
 	t.Run("should set default values when no page and limit are provided", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/pagination-test", nil)
+		req := httptest.NewRequestWithContext(context.Background(), "GET", "/pagination-test", nil)
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
 		defer resp.Body.Close()
@@ -35,7 +36,7 @@ func TestPaginationMiddleware(t *testing.T) {
 	})
 
 	t.Run("should use provided page and limit query parameters", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/pagination-test?page=2&limit=10", nil)
+		req := httptest.NewRequestWithContext(context.Background(), "GET", "/pagination-test?page=2&limit=10", nil)
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
 		defer resp.Body.Close()
@@ -48,7 +49,7 @@ func TestPaginationMiddleware(t *testing.T) {
 	})
 
 	t.Run("should return bad request error for invalid page format", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/pagination-test?page=abc&limit=10", nil)
+		req := httptest.NewRequestWithContext(context.Background(), "GET", "/pagination-test?page=abc&limit=10", nil)
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
 		defer resp.Body.Close()
@@ -57,7 +58,7 @@ func TestPaginationMiddleware(t *testing.T) {
 	})
 
 	t.Run("should return bad request error for zero page format", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/pagination-test?page=0&limit=10", nil)
+		req := httptest.NewRequestWithContext(context.Background(), "GET", "/pagination-test?page=0&limit=10", nil)
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
 		defer resp.Body.Close()
@@ -66,7 +67,7 @@ func TestPaginationMiddleware(t *testing.T) {
 	})
 
 	t.Run("should return bad request error for invalid limit format", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/pagination-test?page=2&limit=xyz", nil)
+		req := httptest.NewRequestWithContext(context.Background(), "GET", "/pagination-test?page=2&limit=xyz", nil)
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
 		defer resp.Body.Close()
@@ -75,7 +76,7 @@ func TestPaginationMiddleware(t *testing.T) {
 	})
 
 	t.Run("should return bad request error for negative limit", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/pagination-test?page=2&limit=-10", nil)
+		req := httptest.NewRequestWithContext(context.Background(), "GET", "/pagination-test?page=2&limit=-10", nil)
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
 		defer resp.Body.Close()
@@ -84,7 +85,7 @@ func TestPaginationMiddleware(t *testing.T) {
 	})
 
 	t.Run("should return bad request error for zero limit", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/pagination-test?page=2&limit=0", nil)
+		req := httptest.NewRequestWithContext(context.Background(), "GET", "/pagination-test?page=2&limit=0", nil)
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
 		defer resp.Body.Close()
