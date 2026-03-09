@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -93,7 +94,7 @@ func Test_NewJWTMiddleware(t *testing.T) {
 			return c.SendString("Hello, World!")
 		})
 
-		req := httptest.NewRequest(fiber.MethodGet, "/", nil)
+		req := httptest.NewRequestWithContext(context.Background(),fiber.MethodGet, "/", nil)
 		resp, _ := app.Test(req)
 		defer resp.Body.Close()
 
@@ -159,7 +160,7 @@ func Test_successHandler(t *testing.T) {
 			return c.SendString("Hello, World!")
 		})
 
-		req := httptest.NewRequest(fiber.MethodGet, "/", nil)
+		req := httptest.NewRequestWithContext(context.Background(),fiber.MethodGet, "/", nil)
 		req.Header.Set("Authorization", "Bearer "+signJWT(t, validKey))
 		resp, _ := app.Test(req)
 		defer resp.Body.Close()
@@ -182,7 +183,7 @@ func Test_successHandler(t *testing.T) {
 		})
 
 		// when
-		req := httptest.NewRequest(fiber.MethodGet, "/", nil)
+		req := httptest.NewRequestWithContext(context.Background(),fiber.MethodGet, "/", nil)
 		resp, _ := app.Test(req)
 		defer resp.Body.Close()
 
@@ -213,7 +214,7 @@ func Test_successHandler(t *testing.T) {
 			return c.SendString("Hello, World!")
 		})
 
-		req := httptest.NewRequest(fiber.MethodGet, "/", nil)
+		req := httptest.NewRequestWithContext(context.Background(),fiber.MethodGet, "/", nil)
 		req.Header.Set("Authorization", "Bearer "+signJWT(t, validKey))
 		resp, _ := app.Test(req)
 		defer resp.Body.Close()

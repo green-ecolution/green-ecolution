@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,7 +19,7 @@ func TestHealthCheck(t *testing.T) {
 	app.Use(handler)
 
 	t.Run("should return 200 OK for liveness probe", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/health", nil)
+		req := httptest.NewRequestWithContext(context.Background(),http.MethodGet, "/health", nil)
 		resp, err := app.Test(req, -1)
 
 		assert.NoError(t, err)
@@ -27,7 +28,7 @@ func TestHealthCheck(t *testing.T) {
 	})
 
 	t.Run("should return 200 OK for readiness probe when services are ready", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/ready", nil)
+		req := httptest.NewRequestWithContext(context.Background(),http.MethodGet, "/ready", nil)
 		resp, err := app.Test(req, -1)
 
 		assert.NoError(t, err)
@@ -36,7 +37,7 @@ func TestHealthCheck(t *testing.T) {
 	})
 
 	t.Run("should return 404 for undefined endpoint", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/undefined", nil)
+		req := httptest.NewRequestWithContext(context.Background(),http.MethodGet, "/undefined", nil)
 		resp, err := app.Test(req, -1)
 
 		assert.NoError(t, err)
@@ -52,7 +53,7 @@ func TestHealthCheck(t *testing.T) {
 		handler := HealthCheck(svc)
 		app.Use(handler)
 
-		req := httptest.NewRequest(http.MethodGet, "/ready", nil)
+		req := httptest.NewRequestWithContext(context.Background(),http.MethodGet, "/ready", nil)
 		resp, err := app.Test(req, -1)
 
 		assert.NoError(t, err)

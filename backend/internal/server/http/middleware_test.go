@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"log/slog"
 	"net/http"
@@ -19,7 +20,7 @@ func TestHealthCheckMiddleware(t *testing.T) {
 		app := fiber.New()
 		app.Use(middleware.HealthCheck(nil))
 
-		req := httptest.NewRequest("GET", "/health", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"GET", "/health", nil)
 		resp, err := app.Test(req, -1)
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
@@ -39,7 +40,7 @@ func TestHealthCheckMiddleware(t *testing.T) {
 				app := fiber.New()
 				app.Use(middleware.HealthCheck(nil))
 
-				req := httptest.NewRequest(method, "/health", nil)
+				req := httptest.NewRequestWithContext(context.Background(),method, "/health", nil)
 				resp, err := app.Test(req, -1)
 				if err != nil {
 					t.Fatalf("Request failed: %v", err)
@@ -58,7 +59,7 @@ func TestHealthCheckMiddleware(t *testing.T) {
 		app := fiber.New()
 		app.Use(middleware.HealthCheck(nil))
 
-		req := httptest.NewRequest("GET", "/health", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"GET", "/health", nil)
 		resp, err := app.Test(req, -1)
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
@@ -76,7 +77,7 @@ func TestHealthCheckMiddleware(t *testing.T) {
 		app := fiber.New()
 		app.Use(middleware.HealthCheck(nil))
 
-		req := httptest.NewRequest("GET", "/health", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"GET", "/health", nil)
 		resp, err := app.Test(req, -1)
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
@@ -104,7 +105,7 @@ func TestHTTPLoggerMiddleware(t *testing.T) {
 			return c.SendString("Log endpoint")
 		})
 
-		req := httptest.NewRequest("GET", "/log", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"GET", "/log", nil)
 		resp, err := app.Test(req, -1)
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
@@ -121,7 +122,7 @@ func TestHTTPLoggerMiddleware(t *testing.T) {
 		app := fiber.New()
 		app.Use(middleware.AppLogger(slog.Default))
 
-		req := httptest.NewRequest("GET", "/non-existent", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"GET", "/non-existent", nil)
 		resp, err := app.Test(req, -1)
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
@@ -142,7 +143,7 @@ func TestHTTPLoggerMiddleware(t *testing.T) {
 			return c.SendString("Logged POST request")
 		})
 
-		req := httptest.NewRequest("POST", "/log", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"POST", "/log", nil)
 		resp, err := app.Test(req, -1)
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
@@ -163,7 +164,7 @@ func TestHTTPLoggerMiddleware(t *testing.T) {
 			return c.SendString("Log endpoint with headers")
 		})
 
-		req := httptest.NewRequest("GET", "/log", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"GET", "/log", nil)
 		req.Header.Set("X-Custom-Header", "TestHeader")
 		resp, err := app.Test(req, -1)
 		if err != nil {
@@ -189,7 +190,7 @@ func TestHTTPLoggerMiddleware(t *testing.T) {
 		})
 
 		largePayload := make([]byte, 10*1024*1024)
-		req := httptest.NewRequest("POST", "/log", bytes.NewBuffer(largePayload))
+		req := httptest.NewRequestWithContext(context.Background(),"POST", "/log", bytes.NewBuffer(largePayload))
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := app.Test(req, -1)
@@ -211,7 +212,7 @@ func TestHTTPLoggerMiddleware(t *testing.T) {
 			return fiber.NewError(http.StatusInternalServerError, "Internal error")
 		})
 
-		req := httptest.NewRequest("GET", "/error", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"GET", "/error", nil)
 		resp, err := app.Test(req, -1)
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
@@ -232,7 +233,7 @@ func TestHTTPLoggerMiddleware(t *testing.T) {
 			return c.SendString("Logged request with query parameters")
 		})
 
-		req := httptest.NewRequest("GET", "/log?param1=value1&param2=value2", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"GET", "/log?param1=value1&param2=value2", nil)
 		resp, err := app.Test(req, -1)
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
@@ -255,7 +256,7 @@ func TestRequestIDMiddleware(t *testing.T) {
 			return c.SendStatus(http.StatusOK)
 		})
 
-		req := httptest.NewRequest("GET", "/request-id", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"GET", "/request-id", nil)
 		resp, err := app.Test(req, -1)
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
@@ -284,7 +285,7 @@ func TestPublicRoutes(t *testing.T) {
 		app.Use(middleware.RequestID())
 		initPublicRoutes(app)
 
-		req := httptest.NewRequest("GET", "/public", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"GET", "/public", nil)
 		resp, err := app.Test(req, -1)
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
@@ -305,7 +306,7 @@ func TestPublicRoutes(t *testing.T) {
 			return c.SendStatus(http.StatusOK)
 		})
 
-		req := httptest.NewRequest("GET", "/request-id", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"GET", "/request-id", nil)
 		req.Header.Set("X-Request-ID", "existing-id")
 		resp, err := app.Test(req, -1)
 		if err != nil {
@@ -330,7 +331,7 @@ func TestPublicRoutes(t *testing.T) {
 
 		ids := make(map[string]bool)
 		for i := 0; i < 10; i++ {
-			req := httptest.NewRequest("GET", "/request-id", nil)
+			req := httptest.NewRequestWithContext(context.Background(),"GET", "/request-id", nil)
 			resp, err := app.Test(req, -1)
 			if err != nil {
 				t.Fatalf("Request failed: %v", err)
@@ -354,7 +355,7 @@ func TestPublicRoutes(t *testing.T) {
 		app := fiber.New()
 		app.Use(middleware.RequestID())
 
-		req := httptest.NewRequest("GET", "/non-existing-route", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"GET", "/non-existing-route", nil)
 		resp, err := app.Test(req, -1)
 
 		if err != nil {
@@ -380,7 +381,7 @@ func TestPublicRoutes(t *testing.T) {
 			return c.SendStatus(http.StatusOK)
 		})
 
-		req := httptest.NewRequest("GET", "/request-id", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"GET", "/request-id", nil)
 		resp, err := app.Test(req, -1)
 
 		if err != nil {
@@ -402,7 +403,7 @@ func TestPublicRoutes(t *testing.T) {
 			return c.SendStatus(http.StatusOK)
 		})
 
-		req := httptest.NewRequest("GET", "/request-id", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"GET", "/request-id", nil)
 		resp, err := app.Test(req, -1)
 
 		if err != nil {
@@ -426,7 +427,7 @@ func TestInvalidRoutes(t *testing.T) {
 		app := fiber.New()
 		app.Use(middleware.HealthCheck(nil))
 
-		req := httptest.NewRequest("GET", "/undefined-route", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"GET", "/undefined-route", nil)
 		resp, err := app.Test(req, -1)
 
 		if err != nil {
@@ -446,7 +447,7 @@ func TestInvalidRoutes(t *testing.T) {
 			return c.SendStatus(http.StatusOK)
 		})
 
-		req := httptest.NewRequest("POST", "/valid-route", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"POST", "/valid-route", nil)
 		resp, err := app.Test(req, -1)
 
 		if err != nil {
@@ -466,7 +467,7 @@ func TestInvalidRoutes(t *testing.T) {
 			return c.SendStatus(http.StatusOK)
 		})
 
-		req := httptest.NewRequest("GET", "/undefined-route?query=param", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"GET", "/undefined-route?query=param", nil)
 		resp, err := app.Test(req, -1)
 
 		if err != nil {
@@ -490,7 +491,7 @@ func TestInvalidRoutes(t *testing.T) {
 			return c.SendStatus(http.StatusOK)
 		})
 
-		req := httptest.NewRequest("GET", "/route/wrong-format-id", nil)
+		req := httptest.NewRequestWithContext(context.Background(),"GET", "/route/wrong-format-id", nil)
 		resp, err := app.Test(req, -1)
 
 		if err != nil {
@@ -509,8 +510,8 @@ func TestInvalidRoutes(t *testing.T) {
 			return c.SendStatus(http.StatusOK)
 		})
 
-		req1 := httptest.NewRequest("GET", "/exact-route-similar", nil)
-		req2 := httptest.NewRequest("GET", "/wrong-prefix-route", nil)
+		req1 := httptest.NewRequestWithContext(context.Background(),"GET", "/exact-route-similar", nil)
+		req2 := httptest.NewRequestWithContext(context.Background(),"GET", "/wrong-prefix-route", nil)
 
 		tests := []struct {
 			req  *http.Request

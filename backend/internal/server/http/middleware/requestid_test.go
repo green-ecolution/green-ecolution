@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,7 +15,7 @@ func TestRequestID(t *testing.T) {
 		app := fiber.New()
 		app.Use(RequestID())
 
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req := httptest.NewRequestWithContext(context.Background(),http.MethodGet, "/", nil)
 		resp, err := app.Test(req, -1)
 
 		assert.NoError(t, err)
@@ -26,7 +27,7 @@ func TestRequestID(t *testing.T) {
 		app := fiber.New()
 		app.Use(RequestID())
 
-		req1 := httptest.NewRequest(http.MethodGet, "/", nil)
+		req1 := httptest.NewRequestWithContext(context.Background(),http.MethodGet, "/", nil)
 		resp1, err1 := app.Test(req1, -1)
 		assert.NoError(t, err1)
 
@@ -34,7 +35,7 @@ func TestRequestID(t *testing.T) {
 		id1 := resp1.Header.Get("X-Request-ID")
 		assert.NotEmpty(t, id1)
 
-		req2 := httptest.NewRequest(http.MethodGet, "/", nil)
+		req2 := httptest.NewRequestWithContext(context.Background(),http.MethodGet, "/", nil)
 		resp2, err2 := app.Test(req2, -1)
 		assert.NoError(t, err2)
 
@@ -49,7 +50,7 @@ func TestRequestID(t *testing.T) {
 		app := fiber.New()
 		app.Use(RequestID())
 
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req := httptest.NewRequestWithContext(context.Background(),http.MethodGet, "/", nil)
 		resp, err := app.Test(req, -1)
 
 		assert.NoError(t, err)
@@ -61,14 +62,14 @@ func TestRequestID(t *testing.T) {
 		app := fiber.New()
 		app.Use(RequestID())
 
-		req1 := httptest.NewRequest(http.MethodGet, "/", nil)
+		req1 := httptest.NewRequestWithContext(context.Background(),http.MethodGet, "/", nil)
 		resp1, err1 := app.Test(req1, -1)
 		assert.NoError(t, err1)
 		defer resp1.Body.Close()
 		id1 := resp1.Header.Get("X-Request-ID")
 		assert.NotEmpty(t, id1)
 
-		req2 := httptest.NewRequest(http.MethodGet, "/", nil)
+		req2 := httptest.NewRequestWithContext(context.Background(),http.MethodGet, "/", nil)
 		resp2, err2 := app.Test(req2, -1)
 		assert.NoError(t, err2)
 
