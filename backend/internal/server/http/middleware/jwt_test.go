@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -168,7 +169,7 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 			return c.SendString("Hello, World!")
 		})
 
-		req := httptest.NewRequest(fiber.MethodGet, "/", nil)
+		req := httptest.NewRequestWithContext(context.Background(), fiber.MethodGet, "/", nil)
 		req.Header.Set("Authorization", "Bearer "+signJWT(t, validKey))
 		resp, _ := app.Test(req)
 		defer resp.Body.Close()
@@ -202,7 +203,7 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 			return c.SendString("Hello, World!")
 		})
 
-		req := httptest.NewRequest(fiber.MethodGet, "/", nil)
+		req := httptest.NewRequestWithContext(context.Background(), fiber.MethodGet, "/", nil)
 		req.Header.Set("Authorization", "Bearer "+signJWT(t, validKey))
 		resp, _ := app.Test(req)
 		defer resp.Body.Close()
@@ -228,7 +229,7 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 			return c.SendString("Hello, World!")
 		})
 
-		req := httptest.NewRequest(fiber.MethodGet, "/", nil)
+		req := httptest.NewRequestWithContext(context.Background(), fiber.MethodGet, "/", nil)
 		// No Authorization header
 		resp, _ := app.Test(req)
 		defer resp.Body.Close()
@@ -262,7 +263,7 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 			return c.SendString("Hello, World!")
 		})
 
-		req := httptest.NewRequest(fiber.MethodGet, "/", nil)
+		req := httptest.NewRequestWithContext(context.Background(), fiber.MethodGet, "/", nil)
 		req.Header.Set("Authorization", "Bearer "+signJWT(t, wrongKey))
 		resp, _ := app.Test(req)
 		defer resp.Body.Close()
@@ -295,7 +296,7 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 			return c.SendString("Hello, World!")
 		})
 
-		req := httptest.NewRequest(fiber.MethodGet, "/", nil)
+		req := httptest.NewRequestWithContext(context.Background(), fiber.MethodGet, "/", nil)
 		// No Authorization header set
 		resp, _ := app.Test(req)
 		defer resp.Body.Close()
@@ -338,7 +339,7 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				req := httptest.NewRequest(fiber.MethodGet, "/", nil)
+				req := httptest.NewRequestWithContext(context.Background(), fiber.MethodGet, "/", nil)
 				req.Header.Set("Authorization", tc.header)
 				resp, _ := app.Test(req)
 				defer resp.Body.Close()
@@ -373,7 +374,7 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 			return c.SendString("Hello, World!")
 		})
 
-		req := httptest.NewRequest(fiber.MethodGet, "/", nil)
+		req := httptest.NewRequestWithContext(context.Background(), fiber.MethodGet, "/", nil)
 		req.Header.Set("Authorization", "Bearer "+signJWT(t, validKey))
 		resp, _ := app.Test(req)
 		defer resp.Body.Close()
@@ -411,7 +412,7 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 			return c.SendString("Hello, World!")
 		})
 
-		req := httptest.NewRequest(fiber.MethodGet, "/", nil)
+		req := httptest.NewRequestWithContext(context.Background(), fiber.MethodGet, "/", nil)
 		req.Header.Set("Authorization", "Bearer "+signJWTWithKid(t, testKey, kid))
 		resp, _ := app.Test(req)
 		defer resp.Body.Close()
@@ -451,7 +452,7 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 			return c.SendString("Hello, World!")
 		})
 
-		req := httptest.NewRequest(fiber.MethodGet, "/", nil)
+		req := httptest.NewRequestWithContext(context.Background(), fiber.MethodGet, "/", nil)
 		req.Header.Set("Authorization", "Bearer "+signJWTWithKid(t, testKey, kid))
 		resp, _ := app.Test(req)
 		defer resp.Body.Close()
@@ -499,7 +500,7 @@ func Test_AllowUnauthorizedMiddleware(t *testing.T) {
 			return c.SendString("Hello, World!")
 		})
 
-		req := httptest.NewRequest(fiber.MethodGet, "/", nil)
+		req := httptest.NewRequestWithContext(context.Background(), fiber.MethodGet, "/", nil)
 		resp, err := app.Test(req)
 		require.NoError(t, err)
 		defer resp.Body.Close()
