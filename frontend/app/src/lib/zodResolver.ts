@@ -22,8 +22,8 @@ interface ResolverError<TFieldValues extends FieldValues> {
 export function zodResolver<TOutput extends FieldValues>(
   schema: ZodSchema<TOutput>,
 ): Resolver<TOutput> {
-  return async (values) => {
-    const result = await schema.safeParseAsync(values)
+  return (values) => {
+    const result = schema.safeParse(values)
 
     if (result.success) {
       return {
