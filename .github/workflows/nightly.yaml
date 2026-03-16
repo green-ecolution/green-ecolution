@@ -115,7 +115,7 @@ jobs:
 
       - name: Build and push backend
         if: matrix.component == 'backend'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./backend
           file: ./backend/Dockerfile
@@ -136,7 +136,7 @@ jobs:
 
       - name: Build and push frontend
         if: matrix.component == 'frontend'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
@@ -153,7 +153,7 @@ jobs:
 
       - name: Build and push migrations
         if: matrix.component == 'migrations'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./.docker/migrations/Dockerfile.postgres

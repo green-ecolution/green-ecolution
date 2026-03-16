@@ -123,7 +123,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Test frontend Dockerfile
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
