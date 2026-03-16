@@ -38,7 +38,7 @@
     "react-dom": "catalog:react19",
     "react-hook-form": "^7.71.2",
     "react-leaflet": "^5.0.0",
-    "recharts": "^3.7.0",
+    "recharts": "^3.8.0",
     "utility-types": "^3.11.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.12"
