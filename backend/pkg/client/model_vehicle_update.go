@@ -22,14 +22,14 @@ var _ MappedNullable = &VehicleUpdate{}
 
 // VehicleUpdate struct for VehicleUpdate
 type VehicleUpdate struct {
-	AdditionalInformation map[string]interface{} `json:"additional_information,omitempty"`
+	AdditionalInformation map[string]interface{} `json:"additional_information"`
 	Description           string                 `json:"description"`
 	DrivingLicense        DrivingLicense         `json:"driving_license"`
 	Height                float32                `json:"height"`
 	Length                float32                `json:"length"`
 	Model                 string                 `json:"model"`
 	NumberPlate           string                 `json:"number_plate"`
-	Provider              *string                `json:"provider,omitempty"`
+	Provider              string                 `json:"provider"`
 	Status                VehicleStatus          `json:"status"`
 	Type                  VehicleType            `json:"type"`
 	WaterCapacity         float32                `json:"water_capacity"`
@@ -43,14 +43,16 @@ type _VehicleUpdate VehicleUpdate
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewVehicleUpdate(description string, drivingLicense DrivingLicense, height float32, length float32, model string, numberPlate string, status VehicleStatus, type_ VehicleType, waterCapacity float32, weight float32, width float32) *VehicleUpdate {
+func NewVehicleUpdate(additionalInformation map[string]interface{}, description string, drivingLicense DrivingLicense, height float32, length float32, model string, numberPlate string, provider string, status VehicleStatus, type_ VehicleType, waterCapacity float32, weight float32, width float32) *VehicleUpdate {
 	this := VehicleUpdate{}
+	this.AdditionalInformation = additionalInformation
 	this.Description = description
 	this.DrivingLicense = drivingLicense
 	this.Height = height
 	this.Length = length
 	this.Model = model
 	this.NumberPlate = numberPlate
+	this.Provider = provider
 	this.Status = status
 	this.Type = type_
 	this.WaterCapacity = waterCapacity
@@ -67,34 +69,26 @@ func NewVehicleUpdateWithDefaults() *VehicleUpdate {
 	return &this
 }
 
-// GetAdditionalInformation returns the AdditionalInformation field value if set, zero value otherwise.
+// GetAdditionalInformation returns the AdditionalInformation field value
 func (o *VehicleUpdate) GetAdditionalInformation() map[string]interface{} {
-	if o == nil || IsNil(o.AdditionalInformation) {
+	if o == nil {
 		var ret map[string]interface{}
 		return ret
 	}
+
 	return o.AdditionalInformation
 }
 
-// GetAdditionalInformationOk returns a tuple with the AdditionalInformation field value if set, nil otherwise
+// GetAdditionalInformationOk returns a tuple with the AdditionalInformation field value
 // and a boolean to check if the value has been set.
 func (o *VehicleUpdate) GetAdditionalInformationOk() (map[string]interface{}, bool) {
-	if o == nil || IsNil(o.AdditionalInformation) {
+	if o == nil {
 		return map[string]interface{}{}, false
 	}
 	return o.AdditionalInformation, true
 }
 
-// HasAdditionalInformation returns a boolean if a field has been set.
-func (o *VehicleUpdate) HasAdditionalInformation() bool {
-	if o != nil && !IsNil(o.AdditionalInformation) {
-		return true
-	}
-
-	return false
-}
-
-// SetAdditionalInformation gets a reference to the given map[string]interface{} and assigns it to the AdditionalInformation field.
+// SetAdditionalInformation sets field value
 func (o *VehicleUpdate) SetAdditionalInformation(v map[string]interface{}) {
 	o.AdditionalInformation = v
 }
@@ -243,36 +237,28 @@ func (o *VehicleUpdate) SetNumberPlate(v string) {
 	o.NumberPlate = v
 }
 
-// GetProvider returns the Provider field value if set, zero value otherwise.
+// GetProvider returns the Provider field value
 func (o *VehicleUpdate) GetProvider() string {
-	if o == nil || IsNil(o.Provider) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.Provider
+
+	return o.Provider
 }
 
-// GetProviderOk returns a tuple with the Provider field value if set, nil otherwise
+// GetProviderOk returns a tuple with the Provider field value
 // and a boolean to check if the value has been set.
 func (o *VehicleUpdate) GetProviderOk() (*string, bool) {
-	if o == nil || IsNil(o.Provider) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Provider, true
+	return &o.Provider, true
 }
 
-// HasProvider returns a boolean if a field has been set.
-func (o *VehicleUpdate) HasProvider() bool {
-	if o != nil && !IsNil(o.Provider) {
-		return true
-	}
-
-	return false
-}
-
-// SetProvider gets a reference to the given string and assigns it to the Provider field.
+// SetProvider sets field value
 func (o *VehicleUpdate) SetProvider(v string) {
-	o.Provider = &v
+	o.Provider = v
 }
 
 // GetStatus returns the Status field value
@@ -405,18 +391,14 @@ func (o VehicleUpdate) MarshalJSON() ([]byte, error) {
 
 func (o VehicleUpdate) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.AdditionalInformation) {
-		toSerialize["additional_information"] = o.AdditionalInformation
-	}
+	toSerialize["additional_information"] = o.AdditionalInformation
 	toSerialize["description"] = o.Description
 	toSerialize["driving_license"] = o.DrivingLicense
 	toSerialize["height"] = o.Height
 	toSerialize["length"] = o.Length
 	toSerialize["model"] = o.Model
 	toSerialize["number_plate"] = o.NumberPlate
-	if !IsNil(o.Provider) {
-		toSerialize["provider"] = o.Provider
-	}
+	toSerialize["provider"] = o.Provider
 	toSerialize["status"] = o.Status
 	toSerialize["type"] = o.Type
 	toSerialize["water_capacity"] = o.WaterCapacity
@@ -430,12 +412,14 @@ func (o *VehicleUpdate) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"additional_information",
 		"description",
 		"driving_license",
 		"height",
 		"length",
 		"model",
 		"number_plate",
+		"provider",
 		"status",
 		"type",
 		"water_capacity",

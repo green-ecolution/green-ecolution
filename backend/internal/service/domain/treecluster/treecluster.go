@@ -2,12 +2,9 @@ package treecluster
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"log/slog"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
@@ -20,7 +17,6 @@ type TreeClusterService struct {
 	treeClusterRepo storage.TreeClusterRepository
 	treeRepo        storage.TreeRepository
 	regionRepo      storage.RegionRepository
-	validator       *validator.Validate
 	eventManager    *worker.EventManager
 }
 
@@ -34,7 +30,6 @@ func NewTreeClusterService(
 		treeClusterRepo: treeClusterRepo,
 		treeRepo:        treeRepo,
 		regionRepo:      regionRepo,
-		validator:       validator.New(),
 		eventManager:    eventManager,
 	}
 }
@@ -80,10 +75,6 @@ func (s *TreeClusterService) publishUpdateEvent(ctx context.Context, prevTc *dom
 
 func (s *TreeClusterService) Create(ctx context.Context, createTc *domain.TreeClusterCreate) (*domain.TreeCluster, error) {
 	log := logger.GetLogger(ctx)
-	if err := s.validator.Struct(createTc); err != nil {
-		log.Debug("failed to validate struct in create tree cluster", "error", err, "raw_cluster", fmt.Sprintf("%+v", createTc))
-		return nil, service.MapError(ctx, errors.Join(err, service.ErrValidation), service.ErrorLogValidation)
-	}
 
 	trees, err := s.getTrees(ctx, createTc.TreeIDs)
 	if err != nil {
@@ -136,10 +127,6 @@ func (s *TreeClusterService) Create(ctx context.Context, createTc *domain.TreeCl
 
 func (s *TreeClusterService) Update(ctx context.Context, id int32, tcUpdate *domain.TreeClusterUpdate) (*domain.TreeCluster, error) {
 	log := logger.GetLogger(ctx)
-	if err := s.validator.Struct(tcUpdate); err != nil {
-		log.Debug("failed to validate struct from update tree cluster request", "error", err, "raw_cluster", fmt.Sprintf("%+v", tcUpdate))
-		return nil, service.MapError(ctx, errors.Join(err, service.ErrValidation), service.ErrorLogValidation)
-	}
 
 	trees, err := s.getTrees(ctx, tcUpdate.TreeIDs)
 	if err != nil {

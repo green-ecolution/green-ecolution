@@ -7,11 +7,11 @@ type LoginResponse struct {
 } //	@Name	LoginResponse
 
 type LoginTokenRequest struct {
-	Code string `json:"code"`
+	Code string `json:"code" validate:"required"`
 } //	@Name	LoginTokenRequest
 
 type LogoutRequest struct {
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `json:"refresh_token" validate:"required"`
 } //	@Name	LogoutRequest
 
 type ClientTokenResponse struct {
@@ -28,5 +28,5 @@ type ClientTokenResponse struct {
 } //	@Name	ClientToken
 
 type RefreshTokenRequest struct {
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `json:"refresh_token" validate:"required"`
 } //	@Name	RefreshTokenRequest

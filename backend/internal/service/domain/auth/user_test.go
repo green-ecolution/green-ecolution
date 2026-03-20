@@ -62,38 +62,6 @@ func TestRegisterUser(t *testing.T) {
 		assert.Equal(t, expected, resp)
 	})
 
-	t.Run("should return error when failed to register user", func(t *testing.T) {
-		// given
-		identityConfig := &config.IdentityAuthConfig{}
-		authRepo := storageMock.NewMockAuthRepository(t)
-		userRepo := storageMock.NewMockUserRepository(t)
-		svc := NewAuthService(authRepo, userRepo, identityConfig)
-
-		// when
-		resp, err := svc.Register(rootCtx, &entities.RegisterUser{})
-
-		// then
-		assert.Error(t, err)
-		assert.Nil(t, resp)
-		// assert.ErrorContains(t, err, "400: validation error")
-
-	})
-
-	t.Run("should return error when validation error", func(t *testing.T) {
-		// given
-		identityConfig := &config.IdentityAuthConfig{}
-		authRepo := storageMock.NewMockAuthRepository(t)
-		userRepo := storageMock.NewMockUserRepository(t)
-		svc := NewAuthService(authRepo, userRepo, identityConfig)
-
-		// when
-		resp, err := svc.Register(rootCtx, &entities.RegisterUser{})
-
-		// then
-		assert.Error(t, err)
-		assert.Nil(t, resp)
-		// assert.ErrorContains(t, err, "400: validation error")
-	})
 }
 
 func TestLoginRequest(t *testing.T) {
@@ -200,23 +168,6 @@ func TestClientTokenCallback(t *testing.T) {
 		assert.Equal(t, expected, resp)
 	})
 
-	t.Run("should return error when validation error", func(t *testing.T) {
-		// given
-		identityConfig := &config.IdentityAuthConfig{}
-		loginCallback := &entities.LoginCallback{}
-
-		authRepo := storageMock.NewMockAuthRepository(t)
-		userRepo := storageMock.NewMockUserRepository(t)
-		svc := NewAuthService(authRepo, userRepo, identityConfig)
-
-		// when
-		_, err := svc.ClientTokenCallback(rootCtx, loginCallback)
-
-		// then
-		assert.Error(t, err)
-		// assert.EqualError(t, err, "400: validation error: Key: 'LoginCallback.Code' Error:Field validation for 'Code' failed on the 'required' tag")
-	})
-
 	t.Run("should return error when failed to get access token", func(t *testing.T) {
 		// given
 		identityConfig := &config.IdentityAuthConfig{}
@@ -260,24 +211,6 @@ func TestLogoutRequest(t *testing.T) {
 
 		// when
 		assert.NoError(t, err)
-	})
-
-	t.Run("should return error when validation fails", func(t *testing.T) {
-		// given
-		identityConfig := &config.IdentityAuthConfig{}
-
-		authRepo := storageMock.NewMockAuthRepository(t)
-		userRepo := storageMock.NewMockUserRepository(t)
-		svc := NewAuthService(authRepo, userRepo, identityConfig)
-
-		invalidLogoutRequest := &entities.Logout{RefreshToken: ""}
-
-		// when
-		err := svc.LogoutRequest(rootCtx, invalidLogoutRequest)
-
-		// then
-		assert.Error(t, err)
-		// assert.EqualError(t, err, "400: validation error: Key: 'Logout.RefreshToken' Error:Field validation for 'RefreshToken' failed on the 'required' tag")
 	})
 
 	t.Run("should return error when session removal fails", func(t *testing.T) {

@@ -8,6 +8,7 @@ import (
 	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper/generated"
+	handler "github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/errorhandler"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils/pagination"
@@ -144,12 +145,12 @@ func GetTreeBySensorID(svc service.TreeService) fiber.Handler {
 func CreateTree(svc service.TreeService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
-		var req entities.TreeCreateRequest
-		if err := c.BodyParser(&req); err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		req, err := handler.BindAndValidate[entities.TreeCreateRequest](c)
+		if err != nil {
+			return err
 		}
 
-		domainReq := treeMapper.FromCreateRequest(&req)
+		domainReq := treeMapper.FromCreateRequest(req)
 		domainData, err := svc.Create(ctx, domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)
@@ -184,11 +185,11 @@ func UpdateTree(svc service.TreeService) fiber.Handler {
 			err = service.NewError(service.BadRequest, "invalid ID format")
 			return errorhandler.HandleError(err)
 		}
-		var req entities.TreeUpdateRequest
-		if err = c.BodyParser(&req); err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		req, err := handler.BindAndValidate[entities.TreeUpdateRequest](c)
+		if err != nil {
+			return err
 		}
-		domainReq := treeMapper.FromUpdateRequest(&req)
+		domainReq := treeMapper.FromUpdateRequest(req)
 		domainData, err := svc.Update(ctx, int32(id), domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)

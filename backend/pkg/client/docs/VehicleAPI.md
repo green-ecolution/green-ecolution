@@ -104,7 +104,7 @@ import (
 )
 
 func main() {
-	body := *openapiclient.NewVehicleCreate("Description_example", openapiclient.DrivingLicense("B"), float32(123), float32(123), "Model_example", "NumberPlate_example", openapiclient.VehicleStatus("active"), openapiclient.VehicleType("transporter"), float32(123), float32(123), float32(123)) // VehicleCreate | Vehicle data to create
+	body := *openapiclient.NewVehicleCreate(map[string]interface{}{"key": interface{}(123)}, "Description_example", openapiclient.DrivingLicense("B"), float32(123), float32(123), "Model_example", "NumberPlate_example", "Provider_example", openapiclient.VehicleStatus("active"), openapiclient.VehicleType("transporter"), float32(123), float32(123), float32(123)) // VehicleCreate | Vehicle data to create
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -514,7 +514,7 @@ import (
 
 func main() {
 	id := int32(56) // int32 | Vehicle ID
-	body := *openapiclient.NewVehicleUpdate("Description_example", openapiclient.DrivingLicense("B"), float32(123), float32(123), "Model_example", "NumberPlate_example", openapiclient.VehicleStatus("active"), openapiclient.VehicleType("transporter"), float32(123), float32(123), float32(123)) // VehicleUpdate | Vehicle data to update
+	body := *openapiclient.NewVehicleUpdate(map[string]interface{}{"key": interface{}(123)}, "Description_example", openapiclient.DrivingLicense("B"), float32(123), float32(123), "Model_example", "NumberPlate_example", "Provider_example", openapiclient.VehicleStatus("active"), openapiclient.VehicleType("transporter"), float32(123), float32(123), float32(123)) // VehicleUpdate | Vehicle data to update
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)

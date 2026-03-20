@@ -11,7 +11,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
@@ -27,7 +26,6 @@ type WateringPlanService struct {
 	userRepo         storage.UserRepository
 	routingRepo      storage.RoutingRepository
 	gpxBucket        storage.S3Repository
-	validator        *validator.Validate
 	eventManager     *worker.EventManager
 }
 
@@ -47,7 +45,6 @@ func NewWateringPlanService(
 		userRepo:         userRepository,
 		routingRepo:      routingRepo,
 		gpxBucket:        gpxRepo,
-		validator:        validator.New(),
 		eventManager:     eventManager,
 	}
 }
@@ -127,14 +124,6 @@ func (w *WateringPlanService) GetByID(ctx context.Context, id int32) (*entities.
 
 func (w *WateringPlanService) Create(ctx context.Context, createWp *entities.WateringPlanCreate) (*entities.WateringPlan, error) {
 	log := logger.GetLogger(ctx)
-	if err := w.validator.Struct(createWp); err != nil {
-		log.Debug("failed to validate struct from create watering plan", "error", err, "raw_watering_plan", fmt.Sprintf("%+v", createWp))
-		return nil, service.MapError(ctx, errors.Join(err, service.ErrValidation), service.ErrorLogValidation)
-	}
-
-	if err := w.validateDate(ctx, createWp.Date); err != nil {
-		return nil, err
-	}
 
 	treeClusters, err := w.fetchTreeClusters(ctx, createWp.TreeClusterIDs)
 	if err != nil {
@@ -250,23 +239,11 @@ func (w *WateringPlanService) GetGPXFileStream(ctx context.Context, objName stri
 
 func (w *WateringPlanService) Update(ctx context.Context, id int32, updateWp *entities.WateringPlanUpdate) (*entities.WateringPlan, error) {
 	log := logger.GetLogger(ctx)
-	if err := w.validator.Struct(updateWp); err != nil {
-		log.Debug("failed to validate struct from update watering plan", "error", err, "raw_watering_plan", fmt.Sprintf("%+v", updateWp))
-		return nil, service.MapError(ctx, errors.Join(err, service.ErrValidation), service.ErrorLogValidation)
-	}
-
-	if err := w.validateDate(ctx, updateWp.Date); err != nil {
-		return nil, err
-	}
 
 	prevWp, err := w.GetByID(ctx, id)
 	if err != nil {
 		log.Debug("failed to get exitsting watering plan by id", "error", err, "watering_plan_id", id)
 		return nil, service.MapError(ctx, err, service.ErrorLogEntityNotFound)
-	}
-
-	if err := w.validateStatusDependentValues(ctx, updateWp); err != nil {
-		return nil, err
 	}
 
 	treeClusters, err := w.fetchTreeClusters(ctx, updateWp.TreeClusterIDs)
@@ -505,32 +482,6 @@ func (w *WateringPlanService) validateUserDrivingLicenses(users []*entities.User
 	}
 
 	return service.NewError(service.BadRequest, "no user has all the required licenses")
-}
-
-func (w *WateringPlanService) validateDate(ctx context.Context, date time.Time) error {
-	log := logger.GetLogger(ctx)
-	today := time.Now().Truncate(24 * time.Hour)
-	if date.Before(today) {
-		log.Debug("date must be today or in the future", "date", date)
-		return service.NewError(service.BadRequest, "date must be today or in the future")
-	}
-	return nil
-}
-
-func (w *WateringPlanService) validateStatusDependentValues(ctx context.Context, entity *entities.WateringPlanUpdate) error {
-	log := logger.GetLogger(ctx)
-	// Set cancellation note to nothing if the current status is not fitting
-	if entity.CancellationNote != "" && entity.Status != entities.WateringPlanStatusCanceled {
-		log.Debug("cancellation note can only be set if watering plan is canceled")
-		return service.NewError(service.BadRequest, "cancellation note can only be set if watering plan is canceled")
-	}
-
-	if entity.Status != entities.WateringPlanStatusFinished && len(entity.Evaluation) > 0 {
-		log.Debug("evaluation values can only be set if the watering plan has been finished")
-		return service.NewError(service.BadRequest, "evaluation values can only be set if the watering plan has been finished")
-	}
-
-	return nil
 }
 
 // This function calculates approximately how much water the irrigation schedule needs

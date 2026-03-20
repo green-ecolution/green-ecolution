@@ -4,22 +4,22 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AdditionalInformation** | Pointer to **map[string]interface{}** |  | [optional] 
+**AdditionalInformation** | **map[string]interface{}** |  | 
 **Description** | **string** |  | 
 **Latitude** | **float32** |  | 
 **Longitude** | **float32** |  | 
 **Number** | **string** |  | 
 **PlantingYear** | **int32** |  | 
-**Provider** | Pointer to **string** |  | [optional] 
-**SensorId** | Pointer to **string** |  | [optional] 
+**Provider** | **string** |  | 
+**SensorId** | **string** |  | 
 **Species** | **string** |  | 
-**TreeClusterId** | Pointer to **int32** |  | [optional] 
+**TreeClusterId** | **int32** |  | 
 
 ## Methods
 
 ### NewTreeUpdate
 
-`func NewTreeUpdate(description string, latitude float32, longitude float32, number string, plantingYear int32, species string, ) *TreeUpdate`
+`func NewTreeUpdate(additionalInformation map[string]interface{}, description string, latitude float32, longitude float32, number string, plantingYear int32, provider string, sensorId string, species string, treeClusterId int32, ) *TreeUpdate`
 
 NewTreeUpdate instantiates a new TreeUpdate object
 This constructor will assign default values to properties that have it defined,
@@ -53,11 +53,6 @@ and a boolean to check if the value has been set.
 
 SetAdditionalInformation sets AdditionalInformation field to given value.
 
-### HasAdditionalInformation
-
-`func (o *TreeUpdate) HasAdditionalInformation() bool`
-
-HasAdditionalInformation returns a boolean if a field has been set.
 
 ### GetDescription
 
@@ -178,11 +173,6 @@ and a boolean to check if the value has been set.
 
 SetProvider sets Provider field to given value.
 
-### HasProvider
-
-`func (o *TreeUpdate) HasProvider() bool`
-
-HasProvider returns a boolean if a field has been set.
 
 ### GetSensorId
 
@@ -203,11 +193,6 @@ and a boolean to check if the value has been set.
 
 SetSensorId sets SensorId field to given value.
 
-### HasSensorId
-
-`func (o *TreeUpdate) HasSensorId() bool`
-
-HasSensorId returns a boolean if a field has been set.
 
 ### GetSpecies
 
@@ -248,11 +233,6 @@ and a boolean to check if the value has been set.
 
 SetTreeClusterId sets TreeClusterId field to given value.
 
-### HasTreeClusterId
-
-`func (o *TreeUpdate) HasTreeClusterId() bool`
-
-HasTreeClusterId returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

@@ -33,7 +33,7 @@ import (
 )
 
 func main() {
-	body := *openapiclient.NewTreeClusterCreate("Address_example", "Description_example", "Name_example", openapiclient.SoilCondition("schluffig"), []int32{int32(123)}) // TreeClusterCreate | Tree cluster data to create
+	body := *openapiclient.NewTreeClusterCreate(map[string]interface{}{"key": interface{}(123)}, "Address_example", "Description_example", "Name_example", "Provider_example", openapiclient.SoilCondition("schluffig"), []int32{int32(123)}) // TreeClusterCreate | Tree cluster data to create
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -312,7 +312,7 @@ import (
 
 func main() {
 	clusterId := int32(56) // int32 | Tree Cluster ID
-	body := *openapiclient.NewTreeClusterUpdate("Address_example", "Description_example", "Name_example", openapiclient.SoilCondition("schluffig"), []int32{int32(123)}) // TreeClusterUpdate | Tree cluster data to update
+	body := *openapiclient.NewTreeClusterUpdate(map[string]interface{}{"key": interface{}(123)}, "Address_example", "Description_example", "Name_example", "Provider_example", openapiclient.SoilCondition("schluffig"), []int32{int32(123)}) // TreeClusterUpdate | Tree cluster data to update
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
