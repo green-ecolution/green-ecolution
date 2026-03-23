@@ -271,7 +271,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup kustomize
-        uses: yokawasa/action-setup-kube-tools@v0.13.1
+        uses: yokawasa/action-setup-kube-tools@v0.13.3
         with:
           setup-tools: |
             kustomize
