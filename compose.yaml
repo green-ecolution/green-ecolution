@@ -238,7 +238,7 @@ services:
   #     - app-network
 
   vroom:
-    image: ghcr.io/vroom-project/vroom-docker:v1.14.0
+    image: ghcr.io/vroom-project/vroom-docker:v1.15.0
     volumes:
       - ./.docker/infra/vroom:/conf
     environment:
@@ -304,7 +304,7 @@ services:
       - "traefik.http.routers.valhalla.entrypoints=web"
 
   reverse-proxy:
-    image: traefik:v3.6.10
+    image: traefik:v3.6.11
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command:
