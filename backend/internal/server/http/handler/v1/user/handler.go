@@ -8,6 +8,7 @@ import (
 	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper/generated"
+	handler "github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/errorhandler"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 	"github.com/pkg/errors"
@@ -62,16 +63,16 @@ func Login(svc service.AuthService) fiber.Handler {
 func Logout(svc service.AuthService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
-		req := entities.LogoutRequest{}
-		if err := c.BodyParser(&req); err != nil {
-			return errorhandler.HandleError(service.NewError(service.BadRequest, errors.Wrap(err, "failed to parse request").Error()))
+		req, err := handler.BindAndValidate[entities.LogoutRequest](c)
+		if err != nil {
+			return err
 		}
 
 		domainReq := domain.Logout{
 			RefreshToken: req.RefreshToken,
 		}
 
-		err := svc.LogoutRequest(ctx, &domainReq)
+		err = svc.LogoutRequest(ctx, &domainReq)
 		if err != nil {
 			return errorhandler.HandleError(service.NewError(service.InternalError, errors.Wrap(err, "failed to logout").Error()))
 		}
@@ -95,9 +96,9 @@ func Logout(svc service.AuthService) fiber.Handler {
 func RequestToken(svc service.AuthService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
-		req := entities.LoginTokenRequest{}
-		if err := c.BodyParser(&req); err != nil {
-			return errorhandler.HandleError(service.NewError(service.BadRequest, errors.Wrap(err, "failed to parse request").Error()))
+		req, err := handler.BindAndValidate[entities.LoginTokenRequest](c)
+		if err != nil {
+			return err
 		}
 
 		redirectURL, err := parseURL(c.Query("redirect_url"))
@@ -144,9 +145,9 @@ func RequestToken(svc service.AuthService) fiber.Handler {
 func Register(svc service.AuthService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
-		req := entities.UserRegisterRequest{}
-		if err := c.BodyParser(&req); err != nil {
-			return errorhandler.HandleError(service.NewError(service.BadRequest, errors.Wrap(err, "failed to parse request").Error()))
+		req, err := handler.BindAndValidate[entities.UserRegisterRequest](c)
+		if err != nil {
+			return err
 		}
 
 		domainUser := domain.RegisterUser{
@@ -279,13 +280,9 @@ var group singleflight.Group
 func RefreshToken(svc service.AuthService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
-		req := entities.RefreshTokenRequest{}
-		if err := c.BodyParser(&req); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(service.NewError(service.BadRequest, errors.Wrap(err, "failed to parse request").Error()))
-		}
-
-		if req.RefreshToken == "" {
-			return c.Status(fiber.StatusUnauthorized).JSON(service.NewError(service.BadRequest, errors.New("refresh token is required").Error()))
+		req, err := handler.BindAndValidate[entities.RefreshTokenRequest](c)
+		if err != nil {
+			return err
 		}
 
 		data, err, _ := group.Do(req.RefreshToken, func() (any, error) {

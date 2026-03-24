@@ -98,7 +98,7 @@ func TestRegisterRoutes(t *testing.T) {
 			).Return(TestWateringPlans[0], nil)
 
 			// when
-			body, _ := json.Marshal(TestWateringPlanRequest)
+			body, _ := json.Marshal(TestWateringPlanUpdateRequest)
 			req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/1", bytes.NewBuffer(body))
 			req.Header.Set("Content-Type", "application/json")
 
