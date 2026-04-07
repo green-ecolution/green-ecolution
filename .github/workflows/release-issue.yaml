@@ -16,7 +16,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Get Green Ecolution App Token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
@@ -105,7 +105,7 @@ jobs:
       issues: write
     steps:
       - name: Get Green Ecolution App Token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
