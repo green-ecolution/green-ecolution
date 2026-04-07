@@ -46,6 +46,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@module-federation/vite": "1.14.1",
+    "@rolldown/plugin-babel": "^0.2.2",
     "@tailwindcss/vite": "^4.2.2",
     "@tanstack/router-plugin": "1.167.12",
     "@testing-library/jest-dom": "^6.9.1",
