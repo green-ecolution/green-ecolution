@@ -121,12 +121,33 @@ On the phone:
 - Frontend: `https://192.168.1.50.sslip.io:3443`
 - Auth: `https://auth.192.168.1.50.sslip.io:3443`
 
-### Installing the self-signed certificate on iOS
+### Installing the self-signed certificate on mobile
 
-1. Open `https://<ip>.sslip.io:3443/localhost.pem` in Safari (temporarily copy the cert to `frontend/app/public/`)
-2. Settings → "Profile Downloaded" → **Install**
+Temporarily copy the cert into the frontend public directory so it can be downloaded:
+
+```bash
+cp .docker/infra/traefik/certs/localhost.pem frontend/app/public/localhost.pem
+```
+
+Then open `https://<ip>.sslip.io:3443/localhost.pem` on the phone. Remove the file afterwards:
+
+```bash
+rm frontend/app/public/localhost.pem
+```
+
+**iOS:**
+
+1. Safari will prompt "This website is trying to download a configuration profile" → **Allow**
+2. Settings → "Profile Downloaded" → **Install** → enter passcode → **Install**
 3. Settings → General → About → **Certificate Trust Settings** → enable the certificate
 4. Clear Safari cache and re-add the PWA to the home screen
+
+**Android:**
+
+1. Chrome downloads the file
+2. Settings → Security → Encryption & Credentials → **Install a certificate** → **CA certificate**
+3. Select `localhost.pem` from Downloads → confirm the warning → **Install anyway**
+4. Close Chrome completely and reload the page
 
 ### Regenerating certificates
 
