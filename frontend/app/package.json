@@ -64,7 +64,7 @@
     "eslint-plugin-react-x": "^2.13.0",
     "globals": "^17.4.0",
     "jsdom": "^29.0.2",
-    "msw": "^2.13.0",
+    "msw": "^2.13.1",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.0",
