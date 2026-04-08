@@ -20,7 +20,7 @@ services:
       timeout: 5s
       retries: 10
     environment:
-      - GE_SERVER_APP_URL=http://localhost:3000
+      - GE_SERVER_APP_URL=http://${APP_HOST:-localhost}:3000
       - GE_SERVER_PORT=3000
       - GE_SERVER_LOGS_LEVEL=debug
       - GE_SERVER_LOGS_FORMAT=text
@@ -32,11 +32,11 @@ services:
       - GE_SERVER_DATABASE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
 
       - GE_AUTH_ENABLE=true
-      - GE_AUTH_OIDC_PROVIDER_BASE_URL=http://auth.localhost:3000
+      - GE_AUTH_OIDC_PROVIDER_BASE_URL=http://auth.${APP_HOST:-localhost}:3000
       - GE_AUTH_OIDC_PROVIDER_HEALTH_URL=http://keycloak:9000/health/ready
       - GE_AUTH_OIDC_PROVIDER_DOMAIN_NAME=green-ecolution
-      - GE_AUTH_OIDC_PROVIDER_AUTH_URL=http://auth.localhost:3000/realms/green-ecolution/protocol/openid-connect/auth
-      - GE_AUTH_OIDC_PROVIDER_TOKEN_URL=http://auth.localhost:3000/realms/green-ecolution/protocol/openid-connect/token
+      - GE_AUTH_OIDC_PROVIDER_AUTH_URL=http://auth.${APP_HOST:-localhost}:3000/realms/green-ecolution/protocol/openid-connect/auth
+      - GE_AUTH_OIDC_PROVIDER_TOKEN_URL=http://auth.${APP_HOST:-localhost}:3000/realms/green-ecolution/protocol/openid-connect/token
       - GE_AUTH_OIDC_PROVIDER_FRONTEND_CLIENT_ID=frontend
       - GE_AUTH_OIDC_PROVIDER_FRONTEND_CLIENT_SECRET=EJogoaQSrW7vlo9CK3zIo2ieC8guy9Mm
       - GE_AUTH_OIDC_PROVIDER_BACKEND_CLIENT_ID=backend
@@ -50,7 +50,7 @@ services:
       - GE_ROUTING_VALHALLA_OPTIMIZATION_VROOM_HOST=http://vroom:3000
 
       - GE_S3_ENABLE=true
-      - GE_S3_ENDPOINT=s3.localhost:3000
+      - GE_S3_ENDPOINT=s3.${APP_HOST:-localhost}:3000
       - GE_S3_REGION=us-east-1
       - GE_S3_USE_SSL=false
       - GE_S3_ROUTE_GPX_BUCKET=${S3_ROUTE_BUCKET:-gpx-routes}
@@ -63,9 +63,9 @@ services:
       - GE_MAP_BBOX=54.714822,9.285796,54.860127,9.583800
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`localhost`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.rule=Host(`${APP_HOST:-localhost}`) && PathPrefix(`/api`)"
       - "traefik.http.routers.backend.entrypoints=web"
-      - "traefik.http.routers.backend-secure.rule=Host(`localhost`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend-secure.rule=Host(`${APP_HOST:-localhost}`) && PathPrefix(`/api`)"
       - "traefik.http.routers.backend-secure.entrypoints=websecure"
       - "traefik.http.routers.backend-secure.tls=true"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
@@ -96,9 +96,9 @@ services:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`localhost`)"
+      - "traefik.http.routers.frontend.rule=Host(`${APP_HOST:-localhost}`)"
       - "traefik.http.routers.frontend.entrypoints=web"
-      - "traefik.http.routers.frontend-secure.rule=Host(`localhost`)"
+      - "traefik.http.routers.frontend-secure.rule=Host(`${APP_HOST:-localhost}`)"
       - "traefik.http.routers.frontend-secure.entrypoints=websecure"
       - "traefik.http.routers.frontend-secure.tls=true"
       - "traefik.http.services.frontend.loadbalancer.server.port=80"

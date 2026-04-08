@@ -67,18 +67,18 @@ services:
       - minio_store:/data
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.minio.rule=Host(`minio.localhost`)"
+      - "traefik.http.routers.minio.rule=Host(`minio.${APP_HOST:-localhost}`)"
       - "traefik.http.routers.minio.entrypoints=web"
       - "traefik.http.routers.minio.service=minio"
-      - "traefik.http.routers.minio-secure.rule=Host(`minio.localhost`)"
+      - "traefik.http.routers.minio-secure.rule=Host(`minio.${APP_HOST:-localhost}`)"
       - "traefik.http.routers.minio-secure.entrypoints=websecure"
       - "traefik.http.routers.minio-secure.tls=true"
       - "traefik.http.routers.minio-secure.service=minio"
       - "traefik.http.services.minio.loadbalancer.server.port=9001"
-      - "traefik.http.routers.s3.rule=Host(`s3.localhost`) || ( Host(`localhost`) && PathPrefix(`/${S3_BUCKET:-gpx-routes}`) )"
+      - "traefik.http.routers.s3.rule=Host(`s3.${APP_HOST:-localhost}`) || ( Host(`${APP_HOST:-localhost}`) && PathPrefix(`/${S3_BUCKET:-gpx-routes}`) )"
       - "traefik.http.routers.s3.entrypoints=web"
       - "traefik.http.routers.s3.service=s3"
-      - "traefik.http.routers.s3-secure.rule=Host(`s3.localhost`) || ( Host(`localhost`) && PathPrefix(`/${S3_BUCKET:-gpx-routes}`) )"
+      - "traefik.http.routers.s3-secure.rule=Host(`s3.${APP_HOST:-localhost}`) || ( Host(`${APP_HOST:-localhost}`) && PathPrefix(`/${S3_BUCKET:-gpx-routes}`) )"
       - "traefik.http.routers.s3-secure.entrypoints=websecure"
       - "traefik.http.routers.s3-secure.tls=true"
       - "traefik.http.routers.s3-secure.service=s3"
@@ -110,16 +110,16 @@ services:
       KC_TRANSACTION_XA_ENABLED: false
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.keycloak.rule=Host(`auth.localhost`)"
+      - "traefik.http.routers.keycloak.rule=Host(`auth.${APP_HOST:-localhost}`)"
       - "traefik.http.routers.keycloak.entrypoints=web"
       - "traefik.http.routers.keycloak.service=keycloak"
-      - "traefik.http.routers.keycloak-secure.rule=Host(`auth.localhost`)"
+      - "traefik.http.routers.keycloak-secure.rule=Host(`auth.${APP_HOST:-localhost}`)"
       - "traefik.http.routers.keycloak-secure.entrypoints=websecure"
       - "traefik.http.routers.keycloak-secure.tls=true"
       - "traefik.http.routers.keycloak-secure.service=keycloak"
       - "traefik.http.services.keycloak.loadbalancer.server.port=3000"
       # Health endpoint on management port
-      - "traefik.http.routers.keycloak-health.rule=Host(`auth.localhost`) && PathPrefix(`/health`)"
+      - "traefik.http.routers.keycloak-health.rule=Host(`auth.${APP_HOST:-localhost}`) && PathPrefix(`/health`)"
       - "traefik.http.routers.keycloak-health.entrypoints=web"
       - "traefik.http.routers.keycloak-health.service=keycloak-health"
       - "traefik.http.services.keycloak-health.loadbalancer.server.port=9000"
@@ -220,7 +220,7 @@ services:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.localhost`)"
+      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.${APP_HOST:-localhost}`)"
       - "traefik.http.routers.pgadmin.entrypoints=web"
 
   # ors-app:
@@ -279,9 +279,9 @@ services:
           memory: 150m
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.vroom.rule=Host(`vroom.localhost`)"
+      - "traefik.http.routers.vroom.rule=Host(`vroom.${APP_HOST:-localhost}`)"
       - "traefik.http.routers.vroom.entrypoints=web"
-      - "traefik.http.routers.vroom-secure.rule=Host(`vroom.localhost`)"
+      - "traefik.http.routers.vroom-secure.rule=Host(`vroom.${APP_HOST:-localhost}`)"
       - "traefik.http.routers.vroom-secure.entrypoints=websecure"
       - "traefik.http.routers.vroom-secure.tls=true"
 
@@ -315,9 +315,9 @@ services:
           memory: 1536m
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.valhalla.rule=Host(`valhalla.localhost`)"
+      - "traefik.http.routers.valhalla.rule=Host(`valhalla.${APP_HOST:-localhost}`)"
       - "traefik.http.routers.valhalla.entrypoints=web"
-      - "traefik.http.routers.valhalla-secure.rule=Host(`valhalla.localhost`)"
+      - "traefik.http.routers.valhalla-secure.rule=Host(`valhalla.${APP_HOST:-localhost}`)"
       - "traefik.http.routers.valhalla-secure.entrypoints=websecure"
       - "traefik.http.routers.valhalla-secure.tls=true"
 
@@ -333,18 +333,18 @@ services:
       - "--entryPoints.web.address=:3000"
       - "--entryPoints.websecure.address=:3443"
     ports:
-      - "127.0.0.1:3000:3000/tcp"
-      - "127.0.0.1:3443:3443/tcp"
+      - "${BIND_ADDR:-127.0.0.1}:3000:3000/tcp"
+      - "${BIND_ADDR:-127.0.0.1}:3443:3443/tcp"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./.docker/infra/traefik/dynamic:/etc/traefik/dynamic:ro"
       - "./.docker/infra/traefik/certs:/etc/traefik/certs:ro"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${APP_HOST:-localhost}`)"
       - "traefik.http.routers.traefik.entrypoints=web"
       - "traefik.http.routers.traefik.service=traefik"
-      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.${APP_HOST:-localhost}`)"
       - "traefik.http.routers.traefik-secure.entrypoints=websecure"
       - "traefik.http.routers.traefik-secure.tls=true"
       - "traefik.http.routers.traefik-secure.service=traefik"

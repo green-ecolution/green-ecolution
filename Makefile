@@ -155,15 +155,18 @@ clean:
 	# frontend artifacts
 	rm -rf $(FRONTEND_DIR)/dist
 
+APP_HOST ?= localhost
+BIND_ADDR ?= 127.0.0.1
+
 .PHONY: certs/generate
 certs/generate:
-	@echo "Generating self-signed TLS certificates..."
+	@echo "Generating self-signed TLS certificates for $(APP_HOST)..."
 	@mkdir -p .docker/infra/traefik/certs
 	@openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 		-keyout .docker/infra/traefik/certs/localhost-key.pem \
 		-out .docker/infra/traefik/certs/localhost.pem \
-		-subj "/CN=localhost" \
-		-addext "subjectAltName=DNS:localhost,DNS:*.localhost,DNS:auth.localhost,DNS:s3.localhost,DNS:minio.localhost,DNS:traefik.localhost,DNS:pgadmin.localhost,DNS:vroom.localhost,DNS:valhalla.localhost"
+		-subj "/CN=$(APP_HOST)" \
+		-addext "subjectAltName=DNS:$(APP_HOST),DNS:*.$(APP_HOST),DNS:localhost,DNS:*.localhost"
 	@echo "Certificates generated in .docker/infra/traefik/certs/"
 
 .PHONY: run/docker
@@ -172,6 +175,8 @@ run/docker:
 	@test -f .docker/infra/traefik/certs/localhost.pem || $(MAKE) certs/generate
 	mkdir -p .docker/infra/valhalla/custom_files
 	test -f .docker/infra/valhalla/custom_files/sh.osm.pbf || wget https://download.geofabrik.de/europe/germany/schleswig-holstein-latest.osm.pbf -O .docker/infra/valhalla/custom_files/sh.osm.pbf
+	APP_HOST="$(APP_HOST)" \
+	BIND_ADDR="$(BIND_ADDR)" \
 	APP_VERSION="$(APP_VERSION)" \
 	APP_GIT_COMMIT="$(APP_GIT_COMMIT)" \
 	APP_GIT_BRANCH="$(APP_GIT_BRANCH)" \
@@ -184,6 +189,8 @@ infra/up:
 	@test -f .docker/infra/traefik/certs/localhost.pem || $(MAKE) certs/generate
 	mkdir -p .docker/infra/valhalla/custom_files
 	test -f .docker/infra/valhalla/custom_files/sh.osm.pbf || wget https://download.geofabrik.de/europe/germany/schleswig-holstein-latest.osm.pbf -O .docker/infra/valhalla/custom_files/sh.osm.pbf
+	APP_HOST="$(APP_HOST)" \
+	BIND_ADDR="$(BIND_ADDR)" \
 	docker compose up -d
 
 .PHONY: infra/stop
