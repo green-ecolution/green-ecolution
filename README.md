@@ -93,6 +93,48 @@ frontend/   → React (Vite, TanStack Router/Query, Zustand, Tailwind)
 
 The backend embeds the compiled frontend and serves it as a single binary.
 
+## PWA
+
+The frontend is installable as a Progressive Web App with offline support via a Workbox service worker.
+
+### Local development (HTTPS)
+
+```bash
+make run/docker
+# Access via https://localhost:3443
+```
+
+Certificates are auto-generated on first run. Accept the self-signed cert warning in the browser.
+
+### Mobile testing on the local network
+
+Use [sslip.io](https://sslip.io) for DNS resolution - it resolves hostnames containing an IP back to that IP, so subdomains like `auth.<ip>.sslip.io` work without any DNS setup.
+
+```bash
+# Replace with your local IP
+APP_HOST=192.168.1.50.sslip.io BIND_ADDR=0.0.0.0 make certs/generate
+APP_HOST=192.168.1.50.sslip.io BIND_ADDR=0.0.0.0 make run/docker
+```
+
+On the phone:
+
+- Frontend: `https://192.168.1.50.sslip.io:3443`
+- Auth: `https://auth.192.168.1.50.sslip.io:3443`
+
+### Installing the self-signed certificate on iOS
+
+1. Open `https://<ip>.sslip.io:3443/localhost.pem` in Safari (temporarily copy the cert to `frontend/app/public/`)
+2. Settings → "Profile Downloaded" → **Install**
+3. Settings → General → About → **Certificate Trust Settings** → enable the certificate
+4. Clear Safari cache and re-add the PWA to the home screen
+
+### Regenerating certificates
+
+```bash
+make certs/generate                # for localhost
+APP_HOST=<ip>.sslip.io make certs/generate  # for network access
+```
+
 ## Configuration
 
 All settings via environment variables (prefix `GE_`) or YAML files in `backend/config/`.
