@@ -1,10 +1,8 @@
 import { defineConfig } from 'vite'
-import react, { reactCompilerPreset } from '@vitejs/plugin-react'
-import babel from '@rolldown/plugin-babel'
+import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 import tanstackRouter from '@tanstack/router-plugin/vite'
-import { federation } from '@module-federation/vite'
 
 //
 // https://vitejs.dev/config/
@@ -16,18 +14,10 @@ export default defineConfig({
       quoteStyle: 'single',
     }),
     tailwindcss(),
-    react(),
-    babel({ presets: [reactCompilerPreset()] }),
-    federation({
-      name: 'app',
-      remotes: {
-        // module federation is being handled dynamically. see app.tsx
-        // add dummy.js to prevent vite from throwing an error
-        dummy: 'dummy.js',
+    react({
+      babel: {
+        plugins: ['babel-plugin-react-compiler'],
       },
-      filename: 'plugin.js',
-      shared: ['react', 'react-dom', '@green-ecolution/plugin-interface'],
-      dts: false,
     }),
   ],
   server: {

@@ -51,9 +51,6 @@ updates:
           - "leaflet"
           - "react-leaflet"
           - "@types/leaflet"
-      module-federation:
-        patterns:
-          - "@module-federation/*"
       other-minor-patch:
         patterns:
           - "*"
@@ -73,7 +70,6 @@ updates:
           - "leaflet"
           - "react-leaflet"
           - "@types/leaflet"
-          - "@module-federation/*"
         update-types:
           - "minor"
           - "patch"
