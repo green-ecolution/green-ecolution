@@ -60,5 +60,20 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "screenshots": [
+    {
+      "src": "/images/screenshots/desktop.png",
+      "sizes": "1436x853",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard Übersicht"
+    },
+    {
+      "src": "/images/screenshots/mobile.png",
+      "sizes": "1206x2622",
+      "type": "image/png",
+      "label": "Mobile Ansicht"
+    }
   ]
 }
