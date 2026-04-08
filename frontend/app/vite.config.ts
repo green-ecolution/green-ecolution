@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 import tanstackRouter from '@tanstack/router-plugin/vite'
+import basicSsl from '@vitejs/plugin-basic-ssl'
+import { VitePWA } from 'vite-plugin-pwa'
 
 //
 // https://vitejs.dev/config/
@@ -17,6 +19,21 @@ export default defineConfig({
     react({
       babel: {
         plugins: ['babel-plugin-react-compiler'],
+      },
+    }),
+    basicSsl(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: [
+        'images/favicons/favicon.svg',
+        'images/favicons/apple-touch-icon.png',
+      ],
+      manifest: false,
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+      },
+      devOptions: {
+        enabled: true,
       },
     }),
   ],
