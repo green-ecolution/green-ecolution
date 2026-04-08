@@ -279,6 +279,7 @@ config/config.dev.yaml
 .docker/infra/ors
 .docker/infra/vroom/access.log
 .docker/infra/valhalla/custom_files
+.docker/infra/traefik/certs/*.pem
 frontend/dist
 
 

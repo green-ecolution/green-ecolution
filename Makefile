@@ -155,9 +155,21 @@ clean:
 	# frontend artifacts
 	rm -rf $(FRONTEND_DIR)/dist
 
+.PHONY: certs/generate
+certs/generate:
+	@echo "Generating self-signed TLS certificates..."
+	@mkdir -p .docker/infra/traefik/certs
+	@openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+		-keyout .docker/infra/traefik/certs/localhost-key.pem \
+		-out .docker/infra/traefik/certs/localhost.pem \
+		-subj "/CN=localhost" \
+		-addext "subjectAltName=DNS:localhost,DNS:*.localhost,DNS:auth.localhost,DNS:s3.localhost,DNS:minio.localhost,DNS:traefik.localhost,DNS:pgadmin.localhost,DNS:vroom.localhost,DNS:valhalla.localhost"
+	@echo "Certificates generated in .docker/infra/traefik/certs/"
+
 .PHONY: run/docker
 run/docker:
 	@echo "Running compose (infra + app)..."
+	@test -f .docker/infra/traefik/certs/localhost.pem || $(MAKE) certs/generate
 	mkdir -p .docker/infra/valhalla/custom_files
 	test -f .docker/infra/valhalla/custom_files/sh.osm.pbf || wget https://download.geofabrik.de/europe/germany/schleswig-holstein-latest.osm.pbf -O .docker/infra/valhalla/custom_files/sh.osm.pbf
 	APP_VERSION="$(APP_VERSION)" \
@@ -169,6 +181,7 @@ run/docker:
 .PHONY: infra/up
 infra/up:
 	@echo "Infra up..."
+	@test -f .docker/infra/traefik/certs/localhost.pem || $(MAKE) certs/generate
 	mkdir -p .docker/infra/valhalla/custom_files
 	test -f .docker/infra/valhalla/custom_files/sh.osm.pbf || wget https://download.geofabrik.de/europe/germany/schleswig-holstein-latest.osm.pbf -O .docker/infra/valhalla/custom_files/sh.osm.pbf
 	docker compose up -d
