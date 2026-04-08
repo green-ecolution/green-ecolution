@@ -311,5 +311,6 @@ dist-ssr
 *.sln
 *.sw?
 app/.__mf__temp/app
+dev-dist
 .direnv
 .pre-commit-config.yaml
