@@ -40,7 +40,7 @@
   <body
     class="antialiased bg-light text-dark font-nunito-sans text-base w-full overflow-x-hidden selection:bg-green-light-300 selection:text-dark"
   >
-    <div id="app-loader">
+    <div id="app-loader" style="display:none">
       <div class="app-loader-content">
         <div class="app-loader-icon-wrap">
           <svg class="app-loader-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -60,7 +60,7 @@
         <div class="app-loader-progress">
           <div class="app-loader-progress-bar"></div>
         </div>
-        <div class="app-loader-status"></div>
+        <div class="app-loader-status">Verbindung wird hergestellt&thinsp;&hellip;</div>
       </div>
       <div class="app-loader-footer">
         <div class="app-loader-version"></div>
@@ -232,11 +232,20 @@
       }
     </style>
     <div id="root" class="min-h-screen flex flex-col"></div>
+    <script>
+      (function() {
+        var isPWA = window.matchMedia('(display-mode: standalone)').matches
+          || navigator.standalone === true;
+        if (isPWA) {
+          document.getElementById('app-loader').style.display = '';
+        }
+      })();
+    </script>
     <script type="module">
       var v = document.querySelector('.app-loader-version');
       var m = document.querySelector('.app-loader-meta');
       var c = document.querySelector('.app-loader-copyright');
-      if (v) v.textContent = 'v' + __APP_VERSION__;
+      if (v) v.textContent = __APP_VERSION__.startsWith('v') ? __APP_VERSION__ : 'v' + __APP_VERSION__;
       if (m) m.textContent = __APP_CITY__ + ' \u00B7 Build ' + __APP_BUILD_TIME__;
       if (c) c.textContent = '\u00A9 ' + new Date().getFullYear() + ' Green Ecolution';
     </script>

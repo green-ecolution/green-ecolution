@@ -165,7 +165,7 @@ certs/generate:
 	@openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 		-keyout .docker/infra/traefik/certs/localhost-key.pem \
 		-out .docker/infra/traefik/certs/localhost.pem \
-		-subj "/CN=$(APP_HOST)" \
+		-subj "/CN=$(APP_HOST)/O=Green Ecolution/OU=Development/L=Flensburg/C=DE" \
 		-addext "subjectAltName=DNS:$(APP_HOST),DNS:*.$(APP_HOST),DNS:localhost,DNS:*.localhost"
 	@echo "Certificates generated in .docker/infra/traefik/certs/"
 

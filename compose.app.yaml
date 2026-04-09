@@ -50,7 +50,7 @@ services:
       - GE_ROUTING_VALHALLA_OPTIMIZATION_VROOM_HOST=http://vroom:3000
 
       - GE_S3_ENABLE=true
-      - GE_S3_ENDPOINT=s3.${APP_HOST:-localhost}:3000
+      - GE_S3_ENDPOINT=storage:3000
       - GE_S3_REGION=us-east-1
       - GE_S3_USE_SSL=false
       - GE_S3_ROUTE_GPX_BUCKET=${S3_ROUTE_BUCKET:-gpx-routes}
@@ -75,6 +75,7 @@ services:
       context: ./frontend
       args:
         - ENV=dev
+        - APP_VERSION=${APP_VERSION:-$(git describe --tags --always --dirty)}
     healthcheck:
       test:
         [

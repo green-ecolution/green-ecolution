@@ -42,7 +42,7 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api-local': {
-        target: 'http://localhost:3000',
+        target: `http://${process.env.APP_HOST || 'localhost'}:3000`,
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api-local/, '/api'),
         ws: true,
@@ -56,7 +56,7 @@ export default defineConfig({
     },
   },
   define: {
-    __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+    __APP_VERSION__: JSON.stringify(process.env.APP_VERSION || process.env.npm_package_version),
     __APP_BUILD_TIME__: JSON.stringify(
       new Date().toISOString().slice(0, 10).replace(/-/g, ''),
     ),

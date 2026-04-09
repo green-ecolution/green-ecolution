@@ -1,7 +1,7 @@
 {
   "name": "Green Ecolution",
   "short_name": "Green Ecolution",
-  "description": "Smartes Grünflächenmanagement",
+  "description": "Smartes Grünflächenmanagement für Kommunen. Überwache die Bewässerung, plane Routen und verwalte deinen Baumbestand in einer App.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
@@ -74,6 +74,18 @@
       "sizes": "1206x2622",
       "type": "image/png",
       "label": "Mobile Ansicht"
+    },
+    {
+      "src": "/images/screenshots/mobile_map.png",
+      "sizes": "1206x2622",
+      "type": "image/png",
+      "label": "Kartenansicht"
+    },
+    {
+      "src": "/images/screenshots/mobile_route.png",
+      "sizes": "1206x2622",
+      "type": "image/png",
+      "label": "Routenplanung"
     }
   ]
 }
