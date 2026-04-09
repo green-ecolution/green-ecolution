@@ -23,7 +23,7 @@ export default defineConfig({
     }),
     basicSsl(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['images/favicons/favicon.svg', 'images/favicons/apple-touch-icon.png'],
       manifest: false,
       workbox: {
