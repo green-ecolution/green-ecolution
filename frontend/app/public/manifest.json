@@ -4,7 +4,7 @@
   "description": "Smartes Grünflächenmanagement für Kommunen. Überwache die Bewässerung, plane Routen und verwalte deinen Baumbestand in einer App.",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#FCFCFC",
   "theme_color": "#4C7741",
   "icons": [

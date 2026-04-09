@@ -75,7 +75,7 @@ const waitForBackend = async () => {
     attempts++
     if (attempts === 2) setStatus('Anwendung wird geladen\u2009\u2026')
     if (attempts === 6) setStatus('Laden dauert etwas l\u00e4nger als gew\u00f6hnlich\u2009\u2026')
-    if (attempts === 15) setStatus('Keine Verbindung m\u00f6glich. Bitte Internetverbindung pr\u00fcfen.')
+    if (attempts === 15) setStatus('Keine Verbindung m\u00f6glich. Verbindungsversuch l\u00e4uft weiterhin\u2009\u2026')
 
     await new Promise((r) => setTimeout(r, 1000))
   }
