@@ -10,8 +10,8 @@ function PluginView() {
   return (
     <div className="container mt-6">
       <p>
-        Das Plugin <strong>{pluginName}</strong> kann derzeit nicht geladen werden. Das Plugin-System
-        wird überarbeitet.
+        Das Plugin <strong>{pluginName}</strong> kann derzeit nicht geladen werden. Das
+        Plugin-System wird überarbeitet.
       </p>
     </div>
   )

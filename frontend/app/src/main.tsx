@@ -40,8 +40,9 @@ declare module '@tanstack/react-router' {
   }
 }
 
-const isPWA = window.matchMedia('(display-mode: standalone)').matches
-    || (navigator as { standalone?: boolean }).standalone === true
+const isPWA =
+  window.matchMedia('(display-mode: standalone)').matches ||
+  (navigator as { standalone?: boolean }).standalone === true
 
 const statusEl = document.querySelector('.app-loader-status')
 const setStatus = (text: string) => {
@@ -75,7 +76,10 @@ const waitForBackend = async () => {
     attempts++
     if (attempts === 2) setStatus('Anwendung wird geladen\u2009\u2026')
     if (attempts === 6) setStatus('Laden dauert etwas l\u00e4nger als gew\u00f6hnlich\u2009\u2026')
-    if (attempts === 15) setStatus('Keine Verbindung m\u00f6glich. Verbindungsversuch l\u00e4uft weiterhin\u2009\u2026')
+    if (attempts === 15)
+      setStatus(
+        'Keine Verbindung m\u00f6glich. Verbindungsversuch l\u00e4uft weiterhin\u2009\u2026',
+      )
 
     await new Promise((r) => setTimeout(r, 1000))
   }
@@ -87,7 +91,7 @@ if (!isPWA) {
   const SPLASH_MIN_DURATION = 1500
   const splashStart = Date.now()
 
-  Promise.all([
+  void Promise.all([
     waitForBackend(),
     new Promise<void>((r) => router.subscribe('onResolved', () => r())),
   ]).then(() => {
