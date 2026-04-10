@@ -21,7 +21,7 @@ export default defineConfig({
         plugins: ['babel-plugin-react-compiler'],
       },
     }),
-    basicSsl(),
+    ...(!process.env.USE_TRAEFIK ? [basicSsl()] : []),
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['images/favicons/favicon.svg', 'images/favicons/apple-touch-icon.png'],
@@ -37,13 +37,24 @@ export default defineConfig({
   ],
   server: {
     host: true,
+    allowedHosts: true,
     proxy: {
-      '/api-local': {
-        target: `http://${process.env.APP_HOST ?? 'localhost'}:3000`,
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api-local/, '/api'),
-        ws: true,
-      },
+      ...(process.env.USE_TRAEFIK
+        ? {
+            '/api': {
+              target: `http://localhost:3030`,
+              changeOrigin: true,
+              ws: true,
+            },
+          }
+        : {
+            '/api-local': {
+              target: `http://${process.env.APP_HOST ?? 'localhost'}:3000`,
+              changeOrigin: true,
+              rewrite: (path) => path.replace(/^\/api-local/, '/api'),
+              ws: true,
+            },
+          }),
       '/api-stage': {
         target: 'https://app.stage.green-ecolution.de',
         changeOrigin: true,

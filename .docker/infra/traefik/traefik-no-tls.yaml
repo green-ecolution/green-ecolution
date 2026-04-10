@@ -1,0 +1,14 @@
+api:
+  insecure: true
+
+providers:
+  docker:
+    exposedByDefault: false
+  file:
+    directory: /etc/traefik/dynamic
+
+entryPoints:
+  web:
+    address: ":3000"
+  websecure:
+    address: ":3443"
