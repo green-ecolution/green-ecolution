@@ -148,6 +148,7 @@ jobs:
           build-args: |
             ENV=dev
             BASEURL=/api
+            APP_VERSION=${{ needs.check-changes.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

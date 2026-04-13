@@ -236,6 +236,7 @@ jobs:
           build-args: |
             ENV=${{ needs.determine-environment.outputs.environment == 'stage' && 'dev' || 'prod' }}
             BASEURL=/api
+            APP_VERSION=${{ needs.determine-environment.outputs.image-tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
