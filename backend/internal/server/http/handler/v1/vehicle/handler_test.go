@@ -783,7 +783,7 @@ func TestCreateVehicleValidation(t *testing.T) {
 	}
 
 	cases := []struct {
-		name  string
+		name   string
 		mutate func(r *serverEntities.VehicleCreateRequest)
 	}{
 		{"missing number plate", func(r *serverEntities.VehicleCreateRequest) { r.NumberPlate = "" }},
