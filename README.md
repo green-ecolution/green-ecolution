@@ -146,6 +146,16 @@ Without Porkbun API keys, the dev environment runs on plain HTTP (port 3000). PW
 make run/dev   # HTTP on localhost:3000
 ```
 
+### Testing the service worker
+
+The service worker is **disabled in `vite dev`** (`devOptions.enabled: false` in `vite.config.ts`) to avoid HMR conflicts with Workbox precaching. To verify PWA behavior (install prompt, update flow, offline fallback), build and serve the production bundle:
+
+```bash
+cd frontend/app && pnpm build && pnpm preview
+```
+
+…or run the full Docker stack via `make run/docker`.
+
 ## Configuration
 
 All settings via environment variables (prefix `GE_`) or YAML files in `backend/config/`.
