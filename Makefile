@@ -182,8 +182,8 @@ else
   S3_USE_SSL          ?= false
 endif
 
-.PHONY: certs/generate
-certs/generate:
+.PHONY: acme/init
+acme/init:
 ifdef PORKBUN_API_KEY
 	@echo "Setting up ACME storage for Let's Encrypt..."
 	@mkdir -p .docker/infra/traefik/acme
@@ -227,7 +227,7 @@ dns/cleanup:
 .PHONY: run/docker
 run/docker:
 	@echo "Running compose (infra + app)..."
-	@$(MAKE) certs/generate
+	@$(MAKE) acme/init
 	mkdir -p .docker/infra/valhalla/custom_files
 	test -f .docker/infra/valhalla/custom_files/sh.osm.pbf || wget https://download.geofabrik.de/europe/germany/schleswig-holstein-latest.osm.pbf -O .docker/infra/valhalla/custom_files/sh.osm.pbf
 	APP_HOST="$(APP_HOST)" \
@@ -247,7 +247,7 @@ run/docker:
 .PHONY: infra/up
 infra/up:
 	@echo "Infra up..."
-	@$(MAKE) certs/generate
+	@$(MAKE) acme/init
 	mkdir -p .docker/infra/valhalla/custom_files
 	test -f .docker/infra/valhalla/custom_files/sh.osm.pbf || wget https://download.geofabrik.de/europe/germany/schleswig-holstein-latest.osm.pbf -O .docker/infra/valhalla/custom_files/sh.osm.pbf
 	APP_HOST="$(APP_HOST)" \
