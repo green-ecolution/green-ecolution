@@ -3939,11 +3939,11 @@ components:
         number: number
         provider: provider
         species: species
-        latitude: 0.8008281904610115
+        latitude: -75.5850925717018
         description: description
         planting_year: 1
         tree_cluster_id: 5
-        longitude: 6.027456183070403
+        longitude: 36.988422590534526
       properties:
         additional_information:
           additionalProperties: true
@@ -3951,8 +3951,12 @@ components:
         description:
           type: string
         latitude:
+          maximum: 90
+          minimum: -90
           type: number
         longitude:
+          maximum: 180
+          minimum: -180
           type: number
         number:
           type: string
@@ -4077,11 +4081,11 @@ components:
         number: number
         provider: provider
         species: species
-        latitude: 0.8008281904610115
+        latitude: -75.5850925717018
         description: description
         planting_year: 1
         tree_cluster_id: 5
-        longitude: 6.027456183070403
+        longitude: 36.988422590534526
       properties:
         additional_information:
           additionalProperties: true
@@ -4089,8 +4093,12 @@ components:
         description:
           type: string
         latitude:
+          maximum: 90
+          minimum: -90
           type: number
         longitude:
+          maximum: 180
+          minimum: -180
           type: number
         number:
           type: string
@@ -4243,8 +4251,12 @@ components:
         employee_id:
           type: string
         first_name:
+          maxLength: 30
+          minLength: 3
           type: string
         last_name:
+          maxLength: 30
+          minLength: 3
           type: string
         password:
           type: string
@@ -4255,6 +4267,8 @@ components:
             type: string
           type: array
         username:
+          maxLength: 15
+          minLength: 3
           type: string
       required:
       - email
@@ -4365,15 +4379,15 @@ components:
         number_plate: number_plate
         description: description
         weight: 5.962133916683182
-        type: transporter
+        type: "{}"
         additional_information:
           key: ""
-        driving_license: B
+        driving_license: "{}"
         provider: provider
         width: 5.637376656633329
         model: model
         height: 0.8008281904610115
-        status: active
+        status: "{}"
       properties:
         additional_information:
           additionalProperties: true
@@ -4381,7 +4395,9 @@ components:
         description:
           type: string
         driving_license:
-          $ref: "#/components/schemas/DrivingLicense"
+          allOf:
+          - $ref: "#/components/schemas/DrivingLicense"
+          type: object
         height:
           type: number
         length:
@@ -4393,9 +4409,13 @@ components:
         provider:
           type: string
         status:
-          $ref: "#/components/schemas/VehicleStatus"
+          allOf:
+          - $ref: "#/components/schemas/VehicleStatus"
+          type: object
         type:
-          $ref: "#/components/schemas/VehicleType"
+          allOf:
+          - $ref: "#/components/schemas/VehicleType"
+          type: object
         water_capacity:
           type: number
         weight:
@@ -4512,15 +4532,15 @@ components:
         number_plate: number_plate
         description: description
         weight: 5.962133916683182
-        type: transporter
+        type: "{}"
         additional_information:
           key: ""
-        driving_license: B
+        driving_license: "{}"
         provider: provider
         width: 5.637376656633329
         model: model
         height: 0.8008281904610115
-        status: active
+        status: "{}"
       properties:
         additional_information:
           additionalProperties: true
@@ -4528,7 +4548,9 @@ components:
         description:
           type: string
         driving_license:
-          $ref: "#/components/schemas/DrivingLicense"
+          allOf:
+          - $ref: "#/components/schemas/DrivingLicense"
+          type: object
         height:
           type: number
         length:
@@ -4540,9 +4562,13 @@ components:
         provider:
           type: string
         status:
-          $ref: "#/components/schemas/VehicleStatus"
+          allOf:
+          - $ref: "#/components/schemas/VehicleStatus"
+          type: object
         type:
-          $ref: "#/components/schemas/VehicleType"
+          allOf:
+          - $ref: "#/components/schemas/VehicleType"
+          type: object
         water_capacity:
           type: number
         weight:
@@ -4795,10 +4821,12 @@ components:
         tree_cluster_ids:
           items:
             type: integer
+          minItems: 1
           type: array
         user_ids:
           items:
             type: string
+          minItems: 1
           type: array
       required:
       - date
@@ -5211,7 +5239,7 @@ components:
         trailer_id: 0
         description: description
         transporter_id: 6
-        status: planned
+        status: "{}"
       properties:
         additional_information:
           additionalProperties: true
@@ -5229,7 +5257,9 @@ components:
         provider:
           type: string
         status:
-          $ref: "#/components/schemas/WateringPlanStatus"
+          allOf:
+          - $ref: "#/components/schemas/WateringPlanStatus"
+          type: object
         trailer_id:
           type: integer
         transporter_id:
@@ -5237,10 +5267,12 @@ components:
         tree_cluster_ids:
           items:
             type: integer
+          minItems: 1
           type: array
         user_ids:
           items:
             type: string
+          minItems: 1
           type: array
       required:
       - cancellation_note

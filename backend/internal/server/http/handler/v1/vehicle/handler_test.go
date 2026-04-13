@@ -765,3 +765,51 @@ func TestDeleteVehicle(t *testing.T) {
 		mockVehicleService.AssertExpectations(t)
 	})
 }
+
+func TestCreateVehicleValidation(t *testing.T) {
+	base := func() serverEntities.VehicleCreateRequest {
+		return serverEntities.VehicleCreateRequest{
+			NumberPlate:    "FL TBZ 123",
+			Model:          "Test",
+			Status:         serverEntities.VehicleStatusActive,
+			Type:           serverEntities.VehicleTypeTrailer,
+			DrivingLicense: serverEntities.DrivingLicenseB,
+			WaterCapacity:  2000,
+			Height:         2.5,
+			Width:          1.8,
+			Length:         4.0,
+			Weight:         1.5,
+		}
+	}
+
+	cases := []struct {
+		name   string
+		mutate func(r *serverEntities.VehicleCreateRequest)
+	}{
+		{"missing number plate", func(r *serverEntities.VehicleCreateRequest) { r.NumberPlate = "" }},
+		{"missing model", func(r *serverEntities.VehicleCreateRequest) { r.Model = "" }},
+		{"invalid status enum", func(r *serverEntities.VehicleCreateRequest) { r.Status = "bogus" }},
+		{"invalid type enum", func(r *serverEntities.VehicleCreateRequest) { r.Type = "bogus" }},
+		{"invalid driving license", func(r *serverEntities.VehicleCreateRequest) { r.DrivingLicense = "X" }},
+		{"water capacity not positive", func(r *serverEntities.VehicleCreateRequest) { r.WaterCapacity = 0 }},
+		{"height not positive", func(r *serverEntities.VehicleCreateRequest) { r.Height = 0 }},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			app := fiber.New()
+			mockVehicleService := serviceMock.NewMockVehicleService(t)
+			app.Post("/v1/vehicle", vehicle.CreateVehicle(mockVehicleService))
+
+			req := base()
+			tc.mutate(&req)
+			body, _ := json.Marshal(req)
+			httpReq, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/vehicle", bytes.NewBuffer(body))
+			httpReq.Header.Set("Content-Type", "application/json")
+			resp, err := app.Test(httpReq, -1)
+			defer resp.Body.Close()
+
+			assert.Nil(t, err)
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		})
+	}
+}

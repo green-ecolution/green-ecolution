@@ -785,8 +785,12 @@ definitions:
       description:
         type: string
       latitude:
+        maximum: 90
+        minimum: -90
         type: number
       longitude:
+        maximum: 180
+        minimum: -180
         type: number
       number:
         type: string
@@ -827,8 +831,12 @@ definitions:
       description:
         type: string
       latitude:
+        maximum: 90
+        minimum: -90
         type: number
       longitude:
+        maximum: 180
+        minimum: -180
         type: number
       number:
         type: string
@@ -915,8 +923,12 @@ definitions:
       employee_id:
         type: string
       first_name:
+        maxLength: 30
+        minLength: 3
         type: string
       last_name:
+        maxLength: 30
+        minLength: 3
         type: string
       password:
         type: string
@@ -927,6 +939,8 @@ definitions:
           type: string
         type: array
       username:
+        maxLength: 15
+        minLength: 3
         type: string
     required:
     - email
@@ -1019,7 +1033,13 @@ definitions:
       description:
         type: string
       driving_license:
-        $ref: '#/definitions/DrivingLicense'
+        allOf:
+        - $ref: '#/definitions/DrivingLicense'
+        enum:
+        - B
+        - BE
+        - C
+        - CE
       height:
         type: number
       length:
@@ -1031,9 +1051,20 @@ definitions:
       provider:
         type: string
       status:
-        $ref: '#/definitions/VehicleStatus'
+        allOf:
+        - $ref: '#/definitions/VehicleStatus'
+        enum:
+        - active
+        - available
+        - not available
+        - unknown
       type:
-        $ref: '#/definitions/VehicleType'
+        allOf:
+        - $ref: '#/definitions/VehicleType'
+        enum:
+        - transporter
+        - trailer
+        - unknown
       water_capacity:
         type: number
       weight:
@@ -1104,7 +1135,13 @@ definitions:
       description:
         type: string
       driving_license:
-        $ref: '#/definitions/DrivingLicense'
+        allOf:
+        - $ref: '#/definitions/DrivingLicense'
+        enum:
+        - B
+        - BE
+        - C
+        - CE
       height:
         type: number
       length:
@@ -1116,9 +1153,20 @@ definitions:
       provider:
         type: string
       status:
-        $ref: '#/definitions/VehicleStatus'
+        allOf:
+        - $ref: '#/definitions/VehicleStatus'
+        enum:
+        - active
+        - available
+        - not available
+        - unknown
       type:
-        $ref: '#/definitions/VehicleType'
+        allOf:
+        - $ref: '#/definitions/VehicleType'
+        enum:
+        - transporter
+        - trailer
+        - unknown
       water_capacity:
         type: number
       weight:
@@ -1241,10 +1289,12 @@ definitions:
       tree_cluster_ids:
         items:
           type: integer
+        minItems: 1
         type: array
       user_ids:
         items:
           type: string
+        minItems: 1
         type: array
     required:
     - date
@@ -1349,7 +1399,15 @@ definitions:
       provider:
         type: string
       status:
-        $ref: '#/definitions/WateringPlanStatus'
+        allOf:
+        - $ref: '#/definitions/WateringPlanStatus'
+        enum:
+        - planned
+        - active
+        - canceled
+        - finished
+        - not competed
+        - unknown
       trailer_id:
         type: integer
       transporter_id:
@@ -1357,10 +1415,12 @@ definitions:
       tree_cluster_ids:
         items:
           type: integer
+        minItems: 1
         type: array
       user_ids:
         items:
           type: string
+        minItems: 1
         type: array
     required:
     - cancellation_note
