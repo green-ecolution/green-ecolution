@@ -16,10 +16,11 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 ARG ENV="prod"
 ARG BASEURL="/api"
+ARG APP_VERSION=""
 RUN if [ "$ENV" == "dev" ]; then \
-        VITE_BACKEND_BASEURL="$BASEURL" pnpm build:stage; \
+        APP_VERSION="$APP_VERSION" VITE_BACKEND_BASEURL="$BASEURL" pnpm build:stage; \
     else \
-        VITE_BACKEND_BASEURL="$BASEURL" pnpm build; \
+        APP_VERSION="$APP_VERSION" VITE_BACKEND_BASEURL="$BASEURL" pnpm build; \
     fi
 
 #############################################

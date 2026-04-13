@@ -1,4 +1,5 @@
 SHELL := bash
+-include .env
 
 BACKEND_DIR      := backend
 FRONTEND_DIR     := frontend
@@ -51,8 +52,11 @@ help:
 	@echo "  build/frontend        Build frontend (pnpm)"
 	@echo "  run                   Run backend binary"
 	@echo "  run/live              Run backend with live reload (air)"
+	@echo "  run/dev               Backend + frontend dev via Traefik HTTPS"
 	@echo "  run/docker            Build+run app + infra via compose"
 	@echo "  infra/up|stop|down    Infra via compose"
+	@echo "  dns/setup             Create Porkbun DNS records for local dev"
+	@echo "  dns/cleanup           Remove Porkbun DNS records"
 	@echo "  lint                  Lint go + frontend"
 	@echo "  test                  Test go + frontend"
 	@echo "  clean                 Clean artifacts"
@@ -155,11 +159,85 @@ clean:
 	# frontend artifacts
 	rm -rf $(FRONTEND_DIR)/dist
 
+DOMAIN   ?= green-ecolution.dev
+LOCAL_IP ?= $(shell ip -4 route get 1.1.1.1 | awk '{print $$7; exit}')
+
+ifdef PORKBUN_API_KEY
+  APP_HOST            ?= $(LOCAL_IP).$(DOMAIN)
+  BIND_ADDR           ?= 0.0.0.0
+  TRAEFIK_CONFIG      ?= traefik.yaml
+  TRAEFIK_ENTRYPOINT  ?= websecure
+  APP_PROTO           ?= https
+  APP_PORT            ?= 3443
+  S3_DEV_ENDPOINT     ?= s3.$(APP_HOST):$(APP_PORT)
+  S3_USE_SSL          ?= true
+else
+  APP_HOST            ?= localhost
+  BIND_ADDR           ?= 127.0.0.1
+  TRAEFIK_CONFIG      ?= traefik-no-tls.yaml
+  TRAEFIK_ENTRYPOINT  ?= web
+  APP_PROTO           ?= http
+  APP_PORT            ?= 3000
+  S3_DEV_ENDPOINT     ?= $(APP_HOST):$(APP_PORT)
+  S3_USE_SSL          ?= false
+endif
+
+.PHONY: acme/init
+acme/init:
+ifdef PORKBUN_API_KEY
+	@echo "Setting up ACME storage for Let's Encrypt..."
+	@mkdir -p .docker/infra/traefik/acme
+	@test -f .docker/infra/traefik/acme/acme.json || \
+		{ touch .docker/infra/traefik/acme/acme.json && chmod 600 .docker/infra/traefik/acme/acme.json; }
+	@echo "ACME storage ready."
+else
+	@echo "No Porkbun API keys set — running without TLS."
+endif
+
+.PHONY: dns/setup
+dns/setup:
+	@echo "Setting up DNS records for $(APP_HOST) -> $(LOCAL_IP)..."
+	@test -n "$(PORKBUN_API_KEY)" || { echo "error: PORKBUN_API_KEY not set"; exit 1; }
+	@test -n "$(PORKBUN_SECRET_API_KEY)" || { echo "error: PORKBUN_SECRET_API_KEY not set"; exit 1; }
+	@echo "Creating A record: $(APP_HOST) -> $(LOCAL_IP)"
+	@curl -sf -X POST "https://api.porkbun.com/api/json/v3/dns/create/$(DOMAIN)" \
+		-H "Content-Type: application/json" \
+		-d '{"apikey":"$(PORKBUN_API_KEY)","secretapikey":"$(PORKBUN_SECRET_API_KEY)","type":"A","name":"$(LOCAL_IP)","content":"$(LOCAL_IP)","ttl":"600"}'
+	@echo ""
+	@echo "Creating wildcard A record: *.$(APP_HOST) -> $(LOCAL_IP)"
+	@curl -sf -X POST "https://api.porkbun.com/api/json/v3/dns/create/$(DOMAIN)" \
+		-H "Content-Type: application/json" \
+		-d '{"apikey":"$(PORKBUN_API_KEY)","secretapikey":"$(PORKBUN_SECRET_API_KEY)","type":"A","name":"*.$(LOCAL_IP)","content":"$(LOCAL_IP)","ttl":"600"}'
+	@echo ""
+	@echo "DNS records created/updated."
+
+.PHONY: dns/cleanup
+dns/cleanup:
+	@echo "Removing DNS records for $(APP_HOST)..."
+	@test -n "$(PORKBUN_API_KEY)" || { echo "error: PORKBUN_API_KEY not set"; exit 1; }
+	@test -n "$(PORKBUN_SECRET_API_KEY)" || { echo "error: PORKBUN_SECRET_API_KEY not set"; exit 1; }
+	@curl -sf -X POST "https://api.porkbun.com/api/json/v3/dns/deleteByNameType/$(DOMAIN)/A/$(LOCAL_IP)" \
+		-H "Content-Type: application/json" \
+		-d '{"apikey":"$(PORKBUN_API_KEY)","secretapikey":"$(PORKBUN_SECRET_API_KEY)"}' || true
+	@curl -sf -X POST "https://api.porkbun.com/api/json/v3/dns/deleteByNameType/$(DOMAIN)/A/*.$(LOCAL_IP)" \
+		-H "Content-Type: application/json" \
+		-d '{"apikey":"$(PORKBUN_API_KEY)","secretapikey":"$(PORKBUN_SECRET_API_KEY)"}' || true
+	@echo "DNS records removed."
+
 .PHONY: run/docker
 run/docker:
 	@echo "Running compose (infra + app)..."
+	@$(MAKE) acme/init
 	mkdir -p .docker/infra/valhalla/custom_files
 	test -f .docker/infra/valhalla/custom_files/sh.osm.pbf || wget https://download.geofabrik.de/europe/germany/schleswig-holstein-latest.osm.pbf -O .docker/infra/valhalla/custom_files/sh.osm.pbf
+	APP_HOST="$(APP_HOST)" \
+	BIND_ADDR="$(BIND_ADDR)" \
+	TRAEFIK_CONFIG="$(TRAEFIK_CONFIG)" \
+	TRAEFIK_ENTRYPOINT="$(TRAEFIK_ENTRYPOINT)" \
+	APP_PROTO="$(APP_PROTO)" \
+	APP_PORT="$(APP_PORT)" \
+	PORKBUN_API_KEY="$(PORKBUN_API_KEY)" \
+	PORKBUN_SECRET_API_KEY="$(PORKBUN_SECRET_API_KEY)" \
 	APP_VERSION="$(APP_VERSION)" \
 	APP_GIT_COMMIT="$(APP_GIT_COMMIT)" \
 	APP_GIT_BRANCH="$(APP_GIT_BRANCH)" \
@@ -169,9 +247,68 @@ run/docker:
 .PHONY: infra/up
 infra/up:
 	@echo "Infra up..."
+	@$(MAKE) acme/init
 	mkdir -p .docker/infra/valhalla/custom_files
 	test -f .docker/infra/valhalla/custom_files/sh.osm.pbf || wget https://download.geofabrik.de/europe/germany/schleswig-holstein-latest.osm.pbf -O .docker/infra/valhalla/custom_files/sh.osm.pbf
+	APP_HOST="$(APP_HOST)" \
+	BIND_ADDR="$(BIND_ADDR)" \
+	TRAEFIK_CONFIG="$(TRAEFIK_CONFIG)" \
+	TRAEFIK_ENTRYPOINT="$(TRAEFIK_ENTRYPOINT)" \
+	APP_PROTO="$(APP_PROTO)" \
+	APP_PORT="$(APP_PORT)" \
+	PORKBUN_API_KEY="$(PORKBUN_API_KEY)" \
+	PORKBUN_SECRET_API_KEY="$(PORKBUN_SECRET_API_KEY)" \
 	docker compose up -d
+
+define DEV_BACKEND_ENV
+GE_SERVER_APP_URL=$(APP_PROTO)://$(APP_HOST):$(APP_PORT) \
+GE_SERVER_PORT=3030 \
+GE_SERVER_LOGS_LEVEL=debug \
+GE_SERVER_LOGS_FORMAT=text \
+GE_SERVER_DATABASE_HOST=$(POSTGRES_HOST) \
+GE_SERVER_DATABASE_PORT=$(POSTGRES_PORT) \
+GE_SERVER_DATABASE_TIMEOUT=30s \
+GE_SERVER_DATABASE_NAME=$(POSTGRES_DB) \
+GE_SERVER_DATABASE_USERNAME=$(POSTGRES_USER) \
+GE_SERVER_DATABASE_PASSWORD=$(POSTGRES_PASSWORD) \
+GE_AUTH_ENABLE=true \
+GE_AUTH_OIDC_PROVIDER_BASE_URL=$(APP_PROTO)://auth.$(APP_HOST):$(APP_PORT) \
+GE_AUTH_OIDC_PROVIDER_HEALTH_URL=http://auth.$(APP_HOST):$(APP_PORT)/health/ready \
+GE_AUTH_OIDC_PROVIDER_DOMAIN_NAME=green-ecolution \
+GE_AUTH_OIDC_PROVIDER_AUTH_URL=$(APP_PROTO)://auth.$(APP_HOST):$(APP_PORT)/realms/green-ecolution/protocol/openid-connect/auth \
+GE_AUTH_OIDC_PROVIDER_TOKEN_URL=$(APP_PROTO)://auth.$(APP_HOST):$(APP_PORT)/realms/green-ecolution/protocol/openid-connect/token \
+GE_AUTH_OIDC_PROVIDER_FRONTEND_CLIENT_ID=frontend \
+GE_AUTH_OIDC_PROVIDER_FRONTEND_CLIENT_SECRET=EJogoaQSrW7vlo9CK3zIo2ieC8guy9Mm \
+GE_AUTH_OIDC_PROVIDER_BACKEND_CLIENT_ID=backend \
+GE_AUTH_OIDC_PROVIDER_BACKEND_CLIENT_SECRET=cVBGgWNlbwSLydLZfZMvTvmNCeiSmLGP \
+GE_ROUTING_ENABLE=true \
+GE_ROUTING_START_POINT=9.434764259345679,54.768731253913806 \
+GE_ROUTING_END_POINT=9.434764259345679,54.768731253913806 \
+GE_ROUTING_WATERING_POINT=9.434764259345679,54.768731253913806 \
+GE_ROUTING_VALHALLA_HOST=$(APP_PROTO)://valhalla.$(APP_HOST):$(APP_PORT) \
+GE_ROUTING_VALHALLA_OPTIMIZATION_VROOM_HOST=$(APP_PROTO)://vroom.$(APP_HOST):$(APP_PORT) \
+GE_S3_ENABLE=true \
+GE_S3_ENDPOINT=$(S3_DEV_ENDPOINT) \
+GE_S3_REGION=us-east-1 \
+GE_S3_USE_SSL=$(S3_USE_SSL) \
+GE_S3_ROUTE_GPX_BUCKET=gpx-routes \
+GE_S3_ROUTE_GPX_ACCESSKEY=root \
+GE_S3_ROUTE_GPX_SECRETACCESSKEY=secret1234 \
+GE_MQTT_ENABLE=false \
+GE_MAP_CENTER=54.792277136221905,9.43580607453268 \
+GE_MAP_BBOX=54.714822,9.285796,54.860127,9.583800
+endef
+
+.PHONY: run/dev
+run/dev:
+	@echo "Starting dev environment ($(APP_HOST))..."
+	@echo "  Backend:  $(APP_PROTO)://$(APP_HOST):$(APP_PORT)/api"
+	@echo "  Frontend: $(APP_PROTO)://$(APP_HOST):$(APP_PORT)"
+	@printf 'http:\n  routers:\n    backend-dev:\n      rule: "Host(\x60$(APP_HOST)\x60) && PathPrefix(\x60/api\x60)"\n      entryPoints: [$(TRAEFIK_ENTRYPOINT)]\n      service: backend-dev\n    frontend-dev:\n      rule: "Host(\x60$(APP_HOST)\x60)"\n      entryPoints: [$(TRAEFIK_ENTRYPOINT)]\n      service: frontend-dev\n  services:\n    backend-dev:\n      loadBalancer:\n        servers:\n          - url: "http://host.docker.internal:3030"\n    frontend-dev:\n      loadBalancer:\n        servers:\n          - url: "http://host.docker.internal:5173"\n' > .docker/infra/traefik/dynamic/dev-services.yaml
+	@trap 'rm -f .docker/infra/traefik/dynamic/dev-services.yaml; kill 0' EXIT; \
+		(cd $(BACKEND_DIR) && $(DEV_BACKEND_ENV) go tool air) & \
+		(cd $(FRONTEND_DIR) && USE_TRAEFIK=1 VITE_BACKEND_BASEURL=/api pnpm run dev) & \
+		wait
 
 .PHONY: infra/stop
 infra/stop:

@@ -3,6 +3,7 @@ import Footer from './components/layout/Footer'
 import Header from './components/layout/Header'
 import useDocumentTitle from '@/hooks/useDocumentTitle'
 import { Toaster } from '@green-ecolution/ui'
+import UpdateNotification from './components/layout/UpdateNotification'
 
 function App() {
   useDocumentTitle()
@@ -15,6 +16,7 @@ function App() {
       </main>
       <Footer />
       <Toaster />
+      <UpdateNotification />
     </>
   )
 }

@@ -40,6 +40,31 @@ declare module '@tanstack/react-router' {
   }
 }
 
+const isPWA =
+  window.matchMedia('(display-mode: standalone)').matches ||
+  (navigator as Navigator & { standalone?: boolean }).standalone === true
+
+const removeLoader = () => {
+  const loader = document.getElementById('app-loader')
+  if (loader) {
+    loader.classList.add('fade-out')
+    setTimeout(() => loader.remove(), 300)
+  }
+}
+
+if (!isPWA) {
+  removeLoader()
+} else {
+  const SPLASH_MIN_DURATION = 1500
+  const splashStart = Date.now()
+
+  void new Promise<void>((r) => router.subscribe('onResolved', () => r())).then(() => {
+    const elapsed = Date.now() - splashStart
+    const remaining = Math.max(0, SPLASH_MIN_DURATION - elapsed)
+    setTimeout(removeLoader, remaining)
+  })
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>

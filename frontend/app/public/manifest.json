@@ -1,0 +1,126 @@
+{
+  "id": "/",
+  "name": "Green Ecolution",
+  "short_name": "Green Ecolution",
+  "description": "Smartes Grünflächenmanagement für Kommunen. Überwache die Bewässerung, plane Routen und verwalte deinen Baumbestand in einer App.",
+  "start_url": "/",
+  "scope": "/",
+  "lang": "de",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FCFCFC",
+  "theme_color": "#4C7741",
+  "icons": [
+    {
+      "src": "/images/favicons/pwa-icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/favicons/pwa-icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/favicons/pwa-icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/favicons/pwa-icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/favicons/pwa-icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/favicons/pwa-icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/favicons/pwa-icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/favicons/pwa-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/favicons/pwa-maskable-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/images/favicons/pwa-maskable-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/images/favicons/pwa-maskable-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/images/favicons/pwa-maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/images/favicons/pwa-maskable-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/images/favicons/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/images/screenshots/desktop.png",
+      "sizes": "1436x853",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard Übersicht"
+    },
+    {
+      "src": "/images/screenshots/mobile.png",
+      "sizes": "1206x2622",
+      "type": "image/png",
+      "label": "Mobile Ansicht"
+    },
+    {
+      "src": "/images/screenshots/mobile_map.png",
+      "sizes": "1206x2622",
+      "type": "image/png",
+      "label": "Kartenansicht"
+    },
+    {
+      "src": "/images/screenshots/mobile_route.png",
+      "sizes": "1206x2622",
+      "type": "image/png",
+      "label": "Routenplanung"
+    }
+  ]
+}

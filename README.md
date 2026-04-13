@@ -31,17 +31,20 @@ Urban green spaces need water - but how much, and when? City maintenance teams o
 The fastest way to run everything locally:
 
 ```bash
-make infra/up    # Start Postgres, Keycloak, MinIO, Valhalla, etc.
-make run/live    # Run backend with hot reload
-```
-
-Frontend dev server (in a second terminal):
-
-```bash
-make fe/dev
+make run/dev     # Start infra, run migrations, launch backend + frontend
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+### With HTTPS (Let's Encrypt)
+
+For valid TLS certificates (required for PWA testing on mobile), you need a domain with DNS API access on [Porkbun](https://porkbun.com). Either ask the `green-ecolution.dev` domain owner for API keys, or register your own domain on Porkbun and set `DOMAIN=your-domain.dev` in `.env`.
+
+1. Copy `.env.example` to `.env` and add your Porkbun API keys (and optionally `DOMAIN`)
+2. Create DNS records: `make dns/setup`
+3. Start dev environment: `make run/dev`
+
+Open `https://<your-ip>.green-ecolution.dev:3443` (or your custom domain).
 
 ## Setup
 
@@ -62,27 +65,43 @@ make build       # Build frontend + backend
 
 | Command | Description |
 |---------|-------------|
-| `make run/live` | Backend with hot reload |
-| `make fe/dev` | Frontend dev server |
+| `make run/dev` | Backend + frontend dev via Traefik |
+| `make run/live` | Backend with hot reload (standalone) |
+| `make run/docker` | Full stack via Docker Compose |
+| `make infra/up` | Start infrastructure only |
+| `make dns/setup` | Create Porkbun DNS records for HTTPS |
+| `make dns/cleanup` | Remove Porkbun DNS records |
 | `make test` | Run all tests |
 | `make lint` | Lint Go + frontend |
 | `make generate` | Run code generation (sqlc, mappers, swagger) |
 | `make migrate/up` | Apply database migrations |
 | `make migrate/new name=...` | Create new migration |
 
-> 💡 For a reproducible dev environment, you can also use `nix develop`.
+> For a reproducible dev environment, you can also use `nix develop`.
 
 ### Services
 
 When running `make infra/up`, these services are available via Traefik:
 
+**Without Porkbun keys** (HTTP on port 3000):
+
 | Service | URL |
 |---------|-----|
-| Backend API | <http://localhost:3000> |
+| Backend API | <http://localhost:3000/api> |
 | Keycloak | <http://auth.localhost:3000> |
 | MinIO Console | <http://minio.localhost:3000> |
 | pgAdmin | <http://pgadmin.localhost:3000> |
 | Valhalla | <http://valhalla.localhost:3000> |
+
+**With Porkbun keys** (HTTPS on port 3443, valid Let's Encrypt certs):
+
+| Service | URL |
+|---------|-----|
+| Backend API | `https://<ip>.green-ecolution.dev:3443/api` |
+| Keycloak | `https://auth.<ip>.green-ecolution.dev:3443` |
+| MinIO Console | `https://minio.<ip>.green-ecolution.dev:3443` |
+| pgAdmin | `https://pgadmin.<ip>.green-ecolution.dev:3443` |
+| Valhalla | `https://valhalla.<ip>.green-ecolution.dev:3443` |
 
 ## Architecture
 
@@ -92,6 +111,50 @@ frontend/   → React (Vite, TanStack Router/Query, Zustand, Tailwind)
 ```
 
 The backend embeds the compiled frontend and serves it as a single binary.
+
+## PWA
+
+The frontend is installable as a Progressive Web App with offline support via a Workbox service worker.
+
+### HTTPS with valid certificates
+
+PWA features like service workers require HTTPS. The project uses [Let's Encrypt](https://letsencrypt.org/) with DNS-01 challenge via [Porkbun](https://porkbun.com) to obtain valid TLS certificates for local development.
+
+```bash
+# 1. Add Porkbun API keys to .env (see .env.example)
+# 2. Create DNS records pointing to your local IP
+make dns/setup
+
+# 3. Start dev environment (HTTPS on port 3443)
+make run/dev
+```
+
+Your local IP is auto-detected. Access the app at `https://<ip>.green-ecolution.dev:3443`.
+
+### Mobile testing
+
+With HTTPS enabled, the app is accessible from any device on the local network. No certificate installation needed since Let's Encrypt certs are trusted by default.
+
+- Frontend: `https://<ip>.green-ecolution.dev:3443`
+- Auth: `https://auth.<ip>.green-ecolution.dev:3443`
+
+### Without HTTPS
+
+Without Porkbun API keys, the dev environment runs on plain HTTP (port 3000). PWA install and service workers won't work, but general development is unaffected.
+
+```bash
+make run/dev   # HTTP on localhost:3000
+```
+
+### Testing the service worker
+
+The service worker is **disabled in `vite dev`** (`devOptions.enabled: false` in `vite.config.ts`) to avoid HMR conflicts with Workbox precaching. To verify PWA behavior (install prompt, update flow, offline fallback), build and serve the production bundle:
+
+```bash
+cd frontend/app && pnpm build && pnpm preview
+```
+
+…or run the full Docker stack via `make run/docker`.
 
 ## Configuration
 

@@ -279,6 +279,11 @@ config/config.dev.yaml
 .docker/infra/ors
 .docker/infra/vroom/access.log
 .docker/infra/valhalla/custom_files
+.docker/infra/traefik/certs/*.pem
+.docker/infra/traefik/acme/
+!.docker/infra/traefik/acme/.gitkeep
+.docker/infra/traefik/dynamic/dev-services.yaml
+frontend/app/public/*.pem
 frontend/dist
 
 
@@ -311,5 +316,6 @@ dist-ssr
 *.sln
 *.sw?
 app/.__mf__temp/app
+dev-dist
 .direnv
 .pre-commit-config.yaml
