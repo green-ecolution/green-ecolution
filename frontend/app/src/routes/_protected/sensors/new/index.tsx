@@ -11,10 +11,7 @@ function NewSensor() {
   const showToast = createToast()
 
   const handleContinue = (sensorId: string) => {
-    showToast(
-      `Sensor-Verknüpfung ist noch nicht implementiert (erkannt: ${sensorId})`,
-      'error',
-    )
+    showToast(`Sensor-Verknüpfung ist noch nicht implementiert (erkannt: ${sensorId})`, 'error')
   }
 
   return (
