@@ -285,6 +285,7 @@ config/config.dev.yaml
 .docker/infra/traefik/dynamic/dev-services.yaml
 frontend/app/public/*.pem
 frontend/dist
+backend/backend
 
 
 ## Frontend
