@@ -4,6 +4,7 @@ import { CameraViewport, Loading, type CameraViewportState } from '@green-ecolut
 import { CameraOff, CircleAlert, ShieldAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import CameraPermissionNotice from './CameraPermissionNotice'
+import PWAInstallHint from './PWAInstallHint'
 import QRScanResult from './QRScanResult'
 
 const STATUS_LABELS: Record<ScannerStatus, string> = {
@@ -85,6 +86,7 @@ const QRScannerView = ({ continueLabel, onContinue }: QRScannerViewProps = {}) =
 
   return (
     <div className="mx-auto max-w-md pb-[env(safe-area-inset-bottom)]">
+      <PWAInstallHint />
       {/* Viewport stays mounted so videoRef remains valid across scan cycles */}
       <div className={status === 'scanned' && scannedData ? 'hidden' : 'block'}>
         <CameraViewport
