@@ -98,19 +98,22 @@ const useGeolocation = ({
     [trackHistory],
   )
 
-  const handleError = useCallback((err: GeolocationPositionError) => {
-    setErrorMessage(err.message || null)
-    if (err.code === err.PERMISSION_DENIED) {
-      setStatus('denied')
-      clearWatch()
-    } else {
-      // POSITION_UNAVAILABLE / TIMEOUT — keep watching, surface as error state
-      // only when we have no fix yet; otherwise stay in 'watching' with last value.
-      if (!locatedRef.current) {
-        setStatus('error')
+  const handleError = useCallback(
+    (err: GeolocationPositionError) => {
+      setErrorMessage(err.message || null)
+      if (err.code === err.PERMISSION_DENIED) {
+        setStatus('denied')
+        clearWatch()
+      } else {
+        // POSITION_UNAVAILABLE / TIMEOUT — keep watching, surface as error state
+        // only when we have no fix yet; otherwise stay in 'watching' with last value.
+        if (!locatedRef.current) {
+          setStatus('error')
+        }
       }
-    }
-  }, [clearWatch])
+    },
+    [clearWatch],
+  )
 
   const start = useCallback(async (): Promise<void> => {
     if (startingRef.current || watchIdRef.current !== null) return

@@ -31,9 +31,7 @@ const LEVEL_LABEL: Record<AccuracyLevel, string> = {
   searching: 'Suche …',
 }
 
-export const accuracyLevelFromMeters = (
-  meters: number | null | undefined,
-): AccuracyLevel => {
+export const accuracyLevelFromMeters = (meters: number | null | undefined): AccuracyLevel => {
   if (meters == null || !Number.isFinite(meters) || meters < 0) return 'searching'
   if (meters < 10) return 'excellent'
   if (meters < 30) return 'good'
@@ -81,8 +79,10 @@ const formatMeters = (m: number): string => {
   return `~${Math.round(m)} m`
 }
 
-export interface AccuracyBadgeProps
-  extends Omit<React.HTMLAttributes<HTMLSpanElement>, 'children'> {
+export interface AccuracyBadgeProps extends Omit<
+  React.HTMLAttributes<HTMLSpanElement>,
+  'children'
+> {
   /** Accuracy in meters (e.g. GeolocationCoordinates.accuracy). */
   accuracyMeters?: number | null
   /** Hide the numeric value — show only level label + bars. */
@@ -94,7 +94,10 @@ const AccuracyBadge = React.forwardRef<HTMLSpanElement, AccuracyBadgeProps>(
     const level = accuracyLevelFromMeters(accuracyMeters)
     const label = LEVEL_LABEL[level]
     const showValue =
-      level !== 'searching' && !hideValue && accuracyMeters != null && Number.isFinite(accuracyMeters)
+      level !== 'searching' &&
+      !hideValue &&
+      accuracyMeters != null &&
+      Number.isFinite(accuracyMeters)
     const value = showValue ? formatMeters(accuracyMeters as number) : null
     const aria = `GPS-Genauigkeit: ${label}${value ? `, ${value}` : ''}`
 

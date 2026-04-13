@@ -9,8 +9,7 @@ interface InlineGPSReadoutProps {
 
 const InlineGPSReadout = ({ position, status }: InlineGPSReadoutProps) => {
   const isLoading = status === 'requesting' || status === 'idle'
-  const isUnavailable =
-    status === 'denied' || status === 'unsupported' || status === 'error'
+  const isUnavailable = status === 'denied' || status === 'unsupported' || status === 'error'
 
   return (
     <div className="flex flex-col gap-2 border-t border-dark-100 pt-3">

@@ -2,13 +2,7 @@ import GeolocationPermissionNotice from '@/components/geolocation/GeolocationPer
 import GPSStatusCard from '@/components/geolocation/GPSStatusCard'
 import LocationMapPreview from '@/components/geolocation/LocationMapPreview'
 import type { GeolocationFix, GeolocationStatus } from '@/hooks/useGeolocation'
-import {
-  AccuracyBadge,
-  Card,
-  CardContent,
-  Button,
-  InlineAlert,
-} from '@green-ecolution/ui'
+import { AccuracyBadge, Card, CardContent, Button, InlineAlert } from '@green-ecolution/ui'
 import { CheckCircle2, Crosshair, Loader2, MapPin, RotateCw } from 'lucide-react'
 
 interface SensorGeolocationSummaryProps {

@@ -107,7 +107,12 @@ const GeolocationDebugView = () => {
   const [permission, setPermission] = useState<PermissionLabel>('unknown')
   const env = useMemo<EnvInfo>(() => {
     if (typeof window === 'undefined') {
-      return { hasGeolocation: false, hasPermissionsApi: false, isSecureContext: false, userAgent: '' }
+      return {
+        hasGeolocation: false,
+        hasPermissionsApi: false,
+        isSecureContext: false,
+        userAgent: '',
+      }
     }
     return {
       hasGeolocation: !!navigator.geolocation,

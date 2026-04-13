@@ -35,11 +35,7 @@ const GPSStatusCard = ({ fix, title = 'Aktuelle Position' }: GPSStatusCardProps)
         <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
           <Field label="Breitengrad" value={fix ? formatCoord(fix.latitude) : '—'} mono />
           <Field label="Längengrad" value={fix ? formatCoord(fix.longitude) : '—'} mono />
-          <Field
-            label="Genauigkeit"
-            value={fix ? `± ${fix.accuracy.toFixed(1)} m` : '—'}
-            mono
-          />
+          <Field label="Genauigkeit" value={fix ? `± ${fix.accuracy.toFixed(1)} m` : '—'} mono />
           <Field
             label="Höhe"
             value={formatAltitude(fix?.altitude ?? null, fix?.altitudeAccuracy ?? null)}
@@ -67,7 +63,9 @@ interface FieldProps {
 const Field = ({ label, value, mono, className }: FieldProps) => (
   <div className={className}>
     <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
-    <dd className={mono ? 'mt-0.5 font-mono text-sm text-foreground' : 'mt-0.5 text-sm'}>{value}</dd>
+    <dd className={mono ? 'mt-0.5 font-mono text-sm text-foreground' : 'mt-0.5 text-sm'}>
+      {value}
+    </dd>
   </div>
 )
 
