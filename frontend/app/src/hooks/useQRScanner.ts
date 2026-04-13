@@ -44,6 +44,12 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
   const streamRef = useRef<MediaStream | null>(null)
   const detectorRef = useRef<InstanceType<typeof BarcodeDetectorType> | null>(null)
   const cancelledRef = useRef(false)
+  const startingRef = useRef(false)
+
+  const onScanRef = useRef(onScan)
+  useEffect(() => {
+    onScanRef.current = onScan
+  }, [onScan])
 
   const [status, setStatus] = useState<ScannerStatus>('idle')
   const [scannedData, setScannedData] = useState<string | null>(null)
@@ -62,6 +68,8 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
 
   const startScanning = useCallback(async (): Promise<void> => {
     if (!videoRef.current) return
+    if (startingRef.current || streamRef.current) return
+    startingRef.current = true
 
     setStatus('requesting')
     cancelledRef.current = false
@@ -69,6 +77,7 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
     // Unsupported browser (no secure context, or very old)
     if (!navigator.mediaDevices?.getUserMedia) {
       setStatus('unsupported')
+      startingRef.current = false
       return
     }
 
@@ -79,6 +88,7 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
       })
       if (perm.state === 'denied') {
         setStatus('denied')
+        startingRef.current = false
         return
       }
     } catch {
@@ -93,6 +103,7 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
       } catch (err) {
         console.error('Failed to initialise BarcodeDetector', err)
         setStatus('error')
+        startingRef.current = false
         return
       }
     }
@@ -106,6 +117,7 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
       streamRef.current = stream
       if (!videoRef.current) {
         stream.getTracks().forEach((t) => t.stop())
+        startingRef.current = false
         return
       }
       videoRef.current.srcObject = stream
@@ -118,12 +130,14 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
         console.error('Camera start failed', err)
         setStatus('error')
       }
+      startingRef.current = false
       return
     }
 
     setStatus('scanning')
+    startingRef.current = false
+    cancelledRef.current = false
 
-    // Detection loop — prefer requestVideoFrameCallback where available.
     const useVFC = 'requestVideoFrameCallback' in HTMLVideoElement.prototype
 
     const handleSuccess = (value: string) => {
@@ -131,7 +145,7 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
       setStatus('scanned')
       // Release camera — prevents duplicate scans & frees hardware
       releaseStream()
-      onScan?.(value)
+      onScanRef.current?.(value)
     }
 
     const tick = async (): Promise<void> => {
@@ -170,7 +184,7 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
     }
 
     scheduleNext()
-  }, [onScan, releaseStream])
+  }, [releaseStream])
 
   const stopScanning = useCallback(() => {
     releaseStream()

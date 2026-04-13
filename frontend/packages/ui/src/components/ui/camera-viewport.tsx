@@ -17,9 +17,10 @@ export interface CameraViewportProps extends React.HTMLAttributes<HTMLDivElement
   ariaLabel?: string
 }
 
-const Corner = ({ className }: { className: string }) => (
+const Corner = ({ className, flash }: { className: string; flash: boolean }) => (
   <span
     aria-hidden="true"
+    data-flash={flash ? 'true' : 'false'}
     className={cn(
       'absolute block size-7 md:size-9 border-white/90',
       'motion-safe:data-[flash=true]:animate-corner-pulse',
@@ -34,6 +35,11 @@ const CameraViewport = React.forwardRef<HTMLDivElement, CameraViewportProps>(
     ref,
   ) => {
     const showVideo = state === 'scanning' || state === 'success'
+
+    const [flashTick, setFlashTick] = React.useState(0)
+    React.useEffect(() => {
+      if (flash) setFlashTick((t) => t + 1)
+    }, [flash])
 
     return (
       <div
@@ -80,10 +86,26 @@ const CameraViewport = React.forwardRef<HTMLDivElement, CameraViewportProps>(
                 )}
               />
               {/* Corner brackets */}
-              <Corner className="top-0 left-0 border-t-2 border-l-2 rounded-tl-md" />
-              <Corner className="top-0 right-0 border-t-2 border-r-2 rounded-tr-md" />
-              <Corner className="bottom-0 left-0 border-b-2 border-l-2 rounded-bl-md" />
-              <Corner className="bottom-0 right-0 border-b-2 border-r-2 rounded-br-md" />
+              <Corner
+                key={`tl-${flashTick}`}
+                flash={flash}
+                className="top-0 left-0 border-t-2 border-l-2 rounded-tl-md"
+              />
+              <Corner
+                key={`tr-${flashTick}`}
+                flash={flash}
+                className="top-0 right-0 border-t-2 border-r-2 rounded-tr-md"
+              />
+              <Corner
+                key={`bl-${flashTick}`}
+                flash={flash}
+                className="bottom-0 left-0 border-b-2 border-l-2 rounded-bl-md"
+              />
+              <Corner
+                key={`br-${flashTick}`}
+                flash={flash}
+                className="bottom-0 right-0 border-b-2 border-r-2 rounded-br-md"
+              />
 
               {/* Layer 2: Scan line — only while scanning */}
               {state === 'scanning' && (
@@ -91,7 +113,7 @@ const CameraViewport = React.forwardRef<HTMLDivElement, CameraViewportProps>(
                   <div
                     aria-hidden="true"
                     className={cn(
-                      'h-px w-full',
+                      'absolute inset-x-0 top-0 h-px w-full',
                       'bg-gradient-to-r from-transparent via-green-light-600 to-transparent',
                       'motion-safe:animate-scan-line motion-reduce:animate-scan-pulse',
                     )}
@@ -105,7 +127,7 @@ const CameraViewport = React.forwardRef<HTMLDivElement, CameraViewportProps>(
         {/* Layer 3: Flash overlay on success */}
         {flash && (
           <div
-            key="flash"
+            key={`flash-${flashTick}`}
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 animate-scan-flash"
           />

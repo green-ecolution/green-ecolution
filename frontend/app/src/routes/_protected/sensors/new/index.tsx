@@ -11,8 +11,10 @@ function NewSensor() {
   const showToast = createToast()
 
   const handleContinue = (sensorId: string) => {
-    // Placeholder until the sensor creation / linking flow is implemented
-    showToast(`Sensor ${sensorId} wird in Kürze verknüpft …`, 'success')
+    showToast(
+      `Sensor-Verknüpfung ist noch nicht implementiert (erkannt: ${sensorId})`,
+      'error',
+    )
   }
 
   return (
