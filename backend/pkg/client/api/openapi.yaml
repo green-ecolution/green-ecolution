@@ -3749,11 +3749,9 @@ components:
             type: integer
           type: array
       required:
-      - additional_information
       - address
       - description
       - name
-      - provider
       - soil_condition
       - tree_ids
       type: object
@@ -3927,11 +3925,9 @@ components:
             type: integer
           type: array
       required:
-      - additional_information
       - address
       - description
       - name
-      - provider
       - soil_condition
       - tree_ids
       type: object
@@ -3975,16 +3971,12 @@ components:
         tree_cluster_id:
           type: integer
       required:
-      - additional_information
       - description
       - latitude
       - longitude
       - number
       - planting_year
-      - provider
-      - sensor_id
       - species
-      - tree_cluster_id
       type: object
     TreeList:
       example:
@@ -4121,16 +4113,12 @@ components:
         tree_cluster_id:
           type: integer
       required:
-      - additional_information
       - description
       - latitude
       - longitude
       - number
       - planting_year
-      - provider
-      - sensor_id
       - species
-      - tree_cluster_id
       type: object
     User:
       example:
@@ -4435,14 +4423,12 @@ components:
         width:
           type: number
       required:
-      - additional_information
       - description
       - driving_license
       - height
       - length
       - model
       - number_plate
-      - provider
       - status
       - type
       - water_capacity
@@ -4590,14 +4576,12 @@ components:
         width:
           type: number
       required:
-      - additional_information
       - description
       - driving_license
       - height
       - length
       - model
       - number_plate
-      - provider
       - status
       - type
       - water_capacity
@@ -4845,11 +4829,8 @@ components:
           minItems: 1
           type: array
       required:
-      - additional_information
       - date
       - description
-      - provider
-      - trailer_id
       - transporter_id
       - tree_cluster_ids
       - user_ids
@@ -5294,14 +5275,10 @@ components:
           minItems: 1
           type: array
       required:
-      - additional_information
       - cancellation_note
       - date
       - description
-      - evaluation
-      - provider
       - status
-      - trailer_id
       - transporter_id
       - tree_cluster_ids
       - user_ids

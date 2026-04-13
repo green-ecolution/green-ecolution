@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AdditionalInformation** | **map[string]interface{}** |  | 
+**AdditionalInformation** | Pointer to **map[string]interface{}** |  | [optional] 
 **CancellationNote** | **string** |  | 
 **Date** | **string** |  | 
 **Description** | **string** |  | 
-**Evaluation** | [**[]EvaluationValue**](EvaluationValue.md) |  | 
-**Provider** | **string** |  | 
+**Evaluation** | Pointer to [**[]EvaluationValue**](EvaluationValue.md) |  | [optional] 
+**Provider** | Pointer to **string** |  | [optional] 
 **Status** | [**WateringPlanStatus**](WateringPlanStatus.md) |  | 
-**TrailerId** | **int32** |  | 
+**TrailerId** | Pointer to **int32** |  | [optional] 
 **TransporterId** | **int32** |  | 
 **TreeClusterIds** | **[]int32** |  | 
 **UserIds** | **[]string** |  | 
@@ -20,7 +20,7 @@ Name | Type | Description | Notes
 
 ### NewWateringPlanUpdate
 
-`func NewWateringPlanUpdate(additionalInformation map[string]interface{}, cancellationNote string, date string, description string, evaluation []EvaluationValue, provider string, status WateringPlanStatus, trailerId int32, transporterId int32, treeClusterIds []int32, userIds []string, ) *WateringPlanUpdate`
+`func NewWateringPlanUpdate(cancellationNote string, date string, description string, status WateringPlanStatus, transporterId int32, treeClusterIds []int32, userIds []string, ) *WateringPlanUpdate`
 
 NewWateringPlanUpdate instantiates a new WateringPlanUpdate object
 This constructor will assign default values to properties that have it defined,
@@ -54,6 +54,11 @@ and a boolean to check if the value has been set.
 
 SetAdditionalInformation sets AdditionalInformation field to given value.
 
+### HasAdditionalInformation
+
+`func (o *WateringPlanUpdate) HasAdditionalInformation() bool`
+
+HasAdditionalInformation returns a boolean if a field has been set.
 
 ### GetCancellationNote
 
@@ -134,6 +139,11 @@ and a boolean to check if the value has been set.
 
 SetEvaluation sets Evaluation field to given value.
 
+### HasEvaluation
+
+`func (o *WateringPlanUpdate) HasEvaluation() bool`
+
+HasEvaluation returns a boolean if a field has been set.
 
 ### GetProvider
 
@@ -154,6 +164,11 @@ and a boolean to check if the value has been set.
 
 SetProvider sets Provider field to given value.
 
+### HasProvider
+
+`func (o *WateringPlanUpdate) HasProvider() bool`
+
+HasProvider returns a boolean if a field has been set.
 
 ### GetStatus
 
@@ -194,6 +209,11 @@ and a boolean to check if the value has been set.
 
 SetTrailerId sets TrailerId field to given value.
 
+### HasTrailerId
+
+`func (o *WateringPlanUpdate) HasTrailerId() bool`
+
+HasTrailerId returns a boolean if a field has been set.
 
 ### GetTransporterId
 

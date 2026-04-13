@@ -22,14 +22,14 @@ var _ MappedNullable = &WateringPlanUpdate{}
 
 // WateringPlanUpdate struct for WateringPlanUpdate
 type WateringPlanUpdate struct {
-	AdditionalInformation map[string]interface{} `json:"additional_information"`
+	AdditionalInformation map[string]interface{} `json:"additional_information,omitempty"`
 	CancellationNote      string                 `json:"cancellation_note"`
 	Date                  string                 `json:"date"`
 	Description           string                 `json:"description"`
-	Evaluation            []EvaluationValue      `json:"evaluation"`
-	Provider              string                 `json:"provider"`
+	Evaluation            []EvaluationValue      `json:"evaluation,omitempty"`
+	Provider              *string                `json:"provider,omitempty"`
 	Status                WateringPlanStatus     `json:"status"`
-	TrailerId             int32                  `json:"trailer_id"`
+	TrailerId             *int32                 `json:"trailer_id,omitempty"`
 	TransporterId         int32                  `json:"transporter_id"`
 	TreeClusterIds        []int32                `json:"tree_cluster_ids"`
 	UserIds               []string               `json:"user_ids"`
@@ -41,16 +41,12 @@ type _WateringPlanUpdate WateringPlanUpdate
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewWateringPlanUpdate(additionalInformation map[string]interface{}, cancellationNote string, date string, description string, evaluation []EvaluationValue, provider string, status WateringPlanStatus, trailerId int32, transporterId int32, treeClusterIds []int32, userIds []string) *WateringPlanUpdate {
+func NewWateringPlanUpdate(cancellationNote string, date string, description string, status WateringPlanStatus, transporterId int32, treeClusterIds []int32, userIds []string) *WateringPlanUpdate {
 	this := WateringPlanUpdate{}
-	this.AdditionalInformation = additionalInformation
 	this.CancellationNote = cancellationNote
 	this.Date = date
 	this.Description = description
-	this.Evaluation = evaluation
-	this.Provider = provider
 	this.Status = status
-	this.TrailerId = trailerId
 	this.TransporterId = transporterId
 	this.TreeClusterIds = treeClusterIds
 	this.UserIds = userIds
@@ -65,26 +61,34 @@ func NewWateringPlanUpdateWithDefaults() *WateringPlanUpdate {
 	return &this
 }
 
-// GetAdditionalInformation returns the AdditionalInformation field value
+// GetAdditionalInformation returns the AdditionalInformation field value if set, zero value otherwise.
 func (o *WateringPlanUpdate) GetAdditionalInformation() map[string]interface{} {
-	if o == nil {
+	if o == nil || IsNil(o.AdditionalInformation) {
 		var ret map[string]interface{}
 		return ret
 	}
-
 	return o.AdditionalInformation
 }
 
-// GetAdditionalInformationOk returns a tuple with the AdditionalInformation field value
+// GetAdditionalInformationOk returns a tuple with the AdditionalInformation field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *WateringPlanUpdate) GetAdditionalInformationOk() (map[string]interface{}, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.AdditionalInformation) {
 		return map[string]interface{}{}, false
 	}
 	return o.AdditionalInformation, true
 }
 
-// SetAdditionalInformation sets field value
+// HasAdditionalInformation returns a boolean if a field has been set.
+func (o *WateringPlanUpdate) HasAdditionalInformation() bool {
+	if o != nil && !IsNil(o.AdditionalInformation) {
+		return true
+	}
+
+	return false
+}
+
+// SetAdditionalInformation gets a reference to the given map[string]interface{} and assigns it to the AdditionalInformation field.
 func (o *WateringPlanUpdate) SetAdditionalInformation(v map[string]interface{}) {
 	o.AdditionalInformation = v
 }
@@ -161,52 +165,68 @@ func (o *WateringPlanUpdate) SetDescription(v string) {
 	o.Description = v
 }
 
-// GetEvaluation returns the Evaluation field value
+// GetEvaluation returns the Evaluation field value if set, zero value otherwise.
 func (o *WateringPlanUpdate) GetEvaluation() []EvaluationValue {
-	if o == nil {
+	if o == nil || IsNil(o.Evaluation) {
 		var ret []EvaluationValue
 		return ret
 	}
-
 	return o.Evaluation
 }
 
-// GetEvaluationOk returns a tuple with the Evaluation field value
+// GetEvaluationOk returns a tuple with the Evaluation field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *WateringPlanUpdate) GetEvaluationOk() ([]EvaluationValue, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.Evaluation) {
 		return nil, false
 	}
 	return o.Evaluation, true
 }
 
-// SetEvaluation sets field value
+// HasEvaluation returns a boolean if a field has been set.
+func (o *WateringPlanUpdate) HasEvaluation() bool {
+	if o != nil && !IsNil(o.Evaluation) {
+		return true
+	}
+
+	return false
+}
+
+// SetEvaluation gets a reference to the given []EvaluationValue and assigns it to the Evaluation field.
 func (o *WateringPlanUpdate) SetEvaluation(v []EvaluationValue) {
 	o.Evaluation = v
 }
 
-// GetProvider returns the Provider field value
+// GetProvider returns the Provider field value if set, zero value otherwise.
 func (o *WateringPlanUpdate) GetProvider() string {
-	if o == nil {
+	if o == nil || IsNil(o.Provider) {
 		var ret string
 		return ret
 	}
-
-	return o.Provider
+	return *o.Provider
 }
 
-// GetProviderOk returns a tuple with the Provider field value
+// GetProviderOk returns a tuple with the Provider field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *WateringPlanUpdate) GetProviderOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.Provider) {
 		return nil, false
 	}
-	return &o.Provider, true
+	return o.Provider, true
 }
 
-// SetProvider sets field value
+// HasProvider returns a boolean if a field has been set.
+func (o *WateringPlanUpdate) HasProvider() bool {
+	if o != nil && !IsNil(o.Provider) {
+		return true
+	}
+
+	return false
+}
+
+// SetProvider gets a reference to the given string and assigns it to the Provider field.
 func (o *WateringPlanUpdate) SetProvider(v string) {
-	o.Provider = v
+	o.Provider = &v
 }
 
 // GetStatus returns the Status field value
@@ -233,28 +253,36 @@ func (o *WateringPlanUpdate) SetStatus(v WateringPlanStatus) {
 	o.Status = v
 }
 
-// GetTrailerId returns the TrailerId field value
+// GetTrailerId returns the TrailerId field value if set, zero value otherwise.
 func (o *WateringPlanUpdate) GetTrailerId() int32 {
-	if o == nil {
+	if o == nil || IsNil(o.TrailerId) {
 		var ret int32
 		return ret
 	}
-
-	return o.TrailerId
+	return *o.TrailerId
 }
 
-// GetTrailerIdOk returns a tuple with the TrailerId field value
+// GetTrailerIdOk returns a tuple with the TrailerId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *WateringPlanUpdate) GetTrailerIdOk() (*int32, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.TrailerId) {
 		return nil, false
 	}
-	return &o.TrailerId, true
+	return o.TrailerId, true
 }
 
-// SetTrailerId sets field value
+// HasTrailerId returns a boolean if a field has been set.
+func (o *WateringPlanUpdate) HasTrailerId() bool {
+	if o != nil && !IsNil(o.TrailerId) {
+		return true
+	}
+
+	return false
+}
+
+// SetTrailerId gets a reference to the given int32 and assigns it to the TrailerId field.
 func (o *WateringPlanUpdate) SetTrailerId(v int32) {
-	o.TrailerId = v
+	o.TrailerId = &v
 }
 
 // GetTransporterId returns the TransporterId field value
@@ -339,14 +367,22 @@ func (o WateringPlanUpdate) MarshalJSON() ([]byte, error) {
 
 func (o WateringPlanUpdate) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["additional_information"] = o.AdditionalInformation
+	if !IsNil(o.AdditionalInformation) {
+		toSerialize["additional_information"] = o.AdditionalInformation
+	}
 	toSerialize["cancellation_note"] = o.CancellationNote
 	toSerialize["date"] = o.Date
 	toSerialize["description"] = o.Description
-	toSerialize["evaluation"] = o.Evaluation
-	toSerialize["provider"] = o.Provider
+	if !IsNil(o.Evaluation) {
+		toSerialize["evaluation"] = o.Evaluation
+	}
+	if !IsNil(o.Provider) {
+		toSerialize["provider"] = o.Provider
+	}
 	toSerialize["status"] = o.Status
-	toSerialize["trailer_id"] = o.TrailerId
+	if !IsNil(o.TrailerId) {
+		toSerialize["trailer_id"] = o.TrailerId
+	}
 	toSerialize["transporter_id"] = o.TransporterId
 	toSerialize["tree_cluster_ids"] = o.TreeClusterIds
 	toSerialize["user_ids"] = o.UserIds
@@ -358,14 +394,10 @@ func (o *WateringPlanUpdate) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"additional_information",
 		"cancellation_note",
 		"date",
 		"description",
-		"evaluation",
-		"provider",
 		"status",
-		"trailer_id",
 		"transporter_id",
 		"tree_cluster_ids",
 		"user_ids",

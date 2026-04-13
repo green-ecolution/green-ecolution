@@ -4,11 +4,11 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AdditionalInformation** | **map[string]interface{}** |  | 
+**AdditionalInformation** | Pointer to **map[string]interface{}** |  | [optional] 
 **Address** | **string** |  | 
 **Description** | **string** |  | 
 **Name** | **string** |  | 
-**Provider** | **string** |  | 
+**Provider** | Pointer to **string** |  | [optional] 
 **SoilCondition** | [**SoilCondition**](SoilCondition.md) |  | 
 **TreeIds** | **[]int32** |  | 
 
@@ -16,7 +16,7 @@ Name | Type | Description | Notes
 
 ### NewTreeClusterCreate
 
-`func NewTreeClusterCreate(additionalInformation map[string]interface{}, address string, description string, name string, provider string, soilCondition SoilCondition, treeIds []int32, ) *TreeClusterCreate`
+`func NewTreeClusterCreate(address string, description string, name string, soilCondition SoilCondition, treeIds []int32, ) *TreeClusterCreate`
 
 NewTreeClusterCreate instantiates a new TreeClusterCreate object
 This constructor will assign default values to properties that have it defined,
@@ -50,6 +50,11 @@ and a boolean to check if the value has been set.
 
 SetAdditionalInformation sets AdditionalInformation field to given value.
 
+### HasAdditionalInformation
+
+`func (o *TreeClusterCreate) HasAdditionalInformation() bool`
+
+HasAdditionalInformation returns a boolean if a field has been set.
 
 ### GetAddress
 
@@ -130,6 +135,11 @@ and a boolean to check if the value has been set.
 
 SetProvider sets Provider field to given value.
 
+### HasProvider
+
+`func (o *TreeClusterCreate) HasProvider() bool`
+
+HasProvider returns a boolean if a field has been set.
 
 ### GetSoilCondition
 

@@ -22,11 +22,11 @@ var _ MappedNullable = &TreeClusterCreate{}
 
 // TreeClusterCreate struct for TreeClusterCreate
 type TreeClusterCreate struct {
-	AdditionalInformation map[string]interface{} `json:"additional_information"`
+	AdditionalInformation map[string]interface{} `json:"additional_information,omitempty"`
 	Address               string                 `json:"address"`
 	Description           string                 `json:"description"`
 	Name                  string                 `json:"name"`
-	Provider              string                 `json:"provider"`
+	Provider              *string                `json:"provider,omitempty"`
 	SoilCondition         SoilCondition          `json:"soil_condition"`
 	TreeIds               []int32                `json:"tree_ids"`
 }
@@ -37,13 +37,11 @@ type _TreeClusterCreate TreeClusterCreate
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewTreeClusterCreate(additionalInformation map[string]interface{}, address string, description string, name string, provider string, soilCondition SoilCondition, treeIds []int32) *TreeClusterCreate {
+func NewTreeClusterCreate(address string, description string, name string, soilCondition SoilCondition, treeIds []int32) *TreeClusterCreate {
 	this := TreeClusterCreate{}
-	this.AdditionalInformation = additionalInformation
 	this.Address = address
 	this.Description = description
 	this.Name = name
-	this.Provider = provider
 	this.SoilCondition = soilCondition
 	this.TreeIds = treeIds
 	return &this
@@ -57,26 +55,34 @@ func NewTreeClusterCreateWithDefaults() *TreeClusterCreate {
 	return &this
 }
 
-// GetAdditionalInformation returns the AdditionalInformation field value
+// GetAdditionalInformation returns the AdditionalInformation field value if set, zero value otherwise.
 func (o *TreeClusterCreate) GetAdditionalInformation() map[string]interface{} {
-	if o == nil {
+	if o == nil || IsNil(o.AdditionalInformation) {
 		var ret map[string]interface{}
 		return ret
 	}
-
 	return o.AdditionalInformation
 }
 
-// GetAdditionalInformationOk returns a tuple with the AdditionalInformation field value
+// GetAdditionalInformationOk returns a tuple with the AdditionalInformation field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *TreeClusterCreate) GetAdditionalInformationOk() (map[string]interface{}, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.AdditionalInformation) {
 		return map[string]interface{}{}, false
 	}
 	return o.AdditionalInformation, true
 }
 
-// SetAdditionalInformation sets field value
+// HasAdditionalInformation returns a boolean if a field has been set.
+func (o *TreeClusterCreate) HasAdditionalInformation() bool {
+	if o != nil && !IsNil(o.AdditionalInformation) {
+		return true
+	}
+
+	return false
+}
+
+// SetAdditionalInformation gets a reference to the given map[string]interface{} and assigns it to the AdditionalInformation field.
 func (o *TreeClusterCreate) SetAdditionalInformation(v map[string]interface{}) {
 	o.AdditionalInformation = v
 }
@@ -153,28 +159,36 @@ func (o *TreeClusterCreate) SetName(v string) {
 	o.Name = v
 }
 
-// GetProvider returns the Provider field value
+// GetProvider returns the Provider field value if set, zero value otherwise.
 func (o *TreeClusterCreate) GetProvider() string {
-	if o == nil {
+	if o == nil || IsNil(o.Provider) {
 		var ret string
 		return ret
 	}
-
-	return o.Provider
+	return *o.Provider
 }
 
-// GetProviderOk returns a tuple with the Provider field value
+// GetProviderOk returns a tuple with the Provider field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *TreeClusterCreate) GetProviderOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.Provider) {
 		return nil, false
 	}
-	return &o.Provider, true
+	return o.Provider, true
 }
 
-// SetProvider sets field value
+// HasProvider returns a boolean if a field has been set.
+func (o *TreeClusterCreate) HasProvider() bool {
+	if o != nil && !IsNil(o.Provider) {
+		return true
+	}
+
+	return false
+}
+
+// SetProvider gets a reference to the given string and assigns it to the Provider field.
 func (o *TreeClusterCreate) SetProvider(v string) {
-	o.Provider = v
+	o.Provider = &v
 }
 
 // GetSoilCondition returns the SoilCondition field value
@@ -235,11 +249,15 @@ func (o TreeClusterCreate) MarshalJSON() ([]byte, error) {
 
 func (o TreeClusterCreate) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["additional_information"] = o.AdditionalInformation
+	if !IsNil(o.AdditionalInformation) {
+		toSerialize["additional_information"] = o.AdditionalInformation
+	}
 	toSerialize["address"] = o.Address
 	toSerialize["description"] = o.Description
 	toSerialize["name"] = o.Name
-	toSerialize["provider"] = o.Provider
+	if !IsNil(o.Provider) {
+		toSerialize["provider"] = o.Provider
+	}
 	toSerialize["soil_condition"] = o.SoilCondition
 	toSerialize["tree_ids"] = o.TreeIds
 	return toSerialize, nil
@@ -250,11 +268,9 @@ func (o *TreeClusterCreate) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"additional_information",
 		"address",
 		"description",
 		"name",
-		"provider",
 		"soil_condition",
 		"tree_ids",
 	}
