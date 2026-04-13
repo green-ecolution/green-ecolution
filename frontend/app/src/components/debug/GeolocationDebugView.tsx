@@ -16,7 +16,7 @@ import {
   TableRow,
 } from '@green-ecolution/ui'
 import { Compass, Crosshair, Loader2, MapPin } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface EnvInfo {
   hasGeolocation: boolean
@@ -105,7 +105,8 @@ const GeolocationDebugView = () => {
   })
 
   const [permission, setPermission] = useState<PermissionLabel>('unknown')
-  const env = useMemo<EnvInfo>(() => {
+  // Captured once on first render — window/navigator are stable within a session.
+  const [env] = useState<EnvInfo>(() => {
     if (typeof window === 'undefined') {
       return {
         hasGeolocation: false,
@@ -120,25 +121,29 @@ const GeolocationDebugView = () => {
       isSecureContext: window.isSecureContext,
       userAgent: navigator.userAgent,
     }
-  }, [])
+  })
 
   // Observe geolocation permission state.
   useEffect(() => {
     let permStatus: PermissionStatus | null = null
+    let handler: (() => void) | null = null
     const sub = async () => {
       try {
         permStatus = await navigator.permissions.query({ name: 'geolocation' as PermissionName })
         setPermission(permStatus.state)
-        permStatus.onchange = () => {
+        handler = () => {
           if (permStatus) setPermission(permStatus.state)
         }
+        permStatus.addEventListener('change', handler)
       } catch {
         setPermission('unavailable')
       }
     }
     void sub()
     return () => {
-      if (permStatus) permStatus.onchange = null
+      if (permStatus && handler) {
+        permStatus.removeEventListener('change', handler)
+      }
     }
   }, [])
 
@@ -156,6 +161,7 @@ const GeolocationDebugView = () => {
               accuracyMeters={position.accuracy}
               className="aspect-[4/3] sm:aspect-[16/10] lg:aspect-auto lg:h-full lg:min-h-72"
               ariaLabel="Live-Karte mit aktueller GPS-Position"
+              interactive
             />
           ) : (
             <EmptyMapState status={status} />

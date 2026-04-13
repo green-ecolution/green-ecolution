@@ -25,12 +25,27 @@ interface LocationMapPreviewProps {
   zoom?: number
   /** ARIA label for the wrapper. */
   ariaLabel?: string
+  /**
+   * When `true`, users can pan and pinch-zoom. Default: `false` — the preview
+   * stays locked on the reported position, which is the right default for
+   * onboarding summaries where the map is an anchor, not a tool.
+   */
+  interactive?: boolean
+  /**
+   * Keep the marker centered as the position updates. When `true`, re-centers
+   * only if the new position drifts out of the current viewport, so a user
+   * who panned manually isn't yanked back to center on every update.
+   * Default: `true`.
+   */
+  follow?: boolean
 }
 
-const RecenterOnPosition = ({ latitude, longitude }: { latitude: number; longitude: number }) => {
+const FollowPosition = ({ latitude, longitude }: { latitude: number; longitude: number }) => {
   const map = useMap()
   useEffect(() => {
-    map.setView([latitude, longitude], map.getZoom(), { animate: true })
+    const next = L.latLng(latitude, longitude)
+    if (map.getBounds().contains(next)) return
+    map.panTo(next, { animate: true })
   }, [map, latitude, longitude])
   return null
 }
@@ -42,13 +57,16 @@ const LocationMapPreview = ({
   className,
   zoom = 18,
   ariaLabel = 'Karte mit aktueller GPS-Position',
+  interactive = false,
+  follow = true,
 }: LocationMapPreviewProps) => {
   const center = L.latLng(latitude, longitude)
   const radius = accuracyMeters && accuracyMeters > 0 ? accuracyMeters : null
 
   return (
     <div
-      role="img"
+      // A dragging/zooming container isn't an `img` — set role only when locked.
+      role={interactive ? undefined : 'img'}
       aria-label={ariaLabel}
       className={cn(
         'relative w-full overflow-hidden rounded-2xl border border-dark-100 shadow-cards',
@@ -60,7 +78,12 @@ const LocationMapPreview = ({
         preferCanvas
         zoomControl={false}
         attributionControl={false}
-        scrollWheelZoom={false}
+        dragging={interactive}
+        touchZoom={interactive}
+        doubleClickZoom={interactive}
+        scrollWheelZoom={interactive}
+        boxZoom={interactive}
+        keyboard={interactive}
         className="z-0 h-full w-full"
         center={center}
         zoom={zoom}
@@ -81,7 +104,7 @@ const LocationMapPreview = ({
           />
         )}
         <Marker position={center} icon={markerIcon} />
-        <RecenterOnPosition latitude={latitude} longitude={longitude} />
+        {follow && <FollowPosition latitude={latitude} longitude={longitude} />}
       </MapContainer>
       <span className="pointer-events-none absolute bottom-1 right-2 text-[10px] text-dark-600/80 font-mono bg-white/70 px-1 rounded">
         © OpenStreetMap
