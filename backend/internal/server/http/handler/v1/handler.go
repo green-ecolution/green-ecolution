@@ -1,11 +1,15 @@
 package handler
 
 import (
+	"errors"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/errorhandler"
+	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 )
 
 var validate *validator.Validate
@@ -21,12 +25,24 @@ func init() {
 func BindAndValidate[T any](c *fiber.Ctx) (*T, error) {
 	var req T
 	if err := c.BodyParser(&req); err != nil {
-		return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, errorhandler.HandleError(service.NewError(service.BadRequest, "invalid request body"))
 	}
 	if err := validate.Struct(&req); err != nil {
-		return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return nil, errorhandler.HandleError(service.NewError(service.BadRequest, formatValidationError(err)))
 	}
 	return &req, nil
+}
+
+func formatValidationError(err error) string {
+	var verrs validator.ValidationErrors
+	if !errors.As(err, &verrs) || len(verrs) == 0 {
+		return "validation failed"
+	}
+	parts := make([]string, 0, len(verrs))
+	for _, fe := range verrs {
+		parts = append(parts, "field '"+fe.Field()+"' failed '"+fe.Tag()+"'")
+	}
+	return "validation failed: " + strings.Join(parts, ", ")
 }
 
 func validateDateTodayOrFuture(fl validator.FieldLevel) bool {
@@ -39,7 +55,10 @@ func validateDateTodayOrFuture(fl validator.FieldLevel) bool {
 }
 
 func validateWateringPlanUpdate(sl validator.StructLevel) {
-	req := sl.Current().Interface().(entities.WateringPlanUpdateRequest)
+	req, ok := sl.Current().Interface().(entities.WateringPlanUpdateRequest)
+	if !ok {
+		return
+	}
 	if req.CancellationNote != "" && req.Status != entities.WateringPlanStatusCanceled {
 		sl.ReportError(req.CancellationNote, "CancellationNote", "cancellation_note", "cancellation_note_status", "")
 	}
