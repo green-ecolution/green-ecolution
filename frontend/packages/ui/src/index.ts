@@ -64,6 +64,10 @@ export type { ButtonProps } from './components/ui/button'
 export { Calendar } from './components/ui/calendar'
 export type { CalendarProps } from './components/ui/calendar'
 
+// CameraViewport
+export { CameraViewport } from './components/ui/camera-viewport'
+export type { CameraViewportProps, CameraViewportState } from './components/ui/camera-viewport'
+
 // Card
 export {
   Card,

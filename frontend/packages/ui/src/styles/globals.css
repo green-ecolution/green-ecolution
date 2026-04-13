@@ -282,6 +282,61 @@
 
   /* Shadows */
   --shadow-cards: 0px 5px 10px 0px rgba(23, 23, 23, 5%);
+
+  /* Animations */
+  --animate-scan-line: scan-line 2.4s ease-in-out infinite alternate;
+  --animate-scan-pulse: scan-pulse 1.5s ease-in-out infinite;
+  --animate-scan-flash: scan-flash 500ms ease-out forwards;
+  --animate-corner-pulse: corner-pulse 350ms ease-out;
+
+  @keyframes scan-line {
+    from {
+      transform: translateY(0);
+      opacity: 0.4;
+    }
+    50% {
+      opacity: 0.9;
+    }
+    to {
+      transform: translateY(calc(100% - 1px));
+      opacity: 0.4;
+    }
+  }
+
+  @keyframes scan-pulse {
+    0%,
+    100% {
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  @keyframes scan-flash {
+    0% {
+      background-color: rgb(255 255 255 / 0.7);
+      box-shadow: inset 0 0 0 0 rgb(255 255 255 / 0);
+    }
+    30% {
+      background-color: rgb(255 255 255 / 0);
+      box-shadow: inset 0 0 0 3px var(--green-dark);
+    }
+    100% {
+      background-color: rgb(255 255 255 / 0);
+      box-shadow: inset 0 0 0 3px rgb(76 119 65 / 0);
+    }
+  }
+
+  @keyframes corner-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
 }
 
 @layer base {
