@@ -71,6 +71,7 @@ const QRScannerDebugView = () => {
 
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [flash, setFlash] = useState(false)
   const [scans, setScans] = useState<ScanEntry[]>([])
   const [env, setEnv] = useState<EnvInfo>({
     hasGetUserMedia: false,
@@ -170,6 +171,8 @@ const QRScannerDebugView = () => {
               bboxHeight: Math.round(bbox.height),
             }
             setScans((prev) => [entry, ...prev].slice(0, 100))
+            setFlash(true)
+            window.setTimeout(() => setFlash(false), 500)
           }
         }
       } catch (err) {
@@ -294,6 +297,7 @@ const QRScannerDebugView = () => {
         <CameraViewport
           videoRef={videoRef}
           state={running ? 'scanning' : 'inactive'}
+          flash={flash}
           ariaLabel="Debug Kamera-Vorschau"
         />
       </div>

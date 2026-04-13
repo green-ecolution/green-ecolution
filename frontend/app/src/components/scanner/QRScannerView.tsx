@@ -2,7 +2,7 @@ import createToast from '@/hooks/createToast'
 import useQRScanner, { type ScannerStatus } from '@/hooks/useQRScanner'
 import { CameraViewport, Loading, type CameraViewportState } from '@green-ecolution/ui'
 import { CameraOff, CircleAlert, ShieldAlert } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import CameraPermissionNotice from './CameraPermissionNotice'
 import PWAInstallHint from './PWAInstallHint'
 import QRScanResult from './QRScanResult'
@@ -35,15 +35,12 @@ interface QRScannerViewProps {
 }
 
 const SCAN_VIBRATE_MS = 40
-const FLASH_DURATION_MS = 500
 
 const QRScannerView = ({ continueLabel, onContinue }: QRScannerViewProps = {}) => {
   const showToast = createToast()
-  const [flash, setFlash] = useState(false)
 
   const { videoRef, status, scannedData, startScanning, resetScan } = useQRScanner({
     onScan: () => {
-      setFlash(true)
       if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
         navigator.vibrate(SCAN_VIBRATE_MS)
       }
@@ -54,16 +51,6 @@ const QRScannerView = ({ continueLabel, onContinue }: QRScannerViewProps = {}) =
   useEffect(() => {
     void startScanning()
   }, [startScanning])
-
-  useEffect(() => {
-    if (!flash) return
-    const id = window.setTimeout(() => {
-      setFlash(false)
-    }, FLASH_DURATION_MS)
-    return () => {
-      window.clearTimeout(id)
-    }
-  }, [flash])
 
   const handleScanAgain = () => {
     resetScan()
@@ -92,19 +79,20 @@ const QRScannerView = ({ continueLabel, onContinue }: QRScannerViewProps = {}) =
     viewportOverlay = <CircleAlert aria-hidden="true" className="size-12 text-white/40" />
   }
 
+  const showResult = status === 'scanned' && scannedData
+
   return (
     <div className="mx-auto max-w-md pb-[env(safe-area-inset-bottom)]">
       <PWAInstallHint />
-      <div className={status === 'scanned' && scannedData ? 'hidden' : 'block'}>
+      <div className={showResult ? 'hidden' : 'block'}>
         <CameraViewport
           videoRef={videoRef}
           state={viewportState}
-          flash={flash}
           overlay={viewportOverlay}
           ariaLabel="Kamera-Vorschau für QR-Code-Scanner"
         />
       </div>
-      {status === 'scanned' && scannedData && (
+      {showResult && (
         <QRScanResult
           sensorId={scannedData}
           onScanAgain={handleScanAgain}
