@@ -5,13 +5,26 @@ import { ArrowRight, CheckCircle2, RotateCcw } from 'lucide-react'
 interface QRScanResultProps {
   sensorId: string
   onScanAgain: () => void
+  /** Label for the primary continue button. Defaults to "Weiter". */
+  continueLabel?: string
+  /** If provided, called instead of the default placeholder toast */
+  onContinue?: (sensorId: string) => void
 }
 
-const QRScanResult = ({ sensorId, onScanAgain }: QRScanResultProps) => {
+const QRScanResult = ({
+  sensorId,
+  onScanAgain,
+  continueLabel = 'Weiter',
+  onContinue,
+}: QRScanResultProps) => {
   const showToast = createToast()
 
   const handleContinue = () => {
-    showToast('Nächster Schritt ist noch nicht implementiert', 'success')
+    if (onContinue) {
+      onContinue(sensorId)
+    } else {
+      showToast('Nächster Schritt ist noch nicht implementiert', 'success')
+    }
   }
 
   return (
@@ -40,7 +53,7 @@ const QRScanResult = ({ sensorId, onScanAgain }: QRScanResultProps) => {
           autoFocus
           className="w-full sm:w-auto"
         >
-          Weiter
+          {continueLabel}
           <ArrowRight />
         </Button>
       </CardFooter>

@@ -1,11 +1,11 @@
 import { sensorQuery } from '@/api/queries'
-import { Loading } from '@green-ecolution/ui'
+import { Button, ListCardHeader, Loading } from '@green-ecolution/ui'
 import Pagination from '@/components/general/Pagination'
 import SensorList from '@/components/sensor/SensorList'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, useLoaderData } from '@tanstack/react-router'
+import { createFileRoute, Link, useLoaderData } from '@tanstack/react-router'
+import { Plus } from 'lucide-react'
 import { z } from 'zod'
-import { ListCardHeader } from '@green-ecolution/ui'
 
 export const Route = createFileRoute('/_protected/sensors/')({
   component: Sensors,
@@ -32,26 +32,23 @@ function Sensors() {
 
   return (
     <div className="container mt-6">
-      <article className="2xl:w-4/5">
-        <h1 className="font-lato font-bold text-3xl mb-4 lg:text-4xl xl:text-5xl">
-          Auflistung aller verfügbaren Sensoren
-        </h1>
-        <p className="mb-4">
-          In diesem Bereich werden alle im System registrierten Sensoren angezeigt. Neue Sensoren
-          werden automatisch erstellt, sobald über das TTN (The Things Network) neue Daten empfangen
-          werden, die keinem vorhandenen Sensor zugeordnet sind. TTN ist ein globales Funknetzwerk,
-          das auf der LoRa-Funktechnik basiert. Mit dieser Technologie können die Messdaten der
-          vergrabenen Sensoren direkt in das System übertragen werden.
-        </p>
-        <p>
-          Wenn ein neuer Sensor angelegt wird, überprüft das System automatisch, ob die
-          mitgesendeten GPS-Koordinaten mit einem im System registrierten Baum übereinstimmen. Falls
-          ein passender Baum gefunden wird, wird der Sensor automatisch mit diesem Baum verknüpft.
-          Diese Verknüpfung kann bei Bedarf auch manuell angepasst werden.
-        </p>
-      </article>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between 2xl:w-4/5">
+        <article className="flex-1">
+          <h1 className="font-lato font-bold text-3xl mb-2 lg:text-4xl xl:text-5xl">Sensoren</h1>
+          <p className="text-sm text-muted-foreground max-w-prose">
+            Übersicht aller im System registrierten Sensoren. Neue Sensoren kannst du durch Scannen
+            des QR-Codes auf der Sensoreinheit hinzufügen.
+          </p>
+        </article>
+        <Button asChild size="sm" className="w-full sm:w-auto sm:shrink-0">
+          <Link to="/sensors/new">
+            <Plus />
+            Sensor hinzufügen
+          </Link>
+        </Button>
+      </div>
 
-      <section className="mt-10">
+      <section className="mt-8">
         <ListCardHeader columns="1fr 2fr 1fr 1fr">
           <p>Status</p>
           <p>Name und Verknüpfung</p>

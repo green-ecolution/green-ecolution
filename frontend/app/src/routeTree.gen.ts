@@ -44,12 +44,14 @@ import { Route as ProtectedVehiclesVehicleIdRouteRouteImport } from './routes/_p
 import { Route as ProtectedTreesTreeIdRouteRouteImport } from './routes/_protected/trees/$treeId/route'
 import { Route as ProtectedTreeclusterTreeclusterIdRouteRouteImport } from './routes/_protected/treecluster/$treeclusterId/route'
 import { Route as ProtectedSettingsPluginRouteRouteImport } from './routes/_protected/settings/plugin/route'
+import { Route as ProtectedSensorsNewRouteRouteImport } from './routes/_protected/sensors/new/route'
 import { Route as ProtectedSensorsSensorIdRouteRouteImport } from './routes/_protected/sensors/$sensorId/route'
 import { Route as ProtectedWateringPlansWateringPlanIdIndexRouteImport } from './routes/_protected/watering-plans/$wateringPlanId/index'
 import { Route as ProtectedVehiclesVehicleIdIndexRouteImport } from './routes/_protected/vehicles/$vehicleId/index'
 import { Route as ProtectedTreesTreeIdIndexRouteImport } from './routes/_protected/trees/$treeId/index'
 import { Route as ProtectedTreeclusterTreeclusterIdIndexRouteImport } from './routes/_protected/treecluster/$treeclusterId/index'
 import { Route as ProtectedSettingsPluginIndexRouteImport } from './routes/_protected/settings/plugin/index'
+import { Route as ProtectedSensorsNewIndexRouteImport } from './routes/_protected/sensors/new/index'
 import { Route as ProtectedSensorsSensorIdIndexRouteImport } from './routes/_protected/sensors/$sensorId/index'
 import { Route as ProtectedDebugQrScannerIndexRouteImport } from './routes/_protected/debug/qr-scanner/index'
 import { Route as ProtectedWateringPlansFormularNewRouteRouteImport } from './routes/_protected/watering-plans/_formular/new/route'
@@ -271,6 +273,12 @@ const ProtectedSettingsPluginRouteRoute =
     path: '/plugin',
     getParentRoute: () => ProtectedSettingsRouteRoute,
   } as any)
+const ProtectedSensorsNewRouteRoute =
+  ProtectedSensorsNewRouteRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => ProtectedSensorsRouteRoute,
+  } as any)
 const ProtectedSensorsSensorIdRouteRoute =
   ProtectedSensorsSensorIdRouteRouteImport.update({
     id: '/$sensorId',
@@ -306,6 +314,12 @@ const ProtectedSettingsPluginIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedSettingsPluginRouteRoute,
+  } as any)
+const ProtectedSensorsNewIndexRoute =
+  ProtectedSensorsNewIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProtectedSensorsNewRouteRoute,
   } as any)
 const ProtectedSensorsSensorIdIndexRoute =
   ProtectedSensorsSensorIdIndexRouteImport.update({
@@ -552,6 +566,7 @@ export interface FileRoutesByFullPath {
   '/info': typeof ProtectedInfoRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/sensors/$sensorId': typeof ProtectedSensorsSensorIdRouteRouteWithChildren
+  '/sensors/new': typeof ProtectedSensorsNewRouteRouteWithChildren
   '/settings/plugin': typeof ProtectedSettingsPluginRouteRouteWithChildren
   '/treecluster/$treeclusterId': typeof ProtectedTreeclusterFormularTreeclusterIdRouteRouteWithChildren
   '/trees/$treeId': typeof ProtectedTreesFormularTreeIdRouteRouteWithChildren
@@ -577,6 +592,7 @@ export interface FileRoutesByFullPath {
   '/watering-plans/new': typeof ProtectedWateringPlansFormularNewRouteRouteWithChildren
   '/debug/qr-scanner/': typeof ProtectedDebugQrScannerIndexRoute
   '/sensors/$sensorId/': typeof ProtectedSensorsSensorIdIndexRoute
+  '/sensors/new/': typeof ProtectedSensorsNewIndexRoute
   '/settings/plugin/': typeof ProtectedSettingsPluginIndexRoute
   '/treecluster/$treeclusterId/': typeof ProtectedTreeclusterTreeclusterIdIndexRoute
   '/trees/$treeId/': typeof ProtectedTreesTreeIdIndexRoute
@@ -630,6 +646,7 @@ export interface FileRoutesByTo {
   '/watering-plans/$wateringPlanId': typeof ProtectedWateringPlansWateringPlanIdIndexRoute
   '/debug/qr-scanner': typeof ProtectedDebugQrScannerIndexRoute
   '/sensors/$sensorId': typeof ProtectedSensorsSensorIdIndexRoute
+  '/sensors/new': typeof ProtectedSensorsNewIndexRoute
   '/settings/plugin': typeof ProtectedSettingsPluginIndexRoute
   '/map/tree/edit': typeof ProtectedMapTreeEditIndexRoute
   '/map/tree/new': typeof ProtectedMapTreeNewIndexRoute
@@ -668,6 +685,7 @@ export interface FileRoutesById {
   '/_protected/info': typeof ProtectedInfoRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/_protected/sensors/$sensorId': typeof ProtectedSensorsSensorIdRouteRouteWithChildren
+  '/_protected/sensors/new': typeof ProtectedSensorsNewRouteRouteWithChildren
   '/_protected/settings/plugin': typeof ProtectedSettingsPluginRouteRouteWithChildren
   '/_protected/treecluster/$treeclusterId': typeof ProtectedTreeclusterTreeclusterIdRouteRouteWithChildren
   '/_protected/trees/$treeId': typeof ProtectedTreesTreeIdRouteRouteWithChildren
@@ -698,6 +716,7 @@ export interface FileRoutesById {
   '/_protected/watering-plans/_formular/new': typeof ProtectedWateringPlansFormularNewRouteRouteWithChildren
   '/_protected/debug/qr-scanner/': typeof ProtectedDebugQrScannerIndexRoute
   '/_protected/sensors/$sensorId/': typeof ProtectedSensorsSensorIdIndexRoute
+  '/_protected/sensors/new/': typeof ProtectedSensorsNewIndexRoute
   '/_protected/settings/plugin/': typeof ProtectedSettingsPluginIndexRoute
   '/_protected/treecluster/$treeclusterId/': typeof ProtectedTreeclusterTreeclusterIdIndexRoute
   '/_protected/trees/$treeId/': typeof ProtectedTreesTreeIdIndexRoute
@@ -748,6 +767,7 @@ export interface FileRouteTypes {
     | '/info'
     | '/auth/callback'
     | '/sensors/$sensorId'
+    | '/sensors/new'
     | '/settings/plugin'
     | '/treecluster/$treeclusterId'
     | '/trees/$treeId'
@@ -773,6 +793,7 @@ export interface FileRouteTypes {
     | '/watering-plans/new'
     | '/debug/qr-scanner/'
     | '/sensors/$sensorId/'
+    | '/sensors/new/'
     | '/settings/plugin/'
     | '/treecluster/$treeclusterId/'
     | '/trees/$treeId/'
@@ -826,6 +847,7 @@ export interface FileRouteTypes {
     | '/watering-plans/$wateringPlanId'
     | '/debug/qr-scanner'
     | '/sensors/$sensorId'
+    | '/sensors/new'
     | '/settings/plugin'
     | '/map/tree/edit'
     | '/map/tree/new'
@@ -863,6 +885,7 @@ export interface FileRouteTypes {
     | '/_protected/info'
     | '/auth/callback'
     | '/_protected/sensors/$sensorId'
+    | '/_protected/sensors/new'
     | '/_protected/settings/plugin'
     | '/_protected/treecluster/$treeclusterId'
     | '/_protected/trees/$treeId'
@@ -893,6 +916,7 @@ export interface FileRouteTypes {
     | '/_protected/watering-plans/_formular/new'
     | '/_protected/debug/qr-scanner/'
     | '/_protected/sensors/$sensorId/'
+    | '/_protected/sensors/new/'
     | '/_protected/settings/plugin/'
     | '/_protected/treecluster/$treeclusterId/'
     | '/_protected/trees/$treeId/'
@@ -1178,6 +1202,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedSettingsPluginRouteRouteImport
       parentRoute: typeof ProtectedSettingsRouteRoute
     }
+    '/_protected/sensors/new': {
+      id: '/_protected/sensors/new'
+      path: '/new'
+      fullPath: '/sensors/new'
+      preLoaderRoute: typeof ProtectedSensorsNewRouteRouteImport
+      parentRoute: typeof ProtectedSensorsRouteRoute
+    }
     '/_protected/sensors/$sensorId': {
       id: '/_protected/sensors/$sensorId'
       path: '/$sensorId'
@@ -1219,6 +1250,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/plugin/'
       preLoaderRoute: typeof ProtectedSettingsPluginIndexRouteImport
       parentRoute: typeof ProtectedSettingsPluginRouteRoute
+    }
+    '/_protected/sensors/new/': {
+      id: '/_protected/sensors/new/'
+      path: '/'
+      fullPath: '/sensors/new/'
+      preLoaderRoute: typeof ProtectedSensorsNewIndexRouteImport
+      parentRoute: typeof ProtectedSensorsNewRouteRoute
     }
     '/_protected/sensors/$sensorId/': {
       id: '/_protected/sensors/$sensorId/'
@@ -1626,14 +1664,30 @@ const ProtectedSensorsSensorIdRouteRouteWithChildren =
     ProtectedSensorsSensorIdRouteRouteChildren,
   )
 
+interface ProtectedSensorsNewRouteRouteChildren {
+  ProtectedSensorsNewIndexRoute: typeof ProtectedSensorsNewIndexRoute
+}
+
+const ProtectedSensorsNewRouteRouteChildren: ProtectedSensorsNewRouteRouteChildren =
+  {
+    ProtectedSensorsNewIndexRoute: ProtectedSensorsNewIndexRoute,
+  }
+
+const ProtectedSensorsNewRouteRouteWithChildren =
+  ProtectedSensorsNewRouteRoute._addFileChildren(
+    ProtectedSensorsNewRouteRouteChildren,
+  )
+
 interface ProtectedSensorsRouteRouteChildren {
   ProtectedSensorsSensorIdRouteRoute: typeof ProtectedSensorsSensorIdRouteRouteWithChildren
+  ProtectedSensorsNewRouteRoute: typeof ProtectedSensorsNewRouteRouteWithChildren
   ProtectedSensorsIndexRoute: typeof ProtectedSensorsIndexRoute
 }
 
 const ProtectedSensorsRouteRouteChildren: ProtectedSensorsRouteRouteChildren = {
   ProtectedSensorsSensorIdRouteRoute:
     ProtectedSensorsSensorIdRouteRouteWithChildren,
+  ProtectedSensorsNewRouteRoute: ProtectedSensorsNewRouteRouteWithChildren,
   ProtectedSensorsIndexRoute: ProtectedSensorsIndexRoute,
 }
 

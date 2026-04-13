@@ -26,7 +26,14 @@ const STATUS_TO_VIEWPORT: Record<ScannerStatus, CameraViewportState> = {
   error: 'error',
 }
 
-const QRScannerView = () => {
+interface QRScannerViewProps {
+  /** Label rendered on the continue button in the result card. Defaults to "Weiter". */
+  continueLabel?: string
+  /** Invoked with the decoded value when the user confirms via the continue button */
+  onContinue?: (value: string) => void
+}
+
+const QRScannerView = ({ continueLabel, onContinue }: QRScannerViewProps = {}) => {
   const showToast = useRef(createToast()).current
   const [flash, setFlash] = useState(false)
 
@@ -77,51 +84,46 @@ const QRScannerView = () => {
   }
 
   return (
-    <div className="container mt-6 pb-[env(safe-area-inset-bottom)]">
-      <article className="2xl:w-4/5">
-        <h1 className="font-lato font-bold text-3xl mb-2 lg:text-4xl xl:text-5xl">QR-Scanner</h1>
-        <p className="text-sm text-muted-foreground max-w-prose">
-          Halte den QR-Code einer Sensoreinheit in den markierten Bereich. Die Erkennung erfolgt
-          automatisch.
-        </p>
-      </article>
+    <div className="mx-auto max-w-md pb-[env(safe-area-inset-bottom)]">
+      {/* Viewport stays mounted so videoRef remains valid across scan cycles */}
+      <div className={status === 'scanned' && scannedData ? 'hidden' : 'block'}>
+        <CameraViewport
+          videoRef={videoRef}
+          state={viewportState}
+          flash={flash}
+          overlay={viewportOverlay}
+          ariaLabel="Kamera-Vorschau für QR-Code-Scanner"
+        />
+      </div>
+      {status === 'scanned' && scannedData && (
+        <QRScanResult
+          sensorId={scannedData}
+          onScanAgain={handleScanAgain}
+          continueLabel={continueLabel}
+          onContinue={onContinue}
+        />
+      )}
 
-      <div className="mt-8 md:mt-10 mx-auto max-w-md">
-        {/* Viewport stays mounted so videoRef remains valid across scan cycles */}
-        <div className={status === 'scanned' && scannedData ? 'hidden' : 'block'}>
-          <CameraViewport
-            videoRef={videoRef}
-            state={viewportState}
-            flash={flash}
-            overlay={viewportOverlay}
-            ariaLabel="Kamera-Vorschau für QR-Code-Scanner"
-          />
-        </div>
-        {status === 'scanned' && scannedData && (
-          <QRScanResult sensorId={scannedData} onScanAgain={handleScanAgain} />
+      <p
+        role="status"
+        aria-live="polite"
+        className="mt-4 text-center text-xs uppercase tracking-[0.2em] text-muted-foreground"
+      >
+        {STATUS_LABELS[status] && <>· {STATUS_LABELS[status]} ·</>}
+      </p>
+
+      <div className="mt-6 min-h-32">
+        {status === 'scanning' && (
+          <p className="text-sm text-muted-foreground text-center max-w-prose mx-auto">
+            Sorge für ausreichend Licht und halte den Code ruhig vor die Kamera.
+          </p>
         )}
-
-        <p
-          role="status"
-          aria-live="polite"
-          className="mt-4 text-center text-xs uppercase tracking-[0.2em] text-muted-foreground"
-        >
-          {STATUS_LABELS[status] && <>· {STATUS_LABELS[status]} ·</>}
-        </p>
-
-        <div className="mt-6 min-h-32">
-          {status === 'scanning' && (
-            <p className="text-sm text-muted-foreground text-center max-w-prose mx-auto">
-              Sorge für ausreichend Licht und halte den Code ruhig vor die Kamera.
-            </p>
-          )}
-          {(status === 'denied' || status === 'unsupported' || status === 'error') && (
-            <CameraPermissionNotice
-              status={status}
-              onRetry={status === 'unsupported' ? undefined : handleRetry}
-            />
-          )}
-        </div>
+        {(status === 'denied' || status === 'unsupported' || status === 'error') && (
+          <CameraPermissionNotice
+            status={status}
+            onRetry={status === 'unsupported' ? undefined : handleRetry}
+          />
+        )}
       </div>
     </div>
   )
