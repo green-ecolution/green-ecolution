@@ -1,6 +1,6 @@
 {
   "name": "@green-ecolution/backend-client",
-  "version": "v0.1.2-608bd4e-stage",
+  "version": "develop",
   "description": "api client for the Green Ecolution backend",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,7 +10,7 @@
   "scripts": {
     "generate": "./openapi-generator.sh remote https://app.stage.green-ecolution.de/api/v1",
     "generate:ci": "./openapi-generator.sh local",
-    "generate:local": "./openapi-generator.sh remote http://localhost:3000/api/v1",
+    "generate:local": "cp ../../../backend/docs/swagger.json ./api-docs.json && ./openapi-generator.sh local-docker",
     "generate:stage": "./openapi-generator.sh remote https://app.stage.green-ecolution.de/api/v1",
     "build": "tsc"
   },

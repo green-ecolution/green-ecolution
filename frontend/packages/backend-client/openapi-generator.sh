@@ -67,7 +67,7 @@ function main() {
   if [ -z "$API_DOCS_SOURCE" ]; then
     echo "❌ Please provide the API docs source"
     exit 1
-  elif [ "$API_DOCS_SOURCE" == "local" ]; then
+  elif [ "$API_DOCS_SOURCE" == "local" ] || [ "$API_DOCS_SOURCE" == "local-docker" ]; then
     echo "📚 Using local API docs"
   elif [ "$API_DOCS_SOURCE" == "remote" ]; then
     echo "🌍 Using remote API docs from $SERVER"
