@@ -32,11 +32,13 @@ interface QRScannerViewProps {
   continueLabel?: string
   /** Invoked with the decoded value when the user confirms via the continue button */
   onContinue?: (value: string) => void
+  /** Optional extra block rendered inside the success card (e.g. GPS readout). */
+  resultExtra?: React.ReactNode
 }
 
 const SCAN_VIBRATE_MS = 40
 
-const QRScannerView = ({ continueLabel, onContinue }: QRScannerViewProps = {}) => {
+const QRScannerView = ({ continueLabel, onContinue, resultExtra }: QRScannerViewProps = {}) => {
   const showToast = createToast()
 
   const { videoRef, status, scannedData, startScanning, resetScan } = useQRScanner({
@@ -98,6 +100,7 @@ const QRScannerView = ({ continueLabel, onContinue }: QRScannerViewProps = {}) =
           onScanAgain={handleScanAgain}
           continueLabel={continueLabel}
           onContinue={onContinue}
+          extra={resultExtra}
         />
       )}
 

@@ -54,6 +54,7 @@ import { Route as ProtectedSettingsPluginIndexRouteImport } from './routes/_prot
 import { Route as ProtectedSensorsNewIndexRouteImport } from './routes/_protected/sensors/new/index'
 import { Route as ProtectedSensorsSensorIdIndexRouteImport } from './routes/_protected/sensors/$sensorId/index'
 import { Route as ProtectedDebugQrScannerIndexRouteImport } from './routes/_protected/debug/qr-scanner/index'
+import { Route as ProtectedDebugGeolocationIndexRouteImport } from './routes/_protected/debug/geolocation/index'
 import { Route as ProtectedWateringPlansFormularNewRouteRouteImport } from './routes/_protected/watering-plans/_formular/new/route'
 import { Route as ProtectedWateringPlansFormularWateringPlanIdRouteRouteImport } from './routes/_protected/watering-plans/_formular/$wateringPlanId/route'
 import { Route as ProtectedVehiclesFormularNewRouteRouteImport } from './routes/_protected/vehicles/_formular/new/route'
@@ -333,6 +334,12 @@ const ProtectedDebugQrScannerIndexRoute =
     path: '/qr-scanner/',
     getParentRoute: () => ProtectedDebugRouteRoute,
   } as any)
+const ProtectedDebugGeolocationIndexRoute =
+  ProtectedDebugGeolocationIndexRouteImport.update({
+    id: '/geolocation/',
+    path: '/geolocation/',
+    getParentRoute: () => ProtectedDebugRouteRoute,
+  } as any)
 const ProtectedWateringPlansFormularNewRouteRoute =
   ProtectedWateringPlansFormularNewRouteRouteImport.update({
     id: '/_formular/new',
@@ -590,6 +597,7 @@ export interface FileRoutesByFullPath {
   '/trees/new': typeof ProtectedTreesFormularNewRouteRouteWithChildren
   '/vehicles/new': typeof ProtectedVehiclesFormularNewRouteRouteWithChildren
   '/watering-plans/new': typeof ProtectedWateringPlansFormularNewRouteRouteWithChildren
+  '/debug/geolocation/': typeof ProtectedDebugGeolocationIndexRoute
   '/debug/qr-scanner/': typeof ProtectedDebugQrScannerIndexRoute
   '/sensors/$sensorId/': typeof ProtectedSensorsSensorIdIndexRoute
   '/sensors/new/': typeof ProtectedSensorsNewIndexRoute
@@ -644,6 +652,7 @@ export interface FileRoutesByTo {
   '/trees/$treeId': typeof ProtectedTreesTreeIdIndexRoute
   '/vehicles/$vehicleId': typeof ProtectedVehiclesVehicleIdIndexRoute
   '/watering-plans/$wateringPlanId': typeof ProtectedWateringPlansWateringPlanIdIndexRoute
+  '/debug/geolocation': typeof ProtectedDebugGeolocationIndexRoute
   '/debug/qr-scanner': typeof ProtectedDebugQrScannerIndexRoute
   '/sensors/$sensorId': typeof ProtectedSensorsSensorIdIndexRoute
   '/sensors/new': typeof ProtectedSensorsNewIndexRoute
@@ -714,6 +723,7 @@ export interface FileRoutesById {
   '/_protected/vehicles/_formular/new': typeof ProtectedVehiclesFormularNewRouteRouteWithChildren
   '/_protected/watering-plans/_formular/$wateringPlanId': typeof ProtectedWateringPlansFormularWateringPlanIdRouteRouteWithChildren
   '/_protected/watering-plans/_formular/new': typeof ProtectedWateringPlansFormularNewRouteRouteWithChildren
+  '/_protected/debug/geolocation/': typeof ProtectedDebugGeolocationIndexRoute
   '/_protected/debug/qr-scanner/': typeof ProtectedDebugQrScannerIndexRoute
   '/_protected/sensors/$sensorId/': typeof ProtectedSensorsSensorIdIndexRoute
   '/_protected/sensors/new/': typeof ProtectedSensorsNewIndexRoute
@@ -791,6 +801,7 @@ export interface FileRouteTypes {
     | '/trees/new'
     | '/vehicles/new'
     | '/watering-plans/new'
+    | '/debug/geolocation/'
     | '/debug/qr-scanner/'
     | '/sensors/$sensorId/'
     | '/sensors/new/'
@@ -845,6 +856,7 @@ export interface FileRouteTypes {
     | '/trees/$treeId'
     | '/vehicles/$vehicleId'
     | '/watering-plans/$wateringPlanId'
+    | '/debug/geolocation'
     | '/debug/qr-scanner'
     | '/sensors/$sensorId'
     | '/sensors/new'
@@ -914,6 +926,7 @@ export interface FileRouteTypes {
     | '/_protected/vehicles/_formular/new'
     | '/_protected/watering-plans/_formular/$wateringPlanId'
     | '/_protected/watering-plans/_formular/new'
+    | '/_protected/debug/geolocation/'
     | '/_protected/debug/qr-scanner/'
     | '/_protected/sensors/$sensorId/'
     | '/_protected/sensors/new/'
@@ -1272,6 +1285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedDebugQrScannerIndexRouteImport
       parentRoute: typeof ProtectedDebugRouteRoute
     }
+    '/_protected/debug/geolocation/': {
+      id: '/_protected/debug/geolocation/'
+      path: '/geolocation'
+      fullPath: '/debug/geolocation/'
+      preLoaderRoute: typeof ProtectedDebugGeolocationIndexRouteImport
+      parentRoute: typeof ProtectedDebugRouteRoute
+    }
     '/_protected/watering-plans/_formular/new': {
       id: '/_protected/watering-plans/_formular/new'
       path: '/new'
@@ -1515,11 +1535,13 @@ declare module '@tanstack/react-router' {
 
 interface ProtectedDebugRouteRouteChildren {
   ProtectedDebugIndexRoute: typeof ProtectedDebugIndexRoute
+  ProtectedDebugGeolocationIndexRoute: typeof ProtectedDebugGeolocationIndexRoute
   ProtectedDebugQrScannerIndexRoute: typeof ProtectedDebugQrScannerIndexRoute
 }
 
 const ProtectedDebugRouteRouteChildren: ProtectedDebugRouteRouteChildren = {
   ProtectedDebugIndexRoute: ProtectedDebugIndexRoute,
+  ProtectedDebugGeolocationIndexRoute: ProtectedDebugGeolocationIndexRoute,
   ProtectedDebugQrScannerIndexRoute: ProtectedDebugQrScannerIndexRoute,
 }
 
