@@ -56,8 +56,8 @@ type VehicleCreateRequest struct {
 	Width          float64                `json:"width" validate:"gt=0"`
 	Length         float64                `json:"length" validate:"gt=0"`
 	Weight         float64                `json:"weight" validate:"gt=0"`
-	Provider       string                 `json:"provider"`
-	AdditionalInfo map[string]interface{} `json:"additional_information"`
+	Provider       string                 `json:"provider" validate:"optional"`
+	AdditionalInfo map[string]interface{} `json:"additional_information" validate:"optional"`
 } //	@Name	VehicleCreate
 
 type VehicleUpdateRequest struct {
@@ -72,6 +72,6 @@ type VehicleUpdateRequest struct {
 	Width          float64                `json:"width" validate:"gt=0"`
 	Length         float64                `json:"length" validate:"gt=0"`
 	Weight         float64                `json:"weight" validate:"gt=0"`
-	Provider       string                 `json:"provider"`
-	AdditionalInfo map[string]interface{} `json:"additional_information"`
+	Provider       string                 `json:"provider" validate:"optional"`
+	AdditionalInfo map[string]interface{} `json:"additional_information" validate:"optional"`
 } //	@Name	VehicleUpdate

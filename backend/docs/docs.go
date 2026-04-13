@@ -4118,11 +4118,9 @@ const docTemplate = `{
         "TreeClusterCreate": {
             "type": "object",
             "required": [
-                "additional_information",
                 "address",
                 "description",
                 "name",
-                "provider",
                 "soil_condition",
                 "tree_ids"
             ],
@@ -4248,11 +4246,9 @@ const docTemplate = `{
         "TreeClusterUpdate": {
             "type": "object",
             "required": [
-                "additional_information",
                 "address",
                 "description",
                 "name",
-                "provider",
                 "soil_condition",
                 "tree_ids"
             ],
@@ -4287,16 +4283,12 @@ const docTemplate = `{
         "TreeCreate": {
             "type": "object",
             "required": [
-                "additional_information",
                 "description",
                 "latitude",
                 "longitude",
                 "number",
                 "planting_year",
-                "provider",
-                "sensor_id",
-                "species",
-                "tree_cluster_id"
+                "species"
             ],
             "properties": {
                 "additional_information": {
@@ -4356,16 +4348,12 @@ const docTemplate = `{
         "TreeUpdate": {
             "type": "object",
             "required": [
-                "additional_information",
                 "description",
                 "latitude",
                 "longitude",
                 "number",
                 "planting_year",
-                "provider",
-                "sensor_id",
-                "species",
-                "tree_cluster_id"
+                "species"
             ],
             "properties": {
                 "additional_information": {
@@ -4637,14 +4625,12 @@ const docTemplate = `{
         "VehicleCreate": {
             "type": "object",
             "required": [
-                "additional_information",
                 "description",
                 "driving_license",
                 "height",
                 "length",
                 "model",
                 "number_plate",
-                "provider",
                 "status",
                 "type",
                 "water_capacity",
@@ -4786,14 +4772,12 @@ const docTemplate = `{
         "VehicleUpdate": {
             "type": "object",
             "required": [
-                "additional_information",
                 "description",
                 "driving_license",
                 "height",
                 "length",
                 "model",
                 "number_plate",
-                "provider",
                 "status",
                 "type",
                 "water_capacity",
@@ -4994,11 +4978,8 @@ const docTemplate = `{
         "WateringPlanCreate": {
             "type": "object",
             "required": [
-                "additional_information",
                 "date",
                 "description",
-                "provider",
-                "trailer_id",
                 "transporter_id",
                 "tree_cluster_ids",
                 "user_ids"
@@ -5149,14 +5130,10 @@ const docTemplate = `{
         "WateringPlanUpdate": {
             "type": "object",
             "required": [
-                "additional_information",
                 "cancellation_note",
                 "date",
                 "description",
-                "evaluation",
-                "provider",
                 "status",
-                "trailer_id",
                 "transporter_id",
                 "tree_cluster_ids",
                 "user_ids"

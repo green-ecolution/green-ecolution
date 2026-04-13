@@ -681,11 +681,9 @@ definitions:
           type: integer
         type: array
     required:
-    - additional_information
     - address
     - description
     - name
-    - provider
     - soil_condition
     - tree_ids
     type: object
@@ -773,11 +771,9 @@ definitions:
           type: integer
         type: array
     required:
-    - additional_information
     - address
     - description
     - name
-    - provider
     - soil_condition
     - tree_ids
     type: object
@@ -809,16 +805,12 @@ definitions:
       tree_cluster_id:
         type: integer
     required:
-    - additional_information
     - description
     - latitude
     - longitude
     - number
     - planting_year
-    - provider
-    - sensor_id
     - species
-    - tree_cluster_id
     type: object
   TreeList:
     properties:
@@ -859,16 +851,12 @@ definitions:
       tree_cluster_id:
         type: integer
     required:
-    - additional_information
     - description
     - latitude
     - longitude
     - number
     - planting_year
-    - provider
-    - sensor_id
     - species
-    - tree_cluster_id
     type: object
   User:
     properties:
@@ -1084,14 +1072,12 @@ definitions:
       width:
         type: number
     required:
-    - additional_information
     - description
     - driving_license
     - height
     - length
     - model
     - number_plate
-    - provider
     - status
     - type
     - water_capacity
@@ -1188,14 +1174,12 @@ definitions:
       width:
         type: number
     required:
-    - additional_information
     - description
     - driving_license
     - height
     - length
     - model
     - number_plate
-    - provider
     - status
     - type
     - water_capacity
@@ -1313,11 +1297,8 @@ definitions:
         minItems: 1
         type: array
     required:
-    - additional_information
     - date
     - description
-    - provider
-    - trailer_id
     - transporter_id
     - tree_cluster_ids
     - user_ids
@@ -1442,14 +1423,10 @@ definitions:
         minItems: 1
         type: array
     required:
-    - additional_information
     - cancellation_note
     - date
     - description
-    - evaluation
-    - provider
     - status
-    - trailer_id
     - transporter_id
     - tree_cluster_ids
     - user_ids

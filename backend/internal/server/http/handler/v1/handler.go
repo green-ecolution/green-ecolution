@@ -19,6 +19,10 @@ func init() {
 	if err := validate.RegisterValidation("datetoday", validateDateTodayOrFuture); err != nil {
 		panic(err)
 	}
+	// "optional" is a swag-only marker; register as no-op (also for nil pointers) so the validator doesn't reject unknown tag.
+	if err := validate.RegisterValidation("optional", func(validator.FieldLevel) bool { return true }, true); err != nil {
+		panic(err)
+	}
 	validate.RegisterStructValidation(validateWateringPlanUpdate, entities.WateringPlanUpdateRequest{})
 }
 

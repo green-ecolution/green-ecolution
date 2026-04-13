@@ -4110,11 +4110,9 @@
         "TreeClusterCreate": {
             "type": "object",
             "required": [
-                "additional_information",
                 "address",
                 "description",
                 "name",
-                "provider",
                 "soil_condition",
                 "tree_ids"
             ],
@@ -4240,11 +4238,9 @@
         "TreeClusterUpdate": {
             "type": "object",
             "required": [
-                "additional_information",
                 "address",
                 "description",
                 "name",
-                "provider",
                 "soil_condition",
                 "tree_ids"
             ],
@@ -4279,16 +4275,12 @@
         "TreeCreate": {
             "type": "object",
             "required": [
-                "additional_information",
                 "description",
                 "latitude",
                 "longitude",
                 "number",
                 "planting_year",
-                "provider",
-                "sensor_id",
-                "species",
-                "tree_cluster_id"
+                "species"
             ],
             "properties": {
                 "additional_information": {
@@ -4348,16 +4340,12 @@
         "TreeUpdate": {
             "type": "object",
             "required": [
-                "additional_information",
                 "description",
                 "latitude",
                 "longitude",
                 "number",
                 "planting_year",
-                "provider",
-                "sensor_id",
-                "species",
-                "tree_cluster_id"
+                "species"
             ],
             "properties": {
                 "additional_information": {
@@ -4629,14 +4617,12 @@
         "VehicleCreate": {
             "type": "object",
             "required": [
-                "additional_information",
                 "description",
                 "driving_license",
                 "height",
                 "length",
                 "model",
                 "number_plate",
-                "provider",
                 "status",
                 "type",
                 "water_capacity",
@@ -4778,14 +4764,12 @@
         "VehicleUpdate": {
             "type": "object",
             "required": [
-                "additional_information",
                 "description",
                 "driving_license",
                 "height",
                 "length",
                 "model",
                 "number_plate",
-                "provider",
                 "status",
                 "type",
                 "water_capacity",
@@ -4986,11 +4970,8 @@
         "WateringPlanCreate": {
             "type": "object",
             "required": [
-                "additional_information",
                 "date",
                 "description",
-                "provider",
-                "trailer_id",
                 "transporter_id",
                 "tree_cluster_ids",
                 "user_ids"
@@ -5141,14 +5122,10 @@
         "WateringPlanUpdate": {
             "type": "object",
             "required": [
-                "additional_information",
                 "cancellation_note",
                 "date",
                 "description",
-                "evaluation",
-                "provider",
                 "status",
-                "trailer_id",
                 "transporter_id",
                 "tree_cluster_ids",
                 "user_ids"
