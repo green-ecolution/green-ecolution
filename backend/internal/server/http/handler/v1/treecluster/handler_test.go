@@ -778,3 +778,43 @@ func TestDeleteTreeCluster(t *testing.T) {
 		mockClusterService.AssertExpectations(t)
 	})
 }
+
+func TestCreateTreeClusterValidation(t *testing.T) {
+	t.Run("should return 400 when name is missing", func(t *testing.T) {
+		app := fiber.New()
+		mockClusterService := serviceMock.NewMockTreeClusterService(t)
+		app.Post("/v1/cluster", treecluster.CreateTreeCluster(mockClusterService))
+
+		body, _ := json.Marshal(serverEntities.TreeClusterCreateRequest{
+			Address:       "123 Main St",
+			SoilCondition: serverEntities.TreeSoilConditionSandig,
+		})
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/cluster", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := app.Test(req, -1)
+		defer resp.Body.Close()
+
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+}
+
+func TestUpdateTreeClusterValidation(t *testing.T) {
+	t.Run("should return 400 when name is missing", func(t *testing.T) {
+		app := fiber.New()
+		mockClusterService := serviceMock.NewMockTreeClusterService(t)
+		app.Put("/v1/cluster/:treecluster_id", treecluster.UpdateTreeCluster(mockClusterService))
+
+		body, _ := json.Marshal(serverEntities.TreeClusterUpdateRequest{
+			Address:       "123 Main St",
+			SoilCondition: serverEntities.TreeSoilConditionSandig,
+		})
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/v1/cluster/1", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := app.Test(req, -1)
+		defer resp.Body.Close()
+
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+}

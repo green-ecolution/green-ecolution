@@ -485,6 +485,60 @@ func TestDeleteTree(t *testing.T) {
 	})
 }
 
+func TestCreateTreeValidation(t *testing.T) {
+	cases := []struct {
+		name string
+		body httpEntities.TreeCreateRequest
+	}{
+		{"missing planting_year", httpEntities.TreeCreateRequest{Number: "T1", Latitude: testLatitude, Longitude: testLongitude}},
+		{"missing number", httpEntities.TreeCreateRequest{PlantingYear: 2024, Latitude: testLatitude, Longitude: testLongitude}},
+		{"latitude out of range", httpEntities.TreeCreateRequest{PlantingYear: 2024, Number: "T1", Latitude: 100, Longitude: testLongitude}},
+		{"longitude out of range", httpEntities.TreeCreateRequest{PlantingYear: 2024, Number: "T1", Latitude: testLatitude, Longitude: 200}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			app := fiber.New()
+			mockTreeService := serviceMock.NewMockTreeService(t)
+			app.Post("/v1/tree", tree.CreateTree(mockTreeService))
+
+			body, _ := json.Marshal(tc.body)
+			req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/tree", bytes.NewBuffer(body))
+			req.Header.Set("Content-Type", "application/json")
+			resp, err := app.Test(req, -1)
+			defer resp.Body.Close()
+
+			assert.Nil(t, err)
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		})
+	}
+}
+
+func TestUpdateTreeValidation(t *testing.T) {
+	cases := []struct {
+		name string
+		body httpEntities.TreeUpdateRequest
+	}{
+		{"latitude out of range", httpEntities.TreeUpdateRequest{PlantingYear: 2024, Latitude: 100, Longitude: testLongitude}},
+		{"longitude out of range", httpEntities.TreeUpdateRequest{PlantingYear: 2024, Latitude: testLatitude, Longitude: -200}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			app := fiber.New()
+			mockTreeService := serviceMock.NewMockTreeService(t)
+			app.Put("/v1/tree/:id", tree.UpdateTree(mockTreeService))
+
+			body, _ := json.Marshal(tc.body)
+			req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/v1/tree/1", bytes.NewBuffer(body))
+			req.Header.Set("Content-Type", "application/json")
+			resp, err := app.Test(req, -1)
+			defer resp.Body.Close()
+
+			assert.Nil(t, err)
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		})
+	}
+}
+
 func TestGetPlantingYears(t *testing.T) {
 	t.Run("should return planting years successfully", func(t *testing.T) {
 		app := fiber.New()

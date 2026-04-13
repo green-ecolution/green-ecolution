@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
@@ -565,4 +566,94 @@ func TestDeleteWateringPlan(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 		mockWateringPlanService.AssertExpectations(t)
 	})
+}
+
+func TestCreateWateringPlanValidation(t *testing.T) {
+	tomorrow := time.Now().Add(24 * time.Hour).Truncate(24 * time.Hour)
+	yesterday := time.Now().Add(-24 * time.Hour).Truncate(24 * time.Hour)
+
+	base := func() serverEntities.WateringPlanCreateRequest {
+		return serverEntities.WateringPlanCreateRequest{
+			Date:           tomorrow,
+			TreeClusterIDs: []*int32{utils.P(int32(1))},
+			TransporterID:  utils.P(int32(1)),
+			UserIDs:        []string{"6a1078e8-80fd-458f-b74e-e388fe2dd6ab"},
+		}
+	}
+
+	cases := []struct {
+		name   string
+		mutate func(r *serverEntities.WateringPlanCreateRequest)
+	}{
+		{"date in the past", func(r *serverEntities.WateringPlanCreateRequest) { r.Date = yesterday }},
+		{"missing tree cluster ids", func(r *serverEntities.WateringPlanCreateRequest) { r.TreeClusterIDs = nil }},
+		{"empty tree cluster ids", func(r *serverEntities.WateringPlanCreateRequest) { r.TreeClusterIDs = []*int32{} }},
+		{"missing transporter id", func(r *serverEntities.WateringPlanCreateRequest) { r.TransporterID = nil }},
+		{"missing user ids", func(r *serverEntities.WateringPlanCreateRequest) { r.UserIDs = nil }},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			app := fiber.New()
+			mockWateringPlanService := serviceMock.NewMockWateringPlanService(t)
+			app.Post("/v1/watering-plan", wateringplan.CreateWateringPlan(mockWateringPlanService))
+
+			req := base()
+			tc.mutate(&req)
+			body, _ := json.Marshal(req)
+			httpReq, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/watering-plan", bytes.NewBuffer(body))
+			httpReq.Header.Set("Content-Type", "application/json")
+			resp, err := app.Test(httpReq, -1)
+			defer resp.Body.Close()
+
+			assert.Nil(t, err)
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		})
+	}
+}
+
+func TestUpdateWateringPlanValidation(t *testing.T) {
+	tomorrow := time.Now().Add(24 * time.Hour).Truncate(24 * time.Hour)
+
+	base := func() serverEntities.WateringPlanUpdateRequest {
+		return serverEntities.WateringPlanUpdateRequest{
+			Date:           tomorrow,
+			TreeClusterIDs: []*int32{utils.P(int32(1))},
+			TransporterID:  utils.P(int32(1)),
+			UserIDs:        []string{"6a1078e8-80fd-458f-b74e-e388fe2dd6ab"},
+			Status:         serverEntities.WateringPlanStatusPlanned,
+		}
+	}
+
+	cases := []struct {
+		name   string
+		mutate func(r *serverEntities.WateringPlanUpdateRequest)
+	}{
+		{"invalid status enum", func(r *serverEntities.WateringPlanUpdateRequest) { r.Status = "bogus" }},
+		{"cancellation note without canceled status", func(r *serverEntities.WateringPlanUpdateRequest) {
+			r.Status = serverEntities.WateringPlanStatusPlanned
+			r.CancellationNote = "oops"
+		}},
+		{"evaluation without finished status", func(r *serverEntities.WateringPlanUpdateRequest) {
+			r.Status = serverEntities.WateringPlanStatusPlanned
+			r.Evaluation = []*serverEntities.EvaluationValue{{TreeClusterID: int32(1), ConsumedWater: utils.P(100.0)}}
+		}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			app := fiber.New()
+			mockWateringPlanService := serviceMock.NewMockWateringPlanService(t)
+			app.Put("/v1/watering-plan/:id", wateringplan.UpdateWateringPlan(mockWateringPlanService))
+
+			req := base()
+			tc.mutate(&req)
+			body, _ := json.Marshal(req)
+			httpReq, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/v1/watering-plan/1", bytes.NewBuffer(body))
+			httpReq.Header.Set("Content-Type", "application/json")
+			resp, err := app.Test(httpReq, -1)
+			defer resp.Body.Close()
+
+			assert.Nil(t, err)
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		})
+	}
 }
