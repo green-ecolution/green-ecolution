@@ -28,6 +28,7 @@
     "@tanstack/react-router": "1.168.10",
     "@tanstack/react-router-devtools": "1.166.11",
     "@tanstack/router-generator": "1.166.24",
+    "barcode-detector": "^3.1.2",
     "date-fns": "^4.1.0",
     "immer": "^11.1.4",
     "leaflet": "^1.9.4",
