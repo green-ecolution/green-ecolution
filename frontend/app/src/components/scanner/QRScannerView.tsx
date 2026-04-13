@@ -2,7 +2,7 @@ import createToast from '@/hooks/createToast'
 import useQRScanner, { type ScannerStatus } from '@/hooks/useQRScanner'
 import { CameraViewport, Loading, type CameraViewportState } from '@green-ecolution/ui'
 import { CameraOff, CircleAlert, ShieldAlert } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import CameraPermissionNotice from './CameraPermissionNotice'
 import PWAInstallHint from './PWAInstallHint'
 import QRScanResult from './QRScanResult'
@@ -34,27 +34,36 @@ interface QRScannerViewProps {
   onContinue?: (value: string) => void
 }
 
+const SCAN_VIBRATE_MS = 40
+const FLASH_DURATION_MS = 500
+
 const QRScannerView = ({ continueLabel, onContinue }: QRScannerViewProps = {}) => {
-  const showToast = useRef(createToast()).current
+  const showToast = createToast()
   const [flash, setFlash] = useState(false)
 
   const { videoRef, status, scannedData, startScanning, resetScan } = useQRScanner({
-    onScan: (value) => {
+    onScan: () => {
       setFlash(true)
       if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
-        navigator.vibrate(40)
+        navigator.vibrate(SCAN_VIBRATE_MS)
       }
-      showToast(`QR-Code erfolgreich gescannt: ${value}`, 'success')
-      window.setTimeout(() => {
-        setFlash(false)
-      }, 500)
+      showToast('QR-Code erfolgreich gescannt', 'success')
     },
   })
 
-  // Auto-start on mount
   useEffect(() => {
     void startScanning()
   }, [startScanning])
+
+  useEffect(() => {
+    if (!flash) return
+    const id = window.setTimeout(() => {
+      setFlash(false)
+    }, FLASH_DURATION_MS)
+    return () => {
+      window.clearTimeout(id)
+    }
+  }, [flash])
 
   const handleScanAgain = () => {
     resetScan()
@@ -67,7 +76,6 @@ const QRScannerView = ({ continueLabel, onContinue }: QRScannerViewProps = {}) =
 
   const viewportState = STATUS_TO_VIEWPORT[status]
 
-  // Overlay content for non-scanning states
   let viewportOverlay: React.ReactNode = null
   if (status === 'requesting') {
     viewportOverlay = (
@@ -87,7 +95,6 @@ const QRScannerView = ({ continueLabel, onContinue }: QRScannerViewProps = {}) =
   return (
     <div className="mx-auto max-w-md pb-[env(safe-area-inset-bottom)]">
       <PWAInstallHint />
-      {/* Viewport stays mounted so videoRef remains valid across scan cycles */}
       <div className={status === 'scanned' && scannedData ? 'hidden' : 'block'}>
         <CameraViewport
           videoRef={videoRef}
@@ -106,13 +113,15 @@ const QRScannerView = ({ continueLabel, onContinue }: QRScannerViewProps = {}) =
         />
       )}
 
-      <p
-        role="status"
-        aria-live="polite"
-        className="mt-4 text-center text-xs uppercase tracking-[0.2em] text-muted-foreground"
-      >
-        {STATUS_LABELS[status] && <>· {STATUS_LABELS[status]} ·</>}
-      </p>
+      {STATUS_LABELS[status] && (
+        <p
+          role="status"
+          aria-live="polite"
+          className="mt-4 text-center text-xs uppercase tracking-[0.2em] text-muted-foreground"
+        >
+          · {STATUS_LABELS[status]} ·
+        </p>
+      )}
 
       <div className="mt-6 min-h-32">
         {status === 'scanning' && (

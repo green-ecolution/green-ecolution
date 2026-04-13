@@ -10,12 +10,17 @@ import {
 import { Download, Share, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-const DISMISS_KEY = 'ge.pwa-install-hint.scanner.dismissed'
+const DISMISS_KEY = 'ge.pwa-install-hint.scanner.dismissed-at'
+const RESHOW_AFTER_MS = 30 * 24 * 60 * 60 * 1000
 
 const readDismissed = (): boolean => {
   if (typeof localStorage === 'undefined') return false
   try {
-    return localStorage.getItem(DISMISS_KEY) === 'true'
+    const raw = localStorage.getItem(DISMISS_KEY)
+    if (!raw) return false
+    const dismissedAt = Number(raw)
+    if (!Number.isFinite(dismissedAt)) return false
+    return Date.now() - dismissedAt < RESHOW_AFTER_MS
   } catch {
     return false
   }
@@ -40,7 +45,7 @@ const PWAInstallHint = () => {
 
   const handleDismiss = () => {
     try {
-      localStorage.setItem(DISMISS_KEY, 'true')
+      localStorage.setItem(DISMISS_KEY, String(Date.now()))
     } catch {
       /* ignore */
     }
@@ -53,15 +58,15 @@ const PWAInstallHint = () => {
 
   const description =
     platform === 'ios'
-      ? 'Tippe unten in Safari auf das Teilen-Symbol und wähle "Zum Home-Bildschirm", um die App zu installieren. So bleibt der Kamerazugriff dauerhaft gespeichert.'
-      : 'Installiere die App auf deinem Gerät, damit der Kamerazugriff gespeichert bleibt und der Scanner schneller startet.'
+      ? 'Tippe unten in Safari auf das Teilen-Symbol und wähle "Zum Home-Bildschirm". So startet der Scanner direkt im Vollbild ohne Adressleiste.'
+      : 'Installiere die App auf deinem Gerät. Der Scanner startet schneller und läuft im Vollbild ohne Browser-Leiste.'
 
   return (
     <Alert variant="info" className="relative w-full mb-6">
       <div className="flex items-start gap-3 pr-6">
         <AlertIcon variant="info" />
         <AlertContent>
-          <AlertTitle>App installieren für dauerhaften Kamerazugriff</AlertTitle>
+          <AlertTitle>App installieren für die beste Scan-Erfahrung</AlertTitle>
           <AlertDescription>{description}</AlertDescription>
           {(platform === 'ios' || canPromptInstall) && (
             <div className="mt-3 flex flex-wrap items-center gap-2">

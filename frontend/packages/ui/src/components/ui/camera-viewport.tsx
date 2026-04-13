@@ -52,8 +52,6 @@ const CameraViewport = React.forwardRef<HTMLDivElement, CameraViewportProps>(
           'relative aspect-square w-full max-w-md mx-auto',
           'overflow-hidden rounded-2xl bg-dark',
           'shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]',
-          'transition-opacity duration-200',
-          state === 'success' && 'opacity-0',
           className,
         )}
         {...props}

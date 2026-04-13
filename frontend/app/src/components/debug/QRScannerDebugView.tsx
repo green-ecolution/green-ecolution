@@ -16,12 +16,6 @@ import {
 } from '@green-ecolution/ui'
 import { useEffect, useRef, useState } from 'react'
 
-declare global {
-  interface Window {
-    BarcodeDetector?: typeof BarcodeDetectorType
-  }
-}
-
 interface EnvInfo {
   hasGetUserMedia: boolean
   hasNativeDetector: boolean

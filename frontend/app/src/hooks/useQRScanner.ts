@@ -24,12 +24,6 @@ interface UseQRScannerReturn {
   resetScan: () => void
 }
 
-declare global {
-  interface Window {
-    BarcodeDetector?: typeof BarcodeDetectorType
-  }
-}
-
 // Resolve a BarcodeDetector ctor, preferring the native browser API.
 const resolveBarcodeDetector = async (): Promise<typeof BarcodeDetectorType> => {
   if (typeof window !== 'undefined' && window.BarcodeDetector) {
@@ -121,7 +115,6 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
         return
       }
       videoRef.current.srcObject = stream
-      await videoRef.current.play()
     } catch (err) {
       const name = err instanceof DOMException ? err.name : ''
       if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
