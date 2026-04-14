@@ -82,6 +82,7 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, openSidebar, closeSideb
             label: 'Karte',
             icon: <Map className="w-5 h-5" />,
             to: '/map',
+            preload: false,
           },
           {
             key: 'nav-green-spaces-clusters',
@@ -173,9 +174,9 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, openSidebar, closeSideb
     <nav
       id="main-navigation"
       aria-label="Hauptnavigation"
-      onMouseOut={handleMouseOut}
-      onMouseOver={handleMouseOver}
-      className={`fixed inset-0 z-50 bg-dark w-screen overflow-hidden h-screen transition-all ease-in-out duration-300
+      onMouseLeave={handleMouseOut}
+      onMouseEnter={handleMouseOver}
+      className={`fixed inset-0 z-50 bg-dark w-screen overflow-hidden h-screen ease-in-out duration-300 transition-[width,left,visibility]
         ${isOpen ? 'visible block left-0 lg:w-[17rem] lg:rounded-r-xl' : 'invisible -left-full lg:visible lg:w-[5rem] lg:left-0'}`}
     >
       <div className="relative px-4 py-5 h-full overflow-y-auto no-scrollbar">
