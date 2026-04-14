@@ -1,6 +1,8 @@
 import GPSStatusCard from '@/components/geolocation/GPSStatusCard'
 import LocationMapPreview from '@/components/geolocation/LocationMapPreview'
 import useGeolocation, { type GeolocationStatus } from '@/hooks/useGeolocation'
+import KV from './KV'
+import { boolBadge } from './badgeHelpers'
 import {
   Badge,
   Button,
@@ -57,9 +59,6 @@ const statusBadge = (status: GeolocationStatus) => {
   }
 }
 
-const boolBadge = (value: boolean) =>
-  value ? <Badge variant="success">true</Badge> : <Badge variant="error">false</Badge>
-
 const formatTime = (ts: number) => {
   const d = new Date(ts)
   return (
@@ -68,13 +67,6 @@ const formatTime = (ts: number) => {
     String(d.getMilliseconds()).padStart(3, '0')
   )
 }
-
-const KV = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div className="flex items-start justify-between gap-3">
-    <span className="text-muted-foreground shrink-0">{label}</span>
-    <span className="text-right">{children}</span>
-  </div>
-)
 
 const EmptyMapState = ({ status }: { status: GeolocationStatus }) => {
   const isLoading = status === 'requesting'
