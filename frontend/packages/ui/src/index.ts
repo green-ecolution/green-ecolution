@@ -1,6 +1,14 @@
 // Styles
 import './styles/globals.css'
 
+// AccuracyBadge
+export {
+  AccuracyBadge,
+  accuracyBadgeVariants,
+  accuracyLevelFromMeters,
+} from './components/ui/accuracy-badge'
+export type { AccuracyBadgeProps, AccuracyLevel } from './components/ui/accuracy-badge'
+
 // Alert
 export {
   Alert,

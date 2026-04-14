@@ -9,6 +9,8 @@ interface QRScanResultProps {
   continueLabel?: string
   /** If provided, called instead of the default placeholder toast */
   onContinue?: (sensorId: string) => void
+  /** Optional extra block rendered below the sensor-ID (e.g. GPS readout). */
+  extra?: React.ReactNode
 }
 
 const QRScanResult = ({
@@ -16,6 +18,7 @@ const QRScanResult = ({
   onScanAgain,
   continueLabel = 'Weiter',
   onContinue,
+  extra,
 }: QRScanResultProps) => {
   const showToast = createToast()
 
@@ -35,11 +38,14 @@ const QRScanResult = ({
           <CardTitle className="text-xl">QR-Code erkannt</CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-2">
-        <span className="text-xs uppercase tracking-widest text-muted-foreground">Sensor-ID</span>
-        <code className="font-mono text-lg md:text-xl font-semibold break-all bg-dark-50 rounded-lg px-3 py-2 border border-dark-100">
-          {sensorId}
-        </code>
+      <CardContent className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <span className="text-xs uppercase tracking-widest text-muted-foreground">Sensor-ID</span>
+          <code className="font-mono text-lg md:text-xl font-semibold break-all bg-dark-50 rounded-lg px-3 py-2 border border-dark-100">
+            {sensorId}
+          </code>
+        </div>
+        {extra}
       </CardContent>
       <CardFooter className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <Button variant="outline" size="sm" onClick={onScanAgain} className="w-full sm:w-auto">

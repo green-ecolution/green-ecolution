@@ -1,7 +1,7 @@
 import { useAuthStore, useMapStore, useUserStore } from '@/store/store'
 import { Button } from '@green-ecolution/ui'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { QrCode } from 'lucide-react'
+import { MapPin, QrCode } from 'lucide-react'
 
 export const Route = createFileRoute('/_protected/debug/')({
   component: Debug,
@@ -25,6 +25,12 @@ function Debug() {
           <Link to="/debug/qr-scanner">
             <QrCode />
             QR-Scanner öffnen
+          </Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
+          <Link to="/debug/geolocation">
+            <MapPin />
+            GPS-Ortung öffnen
           </Link>
         </Button>
       </div>
