@@ -16,7 +16,7 @@ import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import { User, Vehicle } from '@green-ecolution/backend-client'
 import SelectEntities from './types/SelectEntities'
 import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
-import { validateDriverLicenses } from '@/hooks/details/useLicenseValidation'
+import { validateDriverLicenses } from '@/lib/licenseValidation'
 import { Controller, SubmitHandler, useFormContext, useFormState, useWatch } from 'react-hook-form'
 
 interface FormForWateringPlanProps {
@@ -30,6 +30,9 @@ interface FormForWateringPlanProps {
   onBlur?: () => void
 }
 
+const startOfToday = new Date()
+startOfToday.setHours(0, 0, 0, 0)
+
 const FormForWateringPlan = (props: FormForWateringPlanProps) => {
   const { register, handleSubmit, control } = useFormContext<WateringPlanForm>()
   const { isValid, errors } = useFormState({ control })
@@ -39,9 +42,6 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
   })
   const watchedTrailerId = useWatch<WateringPlanForm, 'trailerId'>({ name: 'trailerId' })
   const watchedDriverIds = useWatch<WateringPlanForm, 'driverIds'>({ name: 'driverIds' })
-
-  const startOfToday = new Date()
-  startOfToday.setHours(0, 0, 0, 0)
 
   const licenseCheck = validateDriverLicenses(
     watchedDriverIds ?? [],

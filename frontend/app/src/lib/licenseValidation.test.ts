@@ -8,7 +8,7 @@ import {
   UserStatus,
   UserRole,
 } from '@green-ecolution/backend-client'
-import { licenseSatisfies, validateDriverLicenses } from './useLicenseValidation'
+import { licenseSatisfies, validateDriverLicenses } from './licenseValidation'
 
 describe('licenseSatisfies', () => {
   // B satisfies only B

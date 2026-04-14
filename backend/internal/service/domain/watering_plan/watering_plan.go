@@ -544,6 +544,7 @@ func hasAllRequiredLicenses(user *entities.User, requiredLicenses []entities.Dri
 	return true
 }
 
+// Keep in sync with frontend: frontend/app/src/lib/licenseValidation.ts
 func licenseSatisfies(held, required entities.DrivingLicense) bool {
 	if held == required {
 		return true

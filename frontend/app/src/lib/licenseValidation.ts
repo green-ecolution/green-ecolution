@@ -1,5 +1,6 @@
 import { DrivingLicense, User, Vehicle } from '@green-ecolution/backend-client'
 
+// Keep in sync with backend: internal/service/domain/watering_plan/watering_plan.go
 export function licenseSatisfies(held: DrivingLicense, required: DrivingLicense): boolean {
   if (held === required) {
     return true
@@ -34,14 +35,14 @@ export function validateDriverLicenses(
 
   const requiredLicenses: DrivingLicense[] = []
 
-  if (transporterId && transporterId > 0) {
+  if (transporterId !== undefined && transporterId > 0) {
     const transporter = transporters.find((t) => t.id === transporterId)
     if (transporter) {
       requiredLicenses.push(transporter.drivingLicense)
     }
   }
 
-  if (trailerId && trailerId > 0) {
+  if (trailerId !== undefined && trailerId > 0) {
     const trailer = trailers.find((t) => t.id === trailerId)
     if (trailer) {
       requiredLicenses.push(trailer.drivingLicense)
