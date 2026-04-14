@@ -1,4 +1,6 @@
 import type { BarcodeDetector as BarcodeDetectorType } from 'barcode-detector/pure'
+import KV from './KV'
+import { boolBadge } from './badgeHelpers'
 import {
   Badge,
   Button,
@@ -48,9 +50,6 @@ const permissionBadge = (state: PermissionLabel) => {
       return <Badge variant="muted">{state}</Badge>
   }
 }
-
-const boolBadge = (value: boolean) =>
-  value ? <Badge variant="success">true</Badge> : <Badge variant="error">false</Badge>
 
 const formatTime = (ts: number) => {
   const d = new Date(ts)
@@ -344,12 +343,5 @@ const QRScannerDebugView = () => {
     </div>
   )
 }
-
-const KV = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div className="flex items-start justify-between gap-3">
-    <span className="text-muted-foreground shrink-0">{label}</span>
-    <span className="text-right">{children}</span>
-  </div>
-)
 
 export default QRScannerDebugView
