@@ -15,7 +15,7 @@ import {
 import { VehicleTypeOptions } from '@/hooks/details/useDetailsForVehicleType'
 import { DrivingLicenseOptions } from '@/hooks/details/useDetailsForDrivingLicense'
 import { VehicleStatusOptions } from '@/hooks/details/useDetailsForVehicleStatus'
-import { Controller, SubmitHandler, useFormContext } from 'react-hook-form'
+import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-hook-form'
 
 interface FormForVehicleProps {
   displayError: boolean
@@ -24,12 +24,8 @@ interface FormForVehicleProps {
 }
 
 const FormForVehicle = (props: FormForVehicleProps) => {
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors, isValid },
-  } = useFormContext<VehicleForm>()
+  const { register, handleSubmit, control } = useFormContext<VehicleForm>()
+  const { isValid, errors } = useFormState({ control })
 
   const translateNum = (e: React.ChangeEvent<HTMLInputElement>) =>
     (e.target.value = e.target.value.replace(',', '.'))

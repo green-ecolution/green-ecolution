@@ -544,9 +544,27 @@ func hasAllRequiredLicenses(user *entities.User, requiredLicenses []entities.Dri
 	return true
 }
 
+// Keep in sync with frontend: frontend/app/src/lib/licenseValidation.ts
+func licenseSatisfies(held, required entities.DrivingLicense) bool {
+	if held == required {
+		return true
+	}
+	switch held {
+	case entities.DrivingLicenseBE:
+		return required == entities.DrivingLicenseB
+	case entities.DrivingLicenseC:
+		return required == entities.DrivingLicenseB
+	case entities.DrivingLicenseCE:
+		return required == entities.DrivingLicenseB ||
+			required == entities.DrivingLicenseBE ||
+			required == entities.DrivingLicenseC
+	}
+	return false
+}
+
 func hasValidLicense(user *entities.User, requiredLicense entities.DrivingLicense) bool {
 	for _, userLicense := range user.DrivingLicenses {
-		if userLicense == requiredLicense {
+		if licenseSatisfies(userLicense, requiredLicense) {
 			return true
 		}
 	}
