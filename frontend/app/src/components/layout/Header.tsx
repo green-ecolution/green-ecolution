@@ -11,19 +11,29 @@ function Header() {
   const isStartPage = location.pathname === '/'
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
 
-  const toggleSidebar = useCallback(
-    (state: boolean) => {
-      setOpen(state)
+  const openSidebar = useCallback(() => {
+    setOpen(true)
+    if (!isLargeScreen) {
+      document.body.classList.add('overflow-y-hidden')
+    }
+  }, [isLargeScreen])
 
-      if (isLargeScreen) return
-      if (state) {
-        document.body.classList.add('overflow-y-hidden')
-      } else {
-        document.body.classList.remove('overflow-y-hidden')
+  const closeSidebar = useCallback(() => {
+    setOpen(false)
+    if (!isLargeScreen) {
+      document.body.classList.remove('overflow-y-hidden')
+    }
+  }, [isLargeScreen])
+
+  const toggleSidebar = useCallback(() => {
+    setOpen((prev) => {
+      const next = !prev
+      if (!isLargeScreen) {
+        document.body.classList.toggle('overflow-y-hidden', next)
       }
-    },
-    [isLargeScreen],
-  )
+      return next
+    })
+  }, [isLargeScreen])
 
   return (
     <header className="relative z-10 bg-white lg:pl-20">
@@ -38,7 +48,7 @@ function Header() {
             aria-haspopup="menu"
             aria-label="Hauptnavigation öffnen"
             className="size-8 rounded-full bg-dark hover:bg-dark-600"
-            onClick={() => toggleSidebar(!open)}
+            onClick={toggleSidebar}
           >
             <AlignJustifyIcon className="!size-5 text-light" />
           </Button>
@@ -47,11 +57,7 @@ function Header() {
         <ProfileButton />
       </div>
 
-      <Navigation
-        isOpen={open}
-        openSidebar={() => toggleSidebar(true)}
-        closeSidebar={() => toggleSidebar(false)}
-      />
+      <Navigation isOpen={open} openSidebar={openSidebar} closeSidebar={closeSidebar} />
     </header>
   )
 }

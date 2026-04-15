@@ -12,7 +12,6 @@ import {
 } from 'lucide-react'
 import * as React from 'react'
 import { useCallback, useMemo } from 'react'
-import { useShallow } from 'zustand/react/shallow'
 import { LinkProps } from '@tanstack/react-router'
 import NavLink from '../navigation/NavLink'
 import NavHeadline from '../navigation/NavHeadline'
@@ -59,13 +58,6 @@ const publicNavData: NavSectionData[] = [
 const Navigation: React.FC<NavigationProps> = ({ isOpen, openSidebar, closeSidebar }) => {
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
   const isLoggedIn = useStore((state) => state.isAuthenticated)
-  const mapPosition = useStore(
-    useShallow((state) => ({
-      lat: state.mapCenter[0],
-      lng: state.mapCenter[1],
-      zoom: state.mapZoom,
-    })),
-  )
 
   const handleMouseOver = useCallback(() => {
     if (isLargeScreen) openSidebar()
@@ -90,7 +82,7 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, openSidebar, closeSideb
             label: 'Karte',
             icon: <Map className="w-5 h-5" />,
             to: '/map',
-            search: { lat: mapPosition.lat, lng: mapPosition.lng, zoom: mapPosition.zoom },
+            preload: false,
           },
           {
             key: 'nav-green-spaces-clusters',
@@ -173,7 +165,7 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, openSidebar, closeSideb
         ],
       },
     ],
-    [mapPosition.lat, mapPosition.lng, mapPosition.zoom],
+    [],
   )
 
   const navigationData = isLoggedIn ? protectedNavData : publicNavData
@@ -182,9 +174,9 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, openSidebar, closeSideb
     <nav
       id="main-navigation"
       aria-label="Hauptnavigation"
-      onMouseOut={handleMouseOut}
-      onMouseOver={handleMouseOver}
-      className={`fixed inset-0 z-50 bg-dark w-screen overflow-hidden h-screen transition-all ease-in-out duration-300
+      onMouseLeave={handleMouseOut}
+      onMouseEnter={handleMouseOver}
+      className={`fixed inset-0 z-50 bg-dark w-screen overflow-hidden h-screen ease-in-out duration-300 transition-[width,left,visibility]
         ${isOpen ? 'visible block left-0 lg:w-[17rem] lg:rounded-r-xl' : 'invisible -left-full lg:visible lg:w-[5rem] lg:left-0'}`}
     >
       <div className="relative px-4 py-5 h-full overflow-y-auto no-scrollbar">

@@ -10,7 +10,15 @@ import NotFound from './components/layout/NotFound'
 import ErrorFallback from './components/layout/ErrorFallback'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+})
 
 const router = createRouter({
   routeTree,
@@ -22,7 +30,7 @@ const router = createRouter({
   ),
   defaultNotFoundComponent: () => <NotFound />,
   defaultPreload: 'intent',
-  defaultPreloadStaleTime: 0,
+  defaultPreloadStaleTime: 30_000,
   scrollRestoration: true,
 })
 
