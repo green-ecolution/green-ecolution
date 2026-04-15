@@ -324,3 +324,36 @@ func (r *TreeRepository) FindNearestTree(ctx context.Context, latitude, longitud
 	}
 	return tree, nil
 }
+
+func (r *TreeRepository) FindNearestTrees(ctx context.Context, lat, lng, radiusMeters float64, limit int32) ([]*entities.TreeWithDistance, error) {
+	log := logger.GetLogger(ctx)
+	params := &sqlc.FindNearestTreesParams{
+		Lat:        lat,
+		Lng:        lng,
+		Radius:     radiusMeters,
+		MaxResults: limit,
+	}
+
+	rows, err := r.store.FindNearestTrees(ctx, params)
+	if err != nil {
+		log.Debug("failed to find nearest trees", "error", err, "lat", lat, "lng", lng)
+		return nil, err
+	}
+
+	results := make([]*entities.TreeWithDistance, 0, len(rows))
+	for _, row := range rows {
+		tree, err := r.mapper.FromSql(&row.Tree)
+		if err != nil {
+			log.Debug("failed to convert entity", "error", err)
+			return nil, err
+		}
+		if err := r.mapFields(ctx, tree); err != nil {
+			return nil, err
+		}
+		results = append(results, &entities.TreeWithDistance{
+			Tree:     tree,
+			Distance: row.Distance,
+		})
+	}
+	return results, nil
+}

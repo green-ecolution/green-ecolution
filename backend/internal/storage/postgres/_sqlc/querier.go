@@ -31,6 +31,8 @@ type Querier interface {
 	DeleteVehicle(ctx context.Context, id int32) (int32, error)
 	DeleteWateringPlan(ctx context.Context, id int32) (int32, error)
 	FindNearestTree(ctx context.Context, arg *FindNearestTreeParams) (*Tree, error)
+	// Uses scalar latitude/longitude columns; trees.geometry stores axes swapped.
+	FindNearestTrees(ctx context.Context, arg *FindNearestTreesParams) ([]*FindNearestTreesRow, error)
 	GetAllArchivedVehicles(ctx context.Context) ([]*Vehicle, error)
 	GetAllLatestSensorDataByTreeClusterID(ctx context.Context, id int32) ([]*SensorDatum, error)
 	GetAllRegions(ctx context.Context, arg *GetAllRegionsParams) ([]*Region, error)

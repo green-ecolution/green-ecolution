@@ -1115,6 +1115,65 @@ func (_c *MockQuerier_FindNearestTree_Call) RunAndReturn(run func(context.Contex
 	return _c
 }
 
+// FindNearestTrees provides a mock function with given fields: ctx, arg
+func (_m *MockQuerier) FindNearestTrees(ctx context.Context, arg *sqlc.FindNearestTreesParams) ([]*sqlc.FindNearestTreesRow, error) {
+	ret := _m.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindNearestTrees")
+	}
+
+	var r0 []*sqlc.FindNearestTreesRow
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *sqlc.FindNearestTreesParams) ([]*sqlc.FindNearestTreesRow, error)); ok {
+		return rf(ctx, arg)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *sqlc.FindNearestTreesParams) []*sqlc.FindNearestTreesRow); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*sqlc.FindNearestTreesRow)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *sqlc.FindNearestTreesParams) error); ok {
+		r1 = rf(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockQuerier_FindNearestTrees_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindNearestTrees'
+type MockQuerier_FindNearestTrees_Call struct {
+	*mock.Call
+}
+
+// FindNearestTrees is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg *sqlc.FindNearestTreesParams
+func (_e *MockQuerier_Expecter) FindNearestTrees(ctx interface{}, arg interface{}) *MockQuerier_FindNearestTrees_Call {
+	return &MockQuerier_FindNearestTrees_Call{Call: _e.mock.On("FindNearestTrees", ctx, arg)}
+}
+
+func (_c *MockQuerier_FindNearestTrees_Call) Run(run func(ctx context.Context, arg *sqlc.FindNearestTreesParams)) *MockQuerier_FindNearestTrees_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*sqlc.FindNearestTreesParams))
+	})
+	return _c
+}
+
+func (_c *MockQuerier_FindNearestTrees_Call) Return(_a0 []*sqlc.FindNearestTreesRow, _a1 error) *MockQuerier_FindNearestTrees_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockQuerier_FindNearestTrees_Call) RunAndReturn(run func(context.Context, *sqlc.FindNearestTreesParams) ([]*sqlc.FindNearestTreesRow, error)) *MockQuerier_FindNearestTrees_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAllArchivedVehicles provides a mock function with given fields: ctx
 func (_m *MockQuerier) GetAllArchivedVehicles(ctx context.Context) ([]*sqlc.Vehicle, error) {
 	ret := _m.Called(ctx)

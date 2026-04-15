@@ -106,5 +106,23 @@ WHERE ST_Distance(geometry::geography, ST_SetSRID(ST_MakePoint($1, $2), 4326)::g
 ORDER BY ST_Distance(geometry::geography, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) ASC
     LIMIT 1;
 
+-- name: FindNearestTrees :many
+-- Uses scalar latitude/longitude columns; trees.geometry stores axes swapped.
+WITH query_point AS (
+  SELECT ST_SetSRID(ST_MakePoint(sqlc.arg(lng)::float8, sqlc.arg(lat)::float8), 4326)::geography AS geog
+)
+SELECT sqlc.embed(trees),
+       ST_Distance(
+         ST_SetSRID(ST_MakePoint(trees.longitude, trees.latitude), 4326)::geography,
+         (SELECT geog FROM query_point)
+       )::float8 AS distance
+FROM trees
+WHERE ST_Distance(
+        ST_SetSRID(ST_MakePoint(trees.longitude, trees.latitude), 4326)::geography,
+        (SELECT geog FROM query_point)
+      ) <= sqlc.arg(radius)::float8
+ORDER BY distance ASC
+LIMIT sqlc.arg(max_results)::int;
+
 -- name: GetDistinctPlantingYears :many
 SELECT DISTINCT planting_year FROM trees WHERE planting_year IS NOT NULL ORDER BY planting_year ASC;

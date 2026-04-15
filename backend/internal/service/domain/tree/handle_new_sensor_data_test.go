@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/green-ecolution/green-ecolution/backend/internal/config"
 	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/storage/_mock"
@@ -13,13 +14,19 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+var testMapCfg = config.MapConfig{
+	NearestTreeMaxRadius:    500,
+	NearestTreeDefaultLimit: 10,
+	NearestTreeMaxLimit:     50,
+}
+
 func TestTreeService_HandleNewSensorData(t *testing.T) {
 	t.Run("should update watering status on new sensor data event", func(t *testing.T) {
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		sensorRepo := storageMock.NewMockSensorRepository(t)
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		eventManager := worker.NewEventManager(entities.EventTypeUpdateTree)
-		svc := NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager)
+		svc := NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager, testMapCfg)
 
 		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTree)
 		ctx, cancel := context.WithCancel(context.Background())
@@ -73,7 +80,7 @@ func TestTreeService_HandleNewSensorData(t *testing.T) {
 		sensorRepo := storageMock.NewMockSensorRepository(t)
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		eventManager := worker.NewEventManager(entities.EventTypeUpdateTree)
-		svc := NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager)
+		svc := NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager, testMapCfg)
 
 		// event
 		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTree)
@@ -114,7 +121,7 @@ func TestTreeService_HandleNewSensorData(t *testing.T) {
 		sensorRepo := storageMock.NewMockSensorRepository(t)
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		eventManager := worker.NewEventManager(entities.EventTypeUpdateTree)
-		svc := NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager)
+		svc := NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager, testMapCfg)
 
 		// event
 		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTree)

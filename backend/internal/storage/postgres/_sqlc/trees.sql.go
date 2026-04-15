@@ -108,6 +108,80 @@ func (q *Queries) FindNearestTree(ctx context.Context, arg *FindNearestTreeParam
 	return &i, err
 }
 
+const findNearestTrees = `-- name: FindNearestTrees :many
+WITH query_point AS (
+  SELECT ST_SetSRID(ST_MakePoint($3::float8, $4::float8), 4326)::geography AS geog
+)
+SELECT trees.id, trees.created_at, trees.updated_at, trees.tree_cluster_id, trees.sensor_id, trees.planting_year, trees.species, trees.number, trees.latitude, trees.longitude, trees.watering_status, trees.geometry, trees.description, trees.provider, trees.additional_informations, trees.last_watered,
+       ST_Distance(
+         ST_SetSRID(ST_MakePoint(trees.longitude, trees.latitude), 4326)::geography,
+         (SELECT geog FROM query_point)
+       )::float8 AS distance
+FROM trees
+WHERE ST_Distance(
+        ST_SetSRID(ST_MakePoint(trees.longitude, trees.latitude), 4326)::geography,
+        (SELECT geog FROM query_point)
+      ) <= $1::float8
+ORDER BY distance ASC
+LIMIT $2::int
+`
+
+type FindNearestTreesParams struct {
+	Radius     float64
+	MaxResults int32
+	Lng        float64
+	Lat        float64
+}
+
+type FindNearestTreesRow struct {
+	Tree     Tree
+	Distance float64
+}
+
+// Uses scalar latitude/longitude columns; trees.geometry stores axes swapped.
+func (q *Queries) FindNearestTrees(ctx context.Context, arg *FindNearestTreesParams) ([]*FindNearestTreesRow, error) {
+	rows, err := q.db.Query(ctx, findNearestTrees,
+		arg.Radius,
+		arg.MaxResults,
+		arg.Lng,
+		arg.Lat,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*FindNearestTreesRow{}
+	for rows.Next() {
+		var i FindNearestTreesRow
+		if err := rows.Scan(
+			&i.Tree.ID,
+			&i.Tree.CreatedAt,
+			&i.Tree.UpdatedAt,
+			&i.Tree.TreeClusterID,
+			&i.Tree.SensorID,
+			&i.Tree.PlantingYear,
+			&i.Tree.Species,
+			&i.Tree.Number,
+			&i.Tree.Latitude,
+			&i.Tree.Longitude,
+			&i.Tree.WateringStatus,
+			&i.Tree.Geometry,
+			&i.Tree.Description,
+			&i.Tree.Provider,
+			&i.Tree.AdditionalInformations,
+			&i.Tree.LastWatered,
+			&i.Distance,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllTrees = `-- name: GetAllTrees :many
 SELECT t.id, t.created_at, t.updated_at, t.tree_cluster_id, t.sensor_id, t.planting_year, t.species, t.number, t.latitude, t.longitude, t.watering_status, t.geometry, t.description, t.provider, t.additional_informations, t.last_watered
 FROM trees t

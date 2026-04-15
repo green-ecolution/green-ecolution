@@ -605,3 +605,126 @@ func TestGetPlantingYears(t *testing.T) {
 		mockTreeService.AssertExpectations(t)
 	})
 }
+
+func TestGetNearestTrees(t *testing.T) {
+	const path = "/v1/tree/nearest"
+
+	t.Run("should return nearest trees sorted by distance", func(t *testing.T) {
+		app := fiber.New()
+		mockTreeService := serviceMock.NewMockTreeService(t)
+		app.Get(path, tree.GetNearestTrees(mockTreeService))
+
+		treeWithSensor := *TestTrees[0]
+		treeWithSensor.Sensor = &entities.Sensor{ID: "sensor-1"}
+		results := []*entities.TreeWithDistance{
+			{Tree: &treeWithSensor, Distance: 5.2},
+			{Tree: TestTrees[1], Distance: 42.8},
+		}
+		mockTreeService.EXPECT().GetNearestTrees(mock.Anything, 54.79, 9.43, int32(5)).Return(results, nil)
+
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, path+"?lat=54.79&lng=9.43&limit=5", nil)
+		resp, err := app.Test(req, -1)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var body httpEntities.NearestTreesResponse
+		assert.NoError(t, json.NewDecoder(resp.Body).Decode(&body))
+		assert.Len(t, body.Data, 2)
+		assert.Equal(t, 5.2, body.Data[0].DistanceMeters)
+		assert.NotNil(t, body.Data[0].Tree.Sensor, "tree with sensor should have sensor field populated")
+		assert.Equal(t, 42.8, body.Data[1].DistanceMeters)
+		assert.Nil(t, body.Data[1].Tree.Sensor, "tree without sensor should have sensor == null")
+	})
+
+	t.Run("should return empty data array when no trees found", func(t *testing.T) {
+		app := fiber.New()
+		mockTreeService := serviceMock.NewMockTreeService(t)
+		app.Get(path, tree.GetNearestTrees(mockTreeService))
+		mockTreeService.EXPECT().GetNearestTrees(mock.Anything, 0.0, 0.0, int32(0)).Return([]*entities.TreeWithDistance{}, nil)
+
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, path+"?lat=0&lng=0", nil)
+		resp, err := app.Test(req, -1)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var body httpEntities.NearestTreesResponse
+		assert.NoError(t, json.NewDecoder(resp.Body).Decode(&body))
+		assert.Empty(t, body.Data)
+	})
+
+	t.Run("should return 400 when lat is missing", func(t *testing.T) {
+		app := fiber.New()
+		mockTreeService := serviceMock.NewMockTreeService(t)
+		app.Get(path, tree.GetNearestTrees(mockTreeService))
+
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, path+"?lng=9.43", nil)
+		resp, err := app.Test(req, -1)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("should return 400 when lng is missing", func(t *testing.T) {
+		app := fiber.New()
+		mockTreeService := serviceMock.NewMockTreeService(t)
+		app.Get(path, tree.GetNearestTrees(mockTreeService))
+
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, path+"?lat=54.79", nil)
+		resp, err := app.Test(req, -1)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("should return 400 when lat out of range", func(t *testing.T) {
+		app := fiber.New()
+		mockTreeService := serviceMock.NewMockTreeService(t)
+		app.Get(path, tree.GetNearestTrees(mockTreeService))
+
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, path+"?lat=91&lng=9.43", nil)
+		resp, err := app.Test(req, -1)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("should return 400 when lng out of range", func(t *testing.T) {
+		app := fiber.New()
+		mockTreeService := serviceMock.NewMockTreeService(t)
+		app.Get(path, tree.GetNearestTrees(mockTreeService))
+
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, path+"?lat=54.79&lng=-181", nil)
+		resp, err := app.Test(req, -1)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("should return 400 when lat is not numeric", func(t *testing.T) {
+		app := fiber.New()
+		mockTreeService := serviceMock.NewMockTreeService(t)
+		app.Get(path, tree.GetNearestTrees(mockTreeService))
+
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, path+"?lat=abc&lng=9.43", nil)
+		resp, err := app.Test(req, -1)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("should return 500 when service fails", func(t *testing.T) {
+		app := fiber.New()
+		mockTreeService := serviceMock.NewMockTreeService(t)
+		app.Get(path, tree.GetNearestTrees(mockTreeService))
+		mockTreeService.EXPECT().GetNearestTrees(mock.Anything, 54.79, 9.43, int32(0)).
+			Return(nil, fiber.NewError(fiber.StatusInternalServerError, "boom"))
+
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, path+"?lat=54.79&lng=9.43", nil)
+		resp, err := app.Test(req, -1)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	})
+}

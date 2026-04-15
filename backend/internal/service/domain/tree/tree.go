@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/green-ecolution/green-ecolution/backend/internal/config"
 	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
@@ -19,6 +20,7 @@ type TreeService struct {
 	sensorRepo      storage.SensorRepository
 	treeClusterRepo storage.TreeClusterRepository
 	eventManager    *worker.EventManager
+	mapCfg          config.MapConfig
 }
 
 func NewTreeService(
@@ -26,12 +28,14 @@ func NewTreeService(
 	repoSensor storage.SensorRepository,
 	treeClusterRepo storage.TreeClusterRepository,
 	eventManager *worker.EventManager,
+	mapCfg config.MapConfig,
 ) service.TreeService {
 	return &TreeService{
 		treeRepo:        repoTree,
 		sensorRepo:      repoSensor,
 		treeClusterRepo: treeClusterRepo,
 		eventManager:    eventManager,
+		mapCfg:          mapCfg,
 	}
 }
 
@@ -66,6 +70,24 @@ func (s *TreeService) GetBySensorID(ctx context.Context, id string) (*entities.T
 	}
 
 	return tr, nil
+}
+
+func (s *TreeService) GetNearestTrees(ctx context.Context, lat, lng float64, limit int32) ([]*entities.TreeWithDistance, error) {
+	log := logger.GetLogger(ctx)
+
+	if limit <= 0 {
+		limit = int32(s.mapCfg.NearestTreeDefaultLimit)
+	}
+	if maxLimit := int32(s.mapCfg.NearestTreeMaxLimit); limit > maxLimit {
+		limit = maxLimit
+	}
+
+	trees, err := s.treeRepo.FindNearestTrees(ctx, lat, lng, s.mapCfg.NearestTreeMaxRadius, limit)
+	if err != nil {
+		log.Debug("failed to find nearest trees", "error", err, "lat", lat, "lng", lng)
+		return nil, service.MapError(ctx, err, service.ErrorLogAll)
+	}
+	return trees, nil
 }
 
 func (s *TreeService) publishUpdateTreeEvent(ctx context.Context, prevTree, updatedTree, prevTreeOfSensor *entities.Tree) {

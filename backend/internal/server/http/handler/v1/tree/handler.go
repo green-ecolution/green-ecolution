@@ -251,6 +251,63 @@ func GetPlantingYears(svc service.TreeService) fiber.Handler {
 	}
 }
 
+type nearestTreesQuery struct {
+	Lat   *float64 `query:"lat"`
+	Lng   *float64 `query:"lng"`
+	Limit int32    `query:"limit"`
+}
+
+// @Summary		Get nearest trees
+// @Description	Finds the nearest trees to a given GPS coordinate, sorted by distance (in meters).
+// @Description	Trees with an assigned sensor include their sensor data but are NOT excluded from results.
+// @Description	The search radius is server-controlled via configuration.
+// @Id				get-nearest-trees
+// @Tags			Tree
+// @Produce		json
+// @Success		200	{object}	entities.NearestTreesResponse
+// @Failure		400	{object}	HTTPError
+// @Failure		401	{object}	HTTPError
+// @Failure		403	{object}	HTTPError
+// @Failure		500	{object}	HTTPError
+// @Router			/v1/tree/nearest [get]
+// @Param			lat		query	number	true	"Latitude (-90 to 90)"
+// @Param			lng		query	number	true	"Longitude (-180 to 180)"
+// @Param			limit	query	int		false	"Max number of results (server-clamped)"
+// @Security		Keycloak
+func GetNearestTrees(svc service.TreeService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		ctx := c.Context()
+
+		var q nearestTreesQuery
+		if err := c.QueryParser(&q); err != nil {
+			return errorhandler.HandleError(service.NewError(service.BadRequest, "invalid query parameters"))
+		}
+		if q.Lat == nil || q.Lng == nil {
+			return errorhandler.HandleError(service.NewError(service.BadRequest, "lat and lng query parameters are required"))
+		}
+		if *q.Lat < -90 || *q.Lat > 90 {
+			return errorhandler.HandleError(service.NewError(service.BadRequest, "lat must be between -90 and 90"))
+		}
+		if *q.Lng < -180 || *q.Lng > 180 {
+			return errorhandler.HandleError(service.NewError(service.BadRequest, "lng must be between -180 and 180"))
+		}
+
+		results, err := svc.GetNearestTrees(ctx, *q.Lat, *q.Lng, q.Limit)
+		if err != nil {
+			return errorhandler.HandleError(err)
+		}
+
+		data := make([]*entities.TreeWithDistanceResponse, len(results))
+		for i, r := range results {
+			data[i] = &entities.TreeWithDistanceResponse{
+				Tree:           mapTreeToDto(r.Tree),
+				DistanceMeters: r.Distance,
+			}
+		}
+		return c.JSON(entities.NearestTreesResponse{Data: data})
+	}
+}
+
 func mapTreeToDto(t *domain.Tree) *entities.TreeResponse {
 	dto := treeMapper.FromResponse(t)
 	dto.Sensor = sensorMapper.FromResponse(t.Sensor)

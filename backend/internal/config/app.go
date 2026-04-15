@@ -62,8 +62,11 @@ type RoutingVroomConfig struct {
 }
 
 type MapConfig struct {
-	Center []float64 `mapstructure:"center"`
-	BBox   []float64 `mapstructure:"bbox"`
+	Center                  []float64 `mapstructure:"center"`
+	BBox                    []float64 `mapstructure:"bbox"`
+	NearestTreeMaxRadius    float64   `mapstructure:"nearest_tree_max_radius"`
+	NearestTreeDefaultLimit int       `mapstructure:"nearest_tree_default_limit"`
+	NearestTreeMaxLimit     int       `mapstructure:"nearest_tree_max_limit"`
 }
 
 type S3Config struct {

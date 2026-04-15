@@ -125,6 +125,7 @@ type TreeService interface {
 	Delete(ctx context.Context, id int32) error
 
 	GetBySensorID(ctx context.Context, id string) (*domain.Tree, error)
+	GetNearestTrees(ctx context.Context, lat, lng float64, limit int32) ([]*domain.TreeWithDistance, error)
 	HandleNewSensorData(context.Context, *domain.EventNewSensorData) error
 	UpdateWateringStatuses(ctx context.Context) error
 	GetPlantingYears(ctx context.Context) ([]int32, error)
