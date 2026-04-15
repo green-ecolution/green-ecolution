@@ -1,17 +1,15 @@
 {
-  description = "development enviroment for green-ecolution";
+  description = "development environment for green-ecolution";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
-    pre-commit-hooks.url = "github:cachix/git-hooks.nix";
   };
 
   outputs = {
     self,
     nixpkgs,
     ...
-  } @ inputs: let
+  }: let
     goVersion = 25;
     nodeVersion = 24;
 
@@ -47,33 +45,29 @@
         '';
         homepage = "https://green-ecolution.de";
         changelog = "https://github.com/green-ecolution/green-ecolution/releases";
-        license = {
-          spdxId = "AGPL-3.0-only";
-          fullName = "GNU Affero General Public License v3.0 only";
-        };
+        license = lib.licenses.agpl3Only;
         maintainers = [
           {
             name = "Cedrik Hoffmann";
-            email = "dev@choffmann.io";
+            email = "choffmann@green-ecolution.de";
             github = "choffmann";
             githubId = 73289312;
           }
         ];
         mainProgram = "green-ecolution";
-        platforms = pkgs.lib.platforms.linux ++ pkgs.lib.platforms.darwin;
+        platforms = lib.platforms.linux ++ lib.platforms.darwin;
       };
 
       si = self.sourceInfo or {};
-      gitCommit = si.rev or "local";
-      gitBranch = si.ref or "local";
-      gitRepo = si.url or "local";
+      gitCommit = si.rev or si.dirtyRev or "local";
+      # sourceInfo does not expose branch/repo url; keep as placeholders
+      gitBranch = "local";
+      gitRepo = "local";
 
-      buildDate = let
-        d = si.lastModifiedDate or si.lastModified or null;
-      in
-        if d == null
-        then "000000"
-        else builtins.substring 2 6 d;
+      buildDate =
+        if si ? lastModifiedDate
+        then builtins.substring 2 6 si.lastModifiedDate
+        else "000000";
     in rec {
       frontend = pkgs.stdenv.mkDerivation rec {
         inherit meta;
@@ -81,14 +75,14 @@
         version = "0.1.2"; # x-release-please-version
         src = lib.cleanSource ./frontend;
 
-        nativeBuildInputs = with pkgs; [nodejs pnpm.configHook];
+        nativeBuildInputs = with pkgs; [nodejs pnpm pnpmConfigHook];
 
-        VITE_BACKEND_BASEURL = "/api";
+        env.VITE_BACKEND_BASEURL = "/api";
 
-        pnpmDeps = pkgs.pnpm.fetchDeps {
+        pnpmDeps = pkgs.fetchPnpmDeps {
           inherit pname version src;
           fetcherVersion = 2;
-          hash = "sha256-9r9W+cbwZ5HZPgcuYfHjsNDJBldUyEE6jCmWgC+jt1Y=";
+          hash = "sha256-gSmyqYoRc8p9NLhzyGFenIx5kMwEc89WaVc2inBCoWY=";
         };
 
         buildPhase = ''
@@ -127,8 +121,8 @@
         buildInputs = [pkgs.geos];
 
         doCheck = false;
-        excludedPackages = "pkg/*";
-        vendorHash = "sha256-YSEm5ZqRdx8Qc83gch15daJxMFW67lz1FAjF0+g+vkI=";
+        excludedPackages = ["pkg/*"];
+        vendorHash = "sha256-EuEwOqxjLNYW8XClah6dGUGxJqOAP9t/76EoqL0lqDU=";
         env.CGO_ENABLED = 1;
 
         postInstall = ''
@@ -187,16 +181,10 @@
       };
     });
 
-    nixosConfigurations.ge-dev = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      specialArgs = {inherit inputs self;};
-      modules = [./nixos/ge-dev.nix];
-    };
+    formatter = forEachSupportedSystem ({pkgs}: pkgs.alejandra);
 
-    # nix run .#dev-vm
-    apps.x86_64-linux.dev-vm = {
-      type = "app";
-      program = "${self.nixosConfigurations.ge-dev.config.system.build.vm}/bin/run-ge-dev-vm";
-    };
+    checks = forEachSupportedSystem ({pkgs}: {
+      inherit (self.packages.${pkgs.system}) frontend backend default;
+    });
   };
 }
