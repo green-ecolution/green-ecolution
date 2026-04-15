@@ -101,6 +101,7 @@ Class | Method | HTTP request | Description
 *TreeAPI* | [**CreateTree**](docs/TreeAPI.md#createtree) | **Post** /v1/tree | Create tree
 *TreeAPI* | [**DeleteTree**](docs/TreeAPI.md#deletetree) | **Delete** /v1/tree/{tree_id} | Delete tree
 *TreeAPI* | [**GetAllTrees**](docs/TreeAPI.md#getalltrees) | **Get** /v1/tree | Get all trees
+*TreeAPI* | [**GetNearestTrees**](docs/TreeAPI.md#getnearesttrees) | **Get** /v1/tree/nearest | Get nearest trees
 *TreeAPI* | [**GetPlantingYears**](docs/TreeAPI.md#getplantingyears) | **Get** /v1/tree/planting-years | Get distinct planting years
 *TreeAPI* | [**GetTreeById**](docs/TreeAPI.md#gettreebyid) | **Get** /v1/tree/{tree_id} | Get tree by ID
 *TreeAPI* | [**UpdateTree**](docs/TreeAPI.md#updatetree) | **Put** /v1/tree/{tree_id} | Update tree
@@ -154,6 +155,7 @@ Class | Method | HTTP request | Description
  - [LoginTokenRequest](docs/LoginTokenRequest.md)
  - [LogoutRequest](docs/LogoutRequest.md)
  - [MapInfo](docs/MapInfo.md)
+ - [NearestTreeList](docs/NearestTreeList.md)
  - [Pagination](docs/Pagination.md)
  - [Plugin](docs/Plugin.md)
  - [PluginAuth](docs/PluginAuth.md)
@@ -182,6 +184,7 @@ Class | Method | HTTP request | Description
  - [TreeCreate](docs/TreeCreate.md)
  - [TreeList](docs/TreeList.md)
  - [TreeUpdate](docs/TreeUpdate.md)
+ - [TreeWithDistance](docs/TreeWithDistance.md)
  - [User](docs/User.md)
  - [UserList](docs/UserList.md)
  - [UserRegister](docs/UserRegister.md)

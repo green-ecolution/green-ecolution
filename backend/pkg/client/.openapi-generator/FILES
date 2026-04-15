@@ -36,6 +36,7 @@ docs/LoginResponse.md
 docs/LoginTokenRequest.md
 docs/LogoutRequest.md
 docs/MapInfo.md
+docs/NearestTreeList.md
 docs/Pagination.md
 docs/Plugin.md
 docs/PluginAPI.md
@@ -70,6 +71,7 @@ docs/TreeCreate.md
 docs/TreeList.md
 docs/TreeSensorAPI.md
 docs/TreeUpdate.md
+docs/TreeWithDistance.md
 docs/User.md
 docs/UserAPI.md
 docs/UserList.md
@@ -115,6 +117,7 @@ model_login_response.go
 model_login_token_request.go
 model_logout_request.go
 model_map_info.go
+model_nearest_tree_list.go
 model_pagination.go
 model_plugin.go
 model_plugin_auth.go
@@ -143,6 +146,7 @@ model_tree_cluster_update.go
 model_tree_create.go
 model_tree_list.go
 model_tree_update.go
+model_tree_with_distance.go
 model_user.go
 model_user_list.go
 model_user_register.go

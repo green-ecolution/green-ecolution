@@ -30,6 +30,7 @@ models/LoginResponse.ts
 models/LoginTokenRequest.ts
 models/LogoutRequest.ts
 models/MapInfo.ts
+models/NearestTreeList.ts
 models/Pagination.ts
 models/Plugin.ts
 models/PluginAuth.ts
@@ -58,6 +59,7 @@ models/TreeClusterUpdate.ts
 models/TreeCreate.ts
 models/TreeList.ts
 models/TreeUpdate.ts
+models/TreeWithDistance.ts
 models/User.ts
 models/UserList.ts
 models/UserRegister.ts
