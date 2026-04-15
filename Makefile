@@ -76,6 +76,9 @@ help:
 	@echo "Frontend extra:"
 	@echo "  fe/dev                pnpm dev (frontend workspace)"
 	@echo "  fe/preview            pnpm preview (after build)"
+	@echo ""
+	@echo "Nix:"
+	@echo "  nix/update-hashes     Update pnpm + vendor hashes in flake.nix"
 
 .PHONY: all
 all: build
@@ -378,6 +381,12 @@ tidy:
 	@echo "Go fmt & tidy..."
 	$(call BRUN,go fmt ./...)
 	$(call BRUN,go mod tidy)
+
+.PHONY: nix/update-hashes
+nix/update-hashes:
+	@echo "Updating Nix hashes (frontend + backend)..."
+	nix-shell -p nix-update --run "nix-update --flake --version=skip frontend"
+	nix-shell -p nix-update --run "nix-update --flake --version=skip backend"
 
 .PHONY: lint
 lint:

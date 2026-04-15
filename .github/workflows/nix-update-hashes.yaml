@@ -1,0 +1,67 @@
+name: "Update Nix hashes"
+
+on:
+  pull_request:
+    paths:
+      - "backend/go.sum"
+      - "frontend/pnpm-lock.yaml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  update-hashes:
+    # Only run for Dependabot PRs or manual dispatch.
+    if: github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Get Green Ecolution App Token
+        uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Get Green Ecolution App User ID
+        id: get-user-id
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+
+      - name: Initialize git config
+        run: |
+          git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Update frontend pnpm hash
+        run: nix-shell -p nix-update --run "nix-update --flake --version=skip frontend"
+
+      - name: Update backend vendor hash
+        run: nix-shell -p nix-update --run "nix-update --flake --version=skip backend"
+
+      - name: Commit and push
+        run: |
+          if git diff --quiet flake.nix; then
+            echo "No hash changes."
+            exit 0
+          fi
+          git add flake.nix
+          git commit -m "chore: update nix hashes"
+          git push
