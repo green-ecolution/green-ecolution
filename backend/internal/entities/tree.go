@@ -54,3 +54,8 @@ type TreeQuery struct {
 	PlantingYears    []int32          `query:"planting_years"`
 	Query
 }
+
+type TreeWithDistance struct {
+	Tree     *Tree
+	Distance float64 // meters
+}

@@ -794,6 +794,83 @@ func TestTreeRepository_FindNearestTree(t *testing.T) {
 	})
 }
 
+func TestTreeRepository_FindNearestTrees(t *testing.T) {
+	// Tree 1 (54.82124, 9.48570) and tree 2 (54.82150, 9.48715) are ~95m apart
+	// in the Solitüde Strand seed cluster. A query near them should return both.
+	queryLat := 54.821517
+	queryLng := 9.487169
+
+	t.Run("should return nearby trees sorted ascending by distance", func(t *testing.T) {
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/storage/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+
+		got, err := r.FindNearestTrees(context.Background(), queryLat, queryLng, 500, 10)
+
+		assert.NoError(t, err)
+		assert.NotEmpty(t, got)
+		for i := 1; i < len(got); i++ {
+			assert.GreaterOrEqual(t, got[i].Distance, got[i-1].Distance, "results must be sorted by distance ascending")
+			assert.NotNil(t, got[i].Tree)
+		}
+	})
+
+	t.Run("should populate sensor field on trees that have one assigned", func(t *testing.T) {
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/storage/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+
+		got, err := r.FindNearestTrees(context.Background(), queryLat, queryLng, 500, 10)
+		assert.NoError(t, err)
+
+		var hasTreeWithSensor, hasTreeWithoutSensor bool
+		for _, tw := range got {
+			if tw.Tree.Sensor != nil {
+				hasTreeWithSensor = true
+			} else {
+				hasTreeWithoutSensor = true
+			}
+		}
+		assert.True(t, hasTreeWithSensor, "expected at least one tree with an assigned sensor in the result")
+		assert.True(t, hasTreeWithoutSensor, "expected at least one tree without a sensor in the result")
+	})
+
+	t.Run("should respect max results limit", func(t *testing.T) {
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/storage/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+
+		got, err := r.FindNearestTrees(context.Background(), queryLat, queryLng, 10000, 1)
+
+		assert.NoError(t, err)
+		assert.Len(t, got, 1)
+	})
+
+	t.Run("should return empty slice when no trees within radius", func(t *testing.T) {
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/storage/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+
+		got, err := r.FindNearestTrees(context.Background(), 0.0, 0.0, 100, 10)
+
+		assert.NoError(t, err)
+		assert.Empty(t, got)
+	})
+
+	t.Run("should return error when context is canceled", func(t *testing.T) {
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/storage/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		got, err := r.FindNearestTrees(ctx, queryLat, queryLng, 500, 10)
+
+		assert.Error(t, err)
+		assert.Nil(t, got)
+	})
+}
+
 func assertExpectedEqualToTree(t *testing.T, expectedTree, tree *entities.Tree) {
 	assert.Equal(t, expectedTree.ID, tree.ID, "ID does not match")
 	assert.Equal(t, expectedTree.PlantingYear, tree.PlantingYear, "PlantingYear does not match")

@@ -27,6 +27,15 @@ type TreeListResponse struct {
 	Pagination *Pagination     `json:"pagination,omitempty" validate:"optional"`
 } //	@Name	TreeList
 
+type TreeWithDistanceResponse struct {
+	Tree           *TreeResponse `json:"tree"`
+	DistanceMeters float64       `json:"distance_meters"`
+} //	@Name	TreeWithDistance
+
+type NearestTreesResponse struct {
+	Data []*TreeWithDistanceResponse `json:"data"`
+} //	@Name	NearestTreeList
+
 type TreeCreateRequest struct {
 	TreeClusterID  *int32                 `json:"tree_cluster_id" validate:"optional"`
 	PlantingYear   int32                  `json:"planting_year" validate:"required"`

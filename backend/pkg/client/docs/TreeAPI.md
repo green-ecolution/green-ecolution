@@ -7,6 +7,7 @@ Method | HTTP request | Description
 [**CreateTree**](TreeAPI.md#CreateTree) | **Post** /v1/tree | Create tree
 [**DeleteTree**](TreeAPI.md#DeleteTree) | **Delete** /v1/tree/{tree_id} | Delete tree
 [**GetAllTrees**](TreeAPI.md#GetAllTrees) | **Get** /v1/tree | Get all trees
+[**GetNearestTrees**](TreeAPI.md#GetNearestTrees) | **Get** /v1/tree/nearest | Get nearest trees
 [**GetPlantingYears**](TreeAPI.md#GetPlantingYears) | **Get** /v1/tree/planting-years | Get distinct planting years
 [**GetTreeById**](TreeAPI.md#GetTreeById) | **Get** /v1/tree/{tree_id} | Get tree by ID
 [**UpdateTree**](TreeAPI.md#UpdateTree) | **Put** /v1/tree/{tree_id} | Update tree
@@ -208,6 +209,76 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**TreeList**](TreeList.md)
+
+### Authorization
+
+[Keycloak](../README.md#Keycloak)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GetNearestTrees
+
+> NearestTreeList GetNearestTrees(ctx).Lat(lat).Lng(lng).Limit(limit).Execute()
+
+Get nearest trees
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/green-ecolution/green-ecolution/backend/pkg/client"
+)
+
+func main() {
+	lat := float32(8.14) // float32 | Latitude (-90 to 90)
+	lng := float32(8.14) // float32 | Longitude (-180 to 180)
+	limit := int32(56) // int32 | Max number of results (server-clamped) (optional)
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.TreeAPI.GetNearestTrees(context.Background()).Lat(lat).Lng(lng).Limit(limit).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `TreeAPI.GetNearestTrees``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `GetNearestTrees`: NearestTreeList
+	fmt.Fprintf(os.Stdout, "Response from `TreeAPI.GetNearestTrees`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGetNearestTreesRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **lat** | **float32** | Latitude (-90 to 90) | 
+ **lng** | **float32** | Longitude (-180 to 180) | 
+ **limit** | **int32** | Max number of results (server-clamped) | 
+
+### Return type
+
+[**NearestTreeList**](NearestTreeList.md)
 
 ### Authorization
 

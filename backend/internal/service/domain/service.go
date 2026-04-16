@@ -33,7 +33,7 @@ func NewService(cfg *config.Config, repos *storage.Repository, eventMananger *wo
 
 	return &service.Services{
 		InfoService:         info.NewInfoService(repos.Info),
-		TreeService:         tree.NewTreeService(repos.Tree, repos.Sensor, repos.TreeCluster, eventMananger),
+		TreeService:         tree.NewTreeService(repos.Tree, repos.Sensor, repos.TreeCluster, eventMananger, cfg.Map),
 		AuthService:         authService,
 		RegionService:       region.NewRegionService(repos.Region),
 		TreeClusterService:  treecluster.NewTreeClusterService(repos.TreeCluster, repos.Tree, repos.Region, eventMananger),

@@ -312,6 +312,67 @@ func (_c *MockTreeService_GetBySensorID_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
+// GetNearestTrees provides a mock function with given fields: ctx, lat, lng, limit
+func (_m *MockTreeService) GetNearestTrees(ctx context.Context, lat float64, lng float64, limit int32) ([]*entities.TreeWithDistance, error) {
+	ret := _m.Called(ctx, lat, lng, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetNearestTrees")
+	}
+
+	var r0 []*entities.TreeWithDistance
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, float64, float64, int32) ([]*entities.TreeWithDistance, error)); ok {
+		return rf(ctx, lat, lng, limit)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, float64, float64, int32) []*entities.TreeWithDistance); ok {
+		r0 = rf(ctx, lat, lng, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*entities.TreeWithDistance)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, float64, float64, int32) error); ok {
+		r1 = rf(ctx, lat, lng, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockTreeService_GetNearestTrees_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetNearestTrees'
+type MockTreeService_GetNearestTrees_Call struct {
+	*mock.Call
+}
+
+// GetNearestTrees is a helper method to define mock.On call
+//   - ctx context.Context
+//   - lat float64
+//   - lng float64
+//   - limit int32
+func (_e *MockTreeService_Expecter) GetNearestTrees(ctx interface{}, lat interface{}, lng interface{}, limit interface{}) *MockTreeService_GetNearestTrees_Call {
+	return &MockTreeService_GetNearestTrees_Call{Call: _e.mock.On("GetNearestTrees", ctx, lat, lng, limit)}
+}
+
+func (_c *MockTreeService_GetNearestTrees_Call) Run(run func(ctx context.Context, lat float64, lng float64, limit int32)) *MockTreeService_GetNearestTrees_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(float64), args[2].(float64), args[3].(int32))
+	})
+	return _c
+}
+
+func (_c *MockTreeService_GetNearestTrees_Call) Return(_a0 []*entities.TreeWithDistance, _a1 error) *MockTreeService_GetNearestTrees_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockTreeService_GetNearestTrees_Call) RunAndReturn(run func(context.Context, float64, float64, int32) ([]*entities.TreeWithDistance, error)) *MockTreeService_GetNearestTrees_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetPlantingYears provides a mock function with given fields: ctx
 func (_m *MockTreeService) GetPlantingYears(ctx context.Context) ([]int32, error) {
 	ret := _m.Called(ctx)

@@ -190,6 +190,68 @@ func (_c *MockTreeRepository_FindNearestTree_Call) RunAndReturn(run func(context
 	return _c
 }
 
+// FindNearestTrees provides a mock function with given fields: ctx, lat, lng, radiusMeters, limit
+func (_m *MockTreeRepository) FindNearestTrees(ctx context.Context, lat float64, lng float64, radiusMeters float64, limit int32) ([]*entities.TreeWithDistance, error) {
+	ret := _m.Called(ctx, lat, lng, radiusMeters, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindNearestTrees")
+	}
+
+	var r0 []*entities.TreeWithDistance
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, float64, float64, float64, int32) ([]*entities.TreeWithDistance, error)); ok {
+		return rf(ctx, lat, lng, radiusMeters, limit)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, float64, float64, float64, int32) []*entities.TreeWithDistance); ok {
+		r0 = rf(ctx, lat, lng, radiusMeters, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*entities.TreeWithDistance)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, float64, float64, float64, int32) error); ok {
+		r1 = rf(ctx, lat, lng, radiusMeters, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockTreeRepository_FindNearestTrees_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindNearestTrees'
+type MockTreeRepository_FindNearestTrees_Call struct {
+	*mock.Call
+}
+
+// FindNearestTrees is a helper method to define mock.On call
+//   - ctx context.Context
+//   - lat float64
+//   - lng float64
+//   - radiusMeters float64
+//   - limit int32
+func (_e *MockTreeRepository_Expecter) FindNearestTrees(ctx interface{}, lat interface{}, lng interface{}, radiusMeters interface{}, limit interface{}) *MockTreeRepository_FindNearestTrees_Call {
+	return &MockTreeRepository_FindNearestTrees_Call{Call: _e.mock.On("FindNearestTrees", ctx, lat, lng, radiusMeters, limit)}
+}
+
+func (_c *MockTreeRepository_FindNearestTrees_Call) Run(run func(ctx context.Context, lat float64, lng float64, radiusMeters float64, limit int32)) *MockTreeRepository_FindNearestTrees_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(float64), args[2].(float64), args[3].(float64), args[4].(int32))
+	})
+	return _c
+}
+
+func (_c *MockTreeRepository_FindNearestTrees_Call) Return(_a0 []*entities.TreeWithDistance, _a1 error) *MockTreeRepository_FindNearestTrees_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockTreeRepository_FindNearestTrees_Call) RunAndReturn(run func(context.Context, float64, float64, float64, int32) ([]*entities.TreeWithDistance, error)) *MockTreeRepository_FindNearestTrees_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAll provides a mock function with given fields: ctx, query
 func (_m *MockTreeRepository) GetAll(ctx context.Context, query entities.TreeQuery) ([]*entities.Tree, int64, error) {
 	ret := _m.Called(ctx, query)

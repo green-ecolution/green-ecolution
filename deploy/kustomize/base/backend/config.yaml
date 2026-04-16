@@ -8,6 +8,10 @@ data:
   PORT: "3000"
   DEVELOPMENT: "true"
   GE_MQTT_BROKER: "eu1.cloud.thethings.industries:1883"
-  GE_MQTT_TOPIC: "v3/sgr-students@zde/devices/tree-sensor/up" 
+  GE_MQTT_TOPIC: "v3/sgr-students@zde/devices/tree-sensor/up"
+
+  GE_MAP_NEAREST_TREE_MAX_RADIUS: "500"
+  GE_MAP_NEAREST_TREE_DEFAULT_LIMIT: "10"
+  GE_MAP_NEAREST_TREE_MAX_LIMIT: "50"
 ---
 

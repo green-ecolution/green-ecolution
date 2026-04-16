@@ -8,6 +8,7 @@ import (
 func RegisterRoutes(r fiber.Router, svc service.TreeService) {
 	r.Get("/", GetAllTrees(svc))
 	r.Get("/planting-years", GetPlantingYears(svc))
+	r.Get("/nearest", GetNearestTrees(svc))
 	r.Get("/:id", GetTreeByID(svc))
 	r.Put("/:id", UpdateTree(svc))
 	r.Post("/", CreateTree(svc))

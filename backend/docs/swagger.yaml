@@ -278,6 +278,15 @@ definitions:
     - bbox
     - center
     type: object
+  NearestTreeList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/TreeWithDistance'
+        type: array
+    required:
+    - data
+    type: object
   Pagination:
     properties:
       current_page:
@@ -857,6 +866,16 @@ definitions:
     - number
     - planting_year
     - species
+    type: object
+  TreeWithDistance:
+    properties:
+      distance_meters:
+        type: number
+      tree:
+        $ref: '#/definitions/Tree'
+    required:
+    - distance_meters
+    - tree
     type: object
   User:
     properties:
@@ -2570,6 +2589,56 @@ paths:
       security:
       - Keycloak: []
       summary: Update tree
+      tags:
+      - Tree
+  /v1/tree/nearest:
+    get:
+      description: |-
+        Finds the nearest trees to a given GPS coordinate, sorted by distance (in meters).
+        Trees with an assigned sensor include their sensor data but are NOT excluded from results.
+        The search radius is server-controlled via configuration.
+      operationId: get-nearest-trees
+      parameters:
+      - description: Latitude (-90 to 90)
+        in: query
+        name: lat
+        required: true
+        type: number
+      - description: Longitude (-180 to 180)
+        in: query
+        name: lng
+        required: true
+        type: number
+      - description: Max number of results (server-clamped)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/NearestTreeList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/HTTPError'
+      security:
+      - Keycloak: []
+      summary: Get nearest trees
       tags:
       - Tree
   /v1/tree/planting-years:

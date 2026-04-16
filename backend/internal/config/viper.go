@@ -136,7 +136,13 @@ func setDefaults() {
 	viper.SetDefault("mqtt.password", "")
 	viper.SetDefault("mqtt.topic", "")
 
-	// Map
+	setMapDefaults()
+}
+
+func setMapDefaults() {
 	viper.SetDefault("map.center", []float64{})
 	viper.SetDefault("map.bbox", []float64{})
+	viper.SetDefault("map.nearest_tree_max_radius", 500.0)
+	viper.SetDefault("map.nearest_tree_default_limit", 10)
+	viper.SetDefault("map.nearest_tree_max_limit", 50)
 }

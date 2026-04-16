@@ -16,6 +16,7 @@
 import * as runtime from '../runtime';
 import type {
   HTTPError,
+  NearestTreeList,
   Tree,
   TreeCreate,
   TreeList,
@@ -24,6 +25,8 @@ import type {
 import {
     HTTPErrorFromJSON,
     HTTPErrorToJSON,
+    NearestTreeListFromJSON,
+    NearestTreeListToJSON,
     TreeFromJSON,
     TreeToJSON,
     TreeCreateFromJSON,
@@ -49,6 +52,12 @@ export interface GetAllTreesRequest {
     wateringStatuses?: Array<string>;
     plantingYears?: Array<number>;
     hasCluster?: boolean;
+}
+
+export interface GetNearestTreesRequest {
+    lat: number;
+    lng: number;
+    limit?: number;
 }
 
 export interface GetTreeByIdRequest {
@@ -211,6 +220,68 @@ export class TreeApi extends runtime.BaseAPI {
      */
     async getAllTrees(requestParameters: GetAllTreesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TreeList> {
         const response = await this.getAllTreesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Finds the nearest trees to a given GPS coordinate, sorted by distance (in meters). Trees with an assigned sensor include their sensor data but are NOT excluded from results. The search radius is server-controlled via configuration.
+     * Get nearest trees
+     */
+    async getNearestTreesRaw(requestParameters: GetNearestTreesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<NearestTreeList>> {
+        if (requestParameters['lat'] == null) {
+            throw new runtime.RequiredError(
+                'lat',
+                'Required parameter "lat" was null or undefined when calling getNearestTrees().'
+            );
+        }
+
+        if (requestParameters['lng'] == null) {
+            throw new runtime.RequiredError(
+                'lng',
+                'Required parameter "lng" was null or undefined when calling getNearestTrees().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['lat'] != null) {
+            queryParameters['lat'] = requestParameters['lat'];
+        }
+
+        if (requestParameters['lng'] != null) {
+            queryParameters['lng'] = requestParameters['lng'];
+        }
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            // oauth required
+            headerParameters["Authorization"] = await this.configuration.accessToken("Keycloak", []);
+        }
+
+
+        let urlPath = `/v1/tree/nearest`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => NearestTreeListFromJSON(jsonValue));
+    }
+
+    /**
+     * Finds the nearest trees to a given GPS coordinate, sorted by distance (in meters). Trees with an assigned sensor include their sensor data but are NOT excluded from results. The search radius is server-controlled via configuration.
+     * Get nearest trees
+     */
+    async getNearestTrees(requestParameters: GetNearestTreesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<NearestTreeList> {
+        const response = await this.getNearestTreesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

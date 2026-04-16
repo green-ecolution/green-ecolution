@@ -1481,6 +1481,78 @@
                 }
             }
         },
+        "/v1/tree/nearest": {
+            "get": {
+                "security": [
+                    {
+                        "Keycloak": []
+                    }
+                ],
+                "description": "Finds the nearest trees to a given GPS coordinate, sorted by distance (in meters).\nTrees with an assigned sensor include their sensor data but are NOT excluded from results.\nThe search radius is server-controlled via configuration.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tree"
+                ],
+                "summary": "Get nearest trees",
+                "operationId": "get-nearest-trees",
+                "parameters": [
+                    {
+                        "type": "number",
+                        "description": "Latitude (-90 to 90)",
+                        "name": "lat",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "number",
+                        "description": "Longitude (-180 to 180)",
+                        "name": "lng",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Max number of results (server-clamped)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/NearestTreeList"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/tree/planting-years": {
             "get": {
                 "security": [
@@ -3559,6 +3631,20 @@
                 }
             }
         },
+        "NearestTreeList": {
+            "type": "object",
+            "required": [
+                "data"
+            ],
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/TreeWithDistance"
+                    }
+                }
+            }
+        },
         "Pagination": {
             "type": "object",
             "required": [
@@ -4382,6 +4468,21 @@
                 },
                 "tree_cluster_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "TreeWithDistance": {
+            "type": "object",
+            "required": [
+                "distance_meters",
+                "tree"
+            ],
+            "properties": {
+                "distance_meters": {
+                    "type": "number"
+                },
+                "tree": {
+                    "$ref": "#/definitions/Tree"
                 }
             }
         },
