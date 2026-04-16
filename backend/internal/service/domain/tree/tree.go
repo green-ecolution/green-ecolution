@@ -82,6 +82,7 @@ func (s *TreeService) GetNearestTrees(ctx context.Context, lat, lng float64, lim
 		limit = maxLimit
 	}
 
+	log.Debug("searching nearest trees", "lat", lat, "lng", lng, "radius", s.mapCfg.NearestTreeMaxRadius, "limit", limit)
 	trees, err := s.treeRepo.FindNearestTrees(ctx, lat, lng, s.mapCfg.NearestTreeMaxRadius, limit)
 	if err != nil {
 		log.Debug("failed to find nearest trees", "error", err, "lat", lat, "lng", lng)
