@@ -4,7 +4,7 @@ import QRScannerView from '@/components/scanner/QRScannerView'
 import SensorGeolocationSummary from '@/components/sensor/SensorGeolocationSummary'
 import useGeolocation, { type GeolocationFix } from '@/hooks/useGeolocation'
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 export const Route = createFileRoute('/_protected/sensors/new/')({
   component: NewSensor,
@@ -55,6 +55,10 @@ function NewSensor() {
     }
   }
 
+  const handleConfirmTree = useCallback((_treeId: number) => {
+    // Tree assignment stored for future backend linking
+  }, [])
+
   const summaryFix = frozenFix ?? (scannedSensorId ? position : null)
 
   return (
@@ -79,6 +83,7 @@ function NewSensor() {
           errorMessage={errorMessage}
           onScanAgain={handleScanAgain}
           onRelocate={handleRelocate}
+          onConfirmTree={handleConfirmTree}
         />
       ) : (
         <QRScannerView

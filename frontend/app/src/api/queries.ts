@@ -35,6 +35,7 @@ import {
   ServerInfo,
   ServicesInfo,
   DataStatistics,
+  NearestTreeList,
 } from './backendApi'
 
 /**
@@ -231,4 +232,11 @@ export const plantingYearsQuery = () =>
   queryOptions<number[]>({
     queryKey: ['planting-years'],
     queryFn: () => treeApi.getPlantingYears(),
+  })
+
+export const nearestTreeQuery = (params: { lat: number; lng: number; limit?: number }) =>
+  queryOptions<NearestTreeList>({
+    queryKey: ['trees', 'nearest', params.lat, params.lng, params.limit],
+    queryFn: () =>
+      treeApi.getNearestTrees({ lat: params.lat, lng: params.lng, limit: params.limit }),
   })

@@ -1,9 +1,24 @@
+import { nearestTreeQuery } from '@/api/queries'
 import GeolocationPermissionNotice from '@/components/geolocation/GeolocationPermissionNotice'
 import GPSStatusCard from '@/components/geolocation/GPSStatusCard'
 import LocationMapPreview from '@/components/geolocation/LocationMapPreview'
+import NearestTreeMapPreview from '@/components/geolocation/NearestTreeMapPreview'
+import NearestTreeList from '@/components/sensor/NearestTreeList'
 import type { GeolocationFix, GeolocationStatus } from '@/hooks/useGeolocation'
-import { Card, CardContent, Button, InlineAlert } from '@green-ecolution/ui'
-import { CheckCircle2, Crosshair, Loader2, MapPin, RotateCw } from 'lucide-react'
+import {
+  Button,
+  InlineAlert,
+  Loading,
+  Alert,
+  AlertContent,
+  AlertTitle,
+  AlertDescription,
+  CopyableText,
+  toast,
+} from '@green-ecolution/ui'
+import { useQuery } from '@tanstack/react-query'
+import { CheckCircle2, Crosshair, Loader2, MapPin, RotateCw, TreeDeciduous } from 'lucide-react'
+import { useCallback, useState } from 'react'
 
 interface SensorGeolocationSummaryProps {
   sensorId: string
@@ -12,6 +27,7 @@ interface SensorGeolocationSummaryProps {
   errorMessage: string | null
   onScanAgain: () => void
   onRelocate: () => void
+  onConfirmTree?: (treeId: number) => void
 }
 
 const MapPlaceholder = ({ status }: { status: GeolocationStatus }) => {
@@ -44,9 +60,36 @@ const SensorGeolocationSummary = ({
   errorMessage,
   onScanAgain,
   onRelocate,
+  onConfirmTree,
 }: SensorGeolocationSummaryProps) => {
   const noticeStatus: 'denied' | 'unsupported' | 'error' | null =
     status === 'denied' || status === 'unsupported' || status === 'error' ? status : null
+
+  const [selectedTreeId, setSelectedTreeId] = useState<number | null>(null)
+  const [confirmed, setConfirmed] = useState(false)
+
+  const {
+    data: nearestTrees,
+    isLoading: treesLoading,
+    isError: treesError,
+    refetch: refetchTrees,
+  } = useQuery({
+    ...nearestTreeQuery({
+      lat: position?.latitude ?? 0,
+      lng: position?.longitude ?? 0,
+    }),
+    enabled: !!position,
+  })
+
+  const trees = nearestTrees?.data ?? []
+  const selectedTree = trees.find((t) => t.tree.id === selectedTreeId)
+
+  const handleConfirm = useCallback(() => {
+    if (!selectedTree) return
+    setConfirmed(true)
+    toast.success(`Sensor wird Baum ${selectedTree.tree.number} zugeordnet`)
+    onConfirmTree?.(selectedTree.tree.id)
+  }, [selectedTree, onConfirmTree])
 
   return (
     <div className="mx-auto w-full max-w-3xl pb-[env(safe-area-inset-bottom)]">
@@ -56,26 +99,22 @@ const SensorGeolocationSummary = ({
         <span>Sensor erfasst</span>
       </div>
 
-      <InlineAlert
-        variant="warning"
-        description="Die Speicherung des Sensors ist noch nicht implementiert."
-        className="mb-4 w-full"
-      />
-
       <div className="grid gap-4 md:grid-cols-2 md:gap-6">
         {/* Sensor-ID — spans both columns */}
-        <Card variant="outlined" className="md:col-span-2">
-          <CardContent className="p-5">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Sensor-ID</p>
-            <p className="mt-1 font-mono text-2xl font-semibold tracking-tight break-all">
-              {sensorId}
-            </p>
-          </CardContent>
-        </Card>
+        <CopyableText value={sensorId} label="Sensor-ID" className="md:col-span-2" />
 
-        {/* Map (anchor) */}
+        {/* Map */}
         <div className="md:col-span-1">
-          {position ? (
+          {position && trees.length > 0 ? (
+            <NearestTreeMapPreview
+              sensorLat={position.latitude}
+              sensorLng={position.longitude}
+              sensorAccuracy={position.accuracy}
+              trees={trees}
+              selectedTreeId={selectedTreeId}
+              onSelectTree={setSelectedTreeId}
+            />
+          ) : position ? (
             <LocationMapPreview
               latitude={position.latitude}
               longitude={position.longitude}
@@ -97,8 +136,54 @@ const SensorGeolocationSummary = ({
           <GPSStatusCard fix={position} title="Erfasster Standort" />
         </div>
 
-        {/* Actions — both secondary until "Sensor speichern" exists. */}
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:col-span-2">
+        {/* Nearest trees */}
+        {position && (
+          <div className="md:col-span-2">
+            {treesLoading && <Loading size="default" label="Bäume in der Nähe werden gesucht…" />}
+
+            {treesError && (
+              <Alert variant="destructive">
+                <AlertContent>
+                  <AlertTitle>Baumsuche fehlgeschlagen</AlertTitle>
+                  <AlertDescription>
+                    Die Suche nach Bäumen in der Nähe ist fehlgeschlagen.
+                  </AlertDescription>
+                </AlertContent>
+                <Button variant="outline" size="sm" onClick={() => void refetchTrees()}>
+                  Erneut versuchen
+                </Button>
+              </Alert>
+            )}
+
+            {!treesLoading && !treesError && trees.length === 0 && (
+              <InlineAlert
+                variant="warning"
+                description="Es wurden keine Bäume in der Nähe gefunden. Überprüfe den Standort oder ordne den Sensor manuell zu."
+              />
+            )}
+
+            {trees.length > 0 && (
+              <NearestTreeList
+                trees={trees}
+                selectedTreeId={selectedTreeId}
+                onSelect={setSelectedTreeId}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Confirmed notice */}
+        {confirmed && (
+          <div className="md:col-span-2">
+            <InlineAlert
+              variant="info"
+              description="Die Verknüpfung wird gespeichert, sobald die Sensor-Synchronisation verfügbar ist."
+            />
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:col-span-2">
           <Button variant="outline" onClick={onScanAgain}>
             <RotateCw className="size-4" />
             Erneut scannen
@@ -107,6 +192,25 @@ const SensorGeolocationSummary = ({
             <MapPin className="size-4" />
             Erneut lokalisieren
           </Button>
+          {trees.length > 0 && (
+            <Button
+              onClick={handleConfirm}
+              disabled={!selectedTreeId || confirmed}
+              variant={confirmed ? 'outline' : 'default'}
+            >
+              {confirmed ? (
+                <>
+                  <CheckCircle2 className="size-4" />
+                  Zugeordnet
+                </>
+              ) : (
+                <>
+                  <TreeDeciduous className="size-4" />
+                  Baum zuordnen
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
     </div>
