@@ -1,6 +1,14 @@
 import createToast from '@/hooks/createToast'
-import { Button, Card, CardContent, CardFooter, CardHeader, CardTitle } from '@green-ecolution/ui'
-import { ArrowRight, CheckCircle2, Copy, RotateCcw } from 'lucide-react'
+import {
+  Button,
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  CopyableText,
+} from '@green-ecolution/ui'
+import { ArrowRight, CheckCircle2, RotateCcw } from 'lucide-react'
 
 interface QRScanResultProps {
   sensorId: string
@@ -39,25 +47,12 @@ const QRScanResult = ({
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <span className="text-xs uppercase tracking-widest text-muted-foreground">Sensor-ID</span>
-          <code className="relative flex items-center font-mono text-lg md:text-xl font-semibold break-all bg-dark-50 rounded-lg pl-3 pr-10 py-2 border border-dark-100">
-            <span className="flex-1">{sensorId}</span>
-            <button
-              type="button"
-              onClick={() => {
-                navigator.clipboard
-                  .writeText(sensorId)
-                  .then(() => showToast('Sensor-ID kopiert', 'success'))
-                  .catch(() => showToast('Sensor-ID konnte nicht kopiert werden', 'error'))
-              }}
-              aria-label="Sensor-ID kopieren"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-dark-100 transition-colors cursor-pointer"
-            >
-              <Copy className="size-4" />
-            </button>
-          </code>
-        </div>
+        <CopyableText
+          value={sensorId}
+          label="Sensor-ID"
+          onCopy={() => showToast('Sensor-ID kopiert', 'success')}
+          onCopyError={() => showToast('Sensor-ID konnte nicht kopiert werden', 'error')}
+        />
         {extra}
       </CardContent>
       <CardFooter className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">

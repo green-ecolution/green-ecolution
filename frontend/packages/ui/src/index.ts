@@ -103,6 +103,10 @@ export type { ChartConfig } from './components/ui/chart'
 // Checkbox
 export { Checkbox } from './components/ui/checkbox'
 
+// CopyableText
+export { CopyableText } from './components/ui/copyable-text'
+export type { CopyableTextProps } from './components/ui/copyable-text'
+
 // DatePickerField
 export { DatePickerField } from './components/ui/date-picker-field'
 export type { DatePickerFieldProps } from './components/ui/date-picker-field'
