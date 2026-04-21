@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper/generated"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper"
 	store "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/testutils"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +22,7 @@ var (
 )
 
 func defaultRegionMappers() RegionMappers {
-	return NewRegionMappers(&generated.InternalRegionRepoMapperImpl{})
+	return NewRegionMappers(&mapper.InternalRegionRepoMapperImpl{})
 }
 
 func TestMain(m *testing.M) {

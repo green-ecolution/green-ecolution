@@ -7,16 +7,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
-	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper/generated"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper"
 	handler "github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/errorhandler"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/singleflight"
-)
-
-var (
-	userMapper = generated.UserHTTPMapperImpl{}
 )
 
 // @Summary		Request to login
@@ -166,7 +162,7 @@ func Register(svc service.AuthService) fiber.Handler {
 			return errorhandler.HandleError(err)
 		}
 
-		response := userMapper.FromResponse(u)
+		response := mapper.UserFromResponse(u)
 
 		return c.Status(fiber.StatusCreated).JSON(response)
 	}
@@ -211,7 +207,7 @@ func GetAllUsers(svc service.AuthService) fiber.Handler {
 
 		data := make([]*entities.UserResponse, len(domainData))
 		for i, domain := range domainData {
-			data[i] = userMapper.FromResponse(domain)
+			data[i] = mapper.UserFromResponse(domain)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entities.UserListResponse{
@@ -254,7 +250,7 @@ func GetUsersByRole(svc service.AuthService) fiber.Handler {
 
 		data := make([]*entities.UserResponse, len(users))
 		for i, user := range users {
-			data[i] = userMapper.FromResponse(user)
+			data[i] = mapper.UserFromResponse(user)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entities.UserListResponse{

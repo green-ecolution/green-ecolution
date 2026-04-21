@@ -3,13 +3,9 @@ package evaluation
 import (
 	"github.com/gofiber/fiber/v2"
 	_ "github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
-	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper/generated"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/errorhandler"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
-)
-
-var (
-	evaluationMapper = generated.EvaluationHTTPMapperImpl{}
 )
 
 // @Summary		Get evaluation data
@@ -31,6 +27,6 @@ func GetEvaluation(svc service.EvaluationService) fiber.Handler {
 			return errorhandler.HandleError(err)
 		}
 
-		return c.JSON(evaluationMapper.FromResponse(domainData))
+		return c.JSON(mapper.EvaluationFromResponse(domainData))
 	}
 }

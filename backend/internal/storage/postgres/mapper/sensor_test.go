@@ -5,12 +5,12 @@ import (
 	"time"
 
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc"
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper/generated"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSensorMapper_FromSql(t *testing.T) {
-	sensorMapper := &generated.InternalSensorRepoMapperImpl{}
+	sensorMapper := &mapper.InternalSensorRepoMapperImpl{}
 
 	t.Run("should convert from sql to entity", func(t *testing.T) {
 		// given
@@ -42,7 +42,7 @@ func TestSensorMapper_FromSql(t *testing.T) {
 }
 
 func TestSensorMapper_FromSqlList(t *testing.T) {
-	sensorMapper := &generated.InternalSensorRepoMapperImpl{}
+	sensorMapper := &mapper.InternalSensorRepoMapperImpl{}
 
 	t.Run("should convert from sql slice to entity slice", func(t *testing.T) {
 		// given

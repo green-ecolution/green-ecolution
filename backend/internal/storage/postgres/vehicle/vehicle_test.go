@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper/generated"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper"
 	store "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/testutils"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +23,7 @@ var (
 )
 
 func defaultVehicleMappers() VehicleRepositoryMappers {
-	return NewVehicleRepositoryMappers(&generated.InternalVehicleRepoMapperImpl{})
+	return NewVehicleRepositoryMappers(&mapper.InternalVehicleRepoMapperImpl{})
 }
 
 func TestMain(m *testing.M) {

@@ -7,15 +7,11 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
-	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper/generated"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper"
 	handler "github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/errorhandler"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils/pagination"
-)
-
-var (
-	treeClusterMapper = generated.TreeClusterHTTPMapperImpl{}
 )
 
 // @Summary		Get all tree clusters
@@ -51,7 +47,7 @@ func GetAllTreeClusters(svc service.TreeClusterService) fiber.Handler {
 
 		data := make([]*entities.TreeClusterInListResponse, len(domainData))
 		for i, domain := range domainData {
-			data[i] = treeClusterMapper.FromInListResponse(domain)
+			data[i] = mapper.TreeClusterFromInListResponse(domain)
 		}
 
 		return c.JSON(entities.TreeClusterListResponse{
@@ -90,7 +86,7 @@ func GetTreeClusterByID(svc service.TreeClusterService) fiber.Handler {
 			return errorhandler.HandleError(err)
 		}
 
-		return c.JSON(treeClusterMapper.FromResponse(domainData))
+		return c.JSON(mapper.TreeClusterFromResponse(domainData))
 	}
 }
 
@@ -117,13 +113,13 @@ func CreateTreeCluster(svc service.TreeClusterService) fiber.Handler {
 			return err
 		}
 
-		domainReq := treeClusterMapper.FromCreateRequest(req)
+		domainReq := mapper.TreeClusterFromCreateRequest(req)
 		domainData, err := svc.Create(ctx, domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)
 		}
 
-		data := treeClusterMapper.FromResponse(domainData)
+		data := mapper.TreeClusterFromResponse(domainData)
 		return c.Status(fiber.StatusCreated).JSON(data)
 	}
 }
@@ -158,13 +154,13 @@ func UpdateTreeCluster(svc service.TreeClusterService) fiber.Handler {
 			return err
 		}
 
-		domainReq := treeClusterMapper.FromUpdateRequest(req)
+		domainReq := mapper.TreeClusterFromUpdateRequest(req)
 		domainData, err := svc.Update(ctx, int32(id), domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)
 		}
 
-		return c.JSON(treeClusterMapper.FromResponse(domainData))
+		return c.JSON(mapper.TreeClusterFromResponse(domainData))
 	}
 }
 

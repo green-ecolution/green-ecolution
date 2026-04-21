@@ -5,8 +5,12 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
 )
 
-// goverter:converter
-// goverter:extend github.com/green-ecolution/green-ecolution/backend/internal/utils:TimeToTime
-type RegionHTTPMapper interface {
-	FromResponse(src *domain.Region) *entities.RegionResponse
+func RegionFromResponse(source *domain.Region) *entities.RegionResponse {
+	if source == nil {
+		return nil
+	}
+	return &entities.RegionResponse{
+		ID:   source.ID,
+		Name: source.Name,
+	}
 }

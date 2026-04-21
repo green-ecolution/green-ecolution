@@ -10,7 +10,6 @@ import (
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/mqtt/entities/sensor"
-	"github.com/green-ecolution/green-ecolution/backend/internal/server/mqtt/entities/sensor/generated"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 )
 
@@ -19,16 +18,14 @@ var (
 )
 
 type Mqtt struct {
-	cfg    *config.Config
-	svc    *service.Services
-	mapper sensor.MqttMqttMapper
+	cfg *config.Config
+	svc *service.Services
 }
 
 func NewMqtt(cfg *config.Config, services *service.Services) *Mqtt {
 	return &Mqtt{
-		cfg:    cfg,
-		svc:    services,
-		mapper: &generated.MqttMqttMapperImpl{},
+		cfg: cfg,
+		svc: services,
 	}
 }
 
@@ -74,7 +71,7 @@ func (m *Mqtt) handleMqttMessage(_ MQTT.Client, msg MQTT.Message) {
 	slog.Info("received sensor data", "sensor_id", sensorData.Device)
 	slog.Debug("detailed sensor data", "sensor_raw_data", fmt.Sprintf("%+v", sensorData))
 
-	domainPayload := m.mapper.FromResponse(sensorData)
+	domainPayload := sensor.FromResponse(sensorData)
 	_, err = m.svc.SensorService.HandleMessage(context.Background(), domainPayload)
 	if err != nil {
 		return

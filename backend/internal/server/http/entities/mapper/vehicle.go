@@ -3,19 +3,78 @@ package mapper
 import (
 	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-// goverter:converter
-// goverter:extend github.com/green-ecolution/green-ecolution/backend/internal/utils:TimeToTime
-// goverter:extend github.com/green-ecolution/green-ecolution/backend/internal/utils:TimeToTimePtr
-// goverter:extend github.com/green-ecolution/green-ecolution/backend/internal/utils:TimeToPtrTime
-// goverter:extend github.com/green-ecolution/green-ecolution/backend/internal/utils:MapKeyValueInterface
-// goverter:extend MapVehicleStatus MapVehicleType MapVehicleStatusReq MapVehicleTypeReq MapDrivingLicense MapDrivingLicenseReq
-type VehicleHTTPMapper interface {
-	FromResponse(*domain.Vehicle) *entities.VehicleResponse
-	FromResponseList([]*domain.Vehicle) []*entities.VehicleResponse
-	FromCreateRequest(*entities.VehicleCreateRequest) *domain.VehicleCreate
-	FromUpdateRequest(*entities.VehicleUpdateRequest) *domain.VehicleUpdate
+func VehicleFromResponse(source *domain.Vehicle) *entities.VehicleResponse {
+	if source == nil {
+		return nil
+	}
+	return &entities.VehicleResponse{
+		ID:             source.ID,
+		CreatedAt:      utils.TimeToTime(source.CreatedAt),
+		UpdatedAt:      utils.TimeToTime(source.UpdatedAt),
+		ArchivedAt:     utils.TimeToPtrTime(source.ArchivedAt),
+		NumberPlate:    source.NumberPlate,
+		Description:    source.Description,
+		WaterCapacity:  source.WaterCapacity,
+		Status:         MapVehicleStatus(source.Status),
+		Type:           MapVehicleType(source.Type),
+		Model:          source.Model,
+		DrivingLicense: MapDrivingLicense(source.DrivingLicense),
+		Height:         source.Height,
+		Width:          source.Width,
+		Length:         source.Length,
+		Weight:         source.Weight,
+		Provider:       source.Provider,
+		AdditionalInfo: utils.MapKeyValueInterface(source.AdditionalInfo),
+	}
+}
+
+func VehicleFromResponseList(source []*domain.Vehicle) []*entities.VehicleResponse {
+	return utils.MapSlice(source, VehicleFromResponse)
+}
+
+func VehicleFromCreateRequest(source *entities.VehicleCreateRequest) *domain.VehicleCreate {
+	if source == nil {
+		return nil
+	}
+	return &domain.VehicleCreate{
+		NumberPlate:    source.NumberPlate,
+		Description:    source.Description,
+		WaterCapacity:  source.WaterCapacity,
+		Status:         MapVehicleStatusReq(source.Status),
+		Type:           MapVehicleTypeReq(source.Type),
+		Model:          source.Model,
+		DrivingLicense: MapDrivingLicenseReq(source.DrivingLicense),
+		Height:         source.Height,
+		Width:          source.Width,
+		Length:         source.Length,
+		Weight:         source.Weight,
+		Provider:       source.Provider,
+		AdditionalInfo: utils.MapKeyValueInterface(source.AdditionalInfo),
+	}
+}
+
+func VehicleFromUpdateRequest(source *entities.VehicleUpdateRequest) *domain.VehicleUpdate {
+	if source == nil {
+		return nil
+	}
+	return &domain.VehicleUpdate{
+		NumberPlate:    source.NumberPlate,
+		Description:    source.Description,
+		WaterCapacity:  source.WaterCapacity,
+		Status:         MapVehicleStatusReq(source.Status),
+		Type:           MapVehicleTypeReq(source.Type),
+		Model:          source.Model,
+		DrivingLicense: MapDrivingLicenseReq(source.DrivingLicense),
+		Height:         source.Height,
+		Width:          source.Width,
+		Length:         source.Length,
+		Weight:         source.Weight,
+		Provider:       source.Provider,
+		AdditionalInfo: utils.MapKeyValueInterface(source.AdditionalInfo),
+	}
 }
 
 func MapVehicleStatus(vehicleStatus domain.VehicleStatus) entities.VehicleStatus {

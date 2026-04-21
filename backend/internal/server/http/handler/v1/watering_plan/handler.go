@@ -9,16 +9,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
-	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper/generated"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper"
 	handler "github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/errorhandler"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils/pagination"
-)
-
-var (
-	wateringPlanMapper = generated.WateringPlanHTTPMapperImpl{}
 )
 
 // @Summary		Get all watering plans
@@ -52,7 +48,7 @@ func GetAllWateringPlans(svc service.WateringPlanService) fiber.Handler {
 
 		data := make([]*entities.WateringPlanInListResponse, len(domainData))
 		for i, domain := range domainData {
-			data[i] = wateringPlanMapper.FromInListResponse(domain)
+			data[i] = mapper.WateringPlanFromInListResponse(domain)
 		}
 
 		return c.JSON(entities.WateringPlanListResponse{
@@ -91,7 +87,7 @@ func GetWateringPlanByID(svc service.WateringPlanService) fiber.Handler {
 			return errorhandler.HandleError(err)
 		}
 
-		return c.JSON(wateringPlanMapper.FromResponse(domainData))
+		return c.JSON(mapper.WateringPlanFromResponse(domainData))
 	}
 }
 
@@ -118,13 +114,13 @@ func CreateWateringPlan(svc service.WateringPlanService) fiber.Handler {
 			return err
 		}
 
-		domainReq := wateringPlanMapper.FromCreateRequest(req)
+		domainReq := mapper.WateringPlanFromCreateRequest(req)
 		domainData, err := svc.Create(ctx, domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)
 		}
 
-		data := wateringPlanMapper.FromResponse(domainData)
+		data := mapper.WateringPlanFromResponse(domainData)
 		return c.Status(fiber.StatusCreated).JSON(data)
 	}
 }
@@ -159,13 +155,13 @@ func UpdateWateringPlan(svc service.WateringPlanService) fiber.Handler {
 			return err
 		}
 
-		domainReq := wateringPlanMapper.FromUpdateRequest(req)
+		domainReq := mapper.WateringPlanFromUpdateRequest(req)
 		domainData, err := svc.Update(ctx, int32(id), domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)
 		}
 
-		return c.JSON(wateringPlanMapper.FromResponse(domainData))
+		return c.JSON(mapper.WateringPlanFromResponse(domainData))
 	}
 }
 

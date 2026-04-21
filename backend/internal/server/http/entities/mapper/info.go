@@ -5,16 +5,72 @@ import (
 
 	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-// goverter:converter
-// goverter:extend github.com/green-ecolution/green-ecolution/backend/internal/utils:TimeToTime github.com/green-ecolution/green-ecolution/backend/internal/utils:URLToURL github.com/green-ecolution/green-ecolution/backend/internal/utils:TimeDurationToTimeDuration github.com/green-ecolution/green-ecolution/backend/internal/utils:StringToTime github.com/green-ecolution/green-ecolution/backend/internal/utils:StringToURL github.com/green-ecolution/green-ecolution/backend/internal/utils:StringToNetIP
-// goverter:extend github.com/green-ecolution/green-ecolution/backend/internal/utils:StringToDuration github.com/green-ecolution/green-ecolution/backend/internal/utils:TimeToString github.com/green-ecolution/green-ecolution/backend/internal/utils:NetURLToString github.com/green-ecolution/green-ecolution/backend/internal/utils:NetIPToString github.com/green-ecolution/green-ecolution/backend/internal/utils:TimeDurationToString
-// goverter:extend MapCenter MapBbox MapServiceStatusItems MapServiceStatusItemsReverse
-type InfoHTTPMapper interface {
-	ToResponse(src *domain.App) *entities.AppInfoResponse
-	ServerToResponse(src *domain.Server) *entities.ServerResponse
-	ServicesToResponse(src *domain.Services) *entities.ServicesResponse
+func InfoToResponse(source *domain.App) *entities.AppInfoResponse {
+	if source == nil {
+		return nil
+	}
+	return &entities.AppInfoResponse{
+		Version:     source.Version,
+		VersionInfo: versionInfoToResponse(source.VersionInfo),
+		BuildTime:   utils.TimeToString(source.BuildTime),
+		GoVersion:   source.GoVersion,
+		Git:         gitToResponse(source.Git),
+		Map:         mapToResponse(source.Map),
+	}
+}
+
+func InfoServerToResponse(source *domain.Server) *entities.ServerResponse {
+	if source == nil {
+		return nil
+	}
+	return &entities.ServerResponse{
+		OS:        source.OS,
+		Arch:      source.Arch,
+		Hostname:  source.Hostname,
+		URL:       utils.NetURLToString(source.URL),
+		IP:        utils.NetIPToString(source.IP),
+		Port:      source.Port,
+		Interface: source.Interface,
+		Uptime:    utils.TimeDurationToString(source.Uptime),
+	}
+}
+
+func InfoServicesToResponse(source *domain.Services) *entities.ServicesResponse {
+	if source == nil {
+		return nil
+	}
+	return &entities.ServicesResponse{
+		Items: MapServiceStatusItems(source.Items),
+	}
+}
+
+func versionInfoToResponse(source domain.VersionInfo) entities.VersionInfoResponse {
+	return entities.VersionInfoResponse{
+		Current:         source.Current,
+		Latest:          source.Latest,
+		UpdateAvailable: source.UpdateAvailable,
+		IsDevelopment:   source.IsDevelopment,
+		IsStage:         source.IsStage,
+		ReleaseURL:      source.ReleaseURL,
+	}
+}
+
+func gitToResponse(source domain.Git) entities.GitResponse {
+	return entities.GitResponse{
+		Branch:     source.Branch,
+		Commit:     source.Commit,
+		Repository: utils.NetURLToString(source.Repository),
+	}
+}
+
+func mapToResponse(source domain.Map) entities.MapResponse {
+	return entities.MapResponse{
+		Center: MapBbox(source.Center),
+		BBox:   MapBbox(source.BBox),
+	}
 }
 
 func MapCenter(src []float64) []float64 {
