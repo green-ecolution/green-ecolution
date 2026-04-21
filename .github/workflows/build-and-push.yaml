@@ -27,6 +27,10 @@ on:
         required: false
         type: string
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
 env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: green-ecolution/green-ecolution
@@ -34,13 +38,24 @@ env:
 jobs:
   check-release-pr:
     runs-on: ubuntu-latest
+    timeout-minutes: 2
     outputs:
       should-build: ${{ steps.check.outputs.should-build }}
     steps:
       - name: Check if should build
         id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # Skip if latest commit was pushed by our app bot (kustomize update)
+            AUTHOR=$(gh api "repos/${{ github.repository }}/commits/${{ github.event.pull_request.head.sha }}" --jq '.author.login // empty')
+            if [[ "$AUTHOR" == *"[bot]" ]]; then
+              echo "should-build=false" >> $GITHUB_OUTPUT
+              echo "ℹ️ Skipping: latest commit authored by bot ($AUTHOR)"
+              exit 0
+            fi
+
             if [[ "${{ contains(github.event.pull_request.labels.*.name, 'autorelease: pending') }}" == "true" ]]; then
               echo "should-build=true" >> $GITHUB_OUTPUT
               echo "✅ Release PR detected, will build"
@@ -56,6 +71,7 @@ jobs:
 
   determine-environment:
     runs-on: ubuntu-latest
+    timeout-minutes: 2
     needs: check-release-pr
     if: needs.check-release-pr.outputs.should-build == 'true'
     outputs:
@@ -125,6 +141,7 @@ jobs:
 
   build-migrations:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [check-release-pr, determine-environment]
     if: needs.check-release-pr.outputs.should-build == 'true'
     permissions:
@@ -154,11 +171,12 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:${{ needs.determine-environment.outputs.image-tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=build-migrations
+          cache-to: type=gha,mode=max,scope=build-migrations
 
   build-backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [check-release-pr, determine-environment]
     if: needs.check-release-pr.outputs.should-build == 'true'
     permissions:
@@ -199,11 +217,12 @@ jobs:
             APP_GIT_BRANCH=${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
             APP_GIT_REPOSITORY=${{ github.repository }}
             APP_BUILD_TIME=${{ steps.build-time.outputs.timestamp }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=build-backend
+          cache-to: type=gha,mode=max,scope=build-backend
 
   build-frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [check-release-pr, determine-environment]
     if: needs.check-release-pr.outputs.should-build == 'true'
     permissions:
@@ -237,11 +256,12 @@ jobs:
             ENV=${{ needs.determine-environment.outputs.environment == 'stage' && 'dev' || 'prod' }}
             BASEURL=/api
             APP_VERSION=${{ needs.determine-environment.outputs.image-tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=build-frontend
+          cache-to: type=gha,mode=max,scope=build-frontend
 
   update-kustomize:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs:
       [
         check-release-pr,
@@ -344,7 +364,7 @@ jobs:
             git add deploy/kustomize/demo/kustomization.yaml
           fi
 
-          if git commit -m "chore: update ${ENV} image tags to ${TAG} [skip ci]"; then
+          if git commit -m "chore: update ${ENV} image tags to ${TAG}"; then
             git push origin ${TARGET_BRANCH}
             echo "✅ Kustomize ${ENV} updated on branch ${TARGET_BRANCH}"
             if [[ "$IS_RELEASE" == "true" ]]; then
@@ -396,6 +416,7 @@ jobs:
 
   log-build-info:
     runs-on: ubuntu-latest
+    timeout-minutes: 2
     needs:
       [
         check-release-pr,

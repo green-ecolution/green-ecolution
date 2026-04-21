@@ -68,22 +68,31 @@ setup:
     @command -v pnpm >/dev/null 2>&1 || { echo "pnpm missing (hint: corepack enable)"; exit 1; }
     cd {{ frontend_dir }} && pnpm install
 
+# Compile the Go binary (assumes {{ backend_fe_dist }} is prepared)
+_compile-backend:
+    @echo "Compiling Go binary..."
+    mkdir -p {{ backend_fe_dist }}
+    test -f {{ backend_fe_dist }}/index.html || echo "<!-- placeholder for go:embed -->" > {{ backend_fe_dist }}/index.html
+    cd {{ backend_dir }} && CGO_ENABLED=1 go build {{ goflags }} -o ../bin/{{ binary_name }} .
+
 # Build frontend (pnpm)
 build-frontend:
     @echo "Building frontend..."
-    @command -v pnpm >/dev/null 2>&1 || { echo "pnpm missing (hint: corepack enable)"; exit 1; }
+    @command -v pnpm >/dev/null 2>&1 || { echo "pnpm missing"; exit 1; }
     cd {{ frontend_dir }} && pnpm install --frozen-lockfile
     cd {{ frontend_dir }} && pnpm run build
+    @echo "Frontend build done."
 
-# Build backend (includes frontend)
-build-backend: build-frontend
-    @echo "Building backend..."
+# Build the Go backend (fast; placeholder frontend/dist for go:embed)
+build-backend: _compile-backend
+    @echo "Backend build done."
+
+# Full build: frontend + backend with embedded assets
+build: build-frontend
+    @echo "Embedding frontend into backend..."
     mkdir -p {{ backend_fe_dist }}
     cp -R {{ frontend_dist }}/. {{ backend_fe_dist }}/
-    cd {{ backend_dir }} && CGO_ENABLED=1 go build {{ goflags }} -o ../bin/{{ binary_name }} .
-
-# Build backend + frontend
-build: build-backend
+    @just _compile-backend
     @echo "Build done."
 
 # Build for all platforms
@@ -109,7 +118,7 @@ build-windows:
     cd {{ backend_dir }} && GOARCH=amd64 GOOS=windows CGO_ENABLED=1 go build {{ goflags }} -o ../bin/{{ binary_name }}-windows .
 
 # Run backend binary
-run: build-backend
+run: build
     @echo "Running backend..."
     ./bin/{{ binary_name }} -config ./backend/config/config.yaml
 
@@ -269,12 +278,30 @@ infra-down:
     @echo "Infra down (delete volumes)..."
     docker compose -f compose.yaml down -v
 
-# Run backend code generation (sqlc, go:generate)
-generate:
-    @echo "Generating backend..."
+# Run sqlc code generation
+generate-sqlc:
+    @echo "Generating sqlc..."
     cd {{ backend_dir }} && go tool sqlc generate
-    cd {{ backend_dir }} && go generate
+
+# Run go:generate directives (mocks, OpenAPI entities, etc.)
+generate-go:
+    @echo "Running go generate..."
+    cd {{ backend_dir }} && go generate ./...
+
+# Run frontend code generation (pnpm generate:local)
+generate-frontend:
+    @echo "Generating frontend..."
+    @command -v pnpm >/dev/null 2>&1 || { echo "pnpm missing (hint: corepack enable)"; exit 1; }
+    cd {{ frontend_dir }} && pnpm install --frozen-lockfile
     cd {{ frontend_dir }} && pnpm generate:local
+
+# Run all backend code generation (sqlc + go generate)
+generate-backend: generate-sqlc generate-go
+    @echo "Backend generation done."
+
+# Run all code generation (backend + frontend)
+generate: generate-backend generate-frontend
+    @echo "All code generation done."
 
 # Generate backend client from OpenAPI spec
 generate-client:

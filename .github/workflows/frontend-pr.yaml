@@ -21,6 +21,7 @@ jobs:
             frontend:
               - 'frontend/**'
               - '.github/workflows/frontend-pr.yaml'
+              - '.github/actions/setup-frontend/**'
 
   build:
     needs: changes
@@ -30,21 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v5
-        with:
-          package_json_file: "./frontend/package.json"
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: "pnpm"
-          cache-dependency-path: "./frontend/pnpm-lock.yaml"
-
-      - name: Install Dependencies
-        working-directory: ./frontend
-        run: pnpm install --frozen-lockfile
-
+      - uses: ./.github/actions/setup-frontend
       - name: Build
         working-directory: ./frontend
         run: pnpm build
@@ -57,27 +44,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v5
-        with:
-          package_json_file: "./frontend/package.json"
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: "pnpm"
-          cache-dependency-path: "./frontend/pnpm-lock.yaml"
-
-      - name: Install Dependencies
-        working-directory: ./frontend
-        run: pnpm install --frozen-lockfile
-
-      - name: Build backend-client and plugin-interface
+      - uses: ./.github/actions/setup-frontend
+      - name: Build workspace dependencies
         working-directory: ./frontend
         run: pnpm --filter=!frontend -r build
-
-      - name: Linter
-        continue-on-error: false
+      - name: Lint
         working-directory: ./frontend
         run: pnpm lint
 
@@ -89,25 +60,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v5
-        with:
-          package_json_file: "./frontend/package.json"
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: "pnpm"
-          cache-dependency-path: "./frontend/pnpm-lock.yaml"
-
-      - name: Install Dependencies
-        working-directory: ./frontend
-        run: pnpm install --frozen-lockfile
-
-      - name: Build backend-client and plugin-interface
+      - uses: ./.github/actions/setup-frontend
+      - name: Build workspace dependencies
         working-directory: ./frontend
         run: pnpm --filter=!frontend -r build
-
       - name: Test
         working-directory: ./frontend
         run: pnpm test
@@ -118,10 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
+      - uses: docker/setup-buildx-action@v4
       - name: Test frontend Dockerfile
         uses: docker/build-push-action@v7
         with:
@@ -129,3 +82,28 @@ jobs:
           file: ./frontend/Dockerfile
           push: false
           tags: frontend:test
+          cache-from: type=gha,scope=frontend-dockerfile
+          cache-to: type=gha,mode=max,scope=frontend-dockerfile
+
+  check_generated:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-frontend
+      - name: Generate frontend code
+        working-directory: ./frontend
+        run: pnpm generate:local
+      - name: Check generated code is fresh
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "::error::Generated frontend code is out of date."
+            echo "Please run 'just generate-frontend' (or 'pnpm generate:local' in ./frontend) locally and commit the updated files."
+            echo
+            git status --short
+            echo
+            git diff
+            exit 1
+          fi
+          echo "Generated frontend code is up to date."
