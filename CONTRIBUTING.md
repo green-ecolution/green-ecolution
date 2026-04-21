@@ -35,15 +35,15 @@ Be respectful and constructive in all interactions. We welcome contributors of a
 ### Installation
 
 ```bash
-make setup       # Install Go and pnpm dependencies
-make infra/up    # Start infrastructure (Postgres, Keycloak, MinIO, etc.)
-make run/live    # Run backend with hot reload
+just setup       # Install Go and pnpm dependencies
+just infra-up    # Start infrastructure (Postgres, Keycloak, MinIO, etc.)
+just run-live    # Run backend with hot reload
 ```
 
 Frontend dev server (separate terminal):
 
 ```bash
-make fe/dev
+just fe-dev
 ```
 
 For a reproducible environment, use `nix develop`.
@@ -52,10 +52,10 @@ For a reproducible environment, use `nix develop`.
 
 | Command | Description |
 |---------|-------------|
-| `make test` | Run all tests |
-| `make lint` | Lint Go + frontend |
-| `make generate` | Run code generation |
-| `make migrate/up` | Apply database migrations |
+| `just test` | Run all tests |
+| `just lint` | Lint Go + frontend |
+| `just generate` | Run code generation |
+| `just migrate-up` | Apply database migrations |
 
 ## Making Changes
 
@@ -80,8 +80,8 @@ git checkout -b feature/your-feature-name
 
 1. Write your code
 2. Add tests for new functionality
-3. Ensure all tests pass: `make test`
-4. Ensure linting passes: `make lint`
+3. Ensure all tests pass: `just test`
+4. Ensure linting passes: `just lint`
 5. Update documentation if needed
 
 ## Commit Guidelines
@@ -162,8 +162,8 @@ BREAKING CHANGE: Tree response now includes nested cluster object
 Before requesting review:
 
 - [ ] Code compiles without errors
-- [ ] All tests pass (`make test`)
-- [ ] No new linter warnings (`make lint`)
+- [ ] All tests pass (`just test`)
+- [ ] No new linter warnings (`just lint`)
 - [ ] Documentation updated (if applicable)
 - [ ] Acceptance criteria from issue fulfilled
 

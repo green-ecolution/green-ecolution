@@ -106,7 +106,7 @@ See [`packages/plugin-interface/README.md`](packages/plugin-interface/README.md)
 
 - [Node.js](https://nodejs.org/en/) (recommended via `corepack` or `fnm`)
 - [pnpm](https://pnpm.io/)
-- [Make](https://www.gnu.org/software/make/)
+- [just](https://github.com/casey/just)
 - Optional: [Nix](https://nixos.org/) for reproducible setup
 
 ### Setup ⚙️
@@ -114,7 +114,7 @@ See [`packages/plugin-interface/README.md`](packages/plugin-interface/README.md)
 From the repository root (recommended):
 
 ```bash
-make setup
+just setup
 ```
 
 or manually inside the frontend folder:
@@ -128,7 +128,7 @@ pnpm install
 Start the development server:
 
 ```bash
-make fe/dev
+just fe-dev
 ```
 
 Or directly with pnpm:
@@ -151,7 +151,7 @@ The frontend will be available at: 👉 <http://localhost:5173>
 Build the production-ready frontend:
 
 ```bash
-make build/frontend
+just build-frontend
 ```
 
 The build output is placed in:
@@ -160,7 +160,7 @@ The build output is placed in:
 frontend/dist/
 ```
 
-When running `make build` from the repository root, the build artifacts are automatically embedded into the backend binary for unified deployment.
+When running `just build` from the repository root, the build artifacts are automatically embedded into the backend binary for unified deployment.
 
 ### Regenerating API Client 🔄
 
@@ -182,8 +182,8 @@ pnpm run build:backend-client
 ### Linting & Testing ✅
 
 ```bash
-make lint
-make test
+just lint
+just test
 ```
 
 or directly:
