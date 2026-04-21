@@ -1,0 +1,19 @@
+http:
+  routers:
+    backend-dev:
+      rule: "Host(`${APP_HOST}`) && PathPrefix(`/api`)"
+      entryPoints: [${TRAEFIK_ENTRYPOINT}]
+      service: backend-dev
+    frontend-dev:
+      rule: "Host(`${APP_HOST}`)"
+      entryPoints: [${TRAEFIK_ENTRYPOINT}]
+      service: frontend-dev
+  services:
+    backend-dev:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3030"
+    frontend-dev:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:5173"

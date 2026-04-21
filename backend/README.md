@@ -33,10 +33,10 @@ For further information, visit:
 
 ### 1. Build and run the backend (with Docker Compose)
 
-The easiest way to start the full stack (backend + infrastructure) locally is via **Make**:
+The easiest way to start the full stack (backend + infrastructure) locally is via **just**:
 
 ```bash
-make run/docker
+just run-docker
 ```
 
 This command:
@@ -141,7 +141,7 @@ The backend follows a **layered architecture** with clear separation of concerns
 - [Golang](https://go.dev/)
 - [Air](https://github.com/air-verse/air) for live reload
 - [Mockery](https://github.com/vektra/mockery) `v2.52.2` for generating mocks
-- [Make](https://www.gnu.org/software/make/)
+- [just](https://github.com/casey/just)
 - [Docker](https://github.com/docker)
 - [Docker Compose](https://github.com/docker/compose)
 - Optional: [Nix](https://nixos.org/) (for fully reproducible environments)
@@ -151,19 +151,19 @@ The backend follows a **layered architecture** with clear separation of concerns
 Install required tools:
 
 ```bash
-make setup
+just setup
 ```
 
 Generate code:
 
 ```bash
-make generate
+just generate
 ```
 
 Start the local infrastructure (Postgres, Valhalla, Keycloak, etc.):
 
 ```bash
-make infra/up
+just infra-up
 ```
 
 ### Running the Project ▶️
@@ -171,13 +171,13 @@ make infra/up
 With live reload:
 
 ```bash
-make run/live
+just run-live
 ```
 
 Without live reload:
 
 ```bash
-make run
+just run
 ```
 
 👉 Once the service is up and running, you can access it at: [http://localhost:3000](http://localhost:3000)
@@ -185,13 +185,13 @@ make run
 ### Testing 🧪
 
 ```bash
-make test
+just test
 ```
 
 Verbose mode:
 
 ```bash
-make test/verbose
+just test-verbose
 ```
 
 ### Code Quality 🧹
@@ -199,11 +199,11 @@ make test/verbose
 Format and tidy Go modules:
 
 ```bash
-make tidy
+just tidy
 ```
 
 ```bash
-make lint
+just lint
 ```
 
 ### Database Migrations 🧱
@@ -211,25 +211,25 @@ make lint
 Create a new migration:
 
 ```bash
-make migrate/new name=create_users_table
+just migrate-new name=create_users_table
 ```
 
 Apply migrations:
 
 ```bash
-make migrate/up
+just migrate-up
 ```
 
 Rollback:
 
 ```bash
-make migrate/down
+just migrate-down
 ```
 
 Seed example data:
 
 ```bash
-make seed/up
+just seed-up
 ```
 
 ## How to Contribute 🤝

@@ -31,7 +31,7 @@ Urban green spaces need water - but how much, and when? City maintenance teams o
 The fastest way to run everything locally:
 
 ```bash
-make run/dev     # Start infra, run migrations, launch backend + frontend
+just run-dev     # Start infra, run migrations, launch backend + frontend
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
@@ -41,8 +41,8 @@ Open [http://localhost:3000](http://localhost:3000).
 For valid TLS certificates (required for PWA testing on mobile), you need a domain with DNS API access on [Porkbun](https://porkbun.com). Either ask the `green-ecolution.dev` domain owner for API keys, or register your own domain on Porkbun and set `DOMAIN=your-domain.dev` in `.env`.
 
 1. Copy `.env.example` to `.env` and add your Porkbun API keys (and optionally `DOMAIN`)
-2. Create DNS records: `make dns/setup`
-3. Start dev environment: `make run/dev`
+2. Create DNS records: `just dns-setup`
+3. Start dev environment: `just run-dev`
 
 Open `https://<your-ip>.green-ecolution.dev:3443` (or your custom domain).
 
@@ -57,31 +57,31 @@ Open `https://<your-ip>.green-ecolution.dev:3443` (or your custom domain).
 ### Installation
 
 ```bash
-make setup       # Install Go and pnpm dependencies
-make build       # Build frontend + backend
+just setup       # Install Go and pnpm dependencies
+just build       # Build frontend + backend
 ```
 
 ### Common Commands
 
 | Command | Description |
 |---------|-------------|
-| `make run/dev` | Backend + frontend dev via Traefik |
-| `make run/live` | Backend with hot reload (standalone) |
-| `make run/docker` | Full stack via Docker Compose |
-| `make infra/up` | Start infrastructure only |
-| `make dns/setup` | Create Porkbun DNS records for HTTPS |
-| `make dns/cleanup` | Remove Porkbun DNS records |
-| `make test` | Run all tests |
-| `make lint` | Lint Go + frontend |
-| `make generate` | Run code generation (sqlc, mappers, swagger) |
-| `make migrate/up` | Apply database migrations |
-| `make migrate/new name=...` | Create new migration |
+| `just run-dev` | Backend + frontend dev via Traefik |
+| `just run-live` | Backend with hot reload (standalone) |
+| `just run-docker` | Full stack via Docker Compose |
+| `just infra-up` | Start infrastructure only |
+| `just dns-setup` | Create Porkbun DNS records for HTTPS |
+| `just dns-cleanup` | Remove Porkbun DNS records |
+| `just test` | Run all tests |
+| `just lint` | Lint Go + frontend |
+| `just generate` | Run code generation (sqlc, mappers, swagger) |
+| `just migrate-up` | Apply database migrations |
+| `just migrate-new name=...` | Create new migration |
 
 > For a reproducible dev environment, you can also use `nix develop`.
 
 ### Services
 
-When running `make infra/up`, these services are available via Traefik:
+When running `just infra-up`, these services are available via Traefik:
 
 **Without Porkbun keys** (HTTP on port 3000):
 
@@ -123,10 +123,10 @@ PWA features like service workers require HTTPS. The project uses [Let's Encrypt
 ```bash
 # 1. Add Porkbun API keys to .env (see .env.example)
 # 2. Create DNS records pointing to your local IP
-make dns/setup
+just dns-setup
 
 # 3. Start dev environment (HTTPS on port 3443)
-make run/dev
+just run-dev
 ```
 
 Your local IP is auto-detected. Access the app at `https://<ip>.green-ecolution.dev:3443`.
@@ -143,7 +143,7 @@ With HTTPS enabled, the app is accessible from any device on the local network. 
 Without Porkbun API keys, the dev environment runs on plain HTTP (port 3000). PWA install and service workers won't work, but general development is unaffected.
 
 ```bash
-make run/dev   # HTTP on localhost:3000
+just run-dev   # HTTP on localhost:3000
 ```
 
 ### Testing the service worker
@@ -154,7 +154,7 @@ The service worker is **disabled in `vite dev`** (`devOptions.enabled: false` in
 cd frontend/app && pnpm build && pnpm preview
 ```
 
-…or run the full Docker stack via `make run/docker`.
+…or run the full Docker stack via `just run-docker`.
 
 ## Configuration
 

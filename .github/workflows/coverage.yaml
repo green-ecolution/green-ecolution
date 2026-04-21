@@ -18,16 +18,10 @@ concurrency:
 jobs:
   coverage:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
-
-      - name: Setup Dependencies
-        run: sudo apt-get update && sudo apt-get install -y libgeos-dev libproj-dev
-
-      - name: Setup Go
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: ./backend/go.mod
+      - uses: ./.github/actions/setup-backend
 
       - name: Run tests with coverage
         working-directory: ./backend

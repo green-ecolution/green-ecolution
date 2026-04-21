@@ -12,10 +12,15 @@ env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: green-ecolution/green-ecolution
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   check-changes:
     name: Check for changes
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       should-build: ${{ steps.check.outputs.should-build }}
       tag: ${{ steps.tag.outputs.tag }}
@@ -92,6 +97,7 @@ jobs:
     needs: check-changes
     if: needs.check-changes.outputs.should-build == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
       packages: write
@@ -131,8 +137,8 @@ jobs:
             APP_GIT_BRANCH=main
             APP_GIT_REPOSITORY=${{ github.repository }}
             APP_BUILD_TIME=${{ github.event.head_commit.timestamp }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=nightly-backend
+          cache-to: type=gha,mode=max,scope=nightly-backend
 
       - name: Build and push frontend
         if: matrix.component == 'frontend'
@@ -149,8 +155,8 @@ jobs:
             ENV=dev
             BASEURL=/api
             APP_VERSION=${{ needs.check-changes.outputs.tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=nightly-frontend
+          cache-to: type=gha,mode=max,scope=nightly-frontend
 
       - name: Build and push migrations
         if: matrix.component == 'migrations'
@@ -163,14 +169,15 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:${{ needs.check-changes.outputs.tag }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:nightly
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=nightly-migrations
+          cache-to: type=gha,mode=max,scope=nightly-migrations
 
   build-nix-artifacts:
     name: Build Nix artifacts
     needs: check-changes
     if: needs.check-changes.outputs.should-build == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -230,6 +237,7 @@ jobs:
     needs: [check-changes, build-nightly-images, build-nix-artifacts]
     if: needs.check-changes.outputs.should-build == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: write
     steps:
@@ -291,6 +299,7 @@ jobs:
     needs: create-release
     if: needs.check-changes.outputs.should-build == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: write
     steps:
