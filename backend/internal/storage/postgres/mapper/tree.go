@@ -23,8 +23,8 @@ func (c *InternalTreeRepoMapperImpl) FromSql(source *sqlc.Tree) (*entities.Tree,
 	}
 	return &entities.Tree{
 		ID:             source.ID,
-		CreatedAt:      utils.TimeToTime(source.CreatedAt),
-		UpdatedAt:      utils.TimeToTime(source.UpdatedAt),
+		CreatedAt:      source.CreatedAt,
+		UpdatedAt:      source.UpdatedAt,
 		PlantingYear:   source.PlantingYear,
 		Species:        source.Species,
 		Number:         source.Number,

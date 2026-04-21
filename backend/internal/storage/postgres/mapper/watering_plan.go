@@ -24,9 +24,9 @@ func (c *InternalWateringPlanRepoMapperImpl) FromSql(source *sqlc.WateringPlan) 
 	}
 	result := &entities.WateringPlan{
 		ID:               source.ID,
-		CreatedAt:        utils.TimeToTime(source.CreatedAt),
-		UpdatedAt:        utils.TimeToTime(source.UpdatedAt),
-		Date:             utils.TimeToTime(source.Date),
+		CreatedAt:        source.CreatedAt,
+		UpdatedAt:        source.UpdatedAt,
+		Date:             source.Date,
 		Description:      source.Description,
 		Status:           MapWateringPlanStatus(source.Status),
 		CancellationNote: source.CancellationNote,

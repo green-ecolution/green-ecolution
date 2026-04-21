@@ -12,7 +12,7 @@ func UserFromResponse(source *domain.User) *entities.UserResponse {
 	}
 	resp := &entities.UserResponse{
 		ID:            utils.UUIDToString(source.ID),
-		CreatedAt:     utils.TimeToTime(source.CreatedAt),
+		CreatedAt:     source.CreatedAt,
 		Username:      source.Username,
 		FirstName:     source.FirstName,
 		LastName:      source.LastName,

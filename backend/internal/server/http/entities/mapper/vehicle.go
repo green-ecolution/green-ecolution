@@ -12,8 +12,8 @@ func VehicleFromResponse(source *domain.Vehicle) *entities.VehicleResponse {
 	}
 	return &entities.VehicleResponse{
 		ID:             source.ID,
-		CreatedAt:      utils.TimeToTime(source.CreatedAt),
-		UpdatedAt:      utils.TimeToTime(source.UpdatedAt),
+		CreatedAt:      source.CreatedAt,
+		UpdatedAt:      source.UpdatedAt,
 		ArchivedAt:     utils.TimeToPtrTime(source.ArchivedAt),
 		NumberPlate:    source.NumberPlate,
 		Description:    source.Description,
@@ -27,7 +27,7 @@ func VehicleFromResponse(source *domain.Vehicle) *entities.VehicleResponse {
 		Length:         source.Length,
 		Weight:         source.Weight,
 		Provider:       source.Provider,
-		AdditionalInfo: utils.MapKeyValueInterface(source.AdditionalInfo),
+		AdditionalInfo: source.AdditionalInfo,
 	}
 }
 
@@ -52,7 +52,7 @@ func VehicleFromCreateRequest(source *entities.VehicleCreateRequest) *domain.Veh
 		Length:         source.Length,
 		Weight:         source.Weight,
 		Provider:       source.Provider,
-		AdditionalInfo: utils.MapKeyValueInterface(source.AdditionalInfo),
+		AdditionalInfo: source.AdditionalInfo,
 	}
 }
 
@@ -73,7 +73,7 @@ func VehicleFromUpdateRequest(source *entities.VehicleUpdateRequest) *domain.Veh
 		Length:         source.Length,
 		Weight:         source.Weight,
 		Provider:       source.Provider,
-		AdditionalInfo: utils.MapKeyValueInterface(source.AdditionalInfo),
+		AdditionalInfo: source.AdditionalInfo,
 	}
 }
 

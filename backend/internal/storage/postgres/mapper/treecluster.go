@@ -27,8 +27,8 @@ func (c *InternalTreeClusterRepoMapperImpl) FromSql(source *sqlc.TreeCluster) (*
 	}
 	result := &entities.TreeCluster{
 		ID:             source.ID,
-		CreatedAt:      utils.TimeToTime(source.CreatedAt),
-		UpdatedAt:      utils.TimeToTime(source.UpdatedAt),
+		CreatedAt:      source.CreatedAt,
+		UpdatedAt:      source.UpdatedAt,
 		WateringStatus: MapWateringStatus(source.WateringStatus),
 		LastWatered:    timePtrToTimePtr(source.LastWatered),
 		MoistureLevel:  source.MoistureLevel,
@@ -74,7 +74,7 @@ func timePtrToTimePtr(source *time.Time) *time.Time {
 	if source == nil {
 		return nil
 	}
-	t := utils.TimeToTime(*source)
+	t := *source
 	return &t
 }
 

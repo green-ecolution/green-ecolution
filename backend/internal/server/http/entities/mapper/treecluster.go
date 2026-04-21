@@ -12,10 +12,10 @@ func TreeClusterFromResponse(source *domain.TreeCluster) *entities.TreeClusterRe
 	}
 	resp := &entities.TreeClusterResponse{
 		ID:             source.ID,
-		CreatedAt:      utils.TimeToTime(source.CreatedAt),
-		UpdatedAt:      utils.TimeToTime(source.UpdatedAt),
+		CreatedAt:      source.CreatedAt,
+		UpdatedAt:      source.UpdatedAt,
 		WateringStatus: MapWateringStatus(source.WateringStatus),
-		LastWatered:    utils.TimeToTimePtr(source.LastWatered),
+		LastWatered:    source.LastWatered,
 		MoistureLevel:  source.MoistureLevel,
 		Region:         RegionFromResponse(source.Region),
 		Address:        source.Address,
@@ -24,7 +24,7 @@ func TreeClusterFromResponse(source *domain.TreeCluster) *entities.TreeClusterRe
 		SoilCondition:  MapSoilCondition(source.SoilCondition),
 		Name:           source.Name,
 		Provider:       source.Provider,
-		AdditionalInfo: utils.MapKeyValueInterface(source.AdditionalInfo),
+		AdditionalInfo: source.AdditionalInfo,
 	}
 	if source.Latitude != nil {
 		v := *source.Latitude
@@ -53,10 +53,10 @@ func TreeClusterFromInListResponse(source *domain.TreeCluster) *entities.TreeClu
 	}
 	resp := &entities.TreeClusterInListResponse{
 		ID:             source.ID,
-		CreatedAt:      utils.TimeToTime(source.CreatedAt),
-		UpdatedAt:      utils.TimeToTime(source.UpdatedAt),
+		CreatedAt:      source.CreatedAt,
+		UpdatedAt:      source.UpdatedAt,
 		WateringStatus: MapWateringStatus(source.WateringStatus),
-		LastWatered:    utils.TimeToTimePtr(source.LastWatered),
+		LastWatered:    source.LastWatered,
 		MoistureLevel:  source.MoistureLevel,
 		Region:         RegionFromResponse(source.Region),
 		Address:        source.Address,
@@ -66,7 +66,7 @@ func TreeClusterFromInListResponse(source *domain.TreeCluster) *entities.TreeClu
 		SoilCondition:  MapSoilCondition(source.SoilCondition),
 		Name:           source.Name,
 		Provider:       source.Provider,
-		AdditionalInfo: utils.MapKeyValueInterface(source.AdditionalInfo),
+		AdditionalInfo: source.AdditionalInfo,
 	}
 	if source.Latitude != nil {
 		v := *source.Latitude
@@ -89,7 +89,7 @@ func TreeClusterFromCreateRequest(source *entities.TreeClusterCreateRequest) *do
 		Name:           source.Name,
 		SoilCondition:  MapSoilConditionReq(source.SoilCondition),
 		Provider:       source.Provider,
-		AdditionalInfo: utils.MapKeyValueInterface(source.AdditionalInfo),
+		AdditionalInfo: source.AdditionalInfo,
 	}
 	if source.TreeIDs != nil {
 		result.TreeIDs = make([]*int32, len(source.TreeIDs))
@@ -113,7 +113,7 @@ func TreeClusterFromUpdateRequest(source *entities.TreeClusterUpdateRequest) *do
 		SoilCondition:  MapSoilConditionReq(source.SoilCondition),
 		Name:           source.Name,
 		Provider:       source.Provider,
-		AdditionalInfo: utils.MapKeyValueInterface(source.AdditionalInfo),
+		AdditionalInfo: source.AdditionalInfo,
 	}
 	if source.TreeIDs != nil {
 		result.TreeIDs = make([]*int32, len(source.TreeIDs))
@@ -135,10 +135,10 @@ func treeInClusterToResponse(source *domain.Tree) *entities.TreeResponse {
 	}
 	return &entities.TreeResponse{
 		ID:             source.ID,
-		CreatedAt:      utils.TimeToTime(source.CreatedAt),
-		UpdatedAt:      utils.TimeToTime(source.UpdatedAt),
+		CreatedAt:      source.CreatedAt,
+		UpdatedAt:      source.UpdatedAt,
 		Sensor:         sensorInClusterToResponse(source.Sensor),
-		LastWatered:    utils.TimeToTimePtr(source.LastWatered),
+		LastWatered:    source.LastWatered,
 		PlantingYear:   source.PlantingYear,
 		Species:        source.Species,
 		Number:         source.Number,
@@ -147,7 +147,7 @@ func treeInClusterToResponse(source *domain.Tree) *entities.TreeResponse {
 		WateringStatus: MapWateringStatus(source.WateringStatus),
 		Description:    source.Description,
 		Provider:       source.Provider,
-		AdditionalInfo: utils.MapKeyValueInterface(source.AdditionalInfo),
+		AdditionalInfo: source.AdditionalInfo,
 	}
 }
 
@@ -157,14 +157,14 @@ func sensorInClusterToResponse(source *domain.Sensor) *entities.SensorResponse {
 	}
 	return &entities.SensorResponse{
 		ID:             source.ID,
-		CreatedAt:      utils.TimeToTime(source.CreatedAt),
-		UpdatedAt:      utils.TimeToTime(source.UpdatedAt),
+		CreatedAt:      source.CreatedAt,
+		UpdatedAt:      source.UpdatedAt,
 		Status:         MapSensorStatus(source.Status),
 		LatestData:     sensorDataInClusterToResponse(source.LatestData),
 		Latitude:       source.Latitude,
 		Longitude:      source.Longitude,
 		Provider:       source.Provider,
-		AdditionalInfo: utils.MapKeyValueInterface(source.AdditionalInfo),
+		AdditionalInfo: source.AdditionalInfo,
 	}
 }
 
@@ -173,8 +173,8 @@ func sensorDataInClusterToResponse(source *domain.SensorData) *entities.SensorDa
 		return nil
 	}
 	return &entities.SensorDataResponse{
-		CreatedAt: utils.TimeToTime(source.CreatedAt),
-		UpdatedAt: utils.TimeToTime(source.UpdatedAt),
+		CreatedAt: source.CreatedAt,
+		UpdatedAt: source.UpdatedAt,
 	}
 }
 

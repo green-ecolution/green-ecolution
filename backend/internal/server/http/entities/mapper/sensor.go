@@ -3,7 +3,6 @@ package mapper
 import (
 	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
-	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
 func SensorFromResponse(source *domain.Sensor) *entities.SensorResponse {
@@ -12,14 +11,14 @@ func SensorFromResponse(source *domain.Sensor) *entities.SensorResponse {
 	}
 	return &entities.SensorResponse{
 		ID:             source.ID,
-		CreatedAt:      utils.TimeToTime(source.CreatedAt),
-		UpdatedAt:      utils.TimeToTime(source.UpdatedAt),
+		CreatedAt:      source.CreatedAt,
+		UpdatedAt:      source.UpdatedAt,
 		Status:         MapSensorStatus(source.Status),
 		LatestData:     MapLatestDataToResponse(source.LatestData),
 		Latitude:       source.Latitude,
 		Longitude:      source.Longitude,
 		Provider:       source.Provider,
-		AdditionalInfo: utils.MapKeyValueInterface(source.AdditionalInfo),
+		AdditionalInfo: source.AdditionalInfo,
 	}
 }
 

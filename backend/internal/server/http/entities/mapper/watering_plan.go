@@ -13,9 +13,9 @@ func WateringPlanFromResponse(source *domain.WateringPlan) *entities.WateringPla
 	}
 	resp := &entities.WateringPlanResponse{
 		ID:               source.ID,
-		CreatedAt:        utils.TimeToTime(source.CreatedAt),
-		UpdatedAt:        utils.TimeToTime(source.UpdatedAt),
-		Date:             utils.TimeToTime(source.Date),
+		CreatedAt:        source.CreatedAt,
+		UpdatedAt:        source.UpdatedAt,
+		Date:             source.Date,
 		Description:      source.Description,
 		Status:           MapWateringPlanStatus(source.Status),
 		UserIDs:          MapUUIDs(source.UserIDs),
@@ -26,7 +26,7 @@ func WateringPlanFromResponse(source *domain.WateringPlan) *entities.WateringPla
 		Duration:         utils.DurationToPtrFloat64(source.Duration),
 		RefillCount:      source.RefillCount,
 		Provider:         source.Provider,
-		AdditionalInfo:   utils.MapKeyValueInterface(source.AdditionalInfo),
+		AdditionalInfo:   source.AdditionalInfo,
 	}
 	if source.Distance != nil {
 		v := *source.Distance
@@ -61,9 +61,9 @@ func WateringPlanFromInListResponse(source *domain.WateringPlan) *entities.Water
 	}
 	resp := &entities.WateringPlanInListResponse{
 		ID:               source.ID,
-		CreatedAt:        utils.TimeToTime(source.CreatedAt),
-		UpdatedAt:        utils.TimeToTime(source.UpdatedAt),
-		Date:             utils.TimeToTime(source.Date),
+		CreatedAt:        source.CreatedAt,
+		UpdatedAt:        source.UpdatedAt,
+		Date:             source.Date,
 		Description:      source.Description,
 		Status:           MapWateringPlanStatus(source.Status),
 		UserIDs:          MapUUIDs(source.UserIDs),
@@ -71,7 +71,7 @@ func WateringPlanFromInListResponse(source *domain.WateringPlan) *entities.Water
 		Trailer:          VehicleFromResponse(source.Trailer),
 		CancellationNote: source.CancellationNote,
 		Provider:         source.Provider,
-		AdditionalInfo:   utils.MapKeyValueInterface(source.AdditionalInfo),
+		AdditionalInfo:   source.AdditionalInfo,
 	}
 	if source.Distance != nil {
 		v := *source.Distance
@@ -95,11 +95,11 @@ func WateringPlanFromCreateRequest(source *entities.WateringPlanCreateRequest) *
 		return nil
 	}
 	result := &domain.WateringPlanCreate{
-		Date:           utils.TimeToTime(source.Date),
+		Date:           source.Date,
 		Description:    source.Description,
 		UserIDs:        MapUUIDReq(source.UserIDs),
 		Provider:       source.Provider,
-		AdditionalInfo: utils.MapKeyValueInterface(source.AdditionalInfo),
+		AdditionalInfo: source.AdditionalInfo,
 	}
 	if source.TreeClusterIDs != nil {
 		result.TreeClusterIDs = make([]*int32, len(source.TreeClusterIDs))
@@ -126,13 +126,13 @@ func WateringPlanFromUpdateRequest(source *entities.WateringPlanUpdateRequest) *
 		return nil
 	}
 	result := &domain.WateringPlanUpdate{
-		Date:             utils.TimeToTime(source.Date),
+		Date:             source.Date,
 		Description:      source.Description,
 		CancellationNote: source.CancellationNote,
 		Status:           MapWateringPlanStatusReq(source.Status),
 		UserIDs:          MapUUIDReq(source.UserIDs),
 		Provider:         source.Provider,
-		AdditionalInfo:   utils.MapKeyValueInterface(source.AdditionalInfo),
+		AdditionalInfo:   source.AdditionalInfo,
 	}
 	if source.TreeClusterIDs != nil {
 		result.TreeClusterIDs = make([]*int32, len(source.TreeClusterIDs))

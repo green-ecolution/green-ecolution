@@ -12,10 +12,10 @@ func TreeFromResponse(source *domain.Tree) *entities.TreeResponse {
 	}
 	return &entities.TreeResponse{
 		ID:             source.ID,
-		CreatedAt:      utils.TimeToTime(source.CreatedAt),
-		UpdatedAt:      utils.TimeToTime(source.UpdatedAt),
+		CreatedAt:      source.CreatedAt,
+		UpdatedAt:      source.UpdatedAt,
 		TreeClusterID:  MapTreeClusterToID(source.TreeCluster),
-		LastWatered:    utils.TimeToTimePtr(source.LastWatered),
+		LastWatered:    source.LastWatered,
 		PlantingYear:   source.PlantingYear,
 		Species:        source.Species,
 		Number:         source.Number,
@@ -24,7 +24,7 @@ func TreeFromResponse(source *domain.Tree) *entities.TreeResponse {
 		WateringStatus: MapWateringStatus(source.WateringStatus),
 		Description:    source.Description,
 		Provider:       source.Provider,
-		AdditionalInfo: utils.MapKeyValueInterface(source.AdditionalInfo),
+		AdditionalInfo: source.AdditionalInfo,
 	}
 }
 
@@ -44,7 +44,7 @@ func TreeFromCreateRequest(source *entities.TreeCreateRequest) *domain.TreeCreat
 		Longitude:      source.Longitude,
 		Description:    source.Description,
 		Provider:       source.Provider,
-		AdditionalInfo: utils.MapKeyValueInterface(source.AdditionalInfo),
+		AdditionalInfo: source.AdditionalInfo,
 	}
 	if source.TreeClusterID != nil {
 		v := *source.TreeClusterID
@@ -69,7 +69,7 @@ func TreeFromUpdateRequest(source *entities.TreeUpdateRequest) *domain.TreeUpdat
 		Longitude:      source.Longitude,
 		Description:    source.Description,
 		Provider:       source.Provider,
-		AdditionalInfo: utils.MapKeyValueInterface(source.AdditionalInfo),
+		AdditionalInfo: source.AdditionalInfo,
 	}
 	if source.TreeClusterID != nil {
 		v := *source.TreeClusterID

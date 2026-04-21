@@ -19,8 +19,8 @@ func (c *InternalRegionRepoMapperImpl) FromSql(source *sqlc.Region) *entities.Re
 	}
 	return &entities.Region{
 		ID:        source.ID,
-		CreatedAt: utils.TimeToTime(source.CreatedAt),
-		UpdatedAt: utils.TimeToTime(source.UpdatedAt),
+		CreatedAt: source.CreatedAt,
+		UpdatedAt: source.UpdatedAt,
 		Name:      source.Name,
 	}
 }

@@ -25,8 +25,8 @@ func (c *InternalVehicleRepoMapperImpl) FromSql(source *sqlc.Vehicle) (*entities
 	}
 	return &entities.Vehicle{
 		ID:             source.ID,
-		CreatedAt:      utils.TimeToTime(source.CreatedAt),
-		UpdatedAt:      utils.TimeToTime(source.UpdatedAt),
+		CreatedAt:      source.CreatedAt,
+		UpdatedAt:      source.UpdatedAt,
 		ArchivedAt:     utils.TimePtrToTime(source.ArchivedAt),
 		NumberPlate:    source.NumberPlate,
 		Description:    source.Description,
