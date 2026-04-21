@@ -240,7 +240,7 @@ frontend/
 
 ## License
 
-By contributing to Green Ecolution, you agree that your contributions will be licensed under the [GPL-3.0 License](LICENSE).
+By contributing to Green Ecolution, you agree that your contributions will be licensed under the [AGPL-3.0 License](LICENSE).
 
 ---
 
