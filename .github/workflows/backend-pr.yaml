@@ -3,6 +3,9 @@ name: "Backend - Pull Request Checks"
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -20,6 +23,7 @@ jobs:
           filters: |
             backend:
               - 'backend/**'
+              - 'justfile'
               - '.github/workflows/backend-pr.yaml'
               - '.github/actions/setup-backend/**'
 
@@ -27,6 +31,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
 
@@ -44,6 +49,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-backend
@@ -68,6 +74,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-backend
@@ -91,9 +98,12 @@ jobs:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-backend
+        with:
+          with-cgo-deps: "false"
       - name: Generate OpenAPI client
         run: just generate-client
       - name: Check generated client is fresh
@@ -114,6 +124,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-backend
@@ -127,6 +138,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     services:
       postgres:
         image: postgis/postgis:17-3.5
@@ -162,6 +174,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
       - uses: docker/setup-buildx-action@v4
@@ -174,3 +187,27 @@ jobs:
           tags: backend:test
           cache-from: type=gha,scope=backend-dockerfile
           cache-to: type=gha,mode=max,scope=backend-dockerfile
+
+  pr-ok:
+    if: always()
+    needs: [build_and_test, lint, check_generated_backend, check_generated_client, test_pkg_client, test_migrations, test_dockerfile]
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Verify all jobs passed
+        run: |
+          results=(
+            "${{ needs.build_and_test.result }}"
+            "${{ needs.lint.result }}"
+            "${{ needs.check_generated_backend.result }}"
+            "${{ needs.check_generated_client.result }}"
+            "${{ needs.test_pkg_client.result }}"
+            "${{ needs.test_migrations.result }}"
+            "${{ needs.test_dockerfile.result }}"
+          )
+          for r in "${results[@]}"; do
+            if [[ "$r" != "success" && "$r" != "skipped" ]]; then
+              echo "::error::One or more jobs failed or were cancelled ($r)"
+              exit 1
+            fi
+          done
