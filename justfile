@@ -7,10 +7,10 @@ frontend_dist    := frontend_dir / "app/dist"
 backend_fe_dist  := backend_dir / "frontend/dist"
 binary_name      := "green-ecolution"
 
-app_version        := `git describe --tags --always --dirty`
-app_git_commit     := `git rev-parse --short HEAD`
-app_git_branch     := `git rev-parse --abbrev-ref HEAD`
-app_git_repository := "https://github.com/green-ecolution.git"
+app_version        := `git describe --tags --always --dirty 2>/dev/null || echo "dev"`
+app_git_commit     := `git rev-parse --short HEAD 2>/dev/null || echo "unknown"`
+app_git_branch     := `git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown"`
+app_git_repository := "https://github.com/green-ecolution/green-ecolution.git"
 app_build_time     := `date -u +'%Y-%m-%dT%H:%M:%SZ'`
 
 goflags := '-ldflags=" \
@@ -32,7 +32,7 @@ postgres_port     := env("POSTGRES_PORT", "5432")
 export USER_ID := `echo "$(id -u):$(id -g)"`
 
 domain   := env("DOMAIN", "green-ecolution.dev")
-local_ip := `ip -4 route get 1.1.1.1 | awk '{print $7; exit}'`
+local_ip := `ip -4 route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}' || ipconfig getifaddr en0 2>/dev/null || echo '127.0.0.1'`
 
 porkbun_api_key        := env("PORKBUN_API_KEY", "")
 porkbun_secret_api_key := env("PORKBUN_SECRET_API_KEY", "")
