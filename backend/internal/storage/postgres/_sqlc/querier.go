@@ -14,7 +14,7 @@ type Querier interface {
 	ArchiveTreeCluster(ctx context.Context, id int32) (int32, error)
 	ArchiveVehicle(ctx context.Context, arg *ArchiveVehicleParams) (int32, error)
 	CalculateGroupedCentroids(ctx context.Context, dollar_1 []int32) (string, error)
-	CalculateTreesCentroid(ctx context.Context, treeClusterID *int32) (string, error)
+	CalculateTreesCentroid(ctx context.Context, treeClusterID *int32) (*CalculateTreesCentroidRow, error)
 	CreateRegion(ctx context.Context, arg *CreateRegionParams) (int32, error)
 	CreateSensor(ctx context.Context, arg *CreateSensorParams) (string, error)
 	CreateTree(ctx context.Context, arg *CreateTreeParams) (int32, error)

@@ -45,11 +45,9 @@ sql:
               pointer: true
               type: "Time"
           - db_type: "geometry"
-            go_type: 
-              import: "github.com/twpayne/go-geos"
-              package: "geos"
+            go_type:
+              type: "string"
               pointer: true
-              type: "Geom"
             nullable: true
           - db_type: "uuid"
             go_type:

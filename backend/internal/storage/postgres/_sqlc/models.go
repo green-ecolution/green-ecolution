@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	geos "github.com/twpayne/go-geos"
 )
 
 type DrivingLicense string
@@ -328,7 +327,7 @@ type Region struct {
 	Name      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	Geometry  *geos.Geom
+	Geometry  *string
 }
 
 type Sensor struct {
@@ -338,7 +337,7 @@ type Sensor struct {
 	Status                 SensorStatus
 	Latitude               float64
 	Longitude              float64
-	Geometry               *geos.Geom
+	Geometry               *string
 	Provider               *string
 	AdditionalInformations []byte
 }
@@ -363,7 +362,7 @@ type Tree struct {
 	Latitude               float64
 	Longitude              float64
 	WateringStatus         WateringStatus
-	Geometry               *geos.Geom
+	Geometry               *string
 	Description            *string
 	Provider               *string
 	AdditionalInformations []byte
@@ -383,7 +382,7 @@ type TreeCluster struct {
 	SoilCondition          TreeSoilCondition
 	Latitude               *float64
 	Longitude              *float64
-	Geometry               *geos.Geom
+	Geometry               *string
 	RegionID               *int32
 	Name                   string
 	Provider               *string

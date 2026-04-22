@@ -102,8 +102,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-backend
-        with:
-          with-cgo-deps: "false"
       - name: Generate OpenAPI client
         run: just generate-client
       - name: Check generated client is fresh
@@ -128,8 +126,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-backend
-        with:
-          with-cgo-deps: "false"
       - name: Test pkg/client
         working-directory: ./backend/pkg/client
         run: go test ./...
@@ -163,8 +159,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-backend
-        with:
-          with-cgo-deps: "false"
       - name: Test migrations up
         run: just migrate-up
       - name: Test migrations down

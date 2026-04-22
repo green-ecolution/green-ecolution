@@ -2,7 +2,6 @@ package testutils
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -20,9 +19,6 @@ var (
 
 // SetupPostgres starts a postgres container
 func SetupPostgres(ctx context.Context) *postgres.PostgresContainer {
-	startupTimeout := time.Second * 30
-	pollInterval := time.Microsecond * 100
-
 	postgis, err := postgres.Run(ctx,
 		"postgis/postgis",
 		postgres.WithDatabase(dbName),
@@ -30,12 +26,9 @@ func SetupPostgres(ctx context.Context) *postgres.PostgresContainer {
 		postgres.WithPassword(dbPassword),
 		postgres.WithSQLDriver(dbDriver),
 		testcontainers.WithWaitStrategy(
-			wait.ForSQL("5432/tcp", dbDriver, func(host string, port string) string {
-				return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", dbUsername, dbPassword, host, port, dbName)
-			}).
-				WithStartupTimeout(startupTimeout).
-				WithPollInterval(pollInterval).
-				WithQuery("SELECT 1"),
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).
+				WithStartupTimeout(60*time.Second),
 		),
 	)
 	if err != nil {
