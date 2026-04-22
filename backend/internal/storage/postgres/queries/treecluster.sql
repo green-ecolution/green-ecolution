@@ -82,7 +82,9 @@ WHERE id = $1 RETURNING id;
 DELETE FROM tree_clusters WHERE id = $1 RETURNING id;
 
 -- name: CalculateTreesCentroid :one
-SELECT ST_AsText(ST_Centroid(ST_Collect(geometry)))::text AS centroid FROM trees WHERE trees.tree_cluster_id = $1;
+SELECT ST_X(ST_Centroid(ST_Collect(geometry)))::float8 AS center_x,
+       ST_Y(ST_Centroid(ST_Collect(geometry)))::float8 AS center_y
+FROM trees WHERE trees.tree_cluster_id = $1;
 
 -- name: GetAllLatestSensorDataByTreeClusterID :many
 SELECT sd.*

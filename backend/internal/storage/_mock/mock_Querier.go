@@ -195,22 +195,24 @@ func (_c *MockQuerier_CalculateGroupedCentroids_Call) RunAndReturn(run func(cont
 }
 
 // CalculateTreesCentroid provides a mock function with given fields: ctx, treeClusterID
-func (_m *MockQuerier) CalculateTreesCentroid(ctx context.Context, treeClusterID *int32) (string, error) {
+func (_m *MockQuerier) CalculateTreesCentroid(ctx context.Context, treeClusterID *int32) (*sqlc.CalculateTreesCentroidRow, error) {
 	ret := _m.Called(ctx, treeClusterID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CalculateTreesCentroid")
 	}
 
-	var r0 string
+	var r0 *sqlc.CalculateTreesCentroidRow
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *int32) (string, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *int32) (*sqlc.CalculateTreesCentroidRow, error)); ok {
 		return rf(ctx, treeClusterID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *int32) string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *int32) *sqlc.CalculateTreesCentroidRow); ok {
 		r0 = rf(ctx, treeClusterID)
 	} else {
-		r0 = ret.Get(0).(string)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*sqlc.CalculateTreesCentroidRow)
+		}
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *int32) error); ok {
@@ -241,12 +243,12 @@ func (_c *MockQuerier_CalculateTreesCentroid_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockQuerier_CalculateTreesCentroid_Call) Return(_a0 string, _a1 error) *MockQuerier_CalculateTreesCentroid_Call {
+func (_c *MockQuerier_CalculateTreesCentroid_Call) Return(_a0 *sqlc.CalculateTreesCentroidRow, _a1 error) *MockQuerier_CalculateTreesCentroid_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockQuerier_CalculateTreesCentroid_Call) RunAndReturn(run func(context.Context, *int32) (string, error)) *MockQuerier_CalculateTreesCentroid_Call {
+func (_c *MockQuerier_CalculateTreesCentroid_Call) RunAndReturn(run func(context.Context, *int32) (*sqlc.CalculateTreesCentroidRow, error)) *MockQuerier_CalculateTreesCentroid_Call {
 	_c.Call.Return(run)
 	return _c
 }

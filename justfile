@@ -73,7 +73,7 @@ _compile-backend:
     @echo "Compiling Go binary..."
     mkdir -p {{ backend_fe_dist }}
     test -f {{ backend_fe_dist }}/index.html || echo "<!-- placeholder for go:embed -->" > {{ backend_fe_dist }}/index.html
-    cd {{ backend_dir }} && CGO_ENABLED=1 go build {{ goflags }} -o ../bin/{{ binary_name }} .
+    cd {{ backend_dir }} && CGO_ENABLED=0 go build {{ goflags }} -o ../bin/{{ binary_name }} .
 
 # Build frontend (pnpm)
 build-frontend:
@@ -98,24 +98,24 @@ build: build-frontend
 # Build for all platforms
 build-all: build-frontend
     @echo "Building backend for all platforms..."
-    cd {{ backend_dir }} && GOARCH=amd64 GOOS=darwin  CGO_ENABLED=1 go build {{ goflags }} -o ../bin/{{ binary_name }}-darwin  .
-    cd {{ backend_dir }} && GOARCH=amd64 GOOS=linux   CGO_ENABLED=1 go build {{ goflags }} -o ../bin/{{ binary_name }}-linux   .
-    cd {{ backend_dir }} && GOARCH=amd64 GOOS=windows CGO_ENABLED=1 go build {{ goflags }} -o ../bin/{{ binary_name }}-windows .
+    cd {{ backend_dir }} && GOARCH=amd64 GOOS=darwin  CGO_ENABLED=0 go build {{ goflags }} -o ../bin/{{ binary_name }}-darwin  .
+    cd {{ backend_dir }} && GOARCH=amd64 GOOS=linux   CGO_ENABLED=0 go build {{ goflags }} -o ../bin/{{ binary_name }}-linux   .
+    cd {{ backend_dir }} && GOARCH=amd64 GOOS=windows CGO_ENABLED=0 go build {{ goflags }} -o ../bin/{{ binary_name }}-windows .
 
 # Build for darwin
 build-darwin:
     @echo "Building backend for darwin..."
-    cd {{ backend_dir }} && GOARCH=amd64 GOOS=darwin CGO_ENABLED=1 go build {{ goflags }} -o ../bin/{{ binary_name }}-darwin .
+    cd {{ backend_dir }} && GOARCH=amd64 GOOS=darwin CGO_ENABLED=0 go build {{ goflags }} -o ../bin/{{ binary_name }}-darwin .
 
 # Build for linux
 build-linux:
     @echo "Building backend for linux..."
-    cd {{ backend_dir }} && GOARCH=amd64 GOOS=linux CGO_ENABLED=1 go build {{ goflags }} -o ../bin/{{ binary_name }}-linux .
+    cd {{ backend_dir }} && GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build {{ goflags }} -o ../bin/{{ binary_name }}-linux .
 
 # Build for windows
 build-windows:
     @echo "Building backend for windows..."
-    cd {{ backend_dir }} && GOARCH=amd64 GOOS=windows CGO_ENABLED=1 go build {{ goflags }} -o ../bin/{{ binary_name }}-windows .
+    cd {{ backend_dir }} && GOARCH=amd64 GOOS=windows CGO_ENABLED=0 go build {{ goflags }} -o ../bin/{{ binary_name }}-windows .
 
 # Run backend binary
 run: build

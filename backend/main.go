@@ -34,10 +34,9 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker/subscriber"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/viper"
-	"github.com/twpayne/go-geos"
-	pgxgeos "github.com/twpayne/pgx-geos"
 )
 
 //go:embed all:frontend
@@ -98,7 +97,16 @@ func postgresRepo(ctx context.Context, cfg *config.Config) (repo *storage.Reposi
 	}
 
 	pgxConfig.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
-		return pgxgeos.Register(ctx, conn, geos.NewContext())
+		var geometryOID uint32
+		if err := conn.QueryRow(ctx, "SELECT 'geometry'::regtype::oid").Scan(&geometryOID); err != nil {
+			return fmt.Errorf("failed to get geometry type OID: %w", err)
+		}
+		conn.TypeMap().RegisterType(&pgtype.Type{
+			Name:  "geometry",
+			OID:   geometryOID,
+			Codec: &pgtype.TextCodec{},
+		})
+		return nil
 	}
 
 	pool, err = pgxpool.NewWithConfig(ctx, pgxConfig)

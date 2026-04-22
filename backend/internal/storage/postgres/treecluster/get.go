@@ -10,7 +10,6 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc"
-	"github.com/twpayne/go-geos"
 )
 
 func (r *TreeClusterRepository) GetAll(ctx context.Context, filter entities.TreeClusterQuery) ([]*entities.TreeCluster, int64, error) {
@@ -135,24 +134,13 @@ func (r *TreeClusterRepository) GetByIDs(ctx context.Context, ids []int32) ([]*e
 
 func (r *TreeClusterRepository) GetCenterPoint(ctx context.Context, tcID int32) (lat, long float64, err error) {
 	log := logger.GetLogger(ctx)
-	geoStr, err := r.store.CalculateTreesCentroid(ctx, &tcID)
+	row, err := r.store.CalculateTreesCentroid(ctx, &tcID)
 	if err != nil {
 		log.Warn("failed to calculate center point of given cluster", "error", err, "cluster_id", tcID)
 		return 0, 0, err
 	}
 
-	// Parse geoStr to get latitude and longitude
-	g, err := geos.NewGeomFromWKT(geoStr)
-	if err != nil {
-		log.Debug("failed to parse calculated geo string", "error", err, "geo_string", geoStr)
-		return 0, 0, err
-	}
-
-	if g.IsEmpty() {
-		return 0, 0, errors.New("empty geometry")
-	}
-
-	return g.X(), g.Y(), nil
+	return row.CenterX, row.CenterY, nil
 }
 
 func (r *TreeClusterRepository) GetAllLatestSensorDataByClusterID(ctx context.Context, tcID int32) ([]*entities.SensorData, error) {

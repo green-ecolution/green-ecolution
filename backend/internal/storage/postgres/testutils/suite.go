@@ -3,6 +3,7 @@ package testutils
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"log/slog"
 	"testing"
@@ -10,11 +11,10 @@ import (
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/store"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/twpayne/go-geos"
-	pgxgeos "github.com/twpayne/pgx-geos"
 )
 
 type PostgresTestSuite struct {
@@ -89,7 +89,16 @@ func initStore(dbURL string) *store.Store {
 	}
 
 	pgxConfig.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
-		return pgxgeos.Register(ctx, conn, geos.NewContext())
+		var geometryOID uint32
+		if err := conn.QueryRow(ctx, "SELECT 'geometry'::regtype::oid").Scan(&geometryOID); err != nil {
+			return fmt.Errorf("failed to get geometry type OID: %w", err)
+		}
+		conn.TypeMap().RegisterType(&pgtype.Type{
+			Name:  "geometry",
+			OID:   geometryOID,
+			Codec: &pgtype.TextCodec{},
+		})
+		return nil
 	}
 
 	pool, err := pgxpool.NewWithConfig(context.Background(), pgxConfig)

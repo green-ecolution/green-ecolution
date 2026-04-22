@@ -23,14 +23,21 @@ func (q *Queries) ArchiveTreeCluster(ctx context.Context, id int32) (int32, erro
 }
 
 const calculateTreesCentroid = `-- name: CalculateTreesCentroid :one
-SELECT ST_AsText(ST_Centroid(ST_Collect(geometry)))::text AS centroid FROM trees WHERE trees.tree_cluster_id = $1
+SELECT ST_X(ST_Centroid(ST_Collect(geometry)))::float8 AS center_x,
+       ST_Y(ST_Centroid(ST_Collect(geometry)))::float8 AS center_y
+FROM trees WHERE trees.tree_cluster_id = $1
 `
 
-func (q *Queries) CalculateTreesCentroid(ctx context.Context, treeClusterID *int32) (string, error) {
+type CalculateTreesCentroidRow struct {
+	CenterX float64
+	CenterY float64
+}
+
+func (q *Queries) CalculateTreesCentroid(ctx context.Context, treeClusterID *int32) (*CalculateTreesCentroidRow, error) {
 	row := q.db.QueryRow(ctx, calculateTreesCentroid, treeClusterID)
-	var centroid string
-	err := row.Scan(&centroid)
-	return centroid, err
+	var i CalculateTreesCentroidRow
+	err := row.Scan(&i.CenterX, &i.CenterY)
+	return &i, err
 }
 
 const createTreeCluster = `-- name: CreateTreeCluster :one

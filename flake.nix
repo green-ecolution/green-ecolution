@@ -117,13 +117,10 @@
           "-X github.com/green-ecolution/backend/internal/storage/local/info.buildTime=${buildDate}"
         ];
 
-        nativeBuildInputs = with pkgs; [proj pkg-config];
-        buildInputs = [pkgs.geos];
-
         doCheck = false;
         excludedPackages = ["pkg/*"];
-        vendorHash = "sha256-EuEwOqxjLNYW8XClah6dGUGxJqOAP9t/76EoqL0lqDU=";
-        env.CGO_ENABLED = 1;
+        vendorHash = "sha256-uQVRzSFILxMhesQucVNXFiKIiBDWzF/teO056vIaAyM=";
+        env.CGO_ENABLED = 0;
 
         postInstall = ''
           if [ -e "$out/bin/backend" ]; then
@@ -161,10 +158,7 @@
           go
           gotools
           golangci-lint
-          geos
-          proj
           gnumake
-          pkg-config
           yq-go
           delve
           # Frontend/Node
