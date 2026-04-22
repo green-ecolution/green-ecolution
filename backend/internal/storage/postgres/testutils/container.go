@@ -6,7 +6,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/docker/go-connections/nat"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -31,8 +30,8 @@ func SetupPostgres(ctx context.Context) *postgres.PostgresContainer {
 		postgres.WithPassword(dbPassword),
 		postgres.WithSQLDriver(dbDriver),
 		testcontainers.WithWaitStrategy(
-			wait.ForSQL(nat.Port("5432/tcp"), dbDriver, func(host string, port nat.Port) string {
-				return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", dbUsername, dbPassword, host, port.Port(), dbName)
+			wait.ForSQL("5432/tcp", dbDriver, func(host string, port string) string {
+				return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", dbUsername, dbPassword, host, port, dbName)
 			}).
 				WithStartupTimeout(startupTimeout).
 				WithPollInterval(pollInterval).
