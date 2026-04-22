@@ -48,7 +48,7 @@ func TestTreeRepository_Update(t *testing.T) {
 		assert.Equal(t, newNumber, updatedTree.Number, "Tree Number should match")
 		assert.Equal(t, newCoordinate.Latitude(), updatedTree.Coordinate.Latitude(), "Latitude should match")
 		assert.Equal(t, newCoordinate.Longitude(), updatedTree.Coordinate.Longitude(), "Longitude should match")
-		assert.Equal(t, newPlantingYear.Value(), updatedTree.PlantingYear.Value(), "Planting Year should match")
+		assert.Equal(t, newPlantingYear.Year(), updatedTree.PlantingYear.Year(), "Planting Year should match")
 		assert.Equal(t, newProvider, updatedTree.Provider, "Provider should match")
 		assert.Equal(t, newDescription, updatedTree.Description, "Description should match")
 		assert.Equal(t, newWateringStatus, updatedTree.WateringStatus, "Watering Status should match")

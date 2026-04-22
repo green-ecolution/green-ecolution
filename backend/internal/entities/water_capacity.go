@@ -1,6 +1,9 @@
 package entities
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var ErrInvalidWaterCapacity = errors.New("water capacity must be >= 0")
 
@@ -29,4 +32,8 @@ func (w WaterCapacity) Liters() float64 {
 
 func (w WaterCapacity) Add(other WaterCapacity) WaterCapacity {
 	return WaterCapacity{liters: w.liters + other.liters}
+}
+
+func (w WaterCapacity) String() string {
+	return fmt.Sprintf("%.2fL", w.liters)
 }

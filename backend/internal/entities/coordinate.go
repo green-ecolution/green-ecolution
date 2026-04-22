@@ -1,6 +1,9 @@
 package entities
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var (
 	ErrInvalidLatitude  = errors.New("latitude must be between -90 and 90")
@@ -47,4 +50,8 @@ func (c Coordinate) Latitude() float64 {
 
 func (c Coordinate) Longitude() float64 {
 	return c.lng
+}
+
+func (c Coordinate) String() string {
+	return fmt.Sprintf("(%f, %f)", c.lat, c.lng)
 }

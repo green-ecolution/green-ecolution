@@ -11,13 +11,13 @@ func TestNewPlantingYear(t *testing.T) {
 	t.Run("valid year", func(t *testing.T) {
 		p, err := NewPlantingYear(2023)
 		assert.NoError(t, err)
-		assert.Equal(t, int32(2023), p.Value())
+		assert.Equal(t, int32(2023), p.Year())
 	})
 
 	t.Run("current year", func(t *testing.T) {
 		p, err := NewPlantingYear(int32(time.Now().Year()))
 		assert.NoError(t, err)
-		assert.Equal(t, int32(time.Now().Year()), p.Value())
+		assert.Equal(t, int32(time.Now().Year()), p.Year())
 	})
 
 	t.Run("zero year", func(t *testing.T) {
@@ -38,10 +38,10 @@ func TestNewPlantingYear(t *testing.T) {
 
 func TestPlantingYear_ZeroValue(t *testing.T) {
 	var p PlantingYear
-	assert.Equal(t, int32(0), p.Value())
+	assert.Equal(t, int32(0), p.Year())
 }
 
 func TestMustNewPlantingYear(t *testing.T) {
 	assert.Panics(t, func() { MustNewPlantingYear(0) })
-	assert.Equal(t, int32(2020), MustNewPlantingYear(2020).Value())
+	assert.Equal(t, int32(2020), MustNewPlantingYear(2020).Year())
 }

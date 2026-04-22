@@ -51,7 +51,7 @@ func TestTreeRepository_GetAll(t *testing.T) {
 		assert.NotEmpty(t, got)
 		assert.Equal(t, totalCount, int64(1))
 		assert.Equal(t, expectedTree.ID, got[0].ID, "ID does not match")
-		assert.Equal(t, expectedTree.PlantingYear.Value(), got[0].PlantingYear.Value(), "PlantingYear does not match")
+		assert.Equal(t, expectedTree.PlantingYear.Year(), got[0].PlantingYear.Year(), "PlantingYear does not match")
 		assert.Equal(t, expectedTree.Species, got[0].Species, "Species does not match")
 		assert.Equal(t, expectedTree.Number, got[0].Number, "Number does not match")
 		assert.Equal(t, expectedTree.Coordinate.Latitude(), got[0].Coordinate.Latitude(), "Latitude does not match")
@@ -871,7 +871,7 @@ func TestTreeRepository_FindNearestTrees(t *testing.T) {
 
 func assertExpectedEqualToTree(t *testing.T, expectedTree, tree *entities.Tree) {
 	assert.Equal(t, expectedTree.ID, tree.ID, "ID does not match")
-	assert.Equal(t, expectedTree.PlantingYear.Value(), tree.PlantingYear.Value(), "PlantingYear does not match")
+	assert.Equal(t, expectedTree.PlantingYear.Year(), tree.PlantingYear.Year(), "PlantingYear does not match")
 	assert.Equal(t, expectedTree.Species, tree.Species, "Species does not match")
 	assert.Equal(t, expectedTree.Number, tree.Number, "Number does not match")
 	assert.Equal(t, expectedTree.Coordinate.Latitude(), tree.Coordinate.Latitude(), "Latitude does not match")

@@ -94,7 +94,7 @@ func (s *TreeClusterService) getWateringStatusOfTreeCluster(ctx context.Context,
 		return entities.WateringStatusUnknown, errors.New("failed getting watermark sensor data")
 	}
 
-	return svcUtils.CalculateWateringStatus(ctx, youngestTree.PlantingYear.Value(), watermarks), nil
+	return svcUtils.CalculateWateringStatus(ctx, youngestTree.PlantingYear.Year(), watermarks), nil
 }
 
 func (s *TreeClusterService) getYoungestTree(ctx context.Context, sensorIDs []entities.SensorID) (*entities.Tree, error) {
@@ -106,7 +106,7 @@ func (s *TreeClusterService) getYoungestTree(ctx context.Context, sensorIDs []en
 	}
 
 	slices.SortFunc(trees, func(a, b *entities.Tree) int {
-		return int(b.PlantingYear.Value() - a.PlantingYear.Value())
+		return int(b.PlantingYear.Year() - a.PlantingYear.Year())
 	})
 
 	return trees[0], nil

@@ -102,7 +102,7 @@ func (r *TreeRepository) createEntity(ctx context.Context, entity *entities.Tree
 		TreeClusterID:          treeClusterID,
 		Species:                entity.Species,
 		SensorID:               sensorID,
-		PlantingYear:           entity.PlantingYear.Value(),
+		PlantingYear:           entity.PlantingYear.Year(),
 		Latitude:               entity.Coordinate.Latitude(),
 		Longitude:              entity.Coordinate.Longitude(),
 		WateringStatus:         sqlc.WateringStatus(entity.WateringStatus),

@@ -1,6 +1,9 @@
 package entities
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var ErrInvalidDistance = errors.New("distance must be >= 0")
 
@@ -25,4 +28,8 @@ func MustNewDistance(meters float64) Distance {
 
 func (d Distance) Meters() float64 {
 	return d.meters
+}
+
+func (d Distance) String() string {
+	return fmt.Sprintf("%.2fm", d.meters)
 }

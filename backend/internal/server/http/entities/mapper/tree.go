@@ -18,7 +18,7 @@ func TreeFromResponse(source *domain.Tree) *entities.TreeResponse {
 		UpdatedAt:      source.UpdatedAt,
 		TreeClusterID:  MapTreeClusterToID(source.TreeCluster),
 		LastWatered:    source.LastWatered,
-		PlantingYear:   source.PlantingYear.Value(),
+		PlantingYear:   source.PlantingYear.Year(),
 		Species:        source.Species,
 		Number:         source.Number,
 		Latitude:       source.Coordinate.Latitude(),

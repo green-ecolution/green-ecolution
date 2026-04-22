@@ -2,6 +2,7 @@ package entities
 
 import (
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -26,6 +27,13 @@ func MustNewPlantingYear(year int32) PlantingYear {
 	return p
 }
 
-func (p PlantingYear) Value() int32 {
+func (p PlantingYear) Year() int32 {
 	return p.year
+}
+
+func (p PlantingYear) String() string {
+	if p.year == 0 {
+		return "unset"
+	}
+	return fmt.Sprintf("%d", p.year)
 }

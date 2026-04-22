@@ -135,7 +135,7 @@ func treeInClusterToResponse(source *domain.Tree) *entities.TreeResponse {
 		UpdatedAt:      source.UpdatedAt,
 		Sensor:         sensorInClusterToResponse(source.Sensor),
 		LastWatered:    source.LastWatered,
-		PlantingYear:   source.PlantingYear.Value(),
+		PlantingYear:   source.PlantingYear.Year(),
 		Species:        source.Species,
 		Number:         source.Number,
 		Latitude:       source.Coordinate.Latitude(),
