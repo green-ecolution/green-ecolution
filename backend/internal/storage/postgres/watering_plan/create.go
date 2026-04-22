@@ -3,7 +3,6 @@ package wateringplan
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -64,7 +63,6 @@ func (w *WateringPlanRepository) Create(ctx context.Context, createFn func(*enti
 
 		createdWp, err = newRepo.GetByID(ctx, *id)
 		if err != nil {
-			fmt.Println("failed to get vy id")
 			return err
 		}
 

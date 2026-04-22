@@ -114,7 +114,10 @@ func CreateWateringPlan(svc service.WateringPlanService) fiber.Handler {
 			return err
 		}
 
-		domainReq := mapper.WateringPlanFromCreateRequest(req)
+		domainReq, err := mapper.WateringPlanFromCreateRequest(req)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		}
 		domainData, err := svc.Create(ctx, domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)
@@ -155,7 +158,10 @@ func UpdateWateringPlan(svc service.WateringPlanService) fiber.Handler {
 			return err
 		}
 
-		domainReq := mapper.WateringPlanFromUpdateRequest(req)
+		domainReq, err := mapper.WateringPlanFromUpdateRequest(req)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		}
 		domainData, err := svc.Update(ctx, int32(id), domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)

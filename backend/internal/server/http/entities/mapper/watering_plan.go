@@ -1,6 +1,8 @@
 package mapper
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
@@ -90,14 +92,18 @@ func WateringPlanFromInListResponse(source *domain.WateringPlan) *entities.Water
 	return resp
 }
 
-func WateringPlanFromCreateRequest(source *entities.WateringPlanCreateRequest) *domain.WateringPlanCreate {
+func WateringPlanFromCreateRequest(source *entities.WateringPlanCreateRequest) (*domain.WateringPlanCreate, error) {
 	if source == nil {
-		return nil
+		return nil, nil
+	}
+	userIDs, err := MapUUIDReq(source.UserIDs)
+	if err != nil {
+		return nil, err
 	}
 	result := &domain.WateringPlanCreate{
 		Date:           source.Date,
 		Description:    source.Description,
-		UserIDs:        MapUUIDReq(source.UserIDs),
+		UserIDs:        userIDs,
 		Provider:       source.Provider,
 		AdditionalInfo: source.AdditionalInfo,
 	}
@@ -118,19 +124,23 @@ func WateringPlanFromCreateRequest(source *entities.WateringPlanCreateRequest) *
 		v := *source.TrailerID
 		result.TrailerID = &v
 	}
-	return result
+	return result, nil
 }
 
-func WateringPlanFromUpdateRequest(source *entities.WateringPlanUpdateRequest) *domain.WateringPlanUpdate {
+func WateringPlanFromUpdateRequest(source *entities.WateringPlanUpdateRequest) (*domain.WateringPlanUpdate, error) {
 	if source == nil {
-		return nil
+		return nil, nil
+	}
+	userIDs, err := MapUUIDReq(source.UserIDs)
+	if err != nil {
+		return nil, err
 	}
 	result := &domain.WateringPlanUpdate{
 		Date:             source.Date,
 		Description:      source.Description,
 		CancellationNote: source.CancellationNote,
 		Status:           MapWateringPlanStatusReq(source.Status),
-		UserIDs:          MapUUIDReq(source.UserIDs),
+		UserIDs:          userIDs,
 		Provider:         source.Provider,
 		AdditionalInfo:   source.AdditionalInfo,
 	}
@@ -157,7 +167,7 @@ func WateringPlanFromUpdateRequest(source *entities.WateringPlanUpdateRequest) *
 			result.Evaluation[i] = evaluationValueFromRequest(ev)
 		}
 	}
-	return result
+	return result, nil
 }
 
 // WateringPlanTreeClusterInListResponse maps a TreeCluster in the context of a WateringPlan.
@@ -216,17 +226,16 @@ func MapUUIDs(source []*uuid.UUID) []*uuid.UUID {
 	return target
 }
 
-func MapUUIDReq(userIDs []string) []*uuid.UUID {
-	mappedUserIDs := make([]*uuid.UUID, len(userIDs))
+func MapUUIDReq(userIDs []string) ([]*uuid.UUID, error) {
+	mappedUserIDs := make([]*uuid.UUID, 0, len(userIDs))
 
-	for i, userIDStr := range userIDs {
+	for _, userIDStr := range userIDs {
 		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
-			mappedUserIDs[i] = nil
-		} else {
-			mappedUserIDs[i] = &userID
+			return nil, fmt.Errorf("invalid user ID %q: %w", userIDStr, err)
 		}
+		mappedUserIDs = append(mappedUserIDs, &userID)
 	}
 
-	return mappedUserIDs
+	return mappedUserIDs, nil
 }

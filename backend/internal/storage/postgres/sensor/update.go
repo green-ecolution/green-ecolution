@@ -3,16 +3,13 @@ package sensor
 import (
 	"context"
 	"errors"
-	"log/slog"
-
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/store"
-	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
-
-	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/store"
+	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
 func (r *SensorRepository) Update(ctx context.Context, id entities.SensorID, updateFn func(*entities.Sensor, storage.SensorRepository) (bool, error)) (*entities.Sensor, error) {
@@ -63,7 +60,7 @@ func (r *SensorRepository) Update(ctx context.Context, id entities.SensorID, upd
 		return nil, err
 	}
 
-	slog.Debug("sensor entity updated successfully in db", "sensor_id", id.String())
+	log.Debug("sensor entity updated successfully in db", "sensor_id", id.String())
 	return updatedSensor, nil
 }
 

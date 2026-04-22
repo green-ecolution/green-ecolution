@@ -241,7 +241,10 @@ func convertDrivingLicenses(drivingLicenses []string) []entities.DrivingLicense 
 
 	var licenses []entities.DrivingLicense
 	for _, drivingLicense := range drivingLicenses {
-		license := entities.ParseDrivingLicense(drivingLicense)
+		license, err := entities.ParseDrivingLicense(drivingLicense)
+		if err != nil {
+			continue
+		}
 		licenses = append(licenses, license)
 	}
 
