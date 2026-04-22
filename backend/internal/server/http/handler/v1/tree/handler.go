@@ -7,16 +7,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
-	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper/generated"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper"
 	handler "github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/errorhandler"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils/pagination"
-)
-
-var (
-	treeMapper   = generated.TreeHTTPMapperImpl{}
-	sensorMapper = generated.SensorHTTPMapperImpl{}
 )
 
 // @Summary		Get all trees
@@ -150,7 +145,7 @@ func CreateTree(svc service.TreeService) fiber.Handler {
 			return err
 		}
 
-		domainReq := treeMapper.FromCreateRequest(req)
+		domainReq := mapper.TreeFromCreateRequest(req)
 		domainData, err := svc.Create(ctx, domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)
@@ -189,7 +184,7 @@ func UpdateTree(svc service.TreeService) fiber.Handler {
 		if err != nil {
 			return err
 		}
-		domainReq := treeMapper.FromUpdateRequest(req)
+		domainReq := mapper.TreeFromUpdateRequest(req)
 		domainData, err := svc.Update(ctx, int32(id), domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)
@@ -309,8 +304,8 @@ func GetNearestTrees(svc service.TreeService) fiber.Handler {
 }
 
 func mapTreeToDto(t *domain.Tree) *entities.TreeResponse {
-	dto := treeMapper.FromResponse(t)
-	dto.Sensor = sensorMapper.FromResponse(t.Sensor)
+	dto := mapper.TreeFromResponse(t)
+	dto.Sensor = mapper.SensorFromResponse(t.Sensor)
 
 	return dto
 }

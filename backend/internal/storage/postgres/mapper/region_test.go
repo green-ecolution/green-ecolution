@@ -5,12 +5,12 @@ import (
 	"time"
 
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc"
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper/generated"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRegionMapper_FromSql(t *testing.T) {
-	regionMapper := &generated.InternalRegionRepoMapperImpl{}
+	regionMapper := &mapper.InternalRegionRepoMapperImpl{}
 
 	t.Run("should convert from sql to entity", func(t *testing.T) {
 		// given
@@ -40,7 +40,7 @@ func TestRegionMapper_FromSql(t *testing.T) {
 }
 
 func TestRegionMapper_FromSqlList(t *testing.T) {
-	regionMapper := &generated.InternalRegionRepoMapperImpl{}
+	regionMapper := &mapper.InternalRegionRepoMapperImpl{}
 
 	t.Run("should convert from sql slice to entity slice", func(t *testing.T) {
 		// given

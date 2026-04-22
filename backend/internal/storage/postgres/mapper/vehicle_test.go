@@ -8,12 +8,11 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper"
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper/generated"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestVehicleMapper_FromSql(t *testing.T) {
-	verhicleMapper := &generated.InternalVehicleRepoMapperImpl{}
+	verhicleMapper := &mapper.InternalVehicleRepoMapperImpl{}
 
 	t.Run("should convert from sql to entity", func(t *testing.T) {
 		// given
@@ -55,7 +54,7 @@ func TestVehicleMapper_FromSql(t *testing.T) {
 }
 
 func TestVehicleMapper_FromSqlList(t *testing.T) {
-	verhicleMapper := &generated.InternalVehicleRepoMapperImpl{}
+	verhicleMapper := &mapper.InternalVehicleRepoMapperImpl{}
 
 	t.Run("should convert from sql slice to entity slice", func(t *testing.T) {
 		// given

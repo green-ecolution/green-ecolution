@@ -8,14 +8,14 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc"
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper/generated"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper"
 	"github.com/jackc/pgx/v5"
 )
 
 var (
-	regionMapper = generated.InternalRegionRepoMapperImpl{}
-	treeMapper   = generated.InternalTreeRepoMapperImpl{}
-	sensorMapper = generated.InternalSensorRepoMapperImpl{}
+	regionMapper = mapper.InternalRegionRepoMapperImpl{}
+	treeMapper   = mapper.InternalTreeRepoMapperImpl{}
+	sensorMapper = mapper.InternalSensorRepoMapperImpl{}
 )
 
 // This function is required as soon as you want to add data to the tree cluster object

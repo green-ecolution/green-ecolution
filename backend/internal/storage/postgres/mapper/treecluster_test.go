@@ -8,13 +8,12 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper"
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper/generated"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestTreeclusterMapper_FromSql(t *testing.T) {
-	treeclusterMapper := &generated.InternalTreeClusterRepoMapperImpl{}
+	treeclusterMapper := &mapper.InternalTreeClusterRepoMapperImpl{}
 
 	t.Run("should convert from sql to entity", func(t *testing.T) {
 		// given
@@ -55,7 +54,7 @@ func TestTreeclusterMapper_FromSql(t *testing.T) {
 }
 
 func TestTreeclusterMapper_FromSqlList(t *testing.T) {
-	treeclusterMapper := &generated.InternalTreeClusterRepoMapperImpl{}
+	treeclusterMapper := &mapper.InternalTreeClusterRepoMapperImpl{}
 
 	t.Run("should convert from sql slice to entity slice", func(t *testing.T) {
 		// given

@@ -5,7 +5,7 @@ import (
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc"
-	mapper "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper/generated"
+	mapper "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/region"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/store"

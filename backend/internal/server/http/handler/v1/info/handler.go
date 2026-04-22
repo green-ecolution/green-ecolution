@@ -4,7 +4,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper"
-	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper/generated"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/errorhandler"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 )
@@ -22,15 +21,13 @@ import (
 // @Router			/v1/info [get]
 // @Security		Keycloak
 func GetAppInfo(svc service.InfoService) fiber.Handler {
-	var m mapper.InfoHTTPMapper = &generated.InfoHTTPMapperImpl{}
-
 	return func(c *fiber.Ctx) error {
 		domainInfo, err := svc.GetAppInfoResponse(c.Context())
 		if err != nil {
 			return errorhandler.HandleError(err)
 		}
 
-		response := m.ToResponse(domainInfo)
+		response := mapper.InfoToResponse(domainInfo)
 		return c.JSON(response)
 	}
 }
@@ -68,15 +65,13 @@ func GetMapInfo(svc service.InfoService) fiber.Handler {
 // @Router			/v1/info/server [get]
 // @Security		Keycloak
 func GetServerInfo(svc service.InfoService) fiber.Handler {
-	var m mapper.InfoHTTPMapper = &generated.InfoHTTPMapperImpl{}
-
 	return func(c *fiber.Ctx) error {
 		serverInfo, err := svc.GetServerInfo(c.Context())
 		if err != nil {
 			return errorhandler.HandleError(err)
 		}
 
-		response := m.ServerToResponse(serverInfo)
+		response := mapper.InfoServerToResponse(serverInfo)
 		return c.JSON(response)
 	}
 }
@@ -90,15 +85,13 @@ func GetServerInfo(svc service.InfoService) fiber.Handler {
 // @Failure		500	{object}	HTTPError
 // @Router			/v1/info/services [get]
 func GetServicesStatus(svc service.InfoService) fiber.Handler {
-	var m mapper.InfoHTTPMapper = &generated.InfoHTTPMapperImpl{}
-
 	return func(c *fiber.Ctx) error {
 		services, err := svc.GetServices(c.Context())
 		if err != nil {
 			return errorhandler.HandleError(err)
 		}
 
-		response := m.ServicesToResponse(services)
+		response := mapper.InfoServicesToResponse(services)
 		return c.JSON(response)
 	}
 }

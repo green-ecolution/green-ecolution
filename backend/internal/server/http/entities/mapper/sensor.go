@@ -5,14 +5,36 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
 )
 
-// goverter:converter
-// goverter:extend github.com/green-ecolution/green-ecolution/backend/internal/utils:TimeToTime
-// goverter:extend github.com/green-ecolution/green-ecolution/backend/internal/utils:MapKeyValueInterface
-// goverter:extend MapSensorStatus MapLatestDataToResponse
-type SensorHTTPMapper interface {
-	FromResponse(src *domain.Sensor) *entities.SensorResponse
-	FromDataResponse(src *domain.SensorData) *entities.SensorDataResponse
-	FromWatermarkResponse(src *domain.Watermark) *entities.WatermarkResponse
+func SensorFromResponse(source *domain.Sensor) *entities.SensorResponse {
+	if source == nil {
+		return nil
+	}
+	return &entities.SensorResponse{
+		ID:             source.ID,
+		CreatedAt:      source.CreatedAt,
+		UpdatedAt:      source.UpdatedAt,
+		Status:         MapSensorStatus(source.Status),
+		LatestData:     MapLatestDataToResponse(source.LatestData),
+		Latitude:       source.Latitude,
+		Longitude:      source.Longitude,
+		Provider:       source.Provider,
+		AdditionalInfo: source.AdditionalInfo,
+	}
+}
+
+func SensorFromDataResponse(source *domain.SensorData) *entities.SensorDataResponse {
+	return MapLatestDataToResponse(source)
+}
+
+func SensorFromWatermarkResponse(source *domain.Watermark) *entities.WatermarkResponse {
+	if source == nil {
+		return nil
+	}
+	return &entities.WatermarkResponse{
+		Centibar:   source.Centibar,
+		Resistance: source.Resistance,
+		Depth:      source.Depth,
+	}
 }
 
 func MapLatestDataToResponse(sensorData *domain.SensorData) *entities.SensorDataResponse {

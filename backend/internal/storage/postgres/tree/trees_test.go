@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper/generated"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/testutils"
 	"github.com/stretchr/testify/assert"
 )
@@ -21,9 +21,9 @@ func TestMain(m *testing.M) {
 	defer func() { os.Exit(code) }()
 	suite = testutils.SetupPostgresTestSuite(ctx)
 	mappers = NewTreeRepositoryMappers(
-		&generated.InternalTreeRepoMapperImpl{},
-		&generated.InternalSensorRepoMapperImpl{},
-		&generated.InternalTreeClusterRepoMapperImpl{},
+		&mapper.InternalTreeRepoMapperImpl{},
+		&mapper.InternalSensorRepoMapperImpl{},
+		&mapper.InternalTreeClusterRepoMapperImpl{},
 	)
 	defer suite.Terminate(ctx)
 	code = m.Run()

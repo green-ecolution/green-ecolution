@@ -6,14 +6,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
-	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper/generated"
+	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/handler/v1/errorhandler"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils/pagination"
-)
-
-var (
-	sensorMapper = generated.SensorHTTPMapperImpl{}
 )
 
 // @Summary		Get all sensors
@@ -119,7 +115,7 @@ func GetAllSensorDataByID(svc service.SensorService) fiber.Handler {
 
 		data := make([]*entities.SensorDataResponse, len(domainData))
 		for i, domain := range domainData {
-			data[i] = sensorMapper.FromDataResponse(domain)
+			data[i] = mapper.SensorFromDataResponse(domain)
 		}
 
 		return c.JSON(entities.SensorDataListResponse{
@@ -164,6 +160,6 @@ func DeleteSensor(svc service.SensorService) fiber.Handler {
 // TODO: Create / Update Sensor
 
 func mapToDto(t *domain.Sensor) *entities.SensorResponse {
-	dto := sensorMapper.FromResponse(t)
+	dto := mapper.SensorFromResponse(t)
 	return dto
 }
