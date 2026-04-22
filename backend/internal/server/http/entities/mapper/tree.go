@@ -34,19 +34,56 @@ func TreeFromResponseList(source []*domain.Tree) []*entities.TreeResponse {
 	return utils.MapSlice(source, TreeFromResponse)
 }
 
+type treeRequestFields struct {
+	TreeClusterID  *int32
+	PlantingYear   int32
+	Species        string
+	Number         string
+	Latitude       float64
+	Longitude      float64
+	SensorID       *string
+	Description    string
+	Provider       string
+	AdditionalInfo map[string]interface{}
+}
+
+func parseTreeRequestFields(f treeRequestFields) (domain.Coordinate, domain.PlantingYear, *domain.SensorID, error) {
+	coord, err := domain.NewCoordinate(f.Latitude, f.Longitude)
+	if err != nil {
+		return domain.Coordinate{}, domain.PlantingYear{}, nil, fmt.Errorf("invalid coordinate: %w", err)
+	}
+
+	plantingYear, err := domain.NewPlantingYear(f.PlantingYear)
+	if err != nil {
+		return domain.Coordinate{}, domain.PlantingYear{}, nil, fmt.Errorf("invalid planting year: %w", err)
+	}
+
+	var sensorID *domain.SensorID
+	if f.SensorID != nil {
+		sid, err := domain.NewSensorID(*f.SensorID)
+		if err != nil {
+			return domain.Coordinate{}, domain.PlantingYear{}, nil, fmt.Errorf("invalid sensor ID: %w", err)
+		}
+		sensorID = &sid
+	}
+
+	return coord, plantingYear, sensorID, nil
+}
+
 func TreeFromCreateRequest(source *entities.TreeCreateRequest) (*domain.TreeCreate, error) {
 	if source == nil {
 		return nil, nil
 	}
 
-	coord, err := domain.NewCoordinate(source.Latitude, source.Longitude)
+	coord, plantingYear, sensorID, err := parseTreeRequestFields(treeRequestFields{
+		TreeClusterID: source.TreeClusterID, PlantingYear: source.PlantingYear,
+		Species: source.Species, Number: source.Number,
+		Latitude: source.Latitude, Longitude: source.Longitude,
+		SensorID: source.SensorID, Description: source.Description,
+		Provider: source.Provider, AdditionalInfo: source.AdditionalInfo,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("invalid coordinate: %w", err)
-	}
-
-	plantingYear, err := domain.NewPlantingYear(source.PlantingYear)
-	if err != nil {
-		return nil, fmt.Errorf("invalid planting year: %w", err)
+		return nil, err
 	}
 
 	result := &domain.TreeCreate{
@@ -57,17 +94,11 @@ func TreeFromCreateRequest(source *entities.TreeCreateRequest) (*domain.TreeCrea
 		Description:    source.Description,
 		Provider:       source.Provider,
 		AdditionalInfo: source.AdditionalInfo,
+		SensorID:       sensorID,
 	}
 	if source.TreeClusterID != nil {
 		v := *source.TreeClusterID
 		result.TreeClusterID = &v
-	}
-	if source.SensorID != nil {
-		sensorID, err := domain.NewSensorID(*source.SensorID)
-		if err != nil {
-			return nil, fmt.Errorf("invalid sensor ID: %w", err)
-		}
-		result.SensorID = &sensorID
 	}
 	return result, nil
 }
@@ -77,14 +108,15 @@ func TreeFromUpdateRequest(source *entities.TreeUpdateRequest) (*domain.TreeUpda
 		return nil, nil
 	}
 
-	coord, err := domain.NewCoordinate(source.Latitude, source.Longitude)
+	coord, plantingYear, sensorID, err := parseTreeRequestFields(treeRequestFields{
+		TreeClusterID: source.TreeClusterID, PlantingYear: source.PlantingYear,
+		Species: source.Species, Number: source.Number,
+		Latitude: source.Latitude, Longitude: source.Longitude,
+		SensorID: source.SensorID, Description: source.Description,
+		Provider: source.Provider, AdditionalInfo: source.AdditionalInfo,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("invalid coordinate: %w", err)
-	}
-
-	plantingYear, err := domain.NewPlantingYear(source.PlantingYear)
-	if err != nil {
-		return nil, fmt.Errorf("invalid planting year: %w", err)
+		return nil, err
 	}
 
 	result := &domain.TreeUpdate{
@@ -95,17 +127,11 @@ func TreeFromUpdateRequest(source *entities.TreeUpdateRequest) (*domain.TreeUpda
 		Description:    source.Description,
 		Provider:       source.Provider,
 		AdditionalInfo: source.AdditionalInfo,
+		SensorID:       sensorID,
 	}
 	if source.TreeClusterID != nil {
 		v := *source.TreeClusterID
 		result.TreeClusterID = &v
-	}
-	if source.SensorID != nil {
-		sensorID, err := domain.NewSensorID(*source.SensorID)
-		if err != nil {
-			return nil, fmt.Errorf("invalid sensor ID: %w", err)
-		}
-		result.SensorID = &sensorID
 	}
 	return result, nil
 }
