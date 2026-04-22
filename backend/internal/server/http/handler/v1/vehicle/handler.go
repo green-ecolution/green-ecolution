@@ -151,7 +151,10 @@ func CreateVehicle(svc service.VehicleService) fiber.Handler {
 			return err
 		}
 
-		domainReq := mapper.VehicleFromCreateRequest(req)
+		domainReq, err := mapper.VehicleFromCreateRequest(req)
+		if err != nil {
+			return errorhandler.HandleError(service.NewError(service.BadRequest, err.Error()))
+		}
 		domainData, err := svc.Create(ctx, domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)
@@ -192,7 +195,10 @@ func UpdateVehicle(svc service.VehicleService) fiber.Handler {
 			return err
 		}
 
-		domainReq := mapper.VehicleFromUpdateRequest(req)
+		domainReq, err := mapper.VehicleFromUpdateRequest(req)
+		if err != nil {
+			return errorhandler.HandleError(service.NewError(service.BadRequest, err.Error()))
+		}
 		domainData, err := svc.Update(ctx, int32(id), domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)

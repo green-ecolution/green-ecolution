@@ -37,11 +37,11 @@ func TestSensorService_HandleMessage(t *testing.T) {
 			Data: testPayLoad,
 		}
 
-		sensorRepo.EXPECT().GetByID(context.Background(), testPayLoad.Device).Return(TestSensor, nil)
+		sensorRepo.EXPECT().GetByID(context.Background(), domain.MustNewSensorID(testPayLoad.Device)).Return(TestSensor, nil)
 		sensorRepo.EXPECT().Update(context.Background(), TestSensor.ID, mock.Anything).Return(TestSensor, nil)
-		sensorRepo.EXPECT().InsertSensorData(context.Background(), insertData, testPayLoad.Device).Return(nil)
+		sensorRepo.EXPECT().InsertSensorData(context.Background(), insertData, TestSensor.ID).Return(nil)
 		sensorRepo.EXPECT().GetLatestSensorDataBySensorID(context.Background(), TestSensor.ID).Return(TestSensorData[0], nil)
-		treeRepo.EXPECT().FindNearestTree(context.Background(), TestSensor.Latitude, TestSensor.Longitude).Return(TestNearestTree, nil)
+		treeRepo.EXPECT().FindNearestTree(context.Background(), TestSensor.Coordinate).Return(TestNearestTree, nil)
 		treeRepo.EXPECT().Update(context.Background(), TestNearestTree.ID, mock.Anything).Return(TestNearestTree, nil)
 
 		// when
@@ -55,8 +55,7 @@ func TestSensorService_HandleMessage(t *testing.T) {
 		assert.NotEmpty(t, sensorData)
 		assert.Equal(t, sensorData.Data, insertData.Data)
 		assert.NotNil(t, sensor)
-		assert.Equal(t, sensor.Latitude, TestSensor.Latitude)
-		assert.Equal(t, sensor.Longitude, TestSensor.Longitude)
+		assert.Equal(t, sensor.Coordinate, TestSensor.Coordinate)
 		assert.Equal(t, sensor.Status, domain.SensorStatusOnline)
 	})
 
@@ -68,7 +67,7 @@ func TestSensorService_HandleMessage(t *testing.T) {
 
 		testPayload := TestListMQTTPayload[0]
 
-		sensorRepo.EXPECT().GetByID(context.Background(), testPayload.Device).Return(TestSensor, nil)
+		sensorRepo.EXPECT().GetByID(context.Background(), domain.MustNewSensorID(testPayload.Device)).Return(TestSensor, nil)
 		sensorRepo.EXPECT().Update(context.Background(), TestSensor.ID, mock.Anything).Return(nil, errors.New("update error"))
 
 		// when
@@ -91,12 +90,12 @@ func TestSensorService_HandleMessage(t *testing.T) {
 			Data: testPayLoad,
 		}
 
-		sensorRepo.EXPECT().GetByID(context.Background(), testPayLoad.Device).Return(nil, nil).Once()
+		sensorRepo.EXPECT().GetByID(context.Background(), domain.MustNewSensorID(testPayLoad.Device)).Return(nil, nil).Once()
 		sensorRepo.EXPECT().Create(context.Background(), mock.Anything).Return(TestSensor, nil).Once()
 		sensorRepo.EXPECT().InsertSensorData(context.Background(), insertData, TestSensor.ID).Return(nil).Once()
 		sensorRepo.EXPECT().GetLatestSensorDataBySensorID(context.Background(), TestSensor.ID).Return(TestSensorData[0], nil).Once()
 		sensorRepo.EXPECT().GetByID(context.Background(), TestSensor.ID).Return(TestSensor, nil).Once()
-		treeRepo.EXPECT().FindNearestTree(context.Background(), TestSensor.Latitude, TestSensor.Longitude).Return(TestNearestTree, nil)
+		treeRepo.EXPECT().FindNearestTree(context.Background(), TestSensor.Coordinate).Return(TestNearestTree, nil)
 		treeRepo.EXPECT().Update(context.Background(), TestNearestTree.ID, mock.Anything).Return(TestNearestTree, nil)
 
 		// when
@@ -110,8 +109,7 @@ func TestSensorService_HandleMessage(t *testing.T) {
 		assert.NotEmpty(t, sensorData)
 		assert.Equal(t, sensorData.Data, insertData.Data)
 		assert.NotNil(t, sensor)
-		assert.Equal(t, sensor.Latitude, TestSensor.Latitude)
-		assert.Equal(t, sensor.Longitude, TestSensor.Longitude)
+		assert.Equal(t, sensor.Coordinate, TestSensor.Coordinate)
 		assert.Equal(t, sensor.Status, domain.SensorStatusOnline)
 	})
 
@@ -123,7 +121,7 @@ func TestSensorService_HandleMessage(t *testing.T) {
 
 		testPayload := TestListMQTTPayload[0]
 
-		sensorRepo.EXPECT().GetByID(context.Background(), testPayload.Device).Return(nil, nil)
+		sensorRepo.EXPECT().GetByID(context.Background(), domain.MustNewSensorID(testPayload.Device)).Return(nil, nil)
 		sensorRepo.EXPECT().Create(context.Background(), mock.Anything).Return(nil, errors.New("create error"))
 
 		// when
@@ -190,9 +188,9 @@ func TestSensorService_HandleMessage(t *testing.T) {
 			Data: testPayLoad,
 		}
 
-		sensorRepo.EXPECT().GetByID(context.Background(), testPayLoad.Device).Return(TestSensor, nil)
+		sensorRepo.EXPECT().GetByID(context.Background(), domain.MustNewSensorID(testPayLoad.Device)).Return(TestSensor, nil)
 		sensorRepo.EXPECT().Update(context.Background(), TestSensor.ID, mock.Anything).Return(TestSensor, nil)
-		sensorRepo.EXPECT().InsertSensorData(context.Background(), insertData, testPayLoad.Device).Return(errors.New("insert error"))
+		sensorRepo.EXPECT().InsertSensorData(context.Background(), insertData, TestSensor.ID).Return(errors.New("insert error"))
 
 		// when
 		sensorData, err := svc.HandleMessage(context.Background(), testPayLoad)

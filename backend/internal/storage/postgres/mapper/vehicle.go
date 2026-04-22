@@ -30,7 +30,7 @@ func (c *InternalVehicleRepoMapperImpl) FromSql(source *sqlc.Vehicle) (*entities
 		ArchivedAt:     utils.TimePtrToTime(source.ArchivedAt),
 		NumberPlate:    source.NumberPlate,
 		Description:    source.Description,
-		WaterCapacity:  source.WaterCapacity,
+		WaterCapacity:  entities.MustNewWaterCapacity(source.WaterCapacity),
 		Status:         MapVehicleStatus(source.Status),
 		Type:           MapVehicleType(source.Type),
 		Model:          source.Model,

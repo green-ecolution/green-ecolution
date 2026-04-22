@@ -30,8 +30,8 @@ func TestSensorRepository_GetAll(t *testing.T) {
 		for i, sensor := range got {
 			assert.Equal(t, TestSensorList[i].ID, sensor.ID)
 			assert.Equal(t, TestSensorList[i].Status, sensor.Status)
-			assert.Equal(t, TestSensorList[i].Latitude, sensor.Latitude)
-			assert.Equal(t, TestSensorList[i].Longitude, sensor.Longitude)
+			assert.Equal(t, TestSensorList[i].Coordinate.Latitude(), sensor.Coordinate.Latitude())
+			assert.Equal(t, TestSensorList[i].Coordinate.Longitude(), sensor.Coordinate.Longitude())
 			assert.NotZero(t, sensor.CreatedAt)
 			assert.NotZero(t, sensor.UpdatedAt)
 
@@ -66,8 +66,8 @@ func TestSensorRepository_GetAll(t *testing.T) {
 		for _, sensor := range got {
 			assert.Equal(t, exptectedSensor.ID, sensor.ID)
 			assert.Equal(t, exptectedSensor.Status, sensor.Status)
-			assert.Equal(t, exptectedSensor.Latitude, sensor.Latitude)
-			assert.Equal(t, exptectedSensor.Longitude, sensor.Longitude)
+			assert.Equal(t, exptectedSensor.Coordinate.Latitude(), sensor.Coordinate.Latitude())
+			assert.Equal(t, exptectedSensor.Coordinate.Longitude(), sensor.Coordinate.Longitude())
 			assert.Equal(t, exptectedSensor.AdditionalInfo, sensor.AdditionalInfo)
 			assert.Equal(t, exptectedSensor.Provider, sensor.Provider)
 			assert.NotZero(t, sensor.CreatedAt)
@@ -205,7 +205,7 @@ func TestSensorRepository_GetAllDataById(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.GetAllDataByID(context.Background(), "sensor-1")
+		got, err := r.GetAllDataByID(context.Background(), entities.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.NoError(t, err)
@@ -229,7 +229,7 @@ func TestSensorRepository_GetAllDataById(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.GetAllDataByID(context.Background(), "sensor-999")
+		got, err := r.GetAllDataByID(context.Background(), entities.MustNewSensorID("sensor-999"))
 
 		// then
 		assert.Error(t, err)
@@ -243,7 +243,7 @@ func TestSensorRepository_GetAllDataById(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.GetAllDataByID(context.Background(), "")
+		got, err := r.GetAllDataByID(context.Background(), entities.SensorID{})
 
 		// then
 		assert.Error(t, err)
@@ -257,7 +257,7 @@ func TestSensorRepository_GetAllDataById(t *testing.T) {
 		cancel()
 
 		// when
-		got, err := r.GetAllDataByID(ctx, "sensor-1")
+		got, err := r.GetAllDataByID(ctx, entities.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.Error(t, err)
@@ -274,14 +274,14 @@ func TestSensorRepository_GetByID(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.GetByID(ctx, "sensor-1")
+		got, err := r.GetByID(ctx, entities.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.NoError(t, err)
 		assert.Equal(t, TestSensorList[0].ID, got.ID)
 		assert.Equal(t, TestSensorList[0].Status, got.Status)
-		assert.Equal(t, TestSensorList[0].Latitude, got.Latitude)
-		assert.Equal(t, TestSensorList[0].Longitude, got.Longitude)
+		assert.Equal(t, TestSensorList[0].Coordinate.Latitude(), got.Coordinate.Latitude())
+		assert.Equal(t, TestSensorList[0].Coordinate.Longitude(), got.Coordinate.Longitude())
 		assert.NotZero(t, got.CreatedAt)
 		assert.NotZero(t, got.UpdatedAt)
 
@@ -298,7 +298,7 @@ func TestSensorRepository_GetByID(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.GetByID(ctx, "sensor-1")
+		got, err := r.GetByID(ctx, entities.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.Error(t, err)
@@ -312,7 +312,7 @@ func TestSensorRepository_GetByID(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.GetByID(ctx, "")
+		got, err := r.GetByID(ctx, entities.SensorID{})
 
 		// then
 		assert.Error(t, err)
@@ -326,7 +326,7 @@ func TestSensorRepository_GetByID(t *testing.T) {
 		cancel()
 
 		// when
-		got, err := r.GetByID(ctx, "sensor-1")
+		got, err := r.GetByID(ctx, entities.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.Error(t, err)
@@ -343,7 +343,7 @@ func TestSensorRepository_GetLastSensorDataByID(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		data, err := r.GetLatestSensorDataBySensorID(ctx, "sensor-1")
+		data, err := r.GetLatestSensorDataBySensorID(ctx, entities.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.NoError(t, err)
@@ -360,7 +360,7 @@ func TestSensorRepository_GetLastSensorDataByID(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.GetLatestSensorDataBySensorID(ctx, "notFoundID")
+		got, err := r.GetLatestSensorDataBySensorID(ctx, entities.MustNewSensorID("notFoundID"))
 
 		// then
 		assert.Error(t, err)
@@ -376,7 +376,7 @@ func TestSensorRepository_GetLastSensorDataByID(t *testing.T) {
 		cancel()
 
 		// when
-		got, err := r.GetLatestSensorDataBySensorID(ctx, "sensor-1")
+		got, err := r.GetLatestSensorDataBySensorID(ctx, entities.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.Error(t, err)
@@ -386,12 +386,11 @@ func TestSensorRepository_GetLastSensorDataByID(t *testing.T) {
 
 var TestSensorList = []*entities.Sensor{
 	{
-		ID:        "sensor-1",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		Latitude:  54.82124518093376,
-		Longitude: 9.485702120628517,
-		Status:    entities.SensorStatusOnline,
+		ID:         entities.MustNewSensorID("sensor-1"),
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+		Coordinate: entities.MustNewCoordinate(54.82124518093376, 9.485702120628517),
+		Status:     entities.SensorStatusOnline,
 		LatestData: &entities.SensorData{
 			ID:        1,
 			CreatedAt: time.Now(),
@@ -400,37 +399,33 @@ var TestSensorList = []*entities.Sensor{
 		},
 	},
 	{
-		ID:        "sensor-2",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		Latitude:  54.78780993841013,
-		Longitude: 9.444052105200551,
-		Status:    entities.SensorStatusOffline,
+		ID:         entities.MustNewSensorID("sensor-2"),
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+		Coordinate: entities.MustNewCoordinate(54.78780993841013, 9.444052105200551),
+		Status:     entities.SensorStatusOffline,
 	},
 	{
-		ID:        "sensor-3",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		Latitude:  54.77933725347423,
-		Longitude: 9.426465409018832,
-		Status:    entities.SensorStatusUnknown,
+		ID:         entities.MustNewSensorID("sensor-3"),
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+		Coordinate: entities.MustNewCoordinate(54.77933725347423, 9.426465409018832),
+		Status:     entities.SensorStatusUnknown,
 	},
 	{
-		ID:        "sensor-4",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		Latitude:  54.82078826498143,
-		Longitude: 9.489684366114483,
-		Status:    entities.SensorStatusOnline,
+		ID:         entities.MustNewSensorID("sensor-4"),
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+		Coordinate: entities.MustNewCoordinate(54.82078826498143, 9.489684366114483),
+		Status:     entities.SensorStatusOnline,
 	},
 	{
-		ID:        "sensor-provider",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		Latitude:  54.82078826498143,
-		Longitude: 9.489684366114483,
-		Status:    entities.SensorStatusOnline,
-		Provider:  "test-provider",
+		ID:         entities.MustNewSensorID("sensor-provider"),
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+		Coordinate: entities.MustNewCoordinate(54.82078826498143, 9.489684366114483),
+		Status:     entities.SensorStatusOnline,
+		Provider:   "test-provider",
 		AdditionalInfo: map[string]interface{}{
 			"foo": "bar",
 		},
@@ -464,14 +459,14 @@ var TestMqttPayload = &entities.MqttPayload{
 var TestSensorData = []*entities.SensorData{
 	{
 		ID:        1,
-		SensorID:  "sensor-1",
+		SensorID:  entities.MustNewSensorID("sensor-1"),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		Data:      TestMqttPayload,
 	},
 	{
 		ID:        2,
-		SensorID:  "sensor-1",
+		SensorID:  entities.MustNewSensorID("sensor-1"),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		Data: &entities.MqttPayload{

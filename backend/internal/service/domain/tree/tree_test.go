@@ -204,7 +204,7 @@ func TestTreeService_GetBySensorID(t *testing.T) {
 		eventManager := worker.NewEventManager(entities.EventTypeUpdateTree)
 		svc := tree.NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager, testMapCfg)
 
-		id := "sensor-1"
+		id := entities.MustNewSensorID("sensor-1")
 		expectedTree := TestTreesList[0]
 		treeRepo.EXPECT().GetBySensorID(ctx, id).Return(expectedTree, nil)
 
@@ -223,7 +223,7 @@ func TestTreeService_GetBySensorID(t *testing.T) {
 		eventManager := worker.NewEventManager(entities.EventTypeUpdateTree)
 		svc := tree.NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager, testMapCfg)
 
-		id := "sensor-2"
+		id := entities.MustNewSensorID("sensor-2")
 		expectedError := storage.ErrEntityNotFound("not found")
 		treeRepo.EXPECT().GetBySensorID(ctx, id).Return(nil, expectedError)
 
@@ -243,7 +243,7 @@ func TestTreeService_GetBySensorID(t *testing.T) {
 		eventManager := worker.NewEventManager(entities.EventTypeUpdateTree)
 		svc := tree.NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager, testMapCfg)
 
-		id := "sensor-2"
+		id := entities.MustNewSensorID("sensor-2")
 		expectedError := storage.ErrSensorNotFound
 		treeRepo.EXPECT().GetBySensorID(ctx, id).Return(nil, expectedError)
 
@@ -263,7 +263,7 @@ func TestTreeService_GetBySensorID(t *testing.T) {
 		eventManager := worker.NewEventManager(entities.EventTypeUpdateTree)
 		svc := tree.NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager, testMapCfg)
 
-		id := "sensor-3"
+		id := entities.MustNewSensorID("sensor-3")
 		expectedError := errors.New("unexpected error")
 
 		treeRepo.EXPECT().GetBySensorID(ctx, id).Return(nil, expectedError)
@@ -318,8 +318,7 @@ func TestTreeService_Create(t *testing.T) {
 				assert.Equal(t, TestTreeCreate.PlantingYear, testTree.PlantingYear)
 				assert.Equal(t, TestTreeCreate.Species, testTree.Species)
 				assert.Equal(t, TestTreeCreate.Number, testTree.Number)
-				assert.Equal(t, TestTreeCreate.Latitude, testTree.Latitude)
-				assert.Equal(t, TestTreeCreate.Longitude, testTree.Longitude)
+				assert.Equal(t, TestTreeCreate.Coordinate, testTree.Coordinate)
 				assert.Equal(t, TestTreeCreate.Description, testTree.Description)
 				assert.Equal(t, expectedCluster, testTree.TreeCluster)
 				assert.Equal(t, expectedSensor, testTree.Sensor)
@@ -763,9 +762,8 @@ func TestTreeService_EventSystem(t *testing.T) {
 		expectedTree := *TestTreesList[0]
 		createTree := &entities.TreeCreate{
 			Species:      "Oak",
-			Latitude:     testLatitude,
-			Longitude:    testLongitude,
-			PlantingYear: 2023,
+			Coordinate:   entities.MustNewCoordinate(testLatitude, testLongitude),
+			PlantingYear: entities.MustNewPlantingYear(2023),
 			Number:       "T001",
 		}
 
@@ -843,8 +841,7 @@ func TestTreeService_EventSystem(t *testing.T) {
 			PlantingYear:  expectedTree.PlantingYear,
 			Species:       expectedTree.Species,
 			Number:        expectedTree.Number,
-			Latitude:      expectedTree.Latitude,
-			Longitude:     expectedTree.Longitude,
+			Coordinate:    expectedTree.Coordinate,
 			Description:   expectedTree.Description,
 		})
 
@@ -1130,10 +1127,7 @@ func TestTreeService_GetPlantingYears(t *testing.T) {
 
 func TestTreeService_GetNearestTrees(t *testing.T) {
 	ctx := context.Background()
-	const (
-		lat = 54.801539
-		lng = 9.446741
-	)
+	coord := entities.MustNewCoordinate(54.801539, 9.446741)
 
 	newSvc := func(t *testing.T) (*storageMock.MockTreeRepository, *tree.TreeService) {
 		t.Helper()
@@ -1148,12 +1142,12 @@ func TestTreeService_GetNearestTrees(t *testing.T) {
 	t.Run("should return list sorted by distance on success", func(t *testing.T) {
 		treeRepo, svc := newSvc(t)
 		expected := []*entities.TreeWithDistance{
-			{Tree: TestTreesList[0], Distance: 5.2},
-			{Tree: TestTreesList[1], Distance: 42.8},
+			{Tree: TestTreesList[0], Distance: entities.MustNewDistance(5.2)},
+			{Tree: TestTreesList[1], Distance: entities.MustNewDistance(42.8)},
 		}
-		treeRepo.EXPECT().FindNearestTrees(ctx, lat, lng, testMapCfg.NearestTreeMaxRadius, int32(5)).Return(expected, nil)
+		treeRepo.EXPECT().FindNearestTrees(ctx, coord, testMapCfg.NearestTreeMaxRadius, int32(5)).Return(expected, nil)
 
-		got, err := svc.GetNearestTrees(ctx, lat, lng, 5)
+		got, err := svc.GetNearestTrees(ctx, coord, 5)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expected, got)
@@ -1161,10 +1155,10 @@ func TestTreeService_GetNearestTrees(t *testing.T) {
 
 	t.Run("should use default limit when limit is zero", func(t *testing.T) {
 		treeRepo, svc := newSvc(t)
-		treeRepo.EXPECT().FindNearestTrees(ctx, lat, lng, testMapCfg.NearestTreeMaxRadius, int32(testMapCfg.NearestTreeDefaultLimit)).
+		treeRepo.EXPECT().FindNearestTrees(ctx, coord, testMapCfg.NearestTreeMaxRadius, int32(testMapCfg.NearestTreeDefaultLimit)).
 			Return([]*entities.TreeWithDistance{}, nil)
 
-		got, err := svc.GetNearestTrees(ctx, lat, lng, 0)
+		got, err := svc.GetNearestTrees(ctx, coord, 0)
 
 		assert.NoError(t, err)
 		assert.Empty(t, got)
@@ -1172,10 +1166,10 @@ func TestTreeService_GetNearestTrees(t *testing.T) {
 
 	t.Run("should use default limit when limit is negative", func(t *testing.T) {
 		treeRepo, svc := newSvc(t)
-		treeRepo.EXPECT().FindNearestTrees(ctx, lat, lng, testMapCfg.NearestTreeMaxRadius, int32(testMapCfg.NearestTreeDefaultLimit)).
+		treeRepo.EXPECT().FindNearestTrees(ctx, coord, testMapCfg.NearestTreeMaxRadius, int32(testMapCfg.NearestTreeDefaultLimit)).
 			Return([]*entities.TreeWithDistance{}, nil)
 
-		got, err := svc.GetNearestTrees(ctx, lat, lng, -5)
+		got, err := svc.GetNearestTrees(ctx, coord, -5)
 
 		assert.NoError(t, err)
 		assert.Empty(t, got)
@@ -1183,10 +1177,10 @@ func TestTreeService_GetNearestTrees(t *testing.T) {
 
 	t.Run("should clamp limit to max limit", func(t *testing.T) {
 		treeRepo, svc := newSvc(t)
-		treeRepo.EXPECT().FindNearestTrees(ctx, lat, lng, testMapCfg.NearestTreeMaxRadius, int32(testMapCfg.NearestTreeMaxLimit)).
+		treeRepo.EXPECT().FindNearestTrees(ctx, coord, testMapCfg.NearestTreeMaxRadius, int32(testMapCfg.NearestTreeMaxLimit)).
 			Return([]*entities.TreeWithDistance{}, nil)
 
-		got, err := svc.GetNearestTrees(ctx, lat, lng, 1000)
+		got, err := svc.GetNearestTrees(ctx, coord, 1000)
 
 		assert.NoError(t, err)
 		assert.Empty(t, got)
@@ -1194,10 +1188,10 @@ func TestTreeService_GetNearestTrees(t *testing.T) {
 
 	t.Run("should propagate repository error", func(t *testing.T) {
 		treeRepo, svc := newSvc(t)
-		treeRepo.EXPECT().FindNearestTrees(ctx, lat, lng, testMapCfg.NearestTreeMaxRadius, int32(testMapCfg.NearestTreeDefaultLimit)).
+		treeRepo.EXPECT().FindNearestTrees(ctx, coord, testMapCfg.NearestTreeMaxRadius, int32(testMapCfg.NearestTreeDefaultLimit)).
 			Return(nil, errors.New("db down"))
 
-		got, err := svc.GetNearestTrees(ctx, lat, lng, 0)
+		got, err := svc.GetNearestTrees(ctx, coord, 0)
 
 		assert.Error(t, err)
 		assert.Nil(t, got)

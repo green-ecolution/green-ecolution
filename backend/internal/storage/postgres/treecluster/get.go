@@ -132,15 +132,19 @@ func (r *TreeClusterRepository) GetByIDs(ctx context.Context, ids []int32) ([]*e
 	return tc, nil
 }
 
-func (r *TreeClusterRepository) GetCenterPoint(ctx context.Context, tcID int32) (lat, long float64, err error) {
+func (r *TreeClusterRepository) GetCenterPoint(ctx context.Context, tcID int32) (*entities.Coordinate, error) {
 	log := logger.GetLogger(ctx)
 	row, err := r.store.CalculateTreesCentroid(ctx, &tcID)
 	if err != nil {
 		log.Warn("failed to calculate center point of given cluster", "error", err, "cluster_id", tcID)
-		return 0, 0, err
+		return nil, err
 	}
 
-	return row.CenterX, row.CenterY, nil
+	coord, err := entities.NewCoordinate(row.CenterX, row.CenterY)
+	if err != nil {
+		return nil, err
+	}
+	return &coord, nil
 }
 
 func (r *TreeClusterRepository) GetAllLatestSensorDataByClusterID(ctx context.Context, tcID int32) ([]*entities.SensorData, error) {

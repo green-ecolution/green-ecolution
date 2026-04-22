@@ -85,15 +85,17 @@ func (r *TreeClusterRepository) updateEntity(ctx context.Context, tc *entities.T
 		}
 	}
 
-	if tc.Latitude == nil || tc.Longitude == nil {
+	if tc.Coordinate == nil {
 		if err := r.store.RemoveTreeClusterLocation(ctx, tc.ID); err != nil {
 			return err
 		}
 	} else {
+		lat := tc.Coordinate.Latitude()
+		lng := tc.Coordinate.Longitude()
 		locationArgs := sqlc.SetTreeClusterLocationParams{
 			ID:        tc.ID,
-			Latitude:  tc.Latitude,
-			Longitude: tc.Longitude,
+			Latitude:  &lat,
+			Longitude: &lng,
 		}
 		if err := r.store.SetTreeClusterLocation(ctx, &locationArgs); err != nil {
 			return err

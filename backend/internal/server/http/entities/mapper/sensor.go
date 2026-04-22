@@ -10,13 +10,13 @@ func SensorFromResponse(source *domain.Sensor) *entities.SensorResponse {
 		return nil
 	}
 	return &entities.SensorResponse{
-		ID:             source.ID,
+		ID:             source.ID.String(),
 		CreatedAt:      source.CreatedAt,
 		UpdatedAt:      source.UpdatedAt,
 		Status:         MapSensorStatus(source.Status),
 		LatestData:     MapLatestDataToResponse(source.LatestData),
-		Latitude:       source.Latitude,
-		Longitude:      source.Longitude,
+		Latitude:       source.Coordinate.Latitude(),
+		Longitude:      source.Coordinate.Longitude(),
 		Provider:       source.Provider,
 		AdditionalInfo: source.AdditionalInfo,
 	}

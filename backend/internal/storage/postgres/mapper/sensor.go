@@ -28,12 +28,11 @@ func (c *InternalSensorRepoMapperImpl) FromSql(source *sqlc.Sensor) (*entities.S
 		return nil, err
 	}
 	return &entities.Sensor{
-		ID:             source.ID,
+		ID:             entities.MustNewSensorID(source.ID),
 		CreatedAt:      source.CreatedAt,
 		UpdatedAt:      source.UpdatedAt,
 		Status:         MapSensorStatus(source.Status),
-		Latitude:       source.Latitude,
-		Longitude:      source.Longitude,
+		Coordinate:     entities.MustNewCoordinate(source.Latitude, source.Longitude),
 		Provider:       utils.StringPtrToString(source.Provider),
 		AdditionalInfo: additionalInfo,
 	}, nil
@@ -53,7 +52,7 @@ func (c *InternalSensorRepoMapperImpl) FromSqlSensorData(source *sqlc.SensorDatu
 	}
 	return &entities.SensorData{
 		ID:        source.ID,
-		SensorID:  source.SensorID,
+		SensorID:  entities.MustNewSensorID(source.SensorID),
 		CreatedAt: source.CreatedAt,
 		UpdatedAt: source.UpdatedAt,
 		Data:      data,

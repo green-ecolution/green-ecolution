@@ -36,12 +36,11 @@ type GeoJSONMetadata struct {
 }
 
 type GeoJSONLocation struct {
-	Latitude  float64
-	Longitude float64
+	Coordinate Coordinate
 }
 
 type RouteMetadata struct {
-	Distance float64
+	Distance Distance
 	Refills  int32
 	Time     time.Duration
 }

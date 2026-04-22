@@ -1,6 +1,8 @@
 package mapper
 
 import (
+	"fmt"
+
 	domain "github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
@@ -16,11 +18,11 @@ func TreeFromResponse(source *domain.Tree) *entities.TreeResponse {
 		UpdatedAt:      source.UpdatedAt,
 		TreeClusterID:  MapTreeClusterToID(source.TreeCluster),
 		LastWatered:    source.LastWatered,
-		PlantingYear:   source.PlantingYear,
+		PlantingYear:   source.PlantingYear.Value(),
 		Species:        source.Species,
 		Number:         source.Number,
-		Latitude:       source.Latitude,
-		Longitude:      source.Longitude,
+		Latitude:       source.Coordinate.Latitude(),
+		Longitude:      source.Coordinate.Longitude(),
 		WateringStatus: MapWateringStatus(source.WateringStatus),
 		Description:    source.Description,
 		Provider:       source.Provider,
@@ -32,16 +34,26 @@ func TreeFromResponseList(source []*domain.Tree) []*entities.TreeResponse {
 	return utils.MapSlice(source, TreeFromResponse)
 }
 
-func TreeFromCreateRequest(source *entities.TreeCreateRequest) *domain.TreeCreate {
+func TreeFromCreateRequest(source *entities.TreeCreateRequest) (*domain.TreeCreate, error) {
 	if source == nil {
-		return nil
+		return nil, nil
 	}
+
+	coord, err := domain.NewCoordinate(source.Latitude, source.Longitude)
+	if err != nil {
+		return nil, fmt.Errorf("invalid coordinate: %w", err)
+	}
+
+	plantingYear, err := domain.NewPlantingYear(source.PlantingYear)
+	if err != nil {
+		return nil, fmt.Errorf("invalid planting year: %w", err)
+	}
+
 	result := &domain.TreeCreate{
-		PlantingYear:   source.PlantingYear,
+		PlantingYear:   plantingYear,
 		Species:        source.Species,
 		Number:         source.Number,
-		Latitude:       source.Latitude,
-		Longitude:      source.Longitude,
+		Coordinate:     coord,
 		Description:    source.Description,
 		Provider:       source.Provider,
 		AdditionalInfo: source.AdditionalInfo,
@@ -51,22 +63,35 @@ func TreeFromCreateRequest(source *entities.TreeCreateRequest) *domain.TreeCreat
 		result.TreeClusterID = &v
 	}
 	if source.SensorID != nil {
-		v := *source.SensorID
-		result.SensorID = &v
+		sensorID, err := domain.NewSensorID(*source.SensorID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid sensor ID: %w", err)
+		}
+		result.SensorID = &sensorID
 	}
-	return result
+	return result, nil
 }
 
-func TreeFromUpdateRequest(source *entities.TreeUpdateRequest) *domain.TreeUpdate {
+func TreeFromUpdateRequest(source *entities.TreeUpdateRequest) (*domain.TreeUpdate, error) {
 	if source == nil {
-		return nil
+		return nil, nil
 	}
+
+	coord, err := domain.NewCoordinate(source.Latitude, source.Longitude)
+	if err != nil {
+		return nil, fmt.Errorf("invalid coordinate: %w", err)
+	}
+
+	plantingYear, err := domain.NewPlantingYear(source.PlantingYear)
+	if err != nil {
+		return nil, fmt.Errorf("invalid planting year: %w", err)
+	}
+
 	result := &domain.TreeUpdate{
-		PlantingYear:   source.PlantingYear,
+		PlantingYear:   plantingYear,
 		Species:        source.Species,
 		Number:         source.Number,
-		Latitude:       source.Latitude,
-		Longitude:      source.Longitude,
+		Coordinate:     coord,
 		Description:    source.Description,
 		Provider:       source.Provider,
 		AdditionalInfo: source.AdditionalInfo,
@@ -76,10 +101,13 @@ func TreeFromUpdateRequest(source *entities.TreeUpdateRequest) *domain.TreeUpdat
 		result.TreeClusterID = &v
 	}
 	if source.SensorID != nil {
-		v := *source.SensorID
-		result.SensorID = &v
+		sensorID, err := domain.NewSensorID(*source.SensorID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid sensor ID: %w", err)
+		}
+		result.SensorID = &sensorID
 	}
-	return result
+	return result, nil
 }
 
 func MapTreeClusterToID(treeCluster *domain.TreeCluster) *int32 {

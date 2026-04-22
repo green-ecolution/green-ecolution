@@ -28,7 +28,7 @@ type Vehicle struct {
 	ArchivedAt     time.Time
 	NumberPlate    string
 	Description    string
-	WaterCapacity  float64
+	WaterCapacity  WaterCapacity
 	Status         VehicleStatus
 	Type           VehicleType
 	Model          string
@@ -44,7 +44,7 @@ type Vehicle struct {
 type VehicleCreate struct {
 	NumberPlate    string
 	Description    string
-	WaterCapacity  float64
+	WaterCapacity  WaterCapacity
 	Status         VehicleStatus
 	Type           VehicleType
 	Model          string
@@ -60,7 +60,7 @@ type VehicleCreate struct {
 type VehicleUpdate struct {
 	NumberPlate    string
 	Description    string
-	WaterCapacity  float64
+	WaterCapacity  WaterCapacity
 	Status         VehicleStatus
 	Type           VehicleType
 	Model          string

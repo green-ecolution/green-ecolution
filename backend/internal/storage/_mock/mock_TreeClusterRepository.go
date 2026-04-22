@@ -479,38 +479,33 @@ func (_c *MockTreeClusterRepository_GetByIDs_Call) RunAndReturn(run func(context
 }
 
 // GetCenterPoint provides a mock function with given fields: ctx, id
-func (_m *MockTreeClusterRepository) GetCenterPoint(ctx context.Context, id int32) (float64, float64, error) {
+func (_m *MockTreeClusterRepository) GetCenterPoint(ctx context.Context, id int32) (*entities.Coordinate, error) {
 	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetCenterPoint")
 	}
 
-	var r0 float64
-	var r1 float64
-	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, int32) (float64, float64, error)); ok {
+	var r0 *entities.Coordinate
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int32) (*entities.Coordinate, error)); ok {
 		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int32) float64); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int32) *entities.Coordinate); ok {
 		r0 = rf(ctx, id)
 	} else {
-		r0 = ret.Get(0).(float64)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entities.Coordinate)
+		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int32) float64); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, int32) error); ok {
 		r1 = rf(ctx, id)
 	} else {
-		r1 = ret.Get(1).(float64)
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, int32) error); ok {
-		r2 = rf(ctx, id)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
 // MockTreeClusterRepository_GetCenterPoint_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCenterPoint'
@@ -532,12 +527,12 @@ func (_c *MockTreeClusterRepository_GetCenterPoint_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockTreeClusterRepository_GetCenterPoint_Call) Return(_a0 float64, _a1 float64, _a2 error) *MockTreeClusterRepository_GetCenterPoint_Call {
-	_c.Call.Return(_a0, _a1, _a2)
+func (_c *MockTreeClusterRepository_GetCenterPoint_Call) Return(_a0 *entities.Coordinate, _a1 error) *MockTreeClusterRepository_GetCenterPoint_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockTreeClusterRepository_GetCenterPoint_Call) RunAndReturn(run func(context.Context, int32) (float64, float64, error)) *MockTreeClusterRepository_GetCenterPoint_Call {
+func (_c *MockTreeClusterRepository_GetCenterPoint_Call) RunAndReturn(run func(context.Context, int32) (*entities.Coordinate, error)) *MockTreeClusterRepository_GetCenterPoint_Call {
 	_c.Call.Return(run)
 	return _c
 }

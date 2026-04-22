@@ -61,7 +61,7 @@ func (s *TreeService) GetByID(ctx context.Context, id int32) (*entities.Tree, er
 	return tr, nil
 }
 
-func (s *TreeService) GetBySensorID(ctx context.Context, id string) (*entities.Tree, error) {
+func (s *TreeService) GetBySensorID(ctx context.Context, id entities.SensorID) (*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
 	tr, err := s.treeRepo.GetBySensorID(ctx, id)
 	if err != nil {
@@ -72,7 +72,7 @@ func (s *TreeService) GetBySensorID(ctx context.Context, id string) (*entities.T
 	return tr, nil
 }
 
-func (s *TreeService) GetNearestTrees(ctx context.Context, lat, lng float64, limit int32) ([]*entities.TreeWithDistance, error) {
+func (s *TreeService) GetNearestTrees(ctx context.Context, coord entities.Coordinate, limit int32) ([]*entities.TreeWithDistance, error) {
 	log := logger.GetLogger(ctx)
 
 	if limit <= 0 {
@@ -82,10 +82,10 @@ func (s *TreeService) GetNearestTrees(ctx context.Context, lat, lng float64, lim
 		limit = maxLimit
 	}
 
-	log.Debug("searching nearest trees", "lat", lat, "lng", lng, "radius", s.mapCfg.NearestTreeMaxRadius, "limit", limit)
-	trees, err := s.treeRepo.FindNearestTrees(ctx, lat, lng, s.mapCfg.NearestTreeMaxRadius, limit)
+	log.Debug("searching nearest trees", "lat", coord.Latitude(), "lng", coord.Longitude(), "radius", s.mapCfg.NearestTreeMaxRadius, "limit", limit)
+	trees, err := s.treeRepo.FindNearestTrees(ctx, coord, s.mapCfg.NearestTreeMaxRadius, limit)
 	if err != nil {
-		log.Debug("failed to find nearest trees", "error", err, "lat", lat, "lng", lng)
+		log.Debug("failed to find nearest trees", "error", err, "lat", coord.Latitude(), "lng", coord.Longitude())
 		return nil, service.MapError(ctx, err, service.ErrorLogAll)
 	}
 	return trees, nil
@@ -126,8 +126,7 @@ func (s *TreeService) Create(ctx context.Context, treeCreate *entities.TreeCreat
 		tree.PlantingYear = treeCreate.PlantingYear
 		tree.Species = treeCreate.Species
 		tree.Number = treeCreate.Number
-		tree.Latitude = treeCreate.Latitude
-		tree.Longitude = treeCreate.Longitude
+		tree.Coordinate = treeCreate.Coordinate
 		tree.Description = treeCreate.Description
 		tree.Provider = treeCreate.Provider
 		tree.AdditionalInfo = treeCreate.AdditionalInfo
@@ -155,7 +154,7 @@ func (s *TreeService) Create(ctx context.Context, treeCreate *entities.TreeCreat
 				log.Debug("failed to find previous tree linked to sensor specified from create request", "sensor_id", treeCreate.SensorID)
 			}
 			if sensor.LatestData != nil && sensor.LatestData.Data != nil && len(sensor.LatestData.Data.Watermarks) > 0 {
-				status := utils.CalculateWateringStatus(ctx, treeCreate.PlantingYear, sensor.LatestData.Data.Watermarks)
+				status := utils.CalculateWateringStatus(ctx, treeCreate.PlantingYear.Value(), sensor.LatestData.Data.Watermarks)
 				tree.WateringStatus = status
 			}
 		}
@@ -203,8 +202,7 @@ func (s *TreeService) Update(ctx context.Context, id int32, tu *entities.TreeUpd
 		tree.PlantingYear = tu.PlantingYear
 		tree.Species = tu.Species
 		tree.Number = tu.Number
-		tree.Latitude = tu.Latitude
-		tree.Longitude = tu.Longitude
+		tree.Coordinate = tu.Coordinate
 		tree.Description = tu.Description
 		tree.Provider = tu.Provider
 		tree.AdditionalInfo = tu.AdditionalInfo
@@ -234,7 +232,7 @@ func (s *TreeService) Update(ctx context.Context, id int32, tu *entities.TreeUpd
 				log.Debug("failed to find previous tree linked to sensor specified from update request", "sensor_id", tu.SensorID)
 			}
 			if sensor.LatestData != nil && sensor.LatestData.Data != nil && len(sensor.LatestData.Data.Watermarks) > 0 {
-				status := utils.CalculateWateringStatus(ctx, tu.PlantingYear, sensor.LatestData.Data.Watermarks)
+				status := utils.CalculateWateringStatus(ctx, tu.PlantingYear.Value(), sensor.LatestData.Data.Watermarks)
 				tree.WateringStatus = status
 			}
 		} else {
@@ -274,7 +272,7 @@ func (s *TreeService) UpdateWateringStatuses(ctx context.Context) error {
 			wateringStatus := entities.WateringStatusUnknown
 
 			if tree.Sensor != nil {
-				wateringStatus = utils.CalculateWateringStatus(ctx, tree.PlantingYear, tree.Sensor.LatestData.Data.Watermarks)
+				wateringStatus = utils.CalculateWateringStatus(ctx, tree.PlantingYear.Value(), tree.Sensor.LatestData.Data.Watermarks)
 			}
 			_, err = s.treeRepo.Update(ctx, tree.ID, func(tr *entities.Tree, _ storage.TreeRepository) (bool, error) {
 				tr.WateringStatus = wateringStatus

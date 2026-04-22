@@ -168,7 +168,7 @@ func TestTreeClusterService_Create(t *testing.T) {
 
 		treeRepo.EXPECT().GetBySensorIDs(
 			ctx,
-			"sensor-1",
+			entities.MustNewSensorID("sensor-1"),
 		).Return(testTrees, nil)
 
 		clusterRepo.EXPECT().Update(
@@ -313,7 +313,7 @@ func TestTreeClusterService_Create(t *testing.T) {
 
 		treeRepo.EXPECT().GetBySensorIDs(
 			ctx,
-			"sensor-1",
+			entities.MustNewSensorID("sensor-1"),
 		).Return(testTrees, nil)
 
 		clusterRepo.EXPECT().Update(
@@ -367,7 +367,7 @@ func TestTreeClusterService_Update(t *testing.T) {
 
 		treeRepo.EXPECT().GetBySensorIDs(
 			ctx,
-			"sensor-1",
+			entities.MustNewSensorID("sensor-1"),
 		).Return(testTrees, nil)
 
 		clusterRepo.EXPECT().Update(
@@ -550,7 +550,7 @@ func TestTreeClusterService_EventSystem(t *testing.T) {
 
 		treeRepo.EXPECT().GetBySensorIDs(
 			ctx,
-			"sensor-1",
+			entities.MustNewSensorID("sensor-1"),
 		).Return(testTrees, nil)
 
 		clusterRepo.EXPECT().Update(
@@ -682,7 +682,7 @@ func TestTreeClusterService_UpdateWateringStatuses(t *testing.T) {
 		// when
 		clusterRepo.EXPECT().GetAll(mock.Anything, entities.TreeClusterQuery{}).Return(expectList, int64(len(expectList)), nil)
 		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, staleCluster.ID).Return(allLatestSensorData, nil)
-		treeRepo.EXPECT().GetBySensorIDs(ctx, "sensor-1").Return(testTrees, nil)
+		treeRepo.EXPECT().GetBySensorIDs(ctx, entities.MustNewSensorID("sensor-1")).Return(testTrees, nil)
 		clusterRepo.EXPECT().Update(mock.Anything, staleCluster.ID, mock.Anything).Return(nil)
 
 		err := svc.UpdateWateringStatuses(ctx)
@@ -780,7 +780,7 @@ func TestTreeClusterService_UpdateWateringStatuses(t *testing.T) {
 		// when
 		clusterRepo.EXPECT().GetAll(mock.Anything, entities.TreeClusterQuery{}).Return(expectList, int64(len(expectList)), nil)
 		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, staleCluster.ID).Return(allLatestSensorData, nil)
-		treeRepo.EXPECT().GetBySensorIDs(ctx, "sensor-1").Return(testTrees, nil)
+		treeRepo.EXPECT().GetBySensorIDs(ctx, entities.MustNewSensorID("sensor-1")).Return(testTrees, nil)
 		clusterRepo.EXPECT().Update(mock.Anything, staleCluster.ID, mock.Anything).Return(errors.New("update failed"))
 
 		err := svc.UpdateWateringStatuses(ctx)
@@ -820,6 +820,7 @@ func TestReady(t *testing.T) {
 	})
 }
 
+var testCluster1Coord = entities.MustNewCoordinate(9.446741, 54.801539)
 var testClusters = []*entities.TreeCluster{
 	{
 		ID:            1,
@@ -830,8 +831,7 @@ var testClusters = []*entities.TreeCluster{
 		Description:   "Test description",
 		SoilCondition: entities.TreeSoilConditionLehmig,
 		Archived:      false,
-		Latitude:      utils.P(9.446741),
-		Longitude:     utils.P(54.801539),
+		Coordinate:    &testCluster1Coord,
 		Trees:         testTrees,
 	},
 	{
@@ -843,8 +843,7 @@ var testClusters = []*entities.TreeCluster{
 		Description:   "Test description",
 		SoilCondition: entities.TreeSoilConditionSandig,
 		Archived:      false,
-		Latitude:      nil,
-		Longitude:     nil,
+		Coordinate:    nil,
 		Trees:         testTrees,
 	},
 }
@@ -856,12 +855,11 @@ var testTrees = []*entities.Tree{
 		UpdatedAt:    time.Now(),
 		Species:      "Oak",
 		Number:       "T001",
-		Latitude:     9.446741,
-		Longitude:    54.801539,
+		Coordinate:   entities.MustNewCoordinate(9.446741, 54.801539),
 		Description:  "A mature oak tree",
-		PlantingYear: 2023,
+		PlantingYear: entities.MustNewPlantingYear(2023),
 		Sensor: &entities.Sensor{
-			ID: "sensor-1",
+			ID: entities.MustNewSensorID("sensor-1"),
 		},
 	},
 	{
@@ -870,12 +868,11 @@ var testTrees = []*entities.Tree{
 		UpdatedAt:    time.Now(),
 		Species:      "Pine",
 		Number:       "T002",
-		Latitude:     9.446700,
-		Longitude:    54.801510,
+		Coordinate:   entities.MustNewCoordinate(9.446700, 54.801510),
 		Description:  "A young pine tree",
-		PlantingYear: 2023,
+		PlantingYear: entities.MustNewPlantingYear(2023),
 		Sensor: &entities.Sensor{
-			ID: "sensor-2",
+			ID: entities.MustNewSensorID("sensor-2"),
 		},
 	},
 }

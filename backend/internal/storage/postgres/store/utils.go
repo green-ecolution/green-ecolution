@@ -36,7 +36,7 @@ func (s *Store) MapClusterFields(ctx context.Context, tc *entities.TreeCluster) 
 // This function is required as soon as you want to add the data to the sensor object
 func (s *Store) MapSensorFields(ctx context.Context, sn *entities.Sensor) error {
 	var err error
-	sn.LatestData, err = s.GetLatestSensorDataBySensorID(ctx, sn.ID)
+	sn.LatestData, err = s.GetLatestSensorDataBySensorID(ctx, sn.ID.String())
 
 	var entityNotFoundErr storage.ErrEntityNotFound
 	if err != nil && !errors.As(err, &entityNotFoundErr) {

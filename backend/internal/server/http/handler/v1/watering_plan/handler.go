@@ -277,16 +277,16 @@ func GetGpxFile(svc service.WateringPlanService) fiber.Handler {
 func convertMetaData(domainMetadata domain.GeoJSONMetadata) entities.GeoJSONMetadata {
 	return entities.GeoJSONMetadata{
 		StartPoint: entities.GeoJSONLocation{
-			Latitude:  domainMetadata.StartPoint.Latitude,
-			Longitude: domainMetadata.StartPoint.Longitude,
+			Latitude:  domainMetadata.StartPoint.Coordinate.Latitude(),
+			Longitude: domainMetadata.StartPoint.Coordinate.Longitude(),
 		},
 		EndPoint: entities.GeoJSONLocation{
-			Latitude:  domainMetadata.EndPoint.Latitude,
-			Longitude: domainMetadata.EndPoint.Longitude,
+			Latitude:  domainMetadata.EndPoint.Coordinate.Latitude(),
+			Longitude: domainMetadata.EndPoint.Coordinate.Longitude(),
 		},
 		WateringPoint: entities.GeoJSONLocation{
-			Latitude:  domainMetadata.WateringPoint.Latitude,
-			Longitude: domainMetadata.WateringPoint.Longitude,
+			Latitude:  domainMetadata.WateringPoint.Coordinate.Latitude(),
+			Longitude: domainMetadata.WateringPoint.Coordinate.Longitude(),
 		},
 	}
 }

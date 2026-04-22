@@ -17,8 +17,7 @@ func TestSensorRepository_Update(t *testing.T) {
 	t.Run("should update sensor successfully", func(t *testing.T) {
 		// given
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
-		newLat := 54.82078826498143
-		newLong := 9.489684366114483
+		newCoordinate := entities.MustNewCoordinate(54.82078826498143, 9.489684366114483)
 		newLatestData := &entities.SensorData{
 			ID:        1,
 			CreatedAt: time.Now(),
@@ -26,10 +25,9 @@ func TestSensorRepository_Update(t *testing.T) {
 			Data:      TestMqttPayload,
 		}
 
-		got, err := r.Update(context.Background(), "sensor-1", func(sensor *entities.Sensor, _ storage.SensorRepository) (bool, error) {
+		got, err := r.Update(context.Background(), entities.MustNewSensorID("sensor-1"), func(sensor *entities.Sensor, _ storage.SensorRepository) (bool, error) {
 			sensor.Status = entities.SensorStatusOffline
-			sensor.Latitude = newLat
-			sensor.Longitude = newLong
+			sensor.Coordinate = newCoordinate
 			sensor.LatestData = newLatestData
 			return true, nil
 		})
@@ -38,8 +36,8 @@ func TestSensorRepository_Update(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, got)
 		assert.Equal(t, entities.SensorStatusOffline, got.Status)
-		assert.Equal(t, newLat, got.Latitude)
-		assert.Equal(t, newLong, got.Longitude)
+		assert.Equal(t, newCoordinate.Latitude(), got.Coordinate.Latitude())
+		assert.Equal(t, newCoordinate.Longitude(), got.Coordinate.Longitude())
 
 		assert.NotZero(t, got.LatestData.UpdatedAt)
 		assert.NotZero(t, got.LatestData.CreatedAt)
@@ -51,7 +49,7 @@ func TestSensorRepository_Update(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Update(context.Background(), "sensor-1", func(sensor *entities.Sensor, _ storage.SensorRepository) (bool, error) {
+		got, err := r.Update(context.Background(), entities.MustNewSensorID("sensor-1"), func(sensor *entities.Sensor, _ storage.SensorRepository) (bool, error) {
 			sensor.Status = ""
 			return true, nil
 		})
@@ -66,7 +64,7 @@ func TestSensorRepository_Update(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Update(context.Background(), "", func(sensor *entities.Sensor, _ storage.SensorRepository) (bool, error) {
+		got, err := r.Update(context.Background(), entities.SensorID{}, func(sensor *entities.Sensor, _ storage.SensorRepository) (bool, error) {
 			return true, nil
 		})
 
@@ -80,7 +78,7 @@ func TestSensorRepository_Update(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Update(context.Background(), "notFoundID", func(sensor *entities.Sensor, _ storage.SensorRepository) (bool, error) {
+		got, err := r.Update(context.Background(), entities.MustNewSensorID("notFoundID"), func(sensor *entities.Sensor, _ storage.SensorRepository) (bool, error) {
 			return true, nil
 		})
 
@@ -96,7 +94,7 @@ func TestSensorRepository_Update(t *testing.T) {
 		cancel()
 
 		// when
-		got, err := r.Update(ctx, "sensor-1", func(sensor *entities.Sensor, _ storage.SensorRepository) (bool, error) {
+		got, err := r.Update(ctx, entities.MustNewSensorID("sensor-1"), func(sensor *entities.Sensor, _ storage.SensorRepository) (bool, error) {
 			sensor.Status = entities.SensorStatusOffline
 			return true, nil
 		})

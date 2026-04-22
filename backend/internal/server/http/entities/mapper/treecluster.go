@@ -26,13 +26,11 @@ func TreeClusterFromResponse(source *domain.TreeCluster) *entities.TreeClusterRe
 		Provider:       source.Provider,
 		AdditionalInfo: source.AdditionalInfo,
 	}
-	if source.Latitude != nil {
-		v := *source.Latitude
-		resp.Latitude = &v
-	}
-	if source.Longitude != nil {
-		v := *source.Longitude
-		resp.Longitude = &v
+	if source.Coordinate != nil {
+		lat := source.Coordinate.Latitude()
+		lng := source.Coordinate.Longitude()
+		resp.Latitude = &lat
+		resp.Longitude = &lng
 	}
 	if source.Trees != nil {
 		resp.Trees = make([]*entities.TreeResponse, len(source.Trees))
@@ -68,13 +66,11 @@ func TreeClusterFromInListResponse(source *domain.TreeCluster) *entities.TreeClu
 		Provider:       source.Provider,
 		AdditionalInfo: source.AdditionalInfo,
 	}
-	if source.Latitude != nil {
-		v := *source.Latitude
-		resp.Latitude = &v
-	}
-	if source.Longitude != nil {
-		v := *source.Longitude
-		resp.Longitude = &v
+	if source.Coordinate != nil {
+		lat := source.Coordinate.Latitude()
+		lng := source.Coordinate.Longitude()
+		resp.Latitude = &lat
+		resp.Longitude = &lng
 	}
 	return resp
 }
@@ -139,11 +135,11 @@ func treeInClusterToResponse(source *domain.Tree) *entities.TreeResponse {
 		UpdatedAt:      source.UpdatedAt,
 		Sensor:         sensorInClusterToResponse(source.Sensor),
 		LastWatered:    source.LastWatered,
-		PlantingYear:   source.PlantingYear,
+		PlantingYear:   source.PlantingYear.Value(),
 		Species:        source.Species,
 		Number:         source.Number,
-		Latitude:       source.Latitude,
-		Longitude:      source.Longitude,
+		Latitude:       source.Coordinate.Latitude(),
+		Longitude:      source.Coordinate.Longitude(),
 		WateringStatus: MapWateringStatus(source.WateringStatus),
 		Description:    source.Description,
 		Provider:       source.Provider,
@@ -156,13 +152,13 @@ func sensorInClusterToResponse(source *domain.Sensor) *entities.SensorResponse {
 		return nil
 	}
 	return &entities.SensorResponse{
-		ID:             source.ID,
+		ID:             source.ID.String(),
 		CreatedAt:      source.CreatedAt,
 		UpdatedAt:      source.UpdatedAt,
 		Status:         MapSensorStatus(source.Status),
 		LatestData:     sensorDataInClusterToResponse(source.LatestData),
-		Latitude:       source.Latitude,
-		Longitude:      source.Longitude,
+		Latitude:       source.Coordinate.Latitude(),
+		Longitude:      source.Coordinate.Longitude(),
 		Provider:       source.Provider,
 		AdditionalInfo: source.AdditionalInfo,
 	}

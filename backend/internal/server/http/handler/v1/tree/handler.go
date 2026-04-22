@@ -111,9 +111,14 @@ func GetTreeByID(svc service.TreeService) fiber.Handler {
 func GetTreeBySensorID(svc service.TreeService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
-		id := strings.Clone(c.Params("sensor_id"))
+		rawID := strings.Clone(c.Params("sensor_id"))
 
-		domainData, err := svc.GetBySensorID(ctx, id)
+		sensorID, err := domain.NewSensorID(rawID)
+		if err != nil {
+			return errorhandler.HandleError(service.NewError(service.BadRequest, err.Error()))
+		}
+
+		domainData, err := svc.GetBySensorID(ctx, sensorID)
 		if err != nil {
 			return errorhandler.HandleError(err)
 		}
@@ -145,7 +150,10 @@ func CreateTree(svc service.TreeService) fiber.Handler {
 			return err
 		}
 
-		domainReq := mapper.TreeFromCreateRequest(req)
+		domainReq, err := mapper.TreeFromCreateRequest(req)
+		if err != nil {
+			return errorhandler.HandleError(service.NewError(service.BadRequest, err.Error()))
+		}
 		domainData, err := svc.Create(ctx, domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)
@@ -184,7 +192,10 @@ func UpdateTree(svc service.TreeService) fiber.Handler {
 		if err != nil {
 			return err
 		}
-		domainReq := mapper.TreeFromUpdateRequest(req)
+		domainReq, err := mapper.TreeFromUpdateRequest(req)
+		if err != nil {
+			return errorhandler.HandleError(service.NewError(service.BadRequest, err.Error()))
+		}
 		domainData, err := svc.Update(ctx, int32(id), domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)
@@ -280,14 +291,12 @@ func GetNearestTrees(svc service.TreeService) fiber.Handler {
 		if q.Lat == nil || q.Lng == nil {
 			return errorhandler.HandleError(service.NewError(service.BadRequest, "lat and lng query parameters are required"))
 		}
-		if *q.Lat < -90 || *q.Lat > 90 {
-			return errorhandler.HandleError(service.NewError(service.BadRequest, "lat must be between -90 and 90"))
-		}
-		if *q.Lng < -180 || *q.Lng > 180 {
-			return errorhandler.HandleError(service.NewError(service.BadRequest, "lng must be between -180 and 180"))
+		coord, err := domain.NewCoordinate(*q.Lat, *q.Lng)
+		if err != nil {
+			return errorhandler.HandleError(service.NewError(service.BadRequest, err.Error()))
 		}
 
-		results, err := svc.GetNearestTrees(ctx, *q.Lat, *q.Lng, q.Limit)
+		results, err := svc.GetNearestTrees(ctx, coord, q.Limit)
 		if err != nil {
 			return errorhandler.HandleError(err)
 		}
@@ -296,7 +305,7 @@ func GetNearestTrees(svc service.TreeService) fiber.Handler {
 		for i, r := range results {
 			data[i] = &entities.TreeWithDistanceResponse{
 				Tree:           mapTreeToDto(r.Tree),
-				DistanceMeters: r.Distance,
+				DistanceMeters: r.Distance.Meters(),
 			}
 		}
 		return c.JSON(entities.NearestTreesResponse{Data: data})

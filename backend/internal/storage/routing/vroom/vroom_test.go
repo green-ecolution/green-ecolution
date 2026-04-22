@@ -10,7 +10,6 @@ import (
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
-	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,11 +26,16 @@ func newTestVroomClient(t *testing.T, serverURL string) VroomClient {
 	)
 }
 
+func mustNewCoordinatePtr(lat, lng float64) *entities.Coordinate {
+	c := entities.MustNewCoordinate(lat, lng)
+	return &c
+}
+
 var (
 	testVehicle = &entities.Vehicle{
 		ID:            1,
 		Description:   "Test Vehicle",
-		WaterCapacity: 5000.0,
+		WaterCapacity: entities.MustNewWaterCapacity(5000.0),
 		Type:          entities.VehicleTypeTransporter,
 		Width:         2.5,
 		Height:        3.0,
@@ -41,18 +45,16 @@ var (
 
 	testClusters = []*entities.TreeCluster{
 		{
-			ID:        1,
-			Name:      "Cluster A",
-			Longitude: utils.P(9.2),
-			Latitude:  utils.P(48.2),
-			Trees:     []*entities.Tree{{}, {}},
+			ID:         1,
+			Name:       "Cluster A",
+			Coordinate: mustNewCoordinatePtr(48.2, 9.2),
+			Trees:      []*entities.Tree{{}, {}},
 		},
 		{
-			ID:        2,
-			Name:      "Cluster B",
-			Longitude: utils.P(9.3),
-			Latitude:  utils.P(48.3),
-			Trees:     []*entities.Tree{{}},
+			ID:         2,
+			Name:       "Cluster B",
+			Coordinate: mustNewCoordinatePtr(48.3, 9.3),
+			Trees:      []*entities.Tree{{}},
 		},
 	}
 )
@@ -135,7 +137,7 @@ func TestToVroomVehicle(t *testing.T) {
 		)
 		vehicle := &entities.Vehicle{
 			ID:            2,
-			WaterCapacity: 3500.7,
+			WaterCapacity: entities.MustNewWaterCapacity(3500.7),
 			Type:          entities.VehicleTypeTransporter,
 		}
 
@@ -170,9 +172,9 @@ func TestToVroomShipments(t *testing.T) {
 			WithWateringPoint([]float64{9.05, 48.05}),
 		)
 		clusters := []*entities.TreeCluster{
-			{ID: 1, Name: "A", Longitude: utils.P(9.2), Latitude: utils.P(48.2), Trees: []*entities.Tree{{}}},
-			{ID: 2, Name: "B", Longitude: nil, Latitude: nil, Trees: []*entities.Tree{{}}},
-			{ID: 3, Name: "C", Longitude: utils.P(9.3), Latitude: nil, Trees: []*entities.Tree{{}}},
+			{ID: 1, Name: "A", Coordinate: mustNewCoordinatePtr(48.2, 9.2), Trees: []*entities.Tree{{}}},
+			{ID: 2, Name: "B", Coordinate: nil, Trees: []*entities.Tree{{}}},
+			{ID: 3, Name: "C", Coordinate: nil, Trees: []*entities.Tree{{}}},
 		}
 
 		// when
@@ -448,8 +450,8 @@ func TestVroomClient_OptimizeRoute(t *testing.T) {
 
 		client := newTestVroomClient(t, server.URL)
 		clusters := []*entities.TreeCluster{
-			{ID: 1, Longitude: utils.P(9.2), Latitude: utils.P(48.2), Trees: []*entities.Tree{{}}},
-			{ID: 2, Longitude: nil, Latitude: nil, Trees: []*entities.Tree{{}}},
+			{ID: 1, Coordinate: mustNewCoordinatePtr(48.2, 9.2), Trees: []*entities.Tree{{}}},
+			{ID: 2, Coordinate: nil, Trees: []*entities.Tree{{}}},
 		}
 
 		// when

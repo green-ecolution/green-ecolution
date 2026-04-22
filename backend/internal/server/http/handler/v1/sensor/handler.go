@@ -70,13 +70,14 @@ func GetAllSensors(svc service.SensorService) fiber.Handler {
 func GetSensorByID(svc service.SensorService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
-		id := strings.Clone(c.Params("id"))
-		if id == "" {
-			err := service.NewError(service.BadRequest, "invalid ID format")
-			return errorhandler.HandleError(err)
+		rawID := strings.Clone(c.Params("id"))
+
+		sensorID, err := domain.NewSensorID(rawID)
+		if err != nil {
+			return errorhandler.HandleError(service.NewError(service.BadRequest, err.Error()))
 		}
 
-		domainData, err := svc.GetByID(ctx, id)
+		domainData, err := svc.GetByID(ctx, sensorID)
 		if err != nil {
 			return errorhandler.HandleError(err)
 		}
@@ -102,13 +103,14 @@ func GetSensorByID(svc service.SensorService) fiber.Handler {
 func GetAllSensorDataByID(svc service.SensorService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
-		id := strings.Clone(c.Params("id"))
-		if id == "" {
-			err := service.NewError(service.BadRequest, "invalid ID format")
-			return errorhandler.HandleError(err)
+		rawID := strings.Clone(c.Params("id"))
+
+		sensorID, err := domain.NewSensorID(rawID)
+		if err != nil {
+			return errorhandler.HandleError(service.NewError(service.BadRequest, err.Error()))
 		}
 
-		domainData, err := svc.GetAllDataByID(ctx, id)
+		domainData, err := svc.GetAllDataByID(ctx, sensorID)
 		if err != nil {
 			return errorhandler.HandleError(err)
 		}
@@ -141,14 +143,14 @@ func GetAllSensorDataByID(svc service.SensorService) fiber.Handler {
 func DeleteSensor(svc service.SensorService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
-		id := strings.Clone(c.Params("id"))
-		if id == "" {
-			err := service.NewError(service.BadRequest, "invalid ID format")
-			return errorhandler.HandleError(err)
+		rawID := strings.Clone(c.Params("id"))
+
+		sensorID, err := domain.NewSensorID(rawID)
+		if err != nil {
+			return errorhandler.HandleError(service.NewError(service.BadRequest, err.Error()))
 		}
 
-		err := svc.Delete(ctx, id)
-
+		err = svc.Delete(ctx, sensorID)
 		if err != nil {
 			return errorhandler.HandleError(err)
 		}

@@ -113,9 +113,10 @@ func (r *TreeRepository) GetByID(ctx context.Context, id int32) (*entities.Tree,
 	return t, nil
 }
 
-func (r *TreeRepository) GetBySensorID(ctx context.Context, id string) (*entities.Tree, error) {
+func (r *TreeRepository) GetBySensorID(ctx context.Context, id entities.SensorID) (*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
-	row, err := r.store.GetTreeBySensorID(ctx, &id)
+	idStr := id.String()
+	row, err := r.store.GetTreeBySensorID(ctx, &idStr)
 	if err != nil {
 		log.Debug("failed to get tree by sensor id in db", "error", err, "sensor_id", id)
 		return nil, r.store.MapError(err, sqlc.Tree{})
@@ -134,9 +135,13 @@ func (r *TreeRepository) GetBySensorID(ctx context.Context, id string) (*entitie
 	return t, nil
 }
 
-func (r *TreeRepository) GetBySensorIDs(ctx context.Context, ids ...string) ([]*entities.Tree, error) {
+func (r *TreeRepository) GetBySensorIDs(ctx context.Context, ids ...entities.SensorID) ([]*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
-	rows, err := r.store.GetTreesBySensorIDs(ctx, ids)
+	idStrs := make([]string, len(ids))
+	for i, id := range ids {
+		idStrs[i] = id.String()
+	}
+	rows, err := r.store.GetTreesBySensorIDs(ctx, idStrs)
 	if err != nil {
 		log.Debug("failed to get trees by multiple sensor ids in db", "error", err, "sensor_ids", ids)
 		return nil, r.store.MapError(err, sqlc.Tree{})
@@ -203,15 +208,15 @@ func (r *TreeRepository) GetByTreeClusterID(ctx context.Context, id int32) ([]*e
 	return t, nil
 }
 
-func (r *TreeRepository) GetByCoordinates(ctx context.Context, latitude, longitude float64) (*entities.Tree, error) {
+func (r *TreeRepository) GetByCoordinates(ctx context.Context, coord entities.Coordinate) (*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
 	params := sqlc.GetTreeByCoordinatesParams{
-		Latitude:  latitude,
-		Longitude: longitude,
+		Latitude:  coord.Latitude(),
+		Longitude: coord.Longitude(),
 	}
 	row, err := r.store.GetTreeByCoordinates(ctx, &params)
 	if err != nil {
-		log.Debug("failed to get tree by coordinates in db", "error", err, "latitude", latitude, "longitude", longitude)
+		log.Debug("failed to get tree by coordinates in db", "error", err, "latitude", coord.Latitude(), "longitude", coord.Longitude())
 		return nil, r.store.MapError(err, sqlc.Tree{})
 	}
 	tree, err := r.mapper.FromSql(row)
@@ -300,16 +305,16 @@ func mapTreeCluster(ctx context.Context, r *TreeRepository, t *entities.Tree) er
 	return nil
 }
 
-func (r *TreeRepository) FindNearestTree(ctx context.Context, latitude, longitude float64) (*entities.Tree, error) {
+func (r *TreeRepository) FindNearestTree(ctx context.Context, coord entities.Coordinate) (*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
 	params := &sqlc.FindNearestTreeParams{
-		StMakepoint:   latitude,
-		StMakepoint_2: longitude,
+		StMakepoint:   coord.Latitude(),
+		StMakepoint_2: coord.Longitude(),
 	}
 
 	nearestTree, err := r.store.FindNearestTree(ctx, params)
 	if err != nil {
-		log.Debug("failed to find nearest tree on given coordinates", "error", err, "latitude", latitude, "longitude", longitude)
+		log.Debug("failed to find nearest tree on given coordinates", "error", err, "latitude", coord.Latitude(), "longitude", coord.Longitude())
 		return nil, err
 	}
 
@@ -325,18 +330,18 @@ func (r *TreeRepository) FindNearestTree(ctx context.Context, latitude, longitud
 	return tree, nil
 }
 
-func (r *TreeRepository) FindNearestTrees(ctx context.Context, lat, lng, radiusMeters float64, limit int32) ([]*entities.TreeWithDistance, error) {
+func (r *TreeRepository) FindNearestTrees(ctx context.Context, coord entities.Coordinate, radiusMeters float64, limit int32) ([]*entities.TreeWithDistance, error) {
 	log := logger.GetLogger(ctx)
 	params := &sqlc.FindNearestTreesParams{
-		Lat:        lat,
-		Lng:        lng,
+		Lat:        coord.Latitude(),
+		Lng:        coord.Longitude(),
 		Radius:     radiusMeters,
 		MaxResults: limit,
 	}
 
 	rows, err := r.store.FindNearestTrees(ctx, params)
 	if err != nil {
-		log.Debug("failed to find nearest trees", "error", err, "lat", lat, "lng", lng)
+		log.Debug("failed to find nearest trees", "error", err, "lat", coord.Latitude(), "lng", coord.Longitude())
 		return nil, err
 	}
 
@@ -352,7 +357,7 @@ func (r *TreeRepository) FindNearestTrees(ctx context.Context, lat, lng, radiusM
 		}
 		results = append(results, &entities.TreeWithDistance{
 			Tree:     tree,
-			Distance: row.Distance,
+			Distance: entities.MustNewDistance(row.Distance),
 		})
 	}
 	return results, nil

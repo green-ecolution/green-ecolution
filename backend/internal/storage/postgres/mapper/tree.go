@@ -25,11 +25,10 @@ func (c *InternalTreeRepoMapperImpl) FromSql(source *sqlc.Tree) (*entities.Tree,
 		ID:             source.ID,
 		CreatedAt:      source.CreatedAt,
 		UpdatedAt:      source.UpdatedAt,
-		PlantingYear:   source.PlantingYear,
+		PlantingYear:   mapPlantingYear(source.PlantingYear),
 		Species:        source.Species,
 		Number:         source.Number,
-		Latitude:       source.Latitude,
-		Longitude:      source.Longitude,
+		Coordinate:     entities.MustNewCoordinate(source.Latitude, source.Longitude),
 		WateringStatus: MapWateringStatus(source.WateringStatus),
 		Description:    utils.StringPtrToString(source.Description),
 		LastWatered:    timePtrToTimePtr(source.LastWatered),
@@ -40,4 +39,11 @@ func (c *InternalTreeRepoMapperImpl) FromSql(source *sqlc.Tree) (*entities.Tree,
 
 func (c *InternalTreeRepoMapperImpl) FromSqlList(source []*sqlc.Tree) ([]*entities.Tree, error) {
 	return utils.MapSliceErr(source, c.FromSql)
+}
+
+func mapPlantingYear(year int32) entities.PlantingYear {
+	if year <= 0 {
+		return entities.PlantingYear{}
+	}
+	return entities.MustNewPlantingYear(year)
 }

@@ -254,7 +254,7 @@ func (_c *MockTreeService_GetByID_Call) RunAndReturn(run func(context.Context, i
 }
 
 // GetBySensorID provides a mock function with given fields: ctx, id
-func (_m *MockTreeService) GetBySensorID(ctx context.Context, id string) (*entities.Tree, error) {
+func (_m *MockTreeService) GetBySensorID(ctx context.Context, id entities.SensorID) (*entities.Tree, error) {
 	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
@@ -263,10 +263,10 @@ func (_m *MockTreeService) GetBySensorID(ctx context.Context, id string) (*entit
 
 	var r0 *entities.Tree
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*entities.Tree, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entities.SensorID) (*entities.Tree, error)); ok {
 		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *entities.Tree); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entities.SensorID) *entities.Tree); ok {
 		r0 = rf(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
@@ -274,7 +274,7 @@ func (_m *MockTreeService) GetBySensorID(ctx context.Context, id string) (*entit
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, entities.SensorID) error); ok {
 		r1 = rf(ctx, id)
 	} else {
 		r1 = ret.Error(1)
@@ -290,14 +290,14 @@ type MockTreeService_GetBySensorID_Call struct {
 
 // GetBySensorID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - id string
+//   - id entities.SensorID
 func (_e *MockTreeService_Expecter) GetBySensorID(ctx interface{}, id interface{}) *MockTreeService_GetBySensorID_Call {
 	return &MockTreeService_GetBySensorID_Call{Call: _e.mock.On("GetBySensorID", ctx, id)}
 }
 
-func (_c *MockTreeService_GetBySensorID_Call) Run(run func(ctx context.Context, id string)) *MockTreeService_GetBySensorID_Call {
+func (_c *MockTreeService_GetBySensorID_Call) Run(run func(ctx context.Context, id entities.SensorID)) *MockTreeService_GetBySensorID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(entities.SensorID))
 	})
 	return _c
 }
@@ -307,14 +307,14 @@ func (_c *MockTreeService_GetBySensorID_Call) Return(_a0 *entities.Tree, _a1 err
 	return _c
 }
 
-func (_c *MockTreeService_GetBySensorID_Call) RunAndReturn(run func(context.Context, string) (*entities.Tree, error)) *MockTreeService_GetBySensorID_Call {
+func (_c *MockTreeService_GetBySensorID_Call) RunAndReturn(run func(context.Context, entities.SensorID) (*entities.Tree, error)) *MockTreeService_GetBySensorID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetNearestTrees provides a mock function with given fields: ctx, lat, lng, limit
-func (_m *MockTreeService) GetNearestTrees(ctx context.Context, lat float64, lng float64, limit int32) ([]*entities.TreeWithDistance, error) {
-	ret := _m.Called(ctx, lat, lng, limit)
+// GetNearestTrees provides a mock function with given fields: ctx, coord, limit
+func (_m *MockTreeService) GetNearestTrees(ctx context.Context, coord entities.Coordinate, limit int32) ([]*entities.TreeWithDistance, error) {
+	ret := _m.Called(ctx, coord, limit)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetNearestTrees")
@@ -322,19 +322,19 @@ func (_m *MockTreeService) GetNearestTrees(ctx context.Context, lat float64, lng
 
 	var r0 []*entities.TreeWithDistance
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, float64, float64, int32) ([]*entities.TreeWithDistance, error)); ok {
-		return rf(ctx, lat, lng, limit)
+	if rf, ok := ret.Get(0).(func(context.Context, entities.Coordinate, int32) ([]*entities.TreeWithDistance, error)); ok {
+		return rf(ctx, coord, limit)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, float64, float64, int32) []*entities.TreeWithDistance); ok {
-		r0 = rf(ctx, lat, lng, limit)
+	if rf, ok := ret.Get(0).(func(context.Context, entities.Coordinate, int32) []*entities.TreeWithDistance); ok {
+		r0 = rf(ctx, coord, limit)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*entities.TreeWithDistance)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, float64, float64, int32) error); ok {
-		r1 = rf(ctx, lat, lng, limit)
+	if rf, ok := ret.Get(1).(func(context.Context, entities.Coordinate, int32) error); ok {
+		r1 = rf(ctx, coord, limit)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -349,16 +349,15 @@ type MockTreeService_GetNearestTrees_Call struct {
 
 // GetNearestTrees is a helper method to define mock.On call
 //   - ctx context.Context
-//   - lat float64
-//   - lng float64
+//   - coord entities.Coordinate
 //   - limit int32
-func (_e *MockTreeService_Expecter) GetNearestTrees(ctx interface{}, lat interface{}, lng interface{}, limit interface{}) *MockTreeService_GetNearestTrees_Call {
-	return &MockTreeService_GetNearestTrees_Call{Call: _e.mock.On("GetNearestTrees", ctx, lat, lng, limit)}
+func (_e *MockTreeService_Expecter) GetNearestTrees(ctx interface{}, coord interface{}, limit interface{}) *MockTreeService_GetNearestTrees_Call {
+	return &MockTreeService_GetNearestTrees_Call{Call: _e.mock.On("GetNearestTrees", ctx, coord, limit)}
 }
 
-func (_c *MockTreeService_GetNearestTrees_Call) Run(run func(ctx context.Context, lat float64, lng float64, limit int32)) *MockTreeService_GetNearestTrees_Call {
+func (_c *MockTreeService_GetNearestTrees_Call) Run(run func(ctx context.Context, coord entities.Coordinate, limit int32)) *MockTreeService_GetNearestTrees_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(float64), args[2].(float64), args[3].(int32))
+		run(args[0].(context.Context), args[1].(entities.Coordinate), args[2].(int32))
 	})
 	return _c
 }
@@ -368,7 +367,7 @@ func (_c *MockTreeService_GetNearestTrees_Call) Return(_a0 []*entities.TreeWithD
 	return _c
 }
 
-func (_c *MockTreeService_GetNearestTrees_Call) RunAndReturn(run func(context.Context, float64, float64, int32) ([]*entities.TreeWithDistance, error)) *MockTreeService_GetNearestTrees_Call {
+func (_c *MockTreeService_GetNearestTrees_Call) RunAndReturn(run func(context.Context, entities.Coordinate, int32) ([]*entities.TreeWithDistance, error)) *MockTreeService_GetNearestTrees_Call {
 	_c.Call.Return(run)
 	return _c
 }

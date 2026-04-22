@@ -42,8 +42,8 @@ var (
 	ErrTxClosed         = errors.New("transaction closed")
 	ErrTxCommitRollback = errors.New("transaction cannot commit or rollback")
 
-	ErrInvalidLatitude  = errors.New("latitude must be between 90,-90")
-	ErrInvalidLongitude = errors.New("longitude must be between 180,-180")
+	ErrInvalidLatitude  = entities.ErrInvalidLatitude
+	ErrInvalidLongitude = entities.ErrInvalidLongitude
 
 	ErrUnknownVehicleType = errors.New("unknown vehicle type")
 	ErrBucketNotExists    = errors.New("bucket don't exists")
@@ -82,8 +82,8 @@ type RegionRepository interface {
 	GetAll(ctx context.Context) ([]*entities.Region, int64, error)
 	// GetByID returns one region by id
 	GetByID(ctx context.Context, id int32) (*entities.Region, error)
-	// GetByPoint returns one region by latitude and longitude
-	GetByPoint(ctx context.Context, latitude, longitude float64) (*entities.Region, error)
+	// GetByPoint returns one region by coordinate
+	GetByPoint(ctx context.Context, coord entities.Coordinate) (*entities.Region, error)
 	// Create creates a new region. It accepts a list of functions to apply to the new region
 	Create(ctx context.Context, fn ...entities.EntityFunc[entities.Region]) (*entities.Region, error)
 	// Update updates a already existing region. It accepts a list of functions to apply to the region
@@ -177,7 +177,7 @@ type TreeClusterRepository interface {
 
 	Archive(ctx context.Context, id int32) error
 	LinkTreesToCluster(ctx context.Context, treeClusterID int32, treeIDs []int32) error
-	GetCenterPoint(ctx context.Context, id int32) (float64, float64, error)
+	GetCenterPoint(ctx context.Context, id int32) (*entities.Coordinate, error)
 	GetAllLatestSensorDataByClusterID(ctx context.Context, tcID int32) ([]*entities.SensorData, error)
 }
 
@@ -198,28 +198,28 @@ type TreeRepository interface {
 	GetByTreeClusterID(ctx context.Context, id int32) ([]*entities.Tree, error)
 	GetSensorByTreeID(ctx context.Context, id int32) (*entities.Sensor, error)
 	GetTreesByIDs(ctx context.Context, ids []int32) ([]*entities.Tree, error)
-	GetByCoordinates(ctx context.Context, latitude, longitude float64) (*entities.Tree, error)
-	GetBySensorID(ctx context.Context, id string) (*entities.Tree, error)
-	GetBySensorIDs(ctx context.Context, ids ...string) ([]*entities.Tree, error)
+	GetByCoordinates(ctx context.Context, coord entities.Coordinate) (*entities.Tree, error)
+	GetBySensorID(ctx context.Context, id entities.SensorID) (*entities.Tree, error)
+	GetBySensorIDs(ctx context.Context, ids ...entities.SensorID) ([]*entities.Tree, error)
 
 	UnlinkTreeClusterID(ctx context.Context, treeClusterID int32) error
-	UnlinkSensorID(ctx context.Context, sensorID string) error
-	FindNearestTree(ctx context.Context, latitude, longitude float64) (*entities.Tree, error)
-	FindNearestTrees(ctx context.Context, lat, lng, radiusMeters float64, limit int32) ([]*entities.TreeWithDistance, error)
+	UnlinkSensorID(ctx context.Context, sensorID entities.SensorID) error
+	FindNearestTree(ctx context.Context, coord entities.Coordinate) (*entities.Tree, error)
+	FindNearestTrees(ctx context.Context, coord entities.Coordinate, radiusMeters float64, limit int32) ([]*entities.TreeWithDistance, error)
 	GetDistinctPlantingYears(ctx context.Context) ([]int32, error)
 }
 
 type SensorRepository interface {
 	GetAll(ctx context.Context, query entities.Query) ([]*entities.Sensor, int64, error)
 	GetCount(ctx context.Context, query entities.Query) (int64, error)
-	GetByID(ctx context.Context, id string) (*entities.Sensor, error)
+	GetByID(ctx context.Context, id entities.SensorID) (*entities.Sensor, error)
 	Create(ctx context.Context, createFn func(*entities.Sensor, SensorRepository) (bool, error)) (*entities.Sensor, error)
-	Update(ctx context.Context, id string, updateFn func(*entities.Sensor, SensorRepository) (bool, error)) (*entities.Sensor, error)
-	Delete(ctx context.Context, id string) error
+	Update(ctx context.Context, id entities.SensorID, updateFn func(*entities.Sensor, SensorRepository) (bool, error)) (*entities.Sensor, error)
+	Delete(ctx context.Context, id entities.SensorID) error
 
-	GetAllDataByID(ctx context.Context, id string) ([]*entities.SensorData, error)
-	GetLatestSensorDataBySensorID(ctx context.Context, id string) (*entities.SensorData, error)
-	InsertSensorData(ctx context.Context, data *entities.SensorData, id string) error
+	GetAllDataByID(ctx context.Context, id entities.SensorID) ([]*entities.SensorData, error)
+	GetLatestSensorDataBySensorID(ctx context.Context, id entities.SensorID) (*entities.SensorData, error)
+	InsertSensorData(ctx context.Context, data *entities.SensorData, id entities.SensorID) error
 }
 
 type RoutingRepository interface {

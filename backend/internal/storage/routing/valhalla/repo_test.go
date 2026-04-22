@@ -13,10 +13,14 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/routing/valhalla/valhalla"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/routing/vroom"
-	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func mustNewCoordinatePtr(lat, lng float64) *entities.Coordinate {
+	c := entities.MustNewCoordinate(lat, lng)
+	return &c
+}
 
 var (
 	testStartPoint    = []float64{9.0, 48.0}
@@ -26,7 +30,7 @@ var (
 	testVehicle = &entities.Vehicle{
 		ID:            1,
 		Description:   "Test Vehicle",
-		WaterCapacity: 5000.0,
+		WaterCapacity: entities.MustNewWaterCapacity(5000.0),
 		Type:          entities.VehicleTypeTransporter,
 		Width:         2.5,
 		Height:        3.0,
@@ -36,18 +40,16 @@ var (
 
 	testClusters = []*entities.TreeCluster{
 		{
-			ID:        1,
-			Name:      "Cluster A",
-			Longitude: utils.P(9.2),
-			Latitude:  utils.P(48.2),
-			Trees:     []*entities.Tree{{}, {}},
+			ID:         1,
+			Name:       "Cluster A",
+			Coordinate: mustNewCoordinatePtr(48.2, 9.2),
+			Trees:      []*entities.Tree{{}, {}},
 		},
 		{
-			ID:        2,
-			Name:      "Cluster B",
-			Longitude: utils.P(9.3),
-			Latitude:  utils.P(48.3),
-			Trees:     []*entities.Tree{{}},
+			ID:         2,
+			Name:       "Cluster B",
+			Coordinate: mustNewCoordinatePtr(48.3, 9.3),
+			Trees:      []*entities.Tree{{}},
 		},
 	}
 
@@ -221,10 +223,10 @@ func TestGenerateRoute(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		assert.Equal(t, entities.FeatureCollection, result.Type)
-		assert.Equal(t, 9.0, result.Metadata.StartPoint.Longitude)
-		assert.Equal(t, 48.0, result.Metadata.StartPoint.Latitude)
-		assert.Equal(t, 9.1, result.Metadata.EndPoint.Longitude)
-		assert.Equal(t, 48.1, result.Metadata.EndPoint.Latitude)
+		assert.Equal(t, 9.0, result.Metadata.StartPoint.Coordinate.Longitude())
+		assert.Equal(t, 48.0, result.Metadata.StartPoint.Coordinate.Latitude())
+		assert.Equal(t, 9.1, result.Metadata.EndPoint.Coordinate.Longitude())
+		assert.Equal(t, 48.1, result.Metadata.EndPoint.Coordinate.Latitude())
 	})
 
 	t.Run("should return error when vroom fails", func(t *testing.T) {
@@ -332,7 +334,7 @@ func TestGenerateRouteInformation(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, 15.5, result.Distance)
+		assert.Equal(t, 15.5, result.Distance.Meters())
 		assert.Equal(t, time.Duration(1200*float64(time.Second)), result.Time)
 	})
 

@@ -102,7 +102,7 @@ func (s *TreeClusterService) HandleUpdateTree(ctx context.Context, event *entiti
 }
 
 func (s *TreeClusterService) isNoUpdateNeeded(event *entities.EventUpdateTree) bool {
-	treePosSame := event.Prev.Latitude == event.New.Latitude && event.Prev.Longitude == event.New.Longitude
+	treePosSame := event.Prev.Coordinate == event.New.Coordinate
 	tcSame := event.Prev.TreeCluster != nil && event.New.TreeCluster != nil && event.Prev.TreeCluster.ID == event.New.TreeCluster.ID
 	sensorSame := event.Prev.Sensor == event.New.Sensor
 	return treePosSame && tcSame && sensorSame
@@ -121,20 +121,19 @@ func (s *TreeClusterService) handleTreeClusterUpdate(ctx context.Context, tc *en
 
 	updateFn := func(tc *entities.TreeCluster, repo storage.TreeClusterRepository) (bool, error) {
 		if len(tc.Trees) != 0 {
-			lat, long, err := repo.GetCenterPoint(ctx, tc.ID)
+			coord, err := repo.GetCenterPoint(ctx, tc.ID)
 			if err != nil {
 				log.Error("failed to get center point of tree cluster", "error", err, "tree_cluster", tc)
 				return false, err
 			}
 
-			region, err := s.regionRepo.GetByPoint(ctx, lat, long)
+			region, err := s.regionRepo.GetByPoint(ctx, *coord)
 			if err != nil {
-				log.Error("can't find region by lat and long", "error", err, "latitude", lat, "longitude", long, "tree_cluster", tc)
+				log.Error("can't find region by coordinate", "error", err, "coordinate", coord, "tree_cluster", tc)
 				return false, err
 			}
 
-			tc.Latitude = &lat
-			tc.Longitude = &long
+			tc.Coordinate = coord
 			tc.Region = region
 		}
 		tc.WateringStatus = wateringStatus

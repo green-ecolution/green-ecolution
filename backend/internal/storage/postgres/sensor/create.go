@@ -19,8 +19,7 @@ func defaultSensor() *entities.Sensor {
 	return &entities.Sensor{
 		Status:         entities.SensorStatusUnknown,
 		LatestData:     nil,
-		Latitude:       0,
-		Longitude:      0,
+		Coordinate:     entities.MustNewCoordinate(0, 0),
 		Provider:       "",
 		AdditionalInfo: nil,
 	}
@@ -61,7 +60,7 @@ func (r *SensorRepository) Create(ctx context.Context, createFn func(*entities.S
 			return err
 		}
 		entity.ID = id
-		log.Debug("sensor entity created successfully in db", "sensor_id", id)
+		log.Debug("sensor entity created successfully in db", "sensor_id", id.String())
 
 		if entity.LatestData != nil && entity.LatestData.Data != nil {
 			err = newRepo.InsertSensorData(ctx, entity.LatestData, id)
@@ -85,14 +84,10 @@ func (r *SensorRepository) Create(ctx context.Context, createFn func(*entities.S
 	return createdSensor, nil
 }
 
-func (r *SensorRepository) InsertSensorData(ctx context.Context, latestData *entities.SensorData, id string) error {
+func (r *SensorRepository) InsertSensorData(ctx context.Context, latestData *entities.SensorData, id entities.SensorID) error {
 	log := logger.GetLogger(ctx)
 	if latestData == nil || latestData.Data == nil {
 		return errors.New("latest data cannot be empty")
-	}
-
-	if id == "" {
-		return errors.New("sensor id cannot be empty")
 	}
 
 	mqttData := r.mapper.FromDomainSensorData(latestData.Data)
@@ -102,57 +97,53 @@ func (r *SensorRepository) InsertSensorData(ctx context.Context, latestData *ent
 	}
 
 	params := &sqlc.InsertSensorDataParams{
-		SensorID: id,
+		SensorID: id.String(),
 		Data:     raw,
 	}
 
 	err = r.store.InsertSensorData(ctx, params)
 	if err != nil {
-		log.Error("failed to insert sensor data in db", "error", err, "sensor_id", id)
+		log.Error("failed to insert sensor data in db", "error", err, "sensor_id", id.String())
 		return err
 	}
 
 	return nil
 }
 
-func (r *SensorRepository) createEntity(ctx context.Context, sensor *entities.Sensor) (string, error) {
+func (r *SensorRepository) createEntity(ctx context.Context, sensor *entities.Sensor) (entities.SensorID, error) {
 	log := logger.GetLogger(ctx)
 	additionalInfo, err := utils.MapAdditionalInfoToByte(sensor.AdditionalInfo)
 	if err != nil {
 		log.Debug("failed to marshal additional informations to byte array", "error", err, "additional_info", sensor.AdditionalInfo)
-		return "", err
+		return entities.SensorID{}, err
 	}
 
 	id, err := r.store.CreateSensor(ctx, &sqlc.CreateSensorParams{
-		ID:                     sensor.ID,
+		ID:                     sensor.ID.String(),
 		Status:                 sqlc.SensorStatus(sensor.Status),
 		Provider:               &sensor.Provider,
 		AdditionalInformations: additionalInfo,
 	})
 	if err != nil {
-		return "", err
+		return entities.SensorID{}, err
 	}
 
 	if err := r.store.SetSensorLocation(ctx, &sqlc.SetSensorLocationParams{
 		ID:        id,
-		Latitude:  sensor.Latitude,
-		Longitude: sensor.Longitude,
+		Latitude:  sensor.Coordinate.Latitude(),
+		Longitude: sensor.Coordinate.Longitude(),
 	}); err != nil {
-		return "", err
+		return entities.SensorID{}, err
 	}
-	return id, nil
+	return entities.NewSensorID(id)
 }
 
 func (r *SensorRepository) validateSensorEntity(sensor *entities.Sensor) error {
-	if sensor.ID == "" {
+	if sensor == nil {
+		return errors.New("sensor is nil")
+	}
+	if sensor.ID.String() == "" {
 		return errors.New("sensor id cannot be empty")
 	}
-	if sensor.Latitude < -90 || sensor.Latitude > 90 {
-		return storage.ErrInvalidLatitude
-	}
-	if sensor.Longitude < -180 || sensor.Longitude > 180 {
-		return storage.ErrInvalidLongitude
-	}
-
 	return nil
 }

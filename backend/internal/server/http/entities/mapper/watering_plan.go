@@ -29,7 +29,7 @@ func WateringPlanFromResponse(source *domain.WateringPlan) *entities.WateringPla
 		AdditionalInfo:   source.AdditionalInfo,
 	}
 	if source.Distance != nil {
-		v := *source.Distance
+		v := source.Distance.Meters()
 		resp.Distance = &v
 	}
 	if source.TotalWaterRequired != nil {
@@ -74,7 +74,7 @@ func WateringPlanFromInListResponse(source *domain.WateringPlan) *entities.Water
 		AdditionalInfo:   source.AdditionalInfo,
 	}
 	if source.Distance != nil {
-		v := *source.Distance
+		v := source.Distance.Meters()
 		resp.Distance = &v
 	}
 	if source.TotalWaterRequired != nil {

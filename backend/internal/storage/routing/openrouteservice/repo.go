@@ -149,7 +149,7 @@ func (r *RouteRepo) GenerateRouteInformation(ctx context.Context, vehicle *entit
 
 	return &entities.RouteMetadata{
 		Refills:  int32(refillCount),
-		Distance: distance,
+		Distance: entities.MustNewDistance(distance),
 		Time:     time.Duration(duration * float64(time.Second)),
 	}, nil
 }

@@ -8,7 +8,7 @@ import (
 
 var (
 	currentTime     = time.Now()
-	TestSensorID    = "sensor-1"
+	TestSensorID    = entities.MustNewSensorID("sensor-1")
 	TestMqttPayload = &entities.MqttPayload{
 		Device:      "sensor-123",
 		Battery:     34.0,
@@ -44,8 +44,7 @@ var (
 		ID:         TestSensorID,
 		CreatedAt:  currentTime,
 		UpdatedAt:  currentTime,
-		Latitude:   54.82124518093376,
-		Longitude:  9.485702120628517,
+		Coordinate: entities.MustNewCoordinate(54.82124518093376, 9.485702120628517),
 		Status:     entities.SensorStatusOnline,
 		LatestData: TestSensorData,
 	}
@@ -53,29 +52,26 @@ var (
 	TestSensorList = []*entities.Sensor{
 		TestSensor,
 		{
-			ID:         "sensor-2",
+			ID:         entities.MustNewSensorID("sensor-2"),
 			CreatedAt:  currentTime,
 			UpdatedAt:  currentTime,
-			Latitude:   54.78780993841013,
-			Longitude:  9.444052105200551,
+			Coordinate: entities.MustNewCoordinate(54.78780993841013, 9.444052105200551),
 			Status:     entities.SensorStatusOffline,
 			LatestData: &entities.SensorData{},
 		},
 		{
-			ID:         "sensor-3",
+			ID:         entities.MustNewSensorID("sensor-3"),
 			CreatedAt:  currentTime,
 			UpdatedAt:  currentTime,
-			Latitude:   54.77933725347423,
-			Longitude:  9.426465409018832,
+			Coordinate: entities.MustNewCoordinate(54.77933725347423, 9.426465409018832),
 			Status:     entities.SensorStatusUnknown,
 			LatestData: &entities.SensorData{},
 		},
 		{
-			ID:         "sensor-4",
+			ID:         entities.MustNewSensorID("sensor-4"),
 			CreatedAt:  currentTime,
 			UpdatedAt:  currentTime,
-			Latitude:   54.82078826498143,
-			Longitude:  9.489684366114483,
+			Coordinate: entities.MustNewCoordinate(54.82078826498143, 9.489684366114483),
 			Status:     entities.SensorStatusOnline,
 			LatestData: &entities.SensorData{},
 		},

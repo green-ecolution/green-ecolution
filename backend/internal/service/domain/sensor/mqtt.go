@@ -21,7 +21,19 @@ func (s *SensorService) HandleMessage(ctx context.Context, payload *domain.MqttP
 		return nil, err
 	}
 
-	sensor, err := s.sensorRepo.GetByID(ctx, payload.Device)
+	sensorID, err := domain.NewSensorID(payload.Device)
+	if err != nil {
+		log.Error("failed to create sensor id from mqtt payload", "device", payload.Device, "error", err)
+		return nil, err
+	}
+
+	coord, err := domain.NewCoordinate(payload.Latitude, payload.Longitude)
+	if err != nil {
+		log.Error("failed to create coordinate from mqtt payload", "latitude", payload.Latitude, "longitude", payload.Longitude, "error", err)
+		return nil, err
+	}
+
+	sensor, err := s.sensorRepo.GetByID(ctx, sensorID)
 	if err != nil {
 		var entityNotFoundErr storage.ErrEntityNotFound
 		if !errors.As(err, &entityNotFoundErr) {
@@ -31,23 +43,22 @@ func (s *SensorService) HandleMessage(ctx context.Context, payload *domain.MqttP
 	}
 
 	if sensor != nil {
-		updatedSensor, err := s.updateSensorCoordsAndStatus(ctx, payload, sensor)
+		updatedSensor, err := s.updateSensorCoordsAndStatus(ctx, coord, sensor)
 		if err != nil {
 			log.Error("failed to update sensor", "error", err)
 			return nil, err
 		}
 		sensor = updatedSensor
 	} else {
-		log.Info("a new sensor has joined the party! creating sensor record", "sensor_id", payload.Device, "sensor_latitude", payload.Latitude, "sensor_longitude", payload.Longitude)
+		log.Info("a new sensor has joined the party! creating sensor record", "sensor_id", sensorID.String(), "sensor_latitude", coord.Latitude(), "sensor_longitude", coord.Longitude())
 		createdSensor, err := s.sensorRepo.Create(ctx, func(s *domain.Sensor, _ storage.SensorRepository) (bool, error) {
-			s.ID = payload.Device
-			s.Latitude = payload.Latitude
-			s.Longitude = payload.Longitude
+			s.ID = sensorID
+			s.Coordinate = coord
 			s.Status = domain.SensorStatusOnline
 			return true, nil
 		})
 		if err != nil {
-			log.Error("failed to update sensor", "error", err)
+			log.Error("failed to create sensor", "error", err)
 			return nil, err
 		}
 		sensor = createdSensor
@@ -58,7 +69,7 @@ func (s *SensorService) HandleMessage(ctx context.Context, payload *domain.MqttP
 	}
 	err = s.sensorRepo.InsertSensorData(ctx, &data, sensor.ID)
 	if err != nil {
-		log.Error("failed to insert sensor data", "sensor_id", sensor.ID, "error", err)
+		log.Error("failed to insert sensor data", "sensor_id", sensor.ID.String(), "error", err)
 		return nil, err
 	}
 
@@ -76,19 +87,18 @@ func (s *SensorService) HandleMessage(ctx context.Context, payload *domain.MqttP
 	return sensorData, nil
 }
 
-func (s *SensorService) updateSensorCoordsAndStatus(ctx context.Context, payload *domain.MqttPayload, sensor *domain.Sensor) (*domain.Sensor, error) {
+func (s *SensorService) updateSensorCoordsAndStatus(ctx context.Context, coord domain.Coordinate, sensor *domain.Sensor) (*domain.Sensor, error) {
 	log := logger.GetLogger(ctx)
-	if sensor.Latitude != payload.Latitude || sensor.Longitude != payload.Longitude || sensor.Status != domain.SensorStatusOnline {
+	if sensor.Coordinate.Latitude() != coord.Latitude() || sensor.Coordinate.Longitude() != coord.Longitude() || sensor.Status != domain.SensorStatusOnline {
 		updatedSensor, err := s.sensorRepo.Update(ctx, sensor.ID, func(s *domain.Sensor, _ storage.SensorRepository) (bool, error) {
-			s.Latitude = payload.Latitude
-			s.Longitude = payload.Longitude
+			s.Coordinate = coord
 			s.Status = domain.SensorStatusOnline
 			return true, nil
 		})
 		if err != nil {
 			return nil, err
 		}
-		log.Info("coordinates and status of sensor have been updated successfully", "sensor_id", updatedSensor.ID)
+		log.Info("coordinates and status of sensor have been updated successfully", "sensor_id", updatedSensor.ID.String())
 		return updatedSensor, err
 	}
 

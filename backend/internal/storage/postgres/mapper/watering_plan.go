@@ -37,8 +37,8 @@ func (c *InternalWateringPlanRepoMapperImpl) FromSql(source *sqlc.WateringPlan) 
 		AdditionalInfo:   additionalInfo,
 	}
 	if source.Distance != nil {
-		v := *source.Distance
-		result.Distance = &v
+		d := entities.MustNewDistance(*source.Distance)
+		result.Distance = &d
 	}
 	if source.TotalWaterRequired != nil {
 		v := *source.TotalWaterRequired

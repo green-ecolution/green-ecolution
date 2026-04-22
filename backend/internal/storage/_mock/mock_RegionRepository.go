@@ -266,9 +266,9 @@ func (_c *MockRegionRepository_GetByID_Call) RunAndReturn(run func(context.Conte
 	return _c
 }
 
-// GetByPoint provides a mock function with given fields: ctx, latitude, longitude
-func (_m *MockRegionRepository) GetByPoint(ctx context.Context, latitude float64, longitude float64) (*entities.Region, error) {
-	ret := _m.Called(ctx, latitude, longitude)
+// GetByPoint provides a mock function with given fields: ctx, coord
+func (_m *MockRegionRepository) GetByPoint(ctx context.Context, coord entities.Coordinate) (*entities.Region, error) {
+	ret := _m.Called(ctx, coord)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByPoint")
@@ -276,19 +276,19 @@ func (_m *MockRegionRepository) GetByPoint(ctx context.Context, latitude float64
 
 	var r0 *entities.Region
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, float64, float64) (*entities.Region, error)); ok {
-		return rf(ctx, latitude, longitude)
+	if rf, ok := ret.Get(0).(func(context.Context, entities.Coordinate) (*entities.Region, error)); ok {
+		return rf(ctx, coord)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, float64, float64) *entities.Region); ok {
-		r0 = rf(ctx, latitude, longitude)
+	if rf, ok := ret.Get(0).(func(context.Context, entities.Coordinate) *entities.Region); ok {
+		r0 = rf(ctx, coord)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*entities.Region)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, float64, float64) error); ok {
-		r1 = rf(ctx, latitude, longitude)
+	if rf, ok := ret.Get(1).(func(context.Context, entities.Coordinate) error); ok {
+		r1 = rf(ctx, coord)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -303,15 +303,14 @@ type MockRegionRepository_GetByPoint_Call struct {
 
 // GetByPoint is a helper method to define mock.On call
 //   - ctx context.Context
-//   - latitude float64
-//   - longitude float64
-func (_e *MockRegionRepository_Expecter) GetByPoint(ctx interface{}, latitude interface{}, longitude interface{}) *MockRegionRepository_GetByPoint_Call {
-	return &MockRegionRepository_GetByPoint_Call{Call: _e.mock.On("GetByPoint", ctx, latitude, longitude)}
+//   - coord entities.Coordinate
+func (_e *MockRegionRepository_Expecter) GetByPoint(ctx interface{}, coord interface{}) *MockRegionRepository_GetByPoint_Call {
+	return &MockRegionRepository_GetByPoint_Call{Call: _e.mock.On("GetByPoint", ctx, coord)}
 }
 
-func (_c *MockRegionRepository_GetByPoint_Call) Run(run func(ctx context.Context, latitude float64, longitude float64)) *MockRegionRepository_GetByPoint_Call {
+func (_c *MockRegionRepository_GetByPoint_Call) Run(run func(ctx context.Context, coord entities.Coordinate)) *MockRegionRepository_GetByPoint_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(float64), args[2].(float64))
+		run(args[0].(context.Context), args[1].(entities.Coordinate))
 	})
 	return _c
 }
@@ -321,7 +320,7 @@ func (_c *MockRegionRepository_GetByPoint_Call) Return(_a0 *entities.Region, _a1
 	return _c
 }
 
-func (_c *MockRegionRepository_GetByPoint_Call) RunAndReturn(run func(context.Context, float64, float64) (*entities.Region, error)) *MockRegionRepository_GetByPoint_Call {
+func (_c *MockRegionRepository_GetByPoint_Call) RunAndReturn(run func(context.Context, entities.Coordinate) (*entities.Region, error)) *MockRegionRepository_GetByPoint_Call {
 	_c.Call.Return(run)
 	return _c
 }

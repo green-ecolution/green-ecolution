@@ -20,10 +20,9 @@ var (
 			UpdatedAt:    time.Now(),
 			Species:      "Oak",
 			Number:       "T001",
-			Latitude:     testLatitude,
-			Longitude:    testLongitude,
+			Coordinate:   entities.MustNewCoordinate(testLatitude, testLongitude),
 			Description:  "A mature oak tree",
-			PlantingYear: 2023,
+			PlantingYear: entities.MustNewPlantingYear(2023),
 		},
 		{
 			ID:           2,
@@ -31,10 +30,9 @@ var (
 			UpdatedAt:    time.Now(),
 			Species:      "Pine",
 			Number:       "T002",
-			Latitude:     testLatitude,
-			Longitude:    testLongitude,
+			Coordinate:   entities.MustNewCoordinate(testLatitude, testLongitude),
 			Description:  "A young pine tree",
-			PlantingYear: 2023,
+			PlantingYear: entities.MustNewPlantingYear(2023),
 		},
 	}
 
@@ -46,8 +44,7 @@ var (
 		WateringStatus: entities.WateringStatusBad,
 		Region:         &entities.Region{ID: 1, Name: "Region 1"},
 		Archived:       false,
-		Latitude:       utils.P(testLatitude),
-		Longitude:      utils.P(testLongitude),
+		Coordinate:     utils.P(entities.MustNewCoordinate(testLatitude, testLongitude)),
 		SoilCondition:  entities.TreeSoilConditionSandig,
 	}
 
@@ -58,12 +55,11 @@ var (
 			UpdatedAt:      time.Now(),
 			Species:        "Oak",
 			Number:         "T001",
-			Latitude:       testLatitude,
-			Longitude:      testLongitude,
+			Coordinate:     entities.MustNewCoordinate(testLatitude, testLongitude),
 			Description:    "A mature oak tree",
 			TreeCluster:    testCluster,
 			WateringStatus: entities.WateringStatusGood,
-			PlantingYear:   2023,
+			PlantingYear:   entities.MustNewPlantingYear(2023),
 		},
 		{
 			ID:             2,
@@ -71,12 +67,11 @@ var (
 			UpdatedAt:      time.Now(),
 			Species:        "Pine",
 			Number:         "T002",
-			Latitude:       testLatitude,
-			Longitude:      testLongitude,
+			Coordinate:     entities.MustNewCoordinate(testLatitude, testLongitude),
 			TreeCluster:    testCluster,
 			Description:    "A young pine tree",
 			WateringStatus: entities.WateringStatusBad,
-			PlantingYear:   2022,
+			PlantingYear:   entities.MustNewPlantingYear(2022),
 		},
 	}
 )

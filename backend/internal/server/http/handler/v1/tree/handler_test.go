@@ -155,7 +155,7 @@ func TestGetTreeBySensorID(t *testing.T) {
 		sensorID := "sensor-1"
 		mockTreeService.EXPECT().GetBySensorID(
 			mock.Anything,
-			sensorID,
+			entities.MustNewSensorID(sensorID),
 		).Return(TestTrees[0], nil)
 
 		// when
@@ -176,7 +176,7 @@ func TestGetTreeBySensorID(t *testing.T) {
 		sensorID := "sensor-999"
 		mockTreeService.EXPECT().GetBySensorID(
 			mock.Anything,
-			sensorID,
+			entities.MustNewSensorID(sensorID),
 		).Return(nil, service.NewError(service.NotFound, "not found"))
 
 		req, _ := http.NewRequestWithContext(context.Background(), "GET", "/v1/tree/sensor/"+sensorID, nil)
@@ -196,7 +196,7 @@ func TestGetTreeBySensorID(t *testing.T) {
 		sensorID := "sensor-1"
 		mockTreeService.EXPECT().GetBySensorID(
 			mock.Anything,
-			sensorID,
+			entities.MustNewSensorID(sensorID),
 		).Return(nil, fiber.NewError(fiber.StatusInternalServerError, "internal server error"))
 
 		req, _ := http.NewRequestWithContext(context.Background(), "GET", "/v1/tree/sensor/"+sensorID, nil)
@@ -236,8 +236,8 @@ func TestCreateTree(t *testing.T) {
 		var response httpEntities.TreeResponse
 		err = json.NewDecoder(resp.Body).Decode(&response)
 		assert.NoError(t, err)
-		assert.Equal(t, testTree.Latitude, response.Latitude)
-		assert.Equal(t, testTree.Longitude, response.Longitude)
+		assert.Equal(t, testTree.Coordinate.Latitude(), response.Latitude)
+		assert.Equal(t, testTree.Coordinate.Longitude(), response.Longitude)
 
 		mockTreeService.AssertExpectations(t)
 	})
@@ -310,8 +310,8 @@ func TestUpdateTree(t *testing.T) {
 		var response httpEntities.TreeResponse
 		err = json.NewDecoder(resp.Body).Decode(&response)
 		assert.NoError(t, err)
-		assert.Equal(t, testTree.Latitude, response.Latitude)
-		assert.Equal(t, testTree.Longitude, response.Longitude)
+		assert.Equal(t, testTree.Coordinate.Latitude(), response.Latitude)
+		assert.Equal(t, testTree.Coordinate.Longitude(), response.Longitude)
 
 		mockTreeService.AssertExpectations(t)
 	})
@@ -615,12 +615,12 @@ func TestGetNearestTrees(t *testing.T) {
 		app.Get(path, tree.GetNearestTrees(mockTreeService))
 
 		treeWithSensor := *TestTrees[0]
-		treeWithSensor.Sensor = &entities.Sensor{ID: "sensor-1"}
+		treeWithSensor.Sensor = &entities.Sensor{ID: entities.MustNewSensorID("sensor-1")}
 		results := []*entities.TreeWithDistance{
-			{Tree: &treeWithSensor, Distance: 5.2},
-			{Tree: TestTrees[1], Distance: 42.8},
+			{Tree: &treeWithSensor, Distance: entities.MustNewDistance(5.2)},
+			{Tree: TestTrees[1], Distance: entities.MustNewDistance(42.8)},
 		}
-		mockTreeService.EXPECT().GetNearestTrees(mock.Anything, 54.79, 9.43, int32(5)).Return(results, nil)
+		mockTreeService.EXPECT().GetNearestTrees(mock.Anything, entities.MustNewCoordinate(54.79, 9.43), int32(5)).Return(results, nil)
 
 		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, path+"?lat=54.79&lng=9.43&limit=5", nil)
 		resp, err := app.Test(req, -1)
@@ -641,7 +641,7 @@ func TestGetNearestTrees(t *testing.T) {
 		app := fiber.New()
 		mockTreeService := serviceMock.NewMockTreeService(t)
 		app.Get(path, tree.GetNearestTrees(mockTreeService))
-		mockTreeService.EXPECT().GetNearestTrees(mock.Anything, 0.0, 0.0, int32(0)).Return([]*entities.TreeWithDistance{}, nil)
+		mockTreeService.EXPECT().GetNearestTrees(mock.Anything, entities.MustNewCoordinate(0.0, 0.0), int32(0)).Return([]*entities.TreeWithDistance{}, nil)
 
 		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, path+"?lat=0&lng=0", nil)
 		resp, err := app.Test(req, -1)
@@ -718,7 +718,7 @@ func TestGetNearestTrees(t *testing.T) {
 		app := fiber.New()
 		mockTreeService := serviceMock.NewMockTreeService(t)
 		app.Get(path, tree.GetNearestTrees(mockTreeService))
-		mockTreeService.EXPECT().GetNearestTrees(mock.Anything, 54.79, 9.43, int32(0)).
+		mockTreeService.EXPECT().GetNearestTrees(mock.Anything, entities.MustNewCoordinate(54.79, 9.43), int32(0)).
 			Return(nil, fiber.NewError(fiber.StatusInternalServerError, "boom"))
 
 		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, path+"?lat=54.79&lng=9.43", nil)

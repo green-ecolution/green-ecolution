@@ -32,9 +32,9 @@ func TestTreeRepository_Create(t *testing.T) {
 		assert.Nil(t, got.TreeCluster)
 		assert.Nil(t, got.Sensor)
 		assert.Equal(t, "", got.Number)
-		assert.Equal(t, int32(0), got.PlantingYear)
-		assert.Equal(t, float64(0), got.Latitude)
-		assert.Equal(t, float64(0), got.Longitude)
+		assert.Equal(t, int32(0), got.PlantingYear.Value())
+		assert.Equal(t, float64(0), got.Coordinate.Latitude())
+		assert.Equal(t, float64(0), got.Coordinate.Longitude())
 		assert.Equal(t, "", got.Description)
 		assert.Equal(t, "", got.Provider)
 		assert.Equal(t, entities.WateringStatusUnknown, got.WateringStatus)
@@ -71,9 +71,8 @@ func TestTreeRepository_Create(t *testing.T) {
 		got, err := r.Create(context.Background(), func(tree *entities.Tree, _ storage.TreeRepository) (bool, error) {
 			tree.Species = "Oak"
 			tree.Number = "T001"
-			tree.PlantingYear = 2023
-			tree.Latitude = 54.801539
-			tree.Longitude = 9.446741
+			tree.PlantingYear = entities.MustNewPlantingYear(2023)
+			tree.Coordinate = entities.MustNewCoordinate(54.801539, 9.446741)
 			tree.Description = "A newly planted oak tree"
 			tree.WateringStatus = entities.WateringStatusGood
 			tree.TreeCluster = treeCluster
@@ -98,9 +97,9 @@ func TestTreeRepository_Create(t *testing.T) {
 		assert.Equal(t, sensor.ID, sensorByTree.ID)
 		assert.Equal(t, "Oak", got.Species)
 		assert.Equal(t, "T001", got.Number)
-		assert.Equal(t, int32(2023), got.PlantingYear)
-		assert.Equal(t, 54.801539, got.Latitude)
-		assert.Equal(t, 9.446741, got.Longitude)
+		assert.Equal(t, int32(2023), got.PlantingYear.Value())
+		assert.Equal(t, 54.801539, got.Coordinate.Latitude())
+		assert.Equal(t, 9.446741, got.Coordinate.Longitude())
 		assert.Equal(t, "A newly planted oak tree", got.Description)
 		assert.Equal(t, "", got.Provider)
 		assert.Equal(t, entities.WateringStatusGood, got.WateringStatus)
@@ -115,14 +114,17 @@ func TestTreeRepository_Create(t *testing.T) {
 
 		// when
 		got, err := r.Create(context.Background(), func(tree *entities.Tree, _ storage.TreeRepository) (bool, error) {
-			tree.Latitude = -200
-			tree.Longitude = 0
+			coord, coordErr := entities.NewCoordinate(-200, 0)
+			if coordErr != nil {
+				return false, coordErr
+			}
+			tree.Coordinate = coord
 			return true, nil
 		})
 
 		// then
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), storage.ErrInvalidLatitude.Error())
+		assert.Contains(t, err.Error(), entities.ErrInvalidLatitude.Error())
 		assert.Nil(t, got)
 	})
 
@@ -134,14 +136,17 @@ func TestTreeRepository_Create(t *testing.T) {
 
 		// when
 		got, err := r.Create(context.Background(), func(tree *entities.Tree, _ storage.TreeRepository) (bool, error) {
-			tree.Latitude = 0
-			tree.Longitude = 200
+			coord, coordErr := entities.NewCoordinate(0, 200)
+			if coordErr != nil {
+				return false, coordErr
+			}
+			tree.Coordinate = coord
 			return true, nil
 		})
 
 		// then
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), storage.ErrInvalidLongitude.Error())
+		assert.Contains(t, err.Error(), entities.ErrInvalidLongitude.Error())
 		assert.Nil(t, got)
 	})
 
