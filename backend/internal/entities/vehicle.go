@@ -1,6 +1,7 @@
 package entities
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -77,6 +78,35 @@ type VehicleQuery struct {
 	Type         string `query:"type"`
 	WithArchived bool   `query:"archived"`
 	Query
+}
+
+func MergeVehicles(transporter, trailer *Vehicle) *Vehicle {
+	if transporter == nil {
+		return nil
+	}
+	if trailer == nil {
+		return transporter
+	}
+
+	width := transporter.Width
+	if trailer.Width > width {
+		width = trailer.Width
+	}
+
+	height := transporter.Height
+	if trailer.Height > height {
+		height = trailer.Height
+	}
+
+	return &Vehicle{
+		Width:         width,
+		Height:        height,
+		Length:        transporter.Length + trailer.Length,
+		Weight:        transporter.Weight + trailer.Weight,
+		WaterCapacity: transporter.WaterCapacity.Add(trailer.WaterCapacity),
+		Type:          VehicleTypeTransporter,
+		NumberPlate:   fmt.Sprintf("%s - %s", transporter.NumberPlate, trailer.NumberPlate),
+	}
 }
 
 func ParseVehicleType(vehicleTypeStr string) VehicleType {

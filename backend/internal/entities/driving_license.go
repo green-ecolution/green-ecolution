@@ -11,6 +11,25 @@ const (
 	DrivingLicenseCE DrivingLicense = "CE"
 )
 
+// Satisfies checks if this license covers the required license (hierarchical).
+// Keep in sync with frontend: frontend/app/src/lib/licenseValidation.ts
+func (dl DrivingLicense) Satisfies(required DrivingLicense) bool {
+	if dl == required {
+		return true
+	}
+	switch dl {
+	case DrivingLicenseBE:
+		return required == DrivingLicenseB
+	case DrivingLicenseC:
+		return required == DrivingLicenseB
+	case DrivingLicenseCE:
+		return required == DrivingLicenseB ||
+			required == DrivingLicenseBE ||
+			required == DrivingLicenseC
+	}
+	return false
+}
+
 func ParseDrivingLicense(drivingLicense string) (DrivingLicense, error) {
 	switch drivingLicense {
 	case string(DrivingLicenseB):

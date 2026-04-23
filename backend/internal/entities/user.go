@@ -40,6 +40,31 @@ type User struct {
 	Status          UserStatus
 }
 
+func (u *User) HasRole(role UserRole) bool {
+	for _, r := range u.Roles {
+		if r == role {
+			return true
+		}
+	}
+	return false
+}
+
+func (u *User) HasRequiredLicenses(required []DrivingLicense) bool {
+	for _, req := range required {
+		satisfied := false
+		for _, held := range u.DrivingLicenses {
+			if held.Satisfies(req) {
+				satisfied = true
+				break
+			}
+		}
+		if !satisfied {
+			return false
+		}
+	}
+	return true
+}
+
 type RegisterUser struct {
 	User     User
 	Password string

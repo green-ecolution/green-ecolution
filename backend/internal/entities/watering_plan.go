@@ -39,6 +39,44 @@ type WateringPlan struct {
 	AdditionalInfo     map[string]interface{}
 }
 
+const waterPerTree = 80.0
+
+func (wp *WateringPlan) CalculateRequiredWater() float64 {
+	var total float64
+	for _, tc := range wp.TreeClusters {
+		total += float64(len(tc.Trees)) * waterPerTree
+	}
+	return total
+}
+
+func (wp *WateringPlan) ShouldRegenerateRoute(prev *WateringPlan) bool {
+	if len(prev.TreeClusters) != len(wp.TreeClusters) {
+		return true
+	}
+	if prev.Transporter.ID != wp.Transporter.ID {
+		return true
+	}
+	if (prev.Trailer == nil) != (wp.Trailer == nil) {
+		return true
+	}
+	if prev.Trailer != nil && wp.Trailer != nil && prev.Trailer.ID != wp.Trailer.ID {
+		return true
+	}
+	for i, prevTc := range prev.TreeClusters {
+		if prevTc.ID != wp.TreeClusters[i].ID {
+			return true
+		}
+	}
+	return false
+}
+
+func (wp *WateringPlan) IsExpired(cutoff time.Time) bool {
+	return (wp.Status == WateringPlanStatusActive ||
+		wp.Status == WateringPlanStatusPlanned ||
+		wp.Status == WateringPlanStatusUnknown) &&
+		wp.Date.Before(cutoff)
+}
+
 type WateringPlanCreate struct {
 	Date           time.Time
 	Description    string
