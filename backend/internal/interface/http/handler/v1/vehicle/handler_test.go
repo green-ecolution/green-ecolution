@@ -13,7 +13,7 @@ import (
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	serverEntities "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/vehicle"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/middleware"
@@ -30,7 +30,7 @@ func TestGetAllVehicles(t *testing.T) {
 
 		mockVehicleService.EXPECT().GetAll(
 			mock.Anything,
-			entities.VehicleQuery{},
+			domain.VehicleQuery{},
 		).Return(TestVehicles, int64(len(TestVehicles)), nil)
 
 		// when
@@ -65,7 +65,7 @@ func TestGetAllVehicles(t *testing.T) {
 
 		mockVehicleService.EXPECT().GetAll(
 			mock.Anything,
-			entities.VehicleQuery{},
+			domain.VehicleQuery{},
 		).Return(TestVehicles, int64(len(TestVehicles)), nil)
 
 		// when
@@ -137,7 +137,7 @@ func TestGetAllVehicles(t *testing.T) {
 
 		mockVehicleService.EXPECT().GetAll(
 			mock.Anything,
-			entities.VehicleQuery{Query: entities.Query{Provider: "test-provider"}},
+			domain.VehicleQuery{Query: domain.Query{Provider: "test-provider"}},
 		).Return(TestVehicles, int64(0), nil)
 
 		// when
@@ -170,8 +170,8 @@ func TestGetAllVehicles(t *testing.T) {
 
 		mockVehicleService.EXPECT().GetAll(
 			mock.Anything,
-			entities.VehicleQuery{Type: "transporter"},
-		).Return([]*entities.Vehicle{TestVehicles[1]}, int64(1), nil)
+			domain.VehicleQuery{Type: "transporter"},
+		).Return([]*domain.Vehicle{TestVehicles[1]}, int64(1), nil)
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/vehicle?type=transporter", nil)
@@ -203,8 +203,8 @@ func TestGetAllVehicles(t *testing.T) {
 		app.Get("/v1/vehicle", handler)
 
 		mockVehicleService.EXPECT().GetAll(
-			mock.Anything, entities.VehicleQuery{Type: "transporter"},
-		).Return([]*entities.Vehicle{TestVehicles[1]}, int64(1), nil)
+			mock.Anything, domain.VehicleQuery{Type: "transporter"},
+		).Return([]*domain.Vehicle{TestVehicles[1]}, int64(1), nil)
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/vehicle?type=transporter&page=1&limit=1", nil)
@@ -240,8 +240,8 @@ func TestGetAllVehicles(t *testing.T) {
 		app.Get("/v1/vehicle", handler)
 
 		mockVehicleService.EXPECT().GetAll(
-			mock.Anything, entities.VehicleQuery{},
-		).Return([]*entities.Vehicle{}, int64(0), nil)
+			mock.Anything, domain.VehicleQuery{},
+		).Return([]*domain.Vehicle{}, int64(0), nil)
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/vehicle", nil)
@@ -274,7 +274,7 @@ func TestGetAllVehicles(t *testing.T) {
 		app.Get("/v1/vehicle", handler)
 
 		mockVehicleService.EXPECT().GetAll(
-			mock.Anything, entities.VehicleQuery{},
+			mock.Anything, domain.VehicleQuery{},
 		).Return(nil, int64(0), fiber.NewError(fiber.StatusInternalServerError, "service error"))
 
 		// when
@@ -297,7 +297,7 @@ func TestGetAllVehicles(t *testing.T) {
 		app.Get("/v1/vehicle", handler)
 
 		mockVehicleService.EXPECT().GetAll(
-			mock.Anything, entities.VehicleQuery{Type: "invalid"},
+			mock.Anything, domain.VehicleQuery{Type: "invalid"},
 		).Return(nil, int64(0), fiber.NewError(fiber.ErrBadRequest.Code, "service error"))
 
 		// when

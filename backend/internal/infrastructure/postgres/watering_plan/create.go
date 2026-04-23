@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"

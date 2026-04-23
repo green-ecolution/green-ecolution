@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func TestGetMapInfo(t *testing.T) {

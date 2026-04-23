@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	serverEntities "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/plugin"
 )
@@ -171,7 +171,7 @@ func TestGetPluginsList(t *testing.T) {
 
 		mockPluginService.EXPECT().GetAll(
 			mock.Anything,
-		).Return([]entities.Plugin{}, []time.Time{})
+		).Return([]domain.Plugin{}, []time.Time{})
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/plugin", nil)
@@ -232,7 +232,7 @@ func TestGetPluginInfo(t *testing.T) {
 		mockPluginService.EXPECT().Get(
 			mock.Anything,
 			"non-existent",
-		).Return(entities.Plugin{}, errors.New("not found"))
+		).Return(domain.Plugin{}, errors.New("not found"))
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/plugin/non-existent", nil)

@@ -5,7 +5,7 @@ import (
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	httpEntities "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 )
 
@@ -14,16 +14,16 @@ var (
 	testLongitude         = 54.801539
 	TestTreeUpdateRequest = (*httpEntities.TreeUpdateRequest)(getMockTreeRequest("Updated description"))
 	TestTreeCreateRequest = getMockTreeRequest("Created description")
-	TestTrees             = []*entities.Tree{
+	TestTrees             = []*domain.Tree{
 		{
 			ID:           1,
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),
 			Species:      "Oak",
 			Number:       "T001",
-			Coordinate:   entities.MustNewCoordinate(testLatitude, testLongitude),
+			Coordinate:   domain.MustNewCoordinate(testLatitude, testLongitude),
 			Description:  "A mature oak tree",
-			PlantingYear: entities.MustNewPlantingYear(2023),
+			PlantingYear: domain.MustNewPlantingYear(2023),
 		},
 		{
 			ID:           2,
@@ -31,36 +31,36 @@ var (
 			UpdatedAt:    time.Now(),
 			Species:      "Pine",
 			Number:       "T002",
-			Coordinate:   entities.MustNewCoordinate(testLatitude, testLongitude),
+			Coordinate:   domain.MustNewCoordinate(testLatitude, testLongitude),
 			Description:  "A young pine tree",
-			PlantingYear: entities.MustNewPlantingYear(2023),
+			PlantingYear: domain.MustNewPlantingYear(2023),
 		},
 	}
 
-	testCluster = &entities.TreeCluster{
+	testCluster = &domain.TreeCluster{
 		ID:             1,
 		Name:           "Test Cluster",
 		Address:        "456 New St",
 		Description:    "Description",
-		WateringStatus: entities.WateringStatusBad,
-		Region:         &entities.Region{ID: 1, Name: "Region 1"},
+		WateringStatus: domain.WateringStatusBad,
+		Region:         &domain.Region{ID: 1, Name: "Region 1"},
 		Archived:       false,
-		Coordinate:     utils.P(entities.MustNewCoordinate(testLatitude, testLongitude)),
-		SoilCondition:  entities.TreeSoilConditionSandig,
+		Coordinate:     utils.P(domain.MustNewCoordinate(testLatitude, testLongitude)),
+		SoilCondition:  domain.TreeSoilConditionSandig,
 	}
 
-	testFilterTrees = []*entities.Tree{
+	testFilterTrees = []*domain.Tree{
 		{
 			ID:             1,
 			CreatedAt:      time.Now(),
 			UpdatedAt:      time.Now(),
 			Species:        "Oak",
 			Number:         "T001",
-			Coordinate:     entities.MustNewCoordinate(testLatitude, testLongitude),
+			Coordinate:     domain.MustNewCoordinate(testLatitude, testLongitude),
 			Description:    "A mature oak tree",
 			TreeCluster:    testCluster,
-			WateringStatus: entities.WateringStatusGood,
-			PlantingYear:   entities.MustNewPlantingYear(2023),
+			WateringStatus: domain.WateringStatusGood,
+			PlantingYear:   domain.MustNewPlantingYear(2023),
 		},
 		{
 			ID:             2,
@@ -68,11 +68,11 @@ var (
 			UpdatedAt:      time.Now(),
 			Species:        "Pine",
 			Number:         "T002",
-			Coordinate:     entities.MustNewCoordinate(testLatitude, testLongitude),
+			Coordinate:     domain.MustNewCoordinate(testLatitude, testLongitude),
 			TreeCluster:    testCluster,
 			Description:    "A young pine tree",
-			WateringStatus: entities.WateringStatusBad,
-			PlantingYear:   entities.MustNewPlantingYear(2022),
+			WateringStatus: domain.WateringStatusBad,
+			PlantingYear:   domain.MustNewPlantingYear(2022),
 		},
 	}
 )

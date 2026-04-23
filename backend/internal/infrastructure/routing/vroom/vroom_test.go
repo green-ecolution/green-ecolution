@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func newTestVroomClient(t *testing.T, serverURL string) VroomClient {

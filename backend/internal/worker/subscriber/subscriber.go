@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 type UpdateTreeSubscriber struct {

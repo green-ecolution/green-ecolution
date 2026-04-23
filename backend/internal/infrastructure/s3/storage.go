@@ -5,7 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func NewRepository(cfg *config.Config) (*entities.Repository, error) {

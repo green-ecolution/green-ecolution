@@ -15,7 +15,7 @@ import (
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	serverEntities "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	wateringplan "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/watering_plan"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/middleware"
@@ -32,7 +32,7 @@ func TestGetAllWateringPlans(t *testing.T) {
 
 		mockWateringPlanService.EXPECT().GetAll(
 			mock.Anything,
-			entities.Query{},
+			domain.Query{},
 		).Return(TestWateringPlans, int64(len(TestWateringPlans)), nil)
 
 		// when
@@ -67,7 +67,7 @@ func TestGetAllWateringPlans(t *testing.T) {
 
 		mockWateringPlanService.EXPECT().GetAll(
 			mock.Anything,
-			entities.Query{},
+			domain.Query{},
 		).Return(TestWateringPlans, int64(len(TestWateringPlans)), nil)
 
 		// when
@@ -139,7 +139,7 @@ func TestGetAllWateringPlans(t *testing.T) {
 
 		mockWateringPlanService.EXPECT().GetAll(
 			mock.Anything,
-			entities.Query{Provider: "test-provider"},
+			domain.Query{Provider: "test-provider"},
 		).Return(TestWateringPlans, int64(len(TestWateringPlans)), nil)
 
 		// when
@@ -172,8 +172,8 @@ func TestGetAllWateringPlans(t *testing.T) {
 
 		mockWateringPlanService.EXPECT().GetAll(
 			mock.Anything,
-			entities.Query{},
-		).Return([]*entities.WateringPlan{}, int64(0), nil)
+			domain.Query{},
+		).Return([]*domain.WateringPlan{}, int64(0), nil)
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/watering-plan", nil)
@@ -206,7 +206,7 @@ func TestGetAllWateringPlans(t *testing.T) {
 
 		mockWateringPlanService.EXPECT().GetAll(
 			mock.Anything,
-			entities.Query{},
+			domain.Query{},
 		).Return(nil, int64(0), fiber.NewError(fiber.StatusInternalServerError, "service error"))
 
 		// when

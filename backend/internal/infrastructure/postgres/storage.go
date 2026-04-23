@@ -5,7 +5,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	mapper "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/region"

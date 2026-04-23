@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	versionpkg "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/version"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )

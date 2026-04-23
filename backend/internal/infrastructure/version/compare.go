@@ -5,7 +5,7 @@ import (
 
 	goversion "github.com/hashicorp/go-version"
 
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func CompareVersions(current, latest string) entities.VersionInfo {

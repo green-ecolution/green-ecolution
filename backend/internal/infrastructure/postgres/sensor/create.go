@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"

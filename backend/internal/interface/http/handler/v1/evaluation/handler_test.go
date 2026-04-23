@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	serverEntities "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/evaluation"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
@@ -25,7 +25,7 @@ func TestGetEvaluation(t *testing.T) {
 
 		mockEvaluationService.EXPECT().GetEvaluation(
 			mock.Anything,
-		).Return(&entities.Evaluation{}, nil)
+		).Return(&domain.Evaluation{}, nil)
 
 		app.Get("/v1/evaluation", handler)
 

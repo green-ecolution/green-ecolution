@@ -3,7 +3,7 @@ package mapper
 import (
 	"encoding/json"
 
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	mqtt "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/sensor/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"

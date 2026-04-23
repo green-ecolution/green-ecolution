@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing/valhalla/valhalla"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing/vroom"

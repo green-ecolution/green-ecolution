@@ -15,7 +15,7 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/vehicle"
 	wateringplan "github.com/green-ecolution/green-ecolution/backend/internal/application/watering"
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 )
 

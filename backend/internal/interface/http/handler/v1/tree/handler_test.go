@@ -18,7 +18,7 @@ import (
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	httpEntities "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/tree"
 )
@@ -30,7 +30,7 @@ func TestGetAllTrees(t *testing.T) {
 		app.Get("/v1/tree", tree.GetAllTrees(mockTreeService))
 		mockTreeService.EXPECT().GetAll(
 			mock.Anything,
-			entities.TreeQuery{},
+			domain.TreeQuery{},
 		).Return(TestTrees, int64(len(TestTrees)), nil)
 
 		// when
@@ -50,7 +50,7 @@ func TestGetAllTrees(t *testing.T) {
 		app.Get("/v1/tree", tree.GetAllTrees(mockTreeService))
 		mockTreeService.EXPECT().GetAll(
 			mock.Anything,
-			entities.TreeQuery{Query: entities.Query{Provider: "test-provider"}},
+			domain.TreeQuery{Query: domain.Query{Provider: "test-provider"}},
 		).Return(TestTrees, int64(len(TestTrees)), nil)
 
 		// when
@@ -73,8 +73,8 @@ func TestGetAllTrees(t *testing.T) {
 		app.Get("/v1/tree", tree.GetAllTrees(mockTreeService))
 		mockTreeService.EXPECT().GetAll(
 			mock.Anything,
-			entities.TreeQuery{},
-		).Return([]*entities.Tree{}, int64(0), nil)
+			domain.TreeQuery{},
+		).Return([]*domain.Tree{}, int64(0), nil)
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/tree", nil)
@@ -94,7 +94,7 @@ func TestGetAllTrees(t *testing.T) {
 
 		mockTreeService.EXPECT().GetAll(
 			mock.Anything,
-			entities.TreeQuery{},
+			domain.TreeQuery{},
 		).Return(nil, int64(0), fiber.NewError(fiber.StatusInternalServerError, "internal server error"))
 
 		// when
@@ -122,8 +122,8 @@ func TestGetAllTrees(t *testing.T) {
 
 		mockTreeService.EXPECT().GetAll(
 			mock.Anything,
-			entities.TreeQuery{
-				WateringStatuses: []entities.WateringStatus{entities.WateringStatusGood, entities.WateringStatusBad},
+			domain.TreeQuery{
+				WateringStatuses: []domain.WateringStatus{domain.WateringStatusGood, domain.WateringStatusBad},
 				PlantingYears:    []int32{2022, 2023},
 				HasCluster:       utils.P(true),
 			},
@@ -156,7 +156,7 @@ func TestGetTreeBySensorID(t *testing.T) {
 		sensorID := "sensor-1"
 		mockTreeService.EXPECT().GetBySensorID(
 			mock.Anything,
-			entities.MustNewSensorID(sensorID),
+			domain.MustNewSensorID(sensorID),
 		).Return(TestTrees[0], nil)
 
 		// when
@@ -177,7 +177,7 @@ func TestGetTreeBySensorID(t *testing.T) {
 		sensorID := "sensor-999"
 		mockTreeService.EXPECT().GetBySensorID(
 			mock.Anything,
-			entities.MustNewSensorID(sensorID),
+			domain.MustNewSensorID(sensorID),
 		).Return(nil, ports.NewError(ports.NotFound, "not found"))
 
 		req, _ := http.NewRequestWithContext(context.Background(), "GET", "/v1/tree/sensor/"+sensorID, nil)
@@ -197,7 +197,7 @@ func TestGetTreeBySensorID(t *testing.T) {
 		sensorID := "sensor-1"
 		mockTreeService.EXPECT().GetBySensorID(
 			mock.Anything,
-			entities.MustNewSensorID(sensorID),
+			domain.MustNewSensorID(sensorID),
 		).Return(nil, fiber.NewError(fiber.StatusInternalServerError, "internal server error"))
 
 		req, _ := http.NewRequestWithContext(context.Background(), "GET", "/v1/tree/sensor/"+sensorID, nil)
@@ -616,12 +616,12 @@ func TestGetNearestTrees(t *testing.T) {
 		app.Get(path, tree.GetNearestTrees(mockTreeService))
 
 		treeWithSensor := *TestTrees[0]
-		treeWithSensor.Sensor = &entities.Sensor{ID: entities.MustNewSensorID("sensor-1")}
-		results := []*entities.TreeWithDistance{
-			{Tree: &treeWithSensor, Distance: entities.MustNewDistance(5.2)},
-			{Tree: TestTrees[1], Distance: entities.MustNewDistance(42.8)},
+		treeWithSensor.Sensor = &domain.Sensor{ID: domain.MustNewSensorID("sensor-1")}
+		results := []*domain.TreeWithDistance{
+			{Tree: &treeWithSensor, Distance: domain.MustNewDistance(5.2)},
+			{Tree: TestTrees[1], Distance: domain.MustNewDistance(42.8)},
 		}
-		mockTreeService.EXPECT().GetNearestTrees(mock.Anything, entities.MustNewCoordinate(54.79, 9.43), int32(5)).Return(results, nil)
+		mockTreeService.EXPECT().GetNearestTrees(mock.Anything, domain.MustNewCoordinate(54.79, 9.43), int32(5)).Return(results, nil)
 
 		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, path+"?lat=54.79&lng=9.43&limit=5", nil)
 		resp, err := app.Test(req, -1)
@@ -642,7 +642,7 @@ func TestGetNearestTrees(t *testing.T) {
 		app := fiber.New()
 		mockTreeService := serviceMock.NewMockTreeService(t)
 		app.Get(path, tree.GetNearestTrees(mockTreeService))
-		mockTreeService.EXPECT().GetNearestTrees(mock.Anything, entities.MustNewCoordinate(0.0, 0.0), int32(0)).Return([]*entities.TreeWithDistance{}, nil)
+		mockTreeService.EXPECT().GetNearestTrees(mock.Anything, domain.MustNewCoordinate(0.0, 0.0), int32(0)).Return([]*domain.TreeWithDistance{}, nil)
 
 		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, path+"?lat=0&lng=0", nil)
 		resp, err := app.Test(req, -1)
@@ -719,7 +719,7 @@ func TestGetNearestTrees(t *testing.T) {
 		app := fiber.New()
 		mockTreeService := serviceMock.NewMockTreeService(t)
 		app.Get(path, tree.GetNearestTrees(mockTreeService))
-		mockTreeService.EXPECT().GetNearestTrees(mock.Anything, entities.MustNewCoordinate(54.79, 9.43), int32(0)).
+		mockTreeService.EXPECT().GetNearestTrees(mock.Anything, domain.MustNewCoordinate(54.79, 9.43), int32(0)).
 			Return(nil, fiber.NewError(fiber.StatusInternalServerError, "boom"))
 
 		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, path+"?lat=54.79&lng=9.43", nil)

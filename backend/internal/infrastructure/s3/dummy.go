@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 // S3DummyRepo is used to disable the S3 service by configuration

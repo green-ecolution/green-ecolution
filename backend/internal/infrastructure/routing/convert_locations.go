@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func ConvertLocations(cfg *config.RoutingConfig) (*entities.GeoJSONMetadata, error) {

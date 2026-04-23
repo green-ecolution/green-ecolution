@@ -4,7 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/local/info"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/version"
 )

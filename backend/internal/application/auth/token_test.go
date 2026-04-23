@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )

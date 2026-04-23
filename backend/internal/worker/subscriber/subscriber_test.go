@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	svcMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func TestUpdateTreeSubsciber(t *testing.T) {
