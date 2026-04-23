@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
@@ -60,7 +60,7 @@ func (s *Store) MapError(err error, dbType any) error {
 	}
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		return shared.ErrEntityNotFound(rName)
+		return entities.ErrEntityNotFound(rName)
 	}
 
 	return err

@@ -7,7 +7,7 @@ import (
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 )
@@ -24,7 +24,7 @@ func TestNewService(t *testing.T) {
 		mockUserRepo := storageMock.NewMockUserRepository(t)
 		mockVehicleRepo := storageMock.NewMockVehicleRepository(t)
 
-		mockRepos := &shared.Repository{
+		mockRepos := &entities.Repository{
 			Auth:        mockAuthRepo,
 			Info:        mockInfoRepo,
 			Sensor:      mockSensorRepo,
@@ -35,7 +35,7 @@ func TestNewService(t *testing.T) {
 			Vehicle:     mockVehicleRepo,
 		}
 
-		eventManager := worker.NewEventManager(shared.EventTypeUpdateTree, shared.EventTypeUpdateTreeCluster, shared.EventTypeUpdateWateringPlan)
+		eventManager := worker.NewEventManager(entities.EventTypeUpdateTree, entities.EventTypeUpdateTreeCluster, entities.EventTypeUpdateWateringPlan)
 		svc := NewService(mockConfig, mockRepos, eventManager)
 
 		assert.NotNil(t, svc)

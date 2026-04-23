@@ -7,12 +7,12 @@ import (
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils/pagination"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
-func (r *TreeClusterRepository) GetAll(ctx context.Context, filter shared.TreeClusterQuery) ([]*shared.TreeCluster, int64, error) {
+func (r *TreeClusterRepository) GetAll(ctx context.Context, filter entities.TreeClusterQuery) ([]*entities.TreeCluster, int64, error) {
 	log := logger.GetLogger(ctx)
 
 	page, limit, err := pagination.GetValues(ctx)
@@ -32,7 +32,7 @@ func (r *TreeClusterRepository) GetAll(ctx context.Context, filter shared.TreeCl
 	}
 
 	if totalCount == 0 {
-		return []*shared.TreeCluster{}, 0, nil
+		return []*entities.TreeCluster{}, 0, nil
 	}
 
 	if limit == -1 {
@@ -68,7 +68,7 @@ func (r *TreeClusterRepository) GetAll(ctx context.Context, filter shared.TreeCl
 	return data, totalCount, nil
 }
 
-func (r *TreeClusterRepository) GetCount(ctx context.Context, filter shared.TreeClusterQuery) (int64, error) {
+func (r *TreeClusterRepository) GetCount(ctx context.Context, filter entities.TreeClusterQuery) (int64, error) {
 	log := logger.GetLogger(ctx)
 	var wateringStatuses []string
 	for _, ws := range filter.WateringStatuses {
@@ -88,7 +88,7 @@ func (r *TreeClusterRepository) GetCount(ctx context.Context, filter shared.Tree
 	return totalCount, nil
 }
 
-func (r *TreeClusterRepository) GetByID(ctx context.Context, id int32) (*shared.TreeCluster, error) {
+func (r *TreeClusterRepository) GetByID(ctx context.Context, id int32) (*entities.TreeCluster, error) {
 	log := logger.GetLogger(ctx)
 	row, err := r.store.GetTreeClusterByID(ctx, id)
 	if err != nil {
@@ -109,7 +109,7 @@ func (r *TreeClusterRepository) GetByID(ctx context.Context, id int32) (*shared.
 	return tc, nil
 }
 
-func (r *TreeClusterRepository) GetByIDs(ctx context.Context, ids []int32) ([]*shared.TreeCluster, error) {
+func (r *TreeClusterRepository) GetByIDs(ctx context.Context, ids []int32) ([]*entities.TreeCluster, error) {
 	log := logger.GetLogger(ctx)
 	rows, err := r.store.GetTreesClustersByIDs(ctx, ids)
 	if err != nil {
@@ -132,7 +132,7 @@ func (r *TreeClusterRepository) GetByIDs(ctx context.Context, ids []int32) ([]*s
 	return tc, nil
 }
 
-func (r *TreeClusterRepository) GetCenterPoint(ctx context.Context, tcID int32) (*shared.Coordinate, error) {
+func (r *TreeClusterRepository) GetCenterPoint(ctx context.Context, tcID int32) (*entities.Coordinate, error) {
 	log := logger.GetLogger(ctx)
 	row, err := r.store.CalculateTreesCentroid(ctx, &tcID)
 	if err != nil {
@@ -140,14 +140,14 @@ func (r *TreeClusterRepository) GetCenterPoint(ctx context.Context, tcID int32) 
 		return nil, err
 	}
 
-	coord, err := shared.NewCoordinate(row.CenterX, row.CenterY)
+	coord, err := entities.NewCoordinate(row.CenterX, row.CenterY)
 	if err != nil {
 		return nil, err
 	}
 	return &coord, nil
 }
 
-func (r *TreeClusterRepository) GetAllLatestSensorDataByClusterID(ctx context.Context, tcID int32) ([]*shared.SensorData, error) {
+func (r *TreeClusterRepository) GetAllLatestSensorDataByClusterID(ctx context.Context, tcID int32) ([]*entities.SensorData, error) {
 	log := logger.GetLogger(ctx)
 	rows, err := r.store.GetAllLatestSensorDataByTreeClusterID(ctx, tcID)
 	if err != nil {
@@ -162,7 +162,7 @@ func (r *TreeClusterRepository) GetAllLatestSensorDataByClusterID(ctx context.Co
 	return domainData, nil
 }
 
-func (r *TreeClusterRepository) GetAllRegionsWithWateringPlanCount(ctx context.Context) ([]*shared.RegionEvaluation, error) {
+func (r *TreeClusterRepository) GetAllRegionsWithWateringPlanCount(ctx context.Context) ([]*entities.RegionEvaluation, error) {
 	log := logger.GetLogger(ctx)
 	rows, err := r.store.GetAllTreeClusterRegionsWithWateringPlanCount(ctx)
 	if err != nil {

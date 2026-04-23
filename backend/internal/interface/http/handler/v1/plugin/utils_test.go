@@ -4,23 +4,23 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 var (
-	TestPlugin = shared.Plugin{
+	TestPlugin = entities.Plugin{
 		Slug:        "test-plugin",
 		Name:        "Test Plugin",
 		Path:        url.URL{Scheme: "http", Host: "localhost:8080"},
 		Version:     "1.0.0",
 		Description: "A test plugin",
-		Auth: shared.AuthPlugin{
+		Auth: entities.AuthPlugin{
 			ClientID:     "test-client-id",
 			ClientSecret: "test-client-secret",
 		},
 	}
 
-	TestPlugins = []shared.Plugin{
+	TestPlugins = []entities.Plugin{
 		TestPlugin,
 		{
 			Slug:        "test-plugin-2",
@@ -28,14 +28,14 @@ var (
 			Path:        url.URL{Scheme: "http", Host: "localhost:9090"},
 			Version:     "2.0.0",
 			Description: "Another test plugin",
-			Auth: shared.AuthPlugin{
+			Auth: entities.AuthPlugin{
 				ClientID:     "test-client-id-2",
 				ClientSecret: "test-client-secret-2",
 			},
 		},
 	}
 
-	TestClientToken = &shared.ClientToken{
+	TestClientToken = &entities.ClientToken{
 		AccessToken:  "test-access-token",
 		ExpiresIn:    3600,
 		RefreshToken: "test-refresh-token",

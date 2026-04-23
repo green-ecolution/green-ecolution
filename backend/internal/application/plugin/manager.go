@@ -13,7 +13,7 @@ import (
 	"github.com/go-playground/validator/v10"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 )
@@ -46,23 +46,23 @@ func WithInterval(interval time.Duration) PluginManagerOption {
 
 type PluginManager struct {
 	PluginManagerConfig
-	plugins        map[string]shared.Plugin
+	plugins        map[string]entities.Plugin
 	heartbeats     map[string]time.Time
 	mutex          sync.RWMutex
 	validator      *validator.Validate
-	authRepository shared.AuthRepository
+	authRepository entities.AuthRepository
 }
 
 var _ ports.PluginService = (*PluginManager)(nil)
 
-func NewPluginManager(authRepo shared.AuthRepository, opts ...PluginManagerOption) *PluginManager {
+func NewPluginManager(authRepo entities.AuthRepository, opts ...PluginManagerOption) *PluginManager {
 	cfg := defaultPluginManagerConfig
 	for _, opt := range opts {
 		opt(&cfg)
 	}
 
 	return &PluginManager{
-		plugins:             make(map[string]shared.Plugin),
+		plugins:             make(map[string]entities.Plugin),
 		heartbeats:          make(map[string]time.Time),
 		validator:           validator.New(),
 		authRepository:      authRepo,
@@ -70,7 +70,7 @@ func NewPluginManager(authRepo shared.AuthRepository, opts ...PluginManagerOptio
 	}
 }
 
-func (p *PluginManager) Register(ctx context.Context, plugin *shared.Plugin) (*shared.ClientToken, error) {
+func (p *PluginManager) Register(ctx context.Context, plugin *entities.Plugin) (*entities.ClientToken, error) {
 	log := logger.GetLogger(ctx)
 	if err := p.validator.Struct(plugin); err != nil {
 		log.Debug("failed to validate plugin struct", "error", err, "raw_plugin", fmt.Sprintf("%+v", plugin))
@@ -99,7 +99,7 @@ func (p *PluginManager) Register(ctx context.Context, plugin *shared.Plugin) (*s
 	return token, nil
 }
 
-func (p *PluginManager) RefreshToken(ctx context.Context, auth *shared.AuthPlugin, slug string) (*shared.ClientToken, error) {
+func (p *PluginManager) RefreshToken(ctx context.Context, auth *entities.AuthPlugin, slug string) (*entities.ClientToken, error) {
 	log := logger.GetLogger(ctx)
 	log.Debug("refresh token for plugin", "plugin_slug", slug, "client_id", auth.ClientID, "client_secret", "**********")
 
@@ -112,7 +112,7 @@ func (p *PluginManager) RefreshToken(ctx context.Context, auth *shared.AuthPlugi
 	return token, err
 }
 
-func (p *PluginManager) Get(ctx context.Context, slug string) (shared.Plugin, error) {
+func (p *PluginManager) Get(ctx context.Context, slug string) (entities.Plugin, error) {
 	log := logger.GetLogger(ctx)
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
@@ -125,7 +125,7 @@ func (p *PluginManager) Get(ctx context.Context, slug string) (shared.Plugin, er
 	return plugin, nil
 }
 
-func (p *PluginManager) GetAll(_ context.Context) ([]shared.Plugin, []time.Time) {
+func (p *PluginManager) GetAll(_ context.Context) ([]entities.Plugin, []time.Time) {
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
 	return slices.Collect(maps.Values(p.plugins)), slices.Collect(maps.Values(p.heartbeats))

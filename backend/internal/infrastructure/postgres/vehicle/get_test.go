@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func TestVehicleRepository_GetAll(t *testing.T) {
@@ -22,7 +22,7 @@ func TestVehicleRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, shared.Query{})
+		got, totalCount, err := r.GetAll(ctx, entities.Query{})
 
 		// then
 		assert.NoError(t, err)
@@ -61,7 +61,7 @@ func TestVehicleRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, shared.Query{Provider: "test-provider"})
+		got, totalCount, err := r.GetAll(ctx, entities.Query{Provider: "test-provider"})
 
 		// then
 		assert.NoError(t, err)
@@ -94,7 +94,7 @@ func TestVehicleRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(1))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, shared.Query{})
+		got, totalCount, err := r.GetAll(ctx, entities.Query{})
 
 		// then
 		assert.NoError(t, err)
@@ -118,7 +118,7 @@ func TestVehicleRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(2))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, shared.Query{})
+		got, totalCount, err := r.GetAll(ctx, entities.Query{})
 
 		// then
 		assert.Error(t, err)
@@ -136,7 +136,7 @@ func TestVehicleRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(0))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, shared.Query{})
+		got, totalCount, err := r.GetAll(ctx, entities.Query{})
 
 		// then
 		assert.Error(t, err)
@@ -153,7 +153,7 @@ func TestVehicleRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(2))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, shared.Query{})
+		got, totalCount, err := r.GetAll(ctx, entities.Query{})
 
 		// then
 		assert.NoError(t, err)
@@ -168,7 +168,7 @@ func TestVehicleRepository_GetAll(t *testing.T) {
 		cancel()
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, shared.Query{})
+		got, totalCount, err := r.GetAll(ctx, entities.Query{})
 
 		// then
 		assert.Error(t, err)
@@ -188,7 +188,7 @@ func TestVehicleRepository_GetAllByType(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
 		// when
-		got, totalCount, err := r.GetAllByType(ctx, "", shared.VehicleTypeTransporter)
+		got, totalCount, err := r.GetAllByType(ctx, "", entities.VehicleTypeTransporter)
 
 		// then
 		assert.NoError(t, err)
@@ -197,7 +197,7 @@ func TestVehicleRepository_GetAllByType(t *testing.T) {
 		assert.Equal(t, int64(2), totalCount)
 
 		for _, vehicle := range got {
-			assert.Equal(t, shared.VehicleTypeTransporter, vehicle.Type)
+			assert.Equal(t, entities.VehicleTypeTransporter, vehicle.Type)
 		}
 	})
 
@@ -211,7 +211,7 @@ func TestVehicleRepository_GetAllByType(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
 		// when
-		got, totalCount, err := r.GetAllByType(ctx, "", shared.VehicleTypeTrailer)
+		got, totalCount, err := r.GetAllByType(ctx, "", entities.VehicleTypeTrailer)
 
 		// then
 		assert.NoError(t, err)
@@ -219,7 +219,7 @@ func TestVehicleRepository_GetAllByType(t *testing.T) {
 		assert.Equal(t, totalCount, int64(1))
 
 		for _, vehicle := range got {
-			assert.Equal(t, shared.VehicleTypeTrailer, vehicle.Type)
+			assert.Equal(t, entities.VehicleTypeTrailer, vehicle.Type)
 		}
 	})
 
@@ -235,7 +235,7 @@ func TestVehicleRepository_GetAllByType(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
 		// when
-		got, totalCount, err := r.GetAllByType(ctx, "test-provider", shared.VehicleTypeTransporter)
+		got, totalCount, err := r.GetAllByType(ctx, "test-provider", entities.VehicleTypeTransporter)
 
 		// then
 		assert.NoError(t, err)
@@ -243,7 +243,7 @@ func TestVehicleRepository_GetAllByType(t *testing.T) {
 		assert.Equal(t, expectedVehicle.ID, got[0].ID)
 		assert.Equal(t, expectedVehicle.Provider, got[0].Provider)
 		assert.Equal(t, expectedVehicle.AdditionalInfo, got[0].AdditionalInfo)
-		assert.Equal(t, shared.VehicleTypeTransporter, got[0].Type)
+		assert.Equal(t, entities.VehicleTypeTransporter, got[0].Type)
 	})
 
 	t.Run("should return all verhicles of type trailer and with an limit of 1 and an offset of 2", func(t *testing.T) {
@@ -256,7 +256,7 @@ func TestVehicleRepository_GetAllByType(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(1))
 
 		// when
-		got, totalCount, err := r.GetAllByType(ctx, "", shared.VehicleTypeTrailer)
+		got, totalCount, err := r.GetAllByType(ctx, "", entities.VehicleTypeTrailer)
 
 		// then
 		assert.NoError(t, err)
@@ -273,7 +273,7 @@ func TestVehicleRepository_GetAllByType(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
 		// when
-		got, totalCount, err := r.GetAllByType(ctx, "", shared.VehicleTypeUnknown)
+		got, totalCount, err := r.GetAllByType(ctx, "", entities.VehicleTypeUnknown)
 
 		// then
 		assert.NoError(t, err)
@@ -288,7 +288,7 @@ func TestVehicleRepository_GetAllByType(t *testing.T) {
 		cancel()
 
 		// when
-		got, totalCount, err := r.GetAllByType(ctx, "", shared.VehicleTypeUnknown)
+		got, totalCount, err := r.GetAllByType(ctx, "", entities.VehicleTypeUnknown)
 
 		// then
 		assert.Error(t, err)
@@ -418,7 +418,7 @@ func TestVehicleRepository_GetByID(t *testing.T) {
 func TestVehicleRepository_GetByPlate(t *testing.T) {
 	tests := []struct {
 		name string
-		want *shared.Vehicle
+		want *entities.Vehicle
 		args string
 	}{
 		{
@@ -504,16 +504,16 @@ func TestVehicleRepository_GetByPlate(t *testing.T) {
 	})
 }
 
-var allTestVehicles = []*shared.Vehicle{
+var allTestVehicles = []*entities.Vehicle{
 	{
 		ID:             1,
 		NumberPlate:    "B-1234",
 		Description:    "Test vehicle 1",
-		WaterCapacity:  shared.MustNewWaterCapacity(100.0),
-		Type:           shared.VehicleTypeTrailer,
-		Status:         shared.VehicleStatusActive,
+		WaterCapacity:  entities.MustNewWaterCapacity(100.0),
+		Type:           entities.VehicleTypeTrailer,
+		Status:         entities.VehicleStatusActive,
 		Model:          "1615/17 - Conrad - MAN TGE 3.180",
-		DrivingLicense: shared.DrivingLicenseBE,
+		DrivingLicense: entities.DrivingLicenseBE,
 		Height:         1.5,
 		Length:         2.0,
 		Width:          2.0,
@@ -523,11 +523,11 @@ var allTestVehicles = []*shared.Vehicle{
 		ID:             2,
 		NumberPlate:    "B-5678",
 		Description:    "Test vehicle 2",
-		WaterCapacity:  shared.MustNewWaterCapacity(150.0),
-		Type:           shared.VehicleTypeTransporter,
-		Status:         shared.VehicleStatusUnknown,
+		WaterCapacity:  entities.MustNewWaterCapacity(150.0),
+		Type:           entities.VehicleTypeTransporter,
+		Status:         entities.VehicleStatusUnknown,
 		Model:          "Actros L Mercedes Benz",
-		DrivingLicense: shared.DrivingLicenseC,
+		DrivingLicense: entities.DrivingLicenseC,
 		Height:         2.1,
 		Length:         5.0,
 		Width:          2.4,
@@ -537,11 +537,11 @@ var allTestVehicles = []*shared.Vehicle{
 		ID:             3,
 		NumberPlate:    "B-1001",
 		Description:    "Test vehicle 3",
-		WaterCapacity:  shared.MustNewWaterCapacity(150.0),
-		Type:           shared.VehicleTypeTransporter,
-		Status:         shared.VehicleStatusUnknown,
+		WaterCapacity:  entities.MustNewWaterCapacity(150.0),
+		Type:           entities.VehicleTypeTransporter,
+		Status:         entities.VehicleStatusUnknown,
 		Model:          "Actros L Mercedes Benz",
-		DrivingLicense: shared.DrivingLicenseC,
+		DrivingLicense: entities.DrivingLicenseC,
 		Height:         2.1,
 		Length:         5.0,
 		Width:          2.4,
@@ -553,8 +553,8 @@ var allTestVehicles = []*shared.Vehicle{
 	},
 }
 
-func sortVehicleByWaterCapacity(data []*shared.Vehicle) []*shared.Vehicle {
-	sorted := make([]*shared.Vehicle, len(data))
+func sortVehicleByWaterCapacity(data []*entities.Vehicle) []*entities.Vehicle {
+	sorted := make([]*entities.Vehicle, len(data))
 	copy(sorted, data)
 
 	sort.Slice(sorted, func(i, j int) bool {
@@ -564,7 +564,7 @@ func sortVehicleByWaterCapacity(data []*shared.Vehicle) []*shared.Vehicle {
 	return sorted
 }
 
-func getVehicleWateringPlanCounts() []*shared.VehicleEvaluation {
+func getVehicleWateringPlanCounts() []*entities.VehicleEvaluation {
 	vehicleCountMap := make(map[string]int)
 
 	for _, plan := range allTestWateringPlans {
@@ -576,9 +576,9 @@ func getVehicleWateringPlanCounts() []*shared.VehicleEvaluation {
 		}
 	}
 
-	var vehicleCounts []*shared.VehicleEvaluation
+	var vehicleCounts []*entities.VehicleEvaluation
 	for plate, count := range vehicleCountMap {
-		vehicleCounts = append(vehicleCounts, &shared.VehicleEvaluation{
+		vehicleCounts = append(vehicleCounts, &entities.VehicleEvaluation{
 			NumberPlate:       plate,
 			WateringPlanCount: int64(count),
 		})
@@ -594,8 +594,8 @@ func getVehicleWateringPlanCounts() []*shared.VehicleEvaluation {
 type testWateringPlan struct {
 	ID          int32
 	Date        time.Time
-	Transporter *shared.Vehicle
-	Trailer     *shared.Vehicle
+	Transporter *entities.Vehicle
+	Trailer     *entities.Vehicle
 }
 
 var allTestWateringPlans = []*testWateringPlan{

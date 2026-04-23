@@ -6,19 +6,19 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func TestVehicleRepository_UpdateSuite(t *testing.T) {
 	suite.ResetDB(t)
 	suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/vehicle")
-	input := shared.Vehicle{
+	input := entities.Vehicle{
 		Description:    "Updated description",
 		NumberPlate:    "FL NEW 9876",
-		WaterCapacity:  shared.MustNewWaterCapacity(10000),
-		Type:           shared.VehicleTypeTransporter,
-		Status:         shared.VehicleStatusAvailable,
-		DrivingLicense: shared.DrivingLicenseB,
+		WaterCapacity:  entities.MustNewWaterCapacity(10000),
+		Type:           entities.VehicleTypeTransporter,
+		Status:         entities.VehicleStatusAvailable,
+		DrivingLicense: entities.DrivingLicenseB,
 		Height:         2.75,
 		Length:         6.0,
 		Width:          5.0,
@@ -30,7 +30,7 @@ func TestVehicleRepository_UpdateSuite(t *testing.T) {
 		// given
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
 
-		updateFn := func(vh *shared.Vehicle, _ shared.VehicleRepository) (bool, error) {
+		updateFn := func(vh *entities.Vehicle, _ entities.VehicleRepository) (bool, error) {
 			vh.Description = input.Description
 			vh.NumberPlate = input.NumberPlate
 			vh.Status = input.Status
@@ -75,7 +75,7 @@ func TestVehicleRepository_UpdateSuite(t *testing.T) {
 		numberPlate := "FL ZT 9876"
 
 		// when
-		firstFn := func(vh *shared.Vehicle, _ shared.VehicleRepository) (bool, error) {
+		firstFn := func(vh *entities.Vehicle, _ entities.VehicleRepository) (bool, error) {
 			vh.NumberPlate = numberPlate
 			vh.Height = input.Height
 			vh.Length = input.Length
@@ -101,13 +101,13 @@ func TestVehicleRepository_UpdateSuite(t *testing.T) {
 		// given
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
 
-		updateFn := func(vh *shared.Vehicle, _ shared.VehicleRepository) (bool, error) {
+		updateFn := func(vh *entities.Vehicle, _ entities.VehicleRepository) (bool, error) {
 			vh.NumberPlate = "FL ABC 123"
 			vh.Height = input.Height
 			vh.Length = input.Length
 			vh.Width = input.Width
 			vh.Weight = input.Weight
-			vh.WaterCapacity = shared.MustNewWaterCapacity(0)
+			vh.WaterCapacity = entities.MustNewWaterCapacity(0)
 			return true, nil
 		}
 
@@ -123,7 +123,7 @@ func TestVehicleRepository_UpdateSuite(t *testing.T) {
 		// given
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
 
-		updateFn := func(vh *shared.Vehicle, _ shared.VehicleRepository) (bool, error) {
+		updateFn := func(vh *entities.Vehicle, _ entities.VehicleRepository) (bool, error) {
 			vh.NumberPlate = ""
 			vh.Height = input.Height
 			vh.Length = input.Length
@@ -145,7 +145,7 @@ func TestVehicleRepository_UpdateSuite(t *testing.T) {
 		// given
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
 
-		updateFn := func(vh *shared.Vehicle, _ shared.VehicleRepository) (bool, error) {
+		updateFn := func(vh *entities.Vehicle, _ entities.VehicleRepository) (bool, error) {
 			vh.NumberPlate = "FL ABC 123"
 			vh.Height = 0
 			vh.Length = 0
@@ -167,7 +167,7 @@ func TestVehicleRepository_UpdateSuite(t *testing.T) {
 		// given
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
 
-		updateFn := func(vh *shared.Vehicle, _ shared.VehicleRepository) (bool, error) {
+		updateFn := func(vh *entities.Vehicle, _ entities.VehicleRepository) (bool, error) {
 			vh.NumberPlate = "FL ABC 123"
 			vh.Height = input.Height
 			vh.Length = input.Length
@@ -190,7 +190,7 @@ func TestVehicleRepository_UpdateSuite(t *testing.T) {
 		// given
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
 
-		updateFn := func(vh *shared.Vehicle, _ shared.VehicleRepository) (bool, error) {
+		updateFn := func(vh *entities.Vehicle, _ entities.VehicleRepository) (bool, error) {
 			vh.NumberPlate = "FL ABC 123"
 			vh.Height = input.Height
 			vh.Length = input.Length
@@ -212,7 +212,7 @@ func TestVehicleRepository_UpdateSuite(t *testing.T) {
 		// given
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
 
-		updateFn := func(vh *shared.Vehicle, _ shared.VehicleRepository) (bool, error) {
+		updateFn := func(vh *entities.Vehicle, _ entities.VehicleRepository) (bool, error) {
 			vh.NumberPlate = "FL ABC 123"
 			vh.Height = input.Height
 			vh.Length = input.Length
@@ -233,7 +233,7 @@ func TestVehicleRepository_UpdateSuite(t *testing.T) {
 		// given
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
 
-		updateFn := func(vh *shared.Vehicle, _ shared.VehicleRepository) (bool, error) {
+		updateFn := func(vh *entities.Vehicle, _ entities.VehicleRepository) (bool, error) {
 			vh.NumberPlate = "FL ABC 123"
 			vh.Height = input.Height
 			vh.Length = input.Length
@@ -249,7 +249,7 @@ func TestVehicleRepository_UpdateSuite(t *testing.T) {
 
 		// then
 		assert.Error(t, err)
-		// assert.Equal(t, err, shared.ErrEntityNotFound)
+		// assert.Equal(t, err, entities.ErrEntityNotFound)
 	})
 
 	t.Run("should return error when context is canceled", func(t *testing.T) {
@@ -258,7 +258,7 @@ func TestVehicleRepository_UpdateSuite(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 
-		updateFn := func(vh *shared.Vehicle, _ shared.VehicleRepository) (bool, error) {
+		updateFn := func(vh *entities.Vehicle, _ entities.VehicleRepository) (bool, error) {
 			vh.NumberPlate = "FL ABC 123"
 			vh.Height = input.Height
 			vh.Length = input.Length
@@ -290,7 +290,7 @@ func TestVehicleRepository_UpdateSuite(t *testing.T) {
 	t.Run("should return error when updateFn returns error", func(t *testing.T) {
 		// given
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
-		updateFn := func(wp *shared.Vehicle, _ shared.VehicleRepository) (bool, error) {
+		updateFn := func(wp *entities.Vehicle, _ entities.VehicleRepository) (bool, error) {
 			return true, assert.AnError
 		}
 
@@ -304,7 +304,7 @@ func TestVehicleRepository_UpdateSuite(t *testing.T) {
 	t.Run("should not update when updateFn returns false", func(t *testing.T) {
 		// given
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
-		updateFn := func(wp *shared.Vehicle, _ shared.VehicleRepository) (bool, error) {
+		updateFn := func(wp *entities.Vehicle, _ entities.VehicleRepository) (bool, error) {
 			return false, nil
 		}
 
@@ -321,7 +321,7 @@ func TestVehicleRepository_UpdateSuite(t *testing.T) {
 	t.Run("should not rollback when updateFn returns false", func(t *testing.T) {
 		// given
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
-		updateFn := func(vh *shared.Vehicle, _ shared.VehicleRepository) (bool, error) {
+		updateFn := func(vh *entities.Vehicle, _ entities.VehicleRepository) (bool, error) {
 			vh.NumberPlate = "FL ABC 123"
 			vh.Height = input.Height
 			vh.Length = input.Length

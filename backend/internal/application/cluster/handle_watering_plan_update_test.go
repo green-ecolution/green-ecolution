@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 )
@@ -18,45 +18,45 @@ func TestTreeClusterService_HandleUpdateWateringPlan(t *testing.T) {
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		regionRepo := storageMock.NewMockRegionRepository(t)
-		eventManager := worker.NewEventManager(shared.EventTypeUpdateTreeCluster)
+		eventManager := worker.NewEventManager(entities.EventTypeUpdateTreeCluster)
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, eventManager)
 
-		_, ch, _ := eventManager.Subscribe(shared.EventTypeUpdateTreeCluster)
+		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTreeCluster)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		go eventManager.Run(ctx)
 
 		date := time.Date(2024, 11, 22, 0, 0, 0, 0, time.UTC)
-		prevTc := shared.TreeCluster{
+		prevTc := entities.TreeCluster{
 			ID:          1,
 			LastWatered: nil,
 		}
-		prevWp := shared.WateringPlan{
+		prevWp := entities.WateringPlan{
 			ID:           1,
-			TreeClusters: []*shared.TreeCluster{&prevTc},
-			Status:       shared.WateringPlanStatusActive,
+			TreeClusters: []*entities.TreeCluster{&prevTc},
+			Status:       entities.WateringPlanStatusActive,
 			Date:         date,
 		}
 
-		updatedWp := shared.WateringPlan{
+		updatedWp := entities.WateringPlan{
 			ID:           1,
-			TreeClusters: []*shared.TreeCluster{&prevTc},
-			Status:       shared.WateringPlanStatusFinished,
+			TreeClusters: []*entities.TreeCluster{&prevTc},
+			Status:       entities.WateringPlanStatusFinished,
 			Date:         date,
 		}
 
-		updatedTc := shared.TreeCluster{
+		updatedTc := entities.TreeCluster{
 			ID:          1,
 			LastWatered: &date,
 		}
 
-		event := shared.NewEventUpdateWateringPlan(&prevWp, &updatedWp)
+		event := entities.NewEventUpdateWateringPlan(&prevWp, &updatedWp)
 
-		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).RunAndReturn(func(ctx context.Context, i int32, f func(*shared.TreeCluster, shared.TreeClusterRepository) (bool, error)) error {
-			cluster := shared.TreeCluster{}
+		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).RunAndReturn(func(ctx context.Context, i int32, f func(*entities.TreeCluster, entities.TreeClusterRepository) (bool, error)) error {
+			cluster := entities.TreeCluster{}
 			_, err := f(&cluster, clusterRepo)
 			assert.NoError(t, err)
-			assert.Equal(t, shared.WateringStatusJustWatered, cluster.WateringStatus)
+			assert.Equal(t, entities.WateringStatusJustWatered, cluster.WateringStatus)
 			return nil
 		})
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(&updatedTc, nil)
@@ -69,7 +69,7 @@ func TestTreeClusterService_HandleUpdateWateringPlan(t *testing.T) {
 		select {
 		case recievedEvent, ok := <-ch:
 			assert.True(t, ok)
-			e := recievedEvent.(shared.EventUpdateTreeCluster)
+			e := recievedEvent.(entities.EventUpdateTreeCluster)
 			assert.Equal(t, e.Prev, &prevTc)
 			assert.Equal(t, e.New, &updatedTc)
 		case <-time.After(1 * time.Second):
@@ -81,34 +81,34 @@ func TestTreeClusterService_HandleUpdateWateringPlan(t *testing.T) {
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		regionRepo := storageMock.NewMockRegionRepository(t)
-		eventManager := worker.NewEventManager(shared.EventTypeUpdateTreeCluster)
+		eventManager := worker.NewEventManager(entities.EventTypeUpdateTreeCluster)
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, eventManager)
 
-		_, ch, _ := eventManager.Subscribe(shared.EventTypeUpdateTreeCluster)
+		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTreeCluster)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		go eventManager.Run(ctx)
 
 		date := time.Date(2024, 11, 22, 0, 0, 0, 0, time.UTC)
-		prevTc := shared.TreeCluster{
+		prevTc := entities.TreeCluster{
 			ID:          1,
 			LastWatered: nil,
 		}
-		prevWp := shared.WateringPlan{
+		prevWp := entities.WateringPlan{
 			ID:           1,
-			TreeClusters: []*shared.TreeCluster{&prevTc},
-			Status:       shared.WateringPlanStatusActive,
+			TreeClusters: []*entities.TreeCluster{&prevTc},
+			Status:       entities.WateringPlanStatusActive,
 			Date:         date,
 		}
 
-		updatedWp := shared.WateringPlan{
+		updatedWp := entities.WateringPlan{
 			ID:           1,
-			TreeClusters: []*shared.TreeCluster{&prevTc},
-			Status:       shared.WateringPlanStatusActive,
+			TreeClusters: []*entities.TreeCluster{&prevTc},
+			Status:       entities.WateringPlanStatusActive,
 			Date:         date,
 		}
 
-		event := shared.NewEventUpdateWateringPlan(&prevWp, &updatedWp)
+		event := entities.NewEventUpdateWateringPlan(&prevWp, &updatedWp)
 
 		// when
 		err := svc.HandleUpdateWateringPlan(context.Background(), &event)
@@ -129,34 +129,34 @@ func TestTreeClusterService_HandleUpdateWateringPlan(t *testing.T) {
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		regionRepo := storageMock.NewMockRegionRepository(t)
-		eventManager := worker.NewEventManager(shared.EventTypeUpdateTreeCluster)
+		eventManager := worker.NewEventManager(entities.EventTypeUpdateTreeCluster)
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, eventManager)
 
-		_, ch, _ := eventManager.Subscribe(shared.EventTypeUpdateTreeCluster)
+		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTreeCluster)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		go eventManager.Run(ctx)
 
 		date := time.Date(2024, 11, 22, 0, 0, 0, 0, time.UTC)
-		prevTc := shared.TreeCluster{
+		prevTc := entities.TreeCluster{
 			ID:          1,
 			LastWatered: nil,
 		}
-		prevWp := shared.WateringPlan{
+		prevWp := entities.WateringPlan{
 			ID:           1,
-			TreeClusters: []*shared.TreeCluster{&prevTc},
-			Status:       shared.WateringPlanStatusActive,
+			TreeClusters: []*entities.TreeCluster{&prevTc},
+			Status:       entities.WateringPlanStatusActive,
 			Date:         date,
 		}
 
-		updatedWp := shared.WateringPlan{
+		updatedWp := entities.WateringPlan{
 			ID:           1,
-			TreeClusters: []*shared.TreeCluster{&prevTc},
-			Status:       shared.WateringPlanStatusCanceled,
+			TreeClusters: []*entities.TreeCluster{&prevTc},
+			Status:       entities.WateringPlanStatusCanceled,
 			Date:         date,
 		}
 
-		event := shared.NewEventUpdateWateringPlan(&prevWp, &updatedWp)
+		event := entities.NewEventUpdateWateringPlan(&prevWp, &updatedWp)
 
 		// when
 		err := svc.HandleUpdateWateringPlan(context.Background(), &event)
@@ -177,34 +177,34 @@ func TestTreeClusterService_HandleUpdateWateringPlan(t *testing.T) {
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		regionRepo := storageMock.NewMockRegionRepository(t)
-		eventManager := worker.NewEventManager(shared.EventTypeUpdateTreeCluster)
+		eventManager := worker.NewEventManager(entities.EventTypeUpdateTreeCluster)
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, eventManager)
 
-		_, ch, _ := eventManager.Subscribe(shared.EventTypeUpdateTreeCluster)
+		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTreeCluster)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		go eventManager.Run(ctx)
 
 		date := time.Date(2024, 11, 22, 0, 0, 0, 0, time.UTC)
-		prevTc := shared.TreeCluster{
+		prevTc := entities.TreeCluster{
 			ID:          1,
 			LastWatered: nil,
 		}
-		prevWp := shared.WateringPlan{
+		prevWp := entities.WateringPlan{
 			ID:           1,
-			TreeClusters: []*shared.TreeCluster{&prevTc},
-			Status:       shared.WateringPlanStatusActive,
+			TreeClusters: []*entities.TreeCluster{&prevTc},
+			Status:       entities.WateringPlanStatusActive,
 			Date:         date,
 		}
 
-		updatedWp := shared.WateringPlan{
+		updatedWp := entities.WateringPlan{
 			ID:           1,
-			TreeClusters: []*shared.TreeCluster{&prevTc},
-			Status:       shared.WateringPlanStatusCanceled,
+			TreeClusters: []*entities.TreeCluster{&prevTc},
+			Status:       entities.WateringPlanStatusCanceled,
 			Date:         time.Date(2025, 11, 22, 0, 0, 0, 0, time.UTC),
 		}
 
-		event := shared.NewEventUpdateWateringPlan(&prevWp, &updatedWp)
+		event := entities.NewEventUpdateWateringPlan(&prevWp, &updatedWp)
 
 		// when
 		err := svc.HandleUpdateWateringPlan(context.Background(), &event)

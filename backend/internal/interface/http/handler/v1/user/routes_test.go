@@ -74,7 +74,7 @@ func TestRegisterRoutes(t *testing.T) {
 
 			mockUserService.EXPECT().Register(
 				mock.Anything,
-				mock.AnythingOfType("*shared.RegisterUser"),
+				mock.AnythingOfType("*entities.RegisterUser"),
 			).Return(expected, nil)
 
 			// when
@@ -162,7 +162,7 @@ func TestRegisterPublicRoutes(t *testing.T) {
 
 		mockUserService.EXPECT().LogoutRequest(
 			mock.Anything,
-			mock.AnythingOfType("*shared.Logout"),
+			mock.AnythingOfType("*entities.Logout"),
 		).Return(nil)
 
 		// when
@@ -191,7 +191,7 @@ func TestRegisterPublicRoutes(t *testing.T) {
 
 		mockUserService.EXPECT().LoginRequest(
 			mock.Anything,
-			mock.AnythingOfType("*shared.LoginRequest"),
+			mock.AnythingOfType("*entities.LoginRequest"),
 		).Return(expected)
 
 		// when
@@ -223,7 +223,7 @@ func TestRegisterPublicRoutes(t *testing.T) {
 
 		mockUserService.EXPECT().ClientTokenCallback(
 			mock.Anything,
-			mock.AnythingOfType("*shared.LoginCallback"),
+			mock.AnythingOfType("*entities.LoginCallback"),
 		).Return(expected, nil)
 
 		// when

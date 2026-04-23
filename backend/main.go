@@ -23,7 +23,7 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/application"
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/auth"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/local"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/local/info"
@@ -84,7 +84,7 @@ func main() {
 	startAppServices(ctx, cfg)
 }
 
-func postgresRepo(ctx context.Context, cfg *config.Config) (repo *shared.Repository, pool *pgxpool.Pool, closeFn func()) {
+func postgresRepo(ctx context.Context, cfg *config.Config) (repo *entities.Repository, pool *pgxpool.Pool, closeFn func()) {
 	dbCfg := cfg.Server.Database
 	slog.Info("try to connect to PostgreSQL database")
 	slog.Debug("try to connect to PostgreSQL database with the current configurations", "host", dbCfg.Host, "port", dbCfg.Port, "db_name", dbCfg.Name, "user", dbCfg.Username, "password", "*******")
@@ -131,7 +131,7 @@ func startAppServices(ctx context.Context, cfg *config.Config) {
 	runServices(ctx, httpServer, mqttServer, em, services)
 }
 
-func initializeRepositories(ctx context.Context, cfg *config.Config) (repos *shared.Repository, closeFn func()) {
+func initializeRepositories(ctx context.Context, cfg *config.Config) (repos *entities.Repository, closeFn func()) {
 	pgRepo, pool, closeFn := postgresRepo(ctx, cfg)
 	localRepo, infoRepo, err := local.NewRepository(cfg)
 	if err != nil {
@@ -140,7 +140,7 @@ func initializeRepositories(ctx context.Context, cfg *config.Config) (repos *sha
 
 	// can be switched between ors and valhalla
 	// routingRepo, err := openrouteservice.NewRepository(cfg)
-	var routingRepo *shared.Repository
+	var routingRepo *entities.Repository
 	if cfg.Routing.Enable {
 		routingRepo, err = valhalla.NewRepository(cfg)
 		if err != nil {
@@ -148,14 +148,14 @@ func initializeRepositories(ctx context.Context, cfg *config.Config) (repos *sha
 		}
 	} else {
 		slog.Warn("the routing service is disabled due to the configuration")
-		routingRepo = &shared.Repository{
+		routingRepo = &entities.Repository{
 			Routing: routing.NewDummyRoutingRepo(),
 		}
 	}
 
 	keycloakRepo := auth.NewRepository(&cfg.IdentityAuth)
 
-	var s3Repos *shared.Repository
+	var s3Repos *entities.Repository
 	if viper.GetBool("s3.enable") {
 		s3Repos, err = s3.NewRepository(cfg)
 		if err != nil {
@@ -163,7 +163,7 @@ func initializeRepositories(ctx context.Context, cfg *config.Config) (repos *sha
 		}
 	} else {
 		slog.Warn("the s3 service is disabled due to the configuration")
-		s3Repos = &shared.Repository{
+		s3Repos = &entities.Repository{
 			GpxBucket: s3.NewS3DummyRepo(),
 		}
 	}
@@ -179,7 +179,7 @@ func initializeRepositories(ctx context.Context, cfg *config.Config) (repos *sha
 		S3Repo:           s3Repos.GpxBucket,
 	})
 
-	repositories := &shared.Repository{
+	repositories := &entities.Repository{
 		Auth: keycloakRepo.Auth,
 		User: keycloakRepo.User,
 
@@ -199,12 +199,12 @@ func initializeRepositories(ctx context.Context, cfg *config.Config) (repos *sha
 
 func initializeEventManager() *worker.EventManager {
 	return worker.NewEventManager(
-		shared.EventTypeUpdateTree,
-		shared.EventTypeUpdateTreeCluster,
-		shared.EventTypeCreateTree,
-		shared.EventTypeDeleteTree,
-		shared.EventTypeNewSensorData,
-		shared.EventTypeUpdateWateringPlan,
+		entities.EventTypeUpdateTree,
+		entities.EventTypeUpdateTreeCluster,
+		entities.EventTypeCreateTree,
+		entities.EventTypeDeleteTree,
+		entities.EventTypeNewSensorData,
+		entities.EventTypeUpdateWateringPlan,
 	)
 }
 

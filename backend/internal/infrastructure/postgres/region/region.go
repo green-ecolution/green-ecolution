@@ -3,7 +3,7 @@ package region
 import (
 	"context"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 
@@ -25,15 +25,15 @@ func NewRegionMappers(rMapper mapper.InternalRegionRepoMapper) RegionMappers {
 	}
 }
 
-func NewRegionRepository(s *store.Store, mappers RegionMappers) shared.RegionRepository {
+func NewRegionRepository(s *store.Store, mappers RegionMappers) entities.RegionRepository {
 	return &RegionRepository{
 		store:         s,
 		RegionMappers: mappers,
 	}
 }
 
-func WithName(name string) shared.EntityFunc[shared.Region] {
-	return func(v *shared.Region) {
+func WithName(name string) entities.EntityFunc[entities.Region] {
+	return func(v *entities.Region) {
 		v.Name = name
 	}
 }

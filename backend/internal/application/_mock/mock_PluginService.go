@@ -5,9 +5,8 @@ package ports
 import (
 	context "context"
 
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	mock "github.com/stretchr/testify/mock"
-
-	shared "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 
 	time "time"
 )
@@ -26,22 +25,22 @@ func (_m *MockPluginService) EXPECT() *MockPluginService_Expecter {
 }
 
 // Get provides a mock function with given fields: ctx, slug
-func (_m *MockPluginService) Get(ctx context.Context, slug string) (shared.Plugin, error) {
+func (_m *MockPluginService) Get(ctx context.Context, slug string) (entities.Plugin, error) {
 	ret := _m.Called(ctx, slug)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
 	}
 
-	var r0 shared.Plugin
+	var r0 entities.Plugin
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (shared.Plugin, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (entities.Plugin, error)); ok {
 		return rf(ctx, slug)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) shared.Plugin); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) entities.Plugin); ok {
 		r0 = rf(ctx, slug)
 	} else {
-		r0 = ret.Get(0).(shared.Plugin)
+		r0 = ret.Get(0).(entities.Plugin)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -72,34 +71,34 @@ func (_c *MockPluginService_Get_Call) Run(run func(ctx context.Context, slug str
 	return _c
 }
 
-func (_c *MockPluginService_Get_Call) Return(_a0 shared.Plugin, _a1 error) *MockPluginService_Get_Call {
+func (_c *MockPluginService_Get_Call) Return(_a0 entities.Plugin, _a1 error) *MockPluginService_Get_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockPluginService_Get_Call) RunAndReturn(run func(context.Context, string) (shared.Plugin, error)) *MockPluginService_Get_Call {
+func (_c *MockPluginService_Get_Call) RunAndReturn(run func(context.Context, string) (entities.Plugin, error)) *MockPluginService_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetAll provides a mock function with given fields: ctx
-func (_m *MockPluginService) GetAll(ctx context.Context) ([]shared.Plugin, []time.Time) {
+func (_m *MockPluginService) GetAll(ctx context.Context) ([]entities.Plugin, []time.Time) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAll")
 	}
 
-	var r0 []shared.Plugin
+	var r0 []entities.Plugin
 	var r1 []time.Time
-	if rf, ok := ret.Get(0).(func(context.Context) ([]shared.Plugin, []time.Time)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]entities.Plugin, []time.Time)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []shared.Plugin); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []entities.Plugin); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]shared.Plugin)
+			r0 = ret.Get(0).([]entities.Plugin)
 		}
 	}
 
@@ -132,12 +131,12 @@ func (_c *MockPluginService_GetAll_Call) Run(run func(ctx context.Context)) *Moc
 	return _c
 }
 
-func (_c *MockPluginService_GetAll_Call) Return(_a0 []shared.Plugin, _a1 []time.Time) *MockPluginService_GetAll_Call {
+func (_c *MockPluginService_GetAll_Call) Return(_a0 []entities.Plugin, _a1 []time.Time) *MockPluginService_GetAll_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockPluginService_GetAll_Call) RunAndReturn(run func(context.Context) ([]shared.Plugin, []time.Time)) *MockPluginService_GetAll_Call {
+func (_c *MockPluginService_GetAll_Call) RunAndReturn(run func(context.Context) ([]entities.Plugin, []time.Time)) *MockPluginService_GetAll_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -235,27 +234,27 @@ func (_c *MockPluginService_Ready_Call) RunAndReturn(run func() bool) *MockPlugi
 }
 
 // RefreshToken provides a mock function with given fields: ctx, auth, slug
-func (_m *MockPluginService) RefreshToken(ctx context.Context, auth *shared.AuthPlugin, slug string) (*shared.ClientToken, error) {
+func (_m *MockPluginService) RefreshToken(ctx context.Context, auth *entities.AuthPlugin, slug string) (*entities.ClientToken, error) {
 	ret := _m.Called(ctx, auth, slug)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RefreshToken")
 	}
 
-	var r0 *shared.ClientToken
+	var r0 *entities.ClientToken
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *shared.AuthPlugin, string) (*shared.ClientToken, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *entities.AuthPlugin, string) (*entities.ClientToken, error)); ok {
 		return rf(ctx, auth, slug)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *shared.AuthPlugin, string) *shared.ClientToken); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *entities.AuthPlugin, string) *entities.ClientToken); ok {
 		r0 = rf(ctx, auth, slug)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*shared.ClientToken)
+			r0 = ret.Get(0).(*entities.ClientToken)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *shared.AuthPlugin, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *entities.AuthPlugin, string) error); ok {
 		r1 = rf(ctx, auth, slug)
 	} else {
 		r1 = ret.Error(1)
@@ -271,51 +270,51 @@ type MockPluginService_RefreshToken_Call struct {
 
 // RefreshToken is a helper method to define mock.On call
 //   - ctx context.Context
-//   - auth *shared.AuthPlugin
+//   - auth *entities.AuthPlugin
 //   - slug string
 func (_e *MockPluginService_Expecter) RefreshToken(ctx interface{}, auth interface{}, slug interface{}) *MockPluginService_RefreshToken_Call {
 	return &MockPluginService_RefreshToken_Call{Call: _e.mock.On("RefreshToken", ctx, auth, slug)}
 }
 
-func (_c *MockPluginService_RefreshToken_Call) Run(run func(ctx context.Context, auth *shared.AuthPlugin, slug string)) *MockPluginService_RefreshToken_Call {
+func (_c *MockPluginService_RefreshToken_Call) Run(run func(ctx context.Context, auth *entities.AuthPlugin, slug string)) *MockPluginService_RefreshToken_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*shared.AuthPlugin), args[2].(string))
+		run(args[0].(context.Context), args[1].(*entities.AuthPlugin), args[2].(string))
 	})
 	return _c
 }
 
-func (_c *MockPluginService_RefreshToken_Call) Return(_a0 *shared.ClientToken, _a1 error) *MockPluginService_RefreshToken_Call {
+func (_c *MockPluginService_RefreshToken_Call) Return(_a0 *entities.ClientToken, _a1 error) *MockPluginService_RefreshToken_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockPluginService_RefreshToken_Call) RunAndReturn(run func(context.Context, *shared.AuthPlugin, string) (*shared.ClientToken, error)) *MockPluginService_RefreshToken_Call {
+func (_c *MockPluginService_RefreshToken_Call) RunAndReturn(run func(context.Context, *entities.AuthPlugin, string) (*entities.ClientToken, error)) *MockPluginService_RefreshToken_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Register provides a mock function with given fields: ctx, plugin
-func (_m *MockPluginService) Register(ctx context.Context, plugin *shared.Plugin) (*shared.ClientToken, error) {
+func (_m *MockPluginService) Register(ctx context.Context, plugin *entities.Plugin) (*entities.ClientToken, error) {
 	ret := _m.Called(ctx, plugin)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Register")
 	}
 
-	var r0 *shared.ClientToken
+	var r0 *entities.ClientToken
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *shared.Plugin) (*shared.ClientToken, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *entities.Plugin) (*entities.ClientToken, error)); ok {
 		return rf(ctx, plugin)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *shared.Plugin) *shared.ClientToken); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *entities.Plugin) *entities.ClientToken); ok {
 		r0 = rf(ctx, plugin)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*shared.ClientToken)
+			r0 = ret.Get(0).(*entities.ClientToken)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *shared.Plugin) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *entities.Plugin) error); ok {
 		r1 = rf(ctx, plugin)
 	} else {
 		r1 = ret.Error(1)
@@ -331,24 +330,24 @@ type MockPluginService_Register_Call struct {
 
 // Register is a helper method to define mock.On call
 //   - ctx context.Context
-//   - plugin *shared.Plugin
+//   - plugin *entities.Plugin
 func (_e *MockPluginService_Expecter) Register(ctx interface{}, plugin interface{}) *MockPluginService_Register_Call {
 	return &MockPluginService_Register_Call{Call: _e.mock.On("Register", ctx, plugin)}
 }
 
-func (_c *MockPluginService_Register_Call) Run(run func(ctx context.Context, plugin *shared.Plugin)) *MockPluginService_Register_Call {
+func (_c *MockPluginService_Register_Call) Run(run func(ctx context.Context, plugin *entities.Plugin)) *MockPluginService_Register_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*shared.Plugin))
+		run(args[0].(context.Context), args[1].(*entities.Plugin))
 	})
 	return _c
 }
 
-func (_c *MockPluginService_Register_Call) Return(_a0 *shared.ClientToken, _a1 error) *MockPluginService_Register_Call {
+func (_c *MockPluginService_Register_Call) Return(_a0 *entities.ClientToken, _a1 error) *MockPluginService_Register_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockPluginService_Register_Call) RunAndReturn(run func(context.Context, *shared.Plugin) (*shared.ClientToken, error)) *MockPluginService_Register_Call {
+func (_c *MockPluginService_Register_Call) RunAndReturn(run func(context.Context, *entities.Plugin) (*entities.ClientToken, error)) *MockPluginService_Register_Call {
 	_c.Call.Return(run)
 	return _c
 }

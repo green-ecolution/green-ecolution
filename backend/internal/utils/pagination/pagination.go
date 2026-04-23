@@ -3,7 +3,7 @@ package pagination
 import (
 	"context"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	httpEntities "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
@@ -20,7 +20,7 @@ func GetValues(ctx context.Context) (page, limit int32, err error) {
 
 	if page <= 0 || (limit != -1 && limit <= 0) {
 		log.Debug("pagination values are invalid", "page", ctx.Value("page"), "limit", ctx.Value("limit"))
-		return page, limit, shared.ErrPaginationValueInvalid
+		return page, limit, entities.ErrPaginationValueInvalid
 	}
 
 	return page, limit, nil

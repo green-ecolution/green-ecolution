@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
@@ -126,11 +126,11 @@ func (v *VroomClient) Send(ctx context.Context, reqBody *VroomReq) (*VroomRespon
 	return &vroomResp, nil
 }
 
-func (v *VroomClient) OptimizeRoute(ctx context.Context, vehicle *shared.Vehicle, cluster []*shared.TreeCluster) (*VroomResponse, error) {
+func (v *VroomClient) OptimizeRoute(ctx context.Context, vehicle *entities.Vehicle, cluster []*entities.TreeCluster) (*VroomResponse, error) {
 	log := logger.GetLogger(ctx)
 	vroomVehicle, err := v.toVroomVehicle(vehicle)
 	if err != nil {
-		if errors.Is(err, shared.ErrUnknownVehicleType) {
+		if errors.Is(err, entities.ErrUnknownVehicleType) {
 			log.Error("unknown vehicle type. please specify vehicle type", "error", err, "vehicle_type", vehicle.Type)
 		}
 
@@ -151,14 +151,14 @@ func (v *VroomClient) OptimizeRoute(ctx context.Context, vehicle *shared.Vehicle
 	return resp, nil
 }
 
-func (v *VroomClient) toVroomShipments(cluster []*shared.TreeCluster) []VroomShipments {
+func (v *VroomClient) toVroomShipments(cluster []*entities.TreeCluster) []VroomShipments {
 	// ignore tree cluster with empty coordinates
-	filteredClusters := utils.Filter(cluster, func(c *shared.TreeCluster) bool {
+	filteredClusters := utils.Filter(cluster, func(c *entities.TreeCluster) bool {
 		return c.Coordinate != nil
 	})
 
 	nextID := int32(0)
-	return utils.Map(filteredClusters, func(c *shared.TreeCluster) VroomShipments {
+	return utils.Map(filteredClusters, func(c *entities.TreeCluster) VroomShipments {
 		shipment := VroomShipments{
 			Amount: []int32{int32(len(c.Trees) * treeScale)},
 			Pickup: VroomShipmentStep{
@@ -177,7 +177,7 @@ func (v *VroomClient) toVroomShipments(cluster []*shared.TreeCluster) []VroomShi
 	})
 }
 
-func (v *VroomClient) toVroomVehicle(vehicle *shared.Vehicle) (*VroomVehicle, error) {
+func (v *VroomClient) toVroomVehicle(vehicle *entities.Vehicle) (*VroomVehicle, error) {
 	vehicleType, err := v.toVehicleType(vehicle.Type)
 	if err != nil {
 		return nil, err
@@ -193,9 +193,9 @@ func (v *VroomClient) toVroomVehicle(vehicle *shared.Vehicle) (*VroomVehicle, er
 	}, nil
 }
 
-func (v *VroomClient) toVehicleType(vehicle shared.VehicleType) (string, error) {
-	if vehicle == shared.VehicleTypeUnknown {
-		return "", shared.ErrUnknownVehicleType
+func (v *VroomClient) toVehicleType(vehicle entities.VehicleType) (string, error) {
+	if vehicle == entities.VehicleTypeUnknown {
+		return "", entities.ErrUnknownVehicleType
 	}
 
 	return "auto", nil // It doesn't matter which type is used here

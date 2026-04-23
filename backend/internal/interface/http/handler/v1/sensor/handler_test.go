@@ -13,7 +13,7 @@ import (
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	serverEntities "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/middleware"
@@ -30,7 +30,7 @@ func TestGetAllSensors(t *testing.T) {
 
 		mockSensorService.EXPECT().GetAll(
 			mock.Anything,
-			shared.Query{},
+			entities.Query{},
 		).Return(TestSensorList, int64(len(TestSensorList)), nil)
 
 		// when
@@ -65,7 +65,7 @@ func TestGetAllSensors(t *testing.T) {
 
 		mockSensorService.EXPECT().GetAll(
 			mock.Anything,
-			shared.Query{},
+			entities.Query{},
 		).Return(TestSensorList, int64(len(TestSensorList)), nil)
 
 		// when
@@ -136,7 +136,7 @@ func TestGetAllSensors(t *testing.T) {
 
 		mockSensorService.EXPECT().GetAll(
 			mock.Anything,
-			shared.Query{Provider: "test-provider"},
+			entities.Query{Provider: "test-provider"},
 		).Return(TestSensorList, int64(len(TestSensorList)), nil)
 
 		app.Get("/v1/sensor", handler)
@@ -174,8 +174,8 @@ func TestGetAllSensors(t *testing.T) {
 
 		mockSensorService.EXPECT().GetAll(
 			mock.Anything,
-			shared.Query{},
-		).Return([]*shared.Sensor{}, int64(0), nil)
+			entities.Query{},
+		).Return([]*entities.Sensor{}, int64(0), nil)
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/sensor", nil)
@@ -208,7 +208,7 @@ func TestGetAllSensors(t *testing.T) {
 
 		mockSensorService.EXPECT().GetAll(
 			mock.Anything,
-			shared.Query{},
+			entities.Query{},
 		).Return(nil, int64(0), errors.New("service error"))
 
 		// when
@@ -234,8 +234,8 @@ func TestGetAllSensorDataById(t *testing.T) {
 
 		mockSensorService.EXPECT().GetAllDataByID(
 			mock.Anything,
-			shared.MustNewSensorID("sensor-1"),
-		).Return([]*shared.SensorData{TestSensorData}, nil)
+			entities.MustNewSensorID("sensor-1"),
+		).Return([]*entities.SensorData{TestSensorData}, nil)
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/sensor/data/sensor-1", nil)
@@ -264,7 +264,7 @@ func TestGetAllSensorDataById(t *testing.T) {
 
 		mockSensorService.EXPECT().GetAllDataByID(
 			mock.Anything,
-			shared.MustNewSensorID("sensor-999"),
+			entities.MustNewSensorID("sensor-999"),
 		).Return(nil, ports.NewError(ports.NotFound, "not found"))
 
 		// when
@@ -287,7 +287,7 @@ func TestGetAllSensorDataById(t *testing.T) {
 
 		mockSensorService.EXPECT().GetAllDataByID(
 			mock.Anything,
-			shared.MustNewSensorID("sensor-1"),
+			entities.MustNewSensorID("sensor-1"),
 		).Return(nil, errors.New("service error"))
 
 		// when
@@ -311,7 +311,7 @@ func TestGetSensorById(t *testing.T) {
 
 		mockSensorService.EXPECT().GetByID(
 			mock.Anything,
-			shared.MustNewSensorID("sensor-1"),
+			entities.MustNewSensorID("sensor-1"),
 		).Return(TestSensor, nil)
 
 		app.Get("/v1/sensor/:id", handler)
@@ -332,7 +332,7 @@ func TestGetSensorById(t *testing.T) {
 		assert.Equal(t, response.ID, TestSensor.ID.String())
 		assert.WithinDuration(t, response.CreatedAt, TestSensor.CreatedAt, time.Second)
 		assert.WithinDuration(t, response.UpdatedAt, TestSensor.UpdatedAt, time.Second)
-		assert.Equal(t, shared.SensorStatus(response.Status), TestSensor.Status)
+		assert.Equal(t, entities.SensorStatus(response.Status), TestSensor.Status)
 
 		// assert latest data
 		assert.Equal(t, response.LatestData.Battery, TestSensorList[0].LatestData.Data.Battery)
@@ -349,7 +349,7 @@ func TestGetSensorById(t *testing.T) {
 
 		mockSensorService.EXPECT().GetByID(
 			mock.Anything,
-			shared.MustNewSensorID("sensor-999"),
+			entities.MustNewSensorID("sensor-999"),
 		).Return(nil, ports.NewError(ports.NotFound, "not found"))
 
 		app.Get("/v1/sensor/:id", handler)
@@ -373,7 +373,7 @@ func TestGetSensorById(t *testing.T) {
 
 		mockSensorService.EXPECT().GetByID(
 			mock.Anything,
-			shared.MustNewSensorID("sensor-1"),
+			entities.MustNewSensorID("sensor-1"),
 		).Return(nil, fiber.NewError(fiber.StatusInternalServerError, "service error"))
 
 		app.Get("/v1/sensor/:id", handler)
@@ -399,7 +399,7 @@ func TestDeleteSensor(t *testing.T) {
 
 		mockSensorService.EXPECT().Delete(
 			mock.Anything,
-			shared.MustNewSensorID("sensor-1"),
+			entities.MustNewSensorID("sensor-1"),
 		).Return(nil)
 
 		app.Delete("/v1/sensor/:id", handler)
@@ -423,7 +423,7 @@ func TestDeleteSensor(t *testing.T) {
 
 		mockSensorService.EXPECT().Delete(
 			mock.Anything,
-			shared.MustNewSensorID("sensor-999"),
+			entities.MustNewSensorID("sensor-999"),
 		).Return(ports.NewError(ports.NotFound, "not found"))
 
 		app.Delete("/v1/sensor/:id", handler)

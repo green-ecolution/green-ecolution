@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func newTestVroomClient(t *testing.T, serverURL string) VroomClient {
@@ -26,35 +26,35 @@ func newTestVroomClient(t *testing.T, serverURL string) VroomClient {
 	)
 }
 
-func mustNewCoordinatePtr(lat, lng float64) *shared.Coordinate {
-	c := shared.MustNewCoordinate(lat, lng)
+func mustNewCoordinatePtr(lat, lng float64) *entities.Coordinate {
+	c := entities.MustNewCoordinate(lat, lng)
 	return &c
 }
 
 var (
-	testVehicle = &shared.Vehicle{
+	testVehicle = &entities.Vehicle{
 		ID:            1,
 		Description:   "Test Vehicle",
-		WaterCapacity: shared.MustNewWaterCapacity(5000.0),
-		Type:          shared.VehicleTypeTransporter,
+		WaterCapacity: entities.MustNewWaterCapacity(5000.0),
+		Type:          entities.VehicleTypeTransporter,
 		Width:         2.5,
 		Height:        3.0,
 		Length:        6.0,
 		Weight:        7.5,
 	}
 
-	testClusters = []*shared.TreeCluster{
+	testClusters = []*entities.TreeCluster{
 		{
 			ID:         1,
 			Name:       "Cluster A",
 			Coordinate: mustNewCoordinatePtr(48.2, 9.2),
-			Trees:      []*shared.Tree{{}, {}},
+			Trees:      []*entities.Tree{{}, {}},
 		},
 		{
 			ID:         2,
 			Name:       "Cluster B",
 			Coordinate: mustNewCoordinatePtr(48.3, 9.3),
-			Trees:      []*shared.Tree{{}},
+			Trees:      []*entities.Tree{{}},
 		},
 	}
 )
@@ -65,7 +65,7 @@ func TestToVehicleType(t *testing.T) {
 		client := NewVroomClient()
 
 		// when
-		result, err := client.toVehicleType(shared.VehicleTypeTransporter)
+		result, err := client.toVehicleType(entities.VehicleTypeTransporter)
 
 		// then
 		require.NoError(t, err)
@@ -77,7 +77,7 @@ func TestToVehicleType(t *testing.T) {
 		client := NewVroomClient()
 
 		// when
-		result, err := client.toVehicleType(shared.VehicleTypeTrailer)
+		result, err := client.toVehicleType(entities.VehicleTypeTrailer)
 
 		// then
 		require.NoError(t, err)
@@ -89,10 +89,10 @@ func TestToVehicleType(t *testing.T) {
 		client := NewVroomClient()
 
 		// when
-		_, err := client.toVehicleType(shared.VehicleTypeUnknown)
+		_, err := client.toVehicleType(entities.VehicleTypeUnknown)
 
 		// then
-		assert.ErrorIs(t, err, shared.ErrUnknownVehicleType)
+		assert.ErrorIs(t, err, entities.ErrUnknownVehicleType)
 	})
 }
 
@@ -120,13 +120,13 @@ func TestToVroomVehicle(t *testing.T) {
 	t.Run("should return error for unknown vehicle type", func(t *testing.T) {
 		// given
 		client := NewVroomClient()
-		vehicle := &shared.Vehicle{Type: shared.VehicleTypeUnknown}
+		vehicle := &entities.Vehicle{Type: entities.VehicleTypeUnknown}
 
 		// when
 		_, err := client.toVroomVehicle(vehicle)
 
 		// then
-		assert.ErrorIs(t, err, shared.ErrUnknownVehicleType)
+		assert.ErrorIs(t, err, entities.ErrUnknownVehicleType)
 	})
 
 	t.Run("should convert float water capacity to int32", func(t *testing.T) {
@@ -135,10 +135,10 @@ func TestToVroomVehicle(t *testing.T) {
 			WithStartPoint([]float64{9.0, 48.0}),
 			WithEndPoint([]float64{9.1, 48.1}),
 		)
-		vehicle := &shared.Vehicle{
+		vehicle := &entities.Vehicle{
 			ID:            2,
-			WaterCapacity: shared.MustNewWaterCapacity(3500.7),
-			Type:          shared.VehicleTypeTransporter,
+			WaterCapacity: entities.MustNewWaterCapacity(3500.7),
+			Type:          entities.VehicleTypeTransporter,
 		}
 
 		// when
@@ -171,10 +171,10 @@ func TestToVroomShipments(t *testing.T) {
 		client := NewVroomClient(
 			WithWateringPoint([]float64{9.05, 48.05}),
 		)
-		clusters := []*shared.TreeCluster{
-			{ID: 1, Name: "A", Coordinate: mustNewCoordinatePtr(48.2, 9.2), Trees: []*shared.Tree{{}}},
-			{ID: 2, Name: "B", Coordinate: nil, Trees: []*shared.Tree{{}}},
-			{ID: 3, Name: "C", Coordinate: nil, Trees: []*shared.Tree{{}}},
+		clusters := []*entities.TreeCluster{
+			{ID: 1, Name: "A", Coordinate: mustNewCoordinatePtr(48.2, 9.2), Trees: []*entities.Tree{{}}},
+			{ID: 2, Name: "B", Coordinate: nil, Trees: []*entities.Tree{{}}},
+			{ID: 3, Name: "C", Coordinate: nil, Trees: []*entities.Tree{{}}},
 		}
 
 		// when
@@ -237,7 +237,7 @@ func TestToVroomShipments(t *testing.T) {
 		)
 
 		// when
-		result := client.toVroomShipments([]*shared.TreeCluster{})
+		result := client.toVroomShipments([]*entities.TreeCluster{})
 
 		// then
 		assert.Empty(t, result)
@@ -409,13 +409,13 @@ func TestVroomClient_OptimizeRoute(t *testing.T) {
 		defer server.Close()
 
 		client := newTestVroomClient(t, server.URL)
-		vehicle := &shared.Vehicle{Type: shared.VehicleTypeUnknown}
+		vehicle := &entities.Vehicle{Type: entities.VehicleTypeUnknown}
 
 		// when
 		result, err := client.OptimizeRoute(context.Background(), vehicle, testClusters)
 
 		// then
-		assert.ErrorIs(t, err, shared.ErrUnknownVehicleType)
+		assert.ErrorIs(t, err, entities.ErrUnknownVehicleType)
 		assert.Nil(t, result)
 	})
 
@@ -449,9 +449,9 @@ func TestVroomClient_OptimizeRoute(t *testing.T) {
 		defer server.Close()
 
 		client := newTestVroomClient(t, server.URL)
-		clusters := []*shared.TreeCluster{
-			{ID: 1, Coordinate: mustNewCoordinatePtr(48.2, 9.2), Trees: []*shared.Tree{{}}},
-			{ID: 2, Coordinate: nil, Trees: []*shared.Tree{{}}},
+		clusters := []*entities.TreeCluster{
+			{ID: 1, Coordinate: mustNewCoordinatePtr(48.2, 9.2), Trees: []*entities.Tree{{}}},
+			{ID: 2, Coordinate: nil, Trees: []*entities.Tree{{}}},
 		}
 
 		// when

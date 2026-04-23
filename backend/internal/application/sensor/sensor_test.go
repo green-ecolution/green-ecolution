@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/sensor"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/_mock"
 )
 
@@ -22,8 +22,8 @@ func TestSensorService_GetAll(t *testing.T) {
 		svc := sensor.NewSensorService(sensorRepo, treeRepo, globalEventManager)
 
 		// when
-		sensorRepo.EXPECT().GetAll(context.Background(), shared.Query{}).Return(TestSensorList, int64(len(TestSensorList)), nil)
-		sensors, totalCount, err := svc.GetAll(context.Background(), shared.Query{})
+		sensorRepo.EXPECT().GetAll(context.Background(), entities.Query{}).Return(TestSensorList, int64(len(TestSensorList)), nil)
+		sensors, totalCount, err := svc.GetAll(context.Background(), entities.Query{})
 
 		// then
 		assert.NoError(t, err)
@@ -38,8 +38,8 @@ func TestSensorService_GetAll(t *testing.T) {
 		svc := sensor.NewSensorService(sensorRepo, treeRepo, globalEventManager)
 
 		// when
-		sensorRepo.EXPECT().GetAll(context.Background(), shared.Query{Provider: "test-provider"}).Return(TestSensorList, int64(len(TestSensorList)), nil)
-		sensors, totalCount, err := svc.GetAll(context.Background(), shared.Query{Provider: "test-provider"})
+		sensorRepo.EXPECT().GetAll(context.Background(), entities.Query{Provider: "test-provider"}).Return(TestSensorList, int64(len(TestSensorList)), nil)
+		sensors, totalCount, err := svc.GetAll(context.Background(), entities.Query{Provider: "test-provider"})
 
 		// then
 		assert.NoError(t, err)
@@ -53,8 +53,8 @@ func TestSensorService_GetAll(t *testing.T) {
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(sensorRepo, treeRepo, globalEventManager)
 
-		sensorRepo.EXPECT().GetAll(context.Background(), shared.Query{}).Return(nil, int64(0), shared.ErrSensorNotFound)
-		sensors, totalCount, err := svc.GetAll(context.Background(), shared.Query{})
+		sensorRepo.EXPECT().GetAll(context.Background(), entities.Query{}).Return(nil, int64(0), entities.ErrSensorNotFound)
+		sensors, totalCount, err := svc.GetAll(context.Background(), entities.Query{})
 
 		// then
 		assert.Error(t, err)
@@ -72,8 +72,8 @@ func TestSensorService_GetAllDataByID(t *testing.T) {
 		svc := sensor.NewSensorService(sensorRepo, treeRepo, globalEventManager)
 
 		// when
-		sensorRepo.EXPECT().GetAllDataByID(context.Background(), shared.MustNewSensorID("sensor-1")).Return(TestSensorData, nil)
-		sensorData, err := svc.GetAllDataByID(context.Background(), shared.MustNewSensorID("sensor-1"))
+		sensorRepo.EXPECT().GetAllDataByID(context.Background(), entities.MustNewSensorID("sensor-1")).Return(TestSensorData, nil)
+		sensorData, err := svc.GetAllDataByID(context.Background(), entities.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.NoError(t, err)
@@ -86,8 +86,8 @@ func TestSensorService_GetAllDataByID(t *testing.T) {
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(sensorRepo, treeRepo, globalEventManager)
 
-		sensorRepo.EXPECT().GetAllDataByID(context.Background(), shared.MustNewSensorID("sensor-1")).Return(nil, shared.ErrSensorNotFound)
-		sensorData, err := svc.GetAllDataByID(context.Background(), shared.MustNewSensorID("sensor-1"))
+		sensorRepo.EXPECT().GetAllDataByID(context.Background(), entities.MustNewSensorID("sensor-1")).Return(nil, entities.ErrSensorNotFound)
+		sensorData, err := svc.GetAllDataByID(context.Background(), entities.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.Error(t, err)
@@ -99,7 +99,7 @@ func TestSensorService_GetAllDataByID(t *testing.T) {
 func TestSensorService_GetByID(t *testing.T) {
 	t.Run("should return sensor when found", func(t *testing.T) {
 		// given
-		id := shared.MustNewSensorID("sensor-1")
+		id := entities.MustNewSensorID("sensor-1")
 		sensorRepo := storageMock.NewMockSensorRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(sensorRepo, treeRepo, globalEventManager)
@@ -116,12 +116,12 @@ func TestSensorService_GetByID(t *testing.T) {
 
 	t.Run("should return error if sensor not found", func(t *testing.T) {
 		// given
-		id := shared.MustNewSensorID("sensor-1")
+		id := entities.MustNewSensorID("sensor-1")
 		sensorRepo := storageMock.NewMockSensorRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(sensorRepo, treeRepo, globalEventManager)
 
-		expectedErr := shared.ErrEntityNotFound("not found")
+		expectedErr := entities.ErrEntityNotFound("not found")
 		sensorRepo.EXPECT().GetByID(context.Background(), id).Return(nil, expectedErr)
 
 		// when
@@ -135,11 +135,11 @@ func TestSensorService_GetByID(t *testing.T) {
 }
 
 func TestSensorService_Create(t *testing.T) {
-	newSensor := &shared.SensorCreate{
-		ID:         shared.MustNewSensorID("sensor-1"),
-		Status:     shared.SensorStatusOnline,
+	newSensor := &entities.SensorCreate{
+		ID:         entities.MustNewSensorID("sensor-1"),
+		Status:     entities.SensorStatusOnline,
 		LatestData: TestSensor.LatestData,
-		Coordinate: shared.MustNewCoordinate(9.446741, 54.801539),
+		Coordinate: entities.MustNewCoordinate(9.446741, 54.801539),
 	}
 
 	t.Run("should successfully create a new sensor", func(t *testing.T) {
@@ -164,7 +164,7 @@ func TestSensorService_Create(t *testing.T) {
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(sensorRepo, treeRepo, globalEventManager)
 
-		newSensor.LatestData = &shared.SensorData{}
+		newSensor.LatestData = &entities.SensorData{}
 
 		sensorRepo.EXPECT().Create(context.Background(), mock.Anything).Return(TestSensor, nil)
 
@@ -199,8 +199,8 @@ func TestSensorService_Create(t *testing.T) {
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(sensorRepo, treeRepo, globalEventManager)
 
-		newSensor.Status = shared.SensorStatusOffline
-		newSensor.ID = shared.SensorID{}
+		newSensor.Status = entities.SensorStatusOffline
+		newSensor.ID = entities.SensorID{}
 
 		// when
 		result, err := svc.Create(context.Background(), newSensor)
@@ -217,9 +217,9 @@ func TestSensorService_Create(t *testing.T) {
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(sensorRepo, treeRepo, globalEventManager)
 
-		newSensor.ID = shared.MustNewSensorID("sensor-23")
-		newSensor.Status = shared.SensorStatusOffline
-		newSensor.Coordinate = shared.Coordinate{}
+		newSensor.ID = entities.MustNewSensorID("sensor-23")
+		newSensor.Status = entities.SensorStatusOffline
+		newSensor.Coordinate = entities.Coordinate{}
 
 		// when
 		result, err := svc.Create(context.Background(), newSensor)
@@ -238,9 +238,9 @@ func TestSensorService_Create(t *testing.T) {
 
 		expectedErr := errors.New("Failed to create sensor")
 
-		newSensor.ID = shared.MustNewSensorID("sensor-23")
-		newSensor.Status = shared.SensorStatusOffline
-		newSensor.Coordinate = shared.MustNewCoordinate(9.446741, 54.801539)
+		newSensor.ID = entities.MustNewSensorID("sensor-23")
+		newSensor.Status = entities.SensorStatusOffline
+		newSensor.Coordinate = entities.MustNewCoordinate(9.446741, 54.801539)
 
 		sensorRepo.EXPECT().Create(context.Background(), mock.Anything).Return(nil, expectedErr)
 
@@ -255,15 +255,15 @@ func TestSensorService_Create(t *testing.T) {
 }
 
 func TestSensorService_Update(t *testing.T) {
-	updateSensor := &shared.SensorUpdate{
-		Status:     shared.SensorStatusOnline,
+	updateSensor := &entities.SensorUpdate{
+		Status:     entities.SensorStatusOnline,
 		LatestData: TestSensor.LatestData,
-		Coordinate: shared.MustNewCoordinate(9.446741, 54.801539),
+		Coordinate: entities.MustNewCoordinate(9.446741, 54.801539),
 	}
 
 	t.Run("should successfully update a sensor", func(t *testing.T) {
 		// given
-		id := shared.MustNewSensorID("sensor-1")
+		id := entities.MustNewSensorID("sensor-1")
 		sensorRepo := storageMock.NewMockSensorRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(sensorRepo, treeRepo, globalEventManager)
@@ -282,7 +282,7 @@ func TestSensorService_Update(t *testing.T) {
 
 	t.Run("should return an error when sensor ID does not exist", func(t *testing.T) {
 		// given
-		id := shared.MustNewSensorID("notFoundID")
+		id := entities.MustNewSensorID("notFoundID")
 		sensorRepo := storageMock.NewMockSensorRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(sensorRepo, treeRepo, globalEventManager)
@@ -302,7 +302,7 @@ func TestSensorService_Update(t *testing.T) {
 
 	t.Run("should return an error when the update fails", func(t *testing.T) {
 		// given
-		id := shared.MustNewSensorID("sensor-1")
+		id := entities.MustNewSensorID("sensor-1")
 		sensorRepo := storageMock.NewMockSensorRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(sensorRepo, treeRepo, globalEventManager)
@@ -324,12 +324,12 @@ func TestSensorService_Update(t *testing.T) {
 
 	t.Run("should return validation error on invalid latitude and longitude", func(t *testing.T) {
 		// given
-		id := shared.MustNewSensorID("sensor-1")
+		id := entities.MustNewSensorID("sensor-1")
 		sensorRepo := storageMock.NewMockSensorRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(sensorRepo, treeRepo, globalEventManager)
 
-		updateSensor.Coordinate = shared.Coordinate{}
+		updateSensor.Coordinate = entities.Coordinate{}
 
 		// when
 		result, err := svc.Update(context.Background(), id, updateSensor)
@@ -346,7 +346,7 @@ func TestSensorService_Delete(t *testing.T) {
 
 	t.Run("should successfully delete a sensor", func(t *testing.T) {
 		// given
-		id := shared.MustNewSensorID("sensor-1")
+		id := entities.MustNewSensorID("sensor-1")
 		sensorRepo := storageMock.NewMockSensorRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(sensorRepo, treeRepo, globalEventManager)
@@ -364,12 +364,12 @@ func TestSensorService_Delete(t *testing.T) {
 
 	t.Run("should return error if sensor not found", func(t *testing.T) {
 		// given
-		id := shared.MustNewSensorID("sensor-1")
+		id := entities.MustNewSensorID("sensor-1")
 		sensorRepo := storageMock.NewMockSensorRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(sensorRepo, treeRepo, globalEventManager)
 
-		expectedErr := shared.ErrEntityNotFound("not found")
+		expectedErr := entities.ErrEntityNotFound("not found")
 		sensorRepo.EXPECT().GetByID(ctx, id).Return(nil, expectedErr)
 
 		// when
@@ -382,7 +382,7 @@ func TestSensorService_Delete(t *testing.T) {
 
 	t.Run("should return error if unlinking sensor ID on tree fails", func(t *testing.T) {
 		// given
-		id := shared.MustNewSensorID("sensor-1")
+		id := entities.MustNewSensorID("sensor-1")
 		sensorRepo := storageMock.NewMockSensorRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(sensorRepo, treeRepo, globalEventManager)
@@ -402,7 +402,7 @@ func TestSensorService_Delete(t *testing.T) {
 
 	t.Run("should return error if deleting sensor fails", func(t *testing.T) {
 		// given
-		id := shared.MustNewSensorID("sensor-1")
+		id := entities.MustNewSensorID("sensor-1")
 		sensorRepo := storageMock.NewMockSensorRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(sensorRepo, treeRepo, globalEventManager)
@@ -541,23 +541,23 @@ func TestSensorService_UpdateStatuses(t *testing.T) {
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(repo, treeRepo, globalEventManager)
 
-		staleSensor := &shared.Sensor{
-			ID: shared.MustNewSensorID("sensor-1"),
+		staleSensor := &entities.Sensor{
+			ID: entities.MustNewSensorID("sensor-1"),
 		}
-		recentSensor := &shared.Sensor{
-			ID: shared.MustNewSensorID("sensor-2"),
+		recentSensor := &entities.Sensor{
+			ID: entities.MustNewSensorID("sensor-2"),
 		}
-		staleSensorData := &shared.SensorData{
+		staleSensorData := &entities.SensorData{
 			CreatedAt: time.Now().Add(-73 * time.Hour), // Older than 72h
 		}
-		recentSensorData := &shared.SensorData{
+		recentSensorData := &entities.SensorData{
 			CreatedAt: time.Now().Add(-1 * time.Hour), // 1 hour ago (not stale)
 		}
 
-		expectList := []*shared.Sensor{staleSensor, recentSensor}
+		expectList := []*entities.Sensor{staleSensor, recentSensor}
 
 		// when
-		repo.EXPECT().GetAll(mock.Anything, shared.Query{}).Return(expectList, int64(len(expectList)), nil)
+		repo.EXPECT().GetAll(mock.Anything, entities.Query{}).Return(expectList, int64(len(expectList)), nil)
 		repo.EXPECT().GetLatestSensorDataBySensorID(mock.Anything, staleSensor.ID).Return(staleSensorData, nil)
 		repo.EXPECT().GetLatestSensorDataBySensorID(mock.Anything, recentSensor.ID).Return(recentSensorData, nil)
 		repo.EXPECT().Update(mock.Anything, staleSensor.ID, mock.Anything).Return(staleSensor, nil)
@@ -566,7 +566,7 @@ func TestSensorService_UpdateStatuses(t *testing.T) {
 
 		// then
 		assert.NoError(t, err)
-		repo.AssertCalled(t, "GetAll", mock.Anything, shared.Query{})
+		repo.AssertCalled(t, "GetAll", mock.Anything, entities.Query{})
 		repo.AssertCalled(t, "GetLatestSensorDataBySensorID", mock.Anything, staleSensor.ID)
 		repo.AssertCalled(t, "GetLatestSensorDataBySensorID", mock.Anything, recentSensor.ID)
 		repo.AssertCalled(t, "Update", mock.Anything, staleSensor.ID, mock.Anything)
@@ -580,22 +580,22 @@ func TestSensorService_UpdateStatuses(t *testing.T) {
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(repo, treeRepo, globalEventManager)
 
-		freshSensor := &shared.Sensor{ID: shared.MustNewSensorID("sensor-1")}
-		freshSensorData := &shared.SensorData{
+		freshSensor := &entities.Sensor{ID: entities.MustNewSensorID("sensor-1")}
+		freshSensorData := &entities.SensorData{
 			CreatedAt: time.Now(),
 		}
 
-		expectList := []*shared.Sensor{freshSensor}
+		expectList := []*entities.Sensor{freshSensor}
 
 		// when
-		repo.EXPECT().GetAll(mock.Anything, shared.Query{}).Return(expectList, int64(len(expectList)), nil)
+		repo.EXPECT().GetAll(mock.Anything, entities.Query{}).Return(expectList, int64(len(expectList)), nil)
 		repo.EXPECT().GetLatestSensorDataBySensorID(mock.Anything, freshSensor.ID).Return(freshSensorData, nil)
 
 		err := svc.UpdateStatuses(ctx)
 
 		// then
 		assert.NoError(t, err)
-		repo.AssertCalled(t, "GetAll", mock.Anything, shared.Query{})
+		repo.AssertCalled(t, "GetAll", mock.Anything, entities.Query{})
 		repo.AssertCalled(t, "GetLatestSensorDataBySensorID", mock.Anything, freshSensor.ID)
 		repo.AssertNotCalled(t, "Update")
 		repo.AssertExpectations(t)
@@ -610,14 +610,14 @@ func TestSensorService_UpdateStatuses(t *testing.T) {
 
 		// when
 		expectedErr := errors.New("database error")
-		repo.EXPECT().GetAll(mock.Anything, shared.Query{}).Return(nil, int64(0), expectedErr)
+		repo.EXPECT().GetAll(mock.Anything, entities.Query{}).Return(nil, int64(0), expectedErr)
 
 		err := svc.UpdateStatuses(ctx)
 
 		// then
 		assert.Error(t, err)
 		assert.Equal(t, expectedErr, err)
-		repo.AssertCalled(t, "GetAll", mock.Anything, shared.Query{})
+		repo.AssertCalled(t, "GetAll", mock.Anything, entities.Query{})
 		repo.AssertNotCalled(t, "GetLatestSensorDataBySensorID")
 		repo.AssertNotCalled(t, "Update")
 		repo.AssertExpectations(t)
@@ -630,20 +630,20 @@ func TestSensorService_UpdateStatuses(t *testing.T) {
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(repo, treeRepo, globalEventManager)
 
-		staleSensor := &shared.Sensor{ID: shared.MustNewSensorID("sensor-1")}
-		expectList := []*shared.Sensor{staleSensor}
+		staleSensor := &entities.Sensor{ID: entities.MustNewSensorID("sensor-1")}
+		expectList := []*entities.Sensor{staleSensor}
 
 		expectedErr := errors.New("failed to fetch sensor data")
 
 		// when
-		repo.EXPECT().GetAll(mock.Anything, shared.Query{}).Return(expectList, int64(len(expectList)), nil)
+		repo.EXPECT().GetAll(mock.Anything, entities.Query{}).Return(expectList, int64(len(expectList)), nil)
 		repo.EXPECT().GetLatestSensorDataBySensorID(mock.Anything, staleSensor.ID).Return(nil, expectedErr)
 
 		err := svc.UpdateStatuses(ctx)
 
 		// then
 		assert.NoError(t, err)
-		repo.AssertCalled(t, "GetAll", mock.Anything, shared.Query{})
+		repo.AssertCalled(t, "GetAll", mock.Anything, entities.Query{})
 		repo.AssertCalled(t, "GetLatestSensorDataBySensorID", mock.Anything, staleSensor.ID)
 		repo.AssertNotCalled(t, "Update")
 		repo.AssertExpectations(t)
@@ -656,22 +656,22 @@ func TestSensorService_UpdateStatuses(t *testing.T) {
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		svc := sensor.NewSensorService(repo, treeRepo, globalEventManager)
 
-		staleSensor := &shared.Sensor{ID: shared.MustNewSensorID("sensor-1")}
-		staleSensorData := &shared.SensorData{
+		staleSensor := &entities.Sensor{ID: entities.MustNewSensorID("sensor-1")}
+		staleSensorData := &entities.SensorData{
 			CreatedAt: time.Now().Add(-100 * time.Hour),
 		}
 
-		expectList := []*shared.Sensor{staleSensor}
+		expectList := []*entities.Sensor{staleSensor}
 
 		// when
-		repo.EXPECT().GetAll(mock.Anything, shared.Query{}).Return(expectList, int64(len(expectList)), nil)
+		repo.EXPECT().GetAll(mock.Anything, entities.Query{}).Return(expectList, int64(len(expectList)), nil)
 		repo.EXPECT().GetLatestSensorDataBySensorID(mock.Anything, staleSensor.ID).Return(staleSensorData, nil)
 		repo.EXPECT().Update(mock.Anything, staleSensor.ID, mock.Anything).Return(nil, errors.New("update failed"))
 
 		err := svc.UpdateStatuses(ctx)
 
 		// then
-		repo.AssertCalled(t, "GetAll", mock.Anything, shared.Query{})
+		repo.AssertCalled(t, "GetAll", mock.Anything, entities.Query{})
 		repo.AssertCalled(t, "GetLatestSensorDataBySensorID", mock.Anything, staleSensor.ID)
 		repo.AssertCalled(t, "Update", mock.Anything, staleSensor.ID, mock.Anything)
 		repo.AssertExpectations(t)

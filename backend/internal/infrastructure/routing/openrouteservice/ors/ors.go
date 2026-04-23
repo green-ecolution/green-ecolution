@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
@@ -53,7 +53,7 @@ func NewOrsClient(opts ...OrsClientOption) OrsClient {
 	}
 }
 
-func (o *OrsClient) DirectionsGeoJSON(ctx context.Context, profile string, reqBody *OrsDirectionRequest) (*shared.GeoJSON, error) {
+func (o *OrsClient) DirectionsGeoJSON(ctx context.Context, profile string, reqBody *OrsDirectionRequest) (*entities.GeoJSON, error) {
 	log := logger.GetLogger(ctx)
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(reqBody); err != nil {
@@ -85,7 +85,7 @@ func (o *OrsClient) DirectionsGeoJSON(ctx context.Context, profile string, reqBo
 		return nil, errors.New("response not successful")
 	}
 
-	var geoJSON shared.GeoJSON
+	var geoJSON entities.GeoJSON
 	if err := json.NewDecoder(resp.Body).Decode(&geoJSON); err != nil {
 		log.Error("failed to decode ors response")
 	}

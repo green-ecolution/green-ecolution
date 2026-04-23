@@ -11,7 +11,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
@@ -97,7 +97,7 @@ func (o *ValhallaClient) DirectionsJSON(ctx context.Context, reqBody *DirectionR
 	return &response, nil
 }
 
-func (o *ValhallaClient) DirectionsGeoJSON(ctx context.Context, reqBody *DirectionRequest) (*shared.GeoJSON, error) {
+func (o *ValhallaClient) DirectionsGeoJSON(ctx context.Context, reqBody *DirectionRequest) (*entities.GeoJSON, error) {
 	response, err := o.DirectionsJSON(ctx, reqBody)
 	if err != nil {
 		return nil, err
@@ -144,25 +144,25 @@ func (o *ValhallaClient) DirectionsRawGpx(ctx context.Context, reqBody *Directio
 	return resp.Body, nil
 }
 
-func (o *ValhallaClient) toGeoJSON(resp *DirectionResponse) *shared.GeoJSON {
+func (o *ValhallaClient) toGeoJSON(resp *DirectionResponse) *entities.GeoJSON {
 	bboxRoot := []float64{resp.Trip.Summary.MinLat, resp.Trip.Summary.MinLon, resp.Trip.Summary.MaxLat, resp.Trip.Summary.MinLon}
-	features := utils.Map(resp.Trip.Legs, func(leg LegResponse) shared.GeoJSONFeature {
+	features := utils.Map(resp.Trip.Legs, func(leg LegResponse) entities.GeoJSONFeature {
 		coords := o.decodePolyline(&leg.Shape)
 		bbox := []float64{leg.Summary.MinLat, leg.Summary.MinLon, leg.Summary.MaxLat, leg.Summary.MaxLon}
 
-		return shared.GeoJSONFeature{
-			Type:       shared.Feature,
+		return entities.GeoJSONFeature{
+			Type:       entities.Feature,
 			Bbox:       bbox,
 			Properties: make(map[string]any),
-			Geometry: shared.GeoJSONGeometry{
-				Type:        shared.LineString,
+			Geometry: entities.GeoJSONGeometry{
+				Type:        entities.LineString,
 				Coordinates: coords,
 			},
 		}
 	})
 
-	return &shared.GeoJSON{
-		Type:     shared.FeatureCollection,
+	return &entities.GeoJSON{
+		Type:     entities.FeatureCollection,
 		Bbox:     bboxRoot,
 		Features: features,
 	}

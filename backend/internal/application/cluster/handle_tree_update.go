@@ -3,7 +3,7 @@ package cluster
 import (
 	"context"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
@@ -18,7 +18,7 @@ import (
 //
 // Returns:
 //   - error: An error if updating the previous tree cluster fails; otherwise, nil.
-func (s *TreeClusterService) HandleCreateTree(ctx context.Context, event *shared.EventCreateTree) error {
+func (s *TreeClusterService) HandleCreateTree(ctx context.Context, event *entities.EventCreateTree) error {
 	log := logger.GetLogger(ctx)
 	log.Debug("handle event", "event", event.Type(), "service", "TreeClusterService")
 
@@ -46,7 +46,7 @@ func (s *TreeClusterService) HandleCreateTree(ctx context.Context, event *shared
 //
 // Returns:
 //   - error: An error if updating the tree cluster fails; otherwise, nil.
-func (s *TreeClusterService) HandleDeleteTree(ctx context.Context, event *shared.EventDeleteTree) error {
+func (s *TreeClusterService) HandleDeleteTree(ctx context.Context, event *entities.EventDeleteTree) error {
 	log := logger.GetLogger(ctx)
 	log.Debug("handle event", "event", event.Type(), "service", "TreeClusterService")
 
@@ -68,7 +68,7 @@ func (s *TreeClusterService) HandleDeleteTree(ctx context.Context, event *shared
 //
 // Returns:
 //   - error: An error if updating any of the affected tree clusters fails; otherwise, nil.
-func (s *TreeClusterService) HandleUpdateTree(ctx context.Context, event *shared.EventUpdateTree) error {
+func (s *TreeClusterService) HandleUpdateTree(ctx context.Context, event *entities.EventUpdateTree) error {
 	log := logger.GetLogger(ctx)
 	log.Debug("handle event", "event", event.Type(), "service", "TreeClusterService")
 
@@ -100,7 +100,7 @@ func (s *TreeClusterService) HandleUpdateTree(ctx context.Context, event *shared
 	return nil
 }
 
-func (s *TreeClusterService) handleTreeClusterUpdate(ctx context.Context, tc *shared.TreeCluster, tree *shared.Tree) error {
+func (s *TreeClusterService) handleTreeClusterUpdate(ctx context.Context, tc *entities.TreeCluster, tree *entities.Tree) error {
 	log := logger.GetLogger(ctx)
 	if tc == nil || tree.TreeCluster == nil {
 		return nil
@@ -111,7 +111,7 @@ func (s *TreeClusterService) handleTreeClusterUpdate(ctx context.Context, tc *sh
 		log.Error("could not calculate watering status", "error", err)
 	}
 
-	updateFn := func(tc *shared.TreeCluster, repo shared.TreeClusterRepository) (bool, error) {
+	updateFn := func(tc *entities.TreeCluster, repo entities.TreeClusterRepository) (bool, error) {
 		if len(tc.Trees) != 0 {
 			coord, err := repo.GetCenterPoint(ctx, tc.ID)
 			if err != nil {
@@ -140,7 +140,7 @@ func (s *TreeClusterService) handleTreeClusterUpdate(ctx context.Context, tc *sh
 	return nil
 }
 
-func (s *TreeClusterService) updateWateringStatusOfPrevTreeCluster(ctx context.Context, prevTc *shared.TreeCluster) error {
+func (s *TreeClusterService) updateWateringStatusOfPrevTreeCluster(ctx context.Context, prevTc *entities.TreeCluster) error {
 	log := logger.GetLogger(ctx)
 	if prevTc == nil {
 		return nil
@@ -151,7 +151,7 @@ func (s *TreeClusterService) updateWateringStatusOfPrevTreeCluster(ctx context.C
 		log.Error("could not update watering status", "error", err)
 	}
 
-	updateFn := func(tc *shared.TreeCluster, _ shared.TreeClusterRepository) (bool, error) {
+	updateFn := func(tc *entities.TreeCluster, _ entities.TreeClusterRepository) (bool, error) {
 		tc.WateringStatus = wateringStatus
 		return true, nil
 	}

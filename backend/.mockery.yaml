@@ -37,6 +37,6 @@ packages:
   github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc:
     config: 
       dir: ./internal/infrastructure/_mock
-      outpkg: shared
+      outpkg: entities
     interfaces:
       Querier:

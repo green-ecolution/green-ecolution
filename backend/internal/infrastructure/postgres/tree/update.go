@@ -3,7 +3,7 @@ package tree
 import (
 	"context"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 
 	"github.com/pkg/errors"
@@ -13,9 +13,9 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func (r *TreeRepository) Update(ctx context.Context, id int32, updateFn func(*shared.Tree, shared.TreeRepository) (bool, error)) (*shared.Tree, error) {
+func (r *TreeRepository) Update(ctx context.Context, id int32, updateFn func(*entities.Tree, entities.TreeRepository) (bool, error)) (*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
-	var updatedTree *shared.Tree
+	var updatedTree *entities.Tree
 
 	err := r.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewTreeRepository(s, r.TreeMappers)
@@ -62,7 +62,7 @@ func (r *TreeRepository) Update(ctx context.Context, id int32, updateFn func(*sh
 	return updatedTree, nil
 }
 
-func (r *TreeRepository) updateEntity(ctx context.Context, t *shared.Tree) error {
+func (r *TreeRepository) updateEntity(ctx context.Context, t *entities.Tree) error {
 	log := logger.GetLogger(ctx)
 	additionalInfo, err := utils.MapAdditionalInfoToByte(t.AdditionalInfo)
 	if err != nil {

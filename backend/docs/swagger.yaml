@@ -131,6 +131,84 @@ definitions:
     - tree_cluster_id
     - watering_plan_id
     type: object
+  GeoJSON:
+    properties:
+      bbox:
+        items:
+          type: number
+        type: array
+      features:
+        items:
+          $ref: '#/definitions/GeoJSONFeature'
+        type: array
+      metadata:
+        $ref: '#/definitions/GeoJSONMetadata'
+      type:
+        $ref: '#/definitions/GeoJSONType'
+    required:
+    - bbox
+    - features
+    - metadata
+    - type
+    type: object
+  GeoJSONFeature:
+    properties:
+      bbox:
+        items:
+          type: number
+        type: array
+      geometry:
+        $ref: '#/definitions/GeoJSONGeometry'
+      properties:
+        additionalProperties: {}
+        type: object
+      type:
+        $ref: '#/definitions/GeoJSONType'
+    required:
+    - bbox
+    - geometry
+    - properties
+    - type
+    type: object
+  GeoJSONGeometry:
+    properties:
+      coordinates:
+        items:
+          items:
+            format: float64
+            type: number
+          type: array
+        type: array
+      type:
+        $ref: '#/definitions/GeoJSONType'
+    required:
+    - coordinates
+    - type
+    type: object
+  GeoJSONLocation:
+    properties:
+      coordinate:
+        $ref: '#/definitions/entities.Coordinate'
+    type: object
+  GeoJSONMetadata:
+    properties:
+      endPoint:
+        $ref: '#/definitions/GeoJSONLocation'
+      startPoint:
+        $ref: '#/definitions/GeoJSONLocation'
+      wateringPoint:
+        $ref: '#/definitions/GeoJSONLocation'
+    type: object
+  GeoJSONType:
+    enum:
+    - FeatureCollection
+    - Feature
+    - LineString
+    type: string
+    x-enum-varnames:
+    - FeatureCollection
+    - Feature
+    - LineString
   GitInfo:
     properties:
       branch:
@@ -1394,86 +1472,8 @@ definitions:
     - depth
     - resistance
     type: object
-  shared.Coordinate:
+  entities.Coordinate:
     type: object
-  shared.GeoJSON:
-    properties:
-      bbox:
-        items:
-          type: number
-        type: array
-      features:
-        items:
-          $ref: '#/definitions/shared.GeoJSONFeature'
-        type: array
-      metadata:
-        $ref: '#/definitions/shared.GeoJSONMetadata'
-      type:
-        $ref: '#/definitions/shared.GeoJSONType'
-    required:
-    - bbox
-    - features
-    - metadata
-    - type
-    type: object
-  shared.GeoJSONFeature:
-    properties:
-      bbox:
-        items:
-          type: number
-        type: array
-      geometry:
-        $ref: '#/definitions/shared.GeoJSONGeometry'
-      properties:
-        additionalProperties: {}
-        type: object
-      type:
-        $ref: '#/definitions/shared.GeoJSONType'
-    required:
-    - bbox
-    - geometry
-    - properties
-    - type
-    type: object
-  shared.GeoJSONGeometry:
-    properties:
-      coordinates:
-        items:
-          items:
-            format: float64
-            type: number
-          type: array
-        type: array
-      type:
-        $ref: '#/definitions/shared.GeoJSONType'
-    required:
-    - coordinates
-    - type
-    type: object
-  shared.GeoJSONLocation:
-    properties:
-      coordinate:
-        $ref: '#/definitions/shared.Coordinate'
-    type: object
-  shared.GeoJSONMetadata:
-    properties:
-      endPoint:
-        $ref: '#/definitions/shared.GeoJSONLocation'
-      startPoint:
-        $ref: '#/definitions/shared.GeoJSONLocation'
-      wateringPoint:
-        $ref: '#/definitions/shared.GeoJSONLocation'
-    type: object
-  shared.GeoJSONType:
-    enum:
-    - FeatureCollection
-    - Feature
-    - LineString
-    type: string
-    x-enum-varnames:
-    - FeatureCollection
-    - Feature
-    - LineString
 info:
   contact:
     email: info@green-ecolution.de
@@ -3591,7 +3591,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/shared.GeoJSON'
+            $ref: '#/definitions/GeoJSON'
         "400":
           description: Bad Request
           schema:

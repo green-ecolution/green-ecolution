@@ -4,15 +4,15 @@ import (
 	"context"
 	"time"
 
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	store "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 )
 
-var _ shared.VehicleRepository = (*VehicleRepository)(nil)
+var _ entities.VehicleRepository = (*VehicleRepository)(nil)
 
 type VehicleRepository struct {
 	store *store.Store

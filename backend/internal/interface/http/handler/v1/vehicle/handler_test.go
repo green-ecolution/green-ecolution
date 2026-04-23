@@ -13,7 +13,7 @@ import (
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	serverEntities "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/vehicle"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/middleware"
@@ -30,7 +30,7 @@ func TestGetAllVehicles(t *testing.T) {
 
 		mockVehicleService.EXPECT().GetAll(
 			mock.Anything,
-			shared.VehicleQuery{},
+			entities.VehicleQuery{},
 		).Return(TestVehicles, int64(len(TestVehicles)), nil)
 
 		// when
@@ -65,7 +65,7 @@ func TestGetAllVehicles(t *testing.T) {
 
 		mockVehicleService.EXPECT().GetAll(
 			mock.Anything,
-			shared.VehicleQuery{},
+			entities.VehicleQuery{},
 		).Return(TestVehicles, int64(len(TestVehicles)), nil)
 
 		// when
@@ -137,7 +137,7 @@ func TestGetAllVehicles(t *testing.T) {
 
 		mockVehicleService.EXPECT().GetAll(
 			mock.Anything,
-			shared.VehicleQuery{Query: shared.Query{Provider: "test-provider"}},
+			entities.VehicleQuery{Query: entities.Query{Provider: "test-provider"}},
 		).Return(TestVehicles, int64(0), nil)
 
 		// when
@@ -170,8 +170,8 @@ func TestGetAllVehicles(t *testing.T) {
 
 		mockVehicleService.EXPECT().GetAll(
 			mock.Anything,
-			shared.VehicleQuery{Type: "transporter"},
-		).Return([]*shared.Vehicle{TestVehicles[1]}, int64(1), nil)
+			entities.VehicleQuery{Type: "transporter"},
+		).Return([]*entities.Vehicle{TestVehicles[1]}, int64(1), nil)
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/vehicle?type=transporter", nil)
@@ -203,8 +203,8 @@ func TestGetAllVehicles(t *testing.T) {
 		app.Get("/v1/vehicle", handler)
 
 		mockVehicleService.EXPECT().GetAll(
-			mock.Anything, shared.VehicleQuery{Type: "transporter"},
-		).Return([]*shared.Vehicle{TestVehicles[1]}, int64(1), nil)
+			mock.Anything, entities.VehicleQuery{Type: "transporter"},
+		).Return([]*entities.Vehicle{TestVehicles[1]}, int64(1), nil)
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/vehicle?type=transporter&page=1&limit=1", nil)
@@ -240,8 +240,8 @@ func TestGetAllVehicles(t *testing.T) {
 		app.Get("/v1/vehicle", handler)
 
 		mockVehicleService.EXPECT().GetAll(
-			mock.Anything, shared.VehicleQuery{},
-		).Return([]*shared.Vehicle{}, int64(0), nil)
+			mock.Anything, entities.VehicleQuery{},
+		).Return([]*entities.Vehicle{}, int64(0), nil)
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/vehicle", nil)
@@ -274,7 +274,7 @@ func TestGetAllVehicles(t *testing.T) {
 		app.Get("/v1/vehicle", handler)
 
 		mockVehicleService.EXPECT().GetAll(
-			mock.Anything, shared.VehicleQuery{},
+			mock.Anything, entities.VehicleQuery{},
 		).Return(nil, int64(0), fiber.NewError(fiber.StatusInternalServerError, "service error"))
 
 		// when
@@ -297,7 +297,7 @@ func TestGetAllVehicles(t *testing.T) {
 		app.Get("/v1/vehicle", handler)
 
 		mockVehicleService.EXPECT().GetAll(
-			mock.Anything, shared.VehicleQuery{Type: "invalid"},
+			mock.Anything, entities.VehicleQuery{Type: "invalid"},
 		).Return(nil, int64(0), fiber.NewError(fiber.ErrBadRequest.Code, "service error"))
 
 		// when
@@ -509,7 +509,7 @@ func TestCreateVehicle(t *testing.T) {
 
 		mockVehicleService.EXPECT().Create(
 			mock.Anything,
-			mock.AnythingOfType("*shared.VehicleCreate"),
+			mock.AnythingOfType("*entities.VehicleCreate"),
 		).Return(TestVehicle, nil)
 
 		// when
@@ -558,7 +558,7 @@ func TestCreateVehicle(t *testing.T) {
 
 		mockVehicleService.EXPECT().Create(
 			mock.Anything,
-			mock.AnythingOfType("*shared.VehicleCreate"),
+			mock.AnythingOfType("*entities.VehicleCreate"),
 		).Return(nil, fiber.NewError(fiber.StatusInternalServerError, "service error"))
 
 		// when

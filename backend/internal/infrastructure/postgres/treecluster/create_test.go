@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
@@ -18,7 +18,7 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 		suite.ResetDB(t)
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/treecluster")
 		r := NewTreeClusterRepository(suite.Store, mappers)
-		createFn := func(tc *shared.TreeCluster, _ shared.TreeClusterRepository) (bool, error) {
+		createFn := func(tc *entities.TreeCluster, _ entities.TreeClusterRepository) (bool, error) {
 			tc.Name = "test"
 			return true, nil
 		}
@@ -39,8 +39,8 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 		assert.Equal(t, "", got.Description)
 		assert.Equal(t, 0.0, got.MoistureLevel)
 		assert.Nil(t, got.Coordinate)
-		assert.Equal(t, shared.WateringStatusUnknown, got.WateringStatus)
-		assert.Equal(t, shared.TreeSoilConditionUnknown, got.SoilCondition)
+		assert.Equal(t, entities.WateringStatusUnknown, got.WateringStatus)
+		assert.Equal(t, entities.TreeSoilConditionUnknown, got.SoilCondition)
 		assert.False(t, got.Archived)
 		assert.Nil(t, got.LastWatered)
 	})
@@ -51,13 +51,13 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/treecluster")
 		r := NewTreeClusterRepository(suite.Store, mappers)
 
-		newRegion := &shared.Region{
+		newRegion := &entities.Region{
 			ID:        1,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 			Name:      "Mürwik",
 		}
-		coord := shared.MustNewCoordinate(54.3, 9.5)
+		coord := entities.MustNewCoordinate(54.3, 9.5)
 		totalCountTree, _ := suite.Store.GetAllTreesCount(context.Background(), &sqlc.GetAllTreesCountParams{})
 		testTrees, err := suite.Store.GetAllTrees(context.Background(), &sqlc.GetAllTreesParams{
 			Limit:  int32(totalCountTree),
@@ -71,13 +71,13 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 
 		trees = trees[0:2]
 
-		createFn := func(tc *shared.TreeCluster, _ shared.TreeClusterRepository) (bool, error) {
+		createFn := func(tc *entities.TreeCluster, _ entities.TreeClusterRepository) (bool, error) {
 			tc.Name = "test"
 			tc.Address = "address"
 			tc.Description = "description"
 			tc.MoistureLevel = 1.0
-			tc.WateringStatus = shared.WateringStatusGood
-			tc.SoilCondition = shared.TreeSoilConditionSchluffig
+			tc.WateringStatus = entities.WateringStatusGood
+			tc.SoilCondition = entities.TreeSoilConditionSchluffig
 			tc.Region = newRegion
 			tc.Coordinate = &coord
 			tc.Trees = trees
@@ -102,8 +102,8 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 		assert.NotNil(t, got.Coordinate)
 		assert.Equal(t, coord.Latitude(), got.Coordinate.Latitude())
 		assert.Equal(t, coord.Longitude(), got.Coordinate.Longitude())
-		assert.Equal(t, shared.WateringStatusGood, got.WateringStatus)
-		assert.Equal(t, shared.TreeSoilConditionSchluffig, got.SoilCondition)
+		assert.Equal(t, entities.WateringStatusGood, got.WateringStatus)
+		assert.Equal(t, entities.TreeSoilConditionSchluffig, got.SoilCondition)
 		assert.False(t, got.Archived)
 		assert.Nil(t, got.LastWatered)
 		assert.NotNil(t, got.Trees)
@@ -133,7 +133,7 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 		}
 
 		trees = trees[0:2]
-		createFn := func(tc *shared.TreeCluster, _ shared.TreeClusterRepository) (bool, error) {
+		createFn := func(tc *entities.TreeCluster, _ entities.TreeClusterRepository) (bool, error) {
 			tc.Name = "test"
 			tc.Trees = trees
 			return true, nil
@@ -163,8 +163,8 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 		suite.ResetDB(t)
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/treecluster")
 		r := NewTreeClusterRepository(suite.Store, mappers)
-		coord := shared.MustNewCoordinate(54.81269326939148, 9.484419532963013)
-		createFn := func(tc *shared.TreeCluster, _ shared.TreeClusterRepository) (bool, error) {
+		coord := entities.MustNewCoordinate(54.81269326939148, 9.484419532963013)
+		createFn := func(tc *entities.TreeCluster, _ entities.TreeClusterRepository) (bool, error) {
 			tc.Name = "test"
 			tc.Coordinate = &coord
 			return true, nil
@@ -202,7 +202,7 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 		suite.ResetDB(t)
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/treecluster")
 		r := NewTreeClusterRepository(suite.Store, mappers)
-		createFn := func(tc *shared.TreeCluster, _ shared.TreeClusterRepository) (bool, error) {
+		createFn := func(tc *entities.TreeCluster, _ entities.TreeClusterRepository) (bool, error) {
 			tc.Name = ""
 			return true, nil
 		}
@@ -220,7 +220,7 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 		suite.ResetDB(t)
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/treecluster")
 		r := NewTreeClusterRepository(suite.Store, mappers)
-		createFn := func(tc *shared.TreeCluster, _ shared.TreeClusterRepository) (bool, error) {
+		createFn := func(tc *entities.TreeCluster, _ entities.TreeClusterRepository) (bool, error) {
 			tc.Name = "test"
 			return true, nil
 		}
@@ -241,7 +241,7 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 		suite.ResetDB(t)
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/treecluster")
 		r := NewTreeClusterRepository(suite.Store, mappers)
-		createFn := func(tc *shared.TreeCluster, _ shared.TreeClusterRepository) (bool, error) {
+		createFn := func(tc *entities.TreeCluster, _ entities.TreeClusterRepository) (bool, error) {
 			return false, assert.AnError
 		}
 
@@ -255,7 +255,7 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 		suite.ResetDB(t)
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/treecluster")
 		r := NewTreeClusterRepository(suite.Store, mappers)
-		createFn := func(tc *shared.TreeCluster, _ shared.TreeClusterRepository) (bool, error) {
+		createFn := func(tc *entities.TreeCluster, _ entities.TreeClusterRepository) (bool, error) {
 			return false, nil
 		}
 
@@ -274,7 +274,7 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 		newID := int32(9)
 
 		r := NewTreeClusterRepository(suite.Store, mappers)
-		createFn := func(tc *shared.TreeCluster, _ shared.TreeClusterRepository) (bool, error) {
+		createFn := func(tc *entities.TreeCluster, _ entities.TreeClusterRepository) (bool, error) {
 			tc.Name = "test"
 			return false, nil
 		}
@@ -296,7 +296,7 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 		newID := int32(9)
 
 		r := NewTreeClusterRepository(suite.Store, mappers)
-		createFn := func(tc *shared.TreeCluster, _ shared.TreeClusterRepository) (bool, error) {
+		createFn := func(tc *entities.TreeCluster, _ entities.TreeClusterRepository) (bool, error) {
 			tc.Name = "test"
 			return false, assert.AnError
 		}
@@ -318,7 +318,7 @@ func TestTreeClusterRepository_LinkTreesToCluster(t *testing.T) {
 		suite.ResetDB(t)
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/treecluster")
 		r := NewTreeClusterRepository(suite.Store, mappers)
-		createFn := func(tc *shared.TreeCluster, _ shared.TreeClusterRepository) (bool, error) {
+		createFn := func(tc *entities.TreeCluster, _ entities.TreeClusterRepository) (bool, error) {
 			tc.Name = "test"
 			return true, nil
 		}
@@ -341,7 +341,7 @@ func TestTreeClusterRepository_LinkTreesToCluster(t *testing.T) {
 		assert.NoError(t, err)
 
 		// when
-		err = r.LinkTreesToCluster(context.Background(), tc.ID, utils.Map(trees, func(t *shared.Tree) int32 {
+		err = r.LinkTreesToCluster(context.Background(), tc.ID, utils.Map(trees, func(t *entities.Tree) int32 {
 			return t.ID
 		}))
 		assert.NoError(t, err)
@@ -382,7 +382,7 @@ func TestTreeClusterRepository_LinkTreesToCluster(t *testing.T) {
 		trees = trees[0:2]
 
 		// when
-		err = r.LinkTreesToCluster(context.Background(), 99, utils.Map(trees, func(t *shared.Tree) int32 {
+		err = r.LinkTreesToCluster(context.Background(), 99, utils.Map(trees, func(t *entities.Tree) int32 {
 			return t.ID
 		}))
 
@@ -409,7 +409,7 @@ func TestTreeClusterRepository_LinkTreesToCluster(t *testing.T) {
 		}
 
 		trees = trees[0:2]
-		createFn := func(tc *shared.TreeCluster, _ shared.TreeClusterRepository) (bool, error) {
+		createFn := func(tc *entities.TreeCluster, _ entities.TreeClusterRepository) (bool, error) {
 			tc.Name = "test"
 			return true, nil
 		}
@@ -421,7 +421,7 @@ func TestTreeClusterRepository_LinkTreesToCluster(t *testing.T) {
 		cancel()
 
 		// when
-		err = r.LinkTreesToCluster(ctx, tc.ID, utils.Map(trees, func(t *shared.Tree) int32 {
+		err = r.LinkTreesToCluster(ctx, tc.ID, utils.Map(trees, func(t *entities.Tree) int32 {
 			return t.ID
 		}))
 

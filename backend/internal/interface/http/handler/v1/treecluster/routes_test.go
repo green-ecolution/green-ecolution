@@ -7,13 +7,12 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/treecluster"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/middleware"
 )
@@ -30,7 +29,7 @@ func TestRegisterRoutes(t *testing.T) {
 			ctx = context.WithValue(ctx, "limit", int32(-1))
 
 			mockClusterService.EXPECT().GetAll(
-				mock.Anything, shared.TreeClusterQuery{},
+				mock.Anything, entities.TreeClusterQuery{},
 			).Return(TestClusterList, int64(len(TestClusterList)), nil)
 
 			// when
@@ -50,7 +49,7 @@ func TestRegisterRoutes(t *testing.T) {
 
 			mockClusterService.EXPECT().Create(
 				mock.Anything,
-				mock.AnythingOfType("*shared.TreeClusterCreate"),
+				mock.AnythingOfType("*entities.TreeClusterCreate"),
 			).Return(TestCluster, nil)
 
 			// when

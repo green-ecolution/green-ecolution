@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/_mock"
 )
 
@@ -21,10 +21,10 @@ func TestVehicleService_GetAll(t *testing.T) {
 		svc := NewVehicleService(vehicleRepo)
 
 		expectedVehicles := getTestVehicles()
-		vehicleRepo.EXPECT().GetAll(ctx, shared.Query{}).Return(expectedVehicles, int64(len(expectedVehicles)), nil)
+		vehicleRepo.EXPECT().GetAll(ctx, entities.Query{}).Return(expectedVehicles, int64(len(expectedVehicles)), nil)
 
 		// when
-		vehicles, totalCount, err := svc.GetAll(ctx, shared.VehicleQuery{})
+		vehicles, totalCount, err := svc.GetAll(ctx, entities.VehicleQuery{})
 
 		// then
 		assert.NoError(t, err)
@@ -38,10 +38,10 @@ func TestVehicleService_GetAll(t *testing.T) {
 
 		expectedVehicles := getTestVehicles()
 
-		vehicleRepo.EXPECT().GetAll(ctx, shared.Query{Provider: "test-provider"}).Return(expectedVehicles, int64(len(expectedVehicles)), nil)
+		vehicleRepo.EXPECT().GetAll(ctx, entities.Query{Provider: "test-provider"}).Return(expectedVehicles, int64(len(expectedVehicles)), nil)
 
 		// when
-		vehicles, totalCount, err := svc.GetAll(ctx, shared.VehicleQuery{Query: shared.Query{Provider: "test-provider"}})
+		vehicles, totalCount, err := svc.GetAll(ctx, entities.VehicleQuery{Query: entities.Query{Provider: "test-provider"}})
 
 		// then
 		assert.NoError(t, err)
@@ -54,10 +54,10 @@ func TestVehicleService_GetAll(t *testing.T) {
 		svc := NewVehicleService(vehicleRepo)
 
 		expectedVehicles := getTestVehicles()
-		vehicleRepo.EXPECT().GetAllByType(ctx, "", shared.VehicleTypeTrailer).Return(expectedVehicles, int64(len(expectedVehicles)), nil)
+		vehicleRepo.EXPECT().GetAllByType(ctx, "", entities.VehicleTypeTrailer).Return(expectedVehicles, int64(len(expectedVehicles)), nil)
 
 		// when
-		vehicles, totalCount, err := svc.GetAll(ctx, shared.VehicleQuery{Type: "trailer"})
+		vehicles, totalCount, err := svc.GetAll(ctx, entities.VehicleQuery{Type: "trailer"})
 
 		// then
 		assert.NoError(t, err)
@@ -70,10 +70,10 @@ func TestVehicleService_GetAll(t *testing.T) {
 		svc := NewVehicleService(vehicleRepo)
 
 		expectedVehicles := getTestVehicles()
-		vehicleRepo.EXPECT().GetAllByType(ctx, "test-provider", shared.VehicleTypeTrailer).Return(expectedVehicles, int64(len(expectedVehicles)), nil)
+		vehicleRepo.EXPECT().GetAllByType(ctx, "test-provider", entities.VehicleTypeTrailer).Return(expectedVehicles, int64(len(expectedVehicles)), nil)
 
 		// when
-		vehicles, totalCount, err := svc.GetAll(ctx, shared.VehicleQuery{Query: shared.Query{Provider: "test-provider"}, Type: "trailer"})
+		vehicles, totalCount, err := svc.GetAll(ctx, entities.VehicleQuery{Query: entities.Query{Provider: "test-provider"}, Type: "trailer"})
 
 		// then
 		assert.NoError(t, err)
@@ -85,10 +85,10 @@ func TestVehicleService_GetAll(t *testing.T) {
 		vehicleRepo := storageMock.NewMockVehicleRepository(t)
 		svc := NewVehicleService(vehicleRepo)
 
-		vehicleRepo.EXPECT().GetAll(ctx, shared.Query{}).Return([]*shared.Vehicle{}, int64(0), nil)
+		vehicleRepo.EXPECT().GetAll(ctx, entities.Query{}).Return([]*entities.Vehicle{}, int64(0), nil)
 
 		// when
-		vehicles, totalCount, err := svc.GetAll(ctx, shared.VehicleQuery{})
+		vehicles, totalCount, err := svc.GetAll(ctx, entities.VehicleQuery{})
 
 		// then
 		assert.NoError(t, err)
@@ -101,10 +101,10 @@ func TestVehicleService_GetAll(t *testing.T) {
 		svc := NewVehicleService(vehicleRepo)
 
 		expectedErr := errors.New("GetAll failed")
-		vehicleRepo.EXPECT().GetAll(ctx, shared.Query{}).Return(nil, int64(0), expectedErr)
+		vehicleRepo.EXPECT().GetAll(ctx, entities.Query{}).Return(nil, int64(0), expectedErr)
 
 		// when
-		vehicles, totalCount, err := svc.GetAll(ctx, shared.VehicleQuery{})
+		vehicles, totalCount, err := svc.GetAll(ctx, entities.VehicleQuery{})
 
 		// then
 		assert.Error(t, err)
@@ -138,7 +138,7 @@ func TestVehicleService_GetByID(t *testing.T) {
 		svc := NewVehicleService(vehicleRepo)
 
 		id := int32(1)
-		expectedErr := shared.ErrEntityNotFound("not found")
+		expectedErr := entities.ErrEntityNotFound("not found")
 		vehicleRepo.EXPECT().GetByID(ctx, id).Return(nil, expectedErr)
 
 		// when
@@ -175,7 +175,7 @@ func TestVehicleService_GetByPlate(t *testing.T) {
 		svc := NewVehicleService(vehicleRepo)
 
 		plate := "FL TBZ 1234"
-		expectedErr := shared.ErrEntityNotFound("not found")
+		expectedErr := entities.ErrEntityNotFound("not found")
 		vehicleRepo.EXPECT().GetByPlate(ctx, plate).Return(nil, expectedErr)
 
 		// when
@@ -190,14 +190,14 @@ func TestVehicleService_GetByPlate(t *testing.T) {
 
 func TestVehicleService_Create(t *testing.T) {
 	ctx := context.Background()
-	input := &shared.VehicleCreate{
+	input := &entities.VehicleCreate{
 		NumberPlate:    "FL TBZ 123",
 		Description:    "Test description",
-		Status:         shared.VehicleStatusActive,
-		Type:           shared.VehicleTypeTrailer,
-		WaterCapacity:  shared.MustNewWaterCapacity(2000.5),
+		Status:         entities.VehicleStatusActive,
+		Type:           entities.VehicleTypeTrailer,
+		WaterCapacity:  entities.MustNewWaterCapacity(2000.5),
 		Model:          "Actros L Mercedes Benz",
-		DrivingLicense: shared.DrivingLicenseBE,
+		DrivingLicense: entities.DrivingLicenseBE,
 		Height:         2.1,
 		Length:         5.0,
 		Width:          2.4,
@@ -296,14 +296,14 @@ func TestVehicleService_Create(t *testing.T) {
 func TestVehicleService_Update(t *testing.T) {
 	ctx := context.Background()
 	vehicleID := int32(1)
-	input := &shared.VehicleUpdate{
+	input := &entities.VehicleUpdate{
 		NumberPlate:    "FL TBZ 123",
 		Description:    "Test description",
-		Status:         shared.VehicleStatusActive,
-		Type:           shared.VehicleTypeTrailer,
-		WaterCapacity:  shared.MustNewWaterCapacity(2000.5),
+		Status:         entities.VehicleStatusActive,
+		Type:           entities.VehicleTypeTrailer,
+		WaterCapacity:  entities.MustNewWaterCapacity(2000.5),
 		Model:          "Actros L Mercedes Benz",
-		DrivingLicense: shared.DrivingLicenseBE,
+		DrivingLicense: entities.DrivingLicenseBE,
 		Height:         2.1,
 		Length:         5.0,
 		Width:          2.4,
@@ -347,7 +347,7 @@ func TestVehicleService_Update(t *testing.T) {
 		vehicleRepo.EXPECT().GetByID(
 			ctx,
 			vehicleID,
-		).Return(nil, shared.ErrEntityNotFound("not found"))
+		).Return(nil, entities.ErrEntityNotFound("not found"))
 
 		// when
 		result, err := svc.Update(ctx, vehicleID, input)
@@ -461,7 +461,7 @@ func TestVehicleService_Delete(t *testing.T) {
 		svc := NewVehicleService(vehicleRepo)
 
 		id := int32(1)
-		expectedErr := shared.ErrEntityNotFound("not found")
+		expectedErr := entities.ErrEntityNotFound("not found")
 		vehicleRepo.EXPECT().GetByID(ctx, id).Return(nil, expectedErr)
 
 		// when
@@ -514,21 +514,21 @@ func TestReady(t *testing.T) {
 	})
 }
 
-func getTestVehicles() []*shared.Vehicle {
+func getTestVehicles() []*entities.Vehicle {
 	now := time.Now()
 
-	return []*shared.Vehicle{
+	return []*entities.Vehicle{
 		{
 			ID:             1,
 			CreatedAt:      now,
 			UpdatedAt:      now,
 			NumberPlate:    "FL TBZ 123",
 			Description:    "Test description",
-			Status:         shared.VehicleStatusActive,
-			Type:           shared.VehicleTypeTrailer,
-			WaterCapacity:  shared.MustNewWaterCapacity(2000.5),
+			Status:         entities.VehicleStatusActive,
+			Type:           entities.VehicleTypeTrailer,
+			WaterCapacity:  entities.MustNewWaterCapacity(2000.5),
 			Model:          "1615/17 - Conrad - MAN TGE 3.180",
-			DrivingLicense: shared.DrivingLicenseBE,
+			DrivingLicense: entities.DrivingLicenseBE,
 			Height:         1.5,
 			Length:         2.0,
 			Width:          2.0,
@@ -540,11 +540,11 @@ func getTestVehicles() []*shared.Vehicle {
 			UpdatedAt:      now,
 			NumberPlate:    "FL TBZ 3456",
 			Description:    "Test description",
-			Status:         shared.VehicleStatusNotAvailable,
-			Type:           shared.VehicleTypeTransporter,
-			WaterCapacity:  shared.MustNewWaterCapacity(1000.5),
+			Status:         entities.VehicleStatusNotAvailable,
+			Type:           entities.VehicleTypeTransporter,
+			WaterCapacity:  entities.MustNewWaterCapacity(1000.5),
 			Model:          "Actros L Mercedes Benz",
-			DrivingLicense: shared.DrivingLicenseC,
+			DrivingLicense: entities.DrivingLicenseC,
 			Height:         2.1,
 			Length:         5.0,
 			Width:          2.4,

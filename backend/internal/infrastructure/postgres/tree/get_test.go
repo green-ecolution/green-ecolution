@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
@@ -21,7 +21,7 @@ func TestTreeRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
 		// when
-		trees, totalCount, err := r.GetAll(ctx, shared.TreeQuery{})
+		trees, totalCount, err := r.GetAll(ctx, entities.TreeQuery{})
 
 		// then
 		assert.NoError(t, err)
@@ -44,7 +44,7 @@ func TestTreeRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, shared.TreeQuery{Query: shared.Query{Provider: "test-provider"}})
+		got, totalCount, err := r.GetAll(ctx, entities.TreeQuery{Query: entities.Query{Provider: "test-provider"}})
 
 		// then
 		assert.NoError(t, err)
@@ -75,7 +75,7 @@ func TestTreeRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(2))
 
 		// when
-		trees, totalCount, err := r.GetAll(ctx, shared.TreeQuery{})
+		trees, totalCount, err := r.GetAll(ctx, entities.TreeQuery{})
 
 		// then
 		assert.NoError(t, err)
@@ -98,7 +98,7 @@ func TestTreeRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(2))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, shared.TreeQuery{})
+		got, totalCount, err := r.GetAll(ctx, entities.TreeQuery{})
 
 		// then
 		assert.Error(t, err)
@@ -116,7 +116,7 @@ func TestTreeRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(0))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, shared.TreeQuery{})
+		got, totalCount, err := r.GetAll(ctx, entities.TreeQuery{})
 
 		// then
 		assert.Error(t, err)
@@ -133,7 +133,7 @@ func TestTreeRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, shared.TreeQuery{})
+		got, totalCount, err := r.GetAll(ctx, entities.TreeQuery{})
 
 		// then
 		assert.NoError(t, err)
@@ -148,7 +148,7 @@ func TestTreeRepository_GetAll(t *testing.T) {
 		cancel()
 
 		// when
-		trees, totalCount, err := r.GetAll(ctx, shared.TreeQuery{})
+		trees, totalCount, err := r.GetAll(ctx, entities.TreeQuery{})
 
 		// then
 		assert.Error(t, err)
@@ -162,14 +162,14 @@ func TestTreeRepository_GetAll(t *testing.T) {
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
 		r := NewTreeRepository(suite.Store, mappers)
 
-		filteredTrees := []*shared.Tree{testTrees[1], testTrees[2]}
+		filteredTrees := []*entities.Tree{testTrees[1], testTrees[2]}
 
 		ctx := context.WithValue(context.Background(), "page", int32(1))
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
 		// when
-		trees, totalCount, err := r.GetAll(ctx, shared.TreeQuery{
-			WateringStatuses: []shared.WateringStatus{shared.WateringStatusBad, shared.WateringStatusGood},
+		trees, totalCount, err := r.GetAll(ctx, entities.TreeQuery{
+			WateringStatuses: []entities.WateringStatus{entities.WateringStatusBad, entities.WateringStatusGood},
 			PlantingYears:    []int32{2022, 2023},
 			HasCluster:       utils.P(true),
 		})
@@ -192,7 +192,7 @@ func TestTreeRepository_GetCount(t *testing.T) {
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
 		r := NewTreeRepository(suite.Store, mappers)
 		// when
-		totalCount, err := r.GetCount(context.Background(), shared.TreeQuery{})
+		totalCount, err := r.GetCount(context.Background(), entities.TreeQuery{})
 
 		// then
 		assert.NoError(t, err)
@@ -206,7 +206,7 @@ func TestTreeRepository_GetCount(t *testing.T) {
 		cancel()
 
 		// when
-		totalCount, err := r.GetCount(ctx, shared.TreeQuery{})
+		totalCount, err := r.GetCount(ctx, entities.TreeQuery{})
 
 		// then
 		assert.Error(t, err)
@@ -313,7 +313,7 @@ func TestTreeRepository_GetBySensorID(t *testing.T) {
 	t.Run("should return the correct tree by linked sensor ID", func(t *testing.T) {
 		// given
 		r := NewTreeRepository(suite.Store, mappers)
-		sensorID := shared.MustNewSensorID("sensor-1")
+		sensorID := entities.MustNewSensorID("sensor-1")
 
 		// when
 		tree, err := r.GetBySensorID(context.Background(), sensorID)
@@ -328,7 +328,7 @@ func TestTreeRepository_GetBySensorID(t *testing.T) {
 	t.Run("should return error when sensor is not found", func(t *testing.T) {
 		// given
 		r := NewTreeRepository(suite.Store, mappers)
-		sensorID := shared.MustNewSensorID("sensor-notFound")
+		sensorID := entities.MustNewSensorID("sensor-notFound")
 
 		// when
 		tree, err := r.GetBySensorID(context.Background(), sensorID)
@@ -342,7 +342,7 @@ func TestTreeRepository_GetBySensorID(t *testing.T) {
 	t.Run("should return error when tree is not found", func(t *testing.T) {
 		// given
 		r := NewTreeRepository(suite.Store, mappers)
-		sensorID := shared.MustNewSensorID("sensor-4")
+		sensorID := entities.MustNewSensorID("sensor-4")
 
 		// when
 		tree, err := r.GetBySensorID(context.Background(), sensorID)
@@ -358,7 +358,7 @@ func TestTreeRepository_GetBySensorID(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		sensorID := shared.MustNewSensorID("sensor-1")
+		sensorID := entities.MustNewSensorID("sensor-1")
 
 		// when
 		trees, err := r.GetBySensorID(ctx, sensorID)
@@ -378,7 +378,7 @@ func TestTreeRepository_GetBySensorIDs(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		got, err := r.GetBySensorIDs(context.Background(), shared.MustNewSensorID("sensor-1"), shared.MustNewSensorID("sensor-2"))
+		got, err := r.GetBySensorIDs(context.Background(), entities.MustNewSensorID("sensor-1"), entities.MustNewSensorID("sensor-2"))
 
 		// then
 		assert.NoError(t, err)
@@ -390,7 +390,7 @@ func TestTreeRepository_GetBySensorIDs(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		got, err := r.GetBySensorIDs(context.Background(), shared.MustNewSensorID("sensor-notFound"), shared.MustNewSensorID("sensor-notExists"))
+		got, err := r.GetBySensorIDs(context.Background(), entities.MustNewSensorID("sensor-notFound"), entities.MustNewSensorID("sensor-notExists"))
 
 		// then
 		assert.NoError(t, err)
@@ -402,7 +402,7 @@ func TestTreeRepository_GetBySensorIDs(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		got, err := r.GetBySensorIDs(context.Background(), shared.MustNewSensorID("sensor-1"), shared.MustNewSensorID("sensor-notExists"))
+		got, err := r.GetBySensorIDs(context.Background(), entities.MustNewSensorID("sensor-1"), entities.MustNewSensorID("sensor-notExists"))
 
 		// then
 		assert.NoError(t, err)
@@ -534,7 +534,7 @@ func TestTreeRepository_GetByCoordinates(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		tree, err := r.GetByCoordinates(context.Background(), shared.MustNewCoordinate(0.0, 0.0))
+		tree, err := r.GetByCoordinates(context.Background(), entities.MustNewCoordinate(0.0, 0.0))
 
 		// then
 		assert.Error(t, err)
@@ -548,7 +548,7 @@ func TestTreeRepository_GetByCoordinates(t *testing.T) {
 		cancel()
 
 		// when
-		tree, err := r.GetByCoordinates(ctx, shared.MustNewCoordinate(54.821248093376, 9.485710628517))
+		tree, err := r.GetByCoordinates(ctx, entities.MustNewCoordinate(54.821248093376, 9.485710628517))
 
 		// then
 		assert.Error(t, err)
@@ -584,7 +584,7 @@ func TestTreeRepository_GetSensorByTreeID(t *testing.T) {
 
 		// then
 		assert.Error(t, err)
-		// assert.ErrorIs(t, err, shared.ErrSensorNotFound, "Expected ErrSensorNotFound error")
+		// assert.ErrorIs(t, err, entities.ErrSensorNotFound, "Expected ErrSensorNotFound error")
 		assert.Nil(t, sensor, "Sensor should be nil when not found")
 	})
 
@@ -673,7 +673,7 @@ func TestTreeRepository_GetTreeClusterByTreeID(t *testing.T) {
 
 		// then
 		assert.Error(t, err)
-		// assert.ErrorIs(t, err, shared.ErrTreeClusterNotFound, "Expected ErrTreeClusterNotFound error")
+		// assert.ErrorIs(t, err, entities.ErrTreeClusterNotFound, "Expected ErrTreeClusterNotFound error")
 		assert.Nil(t, treeCluster, "TreeCluster should be nil when not found")
 	})
 
@@ -750,7 +750,7 @@ func TestTreeRepository_FindNearestTree(t *testing.T) {
 		sensorLongitude := 9.487169
 
 		// when
-		nearestTree, errFind := r.FindNearestTree(context.Background(), shared.MustNewCoordinate(sensorLatitude, sensorLongitude))
+		nearestTree, errFind := r.FindNearestTree(context.Background(), entities.MustNewCoordinate(sensorLatitude, sensorLongitude))
 
 		// then
 		assert.NoError(t, errFind, "Expected no error while finding the nearest tree")
@@ -768,7 +768,7 @@ func TestTreeRepository_FindNearestTree(t *testing.T) {
 		sensorLongitude := 9.487200
 
 		// when
-		nearestTree, err := r.FindNearestTree(context.Background(), shared.MustNewCoordinate(sensorLatitude, sensorLongitude))
+		nearestTree, err := r.FindNearestTree(context.Background(), entities.MustNewCoordinate(sensorLatitude, sensorLongitude))
 
 		// then
 		assert.Error(t, err, "Expected error while finding the nearest tree")
@@ -785,7 +785,7 @@ func TestTreeRepository_FindNearestTree(t *testing.T) {
 		cancel()
 
 		// when
-		tree, err := r.FindNearestTree(ctx, shared.MustNewCoordinate(54.82124518093376, 9.485702120628517))
+		tree, err := r.FindNearestTree(ctx, entities.MustNewCoordinate(54.82124518093376, 9.485702120628517))
 
 		// then
 		assert.Error(t, err, "Expected error when context is canceled")
@@ -804,7 +804,7 @@ func TestTreeRepository_FindNearestTrees(t *testing.T) {
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
 		r := NewTreeRepository(suite.Store, mappers)
 
-		got, err := r.FindNearestTrees(context.Background(), shared.MustNewCoordinate(queryLat, queryLng), 500, 10)
+		got, err := r.FindNearestTrees(context.Background(), entities.MustNewCoordinate(queryLat, queryLng), 500, 10)
 
 		assert.NoError(t, err)
 		assert.NotEmpty(t, got)
@@ -819,7 +819,7 @@ func TestTreeRepository_FindNearestTrees(t *testing.T) {
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
 		r := NewTreeRepository(suite.Store, mappers)
 
-		got, err := r.FindNearestTrees(context.Background(), shared.MustNewCoordinate(queryLat, queryLng), 500, 10)
+		got, err := r.FindNearestTrees(context.Background(), entities.MustNewCoordinate(queryLat, queryLng), 500, 10)
 		assert.NoError(t, err)
 
 		var hasTreeWithSensor, hasTreeWithoutSensor bool
@@ -839,7 +839,7 @@ func TestTreeRepository_FindNearestTrees(t *testing.T) {
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
 		r := NewTreeRepository(suite.Store, mappers)
 
-		got, err := r.FindNearestTrees(context.Background(), shared.MustNewCoordinate(queryLat, queryLng), 10000, 1)
+		got, err := r.FindNearestTrees(context.Background(), entities.MustNewCoordinate(queryLat, queryLng), 10000, 1)
 
 		assert.NoError(t, err)
 		assert.Len(t, got, 1)
@@ -850,7 +850,7 @@ func TestTreeRepository_FindNearestTrees(t *testing.T) {
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
 		r := NewTreeRepository(suite.Store, mappers)
 
-		got, err := r.FindNearestTrees(context.Background(), shared.MustNewCoordinate(0.0, 0.0), 100, 10)
+		got, err := r.FindNearestTrees(context.Background(), entities.MustNewCoordinate(0.0, 0.0), 100, 10)
 
 		assert.NoError(t, err)
 		assert.Empty(t, got)
@@ -863,14 +863,14 @@ func TestTreeRepository_FindNearestTrees(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 
-		got, err := r.FindNearestTrees(ctx, shared.MustNewCoordinate(queryLat, queryLng), 500, 10)
+		got, err := r.FindNearestTrees(ctx, entities.MustNewCoordinate(queryLat, queryLng), 500, 10)
 
 		assert.Error(t, err)
 		assert.Nil(t, got)
 	})
 }
 
-func assertExpectedEqualToTree(t *testing.T, expectedTree, tree *shared.Tree) {
+func assertExpectedEqualToTree(t *testing.T, expectedTree, tree *entities.Tree) {
 	assert.Equal(t, expectedTree.ID, tree.ID, "ID does not match")
 	assert.Equal(t, expectedTree.PlantingYear.Year(), tree.PlantingYear.Year(), "PlantingYear does not match")
 	assert.Equal(t, expectedTree.Species, tree.Species, "Species does not match")
@@ -885,53 +885,53 @@ func assertExpectedEqualToTree(t *testing.T, expectedTree, tree *shared.Tree) {
 }
 
 var (
-	testTrees = []*shared.Tree{
+	testTrees = []*entities.Tree{
 		{
 			ID:             1,
-			PlantingYear:   shared.MustNewPlantingYear(2021),
+			PlantingYear:   entities.MustNewPlantingYear(2021),
 			Species:        "Quercus robur",
 			Number:         "1005",
-			Coordinate:     shared.MustNewCoordinate(54.82124518093376, 9.485702120628517),
+			Coordinate:     entities.MustNewCoordinate(54.82124518093376, 9.485702120628517),
 			WateringStatus: "unknown",
 			Description:    "Sample description 1",
 			LastWatered:    nil,
 		},
 		{
 			ID:             2,
-			PlantingYear:   shared.MustNewPlantingYear(2022),
+			PlantingYear:   entities.MustNewPlantingYear(2022),
 			Species:        "Quercus robur",
 			Number:         "1006",
-			Coordinate:     shared.MustNewCoordinate(54.8215076622281, 9.487153277881877),
+			Coordinate:     entities.MustNewCoordinate(54.8215076622281, 9.487153277881877),
 			WateringStatus: "good",
 			Description:    "Sample description 2",
 			LastWatered:    nil,
 		},
 		{
 			ID:             3,
-			PlantingYear:   shared.MustNewPlantingYear(2023),
+			PlantingYear:   entities.MustNewPlantingYear(2023),
 			Species:        "Betula pendula",
 			Number:         "1007",
-			Coordinate:     shared.MustNewCoordinate(54.78780993841013, 9.444052105200551),
+			Coordinate:     entities.MustNewCoordinate(54.78780993841013, 9.444052105200551),
 			WateringStatus: "bad",
 			Description:    "Sample description 3",
 			LastWatered:    nil,
 		},
 		{
 			ID:             4,
-			PlantingYear:   shared.MustNewPlantingYear(2020),
+			PlantingYear:   entities.MustNewPlantingYear(2020),
 			Species:        "Quercus robur",
 			Number:         "1008",
-			Coordinate:     shared.MustNewCoordinate(54.1000, 9.2000),
+			Coordinate:     entities.MustNewCoordinate(54.1000, 9.2000),
 			WateringStatus: "bad",
 			Description:    "Sample description 4",
 			LastWatered:    nil,
 		},
 		{
 			ID:             5,
-			PlantingYear:   shared.MustNewPlantingYear(2022),
+			PlantingYear:   entities.MustNewPlantingYear(2022),
 			Species:        "Betula pendula",
 			Number:         "1009",
-			Coordinate:     shared.MustNewCoordinate(54.22, 9.11),
+			Coordinate:     entities.MustNewCoordinate(54.22, 9.11),
 			WateringStatus: "bad",
 			Description:    "Sample description 5",
 			Provider:       "test-provider",

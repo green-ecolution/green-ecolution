@@ -3,13 +3,13 @@ package sensor
 import (
 	"context"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils/pagination"
 )
 
-func (r *SensorRepository) GetAll(ctx context.Context, query shared.Query) ([]*shared.Sensor, int64, error) {
+func (r *SensorRepository) GetAll(ctx context.Context, query entities.Query) ([]*entities.Sensor, int64, error) {
 	log := logger.GetLogger(ctx)
 	page, limit, err := pagination.GetValues(ctx)
 	if err != nil {
@@ -22,7 +22,7 @@ func (r *SensorRepository) GetAll(ctx context.Context, query shared.Query) ([]*s
 	}
 
 	if totalCount == 0 {
-		return []*shared.Sensor{}, 0, nil
+		return []*entities.Sensor{}, 0, nil
 	}
 
 	if limit == -1 {
@@ -55,7 +55,7 @@ func (r *SensorRepository) GetAll(ctx context.Context, query shared.Query) ([]*s
 	return data, totalCount, nil
 }
 
-func (r *SensorRepository) GetCount(ctx context.Context, query shared.Query) (int64, error) {
+func (r *SensorRepository) GetCount(ctx context.Context, query entities.Query) (int64, error) {
 	log := logger.GetLogger(ctx)
 	totalCount, err := r.store.GetAllSensorsCount(ctx, query.Provider)
 	if err != nil {
@@ -66,7 +66,7 @@ func (r *SensorRepository) GetCount(ctx context.Context, query shared.Query) (in
 	return totalCount, nil
 }
 
-func (r *SensorRepository) GetAllDataByID(ctx context.Context, id shared.SensorID) ([]*shared.SensorData, error) {
+func (r *SensorRepository) GetAllDataByID(ctx context.Context, id entities.SensorID) ([]*entities.SensorData, error) {
 	log := logger.GetLogger(ctx)
 
 	_, err := r.GetByID(ctx, id)
@@ -90,7 +90,7 @@ func (r *SensorRepository) GetAllDataByID(ctx context.Context, id shared.SensorI
 	return data, nil
 }
 
-func (r *SensorRepository) GetByID(ctx context.Context, id shared.SensorID) (*shared.Sensor, error) {
+func (r *SensorRepository) GetByID(ctx context.Context, id entities.SensorID) (*entities.Sensor, error) {
 	log := logger.GetLogger(ctx)
 	row, err := r.store.GetSensorByID(ctx, id.String())
 	if err != nil {
@@ -111,7 +111,7 @@ func (r *SensorRepository) GetByID(ctx context.Context, id shared.SensorID) (*sh
 	return data, nil
 }
 
-func (r *SensorRepository) GetLatestSensorDataBySensorID(ctx context.Context, id shared.SensorID) (*shared.SensorData, error) {
+func (r *SensorRepository) GetLatestSensorDataBySensorID(ctx context.Context, id entities.SensorID) (*entities.SensorData, error) {
 	log := logger.GetLogger(ctx)
 	data, err := r.store.GetLatestSensorDataBySensorID(ctx, id.String())
 	if err != nil {

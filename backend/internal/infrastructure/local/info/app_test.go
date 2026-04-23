@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func TestGetMapInfo(t *testing.T) {
@@ -41,7 +41,7 @@ func TestGetMapInfo(t *testing.T) {
 		_, err := getMapInfo(cfg)
 
 		// then
-		assert.ErrorIs(t, err, shared.ErrInvalidMapConfig)
+		assert.ErrorIs(t, err, entities.ErrInvalidMapConfig)
 	})
 
 	t.Run("should return error when center is empty", func(t *testing.T) {
@@ -57,7 +57,7 @@ func TestGetMapInfo(t *testing.T) {
 		_, err := getMapInfo(cfg)
 
 		// then
-		assert.ErrorIs(t, err, shared.ErrInvalidMapConfig)
+		assert.ErrorIs(t, err, entities.ErrInvalidMapConfig)
 	})
 
 	t.Run("should return error when center has too many elements", func(t *testing.T) {
@@ -73,7 +73,7 @@ func TestGetMapInfo(t *testing.T) {
 		_, err := getMapInfo(cfg)
 
 		// then
-		assert.ErrorIs(t, err, shared.ErrInvalidMapConfig)
+		assert.ErrorIs(t, err, entities.ErrInvalidMapConfig)
 	})
 
 	t.Run("should return error when bbox has wrong length", func(t *testing.T) {
@@ -89,7 +89,7 @@ func TestGetMapInfo(t *testing.T) {
 		_, err := getMapInfo(cfg)
 
 		// then
-		assert.ErrorIs(t, err, shared.ErrInvalidMapConfig)
+		assert.ErrorIs(t, err, entities.ErrInvalidMapConfig)
 	})
 
 	t.Run("should return error when bbox is empty", func(t *testing.T) {
@@ -105,7 +105,7 @@ func TestGetMapInfo(t *testing.T) {
 		_, err := getMapInfo(cfg)
 
 		// then
-		assert.ErrorIs(t, err, shared.ErrInvalidMapConfig)
+		assert.ErrorIs(t, err, entities.ErrInvalidMapConfig)
 	})
 
 	t.Run("should return error when bbox has too many elements", func(t *testing.T) {
@@ -121,7 +121,7 @@ func TestGetMapInfo(t *testing.T) {
 		_, err := getMapInfo(cfg)
 
 		// then
-		assert.ErrorIs(t, err, shared.ErrInvalidMapConfig)
+		assert.ErrorIs(t, err, entities.ErrInvalidMapConfig)
 	})
 
 	t.Run("should return error when both center and bbox are invalid", func(t *testing.T) {
@@ -137,6 +137,6 @@ func TestGetMapInfo(t *testing.T) {
 		_, err := getMapInfo(cfg)
 
 		// then
-		assert.ErrorIs(t, err, shared.ErrInvalidMapConfig)
+		assert.ErrorIs(t, err, entities.ErrInvalidMapConfig)
 	})
 }

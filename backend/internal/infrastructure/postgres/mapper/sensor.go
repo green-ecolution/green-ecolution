@@ -3,23 +3,23 @@ package mapper
 import (
 	"encoding/json"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	mqtt "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/sensor/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
 type InternalSensorRepoMapper interface {
-	FromSql(src *sqlc.Sensor) (*shared.Sensor, error)
-	FromSqlList(src []*sqlc.Sensor) ([]*shared.Sensor, error)
-	FromSqlSensorData(src *sqlc.SensorDatum) (*shared.SensorData, error)
-	FromSqlSensorDataList(src []*sqlc.SensorDatum) ([]*shared.SensorData, error)
-	FromDomainSensorData(src *shared.MqttPayload) *mqtt.MqttPayload
+	FromSql(src *sqlc.Sensor) (*entities.Sensor, error)
+	FromSqlList(src []*sqlc.Sensor) ([]*entities.Sensor, error)
+	FromSqlSensorData(src *sqlc.SensorDatum) (*entities.SensorData, error)
+	FromSqlSensorDataList(src []*sqlc.SensorDatum) ([]*entities.SensorData, error)
+	FromDomainSensorData(src *entities.MqttPayload) *mqtt.MqttPayload
 }
 
 type InternalSensorRepoMapperImpl struct{}
 
-func (c *InternalSensorRepoMapperImpl) FromSql(source *sqlc.Sensor) (*shared.Sensor, error) {
+func (c *InternalSensorRepoMapperImpl) FromSql(source *sqlc.Sensor) (*entities.Sensor, error) {
 	if source == nil {
 		return nil, nil
 	}
@@ -27,22 +27,22 @@ func (c *InternalSensorRepoMapperImpl) FromSql(source *sqlc.Sensor) (*shared.Sen
 	if err != nil {
 		return nil, err
 	}
-	return &shared.Sensor{
-		ID:             shared.MustNewSensorID(source.ID),
+	return &entities.Sensor{
+		ID:             entities.MustNewSensorID(source.ID),
 		CreatedAt:      source.CreatedAt,
 		UpdatedAt:      source.UpdatedAt,
 		Status:         MapSensorStatus(source.Status),
-		Coordinate:     shared.MustNewCoordinate(source.Latitude, source.Longitude),
+		Coordinate:     entities.MustNewCoordinate(source.Latitude, source.Longitude),
 		Provider:       utils.StringPtrToString(source.Provider),
 		AdditionalInfo: additionalInfo,
 	}, nil
 }
 
-func (c *InternalSensorRepoMapperImpl) FromSqlList(source []*sqlc.Sensor) ([]*shared.Sensor, error) {
+func (c *InternalSensorRepoMapperImpl) FromSqlList(source []*sqlc.Sensor) ([]*entities.Sensor, error) {
 	return utils.MapSliceErr(source, c.FromSql)
 }
 
-func (c *InternalSensorRepoMapperImpl) FromSqlSensorData(source *sqlc.SensorDatum) (*shared.SensorData, error) {
+func (c *InternalSensorRepoMapperImpl) FromSqlSensorData(source *sqlc.SensorDatum) (*entities.SensorData, error) {
 	if source == nil {
 		return nil, nil
 	}
@@ -50,20 +50,20 @@ func (c *InternalSensorRepoMapperImpl) FromSqlSensorData(source *sqlc.SensorDatu
 	if err != nil {
 		return nil, err
 	}
-	return &shared.SensorData{
+	return &entities.SensorData{
 		ID:        source.ID,
-		SensorID:  shared.MustNewSensorID(source.SensorID),
+		SensorID:  entities.MustNewSensorID(source.SensorID),
 		CreatedAt: source.CreatedAt,
 		UpdatedAt: source.UpdatedAt,
 		Data:      data,
 	}, nil
 }
 
-func (c *InternalSensorRepoMapperImpl) FromSqlSensorDataList(source []*sqlc.SensorDatum) ([]*shared.SensorData, error) {
+func (c *InternalSensorRepoMapperImpl) FromSqlSensorDataList(source []*sqlc.SensorDatum) ([]*entities.SensorData, error) {
 	return utils.MapSliceErr(source, c.FromSqlSensorData)
 }
 
-func (c *InternalSensorRepoMapperImpl) FromDomainSensorData(source *shared.MqttPayload) *mqtt.MqttPayload {
+func (c *InternalSensorRepoMapperImpl) FromDomainSensorData(source *entities.MqttPayload) *mqtt.MqttPayload {
 	if source == nil {
 		return nil
 	}
@@ -86,8 +86,8 @@ func (c *InternalSensorRepoMapperImpl) FromDomainSensorData(source *shared.MqttP
 	return result
 }
 
-func MapSensorData(src []byte) (*shared.MqttPayload, error) {
-	var payload shared.MqttPayload
+func MapSensorData(src []byte) (*entities.MqttPayload, error) {
+	var payload entities.MqttPayload
 	err := json.Unmarshal(src, &payload)
 	if err != nil {
 		return nil, err
@@ -95,6 +95,6 @@ func MapSensorData(src []byte) (*shared.MqttPayload, error) {
 	return &payload, nil
 }
 
-func MapSensorStatus(src sqlc.SensorStatus) shared.SensorStatus {
-	return shared.SensorStatus(src)
+func MapSensorStatus(src sqlc.SensorStatus) entities.SensorStatus {
+	return entities.SensorStatus(src)
 }

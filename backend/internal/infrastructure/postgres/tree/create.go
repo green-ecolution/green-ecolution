@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
@@ -12,15 +12,15 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func defaultTree() shared.Tree {
-	return shared.Tree{
+func defaultTree() entities.Tree {
+	return entities.Tree{
 		TreeCluster:    nil,
 		Species:        "",
 		Number:         "",
 		Sensor:         nil,
-		PlantingYear:   shared.PlantingYear{},
-		Coordinate:     shared.MustNewCoordinate(0, 0),
-		WateringStatus: shared.WateringStatusUnknown,
+		PlantingYear:   entities.PlantingYear{},
+		Coordinate:     entities.MustNewCoordinate(0, 0),
+		WateringStatus: entities.WateringStatusUnknown,
 		Description:    "",
 		Provider:       "",
 		AdditionalInfo: nil,
@@ -28,13 +28,13 @@ func defaultTree() shared.Tree {
 	}
 }
 
-func (r *TreeRepository) Create(ctx context.Context, createFn func(*shared.Tree, shared.TreeRepository) (bool, error)) (*shared.Tree, error) {
+func (r *TreeRepository) Create(ctx context.Context, createFn func(*entities.Tree, entities.TreeRepository) (bool, error)) (*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
 	if createFn == nil {
 		return nil, errors.New("createFn is nil")
 	}
 
-	var createdTree *shared.Tree
+	var createdTree *entities.Tree
 	err := r.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewTreeRepository(s, r.TreeMappers)
 		entity := defaultTree()
@@ -75,7 +75,7 @@ func (r *TreeRepository) Create(ctx context.Context, createFn func(*shared.Tree,
 	return createdTree, nil
 }
 
-func (r *TreeRepository) createEntity(ctx context.Context, entity *shared.Tree) (int32, error) {
+func (r *TreeRepository) createEntity(ctx context.Context, entity *entities.Tree) (int32, error) {
 	log := logger.GetLogger(ctx)
 	additionalInfo, err := utils.MapAdditionalInfoToByte(entity.AdditionalInfo)
 	if err != nil {
@@ -127,7 +127,7 @@ func (r *TreeRepository) createEntity(ctx context.Context, entity *shared.Tree) 
 	return id, nil
 }
 
-func (r *TreeRepository) validateTreeEntity(tree *shared.Tree) error {
+func (r *TreeRepository) validateTreeEntity(tree *entities.Tree) error {
 	if tree == nil {
 		return errors.New("tree is nil")
 	}

@@ -1,19 +1,19 @@
 package mapper
 
 import (
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
 type InternalTreeRepoMapper interface {
-	FromSql(*sqlc.Tree) (*shared.Tree, error)
-	FromSqlList([]*sqlc.Tree) ([]*shared.Tree, error)
+	FromSql(*sqlc.Tree) (*entities.Tree, error)
+	FromSqlList([]*sqlc.Tree) ([]*entities.Tree, error)
 }
 
 type InternalTreeRepoMapperImpl struct{}
 
-func (c *InternalTreeRepoMapperImpl) FromSql(source *sqlc.Tree) (*shared.Tree, error) {
+func (c *InternalTreeRepoMapperImpl) FromSql(source *sqlc.Tree) (*entities.Tree, error) {
 	if source == nil {
 		return nil, nil
 	}
@@ -21,14 +21,14 @@ func (c *InternalTreeRepoMapperImpl) FromSql(source *sqlc.Tree) (*shared.Tree, e
 	if err != nil {
 		return nil, err
 	}
-	return &shared.Tree{
+	return &entities.Tree{
 		ID:             source.ID,
 		CreatedAt:      source.CreatedAt,
 		UpdatedAt:      source.UpdatedAt,
 		PlantingYear:   mapPlantingYear(source.PlantingYear),
 		Species:        source.Species,
 		Number:         source.Number,
-		Coordinate:     shared.MustNewCoordinate(source.Latitude, source.Longitude),
+		Coordinate:     entities.MustNewCoordinate(source.Latitude, source.Longitude),
 		WateringStatus: MapWateringStatus(source.WateringStatus),
 		Description:    utils.StringPtrToString(source.Description),
 		LastWatered:    timePtrToTimePtr(source.LastWatered),
@@ -37,13 +37,13 @@ func (c *InternalTreeRepoMapperImpl) FromSql(source *sqlc.Tree) (*shared.Tree, e
 	}, nil
 }
 
-func (c *InternalTreeRepoMapperImpl) FromSqlList(source []*sqlc.Tree) ([]*shared.Tree, error) {
+func (c *InternalTreeRepoMapperImpl) FromSqlList(source []*sqlc.Tree) ([]*entities.Tree, error) {
 	return utils.MapSliceErr(source, c.FromSql)
 }
 
-func mapPlantingYear(year int32) shared.PlantingYear {
+func mapPlantingYear(year int32) entities.PlantingYear {
 	if year <= 0 {
-		return shared.PlantingYear{}
+		return entities.PlantingYear{}
 	}
-	return shared.MustNewPlantingYear(year)
+	return entities.MustNewPlantingYear(year)
 }

@@ -15,11 +15,11 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/vehicle"
 	wateringplan "github.com/green-ecolution/green-ecolution/backend/internal/application/watering"
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 )
 
-func NewService(cfg *config.Config, repos *shared.Repository, eventMananger *worker.EventManager) *ports.Services {
+func NewService(cfg *config.Config, repos *entities.Repository, eventMananger *worker.EventManager) *ports.Services {
 	var authSvc ports.AuthService
 	var pluginSvc ports.PluginService
 	if cfg.IdentityAuth.Enable {

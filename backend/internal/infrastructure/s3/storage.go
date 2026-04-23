@@ -5,10 +5,10 @@ import (
 	"log/slog"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
-func NewRepository(cfg *config.Config) (*shared.Repository, error) {
+func NewRepository(cfg *config.Config) (*entities.Repository, error) {
 	slog.Info("creating s3 repository", "bucket_name", cfg.S3.RouteGpx.Bucket, "endpoint", cfg.S3.Endpoint, "region", cfg.S3.Region, "use_ssl", cfg.S3.UseSSL)
 	gpxBucket, err := NewS3Repository(&S3RepoCfg{
 		bucketName:      cfg.S3.RouteGpx.Bucket,
@@ -25,11 +25,11 @@ func NewRepository(cfg *config.Config) (*shared.Repository, error) {
 	bucketExists, err := gpxBucket.BucketExists(context.Background())
 	if err != nil || !bucketExists {
 		slog.Error("bucket don't exists", "error", err, "bucket_name", gpxBucket.cfg.bucketName)
-		return nil, shared.ErrBucketNotExists
+		return nil, entities.ErrBucketNotExists
 	}
 
 	slog.Info("successfully initialized s3 repository", "bucket_name", gpxBucket.cfg.bucketName)
-	return &shared.Repository{
+	return &entities.Repository{
 		GpxBucket: gpxBucket,
 	}, nil
 }

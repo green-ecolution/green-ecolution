@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/testutils"
 )
@@ -55,18 +55,18 @@ func TestWateringPlanRepository_Delete(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		gotBeforeTransporter, errBeforeTransporter := r.GetLinkedVehicleByIDAndType(context.Background(), 1, shared.VehicleTypeTransporter)
+		gotBeforeTransporter, errBeforeTransporter := r.GetLinkedVehicleByIDAndType(context.Background(), 1, entities.VehicleTypeTransporter)
 		assert.NoError(t, errBeforeTransporter)
 		assert.NotNil(t, gotBeforeTransporter)
 
-		gotBeforeTrailer, errBeforeTrailer := r.GetLinkedVehicleByIDAndType(context.Background(), 1, shared.VehicleTypeTrailer)
+		gotBeforeTrailer, errBeforeTrailer := r.GetLinkedVehicleByIDAndType(context.Background(), 1, entities.VehicleTypeTrailer)
 		assert.NoError(t, errBeforeTrailer)
 		assert.NotNil(t, gotBeforeTrailer)
 
 		// when
 		err := r.Delete(context.Background(), 1)
-		transporter, errGotTransporter := r.GetLinkedVehicleByIDAndType(context.Background(), 1, shared.VehicleTypeTransporter)
-		trailer, errGotTrailer := r.GetLinkedVehicleByIDAndType(context.Background(), 1, shared.VehicleTypeTrailer)
+		transporter, errGotTransporter := r.GetLinkedVehicleByIDAndType(context.Background(), 1, entities.VehicleTypeTransporter)
+		trailer, errGotTrailer := r.GetLinkedVehicleByIDAndType(context.Background(), 1, entities.VehicleTypeTrailer)
 
 		// then
 		assert.NoError(t, err)
@@ -92,7 +92,7 @@ func TestWateringPlanRepository_Delete(t *testing.T) {
 
 		// then
 		assert.NoError(t, err)
-		assert.Equal(t, []*shared.TreeCluster{}, treecluster)
+		assert.Equal(t, []*entities.TreeCluster{}, treecluster)
 	})
 
 	t.Run("should delete watering plan and linked users in pivot table", func(t *testing.T) {

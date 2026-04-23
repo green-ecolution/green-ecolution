@@ -9,23 +9,23 @@ import (
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 )
 
 type TreeService struct {
-	treeRepo        shared.TreeRepository
-	sensorRepo      shared.SensorRepository
-	treeClusterRepo shared.TreeClusterRepository
+	treeRepo        entities.TreeRepository
+	sensorRepo      entities.SensorRepository
+	treeClusterRepo entities.TreeClusterRepository
 	eventManager    *worker.EventManager
 	mapCfg          config.MapConfig
 }
 
 func NewTreeService(
-	repoTree shared.TreeRepository,
-	repoSensor shared.SensorRepository,
-	treeClusterRepo shared.TreeClusterRepository,
+	repoTree entities.TreeRepository,
+	repoSensor entities.SensorRepository,
+	treeClusterRepo entities.TreeClusterRepository,
 	eventManager *worker.EventManager,
 	mapCfg config.MapConfig,
 ) ports.TreeService {
@@ -38,7 +38,7 @@ func NewTreeService(
 	}
 }
 
-func (s *TreeService) GetAll(ctx context.Context, query shared.TreeQuery) ([]*shared.Tree, int64, error) {
+func (s *TreeService) GetAll(ctx context.Context, query entities.TreeQuery) ([]*entities.Tree, int64, error) {
 	log := logger.GetLogger(ctx)
 	trees, totalCount, err := s.treeRepo.GetAll(ctx, query)
 	if err != nil {
@@ -49,7 +49,7 @@ func (s *TreeService) GetAll(ctx context.Context, query shared.TreeQuery) ([]*sh
 	return trees, totalCount, nil
 }
 
-func (s *TreeService) GetByID(ctx context.Context, id int32) (*shared.Tree, error) {
+func (s *TreeService) GetByID(ctx context.Context, id int32) (*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
 	tr, err := s.treeRepo.GetByID(ctx, id)
 	if err != nil {
@@ -60,7 +60,7 @@ func (s *TreeService) GetByID(ctx context.Context, id int32) (*shared.Tree, erro
 	return tr, nil
 }
 
-func (s *TreeService) GetBySensorID(ctx context.Context, id shared.SensorID) (*shared.Tree, error) {
+func (s *TreeService) GetBySensorID(ctx context.Context, id entities.SensorID) (*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
 	tr, err := s.treeRepo.GetBySensorID(ctx, id)
 	if err != nil {
@@ -71,7 +71,7 @@ func (s *TreeService) GetBySensorID(ctx context.Context, id shared.SensorID) (*s
 	return tr, nil
 }
 
-func (s *TreeService) GetNearestTrees(ctx context.Context, coord shared.Coordinate, limit int32) ([]*shared.TreeWithDistance, error) {
+func (s *TreeService) GetNearestTrees(ctx context.Context, coord entities.Coordinate, limit int32) ([]*entities.TreeWithDistance, error) {
 	log := logger.GetLogger(ctx)
 
 	if limit <= 0 {
@@ -90,38 +90,38 @@ func (s *TreeService) GetNearestTrees(ctx context.Context, coord shared.Coordina
 	return trees, nil
 }
 
-func (s *TreeService) publishUpdateTreeEvent(ctx context.Context, prevTree, updatedTree, prevTreeOfSensor *shared.Tree) {
+func (s *TreeService) publishUpdateTreeEvent(ctx context.Context, prevTree, updatedTree, prevTreeOfSensor *entities.Tree) {
 	log := logger.GetLogger(ctx)
-	log.Debug("publish new event", "event", shared.EventTypeUpdateTree, "service", "TreeService")
-	event := shared.NewEventUpdateTree(prevTree, updatedTree, prevTreeOfSensor)
+	log.Debug("publish new event", "event", entities.EventTypeUpdateTree, "service", "TreeService")
+	event := entities.NewEventUpdateTree(prevTree, updatedTree, prevTreeOfSensor)
 	if err := s.eventManager.Publish(ctx, event); err != nil {
 		log.Error("error while sending event after updating tree", "err", err, "tree_id", prevTree.ID)
 	}
 }
 
-func (s *TreeService) publishCreateTreeEvent(ctx context.Context, newTree, prevTreeOfSensor *shared.Tree) {
+func (s *TreeService) publishCreateTreeEvent(ctx context.Context, newTree, prevTreeOfSensor *entities.Tree) {
 	log := logger.GetLogger(ctx)
-	log.Debug("publish new event", "event", shared.EventTypeCreateTree, "service", "TreeService")
-	event := shared.NewEventCreateTree(newTree, prevTreeOfSensor)
+	log.Debug("publish new event", "event", entities.EventTypeCreateTree, "service", "TreeService")
+	event := entities.NewEventCreateTree(newTree, prevTreeOfSensor)
 	if err := s.eventManager.Publish(ctx, event); err != nil {
 		log.Error("error while sending event after creating tree", "err", err, "tree_id", newTree.ID)
 	}
 }
 
-func (s *TreeService) publishDeleteTreeEvent(ctx context.Context, prevTree *shared.Tree) {
+func (s *TreeService) publishDeleteTreeEvent(ctx context.Context, prevTree *entities.Tree) {
 	log := logger.GetLogger(ctx)
-	log.Debug("publish new event", "event", shared.EventTypeDeleteTree, "service", "TreeService")
-	event := shared.NewEventDeleteTree(prevTree)
+	log.Debug("publish new event", "event", entities.EventTypeDeleteTree, "service", "TreeService")
+	event := entities.NewEventDeleteTree(prevTree)
 	if err := s.eventManager.Publish(ctx, event); err != nil {
 		log.Error("error while sending event after deleting tree", "err", err, "tree_id", prevTree.ID)
 	}
 }
 
-func (s *TreeService) Create(ctx context.Context, treeCreate *shared.TreeCreate) (*shared.Tree, error) {
+func (s *TreeService) Create(ctx context.Context, treeCreate *entities.TreeCreate) (*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
 
-	var prevTreeOfSensor *shared.Tree
-	newTree, err := s.treeRepo.Create(ctx, func(tree *shared.Tree, repo shared.TreeRepository) (bool, error) {
+	var prevTreeOfSensor *entities.Tree
+	newTree, err := s.treeRepo.Create(ctx, func(tree *entities.Tree, repo entities.TreeRepository) (bool, error) {
 		tree.PlantingYear = treeCreate.PlantingYear
 		tree.Species = treeCreate.Species
 		tree.Number = treeCreate.Number
@@ -190,7 +190,7 @@ func (s *TreeService) Delete(ctx context.Context, id int32) error {
 	return nil
 }
 
-func (s *TreeService) Update(ctx context.Context, id int32, tu *shared.TreeUpdate) (*shared.Tree, error) {
+func (s *TreeService) Update(ctx context.Context, id int32, tu *entities.TreeUpdate) (*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
 
 	prevTree, err := s.treeRepo.GetByID(ctx, id)
@@ -199,8 +199,8 @@ func (s *TreeService) Update(ctx context.Context, id int32, tu *shared.TreeUpdat
 		return nil, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
 	}
 
-	var prevTreeOfSensor *shared.Tree
-	updatedTree, err := s.treeRepo.Update(ctx, id, func(tree *shared.Tree, repo shared.TreeRepository) (bool, error) {
+	var prevTreeOfSensor *entities.Tree
+	updatedTree, err := s.treeRepo.Update(ctx, id, func(tree *entities.Tree, repo entities.TreeRepository) (bool, error) {
 		tree.PlantingYear = tu.PlantingYear
 		tree.Species = tu.Species
 		tree.Number = tu.Number
@@ -259,7 +259,7 @@ func (s *TreeService) Update(ctx context.Context, id int32, tu *shared.TreeUpdat
 
 func (s *TreeService) UpdateWateringStatuses(ctx context.Context) error {
 	log := logger.GetLogger(ctx)
-	trees, _, err := s.treeRepo.GetAll(ctx, shared.TreeQuery{})
+	trees, _, err := s.treeRepo.GetAll(ctx, entities.TreeQuery{})
 	if err != nil {
 		log.Error("failed to fetch trees", "error", err)
 		return err
@@ -269,7 +269,7 @@ func (s *TreeService) UpdateWateringStatuses(ctx context.Context) error {
 	for _, tree := range trees {
 		if tree.IsWateringStatusExpired(cutoffTime) {
 			wateringStatus, hasChanged, err := tree.RefreshWateringStatus()
-			if errors.Is(err, shared.ErrNoSensorData) {
+			if errors.Is(err, entities.ErrNoSensorData) {
 				continue
 			}
 			if err != nil {
@@ -277,7 +277,7 @@ func (s *TreeService) UpdateWateringStatuses(ctx context.Context) error {
 			}
 
 			if hasChanged {
-				_, err = s.treeRepo.Update(ctx, tree.ID, func(tr *shared.Tree, _ shared.TreeRepository) (bool, error) {
+				_, err = s.treeRepo.Update(ctx, tree.ID, func(tr *entities.Tree, _ entities.TreeRepository) (bool, error) {
 					tr.WateringStatus = wateringStatus
 					return true, nil
 				})

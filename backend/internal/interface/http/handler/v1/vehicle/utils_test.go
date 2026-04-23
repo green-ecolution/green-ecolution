@@ -3,24 +3,24 @@ package vehicle_test
 import (
 	"time"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	serverEntities "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 )
 
 var (
 	now = time.Now()
 
-	TestVehicle = &shared.Vehicle{
+	TestVehicle = &entities.Vehicle{
 		ID:          1,
 		CreatedAt:   now,
 		UpdatedAt:   now,
 		NumberPlate: "FL TBZ 123",
 		Description: "Test description",
-		Status:      shared.VehicleStatusActive,
-		Type:        shared.VehicleTypeTrailer,
+		Status:      entities.VehicleStatusActive,
+		Type:        entities.VehicleTypeTrailer,
 	}
 
-	TestVehicles = []*shared.Vehicle{
+	TestVehicles = []*entities.Vehicle{
 		TestVehicle,
 		{
 			ID:            2,
@@ -28,9 +28,9 @@ var (
 			UpdatedAt:     now,
 			NumberPlate:   "FL TBZ 3456",
 			Description:   "Test description",
-			Status:        shared.VehicleStatusNotAvailable,
-			Type:          shared.VehicleTypeTransporter,
-			WaterCapacity: shared.MustNewWaterCapacity(1000.5),
+			Status:        entities.VehicleStatusNotAvailable,
+			Type:          entities.VehicleTypeTransporter,
+			WaterCapacity: entities.MustNewWaterCapacity(1000.5),
 		},
 	}
 

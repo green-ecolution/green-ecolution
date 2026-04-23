@@ -7,13 +7,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils/pagination"
 )
 
-func (w *WateringPlanRepository) GetAll(ctx context.Context, query shared.Query) ([]*shared.WateringPlan, int64, error) {
+func (w *WateringPlanRepository) GetAll(ctx context.Context, query entities.Query) ([]*entities.WateringPlan, int64, error) {
 	log := logger.GetLogger(ctx)
 	page, limit, err := pagination.GetValues(ctx)
 	if err != nil {
@@ -26,7 +26,7 @@ func (w *WateringPlanRepository) GetAll(ctx context.Context, query shared.Query)
 	}
 
 	if totalCount == 0 {
-		return []*shared.WateringPlan{}, 0, nil
+		return []*entities.WateringPlan{}, 0, nil
 	}
 
 	if limit == -1 {
@@ -60,7 +60,7 @@ func (w *WateringPlanRepository) GetAll(ctx context.Context, query shared.Query)
 	return data, totalCount, nil
 }
 
-func (w *WateringPlanRepository) GetCount(ctx context.Context, query shared.Query) (int64, error) {
+func (w *WateringPlanRepository) GetCount(ctx context.Context, query entities.Query) (int64, error) {
 	log := logger.GetLogger(ctx)
 	totalCount, err := w.store.GetAllWateringPlansCount(ctx, query.Provider)
 	if err != nil {
@@ -71,7 +71,7 @@ func (w *WateringPlanRepository) GetCount(ctx context.Context, query shared.Quer
 	return totalCount, nil
 }
 
-func (w *WateringPlanRepository) GetByID(ctx context.Context, id int32) (*shared.WateringPlan, error) {
+func (w *WateringPlanRepository) GetByID(ctx context.Context, id int32) (*entities.WateringPlan, error) {
 	log := logger.GetLogger(ctx)
 	row, err := w.store.GetWateringPlanByID(ctx, id)
 	if err != nil {
@@ -92,7 +92,7 @@ func (w *WateringPlanRepository) GetByID(ctx context.Context, id int32) (*shared
 	return wp, nil
 }
 
-func (w *WateringPlanRepository) GetLinkedVehicleByIDAndType(ctx context.Context, id int32, vehicleType shared.VehicleType) (*shared.Vehicle, error) {
+func (w *WateringPlanRepository) GetLinkedVehicleByIDAndType(ctx context.Context, id int32, vehicleType entities.VehicleType) (*entities.Vehicle, error) {
 	log := logger.GetLogger(ctx)
 	row, err := w.store.GetVehicleByWateringPlanID(ctx, &sqlc.GetVehicleByWateringPlanIDParams{
 		WateringPlanID: id,
@@ -113,7 +113,7 @@ func (w *WateringPlanRepository) GetLinkedVehicleByIDAndType(ctx context.Context
 	return vehicle, nil
 }
 
-func (w *WateringPlanRepository) GetLinkedTreeClustersByID(ctx context.Context, id int32) ([]*shared.TreeCluster, error) {
+func (w *WateringPlanRepository) GetLinkedTreeClustersByID(ctx context.Context, id int32) ([]*entities.TreeCluster, error) {
 	log := logger.GetLogger(ctx)
 	rows, err := w.store.GetTreeClustersByWateringPlanID(ctx, id)
 	if err != nil {
@@ -136,7 +136,7 @@ func (w *WateringPlanRepository) GetLinkedTreeClustersByID(ctx context.Context, 
 	return tc, nil
 }
 
-func (w *WateringPlanRepository) GetEvaluationValues(ctx context.Context, id int32) ([]*shared.EvaluationValue, error) {
+func (w *WateringPlanRepository) GetEvaluationValues(ctx context.Context, id int32) ([]*entities.EvaluationValue, error) {
 	log := logger.GetLogger(ctx)
 	rows, err := w.store.GetAllTreeClusterWateringPlanByID(ctx, id)
 	if err != nil {
@@ -185,7 +185,7 @@ func (w *WateringPlanRepository) GetAllUserCount(ctx context.Context) (int64, er
 	return userCount, nil
 }
 
-func (w *WateringPlanRepository) mapFields(ctx context.Context, wp *shared.WateringPlan) error {
+func (w *WateringPlanRepository) mapFields(ctx context.Context, wp *entities.WateringPlan) error {
 	log := logger.GetLogger(ctx)
 	var err error
 
@@ -195,13 +195,13 @@ func (w *WateringPlanRepository) mapFields(ctx context.Context, wp *shared.Water
 		return w.store.MapError(err, sqlc.WateringPlan{})
 	}
 
-	wp.Transporter, err = w.GetLinkedVehicleByIDAndType(ctx, wp.ID, shared.VehicleTypeTransporter)
+	wp.Transporter, err = w.GetLinkedVehicleByIDAndType(ctx, wp.ID, entities.VehicleTypeTransporter)
 	if err != nil {
 		log.Debug("failed to get linked transporter by watering plan id", "error", err, "watering_plan_id", wp.ID)
 		return w.store.MapError(err, sqlc.WateringPlan{})
 	}
 
-	wp.Trailer, err = w.GetLinkedVehicleByIDAndType(ctx, wp.ID, shared.VehicleTypeTrailer)
+	wp.Trailer, err = w.GetLinkedVehicleByIDAndType(ctx, wp.ID, entities.VehicleTypeTrailer)
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
 			log.Debug("failed to get linked trailer by watering plan id", "error", err, "watering_plan_id", wp.ID)
@@ -217,14 +217,14 @@ func (w *WateringPlanRepository) mapFields(ctx context.Context, wp *shared.Water
 	}
 
 	// Only load evaluation values if the watering plan is set to »finished«
-	if wp.Status == shared.WateringPlanStatusFinished {
+	if wp.Status == entities.WateringPlanStatusFinished {
 		wp.Evaluation, err = w.GetEvaluationValues(ctx, wp.ID)
 		if err != nil {
 			log.Debug("failed to get evaluation values by watering plan id", "error", err, "watering_plan_id", wp.ID)
 			return w.store.MapError(err, sqlc.WateringPlan{})
 		}
 	} else {
-		wp.Evaluation = []*shared.EvaluationValue{}
+		wp.Evaluation = []*entities.EvaluationValue{}
 	}
 
 	return nil

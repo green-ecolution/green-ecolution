@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	svcMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func TestUpdateTreeSubsciber(t *testing.T) {
@@ -16,7 +16,7 @@ func TestUpdateTreeSubsciber(t *testing.T) {
 		// given
 		tcSvc := svcMock.NewMockTreeClusterService(t)
 		sub := NewUpdateTreeSubscriber(tcSvc)
-		event := shared.NewEventUpdateTree(nil, nil, nil)
+		event := entities.NewEventUpdateTree(nil, nil, nil)
 
 		tcSvc.EXPECT().HandleUpdateTree(mock.Anything, &event).Return(nil)
 
@@ -33,7 +33,7 @@ func TestUpdateTreeSubsciber(t *testing.T) {
 		// given
 		tcSvc := svcMock.NewMockTreeClusterService(t)
 		sub := NewCreateTreeSubscriber(tcSvc)
-		event := shared.NewEventCreateTree(nil, nil)
+		event := entities.NewEventCreateTree(nil, nil)
 
 		tcSvc.EXPECT().HandleCreateTree(mock.Anything, &event).Return(nil)
 
@@ -50,7 +50,7 @@ func TestUpdateTreeSubsciber(t *testing.T) {
 		// given
 		tcSvc := svcMock.NewMockTreeClusterService(t)
 		sub := NewDeleteTreeSubscriber(tcSvc)
-		event := shared.NewEventDeleteTree(nil)
+		event := entities.NewEventDeleteTree(nil)
 
 		tcSvc.EXPECT().HandleDeleteTree(mock.Anything, &event).Return(nil)
 
@@ -68,7 +68,7 @@ func TestUpdateTreeSubsciber(t *testing.T) {
 		tcSvc := svcMock.NewMockTreeClusterService(t)
 		tSvc := svcMock.NewMockTreeService(t)
 		sub := NewSensorDataSubscriber(tcSvc, tSvc)
-		event := shared.NewEventSensorData(nil)
+		event := entities.NewEventSensorData(nil)
 
 		tSvc.EXPECT().HandleNewSensorData(mock.Anything, &event).Return(nil)
 		tcSvc.EXPECT().HandleNewSensorData(mock.Anything, &event).Return(nil)
@@ -86,7 +86,7 @@ func TestUpdateTreeSubsciber(t *testing.T) {
 		// given
 		tcSvc := svcMock.NewMockTreeClusterService(t)
 		sub := NewUpdateWateringPlanSubscriber(tcSvc)
-		event := shared.NewEventUpdateWateringPlan(nil, nil)
+		event := entities.NewEventUpdateWateringPlan(nil, nil)
 
 		tcSvc.EXPECT().HandleUpdateWateringPlan(mock.Anything, &event).Return(nil)
 

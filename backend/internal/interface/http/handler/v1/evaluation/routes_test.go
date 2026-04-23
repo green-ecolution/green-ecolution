@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/evaluation"
 )
 
@@ -23,7 +23,7 @@ func TestRegisterRoutes(t *testing.T) {
 
 			mockEvaluationService.EXPECT().GetEvaluation(
 				mock.Anything,
-			).Return(&shared.Evaluation{}, nil)
+			).Return(&entities.Evaluation{}, nil)
 
 			// when
 			req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)

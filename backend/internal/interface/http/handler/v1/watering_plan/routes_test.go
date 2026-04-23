@@ -7,13 +7,12 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	wateringplan "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/watering_plan"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/middleware"
 )
@@ -31,7 +30,7 @@ func TestRegisterRoutes(t *testing.T) {
 
 			mockWateringPlanService.EXPECT().GetAll(
 				mock.Anything,
-				shared.Query{},
+				entities.Query{},
 			).Return(TestWateringPlans, int64(len(TestWateringPlans)), nil)
 
 			// when
@@ -51,7 +50,7 @@ func TestRegisterRoutes(t *testing.T) {
 
 			mockWateringPlanService.EXPECT().Create(
 				mock.Anything,
-				mock.AnythingOfType("*shared.WateringPlanCreate"),
+				mock.AnythingOfType("*entities.WateringPlanCreate"),
 			).Return(TestWateringPlans[0], nil)
 
 			// when

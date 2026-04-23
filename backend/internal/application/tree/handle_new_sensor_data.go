@@ -3,7 +3,7 @@ package tree
 import (
 	"context"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
@@ -18,7 +18,7 @@ import (
 //
 // Returns:
 //   - error: An error if updating the tree fails; otherwise, nil.
-func (s *TreeService) HandleNewSensorData(ctx context.Context, event *shared.EventNewSensorData) error {
+func (s *TreeService) HandleNewSensorData(ctx context.Context, event *entities.EventNewSensorData) error {
 	log := logger.GetLogger(ctx)
 	log.Debug("handle event", "event", event.Type(), "service", "TreeService")
 	t, err := s.treeRepo.GetBySensorID(ctx, event.New.SensorID)
@@ -36,7 +36,7 @@ func (s *TreeService) HandleNewSensorData(ctx context.Context, event *shared.Eve
 		log.Debug("sensor status has not changed", "sensor_status", status)
 		return nil
 	}
-	newTree, err := s.treeRepo.Update(ctx, t.ID, func(s *shared.Tree, _ shared.TreeRepository) (bool, error) {
+	newTree, err := s.treeRepo.Update(ctx, t.ID, func(s *entities.Tree, _ entities.TreeRepository) (bool, error) {
 		log.Debug("updating tree watering status", "prev_status", t.WateringStatus, "new_status", status)
 		s.WateringStatus = status
 		return true, nil

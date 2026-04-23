@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func TestTreeRepository_Update(t *testing.T) {
@@ -21,15 +21,15 @@ func TestTreeRepository_Update(t *testing.T) {
 
 		newSpecies := "Updated Species"
 		newNumber := "UpdatedNumber"
-		newCoordinate := shared.MustNewCoordinate(55.123456, 10.654321)
-		newPlantingYear := shared.MustNewPlantingYear(2025)
+		newCoordinate := entities.MustNewCoordinate(55.123456, 10.654321)
+		newPlantingYear := entities.MustNewPlantingYear(2025)
 		newDescription := "Updated description"
-		newWateringStatus := shared.WateringStatusGood
+		newWateringStatus := entities.WateringStatusGood
 		newLastWateredValue := &date
 		newProvider := "foo-provider"
 
 		// when
-		updatedTree, err := r.Update(context.Background(), treeID, func(tree *shared.Tree, _ shared.TreeRepository) (bool, error) {
+		updatedTree, err := r.Update(context.Background(), treeID, func(tree *entities.Tree, _ entities.TreeRepository) (bool, error) {
 			tree.Species = newSpecies
 			tree.Number = newNumber
 			tree.Coordinate = newCoordinate
@@ -61,7 +61,7 @@ func TestTreeRepository_Update(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		updatedTree, err := r.Update(context.Background(), int32(99), func(tree *shared.Tree, _ shared.TreeRepository) (bool, error) {
+		updatedTree, err := r.Update(context.Background(), int32(99), func(tree *entities.Tree, _ entities.TreeRepository) (bool, error) {
 			tree.Species = "Non-existent species"
 			return true, nil
 		})
@@ -77,7 +77,7 @@ func TestTreeRepository_Update(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		updatedTree, err := r.Update(context.Background(), int32(-1), func(tree *shared.Tree, _ shared.TreeRepository) (bool, error) {
+		updatedTree, err := r.Update(context.Background(), int32(-1), func(tree *entities.Tree, _ entities.TreeRepository) (bool, error) {
 			tree.Species = "species"
 			return true, nil
 		})
@@ -93,7 +93,7 @@ func TestTreeRepository_Update(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		updatedTree, err := r.Update(context.Background(), int32(0), func(tree *shared.Tree, _ shared.TreeRepository) (bool, error) {
+		updatedTree, err := r.Update(context.Background(), int32(0), func(tree *entities.Tree, _ entities.TreeRepository) (bool, error) {
 			tree.Species = "species"
 			return true, nil
 		})
@@ -110,7 +110,7 @@ func TestTreeRepository_Update(t *testing.T) {
 		cancel()
 
 		// when
-		updatedTree, err := r.Update(ctx, int32(1), func(tree *shared.Tree, _ shared.TreeRepository) (bool, error) {
+		updatedTree, err := r.Update(ctx, int32(1), func(tree *entities.Tree, _ entities.TreeRepository) (bool, error) {
 			tree.Species = "Canceled context species"
 			return true, nil
 		})

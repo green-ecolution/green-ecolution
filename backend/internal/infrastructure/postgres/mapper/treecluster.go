@@ -3,21 +3,21 @@ package mapper
 import (
 	"time"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
 type InternalTreeClusterRepoMapper interface {
-	FromSql(*sqlc.TreeCluster) (*shared.TreeCluster, error)
-	FromSqlList([]*sqlc.TreeCluster) ([]*shared.TreeCluster, error)
-	FromSqlRegionWithCount(src *sqlc.GetAllTreeClusterRegionsWithWateringPlanCountRow) (*shared.RegionEvaluation, error)
-	FromSqlRegionListWithCount(src []*sqlc.GetAllTreeClusterRegionsWithWateringPlanCountRow) ([]*shared.RegionEvaluation, error)
+	FromSql(*sqlc.TreeCluster) (*entities.TreeCluster, error)
+	FromSqlList([]*sqlc.TreeCluster) ([]*entities.TreeCluster, error)
+	FromSqlRegionWithCount(src *sqlc.GetAllTreeClusterRegionsWithWateringPlanCountRow) (*entities.RegionEvaluation, error)
+	FromSqlRegionListWithCount(src []*sqlc.GetAllTreeClusterRegionsWithWateringPlanCountRow) ([]*entities.RegionEvaluation, error)
 }
 
 type InternalTreeClusterRepoMapperImpl struct{}
 
-func (c *InternalTreeClusterRepoMapperImpl) FromSql(source *sqlc.TreeCluster) (*shared.TreeCluster, error) {
+func (c *InternalTreeClusterRepoMapperImpl) FromSql(source *sqlc.TreeCluster) (*entities.TreeCluster, error) {
 	if source == nil {
 		return nil, nil
 	}
@@ -25,11 +25,11 @@ func (c *InternalTreeClusterRepoMapperImpl) FromSql(source *sqlc.TreeCluster) (*
 	if err != nil {
 		return nil, err
 	}
-	coord, err := shared.NewCoordinateFromOptional(source.Latitude, source.Longitude)
+	coord, err := entities.NewCoordinateFromOptional(source.Latitude, source.Longitude)
 	if err != nil {
 		return nil, err
 	}
-	result := &shared.TreeCluster{
+	result := &entities.TreeCluster{
 		ID:             source.ID,
 		CreatedAt:      source.CreatedAt,
 		UpdatedAt:      source.UpdatedAt,
@@ -48,21 +48,21 @@ func (c *InternalTreeClusterRepoMapperImpl) FromSql(source *sqlc.TreeCluster) (*
 	return result, nil
 }
 
-func (c *InternalTreeClusterRepoMapperImpl) FromSqlList(source []*sqlc.TreeCluster) ([]*shared.TreeCluster, error) {
+func (c *InternalTreeClusterRepoMapperImpl) FromSqlList(source []*sqlc.TreeCluster) ([]*entities.TreeCluster, error) {
 	return utils.MapSliceErr(source, c.FromSql)
 }
 
-func (c *InternalTreeClusterRepoMapperImpl) FromSqlRegionWithCount(source *sqlc.GetAllTreeClusterRegionsWithWateringPlanCountRow) (*shared.RegionEvaluation, error) {
+func (c *InternalTreeClusterRepoMapperImpl) FromSqlRegionWithCount(source *sqlc.GetAllTreeClusterRegionsWithWateringPlanCountRow) (*entities.RegionEvaluation, error) {
 	if source == nil {
 		return nil, nil
 	}
-	return &shared.RegionEvaluation{
+	return &entities.RegionEvaluation{
 		Name:              source.Name,
 		WateringPlanCount: source.WateringPlanCount,
 	}, nil
 }
 
-func (c *InternalTreeClusterRepoMapperImpl) FromSqlRegionListWithCount(source []*sqlc.GetAllTreeClusterRegionsWithWateringPlanCountRow) ([]*shared.RegionEvaluation, error) {
+func (c *InternalTreeClusterRepoMapperImpl) FromSqlRegionListWithCount(source []*sqlc.GetAllTreeClusterRegionsWithWateringPlanCountRow) ([]*entities.RegionEvaluation, error) {
 	return utils.MapSliceErr(source, c.FromSqlRegionWithCount)
 }
 
@@ -75,10 +75,10 @@ func timePtrToTimePtr(source *time.Time) *time.Time {
 	return &t
 }
 
-func MapWateringStatus(status sqlc.WateringStatus) shared.WateringStatus {
-	return shared.WateringStatus(status)
+func MapWateringStatus(status sqlc.WateringStatus) entities.WateringStatus {
+	return entities.WateringStatus(status)
 }
 
-func MapSoilCondition(condition sqlc.TreeSoilCondition) shared.TreeSoilCondition {
-	return shared.TreeSoilCondition(condition)
+func MapSoilCondition(condition sqlc.TreeSoilCondition) entities.TreeSoilCondition {
+	return entities.TreeSoilCondition(condition)
 }

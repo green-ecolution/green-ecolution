@@ -16,7 +16,7 @@ import (
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	serverEntities "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/treecluster"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/middleware"
@@ -32,7 +32,7 @@ func TestGetAllTreeCluster(t *testing.T) {
 		app.Get("/v1/cluster", handler)
 
 		mockClusterService.EXPECT().GetAll(
-			mock.Anything, shared.TreeClusterQuery{},
+			mock.Anything, entities.TreeClusterQuery{},
 		).Return(TestClusterList, int64(len(TestClusterList)), nil)
 
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/cluster", nil)
@@ -64,7 +64,7 @@ func TestGetAllTreeCluster(t *testing.T) {
 		app.Get("/v1/cluster", handler)
 
 		mockClusterService.EXPECT().GetAll(
-			mock.Anything, shared.TreeClusterQuery{},
+			mock.Anything, entities.TreeClusterQuery{},
 		).Return(TestClusterList, int64(len(TestClusterList)), nil)
 
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/cluster?page=1&limit=1", nil)
@@ -100,8 +100,8 @@ func TestGetAllTreeCluster(t *testing.T) {
 		app.Get("/v1/cluster", handler)
 
 		mockClusterService.EXPECT().GetAll(
-			mock.Anything, shared.TreeClusterQuery{
-				Query: shared.Query{Provider: "test-provider"},
+			mock.Anything, entities.TreeClusterQuery{
+				Query: entities.Query{Provider: "test-provider"},
 			},
 		).Return(TestClusterList, int64(len(TestClusterList)), nil)
 
@@ -171,8 +171,8 @@ func TestGetAllTreeCluster(t *testing.T) {
 		app.Get("/v1/cluster", handler)
 
 		mockClusterService.EXPECT().GetAll(
-			mock.Anything, shared.TreeClusterQuery{},
-		).Return([]*shared.TreeCluster{}, int64(0), nil)
+			mock.Anything, entities.TreeClusterQuery{},
+		).Return([]*entities.TreeCluster{}, int64(0), nil)
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/cluster", nil)
@@ -204,7 +204,7 @@ func TestGetAllTreeCluster(t *testing.T) {
 		app.Get("/v1/cluster", handler)
 
 		mockClusterService.EXPECT().GetAll(
-			mock.Anything, shared.TreeClusterQuery{},
+			mock.Anything, entities.TreeClusterQuery{},
 		).Return(nil, int64(0), fiber.NewError(fiber.StatusInternalServerError, "service error"))
 
 		// when
@@ -226,13 +226,13 @@ func TestGetAllTreeCluster(t *testing.T) {
 		handler := treecluster.GetAllTreeClusters(mockClusterService)
 		app.Get("/v1/cluster", handler)
 
-		expectedFiltered := []*shared.TreeCluster{
+		expectedFiltered := []*entities.TreeCluster{
 			TestClusterList[2],
 		}
 
 		mockClusterService.EXPECT().GetAll(
-			mock.Anything, shared.TreeClusterQuery{
-				WateringStatuses: []shared.WateringStatus{shared.WateringStatusModerate},
+			mock.Anything, entities.TreeClusterQuery{
+				WateringStatuses: []entities.WateringStatus{entities.WateringStatusModerate},
 			},
 		).Return(expectedFiltered, int64(len(expectedFiltered)), nil)
 
@@ -249,7 +249,7 @@ func TestGetAllTreeCluster(t *testing.T) {
 
 		assert.Equal(t, len(expectedFiltered), len(response.Data))
 		for _, cluster := range response.Data {
-			assert.EqualValues(t, shared.WateringStatusModerate, cluster.WateringStatus)
+			assert.EqualValues(t, entities.WateringStatusModerate, cluster.WateringStatus)
 		}
 
 		// assert pagination
@@ -270,13 +270,13 @@ func TestGetAllTreeCluster(t *testing.T) {
 		handler := treecluster.GetAllTreeClusters(mockClusterService)
 		app.Get("/v1/cluster", handler)
 
-		expectedFiltered := []*shared.TreeCluster{
+		expectedFiltered := []*entities.TreeCluster{
 			TestClusterList[2],
 			TestClusterList[3],
 		}
 
 		mockClusterService.EXPECT().GetAll(
-			mock.Anything, shared.TreeClusterQuery{
+			mock.Anything, entities.TreeClusterQuery{
 				Regions: []string{"Mürwik"},
 			},
 		).Return(expectedFiltered, int64(len(expectedFiltered)), nil)
@@ -315,12 +315,12 @@ func TestGetAllTreeCluster(t *testing.T) {
 		handler := treecluster.GetAllTreeClusters(mockClusterService)
 		app.Get("/v1/cluster", handler)
 
-		filter := shared.TreeClusterQuery{
-			WateringStatuses: []shared.WateringStatus{shared.WateringStatusModerate},
+		filter := entities.TreeClusterQuery{
+			WateringStatuses: []entities.WateringStatus{entities.WateringStatusModerate},
 			Regions:          []string{"Mürwik"},
 		}
 
-		expectedFiltered := []*shared.TreeCluster{
+		expectedFiltered := []*entities.TreeCluster{
 			TestClusterList[2],
 		}
 
@@ -341,7 +341,7 @@ func TestGetAllTreeCluster(t *testing.T) {
 
 		assert.Equal(t, len(expectedFiltered), len(response.Data))
 		for _, cluster := range response.Data {
-			assert.EqualValues(t, shared.WateringStatusModerate, cluster.WateringStatus)
+			assert.EqualValues(t, entities.WateringStatusModerate, cluster.WateringStatus)
 			assert.NotNil(t, cluster.Region)
 			assert.Equal(t, "Mürwik", cluster.Region.Name)
 		}
@@ -367,19 +367,19 @@ func TestGetAllTreeCluster(t *testing.T) {
 		handler := treecluster.GetAllTreeClusters(mockClusterService)
 		app.Get("/v1/cluster", handler)
 
-		wateringStatues := []shared.WateringStatus{
-			shared.WateringStatusModerate,
-			shared.WateringStatusBad,
+		wateringStatues := []entities.WateringStatus{
+			entities.WateringStatusModerate,
+			entities.WateringStatusBad,
 		}
 		regionNames := []string{"Mürwik", "Altstadt"}
 
-		filter := shared.TreeClusterQuery{
+		filter := entities.TreeClusterQuery{
 			WateringStatuses: wateringStatues,
 			Regions:          regionNames,
-			Query:            shared.Query{Provider: ""},
+			Query:            entities.Query{Provider: ""},
 		}
 
-		expectedFiltered := []*shared.TreeCluster{
+		expectedFiltered := []*entities.TreeCluster{
 			TestClusterList[2], //  moderate + Mürwik
 			TestClusterList[3], //  Bad + Mürwik
 		}
@@ -408,7 +408,7 @@ func TestGetAllTreeCluster(t *testing.T) {
 
 		for _, cluster := range response.Data {
 			assert.Contains(t, wateringStatues,
-				shared.WateringStatus(cluster.WateringStatus),
+				entities.WateringStatus(cluster.WateringStatus),
 				"Cluster watering status is outside the expected list",
 			)
 
@@ -532,7 +532,7 @@ func TestCreateTreeCluster(t *testing.T) {
 
 		mockClusterService.EXPECT().Create(
 			mock.Anything,
-			mock.AnythingOfType("*shared.TreeClusterCreate"),
+			mock.AnythingOfType("*entities.TreeClusterCreate"),
 		).Return(TestCluster, nil)
 
 		// when
@@ -583,7 +583,7 @@ func TestCreateTreeCluster(t *testing.T) {
 
 		mockClusterService.EXPECT().Create(
 			mock.Anything,
-			mock.AnythingOfType("*shared.TreeClusterCreate"),
+			mock.AnythingOfType("*entities.TreeClusterCreate"),
 		).Return(nil, fiber.NewError(fiber.StatusInternalServerError, "service error"))
 
 		// when

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 )
@@ -25,18 +25,18 @@ func TestTreeService_HandleNewSensorData(t *testing.T) {
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		sensorRepo := storageMock.NewMockSensorRepository(t)
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
-		eventManager := worker.NewEventManager(shared.EventTypeUpdateTree)
+		eventManager := worker.NewEventManager(entities.EventTypeUpdateTree)
 		svc := NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager, testMapCfg)
 
-		_, ch, _ := eventManager.Subscribe(shared.EventTypeUpdateTree)
+		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTree)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		go eventManager.Run(ctx)
 
-		sensorDataEvent := shared.SensorData{
-			SensorID: shared.MustNewSensorID("sensor-1"),
-			Data: &shared.MqttPayload{
-				Watermarks: []shared.Watermark{
+		sensorDataEvent := entities.SensorData{
+			SensorID: entities.MustNewSensorID("sensor-1"),
+			Data: &entities.MqttPayload{
+				Watermarks: []entities.Watermark{
 					{Centibar: 30, Depth: 30},
 					{Centibar: 40, Depth: 60},
 					{Centibar: 50, Depth: 90},
@@ -44,21 +44,21 @@ func TestTreeService_HandleNewSensorData(t *testing.T) {
 			},
 		}
 
-		treeNew := shared.Tree{
+		treeNew := entities.Tree{
 			ID:             1,
-			PlantingYear:   shared.MustNewPlantingYear(int32(time.Now().Year() - 2)),
-			WateringStatus: shared.WateringStatusGood,
+			PlantingYear:   entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
+			WateringStatus: entities.WateringStatusGood,
 		}
 
-		tree := shared.Tree{
+		tree := entities.Tree{
 			ID:             1,
-			PlantingYear:   shared.MustNewPlantingYear(int32(time.Now().Year() - 2)),
-			WateringStatus: shared.WateringStatusUnknown,
+			PlantingYear:   entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
+			WateringStatus: entities.WateringStatusUnknown,
 		}
 
-		event := shared.NewEventSensorData(&sensorDataEvent)
+		event := entities.NewEventSensorData(&sensorDataEvent)
 
-		treeRepo.EXPECT().GetBySensorID(mock.Anything, shared.MustNewSensorID("sensor-1")).Return(&tree, nil)
+		treeRepo.EXPECT().GetBySensorID(mock.Anything, entities.MustNewSensorID("sensor-1")).Return(&tree, nil)
 		treeRepo.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(&treeNew, nil)
 
 		err := svc.HandleNewSensorData(context.Background(), &event)
@@ -66,7 +66,7 @@ func TestTreeService_HandleNewSensorData(t *testing.T) {
 		assert.NoError(t, err)
 		select {
 		case receivedEvent := <-ch:
-			e, ok := receivedEvent.(shared.EventUpdateTree)
+			e, ok := receivedEvent.(entities.EventUpdateTree)
 			assert.True(t, ok)
 			assert.Equal(t, *e.Prev, tree)
 			assert.Equal(t, *e.New, treeNew)
@@ -79,19 +79,19 @@ func TestTreeService_HandleNewSensorData(t *testing.T) {
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		sensorRepo := storageMock.NewMockSensorRepository(t)
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
-		eventManager := worker.NewEventManager(shared.EventTypeUpdateTree)
+		eventManager := worker.NewEventManager(entities.EventTypeUpdateTree)
 		svc := NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager, testMapCfg)
 
 		// event
-		_, ch, _ := eventManager.Subscribe(shared.EventTypeUpdateTree)
+		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTree)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		go eventManager.Run(ctx)
 
-		sensorDataEvent := shared.SensorData{
-			SensorID: shared.MustNewSensorID("sensor-1"),
-			Data: &shared.MqttPayload{
-				Watermarks: []shared.Watermark{
+		sensorDataEvent := entities.SensorData{
+			SensorID: entities.MustNewSensorID("sensor-1"),
+			Data: &entities.MqttPayload{
+				Watermarks: []entities.Watermark{
 					{Centibar: 61, Depth: 30},
 					{Centibar: 24, Depth: 60},
 					{Centibar: 24, Depth: 90},
@@ -99,9 +99,9 @@ func TestTreeService_HandleNewSensorData(t *testing.T) {
 			},
 		}
 
-		event := shared.NewEventSensorData(&sensorDataEvent)
+		event := entities.NewEventSensorData(&sensorDataEvent)
 
-		treeRepo.EXPECT().GetBySensorID(mock.Anything, shared.MustNewSensorID("sensor-1")).Return(nil, shared.ErrTreeNotFound)
+		treeRepo.EXPECT().GetBySensorID(mock.Anything, entities.MustNewSensorID("sensor-1")).Return(nil, entities.ErrTreeNotFound)
 
 		// when
 		err := svc.HandleNewSensorData(context.Background(), &event)
@@ -120,19 +120,19 @@ func TestTreeService_HandleNewSensorData(t *testing.T) {
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		sensorRepo := storageMock.NewMockSensorRepository(t)
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
-		eventManager := worker.NewEventManager(shared.EventTypeUpdateTree)
+		eventManager := worker.NewEventManager(entities.EventTypeUpdateTree)
 		svc := NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager, testMapCfg)
 
 		// event
-		_, ch, _ := eventManager.Subscribe(shared.EventTypeUpdateTree)
+		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTree)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		go eventManager.Run(ctx)
 
-		sensorDataEvent := shared.SensorData{
-			SensorID: shared.MustNewSensorID("sensor-1"),
-			Data: &shared.MqttPayload{
-				Watermarks: []shared.Watermark{
+		sensorDataEvent := entities.SensorData{
+			SensorID: entities.MustNewSensorID("sensor-1"),
+			Data: &entities.MqttPayload{
+				Watermarks: []entities.Watermark{
 					{Centibar: 30, Depth: 30},
 					{Centibar: 40, Depth: 60},
 					{Centibar: 50, Depth: 90},
@@ -140,22 +140,22 @@ func TestTreeService_HandleNewSensorData(t *testing.T) {
 			},
 		}
 
-		tree := shared.Tree{
+		tree := entities.Tree{
 			ID:             1,
-			PlantingYear:   shared.MustNewPlantingYear(int32(time.Now().Year() - 2)),
-			WateringStatus: shared.WateringStatusUnknown,
+			PlantingYear:   entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
+			WateringStatus: entities.WateringStatusUnknown,
 		}
 
-		event := shared.NewEventSensorData(&sensorDataEvent)
+		event := entities.NewEventSensorData(&sensorDataEvent)
 
-		treeRepo.EXPECT().GetBySensorID(mock.Anything, shared.MustNewSensorID("sensor-1")).Return(&tree, nil)
-		treeRepo.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, shared.ErrTreeNotFound)
+		treeRepo.EXPECT().GetBySensorID(mock.Anything, entities.MustNewSensorID("sensor-1")).Return(&tree, nil)
+		treeRepo.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, entities.ErrTreeNotFound)
 
 		// when
 		err := svc.HandleNewSensorData(context.Background(), &event)
 
 		// then
-		assert.ErrorIs(t, err, shared.ErrTreeNotFound)
+		assert.ErrorIs(t, err, entities.ErrTreeNotFound)
 		select {
 		case <-ch:
 			t.Fatal("event was received. It should not have been sent")

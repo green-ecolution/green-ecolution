@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func TestDummyRoutingRepo_GenerateRoute(t *testing.T) {
@@ -19,7 +19,7 @@ func TestDummyRoutingRepo_GenerateRoute(t *testing.T) {
 
 		// then
 		assert.Nil(t, result)
-		assert.ErrorIs(t, err, shared.ErrRoutingServiceDisabled)
+		assert.ErrorIs(t, err, entities.ErrRoutingServiceDisabled)
 	})
 }
 
@@ -33,7 +33,7 @@ func TestDummyRoutingRepo_GenerateRawGpxRoute(t *testing.T) {
 
 		// then
 		assert.Nil(t, result)
-		assert.ErrorIs(t, err, shared.ErrRoutingServiceDisabled)
+		assert.ErrorIs(t, err, entities.ErrRoutingServiceDisabled)
 	})
 }
 
@@ -47,6 +47,6 @@ func TestDummyRoutingRepo_GenerateRouteInformation(t *testing.T) {
 
 		// then
 		assert.Nil(t, result)
-		assert.ErrorIs(t, err, shared.ErrRoutingServiceDisabled)
+		assert.ErrorIs(t, err, entities.ErrRoutingServiceDisabled)
 	})
 }

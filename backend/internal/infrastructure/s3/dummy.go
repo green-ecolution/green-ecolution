@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 // S3DummyRepo is used to disable the S3 service by configuration
@@ -24,5 +24,5 @@ func (s *S3DummyRepo) PutObject(_ context.Context, _, _ string, _ int64, _ io.Re
 }
 
 func (s *S3DummyRepo) GetObject(_ context.Context, _ string) (io.ReadSeekCloser, error) {
-	return nil, shared.ErrS3ServiceDisabled
+	return nil, entities.ErrS3ServiceDisabled
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
@@ -14,23 +14,23 @@ import (
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 )
 
-func defaultSensor() *shared.Sensor {
-	return &shared.Sensor{
-		Status:         shared.SensorStatusUnknown,
+func defaultSensor() *entities.Sensor {
+	return &entities.Sensor{
+		Status:         entities.SensorStatusUnknown,
 		LatestData:     nil,
-		Coordinate:     shared.MustNewCoordinate(0, 0),
+		Coordinate:     entities.MustNewCoordinate(0, 0),
 		Provider:       "",
 		AdditionalInfo: nil,
 	}
 }
 
-func (r *SensorRepository) Create(ctx context.Context, createFn func(*shared.Sensor, shared.SensorRepository) (bool, error)) (*shared.Sensor, error) {
+func (r *SensorRepository) Create(ctx context.Context, createFn func(*entities.Sensor, entities.SensorRepository) (bool, error)) (*entities.Sensor, error) {
 	log := logger.GetLogger(ctx)
 	if createFn == nil {
 		return nil, errors.New("createFn is nil")
 	}
 
-	var createdSensor *shared.Sensor
+	var createdSensor *entities.Sensor
 	err := r.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewSensorRepository(s, r.SensorRepositoryMappers)
 		entity := defaultSensor()
@@ -83,7 +83,7 @@ func (r *SensorRepository) Create(ctx context.Context, createFn func(*shared.Sen
 	return createdSensor, nil
 }
 
-func (r *SensorRepository) InsertSensorData(ctx context.Context, latestData *shared.SensorData, id shared.SensorID) error {
+func (r *SensorRepository) InsertSensorData(ctx context.Context, latestData *entities.SensorData, id entities.SensorID) error {
 	log := logger.GetLogger(ctx)
 	if latestData == nil || latestData.Data == nil {
 		return errors.New("latest data cannot be empty")
@@ -109,12 +109,12 @@ func (r *SensorRepository) InsertSensorData(ctx context.Context, latestData *sha
 	return nil
 }
 
-func (r *SensorRepository) createEntity(ctx context.Context, sensor *shared.Sensor) (shared.SensorID, error) {
+func (r *SensorRepository) createEntity(ctx context.Context, sensor *entities.Sensor) (entities.SensorID, error) {
 	log := logger.GetLogger(ctx)
 	additionalInfo, err := utils.MapAdditionalInfoToByte(sensor.AdditionalInfo)
 	if err != nil {
 		log.Debug("failed to marshal additional informations to byte array", "error", err, "additional_info", sensor.AdditionalInfo)
-		return shared.SensorID{}, err
+		return entities.SensorID{}, err
 	}
 
 	id, err := r.store.CreateSensor(ctx, &sqlc.CreateSensorParams{
@@ -124,7 +124,7 @@ func (r *SensorRepository) createEntity(ctx context.Context, sensor *shared.Sens
 		AdditionalInformations: additionalInfo,
 	})
 	if err != nil {
-		return shared.SensorID{}, err
+		return entities.SensorID{}, err
 	}
 
 	if err := r.store.SetSensorLocation(ctx, &sqlc.SetSensorLocationParams{
@@ -132,12 +132,12 @@ func (r *SensorRepository) createEntity(ctx context.Context, sensor *shared.Sens
 		Latitude:  sensor.Coordinate.Latitude(),
 		Longitude: sensor.Coordinate.Longitude(),
 	}); err != nil {
-		return shared.SensorID{}, err
+		return entities.SensorID{}, err
 	}
-	return shared.NewSensorID(id)
+	return entities.NewSensorID(id)
 }
 
-func (r *SensorRepository) validateSensorEntity(sensor *shared.Sensor) error {
+func (r *SensorRepository) validateSensorEntity(sensor *entities.Sensor) error {
 	if sensor == nil {
 		return errors.New("sensor is nil")
 	}

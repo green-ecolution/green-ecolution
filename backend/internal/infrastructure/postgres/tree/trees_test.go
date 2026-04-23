@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/testutils"
 )
@@ -202,7 +202,7 @@ func TestTreeRepository_UnlinkSensorID(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		err := r.UnlinkSensorID(context.Background(), shared.MustNewSensorID("sensor-1"))
+		err := r.UnlinkSensorID(context.Background(), entities.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.NoError(t, err)
@@ -218,7 +218,7 @@ func TestTreeRepository_UnlinkSensorID(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		err := r.UnlinkSensorID(context.Background(), shared.MustNewSensorID("9999"))
+		err := r.UnlinkSensorID(context.Background(), entities.MustNewSensorID("9999"))
 
 		// then
 		assert.NoError(t, err)
@@ -232,7 +232,7 @@ func TestTreeRepository_UnlinkSensorID(t *testing.T) {
 		cancel()
 
 		// when
-		err := r.UnlinkSensorID(invalidCtx, shared.MustNewSensorID("sensor-1"))
+		err := r.UnlinkSensorID(invalidCtx, entities.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.Error(t, err)
@@ -243,7 +243,7 @@ func TestTreeRepository_UnlinkSensorID(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		err := r.UnlinkSensorID(context.Background(), shared.SensorID{})
+		err := r.UnlinkSensorID(context.Background(), entities.SensorID{})
 
 		// then
 		assert.Error(t, err)

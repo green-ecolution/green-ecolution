@@ -11,8 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils/enums"
 )
@@ -33,10 +32,10 @@ func TestGetAppInfo(t *testing.T) {
 		repo := storageMock.NewMockInfoRepository(t)
 		svc := NewInfoService(repo)
 		tests := map[error]ports.ErrorCode{
-			shared.ErrIPNotFound:            ports.InternalError,
-			shared.ErrIFacesNotFound:        ports.InternalError,
-			shared.ErrIFacesAddressNotFound: ports.InternalError,
-			shared.ErrHostnameNotFound:      ports.InternalError,
+			entities.ErrIPNotFound:            ports.InternalError,
+			entities.ErrIFacesNotFound:        ports.InternalError,
+			entities.ErrIFacesAddressNotFound: ports.InternalError,
+			entities.ErrHostnameNotFound:      ports.InternalError,
 		}
 
 		for k, v := range tests {
@@ -61,22 +60,22 @@ func TestGetAppInfo(t *testing.T) {
 		repo := storageMock.NewMockInfoRepository(t)
 		svc := NewInfoService(repo)
 		buildTime := time.Now()
-		services := domain.Services{
-			Items: []domain.ServiceStatus{
+		services := entities.Services{
+			Items: []entities.ServiceStatus{
 				{Name: "database", Enabled: true, Healthy: true, Message: "Verbunden"},
 			},
 		}
-		versionInfo := domain.VersionInfo{
+		versionInfo := entities.VersionInfo{
 			Current:         "1.0.0",
 			Latest:          "1.0.0",
 			UpdateAvailable: false,
 		}
-		expectedAppInfo := domain.App{
+		expectedAppInfo := entities.App{
 			Version:     "1.0.0",
 			VersionInfo: versionInfo,
 			GoVersion:   "1.16",
 			BuildTime:   buildTime,
-			Git: domain.Git{
+			Git: entities.Git{
 				Commit: "123456",
 				Branch: "main",
 				Repository: &url.URL{
@@ -85,16 +84,16 @@ func TestGetAppInfo(t *testing.T) {
 					Path:   "/green-ecolution/green-space-management",
 				},
 			},
-			Server:   domain.Server{},
+			Server:   entities.Server{},
 			Services: services,
 		}
 
-		givenAppInfo := domain.App{
+		givenAppInfo := entities.App{
 			Version:     "1.0.0",
 			VersionInfo: versionInfo,
 			GoVersion:   "1.16",
 			BuildTime:   buildTime,
-			Git: domain.Git{
+			Git: entities.Git{
 				Commit: "123456",
 				Branch: "main",
 				Repository: &url.URL{
@@ -103,7 +102,7 @@ func TestGetAppInfo(t *testing.T) {
 					Path:   "/green-ecolution/green-space-management",
 				},
 			},
-			Server: domain.Server{
+			Server: entities.Server{
 				OS:       "linux",
 				Arch:     "amd64",
 				Hostname: "localhost",
@@ -133,22 +132,22 @@ func TestGetAppInfo(t *testing.T) {
 		repo := storageMock.NewMockInfoRepository(t)
 		svc := NewInfoService(repo)
 		buildTime := time.Now()
-		services := domain.Services{
-			Items: []domain.ServiceStatus{
+		services := entities.Services{
+			Items: []entities.ServiceStatus{
 				{Name: "database", Enabled: true, Healthy: true, Message: "Verbunden"},
 			},
 		}
-		versionInfo := domain.VersionInfo{
+		versionInfo := entities.VersionInfo{
 			Current:         "1.0.0",
 			Latest:          "1.0.0",
 			UpdateAvailable: false,
 		}
-		expectedAppInfo := domain.App{
+		expectedAppInfo := entities.App{
 			Version:     "1.0.0",
 			VersionInfo: versionInfo,
 			GoVersion:   "1.16",
 			BuildTime:   buildTime,
-			Git: domain.Git{
+			Git: entities.Git{
 				Commit: "123456",
 				Branch: "main",
 				Repository: &url.URL{
@@ -157,7 +156,7 @@ func TestGetAppInfo(t *testing.T) {
 					Path:   "/green-ecolution/green-space-management",
 				},
 			},
-			Server: domain.Server{
+			Server: entities.Server{
 				OS:       "linux",
 				Arch:     "amd64",
 				Hostname: "localhost",
@@ -173,12 +172,12 @@ func TestGetAppInfo(t *testing.T) {
 			Services: services,
 		}
 
-		givenAppInfo := domain.App{
+		givenAppInfo := entities.App{
 			Version:     "1.0.0",
 			VersionInfo: versionInfo,
 			GoVersion:   "1.16",
 			BuildTime:   buildTime,
-			Git: domain.Git{
+			Git: entities.Git{
 				Commit: "123456",
 				Branch: "main",
 				Repository: &url.URL{
@@ -187,7 +186,7 @@ func TestGetAppInfo(t *testing.T) {
 					Path:   "/green-ecolution/green-space-management",
 				},
 			},
-			Server: domain.Server{
+			Server: entities.Server{
 				OS:       "linux",
 				Arch:     "amd64",
 				Hostname: "localhost",

@@ -22,7 +22,7 @@ import (
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
@@ -161,7 +161,7 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 		}
 
 		// when
-		authSvc.EXPECT().RetrospectToken(mock.Anything, mock.Anything).Return(&shared.IntroSpectTokenResult{Active: utils.P(true)}, nil)
+		authSvc.EXPECT().RetrospectToken(mock.Anything, mock.Anything).Return(&entities.IntroSpectTokenResult{Active: utils.P(true)}, nil)
 		got, err := NewJWTMiddleware(cfg, authSvc)
 		assert.NoError(t, err)
 		app := fiber.New()
@@ -195,7 +195,7 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 		}
 
 		// when
-		authSvc.EXPECT().RetrospectToken(mock.Anything, mock.Anything).Return(&shared.IntroSpectTokenResult{Active: utils.P(false)}, nil)
+		authSvc.EXPECT().RetrospectToken(mock.Anything, mock.Anything).Return(&entities.IntroSpectTokenResult{Active: utils.P(false)}, nil)
 		got, err := NewJWTMiddleware(cfg, authSvc)
 		assert.NoError(t, err)
 		app := fiber.New()
@@ -403,7 +403,7 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 		}
 
 		// when
-		authSvc.EXPECT().RetrospectToken(mock.Anything, mock.Anything).Return(&shared.IntroSpectTokenResult{Active: utils.P(true)}, nil)
+		authSvc.EXPECT().RetrospectToken(mock.Anything, mock.Anything).Return(&entities.IntroSpectTokenResult{Active: utils.P(true)}, nil)
 		middleware, err := NewJWTMiddleware(cfg, authSvc)
 		assert.NoError(t, err)
 
@@ -443,7 +443,7 @@ func Test_JWTMiddleware_TokenValidation(t *testing.T) {
 		}
 
 		// when
-		authSvc.EXPECT().RetrospectToken(mock.Anything, mock.Anything).Return(&shared.IntroSpectTokenResult{Active: utils.P(true)}, nil)
+		authSvc.EXPECT().RetrospectToken(mock.Anything, mock.Anything).Return(&entities.IntroSpectTokenResult{Active: utils.P(true)}, nil)
 		middleware, err := NewJWTMiddleware(cfg, authSvc)
 		assert.NoError(t, err)
 

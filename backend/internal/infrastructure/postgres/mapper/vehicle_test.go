@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/mapper"
 )
@@ -136,12 +136,12 @@ var allTestVehicles = []*sqlc.Vehicle{
 func TestMapVehicleStatus(t *testing.T) {
 	tests := []struct {
 		input    sqlc.VehicleStatus
-		expected shared.VehicleStatus
+		expected entities.VehicleStatus
 	}{
-		{input: sqlc.VehicleStatusActive, expected: shared.VehicleStatusActive},
-		{input: sqlc.VehicleStatusAvailable, expected: shared.VehicleStatusAvailable},
-		{input: sqlc.VehicleStatusNotavailable, expected: shared.VehicleStatusNotAvailable},
-		{input: sqlc.VehicleStatusUnknown, expected: shared.VehicleStatusUnknown},
+		{input: sqlc.VehicleStatusActive, expected: entities.VehicleStatusActive},
+		{input: sqlc.VehicleStatusAvailable, expected: entities.VehicleStatusAvailable},
+		{input: sqlc.VehicleStatusNotavailable, expected: entities.VehicleStatusNotAvailable},
+		{input: sqlc.VehicleStatusUnknown, expected: entities.VehicleStatusUnknown},
 	}
 
 	for _, test := range tests {
@@ -155,11 +155,11 @@ func TestMapVehicleStatus(t *testing.T) {
 func TestMapVehicleType(t *testing.T) {
 	tests := []struct {
 		input    sqlc.VehicleType
-		expected shared.VehicleType
+		expected entities.VehicleType
 	}{
-		{input: sqlc.VehicleTypeTrailer, expected: shared.VehicleTypeTrailer},
-		{input: sqlc.VehicleTypeTransporter, expected: shared.VehicleTypeTransporter},
-		{input: sqlc.VehicleTypeUnknown, expected: shared.VehicleTypeUnknown},
+		{input: sqlc.VehicleTypeTrailer, expected: entities.VehicleTypeTrailer},
+		{input: sqlc.VehicleTypeTransporter, expected: entities.VehicleTypeTransporter},
+		{input: sqlc.VehicleTypeUnknown, expected: entities.VehicleTypeUnknown},
 	}
 
 	for _, test := range tests {
@@ -173,12 +173,12 @@ func TestMapVehicleType(t *testing.T) {
 func TestMapDrivingLicense(t *testing.T) {
 	tests := []struct {
 		input    sqlc.DrivingLicense
-		expected shared.DrivingLicense
+		expected entities.DrivingLicense
 	}{
-		{input: sqlc.DrivingLicenseB, expected: shared.DrivingLicenseB},
-		{input: sqlc.DrivingLicenseBE, expected: shared.DrivingLicenseBE},
-		{input: sqlc.DrivingLicenseC, expected: shared.DrivingLicenseC},
-		{input: sqlc.DrivingLicenseCE, expected: shared.DrivingLicenseCE},
+		{input: sqlc.DrivingLicenseB, expected: entities.DrivingLicenseB},
+		{input: sqlc.DrivingLicenseBE, expected: entities.DrivingLicenseBE},
+		{input: sqlc.DrivingLicenseC, expected: entities.DrivingLicenseC},
+		{input: sqlc.DrivingLicenseCE, expected: entities.DrivingLicenseCE},
 	}
 
 	for _, test := range tests {

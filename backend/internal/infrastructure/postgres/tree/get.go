@@ -5,7 +5,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils/pagination"
@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (r *TreeRepository) GetAll(ctx context.Context, query shared.TreeQuery) ([]*shared.Tree, int64, error) {
+func (r *TreeRepository) GetAll(ctx context.Context, query entities.TreeQuery) ([]*entities.Tree, int64, error) {
 	log := logger.GetLogger(ctx)
 	page, limit, err := pagination.GetValues(ctx)
 	if err != nil {
@@ -27,7 +27,7 @@ func (r *TreeRepository) GetAll(ctx context.Context, query shared.TreeQuery) ([]
 	}
 
 	if totalCount == 0 {
-		return []*shared.Tree{}, 0, nil
+		return []*entities.Tree{}, 0, nil
 	}
 
 	if limit == -1 {
@@ -69,7 +69,7 @@ func (r *TreeRepository) GetAll(ctx context.Context, query shared.TreeQuery) ([]
 	return t, totalCount, nil
 }
 
-func (r *TreeRepository) GetCount(ctx context.Context, query shared.TreeQuery) (int64, error) {
+func (r *TreeRepository) GetCount(ctx context.Context, query entities.TreeQuery) (int64, error) {
 	log := logger.GetLogger(ctx)
 
 	var wateringStatuses []string
@@ -92,7 +92,7 @@ func (r *TreeRepository) GetCount(ctx context.Context, query shared.TreeQuery) (
 	return totalCount, nil
 }
 
-func (r *TreeRepository) GetByID(ctx context.Context, id int32) (*shared.Tree, error) {
+func (r *TreeRepository) GetByID(ctx context.Context, id int32) (*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
 	row, err := r.store.GetTreeByID(ctx, id)
 	if err != nil {
@@ -113,7 +113,7 @@ func (r *TreeRepository) GetByID(ctx context.Context, id int32) (*shared.Tree, e
 	return t, nil
 }
 
-func (r *TreeRepository) GetBySensorID(ctx context.Context, id shared.SensorID) (*shared.Tree, error) {
+func (r *TreeRepository) GetBySensorID(ctx context.Context, id entities.SensorID) (*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
 	idStr := id.String()
 	row, err := r.store.GetTreeBySensorID(ctx, &idStr)
@@ -135,7 +135,7 @@ func (r *TreeRepository) GetBySensorID(ctx context.Context, id shared.SensorID) 
 	return t, nil
 }
 
-func (r *TreeRepository) GetBySensorIDs(ctx context.Context, ids ...shared.SensorID) ([]*shared.Tree, error) {
+func (r *TreeRepository) GetBySensorIDs(ctx context.Context, ids ...entities.SensorID) ([]*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
 	idStrs := make([]string, len(ids))
 	for i, id := range ids {
@@ -162,7 +162,7 @@ func (r *TreeRepository) GetBySensorIDs(ctx context.Context, ids ...shared.Senso
 	return t, nil
 }
 
-func (r *TreeRepository) GetTreesByIDs(ctx context.Context, ids []int32) ([]*shared.Tree, error) {
+func (r *TreeRepository) GetTreesByIDs(ctx context.Context, ids []int32) ([]*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
 	rows, err := r.store.GetTreesByIDs(ctx, ids)
 	if err != nil {
@@ -185,7 +185,7 @@ func (r *TreeRepository) GetTreesByIDs(ctx context.Context, ids []int32) ([]*sha
 	return t, nil
 }
 
-func (r *TreeRepository) GetByTreeClusterID(ctx context.Context, id int32) ([]*shared.Tree, error) {
+func (r *TreeRepository) GetByTreeClusterID(ctx context.Context, id int32) ([]*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
 	rows, err := r.store.GetTreesByTreeClusterID(ctx, &id)
 	if err != nil {
@@ -208,7 +208,7 @@ func (r *TreeRepository) GetByTreeClusterID(ctx context.Context, id int32) ([]*s
 	return t, nil
 }
 
-func (r *TreeRepository) GetByCoordinates(ctx context.Context, coord shared.Coordinate) (*shared.Tree, error) {
+func (r *TreeRepository) GetByCoordinates(ctx context.Context, coord entities.Coordinate) (*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
 	params := sqlc.GetTreeByCoordinatesParams{
 		Latitude:  coord.Latitude(),
@@ -230,7 +230,7 @@ func (r *TreeRepository) GetByCoordinates(ctx context.Context, coord shared.Coor
 	return tree, nil
 }
 
-func (r *TreeRepository) GetSensorByTreeID(ctx context.Context, treeID int32) (*shared.Sensor, error) {
+func (r *TreeRepository) GetSensorByTreeID(ctx context.Context, treeID int32) (*entities.Sensor, error) {
 	log := logger.GetLogger(ctx)
 	row, err := r.store.GetSensorByTreeID(ctx, treeID)
 	if err != nil {
@@ -252,7 +252,7 @@ func (r *TreeRepository) GetSensorByTreeID(ctx context.Context, treeID int32) (*
 	return data, nil
 }
 
-func (r *TreeRepository) getTreeClusterByTreeID(ctx context.Context, treeID int32) (*shared.TreeCluster, error) {
+func (r *TreeRepository) getTreeClusterByTreeID(ctx context.Context, treeID int32) (*entities.TreeCluster, error) {
 	log := logger.GetLogger(ctx)
 	row, err := r.store.GetTreeClusterByTreeID(ctx, treeID)
 	if err != nil {
@@ -269,7 +269,7 @@ func (r *TreeRepository) getTreeClusterByTreeID(ctx context.Context, treeID int3
 }
 
 // Map sensor and tree cluster entity to domain tree
-func (r *TreeRepository) mapFields(ctx context.Context, t *shared.Tree) error {
+func (r *TreeRepository) mapFields(ctx context.Context, t *entities.Tree) error {
 	if err := mapSensor(ctx, r, t); err != nil {
 		return err
 	}
@@ -281,10 +281,10 @@ func (r *TreeRepository) mapFields(ctx context.Context, t *shared.Tree) error {
 	return nil
 }
 
-func mapSensor(ctx context.Context, r *TreeRepository, t *shared.Tree) error {
+func mapSensor(ctx context.Context, r *TreeRepository, t *entities.Tree) error {
 	sensor, err := r.GetSensorByTreeID(ctx, t.ID)
 	if err != nil {
-		var entityNotFoundErr shared.ErrEntityNotFound
+		var entityNotFoundErr entities.ErrEntityNotFound
 		if errors.As(err, &entityNotFoundErr) {
 			// If sensor is not found, set sensor to nil
 			t.Sensor = nil
@@ -296,7 +296,7 @@ func mapSensor(ctx context.Context, r *TreeRepository, t *shared.Tree) error {
 	return nil
 }
 
-func mapTreeCluster(ctx context.Context, r *TreeRepository, t *shared.Tree) error {
+func mapTreeCluster(ctx context.Context, r *TreeRepository, t *entities.Tree) error {
 	treeCluster, err := r.getTreeClusterByTreeID(ctx, t.ID)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return err
@@ -305,7 +305,7 @@ func mapTreeCluster(ctx context.Context, r *TreeRepository, t *shared.Tree) erro
 	return nil
 }
 
-func (r *TreeRepository) FindNearestTree(ctx context.Context, coord shared.Coordinate) (*shared.Tree, error) {
+func (r *TreeRepository) FindNearestTree(ctx context.Context, coord entities.Coordinate) (*entities.Tree, error) {
 	log := logger.GetLogger(ctx)
 	params := &sqlc.FindNearestTreeParams{
 		StMakepoint:   coord.Latitude(),
@@ -330,7 +330,7 @@ func (r *TreeRepository) FindNearestTree(ctx context.Context, coord shared.Coord
 	return tree, nil
 }
 
-func (r *TreeRepository) FindNearestTrees(ctx context.Context, coord shared.Coordinate, radiusMeters float64, limit int32) ([]*shared.TreeWithDistance, error) {
+func (r *TreeRepository) FindNearestTrees(ctx context.Context, coord entities.Coordinate, radiusMeters float64, limit int32) ([]*entities.TreeWithDistance, error) {
 	log := logger.GetLogger(ctx)
 	params := &sqlc.FindNearestTreesParams{
 		Lat:        coord.Latitude(),
@@ -345,7 +345,7 @@ func (r *TreeRepository) FindNearestTrees(ctx context.Context, coord shared.Coor
 		return nil, err
 	}
 
-	results := make([]*shared.TreeWithDistance, 0, len(rows))
+	results := make([]*entities.TreeWithDistance, 0, len(rows))
 	for _, row := range rows {
 		tree, err := r.mapper.FromSql(&row.Tree)
 		if err != nil {
@@ -355,9 +355,9 @@ func (r *TreeRepository) FindNearestTrees(ctx context.Context, coord shared.Coor
 		if err := r.mapFields(ctx, tree); err != nil {
 			return nil, err
 		}
-		results = append(results, &shared.TreeWithDistance{
+		results = append(results, &entities.TreeWithDistance{
 			Tree:     tree,
-			Distance: shared.MustNewDistance(row.Distance),
+			Distance: entities.MustNewDistance(row.Distance),
 		})
 	}
 	return results, nil

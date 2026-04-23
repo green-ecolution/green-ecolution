@@ -1,4 +1,4 @@
-package shared
+package entities
 
 type Watermark struct {
 	Centibar   int

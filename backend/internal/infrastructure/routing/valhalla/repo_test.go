@@ -13,13 +13,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing/valhalla/valhalla"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing/vroom"
 )
 
-func mustNewCoordinatePtr(lat, lng float64) *shared.Coordinate {
-	c := shared.MustNewCoordinate(lat, lng)
+func mustNewCoordinatePtr(lat, lng float64) *entities.Coordinate {
+	c := entities.MustNewCoordinate(lat, lng)
 	return &c
 }
 
@@ -28,29 +28,29 @@ var (
 	testEndPoint      = []float64{9.1, 48.1}
 	testWateringPoint = []float64{9.05, 48.05}
 
-	testVehicle = &shared.Vehicle{
+	testVehicle = &entities.Vehicle{
 		ID:            1,
 		Description:   "Test Vehicle",
-		WaterCapacity: shared.MustNewWaterCapacity(5000.0),
-		Type:          shared.VehicleTypeTransporter,
+		WaterCapacity: entities.MustNewWaterCapacity(5000.0),
+		Type:          entities.VehicleTypeTransporter,
 		Width:         2.5,
 		Height:        3.0,
 		Length:        6.0,
 		Weight:        7.5,
 	}
 
-	testClusters = []*shared.TreeCluster{
+	testClusters = []*entities.TreeCluster{
 		{
 			ID:         1,
 			Name:       "Cluster A",
 			Coordinate: mustNewCoordinatePtr(48.2, 9.2),
-			Trees:      []*shared.Tree{{}, {}},
+			Trees:      []*entities.Tree{{}, {}},
 		},
 		{
 			ID:         2,
 			Name:       "Cluster B",
 			Coordinate: mustNewCoordinatePtr(48.3, 9.3),
-			Trees:      []*shared.Tree{{}},
+			Trees:      []*entities.Tree{{}},
 		},
 	}
 
@@ -223,7 +223,7 @@ func TestGenerateRoute(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, shared.FeatureCollection, result.Type)
+		assert.Equal(t, entities.FeatureCollection, result.Type)
 		assert.Equal(t, 9.0, result.Metadata.StartPoint.Coordinate.Longitude())
 		assert.Equal(t, 48.0, result.Metadata.StartPoint.Coordinate.Latitude())
 		assert.Equal(t, 9.1, result.Metadata.EndPoint.Coordinate.Longitude())

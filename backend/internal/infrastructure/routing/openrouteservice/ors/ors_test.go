@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func newTestOrsClient(t *testing.T, serverURL string) OrsClient {
@@ -27,10 +27,10 @@ func newTestOrsClient(t *testing.T, serverURL string) OrsClient {
 func TestDirectionsGeoJSON(t *testing.T) {
 	t.Run("should return GeoJSON on 200 OK", func(t *testing.T) {
 		// given
-		geoJSON := shared.GeoJSON{
-			Type: shared.FeatureCollection,
-			Features: []shared.GeoJSONFeature{
-				{Type: shared.Feature},
+		geoJSON := entities.GeoJSON{
+			Type: entities.FeatureCollection,
+			Features: []entities.GeoJSONFeature{
+				{Type: entities.Feature},
 			},
 		}
 
@@ -50,7 +50,7 @@ func TestDirectionsGeoJSON(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, shared.FeatureCollection, result.Type)
+		assert.Equal(t, entities.FeatureCollection, result.Type)
 		assert.Len(t, result.Features, 1)
 	})
 
@@ -60,7 +60,7 @@ func TestDirectionsGeoJSON(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			receivedPath = r.URL.Path
 			w.Header().Set("Content-Type", "application/json")
-			require.NoError(t, json.NewEncoder(w).Encode(shared.GeoJSON{}))
+			require.NoError(t, json.NewEncoder(w).Encode(entities.GeoJSON{}))
 		}))
 		defer server.Close()
 
@@ -81,7 +81,7 @@ func TestDirectionsGeoJSON(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			receivedContentType = r.Header.Get("Content-Type")
 			w.Header().Set("Content-Type", "application/json")
-			require.NoError(t, json.NewEncoder(w).Encode(shared.GeoJSON{}))
+			require.NoError(t, json.NewEncoder(w).Encode(entities.GeoJSON{}))
 		}))
 		defer server.Close()
 

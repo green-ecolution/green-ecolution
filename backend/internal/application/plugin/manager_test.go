@@ -11,7 +11,7 @@ import (
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/plugin"
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/_mock"
 )
 
@@ -46,7 +46,7 @@ func TestPluginManager_Register(t *testing.T) {
 		mockAuthRepo := storageMock.NewMockAuthRepository(t)
 		svc := plugin.NewPluginManager(mockAuthRepo)
 
-		invalidPlugin := &shared.Plugin{
+		invalidPlugin := &entities.Plugin{
 			Slug: "",
 			Name: "No Slug Plugin",
 		}

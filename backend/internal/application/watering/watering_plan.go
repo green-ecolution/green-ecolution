@@ -12,30 +12,30 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 )
 
 type WateringPlanService struct {
-	wateringPlanRepo shared.WateringPlanRepository
-	clusterRepo      shared.TreeClusterRepository
-	vehicleRepo      shared.VehicleRepository
-	userRepo         shared.UserRepository
-	routingRepo      shared.RoutingRepository
-	gpxBucket        shared.S3Repository
+	wateringPlanRepo entities.WateringPlanRepository
+	clusterRepo      entities.TreeClusterRepository
+	vehicleRepo      entities.VehicleRepository
+	userRepo         entities.UserRepository
+	routingRepo      entities.RoutingRepository
+	gpxBucket        entities.S3Repository
 	eventManager     *worker.EventManager
 }
 
 func NewWateringPlanService(
-	wateringPlanRepository shared.WateringPlanRepository,
-	clusterRepository shared.TreeClusterRepository,
-	vehicleRepository shared.VehicleRepository,
-	userRepository shared.UserRepository,
+	wateringPlanRepository entities.WateringPlanRepository,
+	clusterRepository entities.TreeClusterRepository,
+	vehicleRepository entities.VehicleRepository,
+	userRepository entities.UserRepository,
 	eventManager *worker.EventManager,
-	routingRepo shared.RoutingRepository,
-	gpxRepo shared.S3Repository,
+	routingRepo entities.RoutingRepository,
+	gpxRepo entities.S3Repository,
 ) ports.WateringPlanService {
 	return &WateringPlanService{
 		wateringPlanRepo: wateringPlanRepository,
@@ -48,14 +48,14 @@ func NewWateringPlanService(
 	}
 }
 
-func (w *WateringPlanService) publishUpdateEvent(ctx context.Context, prevWp *shared.WateringPlan) error {
+func (w *WateringPlanService) publishUpdateEvent(ctx context.Context, prevWp *entities.WateringPlan) error {
 	log := logger.GetLogger(ctx)
-	log.Debug("publish new event", "event", shared.EventTypeUpdateWateringPlan, "service", "WateringPlanService")
+	log.Debug("publish new event", "event", entities.EventTypeUpdateWateringPlan, "service", "WateringPlanService")
 	updatedWp, err := w.GetByID(ctx, prevWp.ID)
 	if err != nil {
 		return err
 	}
-	event := shared.NewEventUpdateWateringPlan(prevWp, updatedWp)
+	event := entities.NewEventUpdateWateringPlan(prevWp, updatedWp)
 	if err := w.eventManager.Publish(ctx, event); err != nil {
 		log.Error("error while sending event after updating watering plan", "err", err, "watering_plan_id", prevWp.ID)
 	}
@@ -63,7 +63,7 @@ func (w *WateringPlanService) publishUpdateEvent(ctx context.Context, prevWp *sh
 	return nil
 }
 
-func (w *WateringPlanService) PreviewRoute(ctx context.Context, transporterID int32, trailerID *int32, clusterIDs []int32) (*shared.GeoJSON, error) {
+func (w *WateringPlanService) PreviewRoute(ctx context.Context, transporterID int32, trailerID *int32, clusterIDs []int32) (*entities.GeoJSON, error) {
 	log := logger.GetLogger(ctx)
 	transporter, err := w.vehicleRepo.GetByID(ctx, transporterID)
 	if err != nil {
@@ -71,7 +71,7 @@ func (w *WateringPlanService) PreviewRoute(ctx context.Context, transporterID in
 		return nil, ports.NewError(ports.NotFound, fmt.Sprintf("vehicle with id %d not found", transporterID))
 	}
 
-	var trailer *shared.Vehicle
+	var trailer *entities.Vehicle
 	if trailerID != nil {
 		trailer, err = w.vehicleRepo.GetByID(ctx, *trailerID)
 		if err != nil {
@@ -86,9 +86,9 @@ func (w *WateringPlanService) PreviewRoute(ctx context.Context, transporterID in
 		return nil, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
 	}
 
-	geoJSON, err := w.routingRepo.GenerateRoute(ctx, shared.MergeVehicles(transporter, trailer), clusters)
+	geoJSON, err := w.routingRepo.GenerateRoute(ctx, entities.MergeVehicles(transporter, trailer), clusters)
 	if err != nil {
-		if errors.Is(err, shared.ErrUnknownVehicleType) {
+		if errors.Is(err, entities.ErrUnknownVehicleType) {
 			log.Debug("the vehicle type is not supported", "error", err, "vehicle_type", transporter.Type)
 			return nil, ports.ErrVehicleUnsupportedType
 		}
@@ -99,7 +99,7 @@ func (w *WateringPlanService) PreviewRoute(ctx context.Context, transporterID in
 	return geoJSON, nil
 }
 
-func (w *WateringPlanService) GetAll(ctx context.Context, query shared.Query) ([]*shared.WateringPlan, int64, error) {
+func (w *WateringPlanService) GetAll(ctx context.Context, query entities.Query) ([]*entities.WateringPlan, int64, error) {
 	log := logger.GetLogger(ctx)
 	plans, totalCount, err := w.wateringPlanRepo.GetAll(ctx, query)
 	if err != nil {
@@ -110,7 +110,7 @@ func (w *WateringPlanService) GetAll(ctx context.Context, query shared.Query) ([
 	return plans, totalCount, nil
 }
 
-func (w *WateringPlanService) GetByID(ctx context.Context, id int32) (*shared.WateringPlan, error) {
+func (w *WateringPlanService) GetByID(ctx context.Context, id int32) (*entities.WateringPlan, error) {
 	log := logger.GetLogger(ctx)
 	got, err := w.wateringPlanRepo.GetByID(ctx, id)
 	if err != nil {
@@ -121,7 +121,7 @@ func (w *WateringPlanService) GetByID(ctx context.Context, id int32) (*shared.Wa
 	return got, nil
 }
 
-func (w *WateringPlanService) Create(ctx context.Context, createWp *shared.WateringPlanCreate) (*shared.WateringPlan, error) {
+func (w *WateringPlanService) Create(ctx context.Context, createWp *entities.WateringPlanCreate) (*entities.WateringPlan, error) {
 	log := logger.GetLogger(ctx)
 
 	treeClusters, err := w.fetchTreeClusters(ctx, createWp.TreeClusterIDs)
@@ -135,7 +135,7 @@ func (w *WateringPlanService) Create(ctx context.Context, createWp *shared.Water
 		return nil, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
 	}
 
-	var trailer *shared.Vehicle
+	var trailer *entities.Vehicle
 	if createWp.TrailerID != nil {
 		trailer, err = w.vehicleRepo.GetByID(ctx, *createWp.TrailerID)
 		if err != nil {
@@ -149,7 +149,7 @@ func (w *WateringPlanService) Create(ctx context.Context, createWp *shared.Water
 		return nil, err // err is already a service error
 	}
 
-	created, err := w.wateringPlanRepo.Create(ctx, func(wp *shared.WateringPlan, _ shared.WateringPlanRepository) (bool, error) {
+	created, err := w.wateringPlanRepo.Create(ctx, func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
 		wp.Date = createWp.Date
 		wp.Description = createWp.Description
 		wp.Transporter = transporter
@@ -167,8 +167,8 @@ func (w *WateringPlanService) Create(ctx context.Context, createWp *shared.Water
 		return nil, ports.MapError(ctx, err, ports.ErrorLogAll)
 	}
 
-	err = w.wateringPlanRepo.Update(ctx, created.ID, func(wp *shared.WateringPlan, _ shared.WateringPlanRepository) (bool, error) {
-		mergedVehicle := shared.MergeVehicles(transporter, trailer)
+	err = w.wateringPlanRepo.Update(ctx, created.ID, func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		mergedVehicle := entities.MergeVehicles(transporter, trailer)
 		gpxURL, err := w.getGpxRouteURL(ctx, created.ID, mergedVehicle, treeClusters)
 		if err != nil {
 			log.Warn("generating route in gpx fomat failed. will not save gpx route", "error", err, "watering_plan_id", created.ID)
@@ -197,7 +197,7 @@ func (w *WateringPlanService) Create(ctx context.Context, createWp *shared.Water
 	return created, nil
 }
 
-func (w *WateringPlanService) getGpxRouteURL(ctx context.Context, waterPlanID int32, vehicle *shared.Vehicle, clusters []*shared.TreeCluster) (string, error) {
+func (w *WateringPlanService) getGpxRouteURL(ctx context.Context, waterPlanID int32, vehicle *entities.Vehicle, clusters []*entities.TreeCluster) (string, error) {
 	log := logger.GetLogger(ctx)
 	r, err := w.routingRepo.GenerateRawGpxRoute(ctx, vehicle, clusters)
 	if err != nil {
@@ -235,7 +235,7 @@ func (w *WateringPlanService) GetGPXFileStream(ctx context.Context, objName stri
 	return ioReader, nil
 }
 
-func (w *WateringPlanService) Update(ctx context.Context, id int32, updateWp *shared.WateringPlanUpdate) (*shared.WateringPlan, error) {
+func (w *WateringPlanService) Update(ctx context.Context, id int32, updateWp *entities.WateringPlanUpdate) (*entities.WateringPlan, error) {
 	log := logger.GetLogger(ctx)
 
 	prevWp, err := w.GetByID(ctx, id)
@@ -255,7 +255,7 @@ func (w *WateringPlanService) Update(ctx context.Context, id int32, updateWp *sh
 		return nil, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
 	}
 
-	var trailer *shared.Vehicle
+	var trailer *entities.Vehicle
 	if updateWp.TrailerID != nil {
 		trailer, err = w.vehicleRepo.GetByID(ctx, *updateWp.TrailerID)
 		if err != nil {
@@ -268,7 +268,7 @@ func (w *WateringPlanService) Update(ctx context.Context, id int32, updateWp *sh
 		return nil, err
 	}
 
-	err = w.wateringPlanRepo.Update(ctx, id, func(wp *shared.WateringPlan, _ shared.WateringPlanRepository) (bool, error) {
+	err = w.wateringPlanRepo.Update(ctx, id, func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
 		wp.Date = updateWp.Date
 		wp.Description = updateWp.Description
 		wp.Transporter = transporter
@@ -283,7 +283,7 @@ func (w *WateringPlanService) Update(ctx context.Context, id int32, updateWp *sh
 		wp.Provider = updateWp.Provider
 		wp.AdditionalInfo = updateWp.AdditionalInfo
 
-		mergedVehicle := shared.MergeVehicles(transporter, trailer)
+		mergedVehicle := entities.MergeVehicles(transporter, trailer)
 		if wp.ShouldRegenerateRoute(prevWp) {
 			gpxURL, err := w.getGpxRouteURL(ctx, id, mergedVehicle, treeClusters)
 			if err != nil {
@@ -338,7 +338,7 @@ func (w *WateringPlanService) Ready() bool {
 
 func (w *WateringPlanService) UpdateStatuses(ctx context.Context) error {
 	log := logger.GetLogger(ctx)
-	plans, _, err := w.wateringPlanRepo.GetAll(ctx, shared.Query{Provider: ""})
+	plans, _, err := w.wateringPlanRepo.GetAll(ctx, entities.Query{Provider: ""})
 	if err != nil {
 		log.Error("failed to fetch watering plans", "error", err)
 		return err
@@ -347,8 +347,8 @@ func (w *WateringPlanService) UpdateStatuses(ctx context.Context) error {
 	cutoffTime := time.Now().Add(-24 * time.Hour) // 1 day ago
 	for _, plan := range plans {
 		if plan.IsExpired(cutoffTime) {
-			err = w.wateringPlanRepo.Update(ctx, plan.ID, func(wp *shared.WateringPlan, _ shared.WateringPlanRepository) (bool, error) {
-				wp.Status = shared.WateringPlanStatusNotCompeted
+			err = w.wateringPlanRepo.Update(ctx, plan.ID, func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+				wp.Status = entities.WateringPlanStatusNotCompeted
 				return true, nil
 			})
 
@@ -365,7 +365,7 @@ func (w *WateringPlanService) UpdateStatuses(ctx context.Context) error {
 }
 
 // returns service error
-func (w *WateringPlanService) fetchTreeClusters(ctx context.Context, treeClusterIDs []*int32) ([]*shared.TreeCluster, error) {
+func (w *WateringPlanService) fetchTreeClusters(ctx context.Context, treeClusterIDs []*int32) ([]*entities.TreeCluster, error) {
 	log := logger.GetLogger(ctx)
 	clusters, err := w.clusterRepo.GetByIDs(ctx, utils.Map(treeClusterIDs, func(cID *int32) int32 {
 		return *cID
@@ -377,14 +377,14 @@ func (w *WateringPlanService) fetchTreeClusters(ctx context.Context, treeCluster
 
 	if len(clusters) == 0 {
 		log.Debug("requested tree cluster ids in watering plan are not found", "cluster_ids", treeClusterIDs, "error", err)
-		return nil, shared.ErrEntityNotFound("treecluster")
+		return nil, entities.ErrEntityNotFound("treecluster")
 	}
 
 	return clusters, nil
 }
 
 // returns service error
-func (w *WateringPlanService) validateUsers(ctx context.Context, userIDs []*uuid.UUID, transporter, trailer *shared.Vehicle) error {
+func (w *WateringPlanService) validateUsers(ctx context.Context, userIDs []*uuid.UUID, transporter, trailer *entities.Vehicle) error {
 	log := logger.GetLogger(ctx)
 	var userIDStrings []string
 	for _, id := range userIDs {
@@ -402,16 +402,16 @@ func (w *WateringPlanService) validateUsers(ctx context.Context, userIDs []*uuid
 
 	if len(users) == 0 {
 		log.Debug("requested user ids in watering plan not found", "error", err, "user_ids", userIDStrings)
-		return ports.MapError(ctx, shared.ErrEntityNotFound("users"), ports.ErrorLogEntityNotFound)
+		return ports.MapError(ctx, entities.ErrEntityNotFound("users"), ports.ErrorLogEntityNotFound)
 	}
 
 	for _, user := range users {
-		if !user.HasRole(shared.UserRoleTbz) {
+		if !user.HasRole(entities.UserRoleTbz) {
 			return ports.ErrUserNotCorrectRole
 		}
 	}
 
-	var requiredLicenses []shared.DrivingLicense
+	var requiredLicenses []entities.DrivingLicense
 	if transporter != nil {
 		requiredLicenses = append(requiredLicenses, transporter.DrivingLicense)
 	}

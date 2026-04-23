@@ -12,16 +12,16 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
 // AuthDummyService is used to disable the auth service by configuration
 type AuthDummyService struct {
-	repo shared.UserRepository
+	repo entities.UserRepository
 }
 
-func NewDummyAuthService(repo shared.UserRepository) ports.AuthService {
+func NewDummyAuthService(repo entities.UserRepository) ports.AuthService {
 	return &AuthDummyService{
 		repo: repo,
 	}
@@ -31,7 +31,7 @@ func (s *AuthDummyService) Ready() bool {
 	return true
 }
 
-func (s *AuthDummyService) LoginRequest(ctx context.Context, loginRequest *shared.LoginRequest) *shared.LoginResp {
+func (s *AuthDummyService) LoginRequest(ctx context.Context, loginRequest *entities.LoginRequest) *entities.LoginResp {
 	log := logger.GetLogger(ctx)
 	appURLRaw := viper.GetString("server.app_url")
 	dummyURL, err := url.Parse(appURLRaw + "/api/v1/user/auth/dummy")
@@ -43,44 +43,44 @@ func (s *AuthDummyService) LoginRequest(ctx context.Context, loginRequest *share
 	query.Add("redirect_uri", loginRequest.RedirectURL.String())
 	dummyURL.RawQuery = query.Encode()
 
-	return &shared.LoginResp{
+	return &entities.LoginResp{
 		LoginURL: dummyURL,
 	}
 }
 
-func (s *AuthDummyService) LogoutRequest(_ context.Context, _ *shared.Logout) error {
+func (s *AuthDummyService) LogoutRequest(_ context.Context, _ *entities.Logout) error {
 	return nil
 }
 
-func (s *AuthDummyService) ClientTokenCallback(_ context.Context, _ *shared.LoginCallback) (*shared.ClientToken, error) {
+func (s *AuthDummyService) ClientTokenCallback(_ context.Context, _ *entities.LoginCallback) (*entities.ClientToken, error) {
 	return s.generateDummyToken()
 }
 
-func (s *AuthDummyService) Register(_ context.Context, _ *shared.RegisterUser) (*shared.User, error) {
+func (s *AuthDummyService) Register(_ context.Context, _ *entities.RegisterUser) (*entities.User, error) {
 	return nil, ports.NewError(ports.Gone, "auth service is disabled")
 }
 
-func (s *AuthDummyService) RetrospectToken(_ context.Context, _ string) (*shared.IntroSpectTokenResult, error) {
+func (s *AuthDummyService) RetrospectToken(_ context.Context, _ string) (*entities.IntroSpectTokenResult, error) {
 	return nil, ports.NewError(ports.Gone, "auth service is disabled")
 }
 
-func (s *AuthDummyService) RefreshToken(_ context.Context, _ string) (*shared.ClientToken, error) {
+func (s *AuthDummyService) RefreshToken(_ context.Context, _ string) (*entities.ClientToken, error) {
 	return s.generateDummyToken()
 }
 
-func (s *AuthDummyService) GetAll(ctx context.Context) ([]*shared.User, error) {
+func (s *AuthDummyService) GetAll(ctx context.Context) ([]*entities.User, error) {
 	return s.repo.GetAll(ctx)
 }
 
-func (s *AuthDummyService) GetByIDs(ctx context.Context, ids []string) ([]*shared.User, error) {
+func (s *AuthDummyService) GetByIDs(ctx context.Context, ids []string) ([]*entities.User, error) {
 	return s.repo.GetByIDs(ctx, ids)
 }
 
-func (s *AuthDummyService) GetAllByRole(ctx context.Context, role shared.UserRole) ([]*shared.User, error) {
+func (s *AuthDummyService) GetAllByRole(ctx context.Context, role entities.UserRole) ([]*entities.User, error) {
 	return s.repo.GetAllByRole(ctx, role)
 }
 
-func (s *AuthDummyService) generateDummyToken() (*shared.ClientToken, error) {
+func (s *AuthDummyService) generateDummyToken() (*entities.ClientToken, error) {
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(map[string]interface{}{
 		"email":              "toni.tester@green-ecolution.de",
@@ -98,7 +98,7 @@ func (s *AuthDummyService) generateDummyToken() (*shared.ClientToken, error) {
 
 	b64Buf := base64.RawURLEncoding.EncodeToString(buf.Bytes())
 
-	return &shared.ClientToken{
+	return &entities.ClientToken{
 		TokenType:    "Bearer",
 		Expiry:       time.Now().Add(365 * 24 * time.Hour),
 		ExpiresIn:    int(365 * 24 * time.Hour / time.Second),

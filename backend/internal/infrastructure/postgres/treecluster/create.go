@@ -4,38 +4,38 @@ import (
 	"context"
 	"errors"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func defaultTreeCluster() *shared.TreeCluster {
-	return &shared.TreeCluster{
+func defaultTreeCluster() *entities.TreeCluster {
+	return &entities.TreeCluster{
 		Region:         nil,
 		Address:        "",
 		Description:    "",
 		MoistureLevel:  0,
 		Coordinate:     nil,
-		WateringStatus: shared.WateringStatusUnknown,
-		SoilCondition:  shared.TreeSoilConditionUnknown,
+		WateringStatus: entities.WateringStatusUnknown,
+		SoilCondition:  entities.TreeSoilConditionUnknown,
 		Archived:       false,
 		LastWatered:    nil,
-		Trees:          make([]*shared.Tree, 0),
+		Trees:          make([]*entities.Tree, 0),
 		Name:           "",
 		Provider:       "",
 		AdditionalInfo: nil,
 	}
 }
 
-func (r *TreeClusterRepository) Create(ctx context.Context, createFn func(*shared.TreeCluster, shared.TreeClusterRepository) (bool, error)) (*shared.TreeCluster, error) {
+func (r *TreeClusterRepository) Create(ctx context.Context, createFn func(*entities.TreeCluster, entities.TreeClusterRepository) (bool, error)) (*entities.TreeCluster, error) {
 	log := logger.GetLogger(ctx)
 	if createFn == nil {
 		return nil, errors.New("createFn is nil")
 	}
 
-	var createdTc *shared.TreeCluster
+	var createdTc *entities.TreeCluster
 	err := r.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewTreeClusterRepository(s, r.TreeClusterMappers)
 		entity := defaultTreeCluster()
@@ -78,7 +78,7 @@ func (r *TreeClusterRepository) Create(ctx context.Context, createFn func(*share
 	return createdTc, nil
 }
 
-func (r *TreeClusterRepository) createEntity(ctx context.Context, entity *shared.TreeCluster) (int32, error) {
+func (r *TreeClusterRepository) createEntity(ctx context.Context, entity *entities.TreeCluster) (int32, error) {
 	log := logger.GetLogger(ctx)
 	additionalInfo, err := utils.MapAdditionalInfoToByte(entity.AdditionalInfo)
 	if err != nil {
@@ -109,7 +109,7 @@ func (r *TreeClusterRepository) createEntity(ctx context.Context, entity *shared
 	}
 
 	if len(entity.Trees) > 0 {
-		treeIDs := utils.Map(entity.Trees, func(t *shared.Tree) int32 {
+		treeIDs := utils.Map(entity.Trees, func(t *entities.Tree) int32 {
 			return t.ID
 		})
 
@@ -135,7 +135,7 @@ func (r *TreeClusterRepository) createEntity(ctx context.Context, entity *shared
 	return id, nil
 }
 
-func (r *TreeClusterRepository) validateTreeClusterEntity(tc *shared.TreeCluster) error {
+func (r *TreeClusterRepository) validateTreeClusterEntity(tc *entities.TreeCluster) error {
 	if tc == nil {
 		return errors.New("tree cluster is nil")
 	}

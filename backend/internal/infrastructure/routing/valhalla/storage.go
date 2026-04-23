@@ -4,10 +4,10 @@ import (
 	"log/slog"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
-func NewRepository(cfg *config.Config) (*shared.Repository, error) {
+func NewRepository(cfg *config.Config) (*entities.Repository, error) {
 	repoCfg := &RouteRepoConfig{
 		routing: cfg.Routing,
 	}
@@ -19,7 +19,7 @@ func NewRepository(cfg *config.Config) (*shared.Repository, error) {
 	}
 
 	slog.Info("successfully initialized routing repository", "service", "valhalla")
-	return &shared.Repository{
+	return &entities.Repository{
 		Routing: routingRepo,
 	}, nil
 }

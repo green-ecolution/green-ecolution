@@ -4,20 +4,20 @@ import (
 	"context"
 	"errors"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func (r *SensorRepository) Update(ctx context.Context, id shared.SensorID, updateFn func(*shared.Sensor, shared.SensorRepository) (bool, error)) (*shared.Sensor, error) {
+func (r *SensorRepository) Update(ctx context.Context, id entities.SensorID, updateFn func(*entities.Sensor, entities.SensorRepository) (bool, error)) (*entities.Sensor, error) {
 	log := logger.GetLogger(ctx)
 	if updateFn == nil {
 		return nil, errors.New("updateFn is nil")
 	}
 
-	var updatedSensor *shared.Sensor
+	var updatedSensor *entities.Sensor
 	err := r.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewSensorRepository(s, r.SensorRepositoryMappers)
 		entity, err := newRepo.GetByID(ctx, id)
@@ -63,7 +63,7 @@ func (r *SensorRepository) Update(ctx context.Context, id shared.SensorID, updat
 	return updatedSensor, nil
 }
 
-func (r *SensorRepository) updateEntity(ctx context.Context, sensor *shared.Sensor) error {
+func (r *SensorRepository) updateEntity(ctx context.Context, sensor *entities.Sensor) error {
 	log := logger.GetLogger(ctx)
 
 	additionalInfo, err := utils.MapAdditionalInfoToByte(sensor.AdditionalInfo)

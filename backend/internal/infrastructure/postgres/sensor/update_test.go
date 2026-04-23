@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func TestSensorRepository_Update(t *testing.T) {
@@ -17,16 +17,16 @@ func TestSensorRepository_Update(t *testing.T) {
 	t.Run("should update sensor successfully", func(t *testing.T) {
 		// given
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
-		newCoordinate := shared.MustNewCoordinate(54.82078826498143, 9.489684366114483)
-		newLatestData := &shared.SensorData{
+		newCoordinate := entities.MustNewCoordinate(54.82078826498143, 9.489684366114483)
+		newLatestData := &entities.SensorData{
 			ID:        1,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 			Data:      TestMqttPayload,
 		}
 
-		got, err := r.Update(context.Background(), shared.MustNewSensorID("sensor-1"), func(sensor *shared.Sensor, _ shared.SensorRepository) (bool, error) {
-			sensor.Status = shared.SensorStatusOffline
+		got, err := r.Update(context.Background(), entities.MustNewSensorID("sensor-1"), func(sensor *entities.Sensor, _ entities.SensorRepository) (bool, error) {
+			sensor.Status = entities.SensorStatusOffline
 			sensor.Coordinate = newCoordinate
 			sensor.LatestData = newLatestData
 			return true, nil
@@ -35,7 +35,7 @@ func TestSensorRepository_Update(t *testing.T) {
 		// then
 		assert.NoError(t, err)
 		assert.NotNil(t, got)
-		assert.Equal(t, shared.SensorStatusOffline, got.Status)
+		assert.Equal(t, entities.SensorStatusOffline, got.Status)
 		assert.Equal(t, newCoordinate.Latitude(), got.Coordinate.Latitude())
 		assert.Equal(t, newCoordinate.Longitude(), got.Coordinate.Longitude())
 
@@ -49,7 +49,7 @@ func TestSensorRepository_Update(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Update(context.Background(), shared.MustNewSensorID("sensor-1"), func(sensor *shared.Sensor, _ shared.SensorRepository) (bool, error) {
+		got, err := r.Update(context.Background(), entities.MustNewSensorID("sensor-1"), func(sensor *entities.Sensor, _ entities.SensorRepository) (bool, error) {
 			sensor.Status = ""
 			return true, nil
 		})
@@ -64,7 +64,7 @@ func TestSensorRepository_Update(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Update(context.Background(), shared.SensorID{}, func(sensor *shared.Sensor, _ shared.SensorRepository) (bool, error) {
+		got, err := r.Update(context.Background(), entities.SensorID{}, func(sensor *entities.Sensor, _ entities.SensorRepository) (bool, error) {
 			return true, nil
 		})
 
@@ -78,7 +78,7 @@ func TestSensorRepository_Update(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Update(context.Background(), shared.MustNewSensorID("notFoundID"), func(sensor *shared.Sensor, _ shared.SensorRepository) (bool, error) {
+		got, err := r.Update(context.Background(), entities.MustNewSensorID("notFoundID"), func(sensor *entities.Sensor, _ entities.SensorRepository) (bool, error) {
 			return true, nil
 		})
 
@@ -94,8 +94,8 @@ func TestSensorRepository_Update(t *testing.T) {
 		cancel()
 
 		// when
-		got, err := r.Update(ctx, shared.MustNewSensorID("sensor-1"), func(sensor *shared.Sensor, _ shared.SensorRepository) (bool, error) {
-			sensor.Status = shared.SensorStatusOffline
+		got, err := r.Update(ctx, entities.MustNewSensorID("sensor-1"), func(sensor *entities.Sensor, _ entities.SensorRepository) (bool, error) {
+			sensor.Status = entities.SensorStatusOffline
 			return true, nil
 		})
 

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing/valhalla/valhalla"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing/vroom"
@@ -16,8 +16,8 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-// validate is RouteRepo implements shared.RoutingRepository
-var _ shared.RoutingRepository = (*RouteRepo)(nil)
+// validate is RouteRepo implements entities.RoutingRepository
+var _ entities.RoutingRepository = (*RouteRepo)(nil)
 
 type RouteRepoConfig struct {
 	routing config.RoutingConfig
@@ -56,13 +56,13 @@ func NewRouteRepo(cfg *RouteRepoConfig) (*RouteRepo, error) {
 	}, nil
 }
 
-func (r *RouteRepo) GenerateRoute(ctx context.Context, vehicle *shared.Vehicle, clusters []*shared.TreeCluster) (*shared.GeoJSON, error) {
+func (r *RouteRepo) GenerateRoute(ctx context.Context, vehicle *entities.Vehicle, clusters []*entities.TreeCluster) (*entities.GeoJSON, error) {
 	log := logger.GetLogger(ctx)
 	_, route, err := r.prepareRoute(ctx, vehicle, clusters)
 	if err != nil {
 		log.Error("failed to prepare route", "error", err,
 			"vehicle_id", vehicle.ID,
-			"clusters_ids", utils.Map(clusters, func(c *shared.TreeCluster) int32 { return c.ID }),
+			"clusters_ids", utils.Map(clusters, func(c *entities.TreeCluster) int32 { return c.ID }),
 		)
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (r *RouteRepo) GenerateRoute(ctx context.Context, vehicle *shared.Vehicle, 
 	if err != nil {
 		log.Error("failed to generate route in valhalla", "error", err,
 			"vehicle_id", vehicle.ID,
-			"clusters_ids", utils.Map(clusters, func(c *shared.TreeCluster) int32 { return c.ID }),
+			"clusters_ids", utils.Map(clusters, func(c *entities.TreeCluster) int32 { return c.ID }),
 		)
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (r *RouteRepo) GenerateRoute(ctx context.Context, vehicle *shared.Vehicle, 
 	if err != nil {
 		log.Error("failed to convert generated locations", "error", err,
 			"vehicle_id", vehicle.ID,
-			"clusters_ids", utils.Map(clusters, func(c *shared.TreeCluster) int32 { return c.ID }),
+			"clusters_ids", utils.Map(clusters, func(c *entities.TreeCluster) int32 { return c.ID }),
 		)
 		return nil, err
 	}
@@ -89,12 +89,12 @@ func (r *RouteRepo) GenerateRoute(ctx context.Context, vehicle *shared.Vehicle, 
 
 	log.Debug("route generated successfully",
 		"vehicle_id", vehicle.ID,
-		"clusters_ids", utils.Map(clusters, func(c *shared.TreeCluster) int32 { return c.ID }),
+		"clusters_ids", utils.Map(clusters, func(c *entities.TreeCluster) int32 { return c.ID }),
 	)
 	return entity, nil
 }
 
-func (r *RouteRepo) GenerateRawGpxRoute(ctx context.Context, vehicle *shared.Vehicle, clusters []*shared.TreeCluster) (io.ReadCloser, error) {
+func (r *RouteRepo) GenerateRawGpxRoute(ctx context.Context, vehicle *entities.Vehicle, clusters []*entities.TreeCluster) (io.ReadCloser, error) {
 	log := logger.GetLogger(ctx)
 	_, route, err := r.prepareRoute(ctx, vehicle, clusters)
 	if err != nil {
@@ -103,12 +103,12 @@ func (r *RouteRepo) GenerateRawGpxRoute(ctx context.Context, vehicle *shared.Veh
 
 	log.Debug("route generated successfully as gpx file",
 		"vehicle_id", vehicle.ID,
-		"clusters_ids", utils.Map(clusters, func(c *shared.TreeCluster) int32 { return c.ID }),
+		"clusters_ids", utils.Map(clusters, func(c *entities.TreeCluster) int32 { return c.ID }),
 	)
 	return r.valhalla.DirectionsRawGpx(ctx, route)
 }
 
-func (r *RouteRepo) GenerateRouteInformation(ctx context.Context, vehicle *shared.Vehicle, clusters []*shared.TreeCluster) (*shared.RouteMetadata, error) {
+func (r *RouteRepo) GenerateRouteInformation(ctx context.Context, vehicle *entities.Vehicle, clusters []*entities.TreeCluster) (*entities.RouteMetadata, error) {
 	optimizedRoutes, route, err := r.prepareRoute(ctx, vehicle, clusters)
 	if err != nil {
 		return nil, err
@@ -127,14 +127,14 @@ func (r *RouteRepo) GenerateRouteInformation(ctx context.Context, vehicle *share
 		return nil, err
 	}
 
-	return &shared.RouteMetadata{
+	return &entities.RouteMetadata{
 		Refills:  int32(refillCount),
-		Distance: shared.MustNewDistance(rawDirections.Trip.Summary.Length),
+		Distance: entities.MustNewDistance(rawDirections.Trip.Summary.Length),
 		Time:     time.Duration(rawDirections.Trip.Summary.Time * float64(time.Second)),
 	}, nil
 }
 
-func (r *RouteRepo) prepareRoute(ctx context.Context, vehicle *shared.Vehicle, clusters []*shared.TreeCluster) (optimized *vroom.VroomResponse, routes *valhalla.DirectionRequest, err error) {
+func (r *RouteRepo) prepareRoute(ctx context.Context, vehicle *entities.Vehicle, clusters []*entities.TreeCluster) (optimized *vroom.VroomResponse, routes *valhalla.DirectionRequest, err error) {
 	log := logger.GetLogger(ctx)
 	optimizedRoutes, err := r.vroom.OptimizeRoute(ctx, vehicle, clusters)
 	if err != nil {

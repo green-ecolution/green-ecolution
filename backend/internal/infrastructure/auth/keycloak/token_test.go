@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func TestKeyCloakRepo_RetrospectToken(t *testing.T) {
@@ -73,7 +73,7 @@ func TestKeyCloakRepo_RefreshToken(t *testing.T) {
 		ctx := context.Background()
 		cfg := suite.IdentityConfig(t, ctx)
 		k := NewKeycloakRepository(cfg)
-		user := &shared.User{
+		user := &entities.User{
 			Username:    "should-refresh-token",
 			FirstName:   "Toni",
 			LastName:    "Tester",

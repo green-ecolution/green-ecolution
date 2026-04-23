@@ -6,18 +6,18 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
 // UserDummyRepo is used to disable the auth service by configuration
 type UserDummyRepo struct {
-	dummyUsers []*shared.User
+	dummyUsers []*entities.User
 }
 
 func NewUserDummyRepo() *UserDummyRepo {
 	return &UserDummyRepo{
-		dummyUsers: []*shared.User{
+		dummyUsers: []*entities.User{
 			{
 				ID:              uuid.New(),
 				EmployeeID:      "42",
@@ -26,9 +26,9 @@ func NewUserDummyRepo() *UserDummyRepo {
 				Username:        "pparser",
 				Email:           "peter.parser@tbz-flensburg.de",
 				EmailVerified:   true,
-				DrivingLicenses: []shared.DrivingLicense{shared.DrivingLicenseB, shared.DrivingLicenseBE, shared.DrivingLicenseC},
-				Status:          shared.UserStatusAvailable,
-				Roles:           []shared.UserRole{shared.UserRoleTbz},
+				DrivingLicenses: []entities.DrivingLicense{entities.DrivingLicenseB, entities.DrivingLicenseBE, entities.DrivingLicenseC},
+				Status:          entities.UserStatusAvailable,
+				Roles:           []entities.UserRole{entities.UserRoleTbz},
 			},
 			{
 				ID:              uuid.New(),
@@ -38,9 +38,9 @@ func NewUserDummyRepo() *UserDummyRepo {
 				Username:        "jjung",
 				Email:           "julia.jung@tbz-flensburg.de",
 				EmailVerified:   true,
-				DrivingLicenses: []shared.DrivingLicense{shared.DrivingLicenseB, shared.DrivingLicenseBE, shared.DrivingLicenseC},
-				Status:          shared.UserStatusAbsent,
-				Roles:           []shared.UserRole{shared.UserRoleTbz},
+				DrivingLicenses: []entities.DrivingLicense{entities.DrivingLicenseB, entities.DrivingLicenseBE, entities.DrivingLicenseC},
+				Status:          entities.UserStatusAbsent,
+				Roles:           []entities.UserRole{entities.UserRoleTbz},
 			},
 			{
 				ID:              uuid.New(),
@@ -50,34 +50,34 @@ func NewUserDummyRepo() *UserDummyRepo {
 				Username:        "ttester",
 				Email:           "toni.tester@green-ecolution.de",
 				EmailVerified:   true,
-				DrivingLicenses: []shared.DrivingLicense{shared.DrivingLicenseB, shared.DrivingLicenseBE, shared.DrivingLicenseC, shared.DrivingLicenseCE},
-				Status:          shared.UserStatusAvailable,
-				Roles:           []shared.UserRole{shared.UserRoleGreenEcolution},
+				DrivingLicenses: []entities.DrivingLicense{entities.DrivingLicenseB, entities.DrivingLicenseBE, entities.DrivingLicenseC, entities.DrivingLicenseCE},
+				Status:          entities.UserStatusAvailable,
+				Roles:           []entities.UserRole{entities.UserRoleGreenEcolution},
 			},
 		},
 	}
 }
 
-func (r *UserDummyRepo) Create(_ context.Context, _ *shared.User, _ string, _ []string) (*shared.User, error) {
-	return nil, shared.ErrAuthServiceDisabled
+func (r *UserDummyRepo) Create(_ context.Context, _ *entities.User, _ string, _ []string) (*entities.User, error) {
+	return nil, entities.ErrAuthServiceDisabled
 }
 
 func (r *UserDummyRepo) RemoveSession(_ context.Context, _ string) error {
 	return nil
 }
 
-func (r *UserDummyRepo) GetAll(_ context.Context) ([]*shared.User, error) {
+func (r *UserDummyRepo) GetAll(_ context.Context) ([]*entities.User, error) {
 	return r.dummyUsers, nil
 }
 
-func (r *UserDummyRepo) GetAllByRole(_ context.Context, role shared.UserRole) ([]*shared.User, error) {
-	return utils.Filter(r.dummyUsers, func(u *shared.User) bool {
+func (r *UserDummyRepo) GetAllByRole(_ context.Context, role entities.UserRole) ([]*entities.User, error) {
+	return utils.Filter(r.dummyUsers, func(u *entities.User) bool {
 		return slices.Contains(u.Roles, role)
 	}), nil
 }
 
-func (r *UserDummyRepo) GetByIDs(_ context.Context, ids []string) ([]*shared.User, error) {
-	return utils.Filter(r.dummyUsers, func(u *shared.User) bool {
+func (r *UserDummyRepo) GetByIDs(_ context.Context, ids []string) ([]*entities.User, error) {
+	return utils.Filter(r.dummyUsers, func(u *entities.User) bool {
 		return slices.ContainsFunc(ids, func(id string) bool {
 			return u.ID.String() == id
 		})

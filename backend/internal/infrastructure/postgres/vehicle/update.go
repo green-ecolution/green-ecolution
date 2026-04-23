@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	store "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func (r *VehicleRepository) Update(ctx context.Context, id int32, updateFn func(*shared.Vehicle, shared.VehicleRepository) (bool, error)) error {
+func (r *VehicleRepository) Update(ctx context.Context, id int32, updateFn func(*entities.Vehicle, entities.VehicleRepository) (bool, error)) error {
 	log := logger.GetLogger(ctx)
 	return r.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewVehicleRepository(s, r.VehicleRepositoryMappers)
@@ -47,7 +47,7 @@ func (r *VehicleRepository) Update(ctx context.Context, id int32, updateFn func(
 	})
 }
 
-func (r *VehicleRepository) updateEntity(ctx context.Context, vehicle *shared.Vehicle) error {
+func (r *VehicleRepository) updateEntity(ctx context.Context, vehicle *entities.Vehicle) error {
 	log := logger.GetLogger(ctx)
 	additionalInfo, err := utils.MapAdditionalInfoToByte(vehicle.AdditionalInfo)
 	if err != nil {

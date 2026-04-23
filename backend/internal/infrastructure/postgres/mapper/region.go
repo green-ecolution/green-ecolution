@@ -1,23 +1,23 @@
 package mapper
 
 import (
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
 type InternalRegionRepoMapper interface {
-	FromSql(src *sqlc.Region) *shared.Region
-	FromSqlList(src []*sqlc.Region) []*shared.Region
+	FromSql(src *sqlc.Region) *entities.Region
+	FromSqlList(src []*sqlc.Region) []*entities.Region
 }
 
 type InternalRegionRepoMapperImpl struct{}
 
-func (c *InternalRegionRepoMapperImpl) FromSql(source *sqlc.Region) *shared.Region {
+func (c *InternalRegionRepoMapperImpl) FromSql(source *sqlc.Region) *entities.Region {
 	if source == nil {
 		return nil
 	}
-	return &shared.Region{
+	return &entities.Region{
 		ID:        source.ID,
 		CreatedAt: source.CreatedAt,
 		UpdatedAt: source.UpdatedAt,
@@ -25,6 +25,6 @@ func (c *InternalRegionRepoMapperImpl) FromSql(source *sqlc.Region) *shared.Regi
 	}
 }
 
-func (c *InternalRegionRepoMapperImpl) FromSqlList(source []*sqlc.Region) []*shared.Region {
+func (c *InternalRegionRepoMapperImpl) FromSqlList(source []*sqlc.Region) []*entities.Region {
 	return utils.MapSlice(source, c.FromSql)
 }

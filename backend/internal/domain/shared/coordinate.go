@@ -1,4 +1,4 @@
-package shared
+package entities
 
 import (
 	"errors"
@@ -10,6 +10,9 @@ var (
 	ErrInvalidLongitude = errors.New("longitude must be between -180 and 180")
 )
 
+// Coordinate represents a geographic coordinate with latitude and longitude.
+//
+//	@name Coordinate
 type Coordinate struct {
 	lat float64
 	lng float64

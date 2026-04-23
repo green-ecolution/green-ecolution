@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func TestTreeRepository_Create(t *testing.T) {
@@ -18,7 +18,7 @@ func TestTreeRepository_Create(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		got, err := r.Create(context.Background(), func(tree *shared.Tree, _ shared.TreeRepository) (bool, error) {
+		got, err := r.Create(context.Background(), func(tree *entities.Tree, _ entities.TreeRepository) (bool, error) {
 			return true, nil
 		})
 
@@ -37,7 +37,7 @@ func TestTreeRepository_Create(t *testing.T) {
 		assert.Equal(t, float64(0), got.Coordinate.Longitude())
 		assert.Equal(t, "", got.Description)
 		assert.Equal(t, "", got.Provider)
-		assert.Equal(t, shared.WateringStatusUnknown, got.WateringStatus)
+		assert.Equal(t, entities.WateringStatusUnknown, got.WateringStatus)
 		assert.Nil(t, got.LastWatered)
 	})
 
@@ -68,13 +68,13 @@ func TestTreeRepository_Create(t *testing.T) {
 		}
 
 		// when
-		got, err := r.Create(context.Background(), func(tree *shared.Tree, _ shared.TreeRepository) (bool, error) {
+		got, err := r.Create(context.Background(), func(tree *entities.Tree, _ entities.TreeRepository) (bool, error) {
 			tree.Species = "Oak"
 			tree.Number = "T001"
-			tree.PlantingYear = shared.MustNewPlantingYear(2023)
-			tree.Coordinate = shared.MustNewCoordinate(54.801539, 9.446741)
+			tree.PlantingYear = entities.MustNewPlantingYear(2023)
+			tree.Coordinate = entities.MustNewCoordinate(54.801539, 9.446741)
 			tree.Description = "A newly planted oak tree"
-			tree.WateringStatus = shared.WateringStatusGood
+			tree.WateringStatus = entities.WateringStatusGood
 			tree.TreeCluster = treeCluster
 			tree.Sensor = sensor
 			return true, nil
@@ -102,7 +102,7 @@ func TestTreeRepository_Create(t *testing.T) {
 		assert.Equal(t, 9.446741, got.Coordinate.Longitude())
 		assert.Equal(t, "A newly planted oak tree", got.Description)
 		assert.Equal(t, "", got.Provider)
-		assert.Equal(t, shared.WateringStatusGood, got.WateringStatus)
+		assert.Equal(t, entities.WateringStatusGood, got.WateringStatus)
 		assert.Nil(t, got.LastWatered)
 	})
 
@@ -113,8 +113,8 @@ func TestTreeRepository_Create(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		got, err := r.Create(context.Background(), func(tree *shared.Tree, _ shared.TreeRepository) (bool, error) {
-			coord, coordErr := shared.NewCoordinate(-200, 0)
+		got, err := r.Create(context.Background(), func(tree *entities.Tree, _ entities.TreeRepository) (bool, error) {
+			coord, coordErr := entities.NewCoordinate(-200, 0)
 			if coordErr != nil {
 				return false, coordErr
 			}
@@ -124,7 +124,7 @@ func TestTreeRepository_Create(t *testing.T) {
 
 		// then
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), shared.ErrInvalidLatitude.Error())
+		assert.Contains(t, err.Error(), entities.ErrInvalidLatitude.Error())
 		assert.Nil(t, got)
 	})
 
@@ -135,8 +135,8 @@ func TestTreeRepository_Create(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		got, err := r.Create(context.Background(), func(tree *shared.Tree, _ shared.TreeRepository) (bool, error) {
-			coord, coordErr := shared.NewCoordinate(0, 200)
+		got, err := r.Create(context.Background(), func(tree *entities.Tree, _ entities.TreeRepository) (bool, error) {
+			coord, coordErr := entities.NewCoordinate(0, 200)
 			if coordErr != nil {
 				return false, coordErr
 			}
@@ -146,7 +146,7 @@ func TestTreeRepository_Create(t *testing.T) {
 
 		// then
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), shared.ErrInvalidLongitude.Error())
+		assert.Contains(t, err.Error(), entities.ErrInvalidLongitude.Error())
 		assert.Nil(t, got)
 	})
 
@@ -160,7 +160,7 @@ func TestTreeRepository_Create(t *testing.T) {
 		cancel()
 
 		// when
-		got, err := r.Create(ctx, func(tree *shared.Tree, _ shared.TreeRepository) (bool, error) {
+		got, err := r.Create(ctx, func(tree *entities.Tree, _ entities.TreeRepository) (bool, error) {
 			tree.Species = "Oak"
 			return true, nil
 		})

@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/testutils"
@@ -49,7 +49,7 @@ func TestSensorRepository_Delete(t *testing.T) {
 		r := NewSensorRepository(defaultFields.store, defaultFields.SensorMappers)
 
 		// when
-		err := r.Delete(context.Background(), shared.MustNewSensorID("sensor-1"))
+		err := r.Delete(context.Background(), entities.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.NoError(t, err)
@@ -61,7 +61,7 @@ func TestSensorRepository_Delete(t *testing.T) {
 		r := NewSensorRepository(defaultFields.store, defaultFields.SensorMappers)
 
 		// when
-		err := r.Delete(context.Background(), shared.MustNewSensorID("notFoundID"))
+		err := r.Delete(context.Background(), entities.MustNewSensorID("notFoundID"))
 
 		// then
 		assert.Error(t, err)
@@ -74,7 +74,7 @@ func TestSensorRepository_Delete(t *testing.T) {
 		cancel()
 
 		// when
-		err := r.Delete(ctx, shared.MustNewSensorID("sensor-1"))
+		err := r.Delete(ctx, entities.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.Error(t, err)

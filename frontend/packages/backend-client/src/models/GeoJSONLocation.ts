@@ -16,29 +16,29 @@ import { mapValues } from '../runtime';
 /**
  * 
  * @export
- * @interface SharedGeoJSONLocation
+ * @interface GeoJSONLocation
  */
-export interface SharedGeoJSONLocation {
+export interface GeoJSONLocation {
     /**
      * 
      * @type {object}
-     * @memberof SharedGeoJSONLocation
+     * @memberof GeoJSONLocation
      */
     coordinate?: object;
 }
 
 /**
- * Check if a given object implements the SharedGeoJSONLocation interface.
+ * Check if a given object implements the GeoJSONLocation interface.
  */
-export function instanceOfSharedGeoJSONLocation(value: object): value is SharedGeoJSONLocation {
+export function instanceOfGeoJSONLocation(value: object): value is GeoJSONLocation {
     return true;
 }
 
-export function SharedGeoJSONLocationFromJSON(json: any): SharedGeoJSONLocation {
-    return SharedGeoJSONLocationFromJSONTyped(json, false);
+export function GeoJSONLocationFromJSON(json: any): GeoJSONLocation {
+    return GeoJSONLocationFromJSONTyped(json, false);
 }
 
-export function SharedGeoJSONLocationFromJSONTyped(json: any, ignoreDiscriminator: boolean): SharedGeoJSONLocation {
+export function GeoJSONLocationFromJSONTyped(json: any, ignoreDiscriminator: boolean): GeoJSONLocation {
     if (json == null) {
         return json;
     }
@@ -48,11 +48,11 @@ export function SharedGeoJSONLocationFromJSONTyped(json: any, ignoreDiscriminato
     };
 }
 
-export function SharedGeoJSONLocationToJSON(json: any): SharedGeoJSONLocation {
-    return SharedGeoJSONLocationToJSONTyped(json, false);
+export function GeoJSONLocationToJSON(json: any): GeoJSONLocation {
+    return GeoJSONLocationToJSONTyped(json, false);
 }
 
-export function SharedGeoJSONLocationToJSONTyped(value?: SharedGeoJSONLocation | null, ignoreDiscriminator: boolean = false): any {
+export function GeoJSONLocationToJSONTyped(value?: GeoJSONLocation | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }

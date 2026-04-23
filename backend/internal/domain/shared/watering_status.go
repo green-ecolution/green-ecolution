@@ -1,4 +1,4 @@
-package shared
+package entities
 
 type WateringStatus string
 

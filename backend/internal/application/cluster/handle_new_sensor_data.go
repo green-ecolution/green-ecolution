@@ -4,17 +4,17 @@ import (
 	"context"
 	"errors"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
 // HandleNewSensorData processes new sensor data and updates the watering status of a tree cluster if necessary.
-func (s *TreeClusterService) HandleNewSensorData(ctx context.Context, event *shared.EventNewSensorData) error {
+func (s *TreeClusterService) HandleNewSensorData(ctx context.Context, event *entities.EventNewSensorData) error {
 	log := logger.GetLogger(ctx)
 	log.Debug("handle event", "event", event.Type(), "service", "TreeClusterService")
 	tree, err := s.treeRepo.GetBySensorID(ctx, event.New.SensorID)
 	if err != nil {
-		if errors.Is(err, shared.ErrSensorNotFound) {
+		if errors.Is(err, entities.ErrSensorNotFound) {
 			log.Error("failed to get sensor by id", "sensor_id", event.New.SensorID, "err", err)
 			return nil
 		}
@@ -38,7 +38,7 @@ func (s *TreeClusterService) HandleNewSensorData(ctx context.Context, event *sha
 		return nil
 	}
 
-	updateFn := func(tc *shared.TreeCluster, _ shared.TreeClusterRepository) (bool, error) {
+	updateFn := func(tc *entities.TreeCluster, _ entities.TreeClusterRepository) (bool, error) {
 		tc.WateringStatus = wateringStatus
 		return true, nil
 	}
@@ -50,12 +50,12 @@ func (s *TreeClusterService) HandleNewSensorData(ctx context.Context, event *sha
 	return nil
 }
 
-func (s *TreeClusterService) getWateringStatusOfTreeCluster(ctx context.Context, cluster *shared.TreeCluster) (shared.WateringStatus, error) {
+func (s *TreeClusterService) getWateringStatusOfTreeCluster(ctx context.Context, cluster *entities.TreeCluster) (entities.WateringStatus, error) {
 	log := logger.GetLogger(ctx)
 	sensorData, err := s.treeClusterRepo.GetAllLatestSensorDataByClusterID(ctx, cluster.ID)
 	if err != nil {
 		log.Error("failed to get latest sensor data", "cluster_id", cluster.ID, "err", err)
-		return shared.WateringStatusUnknown, errors.New("failed to get latest sensor data")
+		return entities.WateringStatusUnknown, errors.New("failed to get latest sensor data")
 	}
 
 	return cluster.CalculateWateringStatus(sensorData)

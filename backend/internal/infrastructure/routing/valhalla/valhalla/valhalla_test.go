@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func newTestValhallaClient(t *testing.T, serverURL string) ValhallaClient {
@@ -133,9 +133,9 @@ func TestToGeoJSON(t *testing.T) {
 
 		// then
 		require.Len(t, result.Features, 1)
-		assert.Equal(t, shared.FeatureCollection, result.Type)
-		assert.Equal(t, shared.Feature, result.Features[0].Type)
-		assert.Equal(t, shared.LineString, result.Features[0].Geometry.Type)
+		assert.Equal(t, entities.FeatureCollection, result.Type)
+		assert.Equal(t, entities.Feature, result.Features[0].Type)
+		assert.Equal(t, entities.LineString, result.Features[0].Geometry.Type)
 		assert.NotEmpty(t, result.Features[0].Geometry.Coordinates)
 	})
 
@@ -207,9 +207,9 @@ func TestToGeoJSON(t *testing.T) {
 		result := client.toGeoJSON(resp)
 
 		// then
-		assert.Equal(t, shared.FeatureCollection, result.Type)
-		assert.Equal(t, shared.Feature, result.Features[0].Type)
-		assert.Equal(t, shared.LineString, result.Features[0].Geometry.Type)
+		assert.Equal(t, entities.FeatureCollection, result.Type)
+		assert.Equal(t, entities.Feature, result.Features[0].Type)
+		assert.Equal(t, entities.LineString, result.Features[0].Geometry.Type)
 	})
 
 	t.Run("should return empty features for empty legs", func(t *testing.T) {
@@ -348,7 +348,7 @@ func TestDirectionsGeoJSON(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, shared.FeatureCollection, result.Type)
+		assert.Equal(t, entities.FeatureCollection, result.Type)
 		assert.Len(t, result.Features, 1)
 	})
 

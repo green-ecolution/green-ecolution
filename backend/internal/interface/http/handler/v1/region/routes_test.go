@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/middleware"
 )
 
@@ -25,7 +25,7 @@ func TestRegisterRoutes(t *testing.T) {
 			ctx := context.WithValue(context.Background(), "page", int32(1))
 			ctx = context.WithValue(ctx, "limit", int32(-1))
 
-			expectedRegions := []*shared.Region{
+			expectedRegions := []*entities.Region{
 				{ID: 1, Name: "Region A"},
 				{ID: 2, Name: "Region B"},
 			}
@@ -54,7 +54,7 @@ func TestRegisterRoutes(t *testing.T) {
 			mockRegionService.EXPECT().GetByID(
 				mock.Anything,
 				int32(1),
-			).Return(&shared.Region{ID: 1, Name: "Region A"}, nil)
+			).Return(&entities.Region{ID: 1, Name: "Region A"}, nil)
 
 			// when
 			req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/1", nil)

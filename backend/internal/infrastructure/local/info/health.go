@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 const (
@@ -92,9 +92,9 @@ func newHealthChecker(r *InfoRepository) *healthChecker {
 	}
 }
 
-func (h *healthChecker) checkAll(ctx context.Context) []shared.ServiceStatus {
+func (h *healthChecker) checkAll(ctx context.Context) []entities.ServiceStatus {
 	now := time.Now()
-	services := []shared.ServiceStatus{
+	services := []entities.ServiceStatus{
 		h.checkDatabase(ctx, now),
 		h.checkAuth(ctx, now),
 		h.checkMQTT(now),
@@ -105,8 +105,8 @@ func (h *healthChecker) checkAll(ctx context.Context) []shared.ServiceStatus {
 	return services
 }
 
-func (h *healthChecker) checkDatabase(ctx context.Context, now time.Time) shared.ServiceStatus {
-	status := shared.ServiceStatus{
+func (h *healthChecker) checkDatabase(ctx context.Context, now time.Time) entities.ServiceStatus {
+	status := entities.ServiceStatus{
 		Name:        "database",
 		Enabled:     h.cfg.dbEnabled,
 		LastChecked: now,
@@ -133,8 +133,8 @@ func (h *healthChecker) checkDatabase(ctx context.Context, now time.Time) shared
 	return status
 }
 
-func (h *healthChecker) checkAuth(ctx context.Context, now time.Time) shared.ServiceStatus {
-	status := shared.ServiceStatus{
+func (h *healthChecker) checkAuth(ctx context.Context, now time.Time) entities.ServiceStatus {
+	status := entities.ServiceStatus{
 		Name:        "auth",
 		Enabled:     h.cfg.authEnabled,
 		LastChecked: now,
@@ -163,10 +163,10 @@ func (h *healthChecker) checkAuth(ctx context.Context, now time.Time) shared.Ser
 	return status
 }
 
-func (h *healthChecker) checkMQTT(now time.Time) shared.ServiceStatus {
+func (h *healthChecker) checkMQTT(now time.Time) entities.ServiceStatus {
 	// MQTT health check would require MQTT client reference
 	// For now, just check if enabled
-	status := shared.ServiceStatus{
+	status := entities.ServiceStatus{
 		Name:        "mqtt",
 		Enabled:     h.cfg.mqttEnabled,
 		Healthy:     h.cfg.mqttEnabled,
@@ -180,8 +180,8 @@ func (h *healthChecker) checkMQTT(now time.Time) shared.ServiceStatus {
 	return status
 }
 
-func (h *healthChecker) checkS3(ctx context.Context, now time.Time) shared.ServiceStatus {
-	status := shared.ServiceStatus{
+func (h *healthChecker) checkS3(ctx context.Context, now time.Time) entities.ServiceStatus {
+	status := entities.ServiceStatus{
 		Name:        "s3",
 		Enabled:     h.cfg.s3Enabled,
 		LastChecked: now,
@@ -226,8 +226,8 @@ func (h *healthChecker) checkS3(ctx context.Context, now time.Time) shared.Servi
 	return status
 }
 
-func (h *healthChecker) checkRouting(ctx context.Context, now time.Time) shared.ServiceStatus {
-	status := shared.ServiceStatus{
+func (h *healthChecker) checkRouting(ctx context.Context, now time.Time) entities.ServiceStatus {
+	status := entities.ServiceStatus{
 		Name:        "routing",
 		Enabled:     h.cfg.routingEnabled,
 		LastChecked: now,
@@ -256,8 +256,8 @@ func (h *healthChecker) checkRouting(ctx context.Context, now time.Time) shared.
 	return status
 }
 
-func (h *healthChecker) checkVroom(ctx context.Context, now time.Time) shared.ServiceStatus {
-	status := shared.ServiceStatus{
+func (h *healthChecker) checkVroom(ctx context.Context, now time.Time) entities.ServiceStatus {
+	status := entities.ServiceStatus{
 		Name:        "vroom",
 		Enabled:     h.cfg.vroomEnabled,
 		LastChecked: now,

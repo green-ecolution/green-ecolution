@@ -5,12 +5,12 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
-func (r *RegionRepository) Update(ctx context.Context, id int32, vFn ...shared.EntityFunc[shared.Region]) (*shared.Region, error) {
+func (r *RegionRepository) Update(ctx context.Context, id int32, vFn ...entities.EntityFunc[entities.Region]) (*entities.Region, error) {
 	log := logger.GetLogger(ctx)
 	entity, err := r.GetByID(ctx, id)
 	if err != nil {
@@ -34,7 +34,7 @@ func (r *RegionRepository) Update(ctx context.Context, id int32, vFn ...shared.E
 	return r.GetByID(ctx, entity.ID)
 }
 
-func (r *RegionRepository) updateEntity(ctx context.Context, vehicle *shared.Region) error {
+func (r *RegionRepository) updateEntity(ctx context.Context, vehicle *entities.Region) error {
 	params := sqlc.UpdateRegionParams{
 		ID:   vehicle.ID,
 		Name: vehicle.Name,

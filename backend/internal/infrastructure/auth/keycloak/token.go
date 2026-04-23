@@ -6,11 +6,11 @@ import (
 
 	"github.com/Nerzal/gocloak/v13"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
-func (r *KeycloakRepository) RetrospectToken(ctx context.Context, token string) (*shared.IntroSpectTokenResult, error) {
+func (r *KeycloakRepository) RetrospectToken(ctx context.Context, token string) (*entities.IntroSpectTokenResult, error) {
 	log := logger.GetLogger(ctx)
 	client := gocloak.NewClient(r.cfg.OidcProvider.BaseURL)
 
@@ -20,7 +20,7 @@ func (r *KeycloakRepository) RetrospectToken(ctx context.Context, token string) 
 		return nil, err
 	}
 
-	return &shared.IntroSpectTokenResult{
+	return &entities.IntroSpectTokenResult{
 		Active:   rptResult.Active,
 		Exp:      rptResult.Exp,
 		AuthTime: rptResult.AuthTime,
@@ -28,7 +28,7 @@ func (r *KeycloakRepository) RetrospectToken(ctx context.Context, token string) 
 	}, nil
 }
 
-func (r *KeycloakRepository) GetAccessTokenFromClientCode(ctx context.Context, code, redirectURL string) (*shared.ClientToken, error) {
+func (r *KeycloakRepository) GetAccessTokenFromClientCode(ctx context.Context, code, redirectURL string) (*entities.ClientToken, error) {
 	log := logger.GetLogger(ctx)
 	client := gocloak.NewClient(r.cfg.OidcProvider.BaseURL)
 
@@ -46,7 +46,7 @@ func (r *KeycloakRepository) GetAccessTokenFromClientCode(ctx context.Context, c
 		return nil, err
 	}
 
-	return &shared.ClientToken{
+	return &entities.ClientToken{
 		AccessToken:      token.AccessToken,
 		RefreshToken:     token.RefreshToken,
 		ExpiresIn:        token.ExpiresIn,
@@ -59,7 +59,7 @@ func (r *KeycloakRepository) GetAccessTokenFromClientCode(ctx context.Context, c
 	}, nil
 }
 
-func (r *KeycloakRepository) RefreshToken(ctx context.Context, refreshToken string) (*shared.ClientToken, error) {
+func (r *KeycloakRepository) RefreshToken(ctx context.Context, refreshToken string) (*entities.ClientToken, error) {
 	log := logger.GetLogger(ctx)
 	client := gocloak.NewClient(r.cfg.OidcProvider.BaseURL)
 	token, err := client.RefreshToken(ctx, refreshToken, r.cfg.OidcProvider.Frontend.ClientID, r.cfg.OidcProvider.Frontend.ClientSecret, r.cfg.OidcProvider.DomainName)
@@ -70,7 +70,7 @@ func (r *KeycloakRepository) RefreshToken(ctx context.Context, refreshToken stri
 
 	log.Debug("refreshed token successfully")
 
-	return &shared.ClientToken{
+	return &entities.ClientToken{
 		AccessToken:      token.AccessToken,
 		RefreshToken:     token.RefreshToken,
 		ExpiresIn:        token.ExpiresIn,
@@ -83,7 +83,7 @@ func (r *KeycloakRepository) RefreshToken(ctx context.Context, refreshToken stri
 	}, nil
 }
 
-func (r *KeycloakRepository) GetAccessTokenFromClientCredentials(ctx context.Context, clientID, clientSecret string) (*shared.ClientToken, error) {
+func (r *KeycloakRepository) GetAccessTokenFromClientCredentials(ctx context.Context, clientID, clientSecret string) (*entities.ClientToken, error) {
 	log := logger.GetLogger(ctx)
 	client := gocloak.NewClient(r.cfg.OidcProvider.BaseURL)
 
@@ -99,7 +99,7 @@ func (r *KeycloakRepository) GetAccessTokenFromClientCredentials(ctx context.Con
 		return nil, err
 	}
 
-	return &shared.ClientToken{
+	return &entities.ClientToken{
 		AccessToken:      token.AccessToken,
 		RefreshToken:     token.RefreshToken,
 		ExpiresIn:        token.ExpiresIn,

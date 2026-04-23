@@ -3,7 +3,7 @@ package vehicle
 import (
 	"context"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils/pagination"
@@ -13,7 +13,7 @@ func (r *VehicleRepository) getHelper(
 	ctx context.Context,
 	totalCountFn func() (int64, error),
 	entitiesFn func(page, limit int32) ([]*sqlc.Vehicle, error),
-) ([]*shared.Vehicle, int64, error) {
+) ([]*entities.Vehicle, int64, error) {
 	log := logger.GetLogger(ctx)
 	page, limit, err := pagination.GetValues(ctx)
 	if err != nil {
@@ -27,7 +27,7 @@ func (r *VehicleRepository) getHelper(
 	}
 
 	if totalCount == 0 {
-		return []*shared.Vehicle{}, 0, nil
+		return []*entities.Vehicle{}, 0, nil
 	}
 
 	if limit == -1 {
@@ -44,7 +44,7 @@ func (r *VehicleRepository) getHelper(
 	return r.mapFromList(ctx, rows, totalCount)
 }
 
-func (r *VehicleRepository) GetAll(ctx context.Context, query shared.Query) ([]*shared.Vehicle, int64, error) {
+func (r *VehicleRepository) GetAll(ctx context.Context, query entities.Query) ([]*entities.Vehicle, int64, error) {
 	return r.getHelper(
 		ctx,
 		func() (int64, error) {
@@ -60,7 +60,7 @@ func (r *VehicleRepository) GetAll(ctx context.Context, query shared.Query) ([]*
 	)
 }
 
-func (r *VehicleRepository) GetCount(ctx context.Context, query shared.Query) (int64, error) {
+func (r *VehicleRepository) GetCount(ctx context.Context, query entities.Query) (int64, error) {
 	log := logger.GetLogger(ctx)
 	count, err := r.store.GetAllVehiclesCount(ctx, query.Provider)
 	if err != nil {
@@ -70,7 +70,7 @@ func (r *VehicleRepository) GetCount(ctx context.Context, query shared.Query) (i
 	return count, nil
 }
 
-func (r *VehicleRepository) GetAllWithArchived(ctx context.Context, provider string) ([]*shared.Vehicle, int64, error) {
+func (r *VehicleRepository) GetAllWithArchived(ctx context.Context, provider string) ([]*entities.Vehicle, int64, error) {
 	return r.getHelper(
 		ctx,
 		func() (int64, error) {
@@ -86,7 +86,7 @@ func (r *VehicleRepository) GetAllWithArchived(ctx context.Context, provider str
 	)
 }
 
-func (r *VehicleRepository) GetAllByTypeWithArchived(ctx context.Context, provider string, vehicleType shared.VehicleType) ([]*shared.Vehicle, int64, error) {
+func (r *VehicleRepository) GetAllByTypeWithArchived(ctx context.Context, provider string, vehicleType entities.VehicleType) ([]*entities.Vehicle, int64, error) {
 	return r.getHelper(
 		ctx,
 		func() (int64, error) {
@@ -105,7 +105,7 @@ func (r *VehicleRepository) GetAllByTypeWithArchived(ctx context.Context, provid
 	)
 }
 
-func (r *VehicleRepository) GetAllByType(ctx context.Context, provider string, vehicleType shared.VehicleType) ([]*shared.Vehicle, int64, error) {
+func (r *VehicleRepository) GetAllByType(ctx context.Context, provider string, vehicleType entities.VehicleType) ([]*entities.Vehicle, int64, error) {
 	return r.getHelper(
 		ctx,
 		func() (int64, error) {
@@ -125,7 +125,7 @@ func (r *VehicleRepository) GetAllByType(ctx context.Context, provider string, v
 	)
 }
 
-func (r *VehicleRepository) GetAllArchived(ctx context.Context) ([]*shared.Vehicle, error) {
+func (r *VehicleRepository) GetAllArchived(ctx context.Context) ([]*entities.Vehicle, error) {
 	log := logger.GetLogger(ctx)
 	rows, err := r.store.GetAllArchivedVehicles(ctx)
 	if err != nil {
@@ -136,7 +136,7 @@ func (r *VehicleRepository) GetAllArchived(ctx context.Context) ([]*shared.Vehic
 	return r.mapper.FromSqlList(rows)
 }
 
-func (r *VehicleRepository) GetAllWithWateringPlanCount(ctx context.Context) ([]*shared.VehicleEvaluation, error) {
+func (r *VehicleRepository) GetAllWithWateringPlanCount(ctx context.Context) ([]*entities.VehicleEvaluation, error) {
 	log := logger.GetLogger(ctx)
 	rows, err := r.store.GetAllVehiclesWithWateringPlanCount(ctx)
 	if err != nil {
@@ -147,7 +147,7 @@ func (r *VehicleRepository) GetAllWithWateringPlanCount(ctx context.Context) ([]
 	return r.mapper.FromSqlListVehicleWithCount(rows)
 }
 
-func (r *VehicleRepository) GetByID(ctx context.Context, id int32) (*shared.Vehicle, error) {
+func (r *VehicleRepository) GetByID(ctx context.Context, id int32) (*entities.Vehicle, error) {
 	log := logger.GetLogger(ctx)
 	row, err := r.store.GetVehicleByID(ctx, id)
 	if err != nil {
@@ -158,7 +158,7 @@ func (r *VehicleRepository) GetByID(ctx context.Context, id int32) (*shared.Vehi
 	return r.mapFromRow(ctx, row)
 }
 
-func (r *VehicleRepository) GetByPlate(ctx context.Context, plate string) (*shared.Vehicle, error) {
+func (r *VehicleRepository) GetByPlate(ctx context.Context, plate string) (*entities.Vehicle, error) {
 	log := logger.GetLogger(ctx)
 	row, err := r.store.GetVehicleByPlate(ctx, plate)
 	if err != nil {
@@ -169,7 +169,7 @@ func (r *VehicleRepository) GetByPlate(ctx context.Context, plate string) (*shar
 	return r.mapFromRow(ctx, row)
 }
 
-func (r *VehicleRepository) mapFromRow(ctx context.Context, rows *sqlc.Vehicle) (*shared.Vehicle, error) {
+func (r *VehicleRepository) mapFromRow(ctx context.Context, rows *sqlc.Vehicle) (*entities.Vehicle, error) {
 	log := logger.GetLogger(ctx)
 	vehicles, err := r.mapper.FromSql(rows)
 	if err != nil {
@@ -180,7 +180,7 @@ func (r *VehicleRepository) mapFromRow(ctx context.Context, rows *sqlc.Vehicle) 
 	return vehicles, nil
 }
 
-func (r *VehicleRepository) mapFromList(ctx context.Context, rows []*sqlc.Vehicle, totalCount int64) ([]*shared.Vehicle, int64, error) {
+func (r *VehicleRepository) mapFromList(ctx context.Context, rows []*sqlc.Vehicle, totalCount int64) ([]*entities.Vehicle, int64, error) {
 	log := logger.GetLogger(ctx)
 	vehicles, err := r.mapper.FromSqlList(rows)
 	if err != nil {

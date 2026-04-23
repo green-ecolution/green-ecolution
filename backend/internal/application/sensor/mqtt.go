@@ -4,12 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
-func (s *SensorService) HandleMessage(ctx context.Context, payload *domain.MqttPayload) (*domain.SensorData, error) {
+func (s *SensorService) HandleMessage(ctx context.Context, payload *entities.MqttPayload) (*entities.SensorData, error) {
 	log := logger.GetLogger(ctx)
 	if payload == nil {
 		log.Debug("mqtt payload is nil")
@@ -21,13 +20,13 @@ func (s *SensorService) HandleMessage(ctx context.Context, payload *domain.MqttP
 		return nil, err
 	}
 
-	sensorID, err := domain.NewSensorID(payload.Device)
+	sensorID, err := entities.NewSensorID(payload.Device)
 	if err != nil {
 		log.Error("failed to create sensor id from mqtt payload", "device", payload.Device, "error", err)
 		return nil, err
 	}
 
-	coord, err := domain.NewCoordinate(payload.Latitude, payload.Longitude)
+	coord, err := entities.NewCoordinate(payload.Latitude, payload.Longitude)
 	if err != nil {
 		log.Error("failed to create coordinate from mqtt payload", "latitude", payload.Latitude, "longitude", payload.Longitude, "error", err)
 		return nil, err
@@ -35,7 +34,7 @@ func (s *SensorService) HandleMessage(ctx context.Context, payload *domain.MqttP
 
 	sensor, err := s.sensorRepo.GetByID(ctx, sensorID)
 	if err != nil {
-		var entityNotFoundErr shared.ErrEntityNotFound
+		var entityNotFoundErr entities.ErrEntityNotFound
 		if !errors.As(err, &entityNotFoundErr) {
 			log.Error("failed to get sensor by id", "error", err)
 			return nil, err
@@ -51,10 +50,10 @@ func (s *SensorService) HandleMessage(ctx context.Context, payload *domain.MqttP
 		sensor = updatedSensor
 	} else {
 		log.Info("a new sensor has joined the party! creating sensor record", "sensor_id", sensorID.String(), "sensor_latitude", coord.Latitude(), "sensor_longitude", coord.Longitude())
-		createdSensor, err := s.sensorRepo.Create(ctx, func(s *domain.Sensor, _ shared.SensorRepository) (bool, error) {
+		createdSensor, err := s.sensorRepo.Create(ctx, func(s *entities.Sensor, _ entities.SensorRepository) (bool, error) {
 			s.ID = sensorID
 			s.Coordinate = coord
-			s.Status = domain.SensorStatusOnline
+			s.Status = entities.SensorStatusOnline
 			return true, nil
 		})
 		if err != nil {
@@ -64,7 +63,7 @@ func (s *SensorService) HandleMessage(ctx context.Context, payload *domain.MqttP
 		sensor = createdSensor
 	}
 
-	data := domain.SensorData{
+	data := entities.SensorData{
 		Data: payload,
 	}
 	err = s.sensorRepo.InsertSensorData(ctx, &data, sensor.ID)
@@ -87,12 +86,12 @@ func (s *SensorService) HandleMessage(ctx context.Context, payload *domain.MqttP
 	return sensorData, nil
 }
 
-func (s *SensorService) updateSensorCoordsAndStatus(ctx context.Context, coord domain.Coordinate, sensor *domain.Sensor) (*domain.Sensor, error) {
+func (s *SensorService) updateSensorCoordsAndStatus(ctx context.Context, coord entities.Coordinate, sensor *entities.Sensor) (*entities.Sensor, error) {
 	log := logger.GetLogger(ctx)
-	if sensor.Coordinate.Latitude() != coord.Latitude() || sensor.Coordinate.Longitude() != coord.Longitude() || sensor.Status != domain.SensorStatusOnline {
-		updatedSensor, err := s.sensorRepo.Update(ctx, sensor.ID, func(s *domain.Sensor, _ shared.SensorRepository) (bool, error) {
+	if sensor.Coordinate.Latitude() != coord.Latitude() || sensor.Coordinate.Longitude() != coord.Longitude() || sensor.Status != entities.SensorStatusOnline {
+		updatedSensor, err := s.sensorRepo.Update(ctx, sensor.ID, func(s *entities.Sensor, _ entities.SensorRepository) (bool, error) {
 			s.Coordinate = coord
-			s.Status = domain.SensorStatusOnline
+			s.Status = entities.SensorStatusOnline
 			return true, nil
 		})
 		if err != nil {

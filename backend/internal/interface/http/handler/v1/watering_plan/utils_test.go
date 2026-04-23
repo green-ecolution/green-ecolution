@@ -3,19 +3,19 @@ package wateringplan_test
 import (
 	"time"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	serverEntities "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
 var (
-	TestWateringPlans = []*shared.WateringPlan{
+	TestWateringPlans = []*entities.WateringPlan{
 		{
 			ID:                 1,
 			Date:               time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
 			Description:        "New watering plan for the west side of the city",
-			Status:             shared.WateringPlanStatusPlanned,
-			Distance:           utils.P(shared.MustNewDistance(63.0)),
+			Status:             entities.WateringPlanStatusPlanned,
+			Distance:           utils.P(entities.MustNewDistance(63.0)),
 			TotalWaterRequired: utils.P(6000.0),
 			Transporter:        TestVehicles[1],
 			Trailer:            TestVehicles[0],
@@ -26,8 +26,8 @@ var (
 			ID:                 2,
 			Date:               time.Date(2024, 8, 3, 0, 0, 0, 0, time.UTC),
 			Description:        "New watering plan for the east side of the city",
-			Status:             shared.WateringPlanStatusActive,
-			Distance:           utils.P(shared.MustNewDistance(63.0)),
+			Status:             entities.WateringPlanStatusActive,
+			Distance:           utils.P(entities.MustNewDistance(63.0)),
 			TotalWaterRequired: utils.P(6000.0),
 			Transporter:        TestVehicles[1],
 			Trailer:            TestVehicles[0],
@@ -38,14 +38,14 @@ var (
 			ID:                 3,
 			Date:               time.Date(2024, 6, 12, 0, 0, 0, 0, time.UTC),
 			Description:        "Very important watering plan due to no rainfall",
-			Status:             shared.WateringPlanStatusFinished,
-			Distance:           utils.P(shared.MustNewDistance(63.0)),
+			Status:             entities.WateringPlanStatusFinished,
+			Distance:           utils.P(entities.MustNewDistance(63.0)),
 			TotalWaterRequired: utils.P(6000.0),
 			Transporter:        TestVehicles[1],
 			Trailer:            nil,
 			TreeClusters:       TestClusters[0:3],
 			CancellationNote:   "",
-			Evaluation: []*shared.EvaluationValue{
+			Evaluation: []*entities.EvaluationValue{
 				{
 					WateringPlanID: 3,
 					TreeClusterID:  1,
@@ -67,8 +67,8 @@ var (
 			ID:                 4,
 			Date:               time.Date(2024, 6, 10, 0, 0, 0, 0, time.UTC),
 			Description:        "New watering plan for the south side of the city",
-			Status:             shared.WateringPlanStatusNotCompeted,
-			Distance:           utils.P(shared.MustNewDistance(63.0)),
+			Status:             entities.WateringPlanStatusNotCompeted,
+			Distance:           utils.P(entities.MustNewDistance(63.0)),
 			TotalWaterRequired: utils.P(6000.0),
 			Transporter:        TestVehicles[1],
 			Trailer:            nil,
@@ -79,8 +79,8 @@ var (
 			ID:                 5,
 			Date:               time.Date(2024, 6, 4, 0, 0, 0, 0, time.UTC),
 			Description:        "Canceled due to flood",
-			Status:             shared.WateringPlanStatusCanceled,
-			Distance:           utils.P(shared.MustNewDistance(63.0)),
+			Status:             entities.WateringPlanStatusCanceled,
+			Distance:           utils.P(entities.MustNewDistance(63.0)),
 			TotalWaterRequired: utils.P(6000.0),
 			Transporter:        TestVehicles[1],
 			Trailer:            nil,
@@ -88,39 +88,39 @@ var (
 			CancellationNote:   "The watering plan was cancelled due to various reasons.",
 		},
 	}
-	TestVehicles = []*shared.Vehicle{
+	TestVehicles = []*entities.Vehicle{
 		{
 			ID:            1,
 			NumberPlate:   "B-1234",
 			Description:   "Test vehicle 1",
-			WaterCapacity: shared.MustNewWaterCapacity(100.0),
-			Type:          shared.VehicleTypeTrailer,
-			Status:        shared.VehicleStatusActive,
+			WaterCapacity: entities.MustNewWaterCapacity(100.0),
+			Type:          entities.VehicleTypeTrailer,
+			Status:        entities.VehicleStatusActive,
 		},
 		{
 			ID:            2,
 			NumberPlate:   "B-5678",
 			Description:   "Test vehicle 2",
-			WaterCapacity: shared.MustNewWaterCapacity(150.0),
-			Type:          shared.VehicleTypeTransporter,
-			Status:        shared.VehicleStatusUnknown,
+			WaterCapacity: entities.MustNewWaterCapacity(150.0),
+			Type:          entities.VehicleTypeTransporter,
+			Status:        entities.VehicleStatusUnknown,
 		},
 	}
-	TestClusters = []*shared.TreeCluster{
+	TestClusters = []*entities.TreeCluster{
 		{
 			ID:             1,
 			Name:           "Solitüde Strand",
-			WateringStatus: shared.WateringStatusGood,
+			WateringStatus: entities.WateringStatusGood,
 			MoistureLevel:  0.75,
-			Region: &shared.Region{
+			Region: &entities.Region{
 				ID:   1,
 				Name: "Mürwik",
 			},
 			Address:       "Solitüde Strand",
 			Description:   "Alle Bäume am Strand",
-			SoilCondition: shared.TreeSoilConditionSandig,
-			Coordinate:    utils.P(shared.MustNewCoordinate(54.820940, 9.489022)),
-			Trees: []*shared.Tree{
+			SoilCondition: entities.TreeSoilConditionSandig,
+			Coordinate:    utils.P(entities.MustNewCoordinate(54.820940, 9.489022)),
+			Trees: []*entities.Tree{
 				{ID: 1},
 				{ID: 2},
 				{ID: 3},
@@ -129,17 +129,17 @@ var (
 		{
 			ID:             2,
 			Name:           "Sankt-Jürgen-Platz",
-			WateringStatus: shared.WateringStatusModerate,
+			WateringStatus: entities.WateringStatusModerate,
 			MoistureLevel:  0.5,
-			Region: &shared.Region{
+			Region: &entities.Region{
 				ID:   1,
 				Name: "Mürwik",
 			},
 			Address:       "Ulmenstraße",
 			Description:   "Bäume beim Sankt-Jürgen-Platz",
-			SoilCondition: shared.TreeSoilConditionSchluffig,
-			Coordinate:    utils.P(shared.MustNewCoordinate(54.78805731048199, 9.44400186680097)),
-			Trees: []*shared.Tree{
+			SoilCondition: entities.TreeSoilConditionSchluffig,
+			Coordinate:    utils.P(entities.MustNewCoordinate(54.78805731048199, 9.44400186680097)),
+			Trees: []*entities.Tree{
 				{ID: 4},
 				{ID: 5},
 				{ID: 6},
@@ -150,15 +150,15 @@ var (
 			Name:           "Flensburger Stadion",
 			WateringStatus: "unknown",
 			MoistureLevel:  0.7,
-			Region: &shared.Region{
+			Region: &entities.Region{
 				ID:   1,
 				Name: "Mürwik",
 			},
 			Address:       "Flensburger Stadion",
 			Description:   "Alle Bäume in der Gegend des Stadions in Mürwik",
 			SoilCondition: "schluffig",
-			Coordinate:    utils.P(shared.MustNewCoordinate(54.802163, 9.446398)),
-			Trees:         []*shared.Tree{},
+			Coordinate:    utils.P(entities.MustNewCoordinate(54.802163, 9.446398)),
+			Trees:         []*entities.Tree{},
 		},
 	}
 

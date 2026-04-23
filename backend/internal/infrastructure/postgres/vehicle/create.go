@@ -4,22 +4,22 @@ import (
 	"context"
 	"errors"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	store "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func defaultVehicle() *shared.Vehicle {
-	return &shared.Vehicle{
+func defaultVehicle() *entities.Vehicle {
+	return &entities.Vehicle{
 		NumberPlate:    "",
 		Description:    "",
-		WaterCapacity:  shared.MustNewWaterCapacity(0),
-		Type:           shared.VehicleTypeUnknown,
-		Status:         shared.VehicleStatusUnknown,
+		WaterCapacity:  entities.MustNewWaterCapacity(0),
+		Type:           entities.VehicleTypeUnknown,
+		Status:         entities.VehicleStatusUnknown,
 		Model:          "",
-		DrivingLicense: shared.DrivingLicenseB,
+		DrivingLicense: entities.DrivingLicenseB,
 		Height:         0,
 		Length:         0,
 		Width:          0,
@@ -29,13 +29,13 @@ func defaultVehicle() *shared.Vehicle {
 	}
 }
 
-func (r *VehicleRepository) Create(ctx context.Context, createFn func(*shared.Vehicle, shared.VehicleRepository) (bool, error)) (*shared.Vehicle, error) {
+func (r *VehicleRepository) Create(ctx context.Context, createFn func(*entities.Vehicle, entities.VehicleRepository) (bool, error)) (*entities.Vehicle, error) {
 	log := logger.GetLogger(ctx)
 	if createFn == nil {
 		return nil, errors.New("createFn is nil")
 	}
 
-	var createdVh *shared.Vehicle
+	var createdVh *entities.Vehicle
 	err := r.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewVehicleRepository(s, r.VehicleRepositoryMappers)
 		entity := defaultVehicle()
@@ -76,7 +76,7 @@ func (r *VehicleRepository) Create(ctx context.Context, createFn func(*shared.Ve
 	return createdVh, nil
 }
 
-func (r *VehicleRepository) createEntity(ctx context.Context, entity *shared.Vehicle) (*int32, error) {
+func (r *VehicleRepository) createEntity(ctx context.Context, entity *entities.Vehicle) (*int32, error) {
 	log := logger.GetLogger(ctx)
 	additionalInfo, err := utils.MapAdditionalInfoToByte(entity.AdditionalInfo)
 	if err != nil {
@@ -108,7 +108,7 @@ func (r *VehicleRepository) createEntity(ctx context.Context, entity *shared.Veh
 	return &id, nil
 }
 
-func (r *VehicleRepository) validateVehicle(entity *shared.Vehicle) error {
+func (r *VehicleRepository) validateVehicle(entity *entities.Vehicle) error {
 	if entity.WaterCapacity.Liters() == 0 {
 		return errors.New("water capacity is required and can not be 0")
 	}

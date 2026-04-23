@@ -12,7 +12,7 @@ import (
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
@@ -21,13 +21,13 @@ type UserRepository struct {
 	cfg *config.IdentityAuthConfig
 }
 
-func NewUserRepository(cfg *config.IdentityAuthConfig) shared.UserRepository {
+func NewUserRepository(cfg *config.IdentityAuthConfig) entities.UserRepository {
 	return &UserRepository{
 		cfg: cfg,
 	}
 }
 
-func (r *UserRepository) Create(ctx context.Context, user *shared.User, password string, roles []string) (*shared.User, error) {
+func (r *UserRepository) Create(ctx context.Context, user *entities.User, password string, roles []string) (*entities.User, error) {
 	log := logger.GetLogger(ctx)
 	if user == nil {
 		return nil, ErrEmptyUser
@@ -96,7 +96,7 @@ func (r *UserRepository) RemoveSession(ctx context.Context, refreshToken string)
 	return nil
 }
 
-func (r *UserRepository) GetAll(ctx context.Context) ([]*shared.User, error) {
+func (r *UserRepository) GetAll(ctx context.Context) ([]*entities.User, error) {
 	log := logger.GetLogger(ctx)
 	client, token, err := loginRestAPIClient(ctx, r.cfg.OidcProvider.BaseURL, r.cfg.OidcProvider.Backend.ClientID, r.cfg.OidcProvider.Backend.ClientSecret, r.cfg.OidcProvider.DomainName)
 	if err != nil {
@@ -109,7 +109,7 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]*shared.User, error) {
 		return nil, errors.Join(err, ErrGetUser)
 	}
 
-	allUsers := make([]*shared.User, len(users))
+	allUsers := make([]*entities.User, len(users))
 	for i, kcUser := range users {
 		user, err := keyCloakUserToUser(ctx, kcUser)
 		if err != nil && !errors.Is(err, ErrUserWithNilAttributes) { // skip users without required attributes
@@ -123,7 +123,7 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]*shared.User, error) {
 	return allUsers, nil
 }
 
-func (r *UserRepository) GetAllByRole(ctx context.Context, role shared.UserRole) ([]*shared.User, error) {
+func (r *UserRepository) GetAllByRole(ctx context.Context, role entities.UserRole) ([]*entities.User, error) {
 	log := logger.GetLogger(ctx)
 	users, err := r.GetAll(ctx)
 	if err != nil {
@@ -131,7 +131,7 @@ func (r *UserRepository) GetAllByRole(ctx context.Context, role shared.UserRole)
 		return nil, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
 	}
 
-	return utils.Filter(users, func(user *shared.User) bool {
+	return utils.Filter(users, func(user *entities.User) bool {
 		for _, userRole := range user.Roles {
 			if userRole == role {
 				return true
@@ -141,14 +141,14 @@ func (r *UserRepository) GetAllByRole(ctx context.Context, role shared.UserRole)
 	}), nil
 }
 
-func (r *UserRepository) GetByIDs(ctx context.Context, ids []string) ([]*shared.User, error) {
+func (r *UserRepository) GetByIDs(ctx context.Context, ids []string) ([]*entities.User, error) {
 	log := logger.GetLogger(ctx)
 	client, token, err := loginRestAPIClient(ctx, r.cfg.OidcProvider.BaseURL, r.cfg.OidcProvider.Backend.ClientID, r.cfg.OidcProvider.Backend.ClientSecret, r.cfg.OidcProvider.DomainName)
 	if err != nil {
 		return nil, err
 	}
 
-	users := make([]*shared.User, len(ids))
+	users := make([]*entities.User, len(ids))
 	for i, id := range ids {
 		kcUser, err := client.GetUserByID(ctx, token.AccessToken, r.cfg.OidcProvider.DomainName, id)
 		if err != nil {
@@ -166,7 +166,7 @@ func (r *UserRepository) GetByIDs(ctx context.Context, ids []string) ([]*shared.
 	return users, nil
 }
 
-func keyCloakUserToUser(ctx context.Context, user *gocloak.User) (*shared.User, error) {
+func keyCloakUserToUser(ctx context.Context, user *gocloak.User) (*entities.User, error) {
 	log := logger.GetLogger(ctx)
 	userID, err := uuid.Parse(*user.ID)
 	if err != nil {
@@ -206,7 +206,7 @@ func keyCloakUserToUser(ctx context.Context, user *gocloak.User) (*shared.User, 
 	lisences := convertDrivingLicenses(drivingLicenses)
 
 	const millisecondsInSecond = 1000
-	return &shared.User{
+	return &entities.User{
 		ID:              userID,
 		CreatedAt:       time.Unix(*user.CreatedTimestamp/millisecondsInSecond, 0),
 		Username:        *user.Username,
@@ -217,31 +217,31 @@ func keyCloakUserToUser(ctx context.Context, user *gocloak.User) (*shared.User, 
 		EmployeeID:      employeeID,
 		Roles:           roles,
 		DrivingLicenses: lisences,
-		Status:          shared.ParseUserStatus(status),
+		Status:          entities.ParseUserStatus(status),
 	}, nil
 }
 
-func convertRoles(userRoles []string) []shared.UserRole {
+func convertRoles(userRoles []string) []entities.UserRole {
 	if userRoles == nil {
-		return []shared.UserRole{}
+		return []entities.UserRole{}
 	}
 
-	var roles []shared.UserRole
+	var roles []entities.UserRole
 	for _, roleName := range userRoles {
-		userRole := shared.ParseUserRole(roleName)
+		userRole := entities.ParseUserRole(roleName)
 		roles = append(roles, userRole)
 	}
 	return roles
 }
 
-func convertDrivingLicenses(drivingLicenses []string) []shared.DrivingLicense {
+func convertDrivingLicenses(drivingLicenses []string) []entities.DrivingLicense {
 	if drivingLicenses == nil {
-		return []shared.DrivingLicense{}
+		return []entities.DrivingLicense{}
 	}
 
-	var licenses []shared.DrivingLicense
+	var licenses []entities.DrivingLicense
 	for _, drivingLicense := range drivingLicenses {
-		license, err := shared.ParseDrivingLicense(drivingLicense)
+		license, err := entities.ParseDrivingLicense(drivingLicense)
 		if err != nil {
 			continue
 		}
@@ -258,7 +258,7 @@ func validateRequiredAttributes(user *gocloak.User) error {
 	return nil
 }
 
-func userToKeyCloakUser(user *shared.User) *gocloak.User {
+func userToKeyCloakUser(user *entities.User) *gocloak.User {
 	attribute := make(map[string][]string)
 	attribute["phone_number"] = []string{user.PhoneNumber}
 	attribute["employee_id"] = []string{user.EmployeeID}

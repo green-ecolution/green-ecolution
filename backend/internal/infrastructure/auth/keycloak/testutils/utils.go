@@ -7,7 +7,7 @@ import (
 
 	"github.com/Nerzal/gocloak/v13"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
 func (s *KeycloakTestSuite) LoginAdminAndGetToken(t testing.TB) *gocloak.JWT {
@@ -21,7 +21,7 @@ func (s *KeycloakTestSuite) LoginAdminAndGetToken(t testing.TB) *gocloak.JWT {
 	return token
 }
 
-func (s *KeycloakTestSuite) LoginUser(t testing.TB, user *shared.User) *gocloak.JWT {
+func (s *KeycloakTestSuite) LoginUser(t testing.TB, user *entities.User) *gocloak.JWT {
 	t.Helper()
 	identityConfig := s.IdentityConfig(t, context.Background())
 	client := gocloak.NewClient(identityConfig.OidcProvider.BaseURL)
@@ -33,7 +33,7 @@ func (s *KeycloakTestSuite) LoginUser(t testing.TB, user *shared.User) *gocloak.
 	return token
 }
 
-func (s *KeycloakTestSuite) EnsureUserExists(t testing.TB, user *shared.User) string {
+func (s *KeycloakTestSuite) EnsureUserExists(t testing.TB, user *entities.User) string {
 	t.Helper()
 	identityConfig := s.IdentityConfig(t, context.Background())
 	client := gocloak.NewClient(identityConfig.OidcProvider.BaseURL)
@@ -68,11 +68,11 @@ func (s *KeycloakTestSuite) EnsureUserExists(t testing.TB, user *shared.User) st
 	return userID
 }
 
-func (s *KeycloakTestSuite) TestUserToCreateFunc() []*shared.User {
+func (s *KeycloakTestSuite) TestUserToCreateFunc() []*entities.User {
 	n := 20
-	users := make([]*shared.User, n)
+	users := make([]*entities.User, n)
 	for i := 0; i < n; i++ {
-		users[i] = &shared.User{
+		users[i] = &entities.User{
 			Username:    fmt.Sprintf("test%d", i),
 			FirstName:   "Toni",
 			LastName:    "Tester",
