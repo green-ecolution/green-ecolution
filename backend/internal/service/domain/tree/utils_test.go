@@ -10,6 +10,7 @@ import (
 var (
 	testLatitude     = 9.446741
 	testLongitude    = 54.801539
+	testCoordinate   = entities.MustNewCoordinate(testLatitude, testLongitude)
 	TestTreeClusters = []*entities.TreeCluster{
 		{
 			ID:            1,
@@ -20,8 +21,7 @@ var (
 			Description:   "Test description",
 			SoilCondition: entities.TreeSoilConditionLehmig,
 			Archived:      false,
-			Latitude:      utils.P(testLatitude),
-			Longitude:     utils.P(testLongitude),
+			Coordinate:    &testCoordinate,
 			Trees:         TestTreesList,
 		},
 		{
@@ -33,8 +33,7 @@ var (
 			Description:   "Test description",
 			SoilCondition: entities.TreeSoilConditionSandig,
 			Archived:      false,
-			Latitude:      nil,
-			Longitude:     nil,
+			Coordinate:    nil,
 			Trees:         []*entities.Tree{},
 			LastWatered:   nil,
 		},
@@ -47,10 +46,9 @@ var (
 			UpdatedAt:      time.Now(),
 			Species:        "Oak",
 			Number:         "T001",
-			Latitude:       testLatitude,
-			Longitude:      testLongitude,
+			Coordinate:     entities.MustNewCoordinate(testLatitude, testLongitude),
 			Description:    "A mature oak tree",
-			PlantingYear:   2023,
+			PlantingYear:   entities.MustNewPlantingYear(2023),
 			WateringStatus: entities.WateringStatusBad,
 			LastWatered:    nil,
 		},
@@ -60,10 +58,9 @@ var (
 			UpdatedAt:      time.Now(),
 			Species:        "Pine",
 			Number:         "T002",
-			Latitude:       9.446700,
-			Longitude:      54.801510,
+			Coordinate:     entities.MustNewCoordinate(9.446700, 54.801510),
 			Description:    "A young pine tree",
-			PlantingYear:   2023,
+			PlantingYear:   entities.MustNewPlantingYear(2023),
 			WateringStatus: entities.WateringStatusUnknown,
 			LastWatered:    nil,
 		},
@@ -76,12 +73,11 @@ var (
 			UpdatedAt:      time.Now(),
 			Species:        "Oak",
 			Number:         "T001",
-			Latitude:       testLatitude,
-			Longitude:      testLongitude,
+			Coordinate:     entities.MustNewCoordinate(testLatitude, testLongitude),
 			Description:    "A mature oak tree",
 			TreeCluster:    TestTreeClusters[0],
 			WateringStatus: entities.WateringStatusGood,
-			PlantingYear:   2023,
+			PlantingYear:   entities.MustNewPlantingYear(2023),
 		},
 		{
 			ID:             2,
@@ -89,61 +85,56 @@ var (
 			UpdatedAt:      time.Now(),
 			Species:        "Pine",
 			Number:         "T002",
-			Latitude:       testLatitude,
-			Longitude:      testLongitude,
+			Coordinate:     entities.MustNewCoordinate(testLatitude, testLongitude),
 			TreeCluster:    TestTreeClusters[0],
 			Description:    "A young pine tree",
 			WateringStatus: entities.WateringStatusBad,
-			PlantingYear:   2022,
+			PlantingYear:   entities.MustNewPlantingYear(2022),
 		},
 	}
 
 	TestSensors = []*entities.Sensor{
 		{
-			ID:         "sensor-1",
+			ID:         entities.MustNewSensorID("sensor-1"),
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 			Status:     entities.SensorStatusUnknown,
-			Latitude:   54.82124518093376,
-			Longitude:  9.485702120628517,
+			Coordinate: entities.MustNewCoordinate(54.82124518093376, 9.485702120628517),
 			LatestData: TestSensorDataBad,
 		},
 		{
-			ID:         "sensor-2",
+			ID:         entities.MustNewSensorID("sensor-2"),
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 			Status:     entities.SensorStatusUnknown,
-			Latitude:   54.787809938410133,
-			Longitude:  9.444052105200551,
+			Coordinate: entities.MustNewCoordinate(54.787809938410133, 9.444052105200551),
 			LatestData: &entities.SensorData{},
 		},
 	}
 
 	TestTreeCreate = &entities.TreeCreate{
 		Species:       "Oak",
-		Latitude:      testLatitude,
-		Longitude:     testLongitude,
-		PlantingYear:  2023,
+		Coordinate:    entities.MustNewCoordinate(testLatitude, testLongitude),
+		PlantingYear:  entities.MustNewPlantingYear(2023),
 		Number:        "T001",
 		Description:   "Test tree description",
 		TreeClusterID: utils.P(int32(1)),
-		SensorID:      utils.P("sensor-1"),
+		SensorID:      utils.P(entities.MustNewSensorID("sensor-1")),
 	}
 
 	TestTreeUpdate = &entities.TreeUpdate{
 		TreeClusterID: utils.P(int32(1)),
-		SensorID:      utils.P("sensor-1"),
-		PlantingYear:  2023,
+		SensorID:      utils.P(entities.MustNewSensorID("sensor-1")),
+		PlantingYear:  entities.MustNewPlantingYear(2023),
 		Species:       "Oak",
 		Number:        "T001",
-		Latitude:      testLatitude,
-		Longitude:     testLongitude,
+		Coordinate:    entities.MustNewCoordinate(testLatitude, testLongitude),
 		Description:   "Updated description",
 	}
 
 	TestSensorDataBad = &entities.SensorData{
 		ID:        1,
-		SensorID:  "sensor-1",
+		SensorID:  entities.MustNewSensorID("sensor-1"),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		Data: &entities.MqttPayload{

@@ -49,7 +49,7 @@ func TestRegisterRoutes(t *testing.T) {
 
 			mockSensorService.EXPECT().GetAllDataByID(
 				mock.Anything,
-				"sensor-1",
+				entities.MustNewSensorID("sensor-1"),
 			).Return([]*entities.SensorData{TestSensorData}, nil)
 
 			// when
@@ -71,7 +71,7 @@ func TestRegisterRoutes(t *testing.T) {
 
 			mockSensorService.EXPECT().GetByID(
 				mock.Anything,
-				"sensor-1",
+				entities.MustNewSensorID("sensor-1"),
 			).Return(TestSensor, nil)
 
 			// when
@@ -91,7 +91,7 @@ func TestRegisterRoutes(t *testing.T) {
 
 			mockSensorService.EXPECT().Delete(
 				mock.Anything,
-				"sensor-1",
+				entities.MustNewSensorID("sensor-1"),
 			).Return(nil)
 
 			// when

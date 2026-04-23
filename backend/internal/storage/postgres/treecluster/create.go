@@ -18,8 +18,7 @@ func defaultTreeCluster() *entities.TreeCluster {
 		Address:        "",
 		Description:    "",
 		MoistureLevel:  0,
-		Latitude:       nil,
-		Longitude:      nil,
+		Coordinate:     nil,
 		WateringStatus: entities.WateringStatusUnknown,
 		SoilCondition:  entities.TreeSoilConditionUnknown,
 		Archived:       false,
@@ -121,11 +120,13 @@ func (r *TreeClusterRepository) createEntity(ctx context.Context, entity *entiti
 		}
 	}
 
-	if entity.Latitude != nil && entity.Longitude != nil {
+	if entity.Coordinate != nil {
+		lat := entity.Coordinate.Latitude()
+		lng := entity.Coordinate.Longitude()
 		err = r.store.SetTreeClusterLocation(ctx, &sqlc.SetTreeClusterLocationParams{
 			ID:        id,
-			Latitude:  entity.Latitude,
-			Longitude: entity.Longitude,
+			Latitude:  &lat,
+			Longitude: &lng,
 		})
 		if err != nil {
 			return -1, err

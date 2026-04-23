@@ -82,7 +82,7 @@ func (_c *MockSensorService_Create_Call) RunAndReturn(run func(context.Context, 
 }
 
 // Delete provides a mock function with given fields: ctx, id
-func (_m *MockSensorService) Delete(ctx context.Context, id string) error {
+func (_m *MockSensorService) Delete(ctx context.Context, id entities.SensorID) error {
 	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
@@ -90,7 +90,7 @@ func (_m *MockSensorService) Delete(ctx context.Context, id string) error {
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entities.SensorID) error); ok {
 		r0 = rf(ctx, id)
 	} else {
 		r0 = ret.Error(0)
@@ -106,14 +106,14 @@ type MockSensorService_Delete_Call struct {
 
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
-//   - id string
+//   - id entities.SensorID
 func (_e *MockSensorService_Expecter) Delete(ctx interface{}, id interface{}) *MockSensorService_Delete_Call {
 	return &MockSensorService_Delete_Call{Call: _e.mock.On("Delete", ctx, id)}
 }
 
-func (_c *MockSensorService_Delete_Call) Run(run func(ctx context.Context, id string)) *MockSensorService_Delete_Call {
+func (_c *MockSensorService_Delete_Call) Run(run func(ctx context.Context, id entities.SensorID)) *MockSensorService_Delete_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(entities.SensorID))
 	})
 	return _c
 }
@@ -123,7 +123,7 @@ func (_c *MockSensorService_Delete_Call) Return(_a0 error) *MockSensorService_De
 	return _c
 }
 
-func (_c *MockSensorService_Delete_Call) RunAndReturn(run func(context.Context, string) error) *MockSensorService_Delete_Call {
+func (_c *MockSensorService_Delete_Call) RunAndReturn(run func(context.Context, entities.SensorID) error) *MockSensorService_Delete_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -195,7 +195,7 @@ func (_c *MockSensorService_GetAll_Call) RunAndReturn(run func(context.Context, 
 }
 
 // GetAllDataByID provides a mock function with given fields: ctx, id
-func (_m *MockSensorService) GetAllDataByID(ctx context.Context, id string) ([]*entities.SensorData, error) {
+func (_m *MockSensorService) GetAllDataByID(ctx context.Context, id entities.SensorID) ([]*entities.SensorData, error) {
 	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
@@ -204,10 +204,10 @@ func (_m *MockSensorService) GetAllDataByID(ctx context.Context, id string) ([]*
 
 	var r0 []*entities.SensorData
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]*entities.SensorData, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entities.SensorID) ([]*entities.SensorData, error)); ok {
 		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []*entities.SensorData); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entities.SensorID) []*entities.SensorData); ok {
 		r0 = rf(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
@@ -215,7 +215,7 @@ func (_m *MockSensorService) GetAllDataByID(ctx context.Context, id string) ([]*
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, entities.SensorID) error); ok {
 		r1 = rf(ctx, id)
 	} else {
 		r1 = ret.Error(1)
@@ -231,14 +231,14 @@ type MockSensorService_GetAllDataByID_Call struct {
 
 // GetAllDataByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - id string
+//   - id entities.SensorID
 func (_e *MockSensorService_Expecter) GetAllDataByID(ctx interface{}, id interface{}) *MockSensorService_GetAllDataByID_Call {
 	return &MockSensorService_GetAllDataByID_Call{Call: _e.mock.On("GetAllDataByID", ctx, id)}
 }
 
-func (_c *MockSensorService_GetAllDataByID_Call) Run(run func(ctx context.Context, id string)) *MockSensorService_GetAllDataByID_Call {
+func (_c *MockSensorService_GetAllDataByID_Call) Run(run func(ctx context.Context, id entities.SensorID)) *MockSensorService_GetAllDataByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(entities.SensorID))
 	})
 	return _c
 }
@@ -248,13 +248,13 @@ func (_c *MockSensorService_GetAllDataByID_Call) Return(_a0 []*entities.SensorDa
 	return _c
 }
 
-func (_c *MockSensorService_GetAllDataByID_Call) RunAndReturn(run func(context.Context, string) ([]*entities.SensorData, error)) *MockSensorService_GetAllDataByID_Call {
+func (_c *MockSensorService_GetAllDataByID_Call) RunAndReturn(run func(context.Context, entities.SensorID) ([]*entities.SensorData, error)) *MockSensorService_GetAllDataByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetByID provides a mock function with given fields: ctx, id
-func (_m *MockSensorService) GetByID(ctx context.Context, id string) (*entities.Sensor, error) {
+func (_m *MockSensorService) GetByID(ctx context.Context, id entities.SensorID) (*entities.Sensor, error) {
 	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
@@ -263,10 +263,10 @@ func (_m *MockSensorService) GetByID(ctx context.Context, id string) (*entities.
 
 	var r0 *entities.Sensor
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*entities.Sensor, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entities.SensorID) (*entities.Sensor, error)); ok {
 		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *entities.Sensor); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entities.SensorID) *entities.Sensor); ok {
 		r0 = rf(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
@@ -274,7 +274,7 @@ func (_m *MockSensorService) GetByID(ctx context.Context, id string) (*entities.
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, entities.SensorID) error); ok {
 		r1 = rf(ctx, id)
 	} else {
 		r1 = ret.Error(1)
@@ -290,14 +290,14 @@ type MockSensorService_GetByID_Call struct {
 
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - id string
+//   - id entities.SensorID
 func (_e *MockSensorService_Expecter) GetByID(ctx interface{}, id interface{}) *MockSensorService_GetByID_Call {
 	return &MockSensorService_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id)}
 }
 
-func (_c *MockSensorService_GetByID_Call) Run(run func(ctx context.Context, id string)) *MockSensorService_GetByID_Call {
+func (_c *MockSensorService_GetByID_Call) Run(run func(ctx context.Context, id entities.SensorID)) *MockSensorService_GetByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(entities.SensorID))
 	})
 	return _c
 }
@@ -307,7 +307,7 @@ func (_c *MockSensorService_GetByID_Call) Return(_a0 *entities.Sensor, _a1 error
 	return _c
 }
 
-func (_c *MockSensorService_GetByID_Call) RunAndReturn(run func(context.Context, string) (*entities.Sensor, error)) *MockSensorService_GetByID_Call {
+func (_c *MockSensorService_GetByID_Call) RunAndReturn(run func(context.Context, entities.SensorID) (*entities.Sensor, error)) *MockSensorService_GetByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -464,7 +464,7 @@ func (_c *MockSensorService_Ready_Call) RunAndReturn(run func() bool) *MockSenso
 }
 
 // Update provides a mock function with given fields: ctx, id, updateData
-func (_m *MockSensorService) Update(ctx context.Context, id string, updateData *entities.SensorUpdate) (*entities.Sensor, error) {
+func (_m *MockSensorService) Update(ctx context.Context, id entities.SensorID, updateData *entities.SensorUpdate) (*entities.Sensor, error) {
 	ret := _m.Called(ctx, id, updateData)
 
 	if len(ret) == 0 {
@@ -473,10 +473,10 @@ func (_m *MockSensorService) Update(ctx context.Context, id string, updateData *
 
 	var r0 *entities.Sensor
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, *entities.SensorUpdate) (*entities.Sensor, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entities.SensorID, *entities.SensorUpdate) (*entities.Sensor, error)); ok {
 		return rf(ctx, id, updateData)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, *entities.SensorUpdate) *entities.Sensor); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entities.SensorID, *entities.SensorUpdate) *entities.Sensor); ok {
 		r0 = rf(ctx, id, updateData)
 	} else {
 		if ret.Get(0) != nil {
@@ -484,7 +484,7 @@ func (_m *MockSensorService) Update(ctx context.Context, id string, updateData *
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, *entities.SensorUpdate) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, entities.SensorID, *entities.SensorUpdate) error); ok {
 		r1 = rf(ctx, id, updateData)
 	} else {
 		r1 = ret.Error(1)
@@ -500,15 +500,15 @@ type MockSensorService_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - id string
+//   - id entities.SensorID
 //   - updateData *entities.SensorUpdate
 func (_e *MockSensorService_Expecter) Update(ctx interface{}, id interface{}, updateData interface{}) *MockSensorService_Update_Call {
 	return &MockSensorService_Update_Call{Call: _e.mock.On("Update", ctx, id, updateData)}
 }
 
-func (_c *MockSensorService_Update_Call) Run(run func(ctx context.Context, id string, updateData *entities.SensorUpdate)) *MockSensorService_Update_Call {
+func (_c *MockSensorService_Update_Call) Run(run func(ctx context.Context, id entities.SensorID, updateData *entities.SensorUpdate)) *MockSensorService_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(*entities.SensorUpdate))
+		run(args[0].(context.Context), args[1].(entities.SensorID), args[2].(*entities.SensorUpdate))
 	})
 	return _c
 }
@@ -518,7 +518,7 @@ func (_c *MockSensorService_Update_Call) Return(_a0 *entities.Sensor, _a1 error)
 	return _c
 }
 
-func (_c *MockSensorService_Update_Call) RunAndReturn(run func(context.Context, string, *entities.SensorUpdate) (*entities.Sensor, error)) *MockSensorService_Update_Call {
+func (_c *MockSensorService_Update_Call) RunAndReturn(run func(context.Context, entities.SensorID, *entities.SensorUpdate) (*entities.Sensor, error)) *MockSensorService_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -156,7 +155,7 @@ func (v *VroomClient) OptimizeRoute(ctx context.Context, vehicle *entities.Vehic
 func (v *VroomClient) toVroomShipments(cluster []*entities.TreeCluster) []VroomShipments {
 	// ignore tree cluster with empty coordinates
 	filteredClusters := utils.Filter(cluster, func(c *entities.TreeCluster) bool {
-		return c.Longitude != nil && c.Latitude != nil
+		return c.Coordinate != nil
 	})
 
 	nextID := int32(0)
@@ -170,7 +169,7 @@ func (v *VroomClient) toVroomShipments(cluster []*entities.TreeCluster) []VroomS
 			Delivery: VroomShipmentStep{
 				Description: c.Name,
 				ID:          nextID + 1,
-				Location:    []float64{*c.Longitude, *c.Latitude},
+				Location:    []float64{c.Coordinate.Longitude(), c.Coordinate.Latitude()},
 			},
 		}
 
@@ -185,14 +184,13 @@ func (v *VroomClient) toVroomVehicle(vehicle *entities.Vehicle) (*VroomVehicle, 
 		return nil, err
 	}
 
-	fmt.Println("vehicle capacity", int32(vehicle.WaterCapacity))
 	return &VroomVehicle{
 		ID:          vehicle.ID,
 		Description: vehicle.Description,
 		Profile:     vehicleType,
 		Start:       v.cfg.startPoint,
 		End:         v.cfg.endPoint,
-		Capacity:    []int32{int32(vehicle.WaterCapacity)}, // vroom don't accept floats
+		Capacity:    []int32{int32(vehicle.WaterCapacity.Liters())}, // vroom don't accept floats
 	}, nil
 }
 

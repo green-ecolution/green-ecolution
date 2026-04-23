@@ -77,7 +77,8 @@ func (r *TreeRepository) updateEntity(ctx context.Context, t *entities.Tree) err
 
 	var sensorID *string
 	if t.Sensor != nil {
-		sensorID = &t.Sensor.ID
+		s := t.Sensor.ID.String()
+		sensorID = &s
 
 		if err := r.store.UnlinkSensorIDFromTrees(ctx, sensorID); err != nil {
 			return err
@@ -87,7 +88,7 @@ func (r *TreeRepository) updateEntity(ctx context.Context, t *entities.Tree) err
 	args := sqlc.UpdateTreeParams{
 		ID:                     t.ID,
 		Species:                t.Species,
-		PlantingYear:           t.PlantingYear,
+		PlantingYear:           t.PlantingYear.Year(),
 		Number:                 t.Number,
 		SensorID:               sensorID,
 		TreeClusterID:          treeClusterID,
@@ -100,8 +101,8 @@ func (r *TreeRepository) updateEntity(ctx context.Context, t *entities.Tree) err
 
 	if err := r.store.SetTreeLocation(ctx, &sqlc.SetTreeLocationParams{
 		ID:        t.ID,
-		Latitude:  t.Latitude,
-		Longitude: t.Longitude,
+		Latitude:  t.Coordinate.Latitude(),
+		Longitude: t.Coordinate.Longitude(),
 	}); err != nil {
 		return err
 	}

@@ -36,8 +36,11 @@ func validateLocation(location []float64) (entities.GeoJSONLocation, error) {
 	if len(location) != 2 {
 		return entities.GeoJSONLocation{}, fmt.Errorf("must have exactly two elements: latitude and longitude")
 	}
+	coord, err := entities.NewCoordinate(location[1], location[0])
+	if err != nil {
+		return entities.GeoJSONLocation{}, err
+	}
 	return entities.GeoJSONLocation{
-		Longitude: location[0],
-		Latitude:  location[1],
+		Coordinate: coord,
 	}, nil
 }

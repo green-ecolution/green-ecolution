@@ -21,9 +21,8 @@ func TestTreeRepository_Update(t *testing.T) {
 
 		newSpecies := "Updated Species"
 		newNumber := "UpdatedNumber"
-		newLatitude := 55.123456
-		newLongitude := 10.654321
-		newPlantingYear := int32(2025)
+		newCoordinate := entities.MustNewCoordinate(55.123456, 10.654321)
+		newPlantingYear := entities.MustNewPlantingYear(2025)
 		newDescription := "Updated description"
 		newWateringStatus := entities.WateringStatusGood
 		newLastWateredValue := &date
@@ -33,8 +32,7 @@ func TestTreeRepository_Update(t *testing.T) {
 		updatedTree, err := r.Update(context.Background(), treeID, func(tree *entities.Tree, _ storage.TreeRepository) (bool, error) {
 			tree.Species = newSpecies
 			tree.Number = newNumber
-			tree.Latitude = newLatitude
-			tree.Longitude = newLongitude
+			tree.Coordinate = newCoordinate
 			tree.PlantingYear = newPlantingYear
 			tree.Provider = newProvider
 			tree.Description = newDescription
@@ -48,9 +46,9 @@ func TestTreeRepository_Update(t *testing.T) {
 		assert.NotNil(t, updatedTree)
 		assert.Equal(t, newSpecies, updatedTree.Species, "Species should match")
 		assert.Equal(t, newNumber, updatedTree.Number, "Tree Number should match")
-		assert.Equal(t, newLatitude, updatedTree.Latitude, "Latitude should match")
-		assert.Equal(t, newLongitude, updatedTree.Longitude, "Longitude should match")
-		assert.Equal(t, newPlantingYear, updatedTree.PlantingYear, "Planting Year should match")
+		assert.Equal(t, newCoordinate.Latitude(), updatedTree.Coordinate.Latitude(), "Latitude should match")
+		assert.Equal(t, newCoordinate.Longitude(), updatedTree.Coordinate.Longitude(), "Longitude should match")
+		assert.Equal(t, newPlantingYear.Year(), updatedTree.PlantingYear.Year(), "Planting Year should match")
 		assert.Equal(t, newProvider, updatedTree.Provider, "Provider should match")
 		assert.Equal(t, newDescription, updatedTree.Description, "Description should match")
 		assert.Equal(t, newWateringStatus, updatedTree.WateringStatus, "Watering Status should match")

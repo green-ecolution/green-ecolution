@@ -19,9 +19,8 @@ func defaultTree() entities.Tree {
 		Species:        "",
 		Number:         "",
 		Sensor:         nil,
-		PlantingYear:   0,
-		Latitude:       0,
-		Longitude:      0,
+		PlantingYear:   entities.PlantingYear{},
+		Coordinate:     entities.MustNewCoordinate(0, 0),
 		WateringStatus: entities.WateringStatusUnknown,
 		Description:    "",
 		Provider:       "",
@@ -92,7 +91,8 @@ func (r *TreeRepository) createEntity(ctx context.Context, entity *entities.Tree
 
 	var sensorID *string
 	if entity.Sensor != nil {
-		sensorID = &entity.Sensor.ID
+		s := entity.Sensor.ID.String()
+		sensorID = &s
 		if err := r.store.UnlinkSensorIDFromTrees(ctx, sensorID); err != nil {
 			return -1, err
 		}
@@ -102,9 +102,9 @@ func (r *TreeRepository) createEntity(ctx context.Context, entity *entities.Tree
 		TreeClusterID:          treeClusterID,
 		Species:                entity.Species,
 		SensorID:               sensorID,
-		PlantingYear:           entity.PlantingYear,
-		Latitude:               entity.Latitude,
-		Longitude:              entity.Longitude,
+		PlantingYear:           entity.PlantingYear.Year(),
+		Latitude:               entity.Coordinate.Latitude(),
+		Longitude:              entity.Coordinate.Longitude(),
 		WateringStatus:         sqlc.WateringStatus(entity.WateringStatus),
 		Description:            &entity.Description,
 		Number:                 entity.Number,
@@ -119,8 +119,8 @@ func (r *TreeRepository) createEntity(ctx context.Context, entity *entities.Tree
 
 	if err := r.store.SetTreeLocation(ctx, &sqlc.SetTreeLocationParams{
 		ID:        id,
-		Latitude:  entity.Latitude,
-		Longitude: entity.Longitude,
+		Latitude:  entity.Coordinate.Latitude(),
+		Longitude: entity.Coordinate.Longitude(),
 	}); err != nil {
 		return -1, err
 	}
@@ -131,12 +131,6 @@ func (r *TreeRepository) createEntity(ctx context.Context, entity *entities.Tree
 func (r *TreeRepository) validateTreeEntity(tree *entities.Tree) error {
 	if tree == nil {
 		return errors.New("tree is nil")
-	}
-	if tree.Latitude < -90 || tree.Latitude > 90 {
-		return storage.ErrInvalidLatitude
-	}
-	if tree.Longitude < -180 || tree.Longitude > 180 {
-		return storage.ErrInvalidLongitude
 	}
 	return nil
 }

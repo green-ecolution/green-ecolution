@@ -30,7 +30,7 @@ var (
 			Description:   "Test description",
 			Status:        entities.VehicleStatusNotAvailable,
 			Type:          entities.VehicleTypeTransporter,
-			WaterCapacity: 1000.5,
+			WaterCapacity: entities.MustNewWaterCapacity(1000.5),
 		},
 	}
 

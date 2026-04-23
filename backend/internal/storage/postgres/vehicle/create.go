@@ -16,7 +16,7 @@ func defaultVehicle() *entities.Vehicle {
 	return &entities.Vehicle{
 		NumberPlate:    "",
 		Description:    "",
-		WaterCapacity:  0,
+		WaterCapacity:  entities.MustNewWaterCapacity(0),
 		Type:           entities.VehicleTypeUnknown,
 		Status:         entities.VehicleStatusUnknown,
 		Model:          "",
@@ -88,7 +88,7 @@ func (r *VehicleRepository) createEntity(ctx context.Context, entity *entities.V
 	args := sqlc.CreateVehicleParams{
 		NumberPlate:            entity.NumberPlate,
 		Description:            entity.Description,
-		WaterCapacity:          entity.WaterCapacity,
+		WaterCapacity:          entity.WaterCapacity.Liters(),
 		Type:                   sqlc.VehicleType(entity.Type),
 		Status:                 sqlc.VehicleStatus(entity.Status),
 		DrivingLicense:         sqlc.DrivingLicense(entity.DrivingLicense),
@@ -110,7 +110,7 @@ func (r *VehicleRepository) createEntity(ctx context.Context, entity *entities.V
 }
 
 func (r *VehicleRepository) validateVehicle(entity *entities.Vehicle) error {
-	if entity.WaterCapacity == 0 {
+	if entity.WaterCapacity.Liters() == 0 {
 		return errors.New("water capacity is required and can not be 0")
 	}
 

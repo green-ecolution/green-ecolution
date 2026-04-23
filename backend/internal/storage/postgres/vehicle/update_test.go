@@ -15,7 +15,7 @@ func TestVehicleRepository_UpdateSuite(t *testing.T) {
 	input := entities.Vehicle{
 		Description:    "Updated description",
 		NumberPlate:    "FL NEW 9876",
-		WaterCapacity:  10000,
+		WaterCapacity:  entities.MustNewWaterCapacity(10000),
 		Type:           entities.VehicleTypeTransporter,
 		Status:         entities.VehicleStatusAvailable,
 		DrivingLicense: entities.DrivingLicenseB,
@@ -107,7 +107,7 @@ func TestVehicleRepository_UpdateSuite(t *testing.T) {
 			vh.Length = input.Length
 			vh.Width = input.Width
 			vh.Weight = input.Weight
-			vh.WaterCapacity = 0
+			vh.WaterCapacity = entities.MustNewWaterCapacity(0)
 			return true, nil
 		}
 

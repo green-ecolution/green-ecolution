@@ -22,12 +22,12 @@ func TestConvertLocations(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, 9.0, result.StartPoint.Longitude)
-		assert.Equal(t, 48.0, result.StartPoint.Latitude)
-		assert.Equal(t, 9.1, result.EndPoint.Longitude)
-		assert.Equal(t, 48.1, result.EndPoint.Latitude)
-		assert.Equal(t, 9.2, result.WateringPoint.Longitude)
-		assert.Equal(t, 48.2, result.WateringPoint.Latitude)
+		assert.Equal(t, 9.0, result.StartPoint.Coordinate.Longitude())
+		assert.Equal(t, 48.0, result.StartPoint.Coordinate.Latitude())
+		assert.Equal(t, 9.1, result.EndPoint.Coordinate.Longitude())
+		assert.Equal(t, 48.1, result.EndPoint.Coordinate.Latitude())
+		assert.Equal(t, 9.2, result.WateringPoint.Coordinate.Longitude())
+		assert.Equal(t, 48.2, result.WateringPoint.Coordinate.Latitude())
 	})
 
 	t.Run("should return error for invalid EndPoint with 1 element", func(t *testing.T) {
@@ -92,8 +92,8 @@ func TestValidateLocation(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, 9.0, result.Longitude)
-		assert.Equal(t, 48.0, result.Latitude)
+		assert.Equal(t, 9.0, result.Coordinate.Longitude())
+		assert.Equal(t, 48.0, result.Coordinate.Latitude())
 	})
 
 	t.Run("should return error for 1 element", func(t *testing.T) {

@@ -8,7 +8,6 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc"
-	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,8 +25,7 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 			Name:      "Mürwik",
 		}
 		now := time.Now().UTC()
-		lat := 54.3
-		long := 9.5
+		coord := entities.MustNewCoordinate(54.3, 9.5)
 
 		totalCountTree, _ := suite.Store.GetAllTreesCount(context.Background(), &sqlc.GetAllTreesCountParams{})
 		testTrees, err := suite.Store.GetAllTrees(context.Background(), &sqlc.GetAllTreesParams{
@@ -52,8 +50,7 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 			tc.Archived = true
 			tc.Region = newRegion
 			tc.LastWatered = &now
-			tc.Latitude = &lat
-			tc.Longitude = &long
+			tc.Coordinate = &coord
 			tc.SoilCondition = entities.TreeSoilConditionLehmig
 			tc.Trees = trees
 			return true, nil
@@ -78,10 +75,9 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 		assert.Equal(t, newRegion.Name, got.Region.Name)
 		assert.NotNil(t, got.LastWatered)
 		assert.WithinDuration(t, now, got.LastWatered.UTC(), time.Second)
-		assert.NotNil(t, got.Latitude)
-		assert.NotNil(t, got.Longitude)
-		assert.Equal(t, lat, *got.Latitude)
-		assert.Equal(t, long, *got.Longitude)
+		assert.NotNil(t, got.Coordinate)
+		assert.Equal(t, coord.Latitude(), got.Coordinate.Latitude())
+		assert.Equal(t, coord.Longitude(), got.Coordinate.Longitude())
 		assert.Equal(t, entities.TreeSoilConditionLehmig, got.SoilCondition)
 		assert.NotNil(t, got.Trees)
 		assert.Len(t, got.Trees, len(trees))
@@ -229,9 +225,9 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 		suite.ResetDB(t)
 		suite.InsertSeed(t, "internal/storage/postgres/seed/test/treecluster")
 		r := NewTreeClusterRepository(suite.Store, mappers)
+		newCoord := entities.MustNewCoordinate(1.0, 1.0)
 		updateFn := func(tc *entities.TreeCluster, _ storage.TreeClusterRepository) (bool, error) {
-			tc.Latitude = utils.P(1.0)
-			tc.Longitude = utils.P(1.0)
+			tc.Coordinate = &newCoord
 			return true, nil
 		}
 
@@ -243,10 +239,9 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 		assert.NoError(t, updateErr)
 		assert.NoError(t, getErr)
 		assert.NotNil(t, got)
-		assert.NotNil(t, got.Latitude)
-		assert.NotNil(t, got.Longitude)
-		assert.Equal(t, 1.0, *got.Latitude)
-		assert.Equal(t, 1.0, *got.Longitude)
+		assert.NotNil(t, got.Coordinate)
+		assert.Equal(t, 1.0, got.Coordinate.Latitude())
+		assert.Equal(t, 1.0, got.Coordinate.Longitude())
 	})
 
 	t.Run("should remove tree cluster coordinates", func(t *testing.T) {
@@ -255,8 +250,7 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 		suite.InsertSeed(t, "internal/storage/postgres/seed/test/treecluster")
 		r := NewTreeClusterRepository(suite.Store, mappers)
 		updateFn := func(tc *entities.TreeCluster, _ storage.TreeClusterRepository) (bool, error) {
-			tc.Latitude = nil
-			tc.Longitude = nil
+			tc.Coordinate = nil
 			return true, nil
 		}
 
@@ -268,8 +262,7 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 		assert.NoError(t, updateErr)
 		assert.NoError(t, getErr)
 		assert.NotNil(t, got)
-		assert.Nil(t, got.Latitude)
-		assert.Nil(t, got.Longitude)
+		assert.Nil(t, got.Coordinate)
 	})
 
 	t.Run("should return error when updateFn is nil", func(t *testing.T) {

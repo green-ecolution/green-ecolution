@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 	imgMapper "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper"
@@ -72,11 +73,12 @@ func (r *TreeRepository) UnlinkTreeClusterID(ctx context.Context, treeClusterID 
 	return nil
 }
 
-func (r *TreeRepository) UnlinkSensorID(ctx context.Context, sensorID string) error {
-	if sensorID == "" {
+func (r *TreeRepository) UnlinkSensorID(ctx context.Context, sensorID entities.SensorID) error {
+	if sensorID.String() == "" {
 		return errors.New("sensorID cannot be empty")
 	}
-	return r.store.UnlinkSensorIDFromTrees(ctx, &sensorID)
+	idStr := sensorID.String()
+	return r.store.UnlinkSensorIDFromTrees(ctx, &idStr)
 }
 
 func (r *TreeRepository) GetDistinctPlantingYears(ctx context.Context) ([]int32, error) {

@@ -3,7 +3,6 @@ package wateringplan
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,7 +18,7 @@ func defaultWateringPlan() *entities.WateringPlan {
 	return &entities.WateringPlan{
 		Date:               time.Time{},
 		Description:        "",
-		Distance:           utils.P(0.0),
+		Distance:           utils.P(entities.MustNewDistance(0)),
 		TotalWaterRequired: utils.P(0.0),
 		Status:             entities.WateringPlanStatusPlanned,
 		UserIDs:            make([]*uuid.UUID, 0),
@@ -64,7 +63,6 @@ func (w *WateringPlanRepository) Create(ctx context.Context, createFn func(*enti
 
 		createdWp, err = newRepo.GetByID(ctx, *id)
 		if err != nil {
-			fmt.Println("failed to get vy id")
 			return err
 		}
 
@@ -97,10 +95,16 @@ func (w *WateringPlanRepository) createEntity(ctx context.Context, entity *entit
 		return nil, errors.New("failed to convert date")
 	}
 
+	var distance *float64
+	if entity.Distance != nil {
+		v := entity.Distance.Meters()
+		distance = &v
+	}
+
 	args := sqlc.CreateWateringPlanParams{
 		Date:                   entity.Date,
 		Description:            entity.Description,
-		Distance:               entity.Distance,
+		Distance:               distance,
 		TotalWaterRequired:     entity.TotalWaterRequired,
 		Status:                 sqlc.WateringPlanStatus(entities.WateringPlanStatusPlanned),
 		Provider:               &entity.Provider,

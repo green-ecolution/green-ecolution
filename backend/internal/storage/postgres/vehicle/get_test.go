@@ -508,7 +508,7 @@ var allTestVehicles = []*entities.Vehicle{
 		ID:             1,
 		NumberPlate:    "B-1234",
 		Description:    "Test vehicle 1",
-		WaterCapacity:  100.0,
+		WaterCapacity:  entities.MustNewWaterCapacity(100.0),
 		Type:           entities.VehicleTypeTrailer,
 		Status:         entities.VehicleStatusActive,
 		Model:          "1615/17 - Conrad - MAN TGE 3.180",
@@ -522,7 +522,7 @@ var allTestVehicles = []*entities.Vehicle{
 		ID:             2,
 		NumberPlate:    "B-5678",
 		Description:    "Test vehicle 2",
-		WaterCapacity:  150.0,
+		WaterCapacity:  entities.MustNewWaterCapacity(150.0),
 		Type:           entities.VehicleTypeTransporter,
 		Status:         entities.VehicleStatusUnknown,
 		Model:          "Actros L Mercedes Benz",
@@ -536,7 +536,7 @@ var allTestVehicles = []*entities.Vehicle{
 		ID:             3,
 		NumberPlate:    "B-1001",
 		Description:    "Test vehicle 3",
-		WaterCapacity:  150.0,
+		WaterCapacity:  entities.MustNewWaterCapacity(150.0),
 		Type:           entities.VehicleTypeTransporter,
 		Status:         entities.VehicleStatusUnknown,
 		Model:          "Actros L Mercedes Benz",
@@ -557,7 +557,7 @@ func sortVehicleByWaterCapacity(data []*entities.Vehicle) []*entities.Vehicle {
 	copy(sorted, data)
 
 	sort.Slice(sorted, func(i, j int) bool {
-		return sorted[i].WaterCapacity > sorted[j].WaterCapacity
+		return sorted[i].WaterCapacity.Liters() > sorted[j].WaterCapacity.Liters()
 	})
 
 	return sorted

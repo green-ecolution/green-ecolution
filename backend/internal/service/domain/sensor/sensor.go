@@ -55,7 +55,7 @@ func (s *SensorService) GetAll(ctx context.Context, query entities.Query) ([]*en
 	return sensors, totalCount, nil
 }
 
-func (s *SensorService) GetAllDataByID(ctx context.Context, id string) ([]*entities.SensorData, error) {
+func (s *SensorService) GetAllDataByID(ctx context.Context, id entities.SensorID) ([]*entities.SensorData, error) {
 	log := logger.GetLogger(ctx)
 	sensorData, err := s.sensorRepo.GetAllDataByID(ctx, id)
 
@@ -67,11 +67,11 @@ func (s *SensorService) GetAllDataByID(ctx context.Context, id string) ([]*entit
 	return sensorData, nil
 }
 
-func (s *SensorService) GetByID(ctx context.Context, id string) (*entities.Sensor, error) {
+func (s *SensorService) GetByID(ctx context.Context, id entities.SensorID) (*entities.Sensor, error) {
 	log := logger.GetLogger(ctx)
 	get, err := s.sensorRepo.GetByID(ctx, id)
 	if err != nil {
-		log.Debug("failed to fetch sensor by id", "sensor_id", id, "error", err)
+		log.Debug("failed to fetch sensor by id", "sensor_id", id.String(), "error", err)
 		return nil, service.MapError(ctx, err, service.ErrorLogEntityNotFound)
 	}
 
@@ -85,7 +85,19 @@ func (s *SensorService) Create(ctx context.Context, sc *entities.SensorCreate) (
 		return nil, service.MapError(ctx, errors.Join(err, service.ErrValidation), service.ErrorLogValidation)
 	}
 
+	if sc.ID == (entities.SensorID{}) {
+		err := errors.Join(errors.New("sensor id must not be empty"), service.ErrValidation)
+		return nil, service.MapError(ctx, err, service.ErrorLogValidation)
+	}
+
+	if sc.Coordinate == (entities.Coordinate{}) {
+		err := errors.Join(errors.New("coordinate must not be empty"), service.ErrValidation)
+		return nil, service.MapError(ctx, err, service.ErrorLogValidation)
+	}
+
 	created, err := s.sensorRepo.Create(ctx, func(s *entities.Sensor, _ storage.SensorRepository) (bool, error) {
+		s.ID = sc.ID
+		s.Coordinate = sc.Coordinate
 		s.LatestData = sc.LatestData
 		s.Status = sc.Status
 		s.Provider = sc.Provider
@@ -94,19 +106,24 @@ func (s *SensorService) Create(ctx context.Context, sc *entities.SensorCreate) (
 	})
 
 	if err != nil {
-		log.Debug("failed to create sensor", "error", err, "sensor_id", sc.ID)
+		log.Debug("failed to create sensor", "error", err, "sensor_id", sc.ID.String())
 		return nil, service.MapError(ctx, err, service.ErrorLogAll)
 	}
 
-	log.Info("sensor created successfully", "sensor_id", created.ID)
+	log.Info("sensor created successfully", "sensor_id", created.ID.String())
 	return created, nil
 }
 
-func (s *SensorService) Update(ctx context.Context, id string, su *entities.SensorUpdate) (*entities.Sensor, error) {
+func (s *SensorService) Update(ctx context.Context, id entities.SensorID, su *entities.SensorUpdate) (*entities.Sensor, error) {
 	log := logger.GetLogger(ctx)
 	if err := s.validator.Struct(su); err != nil {
 		log.Debug("failed to validate sensor struct to update", "error", err, "raw_sensor", fmt.Sprintf("%+v", su))
 		return nil, service.MapError(ctx, errors.Join(err, service.ErrValidation), service.ErrorLogValidation)
+	}
+
+	if su.Coordinate == (entities.Coordinate{}) {
+		err := errors.Join(errors.New("coordinate must not be empty"), service.ErrValidation)
+		return nil, service.MapError(ctx, err, service.ErrorLogValidation)
 	}
 
 	_, err := s.sensorRepo.GetByID(ctx, id)
@@ -115,6 +132,7 @@ func (s *SensorService) Update(ctx context.Context, id string, su *entities.Sens
 	}
 
 	updated, err := s.sensorRepo.Update(ctx, id, func(s *entities.Sensor, _ storage.SensorRepository) (bool, error) {
+		s.Coordinate = su.Coordinate
 		s.LatestData = su.LatestData
 		s.Status = su.Status
 		s.Provider = su.Provider
@@ -123,15 +141,15 @@ func (s *SensorService) Update(ctx context.Context, id string, su *entities.Sens
 	})
 
 	if err != nil {
-		log.Debug("failed to update sensor", "sensor_id", id, "error", err)
+		log.Debug("failed to update sensor", "sensor_id", id.String(), "error", err)
 		return nil, service.MapError(ctx, err, service.ErrorLogAll)
 	}
 
-	log.Info("sensor updated successfully", "sensor_id", id)
+	log.Info("sensor updated successfully", "sensor_id", id.String())
 	return updated, nil
 }
 
-func (s *SensorService) Delete(ctx context.Context, id string) error {
+func (s *SensorService) Delete(ctx context.Context, id entities.SensorID) error {
 	log := logger.GetLogger(ctx)
 	_, err := s.sensorRepo.GetByID(ctx, id)
 	if err != nil {
@@ -140,13 +158,13 @@ func (s *SensorService) Delete(ctx context.Context, id string) error {
 
 	err = s.treeRepo.UnlinkSensorID(ctx, id)
 	if err != nil {
-		log.Debug("failed to unlink sensor from tree", "error", err, "sensor_id", id)
+		log.Debug("failed to unlink sensor from tree", "error", err, "sensor_id", id.String())
 		return service.MapError(ctx, err, service.ErrorLogAll)
 	}
 
 	err = s.sensorRepo.Delete(ctx, id)
 	if err != nil {
-		log.Debug("failed to delete sensor", "error", err, "sensor_id", id)
+		log.Debug("failed to delete sensor", "error", err, "sensor_id", id.String())
 		return service.MapError(ctx, err, service.ErrorLogAll)
 	}
 
@@ -165,7 +183,7 @@ func (s *SensorService) UpdateStatuses(ctx context.Context) error {
 	for _, sens := range sensors {
 		sensorData, err := s.sensorRepo.GetLatestSensorDataBySensorID(ctx, sens.ID)
 		if err != nil {
-			log.Error("failed to fetch latest sensor data", "sensor_id", sens.ID, "error", err)
+			log.Error("failed to fetch latest sensor data", "sensor_id", sens.ID.String(), "error", err)
 			continue
 		}
 		if sensorData.CreatedAt.Before(cutoffTime) {
@@ -175,9 +193,9 @@ func (s *SensorService) UpdateStatuses(ctx context.Context) error {
 			})
 
 			if err != nil {
-				log.Error("failed to update sensor status to offline", "sensor_id", sens.ID, "error", err, "prev_sensor_status", sens.Status)
+				log.Error("failed to update sensor status to offline", "sensor_id", sens.ID.String(), "error", err, "prev_sensor_status", sens.Status)
 			} else {
-				log.Debug("sensor marked as offline due to inactivity", "sensor_id", sens.ID, "prev_sensor_status", sens.Status)
+				log.Debug("sensor marked as offline due to inactivity", "sensor_id", sens.ID.String(), "prev_sensor_status", sens.Status)
 			}
 		}
 	}
@@ -192,20 +210,20 @@ func (s *SensorService) MapSensorToTree(ctx context.Context, sen *entities.Senso
 		return errors.New("sensor cannot be nil")
 	}
 
-	nearestTree, err := s.treeRepo.FindNearestTree(ctx, sen.Latitude, sen.Longitude)
+	nearestTree, err := s.treeRepo.FindNearestTree(ctx, sen.Coordinate)
 	if err != nil {
-		log.Error("failed to calculate nearest tree", "sensor_id", sen.ID, "sensor_latitude", sen.Latitude, "sensor_longitude", sen.Longitude)
+		log.Error("failed to calculate nearest tree", "sensor_id", sen.ID.String(), "sensor_latitude", sen.Coordinate.Latitude(), "sensor_longitude", sen.Coordinate.Longitude())
 		return err
 	}
 
 	if nearestTree != nil {
 		_, err = s.treeRepo.Update(ctx, nearestTree.ID, func(tree *entities.Tree, _ storage.TreeRepository) (bool, error) {
 			tree.Sensor = sen
-			log.Debug("update sensor on tree", "tree_id", tree.ID, "sensor_id", sen.ID)
+			log.Debug("update sensor on tree", "tree_id", tree.ID, "sensor_id", sen.ID.String())
 			return true, nil
 		})
 		if err != nil {
-			log.Error("failed to link sensor to nearest calculated tree", "tree_id", nearestTree.ID, "sensor_id", sen.ID, "error", err)
+			log.Error("failed to link sensor to nearest calculated tree", "tree_id", nearestTree.ID, "sensor_id", sen.ID.String(), "error", err)
 			return err
 		}
 	}

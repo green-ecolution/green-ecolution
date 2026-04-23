@@ -22,7 +22,7 @@ func TestSensorMapper_FromSql(t *testing.T) {
 		// then
 		assert.NotNil(t, got)
 		assert.NoError(t, err)
-		assert.Equal(t, src.ID, got.ID)
+		assert.Equal(t, src.ID, got.ID.String())
 		assert.Equal(t, src.CreatedAt, got.CreatedAt)
 		assert.Equal(t, src.UpdatedAt, got.UpdatedAt)
 		assert.Equal(t, src.Status, sqlc.SensorStatus(got.Status))
@@ -58,7 +58,7 @@ func TestSensorMapper_FromSqlList(t *testing.T) {
 
 		for i, src := range src {
 			assert.NotNil(t, got)
-			assert.Equal(t, src.ID, got[i].ID)
+			assert.Equal(t, src.ID, got[i].ID.String())
 			assert.Equal(t, src.CreatedAt, got[i].CreatedAt)
 			assert.Equal(t, src.UpdatedAt, got[i].UpdatedAt)
 			assert.Equal(t, src.Status, sqlc.SensorStatus(got[i].Status))

@@ -795,7 +795,7 @@ var allTestWateringPlans = []*entities.WateringPlan{
 		Date:               time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
 		Description:        "New watering plan for the west side of the city",
 		Status:             entities.WateringPlanStatusPlanned,
-		Distance:           utils.P(63.0),
+		Distance:           utils.P(entities.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(720.0),
 		Transporter:        allTestVehicles[1],
 		Trailer:            allTestVehicles[0],
@@ -808,7 +808,7 @@ var allTestWateringPlans = []*entities.WateringPlan{
 		Date:               time.Date(2024, 8, 3, 0, 0, 0, 0, time.UTC),
 		Description:        "New watering plan for the east side of the city",
 		Status:             entities.WateringPlanStatusActive,
-		Distance:           utils.P(63.0),
+		Distance:           utils.P(entities.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(0.0),
 		Transporter:        allTestVehicles[1],
 		Trailer:            nil,
@@ -825,7 +825,7 @@ var allTestWateringPlans = []*entities.WateringPlan{
 		Date:               time.Date(2024, 6, 12, 0, 0, 0, 0, time.UTC),
 		Description:        "Very important watering plan due to no rainfall",
 		Status:             entities.WateringPlanStatusFinished,
-		Distance:           utils.P(63.0),
+		Distance:           utils.P(entities.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(0.0),
 		Transporter:        allTestVehicles[1],
 		Trailer:            nil,
@@ -855,7 +855,7 @@ var allTestWateringPlans = []*entities.WateringPlan{
 		Date:               time.Date(2024, 6, 10, 0, 0, 0, 0, time.UTC),
 		Description:        "New watering plan for the south side of the city",
 		Status:             entities.WateringPlanStatusNotCompeted,
-		Distance:           utils.P(63.0),
+		Distance:           utils.P(entities.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(0.0),
 		Transporter:        allTestVehicles[1],
 		Trailer:            nil,
@@ -868,7 +868,7 @@ var allTestWateringPlans = []*entities.WateringPlan{
 		Date:               time.Date(2024, 6, 4, 0, 0, 0, 0, time.UTC),
 		Description:        "Canceled due to flood",
 		Status:             entities.WateringPlanStatusCanceled,
-		Distance:           utils.P(63.0),
+		Distance:           utils.P(entities.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(0.0),
 		Transporter:        allTestVehicles[1],
 		TreeClusters:       allTestClusters[2:3],
@@ -882,7 +882,7 @@ var allTestVehicles = []*entities.Vehicle{
 		ID:            1,
 		NumberPlate:   "B-1234",
 		Description:   "Test vehicle 1",
-		WaterCapacity: 100.0,
+		WaterCapacity: entities.MustNewWaterCapacity(100.0),
 		Type:          entities.VehicleTypeTrailer,
 		Status:        entities.VehicleStatusActive,
 	},
@@ -890,10 +890,15 @@ var allTestVehicles = []*entities.Vehicle{
 		ID:            2,
 		NumberPlate:   "B-5678",
 		Description:   "Test vehicle 2",
-		WaterCapacity: 150.0,
+		WaterCapacity: entities.MustNewWaterCapacity(150.0),
 		Type:          entities.VehicleTypeTransporter,
 		Status:        entities.VehicleStatusUnknown,
 	},
+}
+
+func mustNewCoordinatePtr(lat, lng float64) *entities.Coordinate {
+	c := entities.MustNewCoordinate(lat, lng)
+	return &c
 }
 
 var allTestClusters = []*entities.TreeCluster{
@@ -909,8 +914,7 @@ var allTestClusters = []*entities.TreeCluster{
 		Address:       "Am Stadion",
 		Description:   "Alle Bäume am Stadion",
 		SoilCondition: entities.TreeSoilConditionSandig,
-		Latitude:      utils.P(54.820940),
-		Longitude:     utils.P(9.489022),
+		Coordinate:    mustNewCoordinatePtr(54.820940, 9.489022),
 		Trees: []*entities.Tree{
 			{ID: 1},
 			{ID: 2},
@@ -929,8 +933,7 @@ var allTestClusters = []*entities.TreeCluster{
 		Address:       "Ulmenstraße",
 		Description:   "Bäume beim Sankt-Jürgen-Platz",
 		SoilCondition: entities.TreeSoilConditionSchluffig,
-		Latitude:      utils.P(54.78805731048199),
-		Longitude:     utils.P(9.44400186680097),
+		Coordinate:    mustNewCoordinatePtr(54.78805731048199, 9.44400186680097),
 		Trees: []*entities.Tree{
 			{ID: 4},
 			{ID: 5},
@@ -949,8 +952,7 @@ var allTestClusters = []*entities.TreeCluster{
 		Address:       "Solitüde Strand",
 		Description:   "Alle Bäume am Strand",
 		SoilCondition: "schluffig",
-		Latitude:      utils.P(54.802163),
-		Longitude:     utils.P(9.446398),
+		Coordinate:    mustNewCoordinatePtr(54.802163, 9.446398),
 		Trees:         []*entities.Tree{},
 	},
 }

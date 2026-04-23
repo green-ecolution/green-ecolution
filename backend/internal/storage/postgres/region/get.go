@@ -58,16 +58,16 @@ func (r *RegionRepository) GetByID(ctx context.Context, id int32) (*entities.Reg
 	return r.mapper.FromSql(row), nil
 }
 
-func (r *RegionRepository) GetByPoint(ctx context.Context, latitude, longitude float64) (*entities.Region, error) {
+func (r *RegionRepository) GetByPoint(ctx context.Context, coord entities.Coordinate) (*entities.Region, error) {
 	log := logger.GetLogger(ctx)
-	p := fmt.Sprintf("POINT(%f %f)", longitude, latitude)
+	p := fmt.Sprintf("POINT(%f %f)", coord.Longitude(), coord.Latitude())
 	region, err := r.store.GetRegionByPoint(ctx, p)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			log.Debug("no existing region in given coordinates", "error", err, "latitude", latitude, "longitude", longitude)
+			log.Debug("no existing region in given coordinates", "error", err, "latitude", coord.Latitude(), "longitude", coord.Longitude())
 			return nil, nil
 		}
-		log.Debug("failed to translate point to region", "error", err, "latitude", latitude, "longitude", longitude)
+		log.Debug("failed to translate point to region", "error", err, "latitude", coord.Latitude(), "longitude", coord.Longitude())
 		return nil, r.store.MapError(err, sqlc.Region{})
 	}
 

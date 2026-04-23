@@ -34,7 +34,7 @@ func TestTreeService_HandleNewSensorData(t *testing.T) {
 		go eventManager.Run(ctx)
 
 		sensorDataEvent := entities.SensorData{
-			SensorID: "sensor-1",
+			SensorID: entities.MustNewSensorID("sensor-1"),
 			Data: &entities.MqttPayload{
 				Watermarks: []entities.Watermark{
 					{Centibar: 30, Depth: 30},
@@ -46,19 +46,19 @@ func TestTreeService_HandleNewSensorData(t *testing.T) {
 
 		treeNew := entities.Tree{
 			ID:             1,
-			PlantingYear:   int32(time.Now().Year() - 2),
+			PlantingYear:   entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
 			WateringStatus: entities.WateringStatusGood,
 		}
 
 		tree := entities.Tree{
 			ID:             1,
-			PlantingYear:   int32(time.Now().Year() - 2),
+			PlantingYear:   entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
 			WateringStatus: entities.WateringStatusUnknown,
 		}
 
 		event := entities.NewEventSensorData(&sensorDataEvent)
 
-		treeRepo.EXPECT().GetBySensorID(mock.Anything, "sensor-1").Return(&tree, nil)
+		treeRepo.EXPECT().GetBySensorID(mock.Anything, entities.MustNewSensorID("sensor-1")).Return(&tree, nil)
 		treeRepo.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(&treeNew, nil)
 
 		err := svc.HandleNewSensorData(context.Background(), &event)
@@ -89,7 +89,7 @@ func TestTreeService_HandleNewSensorData(t *testing.T) {
 		go eventManager.Run(ctx)
 
 		sensorDataEvent := entities.SensorData{
-			SensorID: "sensor-1",
+			SensorID: entities.MustNewSensorID("sensor-1"),
 			Data: &entities.MqttPayload{
 				Watermarks: []entities.Watermark{
 					{Centibar: 61, Depth: 30},
@@ -101,7 +101,7 @@ func TestTreeService_HandleNewSensorData(t *testing.T) {
 
 		event := entities.NewEventSensorData(&sensorDataEvent)
 
-		treeRepo.EXPECT().GetBySensorID(mock.Anything, "sensor-1").Return(nil, storage.ErrTreeNotFound)
+		treeRepo.EXPECT().GetBySensorID(mock.Anything, entities.MustNewSensorID("sensor-1")).Return(nil, storage.ErrTreeNotFound)
 
 		// when
 		err := svc.HandleNewSensorData(context.Background(), &event)
@@ -130,7 +130,7 @@ func TestTreeService_HandleNewSensorData(t *testing.T) {
 		go eventManager.Run(ctx)
 
 		sensorDataEvent := entities.SensorData{
-			SensorID: "sensor-1",
+			SensorID: entities.MustNewSensorID("sensor-1"),
 			Data: &entities.MqttPayload{
 				Watermarks: []entities.Watermark{
 					{Centibar: 30, Depth: 30},
@@ -142,13 +142,13 @@ func TestTreeService_HandleNewSensorData(t *testing.T) {
 
 		tree := entities.Tree{
 			ID:             1,
-			PlantingYear:   int32(time.Now().Year() - 2),
+			PlantingYear:   entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
 			WateringStatus: entities.WateringStatusUnknown,
 		}
 
 		event := entities.NewEventSensorData(&sensorDataEvent)
 
-		treeRepo.EXPECT().GetBySensorID(mock.Anything, "sensor-1").Return(&tree, nil)
+		treeRepo.EXPECT().GetBySensorID(mock.Anything, entities.MustNewSensorID("sensor-1")).Return(&tree, nil)
 		treeRepo.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, storage.ErrTreeNotFound)
 
 		// when

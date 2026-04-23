@@ -421,16 +421,11 @@ func TestTreeClusterRepository_GetByID(t *testing.T) {
 		assert.Equal(t, allTestCluster[0].WateringStatus, got.WateringStatus)
 		assert.Equal(t, allTestCluster[0].SoilCondition, got.SoilCondition)
 
-		if got.Latitude != nil {
-			assert.Equal(t, allTestCluster[0].Latitude, *got.Latitude)
+		if got.Coordinate != nil {
+			assert.Equal(t, allTestCluster[0].Latitude, got.Coordinate.Latitude())
+			assert.Equal(t, allTestCluster[0].Longitude, got.Coordinate.Longitude())
 		} else {
-			assert.Nil(t, got.Latitude)
-		}
-
-		if got.Longitude != nil {
-			assert.Equal(t, allTestCluster[0].Longitude, *got.Longitude)
-		} else {
-			assert.Nil(t, got.Longitude)
+			assert.Nil(t, got.Coordinate)
 		}
 
 		// assert region
@@ -531,16 +526,11 @@ func TestTreeClusterRepository_GetByIDs(t *testing.T) {
 			assert.Equal(t, allTestCluster[i].SoilCondition, cluster.SoilCondition)
 			assert.Equal(t, allTestCluster[i].Description, cluster.Description)
 
-			if cluster.Latitude != nil {
-				assert.Equal(t, allTestCluster[i].Latitude, *cluster.Latitude)
+			if cluster.Coordinate != nil {
+				assert.Equal(t, allTestCluster[i].Latitude, cluster.Coordinate.Latitude())
+				assert.Equal(t, allTestCluster[i].Longitude, cluster.Coordinate.Longitude())
 			} else {
-				assert.Nil(t, cluster.Latitude)
-			}
-
-			if cluster.Longitude != nil {
-				assert.Equal(t, allTestCluster[i].Longitude, *cluster.Longitude)
-			} else {
-				assert.Nil(t, cluster.Longitude)
+				assert.Nil(t, cluster.Coordinate)
 			}
 
 			// assert region

@@ -78,11 +78,10 @@ var (
 	}
 
 	TestSensor = &domain.Sensor{
-		ID:         "sensor001",
+		ID:         domain.MustNewSensorID("sensor001"),
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
-		Latitude:   54.82124518093376,
-		Longitude:  9.485702120628517,
+		Coordinate: domain.MustNewCoordinate(54.82124518093376, 9.485702120628517),
 		Status:     domain.SensorStatusOnline,
 		LatestData: TestSensorData[0],
 	}
@@ -111,40 +110,36 @@ var (
 	TestSensorList = []*domain.Sensor{
 		TestSensor,
 		{
-			ID:         "sensor-2",
+			ID:         domain.MustNewSensorID("sensor-2"),
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
-			Latitude:   54.78780993841013,
-			Longitude:  9.444052105200551,
+			Coordinate: domain.MustNewCoordinate(54.78780993841013, 9.444052105200551),
 			Status:     domain.SensorStatusOffline,
 			LatestData: &domain.SensorData{},
 		},
 		{
-			ID:         "sensor-3",
+			ID:         domain.MustNewSensorID("sensor-3"),
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
-			Latitude:   54.77933725347423,
-			Longitude:  9.426465409018832,
+			Coordinate: domain.MustNewCoordinate(54.77933725347423, 9.426465409018832),
 			Status:     domain.SensorStatusUnknown,
 			LatestData: &domain.SensorData{},
 		},
 		{
-			ID:         "sensor-4",
+			ID:         domain.MustNewSensorID("sensor-4"),
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
-			Latitude:   54.82078826498143,
-			Longitude:  9.489684366114483,
+			Coordinate: domain.MustNewCoordinate(54.82078826498143, 9.489684366114483),
 			Status:     domain.SensorStatusOnline,
 			LatestData: &domain.SensorData{},
 		},
 	}
 
 	TestSensorNearestTree = &domain.Sensor{
-		ID:         "sensor-05",
+		ID:         domain.MustNewSensorID("sensor-05"),
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
-		Latitude:   54.821535,
-		Longitude:  9.487200,
+		Coordinate: domain.MustNewCoordinate(54.821535, 9.487200),
 		Status:     domain.SensorStatusOnline,
 		LatestData: TestSensorData[0],
 	}
@@ -155,9 +150,8 @@ var (
 		UpdatedAt:    time.Now(),
 		Species:      "Oak",
 		Number:       "T001",
-		Latitude:     54.8215076622281,
-		Longitude:    9.487153277881877,
+		Coordinate:   domain.MustNewCoordinate(54.8215076622281, 9.487153277881877),
 		Description:  "A mature oak tree",
-		PlantingYear: 2023,
+		PlantingYear: domain.MustNewPlantingYear(2023),
 	}
 )

@@ -114,7 +114,10 @@ func CreateWateringPlan(svc service.WateringPlanService) fiber.Handler {
 			return err
 		}
 
-		domainReq := mapper.WateringPlanFromCreateRequest(req)
+		domainReq, err := mapper.WateringPlanFromCreateRequest(req)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		}
 		domainData, err := svc.Create(ctx, domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)
@@ -155,7 +158,10 @@ func UpdateWateringPlan(svc service.WateringPlanService) fiber.Handler {
 			return err
 		}
 
-		domainReq := mapper.WateringPlanFromUpdateRequest(req)
+		domainReq, err := mapper.WateringPlanFromUpdateRequest(req)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		}
 		domainData, err := svc.Update(ctx, int32(id), domainReq)
 		if err != nil {
 			return errorhandler.HandleError(err)
@@ -277,16 +283,16 @@ func GetGpxFile(svc service.WateringPlanService) fiber.Handler {
 func convertMetaData(domainMetadata domain.GeoJSONMetadata) entities.GeoJSONMetadata {
 	return entities.GeoJSONMetadata{
 		StartPoint: entities.GeoJSONLocation{
-			Latitude:  domainMetadata.StartPoint.Latitude,
-			Longitude: domainMetadata.StartPoint.Longitude,
+			Latitude:  domainMetadata.StartPoint.Coordinate.Latitude(),
+			Longitude: domainMetadata.StartPoint.Coordinate.Longitude(),
 		},
 		EndPoint: entities.GeoJSONLocation{
-			Latitude:  domainMetadata.EndPoint.Latitude,
-			Longitude: domainMetadata.EndPoint.Longitude,
+			Latitude:  domainMetadata.EndPoint.Coordinate.Latitude(),
+			Longitude: domainMetadata.EndPoint.Coordinate.Longitude(),
 		},
 		WateringPoint: entities.GeoJSONLocation{
-			Latitude:  domainMetadata.WateringPoint.Latitude,
-			Longitude: domainMetadata.WateringPoint.Longitude,
+			Latitude:  domainMetadata.WateringPoint.Coordinate.Latitude(),
+			Longitude: domainMetadata.WateringPoint.Coordinate.Longitude(),
 		},
 	}
 }

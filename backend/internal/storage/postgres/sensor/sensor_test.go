@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/testutils"
@@ -47,7 +48,7 @@ func TestSensorRepository_Delete(t *testing.T) {
 		r := NewSensorRepository(defaultFields.store, defaultFields.SensorMappers)
 
 		// when
-		err := r.Delete(context.Background(), "sensor-1")
+		err := r.Delete(context.Background(), entities.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.NoError(t, err)
@@ -59,7 +60,7 @@ func TestSensorRepository_Delete(t *testing.T) {
 		r := NewSensorRepository(defaultFields.store, defaultFields.SensorMappers)
 
 		// when
-		err := r.Delete(context.Background(), "notFoundID")
+		err := r.Delete(context.Background(), entities.MustNewSensorID("notFoundID"))
 
 		// then
 		assert.Error(t, err)
@@ -72,7 +73,7 @@ func TestSensorRepository_Delete(t *testing.T) {
 		cancel()
 
 		// when
-		err := r.Delete(ctx, "sensor-1")
+		err := r.Delete(ctx, entities.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.Error(t, err)

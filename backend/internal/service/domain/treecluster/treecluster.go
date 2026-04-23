@@ -272,15 +272,15 @@ func (s *TreeClusterService) updateTreeClusterPosition(ctx context.Context, id i
 
 	err = s.treeClusterRepo.Update(ctx, id, func(tc *domain.TreeCluster, repo storage.TreeClusterRepository) (bool, error) {
 		if len(tc.Trees) != 0 {
-			lat, long, err := repo.GetCenterPoint(ctx, tc.ID)
+			coord, err := repo.GetCenterPoint(ctx, tc.ID)
 			if err != nil {
 				log.Error("failed to get center point of tree cluster", "error", err, "tree_cluster", tc)
 				return false, err
 			}
 
-			region, err := s.regionRepo.GetByPoint(ctx, lat, long)
+			region, err := s.regionRepo.GetByPoint(ctx, *coord)
 			if err != nil {
-				log.Error("can't find region by lat and long", "error", err, "latitude", lat, "longitude", long, "tree_cluster", tc)
+				log.Error("can't find region by coordinate", "error", err, "coordinate", coord, "tree_cluster", tc)
 				return false, err
 			}
 
@@ -293,14 +293,13 @@ func (s *TreeClusterService) updateTreeClusterPosition(ctx context.Context, id i
 				log.Debug("updating region in tree cluster position", "id", region.ID, "name", region.Name)
 			}
 
-			if tc.Latitude != &lat || tc.Longitude != &long {
-				tc.Latitude = &lat
-				tc.Longitude = &long
+			if tc.Coordinate == nil || *tc.Coordinate != *coord {
+				tc.Coordinate = coord
 				tc.WateringStatus = wateringStatus
 
 				log.Info("update tree cluster position due to changed trees inside the tree cluster", "cluster_id", id)
 				log.Debug("detailed updated tree cluster position informations", "cluster_id", id,
-					slog.Group("new_position", "latitude", lat, "longitude", long),
+					slog.Group("new_position", "latitude", coord.Latitude(), "longitude", coord.Longitude()),
 				)
 			}
 		}
@@ -342,20 +341,19 @@ func (s *TreeClusterService) handlePrevTreeLocation(ctx context.Context, trees [
 
 		updateFunc := func(tc *domain.TreeCluster, repo storage.TreeClusterRepository) (bool, error) {
 			if len(tc.Trees) != 0 {
-				lat, long, err := repo.GetCenterPoint(ctx, tc.ID)
+				coord, err := repo.GetCenterPoint(ctx, tc.ID)
 				if err != nil {
 					log.Error("failed to get center point of tree cluster", "error", err, "tree_cluster", tc)
 					return false, err
 				}
 
-				region, err := s.regionRepo.GetByPoint(ctx, lat, long)
+				region, err := s.regionRepo.GetByPoint(ctx, *coord)
 				if err != nil {
-					log.Error("can't find region by lat and long", "error", err, "latitude", lat, "longitude", long, "tree_cluster", tc)
+					log.Error("can't find region by coordinate", "error", err, "coordinate", coord, "tree_cluster", tc)
 					return false, err
 				}
 
-				tc.Latitude = &lat
-				tc.Longitude = &long
+				tc.Coordinate = coord
 				tc.Region = region
 			}
 

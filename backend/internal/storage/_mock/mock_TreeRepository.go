@@ -130,9 +130,9 @@ func (_c *MockTreeRepository_Delete_Call) RunAndReturn(run func(context.Context,
 	return _c
 }
 
-// FindNearestTree provides a mock function with given fields: ctx, latitude, longitude
-func (_m *MockTreeRepository) FindNearestTree(ctx context.Context, latitude float64, longitude float64) (*entities.Tree, error) {
-	ret := _m.Called(ctx, latitude, longitude)
+// FindNearestTree provides a mock function with given fields: ctx, coord
+func (_m *MockTreeRepository) FindNearestTree(ctx context.Context, coord entities.Coordinate) (*entities.Tree, error) {
+	ret := _m.Called(ctx, coord)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindNearestTree")
@@ -140,19 +140,19 @@ func (_m *MockTreeRepository) FindNearestTree(ctx context.Context, latitude floa
 
 	var r0 *entities.Tree
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, float64, float64) (*entities.Tree, error)); ok {
-		return rf(ctx, latitude, longitude)
+	if rf, ok := ret.Get(0).(func(context.Context, entities.Coordinate) (*entities.Tree, error)); ok {
+		return rf(ctx, coord)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, float64, float64) *entities.Tree); ok {
-		r0 = rf(ctx, latitude, longitude)
+	if rf, ok := ret.Get(0).(func(context.Context, entities.Coordinate) *entities.Tree); ok {
+		r0 = rf(ctx, coord)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*entities.Tree)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, float64, float64) error); ok {
-		r1 = rf(ctx, latitude, longitude)
+	if rf, ok := ret.Get(1).(func(context.Context, entities.Coordinate) error); ok {
+		r1 = rf(ctx, coord)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -167,15 +167,14 @@ type MockTreeRepository_FindNearestTree_Call struct {
 
 // FindNearestTree is a helper method to define mock.On call
 //   - ctx context.Context
-//   - latitude float64
-//   - longitude float64
-func (_e *MockTreeRepository_Expecter) FindNearestTree(ctx interface{}, latitude interface{}, longitude interface{}) *MockTreeRepository_FindNearestTree_Call {
-	return &MockTreeRepository_FindNearestTree_Call{Call: _e.mock.On("FindNearestTree", ctx, latitude, longitude)}
+//   - coord entities.Coordinate
+func (_e *MockTreeRepository_Expecter) FindNearestTree(ctx interface{}, coord interface{}) *MockTreeRepository_FindNearestTree_Call {
+	return &MockTreeRepository_FindNearestTree_Call{Call: _e.mock.On("FindNearestTree", ctx, coord)}
 }
 
-func (_c *MockTreeRepository_FindNearestTree_Call) Run(run func(ctx context.Context, latitude float64, longitude float64)) *MockTreeRepository_FindNearestTree_Call {
+func (_c *MockTreeRepository_FindNearestTree_Call) Run(run func(ctx context.Context, coord entities.Coordinate)) *MockTreeRepository_FindNearestTree_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(float64), args[2].(float64))
+		run(args[0].(context.Context), args[1].(entities.Coordinate))
 	})
 	return _c
 }
@@ -185,14 +184,14 @@ func (_c *MockTreeRepository_FindNearestTree_Call) Return(_a0 *entities.Tree, _a
 	return _c
 }
 
-func (_c *MockTreeRepository_FindNearestTree_Call) RunAndReturn(run func(context.Context, float64, float64) (*entities.Tree, error)) *MockTreeRepository_FindNearestTree_Call {
+func (_c *MockTreeRepository_FindNearestTree_Call) RunAndReturn(run func(context.Context, entities.Coordinate) (*entities.Tree, error)) *MockTreeRepository_FindNearestTree_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// FindNearestTrees provides a mock function with given fields: ctx, lat, lng, radiusMeters, limit
-func (_m *MockTreeRepository) FindNearestTrees(ctx context.Context, lat float64, lng float64, radiusMeters float64, limit int32) ([]*entities.TreeWithDistance, error) {
-	ret := _m.Called(ctx, lat, lng, radiusMeters, limit)
+// FindNearestTrees provides a mock function with given fields: ctx, coord, radiusMeters, limit
+func (_m *MockTreeRepository) FindNearestTrees(ctx context.Context, coord entities.Coordinate, radiusMeters float64, limit int32) ([]*entities.TreeWithDistance, error) {
+	ret := _m.Called(ctx, coord, radiusMeters, limit)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindNearestTrees")
@@ -200,19 +199,19 @@ func (_m *MockTreeRepository) FindNearestTrees(ctx context.Context, lat float64,
 
 	var r0 []*entities.TreeWithDistance
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, float64, float64, float64, int32) ([]*entities.TreeWithDistance, error)); ok {
-		return rf(ctx, lat, lng, radiusMeters, limit)
+	if rf, ok := ret.Get(0).(func(context.Context, entities.Coordinate, float64, int32) ([]*entities.TreeWithDistance, error)); ok {
+		return rf(ctx, coord, radiusMeters, limit)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, float64, float64, float64, int32) []*entities.TreeWithDistance); ok {
-		r0 = rf(ctx, lat, lng, radiusMeters, limit)
+	if rf, ok := ret.Get(0).(func(context.Context, entities.Coordinate, float64, int32) []*entities.TreeWithDistance); ok {
+		r0 = rf(ctx, coord, radiusMeters, limit)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*entities.TreeWithDistance)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, float64, float64, float64, int32) error); ok {
-		r1 = rf(ctx, lat, lng, radiusMeters, limit)
+	if rf, ok := ret.Get(1).(func(context.Context, entities.Coordinate, float64, int32) error); ok {
+		r1 = rf(ctx, coord, radiusMeters, limit)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -227,17 +226,16 @@ type MockTreeRepository_FindNearestTrees_Call struct {
 
 // FindNearestTrees is a helper method to define mock.On call
 //   - ctx context.Context
-//   - lat float64
-//   - lng float64
+//   - coord entities.Coordinate
 //   - radiusMeters float64
 //   - limit int32
-func (_e *MockTreeRepository_Expecter) FindNearestTrees(ctx interface{}, lat interface{}, lng interface{}, radiusMeters interface{}, limit interface{}) *MockTreeRepository_FindNearestTrees_Call {
-	return &MockTreeRepository_FindNearestTrees_Call{Call: _e.mock.On("FindNearestTrees", ctx, lat, lng, radiusMeters, limit)}
+func (_e *MockTreeRepository_Expecter) FindNearestTrees(ctx interface{}, coord interface{}, radiusMeters interface{}, limit interface{}) *MockTreeRepository_FindNearestTrees_Call {
+	return &MockTreeRepository_FindNearestTrees_Call{Call: _e.mock.On("FindNearestTrees", ctx, coord, radiusMeters, limit)}
 }
 
-func (_c *MockTreeRepository_FindNearestTrees_Call) Run(run func(ctx context.Context, lat float64, lng float64, radiusMeters float64, limit int32)) *MockTreeRepository_FindNearestTrees_Call {
+func (_c *MockTreeRepository_FindNearestTrees_Call) Run(run func(ctx context.Context, coord entities.Coordinate, radiusMeters float64, limit int32)) *MockTreeRepository_FindNearestTrees_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(float64), args[2].(float64), args[3].(float64), args[4].(int32))
+		run(args[0].(context.Context), args[1].(entities.Coordinate), args[2].(float64), args[3].(int32))
 	})
 	return _c
 }
@@ -247,7 +245,7 @@ func (_c *MockTreeRepository_FindNearestTrees_Call) Return(_a0 []*entities.TreeW
 	return _c
 }
 
-func (_c *MockTreeRepository_FindNearestTrees_Call) RunAndReturn(run func(context.Context, float64, float64, float64, int32) ([]*entities.TreeWithDistance, error)) *MockTreeRepository_FindNearestTrees_Call {
+func (_c *MockTreeRepository_FindNearestTrees_Call) RunAndReturn(run func(context.Context, entities.Coordinate, float64, int32) ([]*entities.TreeWithDistance, error)) *MockTreeRepository_FindNearestTrees_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -318,9 +316,9 @@ func (_c *MockTreeRepository_GetAll_Call) RunAndReturn(run func(context.Context,
 	return _c
 }
 
-// GetByCoordinates provides a mock function with given fields: ctx, latitude, longitude
-func (_m *MockTreeRepository) GetByCoordinates(ctx context.Context, latitude float64, longitude float64) (*entities.Tree, error) {
-	ret := _m.Called(ctx, latitude, longitude)
+// GetByCoordinates provides a mock function with given fields: ctx, coord
+func (_m *MockTreeRepository) GetByCoordinates(ctx context.Context, coord entities.Coordinate) (*entities.Tree, error) {
+	ret := _m.Called(ctx, coord)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByCoordinates")
@@ -328,19 +326,19 @@ func (_m *MockTreeRepository) GetByCoordinates(ctx context.Context, latitude flo
 
 	var r0 *entities.Tree
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, float64, float64) (*entities.Tree, error)); ok {
-		return rf(ctx, latitude, longitude)
+	if rf, ok := ret.Get(0).(func(context.Context, entities.Coordinate) (*entities.Tree, error)); ok {
+		return rf(ctx, coord)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, float64, float64) *entities.Tree); ok {
-		r0 = rf(ctx, latitude, longitude)
+	if rf, ok := ret.Get(0).(func(context.Context, entities.Coordinate) *entities.Tree); ok {
+		r0 = rf(ctx, coord)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*entities.Tree)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, float64, float64) error); ok {
-		r1 = rf(ctx, latitude, longitude)
+	if rf, ok := ret.Get(1).(func(context.Context, entities.Coordinate) error); ok {
+		r1 = rf(ctx, coord)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -355,15 +353,14 @@ type MockTreeRepository_GetByCoordinates_Call struct {
 
 // GetByCoordinates is a helper method to define mock.On call
 //   - ctx context.Context
-//   - latitude float64
-//   - longitude float64
-func (_e *MockTreeRepository_Expecter) GetByCoordinates(ctx interface{}, latitude interface{}, longitude interface{}) *MockTreeRepository_GetByCoordinates_Call {
-	return &MockTreeRepository_GetByCoordinates_Call{Call: _e.mock.On("GetByCoordinates", ctx, latitude, longitude)}
+//   - coord entities.Coordinate
+func (_e *MockTreeRepository_Expecter) GetByCoordinates(ctx interface{}, coord interface{}) *MockTreeRepository_GetByCoordinates_Call {
+	return &MockTreeRepository_GetByCoordinates_Call{Call: _e.mock.On("GetByCoordinates", ctx, coord)}
 }
 
-func (_c *MockTreeRepository_GetByCoordinates_Call) Run(run func(ctx context.Context, latitude float64, longitude float64)) *MockTreeRepository_GetByCoordinates_Call {
+func (_c *MockTreeRepository_GetByCoordinates_Call) Run(run func(ctx context.Context, coord entities.Coordinate)) *MockTreeRepository_GetByCoordinates_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(float64), args[2].(float64))
+		run(args[0].(context.Context), args[1].(entities.Coordinate))
 	})
 	return _c
 }
@@ -373,7 +370,7 @@ func (_c *MockTreeRepository_GetByCoordinates_Call) Return(_a0 *entities.Tree, _
 	return _c
 }
 
-func (_c *MockTreeRepository_GetByCoordinates_Call) RunAndReturn(run func(context.Context, float64, float64) (*entities.Tree, error)) *MockTreeRepository_GetByCoordinates_Call {
+func (_c *MockTreeRepository_GetByCoordinates_Call) RunAndReturn(run func(context.Context, entities.Coordinate) (*entities.Tree, error)) *MockTreeRepository_GetByCoordinates_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -438,7 +435,7 @@ func (_c *MockTreeRepository_GetByID_Call) RunAndReturn(run func(context.Context
 }
 
 // GetBySensorID provides a mock function with given fields: ctx, id
-func (_m *MockTreeRepository) GetBySensorID(ctx context.Context, id string) (*entities.Tree, error) {
+func (_m *MockTreeRepository) GetBySensorID(ctx context.Context, id entities.SensorID) (*entities.Tree, error) {
 	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
@@ -447,10 +444,10 @@ func (_m *MockTreeRepository) GetBySensorID(ctx context.Context, id string) (*en
 
 	var r0 *entities.Tree
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*entities.Tree, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entities.SensorID) (*entities.Tree, error)); ok {
 		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *entities.Tree); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entities.SensorID) *entities.Tree); ok {
 		r0 = rf(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
@@ -458,7 +455,7 @@ func (_m *MockTreeRepository) GetBySensorID(ctx context.Context, id string) (*en
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, entities.SensorID) error); ok {
 		r1 = rf(ctx, id)
 	} else {
 		r1 = ret.Error(1)
@@ -474,14 +471,14 @@ type MockTreeRepository_GetBySensorID_Call struct {
 
 // GetBySensorID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - id string
+//   - id entities.SensorID
 func (_e *MockTreeRepository_Expecter) GetBySensorID(ctx interface{}, id interface{}) *MockTreeRepository_GetBySensorID_Call {
 	return &MockTreeRepository_GetBySensorID_Call{Call: _e.mock.On("GetBySensorID", ctx, id)}
 }
 
-func (_c *MockTreeRepository_GetBySensorID_Call) Run(run func(ctx context.Context, id string)) *MockTreeRepository_GetBySensorID_Call {
+func (_c *MockTreeRepository_GetBySensorID_Call) Run(run func(ctx context.Context, id entities.SensorID)) *MockTreeRepository_GetBySensorID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(entities.SensorID))
 	})
 	return _c
 }
@@ -491,13 +488,13 @@ func (_c *MockTreeRepository_GetBySensorID_Call) Return(_a0 *entities.Tree, _a1 
 	return _c
 }
 
-func (_c *MockTreeRepository_GetBySensorID_Call) RunAndReturn(run func(context.Context, string) (*entities.Tree, error)) *MockTreeRepository_GetBySensorID_Call {
+func (_c *MockTreeRepository_GetBySensorID_Call) RunAndReturn(run func(context.Context, entities.SensorID) (*entities.Tree, error)) *MockTreeRepository_GetBySensorID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetBySensorIDs provides a mock function with given fields: ctx, ids
-func (_m *MockTreeRepository) GetBySensorIDs(ctx context.Context, ids ...string) ([]*entities.Tree, error) {
+func (_m *MockTreeRepository) GetBySensorIDs(ctx context.Context, ids ...entities.SensorID) ([]*entities.Tree, error) {
 	_va := make([]interface{}, len(ids))
 	for _i := range ids {
 		_va[_i] = ids[_i]
@@ -513,10 +510,10 @@ func (_m *MockTreeRepository) GetBySensorIDs(ctx context.Context, ids ...string)
 
 	var r0 []*entities.Tree
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, ...string) ([]*entities.Tree, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, ...entities.SensorID) ([]*entities.Tree, error)); ok {
 		return rf(ctx, ids...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, ...string) []*entities.Tree); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, ...entities.SensorID) []*entities.Tree); ok {
 		r0 = rf(ctx, ids...)
 	} else {
 		if ret.Get(0) != nil {
@@ -524,7 +521,7 @@ func (_m *MockTreeRepository) GetBySensorIDs(ctx context.Context, ids ...string)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, ...string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, ...entities.SensorID) error); ok {
 		r1 = rf(ctx, ids...)
 	} else {
 		r1 = ret.Error(1)
@@ -540,18 +537,18 @@ type MockTreeRepository_GetBySensorIDs_Call struct {
 
 // GetBySensorIDs is a helper method to define mock.On call
 //   - ctx context.Context
-//   - ids ...string
+//   - ids ...entities.SensorID
 func (_e *MockTreeRepository_Expecter) GetBySensorIDs(ctx interface{}, ids ...interface{}) *MockTreeRepository_GetBySensorIDs_Call {
 	return &MockTreeRepository_GetBySensorIDs_Call{Call: _e.mock.On("GetBySensorIDs",
 		append([]interface{}{ctx}, ids...)...)}
 }
 
-func (_c *MockTreeRepository_GetBySensorIDs_Call) Run(run func(ctx context.Context, ids ...string)) *MockTreeRepository_GetBySensorIDs_Call {
+func (_c *MockTreeRepository_GetBySensorIDs_Call) Run(run func(ctx context.Context, ids ...entities.SensorID)) *MockTreeRepository_GetBySensorIDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := make([]string, len(args)-1)
+		variadicArgs := make([]entities.SensorID, len(args)-1)
 		for i, a := range args[1:] {
 			if a != nil {
-				variadicArgs[i] = a.(string)
+				variadicArgs[i] = a.(entities.SensorID)
 			}
 		}
 		run(args[0].(context.Context), variadicArgs...)
@@ -564,7 +561,7 @@ func (_c *MockTreeRepository_GetBySensorIDs_Call) Return(_a0 []*entities.Tree, _
 	return _c
 }
 
-func (_c *MockTreeRepository_GetBySensorIDs_Call) RunAndReturn(run func(context.Context, ...string) ([]*entities.Tree, error)) *MockTreeRepository_GetBySensorIDs_Call {
+func (_c *MockTreeRepository_GetBySensorIDs_Call) RunAndReturn(run func(context.Context, ...entities.SensorID) ([]*entities.Tree, error)) *MockTreeRepository_GetBySensorIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -862,7 +859,7 @@ func (_c *MockTreeRepository_GetTreesByIDs_Call) RunAndReturn(run func(context.C
 }
 
 // UnlinkSensorID provides a mock function with given fields: ctx, sensorID
-func (_m *MockTreeRepository) UnlinkSensorID(ctx context.Context, sensorID string) error {
+func (_m *MockTreeRepository) UnlinkSensorID(ctx context.Context, sensorID entities.SensorID) error {
 	ret := _m.Called(ctx, sensorID)
 
 	if len(ret) == 0 {
@@ -870,7 +867,7 @@ func (_m *MockTreeRepository) UnlinkSensorID(ctx context.Context, sensorID strin
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entities.SensorID) error); ok {
 		r0 = rf(ctx, sensorID)
 	} else {
 		r0 = ret.Error(0)
@@ -886,14 +883,14 @@ type MockTreeRepository_UnlinkSensorID_Call struct {
 
 // UnlinkSensorID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - sensorID string
+//   - sensorID entities.SensorID
 func (_e *MockTreeRepository_Expecter) UnlinkSensorID(ctx interface{}, sensorID interface{}) *MockTreeRepository_UnlinkSensorID_Call {
 	return &MockTreeRepository_UnlinkSensorID_Call{Call: _e.mock.On("UnlinkSensorID", ctx, sensorID)}
 }
 
-func (_c *MockTreeRepository_UnlinkSensorID_Call) Run(run func(ctx context.Context, sensorID string)) *MockTreeRepository_UnlinkSensorID_Call {
+func (_c *MockTreeRepository_UnlinkSensorID_Call) Run(run func(ctx context.Context, sensorID entities.SensorID)) *MockTreeRepository_UnlinkSensorID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(entities.SensorID))
 	})
 	return _c
 }
@@ -903,7 +900,7 @@ func (_c *MockTreeRepository_UnlinkSensorID_Call) Return(_a0 error) *MockTreeRep
 	return _c
 }
 
-func (_c *MockTreeRepository_UnlinkSensorID_Call) RunAndReturn(run func(context.Context, string) error) *MockTreeRepository_UnlinkSensorID_Call {
+func (_c *MockTreeRepository_UnlinkSensorID_Call) RunAndReturn(run func(context.Context, entities.SensorID) error) *MockTreeRepository_UnlinkSensorID_Call {
 	_c.Call.Return(run)
 	return _c
 }

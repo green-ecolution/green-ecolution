@@ -53,7 +53,7 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 	input := entities.WateringPlan{
 		Date:         time.Date(2024, 11, 22, 0, 0, 0, 0, time.UTC),
 		Description:  "Updated watering plan",
-		Distance:     utils.P(50.0),
+		Distance:     utils.P(entities.MustNewDistance(50.0)),
 		Trailer:      vehicle[3],
 		Transporter:  vehicle[1],
 		TreeClusters: treeClusters[0:3],

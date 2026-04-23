@@ -135,7 +135,7 @@ func TestRegisterTreeRoutes(t *testing.T) {
 
 			mockTreeService.EXPECT().GetBySensorID(
 				mock.Anything,
-				sensorID,
+				entities.MustNewSensorID(sensorID),
 			).Return(TestTrees[0], nil)
 
 			// when

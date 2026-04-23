@@ -14,7 +14,7 @@ func TestVehicleRepository_Create(t *testing.T) {
 	suite.InsertSeed(t, "internal/storage/postgres/seed/test/vehicle")
 	input := entities.Vehicle{
 		Description:    "Big car",
-		WaterCapacity:  2000,
+		WaterCapacity:  entities.MustNewWaterCapacity(2000),
 		Type:           entities.VehicleTypeTrailer,
 		Status:         entities.VehicleStatusNotAvailable,
 		DrivingLicense: entities.DrivingLicenseBE,
@@ -110,7 +110,7 @@ func TestVehicleRepository_Create(t *testing.T) {
 			vh.Length = input.Length
 			vh.Width = input.Width
 			vh.Weight = input.Weight
-			vh.WaterCapacity = 0
+			vh.WaterCapacity = entities.MustNewWaterCapacity(0)
 			return true, nil
 		}
 

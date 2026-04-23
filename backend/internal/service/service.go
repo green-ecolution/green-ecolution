@@ -124,8 +124,8 @@ type TreeService interface {
 	Update(ctx context.Context, id int32, updateData *domain.TreeUpdate) (*domain.Tree, error)
 	Delete(ctx context.Context, id int32) error
 
-	GetBySensorID(ctx context.Context, id string) (*domain.Tree, error)
-	GetNearestTrees(ctx context.Context, lat, lng float64, limit int32) ([]*domain.TreeWithDistance, error)
+	GetBySensorID(ctx context.Context, id domain.SensorID) (*domain.Tree, error)
+	GetNearestTrees(ctx context.Context, coord domain.Coordinate, limit int32) ([]*domain.TreeWithDistance, error)
 	HandleNewSensorData(context.Context, *domain.EventNewSensorData) error
 	UpdateWateringStatuses(ctx context.Context) error
 	GetPlantingYears(ctx context.Context) ([]int32, error)
@@ -176,11 +176,11 @@ type TreeClusterService interface {
 type SensorService interface {
 	Service
 	GetAll(ctx context.Context, query domain.Query) ([]*domain.Sensor, int64, error)
-	GetByID(ctx context.Context, id string) (*domain.Sensor, error)
+	GetByID(ctx context.Context, id domain.SensorID) (*domain.Sensor, error)
 	Create(ctx context.Context, createData *domain.SensorCreate) (*domain.Sensor, error)
-	Update(ctx context.Context, id string, updateData *domain.SensorUpdate) (*domain.Sensor, error)
-	Delete(ctx context.Context, id string) error
-	GetAllDataByID(ctx context.Context, id string) ([]*domain.SensorData, error)
+	Update(ctx context.Context, id domain.SensorID, updateData *domain.SensorUpdate) (*domain.Sensor, error)
+	Delete(ctx context.Context, id domain.SensorID) error
+	GetAllDataByID(ctx context.Context, id domain.SensorID) ([]*domain.SensorData, error)
 	HandleMessage(ctx context.Context, payload *domain.MqttPayload) (*domain.SensorData, error)
 	MapSensorToTree(ctx context.Context, sen *domain.Sensor) error
 	UpdateStatuses(ctx context.Context) error

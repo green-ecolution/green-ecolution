@@ -59,7 +59,7 @@ func TestWateringPlanRepository_Create(t *testing.T) {
 	input := entities.WateringPlan{
 		Date:         time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
 		Description:  "New watering plan",
-		Distance:     utils.P(50.0),
+		Distance:     utils.P(entities.MustNewDistance(50.0)),
 		Trailer:      trailer[2],
 		Transporter:  transporter[0],
 		TreeClusters: treeClusters[0:3],
@@ -146,7 +146,7 @@ func TestWateringPlanRepository_Create(t *testing.T) {
 		assert.NotZero(t, got.ID)
 		assert.Equal(t, input.Date, got.Date)
 		assert.Equal(t, "", got.Description)
-		assert.Equal(t, utils.P(float64(0)), got.Distance)
+		assert.Equal(t, utils.P(entities.MustNewDistance(0)), got.Distance)
 		assert.Equal(t, expectedTotalWater, *got.TotalWaterRequired)
 		assert.Equal(t, entities.WateringPlanStatusPlanned, got.Status)
 		assert.Equal(t, "", got.CancellationNote)

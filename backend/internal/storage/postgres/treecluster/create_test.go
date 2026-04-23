@@ -38,8 +38,7 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 		assert.Equal(t, "", got.Address)
 		assert.Equal(t, "", got.Description)
 		assert.Equal(t, 0.0, got.MoistureLevel)
-		assert.Nil(t, got.Latitude)
-		assert.Nil(t, got.Longitude)
+		assert.Nil(t, got.Coordinate)
 		assert.Equal(t, entities.WateringStatusUnknown, got.WateringStatus)
 		assert.Equal(t, entities.TreeSoilConditionUnknown, got.SoilCondition)
 		assert.False(t, got.Archived)
@@ -58,8 +57,7 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 			UpdatedAt: time.Now(),
 			Name:      "Mürwik",
 		}
-		lat := 54.3
-		long := 9.5
+		coord := entities.MustNewCoordinate(54.3, 9.5)
 		totalCountTree, _ := suite.Store.GetAllTreesCount(context.Background(), &sqlc.GetAllTreesCountParams{})
 		testTrees, err := suite.Store.GetAllTrees(context.Background(), &sqlc.GetAllTreesParams{
 			Limit:  int32(totalCountTree),
@@ -81,8 +79,7 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 			tc.WateringStatus = entities.WateringStatusGood
 			tc.SoilCondition = entities.TreeSoilConditionSchluffig
 			tc.Region = newRegion
-			tc.Latitude = &lat
-			tc.Longitude = &long
+			tc.Coordinate = &coord
 			tc.Trees = trees
 			return true, nil
 		}
@@ -102,10 +99,9 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 		assert.Equal(t, "address", got.Address)
 		assert.Equal(t, "description", got.Description)
 		assert.Equal(t, 1.0, got.MoistureLevel)
-		assert.NotNil(t, got.Latitude)
-		assert.NotNil(t, got.Longitude)
-		assert.Equal(t, lat, *got.Latitude)
-		assert.Equal(t, long, *got.Longitude)
+		assert.NotNil(t, got.Coordinate)
+		assert.Equal(t, coord.Latitude(), got.Coordinate.Latitude())
+		assert.Equal(t, coord.Longitude(), got.Coordinate.Longitude())
 		assert.Equal(t, entities.WateringStatusGood, got.WateringStatus)
 		assert.Equal(t, entities.TreeSoilConditionSchluffig, got.SoilCondition)
 		assert.False(t, got.Archived)
@@ -162,15 +158,15 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 		}
 	})
 
-	t.Run("should return tree cluster with latitude and longitude", func(t *testing.T) {
+	t.Run("should return tree cluster with coordinate", func(t *testing.T) {
 		// given
 		suite.ResetDB(t)
 		suite.InsertSeed(t, "internal/storage/postgres/seed/test/treecluster")
 		r := NewTreeClusterRepository(suite.Store, mappers)
+		coord := entities.MustNewCoordinate(54.81269326939148, 9.484419532963013)
 		createFn := func(tc *entities.TreeCluster, _ storage.TreeClusterRepository) (bool, error) {
 			tc.Name = "test"
-			tc.Latitude = utils.P(54.81269326939148)
-			tc.Longitude = utils.P(9.484419532963013)
+			tc.Coordinate = &coord
 			return true, nil
 		}
 
@@ -182,10 +178,9 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 		assert.NotNil(t, got)
 		assert.Equal(t, "test", got.Name)
 		assert.NotZero(t, got.ID)
-		assert.NotNil(t, got.Latitude)
-		assert.NotNil(t, got.Longitude)
-		assert.Equal(t, 54.81269326939148, *got.Latitude)
-		assert.Equal(t, 9.484419532963013, *got.Longitude)
+		assert.NotNil(t, got.Coordinate)
+		assert.Equal(t, 54.81269326939148, got.Coordinate.Latitude())
+		assert.Equal(t, 9.484419532963013, got.Coordinate.Longitude())
 	})
 
 	t.Run("should return error when tree cluster is invalid", func(t *testing.T) {

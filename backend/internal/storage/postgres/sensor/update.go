@@ -3,19 +3,16 @@ package sensor
 import (
 	"context"
 	"errors"
-	"log/slog"
-
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/store"
-	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
-
-	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/store"
+	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func (r *SensorRepository) Update(ctx context.Context, id string, updateFn func(*entities.Sensor, storage.SensorRepository) (bool, error)) (*entities.Sensor, error) {
+func (r *SensorRepository) Update(ctx context.Context, id entities.SensorID, updateFn func(*entities.Sensor, storage.SensorRepository) (bool, error)) (*entities.Sensor, error) {
 	log := logger.GetLogger(ctx)
 	if updateFn == nil {
 		return nil, errors.New("updateFn is nil")
@@ -40,7 +37,7 @@ func (r *SensorRepository) Update(ctx context.Context, id string, updateFn func(
 		}
 
 		if err := newRepo.updateEntity(ctx, entity); err != nil {
-			log.Error("failed to update sensor entity in db", "error", err, "sensor_id", id)
+			log.Error("failed to update sensor entity in db", "error", err, "sensor_id", id.String())
 			return err
 		}
 
@@ -63,7 +60,7 @@ func (r *SensorRepository) Update(ctx context.Context, id string, updateFn func(
 		return nil, err
 	}
 
-	slog.Debug("sensor entity updated successfully in db", "sensor_id", id)
+	log.Debug("sensor entity updated successfully in db", "sensor_id", id.String())
 	return updatedSensor, nil
 }
 
@@ -77,34 +74,21 @@ func (r *SensorRepository) updateEntity(ctx context.Context, sensor *entities.Se
 	}
 
 	params := sqlc.UpdateSensorParams{
-		ID:                     sensor.ID,
+		ID:                     sensor.ID.String(),
 		Status:                 sqlc.SensorStatus(sensor.Status),
 		Provider:               &sensor.Provider,
 		AdditionalInformations: additionalInfo,
 	}
 
 	locationParams := &sqlc.SetSensorLocationParams{
-		ID:        sensor.ID,
-		Latitude:  sensor.Latitude,
-		Longitude: sensor.Longitude,
+		ID:        sensor.ID.String(),
+		Latitude:  sensor.Coordinate.Latitude(),
+		Longitude: sensor.Coordinate.Longitude(),
 	}
 
-	if err := r.validateCoordinates(locationParams); err != nil {
-		return err
-	}
 	if err := r.store.SetSensorLocation(ctx, locationParams); err != nil {
 		return err
 	}
 
 	return r.store.UpdateSensor(ctx, &params)
-}
-func (r *SensorRepository) validateCoordinates(locationParams *sqlc.SetSensorLocationParams) error {
-	if locationParams.Latitude < -90 || locationParams.Latitude > 90 || locationParams.Latitude == 0 {
-		return storage.ErrInvalidLatitude
-	}
-	if locationParams.Longitude < -180 || locationParams.Longitude > 180 || locationParams.Longitude == 0 {
-		return storage.ErrInvalidLongitude
-	}
-
-	return nil
 }

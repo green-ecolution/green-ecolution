@@ -25,6 +25,10 @@ func (c *InternalTreeClusterRepoMapperImpl) FromSql(source *sqlc.TreeCluster) (*
 	if err != nil {
 		return nil, err
 	}
+	coord, err := entities.NewCoordinateFromOptional(source.Latitude, source.Longitude)
+	if err != nil {
+		return nil, err
+	}
 	result := &entities.TreeCluster{
 		ID:             source.ID,
 		CreatedAt:      source.CreatedAt,
@@ -35,18 +39,11 @@ func (c *InternalTreeClusterRepoMapperImpl) FromSql(source *sqlc.TreeCluster) (*
 		Address:        source.Address,
 		Description:    source.Description,
 		Archived:       source.Archived,
+		Coordinate:     coord,
 		SoilCondition:  MapSoilCondition(source.SoilCondition),
 		Name:           source.Name,
 		Provider:       utils.StringPtrToString(source.Provider),
 		AdditionalInfo: additionalInfo,
-	}
-	if source.Latitude != nil {
-		v := *source.Latitude
-		result.Latitude = &v
-	}
-	if source.Longitude != nil {
-		v := *source.Longitude
-		result.Longitude = &v
 	}
 	return result, nil
 }

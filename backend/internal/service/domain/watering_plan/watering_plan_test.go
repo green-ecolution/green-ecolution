@@ -1619,7 +1619,7 @@ var allTestWateringPlans = []*entities.WateringPlan{
 		Date:               time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
 		Description:        "New watering plan for the west side of the city",
 		Status:             entities.WateringPlanStatusPlanned,
-		Distance:           utils.P(63.0),
+		Distance:           utils.P(entities.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(6000.0),
 		Transporter:        allTestVehicles[1],
 		Trailer:            allTestVehicles[0],
@@ -1631,7 +1631,7 @@ var allTestWateringPlans = []*entities.WateringPlan{
 		Date:               time.Date(2024, 8, 3, 0, 0, 0, 0, time.UTC),
 		Description:        "New watering plan for the east side of the city",
 		Status:             entities.WateringPlanStatusActive,
-		Distance:           utils.P(63.0),
+		Distance:           utils.P(entities.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(6000.0),
 		Transporter:        allTestVehicles[1],
 		Trailer:            allTestVehicles[0],
@@ -1643,7 +1643,7 @@ var allTestWateringPlans = []*entities.WateringPlan{
 		Date:               time.Date(2024, 6, 12, 0, 0, 0, 0, time.UTC),
 		Description:        "Very important watering plan due to no rainfall",
 		Status:             entities.WateringPlanStatusFinished,
-		Distance:           utils.P(63.0),
+		Distance:           utils.P(entities.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(6000.0),
 		Transporter:        allTestVehicles[1],
 		Trailer:            nil,
@@ -1672,7 +1672,7 @@ var allTestWateringPlans = []*entities.WateringPlan{
 		Date:               time.Date(2024, 6, 10, 0, 0, 0, 0, time.UTC),
 		Description:        "New watering plan for the south side of the city",
 		Status:             entities.WateringPlanStatusNotCompeted,
-		Distance:           utils.P(63.0),
+		Distance:           utils.P(entities.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(6000.0),
 		Transporter:        allTestVehicles[1],
 		Trailer:            nil,
@@ -1684,7 +1684,7 @@ var allTestWateringPlans = []*entities.WateringPlan{
 		Date:               time.Date(2024, 6, 4, 0, 0, 0, 0, time.UTC),
 		Description:        "Canceled due to flood",
 		Status:             entities.WateringPlanStatusCanceled,
-		Distance:           utils.P(63.0),
+		Distance:           utils.P(entities.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(6000.0),
 		Transporter:        allTestVehicles[1],
 		Trailer:            nil,
@@ -1699,7 +1699,7 @@ var allTestVehicles = []*entities.Vehicle{
 		NumberPlate:    "B-1234",
 		Description:    "Test vehicle 1",
 		DrivingLicense: entities.DrivingLicenseBE,
-		WaterCapacity:  100.0,
+		WaterCapacity:  entities.MustNewWaterCapacity(100.0),
 		Type:           entities.VehicleTypeTrailer,
 		Status:         entities.VehicleStatusActive,
 	},
@@ -1708,11 +1708,17 @@ var allTestVehicles = []*entities.Vehicle{
 		NumberPlate:    "B-5678",
 		Description:    "Test vehicle 2",
 		DrivingLicense: entities.DrivingLicenseC,
-		WaterCapacity:  150.0,
+		WaterCapacity:  entities.MustNewWaterCapacity(150.0),
 		Type:           entities.VehicleTypeTransporter,
 		Status:         entities.VehicleStatusUnknown,
 	},
 }
+
+var (
+	allTestCluster1Coord = entities.MustNewCoordinate(54.820940, 9.489022)
+	allTestCluster2Coord = entities.MustNewCoordinate(54.78805731048199, 9.44400186680097)
+	allTestCluster3Coord = entities.MustNewCoordinate(54.802163, 9.446398)
+)
 
 var allTestClusters = []*entities.TreeCluster{
 	{
@@ -1727,8 +1733,7 @@ var allTestClusters = []*entities.TreeCluster{
 		Address:       "Solitüde Strand",
 		Description:   "Alle Bäume am Strand",
 		SoilCondition: entities.TreeSoilConditionSandig,
-		Latitude:      utils.P(54.820940),
-		Longitude:     utils.P(9.489022),
+		Coordinate:    &allTestCluster1Coord,
 		Trees: []*entities.Tree{
 			{ID: 1},
 			{ID: 2},
@@ -1747,8 +1752,7 @@ var allTestClusters = []*entities.TreeCluster{
 		Address:       "Ulmenstraße",
 		Description:   "Bäume beim Sankt-Jürgen-Platz",
 		SoilCondition: entities.TreeSoilConditionSchluffig,
-		Latitude:      utils.P(54.78805731048199),
-		Longitude:     utils.P(9.44400186680097),
+		Coordinate:    &allTestCluster2Coord,
 		Trees: []*entities.Tree{
 			{ID: 4},
 			{ID: 5},
@@ -1767,8 +1771,7 @@ var allTestClusters = []*entities.TreeCluster{
 		Address:       "Flensburger Stadion",
 		Description:   "Alle Bäume in der Gegend des Stadions in Mürwik",
 		SoilCondition: "schluffig",
-		Latitude:      utils.P(54.802163),
-		Longitude:     utils.P(9.446398),
+		Coordinate:    &allTestCluster3Coord,
 		Trees:         []*entities.Tree{},
 	},
 }

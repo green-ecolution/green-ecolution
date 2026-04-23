@@ -9,7 +9,6 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/storage/_mock"
-	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
@@ -28,7 +27,7 @@ func TestTreeClusterService_HandleUpdateTree(t *testing.T) {
 
 		event := entities.NewEventUpdateTree(&prevTree, &updatedTree, nil)
 		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(1)).Return(allLatestSensorData, nil)
-		treeRepo.EXPECT().GetBySensorIDs(mock.Anything, "sensor-1").Return([]*entities.Tree{&updatedTree}, nil)
+		treeRepo.EXPECT().GetBySensorIDs(mock.Anything, entities.MustNewSensorID("sensor-1")).Return([]*entities.Tree{&updatedTree}, nil)
 		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).RunAndReturn(func(ctx context.Context, i int32, f func(*entities.TreeCluster, storage.TreeClusterRepository) (bool, error)) error {
 			cluster := entities.TreeCluster{}
 			_, err := f(&cluster, clusterRepo)
@@ -102,14 +101,12 @@ func TestTreeClusterService_HandleUpdateTree(t *testing.T) {
 
 		prevTree := entities.Tree{
 			TreeCluster: &prevTc,
-			Latitude:    *prevTc.Latitude,
-			Longitude:   *prevTc.Longitude,
+			Coordinate:  *prevTc.Coordinate,
 		}
 
 		updatedTree := entities.Tree{
 			TreeCluster: &prevTc,
-			Latitude:    *prevTc.Latitude,
-			Longitude:   *prevTc.Longitude,
+			Coordinate:  *prevTc.Coordinate,
 		}
 
 		event := entities.NewEventUpdateTree(&prevTree, &updatedTree, &prevTreeOfSensor)
@@ -185,14 +182,12 @@ func TestTreeClusterService_HandleUpdateTree(t *testing.T) {
 
 		prevTree := entities.Tree{
 			TreeCluster: &prevTc,
-			Latitude:    *prevTc.Latitude,
-			Longitude:   *prevTc.Longitude,
+			Coordinate:  *prevTc.Coordinate,
 		}
 
 		updatedTree := entities.Tree{
 			TreeCluster: &prevTc,
-			Latitude:    *prevTc.Latitude,
-			Longitude:   *prevTc.Longitude,
+			Coordinate:  *prevTc.Coordinate,
 		}
 
 		event := entities.NewEventUpdateTree(&prevTree, &updatedTree, nil)
@@ -223,14 +218,14 @@ func TestTreeClusterService_HandleUpdateTree(t *testing.T) {
 		defer cancel()
 		go eventManager.Run(ctx)
 
+		newTcCoord := entities.MustNewCoordinate(54.776366336440255, 9.451084144617182)
 		newTc := entities.TreeCluster{
 			ID: 2,
 			Region: &entities.Region{
 				ID:   1,
 				Name: "Sandberg",
 			},
-			Latitude:  utils.P(54.776366336440255),
-			Longitude: utils.P(9.451084144617182),
+			Coordinate: &newTcCoord,
 		}
 		updatedTree.TreeCluster = &newTc
 
@@ -338,34 +333,32 @@ func setupTest(t *testing.T) (*storageMock.MockTreeClusterRepository, *storageMo
 	return clusterRepo, treeRepo, regionRepo, eventManager, svc
 }
 
+var prevTcCoord = entities.MustNewCoordinate(54.776366336440255, 9.451084144617182)
 var prevTc = entities.TreeCluster{
 	ID: 1,
 	Region: &entities.Region{
 		ID:   1,
 		Name: "Sandberg",
 	},
-	Latitude:  utils.P(54.776366336440255),
-	Longitude: utils.P(9.451084144617182),
+	Coordinate: &prevTcCoord,
 }
 
 var prevTree = entities.Tree{
 	ID:           1,
 	TreeCluster:  &prevTc,
 	Number:       "T001",
-	Latitude:     54.776366336440255,
-	Longitude:    9.451084144617182,
-	PlantingYear: int32(time.Now().Year() - 2),
+	Coordinate:   entities.MustNewCoordinate(54.776366336440255, 9.451084144617182),
+	PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
 }
 
 var updatedTree = entities.Tree{
 	ID:           1,
 	TreeCluster:  &prevTc,
 	Number:       "T001",
-	Latitude:     54.811733806341856,
-	Longitude:    9.482958846410169,
-	PlantingYear: int32(time.Now().Year() - 2),
+	Coordinate:   entities.MustNewCoordinate(54.811733806341856, 9.482958846410169),
+	PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
 	Sensor: &entities.Sensor{
-		ID: "sensor-1",
+		ID: entities.MustNewSensorID("sensor-1"),
 	},
 }
 
@@ -373,37 +366,36 @@ var prevTreeOfSensor = entities.Tree{
 	ID:           2,
 	TreeCluster:  &prevTreeClusterOfSensor,
 	Number:       "T002",
-	Latitude:     54.811733806341856,
-	Longitude:    9.482958846410169,
-	PlantingYear: int32(time.Now().Year() - 2),
+	Coordinate:   entities.MustNewCoordinate(54.811733806341856, 9.482958846410169),
+	PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
 	Sensor: &entities.Sensor{
-		ID: "sensor-1",
+		ID: entities.MustNewSensorID("sensor-1"),
 	},
 }
 
+var updatedTcCoord = entities.MustNewCoordinate(54.811733806341856, 9.482958846410169)
 var updatedTc = entities.TreeCluster{
 	ID: 1,
 	Region: &entities.Region{
 		ID:   2,
 		Name: "Mürwik",
 	},
-	Latitude:  utils.P(54.811733806341856),
-	Longitude: utils.P(9.482958846410169),
+	Coordinate: &updatedTcCoord,
 }
 
+var prevTreeClusterOfSensorCoord = entities.MustNewCoordinate(54.811733806341856, 9.482958846410169)
 var prevTreeClusterOfSensor = entities.TreeCluster{
 	ID: 2,
 	Region: &entities.Region{
 		ID:   3,
 		Name: "Fuerlund",
 	},
-	Latitude:  utils.P(54.811733806341856),
-	Longitude: utils.P(9.482958846410169),
+	Coordinate: &prevTreeClusterOfSensorCoord,
 }
 
 var allLatestSensorData = []*entities.SensorData{
 	{
-		SensorID: "sensor-1",
+		SensorID: entities.MustNewSensorID("sensor-1"),
 		Data: &entities.MqttPayload{
 			Watermarks: []entities.Watermark{
 				{Centibar: 61, Depth: 30},

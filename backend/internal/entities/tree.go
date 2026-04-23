@@ -10,11 +10,10 @@ type Tree struct {
 	UpdatedAt      time.Time
 	TreeCluster    *TreeCluster
 	Sensor         *Sensor
-	PlantingYear   int32
+	PlantingYear   PlantingYear
 	Species        string
 	Number         string
-	Latitude       float64
-	Longitude      float64
+	Coordinate     Coordinate
 	WateringStatus WateringStatus
 	Description    string
 	LastWatered    *time.Time
@@ -24,12 +23,11 @@ type Tree struct {
 
 type TreeCreate struct {
 	TreeClusterID  *int32
-	SensorID       *string
-	PlantingYear   int32
+	SensorID       *SensorID
+	PlantingYear   PlantingYear
 	Species        string
 	Number         string
-	Latitude       float64
-	Longitude      float64
+	Coordinate     Coordinate
 	Description    string
 	Provider       string
 	AdditionalInfo map[string]interface{}
@@ -37,12 +35,11 @@ type TreeCreate struct {
 
 type TreeUpdate struct {
 	TreeClusterID  *int32
-	SensorID       *string
-	PlantingYear   int32
+	SensorID       *SensorID
+	PlantingYear   PlantingYear
 	Species        string
 	Number         string
-	Latitude       float64
-	Longitude      float64
+	Coordinate     Coordinate
 	Description    string
 	Provider       string
 	AdditionalInfo map[string]interface{}
@@ -57,5 +54,5 @@ type TreeQuery struct {
 
 type TreeWithDistance struct {
 	Tree     *Tree
-	Distance float64 // meters
+	Distance Distance
 }

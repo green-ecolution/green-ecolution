@@ -66,11 +66,17 @@ func (w *WateringPlanRepository) updateEntity(ctx context.Context, entity *entit
 		return errors.New("cancellation note should be empty, as the current watering plan is not canceled")
 	}
 
+	var distance *float64
+	if entity.Distance != nil {
+		v := entity.Distance.Meters()
+		distance = &v
+	}
+
 	params := sqlc.UpdateWateringPlanParams{
 		ID:                     entity.ID,
 		Date:                   entity.Date,
 		Description:            entity.Description,
-		Distance:               entity.Distance,
+		Distance:               distance,
 		TotalWaterRequired:     entity.TotalWaterRequired,
 		Status:                 sqlc.WateringPlanStatus(entity.Status),
 		CancellationNote:       entity.CancellationNote,

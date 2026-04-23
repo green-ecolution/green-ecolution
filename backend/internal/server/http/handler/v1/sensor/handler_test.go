@@ -47,7 +47,7 @@ func TestGetAllSensors(t *testing.T) {
 
 		// assert data
 		assert.Len(t, response.Data, len(TestSensorList))
-		assert.Equal(t, TestSensorList[0].ID, response.Data[0].ID)
+		assert.Equal(t, TestSensorList[0].ID.String(), response.Data[0].ID)
 
 		// assert pagination
 		assert.Empty(t, response.Pagination)
@@ -82,7 +82,7 @@ func TestGetAllSensors(t *testing.T) {
 
 		// assert data
 		assert.Len(t, response.Data, len(TestSensorList))
-		assert.Equal(t, TestSensorList[0].ID, response.Data[0].ID)
+		assert.Equal(t, TestSensorList[0].ID.String(), response.Data[0].ID)
 
 		// assert pagination
 		assert.Equal(t, int32(1), response.Pagination.CurrentPage)
@@ -159,7 +159,7 @@ func TestGetAllSensors(t *testing.T) {
 
 		// Assert response matches test data
 		assert.Len(t, response.Data, len(TestSensorList))
-		assert.Equal(t, TestSensorList[0].ID, response.Data[0].ID)
+		assert.Equal(t, TestSensorList[0].ID.String(), response.Data[0].ID)
 
 		mockSensorService.AssertExpectations(t)
 	})
@@ -233,7 +233,7 @@ func TestGetAllSensorDataById(t *testing.T) {
 
 		mockSensorService.EXPECT().GetAllDataByID(
 			mock.Anything,
-			"sensor-1",
+			entities.MustNewSensorID("sensor-1"),
 		).Return([]*entities.SensorData{TestSensorData}, nil)
 
 		// when
@@ -263,7 +263,7 @@ func TestGetAllSensorDataById(t *testing.T) {
 
 		mockSensorService.EXPECT().GetAllDataByID(
 			mock.Anything,
-			"sensor-999",
+			entities.MustNewSensorID("sensor-999"),
 		).Return(nil, service.NewError(service.NotFound, "not found"))
 
 		// when
@@ -286,7 +286,7 @@ func TestGetAllSensorDataById(t *testing.T) {
 
 		mockSensorService.EXPECT().GetAllDataByID(
 			mock.Anything,
-			"sensor-1",
+			entities.MustNewSensorID("sensor-1"),
 		).Return(nil, errors.New("service error"))
 
 		// when
@@ -310,7 +310,7 @@ func TestGetSensorById(t *testing.T) {
 
 		mockSensorService.EXPECT().GetByID(
 			mock.Anything,
-			"sensor-1",
+			entities.MustNewSensorID("sensor-1"),
 		).Return(TestSensor, nil)
 
 		app.Get("/v1/sensor/:id", handler)
@@ -328,7 +328,7 @@ func TestGetSensorById(t *testing.T) {
 		err = utils.ParseJSONResponse(resp, &response)
 		assert.NoError(t, err)
 
-		assert.Equal(t, response.ID, TestSensor.ID)
+		assert.Equal(t, response.ID, TestSensor.ID.String())
 		assert.WithinDuration(t, response.CreatedAt, TestSensor.CreatedAt, time.Second)
 		assert.WithinDuration(t, response.UpdatedAt, TestSensor.UpdatedAt, time.Second)
 		assert.Equal(t, entities.SensorStatus(response.Status), TestSensor.Status)
@@ -348,7 +348,7 @@ func TestGetSensorById(t *testing.T) {
 
 		mockSensorService.EXPECT().GetByID(
 			mock.Anything,
-			"sensor-999",
+			entities.MustNewSensorID("sensor-999"),
 		).Return(nil, service.NewError(service.NotFound, "not found"))
 
 		app.Get("/v1/sensor/:id", handler)
@@ -372,7 +372,7 @@ func TestGetSensorById(t *testing.T) {
 
 		mockSensorService.EXPECT().GetByID(
 			mock.Anything,
-			"sensor-1",
+			entities.MustNewSensorID("sensor-1"),
 		).Return(nil, fiber.NewError(fiber.StatusInternalServerError, "service error"))
 
 		app.Get("/v1/sensor/:id", handler)
@@ -398,7 +398,7 @@ func TestDeleteSensor(t *testing.T) {
 
 		mockSensorService.EXPECT().Delete(
 			mock.Anything,
-			"sensor-1",
+			entities.MustNewSensorID("sensor-1"),
 		).Return(nil)
 
 		app.Delete("/v1/sensor/:id", handler)
@@ -422,7 +422,7 @@ func TestDeleteSensor(t *testing.T) {
 
 		mockSensorService.EXPECT().Delete(
 			mock.Anything,
-			"sensor-999",
+			entities.MustNewSensorID("sensor-999"),
 		).Return(service.NewError(service.NotFound, "not found"))
 
 		app.Delete("/v1/sensor/:id", handler)

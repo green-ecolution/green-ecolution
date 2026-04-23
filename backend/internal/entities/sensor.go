@@ -11,31 +11,29 @@ const (
 )
 
 type Sensor struct {
-	ID             string
+	ID             SensorID
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	Status         SensorStatus
 	LatestData     *SensorData
-	Latitude       float64
-	Longitude      float64
+	Coordinate     Coordinate
 	Provider       string
 	AdditionalInfo map[string]interface{}
 }
 
 type SensorData struct {
 	ID        int32
-	SensorID  string
+	SensorID  SensorID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Data      *MqttPayload
 }
 
 type SensorCreate struct {
-	ID             string       `validate:"required"`
+	ID             SensorID
 	Status         SensorStatus `validate:"oneof=online offline unknown"`
 	LatestData     *SensorData
-	Latitude       float64 `validate:"required,max=90,min=-90"`
-	Longitude      float64 `validate:"required,max=180,min=-180"`
+	Coordinate     Coordinate
 	Provider       string
 	AdditionalInfo map[string]interface{}
 }
@@ -43,8 +41,7 @@ type SensorCreate struct {
 type SensorUpdate struct {
 	Status         SensorStatus `validate:"oneof=online offline unknown"`
 	LatestData     *SensorData
-	Latitude       float64 `validate:"required,max=90,min=-90"`
-	Longitude      float64 `validate:"required,max=180,min=-180"`
+	Coordinate     Coordinate
 	Provider       string
 	AdditionalInfo map[string]interface{}
 }

@@ -66,18 +66,18 @@ func (r *SensorRepository) GetCount(ctx context.Context, query entities.Query) (
 	return totalCount, nil
 }
 
-func (r *SensorRepository) GetAllDataByID(ctx context.Context, id string) ([]*entities.SensorData, error) {
+func (r *SensorRepository) GetAllDataByID(ctx context.Context, id entities.SensorID) ([]*entities.SensorData, error) {
 	log := logger.GetLogger(ctx)
 
 	_, err := r.GetByID(ctx, id)
 	if err != nil {
-		log.Debug("failed to get sensor in db", "error", err, "sensor_id", id)
+		log.Debug("failed to get sensor in db", "error", err, "sensor_id", id.String())
 		return nil, r.store.MapError(err, sqlc.Sensor{})
 	}
 
-	rows, err := r.store.GetAllSensorDataByID(ctx, id)
+	rows, err := r.store.GetAllSensorDataByID(ctx, id.String())
 	if err != nil {
-		log.Debug("failed to get all sensor data by sensor id in db", "error", err, "sensor_id", id)
+		log.Debug("failed to get all sensor data by sensor id in db", "error", err, "sensor_id", id.String())
 		return nil, r.store.MapError(err, sqlc.Sensor{})
 	}
 
@@ -90,11 +90,11 @@ func (r *SensorRepository) GetAllDataByID(ctx context.Context, id string) ([]*en
 	return data, nil
 }
 
-func (r *SensorRepository) GetByID(ctx context.Context, id string) (*entities.Sensor, error) {
+func (r *SensorRepository) GetByID(ctx context.Context, id entities.SensorID) (*entities.Sensor, error) {
 	log := logger.GetLogger(ctx)
-	row, err := r.store.GetSensorByID(ctx, id)
+	row, err := r.store.GetSensorByID(ctx, id.String())
 	if err != nil {
-		log.Debug("failed to get sensor by id in db", "error", err, "sensor_id", id)
+		log.Debug("failed to get sensor by id in db", "error", err, "sensor_id", id.String())
 		return nil, r.store.MapError(err, sqlc.Sensor{})
 	}
 
@@ -111,11 +111,11 @@ func (r *SensorRepository) GetByID(ctx context.Context, id string) (*entities.Se
 	return data, nil
 }
 
-func (r *SensorRepository) GetLatestSensorDataBySensorID(ctx context.Context, id string) (*entities.SensorData, error) {
+func (r *SensorRepository) GetLatestSensorDataBySensorID(ctx context.Context, id entities.SensorID) (*entities.SensorData, error) {
 	log := logger.GetLogger(ctx)
-	data, err := r.store.GetLatestSensorDataBySensorID(ctx, id)
+	data, err := r.store.GetLatestSensorDataBySensorID(ctx, id.String())
 	if err != nil {
-		log.Debug("failed to get latest sensor data by sensor id in db", "error", err, "sensor_id", id)
+		log.Debug("failed to get latest sensor data by sensor id in db", "error", err, "sensor_id", id.String())
 		return nil, r.store.MapError(err, sqlc.Sensor{})
 	}
 

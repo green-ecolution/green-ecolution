@@ -1,5 +1,7 @@
 package entities
 
+import "fmt"
+
 type DrivingLicense string
 
 const (
@@ -9,17 +11,17 @@ const (
 	DrivingLicenseCE DrivingLicense = "CE"
 )
 
-func ParseDrivingLicense(drivingLicense string) DrivingLicense {
+func ParseDrivingLicense(drivingLicense string) (DrivingLicense, error) {
 	switch drivingLicense {
 	case string(DrivingLicenseB):
-		return DrivingLicenseB
+		return DrivingLicenseB, nil
 	case string(DrivingLicenseBE):
-		return DrivingLicenseBE
+		return DrivingLicenseBE, nil
 	case string(DrivingLicenseC):
-		return DrivingLicenseC
+		return DrivingLicenseC, nil
 	case string(DrivingLicenseCE):
-		return DrivingLicenseCE
+		return DrivingLicenseCE, nil
 	default:
-		return DrivingLicenseB
+		return "", fmt.Errorf("invalid driving license: %q", drivingLicense)
 	}
 }

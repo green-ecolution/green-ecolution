@@ -24,7 +24,7 @@ type WateringPlan struct {
 	Date               time.Time
 	Description        string
 	Status             WateringPlanStatus
-	Distance           *float64
+	Distance           *Distance
 	TotalWaterRequired *float64
 	UserIDs            []*uuid.UUID
 	TreeClusters       []*TreeCluster
