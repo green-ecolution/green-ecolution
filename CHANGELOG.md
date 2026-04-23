@@ -11,6 +11,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.2.0](https://github.com/green-ecolution/green-ecolution/compare/v0.1.2...v0.2.0) (2026-04-23)
+
+
+### Features
+
+* **backend:** add nearest-tree API endpoint (GECO-76) ([#750](https://github.com/green-ecolution/green-ecolution/issues/750)) ([0a251b6](https://github.com/green-ecolution/green-ecolution/commit/0a251b62aeb50ecf32f341cee964dd72b27b1746))
+* **frontend:** add copy-to-clipboard button for sensor ID in QR scan result ([#747](https://github.com/green-ecolution/green-ecolution/issues/747)) ([e8c11eb](https://github.com/green-ecolution/green-ecolution/commit/e8c11eb256b1c4f80af745af6cce60b7be473147))
+* **frontend:** add PWA support with service worker, splash screen and offline handling ([#739](https://github.com/green-ecolution/green-ecolution/issues/739)) ([8e77659](https://github.com/green-ecolution/green-ecolution/commit/8e77659bc4397d8f051f2cfe4ec5b326f068f23d))
+* **frontend:** add QR code scanner for sensor identification ([#741](https://github.com/green-ecolution/green-ecolution/issues/741)) ([a76bb82](https://github.com/green-ecolution/green-ecolution/commit/a76bb8221023d2ea505f20b8a1f38b99bb91d13c))
+* **frontend:** capture GPS location during sensor onboarding ([#742](https://github.com/green-ecolution/green-ecolution/issues/742)) ([ae35fca](https://github.com/green-ecolution/green-ecolution/commit/ae35fcad2455450ad48c4f1e8d44938453ab819e))
+* **frontend:** enable React Compiler ([#658](https://github.com/green-ecolution/green-ecolution/issues/658)) ([a2741b8](https://github.com/green-ecolution/green-ecolution/commit/a2741b87232e90485c48d9e0e971e4039bd7dc97))
+* **frontend:** redesign debug dashboard with structured card layout ([#748](https://github.com/green-ecolution/green-ecolution/issues/748)) ([093595a](https://github.com/green-ecolution/green-ecolution/commit/093595af7d6afb21d26b4e369b8905dea0ac0c25))
+* **frontend:** show nearest trees after sensor GPS capture (GECO-77) ([#751](https://github.com/green-ecolution/green-ecolution/issues/751)) ([3426316](https://github.com/green-ecolution/green-ecolution/commit/34263162901a67b179bcbaee0785a6da24e4ee7c))
+* **info:** add system info page with service status and version check ([#638](https://github.com/green-ecolution/green-ecolution/issues/638)) ([64860f8](https://github.com/green-ecolution/green-ecolution/commit/64860f8d6ab36de9dfcd3394821c26997b4c855c)), closes [#69](https://github.com/green-ecolution/green-ecolution/issues/69)
+* **ui:** add date picker component for date input fields ([#673](https://github.com/green-ecolution/green-ecolution/issues/673)) ([1ce260b](https://github.com/green-ecolution/green-ecolution/commit/1ce260b04935711a304e4639dd013b5bc8a95777)), closes [#120](https://github.com/green-ecolution/green-ecolution/issues/120)
+
+
+### Bug Fixes
+
+* add driving license hierarchy validation and form state reliability ([#674](https://github.com/green-ecolution/green-ecolution/issues/674)) ([59b2629](https://github.com/green-ecolution/green-ecolution/commit/59b262990aeb7c3849650145796992a8d08686b0))
+* **backend:** reject past dates in watering plan create and update ([#662](https://github.com/green-ecolution/green-ecolution/issues/662)) ([b1636eb](https://github.com/green-ecolution/green-ecolution/commit/b1636eba7d0bdb62d7dacf4ef12fa986447c5055)), closes [#642](https://github.com/green-ecolution/green-ecolution/issues/642)
+* **frontend:** fix save button disabled on finished watering plan ([#663](https://github.com/green-ecolution/green-ecolution/issues/663)) ([ae9b892](https://github.com/green-ecolution/green-ecolution/commit/ae9b892f69edf1344bd90f35529670e34ca10b75)), closes [#641](https://github.com/green-ecolution/green-ecolution/issues/641)
+
+
+### Performance Improvements
+
+* **frontend:** reduce unnecessary data fetching and fix navbar hover stutter from event bubbling ([#749](https://github.com/green-ecolution/green-ecolution/issues/749)) ([1389ba0](https://github.com/green-ecolution/green-ecolution/commit/1389ba02c23db4ed1ef2e5dbdc0bbc63c2e5d62d))
+
 ## [0.1.2](https://github.com/green-ecolution/green-ecolution/compare/v0.1.1...v0.1.2) (2026-02-03)
 
 
