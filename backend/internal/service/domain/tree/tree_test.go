@@ -907,10 +907,24 @@ func TestTreeService_UpdateWateringStatuses(t *testing.T) {
 		staleDate := time.Now().Add(-34 * time.Hour)
 		recentDate := time.Now().Add(-2 * time.Hour)
 
+		sensorWithData := &entities.Sensor{
+			ID: entities.MustNewSensorID("sensor-1"),
+			LatestData: &entities.SensorData{
+				Data: &entities.MqttPayload{
+					Watermarks: []entities.Watermark{
+						{Centibar: 10, Depth: 30},
+						{Centibar: 10, Depth: 60},
+						{Centibar: 10, Depth: 90},
+					},
+				},
+			},
+		}
 		staleTree := &entities.Tree{
 			ID:             1,
 			LastWatered:    &staleDate, // Older than 24h
 			WateringStatus: entities.WateringStatusJustWatered,
+			PlantingYear:   entities.MustNewPlantingYear(int32(time.Now().Year())),
+			Sensor:         sensorWithData,
 		}
 		recentTree := &entities.Tree{
 			ID:             2,
@@ -991,10 +1005,24 @@ func TestTreeService_UpdateWateringStatuses(t *testing.T) {
 		svc := tree.NewTreeService(treeRepo, sensorRepo, treeClusterRepo, globalEventManager, testMapCfg)
 
 		staleDate := time.Now().Add(-34 * time.Hour)
+		sensorWithData := &entities.Sensor{
+			ID: entities.MustNewSensorID("sensor-1"),
+			LatestData: &entities.SensorData{
+				Data: &entities.MqttPayload{
+					Watermarks: []entities.Watermark{
+						{Centibar: 10, Depth: 30},
+						{Centibar: 10, Depth: 60},
+						{Centibar: 10, Depth: 90},
+					},
+				},
+			},
+		}
 		staleTree := &entities.Tree{
 			ID:             1,
 			LastWatered:    &staleDate, // Older than 24h
 			WateringStatus: entities.WateringStatusJustWatered,
+			PlantingYear:   entities.MustNewPlantingYear(int32(time.Now().Year())),
+			Sensor:         sensorWithData,
 		}
 		expectList := []*entities.Tree{staleTree}
 
@@ -1008,7 +1036,7 @@ func TestTreeService_UpdateWateringStatuses(t *testing.T) {
 		treeRepo.AssertCalled(t, "GetAll", mock.Anything, entities.TreeQuery{})
 		treeRepo.AssertCalled(t, "Update", mock.Anything, staleTree.ID, mock.Anything)
 		treeRepo.AssertExpectations(t)
-		assert.NoError(t, err)
+		assert.Error(t, err)
 	})
 }
 
