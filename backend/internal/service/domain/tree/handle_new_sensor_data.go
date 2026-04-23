@@ -5,7 +5,6 @@ import (
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
-	"github.com/green-ecolution/green-ecolution/backend/internal/service/domain/utils"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 )
 
@@ -29,7 +28,10 @@ func (s *TreeService) HandleNewSensorData(ctx context.Context, event *entities.E
 		return nil
 	}
 
-	status := utils.CalculateWateringStatus(ctx, t.PlantingYear.Year(), event.New.Data.Watermarks)
+	status, err := t.CalculateWateringStatus(event.New.Data.Watermarks)
+	if err != nil {
+		return err
+	}
 
 	if status == t.WateringStatus {
 		log.Debug("sensor status has not changed", "sensor_status", status)

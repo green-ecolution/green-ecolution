@@ -2,6 +2,7 @@ package tree
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/service"
-	"github.com/green-ecolution/green-ecolution/backend/internal/service/domain/utils"
 	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 )
@@ -154,7 +154,10 @@ func (s *TreeService) Create(ctx context.Context, treeCreate *entities.TreeCreat
 				log.Debug("failed to find previous tree linked to sensor specified from create request", "sensor_id", treeCreate.SensorID)
 			}
 			if sensor.LatestData != nil && sensor.LatestData.Data != nil && len(sensor.LatestData.Data.Watermarks) > 0 {
-				status := utils.CalculateWateringStatus(ctx, treeCreate.PlantingYear.Year(), sensor.LatestData.Data.Watermarks)
+				status, err := tree.CalculateWateringStatus(sensor.LatestData.Data.Watermarks)
+				if err != nil {
+					return false, err
+				}
 				tree.WateringStatus = status
 			}
 		}
@@ -232,12 +235,14 @@ func (s *TreeService) Update(ctx context.Context, id int32, tu *entities.TreeUpd
 				log.Debug("failed to find previous tree linked to sensor specified from update request", "sensor_id", tu.SensorID)
 			}
 			if sensor.LatestData != nil && sensor.LatestData.Data != nil && len(sensor.LatestData.Data.Watermarks) > 0 {
-				status := utils.CalculateWateringStatus(ctx, tu.PlantingYear.Year(), sensor.LatestData.Data.Watermarks)
+				status, err := tree.CalculateWateringStatus(sensor.LatestData.Data.Watermarks)
+				if err != nil {
+					return false, err
+				}
 				tree.WateringStatus = status
 			}
 		} else {
-			tree.Sensor = nil
-			tree.WateringStatus = entities.WateringStatusUnknown
+			tree.RemoveSensor()
 		}
 
 		return true, nil
@@ -263,26 +268,24 @@ func (s *TreeService) UpdateWateringStatuses(ctx context.Context) error {
 
 	cutoffTime := time.Now().Add(-24 * time.Hour) // 1 day ago
 	for _, tree := range trees {
-		// Do nothing if watering status is not »just watered«
-		if tree.WateringStatus != entities.WateringStatusJustWatered {
-			continue
-		}
-
-		if tree.LastWatered.Before(cutoffTime) {
-			wateringStatus := entities.WateringStatusUnknown
-
-			if tree.Sensor != nil {
-				wateringStatus = utils.CalculateWateringStatus(ctx, tree.PlantingYear.Year(), tree.Sensor.LatestData.Data.Watermarks)
+		if tree.IsWateringStatusExpired(cutoffTime) {
+			wateringStatus, hasChanged, err := tree.RefreshWateringStatus()
+			if errors.Is(err, entities.ErrNoSensorData) {
+				continue
 			}
-			_, err = s.treeRepo.Update(ctx, tree.ID, func(tr *entities.Tree, _ storage.TreeRepository) (bool, error) {
-				tr.WateringStatus = wateringStatus
-				return true, nil
-			})
-
 			if err != nil {
-				log.Error("failed to update watering status of tree", "tree_id", tree.ID, "error", err)
-			} else {
-				log.Debug("watering status of tree is updated by scheduler", "tree_id", tree.ID)
+				return err
+			}
+
+			if hasChanged {
+				_, err = s.treeRepo.Update(ctx, tree.ID, func(tr *entities.Tree, _ storage.TreeRepository) (bool, error) {
+					tr.WateringStatus = wateringStatus
+					return true, nil
+				})
+				if err != nil {
+					log.Error("failed to update watering status of tree", "tree_id", tree.ID, "error", err)
+					return err
+				}
 			}
 		}
 	}
