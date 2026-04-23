@@ -1,6 +1,9 @@
 package entities
 
-import "time"
+import (
+	"slices"
+	"time"
+)
 
 type TreeSoilCondition string
 
@@ -29,6 +32,81 @@ type TreeCluster struct {
 	Name           string
 	Provider       string
 	AdditionalInfo map[string]interface{}
+}
+
+func (tc *TreeCluster) CalculateWateringStatus(sensorData []*SensorData) (WateringStatus, error) {
+	if len(sensorData) == 0 {
+		return WateringStatusUnknown, nil
+	}
+
+	youngest := tc.YoungestTree()
+	if youngest == nil {
+		return WateringStatusUnknown, nil
+	}
+
+	watermarks, err := tc.AverageWatermarks(sensorData)
+	if err != nil {
+		return WateringStatusUnknown, err
+	}
+
+	return youngest.CalculateWateringStatus(watermarks)
+}
+
+func (tc *TreeCluster) YoungestTree() *Tree {
+	sortedTrees := slices.SortedFunc(slices.Values(tc.Trees), func(a, b *Tree) int {
+		return int(a.PlantingYear.Year() - b.PlantingYear.Year())
+	})
+
+	if len(sortedTrees) > 0 {
+		return sortedTrees[0]
+	}
+
+	return nil
+}
+
+func (tc *TreeCluster) AverageWatermarks(sensorData []*SensorData) ([]Watermark, error) {
+	var w30CentibarAvg, w60CentibarAvg, w90CentibarAvg int
+	for _, data := range sensorData {
+		w30, w60, w90, err := checkAndSortWatermarks(data.Data.Watermarks)
+		if err != nil {
+			return nil, ErrSensorDataMalformed
+		}
+
+		w30CentibarAvg += w30.Centibar
+		w60CentibarAvg += w60.Centibar
+		w90CentibarAvg += w90.Centibar
+	}
+
+	return []Watermark{
+		{
+			Centibar: w30CentibarAvg / len(sensorData),
+			Depth:    30,
+		},
+		{
+			Centibar: w60CentibarAvg / len(sensorData),
+			Depth:    60,
+		},
+		{
+			Centibar: w90CentibarAvg / len(sensorData),
+			Depth:    90,
+		},
+	}, nil
+}
+
+func (tc *TreeCluster) NeedsPositionUpdate(prevTree, newTree *Tree) bool {
+	if prevTree.Coordinate != newTree.Coordinate {
+		return true
+	}
+	if prevTree.TreeCluster == nil || newTree.TreeCluster == nil {
+		return prevTree.TreeCluster != newTree.TreeCluster
+	}
+	if prevTree.TreeCluster.ID != newTree.TreeCluster.ID {
+		return true
+	}
+	if prevTree.Sensor != newTree.Sensor {
+		return true
+	}
+	return false
 }
 
 type TreeClusterCreate struct {
