@@ -87,7 +87,7 @@ func (w *WateringPlanService) PreviewRoute(ctx context.Context, transporterID in
 		return nil, service.MapError(ctx, err, service.ErrorLogEntityNotFound)
 	}
 
-	geoJSON, err := w.routingRepo.GenerateRoute(ctx, w.mergeVehicle(transporter, trailer), clusters)
+	geoJSON, err := w.routingRepo.GenerateRoute(ctx, entities.MergeVehicles(transporter, trailer), clusters)
 	if err != nil {
 		if errors.Is(err, storage.ErrUnknownVehicleType) {
 			log.Debug("the vehicle type is not supported", "error", err, "vehicle_type", transporter.Type)
@@ -150,7 +150,6 @@ func (w *WateringPlanService) Create(ctx context.Context, createWp *entities.Wat
 		return nil, err // err is already a service error
 	}
 
-	neededWater := w.calculateRequiredWater(treeClusters)
 	created, err := w.wateringPlanRepo.Create(ctx, func(wp *entities.WateringPlan, _ storage.WateringPlanRepository) (bool, error) {
 		wp.Date = createWp.Date
 		wp.Description = createWp.Description
@@ -158,7 +157,7 @@ func (w *WateringPlanService) Create(ctx context.Context, createWp *entities.Wat
 		wp.Trailer = trailer
 		wp.TreeClusters = treeClusters
 		wp.UserIDs = createWp.UserIDs
-		wp.TotalWaterRequired = utils.P(float64(neededWater))
+		wp.TotalWaterRequired = utils.P(wp.CalculateRequiredWater())
 		wp.Provider = createWp.Provider
 		wp.AdditionalInfo = createWp.AdditionalInfo
 
@@ -170,7 +169,7 @@ func (w *WateringPlanService) Create(ctx context.Context, createWp *entities.Wat
 	}
 
 	err = w.wateringPlanRepo.Update(ctx, created.ID, func(wp *entities.WateringPlan, _ storage.WateringPlanRepository) (bool, error) {
-		mergedVehicle := w.mergeVehicle(transporter, trailer)
+		mergedVehicle := entities.MergeVehicles(transporter, trailer)
 		gpxURL, err := w.getGpxRouteURL(ctx, created.ID, mergedVehicle, treeClusters)
 		if err != nil {
 			log.Warn("generating route in gpx fomat failed. will not save gpx route", "error", err, "watering_plan_id", created.ID)
@@ -270,7 +269,6 @@ func (w *WateringPlanService) Update(ctx context.Context, id int32, updateWp *en
 		return nil, err
 	}
 
-	neededWater := w.calculateRequiredWater(treeClusters)
 	err = w.wateringPlanRepo.Update(ctx, id, func(wp *entities.WateringPlan, _ storage.WateringPlanRepository) (bool, error) {
 		wp.Date = updateWp.Date
 		wp.Description = updateWp.Description
@@ -281,12 +279,13 @@ func (w *WateringPlanService) Update(ctx context.Context, id int32, updateWp *en
 		wp.CancellationNote = updateWp.CancellationNote
 		wp.Evaluation = updateWp.Evaluation
 		wp.UserIDs = updateWp.UserIDs
+		neededWater := wp.CalculateRequiredWater()
 		wp.TotalWaterRequired = &neededWater
 		wp.Provider = updateWp.Provider
 		wp.AdditionalInfo = updateWp.AdditionalInfo
 
-		mergedVehicle := w.mergeVehicle(transporter, trailer)
-		if w.shouldUpdateGpx(prevWp, wp) {
+		mergedVehicle := entities.MergeVehicles(transporter, trailer)
+		if wp.ShouldRegenerateRoute(prevWp) {
 			gpxURL, err := w.getGpxRouteURL(ctx, id, mergedVehicle, treeClusters)
 			if err != nil {
 				log.Warn("generating route in gpx fomat failed. will not save gpx route", "error", err, "watering_plan_id", id)
@@ -348,13 +347,7 @@ func (w *WateringPlanService) UpdateStatuses(ctx context.Context) error {
 
 	cutoffTime := time.Now().Add(-24 * time.Hour) // 1 day ago
 	for _, plan := range plans {
-		if plan.Status != entities.WateringPlanStatusActive &&
-			plan.Status != entities.WateringPlanStatusPlanned &&
-			plan.Status != entities.WateringPlanStatusUnknown {
-			continue
-		}
-
-		if plan.Date.Before(cutoffTime) {
+		if plan.IsExpired(cutoffTime) {
 			err = w.wateringPlanRepo.Update(ctx, plan.ID, func(wp *entities.WateringPlan, _ storage.WateringPlanRepository) (bool, error) {
 				wp.Status = entities.WateringPlanStatusNotCompeted
 				return true, nil
@@ -370,32 +363,6 @@ func (w *WateringPlanService) UpdateStatuses(ctx context.Context) error {
 
 	log.Info("watering plan status update process completed successfully")
 	return nil
-}
-
-func (w *WateringPlanService) shouldUpdateGpx(prevWp, newWp *entities.WateringPlan) bool {
-	if len(prevWp.TreeClusters) != len(newWp.TreeClusters) {
-		return true
-	}
-
-	if prevWp.Transporter.ID != newWp.Transporter.ID {
-		return true
-	}
-
-	if (prevWp.Trailer == nil && newWp.Trailer != nil) || (prevWp.Trailer != nil && newWp.Trailer == nil) {
-		return true
-	}
-
-	if prevWp.Trailer != nil && newWp.Trailer != nil && prevWp.Trailer.ID != newWp.Trailer.ID {
-		return true
-	}
-
-	for i, prevWpTc := range prevWp.TreeClusters {
-		if prevWpTc.ID != newWp.TreeClusters[i].ID {
-			return true
-		}
-	}
-
-	return false
 }
 
 // returns service error
@@ -439,134 +406,30 @@ func (w *WateringPlanService) validateUsers(ctx context.Context, userIDs []*uuid
 		return service.MapError(ctx, storage.ErrEntityNotFound("users"), service.ErrorLogEntityNotFound)
 	}
 
-	// Checks if the users have correct user roles
-	// Only users with the user role »UserRoleTbz« should be linked to a watering plan
-	if !w.validateUserRoles(users) {
-		return service.ErrUserNotCorrectRole
-	}
-
-	// Checks if at least on of the users has a matching driving license
-	if err := w.validateUserDrivingLicenses(users, transporter, trailer); err != nil {
-		return err // err is already a service error
-	}
-
-	return nil
-}
-
-func (w *WateringPlanService) validateUserRoles(users []*entities.User) bool {
 	for _, user := range users {
-		if !containsUserRoleTbz(user.Roles) {
-			return false
+		if !user.HasRole(entities.UserRoleTbz) {
+			return service.ErrUserNotCorrectRole
 		}
 	}
 
-	return true
-}
-
-// returns service error
-func (w *WateringPlanService) validateUserDrivingLicenses(users []*entities.User, transporter, trailer *entities.Vehicle) error {
 	var requiredLicenses []entities.DrivingLicense
-
 	if transporter != nil {
 		requiredLicenses = append(requiredLicenses, transporter.DrivingLicense)
 	}
-
 	if trailer != nil {
 		requiredLicenses = append(requiredLicenses, trailer.DrivingLicense)
 	}
 
+	hasQualifiedDriver := false
 	for _, user := range users {
-		if hasAllRequiredLicenses(user, requiredLicenses) {
-			return nil
+		if user.HasRequiredLicenses(requiredLicenses) {
+			hasQualifiedDriver = true
+			break
 		}
 	}
-
-	return service.NewError(service.BadRequest, "no user has all the required licenses")
-}
-
-// This function calculates approximately how much water the irrigation schedule needs
-// Each tree in a linked tree cluster requires approximately 80 liters of water
-func (w *WateringPlanService) calculateRequiredWater(clusters []*entities.TreeCluster) float64 {
-	return utils.Reduce(clusters, func(acc float64, tc *entities.TreeCluster) float64 {
-		return acc + (float64(len(tc.Trees)) * 80.0)
-	}, 0)
-}
-
-func (w *WateringPlanService) mergeVehicle(transporter, trailer *entities.Vehicle) *entities.Vehicle {
-	if transporter == nil {
-		return nil // this should not happen because of before validation
+	if !hasQualifiedDriver {
+		return service.NewError(service.BadRequest, "no user has all the required licenses")
 	}
 
-	if trailer == nil {
-		return transporter
-	}
-
-	var biggerWidth = transporter.Width
-	if trailer.Width > transporter.Width {
-		biggerWidth = trailer.Width
-	}
-
-	var biggerHeight = transporter.Height
-	if trailer.Height > transporter.Height {
-		biggerHeight = trailer.Height
-	}
-
-	return &entities.Vehicle{
-		Width:         biggerWidth,
-		Height:        biggerHeight,
-		Length:        transporter.Length + trailer.Length,
-		Weight:        transporter.Weight + trailer.Weight,
-		WaterCapacity: transporter.WaterCapacity.Add(trailer.WaterCapacity), // TODO: There may be a choice of transporter and trailer, but only the trailer will have water capacity should it be in use.
-		Type:          entities.VehicleTypeTransporter,
-		NumberPlate:   fmt.Sprintf("%s - %s", transporter.NumberPlate, trailer.NumberPlate),
-	}
-}
-
-func containsUserRoleTbz(roles []entities.UserRole) bool {
-	if len(roles) == 0 {
-		return false
-	}
-
-	for _, role := range roles {
-		if role == entities.UserRoleTbz {
-			return true
-		}
-	}
-	return false
-}
-
-func hasAllRequiredLicenses(user *entities.User, requiredLicenses []entities.DrivingLicense) bool {
-	for _, requiredLicense := range requiredLicenses {
-		if !hasValidLicense(user, requiredLicense) {
-			return false
-		}
-	}
-	return true
-}
-
-// Keep in sync with frontend: frontend/app/src/lib/licenseValidation.ts
-func licenseSatisfies(held, required entities.DrivingLicense) bool {
-	if held == required {
-		return true
-	}
-	switch held {
-	case entities.DrivingLicenseBE:
-		return required == entities.DrivingLicenseB
-	case entities.DrivingLicenseC:
-		return required == entities.DrivingLicenseB
-	case entities.DrivingLicenseCE:
-		return required == entities.DrivingLicenseB ||
-			required == entities.DrivingLicenseBE ||
-			required == entities.DrivingLicenseC
-	}
-	return false
-}
-
-func hasValidLicense(user *entities.User, requiredLicense entities.DrivingLicense) bool {
-	for _, userLicense := range user.DrivingLicenses {
-		if licenseSatisfies(userLicense, requiredLicense) {
-			return true
-		}
-	}
-	return false
+	return nil
 }
