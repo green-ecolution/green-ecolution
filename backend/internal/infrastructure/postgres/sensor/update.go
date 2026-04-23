@@ -1,0 +1,93 @@
+package sensor
+
+import (
+	"context"
+	"errors"
+
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
+	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
+	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
+)
+
+func (r *SensorRepository) Update(ctx context.Context, id shared.SensorID, updateFn func(*shared.Sensor, shared.SensorRepository) (bool, error)) (*shared.Sensor, error) {
+	log := logger.GetLogger(ctx)
+	if updateFn == nil {
+		return nil, errors.New("updateFn is nil")
+	}
+
+	var updatedSensor *shared.Sensor
+	err := r.store.WithTx(ctx, func(s *store.Store) error {
+		newRepo := NewSensorRepository(s, r.SensorRepositoryMappers)
+		entity, err := newRepo.GetByID(ctx, id)
+		if err != nil {
+			return err
+		}
+
+		updated, err := updateFn(entity, newRepo)
+		if err != nil {
+			return err
+		}
+
+		if !updated {
+			updatedSensor = entity
+			return nil
+		}
+
+		if err := newRepo.updateEntity(ctx, entity); err != nil {
+			log.Error("failed to update sensor entity in db", "error", err, "sensor_id", id.String())
+			return err
+		}
+
+		if entity.LatestData != nil && entity.LatestData.Data != nil {
+			err = newRepo.InsertSensorData(ctx, entity.LatestData, entity.ID)
+			if err != nil {
+				return err
+			}
+		}
+
+		updatedSensor, err = newRepo.GetByID(ctx, entity.ID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	log.Debug("sensor entity updated successfully in db", "sensor_id", id.String())
+	return updatedSensor, nil
+}
+
+func (r *SensorRepository) updateEntity(ctx context.Context, sensor *shared.Sensor) error {
+	log := logger.GetLogger(ctx)
+
+	additionalInfo, err := utils.MapAdditionalInfoToByte(sensor.AdditionalInfo)
+	if err != nil {
+		log.Debug("failed to marshal additional informations to byte array", "error", err, "additional_info", sensor.AdditionalInfo)
+		return err
+	}
+
+	params := sqlc.UpdateSensorParams{
+		ID:                     sensor.ID.String(),
+		Status:                 sqlc.SensorStatus(sensor.Status),
+		Provider:               &sensor.Provider,
+		AdditionalInformations: additionalInfo,
+	}
+
+	locationParams := &sqlc.SetSensorLocationParams{
+		ID:        sensor.ID.String(),
+		Latitude:  sensor.Coordinate.Latitude(),
+		Longitude: sensor.Coordinate.Longitude(),
+	}
+
+	if err := r.store.SetSensorLocation(ctx, locationParams); err != nil {
+		return err
+	}
+
+	return r.store.UpdateSensor(ctx, &params)
+}

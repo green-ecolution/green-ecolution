@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/server/http/entities"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 )
 
 func TestPaginationUtil_GetValues(t *testing.T) {

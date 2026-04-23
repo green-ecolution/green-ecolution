@@ -1,0 +1,264 @@
+package sensor
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+)
+
+func TestSensorRepository_Create(t *testing.T) {
+	suite.ResetDB(t)
+
+	t.Run("should create sensor", func(t *testing.T) {
+		// given
+		r := NewSensorRepository(suite.Store, defaultSensorMappers())
+
+		// when
+		got, err := r.Create(context.Background(), func(sensor *shared.Sensor, _ shared.SensorRepository) (bool, error) {
+			sensor.ID = input.ID
+			sensor.Coordinate = input.Coordinate
+			sensor.Status = input.Status
+			sensor.LatestData = input.LatestData
+			return true, nil
+		})
+
+		// then
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+		assert.Equal(t, input.Coordinate.Latitude(), got.Coordinate.Latitude())
+		assert.Equal(t, input.Coordinate.Longitude(), got.Coordinate.Longitude())
+		assert.Equal(t, input.Status, got.Status)
+		assert.NotZero(t, got.ID)
+
+		// assert latest data
+		assert.NotZero(t, got.LatestData.UpdatedAt)
+		assert.NotZero(t, got.LatestData.CreatedAt)
+		assert.Equal(t, input.LatestData.Data, got.LatestData.Data)
+	})
+
+	t.Run("should create sensor with empty data and unknown status", func(t *testing.T) {
+		// given
+		r := NewSensorRepository(suite.Store, defaultSensorMappers())
+
+		// when
+		got, err := r.Create(context.Background(), func(sensor *shared.Sensor, _ shared.SensorRepository) (bool, error) {
+			sensor.ID = shared.MustNewSensorID("sensor-124")
+			sensor.Coordinate = input.Coordinate
+			return true, nil
+		})
+
+		// then
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+		assert.Equal(t, shared.SensorStatusUnknown, got.Status)
+		assert.Nil(t, got.LatestData)
+		assert.Equal(t, input.Coordinate.Latitude(), got.Coordinate.Latitude())
+		assert.Equal(t, input.Coordinate.Longitude(), got.Coordinate.Longitude())
+		assert.NotZero(t, got.ID)
+
+		// assert latest data
+		assert.Nil(t, got.LatestData)
+	})
+
+	t.Run("should return error if latitude is out of bounds", func(t *testing.T) {
+		// given
+		r := NewSensorRepository(suite.Store, defaultSensorMappers())
+
+		// when
+		got, err := r.Create(context.Background(), func(sensor *shared.Sensor, _ shared.SensorRepository) (bool, error) {
+			coord, coordErr := shared.NewCoordinate(-200, input.Coordinate.Longitude())
+			if coordErr != nil {
+				return false, coordErr
+			}
+			sensor.ID = shared.MustNewSensorID("sensor-125")
+			sensor.Coordinate = coord
+			return true, nil
+		})
+
+		// then
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), shared.ErrInvalidLatitude.Error())
+		assert.Nil(t, got)
+	})
+
+	t.Run("should return error if longitude is out of bounds", func(t *testing.T) {
+		// given
+		r := NewSensorRepository(suite.Store, defaultSensorMappers())
+
+		// when
+		got, err := r.Create(context.Background(), func(sensor *shared.Sensor, _ shared.SensorRepository) (bool, error) {
+			coord, coordErr := shared.NewCoordinate(input.Coordinate.Latitude(), 200)
+			if coordErr != nil {
+				return false, coordErr
+			}
+			sensor.ID = shared.MustNewSensorID("sensor-125")
+			sensor.Coordinate = coord
+			return true, nil
+		})
+
+		// then
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), shared.ErrInvalidLongitude.Error())
+		assert.Nil(t, got)
+	})
+
+	t.Run("should return error if sensor id is invalid", func(t *testing.T) {
+		// given
+		r := NewSensorRepository(suite.Store, defaultSensorMappers())
+
+		// when
+		got, err := r.Create(context.Background(), func(sensor *shared.Sensor, _ shared.SensorRepository) (bool, error) {
+			sensor.Coordinate = input.Coordinate
+			return true, nil
+		})
+
+		// then
+		assert.Error(t, err)
+		assert.Equal(t, err.Error(), "sensor id cannot be empty")
+		assert.Nil(t, got)
+	})
+
+	t.Run("should return error if sensor with same id already exists", func(t *testing.T) {
+		// given
+		r := NewSensorRepository(suite.Store, defaultSensorMappers())
+
+		// when
+		got, err := r.Create(context.Background(), func(sensor *shared.Sensor, _ shared.SensorRepository) (bool, error) {
+			sensor.ID = input.ID
+			sensor.Coordinate = input.Coordinate
+			sensor.Status = input.Status
+			sensor.LatestData = input.LatestData
+			return true, nil
+		})
+
+		// then
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "sensor with same ID already exists")
+		assert.Nil(t, got)
+	})
+
+	t.Run("should return error when context is canceled", func(t *testing.T) {
+		// given
+		r := NewSensorRepository(suite.Store, defaultSensorMappers())
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		// when
+		got, err := r.Create(ctx, func(sensor *shared.Sensor, _ shared.SensorRepository) (bool, error) {
+			sensor.ID = shared.MustNewSensorID("sensor-5")
+			return true, nil
+		})
+
+		// then
+		assert.Error(t, err)
+		assert.Nil(t, got)
+	})
+}
+
+func TestSensorRepository_InsertSensorData(t *testing.T) {
+	suite.ResetDB(t)
+
+	t.Run("should insert sensor data successfully", func(t *testing.T) {
+		// given
+		r := NewSensorRepository(suite.Store, defaultSensorMappers())
+
+		_, err := r.Create(context.Background(), func(sensor *shared.Sensor, _ shared.SensorRepository) (bool, error) {
+			sensor.ID = input.ID
+			sensor.Coordinate = input.Coordinate
+			sensor.Status = input.Status
+			return true, nil
+		})
+
+		assert.NoError(t, err)
+
+		// when
+		err = r.InsertSensorData(context.Background(), input.LatestData, input.ID)
+
+		// then
+		assert.NoError(t, err)
+	})
+
+	t.Run("should return error when data is empty", func(t *testing.T) {
+		r := NewSensorRepository(suite.Store, defaultSensorMappers())
+
+		_, err := r.Create(context.Background(), func(sensor *shared.Sensor, _ shared.SensorRepository) (bool, error) {
+			sensor.ID = shared.MustNewSensorID("sensor-124")
+			sensor.Coordinate = input.Coordinate
+			sensor.Status = input.Status
+			return true, nil
+		})
+
+		assert.NoError(t, err)
+
+		// when
+		err = r.InsertSensorData(context.Background(), &shared.SensorData{}, input.ID)
+
+		// then
+		assert.Error(t, err)
+		assert.Equal(t, err.Error(), "latest data cannot be empty")
+	})
+
+	t.Run("should return error when data is nil", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		r := NewSensorRepository(suite.Store, defaultSensorMappers())
+
+		// when
+		err := r.InsertSensorData(context.Background(), nil, shared.MustNewSensorID("sensor-1"))
+
+		// then
+		assert.Error(t, err)
+	})
+
+	t.Run("should return error when sensor id is invalid", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		r := NewSensorRepository(suite.Store, defaultSensorMappers())
+
+		// when
+		err := r.InsertSensorData(context.Background(), input.LatestData, shared.SensorID{})
+
+		// then
+		assert.Error(t, err)
+	})
+}
+
+var inputPayload = &shared.MqttPayload{
+	Device:      "sensor-123",
+	Battery:     34.0,
+	Humidity:    50,
+	Temperature: 20,
+	Watermarks: []shared.Watermark{
+		{
+			Resistance: 23,
+			Centibar:   38,
+			Depth:      30,
+		},
+		{
+			Resistance: 23,
+			Centibar:   38,
+			Depth:      60,
+		},
+		{
+			Resistance: 23,
+			Centibar:   38,
+			Depth:      90,
+		},
+	},
+}
+
+var input = &shared.SensorCreate{
+	ID:     shared.MustNewSensorID("sensor-123"),
+	Status: shared.SensorStatusOnline,
+	LatestData: &shared.SensorData{
+		ID:        1,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Data:      inputPayload,
+	},
+	Coordinate: shared.MustNewCoordinate(9.446741, 54.801539),
+}

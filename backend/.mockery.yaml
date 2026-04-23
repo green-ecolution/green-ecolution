@@ -1,8 +1,8 @@
 with-expecter: true
 packages:
-  github.com/green-ecolution/green-ecolution/backend/internal/service:
+  github.com/green-ecolution/green-ecolution/backend/internal/application/ports:
     config: 
-      dir: ./internal/service/_mock
+      dir: ./internal/application/_mock
     interfaces:
       InfoService:
       MqttService:
@@ -18,9 +18,9 @@ packages:
       EvaluationService:
       Service:
       ServicesInterface:
-  github.com/green-ecolution/green-ecolution/backend/internal/storage:
+  github.com/green-ecolution/green-ecolution/backend/internal/domain/shared:
     config: 
-      dir: ./internal/storage/_mock
+      dir: ./internal/infrastructure/_mock
     interfaces:
       InfoRepository:
       SensorRepository:
@@ -34,9 +34,9 @@ packages:
       WateringPlanRepository:
       RoutingRepository:
       S3Repository:
-  github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres/_sqlc:
+  github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc:
     config: 
-      dir: ./internal/storage/_mock
-      outpkg: storage
+      dir: ./internal/infrastructure/_mock
+      outpkg: shared
     interfaces:
       Querier:

@@ -15,21 +15,21 @@
 
 import * as runtime from '../runtime';
 import type {
-  GeoJson,
   HTTPError,
   RouteRequest,
+  SharedGeoJSON,
   WateringPlan,
   WateringPlanCreate,
   WateringPlanList,
   WateringPlanUpdate,
 } from '../models/index';
 import {
-    GeoJsonFromJSON,
-    GeoJsonToJSON,
     HTTPErrorFromJSON,
     HTTPErrorToJSON,
     RouteRequestFromJSON,
     RouteRequestToJSON,
+    SharedGeoJSONFromJSON,
+    SharedGeoJSONToJSON,
     WateringPlanFromJSON,
     WateringPlanToJSON,
     WateringPlanCreateFromJSON,
@@ -80,7 +80,7 @@ export class WateringPlanApi extends runtime.BaseAPI {
      * Generates a preview of the optimized route for the given vehicles and tree clusters without creating a watering plan.
      * Generate preview route
      */
-    async createPreviewRouteRaw(requestParameters: CreatePreviewRouteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GeoJson>> {
+    async createPreviewRouteRaw(requestParameters: CreatePreviewRouteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SharedGeoJSON>> {
         if (requestParameters['body'] == null) {
             throw new runtime.RequiredError(
                 'body',
@@ -110,14 +110,14 @@ export class WateringPlanApi extends runtime.BaseAPI {
             body: RouteRequestToJSON(requestParameters['body']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GeoJsonFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => SharedGeoJSONFromJSON(jsonValue));
     }
 
     /**
      * Generates a preview of the optimized route for the given vehicles and tree clusters without creating a watering plan.
      * Generate preview route
      */
-    async createPreviewRoute(requestParameters: CreatePreviewRouteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GeoJson> {
+    async createPreviewRoute(requestParameters: CreatePreviewRouteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SharedGeoJSON> {
         const response = await this.createPreviewRouteRaw(requestParameters, initOverrides);
         return await response.value();
     }

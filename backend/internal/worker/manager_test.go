@@ -7,27 +7,28 @@ import (
 	"testing"
 	"time"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
-const EventTypeTest entities.EventType = "test event"
+const EventTypeTest shared.EventType = "test event"
 
 type TestEvent struct {
-	eventType entities.EventType
+	eventType shared.EventType
 }
 
-func (e TestEvent) Type() entities.EventType {
+func (e TestEvent) Type() shared.EventType {
 	return e.eventType
 }
 
 type TestSubscriber struct{}
 
-func (s *TestSubscriber) EventType() entities.EventType {
+func (s *TestSubscriber) EventType() shared.EventType {
 	return EventTypeTest
 }
 
-func (s *TestSubscriber) HandleEvent(ctx context.Context, e entities.Event) error {
+func (s *TestSubscriber) HandleEvent(ctx context.Context, e shared.Event) error {
 	_, ok := e.(TestEvent)
 	if !ok {
 		return errors.New("invalid event type")

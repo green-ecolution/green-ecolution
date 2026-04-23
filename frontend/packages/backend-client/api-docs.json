@@ -2998,7 +2998,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/GeoJson"
+                            "$ref": "#/definitions/shared.GeoJSON"
                         }
                     },
                     "400": {
@@ -3413,127 +3413,6 @@
                     "type": "integer"
                 }
             }
-        },
-        "GeoJSONLocation": {
-            "type": "object",
-            "required": [
-                "latitude",
-                "longitude"
-            ],
-            "properties": {
-                "latitude": {
-                    "type": "number"
-                },
-                "longitude": {
-                    "type": "number"
-                }
-            }
-        },
-        "GeoJSONMetadata": {
-            "type": "object",
-            "required": [
-                "end_point",
-                "start_point",
-                "watering_point"
-            ],
-            "properties": {
-                "end_point": {
-                    "$ref": "#/definitions/GeoJSONLocation"
-                },
-                "start_point": {
-                    "$ref": "#/definitions/GeoJSONLocation"
-                },
-                "watering_point": {
-                    "$ref": "#/definitions/GeoJSONLocation"
-                }
-            }
-        },
-        "GeoJson": {
-            "type": "object",
-            "required": [
-                "bbox",
-                "features",
-                "metadata",
-                "type"
-            ],
-            "properties": {
-                "bbox": {
-                    "type": "array",
-                    "items": {
-                        "type": "number"
-                    }
-                },
-                "features": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/GeoJsonFeature"
-                    }
-                },
-                "metadata": {
-                    "$ref": "#/definitions/GeoJSONMetadata"
-                },
-                "type": {
-                    "$ref": "#/definitions/GeoJsonType"
-                }
-            }
-        },
-        "GeoJsonFeature": {
-            "type": "object",
-            "required": [
-                "bbox",
-                "geometry",
-                "properties",
-                "type"
-            ],
-            "properties": {
-                "bbox": {
-                    "type": "array",
-                    "items": {
-                        "type": "number"
-                    }
-                },
-                "geometry": {
-                    "$ref": "#/definitions/GeoJsonGeometry"
-                },
-                "properties": {
-                    "type": "object",
-                    "additionalProperties": {}
-                },
-                "type": {
-                    "$ref": "#/definitions/GeoJsonType"
-                }
-            }
-        },
-        "GeoJsonGeometry": {
-            "type": "object",
-            "required": [
-                "coordinates",
-                "type"
-            ],
-            "properties": {
-                "coordinates": {
-                    "type": "array",
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "type": "number",
-                            "format": "float64"
-                        }
-                    }
-                },
-                "type": {
-                    "$ref": "#/definitions/GeoJsonType"
-                }
-            }
-        },
-        "GeoJsonType": {
-            "type": "string",
-            "enum": [
-                "FeatureCollection"
-            ],
-            "x-enum-varnames": [
-                "FeatureCollection"
-            ]
         },
         "GitInfo": {
             "type": "object",
@@ -5326,6 +5205,122 @@
                     "type": "integer"
                 }
             }
+        },
+        "shared.Coordinate": {
+            "type": "object"
+        },
+        "shared.GeoJSON": {
+            "type": "object",
+            "required": [
+                "bbox",
+                "features",
+                "metadata",
+                "type"
+            ],
+            "properties": {
+                "bbox": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "features": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/shared.GeoJSONFeature"
+                    }
+                },
+                "metadata": {
+                    "$ref": "#/definitions/shared.GeoJSONMetadata"
+                },
+                "type": {
+                    "$ref": "#/definitions/shared.GeoJSONType"
+                }
+            }
+        },
+        "shared.GeoJSONFeature": {
+            "type": "object",
+            "required": [
+                "bbox",
+                "geometry",
+                "properties",
+                "type"
+            ],
+            "properties": {
+                "bbox": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "geometry": {
+                    "$ref": "#/definitions/shared.GeoJSONGeometry"
+                },
+                "properties": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "type": {
+                    "$ref": "#/definitions/shared.GeoJSONType"
+                }
+            }
+        },
+        "shared.GeoJSONGeometry": {
+            "type": "object",
+            "required": [
+                "coordinates",
+                "type"
+            ],
+            "properties": {
+                "coordinates": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "number",
+                            "format": "float64"
+                        }
+                    }
+                },
+                "type": {
+                    "$ref": "#/definitions/shared.GeoJSONType"
+                }
+            }
+        },
+        "shared.GeoJSONLocation": {
+            "type": "object",
+            "properties": {
+                "coordinate": {
+                    "$ref": "#/definitions/shared.Coordinate"
+                }
+            }
+        },
+        "shared.GeoJSONMetadata": {
+            "type": "object",
+            "properties": {
+                "endPoint": {
+                    "$ref": "#/definitions/shared.GeoJSONLocation"
+                },
+                "startPoint": {
+                    "$ref": "#/definitions/shared.GeoJSONLocation"
+                },
+                "wateringPoint": {
+                    "$ref": "#/definitions/shared.GeoJSONLocation"
+                }
+            }
+        },
+        "shared.GeoJSONType": {
+            "type": "string",
+            "enum": [
+                "FeatureCollection",
+                "Feature",
+                "LineString"
+            ],
+            "x-enum-varnames": [
+                "FeatureCollection",
+                "Feature",
+                "LineString"
+            ]
         }
     },
     "securityDefinitions": {

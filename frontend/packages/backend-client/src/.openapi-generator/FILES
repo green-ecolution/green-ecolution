@@ -18,12 +18,6 @@ models/DataStatistics.ts
 models/DrivingLicense.ts
 models/Evaluation.ts
 models/EvaluationValue.ts
-models/GeoJSONLocation.ts
-models/GeoJSONMetadata.ts
-models/GeoJson.ts
-models/GeoJsonFeature.ts
-models/GeoJsonGeometry.ts
-models/GeoJsonType.ts
 models/GitInfo.ts
 models/HTTPError.ts
 models/LoginResponse.ts
@@ -49,6 +43,12 @@ models/SensorStatus.ts
 models/ServerInfo.ts
 models/ServiceStatus.ts
 models/ServicesInfo.ts
+models/SharedGeoJSON.ts
+models/SharedGeoJSONFeature.ts
+models/SharedGeoJSONGeometry.ts
+models/SharedGeoJSONLocation.ts
+models/SharedGeoJSONMetadata.ts
+models/SharedGeoJSONType.ts
 models/SoilCondition.ts
 models/Tree.ts
 models/TreeCluster.ts
