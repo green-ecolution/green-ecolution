@@ -84,7 +84,7 @@ func (s *TreeClusterService) HandleUpdateTree(ctx context.Context, event *entiti
 		return nil
 	}
 
-	if s.isNoUpdateNeeded(event) {
+	if event.Prev.TreeCluster != nil && !event.Prev.TreeCluster.NeedsPositionUpdate(event.Prev, event.New) {
 		return nil
 	}
 
@@ -101,22 +101,15 @@ func (s *TreeClusterService) HandleUpdateTree(ctx context.Context, event *entiti
 	return nil
 }
 
-func (s *TreeClusterService) isNoUpdateNeeded(event *entities.EventUpdateTree) bool {
-	treePosSame := event.Prev.Coordinate == event.New.Coordinate
-	tcSame := event.Prev.TreeCluster != nil && event.New.TreeCluster != nil && event.Prev.TreeCluster.ID == event.New.TreeCluster.ID
-	sensorSame := event.Prev.Sensor == event.New.Sensor
-	return treePosSame && tcSame && sensorSame
-}
-
 func (s *TreeClusterService) handleTreeClusterUpdate(ctx context.Context, tc *entities.TreeCluster, tree *entities.Tree) error {
 	log := logger.GetLogger(ctx)
 	if tc == nil || tree.TreeCluster == nil {
 		return nil
 	}
 
-	wateringStatus, err := s.getWateringStatusOfTreeCluster(ctx, tree.TreeCluster.ID)
+	wateringStatus, err := s.getWateringStatusOfTreeCluster(ctx, tc)
 	if err != nil {
-		log.Error("could not update watering status", "error", err)
+		log.Error("could not calculate watering status", "error", err)
 	}
 
 	updateFn := func(tc *entities.TreeCluster, repo storage.TreeClusterRepository) (bool, error) {
@@ -141,7 +134,7 @@ func (s *TreeClusterService) handleTreeClusterUpdate(ctx context.Context, tc *en
 	}
 
 	if err := s.treeClusterRepo.Update(ctx, tc.ID, updateFn); err == nil {
-		log.Info("successfully updated new tree cluster", "cluster_id", tc.ID)
+		log.Info("successfully updated tree cluster", "cluster_id", tc.ID)
 		return s.publishUpdateEvent(ctx, tc)
 	}
 
@@ -154,7 +147,7 @@ func (s *TreeClusterService) updateWateringStatusOfPrevTreeCluster(ctx context.C
 		return nil
 	}
 
-	wateringStatus, err := s.getWateringStatusOfTreeCluster(ctx, prevTc.ID)
+	wateringStatus, err := s.getWateringStatusOfTreeCluster(ctx, prevTc)
 	if err != nil {
 		log.Error("could not update watering status", "error", err)
 	}

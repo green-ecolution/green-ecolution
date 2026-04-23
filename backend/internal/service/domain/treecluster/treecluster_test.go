@@ -161,16 +161,6 @@ func TestTreeClusterService_Create(t *testing.T) {
 		// UpdateWateringStatuses
 		clusterRepo.EXPECT().GetAll(mock.Anything, entities.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
 
-		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(
-			ctx,
-			int32(1),
-		).Return(allLatestSensorData, nil)
-
-		treeRepo.EXPECT().GetBySensorIDs(
-			ctx,
-			entities.MustNewSensorID("sensor-1"),
-		).Return(testTrees, nil)
-
 		clusterRepo.EXPECT().Update(
 			ctx,
 			expectedCluster.ID,
@@ -213,11 +203,6 @@ func TestTreeClusterService_Create(t *testing.T) {
 
 		// UpdateWateringStatuses
 		clusterRepo.EXPECT().GetAll(mock.Anything, entities.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
-
-		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(
-			ctx,
-			int32(2),
-		).Return(nil, storage.ErrSensorNotFound)
 
 		clusterRepo.EXPECT().Update(
 			ctx,
@@ -306,16 +291,6 @@ func TestTreeClusterService_Create(t *testing.T) {
 		// UpdateWateringStatuses
 		clusterRepo.EXPECT().GetAll(mock.Anything, entities.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
 
-		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(
-			ctx,
-			int32(1),
-		).Return(allLatestSensorData, nil)
-
-		treeRepo.EXPECT().GetBySensorIDs(
-			ctx,
-			entities.MustNewSensorID("sensor-1"),
-		).Return(testTrees, nil)
-
 		clusterRepo.EXPECT().Update(
 			ctx,
 			expectedCluster.ID,
@@ -360,16 +335,6 @@ func TestTreeClusterService_Update(t *testing.T) {
 
 		clusterRepo.EXPECT().GetByID(ctx, clusterID).Return(expectedCluster, nil)
 
-		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(
-			ctx,
-			int32(1),
-		).Return(allLatestSensorData, nil)
-
-		treeRepo.EXPECT().GetBySensorIDs(
-			ctx,
-			entities.MustNewSensorID("sensor-1"),
-		).Return(testTrees, nil)
-
 		clusterRepo.EXPECT().Update(
 			ctx,
 			clusterID,
@@ -409,11 +374,6 @@ func TestTreeClusterService_Update(t *testing.T) {
 		).Return(nil, nil)
 
 		clusterRepo.EXPECT().GetByID(ctx, expectedCluster.ID).Return(expectedCluster, nil)
-
-		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(
-			ctx,
-			int32(2),
-		).Return(nil, storage.ErrSensorNotFound)
 
 		clusterRepo.EXPECT().Update(
 			ctx,
@@ -542,16 +502,6 @@ func TestTreeClusterService_EventSystem(t *testing.T) {
 		).Return(nil, nil)
 
 		clusterRepo.EXPECT().GetByID(ctx, expectedCluster.ID).Return(&expectedCluster, nil)
-
-		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(
-			ctx,
-			int32(2),
-		).Return(allLatestSensorData, nil)
-
-		treeRepo.EXPECT().GetBySensorIDs(
-			ctx,
-			entities.MustNewSensorID("sensor-1"),
-		).Return(testTrees, nil)
 
 		clusterRepo.EXPECT().Update(
 			ctx,
@@ -682,7 +632,6 @@ func TestTreeClusterService_UpdateWateringStatuses(t *testing.T) {
 		// when
 		clusterRepo.EXPECT().GetAll(mock.Anything, entities.TreeClusterQuery{}).Return(expectList, int64(len(expectList)), nil)
 		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, staleCluster.ID).Return(allLatestSensorData, nil)
-		treeRepo.EXPECT().GetBySensorIDs(ctx, entities.MustNewSensorID("sensor-1")).Return(testTrees, nil)
 		clusterRepo.EXPECT().Update(mock.Anything, staleCluster.ID, mock.Anything).Return(nil)
 
 		err := svc.UpdateWateringStatuses(ctx)
@@ -691,7 +640,6 @@ func TestTreeClusterService_UpdateWateringStatuses(t *testing.T) {
 		assert.NoError(t, err)
 		clusterRepo.AssertCalled(t, "GetAll", mock.Anything, entities.TreeClusterQuery{})
 		clusterRepo.AssertCalled(t, "GetAllLatestSensorDataByClusterID", mock.Anything, staleCluster.ID)
-		treeRepo.AssertCalled(t, "GetBySensorIDs", mock.Anything, mock.Anything)
 		clusterRepo.AssertCalled(t, "Update", mock.Anything, staleCluster.ID, mock.Anything)
 		clusterRepo.AssertExpectations(t)
 	})
@@ -755,7 +703,6 @@ func TestTreeClusterService_UpdateWateringStatuses(t *testing.T) {
 		assert.Equal(t, expectedErr, err)
 		clusterRepo.AssertCalled(t, "GetAll", mock.Anything, entities.TreeClusterQuery{})
 		clusterRepo.AssertNotCalled(t, "GetAllLatestSensorDataByClusterID")
-		clusterRepo.AssertNotCalled(t, "GetBySensorIDs")
 		clusterRepo.AssertNotCalled(t, "Update")
 		clusterRepo.AssertExpectations(t)
 	})
@@ -780,7 +727,6 @@ func TestTreeClusterService_UpdateWateringStatuses(t *testing.T) {
 		// when
 		clusterRepo.EXPECT().GetAll(mock.Anything, entities.TreeClusterQuery{}).Return(expectList, int64(len(expectList)), nil)
 		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, staleCluster.ID).Return(allLatestSensorData, nil)
-		treeRepo.EXPECT().GetBySensorIDs(ctx, entities.MustNewSensorID("sensor-1")).Return(testTrees, nil)
 		clusterRepo.EXPECT().Update(mock.Anything, staleCluster.ID, mock.Anything).Return(errors.New("update failed"))
 
 		err := svc.UpdateWateringStatuses(ctx)
@@ -788,7 +734,6 @@ func TestTreeClusterService_UpdateWateringStatuses(t *testing.T) {
 		// then
 		clusterRepo.AssertCalled(t, "GetAll", mock.Anything, entities.TreeClusterQuery{})
 		clusterRepo.AssertCalled(t, "GetAllLatestSensorDataByClusterID", mock.Anything, staleCluster.ID)
-		treeRepo.AssertCalled(t, "GetBySensorIDs", mock.Anything, mock.Anything)
 		clusterRepo.AssertCalled(t, "Update", mock.Anything, staleCluster.ID, mock.Anything)
 		clusterRepo.AssertExpectations(t)
 		assert.NoError(t, err)

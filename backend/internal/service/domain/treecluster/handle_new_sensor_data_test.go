@@ -21,7 +21,6 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 		eventManager := worker.NewEventManager(entities.EventTypeUpdateTreeCluster)
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, eventManager)
 
-		// event
 		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTreeCluster)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -38,8 +37,19 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 			},
 		}
 
+		tree1 := &entities.Tree{
+			ID:           2,
+			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
+		}
+		tree2 := &entities.Tree{
+			ID:           3,
+			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year())),
+		}
+
 		tc := &entities.TreeCluster{
-			ID: 1,
+			ID:             1,
+			WateringStatus: entities.WateringStatusUnknown,
+			Trees:          []*entities.Tree{tree1, tree2},
 		}
 
 		tcNew := &entities.TreeCluster{
@@ -47,34 +57,10 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 			WateringStatus: entities.WateringStatusGood,
 		}
 
-		tree := entities.Tree{
+		tree := &entities.Tree{
 			ID:           1,
 			TreeCluster:  tc,
 			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
-		}
-
-		treeWithSensorID1 := entities.Tree{
-			ID: 2,
-			TreeCluster: &entities.TreeCluster{
-				ID:             1,
-				WateringStatus: entities.WateringStatusUnknown,
-			},
-			Sensor: &entities.Sensor{
-				ID: entities.MustNewSensorID("sensor-1"),
-			},
-			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
-		}
-
-		treeWithSensorID2 := entities.Tree{
-			ID: 3,
-			TreeCluster: &entities.TreeCluster{
-				ID:             1,
-				WateringStatus: entities.WateringStatusUnknown,
-			},
-			Sensor: &entities.Sensor{
-				ID: entities.MustNewSensorID("sensor-2"),
-			},
-			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 29)), // very old tree
 		}
 
 		allLatestSensorData := []*entities.SensorData{
@@ -102,11 +88,10 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 
 		event := entities.NewEventSensorData(&sensorDataEvent)
 
-		treeRepo.EXPECT().GetBySensorID(mock.Anything, entities.MustNewSensorID("sensor-1")).Return(&tree, nil)
+		treeRepo.EXPECT().GetBySensorID(mock.Anything, entities.MustNewSensorID("sensor-1")).Return(tree, nil)
 		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(1)).Return(allLatestSensorData, nil)
-		treeRepo.EXPECT().GetBySensorIDs(mock.Anything, entities.MustNewSensorID("sensor-1"), entities.MustNewSensorID("sensor-2")).Return([]*entities.Tree{&treeWithSensorID1, &treeWithSensorID2}, nil)
 		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).RunAndReturn(func(ctx context.Context, i int32, f func(*entities.TreeCluster, storage.TreeClusterRepository) (bool, error)) error {
-			cluster := entities.TreeCluster{}
+			cluster := *tc
 			_, err := f(&cluster, clusterRepo)
 			assert.NoError(t, err)
 			assert.Equal(t, entities.WateringStatusGood, cluster.WateringStatus)
@@ -114,10 +99,8 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 		})
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(tcNew, nil)
 
-		// when
 		err := svc.HandleNewSensorData(context.Background(), &event)
 
-		// then
 		assert.NoError(t, err)
 		select {
 		case recievedEvent := <-ch:
@@ -137,7 +120,6 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 		eventManager := worker.NewEventManager(entities.EventTypeUpdateTreeCluster)
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, eventManager)
 
-		// event
 		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTreeCluster)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -154,37 +136,31 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 			},
 		}
 
+		treeInCluster := &entities.Tree{
+			ID:           2,
+			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 1)),
+		}
+
 		tc := &entities.TreeCluster{
-			ID: 1,
+			ID:             1,
+			WateringStatus: entities.WateringStatusUnknown,
+			Trees:          []*entities.Tree{treeInCluster},
 		}
 
-		tcNew := &entities.TreeCluster{
-			ID: 1,
-		}
+		tcNew := &entities.TreeCluster{ID: 1}
 
-		tree := entities.Tree{
+		tree := &entities.Tree{
 			ID:           1,
 			TreeCluster:  tc,
 			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
 		}
 
-		treeWithSensorID1 := entities.Tree{
-			ID:             2,
-			TreeCluster:    tc,
-			WateringStatus: entities.WateringStatusBad,
-			Sensor: &entities.Sensor{
-				ID: entities.MustNewSensorID("sensor-1"),
-			},
-			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 1)),
-		}
-
 		event := entities.NewEventSensorData(&sensorDataEvent)
 
-		treeRepo.EXPECT().GetBySensorID(mock.Anything, entities.MustNewSensorID("sensor-1")).Return(&tree, nil)
+		treeRepo.EXPECT().GetBySensorID(mock.Anything, entities.MustNewSensorID("sensor-1")).Return(tree, nil)
 		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(1)).Return([]*entities.SensorData{&sensorDataEvent}, nil)
-		treeRepo.EXPECT().GetBySensorIDs(mock.Anything, entities.MustNewSensorID("sensor-1")).Return([]*entities.Tree{&treeWithSensorID1}, nil)
 		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).RunAndReturn(func(ctx context.Context, i int32, f func(*entities.TreeCluster, storage.TreeClusterRepository) (bool, error)) error {
-			cluster := entities.TreeCluster{}
+			cluster := *tc
 			_, err := f(&cluster, clusterRepo)
 			assert.NoError(t, err)
 			assert.Equal(t, entities.WateringStatusBad, cluster.WateringStatus)
@@ -192,10 +168,8 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 		})
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(tcNew, nil)
 
-		// when
 		err := svc.HandleNewSensorData(context.Background(), &event)
 
-		// then
 		assert.NoError(t, err)
 		select {
 		case recievedEvent := <-ch:
@@ -215,7 +189,6 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 		eventManager := worker.NewEventManager(entities.EventTypeUpdateTreeCluster)
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, eventManager)
 
-		// event
 		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTreeCluster)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -232,38 +205,30 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 			},
 		}
 
+		treeInCluster := &entities.Tree{
+			ID:           2,
+			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 1)),
+		}
+
 		tc := &entities.TreeCluster{
 			ID:             1,
 			WateringStatus: entities.WateringStatusBad,
+			Trees:          []*entities.Tree{treeInCluster},
 		}
 
-		tree := entities.Tree{
-			ID:             1,
-			TreeCluster:    tc,
-			WateringStatus: entities.WateringStatusBad,
-			PlantingYear:   entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
-		}
-
-		treeWithSensorID1 := entities.Tree{
-			ID:             2,
-			TreeCluster:    tc,
-			WateringStatus: entities.WateringStatusBad,
-			Sensor: &entities.Sensor{
-				ID: entities.MustNewSensorID("sensor-1"),
-			},
-			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 1)),
+		tree := &entities.Tree{
+			ID:           1,
+			TreeCluster:  tc,
+			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
 		}
 
 		event := entities.NewEventSensorData(&sensorDataEvent)
 
-		treeRepo.EXPECT().GetBySensorID(mock.Anything, entities.MustNewSensorID("sensor-1")).Return(&tree, nil)
+		treeRepo.EXPECT().GetBySensorID(mock.Anything, entities.MustNewSensorID("sensor-1")).Return(tree, nil)
 		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(1)).Return([]*entities.SensorData{&sensorDataEvent}, nil)
-		treeRepo.EXPECT().GetBySensorIDs(mock.Anything, entities.MustNewSensorID("sensor-1")).Return([]*entities.Tree{&treeWithSensorID1}, nil)
 
-		// when
 		err := svc.HandleNewSensorData(context.Background(), &event)
 
-		// then
 		assert.NoError(t, err)
 		select {
 		case <-ch:
@@ -280,7 +245,6 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 		eventManager := worker.NewEventManager(entities.EventTypeUpdateTreeCluster)
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, eventManager)
 
-		// event
 		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTreeCluster)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -297,21 +261,18 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 			},
 		}
 
-		tree := entities.Tree{
-			ID:             1,
-			TreeCluster:    nil,
-			WateringStatus: entities.WateringStatusBad,
-			PlantingYear:   entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
+		tree := &entities.Tree{
+			ID:           1,
+			TreeCluster:  nil,
+			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
 		}
 
 		event := entities.NewEventSensorData(&sensorDataEvent)
 
-		treeRepo.EXPECT().GetBySensorID(mock.Anything, entities.MustNewSensorID("sensor-1")).Return(&tree, nil)
+		treeRepo.EXPECT().GetBySensorID(mock.Anything, entities.MustNewSensorID("sensor-1")).Return(tree, nil)
 
-		// when
 		err := svc.HandleNewSensorData(context.Background(), &event)
 
-		// then
 		assert.NoError(t, err)
 		select {
 		case <-ch:

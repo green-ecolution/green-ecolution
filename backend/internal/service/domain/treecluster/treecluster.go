@@ -229,11 +229,10 @@ func (s *TreeClusterService) UpdateWateringStatuses(ctx context.Context) error {
 	for _, cluster := range treeClusters {
 		var wateringStatus domain.WateringStatus
 
-		if cluster.Trees == nil || (cluster.Trees != nil && len(cluster.Trees) == 0) {
-			// tree cluster has no trees
+		if len(cluster.Trees) == 0 {
 			wateringStatus = domain.WateringStatusUnknown
 		} else if cluster.LastWatered != nil && cluster.LastWatered.Before(cutoffTime) {
-			wateringStatus, err = s.getWateringStatusOfTreeCluster(ctx, cluster.ID)
+			wateringStatus, err = s.getWateringStatusOfTreeCluster(ctx, cluster)
 			if err != nil {
 				log.Error("failed to get watering status of cluster", "cluster_id", cluster.ID, "error", err)
 				return err
@@ -265,12 +264,7 @@ func (s *TreeClusterService) Ready() bool {
 // otherwise the center point of the tree cluster cannot be set
 func (s *TreeClusterService) updateTreeClusterPosition(ctx context.Context, id int32) error {
 	log := logger.GetLogger(ctx)
-	wateringStatus, err := s.getWateringStatusOfTreeCluster(ctx, id)
-	if err != nil {
-		log.Error("could not update watering status", "error", err)
-	}
-
-	err = s.treeClusterRepo.Update(ctx, id, func(tc *domain.TreeCluster, repo storage.TreeClusterRepository) (bool, error) {
+	err := s.treeClusterRepo.Update(ctx, id, func(tc *domain.TreeCluster, repo storage.TreeClusterRepository) (bool, error) {
 		if len(tc.Trees) != 0 {
 			coord, err := repo.GetCenterPoint(ctx, tc.ID)
 			if err != nil {
@@ -295,7 +289,13 @@ func (s *TreeClusterService) updateTreeClusterPosition(ctx context.Context, id i
 
 			if tc.Coordinate == nil || *tc.Coordinate != *coord {
 				tc.Coordinate = coord
-				tc.WateringStatus = wateringStatus
+
+				wateringStatus, err := s.getWateringStatusOfTreeCluster(ctx, tc)
+				if err != nil {
+					log.Error("could not calculate watering status", "error", err)
+				} else {
+					tc.WateringStatus = wateringStatus
+				}
 
 				log.Info("update tree cluster position due to changed trees inside the tree cluster", "cluster_id", id)
 				log.Debug("detailed updated tree cluster position informations", "cluster_id", id,

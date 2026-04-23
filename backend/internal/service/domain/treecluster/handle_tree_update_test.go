@@ -17,7 +17,7 @@ import (
 //nolint:gocyclo // function handles multiple test cases and complex event logic, which requires higher complexity to cover all scenarios.
 func TestTreeClusterService_HandleUpdateTree(t *testing.T) {
 	t.Run("should update tree cluster lat, long, region, watering status and send treecluster update event", func(t *testing.T) {
-		clusterRepo, treeRepo, _, eventManager, svc := setupTest(t)
+		clusterRepo, _, regionRepo, eventManager, svc := setupTest(t)
 
 		// event
 		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTreeCluster)
@@ -27,9 +27,10 @@ func TestTreeClusterService_HandleUpdateTree(t *testing.T) {
 
 		event := entities.NewEventUpdateTree(&prevTree, &updatedTree, nil)
 		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(1)).Return(allLatestSensorData, nil)
-		treeRepo.EXPECT().GetBySensorIDs(mock.Anything, entities.MustNewSensorID("sensor-1")).Return([]*entities.Tree{&updatedTree}, nil)
+		clusterRepo.EXPECT().GetCenterPoint(mock.Anything, int32(1)).Return(&updatedTcCoord, nil)
+		regionRepo.EXPECT().GetByPoint(mock.Anything, mock.Anything).Return(updatedTc.Region, nil)
 		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).RunAndReturn(func(ctx context.Context, i int32, f func(*entities.TreeCluster, storage.TreeClusterRepository) (bool, error)) error {
-			cluster := entities.TreeCluster{}
+			cluster := prevTc
 			_, err := f(&cluster, clusterRepo)
 			assert.NoError(t, err)
 			assert.Equal(t, entities.WateringStatusGood, cluster.WateringStatus)
@@ -210,9 +211,8 @@ func TestTreeClusterService_HandleUpdateTree(t *testing.T) {
 	})
 
 	t.Run("should update if tree location is equal but tree has changed treecluster", func(t *testing.T) {
-		clusterRepo, _, regionRepo, eventManager, svc := setupTest(t)
+		clusterRepo, _, _, eventManager, svc := setupTest(t)
 
-		// event
 		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTreeCluster)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -226,26 +226,32 @@ func TestTreeClusterService_HandleUpdateTree(t *testing.T) {
 				Name: "Sandberg",
 			},
 			Coordinate: &newTcCoord,
+			Trees: []*entities.Tree{
+				{ID: 1, PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 2))},
+			},
 		}
-		updatedTree.TreeCluster = &newTc
 
-		event := entities.NewEventUpdateTree(&prevTree, &updatedTree, nil)
+		localUpdatedTree := entities.Tree{
+			ID:           1,
+			TreeCluster:  &newTc,
+			Number:       "T001",
+			Coordinate:   entities.MustNewCoordinate(54.811733806341856, 9.482958846410169),
+			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
+			Sensor:       &entities.Sensor{ID: entities.MustNewSensorID("sensor-1")},
+		}
 
-		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(2)).Return(nil, storage.ErrSensorNotFound)
+		event := entities.NewEventUpdateTree(&prevTree, &localUpdatedTree, nil)
+
+		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(1)).Return(allLatestSensorData, nil)
+		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(2)).Return(allLatestSensorData, nil)
 		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).Return(nil)
 		clusterRepo.EXPECT().Update(mock.Anything, int32(2), mock.Anything).Return(nil)
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(&prevTc, nil)
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(2)).Return(&newTc, nil)
 
-		// when
 		err := svc.HandleUpdateTree(context.Background(), &event)
 
-		// then
 		assert.NoError(t, err)
-		clusterRepo.AssertNotCalled(t, "Update")
-		clusterRepo.AssertNotCalled(t, "GetCenterPoint")
-		regionRepo.AssertNotCalled(t, "GetByPoint")
-
 		select {
 		case _, ok := <-ch:
 			assert.True(t, ok)
@@ -341,6 +347,12 @@ var prevTc = entities.TreeCluster{
 		Name: "Sandberg",
 	},
 	Coordinate: &prevTcCoord,
+	Trees: []*entities.Tree{
+		{
+			ID:           1,
+			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
+		},
+	},
 }
 
 var prevTree = entities.Tree{
