@@ -178,7 +178,6 @@ Class | Method | HTTP request | Description
  - [Tree](docs/Tree.md)
  - [TreeCluster](docs/TreeCluster.md)
  - [TreeClusterCreate](docs/TreeClusterCreate.md)
- - [TreeClusterInList](docs/TreeClusterInList.md)
  - [TreeClusterList](docs/TreeClusterList.md)
  - [TreeClusterUpdate](docs/TreeClusterUpdate.md)
  - [TreeCreate](docs/TreeCreate.md)

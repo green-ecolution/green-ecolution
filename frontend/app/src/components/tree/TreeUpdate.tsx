@@ -43,7 +43,7 @@ const TreeUpdate = ({ treeId, clusters, sensors }: TreeUpdateProps) => {
         species: data.species,
         plantingYear: data.plantingYear,
         treeClusterId: data.treeClusterId ?? -1,
-        sensorId: data.sensor?.id ?? '-1',
+        sensorId: data.sensorId ?? '-1',
         description: data.description,
         provider: data.provider,
       },

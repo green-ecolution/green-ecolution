@@ -312,37 +312,37 @@ generate-client:
 # Create a new database migration
 migrate-new name:
     @echo "Create new migration..."
-    cd {{ backend_dir }} && go tool goose -dir internal/storage/postgres/migrations create {{ name }} sql
+    cd {{ backend_dir }} && go tool goose -dir internal/infrastructure/postgres/migrations create {{ name }} sql
 
 # Apply all pending migrations
 migrate-up:
     @echo "Migrating up..."
-    cd {{ backend_dir }} && go tool goose -dir internal/storage/postgres/migrations postgres "{{ db_url }}" up
+    cd {{ backend_dir }} && go tool goose -dir internal/infrastructure/postgres/migrations postgres "{{ db_url }}" up
 
 # Rollback one migration
 migrate-down:
     @echo "Migrating down..."
-    cd {{ backend_dir }} && go tool goose -dir internal/storage/postgres/migrations postgres "{{ db_url }}" down
+    cd {{ backend_dir }} && go tool goose -dir internal/infrastructure/postgres/migrations postgres "{{ db_url }}" down
 
 # Rollback all migrations
 migrate-reset:
     @echo "Migrating reset..."
-    cd {{ backend_dir }} && go tool goose -dir internal/storage/postgres/migrations postgres "{{ db_url }}" reset
+    cd {{ backend_dir }} && go tool goose -dir internal/infrastructure/postgres/migrations postgres "{{ db_url }}" reset
 
 # Show migration status
 migrate-status:
     @echo "Migration status..."
-    cd {{ backend_dir }} && go tool goose -dir internal/storage/postgres/migrations postgres "{{ db_url }}" status
+    cd {{ backend_dir }} && go tool goose -dir internal/infrastructure/postgres/migrations postgres "{{ db_url }}" status
 
 # Apply seed data (runs migrate-up first)
 seed-up: migrate-up
     @echo "Seeding up..."
-    cd {{ backend_dir }} && go tool goose -dir internal/storage/postgres/seed -no-versioning postgres "{{ db_url }}" up
+    cd {{ backend_dir }} && go tool goose -dir internal/infrastructure/postgres/seed -no-versioning postgres "{{ db_url }}" up
 
 # Reset seed data (runs migrate-up first)
 seed-reset: migrate-up
     @echo "Seeding reset..."
-    cd {{ backend_dir }} && go tool goose -dir internal/storage/postgres/seed -no-versioning postgres "{{ db_url }}" reset
+    cd {{ backend_dir }} && go tool goose -dir internal/infrastructure/postgres/seed -no-versioning postgres "{{ db_url }}" reset
 
 # Format Go code and tidy modules
 tidy:

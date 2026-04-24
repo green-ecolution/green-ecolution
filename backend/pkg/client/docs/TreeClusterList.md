@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Data** | [**[]TreeClusterInList**](TreeClusterInList.md) |  | 
+**Data** | [**[]TreeCluster**](TreeCluster.md) |  | 
 **Pagination** | Pointer to [**Pagination**](Pagination.md) |  | [optional] 
 
 ## Methods
 
 ### NewTreeClusterList
 
-`func NewTreeClusterList(data []TreeClusterInList, ) *TreeClusterList`
+`func NewTreeClusterList(data []TreeCluster, ) *TreeClusterList`
 
 NewTreeClusterList instantiates a new TreeClusterList object
 This constructor will assign default values to properties that have it defined,
@@ -28,20 +28,20 @@ but it doesn't guarantee that properties required by API are set
 
 ### GetData
 
-`func (o *TreeClusterList) GetData() []TreeClusterInList`
+`func (o *TreeClusterList) GetData() []TreeCluster`
 
 GetData returns the Data field if non-nil, zero value otherwise.
 
 ### GetDataOk
 
-`func (o *TreeClusterList) GetDataOk() (*[]TreeClusterInList, bool)`
+`func (o *TreeClusterList) GetDataOk() (*[]TreeCluster, bool)`
 
 GetDataOk returns a tuple with the Data field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetData
 
-`func (o *TreeClusterList) SetData(v []TreeClusterInList)`
+`func (o *TreeClusterList) SetData(v []TreeCluster)`
 
 SetData sets Data field to given value.
 

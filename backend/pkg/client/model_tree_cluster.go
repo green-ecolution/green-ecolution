@@ -34,9 +34,9 @@ type TreeCluster struct {
 	MoistureLevel         float32                `json:"moisture_level"`
 	Name                  string                 `json:"name"`
 	Provider              *string                `json:"provider,omitempty"`
-	Region                *Region                `json:"region,omitempty"`
+	RegionId              *int32                 `json:"region_id,omitempty"`
 	SoilCondition         SoilCondition          `json:"soil_condition"`
-	Trees                 []Tree                 `json:"trees,omitempty"`
+	TreeIds               []int32                `json:"tree_ids,omitempty"`
 	UpdatedAt             string                 `json:"updated_at"`
 	WateringStatus        WateringStatus         `json:"watering_status"`
 }
@@ -384,36 +384,36 @@ func (o *TreeCluster) SetProvider(v string) {
 	o.Provider = &v
 }
 
-// GetRegion returns the Region field value if set, zero value otherwise.
-func (o *TreeCluster) GetRegion() Region {
-	if o == nil || IsNil(o.Region) {
-		var ret Region
+// GetRegionId returns the RegionId field value if set, zero value otherwise.
+func (o *TreeCluster) GetRegionId() int32 {
+	if o == nil || IsNil(o.RegionId) {
+		var ret int32
 		return ret
 	}
-	return *o.Region
+	return *o.RegionId
 }
 
-// GetRegionOk returns a tuple with the Region field value if set, nil otherwise
+// GetRegionIdOk returns a tuple with the RegionId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *TreeCluster) GetRegionOk() (*Region, bool) {
-	if o == nil || IsNil(o.Region) {
+func (o *TreeCluster) GetRegionIdOk() (*int32, bool) {
+	if o == nil || IsNil(o.RegionId) {
 		return nil, false
 	}
-	return o.Region, true
+	return o.RegionId, true
 }
 
-// HasRegion returns a boolean if a field has been set.
-func (o *TreeCluster) HasRegion() bool {
-	if o != nil && !IsNil(o.Region) {
+// HasRegionId returns a boolean if a field has been set.
+func (o *TreeCluster) HasRegionId() bool {
+	if o != nil && !IsNil(o.RegionId) {
 		return true
 	}
 
 	return false
 }
 
-// SetRegion gets a reference to the given Region and assigns it to the Region field.
-func (o *TreeCluster) SetRegion(v Region) {
-	o.Region = &v
+// SetRegionId gets a reference to the given int32 and assigns it to the RegionId field.
+func (o *TreeCluster) SetRegionId(v int32) {
+	o.RegionId = &v
 }
 
 // GetSoilCondition returns the SoilCondition field value
@@ -440,36 +440,36 @@ func (o *TreeCluster) SetSoilCondition(v SoilCondition) {
 	o.SoilCondition = v
 }
 
-// GetTrees returns the Trees field value if set, zero value otherwise.
-func (o *TreeCluster) GetTrees() []Tree {
-	if o == nil || IsNil(o.Trees) {
-		var ret []Tree
+// GetTreeIds returns the TreeIds field value if set, zero value otherwise.
+func (o *TreeCluster) GetTreeIds() []int32 {
+	if o == nil || IsNil(o.TreeIds) {
+		var ret []int32
 		return ret
 	}
-	return o.Trees
+	return o.TreeIds
 }
 
-// GetTreesOk returns a tuple with the Trees field value if set, nil otherwise
+// GetTreeIdsOk returns a tuple with the TreeIds field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *TreeCluster) GetTreesOk() ([]Tree, bool) {
-	if o == nil || IsNil(o.Trees) {
+func (o *TreeCluster) GetTreeIdsOk() ([]int32, bool) {
+	if o == nil || IsNil(o.TreeIds) {
 		return nil, false
 	}
-	return o.Trees, true
+	return o.TreeIds, true
 }
 
-// HasTrees returns a boolean if a field has been set.
-func (o *TreeCluster) HasTrees() bool {
-	if o != nil && !IsNil(o.Trees) {
+// HasTreeIds returns a boolean if a field has been set.
+func (o *TreeCluster) HasTreeIds() bool {
+	if o != nil && !IsNil(o.TreeIds) {
 		return true
 	}
 
 	return false
 }
 
-// SetTrees gets a reference to the given []Tree and assigns it to the Trees field.
-func (o *TreeCluster) SetTrees(v []Tree) {
-	o.Trees = v
+// SetTreeIds gets a reference to the given []int32 and assigns it to the TreeIds field.
+func (o *TreeCluster) SetTreeIds(v []int32) {
+	o.TreeIds = v
 }
 
 // GetUpdatedAt returns the UpdatedAt field value
@@ -548,12 +548,12 @@ func (o TreeCluster) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Provider) {
 		toSerialize["provider"] = o.Provider
 	}
-	if !IsNil(o.Region) {
-		toSerialize["region"] = o.Region
+	if !IsNil(o.RegionId) {
+		toSerialize["region_id"] = o.RegionId
 	}
 	toSerialize["soil_condition"] = o.SoilCondition
-	if !IsNil(o.Trees) {
-		toSerialize["trees"] = o.Trees
+	if !IsNil(o.TreeIds) {
+		toSerialize["tree_ids"] = o.TreeIds
 	}
 	toSerialize["updated_at"] = o.UpdatedAt
 	toSerialize["watering_status"] = o.WateringStatus

@@ -1,0 +1,169 @@
+package sensor
+
+import (
+	"strings"
+
+	"github.com/gofiber/fiber/v2"
+
+	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities/mapper"
+	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/errorhandler"
+	"github.com/green-ecolution/green-ecolution/backend/internal/utils/pagination"
+)
+
+// @Summary		Get all sensors
+// @Description	Retrieves a paginated list of all sensors. Supports filtering by provider.
+// @Id				get-all-sensors
+// @Tags			Sensor
+// @Produce		json
+// @Success		200	{object}	entities.SensorListResponse
+// @Failure		400	{object}	HTTPError
+// @Failure		401	{object}	HTTPError
+// @Failure		403	{object}	HTTPError
+// @Failure		500	{object}	HTTPError
+// @Router			/v1/sensor [get]
+// @Param			page		query	int		false	"Page number for pagination"
+// @Param			limit		query	int		false	"Number of items per page"
+// @Param			provider	query	string	false	"Filter by data provider"
+// @Security		Keycloak
+func GetAllSensors(svc ports.SensorService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		ctx := c.Context()
+		var query shared.Query
+
+		if err := c.QueryParser(&query); err != nil {
+			return errorhandler.HandleError(err)
+		}
+
+		domainData, totalCount, err := svc.GetAll(ctx, query)
+		if err != nil {
+			return errorhandler.HandleError(err)
+		}
+
+		data := make([]*entities.SensorResponse, len(domainData))
+		for i, domain := range domainData {
+			data[i] = mapToDto(domain)
+		}
+
+		return c.JSON(entities.SensorListResponse{
+			Data:       data,
+			Pagination: pagination.Create(ctx, totalCount),
+		})
+	}
+}
+
+// @Summary		Get sensor by ID
+// @Description	Retrieves detailed information about a specific sensor including its latest data readings.
+// @Id				get-sensor-by-id
+// @Tags			Sensor
+// @Produce		json
+// @Success		200	{object}	entities.SensorResponse
+// @Failure		400	{object}	HTTPError
+// @Failure		401	{object}	HTTPError
+// @Failure		403	{object}	HTTPError
+// @Failure		404	{object}	HTTPError
+// @Failure		500	{object}	HTTPError
+// @Router			/v1/sensor/{sensor_id} [get]
+// @Param			sensor_id	path	string	true	"Sensor ID"
+// @Security		Keycloak
+func GetSensorByID(svc ports.SensorService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		ctx := c.Context()
+		rawID := strings.Clone(c.Params("id"))
+
+		sensorID, err := sensor.NewSensorID(rawID)
+		if err != nil {
+			return errorhandler.HandleError(ports.NewError(ports.BadRequest, err.Error()))
+		}
+
+		domainData, err := svc.GetByID(ctx, sensorID)
+		if err != nil {
+			return errorhandler.HandleError(err)
+		}
+
+		return c.JSON(mapToDto(domainData))
+	}
+}
+
+// @Summary		Get all sensor data by ID
+// @Description	Retrieves the complete history of data readings for a specific sensor.
+// @Id				get-all-sensor-data-by-id
+// @Tags			Sensor
+// @Produce		json
+// @Success		200	{object}	entities.SensorDataListResponse
+// @Failure		400	{object}	HTTPError
+// @Failure		401	{object}	HTTPError
+// @Failure		403	{object}	HTTPError
+// @Failure		404	{object}	HTTPError
+// @Failure		500	{object}	HTTPError
+// @Router			/v1/sensor/data/{sensor_id} [get]
+// @Param			sensor_id	path	string	true	"Sensor ID"
+// @Security		Keycloak
+func GetAllSensorDataByID(svc ports.SensorService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		ctx := c.Context()
+		rawID := strings.Clone(c.Params("id"))
+
+		sensorID, err := sensor.NewSensorID(rawID)
+		if err != nil {
+			return errorhandler.HandleError(ports.NewError(ports.BadRequest, err.Error()))
+		}
+
+		domainData, err := svc.GetAllDataByID(ctx, sensorID)
+		if err != nil {
+			return errorhandler.HandleError(err)
+		}
+
+		data := make([]*entities.SensorDataResponse, len(domainData))
+		for i, domain := range domainData {
+			data[i] = mapper.SensorFromDataResponse(domain)
+		}
+
+		return c.JSON(entities.SensorDataListResponse{
+			Data: data,
+		})
+	}
+}
+
+// @Summary		Delete sensor
+// @Description	Permanently deletes a sensor and all its associated data readings.
+// @Id				delete-sensor
+// @Tags			Sensor
+// @Produce		json
+// @Success		204
+// @Failure		400	{object}	HTTPError
+// @Failure		401	{object}	HTTPError
+// @Failure		403	{object}	HTTPError
+// @Failure		404	{object}	HTTPError
+// @Failure		500	{object}	HTTPError
+// @Router			/v1/sensor/{sensor_id} [delete]
+// @Param			sensor_id	path	string	true	"Sensor ID"
+// @Security		Keycloak
+func DeleteSensor(svc ports.SensorService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		ctx := c.Context()
+		rawID := strings.Clone(c.Params("id"))
+
+		sensorID, err := sensor.NewSensorID(rawID)
+		if err != nil {
+			return errorhandler.HandleError(ports.NewError(ports.BadRequest, err.Error()))
+		}
+
+		err = svc.Delete(ctx, sensorID)
+		if err != nil {
+			return errorhandler.HandleError(err)
+		}
+
+		return c.SendStatus(fiber.StatusNoContent)
+	}
+}
+
+// TODO: Create / Update Sensor
+
+func mapToDto(t *sensor.Sensor) *entities.SensorResponse {
+	dto := mapper.SensorFromResponse(t)
+	return dto
+}

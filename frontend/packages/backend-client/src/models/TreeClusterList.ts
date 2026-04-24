@@ -20,13 +20,13 @@ import {
     PaginationToJSON,
     PaginationToJSONTyped,
 } from './Pagination';
-import type { TreeClusterInList } from './TreeClusterInList';
+import type { TreeCluster } from './TreeCluster';
 import {
-    TreeClusterInListFromJSON,
-    TreeClusterInListFromJSONTyped,
-    TreeClusterInListToJSON,
-    TreeClusterInListToJSONTyped,
-} from './TreeClusterInList';
+    TreeClusterFromJSON,
+    TreeClusterFromJSONTyped,
+    TreeClusterToJSON,
+    TreeClusterToJSONTyped,
+} from './TreeCluster';
 
 /**
  * 
@@ -36,10 +36,10 @@ import {
 export interface TreeClusterList {
     /**
      * 
-     * @type {Array<TreeClusterInList>}
+     * @type {Array<TreeCluster>}
      * @memberof TreeClusterList
      */
-    data: Array<TreeClusterInList>;
+    data: Array<TreeCluster>;
     /**
      * 
      * @type {Pagination}
@@ -66,7 +66,7 @@ export function TreeClusterListFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'data': ((json['data'] as Array<any>).map(TreeClusterInListFromJSON)),
+        'data': ((json['data'] as Array<any>).map(TreeClusterFromJSON)),
         'pagination': json['pagination'] == null ? undefined : PaginationFromJSON(json['pagination']),
     };
 }
@@ -82,7 +82,7 @@ export function TreeClusterListToJSONTyped(value?: TreeClusterList | null, ignor
 
     return {
         
-        'data': ((value['data'] as Array<any>).map(TreeClusterInListToJSON)),
+        'data': ((value['data'] as Array<any>).map(TreeClusterToJSON)),
         'pagination': PaginationToJSON(value['pagination']),
     };
 }

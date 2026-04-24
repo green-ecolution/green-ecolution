@@ -1,4 +1,4 @@
-import { TreeClusterInList } from '@green-ecolution/backend-client'
+import { TreeCluster } from '@green-ecolution/backend-client'
 import { memo, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { treeClusterQuery } from '@/api/queries'
@@ -29,7 +29,7 @@ const tooltipOptions = {
 }
 
 export interface WithFilterableClustersProps {
-  onClick?: (cluster: TreeClusterInList) => void
+  onClick?: (cluster: TreeCluster) => void
   highlightedClusters?: number[]
   disabledClusters?: number[]
 }
@@ -84,7 +84,7 @@ const FilterableClustersContent = memo(
     const disabledSet = useMemo(() => new Set(disabledClusters), [disabledClusters])
 
     const getIcon = useCallback(
-      (c: TreeClusterInList) =>
+      (c: TreeCluster) =>
         ClusterIcon(
           getStatusColor(c.wateringStatus),
           highlightedSet.has(c.id),
@@ -94,8 +94,8 @@ const FilterableClustersContent = memo(
       [highlightedSet, disabledSet],
     )
 
-    const getId = useCallback((c: TreeClusterInList) => c.id, [])
-    const getTooltip = useCallback((c: TreeClusterInList) => c.name, [])
+    const getId = useCallback((c: TreeCluster) => c.id, [])
+    const getTooltip = useCallback((c: TreeCluster) => c.name, [])
 
     return (
       <MarkerList

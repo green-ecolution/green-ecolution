@@ -32,7 +32,7 @@ type Tree struct {
 	Number                string                 `json:"number"`
 	PlantingYear          int32                  `json:"planting_year"`
 	Provider              *string                `json:"provider,omitempty"`
-	Sensor                *Sensor                `json:"sensor,omitempty"`
+	SensorId              *string                `json:"sensor_id,omitempty"`
 	Species               string                 `json:"species"`
 	TreeClusterId         *int32                 `json:"tree_cluster_id,omitempty"`
 	UpdatedAt             string                 `json:"updated_at"`
@@ -332,36 +332,36 @@ func (o *Tree) SetProvider(v string) {
 	o.Provider = &v
 }
 
-// GetSensor returns the Sensor field value if set, zero value otherwise.
-func (o *Tree) GetSensor() Sensor {
-	if o == nil || IsNil(o.Sensor) {
-		var ret Sensor
+// GetSensorId returns the SensorId field value if set, zero value otherwise.
+func (o *Tree) GetSensorId() string {
+	if o == nil || IsNil(o.SensorId) {
+		var ret string
 		return ret
 	}
-	return *o.Sensor
+	return *o.SensorId
 }
 
-// GetSensorOk returns a tuple with the Sensor field value if set, nil otherwise
+// GetSensorIdOk returns a tuple with the SensorId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *Tree) GetSensorOk() (*Sensor, bool) {
-	if o == nil || IsNil(o.Sensor) {
+func (o *Tree) GetSensorIdOk() (*string, bool) {
+	if o == nil || IsNil(o.SensorId) {
 		return nil, false
 	}
-	return o.Sensor, true
+	return o.SensorId, true
 }
 
-// HasSensor returns a boolean if a field has been set.
-func (o *Tree) HasSensor() bool {
-	if o != nil && !IsNil(o.Sensor) {
+// HasSensorId returns a boolean if a field has been set.
+func (o *Tree) HasSensorId() bool {
+	if o != nil && !IsNil(o.SensorId) {
 		return true
 	}
 
 	return false
 }
 
-// SetSensor gets a reference to the given Sensor and assigns it to the Sensor field.
-func (o *Tree) SetSensor(v Sensor) {
-	o.Sensor = &v
+// SetSensorId gets a reference to the given string and assigns it to the SensorId field.
+func (o *Tree) SetSensorId(v string) {
+	o.SensorId = &v
 }
 
 // GetSpecies returns the Species field value
@@ -494,8 +494,8 @@ func (o Tree) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Provider) {
 		toSerialize["provider"] = o.Provider
 	}
-	if !IsNil(o.Sensor) {
-		toSerialize["sensor"] = o.Sensor
+	if !IsNil(o.SensorId) {
+		toSerialize["sensor_id"] = o.SensorId
 	}
 	toSerialize["species"] = o.Species
 	if !IsNil(o.TreeClusterId) {

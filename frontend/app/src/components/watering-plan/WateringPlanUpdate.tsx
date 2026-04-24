@@ -41,9 +41,9 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
       draft.data ?? {
         date: new Date(data.date),
         description: data.description,
-        transporterId: data.transporter.id,
-        trailerId: data.trailer?.id,
-        clusterIds: data.treeclusters.map((cluster) => cluster.id),
+        transporterId: data.transporterId,
+        trailerId: data.trailerId,
+        clusterIds: data.treeClusterIds,
         status: data.status,
         driverIds: data.userIds,
       },

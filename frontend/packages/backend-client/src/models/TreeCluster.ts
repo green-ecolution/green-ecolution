@@ -20,20 +20,6 @@ import {
     WateringStatusToJSON,
     WateringStatusToJSONTyped,
 } from './WateringStatus';
-import type { Region } from './Region';
-import {
-    RegionFromJSON,
-    RegionFromJSONTyped,
-    RegionToJSON,
-    RegionToJSONTyped,
-} from './Region';
-import type { Tree } from './Tree';
-import {
-    TreeFromJSON,
-    TreeFromJSONTyped,
-    TreeToJSON,
-    TreeToJSONTyped,
-} from './Tree';
 import type { SoilCondition } from './SoilCondition';
 import {
     SoilConditionFromJSON,
@@ -122,10 +108,10 @@ export interface TreeCluster {
     provider?: string;
     /**
      * 
-     * @type {Region}
+     * @type {number}
      * @memberof TreeCluster
      */
-    region?: Region;
+    regionId?: number;
     /**
      * 
      * @type {SoilCondition}
@@ -134,10 +120,10 @@ export interface TreeCluster {
     soilCondition: SoilCondition;
     /**
      * 
-     * @type {Array<Tree>}
+     * @type {Array<number>}
      * @memberof TreeCluster
      */
-    trees?: Array<Tree>;
+    treeIds?: Array<number>;
     /**
      * 
      * @type {string}
@@ -195,9 +181,9 @@ export function TreeClusterFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'moistureLevel': json['moisture_level'],
         'name': json['name'],
         'provider': json['provider'] == null ? undefined : json['provider'],
-        'region': json['region'] == null ? undefined : RegionFromJSON(json['region']),
+        'regionId': json['region_id'] == null ? undefined : json['region_id'],
         'soilCondition': SoilConditionFromJSON(json['soil_condition']),
-        'trees': json['trees'] == null ? undefined : ((json['trees'] as Array<any>).map(TreeFromJSON)),
+        'treeIds': json['tree_ids'] == null ? undefined : json['tree_ids'],
         'updatedAt': json['updated_at'],
         'wateringStatus': WateringStatusFromJSON(json['watering_status']),
     };
@@ -226,9 +212,9 @@ export function TreeClusterToJSONTyped(value?: TreeCluster | null, ignoreDiscrim
         'moisture_level': value['moistureLevel'],
         'name': value['name'],
         'provider': value['provider'],
-        'region': RegionToJSON(value['region']),
+        'region_id': value['regionId'],
         'soil_condition': SoilConditionToJSON(value['soilCondition']),
-        'trees': value['trees'] == null ? undefined : ((value['trees'] as Array<any>).map(TreeToJSON)),
+        'tree_ids': value['treeIds'],
         'updated_at': value['updatedAt'],
         'watering_status': WateringStatusToJSON(value['wateringStatus']),
     };

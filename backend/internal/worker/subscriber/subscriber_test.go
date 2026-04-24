@@ -4,10 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
-	svcMock "github.com/green-ecolution/green-ecolution/backend/internal/service/_mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	svcMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 )
 
 func TestUpdateTreeSubsciber(t *testing.T) {
@@ -15,7 +18,7 @@ func TestUpdateTreeSubsciber(t *testing.T) {
 		// given
 		tcSvc := svcMock.NewMockTreeClusterService(t)
 		sub := NewUpdateTreeSubscriber(tcSvc)
-		event := entities.NewEventUpdateTree(nil, nil, nil)
+		event := tree.NewEventUpdate(nil, nil, nil)
 
 		tcSvc.EXPECT().HandleUpdateTree(mock.Anything, &event).Return(nil)
 
@@ -32,7 +35,7 @@ func TestUpdateTreeSubsciber(t *testing.T) {
 		// given
 		tcSvc := svcMock.NewMockTreeClusterService(t)
 		sub := NewCreateTreeSubscriber(tcSvc)
-		event := entities.NewEventCreateTree(nil, nil)
+		event := tree.NewEventCreate(nil, nil)
 
 		tcSvc.EXPECT().HandleCreateTree(mock.Anything, &event).Return(nil)
 
@@ -49,7 +52,7 @@ func TestUpdateTreeSubsciber(t *testing.T) {
 		// given
 		tcSvc := svcMock.NewMockTreeClusterService(t)
 		sub := NewDeleteTreeSubscriber(tcSvc)
-		event := entities.NewEventDeleteTree(nil)
+		event := tree.NewEventDelete(nil)
 
 		tcSvc.EXPECT().HandleDeleteTree(mock.Anything, &event).Return(nil)
 
@@ -67,7 +70,7 @@ func TestUpdateTreeSubsciber(t *testing.T) {
 		tcSvc := svcMock.NewMockTreeClusterService(t)
 		tSvc := svcMock.NewMockTreeService(t)
 		sub := NewSensorDataSubscriber(tcSvc, tSvc)
-		event := entities.NewEventSensorData(nil)
+		event := sensor.NewEventNewData(nil)
 
 		tSvc.EXPECT().HandleNewSensorData(mock.Anything, &event).Return(nil)
 		tcSvc.EXPECT().HandleNewSensorData(mock.Anything, &event).Return(nil)
@@ -85,7 +88,7 @@ func TestUpdateTreeSubsciber(t *testing.T) {
 		// given
 		tcSvc := svcMock.NewMockTreeClusterService(t)
 		sub := NewUpdateWateringPlanSubscriber(tcSvc)
-		event := entities.NewEventUpdateWateringPlan(nil, nil)
+		event := watering.NewEventUpdate(nil, nil)
 
 		tcSvc.EXPECT().HandleUpdateWateringPlan(mock.Anything, &event).Return(nil)
 

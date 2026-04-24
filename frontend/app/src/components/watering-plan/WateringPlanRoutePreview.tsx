@@ -32,9 +32,9 @@ const WateringPlanPreviewRoute = ({ wateringPlan }: WateringPlanPreviewRouteProp
       <ZoomControls />
       <Suspense fallback={<Loading className="mt-20 justify-center" label="Lade Karte..." />}>
         <ShowRoutePreview
-          selectedClustersIds={wateringPlan.treeclusters.map((tc) => tc.id)}
-          transporterId={wateringPlan.transporter.id}
-          trailerId={wateringPlan.trailer?.id}
+          selectedClustersIds={wateringPlan.treeClusterIds}
+          transporterId={wateringPlan.transporterId}
+          trailerId={wateringPlan.trailerId}
         />
 
         <WithTreesAndClusters onClickTree={handleTreeClick} onClickCluster={handleClusterClick} />

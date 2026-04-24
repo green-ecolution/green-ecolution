@@ -91,8 +91,8 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
           ...loadedData,
           status: WateringPlanStatus.WateringPlanStatusFinished,
           evaluation: data.evaluation,
-          transporterId: loadedData.transporter.id,
-          treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
+          transporterId: loadedData.transporterId,
+          treeClusterIds: loadedData.treeClusterIds,
         })
       }
 
@@ -101,8 +101,8 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
           ...loadedData,
           status: WateringPlanStatus.WateringPlanStatusCanceled,
           cancellationNote: data.cancellationNote,
-          transporterId: loadedData.transporter.id,
-          treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
+          transporterId: loadedData.transporterId,
+          treeClusterIds: loadedData.treeClusterIds,
         })
       }
 
@@ -110,8 +110,8 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
         mutate({
           ...loadedData,
           status,
-          transporterId: loadedData.transporter.id,
-          treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
+          transporterId: loadedData.transporterId,
+          treeClusterIds: loadedData.treeClusterIds,
         })
       }
       switch (status) {
@@ -250,9 +250,9 @@ export const FinishedWateringPlan = ({
     mode: 'onChange',
     resolver: zodResolver(wateringPlanFinishedSchema),
     defaultValues: {
-      evaluation: loadedData.treeclusters.map((cluster) => ({
-        consumedWater: (cluster.treeIds?.length ?? 1) * 80,
-        treeClusterId: cluster.id,
+      evaluation: loadedData.treeClusterIds.map((id) => ({
+        consumedWater: 80,
+        treeClusterId: id,
         wateringPlanId: Number(wateringPlanId),
       })),
     },
@@ -275,7 +275,7 @@ export const FinishedWateringPlan = ({
         <ul className="flex flex-col gap-y-5">
           {fields.map((field, index) => (
             <li key={field.treeClusterId} className="grid grid-cols-1 gap-y-2 md:grid-cols-2">
-              <SelectedCard type="cluster" id={loadedData?.treeclusters[index].id} />
+              <SelectedCard type="cluster" id={loadedData?.treeClusterIds[index]} />
               <div className="relative flex flex-wrap items-center md:mb-3 md:ml-6">
                 <FormField
                   type="number"

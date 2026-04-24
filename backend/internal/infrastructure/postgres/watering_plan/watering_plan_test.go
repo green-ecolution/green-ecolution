@@ -1,0 +1,151 @@
+package wateringplan
+
+import (
+	"context"
+	"os"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/vehicle"
+	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/mapper"
+	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/testutils"
+)
+
+var (
+	mappers WateringPlanMappers
+	suite   *testutils.PostgresTestSuite
+)
+
+func TestMain(m *testing.M) {
+	code := 1
+	ctx := context.Background()
+	defer func() { os.Exit(code) }()
+	suite = testutils.SetupPostgresTestSuite(ctx)
+	mappers = NewWateringPlanRepositoryMappers(
+		&mapper.InternalWateringPlanRepoMapperImpl{},
+		&mapper.InternalVehicleRepoMapperImpl{},
+		&mapper.InternalTreeClusterRepoMapperImpl{},
+	)
+	defer suite.Terminate(ctx)
+
+	code = m.Run()
+}
+
+func TestWateringPlanRepository_Delete(t *testing.T) {
+	t.Run("should delete watering plan", func(t *testing.T) {
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/watering_plan")
+		// given
+		r := NewWateringPlanRepository(suite.Store, mappers)
+
+		// when
+		err := r.Delete(context.Background(), 1)
+		got, errGot := r.GetByID(context.Background(), 1)
+
+		// then
+		assert.NoError(t, err)
+		assert.Error(t, errGot)
+		assert.Nil(t, got)
+	})
+
+	t.Run("should delete watering plan and linked vehicles in pivot table", func(t *testing.T) {
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/watering_plan")
+		// given
+		r := NewWateringPlanRepository(suite.Store, mappers)
+
+		gotBeforeTransporter, errBeforeTransporter := r.getLinkedVehicleIDByIDAndType(context.Background(), 1, string(vehicle.VehicleTypeTransporter))
+		assert.NoError(t, errBeforeTransporter)
+		assert.NotNil(t, gotBeforeTransporter)
+
+		gotBeforeTrailer, errBeforeTrailer := r.getLinkedVehicleIDByIDAndType(context.Background(), 1, string(vehicle.VehicleTypeTrailer))
+		assert.NoError(t, errBeforeTrailer)
+		assert.NotNil(t, gotBeforeTrailer)
+
+		// when
+		err := r.Delete(context.Background(), 1)
+		transporter, errGotTransporter := r.getLinkedVehicleIDByIDAndType(context.Background(), 1, string(vehicle.VehicleTypeTransporter))
+		trailer, errGotTrailer := r.getLinkedVehicleIDByIDAndType(context.Background(), 1, string(vehicle.VehicleTypeTrailer))
+
+		// then
+		assert.NoError(t, err)
+		assert.Error(t, errGotTransporter)
+		assert.Error(t, errGotTrailer)
+		assert.Nil(t, transporter)
+		assert.Nil(t, trailer)
+	})
+
+	t.Run("should delete watering plan and linked treecluster in pivot table", func(t *testing.T) {
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/watering_plan")
+		// given
+		r := NewWateringPlanRepository(suite.Store, mappers)
+
+		gotBefore, errBefore := r.getLinkedTreeClusterIDsByID(context.Background(), 1)
+		assert.NoError(t, errBefore)
+		assert.NotNil(t, gotBefore)
+
+		// when
+		err := r.Delete(context.Background(), 1)
+		treecluster, _ := r.getLinkedTreeClusterIDsByID(context.Background(), 1)
+
+		// then
+		assert.NoError(t, err)
+		assert.Empty(t, treecluster)
+	})
+
+	t.Run("should delete watering plan and linked users in pivot table", func(t *testing.T) {
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/watering_plan")
+		// given
+		r := NewWateringPlanRepository(suite.Store, mappers)
+
+		gotBefore, errBefore := r.getLinkedUsersByID(context.Background(), 1)
+		assert.NoError(t, errBefore)
+		assert.NotNil(t, gotBefore)
+
+		// when
+		err := r.Delete(context.Background(), 1)
+		users, _ := r.getLinkedUsersByID(context.Background(), 1)
+
+		// then
+		assert.NoError(t, err)
+		assert.Empty(t, users)
+	})
+
+	t.Run("should return error when watering plan not found", func(t *testing.T) {
+		// given
+		r := NewWateringPlanRepository(suite.Store, mappers)
+
+		// when
+		err := r.Delete(context.Background(), 99)
+
+		// then
+		assert.Error(t, err)
+	})
+
+	t.Run("should return error when watering plan with negative id", func(t *testing.T) {
+		// given
+		r := NewWateringPlanRepository(suite.Store, mappers)
+
+		// when
+		err := r.Delete(context.Background(), -1)
+
+		// then
+		assert.Error(t, err)
+	})
+
+	t.Run("should return error when vehicle is canceled", func(t *testing.T) {
+		// given
+		r := NewWateringPlanRepository(suite.Store, mappers)
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		// when
+		err := r.Delete(ctx, 1)
+
+		// then
+		assert.Error(t, err)
+	})
+}

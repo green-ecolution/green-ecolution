@@ -595,8 +595,8 @@ definitions:
         type: integer
       provider:
         type: string
-      sensor:
-        $ref: '#/definitions/Sensor'
+      sensor_id:
+        type: string
       species:
         type: string
       tree_cluster_id:
@@ -644,13 +644,13 @@ definitions:
         type: string
       provider:
         type: string
-      region:
-        $ref: '#/definitions/Region'
+      region_id:
+        type: integer
       soil_condition:
         $ref: '#/definitions/SoilCondition'
-      trees:
+      tree_ids:
         items:
-          $ref: '#/definitions/Tree'
+          type: integer
         type: array
       updated_at:
         type: string
@@ -696,64 +696,11 @@ definitions:
     - soil_condition
     - tree_ids
     type: object
-  TreeClusterInList:
-    properties:
-      additional_information:
-        additionalProperties: true
-        type: object
-      address:
-        type: string
-      archived:
-        type: boolean
-      created_at:
-        type: string
-      description:
-        type: string
-      id:
-        type: integer
-      last_watered:
-        type: string
-      latitude:
-        type: number
-      longitude:
-        type: number
-      moisture_level:
-        type: number
-      name:
-        type: string
-      provider:
-        type: string
-      region:
-        $ref: '#/definitions/Region'
-      soil_condition:
-        $ref: '#/definitions/SoilCondition'
-      tree_ids:
-        items:
-          type: integer
-        type: array
-      updated_at:
-        type: string
-      watering_status:
-        $ref: '#/definitions/WateringStatus'
-    required:
-    - address
-    - archived
-    - created_at
-    - description
-    - id
-    - latitude
-    - longitude
-    - moisture_level
-    - name
-    - soil_condition
-    - updated_at
-    - watering_status
-    type: object
   TreeClusterList:
     properties:
       data:
         items:
-          $ref: '#/definitions/TreeClusterInList'
+          $ref: '#/definitions/TreeCluster'
         type: array
       pagination:
         $ref: '#/definitions/Pagination'
@@ -1258,13 +1205,13 @@ definitions:
         $ref: '#/definitions/WateringPlanStatus'
       total_water_required:
         type: number
-      trailer:
-        $ref: '#/definitions/Vehicle'
-      transporter:
-        $ref: '#/definitions/Vehicle'
-      treeclusters:
+      trailer_id:
+        type: integer
+      transporter_id:
+        type: integer
+      tree_cluster_ids:
         items:
-          $ref: '#/definitions/TreeClusterInList'
+          type: integer
         type: array
       updated_at:
         type: string
@@ -1285,8 +1232,8 @@ definitions:
     - refill_count
     - status
     - total_water_required
-    - transporter
-    - treeclusters
+    - transporter_id
+    - tree_cluster_ids
     - updated_at
     - user_ids
     type: object
@@ -1345,13 +1292,13 @@ definitions:
         $ref: '#/definitions/WateringPlanStatus'
       total_water_required:
         type: number
-      trailer:
-        $ref: '#/definitions/Vehicle'
-      transporter:
-        $ref: '#/definitions/Vehicle'
-      treeclusters:
+      trailer_id:
+        type: integer
+      transporter_id:
+        type: integer
+      tree_cluster_ids:
         items:
-          $ref: '#/definitions/TreeClusterInList'
+          type: integer
         type: array
       updated_at:
         type: string
@@ -1368,8 +1315,8 @@ definitions:
     - id
     - status
     - total_water_required
-    - transporter
-    - treeclusters
+    - transporter_id
+    - tree_cluster_ids
     - updated_at
     - user_ids
     type: object

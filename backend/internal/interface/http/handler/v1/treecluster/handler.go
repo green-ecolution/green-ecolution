@@ -1,0 +1,204 @@
+package treecluster
+
+import (
+	"strconv"
+
+	"github.com/gofiber/fiber/v2"
+
+	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
+	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
+	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities/mapper"
+	handler "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1"
+	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/errorhandler"
+	"github.com/green-ecolution/green-ecolution/backend/internal/utils/pagination"
+)
+
+// @Summary		Get all tree clusters
+// @Description	Retrieves a paginated list of all tree clusters. Supports filtering by watering status, region, and provider.
+// @Id				get-all-tree-clusters
+// @Tags			Tree Cluster
+// @Produce		json
+// @Success		200	{object}	entities.TreeClusterListResponse
+// @Failure		400	{object}	HTTPError
+// @Failure		401	{object}	HTTPError
+// @Failure		403	{object}	HTTPError
+// @Failure		500	{object}	HTTPError
+// @Router			/v1/cluster [get]
+// @Param			page				query	int			false	"Page number for pagination"
+// @Param			limit				query	int			false	"Number of items per page"
+// @Param			watering_statuses	query	[]string	false	"Filter by watering statuses (good, moderate, bad)"
+// @Param			regions				query	[]string	false	"Filter by region names"
+// @Param			provider			query	string		false	"Filter by data provider"
+// @Security		Keycloak
+func GetAllTreeClusters(svc ports.TreeClusterService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		ctx := c.Context()
+
+		filter, err := fillTreeClusterQueryParams(c)
+		if err != nil {
+			return errorhandler.HandleError(ports.NewError(ports.BadRequest, err.Error()))
+		}
+
+		domainData, totalCount, err := svc.GetAll(ctx, filter)
+		if err != nil {
+			return errorhandler.HandleError(err)
+		}
+
+		data := mapper.TreeClusterFromResponseList(domainData)
+
+		return c.JSON(entities.TreeClusterListResponse{
+			Data:       data,
+			Pagination: pagination.Create(ctx, totalCount),
+		})
+	}
+}
+
+// @Summary		Get tree cluster by ID
+// @Description	Retrieves detailed information about a specific tree cluster including its trees and calculated watering status.
+// @Id				get-tree-cluster-by-id
+// @Tags			Tree Cluster
+// @Produce		json
+// @Success		200	{object}	entities.TreeClusterResponse
+// @Failure		400	{object}	HTTPError
+// @Failure		401	{object}	HTTPError
+// @Failure		403	{object}	HTTPError
+// @Failure		404	{object}	HTTPError
+// @Failure		500	{object}	HTTPError
+// @Router			/v1/cluster/{cluster_id} [get]
+// @Param			cluster_id	path	int	true	"Tree Cluster ID"
+// @Security		Keycloak
+func GetTreeClusterByID(svc ports.TreeClusterService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		ctx := c.Context()
+		id, err := strconv.Atoi(c.Params("treecluster_id"))
+		if err != nil {
+			err := ports.NewError(ports.BadRequest, "invalid ID format")
+			return errorhandler.HandleError(err)
+		}
+
+		domainData, err := svc.GetByID(ctx, int32(id))
+
+		if err != nil {
+			return errorhandler.HandleError(err)
+		}
+
+		return c.JSON(mapper.TreeClusterFromResponse(domainData))
+	}
+}
+
+// @Summary		Create tree cluster
+// @Description	Creates a new tree cluster with the provided data. Optionally assigns trees to the cluster.
+// @Id				create-tree-cluster
+// @Tags			Tree Cluster
+// @Accept			json
+// @Produce		json
+// @Success		201	{object}	entities.TreeClusterResponse
+// @Failure		400	{object}	HTTPError
+// @Failure		401	{object}	HTTPError
+// @Failure		403	{object}	HTTPError
+// @Failure		500	{object}	HTTPError
+// @Router			/v1/cluster [post]
+// @Param			body	body	entities.TreeClusterCreateRequest	true	"Tree cluster data to create"
+// @Security		Keycloak
+func CreateTreeCluster(svc ports.TreeClusterService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		ctx := c.Context()
+
+		req, err := handler.BindAndValidate[entities.TreeClusterCreateRequest](c)
+		if err != nil {
+			return err
+		}
+
+		domainReq := mapper.TreeClusterFromCreateRequest(req)
+		domainData, err := svc.Create(ctx, domainReq)
+		if err != nil {
+			return errorhandler.HandleError(err)
+		}
+
+		data := mapper.TreeClusterFromResponse(domainData)
+		return c.Status(fiber.StatusCreated).JSON(data)
+	}
+}
+
+// @Summary		Update tree cluster
+// @Description	Updates an existing tree cluster with the provided data. Can modify cluster properties and tree assignments.
+// @Id				update-tree-cluster
+// @Tags			Tree Cluster
+// @Accept			json
+// @Produce		json
+// @Success		200	{object}	entities.TreeClusterResponse
+// @Failure		400	{object}	HTTPError
+// @Failure		401	{object}	HTTPError
+// @Failure		403	{object}	HTTPError
+// @Failure		404	{object}	HTTPError
+// @Failure		500	{object}	HTTPError
+// @Router			/v1/cluster/{cluster_id} [put]
+// @Param			cluster_id	path	int									true	"Tree Cluster ID"
+// @Param			body		body	entities.TreeClusterUpdateRequest	true	"Tree cluster data to update"
+// @Security		Keycloak
+func UpdateTreeCluster(svc ports.TreeClusterService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		ctx := c.Context()
+		id, err := strconv.Atoi(c.Params("treecluster_id"))
+		if err != nil {
+			err := ports.NewError(ports.BadRequest, "invalid ID format")
+			return errorhandler.HandleError(err)
+		}
+
+		req, err := handler.BindAndValidate[entities.TreeClusterUpdateRequest](c)
+		if err != nil {
+			return err
+		}
+
+		domainReq := mapper.TreeClusterFromUpdateRequest(req)
+		domainData, err := svc.Update(ctx, int32(id), domainReq)
+		if err != nil {
+			return errorhandler.HandleError(err)
+		}
+
+		return c.JSON(mapper.TreeClusterFromResponse(domainData))
+	}
+}
+
+// @Summary		Delete tree cluster
+// @Description	Permanently deletes a tree cluster. Trees in the cluster are not deleted but unassigned from the cluster.
+// @Id				delete-tree-cluster
+// @Tags			Tree Cluster
+// @Produce		json
+// @Success		204
+// @Failure		400	{object}	HTTPError
+// @Failure		401	{object}	HTTPError
+// @Failure		403	{object}	HTTPError
+// @Failure		404	{object}	HTTPError
+// @Failure		500	{object}	HTTPError
+// @Router			/v1/cluster/{cluster_id} [delete]
+// @Param			cluster_id	path	int	true	"Tree Cluster ID"
+// @Security		Keycloak
+func DeleteTreeCluster(svc ports.TreeClusterService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		ctx := c.Context()
+		id, err := strconv.Atoi(c.Params("treecluster_id"))
+		if err != nil {
+			err := ports.NewError(ports.BadRequest, "invalid ID format")
+			return errorhandler.HandleError(err)
+		}
+
+		err = svc.Delete(ctx, int32(id))
+		if err != nil {
+			return errorhandler.HandleError(err)
+		}
+
+		return c.SendStatus(fiber.StatusNoContent)
+	}
+}
+
+func fillTreeClusterQueryParams(c *fiber.Ctx) (cluster.TreeClusterQuery, error) {
+	var filter cluster.TreeClusterQuery
+
+	if err := c.QueryParser(&filter); err != nil {
+		return cluster.TreeClusterQuery{}, err
+	}
+
+	return filter, nil
+}

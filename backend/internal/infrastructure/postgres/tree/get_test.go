@@ -1,0 +1,687 @@
+package tree
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	sensorDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	treeDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
+	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
+)
+
+func TestTreeRepository_GetAll(t *testing.T) {
+	t.Run("should return all trees successfully without limitation", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+
+		ctx := context.WithValue(context.Background(), "page", int32(1))
+		ctx = context.WithValue(ctx, "limit", int32(-1))
+
+		// when
+		trees, totalCount, err := r.GetAll(ctx, treeDomain.TreeQuery{})
+
+		// then
+		assert.NoError(t, err)
+		assert.NotNil(t, trees)
+		assert.NotEmpty(t, trees)
+		assert.Equal(t, totalCount, int64(len(testTrees)))
+		for i, tr := range trees {
+			assertExpectedEqualToTree(t, testTrees[i], tr)
+		}
+	})
+
+	t.Run("should return all trees successfully with provider", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+		expectedTree := testTrees[len(testTrees)-1]
+
+		ctx := context.WithValue(context.Background(), "page", int32(1))
+		ctx = context.WithValue(ctx, "limit", int32(-1))
+
+		// when
+		got, totalCount, err := r.GetAll(ctx, treeDomain.TreeQuery{Query: shared.Query{Provider: "test-provider"}})
+
+		// then
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+		assert.NotEmpty(t, got)
+		assert.Equal(t, totalCount, int64(1))
+		assert.Equal(t, expectedTree.ID, got[0].ID, "ID does not match")
+		assert.Equal(t, expectedTree.PlantingYear.Year(), got[0].PlantingYear.Year(), "PlantingYear does not match")
+		assert.Equal(t, expectedTree.Species, got[0].Species, "Species does not match")
+		assert.Equal(t, expectedTree.Number, got[0].Number, "Number does not match")
+		assert.Equal(t, expectedTree.Coordinate.Latitude(), got[0].Coordinate.Latitude(), "Latitude does not match")
+		assert.Equal(t, expectedTree.Coordinate.Longitude(), got[0].Coordinate.Longitude(), "Longitude does not match")
+		assert.Equal(t, expectedTree.WateringStatus, got[0].WateringStatus, "WateringStatus does not match")
+		assert.Equal(t, expectedTree.Description, got[0].Description, "Description does not match")
+		assert.Equal(t, expectedTree.Provider, got[0].Provider, "Provider does not match")
+		assert.Equal(t, expectedTree.AdditionalInfo, got[0].AdditionalInfo, "AdditionalInfo does not match")
+	})
+
+	t.Run("should return all trees successfully limited by 2 and with an offset of 2", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+
+		exptectedTrees := testTrees[2:4]
+
+		ctx := context.WithValue(context.Background(), "page", int32(2))
+		ctx = context.WithValue(ctx, "limit", int32(2))
+
+		// when
+		trees, totalCount, err := r.GetAll(ctx, treeDomain.TreeQuery{})
+
+		// then
+		assert.NoError(t, err)
+		assert.NotNil(t, trees)
+		assert.NotEmpty(t, trees)
+		assert.Equal(t, totalCount, int64(len(testTrees)))
+		assert.Len(t, trees, 2)
+		for i, got := range trees {
+			assert.Equal(t, exptectedTrees[i].ID, got.ID, "ID does not match")
+		}
+	})
+
+	t.Run("should return error on invalid page value", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+
+		ctx := context.WithValue(context.Background(), "page", int32(0))
+		ctx = context.WithValue(ctx, "limit", int32(2))
+
+		// when
+		got, totalCount, err := r.GetAll(ctx, treeDomain.TreeQuery{})
+
+		// then
+		assert.Error(t, err)
+		assert.Empty(t, got)
+		assert.Equal(t, totalCount, int64(0))
+	})
+
+	t.Run("should return error on invalid limit value", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+
+		ctx := context.WithValue(context.Background(), "page", int32(1))
+		ctx = context.WithValue(ctx, "limit", int32(0))
+
+		// when
+		got, totalCount, err := r.GetAll(ctx, treeDomain.TreeQuery{})
+
+		// then
+		assert.Error(t, err)
+		assert.Empty(t, got)
+		assert.Equal(t, totalCount, int64(0))
+	})
+
+	t.Run("should return empty list when no trees exist", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		r := NewTreeRepository(suite.Store, mappers)
+
+		ctx := context.WithValue(context.Background(), "page", int32(1))
+		ctx = context.WithValue(ctx, "limit", int32(-1))
+
+		// when
+		got, totalCount, err := r.GetAll(ctx, treeDomain.TreeQuery{})
+
+		// then
+		assert.NoError(t, err)
+		assert.Empty(t, got)
+		assert.Equal(t, totalCount, int64(0))
+	})
+
+	t.Run("should return error if context is canceled", func(t *testing.T) {
+		// given
+		r := NewTreeRepository(suite.Store, mappers)
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		// when
+		trees, totalCount, err := r.GetAll(ctx, treeDomain.TreeQuery{})
+
+		// then
+		assert.Error(t, err)
+		assert.Nil(t, trees)
+		assert.Equal(t, totalCount, int64(0))
+	})
+
+	t.Run("should return trees filtered by watering status and planting years", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+
+		filteredTrees := []*treeDomain.Tree{testTrees[1], testTrees[2]}
+
+		ctx := context.WithValue(context.Background(), "page", int32(1))
+		ctx = context.WithValue(ctx, "limit", int32(-1))
+
+		// when
+		trees, totalCount, err := r.GetAll(ctx, treeDomain.TreeQuery{
+			WateringStatuses: []shared.WateringStatus{shared.WateringStatusBad, shared.WateringStatusGood},
+			PlantingYears:    []int32{2022, 2023},
+			HasCluster:       utils.P(true),
+		})
+
+		// then
+		assert.NoError(t, err)
+		assert.NotNil(t, trees)
+		assert.NotEmpty(t, trees)
+		assert.Equal(t, totalCount, int64(len(filteredTrees)))
+		for i, tr := range trees {
+			assertExpectedEqualToTree(t, filteredTrees[i], tr)
+		}
+	})
+}
+
+func TestTreeRepository_GetCount(t *testing.T) {
+	t.Run("should return count of all trees in db", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+		// when
+		totalCount, err := r.GetCount(context.Background(), treeDomain.TreeQuery{})
+
+		// then
+		assert.NoError(t, err)
+		assert.Equal(t, int64(len(testTrees)), totalCount)
+	})
+
+	t.Run("should return error when context is canceled", func(t *testing.T) {
+		// given
+		r := NewTreeRepository(suite.Store, mappers)
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		// when
+		totalCount, err := r.GetCount(ctx, treeDomain.TreeQuery{})
+
+		// then
+		assert.Error(t, err)
+		assert.Equal(t, int64(0), totalCount)
+	})
+}
+
+func TestTreeRepository_GetByID(t *testing.T) {
+	t.Run("should return the correct tree by ID", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+
+		// when
+		tr, err := r.GetByID(context.Background(), 1)
+
+		// then
+		assert.NoError(t, err)
+		assert.NotNil(t, tr)
+		assert.NotNil(t, tr.TreeClusterID)
+		assert.NotNil(t, tr.SensorID)
+		assertExpectedEqualToTree(t, tr, testTrees[0])
+	})
+
+	t.Run("should return error if tree not found", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		r := NewTreeRepository(suite.Store, mappers)
+
+		// when
+		tr, err := r.GetByID(context.Background(), 99)
+
+		// then
+		assert.Error(t, err)
+		assert.Nil(t, tr)
+	})
+
+	t.Run("should return error if tree id is negative", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		r := NewTreeRepository(suite.Store, mappers)
+
+		// when
+		tr, err := r.GetByID(context.Background(), -1)
+
+		// then
+		assert.Error(t, err)
+		assert.Nil(t, tr)
+	})
+
+	t.Run("should return error if tree id is zero", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		r := NewTreeRepository(suite.Store, mappers)
+
+		// when
+		tr, err := r.GetByID(context.Background(), 0)
+
+		// then
+		assert.Error(t, err)
+		assert.Nil(t, tr)
+	})
+
+	t.Run("should return error when context is canceled", func(t *testing.T) {
+		// given
+		r := NewTreeRepository(suite.Store, mappers)
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		// when
+		tr, err := r.GetByID(ctx, 1)
+
+		// then
+		assert.Error(t, err)
+		assert.Nil(t, tr)
+	})
+}
+
+func TestTreeRepository_GetBySensorID(t *testing.T) {
+	suite.ResetDB(t)
+	suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+
+	t.Run("should return the correct tree by linked sensor ID", func(t *testing.T) {
+		// given
+		r := NewTreeRepository(suite.Store, mappers)
+		sensorID := sensorDomain.MustNewSensorID("sensor-1")
+
+		ctx := context.WithValue(context.Background(), "page", int32(1))
+		ctx = context.WithValue(ctx, "limit", int32(-1))
+
+		// when
+		trees, totalCount, err := r.GetAll(ctx, treeDomain.TreeQuery{SensorID: &sensorID})
+
+		// then
+		assert.NoError(t, err)
+		assert.Equal(t, int64(1), totalCount)
+		assert.Len(t, trees, 1)
+		tr := trees[0]
+		assert.NotNil(t, tr.SensorID)
+		assert.Equal(t, tr.SensorID.String(), sensorID.String())
+		assertExpectedEqualToTree(t, tr, testTrees[0])
+	})
+
+	t.Run("should return empty list when sensor is not found", func(t *testing.T) {
+		// given
+		r := NewTreeRepository(suite.Store, mappers)
+		sensorID := sensorDomain.MustNewSensorID("sensor-notFound")
+
+		ctx := context.WithValue(context.Background(), "page", int32(1))
+		ctx = context.WithValue(ctx, "limit", int32(-1))
+
+		// when
+		trees, totalCount, err := r.GetAll(ctx, treeDomain.TreeQuery{SensorID: &sensorID})
+
+		// then
+		assert.NoError(t, err)
+		assert.Empty(t, trees)
+		assert.Equal(t, int64(0), totalCount)
+	})
+
+	t.Run("should return empty list when tree with sensor is not found", func(t *testing.T) {
+		// given
+		r := NewTreeRepository(suite.Store, mappers)
+		sensorID := sensorDomain.MustNewSensorID("sensor-4")
+
+		ctx := context.WithValue(context.Background(), "page", int32(1))
+		ctx = context.WithValue(ctx, "limit", int32(-1))
+
+		// when
+		trees, totalCount, err := r.GetAll(ctx, treeDomain.TreeQuery{SensorID: &sensorID})
+
+		// then
+		assert.NoError(t, err)
+		assert.Empty(t, trees)
+		assert.Equal(t, int64(0), totalCount)
+	})
+
+	t.Run("should return error when context is canceled", func(t *testing.T) {
+		// given
+		r := NewTreeRepository(suite.Store, mappers)
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		sensorID := sensorDomain.MustNewSensorID("sensor-1")
+
+		// when
+		trees, _, err := r.GetAll(ctx, treeDomain.TreeQuery{SensorID: &sensorID})
+
+		// then
+		assert.Error(t, err)
+		assert.Nil(t, trees)
+	})
+}
+
+func TestTreeRepository_GetTreesByIDs(t *testing.T) {
+	t.Run("should return trees successfully by IDs", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+		ids := []int32{1, 2}
+		expectedTrees := testTrees[:2]
+
+		ctx := context.WithValue(context.Background(), "page", int32(1))
+		ctx = context.WithValue(ctx, "limit", int32(-1))
+
+		// when
+		trees, totalCount, err := r.GetAll(ctx, treeDomain.TreeQuery{IDs: ids})
+
+		// then
+		assert.NoError(t, err)
+		assert.NotNil(t, trees)
+		assert.Equal(t, int64(len(expectedTrees)), totalCount)
+		assert.Len(t, trees, len(expectedTrees))
+		for i, tr := range trees {
+			assertExpectedEqualToTree(t, expectedTrees[i], tr)
+		}
+	})
+
+	t.Run("should return empty list if no trees are found", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		r := NewTreeRepository(suite.Store, mappers)
+		ids := []int32{99, 100}
+
+		ctx := context.WithValue(context.Background(), "page", int32(1))
+		ctx = context.WithValue(ctx, "limit", int32(-1))
+
+		// when
+		trees, totalCount, err := r.GetAll(ctx, treeDomain.TreeQuery{IDs: ids})
+
+		// then
+		assert.NoError(t, err)
+		assert.Empty(t, trees)
+		assert.Equal(t, int64(0), totalCount)
+	})
+
+	t.Run("should return error when context is canceled", func(t *testing.T) {
+		// given
+		r := NewTreeRepository(suite.Store, mappers)
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		// when
+		trees, _, err := r.GetAll(ctx, treeDomain.TreeQuery{IDs: []int32{1, 2}})
+
+		// then
+		assert.Error(t, err)
+		assert.Nil(t, trees)
+	})
+}
+
+func TestTreeRepository_GetByTreeClusterID(t *testing.T) {
+	t.Run("should return trees successfully for a given tree cluster ID", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+		treeClusterID := int32(1)
+		expectedTrees := testTrees[:2]
+
+		ctx := context.WithValue(context.Background(), "page", int32(1))
+		ctx = context.WithValue(ctx, "limit", int32(-1))
+
+		// when
+		trees, totalCount, err := r.GetAll(ctx, treeDomain.TreeQuery{TreeClusterID: &treeClusterID})
+
+		// then
+		assert.NoError(t, err)
+		assert.NotNil(t, trees)
+		assert.NotEmpty(t, trees)
+		assert.Equal(t, int64(len(expectedTrees)), totalCount)
+		assert.Len(t, trees, len(expectedTrees))
+		for i, tr := range trees {
+			assertExpectedEqualToTree(t, expectedTrees[i], tr)
+		}
+	})
+
+	t.Run("should return empty slice when tree cluster ID is not found", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		r := NewTreeRepository(suite.Store, mappers)
+		treeClusterID := int32(99)
+
+		ctx := context.WithValue(context.Background(), "page", int32(1))
+		ctx = context.WithValue(ctx, "limit", int32(-1))
+
+		// when
+		trees, totalCount, err := r.GetAll(ctx, treeDomain.TreeQuery{TreeClusterID: &treeClusterID})
+
+		// then
+		assert.NoError(t, err)
+		assert.Empty(t, trees)
+		assert.Equal(t, int64(0), totalCount)
+	})
+
+	t.Run("should return error when context is canceled", func(t *testing.T) {
+		// given
+		r := NewTreeRepository(suite.Store, mappers)
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		treeClusterID := int32(1)
+
+		// when
+		trees, _, err := r.GetAll(ctx, treeDomain.TreeQuery{TreeClusterID: &treeClusterID})
+
+		// then
+		assert.Error(t, err)
+		assert.Nil(t, trees)
+	})
+}
+
+func TestTreeRepository_FindNearestTree(t *testing.T) {
+	t.Run("should return the nearest tree for given latitude and longitude", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+
+		tr, err := r.GetByID(context.Background(), 2)
+		assert.NoError(t, err)
+		assert.NotNil(t, tr)
+
+		sensorLatitude := 54.821517
+		sensorLongitude := 9.487169
+
+		// when
+		results, errFind := r.FindNearestTrees(context.Background(), shared.MustNewCoordinate(sensorLatitude, sensorLongitude), 500, 1)
+
+		// then
+		assert.NoError(t, errFind, "Expected no error while finding the nearest tree")
+		assert.Len(t, results, 1, "Expected to find exactly one nearest tree")
+		assertExpectedEqualToTree(t, tr, results[0].Tree)
+	})
+
+	t.Run("should return empty slice when no tree found within the required radius", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+
+		// when
+		results, err := r.FindNearestTrees(context.Background(), shared.MustNewCoordinate(0.0, 0.0), 1, 1)
+
+		// then
+		assert.NoError(t, err)
+		assert.Empty(t, results, "no tree should be found")
+	})
+
+	t.Run("should return error if context is canceled", func(t *testing.T) {
+		// given
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		// when
+		results, err := r.FindNearestTrees(ctx, shared.MustNewCoordinate(54.82124518093376, 9.485702120628517), 500, 1)
+
+		// then
+		assert.Error(t, err, "Expected error when context is canceled")
+		assert.Nil(t, results, "Expected no tree to be returned when context is canceled")
+	})
+}
+
+func TestTreeRepository_FindNearestTrees(t *testing.T) {
+	// Tree 1 (54.82124, 9.48570) and tree 2 (54.82150, 9.48715) are ~95m apart
+	// in the Solitüde Strand seed cluster. A query near them should return both.
+	queryLat := 54.821517
+	queryLng := 9.487169
+
+	t.Run("should return nearby trees sorted ascending by distance", func(t *testing.T) {
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+
+		got, err := r.FindNearestTrees(context.Background(), shared.MustNewCoordinate(queryLat, queryLng), 500, 10)
+
+		assert.NoError(t, err)
+		assert.NotEmpty(t, got)
+		for i := 1; i < len(got); i++ {
+			assert.GreaterOrEqual(t, got[i].Distance.Meters(), got[i-1].Distance.Meters(), "results must be sorted by distance ascending")
+			assert.NotNil(t, got[i].Tree)
+		}
+	})
+
+	t.Run("should populate sensor ID on trees that have one assigned", func(t *testing.T) {
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+
+		got, err := r.FindNearestTrees(context.Background(), shared.MustNewCoordinate(queryLat, queryLng), 500, 10)
+		assert.NoError(t, err)
+
+		var hasTreeWithSensor, hasTreeWithoutSensor bool
+		for _, tw := range got {
+			if tw.Tree.SensorID != nil {
+				hasTreeWithSensor = true
+			} else {
+				hasTreeWithoutSensor = true
+			}
+		}
+		assert.True(t, hasTreeWithSensor, "expected at least one tree with an assigned sensor in the result")
+		assert.True(t, hasTreeWithoutSensor, "expected at least one tree without a sensor in the result")
+	})
+
+	t.Run("should respect max results limit", func(t *testing.T) {
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+
+		got, err := r.FindNearestTrees(context.Background(), shared.MustNewCoordinate(queryLat, queryLng), 10000, 1)
+
+		assert.NoError(t, err)
+		assert.Len(t, got, 1)
+	})
+
+	t.Run("should return empty slice when no trees within radius", func(t *testing.T) {
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+
+		got, err := r.FindNearestTrees(context.Background(), shared.MustNewCoordinate(0.0, 0.0), 100, 10)
+
+		assert.NoError(t, err)
+		assert.Empty(t, got)
+	})
+
+	t.Run("should return error when context is canceled", func(t *testing.T) {
+		suite.ResetDB(t)
+		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
+		r := NewTreeRepository(suite.Store, mappers)
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		got, err := r.FindNearestTrees(ctx, shared.MustNewCoordinate(queryLat, queryLng), 500, 10)
+
+		assert.Error(t, err)
+		assert.Nil(t, got)
+	})
+}
+
+func assertExpectedEqualToTree(t *testing.T, expectedTree, tr *treeDomain.Tree) {
+	assert.Equal(t, expectedTree.ID, tr.ID, "ID does not match")
+	assert.Equal(t, expectedTree.PlantingYear.Year(), tr.PlantingYear.Year(), "PlantingYear does not match")
+	assert.Equal(t, expectedTree.Species, tr.Species, "Species does not match")
+	assert.Equal(t, expectedTree.Number, tr.Number, "Number does not match")
+	assert.Equal(t, expectedTree.Coordinate.Latitude(), tr.Coordinate.Latitude(), "Latitude does not match")
+	assert.Equal(t, expectedTree.Coordinate.Longitude(), tr.Coordinate.Longitude(), "Longitude does not match")
+	assert.Equal(t, expectedTree.WateringStatus, tr.WateringStatus, "WateringStatus does not match")
+	assert.Equal(t, expectedTree.Description, tr.Description, "Description does not match")
+	assert.Equal(t, expectedTree.Provider, tr.Provider, "Provider does not match")
+	assert.Equal(t, expectedTree.AdditionalInfo, tr.AdditionalInfo, "AdditionalInfo does not match")
+	assert.Equal(t, expectedTree.LastWatered, tr.LastWatered, "Last watered does not match")
+}
+
+var (
+	testTrees = []*treeDomain.Tree{
+		{
+			ID:             1,
+			PlantingYear:   treeDomain.MustNewPlantingYear(2021),
+			Species:        "Quercus robur",
+			Number:         "1005",
+			Coordinate:     shared.MustNewCoordinate(54.82124518093376, 9.485702120628517),
+			WateringStatus: "unknown",
+			Description:    "Sample description 1",
+			LastWatered:    nil,
+		},
+		{
+			ID:             2,
+			PlantingYear:   treeDomain.MustNewPlantingYear(2022),
+			Species:        "Quercus robur",
+			Number:         "1006",
+			Coordinate:     shared.MustNewCoordinate(54.8215076622281, 9.487153277881877),
+			WateringStatus: "good",
+			Description:    "Sample description 2",
+			LastWatered:    nil,
+		},
+		{
+			ID:             3,
+			PlantingYear:   treeDomain.MustNewPlantingYear(2023),
+			Species:        "Betula pendula",
+			Number:         "1007",
+			Coordinate:     shared.MustNewCoordinate(54.78780993841013, 9.444052105200551),
+			WateringStatus: "bad",
+			Description:    "Sample description 3",
+			LastWatered:    nil,
+		},
+		{
+			ID:             4,
+			PlantingYear:   treeDomain.MustNewPlantingYear(2020),
+			Species:        "Quercus robur",
+			Number:         "1008",
+			Coordinate:     shared.MustNewCoordinate(54.1000, 9.2000),
+			WateringStatus: "bad",
+			Description:    "Sample description 4",
+			LastWatered:    nil,
+		},
+		{
+			ID:             5,
+			PlantingYear:   treeDomain.MustNewPlantingYear(2022),
+			Species:        "Betula pendula",
+			Number:         "1009",
+			Coordinate:     shared.MustNewCoordinate(54.22, 9.11),
+			WateringStatus: "bad",
+			Description:    "Sample description 5",
+			Provider:       "test-provider",
+			AdditionalInfo: map[string]interface{}{
+				"foo": "bar",
+			},
+			LastWatered: nil,
+		},
+	}
+)

@@ -6,12 +6,19 @@ import { StatusCard } from '@green-ecolution/ui'
 import ChartWateringData from './ChartWateringData'
 import { format } from 'date-fns'
 import { roundTo } from '@/lib/utils'
+import { useQuery } from '@tanstack/react-query'
+import { sensorIdQuery } from '@/api/queries'
 
 interface TabWateringStatusProps {
   tree?: Tree
 }
 
 const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
+  const { data: sensor } = useQuery({
+    ...sensorIdQuery(tree?.sensorId!),
+    enabled: !!tree?.sensorId,
+  })
+
   const wateringStatus = getWateringStatusDetails(
     tree?.wateringStatus ?? WateringStatus.WateringStatusUnknown,
   )
@@ -32,8 +39,8 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
           <StatusCard
             label="Bodenfeuchte"
             value={
-              tree?.sensor?.latestData
-                ? `${roundTo(tree.sensor.latestData.humidity, 2)} %`
+              sensor?.latestData
+                ? `${roundTo(sensor.latestData.humidity, 2)} %`
                 : 'Keine Daten'
             }
             isLarge
@@ -44,8 +51,8 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
           <StatusCard
             label="Bodentemperatur"
             value={
-              tree?.sensor?.latestData
-                ? `${roundTo(tree.sensor.latestData.temperature, 2)} °C`
+              sensor?.latestData
+                ? `${roundTo(sensor.latestData.temperature, 2)} °C`
                 : 'Keine Daten'
             }
             isLarge
@@ -63,7 +70,7 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
         </li>
       </ul>
 
-      {tree?.sensor?.latestData && (
+      {sensor?.latestData && (
         <section className="mt-16">
           <h2 className="font-bold font-lato text-xl mb-4">
             Aktuelle Bewässerungszustand pro Bodentiefe
@@ -79,7 +86,7 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
             <div aria-hidden="true" className="mb-10 lg:mb-0 lg:w-60 lg:col-start-2 xl:w-80">
               <TreeDeciduous className="w-11 h-11 mx-auto mb-4" />
               <ul className="flex flex-col gap-y-3">
-                {tree?.sensor.latestData.watermarks.map((watermark) => (
+                {sensor.latestData.watermarks.map((watermark) => (
                   <li key={watermark.depth} className={`rounded-xl text-center py-3 bg-dark-50`}>
                     <p className={`inline relative pl-8`}>
                       <span className="font-semibold">{watermark.centibar} Zentibar</span>
@@ -101,7 +108,7 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
               </header>
 
               <ul className="flex flex-col gap-y-3 lg:contents">
-                {tree?.sensor.latestData.watermarks.map((watermark) => (
+                {sensor.latestData.watermarks.map((watermark) => (
                   <li
                     key={watermark.depth}
                     className="flex flex-col gap-y-3 border-b border-b-dark-300 pb-3 lg:py-3 lg:grid lg:grid-cols-3 lg:gap-5"
@@ -126,7 +133,7 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
         </section>
       )}
 
-      {tree?.sensor && (
+      {tree?.sensorId && (
         <section className="mt-16">
           <h2 className="font-bold font-lato text-xl mb-4">Messwerte im Verlaufe der Zeit</h2>
           <p className="mb-6">
@@ -137,7 +144,7 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
             Zeit geändert hat.
           </p>
 
-          <ChartWateringData sensorId={tree.sensor.id} />
+          <ChartWateringData sensorId={tree.sensorId} />
         </section>
       )}
     </>

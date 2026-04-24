@@ -20,8 +20,9 @@ import { File, FolderClosed, MoveRight, Pencil, Route } from 'lucide-react'
 import TabGeneralData from './TabGeneralData'
 import TreeClusterList from '../treecluster/TreeClusterList'
 import ButtonLink from '../general/links/ButtonLink'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
 import useStore from '@/store/store'
+import { treeClusterQuery } from '@/api/queries'
 import { basePath, WateringPlan } from '@/api/backendApi'
 import createToast from '@/hooks/createToast'
 import WateringPlanPreviewRoute from './WateringPlanRoutePreview'
@@ -35,6 +36,8 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
   const statusDetails = getWateringPlanStatusDetails(wateringPlan.status)
   const accessToken = useStore((state) => state.token?.accessToken)
   const showToast = createToast()
+  const { data: allClusters } = useSuspenseQuery(treeClusterQuery())
+  const clusters = allClusters.data.filter((c) => wateringPlan.treeClusterIds.includes(c.id))
 
   const date = wateringPlan?.date
     ? format(new Date(wateringPlan?.date), 'dd.MM.yyyy')
@@ -149,7 +152,7 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
           <TabGeneralData wateringPlan={wateringPlan} />
         </TabsContent>
         <TabsContent value="clusters">
-          <TreeClusterList data={wateringPlan.treeclusters} />
+          <TreeClusterList data={clusters} />
         </TabsContent>
         {wateringPlan.distance > 0 && (
           <TabsContent value="route">

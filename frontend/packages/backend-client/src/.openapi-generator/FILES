@@ -53,7 +53,6 @@ models/SoilCondition.ts
 models/Tree.ts
 models/TreeCluster.ts
 models/TreeClusterCreate.ts
-models/TreeClusterInList.ts
 models/TreeClusterList.ts
 models/TreeClusterUpdate.ts
 models/TreeCreate.ts

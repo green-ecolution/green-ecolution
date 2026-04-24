@@ -32,9 +32,9 @@ type WateringPlanInList struct {
 	Provider              *string                `json:"provider,omitempty"`
 	Status                WateringPlanStatus     `json:"status"`
 	TotalWaterRequired    float32                `json:"total_water_required"`
-	Trailer               *Vehicle               `json:"trailer,omitempty"`
-	Transporter           Vehicle                `json:"transporter"`
-	Treeclusters          []TreeClusterInList    `json:"treeclusters"`
+	TrailerId             *int32                 `json:"trailer_id,omitempty"`
+	TransporterId         int32                  `json:"transporter_id"`
+	TreeClusterIds        []int32                `json:"tree_cluster_ids"`
 	UpdatedAt             string                 `json:"updated_at"`
 	UserIds               []string               `json:"user_ids"`
 }
@@ -45,7 +45,7 @@ type _WateringPlanInList WateringPlanInList
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewWateringPlanInList(cancellationNote string, createdAt string, date string, description string, distance float32, id int32, status WateringPlanStatus, totalWaterRequired float32, transporter Vehicle, treeclusters []TreeClusterInList, updatedAt string, userIds []string) *WateringPlanInList {
+func NewWateringPlanInList(cancellationNote string, createdAt string, date string, description string, distance float32, id int32, status WateringPlanStatus, totalWaterRequired float32, transporterId int32, treeClusterIds []int32, updatedAt string, userIds []string) *WateringPlanInList {
 	this := WateringPlanInList{}
 	this.CancellationNote = cancellationNote
 	this.CreatedAt = createdAt
@@ -55,8 +55,8 @@ func NewWateringPlanInList(cancellationNote string, createdAt string, date strin
 	this.Id = id
 	this.Status = status
 	this.TotalWaterRequired = totalWaterRequired
-	this.Transporter = transporter
-	this.Treeclusters = treeclusters
+	this.TransporterId = transporterId
+	this.TreeClusterIds = treeClusterIds
 	this.UpdatedAt = updatedAt
 	this.UserIds = userIds
 	return &this
@@ -326,84 +326,84 @@ func (o *WateringPlanInList) SetTotalWaterRequired(v float32) {
 	o.TotalWaterRequired = v
 }
 
-// GetTrailer returns the Trailer field value if set, zero value otherwise.
-func (o *WateringPlanInList) GetTrailer() Vehicle {
-	if o == nil || IsNil(o.Trailer) {
-		var ret Vehicle
+// GetTrailerId returns the TrailerId field value if set, zero value otherwise.
+func (o *WateringPlanInList) GetTrailerId() int32 {
+	if o == nil || IsNil(o.TrailerId) {
+		var ret int32
 		return ret
 	}
-	return *o.Trailer
+	return *o.TrailerId
 }
 
-// GetTrailerOk returns a tuple with the Trailer field value if set, nil otherwise
+// GetTrailerIdOk returns a tuple with the TrailerId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *WateringPlanInList) GetTrailerOk() (*Vehicle, bool) {
-	if o == nil || IsNil(o.Trailer) {
+func (o *WateringPlanInList) GetTrailerIdOk() (*int32, bool) {
+	if o == nil || IsNil(o.TrailerId) {
 		return nil, false
 	}
-	return o.Trailer, true
+	return o.TrailerId, true
 }
 
-// HasTrailer returns a boolean if a field has been set.
-func (o *WateringPlanInList) HasTrailer() bool {
-	if o != nil && !IsNil(o.Trailer) {
+// HasTrailerId returns a boolean if a field has been set.
+func (o *WateringPlanInList) HasTrailerId() bool {
+	if o != nil && !IsNil(o.TrailerId) {
 		return true
 	}
 
 	return false
 }
 
-// SetTrailer gets a reference to the given Vehicle and assigns it to the Trailer field.
-func (o *WateringPlanInList) SetTrailer(v Vehicle) {
-	o.Trailer = &v
+// SetTrailerId gets a reference to the given int32 and assigns it to the TrailerId field.
+func (o *WateringPlanInList) SetTrailerId(v int32) {
+	o.TrailerId = &v
 }
 
-// GetTransporter returns the Transporter field value
-func (o *WateringPlanInList) GetTransporter() Vehicle {
+// GetTransporterId returns the TransporterId field value
+func (o *WateringPlanInList) GetTransporterId() int32 {
 	if o == nil {
-		var ret Vehicle
+		var ret int32
 		return ret
 	}
 
-	return o.Transporter
+	return o.TransporterId
 }
 
-// GetTransporterOk returns a tuple with the Transporter field value
+// GetTransporterIdOk returns a tuple with the TransporterId field value
 // and a boolean to check if the value has been set.
-func (o *WateringPlanInList) GetTransporterOk() (*Vehicle, bool) {
+func (o *WateringPlanInList) GetTransporterIdOk() (*int32, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.Transporter, true
+	return &o.TransporterId, true
 }
 
-// SetTransporter sets field value
-func (o *WateringPlanInList) SetTransporter(v Vehicle) {
-	o.Transporter = v
+// SetTransporterId sets field value
+func (o *WateringPlanInList) SetTransporterId(v int32) {
+	o.TransporterId = v
 }
 
-// GetTreeclusters returns the Treeclusters field value
-func (o *WateringPlanInList) GetTreeclusters() []TreeClusterInList {
+// GetTreeClusterIds returns the TreeClusterIds field value
+func (o *WateringPlanInList) GetTreeClusterIds() []int32 {
 	if o == nil {
-		var ret []TreeClusterInList
+		var ret []int32
 		return ret
 	}
 
-	return o.Treeclusters
+	return o.TreeClusterIds
 }
 
-// GetTreeclustersOk returns a tuple with the Treeclusters field value
+// GetTreeClusterIdsOk returns a tuple with the TreeClusterIds field value
 // and a boolean to check if the value has been set.
-func (o *WateringPlanInList) GetTreeclustersOk() ([]TreeClusterInList, bool) {
+func (o *WateringPlanInList) GetTreeClusterIdsOk() ([]int32, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.Treeclusters, true
+	return o.TreeClusterIds, true
 }
 
-// SetTreeclusters sets field value
-func (o *WateringPlanInList) SetTreeclusters(v []TreeClusterInList) {
-	o.Treeclusters = v
+// SetTreeClusterIds sets field value
+func (o *WateringPlanInList) SetTreeClusterIds(v []int32) {
+	o.TreeClusterIds = v
 }
 
 // GetUpdatedAt returns the UpdatedAt field value
@@ -478,11 +478,11 @@ func (o WateringPlanInList) ToMap() (map[string]interface{}, error) {
 	}
 	toSerialize["status"] = o.Status
 	toSerialize["total_water_required"] = o.TotalWaterRequired
-	if !IsNil(o.Trailer) {
-		toSerialize["trailer"] = o.Trailer
+	if !IsNil(o.TrailerId) {
+		toSerialize["trailer_id"] = o.TrailerId
 	}
-	toSerialize["transporter"] = o.Transporter
-	toSerialize["treeclusters"] = o.Treeclusters
+	toSerialize["transporter_id"] = o.TransporterId
+	toSerialize["tree_cluster_ids"] = o.TreeClusterIds
 	toSerialize["updated_at"] = o.UpdatedAt
 	toSerialize["user_ids"] = o.UserIds
 	return toSerialize, nil
@@ -501,8 +501,8 @@ func (o *WateringPlanInList) UnmarshalJSON(data []byte) (err error) {
 		"id",
 		"status",
 		"total_water_required",
-		"transporter",
-		"treeclusters",
+		"transporter_id",
+		"tree_cluster_ids",
 		"updated_at",
 		"user_ids",
 	}

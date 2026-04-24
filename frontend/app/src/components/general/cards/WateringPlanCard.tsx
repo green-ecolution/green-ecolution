@@ -36,9 +36,8 @@ const WateringPlanCard: React.FC<WateringPlanCardProps> = ({ wateringPlan }) => 
             {date}
           </ListCardTitle>
           <p className="text-dark-600 lg:text-sm">
-            Fahrzeug:&nbsp;
-            {wateringPlan.transporter.numberPlate}
-            {wateringPlan.trailer && <span> | {wateringPlan.trailer.numberPlate}</span>}
+            Fahrzeug #{wateringPlan.transporterId}
+            {wateringPlan.trailerId && <span> | Anhänger #{wateringPlan.trailerId}</span>}
           </p>
         </div>
 
@@ -54,8 +53,8 @@ const WateringPlanCard: React.FC<WateringPlanCardProps> = ({ wateringPlan }) => 
 
         <ListCardDescription>
           <span className="lg:sr-only">Anzahl der Bewässerungsgruppen:&nbsp;</span>
-          {wateringPlan.treeclusters.length}
-          {wateringPlan.treeclusters.length === 1 ? ' Gruppe' : ' Gruppen'}
+          {wateringPlan.treeClusterIds.length}
+          {wateringPlan.treeClusterIds.length === 1 ? ' Gruppe' : ' Gruppen'}
         </ListCardDescription>
       </Link>
     </ListCard>

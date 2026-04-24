@@ -1,0 +1,69 @@
+package mapper
+
+import (
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
+	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
+)
+
+func SensorFromResponse(source *sensor.Sensor) *entities.SensorResponse {
+	if source == nil {
+		return nil
+	}
+	return &entities.SensorResponse{
+		ID:             source.ID.String(),
+		CreatedAt:      source.CreatedAt,
+		UpdatedAt:      source.UpdatedAt,
+		Status:         MapSensorStatus(source.Status),
+		LatestData:     MapLatestDataToResponse(source.LatestData),
+		Latitude:       source.Coordinate.Latitude(),
+		Longitude:      source.Coordinate.Longitude(),
+		Provider:       source.Provider,
+		AdditionalInfo: source.AdditionalInfo,
+	}
+}
+
+func SensorFromDataResponse(source *sensor.SensorData) *entities.SensorDataResponse {
+	return MapLatestDataToResponse(source)
+}
+
+func SensorFromWatermarkResponse(source *sensor.Watermark) *entities.WatermarkResponse {
+	if source == nil {
+		return nil
+	}
+	return &entities.WatermarkResponse{
+		Centibar:   source.Centibar,
+		Resistance: source.Resistance,
+		Depth:      source.Depth,
+	}
+}
+
+func MapLatestDataToResponse(sensorData *sensor.SensorData) *entities.SensorDataResponse {
+	if sensorData == nil || sensorData.Data == nil {
+		return nil
+	}
+
+	return &entities.SensorDataResponse{
+		CreatedAt:   sensorData.CreatedAt,
+		UpdatedAt:   sensorData.UpdatedAt,
+		Battery:     sensorData.Data.Battery,
+		Humidity:    sensorData.Data.Humidity,
+		Temperature: sensorData.Data.Temperature,
+		Watermarks:  mapWatermarkData(sensorData.Data.Watermarks),
+	}
+}
+
+func mapWatermarkData(watermarks []sensor.Watermark) []*entities.WatermarkResponse {
+	responses := make([]*entities.WatermarkResponse, len(watermarks))
+	for i, w := range watermarks {
+		responses[i] = &entities.WatermarkResponse{
+			Centibar:   w.Centibar,
+			Resistance: w.Resistance,
+			Depth:      w.Depth,
+		}
+	}
+	return responses
+}
+
+func MapSensorStatus(src sensor.SensorStatus) entities.SensorStatus {
+	return entities.SensorStatus(src)
+}

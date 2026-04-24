@@ -13,20 +13,6 @@
  */
 
 import { mapValues } from '../runtime';
-import type { Vehicle } from './Vehicle';
-import {
-    VehicleFromJSON,
-    VehicleFromJSONTyped,
-    VehicleToJSON,
-    VehicleToJSONTyped,
-} from './Vehicle';
-import type { TreeClusterInList } from './TreeClusterInList';
-import {
-    TreeClusterInListFromJSON,
-    TreeClusterInListFromJSONTyped,
-    TreeClusterInListToJSON,
-    TreeClusterInListToJSONTyped,
-} from './TreeClusterInList';
 import type { WateringPlanStatus } from './WateringPlanStatus';
 import {
     WateringPlanStatusFromJSON,
@@ -103,22 +89,22 @@ export interface WateringPlanInList {
     totalWaterRequired: number;
     /**
      * 
-     * @type {Vehicle}
+     * @type {number}
      * @memberof WateringPlanInList
      */
-    trailer?: Vehicle;
+    trailerId?: number;
     /**
      * 
-     * @type {Vehicle}
+     * @type {number}
      * @memberof WateringPlanInList
      */
-    transporter: Vehicle;
+    transporterId: number;
     /**
      * 
-     * @type {Array<TreeClusterInList>}
+     * @type {Array<number>}
      * @memberof WateringPlanInList
      */
-    treeclusters: Array<TreeClusterInList>;
+    treeClusterIds: Array<number>;
     /**
      * 
      * @type {string}
@@ -147,8 +133,8 @@ export function instanceOfWateringPlanInList(value: object): value is WateringPl
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('status' in value) || value['status'] === undefined) return false;
     if (!('totalWaterRequired' in value) || value['totalWaterRequired'] === undefined) return false;
-    if (!('transporter' in value) || value['transporter'] === undefined) return false;
-    if (!('treeclusters' in value) || value['treeclusters'] === undefined) return false;
+    if (!('transporterId' in value) || value['transporterId'] === undefined) return false;
+    if (!('treeClusterIds' in value) || value['treeClusterIds'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
     if (!('userIds' in value) || value['userIds'] === undefined) return false;
     return true;
@@ -174,9 +160,9 @@ export function WateringPlanInListFromJSONTyped(json: any, ignoreDiscriminator: 
         'provider': json['provider'] == null ? undefined : json['provider'],
         'status': WateringPlanStatusFromJSON(json['status']),
         'totalWaterRequired': json['total_water_required'],
-        'trailer': json['trailer'] == null ? undefined : VehicleFromJSON(json['trailer']),
-        'transporter': VehicleFromJSON(json['transporter']),
-        'treeclusters': ((json['treeclusters'] as Array<any>).map(TreeClusterInListFromJSON)),
+        'trailerId': json['trailer_id'] == null ? undefined : json['trailer_id'],
+        'transporterId': json['transporter_id'],
+        'treeClusterIds': json['tree_cluster_ids'],
         'updatedAt': json['updated_at'],
         'userIds': json['user_ids'],
     };
@@ -203,9 +189,9 @@ export function WateringPlanInListToJSONTyped(value?: WateringPlanInList | null,
         'provider': value['provider'],
         'status': WateringPlanStatusToJSON(value['status']),
         'total_water_required': value['totalWaterRequired'],
-        'trailer': VehicleToJSON(value['trailer']),
-        'transporter': VehicleToJSON(value['transporter']),
-        'treeclusters': ((value['treeclusters'] as Array<any>).map(TreeClusterInListToJSON)),
+        'trailer_id': value['trailerId'],
+        'transporter_id': value['transporterId'],
+        'tree_cluster_ids': value['treeClusterIds'],
         'updated_at': value['updatedAt'],
         'user_ids': value['userIds'],
     };

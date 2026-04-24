@@ -22,8 +22,8 @@ var _ MappedNullable = &TreeClusterList{}
 
 // TreeClusterList struct for TreeClusterList
 type TreeClusterList struct {
-	Data       []TreeClusterInList `json:"data"`
-	Pagination *Pagination         `json:"pagination,omitempty"`
+	Data       []TreeCluster `json:"data"`
+	Pagination *Pagination   `json:"pagination,omitempty"`
 }
 
 type _TreeClusterList TreeClusterList
@@ -32,7 +32,7 @@ type _TreeClusterList TreeClusterList
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewTreeClusterList(data []TreeClusterInList) *TreeClusterList {
+func NewTreeClusterList(data []TreeCluster) *TreeClusterList {
 	this := TreeClusterList{}
 	this.Data = data
 	return &this
@@ -47,9 +47,9 @@ func NewTreeClusterListWithDefaults() *TreeClusterList {
 }
 
 // GetData returns the Data field value
-func (o *TreeClusterList) GetData() []TreeClusterInList {
+func (o *TreeClusterList) GetData() []TreeCluster {
 	if o == nil {
-		var ret []TreeClusterInList
+		var ret []TreeCluster
 		return ret
 	}
 
@@ -58,7 +58,7 @@ func (o *TreeClusterList) GetData() []TreeClusterInList {
 
 // GetDataOk returns a tuple with the Data field value
 // and a boolean to check if the value has been set.
-func (o *TreeClusterList) GetDataOk() ([]TreeClusterInList, bool) {
+func (o *TreeClusterList) GetDataOk() ([]TreeCluster, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -66,7 +66,7 @@ func (o *TreeClusterList) GetDataOk() ([]TreeClusterInList, bool) {
 }
 
 // SetData sets field value
-func (o *TreeClusterList) SetData(v []TreeClusterInList) {
+func (o *TreeClusterList) SetData(v []TreeCluster) {
 	o.Data = v
 }
 

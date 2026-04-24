@@ -16,9 +16,9 @@ Name | Type | Description | Notes
 **MoistureLevel** | **float32** |  | 
 **Name** | **string** |  | 
 **Provider** | Pointer to **string** |  | [optional] 
-**Region** | Pointer to [**Region**](Region.md) |  | [optional] 
+**RegionId** | Pointer to **int32** |  | [optional] 
 **SoilCondition** | [**SoilCondition**](SoilCondition.md) |  | 
-**Trees** | Pointer to [**[]Tree**](Tree.md) |  | [optional] 
+**TreeIds** | Pointer to **[]int32** |  | [optional] 
 **UpdatedAt** | **string** |  | 
 **WateringStatus** | [**WateringStatus**](WateringStatus.md) |  | 
 
@@ -296,30 +296,30 @@ SetProvider sets Provider field to given value.
 
 HasProvider returns a boolean if a field has been set.
 
-### GetRegion
+### GetRegionId
 
-`func (o *TreeCluster) GetRegion() Region`
+`func (o *TreeCluster) GetRegionId() int32`
 
-GetRegion returns the Region field if non-nil, zero value otherwise.
+GetRegionId returns the RegionId field if non-nil, zero value otherwise.
 
-### GetRegionOk
+### GetRegionIdOk
 
-`func (o *TreeCluster) GetRegionOk() (*Region, bool)`
+`func (o *TreeCluster) GetRegionIdOk() (*int32, bool)`
 
-GetRegionOk returns a tuple with the Region field if it's non-nil, zero value otherwise
+GetRegionIdOk returns a tuple with the RegionId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetRegion
+### SetRegionId
 
-`func (o *TreeCluster) SetRegion(v Region)`
+`func (o *TreeCluster) SetRegionId(v int32)`
 
-SetRegion sets Region field to given value.
+SetRegionId sets RegionId field to given value.
 
-### HasRegion
+### HasRegionId
 
-`func (o *TreeCluster) HasRegion() bool`
+`func (o *TreeCluster) HasRegionId() bool`
 
-HasRegion returns a boolean if a field has been set.
+HasRegionId returns a boolean if a field has been set.
 
 ### GetSoilCondition
 
@@ -341,30 +341,30 @@ and a boolean to check if the value has been set.
 SetSoilCondition sets SoilCondition field to given value.
 
 
-### GetTrees
+### GetTreeIds
 
-`func (o *TreeCluster) GetTrees() []Tree`
+`func (o *TreeCluster) GetTreeIds() []int32`
 
-GetTrees returns the Trees field if non-nil, zero value otherwise.
+GetTreeIds returns the TreeIds field if non-nil, zero value otherwise.
 
-### GetTreesOk
+### GetTreeIdsOk
 
-`func (o *TreeCluster) GetTreesOk() (*[]Tree, bool)`
+`func (o *TreeCluster) GetTreeIdsOk() (*[]int32, bool)`
 
-GetTreesOk returns a tuple with the Trees field if it's non-nil, zero value otherwise
+GetTreeIdsOk returns a tuple with the TreeIds field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetTrees
+### SetTreeIds
 
-`func (o *TreeCluster) SetTrees(v []Tree)`
+`func (o *TreeCluster) SetTreeIds(v []int32)`
 
-SetTrees sets Trees field to given value.
+SetTreeIds sets TreeIds field to given value.
 
-### HasTrees
+### HasTreeIds
 
-`func (o *TreeCluster) HasTrees() bool`
+`func (o *TreeCluster) HasTreeIds() bool`
 
-HasTrees returns a boolean if a field has been set.
+HasTreeIds returns a boolean if a field has been set.
 
 ### GetUpdatedAt
 

@@ -14,29 +14,33 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/green-ecolution/green-ecolution/backend/docs"
-	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/entities"
-	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
-	"github.com/green-ecolution/green-ecolution/backend/internal/server/http"
-	"github.com/green-ecolution/green-ecolution/backend/internal/server/mqtt"
-	"github.com/green-ecolution/green-ecolution/backend/internal/service"
-	"github.com/green-ecolution/green-ecolution/backend/internal/service/domain"
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage/auth"
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage/local"
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage/local/info"
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage/postgres"
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage/routing"
-	_ "github.com/green-ecolution/green-ecolution/backend/internal/storage/routing/openrouteservice"
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage/routing/valhalla"
-	"github.com/green-ecolution/green-ecolution/backend/internal/storage/s3"
-	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
-	"github.com/green-ecolution/green-ecolution/backend/internal/worker/subscriber"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/viper"
+
+	"github.com/green-ecolution/green-ecolution/backend/docs"
+	"github.com/green-ecolution/green-ecolution/backend/internal/application"
+	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
+	"github.com/green-ecolution/green-ecolution/backend/internal/config"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
+	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/auth"
+	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/local"
+	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/local/info"
+	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres"
+	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing"
+	_ "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing/openrouteservice"
+	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing/valhalla"
+	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/s3"
+	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http"
+	"github.com/green-ecolution/green-ecolution/backend/internal/interface/mqtt"
+	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
+	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
+	"github.com/green-ecolution/green-ecolution/backend/internal/worker/subscriber"
 )
 
 //go:embed all:frontend
@@ -124,7 +128,7 @@ func startAppServices(ctx context.Context, cfg *config.Config) {
 
 	em := initializeEventManager()
 
-	services := domain.NewService(cfg, repositories, em)
+	services := application.NewService(cfg, repositories, em)
 	httpServer := http.NewServer(cfg, services, frontendFS)
 	mqttServer := mqtt.NewMqtt(cfg, services)
 
@@ -192,6 +196,7 @@ func initializeRepositories(ctx context.Context, cfg *config.Config) (repos *sto
 		WateringPlan: pgRepo.WateringPlan,
 		Routing:      routingRepo.Routing,
 		GpxBucket:    s3Repos.GpxBucket,
+		Evaluation:   pgRepo.Evaluation,
 	}
 
 	return repositories, closeFn
@@ -199,16 +204,16 @@ func initializeRepositories(ctx context.Context, cfg *config.Config) (repos *sto
 
 func initializeEventManager() *worker.EventManager {
 	return worker.NewEventManager(
-		entities.EventTypeUpdateTree,
-		entities.EventTypeUpdateTreeCluster,
-		entities.EventTypeCreateTree,
-		entities.EventTypeDeleteTree,
-		entities.EventTypeNewSensorData,
-		entities.EventTypeUpdateWateringPlan,
+		tree.EventTypeUpdate,
+		cluster.EventTypeUpdate,
+		tree.EventTypeCreate,
+		tree.EventTypeDelete,
+		sensor.EventTypeNewData,
+		watering.EventTypeUpdate,
 	)
 }
 
-func runServices(ctx context.Context, httpServer *http.Server, mqttServer *mqtt.Mqtt, em *worker.EventManager, services *service.Services) {
+func runServices(ctx context.Context, httpServer *http.Server, mqttServer *mqtt.Mqtt, em *worker.EventManager, services *ports.Services) {
 	var wg sync.WaitGroup
 
 	if viper.GetBool("mqtt.enable") {
@@ -240,7 +245,7 @@ func runServices(ctx context.Context, httpServer *http.Server, mqttServer *mqtt.
 	wg.Wait()
 }
 
-func runEventSubscriptions(ctx context.Context, wg *sync.WaitGroup, em *worker.EventManager, services *service.Services) {
+func runEventSubscriptions(ctx context.Context, wg *sync.WaitGroup, em *worker.EventManager, services *ports.Services) {
 	subscribers := []worker.Subscriber{
 		subscriber.NewUpdateTreeSubscriber(services.TreeClusterService),
 		subscriber.NewCreateTreeSubscriber(services.TreeClusterService),
