@@ -7,13 +7,12 @@ import (
 	"net/http"
 	"testing"
 
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
+	vehicleDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/vehicle"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/vehicle"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/middleware"
 )
@@ -30,7 +29,7 @@ func TestRegisterRoutes(t *testing.T) {
 			ctx = context.WithValue(ctx, "limit", int32(-1))
 
 			mockVehicleService.EXPECT().GetAll(
-				mock.Anything, domain.VehicleQuery{},
+				mock.Anything, vehicleDomain.VehicleQuery{},
 			).Return(TestVehicles, int64(len(TestVehicles)), nil)
 
 			// when
@@ -49,7 +48,7 @@ func TestRegisterRoutes(t *testing.T) {
 			vehicle.RegisterRoutes(app, mockVehicleService)
 
 			mockVehicleService.EXPECT().GetAll(
-				mock.Anything, domain.VehicleQuery{Type: "transporter"},
+				mock.Anything, vehicleDomain.VehicleQuery{Type: "transporter"},
 			).Return(TestVehicles, int64(len(TestVehicles)), nil)
 
 			// when
@@ -69,7 +68,7 @@ func TestRegisterRoutes(t *testing.T) {
 
 			mockVehicleService.EXPECT().Create(
 				mock.Anything,
-				mock.AnythingOfType("*entities.VehicleCreate"),
+				mock.AnythingOfType("*vehicle.VehicleCreate"),
 			).Return(TestVehicle, nil)
 
 			// when

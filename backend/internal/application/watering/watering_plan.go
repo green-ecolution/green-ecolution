@@ -12,30 +12,35 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
+	clusterDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/routing"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	userDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/user"
+	vehicleDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/vehicle"
+	wateringDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 )
 
 type WateringPlanService struct {
-	wateringPlanRepo entities.WateringPlanRepository
-	clusterRepo      entities.TreeClusterRepository
-	vehicleRepo      entities.VehicleRepository
-	userRepo         entities.UserRepository
-	routingRepo      entities.RoutingRepository
-	gpxBucket        entities.S3Repository
+	wateringPlanRepo wateringDomain.WateringPlanRepository
+	clusterRepo      clusterDomain.TreeClusterRepository
+	vehicleRepo      vehicleDomain.VehicleRepository
+	userRepo         userDomain.UserRepository
+	routingRepo      routing.RoutingRepository
+	gpxBucket        routing.S3Repository
 	eventManager     *worker.EventManager
 }
 
 func NewWateringPlanService(
-	wateringPlanRepository entities.WateringPlanRepository,
-	clusterRepository entities.TreeClusterRepository,
-	vehicleRepository entities.VehicleRepository,
-	userRepository entities.UserRepository,
+	wateringPlanRepository wateringDomain.WateringPlanRepository,
+	clusterRepository clusterDomain.TreeClusterRepository,
+	vehicleRepository vehicleDomain.VehicleRepository,
+	userRepository userDomain.UserRepository,
 	eventManager *worker.EventManager,
-	routingRepo entities.RoutingRepository,
-	gpxRepo entities.S3Repository,
+	routingRepo routing.RoutingRepository,
+	gpxRepo routing.S3Repository,
 ) ports.WateringPlanService {
 	return &WateringPlanService{
 		wateringPlanRepo: wateringPlanRepository,
@@ -48,14 +53,14 @@ func NewWateringPlanService(
 	}
 }
 
-func (w *WateringPlanService) publishUpdateEvent(ctx context.Context, prevWp *entities.WateringPlan) error {
+func (w *WateringPlanService) publishUpdateEvent(ctx context.Context, prevWp *wateringDomain.WateringPlan) error {
 	log := logger.GetLogger(ctx)
-	log.Debug("publish new event", "event", entities.EventTypeUpdateWateringPlan, "service", "WateringPlanService")
+	log.Debug("publish new event", "event", wateringDomain.EventTypeUpdate, "service", "WateringPlanService")
 	updatedWp, err := w.GetByID(ctx, prevWp.ID)
 	if err != nil {
 		return err
 	}
-	event := entities.NewEventUpdateWateringPlan(prevWp, updatedWp)
+	event := wateringDomain.NewEventUpdate(prevWp, updatedWp)
 	if err := w.eventManager.Publish(ctx, event); err != nil {
 		log.Error("error while sending event after updating watering plan", "err", err, "watering_plan_id", prevWp.ID)
 	}
@@ -63,7 +68,7 @@ func (w *WateringPlanService) publishUpdateEvent(ctx context.Context, prevWp *en
 	return nil
 }
 
-func (w *WateringPlanService) PreviewRoute(ctx context.Context, transporterID int32, trailerID *int32, clusterIDs []int32) (*entities.GeoJSON, error) {
+func (w *WateringPlanService) PreviewRoute(ctx context.Context, transporterID int32, trailerID *int32, clusterIDs []int32) (*routing.GeoJSON, error) {
 	log := logger.GetLogger(ctx)
 	transporter, err := w.vehicleRepo.GetByID(ctx, transporterID)
 	if err != nil {
@@ -71,7 +76,7 @@ func (w *WateringPlanService) PreviewRoute(ctx context.Context, transporterID in
 		return nil, ports.NewError(ports.NotFound, fmt.Sprintf("vehicle with id %d not found", transporterID))
 	}
 
-	var trailer *entities.Vehicle
+	var trailer *vehicleDomain.Vehicle
 	if trailerID != nil {
 		trailer, err = w.vehicleRepo.GetByID(ctx, *trailerID)
 		if err != nil {
@@ -86,9 +91,12 @@ func (w *WateringPlanService) PreviewRoute(ctx context.Context, transporterID in
 		return nil, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
 	}
 
-	geoJSON, err := w.routingRepo.GenerateRoute(ctx, entities.MergeVehicles(transporter, trailer), clusters)
+	merged := vehicleDomain.MergeVehicles(transporter, trailer)
+	coords := extractClusterCoordinates(clusters)
+
+	geoJSON, err := w.routingRepo.GenerateRoute(ctx, merged.Height, merged.Width, merged.Length, merged.Weight, coords)
 	if err != nil {
-		if errors.Is(err, entities.ErrUnknownVehicleType) {
+		if errors.Is(err, vehicleDomain.ErrUnknownType) {
 			log.Debug("the vehicle type is not supported", "error", err, "vehicle_type", transporter.Type)
 			return nil, ports.ErrVehicleUnsupportedType
 		}
@@ -99,7 +107,7 @@ func (w *WateringPlanService) PreviewRoute(ctx context.Context, transporterID in
 	return geoJSON, nil
 }
 
-func (w *WateringPlanService) GetAll(ctx context.Context, query entities.Query) ([]*entities.WateringPlan, int64, error) {
+func (w *WateringPlanService) GetAll(ctx context.Context, query shared.Query) ([]*wateringDomain.WateringPlan, int64, error) {
 	log := logger.GetLogger(ctx)
 	plans, totalCount, err := w.wateringPlanRepo.GetAll(ctx, query)
 	if err != nil {
@@ -110,7 +118,7 @@ func (w *WateringPlanService) GetAll(ctx context.Context, query entities.Query) 
 	return plans, totalCount, nil
 }
 
-func (w *WateringPlanService) GetByID(ctx context.Context, id int32) (*entities.WateringPlan, error) {
+func (w *WateringPlanService) GetByID(ctx context.Context, id int32) (*wateringDomain.WateringPlan, error) {
 	log := logger.GetLogger(ctx)
 	got, err := w.wateringPlanRepo.GetByID(ctx, id)
 	if err != nil {
@@ -121,7 +129,7 @@ func (w *WateringPlanService) GetByID(ctx context.Context, id int32) (*entities.
 	return got, nil
 }
 
-func (w *WateringPlanService) Create(ctx context.Context, createWp *entities.WateringPlanCreate) (*entities.WateringPlan, error) {
+func (w *WateringPlanService) Create(ctx context.Context, createWp *wateringDomain.WateringPlanCreate) (*wateringDomain.WateringPlan, error) {
 	log := logger.GetLogger(ctx)
 
 	treeClusters, err := w.fetchTreeClusters(ctx, createWp.TreeClusterIDs)
@@ -135,7 +143,7 @@ func (w *WateringPlanService) Create(ctx context.Context, createWp *entities.Wat
 		return nil, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
 	}
 
-	var trailer *entities.Vehicle
+	var trailer *vehicleDomain.Vehicle
 	if createWp.TrailerID != nil {
 		trailer, err = w.vehicleRepo.GetByID(ctx, *createWp.TrailerID)
 		if err != nil {
@@ -149,14 +157,17 @@ func (w *WateringPlanService) Create(ctx context.Context, createWp *entities.Wat
 		return nil, err // err is already a service error
 	}
 
-	created, err := w.wateringPlanRepo.Create(ctx, func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+	clusterIDs := utils.Map(treeClusters, func(c *clusterDomain.TreeCluster) int32 { return c.ID })
+	totalTreeCount := countTotalTrees(treeClusters)
+
+	created, err := w.wateringPlanRepo.Create(ctx, func(wp *wateringDomain.WateringPlan, _ wateringDomain.WateringPlanRepository) (bool, error) {
 		wp.Date = createWp.Date
 		wp.Description = createWp.Description
-		wp.Transporter = transporter
-		wp.Trailer = trailer
-		wp.TreeClusters = treeClusters
+		wp.TransporterID = createWp.TransporterID
+		wp.TrailerID = createWp.TrailerID
+		wp.TreeClusterIDs = clusterIDs
 		wp.UserIDs = createWp.UserIDs
-		wp.TotalWaterRequired = utils.P(wp.CalculateRequiredWater())
+		wp.TotalWaterRequired = utils.P(wateringDomain.CalculateRequiredWater(totalTreeCount))
 		wp.Provider = createWp.Provider
 		wp.AdditionalInfo = createWp.AdditionalInfo
 
@@ -167,16 +178,19 @@ func (w *WateringPlanService) Create(ctx context.Context, createWp *entities.Wat
 		return nil, ports.MapError(ctx, err, ports.ErrorLogAll)
 	}
 
-	err = w.wateringPlanRepo.Update(ctx, created.ID, func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
-		mergedVehicle := entities.MergeVehicles(transporter, trailer)
-		gpxURL, err := w.getGpxRouteURL(ctx, created.ID, mergedVehicle, treeClusters)
+	mergedVehicle := vehicleDomain.MergeVehicles(transporter, trailer)
+	coords := extractClusterCoordinates(treeClusters)
+	treeCounts := extractTreeCounts(treeClusters)
+
+	err = w.wateringPlanRepo.Update(ctx, created.ID, func(wp *wateringDomain.WateringPlan, _ wateringDomain.WateringPlanRepository) (bool, error) {
+		gpxURL, err := w.getGpxRouteURL(ctx, created.ID, mergedVehicle.Height, mergedVehicle.Width, mergedVehicle.Length, mergedVehicle.Weight, coords)
 		if err != nil {
 			log.Warn("generating route in gpx fomat failed. will not save gpx route", "error", err, "watering_plan_id", created.ID)
 		} else {
 			wp.GpxURL = gpxURL
 		}
 
-		metadata, err := w.routingRepo.GenerateRouteInformation(ctx, mergedVehicle, treeClusters)
+		metadata, err := w.routingRepo.GenerateRouteInformation(ctx, mergedVehicle.Height, mergedVehicle.Width, mergedVehicle.Length, mergedVehicle.Weight, mergedVehicle.WaterCapacity, coords, treeCounts)
 		if err != nil {
 			log.Warn("generating route information failed. will not save route metadata", "error", err, "watering_plan_id", created.ID)
 		} else {
@@ -197,9 +211,9 @@ func (w *WateringPlanService) Create(ctx context.Context, createWp *entities.Wat
 	return created, nil
 }
 
-func (w *WateringPlanService) getGpxRouteURL(ctx context.Context, waterPlanID int32, vehicle *entities.Vehicle, clusters []*entities.TreeCluster) (string, error) {
+func (w *WateringPlanService) getGpxRouteURL(ctx context.Context, waterPlanID int32, vehicleHeight, vehicleWidth, vehicleLength, vehicleWeight float64, clusterCoordinates []shared.Coordinate) (string, error) {
 	log := logger.GetLogger(ctx)
-	r, err := w.routingRepo.GenerateRawGpxRoute(ctx, vehicle, clusters)
+	r, err := w.routingRepo.GenerateRawGpxRoute(ctx, vehicleHeight, vehicleWidth, vehicleLength, vehicleWeight, clusterCoordinates)
 	if err != nil {
 		log.Error("failed to generate gpx route", "error", err)
 		return "", err
@@ -235,7 +249,7 @@ func (w *WateringPlanService) GetGPXFileStream(ctx context.Context, objName stri
 	return ioReader, nil
 }
 
-func (w *WateringPlanService) Update(ctx context.Context, id int32, updateWp *entities.WateringPlanUpdate) (*entities.WateringPlan, error) {
+func (w *WateringPlanService) Update(ctx context.Context, id int32, updateWp *wateringDomain.WateringPlanUpdate) (*wateringDomain.WateringPlan, error) {
 	log := logger.GetLogger(ctx)
 
 	prevWp, err := w.GetByID(ctx, id)
@@ -255,7 +269,7 @@ func (w *WateringPlanService) Update(ctx context.Context, id int32, updateWp *en
 		return nil, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
 	}
 
-	var trailer *entities.Vehicle
+	var trailer *vehicleDomain.Vehicle
 	if updateWp.TrailerID != nil {
 		trailer, err = w.vehicleRepo.GetByID(ctx, *updateWp.TrailerID)
 		if err != nil {
@@ -268,24 +282,29 @@ func (w *WateringPlanService) Update(ctx context.Context, id int32, updateWp *en
 		return nil, err
 	}
 
-	err = w.wateringPlanRepo.Update(ctx, id, func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+	clusterIDs := utils.Map(treeClusters, func(c *clusterDomain.TreeCluster) int32 { return c.ID })
+	totalTreeCount := countTotalTrees(treeClusters)
+	mergedVehicle := vehicleDomain.MergeVehicles(transporter, trailer)
+	coords := extractClusterCoordinates(treeClusters)
+	treeCounts := extractTreeCounts(treeClusters)
+
+	err = w.wateringPlanRepo.Update(ctx, id, func(wp *wateringDomain.WateringPlan, _ wateringDomain.WateringPlanRepository) (bool, error) {
 		wp.Date = updateWp.Date
 		wp.Description = updateWp.Description
-		wp.Transporter = transporter
-		wp.Trailer = trailer
-		wp.TreeClusters = treeClusters
+		wp.TransporterID = updateWp.TransporterID
+		wp.TrailerID = updateWp.TrailerID
+		wp.TreeClusterIDs = clusterIDs
 		wp.Status = updateWp.Status
 		wp.CancellationNote = updateWp.CancellationNote
 		wp.Evaluation = updateWp.Evaluation
 		wp.UserIDs = updateWp.UserIDs
-		neededWater := wp.CalculateRequiredWater()
+		neededWater := wateringDomain.CalculateRequiredWater(totalTreeCount)
 		wp.TotalWaterRequired = &neededWater
 		wp.Provider = updateWp.Provider
 		wp.AdditionalInfo = updateWp.AdditionalInfo
 
-		mergedVehicle := entities.MergeVehicles(transporter, trailer)
 		if wp.ShouldRegenerateRoute(prevWp) {
-			gpxURL, err := w.getGpxRouteURL(ctx, id, mergedVehicle, treeClusters)
+			gpxURL, err := w.getGpxRouteURL(ctx, id, mergedVehicle.Height, mergedVehicle.Width, mergedVehicle.Length, mergedVehicle.Weight, coords)
 			if err != nil {
 				log.Warn("generating route in gpx fomat failed. will not save gpx route", "error", err, "watering_plan_id", id)
 			} else {
@@ -293,7 +312,7 @@ func (w *WateringPlanService) Update(ctx context.Context, id int32, updateWp *en
 			}
 		}
 
-		metadata, err := w.routingRepo.GenerateRouteInformation(ctx, mergedVehicle, treeClusters)
+		metadata, err := w.routingRepo.GenerateRouteInformation(ctx, mergedVehicle.Height, mergedVehicle.Width, mergedVehicle.Length, mergedVehicle.Weight, mergedVehicle.WaterCapacity, coords, treeCounts)
 		if err != nil {
 			log.Warn("generating route information failed. will not route metadata", "error", err, "watering_plan_id", id)
 		} else {
@@ -338,7 +357,7 @@ func (w *WateringPlanService) Ready() bool {
 
 func (w *WateringPlanService) UpdateStatuses(ctx context.Context) error {
 	log := logger.GetLogger(ctx)
-	plans, _, err := w.wateringPlanRepo.GetAll(ctx, entities.Query{Provider: ""})
+	plans, _, err := w.wateringPlanRepo.GetAll(ctx, shared.Query{Provider: ""})
 	if err != nil {
 		log.Error("failed to fetch watering plans", "error", err)
 		return err
@@ -347,8 +366,8 @@ func (w *WateringPlanService) UpdateStatuses(ctx context.Context) error {
 	cutoffTime := time.Now().Add(-24 * time.Hour) // 1 day ago
 	for _, plan := range plans {
 		if plan.IsExpired(cutoffTime) {
-			err = w.wateringPlanRepo.Update(ctx, plan.ID, func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
-				wp.Status = entities.WateringPlanStatusNotCompeted
+			err = w.wateringPlanRepo.Update(ctx, plan.ID, func(wp *wateringDomain.WateringPlan, _ wateringDomain.WateringPlanRepository) (bool, error) {
+				wp.Status = wateringDomain.WateringPlanStatusNotCompeted
 				return true, nil
 			})
 
@@ -365,7 +384,7 @@ func (w *WateringPlanService) UpdateStatuses(ctx context.Context) error {
 }
 
 // returns service error
-func (w *WateringPlanService) fetchTreeClusters(ctx context.Context, treeClusterIDs []*int32) ([]*entities.TreeCluster, error) {
+func (w *WateringPlanService) fetchTreeClusters(ctx context.Context, treeClusterIDs []*int32) ([]*clusterDomain.TreeCluster, error) {
 	log := logger.GetLogger(ctx)
 	clusters, err := w.clusterRepo.GetByIDs(ctx, utils.Map(treeClusterIDs, func(cID *int32) int32 {
 		return *cID
@@ -377,14 +396,14 @@ func (w *WateringPlanService) fetchTreeClusters(ctx context.Context, treeCluster
 
 	if len(clusters) == 0 {
 		log.Debug("requested tree cluster ids in watering plan are not found", "cluster_ids", treeClusterIDs, "error", err)
-		return nil, entities.ErrEntityNotFound("treecluster")
+		return nil, shared.ErrEntityNotFound("treecluster")
 	}
 
 	return clusters, nil
 }
 
 // returns service error
-func (w *WateringPlanService) validateUsers(ctx context.Context, userIDs []*uuid.UUID, transporter, trailer *entities.Vehicle) error {
+func (w *WateringPlanService) validateUsers(ctx context.Context, userIDs []*uuid.UUID, transporter, trailer *vehicleDomain.Vehicle) error {
 	log := logger.GetLogger(ctx)
 	var userIDStrings []string
 	for _, id := range userIDs {
@@ -402,16 +421,16 @@ func (w *WateringPlanService) validateUsers(ctx context.Context, userIDs []*uuid
 
 	if len(users) == 0 {
 		log.Debug("requested user ids in watering plan not found", "error", err, "user_ids", userIDStrings)
-		return ports.MapError(ctx, entities.ErrEntityNotFound("users"), ports.ErrorLogEntityNotFound)
+		return ports.MapError(ctx, shared.ErrEntityNotFound("users"), ports.ErrorLogEntityNotFound)
 	}
 
-	for _, user := range users {
-		if !user.HasRole(entities.UserRoleTbz) {
+	for _, u := range users {
+		if !u.HasRole(userDomain.UserRoleTbz) {
 			return ports.ErrUserNotCorrectRole
 		}
 	}
 
-	var requiredLicenses []entities.DrivingLicense
+	var requiredLicenses []vehicleDomain.DrivingLicense
 	if transporter != nil {
 		requiredLicenses = append(requiredLicenses, transporter.DrivingLicense)
 	}
@@ -420,8 +439,8 @@ func (w *WateringPlanService) validateUsers(ctx context.Context, userIDs []*uuid
 	}
 
 	hasQualifiedDriver := false
-	for _, user := range users {
-		if user.HasRequiredLicenses(requiredLicenses) {
+	for _, u := range users {
+		if u.HasRequiredLicenses(requiredLicenses) {
 			hasQualifiedDriver = true
 			break
 		}
@@ -431,4 +450,30 @@ func (w *WateringPlanService) validateUsers(ctx context.Context, userIDs []*uuid
 	}
 
 	return nil
+}
+
+func extractClusterCoordinates(clusters []*clusterDomain.TreeCluster) []shared.Coordinate {
+	var coords []shared.Coordinate
+	for _, c := range clusters {
+		if c.Coordinate != nil {
+			coords = append(coords, *c.Coordinate)
+		}
+	}
+	return coords
+}
+
+func extractTreeCounts(clusters []*clusterDomain.TreeCluster) []int {
+	counts := make([]int, len(clusters))
+	for i, c := range clusters {
+		counts[i] = len(c.TreeIDs)
+	}
+	return counts
+}
+
+func countTotalTrees(clusters []*clusterDomain.TreeCluster) int {
+	total := 0
+	for _, c := range clusters {
+		total += len(c.TreeIDs)
+	}
+	return total
 }

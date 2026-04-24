@@ -10,7 +10,8 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	sensorDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/middleware"
 )
@@ -28,7 +29,7 @@ func TestRegisterRoutes(t *testing.T) {
 
 			mockSensorService.EXPECT().GetAll(
 				mock.Anything,
-				entities.Query{},
+				shared.Query{},
 			).Return(TestSensorList, int64(len(TestSensorList)), nil)
 
 			// when
@@ -50,8 +51,8 @@ func TestRegisterRoutes(t *testing.T) {
 
 			mockSensorService.EXPECT().GetAllDataByID(
 				mock.Anything,
-				entities.MustNewSensorID("sensor-1"),
-			).Return([]*entities.SensorData{TestSensorData}, nil)
+				sensorDomain.MustNewSensorID("sensor-1"),
+			).Return([]*sensorDomain.SensorData{TestSensorData}, nil)
 
 			// when
 			req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/data/sensor-1", nil)
@@ -72,7 +73,7 @@ func TestRegisterRoutes(t *testing.T) {
 
 			mockSensorService.EXPECT().GetByID(
 				mock.Anything,
-				entities.MustNewSensorID("sensor-1"),
+				sensorDomain.MustNewSensorID("sensor-1"),
 			).Return(TestSensor, nil)
 
 			// when
@@ -92,7 +93,7 @@ func TestRegisterRoutes(t *testing.T) {
 
 			mockSensorService.EXPECT().Delete(
 				mock.Anything,
-				entities.MustNewSensorID("sensor-1"),
+				sensorDomain.MustNewSensorID("sensor-1"),
 			).Return(nil)
 
 			// when

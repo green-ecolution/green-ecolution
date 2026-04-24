@@ -1,11 +1,11 @@
 package mapper
 
 import (
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 )
 
-func SensorFromResponse(source *domain.Sensor) *entities.SensorResponse {
+func SensorFromResponse(source *sensor.Sensor) *entities.SensorResponse {
 	if source == nil {
 		return nil
 	}
@@ -22,11 +22,11 @@ func SensorFromResponse(source *domain.Sensor) *entities.SensorResponse {
 	}
 }
 
-func SensorFromDataResponse(source *domain.SensorData) *entities.SensorDataResponse {
+func SensorFromDataResponse(source *sensor.SensorData) *entities.SensorDataResponse {
 	return MapLatestDataToResponse(source)
 }
 
-func SensorFromWatermarkResponse(source *domain.Watermark) *entities.WatermarkResponse {
+func SensorFromWatermarkResponse(source *sensor.Watermark) *entities.WatermarkResponse {
 	if source == nil {
 		return nil
 	}
@@ -37,7 +37,7 @@ func SensorFromWatermarkResponse(source *domain.Watermark) *entities.WatermarkRe
 	}
 }
 
-func MapLatestDataToResponse(sensorData *domain.SensorData) *entities.SensorDataResponse {
+func MapLatestDataToResponse(sensorData *sensor.SensorData) *entities.SensorDataResponse {
 	if sensorData == nil || sensorData.Data == nil {
 		return nil
 	}
@@ -52,7 +52,7 @@ func MapLatestDataToResponse(sensorData *domain.SensorData) *entities.SensorData
 	}
 }
 
-func mapWatermarkData(watermarks []domain.Watermark) []*entities.WatermarkResponse {
+func mapWatermarkData(watermarks []sensor.Watermark) []*entities.WatermarkResponse {
 	responses := make([]*entities.WatermarkResponse, len(watermarks))
 	for i, w := range watermarks {
 		responses[i] = &entities.WatermarkResponse{
@@ -64,6 +64,6 @@ func mapWatermarkData(watermarks []domain.Watermark) []*entities.WatermarkRespon
 	return responses
 }
 
-func MapSensorStatus(src domain.SensorStatus) entities.SensorStatus {
+func MapSensorStatus(src sensor.SensorStatus) entities.SensorStatus {
 	return entities.SensorStatus(src)
 }

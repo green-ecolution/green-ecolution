@@ -188,7 +188,7 @@ definitions:
   GeoJSONLocation:
     properties:
       coordinate:
-        $ref: '#/definitions/entities.Coordinate'
+        $ref: '#/definitions/shared.Coordinate'
     type: object
   GeoJSONMetadata:
     properties:
@@ -1472,7 +1472,7 @@ definitions:
     - depth
     - resistance
     type: object
-  entities.Coordinate:
+  shared.Coordinate:
     type: object
 info:
   contact:

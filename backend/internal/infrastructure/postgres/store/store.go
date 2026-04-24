@@ -60,7 +60,7 @@ func (s *Store) MapError(err error, dbType any) error {
 	}
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		return entities.ErrEntityNotFound(rName)
+		return shared.ErrEntityNotFound(rName)
 	}
 
 	return err

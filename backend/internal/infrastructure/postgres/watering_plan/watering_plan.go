@@ -3,13 +3,13 @@ package wateringplan
 import (
 	"context"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
-var _ entities.WateringPlanRepository = (*WateringPlanRepository)(nil)
+var _ watering.WateringPlanRepository = (*WateringPlanRepository)(nil)
 
 type WateringPlanRepository struct {
 	store *store.Store

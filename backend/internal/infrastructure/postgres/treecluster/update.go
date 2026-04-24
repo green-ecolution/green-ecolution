@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func (r *TreeClusterRepository) Update(ctx context.Context, id int32, updateFn func(*entities.TreeCluster, entities.TreeClusterRepository) (bool, error)) error {
+func (r *TreeClusterRepository) Update(ctx context.Context, id int32, updateFn func(*cluster.TreeCluster, cluster.TreeClusterRepository) (bool, error)) error {
 	log := logger.GetLogger(ctx)
 	return r.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewTreeClusterRepository(s, r.TreeClusterMappers)
@@ -42,7 +42,7 @@ func (r *TreeClusterRepository) Update(ctx context.Context, id int32, updateFn f
 	})
 }
 
-func (r *TreeClusterRepository) updateEntity(ctx context.Context, tc *entities.TreeCluster) error {
+func (r *TreeClusterRepository) updateEntity(ctx context.Context, tc *cluster.TreeCluster) error {
 	log := logger.GetLogger(ctx)
 	additionalInfo, err := utils.MapAdditionalInfoToByte(tc.AdditionalInfo)
 	if err != nil {
@@ -50,13 +50,9 @@ func (r *TreeClusterRepository) updateEntity(ctx context.Context, tc *entities.T
 		return err
 	}
 
-	var regionID *int32
-	if tc.Region != nil {
-		regionID = &tc.Region.ID
-	}
 	args := sqlc.UpdateTreeClusterParams{
 		ID:                     tc.ID,
-		RegionID:               regionID,
+		RegionID:               tc.RegionID,
 		Address:                tc.Address,
 		Description:            tc.Description,
 		MoistureLevel:          tc.MoistureLevel,
@@ -74,12 +70,8 @@ func (r *TreeClusterRepository) updateEntity(ctx context.Context, tc *entities.T
 		return err
 	}
 
-	if len(tc.Trees) > 0 {
-		treeIDs := utils.Map(tc.Trees, func(t *entities.Tree) int32 {
-			return t.ID
-		})
-
-		if err := r.LinkTreesToCluster(ctx, tc.ID, treeIDs); err != nil {
+	if len(tc.TreeIDs) > 0 {
+		if err := r.LinkTreesToCluster(ctx, tc.ID, tc.TreeIDs); err != nil {
 			return err
 		}
 	}

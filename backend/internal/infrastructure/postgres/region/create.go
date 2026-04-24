@@ -4,18 +4,18 @@ import (
 	"context"
 	"errors"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/region"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
-func defaultRegion() *entities.Region {
-	return &entities.Region{
+func defaultRegion() *region.Region {
+	return &region.Region{
 		Name: "",
 	}
 }
 
-func (r *RegionRepository) Create(ctx context.Context, vFn ...entities.EntityFunc[entities.Region]) (*entities.Region, error) {
+func (r *RegionRepository) Create(ctx context.Context, vFn ...func(*region.Region)) (*region.Region, error) {
 	log := logger.GetLogger(ctx)
 	entity := defaultRegion()
 	for _, fn := range vFn {
@@ -38,7 +38,7 @@ func (r *RegionRepository) Create(ctx context.Context, vFn ...entities.EntityFun
 	return r.GetByID(ctx, *id)
 }
 
-func (r *RegionRepository) createEntity(ctx context.Context, entity *entities.Region) (*int32, error) {
+func (r *RegionRepository) createEntity(ctx context.Context, entity *region.Region) (*int32, error) {
 	args := sqlc.CreateRegionParams{
 		Name: entity.Name,
 	}

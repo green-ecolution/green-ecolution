@@ -12,7 +12,8 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	sensorDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
+	treeDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/tree"
 )
 
@@ -25,7 +26,7 @@ func TestRegisterTreeRoutes(t *testing.T) {
 
 			mockTreeService.EXPECT().GetAll(
 				mock.Anything,
-				entities.TreeQuery{},
+				treeDomain.TreeQuery{},
 			).Return(TestTrees, int64(len(TestTrees)), nil)
 
 			// when
@@ -45,7 +46,7 @@ func TestRegisterTreeRoutes(t *testing.T) {
 
 			mockTreeService.EXPECT().Create(
 				mock.Anything,
-				mock.AnythingOfType("*entities.TreeCreate"),
+				mock.AnythingOfType("*tree.TreeCreate"),
 			).Return(TestTrees[0], nil)
 
 			// when
@@ -135,7 +136,7 @@ func TestRegisterTreeRoutes(t *testing.T) {
 
 			mockTreeService.EXPECT().GetBySensorID(
 				mock.Anything,
-				entities.MustNewSensorID(sensorID),
+				sensorDomain.MustNewSensorID(sensorID),
 			).Return(TestTrees[0], nil)
 
 			// when

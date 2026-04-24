@@ -12,7 +12,6 @@ import (
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
-	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
 const (
@@ -126,77 +125,55 @@ func (v *VroomClient) Send(ctx context.Context, reqBody *VroomReq) (*VroomRespon
 	return &vroomResp, nil
 }
 
-func (v *VroomClient) OptimizeRoute(ctx context.Context, vehicle *entities.Vehicle, cluster []*entities.TreeCluster) (*VroomResponse, error) {
+func (v *VroomClient) OptimizeRoute(ctx context.Context, waterCapacity shared.WaterCapacity, clusterCoordinates []shared.Coordinate, treeCounts []int) (*VroomResponse, error) {
 	log := logger.GetLogger(ctx)
-	vroomVehicle, err := v.toVroomVehicle(vehicle)
-	if err != nil {
-		if errors.Is(err, entities.ErrUnknownVehicleType) {
-			log.Error("unknown vehicle type. please specify vehicle type", "error", err, "vehicle_type", vehicle.Type)
-		}
-
-		return nil, err
-	}
-
-	shipments := v.toVroomShipments(cluster)
+	vroomVehicle := v.toVroomVehicle(waterCapacity)
+	shipments := v.toVroomShipments(clusterCoordinates, treeCounts)
 	req := &VroomReq{
-		Vehicles:  []VroomVehicle{*vroomVehicle},
+		Vehicles:  []VroomVehicle{vroomVehicle},
 		Shipments: shipments,
 	}
 
 	resp, err := v.Send(ctx, req)
 	if err != nil {
+		log.Error("failed to optimize route", "error", err)
 		return nil, err
 	}
 
 	return resp, nil
 }
 
-func (v *VroomClient) toVroomShipments(cluster []*entities.TreeCluster) []VroomShipments {
-	// ignore tree cluster with empty coordinates
-	filteredClusters := utils.Filter(cluster, func(c *entities.TreeCluster) bool {
-		return c.Coordinate != nil
-	})
-
+func (v *VroomClient) toVroomShipments(clusterCoordinates []shared.Coordinate, treeCounts []int) []VroomShipments {
+	shipments := make([]VroomShipments, 0, len(clusterCoordinates))
 	nextID := int32(0)
-	return utils.Map(filteredClusters, func(c *entities.TreeCluster) VroomShipments {
+	for i, coord := range clusterCoordinates {
+		treeCount := 0
+		if i < len(treeCounts) {
+			treeCount = treeCounts[i]
+		}
 		shipment := VroomShipments{
-			Amount: []int32{int32(len(c.Trees) * treeScale)},
+			Amount: []int32{int32(treeCount * treeScale)},
 			Pickup: VroomShipmentStep{
 				ID:       nextID,
 				Location: v.cfg.wateringPoint,
 			},
 			Delivery: VroomShipmentStep{
-				Description: c.Name,
-				ID:          nextID + 1,
-				Location:    []float64{c.Coordinate.Longitude(), c.Coordinate.Latitude()},
+				ID:       nextID + 1,
+				Location: []float64{coord.Longitude(), coord.Latitude()},
 			},
 		}
-
 		nextID += 2
-		return shipment
-	})
+		shipments = append(shipments, shipment)
+	}
+	return shipments
 }
 
-func (v *VroomClient) toVroomVehicle(vehicle *entities.Vehicle) (*VroomVehicle, error) {
-	vehicleType, err := v.toVehicleType(vehicle.Type)
-	if err != nil {
-		return nil, err
+func (v *VroomClient) toVroomVehicle(waterCapacity shared.WaterCapacity) VroomVehicle {
+	return VroomVehicle{
+		ID:       1,
+		Profile:  "auto",
+		Start:    v.cfg.startPoint,
+		End:      v.cfg.endPoint,
+		Capacity: []int32{int32(waterCapacity.Liters())},
 	}
-
-	return &VroomVehicle{
-		ID:          vehicle.ID,
-		Description: vehicle.Description,
-		Profile:     vehicleType,
-		Start:       v.cfg.startPoint,
-		End:         v.cfg.endPoint,
-		Capacity:    []int32{int32(vehicle.WaterCapacity.Liters())}, // vroom don't accept floats
-	}, nil
-}
-
-func (v *VroomClient) toVehicleType(vehicle entities.VehicleType) (string, error) {
-	if vehicle == entities.VehicleTypeUnknown {
-		return "", entities.ErrUnknownVehicleType
-	}
-
-	return "auto", nil // It doesn't matter which type is used here
 }

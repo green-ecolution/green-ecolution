@@ -4,21 +4,21 @@ import (
 	"context"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/region"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
 type RegionService struct {
-	regionRepo entities.RegionRepository
+	regionRepo region.RegionRepository
 }
 
-func NewRegionService(regionRepository entities.RegionRepository) ports.RegionService {
+func NewRegionService(regionRepository region.RegionRepository) ports.RegionService {
 	return &RegionService{
 		regionRepo: regionRepository,
 	}
 }
 
-func (s *RegionService) GetAll(ctx context.Context) ([]*entities.Region, int64, error) {
+func (s *RegionService) GetAll(ctx context.Context) ([]*region.Region, int64, error) {
 	log := logger.GetLogger(ctx)
 	regions, totalCount, err := s.regionRepo.GetAll(ctx)
 	if err != nil {
@@ -29,7 +29,7 @@ func (s *RegionService) GetAll(ctx context.Context) ([]*entities.Region, int64, 
 	return regions, totalCount, nil
 }
 
-func (s *RegionService) GetByID(ctx context.Context, id int32) (*entities.Region, error) {
+func (s *RegionService) GetByID(ctx context.Context, id int32) (*region.Region, error) {
 	log := logger.GetLogger(ctx)
 	region, err := s.regionRepo.GetByID(ctx, id)
 	if err != nil {

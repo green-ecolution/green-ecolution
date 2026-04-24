@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/mapper"
@@ -139,12 +140,12 @@ var allTestTreecluster = []*sqlc.TreeCluster{
 func TestMapWateringStatus(t *testing.T) {
 	tests := []struct {
 		input    sqlc.WateringStatus
-		expected entities.WateringStatus
+		expected shared.WateringStatus
 	}{
-		{input: sqlc.WateringStatusGood, expected: entities.WateringStatusGood},
-		{input: sqlc.WateringStatusModerate, expected: entities.WateringStatusModerate},
-		{input: sqlc.WateringStatusBad, expected: entities.WateringStatusBad},
-		{input: sqlc.WateringStatusUnknown, expected: entities.WateringStatusUnknown},
+		{input: sqlc.WateringStatusGood, expected: shared.WateringStatusGood},
+		{input: sqlc.WateringStatusModerate, expected: shared.WateringStatusModerate},
+		{input: sqlc.WateringStatusBad, expected: shared.WateringStatusBad},
+		{input: sqlc.WateringStatusUnknown, expected: shared.WateringStatusUnknown},
 	}
 
 	for _, test := range tests {
@@ -158,13 +159,13 @@ func TestMapWateringStatus(t *testing.T) {
 func TestMapSoilCondition(t *testing.T) {
 	tests := []struct {
 		input    sqlc.TreeSoilCondition
-		expected entities.TreeSoilCondition
+		expected cluster.TreeSoilCondition
 	}{
-		{input: sqlc.TreeSoilConditionSandig, expected: entities.TreeSoilConditionSandig},
-		{input: sqlc.TreeSoilConditionTonig, expected: entities.TreeSoilConditionTonig},
-		{input: sqlc.TreeSoilConditionLehmig, expected: entities.TreeSoilConditionLehmig},
-		{input: sqlc.TreeSoilConditionSchluffig, expected: entities.TreeSoilConditionSchluffig},
-		{input: sqlc.TreeSoilConditionUnknown, expected: entities.TreeSoilConditionUnknown},
+		{input: sqlc.TreeSoilConditionSandig, expected: cluster.TreeSoilConditionSandig},
+		{input: sqlc.TreeSoilConditionTonig, expected: cluster.TreeSoilConditionTonig},
+		{input: sqlc.TreeSoilConditionLehmig, expected: cluster.TreeSoilConditionLehmig},
+		{input: sqlc.TreeSoilConditionSchluffig, expected: cluster.TreeSoilConditionSchluffig},
+		{input: sqlc.TreeSoilConditionUnknown, expected: cluster.TreeSoilConditionUnknown},
 	}
 
 	for _, test := range tests {

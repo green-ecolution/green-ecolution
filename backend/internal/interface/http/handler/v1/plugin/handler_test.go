@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	pluginDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/plugin"
 	serverEntities "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/plugin"
 )
@@ -29,7 +29,7 @@ func TestRegisterPlugin(t *testing.T) {
 
 		mockPluginService.EXPECT().Register(
 			mock.Anything,
-			mock.AnythingOfType("*entities.Plugin"),
+			mock.AnythingOfType("*plugin.Plugin"),
 		).Return(TestClientToken, nil)
 
 		reqBody := serverEntities.PluginRegisterRequest{
@@ -103,7 +103,7 @@ func TestRegisterPlugin(t *testing.T) {
 
 		mockPluginService.EXPECT().Register(
 			mock.Anything,
-			mock.AnythingOfType("*entities.Plugin"),
+			mock.AnythingOfType("*plugin.Plugin"),
 		).Return(nil, errors.New("registration failed"))
 
 		reqBody := serverEntities.PluginRegisterRequest{
@@ -171,7 +171,7 @@ func TestGetPluginsList(t *testing.T) {
 
 		mockPluginService.EXPECT().GetAll(
 			mock.Anything,
-		).Return([]domain.Plugin{}, []time.Time{})
+		).Return([]pluginDomain.Plugin{}, []time.Time{})
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/plugin", nil)
@@ -232,7 +232,7 @@ func TestGetPluginInfo(t *testing.T) {
 		mockPluginService.EXPECT().Get(
 			mock.Anything,
 			"non-existent",
-		).Return(domain.Plugin{}, errors.New("not found"))
+		).Return(pluginDomain.Plugin{}, errors.New("not found"))
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/plugin/non-existent", nil)
@@ -333,7 +333,7 @@ func TestRefreshToken(t *testing.T) {
 
 		mockPluginService.EXPECT().RefreshToken(
 			mock.Anything,
-			mock.AnythingOfType("*entities.AuthPlugin"),
+			mock.AnythingOfType("*plugin.AuthPlugin"),
 			TestPlugin.Slug,
 		).Return(TestClientToken, nil)
 
@@ -396,7 +396,7 @@ func TestRefreshToken(t *testing.T) {
 
 		mockPluginService.EXPECT().RefreshToken(
 			mock.Anything,
-			mock.AnythingOfType("*entities.AuthPlugin"),
+			mock.AnythingOfType("*plugin.AuthPlugin"),
 			TestPlugin.Slug,
 		).Return(nil, errors.New("auth failed"))
 

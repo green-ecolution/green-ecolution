@@ -6,28 +6,29 @@ import (
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/vehicle"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
 type VehicleService struct {
-	vehicleRepo entities.VehicleRepository
+	vehicleRepo vehicle.VehicleRepository
 }
 
-func NewVehicleService(vehicleRepository entities.VehicleRepository) ports.VehicleService {
+func NewVehicleService(vehicleRepository vehicle.VehicleRepository) ports.VehicleService {
 	return &VehicleService{
 		vehicleRepo: vehicleRepository,
 	}
 }
 
-func (v *VehicleService) GetAll(ctx context.Context, query entities.VehicleQuery) ([]*entities.Vehicle, int64, error) {
+func (v *VehicleService) GetAll(ctx context.Context, query vehicle.VehicleQuery) ([]*vehicle.Vehicle, int64, error) {
 	log := logger.GetLogger(ctx)
-	var vehicles []*entities.Vehicle
+	var vehicles []*vehicle.Vehicle
 	var totalCount int64
 	var err error
 
 	if query.Type != "" {
-		parsedVehicleType := entities.ParseVehicleType(query.Type)
-		if parsedVehicleType == entities.VehicleTypeUnknown {
+		parsedVehicleType := vehicle.ParseVehicleType(query.Type)
+		if parsedVehicleType == vehicle.VehicleTypeUnknown {
 			log.Debug("failed to parse correct vehicle type", "error", err, "vehicle_type", query.Type)
 			return nil, 0, ports.MapError(ctx, errors.Join(err, ports.ErrValidation), ports.ErrorLogValidation)
 		}
@@ -41,7 +42,7 @@ func (v *VehicleService) GetAll(ctx context.Context, query entities.VehicleQuery
 		if query.WithArchived {
 			vehicles, totalCount, err = v.vehicleRepo.GetAllWithArchived(ctx, query.Provider)
 		} else {
-			vehicles, totalCount, err = v.vehicleRepo.GetAll(ctx, entities.Query{Provider: query.Provider})
+			vehicles, totalCount, err = v.vehicleRepo.GetAll(ctx, shared.Query{Provider: query.Provider})
 		}
 	}
 
@@ -53,7 +54,7 @@ func (v *VehicleService) GetAll(ctx context.Context, query entities.VehicleQuery
 	return vehicles, totalCount, nil
 }
 
-func (v *VehicleService) GetAllArchived(ctx context.Context) ([]*entities.Vehicle, error) {
+func (v *VehicleService) GetAllArchived(ctx context.Context) ([]*vehicle.Vehicle, error) {
 	log := logger.GetLogger(ctx)
 	vehicles, err := v.vehicleRepo.GetAllArchived(ctx)
 	if err != nil {
@@ -64,7 +65,7 @@ func (v *VehicleService) GetAllArchived(ctx context.Context) ([]*entities.Vehicl
 	return vehicles, nil
 }
 
-func (v *VehicleService) GetByID(ctx context.Context, id int32) (*entities.Vehicle, error) {
+func (v *VehicleService) GetByID(ctx context.Context, id int32) (*vehicle.Vehicle, error) {
 	log := logger.GetLogger(ctx)
 	got, err := v.vehicleRepo.GetByID(ctx, id)
 	if err != nil {
@@ -75,7 +76,7 @@ func (v *VehicleService) GetByID(ctx context.Context, id int32) (*entities.Vehic
 	return got, nil
 }
 
-func (v *VehicleService) GetByPlate(ctx context.Context, plate string) (*entities.Vehicle, error) {
+func (v *VehicleService) GetByPlate(ctx context.Context, plate string) (*vehicle.Vehicle, error) {
 	log := logger.GetLogger(ctx)
 	got, err := v.vehicleRepo.GetByPlate(ctx, plate)
 	if err != nil {
@@ -86,7 +87,7 @@ func (v *VehicleService) GetByPlate(ctx context.Context, plate string) (*entitie
 	return got, nil
 }
 
-func (v *VehicleService) Create(ctx context.Context, createData *entities.VehicleCreate) (*entities.Vehicle, error) {
+func (v *VehicleService) Create(ctx context.Context, createData *vehicle.VehicleCreate) (*vehicle.Vehicle, error) {
 	log := logger.GetLogger(ctx)
 
 	if isTaken, err := v.isVehicleNumberPlateTaken(ctx, createData.NumberPlate); err != nil {
@@ -97,7 +98,7 @@ func (v *VehicleService) Create(ctx context.Context, createData *entities.Vehicl
 		return nil, ports.ErrVehiclePlateTaken
 	}
 
-	created, err := v.vehicleRepo.Create(ctx, func(vh *entities.Vehicle, _ entities.VehicleRepository) (bool, error) {
+	created, err := v.vehicleRepo.Create(ctx, func(vh *vehicle.Vehicle, _ vehicle.VehicleRepository) (bool, error) {
 		vh.NumberPlate = createData.NumberPlate
 		vh.Description = createData.Description
 		vh.WaterCapacity = createData.WaterCapacity
@@ -123,7 +124,7 @@ func (v *VehicleService) Create(ctx context.Context, createData *entities.Vehicl
 	return created, nil
 }
 
-func (v *VehicleService) Update(ctx context.Context, id int32, updateData *entities.VehicleUpdate) (*entities.Vehicle, error) {
+func (v *VehicleService) Update(ctx context.Context, id int32, updateData *vehicle.VehicleUpdate) (*vehicle.Vehicle, error) {
 	log := logger.GetLogger(ctx)
 
 	oldValue, err := v.GetByID(ctx, id)
@@ -142,7 +143,7 @@ func (v *VehicleService) Update(ctx context.Context, id int32, updateData *entit
 		}
 	}
 
-	err = v.vehicleRepo.Update(ctx, id, func(vh *entities.Vehicle, _ entities.VehicleRepository) (bool, error) {
+	err = v.vehicleRepo.Update(ctx, id, func(vh *vehicle.Vehicle, _ vehicle.VehicleRepository) (bool, error) {
 		vh.NumberPlate = updateData.NumberPlate
 		vh.Description = updateData.Description
 		vh.WaterCapacity = updateData.WaterCapacity
@@ -212,7 +213,7 @@ func (v *VehicleService) Ready() bool {
 
 func (v *VehicleService) isVehicleNumberPlateTaken(ctx context.Context, plate string) (bool, error) {
 	existingVehicle, err := v.vehicleRepo.GetByPlate(ctx, plate)
-	var entityNotFoundErr entities.ErrEntityNotFound
+	var entityNotFoundErr shared.ErrEntityNotFound
 	if err != nil && !errors.As(err, &entityNotFoundErr) {
 		return false, err
 	}

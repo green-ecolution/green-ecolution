@@ -9,7 +9,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/routing"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities/mapper"
 	handler "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1"
@@ -36,7 +37,7 @@ import (
 func GetAllWateringPlans(svc ports.WateringPlanService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
-		var query domain.Query
+		var query shared.Query
 
 		if err := c.QueryParser(&query); err != nil {
 			return errorhandler.HandleError(err)
@@ -210,7 +211,7 @@ func DeleteWateringPlan(svc ports.WateringPlanService) fiber.Handler {
 // @Tags			Watering Plan
 // @Accept			json
 // @Produce		json
-// @Success		200		{object}	domain.GeoJSON
+// @Success		200		{object}	routing.GeoJSON
 // @Failure		400		{object}	HTTPError
 // @Failure		401		{object}	HTTPError
 // @Failure		403		{object}	HTTPError
@@ -231,17 +232,17 @@ func CreatePreviewRoute(svc ports.WateringPlanService) fiber.Handler {
 			return errorhandler.HandleError(err)
 		}
 
-		return c.JSON(domain.GeoJSON{
-			Type:     domain.GeoJSONType(domainGeo.Type),
+		return c.JSON(routing.GeoJSON{
+			Type:     routing.GeoJSONType(domainGeo.Type),
 			Bbox:     domainGeo.Bbox,
 			Metadata: convertMetaData(domainGeo.Metadata),
-			Features: utils.Map(domainGeo.Features, func(f domain.GeoJSONFeature) domain.GeoJSONFeature {
-				return domain.GeoJSONFeature{
-					Type:       domain.GeoJSONType(f.Type),
+			Features: utils.Map(domainGeo.Features, func(f routing.GeoJSONFeature) routing.GeoJSONFeature {
+				return routing.GeoJSONFeature{
+					Type:       routing.GeoJSONType(f.Type),
 					Bbox:       f.Bbox,
 					Properties: f.Properties,
-					Geometry: domain.GeoJSONGeometry{
-						Type:        domain.GeoJSONType(f.Geometry.Type),
+					Geometry: routing.GeoJSONGeometry{
+						Type:        routing.GeoJSONType(f.Geometry.Type),
 						Coordinates: f.Geometry.Coordinates,
 					},
 				}
@@ -281,15 +282,15 @@ func GetGpxFile(svc ports.WateringPlanService) fiber.Handler {
 	}
 }
 
-func convertMetaData(domainMetadata domain.GeoJSONMetadata) domain.GeoJSONMetadata {
-	return domain.GeoJSONMetadata{
-		StartPoint: domain.GeoJSONLocation{
+func convertMetaData(domainMetadata routing.GeoJSONMetadata) routing.GeoJSONMetadata {
+	return routing.GeoJSONMetadata{
+		StartPoint: routing.GeoJSONLocation{
 			Coordinate: domainMetadata.StartPoint.Coordinate,
 		},
-		EndPoint: domain.GeoJSONLocation{
+		EndPoint: routing.GeoJSONLocation{
 			Coordinate: domainMetadata.EndPoint.Coordinate,
 		},
-		WateringPoint: domain.GeoJSONLocation{
+		WateringPoint: routing.GeoJSONLocation{
 			Coordinate: domainMetadata.WateringPoint.Coordinate,
 		},
 	}

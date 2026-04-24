@@ -8,7 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 
+	clusterDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	treeDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 )
@@ -18,18 +21,18 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		regionRepo := storageMock.NewMockRegionRepository(t)
-		eventManager := worker.NewEventManager(entities.EventTypeUpdateTreeCluster)
+		eventManager := worker.NewEventManager(clusterDomain.EventTypeUpdate)
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, eventManager)
 
-		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTreeCluster)
+		_, ch, _ := eventManager.Subscribe(clusterDomain.EventTypeUpdate)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		go eventManager.Run(ctx)
 
-		sensorDataEvent := entities.SensorData{
-			SensorID: entities.MustNewSensorID("sensor-1"),
-			Data: &entities.MqttPayload{
-				Watermarks: []entities.Watermark{
+		sensorDataEvent := sensor.SensorData{
+			SensorID: sensor.MustNewSensorID("sensor-1"),
+			Data: &sensor.MqttPayload{
+				Watermarks: []sensor.Watermark{
 					{Centibar: 30, Depth: 30},
 					{Centibar: 40, Depth: 60},
 					{Centibar: 50, Depth: 90},
@@ -37,37 +40,37 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 			},
 		}
 
-		tree1 := &entities.Tree{
+		tree1 := &treeDomain.Tree{
 			ID:           2,
-			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
+			PlantingYear: treeDomain.MustNewPlantingYear(int32(time.Now().Year() - 2)),
 		}
-		tree2 := &entities.Tree{
+		tree2 := &treeDomain.Tree{
 			ID:           3,
-			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year())),
+			PlantingYear: treeDomain.MustNewPlantingYear(int32(time.Now().Year())),
 		}
 
-		tc := &entities.TreeCluster{
+		tc := &clusterDomain.TreeCluster{
 			ID:             1,
-			WateringStatus: entities.WateringStatusUnknown,
-			Trees:          []*entities.Tree{tree1, tree2},
+			WateringStatus: shared.WateringStatusUnknown,
+			TreeIDs:        []int32{tree1.ID, tree2.ID},
 		}
 
-		tcNew := &entities.TreeCluster{
+		tcNew := &clusterDomain.TreeCluster{
 			ID:             1,
-			WateringStatus: entities.WateringStatusGood,
+			WateringStatus: shared.WateringStatusBad,
 		}
 
-		tree := &entities.Tree{
-			ID:           1,
-			TreeCluster:  tc,
-			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
+		tree := &treeDomain.Tree{
+			ID:            1,
+			TreeClusterID: &tc.ID,
+			PlantingYear:  treeDomain.MustNewPlantingYear(int32(time.Now().Year() - 2)),
 		}
 
-		allLatestSensorData := []*entities.SensorData{
+		allLatestSensorData := []*sensor.SensorData{
 			{
-				SensorID: entities.MustNewSensorID("sensor-1"),
-				Data: &entities.MqttPayload{
-					Watermarks: []entities.Watermark{
+				SensorID: sensor.MustNewSensorID("sensor-1"),
+				Data: &sensor.MqttPayload{
+					Watermarks: []sensor.Watermark{
 						{Centibar: 61, Depth: 30},
 						{Centibar: 24, Depth: 60},
 						{Centibar: 23, Depth: 90},
@@ -75,9 +78,9 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 				},
 			},
 			{
-				SensorID: entities.MustNewSensorID("sensor-2"),
-				Data: &entities.MqttPayload{
-					Watermarks: []entities.Watermark{
+				SensorID: sensor.MustNewSensorID("sensor-2"),
+				Data: &sensor.MqttPayload{
+					Watermarks: []sensor.Watermark{
 						{Centibar: 61, Depth: 30},
 						{Centibar: 24, Depth: 60},
 						{Centibar: 25, Depth: 90},
@@ -86,25 +89,27 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 			},
 		}
 
-		event := entities.NewEventSensorData(&sensorDataEvent)
+		event := sensor.NewEventNewData(&sensorDataEvent)
 
-		treeRepo.EXPECT().GetBySensorID(mock.Anything, entities.MustNewSensorID("sensor-1")).Return(tree, nil)
+		treeRepo.EXPECT().GetBySensorID(mock.Anything, sensor.MustNewSensorID("sensor-1")).Return(tree, nil)
+		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(tc, nil).Once()
 		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(1)).Return(allLatestSensorData, nil)
-		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).RunAndReturn(func(ctx context.Context, i int32, f func(*entities.TreeCluster, entities.TreeClusterRepository) (bool, error)) error {
-			cluster := *tc
-			_, err := f(&cluster, clusterRepo)
+		treeRepo.EXPECT().GetByTreeClusterID(mock.Anything, int32(1)).Return([]*treeDomain.Tree{tree1, tree2}, nil)
+		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).RunAndReturn(func(ctx context.Context, i int32, f func(*clusterDomain.TreeCluster, clusterDomain.TreeClusterRepository) (bool, error)) error {
+			c := *tc
+			_, err := f(&c, clusterRepo)
 			assert.NoError(t, err)
-			assert.Equal(t, entities.WateringStatusGood, cluster.WateringStatus)
+			assert.Equal(t, shared.WateringStatusBad, c.WateringStatus)
 			return nil
 		})
-		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(tcNew, nil)
+		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(tcNew, nil).Once()
 
 		err := svc.HandleNewSensorData(context.Background(), &event)
 
 		assert.NoError(t, err)
 		select {
 		case recievedEvent := <-ch:
-			e, ok := recievedEvent.(entities.EventUpdateTreeCluster)
+			e, ok := recievedEvent.(clusterDomain.EventUpdate)
 			assert.True(t, ok)
 			assert.Equal(t, e.Prev, tc)
 			assert.Equal(t, e.New, tcNew)
@@ -117,18 +122,18 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		regionRepo := storageMock.NewMockRegionRepository(t)
-		eventManager := worker.NewEventManager(entities.EventTypeUpdateTreeCluster)
+		eventManager := worker.NewEventManager(clusterDomain.EventTypeUpdate)
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, eventManager)
 
-		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTreeCluster)
+		_, ch, _ := eventManager.Subscribe(clusterDomain.EventTypeUpdate)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		go eventManager.Run(ctx)
 
-		sensorDataEvent := entities.SensorData{
-			SensorID: entities.MustNewSensorID("sensor-1"),
-			Data: &entities.MqttPayload{
-				Watermarks: []entities.Watermark{
+		sensorDataEvent := sensor.SensorData{
+			SensorID: sensor.MustNewSensorID("sensor-1"),
+			Data: &sensor.MqttPayload{
+				Watermarks: []sensor.Watermark{
 					{Centibar: 61, Depth: 30},
 					{Centibar: 24, Depth: 60},
 					{Centibar: 24, Depth: 90},
@@ -136,44 +141,46 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 			},
 		}
 
-		treeInCluster := &entities.Tree{
+		treeInCluster := &treeDomain.Tree{
 			ID:           2,
-			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 1)),
+			PlantingYear: treeDomain.MustNewPlantingYear(int32(time.Now().Year() - 1)),
 		}
 
-		tc := &entities.TreeCluster{
+		tc := &clusterDomain.TreeCluster{
 			ID:             1,
-			WateringStatus: entities.WateringStatusUnknown,
-			Trees:          []*entities.Tree{treeInCluster},
+			WateringStatus: shared.WateringStatusUnknown,
+			TreeIDs:        []int32{treeInCluster.ID},
 		}
 
-		tcNew := &entities.TreeCluster{ID: 1}
+		tcNew := &clusterDomain.TreeCluster{ID: 1}
 
-		tree := &entities.Tree{
-			ID:           1,
-			TreeCluster:  tc,
-			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
+		tree := &treeDomain.Tree{
+			ID:            1,
+			TreeClusterID: &tc.ID,
+			PlantingYear:  treeDomain.MustNewPlantingYear(int32(time.Now().Year() - 2)),
 		}
 
-		event := entities.NewEventSensorData(&sensorDataEvent)
+		event := sensor.NewEventNewData(&sensorDataEvent)
 
-		treeRepo.EXPECT().GetBySensorID(mock.Anything, entities.MustNewSensorID("sensor-1")).Return(tree, nil)
-		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(1)).Return([]*entities.SensorData{&sensorDataEvent}, nil)
-		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).RunAndReturn(func(ctx context.Context, i int32, f func(*entities.TreeCluster, entities.TreeClusterRepository) (bool, error)) error {
-			cluster := *tc
-			_, err := f(&cluster, clusterRepo)
+		treeRepo.EXPECT().GetBySensorID(mock.Anything, sensor.MustNewSensorID("sensor-1")).Return(tree, nil)
+		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(tc, nil).Once()
+		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(1)).Return([]*sensor.SensorData{&sensorDataEvent}, nil)
+		treeRepo.EXPECT().GetByTreeClusterID(mock.Anything, int32(1)).Return([]*treeDomain.Tree{treeInCluster}, nil)
+		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).RunAndReturn(func(ctx context.Context, i int32, f func(*clusterDomain.TreeCluster, clusterDomain.TreeClusterRepository) (bool, error)) error {
+			c := *tc
+			_, err := f(&c, clusterRepo)
 			assert.NoError(t, err)
-			assert.Equal(t, entities.WateringStatusBad, cluster.WateringStatus)
+			assert.Equal(t, shared.WateringStatusBad, c.WateringStatus)
 			return nil
 		})
-		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(tcNew, nil)
+		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(tcNew, nil).Once()
 
 		err := svc.HandleNewSensorData(context.Background(), &event)
 
 		assert.NoError(t, err)
 		select {
 		case recievedEvent := <-ch:
-			e, ok := recievedEvent.(entities.EventUpdateTreeCluster)
+			e, ok := recievedEvent.(clusterDomain.EventUpdate)
 			assert.True(t, ok)
 			assert.Equal(t, e.Prev, tc)
 			assert.Equal(t, e.New, tcNew)
@@ -186,18 +193,18 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		regionRepo := storageMock.NewMockRegionRepository(t)
-		eventManager := worker.NewEventManager(entities.EventTypeUpdateTreeCluster)
+		eventManager := worker.NewEventManager(clusterDomain.EventTypeUpdate)
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, eventManager)
 
-		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTreeCluster)
+		_, ch, _ := eventManager.Subscribe(clusterDomain.EventTypeUpdate)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		go eventManager.Run(ctx)
 
-		sensorDataEvent := entities.SensorData{
-			SensorID: entities.MustNewSensorID("sensor-1"),
-			Data: &entities.MqttPayload{
-				Watermarks: []entities.Watermark{
+		sensorDataEvent := sensor.SensorData{
+			SensorID: sensor.MustNewSensorID("sensor-1"),
+			Data: &sensor.MqttPayload{
+				Watermarks: []sensor.Watermark{
 					{Centibar: 61, Depth: 30},
 					{Centibar: 24, Depth: 60},
 					{Centibar: 24, Depth: 90},
@@ -205,27 +212,29 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 			},
 		}
 
-		treeInCluster := &entities.Tree{
+		treeInCluster := &treeDomain.Tree{
 			ID:           2,
-			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 1)),
+			PlantingYear: treeDomain.MustNewPlantingYear(int32(time.Now().Year() - 1)),
 		}
 
-		tc := &entities.TreeCluster{
+		tc := &clusterDomain.TreeCluster{
 			ID:             1,
-			WateringStatus: entities.WateringStatusBad,
-			Trees:          []*entities.Tree{treeInCluster},
+			WateringStatus: shared.WateringStatusBad,
+			TreeIDs:        []int32{treeInCluster.ID},
 		}
 
-		tree := &entities.Tree{
-			ID:           1,
-			TreeCluster:  tc,
-			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
+		tree := &treeDomain.Tree{
+			ID:            1,
+			TreeClusterID: &tc.ID,
+			PlantingYear:  treeDomain.MustNewPlantingYear(int32(time.Now().Year() - 2)),
 		}
 
-		event := entities.NewEventSensorData(&sensorDataEvent)
+		event := sensor.NewEventNewData(&sensorDataEvent)
 
-		treeRepo.EXPECT().GetBySensorID(mock.Anything, entities.MustNewSensorID("sensor-1")).Return(tree, nil)
-		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(1)).Return([]*entities.SensorData{&sensorDataEvent}, nil)
+		treeRepo.EXPECT().GetBySensorID(mock.Anything, sensor.MustNewSensorID("sensor-1")).Return(tree, nil)
+		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(tc, nil)
+		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(1)).Return([]*sensor.SensorData{&sensorDataEvent}, nil)
+		treeRepo.EXPECT().GetByTreeClusterID(mock.Anything, int32(1)).Return([]*treeDomain.Tree{treeInCluster}, nil)
 
 		err := svc.HandleNewSensorData(context.Background(), &event)
 
@@ -242,18 +251,18 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		regionRepo := storageMock.NewMockRegionRepository(t)
-		eventManager := worker.NewEventManager(entities.EventTypeUpdateTreeCluster)
+		eventManager := worker.NewEventManager(clusterDomain.EventTypeUpdate)
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, eventManager)
 
-		_, ch, _ := eventManager.Subscribe(entities.EventTypeUpdateTreeCluster)
+		_, ch, _ := eventManager.Subscribe(clusterDomain.EventTypeUpdate)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		go eventManager.Run(ctx)
 
-		sensorDataEvent := entities.SensorData{
-			SensorID: entities.MustNewSensorID("sensor-1"),
-			Data: &entities.MqttPayload{
-				Watermarks: []entities.Watermark{
+		sensorDataEvent := sensor.SensorData{
+			SensorID: sensor.MustNewSensorID("sensor-1"),
+			Data: &sensor.MqttPayload{
+				Watermarks: []sensor.Watermark{
 					{Centibar: 61, Depth: 30},
 					{Centibar: 24, Depth: 60},
 					{Centibar: 24, Depth: 90},
@@ -261,15 +270,15 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 			},
 		}
 
-		tree := &entities.Tree{
-			ID:           1,
-			TreeCluster:  nil,
-			PlantingYear: entities.MustNewPlantingYear(int32(time.Now().Year() - 2)),
+		tree := &treeDomain.Tree{
+			ID:            1,
+			TreeClusterID: nil,
+			PlantingYear:  treeDomain.MustNewPlantingYear(int32(time.Now().Year() - 2)),
 		}
 
-		event := entities.NewEventSensorData(&sensorDataEvent)
+		event := sensor.NewEventNewData(&sensorDataEvent)
 
-		treeRepo.EXPECT().GetBySensorID(mock.Anything, entities.MustNewSensorID("sensor-1")).Return(tree, nil)
+		treeRepo.EXPECT().GetBySensorID(mock.Anything, sensor.MustNewSensorID("sensor-1")).Return(tree, nil)
 
 		err := svc.HandleNewSensorData(context.Background(), &event)
 

@@ -9,7 +9,8 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/auth"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/user"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities/mapper"
 	handler "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1"
@@ -34,7 +35,7 @@ func Login(svc ports.AuthService) fiber.Handler {
 			return errorhandler.HandleError(ports.NewError(ports.BadRequest, errors.Wrap(err, "failed to parse redirect url").Error()))
 		}
 
-		req := domain.LoginRequest{
+		req := auth.LoginRequest{
 			RedirectURL: redirectURL,
 		}
 
@@ -65,7 +66,7 @@ func Logout(svc ports.AuthService) fiber.Handler {
 			return err
 		}
 
-		domainReq := domain.Logout{
+		domainReq := auth.Logout{
 			RefreshToken: req.RefreshToken,
 		}
 
@@ -103,7 +104,7 @@ func RequestToken(svc ports.AuthService) fiber.Handler {
 			return errorhandler.HandleError(ports.NewError(ports.BadRequest, errors.Wrap(err, "failed to parse redirect url").Error()))
 		}
 
-		domainReq := domain.LoginCallback{
+		domainReq := auth.LoginCallback{
 			Code:        req.Code,
 			RedirectURL: redirectURL,
 		}
@@ -147,8 +148,8 @@ func Register(svc ports.AuthService) fiber.Handler {
 			return err
 		}
 
-		domainUser := domain.RegisterUser{
-			User: domain.User{
+		domainUser := user.RegisterUser{
+			User: user.User{
 				Email:     req.Email,
 				FirstName: req.FirstName,
 				LastName:  req.LastName,
@@ -189,7 +190,7 @@ func parseURL(rawURL string) (*url.URL, error) {
 func GetAllUsers(svc ports.AuthService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
-		var domainData []*domain.User
+		var domainData []*user.User
 		var err error
 
 		userIDsParam := c.Query("user_ids")
@@ -239,8 +240,8 @@ func GetUsersByRole(svc ports.AuthService) fiber.Handler {
 			return errorhandler.HandleError(ports.NewError(ports.BadRequest, "invalid role format"))
 		}
 
-		userRole := domain.ParseUserRole(role)
-		if userRole == domain.UserRoleUnknown {
+		userRole := user.ParseUserRole(role)
+		if userRole == user.UserRoleUnknown {
 			return errorhandler.HandleError(ports.NewError(ports.BadRequest, "invalid role type"))
 		}
 
@@ -289,7 +290,7 @@ func RefreshToken(svc ports.AuthService) fiber.Handler {
 			return c.Status(fiber.StatusUnauthorized).JSON(ports.NewError(ports.InternalError, errors.Wrap(err, "failed to refresh token").Error()))
 		}
 
-		token := data.(*domain.ClientToken)
+		token := data.(*auth.ClientToken)
 		response := entities.ClientTokenResponse{
 			AccessToken:  token.AccessToken,
 			ExpiresIn:    token.ExpiresIn,

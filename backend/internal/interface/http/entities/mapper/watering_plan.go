@@ -5,12 +5,12 @@ import (
 
 	"github.com/google/uuid"
 
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func WateringPlanFromResponse(source *domain.WateringPlan) *entities.WateringPlanResponse {
+func WateringPlanFromResponse(source *watering.WateringPlan) *entities.WateringPlanResponse {
 	if source == nil {
 		return nil
 	}
@@ -22,8 +22,6 @@ func WateringPlanFromResponse(source *domain.WateringPlan) *entities.WateringPla
 		Description:      source.Description,
 		Status:           MapWateringPlanStatus(source.Status),
 		UserIDs:          MapUUIDs(source.UserIDs),
-		Transporter:      VehicleFromResponse(source.Transporter),
-		Trailer:          VehicleFromResponse(source.Trailer),
 		CancellationNote: source.CancellationNote,
 		GpxURL:           source.GpxURL,
 		Duration:         utils.DurationToPtrFloat64(source.Duration),
@@ -39,12 +37,6 @@ func WateringPlanFromResponse(source *domain.WateringPlan) *entities.WateringPla
 		v := *source.TotalWaterRequired
 		resp.TotalWaterRequired = &v
 	}
-	if source.TreeClusters != nil {
-		resp.TreeClusters = make([]*entities.TreeClusterInListResponse, len(source.TreeClusters))
-		for i, tc := range source.TreeClusters {
-			resp.TreeClusters[i] = WateringPlanTreeClusterInListResponse(tc)
-		}
-	}
 	if source.Evaluation != nil {
 		resp.Evaluation = make([]*entities.EvaluationValue, len(source.Evaluation))
 		for i, ev := range source.Evaluation {
@@ -54,11 +46,11 @@ func WateringPlanFromResponse(source *domain.WateringPlan) *entities.WateringPla
 	return resp
 }
 
-func WateringPlanFromResponseList(source []*domain.WateringPlan) []*entities.WateringPlanResponse {
+func WateringPlanFromResponseList(source []*watering.WateringPlan) []*entities.WateringPlanResponse {
 	return utils.MapSlice(source, WateringPlanFromResponse)
 }
 
-func WateringPlanFromInListResponse(source *domain.WateringPlan) *entities.WateringPlanInListResponse {
+func WateringPlanFromInListResponse(source *watering.WateringPlan) *entities.WateringPlanInListResponse {
 	if source == nil {
 		return nil
 	}
@@ -70,8 +62,6 @@ func WateringPlanFromInListResponse(source *domain.WateringPlan) *entities.Water
 		Description:      source.Description,
 		Status:           MapWateringPlanStatus(source.Status),
 		UserIDs:          MapUUIDs(source.UserIDs),
-		Transporter:      VehicleFromResponse(source.Transporter),
-		Trailer:          VehicleFromResponse(source.Trailer),
 		CancellationNote: source.CancellationNote,
 		Provider:         source.Provider,
 		AdditionalInfo:   source.AdditionalInfo,
@@ -84,16 +74,10 @@ func WateringPlanFromInListResponse(source *domain.WateringPlan) *entities.Water
 		v := *source.TotalWaterRequired
 		resp.TotalWaterRequired = &v
 	}
-	if source.TreeClusters != nil {
-		resp.TreeClusters = make([]*entities.TreeClusterInListResponse, len(source.TreeClusters))
-		for i, tc := range source.TreeClusters {
-			resp.TreeClusters[i] = WateringPlanTreeClusterInListResponse(tc)
-		}
-	}
 	return resp
 }
 
-func WateringPlanFromCreateRequest(source *entities.WateringPlanCreateRequest) (*domain.WateringPlanCreate, error) {
+func WateringPlanFromCreateRequest(source *entities.WateringPlanCreateRequest) (*watering.WateringPlanCreate, error) {
 	if source == nil {
 		return nil, nil
 	}
@@ -101,7 +85,7 @@ func WateringPlanFromCreateRequest(source *entities.WateringPlanCreateRequest) (
 	if err != nil {
 		return nil, err
 	}
-	result := &domain.WateringPlanCreate{
+	result := &watering.WateringPlanCreate{
 		Date:           source.Date,
 		Description:    source.Description,
 		UserIDs:        userIDs,
@@ -128,7 +112,7 @@ func WateringPlanFromCreateRequest(source *entities.WateringPlanCreateRequest) (
 	return result, nil
 }
 
-func WateringPlanFromUpdateRequest(source *entities.WateringPlanUpdateRequest) (*domain.WateringPlanUpdate, error) {
+func WateringPlanFromUpdateRequest(source *entities.WateringPlanUpdateRequest) (*watering.WateringPlanUpdate, error) {
 	if source == nil {
 		return nil, nil
 	}
@@ -136,7 +120,7 @@ func WateringPlanFromUpdateRequest(source *entities.WateringPlanUpdateRequest) (
 	if err != nil {
 		return nil, err
 	}
-	result := &domain.WateringPlanUpdate{
+	result := &watering.WateringPlanUpdate{
 		Date:             source.Date,
 		Description:      source.Description,
 		CancellationNote: source.CancellationNote,
@@ -163,7 +147,7 @@ func WateringPlanFromUpdateRequest(source *entities.WateringPlanUpdateRequest) (
 		result.TrailerID = &v
 	}
 	if source.Evaluation != nil {
-		result.Evaluation = make([]*domain.EvaluationValue, len(source.Evaluation))
+		result.Evaluation = make([]*watering.EvaluationValue, len(source.Evaluation))
 		for i, ev := range source.Evaluation {
 			result.Evaluation[i] = evaluationValueFromRequest(ev)
 		}
@@ -171,12 +155,7 @@ func WateringPlanFromUpdateRequest(source *entities.WateringPlanUpdateRequest) (
 	return result, nil
 }
 
-// WateringPlanTreeClusterInListResponse maps a TreeCluster in the context of a WateringPlan.
-func WateringPlanTreeClusterInListResponse(source *domain.TreeCluster) *entities.TreeClusterInListResponse {
-	return TreeClusterFromInListResponse(source)
-}
-
-func evaluationValueToResponse(source *domain.EvaluationValue) *entities.EvaluationValue {
+func evaluationValueToResponse(source *watering.EvaluationValue) *entities.EvaluationValue {
 	if source == nil {
 		return nil
 	}
@@ -191,11 +170,11 @@ func evaluationValueToResponse(source *domain.EvaluationValue) *entities.Evaluat
 	return result
 }
 
-func evaluationValueFromRequest(source *entities.EvaluationValue) *domain.EvaluationValue {
+func evaluationValueFromRequest(source *entities.EvaluationValue) *watering.EvaluationValue {
 	if source == nil {
 		return nil
 	}
-	result := &domain.EvaluationValue{
+	result := &watering.EvaluationValue{
 		WateringPlanID: source.WateringPlanID,
 		TreeClusterID:  source.TreeClusterID,
 	}
@@ -206,12 +185,12 @@ func evaluationValueFromRequest(source *entities.EvaluationValue) *domain.Evalua
 	return result
 }
 
-func MapWateringPlanStatus(status domain.WateringPlanStatus) entities.WateringPlanStatus {
+func MapWateringPlanStatus(status watering.WateringPlanStatus) entities.WateringPlanStatus {
 	return entities.WateringPlanStatus(status)
 }
 
-func MapWateringPlanStatusReq(status entities.WateringPlanStatus) domain.WateringPlanStatus {
-	return domain.WateringPlanStatus(status)
+func MapWateringPlanStatusReq(status entities.WateringPlanStatus) watering.WateringPlanStatus {
+	return watering.WateringPlanStatus(status)
 }
 
 func MapUUIDs(source []*uuid.UUID) []*uuid.UUID {

@@ -4,20 +4,20 @@ import (
 	"context"
 	"errors"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	sensorDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func (r *SensorRepository) Update(ctx context.Context, id entities.SensorID, updateFn func(*entities.Sensor, entities.SensorRepository) (bool, error)) (*entities.Sensor, error) {
+func (r *SensorRepository) Update(ctx context.Context, id sensorDomain.SensorID, updateFn func(*sensorDomain.Sensor, sensorDomain.SensorRepository) (bool, error)) (*sensorDomain.Sensor, error) {
 	log := logger.GetLogger(ctx)
 	if updateFn == nil {
 		return nil, errors.New("updateFn is nil")
 	}
 
-	var updatedSensor *entities.Sensor
+	var updatedSensor *sensorDomain.Sensor
 	err := r.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewSensorRepository(s, r.SensorRepositoryMappers)
 		entity, err := newRepo.GetByID(ctx, id)
@@ -63,26 +63,26 @@ func (r *SensorRepository) Update(ctx context.Context, id entities.SensorID, upd
 	return updatedSensor, nil
 }
 
-func (r *SensorRepository) updateEntity(ctx context.Context, sensor *entities.Sensor) error {
+func (r *SensorRepository) updateEntity(ctx context.Context, sn *sensorDomain.Sensor) error {
 	log := logger.GetLogger(ctx)
 
-	additionalInfo, err := utils.MapAdditionalInfoToByte(sensor.AdditionalInfo)
+	additionalInfo, err := utils.MapAdditionalInfoToByte(sn.AdditionalInfo)
 	if err != nil {
-		log.Debug("failed to marshal additional informations to byte array", "error", err, "additional_info", sensor.AdditionalInfo)
+		log.Debug("failed to marshal additional informations to byte array", "error", err, "additional_info", sn.AdditionalInfo)
 		return err
 	}
 
 	params := sqlc.UpdateSensorParams{
-		ID:                     sensor.ID.String(),
-		Status:                 sqlc.SensorStatus(sensor.Status),
-		Provider:               &sensor.Provider,
+		ID:                     sn.ID.String(),
+		Status:                 sqlc.SensorStatus(sn.Status),
+		Provider:               &sn.Provider,
 		AdditionalInformations: additionalInfo,
 	}
 
 	locationParams := &sqlc.SetSensorLocationParams{
-		ID:        sensor.ID.String(),
-		Latitude:  sensor.Coordinate.Latitude(),
-		Longitude: sensor.Coordinate.Longitude(),
+		ID:        sn.ID.String(),
+		Latitude:  sn.Coordinate.Latitude(),
+		Longitude: sn.Coordinate.Longitude(),
 	}
 
 	if err := r.store.SetSensorLocation(ctx, locationParams); err != nil {

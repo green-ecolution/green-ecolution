@@ -9,13 +9,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 
+	clusterDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	treeDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 )
 
-var globalEventManager = worker.NewEventManager() //entities.EventTypeUpdateTree, entities.EventTypeUpdateTreeCluster
+var globalEventManager = worker.NewEventManager() //treeDomain.EventTypeUpdate, clusterDomain.EventTypeUpdate
 
 func TestTreeClusterService_GetAll(t *testing.T) {
 	ctx := context.Background()
@@ -27,10 +30,10 @@ func TestTreeClusterService_GetAll(t *testing.T) {
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, globalEventManager)
 
 		expectedClusters := testClusters
-		clusterRepo.EXPECT().GetAll(ctx, entities.TreeClusterQuery{}).Return(expectedClusters, int64(len(expectedClusters)), nil)
+		clusterRepo.EXPECT().GetAll(ctx, clusterDomain.TreeClusterQuery{}).Return(expectedClusters, int64(len(expectedClusters)), nil)
 
 		// when
-		clusters, totalCount, err := svc.GetAll(ctx, entities.TreeClusterQuery{})
+		clusters, totalCount, err := svc.GetAll(ctx, clusterDomain.TreeClusterQuery{})
 
 		// then
 		assert.NoError(t, err)
@@ -45,10 +48,10 @@ func TestTreeClusterService_GetAll(t *testing.T) {
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, globalEventManager)
 
 		expectedClusters := testClusters
-		clusterRepo.EXPECT().GetAll(ctx, entities.TreeClusterQuery{Query: entities.Query{Provider: "test-provider"}}).Return(expectedClusters, int64(len(expectedClusters)), nil)
+		clusterRepo.EXPECT().GetAll(ctx, clusterDomain.TreeClusterQuery{Query: shared.Query{Provider: "test-provider"}}).Return(expectedClusters, int64(len(expectedClusters)), nil)
 
 		// when
-		clusters, totalCount, err := svc.GetAll(ctx, entities.TreeClusterQuery{Query: entities.Query{Provider: "test-provider"}})
+		clusters, totalCount, err := svc.GetAll(ctx, clusterDomain.TreeClusterQuery{Query: shared.Query{Provider: "test-provider"}})
 
 		// then
 		assert.NoError(t, err)
@@ -62,10 +65,10 @@ func TestTreeClusterService_GetAll(t *testing.T) {
 		regionRepo := storageMock.NewMockRegionRepository(t)
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, globalEventManager)
 
-		clusterRepo.EXPECT().GetAll(ctx, entities.TreeClusterQuery{}).Return([]*entities.TreeCluster{}, int64(0), nil)
+		clusterRepo.EXPECT().GetAll(ctx, clusterDomain.TreeClusterQuery{}).Return([]*clusterDomain.TreeCluster{}, int64(0), nil)
 
 		// when
-		clusters, totalCount, err := svc.GetAll(ctx, entities.TreeClusterQuery{})
+		clusters, totalCount, err := svc.GetAll(ctx, clusterDomain.TreeClusterQuery{})
 
 		// then
 		assert.NoError(t, err)
@@ -81,10 +84,10 @@ func TestTreeClusterService_GetAll(t *testing.T) {
 
 		expectedErr := errors.New("GetAll failed")
 
-		clusterRepo.EXPECT().GetAll(ctx, entities.TreeClusterQuery{}).Return(nil, int64(0), expectedErr)
+		clusterRepo.EXPECT().GetAll(ctx, clusterDomain.TreeClusterQuery{}).Return(nil, int64(0), expectedErr)
 
 		// when
-		clusters, totalCount, err := svc.GetAll(ctx, entities.TreeClusterQuery{})
+		clusters, totalCount, err := svc.GetAll(ctx, clusterDomain.TreeClusterQuery{})
 
 		// then
 		assert.Error(t, err)
@@ -117,7 +120,7 @@ func TestTreeClusterService_GetByID(t *testing.T) {
 
 	t.Run("should return error if tree cluster not found", func(t *testing.T) {
 		id := int32(2)
-		expectedErr := entities.ErrEntityNotFound("not found")
+		expectedErr := shared.ErrEntityNotFound("not found")
 		clusterRepo.EXPECT().GetByID(ctx, id).Return(nil, expectedErr)
 
 		// when
@@ -132,11 +135,11 @@ func TestTreeClusterService_GetByID(t *testing.T) {
 
 func TestTreeClusterService_Create(t *testing.T) {
 	ctx := context.Background()
-	newCluster := &entities.TreeClusterCreate{
+	newCluster := &clusterDomain.TreeClusterCreate{
 		Name:          "Cluster 1",
 		Address:       "123 Main St",
 		Description:   "Test description",
-		SoilCondition: entities.TreeSoilConditionLehmig,
+		SoilCondition: clusterDomain.TreeSoilConditionLehmig,
 		TreeIDs:       []*int32{utils.P(int32(1)), utils.P(int32(2))},
 	}
 
@@ -159,7 +162,7 @@ func TestTreeClusterService_Create(t *testing.T) {
 		).Return(expectedCluster, nil)
 
 		// UpdateWateringStatuses
-		clusterRepo.EXPECT().GetAll(mock.Anything, entities.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
+		clusterRepo.EXPECT().GetAll(mock.Anything, clusterDomain.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
 
 		clusterRepo.EXPECT().Update(
 			ctx,
@@ -181,11 +184,11 @@ func TestTreeClusterService_Create(t *testing.T) {
 		regionRepo := storageMock.NewMockRegionRepository(t)
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, globalEventManager)
 
-		newCluster := &entities.TreeClusterCreate{
+		newCluster := &clusterDomain.TreeClusterCreate{
 			Name:          "Cluster 1",
 			Address:       "123 Main St",
 			Description:   "Test description",
-			SoilCondition: entities.TreeSoilConditionLehmig,
+			SoilCondition: clusterDomain.TreeSoilConditionLehmig,
 			TreeIDs:       []*int32{},
 		}
 
@@ -202,7 +205,7 @@ func TestTreeClusterService_Create(t *testing.T) {
 		).Return(expectedCluster, nil)
 
 		// UpdateWateringStatuses
-		clusterRepo.EXPECT().GetAll(mock.Anything, entities.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
+		clusterRepo.EXPECT().GetAll(mock.Anything, clusterDomain.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
 
 		clusterRepo.EXPECT().Update(
 			ctx,
@@ -224,7 +227,7 @@ func TestTreeClusterService_Create(t *testing.T) {
 		regionRepo := storageMock.NewMockRegionRepository(t)
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, globalEventManager)
 
-		expectedErr := entities.ErrTreeNotFound
+		expectedErr := treeDomain.ErrNotFound
 
 		treeRepo.EXPECT().GetTreesByIDs(
 			ctx,
@@ -289,7 +292,7 @@ func TestTreeClusterService_Create(t *testing.T) {
 		).Return(expectedCluster, nil)
 
 		// UpdateWateringStatuses
-		clusterRepo.EXPECT().GetAll(mock.Anything, entities.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
+		clusterRepo.EXPECT().GetAll(mock.Anything, clusterDomain.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
 
 		clusterRepo.EXPECT().Update(
 			ctx,
@@ -311,11 +314,11 @@ func TestTreeClusterService_Create(t *testing.T) {
 func TestTreeClusterService_Update(t *testing.T) {
 	ctx := context.Background()
 	clusterID := int32(1)
-	updatedCluster := &entities.TreeClusterUpdate{
+	updatedCluster := &clusterDomain.TreeClusterUpdate{
 		Name:          "Cluster 1",
 		Address:       "123 Main St",
 		Description:   "Test description",
-		SoilCondition: entities.TreeSoilConditionLehmig,
+		SoilCondition: clusterDomain.TreeSoilConditionLehmig,
 		TreeIDs:       []*int32{utils.P(int32(1)), utils.P(int32(2))},
 	}
 
@@ -342,7 +345,7 @@ func TestTreeClusterService_Update(t *testing.T) {
 		).Return(nil)
 
 		// UpdateWateringStatuses
-		clusterRepo.EXPECT().GetAll(mock.Anything, entities.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
+		clusterRepo.EXPECT().GetAll(mock.Anything, clusterDomain.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
 
 		// when
 		result, err := svc.Update(ctx, clusterID, updatedCluster)
@@ -358,11 +361,11 @@ func TestTreeClusterService_Update(t *testing.T) {
 		regionRepo := storageMock.NewMockRegionRepository(t)
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, globalEventManager)
 
-		updatedClusterEmptyTrees := &entities.TreeClusterUpdate{
+		updatedClusterEmptyTrees := &clusterDomain.TreeClusterUpdate{
 			Name:          "Cluster 1",
 			Address:       "123 Main St",
 			Description:   "Test description",
-			SoilCondition: entities.TreeSoilConditionLehmig,
+			SoilCondition: clusterDomain.TreeSoilConditionLehmig,
 			TreeIDs:       []*int32{},
 		}
 
@@ -382,7 +385,7 @@ func TestTreeClusterService_Update(t *testing.T) {
 		).Return(nil)
 
 		// UpdateWateringStatuses
-		clusterRepo.EXPECT().GetAll(mock.Anything, entities.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
+		clusterRepo.EXPECT().GetAll(mock.Anything, clusterDomain.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
 
 		// when
 		result, err := svc.Update(ctx, expectedCluster.ID, updatedClusterEmptyTrees)
@@ -401,7 +404,7 @@ func TestTreeClusterService_Update(t *testing.T) {
 		treeRepo.EXPECT().GetTreesByIDs(
 			ctx,
 			[]int32{1, 2},
-		).Return(nil, entities.ErrTreeNotFound)
+		).Return(nil, treeDomain.ErrNotFound)
 
 		// when
 		result, err := svc.Update(context.Background(), clusterID, updatedCluster)
@@ -458,7 +461,7 @@ func TestTreeClusterService_Update(t *testing.T) {
 			ctx,
 			clusterID,
 			mock.Anything,
-		).Return(entities.ErrEntityNotFound("not found"))
+		).Return(shared.ErrEntityNotFound("not found"))
 
 		// when
 		result, err := svc.Update(ctx, clusterID, updatedCluster)
@@ -479,19 +482,19 @@ func TestTreeClusterService_EventSystem(t *testing.T) {
 
 		clusters := testClusters
 		prevCluster := *clusters[1]
-		updatedClusterEmptyTrees := &entities.TreeClusterUpdate{
+		updatedClusterEmptyTrees := &clusterDomain.TreeClusterUpdate{
 			Name:          "Cluster 1",
 			Address:       "123 Main St",
 			Description:   "Test description",
-			SoilCondition: entities.TreeSoilConditionLehmig,
+			SoilCondition: clusterDomain.TreeSoilConditionLehmig,
 			TreeIDs:       []*int32{},
 		}
 
 		expectedCluster := *clusters[1]
 
 		// Event
-		eventManager := worker.NewEventManager(entities.EventTypeUpdateTreeCluster)
-		expectedEvent := entities.NewEventUpdateTreeCluster(&prevCluster, &expectedCluster)
+		eventManager := worker.NewEventManager(clusterDomain.EventTypeUpdate)
+		expectedEvent := clusterDomain.NewEventUpdate(&prevCluster, &expectedCluster)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		go eventManager.Run(ctx)
@@ -510,12 +513,12 @@ func TestTreeClusterService_EventSystem(t *testing.T) {
 		).Return(nil)
 
 		// UpdateWateringStatuses
-		clusterRepo.EXPECT().GetAll(mock.Anything, entities.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
+		clusterRepo.EXPECT().GetAll(mock.Anything, clusterDomain.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
 
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, eventManager)
 
 		// when
-		subID, ch, err := eventManager.Subscribe(entities.EventTypeUpdateTreeCluster)
+		subID, ch, err := eventManager.Subscribe(clusterDomain.EventTypeUpdate)
 		if err != nil {
 			t.Fatal("failed to subscribe to event manager")
 		}
@@ -530,7 +533,7 @@ func TestTreeClusterService_EventSystem(t *testing.T) {
 			t.Fatal("event was not received")
 		}
 
-		_ = eventManager.Unsubscribe(entities.EventTypeUpdateTreeCluster, subID)
+		_ = eventManager.Unsubscribe(clusterDomain.EventTypeUpdate, subID)
 	})
 }
 
@@ -560,7 +563,7 @@ func TestTreeClusterService_Delete(t *testing.T) {
 	t.Run("should return error if tree cluster not found", func(t *testing.T) {
 		id := int32(2)
 
-		expectedErr := entities.ErrEntityNotFound("not found")
+		expectedErr := shared.ErrEntityNotFound("not found")
 		clusterRepo.EXPECT().GetByID(ctx, id).Return(nil, expectedErr)
 
 		// when
@@ -615,31 +618,33 @@ func TestTreeClusterService_UpdateWateringStatuses(t *testing.T) {
 		staleDate := time.Now().Add(-34 * time.Hour)
 		recentDate := time.Now().Add(-2 * time.Hour)
 
-		staleCluster := &entities.TreeCluster{
+		staleCluster := &clusterDomain.TreeCluster{
 			ID:             1,
 			LastWatered:    &staleDate, // Older than 24h
-			Trees:          testTrees,
-			WateringStatus: entities.WateringStatusJustWatered,
+			TreeIDs:        utils.Map(testTrees, func(t *treeDomain.Tree) int32 { return t.ID }),
+			WateringStatus: shared.WateringStatusJustWatered,
 		}
-		recentCluster := &entities.TreeCluster{
+		recentCluster := &clusterDomain.TreeCluster{
 			ID:             2,
 			LastWatered:    &recentDate,
-			Trees:          testTrees,
-			WateringStatus: entities.WateringStatusJustWatered,
+			TreeIDs:        utils.Map(testTrees, func(t *treeDomain.Tree) int32 { return t.ID }),
+			WateringStatus: shared.WateringStatusJustWatered,
 		}
-		expectList := []*entities.TreeCluster{staleCluster, recentCluster}
+		expectList := []*clusterDomain.TreeCluster{staleCluster, recentCluster}
 
 		// when
-		clusterRepo.EXPECT().GetAll(mock.Anything, entities.TreeClusterQuery{}).Return(expectList, int64(len(expectList)), nil)
+		clusterRepo.EXPECT().GetAll(mock.Anything, clusterDomain.TreeClusterQuery{}).Return(expectList, int64(len(expectList)), nil)
 		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, staleCluster.ID).Return(allLatestSensorData, nil)
+		treeRepo.EXPECT().GetByTreeClusterID(mock.Anything, staleCluster.ID).Return(testTrees, nil)
 		clusterRepo.EXPECT().Update(mock.Anything, staleCluster.ID, mock.Anything).Return(nil)
 
 		err := svc.UpdateWateringStatuses(ctx)
 
 		// then
 		assert.NoError(t, err)
-		clusterRepo.AssertCalled(t, "GetAll", mock.Anything, entities.TreeClusterQuery{})
+		clusterRepo.AssertCalled(t, "GetAll", mock.Anything, clusterDomain.TreeClusterQuery{})
 		clusterRepo.AssertCalled(t, "GetAllLatestSensorDataByClusterID", mock.Anything, staleCluster.ID)
+		treeRepo.AssertCalled(t, "GetByTreeClusterID", mock.Anything, staleCluster.ID)
 		clusterRepo.AssertCalled(t, "Update", mock.Anything, staleCluster.ID, mock.Anything)
 		clusterRepo.AssertExpectations(t)
 	})
@@ -655,22 +660,22 @@ func TestTreeClusterService_UpdateWateringStatuses(t *testing.T) {
 		staleDate := time.Now().Add(-34 * time.Hour)
 		recentDate := time.Now().Add(-2 * time.Hour)
 
-		staleCluster := &entities.TreeCluster{
+		staleCluster := &clusterDomain.TreeCluster{
 			ID:             1,
 			LastWatered:    &staleDate, // Older than 24h
-			Trees:          nil,
-			WateringStatus: entities.WateringStatusJustWatered,
+			TreeIDs:        nil,
+			WateringStatus: shared.WateringStatusJustWatered,
 		}
-		recentCluster := &entities.TreeCluster{
+		recentCluster := &clusterDomain.TreeCluster{
 			ID:             2,
 			LastWatered:    &recentDate,
-			Trees:          nil,
-			WateringStatus: entities.WateringStatusJustWatered,
+			TreeIDs:        nil,
+			WateringStatus: shared.WateringStatusJustWatered,
 		}
-		expectList := []*entities.TreeCluster{staleCluster, recentCluster}
+		expectList := []*clusterDomain.TreeCluster{staleCluster, recentCluster}
 
 		// when
-		clusterRepo.EXPECT().GetAll(mock.Anything, entities.TreeClusterQuery{}).Return(expectList, int64(len(expectList)), nil)
+		clusterRepo.EXPECT().GetAll(mock.Anything, clusterDomain.TreeClusterQuery{}).Return(expectList, int64(len(expectList)), nil)
 		clusterRepo.EXPECT().Update(mock.Anything, staleCluster.ID, mock.Anything).Return(nil)
 		clusterRepo.EXPECT().Update(mock.Anything, recentCluster.ID, mock.Anything).Return(nil)
 
@@ -678,7 +683,7 @@ func TestTreeClusterService_UpdateWateringStatuses(t *testing.T) {
 
 		// then
 		assert.NoError(t, err)
-		clusterRepo.AssertCalled(t, "GetAll", mock.Anything, entities.TreeClusterQuery{})
+		clusterRepo.AssertCalled(t, "GetAll", mock.Anything, clusterDomain.TreeClusterQuery{})
 		clusterRepo.AssertCalled(t, "Update", mock.Anything, staleCluster.ID, mock.Anything)
 		clusterRepo.AssertCalled(t, "Update", mock.Anything, recentCluster.ID, mock.Anything)
 		clusterRepo.AssertExpectations(t)
@@ -694,14 +699,14 @@ func TestTreeClusterService_UpdateWateringStatuses(t *testing.T) {
 
 		// when
 		expectedErr := errors.New("database error")
-		clusterRepo.EXPECT().GetAll(mock.Anything, entities.TreeClusterQuery{}).Return(nil, int64(0), expectedErr)
+		clusterRepo.EXPECT().GetAll(mock.Anything, clusterDomain.TreeClusterQuery{}).Return(nil, int64(0), expectedErr)
 
 		err := svc.UpdateWateringStatuses(ctx)
 
 		// then
 		assert.Error(t, err)
 		assert.Equal(t, expectedErr, err)
-		clusterRepo.AssertCalled(t, "GetAll", mock.Anything, entities.TreeClusterQuery{})
+		clusterRepo.AssertCalled(t, "GetAll", mock.Anything, clusterDomain.TreeClusterQuery{})
 		clusterRepo.AssertNotCalled(t, "GetAllLatestSensorDataByClusterID")
 		clusterRepo.AssertNotCalled(t, "Update")
 		clusterRepo.AssertExpectations(t)
@@ -716,24 +721,26 @@ func TestTreeClusterService_UpdateWateringStatuses(t *testing.T) {
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, globalEventManager)
 
 		staleDate := time.Now().Add(-34 * time.Hour)
-		staleCluster := &entities.TreeCluster{
+		staleCluster := &clusterDomain.TreeCluster{
 			ID:             1,
 			LastWatered:    &staleDate, // Older than 24h
-			Trees:          testTrees,
-			WateringStatus: entities.WateringStatusJustWatered,
+			TreeIDs:        utils.Map(testTrees, func(t *treeDomain.Tree) int32 { return t.ID }),
+			WateringStatus: shared.WateringStatusJustWatered,
 		}
-		expectList := []*entities.TreeCluster{staleCluster}
+		expectList := []*clusterDomain.TreeCluster{staleCluster}
 
 		// when
-		clusterRepo.EXPECT().GetAll(mock.Anything, entities.TreeClusterQuery{}).Return(expectList, int64(len(expectList)), nil)
+		clusterRepo.EXPECT().GetAll(mock.Anything, clusterDomain.TreeClusterQuery{}).Return(expectList, int64(len(expectList)), nil)
 		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, staleCluster.ID).Return(allLatestSensorData, nil)
+		treeRepo.EXPECT().GetByTreeClusterID(mock.Anything, staleCluster.ID).Return(testTrees, nil)
 		clusterRepo.EXPECT().Update(mock.Anything, staleCluster.ID, mock.Anything).Return(errors.New("update failed"))
 
 		err := svc.UpdateWateringStatuses(ctx)
 
 		// then
-		clusterRepo.AssertCalled(t, "GetAll", mock.Anything, entities.TreeClusterQuery{})
+		clusterRepo.AssertCalled(t, "GetAll", mock.Anything, clusterDomain.TreeClusterQuery{})
 		clusterRepo.AssertCalled(t, "GetAllLatestSensorDataByClusterID", mock.Anything, staleCluster.ID)
+		treeRepo.AssertCalled(t, "GetByTreeClusterID", mock.Anything, staleCluster.ID)
 		clusterRepo.AssertCalled(t, "Update", mock.Anything, staleCluster.ID, mock.Anything)
 		clusterRepo.AssertExpectations(t)
 		assert.NoError(t, err)
@@ -765,8 +772,8 @@ func TestReady(t *testing.T) {
 	})
 }
 
-var testCluster1Coord = entities.MustNewCoordinate(9.446741, 54.801539)
-var testClusters = []*entities.TreeCluster{
+var testCluster1Coord = shared.MustNewCoordinate(9.446741, 54.801539)
+var testClusters = []*clusterDomain.TreeCluster{
 	{
 		ID:            1,
 		CreatedAt:     time.Now(),
@@ -774,10 +781,10 @@ var testClusters = []*entities.TreeCluster{
 		Name:          "Cluster 1",
 		Address:       "123 Main St",
 		Description:   "Test description",
-		SoilCondition: entities.TreeSoilConditionLehmig,
+		SoilCondition: clusterDomain.TreeSoilConditionLehmig,
 		Archived:      false,
 		Coordinate:    &testCluster1Coord,
-		Trees:         testTrees,
+		TreeIDs:       utils.Map(testTrees, func(t *treeDomain.Tree) int32 { return t.ID }),
 	},
 	{
 		ID:            2,
@@ -786,26 +793,24 @@ var testClusters = []*entities.TreeCluster{
 		Name:          "Cluster 2",
 		Address:       "456 Second St",
 		Description:   "Test description",
-		SoilCondition: entities.TreeSoilConditionSandig,
+		SoilCondition: clusterDomain.TreeSoilConditionSandig,
 		Archived:      false,
 		Coordinate:    nil,
-		Trees:         testTrees,
+		TreeIDs:       utils.Map(testTrees, func(t *treeDomain.Tree) int32 { return t.ID }),
 	},
 }
 
-var testTrees = []*entities.Tree{
+var testTrees = []*treeDomain.Tree{
 	{
 		ID:           1,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 		Species:      "Oak",
 		Number:       "T001",
-		Coordinate:   entities.MustNewCoordinate(9.446741, 54.801539),
+		Coordinate:   shared.MustNewCoordinate(9.446741, 54.801539),
 		Description:  "A mature oak tree",
-		PlantingYear: entities.MustNewPlantingYear(2023),
-		Sensor: &entities.Sensor{
-			ID: entities.MustNewSensorID("sensor-1"),
-		},
+		PlantingYear: treeDomain.MustNewPlantingYear(2023),
+		SensorID:     utils.P(sensor.MustNewSensorID("sensor-1")),
 	},
 	{
 		ID:           2,
@@ -813,11 +818,9 @@ var testTrees = []*entities.Tree{
 		UpdatedAt:    time.Now(),
 		Species:      "Pine",
 		Number:       "T002",
-		Coordinate:   entities.MustNewCoordinate(9.446700, 54.801510),
+		Coordinate:   shared.MustNewCoordinate(9.446700, 54.801510),
 		Description:  "A young pine tree",
-		PlantingYear: entities.MustNewPlantingYear(2023),
-		Sensor: &entities.Sensor{
-			ID: entities.MustNewSensorID("sensor-2"),
-		},
+		PlantingYear: treeDomain.MustNewPlantingYear(2023),
+		SensorID:     utils.P(sensor.MustNewSensorID("sensor-2")),
 	},
 }

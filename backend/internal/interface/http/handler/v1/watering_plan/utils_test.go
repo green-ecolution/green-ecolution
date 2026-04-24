@@ -3,49 +3,51 @@ package wateringplan_test
 import (
 	"time"
 
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	serverEntities "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
 var (
-	TestWateringPlans = []*domain.WateringPlan{
+	TestWateringPlans = []*watering.WateringPlan{
 		{
 			ID:                 1,
 			Date:               time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
 			Description:        "New watering plan for the west side of the city",
-			Status:             domain.WateringPlanStatusPlanned,
-			Distance:           utils.P(domain.MustNewDistance(63.0)),
+			Status:             watering.WateringPlanStatusPlanned,
+			Distance:           utils.P(shared.MustNewDistance(63.0)),
 			TotalWaterRequired: utils.P(6000.0),
-			Transporter:        TestVehicles[1],
-			Trailer:            TestVehicles[0],
-			TreeClusters:       TestClusters[0:2],
+			TransporterID:      utils.P(int32(2)),
+			TrailerID:          utils.P(int32(1)),
+			TreeClusterIDs:     []int32{1, 2},
 			CancellationNote:   "",
 		},
 		{
 			ID:                 2,
 			Date:               time.Date(2024, 8, 3, 0, 0, 0, 0, time.UTC),
 			Description:        "New watering plan for the east side of the city",
-			Status:             domain.WateringPlanStatusActive,
-			Distance:           utils.P(domain.MustNewDistance(63.0)),
+			Status:             watering.WateringPlanStatusActive,
+			Distance:           utils.P(shared.MustNewDistance(63.0)),
 			TotalWaterRequired: utils.P(6000.0),
-			Transporter:        TestVehicles[1],
-			Trailer:            TestVehicles[0],
-			TreeClusters:       TestClusters[2:3],
+			TransporterID:      utils.P(int32(2)),
+			TrailerID:          utils.P(int32(1)),
+			TreeClusterIDs:     []int32{3},
 			CancellationNote:   "",
 		},
 		{
 			ID:                 3,
 			Date:               time.Date(2024, 6, 12, 0, 0, 0, 0, time.UTC),
 			Description:        "Very important watering plan due to no rainfall",
-			Status:             domain.WateringPlanStatusFinished,
-			Distance:           utils.P(domain.MustNewDistance(63.0)),
+			Status:             watering.WateringPlanStatusFinished,
+			Distance:           utils.P(shared.MustNewDistance(63.0)),
 			TotalWaterRequired: utils.P(6000.0),
-			Transporter:        TestVehicles[1],
-			Trailer:            nil,
-			TreeClusters:       TestClusters[0:3],
+			TransporterID:      utils.P(int32(2)),
+			TrailerID:          nil,
+			TreeClusterIDs:     []int32{1, 2, 3},
 			CancellationNote:   "",
-			Evaluation: []*domain.EvaluationValue{
+			Evaluation: []*watering.EvaluationValue{
 				{
 					WateringPlanID: 3,
 					TreeClusterID:  1,
@@ -67,98 +69,63 @@ var (
 			ID:                 4,
 			Date:               time.Date(2024, 6, 10, 0, 0, 0, 0, time.UTC),
 			Description:        "New watering plan for the south side of the city",
-			Status:             domain.WateringPlanStatusNotCompeted,
-			Distance:           utils.P(domain.MustNewDistance(63.0)),
+			Status:             watering.WateringPlanStatusNotCompeted,
+			Distance:           utils.P(shared.MustNewDistance(63.0)),
 			TotalWaterRequired: utils.P(6000.0),
-			Transporter:        TestVehicles[1],
-			Trailer:            nil,
-			TreeClusters:       TestClusters[2:3],
+			TransporterID:      utils.P(int32(2)),
+			TrailerID:          nil,
+			TreeClusterIDs:     []int32{3},
 			CancellationNote:   "",
 		},
 		{
 			ID:                 5,
 			Date:               time.Date(2024, 6, 4, 0, 0, 0, 0, time.UTC),
 			Description:        "Canceled due to flood",
-			Status:             domain.WateringPlanStatusCanceled,
-			Distance:           utils.P(domain.MustNewDistance(63.0)),
+			Status:             watering.WateringPlanStatusCanceled,
+			Distance:           utils.P(shared.MustNewDistance(63.0)),
 			TotalWaterRequired: utils.P(6000.0),
-			Transporter:        TestVehicles[1],
-			Trailer:            nil,
-			TreeClusters:       TestClusters[2:3],
+			TransporterID:      utils.P(int32(2)),
+			TrailerID:          nil,
+			TreeClusterIDs:     []int32{3},
 			CancellationNote:   "The watering plan was cancelled due to various reasons.",
 		},
 	}
-	TestVehicles = []*domain.Vehicle{
-		{
-			ID:            1,
-			NumberPlate:   "B-1234",
-			Description:   "Test vehicle 1",
-			WaterCapacity: domain.MustNewWaterCapacity(100.0),
-			Type:          domain.VehicleTypeTrailer,
-			Status:        domain.VehicleStatusActive,
-		},
-		{
-			ID:            2,
-			NumberPlate:   "B-5678",
-			Description:   "Test vehicle 2",
-			WaterCapacity: domain.MustNewWaterCapacity(150.0),
-			Type:          domain.VehicleTypeTransporter,
-			Status:        domain.VehicleStatusUnknown,
-		},
-	}
-	TestClusters = []*domain.TreeCluster{
+	TestClusters = []*cluster.TreeCluster{
 		{
 			ID:             1,
 			Name:           "Solitüde Strand",
-			WateringStatus: domain.WateringStatusGood,
+			WateringStatus: shared.WateringStatusGood,
 			MoistureLevel:  0.75,
-			Region: &domain.Region{
-				ID:   1,
-				Name: "Mürwik",
-			},
-			Address:       "Solitüde Strand",
-			Description:   "Alle Bäume am Strand",
-			SoilCondition: domain.TreeSoilConditionSandig,
-			Coordinate:    utils.P(domain.MustNewCoordinate(54.820940, 9.489022)),
-			Trees: []*domain.Tree{
-				{ID: 1},
-				{ID: 2},
-				{ID: 3},
-			},
+			RegionID:       utils.P(int32(1)),
+			Address:        "Solitüde Strand",
+			Description:    "Alle Bäume am Strand",
+			SoilCondition:  cluster.TreeSoilConditionSandig,
+			Coordinate:     utils.P(shared.MustNewCoordinate(54.820940, 9.489022)),
+			TreeIDs:        []int32{1, 2, 3},
 		},
 		{
 			ID:             2,
 			Name:           "Sankt-Jürgen-Platz",
-			WateringStatus: domain.WateringStatusModerate,
+			WateringStatus: shared.WateringStatusModerate,
 			MoistureLevel:  0.5,
-			Region: &domain.Region{
-				ID:   1,
-				Name: "Mürwik",
-			},
-			Address:       "Ulmenstraße",
-			Description:   "Bäume beim Sankt-Jürgen-Platz",
-			SoilCondition: domain.TreeSoilConditionSchluffig,
-			Coordinate:    utils.P(domain.MustNewCoordinate(54.78805731048199, 9.44400186680097)),
-			Trees: []*domain.Tree{
-				{ID: 4},
-				{ID: 5},
-				{ID: 6},
-			},
+			RegionID:       utils.P(int32(1)),
+			Address:        "Ulmenstraße",
+			Description:    "Bäume beim Sankt-Jürgen-Platz",
+			SoilCondition:  cluster.TreeSoilConditionSchluffig,
+			Coordinate:     utils.P(shared.MustNewCoordinate(54.78805731048199, 9.44400186680097)),
+			TreeIDs:        []int32{4, 5, 6},
 		},
 		{
 			ID:             3,
 			Name:           "Flensburger Stadion",
 			WateringStatus: "unknown",
 			MoistureLevel:  0.7,
-			Region: &domain.Region{
-				ID:   1,
-				Name: "Mürwik",
-			},
-			Address:       "Flensburger Stadion",
-			Description:   "Alle Bäume in der Gegend des Stadions in Mürwik",
-			SoilCondition: "schluffig",
-			Coordinate:    utils.P(domain.MustNewCoordinate(54.802163, 9.446398)),
-			Trees:         []*domain.Tree{},
+			RegionID:       utils.P(int32(1)),
+			Address:        "Flensburger Stadion",
+			Description:    "Alle Bäume in der Gegend des Stadions in Mürwik",
+			SoilCondition:  "schluffig",
+			Coordinate:     utils.P(shared.MustNewCoordinate(54.802163, 9.446398)),
+			TreeIDs:        []int32{},
 		},
 	}
 

@@ -1,12 +1,13 @@
 package mapper
 
 import (
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func TreeClusterFromResponse(source *domain.TreeCluster) *entities.TreeClusterResponse {
+func TreeClusterFromResponse(source *cluster.TreeCluster) *entities.TreeClusterResponse {
 	if source == nil {
 		return nil
 	}
@@ -17,7 +18,6 @@ func TreeClusterFromResponse(source *domain.TreeCluster) *entities.TreeClusterRe
 		WateringStatus: MapWateringStatus(source.WateringStatus),
 		LastWatered:    source.LastWatered,
 		MoistureLevel:  source.MoistureLevel,
-		Region:         RegionFromResponse(source.Region),
 		Address:        source.Address,
 		Description:    source.Description,
 		Archived:       source.Archived,
@@ -32,20 +32,14 @@ func TreeClusterFromResponse(source *domain.TreeCluster) *entities.TreeClusterRe
 		resp.Latitude = &lat
 		resp.Longitude = &lng
 	}
-	if source.Trees != nil {
-		resp.Trees = make([]*entities.TreeResponse, len(source.Trees))
-		for i, t := range source.Trees {
-			resp.Trees[i] = treeInClusterToResponse(t)
-		}
-	}
 	return resp
 }
 
-func TreeClusterFromResponseList(source []*domain.TreeCluster) []*entities.TreeClusterInListResponse {
+func TreeClusterFromResponseList(source []*cluster.TreeCluster) []*entities.TreeClusterInListResponse {
 	return utils.MapSlice(source, TreeClusterFromInListResponse)
 }
 
-func TreeClusterFromInListResponse(source *domain.TreeCluster) *entities.TreeClusterInListResponse {
+func TreeClusterFromInListResponse(source *cluster.TreeCluster) *entities.TreeClusterInListResponse {
 	if source == nil {
 		return nil
 	}
@@ -56,11 +50,10 @@ func TreeClusterFromInListResponse(source *domain.TreeCluster) *entities.TreeClu
 		WateringStatus: MapWateringStatus(source.WateringStatus),
 		LastWatered:    source.LastWatered,
 		MoistureLevel:  source.MoistureLevel,
-		Region:         RegionFromResponse(source.Region),
 		Address:        source.Address,
 		Description:    source.Description,
 		Archived:       source.Archived,
-		TreeIDs:        MapTreesToIDs(source.Trees),
+		TreeIDs:        mapInt32SliceToPtrSlice(source.TreeIDs),
 		SoilCondition:  MapSoilCondition(source.SoilCondition),
 		Name:           source.Name,
 		Provider:       source.Provider,
@@ -75,11 +68,11 @@ func TreeClusterFromInListResponse(source *domain.TreeCluster) *entities.TreeClu
 	return resp
 }
 
-func TreeClusterFromCreateRequest(source *entities.TreeClusterCreateRequest) *domain.TreeClusterCreate {
+func TreeClusterFromCreateRequest(source *entities.TreeClusterCreateRequest) *cluster.TreeClusterCreate {
 	if source == nil {
 		return nil
 	}
-	result := &domain.TreeClusterCreate{
+	result := &cluster.TreeClusterCreate{
 		Address:        source.Address,
 		Description:    source.Description,
 		Name:           source.Name,
@@ -99,11 +92,11 @@ func TreeClusterFromCreateRequest(source *entities.TreeClusterCreateRequest) *do
 	return result
 }
 
-func TreeClusterFromUpdateRequest(source *entities.TreeClusterUpdateRequest) *domain.TreeClusterUpdate {
+func TreeClusterFromUpdateRequest(source *entities.TreeClusterUpdateRequest) *cluster.TreeClusterUpdate {
 	if source == nil {
 		return nil
 	}
-	result := &domain.TreeClusterUpdate{
+	result := &cluster.TreeClusterUpdate{
 		Address:        source.Address,
 		Description:    source.Description,
 		SoilCondition:  MapSoilConditionReq(source.SoilCondition),
@@ -123,75 +116,26 @@ func TreeClusterFromUpdateRequest(source *entities.TreeClusterUpdateRequest) *do
 	return result
 }
 
-// treeInClusterToResponse maps a tree within a cluster context.
-// Different from TreeFromResponse: includes Sensor, no TreeClusterID.
-func treeInClusterToResponse(source *domain.Tree) *entities.TreeResponse {
-	if source == nil {
-		return nil
-	}
-	return &entities.TreeResponse{
-		ID:             source.ID,
-		CreatedAt:      source.CreatedAt,
-		UpdatedAt:      source.UpdatedAt,
-		Sensor:         sensorInClusterToResponse(source.Sensor),
-		LastWatered:    source.LastWatered,
-		PlantingYear:   source.PlantingYear.Year(),
-		Species:        source.Species,
-		Number:         source.Number,
-		Latitude:       source.Coordinate.Latitude(),
-		Longitude:      source.Coordinate.Longitude(),
-		WateringStatus: MapWateringStatus(source.WateringStatus),
-		Description:    source.Description,
-		Provider:       source.Provider,
-		AdditionalInfo: source.AdditionalInfo,
-	}
-}
-
-func sensorInClusterToResponse(source *domain.Sensor) *entities.SensorResponse {
-	if source == nil {
-		return nil
-	}
-	return &entities.SensorResponse{
-		ID:             source.ID.String(),
-		CreatedAt:      source.CreatedAt,
-		UpdatedAt:      source.UpdatedAt,
-		Status:         MapSensorStatus(source.Status),
-		LatestData:     sensorDataInClusterToResponse(source.LatestData),
-		Latitude:       source.Coordinate.Latitude(),
-		Longitude:      source.Coordinate.Longitude(),
-		Provider:       source.Provider,
-		AdditionalInfo: source.AdditionalInfo,
-	}
-}
-
-func sensorDataInClusterToResponse(source *domain.SensorData) *entities.SensorDataResponse {
-	if source == nil {
-		return nil
-	}
-	return &entities.SensorDataResponse{
-		CreatedAt: source.CreatedAt,
-		UpdatedAt: source.UpdatedAt,
-	}
-}
-
-func MapWateringStatus(status domain.WateringStatus) entities.WateringStatus {
+func MapWateringStatus(status shared.WateringStatus) entities.WateringStatus {
 	return entities.WateringStatus(status)
 }
 
-func MapSoilCondition(condition domain.TreeSoilCondition) entities.TreeSoilCondition {
+func MapSoilCondition(condition cluster.TreeSoilCondition) entities.TreeSoilCondition {
 	return entities.TreeSoilCondition(condition)
 }
 
-func MapSoilConditionReq(condition entities.TreeSoilCondition) domain.TreeSoilCondition {
-	return domain.TreeSoilCondition(condition)
+func MapSoilConditionReq(condition entities.TreeSoilCondition) cluster.TreeSoilCondition {
+	return cluster.TreeSoilCondition(condition)
 }
 
-func MapTreesToIDs(trees []*domain.Tree) []*int32 {
-	var ids []*int32
-	for _, tree := range trees {
-		if tree != nil {
-			ids = append(ids, &tree.ID)
-		}
+func mapInt32SliceToPtrSlice(ids []int32) []*int32 {
+	if ids == nil {
+		return nil
 	}
-	return ids
+	result := make([]*int32, len(ids))
+	for i := range ids {
+		v := ids[i]
+		result[i] = &v
+	}
+	return result
 }

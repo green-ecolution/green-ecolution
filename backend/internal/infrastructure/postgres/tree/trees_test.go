@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/testutils"
 )
@@ -202,14 +202,14 @@ func TestTreeRepository_UnlinkSensorID(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		err := r.UnlinkSensorID(context.Background(), entities.MustNewSensorID("sensor-1"))
+		err := r.UnlinkSensorID(context.Background(), sensor.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.NoError(t, err)
 
-		tree, err := r.GetByID(context.Background(), 1)
+		tr, err := r.GetByID(context.Background(), 1)
 		assert.NoError(t, err)
-		assert.Nil(t, tree.Sensor, "Expected sensorID to be unlinked, but it is still linked")
+		assert.Nil(t, tr.SensorID, "Expected sensorID to be unlinked, but it is still linked")
 
 	})
 	t.Run("should return no error if sensor ID does not exist", func(t *testing.T) {
@@ -218,7 +218,7 @@ func TestTreeRepository_UnlinkSensorID(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		err := r.UnlinkSensorID(context.Background(), entities.MustNewSensorID("9999"))
+		err := r.UnlinkSensorID(context.Background(), sensor.MustNewSensorID("9999"))
 
 		// then
 		assert.NoError(t, err)
@@ -232,7 +232,7 @@ func TestTreeRepository_UnlinkSensorID(t *testing.T) {
 		cancel()
 
 		// when
-		err := r.UnlinkSensorID(invalidCtx, entities.MustNewSensorID("sensor-1"))
+		err := r.UnlinkSensorID(invalidCtx, sensor.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.Error(t, err)
@@ -243,7 +243,7 @@ func TestTreeRepository_UnlinkSensorID(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		err := r.UnlinkSensorID(context.Background(), entities.SensorID{})
+		err := r.UnlinkSensorID(context.Background(), sensor.SensorID{})
 
 		// then
 		assert.Error(t, err)

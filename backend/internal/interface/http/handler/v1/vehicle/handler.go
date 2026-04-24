@@ -7,7 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/vehicle"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities/mapper"
 	handler "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1"
@@ -36,10 +36,10 @@ func GetAllVehicles(svc ports.VehicleService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
 
-		var domainData []*domain.Vehicle
+		var domainData []*vehicle.Vehicle
 		var totalCount int64
 		var err error
-		var query domain.VehicleQuery
+		var query vehicle.VehicleQuery
 
 		if err := c.QueryParser(&query); err != nil {
 			return errorhandler.HandleError(err)

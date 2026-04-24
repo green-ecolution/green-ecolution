@@ -3,11 +3,10 @@ package treecluster
 import (
 	"strconv"
 
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
-
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities/mapper"
 	handler "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1"
@@ -197,11 +196,11 @@ func DeleteTreeCluster(svc ports.TreeClusterService) fiber.Handler {
 	}
 }
 
-func fillTreeClusterQueryParams(c *fiber.Ctx) (domain.TreeClusterQuery, error) {
-	var filter domain.TreeClusterQuery
+func fillTreeClusterQueryParams(c *fiber.Ctx) (cluster.TreeClusterQuery, error) {
+	var filter cluster.TreeClusterQuery
 
 	if err := c.QueryParser(&filter); err != nil {
-		return domain.TreeClusterQuery{}, err
+		return cluster.TreeClusterQuery{}, err
 	}
 
 	return filter, nil

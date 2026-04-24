@@ -4,10 +4,11 @@ import (
 	"fmt"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/routing"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
-func ConvertLocations(cfg *config.RoutingConfig) (*entities.GeoJSONMetadata, error) {
+func ConvertLocations(cfg *config.RoutingConfig) (*routing.GeoJSONMetadata, error) {
 	endPoint, err := validateLocation(cfg.EndPoint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid EndPoint configuration: %w", err)
@@ -23,7 +24,7 @@ func ConvertLocations(cfg *config.RoutingConfig) (*entities.GeoJSONMetadata, err
 		return nil, fmt.Errorf("invalid WateringPoint configuration: %w", err)
 	}
 
-	metdadata := entities.GeoJSONMetadata{
+	metdadata := routing.GeoJSONMetadata{
 		EndPoint:      endPoint,
 		StartPoint:    startPoint,
 		WateringPoint: wateringPoint,
@@ -32,15 +33,15 @@ func ConvertLocations(cfg *config.RoutingConfig) (*entities.GeoJSONMetadata, err
 	return &metdadata, nil
 }
 
-func validateLocation(location []float64) (entities.GeoJSONLocation, error) {
+func validateLocation(location []float64) (routing.GeoJSONLocation, error) {
 	if len(location) != 2 {
-		return entities.GeoJSONLocation{}, fmt.Errorf("must have exactly two elements: latitude and longitude")
+		return routing.GeoJSONLocation{}, fmt.Errorf("must have exactly two elements: latitude and longitude")
 	}
-	coord, err := entities.NewCoordinate(location[1], location[0])
+	coord, err := shared.NewCoordinate(location[1], location[0])
 	if err != nil {
-		return entities.GeoJSONLocation{}, err
+		return routing.GeoJSONLocation{}, err
 	}
-	return entities.GeoJSONLocation{
+	return routing.GeoJSONLocation{
 		Coordinate: coord,
 	}, nil
 }

@@ -12,7 +12,8 @@ import (
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	userDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/user"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/vehicle"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
@@ -21,13 +22,13 @@ type UserRepository struct {
 	cfg *config.IdentityAuthConfig
 }
 
-func NewUserRepository(cfg *config.IdentityAuthConfig) entities.UserRepository {
+func NewUserRepository(cfg *config.IdentityAuthConfig) userDomain.UserRepository {
 	return &UserRepository{
 		cfg: cfg,
 	}
 }
 
-func (r *UserRepository) Create(ctx context.Context, user *entities.User, password string, roles []string) (*entities.User, error) {
+func (r *UserRepository) Create(ctx context.Context, user *userDomain.User, password string, roles []string) (*userDomain.User, error) {
 	log := logger.GetLogger(ctx)
 	if user == nil {
 		return nil, ErrEmptyUser
@@ -96,7 +97,7 @@ func (r *UserRepository) RemoveSession(ctx context.Context, refreshToken string)
 	return nil
 }
 
-func (r *UserRepository) GetAll(ctx context.Context) ([]*entities.User, error) {
+func (r *UserRepository) GetAll(ctx context.Context) ([]*userDomain.User, error) {
 	log := logger.GetLogger(ctx)
 	client, token, err := loginRestAPIClient(ctx, r.cfg.OidcProvider.BaseURL, r.cfg.OidcProvider.Backend.ClientID, r.cfg.OidcProvider.Backend.ClientSecret, r.cfg.OidcProvider.DomainName)
 	if err != nil {
@@ -109,21 +110,21 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]*entities.User, error) {
 		return nil, errors.Join(err, ErrGetUser)
 	}
 
-	allUsers := make([]*entities.User, len(users))
+	allUsers := make([]*userDomain.User, len(users))
 	for i, kcUser := range users {
-		user, err := keyCloakUserToUser(ctx, kcUser)
+		u, err := keyCloakUserToUser(ctx, kcUser)
 		if err != nil && !errors.Is(err, ErrUserWithNilAttributes) { // skip users without required attributes
 			return nil, err
 		}
-		if user != nil {
-			allUsers[i] = user
+		if u != nil {
+			allUsers[i] = u
 		}
 	}
 
 	return allUsers, nil
 }
 
-func (r *UserRepository) GetAllByRole(ctx context.Context, role entities.UserRole) ([]*entities.User, error) {
+func (r *UserRepository) GetAllByRole(ctx context.Context, role userDomain.UserRole) ([]*userDomain.User, error) {
 	log := logger.GetLogger(ctx)
 	users, err := r.GetAll(ctx)
 	if err != nil {
@@ -131,8 +132,8 @@ func (r *UserRepository) GetAllByRole(ctx context.Context, role entities.UserRol
 		return nil, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
 	}
 
-	return utils.Filter(users, func(user *entities.User) bool {
-		for _, userRole := range user.Roles {
+	return utils.Filter(users, func(u *userDomain.User) bool {
+		for _, userRole := range u.Roles {
 			if userRole == role {
 				return true
 			}
@@ -141,14 +142,14 @@ func (r *UserRepository) GetAllByRole(ctx context.Context, role entities.UserRol
 	}), nil
 }
 
-func (r *UserRepository) GetByIDs(ctx context.Context, ids []string) ([]*entities.User, error) {
+func (r *UserRepository) GetByIDs(ctx context.Context, ids []string) ([]*userDomain.User, error) {
 	log := logger.GetLogger(ctx)
 	client, token, err := loginRestAPIClient(ctx, r.cfg.OidcProvider.BaseURL, r.cfg.OidcProvider.Backend.ClientID, r.cfg.OidcProvider.Backend.ClientSecret, r.cfg.OidcProvider.DomainName)
 	if err != nil {
 		return nil, err
 	}
 
-	users := make([]*entities.User, len(ids))
+	users := make([]*userDomain.User, len(ids))
 	for i, id := range ids {
 		kcUser, err := client.GetUserByID(ctx, token.AccessToken, r.cfg.OidcProvider.DomainName, id)
 		if err != nil {
@@ -156,17 +157,17 @@ func (r *UserRepository) GetByIDs(ctx context.Context, ids []string) ([]*entitie
 			return nil, err
 		}
 
-		user, err := keyCloakUserToUser(ctx, kcUser)
+		u, err := keyCloakUserToUser(ctx, kcUser)
 		if err != nil {
 			return nil, err
 		}
-		users[i] = user
+		users[i] = u
 	}
 
 	return users, nil
 }
 
-func keyCloakUserToUser(ctx context.Context, user *gocloak.User) (*entities.User, error) {
+func keyCloakUserToUser(ctx context.Context, user *gocloak.User) (*userDomain.User, error) {
 	log := logger.GetLogger(ctx)
 	userID, err := uuid.Parse(*user.ID)
 	if err != nil {
@@ -206,7 +207,7 @@ func keyCloakUserToUser(ctx context.Context, user *gocloak.User) (*entities.User
 	lisences := convertDrivingLicenses(drivingLicenses)
 
 	const millisecondsInSecond = 1000
-	return &entities.User{
+	return &userDomain.User{
 		ID:              userID,
 		CreatedAt:       time.Unix(*user.CreatedTimestamp/millisecondsInSecond, 0),
 		Username:        *user.Username,
@@ -217,31 +218,31 @@ func keyCloakUserToUser(ctx context.Context, user *gocloak.User) (*entities.User
 		EmployeeID:      employeeID,
 		Roles:           roles,
 		DrivingLicenses: lisences,
-		Status:          entities.ParseUserStatus(status),
+		Status:          userDomain.ParseUserStatus(status),
 	}, nil
 }
 
-func convertRoles(userRoles []string) []entities.UserRole {
+func convertRoles(userRoles []string) []userDomain.UserRole {
 	if userRoles == nil {
-		return []entities.UserRole{}
+		return []userDomain.UserRole{}
 	}
 
-	var roles []entities.UserRole
+	var roles []userDomain.UserRole
 	for _, roleName := range userRoles {
-		userRole := entities.ParseUserRole(roleName)
+		userRole := userDomain.ParseUserRole(roleName)
 		roles = append(roles, userRole)
 	}
 	return roles
 }
 
-func convertDrivingLicenses(drivingLicenses []string) []entities.DrivingLicense {
+func convertDrivingLicenses(drivingLicenses []string) []vehicle.DrivingLicense {
 	if drivingLicenses == nil {
-		return []entities.DrivingLicense{}
+		return []vehicle.DrivingLicense{}
 	}
 
-	var licenses []entities.DrivingLicense
+	var licenses []vehicle.DrivingLicense
 	for _, drivingLicense := range drivingLicenses {
-		license, err := entities.ParseDrivingLicense(drivingLicense)
+		license, err := vehicle.ParseDrivingLicense(drivingLicense)
 		if err != nil {
 			continue
 		}
@@ -258,17 +259,17 @@ func validateRequiredAttributes(user *gocloak.User) error {
 	return nil
 }
 
-func userToKeyCloakUser(user *entities.User) *gocloak.User {
+func userToKeyCloakUser(u *userDomain.User) *gocloak.User {
 	attribute := make(map[string][]string)
-	attribute["phone_number"] = []string{user.PhoneNumber}
-	attribute["employee_id"] = []string{user.EmployeeID}
+	attribute["phone_number"] = []string{u.PhoneNumber}
+	attribute["employee_id"] = []string{u.EmployeeID}
 
 	return &gocloak.User{
-		ID:         gocloak.StringP(user.ID.String()),
-		Username:   gocloak.StringP(user.Username),
-		FirstName:  gocloak.StringP(user.FirstName),
-		LastName:   gocloak.StringP(user.LastName),
-		Email:      gocloak.StringP(user.Email),
+		ID:         gocloak.StringP(u.ID.String()),
+		Username:   gocloak.StringP(u.Username),
+		FirstName:  gocloak.StringP(u.FirstName),
+		LastName:   gocloak.StringP(u.LastName),
+		Email:      gocloak.StringP(u.Email),
 		Enabled:    gocloak.BoolP(true),
 		Attributes: &attribute,
 	}

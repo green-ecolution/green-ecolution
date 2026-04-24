@@ -6,7 +6,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/errorhandler"
@@ -31,7 +32,7 @@ import (
 func GetAllSensors(svc ports.SensorService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
-		var query domain.Query
+		var query shared.Query
 
 		if err := c.QueryParser(&query); err != nil {
 			return errorhandler.HandleError(err)
@@ -73,7 +74,7 @@ func GetSensorByID(svc ports.SensorService) fiber.Handler {
 		ctx := c.Context()
 		rawID := strings.Clone(c.Params("id"))
 
-		sensorID, err := domain.NewSensorID(rawID)
+		sensorID, err := sensor.NewSensorID(rawID)
 		if err != nil {
 			return errorhandler.HandleError(ports.NewError(ports.BadRequest, err.Error()))
 		}
@@ -106,7 +107,7 @@ func GetAllSensorDataByID(svc ports.SensorService) fiber.Handler {
 		ctx := c.Context()
 		rawID := strings.Clone(c.Params("id"))
 
-		sensorID, err := domain.NewSensorID(rawID)
+		sensorID, err := sensor.NewSensorID(rawID)
 		if err != nil {
 			return errorhandler.HandleError(ports.NewError(ports.BadRequest, err.Error()))
 		}
@@ -146,7 +147,7 @@ func DeleteSensor(svc ports.SensorService) fiber.Handler {
 		ctx := c.Context()
 		rawID := strings.Clone(c.Params("id"))
 
-		sensorID, err := domain.NewSensorID(rawID)
+		sensorID, err := sensor.NewSensorID(rawID)
 		if err != nil {
 			return errorhandler.HandleError(ports.NewError(ports.BadRequest, err.Error()))
 		}
@@ -162,7 +163,7 @@ func DeleteSensor(svc ports.SensorService) fiber.Handler {
 
 // TODO: Create / Update Sensor
 
-func mapToDto(t *domain.Sensor) *entities.SensorResponse {
+func mapToDto(t *sensor.Sensor) *entities.SensorResponse {
 	dto := mapper.SensorFromResponse(t)
 	return dto
 }

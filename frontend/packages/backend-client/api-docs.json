@@ -3496,7 +3496,7 @@
             "type": "object",
             "properties": {
                 "coordinate": {
-                    "$ref": "#/definitions/entities.Coordinate"
+                    "$ref": "#/definitions/shared.Coordinate"
                 }
             }
         },
@@ -5319,7 +5319,7 @@
                 }
             }
         },
-        "entities.Coordinate": {
+        "shared.Coordinate": {
             "type": "object"
         }
     },

@@ -9,21 +9,23 @@ import (
 	"github.com/go-playground/validator/v10"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
+	sensorDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	treeDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 )
 
 type SensorService struct {
-	sensorRepo   entities.SensorRepository
-	treeRepo     entities.TreeRepository
+	sensorRepo   sensorDomain.SensorRepository
+	treeRepo     treeDomain.TreeRepository
 	validator    *validator.Validate
 	eventManager *worker.EventManager
 }
 
 func NewSensorService(
-	sensorRepo entities.SensorRepository,
-	treeRepo entities.TreeRepository,
+	sensorRepo sensorDomain.SensorRepository,
+	treeRepo treeDomain.TreeRepository,
 	eventManager *worker.EventManager,
 ) ports.SensorService {
 	return &SensorService{
@@ -34,16 +36,16 @@ func NewSensorService(
 	}
 }
 
-func (s *SensorService) publishNewSensorDataEvent(ctx context.Context, data *entities.SensorData) {
+func (s *SensorService) publishNewSensorDataEvent(ctx context.Context, data *sensorDomain.SensorData) {
 	log := logger.GetLogger(ctx)
-	log.Debug("publish new event", "event", entities.EventTypeNewSensorData, "service", "SensorService")
-	event := entities.NewEventSensorData(data)
+	log.Debug("publish new event", "event", sensorDomain.EventTypeNewData, "service", "SensorService")
+	event := sensorDomain.NewEventNewData(data)
 	if err := s.eventManager.Publish(ctx, event); err != nil {
 		log.Error("error while sending event after new sensor data received", "err", err)
 	}
 }
 
-func (s *SensorService) GetAll(ctx context.Context, query entities.Query) ([]*entities.Sensor, int64, error) {
+func (s *SensorService) GetAll(ctx context.Context, query shared.Query) ([]*sensorDomain.Sensor, int64, error) {
 	log := logger.GetLogger(ctx)
 	sensors, totalCount, err := s.sensorRepo.GetAll(ctx, query)
 
@@ -55,7 +57,7 @@ func (s *SensorService) GetAll(ctx context.Context, query entities.Query) ([]*en
 	return sensors, totalCount, nil
 }
 
-func (s *SensorService) GetAllDataByID(ctx context.Context, id entities.SensorID) ([]*entities.SensorData, error) {
+func (s *SensorService) GetAllDataByID(ctx context.Context, id sensorDomain.SensorID) ([]*sensorDomain.SensorData, error) {
 	log := logger.GetLogger(ctx)
 	sensorData, err := s.sensorRepo.GetAllDataByID(ctx, id)
 
@@ -67,7 +69,7 @@ func (s *SensorService) GetAllDataByID(ctx context.Context, id entities.SensorID
 	return sensorData, nil
 }
 
-func (s *SensorService) GetByID(ctx context.Context, id entities.SensorID) (*entities.Sensor, error) {
+func (s *SensorService) GetByID(ctx context.Context, id sensorDomain.SensorID) (*sensorDomain.Sensor, error) {
 	log := logger.GetLogger(ctx)
 	get, err := s.sensorRepo.GetByID(ctx, id)
 	if err != nil {
@@ -78,24 +80,24 @@ func (s *SensorService) GetByID(ctx context.Context, id entities.SensorID) (*ent
 	return get, nil
 }
 
-func (s *SensorService) Create(ctx context.Context, sc *entities.SensorCreate) (*entities.Sensor, error) {
+func (s *SensorService) Create(ctx context.Context, sc *sensorDomain.SensorCreate) (*sensorDomain.Sensor, error) {
 	log := logger.GetLogger(ctx)
 	if err := s.validator.Struct(sc); err != nil {
 		log.Debug("failed to validate sensor struct to create", "error", err, "raw_sensor", fmt.Sprintf("%+v", sc))
 		return nil, ports.MapError(ctx, errors.Join(err, ports.ErrValidation), ports.ErrorLogValidation)
 	}
 
-	if sc.ID == (entities.SensorID{}) {
+	if sc.ID == (sensorDomain.SensorID{}) {
 		err := errors.Join(errors.New("sensor id must not be empty"), ports.ErrValidation)
 		return nil, ports.MapError(ctx, err, ports.ErrorLogValidation)
 	}
 
-	if sc.Coordinate == (entities.Coordinate{}) {
+	if sc.Coordinate == (shared.Coordinate{}) {
 		err := errors.Join(errors.New("coordinate must not be empty"), ports.ErrValidation)
 		return nil, ports.MapError(ctx, err, ports.ErrorLogValidation)
 	}
 
-	created, err := s.sensorRepo.Create(ctx, func(s *entities.Sensor, _ entities.SensorRepository) (bool, error) {
+	created, err := s.sensorRepo.Create(ctx, func(s *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
 		s.ID = sc.ID
 		s.Coordinate = sc.Coordinate
 		s.LatestData = sc.LatestData
@@ -114,14 +116,14 @@ func (s *SensorService) Create(ctx context.Context, sc *entities.SensorCreate) (
 	return created, nil
 }
 
-func (s *SensorService) Update(ctx context.Context, id entities.SensorID, su *entities.SensorUpdate) (*entities.Sensor, error) {
+func (s *SensorService) Update(ctx context.Context, id sensorDomain.SensorID, su *sensorDomain.SensorUpdate) (*sensorDomain.Sensor, error) {
 	log := logger.GetLogger(ctx)
 	if err := s.validator.Struct(su); err != nil {
 		log.Debug("failed to validate sensor struct to update", "error", err, "raw_sensor", fmt.Sprintf("%+v", su))
 		return nil, ports.MapError(ctx, errors.Join(err, ports.ErrValidation), ports.ErrorLogValidation)
 	}
 
-	if su.Coordinate == (entities.Coordinate{}) {
+	if su.Coordinate == (shared.Coordinate{}) {
 		err := errors.Join(errors.New("coordinate must not be empty"), ports.ErrValidation)
 		return nil, ports.MapError(ctx, err, ports.ErrorLogValidation)
 	}
@@ -131,7 +133,7 @@ func (s *SensorService) Update(ctx context.Context, id entities.SensorID, su *en
 		return nil, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
 	}
 
-	updated, err := s.sensorRepo.Update(ctx, id, func(s *entities.Sensor, _ entities.SensorRepository) (bool, error) {
+	updated, err := s.sensorRepo.Update(ctx, id, func(s *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
 		s.Coordinate = su.Coordinate
 		s.LatestData = su.LatestData
 		s.Status = su.Status
@@ -149,7 +151,7 @@ func (s *SensorService) Update(ctx context.Context, id entities.SensorID, su *en
 	return updated, nil
 }
 
-func (s *SensorService) Delete(ctx context.Context, id entities.SensorID) error {
+func (s *SensorService) Delete(ctx context.Context, id sensorDomain.SensorID) error {
 	log := logger.GetLogger(ctx)
 	_, err := s.sensorRepo.GetByID(ctx, id)
 	if err != nil {
@@ -173,7 +175,7 @@ func (s *SensorService) Delete(ctx context.Context, id entities.SensorID) error 
 
 func (s *SensorService) UpdateStatuses(ctx context.Context) error {
 	log := logger.GetLogger(ctx)
-	sensors, _, err := s.sensorRepo.GetAll(ctx, entities.Query{})
+	sensors, _, err := s.sensorRepo.GetAll(ctx, shared.Query{})
 	if err != nil {
 		log.Error("failed to fetch sensors", "error", err)
 		return err
@@ -187,8 +189,8 @@ func (s *SensorService) UpdateStatuses(ctx context.Context) error {
 			continue
 		}
 		if sensorData.CreatedAt.Before(cutoffTime) {
-			_, err = s.sensorRepo.Update(ctx, sens.ID, func(s *entities.Sensor, _ entities.SensorRepository) (bool, error) {
-				s.Status = entities.SensorStatusOffline
+			_, err = s.sensorRepo.Update(ctx, sens.ID, func(s *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
+				s.Status = sensorDomain.SensorStatusOffline
 				return true, nil
 			})
 
@@ -204,7 +206,7 @@ func (s *SensorService) UpdateStatuses(ctx context.Context) error {
 	return nil
 }
 
-func (s *SensorService) MapSensorToTree(ctx context.Context, sen *entities.Sensor) error {
+func (s *SensorService) MapSensorToTree(ctx context.Context, sen *sensorDomain.Sensor) error {
 	log := logger.GetLogger(ctx)
 	if sen == nil {
 		return errors.New("sensor cannot be nil")
@@ -217,9 +219,9 @@ func (s *SensorService) MapSensorToTree(ctx context.Context, sen *entities.Senso
 	}
 
 	if nearestTree != nil {
-		_, err = s.treeRepo.Update(ctx, nearestTree.ID, func(tree *entities.Tree, _ entities.TreeRepository) (bool, error) {
-			tree.Sensor = sen
-			log.Debug("update sensor on tree", "tree_id", tree.ID, "sensor_id", sen.ID.String())
+		_, err = s.treeRepo.Update(ctx, nearestTree.ID, func(t *treeDomain.Tree, _ treeDomain.TreeRepository) (bool, error) {
+			t.SensorID = &sen.ID
+			log.Debug("update sensor on tree", "tree_id", t.ID, "sensor_id", sen.ID.String())
 			return true, nil
 		})
 		if err != nil {

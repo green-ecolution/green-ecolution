@@ -4,33 +4,33 @@ import (
 	"context"
 	"encoding/json"
 
+	sensorDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 
 	"github.com/pkg/errors"
-
-	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 )
 
-func defaultSensor() *entities.Sensor {
-	return &entities.Sensor{
-		Status:         entities.SensorStatusUnknown,
+func defaultSensor() *sensorDomain.Sensor {
+	return &sensorDomain.Sensor{
+		Status:         sensorDomain.SensorStatusUnknown,
 		LatestData:     nil,
-		Coordinate:     entities.MustNewCoordinate(0, 0),
+		Coordinate:     shared.MustNewCoordinate(0, 0),
 		Provider:       "",
 		AdditionalInfo: nil,
 	}
 }
 
-func (r *SensorRepository) Create(ctx context.Context, createFn func(*entities.Sensor, entities.SensorRepository) (bool, error)) (*entities.Sensor, error) {
+func (r *SensorRepository) Create(ctx context.Context, createFn func(*sensorDomain.Sensor, sensorDomain.SensorRepository) (bool, error)) (*sensorDomain.Sensor, error) {
 	log := logger.GetLogger(ctx)
 	if createFn == nil {
 		return nil, errors.New("createFn is nil")
 	}
 
-	var createdSensor *entities.Sensor
+	var createdSensor *sensorDomain.Sensor
 	err := r.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewSensorRepository(s, r.SensorRepositoryMappers)
 		entity := defaultSensor()
@@ -83,7 +83,7 @@ func (r *SensorRepository) Create(ctx context.Context, createFn func(*entities.S
 	return createdSensor, nil
 }
 
-func (r *SensorRepository) InsertSensorData(ctx context.Context, latestData *entities.SensorData, id entities.SensorID) error {
+func (r *SensorRepository) InsertSensorData(ctx context.Context, latestData *sensorDomain.SensorData, id sensorDomain.SensorID) error {
 	log := logger.GetLogger(ctx)
 	if latestData == nil || latestData.Data == nil {
 		return errors.New("latest data cannot be empty")
@@ -109,39 +109,39 @@ func (r *SensorRepository) InsertSensorData(ctx context.Context, latestData *ent
 	return nil
 }
 
-func (r *SensorRepository) createEntity(ctx context.Context, sensor *entities.Sensor) (entities.SensorID, error) {
+func (r *SensorRepository) createEntity(ctx context.Context, sn *sensorDomain.Sensor) (sensorDomain.SensorID, error) {
 	log := logger.GetLogger(ctx)
-	additionalInfo, err := utils.MapAdditionalInfoToByte(sensor.AdditionalInfo)
+	additionalInfo, err := utils.MapAdditionalInfoToByte(sn.AdditionalInfo)
 	if err != nil {
-		log.Debug("failed to marshal additional informations to byte array", "error", err, "additional_info", sensor.AdditionalInfo)
-		return entities.SensorID{}, err
+		log.Debug("failed to marshal additional informations to byte array", "error", err, "additional_info", sn.AdditionalInfo)
+		return sensorDomain.SensorID{}, err
 	}
 
 	id, err := r.store.CreateSensor(ctx, &sqlc.CreateSensorParams{
-		ID:                     sensor.ID.String(),
-		Status:                 sqlc.SensorStatus(sensor.Status),
-		Provider:               &sensor.Provider,
+		ID:                     sn.ID.String(),
+		Status:                 sqlc.SensorStatus(sn.Status),
+		Provider:               &sn.Provider,
 		AdditionalInformations: additionalInfo,
 	})
 	if err != nil {
-		return entities.SensorID{}, err
+		return sensorDomain.SensorID{}, err
 	}
 
 	if err := r.store.SetSensorLocation(ctx, &sqlc.SetSensorLocationParams{
 		ID:        id,
-		Latitude:  sensor.Coordinate.Latitude(),
-		Longitude: sensor.Coordinate.Longitude(),
+		Latitude:  sn.Coordinate.Latitude(),
+		Longitude: sn.Coordinate.Longitude(),
 	}); err != nil {
-		return entities.SensorID{}, err
+		return sensorDomain.SensorID{}, err
 	}
-	return entities.NewSensorID(id)
+	return sensorDomain.NewSensorID(id)
 }
 
-func (r *SensorRepository) validateSensorEntity(sensor *entities.Sensor) error {
-	if sensor == nil {
+func (r *SensorRepository) validateSensorEntity(sn *sensorDomain.Sensor) error {
+	if sn == nil {
 		return errors.New("sensor is nil")
 	}
-	if sensor.ID.String() == "" {
+	if sn.ID.String() == "" {
 		return errors.New("sensor id cannot be empty")
 	}
 	return nil

@@ -11,7 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/plugin"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/errorhandler"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
@@ -69,13 +69,13 @@ func RegisterPlugin(svc ports.PluginService) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).SendString("Failed to parse plugin path")
 		}
 
-		plugin := &domain.Plugin{
+		plugin := &plugin.Plugin{
 			Name:        req.Name,
 			Path:        *path,
 			Version:     req.Version,
 			Description: req.Description,
 			Slug:        req.Slug,
-			Auth: domain.AuthPlugin{
+			Auth: plugin.AuthPlugin{
 				ClientID:     req.Auth.ClientID,
 				ClientSecret: req.Auth.ClientSecret,
 			},
@@ -166,7 +166,7 @@ func GetPluginsList(svc ports.PluginService) fiber.Handler {
 		ctx := c.Context()
 		p, h := svc.GetAll(ctx)
 		log.Println(h)
-		plugins := utils.Map(p, func(plugin domain.Plugin) entities.PluginResponse {
+		plugins := utils.Map(p, func(plugin plugin.Plugin) entities.PluginResponse {
 			return entities.PluginResponse{
 				Slug:        plugin.Slug,
 				Name:        plugin.Name,
@@ -240,7 +240,7 @@ func RefreshToken(svc ports.PluginService) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).SendString("client_id or client_secret is empty")
 		}
 
-		auth := domain.AuthPlugin{
+		auth := plugin.AuthPlugin{
 			ClientID:     req.ClientID,
 			ClientSecret: req.ClientSecret,
 		}

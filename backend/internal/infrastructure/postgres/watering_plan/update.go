@@ -5,14 +5,14 @@ import (
 	"errors"
 	"time"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func (w *WateringPlanRepository) Update(ctx context.Context, id int32, updateFn func(*entities.WateringPlan, entities.WateringPlanRepository) (bool, error)) error {
+func (w *WateringPlanRepository) Update(ctx context.Context, id int32, updateFn func(*watering.WateringPlan, watering.WateringPlanRepository) (bool, error)) error {
 	log := logger.GetLogger(ctx)
 	return w.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewWateringPlanRepository(s, w.WateringPlanMappers)
@@ -48,7 +48,7 @@ func (w *WateringPlanRepository) Update(ctx context.Context, id int32, updateFn 
 	})
 }
 
-func (w *WateringPlanRepository) updateEntity(ctx context.Context, entity *entities.WateringPlan) error {
+func (w *WateringPlanRepository) updateEntity(ctx context.Context, entity *watering.WateringPlan) error {
 	log := logger.GetLogger(ctx)
 	additionalInfo, err := utils.MapAdditionalInfoToByte(entity.AdditionalInfo)
 	if err != nil {
@@ -61,7 +61,7 @@ func (w *WateringPlanRepository) updateEntity(ctx context.Context, entity *entit
 		return errors.New("failed to convert date")
 	}
 
-	if entity.CancellationNote != "" && entity.Status != entities.WateringPlanStatusCanceled {
+	if entity.CancellationNote != "" && entity.Status != watering.WateringPlanStatusCanceled {
 		return errors.New("cancellation note should be empty, as the current watering plan is not canceled")
 	}
 
@@ -119,8 +119,8 @@ func (w *WateringPlanRepository) updateEntity(ctx context.Context, entity *entit
 
 // This function updates the consumed water values for each tree cluster in a finished watering plan.
 // To save the consumed water values, the watering plan must be »finished«
-func (w *WateringPlanRepository) updateConsumedWaterValues(ctx context.Context, entity *entities.WateringPlan) error {
-	if entity.Status != entities.WateringPlanStatusFinished || len(entity.Evaluation) == 0 {
+func (w *WateringPlanRepository) updateConsumedWaterValues(ctx context.Context, entity *watering.WateringPlan) error {
+	if entity.Status != watering.WateringPlanStatusFinished || len(entity.Evaluation) == 0 {
 		return nil
 	}
 

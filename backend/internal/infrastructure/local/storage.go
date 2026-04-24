@@ -4,12 +4,12 @@ import (
 	"log/slog"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/local/info"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/version"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 )
 
-func NewRepository(cfg *config.Config) (*entities.Repository, *info.InfoRepository, error) {
+func NewRepository(cfg *config.Config) (*storage.Repository, *info.InfoRepository, error) {
 	versionRepo := version.NewGitHubVersionRepository()
 	infoRepo, err := info.NewInfoRepository(cfg, versionRepo, nil)
 	if err != nil {
@@ -18,7 +18,7 @@ func NewRepository(cfg *config.Config) (*entities.Repository, *info.InfoReposito
 	}
 
 	slog.Info("successfully initialized info repository")
-	return &entities.Repository{
+	return &storage.Repository{
 		Info: infoRepo,
 	}, infoRepo, nil
 }

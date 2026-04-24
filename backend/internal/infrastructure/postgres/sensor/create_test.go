@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	sensorDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
@@ -18,11 +19,11 @@ func TestSensorRepository_Create(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Create(context.Background(), func(sensor *entities.Sensor, _ entities.SensorRepository) (bool, error) {
-			sensor.ID = input.ID
-			sensor.Coordinate = input.Coordinate
-			sensor.Status = input.Status
-			sensor.LatestData = input.LatestData
+		got, err := r.Create(context.Background(), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
+			sn.ID = input.ID
+			sn.Coordinate = input.Coordinate
+			sn.Status = input.Status
+			sn.LatestData = input.LatestData
 			return true, nil
 		})
 
@@ -45,16 +46,16 @@ func TestSensorRepository_Create(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Create(context.Background(), func(sensor *entities.Sensor, _ entities.SensorRepository) (bool, error) {
-			sensor.ID = entities.MustNewSensorID("sensor-124")
-			sensor.Coordinate = input.Coordinate
+		got, err := r.Create(context.Background(), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
+			sn.ID = sensorDomain.MustNewSensorID("sensor-124")
+			sn.Coordinate = input.Coordinate
 			return true, nil
 		})
 
 		// then
 		assert.NoError(t, err)
 		assert.NotNil(t, got)
-		assert.Equal(t, entities.SensorStatusUnknown, got.Status)
+		assert.Equal(t, sensorDomain.SensorStatusUnknown, got.Status)
 		assert.Nil(t, got.LatestData)
 		assert.Equal(t, input.Coordinate.Latitude(), got.Coordinate.Latitude())
 		assert.Equal(t, input.Coordinate.Longitude(), got.Coordinate.Longitude())
@@ -69,19 +70,19 @@ func TestSensorRepository_Create(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Create(context.Background(), func(sensor *entities.Sensor, _ entities.SensorRepository) (bool, error) {
-			coord, coordErr := entities.NewCoordinate(-200, input.Coordinate.Longitude())
+		got, err := r.Create(context.Background(), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
+			coord, coordErr := shared.NewCoordinate(-200, input.Coordinate.Longitude())
 			if coordErr != nil {
 				return false, coordErr
 			}
-			sensor.ID = entities.MustNewSensorID("sensor-125")
-			sensor.Coordinate = coord
+			sn.ID = sensorDomain.MustNewSensorID("sensor-125")
+			sn.Coordinate = coord
 			return true, nil
 		})
 
 		// then
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), entities.ErrInvalidLatitude.Error())
+		assert.Contains(t, err.Error(), shared.ErrInvalidLatitude.Error())
 		assert.Nil(t, got)
 	})
 
@@ -90,19 +91,19 @@ func TestSensorRepository_Create(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Create(context.Background(), func(sensor *entities.Sensor, _ entities.SensorRepository) (bool, error) {
-			coord, coordErr := entities.NewCoordinate(input.Coordinate.Latitude(), 200)
+		got, err := r.Create(context.Background(), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
+			coord, coordErr := shared.NewCoordinate(input.Coordinate.Latitude(), 200)
 			if coordErr != nil {
 				return false, coordErr
 			}
-			sensor.ID = entities.MustNewSensorID("sensor-125")
-			sensor.Coordinate = coord
+			sn.ID = sensorDomain.MustNewSensorID("sensor-125")
+			sn.Coordinate = coord
 			return true, nil
 		})
 
 		// then
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), entities.ErrInvalidLongitude.Error())
+		assert.Contains(t, err.Error(), shared.ErrInvalidLongitude.Error())
 		assert.Nil(t, got)
 	})
 
@@ -111,8 +112,8 @@ func TestSensorRepository_Create(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Create(context.Background(), func(sensor *entities.Sensor, _ entities.SensorRepository) (bool, error) {
-			sensor.Coordinate = input.Coordinate
+		got, err := r.Create(context.Background(), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
+			sn.Coordinate = input.Coordinate
 			return true, nil
 		})
 
@@ -127,11 +128,11 @@ func TestSensorRepository_Create(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Create(context.Background(), func(sensor *entities.Sensor, _ entities.SensorRepository) (bool, error) {
-			sensor.ID = input.ID
-			sensor.Coordinate = input.Coordinate
-			sensor.Status = input.Status
-			sensor.LatestData = input.LatestData
+		got, err := r.Create(context.Background(), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
+			sn.ID = input.ID
+			sn.Coordinate = input.Coordinate
+			sn.Status = input.Status
+			sn.LatestData = input.LatestData
 			return true, nil
 		})
 
@@ -148,8 +149,8 @@ func TestSensorRepository_Create(t *testing.T) {
 		cancel()
 
 		// when
-		got, err := r.Create(ctx, func(sensor *entities.Sensor, _ entities.SensorRepository) (bool, error) {
-			sensor.ID = entities.MustNewSensorID("sensor-5")
+		got, err := r.Create(ctx, func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
+			sn.ID = sensorDomain.MustNewSensorID("sensor-5")
 			return true, nil
 		})
 
@@ -166,10 +167,10 @@ func TestSensorRepository_InsertSensorData(t *testing.T) {
 		// given
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
-		_, err := r.Create(context.Background(), func(sensor *entities.Sensor, _ entities.SensorRepository) (bool, error) {
-			sensor.ID = input.ID
-			sensor.Coordinate = input.Coordinate
-			sensor.Status = input.Status
+		_, err := r.Create(context.Background(), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
+			sn.ID = input.ID
+			sn.Coordinate = input.Coordinate
+			sn.Status = input.Status
 			return true, nil
 		})
 
@@ -185,17 +186,17 @@ func TestSensorRepository_InsertSensorData(t *testing.T) {
 	t.Run("should return error when data is empty", func(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
-		_, err := r.Create(context.Background(), func(sensor *entities.Sensor, _ entities.SensorRepository) (bool, error) {
-			sensor.ID = entities.MustNewSensorID("sensor-124")
-			sensor.Coordinate = input.Coordinate
-			sensor.Status = input.Status
+		_, err := r.Create(context.Background(), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
+			sn.ID = sensorDomain.MustNewSensorID("sensor-124")
+			sn.Coordinate = input.Coordinate
+			sn.Status = input.Status
 			return true, nil
 		})
 
 		assert.NoError(t, err)
 
 		// when
-		err = r.InsertSensorData(context.Background(), &entities.SensorData{}, input.ID)
+		err = r.InsertSensorData(context.Background(), &sensorDomain.SensorData{}, input.ID)
 
 		// then
 		assert.Error(t, err)
@@ -208,7 +209,7 @@ func TestSensorRepository_InsertSensorData(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		err := r.InsertSensorData(context.Background(), nil, entities.MustNewSensorID("sensor-1"))
+		err := r.InsertSensorData(context.Background(), nil, sensorDomain.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.Error(t, err)
@@ -220,19 +221,19 @@ func TestSensorRepository_InsertSensorData(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		err := r.InsertSensorData(context.Background(), input.LatestData, entities.SensorID{})
+		err := r.InsertSensorData(context.Background(), input.LatestData, sensorDomain.SensorID{})
 
 		// then
 		assert.Error(t, err)
 	})
 }
 
-var inputPayload = &entities.MqttPayload{
+var inputPayload = &sensorDomain.MqttPayload{
 	Device:      "sensor-123",
 	Battery:     34.0,
 	Humidity:    50,
 	Temperature: 20,
-	Watermarks: []entities.Watermark{
+	Watermarks: []sensorDomain.Watermark{
 		{
 			Resistance: 23,
 			Centibar:   38,
@@ -251,14 +252,14 @@ var inputPayload = &entities.MqttPayload{
 	},
 }
 
-var input = &entities.SensorCreate{
-	ID:     entities.MustNewSensorID("sensor-123"),
-	Status: entities.SensorStatusOnline,
-	LatestData: &entities.SensorData{
+var input = &sensorDomain.SensorCreate{
+	ID:     sensorDomain.MustNewSensorID("sensor-123"),
+	Status: sensorDomain.SensorStatusOnline,
+	LatestData: &sensorDomain.SensorData{
 		ID:        1,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		Data:      inputPayload,
 	},
-	Coordinate: entities.MustNewCoordinate(9.446741, 54.801539),
+	Coordinate: shared.MustNewCoordinate(9.446741, 54.801539),
 }

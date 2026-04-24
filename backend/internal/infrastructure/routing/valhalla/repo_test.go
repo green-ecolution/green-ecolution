@@ -13,45 +13,25 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/routing"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing/valhalla/valhalla"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing/vroom"
 )
-
-func mustNewCoordinatePtr(lat, lng float64) *entities.Coordinate {
-	c := entities.MustNewCoordinate(lat, lng)
-	return &c
-}
 
 var (
 	testStartPoint    = []float64{9.0, 48.0}
 	testEndPoint      = []float64{9.1, 48.1}
 	testWateringPoint = []float64{9.05, 48.05}
 
-	testVehicle = &entities.Vehicle{
-		ID:            1,
-		Description:   "Test Vehicle",
-		WaterCapacity: entities.MustNewWaterCapacity(5000.0),
-		Type:          entities.VehicleTypeTransporter,
-		Width:         2.5,
-		Height:        3.0,
-		Length:        6.0,
-		Weight:        7.5,
-	}
+	testVehicleHeight = 3.0
+	testVehicleWidth  = 2.5
+	testVehicleLength = 6.0
+	testVehicleWeight = 7.5
 
-	testClusters = []*entities.TreeCluster{
-		{
-			ID:         1,
-			Name:       "Cluster A",
-			Coordinate: mustNewCoordinatePtr(48.2, 9.2),
-			Trees:      []*entities.Tree{{}, {}},
-		},
-		{
-			ID:         2,
-			Name:       "Cluster B",
-			Coordinate: mustNewCoordinatePtr(48.3, 9.3),
-			Trees:      []*entities.Tree{{}},
-		},
+	testClusterCoordinates = []shared.Coordinate{
+		shared.MustNewCoordinate(48.2, 9.2),
+		shared.MustNewCoordinate(48.3, 9.3),
 	}
 
 	testVroomResponse = vroom.VroomResponse{
@@ -130,13 +110,13 @@ func TestPrepareRoute(t *testing.T) {
 		)
 
 		// when
-		optimized, route, err := repo.prepareRoute(context.Background(), testVehicle, testClusters)
+		optimized, route, err := repo.prepareRoute(context.Background(), testVehicleHeight, testVehicleWidth, testVehicleLength, testVehicleWeight, testClusterCoordinates)
 
 		// then
 		require.NoError(t, err)
 		assert.NotNil(t, optimized)
 		assert.Equal(t, "truck", route.Costing)
-		// Steps: start, pickup, delivery, pickup, delivery, end → reduced: start, pickup, delivery, pickup, delivery, end (no consecutive pickups here)
+		// Steps: start, pickup, delivery, pickup, delivery, end -> reduced: start, pickup, delivery, pickup, delivery, end (no consecutive pickups here)
 		assert.Len(t, route.Locations, 6)
 	})
 
@@ -152,7 +132,7 @@ func TestPrepareRoute(t *testing.T) {
 		)
 
 		// when
-		_, _, err := repo.prepareRoute(context.Background(), testVehicle, testClusters)
+		_, _, err := repo.prepareRoute(context.Background(), testVehicleHeight, testVehicleWidth, testVehicleLength, testVehicleWeight, testClusterCoordinates)
 
 		// then
 		assert.Error(t, err)
@@ -172,7 +152,7 @@ func TestPrepareRoute(t *testing.T) {
 		)
 
 		// when
-		_, _, err := repo.prepareRoute(context.Background(), testVehicle, testClusters)
+		_, _, err := repo.prepareRoute(context.Background(), testVehicleHeight, testVehicleWidth, testVehicleLength, testVehicleWeight, testClusterCoordinates)
 
 		// then
 		assert.Error(t, err)
@@ -192,7 +172,7 @@ func TestPrepareRoute(t *testing.T) {
 		)
 
 		// when
-		_, route, err := repo.prepareRoute(context.Background(), testVehicle, testClusters)
+		_, route, err := repo.prepareRoute(context.Background(), testVehicleHeight, testVehicleWidth, testVehicleLength, testVehicleWeight, testClusterCoordinates)
 
 		// then
 		require.NoError(t, err)
@@ -219,11 +199,11 @@ func TestGenerateRoute(t *testing.T) {
 		)
 
 		// when
-		result, err := repo.GenerateRoute(context.Background(), testVehicle, testClusters)
+		result, err := repo.GenerateRoute(context.Background(), testVehicleHeight, testVehicleWidth, testVehicleLength, testVehicleWeight, testClusterCoordinates)
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, entities.FeatureCollection, result.Type)
+		assert.Equal(t, routing.FeatureCollection, result.Type)
 		assert.Equal(t, 9.0, result.Metadata.StartPoint.Coordinate.Longitude())
 		assert.Equal(t, 48.0, result.Metadata.StartPoint.Coordinate.Latitude())
 		assert.Equal(t, 9.1, result.Metadata.EndPoint.Coordinate.Longitude())
@@ -242,7 +222,7 @@ func TestGenerateRoute(t *testing.T) {
 		)
 
 		// when
-		result, err := repo.GenerateRoute(context.Background(), testVehicle, testClusters)
+		result, err := repo.GenerateRoute(context.Background(), testVehicleHeight, testVehicleWidth, testVehicleLength, testVehicleWeight, testClusterCoordinates)
 
 		// then
 		assert.Error(t, err)
@@ -262,7 +242,7 @@ func TestGenerateRoute(t *testing.T) {
 		)
 
 		// when
-		result, err := repo.GenerateRoute(context.Background(), testVehicle, testClusters)
+		result, err := repo.GenerateRoute(context.Background(), testVehicleHeight, testVehicleWidth, testVehicleLength, testVehicleWeight, testClusterCoordinates)
 
 		// then
 		assert.Error(t, err)
@@ -286,7 +266,7 @@ func TestGenerateRawGpxRoute(t *testing.T) {
 		)
 
 		// when
-		result, err := repo.GenerateRawGpxRoute(context.Background(), testVehicle, testClusters)
+		result, err := repo.GenerateRawGpxRoute(context.Background(), testVehicleHeight, testVehicleWidth, testVehicleLength, testVehicleWeight, testClusterCoordinates)
 
 		// then
 		require.NoError(t, err)
@@ -308,7 +288,7 @@ func TestGenerateRawGpxRoute(t *testing.T) {
 		)
 
 		// when
-		result, err := repo.GenerateRawGpxRoute(context.Background(), testVehicle, testClusters)
+		result, err := repo.GenerateRawGpxRoute(context.Background(), testVehicleHeight, testVehicleWidth, testVehicleLength, testVehicleWeight, testClusterCoordinates)
 
 		// then
 		assert.Error(t, err)
@@ -331,7 +311,7 @@ func TestGenerateRouteInformation(t *testing.T) {
 		)
 
 		// when
-		result, err := repo.GenerateRouteInformation(context.Background(), testVehicle, testClusters)
+		result, err := repo.GenerateRouteInformation(context.Background(), testVehicleHeight, testVehicleWidth, testVehicleLength, testVehicleWeight, shared.MustNewWaterCapacity(5000), testClusterCoordinates, []int{2, 1})
 
 		// then
 		require.NoError(t, err)
@@ -371,7 +351,7 @@ func TestGenerateRouteInformation(t *testing.T) {
 		)
 
 		// when
-		result, err := repo.GenerateRouteInformation(context.Background(), testVehicle, testClusters)
+		result, err := repo.GenerateRouteInformation(context.Background(), testVehicleHeight, testVehicleWidth, testVehicleLength, testVehicleWeight, shared.MustNewWaterCapacity(5000), testClusterCoordinates, []int{2, 1})
 
 		// then
 		require.NoError(t, err)
@@ -400,7 +380,7 @@ func TestGenerateRouteInformation(t *testing.T) {
 		)
 
 		// when
-		result, err := repo.GenerateRouteInformation(context.Background(), testVehicle, testClusters)
+		result, err := repo.GenerateRouteInformation(context.Background(), testVehicleHeight, testVehicleWidth, testVehicleLength, testVehicleWeight, shared.MustNewWaterCapacity(5000), testClusterCoordinates, []int{2, 1})
 
 		// then
 		require.NoError(t, err)

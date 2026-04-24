@@ -5,7 +5,6 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	mapper "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/region"
@@ -15,9 +14,10 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/treecluster"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/vehicle"
 	wateringplan "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/watering_plan"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 )
 
-func NewRepository(conn *pgxpool.Pool) *entities.Repository {
+func NewRepository(conn *pgxpool.Pool) *storage.Repository {
 	treeMappers := tree.NewTreeRepositoryMappers(
 		&mapper.InternalTreeRepoMapperImpl{},
 		&mapper.InternalSensorRepoMapperImpl{},
@@ -61,7 +61,7 @@ func NewRepository(conn *pgxpool.Pool) *entities.Repository {
 	wateringPlanRepo := wateringplan.NewWateringPlanRepository(store.NewStore(conn, sqlc.New(conn)), wateringPlanMappers)
 	slog.Info("successfully initialized wateringplan repository", "service", "postgres")
 
-	return &entities.Repository{
+	return &storage.Repository{
 		Tree:         treeRepo,
 		TreeCluster:  treeClusterRepo,
 		Vehicle:      vehicleRepo,

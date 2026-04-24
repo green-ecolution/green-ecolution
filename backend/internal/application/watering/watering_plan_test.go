@@ -10,13 +10,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/user"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/vehicle"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 )
 
-var globalEventManager = worker.NewEventManager() //entities.EventTypeUpdateWateringPlan
+var globalEventManager = worker.NewEventManager() //watering.EventTypeUpdate
 
 func TestWateringPlanService_GetAll(t *testing.T) {
 	ctx := context.Background()
@@ -31,10 +35,10 @@ func TestWateringPlanService_GetAll(t *testing.T) {
 
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
-		wateringPlanRepo.EXPECT().GetAll(ctx, entities.Query{}).Return(allTestWateringPlans, int64(len(allTestWateringPlans)), nil)
+		wateringPlanRepo.EXPECT().GetAll(ctx, shared.Query{}).Return(allTestWateringPlans, int64(len(allTestWateringPlans)), nil)
 
 		// when
-		wateringPlans, totalCount, err := svc.GetAll(ctx, entities.Query{})
+		wateringPlans, totalCount, err := svc.GetAll(ctx, shared.Query{})
 
 		// then
 		assert.NoError(t, err)
@@ -52,10 +56,10 @@ func TestWateringPlanService_GetAll(t *testing.T) {
 
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
-		wateringPlanRepo.EXPECT().GetAll(ctx, entities.Query{Provider: "test-provider"}).Return(allTestWateringPlans, int64(len(allTestWateringPlans)), nil)
+		wateringPlanRepo.EXPECT().GetAll(ctx, shared.Query{Provider: "test-provider"}).Return(allTestWateringPlans, int64(len(allTestWateringPlans)), nil)
 
 		// when
-		wateringPlans, totalCount, err := svc.GetAll(ctx, entities.Query{Provider: "test-provider"})
+		wateringPlans, totalCount, err := svc.GetAll(ctx, shared.Query{Provider: "test-provider"})
 
 		// then
 		assert.NoError(t, err)
@@ -73,10 +77,10 @@ func TestWateringPlanService_GetAll(t *testing.T) {
 
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
-		wateringPlanRepo.EXPECT().GetAll(ctx, entities.Query{}).Return([]*entities.WateringPlan{}, int64(0), nil)
+		wateringPlanRepo.EXPECT().GetAll(ctx, shared.Query{}).Return([]*watering.WateringPlan{}, int64(0), nil)
 
 		// when
-		wateringPlans, totalCount, err := svc.GetAll(ctx, entities.Query{})
+		wateringPlans, totalCount, err := svc.GetAll(ctx, shared.Query{})
 
 		// then
 		assert.NoError(t, err)
@@ -95,10 +99,10 @@ func TestWateringPlanService_GetAll(t *testing.T) {
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
 		expectedErr := errors.New("GetAll failed")
-		wateringPlanRepo.EXPECT().GetAll(ctx, entities.Query{}).Return(nil, int64(0), expectedErr)
+		wateringPlanRepo.EXPECT().GetAll(ctx, shared.Query{}).Return(nil, int64(0), expectedErr)
 
 		// when
-		wateringPlans, totalCount, err := svc.GetAll(ctx, entities.Query{})
+		wateringPlans, totalCount, err := svc.GetAll(ctx, shared.Query{})
 
 		// then
 		assert.Error(t, err)
@@ -144,7 +148,7 @@ func TestWateringPlanService_GetByID(t *testing.T) {
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
 		id := int32(1)
-		expectedErr := entities.ErrEntityNotFound("not found")
+		expectedErr := shared.ErrEntityNotFound("not found")
 		wateringPlanRepo.EXPECT().GetByID(ctx, id).Return(nil, expectedErr)
 
 		// when
@@ -167,7 +171,7 @@ func TestWateringPlanService_Create(t *testing.T) {
 
 	futureDate := time.Now().Add(24 * time.Hour).Truncate(24 * time.Hour)
 
-	newWateringPlan := &entities.WateringPlanCreate{
+	newWateringPlan := &watering.WateringPlanCreate{
 		Date:           futureDate,
 		Description:    "New watering plan",
 		TransporterID:  utils.P(int32(2)),
@@ -208,7 +212,7 @@ func TestWateringPlanService_Create(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return([]*entities.User{testUserTbz}, nil)
+		).Return([]*user.User{testUserTbz}, nil)
 
 		wateringPlanRepo.EXPECT().Create(
 			ctx,
@@ -239,7 +243,7 @@ func TestWateringPlanService_Create(t *testing.T) {
 
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
-		newWateringPlan := &entities.WateringPlanCreate{
+		newWateringPlan := &watering.WateringPlanCreate{
 			Date:           futureDate,
 			Description:    "New watering plan",
 			TransporterID:  utils.P(int32(2)),
@@ -263,7 +267,7 @@ func TestWateringPlanService_Create(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return([]*entities.User{testUserTbz}, nil)
+		).Return([]*user.User{testUserTbz}, nil)
 
 		wateringPlanRepo.EXPECT().Create(
 			ctx,
@@ -298,7 +302,7 @@ func TestWateringPlanService_Create(t *testing.T) {
 		clusterRepo.EXPECT().GetByIDs(
 			ctx,
 			[]int32{1, 2},
-		).Return(nil, entities.ErrConnectionClosed)
+		).Return(nil, shared.ErrConnectionClosed)
 
 		// when
 		result, err := svc.Create(ctx, newWateringPlan)
@@ -323,7 +327,7 @@ func TestWateringPlanService_Create(t *testing.T) {
 		clusterRepo.EXPECT().GetByIDs(
 			ctx,
 			[]int32{1, 2},
-		).Return([]*entities.TreeCluster{}, nil)
+		).Return([]*cluster.TreeCluster{}, nil)
 
 		// when
 		result, err := svc.Create(ctx, newWateringPlan)
@@ -354,7 +358,7 @@ func TestWateringPlanService_Create(t *testing.T) {
 		vehicleRepo.EXPECT().GetByID(
 			ctx,
 			int32(2),
-		).Return(nil, entities.ErrVehicleNotFound)
+		).Return(nil, vehicle.ErrNotFound)
 
 		// when
 		result, err := svc.Create(ctx, newWateringPlan)
@@ -397,7 +401,7 @@ func TestWateringPlanService_Create(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return([]*entities.User{}, nil)
+		).Return([]*user.User{}, nil)
 
 		// when
 		result, err := svc.Create(ctx, newWateringPlan)
@@ -440,7 +444,7 @@ func TestWateringPlanService_Create(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return(nil, entities.ErrUserNotFound)
+		).Return(nil, user.ErrNotFound)
 
 		// when
 		result, err := svc.Create(ctx, newWateringPlan)
@@ -483,7 +487,7 @@ func TestWateringPlanService_Create(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return([]*entities.User{testUserGreenEcolution}, nil)
+		).Return([]*user.User{testUserGreenEcolution}, nil)
 
 		// when
 		result, err := svc.Create(ctx, newWateringPlan)
@@ -526,7 +530,7 @@ func TestWateringPlanService_Create(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return([]*entities.User{{Roles: []entities.UserRole{}}}, nil)
+		).Return([]*user.User{{Roles: []user.UserRole{}}}, nil)
 
 		// when
 		result, err := svc.Create(ctx, newWateringPlan)
@@ -569,7 +573,7 @@ func TestWateringPlanService_Create(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return([]*entities.User{testUserCar}, nil)
+		).Return([]*user.User{testUserCar}, nil)
 
 		// when
 		result, err := svc.Create(ctx, newWateringPlan)
@@ -615,7 +619,7 @@ func TestWateringPlanService_Create(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return([]*entities.User{testUserTbz}, nil)
+		).Return([]*user.User{testUserTbz}, nil)
 
 		wateringPlanRepo.EXPECT().Create(
 			ctx,
@@ -643,14 +647,14 @@ func TestWateringPlanService_Update(t *testing.T) {
 
 	futureDate := time.Now().Add(24 * time.Hour).Truncate(24 * time.Hour)
 
-	updatedWateringPlan := &entities.WateringPlanUpdate{
+	updatedWateringPlan := &watering.WateringPlanUpdate{
 		Date:             futureDate,
 		Description:      "New watering plan for the east side of the city",
 		TransporterID:    utils.P(int32(2)),
 		TrailerID:        utils.P(int32(1)),
 		TreeClusterIDs:   []*int32{utils.P(int32(1)), utils.P(int32(2))},
 		UserIDs:          []*uuid.UUID{&testUUID},
-		Status:           entities.WateringPlanStatusActive,
+		Status:           watering.WateringPlanStatusActive,
 		CancellationNote: "",
 	}
 
@@ -691,7 +695,7 @@ func TestWateringPlanService_Update(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return([]*entities.User{testUserTbz}, nil)
+		).Return([]*user.User{testUserTbz}, nil)
 
 		wateringPlanRepo.EXPECT().Update(
 			ctx,
@@ -722,15 +726,15 @@ func TestWateringPlanService_Update(t *testing.T) {
 
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
-		updatedWateringPlan := &entities.WateringPlanUpdate{
+		updatedWateringPlan := &watering.WateringPlanUpdate{
 			Date:             futureDate,
-			Status:           entities.WateringPlanStatusFinished,
+			Status:           watering.WateringPlanStatusFinished,
 			CancellationNote: "",
 			Description:      "New watering plan for the east side of the city",
 			TransporterID:    utils.P(int32(2)),
 			TreeClusterIDs:   []*int32{utils.P(int32(1)), utils.P(int32(2))},
 			UserIDs:          []*uuid.UUID{&testUUID},
-			Evaluation: []*entities.EvaluationValue{
+			Evaluation: []*watering.EvaluationValue{
 				{
 					WateringPlanID: int32(3),
 					TreeClusterID:  1,
@@ -760,7 +764,7 @@ func TestWateringPlanService_Update(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return([]*entities.User{testUserTbz}, nil)
+		).Return([]*user.User{testUserTbz}, nil)
 
 		wateringPlanRepo.EXPECT().Update(
 			ctx,
@@ -791,9 +795,9 @@ func TestWateringPlanService_Update(t *testing.T) {
 
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
-		updatedWateringPlan := &entities.WateringPlanUpdate{
+		updatedWateringPlan := &watering.WateringPlanUpdate{
 			Date:             futureDate,
-			Status:           entities.WateringPlanStatusActive,
+			Status:           watering.WateringPlanStatusActive,
 			CancellationNote: "",
 			Description:      "New watering plan for the east side of the city",
 			TransporterID:    utils.P(int32(2)),
@@ -822,7 +826,7 @@ func TestWateringPlanService_Update(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return([]*entities.User{testUserTbz}, nil)
+		).Return([]*user.User{testUserTbz}, nil)
 
 		wateringPlanRepo.EXPECT().Update(
 			ctx,
@@ -862,7 +866,7 @@ func TestWateringPlanService_Update(t *testing.T) {
 		clusterRepo.EXPECT().GetByIDs(
 			ctx,
 			[]int32{1, 2},
-		).Return(nil, entities.ErrConnectionClosed)
+		).Return(nil, shared.ErrConnectionClosed)
 
 		// when
 		result, err := svc.Update(ctx, int32(1), updatedWateringPlan)
@@ -892,7 +896,7 @@ func TestWateringPlanService_Update(t *testing.T) {
 		clusterRepo.EXPECT().GetByIDs(
 			ctx,
 			[]int32{1, 2},
-		).Return([]*entities.TreeCluster{}, nil)
+		).Return([]*cluster.TreeCluster{}, nil)
 
 		// when
 		result, err := svc.Update(ctx, int32(1), updatedWateringPlan)
@@ -928,7 +932,7 @@ func TestWateringPlanService_Update(t *testing.T) {
 		vehicleRepo.EXPECT().GetByID(
 			ctx,
 			int32(2),
-		).Return(nil, entities.ErrVehicleNotFound)
+		).Return(nil, vehicle.ErrNotFound)
 
 		// when
 		result, err := svc.Update(ctx, int32(1), updatedWateringPlan)
@@ -976,7 +980,7 @@ func TestWateringPlanService_Update(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return([]*entities.User{}, nil)
+		).Return([]*user.User{}, nil)
 
 		// when
 		result, err := svc.Update(ctx, int32(1), updatedWateringPlan)
@@ -1024,7 +1028,7 @@ func TestWateringPlanService_Update(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return([]*entities.User{testUserGreenEcolution}, nil)
+		).Return([]*user.User{testUserGreenEcolution}, nil)
 
 		// when
 		result, err := svc.Update(ctx, int32(1), updatedWateringPlan)
@@ -1072,7 +1076,7 @@ func TestWateringPlanService_Update(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return([]*entities.User{{Roles: []entities.UserRole{}}}, nil)
+		).Return([]*user.User{{Roles: []user.UserRole{}}}, nil)
 
 		// when
 		result, err := svc.Update(ctx, int32(1), updatedWateringPlan)
@@ -1120,7 +1124,7 @@ func TestWateringPlanService_Update(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return(nil, entities.ErrUserNotFound)
+		).Return(nil, user.ErrNotFound)
 
 		// when
 		result, err := svc.Update(ctx, int32(1), updatedWateringPlan)
@@ -1168,7 +1172,7 @@ func TestWateringPlanService_Update(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return([]*entities.User{testUserCar}, nil)
+		).Return([]*user.User{testUserCar}, nil)
 
 		// when
 		result, err := svc.Update(ctx, int32(1), updatedWateringPlan)
@@ -1217,13 +1221,13 @@ func TestWateringPlanService_Update(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return([]*entities.User{testUserTbz}, nil)
+		).Return([]*user.User{testUserTbz}, nil)
 
 		wateringPlanRepo.EXPECT().Update(
 			ctx,
 			int32(1),
 			mock.Anything,
-		).Return(entities.ErrEntityNotFound("not found"))
+		).Return(shared.ErrEntityNotFound("not found"))
 
 		// when
 		result, err := svc.Update(ctx, int32(1), updatedWateringPlan)
@@ -1273,7 +1277,7 @@ func TestWateringPlanService_Update(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return([]*entities.User{testUserTbz}, nil)
+		).Return([]*user.User{testUserTbz}, nil)
 
 		wateringPlanRepo.EXPECT().Update(
 			ctx,
@@ -1309,33 +1313,33 @@ func TestWateringPlanService_EventSystem(t *testing.T) {
 
 		futureDate := time.Now().Add(24 * time.Hour).Truncate(24 * time.Hour)
 
-		prevWp := entities.WateringPlan{
-			ID:           1,
-			Date:         futureDate,
-			TreeClusters: []*entities.TreeCluster{{ID: 1}},
-			Status:       entities.WateringPlanStatusActive,
-			UserIDs:      []*uuid.UUID{&testUUID},
+		prevWp := watering.WateringPlan{
+			ID:             1,
+			Date:           futureDate,
+			TreeClusterIDs: []int32{1},
+			Status:         watering.WateringPlanStatusActive,
+			UserIDs:        []*uuid.UUID{&testUUID},
 		}
 
-		updatedWateringPlan := &entities.WateringPlanUpdate{
+		updatedWateringPlan := &watering.WateringPlanUpdate{
 			Date:           futureDate,
 			TransporterID:  utils.P(int32(2)),
 			TreeClusterIDs: []*int32{utils.P(int32(1)), utils.P(int32(2))},
 			UserIDs:        []*uuid.UUID{&testUUID},
-			Status:         entities.WateringPlanStatusActive,
+			Status:         watering.WateringPlanStatusActive,
 		}
 
-		expectedWp := entities.WateringPlan{
-			ID:           1,
-			Date:         futureDate,
-			TreeClusters: []*entities.TreeCluster{{ID: 1}},
-			Status:       entities.WateringPlanStatusActive,
-			UserIDs:      []*uuid.UUID{&testUUID},
+		expectedWp := watering.WateringPlan{
+			ID:             1,
+			Date:           futureDate,
+			TreeClusterIDs: []int32{1},
+			Status:         watering.WateringPlanStatusActive,
+			UserIDs:        []*uuid.UUID{&testUUID},
 		}
 
 		// Event
-		eventManager := worker.NewEventManager(entities.EventTypeUpdateWateringPlan)
-		expectedEvent := entities.NewEventUpdateWateringPlan(&prevWp, &expectedWp)
+		eventManager := worker.NewEventManager(watering.EventTypeUpdate)
+		expectedEvent := watering.NewEventUpdate(&prevWp, &expectedWp)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		go eventManager.Run(ctx)
@@ -1349,7 +1353,7 @@ func TestWateringPlanService_EventSystem(t *testing.T) {
 		userRepo.EXPECT().GetByIDs(
 			ctx,
 			[]string{testUUIDString},
-		).Return([]*entities.User{testUserTbz}, nil)
+		).Return([]*user.User{testUserTbz}, nil)
 
 		// check treecluster
 		clusterRepo.EXPECT().GetByIDs(
@@ -1372,7 +1376,7 @@ func TestWateringPlanService_EventSystem(t *testing.T) {
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, eventManager, routingRepo, s3Repo)
 
 		// when
-		subID, ch, err := eventManager.Subscribe(entities.EventTypeUpdateWateringPlan)
+		subID, ch, err := eventManager.Subscribe(watering.EventTypeUpdate)
 		if err != nil {
 			t.Fatal("failed to subscribe to event manager")
 		}
@@ -1387,7 +1391,7 @@ func TestWateringPlanService_EventSystem(t *testing.T) {
 			t.Fatal("event was not received")
 		}
 
-		_ = eventManager.Unsubscribe(entities.EventTypeUpdateWateringPlan, subID)
+		_ = eventManager.Unsubscribe(watering.EventTypeUpdate, subID)
 	})
 }
 
@@ -1419,7 +1423,7 @@ func TestWateringPlanService_Delete(t *testing.T) {
 	t.Run("should return error if watering plan not found", func(t *testing.T) {
 		id := int32(2)
 
-		wateringPlanRepo.EXPECT().GetByID(ctx, id).Return(nil, entities.ErrEntityNotFound("not found"))
+		wateringPlanRepo.EXPECT().GetByID(ctx, id).Return(nil, shared.ErrEntityNotFound("not found"))
 
 		// when
 		err := svc.Delete(ctx, id)
@@ -1459,40 +1463,40 @@ func TestWateringPlanService_UpdateStatuses(t *testing.T) {
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
 		// should be updated
-		stalePlanActive := &entities.WateringPlan{
+		stalePlanActive := &watering.WateringPlan{
 			ID:     1,
 			Date:   time.Now().Add(-73 * time.Hour),
-			Status: entities.WateringPlanStatusActive,
+			Status: watering.WateringPlanStatusActive,
 		}
-		stalePlanPlanned := &entities.WateringPlan{
+		stalePlanPlanned := &watering.WateringPlan{
 			ID:     2,
 			Date:   time.Now().Add(-73 * time.Hour),
-			Status: entities.WateringPlanStatusPlanned,
+			Status: watering.WateringPlanStatusPlanned,
 		}
-		stalePlanUnknown := &entities.WateringPlan{
+		stalePlanUnknown := &watering.WateringPlan{
 			ID:     3,
 			Date:   time.Now().Add(-73 * time.Hour),
-			Status: entities.WateringPlanStatusUnknown,
+			Status: watering.WateringPlanStatusUnknown,
 		}
 
 		// should not be updated
-		stalePlanNotCompeted := &entities.WateringPlan{
+		stalePlanNotCompeted := &watering.WateringPlan{
 			ID:     4,
 			Date:   time.Now().Add(-73 * time.Hour),
-			Status: entities.WateringPlanStatusNotCompeted,
+			Status: watering.WateringPlanStatusNotCompeted,
 		}
-		stalePlanFinished := &entities.WateringPlan{
+		stalePlanFinished := &watering.WateringPlan{
 			ID:     5,
 			Date:   time.Now().Add(-73 * time.Hour),
-			Status: entities.WateringPlanStatusFinished,
+			Status: watering.WateringPlanStatusFinished,
 		}
-		recentPlanActive := &entities.WateringPlan{
+		recentPlanActive := &watering.WateringPlan{
 			ID:     6,
 			Date:   time.Now(),
-			Status: entities.WateringPlanStatusActive,
+			Status: watering.WateringPlanStatusActive,
 		}
 
-		expectList := []*entities.WateringPlan{
+		expectList := []*watering.WateringPlan{
 			stalePlanActive,
 			stalePlanPlanned,
 			stalePlanUnknown,
@@ -1502,7 +1506,7 @@ func TestWateringPlanService_UpdateStatuses(t *testing.T) {
 		}
 
 		// when
-		wateringPlanRepo.EXPECT().GetAll(mock.Anything, entities.Query{}).Return(expectList, int64(len(expectList)), nil)
+		wateringPlanRepo.EXPECT().GetAll(mock.Anything, shared.Query{}).Return(expectList, int64(len(expectList)), nil)
 		wateringPlanRepo.EXPECT().Update(mock.Anything, stalePlanActive.ID, mock.Anything).Return(nil)
 		wateringPlanRepo.EXPECT().Update(mock.Anything, stalePlanPlanned.ID, mock.Anything).Return(nil)
 		wateringPlanRepo.EXPECT().Update(mock.Anything, stalePlanUnknown.ID, mock.Anything).Return(nil)
@@ -1511,7 +1515,7 @@ func TestWateringPlanService_UpdateStatuses(t *testing.T) {
 
 		// then
 		assert.NoError(t, err)
-		wateringPlanRepo.AssertCalled(t, "GetAll", mock.Anything, entities.Query{})
+		wateringPlanRepo.AssertCalled(t, "GetAll", mock.Anything, shared.Query{})
 		wateringPlanRepo.AssertCalled(t, "Update", mock.Anything, stalePlanActive.ID, mock.Anything)
 		wateringPlanRepo.AssertCalled(t, "Update", mock.Anything, stalePlanPlanned.ID, mock.Anything)
 		wateringPlanRepo.AssertCalled(t, "Update", mock.Anything, stalePlanUnknown.ID, mock.Anything)
@@ -1533,22 +1537,22 @@ func TestWateringPlanService_UpdateStatuses(t *testing.T) {
 
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
-		recentPlanActive := &entities.WateringPlan{
+		recentPlanActive := &watering.WateringPlan{
 			ID:     6,
 			Date:   time.Now(),
-			Status: entities.WateringPlanStatusActive,
+			Status: watering.WateringPlanStatusActive,
 		}
 
-		expectList := []*entities.WateringPlan{recentPlanActive}
+		expectList := []*watering.WateringPlan{recentPlanActive}
 
 		// when
-		wateringPlanRepo.EXPECT().GetAll(mock.Anything, entities.Query{}).Return(expectList, int64(len(expectList)), nil)
+		wateringPlanRepo.EXPECT().GetAll(mock.Anything, shared.Query{}).Return(expectList, int64(len(expectList)), nil)
 
 		err := svc.UpdateStatuses(ctx)
 
 		// then
 		assert.NoError(t, err)
-		wateringPlanRepo.AssertCalled(t, "GetAll", mock.Anything, entities.Query{})
+		wateringPlanRepo.AssertCalled(t, "GetAll", mock.Anything, shared.Query{})
 		wateringPlanRepo.AssertNotCalled(t, "Update")
 		wateringPlanRepo.AssertExpectations(t)
 	})
@@ -1567,14 +1571,14 @@ func TestWateringPlanService_UpdateStatuses(t *testing.T) {
 
 		// when
 		expectedErr := errors.New("database error")
-		wateringPlanRepo.EXPECT().GetAll(mock.Anything, entities.Query{}).Return(nil, int64(0), expectedErr)
+		wateringPlanRepo.EXPECT().GetAll(mock.Anything, shared.Query{}).Return(nil, int64(0), expectedErr)
 
 		err := svc.UpdateStatuses(ctx)
 
 		// then
 		assert.Error(t, err)
 		assert.Equal(t, expectedErr, err)
-		wateringPlanRepo.AssertCalled(t, "GetAll", mock.Anything, entities.Query{})
+		wateringPlanRepo.AssertCalled(t, "GetAll", mock.Anything, shared.Query{})
 		wateringPlanRepo.AssertNotCalled(t, "Update")
 		wateringPlanRepo.AssertExpectations(t)
 	})
@@ -1591,65 +1595,65 @@ func TestWateringPlanService_UpdateStatuses(t *testing.T) {
 
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
-		stalePlanUnknown := &entities.WateringPlan{
+		stalePlanUnknown := &watering.WateringPlan{
 			ID:     3,
 			Date:   time.Now().Add(-73 * time.Hour),
-			Status: entities.WateringPlanStatusUnknown,
+			Status: watering.WateringPlanStatusUnknown,
 		}
 
-		expectList := []*entities.WateringPlan{stalePlanUnknown}
+		expectList := []*watering.WateringPlan{stalePlanUnknown}
 
 		// when
-		wateringPlanRepo.EXPECT().GetAll(mock.Anything, entities.Query{}).Return(expectList, int64(len(expectList)), nil)
+		wateringPlanRepo.EXPECT().GetAll(mock.Anything, shared.Query{}).Return(expectList, int64(len(expectList)), nil)
 		wateringPlanRepo.EXPECT().Update(mock.Anything, stalePlanUnknown.ID, mock.Anything).Return(errors.New("update failed"))
 
 		err := svc.UpdateStatuses(ctx)
 
 		// then
-		wateringPlanRepo.AssertCalled(t, "GetAll", mock.Anything, entities.Query{})
+		wateringPlanRepo.AssertCalled(t, "GetAll", mock.Anything, shared.Query{})
 		wateringPlanRepo.AssertCalled(t, "Update", mock.Anything, stalePlanUnknown.ID, mock.Anything)
 		wateringPlanRepo.AssertExpectations(t)
 		assert.NoError(t, err)
 	})
 }
 
-var allTestWateringPlans = []*entities.WateringPlan{
+var allTestWateringPlans = []*watering.WateringPlan{
 	{
 		ID:                 1,
 		Date:               time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
 		Description:        "New watering plan for the west side of the city",
-		Status:             entities.WateringPlanStatusPlanned,
-		Distance:           utils.P(entities.MustNewDistance(63.0)),
+		Status:             watering.WateringPlanStatusPlanned,
+		Distance:           utils.P(shared.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(6000.0),
-		Transporter:        allTestVehicles[1],
-		Trailer:            allTestVehicles[0],
-		TreeClusters:       allTestClusters[0:2],
+		TransporterID:      &allTestVehicles[1].ID,
+		TrailerID:          &allTestVehicles[0].ID,
+		TreeClusterIDs:     utils.Map(allTestClusters[0:2], func(tc *cluster.TreeCluster) int32 { return tc.ID }),
 		CancellationNote:   "",
 	},
 	{
 		ID:                 2,
 		Date:               time.Date(2024, 8, 3, 0, 0, 0, 0, time.UTC),
 		Description:        "New watering plan for the east side of the city",
-		Status:             entities.WateringPlanStatusActive,
-		Distance:           utils.P(entities.MustNewDistance(63.0)),
+		Status:             watering.WateringPlanStatusActive,
+		Distance:           utils.P(shared.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(6000.0),
-		Transporter:        allTestVehicles[1],
-		Trailer:            allTestVehicles[0],
-		TreeClusters:       allTestClusters[2:3],
+		TransporterID:      &allTestVehicles[1].ID,
+		TrailerID:          &allTestVehicles[0].ID,
+		TreeClusterIDs:     utils.Map(allTestClusters[2:3], func(tc *cluster.TreeCluster) int32 { return tc.ID }),
 		CancellationNote:   "",
 	},
 	{
 		ID:                 3,
 		Date:               time.Date(2024, 6, 12, 0, 0, 0, 0, time.UTC),
 		Description:        "Very important watering plan due to no rainfall",
-		Status:             entities.WateringPlanStatusFinished,
-		Distance:           utils.P(entities.MustNewDistance(63.0)),
+		Status:             watering.WateringPlanStatusFinished,
+		Distance:           utils.P(shared.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(6000.0),
-		Transporter:        allTestVehicles[1],
-		Trailer:            nil,
-		TreeClusters:       allTestClusters[0:3],
+		TransporterID:      &allTestVehicles[1].ID,
+		TrailerID:          nil,
+		TreeClusterIDs:     utils.Map(allTestClusters[0:3], func(tc *cluster.TreeCluster) int32 { return tc.ID }),
 		CancellationNote:   "",
-		Evaluation: []*entities.EvaluationValue{
+		Evaluation: []*watering.EvaluationValue{
 			{
 				WateringPlanID: 3,
 				TreeClusterID:  1,
@@ -1671,132 +1675,115 @@ var allTestWateringPlans = []*entities.WateringPlan{
 		ID:                 4,
 		Date:               time.Date(2024, 6, 10, 0, 0, 0, 0, time.UTC),
 		Description:        "New watering plan for the south side of the city",
-		Status:             entities.WateringPlanStatusNotCompeted,
-		Distance:           utils.P(entities.MustNewDistance(63.0)),
+		Status:             watering.WateringPlanStatusNotCompeted,
+		Distance:           utils.P(shared.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(6000.0),
-		Transporter:        allTestVehicles[1],
-		Trailer:            nil,
-		TreeClusters:       allTestClusters[2:3],
+		TransporterID:      &allTestVehicles[1].ID,
+		TrailerID:          nil,
+		TreeClusterIDs:     utils.Map(allTestClusters[2:3], func(tc *cluster.TreeCluster) int32 { return tc.ID }),
 		CancellationNote:   "",
 	},
 	{
 		ID:                 5,
 		Date:               time.Date(2024, 6, 4, 0, 0, 0, 0, time.UTC),
 		Description:        "Canceled due to flood",
-		Status:             entities.WateringPlanStatusCanceled,
-		Distance:           utils.P(entities.MustNewDistance(63.0)),
+		Status:             watering.WateringPlanStatusCanceled,
+		Distance:           utils.P(shared.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(6000.0),
-		Transporter:        allTestVehicles[1],
-		Trailer:            nil,
-		TreeClusters:       allTestClusters[2:3],
+		TransporterID:      &allTestVehicles[1].ID,
+		TrailerID:          nil,
+		TreeClusterIDs:     utils.Map(allTestClusters[2:3], func(tc *cluster.TreeCluster) int32 { return tc.ID }),
 		CancellationNote:   "The watering plan was cancelled due to various reasons.",
 	},
 }
 
-var allTestVehicles = []*entities.Vehicle{
+var allTestVehicles = []*vehicle.Vehicle{
 	{
 		ID:             1,
 		NumberPlate:    "B-1234",
 		Description:    "Test vehicle 1",
-		DrivingLicense: entities.DrivingLicenseBE,
-		WaterCapacity:  entities.MustNewWaterCapacity(100.0),
-		Type:           entities.VehicleTypeTrailer,
-		Status:         entities.VehicleStatusActive,
+		DrivingLicense: vehicle.DrivingLicenseBE,
+		WaterCapacity:  shared.MustNewWaterCapacity(100.0),
+		Type:           vehicle.VehicleTypeTrailer,
+		Status:         vehicle.VehicleStatusActive,
 	},
 	{
 		ID:             2,
 		NumberPlate:    "B-5678",
 		Description:    "Test vehicle 2",
-		DrivingLicense: entities.DrivingLicenseC,
-		WaterCapacity:  entities.MustNewWaterCapacity(150.0),
-		Type:           entities.VehicleTypeTransporter,
-		Status:         entities.VehicleStatusUnknown,
+		DrivingLicense: vehicle.DrivingLicenseC,
+		WaterCapacity:  shared.MustNewWaterCapacity(150.0),
+		Type:           vehicle.VehicleTypeTransporter,
+		Status:         vehicle.VehicleStatusUnknown,
 	},
 }
 
 var (
-	allTestCluster1Coord = entities.MustNewCoordinate(54.820940, 9.489022)
-	allTestCluster2Coord = entities.MustNewCoordinate(54.78805731048199, 9.44400186680097)
-	allTestCluster3Coord = entities.MustNewCoordinate(54.802163, 9.446398)
+	allTestCluster1Coord = shared.MustNewCoordinate(54.820940, 9.489022)
+	allTestCluster2Coord = shared.MustNewCoordinate(54.78805731048199, 9.44400186680097)
+	allTestCluster3Coord = shared.MustNewCoordinate(54.802163, 9.446398)
 )
 
-var allTestClusters = []*entities.TreeCluster{
+var allTestClusters = []*cluster.TreeCluster{
 	{
 		ID:             1,
 		Name:           "Solitüde Strand",
-		WateringStatus: entities.WateringStatusGood,
+		WateringStatus: shared.WateringStatusGood,
 		MoistureLevel:  0.75,
-		Region: &entities.Region{
-			ID:   1,
-			Name: "Mürwik",
-		},
-		Address:       "Solitüde Strand",
-		Description:   "Alle Bäume am Strand",
-		SoilCondition: entities.TreeSoilConditionSandig,
-		Coordinate:    &allTestCluster1Coord,
-		Trees: []*entities.Tree{
-			{ID: 1},
-			{ID: 2},
-			{ID: 3},
-		},
+		RegionID:       utils.P(int32(1)),
+		Address:        "Solitüde Strand",
+		Description:    "Alle Bäume am Strand",
+		SoilCondition:  cluster.TreeSoilConditionSandig,
+		Coordinate:     &allTestCluster1Coord,
+		TreeIDs:        []int32{1, 2, 3},
 	},
 	{
 		ID:             2,
 		Name:           "Sankt-Jürgen-Platz",
-		WateringStatus: entities.WateringStatusModerate,
+		WateringStatus: shared.WateringStatusModerate,
 		MoistureLevel:  0.5,
-		Region: &entities.Region{
-			ID:   1,
-			Name: "Mürwik",
-		},
-		Address:       "Ulmenstraße",
-		Description:   "Bäume beim Sankt-Jürgen-Platz",
-		SoilCondition: entities.TreeSoilConditionSchluffig,
-		Coordinate:    &allTestCluster2Coord,
-		Trees: []*entities.Tree{
-			{ID: 4},
-			{ID: 5},
-			{ID: 6},
-		},
+		RegionID:       utils.P(int32(1)),
+		Address:        "Ulmenstraße",
+		Description:    "Bäume beim Sankt-Jürgen-Platz",
+		SoilCondition:  cluster.TreeSoilConditionSchluffig,
+		Coordinate:     &allTestCluster2Coord,
+		TreeIDs:        []int32{4, 5, 6},
 	},
 	{
 		ID:             3,
 		Name:           "Flensburger Stadion",
 		WateringStatus: "unknown",
 		MoistureLevel:  0.7,
-		Region: &entities.Region{
-			ID:   1,
-			Name: "Mürwik",
-		},
-		Address:       "Flensburger Stadion",
-		Description:   "Alle Bäume in der Gegend des Stadions in Mürwik",
-		SoilCondition: "schluffig",
-		Coordinate:    &allTestCluster3Coord,
-		Trees:         []*entities.Tree{},
+		RegionID:       utils.P(int32(1)),
+		Address:        "Flensburger Stadion",
+		Description:    "Alle Bäume in der Gegend des Stadions in Mürwik",
+		SoilCondition:  "schluffig",
+		Coordinate:     &allTestCluster3Coord,
+		TreeIDs:        nil,
 	},
 }
 
-var testUserTbz = &entities.User{
-	Roles: []entities.UserRole{entities.UserRoleTbz},
-	DrivingLicenses: []entities.DrivingLicense{
-		entities.DrivingLicenseB,
-		entities.DrivingLicenseBE,
-		entities.DrivingLicenseC,
-		entities.DrivingLicenseCE,
+var testUserTbz = &user.User{
+	Roles: []user.UserRole{user.UserRoleTbz},
+	DrivingLicenses: []vehicle.DrivingLicense{
+		vehicle.DrivingLicenseB,
+		vehicle.DrivingLicenseBE,
+		vehicle.DrivingLicenseC,
+		vehicle.DrivingLicenseCE,
 	},
 }
 
-var testUserGreenEcolution = &entities.User{
-	Roles: []entities.UserRole{entities.UserRoleGreenEcolution},
-	DrivingLicenses: []entities.DrivingLicense{
-		entities.DrivingLicenseB,
-		entities.DrivingLicenseBE,
-		entities.DrivingLicenseC,
-		entities.DrivingLicenseCE,
+var testUserGreenEcolution = &user.User{
+	Roles: []user.UserRole{user.UserRoleGreenEcolution},
+	DrivingLicenses: []vehicle.DrivingLicense{
+		vehicle.DrivingLicenseB,
+		vehicle.DrivingLicenseBE,
+		vehicle.DrivingLicenseC,
+		vehicle.DrivingLicenseCE,
 	},
 }
 
-var testUserCar = &entities.User{
-	Roles:           []entities.UserRole{entities.UserRoleTbz},
-	DrivingLicenses: []entities.DrivingLicense{entities.DrivingLicenseB},
+var testUserCar = &user.User{
+	Roles:           []user.UserRole{user.UserRoleTbz},
+	DrivingLicenses: []vehicle.DrivingLicense{vehicle.DrivingLicenseB},
 }

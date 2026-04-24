@@ -10,6 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/evaluation"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/region"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
@@ -23,7 +26,7 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 		ctx := context.WithValue(context.Background(), "page", int32(1))
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
-		got, totalCount, err := r.GetAll(ctx, entities.TreeClusterQuery{})
+		got, totalCount, err := r.GetAll(ctx, cluster.TreeClusterQuery{})
 
 		// then
 		assert.NoError(t, err)
@@ -40,22 +43,22 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 
 			// assert region
 			if sortedTestCluster[i].RegionID == -1 {
-				assert.Nil(t, tc.Region)
+				assert.Nil(t, tc.RegionID)
 				assert.NoError(t, err)
 			} else {
-				assert.NotNil(t, tc.Region)
-				assert.Equal(t, sortedTestCluster[i].RegionID, tc.Region.ID)
+				assert.NotNil(t, tc.RegionID)
+				assert.Equal(t, sortedTestCluster[i].RegionID, *tc.RegionID)
 			}
 
 			// assert trees
-			assert.Len(t, tc.Trees, len(sortedTestCluster[i].TreeIDs))
+			assert.Len(t, tc.TreeIDs, len(sortedTestCluster[i].TreeIDs))
 			if len(sortedTestCluster[i].TreeIDs) == 0 {
-				assert.Empty(t, tc.Trees)
+				assert.Empty(t, tc.TreeIDs)
 			}
 
-			for j, tree := range tc.Trees {
-				assert.NotZero(t, tree)
-				assert.Equal(t, sortedTestCluster[i].TreeIDs[j], tree.ID)
+			for j, treeID := range tc.TreeIDs {
+				assert.NotZero(t, treeID)
+				assert.Equal(t, sortedTestCluster[i].TreeIDs[j], treeID)
 			}
 		}
 	})
@@ -70,7 +73,7 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 		ctx := context.WithValue(context.Background(), "page", int32(1))
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
-		got, totalCount, err := r.GetAll(ctx, entities.TreeClusterQuery{Query: entities.Query{Provider: "test-provider"}})
+		got, totalCount, err := r.GetAll(ctx, cluster.TreeClusterQuery{Query: shared.Query{Provider: "test-provider"}})
 
 		// then
 		assert.NoError(t, err)
@@ -93,7 +96,7 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(2))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, entities.TreeClusterQuery{})
+		got, totalCount, err := r.GetAll(ctx, cluster.TreeClusterQuery{})
 
 		// then
 		assert.NoError(t, err)
@@ -121,7 +124,7 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(2))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, entities.TreeClusterQuery{})
+		got, totalCount, err := r.GetAll(ctx, cluster.TreeClusterQuery{})
 
 		// then
 		assert.Error(t, err)
@@ -139,7 +142,7 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(0))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, entities.TreeClusterQuery{})
+		got, totalCount, err := r.GetAll(ctx, cluster.TreeClusterQuery{})
 
 		// then
 		assert.Error(t, err)
@@ -156,7 +159,7 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(2))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, entities.TreeClusterQuery{})
+		got, totalCount, err := r.GetAll(ctx, cluster.TreeClusterQuery{})
 
 		// then
 		assert.NoError(t, err)
@@ -171,7 +174,7 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 		cancel()
 
 		// when
-		_, _, err := r.GetAll(ctx, entities.TreeClusterQuery{})
+		_, _, err := r.GetAll(ctx, cluster.TreeClusterQuery{})
 
 		// then
 		assert.Error(t, err)
@@ -186,8 +189,8 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 		ctx := context.WithValue(context.Background(), "page", int32(1))
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
-		filter := entities.TreeClusterQuery{
-			WateringStatuses: []entities.WateringStatus{entities.WateringStatusGood},
+		filter := cluster.TreeClusterQuery{
+			WateringStatuses: []shared.WateringStatus{shared.WateringStatusGood},
 		}
 
 		// when
@@ -200,7 +203,7 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 		assert.Equal(t, int64(len(got)), totalCount)
 
 		for _, cluster := range got {
-			assert.Equal(t, entities.WateringStatusGood, cluster.WateringStatus)
+			assert.Equal(t, shared.WateringStatusGood, cluster.WateringStatus)
 		}
 	})
 
@@ -213,7 +216,7 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 		ctx := context.WithValue(context.Background(), "page", int32(1))
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
-		filter := entities.TreeClusterQuery{
+		filter := cluster.TreeClusterQuery{
 			Regions: []string{"Mürwik"},
 		}
 
@@ -227,8 +230,7 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 		assert.Equal(t, int64(len(got)), totalCount)
 
 		for _, cluster := range got {
-			assert.NotNil(t, cluster.Region)
-			assert.Equal(t, "Mürwik", cluster.Region.Name)
+			assert.NotNil(t, cluster.RegionID)
 		}
 	})
 
@@ -241,8 +243,8 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 		ctx := context.WithValue(context.Background(), "page", int32(1))
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
-		filter := entities.TreeClusterQuery{
-			WateringStatuses: []entities.WateringStatus{entities.WateringStatusModerate},
+		filter := cluster.TreeClusterQuery{
+			WateringStatuses: []shared.WateringStatus{shared.WateringStatusModerate},
 			Regions:          []string{"Mürwik"},
 		}
 
@@ -256,9 +258,8 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 		assert.Equal(t, int64(len(got)), totalCount)
 
 		for _, cluster := range got {
-			assert.Equal(t, entities.WateringStatusModerate, cluster.WateringStatus)
-			assert.NotNil(t, cluster.Region)
-			assert.Equal(t, "Mürwik", cluster.Region.Name)
+			assert.Equal(t, shared.WateringStatusModerate, cluster.WateringStatus)
+			assert.NotNil(t, cluster.RegionID)
 		}
 	})
 
@@ -271,16 +272,16 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 		ctx := context.WithValue(context.Background(), "page", int32(1))
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
-		wateringstatues := []entities.WateringStatus{
-			entities.WateringStatusGood,
-			entities.WateringStatusModerate,
+		wateringstatues := []shared.WateringStatus{
+			shared.WateringStatusGood,
+			shared.WateringStatusModerate,
 		}
 		regionNames := []string{"Mürwik", "Altstadt"}
 
-		filter := entities.TreeClusterQuery{
+		filter := cluster.TreeClusterQuery{
 			WateringStatuses: wateringstatues,
 			Regions:          regionNames,
-			Query:            entities.Query{Provider: ""},
+			Query:            shared.Query{Provider: ""},
 		}
 
 		// when
@@ -297,8 +298,7 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 				wateringstatues, cluster.WateringStatus, "Cluster has a status outside the expected list",
 			)
 
-			require.NotNil(t, cluster.Region)
-			assert.Contains(t, regionNames, cluster.Region.Name, "Cluster has a region outside the expected list")
+			require.NotNil(t, cluster.RegionID)
 		}
 	})
 
@@ -311,16 +311,16 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 		ctx := context.WithValue(context.Background(), "page", int32(1))
 		ctx = context.WithValue(ctx, "limit", int32(2))
 
-		wateringstatues := []entities.WateringStatus{
-			entities.WateringStatusGood,
-			entities.WateringStatusModerate,
+		wateringstatues := []shared.WateringStatus{
+			shared.WateringStatusGood,
+			shared.WateringStatusModerate,
 		}
 		regionNames := []string{"Mürwik", "Altstadt"}
 
-		filter := entities.TreeClusterQuery{
+		filter := cluster.TreeClusterQuery{
 			WateringStatuses: wateringstatues,
 			Regions:          regionNames,
-			Query:            entities.Query{Provider: ""},
+			Query:            shared.Query{Provider: ""},
 		}
 
 		// when
@@ -339,8 +339,7 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 				wateringstatues, cluster.WateringStatus, "Cluster has a status outside the expected list",
 			)
 
-			require.NotNil(t, cluster.Region)
-			assert.Contains(t, regionNames, cluster.Region.Name, "Cluster has a region outside the expected list")
+			require.NotNil(t, cluster.RegionID)
 		}
 	})
 
@@ -353,13 +352,13 @@ func TestTreeClusterRepository_GetAll(t *testing.T) {
 		ctx := context.WithValue(context.Background(), "page", int32(1))
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
-		filter := entities.TreeClusterQuery{
-			WateringStatuses: []entities.WateringStatus{
-				entities.WateringStatusBad,
-				entities.WateringStatusUnknown,
+		filter := cluster.TreeClusterQuery{
+			WateringStatuses: []shared.WateringStatus{
+				shared.WateringStatusBad,
+				shared.WateringStatusUnknown,
 			},
 			Regions: []string{"DoesNotExist", "FarAwayLand"},
-			Query:   entities.Query{Provider: ""},
+			Query:   shared.Query{Provider: ""},
 		}
 
 		// when
@@ -379,7 +378,7 @@ func TestTreeClusterRepository_GetCount(t *testing.T) {
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/treecluster")
 		r := NewTreeClusterRepository(suite.Store, mappers)
 		// when
-		totalCount, err := r.GetCount(context.Background(), entities.TreeClusterQuery{})
+		totalCount, err := r.GetCount(context.Background(), cluster.TreeClusterQuery{})
 
 		// then
 		assert.NoError(t, err)
@@ -393,7 +392,7 @@ func TestTreeClusterRepository_GetCount(t *testing.T) {
 		cancel()
 
 		// when
-		totalCount, err := r.GetCount(ctx, entities.TreeClusterQuery{})
+		totalCount, err := r.GetCount(ctx, cluster.TreeClusterQuery{})
 
 		// then
 		assert.Error(t, err)
@@ -431,22 +430,22 @@ func TestTreeClusterRepository_GetByID(t *testing.T) {
 
 		// assert region
 		if allTestCluster[0].RegionID == -1 {
-			assert.Nil(t, got.Region)
+			assert.Nil(t, got.RegionID)
 			assert.NoError(t, err)
 		} else {
-			assert.NotNil(t, got.Region)
-			assert.Equal(t, allTestCluster[0].RegionID, got.Region.ID)
+			assert.NotNil(t, got.RegionID)
+			assert.Equal(t, allTestCluster[0].RegionID, *got.RegionID)
 		}
 
 		// assert trees
-		assert.Len(t, got.Trees, len(allTestCluster[0].TreeIDs))
+		assert.Len(t, got.TreeIDs, len(allTestCluster[0].TreeIDs))
 		if len(allTestCluster[0].TreeIDs) == 0 {
-			assert.Empty(t, got.Trees)
+			assert.Empty(t, got.TreeIDs)
 		}
 
-		for j, tree := range got.Trees {
-			assert.NotZero(t, tree)
-			assert.Equal(t, allTestCluster[0].TreeIDs[j], tree.ID)
+		for j, treeID := range got.TreeIDs {
+			assert.NotZero(t, treeID)
+			assert.Equal(t, allTestCluster[0].TreeIDs[j], treeID)
 		}
 	})
 
@@ -536,22 +535,22 @@ func TestTreeClusterRepository_GetByIDs(t *testing.T) {
 
 			// assert region
 			if allTestCluster[i].RegionID == -1 {
-				assert.Nil(t, cluster.Region)
+				assert.Nil(t, cluster.RegionID)
 				assert.NoError(t, err)
 			} else {
-				assert.NotNil(t, cluster.Region)
-				assert.Equal(t, allTestCluster[i].RegionID, cluster.Region.ID)
+				assert.NotNil(t, cluster.RegionID)
+				assert.Equal(t, allTestCluster[i].RegionID, *cluster.RegionID)
 			}
 
 			// assert trees
-			assert.Len(t, cluster.Trees, len(allTestCluster[i].TreeIDs))
+			assert.Len(t, cluster.TreeIDs, len(allTestCluster[i].TreeIDs))
 			if len(allTestCluster[i].TreeIDs) == 0 {
-				assert.Empty(t, cluster.Trees)
+				assert.Empty(t, cluster.TreeIDs)
 			}
 
-			for j, tree := range cluster.Trees {
-				assert.NotZero(t, tree)
-				assert.Equal(t, allTestCluster[i].TreeIDs[j], tree.ID)
+			for j, treeID := range cluster.TreeIDs {
+				assert.NotZero(t, treeID)
+				assert.Equal(t, allTestCluster[i].TreeIDs[j], treeID)
 			}
 		}
 	})
@@ -657,10 +656,10 @@ type testTreeCluster struct {
 	Address        string
 	Description    string
 	MoistureLevel  float64
-	WateringStatus entities.WateringStatus
+	WateringStatus shared.WateringStatus
 	Latitude       float64
 	Longitude      float64
-	SoilCondition  entities.TreeSoilCondition
+	SoilCondition  cluster.TreeSoilCondition
 	RegionID       int32
 	TreeIDs        []int32
 	Provider       string
@@ -674,10 +673,10 @@ var allTestCluster = []*testTreeCluster{
 		Address:        "Solitüde Strand",
 		Description:    "Alle Bäume am Strand",
 		MoistureLevel:  0.75,
-		WateringStatus: entities.WateringStatusGood,
+		WateringStatus: shared.WateringStatusGood,
 		Latitude:       54.82094,
 		Longitude:      9.489022,
-		SoilCondition:  entities.TreeSoilConditionSandig,
+		SoilCondition:  cluster.TreeSoilConditionSandig,
 		RegionID:       1,
 		TreeIDs:        []int32{1, 2, 3},
 	},
@@ -687,10 +686,10 @@ var allTestCluster = []*testTreeCluster{
 		Address:        "Ulmenstraße",
 		Description:    "Bäume beim Sankt-Jürgen-Platz",
 		MoistureLevel:  0.5,
-		WateringStatus: entities.WateringStatusModerate,
+		WateringStatus: shared.WateringStatusModerate,
 		Latitude:       54.78805731048199,
 		Longitude:      9.44400186680097,
-		SoilCondition:  entities.TreeSoilConditionSchluffig,
+		SoilCondition:  cluster.TreeSoilConditionSchluffig,
 		RegionID:       1,
 		TreeIDs:        []int32{4, 5, 6},
 	},
@@ -700,10 +699,10 @@ var allTestCluster = []*testTreeCluster{
 		Address:        "Flensburger Stadion",
 		Description:    "Alle Bäume in der Gegend des Stadions in Mürwik",
 		MoistureLevel:  0.7,
-		WateringStatus: entities.WateringStatusUnknown,
+		WateringStatus: shared.WateringStatusUnknown,
 		Latitude:       54.802163,
 		Longitude:      9.446398,
-		SoilCondition:  entities.TreeSoilConditionSchluffig,
+		SoilCondition:  cluster.TreeSoilConditionSchluffig,
 		RegionID:       1,
 		TreeIDs:        []int32{16, 17, 18, 19, 20},
 	},
@@ -713,10 +712,10 @@ var allTestCluster = []*testTreeCluster{
 		Address:        "Thomas-Finke Straße",
 		Description:    "Gruppe ist besonders anfällig",
 		MoistureLevel:  0.1,
-		WateringStatus: entities.WateringStatusGood,
+		WateringStatus: shared.WateringStatusGood,
 		Latitude:       54.77578311851497,
 		Longitude:      9.450294506300525,
-		SoilCondition:  entities.TreeSoilConditionSchluffig,
+		SoilCondition:  cluster.TreeSoilConditionSchluffig,
 		RegionID:       4,
 		TreeIDs:        []int32{12, 13, 14, 15},
 	},
@@ -726,10 +725,10 @@ var allTestCluster = []*testTreeCluster{
 		Address:        "Mathildenstraße",
 		Description:    "Sehr enge Straße und dadurch schlecht zu bewässern.",
 		MoistureLevel:  0.4,
-		WateringStatus: entities.WateringStatusBad,
+		WateringStatus: shared.WateringStatusBad,
 		Latitude:       54.78219253876479,
 		Longitude:      9.423978982828825,
-		SoilCondition:  entities.TreeSoilConditionSchluffig,
+		SoilCondition:  cluster.TreeSoilConditionSchluffig,
 		RegionID:       10,
 		TreeIDs:        []int32{7, 8, 9, 10, 11},
 	},
@@ -739,10 +738,10 @@ var allTestCluster = []*testTreeCluster{
 		Address:        "Apenrader Straße",
 		Description:    "Guter Baumbestand mit großen Kronen.",
 		MoistureLevel:  0.6,
-		WateringStatus: entities.WateringStatusUnknown,
+		WateringStatus: shared.WateringStatusUnknown,
 		Latitude:       54.807162,
 		Longitude:      9.423138,
-		SoilCondition:  entities.TreeSoilConditionSandig,
+		SoilCondition:  cluster.TreeSoilConditionSandig,
 		RegionID:       13,
 		TreeIDs:        []int32{21, 22, 23, 24},
 	},
@@ -752,10 +751,10 @@ var allTestCluster = []*testTreeCluster{
 		Address:        "Ecknerstraße",
 		Description:    "Kleiner Baumbestand.",
 		MoistureLevel:  0.75,
-		WateringStatus: entities.WateringStatusGood,
+		WateringStatus: shared.WateringStatusGood,
 		Latitude:       54.797162,
 		Longitude:      9.41962,
-		SoilCondition:  entities.TreeSoilConditionSandig,
+		SoilCondition:  cluster.TreeSoilConditionSandig,
 		RegionID:       13,
 	},
 	{
@@ -764,10 +763,10 @@ var allTestCluster = []*testTreeCluster{
 		Address:        "Address8",
 		Description:    "Description8",
 		MoistureLevel:  8.0,
-		WateringStatus: entities.WateringStatusGood,
+		WateringStatus: shared.WateringStatusGood,
 		Latitude:       0xc0012fc3d0,
 		Longitude:      0xc0012fc3d8,
-		SoilCondition:  entities.TreeSoilConditionLehmig,
+		SoilCondition:  cluster.TreeSoilConditionLehmig,
 		RegionID:       -1, // no region
 	},
 	{
@@ -776,10 +775,10 @@ var allTestCluster = []*testTreeCluster{
 		Address:        "Address9",
 		Description:    "Description9",
 		MoistureLevel:  9.0,
-		WateringStatus: entities.WateringStatusGood,
+		WateringStatus: shared.WateringStatusGood,
 		Latitude:       0xc0011fc3d0,
 		Longitude:      0xc0011fc3d8,
-		SoilCondition:  entities.TreeSoilConditionLehmig,
+		SoilCondition:  cluster.TreeSoilConditionLehmig,
 		RegionID:       -1, // no region
 		TreeIDs:        []int32{25, 26, 27, 28},
 		Provider:       "test-provider",
@@ -789,7 +788,7 @@ var allTestCluster = []*testTreeCluster{
 	},
 }
 
-var allTestRegions = []*entities.Region{
+var allTestRegions = []*region.Region{
 	{
 		ID:   1,
 		Name: "Mürwik",
@@ -857,7 +856,7 @@ var allTestWateringPlans = []*testWateringPlan{
 	},
 }
 
-func getRegionCounts() []*entities.RegionEvaluation {
+func getRegionCounts() []*evaluation.RegionEvaluation {
 	regionCountMap := make(map[int32]map[int32]struct{})
 
 	for _, plan := range allTestWateringPlans {
@@ -875,11 +874,11 @@ func getRegionCounts() []*entities.RegionEvaluation {
 		}
 	}
 
-	var regionEvaluations []*entities.RegionEvaluation
+	var regionEvaluations []*evaluation.RegionEvaluation
 	for regionID, planMap := range regionCountMap {
 		for _, region := range allTestRegions {
 			if region.ID == regionID {
-				regionEvaluations = append(regionEvaluations, &entities.RegionEvaluation{
+				regionEvaluations = append(regionEvaluations, &evaluation.RegionEvaluation{
 					Name:              region.Name,
 					WateringPlanCount: int64(len(planMap)),
 				})

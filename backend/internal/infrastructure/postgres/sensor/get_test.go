@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	sensorDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
@@ -21,7 +22,7 @@ func TestSensorRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, entities.Query{})
+		got, totalCount, err := r.GetAll(ctx, shared.Query{})
 
 		// then
 		assert.NoError(t, err)
@@ -57,7 +58,7 @@ func TestSensorRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, entities.Query{Provider: "test-provider"})
+		got, totalCount, err := r.GetAll(ctx, shared.Query{Provider: "test-provider"})
 
 		// then
 		assert.NoError(t, err)
@@ -86,7 +87,7 @@ func TestSensorRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(2))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, entities.Query{})
+		got, totalCount, err := r.GetAll(ctx, shared.Query{})
 
 		// then
 		assert.NoError(t, err)
@@ -110,7 +111,7 @@ func TestSensorRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(2))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, entities.Query{})
+		got, totalCount, err := r.GetAll(ctx, shared.Query{})
 
 		// then
 		assert.Error(t, err)
@@ -128,7 +129,7 @@ func TestSensorRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(0))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, entities.Query{})
+		got, totalCount, err := r.GetAll(ctx, shared.Query{})
 
 		// then
 		assert.Error(t, err)
@@ -145,7 +146,7 @@ func TestSensorRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(2))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, entities.Query{})
+		got, totalCount, err := r.GetAll(ctx, shared.Query{})
 
 		// then
 		assert.NoError(t, err)
@@ -160,7 +161,7 @@ func TestSensorRepository_GetAll(t *testing.T) {
 		cancel()
 
 		// when
-		got, _, err := r.GetAll(ctx, entities.Query{})
+		got, _, err := r.GetAll(ctx, shared.Query{})
 
 		// then
 		assert.Error(t, err)
@@ -176,7 +177,7 @@ func TestSensorRepository_GetCount(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		totalCount, err := r.GetCount(context.Background(), entities.Query{})
+		totalCount, err := r.GetCount(context.Background(), shared.Query{})
 
 		// then
 		assert.NoError(t, err)
@@ -190,7 +191,7 @@ func TestSensorRepository_GetCount(t *testing.T) {
 		cancel()
 
 		// when
-		totalCount, err := r.GetCount(ctx, entities.Query{})
+		totalCount, err := r.GetCount(ctx, shared.Query{})
 
 		// then
 		assert.Error(t, err)
@@ -206,7 +207,7 @@ func TestSensorRepository_GetAllDataById(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.GetAllDataByID(context.Background(), entities.MustNewSensorID("sensor-1"))
+		got, err := r.GetAllDataByID(context.Background(), sensorDomain.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.NoError(t, err)
@@ -230,7 +231,7 @@ func TestSensorRepository_GetAllDataById(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.GetAllDataByID(context.Background(), entities.MustNewSensorID("sensor-999"))
+		got, err := r.GetAllDataByID(context.Background(), sensorDomain.MustNewSensorID("sensor-999"))
 
 		// then
 		assert.Error(t, err)
@@ -244,7 +245,7 @@ func TestSensorRepository_GetAllDataById(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.GetAllDataByID(context.Background(), entities.SensorID{})
+		got, err := r.GetAllDataByID(context.Background(), sensorDomain.SensorID{})
 
 		// then
 		assert.Error(t, err)
@@ -258,7 +259,7 @@ func TestSensorRepository_GetAllDataById(t *testing.T) {
 		cancel()
 
 		// when
-		got, err := r.GetAllDataByID(ctx, entities.MustNewSensorID("sensor-1"))
+		got, err := r.GetAllDataByID(ctx, sensorDomain.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.Error(t, err)
@@ -275,7 +276,7 @@ func TestSensorRepository_GetByID(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.GetByID(ctx, entities.MustNewSensorID("sensor-1"))
+		got, err := r.GetByID(ctx, sensorDomain.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.NoError(t, err)
@@ -299,7 +300,7 @@ func TestSensorRepository_GetByID(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.GetByID(ctx, entities.MustNewSensorID("sensor-1"))
+		got, err := r.GetByID(ctx, sensorDomain.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.Error(t, err)
@@ -313,7 +314,7 @@ func TestSensorRepository_GetByID(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.GetByID(ctx, entities.SensorID{})
+		got, err := r.GetByID(ctx, sensorDomain.SensorID{})
 
 		// then
 		assert.Error(t, err)
@@ -327,7 +328,7 @@ func TestSensorRepository_GetByID(t *testing.T) {
 		cancel()
 
 		// when
-		got, err := r.GetByID(ctx, entities.MustNewSensorID("sensor-1"))
+		got, err := r.GetByID(ctx, sensorDomain.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.Error(t, err)
@@ -344,7 +345,7 @@ func TestSensorRepository_GetLastSensorDataByID(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		data, err := r.GetLatestSensorDataBySensorID(ctx, entities.MustNewSensorID("sensor-1"))
+		data, err := r.GetLatestSensorDataBySensorID(ctx, sensorDomain.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.NoError(t, err)
@@ -361,12 +362,12 @@ func TestSensorRepository_GetLastSensorDataByID(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.GetLatestSensorDataBySensorID(ctx, entities.MustNewSensorID("notFoundID"))
+		got, err := r.GetLatestSensorDataBySensorID(ctx, sensorDomain.MustNewSensorID("notFoundID"))
 
 		// then
 		assert.Error(t, err)
 		assert.Nil(t, got)
-		// assert.EqualError(t, err, error.Error(entities.ErrEntityNotFound))
+		// assert.EqualError(t, err, error.Error(shared.ErrEntityNotFound))
 	})
 
 	t.Run("should return error when context is canceled", func(t *testing.T) {
@@ -377,7 +378,7 @@ func TestSensorRepository_GetLastSensorDataByID(t *testing.T) {
 		cancel()
 
 		// when
-		got, err := r.GetLatestSensorDataBySensorID(ctx, entities.MustNewSensorID("sensor-1"))
+		got, err := r.GetLatestSensorDataBySensorID(ctx, sensorDomain.MustNewSensorID("sensor-1"))
 
 		// then
 		assert.Error(t, err)
@@ -385,14 +386,14 @@ func TestSensorRepository_GetLastSensorDataByID(t *testing.T) {
 	})
 }
 
-var TestSensorList = []*entities.Sensor{
+var TestSensorList = []*sensorDomain.Sensor{
 	{
-		ID:         entities.MustNewSensorID("sensor-1"),
+		ID:         sensorDomain.MustNewSensorID("sensor-1"),
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
-		Coordinate: entities.MustNewCoordinate(54.82124518093376, 9.485702120628517),
-		Status:     entities.SensorStatusOnline,
-		LatestData: &entities.SensorData{
+		Coordinate: shared.MustNewCoordinate(54.82124518093376, 9.485702120628517),
+		Status:     sensorDomain.SensorStatusOnline,
+		LatestData: &sensorDomain.SensorData{
 			ID:        1,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
@@ -400,32 +401,32 @@ var TestSensorList = []*entities.Sensor{
 		},
 	},
 	{
-		ID:         entities.MustNewSensorID("sensor-2"),
+		ID:         sensorDomain.MustNewSensorID("sensor-2"),
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
-		Coordinate: entities.MustNewCoordinate(54.78780993841013, 9.444052105200551),
-		Status:     entities.SensorStatusOffline,
+		Coordinate: shared.MustNewCoordinate(54.78780993841013, 9.444052105200551),
+		Status:     sensorDomain.SensorStatusOffline,
 	},
 	{
-		ID:         entities.MustNewSensorID("sensor-3"),
+		ID:         sensorDomain.MustNewSensorID("sensor-3"),
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
-		Coordinate: entities.MustNewCoordinate(54.77933725347423, 9.426465409018832),
-		Status:     entities.SensorStatusUnknown,
+		Coordinate: shared.MustNewCoordinate(54.77933725347423, 9.426465409018832),
+		Status:     sensorDomain.SensorStatusUnknown,
 	},
 	{
-		ID:         entities.MustNewSensorID("sensor-4"),
+		ID:         sensorDomain.MustNewSensorID("sensor-4"),
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
-		Coordinate: entities.MustNewCoordinate(54.82078826498143, 9.489684366114483),
-		Status:     entities.SensorStatusOnline,
+		Coordinate: shared.MustNewCoordinate(54.82078826498143, 9.489684366114483),
+		Status:     sensorDomain.SensorStatusOnline,
 	},
 	{
-		ID:         entities.MustNewSensorID("sensor-provider"),
+		ID:         sensorDomain.MustNewSensorID("sensor-provider"),
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
-		Coordinate: entities.MustNewCoordinate(54.82078826498143, 9.489684366114483),
-		Status:     entities.SensorStatusOnline,
+		Coordinate: shared.MustNewCoordinate(54.82078826498143, 9.489684366114483),
+		Status:     sensorDomain.SensorStatusOnline,
 		Provider:   "test-provider",
 		AdditionalInfo: map[string]interface{}{
 			"foo": "bar",
@@ -433,12 +434,12 @@ var TestSensorList = []*entities.Sensor{
 	},
 }
 
-var TestMqttPayload = &entities.MqttPayload{
+var TestMqttPayload = &sensorDomain.MqttPayload{
 	Device:      "sensor-123",
 	Battery:     34.0,
 	Humidity:    50,
 	Temperature: 20,
-	Watermarks: []entities.Watermark{
+	Watermarks: []sensorDomain.Watermark{
 		{
 			Resistance: 23,
 			Centibar:   38,
@@ -457,25 +458,25 @@ var TestMqttPayload = &entities.MqttPayload{
 	},
 }
 
-var TestSensorData = []*entities.SensorData{
+var TestSensorData = []*sensorDomain.SensorData{
 	{
 		ID:        1,
-		SensorID:  entities.MustNewSensorID("sensor-1"),
+		SensorID:  sensorDomain.MustNewSensorID("sensor-1"),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		Data:      TestMqttPayload,
 	},
 	{
 		ID:        2,
-		SensorID:  entities.MustNewSensorID("sensor-1"),
+		SensorID:  sensorDomain.MustNewSensorID("sensor-1"),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		Data: &entities.MqttPayload{
+		Data: &sensorDomain.MqttPayload{
 			Device:      "sensor-123",
 			Battery:     32.0,
 			Humidity:    40,
 			Temperature: 10,
-			Watermarks: []entities.Watermark{
+			Watermarks: []sensorDomain.Watermark{
 				{
 					Resistance: 20,
 					Centibar:   10,

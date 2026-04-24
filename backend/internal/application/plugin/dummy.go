@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/auth"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/plugin"
 )
 
 var _ ports.PluginService = (*DummyPluginManager)(nil)
@@ -17,20 +18,20 @@ func NewDummyPluginManager() *DummyPluginManager {
 	return &DummyPluginManager{}
 }
 
-func (s *DummyPluginManager) Register(_ context.Context, _ *entities.Plugin) (*entities.ClientToken, error) {
+func (s *DummyPluginManager) Register(_ context.Context, _ *plugin.Plugin) (*auth.ClientToken, error) {
 	return nil, ports.NewError(ports.Gone, "plugin support is disabled")
 }
 
-func (s *DummyPluginManager) RefreshToken(_ context.Context, _ *entities.AuthPlugin, _ string) (*entities.ClientToken, error) {
+func (s *DummyPluginManager) RefreshToken(_ context.Context, _ *plugin.AuthPlugin, _ string) (*auth.ClientToken, error) {
 	return nil, ports.NewError(ports.Gone, "plugin support is disabled")
 }
 
-func (s *DummyPluginManager) Get(_ context.Context, _ string) (entities.Plugin, error) {
-	return entities.Plugin{}, ports.NewError(ports.NotFound, "plugin support is disabled")
+func (s *DummyPluginManager) Get(_ context.Context, _ string) (plugin.Plugin, error) {
+	return plugin.Plugin{}, ports.NewError(ports.NotFound, "plugin support is disabled")
 }
 
-func (s *DummyPluginManager) GetAll(_ context.Context) ([]entities.Plugin, []time.Time) {
-	return []entities.Plugin{}, []time.Time{}
+func (s *DummyPluginManager) GetAll(_ context.Context) ([]plugin.Plugin, []time.Time) {
+	return []plugin.Plugin{}, []time.Time{}
 }
 
 func (s *DummyPluginManager) HeartBeat(_ context.Context, _ string) error {

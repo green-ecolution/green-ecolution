@@ -3,7 +3,7 @@ package tree
 import (
 	"context"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 
 	"github.com/pkg/errors"
@@ -13,9 +13,9 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func (r *TreeRepository) Update(ctx context.Context, id int32, updateFn func(*entities.Tree, entities.TreeRepository) (bool, error)) (*entities.Tree, error) {
+func (r *TreeRepository) Update(ctx context.Context, id int32, updateFn func(*tree.Tree, tree.TreeRepository) (bool, error)) (*tree.Tree, error) {
 	log := logger.GetLogger(ctx)
-	var updatedTree *entities.Tree
+	var updatedTree *tree.Tree
 
 	err := r.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewTreeRepository(s, r.TreeMappers)
@@ -62,7 +62,7 @@ func (r *TreeRepository) Update(ctx context.Context, id int32, updateFn func(*en
 	return updatedTree, nil
 }
 
-func (r *TreeRepository) updateEntity(ctx context.Context, t *entities.Tree) error {
+func (r *TreeRepository) updateEntity(ctx context.Context, t *tree.Tree) error {
 	log := logger.GetLogger(ctx)
 	additionalInfo, err := utils.MapAdditionalInfoToByte(t.AdditionalInfo)
 	if err != nil {
@@ -70,14 +70,11 @@ func (r *TreeRepository) updateEntity(ctx context.Context, t *entities.Tree) err
 		return err
 	}
 
-	var treeClusterID *int32
-	if t.TreeCluster != nil {
-		treeClusterID = &t.TreeCluster.ID
-	}
+	treeClusterID := t.TreeClusterID
 
 	var sensorID *string
-	if t.Sensor != nil {
-		s := t.Sensor.ID.String()
+	if t.SensorID != nil {
+		s := t.SensorID.String()
 		sensorID = &s
 
 		if err := r.store.UnlinkSensorIDFromTrees(ctx, sensorID); err != nil {

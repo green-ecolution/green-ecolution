@@ -6,14 +6,15 @@ import (
 	"slices"
 	"time"
 
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
-var mapWateringStatus = map[int]entities.WateringStatus{
-	0: entities.WateringStatusGood,
-	1: entities.WateringStatusModerate,
-	2: entities.WateringStatusBad,
+var mapWateringStatus = map[int]shared.WateringStatus{
+	0: shared.WateringStatusGood,
+	1: shared.WateringStatusModerate,
+	2: shared.WateringStatusBad,
 }
 
 func mapKpaRange(centibar, lower, higher int) int {
@@ -26,8 +27,8 @@ func mapKpaRange(centibar, lower, higher int) int {
 	}
 }
 
-func CheckAndSortWatermarks(w []entities.Watermark) (w30, w60, w90 entities.Watermark, err error) {
-	watermarks := slices.SortedFunc(slices.Values(w), func(a, b entities.Watermark) int {
+func CheckAndSortWatermarks(w []sensor.Watermark) (w30, w60, w90 sensor.Watermark, err error) {
+	watermarks := slices.SortedFunc(slices.Values(w), func(a, b sensor.Watermark) int {
 		return a.Depth - b.Depth
 	})
 
@@ -44,10 +45,10 @@ func CheckAndSortWatermarks(w []entities.Watermark) (w30, w60, w90 entities.Wate
 //
 // Parameters:
 //   - plantingYear: The year the plant was planted.
-//   - watermarks: A slice of entities.Watermark containing sensor readings at different depths.
+//   - watermarks: A slice of sensor.Watermark containing sensor readings at different depths.
 //
 // Returns:
-//   - entities.WateringStatus: The calculated watering status based on the plant's lifetime and sensor watermarks.
+//   - shared.WateringStatus: The calculated watering status based on the plant's lifetime and sensor watermarks.
 //
 // Behavior:
 //  1. Calculates the plant's lifetime in years based on the current year.
@@ -67,7 +68,7 @@ func CheckAndSortWatermarks(w []entities.Watermark) (w30, w60, w90 entities.Wate
 // Example:
 //
 //	plantingYear := 2020
-//	watermarks := []entities.Watermark{
+//	watermarks := []sensor.Watermark{
 //	    {Depth: 30, Centibar: 28},
 //	    {Depth: 60, Centibar: 30},
 //	    {Depth: 90, Centibar: 35},
@@ -79,7 +80,7 @@ func CheckAndSortWatermarks(w []entities.Watermark) (w30, w60, w90 entities.Wate
 // Notes:
 //   - The function assumes that watermarks are provided as a slice, where each entry represents a sensor reading at a specific depth.
 //   - Any changes to the mapping of centibar ranges or tree lifetime logic should be reflected here.
-func CalculateWateringStatus(ctx context.Context, plantingYear int32, watermarks []entities.Watermark) entities.WateringStatus {
+func CalculateWateringStatus(ctx context.Context, plantingYear int32, watermarks []sensor.Watermark) shared.WateringStatus {
 	/*
 		Tree 1st year:
 		30cm: <25kPA: green; 25-32kPA orange; >32kPA red
@@ -102,7 +103,7 @@ func CalculateWateringStatus(ctx context.Context, plantingYear int32, watermarks
 	w30, w60, w90, err := CheckAndSortWatermarks(watermarks)
 	if err != nil {
 		log.Error("sensor data watermarks are malformed", "watermarks", watermarks)
-		return entities.WateringStatusUnknown
+		return shared.WateringStatusUnknown
 	}
 
 	statusList := make([]int, 3)
@@ -133,7 +134,7 @@ func CalculateWateringStatus(ctx context.Context, plantingYear int32, watermarks
 		statusList[1] = mapKpaRange(w60.Centibar, lowerCentibarYear3Depth60, noModerate)
 		statusList[2] = mapKpaRange(w90.Centibar, lowerCentibarYear3Depth90, noModerate)
 	default:
-		return entities.WateringStatusUnknown
+		return shared.WateringStatusUnknown
 	}
 
 	slices.Sort(statusList)

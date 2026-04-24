@@ -19,7 +19,8 @@ import (
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/auth"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/user"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
@@ -34,10 +35,10 @@ func TestLogin(t *testing.T) {
 		parsedURLRedirect, _ := url.Parse("http://example.com/redirect")
 		parsedURLResponse, _ := url.Parse("http://example.com/login")
 
-		loginRequest := &domain.LoginRequest{
+		loginRequest := &auth.LoginRequest{
 			RedirectURL: parsedURLRedirect,
 		}
-		loginResponse := &domain.LoginResp{
+		loginResponse := &auth.LoginResp{
 			LoginURL: parsedURLResponse,
 		}
 		mockAuthService.EXPECT().LoginRequest(mock.Anything, loginRequest).Return(loginResponse)
@@ -95,7 +96,7 @@ func TestLogout(t *testing.T) {
 		mockAuthService := serviceMock.NewMockAuthService(t)
 		app.Post("/v1/user/logout", Logout(mockAuthService))
 
-		domainEntity := domain.Logout{
+		domainEntity := auth.Logout{
 			RefreshToken: "valid_refresh_token",
 		}
 
@@ -138,7 +139,7 @@ func TestLogout(t *testing.T) {
 		mockAuthService := serviceMock.NewMockAuthService(t)
 		app.Post("/v1/user/logout", Logout(mockAuthService))
 
-		domainEntity := domain.Logout{
+		domainEntity := auth.Logout{
 			RefreshToken: "valid_refresh_token",
 		}
 
@@ -167,12 +168,12 @@ func TestRequestToken(t *testing.T) {
 		app.Post("/v1/user/token", RequestToken(mockAuthService))
 
 		redirectURL, _ := url.Parse("http://example.com/redirect")
-		domainEntity := domain.LoginCallback{
+		domainEntity := auth.LoginCallback{
 			Code:        "valid_code",
 			RedirectURL: redirectURL,
 		}
 
-		expectedResponse := &domain.ClientToken{
+		expectedResponse := &auth.ClientToken{
 			AccessToken:  "valid_access_token",
 			RefreshToken: "valid_refresh_token",
 			ExpiresIn:    3600,
@@ -227,7 +228,7 @@ func TestRequestToken(t *testing.T) {
 		app.Post("/v1/user/token", RequestToken(mockAuthService))
 
 		redirectURL, _ := url.Parse("http://example.com/redirect")
-		domainEntity := domain.LoginCallback{
+		domainEntity := auth.LoginCallback{
 			Code:        "valid_code",
 			RedirectURL: redirectURL,
 		}
@@ -290,8 +291,8 @@ func TestRegister(t *testing.T) {
 		mockAuthService := serviceMock.NewMockAuthService(t)
 		app.Post("/v1/user/register", Register(mockAuthService))
 
-		domainEntity := domain.RegisterUser{
-			User: domain.User{
+		domainEntity := user.RegisterUser{
+			User: user.User{
 				Email:     "toni@test.com",
 				FirstName: "Toni",
 				LastName:  "Tester",
@@ -301,7 +302,7 @@ func TestRegister(t *testing.T) {
 			Roles:    []string{"admin"},
 		}
 
-		expectedResponse := &domain.User{
+		expectedResponse := &user.User{
 			ID:        uuid.New(),
 			CreatedAt: time.Now(),
 			Email:     "toni@test.com",
@@ -363,8 +364,8 @@ func TestRegister(t *testing.T) {
 		mockAuthService := serviceMock.NewMockAuthService(t)
 		app.Post("/v1/user/register", Register(mockAuthService))
 
-		domainEntity := domain.RegisterUser{
-			User: domain.User{
+		domainEntity := user.RegisterUser{
+			User: user.User{
 				Email:     "toni@test.com",
 				FirstName: "Toni",
 				LastName:  "Tester",
@@ -428,7 +429,7 @@ func TestRefreshToken(t *testing.T) {
 		app.Post("/v1/user/refresh", RefreshToken(mockAuthService))
 		refreshToken := generateJWT(t, "user123")
 
-		expectedResponse := &domain.ClientToken{
+		expectedResponse := &auth.ClientToken{
 			AccessToken:  "valid_access_token",
 			RefreshToken: refreshToken,
 			ExpiresIn:    3600,
@@ -511,7 +512,7 @@ func TestGetAllUsers(t *testing.T) {
 		mockUUID1 := uuid.New()
 		mockUUID2 := uuid.New()
 
-		expectedUsers := []*domain.User{
+		expectedUsers := []*user.User{
 			{
 				ID:          mockUUID1,
 				CreatedAt:   time.Now(),
@@ -568,7 +569,7 @@ func TestGetAllUsers(t *testing.T) {
 
 		mockUUID1 := uuid.New()
 
-		expectedUsers := []*domain.User{
+		expectedUsers := []*user.User{
 			{
 				ID:          mockUUID1,
 				CreatedAt:   time.Now(),
@@ -631,7 +632,7 @@ func TestGetAllUsers(t *testing.T) {
 		mockAuthService := serviceMock.NewMockAuthService(t)
 		app.Get("/v1/user", GetAllUsers(mockAuthService))
 
-		mockAuthService.EXPECT().GetAll(mock.Anything).Return([]*domain.User{}, nil)
+		mockAuthService.EXPECT().GetAll(mock.Anything).Return([]*user.User{}, nil)
 
 		// when
 		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/user", nil)
@@ -656,7 +657,7 @@ func TestGetUsersByRole(t *testing.T) {
 		mockAuthService := serviceMock.NewMockAuthService(t)
 		app.Get("/v1/user/role/:role", GetUsersByRole(mockAuthService))
 
-		users := []*domain.User{
+		users := []*user.User{
 			{
 				ID:          uuid.New(),
 				CreatedAt:   time.Now(),
@@ -666,8 +667,8 @@ func TestGetUsersByRole(t *testing.T) {
 				Username:    "johndoe",
 				EmployeeID:  "1234",
 				PhoneNumber: "+123456789",
-				Roles: []domain.UserRole{
-					domain.UserRoleTbz,
+				Roles: []user.UserRole{
+					user.UserRoleTbz,
 				},
 			},
 			{
@@ -679,16 +680,16 @@ func TestGetUsersByRole(t *testing.T) {
 				Username:    "janedoe",
 				EmployeeID:  "5678",
 				PhoneNumber: "+987654321",
-				Roles: []domain.UserRole{
-					domain.UserRoleSmarteGrenzregion,
+				Roles: []user.UserRole{
+					user.UserRoleSmarteGrenzregion,
 				},
 			},
 		}
-		expectedUsers := []*domain.User{users[1]}
-		mockAuthService.EXPECT().GetAllByRole(mock.Anything, domain.UserRoleGreenEcolution).Return(expectedUsers, nil)
+		expectedUsers := []*user.User{users[1]}
+		mockAuthService.EXPECT().GetAllByRole(mock.Anything, user.UserRoleGreenEcolution).Return(expectedUsers, nil)
 
 		// when
-		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, string("/v1/user/role/"+domain.UserRoleGreenEcolution), nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, string("/v1/user/role/"+user.UserRoleGreenEcolution), nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 
@@ -733,11 +734,11 @@ func TestGetUsersByRole(t *testing.T) {
 		mockAuthService := serviceMock.NewMockAuthService(t)
 		app.Get("/v1/user/role/:role", GetUsersByRole(mockAuthService))
 
-		mockAuthService.EXPECT().GetAllByRole(mock.Anything, domain.UserRoleTbz).
+		mockAuthService.EXPECT().GetAllByRole(mock.Anything, user.UserRoleTbz).
 			Return(nil, ports.NewError(ports.InternalError, "service error"))
 
 		// when
-		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, string("/v1/user/role/"+domain.UserRoleTbz), nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, string("/v1/user/role/"+user.UserRoleTbz), nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 
@@ -752,10 +753,10 @@ func TestGetUsersByRole(t *testing.T) {
 		mockAuthService := serviceMock.NewMockAuthService(t)
 		app.Get("/v1/user/role/:role", GetUsersByRole(mockAuthService))
 
-		mockAuthService.EXPECT().GetAllByRole(mock.Anything, domain.UserRoleTbz).Return([]*domain.User{}, nil)
+		mockAuthService.EXPECT().GetAllByRole(mock.Anything, user.UserRoleTbz).Return([]*user.User{}, nil)
 
 		// when
-		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, string("/v1/user/role/"+domain.UserRoleTbz), nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, string("/v1/user/role/"+user.UserRoleTbz), nil)
 		resp, err := app.Test(req, -1)
 		defer resp.Body.Close()
 

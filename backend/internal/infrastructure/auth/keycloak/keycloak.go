@@ -7,7 +7,7 @@ import (
 	"github.com/Nerzal/gocloak/v13"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/auth"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
@@ -32,7 +32,7 @@ type KeycloakRepository struct {
 	cfg *config.IdentityAuthConfig
 }
 
-func NewKeycloakRepository(cfg *config.IdentityAuthConfig) entities.AuthRepository {
+func NewKeycloakRepository(cfg *config.IdentityAuthConfig) auth.AuthRepository {
 	return &KeycloakRepository{
 		cfg: cfg,
 	}

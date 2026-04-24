@@ -5,11 +5,11 @@ import (
 	"errors"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/auth"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
-func (s *AuthService) RetrospectToken(ctx context.Context, token string) (*domain.IntroSpectTokenResult, error) {
+func (s *AuthService) RetrospectToken(ctx context.Context, token string) (*auth.IntroSpectTokenResult, error) {
 	log := logger.GetLogger(ctx)
 	result, err := s.authRepository.RetrospectToken(ctx, token)
 	if err != nil {
@@ -20,7 +20,7 @@ func (s *AuthService) RetrospectToken(ctx context.Context, token string) (*domai
 	return result, nil
 }
 
-func (s *AuthService) RefreshToken(ctx context.Context, token string) (*domain.ClientToken, error) {
+func (s *AuthService) RefreshToken(ctx context.Context, token string) (*auth.ClientToken, error) {
 	log := logger.GetLogger(ctx)
 	result, err := s.authRepository.RefreshToken(ctx, token)
 	if err != nil {

@@ -24,5 +24,5 @@ func (s *S3DummyRepo) PutObject(_ context.Context, _, _ string, _ int64, _ io.Re
 }
 
 func (s *S3DummyRepo) GetObject(_ context.Context, _ string) (io.ReadSeekCloser, error) {
-	return nil, entities.ErrS3ServiceDisabled
+	return nil, shared.ErrS3ServiceDisabled
 }

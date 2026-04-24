@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/region"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/_mock"
 )
@@ -20,7 +21,7 @@ func TestRegionService_GetAll(t *testing.T) {
 		repo := storageMock.NewMockRegionRepository(t)
 		svc := NewRegionService(repo)
 
-		expectedRegions := []*entities.Region{
+		expectedRegions := []*region.Region{
 			{ID: 1, Name: "Region A"},
 			{ID: 2, Name: "Region B"},
 		}
@@ -58,7 +59,7 @@ func TestRegionService_GetByID(t *testing.T) {
 		repo := storageMock.NewMockRegionRepository(t)
 		svc := NewRegionService(repo)
 
-		expectedRegion := &entities.Region{ID: 1, Name: "Region A"}
+		expectedRegion := &region.Region{ID: 1, Name: "Region A"}
 
 		// when
 		repo.EXPECT().GetByID(rootCtx, int32(1)).Return(expectedRegion, nil)
@@ -75,7 +76,7 @@ func TestRegionService_GetByID(t *testing.T) {
 		svc := NewRegionService(repo)
 
 		// when
-		repo.EXPECT().GetByID(rootCtx, int32(3)).Return(nil, entities.ErrEntityNotFound(""))
+		repo.EXPECT().GetByID(rootCtx, int32(3)).Return(nil, shared.ErrEntityNotFound(""))
 		region, err := svc.GetByID(rootCtx, 3)
 
 		// then

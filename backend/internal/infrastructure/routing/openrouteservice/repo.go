@@ -8,16 +8,17 @@ import (
 	"time"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/routing"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
-	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing"
+	infraRouting "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing/openrouteservice/ors"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing/vroom"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-// validate is RouteRepo implements entities.RoutingRepository
-var _ entities.RoutingRepository = (*RouteRepo)(nil)
+// validate is RouteRepo implements routing.RoutingRepository
+var _ routing.RoutingRepository = (*RouteRepo)(nil)
 
 type RouteRepoConfig struct {
 	routing config.RoutingConfig
@@ -56,74 +57,44 @@ func NewRouteRepo(cfg *RouteRepoConfig) (*RouteRepo, error) {
 	}, nil
 }
 
-func (r *RouteRepo) GenerateRoute(ctx context.Context, vehicle *entities.Vehicle, clusters []*entities.TreeCluster) (*entities.GeoJSON, error) {
+func (r *RouteRepo) GenerateRoute(ctx context.Context, vehicleHeight, vehicleWidth, vehicleLength, vehicleWeight float64, clusterCoordinates []shared.Coordinate) (*routing.GeoJSON, error) {
 	log := logger.GetLogger(ctx)
-	orsProfile, err := r.toOrsVehicleType(vehicle.Type)
+
+	_, orsRoute, err := r.prepareOrsRoute(ctx, clusterCoordinates)
 	if err != nil {
-		log.Debug("failed to convert vehicle type to ors vehicle profile", "error", err, "vehicle_type", vehicle.Type)
+		log.Error("failed to prepare route to call ors", "error", err)
 		return nil, err
 	}
 
-	_, orsRoute, err := r.prepareOrsRoute(ctx, vehicle, clusters)
+	entity, err := r.ors.DirectionsGeoJSON(ctx, "driving-car", orsRoute)
 	if err != nil {
-		log.Error("failed to prepare route to call ors",
-			"error", err,
-			"vehicle_id", vehicle.ID,
-			"clusters_ids", utils.Map(clusters, func(c *entities.TreeCluster) int32 { return c.ID }),
-		)
+		log.Error("failed to calculate route", "error", err)
 		return nil, err
 	}
 
-	entity, err := r.ors.DirectionsGeoJSON(ctx, orsProfile, orsRoute)
+	metadata, err := infraRouting.ConvertLocations(&r.cfg.routing)
 	if err != nil {
-		log.Error("failed to calculate route",
-			"error", err,
-			"vehicle_id", vehicle.ID,
-			"clusters_ids", utils.Map(clusters, func(c *entities.TreeCluster) int32 { return c.ID }),
-		)
-		return nil, err
-	}
-
-	metadata, err := routing.ConvertLocations(&r.cfg.routing)
-	if err != nil {
-		log.Error("failed to convert location to route metadata",
-			"error", err,
-			"vehicle_id", vehicle.ID,
-			"clusters_ids", utils.Map(clusters, func(c *entities.TreeCluster) int32 { return c.ID }),
-		)
+		log.Error("failed to convert location to route metadata", "error", err)
 		return nil, err
 	}
 
 	entity.Metadata = *metadata
 
-	log.Debug("route generated successfully",
-		"vehicle_id", vehicle.ID,
-		"clusters_ids", utils.Map(clusters, func(c *entities.TreeCluster) int32 { return c.ID }),
-	)
+	log.Debug("route generated successfully")
 	return entity, nil
 }
 
-func (r *RouteRepo) GenerateRawGpxRoute(ctx context.Context, vehicle *entities.Vehicle, clusters []*entities.TreeCluster) (io.ReadCloser, error) {
-	orsProfile, err := r.toOrsVehicleType(vehicle.Type)
+func (r *RouteRepo) GenerateRawGpxRoute(ctx context.Context, vehicleHeight, vehicleWidth, vehicleLength, vehicleWeight float64, clusterCoordinates []shared.Coordinate) (io.ReadCloser, error) {
+	_, orsRoute, err := r.prepareOrsRoute(ctx, clusterCoordinates)
 	if err != nil {
 		return nil, err
 	}
 
-	_, orsRoute, err := r.prepareOrsRoute(ctx, vehicle, clusters)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.ors.DirectionsRawGpx(ctx, orsProfile, orsRoute)
+	return r.ors.DirectionsRawGpx(ctx, "driving-car", orsRoute)
 }
 
-func (r *RouteRepo) GenerateRouteInformation(ctx context.Context, vehicle *entities.Vehicle, clusters []*entities.TreeCluster) (*entities.RouteMetadata, error) {
-	orsProfile, err := r.toOrsVehicleType(vehicle.Type)
-	if err != nil {
-		return nil, err
-	}
-
-	optimizedRoutes, route, err := r.prepareOrsRoute(ctx, vehicle, clusters)
+func (r *RouteRepo) GenerateRouteInformation(ctx context.Context, vehicleHeight, vehicleWidth, vehicleLength, vehicleWeight float64, waterCapacity shared.WaterCapacity, clusterCoordinates []shared.Coordinate, treeCounts []int) (*routing.RouteMetadata, error) {
+	optimizedRoutes, route, err := r.prepareOrsRoute(ctx, clusterCoordinates)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +106,7 @@ func (r *RouteRepo) GenerateRouteInformation(ctx context.Context, vehicle *entit
 		refillCount = vroom.RefillCount(reducedSteps)
 	}
 
-	rawDirections, err := r.ors.DirectionsJSON(ctx, orsProfile, route)
+	rawDirections, err := r.ors.DirectionsJSON(ctx, "driving-car", route)
 	if err != nil {
 		return nil, err
 	}
@@ -146,16 +117,16 @@ func (r *RouteRepo) GenerateRouteInformation(ctx context.Context, vehicle *entit
 		duration = rawDirections.Routes[0].Summary.Duration
 	}
 
-	return &entities.RouteMetadata{
+	return &routing.RouteMetadata{
 		Refills:  int32(refillCount),
-		Distance: entities.MustNewDistance(distance),
+		Distance: shared.MustNewDistance(distance),
 		Time:     time.Duration(duration * float64(time.Second)),
 	}, nil
 }
 
-func (r *RouteRepo) prepareOrsRoute(ctx context.Context, vehicle *entities.Vehicle, clusters []*entities.TreeCluster) (optimized *vroom.VroomResponse, routes *ors.OrsDirectionRequest, err error) {
+func (r *RouteRepo) prepareOrsRoute(ctx context.Context, clusterCoordinates []shared.Coordinate) (optimized *vroom.VroomResponse, routes *ors.OrsDirectionRequest, err error) {
 	log := logger.GetLogger(ctx)
-	optimizedRoutes, err := r.vroom.OptimizeRoute(ctx, vehicle, clusters)
+	optimizedRoutes, err := r.vroom.OptimizeRoute(ctx, shared.MustNewWaterCapacity(0), clusterCoordinates, nil)
 	if err != nil {
 		log.Error("failed to optimize route", "error", err)
 		return nil, nil, err
@@ -177,12 +148,4 @@ func (r *RouteRepo) prepareOrsRoute(ctx context.Context, vehicle *entities.Vehic
 		Units:       "m",
 		Language:    "de-de",
 	}, nil
-}
-
-func (r *RouteRepo) toOrsVehicleType(vehicle entities.VehicleType) (string, error) {
-	if vehicle == entities.VehicleTypeUnknown {
-		return "", entities.ErrUnknownVehicleType
-	}
-
-	return "driving-car", nil // ORS doesn't support dynamic routing over api call
 }

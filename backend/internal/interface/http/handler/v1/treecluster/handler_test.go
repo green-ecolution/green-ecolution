@@ -8,15 +8,14 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	clusterDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	serverEntities "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/treecluster"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/middleware"
@@ -32,7 +31,7 @@ func TestGetAllTreeCluster(t *testing.T) {
 		app.Get("/v1/cluster", handler)
 
 		mockClusterService.EXPECT().GetAll(
-			mock.Anything, domain.TreeClusterQuery{},
+			mock.Anything, clusterDomain.TreeClusterQuery{},
 		).Return(TestClusterList, int64(len(TestClusterList)), nil)
 
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/cluster", nil)
@@ -64,7 +63,7 @@ func TestGetAllTreeCluster(t *testing.T) {
 		app.Get("/v1/cluster", handler)
 
 		mockClusterService.EXPECT().GetAll(
-			mock.Anything, domain.TreeClusterQuery{},
+			mock.Anything, clusterDomain.TreeClusterQuery{},
 		).Return(TestClusterList, int64(len(TestClusterList)), nil)
 
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/cluster?page=1&limit=1", nil)
@@ -100,8 +99,8 @@ func TestGetAllTreeCluster(t *testing.T) {
 		app.Get("/v1/cluster", handler)
 
 		mockClusterService.EXPECT().GetAll(
-			mock.Anything, domain.TreeClusterQuery{
-				Query: domain.Query{Provider: "test-provider"},
+			mock.Anything, clusterDomain.TreeClusterQuery{
+				Query: shared.Query{Provider: "test-provider"},
 			},
 		).Return(TestClusterList, int64(len(TestClusterList)), nil)
 
@@ -171,8 +170,8 @@ func TestGetAllTreeCluster(t *testing.T) {
 		app.Get("/v1/cluster", handler)
 
 		mockClusterService.EXPECT().GetAll(
-			mock.Anything, domain.TreeClusterQuery{},
-		).Return([]*domain.TreeCluster{}, int64(0), nil)
+			mock.Anything, clusterDomain.TreeClusterQuery{},
+		).Return([]*clusterDomain.TreeCluster{}, int64(0), nil)
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/cluster", nil)
@@ -204,7 +203,7 @@ func TestGetAllTreeCluster(t *testing.T) {
 		app.Get("/v1/cluster", handler)
 
 		mockClusterService.EXPECT().GetAll(
-			mock.Anything, domain.TreeClusterQuery{},
+			mock.Anything, clusterDomain.TreeClusterQuery{},
 		).Return(nil, int64(0), fiber.NewError(fiber.StatusInternalServerError, "service error"))
 
 		// when
@@ -226,13 +225,13 @@ func TestGetAllTreeCluster(t *testing.T) {
 		handler := treecluster.GetAllTreeClusters(mockClusterService)
 		app.Get("/v1/cluster", handler)
 
-		expectedFiltered := []*domain.TreeCluster{
+		expectedFiltered := []*clusterDomain.TreeCluster{
 			TestClusterList[2],
 		}
 
 		mockClusterService.EXPECT().GetAll(
-			mock.Anything, domain.TreeClusterQuery{
-				WateringStatuses: []domain.WateringStatus{domain.WateringStatusModerate},
+			mock.Anything, clusterDomain.TreeClusterQuery{
+				WateringStatuses: []shared.WateringStatus{shared.WateringStatusModerate},
 			},
 		).Return(expectedFiltered, int64(len(expectedFiltered)), nil)
 
@@ -249,7 +248,7 @@ func TestGetAllTreeCluster(t *testing.T) {
 
 		assert.Equal(t, len(expectedFiltered), len(response.Data))
 		for _, cluster := range response.Data {
-			assert.EqualValues(t, domain.WateringStatusModerate, cluster.WateringStatus)
+			assert.EqualValues(t, shared.WateringStatusModerate, cluster.WateringStatus)
 		}
 
 		// assert pagination
@@ -270,13 +269,13 @@ func TestGetAllTreeCluster(t *testing.T) {
 		handler := treecluster.GetAllTreeClusters(mockClusterService)
 		app.Get("/v1/cluster", handler)
 
-		expectedFiltered := []*domain.TreeCluster{
+		expectedFiltered := []*clusterDomain.TreeCluster{
 			TestClusterList[2],
 			TestClusterList[3],
 		}
 
 		mockClusterService.EXPECT().GetAll(
-			mock.Anything, domain.TreeClusterQuery{
+			mock.Anything, clusterDomain.TreeClusterQuery{
 				Regions: []string{"Mürwik"},
 			},
 		).Return(expectedFiltered, int64(len(expectedFiltered)), nil)
@@ -293,10 +292,6 @@ func TestGetAllTreeCluster(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, len(expectedFiltered), len(response.Data))
-		for _, cluster := range response.Data {
-			assert.NotNil(t, cluster.Region)
-			assert.Equal(t, "Mürwik", cluster.Region.Name)
-		}
 
 		// assert pagination
 		assert.Equal(t, int32(1), response.Pagination.CurrentPage)
@@ -315,12 +310,12 @@ func TestGetAllTreeCluster(t *testing.T) {
 		handler := treecluster.GetAllTreeClusters(mockClusterService)
 		app.Get("/v1/cluster", handler)
 
-		filter := domain.TreeClusterQuery{
-			WateringStatuses: []domain.WateringStatus{domain.WateringStatusModerate},
+		filter := clusterDomain.TreeClusterQuery{
+			WateringStatuses: []shared.WateringStatus{shared.WateringStatusModerate},
 			Regions:          []string{"Mürwik"},
 		}
 
-		expectedFiltered := []*domain.TreeCluster{
+		expectedFiltered := []*clusterDomain.TreeCluster{
 			TestClusterList[2],
 		}
 
@@ -341,9 +336,7 @@ func TestGetAllTreeCluster(t *testing.T) {
 
 		assert.Equal(t, len(expectedFiltered), len(response.Data))
 		for _, cluster := range response.Data {
-			assert.EqualValues(t, domain.WateringStatusModerate, cluster.WateringStatus)
-			assert.NotNil(t, cluster.Region)
-			assert.Equal(t, "Mürwik", cluster.Region.Name)
+			assert.EqualValues(t, shared.WateringStatusModerate, cluster.WateringStatus)
 		}
 
 		// assert pagination
@@ -367,19 +360,19 @@ func TestGetAllTreeCluster(t *testing.T) {
 		handler := treecluster.GetAllTreeClusters(mockClusterService)
 		app.Get("/v1/cluster", handler)
 
-		wateringStatues := []domain.WateringStatus{
-			domain.WateringStatusModerate,
-			domain.WateringStatusBad,
+		wateringStatues := []shared.WateringStatus{
+			shared.WateringStatusModerate,
+			shared.WateringStatusBad,
 		}
 		regionNames := []string{"Mürwik", "Altstadt"}
 
-		filter := domain.TreeClusterQuery{
+		filter := clusterDomain.TreeClusterQuery{
 			WateringStatuses: wateringStatues,
 			Regions:          regionNames,
-			Query:            domain.Query{Provider: ""},
+			Query:            shared.Query{Provider: ""},
 		}
 
-		expectedFiltered := []*domain.TreeCluster{
+		expectedFiltered := []*clusterDomain.TreeCluster{
 			TestClusterList[2], //  moderate + Mürwik
 			TestClusterList[3], //  Bad + Mürwik
 		}
@@ -408,15 +401,8 @@ func TestGetAllTreeCluster(t *testing.T) {
 
 		for _, cluster := range response.Data {
 			assert.Contains(t, wateringStatues,
-				domain.WateringStatus(cluster.WateringStatus),
+				shared.WateringStatus(cluster.WateringStatus),
 				"Cluster watering status is outside the expected list",
-			)
-
-			require.NotNil(t, cluster.Region, "Cluster region must not be nil")
-			assert.Contains(t,
-				regionNames,
-				cluster.Region.Name,
-				"Cluster region is outside the expected list",
 			)
 		}
 
@@ -532,7 +518,7 @@ func TestCreateTreeCluster(t *testing.T) {
 
 		mockClusterService.EXPECT().Create(
 			mock.Anything,
-			mock.AnythingOfType("*entities.TreeClusterCreate"),
+			mock.AnythingOfType("*cluster.TreeClusterCreate"),
 		).Return(TestCluster, nil)
 
 		// when
@@ -550,7 +536,6 @@ func TestCreateTreeCluster(t *testing.T) {
 		err = json.NewDecoder(resp.Body).Decode(&response)
 		assert.NoError(t, err)
 		assert.Equal(t, TestCluster.Name, response.Name)
-		assert.Equal(t, TestCluster.Region.Name, response.Region.Name)
 
 		mockClusterService.AssertExpectations(t)
 	})
@@ -583,7 +568,7 @@ func TestCreateTreeCluster(t *testing.T) {
 
 		mockClusterService.EXPECT().Create(
 			mock.Anything,
-			mock.AnythingOfType("*entities.TreeClusterCreate"),
+			mock.AnythingOfType("*cluster.TreeClusterCreate"),
 		).Return(nil, fiber.NewError(fiber.StatusInternalServerError, "service error"))
 
 		// when

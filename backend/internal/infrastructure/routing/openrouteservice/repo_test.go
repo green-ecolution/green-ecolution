@@ -13,45 +13,25 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/routing"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing/openrouteservice/ors"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/routing/vroom"
 )
-
-func mustNewCoordinatePtr(lat, lng float64) *entities.Coordinate {
-	c := entities.MustNewCoordinate(lat, lng)
-	return &c
-}
 
 var (
 	testStartPoint    = []float64{9.0, 48.0}
 	testEndPoint      = []float64{9.1, 48.1}
 	testWateringPoint = []float64{9.05, 48.05}
 
-	testVehicle = &entities.Vehicle{
-		ID:            1,
-		Description:   "Test Vehicle",
-		WaterCapacity: entities.MustNewWaterCapacity(5000.0),
-		Type:          entities.VehicleTypeTransporter,
-		Width:         2.5,
-		Height:        3.0,
-		Length:        6.0,
-		Weight:        7.5,
-	}
+	testVehicleHeight = 3.0
+	testVehicleWidth  = 2.5
+	testVehicleLength = 6.0
+	testVehicleWeight = 7.5
 
-	testClusters = []*entities.TreeCluster{
-		{
-			ID:         1,
-			Name:       "Cluster A",
-			Coordinate: mustNewCoordinatePtr(48.2, 9.2),
-			Trees:      []*entities.Tree{{}, {}},
-		},
-		{
-			ID:         2,
-			Name:       "Cluster B",
-			Coordinate: mustNewCoordinatePtr(48.3, 9.3),
-			Trees:      []*entities.Tree{{}},
-		},
+	testClusterCoordinates = []shared.Coordinate{
+		shared.MustNewCoordinate(48.2, 9.2),
+		shared.MustNewCoordinate(48.3, 9.3),
 	}
 
 	testVroomResponse = vroom.VroomResponse{
@@ -71,13 +51,13 @@ var (
 		},
 	}
 
-	testOrsGeoJSON = entities.GeoJSON{
-		Type: entities.FeatureCollection,
-		Features: []entities.GeoJSONFeature{
+	testOrsGeoJSON = routing.GeoJSON{
+		Type: routing.FeatureCollection,
+		Features: []routing.GeoJSONFeature{
 			{
-				Type: entities.Feature,
-				Geometry: entities.GeoJSONGeometry{
-					Type:        entities.LineString,
+				Type: routing.Feature,
+				Geometry: routing.GeoJSONGeometry{
+					Type:        routing.LineString,
 					Coordinates: [][]float64{{9.0, 48.0}, {9.1, 48.1}},
 				},
 			},
@@ -121,43 +101,6 @@ func newTestOrsRouteRepo(t *testing.T, vroomHandler, orsHandler http.HandlerFunc
 	return repo
 }
 
-func TestToOrsVehicleType(t *testing.T) {
-	t.Run("should return driving-car for transporter", func(t *testing.T) {
-		// given
-		repo := &RouteRepo{}
-
-		// when
-		result, err := repo.toOrsVehicleType(entities.VehicleTypeTransporter)
-
-		// then
-		require.NoError(t, err)
-		assert.Equal(t, "driving-car", result)
-	})
-
-	t.Run("should return driving-car for trailer", func(t *testing.T) {
-		// given
-		repo := &RouteRepo{}
-
-		// when
-		result, err := repo.toOrsVehicleType(entities.VehicleTypeTrailer)
-
-		// then
-		require.NoError(t, err)
-		assert.Equal(t, "driving-car", result)
-	})
-
-	t.Run("should return error for unknown type", func(t *testing.T) {
-		// given
-		repo := &RouteRepo{}
-
-		// when
-		_, err := repo.toOrsVehicleType(entities.VehicleTypeUnknown)
-
-		// then
-		assert.ErrorIs(t, err, entities.ErrUnknownVehicleType)
-	})
-}
-
 func TestPrepareOrsRoute(t *testing.T) {
 	t.Run("should return OrsDirectionRequest with coordinates", func(t *testing.T) {
 		// given
@@ -172,7 +115,7 @@ func TestPrepareOrsRoute(t *testing.T) {
 		)
 
 		// when
-		optimized, route, err := repo.prepareOrsRoute(context.Background(), testVehicle, testClusters)
+		optimized, route, err := repo.prepareOrsRoute(context.Background(), testClusterCoordinates)
 
 		// then
 		require.NoError(t, err)
@@ -196,7 +139,7 @@ func TestPrepareOrsRoute(t *testing.T) {
 		)
 
 		// when
-		_, _, err := repo.prepareOrsRoute(context.Background(), testVehicle, testClusters)
+		_, _, err := repo.prepareOrsRoute(context.Background(), testClusterCoordinates)
 
 		// then
 		assert.Error(t, err)
@@ -232,11 +175,11 @@ func TestPrepareOrsRoute(t *testing.T) {
 		)
 
 		// when
-		_, route, err := repo.prepareOrsRoute(context.Background(), testVehicle, testClusters)
+		_, route, err := repo.prepareOrsRoute(context.Background(), testClusterCoordinates)
 
 		// then
 		require.NoError(t, err)
-		// 5 raw steps, but 2 consecutive pickups reduced to 1 → 4 coordinates
+		// 5 raw steps, but 2 consecutive pickups reduced to 1 -> 4 coordinates
 		assert.Len(t, route.Coordinates, 4)
 	})
 }
@@ -256,35 +199,15 @@ func TestOrsGenerateRoute(t *testing.T) {
 		)
 
 		// when
-		result, err := repo.GenerateRoute(context.Background(), testVehicle, testClusters)
+		result, err := repo.GenerateRoute(context.Background(), testVehicleHeight, testVehicleWidth, testVehicleLength, testVehicleWeight, testClusterCoordinates)
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, entities.FeatureCollection, result.Type)
+		assert.Equal(t, routing.FeatureCollection, result.Type)
 		assert.Equal(t, 9.0, result.Metadata.StartPoint.Coordinate.Longitude())
 		assert.Equal(t, 48.0, result.Metadata.StartPoint.Coordinate.Latitude())
 		assert.Equal(t, 9.1, result.Metadata.EndPoint.Coordinate.Longitude())
 		assert.Equal(t, 48.1, result.Metadata.EndPoint.Coordinate.Latitude())
-	})
-
-	t.Run("should return ErrUnknownVehicleType for unknown vehicle", func(t *testing.T) {
-		// given
-		repo := newTestOrsRouteRepo(t,
-			func(w http.ResponseWriter, r *http.Request) {
-				t.Fatal("vroom should not be called")
-			},
-			func(w http.ResponseWriter, r *http.Request) {
-				t.Fatal("ORS should not be called")
-			},
-		)
-		vehicle := &entities.Vehicle{Type: entities.VehicleTypeUnknown}
-
-		// when
-		result, err := repo.GenerateRoute(context.Background(), vehicle, testClusters)
-
-		// then
-		assert.ErrorIs(t, err, entities.ErrUnknownVehicleType)
-		assert.Nil(t, result)
 	})
 
 	t.Run("should return error when vroom fails", func(t *testing.T) {
@@ -299,7 +222,7 @@ func TestOrsGenerateRoute(t *testing.T) {
 		)
 
 		// when
-		result, err := repo.GenerateRoute(context.Background(), testVehicle, testClusters)
+		result, err := repo.GenerateRoute(context.Background(), testVehicleHeight, testVehicleWidth, testVehicleLength, testVehicleWeight, testClusterCoordinates)
 
 		// then
 		assert.Error(t, err)
@@ -323,7 +246,7 @@ func TestOrsGenerateRawGpxRoute(t *testing.T) {
 		)
 
 		// when
-		result, err := repo.GenerateRawGpxRoute(context.Background(), testVehicle, testClusters)
+		result, err := repo.GenerateRawGpxRoute(context.Background(), testVehicleHeight, testVehicleWidth, testVehicleLength, testVehicleWeight, testClusterCoordinates)
 
 		// then
 		require.NoError(t, err)
@@ -333,23 +256,22 @@ func TestOrsGenerateRawGpxRoute(t *testing.T) {
 		assert.Equal(t, gpxContent, string(body))
 	})
 
-	t.Run("should return error for unknown vehicle type", func(t *testing.T) {
+	t.Run("should return error when vroom fails", func(t *testing.T) {
 		// given
 		repo := newTestOrsRouteRepo(t,
 			func(w http.ResponseWriter, r *http.Request) {
-				t.Fatal("vroom should not be called")
+				w.WriteHeader(http.StatusInternalServerError)
 			},
 			func(w http.ResponseWriter, r *http.Request) {
 				t.Fatal("ORS should not be called")
 			},
 		)
-		vehicle := &entities.Vehicle{Type: entities.VehicleTypeUnknown}
 
 		// when
-		result, err := repo.GenerateRawGpxRoute(context.Background(), vehicle, testClusters)
+		result, err := repo.GenerateRawGpxRoute(context.Background(), testVehicleHeight, testVehicleWidth, testVehicleLength, testVehicleWeight, testClusterCoordinates)
 
 		// then
-		assert.ErrorIs(t, err, entities.ErrUnknownVehicleType)
+		assert.Error(t, err)
 		assert.Nil(t, result)
 	})
 }
@@ -369,7 +291,7 @@ func TestOrsGenerateRouteInformation(t *testing.T) {
 		)
 
 		// when
-		result, err := repo.GenerateRouteInformation(context.Background(), testVehicle, testClusters)
+		result, err := repo.GenerateRouteInformation(context.Background(), testVehicleHeight, testVehicleWidth, testVehicleLength, testVehicleWeight, shared.MustNewWaterCapacity(5000), testClusterCoordinates, []int{2, 1})
 
 		// then
 		require.NoError(t, err)
@@ -393,7 +315,7 @@ func TestOrsGenerateRouteInformation(t *testing.T) {
 		)
 
 		// when
-		result, err := repo.GenerateRouteInformation(context.Background(), testVehicle, testClusters)
+		result, err := repo.GenerateRouteInformation(context.Background(), testVehicleHeight, testVehicleWidth, testVehicleLength, testVehicleWeight, shared.MustNewWaterCapacity(5000), testClusterCoordinates, []int{2, 1})
 
 		// then
 		require.NoError(t, err)

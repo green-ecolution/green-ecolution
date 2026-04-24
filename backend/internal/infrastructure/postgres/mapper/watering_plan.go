@@ -2,19 +2,20 @@ package mapper
 
 import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
 type InternalWateringPlanRepoMapper interface {
-	FromSql(src *sqlc.WateringPlan) (*entities.WateringPlan, error)
-	FromSqlList(src []*sqlc.WateringPlan) ([]*entities.WateringPlan, error)
-	EvaluationFromSqlList(src []*sqlc.TreeClusterWateringPlan) []*entities.EvaluationValue
+	FromSql(src *sqlc.WateringPlan) (*watering.WateringPlan, error)
+	FromSqlList(src []*sqlc.WateringPlan) ([]*watering.WateringPlan, error)
+	EvaluationFromSqlList(src []*sqlc.TreeClusterWateringPlan) []*watering.EvaluationValue
 }
 
 type InternalWateringPlanRepoMapperImpl struct{}
 
-func (c *InternalWateringPlanRepoMapperImpl) FromSql(source *sqlc.WateringPlan) (*entities.WateringPlan, error) {
+func (c *InternalWateringPlanRepoMapperImpl) FromSql(source *sqlc.WateringPlan) (*watering.WateringPlan, error) {
 	if source == nil {
 		return nil, nil
 	}
@@ -22,7 +23,7 @@ func (c *InternalWateringPlanRepoMapperImpl) FromSql(source *sqlc.WateringPlan) 
 	if err != nil {
 		return nil, err
 	}
-	result := &entities.WateringPlan{
+	result := &watering.WateringPlan{
 		ID:               source.ID,
 		CreatedAt:        source.CreatedAt,
 		UpdatedAt:        source.UpdatedAt,
@@ -37,7 +38,7 @@ func (c *InternalWateringPlanRepoMapperImpl) FromSql(source *sqlc.WateringPlan) 
 		AdditionalInfo:   additionalInfo,
 	}
 	if source.Distance != nil {
-		d := entities.MustNewDistance(*source.Distance)
+		d := shared.MustNewDistance(*source.Distance)
 		result.Distance = &d
 	}
 	if source.TotalWaterRequired != nil {
@@ -47,26 +48,26 @@ func (c *InternalWateringPlanRepoMapperImpl) FromSql(source *sqlc.WateringPlan) 
 	return result, nil
 }
 
-func (c *InternalWateringPlanRepoMapperImpl) FromSqlList(source []*sqlc.WateringPlan) ([]*entities.WateringPlan, error) {
+func (c *InternalWateringPlanRepoMapperImpl) FromSqlList(source []*sqlc.WateringPlan) ([]*watering.WateringPlan, error) {
 	return utils.MapSliceErr(source, c.FromSql)
 }
 
-func (c *InternalWateringPlanRepoMapperImpl) EvaluationFromSqlList(source []*sqlc.TreeClusterWateringPlan) []*entities.EvaluationValue {
+func (c *InternalWateringPlanRepoMapperImpl) EvaluationFromSqlList(source []*sqlc.TreeClusterWateringPlan) []*watering.EvaluationValue {
 	return utils.MapSlice(source, evaluationFromSql)
 }
 
-func evaluationFromSql(source *sqlc.TreeClusterWateringPlan) *entities.EvaluationValue {
+func evaluationFromSql(source *sqlc.TreeClusterWateringPlan) *watering.EvaluationValue {
 	if source == nil {
 		return nil
 	}
 	v := source.ConsumedWater
-	return &entities.EvaluationValue{
+	return &watering.EvaluationValue{
 		WateringPlanID: source.WateringPlanID,
 		TreeClusterID:  source.TreeClusterID,
 		ConsumedWater:  &v,
 	}
 }
 
-func MapWateringPlanStatus(wateringPlanStatus sqlc.WateringPlanStatus) entities.WateringPlanStatus {
-	return entities.WateringPlanStatus(wateringPlanStatus)
+func MapWateringPlanStatus(wateringPlanStatus sqlc.WateringPlanStatus) watering.WateringPlanStatus {
+	return watering.WateringPlanStatus(wateringPlanStatus)
 }

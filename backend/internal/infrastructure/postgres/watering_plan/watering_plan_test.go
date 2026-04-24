@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/vehicle"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/testutils"
 )
@@ -55,18 +55,18 @@ func TestWateringPlanRepository_Delete(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		gotBeforeTransporter, errBeforeTransporter := r.GetLinkedVehicleByIDAndType(context.Background(), 1, entities.VehicleTypeTransporter)
+		gotBeforeTransporter, errBeforeTransporter := r.GetLinkedVehicleIDByIDAndType(context.Background(), 1, string(vehicle.VehicleTypeTransporter))
 		assert.NoError(t, errBeforeTransporter)
 		assert.NotNil(t, gotBeforeTransporter)
 
-		gotBeforeTrailer, errBeforeTrailer := r.GetLinkedVehicleByIDAndType(context.Background(), 1, entities.VehicleTypeTrailer)
+		gotBeforeTrailer, errBeforeTrailer := r.GetLinkedVehicleIDByIDAndType(context.Background(), 1, string(vehicle.VehicleTypeTrailer))
 		assert.NoError(t, errBeforeTrailer)
 		assert.NotNil(t, gotBeforeTrailer)
 
 		// when
 		err := r.Delete(context.Background(), 1)
-		transporter, errGotTransporter := r.GetLinkedVehicleByIDAndType(context.Background(), 1, entities.VehicleTypeTransporter)
-		trailer, errGotTrailer := r.GetLinkedVehicleByIDAndType(context.Background(), 1, entities.VehicleTypeTrailer)
+		transporter, errGotTransporter := r.GetLinkedVehicleIDByIDAndType(context.Background(), 1, string(vehicle.VehicleTypeTransporter))
+		trailer, errGotTrailer := r.GetLinkedVehicleIDByIDAndType(context.Background(), 1, string(vehicle.VehicleTypeTrailer))
 
 		// then
 		assert.NoError(t, err)
@@ -82,17 +82,17 @@ func TestWateringPlanRepository_Delete(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		gotBefore, errBefore := r.GetLinkedTreeClustersByID(context.Background(), 1)
+		gotBefore, errBefore := r.GetLinkedTreeClusterIDsByID(context.Background(), 1)
 		assert.NoError(t, errBefore)
 		assert.NotNil(t, gotBefore)
 
 		// when
 		err := r.Delete(context.Background(), 1)
-		treecluster, _ := r.GetLinkedTreeClustersByID(context.Background(), 1)
+		treecluster, _ := r.GetLinkedTreeClusterIDsByID(context.Background(), 1)
 
 		// then
 		assert.NoError(t, err)
-		assert.Equal(t, []*entities.TreeCluster{}, treecluster)
+		assert.Empty(t, treecluster)
 	})
 
 	t.Run("should delete watering plan and linked users in pivot table", func(t *testing.T) {

@@ -11,7 +11,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/routing"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
@@ -97,7 +97,7 @@ func (o *ValhallaClient) DirectionsJSON(ctx context.Context, reqBody *DirectionR
 	return &response, nil
 }
 
-func (o *ValhallaClient) DirectionsGeoJSON(ctx context.Context, reqBody *DirectionRequest) (*entities.GeoJSON, error) {
+func (o *ValhallaClient) DirectionsGeoJSON(ctx context.Context, reqBody *DirectionRequest) (*routing.GeoJSON, error) {
 	response, err := o.DirectionsJSON(ctx, reqBody)
 	if err != nil {
 		return nil, err
@@ -144,25 +144,25 @@ func (o *ValhallaClient) DirectionsRawGpx(ctx context.Context, reqBody *Directio
 	return resp.Body, nil
 }
 
-func (o *ValhallaClient) toGeoJSON(resp *DirectionResponse) *entities.GeoJSON {
+func (o *ValhallaClient) toGeoJSON(resp *DirectionResponse) *routing.GeoJSON {
 	bboxRoot := []float64{resp.Trip.Summary.MinLat, resp.Trip.Summary.MinLon, resp.Trip.Summary.MaxLat, resp.Trip.Summary.MinLon}
-	features := utils.Map(resp.Trip.Legs, func(leg LegResponse) entities.GeoJSONFeature {
+	features := utils.Map(resp.Trip.Legs, func(leg LegResponse) routing.GeoJSONFeature {
 		coords := o.decodePolyline(&leg.Shape)
 		bbox := []float64{leg.Summary.MinLat, leg.Summary.MinLon, leg.Summary.MaxLat, leg.Summary.MaxLon}
 
-		return entities.GeoJSONFeature{
-			Type:       entities.Feature,
+		return routing.GeoJSONFeature{
+			Type:       routing.Feature,
 			Bbox:       bbox,
 			Properties: make(map[string]any),
-			Geometry: entities.GeoJSONGeometry{
-				Type:        entities.LineString,
+			Geometry: routing.GeoJSONGeometry{
+				Type:        routing.LineString,
 				Coordinates: coords,
 			},
 		}
 	})
 
-	return &entities.GeoJSON{
-		Type:     entities.FeatureCollection,
+	return &routing.GeoJSON{
+		Type:     routing.FeatureCollection,
 		Bbox:     bboxRoot,
 		Features: features,
 	}

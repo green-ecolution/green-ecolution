@@ -15,11 +15,11 @@ func TestDummyRoutingRepo_GenerateRoute(t *testing.T) {
 		repo := NewDummyRoutingRepo()
 
 		// when
-		result, err := repo.GenerateRoute(context.Background(), nil, nil)
+		result, err := repo.GenerateRoute(context.Background(), 0, 0, 0, 0, nil)
 
 		// then
 		assert.Nil(t, result)
-		assert.ErrorIs(t, err, entities.ErrRoutingServiceDisabled)
+		assert.ErrorIs(t, err, shared.ErrRoutingServiceDisabled)
 	})
 }
 
@@ -29,11 +29,11 @@ func TestDummyRoutingRepo_GenerateRawGpxRoute(t *testing.T) {
 		repo := NewDummyRoutingRepo()
 
 		// when
-		result, err := repo.GenerateRawGpxRoute(context.Background(), nil, nil)
+		result, err := repo.GenerateRawGpxRoute(context.Background(), 0, 0, 0, 0, nil)
 
 		// then
 		assert.Nil(t, result)
-		assert.ErrorIs(t, err, entities.ErrRoutingServiceDisabled)
+		assert.ErrorIs(t, err, shared.ErrRoutingServiceDisabled)
 	})
 }
 
@@ -43,10 +43,10 @@ func TestDummyRoutingRepo_GenerateRouteInformation(t *testing.T) {
 		repo := NewDummyRoutingRepo()
 
 		// when
-		result, err := repo.GenerateRouteInformation(context.Background(), nil, nil)
+		result, err := repo.GenerateRouteInformation(context.Background(), 0, 0, 0, 0, shared.WaterCapacity{}, nil, nil)
 
 		// then
 		assert.Nil(t, result)
-		assert.ErrorIs(t, err, entities.ErrRoutingServiceDisabled)
+		assert.ErrorIs(t, err, shared.ErrRoutingServiceDisabled)
 	})
 }

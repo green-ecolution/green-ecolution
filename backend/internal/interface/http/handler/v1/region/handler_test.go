@@ -12,7 +12,7 @@ import (
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	regionDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/region"
 	serverEntities "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/region"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/middleware"
@@ -26,7 +26,7 @@ func TestGetAllRegions(t *testing.T) {
 		mockRegionService := serviceMock.NewMockRegionService(t)
 		handler := region.GetAllRegions(mockRegionService)
 
-		expectedRegions := []*domain.Region{
+		expectedRegions := []*regionDomain.Region{
 			{ID: 1, Name: "Region A"},
 			{ID: 2, Name: "Region B"},
 		}
@@ -67,7 +67,7 @@ func TestGetAllRegions(t *testing.T) {
 		mockRegionService := serviceMock.NewMockRegionService(t)
 		handler := region.GetAllRegions(mockRegionService)
 
-		expectedRegions := []*domain.Region{
+		expectedRegions := []*regionDomain.Region{
 			{ID: 2, Name: "Region B"},
 		}
 
@@ -146,7 +146,7 @@ func TestGetAllRegions(t *testing.T) {
 
 		mockRegionService.EXPECT().GetAll(
 			mock.Anything,
-		).Return([]*domain.Region{}, int64(0), nil)
+		).Return([]*regionDomain.Region{}, int64(0), nil)
 
 		app.Get("/v1/region", handler)
 
@@ -203,7 +203,7 @@ func TestGetRegionByID(t *testing.T) {
 		app := fiber.New()
 		handler := region.GetRegionByID(mockRegionService)
 
-		expectedRegion := &domain.Region{
+		expectedRegion := &regionDomain.Region{
 			ID:   1,
 			Name: "Region A",
 		}
@@ -224,7 +224,7 @@ func TestGetRegionByID(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var response domain.Region
+		var response regionDomain.Region
 		err = utils.ParseJSONResponse(resp, &response)
 		assert.NoError(t, err)
 		assert.Equal(t, "Region A", response.Name)

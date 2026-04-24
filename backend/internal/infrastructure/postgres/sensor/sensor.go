@@ -3,13 +3,13 @@ package sensor
 import (
 	"context"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	sensorDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
-var _ entities.SensorRepository = (*SensorRepository)(nil)
+var _ sensorDomain.SensorRepository = (*SensorRepository)(nil)
 
 type SensorRepository struct {
 	store *store.Store
@@ -33,7 +33,7 @@ func NewSensorRepository(s *store.Store, mappers SensorRepositoryMappers) *Senso
 	}
 }
 
-func (r *SensorRepository) Delete(ctx context.Context, id entities.SensorID) error {
+func (r *SensorRepository) Delete(ctx context.Context, id sensorDomain.SensorID) error {
 	log := logger.GetLogger(ctx)
 	if err := r.store.DeleteSensor(ctx, id.String()); err != nil {
 		log.Error("failed to delete sensor entity in db", "error", err, "sensor_id", id.String())

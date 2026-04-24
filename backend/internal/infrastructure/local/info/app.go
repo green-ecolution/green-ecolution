@@ -9,7 +9,10 @@ import (
 	"time"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/info"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 	versionpkg "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/version"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
@@ -25,7 +28,7 @@ type InfoRepository struct {
 	cfg              *config.Config
 	buildTime        time.Time
 	gitRepository    *url.URL
-	mapInfo          entities.Map
+	mapInfo          info.Map
 	versionRepo      versionpkg.VersionRepository
 	treeRepo         TreeCountRepo
 	sensorRepo       SensorCountRepo
@@ -37,23 +40,23 @@ type InfoRepository struct {
 }
 
 type TreeCountRepo interface {
-	GetCount(ctx context.Context, query entities.TreeQuery) (int64, error)
+	GetCount(ctx context.Context, query tree.TreeQuery) (int64, error)
 }
 
 type SensorCountRepo interface {
-	GetCount(ctx context.Context, query entities.Query) (int64, error)
+	GetCount(ctx context.Context, query shared.Query) (int64, error)
 }
 
 type VehicleCountRepo interface {
-	GetCount(ctx context.Context, query entities.Query) (int64, error)
+	GetCount(ctx context.Context, query shared.Query) (int64, error)
 }
 
 type TreeClusterCountRepo interface {
-	GetCount(ctx context.Context, query entities.TreeClusterQuery) (int64, error)
+	GetCount(ctx context.Context, query cluster.TreeClusterQuery) (int64, error)
 }
 
 type WateringPlanCountRepo interface {
-	GetCount(ctx context.Context, query entities.Query) (int64, error)
+	GetCount(ctx context.Context, query shared.Query) (int64, error)
 }
 
 type DBPool interface {
@@ -126,13 +129,13 @@ func (r *InfoRepository) SetDependencies(deps *InfoRepositoryDeps) {
 	r.s3Repo = deps.S3Repo
 }
 
-func (r *InfoRepository) GetAppInfo(ctx context.Context) (*entities.App, error) {
-	return &entities.App{
+func (r *InfoRepository) GetAppInfo(ctx context.Context) (*info.App, error) {
+	return &info.App{
 		Version:     version,
 		VersionInfo: r.getVersionInfo(ctx),
 		GoVersion:   r.getGoVersion(),
 		BuildTime:   r.buildTime,
-		Git: entities.Git{
+		Git: info.Git{
 			Branch:     gitBranch,
 			Commit:     gitCommit,
 			Repository: r.gitRepository,
@@ -141,23 +144,23 @@ func (r *InfoRepository) GetAppInfo(ctx context.Context) (*entities.App, error) 
 	}, nil
 }
 
-func (r *InfoRepository) GetMapInfo(_ context.Context) (*entities.Map, error) {
+func (r *InfoRepository) GetMapInfo(_ context.Context) (*info.Map, error) {
 	return &r.mapInfo, nil
 }
 
-func (r *InfoRepository) GetServerInfo(ctx context.Context) (*entities.Server, error) {
+func (r *InfoRepository) GetServerInfo(ctx context.Context) (*info.Server, error) {
 	log := logger.GetLogger(ctx)
 
 	hostname, err := r.getHostname()
 	if err != nil {
 		log.Error("failed to get hostname from host", "error", err)
-		return nil, entities.ErrHostnameNotFound
+		return nil, info.ErrHostnameNotFound
 	}
 
 	appURL, err := r.getAppURL()
 	if err != nil {
 		log.Error("failed to parse configured app url", "error", err, "app_url", r.cfg.Server.AppURL)
-		return nil, entities.ErrCannotGetAppURL
+		return nil, info.ErrCannotGetAppURL
 	}
 
 	localIP, err := getIP(ctx)
@@ -170,7 +173,7 @@ func (r *InfoRepository) GetServerInfo(ctx context.Context) (*entities.Server, e
 		return nil, err
 	}
 
-	return &entities.Server{
+	return &info.Server{
 		OS:        r.getOS(),
 		Arch:      r.getArch(),
 		Hostname:  hostname,
@@ -182,44 +185,44 @@ func (r *InfoRepository) GetServerInfo(ctx context.Context) (*entities.Server, e
 	}, nil
 }
 
-func (r *InfoRepository) GetServices(ctx context.Context) (*entities.Services, error) {
+func (r *InfoRepository) GetServices(ctx context.Context) (*info.Services, error) {
 	services := r.getServices(ctx)
 	return &services, nil
 }
 
-func (r *InfoRepository) GetStatistics(ctx context.Context) (*entities.DataStatistics, error) {
-	stats := &entities.DataStatistics{}
+func (r *InfoRepository) GetStatistics(ctx context.Context) (*info.DataStatistics, error) {
+	stats := &info.DataStatistics{}
 
 	if r.treeRepo != nil {
-		count, err := r.treeRepo.GetCount(ctx, entities.TreeQuery{})
+		count, err := r.treeRepo.GetCount(ctx, tree.TreeQuery{})
 		if err == nil {
 			stats.TreeCount = count
 		}
 	}
 
 	if r.sensorRepo != nil {
-		count, err := r.sensorRepo.GetCount(ctx, entities.Query{})
+		count, err := r.sensorRepo.GetCount(ctx, shared.Query{})
 		if err == nil {
 			stats.SensorCount = count
 		}
 	}
 
 	if r.vehicleRepo != nil {
-		count, err := r.vehicleRepo.GetCount(ctx, entities.Query{})
+		count, err := r.vehicleRepo.GetCount(ctx, shared.Query{})
 		if err == nil {
 			stats.VehicleCount = count
 		}
 	}
 
 	if r.treeClusterRepo != nil {
-		count, err := r.treeClusterRepo.GetCount(ctx, entities.TreeClusterQuery{})
+		count, err := r.treeClusterRepo.GetCount(ctx, cluster.TreeClusterQuery{})
 		if err == nil {
 			stats.TreeClusterCount = count
 		}
 	}
 
 	if r.wateringPlanRepo != nil {
-		count, err := r.wateringPlanRepo.GetCount(ctx, entities.Query{})
+		count, err := r.wateringPlanRepo.GetCount(ctx, shared.Query{})
 		if err == nil {
 			stats.WateringPlanCount = count
 		}
@@ -228,13 +231,13 @@ func (r *InfoRepository) GetStatistics(ctx context.Context) (*entities.DataStati
 	return stats, nil
 }
 
-func (r *InfoRepository) getServices(ctx context.Context) entities.Services {
+func (r *InfoRepository) getServices(ctx context.Context) info.Services {
 	checker := newHealthChecker(r)
 	services := checker.checkAll(ctx)
-	return entities.Services{Items: services}
+	return info.Services{Items: services}
 }
 
-func (r *InfoRepository) getVersionInfo(ctx context.Context) entities.VersionInfo {
+func (r *InfoRepository) getVersionInfo(ctx context.Context) info.VersionInfo {
 	if r.versionRepo == nil {
 		return versionpkg.CompareVersions(version, "")
 	}
@@ -249,12 +252,12 @@ func (r *InfoRepository) getVersionInfo(ctx context.Context) entities.VersionInf
 	return result
 }
 
-func getMapInfo(cfg *config.Config) (entities.Map, error) {
+func getMapInfo(cfg *config.Config) (info.Map, error) {
 	if len(cfg.Map.Center) != 2 || len(cfg.Map.BBox) != 4 {
-		return entities.Map{}, entities.ErrInvalidMapConfig
+		return info.Map{}, shared.ErrInvalidMapConfig
 	}
 
-	return entities.Map{
+	return info.Map{
 		Center: cfg.Map.Center,
 		BBox:   cfg.Map.BBox,
 	}, nil
@@ -300,7 +303,7 @@ func getIP(ctx context.Context) (net.IP, error) {
 	var d net.Dialer
 	conn, err := d.DialContext(ctx, "udp", "green-ecolution.de:80")
 	if err != nil {
-		return nil, entities.ErrIPNotFound
+		return nil, info.ErrIPNotFound
 	}
 
 	defer conn.Close()
@@ -311,13 +314,13 @@ func getIP(ctx context.Context) (net.IP, error) {
 func getInterface(localIP net.IP) (string, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		return "", entities.ErrIFacesNotFound
+		return "", info.ErrIFacesNotFound
 	}
 
 	for _, iface := range ifaces {
 		address, err := iface.Addrs()
 		if err != nil {
-			return "", entities.ErrIFacesAddressNotFound
+			return "", info.ErrIFacesAddressNotFound
 		}
 
 		for _, addr := range address {
@@ -327,5 +330,5 @@ func getInterface(localIP net.IP) (string, error) {
 		}
 	}
 
-	return "", entities.ErrIFacesNotFound
+	return "", info.ErrIFacesNotFound
 }

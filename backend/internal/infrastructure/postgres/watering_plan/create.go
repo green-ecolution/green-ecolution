@@ -8,23 +8,24 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func defaultWateringPlan() *entities.WateringPlan {
-	return &entities.WateringPlan{
+func defaultWateringPlan() *watering.WateringPlan {
+	return &watering.WateringPlan{
 		Date:               time.Time{},
 		Description:        "",
-		Distance:           utils.P(entities.MustNewDistance(0)),
+		Distance:           utils.P(shared.MustNewDistance(0)),
 		TotalWaterRequired: utils.P(0.0),
-		Status:             entities.WateringPlanStatusPlanned,
+		Status:             watering.WateringPlanStatusPlanned,
 		UserIDs:            make([]*uuid.UUID, 0),
-		TreeClusters:       make([]*entities.TreeCluster, 0),
-		Transporter:        nil,
-		Trailer:            nil,
+		TreeClusterIDs:     make([]int32, 0),
+		TransporterID:      nil,
+		TrailerID:          nil,
 		CancellationNote:   "",
 		Duration:           time.Duration(0),
 		RefillCount:        0,
@@ -33,13 +34,13 @@ func defaultWateringPlan() *entities.WateringPlan {
 	}
 }
 
-func (w *WateringPlanRepository) Create(ctx context.Context, createFn func(*entities.WateringPlan, entities.WateringPlanRepository) (bool, error)) (*entities.WateringPlan, error) {
+func (w *WateringPlanRepository) Create(ctx context.Context, createFn func(*watering.WateringPlan, watering.WateringPlanRepository) (bool, error)) (*watering.WateringPlan, error) {
 	log := logger.GetLogger(ctx)
 	if createFn == nil {
 		return nil, errors.New("createFn is nil")
 	}
 
-	var createdWp *entities.WateringPlan
+	var createdWp *watering.WateringPlan
 	err := w.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewWateringPlanRepository(s, w.WateringPlanMappers)
 		entity := defaultWateringPlan()
@@ -82,7 +83,7 @@ func (w *WateringPlanRepository) Create(ctx context.Context, createFn func(*enti
 	return createdWp, nil
 }
 
-func (w *WateringPlanRepository) createEntity(ctx context.Context, entity *entities.WateringPlan) (*int32, error) {
+func (w *WateringPlanRepository) createEntity(ctx context.Context, entity *watering.WateringPlan) (*int32, error) {
 	log := logger.GetLogger(ctx)
 	additionalInfo, err := utils.MapAdditionalInfoToByte(entity.AdditionalInfo)
 	if err != nil {
@@ -106,7 +107,7 @@ func (w *WateringPlanRepository) createEntity(ctx context.Context, entity *entit
 		Description:            entity.Description,
 		Distance:               distance,
 		TotalWaterRequired:     entity.TotalWaterRequired,
-		Status:                 sqlc.WateringPlanStatus(entities.WateringPlanStatusPlanned),
+		Status:                 sqlc.WateringPlanStatus(watering.WateringPlanStatusPlanned),
 		Provider:               &entity.Provider,
 		AdditionalInformations: additionalInfo,
 	}
@@ -123,64 +124,56 @@ func (w *WateringPlanRepository) createEntity(ctx context.Context, entity *entit
 	}
 
 	if err := w.setLinkedVehicles(ctx, entity, id); err != nil {
-		if entity.Trailer != nil {
-			log.Debug("failed to link vehicles to currently created watering plan", "error", err, "transporter_id", entity.Transporter.ID, "trailer_id", entity.Trailer.ID, "watering_plan_id", id)
-		} else {
-			log.Debug("failed to link vehicles to currently created watering plan", "error", err, "transporter_id", entity.Transporter.ID, "watering_plan_id", id)
-		}
+		log.Debug("failed to link vehicles to currently created watering plan", "error", err, "transporter_id", entity.TransporterID, "trailer_id", entity.TrailerID, "watering_plan_id", id)
 		return nil, err
 	}
 
 	if err := w.setLinkedTreeClusters(ctx, entity, id); err != nil {
-		if entity.TreeClusters != nil {
-			log.Debug("failed to link tree cluster to currently created watering plan", "error", err, "cluster_ids", utils.Map(entity.TreeClusters, func(c *entities.TreeCluster) int32 { return c.ID }), "watering_plan_id", id)
-		}
+		log.Debug("failed to link tree cluster to currently created watering plan", "error", err, "cluster_ids", entity.TreeClusterIDs, "watering_plan_id", id)
 		return nil, err
 	}
 
 	return &id, nil
 }
 
-func (w *WateringPlanRepository) validateWateringPlan(entity *entities.WateringPlan) error {
-	if entity.Transporter == nil || entity.Transporter.Type != entities.VehicleTypeTransporter {
+func (w *WateringPlanRepository) validateWateringPlan(entity *watering.WateringPlan) error {
+	if entity.TransporterID == nil {
 		return errors.New("watering plan requires a valid transporter")
-	}
-
-	if entity.Trailer != nil && entity.Trailer.Type != entities.VehicleTypeTrailer {
-		return errors.New("trailer vehicle requires a vehicle of type trailer")
 	}
 
 	if len(entity.UserIDs) == 0 {
 		return errors.New("watering plan requires employees")
 	}
 
-	if len(entity.TreeClusters) == 0 {
+	if len(entity.TreeClusterIDs) == 0 {
 		return errors.New("watering plan requires tree cluster")
 	}
 
 	return nil
 }
 
-func (w *WateringPlanRepository) setLinkedVehicles(ctx context.Context, entity *entities.WateringPlan, id int32) error {
+func (w *WateringPlanRepository) setLinkedVehicles(ctx context.Context, entity *watering.WateringPlan, id int32) error {
 	log := logger.GetLogger(ctx)
 	// link transporter to pivot table
-	err := w.store.SetVehicleToWateringPlan(ctx, &sqlc.SetVehicleToWateringPlanParams{
-		WateringPlanID: id,
-		VehicleID:      entity.Transporter.ID,
-	})
-	if err != nil {
-		log.Error("failed to link transporter vehicle to watering plan", "error", err, "watering_plan_id", id, "vehicle_id", entity.Transporter.ID)
-		return err
+	if entity.TransporterID != nil {
+		err := w.store.SetVehicleToWateringPlan(ctx, &sqlc.SetVehicleToWateringPlanParams{
+			WateringPlanID: id,
+			VehicleID:      *entity.TransporterID,
+		})
+		if err != nil {
+			log.Error("failed to link transporter vehicle to watering plan", "error", err, "watering_plan_id", id, "vehicle_id", *entity.TransporterID)
+			return err
+		}
 	}
 
 	// link trailer to pivot table
-	if entity.Trailer != nil {
-		err = w.store.SetVehicleToWateringPlan(ctx, &sqlc.SetVehicleToWateringPlanParams{
+	if entity.TrailerID != nil {
+		err := w.store.SetVehicleToWateringPlan(ctx, &sqlc.SetVehicleToWateringPlanParams{
 			WateringPlanID: id,
-			VehicleID:      entity.Trailer.ID,
+			VehicleID:      *entity.TrailerID,
 		})
 		if err != nil {
-			log.Error("failed to link trailer vehicle to watering plan", "error", err, "watering_plan_id", id, "vehicle_id", entity.Trailer.ID)
+			log.Error("failed to link trailer vehicle to watering plan", "error", err, "watering_plan_id", id, "vehicle_id", *entity.TrailerID)
 			return err
 		}
 	}
@@ -188,7 +181,7 @@ func (w *WateringPlanRepository) setLinkedVehicles(ctx context.Context, entity *
 	return nil
 }
 
-func (w *WateringPlanRepository) setLinkedUsers(ctx context.Context, entity *entities.WateringPlan, id int32) error {
+func (w *WateringPlanRepository) setLinkedUsers(ctx context.Context, entity *watering.WateringPlan, id int32) error {
 	log := logger.GetLogger(ctx)
 	for _, userID := range entity.UserIDs {
 		err := w.store.SetUserToWateringPlan(ctx, &sqlc.SetUserToWateringPlanParams{
@@ -204,15 +197,15 @@ func (w *WateringPlanRepository) setLinkedUsers(ctx context.Context, entity *ent
 	return nil
 }
 
-func (w *WateringPlanRepository) setLinkedTreeClusters(ctx context.Context, entity *entities.WateringPlan, id int32) error {
+func (w *WateringPlanRepository) setLinkedTreeClusters(ctx context.Context, entity *watering.WateringPlan, id int32) error {
 	log := logger.GetLogger(ctx)
-	for _, tc := range entity.TreeClusters {
+	for _, tcID := range entity.TreeClusterIDs {
 		err := w.store.SetTreeClusterToWateringPlan(ctx, &sqlc.SetTreeClusterToWateringPlanParams{
 			WateringPlanID: id,
-			TreeClusterID:  tc.ID,
+			TreeClusterID:  tcID,
 		})
 		if err != nil {
-			log.Error("failed to link tree clusters to watering plan", "error", err, "watering_plan_id", id, "cluster_ids", utils.Map(entity.TreeClusters, func(c *entities.TreeCluster) int32 { return c.ID }))
+			log.Error("failed to link tree clusters to watering plan", "error", err, "watering_plan_id", id, "cluster_ids", entity.TreeClusterIDs)
 			return err
 		}
 	}

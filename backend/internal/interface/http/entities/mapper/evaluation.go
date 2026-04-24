@@ -1,12 +1,12 @@
 package mapper
 
 import (
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/evaluation"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func EvaluationFromResponse(source *domain.Evaluation) *entities.EvaluationResponse {
+func EvaluationFromResponse(source *evaluation.Evaluation) *entities.EvaluationResponse {
 	if source == nil {
 		return nil
 	}
@@ -22,7 +22,7 @@ func EvaluationFromResponse(source *domain.Evaluation) *entities.EvaluationRespo
 	}
 }
 
-func vehicleEvaluationToResponse(source *domain.VehicleEvaluation) *entities.VehicleEvaluationResponse {
+func vehicleEvaluationToResponse(source *evaluation.VehicleEvaluation) *entities.VehicleEvaluationResponse {
 	if source == nil {
 		return nil
 	}
@@ -32,7 +32,7 @@ func vehicleEvaluationToResponse(source *domain.VehicleEvaluation) *entities.Veh
 	}
 }
 
-func regionEvaluationToResponse(source *domain.RegionEvaluation) *entities.RegionEvaluationResponse {
+func regionEvaluationToResponse(source *evaluation.RegionEvaluation) *entities.RegionEvaluationResponse {
 	if source == nil {
 		return nil
 	}

@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
@@ -97,7 +97,7 @@ var allTestWateringPlans = []*sqlc.WateringPlan{
 		ID:                 1,
 		Date:               time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
 		Description:        "New watering plan for the west side of the city",
-		Status:             sqlc.WateringPlanStatus(entities.WateringPlanStatusPlanned),
+		Status:             sqlc.WateringPlanStatus(watering.WateringPlanStatusPlanned),
 		Distance:           utils.P(63.0),
 		TotalWaterRequired: utils.P(6000.0),
 	},
@@ -105,7 +105,7 @@ var allTestWateringPlans = []*sqlc.WateringPlan{
 		ID:                 2,
 		Date:               time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
 		Description:        "New watering plan for the east side of the city",
-		Status:             sqlc.WateringPlanStatus(entities.WateringPlanStatusActive),
+		Status:             sqlc.WateringPlanStatus(watering.WateringPlanStatusActive),
 		Distance:           utils.P(63.0),
 		TotalWaterRequired: utils.P(6000.0),
 	},
@@ -113,7 +113,7 @@ var allTestWateringPlans = []*sqlc.WateringPlan{
 		ID:                 3,
 		Date:               time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
 		Description:        "Very important watering plan due to no rainfall",
-		Status:             sqlc.WateringPlanStatus(entities.WateringPlanStatusFinished),
+		Status:             sqlc.WateringPlanStatus(watering.WateringPlanStatusFinished),
 		Distance:           utils.P(63.0),
 		TotalWaterRequired: utils.P(6000.0),
 	},
@@ -121,7 +121,7 @@ var allTestWateringPlans = []*sqlc.WateringPlan{
 		ID:                 4,
 		Date:               time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
 		Description:        "New watering plan for the south side of the city",
-		Status:             sqlc.WateringPlanStatus(entities.WateringPlanStatusNotCompeted),
+		Status:             sqlc.WateringPlanStatus(watering.WateringPlanStatusNotCompeted),
 		Distance:           utils.P(63.0),
 		TotalWaterRequired: utils.P(6000.0),
 	},
@@ -129,7 +129,7 @@ var allTestWateringPlans = []*sqlc.WateringPlan{
 		ID:                 5,
 		Date:               time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
 		Description:        "Canceled due to flood",
-		Status:             sqlc.WateringPlanStatus(entities.WateringPlanStatusCanceled),
+		Status:             sqlc.WateringPlanStatus(watering.WateringPlanStatusCanceled),
 		Distance:           utils.P(63.0),
 		TotalWaterRequired: utils.P(6000.0),
 	},
@@ -138,14 +138,14 @@ var allTestWateringPlans = []*sqlc.WateringPlan{
 func TestMapWateringPlanStatus(t *testing.T) {
 	tests := []struct {
 		input    sqlc.WateringPlanStatus
-		expected entities.WateringPlanStatus
+		expected watering.WateringPlanStatus
 	}{
-		{input: sqlc.WateringPlanStatusActive, expected: entities.WateringPlanStatusActive},
-		{input: sqlc.WateringPlanStatusCanceled, expected: entities.WateringPlanStatusCanceled},
-		{input: sqlc.WateringPlanStatusFinished, expected: entities.WateringPlanStatusFinished},
-		{input: sqlc.WateringPlanStatusNotcompeted, expected: entities.WateringPlanStatusNotCompeted},
-		{input: sqlc.WateringPlanStatusPlanned, expected: entities.WateringPlanStatusPlanned},
-		{input: sqlc.WateringPlanStatusUnknown, expected: entities.WateringPlanStatusUnknown},
+		{input: sqlc.WateringPlanStatusActive, expected: watering.WateringPlanStatusActive},
+		{input: sqlc.WateringPlanStatusCanceled, expected: watering.WateringPlanStatusCanceled},
+		{input: sqlc.WateringPlanStatusFinished, expected: watering.WateringPlanStatusFinished},
+		{input: sqlc.WateringPlanStatusNotcompeted, expected: watering.WateringPlanStatusNotCompeted},
+		{input: sqlc.WateringPlanStatusPlanned, expected: watering.WateringPlanStatusPlanned},
+		{input: sqlc.WateringPlanStatusUnknown, expected: watering.WateringPlanStatusUnknown},
 	}
 
 	for _, test := range tests {

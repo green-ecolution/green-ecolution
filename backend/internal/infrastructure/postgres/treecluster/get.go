@@ -7,12 +7,15 @@ import (
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils/pagination"
 
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/evaluation"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
-func (r *TreeClusterRepository) GetAll(ctx context.Context, filter entities.TreeClusterQuery) ([]*entities.TreeCluster, int64, error) {
+func (r *TreeClusterRepository) GetAll(ctx context.Context, filter cluster.TreeClusterQuery) ([]*cluster.TreeCluster, int64, error) {
 	log := logger.GetLogger(ctx)
 
 	page, limit, err := pagination.GetValues(ctx)
@@ -32,7 +35,7 @@ func (r *TreeClusterRepository) GetAll(ctx context.Context, filter entities.Tree
 	}
 
 	if totalCount == 0 {
-		return []*entities.TreeCluster{}, 0, nil
+		return []*cluster.TreeCluster{}, 0, nil
 	}
 
 	if limit == -1 {
@@ -68,7 +71,7 @@ func (r *TreeClusterRepository) GetAll(ctx context.Context, filter entities.Tree
 	return data, totalCount, nil
 }
 
-func (r *TreeClusterRepository) GetCount(ctx context.Context, filter entities.TreeClusterQuery) (int64, error) {
+func (r *TreeClusterRepository) GetCount(ctx context.Context, filter cluster.TreeClusterQuery) (int64, error) {
 	log := logger.GetLogger(ctx)
 	var wateringStatuses []string
 	for _, ws := range filter.WateringStatuses {
@@ -88,7 +91,7 @@ func (r *TreeClusterRepository) GetCount(ctx context.Context, filter entities.Tr
 	return totalCount, nil
 }
 
-func (r *TreeClusterRepository) GetByID(ctx context.Context, id int32) (*entities.TreeCluster, error) {
+func (r *TreeClusterRepository) GetByID(ctx context.Context, id int32) (*cluster.TreeCluster, error) {
 	log := logger.GetLogger(ctx)
 	row, err := r.store.GetTreeClusterByID(ctx, id)
 	if err != nil {
@@ -109,7 +112,7 @@ func (r *TreeClusterRepository) GetByID(ctx context.Context, id int32) (*entitie
 	return tc, nil
 }
 
-func (r *TreeClusterRepository) GetByIDs(ctx context.Context, ids []int32) ([]*entities.TreeCluster, error) {
+func (r *TreeClusterRepository) GetByIDs(ctx context.Context, ids []int32) ([]*cluster.TreeCluster, error) {
 	log := logger.GetLogger(ctx)
 	rows, err := r.store.GetTreesClustersByIDs(ctx, ids)
 	if err != nil {
@@ -132,7 +135,7 @@ func (r *TreeClusterRepository) GetByIDs(ctx context.Context, ids []int32) ([]*e
 	return tc, nil
 }
 
-func (r *TreeClusterRepository) GetCenterPoint(ctx context.Context, tcID int32) (*entities.Coordinate, error) {
+func (r *TreeClusterRepository) GetCenterPoint(ctx context.Context, tcID int32) (*shared.Coordinate, error) {
 	log := logger.GetLogger(ctx)
 	row, err := r.store.CalculateTreesCentroid(ctx, &tcID)
 	if err != nil {
@@ -140,14 +143,14 @@ func (r *TreeClusterRepository) GetCenterPoint(ctx context.Context, tcID int32) 
 		return nil, err
 	}
 
-	coord, err := entities.NewCoordinate(row.CenterX, row.CenterY)
+	coord, err := shared.NewCoordinate(row.CenterX, row.CenterY)
 	if err != nil {
 		return nil, err
 	}
 	return &coord, nil
 }
 
-func (r *TreeClusterRepository) GetAllLatestSensorDataByClusterID(ctx context.Context, tcID int32) ([]*entities.SensorData, error) {
+func (r *TreeClusterRepository) GetAllLatestSensorDataByClusterID(ctx context.Context, tcID int32) ([]*sensor.SensorData, error) {
 	log := logger.GetLogger(ctx)
 	rows, err := r.store.GetAllLatestSensorDataByTreeClusterID(ctx, tcID)
 	if err != nil {
@@ -162,7 +165,7 @@ func (r *TreeClusterRepository) GetAllLatestSensorDataByClusterID(ctx context.Co
 	return domainData, nil
 }
 
-func (r *TreeClusterRepository) GetAllRegionsWithWateringPlanCount(ctx context.Context) ([]*entities.RegionEvaluation, error) {
+func (r *TreeClusterRepository) GetAllRegionsWithWateringPlanCount(ctx context.Context) ([]*evaluation.RegionEvaluation, error) {
 	log := logger.GetLogger(ctx)
 	rows, err := r.store.GetAllTreeClusterRegionsWithWateringPlanCount(ctx)
 	if err != nil {

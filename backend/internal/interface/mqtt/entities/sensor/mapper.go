@@ -1,11 +1,11 @@
 package sensor
 
 import (
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func ToResponse(src *domain.MqttPayload) *MqttPayloadResponse {
+func ToResponse(src *sensor.MqttPayload) *MqttPayloadResponse {
 	if src == nil {
 		return nil
 	}
@@ -30,15 +30,15 @@ func ToResponse(src *domain.MqttPayload) *MqttPayloadResponse {
 	return resp
 }
 
-func ToResponseList(src []*domain.MqttPayload) []*MqttPayloadResponse {
+func ToResponseList(src []*sensor.MqttPayload) []*MqttPayloadResponse {
 	return utils.MapSlice(src, ToResponse)
 }
 
-func FromResponse(src *MqttPayloadResponse) *domain.MqttPayload {
+func FromResponse(src *MqttPayloadResponse) *sensor.MqttPayload {
 	if src == nil {
 		return nil
 	}
-	payload := &domain.MqttPayload{
+	payload := &sensor.MqttPayload{
 		Device:      src.Device,
 		Battery:     src.Battery,
 		Humidity:    src.Humidity,
@@ -47,9 +47,9 @@ func FromResponse(src *MqttPayloadResponse) *domain.MqttPayload {
 		Longitude:   src.Longitude,
 	}
 	if src.Watermarks != nil {
-		payload.Watermarks = make([]domain.Watermark, len(src.Watermarks))
+		payload.Watermarks = make([]sensor.Watermark, len(src.Watermarks))
 		for i, w := range src.Watermarks {
-			payload.Watermarks[i] = domain.Watermark{
+			payload.Watermarks[i] = sensor.Watermark{
 				Resistance: w.Resistance,
 				Centibar:   w.Centibar,
 				Depth:      w.Depth,
@@ -59,6 +59,6 @@ func FromResponse(src *MqttPayloadResponse) *domain.MqttPayload {
 	return payload
 }
 
-func FromResponseList(src []*MqttPayloadResponse) []*domain.MqttPayload {
+func FromResponseList(src []*MqttPayloadResponse) []*sensor.MqttPayload {
 	return utils.MapSlice(src, FromResponse)
 }

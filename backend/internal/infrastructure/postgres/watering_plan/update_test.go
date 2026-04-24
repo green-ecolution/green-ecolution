@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
@@ -41,29 +42,36 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	vehicle, err := mappers.vehicleMapper.FromSqlList(testVehicles)
+	vehicles, err := mappers.vehicleMapper.FromSqlList(testVehicles)
 	if err != nil {
 		t.Fatal(err)
 	}
-	treeClusters, err := mappers.clusterMapper.FromSqlList(testCluster)
+	_, err = mappers.clusterMapper.FromSqlList(testCluster)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	input := entities.WateringPlan{
-		Date:         time.Date(2024, 11, 22, 0, 0, 0, 0, time.UTC),
-		Description:  "Updated watering plan",
-		Distance:     utils.P(entities.MustNewDistance(50.0)),
-		Trailer:      vehicle[3],
-		Transporter:  vehicle[1],
-		TreeClusters: treeClusters[0:3],
-		UserIDs:      []*uuid.UUID{&testUUID},
-		Status:       entities.WateringPlanStatusActive,
+	trailerID := vehicles[3].ID
+	transporterID := vehicles[1].ID
+	clusterIDs := make([]int32, 0, 3)
+	for _, tc := range testCluster[0:3] {
+		clusterIDs = append(clusterIDs, tc.ID)
+	}
+
+	input := watering.WateringPlan{
+		Date:           time.Date(2024, 11, 22, 0, 0, 0, 0, time.UTC),
+		Description:    "Updated watering plan",
+		Distance:       utils.P(shared.MustNewDistance(50.0)),
+		TrailerID:      &trailerID,
+		TransporterID:  &transporterID,
+		TreeClusterIDs: clusterIDs,
+		UserIDs:        []*uuid.UUID{&testUUID},
+		Status:         watering.WateringPlanStatusActive,
 	}
 
 	expectedTotalWater := 720.0
 
-	evaluation := []*entities.EvaluationValue{
+	evaluation := []*watering.EvaluationValue{
 		{
 			WateringPlanID: 1,
 			TreeClusterID:  1,
@@ -85,13 +93,13 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			wp.Date = input.Date
 			wp.Description = input.Description
 			wp.Distance = input.Distance
-			wp.Transporter = input.Transporter
-			wp.Trailer = input.Trailer
-			wp.TreeClusters = input.TreeClusters
+			wp.TransporterID = input.TransporterID
+			wp.TrailerID = input.TrailerID
+			wp.TreeClusterIDs = input.TreeClusterIDs
 			wp.UserIDs = input.UserIDs
 			wp.Status = input.Status
 			return true, nil
@@ -113,18 +121,15 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		assert.Equal(t, input.Status, got.Status)
 
 		// assert transporter
-		assert.Equal(t, input.Transporter.ID, got.Transporter.ID)
-		assert.Equal(t, input.Transporter.NumberPlate, got.Transporter.NumberPlate)
+		assert.Equal(t, *input.TransporterID, *got.TransporterID)
 
 		// assert trailer
-		assert.Equal(t, input.Trailer.ID, got.Trailer.ID)
-		assert.Equal(t, input.Trailer.NumberPlate, got.Trailer.NumberPlate)
+		assert.Equal(t, *input.TrailerID, *got.TrailerID)
 
 		// assert TreeClusters
-		assert.Len(t, input.TreeClusters, len(got.TreeClusters))
-		for i, tc := range got.TreeClusters {
-			assert.Equal(t, input.TreeClusters[i].ID, tc.ID)
-			assert.Equal(t, input.TreeClusters[i].Name, tc.Name)
+		assert.Len(t, input.TreeClusterIDs, len(got.TreeClusterIDs))
+		for i, tc := range got.TreeClusterIDs {
+			assert.Equal(t, input.TreeClusterIDs[i], tc)
 		}
 
 		// assert user
@@ -138,13 +143,13 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			wp.Date = input.Date
 			wp.Description = input.Description
 			wp.Distance = input.Distance
-			wp.Transporter = input.Transporter
-			wp.Trailer = nil
-			wp.TreeClusters = input.TreeClusters
+			wp.TransporterID = input.TransporterID
+			wp.TrailerID = nil
+			wp.TreeClusterIDs = input.TreeClusterIDs
 			wp.UserIDs = input.UserIDs
 			wp.Status = input.Status
 			wp.TotalWaterRequired = &expectedTotalWater
@@ -167,17 +172,15 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		assert.Equal(t, input.Status, got.Status)
 
 		// assert transporter
-		assert.Equal(t, input.Transporter.ID, got.Transporter.ID)
-		assert.Equal(t, input.Transporter.NumberPlate, got.Transporter.NumberPlate)
+		assert.Equal(t, *input.TransporterID, *got.TransporterID)
 
 		// assert nil trailer
-		assert.Nil(t, got.Trailer)
+		assert.Nil(t, got.TrailerID)
 
 		// assert TreeClusters
-		assert.Len(t, input.TreeClusters, len(got.TreeClusters))
-		for i, tc := range got.TreeClusters {
-			assert.Equal(t, input.TreeClusters[i].ID, tc.ID)
-			assert.Equal(t, input.TreeClusters[i].Name, tc.Name)
+		assert.Len(t, input.TreeClusterIDs, len(got.TreeClusterIDs))
+		for i, tc := range got.TreeClusterIDs {
+			assert.Equal(t, input.TreeClusterIDs[i], tc)
 		}
 
 		// assert user
@@ -193,14 +196,14 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 
 		cancellationNote := "This watering plan is canceled"
 
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			wp.Date = input.Date
 			wp.Description = input.Description
 			wp.Distance = input.Distance
-			wp.Transporter = input.Transporter
-			wp.TreeClusters = input.TreeClusters
+			wp.TransporterID = input.TransporterID
+			wp.TreeClusterIDs = input.TreeClusterIDs
 			wp.UserIDs = input.UserIDs
-			wp.Status = entities.WateringPlanStatusCanceled
+			wp.Status = watering.WateringPlanStatusCanceled
 			wp.CancellationNote = cancellationNote
 			return true, nil
 		}
@@ -215,7 +218,7 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		assert.NotNil(t, got)
 		assert.NotZero(t, got.ID)
 		assert.Equal(t, input.Date, got.Date)
-		assert.Equal(t, entities.WateringPlanStatusCanceled, got.Status)
+		assert.Equal(t, watering.WateringPlanStatusCanceled, got.Status)
 		assert.Equal(t, cancellationNote, got.CancellationNote)
 	})
 
@@ -223,13 +226,13 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			wp.Date = input.Date
 			wp.Distance = input.Distance
-			wp.Transporter = input.Transporter
-			wp.TreeClusters = input.TreeClusters
+			wp.TransporterID = input.TransporterID
+			wp.TreeClusterIDs = input.TreeClusterIDs
 			wp.UserIDs = input.UserIDs
-			wp.Status = entities.WateringPlanStatusNotCompeted
+			wp.Status = watering.WateringPlanStatusNotCompeted
 			wp.Evaluation = evaluation
 			return true, nil
 		}
@@ -243,7 +246,7 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		assert.NoError(t, getErr)
 		assert.NotNil(t, got)
 		assert.NotZero(t, got.ID)
-		assert.Equal(t, entities.WateringPlanStatusNotCompeted, got.Status)
+		assert.Equal(t, watering.WateringPlanStatusNotCompeted, got.Status)
 
 		// assert consumed water list
 		gotEvaluation, err := r.GetEvaluationValues(context.Background(), 1)
@@ -260,15 +263,15 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			wp.Date = input.Date
 			wp.Description = input.Description
 			wp.Distance = input.Distance
-			wp.Transporter = input.Transporter
-			wp.Trailer = input.Trailer
-			wp.TreeClusters = input.TreeClusters
+			wp.TransporterID = input.TransporterID
+			wp.TrailerID = input.TrailerID
+			wp.TreeClusterIDs = input.TreeClusterIDs
 			wp.UserIDs = input.UserIDs
-			wp.Status = entities.WateringPlanStatusFinished
+			wp.Status = watering.WateringPlanStatusFinished
 			wp.Evaluation = evaluation
 			return true, nil
 		}
@@ -282,7 +285,7 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		assert.NoError(t, getErr)
 		assert.NotNil(t, got)
 		assert.NotZero(t, got.ID)
-		assert.Equal(t, entities.WateringPlanStatusFinished, got.Status)
+		assert.Equal(t, watering.WateringPlanStatusFinished, got.Status)
 
 		// assert consumed water list
 		gotEvaluation, err := r.GetEvaluationValues(context.Background(), 1)
@@ -300,13 +303,13 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			wp.Date = input.Date
 			wp.Distance = input.Distance
-			wp.Transporter = input.Transporter
-			wp.TreeClusters = input.TreeClusters
+			wp.TransporterID = input.TransporterID
+			wp.TreeClusterIDs = input.TreeClusterIDs
 			wp.UserIDs = input.UserIDs
-			wp.Status = entities.WateringPlanStatusActive
+			wp.Status = watering.WateringPlanStatusActive
 			wp.CancellationNote = "This watering plan is canceled"
 			return true, nil
 		}
@@ -323,10 +326,10 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			wp.Date = time.Time{}
-			wp.Transporter = input.Transporter
-			wp.TreeClusters = input.TreeClusters
+			wp.TransporterID = input.TransporterID
+			wp.TreeClusterIDs = input.TreeClusterIDs
 			wp.UserIDs = input.UserIDs
 			return true, nil
 		}
@@ -343,11 +346,11 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			wp.Date = input.Date
-			wp.Transporter = input.Transporter
-			wp.Trailer = input.Transporter
-			wp.TreeClusters = input.TreeClusters
+			wp.TransporterID = input.TransporterID
+			wp.TrailerID = input.TransporterID
+			wp.TreeClusterIDs = input.TreeClusterIDs
 			wp.UserIDs = input.UserIDs
 			return true, nil
 		}
@@ -357,18 +360,20 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 
 		// then
 		assert.Error(t, err)
-		assert.Equal(t, "trailer vehicle requires a vehicle of type trailer", err.Error())
+		// Vehicle type validation now happens in the service layer, not in the repo.
+		// The repo just gets a DB constraint error.
+		assert.Contains(t, err.Error(), "duplicate key")
 	})
 
 	t.Run("should return error when watering plan has no linked users", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			wp.Date = input.Date
-			wp.Transporter = input.Transporter
-			wp.Trailer = input.Trailer
-			wp.TreeClusters = input.TreeClusters
+			wp.TransporterID = input.TransporterID
+			wp.TrailerID = input.TrailerID
+			wp.TreeClusterIDs = input.TreeClusterIDs
 			wp.UserIDs = []*uuid.UUID{}
 			return true, nil
 		}
@@ -385,11 +390,11 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			wp.Date = input.Date
-			wp.Transporter = input.Trailer
-			wp.Trailer = input.Trailer
-			wp.TreeClusters = input.TreeClusters
+			wp.TransporterID = input.TrailerID
+			wp.TrailerID = input.TrailerID
+			wp.TreeClusterIDs = input.TreeClusterIDs
 			wp.UserIDs = input.UserIDs
 			return true, nil
 		}
@@ -399,18 +404,19 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 
 		// then
 		assert.Error(t, err)
-		assert.Equal(t, "watering plan requires a valid transporter", err.Error())
+		// Vehicle type validation now happens in the service layer, not in the repo.
+		assert.Contains(t, err.Error(), "duplicate key")
 	})
 
 	t.Run("should return error when transporter is nil", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			wp.Date = input.Date
-			wp.Transporter = nil
-			wp.Trailer = input.Trailer
-			wp.TreeClusters = input.TreeClusters
+			wp.TransporterID = nil
+			wp.TrailerID = input.TrailerID
+			wp.TreeClusterIDs = input.TreeClusterIDs
 			wp.UserIDs = input.UserIDs
 			return true, nil
 		}
@@ -427,11 +433,11 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			wp.Date = input.Date
-			wp.Transporter = input.Transporter
-			wp.Trailer = input.Trailer
-			wp.TreeClusters = []*entities.TreeCluster{}
+			wp.TransporterID = input.TransporterID
+			wp.TrailerID = input.TrailerID
+			wp.TreeClusterIDs = []int32{}
 			wp.UserIDs = input.UserIDs
 			return true, nil
 		}
@@ -460,11 +466,11 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			wp.Date = input.Date
-			wp.Transporter = input.Transporter
-			wp.Trailer = input.Trailer
-			wp.TreeClusters = input.TreeClusters
+			wp.TransporterID = input.TransporterID
+			wp.TrailerID = input.TrailerID
+			wp.TreeClusterIDs = input.TreeClusterIDs
 			wp.UserIDs = input.UserIDs
 			return true, nil
 		}
@@ -480,11 +486,11 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			wp.Date = input.Date
-			wp.Transporter = input.Transporter
-			wp.Trailer = input.Trailer
-			wp.TreeClusters = input.TreeClusters
+			wp.TransporterID = input.TransporterID
+			wp.TrailerID = input.TrailerID
+			wp.TreeClusterIDs = input.TreeClusterIDs
 			wp.UserIDs = input.UserIDs
 			return true, nil
 		}
@@ -500,11 +506,11 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			wp.Date = input.Date
-			wp.Transporter = input.Transporter
-			wp.Trailer = input.Trailer
-			wp.TreeClusters = input.TreeClusters
+			wp.TransporterID = input.TransporterID
+			wp.TrailerID = input.TrailerID
+			wp.TreeClusterIDs = input.TreeClusterIDs
 			wp.UserIDs = input.UserIDs
 			return true, nil
 		}
@@ -519,11 +525,11 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 	t.Run("should return error if context is canceled", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			wp.Date = input.Date
-			wp.Transporter = input.Transporter
-			wp.Trailer = input.Trailer
-			wp.TreeClusters = input.TreeClusters
+			wp.TransporterID = input.TransporterID
+			wp.TrailerID = input.TrailerID
+			wp.TreeClusterIDs = input.TreeClusterIDs
 			wp.UserIDs = input.UserIDs
 			return true, nil
 		}
@@ -552,7 +558,7 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 	t.Run("should return error when updateFn returns error", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			return true, assert.AnError
 		}
 
@@ -566,7 +572,7 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 	t.Run("should not update when updateFn returns false", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			return false, nil
 		}
 
@@ -583,12 +589,12 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 	t.Run("should not rollback when updateFn returns false", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-		updateFn := func(wp *entities.WateringPlan, _ entities.WateringPlanRepository) (bool, error) {
+		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
 			wp.Date = input.Date
 			wp.Description = "Test"
-			wp.Transporter = input.Transporter
-			wp.Trailer = input.Trailer
-			wp.TreeClusters = input.TreeClusters
+			wp.TransporterID = input.TransporterID
+			wp.TrailerID = input.TrailerID
+			wp.TreeClusterIDs = input.TreeClusterIDs
 			wp.UserIDs = input.UserIDs
 			return false, nil
 		}

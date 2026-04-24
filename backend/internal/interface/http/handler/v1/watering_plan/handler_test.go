@@ -15,7 +15,8 @@ import (
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	serverEntities "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	wateringplan "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/watering_plan"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/middleware"
@@ -32,7 +33,7 @@ func TestGetAllWateringPlans(t *testing.T) {
 
 		mockWateringPlanService.EXPECT().GetAll(
 			mock.Anything,
-			domain.Query{},
+			shared.Query{},
 		).Return(TestWateringPlans, int64(len(TestWateringPlans)), nil)
 
 		// when
@@ -67,7 +68,7 @@ func TestGetAllWateringPlans(t *testing.T) {
 
 		mockWateringPlanService.EXPECT().GetAll(
 			mock.Anything,
-			domain.Query{},
+			shared.Query{},
 		).Return(TestWateringPlans, int64(len(TestWateringPlans)), nil)
 
 		// when
@@ -139,7 +140,7 @@ func TestGetAllWateringPlans(t *testing.T) {
 
 		mockWateringPlanService.EXPECT().GetAll(
 			mock.Anything,
-			domain.Query{Provider: "test-provider"},
+			shared.Query{Provider: "test-provider"},
 		).Return(TestWateringPlans, int64(len(TestWateringPlans)), nil)
 
 		// when
@@ -172,8 +173,8 @@ func TestGetAllWateringPlans(t *testing.T) {
 
 		mockWateringPlanService.EXPECT().GetAll(
 			mock.Anything,
-			domain.Query{},
-		).Return([]*domain.WateringPlan{}, int64(0), nil)
+			shared.Query{},
+		).Return([]*watering.WateringPlan{}, int64(0), nil)
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/watering-plan", nil)
@@ -206,7 +207,7 @@ func TestGetAllWateringPlans(t *testing.T) {
 
 		mockWateringPlanService.EXPECT().GetAll(
 			mock.Anything,
-			domain.Query{},
+			shared.Query{},
 		).Return(nil, int64(0), fiber.NewError(fiber.StatusInternalServerError, "service error"))
 
 		// when
@@ -323,7 +324,7 @@ func TestCreateWateringPlan(t *testing.T) {
 
 		mockWateringPlanService.EXPECT().Create(
 			mock.Anything,
-			mock.AnythingOfType("*entities.WateringPlanCreate"),
+			mock.AnythingOfType("*watering.WateringPlanCreate"),
 		).Return(TestWateringPlans[0], nil)
 
 		// when
@@ -341,7 +342,6 @@ func TestCreateWateringPlan(t *testing.T) {
 		err = json.NewDecoder(resp.Body).Decode(&response)
 		assert.NoError(t, err)
 		assert.Equal(t, TestWateringPlans[0].Date, response.Date)
-		assert.Equal(t, TestWateringPlans[0].Transporter.NumberPlate, response.Transporter.NumberPlate)
 
 		mockWateringPlanService.AssertExpectations(t)
 	})
@@ -374,7 +374,7 @@ func TestCreateWateringPlan(t *testing.T) {
 
 		mockWateringPlanService.EXPECT().Create(
 			mock.Anything,
-			mock.AnythingOfType("*entities.WateringPlanCreate"),
+			mock.AnythingOfType("*watering.WateringPlanCreate"),
 		).Return(nil, fiber.NewError(fiber.StatusInternalServerError, "service error"))
 
 		// when

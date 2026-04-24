@@ -4,7 +4,10 @@ import (
 	"context"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 )
 
 type UpdateTreeSubscriber struct {
@@ -17,12 +20,12 @@ func NewUpdateTreeSubscriber(tcs ports.TreeClusterService) *UpdateTreeSubscriber
 	}
 }
 
-func (s *UpdateTreeSubscriber) EventType() entities.EventType {
-	return entities.EventTypeUpdateTree
+func (s *UpdateTreeSubscriber) EventType() shared.EventType {
+	return tree.EventTypeUpdate
 }
 
-func (s *UpdateTreeSubscriber) HandleEvent(ctx context.Context, e entities.Event) error {
-	event := e.(entities.EventUpdateTree)
+func (s *UpdateTreeSubscriber) HandleEvent(ctx context.Context, e shared.Event) error {
+	event := e.(tree.EventUpdate)
 	return s.tcs.HandleUpdateTree(ctx, &event)
 }
 
@@ -36,12 +39,12 @@ func NewCreateTreeSubscriber(tcs ports.TreeClusterService) *CreateTreeSubscriber
 	}
 }
 
-func (s *CreateTreeSubscriber) EventType() entities.EventType {
-	return entities.EventTypeCreateTree
+func (s *CreateTreeSubscriber) EventType() shared.EventType {
+	return tree.EventTypeCreate
 }
 
-func (s *CreateTreeSubscriber) HandleEvent(ctx context.Context, e entities.Event) error {
-	event := e.(entities.EventCreateTree)
+func (s *CreateTreeSubscriber) HandleEvent(ctx context.Context, e shared.Event) error {
+	event := e.(tree.EventCreate)
 	return s.tcs.HandleCreateTree(ctx, &event)
 }
 
@@ -55,12 +58,12 @@ func NewDeleteTreeSubscriber(tcs ports.TreeClusterService) *DeleteTreeSubscriber
 	}
 }
 
-func (s *DeleteTreeSubscriber) EventType() entities.EventType {
-	return entities.EventTypeDeleteTree
+func (s *DeleteTreeSubscriber) EventType() shared.EventType {
+	return tree.EventTypeDelete
 }
 
-func (s *DeleteTreeSubscriber) HandleEvent(ctx context.Context, e entities.Event) error {
-	event := e.(entities.EventDeleteTree)
+func (s *DeleteTreeSubscriber) HandleEvent(ctx context.Context, e shared.Event) error {
+	event := e.(tree.EventDelete)
 	return s.tcs.HandleDeleteTree(ctx, &event)
 }
 
@@ -76,12 +79,12 @@ func NewSensorDataSubscriber(tcSvc ports.TreeClusterService, treeSvc ports.TreeS
 	}
 }
 
-func (s *CreateSensorDataSubscriber) EventType() entities.EventType {
-	return entities.EventTypeNewSensorData
+func (s *CreateSensorDataSubscriber) EventType() shared.EventType {
+	return sensor.EventTypeNewData
 }
 
-func (s *CreateSensorDataSubscriber) HandleEvent(ctx context.Context, e entities.Event) error {
-	event := e.(entities.EventNewSensorData)
+func (s *CreateSensorDataSubscriber) HandleEvent(ctx context.Context, e shared.Event) error {
+	event := e.(sensor.EventNewData)
 	if err := s.treeSvc.HandleNewSensorData(ctx, &event); err != nil {
 		return err
 	}
@@ -99,12 +102,12 @@ func NewUpdateWateringPlanSubscriber(tcSvc ports.TreeClusterService) *UpdateWate
 	}
 }
 
-func (s *UpdateWateringPlanSubscriber) EventType() entities.EventType {
-	return entities.EventTypeUpdateWateringPlan
+func (s *UpdateWateringPlanSubscriber) EventType() shared.EventType {
+	return watering.EventTypeUpdate
 }
 
-func (s *UpdateWateringPlanSubscriber) HandleEvent(ctx context.Context, e entities.Event) error {
-	event := e.(entities.EventUpdateWateringPlan)
+func (s *UpdateWateringPlanSubscriber) HandleEvent(ctx context.Context, e shared.Event) error {
+	event := e.(watering.EventUpdate)
 	if err := s.tcSvc.HandleUpdateWateringPlan(ctx, &event); err != nil {
 		return err
 	}

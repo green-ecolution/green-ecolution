@@ -18,25 +18,70 @@ packages:
       EvaluationService:
       Service:
       ServicesInterface:
-  github.com/green-ecolution/green-ecolution/backend/internal/domain/shared:
-    config: 
+  github.com/green-ecolution/green-ecolution/backend/internal/domain/info:
+    config:
       dir: ./internal/infrastructure/_mock
+      outpkg: storagemock
     interfaces:
       InfoRepository:
+  github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor:
+    config:
+      dir: ./internal/infrastructure/_mock
+      outpkg: storagemock
+    interfaces:
       SensorRepository:
+  github.com/green-ecolution/green-ecolution/backend/internal/domain/tree:
+    config:
+      dir: ./internal/infrastructure/_mock
+      outpkg: storagemock
+    interfaces:
       TreeRepository:
+  github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster:
+    config:
+      dir: ./internal/infrastructure/_mock
+      outpkg: storagemock
+    interfaces:
       TreeClusterRepository:
+  github.com/green-ecolution/green-ecolution/backend/internal/domain/auth:
+    config:
+      dir: ./internal/infrastructure/_mock
+      outpkg: storagemock
+    interfaces:
       AuthRepository:
+  github.com/green-ecolution/green-ecolution/backend/internal/domain/user:
+    config:
+      dir: ./internal/infrastructure/_mock
+      outpkg: storagemock
+    interfaces:
       UserRepository:
+  github.com/green-ecolution/green-ecolution/backend/internal/domain/region:
+    config:
+      dir: ./internal/infrastructure/_mock
+      outpkg: storagemock
+    interfaces:
       RegionRepository:
-      ImageRepository:
+  github.com/green-ecolution/green-ecolution/backend/internal/domain/vehicle:
+    config:
+      dir: ./internal/infrastructure/_mock
+      outpkg: storagemock
+    interfaces:
       VehicleRepository:
+  github.com/green-ecolution/green-ecolution/backend/internal/domain/watering:
+    config:
+      dir: ./internal/infrastructure/_mock
+      outpkg: storagemock
+    interfaces:
       WateringPlanRepository:
+  github.com/green-ecolution/green-ecolution/backend/internal/domain/routing:
+    config:
+      dir: ./internal/infrastructure/_mock
+      outpkg: storagemock
+    interfaces:
       RoutingRepository:
       S3Repository:
   github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc:
     config: 
       dir: ./internal/infrastructure/_mock
-      outpkg: entities
+      outpkg: storagemock
     interfaces:
       Querier:

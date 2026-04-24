@@ -4,10 +4,10 @@ import (
 	"log/slog"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 )
 
-func NewRepository(cfg *config.Config) (*entities.Repository, error) {
+func NewRepository(cfg *config.Config) (*storage.Repository, error) {
 	repoCfg := &RouteRepoConfig{
 		routing: cfg.Routing,
 	}
@@ -17,7 +17,7 @@ func NewRepository(cfg *config.Config) (*entities.Repository, error) {
 		slog.Error("error creating routing repo", "error", err)
 		return nil, err
 	}
-	return &entities.Repository{
+	return &storage.Repository{
 		Routing: routingRepo,
 	}, nil
 }

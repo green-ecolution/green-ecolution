@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/region"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/errorhandler"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
@@ -35,7 +35,7 @@ func GetAllRegions(svc ports.RegionService) fiber.Handler {
 			return errorhandler.HandleError(err)
 		}
 
-		dto := utils.Map(r, func(region *domain.Region) *entities.RegionResponse {
+		dto := utils.Map(r, func(region *region.Region) *entities.RegionResponse {
 			return &entities.RegionResponse{
 				ID:   region.ID,
 				Name: region.Name,

@@ -3,12 +3,12 @@ package mapper
 import (
 	"time"
 
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/info"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func InfoToResponse(source *domain.App) *entities.AppInfoResponse {
+func InfoToResponse(source *info.App) *entities.AppInfoResponse {
 	if source == nil {
 		return nil
 	}
@@ -22,7 +22,7 @@ func InfoToResponse(source *domain.App) *entities.AppInfoResponse {
 	}
 }
 
-func InfoServerToResponse(source *domain.Server) *entities.ServerResponse {
+func InfoServerToResponse(source *info.Server) *entities.ServerResponse {
 	if source == nil {
 		return nil
 	}
@@ -38,7 +38,7 @@ func InfoServerToResponse(source *domain.Server) *entities.ServerResponse {
 	}
 }
 
-func InfoServicesToResponse(source *domain.Services) *entities.ServicesResponse {
+func InfoServicesToResponse(source *info.Services) *entities.ServicesResponse {
 	if source == nil {
 		return nil
 	}
@@ -47,7 +47,7 @@ func InfoServicesToResponse(source *domain.Services) *entities.ServicesResponse 
 	}
 }
 
-func versionInfoToResponse(source domain.VersionInfo) entities.VersionInfoResponse {
+func versionInfoToResponse(source info.VersionInfo) entities.VersionInfoResponse {
 	return entities.VersionInfoResponse{
 		Current:         source.Current,
 		Latest:          source.Latest,
@@ -58,7 +58,7 @@ func versionInfoToResponse(source domain.VersionInfo) entities.VersionInfoRespon
 	}
 }
 
-func gitToResponse(source domain.Git) entities.GitResponse {
+func gitToResponse(source info.Git) entities.GitResponse {
 	return entities.GitResponse{
 		Branch:     source.Branch,
 		Commit:     source.Commit,
@@ -66,7 +66,7 @@ func gitToResponse(source domain.Git) entities.GitResponse {
 	}
 }
 
-func mapToResponse(source domain.Map) entities.MapResponse {
+func mapToResponse(source info.Map) entities.MapResponse {
 	return entities.MapResponse{
 		Center: MapBbox(source.Center),
 		BBox:   MapBbox(source.BBox),
@@ -81,7 +81,7 @@ func MapBbox(src []float64) []float64 {
 	return src
 }
 
-func MapServiceStatusItems(src []domain.ServiceStatus) []entities.ServiceStatusResponse {
+func MapServiceStatusItems(src []info.ServiceStatus) []entities.ServiceStatusResponse {
 	result := make([]entities.ServiceStatusResponse, len(src))
 	for i, s := range src {
 		result[i] = entities.ServiceStatusResponse{
@@ -103,14 +103,14 @@ func formatTimeISO8601(t time.Time) string {
 	return t.Format(time.RFC3339)
 }
 
-func MapServiceStatusItemsReverse(src []entities.ServiceStatusResponse) []domain.ServiceStatus {
-	result := make([]domain.ServiceStatus, len(src))
+func MapServiceStatusItemsReverse(src []entities.ServiceStatusResponse) []info.ServiceStatus {
+	result := make([]info.ServiceStatus, len(src))
 	for i, s := range src {
 		var lastChecked time.Time
 		if s.LastChecked != "" {
 			lastChecked, _ = time.Parse(time.RFC3339, s.LastChecked)
 		}
-		result[i] = domain.ServiceStatus{
+		result[i] = info.ServiceStatus{
 			Name:         s.Name,
 			Enabled:      s.Enabled,
 			Healthy:      s.Healthy,

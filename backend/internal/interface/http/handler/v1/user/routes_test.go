@@ -16,7 +16,8 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/auth"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/user"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 )
 
@@ -26,7 +27,7 @@ func TestRegisterRoutes(t *testing.T) {
 			mockUserService := serviceMock.NewMockAuthService(t)
 			app := fiber.New()
 			RegisterRoutes(app, mockUserService)
-			expected := []*domain.User{
+			expected := []*user.User{
 				{
 					ID:            uuid.MustParse("6be4c752-94df-4719-99b1-ce58253eaf75"),
 					CreatedAt:     time.Now(),
@@ -59,7 +60,7 @@ func TestRegisterRoutes(t *testing.T) {
 			mockUserService := serviceMock.NewMockAuthService(t)
 			app := fiber.New()
 			RegisterRoutes(app, mockUserService)
-			expected := &domain.User{
+			expected := &user.User{
 				ID:            uuid.MustParse("6be4c752-94df-4719-99b1-ce58253eaf75"),
 				CreatedAt:     time.Now(),
 				Username:      "toni_tester",
@@ -74,7 +75,7 @@ func TestRegisterRoutes(t *testing.T) {
 
 			mockUserService.EXPECT().Register(
 				mock.Anything,
-				mock.AnythingOfType("*entities.RegisterUser"),
+				mock.AnythingOfType("*user.RegisterUser"),
 			).Return(expected, nil)
 
 			// when
@@ -112,7 +113,7 @@ func TestRegisterRoutes(t *testing.T) {
 			mockUserService := serviceMock.NewMockAuthService(t)
 			app := fiber.New()
 			RegisterRoutes(app, mockUserService)
-			expected := []*domain.User{
+			expected := []*user.User{
 				{
 					ID:            uuid.MustParse("6be4c752-94df-4719-99b1-ce58253eaf75"),
 					CreatedAt:     time.Now(),
@@ -124,15 +125,15 @@ func TestRegisterRoutes(t *testing.T) {
 					PhoneNumber:   "+49 123456",
 					EmailVerified: false,
 					Avatar:        nil,
-					Roles: []domain.UserRole{
-						domain.UserRoleGreenEcolution,
+					Roles: []user.UserRole{
+						user.UserRoleGreenEcolution,
 					},
 				},
 			}
-			mockUserService.EXPECT().GetAllByRole(mock.Anything, domain.UserRoleGreenEcolution).Return(expected, nil)
+			mockUserService.EXPECT().GetAllByRole(mock.Anything, user.UserRoleGreenEcolution).Return(expected, nil)
 
 			// when
-			req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, string("/role/"+domain.UserRoleGreenEcolution), nil)
+			req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, string("/role/"+user.UserRoleGreenEcolution), nil)
 			resp, err := app.Test(req, -1)
 			defer resp.Body.Close()
 
@@ -162,7 +163,7 @@ func TestRegisterPublicRoutes(t *testing.T) {
 
 		mockUserService.EXPECT().LogoutRequest(
 			mock.Anything,
-			mock.AnythingOfType("*entities.Logout"),
+			mock.AnythingOfType("*auth.Logout"),
 		).Return(nil)
 
 		// when
@@ -185,13 +186,13 @@ func TestRegisterPublicRoutes(t *testing.T) {
 		app := fiber.New()
 		RegisterPublicRoutes(app, mockUserService)
 		loginURL, _ := url.Parse("http://localhost:8080/auth/realms/green-ecolution/protocol/openid-connect/auth?client_id=green-ecolution-frontend&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Flogin&response_type=code&scope=openid%20profile%20email&state=state&nonce=nonce")
-		expected := &domain.LoginResp{
+		expected := &auth.LoginResp{
 			LoginURL: loginURL,
 		}
 
 		mockUserService.EXPECT().LoginRequest(
 			mock.Anything,
-			mock.AnythingOfType("*entities.LoginRequest"),
+			mock.AnythingOfType("*auth.LoginRequest"),
 		).Return(expected)
 
 		// when
@@ -214,7 +215,7 @@ func TestRegisterPublicRoutes(t *testing.T) {
 		mockUserService := serviceMock.NewMockAuthService(t)
 		app := fiber.New()
 		RegisterPublicRoutes(app, mockUserService)
-		expected := &domain.ClientToken{
+		expected := &auth.ClientToken{
 			AccessToken:  "access-token",
 			RefreshToken: "refresh-token",
 			ExpiresIn:    3600,
@@ -223,7 +224,7 @@ func TestRegisterPublicRoutes(t *testing.T) {
 
 		mockUserService.EXPECT().ClientTokenCallback(
 			mock.Anything,
-			mock.AnythingOfType("*entities.LoginCallback"),
+			mock.AnythingOfType("*auth.LoginCallback"),
 		).Return(expected, nil)
 
 		// when
@@ -254,7 +255,7 @@ func TestRegisterPublicRoutes(t *testing.T) {
 		RegisterPublicRoutes(app, mockUserService)
 		refreshToken := generateJWT(t, "user123")
 
-		expectedResponse := &domain.ClientToken{
+		expectedResponse := &auth.ClientToken{
 			AccessToken:  "valid_access_token",
 			RefreshToken: refreshToken,
 			ExpiresIn:    3600,

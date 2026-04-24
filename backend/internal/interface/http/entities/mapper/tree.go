@@ -3,12 +3,14 @@ package mapper
 import (
 	"fmt"
 
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func TreeFromResponse(source *domain.Tree) *entities.TreeResponse {
+func TreeFromResponse(source *tree.Tree) *entities.TreeResponse {
 	if source == nil {
 		return nil
 	}
@@ -16,28 +18,28 @@ func TreeFromResponse(source *domain.Tree) *entities.TreeResponse {
 		ID:             source.ID,
 		CreatedAt:      source.CreatedAt,
 		UpdatedAt:      source.UpdatedAt,
-		TreeClusterID:  MapTreeClusterToID(source.TreeCluster),
+		TreeClusterID:  source.TreeClusterID,
 		LastWatered:    source.LastWatered,
 		PlantingYear:   source.PlantingYear.Year(),
 		Species:        source.Species,
 		Number:         source.Number,
 		Latitude:       source.Coordinate.Latitude(),
 		Longitude:      source.Coordinate.Longitude(),
-		WateringStatus: MapWateringStatus(source.WateringStatus),
+		WateringStatus: entities.WateringStatus(source.WateringStatus),
 		Description:    source.Description,
 		Provider:       source.Provider,
 		AdditionalInfo: source.AdditionalInfo,
 	}
 }
 
-func TreeFromResponseList(source []*domain.Tree) []*entities.TreeResponse {
+func TreeFromResponseList(source []*tree.Tree) []*entities.TreeResponse {
 	return utils.MapSlice(source, TreeFromResponse)
 }
 
 type parsedTreeFields struct {
-	Coordinate     domain.Coordinate
-	PlantingYear   domain.PlantingYear
-	SensorID       *domain.SensorID
+	Coordinate     shared.Coordinate
+	PlantingYear   tree.PlantingYear
+	SensorID       *sensor.SensorID
 	TreeClusterID  *int32
 	Species        string
 	Number         string
@@ -54,19 +56,19 @@ func parseTreeRequest(
 	species, number, description, provider string,
 	additionalInfo map[string]interface{},
 ) (*parsedTreeFields, error) {
-	coord, err := domain.NewCoordinate(lat, lng)
+	coord, err := shared.NewCoordinate(lat, lng)
 	if err != nil {
 		return nil, fmt.Errorf("invalid coordinate: %w", err)
 	}
 
-	py, err := domain.NewPlantingYear(plantingYear)
+	py, err := tree.NewPlantingYear(plantingYear)
 	if err != nil {
 		return nil, fmt.Errorf("invalid planting year: %w", err)
 	}
 
-	var sid *domain.SensorID
+	var sid *sensor.SensorID
 	if sensorID != nil {
-		s, err := domain.NewSensorID(*sensorID)
+		s, err := sensor.NewSensorID(*sensorID)
 		if err != nil {
 			return nil, fmt.Errorf("invalid sensor ID: %w", err)
 		}
@@ -92,7 +94,7 @@ func parseTreeRequest(
 	}, nil
 }
 
-func TreeFromCreateRequest(source *entities.TreeCreateRequest) (*domain.TreeCreate, error) {
+func TreeFromCreateRequest(source *entities.TreeCreateRequest) (*tree.TreeCreate, error) {
 	if source == nil {
 		return nil, nil
 	}
@@ -108,7 +110,7 @@ func TreeFromCreateRequest(source *entities.TreeCreateRequest) (*domain.TreeCrea
 	return f.toTreeCreate(), nil
 }
 
-func TreeFromUpdateRequest(source *entities.TreeUpdateRequest) (*domain.TreeUpdate, error) {
+func TreeFromUpdateRequest(source *entities.TreeUpdateRequest) (*tree.TreeUpdate, error) {
 	if source == nil {
 		return nil, nil
 	}
@@ -124,8 +126,8 @@ func TreeFromUpdateRequest(source *entities.TreeUpdateRequest) (*domain.TreeUpda
 	return f.toTreeUpdate(), nil
 }
 
-func (f *parsedTreeFields) toTreeCreate() *domain.TreeCreate {
-	return &domain.TreeCreate{
+func (f *parsedTreeFields) toTreeCreate() *tree.TreeCreate {
+	return &tree.TreeCreate{
 		TreeClusterID: f.TreeClusterID, SensorID: f.SensorID,
 		PlantingYear: f.PlantingYear, Species: f.Species, Number: f.Number,
 		Coordinate: f.Coordinate, Description: f.Description,
@@ -133,18 +135,11 @@ func (f *parsedTreeFields) toTreeCreate() *domain.TreeCreate {
 	}
 }
 
-func (f *parsedTreeFields) toTreeUpdate() *domain.TreeUpdate {
-	return &domain.TreeUpdate{
+func (f *parsedTreeFields) toTreeUpdate() *tree.TreeUpdate {
+	return &tree.TreeUpdate{
 		TreeClusterID: f.TreeClusterID, SensorID: f.SensorID,
 		PlantingYear: f.PlantingYear, Species: f.Species, Number: f.Number,
 		Coordinate: f.Coordinate, Description: f.Description,
 		Provider: f.Provider, AdditionalInfo: f.AdditionalInfo,
 	}
-}
-
-func MapTreeClusterToID(treeCluster *domain.TreeCluster) *int32 {
-	if treeCluster == nil {
-		return nil
-	}
-	return &treeCluster.ID
 }

@@ -13,7 +13,8 @@ import (
 
 	serviceMock "github.com/green-ecolution/green-ecolution/backend/internal/application/_mock"
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	vehicleDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/vehicle"
 	serverEntities "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1/vehicle"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/middleware"
@@ -30,7 +31,7 @@ func TestGetAllVehicles(t *testing.T) {
 
 		mockVehicleService.EXPECT().GetAll(
 			mock.Anything,
-			domain.VehicleQuery{},
+			vehicleDomain.VehicleQuery{},
 		).Return(TestVehicles, int64(len(TestVehicles)), nil)
 
 		// when
@@ -65,7 +66,7 @@ func TestGetAllVehicles(t *testing.T) {
 
 		mockVehicleService.EXPECT().GetAll(
 			mock.Anything,
-			domain.VehicleQuery{},
+			vehicleDomain.VehicleQuery{},
 		).Return(TestVehicles, int64(len(TestVehicles)), nil)
 
 		// when
@@ -137,7 +138,7 @@ func TestGetAllVehicles(t *testing.T) {
 
 		mockVehicleService.EXPECT().GetAll(
 			mock.Anything,
-			domain.VehicleQuery{Query: domain.Query{Provider: "test-provider"}},
+			vehicleDomain.VehicleQuery{Query: shared.Query{Provider: "test-provider"}},
 		).Return(TestVehicles, int64(0), nil)
 
 		// when
@@ -170,8 +171,8 @@ func TestGetAllVehicles(t *testing.T) {
 
 		mockVehicleService.EXPECT().GetAll(
 			mock.Anything,
-			domain.VehicleQuery{Type: "transporter"},
-		).Return([]*domain.Vehicle{TestVehicles[1]}, int64(1), nil)
+			vehicleDomain.VehicleQuery{Type: "transporter"},
+		).Return([]*vehicleDomain.Vehicle{TestVehicles[1]}, int64(1), nil)
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/vehicle?type=transporter", nil)
@@ -203,8 +204,8 @@ func TestGetAllVehicles(t *testing.T) {
 		app.Get("/v1/vehicle", handler)
 
 		mockVehicleService.EXPECT().GetAll(
-			mock.Anything, domain.VehicleQuery{Type: "transporter"},
-		).Return([]*domain.Vehicle{TestVehicles[1]}, int64(1), nil)
+			mock.Anything, vehicleDomain.VehicleQuery{Type: "transporter"},
+		).Return([]*vehicleDomain.Vehicle{TestVehicles[1]}, int64(1), nil)
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/vehicle?type=transporter&page=1&limit=1", nil)
@@ -240,8 +241,8 @@ func TestGetAllVehicles(t *testing.T) {
 		app.Get("/v1/vehicle", handler)
 
 		mockVehicleService.EXPECT().GetAll(
-			mock.Anything, domain.VehicleQuery{},
-		).Return([]*domain.Vehicle{}, int64(0), nil)
+			mock.Anything, vehicleDomain.VehicleQuery{},
+		).Return([]*vehicleDomain.Vehicle{}, int64(0), nil)
 
 		// when
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/vehicle", nil)
@@ -274,7 +275,7 @@ func TestGetAllVehicles(t *testing.T) {
 		app.Get("/v1/vehicle", handler)
 
 		mockVehicleService.EXPECT().GetAll(
-			mock.Anything, domain.VehicleQuery{},
+			mock.Anything, vehicleDomain.VehicleQuery{},
 		).Return(nil, int64(0), fiber.NewError(fiber.StatusInternalServerError, "service error"))
 
 		// when
@@ -297,7 +298,7 @@ func TestGetAllVehicles(t *testing.T) {
 		app.Get("/v1/vehicle", handler)
 
 		mockVehicleService.EXPECT().GetAll(
-			mock.Anything, domain.VehicleQuery{Type: "invalid"},
+			mock.Anything, vehicleDomain.VehicleQuery{Type: "invalid"},
 		).Return(nil, int64(0), fiber.NewError(fiber.ErrBadRequest.Code, "service error"))
 
 		// when
@@ -509,7 +510,7 @@ func TestCreateVehicle(t *testing.T) {
 
 		mockVehicleService.EXPECT().Create(
 			mock.Anything,
-			mock.AnythingOfType("*entities.VehicleCreate"),
+			mock.AnythingOfType("*vehicle.VehicleCreate"),
 		).Return(TestVehicle, nil)
 
 		// when
@@ -558,7 +559,7 @@ func TestCreateVehicle(t *testing.T) {
 
 		mockVehicleService.EXPECT().Create(
 			mock.Anything,
-			mock.AnythingOfType("*entities.VehicleCreate"),
+			mock.AnythingOfType("*vehicle.VehicleCreate"),
 		).Return(nil, fiber.NewError(fiber.StatusInternalServerError, "service error"))
 
 		// when

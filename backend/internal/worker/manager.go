@@ -20,18 +20,18 @@ const eventChSize = 100
 // Subscriber defines the interface for handling events of a specific type.
 type Subscriber interface {
 	// HandleEvent processes the received event.
-	HandleEvent(ctx context.Context, event entities.Event) error
+	HandleEvent(ctx context.Context, event shared.Event) error
 
 	// EventType returns the type of events this subscriber is interested in.
-	EventType() entities.EventType
+	EventType() shared.EventType
 }
 
 // EventManager manages event publication and subscription.
 type EventManager struct {
-	eventCh    chan entities.Event
-	subscriber map[entities.EventType]map[int]chan<- entities.Event
+	eventCh    chan shared.Event
+	subscriber map[shared.EventType]map[int]chan<- shared.Event
 	nextID     int
-	eventTypes map[entities.EventType]struct{}
+	eventTypes map[shared.EventType]struct{}
 	rwMutex    sync.RWMutex
 }
 
@@ -42,7 +42,7 @@ type EventManager struct {
 // subscriptions and event delivery.
 //
 // Parameters:
-// - eventTypes: A variadic list of entities.EventType values that the manager should support.
+// - eventTypes: A variadic list of shared.EventType values that the manager should support.
 //
 // Returns:
 // - A pointer to the newly created EventManager instance.
@@ -50,22 +50,22 @@ type EventManager struct {
 // Example usage:
 //
 //	em := NewEventManager(
-//		entities.EventType("UserCreated"),
-//		entities.EventType("UserDeleted"),
+//		shared.EventType("UserCreated"),
+//		shared.EventType("UserDeleted"),
 //	)
-func NewEventManager(eventTypes ...entities.EventType) *EventManager {
-	eventTypeMap := make(map[entities.EventType]struct{})
+func NewEventManager(eventTypes ...shared.EventType) *EventManager {
+	eventTypeMap := make(map[shared.EventType]struct{})
 	for _, eventType := range eventTypes {
 		eventTypeMap[eventType] = struct{}{}
 	}
 
-	subscriber := make(map[entities.EventType]map[int]chan<- entities.Event)
+	subscriber := make(map[shared.EventType]map[int]chan<- shared.Event)
 	for eventType := range eventTypeMap {
-		subscriber[eventType] = make(map[int]chan<- entities.Event)
+		subscriber[eventType] = make(map[int]chan<- shared.Event)
 	}
 
 	return &EventManager{
-		eventCh:    make(chan entities.Event, eventChSize),
+		eventCh:    make(chan shared.Event, eventChSize),
 		subscriber: subscriber,
 		nextID:     0,
 		eventTypes: eventTypeMap,
@@ -78,7 +78,7 @@ func NewEventManager(eventTypes ...entities.EventType) *EventManager {
 // Events are delivered asynchronously to prevent blocking the publisher.
 //
 // Parameters:
-// - event: The event to be published. Must implement the entities.Event interface.
+// - event: The event to be published. Must implement the shared.Event interface.
 //
 // Returns:
 // - An error if the event type is unsupported.
@@ -89,7 +89,7 @@ func NewEventManager(eventTypes ...entities.EventType) *EventManager {
 //	if err != nil {
 //		log.Fatalf("Failed to publish event: %v", err)
 //	}
-func (e *EventManager) Publish(ctx context.Context, event entities.Event) error {
+func (e *EventManager) Publish(ctx context.Context, event shared.Event) error {
 	if _, ok := e.eventTypes[event.Type()]; !ok {
 		return ErrUnknownEventTypeErr
 	}
@@ -117,11 +117,11 @@ func (e *EventManager) Publish(ctx context.Context, event entities.Event) error 
 //
 // Example usage:
 //
-//	id, ch, err := em.Subscribe(entities.EventType("UserCreated"))
+//	id, ch, err := em.Subscribe(shared.EventType("UserCreated"))
 //	if err != nil {
 //		log.Fatalf("Failed to subscribe: %v", err)
 //	}
-func (e *EventManager) Subscribe(eventType entities.EventType) (id int, ch <-chan entities.Event, err error) {
+func (e *EventManager) Subscribe(eventType shared.EventType) (id int, ch <-chan shared.Event, err error) {
 	if _, ok := e.eventTypes[eventType]; !ok {
 		return -1, nil, ErrUnknownEventTypeErr
 	}
@@ -129,7 +129,7 @@ func (e *EventManager) Subscribe(eventType entities.EventType) (id int, ch <-cha
 	e.rwMutex.Lock()
 	defer e.rwMutex.Unlock()
 
-	channel := make(chan entities.Event)
+	channel := make(chan shared.Event)
 	subID := e.nextID
 	e.subscriber[eventType][id] = channel
 	e.nextID++
@@ -152,11 +152,11 @@ func (e *EventManager) Subscribe(eventType entities.EventType) (id int, ch <-cha
 //
 // Example usage:
 //
-//	err := em.Unsubscribe(entities.EventType("UserCreated"), subscriptionID)
+//	err := em.Unsubscribe(shared.EventType("UserCreated"), subscriptionID)
 //	if err != nil {
 //		log.Printf("Failed to unsubscribe: %v", err)
 //	}
-func (e *EventManager) Unsubscribe(eventType entities.EventType, id int) error {
+func (e *EventManager) Unsubscribe(eventType shared.EventType, id int) error {
 	if _, ok := e.eventTypes[eventType]; !ok {
 		return ErrUnknownEventTypeErr
 	}
@@ -169,7 +169,7 @@ func (e *EventManager) Unsubscribe(eventType entities.EventType, id int) error {
 }
 
 // unsubscribe is an internal method to remove a subscription and close its channel.
-func (e *EventManager) unsubscribe(eventType entities.EventType, id int) error {
+func (e *EventManager) unsubscribe(eventType shared.EventType, id int) error {
 	ch, ok := e.subscriber[eventType][id]
 	if !ok {
 		return ErrNotSubscribedErr

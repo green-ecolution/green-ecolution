@@ -13,7 +13,8 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/auth"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/user"
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/_mock"
 )
 
@@ -23,7 +24,7 @@ func TestRegisterUser(t *testing.T) {
 	t.Run("should return result when success", func(t *testing.T) {
 		// given
 		identityConfig := &config.IdentityAuthConfig{}
-		inputUser := &entities.User{
+		inputUser := &user.User{
 			Username:    "username",
 			Email:       "mail@foo.com",
 			PhoneNumber: "phoneNumber",
@@ -31,13 +32,13 @@ func TestRegisterUser(t *testing.T) {
 			LastName:    "lastName",
 			EmployeeID:  "employeeID",
 		}
-		input := &entities.RegisterUser{
+		input := &user.RegisterUser{
 			User:     *inputUser,
 			Password: "password",
 			Roles:    []string{"viewer"},
 		}
 
-		expected := &entities.User{
+		expected := &user.User{
 			ID:            uuid.MustParse("6be4c752-94df-4719-99b1-ce58253eaf75"),
 			CreatedAt:     time.Now(),
 			Username:      inputUser.Username,
@@ -86,7 +87,7 @@ func TestLoginRequest(t *testing.T) {
 		}
 
 		redirectURL, _ := url.Parse("http://localhost:3000/auth/callback")
-		loginRequest := &entities.LoginRequest{
+		loginRequest := &auth.LoginRequest{
 			RedirectURL: redirectURL,
 		}
 
@@ -97,7 +98,7 @@ func TestLoginRequest(t *testing.T) {
 		query.Add("redirect_uri", loginRequest.RedirectURL.String())
 		respURL.RawQuery = query.Encode()
 
-		expected := &entities.LoginResp{
+		expected := &auth.LoginResp{
 			LoginURL: respURL,
 		}
 
@@ -120,7 +121,7 @@ func TestLoginRequest(t *testing.T) {
 			},
 		}
 
-		loginRequest := &entities.LoginRequest{
+		loginRequest := &auth.LoginRequest{
 			RedirectURL: &url.URL{
 				Scheme: "http",
 				Host:   "localhost:3000",
@@ -143,7 +144,7 @@ func TestClientTokenCallback(t *testing.T) {
 	t.Run("should return client token", func(t *testing.T) {
 		// given
 		identityConfig := &config.IdentityAuthConfig{}
-		loginCallback := &entities.LoginCallback{
+		loginCallback := &auth.LoginCallback{
 			Code: "code",
 			RedirectURL: &url.URL{
 				Scheme: "http",
@@ -152,7 +153,7 @@ func TestClientTokenCallback(t *testing.T) {
 			},
 		}
 
-		expected := &entities.ClientToken{
+		expected := &auth.ClientToken{
 			AccessToken: "access_token",
 		}
 
@@ -172,7 +173,7 @@ func TestClientTokenCallback(t *testing.T) {
 	t.Run("should return error when failed to get access token", func(t *testing.T) {
 		// given
 		identityConfig := &config.IdentityAuthConfig{}
-		loginCallback := &entities.LoginCallback{
+		loginCallback := &auth.LoginCallback{
 			Code: "code",
 			RedirectURL: &url.URL{
 				Scheme: "http",
@@ -204,7 +205,7 @@ func TestLogoutRequest(t *testing.T) {
 		userRepo := storageMock.NewMockUserRepository(t)
 		svc := NewAuthService(authRepo, userRepo, identityConfig)
 
-		logoutRequest := &entities.Logout{RefreshToken: "valid-refresh-token"}
+		logoutRequest := &auth.Logout{RefreshToken: "valid-refresh-token"}
 		userRepo.EXPECT().RemoveSession(mock.Anything, logoutRequest.RefreshToken).Return(nil)
 
 		// then
@@ -222,7 +223,7 @@ func TestLogoutRequest(t *testing.T) {
 		userRepo := storageMock.NewMockUserRepository(t)
 		svc := NewAuthService(authRepo, userRepo, identityConfig)
 
-		logoutRequest := &entities.Logout{RefreshToken: "valid-refresh-token"}
+		logoutRequest := &auth.Logout{RefreshToken: "valid-refresh-token"}
 		userRepo.EXPECT().RemoveSession(mock.Anything, logoutRequest.RefreshToken).Return(errors.New(""))
 
 		// when
@@ -244,7 +245,7 @@ func TestGetAllUsers(t *testing.T) {
 		uuid01, _ := uuid.NewRandom()
 		uuid02, _ := uuid.NewRandom()
 
-		expectedUsers := []*entities.User{
+		expectedUsers := []*user.User{
 			{
 				ID:          uuid01,
 				Username:    "user1",
@@ -298,7 +299,7 @@ func TestGetAllUsers(t *testing.T) {
 		identityConfig := &config.IdentityAuthConfig{}
 		svc := NewAuthService(authRepo, userRepo, identityConfig)
 
-		userRepo.EXPECT().GetAll(rootCtx).Return([]*entities.User{}, nil)
+		userRepo.EXPECT().GetAll(rootCtx).Return([]*user.User{}, nil)
 
 		// when
 		users, err := svc.GetAll(rootCtx)
@@ -315,7 +316,7 @@ func TestGetByIDs(t *testing.T) {
 	uuid02, _ := uuid.NewRandom()
 	input := []string{uuid01.String(), uuid02.String()}
 
-	expectedUsers := []*entities.User{
+	expectedUsers := []*user.User{
 		{
 			ID:          uuid01,
 			Username:    "user1",
@@ -374,7 +375,7 @@ func TestGetByIDs(t *testing.T) {
 		identityConfig := &config.IdentityAuthConfig{}
 		svc := NewAuthService(authRepo, userRepo, identityConfig)
 
-		userRepo.EXPECT().GetByIDs(rootCtx, input).Return([]*entities.User{}, nil)
+		userRepo.EXPECT().GetByIDs(rootCtx, input).Return([]*user.User{}, nil)
 
 		// when
 		users, err := svc.GetByIDs(rootCtx, input)
@@ -397,8 +398,8 @@ func TestGetAllByRole(t *testing.T) {
 		uuid01, _ := uuid.NewRandom()
 		uuid02, _ := uuid.NewRandom()
 
-		expectedRole := entities.UserRoleTbz
-		expectedUsers := []*entities.User{
+		expectedRole := user.UserRoleTbz
+		expectedUsers := []*user.User{
 			{
 				ID:          uuid01,
 				Username:    "admin1",
@@ -406,7 +407,7 @@ func TestGetAllByRole(t *testing.T) {
 				LastName:    "Doe",
 				Email:       "admin1@example.com",
 				PhoneNumber: "+123456789",
-				Roles:       []entities.UserRole{entities.UserRoleTbz},
+				Roles:       []user.UserRole{user.UserRoleTbz},
 			},
 			{
 				ID:          uuid02,
@@ -415,7 +416,7 @@ func TestGetAllByRole(t *testing.T) {
 				LastName:    "Smith",
 				Email:       "admin2@example.com",
 				PhoneNumber: "+987654321",
-				Roles:       []entities.UserRole{entities.UserRoleTbz},
+				Roles:       []user.UserRole{user.UserRoleTbz},
 			},
 		}
 
@@ -436,8 +437,8 @@ func TestGetAllByRole(t *testing.T) {
 		identityConfig := &config.IdentityAuthConfig{}
 		svc := NewAuthService(authRepo, userRepo, identityConfig)
 
-		expectedRole := entities.UserRoleTbz
-		userRepo.EXPECT().GetAllByRole(rootCtx, expectedRole).Return([]*entities.User{}, nil)
+		expectedRole := user.UserRoleTbz
+		userRepo.EXPECT().GetAllByRole(rootCtx, expectedRole).Return([]*user.User{}, nil)
 
 		// when
 		users, err := svc.GetAllByRole(rootCtx, expectedRole)
@@ -454,10 +455,10 @@ func TestGetAllByRole(t *testing.T) {
 		identityConfig := &config.IdentityAuthConfig{}
 		svc := NewAuthService(authRepo, userRepo, identityConfig)
 
-		userRepo.EXPECT().GetAllByRole(rootCtx, entities.UserRoleTbz).Return(nil, errors.New("repository error"))
+		userRepo.EXPECT().GetAllByRole(rootCtx, user.UserRoleTbz).Return(nil, errors.New("repository error"))
 
 		// when
-		users, err := svc.GetAllByRole(rootCtx, entities.UserRoleTbz)
+		users, err := svc.GetAllByRole(rootCtx, user.UserRoleTbz)
 
 		// then
 		assert.Error(t, err)

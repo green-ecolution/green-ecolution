@@ -3504,7 +3504,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "coordinate": {
-                    "$ref": "#/definitions/entities.Coordinate"
+                    "$ref": "#/definitions/shared.Coordinate"
                 }
             }
         },
@@ -5327,7 +5327,7 @@ const docTemplate = `{
                 }
             }
         },
-        "entities.Coordinate": {
+        "shared.Coordinate": {
             "type": "object"
         }
     },

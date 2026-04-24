@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	treeDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 )
 
 func TestTreeRepository_Update(t *testing.T) {
@@ -21,23 +22,23 @@ func TestTreeRepository_Update(t *testing.T) {
 
 		newSpecies := "Updated Species"
 		newNumber := "UpdatedNumber"
-		newCoordinate := entities.MustNewCoordinate(55.123456, 10.654321)
-		newPlantingYear := entities.MustNewPlantingYear(2025)
+		newCoordinate := shared.MustNewCoordinate(55.123456, 10.654321)
+		newPlantingYear := treeDomain.MustNewPlantingYear(2025)
 		newDescription := "Updated description"
-		newWateringStatus := entities.WateringStatusGood
+		newWateringStatus := shared.WateringStatusGood
 		newLastWateredValue := &date
 		newProvider := "foo-provider"
 
 		// when
-		updatedTree, err := r.Update(context.Background(), treeID, func(tree *entities.Tree, _ entities.TreeRepository) (bool, error) {
-			tree.Species = newSpecies
-			tree.Number = newNumber
-			tree.Coordinate = newCoordinate
-			tree.PlantingYear = newPlantingYear
-			tree.Provider = newProvider
-			tree.Description = newDescription
-			tree.WateringStatus = newWateringStatus
-			tree.LastWatered = newLastWateredValue
+		updatedTree, err := r.Update(context.Background(), treeID, func(tr *treeDomain.Tree, _ treeDomain.TreeRepository) (bool, error) {
+			tr.Species = newSpecies
+			tr.Number = newNumber
+			tr.Coordinate = newCoordinate
+			tr.PlantingYear = newPlantingYear
+			tr.Provider = newProvider
+			tr.Description = newDescription
+			tr.WateringStatus = newWateringStatus
+			tr.LastWatered = newLastWateredValue
 			return true, nil
 		})
 
@@ -61,8 +62,8 @@ func TestTreeRepository_Update(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		updatedTree, err := r.Update(context.Background(), int32(99), func(tree *entities.Tree, _ entities.TreeRepository) (bool, error) {
-			tree.Species = "Non-existent species"
+		updatedTree, err := r.Update(context.Background(), int32(99), func(tr *treeDomain.Tree, _ treeDomain.TreeRepository) (bool, error) {
+			tr.Species = "Non-existent species"
 			return true, nil
 		})
 
@@ -77,8 +78,8 @@ func TestTreeRepository_Update(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		updatedTree, err := r.Update(context.Background(), int32(-1), func(tree *entities.Tree, _ entities.TreeRepository) (bool, error) {
-			tree.Species = "species"
+		updatedTree, err := r.Update(context.Background(), int32(-1), func(tr *treeDomain.Tree, _ treeDomain.TreeRepository) (bool, error) {
+			tr.Species = "species"
 			return true, nil
 		})
 
@@ -93,8 +94,8 @@ func TestTreeRepository_Update(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		updatedTree, err := r.Update(context.Background(), int32(0), func(tree *entities.Tree, _ entities.TreeRepository) (bool, error) {
-			tree.Species = "species"
+		updatedTree, err := r.Update(context.Background(), int32(0), func(tr *treeDomain.Tree, _ treeDomain.TreeRepository) (bool, error) {
+			tr.Species = "species"
 			return true, nil
 		})
 
@@ -110,8 +111,8 @@ func TestTreeRepository_Update(t *testing.T) {
 		cancel()
 
 		// when
-		updatedTree, err := r.Update(ctx, int32(1), func(tree *entities.Tree, _ entities.TreeRepository) (bool, error) {
-			tree.Species = "Canceled context species"
+		updatedTree, err := r.Update(ctx, int32(1), func(tr *treeDomain.Tree, _ treeDomain.TreeRepository) (bool, error) {
+			tr.Species = "Canceled context species"
 			return true, nil
 		})
 

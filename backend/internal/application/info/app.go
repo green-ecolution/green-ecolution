@@ -5,38 +5,38 @@ import (
 	"errors"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/info"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils/enums"
 )
 
 type InfoService struct {
-	infoRepository entities.InfoRepository
+	infoRepository info.InfoRepository
 }
 
-func NewInfoService(infoRepository entities.InfoRepository) *InfoService {
+func NewInfoService(infoRepository info.InfoRepository) *InfoService {
 	return &InfoService{
 		infoRepository: infoRepository,
 	}
 }
 
-func (s *InfoService) GetAppInfo(ctx context.Context) (*entities.App, error) {
+func (s *InfoService) GetAppInfo(ctx context.Context) (*info.App, error) {
 	log := logger.GetLogger(ctx)
 
 	isAuth := ctx.Value(enums.ContextKeyClaims) != nil
 
 	appInfo, err := s.infoRepository.GetAppInfo(ctx)
 	if err != nil {
-		if errors.Is(err, entities.ErrIPNotFound) {
+		if errors.Is(err, info.ErrIPNotFound) {
 			log.Debug("failed to receive ip from local system", "error", err)
 		}
-		if errors.Is(err, entities.ErrIFacesNotFound) {
+		if errors.Is(err, info.ErrIFacesNotFound) {
 			log.Debug("failed to receive network interfaces from local system", "error", err)
 		}
-		if errors.Is(err, entities.ErrIFacesAddressNotFound) {
+		if errors.Is(err, info.ErrIFacesAddressNotFound) {
 			log.Debug("failed to receive network interfaces address from local system", "error", err)
 		}
-		if errors.Is(err, entities.ErrHostnameNotFound) {
+		if errors.Is(err, info.ErrHostnameNotFound) {
 			log.Debug("failed to receive network hostname from local system", "error", err)
 		}
 
@@ -44,13 +44,13 @@ func (s *InfoService) GetAppInfo(ctx context.Context) (*entities.App, error) {
 	}
 
 	if !isAuth {
-		appInfo.Server = entities.Server{}
+		appInfo.Server = info.Server{}
 	}
 
 	return appInfo, nil
 }
 
-func (s *InfoService) GetAppInfoResponse(ctx context.Context) (*entities.App, error) {
+func (s *InfoService) GetAppInfoResponse(ctx context.Context) (*info.App, error) {
 	appInfo, err := s.GetAppInfo(ctx)
 	if err != nil {
 		return nil, err
@@ -59,11 +59,11 @@ func (s *InfoService) GetAppInfoResponse(ctx context.Context) (*entities.App, er
 	return appInfo, nil
 }
 
-func (s *InfoService) GetMapInfo(ctx context.Context) (*entities.Map, error) {
+func (s *InfoService) GetMapInfo(ctx context.Context) (*info.Map, error) {
 	return s.infoRepository.GetMapInfo(ctx)
 }
 
-func (s *InfoService) GetServerInfo(ctx context.Context) (*entities.Server, error) {
+func (s *InfoService) GetServerInfo(ctx context.Context) (*info.Server, error) {
 	log := logger.GetLogger(ctx)
 
 	isAuth := ctx.Value(enums.ContextKeyClaims) != nil
@@ -74,16 +74,16 @@ func (s *InfoService) GetServerInfo(ctx context.Context) (*entities.Server, erro
 
 	serverInfo, err := s.infoRepository.GetServerInfo(ctx)
 	if err != nil {
-		if errors.Is(err, entities.ErrIPNotFound) {
+		if errors.Is(err, info.ErrIPNotFound) {
 			log.Debug("failed to receive ip from local system", "error", err)
 		}
-		if errors.Is(err, entities.ErrIFacesNotFound) {
+		if errors.Is(err, info.ErrIFacesNotFound) {
 			log.Debug("failed to receive network interfaces from local system", "error", err)
 		}
-		if errors.Is(err, entities.ErrIFacesAddressNotFound) {
+		if errors.Is(err, info.ErrIFacesAddressNotFound) {
 			log.Debug("failed to receive network interfaces address from local system", "error", err)
 		}
-		if errors.Is(err, entities.ErrHostnameNotFound) {
+		if errors.Is(err, info.ErrHostnameNotFound) {
 			log.Debug("failed to receive network hostname from local system", "error", err)
 		}
 
@@ -93,11 +93,11 @@ func (s *InfoService) GetServerInfo(ctx context.Context) (*entities.Server, erro
 	return serverInfo, nil
 }
 
-func (s *InfoService) GetServices(ctx context.Context) (*entities.Services, error) {
+func (s *InfoService) GetServices(ctx context.Context) (*info.Services, error) {
 	return s.infoRepository.GetServices(ctx)
 }
 
-func (s *InfoService) GetStatistics(ctx context.Context) (*entities.DataStatistics, error) {
+func (s *InfoService) GetStatistics(ctx context.Context) (*info.DataStatistics, error) {
 	return s.infoRepository.GetStatistics(ctx)
 }
 

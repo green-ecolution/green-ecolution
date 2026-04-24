@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/vehicle"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
@@ -23,7 +25,7 @@ func TestWateringPlanRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, entities.Query{})
+		got, totalCount, err := r.GetAll(ctx, shared.Query{})
 
 		// then
 		assert.NoError(t, err)
@@ -42,22 +44,21 @@ func TestWateringPlanRepository_GetAll(t *testing.T) {
 			assert.Equal(t, allTestWateringPlans[i].CancellationNote, wp.CancellationNote)
 
 			// assert transporter
-			assert.Equal(t, allTestWateringPlans[i].Transporter.ID, wp.Transporter.ID)
+			assert.Equal(t, allTestWateringPlans[i].TransporterID, wp.TransporterID)
 
 			// assert trailer
-			if allTestWateringPlans[i].Trailer == nil {
-				assert.Nil(t, wp.Trailer)
+			if allTestWateringPlans[i].TrailerID == nil {
+				assert.Nil(t, wp.TrailerID)
 				assert.NoError(t, err)
 			} else {
-				assert.NotNil(t, wp.Trailer)
-				assert.Equal(t, allTestWateringPlans[i].Trailer.ID, wp.Trailer.ID)
+				assert.NotNil(t, wp.TrailerID)
+				assert.Equal(t, *allTestWateringPlans[i].TrailerID, *wp.TrailerID)
 			}
 
 			// assert treecluster
-			assert.Len(t, allTestWateringPlans[i].TreeClusters, len(wp.TreeClusters))
-			for j, tc := range wp.TreeClusters {
-				assert.Equal(t, allTestWateringPlans[i].TreeClusters[j].ID, tc.ID)
-				assert.Equal(t, allTestWateringPlans[i].TreeClusters[j].Name, tc.Name)
+			assert.Len(t, allTestWateringPlans[i].TreeClusterIDs, len(wp.TreeClusterIDs))
+			for j, tcID := range wp.TreeClusterIDs {
+				assert.Equal(t, allTestWateringPlans[i].TreeClusterIDs[j], tcID)
 			}
 
 			// assert user
@@ -70,10 +71,10 @@ func TestWateringPlanRepository_GetAll(t *testing.T) {
 			if allTestWateringPlans[i].Evaluation == nil {
 				assert.Len(t, allTestWateringPlans[i].Evaluation, 0)
 				// check if evaluation is empty if the status is not finished
-				assert.NotEqual(t, entities.WateringPlanStatusFinished, wp.Status)
+				assert.NotEqual(t, watering.WateringPlanStatusFinished, wp.Status)
 			} else {
 				assert.Equal(t, len(allTestWateringPlans[i].Evaluation), len(wp.Evaluation))
-				assert.Equal(t, entities.WateringPlanStatusFinished, wp.Status)
+				assert.Equal(t, watering.WateringPlanStatusFinished, wp.Status)
 				for j, value := range wp.Evaluation {
 					assert.Equal(t, allTestWateringPlans[i].Evaluation[j].WateringPlanID, value.WateringPlanID)
 					assert.Equal(t, allTestWateringPlans[i].Evaluation[j].TreeClusterID, value.TreeClusterID)
@@ -95,7 +96,7 @@ func TestWateringPlanRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(-1))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, entities.Query{Provider: "test-provider"})
+		got, totalCount, err := r.GetAll(ctx, shared.Query{Provider: "test-provider"})
 
 		// then
 		assert.NoError(t, err)
@@ -121,7 +122,7 @@ func TestWateringPlanRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(2))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, entities.Query{})
+		got, totalCount, err := r.GetAll(ctx, shared.Query{})
 		wateringPlans := allTestWateringPlans[2:4]
 
 		// then
@@ -146,7 +147,7 @@ func TestWateringPlanRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(2))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, entities.Query{})
+		got, totalCount, err := r.GetAll(ctx, shared.Query{})
 
 		// then
 		assert.Error(t, err)
@@ -164,7 +165,7 @@ func TestWateringPlanRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(0))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, entities.Query{})
+		got, totalCount, err := r.GetAll(ctx, shared.Query{})
 
 		// then
 		assert.Error(t, err)
@@ -181,7 +182,7 @@ func TestWateringPlanRepository_GetAll(t *testing.T) {
 		ctx = context.WithValue(ctx, "limit", int32(2))
 
 		// when
-		got, totalCount, err := r.GetAll(ctx, entities.Query{})
+		got, totalCount, err := r.GetAll(ctx, shared.Query{})
 
 		// then
 		assert.NoError(t, err)
@@ -196,7 +197,7 @@ func TestWateringPlanRepository_GetAll(t *testing.T) {
 		cancel()
 
 		// when
-		_, _, err := r.GetAll(ctx, entities.Query{})
+		_, _, err := r.GetAll(ctx, shared.Query{})
 
 		// then
 		assert.Error(t, err)
@@ -210,7 +211,7 @@ func TestWateringPlanRepository_GetCount(t *testing.T) {
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/watering_plan")
 		r := NewWateringPlanRepository(suite.Store, mappers)
 		// when
-		totalCount, err := r.GetCount(context.Background(), entities.Query{})
+		totalCount, err := r.GetCount(context.Background(), shared.Query{})
 
 		// then
 		assert.NoError(t, err)
@@ -224,7 +225,7 @@ func TestWateringPlanRepository_GetCount(t *testing.T) {
 		cancel()
 
 		// when
-		totalCount, err := r.GetCount(ctx, entities.Query{})
+		totalCount, err := r.GetCount(ctx, shared.Query{})
 
 		// then
 		assert.Error(t, err)
@@ -287,18 +288,16 @@ func TestWateringPlanRepository_GetByID(t *testing.T) {
 		assert.Equal(t, allTestWateringPlans[0].CancellationNote, got.CancellationNote)
 
 		// assert transporter
-		assert.Equal(t, allTestWateringPlans[0].Transporter.ID, got.Transporter.ID)
-		assert.Equal(t, allTestWateringPlans[0].Transporter.Type, got.Transporter.Type)
+		assert.Equal(t, allTestWateringPlans[0].TransporterID, got.TransporterID)
 
 		// assert trailer
-		assert.Equal(t, allTestWateringPlans[0].Trailer.ID, got.Trailer.ID)
-		assert.Equal(t, allTestWateringPlans[0].Trailer.Type, got.Trailer.Type)
+		assert.NotNil(t, got.TrailerID)
+		assert.Equal(t, *allTestWateringPlans[0].TrailerID, *got.TrailerID)
 
 		// assert treecluster
-		assert.Len(t, got.TreeClusters, 2)
-		for i, tc := range got.TreeClusters {
-			assert.Equal(t, allTestWateringPlans[0].TreeClusters[i].ID, tc.ID)
-			assert.Equal(t, allTestWateringPlans[0].TreeClusters[i].Name, tc.Name)
+		assert.Len(t, got.TreeClusterIDs, 2)
+		for i, tcID := range got.TreeClusterIDs {
+			assert.Equal(t, allTestWateringPlans[0].TreeClusterIDs[i], tcID)
 		}
 
 		// assert user
@@ -330,17 +329,15 @@ func TestWateringPlanRepository_GetByID(t *testing.T) {
 		assert.Equal(t, allTestWateringPlans[1].CancellationNote, got.CancellationNote)
 
 		// assert transporter
-		assert.Equal(t, allTestWateringPlans[1].Transporter.ID, got.Transporter.ID)
-		assert.Equal(t, allTestWateringPlans[1].Transporter.Type, got.Transporter.Type)
+		assert.Equal(t, allTestWateringPlans[1].TransporterID, got.TransporterID)
 
 		// assert nil trailer
-		assert.Nil(t, got.Trailer)
+		assert.Nil(t, got.TrailerID)
 
 		// assert treecluster
-		assert.Len(t, got.TreeClusters, 1)
-		for i, tc := range got.TreeClusters {
-			assert.Equal(t, allTestWateringPlans[1].TreeClusters[i].ID, tc.ID)
-			assert.Equal(t, allTestWateringPlans[1].TreeClusters[i].Name, tc.Name)
+		assert.Len(t, got.TreeClusterIDs, 1)
+		for i, tcID := range got.TreeClusterIDs {
+			assert.Equal(t, allTestWateringPlans[1].TreeClusterIDs[i], tcID)
 		}
 
 		// assert user
@@ -360,11 +357,11 @@ func TestWateringPlanRepository_GetByID(t *testing.T) {
 		// then
 		assert.NoError(t, err)
 		assert.NotNil(t, got)
-		assert.Equal(t, entities.WateringPlanStatusFinished, got.Status)
+		assert.Equal(t, watering.WateringPlanStatusFinished, got.Status)
 
 		// assert evaluation
 		assert.Equal(t, len(allTestWateringPlans[2].Evaluation), len(got.Evaluation))
-		assert.Equal(t, entities.WateringPlanStatusFinished, got.Status)
+		assert.Equal(t, watering.WateringPlanStatusFinished, got.Status)
 		for j, value := range got.Evaluation {
 			assert.Equal(t, allTestWateringPlans[2].Evaluation[j].WateringPlanID, value.WateringPlanID)
 			assert.Equal(t, allTestWateringPlans[2].Evaluation[j].TreeClusterID, value.TreeClusterID)
@@ -423,49 +420,37 @@ func TestWateringPlanRepository_GetByID(t *testing.T) {
 	})
 }
 
-func TestWateringPlanRepository_GetLinkedVehicleByIDAndType(t *testing.T) {
+func TestWateringPlanRepository_GetLinkedVehicleIDByIDAndType(t *testing.T) {
 	ctx := context.Background()
 	suite.ResetDB(t)
 	suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/watering_plan")
 
-	t.Run("should return vehicle with type transporter by watering plan id", func(t *testing.T) {
+	t.Run("should return vehicle ID with type transporter by watering plan id", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-		shouldReturn := allTestVehicles[1]
+		shouldReturnID := allTestVehicles[1].ID
 
 		// when
-		got, err := r.GetLinkedVehicleByIDAndType(ctx, int32(1), entities.VehicleTypeTransporter)
+		got, err := r.GetLinkedVehicleIDByIDAndType(ctx, int32(1), string(vehicle.VehicleTypeTransporter))
 
 		// then
 		assert.NoError(t, err)
-		assert.Equal(t, shouldReturn.ID, got.ID)
-		assert.Equal(t, shouldReturn.NumberPlate, got.NumberPlate)
-		assert.Equal(t, shouldReturn.Description, got.Description)
-		assert.Equal(t, shouldReturn.WaterCapacity, got.WaterCapacity)
-		assert.Equal(t, entities.VehicleTypeTransporter, got.Type)
-		assert.Equal(t, shouldReturn.Status, got.Status)
-		assert.NotZero(t, got.CreatedAt)
-		assert.NotZero(t, got.UpdatedAt)
+		assert.NotNil(t, got)
+		assert.Equal(t, shouldReturnID, *got)
 	})
 
-	t.Run("should return vehicle with type trailer by watering plan id", func(t *testing.T) {
+	t.Run("should return vehicle ID with type trailer by watering plan id", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-		shouldReturn := allTestVehicles[0]
+		shouldReturnID := allTestVehicles[0].ID
 
 		// when
-		got, err := r.GetLinkedVehicleByIDAndType(ctx, int32(1), entities.VehicleTypeTrailer)
+		got, err := r.GetLinkedVehicleIDByIDAndType(ctx, int32(1), string(vehicle.VehicleTypeTrailer))
 
 		// then
 		assert.NoError(t, err)
-		assert.Equal(t, shouldReturn.ID, got.ID)
-		assert.Equal(t, shouldReturn.NumberPlate, got.NumberPlate)
-		assert.Equal(t, shouldReturn.Description, got.Description)
-		assert.Equal(t, shouldReturn.WaterCapacity, got.WaterCapacity)
-		assert.Equal(t, entities.VehicleTypeTrailer, got.Type)
-		assert.Equal(t, shouldReturn.Status, got.Status)
-		assert.NotZero(t, got.CreatedAt)
-		assert.NotZero(t, got.UpdatedAt)
+		assert.NotNil(t, got)
+		assert.Equal(t, shouldReturnID, *got)
 	})
 
 	t.Run("should return error when watering plan not found", func(t *testing.T) {
@@ -473,7 +458,7 @@ func TestWateringPlanRepository_GetLinkedVehicleByIDAndType(t *testing.T) {
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
 		// when
-		got, err := r.GetLinkedVehicleByIDAndType(ctx, int32(99), entities.VehicleTypeTrailer)
+		got, err := r.GetLinkedVehicleIDByIDAndType(ctx, int32(99), string(vehicle.VehicleTypeTrailer))
 
 		// then
 		assert.Error(t, err)
@@ -485,7 +470,7 @@ func TestWateringPlanRepository_GetLinkedVehicleByIDAndType(t *testing.T) {
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
 		// when
-		got, err := r.GetLinkedVehicleByIDAndType(ctx, int32(2), entities.VehicleTypeTrailer)
+		got, err := r.GetLinkedVehicleIDByIDAndType(ctx, int32(2), string(vehicle.VehicleTypeTrailer))
 
 		// then
 		assert.Error(t, err)
@@ -497,7 +482,7 @@ func TestWateringPlanRepository_GetLinkedVehicleByIDAndType(t *testing.T) {
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
 		// when
-		got, err := r.GetLinkedVehicleByIDAndType(ctx, int32(-1), entities.VehicleTypeTransporter)
+		got, err := r.GetLinkedVehicleIDByIDAndType(ctx, int32(-1), string(vehicle.VehicleTypeTransporter))
 
 		// then
 		assert.Error(t, err)
@@ -509,7 +494,7 @@ func TestWateringPlanRepository_GetLinkedVehicleByIDAndType(t *testing.T) {
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
 		// when
-		got, err := r.GetLinkedVehicleByIDAndType(ctx, int32(0), entities.VehicleTypeTransporter)
+		got, err := r.GetLinkedVehicleIDByIDAndType(ctx, int32(0), string(vehicle.VehicleTypeTransporter))
 
 		// then
 		assert.Error(t, err)
@@ -521,7 +506,7 @@ func TestWateringPlanRepository_GetLinkedVehicleByIDAndType(t *testing.T) {
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
 		// when
-		got, err := r.GetLinkedVehicleByIDAndType(ctx, int32(1), entities.VehicleTypeUnknown)
+		got, err := r.GetLinkedVehicleIDByIDAndType(ctx, int32(1), string(vehicle.VehicleTypeUnknown))
 
 		// then
 		assert.Error(t, err)
@@ -535,7 +520,7 @@ func TestWateringPlanRepository_GetLinkedVehicleByIDAndType(t *testing.T) {
 		cancel()
 
 		// when
-		got, err := r.GetLinkedVehicleByIDAndType(ctx, int32(1), entities.VehicleTypeTransporter)
+		got, err := r.GetLinkedVehicleIDByIDAndType(ctx, int32(1), string(vehicle.VehicleTypeTransporter))
 
 		// then
 		assert.Error(t, err)
@@ -543,7 +528,7 @@ func TestWateringPlanRepository_GetLinkedVehicleByIDAndType(t *testing.T) {
 	})
 }
 
-func TestWateringPlanRepository_GetLinkedTreeClustersByID(t *testing.T) {
+func TestWateringPlanRepository_GetLinkedTreeClusterIDsByID(t *testing.T) {
 	suite.ResetDB(t)
 	suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/watering_plan")
 
@@ -553,14 +538,13 @@ func TestWateringPlanRepository_GetLinkedTreeClustersByID(t *testing.T) {
 		shouldReturn := allTestClusters[0:2]
 
 		// when
-		got, err := r.GetLinkedTreeClustersByID(context.Background(), 1)
+		got, err := r.GetLinkedTreeClusterIDsByID(context.Background(), 1)
 
 		// then
 		assert.NoError(t, err)
 		assert.Len(t, got, len(shouldReturn))
-		for i, tc := range got {
-			assert.Equal(t, shouldReturn[i].ID, tc.ID)
-			assert.Equal(t, shouldReturn[i].Name, tc.Name)
+		for i, tcID := range got {
+			assert.Equal(t, shouldReturn[i].ID, tcID)
 		}
 	})
 
@@ -569,7 +553,7 @@ func TestWateringPlanRepository_GetLinkedTreeClustersByID(t *testing.T) {
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
 		// when
-		got, err := r.GetLinkedTreeClustersByID(context.Background(), 99)
+		got, err := r.GetLinkedTreeClusterIDsByID(context.Background(), 99)
 
 		// then
 		assert.NoError(t, err)
@@ -581,7 +565,7 @@ func TestWateringPlanRepository_GetLinkedTreeClustersByID(t *testing.T) {
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
 		// when
-		got, err := r.GetLinkedTreeClustersByID(context.Background(), -1)
+		got, err := r.GetLinkedTreeClusterIDsByID(context.Background(), -1)
 
 		// then
 		assert.NoError(t, err)
@@ -593,7 +577,7 @@ func TestWateringPlanRepository_GetLinkedTreeClustersByID(t *testing.T) {
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
 		// when
-		got, err := r.GetLinkedTreeClustersByID(context.Background(), 0)
+		got, err := r.GetLinkedTreeClusterIDsByID(context.Background(), 0)
 
 		// then
 		assert.NoError(t, err)
@@ -607,7 +591,7 @@ func TestWateringPlanRepository_GetLinkedTreeClustersByID(t *testing.T) {
 		cancel()
 
 		// when
-		got, err := r.GetLinkedTreeClustersByID(ctx, 1)
+		got, err := r.GetLinkedTreeClusterIDsByID(ctx, 1)
 
 		// then
 		assert.Error(t, err)
@@ -790,17 +774,17 @@ func TestWateringPlanRepository_GetAllUserCount(t *testing.T) {
 	})
 }
 
-var allTestWateringPlans = []*entities.WateringPlan{
+var allTestWateringPlans = []*watering.WateringPlan{
 	{
 		ID:                 1,
 		Date:               time.Date(2024, 9, 22, 0, 0, 0, 0, time.UTC),
 		Description:        "New watering plan for the west side of the city",
-		Status:             entities.WateringPlanStatusPlanned,
-		Distance:           utils.P(entities.MustNewDistance(63.0)),
+		Status:             watering.WateringPlanStatusPlanned,
+		Distance:           utils.P(shared.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(720.0),
-		Transporter:        allTestVehicles[1],
-		Trailer:            allTestVehicles[0],
-		TreeClusters:       allTestClusters[0:2],
+		TransporterID:      utils.P(int32(2)),
+		TrailerID:          utils.P(int32(1)),
+		TreeClusterIDs:     []int32{1, 2},
 		CancellationNote:   "",
 		UserIDs:            parseUUIDs([]string{"6a1078e8-80fd-458f-b74e-e388fe2dd6ab", "05c028d9-62ef-4dcc-aa79-6b2fe9ce6f42", "e5ed176c-3aa8-4676-8e5b-0a0001a1bb88"}),
 	},
@@ -808,12 +792,12 @@ var allTestWateringPlans = []*entities.WateringPlan{
 		ID:                 2,
 		Date:               time.Date(2024, 8, 3, 0, 0, 0, 0, time.UTC),
 		Description:        "New watering plan for the east side of the city",
-		Status:             entities.WateringPlanStatusActive,
-		Distance:           utils.P(entities.MustNewDistance(63.0)),
+		Status:             watering.WateringPlanStatusActive,
+		Distance:           utils.P(shared.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(0.0),
-		Transporter:        allTestVehicles[1],
-		Trailer:            nil,
-		TreeClusters:       allTestClusters[2:3],
+		TransporterID:      utils.P(int32(2)),
+		TrailerID:          nil,
+		TreeClusterIDs:     []int32{3},
 		CancellationNote:   "",
 		UserIDs:            parseUUIDs([]string{"6a1078e8-80fd-458f-b74e-e388fe2dd6ab"}),
 		Provider:           "test-provider",
@@ -825,15 +809,15 @@ var allTestWateringPlans = []*entities.WateringPlan{
 		ID:                 3,
 		Date:               time.Date(2024, 6, 12, 0, 0, 0, 0, time.UTC),
 		Description:        "Very important watering plan due to no rainfall",
-		Status:             entities.WateringPlanStatusFinished,
-		Distance:           utils.P(entities.MustNewDistance(63.0)),
+		Status:             watering.WateringPlanStatusFinished,
+		Distance:           utils.P(shared.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(0.0),
-		Transporter:        allTestVehicles[1],
-		Trailer:            nil,
-		TreeClusters:       allTestClusters[0:3],
+		TransporterID:      utils.P(int32(2)),
+		TrailerID:          nil,
+		TreeClusterIDs:     []int32{1, 2, 3},
 		CancellationNote:   "",
 		UserIDs:            parseUUIDs([]string{"6a1078e8-80fd-458f-b74e-e388fe2dd6ab"}),
-		Evaluation: []*entities.EvaluationValue{
+		Evaluation: []*watering.EvaluationValue{
 			{
 				WateringPlanID: 3,
 				TreeClusterID:  1,
@@ -855,12 +839,12 @@ var allTestWateringPlans = []*entities.WateringPlan{
 		ID:                 4,
 		Date:               time.Date(2024, 6, 10, 0, 0, 0, 0, time.UTC),
 		Description:        "New watering plan for the south side of the city",
-		Status:             entities.WateringPlanStatusNotCompeted,
-		Distance:           utils.P(entities.MustNewDistance(63.0)),
+		Status:             watering.WateringPlanStatusNotCompeted,
+		Distance:           utils.P(shared.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(0.0),
-		Transporter:        allTestVehicles[1],
-		Trailer:            nil,
-		TreeClusters:       allTestClusters[2:3],
+		TransporterID:      utils.P(int32(2)),
+		TrailerID:          nil,
+		TreeClusterIDs:     []int32{3},
 		CancellationNote:   "",
 		UserIDs:            parseUUIDs([]string{"6a1078e8-80fd-458f-b74e-e388fe2dd6ab"}),
 	},
@@ -868,94 +852,44 @@ var allTestWateringPlans = []*entities.WateringPlan{
 		ID:                 5,
 		Date:               time.Date(2024, 6, 4, 0, 0, 0, 0, time.UTC),
 		Description:        "Canceled due to flood",
-		Status:             entities.WateringPlanStatusCanceled,
-		Distance:           utils.P(entities.MustNewDistance(63.0)),
+		Status:             watering.WateringPlanStatusCanceled,
+		Distance:           utils.P(shared.MustNewDistance(63.0)),
 		TotalWaterRequired: utils.P(0.0),
-		Transporter:        allTestVehicles[1],
-		TreeClusters:       allTestClusters[2:3],
+		TransporterID:      utils.P(int32(2)),
+		TreeClusterIDs:     []int32{3},
 		CancellationNote:   "The watering plan was cancelled due to various reasons.",
 		UserIDs:            parseUUIDs([]string{"6a1078e8-80fd-458f-b74e-e388fe2dd6ab"}),
 	},
 }
 
-var allTestVehicles = []*entities.Vehicle{
+var allTestVehicles = []*vehicle.Vehicle{
 	{
 		ID:            1,
 		NumberPlate:   "B-1234",
 		Description:   "Test vehicle 1",
-		WaterCapacity: entities.MustNewWaterCapacity(100.0),
-		Type:          entities.VehicleTypeTrailer,
-		Status:        entities.VehicleStatusActive,
+		WaterCapacity: shared.MustNewWaterCapacity(100.0),
+		Type:          vehicle.VehicleTypeTrailer,
+		Status:        vehicle.VehicleStatusActive,
 	},
 	{
 		ID:            2,
 		NumberPlate:   "B-5678",
 		Description:   "Test vehicle 2",
-		WaterCapacity: entities.MustNewWaterCapacity(150.0),
-		Type:          entities.VehicleTypeTransporter,
-		Status:        entities.VehicleStatusUnknown,
+		WaterCapacity: shared.MustNewWaterCapacity(150.0),
+		Type:          vehicle.VehicleTypeTransporter,
+		Status:        vehicle.VehicleStatusUnknown,
 	},
 }
 
-func mustNewCoordinatePtr(lat, lng float64) *entities.Coordinate {
-	c := entities.MustNewCoordinate(lat, lng)
-	return &c
+type testCluster struct {
+	ID   int32
+	Name string
 }
 
-var allTestClusters = []*entities.TreeCluster{
-	{
-		ID:             1,
-		Name:           "Flensburger Stadion",
-		WateringStatus: entities.WateringStatusGood,
-		MoistureLevel:  0.75,
-		Region: &entities.Region{
-			ID:   1,
-			Name: "Mürwik",
-		},
-		Address:       "Am Stadion",
-		Description:   "Alle Bäume am Stadion",
-		SoilCondition: entities.TreeSoilConditionSandig,
-		Coordinate:    mustNewCoordinatePtr(54.820940, 9.489022),
-		Trees: []*entities.Tree{
-			{ID: 1},
-			{ID: 2},
-			{ID: 3},
-		},
-	},
-	{
-		ID:             2,
-		Name:           "Sankt-Jürgen-Platz",
-		WateringStatus: entities.WateringStatusModerate,
-		MoistureLevel:  0.5,
-		Region: &entities.Region{
-			ID:   1,
-			Name: "Mürwik",
-		},
-		Address:       "Ulmenstraße",
-		Description:   "Bäume beim Sankt-Jürgen-Platz",
-		SoilCondition: entities.TreeSoilConditionSchluffig,
-		Coordinate:    mustNewCoordinatePtr(54.78805731048199, 9.44400186680097),
-		Trees: []*entities.Tree{
-			{ID: 4},
-			{ID: 5},
-			{ID: 6},
-		},
-	},
-	{
-		ID:             3,
-		Name:           "Solitüde Strand",
-		WateringStatus: "unknown",
-		MoistureLevel:  0.7,
-		Region: &entities.Region{
-			ID:   1,
-			Name: "Mürwik",
-		},
-		Address:       "Solitüde Strand",
-		Description:   "Alle Bäume am Strand",
-		SoilCondition: "schluffig",
-		Coordinate:    mustNewCoordinatePtr(54.802163, 9.446398),
-		Trees:         []*entities.Tree{},
-	},
+var allTestClusters = []*testCluster{
+	{ID: 1, Name: "Flensburger Stadion"},
+	{ID: 2, Name: "Sankt-Jürgen-Platz"},
+	{ID: 3, Name: "Solitüde Strand"},
 }
 
 func parseUUIDs(uuids []string) []*uuid.UUID {
@@ -974,7 +908,7 @@ func parseUUIDs(uuids []string) []*uuid.UUID {
 func calculateCountTotalWater() int {
 	count := 0
 	for _, plan := range allTestWateringPlans {
-		count += len(plan.TreeClusters)
+		count += len(plan.TreeClusterIDs)
 	}
 
 	return count * 10

@@ -7,7 +7,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities/mapper"
 	handler "github.com/green-ecolution/green-ecolution/backend/internal/interface/http/handler/v1"
@@ -114,7 +116,7 @@ func GetTreeBySensorID(svc ports.TreeService) fiber.Handler {
 		ctx := c.Context()
 		rawID := strings.Clone(c.Params("sensor_id"))
 
-		sensorID, err := domain.NewSensorID(rawID)
+		sensorID, err := sensor.NewSensorID(rawID)
 		if err != nil {
 			return errorhandler.HandleError(ports.NewError(ports.BadRequest, err.Error()))
 		}
@@ -292,7 +294,7 @@ func GetNearestTrees(svc ports.TreeService) fiber.Handler {
 		if q.Lat == nil || q.Lng == nil {
 			return errorhandler.HandleError(ports.NewError(ports.BadRequest, "lat and lng query parameters are required"))
 		}
-		coord, err := domain.NewCoordinate(*q.Lat, *q.Lng)
+		coord, err := shared.NewCoordinate(*q.Lat, *q.Lng)
 		if err != nil {
 			return errorhandler.HandleError(ports.NewError(ports.BadRequest, err.Error()))
 		}
@@ -313,18 +315,15 @@ func GetNearestTrees(svc ports.TreeService) fiber.Handler {
 	}
 }
 
-func mapTreeToDto(t *domain.Tree) *entities.TreeResponse {
-	dto := mapper.TreeFromResponse(t)
-	dto.Sensor = mapper.SensorFromResponse(t.Sensor)
-
-	return dto
+func mapTreeToDto(t *tree.Tree) *entities.TreeResponse {
+	return mapper.TreeFromResponse(t)
 }
 
-func fillTreeQueryParams(c *fiber.Ctx) (domain.TreeQuery, error) {
-	var filter domain.TreeQuery
+func fillTreeQueryParams(c *fiber.Ctx) (tree.TreeQuery, error) {
+	var filter tree.TreeQuery
 
 	if err := c.QueryParser(&filter); err != nil {
-		return domain.TreeQuery{}, err
+		return tree.TreeQuery{}, err
 	}
 
 	return filter, nil

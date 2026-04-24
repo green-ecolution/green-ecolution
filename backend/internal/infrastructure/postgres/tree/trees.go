@@ -4,7 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 	imgMapper "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
@@ -33,7 +34,7 @@ func NewTreeRepositoryMappers(
 	}
 }
 
-var _ entities.TreeRepository = (*TreeRepository)(nil)
+var _ tree.TreeRepository = (*TreeRepository)(nil)
 
 func NewTreeRepository(s *store.Store, mappers TreeMappers) *TreeRepository {
 	return &TreeRepository{
@@ -72,7 +73,7 @@ func (r *TreeRepository) UnlinkTreeClusterID(ctx context.Context, treeClusterID 
 	return nil
 }
 
-func (r *TreeRepository) UnlinkSensorID(ctx context.Context, sensorID entities.SensorID) error {
+func (r *TreeRepository) UnlinkSensorID(ctx context.Context, sensorID sensor.SensorID) error {
 	if sensorID.String() == "" {
 		return errors.New("sensorID cannot be empty")
 	}

@@ -6,11 +6,12 @@ import (
 	"net/url"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/auth"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/user"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
-func (s *AuthService) Register(ctx context.Context, user *domain.RegisterUser) (*domain.User, error) {
+func (s *AuthService) Register(ctx context.Context, user *user.RegisterUser) (*user.User, error) {
 	log := logger.GetLogger(ctx)
 
 	createdUser, err := s.userRepo.Create(ctx, &user.User, user.Password, user.Roles)
@@ -22,7 +23,7 @@ func (s *AuthService) Register(ctx context.Context, user *domain.RegisterUser) (
 	return createdUser, nil
 }
 
-func (s *AuthService) LoginRequest(ctx context.Context, loginRequest *domain.LoginRequest) *domain.LoginResp {
+func (s *AuthService) LoginRequest(ctx context.Context, loginRequest *auth.LoginRequest) *auth.LoginResp {
 	log := logger.GetLogger(ctx)
 	loginURL, err := url.ParseRequestURI(s.cfg.OidcProvider.AuthURL)
 	if err != nil {
@@ -36,14 +37,14 @@ func (s *AuthService) LoginRequest(ctx context.Context, loginRequest *domain.Log
 	query.Add("redirect_uri", loginRequest.RedirectURL.String())
 
 	loginURL.RawQuery = query.Encode()
-	resp := &domain.LoginResp{
+	resp := &auth.LoginResp{
 		LoginURL: loginURL,
 	}
 
 	return resp
 }
 
-func (s *AuthService) ClientTokenCallback(ctx context.Context, loginCallback *domain.LoginCallback) (*domain.ClientToken, error) {
+func (s *AuthService) ClientTokenCallback(ctx context.Context, loginCallback *auth.LoginCallback) (*auth.ClientToken, error) {
 	log := logger.GetLogger(ctx)
 
 	token, err := s.authRepository.GetAccessTokenFromClientCode(ctx, loginCallback.Code, loginCallback.RedirectURL.String())
@@ -55,7 +56,7 @@ func (s *AuthService) ClientTokenCallback(ctx context.Context, loginCallback *do
 	return token, nil
 }
 
-func (s *AuthService) LogoutRequest(ctx context.Context, logoutRequest *domain.Logout) error {
+func (s *AuthService) LogoutRequest(ctx context.Context, logoutRequest *auth.Logout) error {
 	log := logger.GetLogger(ctx)
 
 	err := s.userRepo.RemoveSession(ctx, logoutRequest.RefreshToken)
@@ -67,7 +68,7 @@ func (s *AuthService) LogoutRequest(ctx context.Context, logoutRequest *domain.L
 	return nil
 }
 
-func (s *AuthService) GetAll(ctx context.Context) ([]*domain.User, error) {
+func (s *AuthService) GetAll(ctx context.Context) ([]*user.User, error) {
 	log := logger.GetLogger(ctx)
 	users, err := s.userRepo.GetAll(ctx)
 	if err != nil {
@@ -78,7 +79,7 @@ func (s *AuthService) GetAll(ctx context.Context) ([]*domain.User, error) {
 	return users, nil
 }
 
-func (s *AuthService) GetByIDs(ctx context.Context, ids []string) ([]*domain.User, error) {
+func (s *AuthService) GetByIDs(ctx context.Context, ids []string) ([]*user.User, error) {
 	log := logger.GetLogger(ctx)
 	users, err := s.userRepo.GetByIDs(ctx, ids)
 	if err != nil {
@@ -89,7 +90,7 @@ func (s *AuthService) GetByIDs(ctx context.Context, ids []string) ([]*domain.Use
 	return users, nil
 }
 
-func (s *AuthService) GetAllByRole(ctx context.Context, role domain.UserRole) ([]*domain.User, error) {
+func (s *AuthService) GetAllByRole(ctx context.Context, role user.UserRole) ([]*user.User, error) {
 	log := logger.GetLogger(ctx)
 	users, err := s.userRepo.GetAllByRole(ctx, role)
 	if err != nil {

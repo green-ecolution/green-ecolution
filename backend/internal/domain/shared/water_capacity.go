@@ -1,4 +1,4 @@
-package entities
+package shared
 
 import (
 	"errors"

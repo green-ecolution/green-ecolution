@@ -1,12 +1,12 @@
 package mapper
 
 import (
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/user"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func UserFromResponse(source *domain.User) *entities.UserResponse {
+func UserFromResponse(source *user.User) *entities.UserResponse {
 	if source == nil {
 		return nil
 	}
@@ -38,14 +38,14 @@ func UserFromResponse(source *domain.User) *entities.UserResponse {
 	return resp
 }
 
-func UserFromResponseList(source []*domain.User) []*entities.UserResponse {
+func UserFromResponseList(source []*user.User) []*entities.UserResponse {
 	return utils.MapSlice(source, UserFromResponse)
 }
 
-func MapUserRoles(userRole domain.UserRole) entities.UserRole {
+func MapUserRoles(userRole user.UserRole) entities.UserRole {
 	return entities.UserRole(userRole)
 }
 
-func MapUserStatus(userStatus domain.UserStatus) entities.UserStatus {
+func MapUserStatus(userStatus user.UserStatus) entities.UserStatus {
 	return entities.UserStatus(userStatus)
 }

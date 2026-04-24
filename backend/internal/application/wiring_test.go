@@ -7,8 +7,11 @@ import (
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/_mock"
+	"github.com/green-ecolution/green-ecolution/backend/internal/storage"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 )
 
@@ -24,7 +27,7 @@ func TestNewService(t *testing.T) {
 		mockUserRepo := storageMock.NewMockUserRepository(t)
 		mockVehicleRepo := storageMock.NewMockVehicleRepository(t)
 
-		mockRepos := &entities.Repository{
+		mockRepos := &storage.Repository{
 			Auth:        mockAuthRepo,
 			Info:        mockInfoRepo,
 			Sensor:      mockSensorRepo,
@@ -35,7 +38,7 @@ func TestNewService(t *testing.T) {
 			Vehicle:     mockVehicleRepo,
 		}
 
-		eventManager := worker.NewEventManager(entities.EventTypeUpdateTree, entities.EventTypeUpdateTreeCluster, entities.EventTypeUpdateWateringPlan)
+		eventManager := worker.NewEventManager(tree.EventTypeUpdate, cluster.EventTypeUpdate, watering.EventTypeUpdate)
 		svc := NewService(mockConfig, mockRepos, eventManager)
 
 		assert.NotNil(t, svc)

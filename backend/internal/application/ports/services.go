@@ -8,7 +8,19 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/auth"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/evaluation"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/info"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/plugin"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/region"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/routing"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/user"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/vehicle"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
@@ -51,7 +63,7 @@ func (e Error) Error() string {
 
 func MapError(ctx context.Context, err error, errorMask ErrorLogMask) error {
 	log := logger.GetLogger(ctx)
-	var entityNotFoundErr entities.ErrEntityNotFound
+	var entityNotFoundErr shared.ErrEntityNotFound
 	if errors.As(err, &entityNotFoundErr) {
 		if errorMask&ErrorLogEntityNotFound == 0 {
 			log.Error("can't find entity", "error", err)
@@ -66,17 +78,17 @@ func MapError(ctx context.Context, err error, errorMask ErrorLogMask) error {
 		return NewError(BadRequest, err.Error())
 	}
 
-	if errors.Is(err, entities.ErrS3ServiceDisabled) {
+	if errors.Is(err, shared.ErrS3ServiceDisabled) {
 		log.Warn("s3 service is disabled")
 		return NewError(Gone, err.Error())
 	}
 
-	if errors.Is(err, entities.ErrAuthServiceDisabled) {
+	if errors.Is(err, shared.ErrAuthServiceDisabled) {
 		log.Warn("auth service is disabled")
 		return NewError(Gone, err.Error())
 	}
 
-	if errors.Is(err, entities.ErrRoutingServiceDisabled) {
+	if errors.Is(err, shared.ErrRoutingServiceDisabled) {
 		log.Warn("routing service is disabled")
 		return NewError(Gone, err.Error())
 	}
@@ -98,7 +110,7 @@ const (
 )
 
 type BasicCrudService[T any, CreateType any, UpdateType any] interface {
-	GetAll(ctx context.Context, query entities.Query) ([]*T, int64, error)
+	GetAll(ctx context.Context, query shared.Query) ([]*T, int64, error)
 	GetByID(ctx context.Context, id int32) (*T, error)
 	Create(ctx context.Context, createData *CreateType) (*T, error)
 	Update(ctx context.Context, id int32, updateData *UpdateType) (*T, error)
@@ -107,81 +119,81 @@ type BasicCrudService[T any, CreateType any, UpdateType any] interface {
 
 type InfoService interface {
 	Service
-	GetAppInfo(context.Context) (*entities.App, error)
-	GetAppInfoResponse(context.Context) (*entities.App, error)
-	GetMapInfo(context.Context) (*entities.Map, error)
-	GetServerInfo(context.Context) (*entities.Server, error)
-	GetServices(context.Context) (*entities.Services, error)
-	GetStatistics(context.Context) (*entities.DataStatistics, error)
+	GetAppInfo(context.Context) (*info.App, error)
+	GetAppInfoResponse(context.Context) (*info.App, error)
+	GetMapInfo(context.Context) (*info.Map, error)
+	GetServerInfo(context.Context) (*info.Server, error)
+	GetServices(context.Context) (*info.Services, error)
+	GetStatistics(context.Context) (*info.DataStatistics, error)
 }
 
 type TreeService interface {
 	Service
-	GetAll(ctx context.Context, query entities.TreeQuery) ([]*entities.Tree, int64, error)
-	GetByID(ctx context.Context, id int32) (*entities.Tree, error)
-	Create(ctx context.Context, createData *entities.TreeCreate) (*entities.Tree, error)
-	Update(ctx context.Context, id int32, updateData *entities.TreeUpdate) (*entities.Tree, error)
+	GetAll(ctx context.Context, query tree.TreeQuery) ([]*tree.Tree, int64, error)
+	GetByID(ctx context.Context, id int32) (*tree.Tree, error)
+	Create(ctx context.Context, createData *tree.TreeCreate) (*tree.Tree, error)
+	Update(ctx context.Context, id int32, updateData *tree.TreeUpdate) (*tree.Tree, error)
 	Delete(ctx context.Context, id int32) error
 
-	GetBySensorID(ctx context.Context, id entities.SensorID) (*entities.Tree, error)
-	GetNearestTrees(ctx context.Context, coord entities.Coordinate, limit int32) ([]*entities.TreeWithDistance, error)
-	HandleNewSensorData(context.Context, *entities.EventNewSensorData) error
+	GetBySensorID(ctx context.Context, id sensor.SensorID) (*tree.Tree, error)
+	GetNearestTrees(ctx context.Context, coord shared.Coordinate, limit int32) ([]*tree.TreeWithDistance, error)
+	HandleNewSensorData(context.Context, *sensor.EventNewData) error
 	UpdateWateringStatuses(ctx context.Context) error
 	GetPlantingYears(ctx context.Context) ([]int32, error)
 }
 
 type EvaluationService interface {
 	Service
-	GetEvaluation(ctx context.Context) (*entities.Evaluation, error)
+	GetEvaluation(ctx context.Context) (*evaluation.Evaluation, error)
 }
 
 type AuthService interface {
 	Service
-	LoginRequest(ctx context.Context, loginRequest *entities.LoginRequest) *entities.LoginResp
-	LogoutRequest(ctx context.Context, logoutRequest *entities.Logout) error
-	ClientTokenCallback(ctx context.Context, loginCallback *entities.LoginCallback) (*entities.ClientToken, error)
-	Register(ctx context.Context, user *entities.RegisterUser) (*entities.User, error)
-	RetrospectToken(ctx context.Context, token string) (*entities.IntroSpectTokenResult, error)
-	RefreshToken(ctx context.Context, refreshToken string) (*entities.ClientToken, error)
-	GetAll(ctx context.Context) ([]*entities.User, error)
-	GetByIDs(ctx context.Context, ids []string) ([]*entities.User, error)
-	GetAllByRole(ctx context.Context, role entities.UserRole) ([]*entities.User, error)
+	LoginRequest(ctx context.Context, loginRequest *auth.LoginRequest) *auth.LoginResp
+	LogoutRequest(ctx context.Context, logoutRequest *auth.Logout) error
+	ClientTokenCallback(ctx context.Context, loginCallback *auth.LoginCallback) (*auth.ClientToken, error)
+	Register(ctx context.Context, user *user.RegisterUser) (*user.User, error)
+	RetrospectToken(ctx context.Context, token string) (*auth.IntroSpectTokenResult, error)
+	RefreshToken(ctx context.Context, refreshToken string) (*auth.ClientToken, error)
+	GetAll(ctx context.Context) ([]*user.User, error)
+	GetByIDs(ctx context.Context, ids []string) ([]*user.User, error)
+	GetAllByRole(ctx context.Context, role user.UserRole) ([]*user.User, error)
 }
 
 type RegionService interface {
 	Service
-	GetAll(ctx context.Context) ([]*entities.Region, int64, error)
-	GetByID(ctx context.Context, id int32) (*entities.Region, error)
+	GetAll(ctx context.Context) ([]*region.Region, int64, error)
+	GetByID(ctx context.Context, id int32) (*region.Region, error)
 }
 
 type TreeClusterService interface {
 	Service
 	// TODO: use CrudService as soon as every service has pagination
-	// CrudService[entities.TreeCluster, entities.TreeClusterCreate, entities.TreeClusterUpdate]
-	GetAll(ctx context.Context, query entities.TreeClusterQuery) ([]*entities.TreeCluster, int64, error)
-	GetByID(ctx context.Context, id int32) (*entities.TreeCluster, error)
-	Create(ctx context.Context, createData *entities.TreeClusterCreate) (*entities.TreeCluster, error)
-	Update(ctx context.Context, id int32, updateData *entities.TreeClusterUpdate) (*entities.TreeCluster, error)
+	// CrudService[cluster.TreeCluster, cluster.TreeClusterCreate, cluster.TreeClusterUpdate]
+	GetAll(ctx context.Context, query cluster.TreeClusterQuery) ([]*cluster.TreeCluster, int64, error)
+	GetByID(ctx context.Context, id int32) (*cluster.TreeCluster, error)
+	Create(ctx context.Context, createData *cluster.TreeClusterCreate) (*cluster.TreeCluster, error)
+	Update(ctx context.Context, id int32, updateData *cluster.TreeClusterUpdate) (*cluster.TreeCluster, error)
 	Delete(ctx context.Context, id int32) error
 
-	HandleUpdateTree(context.Context, *entities.EventUpdateTree) error
-	HandleCreateTree(context.Context, *entities.EventCreateTree) error
-	HandleDeleteTree(context.Context, *entities.EventDeleteTree) error
-	HandleNewSensorData(context.Context, *entities.EventNewSensorData) error
-	HandleUpdateWateringPlan(context.Context, *entities.EventUpdateWateringPlan) error
+	HandleUpdateTree(context.Context, *tree.EventUpdate) error
+	HandleCreateTree(context.Context, *tree.EventCreate) error
+	HandleDeleteTree(context.Context, *tree.EventDelete) error
+	HandleNewSensorData(context.Context, *sensor.EventNewData) error
+	HandleUpdateWateringPlan(context.Context, *watering.EventUpdate) error
 	UpdateWateringStatuses(ctx context.Context) error
 }
 
 type SensorService interface {
 	Service
-	GetAll(ctx context.Context, query entities.Query) ([]*entities.Sensor, int64, error)
-	GetByID(ctx context.Context, id entities.SensorID) (*entities.Sensor, error)
-	Create(ctx context.Context, createData *entities.SensorCreate) (*entities.Sensor, error)
-	Update(ctx context.Context, id entities.SensorID, updateData *entities.SensorUpdate) (*entities.Sensor, error)
-	Delete(ctx context.Context, id entities.SensorID) error
-	GetAllDataByID(ctx context.Context, id entities.SensorID) ([]*entities.SensorData, error)
-	HandleMessage(ctx context.Context, payload *entities.MqttPayload) (*entities.SensorData, error)
-	MapSensorToTree(ctx context.Context, sen *entities.Sensor) error
+	GetAll(ctx context.Context, query shared.Query) ([]*sensor.Sensor, int64, error)
+	GetByID(ctx context.Context, id sensor.SensorID) (*sensor.Sensor, error)
+	Create(ctx context.Context, createData *sensor.SensorCreate) (*sensor.Sensor, error)
+	Update(ctx context.Context, id sensor.SensorID, updateData *sensor.SensorUpdate) (*sensor.Sensor, error)
+	Delete(ctx context.Context, id sensor.SensorID) error
+	GetAllDataByID(ctx context.Context, id sensor.SensorID) ([]*sensor.SensorData, error)
+	HandleMessage(ctx context.Context, payload *sensor.MqttPayload) (*sensor.SensorData, error)
+	MapSensorToTree(ctx context.Context, sen *sensor.Sensor) error
 	UpdateStatuses(ctx context.Context) error
 }
 
@@ -192,25 +204,25 @@ type CrudService[T any, CreateType any, UpdateType any] interface {
 
 type VehicleService interface {
 	Service
-	GetAll(ctx context.Context, query entities.VehicleQuery) ([]*entities.Vehicle, int64, error)
-	GetAllArchived(ctx context.Context) ([]*entities.Vehicle, error)
-	GetByID(ctx context.Context, id int32) (*entities.Vehicle, error)
-	Create(ctx context.Context, createData *entities.VehicleCreate) (*entities.Vehicle, error)
-	Update(ctx context.Context, id int32, updateData *entities.VehicleUpdate) (*entities.Vehicle, error)
+	GetAll(ctx context.Context, query vehicle.VehicleQuery) ([]*vehicle.Vehicle, int64, error)
+	GetAllArchived(ctx context.Context) ([]*vehicle.Vehicle, error)
+	GetByID(ctx context.Context, id int32) (*vehicle.Vehicle, error)
+	Create(ctx context.Context, createData *vehicle.VehicleCreate) (*vehicle.Vehicle, error)
+	Update(ctx context.Context, id int32, updateData *vehicle.VehicleUpdate) (*vehicle.Vehicle, error)
 	Delete(ctx context.Context, id int32) error
 	Archive(ctx context.Context, id int32) error
-	GetByPlate(ctx context.Context, plate string) (*entities.Vehicle, error)
+	GetByPlate(ctx context.Context, plate string) (*vehicle.Vehicle, error)
 }
 
 type WateringPlanService interface {
 	Service
-	GetAll(ctx context.Context, query entities.Query) ([]*entities.WateringPlan, int64, error)
-	GetByID(ctx context.Context, id int32) (*entities.WateringPlan, error)
-	Create(ctx context.Context, createData *entities.WateringPlanCreate) (*entities.WateringPlan, error)
-	Update(ctx context.Context, id int32, updateData *entities.WateringPlanUpdate) (*entities.WateringPlan, error)
+	GetAll(ctx context.Context, query shared.Query) ([]*watering.WateringPlan, int64, error)
+	GetByID(ctx context.Context, id int32) (*watering.WateringPlan, error)
+	Create(ctx context.Context, createData *watering.WateringPlanCreate) (*watering.WateringPlan, error)
+	Update(ctx context.Context, id int32, updateData *watering.WateringPlanUpdate) (*watering.WateringPlan, error)
 	Delete(ctx context.Context, id int32) error
 
-	PreviewRoute(ctx context.Context, transporterID int32, trailerID *int32, clusterIDs []int32) (*entities.GeoJSON, error)
+	PreviewRoute(ctx context.Context, transporterID int32, trailerID *int32, clusterIDs []int32) (*routing.GeoJSON, error)
 	GetGPXFileStream(ctx context.Context, objName string) (io.ReadSeekCloser, error)
 
 	UpdateStatuses(ctx context.Context) error
@@ -218,10 +230,10 @@ type WateringPlanService interface {
 
 type PluginService interface {
 	Service
-	Register(ctx context.Context, plugin *entities.Plugin) (*entities.ClientToken, error)
-	RefreshToken(ctx context.Context, auth *entities.AuthPlugin, slug string) (*entities.ClientToken, error)
-	Get(ctx context.Context, slug string) (entities.Plugin, error)
-	GetAll(ctx context.Context) ([]entities.Plugin, []time.Time)
+	Register(ctx context.Context, plugin *plugin.Plugin) (*auth.ClientToken, error)
+	RefreshToken(ctx context.Context, auth *plugin.AuthPlugin, slug string) (*auth.ClientToken, error)
+	Get(ctx context.Context, slug string) (plugin.Plugin, error)
+	GetAll(ctx context.Context) ([]plugin.Plugin, []time.Time)
 	HeartBeat(ctx context.Context, slug string) error
 	Unregister(ctx context.Context, slug string)
 	StartCleanup(ctx context.Context)

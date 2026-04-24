@@ -3,21 +3,23 @@ package mapper
 import (
 	"time"
 
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/evaluation"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
 type InternalTreeClusterRepoMapper interface {
-	FromSql(*sqlc.TreeCluster) (*entities.TreeCluster, error)
-	FromSqlList([]*sqlc.TreeCluster) ([]*entities.TreeCluster, error)
-	FromSqlRegionWithCount(src *sqlc.GetAllTreeClusterRegionsWithWateringPlanCountRow) (*entities.RegionEvaluation, error)
-	FromSqlRegionListWithCount(src []*sqlc.GetAllTreeClusterRegionsWithWateringPlanCountRow) ([]*entities.RegionEvaluation, error)
+	FromSql(*sqlc.TreeCluster) (*cluster.TreeCluster, error)
+	FromSqlList([]*sqlc.TreeCluster) ([]*cluster.TreeCluster, error)
+	FromSqlRegionWithCount(src *sqlc.GetAllTreeClusterRegionsWithWateringPlanCountRow) (*evaluation.RegionEvaluation, error)
+	FromSqlRegionListWithCount(src []*sqlc.GetAllTreeClusterRegionsWithWateringPlanCountRow) ([]*evaluation.RegionEvaluation, error)
 }
 
 type InternalTreeClusterRepoMapperImpl struct{}
 
-func (c *InternalTreeClusterRepoMapperImpl) FromSql(source *sqlc.TreeCluster) (*entities.TreeCluster, error) {
+func (c *InternalTreeClusterRepoMapperImpl) FromSql(source *sqlc.TreeCluster) (*cluster.TreeCluster, error) {
 	if source == nil {
 		return nil, nil
 	}
@@ -25,11 +27,11 @@ func (c *InternalTreeClusterRepoMapperImpl) FromSql(source *sqlc.TreeCluster) (*
 	if err != nil {
 		return nil, err
 	}
-	coord, err := entities.NewCoordinateFromOptional(source.Latitude, source.Longitude)
+	coord, err := shared.NewCoordinateFromOptional(source.Latitude, source.Longitude)
 	if err != nil {
 		return nil, err
 	}
-	result := &entities.TreeCluster{
+	result := &cluster.TreeCluster{
 		ID:             source.ID,
 		CreatedAt:      source.CreatedAt,
 		UpdatedAt:      source.UpdatedAt,
@@ -48,21 +50,21 @@ func (c *InternalTreeClusterRepoMapperImpl) FromSql(source *sqlc.TreeCluster) (*
 	return result, nil
 }
 
-func (c *InternalTreeClusterRepoMapperImpl) FromSqlList(source []*sqlc.TreeCluster) ([]*entities.TreeCluster, error) {
+func (c *InternalTreeClusterRepoMapperImpl) FromSqlList(source []*sqlc.TreeCluster) ([]*cluster.TreeCluster, error) {
 	return utils.MapSliceErr(source, c.FromSql)
 }
 
-func (c *InternalTreeClusterRepoMapperImpl) FromSqlRegionWithCount(source *sqlc.GetAllTreeClusterRegionsWithWateringPlanCountRow) (*entities.RegionEvaluation, error) {
+func (c *InternalTreeClusterRepoMapperImpl) FromSqlRegionWithCount(source *sqlc.GetAllTreeClusterRegionsWithWateringPlanCountRow) (*evaluation.RegionEvaluation, error) {
 	if source == nil {
 		return nil, nil
 	}
-	return &entities.RegionEvaluation{
+	return &evaluation.RegionEvaluation{
 		Name:              source.Name,
 		WateringPlanCount: source.WateringPlanCount,
 	}, nil
 }
 
-func (c *InternalTreeClusterRepoMapperImpl) FromSqlRegionListWithCount(source []*sqlc.GetAllTreeClusterRegionsWithWateringPlanCountRow) ([]*entities.RegionEvaluation, error) {
+func (c *InternalTreeClusterRepoMapperImpl) FromSqlRegionListWithCount(source []*sqlc.GetAllTreeClusterRegionsWithWateringPlanCountRow) ([]*evaluation.RegionEvaluation, error) {
 	return utils.MapSliceErr(source, c.FromSqlRegionWithCount)
 }
 
@@ -75,10 +77,10 @@ func timePtrToTimePtr(source *time.Time) *time.Time {
 	return &t
 }
 
-func MapWateringStatus(status sqlc.WateringStatus) entities.WateringStatus {
-	return entities.WateringStatus(status)
+func MapWateringStatus(status sqlc.WateringStatus) shared.WateringStatus {
+	return shared.WateringStatus(status)
 }
 
-func MapSoilCondition(condition sqlc.TreeSoilCondition) entities.TreeSoilCondition {
-	return entities.TreeSoilCondition(condition)
+func MapSoilCondition(condition sqlc.TreeSoilCondition) cluster.TreeSoilCondition {
+	return cluster.TreeSoilCondition(condition)
 }

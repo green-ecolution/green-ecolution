@@ -5,11 +5,11 @@ import (
 
 	goversion "github.com/hashicorp/go-version"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/info"
 )
 
-func CompareVersions(current, latest string) entities.VersionInfo {
-	result := entities.VersionInfo{
+func CompareVersions(current, latest string) info.VersionInfo {
+	result := info.VersionInfo{
 		Current:         current,
 		Latest:          latest,
 		UpdateAvailable: false,

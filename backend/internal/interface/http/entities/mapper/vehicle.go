@@ -3,12 +3,13 @@ package mapper
 import (
 	"fmt"
 
-	domain "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/vehicle"
 	"github.com/green-ecolution/green-ecolution/backend/internal/interface/http/entities"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func VehicleFromResponse(source *domain.Vehicle) *entities.VehicleResponse {
+func VehicleFromResponse(source *vehicle.Vehicle) *entities.VehicleResponse {
 	if source == nil {
 		return nil
 	}
@@ -33,21 +34,21 @@ func VehicleFromResponse(source *domain.Vehicle) *entities.VehicleResponse {
 	}
 }
 
-func VehicleFromResponseList(source []*domain.Vehicle) []*entities.VehicleResponse {
+func VehicleFromResponseList(source []*vehicle.Vehicle) []*entities.VehicleResponse {
 	return utils.MapSlice(source, VehicleFromResponse)
 }
 
-func VehicleFromCreateRequest(source *entities.VehicleCreateRequest) (*domain.VehicleCreate, error) {
+func VehicleFromCreateRequest(source *entities.VehicleCreateRequest) (*vehicle.VehicleCreate, error) {
 	if source == nil {
 		return nil, nil
 	}
 
-	waterCapacity, err := domain.NewWaterCapacity(source.WaterCapacity)
+	waterCapacity, err := shared.NewWaterCapacity(source.WaterCapacity)
 	if err != nil {
 		return nil, fmt.Errorf("invalid water capacity: %w", err)
 	}
 
-	return &domain.VehicleCreate{
+	return &vehicle.VehicleCreate{
 		NumberPlate:    source.NumberPlate,
 		Description:    source.Description,
 		WaterCapacity:  waterCapacity,
@@ -64,17 +65,17 @@ func VehicleFromCreateRequest(source *entities.VehicleCreateRequest) (*domain.Ve
 	}, nil
 }
 
-func VehicleFromUpdateRequest(source *entities.VehicleUpdateRequest) (*domain.VehicleUpdate, error) {
+func VehicleFromUpdateRequest(source *entities.VehicleUpdateRequest) (*vehicle.VehicleUpdate, error) {
 	if source == nil {
 		return nil, nil
 	}
 
-	waterCapacity, err := domain.NewWaterCapacity(source.WaterCapacity)
+	waterCapacity, err := shared.NewWaterCapacity(source.WaterCapacity)
 	if err != nil {
 		return nil, fmt.Errorf("invalid water capacity: %w", err)
 	}
 
-	return &domain.VehicleUpdate{
+	return &vehicle.VehicleUpdate{
 		NumberPlate:    source.NumberPlate,
 		Description:    source.Description,
 		WaterCapacity:  waterCapacity,
@@ -91,26 +92,26 @@ func VehicleFromUpdateRequest(source *entities.VehicleUpdateRequest) (*domain.Ve
 	}, nil
 }
 
-func MapVehicleStatus(vehicleStatus domain.VehicleStatus) entities.VehicleStatus {
+func MapVehicleStatus(vehicleStatus vehicle.VehicleStatus) entities.VehicleStatus {
 	return entities.VehicleStatus(vehicleStatus)
 }
 
-func MapVehicleType(vehicleType domain.VehicleType) entities.VehicleType {
+func MapVehicleType(vehicleType vehicle.VehicleType) entities.VehicleType {
 	return entities.VehicleType(vehicleType)
 }
 
-func MapDrivingLicense(drivingLicense domain.DrivingLicense) entities.DrivingLicense {
+func MapDrivingLicense(drivingLicense vehicle.DrivingLicense) entities.DrivingLicense {
 	return entities.DrivingLicense(drivingLicense)
 }
 
-func MapVehicleStatusReq(vehicleStatus entities.VehicleStatus) domain.VehicleStatus {
-	return domain.VehicleStatus(vehicleStatus)
+func MapVehicleStatusReq(vehicleStatus entities.VehicleStatus) vehicle.VehicleStatus {
+	return vehicle.VehicleStatus(vehicleStatus)
 }
 
-func MapVehicleTypeReq(vehicleType entities.VehicleType) domain.VehicleType {
-	return domain.VehicleType(vehicleType)
+func MapVehicleTypeReq(vehicleType entities.VehicleType) vehicle.VehicleType {
+	return vehicle.VehicleType(vehicleType)
 }
 
-func MapDrivingLicenseReq(drivingLicense entities.DrivingLicense) domain.DrivingLicense {
-	return domain.DrivingLicense(drivingLicense)
+func MapDrivingLicenseReq(drivingLicense entities.DrivingLicense) vehicle.DrivingLicense {
+	return vehicle.DrivingLicense(drivingLicense)
 }

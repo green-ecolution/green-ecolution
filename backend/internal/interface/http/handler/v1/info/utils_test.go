@@ -5,23 +5,23 @@ import (
 	"net/url"
 	"time"
 
-	entities "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/info"
 )
 
 var (
 	repoURL, _   = url.Parse("https://github.com/green-ecolution/green-ecolution/backend")
 	serverURL, _ = url.Parse("http://localhost")
 
-	TestInfo = &entities.App{
+	TestInfo = &info.App{
 		Version:   "1.0.0",
 		GoVersion: "go1.23.2",
 		BuildTime: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
-		Git: entities.Git{
+		Git: info.Git{
 			Branch:     "main",
 			Commit:     "abcd1234",
 			Repository: repoURL,
 		},
-		Server: entities.Server{
+		Server: info.Server{
 			OS:        "linux",
 			Arch:      "amd64",
 			Hostname:  "localhost",

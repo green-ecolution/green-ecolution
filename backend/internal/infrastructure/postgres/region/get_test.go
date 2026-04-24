@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/region"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
 
@@ -212,7 +213,7 @@ func TestRegionRepository_GetByPoint(t *testing.T) {
 		shouldReturn := allTestRegions[0]
 
 		// when
-		got, err := r.GetByPoint(ctx, entities.MustNewCoordinate(54.811925538974954, 9.484825422729664))
+		got, err := r.GetByPoint(ctx, shared.MustNewCoordinate(54.811925538974954, 9.484825422729664))
 
 		// then
 		assert.NoError(t, err)
@@ -229,7 +230,7 @@ func TestRegionRepository_GetByPoint(t *testing.T) {
 		r := NewRegionRepository(suite.Store, defaultRegionMappers())
 
 		// when
-		got, err := r.GetByPoint(ctx, entities.MustNewCoordinate(0, 0))
+		got, err := r.GetByPoint(ctx, shared.MustNewCoordinate(0, 0))
 
 		// then
 		assert.NoError(t, err)
@@ -243,7 +244,7 @@ func TestRegionRepository_GetByPoint(t *testing.T) {
 		cancel()
 
 		// when
-		got, err := r.GetByPoint(ctx, entities.MustNewCoordinate(54.413, 9.723))
+		got, err := r.GetByPoint(ctx, shared.MustNewCoordinate(54.413, 9.723))
 
 		// then
 		assert.Error(t, err)
@@ -251,7 +252,7 @@ func TestRegionRepository_GetByPoint(t *testing.T) {
 	})
 }
 
-var allTestRegions = []*entities.Region{
+var allTestRegions = []*region.Region{
 	{
 		ID:   1,
 		Name: "Mürwik",

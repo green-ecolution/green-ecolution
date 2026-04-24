@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/config"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/user"
 )
 
 var testUser = suite.TestUserToCreateFunc()
@@ -21,7 +21,7 @@ func TestKeyCloakUserRepo_Create(t *testing.T) {
 	}
 	type args struct {
 		ctx      context.Context
-		user     *entities.User
+		user     *user.User
 		password string
 		roles    []string
 	}
@@ -29,7 +29,7 @@ func TestKeyCloakUserRepo_Create(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    *entities.User
+		want    *user.User
 		wantErr bool
 	}{
 		{
@@ -65,7 +65,7 @@ func TestKeyCloakUserRepo_Create(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				user: &entities.User{
+				user: &user.User{
 					Username:    testUser[0].Username,
 					FirstName:   testUser[1].FirstName,
 					LastName:    testUser[1].LastName,
@@ -175,7 +175,7 @@ func TestKeyCloakUserRepo_RemoveSession(t *testing.T) {
 		// given
 		identityConfig := suite.IdentityConfig(t, context.Background())
 		userRepo := NewUserRepository(identityConfig)
-		user := &entities.User{
+		user := &user.User{
 			Username:    "should-remove-session",
 			FirstName:   "Toni",
 			LastName:    "Tester",
@@ -266,7 +266,7 @@ func TestKeyCloakUserRepo_UserToKeyCloakUser(t *testing.T) {
 	t.Run("should convert user to keycloak user successfully", func(t *testing.T) {
 		// given
 		uuid, _ := uuid.NewRandom()
-		user := &entities.User{
+		user := &user.User{
 			ID:          uuid,
 			CreatedAt:   time.Unix(123456, 0),
 			Username:    "test",
@@ -304,7 +304,7 @@ func TestKeyCloakUserRepo_GetAll(t *testing.T) {
 		// given
 		identityConfig := suite.IdentityConfig(t, context.Background())
 		userRepo := NewUserRepository(identityConfig)
-		user1 := &entities.User{
+		user1 := &user.User{
 			Username:    "user1",
 			FirstName:   "John",
 			LastName:    "Doe",
@@ -312,7 +312,7 @@ func TestKeyCloakUserRepo_GetAll(t *testing.T) {
 			EmployeeID:  "EMP001",
 			PhoneNumber: "+49 123456789",
 		}
-		user2 := &entities.User{
+		user2 := &user.User{
 			Username:    "user2",
 			FirstName:   "Jane",
 			LastName:    "Doe",
@@ -355,30 +355,30 @@ func TestKeyCloakUserRepo_GetAllByRole(t *testing.T) {
 		// given
 		identityConfig := suite.IdentityConfig(t, context.Background())
 		userRepo := NewUserRepository(identityConfig)
-		user3 := &entities.User{
+		user3 := &user.User{
 			Username:    "user3",
 			FirstName:   "John",
 			LastName:    "Doe",
 			Email:       "user3@green-ecolution.de",
 			EmployeeID:  "EMP001",
 			PhoneNumber: "+49 123456789",
-			Roles:       []entities.UserRole{entities.UserRoleSmarteGrenzregion},
+			Roles:       []user.UserRole{user.UserRoleSmarteGrenzregion},
 		}
-		user4 := &entities.User{
+		user4 := &user.User{
 			Username:    "user4",
 			FirstName:   "Jane",
 			LastName:    "Doe",
 			Email:       "user4@green-ecolution.de",
 			EmployeeID:  "EMP002",
 			PhoneNumber: "+49 987654321",
-			Roles:       []entities.UserRole{entities.UserRoleTbz},
+			Roles:       []user.UserRole{user.UserRoleTbz},
 		}
 
 		suite.EnsureUserExists(t, user3)
 		suite.EnsureUserExists(t, user4)
 
 		// when
-		users, err := userRepo.GetAllByRole(context.Background(), entities.UserRoleGreenEcolution)
+		users, err := userRepo.GetAllByRole(context.Background(), user.UserRoleGreenEcolution)
 
 		// then
 		assert.NoError(t, err)
@@ -394,7 +394,7 @@ func TestKeyCloakUserRepo_GetAllByRole(t *testing.T) {
 		userRepo := NewUserRepository(identityConfig)
 
 		// when
-		users, err := userRepo.GetAllByRole(context.Background(), entities.UserRoleGreenEcolution)
+		users, err := userRepo.GetAllByRole(context.Background(), user.UserRoleGreenEcolution)
 
 		// then
 		assert.Error(t, err)
@@ -408,7 +408,7 @@ func TestKeyCloakUserRepo_GetByID(t *testing.T) {
 		identityConfig := suite.IdentityConfig(t, context.Background())
 		userRepo := NewUserRepository(identityConfig)
 
-		user := &entities.User{
+		user := &user.User{
 			CreatedAt:   time.Unix(123456, 0),
 			Username:    "test02",
 			FirstName:   "Toni",
@@ -454,7 +454,7 @@ func TestKeyCloakUserRepo_GetByID(t *testing.T) {
 	})
 }
 
-func containsUser(userList []*entities.User, targetUser entities.User) bool {
+func containsUser(userList []*user.User, targetUser user.User) bool {
 	for _, user := range userList {
 		if user.Username == targetUser.Username &&
 			user.FirstName == targetUser.FirstName &&
