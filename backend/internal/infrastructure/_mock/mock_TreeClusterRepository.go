@@ -7,11 +7,7 @@ import (
 
 	cluster "github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
 
-	evaluation "github.com/green-ecolution/green-ecolution/backend/internal/domain/evaluation"
-
 	mock "github.com/stretchr/testify/mock"
-
-	sensor "github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 
 	shared "github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 )
@@ -248,123 +244,6 @@ func (_c *MockTreeClusterRepository_GetAll_Call) RunAndReturn(run func(context.C
 	return _c
 }
 
-// GetAllLatestSensorDataByClusterID provides a mock function with given fields: ctx, tcID
-func (_m *MockTreeClusterRepository) GetAllLatestSensorDataByClusterID(ctx context.Context, tcID int32) ([]*sensor.SensorData, error) {
-	ret := _m.Called(ctx, tcID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllLatestSensorDataByClusterID")
-	}
-
-	var r0 []*sensor.SensorData
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int32) ([]*sensor.SensorData, error)); ok {
-		return rf(ctx, tcID)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, int32) []*sensor.SensorData); ok {
-		r0 = rf(ctx, tcID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*sensor.SensorData)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, int32) error); ok {
-		r1 = rf(ctx, tcID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockTreeClusterRepository_GetAllLatestSensorDataByClusterID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllLatestSensorDataByClusterID'
-type MockTreeClusterRepository_GetAllLatestSensorDataByClusterID_Call struct {
-	*mock.Call
-}
-
-// GetAllLatestSensorDataByClusterID is a helper method to define mock.On call
-//   - ctx context.Context
-//   - tcID int32
-func (_e *MockTreeClusterRepository_Expecter) GetAllLatestSensorDataByClusterID(ctx interface{}, tcID interface{}) *MockTreeClusterRepository_GetAllLatestSensorDataByClusterID_Call {
-	return &MockTreeClusterRepository_GetAllLatestSensorDataByClusterID_Call{Call: _e.mock.On("GetAllLatestSensorDataByClusterID", ctx, tcID)}
-}
-
-func (_c *MockTreeClusterRepository_GetAllLatestSensorDataByClusterID_Call) Run(run func(ctx context.Context, tcID int32)) *MockTreeClusterRepository_GetAllLatestSensorDataByClusterID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int32))
-	})
-	return _c
-}
-
-func (_c *MockTreeClusterRepository_GetAllLatestSensorDataByClusterID_Call) Return(_a0 []*sensor.SensorData, _a1 error) *MockTreeClusterRepository_GetAllLatestSensorDataByClusterID_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockTreeClusterRepository_GetAllLatestSensorDataByClusterID_Call) RunAndReturn(run func(context.Context, int32) ([]*sensor.SensorData, error)) *MockTreeClusterRepository_GetAllLatestSensorDataByClusterID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAllRegionsWithWateringPlanCount provides a mock function with given fields: ctx
-func (_m *MockTreeClusterRepository) GetAllRegionsWithWateringPlanCount(ctx context.Context) ([]*evaluation.RegionEvaluation, error) {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllRegionsWithWateringPlanCount")
-	}
-
-	var r0 []*evaluation.RegionEvaluation
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]*evaluation.RegionEvaluation, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) []*evaluation.RegionEvaluation); ok {
-		r0 = rf(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*evaluation.RegionEvaluation)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockTreeClusterRepository_GetAllRegionsWithWateringPlanCount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllRegionsWithWateringPlanCount'
-type MockTreeClusterRepository_GetAllRegionsWithWateringPlanCount_Call struct {
-	*mock.Call
-}
-
-// GetAllRegionsWithWateringPlanCount is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *MockTreeClusterRepository_Expecter) GetAllRegionsWithWateringPlanCount(ctx interface{}) *MockTreeClusterRepository_GetAllRegionsWithWateringPlanCount_Call {
-	return &MockTreeClusterRepository_GetAllRegionsWithWateringPlanCount_Call{Call: _e.mock.On("GetAllRegionsWithWateringPlanCount", ctx)}
-}
-
-func (_c *MockTreeClusterRepository_GetAllRegionsWithWateringPlanCount_Call) Run(run func(ctx context.Context)) *MockTreeClusterRepository_GetAllRegionsWithWateringPlanCount_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
-	})
-	return _c
-}
-
-func (_c *MockTreeClusterRepository_GetAllRegionsWithWateringPlanCount_Call) Return(_a0 []*evaluation.RegionEvaluation, _a1 error) *MockTreeClusterRepository_GetAllRegionsWithWateringPlanCount_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockTreeClusterRepository_GetAllRegionsWithWateringPlanCount_Call) RunAndReturn(run func(context.Context) ([]*evaluation.RegionEvaluation, error)) *MockTreeClusterRepository_GetAllRegionsWithWateringPlanCount_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetByID provides a mock function with given fields: ctx, id
 func (_m *MockTreeClusterRepository) GetByID(ctx context.Context, id int32) (*cluster.TreeCluster, error) {
 	ret := _m.Called(ctx, id)
@@ -420,65 +299,6 @@ func (_c *MockTreeClusterRepository_GetByID_Call) Return(_a0 *cluster.TreeCluste
 }
 
 func (_c *MockTreeClusterRepository_GetByID_Call) RunAndReturn(run func(context.Context, int32) (*cluster.TreeCluster, error)) *MockTreeClusterRepository_GetByID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetByIDs provides a mock function with given fields: ctx, ids
-func (_m *MockTreeClusterRepository) GetByIDs(ctx context.Context, ids []int32) ([]*cluster.TreeCluster, error) {
-	ret := _m.Called(ctx, ids)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetByIDs")
-	}
-
-	var r0 []*cluster.TreeCluster
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []int32) ([]*cluster.TreeCluster, error)); ok {
-		return rf(ctx, ids)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, []int32) []*cluster.TreeCluster); ok {
-		r0 = rf(ctx, ids)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*cluster.TreeCluster)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, []int32) error); ok {
-		r1 = rf(ctx, ids)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockTreeClusterRepository_GetByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByIDs'
-type MockTreeClusterRepository_GetByIDs_Call struct {
-	*mock.Call
-}
-
-// GetByIDs is a helper method to define mock.On call
-//   - ctx context.Context
-//   - ids []int32
-func (_e *MockTreeClusterRepository_Expecter) GetByIDs(ctx interface{}, ids interface{}) *MockTreeClusterRepository_GetByIDs_Call {
-	return &MockTreeClusterRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, ids)}
-}
-
-func (_c *MockTreeClusterRepository_GetByIDs_Call) Run(run func(ctx context.Context, ids []int32)) *MockTreeClusterRepository_GetByIDs_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]int32))
-	})
-	return _c
-}
-
-func (_c *MockTreeClusterRepository_GetByIDs_Call) Return(_a0 []*cluster.TreeCluster, _a1 error) *MockTreeClusterRepository_GetByIDs_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockTreeClusterRepository_GetByIDs_Call) RunAndReturn(run func(context.Context, []int32) ([]*cluster.TreeCluster, error)) *MockTreeClusterRepository_GetByIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -595,54 +415,6 @@ func (_c *MockTreeClusterRepository_GetCount_Call) Return(_a0 int64, _a1 error) 
 }
 
 func (_c *MockTreeClusterRepository_GetCount_Call) RunAndReturn(run func(context.Context, cluster.TreeClusterQuery) (int64, error)) *MockTreeClusterRepository_GetCount_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// LinkTreesToCluster provides a mock function with given fields: ctx, treeClusterID, treeIDs
-func (_m *MockTreeClusterRepository) LinkTreesToCluster(ctx context.Context, treeClusterID int32, treeIDs []int32) error {
-	ret := _m.Called(ctx, treeClusterID, treeIDs)
-
-	if len(ret) == 0 {
-		panic("no return value specified for LinkTreesToCluster")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int32, []int32) error); ok {
-		r0 = rf(ctx, treeClusterID, treeIDs)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockTreeClusterRepository_LinkTreesToCluster_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LinkTreesToCluster'
-type MockTreeClusterRepository_LinkTreesToCluster_Call struct {
-	*mock.Call
-}
-
-// LinkTreesToCluster is a helper method to define mock.On call
-//   - ctx context.Context
-//   - treeClusterID int32
-//   - treeIDs []int32
-func (_e *MockTreeClusterRepository_Expecter) LinkTreesToCluster(ctx interface{}, treeClusterID interface{}, treeIDs interface{}) *MockTreeClusterRepository_LinkTreesToCluster_Call {
-	return &MockTreeClusterRepository_LinkTreesToCluster_Call{Call: _e.mock.On("LinkTreesToCluster", ctx, treeClusterID, treeIDs)}
-}
-
-func (_c *MockTreeClusterRepository_LinkTreesToCluster_Call) Run(run func(ctx context.Context, treeClusterID int32, treeIDs []int32)) *MockTreeClusterRepository_LinkTreesToCluster_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int32), args[2].([]int32))
-	})
-	return _c
-}
-
-func (_c *MockTreeClusterRepository_LinkTreesToCluster_Call) Return(_a0 error) *MockTreeClusterRepository_LinkTreesToCluster_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockTreeClusterRepository_LinkTreesToCluster_Call) RunAndReturn(run func(context.Context, int32, []int32) error) *MockTreeClusterRepository_LinkTreesToCluster_Call {
 	_c.Call.Return(run)
 	return _c
 }

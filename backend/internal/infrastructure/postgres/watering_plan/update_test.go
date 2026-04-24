@@ -18,7 +18,7 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 	suite.ResetDB(t)
 	suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/watering_plan")
 
-	vehicleCount, _ := suite.Store.GetAllVehiclesCount(context.Background(), "")
+	vehicleCount, _ := suite.Store.GetAllVehiclesCount(context.Background(), &sqlc.GetAllVehiclesCountParams{})
 	testVehicles, err := suite.Store.GetAllVehicles(context.Background(), &sqlc.GetAllVehiclesParams{
 		Provider: "",
 		Limit:    int32(vehicleCount),
@@ -214,7 +214,7 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		assert.Equal(t, watering.WateringPlanStatusNotCompeted, got.Status)
 
 		// assert consumed water list
-		gotEvaluation, err := r.GetEvaluationValues(context.Background(), 1)
+		gotEvaluation, err := r.getEvaluationValues(context.Background(), 1)
 		assert.NoError(t, err)
 		assert.NotNil(t, gotEvaluation)
 		for i, evaluationValue := range gotEvaluation {
@@ -244,7 +244,7 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		assert.Equal(t, watering.WateringPlanStatusFinished, got.Status)
 
 		// assert consumed water list
-		gotEvaluation, err := r.GetEvaluationValues(context.Background(), 1)
+		gotEvaluation, err := r.getEvaluationValues(context.Background(), 1)
 		assert.NoError(t, err)
 		assert.NotNil(t, gotEvaluation)
 		assert.Len(t, gotEvaluation, len(evaluation))

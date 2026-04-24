@@ -49,22 +49,22 @@ func TestEvaluationService_GetAll(t *testing.T) {
 	}
 
 	t.Run("should return evaluation values when successful", func(t *testing.T) {
+		evaluationRepo := storageMock.NewMockEvaluationRepository(t)
 		wateringPlanRepo := storageMock.NewMockWateringPlanRepository(t)
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		sensorRepo := storageMock.NewMockSensorRepository(t)
-		vehicleRepo := storageMock.NewMockVehicleRepository(t)
 
-		svc := NewEvaluationService(clusterRepo, treeRepo, sensorRepo, wateringPlanRepo, vehicleRepo)
+		svc := NewEvaluationService(evaluationRepo, clusterRepo, treeRepo, sensorRepo, wateringPlanRepo)
 
 		clusterRepo.EXPECT().GetCount(context.Background(), cluster.TreeClusterQuery{}).Return(expectedEvaluation.TreeClusterCount, nil)
 		treeRepo.EXPECT().GetCount(context.Background(), tree.TreeQuery{}).Return(expectedEvaluation.TreeCount, nil)
 		sensorRepo.EXPECT().GetCount(context.Background(), shared.Query{}).Return(expectedEvaluation.SensorCount, nil)
 		wateringPlanRepo.EXPECT().GetCount(context.Background(), shared.Query{}).Return(expectedEvaluation.WateringPlanCount, nil)
-		wateringPlanRepo.EXPECT().GetTotalConsumedWater(context.Background()).Return(expectedEvaluation.TotalWaterConsumption, nil)
-		wateringPlanRepo.EXPECT().GetAllUserCount(context.Background()).Return(expectedEvaluation.UserWateringPlanCount, nil)
-		vehicleRepo.EXPECT().GetAllWithWateringPlanCount(context.Background()).Return(expectedVehicleEvaluaton, nil)
-		clusterRepo.EXPECT().GetAllRegionsWithWateringPlanCount(context.Background()).Return(expectedRegionEvaluation, nil)
+		evaluationRepo.EXPECT().GetTotalConsumedWater(context.Background()).Return(expectedEvaluation.TotalWaterConsumption, nil)
+		evaluationRepo.EXPECT().GetWateringPlanUserCount(context.Background()).Return(expectedEvaluation.UserWateringPlanCount, nil)
+		evaluationRepo.EXPECT().GetVehiclesWithWateringPlanCount(context.Background()).Return(expectedVehicleEvaluaton, nil)
+		evaluationRepo.EXPECT().GetRegionsWithWateringPlanCount(context.Background()).Return(expectedRegionEvaluation, nil)
 
 		evaluation, err := svc.GetEvaluation(context.Background())
 
@@ -73,13 +73,13 @@ func TestEvaluationService_GetAll(t *testing.T) {
 	})
 
 	t.Run("should return error when getting cluster count fails", func(t *testing.T) {
+		evaluationRepo := storageMock.NewMockEvaluationRepository(t)
 		wateringPlanRepo := storageMock.NewMockWateringPlanRepository(t)
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		sensorRepo := storageMock.NewMockSensorRepository(t)
-		vehicleRepo := storageMock.NewMockVehicleRepository(t)
 
-		svc := NewEvaluationService(clusterRepo, treeRepo, sensorRepo, wateringPlanRepo, vehicleRepo)
+		svc := NewEvaluationService(evaluationRepo, clusterRepo, treeRepo, sensorRepo, wateringPlanRepo)
 
 		clusterRepo.EXPECT().GetCount(context.Background(), cluster.TreeClusterQuery{}).Return(int64(0), errors.New("internal error"))
 		evaluation, err := svc.GetEvaluation(context.Background())
@@ -96,13 +96,13 @@ func TestEvaluationService_GetAll(t *testing.T) {
 	})
 
 	t.Run("should return error when getting tree count fails", func(t *testing.T) {
+		evaluationRepo := storageMock.NewMockEvaluationRepository(t)
 		wateringPlanRepo := storageMock.NewMockWateringPlanRepository(t)
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		sensorRepo := storageMock.NewMockSensorRepository(t)
-		vehicleRepo := storageMock.NewMockVehicleRepository(t)
 
-		svc := NewEvaluationService(clusterRepo, treeRepo, sensorRepo, wateringPlanRepo, vehicleRepo)
+		svc := NewEvaluationService(evaluationRepo, clusterRepo, treeRepo, sensorRepo, wateringPlanRepo)
 
 		clusterRepo.EXPECT().GetCount(context.Background(), cluster.TreeClusterQuery{}).Return(expectedEvaluation.TreeClusterCount, nil)
 		treeRepo.EXPECT().GetCount(context.Background(), tree.TreeQuery{}).Return(int64(0), errors.New("internal error"))
@@ -120,13 +120,13 @@ func TestEvaluationService_GetAll(t *testing.T) {
 	})
 
 	t.Run("should return error when getting sensor count fails", func(t *testing.T) {
+		evaluationRepo := storageMock.NewMockEvaluationRepository(t)
 		wateringPlanRepo := storageMock.NewMockWateringPlanRepository(t)
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		sensorRepo := storageMock.NewMockSensorRepository(t)
-		vehicleRepo := storageMock.NewMockVehicleRepository(t)
 
-		svc := NewEvaluationService(clusterRepo, treeRepo, sensorRepo, wateringPlanRepo, vehicleRepo)
+		svc := NewEvaluationService(evaluationRepo, clusterRepo, treeRepo, sensorRepo, wateringPlanRepo)
 
 		clusterRepo.EXPECT().GetCount(context.Background(), cluster.TreeClusterQuery{}).Return(expectedEvaluation.TreeClusterCount, nil)
 		treeRepo.EXPECT().GetCount(context.Background(), tree.TreeQuery{}).Return(expectedEvaluation.TreeCount, nil)
@@ -145,13 +145,13 @@ func TestEvaluationService_GetAll(t *testing.T) {
 	})
 
 	t.Run("should return error when getting watering plans count fails", func(t *testing.T) {
+		evaluationRepo := storageMock.NewMockEvaluationRepository(t)
 		wateringPlanRepo := storageMock.NewMockWateringPlanRepository(t)
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		sensorRepo := storageMock.NewMockSensorRepository(t)
-		vehicleRepo := storageMock.NewMockVehicleRepository(t)
 
-		svc := NewEvaluationService(clusterRepo, treeRepo, sensorRepo, wateringPlanRepo, vehicleRepo)
+		svc := NewEvaluationService(evaluationRepo, clusterRepo, treeRepo, sensorRepo, wateringPlanRepo)
 
 		clusterRepo.EXPECT().GetCount(context.Background(), cluster.TreeClusterQuery{}).Return(expectedEvaluation.TreeClusterCount, nil)
 		treeRepo.EXPECT().GetCount(context.Background(), tree.TreeQuery{}).Return(expectedEvaluation.TreeCount, nil)
@@ -172,19 +172,19 @@ func TestEvaluationService_GetAll(t *testing.T) {
 	})
 
 	t.Run("should return error when getting total water consumption fails", func(t *testing.T) {
+		evaluationRepo := storageMock.NewMockEvaluationRepository(t)
 		wateringPlanRepo := storageMock.NewMockWateringPlanRepository(t)
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		sensorRepo := storageMock.NewMockSensorRepository(t)
-		vehicleRepo := storageMock.NewMockVehicleRepository(t)
 
-		svc := NewEvaluationService(clusterRepo, treeRepo, sensorRepo, wateringPlanRepo, vehicleRepo)
+		svc := NewEvaluationService(evaluationRepo, clusterRepo, treeRepo, sensorRepo, wateringPlanRepo)
 
 		clusterRepo.EXPECT().GetCount(context.Background(), cluster.TreeClusterQuery{}).Return(expectedEvaluation.TreeClusterCount, nil)
 		treeRepo.EXPECT().GetCount(context.Background(), tree.TreeQuery{}).Return(expectedEvaluation.TreeCount, nil)
 		sensorRepo.EXPECT().GetCount(context.Background(), shared.Query{}).Return(expectedEvaluation.SensorCount, nil)
 		wateringPlanRepo.EXPECT().GetCount(context.Background(), shared.Query{}).Return(expectedEvaluation.WateringPlanCount, nil)
-		wateringPlanRepo.EXPECT().GetTotalConsumedWater(context.Background()).Return(int64(0), errors.New("internal error"))
+		evaluationRepo.EXPECT().GetTotalConsumedWater(context.Background()).Return(int64(0), errors.New("internal error"))
 
 		evaluation, err := svc.GetEvaluation(context.Background())
 
@@ -200,20 +200,20 @@ func TestEvaluationService_GetAll(t *testing.T) {
 	})
 
 	t.Run("should return error when getting all linked user count to a watering plan fails", func(t *testing.T) {
+		evaluationRepo := storageMock.NewMockEvaluationRepository(t)
 		wateringPlanRepo := storageMock.NewMockWateringPlanRepository(t)
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		sensorRepo := storageMock.NewMockSensorRepository(t)
-		vehicleRepo := storageMock.NewMockVehicleRepository(t)
 
-		svc := NewEvaluationService(clusterRepo, treeRepo, sensorRepo, wateringPlanRepo, vehicleRepo)
+		svc := NewEvaluationService(evaluationRepo, clusterRepo, treeRepo, sensorRepo, wateringPlanRepo)
 
 		clusterRepo.EXPECT().GetCount(context.Background(), cluster.TreeClusterQuery{}).Return(expectedEvaluation.TreeClusterCount, nil)
 		treeRepo.EXPECT().GetCount(context.Background(), tree.TreeQuery{}).Return(expectedEvaluation.TreeCount, nil)
 		sensorRepo.EXPECT().GetCount(context.Background(), shared.Query{}).Return(expectedEvaluation.SensorCount, nil)
 		wateringPlanRepo.EXPECT().GetCount(context.Background(), shared.Query{}).Return(expectedEvaluation.WateringPlanCount, nil)
-		wateringPlanRepo.EXPECT().GetTotalConsumedWater(context.Background()).Return(expectedEvaluation.TotalWaterConsumption, nil)
-		wateringPlanRepo.EXPECT().GetAllUserCount(context.Background()).Return(int64(0), errors.New("internal error"))
+		evaluationRepo.EXPECT().GetTotalConsumedWater(context.Background()).Return(expectedEvaluation.TotalWaterConsumption, nil)
+		evaluationRepo.EXPECT().GetWateringPlanUserCount(context.Background()).Return(int64(0), errors.New("internal error"))
 
 		evaluation, err := svc.GetEvaluation(context.Background())
 
@@ -229,21 +229,21 @@ func TestEvaluationService_GetAll(t *testing.T) {
 	})
 
 	t.Run("should return error when getting vehicle evaluation fails", func(t *testing.T) {
+		evaluationRepo := storageMock.NewMockEvaluationRepository(t)
 		wateringPlanRepo := storageMock.NewMockWateringPlanRepository(t)
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		sensorRepo := storageMock.NewMockSensorRepository(t)
-		vehicleRepo := storageMock.NewMockVehicleRepository(t)
 
-		svc := NewEvaluationService(clusterRepo, treeRepo, sensorRepo, wateringPlanRepo, vehicleRepo)
+		svc := NewEvaluationService(evaluationRepo, clusterRepo, treeRepo, sensorRepo, wateringPlanRepo)
 
 		clusterRepo.EXPECT().GetCount(context.Background(), cluster.TreeClusterQuery{}).Return(expectedEvaluation.TreeClusterCount, nil)
 		treeRepo.EXPECT().GetCount(context.Background(), tree.TreeQuery{}).Return(expectedEvaluation.TreeCount, nil)
 		sensorRepo.EXPECT().GetCount(context.Background(), shared.Query{}).Return(expectedEvaluation.SensorCount, nil)
 		wateringPlanRepo.EXPECT().GetCount(context.Background(), shared.Query{}).Return(expectedEvaluation.WateringPlanCount, nil)
-		wateringPlanRepo.EXPECT().GetTotalConsumedWater(context.Background()).Return(expectedEvaluation.TotalWaterConsumption, nil)
-		wateringPlanRepo.EXPECT().GetAllUserCount(context.Background()).Return(expectedEvaluation.UserWateringPlanCount, nil)
-		vehicleRepo.EXPECT().GetAllWithWateringPlanCount(context.Background()).Return(nil, errors.New("internal error"))
+		evaluationRepo.EXPECT().GetTotalConsumedWater(context.Background()).Return(expectedEvaluation.TotalWaterConsumption, nil)
+		evaluationRepo.EXPECT().GetWateringPlanUserCount(context.Background()).Return(expectedEvaluation.UserWateringPlanCount, nil)
+		evaluationRepo.EXPECT().GetVehiclesWithWateringPlanCount(context.Background()).Return(nil, errors.New("internal error"))
 
 		evaluation, err := svc.GetEvaluation(context.Background())
 
@@ -259,22 +259,22 @@ func TestEvaluationService_GetAll(t *testing.T) {
 	})
 
 	t.Run("should return error when getting region evaluation fails", func(t *testing.T) {
+		evaluationRepo := storageMock.NewMockEvaluationRepository(t)
 		wateringPlanRepo := storageMock.NewMockWateringPlanRepository(t)
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		sensorRepo := storageMock.NewMockSensorRepository(t)
-		vehicleRepo := storageMock.NewMockVehicleRepository(t)
 
-		svc := NewEvaluationService(clusterRepo, treeRepo, sensorRepo, wateringPlanRepo, vehicleRepo)
+		svc := NewEvaluationService(evaluationRepo, clusterRepo, treeRepo, sensorRepo, wateringPlanRepo)
 
 		clusterRepo.EXPECT().GetCount(context.Background(), cluster.TreeClusterQuery{}).Return(expectedEvaluation.TreeClusterCount, nil)
 		treeRepo.EXPECT().GetCount(context.Background(), tree.TreeQuery{}).Return(expectedEvaluation.TreeCount, nil)
 		sensorRepo.EXPECT().GetCount(context.Background(), shared.Query{}).Return(expectedEvaluation.SensorCount, nil)
 		wateringPlanRepo.EXPECT().GetCount(context.Background(), shared.Query{}).Return(expectedEvaluation.WateringPlanCount, nil)
-		wateringPlanRepo.EXPECT().GetTotalConsumedWater(context.Background()).Return(expectedEvaluation.TotalWaterConsumption, nil)
-		wateringPlanRepo.EXPECT().GetAllUserCount(context.Background()).Return(expectedEvaluation.UserWateringPlanCount, nil)
-		vehicleRepo.EXPECT().GetAllWithWateringPlanCount(context.Background()).Return(expectedVehicleEvaluaton, nil)
-		clusterRepo.EXPECT().GetAllRegionsWithWateringPlanCount(context.Background()).Return(nil, errors.New("internal error"))
+		evaluationRepo.EXPECT().GetTotalConsumedWater(context.Background()).Return(expectedEvaluation.TotalWaterConsumption, nil)
+		evaluationRepo.EXPECT().GetWateringPlanUserCount(context.Background()).Return(expectedEvaluation.UserWateringPlanCount, nil)
+		evaluationRepo.EXPECT().GetVehiclesWithWateringPlanCount(context.Background()).Return(expectedVehicleEvaluaton, nil)
+		evaluationRepo.EXPECT().GetRegionsWithWateringPlanCount(context.Background()).Return(nil, errors.New("internal error"))
 
 		evaluation, err := svc.GetEvaluation(context.Background())
 

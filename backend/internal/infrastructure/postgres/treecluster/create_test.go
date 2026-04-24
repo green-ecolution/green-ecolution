@@ -145,18 +145,24 @@ func TestTreeClusterRepository_Create(t *testing.T) {
 		got, err := r.Create(context.Background(), entity)
 		assert.NoError(t, err)
 
-		sqlGotTrees, err := suite.Store.GetTreesByTreeClusterID(context.Background(), utils.P(got.ID))
-		assert.NoError(t, err)
-
-		assert.Len(t, sqlGotTrees, 2)
 		assert.Equal(t, "test", got.Name)
 		assert.NotZero(t, got.ID)
 		assert.NotEmpty(t, got.TreeIDs)
+		assert.Len(t, got.TreeIDs, 2)
 
-		for i, tree := range sqlGotTrees {
-			assert.Equal(t, treeIDs[i], tree.ID)
-			assert.NotNil(t, tree.TreeClusterID)
-			assert.Equal(t, got.ID, *tree.TreeClusterID)
+		// verify trees are linked to the cluster via GetAllTrees
+		sqlGotTrees, err := suite.Store.GetAllTrees(context.Background(), &sqlc.GetAllTreesParams{
+			TreeClusterID: utils.P(got.ID),
+			Limit:         100,
+			Offset:        0,
+		})
+		assert.NoError(t, err)
+		assert.Len(t, sqlGotTrees, 2)
+
+		for i, sqlTree := range sqlGotTrees {
+			assert.Equal(t, treeIDs[i], sqlTree.ID)
+			assert.NotNil(t, sqlTree.TreeClusterID)
+			assert.Equal(t, got.ID, *sqlTree.TreeClusterID)
 		}
 	})
 

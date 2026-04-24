@@ -1058,65 +1058,6 @@ func (_c *MockQuerier_DeleteWateringPlan_Call) RunAndReturn(run func(context.Con
 	return _c
 }
 
-// FindNearestTree provides a mock function with given fields: ctx, arg
-func (_m *MockQuerier) FindNearestTree(ctx context.Context, arg *sqlc.FindNearestTreeParams) (*sqlc.Tree, error) {
-	ret := _m.Called(ctx, arg)
-
-	if len(ret) == 0 {
-		panic("no return value specified for FindNearestTree")
-	}
-
-	var r0 *sqlc.Tree
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *sqlc.FindNearestTreeParams) (*sqlc.Tree, error)); ok {
-		return rf(ctx, arg)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *sqlc.FindNearestTreeParams) *sqlc.Tree); ok {
-		r0 = rf(ctx, arg)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*sqlc.Tree)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *sqlc.FindNearestTreeParams) error); ok {
-		r1 = rf(ctx, arg)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockQuerier_FindNearestTree_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindNearestTree'
-type MockQuerier_FindNearestTree_Call struct {
-	*mock.Call
-}
-
-// FindNearestTree is a helper method to define mock.On call
-//   - ctx context.Context
-//   - arg *sqlc.FindNearestTreeParams
-func (_e *MockQuerier_Expecter) FindNearestTree(ctx interface{}, arg interface{}) *MockQuerier_FindNearestTree_Call {
-	return &MockQuerier_FindNearestTree_Call{Call: _e.mock.On("FindNearestTree", ctx, arg)}
-}
-
-func (_c *MockQuerier_FindNearestTree_Call) Run(run func(ctx context.Context, arg *sqlc.FindNearestTreeParams)) *MockQuerier_FindNearestTree_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*sqlc.FindNearestTreeParams))
-	})
-	return _c
-}
-
-func (_c *MockQuerier_FindNearestTree_Call) Return(_a0 *sqlc.Tree, _a1 error) *MockQuerier_FindNearestTree_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockQuerier_FindNearestTree_Call) RunAndReturn(run func(context.Context, *sqlc.FindNearestTreeParams) (*sqlc.Tree, error)) *MockQuerier_FindNearestTree_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // FindNearestTrees provides a mock function with given fields: ctx, arg
 func (_m *MockQuerier) FindNearestTrees(ctx context.Context, arg *sqlc.FindNearestTreesParams) ([]*sqlc.FindNearestTreesRow, error) {
 	ret := _m.Called(ctx, arg)
@@ -1172,123 +1113,6 @@ func (_c *MockQuerier_FindNearestTrees_Call) Return(_a0 []*sqlc.FindNearestTrees
 }
 
 func (_c *MockQuerier_FindNearestTrees_Call) RunAndReturn(run func(context.Context, *sqlc.FindNearestTreesParams) ([]*sqlc.FindNearestTreesRow, error)) *MockQuerier_FindNearestTrees_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAllArchivedVehicles provides a mock function with given fields: ctx
-func (_m *MockQuerier) GetAllArchivedVehicles(ctx context.Context) ([]*sqlc.Vehicle, error) {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllArchivedVehicles")
-	}
-
-	var r0 []*sqlc.Vehicle
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]*sqlc.Vehicle, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) []*sqlc.Vehicle); ok {
-		r0 = rf(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*sqlc.Vehicle)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockQuerier_GetAllArchivedVehicles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllArchivedVehicles'
-type MockQuerier_GetAllArchivedVehicles_Call struct {
-	*mock.Call
-}
-
-// GetAllArchivedVehicles is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *MockQuerier_Expecter) GetAllArchivedVehicles(ctx interface{}) *MockQuerier_GetAllArchivedVehicles_Call {
-	return &MockQuerier_GetAllArchivedVehicles_Call{Call: _e.mock.On("GetAllArchivedVehicles", ctx)}
-}
-
-func (_c *MockQuerier_GetAllArchivedVehicles_Call) Run(run func(ctx context.Context)) *MockQuerier_GetAllArchivedVehicles_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
-	})
-	return _c
-}
-
-func (_c *MockQuerier_GetAllArchivedVehicles_Call) Return(_a0 []*sqlc.Vehicle, _a1 error) *MockQuerier_GetAllArchivedVehicles_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockQuerier_GetAllArchivedVehicles_Call) RunAndReturn(run func(context.Context) ([]*sqlc.Vehicle, error)) *MockQuerier_GetAllArchivedVehicles_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAllLatestSensorDataByTreeClusterID provides a mock function with given fields: ctx, id
-func (_m *MockQuerier) GetAllLatestSensorDataByTreeClusterID(ctx context.Context, id int32) ([]*sqlc.SensorDatum, error) {
-	ret := _m.Called(ctx, id)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllLatestSensorDataByTreeClusterID")
-	}
-
-	var r0 []*sqlc.SensorDatum
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int32) ([]*sqlc.SensorDatum, error)); ok {
-		return rf(ctx, id)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, int32) []*sqlc.SensorDatum); ok {
-		r0 = rf(ctx, id)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*sqlc.SensorDatum)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, int32) error); ok {
-		r1 = rf(ctx, id)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockQuerier_GetAllLatestSensorDataByTreeClusterID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllLatestSensorDataByTreeClusterID'
-type MockQuerier_GetAllLatestSensorDataByTreeClusterID_Call struct {
-	*mock.Call
-}
-
-// GetAllLatestSensorDataByTreeClusterID is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id int32
-func (_e *MockQuerier_Expecter) GetAllLatestSensorDataByTreeClusterID(ctx interface{}, id interface{}) *MockQuerier_GetAllLatestSensorDataByTreeClusterID_Call {
-	return &MockQuerier_GetAllLatestSensorDataByTreeClusterID_Call{Call: _e.mock.On("GetAllLatestSensorDataByTreeClusterID", ctx, id)}
-}
-
-func (_c *MockQuerier_GetAllLatestSensorDataByTreeClusterID_Call) Run(run func(ctx context.Context, id int32)) *MockQuerier_GetAllLatestSensorDataByTreeClusterID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int32))
-	})
-	return _c
-}
-
-func (_c *MockQuerier_GetAllLatestSensorDataByTreeClusterID_Call) Return(_a0 []*sqlc.SensorDatum, _a1 error) *MockQuerier_GetAllLatestSensorDataByTreeClusterID_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockQuerier_GetAllLatestSensorDataByTreeClusterID_Call) RunAndReturn(run func(context.Context, int32) ([]*sqlc.SensorDatum, error)) *MockQuerier_GetAllLatestSensorDataByTreeClusterID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1990,241 +1814,9 @@ func (_c *MockQuerier_GetAllVehicles_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
-// GetAllVehiclesByType provides a mock function with given fields: ctx, arg
-func (_m *MockQuerier) GetAllVehiclesByType(ctx context.Context, arg *sqlc.GetAllVehiclesByTypeParams) ([]*sqlc.Vehicle, error) {
+// GetAllVehiclesCount provides a mock function with given fields: ctx, arg
+func (_m *MockQuerier) GetAllVehiclesCount(ctx context.Context, arg *sqlc.GetAllVehiclesCountParams) (int64, error) {
 	ret := _m.Called(ctx, arg)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllVehiclesByType")
-	}
-
-	var r0 []*sqlc.Vehicle
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *sqlc.GetAllVehiclesByTypeParams) ([]*sqlc.Vehicle, error)); ok {
-		return rf(ctx, arg)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *sqlc.GetAllVehiclesByTypeParams) []*sqlc.Vehicle); ok {
-		r0 = rf(ctx, arg)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*sqlc.Vehicle)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *sqlc.GetAllVehiclesByTypeParams) error); ok {
-		r1 = rf(ctx, arg)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockQuerier_GetAllVehiclesByType_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllVehiclesByType'
-type MockQuerier_GetAllVehiclesByType_Call struct {
-	*mock.Call
-}
-
-// GetAllVehiclesByType is a helper method to define mock.On call
-//   - ctx context.Context
-//   - arg *sqlc.GetAllVehiclesByTypeParams
-func (_e *MockQuerier_Expecter) GetAllVehiclesByType(ctx interface{}, arg interface{}) *MockQuerier_GetAllVehiclesByType_Call {
-	return &MockQuerier_GetAllVehiclesByType_Call{Call: _e.mock.On("GetAllVehiclesByType", ctx, arg)}
-}
-
-func (_c *MockQuerier_GetAllVehiclesByType_Call) Run(run func(ctx context.Context, arg *sqlc.GetAllVehiclesByTypeParams)) *MockQuerier_GetAllVehiclesByType_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*sqlc.GetAllVehiclesByTypeParams))
-	})
-	return _c
-}
-
-func (_c *MockQuerier_GetAllVehiclesByType_Call) Return(_a0 []*sqlc.Vehicle, _a1 error) *MockQuerier_GetAllVehiclesByType_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockQuerier_GetAllVehiclesByType_Call) RunAndReturn(run func(context.Context, *sqlc.GetAllVehiclesByTypeParams) ([]*sqlc.Vehicle, error)) *MockQuerier_GetAllVehiclesByType_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAllVehiclesByTypeCount provides a mock function with given fields: ctx, arg
-func (_m *MockQuerier) GetAllVehiclesByTypeCount(ctx context.Context, arg *sqlc.GetAllVehiclesByTypeCountParams) (int64, error) {
-	ret := _m.Called(ctx, arg)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllVehiclesByTypeCount")
-	}
-
-	var r0 int64
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *sqlc.GetAllVehiclesByTypeCountParams) (int64, error)); ok {
-		return rf(ctx, arg)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *sqlc.GetAllVehiclesByTypeCountParams) int64); ok {
-		r0 = rf(ctx, arg)
-	} else {
-		r0 = ret.Get(0).(int64)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *sqlc.GetAllVehiclesByTypeCountParams) error); ok {
-		r1 = rf(ctx, arg)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockQuerier_GetAllVehiclesByTypeCount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllVehiclesByTypeCount'
-type MockQuerier_GetAllVehiclesByTypeCount_Call struct {
-	*mock.Call
-}
-
-// GetAllVehiclesByTypeCount is a helper method to define mock.On call
-//   - ctx context.Context
-//   - arg *sqlc.GetAllVehiclesByTypeCountParams
-func (_e *MockQuerier_Expecter) GetAllVehiclesByTypeCount(ctx interface{}, arg interface{}) *MockQuerier_GetAllVehiclesByTypeCount_Call {
-	return &MockQuerier_GetAllVehiclesByTypeCount_Call{Call: _e.mock.On("GetAllVehiclesByTypeCount", ctx, arg)}
-}
-
-func (_c *MockQuerier_GetAllVehiclesByTypeCount_Call) Run(run func(ctx context.Context, arg *sqlc.GetAllVehiclesByTypeCountParams)) *MockQuerier_GetAllVehiclesByTypeCount_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*sqlc.GetAllVehiclesByTypeCountParams))
-	})
-	return _c
-}
-
-func (_c *MockQuerier_GetAllVehiclesByTypeCount_Call) Return(_a0 int64, _a1 error) *MockQuerier_GetAllVehiclesByTypeCount_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockQuerier_GetAllVehiclesByTypeCount_Call) RunAndReturn(run func(context.Context, *sqlc.GetAllVehiclesByTypeCountParams) (int64, error)) *MockQuerier_GetAllVehiclesByTypeCount_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAllVehiclesByTypeWithArchived provides a mock function with given fields: ctx, arg
-func (_m *MockQuerier) GetAllVehiclesByTypeWithArchived(ctx context.Context, arg *sqlc.GetAllVehiclesByTypeWithArchivedParams) ([]*sqlc.Vehicle, error) {
-	ret := _m.Called(ctx, arg)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllVehiclesByTypeWithArchived")
-	}
-
-	var r0 []*sqlc.Vehicle
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *sqlc.GetAllVehiclesByTypeWithArchivedParams) ([]*sqlc.Vehicle, error)); ok {
-		return rf(ctx, arg)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *sqlc.GetAllVehiclesByTypeWithArchivedParams) []*sqlc.Vehicle); ok {
-		r0 = rf(ctx, arg)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*sqlc.Vehicle)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *sqlc.GetAllVehiclesByTypeWithArchivedParams) error); ok {
-		r1 = rf(ctx, arg)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockQuerier_GetAllVehiclesByTypeWithArchived_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllVehiclesByTypeWithArchived'
-type MockQuerier_GetAllVehiclesByTypeWithArchived_Call struct {
-	*mock.Call
-}
-
-// GetAllVehiclesByTypeWithArchived is a helper method to define mock.On call
-//   - ctx context.Context
-//   - arg *sqlc.GetAllVehiclesByTypeWithArchivedParams
-func (_e *MockQuerier_Expecter) GetAllVehiclesByTypeWithArchived(ctx interface{}, arg interface{}) *MockQuerier_GetAllVehiclesByTypeWithArchived_Call {
-	return &MockQuerier_GetAllVehiclesByTypeWithArchived_Call{Call: _e.mock.On("GetAllVehiclesByTypeWithArchived", ctx, arg)}
-}
-
-func (_c *MockQuerier_GetAllVehiclesByTypeWithArchived_Call) Run(run func(ctx context.Context, arg *sqlc.GetAllVehiclesByTypeWithArchivedParams)) *MockQuerier_GetAllVehiclesByTypeWithArchived_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*sqlc.GetAllVehiclesByTypeWithArchivedParams))
-	})
-	return _c
-}
-
-func (_c *MockQuerier_GetAllVehiclesByTypeWithArchived_Call) Return(_a0 []*sqlc.Vehicle, _a1 error) *MockQuerier_GetAllVehiclesByTypeWithArchived_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockQuerier_GetAllVehiclesByTypeWithArchived_Call) RunAndReturn(run func(context.Context, *sqlc.GetAllVehiclesByTypeWithArchivedParams) ([]*sqlc.Vehicle, error)) *MockQuerier_GetAllVehiclesByTypeWithArchived_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAllVehiclesByTypeWithArchivedCount provides a mock function with given fields: ctx, arg
-func (_m *MockQuerier) GetAllVehiclesByTypeWithArchivedCount(ctx context.Context, arg *sqlc.GetAllVehiclesByTypeWithArchivedCountParams) (int64, error) {
-	ret := _m.Called(ctx, arg)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllVehiclesByTypeWithArchivedCount")
-	}
-
-	var r0 int64
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *sqlc.GetAllVehiclesByTypeWithArchivedCountParams) (int64, error)); ok {
-		return rf(ctx, arg)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *sqlc.GetAllVehiclesByTypeWithArchivedCountParams) int64); ok {
-		r0 = rf(ctx, arg)
-	} else {
-		r0 = ret.Get(0).(int64)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *sqlc.GetAllVehiclesByTypeWithArchivedCountParams) error); ok {
-		r1 = rf(ctx, arg)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockQuerier_GetAllVehiclesByTypeWithArchivedCount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllVehiclesByTypeWithArchivedCount'
-type MockQuerier_GetAllVehiclesByTypeWithArchivedCount_Call struct {
-	*mock.Call
-}
-
-// GetAllVehiclesByTypeWithArchivedCount is a helper method to define mock.On call
-//   - ctx context.Context
-//   - arg *sqlc.GetAllVehiclesByTypeWithArchivedCountParams
-func (_e *MockQuerier_Expecter) GetAllVehiclesByTypeWithArchivedCount(ctx interface{}, arg interface{}) *MockQuerier_GetAllVehiclesByTypeWithArchivedCount_Call {
-	return &MockQuerier_GetAllVehiclesByTypeWithArchivedCount_Call{Call: _e.mock.On("GetAllVehiclesByTypeWithArchivedCount", ctx, arg)}
-}
-
-func (_c *MockQuerier_GetAllVehiclesByTypeWithArchivedCount_Call) Run(run func(ctx context.Context, arg *sqlc.GetAllVehiclesByTypeWithArchivedCountParams)) *MockQuerier_GetAllVehiclesByTypeWithArchivedCount_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*sqlc.GetAllVehiclesByTypeWithArchivedCountParams))
-	})
-	return _c
-}
-
-func (_c *MockQuerier_GetAllVehiclesByTypeWithArchivedCount_Call) Return(_a0 int64, _a1 error) *MockQuerier_GetAllVehiclesByTypeWithArchivedCount_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockQuerier_GetAllVehiclesByTypeWithArchivedCount_Call) RunAndReturn(run func(context.Context, *sqlc.GetAllVehiclesByTypeWithArchivedCountParams) (int64, error)) *MockQuerier_GetAllVehiclesByTypeWithArchivedCount_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAllVehiclesCount provides a mock function with given fields: ctx, provider
-func (_m *MockQuerier) GetAllVehiclesCount(ctx context.Context, provider interface{}) (int64, error) {
-	ret := _m.Called(ctx, provider)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAllVehiclesCount")
@@ -2232,17 +1824,17 @@ func (_m *MockQuerier) GetAllVehiclesCount(ctx context.Context, provider interfa
 
 	var r0 int64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, interface{}) (int64, error)); ok {
-		return rf(ctx, provider)
+	if rf, ok := ret.Get(0).(func(context.Context, *sqlc.GetAllVehiclesCountParams) (int64, error)); ok {
+		return rf(ctx, arg)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, interface{}) int64); ok {
-		r0 = rf(ctx, provider)
+	if rf, ok := ret.Get(0).(func(context.Context, *sqlc.GetAllVehiclesCountParams) int64); ok {
+		r0 = rf(ctx, arg)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, interface{}) error); ok {
-		r1 = rf(ctx, provider)
+	if rf, ok := ret.Get(1).(func(context.Context, *sqlc.GetAllVehiclesCountParams) error); ok {
+		r1 = rf(ctx, arg)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -2257,14 +1849,14 @@ type MockQuerier_GetAllVehiclesCount_Call struct {
 
 // GetAllVehiclesCount is a helper method to define mock.On call
 //   - ctx context.Context
-//   - provider interface{}
-func (_e *MockQuerier_Expecter) GetAllVehiclesCount(ctx interface{}, provider interface{}) *MockQuerier_GetAllVehiclesCount_Call {
-	return &MockQuerier_GetAllVehiclesCount_Call{Call: _e.mock.On("GetAllVehiclesCount", ctx, provider)}
+//   - arg *sqlc.GetAllVehiclesCountParams
+func (_e *MockQuerier_Expecter) GetAllVehiclesCount(ctx interface{}, arg interface{}) *MockQuerier_GetAllVehiclesCount_Call {
+	return &MockQuerier_GetAllVehiclesCount_Call{Call: _e.mock.On("GetAllVehiclesCount", ctx, arg)}
 }
 
-func (_c *MockQuerier_GetAllVehiclesCount_Call) Run(run func(ctx context.Context, provider interface{})) *MockQuerier_GetAllVehiclesCount_Call {
+func (_c *MockQuerier_GetAllVehiclesCount_Call) Run(run func(ctx context.Context, arg *sqlc.GetAllVehiclesCountParams)) *MockQuerier_GetAllVehiclesCount_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(interface{}))
+		run(args[0].(context.Context), args[1].(*sqlc.GetAllVehiclesCountParams))
 	})
 	return _c
 }
@@ -2274,123 +1866,7 @@ func (_c *MockQuerier_GetAllVehiclesCount_Call) Return(_a0 int64, _a1 error) *Mo
 	return _c
 }
 
-func (_c *MockQuerier_GetAllVehiclesCount_Call) RunAndReturn(run func(context.Context, interface{}) (int64, error)) *MockQuerier_GetAllVehiclesCount_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAllVehiclesWithArchived provides a mock function with given fields: ctx, arg
-func (_m *MockQuerier) GetAllVehiclesWithArchived(ctx context.Context, arg *sqlc.GetAllVehiclesWithArchivedParams) ([]*sqlc.Vehicle, error) {
-	ret := _m.Called(ctx, arg)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllVehiclesWithArchived")
-	}
-
-	var r0 []*sqlc.Vehicle
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *sqlc.GetAllVehiclesWithArchivedParams) ([]*sqlc.Vehicle, error)); ok {
-		return rf(ctx, arg)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *sqlc.GetAllVehiclesWithArchivedParams) []*sqlc.Vehicle); ok {
-		r0 = rf(ctx, arg)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*sqlc.Vehicle)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *sqlc.GetAllVehiclesWithArchivedParams) error); ok {
-		r1 = rf(ctx, arg)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockQuerier_GetAllVehiclesWithArchived_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllVehiclesWithArchived'
-type MockQuerier_GetAllVehiclesWithArchived_Call struct {
-	*mock.Call
-}
-
-// GetAllVehiclesWithArchived is a helper method to define mock.On call
-//   - ctx context.Context
-//   - arg *sqlc.GetAllVehiclesWithArchivedParams
-func (_e *MockQuerier_Expecter) GetAllVehiclesWithArchived(ctx interface{}, arg interface{}) *MockQuerier_GetAllVehiclesWithArchived_Call {
-	return &MockQuerier_GetAllVehiclesWithArchived_Call{Call: _e.mock.On("GetAllVehiclesWithArchived", ctx, arg)}
-}
-
-func (_c *MockQuerier_GetAllVehiclesWithArchived_Call) Run(run func(ctx context.Context, arg *sqlc.GetAllVehiclesWithArchivedParams)) *MockQuerier_GetAllVehiclesWithArchived_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*sqlc.GetAllVehiclesWithArchivedParams))
-	})
-	return _c
-}
-
-func (_c *MockQuerier_GetAllVehiclesWithArchived_Call) Return(_a0 []*sqlc.Vehicle, _a1 error) *MockQuerier_GetAllVehiclesWithArchived_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockQuerier_GetAllVehiclesWithArchived_Call) RunAndReturn(run func(context.Context, *sqlc.GetAllVehiclesWithArchivedParams) ([]*sqlc.Vehicle, error)) *MockQuerier_GetAllVehiclesWithArchived_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAllVehiclesWithArchivedCount provides a mock function with given fields: ctx, provider
-func (_m *MockQuerier) GetAllVehiclesWithArchivedCount(ctx context.Context, provider interface{}) (int64, error) {
-	ret := _m.Called(ctx, provider)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllVehiclesWithArchivedCount")
-	}
-
-	var r0 int64
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, interface{}) (int64, error)); ok {
-		return rf(ctx, provider)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, interface{}) int64); ok {
-		r0 = rf(ctx, provider)
-	} else {
-		r0 = ret.Get(0).(int64)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, interface{}) error); ok {
-		r1 = rf(ctx, provider)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockQuerier_GetAllVehiclesWithArchivedCount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllVehiclesWithArchivedCount'
-type MockQuerier_GetAllVehiclesWithArchivedCount_Call struct {
-	*mock.Call
-}
-
-// GetAllVehiclesWithArchivedCount is a helper method to define mock.On call
-//   - ctx context.Context
-//   - provider interface{}
-func (_e *MockQuerier_Expecter) GetAllVehiclesWithArchivedCount(ctx interface{}, provider interface{}) *MockQuerier_GetAllVehiclesWithArchivedCount_Call {
-	return &MockQuerier_GetAllVehiclesWithArchivedCount_Call{Call: _e.mock.On("GetAllVehiclesWithArchivedCount", ctx, provider)}
-}
-
-func (_c *MockQuerier_GetAllVehiclesWithArchivedCount_Call) Run(run func(ctx context.Context, provider interface{})) *MockQuerier_GetAllVehiclesWithArchivedCount_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(interface{}))
-	})
-	return _c
-}
-
-func (_c *MockQuerier_GetAllVehiclesWithArchivedCount_Call) Return(_a0 int64, _a1 error) *MockQuerier_GetAllVehiclesWithArchivedCount_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockQuerier_GetAllVehiclesWithArchivedCount_Call) RunAndReturn(run func(context.Context, interface{}) (int64, error)) *MockQuerier_GetAllVehiclesWithArchivedCount_Call {
+func (_c *MockQuerier_GetAllVehiclesCount_Call) RunAndReturn(run func(context.Context, *sqlc.GetAllVehiclesCountParams) (int64, error)) *MockQuerier_GetAllVehiclesCount_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2682,6 +2158,65 @@ func (_c *MockQuerier_GetLatestSensorDataByID_Call) Return(_a0 *sqlc.SensorDatum
 }
 
 func (_c *MockQuerier_GetLatestSensorDataByID_Call) RunAndReturn(run func(context.Context, string) (*sqlc.SensorDatum, error)) *MockQuerier_GetLatestSensorDataByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetLatestSensorDataBySensorIDs provides a mock function with given fields: ctx, sensorIds
+func (_m *MockQuerier) GetLatestSensorDataBySensorIDs(ctx context.Context, sensorIds []string) ([]*sqlc.SensorDatum, error) {
+	ret := _m.Called(ctx, sensorIds)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLatestSensorDataBySensorIDs")
+	}
+
+	var r0 []*sqlc.SensorDatum
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, []string) ([]*sqlc.SensorDatum, error)); ok {
+		return rf(ctx, sensorIds)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, []string) []*sqlc.SensorDatum); ok {
+		r0 = rf(ctx, sensorIds)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*sqlc.SensorDatum)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, []string) error); ok {
+		r1 = rf(ctx, sensorIds)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockQuerier_GetLatestSensorDataBySensorIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLatestSensorDataBySensorIDs'
+type MockQuerier_GetLatestSensorDataBySensorIDs_Call struct {
+	*mock.Call
+}
+
+// GetLatestSensorDataBySensorIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - sensorIds []string
+func (_e *MockQuerier_Expecter) GetLatestSensorDataBySensorIDs(ctx interface{}, sensorIds interface{}) *MockQuerier_GetLatestSensorDataBySensorIDs_Call {
+	return &MockQuerier_GetLatestSensorDataBySensorIDs_Call{Call: _e.mock.On("GetLatestSensorDataBySensorIDs", ctx, sensorIds)}
+}
+
+func (_c *MockQuerier_GetLatestSensorDataBySensorIDs_Call) Run(run func(ctx context.Context, sensorIds []string)) *MockQuerier_GetLatestSensorDataBySensorIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]string))
+	})
+	return _c
+}
+
+func (_c *MockQuerier_GetLatestSensorDataBySensorIDs_Call) Return(_a0 []*sqlc.SensorDatum, _a1 error) *MockQuerier_GetLatestSensorDataBySensorIDs_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockQuerier_GetLatestSensorDataBySensorIDs_Call) RunAndReturn(run func(context.Context, []string) ([]*sqlc.SensorDatum, error)) *MockQuerier_GetLatestSensorDataBySensorIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -3099,65 +2634,6 @@ func (_c *MockQuerier_GetSensorByStatus_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
-// GetSensorByTreeID provides a mock function with given fields: ctx, id
-func (_m *MockQuerier) GetSensorByTreeID(ctx context.Context, id int32) (*sqlc.Sensor, error) {
-	ret := _m.Called(ctx, id)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetSensorByTreeID")
-	}
-
-	var r0 *sqlc.Sensor
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int32) (*sqlc.Sensor, error)); ok {
-		return rf(ctx, id)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, int32) *sqlc.Sensor); ok {
-		r0 = rf(ctx, id)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*sqlc.Sensor)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, int32) error); ok {
-		r1 = rf(ctx, id)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockQuerier_GetSensorByTreeID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSensorByTreeID'
-type MockQuerier_GetSensorByTreeID_Call struct {
-	*mock.Call
-}
-
-// GetSensorByTreeID is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id int32
-func (_e *MockQuerier_Expecter) GetSensorByTreeID(ctx interface{}, id interface{}) *MockQuerier_GetSensorByTreeID_Call {
-	return &MockQuerier_GetSensorByTreeID_Call{Call: _e.mock.On("GetSensorByTreeID", ctx, id)}
-}
-
-func (_c *MockQuerier_GetSensorByTreeID_Call) Run(run func(ctx context.Context, id int32)) *MockQuerier_GetSensorByTreeID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int32))
-	})
-	return _c
-}
-
-func (_c *MockQuerier_GetSensorByTreeID_Call) Return(_a0 *sqlc.Sensor, _a1 error) *MockQuerier_GetSensorByTreeID_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockQuerier_GetSensorByTreeID_Call) RunAndReturn(run func(context.Context, int32) (*sqlc.Sensor, error)) *MockQuerier_GetSensorByTreeID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetTotalConsumedWater provides a mock function with given fields: ctx
 func (_m *MockQuerier) GetTotalConsumedWater(ctx context.Context) (int64, error) {
 	ret := _m.Called(ctx)
@@ -3210,65 +2686,6 @@ func (_c *MockQuerier_GetTotalConsumedWater_Call) Return(_a0 int64, _a1 error) *
 }
 
 func (_c *MockQuerier_GetTotalConsumedWater_Call) RunAndReturn(run func(context.Context) (int64, error)) *MockQuerier_GetTotalConsumedWater_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetTreeByCoordinates provides a mock function with given fields: ctx, arg
-func (_m *MockQuerier) GetTreeByCoordinates(ctx context.Context, arg *sqlc.GetTreeByCoordinatesParams) (*sqlc.Tree, error) {
-	ret := _m.Called(ctx, arg)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetTreeByCoordinates")
-	}
-
-	var r0 *sqlc.Tree
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *sqlc.GetTreeByCoordinatesParams) (*sqlc.Tree, error)); ok {
-		return rf(ctx, arg)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *sqlc.GetTreeByCoordinatesParams) *sqlc.Tree); ok {
-		r0 = rf(ctx, arg)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*sqlc.Tree)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *sqlc.GetTreeByCoordinatesParams) error); ok {
-		r1 = rf(ctx, arg)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockQuerier_GetTreeByCoordinates_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetTreeByCoordinates'
-type MockQuerier_GetTreeByCoordinates_Call struct {
-	*mock.Call
-}
-
-// GetTreeByCoordinates is a helper method to define mock.On call
-//   - ctx context.Context
-//   - arg *sqlc.GetTreeByCoordinatesParams
-func (_e *MockQuerier_Expecter) GetTreeByCoordinates(ctx interface{}, arg interface{}) *MockQuerier_GetTreeByCoordinates_Call {
-	return &MockQuerier_GetTreeByCoordinates_Call{Call: _e.mock.On("GetTreeByCoordinates", ctx, arg)}
-}
-
-func (_c *MockQuerier_GetTreeByCoordinates_Call) Run(run func(ctx context.Context, arg *sqlc.GetTreeByCoordinatesParams)) *MockQuerier_GetTreeByCoordinates_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*sqlc.GetTreeByCoordinatesParams))
-	})
-	return _c
-}
-
-func (_c *MockQuerier_GetTreeByCoordinates_Call) Return(_a0 *sqlc.Tree, _a1 error) *MockQuerier_GetTreeByCoordinates_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockQuerier_GetTreeByCoordinates_Call) RunAndReturn(run func(context.Context, *sqlc.GetTreeByCoordinatesParams) (*sqlc.Tree, error)) *MockQuerier_GetTreeByCoordinates_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -3332,65 +2749,6 @@ func (_c *MockQuerier_GetTreeByID_Call) RunAndReturn(run func(context.Context, i
 	return _c
 }
 
-// GetTreeBySensorID provides a mock function with given fields: ctx, sensorID
-func (_m *MockQuerier) GetTreeBySensorID(ctx context.Context, sensorID *string) (*sqlc.Tree, error) {
-	ret := _m.Called(ctx, sensorID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetTreeBySensorID")
-	}
-
-	var r0 *sqlc.Tree
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *string) (*sqlc.Tree, error)); ok {
-		return rf(ctx, sensorID)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *string) *sqlc.Tree); ok {
-		r0 = rf(ctx, sensorID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*sqlc.Tree)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *string) error); ok {
-		r1 = rf(ctx, sensorID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockQuerier_GetTreeBySensorID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetTreeBySensorID'
-type MockQuerier_GetTreeBySensorID_Call struct {
-	*mock.Call
-}
-
-// GetTreeBySensorID is a helper method to define mock.On call
-//   - ctx context.Context
-//   - sensorID *string
-func (_e *MockQuerier_Expecter) GetTreeBySensorID(ctx interface{}, sensorID interface{}) *MockQuerier_GetTreeBySensorID_Call {
-	return &MockQuerier_GetTreeBySensorID_Call{Call: _e.mock.On("GetTreeBySensorID", ctx, sensorID)}
-}
-
-func (_c *MockQuerier_GetTreeBySensorID_Call) Run(run func(ctx context.Context, sensorID *string)) *MockQuerier_GetTreeBySensorID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*string))
-	})
-	return _c
-}
-
-func (_c *MockQuerier_GetTreeBySensorID_Call) Return(_a0 *sqlc.Tree, _a1 error) *MockQuerier_GetTreeBySensorID_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockQuerier_GetTreeBySensorID_Call) RunAndReturn(run func(context.Context, *string) (*sqlc.Tree, error)) *MockQuerier_GetTreeBySensorID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetTreeClusterByID provides a mock function with given fields: ctx, id
 func (_m *MockQuerier) GetTreeClusterByID(ctx context.Context, id int32) (*sqlc.TreeCluster, error) {
 	ret := _m.Called(ctx, id)
@@ -3446,65 +2804,6 @@ func (_c *MockQuerier_GetTreeClusterByID_Call) Return(_a0 *sqlc.TreeCluster, _a1
 }
 
 func (_c *MockQuerier_GetTreeClusterByID_Call) RunAndReturn(run func(context.Context, int32) (*sqlc.TreeCluster, error)) *MockQuerier_GetTreeClusterByID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetTreeClusterByTreeID provides a mock function with given fields: ctx, id
-func (_m *MockQuerier) GetTreeClusterByTreeID(ctx context.Context, id int32) (*sqlc.TreeCluster, error) {
-	ret := _m.Called(ctx, id)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetTreeClusterByTreeID")
-	}
-
-	var r0 *sqlc.TreeCluster
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int32) (*sqlc.TreeCluster, error)); ok {
-		return rf(ctx, id)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, int32) *sqlc.TreeCluster); ok {
-		r0 = rf(ctx, id)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*sqlc.TreeCluster)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, int32) error); ok {
-		r1 = rf(ctx, id)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockQuerier_GetTreeClusterByTreeID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetTreeClusterByTreeID'
-type MockQuerier_GetTreeClusterByTreeID_Call struct {
-	*mock.Call
-}
-
-// GetTreeClusterByTreeID is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id int32
-func (_e *MockQuerier_Expecter) GetTreeClusterByTreeID(ctx interface{}, id interface{}) *MockQuerier_GetTreeClusterByTreeID_Call {
-	return &MockQuerier_GetTreeClusterByTreeID_Call{Call: _e.mock.On("GetTreeClusterByTreeID", ctx, id)}
-}
-
-func (_c *MockQuerier_GetTreeClusterByTreeID_Call) Run(run func(ctx context.Context, id int32)) *MockQuerier_GetTreeClusterByTreeID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int32))
-	})
-	return _c
-}
-
-func (_c *MockQuerier_GetTreeClusterByTreeID_Call) Return(_a0 *sqlc.TreeCluster, _a1 error) *MockQuerier_GetTreeClusterByTreeID_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockQuerier_GetTreeClusterByTreeID_Call) RunAndReturn(run func(context.Context, int32) (*sqlc.TreeCluster, error)) *MockQuerier_GetTreeClusterByTreeID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -3621,242 +2920,6 @@ func (_c *MockQuerier_GetTreeClustersCount_Call) Return(_a0 int64, _a1 error) *M
 }
 
 func (_c *MockQuerier_GetTreeClustersCount_Call) RunAndReturn(run func(context.Context, *sqlc.GetTreeClustersCountParams) (int64, error)) *MockQuerier_GetTreeClustersCount_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetTreesByIDs provides a mock function with given fields: ctx, dollar_1
-func (_m *MockQuerier) GetTreesByIDs(ctx context.Context, dollar_1 []int32) ([]*sqlc.Tree, error) {
-	ret := _m.Called(ctx, dollar_1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetTreesByIDs")
-	}
-
-	var r0 []*sqlc.Tree
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []int32) ([]*sqlc.Tree, error)); ok {
-		return rf(ctx, dollar_1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, []int32) []*sqlc.Tree); ok {
-		r0 = rf(ctx, dollar_1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*sqlc.Tree)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, []int32) error); ok {
-		r1 = rf(ctx, dollar_1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockQuerier_GetTreesByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetTreesByIDs'
-type MockQuerier_GetTreesByIDs_Call struct {
-	*mock.Call
-}
-
-// GetTreesByIDs is a helper method to define mock.On call
-//   - ctx context.Context
-//   - dollar_1 []int32
-func (_e *MockQuerier_Expecter) GetTreesByIDs(ctx interface{}, dollar_1 interface{}) *MockQuerier_GetTreesByIDs_Call {
-	return &MockQuerier_GetTreesByIDs_Call{Call: _e.mock.On("GetTreesByIDs", ctx, dollar_1)}
-}
-
-func (_c *MockQuerier_GetTreesByIDs_Call) Run(run func(ctx context.Context, dollar_1 []int32)) *MockQuerier_GetTreesByIDs_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]int32))
-	})
-	return _c
-}
-
-func (_c *MockQuerier_GetTreesByIDs_Call) Return(_a0 []*sqlc.Tree, _a1 error) *MockQuerier_GetTreesByIDs_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockQuerier_GetTreesByIDs_Call) RunAndReturn(run func(context.Context, []int32) ([]*sqlc.Tree, error)) *MockQuerier_GetTreesByIDs_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetTreesBySensorIDs provides a mock function with given fields: ctx, dollar_1
-func (_m *MockQuerier) GetTreesBySensorIDs(ctx context.Context, dollar_1 []string) ([]*sqlc.Tree, error) {
-	ret := _m.Called(ctx, dollar_1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetTreesBySensorIDs")
-	}
-
-	var r0 []*sqlc.Tree
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []string) ([]*sqlc.Tree, error)); ok {
-		return rf(ctx, dollar_1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, []string) []*sqlc.Tree); ok {
-		r0 = rf(ctx, dollar_1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*sqlc.Tree)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, []string) error); ok {
-		r1 = rf(ctx, dollar_1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockQuerier_GetTreesBySensorIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetTreesBySensorIDs'
-type MockQuerier_GetTreesBySensorIDs_Call struct {
-	*mock.Call
-}
-
-// GetTreesBySensorIDs is a helper method to define mock.On call
-//   - ctx context.Context
-//   - dollar_1 []string
-func (_e *MockQuerier_Expecter) GetTreesBySensorIDs(ctx interface{}, dollar_1 interface{}) *MockQuerier_GetTreesBySensorIDs_Call {
-	return &MockQuerier_GetTreesBySensorIDs_Call{Call: _e.mock.On("GetTreesBySensorIDs", ctx, dollar_1)}
-}
-
-func (_c *MockQuerier_GetTreesBySensorIDs_Call) Run(run func(ctx context.Context, dollar_1 []string)) *MockQuerier_GetTreesBySensorIDs_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]string))
-	})
-	return _c
-}
-
-func (_c *MockQuerier_GetTreesBySensorIDs_Call) Return(_a0 []*sqlc.Tree, _a1 error) *MockQuerier_GetTreesBySensorIDs_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockQuerier_GetTreesBySensorIDs_Call) RunAndReturn(run func(context.Context, []string) ([]*sqlc.Tree, error)) *MockQuerier_GetTreesBySensorIDs_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetTreesByTreeClusterID provides a mock function with given fields: ctx, treeClusterID
-func (_m *MockQuerier) GetTreesByTreeClusterID(ctx context.Context, treeClusterID *int32) ([]*sqlc.Tree, error) {
-	ret := _m.Called(ctx, treeClusterID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetTreesByTreeClusterID")
-	}
-
-	var r0 []*sqlc.Tree
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *int32) ([]*sqlc.Tree, error)); ok {
-		return rf(ctx, treeClusterID)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *int32) []*sqlc.Tree); ok {
-		r0 = rf(ctx, treeClusterID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*sqlc.Tree)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *int32) error); ok {
-		r1 = rf(ctx, treeClusterID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockQuerier_GetTreesByTreeClusterID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetTreesByTreeClusterID'
-type MockQuerier_GetTreesByTreeClusterID_Call struct {
-	*mock.Call
-}
-
-// GetTreesByTreeClusterID is a helper method to define mock.On call
-//   - ctx context.Context
-//   - treeClusterID *int32
-func (_e *MockQuerier_Expecter) GetTreesByTreeClusterID(ctx interface{}, treeClusterID interface{}) *MockQuerier_GetTreesByTreeClusterID_Call {
-	return &MockQuerier_GetTreesByTreeClusterID_Call{Call: _e.mock.On("GetTreesByTreeClusterID", ctx, treeClusterID)}
-}
-
-func (_c *MockQuerier_GetTreesByTreeClusterID_Call) Run(run func(ctx context.Context, treeClusterID *int32)) *MockQuerier_GetTreesByTreeClusterID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*int32))
-	})
-	return _c
-}
-
-func (_c *MockQuerier_GetTreesByTreeClusterID_Call) Return(_a0 []*sqlc.Tree, _a1 error) *MockQuerier_GetTreesByTreeClusterID_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockQuerier_GetTreesByTreeClusterID_Call) RunAndReturn(run func(context.Context, *int32) ([]*sqlc.Tree, error)) *MockQuerier_GetTreesByTreeClusterID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetTreesClustersByIDs provides a mock function with given fields: ctx, dollar_1
-func (_m *MockQuerier) GetTreesClustersByIDs(ctx context.Context, dollar_1 []int32) ([]*sqlc.TreeCluster, error) {
-	ret := _m.Called(ctx, dollar_1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetTreesClustersByIDs")
-	}
-
-	var r0 []*sqlc.TreeCluster
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []int32) ([]*sqlc.TreeCluster, error)); ok {
-		return rf(ctx, dollar_1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, []int32) []*sqlc.TreeCluster); ok {
-		r0 = rf(ctx, dollar_1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*sqlc.TreeCluster)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, []int32) error); ok {
-		r1 = rf(ctx, dollar_1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockQuerier_GetTreesClustersByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetTreesClustersByIDs'
-type MockQuerier_GetTreesClustersByIDs_Call struct {
-	*mock.Call
-}
-
-// GetTreesClustersByIDs is a helper method to define mock.On call
-//   - ctx context.Context
-//   - dollar_1 []int32
-func (_e *MockQuerier_Expecter) GetTreesClustersByIDs(ctx interface{}, dollar_1 interface{}) *MockQuerier_GetTreesClustersByIDs_Call {
-	return &MockQuerier_GetTreesClustersByIDs_Call{Call: _e.mock.On("GetTreesClustersByIDs", ctx, dollar_1)}
-}
-
-func (_c *MockQuerier_GetTreesClustersByIDs_Call) Run(run func(ctx context.Context, dollar_1 []int32)) *MockQuerier_GetTreesClustersByIDs_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]int32))
-	})
-	return _c
-}
-
-func (_c *MockQuerier_GetTreesClustersByIDs_Call) Return(_a0 []*sqlc.TreeCluster, _a1 error) *MockQuerier_GetTreesClustersByIDs_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockQuerier_GetTreesClustersByIDs_Call) RunAndReturn(run func(context.Context, []int32) ([]*sqlc.TreeCluster, error)) *MockQuerier_GetTreesClustersByIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }

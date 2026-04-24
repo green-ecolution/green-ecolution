@@ -36,11 +36,11 @@ func NewService(cfg *config.Config, repos *storage.Repository, eventMananger *wo
 		TreeService:         tree.NewTreeService(repos.Tree, repos.Sensor, repos.TreeCluster, eventMananger, cfg.Map),
 		AuthService:         authSvc,
 		RegionService:       region.NewRegionService(repos.Region),
-		TreeClusterService:  cluster.NewTreeClusterService(repos.TreeCluster, repos.Tree, repos.Region, eventMananger),
+		TreeClusterService:  cluster.NewTreeClusterService(repos.TreeCluster, repos.Tree, repos.Region, repos.Sensor, eventMananger),
 		VehicleService:      vehicle.NewVehicleService(repos.Vehicle),
 		SensorService:       sensor.NewSensorService(repos.Sensor, repos.Tree, eventMananger),
 		PluginService:       pluginSvc,
 		WateringPlanService: wateringplan.NewWateringPlanService(repos.WateringPlan, repos.TreeCluster, repos.Vehicle, repos.User, eventMananger, repos.Routing, repos.GpxBucket),
-		EvaluationService:   evaluation.NewEvaluationService(repos.TreeCluster, repos.Tree, repos.Sensor, repos.WateringPlan, repos.Vehicle),
+		EvaluationService:   evaluation.NewEvaluationService(repos.Evaluation, repos.TreeCluster, repos.Tree, repos.Sensor, repos.WateringPlan),
 	}
 }

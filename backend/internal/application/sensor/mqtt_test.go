@@ -10,6 +10,7 @@ import (
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/_mock"
@@ -42,7 +43,7 @@ func TestSensorService_HandleMessage(t *testing.T) {
 		sensorRepo.EXPECT().Update(context.Background(), TestSensor.ID, mock.Anything).Return(TestSensor, nil)
 		sensorRepo.EXPECT().InsertSensorData(context.Background(), insertData, TestSensor.ID).Return(nil)
 		sensorRepo.EXPECT().GetLatestSensorDataBySensorID(context.Background(), TestSensor.ID).Return(TestSensorData[0], nil)
-		treeRepo.EXPECT().FindNearestTree(context.Background(), mock.Anything).Return(TestNearestTree, nil)
+		treeRepo.EXPECT().FindNearestTrees(mock.Anything, mock.Anything, float64(3), int32(1)).Return([]*tree.TreeWithDistance{{Tree: TestNearestTree, Distance: shared.MustNewDistance(0)}}, nil)
 		treeRepo.EXPECT().Update(context.Background(), TestNearestTree.ID, mock.Anything).Return(TestNearestTree, nil)
 
 		// when
@@ -103,7 +104,7 @@ func TestSensorService_HandleMessage(t *testing.T) {
 		sensorRepo.EXPECT().InsertSensorData(context.Background(), insertData, TestSensor.ID).Return(nil).Once()
 		sensorRepo.EXPECT().GetLatestSensorDataBySensorID(context.Background(), TestSensor.ID).Return(TestSensorData[0], nil).Once()
 		sensorRepo.EXPECT().GetByID(context.Background(), TestSensor.ID).Return(TestSensor, nil).Once()
-		treeRepo.EXPECT().FindNearestTree(context.Background(), TestSensor.Coordinate).Return(TestNearestTree, nil)
+		treeRepo.EXPECT().FindNearestTrees(mock.Anything, TestSensor.Coordinate, float64(3), int32(1)).Return([]*tree.TreeWithDistance{{Tree: TestNearestTree, Distance: shared.MustNewDistance(0)}}, nil)
 		treeRepo.EXPECT().Update(context.Background(), TestNearestTree.ID, mock.Anything).Return(TestNearestTree, nil)
 
 		// when

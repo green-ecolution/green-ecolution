@@ -13,6 +13,7 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/info"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/vehicle"
 	versionpkg "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/version"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
@@ -48,7 +49,7 @@ type SensorCountRepo interface {
 }
 
 type VehicleCountRepo interface {
-	GetCount(ctx context.Context, query shared.Query) (int64, error)
+	GetCount(ctx context.Context, query vehicle.VehicleQuery) (int64, error)
 }
 
 type TreeClusterCountRepo interface {
@@ -208,7 +209,7 @@ func (r *InfoRepository) GetStatistics(ctx context.Context) (*info.DataStatistic
 	}
 
 	if r.vehicleRepo != nil {
-		count, err := r.vehicleRepo.GetCount(ctx, shared.Query{})
+		count, err := r.vehicleRepo.GetCount(ctx, vehicle.VehicleQuery{})
 		if err == nil {
 			stats.VehicleCount = count
 		}

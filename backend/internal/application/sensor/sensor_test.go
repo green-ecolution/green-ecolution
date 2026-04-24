@@ -584,8 +584,8 @@ func TestSensorService_MapSensorToTree(t *testing.T) {
 		testTree := TestNearestTree
 
 		treeRepo.EXPECT().
-			FindNearestTree(context.Background(), mock.Anything).
-			Return(testTree, nil)
+			FindNearestTrees(mock.Anything, mock.Anything, float64(3), int32(1)).
+			Return([]*tree.TreeWithDistance{{Tree: testTree, Distance: shared.MustNewDistance(0)}}, nil)
 
 		treeRepo.EXPECT().
 			Update(context.Background(), testTree.ID, mock.Anything).
@@ -621,7 +621,7 @@ func TestSensorService_MapSensorToTree(t *testing.T) {
 		testSensor := TestSensorNearestTree
 
 		treeRepo.EXPECT().
-			FindNearestTree(context.Background(), testSensor.Coordinate).
+			FindNearestTrees(mock.Anything, testSensor.Coordinate, float64(3), int32(1)).
 			Return(nil, errors.New("tree not found"))
 
 		// when
@@ -642,8 +642,8 @@ func TestSensorService_MapSensorToTree(t *testing.T) {
 		testTree := TestNearestTree
 
 		treeRepo.EXPECT().
-			FindNearestTree(context.Background(), mock.Anything).
-			Return(testTree, nil)
+			FindNearestTrees(mock.Anything, mock.Anything, float64(3), int32(1)).
+			Return([]*tree.TreeWithDistance{{Tree: testTree, Distance: shared.MustNewDistance(0)}}, nil)
 
 		treeRepo.EXPECT().
 			Update(context.Background(), testTree.ID, mock.Anything).

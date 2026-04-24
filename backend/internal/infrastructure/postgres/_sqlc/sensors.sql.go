@@ -158,6 +158,39 @@ func (q *Queries) GetLatestSensorDataByID(ctx context.Context, sensorID string) 
 	return &i, err
 }
 
+const getLatestSensorDataBySensorIDs = `-- name: GetLatestSensorDataBySensorIDs :many
+SELECT DISTINCT ON (sensor_id) id, created_at, updated_at, data, sensor_id
+FROM sensor_data
+WHERE sensor_id = ANY($1::text[])
+ORDER BY sensor_id, created_at DESC
+`
+
+func (q *Queries) GetLatestSensorDataBySensorIDs(ctx context.Context, sensorIds []string) ([]*SensorDatum, error) {
+	rows, err := q.db.Query(ctx, getLatestSensorDataBySensorIDs, sensorIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*SensorDatum{}
+	for rows.Next() {
+		var i SensorDatum
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Data,
+			&i.SensorID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getSensorByID = `-- name: GetSensorByID :one
 SELECT id, created_at, updated_at, status, latitude, longitude, geometry, provider, additional_informations FROM sensors WHERE id = $1
 `

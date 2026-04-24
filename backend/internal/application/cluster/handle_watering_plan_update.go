@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
@@ -53,7 +54,7 @@ func (s *TreeClusterService) handleTreeClustersUpdate(ctx context.Context, tcIDs
 		}
 
 		// Fetch trees belonging to this cluster and update their watering status
-		trees, err := s.treeRepo.GetByTreeClusterID(ctx, tcID)
+		trees, _, err := s.treeRepo.GetAll(ctx, tree.TreeQuery{TreeClusterID: &tcID})
 		if err != nil {
 			log.Error("failed to get trees for cluster", "cluster_id", tcID, "err", err)
 			continue

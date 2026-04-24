@@ -93,7 +93,7 @@ func (w *WateringPlanRepository) GetByID(ctx context.Context, id int32) (*wateri
 	return wp, nil
 }
 
-func (w *WateringPlanRepository) GetLinkedVehicleIDByIDAndType(ctx context.Context, id int32, vehicleType string) (*int32, error) {
+func (w *WateringPlanRepository) getLinkedVehicleIDByIDAndType(ctx context.Context, id int32, vehicleType string) (*int32, error) {
 	log := logger.GetLogger(ctx)
 	row, err := w.store.GetVehicleByWateringPlanID(ctx, &sqlc.GetVehicleByWateringPlanIDParams{
 		WateringPlanID: id,
@@ -108,7 +108,7 @@ func (w *WateringPlanRepository) GetLinkedVehicleIDByIDAndType(ctx context.Conte
 	return &row.ID, nil
 }
 
-func (w *WateringPlanRepository) GetLinkedTreeClusterIDsByID(ctx context.Context, id int32) ([]int32, error) {
+func (w *WateringPlanRepository) getLinkedTreeClusterIDsByID(ctx context.Context, id int32) ([]int32, error) {
 	log := logger.GetLogger(ctx)
 	rows, err := w.store.GetTreeClustersByWateringPlanID(ctx, id)
 	if err != nil {
@@ -124,7 +124,7 @@ func (w *WateringPlanRepository) GetLinkedTreeClusterIDsByID(ctx context.Context
 	return ids, nil
 }
 
-func (w *WateringPlanRepository) GetEvaluationValues(ctx context.Context, id int32) ([]*watering.EvaluationValue, error) {
+func (w *WateringPlanRepository) getEvaluationValues(ctx context.Context, id int32) ([]*watering.EvaluationValue, error) {
 	log := logger.GetLogger(ctx)
 	rows, err := w.store.GetAllTreeClusterWateringPlanByID(ctx, id)
 	if err != nil {
@@ -135,7 +135,7 @@ func (w *WateringPlanRepository) GetEvaluationValues(ctx context.Context, id int
 	return w.mapper.EvaluationFromSqlList(rows), nil
 }
 
-func (w *WateringPlanRepository) GetLinkedUsersByID(ctx context.Context, id int32) ([]*uuid.UUID, error) {
+func (w *WateringPlanRepository) getLinkedUsersByID(ctx context.Context, id int32) ([]*uuid.UUID, error) {
 	log := logger.GetLogger(ctx)
 	UUIDs, err := w.store.GetUsersByWateringPlanID(ctx, id)
 	if err != nil {
@@ -151,45 +151,23 @@ func (w *WateringPlanRepository) GetLinkedUsersByID(ctx context.Context, id int3
 	return userUUIDs, nil
 }
 
-func (w *WateringPlanRepository) GetTotalConsumedWater(ctx context.Context) (int64, error) {
-	log := logger.GetLogger(ctx)
-	totalConsumedWater, err := w.store.GetTotalConsumedWater(ctx)
-	if err != nil {
-		log.Debug("failed to get total consumed water value in db", "error", err)
-		return 0, err
-	}
-
-	return totalConsumedWater, nil
-}
-
-func (w *WateringPlanRepository) GetAllUserCount(ctx context.Context) (int64, error) {
-	log := logger.GetLogger(ctx)
-	userCount, err := w.store.GetAllUserWateringPlanCount(ctx)
-	if err != nil {
-		log.Debug("failed to get count of all user linked to watering plans in db", "error", err)
-		return 0, err
-	}
-
-	return userCount, nil
-}
-
 func (w *WateringPlanRepository) mapFields(ctx context.Context, wp *watering.WateringPlan) error {
 	log := logger.GetLogger(ctx)
 	var err error
 
-	wp.TreeClusterIDs, err = w.GetLinkedTreeClusterIDsByID(ctx, wp.ID)
+	wp.TreeClusterIDs, err = w.getLinkedTreeClusterIDsByID(ctx, wp.ID)
 	if err != nil {
 		log.Debug("failed to get linked tree cluster by watering plan id", "error", err, "watering_plan_id", wp.ID)
 		return w.store.MapError(err, sqlc.WateringPlan{})
 	}
 
-	wp.TransporterID, err = w.GetLinkedVehicleIDByIDAndType(ctx, wp.ID, "transporter")
+	wp.TransporterID, err = w.getLinkedVehicleIDByIDAndType(ctx, wp.ID, "transporter")
 	if err != nil {
 		log.Debug("failed to get linked transporter by watering plan id", "error", err, "watering_plan_id", wp.ID)
 		return w.store.MapError(err, sqlc.WateringPlan{})
 	}
 
-	wp.TrailerID, err = w.GetLinkedVehicleIDByIDAndType(ctx, wp.ID, "trailer")
+	wp.TrailerID, err = w.getLinkedVehicleIDByIDAndType(ctx, wp.ID, "trailer")
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
 			log.Debug("failed to get linked trailer by watering plan id", "error", err, "watering_plan_id", wp.ID)
@@ -198,7 +176,7 @@ func (w *WateringPlanRepository) mapFields(ctx context.Context, wp *watering.Wat
 		wp.TrailerID = nil
 	}
 
-	wp.UserIDs, err = w.GetLinkedUsersByID(ctx, wp.ID)
+	wp.UserIDs, err = w.getLinkedUsersByID(ctx, wp.ID)
 	if err != nil {
 		log.Debug("failed to get linked users by watering plan id", "error", err, "watering_plan_id", wp.ID)
 		return w.store.MapError(err, sqlc.WateringPlan{})
@@ -206,7 +184,7 @@ func (w *WateringPlanRepository) mapFields(ctx context.Context, wp *watering.Wat
 
 	// Only load evaluation values if the watering plan is set to »finished«
 	if wp.Status == watering.WateringPlanStatusFinished {
-		wp.Evaluation, err = w.GetEvaluationValues(ctx, wp.ID)
+		wp.Evaluation, err = w.getEvaluationValues(ctx, wp.ID)
 		if err != nil {
 			log.Debug("failed to get evaluation values by watering plan id", "error", err, "watering_plan_id", wp.ID)
 			return w.store.MapError(err, sqlc.WateringPlan{})

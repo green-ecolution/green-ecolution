@@ -191,10 +191,10 @@ func TestWateringPlanService_Create(t *testing.T) {
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -260,10 +260,10 @@ func TestWateringPlanService_Create(t *testing.T) {
 		}
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -315,10 +315,10 @@ func TestWateringPlanService_Create(t *testing.T) {
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(nil, shared.ErrConnectionClosed)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(nil, int64(0), shared.ErrConnectionClosed)
 
 		// when
 		result, err := svc.Create(ctx, newWateringPlan)
@@ -340,10 +340,10 @@ func TestWateringPlanService_Create(t *testing.T) {
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return([]*cluster.TreeCluster{}, nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return([]*cluster.TreeCluster{}, int64(0), nil)
 
 		// when
 		result, err := svc.Create(ctx, newWateringPlan)
@@ -365,10 +365,10 @@ func TestWateringPlanService_Create(t *testing.T) {
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -396,10 +396,10 @@ func TestWateringPlanService_Create(t *testing.T) {
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -439,10 +439,10 @@ func TestWateringPlanService_Create(t *testing.T) {
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -482,10 +482,10 @@ func TestWateringPlanService_Create(t *testing.T) {
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -525,10 +525,10 @@ func TestWateringPlanService_Create(t *testing.T) {
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -568,10 +568,10 @@ func TestWateringPlanService_Create(t *testing.T) {
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, globalEventManager, routingRepo, s3Repo)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -614,10 +614,10 @@ func TestWateringPlanService_Create(t *testing.T) {
 		expectedErr := errors.New("Failed to create watering plan")
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -690,10 +690,10 @@ func TestWateringPlanService_Update(t *testing.T) {
 		).Return(allTestWateringPlans[0], nil)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -768,10 +768,10 @@ func TestWateringPlanService_Update(t *testing.T) {
 		).Return(allTestWateringPlans[2], nil)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -833,10 +833,10 @@ func TestWateringPlanService_Update(t *testing.T) {
 		).Return(allTestWateringPlans[0], nil)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -888,10 +888,10 @@ func TestWateringPlanService_Update(t *testing.T) {
 		).Return(allTestWateringPlans[0], nil)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(nil, shared.ErrConnectionClosed)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(nil, int64(0), shared.ErrConnectionClosed)
 
 		// when
 		result, err := svc.Update(ctx, int32(1), updatedWateringPlan)
@@ -918,10 +918,10 @@ func TestWateringPlanService_Update(t *testing.T) {
 		).Return(allTestWateringPlans[0], nil)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return([]*cluster.TreeCluster{}, nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return([]*cluster.TreeCluster{}, int64(0), nil)
 
 		// when
 		result, err := svc.Update(ctx, int32(1), updatedWateringPlan)
@@ -948,10 +948,10 @@ func TestWateringPlanService_Update(t *testing.T) {
 		).Return(allTestWateringPlans[0], nil)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -984,10 +984,10 @@ func TestWateringPlanService_Update(t *testing.T) {
 		).Return(allTestWateringPlans[0], nil)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -1032,10 +1032,10 @@ func TestWateringPlanService_Update(t *testing.T) {
 		).Return(allTestWateringPlans[0], nil)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -1080,10 +1080,10 @@ func TestWateringPlanService_Update(t *testing.T) {
 		).Return(allTestWateringPlans[0], nil)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -1128,10 +1128,10 @@ func TestWateringPlanService_Update(t *testing.T) {
 		).Return(allTestWateringPlans[0], nil)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -1176,10 +1176,10 @@ func TestWateringPlanService_Update(t *testing.T) {
 		).Return(allTestWateringPlans[0], nil)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -1225,10 +1225,10 @@ func TestWateringPlanService_Update(t *testing.T) {
 		).Return(allTestWateringPlans[0], nil)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -1284,10 +1284,10 @@ func TestWateringPlanService_Update(t *testing.T) {
 		).Return(allTestWateringPlans[0], nil)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(
@@ -1386,10 +1386,10 @@ func TestWateringPlanService_EventSystem(t *testing.T) {
 		).Return([]*user.User{testUserTbz}, nil)
 
 		// check treecluster
-		clusterRepo.EXPECT().GetByIDs(
+		clusterRepo.EXPECT().GetAll(
 			ctx,
-			[]int32{1, 2},
-		).Return(allTestClusters[0:2], nil)
+			cluster.TreeClusterQuery{IDs: []int32{1, 2}},
+		).Return(allTestClusters[0:2], int64(2), nil)
 
 		// check transporter
 		vehicleRepo.EXPECT().GetByID(

@@ -87,48 +87,6 @@ func (q *Queries) DeleteTreeCluster(ctx context.Context, id int32) (int32, error
 	return id, err
 }
 
-const getAllLatestSensorDataByTreeClusterID = `-- name: GetAllLatestSensorDataByTreeClusterID :many
-SELECT sd.id, sd.created_at, sd.updated_at, sd.data, sd.sensor_id
-FROM sensor_data sd
-JOIN sensors s ON sd.sensor_id = s.id
-JOIN trees t ON t.sensor_id = s.id
-JOIN tree_clusters tc ON t.tree_cluster_id = tc.id
-WHERE tc.id = $1
-  AND sd.id = (
-    SELECT id
-    FROM sensor_data
-    WHERE sensor_id = s.id
-    ORDER BY created_at DESC
-    LIMIT 1
-  )
-`
-
-func (q *Queries) GetAllLatestSensorDataByTreeClusterID(ctx context.Context, id int32) ([]*SensorDatum, error) {
-	rows, err := q.db.Query(ctx, getAllLatestSensorDataByTreeClusterID, id)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []*SensorDatum{}
-	for rows.Next() {
-		var i SensorDatum
-		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Data,
-			&i.SensorID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getAllTreeClusterRegionsWithWateringPlanCount = `-- name: GetAllTreeClusterRegionsWithWateringPlanCount :many
 SELECT 
     r.name AS name,
@@ -175,6 +133,7 @@ WHERE
   AND (COALESCE(array_length($4::TEXT[], 1), 0) = 0
     OR r.name = ANY($4::TEXT[]))
   AND (COALESCE($5, '') = '' OR provider = $5)
+  AND (COALESCE(array_length($6::INTEGER[], 1), 0) = 0 OR tc.id = ANY($6::INTEGER[]))
 ORDER BY tc.name ASC
     LIMIT $1 OFFSET $2
 `
@@ -185,6 +144,7 @@ type GetAllTreeClustersParams struct {
 	WateringStatus []string
 	Region         []string
 	Provider       interface{}
+	Ids            []int32
 }
 
 func (q *Queries) GetAllTreeClusters(ctx context.Context, arg *GetAllTreeClustersParams) ([]*TreeCluster, error) {
@@ -194,6 +154,7 @@ func (q *Queries) GetAllTreeClusters(ctx context.Context, arg *GetAllTreeCluster
 		arg.WateringStatus,
 		arg.Region,
 		arg.Provider,
+		arg.Ids,
 	)
 	if err != nil {
 		return nil, err
@@ -328,61 +289,26 @@ WHERE
   AND (COALESCE(array_length($2::TEXT[], 1), 0) = 0
     OR r.name = ANY($2::TEXT[]))
   AND (COALESCE($3, '') = '' OR provider = $3)
+  AND (COALESCE(array_length($4::INTEGER[], 1), 0) = 0 OR tc.id = ANY($4::INTEGER[]))
 `
 
 type GetTreeClustersCountParams struct {
 	WateringStatus []string
 	Region         []string
 	Provider       interface{}
+	Ids            []int32
 }
 
 func (q *Queries) GetTreeClustersCount(ctx context.Context, arg *GetTreeClustersCountParams) (int64, error) {
-	row := q.db.QueryRow(ctx, getTreeClustersCount, arg.WateringStatus, arg.Region, arg.Provider)
+	row := q.db.QueryRow(ctx, getTreeClustersCount,
+		arg.WateringStatus,
+		arg.Region,
+		arg.Provider,
+		arg.Ids,
+	)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
-}
-
-const getTreesClustersByIDs = `-- name: GetTreesClustersByIDs :many
-SELECT id, created_at, updated_at, watering_status, last_watered, moisture_level, address, description, archived, soil_condition, latitude, longitude, geometry, region_id, name, provider, additional_informations FROM tree_clusters WHERE id = ANY($1::int[])
-`
-
-func (q *Queries) GetTreesClustersByIDs(ctx context.Context, dollar_1 []int32) ([]*TreeCluster, error) {
-	rows, err := q.db.Query(ctx, getTreesClustersByIDs, dollar_1)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []*TreeCluster{}
-	for rows.Next() {
-		var i TreeCluster
-		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.WateringStatus,
-			&i.LastWatered,
-			&i.MoistureLevel,
-			&i.Address,
-			&i.Description,
-			&i.Archived,
-			&i.SoilCondition,
-			&i.Latitude,
-			&i.Longitude,
-			&i.Geometry,
-			&i.RegionID,
-			&i.Name,
-			&i.Provider,
-			&i.AdditionalInformations,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const linkTreesToTreeCluster = `-- name: LinkTreesToTreeCluster :exec

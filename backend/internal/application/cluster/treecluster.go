@@ -8,6 +8,7 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/application/ports"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/region"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
@@ -19,6 +20,7 @@ type TreeClusterService struct {
 	treeClusterRepo cluster.TreeClusterRepository
 	treeRepo        tree.TreeRepository
 	regionRepo      region.RegionRepository
+	sensorRepo      sensor.SensorRepository
 	eventManager    *worker.EventManager
 }
 
@@ -26,12 +28,14 @@ func NewTreeClusterService(
 	treeClusterRepo cluster.TreeClusterRepository,
 	treeRepo tree.TreeRepository,
 	regionRepo region.RegionRepository,
+	sensorRepo sensor.SensorRepository,
 	eventManager *worker.EventManager,
 ) ports.TreeClusterService {
 	return &TreeClusterService{
 		treeClusterRepo: treeClusterRepo,
 		treeRepo:        treeRepo,
 		regionRepo:      regionRepo,
+		sensorRepo:      sensorRepo,
 		eventManager:    eventManager,
 	}
 }
@@ -401,7 +405,8 @@ func (s *TreeClusterService) getTrees(ctx context.Context, ids []*int32) ([]*tre
 		treeIDs[i] = *id
 	}
 
-	return s.treeRepo.GetTreesByIDs(ctx, treeIDs)
+	trees, _, err := s.treeRepo.GetAll(ctx, tree.TreeQuery{IDs: treeIDs})
+	return trees, err
 }
 
 func treeIDsFromTrees(trees []*tree.Tree) []int32 {

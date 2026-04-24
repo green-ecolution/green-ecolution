@@ -370,6 +370,65 @@ func (_c *MockSensorRepository_GetCount_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
+// GetLatestDataBySensorIDs provides a mock function with given fields: ctx, ids
+func (_m *MockSensorRepository) GetLatestDataBySensorIDs(ctx context.Context, ids []sensor.SensorID) ([]*sensor.SensorData, error) {
+	ret := _m.Called(ctx, ids)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLatestDataBySensorIDs")
+	}
+
+	var r0 []*sensor.SensorData
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, []sensor.SensorID) ([]*sensor.SensorData, error)); ok {
+		return rf(ctx, ids)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, []sensor.SensorID) []*sensor.SensorData); ok {
+		r0 = rf(ctx, ids)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*sensor.SensorData)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, []sensor.SensorID) error); ok {
+		r1 = rf(ctx, ids)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockSensorRepository_GetLatestDataBySensorIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLatestDataBySensorIDs'
+type MockSensorRepository_GetLatestDataBySensorIDs_Call struct {
+	*mock.Call
+}
+
+// GetLatestDataBySensorIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - ids []sensor.SensorID
+func (_e *MockSensorRepository_Expecter) GetLatestDataBySensorIDs(ctx interface{}, ids interface{}) *MockSensorRepository_GetLatestDataBySensorIDs_Call {
+	return &MockSensorRepository_GetLatestDataBySensorIDs_Call{Call: _e.mock.On("GetLatestDataBySensorIDs", ctx, ids)}
+}
+
+func (_c *MockSensorRepository_GetLatestDataBySensorIDs_Call) Run(run func(ctx context.Context, ids []sensor.SensorID)) *MockSensorRepository_GetLatestDataBySensorIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]sensor.SensorID))
+	})
+	return _c
+}
+
+func (_c *MockSensorRepository_GetLatestDataBySensorIDs_Call) Return(_a0 []*sensor.SensorData, _a1 error) *MockSensorRepository_GetLatestDataBySensorIDs_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockSensorRepository_GetLatestDataBySensorIDs_Call) RunAndReturn(run func(context.Context, []sensor.SensorID) ([]*sensor.SensorData, error)) *MockSensorRepository_GetLatestDataBySensorIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetLatestSensorDataBySensorID provides a mock function with given fields: ctx, id
 func (_m *MockSensorRepository) GetLatestSensorDataBySensorID(ctx context.Context, id sensor.SensorID) (*sensor.SensorData, error) {
 	ret := _m.Called(ctx, id)

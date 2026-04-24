@@ -196,6 +196,7 @@ func initializeRepositories(ctx context.Context, cfg *config.Config) (repos *sto
 		WateringPlan: pgRepo.WateringPlan,
 		Routing:      routingRepo.Routing,
 		GpxBucket:    s3Repos.GpxBucket,
+		Evaluation:   pgRepo.Evaluation,
 	}
 
 	return repositories, closeFn

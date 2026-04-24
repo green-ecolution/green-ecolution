@@ -224,7 +224,7 @@ func UpdateVehicle(svc ports.VehicleService) fiber.Handler {
 func GetArchiveVehicles(svc ports.VehicleService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := c.Context()
-		v, err := svc.GetAllArchived(ctx)
+		v, _, err := svc.GetAllArchived(ctx)
 		if err != nil {
 			return errorhandler.HandleError(err)
 		}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	sensorDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	treeDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 )
@@ -47,27 +48,10 @@ func TestTreeRepository_Create(t *testing.T) {
 		// given
 		suite.ResetDB(t)
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
-		r := TreeRepository{store: suite.Store, TreeMappers: mappers}
-		sqlTreeCluster, clusterErr := suite.Store.GetTreeClusterByID(context.Background(), 1)
-		if clusterErr != nil {
-			t.Fatal(clusterErr)
-		}
+		r := NewTreeRepository(suite.Store, mappers)
 
-		treeCluster, err := mappers.tcMapper.FromSql(sqlTreeCluster)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		sensorID := "sensor-1"
-		sqlSensor, sensorErr := suite.Store.GetSensorByID(context.Background(), sensorID)
-		if sensorErr != nil {
-			t.Fatal(sensorErr)
-		}
-
-		sn, err := mappers.sMapper.FromSql(sqlSensor)
-		if err != nil {
-			t.Fatal(err)
-		}
+		clusterID := int32(1)
+		sensorID := sensorDomain.MustNewSensorID("sensor-1")
 
 		// when
 		got, err := r.Create(context.Background(), &treeDomain.Tree{
@@ -77,12 +61,9 @@ func TestTreeRepository_Create(t *testing.T) {
 			Coordinate:     shared.MustNewCoordinate(54.801539, 9.446741),
 			Description:    "A newly planted oak tree",
 			WateringStatus: shared.WateringStatusGood,
-			TreeClusterID:  &treeCluster.ID,
-			SensorID:       &sn.ID,
+			TreeClusterID:  &clusterID,
+			SensorID:       &sensorID,
 		})
-
-		treeClusterByTree, errClusterByTree := r.getTreeClusterByTreeID(context.Background(), got.ID)
-		sensorByTree, errSensorByTree := r.GetSensorByTreeID(context.Background(), got.ID)
 
 		// then
 		assert.NoError(t, err)
@@ -90,12 +71,10 @@ func TestTreeRepository_Create(t *testing.T) {
 		assert.NotZero(t, got.ID)
 		assert.WithinDuration(t, got.CreatedAt, time.Now(), time.Second)
 		assert.WithinDuration(t, got.UpdatedAt, time.Now(), time.Second)
-		assert.NoError(t, errClusterByTree)
-		assert.NotNil(t, treeClusterByTree)
-		assert.Equal(t, treeCluster.ID, treeClusterByTree.ID)
-		assert.NoError(t, errSensorByTree)
-		assert.NotNil(t, sensorByTree)
-		assert.Equal(t, sn.ID, sensorByTree.ID)
+		assert.NotNil(t, got.TreeClusterID)
+		assert.Equal(t, clusterID, *got.TreeClusterID)
+		assert.NotNil(t, got.SensorID)
+		assert.Equal(t, sensorID.String(), got.SensorID.String())
 		assert.Equal(t, "Oak", got.Species)
 		assert.Equal(t, "T001", got.Number)
 		assert.Equal(t, int32(2023), got.PlantingYear.Year())

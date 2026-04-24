@@ -9,32 +9,31 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/vehicle"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
 type EvaluationService struct {
+	evaluationRepo   evaluation.EvaluationRepository
 	treeClusterRepo  cluster.TreeClusterRepository
 	treeRepo         tree.TreeRepository
 	sensorRepo       sensor.SensorRepository
 	wateringPlanRepo watering.WateringPlanRepository
-	vehicleRepo      vehicle.VehicleRepository
 }
 
 func NewEvaluationService(
+	evaluationRepo evaluation.EvaluationRepository,
 	treeClusterRepo cluster.TreeClusterRepository,
 	treeRepo tree.TreeRepository,
 	sensorRepo sensor.SensorRepository,
 	wateringPlanRepo watering.WateringPlanRepository,
-	vehicleRepo vehicle.VehicleRepository,
 ) ports.EvaluationService {
 	return &EvaluationService{
+		evaluationRepo:   evaluationRepo,
 		treeClusterRepo:  treeClusterRepo,
 		treeRepo:         treeRepo,
 		sensorRepo:       sensorRepo,
 		wateringPlanRepo: wateringPlanRepo,
-		vehicleRepo:      vehicleRepo,
 	}
 }
 
@@ -61,35 +60,35 @@ func (e *EvaluationService) GetEvaluation(ctx context.Context) (*evaluation.Eval
 
 	wateringPlanCount, err := e.wateringPlanRepo.GetCount(ctx, shared.Query{})
 	if err != nil {
-		log.Error("failed to get sensor count", "error", err)
+		log.Error("failed to get watering plan count", "error", err)
 		return &evaluation.Evaluation{}, err
 	}
 
-	totalConsumedWater, err := e.wateringPlanRepo.GetTotalConsumedWater(ctx)
+	totalConsumedWater, err := e.evaluationRepo.GetTotalConsumedWater(ctx)
 	if err != nil {
-		log.Error("failed to get sensor count", "error", err)
+		log.Error("failed to get total consumed water", "error", err)
 		return &evaluation.Evaluation{}, err
 	}
 
-	userCount, err := e.wateringPlanRepo.GetAllUserCount(ctx)
+	userCount, err := e.evaluationRepo.GetWateringPlanUserCount(ctx)
 	if err != nil {
 		log.Error("failed to get user count linked to watering plans", "error", err)
 		return &evaluation.Evaluation{}, err
 	}
 
-	vehicleEvaluation, err := e.vehicleRepo.GetAllWithWateringPlanCount(ctx)
+	vehicleEvaluation, err := e.evaluationRepo.GetVehiclesWithWateringPlanCount(ctx)
 	if err != nil {
 		log.Error("failed to get vehicle evaluation", "error", err)
 		return &evaluation.Evaluation{}, err
 	}
 
-	regionEvaluation, err := e.treeClusterRepo.GetAllRegionsWithWateringPlanCount(ctx)
+	regionEvaluation, err := e.evaluationRepo.GetRegionsWithWateringPlanCount(ctx)
 	if err != nil {
 		log.Error("failed to get region evaluation", "error", err)
 		return &evaluation.Evaluation{}, err
 	}
 
-	evaluation := &evaluation.Evaluation{
+	eval := &evaluation.Evaluation{
 		TreeClusterCount:      clusterCount,
 		TreeCount:             treeCount,
 		SensorCount:           sensorCount,
@@ -100,13 +99,13 @@ func (e *EvaluationService) GetEvaluation(ctx context.Context) (*evaluation.Eval
 		RegionEvaluation:      regionEvaluation,
 	}
 
-	return evaluation, nil
+	return eval, nil
 }
 
 func (e *EvaluationService) Ready() bool {
-	return e.treeClusterRepo != nil &&
+	return e.evaluationRepo != nil &&
+		e.treeClusterRepo != nil &&
 		e.treeRepo != nil &&
 		e.sensorRepo != nil &&
-		e.wateringPlanRepo != nil &&
-		e.vehicleRepo != nil
+		e.wateringPlanRepo != nil
 }

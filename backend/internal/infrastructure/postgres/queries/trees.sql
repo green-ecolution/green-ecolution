@@ -10,6 +10,9 @@ WHERE
     sqlc.narg('hasCluster')::BOOLEAN IS NULL
     OR (t.tree_cluster_id IS NOT NULL) = sqlc.narg('hasCluster')::BOOLEAN
       )
+  AND (sqlc.narg('tree_cluster_id')::INTEGER IS NULL OR t.tree_cluster_id = sqlc.narg('tree_cluster_id'))
+  AND (sqlc.narg('sensor_id')::TEXT IS NULL OR t.sensor_id = sqlc.narg('sensor_id'))
+  AND (COALESCE(array_length(@ids::INTEGER[], 1), 0) = 0 OR t.id = ANY(@ids::INTEGER[]))
   ORDER BY t.number ASC
     LIMIT $1 OFFSET $2;
 
@@ -24,31 +27,13 @@ WHERE
   AND (
     sqlc.narg('hasCluster')::BOOLEAN IS NULL
     OR (t.tree_cluster_id IS NOT NULL) = sqlc.narg('hasCluster')::BOOLEAN
-      );
+      )
+  AND (sqlc.narg('tree_cluster_id')::INTEGER IS NULL OR t.tree_cluster_id = sqlc.narg('tree_cluster_id'))
+  AND (sqlc.narg('sensor_id')::TEXT IS NULL OR t.sensor_id = sqlc.narg('sensor_id'))
+  AND (COALESCE(array_length(@ids::INTEGER[], 1), 0) = 0 OR t.id = ANY(@ids::INTEGER[]));
 
 -- name: GetTreeByID :one
 SELECT * FROM trees WHERE id = $1;
-
--- name: GetTreeBySensorID :one
-SELECT * FROM trees WHERE sensor_id = $1;
-
--- name: GetTreesBySensorIDs :many
-SELECT * FROM trees WHERE sensor_id = ANY($1::text[]) ORDER BY number ASC;
-
--- name: GetTreesByIDs :many
-SELECT * FROM trees WHERE id = ANY($1::int[]) ORDER BY number ASC;
-
--- name: GetTreesByTreeClusterID :many
-SELECT * FROM trees WHERE tree_cluster_id = $1 ORDER BY number ASC;
-
--- name: GetTreeByCoordinates :one
-SELECT * FROM trees WHERE latitude = $1 AND longitude = $2 LIMIT 1;
-
--- name: GetSensorByTreeID :one
-SELECT sensors.* FROM sensors JOIN trees ON sensors.id = trees.sensor_id WHERE trees.id = $1;
-
--- name: GetTreeClusterByTreeID :one
-SELECT tree_clusters.* FROM tree_clusters JOIN trees ON tree_clusters.id = trees.tree_cluster_id WHERE trees.id = $1;
 
 -- name: CreateTree :one
 INSERT INTO trees (
@@ -99,12 +84,6 @@ WHERE sensor_id = $1;
 
 -- name: CalculateGroupedCentroids :one
 SELECT ST_AsText(ST_Centroid(ST_Collect(geometry)))::text AS centroid FROM trees WHERE id = ANY($1::int[]);
-
--- name: FindNearestTree :one
-SELECT * FROM trees
-WHERE ST_Distance(geometry::geography, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) <= 3
-ORDER BY ST_Distance(geometry::geography, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) ASC
-    LIMIT 1;
 
 -- name: FindNearestTrees :many
 -- Uses scalar latitude/longitude columns; trees.geometry stores axes swapped.

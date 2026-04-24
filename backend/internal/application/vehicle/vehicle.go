@@ -22,30 +22,13 @@ func NewVehicleService(vehicleRepository vehicle.VehicleRepository) ports.Vehicl
 
 func (v *VehicleService) GetAll(ctx context.Context, query vehicle.VehicleQuery) ([]*vehicle.Vehicle, int64, error) {
 	log := logger.GetLogger(ctx)
-	var vehicles []*vehicle.Vehicle
-	var totalCount int64
-	var err error
 
-	if query.Type != "" {
-		parsedVehicleType := vehicle.ParseVehicleType(query.Type)
-		if parsedVehicleType == vehicle.VehicleTypeUnknown {
-			log.Debug("failed to parse correct vehicle type", "error", err, "vehicle_type", query.Type)
-			return nil, 0, ports.MapError(ctx, errors.Join(err, ports.ErrValidation), ports.ErrorLogValidation)
-		}
-
-		if query.WithArchived {
-			vehicles, totalCount, err = v.vehicleRepo.GetAllByTypeWithArchived(ctx, query.Provider, parsedVehicleType)
-		} else {
-			vehicles, totalCount, err = v.vehicleRepo.GetAllByType(ctx, query.Provider, parsedVehicleType)
-		}
-	} else {
-		if query.WithArchived {
-			vehicles, totalCount, err = v.vehicleRepo.GetAllWithArchived(ctx, query.Provider)
-		} else {
-			vehicles, totalCount, err = v.vehicleRepo.GetAll(ctx, shared.Query{Provider: query.Provider})
-		}
+	if query.Type != "" && query.Type != vehicle.VehicleTypeTransporter && query.Type != vehicle.VehicleTypeTrailer {
+		log.Debug("failed to parse correct vehicle type", "vehicle_type", query.Type)
+		return nil, 0, ports.MapError(ctx, ports.ErrValidation, ports.ErrorLogValidation)
 	}
 
+	vehicles, totalCount, err := v.vehicleRepo.GetAll(ctx, query)
 	if err != nil {
 		log.Error("failed to fetch vehicles", "error", err)
 		return nil, 0, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
@@ -54,15 +37,15 @@ func (v *VehicleService) GetAll(ctx context.Context, query vehicle.VehicleQuery)
 	return vehicles, totalCount, nil
 }
 
-func (v *VehicleService) GetAllArchived(ctx context.Context) ([]*vehicle.Vehicle, error) {
+func (v *VehicleService) GetAllArchived(ctx context.Context) ([]*vehicle.Vehicle, int64, error) {
 	log := logger.GetLogger(ctx)
-	vehicles, err := v.vehicleRepo.GetAllArchived(ctx)
+	vehicles, totalCount, err := v.vehicleRepo.GetAll(ctx, vehicle.VehicleQuery{OnlyArchived: true})
 	if err != nil {
 		log.Error("failed to get all archived vehicles", "error", err)
-		return nil, ports.MapError(ctx, err, ports.ErrorLogAll)
+		return nil, 0, ports.MapError(ctx, err, ports.ErrorLogAll)
 	}
 
-	return vehicles, nil
+	return vehicles, totalCount, nil
 }
 
 func (v *VehicleService) GetByID(ctx context.Context, id int32) (*vehicle.Vehicle, error) {

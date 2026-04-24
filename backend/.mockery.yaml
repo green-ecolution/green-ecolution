@@ -66,6 +66,12 @@ packages:
       outpkg: storagemock
     interfaces:
       VehicleRepository:
+  github.com/green-ecolution/green-ecolution/backend/internal/domain/evaluation:
+    config:
+      dir: ./internal/infrastructure/_mock
+      outpkg: storagemock
+    interfaces:
+      EvaluationRepository:
   github.com/green-ecolution/green-ecolution/backend/internal/domain/watering:
     config:
       dir: ./internal/infrastructure/_mock

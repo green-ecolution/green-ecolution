@@ -155,6 +155,9 @@ type TreeQuery struct {
 	WateringStatuses []shared.WateringStatus `query:"watering_statuses"`
 	HasCluster       *bool                   `query:"has_cluster"`
 	PlantingYears    []int32                 `query:"planting_years"`
+	IDs              []int32
+	TreeClusterID    *int32
+	SensorID         *sensor.SensorID
 	shared.Query
 }
 

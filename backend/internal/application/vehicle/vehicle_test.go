@@ -22,7 +22,7 @@ func TestVehicleService_GetAll(t *testing.T) {
 		svc := NewVehicleService(vehicleRepo)
 
 		expectedVehicles := getTestVehicles()
-		vehicleRepo.EXPECT().GetAll(ctx, shared.Query{}).Return(expectedVehicles, int64(len(expectedVehicles)), nil)
+		vehicleRepo.EXPECT().GetAll(ctx, vehicle.VehicleQuery{}).Return(expectedVehicles, int64(len(expectedVehicles)), nil)
 
 		// when
 		vehicles, totalCount, err := svc.GetAll(ctx, vehicle.VehicleQuery{})
@@ -39,7 +39,7 @@ func TestVehicleService_GetAll(t *testing.T) {
 
 		expectedVehicles := getTestVehicles()
 
-		vehicleRepo.EXPECT().GetAll(ctx, shared.Query{Provider: "test-provider"}).Return(expectedVehicles, int64(len(expectedVehicles)), nil)
+		vehicleRepo.EXPECT().GetAll(ctx, vehicle.VehicleQuery{Query: shared.Query{Provider: "test-provider"}}).Return(expectedVehicles, int64(len(expectedVehicles)), nil)
 
 		// when
 		vehicles, totalCount, err := svc.GetAll(ctx, vehicle.VehicleQuery{Query: shared.Query{Provider: "test-provider"}})
@@ -55,10 +55,10 @@ func TestVehicleService_GetAll(t *testing.T) {
 		svc := NewVehicleService(vehicleRepo)
 
 		expectedVehicles := getTestVehicles()
-		vehicleRepo.EXPECT().GetAllByType(ctx, "", vehicle.VehicleTypeTrailer).Return(expectedVehicles, int64(len(expectedVehicles)), nil)
+		vehicleRepo.EXPECT().GetAll(ctx, vehicle.VehicleQuery{Type: vehicle.VehicleTypeTrailer}).Return(expectedVehicles, int64(len(expectedVehicles)), nil)
 
 		// when
-		vehicles, totalCount, err := svc.GetAll(ctx, vehicle.VehicleQuery{Type: "trailer"})
+		vehicles, totalCount, err := svc.GetAll(ctx, vehicle.VehicleQuery{Type: vehicle.VehicleTypeTrailer})
 
 		// then
 		assert.NoError(t, err)
@@ -71,10 +71,10 @@ func TestVehicleService_GetAll(t *testing.T) {
 		svc := NewVehicleService(vehicleRepo)
 
 		expectedVehicles := getTestVehicles()
-		vehicleRepo.EXPECT().GetAllByType(ctx, "test-provider", vehicle.VehicleTypeTrailer).Return(expectedVehicles, int64(len(expectedVehicles)), nil)
+		vehicleRepo.EXPECT().GetAll(ctx, vehicle.VehicleQuery{Query: shared.Query{Provider: "test-provider"}, Type: vehicle.VehicleTypeTrailer}).Return(expectedVehicles, int64(len(expectedVehicles)), nil)
 
 		// when
-		vehicles, totalCount, err := svc.GetAll(ctx, vehicle.VehicleQuery{Query: shared.Query{Provider: "test-provider"}, Type: "trailer"})
+		vehicles, totalCount, err := svc.GetAll(ctx, vehicle.VehicleQuery{Query: shared.Query{Provider: "test-provider"}, Type: vehicle.VehicleTypeTrailer})
 
 		// then
 		assert.NoError(t, err)
@@ -86,7 +86,7 @@ func TestVehicleService_GetAll(t *testing.T) {
 		vehicleRepo := storageMock.NewMockVehicleRepository(t)
 		svc := NewVehicleService(vehicleRepo)
 
-		vehicleRepo.EXPECT().GetAll(ctx, shared.Query{}).Return([]*vehicle.Vehicle{}, int64(0), nil)
+		vehicleRepo.EXPECT().GetAll(ctx, vehicle.VehicleQuery{}).Return([]*vehicle.Vehicle{}, int64(0), nil)
 
 		// when
 		vehicles, totalCount, err := svc.GetAll(ctx, vehicle.VehicleQuery{})
@@ -102,7 +102,7 @@ func TestVehicleService_GetAll(t *testing.T) {
 		svc := NewVehicleService(vehicleRepo)
 
 		expectedErr := errors.New("GetAll failed")
-		vehicleRepo.EXPECT().GetAll(ctx, shared.Query{}).Return(nil, int64(0), expectedErr)
+		vehicleRepo.EXPECT().GetAll(ctx, vehicle.VehicleQuery{}).Return(nil, int64(0), expectedErr)
 
 		// when
 		vehicles, totalCount, err := svc.GetAll(ctx, vehicle.VehicleQuery{})

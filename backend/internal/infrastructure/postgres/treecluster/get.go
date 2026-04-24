@@ -2,14 +2,10 @@ package treecluster
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils/pagination"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/evaluation"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
@@ -47,6 +43,7 @@ func (r *TreeClusterRepository) GetAll(ctx context.Context, filter cluster.TreeC
 		WateringStatus: wateringStatuses,
 		Region:         filter.Regions,
 		Provider:       filter.Provider,
+		Ids:            filter.IDs,
 		Limit:          limit,
 		Offset:         (page - 1) * limit,
 	})
@@ -82,6 +79,7 @@ func (r *TreeClusterRepository) GetCount(ctx context.Context, filter cluster.Tre
 		WateringStatus: wateringStatuses,
 		Region:         filter.Regions,
 		Provider:       filter.Provider,
+		Ids:            filter.IDs,
 	})
 	if err != nil {
 		log.Debug("failed to get total tree cluster count in db", "error", err)
@@ -112,29 +110,6 @@ func (r *TreeClusterRepository) GetByID(ctx context.Context, id int32) (*cluster
 	return tc, nil
 }
 
-func (r *TreeClusterRepository) GetByIDs(ctx context.Context, ids []int32) ([]*cluster.TreeCluster, error) {
-	log := logger.GetLogger(ctx)
-	rows, err := r.store.GetTreesClustersByIDs(ctx, ids)
-	if err != nil {
-		log.Debug("failed to get tree cluster by multiple ids", "error", err, "cluster_ids", ids)
-		return nil, r.store.MapError(err, sqlc.TreeCluster{})
-	}
-
-	tc, err := r.mapper.FromSqlList(rows)
-	if err != nil {
-		log.Debug("failed to convert entity", "error", err)
-		return nil, err
-	}
-
-	for _, cluster := range tc {
-		if err := r.store.MapClusterFields(ctx, cluster); err != nil {
-			return nil, r.store.MapError(err, sqlc.TreeCluster{})
-		}
-	}
-
-	return tc, nil
-}
-
 func (r *TreeClusterRepository) GetCenterPoint(ctx context.Context, tcID int32) (*shared.Coordinate, error) {
 	log := logger.GetLogger(ctx)
 	row, err := r.store.CalculateTreesCentroid(ctx, &tcID)
@@ -148,30 +123,4 @@ func (r *TreeClusterRepository) GetCenterPoint(ctx context.Context, tcID int32) 
 		return nil, err
 	}
 	return &coord, nil
-}
-
-func (r *TreeClusterRepository) GetAllLatestSensorDataByClusterID(ctx context.Context, tcID int32) ([]*sensor.SensorData, error) {
-	log := logger.GetLogger(ctx)
-	rows, err := r.store.GetAllLatestSensorDataByTreeClusterID(ctx, tcID)
-	if err != nil {
-		log.Debug("failed to get all latest sensor data by given cluster id in db", "error", err, "cluster_id", tcID)
-		return nil, r.store.MapError(err, sqlc.TreeCluster{})
-	}
-	domainData, err := r.sensorMapper.FromSqlSensorDataList(rows)
-	if err != nil {
-		return nil, errors.Join(err, fmt.Errorf("failed to map sensor data"))
-	}
-
-	return domainData, nil
-}
-
-func (r *TreeClusterRepository) GetAllRegionsWithWateringPlanCount(ctx context.Context) ([]*evaluation.RegionEvaluation, error) {
-	log := logger.GetLogger(ctx)
-	rows, err := r.store.GetAllTreeClusterRegionsWithWateringPlanCount(ctx)
-	if err != nil {
-		log.Debug("failed to get regions with watering plan count", "error", err)
-		return nil, r.store.MapError(err, sqlc.GetAllTreeClusterRegionsWithWateringPlanCountRow{})
-	}
-
-	return r.mapper.FromSqlRegionListWithCount(rows)
 }

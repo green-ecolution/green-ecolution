@@ -18,7 +18,7 @@ func TestWateringPlanRepository_Create(t *testing.T) {
 	suite.ResetDB(t)
 	suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/watering_plan")
 
-	vehicleCount, _ := suite.Store.GetAllVehiclesCount(context.Background(), "")
+	vehicleCount, _ := suite.Store.GetAllVehiclesCount(context.Background(), &sqlc.GetAllVehiclesCountParams{})
 	testVehicles, err := suite.Store.GetAllVehicles(context.Background(), &sqlc.GetAllVehiclesParams{
 		Provider: "",
 		Limit:    int32(vehicleCount),

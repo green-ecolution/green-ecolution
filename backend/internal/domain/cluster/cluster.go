@@ -58,5 +58,6 @@ type TreeClusterUpdate struct {
 type TreeClusterQuery struct {
 	WateringStatuses []shared.WateringStatus `query:"watering_statuses"`
 	Regions          []string                `query:"regions"`
+	IDs              []int32
 	shared.Query
 }

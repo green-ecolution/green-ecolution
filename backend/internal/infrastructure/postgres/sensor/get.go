@@ -112,6 +112,22 @@ func (r *SensorRepository) GetByID(ctx context.Context, id sensorDomain.SensorID
 	return data, nil
 }
 
+func (r *SensorRepository) GetLatestDataBySensorIDs(ctx context.Context, ids []sensorDomain.SensorID) ([]*sensorDomain.SensorData, error) {
+	log := logger.GetLogger(ctx)
+	idStrs := make([]string, len(ids))
+	for i, id := range ids {
+		idStrs[i] = id.String()
+	}
+
+	rows, err := r.store.GetLatestSensorDataBySensorIDs(ctx, idStrs)
+	if err != nil {
+		log.Debug("failed to get latest sensor data by sensor ids", "error", err)
+		return nil, r.store.MapError(err, sqlc.SensorDatum{})
+	}
+
+	return r.mapper.FromSqlSensorDataList(rows)
+}
+
 func (r *SensorRepository) GetLatestSensorDataBySensorID(ctx context.Context, id sensorDomain.SensorID) (*sensorDomain.SensorData, error) {
 	log := logger.GetLogger(ctx)
 	data, err := r.store.GetLatestSensorDataBySensorID(ctx, id.String())

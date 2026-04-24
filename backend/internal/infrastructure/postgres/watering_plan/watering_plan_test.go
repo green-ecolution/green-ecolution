@@ -55,18 +55,18 @@ func TestWateringPlanRepository_Delete(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		gotBeforeTransporter, errBeforeTransporter := r.GetLinkedVehicleIDByIDAndType(context.Background(), 1, string(vehicle.VehicleTypeTransporter))
+		gotBeforeTransporter, errBeforeTransporter := r.getLinkedVehicleIDByIDAndType(context.Background(), 1, string(vehicle.VehicleTypeTransporter))
 		assert.NoError(t, errBeforeTransporter)
 		assert.NotNil(t, gotBeforeTransporter)
 
-		gotBeforeTrailer, errBeforeTrailer := r.GetLinkedVehicleIDByIDAndType(context.Background(), 1, string(vehicle.VehicleTypeTrailer))
+		gotBeforeTrailer, errBeforeTrailer := r.getLinkedVehicleIDByIDAndType(context.Background(), 1, string(vehicle.VehicleTypeTrailer))
 		assert.NoError(t, errBeforeTrailer)
 		assert.NotNil(t, gotBeforeTrailer)
 
 		// when
 		err := r.Delete(context.Background(), 1)
-		transporter, errGotTransporter := r.GetLinkedVehicleIDByIDAndType(context.Background(), 1, string(vehicle.VehicleTypeTransporter))
-		trailer, errGotTrailer := r.GetLinkedVehicleIDByIDAndType(context.Background(), 1, string(vehicle.VehicleTypeTrailer))
+		transporter, errGotTransporter := r.getLinkedVehicleIDByIDAndType(context.Background(), 1, string(vehicle.VehicleTypeTransporter))
+		trailer, errGotTrailer := r.getLinkedVehicleIDByIDAndType(context.Background(), 1, string(vehicle.VehicleTypeTrailer))
 
 		// then
 		assert.NoError(t, err)
@@ -82,13 +82,13 @@ func TestWateringPlanRepository_Delete(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		gotBefore, errBefore := r.GetLinkedTreeClusterIDsByID(context.Background(), 1)
+		gotBefore, errBefore := r.getLinkedTreeClusterIDsByID(context.Background(), 1)
 		assert.NoError(t, errBefore)
 		assert.NotNil(t, gotBefore)
 
 		// when
 		err := r.Delete(context.Background(), 1)
-		treecluster, _ := r.GetLinkedTreeClusterIDsByID(context.Background(), 1)
+		treecluster, _ := r.getLinkedTreeClusterIDsByID(context.Background(), 1)
 
 		// then
 		assert.NoError(t, err)
@@ -101,13 +101,13 @@ func TestWateringPlanRepository_Delete(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
-		gotBefore, errBefore := r.GetLinkedUsersByID(context.Background(), 1)
+		gotBefore, errBefore := r.getLinkedUsersByID(context.Background(), 1)
 		assert.NoError(t, errBefore)
 		assert.NotNil(t, gotBefore)
 
 		// when
 		err := r.Delete(context.Background(), 1)
-		users, _ := r.GetLinkedUsersByID(context.Background(), 1)
+		users, _ := r.getLinkedUsersByID(context.Background(), 1)
 
 		// then
 		assert.NoError(t, err)

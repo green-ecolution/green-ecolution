@@ -65,13 +65,17 @@ func (s *TreeService) GetByID(ctx context.Context, id int32) (*treeDomain.Tree, 
 
 func (s *TreeService) GetBySensorID(ctx context.Context, id sensorDomain.SensorID) (*treeDomain.Tree, error) {
 	log := logger.GetLogger(ctx)
-	tr, err := s.treeRepo.GetBySensorID(ctx, id)
+	trees, _, err := s.treeRepo.GetAll(ctx, treeDomain.TreeQuery{SensorID: &id})
 	if err != nil {
 		log.Debug("failed to get tree by sensor id", "sensor_id", id, "error", err)
 		return nil, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
 	}
 
-	return tr, nil
+	if len(trees) == 0 {
+		return nil, ports.MapError(ctx, treeDomain.ErrNotFound, ports.ErrorLogEntityNotFound)
+	}
+
+	return trees[0], nil
 }
 
 func (s *TreeService) GetNearestTrees(ctx context.Context, coord shared.Coordinate, limit int32) ([]*treeDomain.TreeWithDistance, error) {
@@ -151,7 +155,7 @@ func (s *TreeService) Create(ctx context.Context, treeCreate *treeDomain.TreeCre
 			return nil, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
 		}
 		t.SensorID = treeCreate.SensorID
-		prevTreeOfSensor, err = s.treeRepo.GetBySensorID(ctx, sensorEntity.ID)
+		prevTreeOfSensor, err = s.getTreeBySensorID(ctx, sensorEntity.ID)
 		if err != nil {
 			// If the previous tree that was linked to the sensor could not be found, the create process should still be continued.
 			log.Debug("failed to find previous tree linked to sensor specified from create request", "sensor_id", treeCreate.SensorID)
@@ -232,7 +236,7 @@ func (s *TreeService) Update(ctx context.Context, id int32, tu *treeDomain.TreeU
 		}
 		t.SensorID = tu.SensorID
 
-		prevTreeOfSensor, err = s.treeRepo.GetBySensorID(ctx, sensorEntity.ID)
+		prevTreeOfSensor, err = s.getTreeBySensorID(ctx, sensorEntity.ID)
 		if err != nil {
 			// If the previous tree that was linked to the sensor could not be found, the update process should still be continued.
 			log.Debug("failed to find previous tree linked to sensor specified from update request", "sensor_id", tu.SensorID)
@@ -320,4 +324,15 @@ func (s *TreeService) GetPlantingYears(ctx context.Context) ([]int32, error) {
 
 func (s *TreeService) Ready() bool {
 	return s.treeRepo != nil && s.sensorRepo != nil
+}
+
+func (s *TreeService) getTreeBySensorID(ctx context.Context, id sensorDomain.SensorID) (*treeDomain.Tree, error) {
+	trees, _, err := s.treeRepo.GetAll(ctx, treeDomain.TreeQuery{SensorID: &id})
+	if err != nil {
+		return nil, err
+	}
+	if len(trees) == 0 {
+		return nil, treeDomain.ErrNotFound
+	}
+	return trees[0], nil
 }

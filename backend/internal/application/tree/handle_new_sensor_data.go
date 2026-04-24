@@ -21,7 +21,7 @@ import (
 func (s *TreeService) HandleNewSensorData(ctx context.Context, event *sensorDomain.EventNewData) error {
 	log := logger.GetLogger(ctx)
 	log.Debug("handle event", "event", event.Type(), "service", "TreeService")
-	t, err := s.treeRepo.GetBySensorID(ctx, event.New.SensorID)
+	t, err := s.getTreeBySensorID(ctx, event.New.SensorID)
 	if err != nil {
 		log.Debug("failed to get tree by sensor id", "sensor_id", event.New.SensorID, "err", err)
 		return nil

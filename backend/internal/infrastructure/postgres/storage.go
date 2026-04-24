@@ -6,6 +6,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
+	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/evaluation"
 	mapper "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/region"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/sensor"
@@ -61,6 +62,13 @@ func NewRepository(conn *pgxpool.Pool) *storage.Repository {
 	wateringPlanRepo := wateringplan.NewWateringPlanRepository(store.NewStore(conn, sqlc.New(conn)), wateringPlanMappers)
 	slog.Info("successfully initialized wateringplan repository", "service", "postgres")
 
+	evaluationRepo := evaluation.NewEvaluationRepository(
+		store.NewStore(conn, sqlc.New(conn)),
+		&mapper.InternalTreeClusterRepoMapperImpl{},
+		&mapper.InternalVehicleRepoMapperImpl{},
+	)
+	slog.Info("successfully initialized evaluation repository", "service", "postgres")
+
 	return &storage.Repository{
 		Tree:         treeRepo,
 		TreeCluster:  treeClusterRepo,
@@ -68,5 +76,6 @@ func NewRepository(conn *pgxpool.Pool) *storage.Repository {
 		Sensor:       sensorRepo,
 		Region:       regionRepo,
 		WateringPlan: wateringPlanRepo,
+		Evaluation:   evaluationRepo,
 	}
 }

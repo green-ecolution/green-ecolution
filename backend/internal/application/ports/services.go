@@ -205,7 +205,7 @@ type CrudService[T any, CreateType any, UpdateType any] interface {
 type VehicleService interface {
 	Service
 	GetAll(ctx context.Context, query vehicle.VehicleQuery) ([]*vehicle.Vehicle, int64, error)
-	GetAllArchived(ctx context.Context) ([]*vehicle.Vehicle, error)
+	GetAllArchived(ctx context.Context) ([]*vehicle.Vehicle, int64, error)
 	GetByID(ctx context.Context, id int32) (*vehicle.Vehicle, error)
 	Create(ctx context.Context, createData *vehicle.VehicleCreate) (*vehicle.Vehicle, error)
 	Update(ctx context.Context, id int32, updateData *vehicle.VehicleUpdate) (*vehicle.Vehicle, error)

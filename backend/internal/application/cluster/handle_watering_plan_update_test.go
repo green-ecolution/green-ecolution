@@ -20,8 +20,9 @@ func TestTreeClusterService_HandleUpdateWateringPlan(t *testing.T) {
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		regionRepo := storageMock.NewMockRegionRepository(t)
+		sensorRepo := storageMock.NewMockSensorRepository(t)
 		eventManager := worker.NewEventManager(clusterDomain.EventTypeUpdate)
-		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, eventManager)
+		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, sensorRepo, eventManager)
 
 		_, ch, _ := eventManager.Subscribe(clusterDomain.EventTypeUpdate)
 		ctx, cancel := context.WithCancel(context.Background())
@@ -59,8 +60,9 @@ func TestTreeClusterService_HandleUpdateWateringPlan(t *testing.T) {
 		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).Return(nil)
 		// publishUpdateEvent: GetByID
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(&updatedTc, nil).Once()
-		// GetByTreeClusterID for updating trees
-		treeRepo.EXPECT().GetByTreeClusterID(mock.Anything, int32(1)).Return([]*treeDomain.Tree{}, nil)
+		// GetAll for updating trees in cluster
+		clusterID := int32(1)
+		treeRepo.EXPECT().GetAll(mock.Anything, treeDomain.TreeQuery{TreeClusterID: &clusterID}).Return([]*treeDomain.Tree{}, int64(0), nil)
 
 		// when
 		err := svc.HandleUpdateWateringPlan(context.Background(), &event)
@@ -82,8 +84,9 @@ func TestTreeClusterService_HandleUpdateWateringPlan(t *testing.T) {
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		regionRepo := storageMock.NewMockRegionRepository(t)
+		sensorRepo := storageMock.NewMockSensorRepository(t)
 		eventManager := worker.NewEventManager(clusterDomain.EventTypeUpdate)
-		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, eventManager)
+		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, sensorRepo, eventManager)
 
 		_, ch, _ := eventManager.Subscribe(clusterDomain.EventTypeUpdate)
 		ctx, cancel := context.WithCancel(context.Background())
@@ -130,8 +133,9 @@ func TestTreeClusterService_HandleUpdateWateringPlan(t *testing.T) {
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		regionRepo := storageMock.NewMockRegionRepository(t)
+		sensorRepo := storageMock.NewMockSensorRepository(t)
 		eventManager := worker.NewEventManager(clusterDomain.EventTypeUpdate)
-		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, eventManager)
+		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, sensorRepo, eventManager)
 
 		_, ch, _ := eventManager.Subscribe(clusterDomain.EventTypeUpdate)
 		ctx, cancel := context.WithCancel(context.Background())
@@ -178,8 +182,9 @@ func TestTreeClusterService_HandleUpdateWateringPlan(t *testing.T) {
 		clusterRepo := storageMock.NewMockTreeClusterRepository(t)
 		treeRepo := storageMock.NewMockTreeRepository(t)
 		regionRepo := storageMock.NewMockRegionRepository(t)
+		sensorRepo := storageMock.NewMockSensorRepository(t)
 		eventManager := worker.NewEventManager(clusterDomain.EventTypeUpdate)
-		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, eventManager)
+		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, sensorRepo, eventManager)
 
 		_, ch, _ := eventManager.Subscribe(clusterDomain.EventTypeUpdate)
 		ctx, cancel := context.WithCancel(context.Background())

@@ -15,16 +15,9 @@ type TreeRepository interface {
 	Update(ctx context.Context, id int32, entity *Tree) (*Tree, error)
 	Delete(ctx context.Context, id int32) error
 
-	GetByTreeClusterID(ctx context.Context, id int32) ([]*Tree, error)
-	GetSensorByTreeID(ctx context.Context, id int32) (*sensor.Sensor, error)
-	GetTreesByIDs(ctx context.Context, ids []int32) ([]*Tree, error)
-	GetByCoordinates(ctx context.Context, coord shared.Coordinate) (*Tree, error)
-	GetBySensorID(ctx context.Context, id sensor.SensorID) (*Tree, error)
-	GetBySensorIDs(ctx context.Context, ids ...sensor.SensorID) ([]*Tree, error)
+	FindNearestTrees(ctx context.Context, coord shared.Coordinate, radiusMeters float64, limit int32) ([]*TreeWithDistance, error)
+	GetDistinctPlantingYears(ctx context.Context) ([]int32, error)
 
 	UnlinkTreeClusterID(ctx context.Context, treeClusterID int32) error
 	UnlinkSensorID(ctx context.Context, sensorID sensor.SensorID) error
-	FindNearestTree(ctx context.Context, coord shared.Coordinate) (*Tree, error)
-	FindNearestTrees(ctx context.Context, coord shared.Coordinate, radiusMeters float64, limit int32) ([]*TreeWithDistance, error)
-	GetDistinctPlantingYears(ctx context.Context) ([]int32, error)
 }

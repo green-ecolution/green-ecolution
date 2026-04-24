@@ -28,15 +28,15 @@ func (q *Queries) ArchiveVehicle(ctx context.Context, arg *ArchiveVehicleParams)
 
 const createVehicle = `-- name: CreateVehicle :one
 INSERT INTO vehicles (
-  number_plate, 
-  description, 
-  water_capacity, 
-  type, 
-  status, 
-  model, 
-  driving_license, 
-  height, 
-  length, 
+  number_plate,
+  description,
+  water_capacity,
+  type,
+  status,
+  model,
+  driving_license,
+  height,
+  length,
   width,
   weight,
   provider,
@@ -93,130 +93,40 @@ func (q *Queries) DeleteVehicle(ctx context.Context, id int32) (int32, error) {
 	return id, err
 }
 
-const getAllArchivedVehicles = `-- name: GetAllArchivedVehicles :many
+const getAllVehicles = `-- name: GetAllVehicles :many
 SELECT id, created_at, updated_at, number_plate, description, water_capacity, type, status, model, driving_license, height, length, width, weight, provider, additional_informations, archived_at
 FROM vehicles
 WHERE
-  archived_at IS NOT NULL
-ORDER BY water_capacity DESC
-`
-
-func (q *Queries) GetAllArchivedVehicles(ctx context.Context) ([]*Vehicle, error) {
-	rows, err := q.db.Query(ctx, getAllArchivedVehicles)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []*Vehicle{}
-	for rows.Next() {
-		var i Vehicle
-		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.NumberPlate,
-			&i.Description,
-			&i.WaterCapacity,
-			&i.Type,
-			&i.Status,
-			&i.Model,
-			&i.DrivingLicense,
-			&i.Height,
-			&i.Length,
-			&i.Width,
-			&i.Weight,
-			&i.Provider,
-			&i.AdditionalInformations,
-			&i.ArchivedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAllVehicles = `-- name: GetAllVehicles :many
-SELECT id, created_at, updated_at, number_plate, description, water_capacity, type, status, model, driving_license, height, length, width, weight, provider, additional_informations, archived_at 
-FROM vehicles 
-WHERE
     (COALESCE($3, '') = '' OR provider = $3)
-    AND archived_at IS NULL
+  AND ($4::vehicle_type IS NULL OR type = $4)
+  AND (
+    CASE
+      WHEN $5::BOOLEAN = TRUE THEN archived_at IS NOT NULL
+      WHEN $6::BOOLEAN = TRUE THEN TRUE
+      ELSE archived_at IS NULL
+    END
+  )
 ORDER BY water_capacity DESC
 LIMIT $1 OFFSET $2
 `
 
 type GetAllVehiclesParams struct {
-	Limit    int32
-	Offset   int32
-	Provider interface{}
+	Limit        int32
+	Offset       int32
+	Provider     interface{}
+	VehicleType  NullVehicleType
+	OnlyArchived bool
+	WithArchived bool
 }
 
 func (q *Queries) GetAllVehicles(ctx context.Context, arg *GetAllVehiclesParams) ([]*Vehicle, error) {
-	rows, err := q.db.Query(ctx, getAllVehicles, arg.Limit, arg.Offset, arg.Provider)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []*Vehicle{}
-	for rows.Next() {
-		var i Vehicle
-		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.NumberPlate,
-			&i.Description,
-			&i.WaterCapacity,
-			&i.Type,
-			&i.Status,
-			&i.Model,
-			&i.DrivingLicense,
-			&i.Height,
-			&i.Length,
-			&i.Width,
-			&i.Weight,
-			&i.Provider,
-			&i.AdditionalInformations,
-			&i.ArchivedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAllVehiclesByType = `-- name: GetAllVehiclesByType :many
-SELECT id, created_at, updated_at, number_plate, description, water_capacity, type, status, model, driving_license, height, length, width, weight, provider, additional_informations, archived_at 
-FROM vehicles 
-WHERE
-    (COALESCE($4, '') = '' OR provider = $4)
-  AND archived_at IS NULL
-  AND type = $1
-ORDER BY water_capacity DESC
-LIMIT $2 OFFSET $3
-`
-
-type GetAllVehiclesByTypeParams struct {
-	Type     VehicleType
-	Limit    int32
-	Offset   int32
-	Provider interface{}
-}
-
-func (q *Queries) GetAllVehiclesByType(ctx context.Context, arg *GetAllVehiclesByTypeParams) ([]*Vehicle, error) {
-	rows, err := q.db.Query(ctx, getAllVehiclesByType,
-		arg.Type,
+	rows, err := q.db.Query(ctx, getAllVehicles,
 		arg.Limit,
 		arg.Offset,
 		arg.Provider,
+		arg.VehicleType,
+		arg.OnlyArchived,
+		arg.WithArchived,
 	)
 	if err != nil {
 		return nil, err
@@ -252,194 +162,44 @@ func (q *Queries) GetAllVehiclesByType(ctx context.Context, arg *GetAllVehiclesB
 		return nil, err
 	}
 	return items, nil
-}
-
-const getAllVehiclesByTypeCount = `-- name: GetAllVehiclesByTypeCount :one
-SELECT COUNT(*) 
-  FROM vehicles 
-  WHERE
-    (COALESCE($2, '') = '' OR provider = $2)
-    AND archived_at IS NULL
-    AND type = $1
-`
-
-type GetAllVehiclesByTypeCountParams struct {
-	Type     VehicleType
-	Provider interface{}
-}
-
-func (q *Queries) GetAllVehiclesByTypeCount(ctx context.Context, arg *GetAllVehiclesByTypeCountParams) (int64, error) {
-	row := q.db.QueryRow(ctx, getAllVehiclesByTypeCount, arg.Type, arg.Provider)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const getAllVehiclesByTypeWithArchived = `-- name: GetAllVehiclesByTypeWithArchived :many
-SELECT id, created_at, updated_at, number_plate, description, water_capacity, type, status, model, driving_license, height, length, width, weight, provider, additional_informations, archived_at
-FROM vehicles
-WHERE
-    (COALESCE($4, '') = '' OR provider = $4)
-    AND
-    type = $1
-ORDER BY water_capacity DESC
-LIMIT $2 OFFSET $3
-`
-
-type GetAllVehiclesByTypeWithArchivedParams struct {
-	Type     VehicleType
-	Limit    int32
-	Offset   int32
-	Provider interface{}
-}
-
-func (q *Queries) GetAllVehiclesByTypeWithArchived(ctx context.Context, arg *GetAllVehiclesByTypeWithArchivedParams) ([]*Vehicle, error) {
-	rows, err := q.db.Query(ctx, getAllVehiclesByTypeWithArchived,
-		arg.Type,
-		arg.Limit,
-		arg.Offset,
-		arg.Provider,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []*Vehicle{}
-	for rows.Next() {
-		var i Vehicle
-		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.NumberPlate,
-			&i.Description,
-			&i.WaterCapacity,
-			&i.Type,
-			&i.Status,
-			&i.Model,
-			&i.DrivingLicense,
-			&i.Height,
-			&i.Length,
-			&i.Width,
-			&i.Weight,
-			&i.Provider,
-			&i.AdditionalInformations,
-			&i.ArchivedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAllVehiclesByTypeWithArchivedCount = `-- name: GetAllVehiclesByTypeWithArchivedCount :one
-SELECT COUNT(*)
-  FROM vehicles
-  WHERE
-    (COALESCE($2, '') = '' OR provider = $2)
-    AND
-    type = $1
-`
-
-type GetAllVehiclesByTypeWithArchivedCountParams struct {
-	Type     VehicleType
-	Provider interface{}
-}
-
-func (q *Queries) GetAllVehiclesByTypeWithArchivedCount(ctx context.Context, arg *GetAllVehiclesByTypeWithArchivedCountParams) (int64, error) {
-	row := q.db.QueryRow(ctx, getAllVehiclesByTypeWithArchivedCount, arg.Type, arg.Provider)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
 }
 
 const getAllVehiclesCount = `-- name: GetAllVehiclesCount :one
 SELECT COUNT(*)
-  FROM vehicles
-  WHERE
-    (COALESCE($1, '') = '' OR provider = $1)
-    AND archived_at IS NULL
-`
-
-func (q *Queries) GetAllVehiclesCount(ctx context.Context, provider interface{}) (int64, error) {
-	row := q.db.QueryRow(ctx, getAllVehiclesCount, provider)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const getAllVehiclesWithArchived = `-- name: GetAllVehiclesWithArchived :many
-SELECT id, created_at, updated_at, number_plate, description, water_capacity, type, status, model, driving_license, height, length, width, weight, provider, additional_informations, archived_at FROM vehicles
+FROM vehicles
 WHERE
-    (COALESCE($3, '') = '' OR provider = $3)
-ORDER BY water_capacity DESC
-LIMIT $1 OFFSET $2
-`
-
-type GetAllVehiclesWithArchivedParams struct {
-	Limit    int32
-	Offset   int32
-	Provider interface{}
-}
-
-func (q *Queries) GetAllVehiclesWithArchived(ctx context.Context, arg *GetAllVehiclesWithArchivedParams) ([]*Vehicle, error) {
-	rows, err := q.db.Query(ctx, getAllVehiclesWithArchived, arg.Limit, arg.Offset, arg.Provider)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []*Vehicle{}
-	for rows.Next() {
-		var i Vehicle
-		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.NumberPlate,
-			&i.Description,
-			&i.WaterCapacity,
-			&i.Type,
-			&i.Status,
-			&i.Model,
-			&i.DrivingLicense,
-			&i.Height,
-			&i.Length,
-			&i.Width,
-			&i.Weight,
-			&i.Provider,
-			&i.AdditionalInformations,
-			&i.ArchivedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAllVehiclesWithArchivedCount = `-- name: GetAllVehiclesWithArchivedCount :one
-SELECT COUNT(*)
-  FROM vehicles 
-  WHERE
     (COALESCE($1, '') = '' OR provider = $1)
+  AND ($2::vehicle_type IS NULL OR type = $2)
+  AND (
+    CASE
+      WHEN $3::BOOLEAN = TRUE THEN archived_at IS NOT NULL
+      WHEN $4::BOOLEAN = TRUE THEN TRUE
+      ELSE archived_at IS NULL
+    END
+  )
 `
 
-func (q *Queries) GetAllVehiclesWithArchivedCount(ctx context.Context, provider interface{}) (int64, error) {
-	row := q.db.QueryRow(ctx, getAllVehiclesWithArchivedCount, provider)
+type GetAllVehiclesCountParams struct {
+	Provider     interface{}
+	VehicleType  NullVehicleType
+	OnlyArchived bool
+	WithArchived bool
+}
+
+func (q *Queries) GetAllVehiclesCount(ctx context.Context, arg *GetAllVehiclesCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getAllVehiclesCount,
+		arg.Provider,
+		arg.VehicleType,
+		arg.OnlyArchived,
+		arg.WithArchived,
+	)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
 const getAllVehiclesWithWateringPlanCount = `-- name: GetAllVehiclesWithWateringPlanCount :many
-SELECT 
+SELECT
     v.number_plate,
     COUNT(vwp.watering_plan_id) AS watering_plan_count
 FROM vehicles v

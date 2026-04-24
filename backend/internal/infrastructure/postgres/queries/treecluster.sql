@@ -8,6 +8,7 @@ WHERE
   AND (COALESCE(array_length(@region::TEXT[], 1), 0) = 0
     OR r.name = ANY(@region::TEXT[]))
   AND (COALESCE(@provider, '') = '' OR provider = @provider)
+  AND (COALESCE(array_length(@ids::INTEGER[], 1), 0) = 0 OR tc.id = ANY(@ids::INTEGER[]))
 ORDER BY tc.name ASC
     LIMIT $1 OFFSET $2;
 
@@ -20,13 +21,11 @@ WHERE
         OR watering_status = ANY((@watering_status::TEXT[])::watering_status[]))
   AND (COALESCE(array_length(@region::TEXT[], 1), 0) = 0
     OR r.name = ANY(@region::TEXT[]))
-  AND (COALESCE(@provider, '') = '' OR provider = @provider);
+  AND (COALESCE(@provider, '') = '' OR provider = @provider)
+  AND (COALESCE(array_length(@ids::INTEGER[], 1), 0) = 0 OR tc.id = ANY(@ids::INTEGER[]));
 
 -- name: GetTreeClusterByID :one
 SELECT * FROM tree_clusters WHERE id = $1;
-
--- name: GetTreesClustersByIDs :many
-SELECT * FROM tree_clusters WHERE id = ANY($1::int[]);
 
 -- name: GetRegionByTreeClusterID :one
 SELECT regions.* FROM regions JOIN tree_clusters ON regions.id = tree_clusters.region_id WHERE tree_clusters.id = $1;
@@ -85,21 +84,6 @@ DELETE FROM tree_clusters WHERE id = $1 RETURNING id;
 SELECT ST_X(ST_Centroid(ST_Collect(geometry)))::float8 AS center_x,
        ST_Y(ST_Centroid(ST_Collect(geometry)))::float8 AS center_y
 FROM trees WHERE trees.tree_cluster_id = $1;
-
--- name: GetAllLatestSensorDataByTreeClusterID :many
-SELECT sd.*
-FROM sensor_data sd
-JOIN sensors s ON sd.sensor_id = s.id
-JOIN trees t ON t.sensor_id = s.id
-JOIN tree_clusters tc ON t.tree_cluster_id = tc.id
-WHERE tc.id = $1
-  AND sd.id = (
-    SELECT id
-    FROM sensor_data
-    WHERE sensor_id = s.id
-    ORDER BY created_at DESC
-    LIMIT 1
-  );
 
 -- name: GetAllTreeClusterRegionsWithWateringPlanCount :many
 SELECT 

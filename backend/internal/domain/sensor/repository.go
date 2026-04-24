@@ -17,4 +17,5 @@ type SensorRepository interface {
 	GetAllDataByID(ctx context.Context, id SensorID) ([]*SensorData, error)
 	GetLatestSensorDataBySensorID(ctx context.Context, id SensorID) (*SensorData, error)
 	InsertSensorData(ctx context.Context, data *SensorData, id SensorID) error
+	GetLatestDataBySensorIDs(ctx context.Context, ids []SensorID) ([]*SensorData, error)
 }

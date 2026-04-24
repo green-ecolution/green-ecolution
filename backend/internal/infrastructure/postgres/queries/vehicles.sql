@@ -1,74 +1,32 @@
 -- name: GetAllVehicles :many
-SELECT * 
-FROM vehicles 
+SELECT *
+FROM vehicles
 WHERE
     (COALESCE(@provider, '') = '' OR provider = @provider)
-    AND archived_at IS NULL
+  AND (sqlc.narg('vehicle_type')::vehicle_type IS NULL OR type = sqlc.narg('vehicle_type'))
+  AND (
+    CASE
+      WHEN @only_archived::BOOLEAN = TRUE THEN archived_at IS NOT NULL
+      WHEN @with_archived::BOOLEAN = TRUE THEN TRUE
+      ELSE archived_at IS NULL
+    END
+  )
 ORDER BY water_capacity DESC
 LIMIT $1 OFFSET $2;
 
 -- name: GetAllVehiclesCount :one
 SELECT COUNT(*)
-  FROM vehicles
-  WHERE
-    (COALESCE(@provider, '') = '' OR provider = @provider)
-    AND archived_at IS NULL;
-
--- name: GetAllVehiclesWithArchived :many
-SELECT * FROM vehicles
-WHERE
-    (COALESCE(@provider, '') = '' OR provider = @provider)
-ORDER BY water_capacity DESC
-LIMIT $1 OFFSET $2;
-
--- name: GetAllVehiclesWithArchivedCount :one
-SELECT COUNT(*)
-  FROM vehicles 
-  WHERE
-    (COALESCE(@provider, '') = '' OR provider = @provider);
-
--- name: GetAllVehiclesByType :many
-SELECT * 
-FROM vehicles 
-WHERE
-    (COALESCE(@provider, '') = '' OR provider = @provider)
-  AND archived_at IS NULL
-  AND type = $1
-ORDER BY water_capacity DESC
-LIMIT $2 OFFSET $3;
-
--- name: GetAllVehiclesByTypeCount :one
-SELECT COUNT(*) 
-  FROM vehicles 
-  WHERE
-    (COALESCE(@provider, '') = '' OR provider = @provider)
-    AND archived_at IS NULL
-    AND type = $1;
-
--- name: GetAllVehiclesByTypeWithArchived :many
-SELECT *
 FROM vehicles
 WHERE
     (COALESCE(@provider, '') = '' OR provider = @provider)
-    AND
-    type = $1
-ORDER BY water_capacity DESC
-LIMIT $2 OFFSET $3;
-
--- name: GetAllVehiclesByTypeWithArchivedCount :one
-SELECT COUNT(*)
-  FROM vehicles
-  WHERE
-    (COALESCE(@provider, '') = '' OR provider = @provider)
-    AND
-    type = $1;
-
--- name: GetAllArchivedVehicles :many
-SELECT *
-FROM vehicles
-WHERE
-  archived_at IS NOT NULL
-ORDER BY water_capacity DESC;
+  AND (sqlc.narg('vehicle_type')::vehicle_type IS NULL OR type = sqlc.narg('vehicle_type'))
+  AND (
+    CASE
+      WHEN @only_archived::BOOLEAN = TRUE THEN archived_at IS NOT NULL
+      WHEN @with_archived::BOOLEAN = TRUE THEN TRUE
+      ELSE archived_at IS NULL
+    END
+  );
 
 -- name: GetVehicleByID :one
 SELECT * FROM vehicles WHERE id = $1;
@@ -78,15 +36,15 @@ SELECT * FROM vehicles WHERE number_plate = $1;
 
 -- name: CreateVehicle :one
 INSERT INTO vehicles (
-  number_plate, 
-  description, 
-  water_capacity, 
-  type, 
-  status, 
-  model, 
-  driving_license, 
-  height, 
-  length, 
+  number_plate,
+  description,
+  water_capacity,
+  type,
+  status,
+  model,
+  driving_license,
+  height,
+  length,
   width,
   weight,
   provider,
@@ -119,7 +77,7 @@ UPDATE vehicles SET archived_at = $2 WHERE id = $1 RETURNING id;
 DELETE FROM vehicles WHERE id = $1 RETURNING id;
 
 -- name: GetAllVehiclesWithWateringPlanCount :many
-SELECT 
+SELECT
     v.number_plate,
     COUNT(vwp.watering_plan_id) AS watering_plan_count
 FROM vehicles v

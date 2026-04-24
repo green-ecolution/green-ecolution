@@ -55,5 +55,11 @@ INSERT INTO sensor_data (
   $1, $2
 ) RETURNING id;
 
+-- name: GetLatestSensorDataBySensorIDs :many
+SELECT DISTINCT ON (sensor_id) *
+FROM sensor_data
+WHERE sensor_id = ANY(@sensor_ids::text[])
+ORDER BY sensor_id, created_at DESC;
+
 -- name: DeleteSensor :exec
 DELETE FROM sensors WHERE id = $1;

@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/auth"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/evaluation"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/info"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/region"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/routing"
@@ -25,4 +26,5 @@ type Repository struct {
 	WateringPlan watering.WateringPlanRepository
 	Routing      routing.RoutingRepository
 	GpxBucket    routing.S3Repository
+	Evaluation   evaluation.EvaluationRepository
 }

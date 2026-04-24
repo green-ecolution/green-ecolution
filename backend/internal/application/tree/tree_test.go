@@ -335,12 +335,12 @@ func TestTreeService_GetBySensorID(t *testing.T) {
 
 		id := sensor.MustNewSensorID("sensor-1")
 		expectedTree := TestTreesList[0]
-		treeRepo.EXPECT().GetBySensorID(ctx, id).Return(expectedTree, nil)
+		treeRepo.EXPECT().GetAll(mock.Anything, tree.TreeQuery{SensorID: &id}).Return([]*tree.Tree{expectedTree}, int64(1), nil)
 
-		tree, err := svc.GetBySensorID(ctx, id)
+		result, err := svc.GetBySensorID(ctx, id)
 
 		assert.NoError(t, err)
-		assert.Equal(t, expectedTree, tree)
+		assert.Equal(t, expectedTree, result)
 	})
 
 	t.Run("should return error if tree not found", func(t *testing.T) {
@@ -351,13 +351,12 @@ func TestTreeService_GetBySensorID(t *testing.T) {
 		svc := NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager, testMapCfg)
 
 		id := sensor.MustNewSensorID("sensor-2")
-		expectedError := shared.ErrEntityNotFound("not found")
-		treeRepo.EXPECT().GetBySensorID(ctx, id).Return(nil, expectedError)
+		treeRepo.EXPECT().GetAll(mock.Anything, tree.TreeQuery{SensorID: &id}).Return([]*tree.Tree{}, int64(0), nil)
 
-		tree, err := svc.GetBySensorID(ctx, id)
+		result, err := svc.GetBySensorID(ctx, id)
 
 		assert.Error(t, err)
-		assert.Nil(t, tree)
+		assert.Nil(t, result)
 	})
 
 	t.Run("should return error if sensor not found", func(t *testing.T) {
@@ -368,13 +367,12 @@ func TestTreeService_GetBySensorID(t *testing.T) {
 		svc := NewTreeService(treeRepo, sensorRepo, clusterRepo, eventManager, testMapCfg)
 
 		id := sensor.MustNewSensorID("sensor-2")
-		expectedError := sensor.ErrNotFound
-		treeRepo.EXPECT().GetBySensorID(ctx, id).Return(nil, expectedError)
+		treeRepo.EXPECT().GetAll(mock.Anything, tree.TreeQuery{SensorID: &id}).Return([]*tree.Tree{}, int64(0), nil)
 
-		tree, err := svc.GetBySensorID(ctx, id)
+		result, err := svc.GetBySensorID(ctx, id)
 
 		assert.Error(t, err)
-		assert.Nil(t, tree)
+		assert.Nil(t, result)
 	})
 
 	t.Run("should return error for unexpected repository error", func(t *testing.T) {
@@ -386,12 +384,12 @@ func TestTreeService_GetBySensorID(t *testing.T) {
 
 		id := sensor.MustNewSensorID("sensor-3")
 		expectedError := errors.New("unexpected error")
-		treeRepo.EXPECT().GetBySensorID(ctx, id).Return(nil, expectedError)
+		treeRepo.EXPECT().GetAll(mock.Anything, tree.TreeQuery{SensorID: &id}).Return(nil, int64(0), expectedError)
 
-		tree, err := svc.GetBySensorID(ctx, id)
+		result, err := svc.GetBySensorID(ctx, id)
 
 		assert.Error(t, err)
-		assert.Nil(t, tree)
+		assert.Nil(t, result)
 	})
 }
 
@@ -412,7 +410,7 @@ func TestTreeService_Create(t *testing.T) {
 
 		clusterRepo.EXPECT().GetByID(ctx, *TestTreeCreate.TreeClusterID).Return(expectedCluster, nil)
 		sensorRepo.EXPECT().GetByID(ctx, *TestTreeCreate.SensorID).Return(expectedSensor, nil)
-		treeRepo.EXPECT().GetBySensorID(ctx, expectedSensor.ID).Return(expectedPrevSensorTree, nil)
+		treeRepo.EXPECT().GetAll(mock.Anything, tree.TreeQuery{SensorID: &expectedSensor.ID}).Return([]*tree.Tree{expectedPrevSensorTree}, int64(1), nil)
 		treeRepo.EXPECT().Create(ctx, mock.Anything).Return(expectedTree, nil)
 
 		result, err := svc.Create(ctx, TestTreeCreate)
@@ -467,7 +465,7 @@ func TestTreeService_Create(t *testing.T) {
 
 		clusterRepo.EXPECT().GetByID(ctx, *TestTreeCreate.TreeClusterID).Return(expectedCluster, nil)
 		sensorRepo.EXPECT().GetByID(ctx, *TestTreeCreate.SensorID).Return(expectedSensor, nil)
-		treeRepo.EXPECT().GetBySensorID(ctx, expectedSensor.ID).Return(expectedPrevSensorTree, nil)
+		treeRepo.EXPECT().GetAll(mock.Anything, tree.TreeQuery{SensorID: &expectedSensor.ID}).Return([]*tree.Tree{expectedPrevSensorTree}, int64(1), nil)
 		treeRepo.EXPECT().Create(ctx, mock.Anything).Return(nil, expectedError)
 
 		result, err := svc.Create(ctx, TestTreeCreate)
@@ -578,7 +576,7 @@ func TestTreeService_Update(t *testing.T) {
 		treeRepo.EXPECT().GetByID(ctx, id).Return(currentTree, nil)
 		clusterRepo.EXPECT().GetByID(ctx, *TestTreeUpdate.TreeClusterID).Return(treeCluster, nil)
 		sensorRepo.EXPECT().GetByID(ctx, *TestTreeUpdate.SensorID).Return(sensorEntity, nil)
-		treeRepo.EXPECT().GetBySensorID(ctx, sensorEntity.ID).Return(expectedPrevSensorTree, nil)
+		treeRepo.EXPECT().GetAll(mock.Anything, tree.TreeQuery{SensorID: &sensorEntity.ID}).Return([]*tree.Tree{expectedPrevSensorTree}, int64(1), nil)
 		treeRepo.EXPECT().Update(ctx, id, mock.Anything).Return(updatedTree, nil)
 
 		result, err := svc.Update(ctx, id, TestTreeUpdate)
@@ -659,7 +657,7 @@ func TestTreeService_Update(t *testing.T) {
 		treeRepo.EXPECT().GetByID(ctx, id).Return(currentTree, nil)
 		clusterRepo.EXPECT().GetByID(ctx, *TestTreeUpdate.TreeClusterID).Return(treeCluster, nil)
 		sensorRepo.EXPECT().GetByID(ctx, *TestTreeUpdate.SensorID).Return(sensorEntity, nil)
-		treeRepo.EXPECT().GetBySensorID(ctx, sensorEntity.ID).Return(expectedPrevSensorTree, nil)
+		treeRepo.EXPECT().GetAll(mock.Anything, tree.TreeQuery{SensorID: &sensorEntity.ID}).Return([]*tree.Tree{expectedPrevSensorTree}, int64(1), nil)
 		treeRepo.EXPECT().Update(ctx, id, mock.Anything).Return(nil, expectedError)
 
 		result, err := svc.Update(ctx, id, TestTreeUpdate)

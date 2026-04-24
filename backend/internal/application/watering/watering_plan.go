@@ -84,7 +84,7 @@ func (w *WateringPlanService) PreviewRoute(ctx context.Context, transporterID in
 		}
 	}
 
-	clusters, err := w.clusterRepo.GetByIDs(ctx, clusterIDs)
+	clusters, _, err := w.clusterRepo.GetAll(ctx, clusterDomain.TreeClusterQuery{IDs: clusterIDs})
 	if err != nil {
 		// when error, something is wrong with the db, else clusters should be an empty array
 		log.Debug("failed to get cluster by provided ids", "cluster_ids", clusterIDs)
@@ -389,9 +389,10 @@ func (w *WateringPlanService) UpdateStatuses(ctx context.Context) error {
 // returns service error
 func (w *WateringPlanService) fetchTreeClusters(ctx context.Context, treeClusterIDs []*int32) ([]*clusterDomain.TreeCluster, error) {
 	log := logger.GetLogger(ctx)
-	clusters, err := w.clusterRepo.GetByIDs(ctx, utils.Map(treeClusterIDs, func(cID *int32) int32 {
+	ids := utils.Map(treeClusterIDs, func(cID *int32) int32 {
 		return *cID
-	}))
+	})
+	clusters, _, err := w.clusterRepo.GetAll(ctx, clusterDomain.TreeClusterQuery{IDs: ids})
 	if err != nil {
 		log.Debug("failed to fetch tree cluster specified by requested ids", "cluster_ids", treeClusterIDs, "error", err)
 		return nil, err

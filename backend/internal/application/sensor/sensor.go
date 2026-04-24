@@ -210,13 +210,14 @@ func (s *SensorService) MapSensorToTree(ctx context.Context, sen *sensorDomain.S
 		return errors.New("sensor cannot be nil")
 	}
 
-	nearestTree, err := s.treeRepo.FindNearestTree(ctx, sen.Coordinate)
+	nearestTrees, err := s.treeRepo.FindNearestTrees(ctx, sen.Coordinate, 3, 1)
 	if err != nil {
 		log.Error("failed to calculate nearest tree", "sensor_id", sen.ID.String(), "sensor_latitude", sen.Coordinate.Latitude(), "sensor_longitude", sen.Coordinate.Longitude())
 		return err
 	}
 
-	if nearestTree != nil {
+	if len(nearestTrees) > 0 {
+		nearestTree := nearestTrees[0].Tree
 		log.Debug("update sensor on tree", "tree_id", nearestTree.ID, "sensor_id", sen.ID.String())
 		nearestTree.SensorID = &sen.ID
 		_, err = s.treeRepo.Update(ctx, nearestTree.ID, nearestTree)

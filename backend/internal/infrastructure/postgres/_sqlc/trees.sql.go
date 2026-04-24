@@ -72,42 +72,6 @@ func (q *Queries) DeleteTree(ctx context.Context, id int32) (int32, error) {
 	return id, err
 }
 
-const findNearestTree = `-- name: FindNearestTree :one
-SELECT id, created_at, updated_at, tree_cluster_id, sensor_id, planting_year, species, number, latitude, longitude, watering_status, geometry, description, provider, additional_informations, last_watered FROM trees
-WHERE ST_Distance(geometry::geography, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) <= 3
-ORDER BY ST_Distance(geometry::geography, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) ASC
-    LIMIT 1
-`
-
-type FindNearestTreeParams struct {
-	StMakepoint   interface{}
-	StMakepoint_2 interface{}
-}
-
-func (q *Queries) FindNearestTree(ctx context.Context, arg *FindNearestTreeParams) (*Tree, error) {
-	row := q.db.QueryRow(ctx, findNearestTree, arg.StMakepoint, arg.StMakepoint_2)
-	var i Tree
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.TreeClusterID,
-		&i.SensorID,
-		&i.PlantingYear,
-		&i.Species,
-		&i.Number,
-		&i.Latitude,
-		&i.Longitude,
-		&i.WateringStatus,
-		&i.Geometry,
-		&i.Description,
-		&i.Provider,
-		&i.AdditionalInformations,
-		&i.LastWatered,
-	)
-	return &i, err
-}
-
 const findNearestTrees = `-- name: FindNearestTrees :many
 WITH query_point AS (
   SELECT ST_SetSRID(ST_MakePoint($3::float8, $4::float8), 4326)::geography AS geog
@@ -194,6 +158,9 @@ WHERE
     $6::BOOLEAN IS NULL
     OR (t.tree_cluster_id IS NOT NULL) = $6::BOOLEAN
       )
+  AND ($7::INTEGER IS NULL OR t.tree_cluster_id = $7)
+  AND ($8::TEXT IS NULL OR t.sensor_id = $8)
+  AND (COALESCE(array_length($9::INTEGER[], 1), 0) = 0 OR t.id = ANY($9::INTEGER[]))
   ORDER BY t.number ASC
     LIMIT $1 OFFSET $2
 `
@@ -205,6 +172,9 @@ type GetAllTreesParams struct {
 	Provider       interface{}
 	Years          []int32
 	HasCluster     *bool
+	TreeClusterID  *int32
+	SensorID       *string
+	Ids            []int32
 }
 
 func (q *Queries) GetAllTrees(ctx context.Context, arg *GetAllTreesParams) ([]*Tree, error) {
@@ -215,6 +185,9 @@ func (q *Queries) GetAllTrees(ctx context.Context, arg *GetAllTreesParams) ([]*T
 		arg.Provider,
 		arg.Years,
 		arg.HasCluster,
+		arg.TreeClusterID,
+		arg.SensorID,
+		arg.Ids,
 	)
 	if err != nil {
 		return nil, err
@@ -263,6 +236,9 @@ WHERE
     $4::BOOLEAN IS NULL
     OR (t.tree_cluster_id IS NOT NULL) = $4::BOOLEAN
       )
+  AND ($5::INTEGER IS NULL OR t.tree_cluster_id = $5)
+  AND ($6::TEXT IS NULL OR t.sensor_id = $6)
+  AND (COALESCE(array_length($7::INTEGER[], 1), 0) = 0 OR t.id = ANY($7::INTEGER[]))
 `
 
 type GetAllTreesCountParams struct {
@@ -270,6 +246,9 @@ type GetAllTreesCountParams struct {
 	Provider       interface{}
 	Years          []int32
 	HasCluster     *bool
+	TreeClusterID  *int32
+	SensorID       *string
+	Ids            []int32
 }
 
 func (q *Queries) GetAllTreesCount(ctx context.Context, arg *GetAllTreesCountParams) (int64, error) {
@@ -278,6 +257,9 @@ func (q *Queries) GetAllTreesCount(ctx context.Context, arg *GetAllTreesCountPar
 		arg.Provider,
 		arg.Years,
 		arg.HasCluster,
+		arg.TreeClusterID,
+		arg.SensorID,
+		arg.Ids,
 	)
 	var count int64
 	err := row.Scan(&count)
@@ -308,60 +290,6 @@ func (q *Queries) GetDistinctPlantingYears(ctx context.Context) ([]int32, error)
 	return items, nil
 }
 
-const getSensorByTreeID = `-- name: GetSensorByTreeID :one
-SELECT sensors.id, sensors.created_at, sensors.updated_at, sensors.status, sensors.latitude, sensors.longitude, sensors.geometry, sensors.provider, sensors.additional_informations FROM sensors JOIN trees ON sensors.id = trees.sensor_id WHERE trees.id = $1
-`
-
-func (q *Queries) GetSensorByTreeID(ctx context.Context, id int32) (*Sensor, error) {
-	row := q.db.QueryRow(ctx, getSensorByTreeID, id)
-	var i Sensor
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.Status,
-		&i.Latitude,
-		&i.Longitude,
-		&i.Geometry,
-		&i.Provider,
-		&i.AdditionalInformations,
-	)
-	return &i, err
-}
-
-const getTreeByCoordinates = `-- name: GetTreeByCoordinates :one
-SELECT id, created_at, updated_at, tree_cluster_id, sensor_id, planting_year, species, number, latitude, longitude, watering_status, geometry, description, provider, additional_informations, last_watered FROM trees WHERE latitude = $1 AND longitude = $2 LIMIT 1
-`
-
-type GetTreeByCoordinatesParams struct {
-	Latitude  float64
-	Longitude float64
-}
-
-func (q *Queries) GetTreeByCoordinates(ctx context.Context, arg *GetTreeByCoordinatesParams) (*Tree, error) {
-	row := q.db.QueryRow(ctx, getTreeByCoordinates, arg.Latitude, arg.Longitude)
-	var i Tree
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.TreeClusterID,
-		&i.SensorID,
-		&i.PlantingYear,
-		&i.Species,
-		&i.Number,
-		&i.Latitude,
-		&i.Longitude,
-		&i.WateringStatus,
-		&i.Geometry,
-		&i.Description,
-		&i.Provider,
-		&i.AdditionalInformations,
-		&i.LastWatered,
-	)
-	return &i, err
-}
-
 const getTreeByID = `-- name: GetTreeByID :one
 SELECT id, created_at, updated_at, tree_cluster_id, sensor_id, planting_year, species, number, latitude, longitude, watering_status, geometry, description, provider, additional_informations, last_watered FROM trees WHERE id = $1
 `
@@ -388,186 +316,6 @@ func (q *Queries) GetTreeByID(ctx context.Context, id int32) (*Tree, error) {
 		&i.LastWatered,
 	)
 	return &i, err
-}
-
-const getTreeBySensorID = `-- name: GetTreeBySensorID :one
-SELECT id, created_at, updated_at, tree_cluster_id, sensor_id, planting_year, species, number, latitude, longitude, watering_status, geometry, description, provider, additional_informations, last_watered FROM trees WHERE sensor_id = $1
-`
-
-func (q *Queries) GetTreeBySensorID(ctx context.Context, sensorID *string) (*Tree, error) {
-	row := q.db.QueryRow(ctx, getTreeBySensorID, sensorID)
-	var i Tree
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.TreeClusterID,
-		&i.SensorID,
-		&i.PlantingYear,
-		&i.Species,
-		&i.Number,
-		&i.Latitude,
-		&i.Longitude,
-		&i.WateringStatus,
-		&i.Geometry,
-		&i.Description,
-		&i.Provider,
-		&i.AdditionalInformations,
-		&i.LastWatered,
-	)
-	return &i, err
-}
-
-const getTreeClusterByTreeID = `-- name: GetTreeClusterByTreeID :one
-SELECT tree_clusters.id, tree_clusters.created_at, tree_clusters.updated_at, tree_clusters.watering_status, tree_clusters.last_watered, tree_clusters.moisture_level, tree_clusters.address, tree_clusters.description, tree_clusters.archived, tree_clusters.soil_condition, tree_clusters.latitude, tree_clusters.longitude, tree_clusters.geometry, tree_clusters.region_id, tree_clusters.name, tree_clusters.provider, tree_clusters.additional_informations FROM tree_clusters JOIN trees ON tree_clusters.id = trees.tree_cluster_id WHERE trees.id = $1
-`
-
-func (q *Queries) GetTreeClusterByTreeID(ctx context.Context, id int32) (*TreeCluster, error) {
-	row := q.db.QueryRow(ctx, getTreeClusterByTreeID, id)
-	var i TreeCluster
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.WateringStatus,
-		&i.LastWatered,
-		&i.MoistureLevel,
-		&i.Address,
-		&i.Description,
-		&i.Archived,
-		&i.SoilCondition,
-		&i.Latitude,
-		&i.Longitude,
-		&i.Geometry,
-		&i.RegionID,
-		&i.Name,
-		&i.Provider,
-		&i.AdditionalInformations,
-	)
-	return &i, err
-}
-
-const getTreesByIDs = `-- name: GetTreesByIDs :many
-SELECT id, created_at, updated_at, tree_cluster_id, sensor_id, planting_year, species, number, latitude, longitude, watering_status, geometry, description, provider, additional_informations, last_watered FROM trees WHERE id = ANY($1::int[]) ORDER BY number ASC
-`
-
-func (q *Queries) GetTreesByIDs(ctx context.Context, dollar_1 []int32) ([]*Tree, error) {
-	rows, err := q.db.Query(ctx, getTreesByIDs, dollar_1)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []*Tree{}
-	for rows.Next() {
-		var i Tree
-		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.TreeClusterID,
-			&i.SensorID,
-			&i.PlantingYear,
-			&i.Species,
-			&i.Number,
-			&i.Latitude,
-			&i.Longitude,
-			&i.WateringStatus,
-			&i.Geometry,
-			&i.Description,
-			&i.Provider,
-			&i.AdditionalInformations,
-			&i.LastWatered,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getTreesBySensorIDs = `-- name: GetTreesBySensorIDs :many
-SELECT id, created_at, updated_at, tree_cluster_id, sensor_id, planting_year, species, number, latitude, longitude, watering_status, geometry, description, provider, additional_informations, last_watered FROM trees WHERE sensor_id = ANY($1::text[]) ORDER BY number ASC
-`
-
-func (q *Queries) GetTreesBySensorIDs(ctx context.Context, dollar_1 []string) ([]*Tree, error) {
-	rows, err := q.db.Query(ctx, getTreesBySensorIDs, dollar_1)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []*Tree{}
-	for rows.Next() {
-		var i Tree
-		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.TreeClusterID,
-			&i.SensorID,
-			&i.PlantingYear,
-			&i.Species,
-			&i.Number,
-			&i.Latitude,
-			&i.Longitude,
-			&i.WateringStatus,
-			&i.Geometry,
-			&i.Description,
-			&i.Provider,
-			&i.AdditionalInformations,
-			&i.LastWatered,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getTreesByTreeClusterID = `-- name: GetTreesByTreeClusterID :many
-SELECT id, created_at, updated_at, tree_cluster_id, sensor_id, planting_year, species, number, latitude, longitude, watering_status, geometry, description, provider, additional_informations, last_watered FROM trees WHERE tree_cluster_id = $1 ORDER BY number ASC
-`
-
-func (q *Queries) GetTreesByTreeClusterID(ctx context.Context, treeClusterID *int32) ([]*Tree, error) {
-	rows, err := q.db.Query(ctx, getTreesByTreeClusterID, treeClusterID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []*Tree{}
-	for rows.Next() {
-		var i Tree
-		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.TreeClusterID,
-			&i.SensorID,
-			&i.PlantingYear,
-			&i.Species,
-			&i.Number,
-			&i.Latitude,
-			&i.Longitude,
-			&i.WateringStatus,
-			&i.Geometry,
-			&i.Description,
-			&i.Provider,
-			&i.AdditionalInformations,
-			&i.LastWatered,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const setTreeLocation = `-- name: SetTreeLocation :exec

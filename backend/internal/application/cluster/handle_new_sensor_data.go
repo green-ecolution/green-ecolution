@@ -6,6 +6,7 @@ import (
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
@@ -13,22 +14,23 @@ import (
 func (s *TreeClusterService) HandleNewSensorData(ctx context.Context, event *sensor.EventNewData) error {
 	log := logger.GetLogger(ctx)
 	log.Debug("handle event", "event", event.Type(), "service", "TreeClusterService")
-	tree, err := s.treeRepo.GetBySensorID(ctx, event.New.SensorID)
+	trees, _, err := s.treeRepo.GetAll(ctx, tree.TreeQuery{SensorID: &event.New.SensorID})
 	if err != nil {
-		if errors.Is(err, sensor.ErrNotFound) {
-			log.Error("failed to get sensor by id", "sensor_id", event.New.SensorID, "err", err)
-			return nil
-		}
-		log.Info("the sensor has no selected tree. This event will be ignored", "sensor_id", event.New.SensorID, "error", err)
+		log.Error("failed to get tree by sensor id", "sensor_id", event.New.SensorID, "err", err)
+		return nil
+	}
+	if len(trees) == 0 {
+		log.Info("the sensor has no selected tree. This event will be ignored", "sensor_id", event.New.SensorID)
+		return nil
+	}
+	sensorTree := trees[0]
+
+	if sensorTree.TreeClusterID == nil {
+		log.Info("this tree has no linked tree cluster. This event will be ignored", "tree_id", sensorTree.ID)
 		return nil
 	}
 
-	if tree.TreeClusterID == nil {
-		log.Info("this tree has no linked tree cluster. This event will be ignored", "tree_id", tree.ID)
-		return nil
-	}
-
-	tcID := *tree.TreeClusterID
+	tcID := *sensorTree.TreeClusterID
 	tc, err := s.treeClusterRepo.GetByID(ctx, tcID)
 	if err != nil {
 		log.Error("failed to get tree cluster", "cluster_id", tcID, "err", err)
@@ -56,16 +58,20 @@ func (s *TreeClusterService) HandleNewSensorData(ctx context.Context, event *sen
 
 func (s *TreeClusterService) getWateringStatusOfTreeCluster(ctx context.Context, tcID int32) (shared.WateringStatus, error) {
 	log := logger.GetLogger(ctx)
-	sensorData, err := s.treeClusterRepo.GetAllLatestSensorDataByClusterID(ctx, tcID)
-	if err != nil {
-		log.Error("failed to get latest sensor data", "cluster_id", tcID, "err", err)
-		return shared.WateringStatusUnknown, errors.New("failed to get latest sensor data")
-	}
-
-	trees, err := s.treeRepo.GetByTreeClusterID(ctx, tcID)
+	trees, _, err := s.treeRepo.GetAll(ctx, tree.TreeQuery{TreeClusterID: &tcID})
 	if err != nil {
 		log.Error("failed to get trees for cluster", "cluster_id", tcID, "err", err)
 		return shared.WateringStatusUnknown, errors.New("failed to get trees for cluster")
+	}
+
+	sensorIDs := collectSensorIDs(trees)
+	var sensorData []*sensor.SensorData
+	if len(sensorIDs) > 0 {
+		sensorData, err = s.sensorRepo.GetLatestDataBySensorIDs(ctx, sensorIDs)
+		if err != nil {
+			log.Error("failed to get latest sensor data", "cluster_id", tcID, "err", err)
+			return shared.WateringStatusUnknown, errors.New("failed to get latest sensor data")
+		}
 	}
 
 	if len(trees) == 0 || len(sensorData) == 0 {
@@ -123,4 +129,14 @@ func averageWatermarks(sensorData []*sensor.SensorData) []sensor.Watermark {
 	}
 
 	return result
+}
+
+func collectSensorIDs(trees []*tree.Tree) []sensor.SensorID {
+	var ids []sensor.SensorID
+	for _, t := range trees {
+		if t.SensorID != nil {
+			ids = append(ids, *t.SensorID)
+		}
+	}
+	return ids
 }

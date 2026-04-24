@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
+	treeDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/mapper"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/testutils"
 )
@@ -107,7 +108,11 @@ func TestTreeRepository_UnlinkTreeClusterID(t *testing.T) {
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
 		r := NewTreeRepository(suite.Store, mappers)
 		treeClusterID := int32(1)
-		trees, err := suite.Store.GetTreesByTreeClusterID(context.Background(), &treeClusterID)
+
+		ctx := context.WithValue(context.Background(), "page", int32(1))
+		ctx = context.WithValue(ctx, "limit", int32(-1))
+
+		trees, _, err := r.GetAll(ctx, treeDomain.TreeQuery{TreeClusterID: &treeClusterID})
 		assert.NoError(t, err)
 		assert.NotEmpty(t, trees)
 
@@ -116,7 +121,7 @@ func TestTreeRepository_UnlinkTreeClusterID(t *testing.T) {
 
 		// then
 		assert.NoError(t, err)
-		trees, err = suite.Store.GetTreesByTreeClusterID(context.Background(), &treeClusterID)
+		trees, _, err = r.GetAll(ctx, treeDomain.TreeQuery{TreeClusterID: &treeClusterID})
 		assert.NoError(t, err)
 		assert.Empty(t, trees)
 	})
@@ -127,7 +132,11 @@ func TestTreeRepository_UnlinkTreeClusterID(t *testing.T) {
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
 		r := NewTreeRepository(suite.Store, mappers)
 		treeClusterID := int32(6)
-		trees, err := suite.Store.GetTreesByTreeClusterID(context.Background(), &treeClusterID)
+
+		ctx := context.WithValue(context.Background(), "page", int32(1))
+		ctx = context.WithValue(ctx, "limit", int32(-1))
+
+		trees, _, err := r.GetAll(ctx, treeDomain.TreeQuery{TreeClusterID: &treeClusterID})
 		assert.NoError(t, err)
 		assert.Empty(t, trees)
 
@@ -136,7 +145,7 @@ func TestTreeRepository_UnlinkTreeClusterID(t *testing.T) {
 
 		// then
 		assert.NoError(t, err)
-		trees, err = suite.Store.GetTreesByTreeClusterID(context.Background(), &treeClusterID)
+		trees, _, err = r.GetAll(ctx, treeDomain.TreeQuery{TreeClusterID: &treeClusterID})
 		assert.NoError(t, err)
 		assert.Empty(t, trees)
 	})
