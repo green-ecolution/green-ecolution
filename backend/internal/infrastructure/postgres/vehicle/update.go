@@ -11,33 +11,25 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func (r *VehicleRepository) Update(ctx context.Context, id int32, updateFn func(*vehicle.Vehicle, vehicle.VehicleRepository) (bool, error)) error {
+func (r *VehicleRepository) Update(ctx context.Context, id int32, entity *vehicle.Vehicle) error {
 	log := logger.GetLogger(ctx)
+	if entity == nil {
+		return errors.New("entity is nil")
+	}
+
 	return r.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewVehicleRepository(s, r.VehicleRepositoryMappers)
-		vh, err := newRepo.GetByID(ctx, id)
-		if err != nil {
+
+		if _, err := newRepo.GetByID(ctx, id); err != nil {
 			return err
 		}
 
-		if updateFn == nil {
-			return errors.New("updateFn is nil")
-		}
-
-		updated, err := updateFn(vh, newRepo)
-		if err != nil {
+		if err := newRepo.validateVehicle(entity); err != nil {
 			return err
 		}
 
-		if !updated {
-			return nil
-		}
-
-		if err := newRepo.validateVehicle(vh); err != nil {
-			return err
-		}
-
-		if err := newRepo.updateEntity(ctx, vh); err != nil {
+		entity.ID = id
+		if err := newRepo.updateEntity(ctx, entity); err != nil {
 			log.Error("failed to update vehicle entity in db", "error", err, "vehicle_id", id)
 			return err
 		}

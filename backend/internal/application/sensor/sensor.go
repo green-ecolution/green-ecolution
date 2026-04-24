@@ -97,15 +97,15 @@ func (s *SensorService) Create(ctx context.Context, sc *sensorDomain.SensorCreat
 		return nil, ports.MapError(ctx, err, ports.ErrorLogValidation)
 	}
 
-	created, err := s.sensorRepo.Create(ctx, func(s *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-		s.ID = sc.ID
-		s.Coordinate = sc.Coordinate
-		s.LatestData = sc.LatestData
-		s.Status = sc.Status
-		s.Provider = sc.Provider
-		s.AdditionalInfo = sc.AdditionalInfo
-		return true, nil
-	})
+	entity := &sensorDomain.Sensor{
+		ID:             sc.ID,
+		Coordinate:     sc.Coordinate,
+		LatestData:     sc.LatestData,
+		Status:         sc.Status,
+		Provider:       sc.Provider,
+		AdditionalInfo: sc.AdditionalInfo,
+	}
+	created, err := s.sensorRepo.Create(ctx, entity)
 
 	if err != nil {
 		log.Debug("failed to create sensor", "error", err, "sensor_id", sc.ID.String())
@@ -133,14 +133,14 @@ func (s *SensorService) Update(ctx context.Context, id sensorDomain.SensorID, su
 		return nil, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
 	}
 
-	updated, err := s.sensorRepo.Update(ctx, id, func(s *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-		s.Coordinate = su.Coordinate
-		s.LatestData = su.LatestData
-		s.Status = su.Status
-		s.Provider = su.Provider
-		s.AdditionalInfo = su.AdditionalInfo
-		return true, nil
-	})
+	entity := &sensorDomain.Sensor{
+		Coordinate:     su.Coordinate,
+		LatestData:     su.LatestData,
+		Status:         su.Status,
+		Provider:       su.Provider,
+		AdditionalInfo: su.AdditionalInfo,
+	}
+	updated, err := s.sensorRepo.Update(ctx, id, entity)
 
 	if err != nil {
 		log.Debug("failed to update sensor", "sensor_id", id.String(), "error", err)
@@ -189,10 +189,8 @@ func (s *SensorService) UpdateStatuses(ctx context.Context) error {
 			continue
 		}
 		if sensorData.CreatedAt.Before(cutoffTime) {
-			_, err = s.sensorRepo.Update(ctx, sens.ID, func(s *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-				s.Status = sensorDomain.SensorStatusOffline
-				return true, nil
-			})
+			sens.Status = sensorDomain.SensorStatusOffline
+			_, err = s.sensorRepo.Update(ctx, sens.ID, sens)
 
 			if err != nil {
 				log.Error("failed to update sensor status to offline", "sensor_id", sens.ID.String(), "error", err, "prev_sensor_status", sens.Status)
@@ -219,11 +217,9 @@ func (s *SensorService) MapSensorToTree(ctx context.Context, sen *sensorDomain.S
 	}
 
 	if nearestTree != nil {
-		_, err = s.treeRepo.Update(ctx, nearestTree.ID, func(t *treeDomain.Tree, _ treeDomain.TreeRepository) (bool, error) {
-			t.SensorID = &sen.ID
-			log.Debug("update sensor on tree", "tree_id", t.ID, "sensor_id", sen.ID.String())
-			return true, nil
-		})
+		log.Debug("update sensor on tree", "tree_id", nearestTree.ID, "sensor_id", sen.ID.String())
+		nearestTree.SensorID = &sen.ID
+		_, err = s.treeRepo.Update(ctx, nearestTree.ID, nearestTree)
 		if err != nil {
 			log.Error("failed to link sensor to nearest calculated tree", "tree_id", nearestTree.ID, "sensor_id", sen.ID.String(), "error", err)
 			return err

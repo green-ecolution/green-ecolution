@@ -4,7 +4,6 @@ import (
 	"context"
 
 	sensorDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
-	treeDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
@@ -37,11 +36,9 @@ func (s *TreeService) HandleNewSensorData(ctx context.Context, event *sensorDoma
 		log.Debug("sensor status has not changed", "sensor_status", status)
 		return nil
 	}
-	newTree, err := s.treeRepo.Update(ctx, t.ID, func(tr *treeDomain.Tree, _ treeDomain.TreeRepository) (bool, error) {
-		log.Debug("updating tree watering status", "prev_status", t.WateringStatus, "new_status", status)
-		tr.WateringStatus = status
-		return true, nil
-	})
+	log.Debug("updating tree watering status", "prev_status", t.WateringStatus, "new_status", status)
+	t.WateringStatus = status
+	newTree, err := s.treeRepo.Update(ctx, t.ID, t)
 
 	if err != nil {
 		log.Error("failed to update tree with new watering status", "tree_id", t.ID, "watering_status", status, "err", err)

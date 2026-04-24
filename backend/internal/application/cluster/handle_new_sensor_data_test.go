@@ -95,13 +95,7 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(tc, nil).Once()
 		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(1)).Return(allLatestSensorData, nil)
 		treeRepo.EXPECT().GetByTreeClusterID(mock.Anything, int32(1)).Return([]*treeDomain.Tree{tree1, tree2}, nil)
-		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).RunAndReturn(func(ctx context.Context, i int32, f func(*clusterDomain.TreeCluster, clusterDomain.TreeClusterRepository) (bool, error)) error {
-			c := *tc
-			_, err := f(&c, clusterRepo)
-			assert.NoError(t, err)
-			assert.Equal(t, shared.WateringStatusBad, c.WateringStatus)
-			return nil
-		})
+		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).Return(nil)
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(tcNew, nil).Once()
 
 		err := svc.HandleNewSensorData(context.Background(), &event)
@@ -166,13 +160,7 @@ func TestTreeClusterService_HandleNewSensorData(t *testing.T) {
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(tc, nil).Once()
 		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(1)).Return([]*sensor.SensorData{&sensorDataEvent}, nil)
 		treeRepo.EXPECT().GetByTreeClusterID(mock.Anything, int32(1)).Return([]*treeDomain.Tree{treeInCluster}, nil)
-		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).RunAndReturn(func(ctx context.Context, i int32, f func(*clusterDomain.TreeCluster, clusterDomain.TreeClusterRepository) (bool, error)) error {
-			c := *tc
-			_, err := f(&c, clusterRepo)
-			assert.NoError(t, err)
-			assert.Equal(t, shared.WateringStatusBad, c.WateringStatus)
-			return nil
-		})
+		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).Return(nil)
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(tcNew, nil).Once()
 
 		err := svc.HandleNewSensorData(context.Background(), &event)

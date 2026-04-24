@@ -11,30 +11,23 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func (r *TreeClusterRepository) Update(ctx context.Context, id int32, updateFn func(*cluster.TreeCluster, cluster.TreeClusterRepository) (bool, error)) error {
+func (r *TreeClusterRepository) Update(ctx context.Context, id int32, entity *cluster.TreeCluster) error {
 	log := logger.GetLogger(ctx)
+	if entity == nil {
+		return errors.New("entity is nil")
+	}
+
 	return r.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewTreeClusterRepository(s, r.TreeClusterMappers)
-		tc, err := newRepo.GetByID(ctx, id)
-		if err != nil {
+
+		if _, err := newRepo.GetByID(ctx, id); err != nil {
 			return err
 		}
 
-		if updateFn == nil {
-			return errors.New("updateFn is nil")
-		}
-
-		updated, err := updateFn(tc, newRepo)
-		if err != nil {
-			return err
-		}
-
-		if !updated {
-			return nil
-		}
-
-		if err := newRepo.updateEntity(ctx, tc); err != nil {
+		entity.ID = id
+		if err := newRepo.updateEntity(ctx, entity); err != nil {
 			log.Error("failed to update tree cluster entity in db", "error", err, "cluster_id", id)
+			return err
 		}
 
 		log.Debug("tree cluster updated successfully in db", "cluster_id", id)

@@ -18,12 +18,12 @@ models/DataStatistics.ts
 models/DrivingLicense.ts
 models/Evaluation.ts
 models/EvaluationValue.ts
-models/GeoJSON.ts
-models/GeoJSONFeature.ts
-models/GeoJSONGeometry.ts
 models/GeoJSONLocation.ts
 models/GeoJSONMetadata.ts
-models/GeoJSONType.ts
+models/GeoJson.ts
+models/GeoJsonFeature.ts
+models/GeoJsonGeometry.ts
+models/GeoJsonType.ts
 models/GitInfo.ts
 models/HTTPError.ts
 models/LoginResponse.ts

@@ -11,42 +11,34 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func (r *SensorRepository) Update(ctx context.Context, id sensorDomain.SensorID, updateFn func(*sensorDomain.Sensor, sensorDomain.SensorRepository) (bool, error)) (*sensorDomain.Sensor, error) {
+func (r *SensorRepository) Update(ctx context.Context, id sensorDomain.SensorID, entity *sensorDomain.Sensor) (*sensorDomain.Sensor, error) {
 	log := logger.GetLogger(ctx)
-	if updateFn == nil {
-		return nil, errors.New("updateFn is nil")
+	if entity == nil {
+		return nil, errors.New("entity is nil")
 	}
 
 	var updatedSensor *sensorDomain.Sensor
 	err := r.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewSensorRepository(s, r.SensorRepositoryMappers)
-		entity, err := newRepo.GetByID(ctx, id)
-		if err != nil {
+
+		if _, err := newRepo.GetByID(ctx, id); err != nil {
 			return err
 		}
 
-		updated, err := updateFn(entity, newRepo)
-		if err != nil {
-			return err
-		}
-
-		if !updated {
-			updatedSensor = entity
-			return nil
-		}
-
+		entity.ID = id
 		if err := newRepo.updateEntity(ctx, entity); err != nil {
 			log.Error("failed to update sensor entity in db", "error", err, "sensor_id", id.String())
 			return err
 		}
 
 		if entity.LatestData != nil && entity.LatestData.Data != nil {
-			err = newRepo.InsertSensorData(ctx, entity.LatestData, entity.ID)
+			err := newRepo.InsertSensorData(ctx, entity.LatestData, entity.ID)
 			if err != nil {
 				return err
 			}
 		}
 
+		var err error
 		updatedSensor, err = newRepo.GetByID(ctx, entity.ID)
 		if err != nil {
 			return err

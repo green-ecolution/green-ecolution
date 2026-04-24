@@ -17,8 +17,8 @@ type VehicleRepository interface {
 	GetAllWithWateringPlanCount(ctx context.Context) ([]*evaluation.VehicleEvaluation, error)
 	GetByID(ctx context.Context, id int32) (*Vehicle, error)
 	GetByPlate(ctx context.Context, plate string) (*Vehicle, error)
-	Create(ctx context.Context, fn func(tc *Vehicle, repo VehicleRepository) (bool, error)) (*Vehicle, error)
-	Update(ctx context.Context, id int32, fn func(tc *Vehicle, repo VehicleRepository) (bool, error)) error
+	Create(ctx context.Context, entity *Vehicle) (*Vehicle, error)
+	Update(ctx context.Context, id int32, entity *Vehicle) error
 	Archive(ctx context.Context, id int32) error
 	Delete(ctx context.Context, id int32) error
 }

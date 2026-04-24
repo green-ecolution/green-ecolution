@@ -164,11 +164,11 @@ func TestTreeClusterService_Create(t *testing.T) {
 		// UpdateWateringStatuses
 		clusterRepo.EXPECT().GetAll(mock.Anything, clusterDomain.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
 
-		clusterRepo.EXPECT().Update(
-			ctx,
-			expectedCluster.ID,
-			mock.Anything,
-		).Return(nil)
+		// updateTreeClusterPosition calls GetByID, GetCenterPoint, GetByPoint, Update
+		clusterRepo.EXPECT().GetByID(mock.Anything, expectedCluster.ID).Return(expectedCluster, nil)
+		clusterRepo.EXPECT().GetCenterPoint(mock.Anything, expectedCluster.ID).Return(expectedCluster.Coordinate, nil)
+		regionRepo.EXPECT().GetByPoint(mock.Anything, mock.Anything).Return(nil, nil)
+		clusterRepo.EXPECT().Update(mock.Anything, expectedCluster.ID, mock.Anything).Return(nil)
 
 		// when
 		result, err := svc.Create(ctx, newCluster)
@@ -207,11 +207,14 @@ func TestTreeClusterService_Create(t *testing.T) {
 		// UpdateWateringStatuses
 		clusterRepo.EXPECT().GetAll(mock.Anything, clusterDomain.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
 
-		clusterRepo.EXPECT().Update(
-			ctx,
-			expectedCluster.ID,
-			mock.Anything,
-		).Return(nil)
+		// updateTreeClusterPosition
+		dummyCoord := shared.MustNewCoordinate(9.446741, 54.801539)
+		clusterRepo.EXPECT().GetByID(mock.Anything, expectedCluster.ID).Return(expectedCluster, nil)
+		clusterRepo.EXPECT().GetCenterPoint(mock.Anything, expectedCluster.ID).Return(&dummyCoord, nil).Maybe()
+		regionRepo.EXPECT().GetByPoint(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, expectedCluster.ID).Return(nil, nil).Maybe()
+		treeRepo.EXPECT().GetByTreeClusterID(mock.Anything, expectedCluster.ID).Return(nil, nil).Maybe()
+		clusterRepo.EXPECT().Update(mock.Anything, expectedCluster.ID, mock.Anything).Return(nil)
 
 		// when
 		result, err := svc.Create(ctx, newCluster)
@@ -294,6 +297,10 @@ func TestTreeClusterService_Create(t *testing.T) {
 		// UpdateWateringStatuses
 		clusterRepo.EXPECT().GetAll(mock.Anything, clusterDomain.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
 
+		// updateTreeClusterPosition: GetByID then Update (fails)
+		clusterRepo.EXPECT().GetByID(mock.Anything, expectedCluster.ID).Return(expectedCluster, nil)
+		clusterRepo.EXPECT().GetCenterPoint(mock.Anything, expectedCluster.ID).Return(expectedCluster.Coordinate, nil)
+		regionRepo.EXPECT().GetByPoint(mock.Anything, mock.Anything).Return(nil, nil)
 		clusterRepo.EXPECT().Update(
 			ctx,
 			expectedCluster.ID,
@@ -331,21 +338,16 @@ func TestTreeClusterService_Update(t *testing.T) {
 		expectedCluster := testClusters[0]
 		expectedTrees := testTrees
 
-		treeRepo.EXPECT().GetTreesByIDs(
-			ctx,
-			[]int32{1, 2},
-		).Return(expectedTrees, nil)
-
-		clusterRepo.EXPECT().GetByID(ctx, clusterID).Return(expectedCluster, nil)
-
-		clusterRepo.EXPECT().Update(
-			ctx,
-			clusterID,
-			mock.Anything,
-		).Return(nil)
+		treeRepo.EXPECT().GetTreesByIDs(ctx, []int32{1, 2}).Return(expectedTrees, nil)
+		clusterRepo.EXPECT().GetByID(mock.Anything, clusterID).Return(expectedCluster, nil)
+		clusterRepo.EXPECT().Update(mock.Anything, clusterID, mock.Anything).Return(nil)
 
 		// UpdateWateringStatuses
 		clusterRepo.EXPECT().GetAll(mock.Anything, clusterDomain.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
+
+		// updateTreeClusterPosition
+		clusterRepo.EXPECT().GetCenterPoint(mock.Anything, clusterID).Return(expectedCluster.Coordinate, nil).Maybe()
+		regionRepo.EXPECT().GetByPoint(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 
 		// when
 		result, err := svc.Update(ctx, clusterID, updatedCluster)
@@ -371,21 +373,19 @@ func TestTreeClusterService_Update(t *testing.T) {
 
 		expectedCluster := testClusters[1]
 
-		treeRepo.EXPECT().GetTreesByIDs(
-			ctx,
-			[]int32{},
-		).Return(nil, nil)
-
-		clusterRepo.EXPECT().GetByID(ctx, expectedCluster.ID).Return(expectedCluster, nil)
-
-		clusterRepo.EXPECT().Update(
-			ctx,
-			expectedCluster.ID,
-			mock.Anything,
-		).Return(nil)
+		dummyCoord := shared.MustNewCoordinate(9.446741, 54.801539)
+		treeRepo.EXPECT().GetTreesByIDs(ctx, []int32{}).Return(nil, nil)
+		clusterRepo.EXPECT().GetByID(mock.Anything, expectedCluster.ID).Return(expectedCluster, nil)
+		clusterRepo.EXPECT().Update(mock.Anything, expectedCluster.ID, mock.Anything).Return(nil)
 
 		// UpdateWateringStatuses
 		clusterRepo.EXPECT().GetAll(mock.Anything, clusterDomain.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
+
+		// updateTreeClusterPosition: cluster has TreeIDs so GetCenterPoint etc. will be called
+		clusterRepo.EXPECT().GetCenterPoint(mock.Anything, expectedCluster.ID).Return(&dummyCoord, nil).Maybe()
+		regionRepo.EXPECT().GetByPoint(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, expectedCluster.ID).Return(nil, nil).Maybe()
+		treeRepo.EXPECT().GetByTreeClusterID(mock.Anything, expectedCluster.ID).Return(nil, nil).Maybe()
 
 		// when
 		result, err := svc.Update(ctx, expectedCluster.ID, updatedClusterEmptyTrees)
@@ -499,21 +499,20 @@ func TestTreeClusterService_EventSystem(t *testing.T) {
 		defer cancel()
 		go eventManager.Run(ctx)
 
-		treeRepo.EXPECT().GetTreesByIDs(
-			ctx,
-			[]int32{},
-		).Return(nil, nil)
+		dummyCoord := shared.MustNewCoordinate(9.446741, 54.801539)
+		treeRepo.EXPECT().GetTreesByIDs(ctx, []int32{}).Return(nil, nil)
 
-		clusterRepo.EXPECT().GetByID(ctx, expectedCluster.ID).Return(&expectedCluster, nil)
-
-		clusterRepo.EXPECT().Update(
-			ctx,
-			expectedCluster.ID,
-			mock.Anything,
-		).Return(nil)
+		clusterRepo.EXPECT().GetByID(mock.Anything, expectedCluster.ID).Return(&expectedCluster, nil)
+		clusterRepo.EXPECT().Update(mock.Anything, expectedCluster.ID, mock.Anything).Return(nil)
 
 		// UpdateWateringStatuses
 		clusterRepo.EXPECT().GetAll(mock.Anything, clusterDomain.TreeClusterQuery{}).Return(testClusters, int64(len(testClusters)), nil)
+
+		// updateTreeClusterPosition
+		clusterRepo.EXPECT().GetCenterPoint(mock.Anything, expectedCluster.ID).Return(&dummyCoord, nil).Maybe()
+		regionRepo.EXPECT().GetByPoint(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, expectedCluster.ID).Return(nil, nil).Maybe()
+		treeRepo.EXPECT().GetByTreeClusterID(mock.Anything, expectedCluster.ID).Return(nil, nil).Maybe()
 
 		svc := NewTreeClusterService(clusterRepo, treeRepo, regionRepo, eventManager)
 

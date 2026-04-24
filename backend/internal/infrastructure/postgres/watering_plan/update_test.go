@@ -92,21 +92,11 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 	t.Run("should update watering plan", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.Description = input.Description
-			wp.Distance = input.Distance
-			wp.TransporterID = input.TransporterID
-			wp.TrailerID = input.TrailerID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			wp.Status = input.Status
-			return true, nil
-		}
+		entity := input
+		entity.TotalWaterRequired = &expectedTotalWater
 
 		// when
-		updateErr := r.Update(context.Background(), 1, updateFn)
+		updateErr := r.Update(context.Background(), 1, &entity)
 		got, getErr := r.GetByID(context.Background(), 1)
 
 		// then
@@ -142,22 +132,12 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 	t.Run("should update watering plan and unlink trailer", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.Description = input.Description
-			wp.Distance = input.Distance
-			wp.TransporterID = input.TransporterID
-			wp.TrailerID = nil
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			wp.Status = input.Status
-			wp.TotalWaterRequired = &expectedTotalWater
-			return true, nil
-		}
+		entity := input
+		entity.TrailerID = nil
+		entity.TotalWaterRequired = &expectedTotalWater
 
 		// when
-		updateErr := r.Update(context.Background(), 2, updateFn)
+		updateErr := r.Update(context.Background(), 2, &entity)
 		got, getErr := r.GetByID(context.Background(), 2)
 
 		// then
@@ -195,21 +175,13 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
 		cancellationNote := "This watering plan is canceled"
-
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.Description = input.Description
-			wp.Distance = input.Distance
-			wp.TransporterID = input.TransporterID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			wp.Status = watering.WateringPlanStatusCanceled
-			wp.CancellationNote = cancellationNote
-			return true, nil
-		}
+		entity := input
+		entity.Status = watering.WateringPlanStatusCanceled
+		entity.CancellationNote = cancellationNote
+		entity.TotalWaterRequired = &expectedTotalWater
 
 		// when
-		updateErr := r.Update(context.Background(), 2, updateFn)
+		updateErr := r.Update(context.Background(), 2, &entity)
 		got, getErr := r.GetByID(context.Background(), 2)
 
 		// then
@@ -225,20 +197,13 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 	t.Run("should not update consumed water values if status is not finished", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.Distance = input.Distance
-			wp.TransporterID = input.TransporterID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			wp.Status = watering.WateringPlanStatusNotCompeted
-			wp.Evaluation = evaluation
-			return true, nil
-		}
+		entity := input
+		entity.Status = watering.WateringPlanStatusNotCompeted
+		entity.Evaluation = evaluation
+		entity.TotalWaterRequired = &expectedTotalWater
 
 		// when
-		updateErr := r.Update(context.Background(), 1, updateFn)
+		updateErr := r.Update(context.Background(), 1, &entity)
 		got, getErr := r.GetByID(context.Background(), 1)
 
 		// then
@@ -262,22 +227,13 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 	t.Run("should update watering plan to finished and set consumed water values", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.Description = input.Description
-			wp.Distance = input.Distance
-			wp.TransporterID = input.TransporterID
-			wp.TrailerID = input.TrailerID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			wp.Status = watering.WateringPlanStatusFinished
-			wp.Evaluation = evaluation
-			return true, nil
-		}
+		entity := input
+		entity.Status = watering.WateringPlanStatusFinished
+		entity.Evaluation = evaluation
+		entity.TotalWaterRequired = &expectedTotalWater
 
 		// when
-		updateErr := r.Update(context.Background(), 1, updateFn)
+		updateErr := r.Update(context.Background(), 1, &entity)
 		got, getErr := r.GetByID(context.Background(), 1)
 
 		// then
@@ -302,20 +258,12 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 	t.Run("should return error when cancellation note is not empty and the status is not canceled", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.Distance = input.Distance
-			wp.TransporterID = input.TransporterID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			wp.Status = watering.WateringPlanStatusActive
-			wp.CancellationNote = "This watering plan is canceled"
-			return true, nil
-		}
+		entity := input
+		entity.CancellationNote = "should fail"
+		entity.Status = watering.WateringPlanStatusActive
 
 		// when
-		err := r.Update(context.Background(), 2, updateFn)
+		err := r.Update(context.Background(), 2, &entity)
 
 		// then
 		assert.Error(t, err)
@@ -325,17 +273,11 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 	t.Run("should return error when date is not in correct format", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = time.Time{}
-			wp.TransporterID = input.TransporterID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			return true, nil
-		}
+		entity := input
+		entity.Date = time.Time{} // zero time
 
 		// when
-		err := r.Update(context.Background(), 1, updateFn)
+		err := r.Update(context.Background(), 1, &entity)
 
 		// then
 		assert.Error(t, err)
@@ -345,41 +287,25 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 	t.Run("should return error when trailer vehicle has not correct vehilce type", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.TransporterID = input.TransporterID
-			wp.TrailerID = input.TransporterID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			return true, nil
-		}
+		entity := input
+		entity.TrailerID = &transporterID // use transporter as trailer (wrong type)
 
 		// when
-		err := r.Update(context.Background(), 1, updateFn)
+		err := r.Update(context.Background(), 1, &entity)
 
 		// then
 		assert.Error(t, err)
-		// Vehicle type validation now happens in the service layer, not in the repo.
-		// The repo just gets a DB constraint error.
 		assert.Contains(t, err.Error(), "duplicate key")
 	})
 
 	t.Run("should return error when watering plan has no linked users", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.TransporterID = input.TransporterID
-			wp.TrailerID = input.TrailerID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = []*uuid.UUID{}
-			return true, nil
-		}
+		entity := input
+		entity.UserIDs = nil
 
 		// when
-		err := r.Update(context.Background(), 1, updateFn)
+		err := r.Update(context.Background(), 1, &entity)
 
 		// then
 		assert.Error(t, err)
@@ -389,40 +315,25 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 	t.Run("should return error when transporter has not correct vehilce type", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.TransporterID = input.TrailerID
-			wp.TrailerID = input.TrailerID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			return true, nil
-		}
+		entity := input
+		entity.TransporterID = &trailerID // use trailer as transporter (wrong type)
 
 		// when
-		err := r.Update(context.Background(), 1, updateFn)
+		err := r.Update(context.Background(), 1, &entity)
 
 		// then
 		assert.Error(t, err)
-		// Vehicle type validation now happens in the service layer, not in the repo.
 		assert.Contains(t, err.Error(), "duplicate key")
 	})
 
 	t.Run("should return error when transporter is nil", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.TransporterID = nil
-			wp.TrailerID = input.TrailerID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			return true, nil
-		}
+		entity := input
+		entity.TransporterID = nil
 
 		// when
-		err := r.Update(context.Background(), 1, updateFn)
+		err := r.Update(context.Background(), 1, &entity)
 
 		// then
 		assert.Error(t, err)
@@ -432,25 +343,18 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 	t.Run("should return error when no TreeClusters are linked", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.TransporterID = input.TransporterID
-			wp.TrailerID = input.TrailerID
-			wp.TreeClusterIDs = []int32{}
-			wp.UserIDs = input.UserIDs
-			return true, nil
-		}
+		entity := input
+		entity.TreeClusterIDs = nil
 
 		// when
-		err := r.Update(context.Background(), 1, updateFn)
+		err := r.Update(context.Background(), 1, &entity)
 
 		// then
 		assert.Error(t, err)
 		assert.Equal(t, "watering plan requires tree cluster", err.Error())
 	})
 
-	t.Run("should return error when watering plan is invalid", func(t *testing.T) {
+	t.Run("should return error when entity is nil", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
@@ -459,24 +363,16 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 
 		// then
 		assert.Error(t, err)
-		assert.Equal(t, "updateFn is nil", err.Error())
+		assert.Equal(t, "entity is nil", err.Error())
 	})
 
 	t.Run("should return error when update watering plan with negative id", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.TransporterID = input.TransporterID
-			wp.TrailerID = input.TrailerID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			return true, nil
-		}
+		entity := input
 
 		// when
-		err := r.Update(context.Background(), -1, updateFn)
+		err := r.Update(context.Background(), -1, &entity)
 
 		// then
 		assert.Error(t, err)
@@ -485,18 +381,10 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 	t.Run("should return error when update watering plan with zero id", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.TransporterID = input.TransporterID
-			wp.TrailerID = input.TrailerID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			return true, nil
-		}
+		entity := input
 
 		// when
-		err := r.Update(context.Background(), 0, updateFn)
+		err := r.Update(context.Background(), 0, &entity)
 
 		// then
 		assert.Error(t, err)
@@ -505,18 +393,10 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 	t.Run("should return error when update watering plan not found", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.TransporterID = input.TransporterID
-			wp.TrailerID = input.TrailerID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			return true, nil
-		}
+		entity := input
 
 		// when
-		err := r.Update(context.Background(), 99, updateFn)
+		err := r.Update(context.Background(), 99, &entity)
 
 		// then
 		assert.Error(t, err)
@@ -525,88 +405,15 @@ func TestWateringPlanRepository_Update(t *testing.T) {
 	t.Run("should return error if context is canceled", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.TransporterID = input.TransporterID
-			wp.TrailerID = input.TrailerID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			return true, nil
-		}
 
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
+		entity := input
 
 		// when
-		err := r.Update(ctx, 99, updateFn)
+		err := r.Update(ctx, 99, &entity)
 
 		// then
 		assert.Error(t, err)
-	})
-
-	t.Run("should return error when updateFn is nil", func(t *testing.T) {
-		// given
-		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		// when
-		err := r.Update(context.Background(), 1, nil)
-
-		// then
-		assert.Error(t, err)
-	})
-
-	t.Run("should return error when updateFn returns error", func(t *testing.T) {
-		// given
-		r := NewWateringPlanRepository(suite.Store, mappers)
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			return true, assert.AnError
-		}
-
-		// when
-		err := r.Update(context.Background(), 1, updateFn)
-
-		// then
-		assert.Error(t, err)
-	})
-
-	t.Run("should not update when updateFn returns false", func(t *testing.T) {
-		// given
-		r := NewWateringPlanRepository(suite.Store, mappers)
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			return false, nil
-		}
-
-		// when
-		updateErr := r.Update(context.Background(), 1, updateFn)
-		got, getErr := r.GetByID(context.Background(), 1)
-
-		// then
-		assert.NoError(t, updateErr)
-		assert.NoError(t, getErr)
-		assert.NotNil(t, got)
-	})
-
-	t.Run("should not rollback when updateFn returns false", func(t *testing.T) {
-		// given
-		r := NewWateringPlanRepository(suite.Store, mappers)
-		updateFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.Description = "Test"
-			wp.TransporterID = input.TransporterID
-			wp.TrailerID = input.TrailerID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			return false, nil
-		}
-
-		// when
-		err := r.Update(context.Background(), 1, updateFn)
-		got, getErr := r.GetByID(context.Background(), 1)
-
-		// then
-		assert.NoError(t, err)
-		assert.NoError(t, getErr)
-		assert.NotNil(t, got)
-		assert.NotEqual(t, "Test", got.Description)
 	})
 }

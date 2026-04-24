@@ -76,21 +76,11 @@ func TestWateringPlanRepository_Create(t *testing.T) {
 	t.Run("should create watering plan with all values", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		createFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.Description = input.Description
-			wp.Distance = input.Distance
-			wp.TransporterID = input.TransporterID
-			wp.TrailerID = input.TrailerID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			wp.TotalWaterRequired = &expectedTotalWater
-			return true, nil
-		}
+		entity := input
+		entity.TotalWaterRequired = &expectedTotalWater
 
 		// when
-		got, err := r.Create(context.Background(), createFn)
+		got, err := r.Create(context.Background(), &entity)
 
 		// then
 		assert.NoError(t, err)
@@ -131,18 +121,16 @@ func TestWateringPlanRepository_Create(t *testing.T) {
 	t.Run("should create watering plan with default values", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		createFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.TransporterID = input.TransporterID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			wp.TotalWaterRequired = &expectedTotalWater
-			return true, nil
+		entity := watering.WateringPlan{
+			Date:               input.Date,
+			TransporterID:      input.TransporterID,
+			TreeClusterIDs:     input.TreeClusterIDs,
+			UserIDs:            input.UserIDs,
+			TotalWaterRequired: &expectedTotalWater,
 		}
 
 		// when
-		got, err := r.Create(context.Background(), createFn)
+		got, err := r.Create(context.Background(), &entity)
 
 		// then
 		assert.NoError(t, err)
@@ -150,7 +138,7 @@ func TestWateringPlanRepository_Create(t *testing.T) {
 		assert.NotZero(t, got.ID)
 		assert.Equal(t, input.Date, got.Date)
 		assert.Equal(t, "", got.Description)
-		assert.Equal(t, utils.P(shared.MustNewDistance(0)), got.Distance)
+		assert.Nil(t, got.Distance)
 		assert.Equal(t, expectedTotalWater, *got.TotalWaterRequired)
 		assert.Equal(t, watering.WateringPlanStatusPlanned, got.Status)
 		assert.Equal(t, "", got.CancellationNote)
@@ -182,17 +170,11 @@ func TestWateringPlanRepository_Create(t *testing.T) {
 	t.Run("should return error when date is not in correct format", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		createFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = time.Time{}
-			wp.TransporterID = input.TransporterID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			return true, nil
-		}
+		entity := input
+		entity.Date = time.Time{} // zero time
 
 		// when
-		got, err := r.Create(context.Background(), createFn)
+		got, err := r.Create(context.Background(), &entity)
 
 		// then
 		assert.Error(t, err)
@@ -203,18 +185,11 @@ func TestWateringPlanRepository_Create(t *testing.T) {
 	t.Run("should return error when watering plan has no linked users", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		createFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.TransporterID = input.TransporterID
-			wp.TrailerID = input.TrailerID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = []*uuid.UUID{}
-			return true, nil
-		}
+		entity := input
+		entity.UserIDs = nil
 
 		// when
-		got, err := r.Create(context.Background(), createFn)
+		got, err := r.Create(context.Background(), &entity)
 
 		// then
 		assert.Error(t, err)
@@ -225,18 +200,11 @@ func TestWateringPlanRepository_Create(t *testing.T) {
 	t.Run("should return error when transporter is nil", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		createFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.TransporterID = nil
-			wp.TrailerID = input.TrailerID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			return true, nil
-		}
+		entity := input
+		entity.TransporterID = nil
 
 		// when
-		got, err := r.Create(context.Background(), createFn)
+		got, err := r.Create(context.Background(), &entity)
 
 		// then
 		assert.Error(t, err)
@@ -247,18 +215,11 @@ func TestWateringPlanRepository_Create(t *testing.T) {
 	t.Run("should return error when no treecluster are linked", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-
-		createFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.TransporterID = input.TransporterID
-			wp.TrailerID = input.TrailerID
-			wp.TreeClusterIDs = []int32{}
-			wp.UserIDs = input.UserIDs
-			return true, nil
-		}
+		entity := input
+		entity.TreeClusterIDs = nil
 
 		// when
-		got, err := r.Create(context.Background(), createFn)
+		got, err := r.Create(context.Background(), &entity)
 
 		// then
 		assert.Error(t, err)
@@ -266,7 +227,7 @@ func TestWateringPlanRepository_Create(t *testing.T) {
 		assert.Equal(t, "watering plan requires tree cluster", err.Error())
 	})
 
-	t.Run("should return error when watering plan is invalid", func(t *testing.T) {
+	t.Run("should return error when entity is nil", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
 
@@ -276,79 +237,22 @@ func TestWateringPlanRepository_Create(t *testing.T) {
 		// then
 		assert.Error(t, err)
 		assert.Nil(t, got)
-		assert.Equal(t, "createFn is nil", err.Error())
+		assert.Equal(t, "entity is nil", err.Error())
 	})
 
 	t.Run("should return error if context is canceled", func(t *testing.T) {
 		// given
 		r := NewWateringPlanRepository(suite.Store, mappers)
-		createFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.TransporterID = input.TransporterID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			return true, nil
-		}
 
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
+		entity := input
 
 		// when
-		got, err := r.Create(ctx, createFn)
+		got, err := r.Create(ctx, &entity)
 
 		// then
 		assert.Error(t, err)
 		assert.Nil(t, got)
-	})
-
-	t.Run("should return error when createFn returns error", func(t *testing.T) {
-		// given
-		r := NewWateringPlanRepository(suite.Store, mappers)
-		createFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			return false, assert.AnError
-		}
-
-		wp, err := r.Create(context.Background(), createFn)
-		assert.Error(t, err)
-		assert.Nil(t, wp)
-	})
-
-	t.Run("should not create watering plan when createFn returns false", func(t *testing.T) {
-		// given
-		r := NewWateringPlanRepository(suite.Store, mappers)
-		createFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			return false, nil
-		}
-
-		// when
-		wp, err := r.Create(context.Background(), createFn)
-
-		// then
-		assert.NoError(t, err)
-		assert.Nil(t, wp)
-	})
-
-	t.Run("should rollback transaction when createFn returns false and not return error", func(t *testing.T) {
-		// given
-		newID := int32(9)
-
-		r := NewWateringPlanRepository(suite.Store, mappers)
-		createFn := func(wp *watering.WateringPlan, _ watering.WateringPlanRepository) (bool, error) {
-			wp.Date = input.Date
-			wp.TransporterID = input.TransporterID
-			wp.TrailerID = input.TrailerID
-			wp.TreeClusterIDs = input.TreeClusterIDs
-			wp.UserIDs = input.UserIDs
-			return false, nil
-		}
-
-		// when
-		wp, err := r.Create(context.Background(), createFn)
-		got, _ := suite.Store.GetWateringPlanByID(context.Background(), newID)
-
-		// then
-		assert.NoError(t, err)
-		assert.Nil(t, wp)
-		assert.Empty(t, got)
 	})
 }

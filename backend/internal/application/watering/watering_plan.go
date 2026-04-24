@@ -160,19 +160,19 @@ func (w *WateringPlanService) Create(ctx context.Context, createWp *wateringDoma
 	clusterIDs := utils.Map(treeClusters, func(c *clusterDomain.TreeCluster) int32 { return c.ID })
 	totalTreeCount := countTotalTrees(treeClusters)
 
-	created, err := w.wateringPlanRepo.Create(ctx, func(wp *wateringDomain.WateringPlan, _ wateringDomain.WateringPlanRepository) (bool, error) {
-		wp.Date = createWp.Date
-		wp.Description = createWp.Description
-		wp.TransporterID = createWp.TransporterID
-		wp.TrailerID = createWp.TrailerID
-		wp.TreeClusterIDs = clusterIDs
-		wp.UserIDs = createWp.UserIDs
-		wp.TotalWaterRequired = utils.P(wateringDomain.CalculateRequiredWater(totalTreeCount))
-		wp.Provider = createWp.Provider
-		wp.AdditionalInfo = createWp.AdditionalInfo
-
-		return true, nil
-	})
+	wp := &wateringDomain.WateringPlan{
+		Date:               createWp.Date,
+		Description:        createWp.Description,
+		TransporterID:      createWp.TransporterID,
+		TrailerID:          createWp.TrailerID,
+		TreeClusterIDs:     clusterIDs,
+		UserIDs:            createWp.UserIDs,
+		TotalWaterRequired: utils.P(wateringDomain.CalculateRequiredWater(totalTreeCount)),
+		Provider:           createWp.Provider,
+		AdditionalInfo:     createWp.AdditionalInfo,
+		Status:             wateringDomain.WateringPlanStatusPlanned,
+	}
+	created, err := w.wateringPlanRepo.Create(ctx, wp)
 	if err != nil {
 		log.Debug("failed to create watering plan", "error", err)
 		return nil, ports.MapError(ctx, err, ports.ErrorLogAll)
@@ -182,25 +182,30 @@ func (w *WateringPlanService) Create(ctx context.Context, createWp *wateringDoma
 	coords := extractClusterCoordinates(treeClusters)
 	treeCounts := extractTreeCounts(treeClusters)
 
-	err = w.wateringPlanRepo.Update(ctx, created.ID, func(wp *wateringDomain.WateringPlan, _ wateringDomain.WateringPlanRepository) (bool, error) {
-		gpxURL, err := w.getGpxRouteURL(ctx, created.ID, mergedVehicle.Height, mergedVehicle.Width, mergedVehicle.Length, mergedVehicle.Weight, coords)
-		if err != nil {
-			log.Warn("generating route in gpx fomat failed. will not save gpx route", "error", err, "watering_plan_id", created.ID)
-		} else {
-			wp.GpxURL = gpxURL
-		}
+	// Re-fetch the created entity to get full data for update
+	createdWp, err := w.wateringPlanRepo.GetByID(ctx, created.ID)
+	if err != nil {
+		log.Debug("failed to re-fetch created watering plan", "error", err, "watering_plan_id", created.ID)
+		return nil, ports.MapError(ctx, err, ports.ErrorLogAll)
+	}
 
-		metadata, err := w.routingRepo.GenerateRouteInformation(ctx, mergedVehicle.Height, mergedVehicle.Width, mergedVehicle.Length, mergedVehicle.Weight, mergedVehicle.WaterCapacity, coords, treeCounts)
-		if err != nil {
-			log.Warn("generating route information failed. will not save route metadata", "error", err, "watering_plan_id", created.ID)
-		} else {
-			wp.Distance = utils.P(metadata.Distance)
-			wp.Duration = metadata.Time
-			wp.RefillCount = metadata.Refills
-		}
+	gpxURL, err := w.getGpxRouteURL(ctx, created.ID, mergedVehicle.Height, mergedVehicle.Width, mergedVehicle.Length, mergedVehicle.Weight, coords)
+	if err != nil {
+		log.Warn("generating route in gpx fomat failed. will not save gpx route", "error", err, "watering_plan_id", created.ID)
+	} else {
+		createdWp.GpxURL = gpxURL
+	}
 
-		return true, nil
-	})
+	metadata, err := w.routingRepo.GenerateRouteInformation(ctx, mergedVehicle.Height, mergedVehicle.Width, mergedVehicle.Length, mergedVehicle.Weight, mergedVehicle.WaterCapacity, coords, treeCounts)
+	if err != nil {
+		log.Warn("generating route information failed. will not save route metadata", "error", err, "watering_plan_id", created.ID)
+	} else {
+		createdWp.Distance = utils.P(metadata.Distance)
+		createdWp.Duration = metadata.Time
+		createdWp.RefillCount = metadata.Refills
+	}
+
+	err = w.wateringPlanRepo.Update(ctx, created.ID, createdWp)
 
 	if err != nil {
 		log.Debug("failed to apply generate gpx url and route metadata to recently created watering plan", "error", err, "watering_plan_id", created.ID)
@@ -288,41 +293,41 @@ func (w *WateringPlanService) Update(ctx context.Context, id int32, updateWp *wa
 	coords := extractClusterCoordinates(treeClusters)
 	treeCounts := extractTreeCounts(treeClusters)
 
-	err = w.wateringPlanRepo.Update(ctx, id, func(wp *wateringDomain.WateringPlan, _ wateringDomain.WateringPlanRepository) (bool, error) {
-		wp.Date = updateWp.Date
-		wp.Description = updateWp.Description
-		wp.TransporterID = updateWp.TransporterID
-		wp.TrailerID = updateWp.TrailerID
-		wp.TreeClusterIDs = clusterIDs
-		wp.Status = updateWp.Status
-		wp.CancellationNote = updateWp.CancellationNote
-		wp.Evaluation = updateWp.Evaluation
-		wp.UserIDs = updateWp.UserIDs
-		neededWater := wateringDomain.CalculateRequiredWater(totalTreeCount)
-		wp.TotalWaterRequired = &neededWater
-		wp.Provider = updateWp.Provider
-		wp.AdditionalInfo = updateWp.AdditionalInfo
+	neededWater := wateringDomain.CalculateRequiredWater(totalTreeCount)
+	updateEntity := &wateringDomain.WateringPlan{
+		Date:               updateWp.Date,
+		Description:        updateWp.Description,
+		TransporterID:      updateWp.TransporterID,
+		TrailerID:          updateWp.TrailerID,
+		TreeClusterIDs:     clusterIDs,
+		Status:             updateWp.Status,
+		CancellationNote:   updateWp.CancellationNote,
+		Evaluation:         updateWp.Evaluation,
+		UserIDs:            updateWp.UserIDs,
+		TotalWaterRequired: &neededWater,
+		Provider:           updateWp.Provider,
+		AdditionalInfo:     updateWp.AdditionalInfo,
+	}
 
-		if wp.ShouldRegenerateRoute(prevWp) {
-			gpxURL, err := w.getGpxRouteURL(ctx, id, mergedVehicle.Height, mergedVehicle.Width, mergedVehicle.Length, mergedVehicle.Weight, coords)
-			if err != nil {
-				log.Warn("generating route in gpx fomat failed. will not save gpx route", "error", err, "watering_plan_id", id)
-			} else {
-				wp.GpxURL = gpxURL
-			}
-		}
-
-		metadata, err := w.routingRepo.GenerateRouteInformation(ctx, mergedVehicle.Height, mergedVehicle.Width, mergedVehicle.Length, mergedVehicle.Weight, mergedVehicle.WaterCapacity, coords, treeCounts)
+	if updateEntity.ShouldRegenerateRoute(prevWp) {
+		gpxURL, err := w.getGpxRouteURL(ctx, id, mergedVehicle.Height, mergedVehicle.Width, mergedVehicle.Length, mergedVehicle.Weight, coords)
 		if err != nil {
-			log.Warn("generating route information failed. will not route metadata", "error", err, "watering_plan_id", id)
+			log.Warn("generating route in gpx fomat failed. will not save gpx route", "error", err, "watering_plan_id", id)
 		} else {
-			wp.Distance = utils.P(metadata.Distance)
-			wp.Duration = metadata.Time
-			wp.RefillCount = metadata.Refills
+			updateEntity.GpxURL = gpxURL
 		}
+	}
 
-		return true, nil
-	})
+	metadata, err := w.routingRepo.GenerateRouteInformation(ctx, mergedVehicle.Height, mergedVehicle.Width, mergedVehicle.Length, mergedVehicle.Weight, mergedVehicle.WaterCapacity, coords, treeCounts)
+	if err != nil {
+		log.Warn("generating route information failed. will not route metadata", "error", err, "watering_plan_id", id)
+	} else {
+		updateEntity.Distance = utils.P(metadata.Distance)
+		updateEntity.Duration = metadata.Time
+		updateEntity.RefillCount = metadata.Refills
+	}
+
+	err = w.wateringPlanRepo.Update(ctx, id, updateEntity)
 
 	if err != nil {
 		log.Debug("failed to update watering plan", "error", err, "watering_plan_id", id)
@@ -366,10 +371,8 @@ func (w *WateringPlanService) UpdateStatuses(ctx context.Context) error {
 	cutoffTime := time.Now().Add(-24 * time.Hour) // 1 day ago
 	for _, plan := range plans {
 		if plan.IsExpired(cutoffTime) {
-			err = w.wateringPlanRepo.Update(ctx, plan.ID, func(wp *wateringDomain.WateringPlan, _ wateringDomain.WateringPlanRepository) (bool, error) {
-				wp.Status = wateringDomain.WateringPlanStatusNotCompeted
-				return true, nil
-			})
+			plan.Status = wateringDomain.WateringPlanStatusNotCompeted
+			err = w.wateringPlanRepo.Update(ctx, plan.ID, plan)
 
 			if err != nil {
 				log.Error("failed to update watering plan status to »not competed«", "watering_plan_id", plan.ID, "error", err)

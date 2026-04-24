@@ -3,11 +3,7 @@ package wateringplan
 import (
 	"context"
 	"errors"
-	"time"
 
-	"github.com/google/uuid"
-
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
@@ -15,47 +11,19 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func defaultWateringPlan() *watering.WateringPlan {
-	return &watering.WateringPlan{
-		Date:               time.Time{},
-		Description:        "",
-		Distance:           utils.P(shared.MustNewDistance(0)),
-		TotalWaterRequired: utils.P(0.0),
-		Status:             watering.WateringPlanStatusPlanned,
-		UserIDs:            make([]*uuid.UUID, 0),
-		TreeClusterIDs:     make([]int32, 0),
-		TransporterID:      nil,
-		TrailerID:          nil,
-		CancellationNote:   "",
-		Duration:           time.Duration(0),
-		RefillCount:        0,
-		Provider:           "",
-		AdditionalInfo:     nil,
-	}
-}
-
-func (w *WateringPlanRepository) Create(ctx context.Context, createFn func(*watering.WateringPlan, watering.WateringPlanRepository) (bool, error)) (*watering.WateringPlan, error) {
+func (w *WateringPlanRepository) Create(ctx context.Context, entity *watering.WateringPlan) (*watering.WateringPlan, error) {
 	log := logger.GetLogger(ctx)
-	if createFn == nil {
-		return nil, errors.New("createFn is nil")
+	if entity == nil {
+		return nil, errors.New("entity is nil")
+	}
+
+	if err := w.validateWateringPlan(entity); err != nil {
+		return nil, err
 	}
 
 	var createdWp *watering.WateringPlan
 	err := w.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewWateringPlanRepository(s, w.WateringPlanMappers)
-		entity := defaultWateringPlan()
-		created, err := createFn(entity, newRepo)
-		if err != nil {
-			return err
-		}
-
-		if !created {
-			return nil
-		}
-
-		if err := newRepo.validateWateringPlan(entity); err != nil {
-			return err
-		}
 
 		id, err := newRepo.createEntity(ctx, entity)
 		if err != nil {
@@ -75,11 +43,7 @@ func (w *WateringPlanRepository) Create(ctx context.Context, createFn func(*wate
 		return nil, err
 	}
 
-	if createdWp != nil {
-		log.Debug("tree cluster entity created successfully", "cluster_id", createdWp.ID)
-	} else {
-		log.Debug("tree cluster should not be created. cancel transaction")
-	}
+	log.Debug("watering plan entity created successfully", "watering_plan_id", createdWp.ID)
 	return createdWp, nil
 }
 

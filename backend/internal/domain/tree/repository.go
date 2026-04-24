@@ -11,8 +11,8 @@ type TreeRepository interface {
 	GetAll(ctx context.Context, query TreeQuery) ([]*Tree, int64, error)
 	GetCount(ctx context.Context, query TreeQuery) (int64, error)
 	GetByID(ctx context.Context, id int32) (*Tree, error)
-	Create(ctx context.Context, fn func(tree *Tree, repo TreeRepository) (bool, error)) (*Tree, error)
-	Update(ctx context.Context, id int32, updateFn func(tree *Tree, repo TreeRepository) (bool, error)) (*Tree, error)
+	Create(ctx context.Context, entity *Tree) (*Tree, error)
+	Update(ctx context.Context, id int32, entity *Tree) (*Tree, error)
 	Delete(ctx context.Context, id int32) error
 
 	GetByTreeClusterID(ctx context.Context, id int32) ([]*Tree, error)

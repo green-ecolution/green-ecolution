@@ -94,7 +94,7 @@ func (r *RouteRepo) GenerateRawGpxRoute(ctx context.Context, vehicleHeight, vehi
 	return r.valhalla.DirectionsRawGpx(ctx, route)
 }
 
-func (r *RouteRepo) GenerateRouteInformation(ctx context.Context, vehicleHeight, vehicleWidth, vehicleLength, vehicleWeight float64, waterCapacity shared.WaterCapacity, clusterCoordinates []shared.Coordinate, treeCounts []int) (*routing.RouteMetadata, error) {
+func (r *RouteRepo) GenerateRouteInformation(ctx context.Context, vehicleHeight, vehicleWidth, vehicleLength, vehicleWeight float64, _ shared.WaterCapacity, clusterCoordinates []shared.Coordinate, _ []int) (*routing.RouteMetadata, error) {
 	optimizedRoutes, route, err := r.prepareRoute(ctx, vehicleHeight, vehicleWidth, vehicleLength, vehicleWeight, clusterCoordinates)
 	if err != nil {
 		return nil, err

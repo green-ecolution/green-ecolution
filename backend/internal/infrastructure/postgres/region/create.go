@@ -9,17 +9,10 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
-func defaultRegion() *region.Region {
-	return &region.Region{
-		Name: "",
-	}
-}
-
-func (r *RegionRepository) Create(ctx context.Context, vFn ...func(*region.Region)) (*region.Region, error) {
+func (r *RegionRepository) Create(ctx context.Context, entity *region.Region) (*region.Region, error) {
 	log := logger.GetLogger(ctx)
-	entity := defaultRegion()
-	for _, fn := range vFn {
-		fn(entity)
+	if entity == nil {
+		return nil, errors.New("entity is nil")
 	}
 
 	if entity.Name == "" {

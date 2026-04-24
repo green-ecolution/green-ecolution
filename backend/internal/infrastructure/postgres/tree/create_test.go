@@ -19,8 +19,9 @@ func TestTreeRepository_Create(t *testing.T) {
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		got, err := r.Create(context.Background(), func(tr *treeDomain.Tree, _ treeDomain.TreeRepository) (bool, error) {
-			return true, nil
+		got, err := r.Create(context.Background(), &treeDomain.Tree{
+			Coordinate:     shared.MustNewCoordinate(0, 0),
+			WateringStatus: shared.WateringStatusUnknown,
 		})
 
 		// then
@@ -69,16 +70,15 @@ func TestTreeRepository_Create(t *testing.T) {
 		}
 
 		// when
-		got, err := r.Create(context.Background(), func(tr *treeDomain.Tree, _ treeDomain.TreeRepository) (bool, error) {
-			tr.Species = "Oak"
-			tr.Number = "T001"
-			tr.PlantingYear = treeDomain.MustNewPlantingYear(2023)
-			tr.Coordinate = shared.MustNewCoordinate(54.801539, 9.446741)
-			tr.Description = "A newly planted oak tree"
-			tr.WateringStatus = shared.WateringStatusGood
-			tr.TreeClusterID = &treeCluster.ID
-			tr.SensorID = &sn.ID
-			return true, nil
+		got, err := r.Create(context.Background(), &treeDomain.Tree{
+			Species:        "Oak",
+			Number:         "T001",
+			PlantingYear:   treeDomain.MustNewPlantingYear(2023),
+			Coordinate:     shared.MustNewCoordinate(54.801539, 9.446741),
+			Description:    "A newly planted oak tree",
+			WateringStatus: shared.WateringStatusGood,
+			TreeClusterID:  &treeCluster.ID,
+			SensorID:       &sn.ID,
 		})
 
 		treeClusterByTree, errClusterByTree := r.getTreeClusterByTreeID(context.Background(), got.ID)
@@ -107,47 +107,17 @@ func TestTreeRepository_Create(t *testing.T) {
 		assert.Nil(t, got.LastWatered)
 	})
 
-	t.Run("should return error if latitude is out of bounds", func(t *testing.T) {
+	t.Run("should return error if entity is nil", func(t *testing.T) {
 		// given
 		suite.ResetDB(t)
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
 		r := NewTreeRepository(suite.Store, mappers)
 
 		// when
-		got, err := r.Create(context.Background(), func(tr *treeDomain.Tree, _ treeDomain.TreeRepository) (bool, error) {
-			coord, coordErr := shared.NewCoordinate(-200, 0)
-			if coordErr != nil {
-				return false, coordErr
-			}
-			tr.Coordinate = coord
-			return true, nil
-		})
+		got, err := r.Create(context.Background(), nil)
 
 		// then
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), shared.ErrInvalidLatitude.Error())
-		assert.Nil(t, got)
-	})
-
-	t.Run("should return error if longitude is out of bounds", func(t *testing.T) {
-		// given
-		suite.ResetDB(t)
-		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/tree")
-		r := NewTreeRepository(suite.Store, mappers)
-
-		// when
-		got, err := r.Create(context.Background(), func(tr *treeDomain.Tree, _ treeDomain.TreeRepository) (bool, error) {
-			coord, coordErr := shared.NewCoordinate(0, 200)
-			if coordErr != nil {
-				return false, coordErr
-			}
-			tr.Coordinate = coord
-			return true, nil
-		})
-
-		// then
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), shared.ErrInvalidLongitude.Error())
 		assert.Nil(t, got)
 	})
 
@@ -161,9 +131,9 @@ func TestTreeRepository_Create(t *testing.T) {
 		cancel()
 
 		// when
-		got, err := r.Create(ctx, func(tr *treeDomain.Tree, _ treeDomain.TreeRepository) (bool, error) {
-			tr.Species = "Oak"
-			return true, nil
+		got, err := r.Create(ctx, &treeDomain.Tree{
+			Species:    "Oak",
+			Coordinate: shared.MustNewCoordinate(0, 0),
 		})
 
 		// then

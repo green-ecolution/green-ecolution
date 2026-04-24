@@ -32,25 +32,28 @@ export interface GeoJSONMetadata {
      * @type {GeoJSONLocation}
      * @memberof GeoJSONMetadata
      */
-    endPoint?: GeoJSONLocation;
+    endPoint: GeoJSONLocation;
     /**
      * 
      * @type {GeoJSONLocation}
      * @memberof GeoJSONMetadata
      */
-    startPoint?: GeoJSONLocation;
+    startPoint: GeoJSONLocation;
     /**
      * 
      * @type {GeoJSONLocation}
      * @memberof GeoJSONMetadata
      */
-    wateringPoint?: GeoJSONLocation;
+    wateringPoint: GeoJSONLocation;
 }
 
 /**
  * Check if a given object implements the GeoJSONMetadata interface.
  */
 export function instanceOfGeoJSONMetadata(value: object): value is GeoJSONMetadata {
+    if (!('endPoint' in value) || value['endPoint'] === undefined) return false;
+    if (!('startPoint' in value) || value['startPoint'] === undefined) return false;
+    if (!('wateringPoint' in value) || value['wateringPoint'] === undefined) return false;
     return true;
 }
 
@@ -64,9 +67,9 @@ export function GeoJSONMetadataFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'endPoint': json['endPoint'] == null ? undefined : GeoJSONLocationFromJSON(json['endPoint']),
-        'startPoint': json['startPoint'] == null ? undefined : GeoJSONLocationFromJSON(json['startPoint']),
-        'wateringPoint': json['wateringPoint'] == null ? undefined : GeoJSONLocationFromJSON(json['wateringPoint']),
+        'endPoint': GeoJSONLocationFromJSON(json['end_point']),
+        'startPoint': GeoJSONLocationFromJSON(json['start_point']),
+        'wateringPoint': GeoJSONLocationFromJSON(json['watering_point']),
     };
 }
 
@@ -81,9 +84,9 @@ export function GeoJSONMetadataToJSONTyped(value?: GeoJSONMetadata | null, ignor
 
     return {
         
-        'endPoint': GeoJSONLocationToJSON(value['endPoint']),
-        'startPoint': GeoJSONLocationToJSON(value['startPoint']),
-        'wateringPoint': GeoJSONLocationToJSON(value['wateringPoint']),
+        'end_point': GeoJSONLocationToJSON(value['endPoint']),
+        'start_point': GeoJSONLocationToJSON(value['startPoint']),
+        'watering_point': GeoJSONLocationToJSON(value['wateringPoint']),
     };
 }
 

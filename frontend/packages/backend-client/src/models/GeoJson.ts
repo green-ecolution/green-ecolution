@@ -13,20 +13,20 @@
  */
 
 import { mapValues } from '../runtime';
-import type { GeoJSONType } from './GeoJSONType';
+import type { GeoJsonFeature } from './GeoJsonFeature';
 import {
-    GeoJSONTypeFromJSON,
-    GeoJSONTypeFromJSONTyped,
-    GeoJSONTypeToJSON,
-    GeoJSONTypeToJSONTyped,
-} from './GeoJSONType';
-import type { GeoJSONFeature } from './GeoJSONFeature';
+    GeoJsonFeatureFromJSON,
+    GeoJsonFeatureFromJSONTyped,
+    GeoJsonFeatureToJSON,
+    GeoJsonFeatureToJSONTyped,
+} from './GeoJsonFeature';
+import type { GeoJsonType } from './GeoJsonType';
 import {
-    GeoJSONFeatureFromJSON,
-    GeoJSONFeatureFromJSONTyped,
-    GeoJSONFeatureToJSON,
-    GeoJSONFeatureToJSONTyped,
-} from './GeoJSONFeature';
+    GeoJsonTypeFromJSON,
+    GeoJsonTypeFromJSONTyped,
+    GeoJsonTypeToJSON,
+    GeoJsonTypeToJSONTyped,
+} from './GeoJsonType';
 import type { GeoJSONMetadata } from './GeoJSONMetadata';
 import {
     GeoJSONMetadataFromJSON,
@@ -38,41 +38,41 @@ import {
 /**
  * 
  * @export
- * @interface GeoJSON
+ * @interface GeoJson
  */
-export interface GeoJSON {
+export interface GeoJson {
     /**
      * 
      * @type {Array<number>}
-     * @memberof GeoJSON
+     * @memberof GeoJson
      */
     bbox: Array<number>;
     /**
      * 
-     * @type {Array<GeoJSONFeature>}
-     * @memberof GeoJSON
+     * @type {Array<GeoJsonFeature>}
+     * @memberof GeoJson
      */
-    features: Array<GeoJSONFeature>;
+    features: Array<GeoJsonFeature>;
     /**
      * 
      * @type {GeoJSONMetadata}
-     * @memberof GeoJSON
+     * @memberof GeoJson
      */
     metadata: GeoJSONMetadata;
     /**
      * 
-     * @type {GeoJSONType}
-     * @memberof GeoJSON
+     * @type {GeoJsonType}
+     * @memberof GeoJson
      */
-    type: GeoJSONType;
+    type: GeoJsonType;
 }
 
 
 
 /**
- * Check if a given object implements the GeoJSON interface.
+ * Check if a given object implements the GeoJson interface.
  */
-export function instanceOfGeoJSON(value: object): value is GeoJSON {
+export function instanceOfGeoJson(value: object): value is GeoJson {
     if (!('bbox' in value) || value['bbox'] === undefined) return false;
     if (!('features' in value) || value['features'] === undefined) return false;
     if (!('metadata' in value) || value['metadata'] === undefined) return false;
@@ -80,28 +80,28 @@ export function instanceOfGeoJSON(value: object): value is GeoJSON {
     return true;
 }
 
-export function GeoJSONFromJSON(json: any): GeoJSON {
-    return GeoJSONFromJSONTyped(json, false);
+export function GeoJsonFromJSON(json: any): GeoJson {
+    return GeoJsonFromJSONTyped(json, false);
 }
 
-export function GeoJSONFromJSONTyped(json: any, ignoreDiscriminator: boolean): GeoJSON {
+export function GeoJsonFromJSONTyped(json: any, ignoreDiscriminator: boolean): GeoJson {
     if (json == null) {
         return json;
     }
     return {
         
         'bbox': json['bbox'],
-        'features': ((json['features'] as Array<any>).map(GeoJSONFeatureFromJSON)),
+        'features': ((json['features'] as Array<any>).map(GeoJsonFeatureFromJSON)),
         'metadata': GeoJSONMetadataFromJSON(json['metadata']),
-        'type': GeoJSONTypeFromJSON(json['type']),
+        'type': GeoJsonTypeFromJSON(json['type']),
     };
 }
 
-export function GeoJSONToJSON(json: any): GeoJSON {
-    return GeoJSONToJSONTyped(json, false);
+export function GeoJsonToJSON(json: any): GeoJson {
+    return GeoJsonToJSONTyped(json, false);
 }
 
-export function GeoJSONToJSONTyped(value?: GeoJSON | null, ignoreDiscriminator: boolean = false): any {
+export function GeoJsonToJSONTyped(value?: GeoJson | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
@@ -109,9 +109,9 @@ export function GeoJSONToJSONTyped(value?: GeoJSON | null, ignoreDiscriminator: 
     return {
         
         'bbox': value['bbox'],
-        'features': ((value['features'] as Array<any>).map(GeoJSONFeatureToJSON)),
+        'features': ((value['features'] as Array<any>).map(GeoJsonFeatureToJSON)),
         'metadata': GeoJSONMetadataToJSON(value['metadata']),
-        'type': GeoJSONTypeToJSON(value['type']),
+        'type': GeoJsonTypeToJSON(value['type']),
     };
 }
 

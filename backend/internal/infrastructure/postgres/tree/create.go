@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 
@@ -13,47 +12,21 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func defaultTree() tree.Tree {
-	return tree.Tree{
-		TreeClusterID:  nil,
-		Species:        "",
-		Number:         "",
-		SensorID:       nil,
-		PlantingYear:   tree.PlantingYear{},
-		Coordinate:     shared.MustNewCoordinate(0, 0),
-		WateringStatus: shared.WateringStatusUnknown,
-		Description:    "",
-		Provider:       "",
-		AdditionalInfo: nil,
-		LastWatered:    nil,
-	}
-}
-
-func (r *TreeRepository) Create(ctx context.Context, createFn func(*tree.Tree, tree.TreeRepository) (bool, error)) (*tree.Tree, error) {
+func (r *TreeRepository) Create(ctx context.Context, entity *tree.Tree) (*tree.Tree, error) {
 	log := logger.GetLogger(ctx)
-	if createFn == nil {
-		return nil, errors.New("createFn is nil")
+	if entity == nil {
+		return nil, errors.New("entity is nil")
+	}
+
+	if err := r.validateTreeEntity(entity); err != nil {
+		return nil, err
 	}
 
 	var createdTree *tree.Tree
 	err := r.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewTreeRepository(s, r.TreeMappers)
-		entity := defaultTree()
 
-		created, err := createFn(&entity, newRepo)
-		if err != nil {
-			return err
-		}
-
-		if !created {
-			return nil
-		}
-
-		if err := newRepo.validateTreeEntity(&entity); err != nil {
-			return err
-		}
-
-		id, err := newRepo.createEntity(ctx, &entity)
+		id, err := newRepo.createEntity(ctx, entity)
 		if err != nil {
 			log.Error("failed to create tree entity in db", "error", err)
 			return err

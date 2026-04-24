@@ -21,16 +21,24 @@ import { mapValues } from '../runtime';
 export interface GeoJSONLocation {
     /**
      * 
-     * @type {object}
+     * @type {number}
      * @memberof GeoJSONLocation
      */
-    coordinate?: object;
+    latitude: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof GeoJSONLocation
+     */
+    longitude: number;
 }
 
 /**
  * Check if a given object implements the GeoJSONLocation interface.
  */
 export function instanceOfGeoJSONLocation(value: object): value is GeoJSONLocation {
+    if (!('latitude' in value) || value['latitude'] === undefined) return false;
+    if (!('longitude' in value) || value['longitude'] === undefined) return false;
     return true;
 }
 
@@ -44,7 +52,8 @@ export function GeoJSONLocationFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'coordinate': json['coordinate'] == null ? undefined : json['coordinate'],
+        'latitude': json['latitude'],
+        'longitude': json['longitude'],
     };
 }
 
@@ -59,7 +68,8 @@ export function GeoJSONLocationToJSONTyped(value?: GeoJSONLocation | null, ignor
 
     return {
         
-        'coordinate': value['coordinate'],
+        'latitude': value['latitude'],
+        'longitude': value['longitude'],
     };
 }
 

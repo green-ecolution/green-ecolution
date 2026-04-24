@@ -211,7 +211,7 @@ func DeleteWateringPlan(svc ports.WateringPlanService) fiber.Handler {
 // @Tags			Watering Plan
 // @Accept			json
 // @Produce		json
-// @Success		200		{object}	routing.GeoJSON
+// @Success		200		{object}	entities.GeoJSON
 // @Failure		400		{object}	HTTPError
 // @Failure		401		{object}	HTTPError
 // @Failure		403		{object}	HTTPError
@@ -232,17 +232,17 @@ func CreatePreviewRoute(svc ports.WateringPlanService) fiber.Handler {
 			return errorhandler.HandleError(err)
 		}
 
-		return c.JSON(routing.GeoJSON{
-			Type:     routing.GeoJSONType(domainGeo.Type),
+		return c.JSON(entities.GeoJSON{
+			Type:     entities.GeoJSONType(domainGeo.Type),
 			Bbox:     domainGeo.Bbox,
 			Metadata: convertMetaData(domainGeo.Metadata),
-			Features: utils.Map(domainGeo.Features, func(f routing.GeoJSONFeature) routing.GeoJSONFeature {
-				return routing.GeoJSONFeature{
-					Type:       routing.GeoJSONType(f.Type),
+			Features: utils.Map(domainGeo.Features, func(f routing.GeoJSONFeature) entities.GeoJSONFeature {
+				return entities.GeoJSONFeature{
+					Type:       entities.GeoJSONType(f.Type),
 					Bbox:       f.Bbox,
 					Properties: f.Properties,
-					Geometry: routing.GeoJSONGeometry{
-						Type:        routing.GeoJSONType(f.Geometry.Type),
+					Geometry: entities.GeoJSONGeometry{
+						Type:        entities.GeoJSONType(f.Geometry.Type),
 						Coordinates: f.Geometry.Coordinates,
 					},
 				}
@@ -282,16 +282,19 @@ func GetGpxFile(svc ports.WateringPlanService) fiber.Handler {
 	}
 }
 
-func convertMetaData(domainMetadata routing.GeoJSONMetadata) routing.GeoJSONMetadata {
-	return routing.GeoJSONMetadata{
-		StartPoint: routing.GeoJSONLocation{
-			Coordinate: domainMetadata.StartPoint.Coordinate,
+func convertMetaData(domainMetadata routing.GeoJSONMetadata) entities.GeoJSONMetadata {
+	return entities.GeoJSONMetadata{
+		StartPoint: entities.GeoJSONLocation{
+			Latitude:  domainMetadata.StartPoint.Coordinate.Latitude(),
+			Longitude: domainMetadata.StartPoint.Coordinate.Longitude(),
 		},
-		EndPoint: routing.GeoJSONLocation{
-			Coordinate: domainMetadata.EndPoint.Coordinate,
+		EndPoint: entities.GeoJSONLocation{
+			Latitude:  domainMetadata.EndPoint.Coordinate.Latitude(),
+			Longitude: domainMetadata.EndPoint.Coordinate.Longitude(),
 		},
-		WateringPoint: routing.GeoJSONLocation{
-			Coordinate: domainMetadata.WateringPoint.Coordinate,
+		WateringPoint: entities.GeoJSONLocation{
+			Latitude:  domainMetadata.WateringPoint.Coordinate.Latitude(),
+			Longitude: domainMetadata.WateringPoint.Coordinate.Longitude(),
 		},
 	}
 }

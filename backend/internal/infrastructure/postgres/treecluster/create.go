@@ -5,53 +5,25 @@ import (
 	"errors"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func defaultTreeCluster() *cluster.TreeCluster {
-	return &cluster.TreeCluster{
-		RegionID:       nil,
-		Address:        "",
-		Description:    "",
-		MoistureLevel:  0,
-		Coordinate:     nil,
-		WateringStatus: shared.WateringStatusUnknown,
-		SoilCondition:  cluster.TreeSoilConditionUnknown,
-		Archived:       false,
-		LastWatered:    nil,
-		TreeIDs:        make([]int32, 0),
-		Name:           "",
-		Provider:       "",
-		AdditionalInfo: nil,
-	}
-}
-
-func (r *TreeClusterRepository) Create(ctx context.Context, createFn func(*cluster.TreeCluster, cluster.TreeClusterRepository) (bool, error)) (*cluster.TreeCluster, error) {
+func (r *TreeClusterRepository) Create(ctx context.Context, entity *cluster.TreeCluster) (*cluster.TreeCluster, error) {
 	log := logger.GetLogger(ctx)
-	if createFn == nil {
-		return nil, errors.New("createFn is nil")
+	if entity == nil {
+		return nil, errors.New("entity is nil")
+	}
+
+	if err := r.validateTreeClusterEntity(entity); err != nil {
+		return nil, err
 	}
 
 	var createdTc *cluster.TreeCluster
 	err := r.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewTreeClusterRepository(s, r.TreeClusterMappers)
-		entity := defaultTreeCluster()
-		created, err := createFn(entity, newRepo)
-		if err != nil {
-			return err
-		}
-
-		if !created {
-			return nil
-		}
-
-		if err := newRepo.validateTreeClusterEntity(entity); err != nil {
-			return err
-		}
 
 		id, err := newRepo.createEntity(ctx, entity)
 		if err != nil {
@@ -66,16 +38,11 @@ func (r *TreeClusterRepository) Create(ctx context.Context, createFn func(*clust
 	})
 
 	if err != nil {
-		log.Error("failed to update tree cluster entity in db", "error", err)
+		log.Error("failed to create tree cluster entity in db", "error", err)
 		return nil, err
 	}
 
-	if createdTc != nil {
-		log.Debug("tree cluster entity created successfully", "cluster_id", createdTc.ID)
-	} else {
-		log.Debug("tree cluster should not be created. cancel transaction")
-	}
-
+	log.Debug("tree cluster entity created successfully", "cluster_id", createdTc.ID)
 	return createdTc, nil
 }
 

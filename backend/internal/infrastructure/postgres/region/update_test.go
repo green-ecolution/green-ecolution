@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/region"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +17,7 @@ func TestRegionRepository_Update(t *testing.T) {
 		r := NewRegionRepository(defaultFields.store, defaultFields.RegionMappers)
 
 		// when
-		got, err := r.Update(context.Background(), 1, WithName("test"))
+		got, err := r.Update(context.Background(), 1, &region.Region{Name: "test"})
 		gotByID, _ := r.GetByID(context.Background(), 1)
 
 		// then
@@ -31,7 +32,7 @@ func TestRegionRepository_Update(t *testing.T) {
 		r := NewRegionRepository(defaultFields.store, defaultFields.RegionMappers)
 
 		// when
-		got, err := r.Update(context.Background(), 2, WithName(""))
+		got, err := r.Update(context.Background(), 2, &region.Region{Name: ""})
 
 		// then
 		assert.Error(t, err)
@@ -43,7 +44,7 @@ func TestRegionRepository_Update(t *testing.T) {
 		r := NewRegionRepository(defaultFields.store, defaultFields.RegionMappers)
 
 		// when
-		got, err := r.Update(context.Background(), -1, WithName("test"))
+		got, err := r.Update(context.Background(), -1, &region.Region{Name: "test"})
 
 		// then
 		assert.Error(t, err)
@@ -55,7 +56,7 @@ func TestRegionRepository_Update(t *testing.T) {
 		r := NewRegionRepository(defaultFields.store, defaultFields.RegionMappers)
 
 		// when
-		got, err := r.Update(context.Background(), 0)
+		got, err := r.Update(context.Background(), 0, &region.Region{})
 
 		// then
 		assert.Error(t, err)
@@ -67,7 +68,7 @@ func TestRegionRepository_Update(t *testing.T) {
 		r := NewRegionRepository(defaultFields.store, defaultFields.RegionMappers)
 
 		// when
-		got, err := r.Update(context.Background(), 99, WithName("test"))
+		got, err := r.Update(context.Background(), 99, &region.Region{Name: "test"})
 
 		// then
 		assert.Error(t, err)
@@ -81,7 +82,7 @@ func TestRegionRepository_Update(t *testing.T) {
 		cancel()
 
 		// when
-		got, err := r.Update(ctx, 1, WithName("test"))
+		got, err := r.Update(ctx, 1, &region.Region{Name: "test"})
 
 		// then
 		assert.Error(t, err)

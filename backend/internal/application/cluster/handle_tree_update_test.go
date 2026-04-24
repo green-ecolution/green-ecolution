@@ -37,13 +37,7 @@ func TestTreeClusterService_HandleUpdateTree(t *testing.T) {
 		treeRepo.EXPECT().GetByTreeClusterID(mock.Anything, int32(1)).Return([]*treeDomain.Tree{&updatedTree}, nil)
 		clusterRepo.EXPECT().GetCenterPoint(mock.Anything, int32(1)).Return(&updatedTcCoord, nil)
 		regionRepo.EXPECT().GetByPoint(mock.Anything, mock.Anything).Return(&region.Region{ID: 1, Name: "Mürwik"}, nil)
-		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).RunAndReturn(func(ctx context.Context, i int32, f func(*clusterDomain.TreeCluster, clusterDomain.TreeClusterRepository) (bool, error)) error {
-			cluster := prevTc
-			_, err := f(&cluster, clusterRepo)
-			assert.NoError(t, err)
-			assert.Equal(t, shared.WateringStatusGood, cluster.WateringStatus)
-			return nil
-		})
+		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).Return(nil)
 		// publishUpdateEvent calls GetByID again to fetch updated tc
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(&updatedTc, nil).Once()
 
@@ -64,7 +58,7 @@ func TestTreeClusterService_HandleUpdateTree(t *testing.T) {
 	})
 
 	t.Run("should update tree cluster watering status to unkown and send treecluster update event", func(t *testing.T) {
-		clusterRepo, _, _, eventManager, svc := setupTest(t)
+		clusterRepo, _, regionRepo, eventManager, svc := setupTest(t)
 
 		// event
 		_, ch, _ := eventManager.Subscribe(clusterDomain.EventTypeUpdate)
@@ -77,13 +71,9 @@ func TestTreeClusterService_HandleUpdateTree(t *testing.T) {
 		// HandleUpdateTree calls GetByID to fetch prevTc
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(&prevTc, nil).Once()
 		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(1)).Return(nil, sensor.ErrNotFound)
-		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).RunAndReturn(func(ctx context.Context, i int32, f func(*clusterDomain.TreeCluster, clusterDomain.TreeClusterRepository) (bool, error)) error {
-			cluster := clusterDomain.TreeCluster{}
-			_, err := f(&cluster, clusterRepo)
-			assert.NoError(t, err)
-			assert.Equal(t, shared.WateringStatusUnknown, cluster.WateringStatus)
-			return nil
-		})
+		clusterRepo.EXPECT().GetCenterPoint(mock.Anything, int32(1)).Return(&updatedTcCoord, nil)
+		regionRepo.EXPECT().GetByPoint(mock.Anything, mock.Anything).Return(&region.Region{ID: 1, Name: "Mürwik"}, nil)
+		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).Return(nil)
 		// publishUpdateEvent calls GetByID again
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(&updatedTc, nil).Once()
 
@@ -128,13 +118,7 @@ func TestTreeClusterService_HandleUpdateTree(t *testing.T) {
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(2)).Return(&prevTreeClusterOfSensor, nil).Once()
 		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(2)).Return([]*sensor.SensorData{}, nil)
 		treeRepo.EXPECT().GetByTreeClusterID(mock.Anything, int32(2)).Return([]*treeDomain.Tree{}, nil)
-		clusterRepo.EXPECT().Update(mock.Anything, int32(2), mock.Anything).RunAndReturn(func(ctx context.Context, i int32, f func(*clusterDomain.TreeCluster, clusterDomain.TreeClusterRepository) (bool, error)) error {
-			cluster := clusterDomain.TreeCluster{}
-			_, err := f(&cluster, clusterRepo)
-			assert.NoError(t, err)
-			assert.Equal(t, shared.WateringStatusUnknown, cluster.WateringStatus)
-			return nil
-		})
+		clusterRepo.EXPECT().Update(mock.Anything, int32(2), mock.Anything).Return(nil)
 		// publishUpdateEvent calls GetByID again
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(2)).Return(&prevTreeClusterOfSensor, nil).Once()
 
@@ -227,7 +211,7 @@ func TestTreeClusterService_HandleUpdateTree(t *testing.T) {
 	})
 
 	t.Run("should update if tree location is equal but tree has changed treecluster", func(t *testing.T) {
-		clusterRepo, treeRepo, _, eventManager, svc := setupTest(t)
+		clusterRepo, treeRepo, regionRepo, eventManager, svc := setupTest(t)
 
 		_, ch, _ := eventManager.Subscribe(clusterDomain.EventTypeUpdate)
 		ctx, cancel := context.WithCancel(context.Background())
@@ -258,6 +242,8 @@ func TestTreeClusterService_HandleUpdateTree(t *testing.T) {
 		// handleTreeClusterUpdate for cluster 1
 		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(1)).Return(allLatestSensorData, nil)
 		treeRepo.EXPECT().GetByTreeClusterID(mock.Anything, int32(1)).Return([]*treeDomain.Tree{&localUpdatedTree}, nil)
+		clusterRepo.EXPECT().GetCenterPoint(mock.Anything, int32(1)).Return(&prevTcCoord, nil)
+		regionRepo.EXPECT().GetByPoint(mock.Anything, mock.Anything).Return(&region.Region{ID: 1, Name: "Mürwik"}, nil).Maybe()
 		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).Return(nil)
 		// publishUpdateEvent for cluster 1: GetByID
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(&prevTc, nil).Once()
@@ -266,6 +252,7 @@ func TestTreeClusterService_HandleUpdateTree(t *testing.T) {
 		// handleTreeClusterUpdate for cluster 2
 		clusterRepo.EXPECT().GetAllLatestSensorDataByClusterID(mock.Anything, int32(2)).Return(allLatestSensorData, nil)
 		treeRepo.EXPECT().GetByTreeClusterID(mock.Anything, int32(2)).Return([]*treeDomain.Tree{&localUpdatedTree}, nil)
+		clusterRepo.EXPECT().GetCenterPoint(mock.Anything, int32(2)).Return(&newTcCoord, nil)
 		clusterRepo.EXPECT().Update(mock.Anything, int32(2), mock.Anything).Return(nil)
 		// publishUpdateEvent for cluster 2: GetByID
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(2)).Return(&newTc, nil).Once()

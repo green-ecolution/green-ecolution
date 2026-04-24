@@ -18,7 +18,7 @@ type WateringPlanRepository interface {
 	GetEvaluationValues(ctx context.Context, id int32) ([]*EvaluationValue, error)
 	GetTotalConsumedWater(ctx context.Context) (int64, error)
 	GetAllUserCount(ctx context.Context) (int64, error)
-	Create(ctx context.Context, fn func(tc *WateringPlan, repo WateringPlanRepository) (bool, error)) (*WateringPlan, error)
-	Update(ctx context.Context, id int32, fn func(tc *WateringPlan, repo WateringPlanRepository) (bool, error)) error
+	Create(ctx context.Context, entity *WateringPlan) (*WateringPlan, error)
+	Update(ctx context.Context, id int32, entity *WateringPlan) error
 	Delete(ctx context.Context, id int32) error
 }

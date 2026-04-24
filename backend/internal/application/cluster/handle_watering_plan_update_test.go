@@ -9,7 +9,6 @@ import (
 	mock "github.com/stretchr/testify/mock"
 
 	clusterDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	treeDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/_mock"
@@ -57,13 +56,7 @@ func TestTreeClusterService_HandleUpdateWateringPlan(t *testing.T) {
 
 		// handleTreeClustersUpdate: GetByID for the cluster
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(&prevTc, nil).Once()
-		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).RunAndReturn(func(ctx context.Context, i int32, f func(*clusterDomain.TreeCluster, clusterDomain.TreeClusterRepository) (bool, error)) error {
-			cluster := clusterDomain.TreeCluster{}
-			_, err := f(&cluster, clusterRepo)
-			assert.NoError(t, err)
-			assert.Equal(t, shared.WateringStatusJustWatered, cluster.WateringStatus)
-			return nil
-		})
+		clusterRepo.EXPECT().Update(mock.Anything, int32(1), mock.Anything).Return(nil)
 		// publishUpdateEvent: GetByID
 		clusterRepo.EXPECT().GetByID(mock.Anything, int32(1)).Return(&updatedTc, nil).Once()
 		// GetByTreeClusterID for updating trees

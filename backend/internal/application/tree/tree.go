@@ -123,49 +123,49 @@ func (s *TreeService) publishDeleteTreeEvent(ctx context.Context, prevTree *tree
 func (s *TreeService) Create(ctx context.Context, treeCreate *treeDomain.TreeCreate) (*treeDomain.Tree, error) {
 	log := logger.GetLogger(ctx)
 
+	t := &treeDomain.Tree{
+		PlantingYear:   treeCreate.PlantingYear,
+		Species:        treeCreate.Species,
+		Number:         treeCreate.Number,
+		Coordinate:     treeCreate.Coordinate,
+		Description:    treeCreate.Description,
+		Provider:       treeCreate.Provider,
+		AdditionalInfo: treeCreate.AdditionalInfo,
+	}
+
 	var prevTreeOfSensor *treeDomain.Tree
-	newTree, err := s.treeRepo.Create(ctx, func(t *treeDomain.Tree, repo treeDomain.TreeRepository) (bool, error) {
-		t.PlantingYear = treeCreate.PlantingYear
-		t.Species = treeCreate.Species
-		t.Number = treeCreate.Number
-		t.Coordinate = treeCreate.Coordinate
-		t.Description = treeCreate.Description
-		t.Provider = treeCreate.Provider
-		t.AdditionalInfo = treeCreate.AdditionalInfo
 
-		if treeCreate.TreeClusterID != nil {
-			_, err := s.treeClusterRepo.GetByID(ctx, *treeCreate.TreeClusterID)
-			if err != nil {
-				log.Debug("failed to fetch tree cluster by id specified in the tree create request", "tree_cluster_id", treeCreate.TreeClusterID)
-				return false, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
-			}
-			t.TreeClusterID = treeCreate.TreeClusterID
+	if treeCreate.TreeClusterID != nil {
+		_, err := s.treeClusterRepo.GetByID(ctx, *treeCreate.TreeClusterID)
+		if err != nil {
+			log.Debug("failed to fetch tree cluster by id specified in the tree create request", "tree_cluster_id", treeCreate.TreeClusterID)
+			return nil, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
 		}
+		t.TreeClusterID = treeCreate.TreeClusterID
+	}
 
-		if treeCreate.SensorID != nil {
-			sensorEntity, err := s.sensorRepo.GetByID(ctx, *treeCreate.SensorID)
-			if err != nil {
-				log.Debug("failed to fetch sensor by id specified in the tree create request", "sensor_id", treeCreate.SensorID)
-				return false, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
-			}
-			t.SensorID = treeCreate.SensorID
-			prevTreeOfSensor, err = repo.GetBySensorID(ctx, sensorEntity.ID)
-			if err != nil {
-				// If the previous tree that was linked to the sensor could not be found, the create process should still be continued.
-				log.Debug("failed to find previous tree linked to sensor specified from create request", "sensor_id", treeCreate.SensorID)
-			}
-			if sensorEntity.LatestData != nil && sensorEntity.LatestData.Data != nil && len(sensorEntity.LatestData.Data.Watermarks) > 0 {
-				status, err := t.CalculateWateringStatus(sensorEntity.LatestData.Data.Watermarks)
-				if err != nil {
-					return false, err
-				}
-				t.WateringStatus = status
-			}
+	if treeCreate.SensorID != nil {
+		sensorEntity, err := s.sensorRepo.GetByID(ctx, *treeCreate.SensorID)
+		if err != nil {
+			log.Debug("failed to fetch sensor by id specified in the tree create request", "sensor_id", treeCreate.SensorID)
+			return nil, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
 		}
+		t.SensorID = treeCreate.SensorID
+		prevTreeOfSensor, err = s.treeRepo.GetBySensorID(ctx, sensorEntity.ID)
+		if err != nil {
+			// If the previous tree that was linked to the sensor could not be found, the create process should still be continued.
+			log.Debug("failed to find previous tree linked to sensor specified from create request", "sensor_id", treeCreate.SensorID)
+		}
+		if sensorEntity.LatestData != nil && sensorEntity.LatestData.Data != nil && len(sensorEntity.LatestData.Data.Watermarks) > 0 {
+			status, err := t.CalculateWateringStatus(sensorEntity.LatestData.Data.Watermarks)
+			if err != nil {
+				return nil, err
+			}
+			t.WateringStatus = status
+		}
+	}
 
-		return true, nil
-	})
-
+	newTree, err := s.treeRepo.Create(ctx, t)
 	if err != nil {
 		log.Debug("failed to create tree", "error", err)
 		return nil, ports.MapError(ctx, err, ports.ErrorLogAll)
@@ -201,54 +201,54 @@ func (s *TreeService) Update(ctx context.Context, id int32, tu *treeDomain.TreeU
 		return nil, ports.MapError(ctx, err, ports.ErrorLogEntityNotFound)
 	}
 
+	t := &treeDomain.Tree{
+		PlantingYear:   tu.PlantingYear,
+		Species:        tu.Species,
+		Number:         tu.Number,
+		Coordinate:     tu.Coordinate,
+		Description:    tu.Description,
+		Provider:       tu.Provider,
+		AdditionalInfo: tu.AdditionalInfo,
+	}
+
 	var prevTreeOfSensor *treeDomain.Tree
-	updatedTree, err := s.treeRepo.Update(ctx, id, func(t *treeDomain.Tree, repo treeDomain.TreeRepository) (bool, error) {
-		t.PlantingYear = tu.PlantingYear
-		t.Species = tu.Species
-		t.Number = tu.Number
-		t.Coordinate = tu.Coordinate
-		t.Description = tu.Description
-		t.Provider = tu.Provider
-		t.AdditionalInfo = tu.AdditionalInfo
 
-		if tu.TreeClusterID != nil {
-			_, err := s.treeClusterRepo.GetByID(ctx, *tu.TreeClusterID)
-			if err != nil {
-				log.Debug("failed to find tree cluster by id specified from update request", "tree_cluster_id", tu.TreeClusterID)
-				return false, ports.MapError(ctx, fmt.Errorf("failed to find TreeCluster with ID %d: %w", *tu.TreeClusterID, err), ports.ErrorLogEntityNotFound)
-			}
-			t.TreeClusterID = tu.TreeClusterID
-		} else {
-			t.TreeClusterID = nil
+	if tu.TreeClusterID != nil {
+		_, err := s.treeClusterRepo.GetByID(ctx, *tu.TreeClusterID)
+		if err != nil {
+			log.Debug("failed to find tree cluster by id specified from update request", "tree_cluster_id", tu.TreeClusterID)
+			return nil, ports.MapError(ctx, fmt.Errorf("failed to find TreeCluster with ID %d: %w", *tu.TreeClusterID, err), ports.ErrorLogEntityNotFound)
 		}
+		t.TreeClusterID = tu.TreeClusterID
+	} else {
+		t.TreeClusterID = nil
+	}
 
-		if tu.SensorID != nil {
-			sensorEntity, err := s.sensorRepo.GetByID(ctx, *tu.SensorID)
-			if err != nil {
-				log.Debug("failed to find sensor by id specified from update request", "sensor_id", tu.SensorID)
-				return false, ports.MapError(ctx, fmt.Errorf("failed to find Sensor with ID %v: %w", *tu.SensorID, err), ports.ErrorLogEntityNotFound)
-			}
-			t.SensorID = tu.SensorID
-
-			prevTreeOfSensor, err = repo.GetBySensorID(ctx, sensorEntity.ID)
-			if err != nil {
-				// If the previous tree that was linked to the sensor could not be found, the update process should still be continued.
-				log.Debug("failed to find previous tree linked to sensor specified from update request", "sensor_id", tu.SensorID)
-			}
-			if sensorEntity.LatestData != nil && sensorEntity.LatestData.Data != nil && len(sensorEntity.LatestData.Data.Watermarks) > 0 {
-				status, err := t.CalculateWateringStatus(sensorEntity.LatestData.Data.Watermarks)
-				if err != nil {
-					return false, err
-				}
-				t.WateringStatus = status
-			}
-		} else {
-			t.RemoveSensor()
+	if tu.SensorID != nil {
+		sensorEntity, err := s.sensorRepo.GetByID(ctx, *tu.SensorID)
+		if err != nil {
+			log.Debug("failed to find sensor by id specified from update request", "sensor_id", tu.SensorID)
+			return nil, ports.MapError(ctx, fmt.Errorf("failed to find Sensor with ID %v: %w", *tu.SensorID, err), ports.ErrorLogEntityNotFound)
 		}
+		t.SensorID = tu.SensorID
 
-		return true, nil
-	})
+		prevTreeOfSensor, err = s.treeRepo.GetBySensorID(ctx, sensorEntity.ID)
+		if err != nil {
+			// If the previous tree that was linked to the sensor could not be found, the update process should still be continued.
+			log.Debug("failed to find previous tree linked to sensor specified from update request", "sensor_id", tu.SensorID)
+		}
+		if sensorEntity.LatestData != nil && sensorEntity.LatestData.Data != nil && len(sensorEntity.LatestData.Data.Watermarks) > 0 {
+			status, err := t.CalculateWateringStatus(sensorEntity.LatestData.Data.Watermarks)
+			if err != nil {
+				return nil, err
+			}
+			t.WateringStatus = status
+		}
+	} else {
+		t.RemoveSensor()
+	}
 
+	updatedTree, err := s.treeRepo.Update(ctx, id, t)
 	if err != nil {
 		log.Debug("failed to update tree", "error", err, "tree_id", id)
 		return nil, ports.MapError(ctx, err, ports.ErrorLogAll)
@@ -269,36 +269,37 @@ func (s *TreeService) UpdateWateringStatuses(ctx context.Context) error {
 
 	cutoffTime := time.Now().Add(-24 * time.Hour) // 1 day ago
 	for _, t := range trees {
-		if t.IsWateringStatusExpired(cutoffTime) {
-			if t.SensorID == nil {
-				continue
-			}
-			sensorEntity, err := s.sensorRepo.GetByID(ctx, *t.SensorID)
-			if err != nil {
-				log.Debug("failed to fetch sensor for tree", "tree_id", t.ID, "sensor_id", *t.SensorID, "error", err)
-				continue
-			}
-			if sensorEntity.LatestData == nil || sensorEntity.LatestData.Data == nil {
-				continue
-			}
+		if !t.IsWateringStatusExpired(cutoffTime) {
+			continue
+		}
 
-			wateringStatus, hasChanged, err := t.RefreshWateringStatus(sensorEntity.LatestData.Data.Watermarks)
-			if errors.Is(err, treeDomain.ErrNoSensorData) {
-				continue
-			}
+		if t.SensorID == nil {
+			continue
+		}
+
+		sensorEntity, err := s.sensorRepo.GetByID(ctx, *t.SensorID)
+		if err != nil {
+			log.Debug("failed to fetch sensor for tree", "tree_id", t.ID, "sensor_id", *t.SensorID, "error", err)
+			continue
+		}
+		if sensorEntity.LatestData == nil || sensorEntity.LatestData.Data == nil {
+			continue
+		}
+
+		wateringStatus, hasChanged, err := t.RefreshWateringStatus(sensorEntity.LatestData.Data.Watermarks)
+		if errors.Is(err, treeDomain.ErrNoSensorData) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+
+		if hasChanged {
+			t.WateringStatus = wateringStatus
+			_, err = s.treeRepo.Update(ctx, t.ID, t)
 			if err != nil {
+				log.Error("failed to update watering status of tree", "tree_id", t.ID, "error", err)
 				return err
-			}
-
-			if hasChanged {
-				_, err = s.treeRepo.Update(ctx, t.ID, func(tr *treeDomain.Tree, _ treeDomain.TreeRepository) (bool, error) {
-					tr.WateringStatus = wateringStatus
-					return true, nil
-				})
-				if err != nil {
-					log.Error("failed to update watering status of tree", "tree_id", t.ID, "error", err)
-					return err
-				}
 			}
 		}
 	}

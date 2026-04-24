@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/region"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,7 +15,7 @@ func TestRegionRepository_Create(t *testing.T) {
 		r := NewRegionRepository(defaultFields.store, defaultFields.RegionMappers)
 
 		// when
-		got, err := r.Create(context.Background(), WithName("test"))
+		got, err := r.Create(context.Background(), &region.Region{Name: "test"})
 
 		// then
 		assert.NoError(t, err)
@@ -27,7 +28,7 @@ func TestRegionRepository_Create(t *testing.T) {
 		r := NewRegionRepository(defaultFields.store, defaultFields.RegionMappers)
 
 		// when
-		got, err := r.Create(context.Background())
+		got, err := r.Create(context.Background(), &region.Region{})
 
 		// then
 		assert.Error(t, err)
@@ -41,7 +42,7 @@ func TestRegionRepository_Create(t *testing.T) {
 		cancel()
 
 		// when
-		got, err := r.Create(ctx, WithName("test"))
+		got, err := r.Create(ctx, &region.Region{Name: "test"})
 
 		// then
 		assert.Error(t, err)

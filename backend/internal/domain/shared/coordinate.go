@@ -13,7 +13,7 @@ var (
 type Coordinate struct {
 	lat float64
 	lng float64
-} // @name Coordinate
+}
 
 func NewCoordinate(lat, lng float64) (Coordinate, error) {
 	if lat < -90 || lat > 90 {

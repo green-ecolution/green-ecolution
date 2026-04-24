@@ -4,9 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/tree"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/watering"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
@@ -43,13 +41,10 @@ func (s *TreeClusterService) handleTreeClustersUpdate(ctx context.Context, tcIDs
 			continue
 		}
 
-		updateFn := func(tc *cluster.TreeCluster, _ cluster.TreeClusterRepository) (bool, error) {
-			tc.WateringStatus = shared.WateringStatusJustWatered
-			tc.LastWatered = &date
-			return true, nil
-		}
+		tc.WateringStatus = shared.WateringStatusJustWatered
+		tc.LastWatered = &date
 
-		if err := s.treeClusterRepo.Update(ctx, tcID, updateFn); err == nil {
+		if err := s.treeClusterRepo.Update(ctx, tcID, tc); err == nil {
 			log.Info("successfully updated last watered date and watering status in tree cluster", "cluster_id", tcID, "last_watered", date)
 			err := s.publishUpdateEvent(ctx, tc)
 			if err != nil {
@@ -65,13 +60,10 @@ func (s *TreeClusterService) handleTreeClustersUpdate(ctx context.Context, tcIDs
 		}
 
 		for _, tr := range trees {
-			_, err := s.treeRepo.Update(ctx, tr.ID, func(t *tree.Tree, _ tree.TreeRepository) (bool, error) {
-				log.Debug("updating tree watering status", "prev_status", tr.WateringStatus, "new_status", shared.WateringStatusJustWatered)
-				t.WateringStatus = shared.WateringStatusJustWatered
-				t.LastWatered = &date
-				return true, nil
-			})
-
+			log.Debug("updating tree watering status", "prev_status", tr.WateringStatus, "new_status", shared.WateringStatusJustWatered)
+			tr.WateringStatus = shared.WateringStatusJustWatered
+			tr.LastWatered = &date
+			_, err := s.treeRepo.Update(ctx, tr.ID, tr)
 			if err != nil {
 				return err
 			}

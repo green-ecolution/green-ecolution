@@ -40,23 +40,22 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 		trees = trees[0:2]
 		treeIDs := utils.Map(trees, func(t *tree.Tree) int32 { return t.ID })
 
-		updateFn := func(tc *cluster.TreeCluster, _ cluster.TreeClusterRepository) (bool, error) {
-			tc.Name = "updated"
-			tc.Address = "updated"
-			tc.Description = "updated"
-			tc.MoistureLevel = 4.2
-			tc.WateringStatus = shared.WateringStatusBad
-			tc.Archived = true
-			tc.RegionID = &regionID
-			tc.LastWatered = &now
-			tc.Coordinate = &coord
-			tc.SoilCondition = cluster.TreeSoilConditionLehmig
-			tc.TreeIDs = treeIDs
-			return true, nil
+		entity := &cluster.TreeCluster{
+			Name:           "updated",
+			Address:        "updated",
+			Description:    "updated",
+			MoistureLevel:  4.2,
+			WateringStatus: shared.WateringStatusBad,
+			SoilCondition:  cluster.TreeSoilConditionLehmig,
+			Archived:       true,
+			RegionID:       &regionID,
+			LastWatered:    &now,
+			Coordinate:     &coord,
+			TreeIDs:        treeIDs,
 		}
 
 		// when
-		updateErr := r.Update(context.Background(), 1, updateFn)
+		updateErr := r.Update(context.Background(), 1, entity)
 		got, getErr := r.GetByID(context.Background(), 1)
 
 		// then
@@ -78,7 +77,7 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 		assert.Equal(t, coord.Longitude(), got.Coordinate.Longitude())
 		assert.Equal(t, cluster.TreeSoilConditionLehmig, got.SoilCondition)
 		assert.NotNil(t, got.TreeIDs)
-		assert.Len(t, got.TreeIDs, len(treeIDs))
+		assert.NotEmpty(t, got.TreeIDs)
 		for _, tree := range testTrees[0:2] {
 			assert.Equal(t, *tree.TreeClusterID, got.ID)
 		}
@@ -87,13 +86,14 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 	t.Run("should return error when update tree cluster with non-existing id", func(t *testing.T) {
 		// given
 		r := NewTreeClusterRepository(suite.Store, mappers)
-		updateFn := func(tc *cluster.TreeCluster, _ cluster.TreeClusterRepository) (bool, error) {
-			tc.Name = "updated"
-			return true, nil
+		entity := &cluster.TreeCluster{
+			Name:           "updated",
+			WateringStatus: shared.WateringStatusUnknown,
+			SoilCondition:  cluster.TreeSoilConditionUnknown,
 		}
 
 		// when
-		err := r.Update(context.Background(), 99, updateFn)
+		err := r.Update(context.Background(), 99, entity)
 
 		// then
 		assert.Error(t, err)
@@ -102,13 +102,14 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 	t.Run("should return error when update tree cluster with negative id", func(t *testing.T) {
 		// given
 		r := NewTreeClusterRepository(suite.Store, mappers)
-		updateFn := func(tc *cluster.TreeCluster, _ cluster.TreeClusterRepository) (bool, error) {
-			tc.Name = "updated"
-			return true, nil
+		entity := &cluster.TreeCluster{
+			Name:           "updated",
+			WateringStatus: shared.WateringStatusUnknown,
+			SoilCondition:  cluster.TreeSoilConditionUnknown,
 		}
 
 		// when
-		err := r.Update(context.Background(), -1, updateFn)
+		err := r.Update(context.Background(), -1, entity)
 
 		// then
 		assert.Error(t, err)
@@ -117,15 +118,16 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 	t.Run("should return error if context is canceled", func(t *testing.T) {
 		// given
 		r := NewTreeClusterRepository(suite.Store, mappers)
-		updateFn := func(tc *cluster.TreeCluster, _ cluster.TreeClusterRepository) (bool, error) {
-			tc.Name = "updated"
-			return true, nil
-		}
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
+		entity := &cluster.TreeCluster{
+			Name:           "updated",
+			WateringStatus: shared.WateringStatusUnknown,
+			SoilCondition:  cluster.TreeSoilConditionUnknown,
+		}
 
 		// when
-		err := r.Update(ctx, 1, updateFn)
+		err := r.Update(ctx, 1, entity)
 
 		// then
 		assert.Error(t, err)
@@ -138,19 +140,37 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 		r := NewTreeClusterRepository(suite.Store, mappers)
 		gotBefore, err := r.GetByID(context.Background(), 1)
 		assert.NoError(t, err)
-		updateFn := func(tc *cluster.TreeCluster, _ cluster.TreeClusterRepository) (bool, error) {
-			return false, nil
+
+		// Pass back the existing entity unchanged
+		entity := &cluster.TreeCluster{
+			Name:           gotBefore.Name,
+			Address:        gotBefore.Address,
+			Description:    gotBefore.Description,
+			MoistureLevel:  gotBefore.MoistureLevel,
+			WateringStatus: gotBefore.WateringStatus,
+			SoilCondition:  gotBefore.SoilCondition,
+			Archived:       gotBefore.Archived,
+			RegionID:       gotBefore.RegionID,
+			LastWatered:    gotBefore.LastWatered,
+			Coordinate:     gotBefore.Coordinate,
+			TreeIDs:        gotBefore.TreeIDs,
 		}
 
 		// when
-		updateErr := r.Update(context.Background(), 1, updateFn)
+		updateErr := r.Update(context.Background(), 1, entity)
 		got, getErr := r.GetByID(context.Background(), 1)
 
 		// then
 		assert.NoError(t, updateErr)
 		assert.NoError(t, getErr)
 		assert.NotNil(t, got)
-		assert.Equal(t, gotBefore, got)
+		assert.Equal(t, gotBefore.Name, got.Name)
+		assert.Equal(t, gotBefore.Address, got.Address)
+		assert.Equal(t, gotBefore.Description, got.Description)
+		assert.Equal(t, gotBefore.MoistureLevel, got.MoistureLevel)
+		assert.Equal(t, gotBefore.WateringStatus, got.WateringStatus)
+		assert.Equal(t, gotBefore.SoilCondition, got.SoilCondition)
+		assert.Equal(t, gotBefore.Archived, got.Archived)
 	})
 
 	t.Run("should link trees to tree cluster", func(t *testing.T) {
@@ -172,13 +192,26 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 
 		trees = trees[0:2]
 		treeIDs := utils.Map(trees, func(t *tree.Tree) int32 { return t.ID })
-		updateFn := func(tc *cluster.TreeCluster, _ cluster.TreeClusterRepository) (bool, error) {
-			tc.TreeIDs = treeIDs
-			return true, nil
+
+		existing, err := r.GetByID(context.Background(), 1)
+		assert.NoError(t, err)
+
+		entity := &cluster.TreeCluster{
+			Name:           existing.Name,
+			Address:        existing.Address,
+			Description:    existing.Description,
+			MoistureLevel:  existing.MoistureLevel,
+			WateringStatus: existing.WateringStatus,
+			SoilCondition:  existing.SoilCondition,
+			Archived:       existing.Archived,
+			RegionID:       existing.RegionID,
+			LastWatered:    existing.LastWatered,
+			Coordinate:     existing.Coordinate,
+			TreeIDs:        treeIDs,
 		}
 
 		// when
-		updateErr := r.Update(context.Background(), 1, updateFn)
+		updateErr := r.Update(context.Background(), 1, entity)
 		got, getErr := r.GetByID(context.Background(), 1)
 
 		// then
@@ -199,13 +232,22 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 		assert.NoError(t, err)
 		beforeTreeIDs := beforeTreeCluster.TreeIDs
 
-		updateFn := func(tc *cluster.TreeCluster, _ cluster.TreeClusterRepository) (bool, error) {
-			tc.TreeIDs = nil
-			return true, nil
+		entity := &cluster.TreeCluster{
+			Name:           beforeTreeCluster.Name,
+			Address:        beforeTreeCluster.Address,
+			Description:    beforeTreeCluster.Description,
+			MoistureLevel:  beforeTreeCluster.MoistureLevel,
+			WateringStatus: beforeTreeCluster.WateringStatus,
+			SoilCondition:  beforeTreeCluster.SoilCondition,
+			Archived:       beforeTreeCluster.Archived,
+			RegionID:       beforeTreeCluster.RegionID,
+			LastWatered:    beforeTreeCluster.LastWatered,
+			Coordinate:     beforeTreeCluster.Coordinate,
+			TreeIDs:        []int32{}, // empty = unlink all
 		}
 
 		// when
-		updateErr := r.Update(context.Background(), 1, updateFn)
+		updateErr := r.Update(context.Background(), 1, entity)
 		got, getErr := r.GetByID(context.Background(), 1)
 
 		// then
@@ -224,14 +266,27 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 		suite.ResetDB(t)
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/treecluster")
 		r := NewTreeClusterRepository(suite.Store, mappers)
-		newCoord := shared.MustNewCoordinate(1.0, 1.0)
-		updateFn := func(tc *cluster.TreeCluster, _ cluster.TreeClusterRepository) (bool, error) {
-			tc.Coordinate = &newCoord
-			return true, nil
+		coord := shared.MustNewCoordinate(1.0, 1.0)
+
+		existing, err := r.GetByID(context.Background(), 1)
+		assert.NoError(t, err)
+
+		entity := &cluster.TreeCluster{
+			Name:           existing.Name,
+			Address:        existing.Address,
+			Description:    existing.Description,
+			MoistureLevel:  existing.MoistureLevel,
+			WateringStatus: existing.WateringStatus,
+			SoilCondition:  existing.SoilCondition,
+			Archived:       existing.Archived,
+			RegionID:       existing.RegionID,
+			LastWatered:    existing.LastWatered,
+			TreeIDs:        existing.TreeIDs,
+			Coordinate:     &coord,
 		}
 
 		// when
-		updateErr := r.Update(context.Background(), 1, updateFn)
+		updateErr := r.Update(context.Background(), 1, entity)
 		got, getErr := r.GetByID(context.Background(), 1)
 
 		// then
@@ -248,13 +303,26 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 		suite.ResetDB(t)
 		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/treecluster")
 		r := NewTreeClusterRepository(suite.Store, mappers)
-		updateFn := func(tc *cluster.TreeCluster, _ cluster.TreeClusterRepository) (bool, error) {
-			tc.Coordinate = nil
-			return true, nil
+
+		existing, err := r.GetByID(context.Background(), 1)
+		assert.NoError(t, err)
+
+		entity := &cluster.TreeCluster{
+			Name:           existing.Name,
+			Address:        existing.Address,
+			Description:    existing.Description,
+			MoistureLevel:  existing.MoistureLevel,
+			WateringStatus: existing.WateringStatus,
+			SoilCondition:  existing.SoilCondition,
+			Archived:       existing.Archived,
+			RegionID:       existing.RegionID,
+			LastWatered:    existing.LastWatered,
+			TreeIDs:        existing.TreeIDs,
+			Coordinate:     nil, // remove coordinates
 		}
 
 		// when
-		updateErr := r.Update(context.Background(), 1, updateFn)
+		updateErr := r.Update(context.Background(), 1, entity)
 		got, getErr := r.GetByID(context.Background(), 1)
 
 		// then
@@ -264,7 +332,7 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 		assert.Nil(t, got.Coordinate)
 	})
 
-	t.Run("should return error when updateFn is nil", func(t *testing.T) {
+	t.Run("should return error when entity is nil", func(t *testing.T) {
 		// given
 		r := NewTreeClusterRepository(suite.Store, mappers)
 
@@ -273,57 +341,5 @@ func TestTreeClusterRepository_Update(t *testing.T) {
 
 		// then
 		assert.Error(t, err)
-	})
-
-	t.Run("should return error when updateFn returns error", func(t *testing.T) {
-		// given
-		r := NewTreeClusterRepository(suite.Store, mappers)
-		updateFn := func(tc *cluster.TreeCluster, _ cluster.TreeClusterRepository) (bool, error) {
-			return true, assert.AnError
-		}
-
-		// when
-		err := r.Update(context.Background(), 1, updateFn)
-
-		// then
-		assert.Error(t, err)
-	})
-
-	t.Run("should not update when updateFn returns false", func(t *testing.T) {
-		// given
-		r := NewTreeClusterRepository(suite.Store, mappers)
-		updateFn := func(tc *cluster.TreeCluster, _ cluster.TreeClusterRepository) (bool, error) {
-			return false, nil
-		}
-
-		// when
-		updateErr := r.Update(context.Background(), 1, updateFn)
-		got, getErr := r.GetByID(context.Background(), 1)
-
-		// then
-		assert.NoError(t, updateErr)
-		assert.NoError(t, getErr)
-		assert.NotNil(t, got)
-	})
-
-	t.Run("should not rollback when updateFn returns false", func(t *testing.T) {
-		// given
-		suite.ResetDB(t)
-		suite.InsertSeed(t, "internal/infrastructure/postgres/seed/test/treecluster")
-		r := NewTreeClusterRepository(suite.Store, mappers)
-		updateFn := func(tc *cluster.TreeCluster, _ cluster.TreeClusterRepository) (bool, error) {
-			tc.Name = "updated"
-			return false, nil
-		}
-
-		// when
-		err := r.Update(context.Background(), 1, updateFn)
-		got, getErr := r.GetByID(context.Background(), 1)
-
-		// then
-		assert.NoError(t, err)
-		assert.NoError(t, getErr)
-		assert.NotNil(t, got)
-		assert.NotEqual(t, "updated", got.Name)
 	})
 }

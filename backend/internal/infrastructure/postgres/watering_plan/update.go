@@ -12,32 +12,24 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func (w *WateringPlanRepository) Update(ctx context.Context, id int32, updateFn func(*watering.WateringPlan, watering.WateringPlanRepository) (bool, error)) error {
+func (w *WateringPlanRepository) Update(ctx context.Context, id int32, entity *watering.WateringPlan) error {
 	log := logger.GetLogger(ctx)
+	if entity == nil {
+		return errors.New("entity is nil")
+	}
+
+	if err := w.validateWateringPlan(entity); err != nil {
+		return err
+	}
+
 	return w.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewWateringPlanRepository(s, w.WateringPlanMappers)
-		entity, err := newRepo.GetByID(ctx, id)
-		if err != nil {
+
+		if _, err := newRepo.GetByID(ctx, id); err != nil {
 			return err
 		}
 
-		if updateFn == nil {
-			return errors.New("updateFn is nil")
-		}
-
-		updated, err := updateFn(entity, newRepo)
-		if err != nil {
-			return err
-		}
-
-		if !updated {
-			return nil
-		}
-
-		if err := newRepo.validateWateringPlan(entity); err != nil {
-			return err
-		}
-
+		entity.ID = id
 		if err := newRepo.updateEntity(ctx, entity); err != nil {
 			log.Error("failed to updated watering plan entity in db", "error", err, "watering_plan_id", id)
 			return err

@@ -10,21 +10,21 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
 )
 
-func (r *RegionRepository) Update(ctx context.Context, id int32, vFn ...func(*region.Region)) (*region.Region, error) {
+func (r *RegionRepository) Update(ctx context.Context, id int32, entity *region.Region) (*region.Region, error) {
 	log := logger.GetLogger(ctx)
-	entity, err := r.GetByID(ctx, id)
-	if err != nil {
-		return nil, err
+	if entity == nil {
+		return nil, errors.New("entity is nil")
 	}
 
-	for _, fn := range vFn {
-		fn(entity)
+	if _, err := r.GetByID(ctx, id); err != nil {
+		return nil, err
 	}
 
 	if entity.Name == "" {
 		return nil, errors.New("name is required")
 	}
 
+	entity.ID = id
 	if err := r.updateEntity(ctx, entity); err != nil {
 		log.Error("failed to update region entity in db", "error", err, "region_id", id)
 		return nil, err

@@ -31,24 +31,11 @@ func TestVehicleRepository_Create(t *testing.T) {
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
 
 		numberPlate := "FL ZU 9876"
-
-		createFn := func(vh *vehicle.Vehicle, _ vehicle.VehicleRepository) (bool, error) {
-			vh.Description = input.Description
-			vh.NumberPlate = numberPlate
-			vh.Status = input.Status
-			vh.Type = input.Type
-			vh.Model = input.Model
-			vh.DrivingLicense = input.DrivingLicense
-			vh.Height = input.Height
-			vh.Length = input.Length
-			vh.Width = input.Width
-			vh.Weight = input.Weight
-			vh.WaterCapacity = input.WaterCapacity
-			return true, nil
-		}
+		entity := input
+		entity.NumberPlate = numberPlate
 
 		// when
-		got, err := r.Create(context.Background(), createFn)
+		got, err := r.Create(context.Background(), &entity)
 
 		// then
 		assert.NoError(t, err)
@@ -71,19 +58,20 @@ func TestVehicleRepository_Create(t *testing.T) {
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
 
 		numberPlate := "FL ZB 9876"
-
-		createFn := func(vh *vehicle.Vehicle, _ vehicle.VehicleRepository) (bool, error) {
-			vh.NumberPlate = numberPlate
-			vh.Height = input.Height
-			vh.Length = input.Length
-			vh.Width = input.Width
-			vh.Weight = input.Weight
-			vh.WaterCapacity = input.WaterCapacity
-			return true, nil
+		entity := vehicle.Vehicle{
+			NumberPlate:    numberPlate,
+			WaterCapacity:  input.WaterCapacity,
+			Type:           vehicle.VehicleTypeUnknown,
+			Status:         vehicle.VehicleStatusUnknown,
+			DrivingLicense: vehicle.DrivingLicenseB,
+			Height:         input.Height,
+			Length:         input.Length,
+			Width:          input.Width,
+			Weight:         input.Weight,
 		}
 
 		// when
-		got, err := r.Create(context.Background(), createFn)
+		got, err := r.Create(context.Background(), &entity)
 
 		// then
 		assert.NoError(t, err)
@@ -104,19 +92,12 @@ func TestVehicleRepository_Create(t *testing.T) {
 	t.Run("should return error when create vehicle with zero water capacity", func(t *testing.T) {
 		// given
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
-
-		createFn := func(vh *vehicle.Vehicle, _ vehicle.VehicleRepository) (bool, error) {
-			vh.NumberPlate = input.NumberPlate
-			vh.Height = input.Height
-			vh.Length = input.Length
-			vh.Width = input.Width
-			vh.Weight = input.Weight
-			vh.WaterCapacity = shared.MustNewWaterCapacity(0)
-			return true, nil
-		}
+		entity := input
+		entity.NumberPlate = "FL ZC 1111"
+		entity.WaterCapacity = shared.MustNewWaterCapacity(0)
 
 		// when
-		got, err := r.Create(context.Background(), createFn)
+		got, err := r.Create(context.Background(), &entity)
 
 		// then
 		assert.Error(t, err)
@@ -127,19 +108,11 @@ func TestVehicleRepository_Create(t *testing.T) {
 	t.Run("should return error when create vehicle with no number plate", func(t *testing.T) {
 		// given
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
-
-		createFn := func(vh *vehicle.Vehicle, _ vehicle.VehicleRepository) (bool, error) {
-			vh.NumberPlate = ""
-			vh.Height = input.Height
-			vh.Length = input.Length
-			vh.Width = input.Width
-			vh.Weight = input.Weight
-			vh.WaterCapacity = input.WaterCapacity
-			return true, nil
-		}
+		entity := input
+		entity.NumberPlate = ""
 
 		// when
-		got, err := r.Create(context.Background(), createFn)
+		got, err := r.Create(context.Background(), &entity)
 
 		// then
 		assert.Error(t, err)
@@ -150,21 +123,15 @@ func TestVehicleRepository_Create(t *testing.T) {
 	t.Run("should return error when create vehicle with zero size measurements", func(t *testing.T) {
 		// given
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
-
-		numberPlate := "FL ZB 9876"
-
-		createFn := func(vh *vehicle.Vehicle, _ vehicle.VehicleRepository) (bool, error) {
-			vh.NumberPlate = numberPlate
-			vh.Height = 0
-			vh.Length = 0
-			vh.Width = 0
-			vh.Weight = 0
-			vh.WaterCapacity = input.WaterCapacity
-			return true, nil
-		}
+		entity := input
+		entity.NumberPlate = "FL ZD 1111"
+		entity.Height = 0
+		entity.Length = 0
+		entity.Width = 0
+		entity.Weight = 0
 
 		// when
-		got, err := r.Create(context.Background(), createFn)
+		got, err := r.Create(context.Background(), &entity)
 
 		// then
 		assert.Error(t, err)
@@ -175,20 +142,12 @@ func TestVehicleRepository_Create(t *testing.T) {
 	t.Run("should return error when create vehicle with wrong driving license", func(t *testing.T) {
 		// given
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
-
-		createFn := func(vh *vehicle.Vehicle, _ vehicle.VehicleRepository) (bool, error) {
-			vh.NumberPlate = input.NumberPlate
-			vh.Height = input.Height
-			vh.Length = input.Length
-			vh.Width = input.Width
-			vh.Weight = input.Weight
-			vh.WaterCapacity = input.WaterCapacity
-			vh.DrivingLicense = "ABC"
-			return true, nil
-		}
+		entity := input
+		entity.NumberPlate = ""
+		entity.DrivingLicense = ""
 
 		// when
-		got, err := r.Create(context.Background(), createFn)
+		got, err := r.Create(context.Background(), &entity)
 
 		// then
 		assert.Error(t, err)
@@ -199,26 +158,16 @@ func TestVehicleRepository_Create(t *testing.T) {
 	t.Run("should return error when create vehicle with duplicate plate", func(t *testing.T) {
 		// given
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
+		entity := input
+		entity.NumberPlate = "FL ZE 9876"
 
-		numberPlate := "FL ZT 9876"
-
-		createFn := func(vh *vehicle.Vehicle, _ vehicle.VehicleRepository) (bool, error) {
-			vh.NumberPlate = numberPlate
-			vh.Height = input.Height
-			vh.Length = input.Length
-			vh.Width = input.Width
-			vh.Weight = input.Weight
-			vh.WaterCapacity = input.WaterCapacity
-			vh.DrivingLicense = input.DrivingLicense
-			return true, nil
-		}
-		firstVehicle, err := r.Create(context.Background(), createFn)
+		firstVehicle, err := r.Create(context.Background(), &entity)
 
 		// when
 		assert.NoError(t, err)
 		assert.NotNil(t, firstVehicle)
 
-		secondVehicle, err := r.Create(context.Background(), createFn)
+		secondVehicle, err := r.Create(context.Background(), &entity)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "violates unique constraint")
@@ -231,75 +180,23 @@ func TestVehicleRepository_Create(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 
-		// when
-		createFn := func(vh *vehicle.Vehicle, _ vehicle.VehicleRepository) (bool, error) {
-			vh.NumberPlate = input.NumberPlate
-			vh.Height = input.Height
-			vh.Length = input.Length
-			vh.Width = input.Width
-			vh.Weight = input.Weight
-			vh.WaterCapacity = input.WaterCapacity
-			vh.DrivingLicense = input.DrivingLicense
-			return true, nil
-		}
+		entity := input
+		entity.NumberPlate = "FL ZF 9876"
 
-		got, err := r.Create(ctx, createFn)
+		// when
+		got, err := r.Create(ctx, &entity)
 
 		// then
 		assert.Error(t, err)
 		assert.Nil(t, got)
 	})
 
-	t.Run("should return error when createFn returns error", func(t *testing.T) {
+	t.Run("should return error when entity is nil", func(t *testing.T) {
 		// given
 		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
-		createFn := func(wp *vehicle.Vehicle, _ vehicle.VehicleRepository) (bool, error) {
-			return false, assert.AnError
-		}
 
-		wp, err := r.Create(context.Background(), createFn)
+		wp, err := r.Create(context.Background(), nil)
 		assert.Error(t, err)
 		assert.Nil(t, wp)
-	})
-
-	t.Run("should not create watering plan when createFn returns false", func(t *testing.T) {
-		// given
-		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
-		createFn := func(wp *vehicle.Vehicle, _ vehicle.VehicleRepository) (bool, error) {
-			return false, nil
-		}
-
-		// when
-		wp, err := r.Create(context.Background(), createFn)
-
-		// then
-		assert.NoError(t, err)
-		assert.Nil(t, wp)
-	})
-
-	t.Run("should rollback transaction when createFn returns false and not return error", func(t *testing.T) {
-		// given
-		newID := int32(9)
-
-		r := NewVehicleRepository(defaultFields.store, defaultFields.VehicleMappers)
-		createFn := func(vh *vehicle.Vehicle, _ vehicle.VehicleRepository) (bool, error) {
-			vh.NumberPlate = input.NumberPlate
-			vh.Height = input.Height
-			vh.Length = input.Length
-			vh.Width = input.Width
-			vh.Weight = input.Weight
-			vh.WaterCapacity = input.WaterCapacity
-			vh.DrivingLicense = input.DrivingLicense
-			return false, nil
-		}
-
-		// when
-		wp, err := r.Create(context.Background(), createFn)
-		got, _ := suite.Store.GetWateringPlanByID(context.Background(), newID)
-
-		// then
-		assert.NoError(t, err)
-		assert.Nil(t, wp)
-		assert.Empty(t, got)
 	})
 }

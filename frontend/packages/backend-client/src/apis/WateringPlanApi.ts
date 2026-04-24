@@ -15,7 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
-  GeoJSON,
+  GeoJson,
   HTTPError,
   RouteRequest,
   WateringPlan,
@@ -24,8 +24,8 @@ import type {
   WateringPlanUpdate,
 } from '../models/index';
 import {
-    GeoJSONFromJSON,
-    GeoJSONToJSON,
+    GeoJsonFromJSON,
+    GeoJsonToJSON,
     HTTPErrorFromJSON,
     HTTPErrorToJSON,
     RouteRequestFromJSON,
@@ -80,7 +80,7 @@ export class WateringPlanApi extends runtime.BaseAPI {
      * Generates a preview of the optimized route for the given vehicles and tree clusters without creating a watering plan.
      * Generate preview route
      */
-    async createPreviewRouteRaw(requestParameters: CreatePreviewRouteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GeoJSON>> {
+    async createPreviewRouteRaw(requestParameters: CreatePreviewRouteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GeoJson>> {
         if (requestParameters['body'] == null) {
             throw new runtime.RequiredError(
                 'body',
@@ -110,14 +110,14 @@ export class WateringPlanApi extends runtime.BaseAPI {
             body: RouteRequestToJSON(requestParameters['body']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GeoJSONFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => GeoJsonFromJSON(jsonValue));
     }
 
     /**
      * Generates a preview of the optimized route for the given vehicles and tree clusters without creating a watering plan.
      * Generate preview route
      */
-    async createPreviewRoute(requestParameters: CreatePreviewRouteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GeoJSON> {
+    async createPreviewRoute(requestParameters: CreatePreviewRouteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GeoJson> {
         const response = await this.createPreviewRouteRaw(requestParameters, initOverrides);
         return await response.value();
     }

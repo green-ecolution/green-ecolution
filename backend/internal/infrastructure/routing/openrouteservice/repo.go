@@ -57,7 +57,7 @@ func NewRouteRepo(cfg *RouteRepoConfig) (*RouteRepo, error) {
 	}, nil
 }
 
-func (r *RouteRepo) GenerateRoute(ctx context.Context, vehicleHeight, vehicleWidth, vehicleLength, vehicleWeight float64, clusterCoordinates []shared.Coordinate) (*routing.GeoJSON, error) {
+func (r *RouteRepo) GenerateRoute(ctx context.Context, _, _, _, _ float64, clusterCoordinates []shared.Coordinate) (*routing.GeoJSON, error) {
 	log := logger.GetLogger(ctx)
 
 	_, orsRoute, err := r.prepareOrsRoute(ctx, clusterCoordinates)
@@ -84,7 +84,7 @@ func (r *RouteRepo) GenerateRoute(ctx context.Context, vehicleHeight, vehicleWid
 	return entity, nil
 }
 
-func (r *RouteRepo) GenerateRawGpxRoute(ctx context.Context, vehicleHeight, vehicleWidth, vehicleLength, vehicleWeight float64, clusterCoordinates []shared.Coordinate) (io.ReadCloser, error) {
+func (r *RouteRepo) GenerateRawGpxRoute(ctx context.Context, _, _, _, _ float64, clusterCoordinates []shared.Coordinate) (io.ReadCloser, error) {
 	_, orsRoute, err := r.prepareOrsRoute(ctx, clusterCoordinates)
 	if err != nil {
 		return nil, err
@@ -93,7 +93,7 @@ func (r *RouteRepo) GenerateRawGpxRoute(ctx context.Context, vehicleHeight, vehi
 	return r.ors.DirectionsRawGpx(ctx, "driving-car", orsRoute)
 }
 
-func (r *RouteRepo) GenerateRouteInformation(ctx context.Context, vehicleHeight, vehicleWidth, vehicleLength, vehicleWeight float64, waterCapacity shared.WaterCapacity, clusterCoordinates []shared.Coordinate, treeCounts []int) (*routing.RouteMetadata, error) {
+func (r *RouteRepo) GenerateRouteInformation(ctx context.Context, _, _, _, _ float64, _ shared.WaterCapacity, clusterCoordinates []shared.Coordinate, _ []int) (*routing.RouteMetadata, error) {
 	optimizedRoutes, route, err := r.prepareOrsRoute(ctx, clusterCoordinates)
 	if err != nil {
 		return nil, err

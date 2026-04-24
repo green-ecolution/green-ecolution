@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 
 	sensorDomain "github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	"github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
@@ -14,44 +13,24 @@ import (
 	"github.com/pkg/errors"
 )
 
-func defaultSensor() *sensorDomain.Sensor {
-	return &sensorDomain.Sensor{
-		Status:         sensorDomain.SensorStatusUnknown,
-		LatestData:     nil,
-		Coordinate:     shared.MustNewCoordinate(0, 0),
-		Provider:       "",
-		AdditionalInfo: nil,
-	}
-}
-
-func (r *SensorRepository) Create(ctx context.Context, createFn func(*sensorDomain.Sensor, sensorDomain.SensorRepository) (bool, error)) (*sensorDomain.Sensor, error) {
+func (r *SensorRepository) Create(ctx context.Context, entity *sensorDomain.Sensor) (*sensorDomain.Sensor, error) {
 	log := logger.GetLogger(ctx)
-	if createFn == nil {
-		return nil, errors.New("createFn is nil")
+	if entity == nil {
+		return nil, errors.New("entity is nil")
+	}
+
+	if err := r.validateSensorEntity(entity); err != nil {
+		return nil, err
+	}
+
+	existingSensor, _ := r.GetByID(ctx, entity.ID)
+	if existingSensor != nil {
+		return nil, errors.New("sensor with same ID already exists")
 	}
 
 	var createdSensor *sensorDomain.Sensor
 	err := r.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewSensorRepository(s, r.SensorRepositoryMappers)
-		entity := defaultSensor()
-
-		created, err := createFn(entity, newRepo)
-		if err != nil {
-			return err
-		}
-
-		if !created {
-			return nil
-		}
-
-		existingSensor, _ := newRepo.GetByID(ctx, entity.ID)
-		if existingSensor != nil {
-			return errors.New("sensor with same ID already exists")
-		}
-
-		if err := newRepo.validateSensorEntity(entity); err != nil {
-			return err
-		}
 
 		id, err := newRepo.createEntity(ctx, entity)
 		if err != nil {

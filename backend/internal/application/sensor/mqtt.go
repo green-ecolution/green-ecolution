@@ -51,11 +51,10 @@ func (s *SensorService) HandleMessage(ctx context.Context, payload *sensorDomain
 		sen = updatedSensor
 	} else {
 		log.Info("a new sensor has joined the party! creating sensor record", "sensor_id", sensorID.String(), "sensor_latitude", coord.Latitude(), "sensor_longitude", coord.Longitude())
-		createdSensor, err := s.sensorRepo.Create(ctx, func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-			sn.ID = sensorID
-			sn.Coordinate = coord
-			sn.Status = sensorDomain.SensorStatusOnline
-			return true, nil
+		createdSensor, err := s.sensorRepo.Create(ctx, &sensorDomain.Sensor{
+			ID:         sensorID,
+			Coordinate: coord,
+			Status:     sensorDomain.SensorStatusOnline,
 		})
 		if err != nil {
 			log.Error("failed to create sensor", "error", err)
@@ -90,11 +89,9 @@ func (s *SensorService) HandleMessage(ctx context.Context, payload *sensorDomain
 func (s *SensorService) updateSensorCoordsAndStatus(ctx context.Context, coord shared.Coordinate, sen *sensorDomain.Sensor) (*sensorDomain.Sensor, error) {
 	log := logger.GetLogger(ctx)
 	if sen.Coordinate.Latitude() != coord.Latitude() || sen.Coordinate.Longitude() != coord.Longitude() || sen.Status != sensorDomain.SensorStatusOnline {
-		updatedSensor, err := s.sensorRepo.Update(ctx, sen.ID, func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-			sn.Coordinate = coord
-			sn.Status = sensorDomain.SensorStatusOnline
-			return true, nil
-		})
+		sen.Coordinate = coord
+		sen.Status = sensorDomain.SensorStatusOnline
+		updatedSensor, err := s.sensorRepo.Update(ctx, sen.ID, sen)
 		if err != nil {
 			return nil, err
 		}

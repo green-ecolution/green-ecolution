@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
+	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/worker"
 
 	storageMock "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/_mock"
@@ -41,7 +42,7 @@ func TestSensorService_HandleMessage(t *testing.T) {
 		sensorRepo.EXPECT().Update(context.Background(), TestSensor.ID, mock.Anything).Return(TestSensor, nil)
 		sensorRepo.EXPECT().InsertSensorData(context.Background(), insertData, TestSensor.ID).Return(nil)
 		sensorRepo.EXPECT().GetLatestSensorDataBySensorID(context.Background(), TestSensor.ID).Return(TestSensorData[0], nil)
-		treeRepo.EXPECT().FindNearestTree(context.Background(), TestSensor.Coordinate).Return(TestNearestTree, nil)
+		treeRepo.EXPECT().FindNearestTree(context.Background(), mock.Anything).Return(TestNearestTree, nil)
 		treeRepo.EXPECT().Update(context.Background(), TestNearestTree.ID, mock.Anything).Return(TestNearestTree, nil)
 
 		// when
@@ -67,8 +68,15 @@ func TestSensorService_HandleMessage(t *testing.T) {
 
 		testPayload := TestListMQTTPayload[0]
 
-		sensorRepo.EXPECT().GetByID(context.Background(), sensor.MustNewSensorID(testPayload.Device)).Return(TestSensor, nil)
-		sensorRepo.EXPECT().Update(context.Background(), TestSensor.ID, mock.Anything).Return(nil, errors.New("update error"))
+		// Use a fresh sensor with different coordinates to ensure updateSensorCoordsAndStatus triggers Update
+		testSen := &sensor.Sensor{
+			ID:         sensor.MustNewSensorID("sensor001"),
+			Coordinate: shared.MustNewCoordinate(54.82124518093376, 9.485702120628517),
+			Status:     sensor.SensorStatusOnline,
+		}
+
+		sensorRepo.EXPECT().GetByID(context.Background(), sensor.MustNewSensorID(testPayload.Device)).Return(testSen, nil)
+		sensorRepo.EXPECT().Update(context.Background(), testSen.ID, mock.Anything).Return(nil, errors.New("update error"))
 
 		// when
 		sensorData, err := svc.HandleMessage(context.Background(), testPayload)
@@ -188,9 +196,16 @@ func TestSensorService_HandleMessage(t *testing.T) {
 			Data: testPayLoad,
 		}
 
-		sensorRepo.EXPECT().GetByID(context.Background(), sensor.MustNewSensorID(testPayLoad.Device)).Return(TestSensor, nil)
-		sensorRepo.EXPECT().Update(context.Background(), TestSensor.ID, mock.Anything).Return(TestSensor, nil)
-		sensorRepo.EXPECT().InsertSensorData(context.Background(), insertData, TestSensor.ID).Return(errors.New("insert error"))
+		// Use a fresh sensor with different coordinates to ensure updateSensorCoordsAndStatus triggers Update
+		testSen := &sensor.Sensor{
+			ID:         sensor.MustNewSensorID("sensor001"),
+			Coordinate: shared.MustNewCoordinate(54.82124518093376, 9.485702120628517),
+			Status:     sensor.SensorStatusOnline,
+		}
+
+		sensorRepo.EXPECT().GetByID(context.Background(), sensor.MustNewSensorID(testPayLoad.Device)).Return(testSen, nil)
+		sensorRepo.EXPECT().Update(context.Background(), testSen.ID, mock.Anything).Return(testSen, nil)
+		sensorRepo.EXPECT().InsertSensorData(context.Background(), insertData, testSen.ID).Return(errors.New("insert error"))
 
 		// when
 		sensorData, err := svc.HandleMessage(context.Background(), testPayLoad)

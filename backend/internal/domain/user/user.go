@@ -2,6 +2,7 @@ package user
 
 import (
 	"net/url"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -43,12 +44,7 @@ type User struct {
 }
 
 func (u *User) HasRole(role UserRole) bool {
-	for _, r := range u.Roles {
-		if r == role {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(u.Roles, role)
 }
 
 func (u *User) HasRequiredLicenses(required []vehicle.DrivingLicense) bool {

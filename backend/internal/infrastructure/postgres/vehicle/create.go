@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/vehicle"
 	sqlc "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/_sqlc"
 	store "github.com/green-ecolution/green-ecolution/backend/internal/infrastructure/postgres/store"
@@ -12,46 +11,19 @@ import (
 	"github.com/green-ecolution/green-ecolution/backend/internal/utils"
 )
 
-func defaultVehicle() *vehicle.Vehicle {
-	return &vehicle.Vehicle{
-		NumberPlate:    "",
-		Description:    "",
-		WaterCapacity:  shared.MustNewWaterCapacity(0),
-		Type:           vehicle.VehicleTypeUnknown,
-		Status:         vehicle.VehicleStatusUnknown,
-		Model:          "",
-		DrivingLicense: vehicle.DrivingLicenseB,
-		Height:         0,
-		Length:         0,
-		Width:          0,
-		Weight:         0,
-		Provider:       "",
-		AdditionalInfo: nil,
-	}
-}
-
-func (r *VehicleRepository) Create(ctx context.Context, createFn func(*vehicle.Vehicle, vehicle.VehicleRepository) (bool, error)) (*vehicle.Vehicle, error) {
+func (r *VehicleRepository) Create(ctx context.Context, entity *vehicle.Vehicle) (*vehicle.Vehicle, error) {
 	log := logger.GetLogger(ctx)
-	if createFn == nil {
-		return nil, errors.New("createFn is nil")
+	if entity == nil {
+		return nil, errors.New("entity is nil")
+	}
+
+	if err := r.validateVehicle(entity); err != nil {
+		return nil, err
 	}
 
 	var createdVh *vehicle.Vehicle
 	err := r.store.WithTx(ctx, func(s *store.Store) error {
 		newRepo := NewVehicleRepository(s, r.VehicleRepositoryMappers)
-		entity := defaultVehicle()
-		created, err := createFn(entity, newRepo)
-		if err != nil {
-			return err
-		}
-
-		if !created {
-			return nil
-		}
-
-		if err := newRepo.validateVehicle(entity); err != nil {
-			return err
-		}
 
 		id, err := newRepo.createEntity(ctx, entity)
 		if err != nil {

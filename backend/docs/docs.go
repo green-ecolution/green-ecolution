@@ -3006,7 +3006,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/GeoJSON"
+                            "$ref": "#/definitions/GeoJson"
                         }
                     },
                     "400": {
@@ -3422,7 +3422,41 @@ const docTemplate = `{
                 }
             }
         },
-        "GeoJSON": {
+        "GeoJSONLocation": {
+            "type": "object",
+            "required": [
+                "latitude",
+                "longitude"
+            ],
+            "properties": {
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                }
+            }
+        },
+        "GeoJSONMetadata": {
+            "type": "object",
+            "required": [
+                "end_point",
+                "start_point",
+                "watering_point"
+            ],
+            "properties": {
+                "end_point": {
+                    "$ref": "#/definitions/GeoJSONLocation"
+                },
+                "start_point": {
+                    "$ref": "#/definitions/GeoJSONLocation"
+                },
+                "watering_point": {
+                    "$ref": "#/definitions/GeoJSONLocation"
+                }
+            }
+        },
+        "GeoJson": {
             "type": "object",
             "required": [
                 "bbox",
@@ -3440,18 +3474,18 @@ const docTemplate = `{
                 "features": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/GeoJSONFeature"
+                        "$ref": "#/definitions/GeoJsonFeature"
                     }
                 },
                 "metadata": {
                     "$ref": "#/definitions/GeoJSONMetadata"
                 },
                 "type": {
-                    "$ref": "#/definitions/GeoJSONType"
+                    "$ref": "#/definitions/GeoJsonType"
                 }
             }
         },
-        "GeoJSONFeature": {
+        "GeoJsonFeature": {
             "type": "object",
             "required": [
                 "bbox",
@@ -3467,18 +3501,18 @@ const docTemplate = `{
                     }
                 },
                 "geometry": {
-                    "$ref": "#/definitions/GeoJSONGeometry"
+                    "$ref": "#/definitions/GeoJsonGeometry"
                 },
                 "properties": {
                     "type": "object",
                     "additionalProperties": {}
                 },
                 "type": {
-                    "$ref": "#/definitions/GeoJSONType"
+                    "$ref": "#/definitions/GeoJsonType"
                 }
             }
         },
-        "GeoJSONGeometry": {
+        "GeoJsonGeometry": {
             "type": "object",
             "required": [
                 "coordinates",
@@ -3496,43 +3530,17 @@ const docTemplate = `{
                     }
                 },
                 "type": {
-                    "$ref": "#/definitions/GeoJSONType"
+                    "$ref": "#/definitions/GeoJsonType"
                 }
             }
         },
-        "GeoJSONLocation": {
-            "type": "object",
-            "properties": {
-                "coordinate": {
-                    "$ref": "#/definitions/shared.Coordinate"
-                }
-            }
-        },
-        "GeoJSONMetadata": {
-            "type": "object",
-            "properties": {
-                "endPoint": {
-                    "$ref": "#/definitions/GeoJSONLocation"
-                },
-                "startPoint": {
-                    "$ref": "#/definitions/GeoJSONLocation"
-                },
-                "wateringPoint": {
-                    "$ref": "#/definitions/GeoJSONLocation"
-                }
-            }
-        },
-        "GeoJSONType": {
+        "GeoJsonType": {
             "type": "string",
             "enum": [
-                "FeatureCollection",
-                "Feature",
-                "LineString"
+                "FeatureCollection"
             ],
             "x-enum-varnames": [
-                "FeatureCollection",
-                "Feature",
-                "LineString"
+                "FeatureCollection"
             ]
         },
         "GitInfo": {
@@ -5326,9 +5334,6 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
-        },
-        "shared.Coordinate": {
-            "type": "object"
         }
     },
     "securityDefinitions": {

@@ -19,12 +19,11 @@ func TestSensorRepository_Create(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Create(context.Background(), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-			sn.ID = input.ID
-			sn.Coordinate = input.Coordinate
-			sn.Status = input.Status
-			sn.LatestData = input.LatestData
-			return true, nil
+		got, err := r.Create(context.Background(), &sensorDomain.Sensor{
+			ID:         input.ID,
+			Coordinate: input.Coordinate,
+			Status:     input.Status,
+			LatestData: input.LatestData,
 		})
 
 		// then
@@ -46,10 +45,10 @@ func TestSensorRepository_Create(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Create(context.Background(), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-			sn.ID = sensorDomain.MustNewSensorID("sensor-124")
-			sn.Coordinate = input.Coordinate
-			return true, nil
+		got, err := r.Create(context.Background(), &sensorDomain.Sensor{
+			ID:         sensorDomain.MustNewSensorID("sensor-124"),
+			Status:     sensorDomain.SensorStatusUnknown,
+			Coordinate: input.Coordinate,
 		})
 
 		// then
@@ -65,56 +64,13 @@ func TestSensorRepository_Create(t *testing.T) {
 		assert.Nil(t, got.LatestData)
 	})
 
-	t.Run("should return error if latitude is out of bounds", func(t *testing.T) {
-		// given
-		r := NewSensorRepository(suite.Store, defaultSensorMappers())
-
-		// when
-		got, err := r.Create(context.Background(), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-			coord, coordErr := shared.NewCoordinate(-200, input.Coordinate.Longitude())
-			if coordErr != nil {
-				return false, coordErr
-			}
-			sn.ID = sensorDomain.MustNewSensorID("sensor-125")
-			sn.Coordinate = coord
-			return true, nil
-		})
-
-		// then
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), shared.ErrInvalidLatitude.Error())
-		assert.Nil(t, got)
-	})
-
-	t.Run("should return error if longitude is out of bounds", func(t *testing.T) {
-		// given
-		r := NewSensorRepository(suite.Store, defaultSensorMappers())
-
-		// when
-		got, err := r.Create(context.Background(), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-			coord, coordErr := shared.NewCoordinate(input.Coordinate.Latitude(), 200)
-			if coordErr != nil {
-				return false, coordErr
-			}
-			sn.ID = sensorDomain.MustNewSensorID("sensor-125")
-			sn.Coordinate = coord
-			return true, nil
-		})
-
-		// then
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), shared.ErrInvalidLongitude.Error())
-		assert.Nil(t, got)
-	})
-
 	t.Run("should return error if sensor id is invalid", func(t *testing.T) {
 		// given
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Create(context.Background(), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-			sn.Coordinate = input.Coordinate
-			return true, nil
+		got, err := r.Create(context.Background(), &sensorDomain.Sensor{
+			Coordinate: input.Coordinate,
 		})
 
 		// then
@@ -128,12 +84,11 @@ func TestSensorRepository_Create(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Create(context.Background(), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-			sn.ID = input.ID
-			sn.Coordinate = input.Coordinate
-			sn.Status = input.Status
-			sn.LatestData = input.LatestData
-			return true, nil
+		got, err := r.Create(context.Background(), &sensorDomain.Sensor{
+			ID:         input.ID,
+			Coordinate: input.Coordinate,
+			Status:     input.Status,
+			LatestData: input.LatestData,
 		})
 
 		// then
@@ -149,9 +104,8 @@ func TestSensorRepository_Create(t *testing.T) {
 		cancel()
 
 		// when
-		got, err := r.Create(ctx, func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-			sn.ID = sensorDomain.MustNewSensorID("sensor-5")
-			return true, nil
+		got, err := r.Create(ctx, &sensorDomain.Sensor{
+			ID: sensorDomain.MustNewSensorID("sensor-5"),
 		})
 
 		// then
@@ -167,11 +121,10 @@ func TestSensorRepository_InsertSensorData(t *testing.T) {
 		// given
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
-		_, err := r.Create(context.Background(), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-			sn.ID = input.ID
-			sn.Coordinate = input.Coordinate
-			sn.Status = input.Status
-			return true, nil
+		_, err := r.Create(context.Background(), &sensorDomain.Sensor{
+			ID:         input.ID,
+			Coordinate: input.Coordinate,
+			Status:     input.Status,
 		})
 
 		assert.NoError(t, err)
@@ -186,11 +139,10 @@ func TestSensorRepository_InsertSensorData(t *testing.T) {
 	t.Run("should return error when data is empty", func(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
-		_, err := r.Create(context.Background(), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-			sn.ID = sensorDomain.MustNewSensorID("sensor-124")
-			sn.Coordinate = input.Coordinate
-			sn.Status = input.Status
-			return true, nil
+		_, err := r.Create(context.Background(), &sensorDomain.Sensor{
+			ID:         sensorDomain.MustNewSensorID("sensor-124"),
+			Coordinate: input.Coordinate,
+			Status:     input.Status,
 		})
 
 		assert.NoError(t, err)

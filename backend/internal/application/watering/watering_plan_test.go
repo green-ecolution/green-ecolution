@@ -219,6 +219,14 @@ func TestWateringPlanService_Create(t *testing.T) {
 			mock.Anything,
 		).Return(allTestWateringPlans[0], nil)
 
+		wateringPlanRepo.EXPECT().GetByID(
+			ctx,
+			allTestWateringPlans[0].ID,
+		).Return(allTestWateringPlans[0], nil)
+
+		routingRepo.EXPECT().GenerateRawGpxRoute(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("not available"))
+		routingRepo.EXPECT().GenerateRouteInformation(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("not available"))
+
 		wateringPlanRepo.EXPECT().Update(
 			ctx,
 			allTestWateringPlans[0].ID,
@@ -273,6 +281,14 @@ func TestWateringPlanService_Create(t *testing.T) {
 			ctx,
 			mock.Anything,
 		).Return(allTestWateringPlans[0], nil)
+
+		wateringPlanRepo.EXPECT().GetByID(
+			ctx,
+			allTestWateringPlans[0].ID,
+		).Return(allTestWateringPlans[0], nil)
+
+		routingRepo.EXPECT().GenerateRawGpxRoute(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("not available"))
+		routingRepo.EXPECT().GenerateRouteInformation(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("not available"))
 
 		wateringPlanRepo.EXPECT().Update(
 			ctx,
@@ -697,12 +713,15 @@ func TestWateringPlanService_Update(t *testing.T) {
 			[]string{testUUIDString},
 		).Return([]*user.User{testUserTbz}, nil)
 
+		routingRepo.EXPECT().GenerateRouteInformation(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("not available"))
+
 		wateringPlanRepo.EXPECT().Update(
 			ctx,
 			int32(1),
 			mock.Anything,
 		).Return(nil)
 
+		// publishUpdateEvent and final GetByID
 		wateringPlanRepo.EXPECT().GetByID(
 			ctx,
 			int32(1),
@@ -766,6 +785,9 @@ func TestWateringPlanService_Update(t *testing.T) {
 			[]string{testUUIDString},
 		).Return([]*user.User{testUserTbz}, nil)
 
+		routingRepo.EXPECT().GenerateRawGpxRoute(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("not available")).Maybe()
+		routingRepo.EXPECT().GenerateRouteInformation(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("not available"))
+
 		wateringPlanRepo.EXPECT().Update(
 			ctx,
 			int32(3),
@@ -827,6 +849,9 @@ func TestWateringPlanService_Update(t *testing.T) {
 			ctx,
 			[]string{testUUIDString},
 		).Return([]*user.User{testUserTbz}, nil)
+
+		routingRepo.EXPECT().GenerateRawGpxRoute(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("not available")).Maybe()
+		routingRepo.EXPECT().GenerateRouteInformation(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("not available"))
 
 		wateringPlanRepo.EXPECT().Update(
 			ctx,
@@ -1223,6 +1248,9 @@ func TestWateringPlanService_Update(t *testing.T) {
 			[]string{testUUIDString},
 		).Return([]*user.User{testUserTbz}, nil)
 
+		routingRepo.EXPECT().GenerateRawGpxRoute(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("not available")).Maybe()
+		routingRepo.EXPECT().GenerateRouteInformation(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("not available"))
+
 		wateringPlanRepo.EXPECT().Update(
 			ctx,
 			int32(1),
@@ -1278,6 +1306,8 @@ func TestWateringPlanService_Update(t *testing.T) {
 			ctx,
 			[]string{testUUIDString},
 		).Return([]*user.User{testUserTbz}, nil)
+
+		routingRepo.EXPECT().GenerateRouteInformation(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("not available"))
 
 		wateringPlanRepo.EXPECT().Update(
 			ctx,
@@ -1367,11 +1397,17 @@ func TestWateringPlanService_EventSystem(t *testing.T) {
 			int32(2),
 		).Return(allTestVehicles[1], nil)
 
+		routingRepo.EXPECT().GenerateRawGpxRoute(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("not available"))
+		routingRepo.EXPECT().GenerateRouteInformation(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("not available"))
+
 		wateringPlanRepo.EXPECT().Update(
 			ctx,
 			expectedWp.ID,
 			mock.Anything,
 		).Return(nil)
+
+		// publishUpdateEvent and final GetByID
+		wateringPlanRepo.EXPECT().GetByID(ctx, expectedWp.ID).Return(&expectedWp, nil)
 
 		svc := NewWateringPlanService(wateringPlanRepo, clusterRepo, vehicleRepo, userRepo, eventManager, routingRepo, s3Repo)
 

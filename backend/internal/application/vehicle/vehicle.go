@@ -98,23 +98,22 @@ func (v *VehicleService) Create(ctx context.Context, createData *vehicle.Vehicle
 		return nil, ports.ErrVehiclePlateTaken
 	}
 
-	created, err := v.vehicleRepo.Create(ctx, func(vh *vehicle.Vehicle, _ vehicle.VehicleRepository) (bool, error) {
-		vh.NumberPlate = createData.NumberPlate
-		vh.Description = createData.Description
-		vh.WaterCapacity = createData.WaterCapacity
-		vh.Status = createData.Status
-		vh.Type = createData.Type
-		vh.Height = createData.Height
-		vh.Length = createData.Length
-		vh.Width = createData.Width
-		vh.Model = createData.Model
-		vh.Weight = createData.Weight
-		vh.DrivingLicense = createData.DrivingLicense
-		vh.Provider = createData.Provider
-		vh.AdditionalInfo = createData.AdditionalInfo
-
-		return true, nil
-	})
+	vh := &vehicle.Vehicle{
+		NumberPlate:    createData.NumberPlate,
+		Description:    createData.Description,
+		WaterCapacity:  createData.WaterCapacity,
+		Status:         createData.Status,
+		Type:           createData.Type,
+		Height:         createData.Height,
+		Length:         createData.Length,
+		Width:          createData.Width,
+		Model:          createData.Model,
+		Weight:         createData.Weight,
+		DrivingLicense: createData.DrivingLicense,
+		Provider:       createData.Provider,
+		AdditionalInfo: createData.AdditionalInfo,
+	}
+	created, err := v.vehicleRepo.Create(ctx, vh)
 	if err != nil {
 		log.Error("failed to create vehicle", "error", err)
 		return nil, ports.MapError(ctx, err, ports.ErrorLogAll)
@@ -143,23 +142,22 @@ func (v *VehicleService) Update(ctx context.Context, id int32, updateData *vehic
 		}
 	}
 
-	err = v.vehicleRepo.Update(ctx, id, func(vh *vehicle.Vehicle, _ vehicle.VehicleRepository) (bool, error) {
-		vh.NumberPlate = updateData.NumberPlate
-		vh.Description = updateData.Description
-		vh.WaterCapacity = updateData.WaterCapacity
-		vh.Status = updateData.Status
-		vh.Type = updateData.Type
-		vh.Height = updateData.Height
-		vh.Length = updateData.Length
-		vh.Width = updateData.Width
-		vh.Model = updateData.Model
-		vh.Weight = updateData.Weight
-		vh.DrivingLicense = updateData.DrivingLicense
-		vh.Provider = updateData.Provider
-		vh.AdditionalInfo = updateData.AdditionalInfo
-
-		return true, nil
-	})
+	vh := &vehicle.Vehicle{
+		NumberPlate:    updateData.NumberPlate,
+		Description:    updateData.Description,
+		WaterCapacity:  updateData.WaterCapacity,
+		Status:         updateData.Status,
+		Type:           updateData.Type,
+		Height:         updateData.Height,
+		Length:         updateData.Length,
+		Width:          updateData.Width,
+		Model:          updateData.Model,
+		Weight:         updateData.Weight,
+		DrivingLicense: updateData.DrivingLicense,
+		Provider:       updateData.Provider,
+		AdditionalInfo: updateData.AdditionalInfo,
+	}
+	err = v.vehicleRepo.Update(ctx, id, vh)
 
 	if err != nil {
 		log.Debug("failed to update vehicle", "error", err, "vehicle_id", id)

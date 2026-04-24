@@ -26,11 +26,10 @@ func TestSensorRepository_Update(t *testing.T) {
 			Data:      TestMqttPayload,
 		}
 
-		got, err := r.Update(context.Background(), sensorDomain.MustNewSensorID("sensor-1"), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-			sn.Status = sensorDomain.SensorStatusOffline
-			sn.Coordinate = newCoordinate
-			sn.LatestData = newLatestData
-			return true, nil
+		got, err := r.Update(context.Background(), sensorDomain.MustNewSensorID("sensor-1"), &sensorDomain.Sensor{
+			Status:     sensorDomain.SensorStatusOffline,
+			Coordinate: newCoordinate,
+			LatestData: newLatestData,
 		})
 
 		// then
@@ -50,9 +49,9 @@ func TestSensorRepository_Update(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Update(context.Background(), sensorDomain.MustNewSensorID("sensor-1"), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-			sn.Status = ""
-			return true, nil
+		got, err := r.Update(context.Background(), sensorDomain.MustNewSensorID("sensor-1"), &sensorDomain.Sensor{
+			Status:     "",
+			Coordinate: shared.MustNewCoordinate(0, 0),
 		})
 
 		// then
@@ -65,8 +64,8 @@ func TestSensorRepository_Update(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Update(context.Background(), sensorDomain.SensorID{}, func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-			return true, nil
+		got, err := r.Update(context.Background(), sensorDomain.SensorID{}, &sensorDomain.Sensor{
+			Coordinate: shared.MustNewCoordinate(0, 0),
 		})
 
 		// then
@@ -79,8 +78,8 @@ func TestSensorRepository_Update(t *testing.T) {
 		r := NewSensorRepository(suite.Store, defaultSensorMappers())
 
 		// when
-		got, err := r.Update(context.Background(), sensorDomain.MustNewSensorID("notFoundID"), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-			return true, nil
+		got, err := r.Update(context.Background(), sensorDomain.MustNewSensorID("notFoundID"), &sensorDomain.Sensor{
+			Coordinate: shared.MustNewCoordinate(0, 0),
 		})
 
 		// then
@@ -95,9 +94,9 @@ func TestSensorRepository_Update(t *testing.T) {
 		cancel()
 
 		// when
-		got, err := r.Update(ctx, sensorDomain.MustNewSensorID("sensor-1"), func(sn *sensorDomain.Sensor, _ sensorDomain.SensorRepository) (bool, error) {
-			sn.Status = sensorDomain.SensorStatusOffline
-			return true, nil
+		got, err := r.Update(ctx, sensorDomain.MustNewSensorID("sensor-1"), &sensorDomain.Sensor{
+			Status:     sensorDomain.SensorStatusOffline,
+			Coordinate: shared.MustNewCoordinate(0, 0),
 		})
 
 		// then

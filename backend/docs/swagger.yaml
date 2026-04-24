@@ -131,7 +131,30 @@ definitions:
     - tree_cluster_id
     - watering_plan_id
     type: object
-  GeoJSON:
+  GeoJSONLocation:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+    required:
+    - latitude
+    - longitude
+    type: object
+  GeoJSONMetadata:
+    properties:
+      end_point:
+        $ref: '#/definitions/GeoJSONLocation'
+      start_point:
+        $ref: '#/definitions/GeoJSONLocation'
+      watering_point:
+        $ref: '#/definitions/GeoJSONLocation'
+    required:
+    - end_point
+    - start_point
+    - watering_point
+    type: object
+  GeoJson:
     properties:
       bbox:
         items:
@@ -139,38 +162,38 @@ definitions:
         type: array
       features:
         items:
-          $ref: '#/definitions/GeoJSONFeature'
+          $ref: '#/definitions/GeoJsonFeature'
         type: array
       metadata:
         $ref: '#/definitions/GeoJSONMetadata'
       type:
-        $ref: '#/definitions/GeoJSONType'
+        $ref: '#/definitions/GeoJsonType'
     required:
     - bbox
     - features
     - metadata
     - type
     type: object
-  GeoJSONFeature:
+  GeoJsonFeature:
     properties:
       bbox:
         items:
           type: number
         type: array
       geometry:
-        $ref: '#/definitions/GeoJSONGeometry'
+        $ref: '#/definitions/GeoJsonGeometry'
       properties:
         additionalProperties: {}
         type: object
       type:
-        $ref: '#/definitions/GeoJSONType'
+        $ref: '#/definitions/GeoJsonType'
     required:
     - bbox
     - geometry
     - properties
     - type
     type: object
-  GeoJSONGeometry:
+  GeoJsonGeometry:
     properties:
       coordinates:
         items:
@@ -180,35 +203,17 @@ definitions:
           type: array
         type: array
       type:
-        $ref: '#/definitions/GeoJSONType'
+        $ref: '#/definitions/GeoJsonType'
     required:
     - coordinates
     - type
     type: object
-  GeoJSONLocation:
-    properties:
-      coordinate:
-        $ref: '#/definitions/shared.Coordinate'
-    type: object
-  GeoJSONMetadata:
-    properties:
-      endPoint:
-        $ref: '#/definitions/GeoJSONLocation'
-      startPoint:
-        $ref: '#/definitions/GeoJSONLocation'
-      wateringPoint:
-        $ref: '#/definitions/GeoJSONLocation'
-    type: object
-  GeoJSONType:
+  GeoJsonType:
     enum:
     - FeatureCollection
-    - Feature
-    - LineString
     type: string
     x-enum-varnames:
     - FeatureCollection
-    - Feature
-    - LineString
   GitInfo:
     properties:
       branch:
@@ -1471,8 +1476,6 @@ definitions:
     - centibar
     - depth
     - resistance
-    type: object
-  shared.Coordinate:
     type: object
 info:
   contact:
@@ -3591,7 +3594,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/GeoJSON'
+            $ref: '#/definitions/GeoJson'
         "400":
           description: Bad Request
           schema:

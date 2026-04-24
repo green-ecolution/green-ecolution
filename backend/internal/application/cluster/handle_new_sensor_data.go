@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/green-ecolution/green-ecolution/backend/internal/domain/cluster"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/sensor"
 	"github.com/green-ecolution/green-ecolution/backend/internal/domain/shared"
 	"github.com/green-ecolution/green-ecolution/backend/internal/logger"
@@ -47,12 +46,8 @@ func (s *TreeClusterService) HandleNewSensorData(ctx context.Context, event *sen
 		return nil
 	}
 
-	updateFn := func(tc *cluster.TreeCluster, _ cluster.TreeClusterRepository) (bool, error) {
-		tc.WateringStatus = wateringStatus
-		return true, nil
-	}
-
-	if err := s.treeClusterRepo.Update(ctx, tcID, updateFn); err == nil {
+	tc.WateringStatus = wateringStatus
+	if err := s.treeClusterRepo.Update(ctx, tcID, tc); err == nil {
 		return s.publishUpdateEvent(ctx, tc)
 	}
 

@@ -13,8 +13,8 @@ type TreeClusterRepository interface {
 	GetCount(ctx context.Context, query TreeClusterQuery) (int64, error)
 	GetByID(ctx context.Context, id int32) (*TreeCluster, error)
 	GetByIDs(ctx context.Context, ids []int32) ([]*TreeCluster, error)
-	Create(ctx context.Context, fn func(tc *TreeCluster, repo TreeClusterRepository) (bool, error)) (*TreeCluster, error)
-	Update(ctx context.Context, id int32, fn func(tc *TreeCluster, repo TreeClusterRepository) (bool, error)) error
+	Create(ctx context.Context, entity *TreeCluster) (*TreeCluster, error)
+	Update(ctx context.Context, id int32, entity *TreeCluster) error
 	Delete(ctx context.Context, id int32) error
 	GetAllRegionsWithWateringPlanCount(ctx context.Context) ([]*evaluation.RegionEvaluation, error)
 
