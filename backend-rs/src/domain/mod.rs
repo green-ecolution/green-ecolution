@@ -28,7 +28,10 @@ pub enum DomainError {
     InvalidDrivingLicense(String),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, thiserror::Error)]
+pub enum RepositoryError {}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Id<T>(i32, PhantomData<T>);
 
 impl<T> Id<T> {

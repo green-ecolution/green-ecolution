@@ -4,6 +4,8 @@ use std::time::Duration;
 use chrono::{DateTime, Utc};
 use url::Url;
 
+use crate::domain::RepositoryError;
+
 #[derive(Debug, Clone)]
 pub struct ServiceStatus {
     name: String,
@@ -311,4 +313,13 @@ impl Map {
     pub fn bbox(&self) -> [f64; 4] {
         self.bbox
     }
+}
+
+#[trait_variant::make(Send)]
+pub trait InfoRepository {
+    async fn app_info(&self) -> Result<App, RepositoryError>;
+    async fn map_info(&self) -> Result<Map, RepositoryError>;
+    async fn server_info(&self) -> Result<Server, RepositoryError>;
+    async fn services_info(&self) -> Result<ServiceStatus, RepositoryError>;
+    async fn statistics_info(&self) -> Result<DataStatistics, RepositoryError>;
 }

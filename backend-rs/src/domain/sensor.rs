@@ -1,6 +1,9 @@
 use chrono::{DateTime, Utc};
 
-use crate::domain::{Id, shared::{coordinates::Coordinate, provider_info::ProviderInfo}};
+use crate::domain::{
+    Id, RepositoryError,
+    shared::{coordinates::Coordinate, pagination::Page, provider_info::ProviderInfo},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SensorStatus {
@@ -29,16 +32,38 @@ impl Sensor {
         coordinates: Coordinate,
         provider_info: ProviderInfo,
     ) -> Self {
-        Self { id, created_at, updated_at, status, latest_data, coordinates, provider_info }
+        Self {
+            id,
+            created_at,
+            updated_at,
+            status,
+            latest_data,
+            coordinates,
+            provider_info,
+        }
     }
 
-    pub fn id(&self) -> &Id<Self> { &self.id }
-    pub fn created_at(&self) -> DateTime<Utc> { self.created_at }
-    pub fn updated_at(&self) -> DateTime<Utc> { self.updated_at }
-    pub fn status(&self) -> Option<SensorStatus> { self.status }
-    pub fn latest_data(&self) -> Option<&SensorData> { self.latest_data.as_ref() }
-    pub fn coordinates(&self) -> &Coordinate { &self.coordinates }
-    pub fn provider_info(&self) -> &ProviderInfo { &self.provider_info }
+    pub fn id(&self) -> &Id<Self> {
+        &self.id
+    }
+    pub fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
+    }
+    pub fn updated_at(&self) -> DateTime<Utc> {
+        self.updated_at
+    }
+    pub fn status(&self) -> Option<SensorStatus> {
+        self.status
+    }
+    pub fn latest_data(&self) -> Option<&SensorData> {
+        self.latest_data.as_ref()
+    }
+    pub fn coordinates(&self) -> &Coordinate {
+        &self.coordinates
+    }
+    pub fn provider_info(&self) -> &ProviderInfo {
+        &self.provider_info
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -57,13 +82,26 @@ impl SensorData {
         created_at: DateTime<Utc>,
         updated_at: DateTime<Utc>,
     ) -> Self {
-        Self { id, sensor_id, created_at, updated_at }
+        Self {
+            id,
+            sensor_id,
+            created_at,
+            updated_at,
+        }
     }
 
-    pub fn id(&self) -> &Id<Self> { &self.id }
-    pub fn sensor_id(&self) -> &Id<Sensor> { &self.sensor_id }
-    pub fn created_at(&self) -> DateTime<Utc> { self.created_at }
-    pub fn updated_at(&self) -> DateTime<Utc> { self.updated_at }
+    pub fn id(&self) -> &Id<Self> {
+        &self.id
+    }
+    pub fn sensor_id(&self) -> &Id<Sensor> {
+        &self.sensor_id
+    }
+    pub fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
+    }
+    pub fn updated_at(&self) -> DateTime<Utc> {
+        self.updated_at
+    }
 }
 
 #[derive(Debug)]
@@ -81,4 +119,23 @@ pub struct SensorUpdate {
     pub latest_data: Option<SensorData>,
     pub coordinate: Option<Coordinate>,
     pub provider_info: Option<ProviderInfo>,
+}
+
+#[derive(Debug, Default)]
+pub struct SensorQuery {
+    pub provider: Option<String>,
+}
+
+#[trait_variant::make(Send)]
+pub trait SensorRepository {
+    async fn all(&self, query: SensorQuery) -> Result<Page<Sensor>, RepositoryError>;
+    async fn count(&self, query: SensorQuery) -> Result<u64, RepositoryError>;
+    async fn create(&self, entity: SensorCreate) -> Result<Sensor, RepositoryError>;
+    async fn update(&self, id: Id<Sensor>, entity: SensorUpdate)
+    -> Result<Sensor, RepositoryError>;
+    async fn delete(&self, id: Id<Sensor>) -> Result<(), RepositoryError>;
+
+    async fn all_data(&self, id: Id<Sensor>) -> Result<Page<SensorData>, RepositoryError>;
+    async fn latest_data(&self, id: Id<Sensor>) -> Result<SensorData, RepositoryError>;
+    async fn create_data(&self, data: SensorData) -> Result<(), RepositoryError>;
 }

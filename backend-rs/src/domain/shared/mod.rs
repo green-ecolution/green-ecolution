@@ -1,13 +1,6 @@
 pub mod coordinates;
 pub mod distance;
+pub mod pagination;
 pub mod provider_info;
 pub mod water_capacity;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum WateringStatus {
-    Good,
-    Moderate,
-    Bad,
-    JustWatered,
-    Unknown,
-}
+pub mod watering_status;

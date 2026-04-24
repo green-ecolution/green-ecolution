@@ -2,7 +2,7 @@ use std::{fmt::Display, ops::Add};
 
 use crate::domain::DomainError;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Distance(f64);
 
 impl Distance {

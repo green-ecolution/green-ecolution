@@ -2,7 +2,7 @@ use std::{fmt::Display, ops::Add};
 
 use crate::domain::DomainError;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct WaterCapacity(f64);
 
 impl WaterCapacity {

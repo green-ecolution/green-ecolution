@@ -3,8 +3,8 @@ use std::str::FromStr;
 use chrono::{DateTime, Utc};
 
 use crate::domain::{
-    DomainError, Id,
-    shared::{provider_info::ProviderInfo, water_capacity::WaterCapacity},
+    DomainError, Id, RepositoryError,
+    shared::{pagination::Page, provider_info::ProviderInfo, water_capacity::WaterCapacity},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -17,16 +17,16 @@ pub enum DrivingLicense {
 
 impl DrivingLicense {
     pub fn satisfies(&self, required: DrivingLicense) -> bool {
-        match *self {
-            DrivingLicense::BE => required == DrivingLicense::B,
-            DrivingLicense::C => required == DrivingLicense::B,
-            DrivingLicense::CE => {
-                required == DrivingLicense::B
-                    || required == DrivingLicense::BE
-                    || required == DrivingLicense::C
-            }
-            _ => false,
-        }
+        *self == required
+            || matches!(
+                (self, required),
+                (DrivingLicense::BE, DrivingLicense::B)
+                    | (DrivingLicense::C, DrivingLicense::B)
+                    | (
+                        DrivingLicense::CE,
+                        DrivingLicense::B | DrivingLicense::BE | DrivingLicense::C
+                    )
+            )
     }
 }
 
@@ -206,4 +206,20 @@ pub struct VehicleQuery {
     pub with_archived: bool,
     pub only_archived: bool,
     pub provider: Option<String>,
+}
+
+#[trait_variant::make(Send)]
+pub trait VehicleRepository {
+    async fn all(&self, query: VehicleQuery) -> Result<Page<Vehicle>, RepositoryError>;
+    async fn count(&self, query: VehicleQuery) -> Result<u64, RepositoryError>;
+    async fn by_id(&self, id: Id<Vehicle>) -> Result<Vehicle, RepositoryError>;
+    async fn by_plate(&self, plate: &str) -> Result<Vehicle, RepositoryError>;
+    async fn create(&self, entity: VehicleCreate) -> Result<Vehicle, RepositoryError>;
+    async fn update(
+        &self,
+        id: Id<Vehicle>,
+        entity: VehicleUpdate,
+    ) -> Result<Vehicle, RepositoryError>;
+    async fn archive(&self, id: Id<Vehicle>) -> Result<(), RepositoryError>;
+    async fn delete(&self, id: Id<Vehicle>) -> Result<(), RepositoryError>;
 }

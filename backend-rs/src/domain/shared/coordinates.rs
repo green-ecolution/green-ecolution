@@ -7,11 +7,11 @@ pub struct Coordinate(f64, f64);
 
 impl Coordinate {
     pub fn new(lat: f64, lng: f64) -> Result<Coordinate, DomainError> {
-        if lat < -90.0 || lat > 90.0 {
+        if (-90.0..=90.0).contains(&lat) {
             return Err(DomainError::InvalidLatitude(lat));
         }
 
-        if lng < -180.0 || lng > 180.0 {
+        if (-180.0..=180.0).contains(&lng) {
             return Err(DomainError::InvalidLongitude(lng));
         }
 

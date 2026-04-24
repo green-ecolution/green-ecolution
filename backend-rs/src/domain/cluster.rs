@@ -1,8 +1,11 @@
 use chrono::{DateTime, Utc};
 
 use crate::domain::{
-    Id,
-    shared::{WateringStatus, coordinates::Coordinate, provider_info::ProviderInfo},
+    Id, RepositoryError,
+    shared::{
+        coordinates::Coordinate, pagination::Page, provider_info::ProviderInfo,
+        watering_status::WateringStatus,
+    },
     tree::Tree,
 };
 
@@ -62,18 +65,42 @@ impl TreeCluster {
         }
     }
 
-    pub fn id(&self) -> &Id<Self> { &self.id }
-    pub fn created_at(&self) -> DateTime<Utc> { self.created_at }
-    pub fn updated_at(&self) -> DateTime<Utc> { self.updated_at }
-    pub fn watering_status(&self) -> WateringStatus { self.watering_status }
-    pub fn last_watered(&self) -> Option<DateTime<Utc>> { self.last_watered }
-    pub fn moisture_level(&self) -> f64 { self.moisture_level }
-    pub fn address(&self) -> &str { &self.address }
-    pub fn coordinates(&self) -> Option<&Coordinate> { self.coordinates.as_ref() }
-    pub fn tree_ids(&self) -> &[Id<Tree>] { &self.tree_ids }
-    pub fn soil_condition(&self) -> Option<SoilCondition> { self.soil_condition }
-    pub fn name(&self) -> &str { &self.name }
-    pub fn provider_info(&self) -> &ProviderInfo { &self.provider_info }
+    pub fn id(&self) -> &Id<Self> {
+        &self.id
+    }
+    pub fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
+    }
+    pub fn updated_at(&self) -> DateTime<Utc> {
+        self.updated_at
+    }
+    pub fn watering_status(&self) -> WateringStatus {
+        self.watering_status
+    }
+    pub fn last_watered(&self) -> Option<DateTime<Utc>> {
+        self.last_watered
+    }
+    pub fn moisture_level(&self) -> f64 {
+        self.moisture_level
+    }
+    pub fn address(&self) -> &str {
+        &self.address
+    }
+    pub fn coordinates(&self) -> Option<&Coordinate> {
+        self.coordinates.as_ref()
+    }
+    pub fn tree_ids(&self) -> &[Id<Tree>] {
+        &self.tree_ids
+    }
+    pub fn soil_condition(&self) -> Option<SoilCondition> {
+        self.soil_condition
+    }
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+    pub fn provider_info(&self) -> &ProviderInfo {
+        &self.provider_info
+    }
 }
 
 #[derive(Debug)]
@@ -102,4 +129,20 @@ pub struct TreeClusterQuery {
     pub regions: Vec<String>,
     pub ids: Vec<i32>,
     pub provider: Option<String>,
+}
+
+#[trait_variant::make(Send)]
+pub trait TreeClusterRepository {
+    async fn all(&self, query: TreeClusterQuery) -> Result<Page<TreeCluster>, RepositoryError>;
+    async fn count(&self, query: TreeClusterQuery) -> Result<u64, RepositoryError>;
+    async fn by_id(&self, id: Id<TreeCluster>) -> Result<TreeCluster, RepositoryError>;
+    async fn create(&self, entity: TreeClusterCreate) -> Result<TreeCluster, RepositoryError>;
+    async fn update(
+        &self,
+        id: Id<TreeCluster>,
+        entity: TreeClusterUpdate,
+    ) -> Result<(), RepositoryError>;
+    async fn delete(&self, id: Id<TreeCluster>) -> Result<(), RepositoryError>;
+    async fn archive(&self, id: Id<TreeCluster>) -> Result<(), RepositoryError>;
+    async fn center_point(&self, id: Id<TreeCluster>) -> Result<Coordinate, RepositoryError>;
 }
