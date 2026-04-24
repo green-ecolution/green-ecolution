@@ -18,38 +18,7 @@ func TreeClusterFromResponse(source *cluster.TreeCluster) *entities.TreeClusterR
 		WateringStatus: MapWateringStatus(source.WateringStatus),
 		LastWatered:    source.LastWatered,
 		MoistureLevel:  source.MoistureLevel,
-		Address:        source.Address,
-		Description:    source.Description,
-		Archived:       source.Archived,
-		SoilCondition:  MapSoilCondition(source.SoilCondition),
-		Name:           source.Name,
-		Provider:       source.Provider,
-		AdditionalInfo: source.AdditionalInfo,
-	}
-	if source.Coordinate != nil {
-		lat := source.Coordinate.Latitude()
-		lng := source.Coordinate.Longitude()
-		resp.Latitude = &lat
-		resp.Longitude = &lng
-	}
-	return resp
-}
-
-func TreeClusterFromResponseList(source []*cluster.TreeCluster) []*entities.TreeClusterInListResponse {
-	return utils.MapSlice(source, TreeClusterFromInListResponse)
-}
-
-func TreeClusterFromInListResponse(source *cluster.TreeCluster) *entities.TreeClusterInListResponse {
-	if source == nil {
-		return nil
-	}
-	resp := &entities.TreeClusterInListResponse{
-		ID:             source.ID,
-		CreatedAt:      source.CreatedAt,
-		UpdatedAt:      source.UpdatedAt,
-		WateringStatus: MapWateringStatus(source.WateringStatus),
-		LastWatered:    source.LastWatered,
-		MoistureLevel:  source.MoistureLevel,
+		RegionID:       source.RegionID,
 		Address:        source.Address,
 		Description:    source.Description,
 		Archived:       source.Archived,
@@ -66,6 +35,10 @@ func TreeClusterFromInListResponse(source *cluster.TreeCluster) *entities.TreeCl
 		resp.Longitude = &lng
 	}
 	return resp
+}
+
+func TreeClusterFromResponseList(source []*cluster.TreeCluster) []*entities.TreeClusterResponse {
+	return utils.MapSlice(source, TreeClusterFromResponse)
 }
 
 func TreeClusterFromCreateRequest(source *entities.TreeClusterCreateRequest) *cluster.TreeClusterCreate {

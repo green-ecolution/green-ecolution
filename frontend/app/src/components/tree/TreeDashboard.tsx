@@ -43,7 +43,7 @@ const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
               <span>Bewässerungsgruppe: {treeCluster?.name}</span>
               {', '}
               <span>
-                Standort: {treeCluster?.address}, {treeCluster?.region?.name}
+                Standort: {treeCluster?.address}
               </span>
             </p>
           ) : (
@@ -88,7 +88,7 @@ const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
         />
       </article>
 
-      {tree?.sensor ? (
+      {tree?.sensorId ? (
         <Tabs defaultValue="watering" className="mt-10">
           <TabsList>
             <TabsTrigger value="watering">

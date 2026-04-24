@@ -45,10 +45,7 @@ func GetAllTreeClusters(svc ports.TreeClusterService) fiber.Handler {
 			return errorhandler.HandleError(err)
 		}
 
-		data := make([]*entities.TreeClusterInListResponse, len(domainData))
-		for i, domain := range domainData {
-			data[i] = mapper.TreeClusterFromInListResponse(domain)
-		}
+		data := mapper.TreeClusterFromResponseList(domainData)
 
 		return c.JSON(entities.TreeClusterListResponse{
 			Data:       data,

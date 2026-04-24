@@ -64,7 +64,6 @@ docs/TreeAPI.md
 docs/TreeCluster.md
 docs/TreeClusterAPI.md
 docs/TreeClusterCreate.md
-docs/TreeClusterInList.md
 docs/TreeClusterList.md
 docs/TreeClusterUpdate.md
 docs/TreeCreate.md
@@ -140,7 +139,6 @@ model_soil_condition.go
 model_tree.go
 model_tree_cluster.go
 model_tree_cluster_create.go
-model_tree_cluster_in_list.go
 model_tree_cluster_list.go
 model_tree_cluster_update.go
 model_tree_create.go

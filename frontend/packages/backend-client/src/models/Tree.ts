@@ -20,13 +20,6 @@ import {
     WateringStatusToJSON,
     WateringStatusToJSONTyped,
 } from './WateringStatus';
-import type { Sensor } from './Sensor';
-import {
-    SensorFromJSON,
-    SensorFromJSONTyped,
-    SensorToJSON,
-    SensorToJSONTyped,
-} from './Sensor';
 
 /**
  * 
@@ -96,10 +89,10 @@ export interface Tree {
     provider?: string;
     /**
      * 
-     * @type {Sensor}
+     * @type {string}
      * @memberof Tree
      */
-    sensor?: Sensor;
+    sensorId?: string;
     /**
      * 
      * @type {string}
@@ -165,7 +158,7 @@ export function TreeFromJSONTyped(json: any, ignoreDiscriminator: boolean): Tree
         'number': json['number'],
         'plantingYear': json['planting_year'],
         'provider': json['provider'] == null ? undefined : json['provider'],
-        'sensor': json['sensor'] == null ? undefined : SensorFromJSON(json['sensor']),
+        'sensorId': json['sensor_id'] == null ? undefined : json['sensor_id'],
         'species': json['species'],
         'treeClusterId': json['tree_cluster_id'] == null ? undefined : json['tree_cluster_id'],
         'updatedAt': json['updated_at'],
@@ -194,7 +187,7 @@ export function TreeToJSONTyped(value?: Tree | null, ignoreDiscriminator: boolea
         'number': value['number'],
         'planting_year': value['plantingYear'],
         'provider': value['provider'],
-        'sensor': SensorToJSON(value['sensor']),
+        'sensor_id': value['sensorId'],
         'species': value['species'],
         'tree_cluster_id': value['treeClusterId'],
         'updated_at': value['updatedAt'],

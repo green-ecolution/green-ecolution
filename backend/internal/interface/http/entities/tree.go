@@ -9,7 +9,7 @@ type TreeResponse struct {
 	CreatedAt      time.Time              `json:"created_at"`
 	UpdatedAt      time.Time              `json:"updated_at"`
 	TreeClusterID  *int32                 `json:"tree_cluster_id" validate:"optional"`
-	Sensor         *SensorResponse        `json:"sensor" validate:"optional"`
+	SensorID       *string                `json:"sensor_id" validate:"optional"`
 	LastWatered    *time.Time             `json:"last_watered,omitempty" validate:"optional"`
 	PlantingYear   int32                  `json:"planting_year"`
 	Species        string                 `json:"species"`

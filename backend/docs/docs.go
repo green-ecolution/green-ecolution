@@ -4110,8 +4110,8 @@ const docTemplate = `{
                 "provider": {
                     "type": "string"
                 },
-                "sensor": {
-                    "$ref": "#/definitions/Sensor"
+                "sensor_id": {
+                    "type": "string"
                 },
                 "species": {
                     "type": "string"
@@ -4181,16 +4181,16 @@ const docTemplate = `{
                 "provider": {
                     "type": "string"
                 },
-                "region": {
-                    "$ref": "#/definitions/Region"
+                "region_id": {
+                    "type": "integer"
                 },
                 "soil_condition": {
                     "$ref": "#/definitions/SoilCondition"
                 },
-                "trees": {
+                "tree_ids": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/Tree"
+                        "type": "integer"
                     }
                 },
                 "updated_at": {
@@ -4238,80 +4238,6 @@ const docTemplate = `{
                 }
             }
         },
-        "TreeClusterInList": {
-            "type": "object",
-            "required": [
-                "address",
-                "archived",
-                "created_at",
-                "description",
-                "id",
-                "latitude",
-                "longitude",
-                "moisture_level",
-                "name",
-                "soil_condition",
-                "updated_at",
-                "watering_status"
-            ],
-            "properties": {
-                "additional_information": {
-                    "type": "object",
-                    "additionalProperties": true
-                },
-                "address": {
-                    "type": "string"
-                },
-                "archived": {
-                    "type": "boolean"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "last_watered": {
-                    "type": "string"
-                },
-                "latitude": {
-                    "type": "number"
-                },
-                "longitude": {
-                    "type": "number"
-                },
-                "moisture_level": {
-                    "type": "number"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "provider": {
-                    "type": "string"
-                },
-                "region": {
-                    "$ref": "#/definitions/Region"
-                },
-                "soil_condition": {
-                    "$ref": "#/definitions/SoilCondition"
-                },
-                "tree_ids": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "watering_status": {
-                    "$ref": "#/definitions/WateringStatus"
-                }
-            }
-        },
         "TreeClusterList": {
             "type": "object",
             "required": [
@@ -4321,7 +4247,7 @@ const docTemplate = `{
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/TreeClusterInList"
+                        "$ref": "#/definitions/TreeCluster"
                     }
                 },
                 "pagination": {
@@ -5001,8 +4927,8 @@ const docTemplate = `{
                 "refill_count",
                 "status",
                 "total_water_required",
-                "transporter",
-                "treeclusters",
+                "transporter_id",
+                "tree_cluster_ids",
                 "updated_at",
                 "user_ids"
             ],
@@ -5053,16 +4979,16 @@ const docTemplate = `{
                 "total_water_required": {
                     "type": "number"
                 },
-                "trailer": {
-                    "$ref": "#/definitions/Vehicle"
+                "trailer_id": {
+                    "type": "integer"
                 },
-                "transporter": {
-                    "$ref": "#/definitions/Vehicle"
+                "transporter_id": {
+                    "type": "integer"
                 },
-                "treeclusters": {
+                "tree_cluster_ids": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/TreeClusterInList"
+                        "type": "integer"
                     }
                 },
                 "updated_at": {
@@ -5132,8 +5058,8 @@ const docTemplate = `{
                 "id",
                 "status",
                 "total_water_required",
-                "transporter",
-                "treeclusters",
+                "transporter_id",
+                "tree_cluster_ids",
                 "updated_at",
                 "user_ids"
             ],
@@ -5169,16 +5095,16 @@ const docTemplate = `{
                 "total_water_required": {
                     "type": "number"
                 },
-                "trailer": {
-                    "$ref": "#/definitions/Vehicle"
+                "trailer_id": {
+                    "type": "integer"
                 },
-                "transporter": {
-                    "$ref": "#/definitions/Vehicle"
+                "transporter_id": {
+                    "type": "integer"
                 },
-                "treeclusters": {
+                "tree_cluster_ids": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/TreeClusterInList"
+                        "type": "integer"
                     }
                 },
                 "updated_at": {

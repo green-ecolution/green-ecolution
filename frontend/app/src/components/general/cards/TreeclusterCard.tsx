@@ -1,13 +1,13 @@
 import TreeIcon from '@/components/icons/Tree'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
-import { TreeClusterInList } from '@green-ecolution/backend-client'
+import { TreeCluster } from '@green-ecolution/backend-client'
 import { Link } from '@tanstack/react-router'
 import { MapPin } from 'lucide-react'
 import React from 'react'
 import { ListCard, ListCardStatus, ListCardTitle, ListCardMeta } from '@green-ecolution/ui'
 
 interface TreeclusterCardProps {
-  treecluster: TreeClusterInList
+  treecluster: TreeCluster
 }
 
 const TreeclusterCard: React.FC<TreeclusterCardProps> = ({ treecluster }) => {
@@ -28,11 +28,7 @@ const TreeclusterCard: React.FC<TreeclusterCardProps> = ({ treecluster }) => {
         <ListCardMeta>
           <MapPin className="w-5 h-5" />
           <p>
-            <span>{treecluster.address}, </span>
-            <br />
-            <span className="text-dark-600 lg:block lg:text-sm">
-              {treecluster.region?.name ?? '-'}
-            </span>
+            <span>{treecluster.address}</span>
           </p>
         </ListCardMeta>
 

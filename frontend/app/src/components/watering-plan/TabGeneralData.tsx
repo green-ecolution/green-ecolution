@@ -2,8 +2,8 @@ import { WateringPlan, WateringPlanStatus } from '@green-ecolution/backend-clien
 import { DetailedList, StatusCard } from '@green-ecolution/ui'
 import { format, formatDuration, intervalToDuration } from 'date-fns'
 import { getWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { userQuery } from '@/api/queries'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
+import { userQuery, vehicleIdQuery } from '@/api/queries'
 import { de } from 'date-fns/locale'
 import { roundTo } from '@/lib/utils'
 
@@ -14,6 +14,14 @@ interface TabGeneralDataProps {
 const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
   const userIdsString = wateringPlan?.userIds?.join(',') || ''
   const { data: userRes } = useSuspenseQuery(userQuery({ userIds: userIdsString }))
+  const { data: transporter } = useQuery({
+    ...vehicleIdQuery(wateringPlan.transporterId.toString()),
+    enabled: !!wateringPlan.transporterId,
+  })
+  const { data: trailer } = useQuery({
+    ...vehicleIdQuery(wateringPlan.trailerId?.toString() ?? '-1'),
+    enabled: !!wateringPlan.trailerId,
+  })
 
   const updatedDate = wateringPlan?.updatedAt
     ? format(new Date(wateringPlan.updatedAt), 'dd.MM.yyyy')
@@ -39,20 +47,20 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
     },
     {
       label: 'Transporter',
-      value: wateringPlan.transporter
-        ? `${wateringPlan.transporter.numberPlate}${wateringPlan.transporter.archivedAt ? ' (Archiviert)' : ''}`
+      value: transporter
+        ? `${transporter.numberPlate}${transporter.archivedAt ? ' (Archiviert)' : ''}`
         : 'Keine Angabe',
     },
     {
       label: 'Zusätzlicher Anhänger',
-      value: wateringPlan.trailer
-        ? `${wateringPlan.trailer.numberPlate}${wateringPlan.trailer.archivedAt ? ' (Archiviert)' : ''}`
+      value: trailer
+        ? `${trailer.numberPlate}${trailer.archivedAt ? ' (Archiviert)' : ''}`
         : 'Keine Angabe',
     },
     {
       label: 'Anzahl der Bewässerungsgruppen',
-      value: wateringPlan.treeclusters?.length
-        ? `${wateringPlan.treeclusters.length} Gruppe(n)`
+      value: wateringPlan.treeClusterIds?.length
+        ? `${wateringPlan.treeClusterIds.length} Gruppe(n)`
         : 'Keine Angabe',
     },
     {
@@ -109,7 +117,7 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
               label="Verbrauchtes Wasser"
               value={`${wateringPlan.evaluation.reduce((sum, item) => sum + item.consumedWater, 0)} Liter`}
               isLarge
-              description={`bei ${wateringPlan.treeclusters.length} ${wateringPlan.treeclusters.length === 1 ? 'Bewässerungsgruppe' : 'Bewässerungsgruppen'}`}
+              description={`bei ${wateringPlan.treeClusterIds.length} ${wateringPlan.treeClusterIds.length === 1 ? 'Bewässerungsgruppe' : 'Bewässerungsgruppen'}`}
             />
           </li>
         )}

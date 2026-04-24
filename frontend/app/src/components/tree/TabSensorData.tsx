@@ -5,21 +5,28 @@ import { format } from 'date-fns'
 import GeneralLink from '../general/links/GeneralLink'
 import ChartSensorData from './ChartSensorData'
 import { SensorStatus, Tree } from '@green-ecolution/backend-client'
+import { useQuery } from '@tanstack/react-query'
+import { sensorIdQuery } from '@/api/queries'
 
 interface TabSensorDataProps {
   tree: Tree
 }
 
 const TabSensorData: React.FC<TabSensorDataProps> = ({ tree }) => {
-  const updatedDate = tree?.sensor?.updatedAt
-    ? format(new Date(tree?.sensor?.updatedAt), 'dd.MM.yyyy')
+  const { data: sensor } = useQuery({
+    ...sensorIdQuery(tree.sensorId!),
+    enabled: !!tree.sensorId,
+  })
+
+  const updatedDate = sensor?.updatedAt
+    ? format(new Date(sensor.updatedAt), 'dd.MM.yyyy')
     : 'Keine Angabe'
-  const updatedTime = tree?.sensor?.latestData?.updatedAt
-    ? format(new Date(tree?.sensor?.latestData?.updatedAt).getTime(), 'HH:mm')
+  const updatedTime = sensor?.latestData?.updatedAt
+    ? format(new Date(sensor.latestData.updatedAt).getTime(), 'HH:mm')
     : 'Keine Angabe'
 
   const sensorStatusDetails = getSensorStatusDetails(
-    tree?.sensor?.status ?? SensorStatus.SensorStatusUnknown,
+    sensor?.status ?? SensorStatus.SensorStatusUnknown,
   )
 
   return (
@@ -38,8 +45,8 @@ const TabSensorData: React.FC<TabSensorDataProps> = ({ tree }) => {
           <StatusCard
             label="Akkustand"
             value={
-              tree?.sensor?.latestData?.battery
-                ? `${tree.sensor.latestData.battery.toFixed(2)} V`
+              sensor?.latestData?.battery
+                ? `${sensor.latestData.battery.toFixed(2)} V`
                 : 'Keine Angabe'
             }
             isLarge
@@ -49,7 +56,7 @@ const TabSensorData: React.FC<TabSensorDataProps> = ({ tree }) => {
         <li>
           <StatusCard
             label="Letzte Messung"
-            value={tree?.sensor?.latestData?.updatedAt ? `${updatedTime} Uhr` : 'Keine Angabe'}
+            value={sensor?.latestData?.updatedAt ? `${updatedTime} Uhr` : 'Keine Angabe'}
             isLarge
             description={`am ${updatedDate}`}
           />
@@ -59,11 +66,11 @@ const TabSensorData: React.FC<TabSensorDataProps> = ({ tree }) => {
         label="Zum verknüpften Sensor"
         link={{
           to: '/sensors/$sensorId',
-          params: { sensorId: String(tree?.sensor?.id) },
+          params: { sensorId: String(tree.sensorId) },
         }}
       />
 
-      {tree?.sensor && <ChartSensorData sensorId={tree.sensor.id} />}
+      {tree.sensorId && <ChartSensorData sensorId={tree.sensorId} />}
     </>
   )
 }

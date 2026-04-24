@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
-import { TreeClusterInList } from '@green-ecolution/backend-client'
+import { TreeCluster } from '@green-ecolution/backend-client'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import {
   AlertDialog,
@@ -124,7 +124,7 @@ function SelectCluster() {
     setClusterIds((prev) => prev.filter((id) => id !== clusterId))
   }
 
-  const handleClick = (cluster: TreeClusterInList) => {
+  const handleClick = (cluster: TreeCluster) => {
     if (disabledClusters.includes(cluster.id)) return
 
     setClusterIds((prev) => {

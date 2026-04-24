@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 **Number** | **string** |  | 
 **PlantingYear** | **int32** |  | 
 **Provider** | Pointer to **string** |  | [optional] 
-**Sensor** | Pointer to [**Sensor**](Sensor.md) |  | [optional] 
+**SensorId** | Pointer to **string** |  | [optional] 
 **Species** | **string** |  | 
 **TreeClusterId** | Pointer to **int32** |  | [optional] 
 **UpdatedAt** | **string** |  | 
@@ -254,30 +254,30 @@ SetProvider sets Provider field to given value.
 
 HasProvider returns a boolean if a field has been set.
 
-### GetSensor
+### GetSensorId
 
-`func (o *Tree) GetSensor() Sensor`
+`func (o *Tree) GetSensorId() string`
 
-GetSensor returns the Sensor field if non-nil, zero value otherwise.
+GetSensorId returns the SensorId field if non-nil, zero value otherwise.
 
-### GetSensorOk
+### GetSensorIdOk
 
-`func (o *Tree) GetSensorOk() (*Sensor, bool)`
+`func (o *Tree) GetSensorIdOk() (*string, bool)`
 
-GetSensorOk returns a tuple with the Sensor field if it's non-nil, zero value otherwise
+GetSensorIdOk returns a tuple with the SensorId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetSensor
+### SetSensorId
 
-`func (o *Tree) SetSensor(v Sensor)`
+`func (o *Tree) SetSensorId(v string)`
 
-SetSensor sets Sensor field to given value.
+SetSensorId sets SensorId field to given value.
 
-### HasSensor
+### HasSensorId
 
-`func (o *Tree) HasSensor() bool`
+`func (o *Tree) HasSensorId() bool`
 
-HasSensor returns a boolean if a field has been set.
+HasSensorId returns a boolean if a field has been set.
 
 ### GetSpecies
 

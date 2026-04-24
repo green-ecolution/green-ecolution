@@ -14,11 +14,18 @@ func TreeFromResponse(source *tree.Tree) *entities.TreeResponse {
 	if source == nil {
 		return nil
 	}
+	var sensorID *string
+	if source.SensorID != nil {
+		s := source.SensorID.String()
+		sensorID = &s
+	}
+
 	return &entities.TreeResponse{
 		ID:             source.ID,
 		CreatedAt:      source.CreatedAt,
 		UpdatedAt:      source.UpdatedAt,
 		TreeClusterID:  source.TreeClusterID,
+		SensorID:       sensorID,
 		LastWatered:    source.LastWatered,
 		PlantingYear:   source.PlantingYear.Year(),
 		Species:        source.Species,

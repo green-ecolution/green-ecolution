@@ -14,12 +14,22 @@ import {
   StatusCard,
 } from '@green-ecolution/ui'
 import { TreeCluster } from '@green-ecolution/backend-client'
+import { useQueries } from '@tanstack/react-query'
+import { treeIdQuery } from '@/api/queries'
 
 interface TreeClusterDashboardProps {
   treecluster: TreeCluster
 }
 
 const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
+  const treeIds = treecluster.treeIds ?? []
+  const treeQueries = useQueries({
+    queries: treeIds.map((id) => treeIdQuery(String(id))),
+  })
+  const trees = treeQueries
+    .filter((q) => q.isSuccess && q.data != null)
+    .map((q) => q.data)
+
   const wateringStatus = getWateringStatusDetails(treecluster.wateringStatus)
   const lastWateredDate = treecluster.lastWatered
     ? format(new Date(treecluster.lastWatered), 'dd.MM.yyyy')
@@ -34,7 +44,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
             Bewässerungsgruppe: {treecluster.name}
           </h1>
           {treecluster.description && <p className="mb-4">{treecluster.description}</p>}
-          {treecluster.trees?.length === 0 ? (
+          {treeIds.length === 0 ? (
             <Alert variant="destructive" className="flex gap-4">
               <AlertIcon variant="destructive" />
               <AlertContent>
@@ -86,8 +96,8 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
             <StatusCard
               label="Baumanzahl in der Gruppe"
               value={
-                treecluster.trees?.length
-                  ? `${treecluster.trees.length} ${treecluster.trees.length > 1 ? 'Bäume' : 'Baum'}`
+                treeIds.length > 0
+                  ? `${treeIds.length} ${treeIds.length > 1 ? 'Bäume' : 'Baum'}`
                   : 'Keine Bäume'
               }
               description="Nicht alle Bäume haben Sensoren, da Rückschlüsse möglich sind."
@@ -96,7 +106,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
           <li className="h-full">
             <StatusCard
               label="Standort der Gruppe"
-              value={`${treecluster.address}, ${treecluster.region?.name ?? '-'}`}
+              value={treecluster.address}
             />
           </li>
           <li className="h-full">
@@ -119,12 +129,12 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
         </header>
 
         <ul className="flex flex-col gap-y-5">
-          {treecluster.trees?.length === 0 ? (
+          {treeIds.length === 0 ? (
             <li className="text-center text-dark-600 mt-4">
               <p>Der Bewässerungsgruppe wurden keine Bäume hinzugefügt.</p>
             </li>
           ) : (
-            treecluster.trees?.map((tree) => (
+            trees.map((tree) => (
               <li key={tree.id}>
                 <TreeCard tree={tree} showTreeClusterInfo={false} />
               </li>

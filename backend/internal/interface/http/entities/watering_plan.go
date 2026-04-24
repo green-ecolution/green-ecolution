@@ -26,35 +26,35 @@ type WateringPlanResponse struct {
 	Status             WateringPlanStatus           `json:"status"`
 	Distance           *float64                     `json:"distance"`
 	TotalWaterRequired *float64                     `json:"total_water_required"`
-	UserIDs            []*uuid.UUID                 `json:"user_ids"`
-	TreeClusters       []*TreeClusterInListResponse `json:"treeclusters"`
-	Transporter        *VehicleResponse             `json:"transporter"`
-	Trailer            *VehicleResponse             `json:"trailer" validate:"optional"`
-	CancellationNote   string                       `json:"cancellation_note"`
-	Evaluation         []*EvaluationValue           `json:"evaluation"`
-	GpxURL             string                       `json:"gpx_url"`
-	Duration           *float64                     `json:"duration"`
-	RefillCount        int32                        `json:"refill_count"`
-	Provider           string                       `json:"provider,omitempty"`
-	AdditionalInfo     map[string]interface{}       `json:"additional_information,omitempty" validate:"optional"`
+	UserIDs            []*uuid.UUID         `json:"user_ids"`
+	TreeClusterIDs     []int32              `json:"tree_cluster_ids"`
+	TransporterID      *int32               `json:"transporter_id"`
+	TrailerID          *int32               `json:"trailer_id" validate:"optional"`
+	CancellationNote   string               `json:"cancellation_note"`
+	Evaluation         []*EvaluationValue   `json:"evaluation"`
+	GpxURL             string               `json:"gpx_url"`
+	Duration           *float64             `json:"duration"`
+	RefillCount        int32                `json:"refill_count"`
+	Provider           string               `json:"provider,omitempty"`
+	AdditionalInfo     map[string]interface{} `json:"additional_information,omitempty" validate:"optional"`
 } //	@Name	WateringPlan
 
 type WateringPlanInListResponse struct {
-	ID                 int32                        `json:"id"`
-	CreatedAt          time.Time                    `json:"created_at"`
-	UpdatedAt          time.Time                    `json:"updated_at"`
-	Date               time.Time                    `json:"date"`
-	Description        string                       `json:"description"`
-	Status             WateringPlanStatus           `json:"status"`
-	Distance           *float64                     `json:"distance"`
-	TotalWaterRequired *float64                     `json:"total_water_required"`
-	UserIDs            []*uuid.UUID                 `json:"user_ids"`
-	TreeClusters       []*TreeClusterInListResponse `json:"treeclusters"`
-	Transporter        *VehicleResponse             `json:"transporter"`
-	Trailer            *VehicleResponse             `json:"trailer" validate:"optional"`
-	CancellationNote   string                       `json:"cancellation_note"`
-	Provider           string                       `json:"provider,omitempty"`
-	AdditionalInfo     map[string]interface{}       `json:"additional_information,omitempty" validate:"optional"`
+	ID                 int32                  `json:"id"`
+	CreatedAt          time.Time              `json:"created_at"`
+	UpdatedAt          time.Time              `json:"updated_at"`
+	Date               time.Time              `json:"date"`
+	Description        string                 `json:"description"`
+	Status             WateringPlanStatus     `json:"status"`
+	Distance           *float64               `json:"distance"`
+	TotalWaterRequired *float64               `json:"total_water_required"`
+	UserIDs            []*uuid.UUID           `json:"user_ids"`
+	TreeClusterIDs     []int32                `json:"tree_cluster_ids"`
+	TransporterID      *int32                 `json:"transporter_id"`
+	TrailerID          *int32                 `json:"trailer_id" validate:"optional"`
+	CancellationNote   string                 `json:"cancellation_note"`
+	Provider           string                 `json:"provider,omitempty"`
+	AdditionalInfo     map[string]interface{} `json:"additional_information,omitempty" validate:"optional"`
 } //	@Name	WateringPlanInList
 
 type WateringPlanListResponse struct {

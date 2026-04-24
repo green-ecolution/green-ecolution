@@ -14,9 +14,9 @@ Name | Type | Description | Notes
 **Provider** | Pointer to **string** |  | [optional] 
 **Status** | [**WateringPlanStatus**](WateringPlanStatus.md) |  | 
 **TotalWaterRequired** | **float32** |  | 
-**Trailer** | Pointer to [**Vehicle**](Vehicle.md) |  | [optional] 
-**Transporter** | [**Vehicle**](Vehicle.md) |  | 
-**Treeclusters** | [**[]TreeClusterInList**](TreeClusterInList.md) |  | 
+**TrailerId** | Pointer to **int32** |  | [optional] 
+**TransporterId** | **int32** |  | 
+**TreeClusterIds** | **[]int32** |  | 
 **UpdatedAt** | **string** |  | 
 **UserIds** | **[]string** |  | 
 
@@ -24,7 +24,7 @@ Name | Type | Description | Notes
 
 ### NewWateringPlanInList
 
-`func NewWateringPlanInList(cancellationNote string, createdAt string, date string, description string, distance float32, id int32, status WateringPlanStatus, totalWaterRequired float32, transporter Vehicle, treeclusters []TreeClusterInList, updatedAt string, userIds []string, ) *WateringPlanInList`
+`func NewWateringPlanInList(cancellationNote string, createdAt string, date string, description string, distance float32, id int32, status WateringPlanStatus, totalWaterRequired float32, transporterId int32, treeClusterIds []int32, updatedAt string, userIds []string, ) *WateringPlanInList`
 
 NewWateringPlanInList instantiates a new WateringPlanInList object
 This constructor will assign default values to properties that have it defined,
@@ -249,69 +249,69 @@ and a boolean to check if the value has been set.
 SetTotalWaterRequired sets TotalWaterRequired field to given value.
 
 
-### GetTrailer
+### GetTrailerId
 
-`func (o *WateringPlanInList) GetTrailer() Vehicle`
+`func (o *WateringPlanInList) GetTrailerId() int32`
 
-GetTrailer returns the Trailer field if non-nil, zero value otherwise.
+GetTrailerId returns the TrailerId field if non-nil, zero value otherwise.
 
-### GetTrailerOk
+### GetTrailerIdOk
 
-`func (o *WateringPlanInList) GetTrailerOk() (*Vehicle, bool)`
+`func (o *WateringPlanInList) GetTrailerIdOk() (*int32, bool)`
 
-GetTrailerOk returns a tuple with the Trailer field if it's non-nil, zero value otherwise
+GetTrailerIdOk returns a tuple with the TrailerId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetTrailer
+### SetTrailerId
 
-`func (o *WateringPlanInList) SetTrailer(v Vehicle)`
+`func (o *WateringPlanInList) SetTrailerId(v int32)`
 
-SetTrailer sets Trailer field to given value.
+SetTrailerId sets TrailerId field to given value.
 
-### HasTrailer
+### HasTrailerId
 
-`func (o *WateringPlanInList) HasTrailer() bool`
+`func (o *WateringPlanInList) HasTrailerId() bool`
 
-HasTrailer returns a boolean if a field has been set.
+HasTrailerId returns a boolean if a field has been set.
 
-### GetTransporter
+### GetTransporterId
 
-`func (o *WateringPlanInList) GetTransporter() Vehicle`
+`func (o *WateringPlanInList) GetTransporterId() int32`
 
-GetTransporter returns the Transporter field if non-nil, zero value otherwise.
+GetTransporterId returns the TransporterId field if non-nil, zero value otherwise.
 
-### GetTransporterOk
+### GetTransporterIdOk
 
-`func (o *WateringPlanInList) GetTransporterOk() (*Vehicle, bool)`
+`func (o *WateringPlanInList) GetTransporterIdOk() (*int32, bool)`
 
-GetTransporterOk returns a tuple with the Transporter field if it's non-nil, zero value otherwise
+GetTransporterIdOk returns a tuple with the TransporterId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetTransporter
+### SetTransporterId
 
-`func (o *WateringPlanInList) SetTransporter(v Vehicle)`
+`func (o *WateringPlanInList) SetTransporterId(v int32)`
 
-SetTransporter sets Transporter field to given value.
+SetTransporterId sets TransporterId field to given value.
 
 
-### GetTreeclusters
+### GetTreeClusterIds
 
-`func (o *WateringPlanInList) GetTreeclusters() []TreeClusterInList`
+`func (o *WateringPlanInList) GetTreeClusterIds() []int32`
 
-GetTreeclusters returns the Treeclusters field if non-nil, zero value otherwise.
+GetTreeClusterIds returns the TreeClusterIds field if non-nil, zero value otherwise.
 
-### GetTreeclustersOk
+### GetTreeClusterIdsOk
 
-`func (o *WateringPlanInList) GetTreeclustersOk() (*[]TreeClusterInList, bool)`
+`func (o *WateringPlanInList) GetTreeClusterIdsOk() (*[]int32, bool)`
 
-GetTreeclustersOk returns a tuple with the Treeclusters field if it's non-nil, zero value otherwise
+GetTreeClusterIdsOk returns a tuple with the TreeClusterIds field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetTreeclusters
+### SetTreeClusterIds
 
-`func (o *WateringPlanInList) SetTreeclusters(v []TreeClusterInList)`
+`func (o *WateringPlanInList) SetTreeClusterIds(v []int32)`
 
-SetTreeclusters sets Treeclusters field to given value.
+SetTreeClusterIds sets TreeClusterIds field to given value.
 
 
 ### GetUpdatedAt

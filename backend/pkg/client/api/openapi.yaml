@@ -3059,11 +3059,12 @@ components:
         data:
         - distance_meters: 0.8008281904610115
           tree:
-            latitude: 2.3021358869347655
+            latitude: 6.027456183070403
             created_at: created_at
             description: description
-            tree_cluster_id: 7
+            tree_cluster_id: 5
             last_watered: last_watered
+            sensor_id: sensor_id
             additional_information:
               key: ""
             number: number
@@ -3071,39 +3072,17 @@ components:
             watering_status: good
             provider: provider
             species: species
-            planting_year: 9
-            sensor:
-              additional_information:
-                key: ""
-              latest_data:
-                updated_at: updated_at
-                temperature: 4.145608029883936
-                created_at: created_at
-                humidity: 2.027123023002322
-                watermarks:
-                - centibar: 7
-                  depth: 1
-                  resistance: 1
-                - centibar: 7
-                  depth: 1
-                  resistance: 1
-                battery: 3.616076749251911
-              updated_at: updated_at
-              provider: provider
-              latitude: 1.4894159098541704
-              created_at: created_at
-              id: id
-              longitude: 6.84685269835264
-              status: online
-            id: 5
-            longitude: 7.061401241503109
+            planting_year: 5
+            id: 0
+            longitude: 1.4658129805029452
         - distance_meters: 0.8008281904610115
           tree:
-            latitude: 2.3021358869347655
+            latitude: 6.027456183070403
             created_at: created_at
             description: description
-            tree_cluster_id: 7
+            tree_cluster_id: 5
             last_watered: last_watered
+            sensor_id: sensor_id
             additional_information:
               key: ""
             number: number
@@ -3111,32 +3090,9 @@ components:
             watering_status: good
             provider: provider
             species: species
-            planting_year: 9
-            sensor:
-              additional_information:
-                key: ""
-              latest_data:
-                updated_at: updated_at
-                temperature: 4.145608029883936
-                created_at: created_at
-                humidity: 2.027123023002322
-                watermarks:
-                - centibar: 7
-                  depth: 1
-                  resistance: 1
-                - centibar: 7
-                  depth: 1
-                  resistance: 1
-                battery: 3.616076749251911
-              updated_at: updated_at
-              provider: provider
-              latitude: 1.4894159098541704
-              created_at: created_at
-              id: id
-              longitude: 6.84685269835264
-              status: online
-            id: 5
-            longitude: 7.061401241503109
+            planting_year: 5
+            id: 0
+            longitude: 1.4658129805029452
       properties:
         data:
           items:
@@ -3272,7 +3228,7 @@ components:
     Region:
       example:
         name: name
-        id: 5
+        id: 0
       properties:
         id:
           type: integer
@@ -3305,9 +3261,9 @@ components:
           current_page: 7
         data:
         - name: name
-          id: 5
+          id: 0
         - name: name
-          id: 5
+          id: 0
       properties:
         data:
           items:
@@ -3344,23 +3300,23 @@ components:
           key: ""
         latest_data:
           updated_at: updated_at
-          temperature: 4.145608029883936
+          temperature: 1.4658129805029452
           created_at: created_at
-          humidity: 2.027123023002322
+          humidity: 6.027456183070403
           watermarks:
-          - centibar: 7
-            depth: 1
-            resistance: 1
-          - centibar: 7
-            depth: 1
-            resistance: 1
-          battery: 3.616076749251911
+          - centibar: 5
+            depth: 5
+            resistance: 2
+          - centibar: 5
+            depth: 5
+            resistance: 2
+          battery: 0.8008281904610115
         updated_at: updated_at
         provider: provider
-        latitude: 1.4894159098541704
+        latitude: 7.061401241503109
         created_at: created_at
         id: id
-        longitude: 6.84685269835264
+        longitude: 9.301444243932576
         status: online
       properties:
         additional_information:
@@ -3394,17 +3350,17 @@ components:
     SensorData:
       example:
         updated_at: updated_at
-        temperature: 4.145608029883936
+        temperature: 1.4658129805029452
         created_at: created_at
-        humidity: 2.027123023002322
+        humidity: 6.027456183070403
         watermarks:
-        - centibar: 7
-          depth: 1
-          resistance: 1
-        - centibar: 7
-          depth: 1
-          resistance: 1
-        battery: 3.616076749251911
+        - centibar: 5
+          depth: 5
+          resistance: 2
+        - centibar: 5
+          depth: 5
+          resistance: 2
+        battery: 0.8008281904610115
       properties:
         battery:
           type: number
@@ -3432,29 +3388,29 @@ components:
       example:
         data:
         - updated_at: updated_at
-          temperature: 4.145608029883936
+          temperature: 1.4658129805029452
           created_at: created_at
-          humidity: 2.027123023002322
+          humidity: 6.027456183070403
           watermarks:
-          - centibar: 7
-            depth: 1
-            resistance: 1
-          - centibar: 7
-            depth: 1
-            resistance: 1
-          battery: 3.616076749251911
+          - centibar: 5
+            depth: 5
+            resistance: 2
+          - centibar: 5
+            depth: 5
+            resistance: 2
+          battery: 0.8008281904610115
         - updated_at: updated_at
-          temperature: 4.145608029883936
+          temperature: 1.4658129805029452
           created_at: created_at
-          humidity: 2.027123023002322
+          humidity: 6.027456183070403
           watermarks:
-          - centibar: 7
-            depth: 1
-            resistance: 1
-          - centibar: 7
-            depth: 1
-            resistance: 1
-          battery: 3.616076749251911
+          - centibar: 5
+            depth: 5
+            resistance: 2
+          - centibar: 5
+            depth: 5
+            resistance: 2
+          battery: 0.8008281904610115
       properties:
         data:
           items:
@@ -3476,45 +3432,45 @@ components:
             key: ""
           latest_data:
             updated_at: updated_at
-            temperature: 4.145608029883936
+            temperature: 1.4658129805029452
             created_at: created_at
-            humidity: 2.027123023002322
+            humidity: 6.027456183070403
             watermarks:
-            - centibar: 7
-              depth: 1
-              resistance: 1
-            - centibar: 7
-              depth: 1
-              resistance: 1
-            battery: 3.616076749251911
+            - centibar: 5
+              depth: 5
+              resistance: 2
+            - centibar: 5
+              depth: 5
+              resistance: 2
+            battery: 0.8008281904610115
           updated_at: updated_at
           provider: provider
-          latitude: 1.4894159098541704
+          latitude: 7.061401241503109
           created_at: created_at
           id: id
-          longitude: 6.84685269835264
+          longitude: 9.301444243932576
           status: online
         - additional_information:
             key: ""
           latest_data:
             updated_at: updated_at
-            temperature: 4.145608029883936
+            temperature: 1.4658129805029452
             created_at: created_at
-            humidity: 2.027123023002322
+            humidity: 6.027456183070403
             watermarks:
-            - centibar: 7
-              depth: 1
-              resistance: 1
-            - centibar: 7
-              depth: 1
-              resistance: 1
-            battery: 3.616076749251911
+            - centibar: 5
+              depth: 5
+              resistance: 2
+            - centibar: 5
+              depth: 5
+              resistance: 2
+            battery: 0.8008281904610115
           updated_at: updated_at
           provider: provider
-          latitude: 1.4894159098541704
+          latitude: 7.061401241503109
           created_at: created_at
           id: id
-          longitude: 6.84685269835264
+          longitude: 9.301444243932576
           status: online
       properties:
         data:
@@ -3638,11 +3594,12 @@ components:
       - TreeSoilConditionUnknown
     Tree:
       example:
-        latitude: 2.3021358869347655
+        latitude: 6.027456183070403
         created_at: created_at
         description: description
-        tree_cluster_id: 7
+        tree_cluster_id: 5
         last_watered: last_watered
+        sensor_id: sensor_id
         additional_information:
           key: ""
         number: number
@@ -3650,32 +3607,9 @@ components:
         watering_status: good
         provider: provider
         species: species
-        planting_year: 9
-        sensor:
-          additional_information:
-            key: ""
-          latest_data:
-            updated_at: updated_at
-            temperature: 4.145608029883936
-            created_at: created_at
-            humidity: 2.027123023002322
-            watermarks:
-            - centibar: 7
-              depth: 1
-              resistance: 1
-            - centibar: 7
-              depth: 1
-              resistance: 1
-            battery: 3.616076749251911
-          updated_at: updated_at
-          provider: provider
-          latitude: 1.4894159098541704
-          created_at: created_at
-          id: id
-          longitude: 6.84685269835264
-          status: online
-        id: 5
-        longitude: 7.061401241503109
+        planting_year: 5
+        id: 0
+        longitude: 1.4658129805029452
       properties:
         additional_information:
           additionalProperties: true
@@ -3698,8 +3632,8 @@ components:
           type: integer
         provider:
           type: string
-        sensor:
-          $ref: "#/components/schemas/Sensor"
+        sensor_id:
+          type: string
         species:
           type: string
         tree_cluster_id:
@@ -3724,99 +3658,23 @@ components:
       example:
         address: address
         latitude: 6.027456183070403
+        region_id: 5
         created_at: created_at
         description: description
         last_watered: last_watered
-        trees:
-        - latitude: 2.3021358869347655
-          created_at: created_at
-          description: description
-          tree_cluster_id: 7
-          last_watered: last_watered
-          additional_information:
-            key: ""
-          number: number
-          updated_at: updated_at
-          watering_status: good
-          provider: provider
-          species: species
-          planting_year: 9
-          sensor:
-            additional_information:
-              key: ""
-            latest_data:
-              updated_at: updated_at
-              temperature: 4.145608029883936
-              created_at: created_at
-              humidity: 2.027123023002322
-              watermarks:
-              - centibar: 7
-                depth: 1
-                resistance: 1
-              - centibar: 7
-                depth: 1
-                resistance: 1
-              battery: 3.616076749251911
-            updated_at: updated_at
-            provider: provider
-            latitude: 1.4894159098541704
-            created_at: created_at
-            id: id
-            longitude: 6.84685269835264
-            status: online
-          id: 5
-          longitude: 7.061401241503109
-        - latitude: 2.3021358869347655
-          created_at: created_at
-          description: description
-          tree_cluster_id: 7
-          last_watered: last_watered
-          additional_information:
-            key: ""
-          number: number
-          updated_at: updated_at
-          watering_status: good
-          provider: provider
-          species: species
-          planting_year: 9
-          sensor:
-            additional_information:
-              key: ""
-            latest_data:
-              updated_at: updated_at
-              temperature: 4.145608029883936
-              created_at: created_at
-              humidity: 2.027123023002322
-              watermarks:
-              - centibar: 7
-                depth: 1
-                resistance: 1
-              - centibar: 7
-                depth: 1
-                resistance: 1
-              battery: 3.616076749251911
-            updated_at: updated_at
-            provider: provider
-            latitude: 1.4894159098541704
-            created_at: created_at
-            id: id
-            longitude: 6.84685269835264
-            status: online
-          id: 5
-          longitude: 7.061401241503109
         soil_condition: schluffig
         additional_information:
           key: ""
         archived: true
+        tree_ids:
+        - 2
+        - 2
         updated_at: updated_at
-        watering_status: null
+        watering_status: good
         provider: provider
         name: name
         moisture_level: 5.962133916683182
         id: 0
-        region:
-          name: name
-          id: 5
         longitude: 1.4658129805029452
       properties:
         additional_information:
@@ -3844,13 +3702,13 @@ components:
           type: string
         provider:
           type: string
-        region:
-          $ref: "#/components/schemas/Region"
+        region_id:
+          type: integer
         soil_condition:
           $ref: "#/components/schemas/SoilCondition"
-        trees:
+        tree_ids:
           items:
-            $ref: "#/components/schemas/Tree"
+            type: integer
           type: array
         updated_at:
           type: string
@@ -3907,82 +3765,6 @@ components:
       - soil_condition
       - tree_ids
       type: object
-    TreeClusterInList:
-      example:
-        address: address
-        latitude: 6.027456183070403
-        created_at: created_at
-        description: description
-        last_watered: last_watered
-        soil_condition: schluffig
-        additional_information:
-          key: ""
-        archived: true
-        tree_ids:
-        - 2
-        - 2
-        updated_at: updated_at
-        watering_status: good
-        provider: provider
-        name: name
-        moisture_level: 5.962133916683182
-        id: 0
-        region:
-          name: name
-          id: 5
-        longitude: 1.4658129805029452
-      properties:
-        additional_information:
-          additionalProperties: true
-          type: object
-        address:
-          type: string
-        archived:
-          type: boolean
-        created_at:
-          type: string
-        description:
-          type: string
-        id:
-          type: integer
-        last_watered:
-          type: string
-        latitude:
-          type: number
-        longitude:
-          type: number
-        moisture_level:
-          type: number
-        name:
-          type: string
-        provider:
-          type: string
-        region:
-          $ref: "#/components/schemas/Region"
-        soil_condition:
-          $ref: "#/components/schemas/SoilCondition"
-        tree_ids:
-          items:
-            type: integer
-          type: array
-        updated_at:
-          type: string
-        watering_status:
-          $ref: "#/components/schemas/WateringStatus"
-      required:
-      - address
-      - archived
-      - created_at
-      - description
-      - id
-      - latitude
-      - longitude
-      - moisture_level
-      - name
-      - soil_condition
-      - updated_at
-      - watering_status
-      type: object
     TreeClusterList:
       example:
         pagination:
@@ -3994,6 +3776,7 @@ components:
         data:
         - address: address
           latitude: 6.027456183070403
+          region_id: 5
           created_at: created_at
           description: description
           last_watered: last_watered
@@ -4010,12 +3793,10 @@ components:
           name: name
           moisture_level: 5.962133916683182
           id: 0
-          region:
-            name: name
-            id: 5
           longitude: 1.4658129805029452
         - address: address
           latitude: 6.027456183070403
+          region_id: 5
           created_at: created_at
           description: description
           last_watered: last_watered
@@ -4032,14 +3813,11 @@ components:
           name: name
           moisture_level: 5.962133916683182
           id: 0
-          region:
-            name: name
-            id: 5
           longitude: 1.4658129805029452
       properties:
         data:
           items:
-            $ref: "#/components/schemas/TreeClusterInList"
+            $ref: "#/components/schemas/TreeCluster"
           type: array
         pagination:
           $ref: "#/components/schemas/Pagination"
@@ -4139,11 +3917,12 @@ components:
           prev_page: 3
           current_page: 7
         data:
-        - latitude: 2.3021358869347655
+        - latitude: 6.027456183070403
           created_at: created_at
           description: description
-          tree_cluster_id: 7
+          tree_cluster_id: 5
           last_watered: last_watered
+          sensor_id: sensor_id
           additional_information:
             key: ""
           number: number
@@ -4151,37 +3930,15 @@ components:
           watering_status: good
           provider: provider
           species: species
-          planting_year: 9
-          sensor:
-            additional_information:
-              key: ""
-            latest_data:
-              updated_at: updated_at
-              temperature: 4.145608029883936
-              created_at: created_at
-              humidity: 2.027123023002322
-              watermarks:
-              - centibar: 7
-                depth: 1
-                resistance: 1
-              - centibar: 7
-                depth: 1
-                resistance: 1
-              battery: 3.616076749251911
-            updated_at: updated_at
-            provider: provider
-            latitude: 1.4894159098541704
-            created_at: created_at
-            id: id
-            longitude: 6.84685269835264
-            status: online
-          id: 5
-          longitude: 7.061401241503109
-        - latitude: 2.3021358869347655
+          planting_year: 5
+          id: 0
+          longitude: 1.4658129805029452
+        - latitude: 6.027456183070403
           created_at: created_at
           description: description
-          tree_cluster_id: 7
+          tree_cluster_id: 5
           last_watered: last_watered
+          sensor_id: sensor_id
           additional_information:
             key: ""
           number: number
@@ -4189,32 +3946,9 @@ components:
           watering_status: good
           provider: provider
           species: species
-          planting_year: 9
-          sensor:
-            additional_information:
-              key: ""
-            latest_data:
-              updated_at: updated_at
-              temperature: 4.145608029883936
-              created_at: created_at
-              humidity: 2.027123023002322
-              watermarks:
-              - centibar: 7
-                depth: 1
-                resistance: 1
-              - centibar: 7
-                depth: 1
-                resistance: 1
-              battery: 3.616076749251911
-            updated_at: updated_at
-            provider: provider
-            latitude: 1.4894159098541704
-            created_at: created_at
-            id: id
-            longitude: 6.84685269835264
-            status: online
-          id: 5
-          longitude: 7.061401241503109
+          planting_year: 5
+          id: 0
+          longitude: 1.4658129805029452
       properties:
         data:
           items:
@@ -4276,11 +4010,12 @@ components:
       example:
         distance_meters: 0.8008281904610115
         tree:
-          latitude: 2.3021358869347655
+          latitude: 6.027456183070403
           created_at: created_at
           description: description
-          tree_cluster_id: 7
+          tree_cluster_id: 5
           last_watered: last_watered
+          sensor_id: sensor_id
           additional_information:
             key: ""
           number: number
@@ -4288,32 +4023,9 @@ components:
           watering_status: good
           provider: provider
           species: species
-          planting_year: 9
-          sensor:
-            additional_information:
-              key: ""
-            latest_data:
-              updated_at: updated_at
-              temperature: 4.145608029883936
-              created_at: created_at
-              humidity: 2.027123023002322
-              watermarks:
-              - centibar: 7
-                depth: 1
-                resistance: 1
-              - centibar: 7
-                depth: 1
-                resistance: 1
-              battery: 3.616076749251911
-            updated_at: updated_at
-            provider: provider
-            latitude: 1.4894159098541704
-            created_at: created_at
-            id: id
-            longitude: 6.84685269835264
-            status: online
-          id: 5
-          longitude: 7.061401241503109
+          planting_year: 5
+          id: 0
+          longitude: 1.4658129805029452
       properties:
         distance_meters:
           type: number
@@ -4821,51 +4533,6 @@ components:
     WateringPlan:
       example:
         date: date
-        treeclusters:
-        - address: address
-          latitude: 6.027456183070403
-          created_at: created_at
-          description: description
-          last_watered: last_watered
-          soil_condition: schluffig
-          additional_information:
-            key: ""
-          archived: true
-          tree_ids:
-          - 2
-          - 2
-          updated_at: updated_at
-          watering_status: good
-          provider: provider
-          name: name
-          moisture_level: 5.962133916683182
-          id: 0
-          region:
-            name: name
-            id: 5
-          longitude: 1.4658129805029452
-        - address: address
-          latitude: 6.027456183070403
-          created_at: created_at
-          description: description
-          last_watered: last_watered
-          soil_condition: schluffig
-          additional_information:
-            key: ""
-          archived: true
-          tree_ids:
-          - 2
-          - 2
-          updated_at: updated_at
-          watering_status: good
-          provider: provider
-          name: name
-          moisture_level: 5.962133916683182
-          id: 0
-          region:
-            name: name
-            id: 5
-          longitude: 1.4658129805029452
         cancellation_note: cancellation_note
         distance: 0.8008281904610115
         user_ids:
@@ -4883,50 +4550,17 @@ components:
         - consumed_water: 1.4658129805029452
           tree_cluster_id: 5
           watering_plan_id: 5
-        trailer:
-          water_capacity: 5.962133916683182
-          archived_at: archived_at
-          length: 1.4658129805029452
-          number_plate: number_plate
-          created_at: created_at
-          description: description
-          weight: 5.637376656633329
-          type: transporter
-          additional_information:
-            key: ""
-          driving_license: B
-          updated_at: updated_at
-          provider: provider
-          width: 2.3021358869347655
-          model: model
-          id: 6
-          height: 0.8008281904610115
-          status: active
         additional_information:
           key: ""
+        tree_cluster_ids:
+        - 4
+        - 4
         updated_at: updated_at
         provider: provider
         gpx_url: gpx_url
-        transporter:
-          water_capacity: 5.962133916683182
-          archived_at: archived_at
-          length: 1.4658129805029452
-          number_plate: number_plate
-          created_at: created_at
-          description: description
-          weight: 5.637376656633329
-          type: transporter
-          additional_information:
-            key: ""
-          driving_license: B
-          updated_at: updated_at
-          provider: provider
-          width: 2.3021358869347655
-          model: model
-          id: 6
-          height: 0.8008281904610115
-          status: active
+        trailer_id: 3
         id: 2
+        transporter_id: 2
         status: planned
       properties:
         additional_information:
@@ -4960,13 +4594,13 @@ components:
           $ref: "#/components/schemas/WateringPlanStatus"
         total_water_required:
           type: number
-        trailer:
-          $ref: "#/components/schemas/Vehicle"
-        transporter:
-          $ref: "#/components/schemas/Vehicle"
-        treeclusters:
+        trailer_id:
+          type: integer
+        transporter_id:
+          type: integer
+        tree_cluster_ids:
           items:
-            $ref: "#/components/schemas/TreeClusterInList"
+            type: integer
           type: array
         updated_at:
           type: string
@@ -4987,8 +4621,8 @@ components:
       - refill_count
       - status
       - total_water_required
-      - transporter
-      - treeclusters
+      - transporter_id
+      - tree_cluster_ids
       - updated_at
       - user_ids
       type: object
@@ -5041,51 +4675,6 @@ components:
     WateringPlanInList:
       example:
         date: date
-        treeclusters:
-        - address: address
-          latitude: 6.027456183070403
-          created_at: created_at
-          description: description
-          last_watered: last_watered
-          soil_condition: schluffig
-          additional_information:
-            key: ""
-          archived: true
-          tree_ids:
-          - 2
-          - 2
-          updated_at: updated_at
-          watering_status: good
-          provider: provider
-          name: name
-          moisture_level: 5.962133916683182
-          id: 0
-          region:
-            name: name
-            id: 5
-          longitude: 1.4658129805029452
-        - address: address
-          latitude: 6.027456183070403
-          created_at: created_at
-          description: description
-          last_watered: last_watered
-          soil_condition: schluffig
-          additional_information:
-            key: ""
-          archived: true
-          tree_ids:
-          - 2
-          - 2
-          updated_at: updated_at
-          watering_status: good
-          provider: provider
-          name: name
-          moisture_level: 5.962133916683182
-          id: 0
-          region:
-            name: name
-            id: 5
-          longitude: 1.4658129805029452
         cancellation_note: cancellation_note
         distance: 0.8008281904610115
         user_ids:
@@ -5094,49 +4683,16 @@ components:
         total_water_required: 1.4658129805029452
         created_at: created_at
         description: description
-        trailer:
-          water_capacity: 5.962133916683182
-          archived_at: archived_at
-          length: 1.4658129805029452
-          number_plate: number_plate
-          created_at: created_at
-          description: description
-          weight: 5.637376656633329
-          type: transporter
-          additional_information:
-            key: ""
-          driving_license: B
-          updated_at: updated_at
-          provider: provider
-          width: 2.3021358869347655
-          model: model
-          id: 6
-          height: 0.8008281904610115
-          status: active
         additional_information:
           key: ""
+        tree_cluster_ids:
+        - 2
+        - 2
         updated_at: updated_at
         provider: provider
-        transporter:
-          water_capacity: 5.962133916683182
-          archived_at: archived_at
-          length: 1.4658129805029452
-          number_plate: number_plate
-          created_at: created_at
-          description: description
-          weight: 5.637376656633329
-          type: transporter
-          additional_information:
-            key: ""
-          driving_license: B
-          updated_at: updated_at
-          provider: provider
-          width: 2.3021358869347655
-          model: model
-          id: 6
-          height: 0.8008281904610115
-          status: active
+        trailer_id: 5
         id: 6
+        transporter_id: 5
         status: planned
       properties:
         additional_information:
@@ -5160,13 +4716,13 @@ components:
           $ref: "#/components/schemas/WateringPlanStatus"
         total_water_required:
           type: number
-        trailer:
-          $ref: "#/components/schemas/Vehicle"
-        transporter:
-          $ref: "#/components/schemas/Vehicle"
-        treeclusters:
+        trailer_id:
+          type: integer
+        transporter_id:
+          type: integer
+        tree_cluster_ids:
           items:
-            $ref: "#/components/schemas/TreeClusterInList"
+            type: integer
           type: array
         updated_at:
           type: string
@@ -5183,8 +4739,8 @@ components:
       - id
       - status
       - total_water_required
-      - transporter
-      - treeclusters
+      - transporter_id
+      - tree_cluster_ids
       - updated_at
       - user_ids
       type: object
@@ -5198,51 +4754,6 @@ components:
           current_page: 7
         data:
         - date: date
-          treeclusters:
-          - address: address
-            latitude: 6.027456183070403
-            created_at: created_at
-            description: description
-            last_watered: last_watered
-            soil_condition: schluffig
-            additional_information:
-              key: ""
-            archived: true
-            tree_ids:
-            - 2
-            - 2
-            updated_at: updated_at
-            watering_status: good
-            provider: provider
-            name: name
-            moisture_level: 5.962133916683182
-            id: 0
-            region:
-              name: name
-              id: 5
-            longitude: 1.4658129805029452
-          - address: address
-            latitude: 6.027456183070403
-            created_at: created_at
-            description: description
-            last_watered: last_watered
-            soil_condition: schluffig
-            additional_information:
-              key: ""
-            archived: true
-            tree_ids:
-            - 2
-            - 2
-            updated_at: updated_at
-            watering_status: good
-            provider: provider
-            name: name
-            moisture_level: 5.962133916683182
-            id: 0
-            region:
-              name: name
-              id: 5
-            longitude: 1.4658129805029452
           cancellation_note: cancellation_note
           distance: 0.8008281904610115
           user_ids:
@@ -5251,96 +4762,18 @@ components:
           total_water_required: 1.4658129805029452
           created_at: created_at
           description: description
-          trailer:
-            water_capacity: 5.962133916683182
-            archived_at: archived_at
-            length: 1.4658129805029452
-            number_plate: number_plate
-            created_at: created_at
-            description: description
-            weight: 5.637376656633329
-            type: transporter
-            additional_information:
-              key: ""
-            driving_license: B
-            updated_at: updated_at
-            provider: provider
-            width: 2.3021358869347655
-            model: model
-            id: 6
-            height: 0.8008281904610115
-            status: active
           additional_information:
             key: ""
+          tree_cluster_ids:
+          - 2
+          - 2
           updated_at: updated_at
           provider: provider
-          transporter:
-            water_capacity: 5.962133916683182
-            archived_at: archived_at
-            length: 1.4658129805029452
-            number_plate: number_plate
-            created_at: created_at
-            description: description
-            weight: 5.637376656633329
-            type: transporter
-            additional_information:
-              key: ""
-            driving_license: B
-            updated_at: updated_at
-            provider: provider
-            width: 2.3021358869347655
-            model: model
-            id: 6
-            height: 0.8008281904610115
-            status: active
+          trailer_id: 5
           id: 6
+          transporter_id: 5
           status: planned
         - date: date
-          treeclusters:
-          - address: address
-            latitude: 6.027456183070403
-            created_at: created_at
-            description: description
-            last_watered: last_watered
-            soil_condition: schluffig
-            additional_information:
-              key: ""
-            archived: true
-            tree_ids:
-            - 2
-            - 2
-            updated_at: updated_at
-            watering_status: good
-            provider: provider
-            name: name
-            moisture_level: 5.962133916683182
-            id: 0
-            region:
-              name: name
-              id: 5
-            longitude: 1.4658129805029452
-          - address: address
-            latitude: 6.027456183070403
-            created_at: created_at
-            description: description
-            last_watered: last_watered
-            soil_condition: schluffig
-            additional_information:
-              key: ""
-            archived: true
-            tree_ids:
-            - 2
-            - 2
-            updated_at: updated_at
-            watering_status: good
-            provider: provider
-            name: name
-            moisture_level: 5.962133916683182
-            id: 0
-            region:
-              name: name
-              id: 5
-            longitude: 1.4658129805029452
           cancellation_note: cancellation_note
           distance: 0.8008281904610115
           user_ids:
@@ -5349,49 +4782,16 @@ components:
           total_water_required: 1.4658129805029452
           created_at: created_at
           description: description
-          trailer:
-            water_capacity: 5.962133916683182
-            archived_at: archived_at
-            length: 1.4658129805029452
-            number_plate: number_plate
-            created_at: created_at
-            description: description
-            weight: 5.637376656633329
-            type: transporter
-            additional_information:
-              key: ""
-            driving_license: B
-            updated_at: updated_at
-            provider: provider
-            width: 2.3021358869347655
-            model: model
-            id: 6
-            height: 0.8008281904610115
-            status: active
           additional_information:
             key: ""
+          tree_cluster_ids:
+          - 2
+          - 2
           updated_at: updated_at
           provider: provider
-          transporter:
-            water_capacity: 5.962133916683182
-            archived_at: archived_at
-            length: 1.4658129805029452
-            number_plate: number_plate
-            created_at: created_at
-            description: description
-            weight: 5.637376656633329
-            type: transporter
-            additional_information:
-              key: ""
-            driving_license: B
-            updated_at: updated_at
-            provider: provider
-            width: 2.3021358869347655
-            model: model
-            id: 6
-            height: 0.8008281904610115
-            status: active
+          trailer_id: 5
           id: 6
+          transporter_id: 5
           status: planned
       properties:
         data:
@@ -5502,9 +4902,9 @@ components:
       - WateringStatusUnknown
     WatermarkResponse:
       example:
-        centibar: 7
-        depth: 1
-        resistance: 1
+        centibar: 5
+        depth: 5
+        resistance: 2
       properties:
         centibar:
           type: integer

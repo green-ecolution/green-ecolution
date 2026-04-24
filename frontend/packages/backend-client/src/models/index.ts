@@ -41,7 +41,6 @@ export * from './SoilCondition';
 export * from './Tree';
 export * from './TreeCluster';
 export * from './TreeClusterCreate';
-export * from './TreeClusterInList';
 export * from './TreeClusterList';
 export * from './TreeClusterUpdate';
 export * from './TreeCreate';

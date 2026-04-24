@@ -42,7 +42,7 @@ const TreeClusterUpdate = ({ clusterId, formState }: TreeClusterUpdateProps) => 
         address: data.address,
         description: data.description,
         soilCondition: data.soilCondition,
-        treeIds: data.trees?.map((tree) => tree.id) ?? [],
+        treeIds: data.treeIds ?? [],
       },
   )
   const { mutate, isError, error, form, navigationBlocker, saveDraft } = useTreeClusterForm(
