@@ -164,6 +164,12 @@
           # Frontend/Node
           nodejs
           pnpm
+          # Rust
+          rustc
+          cargo
+          rustfmt
+          clippy
+          rust-analyzer
           # Deploy tooling
           kustomize
           ksops
