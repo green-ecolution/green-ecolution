@@ -3,7 +3,10 @@ use sqlx::PgPool;
 use crate::domain::{
     Id, RepositoryError,
     region::{Region, RegionCreate, RegionRepository, RegionUpdate},
-    shared::{coordinates::Coordinate, pagination::Page},
+    shared::{
+        coordinates::Coordinate,
+        pagination::{Page, Pagination},
+    },
 };
 
 pub struct PgRegionRepository {
@@ -18,10 +21,19 @@ impl PgRegionRepository {
 
 #[async_trait::async_trait]
 impl RegionRepository for PgRegionRepository {
-    async fn all(&self) -> Result<Page<Region>, RepositoryError> {
-        let rows = sqlx::query!(r#"SELECT id, name, created_at, updated_at FROM regions"#)
-            .fetch_all(&self.pool)
-            .await?;
+    async fn all(&self, pagination: Pagination) -> Result<Page<Region>, RepositoryError> {
+        let total = sqlx::query_scalar!(r#"SELECT COUNT(*) FROM regions"#)
+            .fetch_one(&self.pool)
+            .await?
+            .unwrap_or(0) as u64;
+
+        let rows = sqlx::query!(
+            r#"SELECT id, name, created_at, updated_at FROM regions LIMIT $1 OFFSET $2"#,
+            pagination.limit as i64,
+            pagination.offset as i64
+        )
+        .fetch_all(&self.pool)
+        .await?;
 
         let items: Vec<Region> = rows
             .into_iter()
@@ -34,8 +46,6 @@ impl RegionRepository for PgRegionRepository {
                 )
             })
             .collect();
-
-        let total = items.len() as u64;
 
         Ok(Page { items, total })
     }

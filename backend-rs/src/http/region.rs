@@ -1,14 +1,20 @@
 use std::sync::Arc;
 
-use axum::{Json, extract::State};
+use axum::{
+    Json,
+    extract::{Query, State},
+};
 
 use crate::{
     domain::{
         RepositoryError,
         region::{Region, RegionCreate},
-        shared::pagination::Page,
+        shared::pagination::{Page, Pagination},
     },
-    http::{AppState, PaginationRepsonse},
+    http::{
+        AppState,
+        pagination::{PaginationParams, PaginationRepsonse},
+    },
 };
 
 #[derive(serde::Serialize)]
@@ -21,6 +27,30 @@ pub struct RegionResponse {
 pub struct RegionListResponse {
     data: Vec<RegionResponse>,
     pagination: PaginationRepsonse,
+}
+
+impl RegionListResponse {
+    pub fn from_page(page: Page<Region>, current_page: u64, per_page: u64) -> Self {
+        let total_pages = (page.total + per_page - 1) / per_page;
+        Self {
+            data: page.items.iter().map(|r| r.into()).collect(),
+            pagination: PaginationRepsonse {
+                total: page.total,
+                current_page,
+                total_pages,
+                next_page: if current_page < total_pages {
+                    Some(current_page + 1)
+                } else {
+                    None
+                },
+                prev_page: if current_page > 1 {
+                    Some(current_page - 1)
+                } else {
+                    None
+                },
+            },
+        }
+    }
 }
 
 impl Into<RegionResponse> for Region {
@@ -41,25 +71,14 @@ impl Into<RegionResponse> for &Region {
     }
 }
 
-impl Into<RegionListResponse> for Page<Region> {
-    fn into(self) -> RegionListResponse {
-        let data = self.items.iter().map(|r| r.into()).collect();
-        let pagination = PaginationRepsonse {
-            total: self.total,
-            current_page: 0,
-            total_pages: 0,
-            next_page: None,
-            prev_page: None,
-        };
-        RegionListResponse { data, pagination }
-    }
-}
-
 pub async fn list_region(
     State(state): State<Arc<AppState>>,
+    Query(params): Query<PaginationParams>,
 ) -> Result<Json<RegionListResponse>, RepositoryError> {
-    let region = state.region_repo.all().await?;
-    Ok(Json(region.into()))
+    let pagination = Pagination::new(params.page, params.per_page);
+    let region = state.region_repo.all(pagination).await?;
+    let response = RegionListResponse::from_page(region, params.page, params.per_page);
+    Ok(Json(response))
 }
 
 pub async fn create_region(

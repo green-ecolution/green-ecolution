@@ -5,16 +5,8 @@ use axum::{Router, routing::get};
 use crate::domain::region::RegionRepository;
 
 pub mod error;
+pub mod pagination;
 pub mod region;
-
-#[derive(serde::Serialize)]
-pub struct PaginationRepsonse {
-    total: u64,
-    current_page: u32,
-    total_pages: u32,
-    next_page: Option<u32>,
-    prev_page: Option<u32>,
-}
 
 pub struct AppState {
     pub region_repo: Arc<dyn RegionRepository + Send + Sync>,
