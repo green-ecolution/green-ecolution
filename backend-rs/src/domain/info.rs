@@ -315,8 +315,8 @@ impl Map {
     }
 }
 
-#[trait_variant::make(Send)]
-pub trait InfoRepository {
+#[async_trait::async_trait]
+pub trait InfoRepository: Send + Sync {
     async fn app_info(&self) -> Result<App, RepositoryError>;
     async fn map_info(&self) -> Result<Map, RepositoryError>;
     async fn server_info(&self) -> Result<Server, RepositoryError>;

@@ -208,8 +208,8 @@ pub struct VehicleQuery {
     pub provider: Option<String>,
 }
 
-#[trait_variant::make(Send)]
-pub trait VehicleRepository {
+#[async_trait::async_trait]
+pub trait VehicleRepository: Send + Sync {
     async fn all(&self, query: VehicleQuery) -> Result<Page<Vehicle>, RepositoryError>;
     async fn count(&self, query: VehicleQuery) -> Result<u64, RepositoryError>;
     async fn by_id(&self, id: Id<Vehicle>) -> Result<Vehicle, RepositoryError>;

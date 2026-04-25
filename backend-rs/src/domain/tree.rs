@@ -171,8 +171,8 @@ pub struct TreeQuery {
     pub provider: Option<String>,
 }
 
-#[trait_variant::make(Send)]
-pub trait TreeRepository {
+#[async_trait::async_trait]
+pub trait TreeRepository: Send + Sync {
     async fn all(&self, query: TreeQuery) -> Result<Page<Tree>, RepositoryError>;
     async fn count(&self, query: TreeQuery) -> Result<u64, RepositoryError>;
     async fn by_id(&self, id: Id<Tree>) -> Result<Tree, RepositoryError>;

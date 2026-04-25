@@ -126,8 +126,8 @@ pub struct SensorQuery {
     pub provider: Option<String>,
 }
 
-#[trait_variant::make(Send)]
-pub trait SensorRepository {
+#[async_trait::async_trait]
+pub trait SensorRepository: Send + Sync {
     async fn all(&self, query: SensorQuery) -> Result<Page<Sensor>, RepositoryError>;
     async fn count(&self, query: SensorQuery) -> Result<u64, RepositoryError>;
     async fn create(&self, entity: SensorCreate) -> Result<Sensor, RepositoryError>;

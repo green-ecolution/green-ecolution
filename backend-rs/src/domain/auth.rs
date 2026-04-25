@@ -177,8 +177,8 @@ impl Logout {
     }
 }
 
-#[trait_variant::make(Send)]
-pub trait AuthRepository {
+#[async_trait::async_trait]
+pub trait AuthRepository: Send + Sync {
     async fn introspect_token(&self, token: &str) -> Result<IntrospectToken, RepositoryError>;
     async fn refresh_token(&self, refresh_token: &str) -> Result<ClientToken, RepositoryError>;
     async fn access_token_from_client_code(

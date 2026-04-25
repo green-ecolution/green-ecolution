@@ -42,6 +42,7 @@ impl Region {
     }
 }
 
+#[derive(Debug, serde::Deserialize)]
 pub struct RegionCreate {
     pub name: String,
 }
@@ -50,8 +51,8 @@ pub struct RegionUpdate {
     pub name: String,
 }
 
-#[trait_variant::make(Send)]
-pub trait RegionRepository {
+#[async_trait::async_trait]
+pub trait RegionRepository: Send + Sync {
     async fn all(&self) -> Result<Page<Region>, RepositoryError>;
     async fn by_id(&self, id: Id<Region>) -> Result<Region, RepositoryError>;
     async fn by_point(&self, coord: Coordinate) -> Result<Region, RepositoryError>;

@@ -99,8 +99,8 @@ impl RegionEvaluation {
     }
 }
 
-#[trait_variant::make(Send)]
-pub trait EvaluationRepository {
+#[async_trait::async_trait]
+pub trait EvaluationRepository: Send + Sync {
     async fn regions_with_watering_plan(&self) -> Result<Vec<RegionEvaluation>, RepositoryError>;
     async fn vehicle_with_watering_plan(&self) -> Result<Vec<VehicleEvaluation>, RepositoryError>;
     async fn total_consumed_water(&self) -> Result<f64, RepositoryError>;

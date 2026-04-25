@@ -195,8 +195,8 @@ pub struct WateringPlanQuery {
     pub provider: Option<String>,
 }
 
-#[trait_variant::make(Send)]
-pub trait WateringPlanRepository {
+#[async_trait::async_trait]
+pub trait WateringPlanRepository: Send + Sync {
     async fn all(&self, query: WateringPlanQuery) -> Result<Page<WateringPlan>, RepositoryError>;
     async fn count(&self, query: WateringPlanQuery) -> Result<u64, RepositoryError>;
     async fn by_id(&self, id: Id<WateringPlan>) -> Result<WateringPlan, RepositoryError>;

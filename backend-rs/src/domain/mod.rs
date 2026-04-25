@@ -29,7 +29,16 @@ pub enum DomainError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum RepositoryError {}
+pub enum RepositoryError {
+    #[error("entity not found")]
+    NotFound,
+    #[error("entity already exists: {0}")]
+    AlreadyExists(String),
+    #[error("referenced entity not found: {0}")]
+    ForeignKeyViolation(String),
+    #[error("{0}")]
+    Internal(String),
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Id<T>(i32, PhantomData<T>);
