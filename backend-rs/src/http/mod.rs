@@ -13,10 +13,9 @@ pub struct AppState {
 }
 
 pub fn router(state: Arc<AppState>) -> Router {
-    Router::new()
-        .route(
-            "/regions",
-            get(region::list_region).post(region::create_region),
-        )
-        .with_state(state)
+    let v1 = Router::new()
+        .route("/regions", get(region::all_region))
+        .route("/regions/{region_id}", get(region::region_by_id));
+
+    Router::new().nest("/api/v1", v1).with_state(state)
 }

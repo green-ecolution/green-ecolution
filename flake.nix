@@ -170,6 +170,7 @@
           rustfmt
           clippy
           rust-analyzer
+          sqlx-cli
           # Deploy tooling
           kustomize
           ksops

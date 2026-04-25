@@ -2,13 +2,13 @@ use std::sync::Arc;
 
 use axum::{
     Json,
-    extract::{Query, State},
+    extract::{Path, Query, State},
 };
 
 use crate::{
     domain::{
-        RepositoryError,
-        region::{Region, RegionCreate},
+        Id, RepositoryError,
+        region::Region,
         shared::pagination::{Page, Pagination},
     },
     http::{
@@ -71,7 +71,7 @@ impl Into<RegionResponse> for &Region {
     }
 }
 
-pub async fn list_region(
+pub async fn all_region(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<RegionListResponse>, RepositoryError> {
@@ -81,10 +81,10 @@ pub async fn list_region(
     Ok(Json(response))
 }
 
-pub async fn create_region(
+pub async fn region_by_id(
     State(state): State<Arc<AppState>>,
-    Json(body): Json<RegionCreate>,
+    Path(region_id): Path<i32>,
 ) -> Result<Json<RegionResponse>, RepositoryError> {
-    let region = state.region_repo.create(body).await?;
+    let region = state.region_repo.by_id(Id::new(region_id)).await?;
     Ok(Json(region.into()))
 }

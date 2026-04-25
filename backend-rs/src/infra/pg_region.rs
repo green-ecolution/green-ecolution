@@ -84,8 +84,21 @@ impl RegionRepository for PgRegionRepository {
         ))
     }
 
+    // TODO: Handle Geometry
     async fn create(&self, entity: RegionCreate) -> Result<Region, RepositoryError> {
-        todo!()
+        let row = sqlx::query!(
+            r#"INSERT INTO regions (name) VALUES ($1) RETURNING id, created_at, updated_at, name"#,
+            entity.name
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(Region::new(
+            Id::new(row.id),
+            row.created_at.and_utc(),
+            row.updated_at.and_utc(),
+            row.name,
+        ))
     }
 
     async fn update(
@@ -93,10 +106,27 @@ impl RegionRepository for PgRegionRepository {
         id: Id<Region>,
         entity: RegionUpdate,
     ) -> Result<Region, RepositoryError> {
-        todo!()
+        let row = sqlx::query!(
+            r#"UPDATE regions SET name = $2 WHERE id = $1 RETURNING id, name, created_at, updated_at"#,
+            id.value(),
+            entity.name
+        )
+          .fetch_one(&self.pool)
+          .await?;
+
+        Ok(Region::new(
+            Id::new(row.id),
+            row.created_at.and_utc(),
+            row.updated_at.and_utc(),
+            row.name,
+        ))
     }
 
     async fn delete(&self, id: Id<Region>) -> Result<(), RepositoryError> {
-        todo!()
+        let _ = sqlx::query!(r#"DELETE FROM regions WHERE id = $1"#, id.value())
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
     }
 }
