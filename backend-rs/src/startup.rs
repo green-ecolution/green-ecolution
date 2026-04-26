@@ -14,6 +14,7 @@ use crate::{
         pg_tree::PgTreeRepository,
         pg_vehicle::PgVehicleRepository,
         pg_watering_plan::PgWateringPlanRepository,
+        system_info::DefaultSystemInfoProvider,
     },
     service::{
         cluster_service::ClusterService,
@@ -89,6 +90,8 @@ impl Application {
         let watering_plan_service =
             Arc::new(WateringPlanService::new(watering_plan_repo, event_bus));
         let evaluation_service = Arc::new(EvaluationService::new(evaluation_repo));
+        let info_provider: Arc<dyn crate::domain::info::SystemInfoProvider> =
+            Arc::new(DefaultSystemInfoProvider::new());
 
         let state = Arc::new(AppState {
             region_service,
@@ -98,6 +101,7 @@ impl Application {
             cluster_service,
             watering_plan_service,
             evaluation_service,
+            info_provider,
         });
 
         let listener = TcpListener::bind(address).await?;

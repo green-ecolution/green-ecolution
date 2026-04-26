@@ -2,6 +2,7 @@ use crate::domain::RepositoryError;
 
 pub mod pg_cluster;
 pub mod pg_evaluation;
+pub mod system_info;
 pub mod pg_region;
 pub mod pg_sensor;
 pub mod pg_tree;

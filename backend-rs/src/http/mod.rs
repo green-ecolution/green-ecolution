@@ -6,14 +6,17 @@ use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::service::{
-    cluster_service::ClusterService,
-    evaluation_service::EvaluationService,
-    region_service::RegionService,
-    sensor_service::SensorService,
-    tree_service::TreeService,
-    vehicle_service::VehicleService,
-    watering_plan_service::WateringPlanService,
+use crate::{
+    domain::info::SystemInfoProvider,
+    service::{
+        cluster_service::ClusterService,
+        evaluation_service::EvaluationService,
+        region_service::RegionService,
+        sensor_service::SensorService,
+        tree_service::TreeService,
+        vehicle_service::VehicleService,
+        watering_plan_service::WateringPlanService,
+    },
 };
 
 pub mod v1;
@@ -26,6 +29,7 @@ pub struct AppState {
     pub cluster_service: Arc<ClusterService>,
     pub watering_plan_service: Arc<WateringPlanService>,
     pub evaluation_service: Arc<EvaluationService>,
+    pub info_provider: Arc<dyn SystemInfoProvider>,
 }
 
 #[derive(OpenApi)]

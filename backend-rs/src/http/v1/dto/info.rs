@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::domain::info::{DataStatistics, Git, Map, Server, ServiceStatus, VersionInfo};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct VersionInfoResponse {
     pub current: String,
     pub latest: String,
@@ -29,7 +29,7 @@ impl From<&VersionInfo> for VersionInfoResponse {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct GitInfoResponse {
     pub branch: String,
     pub commit: String,
@@ -46,7 +46,7 @@ impl From<&Git> for GitInfoResponse {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct MapInfoResponse {
     pub center: Vec<f64>,
     pub bbox: Vec<f64>,
@@ -61,7 +61,7 @@ impl From<&Map> for MapInfoResponse {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct ServerInfoResponse {
     pub os: String,
     pub arch: String,
@@ -88,7 +88,7 @@ impl From<&Server> for ServerInfoResponse {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct ServiceStatusResponse {
     pub name: String,
     pub enabled: bool,
@@ -114,12 +114,12 @@ impl From<&ServiceStatus> for ServiceStatusResponse {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct ServicesInfoResponse {
     pub items: Vec<ServiceStatusResponse>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct DataStatisticsResponse {
     #[serde(rename = "treeCount")]
     pub tree_count: i64,
@@ -145,7 +145,7 @@ impl From<&DataStatistics> for DataStatisticsResponse {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct AppInfoResponse {
     pub version: String,
     #[serde(rename = "versionInfo")]
