@@ -8,28 +8,60 @@ use crate::domain::{
 
 use super::{DrivingLicense, VehicleStatus, VehicleType};
 
+/// Represents a watering vehicle used for urban green-space irrigation.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct VehicleResponse {
+    /// Unique identifier of the vehicle.
+    #[schema(example = 1, minimum = 1)]
     pub id: i32,
+    /// Timestamp when the vehicle was created (RFC 3339).
+    #[schema(example = "2025-01-15T08:30:00Z")]
     pub created_at: String,
+    /// Timestamp when the vehicle was last updated (RFC 3339).
+    #[schema(example = "2025-03-20T14:12:00Z")]
     pub updated_at: String,
+    /// Official license plate number of the vehicle.
+    #[schema(example = "FL-GE 123")]
     pub number_plate: String,
+    /// Human-readable description of the vehicle.
+    #[schema(example = "Großes Bewässerungsfahrzeug für den Innenstadtbereich")]
     pub description: String,
+    /// Water tank capacity in liters.
+    #[schema(example = 8000.0, minimum = 0.0)]
     pub water_capacity: f64,
+    /// Manufacturer and model name.
+    #[schema(example = "MAN TGE 3.180")]
     pub model: String,
+    /// Current operational status of the vehicle.
     pub status: VehicleStatus,
+    /// Type/category of the vehicle.
     #[serde(rename = "type")]
     pub vehicle_type: VehicleType,
+    /// Required driving license class to operate this vehicle.
     pub driving_license: DrivingLicense,
+    /// Vehicle height in meters.
+    #[schema(example = 3.2, minimum = 0.0)]
     pub height: f64,
+    /// Vehicle width in meters.
+    #[schema(example = 2.5, minimum = 0.0)]
     pub width: f64,
+    /// Vehicle length in meters.
+    #[schema(example = 6.8, minimum = 0.0)]
     pub length: f64,
+    /// Vehicle weight in kilograms.
+    #[schema(example = 7500.0, minimum = 0.0)]
     pub weight: f64,
+    /// Timestamp when the vehicle was archived, if applicable (RFC 3339).
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(example = "2025-06-01T00:00:00Z", nullable)]
     pub archived_at: Option<String>,
+    /// Name of the external data provider that supplied this vehicle record.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(example = "green_ecolution", nullable)]
     pub provider: Option<String>,
+    /// Arbitrary additional metadata from the provider.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(value_type = Object, nullable)]
     pub additional_information: Option<serde_json::Value>,
 }
 
@@ -57,43 +89,91 @@ impl From<&Vehicle> for VehicleResponse {
     }
 }
 
+/// Request body for creating a new watering vehicle.
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct VehicleCreateRequest {
+    /// Official license plate number of the vehicle.
+    #[schema(example = "FL-GE 123")]
     pub number_plate: String,
+    /// Human-readable description of the vehicle.
+    #[schema(example = "Großes Bewässerungsfahrzeug für den Innenstadtbereich")]
     pub description: String,
+    /// Water tank capacity in liters.
+    #[schema(example = 8000.0, minimum = 0.0)]
     pub water_capacity: f64,
+    /// Manufacturer and model name.
+    #[schema(example = "MAN TGE 3.180")]
     pub model: String,
+    /// Current operational status of the vehicle.
     pub status: VehicleStatus,
+    /// Type/category of the vehicle.
     #[serde(rename = "type")]
     pub vehicle_type: VehicleType,
+    /// Required driving license class to operate this vehicle.
     pub driving_license: DrivingLicense,
+    /// Vehicle height in meters.
+    #[schema(example = 3.2, minimum = 0.0)]
     pub height: f64,
+    /// Vehicle width in meters.
+    #[schema(example = 2.5, minimum = 0.0)]
     pub width: f64,
+    /// Vehicle length in meters.
+    #[schema(example = 6.8, minimum = 0.0)]
     pub length: f64,
+    /// Vehicle weight in kilograms.
+    #[schema(example = 7500.0, minimum = 0.0)]
     pub weight: f64,
+    /// Name of the external data provider that supplied this vehicle record.
     #[serde(default)]
+    #[schema(example = "green_ecolution", nullable)]
     pub provider: Option<String>,
+    /// Arbitrary additional metadata from the provider.
     #[serde(default)]
+    #[schema(value_type = Object, nullable)]
     pub additional_information: Option<serde_json::Value>,
 }
 
+/// Request body for updating an existing watering vehicle.
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct VehicleUpdateRequest {
+    /// Official license plate number of the vehicle.
+    #[schema(example = "FL-GE 123")]
     pub number_plate: String,
+    /// Human-readable description of the vehicle.
+    #[schema(example = "Großes Bewässerungsfahrzeug für den Innenstadtbereich")]
     pub description: String,
+    /// Water tank capacity in liters.
+    #[schema(example = 8000.0, minimum = 0.0)]
     pub water_capacity: f64,
+    /// Manufacturer and model name.
+    #[schema(example = "MAN TGE 3.180")]
     pub model: String,
+    /// Current operational status of the vehicle.
     pub status: VehicleStatus,
+    /// Type/category of the vehicle.
     #[serde(rename = "type")]
     pub vehicle_type: VehicleType,
+    /// Required driving license class to operate this vehicle.
     pub driving_license: DrivingLicense,
+    /// Vehicle height in meters.
+    #[schema(example = 3.2, minimum = 0.0)]
     pub height: f64,
+    /// Vehicle width in meters.
+    #[schema(example = 2.5, minimum = 0.0)]
     pub width: f64,
+    /// Vehicle length in meters.
+    #[schema(example = 6.8, minimum = 0.0)]
     pub length: f64,
+    /// Vehicle weight in kilograms.
+    #[schema(example = 7500.0, minimum = 0.0)]
     pub weight: f64,
+    /// Name of the external data provider that supplied this vehicle record.
     #[serde(default)]
+    #[schema(example = "green_ecolution", nullable)]
     pub provider: Option<String>,
+    /// Arbitrary additional metadata from the provider.
     #[serde(default)]
+    #[schema(value_type = Object, nullable)]
     pub additional_information: Option<serde_json::Value>,
 }
 

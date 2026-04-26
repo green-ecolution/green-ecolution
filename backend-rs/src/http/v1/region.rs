@@ -28,9 +28,13 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     get,
     path = "/regions",
     tag = "Regions",
+    operation_id = "listRegions",
+    summary = "List all regions",
+    description = "Returns a paginated list of all geographic regions used to organize tree clusters.",
     params(PaginationParams),
     responses(
-        (status = 200, description = "Paginated list of regions"),
+        (status = 200, description = "Paginated list of regions", body = ListResponse<RegionResponse>),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn list_regions(
@@ -50,10 +54,14 @@ pub async fn list_regions(
     get,
     path = "/regions/{region_id}",
     tag = "Regions",
+    operation_id = "getRegion",
+    summary = "Get a region",
+    description = "Returns a single region by its unique identifier.",
     params(("region_id" = i32, Path, description = "Region ID")),
     responses(
         (status = 200, description = "Region found", body = RegionResponse),
         (status = 404, description = "Region not found"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn get_region(

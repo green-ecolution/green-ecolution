@@ -32,8 +32,14 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
 }
 
 #[utoipa::path(get, path = "/vehicles", tag = "Vehicles",
+    operation_id = "listVehicles",
+    summary = "List all vehicles",
+    description = "Returns a paginated list of active vehicles.",
     params(PaginationParams),
-    responses((status = 200, description = "Paginated list of vehicles"))
+    responses(
+        (status = 200, description = "Paginated list of vehicles", body = ListResponse<VehicleResponse>),
+        (status = 500, description = "Internal server error"),
+    )
 )]
 pub async fn list_vehicles(
     State(state): State<Arc<AppState>>,
@@ -49,10 +55,14 @@ pub async fn list_vehicles(
 }
 
 #[utoipa::path(get, path = "/vehicles/{vehicle_id}", tag = "Vehicles",
+    operation_id = "getVehicle",
+    summary = "Get a vehicle",
+    description = "Returns a single vehicle by its ID.",
     params(("vehicle_id" = i32, Path, description = "Vehicle ID")),
     responses(
         (status = 200, description = "Vehicle found", body = VehicleResponse),
         (status = 404, description = "Vehicle not found"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn get_vehicle(
@@ -64,11 +74,15 @@ pub async fn get_vehicle(
 }
 
 #[utoipa::path(post, path = "/vehicles", tag = "Vehicles",
+    operation_id = "createVehicle",
+    summary = "Create a vehicle",
+    description = "Registers a new watering vehicle.",
     request_body = VehicleCreateRequest,
     responses(
         (status = 201, description = "Vehicle created", body = VehicleResponse),
         (status = 400, description = "Invalid input"),
         (status = 409, description = "Number plate already exists"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn create_vehicle(
@@ -81,11 +95,15 @@ pub async fn create_vehicle(
 }
 
 #[utoipa::path(put, path = "/vehicles/{vehicle_id}", tag = "Vehicles",
+    operation_id = "updateVehicle",
+    summary = "Update a vehicle",
+    description = "Updates the details of an existing vehicle.",
     params(("vehicle_id" = i32, Path, description = "Vehicle ID")),
     request_body = VehicleUpdateRequest,
     responses(
         (status = 200, description = "Vehicle updated", body = VehicleResponse),
         (status = 404, description = "Vehicle not found"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn update_vehicle(
@@ -99,10 +117,14 @@ pub async fn update_vehicle(
 }
 
 #[utoipa::path(delete, path = "/vehicles/{vehicle_id}", tag = "Vehicles",
+    operation_id = "deleteVehicle",
+    summary = "Delete a vehicle",
+    description = "Permanently deletes a vehicle.",
     params(("vehicle_id" = i32, Path, description = "Vehicle ID")),
     responses(
         (status = 204, description = "Vehicle deleted"),
         (status = 404, description = "Vehicle not found"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn delete_vehicle(
@@ -114,8 +136,14 @@ pub async fn delete_vehicle(
 }
 
 #[utoipa::path(get, path = "/vehicles/archived", tag = "Vehicles",
+    operation_id = "listArchivedVehicles",
+    summary = "List archived vehicles",
+    description = "Returns a paginated list of decommissioned vehicles.",
     params(PaginationParams),
-    responses((status = 200, description = "Paginated list of archived vehicles"))
+    responses(
+        (status = 200, description = "Paginated list of archived vehicles", body = ListResponse<VehicleResponse>),
+        (status = 500, description = "Internal server error"),
+    )
 )]
 pub async fn list_archived_vehicles(
     State(state): State<Arc<AppState>>,
@@ -133,10 +161,14 @@ pub async fn list_archived_vehicles(
 }
 
 #[utoipa::path(post, path = "/vehicles/archived/{vehicle_id}", tag = "Vehicles",
+    operation_id = "archiveVehicle",
+    summary = "Archive a vehicle",
+    description = "Moves a vehicle to the archived state.",
     params(("vehicle_id" = i32, Path, description = "Vehicle ID")),
     responses(
         (status = 204, description = "Vehicle archived"),
         (status = 404, description = "Vehicle not found"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn archive_vehicle(
@@ -148,10 +180,14 @@ pub async fn archive_vehicle(
 }
 
 #[utoipa::path(get, path = "/vehicles/plate/{plate}", tag = "Vehicles",
+    operation_id = "getVehicleByPlate",
+    summary = "Get vehicle by plate",
+    description = "Looks up a vehicle by its license plate number.",
     params(("plate" = String, Path, description = "Vehicle number plate")),
     responses(
         (status = 200, description = "Vehicle found", body = VehicleResponse),
         (status = 404, description = "Vehicle not found"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn get_vehicle_by_plate(

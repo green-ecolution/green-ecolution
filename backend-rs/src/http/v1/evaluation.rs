@@ -25,7 +25,13 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
 }
 
 #[utoipa::path(get, path = "/evaluation", tag = "Evaluation",
-    responses((status = 200, description = "Evaluation statistics", body = EvaluationResponse))
+    operation_id = "getEvaluation",
+    summary = "Get evaluation data",
+    description = "Returns aggregated statistics including resource counts, water consumption, and per-region/vehicle breakdowns.",
+    responses(
+        (status = 200, description = "Evaluation statistics", body = EvaluationResponse),
+        (status = 500, description = "Internal server error"),
+    )
 )]
 pub async fn get_evaluation(
     State(state): State<Arc<AppState>>,

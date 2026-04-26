@@ -65,9 +65,18 @@ async fn build_cluster_response(
     }))
 }
 
-#[utoipa::path(get, path = "/clusters", tag = "Tree Clusters",
+#[utoipa::path(
+    get,
+    path = "/clusters",
+    tag = "Tree Clusters",
+    operation_id = "listClusters",
+    summary = "List all tree clusters",
+    description = "Returns a paginated list of all tree clusters with a compact representation including region info.",
     params(PaginationParams),
-    responses((status = 200, description = "Paginated list of tree clusters"))
+    responses(
+        (status = 200, description = "Paginated list of tree clusters", body = ListResponse<TreeClusterInListResponse>),
+        (status = 500, description = "Internal server error"),
+    )
 )]
 pub async fn list_clusters(
     State(state): State<Arc<AppState>>,
@@ -92,11 +101,18 @@ pub async fn list_clusters(
     Ok(Json(response))
 }
 
-#[utoipa::path(get, path = "/clusters/{cluster_id}", tag = "Tree Clusters",
+#[utoipa::path(
+    get,
+    path = "/clusters/{cluster_id}",
+    tag = "Tree Clusters",
+    operation_id = "getCluster",
+    summary = "Get a tree cluster",
+    description = "Returns a single tree cluster by its unique identifier, including fully resolved tree objects.",
     params(("cluster_id" = i32, Path, description = "Cluster ID")),
     responses(
         (status = 200, description = "Cluster found", body = TreeClusterResponse),
         (status = 404, description = "Cluster not found"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn get_cluster(
@@ -108,10 +124,17 @@ pub async fn get_cluster(
     Ok(Json(response))
 }
 
-#[utoipa::path(post, path = "/clusters", tag = "Tree Clusters",
+#[utoipa::path(
+    post,
+    path = "/clusters",
+    tag = "Tree Clusters",
+    operation_id = "createCluster",
+    summary = "Create a tree cluster",
+    description = "Creates a new tree cluster with the given properties and returns the created resource.",
     request_body = TreeClusterCreateRequest,
     responses(
         (status = 201, description = "Cluster created", body = TreeClusterResponse),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn create_cluster(
@@ -123,12 +146,19 @@ pub async fn create_cluster(
     Ok((StatusCode::CREATED, Json(response)))
 }
 
-#[utoipa::path(put, path = "/clusters/{cluster_id}", tag = "Tree Clusters",
+#[utoipa::path(
+    put,
+    path = "/clusters/{cluster_id}",
+    tag = "Tree Clusters",
+    operation_id = "updateCluster",
+    summary = "Update a tree cluster",
+    description = "Updates an existing tree cluster identified by its ID and returns the updated resource.",
     params(("cluster_id" = i32, Path, description = "Cluster ID")),
     request_body = TreeClusterUpdateRequest,
     responses(
         (status = 200, description = "Cluster updated", body = TreeClusterResponse),
         (status = 404, description = "Cluster not found"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn update_cluster(
@@ -146,11 +176,18 @@ pub async fn update_cluster(
     Ok(Json(response))
 }
 
-#[utoipa::path(delete, path = "/clusters/{cluster_id}", tag = "Tree Clusters",
+#[utoipa::path(
+    delete,
+    path = "/clusters/{cluster_id}",
+    tag = "Tree Clusters",
+    operation_id = "deleteCluster",
+    summary = "Delete a tree cluster",
+    description = "Deletes a tree cluster identified by its ID.",
     params(("cluster_id" = i32, Path, description = "Cluster ID")),
     responses(
         (status = 204, description = "Cluster deleted"),
         (status = 404, description = "Cluster not found"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn delete_cluster(

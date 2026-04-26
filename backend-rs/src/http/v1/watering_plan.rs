@@ -74,8 +74,14 @@ async fn resolve_plan_relations(
 }
 
 #[utoipa::path(get, path = "/watering-plans", tag = "Watering Plans",
+    operation_id = "listWateringPlans",
+    summary = "List all watering plans",
+    description = "Returns a paginated list of watering plans with embedded vehicles and clusters.",
     params(PaginationParams),
-    responses((status = 200, description = "Paginated list of watering plans"))
+    responses(
+        (status = 200, description = "Paginated list of watering plans", body = ListResponse<WateringPlanInListResponse>),
+        (status = 500, description = "Internal server error"),
+    )
 )]
 pub async fn list_watering_plans(
     State(state): State<Arc<AppState>>,
@@ -140,10 +146,14 @@ pub async fn list_watering_plans(
 }
 
 #[utoipa::path(get, path = "/watering-plans/{watering_plan_id}", tag = "Watering Plans",
+    operation_id = "getWateringPlan",
+    summary = "Get a watering plan",
+    description = "Returns full watering plan detail including evaluation values.",
     params(("watering_plan_id" = i32, Path, description = "Watering plan ID")),
     responses(
         (status = 200, description = "Watering plan found", body = WateringPlanResponse),
         (status = 404, description = "Watering plan not found"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn get_watering_plan(
@@ -166,10 +176,14 @@ pub async fn get_watering_plan(
 }
 
 #[utoipa::path(post, path = "/watering-plans", tag = "Watering Plans",
+    operation_id = "createWateringPlan",
+    summary = "Create a watering plan",
+    description = "Creates a new watering plan with clusters, vehicles, and user assignments.",
     request_body = WateringPlanCreateRequest,
     responses(
         (status = 201, description = "Watering plan created", body = WateringPlanResponse),
         (status = 400, description = "Invalid input"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn create_watering_plan(
@@ -193,11 +207,15 @@ pub async fn create_watering_plan(
 }
 
 #[utoipa::path(put, path = "/watering-plans/{watering_plan_id}", tag = "Watering Plans",
+    operation_id = "updateWateringPlan",
+    summary = "Update a watering plan",
+    description = "Updates the details or status of an existing watering plan.",
     params(("watering_plan_id" = i32, Path, description = "Watering plan ID")),
     request_body = WateringPlanUpdateRequest,
     responses(
         (status = 200, description = "Watering plan updated", body = WateringPlanResponse),
         (status = 404, description = "Watering plan not found"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn update_watering_plan(
@@ -225,10 +243,14 @@ pub async fn update_watering_plan(
 }
 
 #[utoipa::path(delete, path = "/watering-plans/{watering_plan_id}", tag = "Watering Plans",
+    operation_id = "deleteWateringPlan",
+    summary = "Delete a watering plan",
+    description = "Permanently deletes a watering plan.",
     params(("watering_plan_id" = i32, Path, description = "Watering plan ID")),
     responses(
         (status = 204, description = "Watering plan deleted"),
         (status = 404, description = "Watering plan not found"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn delete_watering_plan(
@@ -240,8 +262,14 @@ pub async fn delete_watering_plan(
 }
 
 #[utoipa::path(get, path = "/watering-plans/route/gpx/{gpx_name}", tag = "Watering Plans",
+    operation_id = "getGpxFile",
+    summary = "Download GPX file",
+    description = "Downloads the optimized watering route as a GPX file.",
     params(("gpx_name" = String, Path, description = "GPX file name")),
-    responses((status = 200, description = "GPX file"))
+    responses(
+        (status = 200, description = "GPX file"),
+        (status = 500, description = "Internal server error"),
+    )
 )]
 pub async fn get_gpx_file(
     State(_state): State<Arc<AppState>>,
@@ -251,7 +279,13 @@ pub async fn get_gpx_file(
 }
 
 #[utoipa::path(post, path = "/watering-plans/route/preview", tag = "Watering Plans",
-    responses((status = 200, description = "Route preview"))
+    operation_id = "previewRoute",
+    summary = "Preview route",
+    description = "Calculates and previews an optimized watering route without creating a plan.",
+    responses(
+        (status = 200, description = "Route preview"),
+        (status = 500, description = "Internal server error"),
+    )
 )]
 pub async fn preview_route(
     State(_state): State<Arc<AppState>>,
