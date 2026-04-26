@@ -10,7 +10,7 @@ import { WateringPlanStatus } from '@green-ecolution/backend-client'
 describe('wateringPlanSchemaBase', () => {
   const validWateringPlan = {
     date: new Date(),
-    status: WateringPlanStatus.WateringPlanStatusPlanned,
+    status: WateringPlanStatus.Planned,
     transporterId: 1,
     trailerId: 2,
     driverIds: ['550e8400-e29b-41d4-a716-446655440000'],
@@ -25,12 +25,12 @@ describe('wateringPlanSchemaBase', () => {
 
   it('accepts all valid WateringPlanStatus values', () => {
     const statuses = [
-      WateringPlanStatus.WateringPlanStatusPlanned,
-      WateringPlanStatus.WateringPlanStatusActive,
-      WateringPlanStatus.WateringPlanStatusCanceled,
-      WateringPlanStatus.WateringPlanStatusFinished,
-      WateringPlanStatus.WateringPlanStatusNotCompeted,
-      WateringPlanStatus.WateringPlanStatusUnknown,
+      WateringPlanStatus.Planned,
+      WateringPlanStatus.Active,
+      WateringPlanStatus.Canceled,
+      WateringPlanStatus.Finished,
+      WateringPlanStatus.NotCompeted,
+      WateringPlanStatus.Unknown,
     ]
 
     statuses.forEach((status) => {
@@ -103,7 +103,7 @@ describe('wateringPlanSchema (extended)', () => {
 
   const validWateringPlan = {
     date: futureDate,
-    status: WateringPlanStatus.WateringPlanStatusPlanned,
+    status: WateringPlanStatus.Planned,
     transporterId: 1,
     driverIds: ['550e8400-e29b-41d4-a716-446655440000'],
     clusterIds: [1],

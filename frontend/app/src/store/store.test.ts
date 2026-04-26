@@ -94,7 +94,7 @@ describe('Store - User Slice', () => {
       lastName: '',
       drivingLicenses: [],
       userRoles: [],
-      userStatus: UserStatus.UserStatusUnknown,
+      userStatus: UserStatus.Unknown,
     })
   })
 
@@ -115,9 +115,9 @@ describe('Store - User Slice', () => {
     expect(useStore.getState().email).toBe('test@example.com')
     expect(useStore.getState().firstName).toBe('Test')
     expect(useStore.getState().lastName).toBe('User')
-    expect(useStore.getState().drivingLicenses).toEqual([DrivingLicense.DrivingLicenseBE])
-    expect(useStore.getState().userRoles).toEqual([UserRole.UserRoleTbz])
-    expect(useStore.getState().userStatus).toBe(UserStatus.UserStatusAvailable)
+    expect(useStore.getState().drivingLicenses).toEqual([DrivingLicense.Be])
+    expect(useStore.getState().userRoles).toEqual([UserRole.Tbz])
+    expect(useStore.getState().userStatus).toBe(UserStatus.Available)
   })
 
   it('setUserFromJwt handles missing optional fields', () => {
@@ -134,7 +134,7 @@ describe('Store - User Slice', () => {
     expect(useStore.getState().username).toBe('testuser')
     expect(useStore.getState().drivingLicenses).toEqual([])
     expect(useStore.getState().userRoles).toEqual([])
-    expect(useStore.getState().userStatus).toBe(UserStatus.UserStatusUnknown)
+    expect(useStore.getState().userStatus).toBe(UserStatus.Unknown)
   })
 
   it('isUserEmpty returns true when user data is empty', () => {
@@ -160,7 +160,7 @@ describe('Store - User Slice', () => {
       lastName: 'User',
       drivingLicenses: [], // Empty - should NOT affect result
       userRoles: [], // Empty - should NOT affect result
-      userStatus: UserStatus.UserStatusUnknown, // Unknown - should NOT affect result
+      userStatus: UserStatus.Unknown, // Unknown - should NOT affect result
     })
 
     expect(useStore.getState().isUserEmpty()).toBe(false)
@@ -172,9 +172,9 @@ describe('Store - User Slice', () => {
       email: 'test@example.com',
       firstName: 'Test',
       lastName: 'User',
-      drivingLicenses: [DrivingLicense.DrivingLicenseB],
-      userRoles: [UserRole.UserRoleTbz],
-      userStatus: UserStatus.UserStatusAvailable,
+      drivingLicenses: [DrivingLicense.B],
+      userRoles: [UserRole.Tbz],
+      userStatus: UserStatus.Available,
     })
 
     useStore.getState().clearUser()
@@ -185,7 +185,7 @@ describe('Store - User Slice', () => {
     expect(useStore.getState().lastName).toBe('')
     expect(useStore.getState().drivingLicenses).toEqual([])
     expect(useStore.getState().userRoles).toEqual([])
-    expect(useStore.getState().userStatus).toBe(UserStatus.UserStatusUnknown)
+    expect(useStore.getState().userStatus).toBe(UserStatus.Unknown)
   })
 })
 

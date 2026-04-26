@@ -1,4 +1,6 @@
-import { HTTPError } from '@green-ecolution/backend-client'
+interface HTTPError {
+  error: string
+}
 
 export function decodeJWT<T>(token: string): T {
   const payload = token.split('.')[1]

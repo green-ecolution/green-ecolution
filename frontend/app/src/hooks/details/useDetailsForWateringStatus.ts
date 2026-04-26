@@ -10,31 +10,31 @@ const WateringStatusProperties: Record<
     colorHex: string
   }
 > = {
-  [WateringStatus.WateringStatusUnknown]: {
+  [WateringStatus.Unknown]: {
     color: 'outline-dark',
     label: 'Unbekannt',
     description: 'Der Bewässerungsstatus ist unbekannt.',
     colorHex: '#A2A2A2',
   },
-  [WateringStatus.WateringStatusJustWatered]: {
+  [WateringStatus.JustWatered]: {
     color: 'outline-dark',
     label: 'Soeben bewässert',
     description: 'Die Bäume wurden vor kurzem bewässert.',
     colorHex: '#747474',
   },
-  [WateringStatus.WateringStatusBad]: {
+  [WateringStatus.Bad]: {
     color: 'outline-red',
     label: 'Sehr trocken',
     description: 'Die Bäume benötigen dringend Wasser.',
     colorHex: '#E44E4D',
   },
-  [WateringStatus.WateringStatusModerate]: {
+  [WateringStatus.Moderate]: {
     color: 'outline-yellow',
     label: 'Leicht trocken',
     description: 'Die Bäume sind leicht trocken und benötigen etwas Wasser.',
     colorHex: '#FFC434',
   },
-  [WateringStatus.WateringStatusGood]: {
+  [WateringStatus.Good]: {
     color: 'outline-green-light',
     label: 'In Ordnung',
     description: 'Die Bewässerung ist ausreichend, keine Maßnahmen erforderlich.',

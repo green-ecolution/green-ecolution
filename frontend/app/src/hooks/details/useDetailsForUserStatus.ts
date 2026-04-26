@@ -7,17 +7,17 @@ export const UserStatusOptions: {
   color: StatusColor
 }[] = [
   {
-    value: UserStatus.UserStatusUnknown,
+    value: UserStatus.Unknown,
     label: 'Unbekannt',
     color: 'outline-dark',
   },
   {
-    value: UserStatus.UserStatusAbsent,
+    value: UserStatus.Absent,
     label: 'Nicht verfügbar',
     color: 'outline-red',
   },
   {
-    value: UserStatus.UserStatusAvailable,
+    value: UserStatus.Available,
     label: 'Verfügbar',
     color: 'outline-green-dark',
   },
@@ -29,10 +29,10 @@ export const getUserStatusDetails = (userStatus: UserStatus) =>
 export const parseUserStatus = (status: string): UserStatus => {
   switch (status.toLowerCase()) {
     case 'absent':
-      return UserStatus.UserStatusAbsent
+      return UserStatus.Absent
     case 'available':
-      return UserStatus.UserStatusAvailable
+      return UserStatus.Available
     default:
-      return UserStatus.UserStatusUnknown
+      return UserStatus.Unknown
   }
 }

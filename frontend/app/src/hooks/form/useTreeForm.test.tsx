@@ -26,7 +26,7 @@ vi.mock('@tanstack/react-router', () => ({
 }))
 
 import { treeApi } from '@/api/backendApi'
-import type { Tree } from '@green-ecolution/backend-client'
+import type { Tree } from '@/api/backendApi'
 
 function createWrapper() {
   const queryClient = new QueryClient({

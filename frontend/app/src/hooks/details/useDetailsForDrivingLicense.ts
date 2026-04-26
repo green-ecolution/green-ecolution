@@ -2,19 +2,19 @@ import { DrivingLicense } from '@green-ecolution/backend-client'
 
 export const DrivingLicenseOptions = [
   {
-    value: DrivingLicense.DrivingLicenseB,
+    value: DrivingLicense.B,
     label: 'B',
   },
   {
-    value: DrivingLicense.DrivingLicenseBE,
+    value: DrivingLicense.Be,
     label: 'BE',
   },
   {
-    value: DrivingLicense.DrivingLicenseC,
+    value: DrivingLicense.C,
     label: 'C',
   },
   {
-    value: DrivingLicense.DrivingLicenseCE,
+    value: DrivingLicense.Ce,
     label: 'CE',
   },
 ]
@@ -26,14 +26,14 @@ export const getDrivingLicenseDetails = (drivingLicense: DrivingLicense) =>
 export const parseDrivingLicense = (drivingLicense: string): DrivingLicense => {
   switch (drivingLicense) {
     case 'B':
-      return DrivingLicense.DrivingLicenseB
+      return DrivingLicense.B
     case 'BE':
-      return DrivingLicense.DrivingLicenseBE
+      return DrivingLicense.Be
     case 'C':
-      return DrivingLicense.DrivingLicenseC
+      return DrivingLicense.C
     case 'CE':
-      return DrivingLicense.DrivingLicenseCE
+      return DrivingLicense.Ce
     default:
-      return DrivingLicense.DrivingLicenseB
+      return DrivingLicense.B
   }
 }

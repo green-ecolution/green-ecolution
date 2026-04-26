@@ -1,4 +1,5 @@
-import { DrivingLicense, User, Vehicle } from '@green-ecolution/backend-client'
+import { DrivingLicense } from '@green-ecolution/backend-client'
+import type { User, Vehicle } from '@/api/backendApi'
 
 // Keep in sync with backend: internal/service/domain/watering_plan/watering_plan.go
 export function licenseSatisfies(held: DrivingLicense, required: DrivingLicense): boolean {
@@ -6,15 +7,15 @@ export function licenseSatisfies(held: DrivingLicense, required: DrivingLicense)
     return true
   }
   switch (held) {
-    case DrivingLicense.DrivingLicenseBE:
-      return required === DrivingLicense.DrivingLicenseB
-    case DrivingLicense.DrivingLicenseC:
-      return required === DrivingLicense.DrivingLicenseB
-    case DrivingLicense.DrivingLicenseCE:
+    case DrivingLicense.Be:
+      return required === DrivingLicense.B
+    case DrivingLicense.C:
+      return required === DrivingLicense.B
+    case DrivingLicense.Ce:
       return (
-        required === DrivingLicense.DrivingLicenseB ||
-        required === DrivingLicense.DrivingLicenseBE ||
-        required === DrivingLicense.DrivingLicenseC
+        required === DrivingLicense.B ||
+        required === DrivingLicense.Be ||
+        required === DrivingLicense.C
       )
     default:
       return false
@@ -55,8 +56,8 @@ export function validateDriverLicenses(
 
   const selectedUsers = users.filter((u) => driverIds.includes(u.id))
   const hasQualifiedDriver = selectedUsers.some((user) =>
-    requiredLicenses.every((required) =>
-      user.drivingLicenses.some((held) => licenseSatisfies(held, required)),
+    requiredLicenses.every((required: DrivingLicense) =>
+      user.drivingLicenses.some((held: DrivingLicense) => licenseSatisfies(held, required)),
     ),
   )
 

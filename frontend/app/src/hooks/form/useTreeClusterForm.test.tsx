@@ -27,7 +27,7 @@ vi.mock('@tanstack/react-router', () => ({
 }))
 
 import { clusterApi } from '@/api/backendApi'
-import type { TreeCluster } from '@green-ecolution/backend-client'
+import type { TreeCluster } from '@/api/backendApi'
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -49,7 +49,7 @@ const defaultInitForm = {
   name: 'Test Cluster',
   address: 'Test Address 123',
   description: '',
-  soilCondition: SoilCondition.TreeSoilConditionSandig,
+  soilCondition: SoilCondition.Sandig,
   treeIds: [] as number[],
 }
 
@@ -59,8 +59,8 @@ function createMockTreeCluster(overrides: Partial<TreeCluster> = {}): TreeCluste
     name: 'Test Cluster',
     address: 'Test Address 123',
     description: '',
-    soilCondition: SoilCondition.TreeSoilConditionSandig,
-    wateringStatus: WateringStatus.WateringStatusGood,
+    soilCondition: SoilCondition.Sandig,
+    wateringStatus: WateringStatus.Good,
     trees: [],
     archived: false,
     region: null,
@@ -91,7 +91,7 @@ describe('useTreeClusterForm', () => {
     expect(result.current.form.getValues('name')).toBe('Test Cluster')
     expect(result.current.form.getValues('address')).toBe('Test Address 123')
     expect(result.current.form.getValues('soilCondition')).toBe(
-      SoilCondition.TreeSoilConditionSandig,
+      SoilCondition.Sandig,
     )
     expect(result.current.form.getValues('treeIds')).toEqual([])
   })
@@ -113,7 +113,7 @@ describe('useTreeClusterForm', () => {
   it('calls createTreeCluster API when mutationType is create', async () => {
     const mockResponse = createMockTreeCluster()
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    const createMock = vi.mocked(clusterApi.createTreeCluster)
+    const createMock = vi.mocked(clusterApi.createCluster)
     createMock.mockResolvedValueOnce(mockResponse)
 
     const { result } = renderHook(
@@ -126,7 +126,7 @@ describe('useTreeClusterForm', () => {
         name: 'Test Cluster',
         address: 'Test Address 123',
         description: '',
-        soilCondition: SoilCondition.TreeSoilConditionSandig,
+        soilCondition: SoilCondition.Sandig,
         treeIds: [],
       })
     })
@@ -138,7 +138,7 @@ describe('useTreeClusterForm', () => {
           name: 'Test Cluster',
           address: 'Test Address 123',
           description: '',
-          soilCondition: SoilCondition.TreeSoilConditionSandig,
+          soilCondition: SoilCondition.Sandig,
           treeIds: [],
         },
       })
@@ -150,17 +150,17 @@ describe('useTreeClusterForm', () => {
       id: 5,
       name: 'Updated Cluster',
       address: 'Updated Address',
-      soilCondition: SoilCondition.TreeSoilConditionLehmig,
+      soilCondition: SoilCondition.Lehmig,
     })
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    const updateMock = vi.mocked(clusterApi.updateTreeCluster)
+    const updateMock = vi.mocked(clusterApi.updateCluster)
     updateMock.mockResolvedValueOnce(mockResponse)
 
     const updateInitForm = {
       ...defaultInitForm,
       name: 'Updated Cluster',
       address: 'Updated Address',
-      soilCondition: SoilCondition.TreeSoilConditionLehmig,
+      soilCondition: SoilCondition.Lehmig,
     }
 
     const { result } = renderHook(
@@ -173,7 +173,7 @@ describe('useTreeClusterForm', () => {
         name: 'Updated Cluster',
         address: 'Updated Address',
         description: '',
-        soilCondition: SoilCondition.TreeSoilConditionLehmig,
+        soilCondition: SoilCondition.Lehmig,
         treeIds: [],
       })
     })
@@ -195,7 +195,7 @@ describe('useTreeClusterForm', () => {
     it('clears draft on successful mutation', async () => {
       const mockResponse = createMockTreeCluster()
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      const createMock = vi.mocked(clusterApi.createTreeCluster)
+      const createMock = vi.mocked(clusterApi.createCluster)
       createMock.mockResolvedValueOnce(mockResponse)
 
       // Pre-populate draft
@@ -214,7 +214,7 @@ describe('useTreeClusterForm', () => {
           name: 'Test Cluster',
           address: 'Test Address 123',
           description: '',
-          soilCondition: SoilCondition.TreeSoilConditionSandig,
+          soilCondition: SoilCondition.Sandig,
           treeIds: [],
         })
       })

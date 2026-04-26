@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { vehicleIdQuery, vehicleQuery } from '@/api/queries'
 import createToast from '@/hooks/createToast'
 import { useNavigate } from '@tanstack/react-router'
-import { Vehicle, VehicleCreate, VehicleUpdate } from '@green-ecolution/backend-client'
+import type { Vehicle, VehicleCreate, VehicleUpdate } from '@/api/backendApi'
 import { vehicleApi } from '@/api/backendApi'
 import { VehicleForm, vehicleSchema } from '@/schema/vehicleSchema'
 import { DefaultValues, useForm } from 'react-hook-form'
@@ -25,12 +25,12 @@ export const useVehicleForm = (
     mutationFn: (vehicle: VehicleCreate | VehicleUpdate) => {
       if (mutationType === 'create') {
         return vehicleApi.createVehicle({
-          body: vehicle as VehicleCreate,
+          vehicleCreateRequest: vehicle as VehicleCreate,
         })
       } else if (mutationType === 'update' && opts.vehicleId) {
         return vehicleApi.updateVehicle({
-          id: Number(opts.vehicleId),
-          body: vehicle as VehicleUpdate,
+          vehicleId: Number(opts.vehicleId),
+          vehicleUpdateRequest: vehicle as VehicleUpdate,
         })
       }
       return Promise.reject(Error('Invalid mutation type or missing vehicleId for update'))

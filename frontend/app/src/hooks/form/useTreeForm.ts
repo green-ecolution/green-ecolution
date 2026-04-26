@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query'
 import { treeClusterIdQuery, treeIdQuery, treeQuery } from '@/api/queries'
-import { Tree, TreeCreate, TreeUpdate } from '@green-ecolution/backend-client'
+import type { Tree, TreeCreate, TreeUpdate } from '@/api/backendApi'
 import { treeApi } from '@/api/backendApi'
 import { TreeForm, treeSchema } from '@/schema/treeSchema'
 import { DefaultValues } from 'react-hook-form'
@@ -10,8 +10,8 @@ const treeConfig: EntityFormConfig<TreeForm, TreeCreate, TreeUpdate, Tree> = {
   formType: 'tree',
   schema: treeSchema,
 
-  createFn: (body) => treeApi.createTree({ body }),
-  updateFn: (id, body) => treeApi.updateTree({ treeId: Number(id), body }),
+  createFn: (body) => treeApi.createTree({ treeCreateRequest: body }),
+  updateFn: (id, body) => treeApi.updateTree({ treeId: Number(id), treeUpdateRequest: body }),
 
   invalidateQueries: (data, queryClient: QueryClient) => {
     queryClient

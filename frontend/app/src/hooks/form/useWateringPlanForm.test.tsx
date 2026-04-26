@@ -27,7 +27,7 @@ vi.mock('@tanstack/react-router', () => ({
 }))
 
 import { wateringPlanApi } from '@/api/backendApi'
-import type { WateringPlan } from '@green-ecolution/backend-client'
+import type { WateringPlan } from '@/api/backendApi'
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -50,7 +50,7 @@ futureDate.setDate(futureDate.getDate() + 7)
 
 const defaultInitForm = {
   date: futureDate,
-  status: WateringPlanStatus.WateringPlanStatusPlanned,
+  status: WateringPlanStatus.Planned,
   transporterId: 1,
   trailerId: 2,
   driverIds: ['550e8400-e29b-41d4-a716-446655440000'],
@@ -62,7 +62,7 @@ function createMockWateringPlan(overrides: Partial<WateringPlan> = {}): Watering
   return {
     id: 1,
     date: futureDate.toISOString(),
-    status: WateringPlanStatus.WateringPlanStatusPlanned,
+    status: WateringPlanStatus.Planned,
     description: '',
     transporter: {
       id: 1,
@@ -97,7 +97,7 @@ describe('useWateringPlanForm', () => {
 
     expect(result.current.form.getValues('transporterId')).toBe(1)
     expect(result.current.form.getValues('status')).toBe(
-      WateringPlanStatus.WateringPlanStatusPlanned,
+      WateringPlanStatus.Planned,
     )
     expect(result.current.form.getValues('driverIds')).toEqual([
       '550e8400-e29b-41d4-a716-446655440000',
@@ -157,7 +157,7 @@ describe('useWateringPlanForm', () => {
   it('calls updateWateringPlan API when mutationType is update', async () => {
     const mockResponse = createMockWateringPlan({
       id: 5,
-      status: WateringPlanStatus.WateringPlanStatusActive,
+      status: WateringPlanStatus.Active,
     })
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const updateMock = vi.mocked(wateringPlanApi.updateWateringPlan)
@@ -165,7 +165,7 @@ describe('useWateringPlanForm', () => {
 
     const updateInitForm = {
       ...defaultInitForm,
-      status: WateringPlanStatus.WateringPlanStatusActive,
+      status: WateringPlanStatus.Active,
     }
 
     const { result } = renderHook(
@@ -176,7 +176,7 @@ describe('useWateringPlanForm', () => {
     act(() => {
       result.current.mutate({
         date: futureDate.toISOString(),
-        status: WateringPlanStatus.WateringPlanStatusActive,
+        status: WateringPlanStatus.Active,
         transporterId: 1,
         userIds: ['550e8400-e29b-41d4-a716-446655440000'],
         treeClusterIds: [1, 2],
@@ -191,7 +191,7 @@ describe('useWateringPlanForm', () => {
         id: 5,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         body: expect.objectContaining({
-          status: WateringPlanStatus.WateringPlanStatusActive,
+          status: WateringPlanStatus.Active,
           transporterId: 1,
         }),
       })

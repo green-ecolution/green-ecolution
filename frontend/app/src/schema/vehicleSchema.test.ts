@@ -6,9 +6,9 @@ describe('vehicleSchema', () => {
   const validVehicle = {
     numberPlate: 'HH-AB-1234',
     model: 'Mercedes Sprinter',
-    type: VehicleType.VehicleTypeTransporter,
-    drivingLicense: DrivingLicense.DrivingLicenseB,
-    status: VehicleStatus.VehicleStatusAvailable,
+    type: VehicleType.Transporter,
+    drivingLicense: DrivingLicense.B,
+    status: VehicleStatus.Available,
     height: 2.5,
     width: 2.0,
     length: 6.0,
@@ -40,9 +40,9 @@ describe('vehicleSchema', () => {
 
   it('accepts all valid VehicleType values', () => {
     const vehicleTypes = [
-      VehicleType.VehicleTypeTransporter,
-      VehicleType.VehicleTypeTrailer,
-      VehicleType.VehicleTypeUnknown,
+      VehicleType.Transporter,
+      VehicleType.Trailer,
+      VehicleType.Unknown,
     ]
 
     vehicleTypes.forEach((type) => {
@@ -58,10 +58,10 @@ describe('vehicleSchema', () => {
 
   it('accepts all valid DrivingLicense values', () => {
     const licenses = [
-      DrivingLicense.DrivingLicenseB,
-      DrivingLicense.DrivingLicenseBE,
-      DrivingLicense.DrivingLicenseC,
-      DrivingLicense.DrivingLicenseCE,
+      DrivingLicense.B,
+      DrivingLicense.Be,
+      DrivingLicense.C,
+      DrivingLicense.Ce,
     ]
 
     licenses.forEach((drivingLicense) => {
@@ -77,10 +77,10 @@ describe('vehicleSchema', () => {
 
   it('accepts all valid VehicleStatus values', () => {
     const statuses = [
-      VehicleStatus.VehicleStatusActive,
-      VehicleStatus.VehicleStatusAvailable,
-      VehicleStatus.VehicleStatusNotAvailable,
-      VehicleStatus.VehicleStatusUnknown,
+      VehicleStatus.Active,
+      VehicleStatus.Available,
+      VehicleStatus.NotAvailable,
+      VehicleStatus.Unknown,
     ]
 
     statuses.forEach((status) => {

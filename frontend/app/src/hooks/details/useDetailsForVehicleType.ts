@@ -2,15 +2,15 @@ import { VehicleType } from '@green-ecolution/backend-client'
 
 export const VehicleTypeOptions = [
   {
-    value: VehicleType.VehicleTypeTrailer,
+    value: VehicleType.Trailer,
     label: 'Anhänger',
   },
   {
-    value: VehicleType.VehicleTypeTransporter,
+    value: VehicleType.Transporter,
     label: 'Transporter',
   },
   {
-    value: VehicleType.VehicleTypeUnknown,
+    value: VehicleType.Unknown,
     label: 'Unbekannt',
   },
 ]

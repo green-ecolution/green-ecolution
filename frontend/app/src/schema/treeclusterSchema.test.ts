@@ -7,7 +7,7 @@ describe('clusterSchemaBase', () => {
     name: 'Test Cluster',
     address: 'Test Address 123',
     description: 'A test cluster',
-    soilCondition: SoilCondition.TreeSoilConditionSandig,
+    soilCondition: SoilCondition.Sandig,
     treeIds: [1, 2, 3],
   }
 
@@ -33,11 +33,11 @@ describe('clusterSchemaBase', () => {
 
   it('accepts all valid SoilCondition values', () => {
     const soilConditions = [
-      SoilCondition.TreeSoilConditionSchluffig,
-      SoilCondition.TreeSoilConditionSandig,
-      SoilCondition.TreeSoilConditionLehmig,
-      SoilCondition.TreeSoilConditionTonig,
-      SoilCondition.TreeSoilConditionUnknown,
+      SoilCondition.Schluffig,
+      SoilCondition.Sandig,
+      SoilCondition.Lehmig,
+      SoilCondition.Tonig,
+      SoilCondition.Unknown,
     ]
 
     soilConditions.forEach((soilCondition) => {
@@ -72,7 +72,7 @@ describe('clusterSchema (extended)', () => {
     name: 'Test Cluster',
     address: 'Test Address 123',
     description: '',
-    soilCondition: SoilCondition.TreeSoilConditionSandig,
+    soilCondition: SoilCondition.Sandig,
     treeIds: [],
   }
 
@@ -115,7 +115,7 @@ describe('clusterSchema (extended)', () => {
       name: 'Complete Cluster',
       address: 'Full Address 456',
       description: 'A complete cluster description',
-      soilCondition: SoilCondition.TreeSoilConditionLehmig,
+      soilCondition: SoilCondition.Lehmig,
       treeIds: [1, 2, 3],
     })
     expect(result.success).toBe(true)

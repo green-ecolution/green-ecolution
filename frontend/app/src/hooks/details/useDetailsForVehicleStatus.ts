@@ -9,28 +9,28 @@ export const VehicleStatusOptions: {
   description: string
 }[] = [
   {
-    value: VehicleStatus.VehicleStatusUnknown,
+    value: VehicleStatus.Unknown,
     color: 'outline-dark',
     bgcolor: 'none',
     label: 'Unbekannt',
     description: 'Der Fahrzeugstatus ist unbekannt.',
   },
   {
-    value: VehicleStatus.VehicleStatusNotAvailable,
+    value: VehicleStatus.NotAvailable,
     color: 'outline-red',
     bgcolor: 'none',
     label: 'Nicht Verfügbar',
     description: 'Das Fahrzeug ist nicht verfügbar.',
   },
   {
-    value: VehicleStatus.VehicleStatusAvailable,
+    value: VehicleStatus.Available,
     color: 'outline-green-dark',
     bgcolor: 'none',
     label: 'Verfügbar',
     description: 'Das Fahrzeug ist verfügbar.',
   },
   {
-    value: VehicleStatus.VehicleStatusActive,
+    value: VehicleStatus.Active,
     color: 'outline-green-light',
     bgcolor: 'green-light-200',
     label: 'Im Einsatz',

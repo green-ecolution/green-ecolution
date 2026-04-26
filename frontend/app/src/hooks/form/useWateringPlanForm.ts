@@ -1,10 +1,6 @@
 import { QueryClient } from '@tanstack/react-query'
 import { wateringPlanIdQuery, wateringPlanQuery } from '@/api/queries'
-import {
-  WateringPlan,
-  WateringPlanCreate,
-  WateringPlanUpdate,
-} from '@green-ecolution/backend-client'
+import type { WateringPlan, WateringPlanCreate, WateringPlanUpdate } from '@/api/backendApi'
 import { wateringPlanApi } from '@/api/backendApi'
 import { WateringPlanForm, wateringPlanSchema } from '@/schema/wateringPlanSchema'
 import { DefaultValues } from 'react-hook-form'
@@ -19,8 +15,8 @@ const wateringPlanConfig: EntityFormConfig<
   formType: 'wateringplan',
   schema: wateringPlanSchema,
 
-  createFn: (body) => wateringPlanApi.createWateringPlan({ body }),
-  updateFn: (id, body) => wateringPlanApi.updateWateringPlan({ id: Number(id), body }),
+  createFn: (body) => wateringPlanApi.createWateringPlan({ wateringPlanCreateRequest: body }),
+  updateFn: (id, body) => wateringPlanApi.updateWateringPlan({ wateringPlanId: Number(id), wateringPlanUpdateRequest: body }),
 
   invalidateQueries: (data, queryClient: QueryClient) => {
     queryClient

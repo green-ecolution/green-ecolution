@@ -2,23 +2,23 @@ import { SoilCondition } from '@green-ecolution/backend-client'
 
 export const SoilConditionOptions = [
   {
-    value: SoilCondition.TreeSoilConditionSchluffig,
+    value: SoilCondition.Schluffig,
     label: 'Schluffig',
   },
   {
-    value: SoilCondition.TreeSoilConditionSandig,
+    value: SoilCondition.Sandig,
     label: 'Sandig',
   },
   {
-    value: SoilCondition.TreeSoilConditionLehmig,
+    value: SoilCondition.Lehmig,
     label: 'Lehmig',
   },
   {
-    value: SoilCondition.TreeSoilConditionTonig,
+    value: SoilCondition.Tonig,
     label: 'Tonig',
   },
   {
-    value: SoilCondition.TreeSoilConditionUnknown,
+    value: SoilCondition.Unknown,
     label: 'Unbekannt',
   },
 ]

@@ -2,19 +2,19 @@ import { UserRole } from '@green-ecolution/backend-client'
 
 export const UserRoleOptions = [
   {
-    value: UserRole.UserRoleUnknown,
+    value: UserRole.Unknown,
     label: 'Keine Angabe',
   },
   {
-    value: UserRole.UserRoleGreenEcolution,
+    value: UserRole.GreenEcolution,
     label: 'Green Ecolution | HS Flensburg',
   },
   {
-    value: UserRole.UserRoleSmarteGrenzregion,
+    value: UserRole.SmarteGrenzregion,
     label: 'Smarte Grenzregion',
   },
   {
-    value: UserRole.UserRoleTbz,
+    value: UserRole.Tbz,
     label: 'TBZ Flensburg',
   },
 ]
@@ -25,12 +25,12 @@ export const getUserRoleDetails = (userRole: UserRole) =>
 export const parseUserRole = (role: string): UserRole => {
   switch (role) {
     case 'tbz':
-      return UserRole.UserRoleTbz
+      return UserRole.Tbz
     case 'green-ecolution':
-      return UserRole.UserRoleGreenEcolution
+      return UserRole.GreenEcolution
     case 'smarte-grenzregion':
-      return UserRole.UserRoleSmarteGrenzregion
+      return UserRole.SmarteGrenzregion
     default:
-      return UserRole.UserRoleUnknown
+      return UserRole.Unknown
   }
 }

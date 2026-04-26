@@ -18,7 +18,7 @@ vi.mock('@tanstack/react-router', () => ({
 }))
 
 import { vehicleApi } from '@/api/backendApi'
-import type { Vehicle } from '@green-ecolution/backend-client'
+import type { Vehicle } from '@/api/backendApi'
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -39,9 +39,9 @@ function createWrapper() {
 const defaultInitForm = {
   numberPlate: 'HH-AB-1234',
   model: 'Mercedes Sprinter',
-  type: VehicleType.VehicleTypeTransporter,
-  drivingLicense: DrivingLicense.DrivingLicenseB,
-  status: VehicleStatus.VehicleStatusAvailable,
+  type: VehicleType.Transporter,
+  drivingLicense: DrivingLicense.B,
+  status: VehicleStatus.Available,
   height: 2.5,
   width: 2.0,
   length: 6.0,
@@ -62,7 +62,7 @@ describe('useVehicleForm', () => {
 
     expect(result.current.form.getValues('numberPlate')).toBe('HH-AB-1234')
     expect(result.current.form.getValues('model')).toBe('Mercedes Sprinter')
-    expect(result.current.form.getValues('type')).toBe(VehicleType.VehicleTypeTransporter)
+    expect(result.current.form.getValues('type')).toBe(VehicleType.Transporter)
     expect(result.current.form.getValues('waterCapacity')).toBe(1000)
   })
 
@@ -95,9 +95,9 @@ describe('useVehicleForm', () => {
       result.current.mutate({
         numberPlate: 'HH-AB-1234',
         model: 'Mercedes Sprinter',
-        type: VehicleType.VehicleTypeTransporter,
-        drivingLicense: DrivingLicense.DrivingLicenseB,
-        status: VehicleStatus.VehicleStatusAvailable,
+        type: VehicleType.Transporter,
+        drivingLicense: DrivingLicense.B,
+        status: VehicleStatus.Available,
         height: 2.5,
         width: 2.0,
         length: 6.0,
@@ -144,9 +144,9 @@ describe('useVehicleForm', () => {
       result.current.mutate({
         numberPlate: 'HH-XY-5678',
         model: 'VW Crafter',
-        type: VehicleType.VehicleTypeTransporter,
-        drivingLicense: DrivingLicense.DrivingLicenseB,
-        status: VehicleStatus.VehicleStatusAvailable,
+        type: VehicleType.Transporter,
+        drivingLicense: DrivingLicense.B,
+        status: VehicleStatus.Available,
         height: 2.5,
         width: 2.0,
         length: 6.0,
