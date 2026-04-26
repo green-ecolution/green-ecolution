@@ -11,31 +11,33 @@ import {
 } from './queries'
 import type {
   Tree,
-  TreeList,
   Vehicle,
-  VehicleList,
   TreeCluster,
-  TreeClusterList,
   WateringPlan,
-  WateringPlanList,
+} from '@/api/backendApi'
+import type {
+  ListResponseTreeResponse,
+  ListResponseVehicleResponse,
+  ListResponseTreeClusterInListResponse,
+  ListResponseWateringPlanInListResponse,
 } from '@green-ecolution/backend-client'
 
 vi.mock('./backendApi', () => ({
   treeApi: {
-    getAllTrees: vi.fn(),
-    getTreeById: vi.fn(),
+    listTrees: vi.fn(),
+    getTree: vi.fn(),
   },
   vehicleApi: {
-    getAllVehicles: vi.fn(),
-    getVehicleById: vi.fn(),
+    listVehicles: vi.fn(),
+    getVehicle: vi.fn(),
   },
   clusterApi: {
-    getAllTreeClusters: vi.fn(),
-    getTreeClusterById: vi.fn(),
+    listClusters: vi.fn(),
+    getCluster: vi.fn(),
   },
   wateringPlanApi: {
-    getAllWateringPlans: vi.fn(),
-    getWateringPlanById: vi.fn(),
+    listWateringPlans: vi.fn(),
+    getWateringPlan: vi.fn(),
   },
 }))
 
@@ -62,59 +64,30 @@ describe('Query Functions', () => {
         expect(options.queryKey).toContain(2)
       })
 
-      it('includes filter params in query key', () => {
-        const options = treeQuery({ wateringStatuses: ['good', 'bad'] })
-
-        expect(options.queryKey).toContain('trees')
-      })
-
-      it('includes hasCluster in query key when true', () => {
-        const options = treeQuery({ hasCluster: true })
-
-        expect(options.queryKey).toContain(true)
-      })
-
-      it('includes hasCluster in query key when false', () => {
-        const options = treeQuery({ hasCluster: false })
-
-        expect(options.queryKey).toContain(false)
-      })
-
-      it('uses different query keys for different hasCluster values', () => {
-        const optionsTrue = treeQuery({ hasCluster: true })
-        const optionsFalse = treeQuery({ hasCluster: false })
-        const optionsUndefined = treeQuery({})
-
-        // All should have different query keys
-        expect(optionsTrue.queryKey).not.toEqual(optionsFalse.queryKey)
-        expect(optionsTrue.queryKey).not.toEqual(optionsUndefined.queryKey)
-        expect(optionsFalse.queryKey).not.toEqual(optionsUndefined.queryKey)
-      })
-
-      it('calls treeApi.getAllTrees when queryFn is executed', async () => {
-        const mockResponse = { data: [] } as TreeList
+      it('calls treeApi.listTrees when queryFn is executed', async () => {
+        const mockResponse = { data: [] } as unknown as ListResponseTreeResponse
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        vi.mocked(treeApi.getAllTrees).mockResolvedValueOnce(mockResponse)
+        vi.mocked(treeApi.listTrees).mockResolvedValueOnce(mockResponse)
 
         const options = treeQuery()
         const result = await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(treeApi.getAllTrees).toHaveBeenCalledWith(undefined)
+        expect(treeApi.listTrees).toHaveBeenCalledWith(undefined)
         expect(result).toEqual(mockResponse)
       })
 
-      it('passes params to treeApi.getAllTrees', async () => {
-        const mockResponse = { data: [] } as TreeList
+      it('passes params to treeApi.listTrees', async () => {
+        const mockResponse = { data: [] } as unknown as ListResponseTreeResponse
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        vi.mocked(treeApi.getAllTrees).mockResolvedValueOnce(mockResponse)
+        vi.mocked(treeApi.listTrees).mockResolvedValueOnce(mockResponse)
 
-        const params = { page: 2, plantingYears: [2023, 2024] }
+        const params = { page: 2 }
         const options = treeQuery(params)
         await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(treeApi.getAllTrees).toHaveBeenCalledWith(params)
+        expect(treeApi.listTrees).toHaveBeenCalledWith(params)
       })
     })
 
@@ -126,28 +99,28 @@ describe('Query Functions', () => {
         expect(options.queryFn).toBeDefined()
       })
 
-      it('calls treeApi.getTreeById with correct id', async () => {
+      it('calls treeApi.getTree with correct id', async () => {
         const mockTree = { id: 123, latitude: 54.0, longitude: 9.0 } as Tree
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        vi.mocked(treeApi.getTreeById).mockResolvedValueOnce(mockTree)
+        vi.mocked(treeApi.getTree).mockResolvedValueOnce(mockTree)
 
         const options = treeIdQuery('123')
         const result = await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(treeApi.getTreeById).toHaveBeenCalledWith({ treeId: 123 })
+        expect(treeApi.getTree).toHaveBeenCalledWith({ treeId: 123 })
         expect(result).toEqual(mockTree)
       })
 
       it('converts string id to number', async () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        vi.mocked(treeApi.getTreeById).mockResolvedValueOnce({} as Tree)
+        vi.mocked(treeApi.getTree).mockResolvedValueOnce({} as Tree)
 
         const options = treeIdQuery('456')
         await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(treeApi.getTreeById).toHaveBeenCalledWith({ treeId: 456 })
+        expect(treeApi.getTree).toHaveBeenCalledWith({ treeId: 456 })
       })
     })
   })
@@ -161,37 +134,30 @@ describe('Query Functions', () => {
         expect(options.queryFn).toBeDefined()
       })
 
-      it('includes type filter in query key', () => {
-        const options = vehicleQuery({ type: 'transporter' })
-
-        expect(options.queryKey).toContain('vehicle')
-        expect(options.queryKey).toContain('transporter')
-      })
-
-      it('calls vehicleApi.getAllVehicles when queryFn is executed', async () => {
-        const mockResponse = { data: [] } as VehicleList
+      it('calls vehicleApi.listVehicles when queryFn is executed', async () => {
+        const mockResponse = { data: [] } as unknown as ListResponseVehicleResponse
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        vi.mocked(vehicleApi.getAllVehicles).mockResolvedValueOnce(mockResponse)
+        vi.mocked(vehicleApi.listVehicles).mockResolvedValueOnce(mockResponse)
 
         const options = vehicleQuery()
         const result = await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(vehicleApi.getAllVehicles).toHaveBeenCalledWith(undefined)
+        expect(vehicleApi.listVehicles).toHaveBeenCalledWith(undefined)
         expect(result).toEqual(mockResponse)
       })
 
-      it('passes type filter to vehicleApi.getAllVehicles', async () => {
-        const mockResponse = { data: [] } as VehicleList
+      it('passes params to vehicleApi.listVehicles', async () => {
+        const mockResponse = { data: [] } as unknown as ListResponseVehicleResponse
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        vi.mocked(vehicleApi.getAllVehicles).mockResolvedValueOnce(mockResponse)
+        vi.mocked(vehicleApi.listVehicles).mockResolvedValueOnce(mockResponse)
 
-        const params = { type: 'trailer' as const }
+        const params = { page: 1 }
         const options = vehicleQuery(params)
         await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(vehicleApi.getAllVehicles).toHaveBeenCalledWith(params)
+        expect(vehicleApi.listVehicles).toHaveBeenCalledWith(params)
       })
     })
 
@@ -203,16 +169,16 @@ describe('Query Functions', () => {
         expect(options.queryFn).toBeDefined()
       })
 
-      it('calls vehicleApi.getVehicleById with correct id', async () => {
+      it('calls vehicleApi.getVehicle with correct id', async () => {
         const mockVehicle = { id: 42, numberPlate: 'HH-AB-1234' } as Vehicle
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        vi.mocked(vehicleApi.getVehicleById).mockResolvedValueOnce(mockVehicle)
+        vi.mocked(vehicleApi.getVehicle).mockResolvedValueOnce(mockVehicle)
 
         const options = vehicleIdQuery('42')
         const result = await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(vehicleApi.getVehicleById).toHaveBeenCalledWith({ id: 42 })
+        expect(vehicleApi.getVehicle).toHaveBeenCalledWith({ vehicleId: 42 })
         expect(result).toEqual(mockVehicle)
       })
     })
@@ -227,22 +193,16 @@ describe('Query Functions', () => {
         expect(options.queryFn).toBeDefined()
       })
 
-      it('includes region filter in query key', () => {
-        const options = treeClusterQuery({ regions: ['1', '2'] })
-
-        expect(options.queryKey).toContain('treeclusters')
-      })
-
-      it('calls clusterApi.getAllTreeClusters when queryFn is executed', async () => {
-        const mockResponse = { data: [] } as TreeClusterList
+      it('calls clusterApi.listClusters when queryFn is executed', async () => {
+        const mockResponse = { data: [] } as unknown as ListResponseTreeClusterInListResponse
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        vi.mocked(clusterApi.getAllTreeClusters).mockResolvedValueOnce(mockResponse)
+        vi.mocked(clusterApi.listClusters).mockResolvedValueOnce(mockResponse)
 
         const options = treeClusterQuery()
         const result = await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(clusterApi.getAllTreeClusters).toHaveBeenCalledWith(undefined)
+        expect(clusterApi.listClusters).toHaveBeenCalledWith(undefined)
         expect(result).toEqual(mockResponse)
       })
     })
@@ -255,16 +215,16 @@ describe('Query Functions', () => {
         expect(options.queryFn).toBeDefined()
       })
 
-      it('calls clusterApi.getTreeClusterById with correct id', async () => {
+      it('calls clusterApi.getCluster with correct id', async () => {
         const mockCluster = { id: 99, name: 'Test Cluster' } as TreeCluster
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        vi.mocked(clusterApi.getTreeClusterById).mockResolvedValueOnce(mockCluster)
+        vi.mocked(clusterApi.getCluster).mockResolvedValueOnce(mockCluster)
 
         const options = treeClusterIdQuery('99')
         const result = await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(clusterApi.getTreeClusterById).toHaveBeenCalledWith({ clusterId: 99 })
+        expect(clusterApi.getCluster).toHaveBeenCalledWith({ clusterId: 99 })
         expect(result).toEqual(mockCluster)
       })
     })
@@ -291,16 +251,16 @@ describe('Query Functions', () => {
         expect(options.queryKey).toContain(3)
       })
 
-      it('calls wateringPlanApi.getAllWateringPlans when queryFn is executed', async () => {
-        const mockResponse = { data: [] } as WateringPlanList
+      it('calls wateringPlanApi.listWateringPlans when queryFn is executed', async () => {
+        const mockResponse = { data: [] } as unknown as ListResponseWateringPlanInListResponse
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        vi.mocked(wateringPlanApi.getAllWateringPlans).mockResolvedValueOnce(mockResponse)
+        vi.mocked(wateringPlanApi.listWateringPlans).mockResolvedValueOnce(mockResponse)
 
         const options = wateringPlanQuery()
         const result = await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(wateringPlanApi.getAllWateringPlans).toHaveBeenCalledWith(undefined)
+        expect(wateringPlanApi.listWateringPlans).toHaveBeenCalledWith(undefined)
         expect(result).toEqual(mockResponse)
       })
     })
@@ -313,16 +273,16 @@ describe('Query Functions', () => {
         expect(options.queryFn).toBeDefined()
       })
 
-      it('calls wateringPlanApi.getWateringPlanById with correct id', async () => {
+      it('calls wateringPlanApi.getWateringPlan with correct id', async () => {
         const mockPlan = { id: 55, date: '2025-01-15' } as WateringPlan
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        vi.mocked(wateringPlanApi.getWateringPlanById).mockResolvedValueOnce(mockPlan)
+        vi.mocked(wateringPlanApi.getWateringPlan).mockResolvedValueOnce(mockPlan)
 
         const options = wateringPlanIdQuery('55')
         const result = await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(wateringPlanApi.getWateringPlanById).toHaveBeenCalledWith({ id: 55 })
+        expect(wateringPlanApi.getWateringPlan).toHaveBeenCalledWith({ wateringPlanId: 55 })
         expect(result).toEqual(mockPlan)
       })
     })

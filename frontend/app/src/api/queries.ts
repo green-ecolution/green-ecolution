@@ -1,41 +1,39 @@
 import { queryOptions } from '@tanstack/react-query'
 import {
-  AppInfo,
+  AppInfoResponse,
   clusterApi,
+  DataStatisticsResponse,
+  EvaluationResponse,
   infoApi,
+  ListClustersRequest,
+  ListResponseSensorResponse,
+  ListResponseTreeClusterInListResponse,
+  ListResponseTreeResponse,
+  ListResponseUserResponse,
+  ListResponseVehicleResponse,
+  ListResponseWateringPlanInListResponse,
+  ListSensorsRequest,
+  ListTreesRequest,
+  ListUsersRequest,
+  ListVehiclesRequest,
+  ListWateringPlansRequest,
+  MapInfoResponse,
+  NearestTreeListResponse,
   regionApi,
+  SensorDataResponse,
+  SensorResponse,
   sensorApi,
-  SensorList,
-  Tree,
+  ServerInfoResponse,
+  ServicesInfoResponse,
+  TreeClusterResponse,
+  TreeResponse,
   treeApi,
-  TreeCluster,
-  TreeClusterList,
-  TreeList,
-  vehicleApi,
-  VehicleList,
-  Vehicle,
-  treeSensorApi,
-  Sensor,
-  WateringPlanList,
-  wateringPlanApi,
-  WateringPlan,
-  UserList,
   userApi,
-  GeoJson,
-  SensorDataList,
-  Evaluation,
+  vehicleApi,
+  VehicleResponse,
+  WateringPlanResponse,
+  wateringPlanApi,
   evaluationApi,
-  GetAllTreeClustersRequest,
-  GetAllSensorsRequest,
-  GetAllTreesRequest,
-  GetAllVehiclesRequest,
-  GetAllWateringPlansRequest,
-  GetAllUsersRequest,
-  MapInfo,
-  ServerInfo,
-  ServicesInfo,
-  DataStatistics,
-  NearestTreeList,
 } from './backendApi'
 
 /**
@@ -59,183 +57,172 @@ const parseNumericId = (id: string): number => {
   return num
 }
 
-export const treeClusterQuery = (params?: GetAllTreeClustersRequest) =>
-  queryOptions<TreeClusterList>({
-    queryKey: ['treeclusters', params?.page, params?.regions, params?.wateringStatuses].filter(
+export const treeClusterQuery = (params?: ListClustersRequest) =>
+  queryOptions<ListResponseTreeClusterInListResponse>({
+    queryKey: ['treeclusters', params?.page, params?.perPage].filter(
       (e) => e != undefined || e != null,
     ),
-    queryFn: () => clusterApi.getAllTreeClusters(params),
+    queryFn: () => clusterApi.listClusters(params),
   })
 
 export const treeClusterIdQuery = (id: string) =>
-  queryOptions<TreeCluster>({
+  queryOptions<TreeClusterResponse>({
     queryKey: ['treecluster', id],
-    queryFn: () => clusterApi.getTreeClusterById({ clusterId: parseNumericId(id) }),
+    queryFn: () => clusterApi.getCluster({ clusterId: parseNumericId(id) }),
     enabled: isValidNumericId(id),
   })
 
-export const sensorQuery = (params?: GetAllSensorsRequest) =>
-  queryOptions<SensorList>({
+export const sensorQuery = (params?: ListSensorsRequest) =>
+  queryOptions<ListResponseSensorResponse>({
     queryKey: ['sensors', params?.page ?? '1'],
-    queryFn: () => sensorApi.getAllSensors(params),
+    queryFn: () => sensorApi.listSensors(params),
   })
 
 export const sensorDataQuery = (id: string) =>
-  queryOptions<SensorDataList>({
+  queryOptions<Array<SensorDataResponse>>({
     queryKey: ['sensor data', id],
     queryFn: () =>
-      sensorApi.getAllSensorDataById({
+      sensorApi.listSensorData({
         sensorId: id,
       }),
   })
 
 export const sensorIdQuery = (id: string) =>
-  queryOptions<Sensor>({
+  queryOptions<SensorResponse>({
     queryKey: ['sensor', id],
     queryFn: () =>
-      sensorApi.getSensorById({
+      sensorApi.getSensor({
         sensorId: id,
       }),
   })
 
-export const treeQuery = (params?: GetAllTreesRequest) =>
-  queryOptions<TreeList>({
-    queryKey: [
-      'trees',
-      params?.page,
-      params?.wateringStatuses,
-      params?.plantingYears,
-      params?.hasCluster,
-    ].filter((e) => e != undefined || e != null),
-    queryFn: () => treeApi.getAllTrees(params),
+export const treeQuery = (params?: ListTreesRequest) =>
+  queryOptions<ListResponseTreeResponse>({
+    queryKey: ['trees', params?.page, params?.perPage].filter((e) => e != undefined || e != null),
+    queryFn: () => treeApi.listTrees(params),
   })
 
 export const treeIdQuery = (id: string) =>
-  queryOptions<Tree>({
+  queryOptions<TreeResponse>({
     queryKey: ['tree', id],
-    queryFn: () => treeApi.getTreeById({ treeId: parseNumericId(id) }),
+    queryFn: () => treeApi.getTree({ treeId: parseNumericId(id) }),
     enabled: isValidNumericId(id),
   })
 
-export const treeSensorIdQuery = (id: string) =>
-  queryOptions<Tree>({
-    queryKey: ['tree-sensor', id],
-    queryFn: () =>
-      treeSensorApi.getTreeBySensorId({
-        sensorId: id,
-      }),
-  })
+// TODO: The Rust backend changed this endpoint to /trees/{tree_id}/sensors/{sensor_id}
+// which requires both IDs. The Go backend had /tree/sensor/{sensor_id}.
+// This query needs a dedicated "get tree by sensor ID" endpoint in the Rust backend.
+// export const treeSensorIdQuery = (id: string) =>
+//   queryOptions<TreeResponse>({
+//     queryKey: ['tree-sensor', id],
+//     queryFn: () => treeApi.getTreeSensor({ treeId: ???, sensorId: id }),
+//   })
 
 export const regionsQuery = () =>
   queryOptions({
     queryKey: ['regions'],
-    queryFn: () => regionApi.getAllRegions(),
+    queryFn: () => regionApi.listRegions(),
   })
 
 export const infoQuery = () =>
-  queryOptions<AppInfo>({
+  queryOptions<AppInfoResponse>({
     queryKey: ['info'],
-    queryFn: () => infoApi.getAppInfo(),
+    queryFn: () => infoApi.getInfo(),
   })
 
 export const mapInfoQuery = () =>
-  queryOptions<MapInfo>({
+  queryOptions<MapInfoResponse>({
     queryKey: ['info', 'map'],
     queryFn: () => infoApi.getMapInfo(),
   })
 
 export const serverInfoQuery = () =>
-  queryOptions<ServerInfo>({
+  queryOptions<ServerInfoResponse>({
     queryKey: ['info', 'server'],
     queryFn: () => infoApi.getServerInfo(),
   })
 
 export const servicesInfoQuery = () =>
-  queryOptions<ServicesInfo>({
+  queryOptions<ServicesInfoResponse>({
     queryKey: ['info', 'services'],
-    queryFn: () => infoApi.getServicesStatus(),
+    queryFn: () => infoApi.getServicesInfo(),
   })
 
 export const statisticsQuery = () =>
-  queryOptions<DataStatistics>({
+  queryOptions<DataStatisticsResponse>({
     queryKey: ['info', 'statistics'],
-    queryFn: () => infoApi.getDataStatistics(),
+    queryFn: () => infoApi.getStatistics(),
   })
 
 export const evaluationQuery = () =>
-  queryOptions<Evaluation>({
+  queryOptions<EvaluationResponse>({
     queryKey: ['evaluation'],
     queryFn: () => evaluationApi.getEvaluation(),
   })
 
-export const vehicleQuery = (params?: GetAllVehiclesRequest) => {
-  return queryOptions<VehicleList>({
-    queryKey: ['vehicle', params?.type, params?.page].filter((e) => e != undefined || e != null),
-    queryFn: () => vehicleApi.getAllVehicles(params),
+export const vehicleQuery = (params?: ListVehiclesRequest) => {
+  return queryOptions<ListResponseVehicleResponse>({
+    queryKey: ['vehicle', params?.page].filter((e) => e != undefined || e != null),
+    queryFn: () => vehicleApi.listVehicles(params),
   })
 }
 
 export const vehicleIdQuery = (id: string) =>
-  queryOptions<Vehicle>({
+  queryOptions<VehicleResponse>({
     queryKey: ['vehicle', id],
-    queryFn: () => vehicleApi.getVehicleById({ id: parseNumericId(id) }),
+    queryFn: () => vehicleApi.getVehicle({ vehicleId: parseNumericId(id) }),
     enabled: isValidNumericId(id),
   })
 
-export const wateringPlanQuery = (params?: GetAllWateringPlansRequest) =>
-  queryOptions<WateringPlanList>({
+export const wateringPlanQuery = (params?: ListWateringPlansRequest) =>
+  queryOptions<ListResponseWateringPlanInListResponse>({
     queryKey: ['watering-plans', params?.page ?? '1'],
-    queryFn: () => wateringPlanApi.getAllWateringPlans(params),
+    queryFn: () => wateringPlanApi.listWateringPlans(params),
   })
 
 export const wateringPlanIdQuery = (id: string) =>
-  queryOptions<WateringPlan>({
+  queryOptions<WateringPlanResponse>({
     queryKey: ['watering-plan', id],
-    queryFn: () => wateringPlanApi.getWateringPlanById({ id: parseNumericId(id) }),
+    queryFn: () => wateringPlanApi.getWateringPlan({ wateringPlanId: parseNumericId(id) }),
     enabled: isValidNumericId(id),
   })
 
-export const userQuery = (params?: GetAllUsersRequest) => {
-  return queryOptions<UserList>({
+export const userQuery = (params?: ListUsersRequest) => {
+  return queryOptions<ListResponseUserResponse>({
     queryKey: ['users', params],
-    queryFn: () => userApi.getAllUsers(params),
+    queryFn: () => userApi.listUsers(params),
   })
 }
 
 export const userRoleQuery = (role: string) =>
-  queryOptions<UserList>({
+  queryOptions<ListResponseUserResponse>({
     queryKey: ['user', role],
     queryFn: () =>
-      userApi.getUsersByRole({
-        role: role,
+      userApi.listUsersByRole({
+        roleId: role,
       }),
   })
 
+// TODO: previewRoute() currently takes no parameters in the generated client.
+// The Rust backend endpoint needs a request body (RouteRequest) to be functional.
 export const routePreviewQuery = (
   transporterId: number,
   clusterIds: number[],
-  trailerId?: number,
+  _trailerId?: number,
 ) =>
-  queryOptions<GeoJson>({
+  queryOptions({
     queryKey: ['route', 'preview', `transporter:${transporterId}`, ...clusterIds],
-    queryFn: () =>
-      wateringPlanApi.createPreviewRoute({
-        body: {
-          transporterId: Number(transporterId),
-          trailerId: Number(trailerId),
-          clusterIds,
-        },
-      }),
+    queryFn: () => console.log('not implemented'), // () => wateringPlanApi.previewRoute(),
   })
 
 export const plantingYearsQuery = () =>
   queryOptions<number[]>({
     queryKey: ['planting-years'],
-    queryFn: () => treeApi.getPlantingYears(),
+    queryFn: () => treeApi.listPlantingYears(),
   })
 
 export const nearestTreeQuery = (params: { lat: number; lng: number; limit?: number }) =>
-  queryOptions<NearestTreeList>({
+  queryOptions<NearestTreeListResponse>({
     queryKey: ['trees', 'nearest', params.lat, params.lng, params.limit],
     queryFn: () =>
       treeApi.getNearestTrees({ lat: params.lat, lng: params.lng, limit: params.limit }),

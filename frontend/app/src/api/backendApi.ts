@@ -1,25 +1,24 @@
 import useStore from '@/store/store'
 import {
-  ClientTokenFromJSON,
+  ClientTokenResponseFromJSON,
   Configuration,
   ConfigurationParameters,
   EvaluationApi,
   FetchAPI,
   HTTPHeaders,
   InfoApi,
-  PluginApi,
-  RegionApi,
-  SensorApi,
-  TreeApi,
-  TreeClusterApi,
-  TreeSensorApi,
-  UserApi,
-  VehicleApi,
-  WateringPlanApi,
+  PluginsApi,
+  RegionsApi,
+  SensorsApi,
+  TreesApi,
+  TreeClustersApi,
+  UsersApi,
+  VehiclesApi,
+  WateringPlansApi,
 } from '@green-ecolution/backend-client'
 import { redirect } from '@tanstack/react-router'
 
-export const basePath = import.meta.env.VITE_BACKEND_BASEURL ?? '/api-local'
+export const basePath = '/api-local'
 
 const headers: HTTPHeaders = {
   'Content-Type': 'application/json',
@@ -55,7 +54,7 @@ async function performTokenRefresh(): Promise<void> {
     })
   }
 
-  const data = ClientTokenFromJSON(await res.json())
+  const data = ClientTokenResponseFromJSON(await res.json())
   useStore.getState().setToken(data)
   useStore.getState().setUserFromJwt(data.accessToken)
   lastRefreshTime = Date.now()
@@ -121,16 +120,46 @@ const configParams: ConfigurationParameters = {
 
 const config = new Configuration(configParams)
 
-export const treeApi = new TreeApi(config)
-export const treeSensorApi = new TreeSensorApi(config)
-export const clusterApi = new TreeClusterApi(config)
+export const treeApi = new TreesApi(config)
+export const clusterApi = new TreeClustersApi(config)
 export const infoApi = new InfoApi(config)
 export const evaluationApi = new EvaluationApi(config)
-export const userApi = new UserApi(config)
-export const regionApi = new RegionApi(config)
-export const sensorApi = new SensorApi(config)
-export const vehicleApi = new VehicleApi(config)
-export const pluginApi = new PluginApi(config)
-export const wateringPlanApi = new WateringPlanApi(config)
+export const userApi = new UsersApi(config)
+export const regionApi = new RegionsApi(config)
+export const sensorApi = new SensorsApi(config)
+export const vehicleApi = new VehiclesApi(config)
+export const pluginApi = new PluginsApi(config)
+export const wateringPlanApi = new WateringPlansApi(config)
 
 export * from '@green-ecolution/backend-client'
+
+// Domain type aliases — clean names re-exported from the generated client
+export type { TreeResponse as Tree } from '@green-ecolution/backend-client'
+export type { TreeCreateRequest as TreeCreate } from '@green-ecolution/backend-client'
+export type { TreeUpdateRequest as TreeUpdate } from '@green-ecolution/backend-client'
+export type { TreeClusterResponse as TreeCluster } from '@green-ecolution/backend-client'
+export type { TreeClusterInListResponse as TreeClusterInList } from '@green-ecolution/backend-client'
+export type { TreeClusterCreateRequest as TreeClusterCreate } from '@green-ecolution/backend-client'
+export type { TreeClusterUpdateRequest as TreeClusterUpdate } from '@green-ecolution/backend-client'
+export type { SensorResponse as Sensor } from '@green-ecolution/backend-client'
+export type { SensorDataResponse as SensorData } from '@green-ecolution/backend-client'
+export type { VehicleResponse as Vehicle } from '@green-ecolution/backend-client'
+export type { VehicleCreateRequest as VehicleCreate } from '@green-ecolution/backend-client'
+export type { VehicleUpdateRequest as VehicleUpdate } from '@green-ecolution/backend-client'
+export type { WateringPlanResponse as WateringPlan } from '@green-ecolution/backend-client'
+export type { WateringPlanInListResponse as WateringPlanInList } from '@green-ecolution/backend-client'
+export type { WateringPlanCreateRequest as WateringPlanCreate } from '@green-ecolution/backend-client'
+export type { WateringPlanUpdateRequest as WateringPlanUpdate } from '@green-ecolution/backend-client'
+export type { UserResponse as User } from '@green-ecolution/backend-client'
+export type { RegionResponse as Region } from '@green-ecolution/backend-client'
+export type { EvaluationResponse as Evaluation } from '@green-ecolution/backend-client'
+export type { AppInfoResponse as AppInfo } from '@green-ecolution/backend-client'
+export type { MapInfoResponse as MapInfo } from '@green-ecolution/backend-client'
+export type { ServerInfoResponse as ServerInfo } from '@green-ecolution/backend-client'
+export type { ServicesInfoResponse as ServicesInfo } from '@green-ecolution/backend-client'
+export type { DataStatisticsResponse as DataStatistics } from '@green-ecolution/backend-client'
+export type { ClientTokenResponse as ClientToken } from '@green-ecolution/backend-client'
+export type { NearestTreeListResponse as NearestTreeList } from '@green-ecolution/backend-client'
+export type { TreeWithDistanceResponse as TreeWithDistance } from '@green-ecolution/backend-client'
+export type { EvaluationValueResponse as EvaluationValue } from '@green-ecolution/backend-client'
+export type { PaginationResponse as Pagination } from '@green-ecolution/backend-client'
