@@ -45,9 +45,6 @@ pub struct AppState {
         contact(name = "Green Ecolution", url = "https://green-ecolution.de"),
         license(name = "AGPL-3.0", identifier = "AGPL-3.0-or-later"),
     ),
-    servers(
-        (url = "/api", description = "Default API base path"),
-    ),
     tags(
         (name = "Regions", description = "Manage geographic regions used to group tree clusters. Regions define administrative boundaries for organizing green spaces."),
         (name = "Tree Clusters", description = "Manage tree clusters — logical groupings of trees that share soil conditions and watering schedules. Clusters are the primary unit for watering plan assignments."),
