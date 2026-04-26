@@ -22,16 +22,16 @@ use crate::{
         },
         watering_plan::WateringPlanStatus as DomainWateringPlanStatus,
     },
-    http::v1::pagination::PaginationRepsonse,
+    http::v1::pagination::PaginationResponse,
 };
 
-#[derive(Debug, Serialize)]
-pub struct ListResponse<T: Serialize> {
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct ListResponse<T: Serialize + utoipa::ToSchema> {
     pub data: Vec<T>,
-    pub pagination: PaginationRepsonse,
+    pub pagination: PaginationResponse,
 }
 
-impl<T: Serialize> ListResponse<T> {
+impl<T: Serialize + utoipa::ToSchema> ListResponse<T> {
     pub fn from_page<D>(page: Page<D>, current_page: u64, per_page: u64) -> Self
     where
         T: for<'a> From<&'a D>,
@@ -39,7 +39,7 @@ impl<T: Serialize> ListResponse<T> {
         let total_pages = (page.total + per_page - 1) / per_page;
         Self {
             data: page.items.iter().map(T::from).collect(),
-            pagination: PaginationRepsonse::new(page.total, current_page, total_pages),
+            pagination: PaginationResponse::new(page.total, current_page, total_pages),
         }
     }
 
@@ -52,94 +52,149 @@ impl<T: Serialize> ListResponse<T> {
         let total_pages = (page.total + per_page - 1) / per_page;
         Self {
             data: page.items.iter().map(map_fn).collect(),
-            pagination: PaginationRepsonse::new(page.total, current_page, total_pages),
+            pagination: PaginationResponse::new(page.total, current_page, total_pages),
         }
     }
 }
 
 // -- Shared enums used across multiple DTOs --
 
+/// Current watering status of a tree or tree cluster.
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
+#[schema(example = "good")]
 pub enum WateringStatus {
+    /// Soil moisture is sufficient — no watering needed.
     Good,
+    /// Soil moisture is below optimal — watering recommended soon.
     Moderate,
+    /// Soil moisture is critically low — immediate watering required.
     Bad,
+    /// Recently watered — status will update after next sensor reading.
     #[serde(rename = "just watered")]
     JustWatered,
+    /// Status could not be determined (e.g. no sensor data available).
     Unknown,
 }
 
+/// Soil condition classification of a tree cluster site.
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
+#[schema(example = "sandig")]
 pub enum SoilCondition {
+    /// Silt-based soil with moderate water retention.
     Schluffig,
+    /// Sandy soil with low water retention.
     Sandig,
+    /// Loamy soil with good water retention.
     Lehmig,
+    /// Clay-heavy soil with high water retention.
     Tonig,
+    /// Soil condition has not been assessed.
     Unknown,
 }
 
+/// Connectivity status of a LoRaWAN sensor.
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
+#[schema(example = "online")]
 pub enum SensorStatus {
+    /// Sensor is transmitting data within expected intervals.
     Online,
+    /// Sensor has not transmitted data within the expected interval.
     Offline,
+    /// Sensor connectivity status could not be determined.
     Unknown,
 }
 
+/// European driving license category required to operate a vehicle.
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[schema(example = "BE")]
 pub enum DrivingLicense {
+    /// Standard car license (up to 3.5t).
     B,
+    /// Car license with trailer (up to 3.5t + trailer).
     BE,
+    /// Truck license (over 3.5t).
     C,
+    /// Truck license with trailer.
     CE,
 }
 
+/// Operational status of a watering vehicle.
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
+#[schema(example = "available")]
 pub enum VehicleStatus {
+    /// Vehicle is currently in use on a watering plan.
     Active,
+    /// Vehicle is available for assignment.
     Available,
+    /// Vehicle is temporarily unavailable (e.g. maintenance).
     #[serde(rename = "not available")]
     NotAvailable,
+    /// Vehicle status could not be determined.
     Unknown,
 }
 
+/// Classification of a watering vehicle.
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
+#[schema(example = "transporter")]
 pub enum VehicleType {
+    /// Self-propelled vehicle with water tank.
     Transporter,
+    /// Towed water tank attached to a transporter.
     Trailer,
+    /// Vehicle type has not been classified.
     Unknown,
 }
 
+/// Lifecycle status of a watering plan.
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
+#[schema(example = "planned")]
 pub enum WateringPlanStatus {
+    /// Plan has been created but not yet started.
     Planned,
+    /// Plan is currently being executed.
     Active,
+    /// Plan was canceled before completion.
     Canceled,
+    /// Plan was completed successfully.
     Finished,
+    /// Plan was started but could not be completed.
     #[serde(rename = "not competed")]
     NotCompleted,
+    /// Plan status could not be determined.
     Unknown,
 }
 
+/// Role assigned to a user within the system.
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "kebab-case")]
+#[schema(example = "tbz")]
 pub enum UserRole {
+    /// Technisches Betriebszentrum — primary operator role.
     Tbz,
+    /// Green Ecolution project team member.
     GreenEcolution,
+    /// Smarte Grenzregion project team member.
     SmarteGrenzregion,
+    /// Role could not be determined.
     Unknown,
 }
 
+/// Availability status of a user.
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
+#[schema(example = "available")]
 pub enum UserStatus {
+    /// User is available for watering plan assignments.
     Available,
+    /// User is currently absent.
     Absent,
+    /// Availability could not be determined.
     Unknown,
 }
 
