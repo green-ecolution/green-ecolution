@@ -1,4 +1,4 @@
-#[derive(serde::Serialize)]
+#[derive(Debug, serde::Serialize)]
 pub struct PaginationRepsonse {
     pub total: u64,
     pub current_page: u64,

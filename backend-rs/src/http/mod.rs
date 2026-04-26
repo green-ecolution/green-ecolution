@@ -1,21 +1,17 @@
 use std::sync::Arc;
 
-use axum::{Router, routing::get};
+use axum::Router;
 
-use crate::domain::region::RegionRepository;
+use crate::{domain::region::RegionRepository, http};
 
-pub mod error;
-pub mod pagination;
-pub mod region;
+pub mod v1;
 
 pub struct AppState {
-    pub region_repo: Arc<dyn RegionRepository + Send + Sync>,
+    pub region_repo: Arc<dyn RegionRepository>,
 }
 
 pub fn router(state: Arc<AppState>) -> Router {
-    let v1 = Router::new()
-        .route("/regions", get(region::all_region))
-        .route("/regions/{region_id}", get(region::region_by_id));
-
-    Router::new().nest("/api/v1", v1).with_state(state)
+    Router::new()
+        .nest("/api/v1", http::v1::router())
+        .with_state(state)
 }
