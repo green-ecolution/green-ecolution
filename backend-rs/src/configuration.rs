@@ -43,6 +43,8 @@ pub struct ApplicationSettings {
     pub port: u16,
     pub host: String,
     pub base_url: String,
+    #[serde(default)]
+    pub environment: Environment,
 }
 
 pub fn get_configuration() -> Result<Settings, config::ConfigError> {
@@ -68,7 +70,10 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
     settings.try_deserialize::<Settings>()
 }
 
+#[derive(Debug, Clone, serde::Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
 pub enum Environment {
+    #[default]
     Local,
     Production,
 }
