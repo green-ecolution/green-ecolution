@@ -29,4 +29,5 @@ pub fn router() -> OpenApiRouter<Arc<AppState>> {
         .merge(user::routes())
         .merge(vehicle::routes())
         .merge(watering_plan::routes())
+        .merge(plugin::routes())
 }

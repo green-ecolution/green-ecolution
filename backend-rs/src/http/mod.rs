@@ -37,18 +37,28 @@ pub struct AppState {
     info(
         title = "Green Ecolution API",
         version = "0.1.0",
-        description = "Smart irrigation and green-space management API",
+        description = "REST API for the Green Ecolution smart irrigation and green-space management platform. \
+            Combines IoT sensor data, route optimization, and automated maintenance scheduling \
+            to help municipalities manage urban greenery efficiently. \
+            The system uses LoRaWAN sensors to monitor soil conditions, calculates optimal \
+            watering routes, and provides fleet management capabilities.",
+        contact(name = "Green Ecolution", url = "https://green-ecolution.de"),
         license(name = "AGPL-3.0", identifier = "AGPL-3.0-or-later"),
     ),
+    servers(
+        (url = "/api", description = "Default API base path"),
+    ),
     tags(
-        (name = "Regions", description = "Region management"),
-        (name = "Tree Clusters", description = "Tree cluster management"),
-        (name = "Trees", description = "Tree management"),
-        (name = "Vehicles", description = "Vehicle management"),
-        (name = "Sensors", description = "Sensor management"),
-        (name = "Watering Plans", description = "Watering plan management"),
-        (name = "Evaluation", description = "Evaluation and statistics"),
-        (name = "Info", description = "Application info"),
+        (name = "Regions", description = "Manage geographic regions used to group tree clusters. Regions define administrative boundaries for organizing green spaces."),
+        (name = "Tree Clusters", description = "Manage tree clusters — logical groupings of trees that share soil conditions and watering schedules. Clusters are the primary unit for watering plan assignments."),
+        (name = "Trees", description = "Manage individual trees including their species, location, planting year, and associated sensors. Trees can be assigned to clusters for grouped watering management."),
+        (name = "Vehicles", description = "Manage watering vehicles (transporters and trailers) including their water capacity, dimensions, and availability status. Vehicles can be archived when decommissioned."),
+        (name = "Sensors", description = "Access LoRaWAN sensor data for soil moisture monitoring. Sensors are linked to individual trees and provide real-time environmental readings."),
+        (name = "Watering Plans", description = "Create and manage watering plans that combine tree clusters, vehicles, and optimized routes. Plans track status from planning through execution."),
+        (name = "Evaluation", description = "Aggregated statistics and evaluation data across all managed resources. Provides insights on watering plan coverage by region and vehicle usage."),
+        (name = "Info", description = "Application metadata including version information, server status, map configuration, service health, and data statistics."),
+        (name = "Users", description = "User management and OAuth2/OIDC authentication via Keycloak. Handles login flows, token management, and user registration."),
+        (name = "Plugins", description = "Plugin registration and lifecycle management. External plugins can register, authenticate, and maintain heartbeat connections."),
     )
 )]
 struct ApiDoc;
