@@ -4,7 +4,8 @@ import ButtonLink from '../general/links/ButtonLink'
 import { Pencil } from 'lucide-react'
 import { getVehicleStatusDetails } from '@/hooks/details/useDetailsForVehicleStatus'
 import GeneralLink from '../general/links/GeneralLink'
-import { Vehicle, VehicleStatus } from '@green-ecolution/backend-client'
+import type { Vehicle } from '@/api/backendApi'
+import { VehicleStatus } from '@green-ecolution/backend-client'
 import { getVehicleType } from '@/hooks/details/useDetailsForVehicleType'
 import { DetailedList } from '@green-ecolution/ui'
 
@@ -80,7 +81,7 @@ const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
         />
       </article>
 
-      {vehicle.status == VehicleStatus.VehicleStatusActive && (
+      {vehicle.status == VehicleStatus.Active && (
         <div className="h-full shadow-cards flex flex-col gap-y-3 rounded-xl border border-green-light bg-green-light-50 p-6 mt-6">
           <div className="flex items-center justify-between">
             <p className="text-lg font-semibold">Dieses Fahrzeug befindet sich im Einsatz.</p>

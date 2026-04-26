@@ -20,7 +20,7 @@ export const Route = createFileRoute('/_protected/watering-plans/')({
   }),
   loader: ({ context: { queryClient }, deps: { page } }) => {
     queryClient
-      .prefetchQuery(wateringPlanQuery({ page: page, limit: 5 }))
+      .prefetchQuery(wateringPlanQuery({ page: page, perPage: 5 }))
       .catch((error) => console.error('Prefetching "wateringPlanQuery" failed', error))
     return { page }
   },
@@ -29,7 +29,7 @@ export const Route = createFileRoute('/_protected/watering-plans/')({
 function WateringPlans() {
   const search = useLoaderData({ from: '/_protected/watering-plans/' })
   const { data: wateringPlanRes } = useSuspenseQuery(
-    wateringPlanQuery({ page: search.page, limit: 5 }),
+    wateringPlanQuery({ page: search.page, perPage: 5 }),
   )
 
   return (

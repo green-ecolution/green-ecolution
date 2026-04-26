@@ -13,7 +13,8 @@ import {
 } from '@green-ecolution/ui'
 import FormError from './FormError'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
-import { User, Vehicle } from '@green-ecolution/backend-client'
+import type { User, Vehicle } from '@/api/backendApi'
+import type { DrivingLicense } from '@green-ecolution/backend-client'
 import SelectEntities from './types/SelectEntities'
 import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
 import { validateDriverLicenses } from '@/lib/licenseValidation'
@@ -58,7 +59,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
     }
 
     return user.drivingLicenses
-      .map((drivingLicense) => getDrivingLicenseDetails(drivingLicense).label)
+      .map((drivingLicense: DrivingLicense) => getDrivingLicenseDetails(drivingLicense).label)
       .join(', ')
   }
 

@@ -1,10 +1,8 @@
-import { Sensor } from '@green-ecolution/backend-client'
+import type { Sensor } from '@/api/backendApi'
 import { format, formatDistanceToNow } from 'date-fns'
 import React from 'react'
 import { Badge, ListCard, ListCardTitle, ListCardDescription } from '@green-ecolution/ui'
 import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
-import { useQuery } from '@tanstack/react-query'
-import { treeSensorIdQuery } from '@/api/queries'
 import { Link } from '@tanstack/react-router'
 import { de } from 'date-fns/locale'
 
@@ -13,9 +11,6 @@ interface SensorCardProps {
 }
 
 const SensorCard: React.FC<SensorCardProps> = ({ sensor }) => {
-  const sensorId = String(sensor.id)
-
-  const { data: treeRes } = useQuery(treeSensorIdQuery(sensorId))
   const statusDetails = getSensorStatusDetails(sensor.status)
   const createdDate = sensor?.createdAt
     ? format(new Date(sensor?.createdAt), 'dd.MM.yyyy')
@@ -40,18 +35,8 @@ const SensorCard: React.FC<SensorCardProps> = ({ sensor }) => {
 
         <div>
           <ListCardTitle className="mb-0.5">ID: {sensor.id}</ListCardTitle>
-          {treeRes ? (
-            <p className="text-dark-800 text-sm">
-              <span className={`${treeRes.number ? 'block' : 'hidden'}`}>
-                Baum: {treeRes.number}
-              </span>
-              <span className={`${treeRes.number ? 'block' : 'hidden'}`}>
-                Ort: {treeRes.latitude}, {treeRes.longitude}
-              </span>
-            </p>
-          ) : (
-            <p className="text-red">Keine Verknüpfung</p>
-          )}
+          {/* TODO: treeSensorIdQuery was removed - needs a dedicated endpoint in the Rust backend */}
+          <p className="text-dark-800 text-sm">Sensor-Details</p>
         </div>
 
         <ListCardDescription>

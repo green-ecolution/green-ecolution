@@ -19,7 +19,7 @@ import SensorIcon from '../icons/Sensor'
 import TabWateringStatus from './TabWateringStatus'
 import TabGeneralData from './TabGeneralData'
 import TabSensorData from './TabSensorData'
-import { Tree, TreeCluster } from '@green-ecolution/backend-client'
+import type { Tree, TreeCluster } from '@/api/backendApi'
 
 interface TreeDashboardProps {
   tree: Tree

@@ -4,7 +4,7 @@ import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatu
 import { format, formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { DetailedList, StatusCard } from '@green-ecolution/ui'
-import { Sensor, Tree } from '@green-ecolution/backend-client'
+import type { Sensor, Tree } from '@/api/backendApi'
 
 interface SensorDashboardProps {
   sensor: Sensor
@@ -80,8 +80,8 @@ const SensorDashboard = ({ sensor, sensorTree: linkedTree }: SensorDashboardProp
             <StatusCard
               label="Akkustand"
               value={
-                sensor?.latestData?.battery
-                  ? `${sensor.latestData.battery.toFixed(2)} V`
+                (sensor?.latestData?.data as Record<string, number> | undefined)?.battery
+                  ? `${((sensor.latestData!.data as Record<string, number>).battery).toFixed(2)} V`
                   : 'Keine Angabe'
               }
               isLarge

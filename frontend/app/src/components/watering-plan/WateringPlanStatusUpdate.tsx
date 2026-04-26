@@ -1,10 +1,7 @@
 import { useCallback, useState } from 'react'
 import BackLink from '../general/links/BackLink'
-import {
-  WateringPlan,
-  WateringPlanStatus,
-  WateringPlanUpdate,
-} from '@green-ecolution/backend-client'
+import { WateringPlanStatus } from '@green-ecolution/backend-client'
+import type { WateringPlan, WateringPlanUpdate } from '@/api/backendApi'
 import { wateringPlanIdQuery, wateringPlanQuery } from '@/api/queries'
 import { format } from 'date-fns'
 import { MoveRight } from 'lucide-react'
@@ -53,8 +50,8 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const { mutate, isError, error } = useMutation({
     mutationFn: (wateringPlan: WateringPlanUpdate) =>
       wateringPlanApi.updateWateringPlan({
-        id: Number(wateringPlanId),
-        body: wateringPlan,
+        wateringPlanId: Number(wateringPlanId),
+        wateringPlanUpdateRequest: wateringPlan,
       }),
 
     onSuccess: (data: WateringPlan) => {
@@ -89,7 +86,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
       const onSubmitFinished: SubmitHandler<WateringPlanFinishedForm> = (data) => {
         mutate({
           ...loadedData,
-          status: WateringPlanStatus.WateringPlanStatusFinished,
+          status: WateringPlanStatus.Finished,
           evaluation: data.evaluation,
           transporterId: loadedData.transporter.id,
           treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
@@ -99,7 +96,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
       const onSubmitCancel: SubmitHandler<WateringPlanCancelForm> = (data) => {
         mutate({
           ...loadedData,
-          status: WateringPlanStatus.WateringPlanStatusCanceled,
+          status: WateringPlanStatus.Canceled,
           cancellationNote: data.cancellationNote,
           transporterId: loadedData.transporter.id,
           treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
@@ -250,7 +247,7 @@ export const FinishedWateringPlan = ({
     mode: 'onChange',
     resolver: zodResolver(wateringPlanFinishedSchema),
     defaultValues: {
-      evaluation: loadedData.treeclusters.map((cluster) => ({
+      evaluation: loadedData.treeclusters.map((cluster: { treeIds?: number[]; id: number }) => ({
         consumedWater: (cluster.treeIds?.length ?? 1) * 80,
         treeClusterId: cluster.id,
         wateringPlanId: Number(wateringPlanId),

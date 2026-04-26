@@ -1,4 +1,4 @@
-import { Pagination as PaginationObject } from '@green-ecolution/backend-client'
+import type { Pagination as PaginationObject } from '@/api/backendApi'
 import { SimplePagination } from '@green-ecolution/ui'
 import { useRouter, useSearch } from '@tanstack/react-router'
 

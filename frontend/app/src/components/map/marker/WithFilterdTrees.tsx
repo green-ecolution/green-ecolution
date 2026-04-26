@@ -1,4 +1,4 @@
-import { Tree } from '@green-ecolution/backend-client'
+import type { Tree } from '@/api/backendApi'
 import MarkerList from './MarkerList'
 import { TreeMarkerIcon } from '../markerIcons'
 import { getStatusColor } from '../utils'

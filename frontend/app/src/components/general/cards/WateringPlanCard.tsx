@@ -1,5 +1,5 @@
 import { getWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
-import { WateringPlanInList } from '@green-ecolution/backend-client'
+import type { WateringPlanInList } from '@/api/backendApi'
 import { Link } from '@tanstack/react-router'
 import React from 'react'
 import { Badge, ListCard, ListCardTitle, ListCardDescription } from '@green-ecolution/ui'

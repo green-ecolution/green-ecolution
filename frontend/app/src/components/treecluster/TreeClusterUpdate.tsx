@@ -1,7 +1,8 @@
 import FormForTreecluster from '../general/form/FormForTreecluster'
 import BackLink from '../general/links/BackLink'
 import DeleteSection from './DeleteSection'
-import { TreeCluster } from '@green-ecolution/backend-client'
+import type { TreeCluster } from '@/api/backendApi'
+import { TreeResponse } from '@green-ecolution/backend-client'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
 import { useInitFormQuery } from '@/hooks/form/useInitForm'
 import { treeClusterIdQuery } from '@/api/queries'
@@ -42,7 +43,7 @@ const TreeClusterUpdate = ({ clusterId, formState }: TreeClusterUpdateProps) => 
         address: data.address,
         description: data.description,
         soilCondition: data.soilCondition,
-        treeIds: data.trees?.map((tree) => tree.id) ?? [],
+        treeIds: data.trees?.map((tree: TreeResponse) => tree.id) ?? [],
       },
   )
   const { mutate, isError, error, form, navigationBlocker, saveDraft } = useTreeClusterForm(
@@ -61,7 +62,7 @@ const TreeClusterUpdate = ({ clusterId, formState }: TreeClusterUpdateProps) => 
   }
 
   const handleDeleteTreeCluster = () => {
-    return clusterApi.deleteTreeCluster({
+    return clusterApi.deleteCluster({
       clusterId: Number(clusterId),
     })
   }

@@ -8,10 +8,9 @@ import { zodResolver } from '@/lib/zodResolver'
 import { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@green-ecolution/ui'
+import type { Vehicle, User } from '@/api/backendApi'
 import {
   WateringPlanStatus,
-  Vehicle,
-  User,
   VehicleType,
   DrivingLicense,
   VehicleStatus,
@@ -47,7 +46,7 @@ futureDate.setDate(futureDate.getDate() + 7)
 
 const defaultFormValues: WateringPlanForm = {
   date: futureDate,
-  status: WateringPlanStatus.WateringPlanStatusPlanned,
+  status: WateringPlanStatus.Planned,
   transporterId: -1,
   trailerId: -1,
   driverIds: [],
@@ -59,16 +58,16 @@ const mockTransporters = [
   {
     id: 1,
     numberPlate: 'HH-AB-1234',
-    drivingLicense: DrivingLicense.DrivingLicenseB,
-    type: VehicleType.VehicleTypeTransporter,
-    status: VehicleStatus.VehicleStatusAvailable,
+    drivingLicense: DrivingLicense.B,
+    type: VehicleType.Transporter,
+    status: VehicleStatus.Available,
   },
   {
     id: 2,
     numberPlate: 'HH-XY-5678',
-    drivingLicense: DrivingLicense.DrivingLicenseC,
-    type: VehicleType.VehicleTypeTransporter,
-    status: VehicleStatus.VehicleStatusAvailable,
+    drivingLicense: DrivingLicense.C,
+    type: VehicleType.Transporter,
+    status: VehicleStatus.Available,
   },
 ] as Vehicle[]
 
@@ -76,9 +75,9 @@ const mockTrailers = [
   {
     id: 10,
     numberPlate: 'HH-TR-0001',
-    drivingLicense: DrivingLicense.DrivingLicenseBE,
-    type: VehicleType.VehicleTypeTrailer,
-    status: VehicleStatus.VehicleStatusAvailable,
+    drivingLicense: DrivingLicense.Be,
+    type: VehicleType.Trailer,
+    status: VehicleStatus.Available,
   },
 ] as Vehicle[]
 
@@ -87,13 +86,13 @@ const mockUsers = [
     id: '550e8400-e29b-41d4-a716-446655440000',
     firstName: 'Max',
     lastName: 'Mustermann',
-    drivingLicenses: [DrivingLicense.DrivingLicenseB, DrivingLicense.DrivingLicenseC],
+    drivingLicenses: [DrivingLicense.B, DrivingLicense.C],
   },
   {
     id: '550e8400-e29b-41d4-a716-446655440001',
     firstName: 'Anna',
     lastName: 'Schmidt',
-    drivingLicenses: [DrivingLicense.DrivingLicenseB],
+    drivingLicenses: [DrivingLicense.B],
   },
 ] as User[]
 

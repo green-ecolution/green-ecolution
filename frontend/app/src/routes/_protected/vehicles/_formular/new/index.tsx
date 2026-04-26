@@ -12,9 +12,9 @@ export const Route = createFileRoute('/_protected/vehicles/_formular/new/')({
 
 const defaultForm: DefaultValues<VehicleForm> = {
   numberPlate: '',
-  type: VehicleType.VehicleTypeTransporter,
-  drivingLicense: DrivingLicense.DrivingLicenseB,
-  status: VehicleStatus.VehicleStatusUnknown,
+  type: VehicleType.Transporter,
+  drivingLicense: DrivingLicense.B,
+  status: VehicleStatus.Unknown,
   height: 2.5,
   width: 2,
   length: 6,

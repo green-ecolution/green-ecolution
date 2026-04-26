@@ -18,16 +18,16 @@ interface ChartSensorDataProps {
 
 const ChartSensorData: React.FC<ChartSensorDataProps> = ({ sensorId }) => {
   const { data: sensorDataRes } = useSuspenseQuery(sensorDataQuery(sensorId))
-  const batteryData = sensorDataRes.data
+  const batteryData = sensorDataRes
     .map((entry) => ({
       name: format(new Date(entry.updatedAt), 'dd.MM.yyyy'),
-      battery: entry.battery,
+      battery: (entry.data as Record<string, unknown>).battery,
     }))
     .reverse()
 
   return (
     <>
-      {sensorDataRes.data.length > 1 && (
+      {sensorDataRes.length > 1 && (
         <section className="mt-16">
           <h2 className="font-bold font-lato text-xl mb-4">Akkulaufzeit im Verlaufe der Zeit</h2>
           <p className="mb-6">

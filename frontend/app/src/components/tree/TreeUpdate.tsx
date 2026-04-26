@@ -2,7 +2,7 @@ import { TreeForm } from '@/schema/treeSchema'
 import FormForTree from '../general/form/FormForTree'
 import BackLink from '../general/links/BackLink'
 import DeleteSection from '../treecluster/DeleteSection'
-import { Sensor, Tree, TreeCluster } from '@green-ecolution/backend-client'
+import type { Sensor, TreeClusterInList, Tree } from '@/api/backendApi'
 import { useInitFormQuery } from '@/hooks/form/useInitForm'
 import { treeIdQuery } from '@/api/queries'
 import { treeApi } from '@/api/backendApi'
@@ -25,7 +25,7 @@ import { MoveRight, X } from 'lucide-react'
 
 interface TreeUpdateProps {
   treeId: string
-  clusters: TreeCluster[]
+  clusters: TreeClusterInList[]
   sensors: Sensor[]
 }
 
@@ -45,7 +45,7 @@ const TreeUpdate = ({ treeId, clusters, sensors }: TreeUpdateProps) => {
         treeClusterId: data.treeClusterId ?? -1,
         sensorId: data.sensor?.id ?? '-1',
         description: data.description,
-        provider: data.provider,
+        provider: data.provider ?? undefined,
       },
   )
   const { mutate, isError, error, form, navigationBlocker, saveDraft } = useTreeForm('update', {

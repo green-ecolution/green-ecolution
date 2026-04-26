@@ -1,4 +1,4 @@
-import { Tree, TreeClusterInList, TreeCluster } from '@green-ecolution/backend-client'
+import type { Tree, TreeClusterInList, TreeCluster } from '@/api/backendApi'
 import useStore from '@/store/store'
 import WithAllTrees from './WithAllTrees'
 import WithAllClusters from './WithAllClusters'

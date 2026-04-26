@@ -3,7 +3,7 @@ import { WateringStatus } from '@green-ecolution/backend-client'
 
 export const getStatusColor = (wateringStatus: WateringStatus) => {
   const statusDetails = getWateringStatusDetails(
-    wateringStatus ?? WateringStatus.WateringStatusUnknown,
+    wateringStatus ?? WateringStatus.Unknown,
   )
   return statusDetails.colorHex
 }

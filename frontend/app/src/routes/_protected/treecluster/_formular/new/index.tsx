@@ -24,7 +24,7 @@ export const Route = createFileRoute('/_protected/treecluster/_formular/new/')({
 })
 
 const defaultForm: DefaultValues<TreeclusterForm> = {
-  soilCondition: SoilCondition.TreeSoilConditionUnknown,
+  soilCondition: SoilCondition.Unknown,
   treeIds: [],
 }
 

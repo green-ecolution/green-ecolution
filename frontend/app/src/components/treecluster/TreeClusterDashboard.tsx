@@ -13,7 +13,7 @@ import {
   AlertDescription,
   StatusCard,
 } from '@green-ecolution/ui'
-import { TreeCluster } from '@green-ecolution/backend-client'
+import type { TreeCluster, Tree } from '@/api/backendApi'
 
 interface TreeClusterDashboardProps {
   treecluster: TreeCluster
@@ -124,7 +124,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
               <p>Der Bewässerungsgruppe wurden keine Bäume hinzugefügt.</p>
             </li>
           ) : (
-            treecluster.trees?.map((tree) => (
+            treecluster.trees?.map((tree: Tree) => (
               <li key={tree.id}>
                 <TreeCard tree={tree} showTreeClusterInfo={false} />
               </li>

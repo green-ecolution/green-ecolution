@@ -31,7 +31,7 @@ const defaultForm: DefaultValues<WateringPlanForm> = {
   transporterId: -1,
   trailerId: undefined,
   clusterIds: [],
-  status: WateringPlanStatus.WateringPlanStatusPlanned,
+  status: WateringPlanStatus.Planned,
   driverIds: [],
 }
 
@@ -43,14 +43,10 @@ function NewWateringPlan() {
   const navigate = useNavigate({ from: Route.fullPath })
   const { data: users } = useSuspenseQuery(userRoleQuery('tbz'))
   const { data: trailers } = useSuspenseQuery(
-    vehicleQuery({
-      type: 'trailer',
-    }),
+    vehicleQuery(),
   )
   const { data: transporters } = useSuspenseQuery(
-    vehicleQuery({
-      type: 'transporter',
-    }),
+    vehicleQuery(),
   )
   const { mutate, isError, error, form, navigationBlocker, saveDraft } = useWateringPlanForm(
     'create',

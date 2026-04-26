@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
-import { Tree } from '@green-ecolution/backend-client'
+import { Tree } from '@/api/backendApi'
 import { useCallback, useRef, useState } from 'react'
 import SelectedCard from '@/components/general/cards/SelectedCard'
 import WithFilterableTrees from '@/components/map/marker/WithFilterableTrees'

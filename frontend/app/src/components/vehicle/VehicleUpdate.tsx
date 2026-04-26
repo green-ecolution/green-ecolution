@@ -1,6 +1,6 @@
 import BackLink from '../general/links/BackLink'
 import DeleteSection from '../treecluster/DeleteSection'
-import { Vehicle } from '@green-ecolution/backend-client'
+import type { Vehicle } from '@/api/backendApi'
 import { useInitFormQuery } from '@/hooks/form/useInitForm'
 import { vehicleIdQuery } from '@/api/queries'
 import { vehicleApi } from '@/api/backendApi'
@@ -39,7 +39,7 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
 
   const handleArchiveVehicle = () => {
     return vehicleApi.archiveVehicle({
-      id: Number(vehicleId),
+      vehicleId: Number(vehicleId),
     })
   }
 

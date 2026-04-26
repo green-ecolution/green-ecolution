@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { Suspense } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { pluginApi } from '@/api/backendApi'
+import type { PluginResponse } from '@/api/backendApi'
 import { LinkCard, LinkCardTitle, LinkCardDescription, LinkCardFooter } from '@green-ecolution/ui'
 
 export const Route = createFileRoute('/_protected/settings/plugin/')({
@@ -32,13 +33,13 @@ function PluginView() {
 const PluginList = () => {
   const { data: pluginList } = useQuery({
     queryKey: ['pluginList'],
-    queryFn: () => pluginApi.getPluginsList(),
+    queryFn: () => pluginApi.listPlugins(),
   })
 
   return (
     <>
       <ul className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {pluginList?.plugins.map((plugin, key) => (
+        {pluginList?.data.map((plugin: PluginResponse, key: number) => (
           <li key={plugin.slug}>
             <LinkCard variant={key % 2 ? 'dark' : 'light'} asChild>
               <Link
@@ -56,7 +57,7 @@ const PluginList = () => {
       </ul>
 
       {!pluginList ||
-        (pluginList.plugins.length === 0 && (
+        (pluginList.data.length === 0 && (
           <div className="text-center mt-6">
             <p className="text-dark-500">Zur Zeit sind keine Plugins registriert.</p>
           </div>

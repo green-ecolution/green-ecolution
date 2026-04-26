@@ -10,14 +10,14 @@ import {
   SelectItem,
   Button,
 } from '@green-ecolution/ui'
-import { Sensor, TreeCluster } from '@/api/backendApi'
+import { Sensor, TreeClusterInList } from '@/api/backendApi'
 import { MapPin, MoveRight } from 'lucide-react'
 import FormError from './FormError'
 import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-hook-form'
 
 interface FormForTreeProps {
   isReadonly: boolean
-  treeClusters: TreeCluster[]
+  treeClusters: TreeClusterInList[]
   sensors: Sensor[]
   displayError: boolean
   errorMessage?: string

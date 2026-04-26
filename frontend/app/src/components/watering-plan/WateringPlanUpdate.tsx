@@ -60,8 +60,8 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
   const date = loadedData?.date ? format(new Date(loadedData?.date), 'dd.MM.yyyy') : 'Keine Angabe'
 
   const { data: users } = useSuspenseQuery(userRoleQuery('tbz'))
-  const { data: trailers } = useSuspenseQuery(vehicleQuery({ type: 'trailer' }))
-  const { data: transporters } = useSuspenseQuery(vehicleQuery({ type: 'transporter' }))
+  const { data: trailers } = useSuspenseQuery(vehicleQuery())
+  const { data: transporters } = useSuspenseQuery(vehicleQuery())
 
   const onSubmit: SubmitHandler<WateringPlanForm> = (data) => {
     mutate({
@@ -97,7 +97,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
 
   const handleDeleteWateringPlan = () => {
     return wateringPlanApi.deleteWateringPlan({
-      id: Number(wateringPlanId),
+      wateringPlanId: Number(wateringPlanId),
     })
   }
 

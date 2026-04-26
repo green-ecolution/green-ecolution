@@ -39,7 +39,7 @@ const defaultFormValues: TreeclusterForm = {
   name: '',
   address: '',
   description: '',
-  soilCondition: SoilCondition.TreeSoilConditionUnknown,
+  soilCondition: SoilCondition.Unknown,
   treeIds: [],
 }
 

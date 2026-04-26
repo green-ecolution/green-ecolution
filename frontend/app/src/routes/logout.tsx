@@ -16,8 +16,8 @@ export const Route = createFileRoute('/logout')({
     }
 
     await userApi
-      .logout({
-        body: {
+      .logoutUser({
+        logoutRequest: {
           refreshToken: state.token?.refreshToken ?? '',
         },
       })

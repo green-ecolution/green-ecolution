@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
-import { TreeClusterInList } from '@green-ecolution/backend-client'
+import { TreeClusterInList } from '@/api/backendApi'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import {
   AlertDialog,

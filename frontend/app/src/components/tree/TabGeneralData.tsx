@@ -1,4 +1,4 @@
-import { Tree } from '@green-ecolution/backend-client'
+import type { Tree } from '@/api/backendApi'
 import { format } from 'date-fns'
 import { DetailedList } from '@green-ecolution/ui'
 

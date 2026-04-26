@@ -1,6 +1,6 @@
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router'
 import MapButtons from '@/components/map/MapButtons'
-import { Tree, TreeCluster } from '@green-ecolution/backend-client'
+import type { Tree, TreeCluster, TreeClusterInList } from '@/api/backendApi'
 import { useQuery } from '@tanstack/react-query'
 import { treeQuery } from '@/api/queries'
 import { useCallback, useMemo, useRef } from 'react'
@@ -15,7 +15,6 @@ import { WithTreesAndClusters } from '@/components/map/marker/WithAllClusterAndT
 import WithFilterdTrees from '@/components/map/marker/WithFilterdTrees'
 
 const mapFilterSchema = z.object({
-  wateringStatuses: z.array(z.string()).optional(),
   hasCluster: z.boolean().optional(),
   plantingYears: z.array(z.number()).optional(),
   tree: z.number().optional(),
@@ -30,19 +29,16 @@ function MapView() {
 
   const hasActiveFilter = useMemo(
     () =>
-      search.wateringStatuses !== undefined ||
       search.hasCluster !== undefined ||
       search.plantingYears !== undefined,
-    [search.wateringStatuses, search.hasCluster, search.plantingYears],
+    [search.hasCluster, search.plantingYears],
   )
 
+  // TODO: The Rust backend list endpoint doesn't support filter params yet.
+  // Once filter support is added, pass hasCluster/plantingYears here.
   const { data: treesRes } = useQuery({
     enabled: hasActiveFilter,
-    ...treeQuery({
-      wateringStatuses: search.wateringStatuses,
-      hasCluster: search.hasCluster,
-      plantingYears: search.plantingYears,
-    }),
+    ...treeQuery(),
   })
 
   const handleTreeClick = useCallback(
@@ -55,7 +51,7 @@ function MapView() {
   )
 
   const handleClusterClick = useCallback(
-    (cluster: TreeCluster) => {
+    (cluster: TreeClusterInList | TreeCluster) => {
       navigate({
         to: `/treecluster/$treeclusterId`,
         params: { treeclusterId: cluster.id.toString() },
@@ -114,7 +110,7 @@ const MapViewWithProvider = () => {
   const search = useLoaderData({ from: '/_protected/map/' })
   return (
     <FilterProvider
-      initialStatus={search.wateringStatuses ?? []}
+      initialStatus={[]}
       initialHasCluster={search.hasCluster ?? undefined}
       initialPlantingYears={search.plantingYears ?? []}
     >
@@ -127,15 +123,14 @@ export const Route = createFileRoute('/_protected/map/')({
   component: MapViewWithProvider,
   validateSearch: mapFilterSchema,
 
-  loaderDeps: ({ search: { wateringStatuses, hasCluster, plantingYears, tree, cluster } }) => ({
-    wateringStatuses: wateringStatuses ?? undefined,
+  loaderDeps: ({ search: { hasCluster, plantingYears, tree, cluster } }) => ({
     hasCluster: hasCluster ?? undefined,
     plantingYears: plantingYears ?? undefined,
     tree: tree ?? undefined,
     cluster: cluster ?? undefined,
   }),
 
-  loader: ({ deps: { wateringStatuses, hasCluster, plantingYears, tree, cluster } }) => {
-    return { wateringStatuses, hasCluster, plantingYears, tree, cluster }
+  loader: ({ deps: { hasCluster, plantingYears, tree, cluster } }) => {
+    return { hasCluster, plantingYears, tree, cluster }
   },
 })

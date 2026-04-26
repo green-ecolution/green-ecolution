@@ -1,7 +1,7 @@
-import { sensorIdQuery, treeSensorIdQuery } from '@/api/queries'
+import { sensorIdQuery } from '@/api/queries'
 import { Loading } from '@green-ecolution/ui'
 import SensorDashboard from '@/components/sensor/SensorDashboard'
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_protected/sensors/$sensorId/')({
@@ -16,8 +16,9 @@ export const Route = createFileRoute('/_protected/sensors/$sensorId/')({
 function SingleSensor() {
   const sensorId = Route.useParams().sensorId
   const { data: sensor } = useSuspenseQuery(sensorIdQuery(sensorId))
-  // Ensure tree query doesn't throw error if it's not available since it's optional
-  const { data: linkedTree } = useQuery(treeSensorIdQuery(sensor.id))
+  // TODO: treeSensorIdQuery was removed — the Rust backend needs a dedicated
+  // "get tree by sensor ID" endpoint before this can be restored.
+  const linkedTree = undefined
 
   return (
     <div className="container mt-6">

@@ -3,7 +3,7 @@ import { Suspense } from 'react'
 import { Loading } from '@green-ecolution/ui'
 import ShowRoutePreview from '../map/marker/ShowRoutePreview'
 import { WithTreesAndClusters } from '../map/marker/WithAllClusterAndTrees'
-import { Tree, TreeCluster, WateringPlan } from '@green-ecolution/backend-client'
+import type { Tree, TreeCluster, TreeClusterInList, WateringPlan } from '@/api/backendApi'
 import { useNavigate } from '@tanstack/react-router'
 import Map from '../map/Map'
 
@@ -20,7 +20,7 @@ const WateringPlanPreviewRoute = ({ wateringPlan }: WateringPlanPreviewRouteProp
     )
   }
 
-  const handleClusterClick = (cluster: TreeCluster) => {
+  const handleClusterClick = (cluster: TreeClusterInList | TreeCluster) => {
     navigate({
       to: `/treecluster/$treeclusterId`,
       params: { treeclusterId: cluster.id.toString() },
@@ -32,7 +32,7 @@ const WateringPlanPreviewRoute = ({ wateringPlan }: WateringPlanPreviewRouteProp
       <ZoomControls />
       <Suspense fallback={<Loading className="mt-20 justify-center" label="Lade Karte..." />}>
         <ShowRoutePreview
-          selectedClustersIds={wateringPlan.treeclusters.map((tc) => tc.id)}
+          selectedClustersIds={wateringPlan.treeclusters.map((tc: { id: number }) => tc.id)}
           transporterId={wateringPlan.transporter.id}
           trailerId={wateringPlan.trailer?.id}
         />

@@ -16,23 +16,33 @@ interface ChartWateringDataProps {
   sensorId: string
 }
 
+interface Watermark {
+  depth: number
+  resistance: number
+}
+
 const ChartWateringData: React.FC<ChartWateringDataProps> = ({ sensorId }) => {
   const { data: sensorDataRes } = useSuspenseQuery(sensorDataQuery(sensorId))
-  const transformedDataForTemperature = sensorDataRes.data
-    .map((entry) => ({
-      name: format(new Date(entry.updatedAt), 'dd.MM.yyyy'),
-      temperature: entry.temperature,
-      humidity: entry.humidity,
-    }))
+  const transformedDataForTemperature = sensorDataRes
+    .map((entry) => {
+      const payload = entry.data as Record<string, unknown>
+      return {
+        name: format(new Date(entry.updatedAt), 'dd.MM.yyyy'),
+        temperature: payload.temperature,
+        humidity: payload.humidity,
+      }
+    })
     .reverse()
 
-  const transformedDataForWatermarks = sensorDataRes.data
+  const transformedDataForWatermarks = sensorDataRes
     .map((entry) => {
+      const payload = entry.data as Record<string, unknown>
       const formattedEntry: Record<string, number | string> = {
         name: format(new Date(entry.updatedAt), 'dd.MM.yyyy'),
       }
 
-      entry.watermarks.forEach((watermark) => {
+      const watermarks = ((payload.watermarks as Watermark[]) ?? [])
+      watermarks.forEach((watermark: Watermark) => {
         formattedEntry[`depth_${watermark.depth}`] = watermark.resistance
       })
 
@@ -42,7 +52,7 @@ const ChartWateringData: React.FC<ChartWateringDataProps> = ({ sensorId }) => {
 
   return (
     <>
-      {sensorDataRes.data.length > 1 && (
+      {sensorDataRes.length > 1 && (
         <>
           <h3 className="font-bold mb-4 text-dark-600 text-center">
             Bodentemperatur und -feuchtigkeit im Verlaufe der Zeit:

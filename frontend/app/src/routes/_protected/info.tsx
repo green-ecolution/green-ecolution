@@ -50,7 +50,7 @@ import {
   XCircle,
   Zap,
 } from 'lucide-react'
-import type { ServiceStatus, VersionInfo } from '@green-ecolution/backend-client'
+import type { ServiceStatusResponse, VersionInfoResponse } from '@green-ecolution/backend-client'
 import { Bar, BarChart, XAxis, YAxis, Cell } from 'recharts'
 
 const tabSchema = z.enum(['system', 'data', 'software', 'server', 'runtime']).catch('system')
@@ -130,7 +130,7 @@ function formatUptime(uptime: string): string {
   return `${minutes} Minuten`
 }
 
-function getVersionStatusProps(versionInfo: VersionInfo) {
+function getVersionStatusProps(versionInfo: VersionInfoResponse) {
   if (versionInfo.isDevelopment) {
     return {
       status: 'default' as const,
@@ -515,12 +515,12 @@ function DataStatCard({ icon, label, value, subtitle, color, href }: DataStatCar
 
 interface SystemTabContentProps {
   data: {
-    versionInfo: VersionInfo
+    versionInfo: VersionInfoResponse
     goVersion: string
   }
   servicesData:
     | {
-        items: ServiceStatus[]
+        items: ServiceStatusResponse[]
       }
     | undefined
   servicesLoading: boolean
@@ -557,7 +557,7 @@ function SystemTabContent({
   formatUptime,
 }: SystemTabContentProps) {
   const healthyServices =
-    servicesData?.items.filter((s: ServiceStatus) => s.enabled && s.healthy).length ?? 0
+    servicesData?.items.filter((s: ServiceStatusResponse) => s.enabled && s.healthy).length ?? 0
 
   const version = data.versionInfo.current
   const isDev = data.versionInfo.isDevelopment || data.versionInfo.isStage
@@ -679,7 +679,7 @@ function SystemTabContent({
             </div>
           ) : servicesData ? (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {servicesData.items.map((service: ServiceStatus) => {
+              {servicesData.items.map((service: ServiceStatusResponse) => {
                 const isHealthy = service.enabled && service.healthy
                 const isDisabled = !service.enabled
 
@@ -721,10 +721,10 @@ function SystemTabContent({
                         )}
                       </div>
                       <p className="text-xs text-dark-500 truncate">
-                        {translateServiceMessage(service.message)}
+                        {translateServiceMessage(service.message ?? undefined)}
                       </p>
                       {service.enabled &&
-                        service.responseTimeMs !== undefined &&
+                        service.responseTimeMs != null &&
                         service.responseTimeMs > 0 && (
                           <p className="text-xs text-dark-400 mt-0.5">
                             {service.responseTimeMs < 1
@@ -760,7 +760,7 @@ interface SoftwareTabContentProps {
       commit: string
       repository: string
     }
-    versionInfo: VersionInfo
+    versionInfo: VersionInfoResponse
   }
 }
 

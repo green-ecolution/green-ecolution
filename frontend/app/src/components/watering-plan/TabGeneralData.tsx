@@ -1,4 +1,5 @@
-import { WateringPlan, WateringPlanStatus } from '@green-ecolution/backend-client'
+import { WateringPlanStatus } from '@green-ecolution/backend-client'
+import type { WateringPlan } from '@/api/backendApi'
 import { DetailedList, StatusCard } from '@green-ecolution/ui'
 import { format, formatDuration, intervalToDuration } from 'date-fns'
 import { getWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
@@ -12,8 +13,7 @@ interface TabGeneralDataProps {
 }
 
 const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
-  const userIdsString = wateringPlan?.userIds?.join(',') || ''
-  const { data: userRes } = useSuspenseQuery(userQuery({ userIds: userIdsString }))
+  const { data: userRes } = useSuspenseQuery(userQuery())
 
   const updatedDate = wateringPlan?.updatedAt
     ? format(new Date(wateringPlan.updatedAt), 'dd.MM.yyyy')
@@ -78,7 +78,7 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
   ]
 
   const statusDetails = getWateringPlanStatusDetails(
-    wateringPlan?.status ?? WateringPlanStatus.WateringPlanStatusUnknown,
+    wateringPlan?.status ?? WateringPlanStatus.Unknown,
   )
 
   return (
@@ -93,7 +93,7 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
             description={statusDetails.description}
           />
         </li>
-        {wateringPlan?.status === WateringPlanStatus.WateringPlanStatusCanceled &&
+        {wateringPlan?.status === WateringPlanStatus.Canceled &&
           wateringPlan.cancellationNote && (
             <li>
               <StatusCard
@@ -103,11 +103,11 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
               />
             </li>
           )}
-        {wateringPlan?.status === WateringPlanStatus.WateringPlanStatusFinished && (
+        {wateringPlan?.status === WateringPlanStatus.Finished && (
           <li>
             <StatusCard
               label="Verbrauchtes Wasser"
-              value={`${wateringPlan.evaluation.reduce((sum, item) => sum + item.consumedWater, 0)} Liter`}
+              value={`${wateringPlan.evaluation.reduce((sum: number, item: { consumedWater: number }) => sum + item.consumedWater, 0)} Liter`}
               isLarge
               description={`bei ${wateringPlan.treeclusters.length} ${wateringPlan.treeclusters.length === 1 ? 'Bewässerungsgruppe' : 'Bewässerungsgruppen'}`}
             />

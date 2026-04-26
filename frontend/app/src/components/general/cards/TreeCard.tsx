@@ -1,6 +1,7 @@
 import { treeClusterIdQuery } from '@/api/queries'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
-import { WateringStatus, Tree } from '@green-ecolution/backend-client'
+import { WateringStatus } from '@green-ecolution/backend-client'
+import type { Tree } from '@/api/backendApi'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import React from 'react'
@@ -18,7 +19,7 @@ const TreeCard: React.FC<TreeCardProps> = ({ tree, showTreeClusterInfo = true })
     enabled: clusterId !== null,
   })
   const statusDetails = getWateringStatusDetails(
-    tree.wateringStatus ?? WateringStatus.WateringStatusUnknown,
+    tree.wateringStatus ?? WateringStatus.Unknown,
   )
 
   const columns = showTreeClusterInfo ? '1fr 1.5fr 1fr 1fr' : '1.5fr 2fr 1fr'

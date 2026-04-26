@@ -1,4 +1,5 @@
-import { WateringStatus, Tree } from '@green-ecolution/backend-client'
+import { WateringStatus } from '@green-ecolution/backend-client'
+import type { Tree } from '@/api/backendApi'
 import React from 'react'
 import { TreeDeciduous } from 'lucide-react'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
@@ -7,13 +8,25 @@ import ChartWateringData from './ChartWateringData'
 import { format } from 'date-fns'
 import { roundTo } from '@/lib/utils'
 
+interface Watermark {
+  depth: number
+  centibar: number
+  resistance: number
+}
+
+interface SensorPayload {
+  humidity: number
+  temperature: number
+  watermarks: Watermark[]
+}
+
 interface TabWateringStatusProps {
   tree?: Tree
 }
 
 const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
   const wateringStatus = getWateringStatusDetails(
-    tree?.wateringStatus ?? WateringStatus.WateringStatusUnknown,
+    tree?.wateringStatus ?? WateringStatus.Unknown,
   )
 
   return (
@@ -33,7 +46,7 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
             label="Bodenfeuchte"
             value={
               tree?.sensor?.latestData
-                ? `${roundTo(tree.sensor.latestData.humidity, 2)} %`
+                ? `${roundTo((tree.sensor.latestData.data as SensorPayload).humidity, 2)} %`
                 : 'Keine Daten'
             }
             isLarge
@@ -45,7 +58,7 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
             label="Bodentemperatur"
             value={
               tree?.sensor?.latestData
-                ? `${roundTo(tree.sensor.latestData.temperature, 2)} °C`
+                ? `${roundTo((tree.sensor.latestData.data as SensorPayload).temperature, 2)} °C`
                 : 'Keine Daten'
             }
             isLarge
@@ -79,7 +92,7 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
             <div aria-hidden="true" className="mb-10 lg:mb-0 lg:w-60 lg:col-start-2 xl:w-80">
               <TreeDeciduous className="w-11 h-11 mx-auto mb-4" />
               <ul className="flex flex-col gap-y-3">
-                {tree?.sensor.latestData.watermarks.map((watermark) => (
+                {(((tree?.sensor.latestData.data as SensorPayload)?.watermarks) ?? []).map((watermark: Watermark) => (
                   <li key={watermark.depth} className={`rounded-xl text-center py-3 bg-dark-50`}>
                     <p className={`inline relative pl-8`}>
                       <span className="font-semibold">{watermark.centibar} Zentibar</span>
@@ -101,7 +114,7 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
               </header>
 
               <ul className="flex flex-col gap-y-3 lg:contents">
-                {tree?.sensor.latestData.watermarks.map((watermark) => (
+                {(((tree?.sensor.latestData.data as SensorPayload)?.watermarks) ?? []).map((watermark: Watermark) => (
                   <li
                     key={watermark.depth}
                     className="flex flex-col gap-y-3 border-b border-b-dark-300 pb-3 lg:py-3 lg:grid lg:grid-cols-3 lg:gap-5"

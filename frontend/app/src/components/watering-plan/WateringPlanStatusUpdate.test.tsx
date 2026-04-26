@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { WateringPlan, WateringPlanStatus } from '@green-ecolution/backend-client'
+import { WateringPlanStatus } from '@green-ecolution/backend-client'
+import type { WateringPlan } from '@/api/backendApi'
 import { FinishedWateringPlan, CancelWateringPlan } from './WateringPlanStatusUpdate'
 
 vi.mock('../general/cards/SelectedCard', () => ({
@@ -11,7 +12,7 @@ vi.mock('../general/cards/SelectedCard', () => ({
 const mockLoadedData = {
   id: 1,
   date: '2026-03-01T00:00:00Z',
-  status: WateringPlanStatus.WateringPlanStatusActive,
+  status: WateringPlanStatus.Active,
   treeclusters: [{ id: 10, name: 'Cluster A', treeIds: [1, 2, 3, 4, 5] }],
   transporter: { id: 1 },
 } as unknown as WateringPlan

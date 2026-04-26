@@ -1,4 +1,4 @@
-import { Tree } from '@green-ecolution/backend-client'
+import type { Tree } from '@/api/backendApi'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { treeQuery } from '@/api/queries'
 import { TreeMarkerIcon } from '../markerIcons'

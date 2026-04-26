@@ -21,14 +21,14 @@ export const Route = createFileRoute('/_protected/vehicles/')({
     page: page || 1,
   }),
   loader: ({ context: { queryClient }, deps: { page } }) => {
-    queryClient.prefetchQuery(vehicleQuery({ page, limit: 5 })).catch(console.log)
+    queryClient.prefetchQuery(vehicleQuery({ page, perPage: 5 })).catch(console.log)
     return { page }
   },
 })
 
 function Vehicles() {
   const search = useLoaderData({ from: '/_protected/vehicles/' })
-  const { data: vehicleRes } = useSuspenseQuery(vehicleQuery({ page: search.page, limit: 5 }))
+  const { data: vehicleRes } = useSuspenseQuery(vehicleQuery({ page: search.page, perPage: 5 }))
   return (
     <div className="container mt-6">
       <article className="mb-20 2xl:w-4/5">

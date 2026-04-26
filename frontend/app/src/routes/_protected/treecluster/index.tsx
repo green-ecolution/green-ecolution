@@ -9,7 +9,6 @@ import Pagination from '@/components/general/Pagination'
 import Dialog from '@/components/general/filter/Dialog'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
 import RegionFieldset from '@/components/general/filter/fieldsets/RegionFieldset'
-import { GetAllTreeClustersRequest } from '@green-ecolution/backend-client'
 import { z } from 'zod'
 import { treeClusterQuery } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
@@ -21,13 +20,11 @@ const treeclusterFilterSchema = z.object({
 })
 
 function Treecluster() {
-  const { page, wateringStatuses, regions } = useLoaderData({ from: '/_protected/treecluster/' })
+  const { page } = useLoaderData({ from: '/_protected/treecluster/' })
   const { data: clustersRes } = useSuspenseQuery(
     treeClusterQuery({
       page: page,
-      limit: 5,
-      wateringStatuses,
-      regions,
+      perPage: 5,
     }),
   )
 
@@ -73,12 +70,10 @@ function Treecluster() {
 }
 
 const TreeclusterWithProvider = () => {
-  const search = useLoaderData({ from: '/_protected/treecluster/' })
-
   return (
     <FilterProvider
-      initialStatus={search.wateringStatuses ?? []}
-      initialRegions={search.regions ?? []}
+      initialStatus={[]}
+      initialRegions={[]}
     >
       <Treecluster />
     </FilterProvider>
@@ -89,7 +84,7 @@ export const Route = createFileRoute('/_protected/treecluster/')({
   component: TreeclusterWithProvider,
   validateSearch: treeclusterFilterSchema,
   pendingComponent: () => <Loading className="mt-20 justify-center" label="Daten werden geladen" />,
-  loaderDeps: ({ search }: { search: GetAllTreeClustersRequest }) => ({
+  loaderDeps: ({ search }) => ({
     wateringStatuses:
       search.wateringStatuses && search.wateringStatuses.length > 0
         ? search.wateringStatuses
@@ -99,19 +94,17 @@ export const Route = createFileRoute('/_protected/treecluster/')({
 
     page: search.page,
   }),
-  loader: ({ context: { queryClient }, deps: { wateringStatuses, regions, page } }) => {
+  loader: ({ context: { queryClient }, deps: { page } }) => {
     queryClient
       .prefetchQuery(
         treeClusterQuery({
           page,
-          limit: 5,
-          wateringStatuses,
-          regions,
+          perPage: 5,
         }),
       )
       .catch((error) => console.error('Prefetching "treeClusterQuery" failed:', error))
 
-    return { wateringStatuses, regions, page }
+    return { page }
   },
 })
 

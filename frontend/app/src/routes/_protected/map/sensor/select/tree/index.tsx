@@ -5,7 +5,7 @@ import MapSelectEntitiesModal from '@/components/map/MapSelectEntitiesModal'
 import SensorMarker from '@/components/map/marker/SensorMarker'
 import WithFilterableTrees from '@/components/map/marker/WithFilterableTrees'
 import createToast from '@/hooks/createToast'
-import { Tree, TreeUpdate as TreeUpdateReq } from '@green-ecolution/backend-client'
+import { Tree, TreeUpdateRequest } from '@/api/backendApi'
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useState } from 'react'
@@ -33,10 +33,10 @@ function LinkTreeToSensor() {
   const { data: sensor } = useSuspenseQuery(sensorIdQuery(String(sensorId)))
 
   const { mutate } = useMutation({
-    mutationFn: (tree: TreeUpdateReq) =>
+    mutationFn: (tree: TreeUpdateRequest) =>
       treeApi.updateTree({
         treeId: Number(treeId),
-        body: tree,
+        treeUpdateRequest: tree,
       }),
     onSuccess: () => handleOnUpdateSuccess(),
     onError: (error: Error) => {

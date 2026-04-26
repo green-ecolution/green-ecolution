@@ -4,7 +4,8 @@ import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatu
 import { format } from 'date-fns'
 import GeneralLink from '../general/links/GeneralLink'
 import ChartSensorData from './ChartSensorData'
-import { SensorStatus, Tree } from '@green-ecolution/backend-client'
+import { SensorStatus } from '@green-ecolution/backend-client'
+import type { Tree } from '@/api/backendApi'
 
 interface TabSensorDataProps {
   tree: Tree
@@ -19,7 +20,7 @@ const TabSensorData: React.FC<TabSensorDataProps> = ({ tree }) => {
     : 'Keine Angabe'
 
   const sensorStatusDetails = getSensorStatusDetails(
-    tree?.sensor?.status ?? SensorStatus.SensorStatusUnknown,
+    tree?.sensor?.status ?? SensorStatus.Unknown,
   )
 
   return (
@@ -38,8 +39,8 @@ const TabSensorData: React.FC<TabSensorDataProps> = ({ tree }) => {
           <StatusCard
             label="Akkustand"
             value={
-              tree?.sensor?.latestData?.battery
-                ? `${tree.sensor.latestData.battery.toFixed(2)} V`
+              (tree?.sensor?.latestData?.data as Record<string, number> | undefined)?.battery
+                ? `${((tree.sensor!.latestData!.data as Record<string, number>).battery).toFixed(2)} V`
                 : 'Keine Angabe'
             }
             isLarge

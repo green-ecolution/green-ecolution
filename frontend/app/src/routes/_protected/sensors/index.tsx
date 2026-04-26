@@ -20,7 +20,7 @@ export const Route = createFileRoute('/_protected/sensors/')({
   }),
   loader: ({ context: { queryClient }, deps: { page } }) => {
     queryClient
-      .prefetchQuery(sensorQuery({ page, limit: 5 }))
+      .prefetchQuery(sensorQuery({ page, perPage: 5 }))
       .catch((error) => console.error('Prefetching "sensorQuery" failed:', error))
     return { page }
   },
@@ -28,7 +28,7 @@ export const Route = createFileRoute('/_protected/sensors/')({
 
 function Sensors() {
   const { page } = useLoaderData({ from: '/_protected/sensors/' })
-  const { data: sensorsRes } = useSuspenseQuery(sensorQuery({ page, limit: 5 }))
+  const { data: sensorsRes } = useSuspenseQuery(sensorQuery({ page, perPage: 5 }))
 
   return (
     <div className="container mt-6">

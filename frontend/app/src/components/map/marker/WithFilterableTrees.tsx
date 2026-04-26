@@ -1,4 +1,4 @@
-import { Tree } from '@green-ecolution/backend-client'
+import type { Tree } from '@/api/backendApi'
 import { memo, useCallback, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { treeQuery } from '@/api/queries'
@@ -45,13 +45,10 @@ const FilterableTreesContent = memo(
       [appliedFilters.wateringStatuses, appliedFilters.hasCluster, appliedFilters.plantingYears],
     )
 
+    // TODO: wateringStatuses, hasCluster, plantingYears filter params are not yet supported in the new API
     const { data: treesRes } = useQuery({
       enabled: hasActiveFilter,
-      ...treeQuery({
-        wateringStatuses: appliedFilters.wateringStatuses,
-        hasCluster: appliedFilters.hasCluster,
-        plantingYears: appliedFilters.plantingYears,
-      }),
+      ...treeQuery({}),
     })
 
     if (hasActiveFilter) {

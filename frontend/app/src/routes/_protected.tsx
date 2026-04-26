@@ -7,10 +7,10 @@ export const Route = createFileRoute('/_protected')({
     const isAuthenticated = useStore.getState().isAuthenticated
     if (!isAuthenticated) {
       const loginUrl = await userApi
-        .login({
+        .loginUser({
           redirectUrl: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(location.pathname + location.searchStr)}`,
         })
-        .then((res) => res.loginUrl)
+        .then((res: { loginUrl: string }) => res.loginUrl)
 
       window.location.href = loginUrl
     }

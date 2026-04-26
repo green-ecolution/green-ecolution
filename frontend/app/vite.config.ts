@@ -49,7 +49,7 @@ export default defineConfig({
           }
         : {
             '/api-local': {
-              target: `http://${process.env.APP_HOST ?? 'localhost'}:3000`,
+              target: `http://localhost:3020`,
               changeOrigin: true,
               rewrite: (path) => path.replace(/^\/api-local/, '/api'),
               ws: true,

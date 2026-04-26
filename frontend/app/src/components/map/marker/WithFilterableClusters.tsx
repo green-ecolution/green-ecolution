@@ -1,4 +1,4 @@
-import { TreeClusterInList } from '@green-ecolution/backend-client'
+import type { TreeClusterInList } from '@/api/backendApi'
 import { memo, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { treeClusterQuery } from '@/api/queries'
@@ -57,15 +57,9 @@ const FilterableClustersContent = memo(
       [appliedFilters.wateringStatuses, appliedFilters.regions],
     )
 
+    // TODO: wateringStatuses and regions filter params are not yet supported in the new API
     const { data } = useSuspenseQuery(
-      treeClusterQuery(
-        hasActiveFilter
-          ? {
-              wateringStatuses: appliedFilters.wateringStatuses,
-              regions: appliedFilters.regions,
-            }
-          : undefined,
-      ),
+      treeClusterQuery(hasActiveFilter ? {} : undefined),
     )
 
     const filteredData = useMemo(

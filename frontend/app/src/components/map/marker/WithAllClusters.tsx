@@ -1,4 +1,4 @@
-import { TreeClusterInList } from '@green-ecolution/backend-client'
+import type { TreeClusterInList } from '@/api/backendApi'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { treeClusterQuery } from '@/api/queries'
 import MarkerList from './MarkerList'

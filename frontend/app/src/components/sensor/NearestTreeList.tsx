@@ -1,5 +1,5 @@
 import { treeClusterIdQuery } from '@/api/queries'
-import { type TreeWithDistance } from '@green-ecolution/backend-client'
+import type { TreeWithDistance } from '@/api/backendApi'
 import { Badge, cn } from '@green-ecolution/ui'
 import { useQuery } from '@tanstack/react-query'
 import { Check, MapPin, TreeDeciduous } from 'lucide-react'

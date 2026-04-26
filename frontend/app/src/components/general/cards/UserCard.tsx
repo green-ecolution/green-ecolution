@@ -1,5 +1,6 @@
 import React from 'react'
-import { User } from '@green-ecolution/backend-client'
+import type { User } from '@/api/backendApi'
+import type { UserRole, DrivingLicense } from '@green-ecolution/backend-client'
 import { Badge, ListCard, ListCardTitle, ListCardDescription } from '@green-ecolution/ui'
 import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
 import { getUserRoleDetails } from '@/hooks/details/useDetailsForUserRole'
@@ -26,7 +27,7 @@ const UserCard: React.FC<UserCard> = ({ user }) => {
 
       <ListCardDescription>
         <span className="lg:sr-only">Organisation:&nbsp;</span>
-        {user.roles.map((role, index) => (
+        {user.roles.map((role: UserRole, index: number) => (
           <span key={getUserRoleDetails(role).label}>
             {getUserRoleDetails(role).label}
             {index < user.roles.length - 1 ? ', ' : ''}
@@ -38,7 +39,7 @@ const UserCard: React.FC<UserCard> = ({ user }) => {
         <span className="lg:sr-only">Führerscheinklasse:&nbsp;</span>
         {user.drivingLicenses && user.drivingLicenses.length > 0 ? (
           <>
-            {user.drivingLicenses.map((drivingLicense, index) => (
+            {user.drivingLicenses.map((drivingLicense: DrivingLicense, index: number) => (
               <span key={getDrivingLicenseDetails(drivingLicense).label}>
                 {getDrivingLicenseDetails(drivingLicense).label}
                 {index < user.drivingLicenses.length - 1 ? ', ' : ''}

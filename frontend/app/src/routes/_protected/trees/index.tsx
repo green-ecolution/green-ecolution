@@ -6,7 +6,6 @@ import { Plus } from 'lucide-react'
 import TreeCard from '@/components/general/cards/TreeCard'
 import { z } from 'zod'
 import Pagination from '@/components/general/Pagination'
-import { GetAllTreesRequest } from '@green-ecolution/backend-client'
 import Dialog from '@/components/general/filter/Dialog'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
 import ClusterFieldset from '@/components/general/filter/fieldsets/ClusterFieldset'
@@ -22,16 +21,13 @@ const treeFilterSchema = z.object({
 })
 
 function Trees() {
-  const { wateringStatuses, hasCluster, plantingYears, page } = useLoaderData({
+  const { page } = useLoaderData({
     from: '/_protected/trees/',
   })
   const { data: treesRes } = useSuspenseQuery(
     treeQuery({
       page: page ?? 1,
-      wateringStatuses,
-      hasCluster,
-      plantingYears,
-      limit: 10,
+      perPage: 10,
     }),
   )
 
@@ -108,11 +104,11 @@ export const Route = createFileRoute('/_protected/trees/')({
   component: TreesWithProvider,
   validateSearch: treeFilterSchema,
   pendingComponent: () => <Loading className="mt-20 justify-center" label="Daten werden geladen" />,
-  loaderDeps: ({ search }: { search: GetAllTreesRequest }) => ({
+  loaderDeps: ({ search }) => ({
     wateringStatuses: search.wateringStatuses ?? undefined,
     hasCluster: search.hasCluster ?? undefined,
     plantingYears: search.plantingYears ?? undefined,
-    page: search.page ?? 1,
+    page: 1,
   }),
   loader: ({
     deps: { page, wateringStatuses, hasCluster, plantingYears },
@@ -121,10 +117,7 @@ export const Route = createFileRoute('/_protected/trees/')({
     const query = queryClient.prefetchQuery(
       treeQuery({
         page,
-        wateringStatuses,
-        hasCluster,
-        plantingYears,
-        limit: 10,
+        perPage: 10,
       }),
     )
 

@@ -15,9 +15,9 @@ export const Route = createFileRoute('/auth/callback')({
   loaderDeps: ({ search: { code } }) => ({ code }),
   beforeLoad: async ({ search: { code, redirect } }) => {
     const token = await userApi
-      .requestToken({
+      .exchangeLoginToken({
         redirectUrl: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}`,
-        body: {
+        loginTokenRequest: {
           code,
         },
       })

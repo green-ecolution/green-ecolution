@@ -1,7 +1,8 @@
 import { SensorMarkerIcon, TreeMarkerIcon } from '@/components/map/markerIcons'
 import ZoomControls from '@/components/map/ZoomControls'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
-import { type TreeWithDistance, WateringStatus } from '@green-ecolution/backend-client'
+import type { TreeWithDistance } from '@/api/backendApi'
+import { WateringStatus } from '@green-ecolution/backend-client'
 import { cn } from '@green-ecolution/ui'
 import L from 'leaflet'
 import { useMemo } from 'react'
@@ -85,7 +86,7 @@ const NearestTreeMapPreview = ({
         {trees.map((entry) => {
           const { tree } = entry
           const statusDetails = getWateringStatusDetails(
-            tree.wateringStatus ?? WateringStatus.WateringStatusUnknown,
+            tree.wateringStatus ?? WateringStatus.Unknown,
           )
           const isSelected = tree.id === selectedTreeId
 

@@ -8,7 +8,7 @@ import { zodResolver } from '@/lib/zodResolver'
 import { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@green-ecolution/ui'
-import { TreeCluster, Sensor } from '@green-ecolution/backend-client'
+import { TreeClusterInList, Sensor } from '@/api/backendApi'
 
 function TestWrapper({
   children,
@@ -49,7 +49,7 @@ const defaultFormValues: TreeForm = {
 const mockTreeClusters = [
   { id: 1, name: 'Cluster A' },
   { id: 2, name: 'Cluster B' },
-] as TreeCluster[]
+] as TreeClusterInList[]
 
 const mockSensors = [
   { id: 'sensor-1', status: 'online' },
