@@ -14,7 +14,10 @@ use crate::{
         v1::{
             dto::{
                 ListResponse,
-                tree::{TreeCreateRequest, TreeResponse, TreeUpdateRequest},
+                tree::{
+                    NearestTreeListResponse, NearestTreeParams, TreeCreateRequest, TreeResponse,
+                    TreeUpdateRequest,
+                },
             },
             pagination::PaginationParams,
         },
@@ -26,6 +29,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .routes(routes!(list_trees, create_tree))
         .routes(routes!(list_planting_years))
+        .routes(routes!(get_nearest_trees))
         .routes(routes!(get_tree, update_tree, delete_tree))
         .routes(routes!(get_tree_sensor))
 }
@@ -42,8 +46,14 @@ async fn build_tree_response(
 }
 
 #[utoipa::path(get, path = "/trees", tag = "Trees",
+    operation_id = "listTrees",
+    summary = "List all trees",
+    description = "Returns a paginated list of all trees with their associated sensor data.",
     params(PaginationParams),
-    responses((status = 200, description = "Paginated list of trees"))
+    responses(
+        (status = 200, description = "Paginated list of trees", body = ListResponse<TreeResponse>),
+        (status = 500, description = "Internal server error"),
+    )
 )]
 pub async fn list_trees(
     State(state): State<Arc<AppState>>,
@@ -70,10 +80,14 @@ pub async fn list_trees(
 }
 
 #[utoipa::path(get, path = "/trees/{tree_id}", tag = "Trees",
+    operation_id = "getTree",
+    summary = "Get a tree by ID",
+    description = "Returns a single tree by its ID, including associated sensor data.",
     params(("tree_id" = i32, Path, description = "Tree ID")),
     responses(
         (status = 200, description = "Tree found", body = TreeResponse),
         (status = 404, description = "Tree not found"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn get_tree(
@@ -86,10 +100,14 @@ pub async fn get_tree(
 }
 
 #[utoipa::path(post, path = "/trees", tag = "Trees",
+    operation_id = "createTree",
+    summary = "Create a new tree",
+    description = "Creates a new tree with location and optional cluster or sensor association.",
     request_body = TreeCreateRequest,
     responses(
         (status = 201, description = "Tree created", body = TreeResponse),
         (status = 400, description = "Invalid input"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn create_tree(
@@ -103,11 +121,15 @@ pub async fn create_tree(
 }
 
 #[utoipa::path(put, path = "/trees/{tree_id}", tag = "Trees",
+    operation_id = "updateTree",
+    summary = "Update a tree",
+    description = "Performs a full replacement update of a tree by its ID.",
     params(("tree_id" = i32, Path, description = "Tree ID")),
     request_body = TreeUpdateRequest,
     responses(
         (status = 200, description = "Tree updated", body = TreeResponse),
         (status = 404, description = "Tree not found"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn update_tree(
@@ -122,10 +144,14 @@ pub async fn update_tree(
 }
 
 #[utoipa::path(delete, path = "/trees/{tree_id}", tag = "Trees",
+    operation_id = "deleteTree",
+    summary = "Delete a tree",
+    description = "Permanently deletes a tree by its ID.",
     params(("tree_id" = i32, Path, description = "Tree ID")),
     responses(
         (status = 204, description = "Tree deleted"),
         (status = 404, description = "Tree not found"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn delete_tree(
@@ -137,7 +163,13 @@ pub async fn delete_tree(
 }
 
 #[utoipa::path(get, path = "/trees/planting-years", tag = "Trees",
-    responses((status = 200, description = "List of distinct planting years"))
+    operation_id = "listPlantingYears",
+    summary = "List distinct planting years",
+    description = "Returns a list of distinct planting years across all trees.",
+    responses(
+        (status = 200, description = "List of distinct planting years", body = Vec<i32>),
+        (status = 500, description = "Internal server error"),
+    )
 )]
 pub async fn list_planting_years(
     State(state): State<Arc<AppState>>,
@@ -146,7 +178,27 @@ pub async fn list_planting_years(
     Ok(Json(years.into_iter().map(|y| y.year() as i32).collect()))
 }
 
+#[utoipa::path(get, path = "/trees/nearest", tag = "Trees",
+    operation_id = "getNearestTrees",
+    summary = "Get nearest trees",
+    description = "Finds trees closest to a given coordinate.",
+    params(NearestTreeParams),
+    responses(
+        (status = 200, description = "Nearest trees", body = NearestTreeListResponse),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+pub async fn get_nearest_trees(
+    State(_state): State<Arc<AppState>>,
+    Query(_params): Query<NearestTreeParams>,
+) -> Result<Json<NearestTreeListResponse>, ServiceError> {
+    todo!()
+}
+
 #[utoipa::path(get, path = "/trees/{tree_id}/sensors/{sensor_id}", tag = "Trees",
+    operation_id = "getTreeSensor",
+    summary = "Get a tree by tree and sensor ID",
+    description = "Returns a tree identified by both its tree ID and sensor ID.",
     params(
         ("tree_id" = i32, Path, description = "Tree ID"),
         ("sensor_id" = String, Path, description = "Sensor ID"),
@@ -154,6 +206,7 @@ pub async fn list_planting_years(
     responses(
         (status = 200, description = "Tree with sensor", body = TreeResponse),
         (status = 404, description = "Tree not found"),
+        (status = 500, description = "Internal server error"),
     )
 )]
 pub async fn get_tree_sensor(
