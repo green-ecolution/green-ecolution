@@ -2,7 +2,7 @@ use sqlx::PgPool;
 
 use crate::domain::{
     Id, RepositoryError,
-    region::{Region, RegionCreate, RegionRepository, RegionUpdate},
+    region::{Region, RegionCreate, RegionQuery, RegionRepository, RegionUpdate},
     shared::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
@@ -21,7 +21,7 @@ impl PgRegionRepository {
 
 #[async_trait::async_trait]
 impl RegionRepository for PgRegionRepository {
-    async fn all(&self, pagination: Pagination) -> Result<Page<Region>, RepositoryError> {
+    async fn all(&self, _query: RegionQuery, pagination: Pagination) -> Result<Page<Region>, RepositoryError> {
         let total = sqlx::query_scalar!(r#"SELECT COUNT(*) FROM regions"#)
             .fetch_one(&self.pool)
             .await?
@@ -38,12 +38,12 @@ impl RegionRepository for PgRegionRepository {
         let items: Vec<Region> = rows
             .into_iter()
             .map(|row| {
-                Region::new(
-                    Id::new(row.id),
-                    row.created_at.and_utc(),
-                    row.updated_at.and_utc(),
-                    row.name,
-                )
+                Region {
+                    id: Id::new(row.id),
+                    created_at: row.created_at.and_utc(),
+                    updated_at: row.updated_at.and_utc(),
+                    name: row.name,
+                }
             })
             .collect();
 
@@ -59,12 +59,12 @@ impl RegionRepository for PgRegionRepository {
         .await?
         .ok_or(RepositoryError::NotFound)?;
 
-        Ok(Region::new(
-            Id::new(row.id),
-            row.created_at.and_utc(),
-            row.updated_at.and_utc(),
-            row.name,
-        ))
+        Ok(Region {
+            id: Id::new(row.id),
+            created_at: row.created_at.and_utc(),
+            updated_at: row.updated_at.and_utc(),
+            name: row.name,
+        })
     }
 
     async fn by_point(&self, coord: Coordinate) -> Result<Region, RepositoryError> {
@@ -76,12 +76,12 @@ impl RegionRepository for PgRegionRepository {
         .await?
         .ok_or(RepositoryError::NotFound)?;
 
-        Ok(Region::new(
-            Id::new(row.id),
-            row.created_at.and_utc(),
-            row.updated_at.and_utc(),
-            row.name,
-        ))
+        Ok(Region {
+            id: Id::new(row.id),
+            created_at: row.created_at.and_utc(),
+            updated_at: row.updated_at.and_utc(),
+            name: row.name,
+        })
     }
 
     // TODO: Handle Geometry
@@ -93,12 +93,12 @@ impl RegionRepository for PgRegionRepository {
         .fetch_one(&self.pool)
         .await?;
 
-        Ok(Region::new(
-            Id::new(row.id),
-            row.created_at.and_utc(),
-            row.updated_at.and_utc(),
-            row.name,
-        ))
+        Ok(Region {
+            id: Id::new(row.id),
+            created_at: row.created_at.and_utc(),
+            updated_at: row.updated_at.and_utc(),
+            name: row.name,
+        })
     }
 
     async fn update(
@@ -114,12 +114,12 @@ impl RegionRepository for PgRegionRepository {
           .fetch_one(&self.pool)
           .await?;
 
-        Ok(Region::new(
-            Id::new(row.id),
-            row.created_at.and_utc(),
-            row.updated_at.and_utc(),
-            row.name,
-        ))
+        Ok(Region {
+            id: Id::new(row.id),
+            created_at: row.created_at.and_utc(),
+            updated_at: row.updated_at.and_utc(),
+            name: row.name,
+        })
     }
 
     async fn delete(&self, id: Id<Region>) -> Result<(), RepositoryError> {
