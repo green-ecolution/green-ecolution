@@ -5,7 +5,7 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
 };
-use axum::routing::{get, post};
+use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     domain::{
@@ -32,23 +32,12 @@ use crate::{
     service::ServiceError,
 };
 
-pub fn routes() -> utoipa_axum::router::OpenApiRouter<Arc<AppState>> {
-    utoipa_axum::router::OpenApiRouter::new()
-        .route(
-            "/watering-plans",
-            get(list_watering_plans).post(create_watering_plan),
-        )
-        .route(
-            "/watering-plans/route/gpx/{gpx_name}",
-            get(get_gpx_file),
-        )
-        .route("/watering-plans/route/preview", post(preview_route))
-        .route(
-            "/watering-plans/{watering_plan_id}",
-            get(get_watering_plan)
-                .put(update_watering_plan)
-                .delete(delete_watering_plan),
-        )
+pub fn routes() -> OpenApiRouter<Arc<AppState>> {
+    OpenApiRouter::new()
+        .routes(routes!(list_watering_plans, create_watering_plan))
+        .routes(routes!(get_gpx_file))
+        .routes(routes!(preview_route))
+        .routes(routes!(get_watering_plan, update_watering_plan, delete_watering_plan))
 }
 
 async fn resolve_plan_relations(
@@ -84,6 +73,10 @@ async fn resolve_plan_relations(
     Ok((transporter, trailer, cluster_responses))
 }
 
+#[utoipa::path(get, path = "/watering-plans", tag = "Watering Plans",
+    params(PaginationParams),
+    responses((status = 200, description = "Paginated list of watering plans"))
+)]
 pub async fn list_watering_plans(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
@@ -94,7 +87,6 @@ pub async fn list_watering_plans(
         .all(WateringPlanQuery::default(), pagination)
         .await?;
 
-    // Batch fetch all vehicles and clusters
     let vehicle_ids: Vec<_> = page
         .items
         .iter()
@@ -147,6 +139,13 @@ pub async fn list_watering_plans(
     Ok(Json(response))
 }
 
+#[utoipa::path(get, path = "/watering-plans/{watering_plan_id}", tag = "Watering Plans",
+    params(("watering_plan_id" = i32, Path, description = "Watering plan ID")),
+    responses(
+        (status = 200, description = "Watering plan found", body = WateringPlanResponse),
+        (status = 404, description = "Watering plan not found"),
+    )
+)]
 pub async fn get_watering_plan(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -166,6 +165,13 @@ pub async fn get_watering_plan(
     Ok(Json(response))
 }
 
+#[utoipa::path(post, path = "/watering-plans", tag = "Watering Plans",
+    request_body = WateringPlanCreateRequest,
+    responses(
+        (status = 201, description = "Watering plan created", body = WateringPlanResponse),
+        (status = 400, description = "Invalid input"),
+    )
+)]
 pub async fn create_watering_plan(
     State(state): State<Arc<AppState>>,
     Json(entity): Json<WateringPlanCreateRequest>,
@@ -186,6 +192,14 @@ pub async fn create_watering_plan(
     Ok((StatusCode::CREATED, Json(response)))
 }
 
+#[utoipa::path(put, path = "/watering-plans/{watering_plan_id}", tag = "Watering Plans",
+    params(("watering_plan_id" = i32, Path, description = "Watering plan ID")),
+    request_body = WateringPlanUpdateRequest,
+    responses(
+        (status = 200, description = "Watering plan updated", body = WateringPlanResponse),
+        (status = 404, description = "Watering plan not found"),
+    )
+)]
 pub async fn update_watering_plan(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -210,6 +224,13 @@ pub async fn update_watering_plan(
     Ok(Json(response))
 }
 
+#[utoipa::path(delete, path = "/watering-plans/{watering_plan_id}", tag = "Watering Plans",
+    params(("watering_plan_id" = i32, Path, description = "Watering plan ID")),
+    responses(
+        (status = 204, description = "Watering plan deleted"),
+        (status = 404, description = "Watering plan not found"),
+    )
+)]
 pub async fn delete_watering_plan(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -218,6 +239,10 @@ pub async fn delete_watering_plan(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[utoipa::path(get, path = "/watering-plans/route/gpx/{gpx_name}", tag = "Watering Plans",
+    params(("gpx_name" = String, Path, description = "GPX file name")),
+    responses((status = 200, description = "GPX file"))
+)]
 pub async fn get_gpx_file(
     State(_state): State<Arc<AppState>>,
     Path(_name): Path<String>,
@@ -225,6 +250,9 @@ pub async fn get_gpx_file(
     todo!()
 }
 
+#[utoipa::path(post, path = "/watering-plans/route/preview", tag = "Watering Plans",
+    responses((status = 200, description = "Route preview"))
+)]
 pub async fn preview_route(
     State(_state): State<Arc<AppState>>,
 ) -> Result<Json<()>, ServiceError> {

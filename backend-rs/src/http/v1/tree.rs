@@ -5,7 +5,7 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
 };
-use axum::routing::get;
+use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     domain::{Id, tree::{Tree, TreeQuery}, shared::pagination::Pagination},
@@ -22,18 +22,12 @@ use crate::{
     service::ServiceError,
 };
 
-pub fn routes() -> utoipa_axum::router::OpenApiRouter<Arc<AppState>> {
-    utoipa_axum::router::OpenApiRouter::new()
-        .route("/trees", get(list_trees).post(create_tree))
-        .route("/trees/planting-years", get(list_planting_years))
-        .route(
-            "/trees/{tree_id}",
-            get(get_tree).put(update_tree).delete(delete_tree),
-        )
-        .route(
-            "/trees/{tree_id}/sensors/{sensor_id}",
-            get(get_tree_sensor),
-        )
+pub fn routes() -> OpenApiRouter<Arc<AppState>> {
+    OpenApiRouter::new()
+        .routes(routes!(list_trees, create_tree))
+        .routes(routes!(list_planting_years))
+        .routes(routes!(get_tree, update_tree, delete_tree))
+        .routes(routes!(get_tree_sensor))
 }
 
 async fn build_tree_response(
@@ -47,6 +41,10 @@ async fn build_tree_response(
     Ok(TreeResponse::from((tree, sensor.as_ref())))
 }
 
+#[utoipa::path(get, path = "/trees", tag = "Trees",
+    params(PaginationParams),
+    responses((status = 200, description = "Paginated list of trees"))
+)]
 pub async fn list_trees(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
@@ -71,6 +69,13 @@ pub async fn list_trees(
     Ok(Json(response))
 }
 
+#[utoipa::path(get, path = "/trees/{tree_id}", tag = "Trees",
+    params(("tree_id" = i32, Path, description = "Tree ID")),
+    responses(
+        (status = 200, description = "Tree found", body = TreeResponse),
+        (status = 404, description = "Tree not found"),
+    )
+)]
 pub async fn get_tree(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -80,6 +85,13 @@ pub async fn get_tree(
     Ok(Json(response))
 }
 
+#[utoipa::path(post, path = "/trees", tag = "Trees",
+    request_body = TreeCreateRequest,
+    responses(
+        (status = 201, description = "Tree created", body = TreeResponse),
+        (status = 400, description = "Invalid input"),
+    )
+)]
 pub async fn create_tree(
     State(state): State<Arc<AppState>>,
     Json(entity): Json<TreeCreateRequest>,
@@ -90,6 +102,14 @@ pub async fn create_tree(
     Ok((StatusCode::CREATED, Json(response)))
 }
 
+#[utoipa::path(put, path = "/trees/{tree_id}", tag = "Trees",
+    params(("tree_id" = i32, Path, description = "Tree ID")),
+    request_body = TreeUpdateRequest,
+    responses(
+        (status = 200, description = "Tree updated", body = TreeResponse),
+        (status = 404, description = "Tree not found"),
+    )
+)]
 pub async fn update_tree(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -101,6 +121,13 @@ pub async fn update_tree(
     Ok(Json(response))
 }
 
+#[utoipa::path(delete, path = "/trees/{tree_id}", tag = "Trees",
+    params(("tree_id" = i32, Path, description = "Tree ID")),
+    responses(
+        (status = 204, description = "Tree deleted"),
+        (status = 404, description = "Tree not found"),
+    )
+)]
 pub async fn delete_tree(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -109,6 +136,9 @@ pub async fn delete_tree(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[utoipa::path(get, path = "/trees/planting-years", tag = "Trees",
+    responses((status = 200, description = "List of distinct planting years"))
+)]
 pub async fn list_planting_years(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<i32>>, ServiceError> {
@@ -116,6 +146,16 @@ pub async fn list_planting_years(
     Ok(Json(years.into_iter().map(|y| y.year() as i32).collect()))
 }
 
+#[utoipa::path(get, path = "/trees/{tree_id}/sensors/{sensor_id}", tag = "Trees",
+    params(
+        ("tree_id" = i32, Path, description = "Tree ID"),
+        ("sensor_id" = String, Path, description = "Sensor ID"),
+    ),
+    responses(
+        (status = 200, description = "Tree with sensor", body = TreeResponse),
+        (status = 404, description = "Tree not found"),
+    )
+)]
 pub async fn get_tree_sensor(
     State(state): State<Arc<AppState>>,
     Path((tree_id, _sensor_id)): Path<(i32, String)>,

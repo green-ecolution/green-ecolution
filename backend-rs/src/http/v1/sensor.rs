@@ -5,10 +5,10 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
 };
-use axum::routing::get;
+use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    domain::sensor::SensorQuery,
+    domain::{sensor::SensorQuery, shared::pagination::Pagination},
     http::{
         AppState,
         v1::{
@@ -20,19 +20,19 @@ use crate::{
         },
     },
     service::ServiceError,
-    domain::shared::pagination::Pagination,
 };
 
-pub fn routes() -> utoipa_axum::router::OpenApiRouter<Arc<AppState>> {
-    utoipa_axum::router::OpenApiRouter::new()
-        .route("/sensors", get(list_sensors))
-        .route(
-            "/sensors/{sensor_id}",
-            get(get_sensor).delete(delete_sensor),
-        )
-        .route("/sensors/{sensor_id}/data", get(list_sensor_data))
+pub fn routes() -> OpenApiRouter<Arc<AppState>> {
+    OpenApiRouter::new()
+        .routes(routes!(list_sensors))
+        .routes(routes!(get_sensor, delete_sensor))
+        .routes(routes!(list_sensor_data))
 }
 
+#[utoipa::path(get, path = "/sensors", tag = "Sensors",
+    params(PaginationParams),
+    responses((status = 200, description = "Paginated list of sensors"))
+)]
 pub async fn list_sensors(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
@@ -42,11 +42,17 @@ pub async fn list_sensors(
         .sensor_service
         .all(SensorQuery::default(), pagination)
         .await?;
-    let response =
-        ListResponse::<SensorResponse>::from_page(page, params.page, params.per_page);
+    let response = ListResponse::<SensorResponse>::from_page(page, params.page, params.per_page);
     Ok(Json(response))
 }
 
+#[utoipa::path(get, path = "/sensors/{sensor_id}", tag = "Sensors",
+    params(("sensor_id" = String, Path, description = "Sensor ID")),
+    responses(
+        (status = 200, description = "Sensor found", body = SensorResponse),
+        (status = 404, description = "Sensor not found"),
+    )
+)]
 pub async fn get_sensor(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
@@ -55,6 +61,13 @@ pub async fn get_sensor(
     Ok(Json(SensorResponse::from(&sensor)))
 }
 
+#[utoipa::path(delete, path = "/sensors/{sensor_id}", tag = "Sensors",
+    params(("sensor_id" = String, Path, description = "Sensor ID")),
+    responses(
+        (status = 204, description = "Sensor deleted"),
+        (status = 404, description = "Sensor not found"),
+    )
+)]
 pub async fn delete_sensor(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
@@ -63,6 +76,10 @@ pub async fn delete_sensor(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[utoipa::path(get, path = "/sensors/{sensor_id}/data", tag = "Sensors",
+    params(("sensor_id" = String, Path, description = "Sensor ID")),
+    responses((status = 200, description = "Sensor data list"))
+)]
 pub async fn list_sensor_data(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,

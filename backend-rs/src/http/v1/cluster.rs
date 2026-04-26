@@ -5,7 +5,7 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
 };
-use axum::routing::get;
+use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     domain::{Id, cluster::TreeCluster, cluster::TreeClusterQuery, shared::pagination::Pagination},
@@ -26,13 +26,10 @@ use crate::{
     service::ServiceError,
 };
 
-pub fn routes() -> utoipa_axum::router::OpenApiRouter<Arc<AppState>> {
-    utoipa_axum::router::OpenApiRouter::new()
-        .route("/clusters", get(list_clusters).post(create_cluster))
-        .route(
-            "/clusters/{cluster_id}",
-            get(get_cluster).put(update_cluster).delete(delete_cluster),
-        )
+pub fn routes() -> OpenApiRouter<Arc<AppState>> {
+    OpenApiRouter::new()
+        .routes(routes!(list_clusters, create_cluster))
+        .routes(routes!(get_cluster, update_cluster, delete_cluster))
 }
 
 async fn build_cluster_response(
@@ -68,6 +65,10 @@ async fn build_cluster_response(
     }))
 }
 
+#[utoipa::path(get, path = "/clusters", tag = "Tree Clusters",
+    params(PaginationParams),
+    responses((status = 200, description = "Paginated list of tree clusters"))
+)]
 pub async fn list_clusters(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
@@ -91,6 +92,13 @@ pub async fn list_clusters(
     Ok(Json(response))
 }
 
+#[utoipa::path(get, path = "/clusters/{cluster_id}", tag = "Tree Clusters",
+    params(("cluster_id" = i32, Path, description = "Cluster ID")),
+    responses(
+        (status = 200, description = "Cluster found", body = TreeClusterResponse),
+        (status = 404, description = "Cluster not found"),
+    )
+)]
 pub async fn get_cluster(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -100,6 +108,12 @@ pub async fn get_cluster(
     Ok(Json(response))
 }
 
+#[utoipa::path(post, path = "/clusters", tag = "Tree Clusters",
+    request_body = TreeClusterCreateRequest,
+    responses(
+        (status = 201, description = "Cluster created", body = TreeClusterResponse),
+    )
+)]
 pub async fn create_cluster(
     State(state): State<Arc<AppState>>,
     Json(entity): Json<TreeClusterCreateRequest>,
@@ -109,6 +123,14 @@ pub async fn create_cluster(
     Ok((StatusCode::CREATED, Json(response)))
 }
 
+#[utoipa::path(put, path = "/clusters/{cluster_id}", tag = "Tree Clusters",
+    params(("cluster_id" = i32, Path, description = "Cluster ID")),
+    request_body = TreeClusterUpdateRequest,
+    responses(
+        (status = 200, description = "Cluster updated", body = TreeClusterResponse),
+        (status = 404, description = "Cluster not found"),
+    )
+)]
 pub async fn update_cluster(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -124,6 +146,13 @@ pub async fn update_cluster(
     Ok(Json(response))
 }
 
+#[utoipa::path(delete, path = "/clusters/{cluster_id}", tag = "Tree Clusters",
+    params(("cluster_id" = i32, Path, description = "Cluster ID")),
+    responses(
+        (status = 204, description = "Cluster deleted"),
+        (status = 404, description = "Cluster not found"),
+    )
+)]
 pub async fn delete_cluster(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,

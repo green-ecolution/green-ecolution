@@ -5,7 +5,7 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
 };
-use axum::routing::{get, post};
+use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     domain::{Id, vehicle::VehicleQuery, shared::pagination::Pagination},
@@ -14,9 +14,7 @@ use crate::{
         v1::{
             dto::{
                 ListResponse,
-                vehicle::{
-                    VehicleCreateRequest, VehicleResponse, VehicleUpdateRequest,
-                },
+                vehicle::{VehicleCreateRequest, VehicleResponse, VehicleUpdateRequest},
             },
             pagination::PaginationParams,
         },
@@ -24,18 +22,19 @@ use crate::{
     service::ServiceError,
 };
 
-pub fn routes() -> utoipa_axum::router::OpenApiRouter<Arc<AppState>> {
-    utoipa_axum::router::OpenApiRouter::new()
-        .route("/vehicles", get(list_vehicles).post(create_vehicle))
-        .route("/vehicles/archived", get(list_archived_vehicles))
-        .route("/vehicles/archived/{vehicle_id}", post(archive_vehicle))
-        .route("/vehicles/plate/{plate}", get(get_vehicle_by_plate))
-        .route(
-            "/vehicles/{vehicle_id}",
-            get(get_vehicle).put(update_vehicle).delete(delete_vehicle),
-        )
+pub fn routes() -> OpenApiRouter<Arc<AppState>> {
+    OpenApiRouter::new()
+        .routes(routes!(list_vehicles, create_vehicle))
+        .routes(routes!(list_archived_vehicles))
+        .routes(routes!(archive_vehicle))
+        .routes(routes!(get_vehicle_by_plate))
+        .routes(routes!(get_vehicle, update_vehicle, delete_vehicle))
 }
 
+#[utoipa::path(get, path = "/vehicles", tag = "Vehicles",
+    params(PaginationParams),
+    responses((status = 200, description = "Paginated list of vehicles"))
+)]
 pub async fn list_vehicles(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
@@ -45,11 +44,17 @@ pub async fn list_vehicles(
         .vehicle_service
         .all(VehicleQuery::default(), pagination)
         .await?;
-    let response =
-        ListResponse::<VehicleResponse>::from_page(page, params.page, params.per_page);
+    let response = ListResponse::<VehicleResponse>::from_page(page, params.page, params.per_page);
     Ok(Json(response))
 }
 
+#[utoipa::path(get, path = "/vehicles/{vehicle_id}", tag = "Vehicles",
+    params(("vehicle_id" = i32, Path, description = "Vehicle ID")),
+    responses(
+        (status = 200, description = "Vehicle found", body = VehicleResponse),
+        (status = 404, description = "Vehicle not found"),
+    )
+)]
 pub async fn get_vehicle(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -58,6 +63,14 @@ pub async fn get_vehicle(
     Ok(Json(VehicleResponse::from(&vehicle)))
 }
 
+#[utoipa::path(post, path = "/vehicles", tag = "Vehicles",
+    request_body = VehicleCreateRequest,
+    responses(
+        (status = 201, description = "Vehicle created", body = VehicleResponse),
+        (status = 400, description = "Invalid input"),
+        (status = 409, description = "Number plate already exists"),
+    )
+)]
 pub async fn create_vehicle(
     State(state): State<Arc<AppState>>,
     Json(entity): Json<VehicleCreateRequest>,
@@ -67,6 +80,14 @@ pub async fn create_vehicle(
     Ok((StatusCode::CREATED, Json(VehicleResponse::from(&vehicle))))
 }
 
+#[utoipa::path(put, path = "/vehicles/{vehicle_id}", tag = "Vehicles",
+    params(("vehicle_id" = i32, Path, description = "Vehicle ID")),
+    request_body = VehicleUpdateRequest,
+    responses(
+        (status = 200, description = "Vehicle updated", body = VehicleResponse),
+        (status = 404, description = "Vehicle not found"),
+    )
+)]
 pub async fn update_vehicle(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -77,6 +98,13 @@ pub async fn update_vehicle(
     Ok(Json(VehicleResponse::from(&vehicle)))
 }
 
+#[utoipa::path(delete, path = "/vehicles/{vehicle_id}", tag = "Vehicles",
+    params(("vehicle_id" = i32, Path, description = "Vehicle ID")),
+    responses(
+        (status = 204, description = "Vehicle deleted"),
+        (status = 404, description = "Vehicle not found"),
+    )
+)]
 pub async fn delete_vehicle(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -85,6 +113,10 @@ pub async fn delete_vehicle(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[utoipa::path(get, path = "/vehicles/archived", tag = "Vehicles",
+    params(PaginationParams),
+    responses((status = 200, description = "Paginated list of archived vehicles"))
+)]
 pub async fn list_archived_vehicles(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
@@ -96,11 +128,17 @@ pub async fn list_archived_vehicles(
         ..Default::default()
     };
     let page = state.vehicle_service.all(query, pagination).await?;
-    let response =
-        ListResponse::<VehicleResponse>::from_page(page, params.page, params.per_page);
+    let response = ListResponse::<VehicleResponse>::from_page(page, params.page, params.per_page);
     Ok(Json(response))
 }
 
+#[utoipa::path(post, path = "/vehicles/archived/{vehicle_id}", tag = "Vehicles",
+    params(("vehicle_id" = i32, Path, description = "Vehicle ID")),
+    responses(
+        (status = 204, description = "Vehicle archived"),
+        (status = 404, description = "Vehicle not found"),
+    )
+)]
 pub async fn archive_vehicle(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -109,6 +147,13 @@ pub async fn archive_vehicle(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[utoipa::path(get, path = "/vehicles/plate/{plate}", tag = "Vehicles",
+    params(("plate" = String, Path, description = "Vehicle number plate")),
+    responses(
+        (status = 200, description = "Vehicle found", body = VehicleResponse),
+        (status = 404, description = "Vehicle not found"),
+    )
+)]
 pub async fn get_vehicle_by_plate(
     State(state): State<Arc<AppState>>,
     Path(plate): Path<String>,
