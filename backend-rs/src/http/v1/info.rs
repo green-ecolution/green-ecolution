@@ -8,7 +8,7 @@ use crate::{
         AppState,
         v1::dto::info::{
             AppInfoResponse, DataStatisticsResponse, GitInfoResponse, MapInfoResponse,
-            ServerInfoResponse, ServicesInfoResponse, VersionInfoResponse,
+            ServerInfoResponse, ServiceStatusResponse, ServicesInfoResponse, VersionInfoResponse,
         },
     },
     service::ServiceError,
@@ -59,9 +59,10 @@ pub async fn get_info(
     )
 )]
 pub async fn get_map_info(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<Json<MapInfoResponse>, ServiceError> {
-    todo!()
+    let map = state.info_provider.map_info().await?;
+    Ok(Json(MapInfoResponse::from(&map)))
 }
 
 #[utoipa::path(get, path = "/info/server", tag = "Info",
@@ -74,9 +75,10 @@ pub async fn get_map_info(
     )
 )]
 pub async fn get_server_info(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<Json<ServerInfoResponse>, ServiceError> {
-    todo!()
+    let server = state.info_provider.server_info().await?;
+    Ok(Json(ServerInfoResponse::from(&server)))
 }
 
 #[utoipa::path(get, path = "/info/services", tag = "Info",
@@ -89,9 +91,12 @@ pub async fn get_server_info(
     )
 )]
 pub async fn get_services_info(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<Json<ServicesInfoResponse>, ServiceError> {
-    todo!()
+    let service = state.info_provider.services_info().await?;
+    Ok(Json(ServicesInfoResponse {
+        items: vec![ServiceStatusResponse::from(&service)],
+    }))
 }
 
 #[utoipa::path(get, path = "/info/statistics", tag = "Info",
@@ -104,7 +109,8 @@ pub async fn get_services_info(
     )
 )]
 pub async fn get_statistics(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<Json<DataStatisticsResponse>, ServiceError> {
-    todo!()
+    let stats = state.info_provider.statistics_info().await?;
+    Ok(Json(DataStatisticsResponse::from(&stats)))
 }
