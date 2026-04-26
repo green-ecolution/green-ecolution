@@ -1,4 +1,5 @@
 pub mod clusters;
+pub mod evaluation;
 pub mod helpers;
 pub mod regions;
 pub mod sensors;
