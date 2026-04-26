@@ -7,6 +7,26 @@ pub struct PaginationRepsonse {
     pub prev_page: Option<u64>,
 }
 
+impl PaginationRepsonse {
+    pub fn new(total: u64, current_page: u64, total_pages: u64) -> Self {
+        Self {
+            total,
+            current_page,
+            total_pages,
+            next_page: if current_page < total_pages {
+                Some(current_page + 1)
+            } else {
+                None
+            },
+            prev_page: if current_page > 1 {
+                Some(current_page - 1)
+            } else {
+                None
+            },
+        }
+    }
+}
+
 #[derive(Debug, serde::Deserialize)]
 pub struct PaginationParams {
     #[serde(default = "default_page")]

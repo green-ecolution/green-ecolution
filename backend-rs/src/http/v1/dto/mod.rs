@@ -9,16 +9,53 @@ pub mod user;
 pub mod vehicle;
 pub mod watering_plan;
 
-use crate::domain::{
-    cluster::SoilCondition as DomainSoilCondition,
-    sensor::SensorStatus as DomainSensorStatus,
-    shared::watering_status::WateringStatus as DomainWateringStatus,
-    vehicle::{
-        DrivingLicense as DomainDrivingLicense, VehicleStatus as DomainVehicleStatus,
-        VehicleType as DomainVehicleType,
+use serde::Serialize;
+
+use crate::{
+    domain::{
+        cluster::SoilCondition as DomainSoilCondition,
+        sensor::SensorStatus as DomainSensorStatus,
+        shared::{pagination::Page, watering_status::WateringStatus as DomainWateringStatus},
+        vehicle::{
+            DrivingLicense as DomainDrivingLicense, VehicleStatus as DomainVehicleStatus,
+            VehicleType as DomainVehicleType,
+        },
+        watering_plan::WateringPlanStatus as DomainWateringPlanStatus,
     },
-    watering_plan::WateringPlanStatus as DomainWateringPlanStatus,
+    http::v1::pagination::PaginationRepsonse,
 };
+
+#[derive(Debug, Serialize)]
+pub struct ListResponse<T: Serialize> {
+    pub data: Vec<T>,
+    pub pagination: PaginationRepsonse,
+}
+
+impl<T: Serialize> ListResponse<T> {
+    pub fn from_page<D>(page: Page<D>, current_page: u64, per_page: u64) -> Self
+    where
+        T: for<'a> From<&'a D>,
+    {
+        let total_pages = (page.total + per_page - 1) / per_page;
+        Self {
+            data: page.items.iter().map(T::from).collect(),
+            pagination: PaginationRepsonse::new(page.total, current_page, total_pages),
+        }
+    }
+
+    pub fn from_page_with<D>(
+        page: Page<D>,
+        current_page: u64,
+        per_page: u64,
+        map_fn: impl Fn(&D) -> T,
+    ) -> Self {
+        let total_pages = (page.total + per_page - 1) / per_page;
+        Self {
+            data: page.items.iter().map(map_fn).collect(),
+            pagination: PaginationRepsonse::new(page.total, current_page, total_pages),
+        }
+    }
+}
 
 // -- Shared enums used across multiple DTOs --
 
@@ -104,6 +141,65 @@ pub enum UserStatus {
     Available,
     Absent,
     Unknown,
+}
+
+// -- From impls: DTO -> Domain --
+
+impl From<SoilCondition> for DomainSoilCondition {
+    fn from(value: SoilCondition) -> Self {
+        match value {
+            SoilCondition::Schluffig => Self::Schluffig,
+            SoilCondition::Sandig => Self::Sandig,
+            SoilCondition::Lehmig => Self::Lehmig,
+            SoilCondition::Tonig => Self::Tonig,
+            SoilCondition::Unknown => Self::Unknown,
+        }
+    }
+}
+
+impl From<VehicleStatus> for DomainVehicleStatus {
+    fn from(value: VehicleStatus) -> Self {
+        match value {
+            VehicleStatus::Active => Self::Active,
+            VehicleStatus::Available => Self::Available,
+            VehicleStatus::NotAvailable => Self::NotAvailable,
+            VehicleStatus::Unknown => Self::Unknown,
+        }
+    }
+}
+
+impl From<VehicleType> for DomainVehicleType {
+    fn from(value: VehicleType) -> Self {
+        match value {
+            VehicleType::Transporter => Self::Transporter,
+            VehicleType::Trailer => Self::Trailer,
+            VehicleType::Unknown => Self::Unknown,
+        }
+    }
+}
+
+impl From<DrivingLicense> for DomainDrivingLicense {
+    fn from(value: DrivingLicense) -> Self {
+        match value {
+            DrivingLicense::B => Self::B,
+            DrivingLicense::BE => Self::BE,
+            DrivingLicense::C => Self::C,
+            DrivingLicense::CE => Self::CE,
+        }
+    }
+}
+
+impl From<WateringPlanStatus> for DomainWateringPlanStatus {
+    fn from(value: WateringPlanStatus) -> Self {
+        match value {
+            WateringPlanStatus::Planned => Self::Planned,
+            WateringPlanStatus::Active => Self::Active,
+            WateringPlanStatus::Canceled => Self::Canceled,
+            WateringPlanStatus::Finished => Self::Finished,
+            WateringPlanStatus::NotCompleted => Self::NotCompleted,
+            WateringPlanStatus::Unknown => Self::Unknown,
+        }
+    }
 }
 
 // -- From impls: Domain -> DTO --

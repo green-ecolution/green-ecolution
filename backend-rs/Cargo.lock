@@ -913,6 +913,7 @@ dependencies = [
  "chrono",
  "claims",
  "config",
+ "futures",
  "quickcheck",
  "quickcheck_macros",
  "rand 0.9.4",

@@ -15,6 +15,17 @@ use crate::{
         pg_vehicle::PgVehicleRepository,
         pg_watering_plan::PgWateringPlanRepository,
     },
+    service::{
+        cluster_service::ClusterService,
+        evaluation_service::EvaluationService,
+        event_bus::{EventBus, InMemoryEventBus},
+        handlers::cluster_recalc::ClusterRecalculationHandler,
+        region_service::RegionService,
+        sensor_service::SensorService,
+        tree_service::TreeService,
+        vehicle_service::VehicleService,
+        watering_plan_service::WateringPlanService,
+    },
 };
 
 pub struct Application {
@@ -34,14 +45,59 @@ impl Application {
     }
 
     pub async fn build_with_pool(pool: PgPool, address: &str) -> Result<Self, std::io::Error> {
+        // Repositories
+        let region_repo: Arc<dyn crate::domain::region::RegionRepository> =
+            Arc::new(PgRegionRepository::new(pool.clone()));
+        let tree_repo: Arc<dyn crate::domain::tree::TreeRepository> =
+            Arc::new(PgTreeRepository::new(pool.clone()));
+        let sensor_repo: Arc<dyn crate::domain::sensor::SensorRepository> =
+            Arc::new(PgSensorRepository::new(pool.clone()));
+        let vehicle_repo: Arc<dyn crate::domain::vehicle::VehicleRepository> =
+            Arc::new(PgVehicleRepository::new(pool.clone()));
+        let cluster_repo: Arc<dyn crate::domain::cluster::TreeClusterRepository> =
+            Arc::new(PgTreeClusterRepository::new(pool.clone()));
+        let watering_plan_repo: Arc<dyn crate::domain::watering_plan::WateringPlanRepository> =
+            Arc::new(PgWateringPlanRepository::new(pool.clone()));
+        let evaluation_repo: Arc<dyn crate::domain::evaluation::EvaluationRepository> =
+            Arc::new(PgEvaluationRepository::new(pool));
+
+        // Event handlers
+        let cluster_recalc_handler = Arc::new(ClusterRecalculationHandler::new(
+            cluster_repo.clone(),
+            region_repo.clone(),
+        ));
+
+        // Event bus
+        let event_bus: Arc<dyn EventBus> = Arc::new(InMemoryEventBus::new(vec![
+            cluster_recalc_handler,
+        ]));
+
+        // Services
+        let region_service = Arc::new(RegionService::new(region_repo));
+        let tree_service = Arc::new(TreeService::new(tree_repo.clone(), event_bus.clone()));
+        let sensor_service = Arc::new(SensorService::new(
+            sensor_repo,
+            tree_repo.clone(),
+            event_bus.clone(),
+        ));
+        let vehicle_service = Arc::new(VehicleService::new(vehicle_repo));
+        let cluster_service = Arc::new(ClusterService::new(
+            cluster_repo,
+            tree_repo,
+            event_bus.clone(),
+        ));
+        let watering_plan_service =
+            Arc::new(WateringPlanService::new(watering_plan_repo, event_bus));
+        let evaluation_service = Arc::new(EvaluationService::new(evaluation_repo));
+
         let state = Arc::new(AppState {
-            region_repo: Arc::new(PgRegionRepository::new(pool.clone())),
-            tree_repo: Arc::new(PgTreeRepository::new(pool.clone())),
-            sensor_repo: Arc::new(PgSensorRepository::new(pool.clone())),
-            vehicle_repo: Arc::new(PgVehicleRepository::new(pool.clone())),
-            cluster_repo: Arc::new(PgTreeClusterRepository::new(pool.clone())),
-            watering_plan_repo: Arc::new(PgWateringPlanRepository::new(pool.clone())),
-            evaluation_repo: Arc::new(PgEvaluationRepository::new(pool)),
+            region_service,
+            tree_service,
+            sensor_service,
+            vehicle_service,
+            cluster_service,
+            watering_plan_service,
+            evaluation_service,
         });
 
         let listener = TcpListener::bind(address).await?;

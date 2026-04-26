@@ -3,7 +3,6 @@ use serde::Serialize;
 use crate::domain::sensor::{Sensor, SensorData};
 
 use super::SensorStatus;
-use crate::http::v1::pagination::PaginationRepsonse;
 
 #[derive(Debug, Serialize)]
 pub struct SensorDataResponse {
@@ -52,16 +51,4 @@ impl From<&Sensor> for SensorResponse {
             additional_information: Some(value.provider_info.additional_info.clone()),
         }
     }
-}
-
-#[derive(Debug, Serialize)]
-pub struct SensorListResponse {
-    pub data: Vec<SensorResponse>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub pagination: Option<PaginationRepsonse>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct SensorDataListResponse {
-    pub data: Vec<SensorDataResponse>,
 }

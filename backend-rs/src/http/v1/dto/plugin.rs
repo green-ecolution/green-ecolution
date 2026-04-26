@@ -25,11 +25,6 @@ impl From<&Plugin> for PluginResponse {
     }
 }
 
-#[derive(Debug, Serialize)]
-pub struct PluginListResponse {
-    pub plugins: Vec<PluginResponse>,
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PluginAuthRequest {
     pub client_id: String,

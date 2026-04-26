@@ -57,6 +57,8 @@ pub struct TreeClusterUpdate {
     pub soil_condition: Option<SoilCondition>,
     pub tree_ids: Option<Vec<Id<Tree>>>,
     pub provider_info: Option<ProviderInfo>,
+    pub coordinates: Option<Coordinate>,
+    pub region_id: Option<Option<Id<Region>>>,
 }
 
 #[derive(Debug, Default)]

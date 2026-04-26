@@ -21,11 +21,6 @@ pub struct UserResponse {
     pub driving_licenses: Vec<DrivingLicense>,
 }
 
-#[derive(Debug, Serialize)]
-pub struct UserListResponse {
-    pub data: Vec<UserResponse>,
-}
-
 #[derive(Debug, Deserialize)]
 pub struct UserRegisterRequest {
     pub username: String,

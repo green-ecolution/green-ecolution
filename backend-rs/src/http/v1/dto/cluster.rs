@@ -1,13 +1,13 @@
 use serde::{Deserialize, Serialize};
 
-use crate::domain::{cluster::TreeCluster, region::Region};
-
-use super::{
-    SoilCondition, WateringStatus,
-    region::RegionResponse,
-    tree::TreeResponse,
+use crate::domain::{
+    Id,
+    cluster::{TreeCluster, TreeClusterCreate, TreeClusterUpdate},
+    region::Region,
+    shared::provider_info::ProviderInfo,
 };
-use crate::http::v1::pagination::PaginationRepsonse;
+
+use super::{SoilCondition, WateringStatus, region::RegionResponse, tree::TreeResponse};
 
 // -- Responses --
 
@@ -56,7 +56,10 @@ impl From<TreeClusterView<'_>> for TreeClusterResponse {
             description: c.description.clone(),
             watering_status: c.watering_status.into(),
             moisture_level: c.moisture_level,
-            soil_condition: c.soil_condition.map(Into::into).unwrap_or(SoilCondition::Unknown),
+            soil_condition: c
+                .soil_condition
+                .map(Into::into)
+                .unwrap_or(SoilCondition::Unknown),
             latitude: c.coordinates.map(|co| co.latitude()).unwrap_or_default(),
             longitude: c.coordinates.map(|co| co.longitude()).unwrap_or_default(),
             archived: c.archived,
@@ -105,7 +108,10 @@ impl From<(&TreeCluster, Option<&Region>)> for TreeClusterInListResponse {
             description: c.description.clone(),
             watering_status: c.watering_status.into(),
             moisture_level: c.moisture_level,
-            soil_condition: c.soil_condition.map(Into::into).unwrap_or(SoilCondition::Unknown),
+            soil_condition: c
+                .soil_condition
+                .map(Into::into)
+                .unwrap_or(SoilCondition::Unknown),
             latitude: c.coordinates.map(|co| co.latitude()).unwrap_or_default(),
             longitude: c.coordinates.map(|co| co.longitude()).unwrap_or_default(),
             archived: c.archived,
@@ -116,13 +122,6 @@ impl From<(&TreeCluster, Option<&Region>)> for TreeClusterInListResponse {
             tree_ids: c.tree_ids.iter().map(|id| id.value()).collect(),
         }
     }
-}
-
-#[derive(Debug, Serialize)]
-pub struct TreeClusterListResponse {
-    pub data: Vec<TreeClusterInListResponse>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub pagination: Option<PaginationRepsonse>,
 }
 
 // -- Requests --
@@ -151,4 +150,37 @@ pub struct TreeClusterUpdateRequest {
     pub provider: Option<String>,
     #[serde(default)]
     pub additional_information: Option<serde_json::Value>,
+}
+
+impl From<TreeClusterCreateRequest> for TreeClusterCreate {
+    fn from(req: TreeClusterCreateRequest) -> Self {
+        Self {
+            name: req.name,
+            address: req.address,
+            description: req.description,
+            soil_condition: req.soil_condition.into(),
+            tree_ids: req.tree_ids.into_iter().map(Id::new).collect(),
+            provider_info: ProviderInfo {
+                provider: req.provider.unwrap_or_default(),
+                additional_info: req.additional_information.unwrap_or_default(),
+            },
+        }
+    }
+}
+
+impl From<TreeClusterUpdateRequest> for TreeClusterUpdate {
+    fn from(req: TreeClusterUpdateRequest) -> Self {
+        Self {
+            name: Some(req.name),
+            address: Some(req.address),
+            description: Some(req.description),
+            soil_condition: Some(req.soil_condition.into()),
+            tree_ids: Some(req.tree_ids.into_iter().map(Id::new).collect()),
+            provider_info: Some(ProviderInfo {
+                provider: req.provider.unwrap_or_default(),
+                additional_info: req.additional_information.unwrap_or_default(),
+            }),
+            ..Default::default()
+        }
+    }
 }

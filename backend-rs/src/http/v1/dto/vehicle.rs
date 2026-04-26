@@ -1,9 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-use crate::domain::vehicle::Vehicle;
+use crate::domain::{
+    DomainError,
+    shared::{provider_info::ProviderInfo, water_capacity::WaterCapacity},
+    vehicle::{Vehicle, VehicleCreate, VehicleDimension, VehicleUpdate},
+};
 
 use super::{DrivingLicense, VehicleStatus, VehicleType};
-use crate::http::v1::pagination::PaginationRepsonse;
 
 #[derive(Debug, Serialize)]
 pub struct VehicleResponse {
@@ -54,13 +57,6 @@ impl From<&Vehicle> for VehicleResponse {
     }
 }
 
-#[derive(Debug, Serialize)]
-pub struct VehicleListResponse {
-    pub data: Vec<VehicleResponse>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub pagination: Option<PaginationRepsonse>,
-}
-
 #[derive(Debug, Deserialize)]
 pub struct VehicleCreateRequest {
     pub number_plate: String,
@@ -99,4 +95,56 @@ pub struct VehicleUpdateRequest {
     pub provider: Option<String>,
     #[serde(default)]
     pub additional_information: Option<serde_json::Value>,
+}
+
+impl TryFrom<VehicleCreateRequest> for VehicleCreate {
+    type Error = DomainError;
+
+    fn try_from(req: VehicleCreateRequest) -> Result<Self, Self::Error> {
+        Ok(Self {
+            number_plate: req.number_plate,
+            description: req.description,
+            water_capacity: WaterCapacity::new(req.water_capacity)?,
+            status: req.status.into(),
+            vehicle_type: req.vehicle_type.into(),
+            model: req.model,
+            driving_license: req.driving_license.into(),
+            dimension: VehicleDimension {
+                height: req.height,
+                width: req.width,
+                length: req.length,
+                weight: req.weight,
+            },
+            provider_info: ProviderInfo {
+                provider: req.provider.unwrap_or_default(),
+                additional_info: req.additional_information.unwrap_or_default(),
+            },
+        })
+    }
+}
+
+impl TryFrom<VehicleUpdateRequest> for VehicleUpdate {
+    type Error = DomainError;
+
+    fn try_from(req: VehicleUpdateRequest) -> Result<Self, Self::Error> {
+        Ok(Self {
+            number_plate: Some(req.number_plate),
+            description: Some(req.description),
+            water_capacity: Some(WaterCapacity::new(req.water_capacity)?),
+            status: Some(req.status.into()),
+            vehicle_type: Some(req.vehicle_type.into()),
+            model: Some(req.model),
+            driving_license: Some(req.driving_license.into()),
+            dimension: Some(VehicleDimension {
+                height: req.height,
+                width: req.width,
+                length: req.length,
+                weight: req.weight,
+            }),
+            provider_info: Some(ProviderInfo {
+                provider: req.provider.unwrap_or_default(),
+                additional_info: req.additional_information.unwrap_or_default(),
+            }),
+        })
+    }
 }

@@ -20,6 +20,7 @@ async-trait = "0.1.89"
 axum = { version = "0.8.9", features = ["json"] }
 chrono = "0.4.44"
 config = "0.15.22"
+futures = "0.3"
 secrecy = { version = "0.10.3", features = ["serde"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde-aux = "4.7.0"

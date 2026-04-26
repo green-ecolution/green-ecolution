@@ -1,9 +1,13 @@
 use serde::{Deserialize, Serialize};
 
-use crate::domain::{sensor::Sensor, tree::Tree};
+use crate::domain::{
+    DomainError, Id,
+    sensor::Sensor,
+    shared::{coordinates::Coordinate, provider_info::ProviderInfo},
+    tree::{PlantingYear, Tree, TreeCreate, TreeUpdate},
+};
 
 use super::{WateringStatus, sensor::SensorResponse};
-use crate::http::v1::pagination::PaginationRepsonse;
 
 #[derive(Debug, Serialize)]
 pub struct TreeResponse {
@@ -52,13 +56,6 @@ impl From<(&Tree, Option<&Sensor>)> for TreeResponse {
 }
 
 #[derive(Debug, Serialize)]
-pub struct TreeListResponse {
-    pub data: Vec<TreeResponse>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub pagination: Option<PaginationRepsonse>,
-}
-
-#[derive(Debug, Serialize)]
 pub struct TreeWithDistanceResponse {
     pub tree: TreeResponse,
     pub distance_meters: f64,
@@ -98,4 +95,44 @@ pub struct TreeUpdateRequest {
     pub provider: Option<String>,
     #[serde(default)]
     pub additional_information: Option<serde_json::Value>,
+}
+
+impl TryFrom<TreeCreateRequest> for TreeCreate {
+    type Error = DomainError;
+
+    fn try_from(req: TreeCreateRequest) -> Result<Self, Self::Error> {
+        Ok(Self {
+            cluster_id: req.tree_cluster_id.map(Id::new),
+            sensor_id: req.sensor_id,
+            planting_year: PlantingYear::new(req.planting_year as u32)?,
+            species: req.species,
+            tree_number: req.number,
+            coordinate: Coordinate::new(req.latitude, req.longitude)?,
+            description: req.description,
+            provider_info: ProviderInfo {
+                provider: req.provider.unwrap_or_default(),
+                additional_info: req.additional_information.unwrap_or_default(),
+            },
+        })
+    }
+}
+
+impl TryFrom<TreeUpdateRequest> for TreeUpdate {
+    type Error = DomainError;
+
+    fn try_from(req: TreeUpdateRequest) -> Result<Self, Self::Error> {
+        Ok(Self {
+            cluster_id: req.tree_cluster_id.map(Id::new),
+            sensor_id: req.sensor_id,
+            planting_year: Some(PlantingYear::new(req.planting_year as u32)?),
+            species: Some(req.species),
+            tree_number: Some(req.number),
+            coordinate: Some(Coordinate::new(req.latitude, req.longitude)?),
+            description: Some(req.description),
+            provider_info: Some(ProviderInfo {
+                provider: req.provider.unwrap_or_default(),
+                additional_info: req.additional_information.unwrap_or_default(),
+            }),
+        })
+    }
 }

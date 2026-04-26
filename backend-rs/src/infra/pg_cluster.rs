@@ -266,7 +266,10 @@ impl TreeClusterRepository for PgTreeClusterRepository {
                 description = COALESCE($4, description),
                 soil_condition = COALESCE($5, soil_condition),
                 provider = COALESCE($6, provider),
-                additional_informations = COALESCE($7, additional_informations)
+                additional_informations = COALESCE($7, additional_informations),
+                latitude = COALESCE($8, latitude),
+                longitude = COALESCE($9, longitude),
+                region_id = CASE WHEN $10::bool THEN $11 ELSE region_id END
             WHERE id = $1"#,
             id.value(),
             entity.name,
@@ -278,6 +281,10 @@ impl TreeClusterRepository for PgTreeClusterRepository {
                 .provider_info
                 .as_ref()
                 .map(|p| p.additional_info.clone()),
+            entity.coordinates.map(|c| c.latitude()),
+            entity.coordinates.map(|c| c.longitude()),
+            entity.region_id.is_some(),
+            entity.region_id.flatten().map(|id| id.value()),
         )
         .execute(&mut *tx)
         .await?;

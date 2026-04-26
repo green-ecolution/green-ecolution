@@ -1,9 +1,13 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::domain::watering_plan::WateringPlan;
+use crate::domain::{
+    DomainError, Id,
+    shared::provider_info::ProviderInfo,
+    watering_plan::{WateringPlan, WateringPlanCreate, WateringPlanUpdate},
+};
 
 use super::{WateringPlanStatus, cluster::TreeClusterInListResponse, vehicle::VehicleResponse};
-use crate::http::v1::pagination::PaginationRepsonse;
 
 #[derive(Debug, Serialize)]
 pub struct EvaluationValueResponse {
@@ -62,7 +66,11 @@ impl From<WateringPlanView> for WateringPlanResponse {
             distance: p.distance.map(|d| d.meters()).unwrap_or_default(),
             total_water_required: p.total_water_required.unwrap_or_default(),
             cancellation_note: p.cancellation_note.clone().unwrap_or_default(),
-            gpx_url: p.gpx_url.as_ref().map(|u| u.to_string()).unwrap_or_default(),
+            gpx_url: p
+                .gpx_url
+                .as_ref()
+                .map(|u| u.to_string())
+                .unwrap_or_default(),
             refill_count: p.refill_count,
             duration: p.duration.as_secs_f64(),
             transporter: view.transporter,
@@ -131,13 +139,6 @@ impl From<WateringPlanInListView> for WateringPlanInListResponse {
     }
 }
 
-#[derive(Debug, Serialize)]
-pub struct WateringPlanListResponse {
-    pub data: Vec<WateringPlanInListResponse>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub pagination: Option<PaginationRepsonse>,
-}
-
 // -- Requests --
 
 #[derive(Debug, Deserialize)]
@@ -187,4 +188,49 @@ pub struct RouteRequest {
     pub transporter_id: i32,
     #[serde(default)]
     pub trailer_id: Option<i32>,
+}
+
+fn parse_date(s: &str) -> Result<DateTime<Utc>, DomainError> {
+    DateTime::parse_from_rfc3339(s)
+        .map(|dt| dt.with_timezone(&Utc))
+        .map_err(|e| DomainError::InvalidInput(format!("invalid date: {e}")))
+}
+
+impl TryFrom<WateringPlanCreateRequest> for WateringPlanCreate {
+    type Error = DomainError;
+
+    fn try_from(req: WateringPlanCreateRequest) -> Result<Self, Self::Error> {
+        Ok(Self {
+            date: parse_date(&req.date)?,
+            description: req.description,
+            cluster_ids: req.tree_cluster_ids.into_iter().map(Id::new).collect(),
+            transporter_id: Some(Id::new(req.transporter_id)),
+            trailer_id: req.trailer_id.map(Id::new),
+            provider_info: ProviderInfo {
+                provider: req.provider.unwrap_or_default(),
+                additional_info: req.additional_information.unwrap_or_default(),
+            },
+        })
+    }
+}
+
+impl TryFrom<WateringPlanUpdateRequest> for WateringPlanUpdate {
+    type Error = DomainError;
+
+    fn try_from(req: WateringPlanUpdateRequest) -> Result<Self, Self::Error> {
+        Ok(Self {
+            date: Some(parse_date(&req.date)?),
+            description: Some(req.description),
+            cluster_ids: Some(req.tree_cluster_ids.into_iter().map(Id::new).collect()),
+            transporter_id: Some(Id::new(req.transporter_id)),
+            trailer_id: req.trailer_id.map(Id::new),
+            cancellation_note: Some(req.cancellation_note),
+            status: Some(req.status.into()),
+            evaluation: None,
+            provider_info: Some(ProviderInfo {
+                provider: req.provider.unwrap_or_default(),
+                additional_info: req.additional_information.unwrap_or_default(),
+            }),
+        })
+    }
 }

@@ -3,26 +3,26 @@ use std::sync::Arc;
 use axum::Router;
 use tower_http::trace::TraceLayer;
 
-use crate::domain::{
-    cluster::TreeClusterRepository,
-    evaluation::EvaluationRepository,
-    region::RegionRepository,
-    sensor::SensorRepository,
-    tree::TreeRepository,
-    vehicle::VehicleRepository,
-    watering_plan::WateringPlanRepository,
+use crate::service::{
+    cluster_service::ClusterService,
+    evaluation_service::EvaluationService,
+    region_service::RegionService,
+    sensor_service::SensorService,
+    tree_service::TreeService,
+    vehicle_service::VehicleService,
+    watering_plan_service::WateringPlanService,
 };
 
 pub mod v1;
 
 pub struct AppState {
-    pub region_repo: Arc<dyn RegionRepository>,
-    pub tree_repo: Arc<dyn TreeRepository>,
-    pub sensor_repo: Arc<dyn SensorRepository>,
-    pub vehicle_repo: Arc<dyn VehicleRepository>,
-    pub cluster_repo: Arc<dyn TreeClusterRepository>,
-    pub watering_plan_repo: Arc<dyn WateringPlanRepository>,
-    pub evaluation_repo: Arc<dyn EvaluationRepository>,
+    pub region_service: Arc<RegionService>,
+    pub tree_service: Arc<TreeService>,
+    pub sensor_service: Arc<SensorService>,
+    pub vehicle_service: Arc<VehicleService>,
+    pub cluster_service: Arc<ClusterService>,
+    pub watering_plan_service: Arc<WateringPlanService>,
+    pub evaluation_service: Arc<EvaluationService>,
 }
 
 pub fn router(state: Arc<AppState>) -> Router {
