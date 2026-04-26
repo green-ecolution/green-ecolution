@@ -33,7 +33,7 @@ async fn list_vehicles_returns_empty_list() {
     let body: serde_json::Value = response.json().await.unwrap();
 
     assert_eq!(body["data"].as_array().unwrap().len(), 0);
-    assert_eq!(body["pagination"]["total"], 0);
+    assert_eq!(body["pagination"]["total_records"], 0);
 }
 
 #[tokio::test]
@@ -179,7 +179,7 @@ async fn list_vehicles_respects_pagination() {
     let body: serde_json::Value = response.json().await.unwrap();
 
     assert_eq!(body["data"].as_array().unwrap().len(), 2);
-    assert_eq!(body["pagination"]["total"], 5);
+    assert_eq!(body["pagination"]["total_records"], 5);
     assert_eq!(body["pagination"]["current_page"], 1);
     assert_eq!(body["pagination"]["total_pages"], 3);
 }

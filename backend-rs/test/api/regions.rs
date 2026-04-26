@@ -17,7 +17,7 @@ async fn list_regions_returns_empty_list() {
     let body: serde_json::Value = response.json().await.unwrap();
 
     assert_eq!(body["data"].as_array().unwrap().len(), 0);
-    assert_eq!(body["pagination"]["total"], 0);
+    assert_eq!(body["pagination"]["total_records"], 0);
 }
 
 #[tokio::test]
@@ -63,7 +63,7 @@ async fn list_regions_returns_inserted_regions() {
     let body: serde_json::Value = response.json().await.unwrap();
 
     assert_eq!(body["data"].as_array().unwrap().len(), 2);
-    assert_eq!(body["pagination"]["total"], 2);
+    assert_eq!(body["pagination"]["total_records"], 2);
 }
 
 #[tokio::test]
@@ -81,7 +81,7 @@ async fn list_regions_respects_pagination() {
     let body: serde_json::Value = response.json().await.unwrap();
 
     assert_eq!(body["data"].as_array().unwrap().len(), 2);
-    assert_eq!(body["pagination"]["total"], 5);
+    assert_eq!(body["pagination"]["total_records"], 5);
     assert_eq!(body["pagination"]["current_page"], 1);
     assert_eq!(body["pagination"]["total_pages"], 3);
     assert!(body["pagination"]["next_page"].as_u64().is_some());
