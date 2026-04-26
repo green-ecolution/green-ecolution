@@ -34,6 +34,12 @@ pub struct AppState {
 
 #[derive(OpenApi)]
 #[openapi(
+    info(
+        title = "Green Ecolution API",
+        version = "0.1.0",
+        description = "Smart irrigation and green-space management API",
+        license(name = "AGPL-3.0", identifier = "AGPL-3.0-or-later"),
+    ),
     tags(
         (name = "Regions", description = "Region management"),
         (name = "Tree Clusters", description = "Tree cluster management"),
