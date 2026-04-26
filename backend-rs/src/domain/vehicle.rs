@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 
 use crate::domain::{
     DomainError, Id, RepositoryError,
-    shared::{pagination::Page, provider_info::ProviderInfo, water_capacity::WaterCapacity},
+    shared::{pagination::{Page, Pagination}, provider_info::ProviderInfo, water_capacity::WaterCapacity},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -59,119 +59,27 @@ pub enum VehicleType {
 
 #[derive(Debug, Clone)]
 pub struct Vehicle {
-    id: Id<Self>,
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
-    archived_at: Option<DateTime<Utc>>,
-    number_plate: String,
-    description: Option<String>,
-    water_capacity: WaterCapacity,
-    vehicle_type: VehicleType,
-    model: String,
-    driving_license: DrivingLicense,
-    dimension: VehicleDimension,
-    provider_info: ProviderInfo,
-}
-
-impl Vehicle {
-    pub fn new(
-        id: Id<Self>,
-        created_at: DateTime<Utc>,
-        updated_at: DateTime<Utc>,
-        archived_at: Option<DateTime<Utc>>,
-        number_plate: String,
-        description: Option<String>,
-        water_capacity: WaterCapacity,
-        vehicle_type: VehicleType,
-        model: String,
-        driving_license: DrivingLicense,
-        dimension: VehicleDimension,
-        provider_info: ProviderInfo,
-    ) -> Self {
-        Self {
-            id,
-            created_at,
-            updated_at,
-            archived_at,
-            number_plate,
-            description,
-            water_capacity,
-            vehicle_type,
-            model,
-            driving_license,
-            dimension,
-            provider_info,
-        }
-    }
-
-    pub fn id(&self) -> &Id<Self> {
-        &self.id
-    }
-    pub fn created_at(&self) -> DateTime<Utc> {
-        self.created_at
-    }
-    pub fn updated_at(&self) -> DateTime<Utc> {
-        self.updated_at
-    }
-    pub fn archived_at(&self) -> Option<DateTime<Utc>> {
-        self.archived_at
-    }
-    pub fn number_plate(&self) -> &str {
-        &self.number_plate
-    }
-    pub fn description(&self) -> Option<&str> {
-        self.description.as_deref()
-    }
-    pub fn water_capacity(&self) -> &WaterCapacity {
-        &self.water_capacity
-    }
-    pub fn vehicle_type(&self) -> VehicleType {
-        self.vehicle_type
-    }
-    pub fn model(&self) -> &str {
-        &self.model
-    }
-    pub fn driving_license(&self) -> DrivingLicense {
-        self.driving_license
-    }
-    pub fn dimension(&self) -> &VehicleDimension {
-        &self.dimension
-    }
-    pub fn provider_info(&self) -> &ProviderInfo {
-        &self.provider_info
-    }
+    pub id: Id<Self>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub archived_at: Option<DateTime<Utc>>,
+    pub number_plate: String,
+    pub description: Option<String>,
+    pub water_capacity: WaterCapacity,
+    pub status: VehicleStatus,
+    pub vehicle_type: VehicleType,
+    pub model: String,
+    pub driving_license: DrivingLicense,
+    pub dimension: VehicleDimension,
+    pub provider_info: ProviderInfo,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct VehicleDimension {
-    height: f64,
-    width: f64,
-    length: f64,
-    weight: f64,
-}
-
-impl VehicleDimension {
-    pub fn new(height: f64, width: f64, length: f64, weight: f64) -> Self {
-        Self {
-            height,
-            width,
-            length,
-            weight,
-        }
-    }
-
-    pub fn height(&self) -> f64 {
-        self.height
-    }
-    pub fn width(&self) -> f64 {
-        self.width
-    }
-    pub fn length(&self) -> f64 {
-        self.length
-    }
-    pub fn weight(&self) -> f64 {
-        self.weight
-    }
+    pub height: f64,
+    pub width: f64,
+    pub length: f64,
+    pub weight: f64,
 }
 
 #[derive(Debug)]
@@ -210,7 +118,7 @@ pub struct VehicleQuery {
 
 #[async_trait::async_trait]
 pub trait VehicleRepository: Send + Sync {
-    async fn all(&self, query: VehicleQuery) -> Result<Page<Vehicle>, RepositoryError>;
+    async fn all(&self, query: VehicleQuery, pagination: Pagination) -> Result<Page<Vehicle>, RepositoryError>;
     async fn count(&self, query: VehicleQuery) -> Result<u64, RepositoryError>;
     async fn by_id(&self, id: Id<Vehicle>) -> Result<Vehicle, RepositoryError>;
     async fn by_plate(&self, plate: &str) -> Result<Vehicle, RepositoryError>;

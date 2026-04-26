@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 
 use crate::domain::{
     Id, RepositoryError,
-    shared::{coordinates::Coordinate, pagination::Page, provider_info::ProviderInfo},
+    shared::{coordinates::Coordinate, pagination::{Page, Pagination}, provider_info::ProviderInfo},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -13,95 +13,32 @@ pub enum SensorStatus {
 
 #[derive(Debug, Clone)]
 pub struct Sensor {
-    id: Id<Self>,
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
-    status: Option<SensorStatus>,
-    latest_data: Option<SensorData>,
-    coordinates: Coordinate,
-    provider_info: ProviderInfo,
+    pub id: Id<Self>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub status: Option<SensorStatus>,
+    pub latest_data: Option<SensorData>,
+    pub coordinates: Coordinate,
+    pub provider_info: ProviderInfo,
 }
 
-impl Sensor {
-    pub fn new(
-        id: Id<Self>,
-        created_at: DateTime<Utc>,
-        updated_at: DateTime<Utc>,
-        status: Option<SensorStatus>,
-        latest_data: Option<SensorData>,
-        coordinates: Coordinate,
-        provider_info: ProviderInfo,
-    ) -> Self {
-        Self {
-            id,
-            created_at,
-            updated_at,
-            status,
-            latest_data,
-            coordinates,
-            provider_info,
-        }
-    }
-
-    pub fn id(&self) -> &Id<Self> {
-        &self.id
-    }
-    pub fn created_at(&self) -> DateTime<Utc> {
-        self.created_at
-    }
-    pub fn updated_at(&self) -> DateTime<Utc> {
-        self.updated_at
-    }
-    pub fn status(&self) -> Option<SensorStatus> {
-        self.status
-    }
-    pub fn latest_data(&self) -> Option<&SensorData> {
-        self.latest_data.as_ref()
-    }
-    pub fn coordinates(&self) -> &Coordinate {
-        &self.coordinates
-    }
-    pub fn provider_info(&self) -> &ProviderInfo {
-        &self.provider_info
-    }
+#[derive(Debug, Clone, Copy)]
+pub struct Watermark {
+    pub depth: i32,
+    pub resistance: i32,
+    pub centibar: i32,
 }
 
 #[derive(Debug, Clone)]
 pub struct SensorData {
-    id: Id<Self>,
-    sensor_id: Id<Sensor>,
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
-    // data
-}
-
-impl SensorData {
-    pub fn new(
-        id: Id<Self>,
-        sensor_id: Id<Sensor>,
-        created_at: DateTime<Utc>,
-        updated_at: DateTime<Utc>,
-    ) -> Self {
-        Self {
-            id,
-            sensor_id,
-            created_at,
-            updated_at,
-        }
-    }
-
-    pub fn id(&self) -> &Id<Self> {
-        &self.id
-    }
-    pub fn sensor_id(&self) -> &Id<Sensor> {
-        &self.sensor_id
-    }
-    pub fn created_at(&self) -> DateTime<Utc> {
-        self.created_at
-    }
-    pub fn updated_at(&self) -> DateTime<Utc> {
-        self.updated_at
-    }
+    pub id: Id<Self>,
+    pub sensor_id: Id<Sensor>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub battery: f64,
+    pub humidity: f64,
+    pub temperature: f64,
+    pub watermarks: Vec<Watermark>,
 }
 
 #[derive(Debug)]
@@ -128,8 +65,9 @@ pub struct SensorQuery {
 
 #[async_trait::async_trait]
 pub trait SensorRepository: Send + Sync {
-    async fn all(&self, query: SensorQuery) -> Result<Page<Sensor>, RepositoryError>;
+    async fn all(&self, query: SensorQuery, pagination: Pagination) -> Result<Page<Sensor>, RepositoryError>;
     async fn count(&self, query: SensorQuery) -> Result<u64, RepositoryError>;
+    async fn by_id(&self, id: Id<Sensor>) -> Result<Sensor, RepositoryError>;
     async fn create(&self, entity: SensorCreate) -> Result<Sensor, RepositoryError>;
     async fn update(&self, id: Id<Sensor>, entity: SensorUpdate)
     -> Result<Sensor, RepositoryError>;

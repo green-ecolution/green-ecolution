@@ -10,39 +10,10 @@ use crate::domain::{
 
 #[derive(Debug, Clone)]
 pub struct Region {
-    id: Id<Self>,
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
-    name: String,
-}
-
-impl Region {
-    pub fn new(
-        id: Id<Self>,
-        created_at: DateTime<Utc>,
-        updated_at: DateTime<Utc>,
-        name: String,
-    ) -> Self {
-        Self {
-            id,
-            created_at,
-            updated_at,
-            name,
-        }
-    }
-
-    pub fn id(&self) -> &Id<Self> {
-        &self.id
-    }
-    pub fn created_at(&self) -> DateTime<Utc> {
-        self.created_at
-    }
-    pub fn updated_at(&self) -> DateTime<Utc> {
-        self.updated_at
-    }
-    pub fn name(&self) -> &str {
-        &self.name
-    }
+    pub id: Id<Self>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub name: String,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -54,9 +25,14 @@ pub struct RegionUpdate {
     pub name: String,
 }
 
+#[derive(Debug, Default)]
+pub struct RegionQuery {
+    pub provider: Option<String>,
+}
+
 #[async_trait::async_trait]
 pub trait RegionRepository: Send + Sync {
-    async fn all(&self, pagination: Pagination) -> Result<Page<Region>, RepositoryError>;
+    async fn all(&self, query: RegionQuery, pagination: Pagination) -> Result<Page<Region>, RepositoryError>;
     async fn by_id(&self, id: Id<Region>) -> Result<Region, RepositoryError>;
     async fn by_point(&self, coord: Coordinate) -> Result<Region, RepositoryError>;
     async fn create(&self, entity: RegionCreate) -> Result<Region, RepositoryError>;

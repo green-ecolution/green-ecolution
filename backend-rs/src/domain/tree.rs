@@ -5,7 +5,7 @@ use crate::domain::{
     cluster::TreeCluster,
     sensor::Sensor,
     shared::{
-        coordinates::Coordinate, distance::Distance, pagination::Page, provider_info::ProviderInfo,
+        coordinates::Coordinate, distance::Distance, pagination::{Page, Pagination}, provider_info::ProviderInfo,
         watering_status::WateringStatus,
     },
 };
@@ -29,111 +29,24 @@ impl PlantingYear {
 
 #[derive(Debug, Clone)]
 pub struct Tree {
-    id: Id<Self>,
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
-    cluster_id: Id<TreeCluster>,
-    sensor_id: Id<Sensor>,
-    planting_year: PlantingYear,
-    species: String,
-    tree_number: String,
-    coordinate: Coordinate,
-    watering_status: WateringStatus,
-    description: Option<String>,
-    last_watered: Option<DateTime<Utc>>,
-    provider_info: ProviderInfo,
-}
-
-impl Tree {
-    pub fn new(
-        id: Id<Self>,
-        created_at: DateTime<Utc>,
-        updated_at: DateTime<Utc>,
-        cluster_id: Id<TreeCluster>,
-        sensor_id: Id<Sensor>,
-        planting_year: PlantingYear,
-        species: String,
-        tree_number: String,
-        coordinate: Coordinate,
-        watering_status: WateringStatus,
-        description: Option<String>,
-        last_watered: Option<DateTime<Utc>>,
-        provider_info: ProviderInfo,
-    ) -> Self {
-        Self {
-            id,
-            created_at,
-            updated_at,
-            cluster_id,
-            sensor_id,
-            planting_year,
-            species,
-            tree_number,
-            coordinate,
-            watering_status,
-            description,
-            last_watered,
-            provider_info,
-        }
-    }
-
-    pub fn id(&self) -> &Id<Self> {
-        &self.id
-    }
-    pub fn created_at(&self) -> DateTime<Utc> {
-        self.created_at
-    }
-    pub fn updated_at(&self) -> DateTime<Utc> {
-        self.updated_at
-    }
-    pub fn cluster_id(&self) -> &Id<TreeCluster> {
-        &self.cluster_id
-    }
-    pub fn sensor_id(&self) -> &Id<Sensor> {
-        &self.sensor_id
-    }
-    pub fn planting_year(&self) -> &PlantingYear {
-        &self.planting_year
-    }
-    pub fn species(&self) -> &str {
-        &self.species
-    }
-    pub fn tree_number(&self) -> &str {
-        &self.tree_number
-    }
-    pub fn coordinate(&self) -> &Coordinate {
-        &self.coordinate
-    }
-    pub fn watering_status(&self) -> WateringStatus {
-        self.watering_status
-    }
-    pub fn description(&self) -> Option<&str> {
-        self.description.as_deref()
-    }
-    pub fn last_watered(&self) -> Option<DateTime<Utc>> {
-        self.last_watered
-    }
-    pub fn provider_info(&self) -> &ProviderInfo {
-        &self.provider_info
-    }
+    pub id: Id<Self>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub cluster_id: Id<TreeCluster>,
+    pub sensor_id: Id<Sensor>,
+    pub planting_year: PlantingYear,
+    pub species: String,
+    pub tree_number: String,
+    pub coordinate: Coordinate,
+    pub watering_status: WateringStatus,
+    pub description: Option<String>,
+    pub last_watered: Option<DateTime<Utc>>,
+    pub provider_info: ProviderInfo,
 }
 
 pub struct TreeWithDistance {
-    tree: Tree,
-    distance: Distance,
-}
-
-impl TreeWithDistance {
-    pub fn new(tree: Tree, distance: Distance) -> Self {
-        Self { tree, distance }
-    }
-
-    pub fn tree(&self) -> &Tree {
-        &self.tree
-    }
-    pub fn distance(&self) -> Distance {
-        self.distance
-    }
+    pub tree: Tree,
+    pub distance: Distance,
 }
 
 #[derive(Debug)]
@@ -173,7 +86,7 @@ pub struct TreeQuery {
 
 #[async_trait::async_trait]
 pub trait TreeRepository: Send + Sync {
-    async fn all(&self, query: TreeQuery) -> Result<Page<Tree>, RepositoryError>;
+    async fn all(&self, query: TreeQuery, pagination: Pagination) -> Result<Page<Tree>, RepositoryError>;
     async fn count(&self, query: TreeQuery) -> Result<u64, RepositoryError>;
     async fn by_id(&self, id: Id<Tree>) -> Result<Tree, RepositoryError>;
     async fn create(&self, entity: TreeCreate) -> Result<Tree, RepositoryError>;
