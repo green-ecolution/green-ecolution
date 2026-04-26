@@ -1,0 +1,2 @@
+ALTER TABLE trees ADD COLUMN last_watered TIMESTAMP;
+

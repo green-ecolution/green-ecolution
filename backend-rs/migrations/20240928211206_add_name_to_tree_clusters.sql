@@ -1,0 +1,3 @@
+ALTER TABLE tree_clusters
+ADD COLUMN name TEXT NOT NULL;
+

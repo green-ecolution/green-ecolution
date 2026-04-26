@@ -1,0 +1,6 @@
+ALTER TABLE watering_plans
+ADD COLUMN refill_count INT NOT NULL DEFAULT 0;
+
+ALTER TABLE watering_plans
+ADD COLUMN duration FLOAT NOT NULL DEFAULT 0;
+

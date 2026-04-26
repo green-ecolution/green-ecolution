@@ -1,0 +1,2 @@
+ALTER TABLE vehicles ADD COLUMN archived_at TIMESTAMP DEFAULT NULL;
+
