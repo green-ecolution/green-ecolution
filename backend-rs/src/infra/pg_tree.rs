@@ -196,6 +196,9 @@ impl TreeRepository for PgTreeRepository {
     }
 
     async fn update(&self, id: Id<Tree>, entity: TreeUpdate) -> Result<Tree, RepositoryError> {
+        let lat = entity.coordinate.map(|c| c.latitude());
+        let lng = entity.coordinate.map(|c| c.longitude());
+
         sqlx::query_as!(
             TreeRow,
             r#"UPDATE trees SET
@@ -206,7 +209,13 @@ impl TreeRepository for PgTreeRepository {
                 number = COALESCE($6, number),
                 description = COALESCE($7, description),
                 provider = COALESCE($8, provider),
-                additional_informations = COALESCE($9, additional_informations)
+                additional_informations = COALESCE($9, additional_informations),
+                latitude = COALESCE($10, latitude),
+                longitude = COALESCE($11, longitude),
+                geometry = COALESCE(
+                    CASE WHEN $10 IS NOT NULL THEN ST_SetSRID(ST_MakePoint($11, $10), 4326) END,
+                    geometry
+                )
             WHERE id = $1
             RETURNING id, created_at, updated_at, tree_cluster_id, sensor_id,
                       planting_year, species, number, latitude, longitude,
@@ -222,6 +231,8 @@ impl TreeRepository for PgTreeRepository {
             entity.description,
             entity.provider_info.as_ref().map(|p| p.provider.as_str()),
             entity.provider_info.as_ref().map(|p| p.additional_info.clone()),
+            lat,
+            lng,
         )
         .fetch_optional(&self.pool)
         .await?

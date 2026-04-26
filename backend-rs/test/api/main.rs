@@ -1,2 +1,7 @@
+pub mod clusters;
 pub mod helpers;
 pub mod regions;
+pub mod sensors;
+pub mod trees;
+pub mod vehicle;
+pub mod watering_plans;

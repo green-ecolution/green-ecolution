@@ -1,0 +1,281 @@
+use crate::helpers::{self, spawn_app};
+
+async fn create_transporter(app: &helpers::TestApp) -> serde_json::Value {
+    let body = serde_json::json!({
+        "number_plate": "FL-GE 100",
+        "description": "Giesswagen",
+        "water_capacity": 5000.0,
+        "model": "MAN TGS",
+        "status": "available",
+        "type": "transporter",
+        "driving_license": "C",
+        "height": 3.2, "width": 2.5, "length": 8.0, "weight": 12000.0
+    });
+    let resp = app.post_json("/api/v1/vehicles", &body).await;
+    resp.json().await.unwrap()
+}
+
+async fn create_trailer(app: &helpers::TestApp) -> serde_json::Value {
+    let body = serde_json::json!({
+        "number_plate": "FL-GE 200",
+        "description": "Anhaenger",
+        "water_capacity": 3000.0,
+        "model": "Trailer X",
+        "status": "available",
+        "type": "trailer",
+        "driving_license": "BE",
+        "height": 2.0, "width": 2.0, "length": 5.0, "weight": 3000.0
+    });
+    let resp = app.post_json("/api/v1/vehicles", &body).await;
+    resp.json().await.unwrap()
+}
+
+async fn create_cluster(app: &helpers::TestApp) -> serde_json::Value {
+    let body = serde_json::json!({
+        "name": "Testcluster",
+        "address": "Testweg 1",
+        "description": "Test",
+        "soil_condition": "sandig",
+        "tree_ids": []
+    });
+    let resp = app.post_json("/api/v1/clusters", &body).await;
+    resp.json().await.unwrap()
+}
+
+fn plan_body(transporter_id: i64, cluster_ids: Vec<i64>) -> serde_json::Value {
+    serde_json::json!({
+        "date": "2026-05-01T08:00:00Z",
+        "description": "Bewaesserung Innenstadt",
+        "transporter_id": transporter_id,
+        "tree_cluster_ids": cluster_ids,
+        "user_ids": []
+    })
+}
+
+#[tokio::test]
+async fn list_watering_plans_returns_200() {
+    let app = spawn_app().await;
+
+    let response = app.get("/api/v1/watering-plans").await;
+
+    assert_eq!(response.status().as_u16(), 200);
+}
+
+#[tokio::test]
+async fn list_watering_plans_returns_empty_list() {
+    let app = spawn_app().await;
+
+    let response = app.get("/api/v1/watering-plans").await;
+    let body: serde_json::Value = response.json().await.unwrap();
+
+    assert_eq!(body["data"].as_array().unwrap().len(), 0);
+    assert_eq!(body["pagination"]["total"], 0);
+}
+
+#[tokio::test]
+async fn get_watering_plan_returns_404_for_nonexistent_id() {
+    let app = spawn_app().await;
+
+    let response = app.get("/api/v1/watering-plans/999").await;
+
+    assert_eq!(response.status().as_u16(), 404);
+}
+
+#[tokio::test]
+async fn create_watering_plan_returns_201() {
+    let app = spawn_app().await;
+
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_i64().unwrap();
+
+    let response = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
+        .await;
+
+    assert_eq!(response.status().as_u16(), 201);
+
+    let plan: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(plan["description"], "Bewaesserung Innenstadt");
+    assert_eq!(plan["status"], "planned");
+    assert_eq!(plan["transporter"]["id"], tid);
+}
+
+#[tokio::test]
+async fn create_watering_plan_with_clusters() {
+    let app = spawn_app().await;
+
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_i64().unwrap();
+    let cluster = create_cluster(&app).await;
+    let cid = cluster["id"].as_i64().unwrap();
+
+    let response = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![cid]))
+        .await;
+
+    assert_eq!(response.status().as_u16(), 201);
+
+    let plan: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(plan["treeclusters"].as_array().unwrap().len(), 1);
+    assert_eq!(plan["treeclusters"][0]["id"], cid);
+}
+
+#[tokio::test]
+async fn create_watering_plan_with_trailer() {
+    let app = spawn_app().await;
+
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_i64().unwrap();
+    let trailer = create_trailer(&app).await;
+    let trailer_id = trailer["id"].as_i64().unwrap();
+
+    let mut body = plan_body(tid, vec![]);
+    body["trailer_id"] = serde_json::json!(trailer_id);
+
+    let response = app.post_json("/api/v1/watering-plans", &body).await;
+
+    assert_eq!(response.status().as_u16(), 201);
+
+    let plan: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(plan["transporter"]["id"], tid);
+    assert!(plan["trailer"].is_object());
+    assert_eq!(plan["trailer"]["id"], trailer_id);
+}
+
+#[tokio::test]
+async fn create_watering_plan_with_invalid_date_returns_400() {
+    let app = spawn_app().await;
+
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_i64().unwrap();
+
+    let body = serde_json::json!({
+        "date": "not-a-date",
+        "description": "Test",
+        "transporter_id": tid,
+        "tree_cluster_ids": [],
+        "user_ids": []
+    });
+
+    let response = app.post_json("/api/v1/watering-plans", &body).await;
+
+    assert_eq!(response.status().as_u16(), 400);
+}
+
+#[tokio::test]
+async fn get_watering_plan_returns_full_response() {
+    let app = spawn_app().await;
+
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_i64().unwrap();
+
+    let create_resp = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
+        .await;
+    let created: serde_json::Value = create_resp.json().await.unwrap();
+    let id = created["id"].as_i64().unwrap();
+
+    let response = app.get(&format!("/api/v1/watering-plans/{}", id)).await;
+
+    assert_eq!(response.status().as_u16(), 200);
+
+    let plan: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(plan["description"], "Bewaesserung Innenstadt");
+    assert_eq!(plan["transporter"]["number_plate"], "FL-GE 100");
+}
+
+#[tokio::test]
+async fn update_watering_plan_changes_description() {
+    let app = spawn_app().await;
+
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_i64().unwrap();
+
+    let create_resp = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
+        .await;
+    let created: serde_json::Value = create_resp.json().await.unwrap();
+    let id = created["id"].as_i64().unwrap();
+
+    let update_body = serde_json::json!({
+        "date": "2026-05-01T08:00:00Z",
+        "description": "Aktualisiert",
+        "status": "active",
+        "transporter_id": tid,
+        "tree_cluster_ids": [],
+        "user_ids": [],
+        "cancellation_note": ""
+    });
+
+    let response = app
+        .put_json(&format!("/api/v1/watering-plans/{}", id), &update_body)
+        .await;
+
+    assert_eq!(response.status().as_u16(), 200);
+
+    let plan: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(plan["description"], "Aktualisiert");
+    assert_eq!(plan["status"], "active");
+}
+
+#[tokio::test]
+async fn delete_watering_plan_returns_204() {
+    let app = spawn_app().await;
+
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_i64().unwrap();
+
+    let create_resp = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
+        .await;
+    let created: serde_json::Value = create_resp.json().await.unwrap();
+    let id = created["id"].as_i64().unwrap();
+
+    let response = app
+        .delete(&format!("/api/v1/watering-plans/{}", id))
+        .await;
+    assert_eq!(response.status().as_u16(), 204);
+
+    let get_resp = app.get(&format!("/api/v1/watering-plans/{}", id)).await;
+    assert_eq!(get_resp.status().as_u16(), 404);
+}
+
+#[tokio::test]
+async fn list_watering_plans_respects_pagination() {
+    let app = spawn_app().await;
+
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_i64().unwrap();
+
+    for _ in 0..5 {
+        app.post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
+            .await;
+    }
+
+    let response = app
+        .get("/api/v1/watering-plans?page=1&per_page=2")
+        .await;
+    let body: serde_json::Value = response.json().await.unwrap();
+
+    assert_eq!(body["data"].as_array().unwrap().len(), 2);
+    assert_eq!(body["pagination"]["total"], 5);
+    assert_eq!(body["pagination"]["current_page"], 1);
+    assert_eq!(body["pagination"]["total_pages"], 3);
+}
+
+#[tokio::test]
+async fn list_watering_plans_includes_resolved_vehicles() {
+    let app = spawn_app().await;
+
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_i64().unwrap();
+
+    app.post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
+        .await;
+
+    let response = app.get("/api/v1/watering-plans").await;
+    let body: serde_json::Value = response.json().await.unwrap();
+
+    let plan = &body["data"][0];
+    assert_eq!(plan["transporter"]["number_plate"], "FL-GE 100");
+}

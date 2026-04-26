@@ -67,7 +67,7 @@ impl EventHandler for ClusterRecalculationHandler {
                 .update(
                     cluster_id,
                     TreeClusterUpdate {
-                        coordinates,
+                        coordinates: Some(coordinates),
                         region_id: Some(region_id),
                         ..Default::default()
                     },

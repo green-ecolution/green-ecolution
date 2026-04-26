@@ -26,6 +26,23 @@ impl TestApp {
             .await
             .expect("failed to execute request")
     }
+
+    pub async fn put_json(&self, path: &str, body: &serde_json::Value) -> reqwest::Response {
+        reqwest::Client::new()
+            .put(format!("{}{}", self.address, path))
+            .json(body)
+            .send()
+            .await
+            .expect("failed to execute request")
+    }
+
+    pub async fn delete(&self, path: &str) -> reqwest::Response {
+        reqwest::Client::new()
+            .delete(format!("{}{}", self.address, path))
+            .send()
+            .await
+            .expect("failed to execute request")
+    }
 }
 
 pub async fn spawn_app() -> TestApp {
