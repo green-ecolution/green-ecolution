@@ -62,7 +62,7 @@ impl From<WateringPlanView> for WateringPlanResponse {
             distance: p.distance.map(|d| d.meters()).unwrap_or_default(),
             total_water_required: p.total_water_required.unwrap_or_default(),
             cancellation_note: p.cancellation_note.clone().unwrap_or_default(),
-            gpx_url: p.gpx_url.to_string(),
+            gpx_url: p.gpx_url.as_ref().map(|u| u.to_string()).unwrap_or_default(),
             refill_count: p.refill_count,
             duration: p.duration.as_secs_f64(),
             transporter: view.transporter,

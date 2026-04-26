@@ -8,7 +8,10 @@ impl IntoResponse for RepositoryError {
             RepositoryError::NotFound => StatusCode::NOT_FOUND,
             RepositoryError::AlreadyExists(_) => StatusCode::CONFLICT,
             RepositoryError::ForeignKeyViolation(_) => StatusCode::UNPROCESSABLE_ENTITY,
-            RepositoryError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            RepositoryError::ConstraintViolation(_) => StatusCode::BAD_REQUEST,
+            RepositoryError::DataIntegrity(_) | RepositoryError::Internal(_) => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
         };
         (status, self.to_string()).into_response()
     }

@@ -1,35 +1,15 @@
 use serde::Serialize;
 
-use crate::domain::sensor::{Sensor, SensorData, Watermark};
+use crate::domain::sensor::{Sensor, SensorData};
 
 use super::SensorStatus;
 use crate::http::v1::pagination::PaginationRepsonse;
 
 #[derive(Debug, Serialize)]
-pub struct WatermarkResponse {
-    pub depth: i32,
-    pub resistance: i32,
-    pub centibar: i32,
-}
-
-impl From<&Watermark> for WatermarkResponse {
-    fn from(value: &Watermark) -> Self {
-        Self {
-            depth: value.depth,
-            resistance: value.resistance,
-            centibar: value.centibar,
-        }
-    }
-}
-
-#[derive(Debug, Serialize)]
 pub struct SensorDataResponse {
     pub created_at: String,
     pub updated_at: String,
-    pub battery: f64,
-    pub humidity: f64,
-    pub temperature: f64,
-    pub watermarks: Vec<WatermarkResponse>,
+    pub data: serde_json::Value,
 }
 
 impl From<&SensorData> for SensorDataResponse {
@@ -37,10 +17,7 @@ impl From<&SensorData> for SensorDataResponse {
         Self {
             created_at: value.created_at.to_rfc3339(),
             updated_at: value.updated_at.to_rfc3339(),
-            battery: value.battery,
-            humidity: value.humidity,
-            temperature: value.temperature,
-            watermarks: value.watermarks.iter().map(WatermarkResponse::from).collect(),
+            data: value.data.clone(),
         }
     }
 }
@@ -64,10 +41,10 @@ pub struct SensorResponse {
 impl From<&Sensor> for SensorResponse {
     fn from(value: &Sensor) -> Self {
         Self {
-            id: value.id.value().to_string(),
+            id: value.id.clone(),
             created_at: value.created_at.to_rfc3339(),
             updated_at: value.updated_at.to_rfc3339(),
-            status: value.status.map(Into::into).unwrap_or(SensorStatus::Unknown),
+            status: value.status.into(),
             latitude: value.coordinates.latitude(),
             longitude: value.coordinates.longitude(),
             latest_data: value.latest_data.as_ref().map(SensorDataResponse::from),

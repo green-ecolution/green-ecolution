@@ -3,9 +3,11 @@ use chrono::{DateTime, Datelike, Utc};
 use crate::domain::{
     DomainError, Id, RepositoryError,
     cluster::TreeCluster,
-    sensor::Sensor,
     shared::{
-        coordinates::Coordinate, distance::Distance, pagination::{Page, Pagination}, provider_info::ProviderInfo,
+        coordinates::Coordinate,
+        distance::Distance,
+        pagination::{Page, Pagination},
+        provider_info::ProviderInfo,
         watering_status::WateringStatus,
     },
 };
@@ -32,8 +34,8 @@ pub struct Tree {
     pub id: Id<Self>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub cluster_id: Id<TreeCluster>,
-    pub sensor_id: Id<Sensor>,
+    pub cluster_id: Option<Id<TreeCluster>>,
+    pub sensor_id: Option<String>,
     pub planting_year: PlantingYear,
     pub species: String,
     pub tree_number: String,
@@ -52,7 +54,7 @@ pub struct TreeWithDistance {
 #[derive(Debug)]
 pub struct TreeCreate {
     pub cluster_id: Option<Id<TreeCluster>>,
-    pub sensor_id: Option<Id<Sensor>>,
+    pub sensor_id: Option<String>,
     pub planting_year: PlantingYear,
     pub species: String,
     pub tree_number: String,
@@ -64,7 +66,7 @@ pub struct TreeCreate {
 #[derive(Debug, Default)]
 pub struct TreeUpdate {
     pub cluster_id: Option<Id<TreeCluster>>,
-    pub sensor_id: Option<Id<Sensor>>,
+    pub sensor_id: Option<String>,
     pub planting_year: Option<PlantingYear>,
     pub species: Option<String>,
     pub tree_number: Option<String>,
@@ -80,15 +82,19 @@ pub struct TreeQuery {
     pub planting_years: Vec<u32>,
     pub ids: Vec<Id<Self>>,
     pub cluster_id: Option<Id<TreeCluster>>,
-    pub sensor_id: Option<Id<Sensor>>,
+    pub sensor_id: Option<String>,
     pub provider: Option<String>,
 }
 
 #[async_trait::async_trait]
 pub trait TreeRepository: Send + Sync {
-    async fn all(&self, query: TreeQuery, pagination: Pagination) -> Result<Page<Tree>, RepositoryError>;
-    async fn count(&self, query: TreeQuery) -> Result<u64, RepositoryError>;
+    async fn all(
+        &self,
+        query: TreeQuery,
+        pagination: Pagination,
+    ) -> Result<Page<Tree>, RepositoryError>;
     async fn by_id(&self, id: Id<Tree>) -> Result<Tree, RepositoryError>;
+    async fn by_ids(&self, ids: &[Id<Tree>]) -> Result<Vec<Tree>, RepositoryError>;
     async fn create(&self, entity: TreeCreate) -> Result<Tree, RepositoryError>;
     async fn update(&self, id: Id<Tree>, entity: TreeUpdate) -> Result<Tree, RepositoryError>;
     async fn archive(&self, id: Id<Tree>) -> Result<(), RepositoryError>;
@@ -103,5 +109,5 @@ pub trait TreeRepository: Send + Sync {
 
     async fn distinct_planting_years(&self) -> Result<Vec<PlantingYear>, RepositoryError>;
     async fn unlink_cluster_id(&self, cluster_id: Id<TreeCluster>) -> Result<(), RepositoryError>;
-    async fn unlink_sensor_id(&self, sensor_id: Id<Sensor>) -> Result<(), RepositoryError>;
+    async fn unlink_sensor_id(&self, sensor_id: &str) -> Result<(), RepositoryError>;
 }

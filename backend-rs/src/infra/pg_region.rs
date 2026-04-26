@@ -21,7 +21,11 @@ impl PgRegionRepository {
 
 #[async_trait::async_trait]
 impl RegionRepository for PgRegionRepository {
-    async fn all(&self, _query: RegionQuery, pagination: Pagination) -> Result<Page<Region>, RepositoryError> {
+    async fn all(
+        &self,
+        _query: RegionQuery,
+        pagination: Pagination,
+    ) -> Result<Page<Region>, RepositoryError> {
         let total = sqlx::query_scalar!(r#"SELECT COUNT(*) FROM regions"#)
             .fetch_one(&self.pool)
             .await?
@@ -37,13 +41,11 @@ impl RegionRepository for PgRegionRepository {
 
         let items: Vec<Region> = rows
             .into_iter()
-            .map(|row| {
-                Region {
-                    id: Id::new(row.id),
-                    created_at: row.created_at.and_utc(),
-                    updated_at: row.updated_at.and_utc(),
-                    name: row.name,
-                }
+            .map(|row| Region {
+                id: Id::new(row.id),
+                created_at: row.created_at.and_utc(),
+                updated_at: row.updated_at.and_utc(),
+                name: row.name,
             })
             .collect();
 
@@ -67,10 +69,32 @@ impl RegionRepository for PgRegionRepository {
         })
     }
 
+    async fn by_ids(&self, ids: &[Id<Region>]) -> Result<Vec<Region>, RepositoryError> {
+        let id_values: Vec<i32> = ids.iter().map(|id| id.value()).collect();
+        let rows = sqlx::query!(
+            r#"SELECT id, name, created_at, updated_at FROM regions WHERE id = ANY($1)"#,
+            &id_values
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|row| Region {
+                id: Id::new(row.id),
+                created_at: row.created_at.and_utc(),
+                updated_at: row.updated_at.and_utc(),
+                name: row.name,
+            })
+            .collect())
+    }
+
     async fn by_point(&self, coord: Coordinate) -> Result<Region, RepositoryError> {
         let row = sqlx::query!(
-        r#"SELECT id, name, created_at, updated_at FROM regions WHERE ST_Contains(geometry, ST_GeomFromText($1, 4326))"#,
-        format!("POINT({} {})", coord.longitude(), coord.latitude())
+            r#"SELECT id, name, created_at, updated_at FROM regions
+            WHERE ST_Contains(geometry, ST_SetSRID(ST_MakePoint($1, $2), 4326))"#,
+            coord.longitude(),
+            coord.latitude()
         )
         .fetch_optional(&self.pool)
         .await?
@@ -123,7 +147,7 @@ impl RegionRepository for PgRegionRepository {
     }
 
     async fn delete(&self, id: Id<Region>) -> Result<(), RepositoryError> {
-        let _ = sqlx::query!(r#"DELETE FROM regions WHERE id = $1"#, id.value())
+        sqlx::query!(r#"DELETE FROM regions WHERE id = $1"#, id.value())
             .execute(&self.pool)
             .await?;
 

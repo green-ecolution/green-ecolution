@@ -36,8 +36,18 @@ pub enum RepositoryError {
     AlreadyExists(String),
     #[error("referenced entity not found: {0}")]
     ForeignKeyViolation(String),
-    #[error("{0}")]
+    #[error("constraint violation: {0}")]
+    ConstraintViolation(String),
+    #[error("data integrity error: {0}")]
+    DataIntegrity(String),
+    #[error("internal error: {0}")]
     Internal(String),
+}
+
+impl From<DomainError> for RepositoryError {
+    fn from(value: DomainError) -> Self {
+        RepositoryError::DataIntegrity(value.to_string())
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

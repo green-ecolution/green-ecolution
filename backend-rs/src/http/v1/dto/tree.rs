@@ -42,7 +42,7 @@ impl From<(&Tree, Option<&Sensor>)> for TreeResponse {
             longitude: tree.coordinate.longitude(),
             watering_status: tree.watering_status.into(),
             description: tree.description.clone().unwrap_or_default(),
-            tree_cluster_id: Some(tree.cluster_id.value()),
+            tree_cluster_id: tree.cluster_id.as_ref().map(|id| id.value()),
             sensor: sensor.map(SensorResponse::from),
             last_watered: tree.last_watered.map(|dt| dt.to_rfc3339()),
             provider: Some(tree.provider_info.provider.clone()),

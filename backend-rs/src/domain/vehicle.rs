@@ -7,7 +7,8 @@ use crate::domain::{
     shared::{pagination::{Page, Pagination}, provider_info::ProviderInfo, water_capacity::WaterCapacity},
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, sqlx::Type)]
+#[sqlx(type_name = "driving_license")]
 pub enum DrivingLicense {
     B,
     BE,
@@ -44,17 +45,22 @@ impl FromStr for DrivingLicense {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, sqlx::Type)]
+#[sqlx(type_name = "vehicle_status", rename_all = "snake_case")]
 pub enum VehicleStatus {
     Active,
     Available,
+    #[sqlx(rename = "not available")]
     NotAvailable,
+    Unknown,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, sqlx::Type)]
+#[sqlx(type_name = "vehicle_type", rename_all = "snake_case")]
 pub enum VehicleType {
     Transporter,
     Trailer,
+    Unknown,
 }
 
 #[derive(Debug, Clone)]
@@ -119,8 +125,8 @@ pub struct VehicleQuery {
 #[async_trait::async_trait]
 pub trait VehicleRepository: Send + Sync {
     async fn all(&self, query: VehicleQuery, pagination: Pagination) -> Result<Page<Vehicle>, RepositoryError>;
-    async fn count(&self, query: VehicleQuery) -> Result<u64, RepositoryError>;
     async fn by_id(&self, id: Id<Vehicle>) -> Result<Vehicle, RepositoryError>;
+    async fn by_ids(&self, ids: &[Id<Vehicle>]) -> Result<Vec<Vehicle>, RepositoryError>;
     async fn by_plate(&self, plate: &str) -> Result<Vehicle, RepositoryError>;
     async fn create(&self, entity: VehicleCreate) -> Result<Vehicle, RepositoryError>;
     async fn update(

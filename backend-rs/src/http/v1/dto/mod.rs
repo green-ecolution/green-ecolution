@@ -127,6 +127,7 @@ impl From<DomainSoilCondition> for SoilCondition {
             DomainSoilCondition::Sandig => Self::Sandig,
             DomainSoilCondition::Lehmig => Self::Lehmig,
             DomainSoilCondition::Tonig => Self::Tonig,
+            DomainSoilCondition::Unknown => Self::Unknown,
         }
     }
 }
@@ -136,6 +137,7 @@ impl From<DomainSensorStatus> for SensorStatus {
         match value {
             DomainSensorStatus::Online => Self::Online,
             DomainSensorStatus::Offline => Self::Offline,
+            DomainSensorStatus::Unknown => Self::Unknown,
         }
     }
 }
@@ -157,6 +159,7 @@ impl From<DomainVehicleStatus> for VehicleStatus {
             DomainVehicleStatus::Active => Self::Active,
             DomainVehicleStatus::Available => Self::Available,
             DomainVehicleStatus::NotAvailable => Self::NotAvailable,
+            DomainVehicleStatus::Unknown => Self::Unknown,
         }
     }
 }
@@ -166,6 +169,7 @@ impl From<DomainVehicleType> for VehicleType {
         match value {
             DomainVehicleType::Transporter => Self::Transporter,
             DomainVehicleType::Trailer => Self::Trailer,
+            DomainVehicleType::Unknown => Self::Unknown,
         }
     }
 }
@@ -178,6 +182,7 @@ impl From<DomainWateringPlanStatus> for WateringPlanStatus {
             DomainWateringPlanStatus::Canceled => Self::Canceled,
             DomainWateringPlanStatus::Finished => Self::Finished,
             DomainWateringPlanStatus::NotCompleted => Self::NotCompleted,
+            DomainWateringPlanStatus::Unknown => Self::Unknown,
         }
     }
 }

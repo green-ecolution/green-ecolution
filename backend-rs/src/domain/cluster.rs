@@ -10,12 +10,14 @@ use crate::domain::{
     tree::Tree,
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, sqlx::Type)]
+#[sqlx(type_name = "tree_soil_condition", rename_all = "snake_case")]
 pub enum SoilCondition {
     Schluffig,
     Sandig,
     Lehmig,
     Tonig,
+    Unknown,
 }
 
 #[derive(Debug, Clone)]
@@ -68,8 +70,8 @@ pub struct TreeClusterQuery {
 #[async_trait::async_trait]
 pub trait TreeClusterRepository: Send + Sync {
     async fn all(&self, query: TreeClusterQuery, pagination: Pagination) -> Result<Page<TreeCluster>, RepositoryError>;
-    async fn count(&self, query: TreeClusterQuery) -> Result<u64, RepositoryError>;
     async fn by_id(&self, id: Id<TreeCluster>) -> Result<TreeCluster, RepositoryError>;
+    async fn by_ids(&self, ids: &[Id<TreeCluster>]) -> Result<Vec<TreeCluster>, RepositoryError>;
     async fn create(&self, entity: TreeClusterCreate) -> Result<TreeCluster, RepositoryError>;
     async fn update(
         &self,

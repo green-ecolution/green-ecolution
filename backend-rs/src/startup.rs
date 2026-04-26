@@ -6,7 +6,15 @@ use tokio::net::TcpListener;
 use crate::{
     configuration::{DatabaseSettings, Settings},
     http::{AppState, router},
-    infra::pg_region::PgRegionRepository,
+    infra::{
+        pg_cluster::PgTreeClusterRepository,
+        pg_evaluation::PgEvaluationRepository,
+        pg_region::PgRegionRepository,
+        pg_sensor::PgSensorRepository,
+        pg_tree::PgTreeRepository,
+        pg_vehicle::PgVehicleRepository,
+        pg_watering_plan::PgWateringPlanRepository,
+    },
 };
 
 pub struct Application {
@@ -27,7 +35,13 @@ impl Application {
 
     pub async fn build_with_pool(pool: PgPool, address: &str) -> Result<Self, std::io::Error> {
         let state = Arc::new(AppState {
-            region_repo: Arc::new(PgRegionRepository::new(pool)),
+            region_repo: Arc::new(PgRegionRepository::new(pool.clone())),
+            tree_repo: Arc::new(PgTreeRepository::new(pool.clone())),
+            sensor_repo: Arc::new(PgSensorRepository::new(pool.clone())),
+            vehicle_repo: Arc::new(PgVehicleRepository::new(pool.clone())),
+            cluster_repo: Arc::new(PgTreeClusterRepository::new(pool.clone())),
+            watering_plan_repo: Arc::new(PgWateringPlanRepository::new(pool.clone())),
+            evaluation_repo: Arc::new(PgEvaluationRepository::new(pool)),
         });
 
         let listener = TcpListener::bind(address).await?;
