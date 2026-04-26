@@ -2,6 +2,9 @@ use std::sync::Arc;
 
 use axum::Router;
 use tower_http::trace::TraceLayer;
+use utoipa::OpenApi;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_swagger_ui::SwaggerUi;
 
 use crate::service::{
     cluster_service::ClusterService,
@@ -25,9 +28,28 @@ pub struct AppState {
     pub evaluation_service: Arc<EvaluationService>,
 }
 
+#[derive(OpenApi)]
+#[openapi(
+    tags(
+        (name = "Regions", description = "Region management"),
+        (name = "Tree Clusters", description = "Tree cluster management"),
+        (name = "Trees", description = "Tree management"),
+        (name = "Vehicles", description = "Vehicle management"),
+        (name = "Sensors", description = "Sensor management"),
+        (name = "Watering Plans", description = "Watering plan management"),
+        (name = "Evaluation", description = "Evaluation and statistics"),
+        (name = "Info", description = "Application info"),
+    )
+)]
+struct ApiDoc;
+
 pub fn router(state: Arc<AppState>) -> Router {
-    Router::new()
+    let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .nest("/api/v1", v1::router())
+        .split_for_parts();
+
+    router
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api))
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }

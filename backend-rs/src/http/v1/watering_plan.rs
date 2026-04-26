@@ -1,11 +1,11 @@
 use std::{collections::HashMap, sync::Arc};
 
 use axum::{
-    Json, Router,
+    Json,
     extract::{Path, Query, State},
     http::StatusCode,
-    routing::{get, post},
 };
+use axum::routing::{get, post};
 
 use crate::{
     domain::{
@@ -32,8 +32,8 @@ use crate::{
     service::ServiceError,
 };
 
-pub fn routes() -> Router<Arc<AppState>> {
-    Router::new()
+pub fn routes() -> utoipa_axum::router::OpenApiRouter<Arc<AppState>> {
+    utoipa_axum::router::OpenApiRouter::new()
         .route(
             "/watering-plans",
             get(list_watering_plans).post(create_watering_plan),

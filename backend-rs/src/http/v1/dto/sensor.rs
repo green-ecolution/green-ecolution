@@ -4,7 +4,7 @@ use crate::domain::sensor::{Sensor, SensorData};
 
 use super::SensorStatus;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SensorDataResponse {
     pub created_at: String,
     pub updated_at: String,
@@ -21,7 +21,7 @@ impl From<&SensorData> for SensorDataResponse {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SensorResponse {
     pub id: String,
     pub created_at: String,

@@ -59,7 +59,7 @@ impl<T: Serialize> ListResponse<T> {
 
 // -- Shared enums used across multiple DTOs --
 
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum WateringStatus {
     Good,
@@ -70,7 +70,7 @@ pub enum WateringStatus {
     Unknown,
 }
 
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SoilCondition {
     Schluffig,
@@ -80,7 +80,7 @@ pub enum SoilCondition {
     Unknown,
 }
 
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SensorStatus {
     Online,
@@ -88,7 +88,7 @@ pub enum SensorStatus {
     Unknown,
 }
 
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 pub enum DrivingLicense {
     B,
     BE,
@@ -96,7 +96,7 @@ pub enum DrivingLicense {
     CE,
 }
 
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum VehicleStatus {
     Active,
@@ -106,7 +106,7 @@ pub enum VehicleStatus {
     Unknown,
 }
 
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum VehicleType {
     Transporter,
@@ -114,7 +114,7 @@ pub enum VehicleType {
     Unknown,
 }
 
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum WateringPlanStatus {
     Planned,
@@ -126,7 +126,7 @@ pub enum WateringPlanStatus {
     Unknown,
 }
 
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum UserRole {
     Tbz,
@@ -135,7 +135,7 @@ pub enum UserRole {
     Unknown,
 }
 
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum UserStatus {
     Available,

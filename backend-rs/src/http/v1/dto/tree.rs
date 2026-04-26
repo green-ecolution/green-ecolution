@@ -9,7 +9,7 @@ use crate::domain::{
 
 use super::{WateringStatus, sensor::SensorResponse};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct TreeResponse {
     pub id: i32,
     pub created_at: String,
@@ -55,13 +55,13 @@ impl From<(&Tree, Option<&Sensor>)> for TreeResponse {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct TreeWithDistanceResponse {
     pub tree: TreeResponse,
     pub distance_meters: f64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct TreeCreateRequest {
     pub species: String,
     pub number: String,
@@ -79,7 +79,7 @@ pub struct TreeCreateRequest {
     pub additional_information: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct TreeUpdateRequest {
     pub species: String,
     pub number: String,

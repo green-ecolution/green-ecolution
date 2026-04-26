@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::domain::evaluation::{RegionEvaluation, VehicleEvaluation};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct RegionEvaluationResponse {
     pub name: String,
     pub watering_plan_count: i32,
@@ -17,7 +17,7 @@ impl From<&RegionEvaluation> for RegionEvaluationResponse {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct VehicleEvaluationResponse {
     pub number_plate: String,
     pub watering_plan_count: i32,
@@ -32,7 +32,7 @@ impl From<&VehicleEvaluation> for VehicleEvaluationResponse {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct EvaluationResponse {
     pub tree_count: u32,
     pub treecluster_count: u32,

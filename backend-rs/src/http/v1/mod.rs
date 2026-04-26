@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use axum::Router;
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::http::AppState;
 
@@ -18,8 +18,8 @@ pub mod user;
 pub mod vehicle;
 pub mod watering_plan;
 
-pub fn router() -> Router<Arc<AppState>> {
-    Router::new()
+pub fn router() -> OpenApiRouter<Arc<AppState>> {
+    OpenApiRouter::new()
         .merge(region::routes())
         .merge(cluster::routes())
         .merge(evaluation::routes())

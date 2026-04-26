@@ -1,6 +1,6 @@
 use crate::domain::region::Region;
 
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, serde::Serialize, utoipa::ToSchema)]
 pub struct RegionResponse {
     pub id: i32,
     pub name: String,

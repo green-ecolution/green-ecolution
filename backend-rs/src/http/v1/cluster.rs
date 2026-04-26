@@ -1,11 +1,11 @@
 use std::{collections::HashMap, sync::Arc};
 
 use axum::{
-    Json, Router,
+    Json,
     extract::{Path, Query, State},
     http::StatusCode,
-    routing::get,
 };
+use axum::routing::get;
 
 use crate::{
     domain::{Id, cluster::TreeCluster, cluster::TreeClusterQuery, shared::pagination::Pagination},
@@ -26,8 +26,8 @@ use crate::{
     service::ServiceError,
 };
 
-pub fn routes() -> Router<Arc<AppState>> {
-    Router::new()
+pub fn routes() -> utoipa_axum::router::OpenApiRouter<Arc<AppState>> {
+    utoipa_axum::router::OpenApiRouter::new()
         .route("/clusters", get(list_clusters).post(create_cluster))
         .route(
             "/clusters/{cluster_id}",

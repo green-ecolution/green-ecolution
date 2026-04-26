@@ -1,15 +1,16 @@
 use std::sync::Arc;
 
 use axum::{
-    Json, Router,
+    Json,
     extract::{Path, State},
-    routing::{get, post},
 };
+use axum::routing::{get, post};
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::http::AppState;
 
-pub fn routes() -> Router<Arc<AppState>> {
-    Router::new()
+pub fn routes() -> OpenApiRouter<Arc<AppState>> {
+    OpenApiRouter::new()
         .route("/users", get(list_users).post(create_user))
         .route("/users/login", get(login))
         .route("/users/login/token", post(login_token))

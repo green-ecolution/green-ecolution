@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
 use axum::{
-    Json, Router,
+    Json,
     extract::{Path, Query, State},
     http::StatusCode,
-    routing::{get, post},
 };
+use axum::routing::{get, post};
 
 use crate::{
     domain::{Id, vehicle::VehicleQuery, shared::pagination::Pagination},
@@ -24,8 +24,8 @@ use crate::{
     service::ServiceError,
 };
 
-pub fn routes() -> Router<Arc<AppState>> {
-    Router::new()
+pub fn routes() -> utoipa_axum::router::OpenApiRouter<Arc<AppState>> {
+    utoipa_axum::router::OpenApiRouter::new()
         .route("/vehicles", get(list_vehicles).post(create_vehicle))
         .route("/vehicles/archived", get(list_archived_vehicles))
         .route("/vehicles/archived/{vehicle_id}", post(archive_vehicle))

@@ -1,4 +1,4 @@
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, serde::Serialize, utoipa::ToSchema)]
 pub struct PaginationRepsonse {
     pub total: u64,
     pub current_page: u64,
@@ -27,7 +27,7 @@ impl PaginationRepsonse {
     }
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, utoipa::IntoParams)]
 pub struct PaginationParams {
     #[serde(default = "default_page")]
     pub page: u64,

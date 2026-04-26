@@ -8,7 +8,7 @@ use crate::domain::{
 
 use super::{DrivingLicense, VehicleStatus, VehicleType};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct VehicleResponse {
     pub id: i32,
     pub created_at: String,
@@ -57,7 +57,7 @@ impl From<&Vehicle> for VehicleResponse {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct VehicleCreateRequest {
     pub number_plate: String,
     pub description: String,
@@ -77,7 +77,7 @@ pub struct VehicleCreateRequest {
     pub additional_information: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct VehicleUpdateRequest {
     pub number_plate: String,
     pub description: String,

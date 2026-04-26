@@ -11,7 +11,7 @@ use super::{SoilCondition, WateringStatus, region::RegionResponse, tree::TreeRes
 
 // -- Responses --
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct TreeClusterResponse {
     pub id: i32,
     pub created_at: String,
@@ -72,7 +72,7 @@ impl From<TreeClusterView<'_>> for TreeClusterResponse {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct TreeClusterInListResponse {
     pub id: i32,
     pub created_at: String,
@@ -126,7 +126,7 @@ impl From<(&TreeCluster, Option<&Region>)> for TreeClusterInListResponse {
 
 // -- Requests --
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct TreeClusterCreateRequest {
     pub name: String,
     pub address: String,
@@ -139,7 +139,7 @@ pub struct TreeClusterCreateRequest {
     pub additional_information: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct TreeClusterUpdateRequest {
     pub name: String,
     pub address: String,

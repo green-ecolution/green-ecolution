@@ -1,11 +1,11 @@
 use std::{collections::HashMap, sync::Arc};
 
 use axum::{
-    Json, Router,
+    Json,
     extract::{Path, Query, State},
     http::StatusCode,
-    routing::get,
 };
+use axum::routing::get;
 
 use crate::{
     domain::{Id, tree::{Tree, TreeQuery}, shared::pagination::Pagination},
@@ -22,8 +22,8 @@ use crate::{
     service::ServiceError,
 };
 
-pub fn routes() -> Router<Arc<AppState>> {
-    Router::new()
+pub fn routes() -> utoipa_axum::router::OpenApiRouter<Arc<AppState>> {
+    utoipa_axum::router::OpenApiRouter::new()
         .route("/trees", get(list_trees).post(create_tree))
         .route("/trees/planting-years", get(list_planting_years))
         .route(

@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use axum::{
-    Json, Router,
+    Json,
     extract::{Path, Query, State},
-    routing::get,
 };
+use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     domain::{Id, region::RegionQuery, shared::pagination::Pagination},
@@ -18,12 +18,21 @@ use crate::{
     service::ServiceError,
 };
 
-pub fn routes() -> Router<Arc<AppState>> {
-    Router::new()
-        .route("/regions", get(list_regions))
-        .route("/regions/{region_id}", get(get_region))
+pub fn routes() -> OpenApiRouter<Arc<AppState>> {
+    OpenApiRouter::new()
+        .routes(routes!(list_regions))
+        .routes(routes!(get_region))
 }
 
+#[utoipa::path(
+    get,
+    path = "/regions",
+    tag = "Regions",
+    params(PaginationParams),
+    responses(
+        (status = 200, description = "Paginated list of regions"),
+    )
+)]
 pub async fn list_regions(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
@@ -37,6 +46,16 @@ pub async fn list_regions(
     Ok(Json(response))
 }
 
+#[utoipa::path(
+    get,
+    path = "/regions/{region_id}",
+    tag = "Regions",
+    params(("region_id" = i32, Path, description = "Region ID")),
+    responses(
+        (status = 200, description = "Region found", body = RegionResponse),
+        (status = 404, description = "Region not found"),
+    )
+)]
 pub async fn get_region(
     State(state): State<Arc<AppState>>,
     Path(region_id): Path<i32>,

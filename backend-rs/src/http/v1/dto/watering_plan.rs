@@ -9,7 +9,7 @@ use crate::domain::{
 
 use super::{WateringPlanStatus, cluster::TreeClusterInListResponse, vehicle::VehicleResponse};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct EvaluationValueResponse {
     pub watering_plan_id: i32,
     pub tree_cluster_id: i32,
@@ -18,7 +18,7 @@ pub struct EvaluationValueResponse {
 
 // -- Detail response --
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct WateringPlanResponse {
     pub id: i32,
     pub created_at: String,
@@ -86,7 +86,7 @@ impl From<WateringPlanView> for WateringPlanResponse {
 
 // -- List response --
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct WateringPlanInListResponse {
     pub id: i32,
     pub created_at: String,
@@ -141,7 +141,7 @@ impl From<WateringPlanInListView> for WateringPlanInListResponse {
 
 // -- Requests --
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct WateringPlanCreateRequest {
     pub date: String,
     pub description: String,
@@ -156,7 +156,7 @@ pub struct WateringPlanCreateRequest {
     pub additional_information: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct WateringPlanUpdateRequest {
     pub date: String,
     pub description: String,
@@ -175,14 +175,14 @@ pub struct WateringPlanUpdateRequest {
     pub additional_information: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct EvaluationValueRequest {
     pub watering_plan_id: i32,
     pub tree_cluster_id: i32,
     pub consumed_water: f64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct RouteRequest {
     pub cluster_ids: Vec<i32>,
     pub transporter_id: i32,

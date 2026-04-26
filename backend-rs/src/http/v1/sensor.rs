@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
 use axum::{
-    Json, Router,
+    Json,
     extract::{Path, Query, State},
     http::StatusCode,
-    routing::get,
 };
+use axum::routing::get;
 
 use crate::{
     domain::sensor::SensorQuery,
@@ -23,8 +23,8 @@ use crate::{
     domain::shared::pagination::Pagination,
 };
 
-pub fn routes() -> Router<Arc<AppState>> {
-    Router::new()
+pub fn routes() -> utoipa_axum::router::OpenApiRouter<Arc<AppState>> {
+    utoipa_axum::router::OpenApiRouter::new()
         .route("/sensors", get(list_sensors))
         .route(
             "/sensors/{sensor_id}",
