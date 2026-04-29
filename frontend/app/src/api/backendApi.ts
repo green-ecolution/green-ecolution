@@ -15,7 +15,7 @@ import {
   WateringPlansApi,
 } from '@green-ecolution/backend-client'
 
-export const basePath = '/api-local'
+export const basePath = import.meta.env.VITE_BACKEND_BASEURL ?? '/api-local'
 
 const headers: HTTPHeaders = {
   'Content-Type': 'application/json',

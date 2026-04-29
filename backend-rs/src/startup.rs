@@ -33,6 +33,7 @@ pub struct Application {
     port: u16,
     listener: TcpListener,
     state: Arc<AppState>,
+    base_url: String,
 }
 
 impl Application {
@@ -42,10 +43,14 @@ impl Application {
             .expect("failed to connect to database");
 
         let address = format!("{}:{}", config.application.host, config.application.port);
-        Self::build_with_pool(pool, &address).await
+        Self::build_with_pool(pool, &address, config.application.base_url).await
     }
 
-    pub async fn build_with_pool(pool: PgPool, address: &str) -> Result<Self, std::io::Error> {
+    pub async fn build_with_pool(
+        pool: PgPool,
+        address: &str,
+        base_url: String,
+    ) -> Result<Self, std::io::Error> {
         // Repositories
         let region_repo: Arc<dyn crate::domain::region::RegionRepository> =
             Arc::new(PgRegionRepository::new(pool.clone()));
@@ -111,6 +116,7 @@ impl Application {
             port,
             listener,
             state,
+            base_url,
         })
     }
 
@@ -119,7 +125,7 @@ impl Application {
     }
 
     pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {
-        let app = router(self.state);
+        let app = router(self.state, &self.base_url);
         tracing::info!("listening on {}", self.listener.local_addr()?);
         axum::serve(self.listener, app).await
     }

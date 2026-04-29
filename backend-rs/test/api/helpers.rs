@@ -79,9 +79,13 @@ pub async fn spawn_app() -> TestApp {
         .await
         .expect("failed to run migrations");
 
-    let app = Application::build_with_pool(db_pool.clone(), "127.0.0.1:0")
-        .await
-        .expect("failed to build application");
+    let app = Application::build_with_pool(
+        db_pool.clone(),
+        "127.0.0.1:0",
+        "http://127.0.0.1".to_string(),
+    )
+    .await
+    .expect("failed to build application");
     let port = app.port();
     tokio::spawn(app.run_until_stopped());
 

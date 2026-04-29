@@ -4,7 +4,7 @@
 interface ImportMetaEnv {
   readonly BASE_URL: string
 
-  readonly VITE_BACKEND_BASEURL: string
+  readonly VITE_BACKEND_BASEURL?: string
   readonly VITE_APP_CITY?: string
 }
 

@@ -3,6 +3,7 @@ use std::sync::Arc;
 use axum::Router;
 use tower_http::trace::TraceLayer;
 use utoipa::OpenApi;
+use utoipa::openapi::Server;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -60,10 +61,12 @@ pub struct AppState {
 )]
 struct ApiDoc;
 
-pub fn router(state: Arc<AppState>) -> Router {
-    let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
+pub fn router(state: Arc<AppState>, base_url: &str) -> Router {
+    let (router, mut api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .nest("/api/v1", v1::router())
         .split_for_parts();
+
+    api.servers = Some(vec![Server::new(base_url)]);
 
     router
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api))
