@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE trees SET tree_cluster_id = NULL WHERE tree_cluster_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ccfe488957e7fd1ec80c4372a728572459ab4295ffb90a8b2c02f6cfc421ac2c"
+}

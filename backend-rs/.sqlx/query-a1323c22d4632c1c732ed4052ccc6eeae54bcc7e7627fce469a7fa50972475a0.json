@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT r.name AS \"name!\", COUNT(DISTINCT twp.watering_plan_id)::int AS \"watering_plan_count!: i32\"\n            FROM regions r\n            INNER JOIN tree_clusters tc ON r.id = tc.region_id\n            INNER JOIN tree_cluster_watering_plans twp ON tc.id = twp.tree_cluster_id\n            GROUP BY r.name\n            ORDER BY COUNT(DISTINCT twp.watering_plan_id) DESC",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name!",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "watering_plan_count!: i32",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "a1323c22d4632c1c732ed4052ccc6eeae54bcc7e7627fce469a7fa50972475a0"
+}

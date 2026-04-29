@@ -1,0 +1,91 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO sensors (id, status, latitude, longitude, geometry, provider, additional_informations)\n            VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint($4, $3), 4326), $5, $6)\n            RETURNING id, created_at, updated_at, status AS \"status: SensorStatus\",\n                      latitude, longitude, provider, additional_informations",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 2,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 3,
+        "name": "status: SensorStatus",
+        "type_info": {
+          "Custom": {
+            "name": "sensor_status",
+            "kind": {
+              "Enum": [
+                "online",
+                "offline",
+                "unknown"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "latitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 5,
+        "name": "longitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 6,
+        "name": "provider",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "additional_informations",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        {
+          "Custom": {
+            "name": "sensor_status",
+            "kind": {
+              "Enum": [
+                "online",
+                "offline",
+                "unknown"
+              ]
+            }
+          }
+        },
+        "Float8",
+        "Float8",
+        "Text",
+        "Jsonb"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "8002715b882d02b4418b1d2513a84895cdb9e6c8a2e2fc35569b5f44d11db661"
+}

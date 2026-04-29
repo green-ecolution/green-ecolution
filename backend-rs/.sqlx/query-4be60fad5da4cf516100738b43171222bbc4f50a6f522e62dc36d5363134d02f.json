@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, name, created_at, updated_at FROM regions WHERE ST_Contains(geometry, ST_GeomFromText($1, 4326))",
+  "query": "SELECT id, name, created_at, updated_at FROM regions LIMIT $1 OFFSET $2",
   "describe": {
     "columns": [
       {
@@ -26,7 +26,8 @@
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "Int8",
+        "Int8"
       ]
     },
     "nullable": [
@@ -36,5 +37,5 @@
       false
     ]
   },
-  "hash": "1b797048dcc89730d86af8656ed3da753515c0b0ae1e22d42a5b03412cce2862"
+  "hash": "4be60fad5da4cf516100738b43171222bbc4f50a6f522e62dc36d5363134d02f"
 }

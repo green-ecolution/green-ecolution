@@ -1,0 +1,117 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO watering_plans (date, description, status, provider, additional_informations)\n            VALUES ($1, $2, 'planned', $3, $4)\n            RETURNING id, created_at, updated_at, date, description,\n                      status AS \"status: WateringPlanStatus\",\n                      distance, total_water_required, cancellation_note,\n                      gpx_url, refill_count, duration,\n                      provider, additional_informations",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 2,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 3,
+        "name": "date",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 4,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "status: WateringPlanStatus",
+        "type_info": {
+          "Custom": {
+            "name": "watering_plan_status",
+            "kind": {
+              "Enum": [
+                "planned",
+                "active",
+                "canceled",
+                "finished",
+                "not competed",
+                "unknown"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "distance",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 7,
+        "name": "total_water_required",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 8,
+        "name": "cancellation_note",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "gpx_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "refill_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 11,
+        "name": "duration",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 12,
+        "name": "provider",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 13,
+        "name": "additional_informations",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Date",
+        "Text",
+        "Text",
+        "Jsonb"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "27c04b304e09451f6c5b8b6636822217eec8e1c0136a868aaf3c337921536878"
+}

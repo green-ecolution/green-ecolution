@@ -1,0 +1,200 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO vehicles (number_plate, description, water_capacity, type, status,\n                                     model, driving_license, height, length, width, weight,\n                                     provider, additional_informations)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)\n            RETURNING id, created_at, updated_at, number_plate, description,\n                      water_capacity, model, archived_at,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, length, width, weight,\n                      provider, additional_informations",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 2,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 3,
+        "name": "number_plate",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "water_capacity",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 6,
+        "name": "model",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "archived_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 8,
+        "name": "vehicle_type: VehicleType",
+        "type_info": {
+          "Custom": {
+            "name": "vehicle_type",
+            "kind": {
+              "Enum": [
+                "transporter",
+                "trailer",
+                "unknown"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "status: VehicleStatus",
+        "type_info": {
+          "Custom": {
+            "name": "vehicle_status",
+            "kind": {
+              "Enum": [
+                "active",
+                "available",
+                "not available",
+                "unknown"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "driving_license: DrivingLicense",
+        "type_info": {
+          "Custom": {
+            "name": "driving_license",
+            "kind": {
+              "Enum": [
+                "B",
+                "BE",
+                "C",
+                "CE"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "height",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 12,
+        "name": "length",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 13,
+        "name": "width",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 14,
+        "name": "weight",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 15,
+        "name": "provider",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 16,
+        "name": "additional_informations",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Float8",
+        {
+          "Custom": {
+            "name": "vehicle_type",
+            "kind": {
+              "Enum": [
+                "transporter",
+                "trailer",
+                "unknown"
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "vehicle_status",
+            "kind": {
+              "Enum": [
+                "active",
+                "available",
+                "not available",
+                "unknown"
+              ]
+            }
+          }
+        },
+        "Text",
+        {
+          "Custom": {
+            "name": "driving_license",
+            "kind": {
+              "Enum": [
+                "B",
+                "BE",
+                "C",
+                "CE"
+              ]
+            }
+          }
+        },
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Text",
+        "Jsonb"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "b318afbf4833a92e013bb13da8e3e4a095f25e8f8c98f6d17b5cfc1fd28c9105"
+}

@@ -1,0 +1,129 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE trees SET\n                tree_cluster_id = COALESCE($2, tree_cluster_id),\n                sensor_id = COALESCE($3, sensor_id),\n                planting_year = COALESCE($4, planting_year),\n                species = COALESCE($5, species),\n                number = COALESCE($6, number),\n                description = COALESCE($7, description),\n                provider = COALESCE($8, provider),\n                additional_informations = COALESCE($9, additional_informations),\n                latitude = COALESCE($10, latitude),\n                longitude = COALESCE($11, longitude),\n                geometry = COALESCE(\n                    CASE WHEN $10 IS NOT NULL THEN ST_SetSRID(ST_MakePoint($11, $10), 4326) END,\n                    geometry\n                )\n            WHERE id = $1\n            RETURNING id, created_at, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description, last_watered,\n                      provider, additional_informations",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 2,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 3,
+        "name": "tree_cluster_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "sensor_id",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "planting_year",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "species",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "number",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "latitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 9,
+        "name": "longitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 10,
+        "name": "watering_status: WateringStatus",
+        "type_info": {
+          "Custom": {
+            "name": "watering_status",
+            "kind": {
+              "Enum": [
+                "good",
+                "moderate",
+                "bad",
+                "unknown",
+                "just watered"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 12,
+        "name": "last_watered",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 13,
+        "name": "provider",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 14,
+        "name": "additional_informations",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4",
+        "Varchar",
+        "Int4",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Jsonb",
+        "Float8",
+        "Float8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "19860c9219c0c0903b03156f43467413950364c7df2e7b784900271d21d9084f"
+}

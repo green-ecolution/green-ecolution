@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT v.number_plate AS \"number_plate!\", COUNT(vwp.watering_plan_id)::int AS \"watering_plan_count!: i32\"\n            FROM vehicles v\n            INNER JOIN vehicle_watering_plans vwp ON v.id = vwp.vehicle_id\n            GROUP BY v.number_plate\n            ORDER BY COUNT(vwp.watering_plan_id) DESC",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "number_plate!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "watering_plan_count!: i32",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "bf7a2b199efac87c44b78f08ada16922c24a7ce0c0b85bdc265361ae3497f7f6"
+}

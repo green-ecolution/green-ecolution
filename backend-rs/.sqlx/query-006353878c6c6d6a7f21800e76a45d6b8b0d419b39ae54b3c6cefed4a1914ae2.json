@@ -1,0 +1,144 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT tc.id, tc.created_at, tc.updated_at, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id, tc.last_watered,\n                      tc.latitude, tc.longitude,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: SoilCondition\",\n                      tc.provider, tc.additional_informations,\n                      COALESCE(ARRAY_AGG(t.id) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS \"tree_ids!: Vec<i32>\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.id = ANY($1)\n            GROUP BY tc.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 2,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 3,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "address",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "archived",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 7,
+        "name": "moisture_level",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 8,
+        "name": "region_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 9,
+        "name": "last_watered",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 10,
+        "name": "latitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 11,
+        "name": "longitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 12,
+        "name": "watering_status: WateringStatus",
+        "type_info": {
+          "Custom": {
+            "name": "watering_status",
+            "kind": {
+              "Enum": [
+                "good",
+                "moderate",
+                "bad",
+                "unknown",
+                "just watered"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "soil_condition: SoilCondition",
+        "type_info": {
+          "Custom": {
+            "name": "tree_soil_condition",
+            "kind": {
+              "Enum": [
+                "schluffig",
+                "sandig",
+                "lehmig",
+                "tonig",
+                "unknown"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "provider",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 15,
+        "name": "additional_informations",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 16,
+        "name": "tree_ids!: Vec<i32>",
+        "type_info": "Int4Array"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4Array"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      null
+    ]
+  },
+  "hash": "006353878c6c6d6a7f21800e76a45d6b8b0d419b39ae54b3c6cefed4a1914ae2"
+}

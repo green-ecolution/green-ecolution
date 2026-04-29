@@ -1,0 +1,89 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE sensors SET\n                status = COALESCE($2, status),\n                provider = COALESCE($3, provider),\n                additional_informations = COALESCE($4, additional_informations)\n            WHERE id = $1\n            RETURNING id, created_at, updated_at, status AS \"status: SensorStatus\",\n                      latitude, longitude, provider, additional_informations",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 2,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 3,
+        "name": "status: SensorStatus",
+        "type_info": {
+          "Custom": {
+            "name": "sensor_status",
+            "kind": {
+              "Enum": [
+                "online",
+                "offline",
+                "unknown"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "latitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 5,
+        "name": "longitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 6,
+        "name": "provider",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "additional_informations",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        {
+          "Custom": {
+            "name": "sensor_status",
+            "kind": {
+              "Enum": [
+                "online",
+                "offline",
+                "unknown"
+              ]
+            }
+          }
+        },
+        "Text",
+        "Jsonb"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "eef1c35e73d78513ed7bdd822077bb0fa03cfbd11d54231cd36f8939a1a5a082"
+}
