@@ -83,8 +83,8 @@ impl From<&Vehicle> for VehicleResponse {
             length: value.dimension.length,
             weight: value.dimension.weight,
             archived_at: value.archived_at.map(|dt| dt.to_rfc3339()),
-            provider: Some(value.provider_info.provider.clone()),
-            additional_information: Some(value.provider_info.additional_info.clone()),
+            provider: value.provider_info.provider.clone(),
+            additional_information: value.provider_info.additional_info.clone(),
         }
     }
 }
@@ -196,8 +196,8 @@ impl TryFrom<VehicleCreateRequest> for VehicleCreate {
                 weight: req.weight,
             },
             provider_info: ProviderInfo {
-                provider: req.provider.unwrap_or_default(),
-                additional_info: req.additional_information.unwrap_or_default(),
+                provider: req.provider,
+                additional_info: req.additional_information,
             },
         })
     }
@@ -222,8 +222,8 @@ impl TryFrom<VehicleUpdateRequest> for VehicleUpdate {
                 weight: req.weight,
             }),
             provider_info: Some(ProviderInfo {
-                provider: req.provider.unwrap_or_default(),
-                additional_info: req.additional_information.unwrap_or_default(),
+                provider: req.provider,
+                additional_info: req.additional_information,
             }),
         })
     }

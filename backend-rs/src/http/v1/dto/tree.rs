@@ -93,8 +93,8 @@ impl From<(&Tree, Option<&Sensor>)> for TreeResponse {
             tree_cluster_id: tree.cluster_id.as_ref().map(|id| id.value()),
             sensor: sensor.map(SensorResponse::from),
             last_watered: tree.last_watered.map(|dt| dt.to_rfc3339()),
-            provider: Some(tree.provider_info.provider.clone()),
-            additional_information: Some(tree.provider_info.additional_info.clone()),
+            provider: tree.provider_info.provider.clone(),
+            additional_information: tree.provider_info.additional_info.clone(),
         }
     }
 }
@@ -243,8 +243,8 @@ impl TryFrom<TreeCreateRequest> for TreeCreate {
             coordinate: Coordinate::new(req.latitude, req.longitude)?,
             description: req.description,
             provider_info: ProviderInfo {
-                provider: req.provider.unwrap_or_default(),
-                additional_info: req.additional_information.unwrap_or_default(),
+                provider: req.provider,
+                additional_info: req.additional_information,
             },
         })
     }
@@ -263,8 +263,8 @@ impl TryFrom<TreeUpdateRequest> for TreeUpdate {
             coordinate: Some(Coordinate::new(req.latitude, req.longitude)?),
             description: Some(req.description),
             provider_info: Some(ProviderInfo {
-                provider: req.provider.unwrap_or_default(),
-                additional_info: req.additional_information.unwrap_or_default(),
+                provider: req.provider,
+                additional_info: req.additional_information,
             }),
         })
     }

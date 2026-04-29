@@ -96,8 +96,8 @@ impl From<TreeClusterView<'_>> for TreeClusterResponse {
             longitude: c.coordinates.map(|co| co.longitude()).unwrap_or_default(),
             archived: c.archived,
             region: view.region.map(RegionResponse::from),
-            provider: Some(c.provider_info.provider.clone()),
-            additional_information: Some(c.provider_info.additional_info.clone()),
+            provider: c.provider_info.provider.clone(),
+            additional_information: c.provider_info.additional_info.clone(),
             last_watered: c.last_watered.map(|dt| dt.to_rfc3339()),
             trees: view.trees,
         }
@@ -181,8 +181,8 @@ impl From<(&TreeCluster, Option<&Region>)> for TreeClusterInListResponse {
             longitude: c.coordinates.map(|co| co.longitude()).unwrap_or_default(),
             archived: c.archived,
             region: region.map(RegionResponse::from),
-            provider: Some(c.provider_info.provider.clone()),
-            additional_information: Some(c.provider_info.additional_info.clone()),
+            provider: c.provider_info.provider.clone(),
+            additional_information: c.provider_info.additional_info.clone(),
             last_watered: c.last_watered.map(|dt| dt.to_rfc3339()),
             tree_ids: c.tree_ids.iter().map(|id| id.value()).collect(),
         }
@@ -254,8 +254,8 @@ impl From<TreeClusterCreateRequest> for TreeClusterCreate {
             soil_condition: req.soil_condition.into(),
             tree_ids: req.tree_ids.into_iter().map(Id::new).collect(),
             provider_info: ProviderInfo {
-                provider: req.provider.unwrap_or_default(),
-                additional_info: req.additional_information.unwrap_or_default(),
+                provider: req.provider,
+                additional_info: req.additional_information,
             },
         }
     }
@@ -270,8 +270,8 @@ impl From<TreeClusterUpdateRequest> for TreeClusterUpdate {
             soil_condition: Some(req.soil_condition.into()),
             tree_ids: Some(req.tree_ids.into_iter().map(Id::new).collect()),
             provider_info: Some(ProviderInfo {
-                provider: req.provider.unwrap_or_default(),
-                additional_info: req.additional_information.unwrap_or_default(),
+                provider: req.provider,
+                additional_info: req.additional_information,
             }),
             ..Default::default()
         }

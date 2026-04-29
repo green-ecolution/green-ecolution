@@ -1,7 +1,11 @@
 use serde_json::Value;
 
-#[derive(Debug, Clone)]
+/// Provider attribution and provider-specific metadata for an entity.
+///
+/// `provider` distinguishes data sources
+/// `additional_info` carries opaque provider payload.
+#[derive(Debug, Default, Clone)]
 pub struct ProviderInfo {
-    pub provider: String,
-    pub additional_info: Value,
+    pub provider: Option<String>,
+    pub additional_info: Option<Value>,
 }

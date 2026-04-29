@@ -57,8 +57,8 @@ impl From<TreeClusterRow> for TreeCluster {
             soil_condition: Some(row.soil_condition),
             name: row.name,
             provider_info: ProviderInfo {
-                provider: row.provider.unwrap_or_default(),
-                additional_info: row.additional_informations.unwrap_or_default(),
+                provider: row.provider,
+                additional_info: row.additional_informations,
             },
         }
     }
@@ -264,11 +264,14 @@ impl TreeClusterRepository for PgTreeClusterRepository {
             entity.address,
             entity.description,
             entity.soil_condition as Option<SoilCondition>,
-            entity.provider_info.as_ref().map(|p| p.provider.as_str()),
             entity
                 .provider_info
                 .as_ref()
-                .map(|p| p.additional_info.clone()),
+                .and_then(|p| p.provider.as_deref()),
+            entity
+                .provider_info
+                .as_ref()
+                .and_then(|p| p.additional_info.clone()),
             coord_change,
             coord_set.map(|c| c.latitude()),
             coord_set.map(|c| c.longitude()),

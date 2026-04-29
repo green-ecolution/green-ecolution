@@ -120,8 +120,8 @@ impl From<WateringPlanView> for WateringPlanResponse {
             treeclusters: view.clusters,
             user_ids: view.user_ids,
             evaluation: view.evaluation,
-            provider: Some(p.provider_info.provider.clone()),
-            additional_information: Some(p.provider_info.additional_info.clone()),
+            provider: p.provider_info.provider.clone(),
+            additional_information: p.provider_info.additional_info.clone(),
         }
     }
 }
@@ -203,8 +203,8 @@ impl From<WateringPlanInListView> for WateringPlanInListResponse {
             trailer: view.trailer,
             treeclusters: view.clusters,
             user_ids: view.user_ids,
-            provider: Some(p.provider_info.provider.clone()),
-            additional_information: Some(p.provider_info.additional_info.clone()),
+            provider: p.provider_info.provider.clone(),
+            additional_information: p.provider_info.additional_info.clone(),
         }
     }
 }
@@ -330,8 +330,8 @@ impl TryFrom<WateringPlanCreateRequest> for WateringPlanCreate {
             transporter_id: Some(Id::new(req.transporter_id)),
             trailer_id: req.trailer_id.map(Id::new),
             provider_info: ProviderInfo {
-                provider: req.provider.unwrap_or_default(),
-                additional_info: req.additional_information.unwrap_or_default(),
+                provider: req.provider,
+                additional_info: req.additional_information,
             },
         })
     }
@@ -351,8 +351,8 @@ impl TryFrom<WateringPlanUpdateRequest> for WateringPlanUpdate {
             status: Some(req.status.into()),
             evaluation: None,
             provider_info: Some(ProviderInfo {
-                provider: req.provider.unwrap_or_default(),
-                additional_info: req.additional_information.unwrap_or_default(),
+                provider: req.provider,
+                additional_info: req.additional_information,
             }),
         })
     }

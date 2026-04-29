@@ -53,8 +53,8 @@ impl TryFrom<TreeRow> for Tree {
             description: row.description,
             last_watered: row.last_watered.map(|dt| dt.and_utc()),
             provider_info: ProviderInfo {
-                provider: row.provider.unwrap_or_default(),
-                additional_info: row.additional_informations.unwrap_or_default(),
+                provider: row.provider,
+                additional_info: row.additional_informations,
             },
         })
     }
@@ -230,8 +230,14 @@ impl TreeRepository for PgTreeRepository {
             entity.species,
             entity.tree_number,
             entity.description,
-            entity.provider_info.as_ref().map(|p| p.provider.as_str()),
-            entity.provider_info.as_ref().map(|p| p.additional_info.clone()),
+            entity
+                .provider_info
+                .as_ref()
+                .and_then(|p| p.provider.as_deref()),
+            entity
+                .provider_info
+                .as_ref()
+                .and_then(|p| p.additional_info.clone()),
             lat,
             lng,
         )
@@ -306,8 +312,8 @@ impl TreeRepository for PgTreeRepository {
                         description: row.description,
                         last_watered: row.last_watered.map(|dt| dt.and_utc()),
                         provider_info: ProviderInfo {
-                            provider: row.provider.unwrap_or_default(),
-                            additional_info: row.additional_informations.unwrap_or_default(),
+                            provider: row.provider,
+                            additional_info: row.additional_informations,
                         },
                     },
                     distance: Distance::new(row.distance)?,

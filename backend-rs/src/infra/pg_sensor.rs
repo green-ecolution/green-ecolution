@@ -38,8 +38,8 @@ impl TryFrom<SensorRow> for Sensor {
             latest_data: None,
             coordinates: Coordinate::new(row.latitude, row.longitude)?,
             provider_info: ProviderInfo {
-                provider: row.provider.unwrap_or_default(),
-                additional_info: row.additional_informations.unwrap_or_default(),
+                provider: row.provider,
+                additional_info: row.additional_informations,
             },
         })
     }
@@ -165,8 +165,14 @@ impl SensorRepository for PgSensorRepository {
                       latitude, longitude, provider, additional_informations"#,
             id,
             entity.status as Option<SensorStatus>,
-            entity.provider_info.as_ref().map(|p| p.provider.as_str()),
-            entity.provider_info.as_ref().map(|p| p.additional_info.clone()),
+            entity
+                .provider_info
+                .as_ref()
+                .and_then(|p| p.provider.as_deref()),
+            entity
+                .provider_info
+                .as_ref()
+                .and_then(|p| p.additional_info.clone()),
         )
         .fetch_optional(&self.pool)
         .await?

@@ -82,8 +82,8 @@ impl From<&Sensor> for SensorResponse {
             latitude: value.coordinates.latitude(),
             longitude: value.coordinates.longitude(),
             latest_data: value.latest_data.as_ref().map(SensorDataResponse::from),
-            provider: Some(value.provider_info.provider.clone()),
-            additional_information: Some(value.provider_info.additional_info.clone()),
+            provider: value.provider_info.provider.clone(),
+            additional_information: value.provider_info.additional_info.clone(),
         }
     }
 }
