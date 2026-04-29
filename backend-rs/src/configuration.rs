@@ -10,6 +10,7 @@ pub struct Settings {
     pub database: DatabaseSettings,
     pub application: ApplicationSettings,
     pub log: LogSettings,
+    pub cors: CorsSettings,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -65,6 +66,11 @@ pub struct ApplicationSettings {
 pub struct LogSettings {
     pub level: String,
     pub format: LogFormat,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct CorsSettings {
+    pub allowed_origins: Vec<String>,
 }
 
 #[derive(Debug, Clone, Copy, serde::Deserialize, Default)]

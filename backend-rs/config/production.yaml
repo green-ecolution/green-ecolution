@@ -7,3 +7,6 @@ database:
 log:
   level: "info,sqlx=warn"
   format: "json"
+cors:
+  allowed_origins:
+    - "https://app.green-ecolution.de"

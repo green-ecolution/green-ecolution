@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
-use axum::Router;
+use axum::{Router, http::HeaderValue};
 use tower_http::{
+    cors::{Any, CorsLayer},
     request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
     trace::{DefaultOnFailure, TraceLayer},
 };
@@ -11,6 +12,7 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
+    configuration::CorsSettings,
     domain::info::SystemInfoProvider,
     http::tracing::{MakeRequestUuid, REQUEST_ID_HEADER, make_span, on_response},
     service::{
@@ -66,7 +68,7 @@ pub struct AppState {
 )]
 struct ApiDoc;
 
-pub fn router(state: Arc<AppState>, base_url: &str) -> Router {
+pub fn router(state: Arc<AppState>, base_url: &str, cors: &CorsSettings) -> Router {
     let (router, mut api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .nest("/api/v1", v1::router())
         .split_for_parts();
@@ -80,8 +82,29 @@ pub fn router(state: Arc<AppState>, base_url: &str) -> Router {
 
     router
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api))
+        .layer(cors_layer(cors))
         .layer(PropagateRequestIdLayer::new(REQUEST_ID_HEADER))
         .layer(trace_layer)
         .layer(SetRequestIdLayer::new(REQUEST_ID_HEADER, MakeRequestUuid))
         .with_state(state)
+}
+
+fn cors_layer(config: &CorsSettings) -> CorsLayer {
+    if config.allowed_origins.iter().any(|o| o == "*") {
+        return CorsLayer::new()
+            .allow_origin(Any)
+            .allow_methods(Any)
+            .allow_headers(Any);
+    }
+
+    let origins: Vec<HeaderValue> = config
+        .allowed_origins
+        .iter()
+        .filter_map(|o| HeaderValue::from_str(o).ok())
+        .collect();
+
+    CorsLayer::new()
+        .allow_origin(origins)
+        .allow_methods(Any)
+        .allow_headers(Any)
 }

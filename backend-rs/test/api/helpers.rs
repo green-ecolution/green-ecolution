@@ -1,4 +1,4 @@
-use green_ecolution::startup::Application;
+use green_ecolution::{configuration::CorsSettings, startup::Application};
 use sqlx::{PgPool, postgres::PgPoolOptions};
 use testcontainers::{ContainerAsync, GenericImage, ImageExt, runners::AsyncRunner};
 
@@ -83,6 +83,7 @@ pub async fn spawn_app() -> TestApp {
         db_pool.clone(),
         "127.0.0.1:0",
         "http://127.0.0.1".to_string(),
+        CorsSettings { allowed_origins: vec!["*".to_string()] },
     )
     .await
     .expect("failed to build application");

@@ -4,7 +4,7 @@ use sqlx::{PgPool, postgres::PgPoolOptions};
 use tokio::net::TcpListener;
 
 use crate::{
-    configuration::{DatabaseSettings, Settings},
+    configuration::{CorsSettings, DatabaseSettings, Settings},
     http::{AppState, router},
     infra::{
         pg_cluster::PgTreeClusterRepository,
@@ -34,6 +34,7 @@ pub struct Application {
     listener: TcpListener,
     state: Arc<AppState>,
     base_url: String,
+    cors: CorsSettings,
 }
 
 impl Application {
@@ -43,13 +44,14 @@ impl Application {
             .expect("failed to connect to database");
 
         let address = format!("{}:{}", config.application.host, config.application.port);
-        Self::build_with_pool(pool, &address, config.application.base_url).await
+        Self::build_with_pool(pool, &address, config.application.base_url, config.cors).await
     }
 
     pub async fn build_with_pool(
         pool: PgPool,
         address: &str,
         base_url: String,
+        cors: CorsSettings,
     ) -> Result<Self, std::io::Error> {
         // Repositories
         let region_repo: Arc<dyn crate::domain::region::RegionRepository> =
@@ -117,6 +119,7 @@ impl Application {
             listener,
             state,
             base_url,
+            cors,
         })
     }
 
@@ -125,7 +128,7 @@ impl Application {
     }
 
     pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {
-        let app = router(self.state, &self.base_url);
+        let app = router(self.state, &self.base_url, &self.cors);
         tracing::info!("listening on {}", self.listener.local_addr()?);
         axum::serve(self.listener, app).await
     }

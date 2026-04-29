@@ -12,3 +12,6 @@ database:
 log:
   level: "info,sqlx=warn,tower_http=debug"
   format: "pretty"
+cors:
+  allowed_origins:
+    - "*"
