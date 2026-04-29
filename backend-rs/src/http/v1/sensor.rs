@@ -43,12 +43,12 @@ pub async fn list_sensors(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<SensorResponse>>, ServiceError> {
-    let pagination = Pagination::new(params.page, params.per_page);
+    let pagination = Pagination::from(&params);
     let page = state
         .sensor_service
         .all(SensorQuery::default(), pagination)
         .await?;
-    let response = ListResponse::<SensorResponse>::from_page(page, params.page, params.per_page);
+    let response = ListResponse::<SensorResponse>::from_page(page, &pagination);
     Ok(Json(response))
 }
 

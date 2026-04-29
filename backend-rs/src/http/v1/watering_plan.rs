@@ -87,7 +87,7 @@ pub async fn list_watering_plans(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<WateringPlanInListResponse>>, ServiceError> {
-    let pagination = Pagination::new(params.page, params.per_page);
+    let pagination = Pagination::from(&params);
     let page = state
         .watering_plan_service
         .all(WateringPlanQuery::default(), pagination)
@@ -113,7 +113,7 @@ pub async fn list_watering_plans(
     let region_map: HashMap<_, _> = regions.iter().map(|r| (r.id, r)).collect();
     let cluster_map: HashMap<_, _> = clusters.iter().map(|c| (c.id, c)).collect();
 
-    let response = ListResponse::from_page_with(page, params.page, params.per_page, |plan| {
+    let response = ListResponse::from_page_with(page, &pagination, |plan: &WateringPlan| {
         let transporter = plan
             .transporter_id
             .and_then(|id| vehicle_map.get(&id))

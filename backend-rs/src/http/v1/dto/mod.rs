@@ -15,7 +15,10 @@ use crate::{
     domain::{
         cluster::SoilCondition as DomainSoilCondition,
         sensor::SensorStatus as DomainSensorStatus,
-        shared::{pagination::Page, watering_status::WateringStatus as DomainWateringStatus},
+        shared::{
+            pagination::{Page, Pagination},
+            watering_status::WateringStatus as DomainWateringStatus,
+        },
         vehicle::{
             DrivingLicense as DomainDrivingLicense, VehicleStatus as DomainVehicleStatus,
             VehicleType as DomainVehicleType,
@@ -32,27 +35,26 @@ pub struct ListResponse<T: Serialize + utoipa::ToSchema> {
 }
 
 impl<T: Serialize + utoipa::ToSchema> ListResponse<T> {
-    pub fn from_page<D>(page: Page<D>, current_page: u64, per_page: u64) -> Self
+    /// Build a `ListResponse` from a domain `Page` using the standard `T: From<&D>` conversion.
+    pub fn from_page<D>(page: Page<D>, pagination: &Pagination) -> Self
     where
         T: for<'a> From<&'a D>,
     {
-        let total_pages = (page.total + per_page - 1) / per_page;
         Self {
             data: page.items.iter().map(T::from).collect(),
-            pagination: PaginationResponse::new(page.total, current_page, total_pages),
+            pagination: PaginationResponse::new(page.total, pagination),
         }
     }
 
-    pub fn from_page_with<D>(
-        page: Page<D>,
-        current_page: u64,
-        per_page: u64,
-        map_fn: impl Fn(&D) -> T,
-    ) -> Self {
-        let total_pages = (page.total + per_page - 1) / per_page;
+    /// Build a `ListResponse` from a domain `Page` with a custom mapping closure.
+    /// Use this when the DTO needs additional context (e.g. a sensor map) beyond the domain item.
+    pub fn from_page_with<D, F>(page: Page<D>, pagination: &Pagination, map_fn: F) -> Self
+    where
+        F: FnMut(&D) -> T,
+    {
         Self {
             data: page.items.iter().map(map_fn).collect(),
-            pagination: PaginationResponse::new(page.total, current_page, total_pages),
+            pagination: PaginationResponse::new(page.total, pagination),
         }
     }
 }

@@ -32,9 +32,11 @@ impl TreeClusterRepository for PgTreeClusterRepository {
         pagination: Pagination,
     ) -> Result<Page<TreeCluster>, RepositoryError> {
         let watering_statuses: Vec<WateringStatus> = query.watering_statuses;
+        let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
+        let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
 
         let total = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) FROM tree_clusters tc
+            r#"SELECT COUNT(*) AS "count!: i64" FROM tree_clusters tc
             LEFT JOIN regions r ON r.id = tc.region_id
             WHERE ($1::watering_status[] = '{}' OR tc.watering_status = ANY($1))
               AND ($2::text[] = '{}' OR r.name = ANY($2))
@@ -44,8 +46,7 @@ impl TreeClusterRepository for PgTreeClusterRepository {
             query.provider,
         )
         .fetch_one(&self.pool)
-        .await?
-        .unwrap_or(0) as u64;
+        .await? as u64;
 
         let rows = sqlx::query!(
             r#"SELECT tc.id, tc.created_at, tc.updated_at, tc.name, tc.address,
@@ -67,8 +68,8 @@ impl TreeClusterRepository for PgTreeClusterRepository {
             &watering_statuses as &[WateringStatus],
             &query.regions,
             query.provider,
-            pagination.limit as i64,
-            pagination.offset as i64,
+            limit,
+            offset,
         )
         .fetch_all(&self.pool)
         .await?;

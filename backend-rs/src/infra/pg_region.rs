@@ -26,15 +26,18 @@ impl RegionRepository for PgRegionRepository {
         _query: RegionQuery,
         pagination: Pagination,
     ) -> Result<Page<Region>, RepositoryError> {
-        let total = sqlx::query_scalar!(r#"SELECT COUNT(*) FROM regions"#)
+        let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
+        let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
+
+        let total = sqlx::query_scalar!(r#"SELECT COUNT(*) AS "count!: i64" FROM regions"#)
             .fetch_one(&self.pool)
-            .await?
-            .unwrap_or(0) as u64;
+            .await? as u64;
 
         let rows = sqlx::query!(
-            r#"SELECT id, name, created_at, updated_at FROM regions LIMIT $1 OFFSET $2"#,
-            pagination.limit as i64,
-            pagination.offset as i64
+            r#"SELECT id, name, created_at, updated_at FROM regions
+            ORDER BY name ASC, id ASC LIMIT $1 OFFSET $2"#,
+            limit,
+            offset
         )
         .fetch_all(&self.pool)
         .await?;

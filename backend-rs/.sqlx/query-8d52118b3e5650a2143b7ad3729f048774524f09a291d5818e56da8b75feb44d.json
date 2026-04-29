@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT COUNT(*) FROM sensors\n            WHERE ($1::text IS NULL OR provider = $1)",
+  "query": "SELECT COUNT(*) AS \"count!: i64\" FROM watering_plans\n            WHERE ($1::text IS NULL OR provider = $1)",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "count",
+        "name": "count!: i64",
         "type_info": "Int8"
       }
     ],
@@ -18,5 +18,5 @@
       null
     ]
   },
-  "hash": "0ef482709cad8d88e66f1e964c5872d8b381f8658ebf2bdda882190ec6a378fa"
+  "hash": "8d52118b3e5650a2143b7ad3729f048774524f09a291d5818e56da8b75feb44d"
 }

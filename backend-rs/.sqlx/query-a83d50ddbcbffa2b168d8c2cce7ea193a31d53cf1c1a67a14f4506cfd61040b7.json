@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT COUNT(*) FROM tree_clusters tc\n            LEFT JOIN regions r ON r.id = tc.region_id\n            WHERE ($1::watering_status[] = '{}' OR tc.watering_status = ANY($1))\n              AND ($2::text[] = '{}' OR r.name = ANY($2))\n              AND ($3::text IS NULL OR tc.provider = $3)",
+  "query": "SELECT COUNT(*) AS \"count!: i64\" FROM trees\n            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))\n              AND ($2::int[] = '{}' OR planting_year = ANY($2))\n              AND ($3::text IS NULL OR provider = $3)\n              AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "count",
+        "name": "count!: i64",
         "type_info": "Int8"
       }
     ],
@@ -32,13 +32,14 @@
             }
           }
         },
-        "TextArray",
-        "Text"
+        "Int4Array",
+        "Text",
+        "Bool"
       ]
     },
     "nullable": [
       null
     ]
   },
-  "hash": "53951f7476894c752c860045ad6e1ad1355d1d7c478201e2b7f5bd2f0ce41ff8"
+  "hash": "a83d50ddbcbffa2b168d8c2cce7ea193a31d53cf1c1a67a14f4506cfd61040b7"
 }

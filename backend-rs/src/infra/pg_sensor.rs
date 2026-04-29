@@ -62,14 +62,16 @@ impl SensorRepository for PgSensorRepository {
         query: SensorQuery,
         pagination: Pagination,
     ) -> Result<Page<Sensor>, RepositoryError> {
+        let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
+        let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
+
         let total = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) FROM sensors
+            r#"SELECT COUNT(*) AS "count!: i64" FROM sensors
             WHERE ($1::text IS NULL OR provider = $1)"#,
             query.provider
         )
         .fetch_one(&self.pool)
-        .await?
-        .unwrap_or(0) as u64;
+        .await? as u64;
 
         let rows = sqlx::query_as!(
             SensorRow,
@@ -82,8 +84,8 @@ impl SensorRepository for PgSensorRepository {
             ORDER BY id
             LIMIT $2 OFFSET $3"#,
             query.provider,
-            pagination.limit as i64,
-            pagination.offset as i64,
+            limit,
+            offset,
         )
         .fetch_all(&self.pool)
         .await?;

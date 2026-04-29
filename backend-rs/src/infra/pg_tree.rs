@@ -79,9 +79,11 @@ impl TreeRepository for PgTreeRepository {
     ) -> Result<Page<Tree>, RepositoryError> {
         let watering_statuses: Vec<WateringStatus> = query.watering_statuses;
         let planting_years: Vec<i32> = query.planting_years.iter().map(|&y| y as i32).collect();
+        let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
+        let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
 
         let total = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) FROM trees
+            r#"SELECT COUNT(*) AS "count!: i64" FROM trees
             WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))
               AND ($2::int[] = '{}' OR planting_year = ANY($2))
               AND ($3::text IS NULL OR provider = $3)
@@ -92,8 +94,7 @@ impl TreeRepository for PgTreeRepository {
             query.has_cluster,
         )
         .fetch_one(&self.pool)
-        .await?
-        .unwrap_or(0) as u64;
+        .await? as u64;
 
         let rows = sqlx::query_as!(
             TreeRow,
@@ -113,8 +114,8 @@ impl TreeRepository for PgTreeRepository {
             &planting_years,
             query.provider,
             query.has_cluster,
-            pagination.limit as i64,
-            pagination.offset as i64,
+            limit,
+            offset,
         )
         .fetch_all(&self.pool)
         .await?;

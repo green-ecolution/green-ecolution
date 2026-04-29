@@ -41,12 +41,12 @@ pub async fn list_regions(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<RegionResponse>>, ServiceError> {
-    let pagination = Pagination::new(params.page, params.per_page);
+    let pagination = Pagination::from(&params);
     let page = state
         .region_service
         .all(RegionQuery::default(), pagination)
         .await?;
-    let response = ListResponse::<RegionResponse>::from_page(page, params.page, params.per_page);
+    let response = ListResponse::<RegionResponse>::from_page(page, &pagination);
     Ok(Json(response))
 }
 

@@ -45,12 +45,12 @@ pub async fn list_vehicles(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<VehicleResponse>>, ServiceError> {
-    let pagination = Pagination::new(params.page, params.per_page);
+    let pagination = Pagination::from(&params);
     let page = state
         .vehicle_service
         .all(VehicleQuery::default(), pagination)
         .await?;
-    let response = ListResponse::<VehicleResponse>::from_page(page, params.page, params.per_page);
+    let response = ListResponse::<VehicleResponse>::from_page(page, &pagination);
     Ok(Json(response))
 }
 
@@ -149,14 +149,14 @@ pub async fn list_archived_vehicles(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<VehicleResponse>>, ServiceError> {
-    let pagination = Pagination::new(params.page, params.per_page);
+    let pagination = Pagination::from(&params);
     let query = VehicleQuery {
         only_archived: true,
         with_archived: true,
         ..Default::default()
     };
     let page = state.vehicle_service.all(query, pagination).await?;
-    let response = ListResponse::<VehicleResponse>::from_page(page, params.page, params.per_page);
+    let response = ListResponse::<VehicleResponse>::from_page(page, &pagination);
     Ok(Json(response))
 }
 

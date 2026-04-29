@@ -82,7 +82,7 @@ pub async fn list_clusters(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<TreeClusterInListResponse>>, ServiceError> {
-    let pagination = Pagination::new(params.page, params.per_page);
+    let pagination = Pagination::from(&params);
     let page = state
         .cluster_service
         .all(TreeClusterQuery::default(), pagination)
@@ -92,7 +92,7 @@ pub async fn list_clusters(
     let regions = state.region_service.by_ids(&region_ids).await?;
     let region_map: HashMap<_, _> = regions.iter().map(|r| (r.id, r)).collect();
 
-    let response = ListResponse::from_page_with(page, params.page, params.per_page, |cluster| {
+    let response = ListResponse::from_page_with(page, &pagination, |cluster: &TreeCluster| {
         let region = cluster
             .region_id
             .and_then(|id| region_map.get(&id).copied());

@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT COUNT(*) FROM vehicles\n            WHERE ($1::text IS NULL OR provider = $1)\n              AND ($2::vehicle_type IS NULL OR type = $2)\n              AND ($3::bool OR archived_at IS NULL)\n              AND (NOT $4::bool OR archived_at IS NOT NULL)",
+  "query": "SELECT COUNT(*) AS \"count!: i64\" FROM vehicles\n            WHERE ($1::text IS NULL OR provider = $1)\n              AND ($2::vehicle_type IS NULL OR type = $2)\n              AND ($3::bool OR archived_at IS NULL)\n              AND (NOT $4::bool OR archived_at IS NOT NULL)",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "count",
+        "name": "count!: i64",
         "type_info": "Int8"
       }
     ],
@@ -32,5 +32,5 @@
       null
     ]
   },
-  "hash": "32bbe5f376680c960d009b9a65563d0aa0ddd3cdc84a8c1f7638048ce9d55fdd"
+  "hash": "6876d118765f576cea98a99f6227d5fc707a69a0da87491f4e9bb8355c162711"
 }

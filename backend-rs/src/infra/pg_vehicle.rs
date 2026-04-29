@@ -82,8 +82,11 @@ impl VehicleRepository for PgVehicleRepository {
         query: VehicleQuery,
         pagination: Pagination,
     ) -> Result<Page<Vehicle>, RepositoryError> {
+        let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
+        let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
+
         let total = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) FROM vehicles
+            r#"SELECT COUNT(*) AS "count!: i64" FROM vehicles
             WHERE ($1::text IS NULL OR provider = $1)
               AND ($2::vehicle_type IS NULL OR type = $2)
               AND ($3::bool OR archived_at IS NULL)
@@ -94,8 +97,7 @@ impl VehicleRepository for PgVehicleRepository {
             query.only_archived,
         )
         .fetch_one(&self.pool)
-        .await?
-        .unwrap_or(0) as u64;
+        .await? as u64;
 
         let rows = sqlx::query_as!(
             VehicleRow,
@@ -117,8 +119,8 @@ impl VehicleRepository for PgVehicleRepository {
             query.vehicle_type as Option<VehicleType>,
             query.with_archived,
             query.only_archived,
-            pagination.limit as i64,
-            pagination.offset as i64,
+            limit,
+            offset,
         )
         .fetch_all(&self.pool)
         .await?;

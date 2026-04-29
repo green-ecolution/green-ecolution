@@ -30,14 +30,16 @@ impl WateringPlanRepository for PgWateringPlanRepository {
         query: WateringPlanQuery,
         pagination: Pagination,
     ) -> Result<Page<WateringPlan>, RepositoryError> {
+        let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
+        let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
+
         let total = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) FROM watering_plans
+            r#"SELECT COUNT(*) AS "count!: i64" FROM watering_plans
             WHERE ($1::text IS NULL OR provider = $1)"#,
             query.provider,
         )
         .fetch_one(&self.pool)
-        .await?
-        .unwrap_or(0) as u64;
+        .await? as u64;
 
         let rows = sqlx::query!(
             r#"SELECT wp.id, wp.created_at, wp.updated_at, wp.date, wp.description,
@@ -55,8 +57,8 @@ impl WateringPlanRepository for PgWateringPlanRepository {
             ORDER BY wp.date DESC
             LIMIT $2 OFFSET $3"#,
             query.provider,
-            pagination.limit as i64,
-            pagination.offset as i64,
+            limit,
+            offset,
         )
         .fetch_all(&self.pool)
         .await?;
