@@ -8,7 +8,11 @@ use axum::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    domain::{Id, tree::{Tree, TreeQuery}, shared::pagination::Pagination},
+    domain::{
+        Id,
+        shared::pagination::Pagination,
+        tree::{Tree, TreeQuery},
+    },
     http::{
         AppState,
         v1::{
@@ -31,13 +35,9 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(list_planting_years))
         .routes(routes!(get_nearest_trees))
         .routes(routes!(get_tree, update_tree, delete_tree))
-        .routes(routes!(get_tree_sensor))
 }
 
-async fn build_tree_response(
-    state: &AppState,
-    tree: &Tree,
-) -> Result<TreeResponse, ServiceError> {
+async fn build_tree_response(state: &AppState, tree: &Tree) -> Result<TreeResponse, ServiceError> {
     let sensor = match &tree.sensor_id {
         Some(sid) => Some(state.sensor_service.by_id(sid).await?),
         None => None,
@@ -66,7 +66,11 @@ pub async fn list_trees(
         .all(TreeQuery::default(), pagination)
         .await?;
 
-    let sensor_ids: Vec<String> = page.items.iter().filter_map(|t| t.sensor_id.clone()).collect();
+    let sensor_ids: Vec<String> = page
+        .items
+        .iter()
+        .filter_map(|t| t.sensor_id.clone())
+        .collect();
     let sensors = state.sensor_service.by_ids(&sensor_ids).await?;
     let sensor_map: HashMap<&str, _> = sensors.iter().map(|s| (s.id.as_str(), s)).collect();
 
@@ -200,28 +204,4 @@ pub async fn get_nearest_trees(
     Query(_params): Query<NearestTreeParams>,
 ) -> Result<Json<NearestTreeListResponse>, ServiceError> {
     todo!()
-}
-
-#[utoipa::path(get, path = "/trees/{tree_id}/sensors/{sensor_id}", tag = "Trees",
-    operation_id = "getTreeSensor",
-    summary = "Get a tree by tree and sensor ID",
-    description = "Returns a tree identified by both its tree ID and sensor ID.",
-    params(
-        ("tree_id" = i32, Path, description = "Tree ID"),
-        ("sensor_id" = String, Path, description = "Sensor ID"),
-    ),
-    responses(
-        (status = 200, description = "Tree with sensor", body = TreeResponse),
-        (status = 404, description = "Tree not found"),
-        (status = 500, description = "Internal server error"),
-    )
-)]
-#[tracing::instrument(level = "info", skip_all, fields(tree.id = tree_id))]
-pub async fn get_tree_sensor(
-    State(state): State<Arc<AppState>>,
-    Path((tree_id, _sensor_id)): Path<(i32, String)>,
-) -> Result<Json<TreeResponse>, ServiceError> {
-    let tree = state.tree_service.by_id(Id::from(tree_id)).await?;
-    let response = build_tree_response(&state, &tree).await?;
-    Ok(Json(response))
 }

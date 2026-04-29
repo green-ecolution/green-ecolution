@@ -8,13 +8,16 @@ use axum::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    domain::{sensor::SensorQuery, shared::pagination::Pagination},
+    domain::{
+        RepositoryError, sensor::SensorQuery, shared::pagination::Pagination, tree::TreeQuery,
+    },
     http::{
         AppState,
         v1::{
             dto::{
                 ListResponse,
                 sensor::{SensorDataResponse, SensorResponse},
+                tree::TreeResponse,
             },
             pagination::PaginationParams,
         },
@@ -27,6 +30,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(list_sensors))
         .routes(routes!(get_sensor, delete_sensor))
         .routes(routes!(list_sensor_data))
+        .routes(routes!(get_tree_by_sensor))
 }
 
 #[utoipa::path(get, path = "/sensors", tag = "Sensors",
@@ -111,4 +115,36 @@ pub async fn list_sensor_data(
     let data = state.sensor_service.all_data(&id).await?;
     let response: Vec<SensorDataResponse> = data.iter().map(SensorDataResponse::from).collect();
     Ok(Json(response))
+}
+
+#[utoipa::path(get, path = "/sensors/{sensor_id}/tree", tag = "Trees",
+    operation_id = "getTreeBySensor",
+    summary = "Get the tree associated with a sensor",
+    description = "Retrieves the tree linked to the given sensor. Returns 404 if the sensor or its associated tree does not exist.",
+    params(("sensor_id" = String, Path, description = "Sensor ID")),
+    responses(
+        (status = 200, description = "Tree found", body = TreeResponse),
+        (status = 404, description = "Sensor or associated tree not found"),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
+pub async fn get_tree_by_sensor(
+    State(state): State<Arc<AppState>>,
+    Path(sensor_id): Path<String>,
+) -> Result<Json<TreeResponse>, ServiceError> {
+    let sensor = state.sensor_service.by_id(&sensor_id).await?;
+    let query = TreeQuery {
+        sensor_id: Some(sensor_id),
+        ..Default::default()
+    };
+    let tree = state
+        .tree_service
+        .all(query, Pagination::new(1, 1))
+        .await?
+        .items
+        .into_iter()
+        .next()
+        .ok_or(ServiceError::Repository(RepositoryError::NotFound))?;
+    Ok(Json(TreeResponse::from((&tree, Some(&sensor)))))
 }

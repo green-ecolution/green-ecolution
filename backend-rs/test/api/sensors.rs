@@ -165,3 +165,46 @@ async fn delete_sensor_unlinks_from_tree() {
             .unwrap();
     assert!(tree_sensor.is_none());
 }
+
+#[tokio::test]
+async fn get_tree_by_sensor_returns_linked_tree() {
+    let app = spawn_app().await;
+
+    insert_sensor(&app, "sensor-tree").await;
+    sqlx::query!(
+        r#"INSERT INTO trees (sensor_id, planting_year, species, number, latitude, longitude,
+                              geometry, description)
+        VALUES ('sensor-tree', 2020, 'Eiche', 'T-LINK', 53.55, 9.99,
+                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test')"#,
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+
+    let response = app.get("/api/v1/sensors/sensor-tree/tree").await;
+    assert_eq!(response.status().as_u16(), 200);
+
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["number"], "T-LINK");
+    assert_eq!(body["sensor"]["id"], "sensor-tree");
+}
+
+#[tokio::test]
+async fn get_tree_by_sensor_returns_404_for_unknown_sensor() {
+    let app = spawn_app().await;
+
+    let response = app.get("/api/v1/sensors/does-not-exist/tree").await;
+
+    assert_eq!(response.status().as_u16(), 404);
+}
+
+#[tokio::test]
+async fn get_tree_by_sensor_returns_404_when_no_tree_linked() {
+    let app = spawn_app().await;
+
+    insert_sensor(&app, "sensor-orphan").await;
+
+    let response = app.get("/api/v1/sensors/sensor-orphan/tree").await;
+
+    assert_eq!(response.status().as_u16(), 404);
+}
