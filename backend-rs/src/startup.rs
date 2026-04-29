@@ -133,7 +133,7 @@ impl Application {
 
 pub async fn get_connection_pool(config: &DatabaseSettings) -> Result<PgPool, sqlx::Error> {
     PgPoolOptions::new()
-        .max_connections(5)
+        .max_connections(config.max_connections)
         .connect_with(config.connection_options())
         .await
 }

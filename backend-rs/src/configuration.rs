@@ -1,11 +1,15 @@
+use std::time::Duration;
+
 use secrecy::{ExposeSecret, SecretString};
 use serde_aux::field_attributes::deserialize_number_from_string;
+use sqlx::ConnectOptions;
 use sqlx::postgres::{PgConnectOptions, PgSslMode};
 
 #[derive(serde::Deserialize, Clone)]
 pub struct Settings {
     pub database: DatabaseSettings,
     pub application: ApplicationSettings,
+    pub log: LogSettings,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -17,6 +21,11 @@ pub struct DatabaseSettings {
     pub host: String,
     pub database_name: String,
     pub require_ssl: bool,
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub max_connections: u32,
+    pub log_statements_level: LogLevel,
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub slow_query_threshold_ms: u64,
 }
 
 impl DatabaseSettings {
@@ -34,6 +43,11 @@ impl DatabaseSettings {
             .port(self.port)
             .database(&self.database_name)
             .ssl_mode(ssl_mode)
+            .log_statements(self.log_statements_level.into())
+            .log_slow_statements(
+                log::LevelFilter::Warn,
+                Duration::from_millis(self.slow_query_threshold_ms),
+            )
     }
 }
 
@@ -45,6 +59,45 @@ pub struct ApplicationSettings {
     pub base_url: String,
     #[serde(default)]
     pub environment: Environment,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct LogSettings {
+    pub level: String,
+    pub format: LogFormat,
+}
+
+#[derive(Debug, Clone, Copy, serde::Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum LogFormat {
+    #[default]
+    Pretty,
+    Json,
+}
+
+#[derive(Debug, Clone, Copy, serde::Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum LogLevel {
+    Off,
+    Error,
+    Warn,
+    #[default]
+    Info,
+    Debug,
+    Trace,
+}
+
+impl From<LogLevel> for log::LevelFilter {
+    fn from(level: LogLevel) -> Self {
+        match level {
+            LogLevel::Off => log::LevelFilter::Off,
+            LogLevel::Error => log::LevelFilter::Error,
+            LogLevel::Warn => log::LevelFilter::Warn,
+            LogLevel::Info => log::LevelFilter::Info,
+            LogLevel::Debug => log::LevelFilter::Debug,
+            LogLevel::Trace => log::LevelFilter::Trace,
+        }
+    }
 }
 
 pub fn get_configuration() -> Result<Settings, config::ConfigError> {

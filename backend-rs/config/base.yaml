@@ -6,3 +6,9 @@ database:
   username: "postgres"
   password: "postgres"
   database_name: "postgres"
+  max_connections: 5
+  log_statements_level: "debug"
+  slow_query_threshold_ms: 500
+log:
+  level: "info,sqlx=warn,tower_http=debug"
+  format: "pretty"

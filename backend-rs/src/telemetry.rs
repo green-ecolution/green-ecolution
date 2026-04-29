@@ -2,20 +2,17 @@ use tracing_subscriber::{
     EnvFilter, fmt, fmt::format::FmtSpan, layer::SubscriberExt, util::SubscriberInitExt,
 };
 
+use crate::configuration::{LogFormat, LogSettings};
+
 /// Initialize the tracing subscriber.
-///
-/// - `RUST_LOG` controls log levels (default: `info`).
-/// - `json = true` switches to structured JSON output (production).
-/// - `FmtSpan::CLOSE` emits one event per span close including elapsed time,
-///   so per-handler/per-service timings appear without manual logging.
-pub fn init(json: bool) {
-    let env_filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("info,sqlx=warn,tower_http=debug"));
+pub fn init(config: &LogSettings) {
+    let env_filter =
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(&config.level));
 
     let registry = tracing_subscriber::registry().with(env_filter);
 
-    if json {
-        registry
+    match config.format {
+        LogFormat::Json => registry
             .with(
                 fmt::layer()
                     .json()
@@ -23,10 +20,9 @@ pub fn init(json: bool) {
                     .with_span_list(true)
                     .with_span_events(FmtSpan::CLOSE),
             )
-            .init();
-    } else {
-        registry
+            .init(),
+        LogFormat::Pretty => registry
             .with(fmt::layer().with_span_events(FmtSpan::CLOSE))
-            .init();
-    };
+            .init(),
+    }
 }

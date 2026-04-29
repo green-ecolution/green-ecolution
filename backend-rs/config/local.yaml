@@ -3,3 +3,5 @@ application:
   base_url: "http://127.0.0.1:3020"
 database:
   require_ssl: false
+log:
+  level: "info,sqlx::query=debug,tower_http=debug"
