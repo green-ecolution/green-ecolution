@@ -171,6 +171,8 @@
           clippy
           rust-analyzer
           sqlx-cli
+          clang
+          lld
           # Deploy tooling
           kustomize
           ksops

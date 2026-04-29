@@ -2,6 +2,14 @@
 name = "green-ecolution"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.85"
+description = "Smart irrigation and green-space management platform"
+authors = ["Cedrik Hoffmann <choffmann@green-ecolution.de>"]
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/green-ecolution/green-ecolution"
+homepage = "https://green-ecolution.de"
+readme = "../README.md"
+publish = false
 
 [lib]
 path = "src/lib.rs"
@@ -47,3 +55,14 @@ testcontainers = "0.25"
 testcontainers-modules = { version = "0.13", features = ["postgres"] }
 uuid = { version = "1", features = ["v4"] }
 wiremock = "0.6.5"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+opt-level = 3
+panic = "abort"
+
+[profile.dev]
+opt-level = 0
+debug = true
