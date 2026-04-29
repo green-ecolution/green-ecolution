@@ -255,7 +255,7 @@ impl TreeRepository for PgTreeRepository {
     async fn nearest_trees(
         &self,
         coord: Coordinate,
-        radius_meters: f64,
+        radius: Distance,
         limit: u32,
     ) -> Result<Vec<TreeWithDistance>, RepositoryError> {
         let rows = sqlx::query!(
@@ -283,7 +283,7 @@ impl TreeRepository for PgTreeRepository {
             LIMIT $4"#,
             coord.latitude(),
             coord.longitude(),
-            radius_meters,
+            radius.meters(),
             limit as i64,
         )
         .fetch_all(&self.pool)

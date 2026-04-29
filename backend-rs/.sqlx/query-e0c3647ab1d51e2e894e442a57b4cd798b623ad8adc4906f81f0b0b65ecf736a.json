@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, sensor_id, created_at, updated_at, data\n            FROM sensor_data WHERE sensor_id = $1\n            ORDER BY created_at DESC",
+  "query": "UPDATE regions SET name = $2 WHERE id = $1\n            RETURNING id, name, created_at, updated_at",
   "describe": {
     "columns": [
       {
@@ -10,7 +10,7 @@
       },
       {
         "ordinal": 1,
-        "name": "sensor_id",
+        "name": "name",
         "type_info": "Varchar"
       },
       {
@@ -22,25 +22,20 @@
         "ordinal": 3,
         "name": "updated_at",
         "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 4,
-        "name": "data",
-        "type_info": "Jsonb"
       }
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "Int4",
+        "Varchar"
       ]
     },
     "nullable": [
       false,
       false,
       false,
-      false,
       false
     ]
   },
-  "hash": "026b9ecc19adaa89879a4c2a4d7dacb76784e756fe892a8b3d481286ce952b10"
+  "hash": "e0c3647ab1d51e2e894e442a57b4cd798b623ad8adc4906f81f0b0b65ecf736a"
 }

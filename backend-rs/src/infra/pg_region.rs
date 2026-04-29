@@ -1,3 +1,4 @@
+use chrono::NaiveDateTime;
 use sqlx::PgPool;
 
 use crate::domain::{
@@ -8,6 +9,24 @@ use crate::domain::{
         pagination::{Page, Pagination},
     },
 };
+
+struct RegionRow {
+    id: i32,
+    created_at: NaiveDateTime,
+    updated_at: NaiveDateTime,
+    name: String,
+}
+
+impl From<RegionRow> for Region {
+    fn from(row: RegionRow) -> Self {
+        Self {
+            id: Id::new(row.id),
+            created_at: row.created_at.and_utc(),
+            updated_at: row.updated_at.and_utc(),
+            name: row.name,
+        }
+    }
+}
 
 pub struct PgRegionRepository {
     pool: PgPool,
@@ -33,67 +52,51 @@ impl RegionRepository for PgRegionRepository {
             .fetch_one(&self.pool)
             .await? as u64;
 
-        let rows = sqlx::query!(
+        let items: Vec<Region> = sqlx::query_as!(
+            RegionRow,
             r#"SELECT id, name, created_at, updated_at FROM regions
             ORDER BY name ASC, id ASC LIMIT $1 OFFSET $2"#,
             limit,
             offset
         )
         .fetch_all(&self.pool)
-        .await?;
-
-        let items: Vec<Region> = rows
-            .into_iter()
-            .map(|row| Region {
-                id: Id::new(row.id),
-                created_at: row.created_at.and_utc(),
-                updated_at: row.updated_at.and_utc(),
-                name: row.name,
-            })
-            .collect();
+        .await?
+        .into_iter()
+        .map(Region::from)
+        .collect();
 
         Ok(Page { items, total })
     }
 
     async fn by_id(&self, id: Id<Region>) -> Result<Region, RepositoryError> {
-        let row = sqlx::query!(
+        Ok(sqlx::query_as!(
+            RegionRow,
             r#"SELECT id, name, created_at, updated_at FROM regions WHERE id = $1"#,
             id.value()
         )
         .fetch_optional(&self.pool)
         .await?
-        .ok_or(RepositoryError::NotFound)?;
-
-        Ok(Region {
-            id: Id::new(row.id),
-            created_at: row.created_at.and_utc(),
-            updated_at: row.updated_at.and_utc(),
-            name: row.name,
-        })
+        .ok_or(RepositoryError::NotFound)?
+        .into())
     }
 
     async fn by_ids(&self, ids: &[Id<Region>]) -> Result<Vec<Region>, RepositoryError> {
         let id_values: Vec<i32> = ids.iter().map(|id| id.value()).collect();
-        let rows = sqlx::query!(
+        Ok(sqlx::query_as!(
+            RegionRow,
             r#"SELECT id, name, created_at, updated_at FROM regions WHERE id = ANY($1)"#,
             &id_values
         )
         .fetch_all(&self.pool)
-        .await?;
-
-        Ok(rows
-            .into_iter()
-            .map(|row| Region {
-                id: Id::new(row.id),
-                created_at: row.created_at.and_utc(),
-                updated_at: row.updated_at.and_utc(),
-                name: row.name,
-            })
-            .collect())
+        .await?
+        .into_iter()
+        .map(Region::from)
+        .collect())
     }
 
     async fn by_point(&self, coord: Coordinate) -> Result<Region, RepositoryError> {
-        let row = sqlx::query!(
+        Ok(sqlx::query_as!(
+            RegionRow,
             r#"SELECT id, name, created_at, updated_at FROM regions
             WHERE ST_Contains(geometry, ST_SetSRID(ST_MakePoint($1, $2), 4326))"#,
             coord.longitude(),
@@ -101,31 +104,20 @@ impl RegionRepository for PgRegionRepository {
         )
         .fetch_optional(&self.pool)
         .await?
-        .ok_or(RepositoryError::NotFound)?;
-
-        Ok(Region {
-            id: Id::new(row.id),
-            created_at: row.created_at.and_utc(),
-            updated_at: row.updated_at.and_utc(),
-            name: row.name,
-        })
+        .ok_or(RepositoryError::NotFound)?
+        .into())
     }
 
     // TODO: Handle Geometry
     async fn create(&self, entity: RegionCreate) -> Result<Region, RepositoryError> {
-        let row = sqlx::query!(
+        Ok(sqlx::query_as!(
+            RegionRow,
             r#"INSERT INTO regions (name) VALUES ($1) RETURNING id, created_at, updated_at, name"#,
             entity.name
         )
         .fetch_one(&self.pool)
-        .await?;
-
-        Ok(Region {
-            id: Id::new(row.id),
-            created_at: row.created_at.and_utc(),
-            updated_at: row.updated_at.and_utc(),
-            name: row.name,
-        })
+        .await?
+        .into())
     }
 
     async fn update(
@@ -133,20 +125,16 @@ impl RegionRepository for PgRegionRepository {
         id: Id<Region>,
         entity: RegionUpdate,
     ) -> Result<Region, RepositoryError> {
-        let row = sqlx::query!(
-            r#"UPDATE regions SET name = $2 WHERE id = $1 RETURNING id, name, created_at, updated_at"#,
+        Ok(sqlx::query_as!(
+            RegionRow,
+            r#"UPDATE regions SET name = $2 WHERE id = $1
+            RETURNING id, name, created_at, updated_at"#,
             id.value(),
             entity.name
         )
-          .fetch_one(&self.pool)
-          .await?;
-
-        Ok(Region {
-            id: Id::new(row.id),
-            created_at: row.created_at.and_utc(),
-            updated_at: row.updated_at.and_utc(),
-            name: row.name,
-        })
+        .fetch_one(&self.pool)
+        .await?
+        .into())
     }
 
     async fn delete(&self, id: Id<Region>) -> Result<(), RepositoryError> {

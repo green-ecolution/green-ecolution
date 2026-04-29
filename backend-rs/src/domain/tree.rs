@@ -103,7 +103,7 @@ pub trait TreeRepository: Send + Sync {
     async fn nearest_trees(
         &self,
         coord: Coordinate,
-        radius_meters: f64,
+        radius: Distance,
         limit: u32,
     ) -> Result<Vec<TreeWithDistance>, RepositoryError>;
 

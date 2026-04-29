@@ -64,11 +64,10 @@ impl EvaluationRepository for PgEvaluationRepository {
 
     async fn watering_plan_user(&self) -> Result<u64, RepositoryError> {
         let count = sqlx::query_scalar!(
-            "SELECT COUNT(*) FROM user_watering_plans"
+            r#"SELECT COUNT(*) AS "count!: i64" FROM user_watering_plans"#
         )
         .fetch_one(&self.pool)
-        .await?
-        .unwrap_or(0) as u64;
+        .await? as u64;
 
         Ok(count)
     }

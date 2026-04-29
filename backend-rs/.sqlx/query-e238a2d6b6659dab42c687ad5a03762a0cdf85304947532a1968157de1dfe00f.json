@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT COUNT(*) FROM user_watering_plans",
+  "query": "SELECT COUNT(*) AS \"count!: i64\" FROM user_watering_plans",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "count",
+        "name": "count!: i64",
         "type_info": "Int8"
       }
     ],
@@ -16,5 +16,5 @@
       null
     ]
   },
-  "hash": "993ee3805a8fe594b01460766a5bd7d4517e415dbd0ea2cf441c958197859873"
+  "hash": "e238a2d6b6659dab42c687ad5a03762a0cdf85304947532a1968157de1dfe00f"
 }

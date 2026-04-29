@@ -5,6 +5,7 @@ use crate::domain::{
     events::DomainEvent,
     shared::{
         coordinates::Coordinate,
+        distance::Distance,
         pagination::{Page, Pagination},
     },
     tree::{
@@ -84,10 +85,10 @@ impl TreeService {
     pub async fn nearest_trees(
         &self,
         coord: Coordinate,
-        radius_meters: f64,
+        radius: Distance,
         limit: u32,
     ) -> Result<Vec<TreeWithDistance>, ServiceError> {
-        Ok(self.tree_repo.nearest_trees(coord, radius_meters, limit).await?)
+        Ok(self.tree_repo.nearest_trees(coord, radius, limit).await?)
     }
 
     pub async fn distinct_planting_years(&self) -> Result<Vec<PlantingYear>, ServiceError> {

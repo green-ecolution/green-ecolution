@@ -4,7 +4,10 @@ use crate::domain::{
     Id, RepositoryError,
     region::Region,
     shared::{
-        coordinates::Coordinate, pagination::{Page, Pagination}, provider_info::ProviderInfo,
+        coordinates::Coordinate,
+        field_update::FieldUpdate,
+        pagination::{Page, Pagination},
+        provider_info::ProviderInfo,
         watering_status::WateringStatus,
     },
     tree::Tree,
@@ -57,8 +60,8 @@ pub struct TreeClusterUpdate {
     pub soil_condition: Option<SoilCondition>,
     pub tree_ids: Option<Vec<Id<Tree>>>,
     pub provider_info: Option<ProviderInfo>,
-    pub coordinates: Option<Option<Coordinate>>,
-    pub region_id: Option<Option<Id<Region>>>,
+    pub coordinates: FieldUpdate<Coordinate>,
+    pub region_id: FieldUpdate<Id<Region>>,
 }
 
 #[derive(Debug, Default)]
@@ -71,7 +74,11 @@ pub struct TreeClusterQuery {
 
 #[async_trait::async_trait]
 pub trait TreeClusterRepository: Send + Sync {
-    async fn all(&self, query: TreeClusterQuery, pagination: Pagination) -> Result<Page<TreeCluster>, RepositoryError>;
+    async fn all(
+        &self,
+        query: TreeClusterQuery,
+        pagination: Pagination,
+    ) -> Result<Page<TreeCluster>, RepositoryError>;
     async fn by_id(&self, id: Id<TreeCluster>) -> Result<TreeCluster, RepositoryError>;
     async fn by_ids(&self, ids: &[Id<TreeCluster>]) -> Result<Vec<TreeCluster>, RepositoryError>;
     async fn create(&self, entity: TreeClusterCreate) -> Result<TreeCluster, RepositoryError>;

@@ -182,11 +182,17 @@ impl SensorRepository for PgSensorRepository {
     }
 
     async fn all_data(&self, sensor_id: &str) -> Result<Vec<SensorData>, RepositoryError> {
+        // TODO: replace hard limit with proper pagination once the API allows it.
+        // Sensor data grows unbounded (LoRaWAN ticks), so we cap reads to prevent OOM.
+        const MAX_ROWS: i64 = 10_000;
+
         let rows = sqlx::query!(
             r#"SELECT id, sensor_id, created_at, updated_at, data
             FROM sensor_data WHERE sensor_id = $1
-            ORDER BY created_at DESC"#,
-            sensor_id
+            ORDER BY created_at DESC
+            LIMIT $2"#,
+            sensor_id,
+            MAX_ROWS,
         )
         .fetch_all(&self.pool)
         .await?;

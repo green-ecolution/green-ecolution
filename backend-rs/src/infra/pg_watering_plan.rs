@@ -1,3 +1,4 @@
+use chrono::NaiveTime;
 use sqlx::PgPool;
 
 use crate::domain::{
@@ -74,7 +75,7 @@ impl WateringPlanRepository for PgWateringPlanRepository {
                     id: Id::new(row.id),
                     created_at: row.created_at.and_utc(),
                     updated_at: row.updated_at.and_utc(),
-                    date: row.date.and_hms_opt(0, 0, 0).unwrap().and_utc(),
+                    date: row.date.and_time(NaiveTime::MIN).and_utc(),
                     description: Some(row.description),
                     status: row.status,
                     distance: row.distance.and_then(|d| Distance::new(d).ok()),
@@ -126,7 +127,7 @@ impl WateringPlanRepository for PgWateringPlanRepository {
             id: Id::new(row.id),
             created_at: row.created_at.and_utc(),
             updated_at: row.updated_at.and_utc(),
-            date: row.date.and_hms_opt(0, 0, 0).unwrap().and_utc(),
+            date: row.date.and_time(NaiveTime::MIN).and_utc(),
             description: Some(row.description),
             status: row.status,
             distance: row.distance.and_then(|d| Distance::new(d).ok()),
@@ -204,7 +205,7 @@ impl WateringPlanRepository for PgWateringPlanRepository {
             id: Id::new(plan_id),
             created_at: row.created_at.and_utc(),
             updated_at: row.updated_at.and_utc(),
-            date: row.date.and_hms_opt(0, 0, 0).unwrap().and_utc(),
+            date: row.date.and_time(NaiveTime::MIN).and_utc(),
             description: Some(row.description),
             status: row.status,
             distance: None,

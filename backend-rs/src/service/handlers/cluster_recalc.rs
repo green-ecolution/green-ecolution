@@ -4,6 +4,7 @@ use crate::domain::{
     cluster::{TreeClusterRepository, TreeClusterUpdate},
     events::DomainEvent,
     region::RegionRepository,
+    shared::field_update::FieldUpdate,
 };
 use crate::service::event_bus::{EventHandler, EventHandlerError};
 
@@ -67,8 +68,8 @@ impl EventHandler for ClusterRecalculationHandler {
                 .update(
                     cluster_id,
                     TreeClusterUpdate {
-                        coordinates: Some(coordinates),
-                        region_id: Some(region_id),
+                        coordinates: coordinates.map_or(FieldUpdate::Cleared, FieldUpdate::Set),
+                        region_id: region_id.map_or(FieldUpdate::Cleared, FieldUpdate::Set),
                         ..Default::default()
                     },
                 )
