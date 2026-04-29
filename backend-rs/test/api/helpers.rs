@@ -1,12 +1,15 @@
+use std::sync::OnceLock;
+
 use green_ecolution::{configuration::CorsSettings, startup::Application};
-use sqlx::{PgPool, postgres::PgPoolOptions};
+use sqlx::{Connection, Executor, PgConnection, PgPool, postgres::PgPoolOptions};
 use testcontainers::{ContainerAsync, GenericImage, ImageExt, runners::AsyncRunner};
+use tokio::sync::OnceCell;
+use uuid::Uuid;
 
 pub struct TestApp {
     pub address: String,
     pub port: u16,
     pub db_pool: PgPool,
-    _container: ContainerAsync<GenericImage>,
 }
 
 impl TestApp {
@@ -45,45 +48,102 @@ impl TestApp {
     }
 }
 
-pub async fn spawn_app() -> TestApp {
-    let image = GenericImage::new("postgis/postgis", "17-3.5")
-        .with_exposed_port(5432.into())
-        .with_wait_for(testcontainers::core::WaitFor::message_on_stderr(
-            "database system is ready to accept connections",
-        ))
-        .with_env_var("POSTGRES_USER", "postgres")
-        .with_env_var("POSTGRES_PASSWORD", "postgres")
-        .with_env_var("POSTGRES_DB", "postgres");
+struct SharedContainer {
+    _container: ContainerAsync<GenericImage>,
+    host_port: u16,
+}
 
-    let container: ContainerAsync<GenericImage> = image
-        .start()
+static CONTAINER: OnceCell<SharedContainer> = OnceCell::const_new();
+static CONTAINER_ID: OnceLock<String> = OnceLock::new();
+
+// `static` destructors don't run on process exit, and the testcontainers
+// `watchdog` feature only fires on SIGTERM/SIGINT/SIGQUIT — neither covers a
+// clean test-runner exit. Register a libc `atexit` hook that force-removes the
+// container via the docker CLI as a synchronous fallback.
+extern "C" fn cleanup_container_at_exit() {
+    if let Some(id) = CONTAINER_ID.get() {
+        let _ = std::process::Command::new("docker")
+            .args(["rm", "-f", id])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status();
+    }
+}
+
+async fn shared_container() -> &'static SharedContainer {
+    CONTAINER
+        .get_or_init(|| async {
+            let image = GenericImage::new("postgis/postgis", "17-3.5")
+                .with_exposed_port(5432.into())
+                .with_wait_for(testcontainers::core::WaitFor::message_on_stderr(
+                    "database system is ready to accept connections",
+                ))
+                .with_env_var("POSTGRES_USER", "postgres")
+                .with_env_var("POSTGRES_PASSWORD", "postgres")
+                .with_env_var("POSTGRES_DB", "postgres");
+
+            let container = image
+                .start()
+                .await
+                .expect("failed to start postgis container");
+
+            let host_port = container
+                .get_host_port_ipv4(5432)
+                .await
+                .expect("failed to get postgres port");
+
+            CONTAINER_ID
+                .set(container.id().to_string())
+                .expect("container id already set");
+            unsafe { libc::atexit(cleanup_container_at_exit) };
+
+            SharedContainer {
+                _container: container,
+                host_port,
+            }
+        })
         .await
-        .expect("failed to start postgis container");
+}
 
-    let host_port = container
-        .get_host_port_ipv4(5432)
+async fn create_test_database(host_port: u16) -> (String, PgPool) {
+    let db_name = format!("test_{}", Uuid::new_v4().simple());
+
+    let admin_url = format!("postgres://postgres:postgres@127.0.0.1:{host_port}/postgres");
+    let mut admin = PgConnection::connect(&admin_url)
         .await
-        .expect("failed to get postgres port");
+        .expect("failed to connect to admin database");
+    admin
+        .execute(format!(r#"CREATE DATABASE "{db_name}""#).as_str())
+        .await
+        .expect("failed to create test database");
 
-    let connection_string =
-        format!("postgres://postgres:postgres@127.0.0.1:{host_port}/postgres");
+    let connection_string = format!("postgres://postgres:postgres@127.0.0.1:{host_port}/{db_name}");
 
-    let db_pool = PgPoolOptions::new()
+    let pool = PgPoolOptions::new()
         .max_connections(5)
         .connect(&connection_string)
         .await
         .expect("failed to connect to test database");
 
     sqlx::migrate!("./migrations")
-        .run(&db_pool)
+        .run(&pool)
         .await
         .expect("failed to run migrations");
+
+    (db_name, pool)
+}
+
+pub async fn spawn_app() -> TestApp {
+    let container = shared_container().await;
+    let (_db_name, db_pool) = create_test_database(container.host_port).await;
 
     let app = Application::build_with_pool(
         db_pool.clone(),
         "127.0.0.1:0",
         "http://127.0.0.1".to_string(),
-        CorsSettings { allowed_origins: vec!["*".to_string()] },
+        CorsSettings {
+            allowed_origins: vec!["*".to_string()],
+        },
     )
     .await
     .expect("failed to build application");
@@ -94,6 +154,5 @@ pub async fn spawn_app() -> TestApp {
         address: format!("http://127.0.0.1:{port}"),
         port,
         db_pool,
-        _container: container,
     }
 }

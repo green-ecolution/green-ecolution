@@ -388,6 +388,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "conquer-once"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d008a441c0f269f36ca13712528069a86a3e60dffee1d98b976eb3b0b2160b4"
+dependencies = [
+ "conquer-util",
+]
+
+[[package]]
+name = "conquer-util"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e763eef8846b13b380f37dfecda401770b0ca4e56e95170237bd7c25c7db3582"
+
+[[package]]
 name = "const-oid"
 version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -960,6 +975,7 @@ dependencies = [
  "config",
  "futures",
  "hostname",
+ "libc",
  "log",
  "quickcheck",
  "quickcheck_macros",
@@ -2757,6 +2773,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
+name = "signal-hook"
+version = "0.3.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d881a16cf4426aa584979d30bd82cb33429027e42122b169753d6ef1085ed6e2"
+dependencies = [
+ "libc",
+ "signal-hook-registry",
+]
+
+[[package]]
 name = "signal-hook-registry"
 version = "1.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3117,6 +3143,7 @@ dependencies = [
  "async-trait",
  "bollard",
  "bytes",
+ "conquer-once",
  "docker_credential",
  "either",
  "etcetera 0.10.0",
@@ -3128,6 +3155,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
+ "signal-hook",
  "thiserror",
  "tokio",
  "tokio-stream",
