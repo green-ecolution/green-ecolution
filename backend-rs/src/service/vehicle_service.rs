@@ -19,6 +19,7 @@ impl VehicleService {
         Self { vehicle_repo }
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn all(
         &self,
         query: VehicleQuery,
@@ -27,22 +28,27 @@ impl VehicleService {
         Ok(self.vehicle_repo.all(query, pagination).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(vehicle.id = %id))]
     pub async fn by_id(&self, id: Id<Vehicle>) -> Result<Vehicle, ServiceError> {
         Ok(self.vehicle_repo.by_id(id).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn by_ids(&self, ids: &[Id<Vehicle>]) -> Result<Vec<Vehicle>, ServiceError> {
         Ok(self.vehicle_repo.by_ids(ids).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(vehicle.plate = plate))]
     pub async fn by_plate(&self, plate: &str) -> Result<Vehicle, ServiceError> {
         Ok(self.vehicle_repo.by_plate(plate).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn create(&self, input: VehicleCreate) -> Result<Vehicle, ServiceError> {
         Ok(self.vehicle_repo.create(input).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(vehicle.id = %id))]
     pub async fn update(
         &self,
         id: Id<Vehicle>,
@@ -51,10 +57,12 @@ impl VehicleService {
         Ok(self.vehicle_repo.update(id, input).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(vehicle.id = %id))]
     pub async fn archive(&self, id: Id<Vehicle>) -> Result<(), ServiceError> {
         Ok(self.vehicle_repo.archive(id).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(vehicle.id = %id))]
     pub async fn delete(&self, id: Id<Vehicle>) -> Result<(), ServiceError> {
         Ok(self.vehicle_repo.delete(id).await?)
     }

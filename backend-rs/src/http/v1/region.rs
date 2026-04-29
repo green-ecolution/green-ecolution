@@ -37,6 +37,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn list_regions(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
@@ -64,6 +65,7 @@ pub async fn list_regions(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(region.id = region_id))]
 pub async fn get_region(
     State(state): State<Arc<AppState>>,
     Path(region_id): Path<i32>,

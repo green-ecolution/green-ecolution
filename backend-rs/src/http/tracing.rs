@@ -29,19 +29,17 @@ pub fn make_span(request: &Request) -> Span {
         .unwrap_or("unknown");
     tracing::info_span!(
         "http_request",
-        method = %request.method(),
-        uri = %request.uri(),
-        version = ?request.version(),
+        "http.request.method" = %request.method(),
+        "url.path" = %request.uri().path(),
+        "url.query" = request.uri().query(),
+        "network.protocol.version" = ?request.version(),
         request_id = %request_id,
-        status = tracing::field::Empty,
+        "http.response.status_code" = tracing::field::Empty,
         latency_ms = tracing::field::Empty,
     )
 }
 
 pub fn on_response(response: &Response<Body>, latency: Duration, span: &Span) {
-    let status = response.status().as_u16();
-    let latency_ms = latency.as_millis() as u64;
-    span.record("status", status);
-    span.record("latency_ms", latency_ms);
-    tracing::info!(status, latency_ms, "request completed");
+    span.record("http.response.status_code", response.status().as_u16());
+    span.record("latency_ms", latency.as_millis() as u64);
 }

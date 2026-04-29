@@ -32,6 +32,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn get_info(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<AppInfoResponse>, ServiceError> {
@@ -58,6 +59,7 @@ pub async fn get_info(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn get_map_info(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<MapInfoResponse>, ServiceError> {
@@ -74,6 +76,7 @@ pub async fn get_map_info(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn get_server_info(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<ServerInfoResponse>, ServiceError> {
@@ -90,6 +93,7 @@ pub async fn get_server_info(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn get_services_info(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<ServicesInfoResponse>, ServiceError> {
@@ -108,6 +112,7 @@ pub async fn get_services_info(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn get_statistics(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<DataStatisticsResponse>, ServiceError> {

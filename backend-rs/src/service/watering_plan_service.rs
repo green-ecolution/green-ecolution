@@ -28,6 +28,7 @@ impl WateringPlanService {
         }
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn all(
         &self,
         query: WateringPlanQuery,
@@ -36,10 +37,12 @@ impl WateringPlanService {
         Ok(self.watering_plan_repo.all(query, pagination).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(plan.id = %id))]
     pub async fn by_id(&self, id: Id<WateringPlan>) -> Result<WateringPlan, ServiceError> {
         Ok(self.watering_plan_repo.by_id(id).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn create(
         &self,
         input: WateringPlanCreate,
@@ -47,6 +50,7 @@ impl WateringPlanService {
         Ok(self.watering_plan_repo.create(input).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(plan.id = %id))]
     pub async fn update(
         &self,
         id: Id<WateringPlan>,
@@ -68,6 +72,7 @@ impl WateringPlanService {
         Ok(plan)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(plan.id = %id))]
     pub async fn delete(&self, id: Id<WateringPlan>) -> Result<(), ServiceError> {
         Ok(self.watering_plan_repo.delete(id).await?)
     }

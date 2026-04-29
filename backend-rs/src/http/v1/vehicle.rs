@@ -41,6 +41,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn list_vehicles(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
@@ -65,6 +66,7 @@ pub async fn list_vehicles(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(vehicle.id = id))]
 pub async fn get_vehicle(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -85,6 +87,7 @@ pub async fn get_vehicle(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn create_vehicle(
     State(state): State<Arc<AppState>>,
     Json(entity): Json<VehicleCreateRequest>,
@@ -106,6 +109,7 @@ pub async fn create_vehicle(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(vehicle.id = id))]
 pub async fn update_vehicle(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -127,6 +131,7 @@ pub async fn update_vehicle(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(vehicle.id = id))]
 pub async fn delete_vehicle(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -145,6 +150,7 @@ pub async fn delete_vehicle(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn list_archived_vehicles(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
@@ -171,6 +177,7 @@ pub async fn list_archived_vehicles(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(vehicle.id = id))]
 pub async fn archive_vehicle(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -190,6 +197,7 @@ pub async fn archive_vehicle(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(vehicle.plate = %plate))]
 pub async fn get_vehicle_by_plate(
     State(state): State<Arc<AppState>>,
     Path(plate): Path<String>,

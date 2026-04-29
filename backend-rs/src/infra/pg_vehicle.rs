@@ -77,6 +77,7 @@ impl PgVehicleRepository {
 
 #[async_trait::async_trait]
 impl VehicleRepository for PgVehicleRepository {
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn all(
         &self,
         query: VehicleQuery,
@@ -133,6 +134,7 @@ impl VehicleRepository for PgVehicleRepository {
         Ok(Page { items, total })
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn by_id(&self, id: Id<Vehicle>) -> Result<Vehicle, RepositoryError> {
         sqlx::query_as!(
             VehicleRow,
@@ -152,6 +154,7 @@ impl VehicleRepository for PgVehicleRepository {
         .try_into()
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn by_ids(&self, ids: &[Id<Vehicle>]) -> Result<Vec<Vehicle>, RepositoryError> {
         let id_values: Vec<i32> = ids.iter().map(|id| id.value()).collect();
         sqlx::query_as!(
@@ -173,6 +176,7 @@ impl VehicleRepository for PgVehicleRepository {
         .collect()
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn by_plate(&self, plate: &str) -> Result<Vehicle, RepositoryError> {
         sqlx::query_as!(
             VehicleRow,
@@ -192,6 +196,7 @@ impl VehicleRepository for PgVehicleRepository {
         .try_into()
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn create(&self, entity: VehicleCreate) -> Result<Vehicle, RepositoryError> {
         sqlx::query_as!(
             VehicleRow,
@@ -225,6 +230,7 @@ impl VehicleRepository for PgVehicleRepository {
         .try_into()
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn update(
         &self,
         id: Id<Vehicle>,
@@ -281,6 +287,7 @@ impl VehicleRepository for PgVehicleRepository {
         .try_into()
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn archive(&self, id: Id<Vehicle>) -> Result<(), RepositoryError> {
         sqlx::query!(
             "UPDATE vehicles SET archived_at = NOW() WHERE id = $1",
@@ -291,6 +298,7 @@ impl VehicleRepository for PgVehicleRepository {
         Ok(())
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn delete(&self, id: Id<Vehicle>) -> Result<(), RepositoryError> {
         sqlx::query!("DELETE FROM vehicles WHERE id = $1", id.value())
             .execute(&self.pool)

@@ -76,6 +76,7 @@ impl PgTreeClusterRepository {
 
 #[async_trait::async_trait]
 impl TreeClusterRepository for PgTreeClusterRepository {
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn all(
         &self,
         query: TreeClusterQuery,
@@ -131,6 +132,7 @@ impl TreeClusterRepository for PgTreeClusterRepository {
         Ok(Page { items, total })
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn by_id(&self, id: Id<TreeCluster>) -> Result<TreeCluster, RepositoryError> {
         Ok(sqlx::query_as!(
             TreeClusterRow,
@@ -153,6 +155,7 @@ impl TreeClusterRepository for PgTreeClusterRepository {
         .into())
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn by_ids(
         &self,
         ids: &[Id<TreeCluster>],
@@ -180,6 +183,7 @@ impl TreeClusterRepository for PgTreeClusterRepository {
         .collect())
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn create(&self, entity: TreeClusterCreate) -> Result<TreeCluster, RepositoryError> {
         let mut tx = self.pool.begin().await?;
 
@@ -235,6 +239,7 @@ impl TreeClusterRepository for PgTreeClusterRepository {
         })
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn update(
         &self,
         id: Id<TreeCluster>,
@@ -303,6 +308,7 @@ impl TreeClusterRepository for PgTreeClusterRepository {
         Ok(())
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn delete(&self, id: Id<TreeCluster>) -> Result<(), RepositoryError> {
         let mut tx = self.pool.begin().await?;
 
@@ -321,6 +327,7 @@ impl TreeClusterRepository for PgTreeClusterRepository {
         Ok(())
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn archive(&self, id: Id<TreeCluster>) -> Result<(), RepositoryError> {
         sqlx::query!(
             "UPDATE tree_clusters SET archived = true WHERE id = $1",
@@ -331,6 +338,7 @@ impl TreeClusterRepository for PgTreeClusterRepository {
         Ok(())
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn center_point(&self, id: Id<TreeCluster>) -> Result<Coordinate, RepositoryError> {
         let row = sqlx::query!(
             r#"SELECT

@@ -26,6 +26,7 @@ impl PgWateringPlanRepository {
 
 #[async_trait::async_trait]
 impl WateringPlanRepository for PgWateringPlanRepository {
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn all(
         &self,
         query: WateringPlanQuery,
@@ -99,6 +100,7 @@ impl WateringPlanRepository for PgWateringPlanRepository {
         Ok(Page { items, total })
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn by_id(&self, id: Id<WateringPlan>) -> Result<WateringPlan, RepositoryError> {
         let row = sqlx::query!(
             r#"SELECT wp.id, wp.created_at, wp.updated_at, wp.date, wp.description,
@@ -147,6 +149,7 @@ impl WateringPlanRepository for PgWateringPlanRepository {
         })
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn create(
         &self,
         entity: WateringPlanCreate,
@@ -222,6 +225,7 @@ impl WateringPlanRepository for PgWateringPlanRepository {
         })
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn update(
         &self,
         id: Id<WateringPlan>,
@@ -256,6 +260,7 @@ impl WateringPlanRepository for PgWateringPlanRepository {
         self.by_id(id).await
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn delete(&self, id: Id<WateringPlan>) -> Result<(), RepositoryError> {
         sqlx::query!("DELETE FROM watering_plans WHERE id = $1", id.value())
             .execute(&self.pool)

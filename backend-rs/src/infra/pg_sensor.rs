@@ -57,6 +57,7 @@ impl PgSensorRepository {
 
 #[async_trait::async_trait]
 impl SensorRepository for PgSensorRepository {
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn all(
         &self,
         query: SensorQuery,
@@ -98,6 +99,7 @@ impl SensorRepository for PgSensorRepository {
         Ok(Page { items, total })
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn by_id(&self, id: &str) -> Result<Sensor, RepositoryError> {
         sqlx::query_as!(
             SensorRow,
@@ -114,6 +116,7 @@ impl SensorRepository for PgSensorRepository {
         .try_into()
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn by_ids(&self, ids: &[String]) -> Result<Vec<Sensor>, RepositoryError> {
         sqlx::query_as!(
             SensorRow,
@@ -131,6 +134,7 @@ impl SensorRepository for PgSensorRepository {
         .collect()
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn create(&self, entity: SensorCreate) -> Result<Sensor, RepositoryError> {
         let lat = entity.coordinate.latitude();
         let lng = entity.coordinate.longitude();
@@ -153,6 +157,7 @@ impl SensorRepository for PgSensorRepository {
         .try_into()
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn update(&self, id: &str, entity: SensorUpdate) -> Result<Sensor, RepositoryError> {
         sqlx::query_as!(
             SensorRow,
@@ -180,6 +185,7 @@ impl SensorRepository for PgSensorRepository {
         .try_into()
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         sqlx::query!("DELETE FROM sensors WHERE id = $1", id)
             .execute(&self.pool)
@@ -187,6 +193,7 @@ impl SensorRepository for PgSensorRepository {
         Ok(())
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn all_data(&self, sensor_id: &str) -> Result<Vec<SensorData>, RepositoryError> {
         // TODO: replace hard limit with proper pagination once the API allows it.
         // Sensor data grows unbounded (LoRaWAN ticks), so we cap reads to prevent OOM.
@@ -215,6 +222,7 @@ impl SensorRepository for PgSensorRepository {
             .collect())
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn latest_data(&self, sensor_id: &str) -> Result<SensorData, RepositoryError> {
         let row = sqlx::query!(
             r#"SELECT id, sensor_id, created_at, updated_at, data
@@ -235,6 +243,7 @@ impl SensorRepository for PgSensorRepository {
         })
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn create_data(&self, data: SensorData) -> Result<(), RepositoryError> {
         sqlx::query!(
             r#"INSERT INTO sensor_data (sensor_id, data) VALUES ($1, $2)"#,

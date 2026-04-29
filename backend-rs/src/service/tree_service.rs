@@ -26,6 +26,7 @@ impl TreeService {
         Self { tree_repo, event_bus }
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn all(
         &self,
         query: TreeQuery,
@@ -34,14 +35,17 @@ impl TreeService {
         Ok(self.tree_repo.all(query, pagination).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(tree.id = %id))]
     pub async fn by_id(&self, id: Id<Tree>) -> Result<Tree, ServiceError> {
         Ok(self.tree_repo.by_id(id).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn by_ids(&self, ids: &[Id<Tree>]) -> Result<Vec<Tree>, ServiceError> {
         Ok(self.tree_repo.by_ids(ids).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn create(&self, input: TreeCreate) -> Result<Tree, ServiceError> {
         let tree = self.tree_repo.create(input).await?;
         self.event_bus
@@ -53,6 +57,7 @@ impl TreeService {
         Ok(tree)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(tree.id = %id))]
     pub async fn update(&self, id: Id<Tree>, input: TreeUpdate) -> Result<Tree, ServiceError> {
         let old = self.tree_repo.by_id(id).await?;
         let tree = self.tree_repo.update(id, input).await?;
@@ -66,6 +71,7 @@ impl TreeService {
         Ok(tree)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(tree.id = %id))]
     pub async fn delete(&self, id: Id<Tree>) -> Result<(), ServiceError> {
         let tree = self.tree_repo.by_id(id).await?;
         self.tree_repo.delete(id).await?;
@@ -78,10 +84,12 @@ impl TreeService {
         Ok(())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(tree.id = %id))]
     pub async fn archive(&self, id: Id<Tree>) -> Result<(), ServiceError> {
         Ok(self.tree_repo.archive(id).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(limit))]
     pub async fn nearest_trees(
         &self,
         coord: Coordinate,
@@ -91,10 +99,12 @@ impl TreeService {
         Ok(self.tree_repo.nearest_trees(coord, radius, limit).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn distinct_planting_years(&self) -> Result<Vec<PlantingYear>, ServiceError> {
         Ok(self.tree_repo.distinct_planting_years().await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %cluster_id))]
     pub async fn unlink_cluster_id(
         &self,
         cluster_id: Id<TreeCluster>,
@@ -102,6 +112,7 @@ impl TreeService {
         Ok(self.tree_repo.unlink_cluster_id(cluster_id).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = sensor_id))]
     pub async fn unlink_sensor_id(&self, sensor_id: &str) -> Result<(), ServiceError> {
         Ok(self.tree_repo.unlink_sensor_id(sensor_id).await?)
     }

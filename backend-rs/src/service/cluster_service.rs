@@ -35,6 +35,7 @@ impl ClusterService {
         }
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn all(
         &self,
         query: TreeClusterQuery,
@@ -43,10 +44,12 @@ impl ClusterService {
         Ok(self.cluster_repo.all(query, pagination).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
     pub async fn by_id(&self, id: Id<TreeCluster>) -> Result<TreeCluster, ServiceError> {
         Ok(self.cluster_repo.by_id(id).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn by_ids(
         &self,
         ids: &[Id<TreeCluster>],
@@ -54,6 +57,7 @@ impl ClusterService {
         Ok(self.cluster_repo.by_ids(ids).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn create(
         &self,
         input: TreeClusterCreate,
@@ -67,6 +71,7 @@ impl ClusterService {
         Ok(cluster)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
     pub async fn update(
         &self,
         id: Id<TreeCluster>,
@@ -82,16 +87,19 @@ impl ClusterService {
         Ok(())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
     pub async fn delete(&self, id: Id<TreeCluster>) -> Result<(), ServiceError> {
         self.tree_repo.unlink_cluster_id(id).await?;
         self.cluster_repo.delete(id).await?;
         Ok(())
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
     pub async fn archive(&self, id: Id<TreeCluster>) -> Result<(), ServiceError> {
         Ok(self.cluster_repo.archive(id).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
     pub async fn center_point(&self, id: Id<TreeCluster>) -> Result<Coordinate, ServiceError> {
         Ok(self.cluster_repo.center_point(id).await?)
     }

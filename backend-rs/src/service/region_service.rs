@@ -18,6 +18,7 @@ impl RegionService {
         Self { region_repo }
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn all(
         &self,
         query: RegionQuery,
@@ -26,22 +27,27 @@ impl RegionService {
         Ok(self.region_repo.all(query, pagination).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(region.id = %id))]
     pub async fn by_id(&self, id: Id<Region>) -> Result<Region, ServiceError> {
         Ok(self.region_repo.by_id(id).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn by_ids(&self, ids: &[Id<Region>]) -> Result<Vec<Region>, ServiceError> {
         Ok(self.region_repo.by_ids(ids).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn by_point(&self, coord: Coordinate) -> Result<Region, ServiceError> {
         Ok(self.region_repo.by_point(coord).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub async fn create(&self, entity: RegionCreate) -> Result<Region, ServiceError> {
         Ok(self.region_repo.create(entity).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(region.id = %id))]
     pub async fn update(
         &self,
         id: Id<Region>,
@@ -50,6 +56,7 @@ impl RegionService {
         Ok(self.region_repo.update(id, entity).await?)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(region.id = %id))]
     pub async fn delete(&self, id: Id<Region>) -> Result<(), ServiceError> {
         Ok(self.region_repo.delete(id).await?)
     }

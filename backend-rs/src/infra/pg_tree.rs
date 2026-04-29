@@ -72,6 +72,7 @@ impl PgTreeRepository {
 
 #[async_trait::async_trait]
 impl TreeRepository for PgTreeRepository {
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn all(
         &self,
         query: TreeQuery,
@@ -128,6 +129,7 @@ impl TreeRepository for PgTreeRepository {
         Ok(Page { items, total })
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn by_id(&self, id: Id<Tree>) -> Result<Tree, RepositoryError> {
         sqlx::query_as!(
             TreeRow,
@@ -145,6 +147,7 @@ impl TreeRepository for PgTreeRepository {
         .try_into()
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn by_ids(&self, ids: &[Id<Tree>]) -> Result<Vec<Tree>, RepositoryError> {
         let id_values: Vec<i32> = ids.iter().map(|id| id.value()).collect();
         sqlx::query_as!(
@@ -164,6 +167,7 @@ impl TreeRepository for PgTreeRepository {
         .collect()
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn create(&self, entity: TreeCreate) -> Result<Tree, RepositoryError> {
         let lat = entity.coordinate.latitude();
         let lng = entity.coordinate.longitude();
@@ -196,6 +200,7 @@ impl TreeRepository for PgTreeRepository {
         .try_into()
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn update(&self, id: Id<Tree>, entity: TreeUpdate) -> Result<Tree, RepositoryError> {
         let lat = entity.coordinate.map(|c| c.latitude());
         let lng = entity.coordinate.map(|c| c.longitude());
@@ -247,10 +252,12 @@ impl TreeRepository for PgTreeRepository {
         .try_into()
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn archive(&self, _id: Id<Tree>) -> Result<(), RepositoryError> {
         todo!("implement archive for trees")
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn delete(&self, id: Id<Tree>) -> Result<(), RepositoryError> {
         sqlx::query!("DELETE FROM trees WHERE id = $1", id.value())
             .execute(&self.pool)
@@ -258,6 +265,7 @@ impl TreeRepository for PgTreeRepository {
         Ok(())
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn nearest_trees(
         &self,
         coord: Coordinate,
@@ -322,6 +330,7 @@ impl TreeRepository for PgTreeRepository {
             .collect()
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn distinct_planting_years(&self) -> Result<Vec<PlantingYear>, RepositoryError> {
         let rows = sqlx::query_scalar!(
             "SELECT DISTINCT planting_year FROM trees ORDER BY planting_year ASC"
@@ -335,6 +344,7 @@ impl TreeRepository for PgTreeRepository {
             .collect())
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn unlink_cluster_id(
         &self,
         cluster_id: Id<TreeCluster>,
@@ -348,6 +358,7 @@ impl TreeRepository for PgTreeRepository {
         Ok(())
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn unlink_sensor_id(&self, sensor_id: &str) -> Result<(), RepositoryError> {
         sqlx::query!(
             "UPDATE trees SET sensor_id = NULL, watering_status = 'unknown' WHERE sensor_id = $1",

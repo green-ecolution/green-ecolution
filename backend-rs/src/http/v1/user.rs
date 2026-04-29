@@ -43,6 +43,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn list_users(
     State(_state): State<Arc<AppState>>,
     Query(_params): Query<PaginationParams>,
@@ -61,6 +62,7 @@ pub async fn list_users(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn create_user(
     State(_state): State<Arc<AppState>>,
     Json(_entity): Json<UserRegisterRequest>,
@@ -78,6 +80,7 @@ pub async fn create_user(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn login(
     State(_state): State<Arc<AppState>>,
 ) -> Result<Json<LoginResponse>, ServiceError> {
@@ -95,6 +98,7 @@ pub async fn login(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn login_token(
     State(_state): State<Arc<AppState>>,
     Json(_entity): Json<LoginTokenRequest>,
@@ -112,6 +116,7 @@ pub async fn login_token(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn logout(
     State(_state): State<Arc<AppState>>,
     Json(_entity): Json<LogoutRequest>,
@@ -129,6 +134,7 @@ pub async fn logout(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn list_users_by_role(
     State(_state): State<Arc<AppState>>,
     Path(_role_id): Path<String>,
@@ -146,6 +152,7 @@ pub async fn list_users_by_role(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn refresh_token(
     State(_state): State<Arc<AppState>>,
     Json(_entity): Json<RefreshTokenRequest>,

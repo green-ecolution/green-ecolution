@@ -38,6 +38,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn list_plugins(
     State(_state): State<Arc<AppState>>,
 ) -> Result<Json<PluginListResponse>, ServiceError> {
@@ -55,6 +56,7 @@ pub async fn list_plugins(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn register_plugin(
     State(_state): State<Arc<AppState>>,
     Json(_entity): Json<PluginRegisterRequest>,
@@ -73,6 +75,7 @@ pub async fn register_plugin(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn get_plugin(
     State(_state): State<Arc<AppState>>,
     Path(_slug): Path<String>,
@@ -91,6 +94,7 @@ pub async fn get_plugin(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn plugin_heartbeat(
     State(_state): State<Arc<AppState>>,
     Path(_slug): Path<String>,
@@ -110,6 +114,7 @@ pub async fn plugin_heartbeat(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn plugin_refresh_token(
     State(_state): State<Arc<AppState>>,
     Path(_slug): Path<String>,
@@ -129,6 +134,7 @@ pub async fn plugin_refresh_token(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn unregister_plugin(
     State(_state): State<Arc<AppState>>,
     Path(_slug): Path<String>,

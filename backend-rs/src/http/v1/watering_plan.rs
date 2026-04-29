@@ -83,6 +83,7 @@ async fn resolve_plan_relations(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn list_watering_plans(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
@@ -156,6 +157,7 @@ pub async fn list_watering_plans(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(plan.id = id))]
 pub async fn get_watering_plan(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -186,6 +188,7 @@ pub async fn get_watering_plan(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn create_watering_plan(
     State(state): State<Arc<AppState>>,
     Json(entity): Json<WateringPlanCreateRequest>,
@@ -218,6 +221,7 @@ pub async fn create_watering_plan(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(plan.id = id))]
 pub async fn update_watering_plan(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -253,6 +257,7 @@ pub async fn update_watering_plan(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(plan.id = id))]
 pub async fn delete_watering_plan(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -271,6 +276,7 @@ pub async fn delete_watering_plan(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn get_gpx_file(
     State(_state): State<Arc<AppState>>,
     Path(_name): Path<String>,
@@ -287,6 +293,7 @@ pub async fn get_gpx_file(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn preview_route(
     State(_state): State<Arc<AppState>>,
 ) -> Result<Json<()>, ServiceError> {

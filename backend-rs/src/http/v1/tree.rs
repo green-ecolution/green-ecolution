@@ -55,6 +55,7 @@ async fn build_tree_response(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn list_trees(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
@@ -90,6 +91,7 @@ pub async fn list_trees(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(tree.id = id))]
 pub async fn get_tree(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -110,6 +112,7 @@ pub async fn get_tree(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn create_tree(
     State(state): State<Arc<AppState>>,
     Json(entity): Json<TreeCreateRequest>,
@@ -132,6 +135,7 @@ pub async fn create_tree(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(tree.id = id))]
 pub async fn update_tree(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -154,6 +158,7 @@ pub async fn update_tree(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(tree.id = id))]
 pub async fn delete_tree(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -171,6 +176,7 @@ pub async fn delete_tree(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn list_planting_years(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<i32>>, ServiceError> {
@@ -188,6 +194,7 @@ pub async fn list_planting_years(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn get_nearest_trees(
     State(_state): State<Arc<AppState>>,
     Query(_params): Query<NearestTreeParams>,
@@ -209,6 +216,7 @@ pub async fn get_nearest_trees(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(tree.id = tree_id))]
 pub async fn get_tree_sensor(
     State(state): State<Arc<AppState>>,
     Path((tree_id, _sensor_id)): Path<(i32, String)>,

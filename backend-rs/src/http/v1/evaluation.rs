@@ -33,6 +33,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn get_evaluation(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<EvaluationResponse>, ServiceError> {

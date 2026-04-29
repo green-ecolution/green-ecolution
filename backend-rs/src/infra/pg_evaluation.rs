@@ -17,6 +17,7 @@ impl PgEvaluationRepository {
 
 #[async_trait::async_trait]
 impl EvaluationRepository for PgEvaluationRepository {
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn regions_with_watering_plan(
         &self,
     ) -> Result<Vec<RegionEvaluation>, RepositoryError> {
@@ -35,6 +36,7 @@ impl EvaluationRepository for PgEvaluationRepository {
         Ok(rows)
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn vehicle_with_watering_plan(
         &self,
     ) -> Result<Vec<VehicleEvaluation>, RepositoryError> {
@@ -52,6 +54,7 @@ impl EvaluationRepository for PgEvaluationRepository {
         Ok(rows)
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn total_consumed_water(&self) -> Result<f64, RepositoryError> {
         let total = sqlx::query_scalar!(
             "SELECT COALESCE(SUM(consumed_water), 0)::float8 AS \"total!\" FROM tree_cluster_watering_plans"
@@ -62,6 +65,7 @@ impl EvaluationRepository for PgEvaluationRepository {
         Ok(total)
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn watering_plan_user(&self) -> Result<u64, RepositoryError> {
         let count = sqlx::query_scalar!(
             r#"SELECT COUNT(*) AS "count!: i64" FROM user_watering_plans"#

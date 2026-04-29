@@ -40,6 +40,7 @@ impl PgRegionRepository {
 
 #[async_trait::async_trait]
 impl RegionRepository for PgRegionRepository {
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn all(
         &self,
         _query: RegionQuery,
@@ -68,6 +69,7 @@ impl RegionRepository for PgRegionRepository {
         Ok(Page { items, total })
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn by_id(&self, id: Id<Region>) -> Result<Region, RepositoryError> {
         Ok(sqlx::query_as!(
             RegionRow,
@@ -80,6 +82,7 @@ impl RegionRepository for PgRegionRepository {
         .into())
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn by_ids(&self, ids: &[Id<Region>]) -> Result<Vec<Region>, RepositoryError> {
         let id_values: Vec<i32> = ids.iter().map(|id| id.value()).collect();
         Ok(sqlx::query_as!(
@@ -94,6 +97,7 @@ impl RegionRepository for PgRegionRepository {
         .collect())
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn by_point(&self, coord: Coordinate) -> Result<Region, RepositoryError> {
         Ok(sqlx::query_as!(
             RegionRow,
@@ -109,6 +113,7 @@ impl RegionRepository for PgRegionRepository {
     }
 
     // TODO: Handle Geometry
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn create(&self, entity: RegionCreate) -> Result<Region, RepositoryError> {
         Ok(sqlx::query_as!(
             RegionRow,
@@ -120,6 +125,7 @@ impl RegionRepository for PgRegionRepository {
         .into())
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn update(
         &self,
         id: Id<Region>,
@@ -137,6 +143,7 @@ impl RegionRepository for PgRegionRepository {
         .into())
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn delete(&self, id: Id<Region>) -> Result<(), RepositoryError> {
         sqlx::query!(r#"DELETE FROM regions WHERE id = $1"#, id.value())
             .execute(&self.pool)

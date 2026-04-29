@@ -78,6 +78,7 @@ async fn build_cluster_response(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn list_clusters(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
@@ -115,6 +116,7 @@ pub async fn list_clusters(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(cluster.id = id))]
 pub async fn get_cluster(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -137,6 +139,7 @@ pub async fn get_cluster(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn create_cluster(
     State(state): State<Arc<AppState>>,
     Json(entity): Json<TreeClusterCreateRequest>,
@@ -161,6 +164,7 @@ pub async fn create_cluster(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(cluster.id = id))]
 pub async fn update_cluster(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
@@ -190,6 +194,7 @@ pub async fn update_cluster(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(cluster.id = id))]
 pub async fn delete_cluster(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,

@@ -39,6 +39,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all)]
 pub async fn list_sensors(
     State(state): State<Arc<AppState>>,
     Query(params): Query<PaginationParams>,
@@ -63,6 +64,7 @@ pub async fn list_sensors(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %id))]
 pub async fn get_sensor(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
@@ -82,6 +84,7 @@ pub async fn get_sensor(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %id))]
 pub async fn delete_sensor(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
@@ -100,6 +103,7 @@ pub async fn delete_sensor(
         (status = 500, description = "Internal server error"),
     )
 )]
+#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %id))]
 pub async fn list_sensor_data(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
