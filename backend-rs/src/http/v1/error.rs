@@ -13,6 +13,9 @@ impl IntoResponse for RepositoryError {
                 StatusCode::INTERNAL_SERVER_ERROR
             }
         };
+        if status.is_server_error() {
+            tracing::error!(error = %self, kind = "repository", "request failed");
+        }
         (status, self.to_string()).into_response()
     }
 }

@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
 use axum::Router;
-use tower_http::trace::TraceLayer;
+use tower_http::{
+    request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
+    trace::{DefaultOnFailure, TraceLayer},
+};
 use utoipa::OpenApi;
 use utoipa::openapi::Server;
 use utoipa_axum::router::OpenApiRouter;
@@ -9,6 +12,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
     domain::info::SystemInfoProvider,
+    http::tracing::{MakeRequestUuid, REQUEST_ID_HEADER, make_span, on_response},
     service::{
         cluster_service::ClusterService,
         evaluation_service::EvaluationService,
@@ -20,6 +24,7 @@ use crate::{
     },
 };
 
+mod tracing;
 pub mod v1;
 
 pub struct AppState {
@@ -68,8 +73,15 @@ pub fn router(state: Arc<AppState>, base_url: &str) -> Router {
 
     api.servers = Some(vec![Server::new(base_url)]);
 
+    let trace_layer = TraceLayer::new_for_http()
+        .make_span_with(make_span)
+        .on_response(on_response)
+        .on_failure(DefaultOnFailure::new().level(::tracing::Level::ERROR));
+
     router
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api))
-        .layer(TraceLayer::new_for_http())
+        .layer(PropagateRequestIdLayer::new(REQUEST_ID_HEADER))
+        .layer(trace_layer)
+        .layer(SetRequestIdLayer::new(REQUEST_ID_HEADER, MakeRequestUuid))
         .with_state(state)
 }
