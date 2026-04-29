@@ -1,0 +1,8 @@
+DELETE FROM vehicles;
+DELETE FROM trees;
+DELETE FROM tree_clusters;
+DELETE FROM sensor_data;
+DELETE FROM sensors;
+DELETE FROM watering_plans;
+DELETE FROM vehicle_watering_plans;
+DELETE FROM tree_cluster_watering_plans;

@@ -269,7 +269,6 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/windows,linux,macos,go,goland+all,jetbrains+all,visualstudiocode
 .secrets
 config.yaml
-bin
 .docker/.env*
 config/config.stage.yaml
 config/config.prod.yaml
@@ -320,3 +319,4 @@ app/.__mf__temp/app
 dev-dist
 .direnv
 .pre-commit-config.yaml
+/bin

@@ -1,27 +1,15 @@
 set dotenv-load
 set shell := ["bash", "-euc"]
 
-backend_dir      := "backend"
+backend_dir      := "backend-rs"
 frontend_dir     := "frontend"
 frontend_dist    := frontend_dir / "app/dist"
-backend_fe_dist  := backend_dir / "frontend/dist"
 binary_name      := "green-ecolution"
 
 app_version        := `git describe --tags --always --dirty 2>/dev/null || echo "dev"`
 app_git_commit     := `git rev-parse --short HEAD 2>/dev/null || echo "unknown"`
 app_git_branch     := `git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown"`
-app_git_repository := "https://github.com/green-ecolution/green-ecolution.git"
 app_build_time     := `date -u +'%Y-%m-%dT%H:%M:%SZ'`
-
-goflags := '-ldflags=" \
-  -s -w \
-  -X main.version=' + app_version + ' \
-  -X github.com/green-ecolution/backend/internal/storage/local/info.version=' + app_version + ' \
-  -X github.com/green-ecolution/backend/internal/storage/local/info.gitCommit=' + app_git_commit + ' \
-  -X github.com/green-ecolution/backend/internal/storage/local/info.gitBranch=' + app_git_branch + ' \
-  -X github.com/green-ecolution/backend/internal/storage/local/info.gitRepository=' + app_git_repository + ' \
-  -X github.com/green-ecolution/backend/internal/storage/local/info.buildTime=' + app_build_time + ' \
-"'
 
 postgres_user     := env("POSTGRES_USER", "postgres")
 postgres_password := env("POSTGRES_PASSWORD", "postgres")
@@ -48,32 +36,25 @@ s3_use_ssl         := if porkbun_api_key != "" { "true" } else { "false" }
 
 db_url := "postgres://" + postgres_user + ":" + postgres_password + "@" + postgres_host + ":" + postgres_port + "/" + postgres_db
 
-# Auth / S3 secrets (from .env)
-ge_auth_oidc_frontend_client_id     := env("GE_AUTH_OIDC_FRONTEND_CLIENT_ID", "frontend")
-ge_auth_oidc_frontend_client_secret := env("GE_AUTH_OIDC_FRONTEND_CLIENT_SECRET", "")
-ge_auth_oidc_backend_client_id      := env("GE_AUTH_OIDC_BACKEND_CLIENT_ID", "backend")
-ge_auth_oidc_backend_client_secret  := env("GE_AUTH_OIDC_BACKEND_CLIENT_SECRET", "")
-ge_s3_accesskey                     := env("GE_S3_ACCESSKEY", "root")
-ge_s3_secretaccesskey               := env("GE_S3_SECRETACCESSKEY", "secret1234")
-
 # Show available recipes
 default:
     @just --list
 
-# Install Go modules + pnpm dependencies
+# Install Rust toolchain components + pnpm dependencies
 setup:
-    @echo "Installing backend deps..."
-    cd {{ backend_dir }} && go mod download
+    @echo "Checking Rust toolchain..."
+    @command -v cargo >/dev/null 2>&1 || { echo "cargo missing (install rustup)"; exit 1; }
+    cd {{ backend_dir }} && cargo fetch --locked
     @echo "Installing frontend deps..."
     @command -v pnpm >/dev/null 2>&1 || { echo "pnpm missing (hint: corepack enable)"; exit 1; }
     cd {{ frontend_dir }} && pnpm install
 
-# Compile the Go binary (assumes {{ backend_fe_dist }} is prepared)
+# Compile the Rust binary
 _compile-backend:
-    @echo "Compiling Go binary..."
-    mkdir -p {{ backend_fe_dist }}
-    test -f {{ backend_fe_dist }}/index.html || echo "<!-- placeholder for go:embed -->" > {{ backend_fe_dist }}/index.html
-    cd {{ backend_dir }} && CGO_ENABLED=0 go build {{ goflags }} -o ../bin/{{ binary_name }} .
+    @echo "Compiling Rust binary..."
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --release --locked --bin {{ binary_name }}
+    mkdir -p bin
+    cp {{ backend_dir }}/target/release/{{ binary_name }} bin/{{ binary_name }}
 
 # Build frontend (pnpm)
 build-frontend:
@@ -83,49 +64,52 @@ build-frontend:
     cd {{ frontend_dir }} && pnpm run build
     @echo "Frontend build done."
 
-# Build the Go backend (fast; placeholder frontend/dist for go:embed)
+# Build the Rust backend
 build-backend: _compile-backend
     @echo "Backend build done."
 
-# Full build: frontend + backend with embedded assets
-build: build-frontend
-    @echo "Embedding frontend into backend..."
-    mkdir -p {{ backend_fe_dist }}
-    cp -R {{ frontend_dist }}/. {{ backend_fe_dist }}/
-    @just _compile-backend
+# Full build: frontend + backend
+build: build-frontend _compile-backend
     @echo "Build done."
 
 # Build for all platforms
 build-all: build-frontend
     @echo "Building backend for all platforms..."
-    cd {{ backend_dir }} && GOARCH=amd64 GOOS=darwin  CGO_ENABLED=0 go build {{ goflags }} -o ../bin/{{ binary_name }}-darwin  .
-    cd {{ backend_dir }} && GOARCH=amd64 GOOS=linux   CGO_ENABLED=0 go build {{ goflags }} -o ../bin/{{ binary_name }}-linux   .
-    cd {{ backend_dir }} && GOARCH=amd64 GOOS=windows CGO_ENABLED=0 go build {{ goflags }} -o ../bin/{{ binary_name }}-windows .
+    @just build-linux
+    @just build-darwin
+    @just build-windows
 
-# Build for darwin
+# Build for darwin (requires `rustup target add x86_64-apple-darwin` and a cross linker)
 build-darwin:
-    @echo "Building backend for darwin..."
-    cd {{ backend_dir }} && GOARCH=amd64 GOOS=darwin CGO_ENABLED=0 go build {{ goflags }} -o ../bin/{{ binary_name }}-darwin .
+    @echo "Building backend for darwin (x86_64)..."
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --release --locked --target x86_64-apple-darwin --bin {{ binary_name }}
+    mkdir -p bin
+    cp {{ backend_dir }}/target/x86_64-apple-darwin/release/{{ binary_name }} bin/{{ binary_name }}-darwin
 
-# Build for linux
+# Build for linux (musl static binary; requires `rustup target add x86_64-unknown-linux-musl`)
 build-linux:
-    @echo "Building backend for linux..."
-    cd {{ backend_dir }} && GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build {{ goflags }} -o ../bin/{{ binary_name }}-linux .
+    @echo "Building backend for linux (x86_64-musl)..."
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --release --locked --target x86_64-unknown-linux-musl --bin {{ binary_name }}
+    mkdir -p bin
+    cp {{ backend_dir }}/target/x86_64-unknown-linux-musl/release/{{ binary_name }} bin/{{ binary_name }}-linux
 
-# Build for windows
+# Build for windows (requires `rustup target add x86_64-pc-windows-gnu` and mingw-w64)
 build-windows:
-    @echo "Building backend for windows..."
-    cd {{ backend_dir }} && GOARCH=amd64 GOOS=windows CGO_ENABLED=0 go build {{ goflags }} -o ../bin/{{ binary_name }}-windows .
+    @echo "Building backend for windows (x86_64-gnu)..."
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --release --locked --target x86_64-pc-windows-gnu --bin {{ binary_name }}
+    mkdir -p bin
+    cp {{ backend_dir }}/target/x86_64-pc-windows-gnu/release/{{ binary_name }}.exe bin/{{ binary_name }}-windows.exe
 
 # Run backend binary
 run: build
     @echo "Running backend..."
-    ./bin/{{ binary_name }} -config ./backend/config/config.yaml
+    cd {{ backend_dir }} && APP_ENVIRONMENT=local ../bin/{{ binary_name }}
 
-# Run backend with live reload (air)
+# Run backend with live reload (bacon)
 run-live:
-    @echo "Running backend live (air)..."
-    cd {{ backend_dir }} && go tool air
+    @echo "Running backend live (bacon)..."
+    @command -v bacon >/dev/null 2>&1 || { echo "bacon missing — run: cargo install bacon (or: nix shell nixpkgs#bacon)"; exit 1; }
+    cd {{ backend_dir }} && SQLX_OFFLINE=true APP_ENVIRONMENT=local bacon --headless --job run -- --bin {{ binary_name }}
 
 # Run frontend dev server
 fe-dev:
@@ -137,56 +121,30 @@ fe-preview:
 
 # Backend + frontend dev via Traefik
 run-dev:
+    @command -v bacon >/dev/null 2>&1 || { echo "bacon missing — run: cargo install bacon (or: nix shell nixpkgs#bacon)"; exit 1; }
     @echo "Starting dev environment ({{ app_host }})..."
     @echo "  Backend:  {{ app_proto }}://{{ app_host }}:{{ app_port }}/api"
     @echo "  Frontend: {{ app_proto }}://{{ app_host }}:{{ app_port }}"
-    APP_HOST="{{ app_host }}" \
-    TRAEFIK_ENTRYPOINT="{{ traefik_entrypoint }}" \
-      envsubst < .docker/infra/traefik/dynamic/dev-services.yaml.tmpl \
-      > .docker/infra/traefik/dynamic/dev-services.yaml
+    sed -e 's|${APP_HOST}|{{ app_host }}|g' \
+        -e 's|${TRAEFIK_ENTRYPOINT}|{{ traefik_entrypoint }}|g' \
+        .docker/infra/traefik/dynamic/dev-services.yaml.tmpl \
+        > .docker/infra/traefik/dynamic/dev-services.yaml
     trap 'rm -f .docker/infra/traefik/dynamic/dev-services.yaml; kill 0' EXIT; \
       ( cd {{ backend_dir }} && \
-        GE_SERVER_APP_URL={{ app_proto }}://{{ app_host }}:{{ app_port }} \
-        GE_SERVER_PORT=3030 \
-        GE_SERVER_LOGS_LEVEL=debug \
-        GE_SERVER_LOGS_FORMAT=text \
-        GE_SERVER_DATABASE_HOST={{ postgres_host }} \
-        GE_SERVER_DATABASE_PORT={{ postgres_port }} \
-        GE_SERVER_DATABASE_TIMEOUT=30s \
-        GE_SERVER_DATABASE_NAME={{ postgres_db }} \
-        GE_SERVER_DATABASE_USERNAME={{ postgres_user }} \
-        GE_SERVER_DATABASE_PASSWORD={{ postgres_password }} \
-        GE_AUTH_ENABLE=true \
-        GE_AUTH_OIDC_PROVIDER_BASE_URL={{ app_proto }}://auth.{{ app_host }}:{{ app_port }} \
-        GE_AUTH_OIDC_PROVIDER_HEALTH_URL=http://auth.{{ app_host }}:{{ app_port }}/health/ready \
-        GE_AUTH_OIDC_PROVIDER_DOMAIN_NAME=green-ecolution \
-        GE_AUTH_OIDC_PROVIDER_AUTH_URL={{ app_proto }}://auth.{{ app_host }}:{{ app_port }}/realms/green-ecolution/protocol/openid-connect/auth \
-        GE_AUTH_OIDC_PROVIDER_TOKEN_URL={{ app_proto }}://auth.{{ app_host }}:{{ app_port }}/realms/green-ecolution/protocol/openid-connect/token \
-        GE_AUTH_OIDC_PROVIDER_FRONTEND_CLIENT_ID={{ ge_auth_oidc_frontend_client_id }} \
-        GE_AUTH_OIDC_PROVIDER_FRONTEND_CLIENT_SECRET={{ ge_auth_oidc_frontend_client_secret }} \
-        GE_AUTH_OIDC_PROVIDER_BACKEND_CLIENT_ID={{ ge_auth_oidc_backend_client_id }} \
-        GE_AUTH_OIDC_PROVIDER_BACKEND_CLIENT_SECRET={{ ge_auth_oidc_backend_client_secret }} \
-        GE_ROUTING_ENABLE=true \
-        GE_ROUTING_START_POINT=9.434764259345679,54.768731253913806 \
-        GE_ROUTING_END_POINT=9.434764259345679,54.768731253913806 \
-        GE_ROUTING_WATERING_POINT=9.434764259345679,54.768731253913806 \
-        GE_ROUTING_VALHALLA_HOST={{ app_proto }}://valhalla.{{ app_host }}:{{ app_port }} \
-        GE_ROUTING_VALHALLA_OPTIMIZATION_VROOM_HOST={{ app_proto }}://vroom.{{ app_host }}:{{ app_port }} \
-        GE_S3_ENABLE=true \
-        GE_S3_ENDPOINT={{ s3_dev_endpoint }} \
-        GE_S3_REGION=us-east-1 \
-        GE_S3_USE_SSL={{ s3_use_ssl }} \
-        GE_S3_ROUTE_GPX_BUCKET=gpx-routes \
-        GE_S3_ROUTE_GPX_ACCESSKEY={{ ge_s3_accesskey }} \
-        GE_S3_ROUTE_GPX_SECRETACCESSKEY={{ ge_s3_secretaccesskey }} \
-        GE_MQTT_ENABLE=false \
-        GE_MAP_CENTER=54.792277136221905,9.43580607453268 \
-        GE_MAP_BBOX=54.714822,9.285796,54.860127,9.583800 \
-        GE_MAP_NEAREST_TREE_MAX_RADIUS=500 \
-        GE_MAP_NEAREST_TREE_DEFAULT_LIMIT=10 \
-        GE_MAP_NEAREST_TREE_MAX_LIMIT=50 \
-        go tool air ) & \
-      ( cd {{ frontend_dir }} && USE_TRAEFIK=1 VITE_BACKEND_BASEURL=/api pnpm run dev ) & \
+        APP_ENVIRONMENT=local \
+        SQLX_OFFLINE=true \
+        APP_APPLICATION__HOST=0.0.0.0 \
+        APP_APPLICATION__PORT=3030 \
+        APP_APPLICATION__BASE_URL={{ app_proto }}://{{ app_host }}:{{ app_port }} \
+        APP_DATABASE__HOST={{ postgres_host }} \
+        APP_DATABASE__PORT={{ postgres_port }} \
+        APP_DATABASE__DATABASE_NAME={{ postgres_db }} \
+        APP_DATABASE__USERNAME={{ postgres_user }} \
+        APP_DATABASE__PASSWORD={{ postgres_password }} \
+        APP_LOG__LEVEL=debug \
+        APP_LOG__FORMAT=pretty \
+        bacon --headless --job run -- --bin {{ binary_name }} ) & \
+      ( cd {{ frontend_dir }} && USE_TRAEFIK=1 VITE_BACKEND_BASEURL= pnpm run dev ) & \
       wait
 
 # Set up ACME storage for Let's Encrypt
@@ -278,15 +236,11 @@ infra-down:
     @echo "Infra down (delete volumes)..."
     docker compose -f compose.yaml down -v
 
-# Run sqlc code generation
-generate-sqlc:
-    @echo "Generating sqlc..."
-    cd {{ backend_dir }} && go tool sqlc generate
-
-# Run go:generate directives (mocks, OpenAPI entities, etc.)
-generate-go:
-    @echo "Running go generate..."
-    cd {{ backend_dir }} && go generate ./...
+# Refresh sqlx offline query cache (.sqlx/) — requires running DB and sqlx-cli
+generate-sqlx:
+    @echo "Refreshing sqlx offline cache..."
+    @command -v cargo-sqlx >/dev/null 2>&1 || { echo "sqlx-cli missing (cargo install sqlx-cli --no-default-features --features rustls,postgres)"; exit 1; }
+    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" cargo sqlx prepare
 
 # Run frontend code generation (pnpm generate:local)
 generate-frontend:
@@ -295,8 +249,8 @@ generate-frontend:
     cd {{ frontend_dir }} && pnpm install --frozen-lockfile
     cd {{ frontend_dir }} && pnpm generate:local
 
-# Run all backend code generation (sqlc + go generate)
-generate-backend: generate-sqlc generate-go
+# Run all backend code generation (sqlx prepare)
+generate-backend: generate-sqlx
     @echo "Backend generation done."
 
 # Run all code generation (backend + frontend)
@@ -306,83 +260,77 @@ generate: generate-backend generate-frontend
 # Generate backend client from OpenAPI spec
 generate-client:
     @echo "Generating backend client (openapi)..."
-    cd {{ backend_dir }} && ./scripts/openapi-generator.sh client docs/swagger.yaml pkg/client
-    cd {{ backend_dir }}/pkg/client && go fmt ./... && go mod tidy
+    @echo "TODO: implement OpenAPI client generation for Rust backend (utoipa exposes /api-docs)"
 
-# Create a new database migration
+# Create a new migration file (requires sqlx-cli for scaffolding)
 migrate-new name:
     @echo "Create new migration..."
-    cd {{ backend_dir }} && go tool goose -dir internal/storage/postgres/migrations create {{ name }} sql
+    @command -v cargo-sqlx >/dev/null 2>&1 || { echo "sqlx-cli missing (cargo install sqlx-cli --no-default-features --features rustls,postgres)"; exit 1; }
+    cd {{ backend_dir }} && cargo sqlx migrate add {{ name }}
+
+# Build the in-tree `migrate` binary
+_migrate-build:
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --bin migrate
 
 # Apply all pending migrations
-migrate-up:
+migrate-up: _migrate-build
     @echo "Migrating up..."
-    cd {{ backend_dir }} && go tool goose -dir internal/storage/postgres/migrations postgres "{{ db_url }}" up
+    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate up
 
-# Rollback one migration
-migrate-down:
-    @echo "Migrating down..."
-    cd {{ backend_dir }} && go tool goose -dir internal/storage/postgres/migrations postgres "{{ db_url }}" down
-
-# Rollback all migrations
-migrate-reset:
-    @echo "Migrating reset..."
-    cd {{ backend_dir }} && go tool goose -dir internal/storage/postgres/migrations postgres "{{ db_url }}" reset
+# Drop and recreate the database, then migrate
+migrate-reset: _migrate-build
+    @echo "Resetting database..."
+    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate reset
 
 # Show migration status
-migrate-status:
+migrate-status: _migrate-build
     @echo "Migration status..."
-    cd {{ backend_dir }} && go tool goose -dir internal/storage/postgres/migrations postgres "{{ db_url }}" status
+    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate info
 
-# Apply seed data (runs migrate-up first)
-seed-up: migrate-up
-    @echo "Seeding up..."
-    cd {{ backend_dir }} && go tool goose -dir internal/storage/postgres/seed -no-versioning postgres "{{ db_url }}" up
+# Apply seeds on top of the current DB (assumes empty/migrated schema)
+seed-up: _migrate-build
+    @echo "Applying seeds..."
+    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate seed
 
-# Reset seed data (runs migrate-up first)
-seed-reset: migrate-up
-    @echo "Seeding reset..."
-    cd {{ backend_dir }} && go tool goose -dir internal/storage/postgres/seed -no-versioning postgres "{{ db_url }}" reset
+# Remove all seed data (runs *.down.sql files in reverse order)
+seed-down: _migrate-build
+    @echo "Removing seed data..."
+    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate seed-down
 
-# Format Go code and tidy modules
+# Reset DB, migrate, then apply seeds
+seed-reset: _migrate-build
+    @echo "Resetting DB and applying seeds..."
+    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate reset --with-seed
+
+# Format Rust code
 tidy:
-    @echo "Go fmt & tidy..."
-    cd {{ backend_dir }} && go fmt ./...
-    cd {{ backend_dir }} && go mod tidy
+    @echo "cargo fmt..."
+    cd {{ backend_dir }} && cargo fmt --all
 
-# Lint Go + frontend
+# Lint Rust + frontend
 lint:
-    @echo "Go fmt + Frontend lint..."
-    cd {{ backend_dir }} && go fmt ./...
+    @echo "cargo fmt --check + clippy + Frontend lint..."
+    cd {{ backend_dir }} && cargo fmt --all -- --check
+    cd {{ backend_dir }} && cargo clippy --all-targets --all-features -- -D warnings
     cd {{ frontend_dir }} && pnpm run lint
 
-# Run Go tests + frontend tests
+# Run Rust + frontend tests
 test:
-    @echo "Go tests..."
-    cd {{ backend_dir }} && go test -cover ./...
+    @echo "Rust tests..."
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo test --locked
     @echo "Frontend tests..."
     cd {{ frontend_dir }} && pnpm run test
 
-# Run Go tests with verbose output
+# Run Rust tests with verbose output
 test-verbose:
-    @echo "Go tests (verbose)..."
-    cd {{ backend_dir }} && go test -v -cover ./...
+    @echo "Rust tests (verbose)..."
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo test --locked -- --nocapture
 
 # Clean build artifacts
 clean:
     @echo "Cleaning..."
-    cd {{ backend_dir }} && go clean
+    cd {{ backend_dir }} && cargo clean
     rm -rf bin
-    rm -rf {{ backend_dir }}/docs
-    rm -rf {{ backend_dir }}/tmp
-    rm -rf {{ backend_dir }}/internal/server/http/entities/info/generated
-    rm -rf {{ backend_dir }}/internal/server/http/entities/sensor/generated
-    rm -rf {{ backend_dir }}/internal/server/http/entities/tree/generated
-    rm -rf {{ backend_dir }}/internal/server/mqtt/entities/sensor/generated
-    rm -rf {{ backend_dir }}/internal/service/_mock
-    rm -rf {{ backend_dir }}/internal/storage/_mock
-    rm -rf {{ backend_dir }}/internal/storage/postgres/_sqlc
-    rm -rf {{ backend_dir }}/internal/storage/postgres/mapper/generated
     rm -rf .docker/infra/valhalla/custom_files
     rm -rf {{ frontend_dist }}
 

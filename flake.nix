@@ -173,6 +173,7 @@
           sqlx-cli
           clang
           lld
+          bacon
           # Deploy tooling
           kustomize
           ksops
