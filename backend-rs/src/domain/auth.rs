@@ -62,8 +62,9 @@ pub trait AuthRepository: Send + Sync {
     async fn refresh_token(&self, refresh_token: &str) -> Result<ClientToken, RepositoryError>;
     async fn access_token_from_client_code(
         &self,
-        token: &str,
+        code: &str,
         redirect_url: &Url,
+        code_verifier: Option<&str>,
     ) -> Result<ClientToken, RepositoryError>;
     async fn access_token_from_client_credentials(
         &self,

@@ -84,14 +84,18 @@ impl AuthRepository for KeycloakAuthRepository {
         &self,
         code: &str,
         redirect_url: &Url,
+        code_verifier: Option<&str>,
     ) -> Result<ClientToken, RepositoryError> {
         let redirect = redirect_url.to_string();
-        let form: Vec<(&str, &str)> = vec![
+        let mut form: Vec<(&str, &str)> = vec![
             ("grant_type", "authorization_code"),
             ("code", code),
             ("redirect_uri", &redirect),
             ("client_id", &self.client.frontend_client_id),
         ];
+        if let Some(verifier) = code_verifier {
+            form.push(("code_verifier", verifier));
+        }
 
         let resp: TokenResponse = self.post_token_form(self.client.token_url(), &form).await?;
         Ok(resp.into())

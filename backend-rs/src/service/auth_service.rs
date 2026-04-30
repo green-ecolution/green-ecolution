@@ -56,7 +56,11 @@ impl AuthService {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub fn login_url(&self, redirect_url: Option<Url>) -> LoginResponse {
+    pub fn login_url(
+        &self,
+        redirect_url: Option<Url>,
+        code_challenge: Option<&str>,
+    ) -> LoginResponse {
         let redirect = redirect_url.unwrap_or_else(|| self.config.default_redirect_url.clone());
         if !self.config.enabled {
             // Skip the IdP roundtrip: the SPA callback URL with code=demo
@@ -66,12 +70,18 @@ impl AuthService {
             return LoginResponse { login_url: url };
         }
         let mut url = self.config.auth_url.clone();
-        url.query_pairs_mut()
-            .clear()
-            .append_pair("client_id", &self.config.frontend_client_id)
-            .append_pair("response_type", "code")
-            .append_pair("scope", "openid profile email")
-            .append_pair("redirect_uri", redirect.as_str());
+        {
+            let mut q = url.query_pairs_mut();
+            q.clear()
+                .append_pair("client_id", &self.config.frontend_client_id)
+                .append_pair("response_type", "code")
+                .append_pair("scope", "openid profile email")
+                .append_pair("redirect_uri", redirect.as_str());
+            if let Some(challenge) = code_challenge {
+                q.append_pair("code_challenge", challenge)
+                    .append_pair("code_challenge_method", "S256");
+            }
+        }
         LoginResponse { login_url: url }
     }
 
@@ -80,13 +90,14 @@ impl AuthService {
         &self,
         code: &str,
         redirect_url: Url,
+        code_verifier: Option<&str>,
     ) -> Result<ClientToken, ServiceError> {
         if !self.config.enabled {
             return Ok(dummy_token());
         }
         Ok(self
             .auth_repo
-            .access_token_from_client_code(code, &redirect_url)
+            .access_token_from_client_code(code, &redirect_url, code_verifier)
             .await?)
     }
 

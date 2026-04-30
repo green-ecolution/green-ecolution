@@ -136,6 +136,11 @@ pub struct LoginTokenRequest {
     /// Authorization code received from the OIDC provider callback.
     #[schema(example = "abc123-auth-code")]
     pub code: String,
+    /// PKCE code verifier matching the `code_challenge` sent on /login. Required
+    /// when the frontend client is public (no secret); omitted otherwise.
+    #[serde(default)]
+    #[schema(example = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk", nullable)]
+    pub code_verifier: Option<String>,
 }
 
 /// Request body for logging out a user session.

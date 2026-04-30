@@ -51,6 +51,10 @@ pub struct LoginQuery {
     /// Where Keycloak should redirect to after a successful login.
     #[serde(default)]
     pub redirect_url: Option<String>,
+    /// PKCE code challenge (base64url(sha256(verifier))). When present the
+    /// backend appends `code_challenge_method=S256` to the auth URL.
+    #[serde(default)]
+    pub code_challenge: Option<String>,
 }
 
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
@@ -128,7 +132,9 @@ pub async fn login(
         .map(url::Url::parse)
         .transpose()
         .map_err(|e| ServiceError::InvalidInput(format!("redirect_url: {e}")))?;
-    let response = state.auth_service.login_url(redirect_url);
+    let response = state
+        .auth_service
+        .login_url(redirect_url, query.code_challenge.as_deref());
     Ok(Json((&response).into()))
 }
 
@@ -153,7 +159,7 @@ pub async fn login_token(
         .map_err(|e| ServiceError::InvalidInput(format!("redirect_url: {e}")))?;
     let token = state
         .auth_service
-        .exchange_code(&req.code, redirect_url)
+        .exchange_code(&req.code, redirect_url, req.code_verifier.as_deref())
         .await?;
     Ok(Json((&token).into()))
 }

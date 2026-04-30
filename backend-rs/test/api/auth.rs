@@ -127,6 +127,31 @@ async fn login_url_handler_returns_keycloak_redirect() {
     assert!(login_url.contains("response_type=code"));
     assert!(login_url.contains("client_id=frontend"));
     assert!(login_url.contains("redirect_uri="));
+    assert!(
+        !login_url.contains("code_challenge"),
+        "no PKCE params unless requested: {login_url}"
+    );
+}
+
+#[tokio::test]
+async fn login_url_appends_pkce_params_when_challenge_provided() {
+    let (_harness, app) = spawn_with_auth().await;
+
+    let response = app
+        .get("/api/v1/users/login?redirect_url=http%3A%2F%2Flocalhost%2Fcb&code_challenge=abc123challenge")
+        .await;
+    assert_eq!(response.status(), reqwest::StatusCode::OK);
+
+    let body: serde_json::Value = response.json().await.unwrap();
+    let login_url = body["login_url"].as_str().unwrap();
+    assert!(
+        login_url.contains("code_challenge=abc123challenge"),
+        "should propagate challenge: {login_url}"
+    );
+    assert!(
+        login_url.contains("code_challenge_method=S256"),
+        "should set S256 method: {login_url}"
+    );
 }
 
 #[tokio::test]
