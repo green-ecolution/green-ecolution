@@ -251,14 +251,10 @@ impl UserRepository for KeycloakUserRepository {
     }
 
     async fn revoke_session(&self, refresh_token: &str) -> Result<(), RepositoryError> {
-        // Keycloak's `/logout` (18+) terminates the session given the refresh token + owning client_id.
-        let mut form: Vec<(&str, &str)> = vec![
+        let form: Vec<(&str, &str)> = vec![
             ("client_id", self.client.frontend_client_id.as_str()),
             ("refresh_token", refresh_token),
         ];
-        if let Some(secret) = self.client.frontend_client_secret() {
-            form.push(("client_secret", secret));
-        }
 
         let resp = self
             .client

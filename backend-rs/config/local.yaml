@@ -9,7 +9,6 @@ auth:
   enabled: true
   issuer_url: "http://auth.localhost:3000/realms/green-ecolution"
   frontend_client_id: "frontend"
-  frontend_client_secret: "EJogoaQSrW7vlo9CK3zIo2ieC8guy9Mm"
   backend_client_id: "backend"
   backend_client_secret: "cVBGgWNlbwSLydLZfZMvTvmNCeiSmLGP"
   default_redirect_url: "http://localhost:3000/auth/callback"

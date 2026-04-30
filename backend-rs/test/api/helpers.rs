@@ -144,7 +144,6 @@ pub fn disabled_auth_settings() -> AuthSettings {
         enabled: false,
         issuer_url: "http://127.0.0.1:1/realms/test".to_string(),
         frontend_client_id: "frontend".to_string(),
-        frontend_client_secret: None,
         backend_client_id: "backend".to_string(),
         backend_client_secret: SecretString::from("test".to_string()),
         jwks_refresh_interval_secs: 60,

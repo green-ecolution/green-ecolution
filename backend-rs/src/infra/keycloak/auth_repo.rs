@@ -70,14 +70,11 @@ impl AuthRepository for KeycloakAuthRepository {
     }
 
     async fn refresh_token(&self, refresh_token: &str) -> Result<ClientToken, RepositoryError> {
-        let mut form: Vec<(&str, &str)> = vec![
+        let form: Vec<(&str, &str)> = vec![
             ("grant_type", "refresh_token"),
             ("refresh_token", refresh_token),
             ("client_id", &self.client.frontend_client_id),
         ];
-        if let Some(secret) = self.client.frontend_client_secret() {
-            form.push(("client_secret", secret));
-        }
 
         let resp: TokenResponse = self.post_token_form(self.client.token_url(), &form).await?;
         Ok(resp.into())
@@ -89,15 +86,12 @@ impl AuthRepository for KeycloakAuthRepository {
         redirect_url: &Url,
     ) -> Result<ClientToken, RepositoryError> {
         let redirect = redirect_url.to_string();
-        let mut form: Vec<(&str, &str)> = vec![
+        let form: Vec<(&str, &str)> = vec![
             ("grant_type", "authorization_code"),
             ("code", code),
             ("redirect_uri", &redirect),
             ("client_id", &self.client.frontend_client_id),
         ];
-        if let Some(secret) = self.client.frontend_client_secret() {
-            form.push(("client_secret", secret));
-        }
 
         let resp: TokenResponse = self.post_token_form(self.client.token_url(), &form).await?;
         Ok(resp.into())

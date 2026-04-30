@@ -74,7 +74,6 @@ impl AuthHarness {
             enabled,
             issuer_url: self.issuer_url.clone(),
             frontend_client_id: "frontend".to_string(),
-            frontend_client_secret: None,
             backend_client_id: "backend".to_string(),
             backend_client_secret: SecretString::from("backend-secret".to_string()),
             jwks_refresh_interval_secs: 3600,

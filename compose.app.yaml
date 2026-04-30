@@ -22,7 +22,6 @@ services:
       - APP_AUTH__ENABLED=true
       - APP_AUTH__ISSUER_URL=${APP_PROTO:-http}://auth.${APP_HOST:-localhost}:${APP_PORT:-3443}/realms/green-ecolution
       - APP_AUTH__FRONTEND_CLIENT_ID=frontend
-      - APP_AUTH__FRONTEND_CLIENT_SECRET=EJogoaQSrW7vlo9CK3zIo2ieC8guy9Mm
       - APP_AUTH__BACKEND_CLIENT_ID=backend
       - APP_AUTH__BACKEND_CLIENT_SECRET=cVBGgWNlbwSLydLZfZMvTvmNCeiSmLGP
       - APP_AUTH__JWKS_REFRESH_INTERVAL_SECS=3600

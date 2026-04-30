@@ -14,7 +14,6 @@ pub struct KeycloakClient {
     server_root: Url,
     realm: String,
     pub frontend_client_id: String,
-    pub frontend_client_secret: Option<SecretString>,
     pub backend_client_id: String,
     pub backend_client_secret: SecretString,
 }
@@ -57,7 +56,6 @@ impl KeycloakClient {
             server_root,
             realm,
             frontend_client_id: settings.frontend_client_id.clone(),
-            frontend_client_secret: settings.frontend_client_secret.clone(),
             backend_client_id: settings.backend_client_id.clone(),
             backend_client_secret: settings.backend_client_secret.clone(),
         })
@@ -139,12 +137,6 @@ impl KeycloakClient {
         self.backend_client_secret.expose_secret()
     }
 
-    pub fn frontend_client_secret(&self) -> Option<&str> {
-        self.frontend_client_secret
-            .as_ref()
-            .map(|s| s.expose_secret())
-    }
-
     fn realm_oidc(&self, leaf: &str) -> Url {
         let mut url = self.server_root.clone();
         url.set_path(&format!(
@@ -165,7 +157,6 @@ mod tests {
             enabled: true,
             issuer_url: issuer.to_string(),
             frontend_client_id: "ui".into(),
-            frontend_client_secret: None,
             backend_client_id: "backend".into(),
             backend_client_secret: SecretString::from("s".to_string()),
             jwks_refresh_interval_secs: 60,

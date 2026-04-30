@@ -79,8 +79,6 @@ pub struct AuthSettings {
     pub enabled: bool,
     pub issuer_url: String,
     pub frontend_client_id: String,
-    #[serde(default)]
-    pub frontend_client_secret: Option<SecretString>,
     pub backend_client_id: String,
     pub backend_client_secret: SecretString,
     #[serde(deserialize_with = "deserialize_number_from_string")]
