@@ -1,8 +1,6 @@
 use std::sync::Arc;
 
-use crate::domain::evaluation::{
-    EvaluationRepository, RegionEvaluation, VehicleEvaluation,
-};
+use crate::domain::evaluation::{EvaluationRepository, RegionEvaluation, VehicleEvaluation};
 
 use super::ServiceError;
 
@@ -16,16 +14,12 @@ impl EvaluationService {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn regions_with_watering_plan(
-        &self,
-    ) -> Result<Vec<RegionEvaluation>, ServiceError> {
+    pub async fn regions_with_watering_plan(&self) -> Result<Vec<RegionEvaluation>, ServiceError> {
         Ok(self.evaluation_repo.regions_with_watering_plan().await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn vehicle_with_watering_plan(
-        &self,
-    ) -> Result<Vec<VehicleEvaluation>, ServiceError> {
+    pub async fn vehicle_with_watering_plan(&self) -> Result<Vec<VehicleEvaluation>, ServiceError> {
         Ok(self.evaluation_repo.vehicle_with_watering_plan().await?)
     }
 

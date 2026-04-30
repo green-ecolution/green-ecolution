@@ -3,8 +3,7 @@ use std::sync::Arc;
 use crate::domain::{
     Id,
     cluster::{
-        TreeCluster, TreeClusterCreate, TreeClusterQuery, TreeClusterRepository,
-        TreeClusterUpdate,
+        TreeCluster, TreeClusterCreate, TreeClusterQuery, TreeClusterRepository, TreeClusterUpdate,
     },
     events::DomainEvent,
     shared::{
@@ -50,18 +49,12 @@ impl ClusterService {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn by_ids(
-        &self,
-        ids: &[Id<TreeCluster>],
-    ) -> Result<Vec<TreeCluster>, ServiceError> {
+    pub async fn by_ids(&self, ids: &[Id<TreeCluster>]) -> Result<Vec<TreeCluster>, ServiceError> {
         Ok(self.cluster_repo.by_ids(ids).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn create(
-        &self,
-        input: TreeClusterCreate,
-    ) -> Result<TreeCluster, ServiceError> {
+    pub async fn create(&self, input: TreeClusterCreate) -> Result<TreeCluster, ServiceError> {
         let cluster = self.cluster_repo.create(input).await?;
         self.event_bus
             .publish(DomainEvent::ClusterTreesChanged {

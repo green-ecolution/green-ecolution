@@ -2,7 +2,11 @@ use chrono::{DateTime, Utc};
 
 use crate::domain::{
     RepositoryError,
-    shared::{coordinates::Coordinate, pagination::{Page, Pagination}, provider_info::ProviderInfo},
+    shared::{
+        coordinates::Coordinate,
+        pagination::{Page, Pagination},
+        provider_info::ProviderInfo,
+    },
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, sqlx::Type)]
@@ -62,7 +66,11 @@ pub struct SensorQuery {
 
 #[async_trait::async_trait]
 pub trait SensorRepository: Send + Sync {
-    async fn all(&self, query: SensorQuery, pagination: Pagination) -> Result<Page<Sensor>, RepositoryError>;
+    async fn all(
+        &self,
+        query: SensorQuery,
+        pagination: Pagination,
+    ) -> Result<Page<Sensor>, RepositoryError>;
     async fn by_id(&self, id: &str) -> Result<Sensor, RepositoryError>;
     async fn by_ids(&self, ids: &[String]) -> Result<Vec<Sensor>, RepositoryError>;
     async fn create(&self, entity: SensorCreate) -> Result<Sensor, RepositoryError>;

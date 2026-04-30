@@ -15,3 +15,7 @@ log:
 cors:
   allowed_origins:
     - "*"
+auth:
+  enabled: true
+  jwks_refresh_interval_secs: 3600
+  jwks_refresh_timeout_secs: 5

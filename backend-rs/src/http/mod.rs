@@ -14,18 +14,19 @@ use utoipa_swagger_ui::SwaggerUi;
 use crate::{
     configuration::CorsSettings,
     domain::info::SystemInfoProvider,
-    http::tracing::{MakeRequestUuid, REQUEST_ID_HEADER, make_span, on_response},
+    http::{
+        auth::AuthLayer,
+        tracing::{MakeRequestUuid, REQUEST_ID_HEADER, make_span, on_response},
+    },
     service::{
-        cluster_service::ClusterService,
-        evaluation_service::EvaluationService,
-        region_service::RegionService,
-        sensor_service::SensorService,
-        tree_service::TreeService,
-        vehicle_service::VehicleService,
-        watering_plan_service::WateringPlanService,
+        auth_service::AuthService, cluster_service::ClusterService,
+        evaluation_service::EvaluationService, region_service::RegionService,
+        sensor_service::SensorService, tree_service::TreeService, user_service::UserService,
+        vehicle_service::VehicleService, watering_plan_service::WateringPlanService,
     },
 };
 
+pub mod auth;
 mod tracing;
 pub mod v1;
 
@@ -37,6 +38,8 @@ pub struct AppState {
     pub cluster_service: Arc<ClusterService>,
     pub watering_plan_service: Arc<WateringPlanService>,
     pub evaluation_service: Arc<EvaluationService>,
+    pub auth_service: Arc<AuthService>,
+    pub user_service: Arc<UserService>,
     pub info_provider: Arc<dyn SystemInfoProvider>,
 }
 
@@ -68,9 +71,14 @@ pub struct AppState {
 )]
 struct ApiDoc;
 
-pub fn router(state: Arc<AppState>, base_url: &str, cors: &CorsSettings) -> Router {
+pub fn router(
+    state: Arc<AppState>,
+    base_url: &str,
+    cors: &CorsSettings,
+    auth_layer: AuthLayer,
+) -> Router {
     let (router, mut api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
-        .nest("/api/v1", v1::router())
+        .nest("/api/v1", v1::router(auth_layer))
         .split_for_parts();
 
     api.servers = Some(vec![Server::new(base_url)]);

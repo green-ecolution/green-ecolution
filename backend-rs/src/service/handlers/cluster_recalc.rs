@@ -24,7 +24,10 @@ impl ClusterRecalculationHandler {
         }
     }
 
-    fn affected_cluster_ids(&self, event: &DomainEvent) -> Vec<crate::domain::Id<crate::domain::cluster::TreeCluster>> {
+    fn affected_cluster_ids(
+        &self,
+        event: &DomainEvent,
+    ) -> Vec<crate::domain::Id<crate::domain::cluster::TreeCluster>> {
         match event {
             DomainEvent::TreeCreated { cluster_id, .. } => cluster_id.iter().copied().collect(),
             DomainEvent::TreeUpdated {

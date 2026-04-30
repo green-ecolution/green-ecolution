@@ -32,7 +32,11 @@ pub struct RegionQuery {
 
 #[async_trait::async_trait]
 pub trait RegionRepository: Send + Sync {
-    async fn all(&self, query: RegionQuery, pagination: Pagination) -> Result<Page<Region>, RepositoryError>;
+    async fn all(
+        &self,
+        query: RegionQuery,
+        pagination: Pagination,
+    ) -> Result<Page<Region>, RepositoryError>;
     async fn by_id(&self, id: Id<Region>) -> Result<Region, RepositoryError>;
     async fn by_ids(&self, ids: &[Id<Region>]) -> Result<Vec<Region>, RepositoryError>;
     async fn by_point(&self, coord: Coordinate) -> Result<Region, RepositoryError>;

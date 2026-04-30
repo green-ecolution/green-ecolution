@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use crate::domain::{
     Id,
+    cluster::TreeCluster,
     events::DomainEvent,
     shared::{
         coordinates::Coordinate,
@@ -11,7 +12,6 @@ use crate::domain::{
     tree::{
         PlantingYear, Tree, TreeCreate, TreeQuery, TreeRepository, TreeUpdate, TreeWithDistance,
     },
-    cluster::TreeCluster,
 };
 
 use super::{ServiceError, event_bus::EventBus};
@@ -23,7 +23,10 @@ pub struct TreeService {
 
 impl TreeService {
     pub fn new(tree_repo: Arc<dyn TreeRepository>, event_bus: Arc<dyn EventBus>) -> Self {
-        Self { tree_repo, event_bus }
+        Self {
+            tree_repo,
+            event_bus,
+        }
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -105,10 +108,7 @@ impl TreeService {
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %cluster_id))]
-    pub async fn unlink_cluster_id(
-        &self,
-        cluster_id: Id<TreeCluster>,
-    ) -> Result<(), ServiceError> {
+    pub async fn unlink_cluster_id(&self, cluster_id: Id<TreeCluster>) -> Result<(), ServiceError> {
         Ok(self.tree_repo.unlink_cluster_id(cluster_id).await?)
     }
 

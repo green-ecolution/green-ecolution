@@ -19,10 +19,18 @@ services:
       - APP_DATABASE__PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - APP_LOG__LEVEL=info,sqlx=warn,tower_http=info
       - APP_LOG__FORMAT=json
-      # NOTE: auth (Keycloak), routing (Valhalla/Vroom), S3 (MinIO), MQTT and
-      # map config are not yet implemented in backend-rs. Corresponding env
-      # vars from the Go backend have been removed; re-add them once the Rust
-      # Settings struct exposes the matching sections.
+      - APP_AUTH__ENABLED=true
+      - APP_AUTH__ISSUER_URL=${APP_PROTO:-http}://auth.${APP_HOST:-localhost}:${APP_PORT:-3443}/realms/green-ecolution
+      - APP_AUTH__FRONTEND_CLIENT_ID=frontend
+      - APP_AUTH__FRONTEND_CLIENT_SECRET=EJogoaQSrW7vlo9CK3zIo2ieC8guy9Mm
+      - APP_AUTH__BACKEND_CLIENT_ID=backend
+      - APP_AUTH__BACKEND_CLIENT_SECRET=cVBGgWNlbwSLydLZfZMvTvmNCeiSmLGP
+      - APP_AUTH__JWKS_REFRESH_INTERVAL_SECS=3600
+      - APP_AUTH__JWKS_REFRESH_TIMEOUT_SECS=5
+      - APP_AUTH__DEFAULT_REDIRECT_URL=${APP_PROTO:-https}://${APP_HOST:-localhost}:${APP_PORT:-3443}/auth/callback
+      # routing (Valhalla/Vroom), S3 (MinIO), MQTT and map config are not yet
+      # implemented in backend-rs. Re-add the matching env vars once the Rust
+      # Settings struct exposes those sections.
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`${APP_HOST:-localhost}`) && PathPrefix(`/api`)"

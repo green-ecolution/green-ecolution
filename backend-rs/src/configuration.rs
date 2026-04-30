@@ -11,6 +11,7 @@ pub struct Settings {
     pub application: ApplicationSettings,
     pub log: LogSettings,
     pub cors: CorsSettings,
+    pub auth: AuthSettings,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -71,6 +72,24 @@ pub struct LogSettings {
 #[derive(serde::Deserialize, Clone)]
 pub struct CorsSettings {
     pub allowed_origins: Vec<String>,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct AuthSettings {
+    pub enabled: bool,
+    pub issuer_url: String,
+    pub frontend_client_id: String,
+    #[serde(default)]
+    pub frontend_client_secret: Option<SecretString>,
+    pub backend_client_id: String,
+    pub backend_client_secret: SecretString,
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub jwks_refresh_interval_secs: u64,
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub jwks_refresh_timeout_secs: u64,
+    pub default_redirect_url: String,
+    #[serde(default)]
+    pub expected_audience: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, serde::Deserialize, Default)]

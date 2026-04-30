@@ -231,9 +231,7 @@ async fn delete_watering_plan_returns_204() {
     let created: serde_json::Value = create_resp.json().await.unwrap();
     let id = created["id"].as_i64().unwrap();
 
-    let response = app
-        .delete(&format!("/api/v1/watering-plans/{}", id))
-        .await;
+    let response = app.delete(&format!("/api/v1/watering-plans/{}", id)).await;
     assert_eq!(response.status().as_u16(), 204);
 
     let get_resp = app.get(&format!("/api/v1/watering-plans/{}", id)).await;
@@ -252,9 +250,7 @@ async fn list_watering_plans_respects_pagination() {
             .await;
     }
 
-    let response = app
-        .get("/api/v1/watering-plans?page=1&per_page=2")
-        .await;
+    let response = app.get("/api/v1/watering-plans?page=1&per_page=2").await;
     let body: serde_json::Value = response.json().await.unwrap();
 
     assert_eq!(body["data"].as_array().unwrap().len(), 2);

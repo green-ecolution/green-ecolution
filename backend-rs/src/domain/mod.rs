@@ -2,14 +2,15 @@ use std::marker::PhantomData;
 
 pub mod auth;
 pub mod cluster;
-pub mod events;
 pub mod evaluation;
+pub mod events;
 pub mod info;
 pub mod plugin;
 pub mod region;
 pub mod sensor;
 pub mod shared;
 pub mod tree;
+pub mod user;
 pub mod vehicle;
 pub mod watering_plan;
 

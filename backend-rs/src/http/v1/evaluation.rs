@@ -5,11 +5,8 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     domain::{
-        cluster::TreeClusterQuery,
-        sensor::SensorQuery,
-        shared::pagination::Pagination,
-        tree::TreeQuery,
-        watering_plan::WateringPlanQuery,
+        cluster::TreeClusterQuery, sensor::SensorQuery, shared::pagination::Pagination,
+        tree::TreeQuery, watering_plan::WateringPlanQuery,
     },
     http::{
         AppState,

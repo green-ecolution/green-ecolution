@@ -1,6 +1,10 @@
 use std::sync::OnceLock;
 
-use green_ecolution::{configuration::CorsSettings, startup::Application};
+use green_ecolution::{
+    configuration::{AuthSettings, CorsSettings},
+    startup::Application,
+};
+use secrecy::SecretString;
 use sqlx::{Connection, Executor, PgConnection, PgPool, postgres::PgPoolOptions};
 use testcontainers::{ContainerAsync, GenericImage, ImageExt, runners::AsyncRunner};
 use tokio::sync::OnceCell;
@@ -133,7 +137,28 @@ async fn create_test_database(host_port: u16) -> (String, PgPool) {
     (db_name, pool)
 }
 
+// `issuer_url` must still match `/realms/<name>` even when `enabled = false`
+// — `KeycloakClient::new` parses it at boot regardless.
+pub fn disabled_auth_settings() -> AuthSettings {
+    AuthSettings {
+        enabled: false,
+        issuer_url: "http://127.0.0.1:1/realms/test".to_string(),
+        frontend_client_id: "frontend".to_string(),
+        frontend_client_secret: None,
+        backend_client_id: "backend".to_string(),
+        backend_client_secret: SecretString::from("test".to_string()),
+        jwks_refresh_interval_secs: 60,
+        jwks_refresh_timeout_secs: 5,
+        default_redirect_url: "http://127.0.0.1/cb".to_string(),
+        expected_audience: None,
+    }
+}
+
 pub async fn spawn_app() -> TestApp {
+    spawn_app_with_auth(disabled_auth_settings()).await
+}
+
+pub async fn spawn_app_with_auth(auth: AuthSettings) -> TestApp {
     let container = shared_container().await;
     let (_db_name, db_pool) = create_test_database(container.host_port).await;
 
@@ -144,6 +169,7 @@ pub async fn spawn_app() -> TestApp {
         CorsSettings {
             allowed_origins: vec!["*".to_string()],
         },
+        auth,
     )
     .await
     .expect("failed to build application");

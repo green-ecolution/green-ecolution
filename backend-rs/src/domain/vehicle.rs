@@ -4,7 +4,11 @@ use chrono::{DateTime, Utc};
 
 use crate::domain::{
     DomainError, Id, RepositoryError,
-    shared::{pagination::{Page, Pagination}, provider_info::ProviderInfo, water_capacity::WaterCapacity},
+    shared::{
+        pagination::{Page, Pagination},
+        provider_info::ProviderInfo,
+        water_capacity::WaterCapacity,
+    },
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, sqlx::Type)]
@@ -124,7 +128,11 @@ pub struct VehicleQuery {
 
 #[async_trait::async_trait]
 pub trait VehicleRepository: Send + Sync {
-    async fn all(&self, query: VehicleQuery, pagination: Pagination) -> Result<Page<Vehicle>, RepositoryError>;
+    async fn all(
+        &self,
+        query: VehicleQuery,
+        pagination: Pagination,
+    ) -> Result<Page<Vehicle>, RepositoryError>;
     async fn by_id(&self, id: Id<Vehicle>) -> Result<Vehicle, RepositoryError>;
     async fn by_ids(&self, ids: &[Id<Vehicle>]) -> Result<Vec<Vehicle>, RepositoryError>;
     async fn by_plate(&self, plate: &str) -> Result<Vehicle, RepositoryError>;

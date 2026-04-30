@@ -1,12 +1,20 @@
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 
 use axum::{
     Json,
     extract::{Path, Query, State},
+    http::StatusCode,
 };
+use serde::Deserialize;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
+    domain::{
+        DomainError,
+        auth::AuthUser,
+        shared::pagination::Pagination,
+        user::{UserCreate as DomainUserCreate, UserRole as DomainUserRole},
+    },
     http::{
         AppState,
         v1::{
@@ -20,17 +28,35 @@ use crate::{
             pagination::PaginationParams,
         },
     },
+    require_role,
     service::ServiceError,
 };
 
-pub fn routes() -> OpenApiRouter<Arc<AppState>> {
+pub fn public_routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
-        .routes(routes!(list_users, create_user))
         .routes(routes!(login))
         .routes(routes!(login_token))
         .routes(routes!(logout))
-        .routes(routes!(list_users_by_role))
         .routes(routes!(refresh_token))
+}
+
+pub fn protected_routes() -> OpenApiRouter<Arc<AppState>> {
+    OpenApiRouter::new()
+        .routes(routes!(list_users, create_user))
+        .routes(routes!(list_users_by_role))
+}
+
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+pub struct LoginQuery {
+    /// Where Keycloak should redirect to after a successful login.
+    #[serde(default)]
+    pub redirect_url: Option<String>,
+}
+
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+pub struct LoginTokenQuery {
+    /// The same redirect URL the SPA used in the initial /login call.
+    pub redirect_url: String,
 }
 
 #[utoipa::path(get, path = "/users", tag = "Users",
@@ -40,15 +66,19 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     params(PaginationParams),
     responses(
         (status = 200, description = "Paginated list of users", body = ListResponse<UserResponse>),
+        (status = 401, description = "Unauthorized"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_users(
-    State(_state): State<Arc<AppState>>,
-    Query(_params): Query<PaginationParams>,
+    State(state): State<Arc<AppState>>,
+    _user: AuthUser,
+    Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<UserResponse>>, ServiceError> {
-    todo!()
+    let pagination = Pagination::from(&params);
+    let page = state.user_service.list(pagination).await?;
+    Ok(Json(ListResponse::from_page(page, &pagination)))
 }
 
 #[utoipa::path(post, path = "/users", tag = "Users",
@@ -59,51 +89,73 @@ pub async fn list_users(
     responses(
         (status = 201, description = "User created", body = UserResponse),
         (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn create_user(
-    State(_state): State<Arc<AppState>>,
-    Json(_entity): Json<UserRegisterRequest>,
-) -> Result<Json<UserResponse>, ServiceError> {
-    todo!()
+    State(state): State<Arc<AppState>>,
+    user: AuthUser,
+    Json(req): Json<UserRegisterRequest>,
+) -> Result<(StatusCode, Json<UserResponse>), ServiceError> {
+    require_role!(user, DomainUserRole::Tbz, DomainUserRole::GreenEcolution);
+    let entity: DomainUserCreate = req.try_into()?;
+    let created = state.user_service.register(entity).await?;
+    Ok((StatusCode::CREATED, Json((&created).into())))
 }
 
 #[utoipa::path(get, path = "/users/login", tag = "Users",
     operation_id = "loginUser",
     summary = "Initiate login",
     description = "Initiate OAuth2/OIDC login flow.",
-    params(("redirect_url" = String, Query, description = "Redirect URL after login")),
+    params(LoginQuery),
     responses(
         (status = 200, description = "Login URL", body = LoginResponse),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid redirect_url"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn login(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
+    Query(query): Query<LoginQuery>,
 ) -> Result<Json<LoginResponse>, ServiceError> {
-    todo!()
+    let redirect_url = query
+        .redirect_url
+        .as_deref()
+        .filter(|s| !s.is_empty())
+        .map(url::Url::parse)
+        .transpose()
+        .map_err(|e| ServiceError::InvalidInput(format!("redirect_url: {e}")))?;
+    let response = state.auth_service.login_url(redirect_url);
+    Ok(Json((&response).into()))
 }
 
 #[utoipa::path(post, path = "/users/login/token", tag = "Users",
     operation_id = "exchangeLoginToken",
     summary = "Exchange auth code for tokens",
     description = "Exchange an authorization code for access/refresh tokens.",
-    params(("redirect_url" = String, Query, description = "Redirect URL")),
+    params(LoginTokenQuery),
     request_body = LoginTokenRequest,
     responses(
         (status = 200, description = "Token response", body = ClientTokenResponse),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid code or redirect_url"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn login_token(
-    State(_state): State<Arc<AppState>>,
-    Json(_entity): Json<LoginTokenRequest>,
+    State(state): State<Arc<AppState>>,
+    Query(query): Query<LoginTokenQuery>,
+    Json(req): Json<LoginTokenRequest>,
 ) -> Result<Json<ClientTokenResponse>, ServiceError> {
-    todo!()
+    let redirect_url = url::Url::parse(&query.redirect_url)
+        .map_err(|e| ServiceError::InvalidInput(format!("redirect_url: {e}")))?;
+    let token = state
+        .auth_service
+        .exchange_code(&req.code, redirect_url)
+        .await?;
+    Ok(Json((&token).into()))
 }
 
 #[utoipa::path(post, path = "/users/logout", tag = "Users",
@@ -112,34 +164,49 @@ pub async fn login_token(
     description = "Invalidate a user session.",
     request_body = LogoutRequest,
     responses(
-        (status = 200, description = "Logged out"),
+        (status = 204, description = "Logged out"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn logout(
-    State(_state): State<Arc<AppState>>,
-    Json(_entity): Json<LogoutRequest>,
-) -> Result<Json<String>, ServiceError> {
-    todo!()
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<LogoutRequest>,
+) -> Result<StatusCode, ServiceError> {
+    state
+        .user_service
+        .revoke_session(&req.refresh_token)
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[utoipa::path(get, path = "/users/role/{role_id}", tag = "Users",
     operation_id = "listUsersByRole",
     summary = "List users by role",
     description = "Returns a filtered list of users with a specific role.",
-    params(("role_id" = String, Path, description = "User role")),
+    params(
+        ("role_id" = String, Path, description = "User role"),
+        PaginationParams,
+    ),
     responses(
         (status = 200, description = "Users with role", body = ListResponse<UserResponse>),
+        (status = 400, description = "Unknown role"),
+        (status = 401, description = "Unauthorized"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_users_by_role(
-    State(_state): State<Arc<AppState>>,
-    Path(_role_id): Path<String>,
+    State(state): State<Arc<AppState>>,
+    _user: AuthUser,
+    Path(role_id): Path<String>,
+    Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<UserResponse>>, ServiceError> {
-    todo!()
+    let role = DomainUserRole::from_str(&role_id)
+        .map_err(|e: DomainError| ServiceError::InvalidInput(e.to_string()))?;
+    let pagination = Pagination::from(&params);
+    let page = state.user_service.by_role(role, pagination).await?;
+    Ok(Json(ListResponse::from_page(page, &pagination)))
 }
 
 #[utoipa::path(post, path = "/users/token/refresh", tag = "Users",
@@ -149,13 +216,14 @@ pub async fn list_users_by_role(
     request_body = RefreshTokenRequest,
     responses(
         (status = 200, description = "Refreshed token", body = ClientTokenResponse),
-        (status = 500, description = "Internal server error"),
+        (status = 400, description = "Invalid refresh token"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn refresh_token(
-    State(_state): State<Arc<AppState>>,
-    Json(_entity): Json<RefreshTokenRequest>,
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<RefreshTokenRequest>,
 ) -> Result<Json<ClientTokenResponse>, ServiceError> {
-    todo!()
+    let token = state.auth_service.refresh(&req.refresh_token).await?;
+    Ok(Json((&token).into()))
 }

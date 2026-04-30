@@ -21,9 +21,8 @@ use crate::{
                 cluster::TreeClusterInListResponse,
                 vehicle::VehicleResponse,
                 watering_plan::{
-                    WateringPlanCreateRequest, WateringPlanInListResponse,
-                    WateringPlanInListView, WateringPlanResponse, WateringPlanUpdateRequest,
-                    WateringPlanView,
+                    WateringPlanCreateRequest, WateringPlanInListResponse, WateringPlanInListView,
+                    WateringPlanResponse, WateringPlanUpdateRequest, WateringPlanView,
                 },
             },
             pagination::PaginationParams,
@@ -37,14 +36,24 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(list_watering_plans, create_watering_plan))
         .routes(routes!(get_gpx_file))
         .routes(routes!(preview_route))
-        .routes(routes!(get_watering_plan, update_watering_plan, delete_watering_plan))
+        .routes(routes!(
+            get_watering_plan,
+            update_watering_plan,
+            delete_watering_plan
+        ))
 }
 
 async fn resolve_plan_relations(
     state: &AppState,
     plan: &WateringPlan,
-) -> Result<(VehicleResponse, Option<VehicleResponse>, Vec<TreeClusterInListResponse>), ServiceError>
-{
+) -> Result<
+    (
+        VehicleResponse,
+        Option<VehicleResponse>,
+        Vec<TreeClusterInListResponse>,
+    ),
+    ServiceError,
+> {
     let transporter_id = plan
         .transporter_id
         .ok_or_else(|| ServiceError::InvalidInput("watering plan has no transporter".into()))?;
@@ -294,8 +303,6 @@ pub async fn get_gpx_file(
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
-pub async fn preview_route(
-    State(_state): State<Arc<AppState>>,
-) -> Result<Json<()>, ServiceError> {
+pub async fn preview_route(State(_state): State<Arc<AppState>>) -> Result<Json<()>, ServiceError> {
     todo!()
 }

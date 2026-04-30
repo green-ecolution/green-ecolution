@@ -212,11 +212,16 @@ async fn insert_tree_at(app: &helpers::TestApp, lat: f64, lng: f64, number: &str
 async fn insert_region_covering(app: &helpers::TestApp, name: &str, lat: f64, lng: f64) -> i32 {
     let wkt = format!(
         "MULTIPOLYGON((({} {}, {} {}, {} {}, {} {}, {} {})))",
-        lng - 0.01, lat - 0.01,
-        lng + 0.01, lat - 0.01,
-        lng + 0.01, lat + 0.01,
-        lng - 0.01, lat + 0.01,
-        lng - 0.01, lat - 0.01,
+        lng - 0.01,
+        lat - 0.01,
+        lng + 0.01,
+        lat - 0.01,
+        lng + 0.01,
+        lat + 0.01,
+        lng - 0.01,
+        lat + 0.01,
+        lng - 0.01,
+        lat - 0.01,
     );
     sqlx::query_scalar!(
         r#"INSERT INTO regions (name, geometry)
@@ -326,8 +331,14 @@ async fn tree_create_triggers_cluster_recalculation() {
 
     let lat = cluster["latitude"].as_f64().unwrap();
     let lng = cluster["longitude"].as_f64().unwrap();
-    assert!((lat - 53.56).abs() < 0.001, "latitude should be ~53.56, got {lat}");
-    assert!((lng - 10.01).abs() < 0.001, "longitude should be ~10.01, got {lng}");
+    assert!(
+        (lat - 53.56).abs() < 0.001,
+        "latitude should be ~53.56, got {lat}"
+    );
+    assert!(
+        (lng - 10.01).abs() < 0.001,
+        "longitude should be ~10.01, got {lng}"
+    );
 }
 
 #[tokio::test]
@@ -366,7 +377,10 @@ async fn tree_create_triggers_region_assignment() {
     let get_resp = app.get(&format!("/api/v1/clusters/{}", cluster_id)).await;
     let cluster: serde_json::Value = get_resp.json().await.unwrap();
 
-    assert!(cluster["region"].is_object(), "region should be assigned after tree creation");
+    assert!(
+        cluster["region"].is_object(),
+        "region should be assigned after tree creation"
+    );
     assert_eq!(cluster["region"]["name"], "Neustadt");
 }
 
@@ -463,9 +477,7 @@ async fn tree_move_to_other_cluster_recalculates_both() {
     assert_eq!(update_resp.status().as_u16(), 200);
 
     // Cluster A: no more trees → coordinates reset
-    let a_after = app
-        .get(&format!("/api/v1/clusters/{}", cluster_a_id))
-        .await;
+    let a_after = app.get(&format!("/api/v1/clusters/{}", cluster_a_id)).await;
     let a_after_body: serde_json::Value = a_after.json().await.unwrap();
     assert_eq!(
         a_after_body["latitude"].as_f64().unwrap(),
@@ -474,9 +486,7 @@ async fn tree_move_to_other_cluster_recalculates_both() {
     );
 
     // Cluster B: now has two trees → center recalculated
-    let b_after = app
-        .get(&format!("/api/v1/clusters/{}", cluster_b_id))
-        .await;
+    let b_after = app.get(&format!("/api/v1/clusters/{}", cluster_b_id)).await;
     let b_after_body: serde_json::Value = b_after.json().await.unwrap();
     let b_lat = b_after_body["latitude"].as_f64().unwrap();
     // Center of (53.50, 9.90) and (53.60, 10.10) is roughly (53.55, 10.00)

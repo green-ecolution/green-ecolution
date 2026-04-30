@@ -2,9 +2,7 @@ use std::sync::Arc;
 
 use crate::domain::{
     events::DomainEvent,
-    sensor::{
-        Sensor, SensorCreate, SensorData, SensorQuery, SensorRepository, SensorUpdate,
-    },
+    sensor::{Sensor, SensorCreate, SensorData, SensorQuery, SensorRepository, SensorUpdate},
     shared::pagination::{Page, Pagination},
     tree::TreeRepository,
 };
@@ -55,11 +53,7 @@ impl SensorService {
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = id))]
-    pub async fn update(
-        &self,
-        id: &str,
-        input: SensorUpdate,
-    ) -> Result<Sensor, ServiceError> {
+    pub async fn update(&self, id: &str, input: SensorUpdate) -> Result<Sensor, ServiceError> {
         Ok(self.sensor_repo.update(id, input).await?)
     }
 

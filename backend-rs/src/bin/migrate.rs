@@ -142,8 +142,8 @@ async fn run_seed_downs(pool: &PgPool) -> Result<(), Box<dyn std::error::Error>>
     Ok(())
 }
 
-fn resolve_options() -> Result<(PgConnectOptions, PgConnectOptions, String), Box<dyn std::error::Error>>
-{
+fn resolve_options()
+-> Result<(PgConnectOptions, PgConnectOptions, String), Box<dyn std::error::Error>> {
     if let Ok(url) = env::var("DATABASE_URL") {
         let app: PgConnectOptions = url.parse()?;
         let db_name = app

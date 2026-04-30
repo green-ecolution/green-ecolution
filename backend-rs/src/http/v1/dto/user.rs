@@ -1,6 +1,13 @@
+use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 
-use crate::domain::auth::{ClientToken, LoginResponse as DomainLoginResponse};
+use crate::domain::{
+    auth::{ClientToken, LoginResponse as DomainLoginResponse},
+    user::{
+        User as DomainUser, UserCreate as DomainUserCreate, UserRole as DomainUserRole,
+        UserStatus as DomainUserStatus,
+    },
+};
 
 use super::{DrivingLicense, UserRole, UserStatus};
 
@@ -109,7 +116,9 @@ pub struct UserRegisterRequest {
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct LoginResponse {
     /// Full OIDC authorization URL the client should redirect to.
-    #[schema(example = "https://auth.green-ecolution.de/auth/realms/green-ecolution/protocol/openid-connect/auth?client_id=green-ecolution&redirect_uri=https%3A%2F%2Fapp.green-ecolution.de%2Fcallback&response_type=code&scope=openid+profile+email")]
+    #[schema(
+        example = "https://auth.green-ecolution.de/auth/realms/green-ecolution/protocol/openid-connect/auth?client_id=green-ecolution&redirect_uri=https%3A%2F%2Fapp.green-ecolution.de%2Fcallback&response_type=code&scope=openid+profile+email"
+    )]
     pub login_url: String,
 }
 
@@ -190,6 +199,93 @@ pub struct ClientTokenResponse {
     /// OAuth2 scopes granted.
     #[schema(example = "openid profile email")]
     pub scope: String,
+}
+
+impl From<DomainUserRole> for UserRole {
+    fn from(value: DomainUserRole) -> Self {
+        match value {
+            DomainUserRole::Tbz => UserRole::Tbz,
+            DomainUserRole::GreenEcolution => UserRole::GreenEcolution,
+            DomainUserRole::SmarteGrenzregion => UserRole::SmarteGrenzregion,
+            DomainUserRole::Unknown => UserRole::Unknown,
+        }
+    }
+}
+
+impl From<UserRole> for DomainUserRole {
+    fn from(value: UserRole) -> Self {
+        match value {
+            UserRole::Tbz => DomainUserRole::Tbz,
+            UserRole::GreenEcolution => DomainUserRole::GreenEcolution,
+            UserRole::SmarteGrenzregion => DomainUserRole::SmarteGrenzregion,
+            UserRole::Unknown => DomainUserRole::Unknown,
+        }
+    }
+}
+
+impl From<DomainUserStatus> for UserStatus {
+    fn from(value: DomainUserStatus) -> Self {
+        match value {
+            DomainUserStatus::Available => UserStatus::Available,
+            DomainUserStatus::Absent => UserStatus::Absent,
+            DomainUserStatus::Unknown => UserStatus::Unknown,
+        }
+    }
+}
+
+impl From<&DomainUser> for UserResponse {
+    fn from(value: &DomainUser) -> Self {
+        Self {
+            id: value.id.to_string(),
+            created_at: value.created_at.to_rfc3339(),
+            username: value.username.clone(),
+            first_name: value.first_name.clone(),
+            last_name: value.last_name.clone(),
+            email: value.email.clone(),
+            email_verified: value.email_verified,
+            employee_id: value.employee_id.clone().unwrap_or_default(),
+            phone_number: value.phone_number.clone().unwrap_or_default(),
+            avatar_url: value
+                .avatar_url
+                .as_ref()
+                .map(|u| u.to_string())
+                .unwrap_or_default(),
+            status: value.status.into(),
+            roles: value.roles.iter().copied().map(Into::into).collect(),
+            driving_licenses: value
+                .driving_licenses
+                .iter()
+                .copied()
+                .map(Into::into)
+                .collect(),
+        }
+    }
+}
+
+impl TryFrom<UserRegisterRequest> for DomainUserCreate {
+    type Error = crate::domain::DomainError;
+
+    fn try_from(value: UserRegisterRequest) -> Result<Self, Self::Error> {
+        let avatar_url = value
+            .avatar_url
+            .as_deref()
+            .filter(|s| !s.is_empty())
+            .map(url::Url::parse)
+            .transpose()
+            .map_err(|e| crate::domain::DomainError::InvalidInput(format!("avatar_url: {e}")))?;
+
+        Ok(Self {
+            username: value.username,
+            first_name: value.first_name,
+            last_name: value.last_name,
+            email: value.email,
+            password: SecretString::from(value.password),
+            roles: value.roles,
+            employee_id: value.employee_id.filter(|s| !s.is_empty()),
+            phone_number: value.phone_number.filter(|s| !s.is_empty()),
+            avatar_url,
+        })
+    }
 }
 
 impl From<&ClientToken> for ClientTokenResponse {

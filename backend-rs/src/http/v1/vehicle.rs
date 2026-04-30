@@ -8,7 +8,7 @@ use axum::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    domain::{Id, vehicle::VehicleQuery, shared::pagination::Pagination},
+    domain::{Id, shared::pagination::Pagination, vehicle::VehicleQuery},
     http::{
         AppState,
         v1::{

@@ -156,10 +156,7 @@ impl TreeClusterRepository for PgTreeClusterRepository {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn by_ids(
-        &self,
-        ids: &[Id<TreeCluster>],
-    ) -> Result<Vec<TreeCluster>, RepositoryError> {
+    async fn by_ids(&self, ids: &[Id<TreeCluster>]) -> Result<Vec<TreeCluster>, RepositoryError> {
         let id_values: Vec<i32> = ids.iter().map(|id| id.value()).collect();
         Ok(sqlx::query_as!(
             TreeClusterRow,

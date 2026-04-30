@@ -52,8 +52,7 @@ export interface GetTreeRequest {
     treeId: number;
 }
 
-export interface GetTreeSensorRequest {
-    treeId: number;
+export interface GetTreeBySensorRequest {
     sensorId: string;
 }
 
@@ -248,21 +247,14 @@ export class TreesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a tree identified by both its tree ID and sensor ID.
-     * Get a tree by tree and sensor ID
+     * Retrieves the tree linked to the given sensor. Returns 404 if the sensor or its associated tree does not exist.
+     * Get the tree associated with a sensor
      */
-    async getTreeSensorRaw(requestParameters: GetTreeSensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeResponse>> {
-        if (requestParameters['treeId'] == null) {
-            throw new runtime.RequiredError(
-                'treeId',
-                'Required parameter "treeId" was null or undefined when calling getTreeSensor().'
-            );
-        }
-
+    async getTreeBySensorRaw(requestParameters: GetTreeBySensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeResponse>> {
         if (requestParameters['sensorId'] == null) {
             throw new runtime.RequiredError(
                 'sensorId',
-                'Required parameter "sensorId" was null or undefined when calling getTreeSensor().'
+                'Required parameter "sensorId" was null or undefined when calling getTreeBySensor().'
             );
         }
 
@@ -271,8 +263,7 @@ export class TreesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/trees/{tree_id}/sensors/{sensor_id}`;
-        urlPath = urlPath.replace(`{${"tree_id"}}`, encodeURIComponent(String(requestParameters['treeId'])));
+        let urlPath = `/api/v1/sensors/{sensor_id}/tree`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
         const response = await this.request({
@@ -286,11 +277,11 @@ export class TreesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a tree identified by both its tree ID and sensor ID.
-     * Get a tree by tree and sensor ID
+     * Retrieves the tree linked to the given sensor. Returns 404 if the sensor or its associated tree does not exist.
+     * Get the tree associated with a sensor
      */
-    async getTreeSensor(requestParameters: GetTreeSensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TreeResponse> {
-        const response = await this.getTreeSensorRaw(requestParameters, initOverrides);
+    async getTreeBySensor(requestParameters: GetTreeBySensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TreeResponse> {
+        const response = await this.getTreeBySensorRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

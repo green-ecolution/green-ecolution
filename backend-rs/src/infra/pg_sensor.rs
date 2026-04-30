@@ -5,8 +5,7 @@ use sqlx::PgPool;
 use crate::domain::{
     RepositoryError,
     sensor::{
-        Sensor, SensorCreate, SensorData, SensorQuery, SensorRepository, SensorStatus,
-        SensorUpdate,
+        Sensor, SensorCreate, SensorData, SensorQuery, SensorRepository, SensorStatus, SensorUpdate,
     },
     shared::{
         coordinates::Coordinate,

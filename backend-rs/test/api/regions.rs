@@ -71,10 +71,13 @@ async fn list_regions_respects_pagination() {
     let app = spawn_app().await;
 
     for i in 1..=5 {
-        sqlx::query!("INSERT INTO regions (name) VALUES ($1)", format!("Region {}", i))
-            .execute(&app.db_pool)
-            .await
-            .unwrap();
+        sqlx::query!(
+            "INSERT INTO regions (name) VALUES ($1)",
+            format!("Region {}", i)
+        )
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
     }
 
     let response = app.get("/api/v1/regions?page=1&per_page=2").await;

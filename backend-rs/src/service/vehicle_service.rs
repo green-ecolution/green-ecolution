@@ -3,9 +3,7 @@ use std::sync::Arc;
 use crate::domain::{
     Id,
     shared::pagination::{Page, Pagination},
-    vehicle::{
-        Vehicle, VehicleCreate, VehicleQuery, VehicleRepository, VehicleUpdate,
-    },
+    vehicle::{Vehicle, VehicleCreate, VehicleQuery, VehicleRepository, VehicleUpdate},
 };
 
 use super::ServiceError;

@@ -1,7 +1,8 @@
 use chrono::{DateTime, Utc};
 use url::Url;
+use uuid::Uuid;
 
-use crate::domain::RepositoryError;
+use crate::domain::{RepositoryError, user::UserRole};
 
 #[derive(Debug, Clone)]
 pub struct IntrospectToken {
@@ -44,6 +45,15 @@ pub struct LoginCallback {
 #[derive(Debug, Clone)]
 pub struct Logout {
     pub refresh_token: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct AuthUser {
+    pub id: Uuid,
+    pub username: Option<String>,
+    pub email: Option<String>,
+    pub roles: Vec<UserRole>,
+    pub raw_claims: serde_json::Value,
 }
 
 #[async_trait::async_trait]

@@ -59,10 +59,12 @@ export interface ListUsersRequest {
 
 export interface ListUsersByRoleRequest {
     roleId: string;
+    page?: number;
+    perPage?: number;
 }
 
 export interface LoginUserRequest {
-    redirectUrl: string;
+    redirectUrl?: string | null;
 }
 
 export interface LogoutUserRequest {
@@ -224,6 +226,14 @@ export class UsersApi extends runtime.BaseAPI {
 
         const queryParameters: any = {};
 
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['perPage'] != null) {
+            queryParameters['per_page'] = requestParameters['perPage'];
+        }
+
         const headerParameters: runtime.HTTPHeaders = {};
 
 
@@ -254,13 +264,6 @@ export class UsersApi extends runtime.BaseAPI {
      * Initiate login
      */
     async loginUserRaw(requestParameters: LoginUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LoginResponse>> {
-        if (requestParameters['redirectUrl'] == null) {
-            throw new runtime.RequiredError(
-                'redirectUrl',
-                'Required parameter "redirectUrl" was null or undefined when calling loginUser().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['redirectUrl'] != null) {
@@ -286,7 +289,7 @@ export class UsersApi extends runtime.BaseAPI {
      * Initiate OAuth2/OIDC login flow.
      * Initiate login
      */
-    async loginUser(requestParameters: LoginUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LoginResponse> {
+    async loginUser(requestParameters: LoginUserRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LoginResponse> {
         const response = await this.loginUserRaw(requestParameters, initOverrides);
         return await response.value();
     }

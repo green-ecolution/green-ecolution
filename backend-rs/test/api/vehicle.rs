@@ -49,7 +49,9 @@ async fn get_vehicles_returns_404_for_nonexistent_id() {
 async fn create_vehicle_returns_201() {
     let app = spawn_app().await;
 
-    let response = app.post_json("/api/v1/vehicles", &vehicle_json("FL-GE 123")).await;
+    let response = app
+        .post_json("/api/v1/vehicles", &vehicle_json("FL-GE 123"))
+        .await;
 
     assert_eq!(response.status().as_u16(), 201);
 
@@ -78,7 +80,9 @@ async fn create_vehicle_with_negative_capacity_returns_400() {
 async fn get_vehicle_returns_full_response() {
     let app = spawn_app().await;
 
-    let create_resp = app.post_json("/api/v1/vehicles", &vehicle_json("FL-GE 100")).await;
+    let create_resp = app
+        .post_json("/api/v1/vehicles", &vehicle_json("FL-GE 100"))
+        .await;
     let created: serde_json::Value = create_resp.json().await.unwrap();
     let id = created["id"].as_i64().unwrap();
 
@@ -98,7 +102,8 @@ async fn get_vehicle_returns_full_response() {
 async fn get_vehicle_by_plate_returns_vehicle() {
     let app = spawn_app().await;
 
-    app.post_json("/api/v1/vehicles", &vehicle_json("FL-GE 200")).await;
+    app.post_json("/api/v1/vehicles", &vehicle_json("FL-GE 200"))
+        .await;
 
     let response = app.get("/api/v1/vehicles/plate/FL-GE 200").await;
 
@@ -112,7 +117,9 @@ async fn get_vehicle_by_plate_returns_vehicle() {
 async fn update_vehicle_changes_model() {
     let app = spawn_app().await;
 
-    let create_resp = app.post_json("/api/v1/vehicles", &vehicle_json("FL-GE 300")).await;
+    let create_resp = app
+        .post_json("/api/v1/vehicles", &vehicle_json("FL-GE 300"))
+        .await;
     let created: serde_json::Value = create_resp.json().await.unwrap();
     let id = created["id"].as_i64().unwrap();
 
@@ -133,7 +140,9 @@ async fn update_vehicle_changes_model() {
 async fn delete_vehicle_returns_204() {
     let app = spawn_app().await;
 
-    let create_resp = app.post_json("/api/v1/vehicles", &vehicle_json("FL-GE 400")).await;
+    let create_resp = app
+        .post_json("/api/v1/vehicles", &vehicle_json("FL-GE 400"))
+        .await;
     let created: serde_json::Value = create_resp.json().await.unwrap();
     let id = created["id"].as_i64().unwrap();
 
@@ -148,12 +157,17 @@ async fn delete_vehicle_returns_204() {
 async fn archive_vehicle_hides_from_default_list() {
     let app = spawn_app().await;
 
-    let create_resp = app.post_json("/api/v1/vehicles", &vehicle_json("FL-GE 500")).await;
+    let create_resp = app
+        .post_json("/api/v1/vehicles", &vehicle_json("FL-GE 500"))
+        .await;
     let created: serde_json::Value = create_resp.json().await.unwrap();
     let id = created["id"].as_i64().unwrap();
 
     let archive_resp = app
-        .post_json(&format!("/api/v1/vehicles/archived/{}", id), &serde_json::json!({}))
+        .post_json(
+            &format!("/api/v1/vehicles/archived/{}", id),
+            &serde_json::json!({}),
+        )
         .await;
     assert_eq!(archive_resp.status().as_u16(), 204);
 
@@ -188,9 +202,12 @@ async fn list_vehicles_respects_pagination() {
 async fn create_duplicate_plate_returns_409() {
     let app = spawn_app().await;
 
-    app.post_json("/api/v1/vehicles", &vehicle_json("FL-GE 999")).await;
+    app.post_json("/api/v1/vehicles", &vehicle_json("FL-GE 999"))
+        .await;
 
-    let response = app.post_json("/api/v1/vehicles", &vehicle_json("FL-GE 999")).await;
+    let response = app
+        .post_json("/api/v1/vehicles", &vehicle_json("FL-GE 999"))
+        .await;
 
     assert_eq!(response.status().as_u16(), 409);
 }

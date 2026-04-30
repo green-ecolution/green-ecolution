@@ -1,6 +1,4 @@
-use crate::domain::shared::pagination::{
-    DEFAULT_PAGE, DEFAULT_PER_PAGE, MAX_PER_PAGE, Pagination,
-};
+use crate::domain::shared::pagination::{DEFAULT_PAGE, DEFAULT_PER_PAGE, MAX_PER_PAGE, Pagination};
 
 /// Pagination metadata returned in list responses.
 #[derive(Debug, serde::Serialize, utoipa::ToSchema)]

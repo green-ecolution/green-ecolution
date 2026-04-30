@@ -1,3 +1,5 @@
+pub mod auth;
+pub mod auth_helpers;
 pub mod clusters;
 pub mod evaluation;
 pub mod helpers;

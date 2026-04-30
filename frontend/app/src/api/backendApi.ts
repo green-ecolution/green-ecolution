@@ -1,4 +1,6 @@
+import useStore from '@/store/store'
 import {
+  ClientTokenResponseFromJSON,
   Configuration,
   ConfigurationParameters,
   EvaluationApi,
@@ -14,6 +16,7 @@ import {
   VehiclesApi,
   WateringPlansApi,
 } from '@green-ecolution/backend-client'
+import { redirect } from '@tanstack/react-router'
 
 export const basePath = import.meta.env.VITE_BACKEND_BASEURL ?? '/api-local'
 
@@ -22,21 +25,94 @@ const headers: HTTPHeaders = {
   Accept: 'application/json',
 }
 
-// TODO: Re-enable token refresh + auth guard once Rust backend implements authentication
+let refreshPromise: Promise<void> | null = null
+let lastRefreshTime = 0
+const MIN_REFRESH_INTERVAL = 5000
+
+async function performTokenRefresh(): Promise<void> {
+  const refreshToken =
+    useStore.getState().token?.refreshToken ?? localStorage.getItem('refreshToken')
+  if (!refreshToken) {
+    useStore.getState().clearAuth()
+    throw redirect({
+      to: '/login',
+      search: { redirect: window.location.pathname + window.location.search },
+    })
+  }
+
+  const res = await fetch(`${basePath}/api/v1/users/token/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  })
+
+  if (res.status !== 200) {
+    useStore.getState().clearAuth()
+    throw redirect({
+      to: '/login',
+      search: { redirect: window.location.pathname + window.location.search },
+    })
+  }
+
+  const data = ClientTokenResponseFromJSON(await res.json())
+  useStore.getState().setToken(data)
+  useStore.getState().setUserFromJwt(data.accessToken)
+  lastRefreshTime = Date.now()
+}
+
+async function ensureFreshToken(): Promise<void> {
+  const store = useStore.getState()
+  if (!store.isAuthenticated) return
+
+  if (store.token && !store.isTokenExpiringSoon()) return
+  if (Date.now() - lastRefreshTime < MIN_REFRESH_INTERVAL && store.token) return
+
+  if (refreshPromise) {
+    await refreshPromise
+    return
+  }
+
+  refreshPromise = performTokenRefresh().finally(() => {
+    refreshPromise = null
+  })
+  await refreshPromise
+}
+
 const backendFetch: FetchAPI = async (...args) => {
   const [resource, config] = args
-  return fetch(resource, config)
+
+  await ensureFreshToken()
+
+  const currentToken = useStore.getState().token?.accessToken
+  const updatedConfig = currentToken
+    ? { ...config, headers: { ...config?.headers, Authorization: `Bearer ${currentToken}` } }
+    : config
+
+  const response = await fetch(resource, updatedConfig)
+
+  const resourceUrl =
+    typeof resource === 'string' ? resource : resource instanceof URL ? resource.href : ''
+  if (response.status === 401 && !resourceUrl.includes('/token/refresh')) {
+    if (!refreshPromise) {
+      useStore.getState().clearAuth()
+      throw redirect({
+        to: '/login',
+        search: { redirect: window.location.pathname + window.location.search },
+      })
+    }
+  }
+
+  return response
 }
 
 const configParams: ConfigurationParameters = {
   basePath,
   headers,
   fetchApi: backendFetch,
-  // TODO: Re-enable once auth is implemented in Rust backend
-  // accessToken() {
-  //   const token = useStore.getState().token?.accessToken
-  //   return token ? `Bearer ${token}` : ''
-  // },
+  accessToken() {
+    const token = useStore.getState().token?.accessToken
+    return token ? `Bearer ${token}` : ''
+  },
 }
 
 const config = new Configuration(configParams)

@@ -18,9 +18,7 @@ impl PgEvaluationRepository {
 #[async_trait::async_trait]
 impl EvaluationRepository for PgEvaluationRepository {
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn regions_with_watering_plan(
-        &self,
-    ) -> Result<Vec<RegionEvaluation>, RepositoryError> {
+    async fn regions_with_watering_plan(&self) -> Result<Vec<RegionEvaluation>, RepositoryError> {
         let rows = sqlx::query_as!(
             RegionEvaluation,
             r#"SELECT r.name AS "name!", COUNT(DISTINCT twp.watering_plan_id)::int AS "watering_plan_count!: i32"
@@ -37,9 +35,7 @@ impl EvaluationRepository for PgEvaluationRepository {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn vehicle_with_watering_plan(
-        &self,
-    ) -> Result<Vec<VehicleEvaluation>, RepositoryError> {
+    async fn vehicle_with_watering_plan(&self) -> Result<Vec<VehicleEvaluation>, RepositoryError> {
         let rows = sqlx::query_as!(
             VehicleEvaluation,
             r#"SELECT v.number_plate AS "number_plate!", COUNT(vwp.watering_plan_id)::int AS "watering_plan_count!: i32"
@@ -67,11 +63,10 @@ impl EvaluationRepository for PgEvaluationRepository {
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn watering_plan_user(&self) -> Result<u64, RepositoryError> {
-        let count = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) AS "count!: i64" FROM user_watering_plans"#
-        )
-        .fetch_one(&self.pool)
-        .await? as u64;
+        let count =
+            sqlx::query_scalar!(r#"SELECT COUNT(*) AS "count!: i64" FROM user_watering_plans"#)
+                .fetch_one(&self.pool)
+                .await? as u64;
 
         Ok(count)
     }

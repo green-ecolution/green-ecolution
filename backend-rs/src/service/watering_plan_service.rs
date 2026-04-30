@@ -43,10 +43,7 @@ impl WateringPlanService {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn create(
-        &self,
-        input: WateringPlanCreate,
-    ) -> Result<WateringPlan, ServiceError> {
+    pub async fn create(&self, input: WateringPlanCreate) -> Result<WateringPlan, ServiceError> {
         Ok(self.watering_plan_repo.create(input).await?)
     }
 

@@ -150,10 +150,7 @@ impl WateringPlanRepository for PgWateringPlanRepository {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn create(
-        &self,
-        entity: WateringPlanCreate,
-    ) -> Result<WateringPlan, RepositoryError> {
+    async fn create(&self, entity: WateringPlanCreate) -> Result<WateringPlan, RepositoryError> {
         let mut tx = self.pool.begin().await?;
 
         let row = sqlx::query!(

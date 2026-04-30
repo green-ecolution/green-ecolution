@@ -20,8 +20,8 @@ impl DefaultSystemInfoProvider {
             start_time: Instant::now(),
             version: env!("CARGO_PKG_VERSION").to_string(),
             map: Map {
-                center: [54.7833, 9.4333],
-                bbox: [9.3, 54.7, 9.6, 54.85],
+                center: [54.792277136221905, 9.43580607453268],
+                bbox: [54.714822, 9.285796, 54.860127, 9.583800],
             },
         }
     }

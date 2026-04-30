@@ -345,10 +345,7 @@ impl TreeRepository for PgTreeRepository {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn unlink_cluster_id(
-        &self,
-        cluster_id: Id<TreeCluster>,
-    ) -> Result<(), RepositoryError> {
+    async fn unlink_cluster_id(&self, cluster_id: Id<TreeCluster>) -> Result<(), RepositoryError> {
         sqlx::query!(
             "UPDATE trees SET tree_cluster_id = NULL WHERE tree_cluster_id = $1",
             cluster_id.value()

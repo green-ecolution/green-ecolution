@@ -32,6 +32,12 @@ export interface PaginationResponse {
      */
     nextPage?: number | null;
     /**
+     * Page size used for this response.
+     * @type {number}
+     * @memberof PaginationResponse
+     */
+    perPage: number;
+    /**
      * Previous page number, if available.
      * @type {number}
      * @memberof PaginationResponse
@@ -56,6 +62,7 @@ export interface PaginationResponse {
  */
 export function instanceOfPaginationResponse(value: object): value is PaginationResponse {
     if (!('currentPage' in value) || value['currentPage'] === undefined) return false;
+    if (!('perPage' in value) || value['perPage'] === undefined) return false;
     if (!('totalPages' in value) || value['totalPages'] === undefined) return false;
     if (!('totalRecords' in value) || value['totalRecords'] === undefined) return false;
     return true;
@@ -73,6 +80,7 @@ export function PaginationResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         
         'currentPage': json['current_page'],
         'nextPage': json['next_page'] == null ? undefined : json['next_page'],
+        'perPage': json['per_page'],
         'prevPage': json['prev_page'] == null ? undefined : json['prev_page'],
         'totalPages': json['total_pages'],
         'totalRecords': json['total_records'],
@@ -92,6 +100,7 @@ export function PaginationResponseToJSONTyped(value?: PaginationResponse | null,
         
         'current_page': value['currentPage'],
         'next_page': value['nextPage'],
+        'per_page': value['perPage'],
         'prev_page': value['prevPage'],
         'total_pages': value['totalPages'],
         'total_records': value['totalRecords'],
