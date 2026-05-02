@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::domain::sensor::{Sensor, SensorData};
+use crate::domain::sensor::{SensorView, data::SensorReadingView};
 
 use super::SensorStatus;
 
@@ -20,8 +20,8 @@ pub struct SensorDataResponse {
     pub data: serde_json::Value,
 }
 
-impl From<&SensorData> for SensorDataResponse {
-    fn from(value: &SensorData) -> Self {
+impl From<&SensorReadingView> for SensorDataResponse {
+    fn from(value: &SensorReadingView) -> Self {
         Self {
             created_at: value.created_at.to_rfc3339(),
             updated_at: value.updated_at.to_rfc3339(),
@@ -72,18 +72,18 @@ pub struct SensorResponse {
     pub additional_information: Option<serde_json::Value>,
 }
 
-impl From<&Sensor> for SensorResponse {
-    fn from(value: &Sensor) -> Self {
+impl From<&SensorView> for SensorResponse {
+    fn from(value: &SensorView) -> Self {
         Self {
             id: value.id.clone(),
             created_at: value.created_at.to_rfc3339(),
             updated_at: value.updated_at.to_rfc3339(),
             status: value.status.into(),
-            latitude: value.coordinates.latitude(),
-            longitude: value.coordinates.longitude(),
-            latest_data: value.latest_data.as_ref().map(SensorDataResponse::from),
-            provider: value.provider_info.provider.clone(),
-            additional_information: value.provider_info.additional_info.clone(),
+            latitude: value.latitude,
+            longitude: value.longitude,
+            latest_data: value.latest_reading.as_ref().map(SensorDataResponse::from),
+            provider: value.provider.clone(),
+            additional_information: value.additional_info.clone(),
         }
     }
 }

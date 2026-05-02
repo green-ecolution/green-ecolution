@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::domain::{
     DomainError, Id,
-    sensor::Sensor,
+    sensor::SensorView,
     shared::{coordinates::Coordinate, provider_info::ProviderInfo},
     tree::{PlantingYear, Tree, TreeCreate, TreeUpdate},
 };
@@ -77,8 +77,8 @@ pub struct TreeResponse {
     pub additional_information: Option<serde_json::Value>,
 }
 
-impl From<(&Tree, Option<&Sensor>)> for TreeResponse {
-    fn from((tree, sensor): (&Tree, Option<&Sensor>)) -> Self {
+impl From<(&Tree, Option<&SensorView>)> for TreeResponse {
+    fn from((tree, sensor): (&Tree, Option<&SensorView>)) -> Self {
         Self {
             id: tree.id.value(),
             created_at: tree.created_at.to_rfc3339(),

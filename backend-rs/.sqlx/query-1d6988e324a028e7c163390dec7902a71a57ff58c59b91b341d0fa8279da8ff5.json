@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO sensors (id, status, latitude, longitude, geometry)\n        VALUES ($1, 'online', 53.55, 9.99, ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1d6988e324a028e7c163390dec7902a71a57ff58c59b91b341d0fa8279da8ff5"
+}

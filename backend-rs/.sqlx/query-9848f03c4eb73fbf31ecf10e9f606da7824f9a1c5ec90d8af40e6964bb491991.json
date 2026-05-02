@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, sensor_id, created_at, updated_at, data\n            FROM sensor_data WHERE sensor_id = $1\n            ORDER BY created_at DESC\n            LIMIT $2",
+  "query": "SELECT id, sensor_id, created_at AS recorded_at, data\n            FROM sensor_data WHERE sensor_id = $1\n            ORDER BY created_at DESC LIMIT $2",
   "describe": {
     "columns": [
       {
@@ -15,16 +15,11 @@
       },
       {
         "ordinal": 2,
-        "name": "created_at",
+        "name": "recorded_at",
         "type_info": "Timestamp"
       },
       {
         "ordinal": 3,
-        "name": "updated_at",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 4,
         "name": "data",
         "type_info": "Jsonb"
       }
@@ -39,9 +34,8 @@
       false,
       false,
       false,
-      false,
       false
     ]
   },
-  "hash": "5b15c0622a99f0d4e1369b4872f386628bc3e705ad1971d84d689705a2a3f643"
+  "hash": "9848f03c4eb73fbf31ecf10e9f606da7824f9a1c5ec90d8af40e6964bb491991"
 }

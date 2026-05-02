@@ -9,7 +9,10 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     domain::{
-        RepositoryError, sensor::SensorQuery, shared::pagination::Pagination, tree::TreeQuery,
+        RepositoryError,
+        sensor::{SensorId, SensorSearchQuery},
+        shared::pagination::Pagination,
+        tree::TreeQuery,
     },
     http::{
         AppState,
@@ -51,7 +54,7 @@ pub async fn list_sensors(
     let pagination = Pagination::from(&params);
     let page = state
         .sensor_service
-        .all(SensorQuery::default(), pagination)
+        .search_view(SensorSearchQuery::default(), pagination)
         .await?;
     let response = ListResponse::<SensorResponse>::from_page(page, &pagination);
     Ok(Json(response))
@@ -73,8 +76,9 @@ pub async fn get_sensor(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
 ) -> Result<Json<SensorResponse>, ServiceError> {
-    let sensor = state.sensor_service.by_id(&id).await?;
-    Ok(Json(SensorResponse::from(&sensor)))
+    let sensor_id = SensorId::new(id).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+    let view = state.sensor_service.view_by_id(&sensor_id).await?;
+    Ok(Json(SensorResponse::from(&view)))
 }
 
 #[utoipa::path(delete, path = "/sensors/{sensor_id}", tag = "Sensors",
@@ -93,7 +97,8 @@ pub async fn delete_sensor(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, ServiceError> {
-    state.sensor_service.delete(&id).await?;
+    let sensor_id = SensorId::new(id).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+    state.sensor_service.delete(&sensor_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -112,8 +117,12 @@ pub async fn list_sensor_data(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
 ) -> Result<Json<Vec<SensorDataResponse>>, ServiceError> {
-    let data = state.sensor_service.all_data(&id).await?;
-    let response: Vec<SensorDataResponse> = data.iter().map(SensorDataResponse::from).collect();
+    let sensor_id = SensorId::new(id).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+    let readings = state
+        .sensor_service
+        .view_history(&sensor_id, 10_000)
+        .await?;
+    let response: Vec<SensorDataResponse> = readings.iter().map(SensorDataResponse::from).collect();
     Ok(Json(response))
 }
 
@@ -133,7 +142,9 @@ pub async fn get_tree_by_sensor(
     State(state): State<Arc<AppState>>,
     Path(sensor_id): Path<String>,
 ) -> Result<Json<TreeResponse>, ServiceError> {
-    let sensor = state.sensor_service.by_id(&sensor_id).await?;
+    let sid =
+        SensorId::new(sensor_id.clone()).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+    let sensor_view = state.sensor_service.view_by_id(&sid).await?;
     let query = TreeQuery {
         sensor_id: Some(sensor_id),
         ..Default::default()
@@ -146,5 +157,5 @@ pub async fn get_tree_by_sensor(
         .into_iter()
         .next()
         .ok_or(ServiceError::Repository(RepositoryError::NotFound))?;
-    Ok(Json(TreeResponse::from((&tree, Some(&sensor)))))
+    Ok(Json(TreeResponse::from((&tree, Some(&sensor_view)))))
 }

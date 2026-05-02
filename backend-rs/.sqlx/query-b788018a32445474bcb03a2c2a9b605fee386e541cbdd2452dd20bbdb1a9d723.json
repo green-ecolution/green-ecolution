@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, created_at, updated_at,\n                      status AS \"status: SensorStatus\",\n                      latitude, longitude,\n                      provider, additional_informations\n            FROM sensors\n            WHERE ($1::text IS NULL OR provider = $1)\n            ORDER BY id\n            LIMIT $2 OFFSET $3",
+  "query": "SELECT id, created_at, updated_at,\n                      status AS \"status: SensorStatus\",\n                      latitude, longitude,\n                      provider,\n                      additional_informations AS additional_info\n            FROM sensors\n            WHERE ($1::text IS NULL OR provider = $1)\n            ORDER BY id\n            LIMIT $2 OFFSET $3",
   "describe": {
     "columns": [
       {
@@ -51,7 +51,7 @@
       },
       {
         "ordinal": 7,
-        "name": "additional_informations",
+        "name": "additional_info",
         "type_info": "Jsonb"
       }
     ],
@@ -73,5 +73,5 @@
       true
     ]
   },
-  "hash": "9209e28492846e53390196b8397287ec280b756f5256c14132a32a3c116c6909"
+  "hash": "b788018a32445474bcb03a2c2a9b605fee386e541cbdd2452dd20bbdb1a9d723"
 }

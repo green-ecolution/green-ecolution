@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE sensors SET\n                status = COALESCE($2, status),\n                provider = COALESCE($3, provider),\n                additional_informations = COALESCE($4, additional_informations)\n            WHERE id = $1\n            RETURNING id, created_at, updated_at, status AS \"status: SensorStatus\",\n                      latitude, longitude, provider, additional_informations",
+  "query": "SELECT id, created_at, updated_at,\n                      status AS \"status: SensorStatus\",\n                      latitude, longitude,\n                      provider,\n                      additional_informations AS additional_info\n            FROM sensors WHERE id = $1",
   "describe": {
     "columns": [
       {
@@ -51,27 +51,13 @@
       },
       {
         "ordinal": 7,
-        "name": "additional_informations",
+        "name": "additional_info",
         "type_info": "Jsonb"
       }
     ],
     "parameters": {
       "Left": [
-        "Text",
-        {
-          "Custom": {
-            "name": "sensor_status",
-            "kind": {
-              "Enum": [
-                "online",
-                "offline",
-                "unknown"
-              ]
-            }
-          }
-        },
-        "Text",
-        "Jsonb"
+        "Text"
       ]
     },
     "nullable": [
@@ -85,5 +71,5 @@
       true
     ]
   },
-  "hash": "eef1c35e73d78513ed7bdd822077bb0fa03cfbd11d54231cd36f8939a1a5a082"
+  "hash": "3ec87adeaf34ca4c830b67679a094380e2905dcd67c1e405d97229985379df09"
 }

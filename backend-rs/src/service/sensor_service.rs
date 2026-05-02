@@ -2,91 +2,131 @@ use std::sync::Arc;
 
 use crate::domain::{
     events::DomainEvent,
-    sensor::{Sensor, SensorCreate, SensorData, SensorQuery, SensorRepository, SensorUpdate},
-    shared::pagination::{Page, Pagination},
+    sensor::{
+        Sensor, SensorDraft, SensorId, SensorReader, SensorReadingReader, SensorReadingWriter,
+        SensorSearchQuery, SensorStatus, SensorView, SensorWriter,
+        data::{SensorReadingDraft, SensorReadingView},
+    },
+    shared::{
+        coordinates::Coordinate,
+        pagination::{Page, Pagination},
+    },
     tree::TreeRepository,
 };
 
 use super::{ServiceError, event_bus::EventBus};
 
 pub struct SensorService {
-    sensor_repo: Arc<dyn SensorRepository>,
+    reader: Arc<dyn SensorReader>,
+    writer: Arc<dyn SensorWriter>,
+    reading_reader: Arc<dyn SensorReadingReader>,
+    reading_writer: Arc<dyn SensorReadingWriter>,
     tree_repo: Arc<dyn TreeRepository>,
     event_bus: Arc<dyn EventBus>,
 }
 
 impl SensorService {
     pub fn new(
-        sensor_repo: Arc<dyn SensorRepository>,
+        reader: Arc<dyn SensorReader>,
+        writer: Arc<dyn SensorWriter>,
+        reading_reader: Arc<dyn SensorReadingReader>,
+        reading_writer: Arc<dyn SensorReadingWriter>,
         tree_repo: Arc<dyn TreeRepository>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
         Self {
-            sensor_repo,
+            reader,
+            writer,
+            reading_reader,
+            reading_writer,
             tree_repo,
             event_bus,
         }
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn all(
+    pub async fn search_view(
         &self,
-        query: SensorQuery,
+        query: SensorSearchQuery,
         pagination: Pagination,
-    ) -> Result<Page<Sensor>, ServiceError> {
-        Ok(self.sensor_repo.all(query, pagination).await?)
+    ) -> Result<Page<SensorView>, ServiceError> {
+        Ok(self.reader.view_search(query, pagination).await?)
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = id))]
-    pub async fn by_id(&self, id: &str) -> Result<Sensor, ServiceError> {
-        Ok(self.sensor_repo.by_id(id).await?)
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
+    pub async fn view_by_id(&self, id: &SensorId) -> Result<SensorView, ServiceError> {
+        Ok(self.reader.view_by_id(id).await?)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
+    pub async fn by_id(&self, id: &SensorId) -> Result<Sensor, ServiceError> {
+        Ok(self.reader.by_id(id).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn by_ids(&self, ids: &[String]) -> Result<Vec<Sensor>, ServiceError> {
-        Ok(self.sensor_repo.by_ids(ids).await?)
+    pub async fn by_ids(&self, ids: &[SensorId]) -> Result<Vec<Sensor>, ServiceError> {
+        Ok(self.reader.by_ids(ids).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn create(&self, input: SensorCreate) -> Result<Sensor, ServiceError> {
-        Ok(self.sensor_repo.create(input).await?)
+    pub async fn view_by_ids(&self, ids: &[SensorId]) -> Result<Vec<SensorView>, ServiceError> {
+        Ok(self.reader.view_by_ids(ids).await?)
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = id))]
-    pub async fn update(&self, id: &str, input: SensorUpdate) -> Result<Sensor, ServiceError> {
-        Ok(self.sensor_repo.update(id, input).await?)
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn create(&self, draft: SensorDraft) -> Result<Sensor, ServiceError> {
+        Ok(self.writer.save_new(draft).await?)
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = id))]
-    pub async fn delete(&self, id: &str) -> Result<(), ServiceError> {
-        self.tree_repo.unlink_sensor_id(id).await?;
-        self.sensor_repo.delete(id).await?;
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
+    pub async fn change_status(
+        &self,
+        id: &SensorId,
+        new: SensorStatus,
+    ) -> Result<Sensor, ServiceError> {
+        let mut sensor = self.reader.by_id(id).await?;
+        sensor.change_status(new);
+        self.writer.save(&sensor).await?;
+        Ok(sensor)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
+    pub async fn move_to(&self, id: &SensorId, new: Coordinate) -> Result<Sensor, ServiceError> {
+        let mut sensor = self.reader.by_id(id).await?;
+        sensor.move_to(new);
+        self.writer.save(&sensor).await?;
+        Ok(sensor)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
+    pub async fn delete(&self, id: &SensorId) -> Result<(), ServiceError> {
+        self.tree_repo.unlink_sensor_id(id.as_str()).await?;
+        self.writer.delete(id).await?;
         self.event_bus
             .publish(DomainEvent::SensorDeleted {
-                sensor_id: id.to_string(),
+                sensor_id: id.as_str().to_string(),
                 affected_tree_ids: vec![],
             })
             .await;
         Ok(())
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = sensor_id))]
-    pub async fn all_data(&self, sensor_id: &str) -> Result<Vec<SensorData>, ServiceError> {
-        Ok(self.sensor_repo.all_data(sensor_id).await?)
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %sensor_id))]
+    pub async fn view_history(
+        &self,
+        sensor_id: &SensorId,
+        limit: i64,
+    ) -> Result<Vec<SensorReadingView>, ServiceError> {
+        Ok(self.reading_reader.view_history(sensor_id, limit).await?)
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = sensor_id))]
-    pub async fn latest_data(&self, sensor_id: &str) -> Result<SensorData, ServiceError> {
-        Ok(self.sensor_repo.latest_data(sensor_id).await?)
-    }
-
-    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %data.sensor_id))]
-    pub async fn create_data(&self, data: SensorData) -> Result<(), ServiceError> {
-        let sensor_id = data.sensor_id.clone();
-        self.sensor_repo.create_data(data).await?;
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %draft.sensor_id))]
+    pub async fn record_reading(&self, draft: SensorReadingDraft) -> Result<(), ServiceError> {
+        let sensor_id_str = draft.sensor_id.as_str().to_string();
+        self.reading_writer.record(draft).await?;
         self.event_bus
             .publish(DomainEvent::SensorDataReceived {
-                sensor_id,
+                sensor_id: sensor_id_str,
                 data: serde_json::Value::Null,
             })
             .await;

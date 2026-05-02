@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, created_at, updated_at,\n                      status AS \"status: SensorStatus\",\n                      latitude, longitude,\n                      provider, additional_informations\n            FROM sensors WHERE id = $1",
+  "query": "SELECT id,\n                      status AS \"status: SensorStatus\",\n                      latitude, longitude,\n                      provider,\n                      additional_informations AS additional_info\n            FROM sensors WHERE id = $1",
   "describe": {
     "columns": [
       {
@@ -10,16 +10,6 @@
       },
       {
         "ordinal": 1,
-        "name": "created_at",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 2,
-        "name": "updated_at",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 3,
         "name": "status: SensorStatus",
         "type_info": {
           "Custom": {
@@ -35,23 +25,23 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 2,
         "name": "latitude",
         "type_info": "Float8"
       },
       {
-        "ordinal": 5,
+        "ordinal": 3,
         "name": "longitude",
         "type_info": "Float8"
       },
       {
-        "ordinal": 6,
+        "ordinal": 4,
         "name": "provider",
         "type_info": "Text"
       },
       {
-        "ordinal": 7,
-        "name": "additional_informations",
+        "ordinal": 5,
+        "name": "additional_info",
         "type_info": "Jsonb"
       }
     ],
@@ -65,11 +55,9 @@
       false,
       false,
       false,
-      false,
-      false,
       true,
       true
     ]
   },
-  "hash": "a6a3cf112998322e5837ff0891fbb9603ef0dcc3b32559a35d3424b1076cbf16"
+  "hash": "d046bec4377380968e943c19da09a70313de0c0e216ed56d0d183ea39f3b3343"
 }

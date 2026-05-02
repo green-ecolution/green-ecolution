@@ -8,7 +8,12 @@ use axum::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    domain::{Id, cluster::TreeCluster, cluster::TreeClusterQuery, shared::pagination::Pagination},
+    domain::{
+        Id,
+        cluster::{TreeCluster, TreeClusterQuery},
+        sensor::SensorId,
+        shared::pagination::Pagination,
+    },
     http::{
         AppState,
         v1::{
@@ -43,8 +48,16 @@ async fn build_cluster_response(
 
     let trees = state.tree_service.by_ids(&cluster.tree_ids).await?;
 
-    let sensor_ids: Vec<String> = trees.iter().filter_map(|t| t.sensor_id.clone()).collect();
-    let sensors = state.sensor_service.by_ids(&sensor_ids).await?;
+    let sensor_ids: Vec<SensorId> = trees
+        .iter()
+        .filter_map(|t| {
+            t.sensor_id
+                .as_deref()
+                .map(SensorId::new)
+                .and_then(Result::ok)
+        })
+        .collect();
+    let sensors = state.sensor_service.view_by_ids(&sensor_ids).await?;
     let sensor_map: HashMap<&str, _> = sensors.iter().map(|s| (s.id.as_str(), s)).collect();
 
     let tree_responses: Vec<TreeResponse> = trees

@@ -74,8 +74,13 @@ impl Application {
         let region_writer: Arc<dyn crate::domain::region::RegionWriter> = region_repo;
         let tree_repo: Arc<dyn crate::domain::tree::TreeRepository> =
             Arc::new(PgTreeRepository::new(pool.clone()));
-        let sensor_repo: Arc<dyn crate::domain::sensor::SensorRepository> =
-            Arc::new(PgSensorRepository::new(pool.clone()));
+        let sensor_repo = Arc::new(PgSensorRepository::new(pool.clone()));
+        let sensor_reader: Arc<dyn crate::domain::sensor::SensorReader> = sensor_repo.clone();
+        let sensor_writer: Arc<dyn crate::domain::sensor::SensorWriter> = sensor_repo.clone();
+        let sensor_reading_reader: Arc<dyn crate::domain::sensor::SensorReadingReader> =
+            sensor_repo.clone();
+        let sensor_reading_writer: Arc<dyn crate::domain::sensor::SensorReadingWriter> =
+            sensor_repo;
         let vehicle_repo: Arc<dyn crate::domain::vehicle::VehicleRepository> =
             Arc::new(PgVehicleRepository::new(pool.clone()));
         let cluster_repo: Arc<dyn crate::domain::cluster::TreeClusterRepository> =
@@ -123,7 +128,10 @@ impl Application {
         let region_service = Arc::new(RegionService::new(region_reader, region_writer));
         let tree_service = Arc::new(TreeService::new(tree_repo.clone(), event_bus.clone()));
         let sensor_service = Arc::new(SensorService::new(
-            sensor_repo,
+            sensor_reader,
+            sensor_writer,
+            sensor_reading_reader,
+            sensor_reading_writer,
             tree_repo.clone(),
             event_bus.clone(),
         ));

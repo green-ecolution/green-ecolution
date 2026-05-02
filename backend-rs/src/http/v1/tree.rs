@@ -10,6 +10,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     domain::{
         Id,
+        sensor::SensorId,
         shared::pagination::Pagination,
         tree::{Tree, TreeQuery},
     },
@@ -39,7 +40,11 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
 
 async fn build_tree_response(state: &AppState, tree: &Tree) -> Result<TreeResponse, ServiceError> {
     let sensor = match &tree.sensor_id {
-        Some(sid) => Some(state.sensor_service.by_id(sid).await?),
+        Some(sid) => {
+            let sensor_id =
+                SensorId::new(sid).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+            Some(state.sensor_service.view_by_id(&sensor_id).await?)
+        }
         None => None,
     };
     Ok(TreeResponse::from((tree, sensor.as_ref())))
@@ -66,12 +71,17 @@ pub async fn list_trees(
         .all(TreeQuery::default(), pagination)
         .await?;
 
-    let sensor_ids: Vec<String> = page
+    let sensor_ids: Vec<SensorId> = page
         .items
         .iter()
-        .filter_map(|t| t.sensor_id.clone())
+        .filter_map(|t| {
+            t.sensor_id
+                .as_deref()
+                .map(SensorId::new)
+                .and_then(Result::ok)
+        })
         .collect();
-    let sensors = state.sensor_service.by_ids(&sensor_ids).await?;
+    let sensors = state.sensor_service.view_by_ids(&sensor_ids).await?;
     let sensor_map: HashMap<&str, _> = sensors.iter().map(|s| (s.id.as_str(), s)).collect();
 
     let response = ListResponse::from_page_with(page, &pagination, |tree: &Tree| {
