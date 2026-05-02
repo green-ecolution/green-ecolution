@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 use crate::domain::{
-    DomainError,
-    shared::{provider_info::ProviderInfo, water_capacity::WaterCapacity},
-    vehicle::{Vehicle, VehicleCreate, VehicleDimension, VehicleUpdate},
+    shared::{
+        provenance::{Provenance, ProviderId},
+        water_capacity::WaterCapacity,
+    },
+    vehicle::{NumberPlate, VehicleDimension, VehicleDraft, VehicleModel, VehicleView},
 };
 
 use super::{DrivingLicense, VehicleStatus, VehicleType};
@@ -65,26 +67,26 @@ pub struct VehicleResponse {
     pub additional_information: Option<serde_json::Value>,
 }
 
-impl From<&Vehicle> for VehicleResponse {
-    fn from(value: &Vehicle) -> Self {
+impl From<&VehicleView> for VehicleResponse {
+    fn from(value: &VehicleView) -> Self {
         Self {
-            id: value.id.value(),
+            id: value.id,
             created_at: value.created_at.to_rfc3339(),
             updated_at: value.updated_at.to_rfc3339(),
             number_plate: value.number_plate.clone(),
             description: value.description.clone().unwrap_or_default(),
-            water_capacity: value.water_capacity.liters(),
+            water_capacity: value.water_capacity,
             model: value.model.clone(),
             status: value.status.into(),
             vehicle_type: value.vehicle_type.into(),
             driving_license: value.driving_license.into(),
-            height: value.dimension.height,
-            width: value.dimension.width,
-            length: value.dimension.length,
-            weight: value.dimension.weight,
+            height: value.height,
+            width: value.width,
+            length: value.length,
+            weight: value.weight,
             archived_at: value.archived_at.map(|dt| dt.to_rfc3339()),
-            provider: value.provider_info.provider.clone(),
-            additional_information: value.provider_info.additional_info.clone(),
+            provider: value.provider.clone(),
+            additional_information: value.additional_info.clone(),
         }
     }
 }
@@ -97,7 +99,7 @@ pub struct VehicleCreateRequest {
     pub number_plate: String,
     /// Human-readable description of the vehicle.
     #[schema(example = "Großes Bewässerungsfahrzeug für den Innenstadtbereich")]
-    pub description: String,
+    pub description: Option<String>,
     /// Water tank capacity in liters.
     #[schema(example = 8000.0, minimum = 0.0)]
     pub water_capacity: f64,
@@ -141,7 +143,7 @@ pub struct VehicleUpdateRequest {
     pub number_plate: String,
     /// Human-readable description of the vehicle.
     #[schema(example = "Großes Bewässerungsfahrzeug für den Innenstadtbereich")]
-    pub description: String,
+    pub description: Option<String>,
     /// Water tank capacity in liters.
     #[schema(example = 8000.0, minimum = 0.0)]
     pub water_capacity: f64,
@@ -177,54 +179,77 @@ pub struct VehicleUpdateRequest {
     pub additional_information: Option<serde_json::Value>,
 }
 
-impl TryFrom<VehicleCreateRequest> for VehicleCreate {
-    type Error = DomainError;
+fn parse_provenance(
+    provider: Option<String>,
+    additional_information: Option<serde_json::Value>,
+) -> Result<Provenance, crate::service::ServiceError> {
+    let provider_id = provider
+        .map(ProviderId::new)
+        .transpose()
+        .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
+    Ok(Provenance::new(provider_id, additional_information))
+}
 
-    fn try_from(req: VehicleCreateRequest) -> Result<Self, Self::Error> {
-        Ok(Self {
-            number_plate: req.number_plate,
-            description: req.description,
-            water_capacity: WaterCapacity::new(req.water_capacity)?,
-            status: req.status.into(),
-            vehicle_type: req.vehicle_type.into(),
-            model: req.model,
-            driving_license: req.driving_license.into(),
-            dimension: VehicleDimension {
-                height: req.height,
-                width: req.width,
-                length: req.length,
-                weight: req.weight,
-            },
-            provider_info: ProviderInfo {
-                provider: req.provider,
-                additional_info: req.additional_information,
-            },
+impl VehicleCreateRequest {
+    pub fn into_draft(self) -> Result<VehicleDraft, crate::service::ServiceError> {
+        let number_plate = NumberPlate::new(self.number_plate)
+            .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
+        let model = VehicleModel::new(self.model)
+            .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
+        let water_capacity = WaterCapacity::new(self.water_capacity)
+            .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
+        let dimension = VehicleDimension::new(self.height, self.width, self.length, self.weight)
+            .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
+        let provenance = parse_provenance(self.provider, self.additional_information)?;
+
+        Ok(VehicleDraft {
+            number_plate,
+            description: self.description,
+            water_capacity,
+            status: self.status.into(),
+            vehicle_type: self.vehicle_type.into(),
+            model,
+            driving_license: self.driving_license.into(),
+            dimension,
+            provenance,
         })
     }
 }
 
-impl TryFrom<VehicleUpdateRequest> for VehicleUpdate {
-    type Error = DomainError;
+pub struct VehicleUpdateFields {
+    pub number_plate: NumberPlate,
+    pub description: Option<String>,
+    pub water_capacity: WaterCapacity,
+    pub status: crate::domain::vehicle::VehicleStatus,
+    pub vehicle_type: crate::domain::vehicle::VehicleType,
+    pub model: VehicleModel,
+    pub driving_license: crate::domain::vehicle::DrivingLicense,
+    pub dimension: VehicleDimension,
+    pub provenance: Provenance,
+}
 
-    fn try_from(req: VehicleUpdateRequest) -> Result<Self, Self::Error> {
-        Ok(Self {
-            number_plate: Some(req.number_plate),
-            description: Some(req.description),
-            water_capacity: Some(WaterCapacity::new(req.water_capacity)?),
-            status: Some(req.status.into()),
-            vehicle_type: Some(req.vehicle_type.into()),
-            model: Some(req.model),
-            driving_license: Some(req.driving_license.into()),
-            dimension: Some(VehicleDimension {
-                height: req.height,
-                width: req.width,
-                length: req.length,
-                weight: req.weight,
-            }),
-            provider_info: Some(ProviderInfo {
-                provider: req.provider,
-                additional_info: req.additional_information,
-            }),
+impl VehicleUpdateRequest {
+    pub fn into_fields(self) -> Result<VehicleUpdateFields, crate::service::ServiceError> {
+        let number_plate = NumberPlate::new(self.number_plate)
+            .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
+        let model = VehicleModel::new(self.model)
+            .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
+        let water_capacity = WaterCapacity::new(self.water_capacity)
+            .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
+        let dimension = VehicleDimension::new(self.height, self.width, self.length, self.weight)
+            .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
+        let provenance = parse_provenance(self.provider, self.additional_information)?;
+
+        Ok(VehicleUpdateFields {
+            number_plate,
+            description: self.description,
+            water_capacity,
+            status: self.status.into(),
+            vehicle_type: self.vehicle_type.into(),
+            model,
+            driving_license: self.driving_license.into(),
+            dimension,
+            provenance,
         })
     }
 }

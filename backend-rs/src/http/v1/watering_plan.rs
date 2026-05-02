@@ -57,11 +57,12 @@ async fn resolve_plan_relations(
     let transporter_id = plan
         .transporter_id
         .ok_or_else(|| ServiceError::InvalidInput("watering plan has no transporter".into()))?;
-    let transporter = VehicleResponse::from(&state.vehicle_service.by_id(transporter_id).await?);
+    let transporter =
+        VehicleResponse::from(&state.vehicle_service.view_by_id(transporter_id).await?);
 
     let trailer = match plan.trailer_id {
         Some(id) => Some(VehicleResponse::from(
-            &state.vehicle_service.by_id(id).await?,
+            &state.vehicle_service.view_by_id(id).await?,
         )),
         None => None,
     };
@@ -108,8 +109,8 @@ pub async fn list_watering_plans(
         .iter()
         .flat_map(|p| [p.transporter_id, p.trailer_id].into_iter().flatten())
         .collect();
-    let vehicles = state.vehicle_service.by_ids(&vehicle_ids).await?;
-    let vehicle_map: HashMap<_, _> = vehicles.iter().map(|v| (v.id, v)).collect();
+    let vehicles = state.vehicle_service.view_by_ids(&vehicle_ids).await?;
+    let vehicle_map: HashMap<_, _> = vehicles.iter().map(|v| (Id::from(v.id), v)).collect();
 
     let cluster_ids: Vec<_> = page
         .items

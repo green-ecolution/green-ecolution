@@ -54,6 +54,12 @@ impl From<DomainError> for RepositoryError {
     }
 }
 
+impl From<crate::domain::shared::error::ValidationError> for RepositoryError {
+    fn from(e: crate::domain::shared::error::ValidationError) -> Self {
+        RepositoryError::DataIntegrity(e.to_string())
+    }
+}
+
 #[derive(Debug)]
 pub struct Id<T>(i32, PhantomData<T>);
 

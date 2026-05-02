@@ -148,8 +148,6 @@ pub enum VehicleType {
     Transporter,
     /// Towed water tank attached to a transporter.
     Trailer,
-    /// Vehicle type has not been classified.
-    Unknown,
 }
 
 /// Lifecycle status of a watering plan.
@@ -230,7 +228,6 @@ impl From<VehicleType> for DomainVehicleType {
         match value {
             VehicleType::Transporter => Self::Transporter,
             VehicleType::Trailer => Self::Trailer,
-            VehicleType::Unknown => Self::Unknown,
         }
     }
 }
@@ -322,7 +319,6 @@ impl From<DomainVehicleType> for VehicleType {
         match value {
             DomainVehicleType::Transporter => Self::Transporter,
             DomainVehicleType::Trailer => Self::Trailer,
-            DomainVehicleType::Unknown => Self::Unknown,
         }
     }
 }

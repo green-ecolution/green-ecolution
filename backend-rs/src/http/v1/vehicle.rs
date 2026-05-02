@@ -8,7 +8,7 @@ use axum::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    domain::{Id, shared::pagination::Pagination, vehicle::VehicleQuery},
+    domain::{Id, shared::pagination::Pagination, vehicle::VehicleSearchQuery},
     http::{
         AppState,
         v1::{
@@ -49,7 +49,7 @@ pub async fn list_vehicles(
     let pagination = Pagination::from(&params);
     let page = state
         .vehicle_service
-        .all(VehicleQuery::default(), pagination)
+        .search_view(VehicleSearchQuery::default(), pagination)
         .await?;
     let response = ListResponse::<VehicleResponse>::from_page(page, &pagination);
     Ok(Json(response))
@@ -71,8 +71,8 @@ pub async fn get_vehicle(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
 ) -> Result<Json<VehicleResponse>, ServiceError> {
-    let vehicle = state.vehicle_service.by_id(Id::from(id)).await?;
-    Ok(Json(VehicleResponse::from(&vehicle)))
+    let view = state.vehicle_service.view_by_id(Id::from(id)).await?;
+    Ok(Json(VehicleResponse::from(&view)))
 }
 
 #[utoipa::path(post, path = "/vehicles", tag = "Vehicles",
@@ -92,9 +92,10 @@ pub async fn create_vehicle(
     State(state): State<Arc<AppState>>,
     Json(entity): Json<VehicleCreateRequest>,
 ) -> Result<(StatusCode, Json<VehicleResponse>), ServiceError> {
-    let create = entity.try_into().map_err(ServiceError::Domain)?;
-    let vehicle = state.vehicle_service.create(create).await?;
-    Ok((StatusCode::CREATED, Json(VehicleResponse::from(&vehicle))))
+    let draft = entity.into_draft()?;
+    let vehicle = state.vehicle_service.create(draft).await?;
+    let view = state.vehicle_service.view_by_id(vehicle.id).await?;
+    Ok((StatusCode::CREATED, Json(VehicleResponse::from(&view))))
 }
 
 #[utoipa::path(put, path = "/vehicles/{vehicle_id}", tag = "Vehicles",
@@ -115,9 +116,24 @@ pub async fn update_vehicle(
     Path(id): Path<i32>,
     Json(entity): Json<VehicleUpdateRequest>,
 ) -> Result<Json<VehicleResponse>, ServiceError> {
-    let update = entity.try_into().map_err(ServiceError::Domain)?;
-    let vehicle = state.vehicle_service.update(Id::from(id), update).await?;
-    Ok(Json(VehicleResponse::from(&vehicle)))
+    let fields = entity.into_fields()?;
+    let vehicle = state
+        .vehicle_service
+        .replace(
+            Id::from(id),
+            fields.number_plate,
+            fields.description,
+            fields.water_capacity,
+            fields.status,
+            fields.vehicle_type,
+            fields.model,
+            fields.driving_license,
+            fields.dimension,
+            fields.provenance,
+        )
+        .await?;
+    let view = state.vehicle_service.view_by_id(vehicle.id).await?;
+    Ok(Json(VehicleResponse::from(&view)))
 }
 
 #[utoipa::path(delete, path = "/vehicles/{vehicle_id}", tag = "Vehicles",
@@ -156,12 +172,12 @@ pub async fn list_archived_vehicles(
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<VehicleResponse>>, ServiceError> {
     let pagination = Pagination::from(&params);
-    let query = VehicleQuery {
+    let query = VehicleSearchQuery {
         only_archived: true,
         with_archived: true,
         ..Default::default()
     };
-    let page = state.vehicle_service.all(query, pagination).await?;
+    let page = state.vehicle_service.search_view(query, pagination).await?;
     let response = ListResponse::<VehicleResponse>::from_page(page, &pagination);
     Ok(Json(response))
 }
@@ -202,6 +218,16 @@ pub async fn get_vehicle_by_plate(
     State(state): State<Arc<AppState>>,
     Path(plate): Path<String>,
 ) -> Result<Json<VehicleResponse>, ServiceError> {
-    let vehicle = state.vehicle_service.by_plate(&plate).await?;
-    Ok(Json(VehicleResponse::from(&vehicle)))
+    let number_plate = crate::domain::vehicle::NumberPlate::new(plate)
+        .map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+    let vehicle =
+        state
+            .vehicle_service
+            .by_plate(&number_plate)
+            .await?
+            .ok_or(ServiceError::Repository(
+                crate::domain::RepositoryError::NotFound,
+            ))?;
+    let view = state.vehicle_service.view_by_id(vehicle.id).await?;
+    Ok(Json(VehicleResponse::from(&view)))
 }

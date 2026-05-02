@@ -6,7 +6,7 @@ use url::Url;
 use uuid::Uuid;
 
 use crate::domain::{
-    DomainError, RepositoryError,
+    RepositoryError,
     user::{User, UserRole, UserStatus},
     vehicle::DrivingLicense,
 };
@@ -64,9 +64,9 @@ impl KcUser {
             .transpose()
             .map_err(|e| RepositoryError::DataIntegrity(format!("invalid avatar_url: {e}")))?;
 
-        let roles = parse_attr_list::<UserRole>(&attributes, ATTR_USER_ROLES)?;
+        let roles = parse_attr_list::<UserRole, _>(&attributes, ATTR_USER_ROLES)?;
         let driving_licenses =
-            parse_attr_list::<DrivingLicense>(&attributes, ATTR_DRIVING_LICENSES)?;
+            parse_attr_list::<DrivingLicense, _>(&attributes, ATTR_DRIVING_LICENSES)?;
         let status = first_attr(&attributes, ATTR_STATUS)
             .as_deref()
             .map(UserStatus::from_str)
@@ -100,10 +100,14 @@ fn first_attr(attrs: &HashMap<String, Vec<String>>, key: &str) -> Option<String>
         .cloned()
 }
 
-fn parse_attr_list<T: FromStr<Err = DomainError>>(
+fn parse_attr_list<T, E>(
     attrs: &HashMap<String, Vec<String>>,
     key: &str,
-) -> Result<Vec<T>, RepositoryError> {
+) -> Result<Vec<T>, RepositoryError>
+where
+    T: FromStr<Err = E>,
+    E: Into<RepositoryError>,
+{
     let Some(values) = attrs.get(key) else {
         return Ok(Vec::new());
     };
@@ -114,7 +118,7 @@ fn parse_attr_list<T: FromStr<Err = DomainError>>(
             if trimmed.is_empty() {
                 continue;
             }
-            out.push(T::from_str(trimmed).map_err(RepositoryError::from)?);
+            out.push(T::from_str(trimmed).map_err(|e| e.into())?);
         }
     }
     Ok(out)

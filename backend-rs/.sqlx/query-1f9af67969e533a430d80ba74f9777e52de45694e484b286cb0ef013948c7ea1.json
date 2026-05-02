@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE vehicles SET\n                number_plate = COALESCE($2, number_plate),\n                description = COALESCE($3, description),\n                water_capacity = COALESCE($4, water_capacity),\n                type = COALESCE($5, type),\n                status = COALESCE($6, status),\n                model = COALESCE($7, model),\n                driving_license = COALESCE($8, driving_license),\n                height = COALESCE($9, height),\n                length = COALESCE($10, length),\n                width = COALESCE($11, width),\n                weight = COALESCE($12, weight),\n                provider = COALESCE($13, provider),\n                additional_informations = COALESCE($14, additional_informations)\n            WHERE id = $1\n            RETURNING id, created_at, updated_at, number_plate, description,\n                      water_capacity, model, archived_at,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, length, width, weight,\n                      provider, additional_informations",
+  "query": "SELECT id, created_at, updated_at,\n                      archived_at,\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS \"additional_info: Value\"\n            FROM vehicles\n            WHERE ($1::text IS NULL OR provider = $1)\n              AND ($2::vehicle_type IS NULL OR type = $2)\n              AND ($3::bool OR archived_at IS NULL)\n              AND (NOT $4::bool OR archived_at IS NOT NULL)\n            ORDER BY water_capacity DESC\n            LIMIT $5 OFFSET $6",
   "describe": {
     "columns": [
       {
@@ -20,31 +20,26 @@
       },
       {
         "ordinal": 3,
-        "name": "number_plate",
-        "type_info": "Text"
-      },
-      {
-        "ordinal": 4,
-        "name": "description",
-        "type_info": "Text"
-      },
-      {
-        "ordinal": 5,
-        "name": "water_capacity",
-        "type_info": "Float8"
-      },
-      {
-        "ordinal": 6,
-        "name": "model",
-        "type_info": "Text"
-      },
-      {
-        "ordinal": 7,
         "name": "archived_at",
         "type_info": "Timestamp"
       },
       {
-        "ordinal": 8,
+        "ordinal": 4,
+        "name": "number_plate",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "water_capacity",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 7,
         "name": "vehicle_type: VehicleType",
         "type_info": {
           "Custom": {
@@ -60,7 +55,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 8,
         "name": "status: VehicleStatus",
         "type_info": {
           "Custom": {
@@ -75,6 +70,11 @@
             }
           }
         }
+      },
+      {
+        "ordinal": 9,
+        "name": "model",
+        "type_info": "Text"
       },
       {
         "ordinal": 10,
@@ -100,12 +100,12 @@
       },
       {
         "ordinal": 12,
-        "name": "length",
+        "name": "width",
         "type_info": "Float8"
       },
       {
         "ordinal": 13,
-        "name": "width",
+        "name": "length",
         "type_info": "Float8"
       },
       {
@@ -120,16 +120,13 @@
       },
       {
         "ordinal": 16,
-        "name": "additional_informations",
+        "name": "additional_info: Value",
         "type_info": "Jsonb"
       }
     ],
     "parameters": {
       "Left": [
-        "Int4",
         "Text",
-        "Text",
-        "Float8",
         {
           "Custom": {
             "name": "vehicle_type",
@@ -142,50 +139,21 @@
             }
           }
         },
-        {
-          "Custom": {
-            "name": "vehicle_status",
-            "kind": {
-              "Enum": [
-                "active",
-                "available",
-                "not available",
-                "unknown"
-              ]
-            }
-          }
-        },
-        "Text",
-        {
-          "Custom": {
-            "name": "driving_license",
-            "kind": {
-              "Enum": [
-                "B",
-                "BE",
-                "C",
-                "CE"
-              ]
-            }
-          }
-        },
-        "Float8",
-        "Float8",
-        "Float8",
-        "Float8",
-        "Text",
-        "Jsonb"
+        "Bool",
+        "Bool",
+        "Int8",
+        "Int8"
       ]
     },
     "nullable": [
       false,
       false,
       false,
-      false,
-      false,
-      false,
-      false,
       true,
+      false,
+      false,
+      false,
+      false,
       false,
       false,
       false,
@@ -197,5 +165,5 @@
       true
     ]
   },
-  "hash": "30d53d8a79693a9cc9469ba8109fd678869e6d96335f760e5a3dd687af5538fc"
+  "hash": "1f9af67969e533a430d80ba74f9777e52de45694e484b286cb0ef013948c7ea1"
 }

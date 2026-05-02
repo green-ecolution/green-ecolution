@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, created_at, updated_at, number_plate, description,\n                      water_capacity, model, archived_at,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, length, width, weight,\n                      provider, additional_informations\n            FROM vehicles WHERE id = $1",
+  "query": "SELECT id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS additional_info\n            FROM vehicles WHERE id = ANY($1)",
   "describe": {
     "columns": [
       {
@@ -10,41 +10,26 @@
       },
       {
         "ordinal": 1,
-        "name": "created_at",
+        "name": "archived_at: DateTime<chrono::Utc>",
         "type_info": "Timestamp"
       },
       {
         "ordinal": 2,
-        "name": "updated_at",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 3,
         "name": "number_plate",
         "type_info": "Text"
       },
       {
-        "ordinal": 4,
+        "ordinal": 3,
         "name": "description",
         "type_info": "Text"
       },
       {
-        "ordinal": 5,
+        "ordinal": 4,
         "name": "water_capacity",
         "type_info": "Float8"
       },
       {
-        "ordinal": 6,
-        "name": "model",
-        "type_info": "Text"
-      },
-      {
-        "ordinal": 7,
-        "name": "archived_at",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 8,
+        "ordinal": 5,
         "name": "vehicle_type: VehicleType",
         "type_info": {
           "Custom": {
@@ -60,7 +45,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 6,
         "name": "status: VehicleStatus",
         "type_info": {
           "Custom": {
@@ -77,7 +62,12 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 7,
+        "name": "model",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
         "name": "driving_license: DrivingLicense",
         "type_info": {
           "Custom": {
@@ -94,50 +84,48 @@
         }
       },
       {
-        "ordinal": 11,
+        "ordinal": 9,
         "name": "height",
         "type_info": "Float8"
       },
       {
-        "ordinal": 12,
-        "name": "length",
-        "type_info": "Float8"
-      },
-      {
-        "ordinal": 13,
+        "ordinal": 10,
         "name": "width",
         "type_info": "Float8"
       },
       {
-        "ordinal": 14,
+        "ordinal": 11,
+        "name": "length",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 12,
         "name": "weight",
         "type_info": "Float8"
       },
       {
-        "ordinal": 15,
+        "ordinal": 13,
         "name": "provider",
         "type_info": "Text"
       },
       {
-        "ordinal": 16,
-        "name": "additional_informations",
+        "ordinal": 14,
+        "name": "additional_info",
         "type_info": "Jsonb"
       }
     ],
     "parameters": {
       "Left": [
-        "Int4"
+        "Int4Array"
       ]
     },
     "nullable": [
       false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
       true,
+      false,
+      false,
+      false,
+      false,
       false,
       false,
       false,
@@ -149,5 +137,5 @@
       true
     ]
   },
-  "hash": "8a41b57e7e051bf4ceec35f97ed03b3a732d5d90b2c0b953af09ab9f48b0a701"
+  "hash": "4df732983f9f68650f9d09de2ff34e0d308710ea0d03af8dc5266554cd0251be"
 }
