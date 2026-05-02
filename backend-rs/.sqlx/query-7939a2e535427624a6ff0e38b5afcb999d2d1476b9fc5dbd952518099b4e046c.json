@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, created_at, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description, last_watered,\n                      provider, additional_informations\n            FROM trees\n            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))\n              AND ($2::int[] = '{}' OR planting_year = ANY($2))\n              AND ($3::text IS NULL OR provider = $3)\n              AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))\n            ORDER BY number ASC\n            LIMIT $5 OFFSET $6",
+  "query": "WITH distances AS (\n                SELECT *,\n                    ST_Distance(\n                        geometry::geography,\n                        ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography\n                    )::float8 AS dist\n                FROM trees\n                WHERE ST_DWithin(\n                    geometry::geography,\n                    ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,\n                    $3\n                )\n            )\n            SELECT id, created_at, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      dist AS \"distance!: f64\"\n            FROM distances\n            ORDER BY dist ASC\n            LIMIT $4",
   "describe": {
     "columns": [
       {
@@ -78,7 +78,7 @@
       },
       {
         "ordinal": 12,
-        "name": "last_watered",
+        "name": "last_watered: DateTime<Utc>",
         "type_info": "Timestamp"
       },
       {
@@ -88,37 +88,20 @@
       },
       {
         "ordinal": 14,
-        "name": "additional_informations",
+        "name": "additional_info",
         "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 15,
+        "name": "distance!: f64",
+        "type_info": "Float8"
       }
     ],
     "parameters": {
       "Left": [
-        {
-          "Custom": {
-            "name": "watering_status[]",
-            "kind": {
-              "Array": {
-                "Custom": {
-                  "name": "watering_status",
-                  "kind": {
-                    "Enum": [
-                      "good",
-                      "moderate",
-                      "bad",
-                      "unknown",
-                      "just watered"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        "Int4Array",
-        "Text",
-        "Bool",
-        "Int8",
+        "Float8",
+        "Float8",
+        "Float8",
         "Int8"
       ]
     },
@@ -137,8 +120,9 @@
       true,
       true,
       true,
-      true
+      true,
+      null
     ]
   },
-  "hash": "16d9978d045751df74e2216b7584bf3780ff6ffa11706382e248a93a22551fe1"
+  "hash": "7939a2e535427624a6ff0e38b5afcb999d2d1476b9fc5dbd952518099b4e046c"
 }

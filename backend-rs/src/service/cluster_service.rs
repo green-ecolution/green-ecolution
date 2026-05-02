@@ -10,26 +10,26 @@ use crate::domain::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
     },
-    tree::TreeRepository,
+    tree::TreeWriter,
 };
 
 use super::{ServiceError, event_bus::EventBus};
 
 pub struct ClusterService {
     cluster_repo: Arc<dyn TreeClusterRepository>,
-    tree_repo: Arc<dyn TreeRepository>,
+    tree_writer: Arc<dyn TreeWriter>,
     event_bus: Arc<dyn EventBus>,
 }
 
 impl ClusterService {
     pub fn new(
         cluster_repo: Arc<dyn TreeClusterRepository>,
-        tree_repo: Arc<dyn TreeRepository>,
+        tree_writer: Arc<dyn TreeWriter>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
         Self {
             cluster_repo,
-            tree_repo,
+            tree_writer,
             event_bus,
         }
     }
@@ -82,7 +82,7 @@ impl ClusterService {
 
     #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
     pub async fn delete(&self, id: Id<TreeCluster>) -> Result<(), ServiceError> {
-        self.tree_repo.unlink_cluster_id(id).await?;
+        self.tree_writer.unlink_cluster_id(id).await?;
         self.cluster_repo.delete(id).await?;
         Ok(())
     }

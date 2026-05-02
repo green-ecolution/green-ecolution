@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO trees (tree_cluster_id, sensor_id, planting_year, species, number,\n                                  description, watering_status, latitude, longitude,\n                                  geometry, provider, additional_informations)\n            VALUES ($1, $2, $3, $4, $5, $6, 'unknown', $7, $8,\n                    ST_SetSRID(ST_MakePoint($8, $7), 4326), $9, $10)\n            RETURNING id, created_at, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description, last_watered,\n                      provider, additional_informations",
+  "query": "INSERT INTO trees (tree_cluster_id, sensor_id, planting_year, species, number,\n                                  description, watering_status, latitude, longitude,\n                                  geometry, provider, additional_informations)\n            VALUES ($1, $2, $3, $4, $5, $6, 'unknown', $7, $8,\n                    ST_SetSRID(ST_MakePoint($8, $7), 4326), $9, $10)\n            RETURNING id, tree_cluster_id AS cluster_id, sensor_id,\n                      planting_year, species, number AS tree_number,\n                      latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info",
   "describe": {
     "columns": [
       {
@@ -10,51 +10,41 @@
       },
       {
         "ordinal": 1,
-        "name": "created_at",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 2,
-        "name": "updated_at",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 3,
-        "name": "tree_cluster_id",
+        "name": "cluster_id",
         "type_info": "Int4"
       },
       {
-        "ordinal": 4,
+        "ordinal": 2,
         "name": "sensor_id",
         "type_info": "Varchar"
       },
       {
-        "ordinal": 5,
+        "ordinal": 3,
         "name": "planting_year",
         "type_info": "Int4"
       },
       {
-        "ordinal": 6,
+        "ordinal": 4,
         "name": "species",
         "type_info": "Text"
       },
       {
-        "ordinal": 7,
-        "name": "number",
+        "ordinal": 5,
+        "name": "tree_number",
         "type_info": "Text"
       },
       {
-        "ordinal": 8,
+        "ordinal": 6,
         "name": "latitude",
         "type_info": "Float8"
       },
       {
-        "ordinal": 9,
+        "ordinal": 7,
         "name": "longitude",
         "type_info": "Float8"
       },
       {
-        "ordinal": 10,
+        "ordinal": 8,
         "name": "watering_status: WateringStatus",
         "type_info": {
           "Custom": {
@@ -72,23 +62,23 @@
         }
       },
       {
-        "ordinal": 11,
+        "ordinal": 9,
         "name": "description",
         "type_info": "Text"
       },
       {
-        "ordinal": 12,
-        "name": "last_watered",
+        "ordinal": 10,
+        "name": "last_watered: DateTime<Utc>",
         "type_info": "Timestamp"
       },
       {
-        "ordinal": 13,
+        "ordinal": 11,
         "name": "provider",
         "type_info": "Text"
       },
       {
-        "ordinal": 14,
-        "name": "additional_informations",
+        "ordinal": 12,
+        "name": "additional_info",
         "type_info": "Jsonb"
       }
     ],
@@ -108,8 +98,6 @@
     },
     "nullable": [
       false,
-      false,
-      false,
       true,
       true,
       false,
@@ -124,5 +112,5 @@
       true
     ]
   },
-  "hash": "b2646fe93f222669d35c1bab189e2463adce1d64c599e301ca3b3b6d6d55067f"
+  "hash": "d59a6ab7ec124d4d480f537872970e94c826a6697cdcb9bef1c5987d24ecbc46"
 }

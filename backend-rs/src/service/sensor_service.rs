@@ -11,7 +11,7 @@ use crate::domain::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
     },
-    tree::TreeRepository,
+    tree::TreeWriter,
 };
 
 use super::{ServiceError, event_bus::EventBus};
@@ -21,7 +21,7 @@ pub struct SensorService {
     writer: Arc<dyn SensorWriter>,
     reading_reader: Arc<dyn SensorReadingReader>,
     reading_writer: Arc<dyn SensorReadingWriter>,
-    tree_repo: Arc<dyn TreeRepository>,
+    tree_writer: Arc<dyn TreeWriter>,
     event_bus: Arc<dyn EventBus>,
 }
 
@@ -31,7 +31,7 @@ impl SensorService {
         writer: Arc<dyn SensorWriter>,
         reading_reader: Arc<dyn SensorReadingReader>,
         reading_writer: Arc<dyn SensorReadingWriter>,
-        tree_repo: Arc<dyn TreeRepository>,
+        tree_writer: Arc<dyn TreeWriter>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
         Self {
@@ -39,7 +39,7 @@ impl SensorService {
             writer,
             reading_reader,
             reading_writer,
-            tree_repo,
+            tree_writer,
             event_bus,
         }
     }
@@ -100,7 +100,7 @@ impl SensorService {
 
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
     pub async fn delete(&self, id: &SensorId) -> Result<(), ServiceError> {
-        self.tree_repo.unlink_sensor_id(id.as_str()).await?;
+        self.tree_writer.unlink_sensor_id(id).await?;
         self.writer.delete(id).await?;
         self.event_bus
             .publish(DomainEvent::SensorDeleted {

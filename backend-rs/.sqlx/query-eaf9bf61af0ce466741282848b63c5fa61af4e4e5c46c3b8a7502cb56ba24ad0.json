@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "WITH distances AS (\n                SELECT *,\n                    ST_Distance(\n                        geometry::geography,\n                        ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography\n                    )::float8 AS dist\n                FROM trees\n                WHERE ST_DWithin(\n                    geometry::geography,\n                    ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,\n                    $3\n                )\n            )\n            SELECT id, created_at, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description, last_watered,\n                      provider, additional_informations,\n                      dist AS \"distance!: f64\"\n            FROM distances\n            ORDER BY dist ASC\n            LIMIT $4",
+  "query": "SELECT id, created_at, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info\n            FROM trees WHERE id = ANY($1)",
   "describe": {
     "columns": [
       {
@@ -78,7 +78,7 @@
       },
       {
         "ordinal": 12,
-        "name": "last_watered",
+        "name": "last_watered: DateTime<Utc>",
         "type_info": "Timestamp"
       },
       {
@@ -88,21 +88,13 @@
       },
       {
         "ordinal": 14,
-        "name": "additional_informations",
+        "name": "additional_info",
         "type_info": "Jsonb"
-      },
-      {
-        "ordinal": 15,
-        "name": "distance!: f64",
-        "type_info": "Float8"
       }
     ],
     "parameters": {
       "Left": [
-        "Float8",
-        "Float8",
-        "Float8",
-        "Int8"
+        "Int4Array"
       ]
     },
     "nullable": [
@@ -120,9 +112,8 @@
       true,
       true,
       true,
-      true,
-      null
+      true
     ]
   },
-  "hash": "45868ce5d098591f7f98b8f46a5565236b700a8b738e710771d4bd55fdd3c05a"
+  "hash": "eaf9bf61af0ce466741282848b63c5fa61af4e4e5c46c3b8a7502cb56ba24ad0"
 }

@@ -12,7 +12,6 @@ use crate::{
         RepositoryError,
         sensor::{SensorId, SensorSearchQuery},
         shared::pagination::Pagination,
-        tree::TreeQuery,
     },
     http::{
         AppState,
@@ -142,20 +141,13 @@ pub async fn get_tree_by_sensor(
     State(state): State<Arc<AppState>>,
     Path(sensor_id): Path<String>,
 ) -> Result<Json<TreeResponse>, ServiceError> {
-    let sid =
-        SensorId::new(sensor_id.clone()).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
-    let sensor_view = state.sensor_service.view_by_id(&sid).await?;
-    let query = TreeQuery {
-        sensor_id: Some(sensor_id),
-        ..Default::default()
-    };
+    let sensor_id =
+        SensorId::new(sensor_id).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+    let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
     let tree = state
         .tree_service
-        .all(query, Pagination::new(1, 1))
+        .view_by_sensor_id(&sensor_id)
         .await?
-        .items
-        .into_iter()
-        .next()
         .ok_or(ServiceError::Repository(RepositoryError::NotFound))?;
-    Ok(Json(TreeResponse::from((&tree, Some(&sensor_view)))))
+    Ok(Json(TreeResponse::from((&tree, Some(&sensor)))))
 }

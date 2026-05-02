@@ -46,7 +46,7 @@ async fn build_cluster_response(
         None => None,
     };
 
-    let trees = state.tree_service.by_ids(&cluster.tree_ids).await?;
+    let trees = state.tree_service.view_by_ids(&cluster.tree_ids).await?;
 
     let sensor_ids: Vec<SensorId> = trees
         .iter()

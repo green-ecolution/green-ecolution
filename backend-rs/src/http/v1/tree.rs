@@ -9,10 +9,10 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     domain::{
-        Id,
+        DomainError, Id,
         sensor::SensorId,
         shared::pagination::Pagination,
-        tree::{Tree, TreeQuery},
+        tree::{TreeDraft, TreeSearchQuery, TreeView},
     },
     http::{
         AppState,
@@ -38,18 +38,6 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(get_tree, update_tree, delete_tree))
 }
 
-async fn build_tree_response(state: &AppState, tree: &Tree) -> Result<TreeResponse, ServiceError> {
-    let sensor = match &tree.sensor_id {
-        Some(sid) => {
-            let sensor_id =
-                SensorId::new(sid).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
-            Some(state.sensor_service.view_by_id(&sensor_id).await?)
-        }
-        None => None,
-    };
-    Ok(TreeResponse::from((tree, sensor.as_ref())))
-}
-
 #[utoipa::path(get, path = "/trees", tag = "Trees",
     operation_id = "listTrees",
     summary = "List all trees",
@@ -68,7 +56,7 @@ pub async fn list_trees(
     let pagination = Pagination::from(&params);
     let page = state
         .tree_service
-        .all(TreeQuery::default(), pagination)
+        .search_view(TreeSearchQuery::default(), pagination)
         .await?;
 
     let sensor_ids: Vec<SensorId> = page
@@ -84,7 +72,7 @@ pub async fn list_trees(
     let sensors = state.sensor_service.view_by_ids(&sensor_ids).await?;
     let sensor_map: HashMap<&str, _> = sensors.iter().map(|s| (s.id.as_str(), s)).collect();
 
-    let response = ListResponse::from_page_with(page, &pagination, |tree: &Tree| {
+    let response = ListResponse::from_page_with(page, &pagination, |tree: &TreeView| {
         let sensor = tree
             .sensor_id
             .as_deref()
@@ -110,9 +98,16 @@ pub async fn get_tree(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
 ) -> Result<Json<TreeResponse>, ServiceError> {
-    let tree = state.tree_service.by_id(Id::from(id)).await?;
-    let response = build_tree_response(&state, &tree).await?;
-    Ok(Json(response))
+    let tree = state.tree_service.view_by_id(Id::from(id)).await?;
+    let sensor = match &tree.sensor_id {
+        Some(sid) => {
+            let sensor_id =
+                SensorId::new(sid).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+            Some(state.sensor_service.view_by_id(&sensor_id).await?)
+        }
+        None => None,
+    };
+    Ok(Json(TreeResponse::from((&tree, sensor.as_ref()))))
 }
 
 #[utoipa::path(post, path = "/trees", tag = "Trees",
@@ -131,10 +126,23 @@ pub async fn create_tree(
     State(state): State<Arc<AppState>>,
     Json(entity): Json<TreeCreateRequest>,
 ) -> Result<(StatusCode, Json<TreeResponse>), ServiceError> {
-    let create = entity.try_into().map_err(ServiceError::Domain)?;
-    let tree = state.tree_service.create(create).await?;
-    let response = build_tree_response(&state, &tree).await?;
-    Ok((StatusCode::CREATED, Json(response)))
+    let draft: TreeDraft = entity
+        .try_into()
+        .map_err(|e: DomainError| ServiceError::InvalidInput(e.to_string()))?;
+    let tree = state.tree_service.create(draft).await?;
+    let view = state.tree_service.view_by_id(tree.id).await?;
+    let sensor = match view.sensor_id.as_deref() {
+        Some(sid) => {
+            let sensor_id =
+                SensorId::new(sid).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+            Some(state.sensor_service.view_by_id(&sensor_id).await?)
+        }
+        None => None,
+    };
+    Ok((
+        StatusCode::CREATED,
+        Json(TreeResponse::from((&view, sensor.as_ref()))),
+    ))
 }
 
 #[utoipa::path(put, path = "/trees/{tree_id}", tag = "Trees",
@@ -155,10 +163,32 @@ pub async fn update_tree(
     Path(id): Path<i32>,
     Json(entity): Json<TreeUpdateRequest>,
 ) -> Result<Json<TreeResponse>, ServiceError> {
-    let update = entity.try_into().map_err(ServiceError::Domain)?;
-    let tree = state.tree_service.update(Id::from(id), update).await?;
-    let response = build_tree_response(&state, &tree).await?;
-    Ok(Json(response))
+    let create = TreeCreateRequest {
+        species: entity.species,
+        number: entity.number,
+        planting_year: entity.planting_year,
+        latitude: entity.latitude,
+        longitude: entity.longitude,
+        description: entity.description,
+        tree_cluster_id: entity.tree_cluster_id,
+        sensor_id: entity.sensor_id,
+        provider: entity.provider,
+        additional_information: entity.additional_information,
+    };
+    let draft: TreeDraft = create
+        .try_into()
+        .map_err(|e: DomainError| ServiceError::InvalidInput(e.to_string()))?;
+    let tree = state.tree_service.replace(Id::from(id), draft).await?;
+    let view = state.tree_service.view_by_id(tree.id).await?;
+    let sensor = match view.sensor_id.as_deref() {
+        Some(sid) => {
+            let sensor_id =
+                SensorId::new(sid).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+            Some(state.sensor_service.view_by_id(&sensor_id).await?)
+        }
+        None => None,
+    };
+    Ok(Json(TreeResponse::from((&view, sensor.as_ref()))))
 }
 
 #[utoipa::path(delete, path = "/trees/{tree_id}", tag = "Trees",
