@@ -1,7 +1,10 @@
 pub mod coordinates;
 pub mod distance;
+pub mod error;
 pub mod field_update;
 pub mod pagination;
+pub mod provenance;
 pub mod provider_info;
+pub mod string_value;
 pub mod water_capacity;
 pub mod watering_status;
