@@ -7,7 +7,7 @@ use axum::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    domain::{Id, region::RegionQuery, shared::pagination::Pagination},
+    domain::{Id, region::RegionSearchQuery, shared::pagination::Pagination},
     http::{
         AppState,
         v1::{
@@ -45,7 +45,7 @@ pub async fn list_regions(
     let pagination = Pagination::from(&params);
     let page = state
         .region_service
-        .all(RegionQuery::default(), pagination)
+        .search(RegionSearchQuery::default(), pagination)
         .await?;
     let response = ListResponse::<RegionResponse>::from_page(page, &pagination);
     Ok(Json(response))

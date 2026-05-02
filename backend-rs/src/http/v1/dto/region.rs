@@ -17,7 +17,7 @@ impl From<&Region> for RegionResponse {
     fn from(value: &Region) -> Self {
         Self {
             id: value.id.value(),
-            name: value.name.clone(),
+            name: value.name.as_str().to_string(),
         }
     }
 }

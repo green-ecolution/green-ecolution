@@ -2,62 +2,68 @@ use std::sync::Arc;
 
 use crate::domain::{
     Id,
-    region::{Region, RegionCreate, RegionQuery, RegionRepository, RegionUpdate},
-    shared::coordinates::Coordinate,
-    shared::pagination::{Page, Pagination},
+    region::{Region, RegionDraft, RegionName, RegionReader, RegionSearchQuery, RegionWriter},
+    shared::{
+        coordinates::Coordinate,
+        pagination::{Page, Pagination},
+    },
 };
 
 use super::ServiceError;
 
 pub struct RegionService {
-    region_repo: Arc<dyn RegionRepository>,
+    reader: Arc<dyn RegionReader>,
+    writer: Arc<dyn RegionWriter>,
 }
 
 impl RegionService {
-    pub fn new(region_repo: Arc<dyn RegionRepository>) -> Self {
-        Self { region_repo }
+    pub fn new(reader: Arc<dyn RegionReader>, writer: Arc<dyn RegionWriter>) -> Self {
+        Self { reader, writer }
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn all(
+    pub async fn search(
         &self,
-        query: RegionQuery,
+        query: RegionSearchQuery,
         pagination: Pagination,
     ) -> Result<Page<Region>, ServiceError> {
-        Ok(self.region_repo.all(query, pagination).await?)
+        Ok(self.reader.search(query, pagination).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(region.id = %id))]
     pub async fn by_id(&self, id: Id<Region>) -> Result<Region, ServiceError> {
-        Ok(self.region_repo.by_id(id).await?)
+        Ok(self.reader.by_id(id).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn by_ids(&self, ids: &[Id<Region>]) -> Result<Vec<Region>, ServiceError> {
-        Ok(self.region_repo.by_ids(ids).await?)
+        Ok(self.reader.by_ids(ids).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn by_point(&self, coord: Coordinate) -> Result<Region, ServiceError> {
-        Ok(self.region_repo.by_point(coord).await?)
+    pub async fn by_point(&self, coord: Coordinate) -> Result<Option<Region>, ServiceError> {
+        Ok(self.reader.by_point(coord).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn create(&self, entity: RegionCreate) -> Result<Region, ServiceError> {
-        Ok(self.region_repo.create(entity).await?)
+    pub async fn create(&self, draft: RegionDraft) -> Result<Region, ServiceError> {
+        Ok(self.writer.save_new(draft).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(region.id = %id))]
-    pub async fn update(
+    pub async fn rename(
         &self,
         id: Id<Region>,
-        entity: RegionUpdate,
+        new_name: RegionName,
     ) -> Result<Region, ServiceError> {
-        Ok(self.region_repo.update(id, entity).await?)
+        let mut region = self.reader.by_id(id).await?;
+        region.rename(new_name);
+        self.writer.save(&region).await?;
+        Ok(region)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(region.id = %id))]
     pub async fn delete(&self, id: Id<Region>) -> Result<(), ServiceError> {
-        Ok(self.region_repo.delete(id).await?)
+        Ok(self.writer.delete(id).await?)
     }
 }

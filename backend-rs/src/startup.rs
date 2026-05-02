@@ -69,8 +69,9 @@ impl Application {
         auth: AuthSettings,
     ) -> Result<Self, std::io::Error> {
         // Repositories
-        let region_repo: Arc<dyn crate::domain::region::RegionRepository> =
-            Arc::new(PgRegionRepository::new(pool.clone()));
+        let region_repo = Arc::new(PgRegionRepository::new(pool.clone()));
+        let region_reader: Arc<dyn crate::domain::region::RegionReader> = region_repo.clone();
+        let region_writer: Arc<dyn crate::domain::region::RegionWriter> = region_repo;
         let tree_repo: Arc<dyn crate::domain::tree::TreeRepository> =
             Arc::new(PgTreeRepository::new(pool.clone()));
         let sensor_repo: Arc<dyn crate::domain::sensor::SensorRepository> =
@@ -111,7 +112,7 @@ impl Application {
         // Event handlers
         let cluster_recalc_handler = Arc::new(ClusterRecalculationHandler::new(
             cluster_repo.clone(),
-            region_repo.clone(),
+            region_reader.clone(),
         ));
 
         // Event bus
@@ -119,7 +120,7 @@ impl Application {
             Arc::new(InMemoryEventBus::new(vec![cluster_recalc_handler]));
 
         // Domain services
-        let region_service = Arc::new(RegionService::new(region_repo));
+        let region_service = Arc::new(RegionService::new(region_reader, region_writer));
         let tree_service = Arc::new(TreeService::new(tree_repo.clone(), event_bus.clone()));
         let sensor_service = Arc::new(SensorService::new(
             sensor_repo,

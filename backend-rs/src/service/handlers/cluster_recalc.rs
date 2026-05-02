@@ -3,24 +3,24 @@ use std::sync::Arc;
 use crate::domain::{
     cluster::{TreeClusterRepository, TreeClusterUpdate},
     events::DomainEvent,
-    region::RegionRepository,
+    region::RegionReader,
     shared::field_update::FieldUpdate,
 };
 use crate::service::event_bus::{EventHandler, EventHandlerError};
 
 pub struct ClusterRecalculationHandler {
     cluster_repo: Arc<dyn TreeClusterRepository>,
-    region_repo: Arc<dyn RegionRepository>,
+    region_reader: Arc<dyn RegionReader>,
 }
 
 impl ClusterRecalculationHandler {
     pub fn new(
         cluster_repo: Arc<dyn TreeClusterRepository>,
-        region_repo: Arc<dyn RegionRepository>,
+        region_reader: Arc<dyn RegionReader>,
     ) -> Self {
         Self {
             cluster_repo,
-            region_repo,
+            region_reader,
         }
     }
 
@@ -63,7 +63,13 @@ impl EventHandler for ClusterRecalculationHandler {
         for cluster_id in self.affected_cluster_ids(event) {
             let coordinates = self.cluster_repo.center_point(cluster_id).await.ok();
             let region_id = match coordinates {
-                Some(center) => self.region_repo.by_point(center).await.ok().map(|r| r.id),
+                Some(center) => self
+                    .region_reader
+                    .by_point(center)
+                    .await
+                    .ok()
+                    .flatten()
+                    .map(|r| r.id),
                 None => None,
             };
 

@@ -1,32 +1,14 @@
-use chrono::NaiveDateTime;
 use sqlx::PgPool;
 
+use crate::domain::region::RegionSnapshot;
 use crate::domain::{
     Id, RepositoryError,
-    region::{Region, RegionCreate, RegionQuery, RegionRepository, RegionUpdate},
+    region::{Region, RegionDraft, RegionName, RegionReader, RegionSearchQuery, RegionWriter},
     shared::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
     },
 };
-
-struct RegionRow {
-    id: i32,
-    created_at: NaiveDateTime,
-    updated_at: NaiveDateTime,
-    name: String,
-}
-
-impl From<RegionRow> for Region {
-    fn from(row: RegionRow) -> Self {
-        Self {
-            id: Id::new(row.id),
-            created_at: row.created_at.and_utc(),
-            updated_at: row.updated_at.and_utc(),
-            name: row.name,
-        }
-    }
-}
 
 pub struct PgRegionRepository {
     pool: PgPool,
@@ -39,11 +21,72 @@ impl PgRegionRepository {
 }
 
 #[async_trait::async_trait]
-impl RegionRepository for PgRegionRepository {
+impl RegionReader for PgRegionRepository {
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn all(
+    async fn by_id(&self, id: Id<Region>) -> Result<Region, RepositoryError> {
+        sqlx::query_as!(
+            RegionSnapshot,
+            r#"SELECT id, name FROM regions WHERE id = $1"#,
+            id.value()
+        )
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(RepositoryError::NotFound)
+        .map(Region::reconstitute)
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn by_ids(&self, ids: &[Id<Region>]) -> Result<Vec<Region>, RepositoryError> {
+        let id_values: Vec<i32> = ids.iter().map(|id| id.value()).collect();
+        let regions = sqlx::query_as!(
+            RegionSnapshot,
+            r#"SELECT id, name FROM regions WHERE id = ANY($1)"#,
+            &id_values
+        )
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(Region::reconstitute)
+        .collect();
+
+        Ok(regions)
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn by_name(&self, name: &RegionName) -> Result<Option<Region>, RepositoryError> {
+        let region = sqlx::query_as!(
+            RegionSnapshot,
+            r#"SELECT id, name FROM regions WHERE name = $1"#,
+            name.as_str()
+        )
+        .fetch_optional(&self.pool)
+        .await?
+        .map(Region::reconstitute);
+
+        Ok(region)
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn by_point(&self, coord: Coordinate) -> Result<Option<Region>, RepositoryError> {
+        let region = sqlx::query_as!(
+            RegionSnapshot,
+            r#"SELECT id, name FROM regions
+            WHERE ST_Contains(geometry, ST_SetSRID(ST_MakePoint($1, $2), 4326))
+            LIMIT 1"#,
+            coord.longitude(),
+            coord.latitude()
+        )
+        .fetch_optional(&self.pool)
+        .await?
+        .map(Region::reconstitute);
+
+        Ok(region)
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn search(
         &self,
-        _query: RegionQuery,
+        _query: RegionSearchQuery,
         pagination: Pagination,
     ) -> Result<Page<Region>, RepositoryError> {
         let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
@@ -53,101 +96,63 @@ impl RegionRepository for PgRegionRepository {
             .fetch_one(&self.pool)
             .await? as u64;
 
-        let items: Vec<Region> = sqlx::query_as!(
-            RegionRow,
-            r#"SELECT id, name, created_at, updated_at FROM regions
-            ORDER BY name ASC, id ASC LIMIT $1 OFFSET $2"#,
+        let items = sqlx::query_as!(
+            RegionSnapshot,
+            r#"SELECT id, name FROM regions ORDER BY name ASC, id ASC LIMIT $1 OFFSET $2"#,
             limit,
             offset
         )
         .fetch_all(&self.pool)
         .await?
         .into_iter()
-        .map(Region::from)
+        .map(Region::reconstitute)
         .collect();
 
         Ok(Page { items, total })
     }
+}
 
+#[async_trait::async_trait]
+impl RegionWriter for PgRegionRepository {
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn by_id(&self, id: Id<Region>) -> Result<Region, RepositoryError> {
-        Ok(sqlx::query_as!(
-            RegionRow,
-            r#"SELECT id, name, created_at, updated_at FROM regions WHERE id = $1"#,
-            id.value()
-        )
-        .fetch_optional(&self.pool)
-        .await?
-        .ok_or(RepositoryError::NotFound)?
-        .into())
-    }
-
-    #[tracing::instrument(level = "trace", skip_all)]
-    async fn by_ids(&self, ids: &[Id<Region>]) -> Result<Vec<Region>, RepositoryError> {
-        let id_values: Vec<i32> = ids.iter().map(|id| id.value()).collect();
-        Ok(sqlx::query_as!(
-            RegionRow,
-            r#"SELECT id, name, created_at, updated_at FROM regions WHERE id = ANY($1)"#,
-            &id_values
-        )
-        .fetch_all(&self.pool)
-        .await?
-        .into_iter()
-        .map(Region::from)
-        .collect())
-    }
-
-    #[tracing::instrument(level = "trace", skip_all)]
-    async fn by_point(&self, coord: Coordinate) -> Result<Region, RepositoryError> {
-        Ok(sqlx::query_as!(
-            RegionRow,
-            r#"SELECT id, name, created_at, updated_at FROM regions
-            WHERE ST_Contains(geometry, ST_SetSRID(ST_MakePoint($1, $2), 4326))"#,
-            coord.longitude(),
-            coord.latitude()
-        )
-        .fetch_optional(&self.pool)
-        .await?
-        .ok_or(RepositoryError::NotFound)?
-        .into())
-    }
-
-    // TODO: Handle Geometry
-    #[tracing::instrument(level = "trace", skip_all)]
-    async fn create(&self, entity: RegionCreate) -> Result<Region, RepositoryError> {
-        Ok(sqlx::query_as!(
-            RegionRow,
-            r#"INSERT INTO regions (name) VALUES ($1) RETURNING id, created_at, updated_at, name"#,
-            entity.name
+    async fn save_new(&self, draft: RegionDraft) -> Result<Region, RepositoryError> {
+        sqlx::query_as!(
+            RegionSnapshot,
+            r#"INSERT INTO regions (name) VALUES ($1) RETURNING id, name"#,
+            draft.name.as_str()
         )
         .fetch_one(&self.pool)
-        .await?
-        .into())
+        .await
+        .map(Region::reconstitute)
+        .map_err(Into::into)
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn update(
-        &self,
-        id: Id<Region>,
-        entity: RegionUpdate,
-    ) -> Result<Region, RepositoryError> {
-        Ok(sqlx::query_as!(
-            RegionRow,
-            r#"UPDATE regions SET name = $2 WHERE id = $1
-            RETURNING id, name, created_at, updated_at"#,
-            id.value(),
-            entity.name
+    async fn save(&self, region: &Region) -> Result<(), RepositoryError> {
+        let result = sqlx::query!(
+            r#"UPDATE regions SET name = $2 WHERE id = $1"#,
+            region.id.value(),
+            region.name.as_str()
         )
-        .fetch_one(&self.pool)
-        .await?
-        .into())
+        .execute(&self.pool)
+        .await?;
+
+        if result.rows_affected() == 0 {
+            return Err(RepositoryError::NotFound);
+        }
+
+        Ok(())
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn delete(&self, id: Id<Region>) -> Result<(), RepositoryError> {
-        sqlx::query!(r#"DELETE FROM regions WHERE id = $1"#, id.value())
+        let result = sqlx::query!(r#"DELETE FROM regions WHERE id = $1"#, id.value())
             .execute(&self.pool)
             .await?;
+
+        if result.rows_affected() == 0 {
+            return Err(RepositoryError::NotFound);
+        }
 
         Ok(())
     }

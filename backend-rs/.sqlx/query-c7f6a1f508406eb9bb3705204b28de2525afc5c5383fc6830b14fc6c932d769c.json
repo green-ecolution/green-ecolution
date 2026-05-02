@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, name FROM regions\n            WHERE ST_Contains(geometry, ST_SetSRID(ST_MakePoint($1, $2), 4326))\n            LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Float8",
+        "Float8"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "c7f6a1f508406eb9bb3705204b28de2525afc5c5383fc6830b14fc6c932d769c"
+}
