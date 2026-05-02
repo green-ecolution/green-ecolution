@@ -10,9 +10,16 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     domain::{
         Id,
-        cluster::{TreeCluster, TreeClusterQuery},
+        cluster::{
+            ClusterAddress, ClusterName, TreeClusterDraft, TreeClusterSearchQuery, TreeClusterView,
+        },
+        region::Region,
         sensor::SensorId,
-        shared::pagination::Pagination,
+        shared::{
+            error::ValidationError,
+            pagination::Pagination,
+            provenance::{Provenance, ProviderId},
+        },
     },
     http::{
         AppState,
@@ -21,7 +28,7 @@ use crate::{
                 ListResponse,
                 cluster::{
                     TreeClusterCreateRequest, TreeClusterInListResponse, TreeClusterResponse,
-                    TreeClusterUpdateRequest, TreeClusterView,
+                    TreeClusterUpdateRequest,
                 },
                 tree::TreeResponse,
             },
@@ -39,14 +46,16 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
 
 async fn build_cluster_response(
     state: &AppState,
-    cluster: &TreeCluster,
+    cluster: &TreeClusterView,
 ) -> Result<TreeClusterResponse, ServiceError> {
     let region = match cluster.region_id {
-        Some(id) => Some(state.region_service.by_id(id).await?),
+        Some(id) => Some(state.region_service.by_id(Id::new(id)).await?),
         None => None,
     };
 
-    let trees = state.tree_service.view_by_ids(&cluster.tree_ids).await?;
+    let tree_ids: Vec<Id<crate::domain::tree::Tree>> =
+        cluster.tree_ids.iter().map(|&id| Id::new(id)).collect();
+    let trees = state.tree_service.view_by_ids(&tree_ids).await?;
 
     let sensor_ids: Vec<SensorId> = trees
         .iter()
@@ -71,11 +80,11 @@ async fn build_cluster_response(
         })
         .collect();
 
-    Ok(TreeClusterResponse::from(TreeClusterView {
+    Ok(TreeClusterResponse::from_parts(
         cluster,
-        region: region.as_ref(),
-        trees: tree_responses,
-    }))
+        region.as_ref(),
+        tree_responses,
+    ))
 }
 
 #[utoipa::path(
@@ -99,16 +108,21 @@ pub async fn list_clusters(
     let pagination = Pagination::from(&params);
     let page = state
         .cluster_service
-        .all(TreeClusterQuery::default(), pagination)
+        .search_view(TreeClusterSearchQuery::default(), pagination)
         .await?;
 
-    let region_ids: Vec<_> = page.items.iter().filter_map(|c| c.region_id).collect();
+    let region_ids: Vec<Id<Region>> = page
+        .items
+        .iter()
+        .filter_map(|c| c.region_id.map(Id::new))
+        .collect();
     let regions = state.region_service.by_ids(&region_ids).await?;
-    let region_map: HashMap<_, _> = regions.iter().map(|r| (r.id, r)).collect();
+    let region_map: HashMap<Id<Region>, &_> = regions.iter().map(|r| (r.id, r)).collect();
 
-    let response = ListResponse::from_page_with(page, &pagination, |cluster: &TreeCluster| {
+    let response = ListResponse::from_page_with(page, &pagination, |cluster: &TreeClusterView| {
         let region = cluster
             .region_id
+            .map(Id::new)
             .and_then(|id| region_map.get(&id).copied());
         TreeClusterInListResponse::from((cluster, region))
     });
@@ -134,8 +148,8 @@ pub async fn get_cluster(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
 ) -> Result<Json<TreeClusterResponse>, ServiceError> {
-    let cluster = state.cluster_service.by_id(Id::from(id)).await?;
-    let response = build_cluster_response(&state, &cluster).await?;
+    let view = state.cluster_service.view_by_id(Id::from(id)).await?;
+    let response = build_cluster_response(&state, &view).await?;
     Ok(Json(response))
 }
 
@@ -157,8 +171,12 @@ pub async fn create_cluster(
     State(state): State<Arc<AppState>>,
     Json(entity): Json<TreeClusterCreateRequest>,
 ) -> Result<(StatusCode, Json<TreeClusterResponse>), ServiceError> {
-    let cluster = state.cluster_service.create(entity.into()).await?;
-    let response = build_cluster_response(&state, &cluster).await?;
+    let draft: TreeClusterDraft = entity
+        .try_into()
+        .map_err(|e: ValidationError| ServiceError::InvalidInput(e.to_string()))?;
+    let cluster = state.cluster_service.create(draft).await?;
+    let view = state.cluster_service.view_by_id(cluster.id).await?;
+    let response = build_cluster_response(&state, &view).await?;
     Ok((StatusCode::CREATED, Json(response)))
 }
 
@@ -184,12 +202,34 @@ pub async fn update_cluster(
     Json(entity): Json<TreeClusterUpdateRequest>,
 ) -> Result<Json<TreeClusterResponse>, ServiceError> {
     let cluster_id = Id::from(id);
+    let name =
+        ClusterName::new(entity.name).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+    let address = ClusterAddress::new(entity.address)
+        .map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+    let soil_condition = Some(entity.soil_condition.into());
+    let tree_ids: Vec<_> = entity.tree_ids.into_iter().map(Id::new).collect();
+    let provenance = Provenance::new(
+        entity
+            .provider
+            .map(ProviderId::new)
+            .transpose()
+            .map_err(|e: ValidationError| ServiceError::InvalidInput(e.to_string()))?,
+        entity.additional_information,
+    );
     state
         .cluster_service
-        .update(cluster_id, entity.into())
+        .replace(
+            cluster_id,
+            name,
+            address,
+            entity.description,
+            soil_condition,
+            tree_ids,
+            provenance,
+        )
         .await?;
-    let cluster = state.cluster_service.by_id(cluster_id).await?;
-    let response = build_cluster_response(&state, &cluster).await?;
+    let view = state.cluster_service.view_by_id(cluster_id).await?;
+    let response = build_cluster_response(&state, &view).await?;
     Ok(Json(response))
 }
 

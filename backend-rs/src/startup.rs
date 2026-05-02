@@ -25,6 +25,7 @@ use crate::{
         evaluation_service::EvaluationService,
         event_bus::{EventBus, InMemoryEventBus},
         handlers::cluster_recalc::ClusterRecalculationHandler,
+        handlers::cluster_status::ClusterStatusAggregatorHandler,
         region_service::RegionService,
         sensor_service::SensorService,
         tree_service::TreeService,
@@ -84,8 +85,10 @@ impl Application {
             sensor_repo;
         let vehicle_repo: Arc<dyn crate::domain::vehicle::VehicleRepository> =
             Arc::new(PgVehicleRepository::new(pool.clone()));
-        let cluster_repo: Arc<dyn crate::domain::cluster::TreeClusterRepository> =
-            Arc::new(PgTreeClusterRepository::new(pool.clone()));
+        let cluster_repo = Arc::new(PgTreeClusterRepository::new(pool.clone()));
+        let cluster_reader: Arc<dyn crate::domain::cluster::TreeClusterReader> =
+            cluster_repo.clone();
+        let cluster_writer: Arc<dyn crate::domain::cluster::TreeClusterWriter> = cluster_repo;
         let watering_plan_repo: Arc<dyn crate::domain::watering_plan::WateringPlanRepository> =
             Arc::new(PgWateringPlanRepository::new(pool.clone()));
         let evaluation_repo: Arc<dyn crate::domain::evaluation::EvaluationRepository> =
@@ -117,13 +120,23 @@ impl Application {
 
         // Event handlers
         let cluster_recalc_handler = Arc::new(ClusterRecalculationHandler::new(
-            cluster_repo.clone(),
+            cluster_reader.clone(),
+            cluster_writer.clone(),
+            tree_reader.clone(),
             region_reader.clone(),
+        ));
+        let cluster_status_handler = Arc::new(ClusterStatusAggregatorHandler::new(
+            cluster_reader.clone(),
+            cluster_writer.clone(),
+            tree_reader.clone(),
         ));
 
         // Event bus
-        let event_bus: Arc<dyn EventBus> =
-            Arc::new(InMemoryEventBus::new(vec![cluster_recalc_handler]));
+        let handlers: Vec<Arc<dyn crate::service::event_bus::EventHandler>> = vec![
+            cluster_recalc_handler as Arc<dyn crate::service::event_bus::EventHandler>,
+            cluster_status_handler as Arc<dyn crate::service::event_bus::EventHandler>,
+        ];
+        let event_bus: Arc<dyn EventBus> = Arc::new(InMemoryEventBus::new(handlers));
 
         // Domain services
         let region_service = Arc::new(RegionService::new(region_reader, region_writer));
@@ -142,7 +155,8 @@ impl Application {
         ));
         let vehicle_service = Arc::new(VehicleService::new(vehicle_repo));
         let cluster_service = Arc::new(ClusterService::new(
-            cluster_repo,
+            cluster_reader,
+            cluster_writer,
             tree_writer,
             event_bus.clone(),
         ));

@@ -67,14 +67,14 @@ async fn resolve_plan_relations(
     };
 
     let clusters = state.cluster_service.by_ids(&plan.cluster_ids).await?;
-    let region_ids: Vec<_> = clusters.iter().filter_map(|c| c.region_id).collect();
+    let region_ids: Vec<_> = clusters.iter().filter_map(|c| c.region_id()).collect();
     let regions = state.region_service.by_ids(&region_ids).await?;
     let region_map: HashMap<_, _> = regions.iter().map(|r| (r.id, r)).collect();
 
     let cluster_responses: Vec<TreeClusterInListResponse> = clusters
         .iter()
         .map(|c| {
-            let region = c.region_id.and_then(|id| region_map.get(&id).copied());
+            let region = c.region_id().and_then(|id| region_map.get(&id).copied());
             TreeClusterInListResponse::from((c, region))
         })
         .collect();
@@ -118,7 +118,7 @@ pub async fn list_watering_plans(
         .copied()
         .collect();
     let clusters = state.cluster_service.by_ids(&cluster_ids).await?;
-    let region_ids: Vec<_> = clusters.iter().filter_map(|c| c.region_id).collect();
+    let region_ids: Vec<_> = clusters.iter().filter_map(|c| c.region_id()).collect();
     let regions = state.region_service.by_ids(&region_ids).await?;
     let region_map: HashMap<_, _> = regions.iter().map(|r| (r.id, r)).collect();
     let cluster_map: HashMap<_, _> = clusters.iter().map(|c| (c.id, c)).collect();
@@ -138,7 +138,7 @@ pub async fn list_watering_plans(
             .iter()
             .filter_map(|cid| cluster_map.get(cid))
             .map(|c| {
-                let region = c.region_id.and_then(|rid| region_map.get(&rid).copied());
+                let region = c.region_id().and_then(|rid| region_map.get(&rid).copied());
                 TreeClusterInListResponse::from((*c, region))
             })
             .collect();

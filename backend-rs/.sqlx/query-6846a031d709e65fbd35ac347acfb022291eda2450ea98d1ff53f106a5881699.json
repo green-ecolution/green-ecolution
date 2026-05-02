@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT tc.id, tc.created_at, tc.updated_at, tc.name, tc.address,\n                      tc.description, tc.archived, tc.moisture_level, tc.region_id,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: SoilCondition\",\n                      tc.latitude, tc.longitude, tc.last_watered,\n                      tc.provider, tc.additional_informations,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS \"tree_ids!: Vec<i32>\"\n            FROM tree_clusters tc\n            LEFT JOIN regions r ON r.id = tc.region_id\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE ($1::watering_status[] = '{}' OR tc.watering_status = ANY($1))\n              AND ($2::text[] = '{}' OR r.name = ANY($2))\n              AND ($3::text IS NULL OR tc.provider = $3)\n            GROUP BY tc.id\n            ORDER BY tc.name ASC, tc.id ASC\n            LIMIT $4 OFFSET $5",
+  "query": "SELECT tc.id, tc.created_at, tc.updated_at, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: Option<SoilCondition>\",\n                      tc.latitude, tc.longitude,\n                      tc.last_watered AS \"last_watered: DateTime<Utc>\",\n                      tc.provider,\n                      tc.additional_informations AS additional_info,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS \"tree_ids!: Vec<i32>\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.id = $1\n            GROUP BY tc.id",
   "describe": {
     "columns": [
       {
@@ -68,7 +68,7 @@
       },
       {
         "ordinal": 10,
-        "name": "soil_condition: SoilCondition",
+        "name": "soil_condition: Option<SoilCondition>",
         "type_info": {
           "Custom": {
             "name": "tree_soil_condition",
@@ -96,7 +96,7 @@
       },
       {
         "ordinal": 13,
-        "name": "last_watered",
+        "name": "last_watered: DateTime<Utc>",
         "type_info": "Timestamp"
       },
       {
@@ -106,7 +106,7 @@
       },
       {
         "ordinal": 15,
-        "name": "additional_informations",
+        "name": "additional_info",
         "type_info": "Jsonb"
       },
       {
@@ -117,31 +117,7 @@
     ],
     "parameters": {
       "Left": [
-        {
-          "Custom": {
-            "name": "watering_status[]",
-            "kind": {
-              "Array": {
-                "Custom": {
-                  "name": "watering_status",
-                  "kind": {
-                    "Enum": [
-                      "good",
-                      "moderate",
-                      "bad",
-                      "unknown",
-                      "just watered"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        "TextArray",
-        "Text",
-        "Int8",
-        "Int8"
+        "Int4"
       ]
     },
     "nullable": [
@@ -164,5 +140,5 @@
       null
     ]
   },
-  "hash": "afdf14668f2bbddc8957d98e9251e13c5a6a7e051a9e17f3a342d4b7521b6636"
+  "hash": "6846a031d709e65fbd35ac347acfb022291eda2450ea98d1ff53f106a5881699"
 }

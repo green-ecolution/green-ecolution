@@ -35,12 +35,8 @@ impl InMemoryEventBus {
 #[async_trait::async_trait]
 impl EventBus for InMemoryEventBus {
     async fn publish(&self, event: DomainEvent) {
-        let applicable: Vec<_> = self.handlers.iter().filter(|h| h.handles(&event)).collect();
-
-        let results = futures::future::join_all(applicable.iter().map(|h| h.handle(&event))).await;
-
-        for (handler, result) in applicable.iter().zip(results) {
-            if let Err(e) = result {
+        for handler in self.handlers.iter().filter(|h| h.handles(&event)) {
+            if let Err(e) = handler.handle(&event).await {
                 tracing::error!(
                     handler = handler.name(),
                     error = %e,

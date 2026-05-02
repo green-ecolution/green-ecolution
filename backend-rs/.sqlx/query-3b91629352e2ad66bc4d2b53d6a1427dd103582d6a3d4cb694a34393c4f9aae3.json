@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT tc.id, tc.created_at, tc.updated_at, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id, tc.last_watered,\n                      tc.latitude, tc.longitude,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: SoilCondition\",\n                      tc.provider, tc.additional_informations,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS \"tree_ids!: Vec<i32>\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.id = $1\n            GROUP BY tc.id",
+  "query": "SELECT tc.id, tc.created_at, tc.updated_at, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: Option<SoilCondition>\",\n                      tc.latitude, tc.longitude,\n                      tc.last_watered AS \"last_watered: DateTime<Utc>\",\n                      tc.provider,\n                      tc.additional_informations AS additional_info,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS \"tree_ids!: Vec<i32>\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.id = ANY($1)\n            GROUP BY tc.id",
   "describe": {
     "columns": [
       {
@@ -50,21 +50,6 @@
       },
       {
         "ordinal": 9,
-        "name": "last_watered",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 10,
-        "name": "latitude",
-        "type_info": "Float8"
-      },
-      {
-        "ordinal": 11,
-        "name": "longitude",
-        "type_info": "Float8"
-      },
-      {
-        "ordinal": 12,
         "name": "watering_status: WateringStatus",
         "type_info": {
           "Custom": {
@@ -82,8 +67,8 @@
         }
       },
       {
-        "ordinal": 13,
-        "name": "soil_condition: SoilCondition",
+        "ordinal": 10,
+        "name": "soil_condition: Option<SoilCondition>",
         "type_info": {
           "Custom": {
             "name": "tree_soil_condition",
@@ -100,13 +85,28 @@
         }
       },
       {
+        "ordinal": 11,
+        "name": "latitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 12,
+        "name": "longitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 13,
+        "name": "last_watered: DateTime<Utc>",
+        "type_info": "Timestamp"
+      },
+      {
         "ordinal": 14,
         "name": "provider",
         "type_info": "Text"
       },
       {
         "ordinal": 15,
-        "name": "additional_informations",
+        "name": "additional_info",
         "type_info": "Jsonb"
       },
       {
@@ -117,7 +117,7 @@
     ],
     "parameters": {
       "Left": [
-        "Int4"
+        "Int4Array"
       ]
     },
     "nullable": [
@@ -130,15 +130,15 @@
       false,
       false,
       true,
-      true,
-      true,
-      true,
       false,
       false,
+      true,
+      true,
+      true,
       true,
       true,
       null
     ]
   },
-  "hash": "730bdce4e33f8d53c087e0e7e93fdc4b5cfe198b3088a214d84a12d85ca94c77"
+  "hash": "3b91629352e2ad66bc4d2b53d6a1427dd103582d6a3d4cb694a34393c4f9aae3"
 }

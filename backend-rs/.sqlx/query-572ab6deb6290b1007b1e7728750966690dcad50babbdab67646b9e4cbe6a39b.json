@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT tc.id, tc.created_at, tc.updated_at, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id, tc.last_watered,\n                      tc.latitude, tc.longitude,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: SoilCondition\",\n                      tc.provider, tc.additional_informations,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS \"tree_ids!: Vec<i32>\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.id = ANY($1)\n            GROUP BY tc.id",
+  "query": "SELECT tc.id, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: Option<SoilCondition>\",\n                      tc.latitude, tc.longitude,\n                      tc.last_watered AS \"last_watered: DateTime<Utc>\",\n                      tc.provider,\n                      tc.additional_informations AS additional_info,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS \"tree_ids!: Vec<i32>\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.id = $1\n            GROUP BY tc.id",
   "describe": {
     "columns": [
       {
@@ -10,61 +10,36 @@
       },
       {
         "ordinal": 1,
-        "name": "created_at",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 2,
-        "name": "updated_at",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 3,
         "name": "name",
         "type_info": "Text"
       },
       {
-        "ordinal": 4,
+        "ordinal": 2,
         "name": "address",
         "type_info": "Text"
       },
       {
-        "ordinal": 5,
+        "ordinal": 3,
         "name": "description",
         "type_info": "Text"
       },
       {
-        "ordinal": 6,
+        "ordinal": 4,
         "name": "archived",
         "type_info": "Bool"
       },
       {
-        "ordinal": 7,
+        "ordinal": 5,
         "name": "moisture_level",
         "type_info": "Float8"
       },
       {
-        "ordinal": 8,
+        "ordinal": 6,
         "name": "region_id",
         "type_info": "Int4"
       },
       {
-        "ordinal": 9,
-        "name": "last_watered",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 10,
-        "name": "latitude",
-        "type_info": "Float8"
-      },
-      {
-        "ordinal": 11,
-        "name": "longitude",
-        "type_info": "Float8"
-      },
-      {
-        "ordinal": 12,
+        "ordinal": 7,
         "name": "watering_status: WateringStatus",
         "type_info": {
           "Custom": {
@@ -82,8 +57,8 @@
         }
       },
       {
-        "ordinal": 13,
-        "name": "soil_condition: SoilCondition",
+        "ordinal": 8,
+        "name": "soil_condition: Option<SoilCondition>",
         "type_info": {
           "Custom": {
             "name": "tree_soil_condition",
@@ -100,24 +75,39 @@
         }
       },
       {
-        "ordinal": 14,
+        "ordinal": 9,
+        "name": "latitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 10,
+        "name": "longitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 11,
+        "name": "last_watered: DateTime<Utc>",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 12,
         "name": "provider",
         "type_info": "Text"
       },
       {
-        "ordinal": 15,
-        "name": "additional_informations",
+        "ordinal": 13,
+        "name": "additional_info",
         "type_info": "Jsonb"
       },
       {
-        "ordinal": 16,
+        "ordinal": 14,
         "name": "tree_ids!: Vec<i32>",
         "type_info": "Int4Array"
       }
     ],
     "parameters": {
       "Left": [
-        "Int4Array"
+        "Int4"
       ]
     },
     "nullable": [
@@ -127,18 +117,16 @@
       false,
       false,
       false,
+      true,
       false,
       false,
       true,
       true,
       true,
-      true,
-      false,
-      false,
       true,
       true,
       null
     ]
   },
-  "hash": "ffa6a165f01df7ba9b6d5b24b680e08f85561a99d4becec1eb921ac6469aec78"
+  "hash": "572ab6deb6290b1007b1e7728750966690dcad50babbdab67646b9e4cbe6a39b"
 }

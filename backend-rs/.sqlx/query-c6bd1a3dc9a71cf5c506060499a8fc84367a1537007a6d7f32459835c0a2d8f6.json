@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE tree_clusters SET\n                name = $2, address = $3, description = $4, soil_condition = $5,\n                provider = $6, additional_informations = $7,\n                latitude = $8, longitude = $9, region_id = $10,\n                watering_status = $11, last_watered = $12, archived = $13,\n                moisture_level = $14\n            WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Text",
+        "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "tree_soil_condition",
+            "kind": {
+              "Enum": [
+                "schluffig",
+                "sandig",
+                "lehmig",
+                "tonig",
+                "unknown"
+              ]
+            }
+          }
+        },
+        "Text",
+        "Jsonb",
+        "Float8",
+        "Float8",
+        "Int4",
+        {
+          "Custom": {
+            "name": "watering_status",
+            "kind": {
+              "Enum": [
+                "good",
+                "moderate",
+                "bad",
+                "unknown",
+                "just watered"
+              ]
+            }
+          }
+        },
+        "Timestamp",
+        "Bool",
+        "Float8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c6bd1a3dc9a71cf5c506060499a8fc84367a1537007a6d7f32459835c0a2d8f6"
+}

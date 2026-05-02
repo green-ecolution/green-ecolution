@@ -5,7 +5,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     domain::{
-        cluster::TreeClusterQuery, sensor::SensorSearchQuery, shared::pagination::Pagination,
+        cluster::TreeClusterSearchQuery, sensor::SensorSearchQuery, shared::pagination::Pagination,
         tree::TreeSearchQuery, watering_plan::WateringPlanQuery,
     },
     http::{
@@ -42,7 +42,7 @@ pub async fn get_evaluation(
         .await?;
     let cluster_page = state
         .cluster_service
-        .all(TreeClusterQuery::default(), count_pagination.clone())
+        .search_view(TreeClusterSearchQuery::default(), count_pagination.clone())
         .await?;
     let sensor_page = state
         .sensor_service

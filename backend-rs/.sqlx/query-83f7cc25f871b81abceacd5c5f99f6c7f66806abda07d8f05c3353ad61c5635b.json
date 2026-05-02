@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT\n                ST_X(ST_Centroid(ST_Collect(geometry)))::float8 AS \"center_x: f64\",\n                ST_Y(ST_Centroid(ST_Collect(geometry)))::float8 AS \"center_y: f64\"\n            FROM trees WHERE tree_cluster_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "center_x: f64",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 1,
+        "name": "center_y: f64",
+        "type_info": "Float8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "83f7cc25f871b81abceacd5c5f99f6c7f66806abda07d8f05c3353ad61c5635b"
+}

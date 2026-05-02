@@ -4,36 +4,31 @@ use crate::domain::{
     Id,
     cluster::{TreeCluster, TreeClusterReader, TreeClusterWriter},
     events::DomainEvent,
-    region::RegionReader,
     tree::TreeReader,
 };
 use crate::service::event_bus::{EventHandler, EventHandlerError};
 
-pub struct ClusterRecalculationHandler {
+pub struct ClusterStatusAggregatorHandler {
     cluster_reader: Arc<dyn TreeClusterReader>,
     cluster_writer: Arc<dyn TreeClusterWriter>,
     tree_reader: Arc<dyn TreeReader>,
-    region_reader: Arc<dyn RegionReader>,
 }
 
-impl ClusterRecalculationHandler {
+impl ClusterStatusAggregatorHandler {
     pub fn new(
         cluster_reader: Arc<dyn TreeClusterReader>,
         cluster_writer: Arc<dyn TreeClusterWriter>,
         tree_reader: Arc<dyn TreeReader>,
-        region_reader: Arc<dyn RegionReader>,
     ) -> Self {
         Self {
             cluster_reader,
             cluster_writer,
             tree_reader,
-            region_reader,
         }
     }
 
     fn affected_cluster_ids(&self, event: &DomainEvent) -> Vec<Id<TreeCluster>> {
         match event {
-            DomainEvent::TreeCreated { cluster_id, .. } => cluster_id.iter().copied().collect(),
             DomainEvent::TreeUpdated {
                 old_cluster_id,
                 new_cluster_id,
@@ -46,17 +41,19 @@ impl ClusterRecalculationHandler {
                 ids.dedup();
                 ids
             }
+            DomainEvent::TreeCreated { cluster_id, .. } => cluster_id.iter().copied().collect(),
             DomainEvent::TreeDeleted { cluster_id, .. } => cluster_id.iter().copied().collect(),
             DomainEvent::ClusterTreesChanged { cluster_id } => vec![*cluster_id],
+            DomainEvent::SensorDataReceived { .. } => vec![],
             _ => vec![],
         }
     }
 }
 
 #[async_trait::async_trait]
-impl EventHandler for ClusterRecalculationHandler {
+impl EventHandler for ClusterStatusAggregatorHandler {
     fn name(&self) -> &str {
-        "cluster_recalculation"
+        "cluster_status_aggregator"
     }
 
     fn handles(&self, event: &DomainEvent) -> bool {
@@ -75,21 +72,13 @@ impl EventHandler for ClusterRecalculationHandler {
                 .by_ids(&cluster.tree_ids)
                 .await
                 .unwrap_or_default();
-            let coords: Vec<_> = trees.iter().map(|t| t.coordinate).collect();
-            cluster.recalculate_centroid(&coords);
+            let statuses: Vec<_> = trees
+                .iter()
+                .filter(|t| t.sensor_id().is_some())
+                .map(|t| t.watering_status())
+                .collect();
 
-            let region_id = match cluster.coordinates() {
-                Some(center) => self
-                    .region_reader
-                    .by_point(center)
-                    .await
-                    .ok()
-                    .flatten()
-                    .map(|r| r.id),
-                None => None,
-            };
-            cluster.assign_region(region_id);
-
+            cluster.recalculate_watering_status(&statuses);
             self.cluster_writer.save(&cluster).await?;
         }
         Ok(())
