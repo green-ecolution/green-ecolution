@@ -206,7 +206,7 @@ dns-cleanup:
     @echo "DNS records removed."
 
 # Build + run app + infra via Docker Compose
-run-docker: _acme-init _ensure-valhalla
+run-docker: _acme-init _ensure-valhalla build-domain-wasm
     @echo "Running compose (infra + app)..."
     APP_HOST="{{ app_host }}" \
     BIND_ADDR="{{ bind_addr }}" \

@@ -12,8 +12,6 @@
     }
   },
   "scripts": {
-    "build:wasm": "cd ../../.. && just build-domain-wasm",
-    "build": "pnpm run build:wasm",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
