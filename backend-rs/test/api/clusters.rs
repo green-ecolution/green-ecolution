@@ -169,6 +169,61 @@ async fn delete_cluster_returns_204() {
 }
 
 #[tokio::test]
+async fn delete_cluster_unlinks_trees_and_keeps_them_alive() {
+    let app = spawn_app().await;
+
+    sqlx::query!(
+        r#"INSERT INTO trees (planting_year, species, number, latitude, longitude, geometry, description)
+        VALUES
+            (2020, 'Eiche', 'T-DEL-1', 53.55, 9.99, ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'A'),
+            (2021, 'Linde', 'T-DEL-2', 53.56, 9.98, ST_SetSRID(ST_MakePoint(9.98, 53.56), 4326), 'B')"#
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+
+    let tree_ids: Vec<i32> = sqlx::query_scalar!(
+        "SELECT id FROM trees WHERE number IN ('T-DEL-1', 'T-DEL-2') ORDER BY number"
+    )
+    .fetch_all(&app.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(tree_ids.len(), 2);
+
+    let body = serde_json::json!({
+        "name": "Cluster mit Baeumen",
+        "address": "Allee 1",
+        "description": "Wird geloescht, Baeume bleiben",
+        "soil_condition": "lehmig",
+        "tree_ids": tree_ids,
+    });
+
+    let create_resp = app.post_json("/api/v1/clusters", &body).await;
+    let created: serde_json::Value = create_resp.json().await.unwrap();
+    let cluster_id = created["id"].as_i64().unwrap();
+
+    let response = app
+        .delete(&format!("/api/v1/clusters/{}", cluster_id))
+        .await;
+    assert_eq!(response.status().as_u16(), 204);
+
+    let remaining: Vec<(i32, Option<i32>)> = sqlx::query_as(
+        "SELECT id, tree_cluster_id FROM trees WHERE number IN ('T-DEL-1', 'T-DEL-2') ORDER BY number",
+    )
+    .fetch_all(&app.db_pool)
+    .await
+    .unwrap();
+
+    assert_eq!(remaining.len(), 2, "trees must survive cluster delete");
+    for (_id, cluster) in &remaining {
+        assert!(
+            cluster.is_none(),
+            "tree_cluster_id must be cleared after cluster delete"
+        );
+    }
+}
+
+#[tokio::test]
 async fn list_clusters_respects_pagination() {
     let app = spawn_app().await;
 
