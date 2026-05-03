@@ -25,7 +25,10 @@ pub trait TreeReader: Send + Sync {
 
     /// Loads all trees that belong to `cluster_id`. Empty vec if the cluster
     /// has no trees.
-    async fn by_cluster_id(&self, cluster_id: Id<TreeCluster>) -> Result<Vec<Tree>, RepositoryError>;
+    async fn by_cluster_id(
+        &self,
+        cluster_id: Id<TreeCluster>,
+    ) -> Result<Vec<Tree>, RepositoryError>;
 
     /// Returns [`TreeView`] — includes audit timestamps.
     async fn view_by_id(&self, id: Id<Tree>) -> Result<TreeView, RepositoryError>;
