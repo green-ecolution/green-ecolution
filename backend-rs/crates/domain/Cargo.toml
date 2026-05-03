@@ -7,7 +7,7 @@ authors.workspace = true
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
-description = "Green Ecolution domain layer (portable)"
+description = "Green Ecolution domain layer"
 readme = "../../../README.md"
 publish.workspace = true
 
