@@ -240,7 +240,7 @@ infra-down:
 generate-sqlx:
     @echo "Refreshing sqlx offline cache..."
     @command -v cargo-sqlx >/dev/null 2>&1 || { echo "sqlx-cli missing (cargo install sqlx-cli --no-default-features --features rustls,postgres)"; exit 1; }
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" cargo sqlx prepare --workspace
+    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" cargo sqlx prepare --workspace -- --tests
 
 # Run frontend code generation (pnpm generate:local)
 generate-frontend:
