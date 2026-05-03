@@ -51,7 +51,8 @@ pub use view::WateringPlanView;
 /// Lifecycle status of a [`WateringPlan`].
 ///
 /// See the module-level state machine diagram for valid transitions.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "sqlx", derive(sqlx::Type))]
 #[cfg_attr(
     feature = "sqlx",
@@ -62,6 +63,7 @@ pub enum WateringPlanStatus {
     Active,
     Canceled,
     Finished,
+    #[serde(rename = "not competed")]
     #[cfg_attr(feature = "sqlx", sqlx(rename = "not competed"))]
     NotCompleted,
     Unknown,

@@ -1,48 +1,41 @@
 use domain::shared::error::ValidationError;
 use domain::shared::water_capacity::WaterCapacity;
-use domain::vehicle::{NumberPlate, VehicleDimension, VehicleModel};
+use domain::vehicle::{
+    DrivingLicense, NumberPlate, VehicleDimension, VehicleModel, VehicleStatus, VehicleType,
+};
 use serde::Deserialize;
 use serde_wasm_bindgen::{from_value, to_value};
 use wasm_bindgen::prelude::*;
 
-use crate::coerce::{LooseF64, invalid_number_issue};
+use crate::coerce::{LooseF64, invalid_number_issue, validate_enum};
 use crate::issue::ValidationIssue;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct VehicleDraftInput {
+    #[serde(default)]
     pub number_plate: String,
+    #[serde(default)]
     pub model: String,
+    #[serde(default)]
     pub r#type: String,
+    #[serde(default)]
     pub driving_license: String,
+    #[serde(default)]
     pub status: String,
+    #[serde(default)]
     pub water_capacity: LooseF64,
+    #[serde(default)]
     pub height: LooseF64,
+    #[serde(default)]
     pub width: LooseF64,
+    #[serde(default)]
     pub length: LooseF64,
+    #[serde(default)]
     pub weight: LooseF64,
     #[serde(default)]
     #[allow(dead_code)] // free-text DTO field, not validated
     pub description: Option<String>,
-}
-
-const VALID_VEHICLE_TYPES: &[&str] = &["transporter", "trailer"];
-const VALID_VEHICLE_STATUSES: &[&str] = &["active", "available", "not available", "unknown"];
-const VALID_DRIVING_LICENSES: &[&str] = &["B", "BE", "C", "CE"];
-
-fn invalid_enum_issue(
-    field: &'static str,
-    path: &'static str,
-    got: &str,
-    valid: &[&str],
-) -> ValidationIssue {
-    ValidationIssue::from_error(
-        &ValidationError::InvalidFormat {
-            field,
-            reason: format!("got `{}`, expected one of {:?}", got, valid),
-        },
-        path,
-    )
 }
 
 pub(crate) fn collect_vehicle_issues(input: &VehicleDraftInput) -> Vec<ValidationIssue> {
@@ -54,29 +47,18 @@ pub(crate) fn collect_vehicle_issues(input: &VehicleDraftInput) -> Vec<Validatio
     if let Err(err) = VehicleModel::new(&input.model) {
         issues.push(ValidationIssue::from_error(&err, "model"));
     }
-    if !VALID_VEHICLE_TYPES.contains(&input.r#type.as_str()) {
-        issues.push(invalid_enum_issue(
-            "vehicle.type",
-            "type",
-            &input.r#type,
-            VALID_VEHICLE_TYPES,
-        ));
+    if let Some(issue) = validate_enum::<VehicleType>(&input.r#type, "vehicle.type", "type") {
+        issues.push(issue);
     }
-    if !VALID_DRIVING_LICENSES.contains(&input.driving_license.as_str()) {
-        issues.push(invalid_enum_issue(
-            "vehicle.driving_license",
-            "drivingLicense",
-            &input.driving_license,
-            VALID_DRIVING_LICENSES,
-        ));
+    if let Some(issue) = validate_enum::<DrivingLicense>(
+        &input.driving_license,
+        "vehicle.driving_license",
+        "drivingLicense",
+    ) {
+        issues.push(issue);
     }
-    if !VALID_VEHICLE_STATUSES.contains(&input.status.as_str()) {
-        issues.push(invalid_enum_issue(
-            "vehicle.status",
-            "status",
-            &input.status,
-            VALID_VEHICLE_STATUSES,
-        ));
+    if let Some(issue) = validate_enum::<VehicleStatus>(&input.status, "vehicle.status", "status") {
+        issues.push(issue);
     }
 
     match input.water_capacity.0 {
@@ -220,6 +202,20 @@ mod tests {
             .find(|i| i.path == "height")
             .expect("height issue");
         assert_eq!(issue.key, "vehicle.dimension.height.invalidFormat");
+    }
+
+    #[test]
+    fn empty_json_yields_per_field_issues_without_throwing() {
+        let input: VehicleDraftInput = serde_json::from_value(serde_json::json!({})).unwrap();
+        let issues = collect_vehicle_issues(&input);
+        let paths: Vec<&str> = issues.iter().map(|i| i.path.as_str()).collect();
+        assert!(paths.contains(&"numberPlate"));
+        assert!(paths.contains(&"model"));
+        assert!(paths.contains(&"type"));
+        assert!(paths.contains(&"drivingLicense"));
+        assert!(paths.contains(&"status"));
+        assert!(paths.contains(&"waterCapacity"));
+        assert!(paths.contains(&"height"));
     }
 
     #[test]

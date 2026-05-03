@@ -1,8 +1,12 @@
 use chrono::{DateTime, Utc};
+use domain::shared::error::ValidationError;
+use domain::watering_plan::WateringPlanStatus;
 use serde::Deserialize;
 use serde_wasm_bindgen::{from_value, to_value};
+use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
+use crate::coerce::validate_enum;
 use crate::issue::ValidationIssue;
 
 #[derive(Debug, Deserialize)]
@@ -12,6 +16,7 @@ pub(crate) struct WateringPlanDraftInput {
     #[serde(default)]
     #[allow(dead_code)] // free-text DTO field, not validated
     pub description: Option<String>,
+    #[serde(default)]
     pub cluster_ids: Vec<i32>,
     #[serde(default)]
     pub transporter_id: Option<i32>,
@@ -20,10 +25,11 @@ pub(crate) struct WateringPlanDraftInput {
     pub trailer_id: Option<i32>,
     #[serde(default)]
     pub driver_ids: Vec<String>,
+    #[serde(default)]
+    pub status: Option<String>,
 }
 
 pub(crate) fn collect_plan_issues(input: &WateringPlanDraftInput) -> Vec<ValidationIssue> {
-    use domain::shared::error::ValidationError;
     let mut issues = Vec::new();
 
     if input.cluster_ids.is_empty() {
@@ -42,15 +48,59 @@ pub(crate) fn collect_plan_issues(input: &WateringPlanDraftInput) -> Vec<Validat
             },
             "driverIds",
         ));
+    } else {
+        for id in &input.driver_ids {
+            if Uuid::parse_str(id).is_err() {
+                issues.push(ValidationIssue::from_error(
+                    &ValidationError::InvalidFormat {
+                        field: "watering_plan.driver_ids",
+                        reason: format!("`{}` is not a valid UUID", id),
+                    },
+                    "driverIds",
+                ));
+                break;
+            }
+        }
     }
 
-    if input.transporter_id.is_none() {
-        issues.push(ValidationIssue::from_error(
+    match input.transporter_id {
+        None => issues.push(ValidationIssue::from_error(
             &ValidationError::EmptyString {
                 field: "watering_plan.transporter_id",
             },
             "transporterId",
+        )),
+        Some(id) if id <= 0 => issues.push(ValidationIssue::from_error(
+            &ValidationError::OutOfRange {
+                field: "watering_plan.transporter_id",
+                min: 1.0,
+                max: f64::MAX,
+                got: id as f64,
+            },
+            "transporterId",
+        )),
+        Some(_) => {}
+    }
+
+    if let Some(id) = input.trailer_id
+        && id <= 0
+    {
+        issues.push(ValidationIssue::from_error(
+            &ValidationError::OutOfRange {
+                field: "watering_plan.trailer_id",
+                min: 1.0,
+                max: f64::MAX,
+                got: id as f64,
+            },
+            "trailerId",
         ));
+    }
+
+    if let Some(status) = input.status.as_deref()
+        && let Some(issue) =
+            validate_enum::<WateringPlanStatus>(status, "watering_plan.status", "status")
+    {
+        issues.push(issue);
     }
 
     let today_start = Utc::now()
@@ -98,12 +148,14 @@ mod tests {
             transporter_id: Some(10),
             trailer_id: None,
             driver_ids: vec!["00000000-0000-0000-0000-000000000001".into()],
+            status: Some("planned".into()),
         }
     }
 
     #[test]
     fn valid_plan_yields_no_issues() {
-        assert!(collect_plan_issues(&valid()).is_empty());
+        let issues = collect_plan_issues(&valid());
+        assert!(issues.is_empty(), "expected no issues, got {:?}", issues);
     }
 
     #[test]
@@ -111,7 +163,7 @@ mod tests {
         let mut input = valid();
         input.cluster_ids.clear();
         let issues = collect_plan_issues(&input);
-        assert_eq!(issues[0].path, "clusterIds");
+        assert!(issues.iter().any(|i| i.path == "clusterIds"));
     }
 
     #[test]
@@ -120,6 +172,57 @@ mod tests {
         input.transporter_id = None;
         let issues = collect_plan_issues(&input);
         assert!(issues.iter().any(|i| i.path == "transporterId"));
+    }
+
+    #[test]
+    fn non_positive_transporter_yields_issue() {
+        let mut input = valid();
+        input.transporter_id = Some(0);
+        let issues = collect_plan_issues(&input);
+        let issue = issues
+            .iter()
+            .find(|i| i.path == "transporterId")
+            .expect("transporterId issue");
+        assert_eq!(issue.key, "watering_plan.transporter_id.outOfRange");
+    }
+
+    #[test]
+    fn non_positive_trailer_yields_issue() {
+        let mut input = valid();
+        input.trailer_id = Some(-1);
+        let issues = collect_plan_issues(&input);
+        assert!(issues.iter().any(|i| i.path == "trailerId"));
+    }
+
+    #[test]
+    fn invalid_uuid_in_driver_ids_yields_issue() {
+        let mut input = valid();
+        input.driver_ids = vec!["not-a-uuid".into()];
+        let issues = collect_plan_issues(&input);
+        let issue = issues
+            .iter()
+            .find(|i| i.path == "driverIds")
+            .expect("driverIds issue");
+        assert_eq!(issue.key, "watering_plan.driver_ids.invalidFormat");
+    }
+
+    #[test]
+    fn invalid_status_is_rejected() {
+        let mut input = valid();
+        input.status = Some("merged".into());
+        let issues = collect_plan_issues(&input);
+        let issue = issues
+            .iter()
+            .find(|i| i.path == "status")
+            .expect("status issue");
+        assert_eq!(issue.key, "watering_plan.status.invalidFormat");
+    }
+
+    #[test]
+    fn missing_status_is_accepted() {
+        let mut input = valid();
+        input.status = None;
+        assert!(collect_plan_issues(&input).is_empty());
     }
 
     #[test]

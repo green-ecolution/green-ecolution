@@ -39,7 +39,8 @@ pub use view::VehicleView;
 /// - `Available` — ready to be assigned to a watering plan.
 /// - `NotAvailable` — temporarily out of service (maintenance, etc.).
 /// - `Unknown` — status not yet set or not determinable.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "sqlx", derive(sqlx::Type))]
 #[cfg_attr(
     feature = "sqlx",
@@ -48,12 +49,14 @@ pub use view::VehicleView;
 pub enum VehicleStatus {
     Active,
     Available,
+    #[serde(rename = "not available")]
     #[cfg_attr(feature = "sqlx", sqlx(rename = "not available"))]
     NotAvailable,
     Unknown,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "sqlx", derive(sqlx::Type))]
 #[cfg_attr(
     feature = "sqlx",

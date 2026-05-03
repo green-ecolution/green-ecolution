@@ -10,10 +10,15 @@ use crate::issue::ValidationIssue;
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct TreeDraftInput {
+    #[serde(default)]
     pub number: String,
+    #[serde(default)]
     pub species: String,
+    #[serde(default)]
     pub planting_year: LooseU32,
+    #[serde(default)]
     pub latitude: LooseF64,
+    #[serde(default)]
     pub longitude: LooseF64,
     #[serde(default)]
     #[allow(dead_code)] // free-text DTO field, not validated
@@ -144,6 +149,20 @@ mod tests {
                 .iter()
                 .any(|i| i.path == "latitude" && i.key == "coordinate.latitude.invalidFormat")
         );
+    }
+
+    #[test]
+    fn empty_json_yields_per_field_issues_without_throwing() {
+        // Frontend may submit an empty object before any field is filled.
+        // We must produce structured issues, not throw a JsError.
+        let input: TreeDraftInput = serde_json::from_value(serde_json::json!({})).unwrap();
+        let issues = collect_tree_issues(&input);
+        let paths: Vec<&str> = issues.iter().map(|i| i.path.as_str()).collect();
+        assert!(paths.contains(&"number"));
+        assert!(paths.contains(&"species"));
+        assert!(paths.contains(&"plantingYear"));
+        assert!(paths.contains(&"latitude"));
+        assert!(paths.contains(&"longitude"));
     }
 
     #[test]

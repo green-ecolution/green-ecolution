@@ -12,7 +12,7 @@ use serde::{Deserialize, Deserializer};
 use crate::issue::ValidationIssue;
 
 /// Wraps a numeric form field that may arrive as a number or a string.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub(crate) struct LooseF64(pub Option<f64>);
 
 impl<'de> Deserialize<'de> for LooseF64 {
@@ -38,7 +38,7 @@ impl<'de> Deserialize<'de> for LooseF64 {
 }
 
 /// Wraps a numeric form field that must parse as a non-negative integer.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub(crate) struct LooseU32(pub Option<u32>);
 
 impl<'de> Deserialize<'de> for LooseU32 {
@@ -79,6 +79,29 @@ pub(crate) fn invalid_number_issue(field: &'static str, path: &'static str) -> V
         },
         path,
     )
+}
+
+/// Validate that `raw` is a valid wire-format value of the domain enum `T`.
+///
+/// The domain enum's `serde::Deserialize` impl is the single source of truth
+/// for valid variants and their wire spelling. Returns `None` on success, or
+/// a `ValidationIssue` whose `key` is `{field}.invalidFormat` on failure.
+pub(crate) fn validate_enum<T: serde::de::DeserializeOwned>(
+    raw: &str,
+    field: &'static str,
+    path: &'static str,
+) -> Option<ValidationIssue> {
+    use domain::shared::error::ValidationError;
+    match serde_json::from_value::<T>(serde_json::Value::String(raw.to_string())) {
+        Ok(_) => None,
+        Err(_) => Some(ValidationIssue::from_error(
+            &ValidationError::InvalidFormat {
+                field,
+                reason: format!("`{}` is not a valid value", raw),
+            },
+            path,
+        )),
+    }
 }
 
 #[cfg(test)]

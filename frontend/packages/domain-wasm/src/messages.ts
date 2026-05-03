@@ -29,6 +29,7 @@ const messages: Record<string, Renderer> = {
   'cluster.address.empty': () => 'Adresse ist erforderlich.',
   'cluster.address.tooShort': (p) => `Adresse muss mindestens ${p.min} Zeichen lang sein.`,
   'cluster.address.tooLong': (p) => `Adresse darf maximal ${p.max} Zeichen lang sein.`,
+  'cluster.soil_condition.invalidFormat': () => 'Keine korrekte Bodenbeschaffenheit.',
 
   // Vehicle
   'vehicle.number_plate.empty': () => 'Kennzeichen ist erforderlich.',
@@ -60,6 +61,12 @@ const messages: Record<string, Renderer> = {
   'watering_plan.driver_ids.empty': () =>
     'Es muss mindestens ein Mitarbeiter ausgewählt werden.',
   'watering_plan.transporter_id.empty': () => 'Es muss ein Transportfahrzeug ausgewählt werden.',
+  'watering_plan.transporter_id.outOfRange': () =>
+    'Es muss ein gültiges Transportfahrzeug ausgewählt werden.',
+  'watering_plan.trailer_id.outOfRange': () => 'Es muss ein gültiger Anhänger ausgewählt werden.',
+  'watering_plan.driver_ids.invalidFormat': () =>
+    'Eine Mitarbeiter-ID hat kein gültiges UUID-Format.',
+  'watering_plan.status.invalidFormat': () => 'Kein korrekter Status.',
   'watering_plan.date.outOfRange': () => 'Datum muss heute oder in der Zukunft liegen.',
 
   // User

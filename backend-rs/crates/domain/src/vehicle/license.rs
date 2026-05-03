@@ -5,7 +5,7 @@ use crate::shared::error::ValidationError;
 /// EU driving license categories relevant to the fleet.
 ///
 /// The hierarchy is B < BE < C < CE for the purposes of [`DrivingLicense::satisfies`].
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(feature = "sqlx", derive(sqlx::Type))]
 #[cfg_attr(feature = "sqlx", sqlx(type_name = "driving_license"))]
 pub enum DrivingLicense {

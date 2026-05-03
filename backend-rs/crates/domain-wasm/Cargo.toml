@@ -16,6 +16,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 domain = { path = "../domain" }
 chrono = { workspace = true }
+uuid = { workspace = true }
 wasm-bindgen = "0.2.100"
 serde = { workspace = true }
 serde_json = { workspace = true }
