@@ -3,6 +3,10 @@ use serde_json::Value;
 
 use crate::domain::shared::{distance::Distance, watering_status::WateringStatus};
 
+/// HTTP-side read model for a tree.
+///
+/// Uses primitive types rather than value objects; includes audit timestamps
+/// absent from the aggregate.
 #[derive(Debug, Clone)]
 pub struct TreeView {
     pub id: i32,
@@ -22,6 +26,9 @@ pub struct TreeView {
     pub additional_info: Option<Value>,
 }
 
+/// A [`TreeView`] annotated with the distance from the query point.
+///
+/// Returned by `TreeReader::view_nearest`.
 #[derive(Debug, Clone)]
 pub struct TreeViewWithDistance {
     pub tree: TreeView,

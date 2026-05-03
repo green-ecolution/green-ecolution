@@ -1,3 +1,15 @@
+//! Tree aggregate — individual street / park trees managed by the platform.
+//!
+//! The aggregate ([`Tree`]) keeps `cluster_id`, `sensor_id`, and
+//! `watering_status` private because they must only change through the
+//! dedicated methods `move_to_cluster`, `attach_sensor` / `detach_sensor`, and
+//! `record_watering_status`. Direct field mutation would silently bypass
+//! invariants (notably: detaching a sensor resets `watering_status` to
+//! `Unknown`).
+//!
+//! [`TreeView`] adds audit fields for HTTP responses. [`TreeViewWithDistance`]
+//! is returned by proximity searches.
+
 pub mod error;
 pub mod planting_year;
 pub mod repository;
@@ -26,6 +38,7 @@ pub use repository::{TreeReader, TreeWriter};
 pub(crate) use snapshot::TreeSnapshot;
 pub use view::{TreeView, TreeViewWithDistance};
 
+/// Botanical or common species name, 1–255 characters after trimming.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Species(NonEmptyString);
 
@@ -50,6 +63,7 @@ impl std::fmt::Display for Species {
     }
 }
 
+/// Municipality-assigned tree identifier (e.g. `"FL-001"`), 1–64 characters.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TreeNumber(NonEmptyString);
 
@@ -90,6 +104,7 @@ pub struct Tree {
     provenance: Provenance,
 }
 
+/// Input for creating a new [`Tree`].
 #[derive(Debug, Clone)]
 pub struct TreeDraft {
     pub planting_year: PlantingYear,
@@ -102,6 +117,7 @@ pub struct TreeDraft {
     pub provenance: Provenance,
 }
 
+/// Filter inputs for tree list queries.
 #[derive(Debug, Default, Clone)]
 pub struct TreeSearchQuery {
     pub watering_statuses: Vec<WateringStatus>,
@@ -176,6 +192,11 @@ impl Tree {
         self.sensor_id = Some(sensor);
     }
 
+    /// Detaches the sensor and resets `watering_status` to
+    /// [`WateringStatus::Unknown`].
+    ///
+    /// Once the sensor link is gone there is no data source to derive a status
+    /// from, so the previous value is no longer meaningful.
     pub fn detach_sensor(&mut self) {
         if self.sensor_id.is_none() {
             return;

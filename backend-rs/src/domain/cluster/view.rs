@@ -3,6 +3,10 @@ use serde_json::Value;
 
 use crate::domain::{cluster::SoilCondition, shared::watering_status::WateringStatus};
 
+/// HTTP-side read model for a tree cluster.
+///
+/// Includes audit timestamps and flattened primitive types for easy
+/// serialisation.
 #[derive(Debug, Clone)]
 pub struct TreeClusterView {
     pub id: i32,

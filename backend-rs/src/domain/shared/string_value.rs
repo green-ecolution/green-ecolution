@@ -1,5 +1,10 @@
 use crate::domain::shared::error::ValidationError;
 
+/// Trimmed, length-bounded string that rejects empty input after trimming.
+///
+/// Each per-field wrapper type (e.g. `RegionName`, `Species`) specifies its
+/// own `min` / `max` bounds; `NonEmptyString` enforces them in Unicode scalar
+/// value counts, not bytes.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NonEmptyString(String);
 

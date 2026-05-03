@@ -1,3 +1,5 @@
+//! System-info and health DTOs returned by the `/info` endpoints.
+
 use std::net::IpAddr;
 use std::time::Duration;
 

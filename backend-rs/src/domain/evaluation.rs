@@ -1,3 +1,6 @@
+//! Cross-aggregate evaluation summary used by the dashboard to give an
+//! overview of watering activity across vehicles, regions, and entity counts.
+
 use crate::domain::RepositoryError;
 
 #[derive(Debug, Clone)]

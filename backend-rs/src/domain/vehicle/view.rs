@@ -3,6 +3,9 @@ use serde_json::Value;
 
 use crate::domain::vehicle::{DrivingLicense, VehicleStatus, VehicleType};
 
+/// HTTP-side read model for a vehicle.
+///
+/// Adds `created_at` / `updated_at` audit timestamps absent from the aggregate.
 #[derive(Debug, Clone)]
 pub struct VehicleView {
     pub id: i32,

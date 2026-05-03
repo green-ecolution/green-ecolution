@@ -1,5 +1,10 @@
 use crate::domain::shared::error::ValidationError;
 
+/// Trimmed, heuristically validated email address.
+///
+/// Validation requires a `@`, a domain with at least one `.`, and no
+/// whitespace. This is intentionally permissive — it catches obvious typos
+/// without pulling in a full RFC 5321 parser.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Email(String);
 

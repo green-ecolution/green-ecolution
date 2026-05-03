@@ -1,3 +1,10 @@
+//! User aggregate — a Keycloak-managed identity surfaced to the domain layer.
+//!
+//! Unlike other aggregates the user `id` is a [`Uuid`] (Keycloak's own identifier)
+//! rather than an `Id<User>`. There is no reader/writer split: [`UserRepository`]
+//! is a single unified trait because user lifecycle management is delegated
+//! entirely to Keycloak and does not follow the same DB-snapshot pattern.
+
 use std::str::FromStr;
 
 use chrono::{DateTime, Utc};
@@ -16,6 +23,7 @@ use crate::domain::{
     vehicle::DrivingLicense,
 };
 
+/// Application role assigned to a user in Keycloak.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum UserRole {
     Tbz,
@@ -79,6 +87,7 @@ impl FromStr for UserStatus {
     }
 }
 
+/// Keycloak username, 1–64 characters after trimming.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Username(NonEmptyString);
 
@@ -119,6 +128,7 @@ pub struct User {
     pub status: UserStatus,
 }
 
+/// Input for creating a new user in Keycloak.
 #[derive(Debug, Clone)]
 pub struct UserCreate {
     pub username: Username,
@@ -132,6 +142,10 @@ pub struct UserCreate {
     pub avatar_url: Option<Url>,
 }
 
+/// Unified access to Keycloak-managed users.
+///
+/// Not split into reader/writer because user management is entirely delegated
+/// to Keycloak — there is no local DB snapshot to rehydrate.
 #[async_trait::async_trait]
 pub trait UserRepository: Send + Sync {
     async fn create(&self, entity: UserCreate) -> Result<User, RepositoryError>;

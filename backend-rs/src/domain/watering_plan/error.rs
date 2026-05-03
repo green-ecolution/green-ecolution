@@ -3,6 +3,7 @@ use thiserror::Error;
 use crate::domain::shared::error::ValidationError;
 use crate::domain::watering_plan::WateringPlanStatus;
 
+/// Errors from `WateringPlan` state transitions and validation.
 #[derive(Debug, Error, PartialEq)]
 pub enum WateringPlanError {
     #[error(transparent)]
@@ -16,6 +17,9 @@ pub enum WateringPlanError {
     CannotMutateAfterStart,
     #[error("a non-empty cancellation note is required")]
     CancellationNoteRequired,
+    /// Raised by `WateringPlan::finish` when no evaluation is present for the
+    /// given `cluster_id`. Every cluster currently assigned to the plan must
+    /// have exactly one evaluation entry.
     #[error("evaluation missing for cluster {0}")]
     EvaluationMissingForCluster(i32),
 }

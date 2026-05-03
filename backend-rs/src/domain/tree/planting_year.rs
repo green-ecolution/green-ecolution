@@ -2,6 +2,7 @@ use chrono::{Datelike, Utc};
 
 use crate::domain::shared::error::ValidationError;
 
+/// Calendar year in which a tree was planted; must not be in the future.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PlantingYear(u32);
 

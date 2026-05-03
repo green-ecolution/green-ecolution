@@ -3,6 +3,7 @@ use serde_json::Value;
 
 use crate::domain::shared::watering_status::WateringStatus;
 
+/// Raw DB-row mapping used exclusively for aggregate rehydration.
 #[derive(Debug, Clone)]
 pub(crate) struct TreeSnapshot {
     pub(crate) id: i32,

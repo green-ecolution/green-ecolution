@@ -5,12 +5,18 @@ pub const DEFAULT_PER_PAGE: u64 = 25;
 /// Maximum page size accepted from clients to bound query cost.
 pub const MAX_PER_PAGE: u64 = 100;
 
+/// A single page of results together with the total item count across all pages.
 #[derive(Debug, Clone)]
 pub struct Page<T> {
     pub items: Vec<T>,
     pub total: u64,
 }
 
+/// Validated pagination cursor.
+///
+/// `page` is clamped to `≥ 1`; `per_page` is clamped to `[1, MAX_PER_PAGE]`.
+/// Callers that pass 0 or an oversized value are silently corrected rather
+/// than getting an error, because these are usually benign client mistakes.
 #[derive(Debug, Clone, Copy)]
 pub struct Pagination {
     page: u64,

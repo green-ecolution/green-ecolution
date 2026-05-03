@@ -1,3 +1,10 @@
+//! Shared kernel — value objects and cross-cutting types used by every
+//! aggregate.
+//!
+//! Provides: `ValidationError`, `NonEmptyString`, `Email`, `Coordinate`,
+//! `Distance`, `WaterCapacity`, `Provenance`, `Pagination`, `WateringStatus`,
+//! and the helper types in `string_value`.
+
 pub mod coordinates;
 pub mod distance;
 pub mod email;

@@ -9,11 +9,13 @@ use crate::domain::{
     },
 };
 
+/// Read-side access to regions.
 #[async_trait]
 pub trait RegionReader: Send + Sync {
     async fn by_id(&self, id: Id<Region>) -> Result<Region, RepositoryError>;
     async fn by_ids(&self, ids: &[Id<Region>]) -> Result<Vec<Region>, RepositoryError>;
     async fn by_name(&self, name: &RegionName) -> Result<Option<Region>, RepositoryError>;
+    /// Returns the region whose polygon contains `coord`, if any.
     async fn by_point(&self, coord: Coordinate) -> Result<Option<Region>, RepositoryError>;
     async fn search(
         &self,
@@ -22,6 +24,7 @@ pub trait RegionReader: Send + Sync {
     ) -> Result<Page<Region>, RepositoryError>;
 }
 
+/// Write-side access to regions.
 #[async_trait]
 pub trait RegionWriter: Send + Sync {
     async fn save_new(&self, draft: RegionDraft) -> Result<Region, RepositoryError>;

@@ -1,3 +1,6 @@
+//! Plugin manifest shapes — describes a registered external plugin with its
+//! location and OAuth client credentials.
+
 use url::Url;
 
 #[derive(Debug, Clone)]

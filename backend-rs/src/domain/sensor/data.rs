@@ -3,6 +3,10 @@ use serde_json::Value;
 
 use crate::domain::sensor::SensorId;
 
+/// A single time-series measurement from a sensor.
+///
+/// `recorded_at` is the domain name for the event timestamp; the underlying
+/// DB column is called `created_at`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct SensorReading {
     pub id: i32,
@@ -11,12 +15,17 @@ pub struct SensorReading {
     pub data: Value,
 }
 
+/// Input for recording a new sensor measurement.
 #[derive(Debug, Clone)]
 pub struct SensorReadingDraft {
     pub sensor_id: SensorId,
     pub data: Value,
 }
 
+/// HTTP-side read model for a sensor reading.
+///
+/// Exposes the timestamp as `created_at` (matching the DB column name and the
+/// existing API contract) rather than the domain's `recorded_at`.
 #[derive(Debug, Clone)]
 pub struct SensorReadingView {
     pub id: i32,

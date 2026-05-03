@@ -1,5 +1,11 @@
 use thiserror::Error;
 
+/// Validation failure returned by value-object constructors.
+///
+/// Every `::new` constructor on a domain value object (e.g. `NonEmptyString`,
+/// `Coordinate`) returns this error type on bad input. It converts into
+/// [`crate::domain::RepositoryError::DataIntegrity`] so infrastructure code
+/// can propagate it without knowing the specific variant.
 #[derive(Debug, Error, PartialEq)]
 pub enum ValidationError {
     #[error("{field} is empty")]

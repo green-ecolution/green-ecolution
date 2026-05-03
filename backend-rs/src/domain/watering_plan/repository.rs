@@ -10,6 +10,8 @@ use crate::domain::{
     },
 };
 
+/// Read-side access to watering plans, including aggregate hydration and the
+/// HTTP-friendly [`WateringPlanView`] read model.
 #[async_trait]
 pub trait WateringPlanReader: Send + Sync {
     async fn by_id(&self, id: Id<WateringPlan>) -> Result<WateringPlan, RepositoryError>;
@@ -25,6 +27,7 @@ pub trait WateringPlanReader: Send + Sync {
     ) -> Result<Vec<WateringPlanEvaluation>, RepositoryError>;
 }
 
+/// Write-side access to watering plans.
 #[async_trait]
 pub trait WateringPlanWriter: Send + Sync {
     async fn save_new(&self, draft: WateringPlanDraft) -> Result<WateringPlan, RepositoryError>;
@@ -35,6 +38,7 @@ pub trait WateringPlanWriter: Send + Sync {
         evaluations: &[WateringPlanEvaluation],
     ) -> Result<(), RepositoryError>;
     async fn delete(&self, id: Id<WateringPlan>) -> Result<(), RepositoryError>;
+    /// Sets `last_watered` on the given clusters and all their member trees.
     async fn propagate_last_watered(
         &self,
         cluster_ids: &[Id<TreeCluster>],

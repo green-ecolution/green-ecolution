@@ -2,6 +2,8 @@ use serde_json::Value;
 
 use crate::domain::shared::{error::ValidationError, string_value::NonEmptyString};
 
+/// Opaque provider identifier (e.g. `"tbz"`, `"smarte-grenzregion"`),
+/// 1–64 characters after trimming.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ProviderId(NonEmptyString);
 
@@ -26,6 +28,11 @@ impl std::fmt::Display for ProviderId {
     }
 }
 
+/// Attribution metadata attached to most aggregates.
+///
+/// Tracks which external system imported an entity (`provider`) and carries
+/// an opaque JSON payload for provider-specific data (`additional_info`).
+/// Both fields are optional; the default is an empty struct.
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct Provenance {
     provider: Option<ProviderId>,

@@ -6,6 +6,10 @@ use url::Url;
 
 use crate::domain::watering_plan::WateringPlanStatus;
 
+/// HTTP-side read model for a watering plan.
+///
+/// Adds `created_at` / `updated_at` audit timestamps absent from the
+/// aggregate.
 #[derive(Debug, Clone)]
 pub struct WateringPlanView {
     pub id: i32,

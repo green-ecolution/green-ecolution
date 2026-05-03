@@ -1,3 +1,10 @@
+//! Region aggregate — a named geographic boundary used to group tree clusters.
+//!
+//! Follows the standard pattern: [`Region`] aggregate, [`RegionDraft`] for
+//! creation, a `pub(crate)` snapshot for DB rehydration, and a
+//! [`RegionReader`] / [`RegionWriter`] trait split. No view type is needed
+//! because `Region` is small enough to serve as its own read model.
+
 pub mod error;
 pub mod repository;
 pub mod snapshot;
@@ -12,6 +19,7 @@ pub use repository::{RegionReader, RegionWriter};
 #[allow(unused_imports)]
 pub(crate) use snapshot::RegionSnapshot;
 
+/// Region name, 1–255 characters after trimming.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RegionName(NonEmptyString);
 
@@ -42,6 +50,7 @@ pub struct Region {
     pub name: RegionName,
 }
 
+/// Input for creating a new [`Region`].
 #[derive(Debug, Clone)]
 pub struct RegionDraft {
     pub name: RegionName,

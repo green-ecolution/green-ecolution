@@ -1,3 +1,21 @@
+//! Domain layer for Green Ecolution.
+//!
+//! Each aggregate lives in its own sub-module and follows a consistent pattern:
+//!
+//! - **Aggregate** (`Tree`, `Vehicle`, …) — enforces invariants; key fields
+//!   that must not be set directly are private with accessor methods.
+//! - **View** (`TreeView`, …) — flat, audit-enriched read model (`created_at` /
+//!   `updated_at`) used by HTTP handlers; avoids exposing aggregate internals.
+//! - **Snapshot** (`pub(crate)`) — raw DB-row struct used exclusively for
+//!   rehydration via `reconstitute`; never crosses the domain boundary.
+//! - **Reader / Writer traits** — split so read-heavy paths depend only on
+//!   `*Reader` and mutation paths only on `*Writer`.
+//! - **Draft** — plain input struct for aggregate creation (`save_new`).
+//!
+//! [`shared`] holds cross-cutting value objects and `ValidationError`.
+//! [`RepositoryError`] is the single error type returned by all repository
+//! traits; `ValidationError` converts into it via `DataIntegrity`.
+
 use std::marker::PhantomData;
 
 pub mod auth;
@@ -14,6 +32,11 @@ pub mod user;
 pub mod vehicle;
 pub mod watering_plan;
 
+/// Errors that repository implementations return to the domain.
+///
+/// Infrastructure adapters map driver-specific errors into these variants so
+/// that the domain layer never depends on a particular DB or auth library.
+/// `ValidationError` converts into [`RepositoryError::DataIntegrity`].
 #[derive(Debug, thiserror::Error)]
 pub enum RepositoryError {
     #[error("entity not found")]
@@ -36,6 +59,10 @@ impl From<crate::domain::shared::error::ValidationError> for RepositoryError {
     }
 }
 
+/// Typed integer identity.
+///
+/// The phantom type parameter prevents accidental cross-aggregate comparisons
+/// (e.g. `Id<Tree>` cannot be compared with `Id<Vehicle>` at compile time).
 #[derive(Debug)]
 pub struct Id<T>(i32, PhantomData<T>);
 

@@ -2,6 +2,7 @@ use serde_json::Value;
 
 use crate::domain::sensor::SensorStatus;
 
+/// Raw DB-row mapping used exclusively for aggregate rehydration.
 #[derive(Debug, Clone)]
 pub(crate) struct SensorSnapshot {
     pub(crate) id: String,

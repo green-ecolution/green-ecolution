@@ -1,3 +1,23 @@
+//! WateringPlan aggregate — a scheduled watering run for a set of tree clusters.
+//!
+//! ## State machine
+//!
+//! ```text
+//! Planned ──start()──► Active ──finish(evals)──► Finished
+//!    │                   │
+//!    └──cancel(note)──┐  └──fail(note)──► NotCompleted
+//!                     ▼
+//!                  Canceled
+//! ```
+//!
+//! Transitions not shown are rejected with [`WateringPlanError::InvalidStateTransition`].
+//! `Unknown` is a legacy/sentinel value from the DB; it does not participate
+//! in normal transitions.
+//!
+//! Plan content (`date`, `cluster_ids`, vehicles) may only be changed while
+//! the plan is in `Planned`; `replace_details` enforces this via
+//! [`WateringPlanError::CannotMutateAfterStart`].
+
 pub mod error;
 pub mod evaluation;
 pub mod repository;
@@ -27,6 +47,9 @@ pub use repository::{WateringPlanReader, WateringPlanWriter};
 pub(crate) use snapshot::WateringPlanSnapshot;
 pub use view::WateringPlanView;
 
+/// Lifecycle status of a [`WateringPlan`].
+///
+/// See the module-level state machine diagram for valid transitions.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, sqlx::Type)]
 #[sqlx(type_name = "watering_plan_status", rename_all = "snake_case")]
 pub enum WateringPlanStatus {
@@ -58,6 +81,7 @@ pub struct WateringPlan {
     provenance: Provenance,
 }
 
+/// Input for creating a new [`WateringPlan`].
 #[derive(Debug, Clone)]
 pub struct WateringPlanDraft {
     pub date: DateTime<Utc>,
@@ -125,6 +149,7 @@ impl WateringPlan {
         Ok(())
     }
 
+    /// Updates editable fields. Only allowed while status is [`WateringPlanStatus::Planned`].
     pub fn replace_details(
         &mut self,
         date: DateTime<Utc>,
@@ -144,6 +169,7 @@ impl WateringPlan {
         Ok(())
     }
 
+    /// Transitions `Planned → Active`. Fails on any other starting status.
     pub fn start(&mut self) -> Result<(), WateringPlanError> {
         if self.status != WateringPlanStatus::Planned {
             return Err(WateringPlanError::InvalidStateTransition {
@@ -155,6 +181,9 @@ impl WateringPlan {
         Ok(())
     }
 
+    /// Transitions `Planned | Active → Canceled`.
+    ///
+    /// `note` must be non-empty (trimmed). Sets `cancellation_note`.
     pub fn cancel(&mut self, note: String) -> Result<(), WateringPlanError> {
         if note.trim().is_empty() {
             return Err(WateringPlanError::CancellationNoteRequired);
@@ -173,6 +202,9 @@ impl WateringPlan {
         Ok(())
     }
 
+    /// Transitions `Active → NotCompleted`.
+    ///
+    /// `note` must be non-empty (trimmed). Sets `cancellation_note`.
     pub fn fail(&mut self, note: String) -> Result<(), WateringPlanError> {
         if note.trim().is_empty() {
             return Err(WateringPlanError::CancellationNoteRequired);
@@ -188,6 +220,11 @@ impl WateringPlan {
         Ok(())
     }
 
+    /// Transitions `Active → Finished`.
+    ///
+    /// Requires exactly one [`WateringPlanEvaluation`] per `cluster_id` that
+    /// is currently assigned (checked by `cluster_id` value at call time).
+    /// Missing evaluations result in [`WateringPlanError::EvaluationMissingForCluster`].
     pub fn finish(
         &mut self,
         evaluations: &[WateringPlanEvaluation],

@@ -2,6 +2,7 @@ use std::{fmt::Display, ops::Add};
 
 use crate::domain::shared::error::ValidationError;
 
+/// Non-negative water volume in litres.
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct WaterCapacity(f64);
 

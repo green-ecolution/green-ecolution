@@ -2,6 +2,7 @@ use std::{fmt::Display, ops::Add};
 
 use crate::domain::shared::error::ValidationError;
 
+/// Non-negative distance in metres.
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Distance(f64);
 

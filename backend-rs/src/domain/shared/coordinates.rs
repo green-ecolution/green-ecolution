@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use crate::domain::shared::error::ValidationError;
 
+/// WGS-84 latitude/longitude pair, validated to `[-90, 90] × [-180, 180]`.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Coordinate(f64, f64);
 

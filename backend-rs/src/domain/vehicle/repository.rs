@@ -6,6 +6,8 @@ use crate::domain::{
     vehicle::{NumberPlate, Vehicle, VehicleDraft, VehicleSearchQuery, VehicleType, VehicleView},
 };
 
+/// Read-side access to vehicles, including aggregate hydration and the
+/// HTTP-friendly [`VehicleView`] read model.
 #[async_trait]
 pub trait VehicleReader: Send + Sync {
     async fn by_id(&self, id: Id<Vehicle>) -> Result<Vehicle, RepositoryError>;
@@ -26,6 +28,7 @@ pub trait VehicleReader: Send + Sync {
     ) -> Result<Page<VehicleView>, RepositoryError>;
 }
 
+/// Write-side access to vehicles.
 #[async_trait]
 pub trait VehicleWriter: Send + Sync {
     async fn save_new(&self, draft: VehicleDraft) -> Result<Vehicle, RepositoryError>;

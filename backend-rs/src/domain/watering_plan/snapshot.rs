@@ -6,6 +6,7 @@ use url::Url;
 
 use crate::domain::watering_plan::WateringPlanStatus;
 
+/// Raw DB-row mapping used exclusively for aggregate rehydration.
 #[derive(Debug, Clone)]
 pub(crate) struct WateringPlanSnapshot {
     pub(crate) id: i32,

@@ -2,6 +2,9 @@ use std::str::FromStr;
 
 use crate::domain::shared::error::ValidationError;
 
+/// EU driving license categories relevant to the fleet.
+///
+/// The hierarchy is B < BE < C < CE for the purposes of [`DrivingLicense::satisfies`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, sqlx::Type)]
 #[sqlx(type_name = "driving_license")]
 pub enum DrivingLicense {
@@ -12,6 +15,9 @@ pub enum DrivingLicense {
 }
 
 impl DrivingLicense {
+    /// Returns `true` if this license covers `required`.
+    ///
+    /// A higher category satisfies lower ones (CE covers B, BE, and C).
     pub fn satisfies(&self, required: DrivingLicense) -> bool {
         *self == required
             || matches!(

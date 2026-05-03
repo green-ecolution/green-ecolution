@@ -3,6 +3,7 @@ use serde_json::Value;
 
 use crate::domain::vehicle::{DrivingLicense, VehicleStatus, VehicleType};
 
+/// Raw DB-row mapping used exclusively for aggregate rehydration.
 #[derive(Debug, Clone)]
 pub(crate) struct VehicleSnapshot {
     pub(crate) id: i32,

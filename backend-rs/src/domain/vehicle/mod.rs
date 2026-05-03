@@ -1,3 +1,13 @@
+//! Vehicle aggregate — watering trucks and trailers in the fleet.
+//!
+//! `archived_at` is part of the aggregate (it carries domain meaning — when a
+//! vehicle was retired), unlike `created_at` / `updated_at` which are
+//! infrastructure concerns dropped from the aggregate. The `archive` method is
+//! idempotent: a second call after the vehicle is already archived is a no-op
+//! and does not overwrite the original timestamp.
+//!
+//! [`VehicleView`] adds `created_at` / `updated_at` for HTTP responses.
+
 pub mod error;
 pub mod license;
 pub mod repository;
@@ -23,6 +33,12 @@ pub use repository::{VehicleReader, VehicleWriter};
 pub(crate) use snapshot::VehicleSnapshot;
 pub use view::VehicleView;
 
+/// Operational status of a vehicle.
+///
+/// - `Active` — currently on a watering run.
+/// - `Available` — ready to be assigned to a watering plan.
+/// - `NotAvailable` — temporarily out of service (maintenance, etc.).
+/// - `Unknown` — status not yet set or not determinable.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, sqlx::Type)]
 #[sqlx(type_name = "vehicle_status", rename_all = "snake_case")]
 pub enum VehicleStatus {
@@ -40,6 +56,7 @@ pub enum VehicleType {
     Trailer,
 }
 
+/// Vehicle registration plate, 1–32 characters after trimming.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NumberPlate(NonEmptyString);
 
@@ -69,6 +86,7 @@ impl std::fmt::Display for NumberPlate {
     }
 }
 
+/// Vehicle make/model string, 1–128 characters after trimming.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct VehicleModel(NonEmptyString);
 
@@ -153,6 +171,7 @@ pub struct Vehicle {
     provenance: Provenance,
 }
 
+/// Input for creating a new [`Vehicle`].
 #[derive(Debug, Clone)]
 pub struct VehicleDraft {
     pub number_plate: NumberPlate,
@@ -233,6 +252,10 @@ impl Vehicle {
         self.provenance = provenance;
     }
 
+    /// Marks the vehicle as archived at `at`.
+    ///
+    /// Idempotent: if the vehicle is already archived the original timestamp is
+    /// preserved and `at` is ignored.
     pub fn archive(&mut self, at: DateTime<Utc>) {
         if self.archived_at.is_some() {
             return;

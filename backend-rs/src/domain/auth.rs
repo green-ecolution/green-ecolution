@@ -1,3 +1,6 @@
+//! Auth DTOs and repository — token exchange and login-callback shapes
+//! consumed by the Keycloak OIDC integration.
+
 use chrono::{DateTime, Utc};
 use url::Url;
 use uuid::Uuid;

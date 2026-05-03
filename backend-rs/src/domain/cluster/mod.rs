@@ -1,3 +1,16 @@
+//! TreeCluster aggregate — a named group of trees that are watered together.
+//!
+//! Three fields are private because they are derived rather than user-supplied:
+//!
+//! - `watering_status` — majority vote across member trees, updated by
+//!   `recalculate_watering_status`.
+//! - `coordinates` — centroid of member tree coordinates, updated by
+//!   `recalculate_centroid`. Cleared when the cluster has no trees.
+//! - `region_id` — set by `assign_region` after a spatial lookup maps the
+//!   centroid to a region polygon.
+//!
+//! [`TreeClusterView`] adds audit fields for HTTP responses.
+
 pub mod error;
 pub mod repository;
 pub mod snapshot;
@@ -26,6 +39,7 @@ pub(crate) use snapshot::TreeClusterSnapshot;
 pub use soil_condition::SoilCondition;
 pub use view::TreeClusterView;
 
+/// Human-readable cluster name, 1–255 characters after trimming.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ClusterName(NonEmptyString);
 
@@ -50,6 +64,7 @@ impl std::fmt::Display for ClusterName {
     }
 }
 
+/// Street address or location description for a cluster, 1–512 characters.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ClusterAddress(NonEmptyString);
 
@@ -92,6 +107,7 @@ pub struct TreeCluster {
     provenance: Provenance,
 }
 
+/// Input for creating a new [`TreeCluster`].
 #[derive(Debug, Clone)]
 pub struct TreeClusterDraft {
     pub name: ClusterName,
@@ -176,6 +192,10 @@ impl TreeCluster {
         self.tree_ids = tree_ids;
     }
 
+    /// Recalculates the geographic centroid from the given coordinates.
+    ///
+    /// Passing an empty slice clears `coordinates` (the cluster has no spatial
+    /// position when it has no trees).
     pub fn recalculate_centroid(&mut self, coords: &[Coordinate]) {
         if coords.is_empty() {
             self.coordinates = None;

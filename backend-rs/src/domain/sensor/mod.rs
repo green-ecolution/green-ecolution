@@ -1,3 +1,14 @@
+//! Sensor aggregate — LoRaWAN (or similar) devices mounted on trees.
+//!
+//! The aggregate ([`Sensor`]) tracks connectivity status and physical location.
+//! Time-series readings live in the [`data`] sub-module as the `SensorReading`
+//! sub-aggregate. The view ([`SensorView`]) adds `created_at` / `updated_at`
+//! audit fields and embeds the latest reading for HTTP responses.
+//!
+//! The `recorded_at` field on `SensorReading` is what the domain calls the
+//! event timestamp; the DB column is named `created_at`, but the aggregate
+//! exposes it as `recorded_at` to make the domain meaning explicit.
+
 pub mod data;
 pub mod error;
 pub mod repository;
@@ -25,6 +36,7 @@ pub enum SensorStatus {
     Unknown,
 }
 
+/// Sensor identifier (e.g. EUI from LoRaWAN), 1–64 characters after trimming.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SensorId(NonEmptyString);
 
@@ -56,6 +68,7 @@ pub struct Sensor {
     pub provenance: Provenance,
 }
 
+/// Input for creating a new [`Sensor`].
 #[derive(Debug, Clone)]
 pub struct SensorDraft {
     pub id: SensorId,
