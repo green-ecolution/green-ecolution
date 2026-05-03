@@ -28,16 +28,17 @@ Be respectful and constructive in all interactions. We welcome contributors of a
 
 ### Requirements
 
-- Go (with CGO enabled)
+- Rust toolchain (rustup, includes cargo)
 - Node.js + pnpm (`corepack enable`)
 - Docker + Docker Compose
+- `sqlx-cli` (`cargo install sqlx-cli --no-default-features --features rustls,postgres`) for migrations and offline-cache regeneration
 
 ### Installation
 
 ```bash
-just setup       # Install Go and pnpm dependencies
+just setup       # cargo fetch + pnpm install
 just infra-up    # Start infrastructure (Postgres, Keycloak, MinIO, etc.)
-just run-live    # Run backend with hot reload
+just run-live    # Run backend with bacon hot reload
 ```
 
 Frontend dev server (separate terminal):
@@ -52,10 +53,11 @@ For a reproducible environment, use `nix develop`.
 
 | Command | Description |
 |---------|-------------|
-| `just test` | Run all tests |
-| `just lint` | Lint Go + frontend |
+| `just test` | Run all tests (Rust workspace + frontend) |
+| `just lint` | Lint Rust workspace + frontend |
 | `just generate` | Run code generation |
 | `just migrate-up` | Apply database migrations |
+| `just sqlx-prepare` | Refresh sqlx offline query cache (after changing any `query!` / `query_as!`) |
 
 ## Making Changes
 
@@ -199,13 +201,14 @@ Use the [Feature Request template](https://github.com/green-ecolution/green-ecol
 
 ## Coding Standards
 
-### Go (Backend)
+### Rust (Backend)
 
-- Follow standard Go formatting (`gofmt`)
-- Use meaningful variable and function names
-- Keep functions focused and small
-- Add comments only where logic isn't self-evident
-- Write tests for new functionality
+- Format with `cargo fmt --all` and lint with `cargo clippy --workspace --all-targets --all-features -- -D warnings` before pushing.
+- Build with `--locked` and rely on `SQLX_OFFLINE=true` for CI; refresh the cache with `just sqlx-prepare` whenever a `query!` / `query_as!` invocation changes.
+- Domain code (`backend-rs/crates/domain/`) must not depend on `sqlx`, `axum`, `tokio`, `reqwest`, `rumqttc`, or `tracing-subscriber`. `cargo build -p domain --no-default-features --locked` must stay green so the crate remains portable to WASM / mobile targets.
+- Aggregate invariants live in private fields with intent-named methods that return `Vec<DomainEvent>`. HTTP handlers return `*View` types, never raw aggregates.
+- Errors are typed: repository traits return `RepositoryError`; the HTTP layer maps to `ApiError`. Avoid `unwrap()` / `expect()` / `panic!` outside `reconstitute` paths and tests.
+- Write tests next to the code (`#[cfg(test)] mod tests`) for unit tests; integration tests live in `backend-rs/crates/server/test/api/`.
 
 ### TypeScript/React (Frontend)
 
@@ -224,12 +227,27 @@ Use the [Feature Request template](https://github.com/green-ecolution/green-ecol
 ## Project Structure
 
 ```
-backend/          Go API server
+backend-rs/                  Cargo workspace (Rust API)
+  Cargo.toml                 workspace manifest (resolver = "3")
+  crates/
+    domain/                  portable domain layer (aggregates, value objects,
+                             repository traits, domain events, EventBus port).
+                             No dependency on sqlx, axum, tokio — reusable on
+                             WASM / mobile targets.
+    server/                  server crate (axum router, Postgres adapters,
+                             Keycloak, MQTT, composition root). Uses `domain`
+                             with the `sqlx` feature enabled. Produces the
+                             `green-ecolution` and `migrate` binaries.
+  migrations/                sqlx-managed SQL migrations (workspace root)
+  seeds/                     SQL seed data
+  config/                    YAML config (base, local, production)
+  .sqlx/                     committed offline query metadata
 frontend/
-  app/           Main React application
+  app/                       Main React application
   packages/
-    ui/          Shared UI components
-    backend-client/  Generated API client
+    ui/                      Shared UI components
+    backend-client/          Generated OpenAPI client
+    plugin-interface/        Plugin system interface
 ```
 
 ## Getting Help
