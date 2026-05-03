@@ -61,10 +61,26 @@ pub enum DomainEvent {
         ts: DateTime<Utc>,
         data: serde_json::Value,
     },
+    WateringPlanStarted {
+        plan_id: Id<WateringPlan>,
+        cluster_ids: Vec<Id<TreeCluster>>,
+    },
+    WateringPlanCanceled {
+        plan_id: Id<WateringPlan>,
+        cluster_ids: Vec<Id<TreeCluster>>,
+    },
+    WateringPlanFailed {
+        plan_id: Id<WateringPlan>,
+        cluster_ids: Vec<Id<TreeCluster>>,
+    },
     WateringPlanFinished {
         plan_id: Id<WateringPlan>,
         cluster_ids: Vec<Id<TreeCluster>>,
         finished_at: DateTime<Utc>,
         evaluations: Vec<WateringPlanEvaluation>,
+    },
+    WateringPlanDeleted {
+        plan_id: Id<WateringPlan>,
+        cluster_ids: Vec<Id<TreeCluster>>,
     },
 }

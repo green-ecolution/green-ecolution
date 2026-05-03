@@ -1,9 +1,10 @@
-//! User aggregate — a Keycloak-managed identity surfaced to the domain layer.
+//! User read model — Keycloak-managed identities surfaced to the domain layer.
 //!
-//! Unlike other aggregates the user `id` is a [`Uuid`] (Keycloak's own identifier)
-//! rather than an `Id<User>`. There is no reader/writer split: [`UserRepository`]
-//! is a single unified trait because user lifecycle management is delegated
-//! entirely to Keycloak and does not follow the same DB-snapshot pattern.
+//! There is no User aggregate: lifecycle and invariants live entirely in
+//! Keycloak. [`UserView`] is a flat read model carrying `created_at` and the
+//! attributes the API needs. [`UserRepository`] is a single unified trait
+//! (no reader/writer split) because there is no local DB snapshot to rehydrate.
+//! The `id` is a [`Uuid`] (Keycloak's own identifier) rather than an `Id<…>`.
 
 use std::str::FromStr;
 
@@ -111,8 +112,13 @@ impl std::fmt::Display for Username {
     }
 }
 
+/// Flat read model for a Keycloak-managed user.
+///
+/// Carries `created_at` (a DB-style audit field) because there is no separate
+/// User aggregate — Keycloak owns the lifecycle. Returned by every method on
+/// [`UserRepository`] for both reads and the post-create response.
 #[derive(Debug, Clone)]
-pub struct User {
+pub struct UserView {
     pub id: Uuid,
     pub created_at: DateTime<Utc>,
     pub username: Username,
@@ -148,13 +154,13 @@ pub struct UserCreate {
 /// to Keycloak — there is no local DB snapshot to rehydrate.
 #[async_trait::async_trait]
 pub trait UserRepository: Send + Sync {
-    async fn create(&self, entity: UserCreate) -> Result<User, RepositoryError>;
-    async fn all(&self, pagination: Pagination) -> Result<Page<User>, RepositoryError>;
+    async fn create(&self, entity: UserCreate) -> Result<UserView, RepositoryError>;
+    async fn all(&self, pagination: Pagination) -> Result<Page<UserView>, RepositoryError>;
     async fn by_role(
         &self,
         role: UserRole,
         pagination: Pagination,
-    ) -> Result<Page<User>, RepositoryError>;
-    async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<User>, RepositoryError>;
+    ) -> Result<Page<UserView>, RepositoryError>;
+    async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserView>, RepositoryError>;
     async fn revoke_session(&self, refresh_token: &str) -> Result<(), RepositoryError>;
 }

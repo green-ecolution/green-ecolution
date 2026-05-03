@@ -8,7 +8,7 @@ use crate::domain::{
         email::Email,
         pagination::{Page, Pagination},
     },
-    user::{User, UserCreate, UserRepository, UserRole, UserStatus, Username},
+    user::{UserCreate, UserRepository, UserRole, UserStatus, UserView, Username},
     vehicle::DrivingLicense,
 };
 
@@ -25,7 +25,7 @@ impl UserService {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn register(&self, entity: UserCreate) -> Result<User, ServiceError> {
+    pub async fn register(&self, entity: UserCreate) -> Result<UserView, ServiceError> {
         if !self.enabled {
             return Ok(synthesize_registered_user(entity));
         }
@@ -33,7 +33,7 @@ impl UserService {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn list(&self, pagination: Pagination) -> Result<Page<User>, ServiceError> {
+    pub async fn list(&self, pagination: Pagination) -> Result<Page<UserView>, ServiceError> {
         if !self.enabled {
             return Ok(demo_user_page(pagination));
         }
@@ -45,7 +45,7 @@ impl UserService {
         &self,
         role: UserRole,
         pagination: Pagination,
-    ) -> Result<Page<User>, ServiceError> {
+    ) -> Result<Page<UserView>, ServiceError> {
         if !self.enabled {
             if role == UserRole::GreenEcolution {
                 return Ok(demo_user_page(pagination));
@@ -59,7 +59,7 @@ impl UserService {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<User>, ServiceError> {
+    pub async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserView>, ServiceError> {
         if !self.enabled {
             let demo = demo_user();
             return Ok(ids
@@ -82,8 +82,8 @@ impl UserService {
 
 // Must stay in lockstep with `auth_service::dummy_token` and the middleware
 // bypass identity — login claims, AuthUser, and user-list entry agree.
-fn demo_user() -> User {
-    User {
+fn demo_user() -> UserView {
+    UserView {
         id: Uuid::nil(),
         created_at: Utc::now(),
         username: Username::reconstitute("ttester".to_string()),
@@ -105,7 +105,7 @@ fn demo_user() -> User {
     }
 }
 
-fn demo_user_page(pagination: Pagination) -> Page<User> {
+fn demo_user_page(pagination: Pagination) -> Page<UserView> {
     let items = if pagination.page() == 1 {
         vec![demo_user()]
     } else {
@@ -114,13 +114,13 @@ fn demo_user_page(pagination: Pagination) -> Page<User> {
     Page { items, total: 1 }
 }
 
-fn synthesize_registered_user(entity: UserCreate) -> User {
+fn synthesize_registered_user(entity: UserCreate) -> UserView {
     let roles = if entity.roles.is_empty() {
         vec![UserRole::GreenEcolution]
     } else {
         entity.roles.clone()
     };
-    User {
+    UserView {
         id: Uuid::new_v4(),
         created_at: Utc::now(),
         username: entity.username,

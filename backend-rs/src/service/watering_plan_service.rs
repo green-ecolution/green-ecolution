@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use crate::domain::{
     Id,
+    events::DomainEvent,
     shared::pagination::{Page, Pagination},
     watering_plan::{
         WateringPlan, WateringPlanDraft, WateringPlanError, WateringPlanEvaluation,
@@ -15,7 +16,6 @@ use super::{ServiceError, event_bus::EventBus};
 pub struct WateringPlanService {
     reader: Arc<dyn WateringPlanReader>,
     writer: Arc<dyn WateringPlanWriter>,
-    #[allow(dead_code)]
     event_bus: Arc<dyn EventBus>,
 }
 
@@ -79,8 +79,9 @@ impl WateringPlanService {
     #[tracing::instrument(level = "debug", skip_all, fields(plan.id = %id))]
     pub async fn start(&self, id: Id<WateringPlan>) -> Result<WateringPlan, ServiceError> {
         let mut plan = self.reader.by_id(id).await?;
-        plan.start().map_err(map_plan_error)?;
+        let events = plan.start().map_err(map_plan_error)?;
         self.writer.save(&plan).await?;
+        self.event_bus.publish_all(events).await;
         Ok(plan)
     }
 
@@ -91,8 +92,9 @@ impl WateringPlanService {
         note: String,
     ) -> Result<WateringPlan, ServiceError> {
         let mut plan = self.reader.by_id(id).await?;
-        plan.cancel(note).map_err(map_plan_error)?;
+        let events = plan.cancel(note).map_err(map_plan_error)?;
         self.writer.save(&plan).await?;
+        self.event_bus.publish_all(events).await;
         Ok(plan)
     }
 
@@ -103,14 +105,24 @@ impl WateringPlanService {
         note: String,
     ) -> Result<WateringPlan, ServiceError> {
         let mut plan = self.reader.by_id(id).await?;
-        plan.fail(note).map_err(map_plan_error)?;
+        let events = plan.fail(note).map_err(map_plan_error)?;
         self.writer.save(&plan).await?;
+        self.event_bus.publish_all(events).await;
         Ok(plan)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(plan.id = %id))]
     pub async fn delete(&self, id: Id<WateringPlan>) -> Result<(), ServiceError> {
-        Ok(self.writer.delete(id).await?)
+        let plan = self.reader.by_id(id).await?;
+        let cluster_ids = plan.cluster_ids().to_vec();
+        self.writer.delete(id).await?;
+        self.event_bus
+            .publish(DomainEvent::WateringPlanDeleted {
+                plan_id: id,
+                cluster_ids,
+            })
+            .await;
+        Ok(())
     }
 }
 

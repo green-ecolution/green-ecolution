@@ -601,6 +601,145 @@ async fn cluster_update_tree_ids_recalculates_center() {
     );
 }
 
+// -- ClusterStatusAggregator (sensor-equipped tree status → cluster status) --
+
+async fn insert_sensor(app: &helpers::TestApp, id: &str) {
+    sqlx::query!(
+        r#"INSERT INTO sensors (id, status, latitude, longitude, geometry)
+        VALUES ($1, 'online', 53.55, 9.99, ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326))"#,
+        id,
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+}
+
+async fn insert_tree_with(
+    app: &helpers::TestApp,
+    number: &str,
+    sensor_id: Option<&str>,
+    watering_status: &str,
+) -> i32 {
+    sqlx::query_scalar!(
+        r#"INSERT INTO trees (planting_year, species, number, latitude, longitude,
+                              geometry, description, sensor_id, watering_status)
+        VALUES (2020, 'Eiche', $1, 53.55, 9.99,
+                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', $2,
+                $3::text::watering_status)
+        RETURNING id"#,
+        number,
+        sensor_id,
+        watering_status,
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap()
+}
+
+#[tokio::test]
+async fn cluster_status_takes_majority_among_sensor_equipped_trees() {
+    let app = spawn_app().await;
+
+    insert_sensor(&app, "s-good-1").await;
+    insert_sensor(&app, "s-good-2").await;
+    insert_sensor(&app, "s-bad-1").await;
+    let t_good_1 = insert_tree_with(&app, "T-AG-1", Some("s-good-1"), "good").await;
+    let t_good_2 = insert_tree_with(&app, "T-AG-2", Some("s-good-2"), "good").await;
+    let t_bad = insert_tree_with(&app, "T-AG-3", Some("s-bad-1"), "bad").await;
+    let t_sensorless = insert_tree_with(&app, "T-AG-4", None, "bad").await;
+
+    let body = serde_json::json!({
+        "name": "Status Aggregator",
+        "address": "Test",
+        "description": "Test",
+        "soil_condition": "sandig",
+        "tree_ids": [t_good_1, t_good_2, t_bad, t_sensorless],
+    });
+    let resp = app.post_json("/api/v1/clusters", &body).await;
+    let cluster: serde_json::Value = resp.json().await.unwrap();
+    let cid = cluster["id"].as_i64().unwrap();
+
+    let after = app.get(&format!("/api/v1/clusters/{}", cid)).await;
+    let after: serde_json::Value = after.json().await.unwrap();
+    assert_eq!(
+        after["watering_status"], "good",
+        "majority among sensor-equipped trees is good (2/3); sensorless tree must be ignored"
+    );
+}
+
+#[tokio::test]
+async fn cluster_status_is_unknown_with_only_sensorless_trees() {
+    let app = spawn_app().await;
+
+    let t1 = insert_tree_with(&app, "T-NS-1", None, "good").await;
+    let t2 = insert_tree_with(&app, "T-NS-2", None, "bad").await;
+
+    let body = serde_json::json!({
+        "name": "Sensorless Cluster",
+        "address": "Test",
+        "description": "Test",
+        "soil_condition": "sandig",
+        "tree_ids": [t1, t2],
+    });
+    let resp = app.post_json("/api/v1/clusters", &body).await;
+    let cluster: serde_json::Value = resp.json().await.unwrap();
+    let cid = cluster["id"].as_i64().unwrap();
+
+    let after = app.get(&format!("/api/v1/clusters/{}", cid)).await;
+    let after: serde_json::Value = after.json().await.unwrap();
+    assert_eq!(after["watering_status"], "unknown");
+}
+
+#[tokio::test]
+async fn attaching_sensor_to_tree_recalculates_cluster_status() {
+    let app = spawn_app().await;
+
+    insert_sensor(&app, "s-attach").await;
+    let tree_id = insert_tree_with(&app, "T-ATT", None, "good").await;
+
+    let cluster_resp = app
+        .post_json(
+            "/api/v1/clusters",
+            &serde_json::json!({
+                "name": "Attach Test",
+                "address": "Test",
+                "description": "Test",
+                "soil_condition": "sandig",
+                "tree_ids": [tree_id],
+            }),
+        )
+        .await;
+    let cluster: serde_json::Value = cluster_resp.json().await.unwrap();
+    let cid = cluster["id"].as_i64().unwrap();
+
+    let before = app.get(&format!("/api/v1/clusters/{}", cid)).await;
+    let before: serde_json::Value = before.json().await.unwrap();
+    assert_eq!(
+        before["watering_status"], "unknown",
+        "no sensor-equipped trees yet"
+    );
+
+    let update = serde_json::json!({
+        "species": "Eiche",
+        "number": "T-ATT",
+        "planting_year": 2020,
+        "latitude": 53.55,
+        "longitude": 9.99,
+        "description": "Test",
+        "tree_cluster_id": cid,
+        "sensor_id": "s-attach",
+    });
+    let upd = app.put_json(&format!("/api/v1/trees/{}", tree_id), &update).await;
+    assert_eq!(upd.status().as_u16(), 200);
+
+    let after = app.get(&format!("/api/v1/clusters/{}", cid)).await;
+    let after: serde_json::Value = after.json().await.unwrap();
+    assert_eq!(
+        after["watering_status"], "good",
+        "after sensor attach, the now-counted tree status drives cluster status"
+    );
+}
+
 #[tokio::test]
 async fn tree_position_update_recalculates_cluster_center() {
     let app = spawn_app().await;

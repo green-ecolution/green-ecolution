@@ -350,4 +350,34 @@ mod tests {
         v.unarchive();
         assert!(!v.is_archived());
     }
+
+    #[test]
+    fn replace_details_overwrites_all_mutable_fields() {
+        let mut v = fixed_vehicle();
+        let original_archived = v.archived_at();
+        v.replace_details(VehicleUpdate {
+            number_plate: NumberPlate::new("FL-XY-789").unwrap(),
+            description: Some("neu".into()),
+            water_capacity: WaterCapacity::new(2000.0).unwrap(),
+            status: VehicleStatus::NotAvailable,
+            vehicle_type: VehicleType::Trailer,
+            model: VehicleModel::new("Schmitz Cargobull").unwrap(),
+            driving_license: DrivingLicense::BE,
+            dimension: VehicleDimension::new(2.5, 2.2, 6.0, 4000.0).unwrap(),
+            provenance: Provenance::default(),
+        });
+        assert_eq!(v.number_plate.as_str(), "FL-XY-789");
+        assert_eq!(v.description.as_deref(), Some("neu"));
+        assert_eq!(v.water_capacity.liters(), 2000.0);
+        assert_eq!(v.status, VehicleStatus::NotAvailable);
+        assert_eq!(v.vehicle_type, VehicleType::Trailer);
+        assert_eq!(v.model.as_str(), "Schmitz Cargobull");
+        assert_eq!(v.driving_license, DrivingLicense::BE);
+        assert_eq!(v.dimension.length, 6.0);
+        assert_eq!(
+            v.archived_at(),
+            original_archived,
+            "replace_details must not touch archived_at"
+        );
+    }
 }

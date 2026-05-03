@@ -5,8 +5,8 @@ use crate::domain::{
     auth::{ClientToken, LoginResponse as DomainLoginResponse},
     shared::{email::Email, error::ValidationError},
     user::{
-        User as DomainUser, UserCreate as DomainUserCreate, UserRole as DomainUserRole,
-        UserStatus as DomainUserStatus, Username,
+        UserCreate as DomainUserCreate, UserRole as DomainUserRole,
+        UserStatus as DomainUserStatus, UserView as DomainUserView, Username,
     },
 };
 use crate::service::ServiceError;
@@ -237,8 +237,8 @@ impl From<DomainUserStatus> for UserStatus {
     }
 }
 
-impl From<&DomainUser> for UserResponse {
-    fn from(value: &DomainUser) -> Self {
+impl From<&DomainUserView> for UserResponse {
+    fn from(value: &DomainUserView) -> Self {
         Self {
             id: value.id.to_string(),
             created_at: value.created_at.to_rfc3339(),

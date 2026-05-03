@@ -224,6 +224,12 @@ impl TreeCluster {
         self.region_id = region_id;
     }
 
+    /// Sets `watering_status` to the most frequent value in `statuses`.
+    ///
+    /// Empty input maps to [`WateringStatus::Unknown`]. Ties are broken by
+    /// severity (worst wins): `Bad > Moderate > JustWatered > Good > Unknown`.
+    /// This makes the result deterministic and biases the cluster status
+    /// toward the more alarming reading when sensors disagree.
     pub fn recalculate_watering_status(&mut self, statuses: &[WateringStatus]) {
         if statuses.is_empty() {
             self.watering_status = WateringStatus::Unknown;
@@ -235,13 +241,23 @@ impl TreeCluster {
         }
         self.watering_status = counts
             .into_iter()
-            .max_by_key(|(_, c)| *c)
+            .max_by_key(|(s, c)| (*c, severity(*s)))
             .map(|(s, _)| s)
             .unwrap_or(WateringStatus::Unknown);
     }
 
     pub fn mark_watered_at(&mut self, ts: DateTime<Utc>) {
         self.last_watered = Some(ts);
+    }
+}
+
+fn severity(s: WateringStatus) -> u8 {
+    match s {
+        WateringStatus::Bad => 4,
+        WateringStatus::Moderate => 3,
+        WateringStatus::JustWatered => 2,
+        WateringStatus::Good => 1,
+        WateringStatus::Unknown => 0,
     }
 }
 
@@ -325,6 +341,28 @@ mod tests {
     }
 
     #[test]
+    fn recalculate_watering_status_breaks_ties_by_worst_severity() {
+        let mut c = fixed_cluster();
+        c.recalculate_watering_status(&[WateringStatus::Good, WateringStatus::Bad]);
+        assert_eq!(
+            c.watering_status(),
+            WateringStatus::Bad,
+            "1×good vs 1×bad must resolve to Bad (worst wins on tie)"
+        );
+
+        c.recalculate_watering_status(&[
+            WateringStatus::Good,
+            WateringStatus::Moderate,
+            WateringStatus::JustWatered,
+        ]);
+        assert_eq!(
+            c.watering_status(),
+            WateringStatus::Moderate,
+            "1×good vs 1×moderate vs 1×just_watered must resolve to Moderate"
+        );
+    }
+
+    #[test]
     fn assign_region_sets_id() {
         let mut c = fixed_cluster();
         c.assign_region(Some(Id::new(7)));
@@ -336,6 +374,27 @@ mod tests {
         let mut c = fixed_cluster();
         c.replace_trees(vec![Id::new(1), Id::new(2)]);
         assert_eq!(c.tree_ids, vec![Id::new(1), Id::new(2)]);
+    }
+
+    #[test]
+    fn replace_details_overwrites_user_facing_fields() {
+        let mut c = fixed_cluster();
+        let new_provenance = Provenance::new(
+            Some(crate::domain::shared::provenance::ProviderId::new("tbz").unwrap()),
+            None,
+        );
+        c.replace_details(
+            ClusterName::new("Neuer Name").unwrap(),
+            ClusterAddress::new("Neue Adresse 5").unwrap(),
+            "Neue Beschreibung".to_string(),
+            Some(SoilCondition::Sandig),
+            new_provenance.clone(),
+        );
+        assert_eq!(c.name.as_str(), "Neuer Name");
+        assert_eq!(c.address.as_str(), "Neue Adresse 5");
+        assert_eq!(c.description, "Neue Beschreibung");
+        assert_eq!(c.soil_condition, Some(SoilCondition::Sandig));
+        assert_eq!(c.provenance(), &new_provenance);
     }
 
     #[test]

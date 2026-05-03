@@ -14,7 +14,7 @@ use uuid::Uuid;
 use crate::domain::{
     RepositoryError,
     shared::pagination::{Page, Pagination},
-    user::{User, UserCreate, UserRepository, UserRole},
+    user::{UserCreate, UserRepository, UserRole, UserView},
 };
 
 use super::{
@@ -93,7 +93,7 @@ impl KeycloakUserRepository {
 
 #[async_trait::async_trait]
 impl UserRepository for KeycloakUserRepository {
-    async fn create(&self, entity: UserCreate) -> Result<User, RepositoryError> {
+    async fn create(&self, entity: UserCreate) -> Result<UserView, RepositoryError> {
         let token = self.service_account_token().await?;
 
         let mut attributes: HashMap<String, Vec<String>> = HashMap::new();
@@ -209,7 +209,7 @@ impl UserRepository for KeycloakUserRepository {
         kc_user.try_into_domain()
     }
 
-    async fn all(&self, pagination: Pagination) -> Result<Page<User>, RepositoryError> {
+    async fn all(&self, pagination: Pagination) -> Result<Page<UserView>, RepositoryError> {
         self.list_users(&[], pagination).await
     }
 
@@ -217,14 +217,14 @@ impl UserRepository for KeycloakUserRepository {
         &self,
         role: UserRole,
         pagination: Pagination,
-    ) -> Result<Page<User>, RepositoryError> {
+    ) -> Result<Page<UserView>, RepositoryError> {
         // Roles live in the `user_roles` custom attribute (not realm roles), so
         // we filter via the `q` param which Keycloak matches against attributes.
         let q = format!("user_roles:{}", role.as_str());
         self.list_users(&[("q", q.as_str())], pagination).await
     }
 
-    async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<User>, RepositoryError> {
+    async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserView>, RepositoryError> {
         let token = self.service_account_token().await?;
         let mut out = Vec::with_capacity(ids.len());
         for id in ids {
@@ -292,7 +292,7 @@ impl KeycloakUserRepository {
         &self,
         extra_query: &[(&str, &str)],
         pagination: Pagination,
-    ) -> Result<Page<User>, RepositoryError> {
+    ) -> Result<Page<UserView>, RepositoryError> {
         let token = self.service_account_token().await?;
         let total = self.count_users(&token, extra_query).await?;
 

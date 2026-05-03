@@ -326,14 +326,47 @@ mod tests {
         let events = t.move_to_cluster(Some(target));
         assert_eq!(t.cluster_id(), Some(target));
         assert_eq!(events.len(), 1);
-        assert!(matches!(
-            events[0],
-            DomainEvent::TreeMovedBetweenClusters {
-                tree_id: _,
-                from: None,
-                to: Some(_),
+        match &events[0] {
+            DomainEvent::TreeMovedBetweenClusters { tree_id, from, to } => {
+                assert_eq!(*tree_id, t.id);
+                assert_eq!(*from, None);
+                assert_eq!(*to, Some(target));
             }
-        ));
+            other => panic!("expected TreeMovedBetweenClusters, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn move_to_other_cluster_emits_event_with_from_and_to() {
+        let mut t = fixed_tree();
+        let a = Id::new(10);
+        let b = Id::new(20);
+        t.move_to_cluster(Some(a));
+        let events = t.move_to_cluster(Some(b));
+        assert_eq!(t.cluster_id(), Some(b));
+        match &events[0] {
+            DomainEvent::TreeMovedBetweenClusters { from, to, .. } => {
+                assert_eq!(*from, Some(a));
+                assert_eq!(*to, Some(b));
+            }
+            other => panic!("expected TreeMovedBetweenClusters, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn move_out_of_cluster_emits_event_with_to_none() {
+        let mut t = fixed_tree();
+        let a = Id::new(10);
+        t.move_to_cluster(Some(a));
+        let events = t.move_to_cluster(None);
+        assert!(t.cluster_id().is_none());
+        match &events[0] {
+            DomainEvent::TreeMovedBetweenClusters { from, to, .. } => {
+                assert_eq!(*from, Some(a));
+                assert_eq!(*to, None);
+            }
+            other => panic!("expected TreeMovedBetweenClusters, got {other:?}"),
+        }
     }
 
     #[test]

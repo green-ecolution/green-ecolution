@@ -275,3 +275,146 @@ async fn list_watering_plans_includes_resolved_vehicles() {
     let plan = &body["data"][0];
     assert_eq!(plan["transporter"]["number_plate"], "FL-GE 100");
 }
+
+fn update_body_with_status(
+    transporter_id: i64,
+    cluster_ids: Vec<i64>,
+    status: &str,
+    cancellation_note: &str,
+    evaluation: serde_json::Value,
+) -> serde_json::Value {
+    serde_json::json!({
+        "date": "2026-05-01T08:00:00Z",
+        "description": "Bewaesserung Innenstadt",
+        "status": status,
+        "transporter_id": transporter_id,
+        "tree_cluster_ids": cluster_ids,
+        "user_ids": [],
+        "cancellation_note": cancellation_note,
+        "evaluation": evaluation,
+    })
+}
+
+#[tokio::test]
+async fn finish_watering_plan_propagates_last_watered_and_persists_evaluations() {
+    let app = spawn_app().await;
+
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_i64().unwrap();
+
+    let cluster = create_cluster(&app).await;
+    let cid = cluster["id"].as_i64().unwrap();
+    assert!(
+        cluster["last_watered"].is_null(),
+        "cluster should start without last_watered"
+    );
+
+    let create_resp = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![cid]))
+        .await;
+    let plan: serde_json::Value = create_resp.json().await.unwrap();
+    let plan_id = plan["id"].as_i64().unwrap();
+
+    let activate = update_body_with_status(
+        tid,
+        vec![cid],
+        "active",
+        "",
+        serde_json::json!([]),
+    );
+    let activate_resp = app
+        .put_json(&format!("/api/v1/watering-plans/{}", plan_id), &activate)
+        .await;
+    assert_eq!(activate_resp.status().as_u16(), 200);
+
+    let finish = update_body_with_status(
+        tid,
+        vec![cid],
+        "finished",
+        "",
+        serde_json::json!([{
+            "watering_plan_id": plan_id,
+            "tree_cluster_id": cid,
+            "consumed_water": 1234.5
+        }]),
+    );
+    let finish_resp = app
+        .put_json(&format!("/api/v1/watering-plans/{}", plan_id), &finish)
+        .await;
+    assert_eq!(finish_resp.status().as_u16(), 200);
+
+    let finished: serde_json::Value = finish_resp.json().await.unwrap();
+    assert_eq!(finished["status"], "finished");
+    let evals = finished["evaluation"].as_array().unwrap();
+    assert_eq!(evals.len(), 1);
+    assert_eq!(evals[0]["tree_cluster_id"], cid);
+    assert_eq!(evals[0]["consumed_water"], 1234.5);
+
+    let cluster_after = app.get(&format!("/api/v1/clusters/{}", cid)).await;
+    let cluster_after: serde_json::Value = cluster_after.json().await.unwrap();
+    assert!(
+        cluster_after["last_watered"].is_string(),
+        "cluster.last_watered must be set after plan finish, got {:?}",
+        cluster_after["last_watered"]
+    );
+}
+
+#[tokio::test]
+async fn finish_without_evaluation_for_cluster_returns_400() {
+    let app = spawn_app().await;
+
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_i64().unwrap();
+    let cluster = create_cluster(&app).await;
+    let cid = cluster["id"].as_i64().unwrap();
+
+    let create_resp = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![cid]))
+        .await;
+    let plan: serde_json::Value = create_resp.json().await.unwrap();
+    let plan_id = plan["id"].as_i64().unwrap();
+
+    app.put_json(
+        &format!("/api/v1/watering-plans/{}", plan_id),
+        &update_body_with_status(tid, vec![cid], "active", "", serde_json::json!([])),
+    )
+    .await;
+
+    let finish_resp = app
+        .put_json(
+            &format!("/api/v1/watering-plans/{}", plan_id),
+            &update_body_with_status(tid, vec![cid], "finished", "", serde_json::json!([])),
+        )
+        .await;
+    assert_eq!(finish_resp.status().as_u16(), 400);
+}
+
+#[tokio::test]
+async fn cancel_active_watering_plan_with_note_succeeds() {
+    let app = spawn_app().await;
+
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_i64().unwrap();
+
+    let create_resp = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
+        .await;
+    let plan: serde_json::Value = create_resp.json().await.unwrap();
+    let plan_id = plan["id"].as_i64().unwrap();
+
+    app.put_json(
+        &format!("/api/v1/watering-plans/{}", plan_id),
+        &update_body_with_status(tid, vec![], "active", "", serde_json::json!([])),
+    )
+    .await;
+
+    let cancel_resp = app
+        .put_json(
+            &format!("/api/v1/watering-plans/{}", plan_id),
+            &update_body_with_status(tid, vec![], "canceled", "Wetter", serde_json::json!([])),
+        )
+        .await;
+    assert_eq!(cancel_resp.status().as_u16(), 200);
+    let body: serde_json::Value = cancel_resp.json().await.unwrap();
+    assert_eq!(body["status"], "canceled");
+}

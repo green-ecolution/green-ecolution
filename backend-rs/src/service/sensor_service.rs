@@ -125,12 +125,13 @@ impl SensorService {
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %draft.sensor_id))]
     pub async fn record_reading(&self, draft: SensorReadingDraft) -> Result<(), ServiceError> {
         let sensor_id = draft.sensor_id.clone();
+        let data = draft.data.clone();
         self.reading_writer.record(draft).await?;
         self.event_bus
             .publish(DomainEvent::SensorDataReceived {
                 sensor_id,
                 ts: chrono::Utc::now(),
-                data: serde_json::Value::Null,
+                data,
             })
             .await;
         Ok(())

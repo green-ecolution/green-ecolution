@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::domain::{
     RepositoryError,
     shared::email::Email,
-    user::{User, UserRole, UserStatus, Username},
+    user::{UserRole, UserStatus, UserView, Username},
     vehicle::DrivingLicense,
 };
 
@@ -43,7 +43,7 @@ pub struct KcUser {
 }
 
 impl KcUser {
-    pub fn try_into_domain(self) -> Result<User, RepositoryError> {
+    pub fn try_into_domain(self) -> Result<UserView, RepositoryError> {
         let id_str = self
             .id
             .ok_or_else(|| RepositoryError::DataIntegrity("keycloak user missing id".into()))?;
@@ -75,7 +75,7 @@ impl KcUser {
             .map_err(RepositoryError::from)?
             .unwrap_or(UserStatus::Available);
 
-        Ok(User {
+        Ok(UserView {
             id,
             created_at,
             username: Username::reconstitute(self.username.unwrap_or_default()),

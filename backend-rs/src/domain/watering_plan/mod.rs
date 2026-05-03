@@ -175,7 +175,7 @@ impl WateringPlan {
     }
 
     /// Transitions `Planned → Active`. Fails on any other starting status.
-    pub fn start(&mut self) -> Result<(), WateringPlanError> {
+    pub fn start(&mut self) -> Result<Vec<DomainEvent>, WateringPlanError> {
         if self.status != WateringPlanStatus::Planned {
             return Err(WateringPlanError::InvalidStateTransition {
                 from: self.status,
@@ -183,13 +183,16 @@ impl WateringPlan {
             });
         }
         self.status = WateringPlanStatus::Active;
-        Ok(())
+        Ok(vec![DomainEvent::WateringPlanStarted {
+            plan_id: self.id,
+            cluster_ids: self.cluster_ids.clone(),
+        }])
     }
 
     /// Transitions `Planned | Active → Canceled`.
     ///
     /// `note` must be non-empty (trimmed). Sets `cancellation_note`.
-    pub fn cancel(&mut self, note: String) -> Result<(), WateringPlanError> {
+    pub fn cancel(&mut self, note: String) -> Result<Vec<DomainEvent>, WateringPlanError> {
         if note.trim().is_empty() {
             return Err(WateringPlanError::CancellationNoteRequired);
         }
@@ -204,13 +207,16 @@ impl WateringPlan {
         }
         self.status = WateringPlanStatus::Canceled;
         self.cancellation_note = Some(note);
-        Ok(())
+        Ok(vec![DomainEvent::WateringPlanCanceled {
+            plan_id: self.id,
+            cluster_ids: self.cluster_ids.clone(),
+        }])
     }
 
     /// Transitions `Active → NotCompleted`.
     ///
     /// `note` must be non-empty (trimmed). Sets `cancellation_note`.
-    pub fn fail(&mut self, note: String) -> Result<(), WateringPlanError> {
+    pub fn fail(&mut self, note: String) -> Result<Vec<DomainEvent>, WateringPlanError> {
         if note.trim().is_empty() {
             return Err(WateringPlanError::CancellationNoteRequired);
         }
@@ -222,7 +228,10 @@ impl WateringPlan {
         }
         self.status = WateringPlanStatus::NotCompleted;
         self.cancellation_note = Some(note);
-        Ok(())
+        Ok(vec![DomainEvent::WateringPlanFailed {
+            plan_id: self.id,
+            cluster_ids: self.cluster_ids.clone(),
+        }])
     }
 
     /// Transitions `Active → Finished`.
@@ -280,7 +289,7 @@ mod tests {
     use super::*;
     use crate::domain::shared::provenance::Provenance;
     use chrono::TimeZone;
-    use claims::{assert_err, assert_ok};
+    use claims::assert_err;
 
     fn fixed_plan() -> WateringPlan {
         WateringPlan {
@@ -304,8 +313,19 @@ mod tests {
     #[test]
     fn start_from_planned_succeeds() {
         let mut p = fixed_plan();
-        assert_ok!(p.start());
+        let events = p.start().unwrap();
         assert_eq!(p.status(), WateringPlanStatus::Active);
+        assert_eq!(events.len(), 1);
+        match &events[0] {
+            DomainEvent::WateringPlanStarted {
+                plan_id,
+                cluster_ids,
+            } => {
+                assert_eq!(*plan_id, p.id);
+                assert_eq!(cluster_ids, &vec![Id::new(1), Id::new(2)]);
+            }
+            other => panic!("expected WateringPlanStarted, got {other:?}"),
+        }
     }
 
     #[test]
@@ -325,9 +345,30 @@ mod tests {
     #[test]
     fn cancel_from_planned_succeeds() {
         let mut p = fixed_plan();
-        p.cancel("not needed".to_string()).unwrap();
+        let events = p.cancel("not needed".to_string()).unwrap();
         assert_eq!(p.status(), WateringPlanStatus::Canceled);
         assert_eq!(p.cancellation_note(), Some("not needed"));
+        assert_eq!(events.len(), 1);
+        match &events[0] {
+            DomainEvent::WateringPlanCanceled {
+                plan_id,
+                cluster_ids,
+            } => {
+                assert_eq!(*plan_id, p.id);
+                assert_eq!(cluster_ids, &vec![Id::new(1), Id::new(2)]);
+            }
+            other => panic!("expected WateringPlanCanceled, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn cancel_from_active_succeeds() {
+        let mut p = fixed_plan();
+        p.start().unwrap();
+        let events = p.cancel("aborted mid-run".to_string()).unwrap();
+        assert_eq!(p.status(), WateringPlanStatus::Canceled);
+        assert_eq!(p.cancellation_note(), Some("aborted mid-run"));
+        assert!(matches!(events[0], DomainEvent::WateringPlanCanceled { .. }));
     }
 
     #[test]
@@ -355,8 +396,28 @@ mod tests {
         let mut p = fixed_plan();
         assert_err!(p.fail("breakdown".to_string()));
         p.start().unwrap();
-        assert_ok!(p.fail("breakdown".to_string()));
+        let events = p.fail("breakdown".to_string()).unwrap();
         assert_eq!(p.status(), WateringPlanStatus::NotCompleted);
+        assert_eq!(p.cancellation_note(), Some("breakdown"));
+        assert_eq!(events.len(), 1);
+        match &events[0] {
+            DomainEvent::WateringPlanFailed {
+                plan_id,
+                cluster_ids,
+            } => {
+                assert_eq!(*plan_id, p.id);
+                assert_eq!(cluster_ids, &vec![Id::new(1), Id::new(2)]);
+            }
+            other => panic!("expected WateringPlanFailed, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn fail_requires_note() {
+        let mut p = fixed_plan();
+        p.start().unwrap();
+        assert_err!(p.fail("".to_string()));
+        assert_err!(p.fail("   ".to_string()));
     }
 
     #[test]
@@ -400,10 +461,71 @@ mod tests {
         let events = p.finish(&evals).unwrap();
         assert_eq!(p.status(), WateringPlanStatus::Finished);
         assert_eq!(events.len(), 1);
+        match &events[0] {
+            DomainEvent::WateringPlanFinished {
+                plan_id,
+                cluster_ids,
+                evaluations,
+                ..
+            } => {
+                assert_eq!(*plan_id, p.id);
+                assert_eq!(cluster_ids, &vec![Id::new(1), Id::new(2)]);
+                assert_eq!(evaluations.len(), 2);
+            }
+            other => panic!("expected WateringPlanFinished, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn start_from_canceled_rejects() {
+        let mut p = fixed_plan();
+        p.cancel("done".to_string()).unwrap();
+        assert_err!(p.start());
+    }
+
+    #[test]
+    fn cancel_from_notcompleted_rejects() {
+        let mut p = fixed_plan();
+        p.start().unwrap();
+        p.fail("breakdown".to_string()).unwrap();
+        assert_err!(p.cancel("too late".to_string()));
+    }
+
+    #[test]
+    fn replace_details_from_canceled_rejects() {
+        let mut p = fixed_plan();
+        p.cancel("nope".to_string()).unwrap();
+        let result = p.replace_details(WateringPlanUpdate {
+            date: p.date,
+            description: None,
+            cluster_ids: vec![],
+            transporter_id: None,
+            trailer_id: None,
+            provenance: Provenance::default(),
+        });
         assert!(matches!(
-            events[0],
-            DomainEvent::WateringPlanFinished { .. }
+            result,
+            Err(WateringPlanError::CannotMutateAfterStart)
         ));
+    }
+
+    #[test]
+    fn set_metrics_overwrites_run_results() {
+        let mut p = fixed_plan();
+        let dist = crate::domain::shared::distance::Distance::new(1234.0).unwrap();
+        let url: Url = "https://example.com/run.gpx".parse().unwrap();
+        p.set_metrics(
+            Some(dist),
+            Some(99.5),
+            3,
+            Duration::from_secs(60 * 45),
+            Some(url.clone()),
+        );
+        assert_eq!(p.distance, Some(dist));
+        assert_eq!(p.total_water_required, Some(99.5));
+        assert_eq!(p.refill_count, 3);
+        assert_eq!(p.duration, Duration::from_secs(60 * 45));
+        assert_eq!(p.gpx_url, Some(url));
     }
 
     #[test]
