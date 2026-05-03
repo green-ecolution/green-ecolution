@@ -1,6 +1,6 @@
 import type { FieldErrors, FieldValues, Resolver, ResolverResult } from 'react-hook-form'
 import { translateIssue } from './messages'
-import type { ValidationIssue } from './types'
+import type { TreeForm, TreeclusterForm, ValidationIssue, VehicleForm, WateringPlanForm } from './types'
 import {
   validateTreeClusterDraft,
   validateTreeDraft,
@@ -29,7 +29,7 @@ function buildResolver<TForm extends FieldValues>(validate: RawValidator): Resol
   }
 }
 
-export const treeDraftResolver = buildResolver(validateTreeDraft as RawValidator)
-export const clusterDraftResolver = buildResolver(validateTreeClusterDraft as RawValidator)
-export const vehicleDraftResolver = buildResolver(validateVehicleDraft as RawValidator)
-export const wateringPlanDraftResolver = buildResolver(validateWateringPlanDraft as RawValidator)
+export const treeDraftResolver: Resolver<TreeForm> = buildResolver<TreeForm>(validateTreeDraft as RawValidator)
+export const clusterDraftResolver: Resolver<TreeclusterForm> = buildResolver<TreeclusterForm>(validateTreeClusterDraft as RawValidator)
+export const vehicleDraftResolver: Resolver<VehicleForm> = buildResolver<VehicleForm>(validateVehicleDraft as RawValidator)
+export const wateringPlanDraftResolver: Resolver<WateringPlanForm> = buildResolver<WateringPlanForm>(validateWateringPlanDraft as RawValidator)

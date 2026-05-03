@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { ValidationIssue } from './types'
+import type { TreeForm, ValidationIssue } from './types'
 
 vi.mock('../pkg/domain_wasm.js', () => ({
   validateTreeDraft: vi.fn<(_: unknown) => ValidationIssue[]>(),
@@ -11,18 +11,22 @@ vi.mock('../pkg/domain_wasm.js', () => ({
 import { validateTreeDraft } from '../pkg/domain_wasm.js'
 import { treeDraftResolver } from './resolver'
 
+const validTreeForm: TreeForm = {
+  number: 'FL-001',
+  species: 'Quercus',
+  plantingYear: 2020,
+  latitude: 52.5,
+  longitude: 13.4,
+  description: '',
+  treeClusterId: -1,
+  sensorId: '-1',
+}
+
 describe('treeDraftResolver', () => {
   it('returns values when validation passes', async () => {
     vi.mocked(validateTreeDraft).mockReturnValueOnce([])
-    const values = {
-      number: 'FL-001',
-      species: 'Quercus',
-      plantingYear: 2020,
-      latitude: 52.5,
-      longitude: 13.4,
-    }
-    const result = await treeDraftResolver(values, undefined, {} as never)
-    expect(result.values).toEqual(values)
+    const result = await treeDraftResolver(validTreeForm, undefined, {} as never)
+    expect(result.values).toEqual(validTreeForm)
     expect(result.errors).toEqual({})
   })
 
@@ -36,7 +40,7 @@ describe('treeDraftResolver', () => {
       },
     ])
     const result = await treeDraftResolver(
-      { species: '' } as never,
+      { ...validTreeForm, species: '' },
       undefined,
       {} as never,
     )
@@ -56,7 +60,7 @@ describe('treeDraftResolver', () => {
         params: {},
       },
     ])
-    const result = await treeDraftResolver({} as never, undefined, {} as never)
+    const result = await treeDraftResolver(validTreeForm, undefined, {} as never)
     expect(result.errors.plantingYear?.message).toBe('tree.planting_year.unknown')
   })
 })

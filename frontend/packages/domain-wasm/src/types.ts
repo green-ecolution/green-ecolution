@@ -14,6 +14,7 @@ export interface TreeForm {
   description: string
   treeClusterId: number
   sensorId: string
+  provider?: string
 }
 
 export interface TreeclusterForm {
