@@ -1,16 +1,14 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    domain::{
-        Id,
-        shared::{
-            error::ValidationError,
-            provenance::{Provenance, ProviderId},
-        },
-        watering_plan::{WateringPlanDraft, WateringPlanEvaluation, WateringPlanView},
+use crate::service::ServiceError;
+use domain::{
+    Id,
+    shared::{
+        error::ValidationError,
+        provenance::{Provenance, ProviderId},
     },
-    service::ServiceError,
+    watering_plan::{WateringPlanDraft, WateringPlanEvaluation, WateringPlanView},
 };
 
 use super::{WateringPlanStatus, cluster::TreeClusterInListResponse, vehicle::VehicleResponse};
@@ -307,7 +305,7 @@ pub struct EvaluationValueRequest {
 impl EvaluationValueRequest {
     pub fn into_domain(
         self,
-        plan_id: Id<crate::domain::watering_plan::WateringPlan>,
+        plan_id: Id<domain::watering_plan::WateringPlan>,
     ) -> WateringPlanEvaluation {
         WateringPlanEvaluation {
             watering_plan_id: plan_id,

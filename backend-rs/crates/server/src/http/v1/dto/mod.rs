@@ -11,21 +11,19 @@ pub mod watering_plan;
 
 use serde::Serialize;
 
-use crate::{
-    domain::{
-        cluster::SoilCondition as DomainSoilCondition,
-        sensor::SensorStatus as DomainSensorStatus,
-        shared::{
-            pagination::{Page, Pagination},
-            watering_status::WateringStatus as DomainWateringStatus,
-        },
-        vehicle::{
-            DrivingLicense as DomainDrivingLicense, VehicleStatus as DomainVehicleStatus,
-            VehicleType as DomainVehicleType,
-        },
-        watering_plan::WateringPlanStatus as DomainWateringPlanStatus,
+use crate::http::v1::pagination::PaginationResponse;
+use domain::{
+    cluster::SoilCondition as DomainSoilCondition,
+    sensor::SensorStatus as DomainSensorStatus,
+    shared::{
+        pagination::{Page, Pagination},
+        watering_status::WateringStatus as DomainWateringStatus,
     },
-    http::v1::pagination::PaginationResponse,
+    vehicle::{
+        DrivingLicense as DomainDrivingLicense, VehicleStatus as DomainVehicleStatus,
+        VehicleType as DomainVehicleType,
+    },
+    watering_plan::WateringPlanStatus as DomainWateringPlanStatus,
 };
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]

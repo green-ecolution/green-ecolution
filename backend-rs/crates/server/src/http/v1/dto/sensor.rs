@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::domain::sensor::{SensorView, data::SensorReadingView};
+use domain::sensor::{SensorView, data::SensorReadingView};
 
 use super::SensorStatus;
 

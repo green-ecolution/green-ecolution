@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::domain::{RepositoryError, events::DomainEvent};
+use domain::{RepositoryError, events::DomainEvent};
 
 #[derive(Debug, thiserror::Error)]
 pub enum EventHandlerError {

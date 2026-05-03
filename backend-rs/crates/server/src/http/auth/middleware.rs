@@ -10,12 +10,8 @@ use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode, decode_header};
 use serde_json::Value;
 use uuid::Uuid;
 
-use crate::{
-    configuration::AuthSettings,
-    domain::{auth::AuthUser, user::UserRole},
-    infra::keycloak::JwksProvider,
-    service::AuthError,
-};
+use crate::{configuration::AuthSettings, infra::keycloak::JwksProvider, service::AuthError};
+use domain::{auth::AuthUser, user::UserRole};
 
 #[derive(Clone)]
 pub struct AuthLayer {

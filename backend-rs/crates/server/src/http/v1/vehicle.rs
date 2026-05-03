@@ -8,7 +8,6 @@ use axum::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    domain::{Id, shared::pagination::Pagination, vehicle::VehicleSearchQuery},
     http::{
         AppState,
         v1::{
@@ -21,6 +20,7 @@ use crate::{
     },
     service::ServiceError,
 };
+use domain::{Id, shared::pagination::Pagination, vehicle::VehicleSearchQuery};
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
@@ -204,16 +204,13 @@ pub async fn get_vehicle_by_plate(
     State(state): State<Arc<AppState>>,
     Path(plate): Path<String>,
 ) -> Result<Json<VehicleResponse>, ServiceError> {
-    let number_plate = crate::domain::vehicle::NumberPlate::new(plate)
+    let number_plate = domain::vehicle::NumberPlate::new(plate)
         .map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
-    let vehicle =
-        state
-            .vehicle_service
-            .by_plate(&number_plate)
-            .await?
-            .ok_or(ServiceError::Repository(
-                crate::domain::RepositoryError::NotFound,
-            ))?;
+    let vehicle = state
+        .vehicle_service
+        .by_plate(&number_plate)
+        .await?
+        .ok_or(ServiceError::Repository(domain::RepositoryError::NotFound))?;
     let view = state.vehicle_service.view_by_id(vehicle.id).await?;
     Ok(Json(VehicleResponse::from(&view)))
 }

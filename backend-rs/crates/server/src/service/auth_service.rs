@@ -5,10 +5,8 @@ use chrono::{Duration, Utc};
 use serde_json::json;
 use url::Url;
 
-use crate::{
-    configuration::AuthSettings,
-    domain::auth::{AuthRepository, ClientToken, IntrospectToken, LoginResponse},
-};
+use crate::configuration::AuthSettings;
+use domain::auth::{AuthRepository, ClientToken, IntrospectToken, LoginResponse};
 
 use super::ServiceError;
 

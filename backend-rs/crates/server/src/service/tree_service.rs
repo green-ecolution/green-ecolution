@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::domain::{
+use domain::{
     Id,
     cluster::TreeCluster,
     events::DomainEvent,

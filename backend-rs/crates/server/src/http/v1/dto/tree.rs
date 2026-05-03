@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::domain::{
+use domain::{
     Id,
     sensor::{SensorId, SensorView},
     shared::{

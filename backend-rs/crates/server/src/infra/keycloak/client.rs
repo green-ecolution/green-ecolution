@@ -3,7 +3,8 @@ use std::time::Duration;
 use secrecy::{ExposeSecret, SecretString};
 use url::Url;
 
-use crate::{configuration::AuthSettings, domain::RepositoryError};
+use crate::configuration::AuthSettings;
+use domain::RepositoryError;
 
 // Endpoints are derived from the issuer URL rather than the OIDC discovery
 // document — Keycloak's path scheme is stable enough to skip the extra hop.

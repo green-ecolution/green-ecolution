@@ -8,12 +8,6 @@ use axum::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    domain::{
-        Id,
-        sensor::SensorId,
-        shared::{error::ValidationError, pagination::Pagination},
-        tree::{TreeDraft, TreeSearchQuery, TreeView},
-    },
     http::{
         AppState,
         v1::{
@@ -28,6 +22,12 @@ use crate::{
         },
     },
     service::ServiceError,
+};
+use domain::{
+    Id,
+    sensor::SensorId,
+    shared::{error::ValidationError, pagination::Pagination},
+    tree::{TreeDraft, TreeSearchQuery, TreeView},
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {

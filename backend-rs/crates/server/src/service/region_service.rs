@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::domain::{
+use domain::{
     Id,
     region::{Region, RegionDraft, RegionName, RegionReader, RegionSearchQuery, RegionWriter},
     shared::{

@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
-use crate::domain::{
+use crate::service::event_bus::{EventHandler, EventHandlerError};
+use domain::{
     Id,
     cluster::{TreeCluster, TreeClusterReader, TreeClusterWriter},
     events::DomainEvent,
     region::RegionReader,
     tree::TreeReader,
 };
-use crate::service::event_bus::{EventHandler, EventHandlerError};
 
 pub struct ClusterRecalculationHandler {
     cluster_reader: Arc<dyn TreeClusterReader>,

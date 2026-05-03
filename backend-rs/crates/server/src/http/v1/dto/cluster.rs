@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::domain::{
+use domain::{
     Id,
     cluster::{ClusterAddress, ClusterName, TreeCluster, TreeClusterDraft, TreeClusterView},
     region::Region,

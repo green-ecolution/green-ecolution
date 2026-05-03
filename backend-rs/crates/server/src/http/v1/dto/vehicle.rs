@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::domain::{
+use domain::{
     shared::{
         provenance::{Provenance, ProviderId},
         water_capacity::WaterCapacity,
@@ -219,7 +219,7 @@ impl VehicleCreateRequest {
 impl VehicleUpdateRequest {
     pub fn into_update(
         self,
-    ) -> Result<crate::domain::vehicle::VehicleUpdate, crate::service::ServiceError> {
+    ) -> Result<domain::vehicle::VehicleUpdate, crate::service::ServiceError> {
         let number_plate = NumberPlate::new(self.number_plate)
             .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
         let model = VehicleModel::new(self.model)
@@ -230,7 +230,7 @@ impl VehicleUpdateRequest {
             .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
         let provenance = parse_provenance(self.provider, self.additional_information)?;
 
-        Ok(crate::domain::vehicle::VehicleUpdate {
+        Ok(domain::vehicle::VehicleUpdate {
             number_plate,
             description: self.description,
             water_capacity,

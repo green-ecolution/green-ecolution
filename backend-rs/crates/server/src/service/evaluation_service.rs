@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::domain::evaluation::{EvaluationRepository, RegionEvaluation, VehicleEvaluation};
+use domain::evaluation::{EvaluationRepository, RegionEvaluation, VehicleEvaluation};
 
 use super::ServiceError;
 

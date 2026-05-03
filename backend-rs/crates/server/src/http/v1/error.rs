@@ -1,25 +1,17 @@
 use axum::{http::StatusCode, response::IntoResponse};
 
-use crate::{
-    domain::RepositoryError,
-    service::{AuthError, ServiceError},
-};
+use crate::service::{AuthError, ServiceError};
+use domain::RepositoryError;
 
-impl IntoResponse for RepositoryError {
-    fn into_response(self) -> axum::response::Response {
-        let status = match &self {
-            RepositoryError::NotFound => StatusCode::NOT_FOUND,
-            RepositoryError::AlreadyExists(_) => StatusCode::CONFLICT,
-            RepositoryError::ForeignKeyViolation(_) => StatusCode::UNPROCESSABLE_ENTITY,
-            RepositoryError::ConstraintViolation(_) => StatusCode::BAD_REQUEST,
-            RepositoryError::DataIntegrity(_) | RepositoryError::Internal(_) => {
-                StatusCode::INTERNAL_SERVER_ERROR
-            }
-        };
-        if status.is_server_error() {
-            tracing::error!(error = %self, kind = "repository", "request failed");
+fn repository_error_status(e: &RepositoryError) -> StatusCode {
+    match e {
+        RepositoryError::NotFound => StatusCode::NOT_FOUND,
+        RepositoryError::AlreadyExists(_) => StatusCode::CONFLICT,
+        RepositoryError::ForeignKeyViolation(_) => StatusCode::UNPROCESSABLE_ENTITY,
+        RepositoryError::ConstraintViolation(_) => StatusCode::BAD_REQUEST,
+        RepositoryError::DataIntegrity(_) | RepositoryError::Internal(_) => {
+            StatusCode::INTERNAL_SERVER_ERROR
         }
-        (status, self.to_string()).into_response()
     }
 }
 
@@ -42,7 +34,13 @@ impl IntoResponse for AuthError {
 impl IntoResponse for ServiceError {
     fn into_response(self) -> axum::response::Response {
         match self {
-            ServiceError::Repository(e) => e.into_response(),
+            ServiceError::Repository(e) => {
+                let status = repository_error_status(&e);
+                if status.is_server_error() {
+                    tracing::error!(error = %e, kind = "repository", "request failed");
+                }
+                (status, e.to_string()).into_response()
+            }
             ServiceError::InvalidInput(msg) => (StatusCode::BAD_REQUEST, msg).into_response(),
             ServiceError::Auth(e) => e.into_response(),
         }

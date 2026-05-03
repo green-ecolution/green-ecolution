@@ -11,7 +11,7 @@ use serde_json::json;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
-use crate::domain::{
+use domain::{
     RepositoryError,
     shared::pagination::{Page, Pagination},
     user::{UserCreate, UserRepository, UserRole, UserView},

@@ -1,9 +1,9 @@
 use std::sync::{Arc, OnceLock};
 
+use domain::sensor::data::MqttPayload;
 use secrecy::SecretString;
 use server::{
     configuration::{AuthSettings, CorsSettings},
-    domain::sensor::data::MqttPayload,
     http::AppState,
     service::ServiceError,
     startup::Application,

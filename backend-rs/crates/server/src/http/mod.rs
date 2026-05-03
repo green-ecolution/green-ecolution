@@ -13,7 +13,6 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
     configuration::CorsSettings,
-    domain::info::SystemInfoProvider,
     http::{
         auth::AuthLayer,
         tracing::{MakeRequestUuid, REQUEST_ID_HEADER, make_span, on_response},
@@ -26,6 +25,7 @@ use crate::{
         watering_plan_service::WateringPlanService,
     },
 };
+use domain::info::SystemInfoProvider;
 
 pub mod auth;
 mod tracing;

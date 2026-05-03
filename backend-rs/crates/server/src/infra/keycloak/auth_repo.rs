@@ -4,7 +4,7 @@ use chrono::{Duration, Utc};
 use serde::Deserialize;
 use url::Url;
 
-use crate::domain::{
+use domain::{
     RepositoryError,
     auth::{AuthRepository, ClientToken, IntrospectToken},
 };

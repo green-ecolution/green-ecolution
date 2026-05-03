@@ -1,7 +1,8 @@
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 
-use crate::domain::{
+use crate::service::ServiceError;
+use domain::{
     auth::{ClientToken, LoginResponse as DomainLoginResponse},
     shared::{email::Email, error::ValidationError},
     user::{
@@ -9,7 +10,6 @@ use crate::domain::{
         UserView as DomainUserView, Username,
     },
 };
-use crate::service::ServiceError;
 
 use super::{DrivingLicense, UserRole, UserStatus};
 

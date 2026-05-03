@@ -2,13 +2,11 @@ use std::sync::Arc;
 
 use chrono::Utc;
 
-use crate::{
-    domain::{
-        events::DomainEvent,
-        sensor::{SensorId, data::Watermark},
-        tree::{TreeReader, TreeWriter},
-    },
-    service::event_bus::{EventHandler, EventHandlerError},
+use crate::service::event_bus::{EventHandler, EventHandlerError};
+use domain::{
+    events::DomainEvent,
+    sensor::{SensorId, data::Watermark},
+    tree::{TreeReader, TreeWriter},
 };
 
 /// Subscriber that turns each `SensorDataReceived` event into a fresh

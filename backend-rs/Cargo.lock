@@ -683,11 +683,15 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
+ "claims",
+ "quickcheck",
+ "quickcheck_macros",
  "secrecy",
  "serde",
  "serde_json",
  "sqlx",
  "thiserror",
+ "url",
  "uuid",
 ]
 
@@ -2862,6 +2866,7 @@ dependencies = [
  "chrono",
  "claims",
  "config",
+ "domain",
  "futures",
  "hostname",
  "include_dir",

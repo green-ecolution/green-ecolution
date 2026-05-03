@@ -9,13 +9,9 @@ use serde::Deserialize;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    domain::{
-        auth::AuthUser,
-        shared::pagination::Pagination,
-        user::{UserCreate as DomainUserCreate, UserRole as DomainUserRole},
-    },
     http::{
         AppState,
+        auth::extractor::AuthUserExtractor,
         v1::{
             dto::{
                 ListResponse,
@@ -29,6 +25,10 @@ use crate::{
     },
     require_role,
     service::ServiceError,
+};
+use domain::{
+    shared::pagination::Pagination,
+    user::{UserCreate as DomainUserCreate, UserRole as DomainUserRole},
 };
 
 pub fn public_routes() -> OpenApiRouter<Arc<AppState>> {
@@ -76,7 +76,7 @@ pub struct LoginTokenQuery {
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_users(
     State(state): State<Arc<AppState>>,
-    _user: AuthUser,
+    _user: AuthUserExtractor,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<UserResponse>>, ServiceError> {
     let pagination = Pagination::from(&params);
@@ -100,7 +100,7 @@ pub async fn list_users(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn create_user(
     State(state): State<Arc<AppState>>,
-    user: AuthUser,
+    user: AuthUserExtractor,
     Json(req): Json<UserRegisterRequest>,
 ) -> Result<(StatusCode, Json<UserResponse>), ServiceError> {
     require_role!(user, DomainUserRole::Tbz, DomainUserRole::GreenEcolution);
@@ -203,7 +203,7 @@ pub async fn logout(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_users_by_role(
     State(state): State<Arc<AppState>>,
-    _user: AuthUser,
+    _user: AuthUserExtractor,
     Path(role_id): Path<String>,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<UserResponse>>, ServiceError> {

@@ -92,31 +92,29 @@ impl Application {
     ) -> Result<Self, std::io::Error> {
         // Repositories
         let region_repo = Arc::new(PgRegionRepository::new(pool.clone()));
-        let region_reader: Arc<dyn crate::domain::region::RegionReader> = region_repo.clone();
-        let region_writer: Arc<dyn crate::domain::region::RegionWriter> = region_repo;
+        let region_reader: Arc<dyn domain::region::RegionReader> = region_repo.clone();
+        let region_writer: Arc<dyn domain::region::RegionWriter> = region_repo;
         let tree_repo = Arc::new(PgTreeRepository::new(pool.clone()));
-        let tree_reader: Arc<dyn crate::domain::tree::TreeReader> = tree_repo.clone();
-        let tree_writer: Arc<dyn crate::domain::tree::TreeWriter> = tree_repo;
+        let tree_reader: Arc<dyn domain::tree::TreeReader> = tree_repo.clone();
+        let tree_writer: Arc<dyn domain::tree::TreeWriter> = tree_repo;
         let sensor_repo = Arc::new(PgSensorRepository::new(pool.clone()));
-        let sensor_reader: Arc<dyn crate::domain::sensor::SensorReader> = sensor_repo.clone();
-        let sensor_writer: Arc<dyn crate::domain::sensor::SensorWriter> = sensor_repo.clone();
-        let sensor_reading_reader: Arc<dyn crate::domain::sensor::SensorReadingReader> =
+        let sensor_reader: Arc<dyn domain::sensor::SensorReader> = sensor_repo.clone();
+        let sensor_writer: Arc<dyn domain::sensor::SensorWriter> = sensor_repo.clone();
+        let sensor_reading_reader: Arc<dyn domain::sensor::SensorReadingReader> =
             sensor_repo.clone();
-        let sensor_reading_writer: Arc<dyn crate::domain::sensor::SensorReadingWriter> =
-            sensor_repo;
+        let sensor_reading_writer: Arc<dyn domain::sensor::SensorReadingWriter> = sensor_repo;
         let vehicle_repo = Arc::new(PgVehicleRepository::new(pool.clone()));
-        let vehicle_reader: Arc<dyn crate::domain::vehicle::VehicleReader> = vehicle_repo.clone();
-        let vehicle_writer: Arc<dyn crate::domain::vehicle::VehicleWriter> = vehicle_repo;
+        let vehicle_reader: Arc<dyn domain::vehicle::VehicleReader> = vehicle_repo.clone();
+        let vehicle_writer: Arc<dyn domain::vehicle::VehicleWriter> = vehicle_repo;
         let cluster_repo = Arc::new(PgTreeClusterRepository::new(pool.clone()));
-        let cluster_reader: Arc<dyn crate::domain::cluster::TreeClusterReader> =
-            cluster_repo.clone();
-        let cluster_writer: Arc<dyn crate::domain::cluster::TreeClusterWriter> = cluster_repo;
+        let cluster_reader: Arc<dyn domain::cluster::TreeClusterReader> = cluster_repo.clone();
+        let cluster_writer: Arc<dyn domain::cluster::TreeClusterWriter> = cluster_repo;
         let watering_plan_repo = Arc::new(PgWateringPlanRepository::new(pool.clone()));
-        let watering_plan_reader: Arc<dyn crate::domain::watering_plan::WateringPlanReader> =
+        let watering_plan_reader: Arc<dyn domain::watering_plan::WateringPlanReader> =
             watering_plan_repo.clone();
-        let watering_plan_writer: Arc<dyn crate::domain::watering_plan::WateringPlanWriter> =
+        let watering_plan_writer: Arc<dyn domain::watering_plan::WateringPlanWriter> =
             watering_plan_repo;
-        let evaluation_repo: Arc<dyn crate::domain::evaluation::EvaluationRepository> =
+        let evaluation_repo: Arc<dyn domain::evaluation::EvaluationRepository> =
             Arc::new(PgEvaluationRepository::new(pool));
 
         let AuthStack {
@@ -186,7 +184,7 @@ impl Application {
             event_bus.clone(),
         ));
         let evaluation_service = Arc::new(EvaluationService::new(evaluation_repo));
-        let info_provider: Arc<dyn crate::domain::info::SystemInfoProvider> =
+        let info_provider: Arc<dyn domain::info::SystemInfoProvider> =
             Arc::new(DefaultSystemInfoProvider::new());
 
         let state = Arc::new(AppState {

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::domain::plugin::Plugin;
+use domain::plugin::Plugin;
 
 use super::user::ClientTokenResponse;
 

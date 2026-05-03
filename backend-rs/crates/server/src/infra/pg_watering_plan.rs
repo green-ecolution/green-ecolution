@@ -3,7 +3,7 @@ use chrono::NaiveTime;
 use serde_json::Value;
 use sqlx::PgPool;
 
-use crate::domain::{
+use domain::{
     Id, RepositoryError,
     cluster::TreeCluster,
     shared::pagination::{Page, Pagination},

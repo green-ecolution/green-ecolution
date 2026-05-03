@@ -1,7 +1,7 @@
 use sqlx::PgPool;
 
-use crate::domain::region::RegionSnapshot;
-use crate::domain::{
+use domain::region::RegionSnapshot;
+use domain::{
     Id, RepositoryError,
     region::{Region, RegionDraft, RegionName, RegionReader, RegionSearchQuery, RegionWriter},
     shared::{

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use url::Url;
 use uuid::Uuid;
 
-use crate::domain::{
+use domain::{
     RepositoryError,
     shared::email::Email,
     user::{UserRole, UserStatus, UserView, Username},

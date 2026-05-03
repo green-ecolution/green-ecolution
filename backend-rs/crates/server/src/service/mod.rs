@@ -11,7 +11,7 @@ pub mod vehicle_service;
 pub mod watering_execution_service;
 pub mod watering_plan_service;
 
-use crate::domain::RepositoryError;
+use domain::RepositoryError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ServiceError {

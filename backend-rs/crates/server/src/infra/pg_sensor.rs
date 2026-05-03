@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use sqlx::PgPool;
 
-use crate::domain::{
+use domain::{
     RepositoryError,
     sensor::{
         Sensor, SensorDraft, SensorId, SensorReader, SensorReadingReader, SensorReadingWriter,

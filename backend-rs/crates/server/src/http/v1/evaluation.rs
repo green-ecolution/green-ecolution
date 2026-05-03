@@ -4,10 +4,6 @@ use axum::{Json, extract::State};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    domain::{
-        cluster::TreeClusterSearchQuery, sensor::SensorSearchQuery, shared::pagination::Pagination,
-        tree::TreeSearchQuery, watering_plan::WateringPlanSearchQuery,
-    },
     http::{
         AppState,
         v1::dto::evaluation::{
@@ -15,6 +11,10 @@ use crate::{
         },
     },
     service::ServiceError,
+};
+use domain::{
+    cluster::TreeClusterSearchQuery, sensor::SensorSearchQuery, shared::pagination::Pagination,
+    tree::TreeSearchQuery, watering_plan::WateringPlanSearchQuery,
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {

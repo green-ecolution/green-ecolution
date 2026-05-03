@@ -8,17 +8,6 @@ use axum::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    domain::{
-        Id,
-        shared::{
-            pagination::Pagination,
-            provenance::{Provenance, ProviderId},
-        },
-        watering_plan::{
-            WateringPlanSearchQuery, WateringPlanStatus as DomainStatus, WateringPlanUpdate,
-            WateringPlanView,
-        },
-    },
     http::{
         AppState,
         v1::{
@@ -36,6 +25,17 @@ use crate::{
         },
     },
     service::ServiceError,
+};
+use domain::{
+    Id,
+    shared::{
+        pagination::Pagination,
+        provenance::{Provenance, ProviderId},
+    },
+    watering_plan::{
+        WateringPlanSearchQuery, WateringPlanStatus as DomainStatus, WateringPlanUpdate,
+        WateringPlanView,
+    },
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -426,6 +426,6 @@ fn parse_date(s: &str) -> Result<chrono::DateTime<chrono::Utc>, ServiceError> {
         .map_err(|e| ServiceError::InvalidInput(format!("invalid date: {e}")))
 }
 
-fn invalid(e: crate::domain::shared::error::ValidationError) -> ServiceError {
+fn invalid(e: domain::shared::error::ValidationError) -> ServiceError {
     ServiceError::InvalidInput(e.to_string())
 }

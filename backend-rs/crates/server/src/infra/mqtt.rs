@@ -12,11 +12,8 @@ use secrecy::ExposeSecret;
 use serde_json::Value;
 use url::Url;
 
-use crate::{
-    configuration::MqttSettings,
-    domain::sensor::data::{MqttPayload, Watermark},
-    service::sensor_service::SensorService,
-};
+use crate::{configuration::MqttSettings, service::sensor_service::SensorService};
+use domain::sensor::data::{MqttPayload, Watermark};
 
 /// Spawns the MQTT subscriber as a tokio task. Returns `Ok(())` if disabled
 /// or if the task started successfully. The task itself logs and recovers

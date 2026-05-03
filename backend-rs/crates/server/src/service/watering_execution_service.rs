@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use chrono::Utc;
 
-use crate::domain::{
+use domain::{
     Id,
     watering_plan::{WateringPlan, WateringPlanEvaluation, WateringPlanReader, WateringPlanWriter},
 };

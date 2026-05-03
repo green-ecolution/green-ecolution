@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::domain::info::{DataStatistics, Git, Map, Server, ServiceStatus, VersionInfo};
+use domain::info::{DataStatistics, Git, Map, Server, ServiceStatus, VersionInfo};
 
 /// Version information for the running application, including update status.
 #[derive(Debug, Serialize, utoipa::ToSchema)]

@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 
-use crate::domain::tree::snapshot::TreeSnapshot;
-use crate::domain::{
+use domain::tree::snapshot::TreeSnapshot;
+use domain::{
     Id, RepositoryError,
     cluster::TreeCluster,
     sensor::SensorId,

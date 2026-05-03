@@ -7,7 +7,6 @@ use axum::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    domain::{Id, region::RegionSearchQuery, shared::pagination::Pagination},
     http::{
         AppState,
         v1::{
@@ -17,6 +16,7 @@ use crate::{
     },
     service::ServiceError,
 };
+use domain::{Id, region::RegionSearchQuery, shared::pagination::Pagination};
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()

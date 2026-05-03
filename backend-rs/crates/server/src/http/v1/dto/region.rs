@@ -1,4 +1,4 @@
-use crate::domain::region::Region;
+use domain::region::Region;
 
 /// A geographic region used to group tree clusters.
 #[derive(Debug, serde::Serialize, utoipa::ToSchema)]

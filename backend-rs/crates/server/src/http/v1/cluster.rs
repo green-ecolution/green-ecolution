@@ -8,20 +8,6 @@ use axum::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    domain::{
-        Id,
-        cluster::{
-            ClusterAddress, ClusterName, TreeClusterDraft, TreeClusterSearchQuery,
-            TreeClusterUpdate, TreeClusterView,
-        },
-        region::Region,
-        sensor::SensorId,
-        shared::{
-            error::ValidationError,
-            pagination::Pagination,
-            provenance::{Provenance, ProviderId},
-        },
-    },
     http::{
         AppState,
         v1::{
@@ -37,6 +23,20 @@ use crate::{
         },
     },
     service::ServiceError,
+};
+use domain::{
+    Id,
+    cluster::{
+        ClusterAddress, ClusterName, TreeClusterDraft, TreeClusterSearchQuery, TreeClusterUpdate,
+        TreeClusterView,
+    },
+    region::Region,
+    sensor::SensorId,
+    shared::{
+        error::ValidationError,
+        pagination::Pagination,
+        provenance::{Provenance, ProviderId},
+    },
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -54,7 +54,7 @@ async fn build_cluster_response(
         None => None,
     };
 
-    let tree_ids: Vec<Id<crate::domain::tree::Tree>> =
+    let tree_ids: Vec<Id<domain::tree::Tree>> =
         cluster.tree_ids.iter().map(|&id| Id::new(id)).collect();
     let trees = state.tree_service.view_by_ids(&tree_ids).await?;
 

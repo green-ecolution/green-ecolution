@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::domain::{
+use domain::{
     RepositoryError,
     events::DomainEvent,
     sensor::{

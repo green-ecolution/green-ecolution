@@ -33,6 +33,7 @@ axum = { version = "0.8.9", features = ["json"] }
 base64 = "0.22"
 chrono = { workspace = true }
 config = "0.15.22"
+domain = { path = "../domain", features = ["sqlx"] }
 futures = "0.3"
 hostname = "0.4"
 include_dir = "0.7"
@@ -60,6 +61,7 @@ utoipa-swagger-ui = { version = "9", features = ["axum"] }
 
 [dev-dependencies]
 claims = "0.8"
+domain = { path = "../domain", features = ["sqlx"] }
 libc = "0.2"
 quickcheck = "1"
 quickcheck_macros = "1"

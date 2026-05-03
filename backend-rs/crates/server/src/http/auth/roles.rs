@@ -1,7 +1,5 @@
-use crate::{
-    domain::{auth::AuthUser, user::UserRole},
-    service::AuthError,
-};
+use crate::service::AuthError;
+use domain::{auth::AuthUser, user::UserRole};
 
 pub fn require_any_role(user: &AuthUser, roles: &[UserRole]) -> Result<(), AuthError> {
     if user.roles.iter().any(|r| roles.contains(r)) {

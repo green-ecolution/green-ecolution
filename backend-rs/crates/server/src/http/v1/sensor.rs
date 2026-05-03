@@ -8,11 +8,6 @@ use axum::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    domain::{
-        RepositoryError,
-        sensor::{SensorId, SensorSearchQuery},
-        shared::pagination::Pagination,
-    },
     http::{
         AppState,
         v1::{
@@ -25,6 +20,11 @@ use crate::{
         },
     },
     service::ServiceError,
+};
+use domain::{
+    RepositoryError,
+    sensor::{SensorId, SensorSearchQuery},
+    shared::pagination::Pagination,
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {

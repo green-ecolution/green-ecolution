@@ -3,7 +3,7 @@ use std::sync::Arc;
 use chrono::Utc;
 use uuid::Uuid;
 
-use crate::domain::{
+use domain::{
     shared::{
         email::Email,
         pagination::{Page, Pagination},

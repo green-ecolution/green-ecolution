@@ -3,8 +3,8 @@ use std::time::{Duration, Instant};
 
 use chrono::Utc;
 
-use crate::domain::RepositoryError;
-use crate::domain::info::{
+use domain::RepositoryError;
+use domain::info::{
     App, DataStatistics, Git, Map, Server, ServiceStatus, SystemInfoProvider, VersionInfo,
 };
 
