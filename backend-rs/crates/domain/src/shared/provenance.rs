@@ -12,7 +12,6 @@ impl ProviderId {
         Ok(Self(NonEmptyString::new(value, "provider", 1, 64)?))
     }
 
-    #[allow(dead_code)]
     pub fn reconstitute(value: String) -> Self {
         Self(NonEmptyString::reconstitute(value))
     }
@@ -47,7 +46,6 @@ impl Provenance {
         }
     }
 
-    #[allow(dead_code)]
     pub fn reconstitute(provider: Option<String>, additional_info: Option<Value>) -> Self {
         Self {
             provider: provider.map(ProviderId::reconstitute),

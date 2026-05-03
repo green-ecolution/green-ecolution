@@ -37,7 +37,6 @@ impl NonEmptyString {
         Ok(Self(trimmed))
     }
 
-    #[allow(dead_code)]
     pub fn reconstitute(value: String) -> Self {
         Self(value)
     }

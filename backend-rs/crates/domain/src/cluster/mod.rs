@@ -35,7 +35,6 @@ use crate::{
 pub use error::ClusterError;
 pub use repository::{TreeClusterReader, TreeClusterWriter};
 #[doc(hidden)]
-#[allow(unused_imports)]
 pub use snapshot::TreeClusterSnapshot;
 pub use soil_condition::SoilCondition;
 pub use view::TreeClusterView;
@@ -49,7 +48,6 @@ impl ClusterName {
         Ok(Self(NonEmptyString::new(value, "cluster.name", 1, 255)?))
     }
 
-    #[allow(dead_code)]
     pub fn reconstitute(value: String) -> Self {
         Self(NonEmptyString::reconstitute(value))
     }
@@ -74,7 +72,6 @@ impl ClusterAddress {
         Ok(Self(NonEmptyString::new(value, "cluster.address", 1, 512)?))
     }
 
-    #[allow(dead_code)]
     pub fn reconstitute(value: String) -> Self {
         Self(NonEmptyString::reconstitute(value))
     }
@@ -141,7 +138,6 @@ pub struct TreeClusterUpdate {
 
 impl TreeCluster {
     #[doc(hidden)]
-    #[allow(dead_code)]
     pub fn reconstitute(snap: TreeClusterSnapshot) -> Self {
         let coordinates = match (snap.latitude, snap.longitude) {
             (Some(lat), Some(lng)) => {

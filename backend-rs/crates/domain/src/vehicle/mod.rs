@@ -29,7 +29,6 @@ use crate::{
 pub use error::VehicleError;
 pub use license::DrivingLicense;
 pub use repository::{VehicleReader, VehicleWriter};
-#[allow(unused_imports)]
 #[doc(hidden)]
 pub use snapshot::VehicleSnapshot;
 pub use view::VehicleView;
@@ -79,7 +78,6 @@ impl NumberPlate {
         )?))
     }
 
-    #[allow(dead_code)]
     pub fn reconstitute(value: String) -> Self {
         Self(NonEmptyString::reconstitute(value))
     }
@@ -104,7 +102,6 @@ impl VehicleModel {
         Ok(Self(NonEmptyString::new(value, "vehicle.model", 1, 128)?))
     }
 
-    #[allow(dead_code)]
     pub fn reconstitute(value: String) -> Self {
         Self(NonEmptyString::reconstitute(value))
     }
@@ -153,7 +150,6 @@ impl VehicleDimension {
         })
     }
 
-    #[allow(dead_code)]
     pub fn reconstitute(height: f64, width: f64, length: f64, weight: f64) -> Self {
         Self {
             height,
@@ -218,7 +214,6 @@ pub struct VehicleUpdate {
 
 impl Vehicle {
     #[doc(hidden)]
-    #[allow(dead_code)]
     pub fn reconstitute(snap: VehicleSnapshot) -> Self {
         Self {
             id: Id::new(snap.id),

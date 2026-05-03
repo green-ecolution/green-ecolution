@@ -16,7 +16,6 @@ path = "src/lib.rs"
 
 [features]
 default = []
-# Aktiviert sqlx::Type-Derives auf Domain-Enums. Nur für Server-Konsumenten.
 sqlx = ["dep:sqlx"]
 
 [dependencies]
@@ -30,7 +29,7 @@ url = { workspace = true }
 uuid = { workspace = true }
 
 # Optional, nur wenn `sqlx`-Feature aktiv ist.
-sqlx = { version = "0.8.6", features = ["postgres", "chrono", "uuid", "json"], optional = true }
+sqlx = { workspace = true, features = ["derive", "postgres", "chrono", "uuid", "json"], optional = true }
 
 [dev-dependencies]
 claims = "0.8"

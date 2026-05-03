@@ -20,7 +20,6 @@ impl PlantingYear {
         Ok(Self(year))
     }
 
-    #[allow(dead_code)]
     pub fn reconstitute(year: u32) -> Self {
         Self(year)
     }

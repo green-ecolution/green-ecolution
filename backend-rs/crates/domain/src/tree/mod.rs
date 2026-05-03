@@ -36,7 +36,6 @@ pub use error::TreeError;
 pub use planting_year::PlantingYear;
 pub use repository::{TreeReader, TreeWriter};
 #[doc(hidden)]
-#[allow(unused_imports)]
 pub use snapshot::TreeSnapshot;
 pub use view::{TreeView, TreeViewWithDistance};
 
@@ -49,7 +48,6 @@ impl Species {
         Ok(Self(NonEmptyString::new(value, "tree.species", 1, 255)?))
     }
 
-    #[allow(dead_code)]
     pub fn reconstitute(value: String) -> Self {
         Self(NonEmptyString::reconstitute(value))
     }
@@ -74,7 +72,6 @@ impl TreeNumber {
         Ok(Self(NonEmptyString::new(value, "tree.number", 1, 64)?))
     }
 
-    #[allow(dead_code)]
     pub fn reconstitute(value: String) -> Self {
         Self(NonEmptyString::reconstitute(value))
     }
@@ -133,7 +130,6 @@ pub struct TreeSearchQuery {
 
 impl Tree {
     #[doc(hidden)]
-    #[allow(dead_code)]
     pub fn reconstitute(snap: TreeSnapshot) -> Self {
         Self {
             id: Id::new(snap.id),

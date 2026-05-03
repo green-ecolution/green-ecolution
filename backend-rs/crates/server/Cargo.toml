@@ -46,7 +46,7 @@ serde = { workspace = true }
 serde-aux = "4.7.0"
 serde_json = { workspace = true }
 serde_urlencoded = "0.7"
-sqlx = { version = "0.8.6", features = ["runtime-tokio", "tls-rustls", "postgres", "chrono", "uuid", "json"] }
+sqlx = { workspace = true, features = ["macros", "migrate", "runtime-tokio", "tls-rustls", "postgres", "chrono", "uuid", "json"] }
 thiserror = { workspace = true }
 tokio = { version = "1.52.1", features = ["full"] }
 tower = "0.5"

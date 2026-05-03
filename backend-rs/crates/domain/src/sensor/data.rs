@@ -46,7 +46,6 @@ pub struct SensorReadingSnapshot {
 
 impl SensorReading {
     #[doc(hidden)]
-    #[allow(dead_code)]
     pub fn reconstitute(snap: SensorReadingSnapshot) -> Self {
         Self {
             id: snap.id,

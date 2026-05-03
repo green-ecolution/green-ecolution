@@ -44,7 +44,6 @@ pub use error::WateringPlanError;
 pub use error::WateringPlanError as Error;
 pub use evaluation::WateringPlanEvaluation;
 pub use repository::{WateringPlanReader, WateringPlanWriter};
-#[allow(unused_imports)]
 #[doc(hidden)]
 pub use snapshot::WateringPlanSnapshot;
 pub use view::WateringPlanView;
@@ -117,7 +116,6 @@ pub struct WateringPlanUpdate {
 
 impl WateringPlan {
     #[doc(hidden)]
-    #[allow(dead_code)]
     pub fn reconstitute(snap: WateringPlanSnapshot) -> Self {
         Self {
             id: Id::new(snap.id),

@@ -16,7 +16,6 @@ use crate::{
 
 pub use error::RegionError;
 pub use repository::{RegionReader, RegionWriter};
-#[allow(unused_imports)]
 #[doc(hidden)]
 pub use snapshot::RegionSnapshot;
 
@@ -29,7 +28,6 @@ impl RegionName {
         Ok(Self(NonEmptyString::new(value, "region.name", 1, 255)?))
     }
 
-    #[allow(dead_code)]
     pub fn reconstitute(value: String) -> Self {
         Self(NonEmptyString::reconstitute(value))
     }
@@ -59,7 +57,6 @@ pub struct RegionDraft {
 
 impl Region {
     #[doc(hidden)]
-    #[allow(dead_code)]
     pub fn reconstitute(snap: RegionSnapshot) -> Self {
         Self {
             id: Id::new(snap.id),
