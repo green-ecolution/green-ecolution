@@ -7,5 +7,6 @@ mod cluster_draft;
 mod field_validators;
 mod issue;
 mod tree_draft;
+mod vehicle_draft;
 
 pub use issue::ValidationIssue;
