@@ -1,18 +1,28 @@
 use std::fmt::Display;
 
-use crate::domain::DomainError;
+use crate::domain::shared::error::ValidationError;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Coordinate(f64, f64);
 
 impl Coordinate {
-    pub fn new(lat: f64, lng: f64) -> Result<Coordinate, DomainError> {
+    pub fn new(lat: f64, lng: f64) -> Result<Coordinate, ValidationError> {
         if !(-90.0..=90.0).contains(&lat) {
-            return Err(DomainError::InvalidLatitude(lat));
+            return Err(ValidationError::OutOfRange {
+                field: "coordinate.latitude",
+                min: -90.0,
+                max: 90.0,
+                got: lat,
+            });
         }
 
         if !(-180.0..=180.0).contains(&lng) {
-            return Err(DomainError::InvalidLongitude(lng));
+            return Err(ValidationError::OutOfRange {
+                field: "coordinate.longitude",
+                min: -180.0,
+                max: 180.0,
+                got: lng,
+            });
         }
 
         Ok(Self(lat, lng))

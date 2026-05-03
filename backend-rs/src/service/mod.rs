@@ -11,14 +11,12 @@ pub mod vehicle_service;
 pub mod watering_execution_service;
 pub mod watering_plan_service;
 
-use crate::domain::{DomainError, RepositoryError};
+use crate::domain::RepositoryError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ServiceError {
     #[error(transparent)]
     Repository(#[from] RepositoryError),
-    #[error(transparent)]
-    Domain(#[from] DomainError),
     #[error("invalid input: {0}")]
     InvalidInput(String),
     #[error(transparent)]

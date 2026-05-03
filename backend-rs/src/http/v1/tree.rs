@@ -9,9 +9,9 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     domain::{
-        DomainError, Id,
+        Id,
         sensor::SensorId,
-        shared::pagination::Pagination,
+        shared::{error::ValidationError, pagination::Pagination},
         tree::{TreeDraft, TreeSearchQuery, TreeView},
     },
     http::{
@@ -128,7 +128,7 @@ pub async fn create_tree(
 ) -> Result<(StatusCode, Json<TreeResponse>), ServiceError> {
     let draft: TreeDraft = entity
         .try_into()
-        .map_err(|e: DomainError| ServiceError::InvalidInput(e.to_string()))?;
+        .map_err(|e: ValidationError| ServiceError::InvalidInput(e.to_string()))?;
     let tree = state.tree_service.create(draft).await?;
     let view = state.tree_service.view_by_id(tree.id).await?;
     let sensor = match view.sensor_id.as_deref() {
@@ -177,7 +177,7 @@ pub async fn update_tree(
     };
     let draft: TreeDraft = create
         .try_into()
-        .map_err(|e: DomainError| ServiceError::InvalidInput(e.to_string()))?;
+        .map_err(|e: ValidationError| ServiceError::InvalidInput(e.to_string()))?;
     let tree = state.tree_service.replace(Id::from(id), draft).await?;
     let view = state.tree_service.view_by_id(tree.id).await?;
     let sensor = match view.sensor_id.as_deref() {

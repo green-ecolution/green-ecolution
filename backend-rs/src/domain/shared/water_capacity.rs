@@ -1,14 +1,19 @@
 use std::{fmt::Display, ops::Add};
 
-use crate::domain::DomainError;
+use crate::domain::shared::error::ValidationError;
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct WaterCapacity(f64);
 
 impl WaterCapacity {
-    pub fn new(liters: f64) -> Result<Self, DomainError> {
+    pub fn new(liters: f64) -> Result<Self, ValidationError> {
         if liters.is_sign_negative() {
-            return Err(DomainError::InvalidWaterCapacity(liters));
+            return Err(ValidationError::OutOfRange {
+                field: "water_capacity.liters",
+                min: 0.0,
+                max: f64::INFINITY,
+                got: liters,
+            });
         }
         Ok(Self(liters))
     }

@@ -1,6 +1,7 @@
 use crate::domain::{
     Id,
     cluster::TreeCluster,
+    sensor::SensorId,
     tree::Tree,
     watering_plan::{WateringPlan, WateringPlanStatus},
 };
@@ -24,11 +25,11 @@ pub enum DomainEvent {
         cluster_id: Id<TreeCluster>,
     },
     SensorDeleted {
-        sensor_id: String,
+        sensor_id: SensorId,
         affected_tree_ids: Vec<Id<Tree>>,
     },
     SensorDataReceived {
-        sensor_id: String,
+        sensor_id: SensorId,
         data: serde_json::Value,
     },
     WateringPlanStatusChanged {

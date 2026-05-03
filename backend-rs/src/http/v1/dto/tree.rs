@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::domain::{
-    DomainError, Id,
+    Id,
     sensor::{SensorId, SensorView},
     shared::{
         coordinates::Coordinate,
@@ -130,16 +130,15 @@ pub struct TreeCreateRequest {
 }
 
 impl TryFrom<TreeCreateRequest> for TreeDraft {
-    type Error = DomainError;
+    type Error = ValidationError;
 
     fn try_from(req: TreeCreateRequest) -> Result<Self, Self::Error> {
-        let v = |e: ValidationError| DomainError::InvalidInput(e.to_string());
         Ok(Self {
             cluster_id: req.tree_cluster_id.map(Id::new),
-            sensor_id: req.sensor_id.map(SensorId::new).transpose().map_err(v)?,
-            planting_year: PlantingYear::new(req.planting_year as u32).map_err(v)?,
-            species: Species::new(req.species).map_err(v)?,
-            tree_number: TreeNumber::new(req.number).map_err(v)?,
+            sensor_id: req.sensor_id.map(SensorId::new).transpose()?,
+            planting_year: PlantingYear::new(req.planting_year as u32)?,
+            species: Species::new(req.species)?,
+            tree_number: TreeNumber::new(req.number)?,
             coordinate: Coordinate::new(req.latitude, req.longitude)?,
             description: if req.description.is_empty() {
                 None
@@ -147,7 +146,7 @@ impl TryFrom<TreeCreateRequest> for TreeDraft {
                 Some(req.description)
             },
             provenance: Provenance::new(
-                req.provider.map(ProviderId::new).transpose().map_err(v)?,
+                req.provider.map(ProviderId::new).transpose()?,
                 req.additional_information,
             ),
         })

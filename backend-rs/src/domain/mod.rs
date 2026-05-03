@@ -15,24 +15,6 @@ pub mod vehicle;
 pub mod watering_plan;
 
 #[derive(Debug, thiserror::Error)]
-pub enum DomainError {
-    #[error("planting year must be > 0 and not in the future, got {0}")]
-    InvalidPlantingYear(u32),
-    #[error("latitude must be between -90 and 90")]
-    InvalidLatitude(f64),
-    #[error("longitude must be between -180 and 180")]
-    InvalidLongitude(f64),
-    #[error("water capacity must be >= 0")]
-    InvalidWaterCapacity(f64),
-    #[error("distance must be >= 0")]
-    InvalidDistance(f64),
-    #[error("invalid driving license")]
-    InvalidDrivingLicense(String),
-    #[error("invalid input: {0}")]
-    InvalidInput(String),
-}
-
-#[derive(Debug, thiserror::Error)]
 pub enum RepositoryError {
     #[error("entity not found")]
     NotFound,
@@ -46,12 +28,6 @@ pub enum RepositoryError {
     DataIntegrity(String),
     #[error("internal error: {0}")]
     Internal(String),
-}
-
-impl From<DomainError> for RepositoryError {
-    fn from(value: DomainError) -> Self {
-        RepositoryError::DataIntegrity(value.to_string())
-    }
 }
 
 impl From<crate::domain::shared::error::ValidationError> for RepositoryError {

@@ -43,7 +43,6 @@ impl IntoResponse for ServiceError {
     fn into_response(self) -> axum::response::Response {
         match self {
             ServiceError::Repository(e) => e.into_response(),
-            ServiceError::Domain(e) => (StatusCode::BAD_REQUEST, e.to_string()).into_response(),
             ServiceError::InvalidInput(msg) => (StatusCode::BAD_REQUEST, msg).into_response(),
             ServiceError::Auth(e) => e.into_response(),
         }

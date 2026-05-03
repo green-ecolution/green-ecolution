@@ -104,7 +104,7 @@ impl SensorService {
         self.writer.delete(id).await?;
         self.event_bus
             .publish(DomainEvent::SensorDeleted {
-                sensor_id: id.as_str().to_string(),
+                sensor_id: id.clone(),
                 affected_tree_ids: vec![],
             })
             .await;
@@ -122,11 +122,11 @@ impl SensorService {
 
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %draft.sensor_id))]
     pub async fn record_reading(&self, draft: SensorReadingDraft) -> Result<(), ServiceError> {
-        let sensor_id_str = draft.sensor_id.as_str().to_string();
+        let sensor_id = draft.sensor_id.clone();
         self.reading_writer.record(draft).await?;
         self.event_bus
             .publish(DomainEvent::SensorDataReceived {
-                sensor_id: sensor_id_str,
+                sensor_id,
                 data: serde_json::Value::Null,
             })
             .await;

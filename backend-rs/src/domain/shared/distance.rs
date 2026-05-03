@@ -1,14 +1,19 @@
 use std::{fmt::Display, ops::Add};
 
-use crate::domain::DomainError;
+use crate::domain::shared::error::ValidationError;
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Distance(f64);
 
 impl Distance {
-    pub fn new(meters: f64) -> Result<Self, DomainError> {
+    pub fn new(meters: f64) -> Result<Self, ValidationError> {
         if meters.is_sign_negative() {
-            return Err(DomainError::InvalidDistance(meters));
+            return Err(ValidationError::OutOfRange {
+                field: "distance.meters",
+                min: 0.0,
+                max: f64::INFINITY,
+                got: meters,
+            });
         }
 
         Ok(Distance(meters))
