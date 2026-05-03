@@ -42,6 +42,9 @@ const messages: Record<string, Renderer> = {
   'vehicle.dimension.width.outOfRange': () => 'Breite ist erforderlich.',
   'vehicle.dimension.length.outOfRange': () => 'Länge ist erforderlich.',
   'vehicle.dimension.weight.outOfRange': () => 'Gewicht ist erforderlich.',
+  'vehicle.type.invalidFormat': () => 'Kein korrekter Fahrzeugtyp.',
+  'vehicle.driving_license.invalidFormat': () => 'Keine korrekte Fahrzeugerlaubnis.',
+  'vehicle.status.invalidFormat': () => 'Kein korrekter Fahrzeugstatus.',
 
   // Watering plan
   'watering_plan.cluster_ids.empty': () =>
