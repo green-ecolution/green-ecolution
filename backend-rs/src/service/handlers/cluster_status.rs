@@ -29,22 +29,27 @@ impl ClusterStatusAggregatorHandler {
 
     fn affected_cluster_ids(&self, event: &DomainEvent) -> Vec<Id<TreeCluster>> {
         match event {
-            DomainEvent::TreeUpdated {
-                old_cluster_id,
-                new_cluster_id,
+            DomainEvent::TreeCreated {
+                cluster_id,
+                sensor_id: Some(_),
                 ..
-            } => {
-                let mut ids: Vec<_> = [*old_cluster_id, *new_cluster_id]
-                    .into_iter()
-                    .flatten()
-                    .collect();
+            } => cluster_id.iter().copied().collect(),
+            DomainEvent::TreeDeleted {
+                cluster_id,
+                had_sensor: true,
+                ..
+            } => cluster_id.iter().copied().collect(),
+            DomainEvent::TreeMovedBetweenClusters { from, to, .. } => {
+                let mut ids: Vec<_> = [*from, *to].into_iter().flatten().collect();
                 ids.dedup();
                 ids
             }
-            DomainEvent::TreeCreated { cluster_id, .. } => cluster_id.iter().copied().collect(),
-            DomainEvent::TreeDeleted { cluster_id, .. } => cluster_id.iter().copied().collect(),
+            DomainEvent::TreeSensorAttached { cluster_id, .. }
+            | DomainEvent::TreeSensorDetached { cluster_id, .. }
+            | DomainEvent::TreeWateringStatusChanged { cluster_id, .. } => {
+                cluster_id.iter().copied().collect()
+            }
             DomainEvent::ClusterTreesChanged { cluster_id } => vec![*cluster_id],
-            DomainEvent::SensorDataReceived { .. } => vec![],
             _ => vec![],
         }
     }

@@ -34,19 +34,15 @@ impl ClusterRecalculationHandler {
     fn affected_cluster_ids(&self, event: &DomainEvent) -> Vec<Id<TreeCluster>> {
         match event {
             DomainEvent::TreeCreated { cluster_id, .. } => cluster_id.iter().copied().collect(),
-            DomainEvent::TreeUpdated {
-                old_cluster_id,
-                new_cluster_id,
-                ..
-            } => {
-                let mut ids: Vec<_> = [*old_cluster_id, *new_cluster_id]
-                    .into_iter()
-                    .flatten()
-                    .collect();
+            DomainEvent::TreeDeleted { cluster_id, .. } => cluster_id.iter().copied().collect(),
+            DomainEvent::TreeCoordinateChanged { cluster_id, .. } => {
+                cluster_id.iter().copied().collect()
+            }
+            DomainEvent::TreeMovedBetweenClusters { from, to, .. } => {
+                let mut ids: Vec<_> = [*from, *to].into_iter().flatten().collect();
                 ids.dedup();
                 ids
             }
-            DomainEvent::TreeDeleted { cluster_id, .. } => cluster_id.iter().copied().collect(),
             DomainEvent::ClusterTreesChanged { cluster_id } => vec![*cluster_id],
             _ => vec![],
         }

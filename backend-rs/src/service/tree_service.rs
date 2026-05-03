@@ -78,13 +78,11 @@ impl TreeService {
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn create(&self, draft: TreeDraft) -> Result<Tree, ServiceError> {
         let tree = self.writer.save_new(draft).await?;
-        let cluster_id = tree.cluster_id();
-        let sensor_id = tree.sensor_id().cloned();
         self.event_bus
             .publish(DomainEvent::TreeCreated {
                 tree_id: tree.id,
-                cluster_id,
-                sensor_id,
+                cluster_id: tree.cluster_id(),
+                sensor_id: tree.sensor_id().cloned(),
             })
             .await;
         Ok(tree)
@@ -93,28 +91,22 @@ impl TreeService {
     #[tracing::instrument(level = "debug", skip_all, fields(tree.id = %id))]
     pub async fn replace(&self, id: Id<Tree>, draft: TreeDraft) -> Result<Tree, ServiceError> {
         let mut tree = self.reader.by_id(id).await?;
-        let old_cluster_id = tree.cluster_id();
-        tree.replace_details(
+        let mut events = Vec::new();
+        events.extend(tree.replace_details(
             draft.species,
             draft.tree_number,
             draft.planting_year,
             draft.coordinate,
             draft.description,
             draft.provenance,
-        );
-        tree.move_to_cluster(draft.cluster_id);
-        match draft.sensor_id {
+        ));
+        events.extend(tree.move_to_cluster(draft.cluster_id));
+        events.extend(match draft.sensor_id {
             Some(sid) => tree.attach_sensor(sid),
             None => tree.detach_sensor(),
-        }
+        });
         self.writer.save(&tree).await?;
-        self.event_bus
-            .publish(DomainEvent::TreeUpdated {
-                tree_id: tree.id,
-                old_cluster_id,
-                new_cluster_id: draft.cluster_id,
-            })
-            .await;
+        self.event_bus.publish_all(events).await;
         Ok(tree)
     }
 
@@ -125,18 +117,9 @@ impl TreeService {
         target: Option<Id<TreeCluster>>,
     ) -> Result<Tree, ServiceError> {
         let mut tree = self.reader.by_id(id).await?;
-        let old_cluster_id = tree.cluster_id();
-        tree.move_to_cluster(target);
+        let events = tree.move_to_cluster(target);
         self.writer.save(&tree).await?;
-        if old_cluster_id != target {
-            self.event_bus
-                .publish(DomainEvent::TreeUpdated {
-                    tree_id: tree.id,
-                    old_cluster_id,
-                    new_cluster_id: target,
-                })
-                .await;
-        }
+        self.event_bus.publish_all(events).await;
         Ok(tree)
     }
 
@@ -147,16 +130,18 @@ impl TreeService {
         sensor_id: SensorId,
     ) -> Result<Tree, ServiceError> {
         let mut tree = self.reader.by_id(id).await?;
-        tree.attach_sensor(sensor_id);
+        let events = tree.attach_sensor(sensor_id);
         self.writer.save(&tree).await?;
+        self.event_bus.publish_all(events).await;
         Ok(tree)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(tree.id = %id))]
     pub async fn detach_sensor(&self, id: Id<Tree>) -> Result<Tree, ServiceError> {
         let mut tree = self.reader.by_id(id).await?;
-        tree.detach_sensor();
+        let events = tree.detach_sensor();
         self.writer.save(&tree).await?;
+        self.event_bus.publish_all(events).await;
         Ok(tree)
     }
 
@@ -167,8 +152,9 @@ impl TreeService {
         status: WateringStatus,
     ) -> Result<Tree, ServiceError> {
         let mut tree = self.reader.by_id(id).await?;
-        tree.record_watering_status(status);
+        let events = tree.record_watering_status(status);
         self.writer.save(&tree).await?;
+        self.event_bus.publish_all(events).await;
         Ok(tree)
     }
 
@@ -176,7 +162,7 @@ impl TreeService {
     pub async fn delete(&self, id: Id<Tree>) -> Result<(), ServiceError> {
         let tree = self.reader.by_id(id).await?;
         let cluster_id = tree.cluster_id();
-        let had_sensor = tree.sensor_id().is_some();
+        let had_sensor = tree.had_sensor();
         self.writer.delete(id).await?;
         self.event_bus
             .publish(DomainEvent::TreeDeleted {
