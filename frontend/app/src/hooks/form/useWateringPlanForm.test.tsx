@@ -143,7 +143,7 @@ describe('useWateringPlanForm', () => {
     await waitFor(() => {
       expect(createMock).toHaveBeenCalledTimes(1)
       expect(createMock).toHaveBeenCalledWith({
-        body: {
+        wateringPlanCreateRequest: {
           date: futureDate.toISOString(),
           transporterId: 1,
           userIds: ['550e8400-e29b-41d4-a716-446655440000'],
@@ -188,9 +188,9 @@ describe('useWateringPlanForm', () => {
     await waitFor(() => {
       expect(updateMock).toHaveBeenCalledTimes(1)
       expect(updateMock).toHaveBeenCalledWith({
-        id: 5,
+        wateringPlanId: 5,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        body: expect.objectContaining({
+        wateringPlanUpdateRequest: expect.objectContaining({
           status: WateringPlanStatus.Active,
           transporterId: 1,
         }),

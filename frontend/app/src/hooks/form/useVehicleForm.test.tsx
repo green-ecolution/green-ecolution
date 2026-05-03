@@ -110,7 +110,7 @@ describe('useVehicleForm', () => {
     await waitFor(() => {
       expect(createMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          body: expect.objectContaining({
+          vehicleCreateRequest: expect.objectContaining({
             numberPlate: 'HH-AB-1234',
             model: 'Mercedes Sprinter',
           }) as unknown,
@@ -159,8 +159,10 @@ describe('useVehicleForm', () => {
     await waitFor(() => {
       expect(updateMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          id: 5,
-          body: expect.objectContaining({ numberPlate: 'HH-XY-5678' }) as unknown,
+          vehicleId: 5,
+          vehicleUpdateRequest: expect.objectContaining({
+            numberPlate: 'HH-XY-5678',
+          }) as unknown,
         }),
       )
     })
@@ -193,7 +195,7 @@ describe('useVehicleForm', () => {
     await waitFor(() => {
       expect(createMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          body: expect.objectContaining({
+          vehicleCreateRequest: expect.objectContaining({
             height: 3.0,
             width: 2.5,
             length: 7.0,

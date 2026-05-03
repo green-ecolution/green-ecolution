@@ -118,7 +118,7 @@ describe('useTreeForm', () => {
     await waitFor(() => {
       expect(createTreeMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          body: expect.objectContaining({
+          treeCreateRequest: expect.objectContaining({
             number: 'T-001',
             species: 'Oak',
           }) as unknown,
@@ -167,7 +167,7 @@ describe('useTreeForm', () => {
       expect(updateTreeMock).toHaveBeenCalledWith(
         expect.objectContaining({
           treeId: 5,
-          body: expect.objectContaining({ species: 'Maple' }) as unknown,
+          treeUpdateRequest: expect.objectContaining({ species: 'Maple' }) as unknown,
         }),
       )
     })

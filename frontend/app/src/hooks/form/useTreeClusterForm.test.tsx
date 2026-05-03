@@ -9,8 +9,8 @@ import useStore from '@/store/store'
 
 vi.mock('@/api/backendApi', () => ({
   clusterApi: {
-    createTreeCluster: vi.fn(),
-    updateTreeCluster: vi.fn(),
+    createCluster: vi.fn(),
+    updateCluster: vi.fn(),
   },
 }))
 
@@ -134,7 +134,7 @@ describe('useTreeClusterForm', () => {
     await waitFor(() => {
       expect(createMock).toHaveBeenCalledTimes(1)
       expect(createMock).toHaveBeenCalledWith({
-        body: {
+        treeClusterCreateRequest: {
           name: 'Test Cluster',
           address: 'Test Address 123',
           description: '',
@@ -183,7 +183,7 @@ describe('useTreeClusterForm', () => {
       expect(updateMock).toHaveBeenCalledWith({
         clusterId: 5,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        body: expect.objectContaining({
+        treeClusterUpdateRequest: expect.objectContaining({
           name: 'Updated Cluster',
           address: 'Updated Address',
         }),
