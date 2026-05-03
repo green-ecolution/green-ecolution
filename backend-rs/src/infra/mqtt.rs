@@ -21,12 +21,12 @@ use crate::{
 /// Spawns the MQTT subscriber as a tokio task. Returns `Ok(())` if disabled
 /// or if the task started successfully. The task itself logs and recovers
 /// from connection errors; the caller does not await its completion.
-pub fn spawn_mqtt_subscriber(
+pub fn spawn(
     settings: MqttSettings,
     sensor_service: Arc<SensorService>,
 ) -> Result<(), MqttSubscriberError> {
     if !settings.enabled {
-        tracing::info!("mqtt subscriber disabled (mqtt.enabled = false)");
+        tracing::info!("mqtt subscriber disabled due to config (mqtt.enabled = false)");
         return Ok(());
     }
     if settings.broker_url.is_empty() || settings.topic.is_empty() {

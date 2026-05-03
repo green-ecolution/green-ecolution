@@ -5,12 +5,10 @@ use tokio::net::TcpListener;
 
 use crate::{
     configuration::{AuthSettings, CorsSettings, DatabaseSettings, MqttSettings, Settings},
-    domain::auth::AuthRepository,
-    domain::user::UserRepository,
     http::{AppState, auth::AuthLayer, router},
     infra::{
-        keycloak::{JwksProvider, KeycloakAuthRepository, KeycloakClient, KeycloakUserRepository},
-        mqtt::spawn_mqtt_subscriber,
+        self,
+        keycloak::{AuthStack, JwksProvider},
         pg_cluster::PgTreeClusterRepository,
         pg_evaluation::PgEvaluationRepository,
         pg_region::PgRegionRepository,
@@ -21,7 +19,6 @@ use crate::{
         system_info::DefaultSystemInfoProvider,
     },
     service::{
-        auth_service::{AuthService, AuthServiceConfig},
         cluster_service::ClusterService,
         evaluation_service::EvaluationService,
         event_bus::{EventBus, InMemoryEventBus},
@@ -31,7 +28,6 @@ use crate::{
         region_service::RegionService,
         sensor_service::SensorService,
         tree_service::TreeService,
-        user_service::UserService,
         vehicle_service::VehicleService,
         watering_execution_service::WateringExecutionService,
         watering_plan_service::WateringPlanService,
@@ -58,21 +54,13 @@ impl Application {
         let app = Self::build_with_pool(
             pool,
             &address,
-            config.application.base_url,
-            config.cors,
-            config.auth,
+            config.application.base_url.clone(),
+            config.cors.clone(),
+            config.auth.clone(),
         )
         .await?;
 
-        // Background tasks. MQTT only fires when explicitly enabled in config;
-        // failure to spawn is logged but does not abort startup so the HTTP
-        // server still comes up.
-        if let Err(e) =
-            spawn_mqtt_subscriber(config.mqtt.clone(), app.state.sensor_service.clone())
-        {
-            tracing::error!(error = %e, "mqtt subscriber not started");
-        }
-
+        spawn_background_tasks(&config, &app);
         Ok(app)
     }
 
@@ -89,7 +77,7 @@ impl Application {
         mqtt: MqttSettings,
     ) -> Result<Self, std::io::Error> {
         let app = Self::build_with_pool(pool, address, base_url, cors, auth).await?;
-        if let Err(e) = spawn_mqtt_subscriber(mqtt, app.state.sensor_service.clone()) {
+        if let Err(e) = infra::mqtt::spawn(mqtt, app.state.sensor_service.clone()) {
             tracing::error!(error = %e, "mqtt subscriber not started");
         }
         Ok(app)
@@ -131,29 +119,12 @@ impl Application {
         let evaluation_repo: Arc<dyn crate::domain::evaluation::EvaluationRepository> =
             Arc::new(PgEvaluationRepository::new(pool));
 
-        let kc_client = Arc::new(
-            KeycloakClient::new(&auth)
-                .map_err(|e| std::io::Error::other(format!("keycloak client init: {e}")))?,
-        );
-        let jwks = Arc::new(JwksProvider::new(&kc_client, &auth));
-        if auth.enabled {
-            // Soft-fail: dev environments without a running Keycloak can still boot;
-            // the background refresher will pick up keys once it comes online.
-            if let Err(err) = jwks.refresh_now().await {
-                tracing::warn!(error = %err, "initial JWKS refresh failed; will retry in background");
-            }
-            jwks.spawn_background_refresh();
-        }
-
-        let auth_repo: Arc<dyn AuthRepository> =
-            Arc::new(KeycloakAuthRepository::new(kc_client.clone()));
-        let user_repo: Arc<dyn UserRepository> =
-            Arc::new(KeycloakUserRepository::new(kc_client.clone()));
-
-        let auth_service_config = AuthServiceConfig::from_settings(&auth)
-            .map_err(|e| std::io::Error::other(format!("auth service config: {e}")))?;
-        let auth_service = Arc::new(AuthService::new(auth_repo, auth_service_config));
-        let user_service = Arc::new(UserService::new(user_repo, auth.enabled));
+        let AuthStack {
+            auth_service,
+            user_service,
+            auth_layer,
+            jwks,
+        } = infra::keycloak::build(&auth).await?;
 
         // Event handlers
         let cluster_recalc_handler = Arc::new(ClusterRecalculationHandler::new(
@@ -232,8 +203,6 @@ impl Application {
             info_provider,
         });
 
-        let auth_layer = AuthLayer::new(jwks.clone(), &auth);
-
         let listener = TcpListener::bind(address).await?;
         let port = listener.local_addr()?.port();
 
@@ -271,4 +240,13 @@ pub async fn get_connection_pool(config: &DatabaseSettings) -> Result<PgPool, sq
         .max_connections(config.max_connections)
         .connect_with(config.connection_options())
         .await
+}
+
+/// Starts every background task that has its `enabled` flag set in
+/// `config`. Failures are logged and the HTTP server still comes up — a
+/// missing broker should not bring down a running deployment.
+fn spawn_background_tasks(config: &Settings, app: &Application) {
+    if let Err(e) = infra::mqtt::spawn(config.mqtt.clone(), app.state.sensor_service.clone()) {
+        tracing::error!(error = %e, "mqtt subscriber not started");
+    }
 }
