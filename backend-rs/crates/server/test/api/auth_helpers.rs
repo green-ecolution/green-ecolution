@@ -1,7 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
-use green_ecolution::configuration::AuthSettings;
 use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
 use rsa::{
     RsaPrivateKey, RsaPublicKey, pkcs1::EncodeRsaPrivateKey, pkcs8::LineEnding,
@@ -9,6 +8,7 @@ use rsa::{
 };
 use secrecy::SecretString;
 use serde_json::{Value, json};
+use server::configuration::AuthSettings;
 use uuid::Uuid;
 use wiremock::{
     Mock, MockServer, ResponseTemplate,

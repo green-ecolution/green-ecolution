@@ -368,7 +368,10 @@ mod tests {
         let events = p.cancel("aborted mid-run".to_string()).unwrap();
         assert_eq!(p.status(), WateringPlanStatus::Canceled);
         assert_eq!(p.cancellation_note(), Some("aborted mid-run"));
-        assert!(matches!(events[0], DomainEvent::WateringPlanCanceled { .. }));
+        assert!(matches!(
+            events[0],
+            DomainEvent::WateringPlanCanceled { .. }
+        ));
     }
 
     #[test]

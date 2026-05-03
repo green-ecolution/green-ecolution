@@ -236,7 +236,12 @@ async fn handle_message_creates_sensor_links_nearest_tree_and_updates_watering_s
                               geometry, description)
         VALUES ($1, 'Eiche', 'T-MQ-1', 53.55, 9.99,
                 ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test')"#,
-        chrono::Utc::now().date_naive().format("%Y").to_string().parse::<i32>().unwrap(),
+        chrono::Utc::now()
+            .date_naive()
+            .format("%Y")
+            .to_string()
+            .parse::<i32>()
+            .unwrap(),
     )
     .execute(&app.db_pool)
     .await
@@ -279,7 +284,12 @@ async fn handle_message_known_sensor_updates_only_status_and_publishes_event() {
                               geometry, description, watering_status)
         VALUES ('sensor-known', $1, 'Eiche', 'T-KN', 53.55, 9.99,
                 ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', 'unknown')"#,
-        chrono::Utc::now().date_naive().format("%Y").to_string().parse::<i32>().unwrap(),
+        chrono::Utc::now()
+            .date_naive()
+            .format("%Y")
+            .to_string()
+            .parse::<i32>()
+            .unwrap(),
     )
     .execute(&app.db_pool)
     .await

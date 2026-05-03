@@ -369,10 +369,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c673075a2e0e5f4a1dde27ce9dee1ea4558c7ffe648f576438a20ca1d2acc4b0"
 dependencies = [
  "iana-time-zone",
- "js-sys",
  "num-traits",
  "serde",
- "wasm-bindgen",
  "windows-link",
 ]
 
@@ -1012,51 +1010,6 @@ dependencies = [
  "rand_core 0.10.1",
  "wasip2",
  "wasip3",
-]
-
-[[package]]
-name = "green-ecolution"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "axum",
- "base64 0.22.1",
- "chrono",
- "claims",
- "config",
- "futures",
- "hostname",
- "include_dir",
- "jsonwebtoken",
- "libc",
- "log",
- "quickcheck",
- "quickcheck_macros",
- "rand 0.8.6",
- "reqwest",
- "rsa",
- "rumqttc",
- "secrecy",
- "serde",
- "serde-aux",
- "serde_json",
- "serde_urlencoded",
- "sqlx",
- "testcontainers",
- "testcontainers-modules",
- "thiserror",
- "tokio",
- "tower",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "url",
- "utoipa",
- "utoipa-axum",
- "utoipa-swagger-ui",
- "uuid",
- "wiremock",
 ]
 
 [[package]]
@@ -2880,6 +2833,51 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "server"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "base64 0.22.1",
+ "chrono",
+ "claims",
+ "config",
+ "futures",
+ "hostname",
+ "include_dir",
+ "jsonwebtoken",
+ "libc",
+ "log",
+ "quickcheck",
+ "quickcheck_macros",
+ "rand 0.8.6",
+ "reqwest",
+ "rsa",
+ "rumqttc",
+ "secrecy",
+ "serde",
+ "serde-aux",
+ "serde_json",
+ "serde_urlencoded",
+ "sqlx",
+ "testcontainers",
+ "testcontainers-modules",
+ "thiserror",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "utoipa",
+ "utoipa-axum",
+ "utoipa-swagger-ui",
+ "uuid",
+ "wiremock",
 ]
 
 [[package]]

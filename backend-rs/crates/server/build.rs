@@ -2,10 +2,10 @@ use std::process::Command;
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=migrations");
-    println!("cargo:rerun-if-changed=seeds");
-    println!("cargo:rerun-if-changed=../.git/HEAD");
-    println!("cargo:rerun-if-changed=../.git/refs");
+    println!("cargo:rerun-if-changed=../../migrations");
+    println!("cargo:rerun-if-changed=../../seeds");
+    println!("cargo:rerun-if-changed=../../../.git/HEAD");
+    println!("cargo:rerun-if-changed=../../../.git/refs");
     for var in [
         "GE_VERSION",
         "GE_GIT_COMMIT",

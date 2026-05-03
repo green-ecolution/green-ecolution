@@ -1,0 +1,70 @@
+[package]
+name = "server"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Green Ecolution backend server"
+readme = "../../../README.md"
+publish.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+path = "src/main.rs"
+name = "green-ecolution"
+
+[[bin]]
+path = "src/bin/migrate.rs"
+name = "migrate"
+
+[[test]]
+name = "api"
+path = "test/api/main.rs"
+
+[dependencies]
+anyhow = "1.0.102"
+async-trait = { workspace = true }
+axum = { version = "0.8.9", features = ["json"] }
+base64 = "0.22"
+chrono = { workspace = true }
+config = "0.15.22"
+futures = "0.3"
+hostname = "0.4"
+include_dir = "0.7"
+jsonwebtoken = "9.3"
+log = "0.4"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+rumqttc = "0.25"
+secrecy = { workspace = true }
+serde = { workspace = true }
+serde-aux = "4.7.0"
+serde_json = { workspace = true }
+serde_urlencoded = "0.7"
+sqlx = { version = "0.8.6", features = ["runtime-tokio", "tls-rustls", "postgres", "chrono", "uuid", "json"] }
+thiserror = { workspace = true }
+tokio = { version = "1.52.1", features = ["full"] }
+tower = "0.5"
+tower-http = { version = "0.6.8", features = ["cors", "trace", "request-id"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+url = "2.5.8"
+uuid = { workspace = true }
+utoipa = { version = "5", features = ["axum_extras"] }
+utoipa-axum = "0.2"
+utoipa-swagger-ui = { version = "9", features = ["axum"] }
+
+[dev-dependencies]
+claims = "0.8"
+libc = "0.2"
+quickcheck = "1"
+quickcheck_macros = "1"
+rand = "0.8"
+rsa = { version = "0.9", features = ["sha2"] }
+testcontainers = { version = "0.25", features = ["watchdog"] }
+testcontainers-modules = { version = "0.13", features = ["postgres"] }
+wiremock = "0.6.5"

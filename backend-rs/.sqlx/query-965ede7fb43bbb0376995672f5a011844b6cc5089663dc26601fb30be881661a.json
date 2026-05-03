@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT sensor_id FROM trees WHERE number = 'T-MQ-1'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "sensor_id",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "965ede7fb43bbb0376995672f5a011844b6cc5089663dc26601fb30be881661a"
+}

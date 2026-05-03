@@ -1,12 +1,12 @@
-use green_ecolution::configuration::get_configuration;
 use include_dir::{Dir, include_dir};
 use secrecy::ExposeSecret;
+use server::configuration::get_configuration;
 use sqlx::postgres::PgConnectOptions;
 use sqlx::{Connection, Executor, PgConnection, PgPool, migrate::Migrator};
 use std::env;
 
-static MIGRATOR: Migrator = sqlx::migrate!("./migrations");
-static SEEDS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/seeds");
+static MIGRATOR: Migrator = sqlx::migrate!("../../migrations");
+static SEEDS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../seeds");
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

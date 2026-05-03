@@ -1,13 +1,13 @@
 use std::sync::{Arc, OnceLock};
 
-use green_ecolution::{
+use secrecy::SecretString;
+use server::{
     configuration::{AuthSettings, CorsSettings},
     domain::sensor::data::MqttPayload,
     http::AppState,
     service::ServiceError,
     startup::Application,
 };
-use secrecy::SecretString;
 use sqlx::{Connection, Executor, PgConnection, PgPool, postgres::PgPoolOptions};
 use testcontainers::{ContainerAsync, GenericImage, ImageExt, runners::AsyncRunner};
 use tokio::sync::OnceCell;
@@ -145,7 +145,7 @@ async fn create_test_database(host_port: u16) -> (String, PgPool) {
         .await
         .expect("failed to connect to test database");
 
-    sqlx::migrate!("./migrations")
+    sqlx::migrate!("../../migrations")
         .run(&pool)
         .await
         .expect("failed to run migrations");

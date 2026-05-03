@@ -1,4 +1,4 @@
-use green_ecolution::{configuration::get_configuration, startup::Application, telemetry};
+use server::{configuration::get_configuration, startup::Application, telemetry};
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {

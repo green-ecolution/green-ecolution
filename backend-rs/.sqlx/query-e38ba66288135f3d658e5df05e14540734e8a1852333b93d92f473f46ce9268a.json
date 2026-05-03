@@ -37,8 +37,7 @@
             "kind": {
               "Enum": [
                 "transporter",
-                "trailer",
-                "unknown"
+                "trailer"
               ]
             }
           }

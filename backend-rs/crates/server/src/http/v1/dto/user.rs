@@ -5,8 +5,8 @@ use crate::domain::{
     auth::{ClientToken, LoginResponse as DomainLoginResponse},
     shared::{email::Email, error::ValidationError},
     user::{
-        UserCreate as DomainUserCreate, UserRole as DomainUserRole,
-        UserStatus as DomainUserStatus, UserView as DomainUserView, Username,
+        UserCreate as DomainUserCreate, UserRole as DomainUserRole, UserStatus as DomainUserStatus,
+        UserView as DomainUserView, Username,
     },
 };
 use crate::service::ServiceError;

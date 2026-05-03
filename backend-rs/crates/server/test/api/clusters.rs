@@ -729,7 +729,9 @@ async fn attaching_sensor_to_tree_recalculates_cluster_status() {
         "tree_cluster_id": cid,
         "sensor_id": "s-attach",
     });
-    let upd = app.put_json(&format!("/api/v1/trees/{}", tree_id), &update).await;
+    let upd = app
+        .put_json(&format!("/api/v1/trees/{}", tree_id), &update)
+        .await;
     assert_eq!(upd.status().as_u16(), 200);
 
     let after = app.get(&format!("/api/v1/clusters/{}", cid)).await;

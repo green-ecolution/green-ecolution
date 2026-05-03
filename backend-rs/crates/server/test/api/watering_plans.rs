@@ -315,13 +315,7 @@ async fn finish_watering_plan_propagates_last_watered_and_persists_evaluations()
     let plan: serde_json::Value = create_resp.json().await.unwrap();
     let plan_id = plan["id"].as_i64().unwrap();
 
-    let activate = update_body_with_status(
-        tid,
-        vec![cid],
-        "active",
-        "",
-        serde_json::json!([]),
-    );
+    let activate = update_body_with_status(tid, vec![cid], "active", "", serde_json::json!([]));
     let activate_resp = app
         .put_json(&format!("/api/v1/watering-plans/{}", plan_id), &activate)
         .await;

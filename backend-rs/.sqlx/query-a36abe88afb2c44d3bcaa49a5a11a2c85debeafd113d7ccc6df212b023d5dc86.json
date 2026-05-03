@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT watering_status::text AS \"ws!\" FROM trees WHERE number = 'T-KN'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "ws!",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "a36abe88afb2c44d3bcaa49a5a11a2c85debeafd113d7ccc6df212b023d5dc86"
+}
