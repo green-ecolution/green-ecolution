@@ -5,6 +5,7 @@ use serde::Deserialize;
 use serde_wasm_bindgen::{from_value, to_value};
 use wasm_bindgen::prelude::*;
 
+use crate::coerce::{LooseF64, invalid_number_issue};
 use crate::issue::ValidationIssue;
 
 #[derive(Debug, Deserialize)]
@@ -15,11 +16,11 @@ pub(crate) struct VehicleDraftInput {
     pub r#type: String,
     pub driving_license: String,
     pub status: String,
-    pub water_capacity: f64,
-    pub height: f64,
-    pub width: f64,
-    pub length: f64,
-    pub weight: f64,
+    pub water_capacity: LooseF64,
+    pub height: LooseF64,
+    pub width: LooseF64,
+    pub length: LooseF64,
+    pub weight: LooseF64,
     #[serde(default)]
     #[allow(dead_code)] // free-text DTO field, not validated
     pub description: Option<String>,
@@ -77,18 +78,52 @@ pub(crate) fn collect_vehicle_issues(input: &VehicleDraftInput) -> Vec<Validatio
             VALID_VEHICLE_STATUSES,
         ));
     }
-    if let Err(err) = WaterCapacity::new(input.water_capacity) {
-        issues.push(ValidationIssue::from_error(&err, "waterCapacity"));
-    }
-    if let Err(err) = VehicleDimension::new(input.height, input.width, input.length, input.weight) {
-        let path = match &err {
-            ValidationError::OutOfRange { field, .. }
-            | ValidationError::InvalidFormat { field, .. } => {
-                field.rsplit('.').next().unwrap_or("dimension")
+
+    match input.water_capacity.0 {
+        None => issues.push(invalid_number_issue(
+            "vehicle.water_capacity",
+            "waterCapacity",
+        )),
+        Some(n) => {
+            if let Err(err) = WaterCapacity::new(n) {
+                issues.push(ValidationIssue::from_error(&err, "waterCapacity"));
             }
-            _ => "dimension",
-        };
-        issues.push(ValidationIssue::from_error(&err, path));
+        }
+    }
+
+    let dims = (
+        input.height.0,
+        input.width.0,
+        input.length.0,
+        input.weight.0,
+    );
+    match dims {
+        (Some(h), Some(w), Some(l), Some(wt)) => {
+            if let Err(err) = VehicleDimension::new(h, w, l, wt) {
+                let path = match &err {
+                    ValidationError::OutOfRange { field, .. }
+                    | ValidationError::InvalidFormat { field, .. } => {
+                        field.rsplit('.').next().unwrap_or("dimension")
+                    }
+                    _ => "dimension",
+                };
+                issues.push(ValidationIssue::from_error(&err, path));
+            }
+        }
+        _ => {
+            if input.height.0.is_none() {
+                issues.push(invalid_number_issue("vehicle.dimension.height", "height"));
+            }
+            if input.width.0.is_none() {
+                issues.push(invalid_number_issue("vehicle.dimension.width", "width"));
+            }
+            if input.length.0.is_none() {
+                issues.push(invalid_number_issue("vehicle.dimension.length", "length"));
+            }
+            if input.weight.0.is_none() {
+                issues.push(invalid_number_issue("vehicle.dimension.weight", "weight"));
+            }
+        }
     }
 
     issues
@@ -112,11 +147,11 @@ mod tests {
             r#type: "transporter".into(),
             driving_license: "B".into(),
             status: "available".into(),
-            water_capacity: 100.0,
-            height: 2.5,
-            width: 2.0,
-            length: 6.0,
-            weight: 3500.0,
+            water_capacity: LooseF64(Some(100.0)),
+            height: LooseF64(Some(2.5)),
+            width: LooseF64(Some(2.0)),
+            length: LooseF64(Some(6.0)),
+            weight: LooseF64(Some(3500.0)),
             description: None,
         }
     }
@@ -166,12 +201,36 @@ mod tests {
     #[test]
     fn negative_water_capacity_yields_issue() {
         let mut input = valid();
-        input.water_capacity = -10.0;
+        input.water_capacity = LooseF64(Some(-10.0));
         let issues = collect_vehicle_issues(&input);
         let issue = issues
             .iter()
             .find(|i| i.path == "waterCapacity")
             .expect("water_capacity issue");
         assert!(issue.key.contains("water_capacity"));
+    }
+
+    #[test]
+    fn unparseable_height_yields_issue() {
+        let mut input = valid();
+        input.height = LooseF64(None);
+        let issues = collect_vehicle_issues(&input);
+        let issue = issues
+            .iter()
+            .find(|i| i.path == "height")
+            .expect("height issue");
+        assert_eq!(issue.key, "vehicle.dimension.height.invalidFormat");
+    }
+
+    #[test]
+    fn unparseable_water_capacity_yields_issue() {
+        let mut input = valid();
+        input.water_capacity = LooseF64(None);
+        let issues = collect_vehicle_issues(&input);
+        let issue = issues
+            .iter()
+            .find(|i| i.path == "waterCapacity")
+            .expect("water_capacity issue");
+        assert_eq!(issue.key, "vehicle.water_capacity.invalidFormat");
     }
 }

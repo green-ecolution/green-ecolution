@@ -12,12 +12,15 @@ const messages: Record<string, Renderer> = {
   'tree.number.tooLong': (p) => `Baumnummer darf maximal ${p.max} Zeichen lang sein.`,
   'tree.planting_year.outOfRange': (p) =>
     `Pflanzjahr muss zwischen ${p.min} und ${p.max} liegen.`,
+  'tree.planting_year.invalidFormat': () => 'Pflanzjahr muss eine ganze Zahl sein.',
 
   // Coordinate
   'coordinate.latitude.outOfRange': (p) =>
     `Breitengrad muss zwischen ${p.min} und ${p.max} liegen (war ${p.got}).`,
   'coordinate.longitude.outOfRange': (p) =>
     `Längengrad muss zwischen ${p.min} und ${p.max} liegen (war ${p.got}).`,
+  'coordinate.latitude.invalidFormat': () => 'Breitengrad muss eine Zahl sein.',
+  'coordinate.longitude.invalidFormat': () => 'Längengrad muss eine Zahl sein.',
 
   // Cluster
   'cluster.name.empty': () => 'Name ist erforderlich.',
@@ -38,10 +41,15 @@ const messages: Record<string, Renderer> = {
   'vehicle.model.tooLong': (p) => `Modell darf maximal ${p.max} Zeichen lang sein.`,
   'water_capacity.outOfRange': (p) =>
     `Wasserkapazität muss zwischen ${p.min} und ${p.max} Liter liegen.`,
+  'vehicle.water_capacity.invalidFormat': () => 'Wasserkapazität muss eine Zahl sein.',
   'vehicle.dimension.height.outOfRange': () => 'Höhe ist erforderlich.',
   'vehicle.dimension.width.outOfRange': () => 'Breite ist erforderlich.',
   'vehicle.dimension.length.outOfRange': () => 'Länge ist erforderlich.',
   'vehicle.dimension.weight.outOfRange': () => 'Gewicht ist erforderlich.',
+  'vehicle.dimension.height.invalidFormat': () => 'Höhe muss eine Zahl sein.',
+  'vehicle.dimension.width.invalidFormat': () => 'Breite muss eine Zahl sein.',
+  'vehicle.dimension.length.invalidFormat': () => 'Länge muss eine Zahl sein.',
+  'vehicle.dimension.weight.invalidFormat': () => 'Gewicht muss eine Zahl sein.',
   'vehicle.type.invalidFormat': () => 'Kein korrekter Fahrzeugtyp.',
   'vehicle.driving_license.invalidFormat': () => 'Keine korrekte Fahrzeugerlaubnis.',
   'vehicle.status.invalidFormat': () => 'Kein korrekter Fahrzeugstatus.',

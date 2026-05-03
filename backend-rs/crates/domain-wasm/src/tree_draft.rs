@@ -4,6 +4,7 @@ use serde::Deserialize;
 use serde_wasm_bindgen::{from_value, to_value};
 use wasm_bindgen::prelude::*;
 
+use crate::coerce::{LooseF64, LooseU32, invalid_number_issue};
 use crate::issue::ValidationIssue;
 
 #[derive(Debug, Deserialize)]
@@ -11,12 +12,11 @@ use crate::issue::ValidationIssue;
 pub(crate) struct TreeDraftInput {
     pub number: String,
     pub species: String,
-    pub planting_year: u32,
-    pub latitude: f64,
-    pub longitude: f64,
+    pub planting_year: LooseU32,
+    pub latitude: LooseF64,
+    pub longitude: LooseF64,
     #[serde(default)]
-    #[allow(dead_code)]
-    // reason: part of the expected frontend DTO shape; validation only checks specific fields
+    #[allow(dead_code)] // free-text DTO field, not validated
     pub description: Option<String>,
 }
 
@@ -29,19 +29,38 @@ pub(crate) fn collect_tree_issues(input: &TreeDraftInput) -> Vec<ValidationIssue
     if let Err(err) = Species::new(&input.species) {
         issues.push(ValidationIssue::from_error(&err, "species"));
     }
-    if let Err(err) = PlantingYear::new(input.planting_year) {
-        issues.push(ValidationIssue::from_error(&err, "plantingYear"));
-    }
-    if let Err(err) = Coordinate::new(input.latitude, input.longitude) {
-        let path = match &err {
-            domain::shared::error::ValidationError::OutOfRange { field, .. }
-                if *field == "coordinate.longitude" =>
-            {
-                "longitude"
+
+    match input.planting_year.0 {
+        None => issues.push(invalid_number_issue("tree.planting_year", "plantingYear")),
+        Some(year) => {
+            if let Err(err) = PlantingYear::new(year) {
+                issues.push(ValidationIssue::from_error(&err, "plantingYear"));
             }
-            _ => "latitude",
-        };
-        issues.push(ValidationIssue::from_error(&err, path));
+        }
+    }
+
+    match (input.latitude.0, input.longitude.0) {
+        (Some(lat), Some(lng)) => {
+            if let Err(err) = Coordinate::new(lat, lng) {
+                let path = match &err {
+                    domain::shared::error::ValidationError::OutOfRange { field, .. }
+                        if *field == "coordinate.longitude" =>
+                    {
+                        "longitude"
+                    }
+                    _ => "latitude",
+                };
+                issues.push(ValidationIssue::from_error(&err, path));
+            }
+        }
+        _ => {
+            if input.latitude.0.is_none() {
+                issues.push(invalid_number_issue("coordinate.latitude", "latitude"));
+            }
+            if input.longitude.0.is_none() {
+                issues.push(invalid_number_issue("coordinate.longitude", "longitude"));
+            }
+        }
     }
 
     issues
@@ -62,9 +81,9 @@ mod tests {
         TreeDraftInput {
             number: "FL-001".into(),
             species: "Quercus".into(),
-            planting_year: 2020,
-            latitude: 52.5,
-            longitude: 13.4,
+            planting_year: LooseU32(Some(2020)),
+            latitude: LooseF64(Some(52.5)),
+            longitude: LooseF64(Some(13.4)),
             description: None,
         }
     }
@@ -88,7 +107,7 @@ mod tests {
     #[test]
     fn future_planting_year_yields_planting_year_issue() {
         let mut input = valid_input();
-        input.planting_year = 9999;
+        input.planting_year = LooseU32(Some(9999));
         let issues = collect_tree_issues(&input);
         assert_eq!(issues.len(), 1);
         assert_eq!(issues[0].path, "plantingYear");
@@ -96,9 +115,19 @@ mod tests {
     }
 
     #[test]
+    fn unparseable_planting_year_yields_issue() {
+        let mut input = valid_input();
+        input.planting_year = LooseU32(None);
+        let issues = collect_tree_issues(&input);
+        assert_eq!(issues.len(), 1);
+        assert_eq!(issues[0].path, "plantingYear");
+        assert_eq!(issues[0].key, "tree.planting_year.invalidFormat");
+    }
+
+    #[test]
     fn out_of_range_longitude_yields_longitude_issue() {
         let mut input = valid_input();
-        input.longitude = 181.0;
+        input.longitude = LooseF64(Some(181.0));
         let issues = collect_tree_issues(&input);
         assert_eq!(issues.len(), 1);
         assert_eq!(issues[0].path, "longitude");
@@ -106,13 +135,25 @@ mod tests {
     }
 
     #[test]
+    fn unparseable_latitude_yields_issue() {
+        let mut input = valid_input();
+        input.latitude = LooseF64(None);
+        let issues = collect_tree_issues(&input);
+        assert!(
+            issues
+                .iter()
+                .any(|i| i.path == "latitude" && i.key == "coordinate.latitude.invalidFormat")
+        );
+    }
+
+    #[test]
     fn collects_multiple_issues_not_fail_fast() {
         let input = TreeDraftInput {
             number: "".into(),
             species: "".into(),
-            planting_year: 9999,
-            latitude: 91.0,
-            longitude: 0.0,
+            planting_year: LooseU32(Some(9999)),
+            latitude: LooseF64(Some(91.0)),
+            longitude: LooseF64(Some(0.0)),
             description: None,
         };
         let issues = collect_tree_issues(&input);

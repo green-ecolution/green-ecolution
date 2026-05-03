@@ -4,6 +4,7 @@
 //! per-aggregate draft validators. No business logic lives here.
 
 mod cluster_draft;
+mod coerce;
 mod field_validators;
 mod issue;
 mod plan_draft;
