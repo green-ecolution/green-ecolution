@@ -24,6 +24,7 @@ use crate::shared::{
 
 pub use error::SensorError;
 pub use repository::{SensorReader, SensorReadingReader, SensorReadingWriter, SensorWriter};
+#[doc(hidden)]
 #[allow(unused_imports)]
 pub use snapshot::SensorSnapshot;
 pub use view::SensorView;
@@ -82,6 +83,7 @@ pub struct SensorDraft {
 }
 
 impl Sensor {
+    #[doc(hidden)]
     #[allow(dead_code)]
     pub fn reconstitute(snap: SensorSnapshot) -> Self {
         Self {

@@ -30,6 +30,7 @@ pub use error::VehicleError;
 pub use license::DrivingLicense;
 pub use repository::{VehicleReader, VehicleWriter};
 #[allow(unused_imports)]
+#[doc(hidden)]
 pub use snapshot::VehicleSnapshot;
 pub use view::VehicleView;
 
@@ -216,6 +217,7 @@ pub struct VehicleUpdate {
 }
 
 impl Vehicle {
+    #[doc(hidden)]
     #[allow(dead_code)]
     pub fn reconstitute(snap: VehicleSnapshot) -> Self {
         Self {

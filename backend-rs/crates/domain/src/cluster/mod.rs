@@ -34,6 +34,7 @@ use crate::{
 
 pub use error::ClusterError;
 pub use repository::{TreeClusterReader, TreeClusterWriter};
+#[doc(hidden)]
 #[allow(unused_imports)]
 pub use snapshot::TreeClusterSnapshot;
 pub use soil_condition::SoilCondition;
@@ -139,6 +140,7 @@ pub struct TreeClusterUpdate {
 }
 
 impl TreeCluster {
+    #[doc(hidden)]
     #[allow(dead_code)]
     pub fn reconstitute(snap: TreeClusterSnapshot) -> Self {
         let coordinates = match (snap.latitude, snap.longitude) {

@@ -17,6 +17,7 @@ use crate::{
 pub use error::RegionError;
 pub use repository::{RegionReader, RegionWriter};
 #[allow(unused_imports)]
+#[doc(hidden)]
 pub use snapshot::RegionSnapshot;
 
 /// Region name, 1–255 characters after trimming.
@@ -57,6 +58,7 @@ pub struct RegionDraft {
 }
 
 impl Region {
+    #[doc(hidden)]
     #[allow(dead_code)]
     pub fn reconstitute(snap: RegionSnapshot) -> Self {
         Self {

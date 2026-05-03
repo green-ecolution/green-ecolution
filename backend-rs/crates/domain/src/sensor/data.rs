@@ -35,6 +35,7 @@ pub struct SensorReadingView {
     pub data: Value,
 }
 
+#[doc(hidden)]
 #[derive(Debug, Clone)]
 pub struct SensorReadingSnapshot {
     pub id: i32,
@@ -44,6 +45,7 @@ pub struct SensorReadingSnapshot {
 }
 
 impl SensorReading {
+    #[doc(hidden)]
     #[allow(dead_code)]
     pub fn reconstitute(snap: SensorReadingSnapshot) -> Self {
         Self {

@@ -35,6 +35,7 @@ use crate::{
 pub use error::TreeError;
 pub use planting_year::PlantingYear;
 pub use repository::{TreeReader, TreeWriter};
+#[doc(hidden)]
 #[allow(unused_imports)]
 pub use snapshot::TreeSnapshot;
 pub use view::{TreeView, TreeViewWithDistance};
@@ -131,6 +132,7 @@ pub struct TreeSearchQuery {
 }
 
 impl Tree {
+    #[doc(hidden)]
     #[allow(dead_code)]
     pub fn reconstitute(snap: TreeSnapshot) -> Self {
         Self {
