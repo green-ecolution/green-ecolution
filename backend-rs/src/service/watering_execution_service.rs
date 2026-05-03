@@ -4,11 +4,7 @@ use chrono::Utc;
 
 use crate::domain::{
     Id,
-    events::DomainEvent,
-    watering_plan::{
-        WateringPlan, WateringPlanEvaluation, WateringPlanReader, WateringPlanStatus,
-        WateringPlanWriter,
-    },
+    watering_plan::{WateringPlan, WateringPlanEvaluation, WateringPlanReader, WateringPlanWriter},
 };
 
 use super::{ServiceError, event_bus::EventBus};
@@ -39,7 +35,8 @@ impl WateringExecutionService {
         evaluations: Vec<WateringPlanEvaluation>,
     ) -> Result<WateringPlan, ServiceError> {
         let mut plan = self.reader.by_id(id).await?;
-        plan.finish(&evaluations)
+        let events = plan
+            .finish(&evaluations)
             .map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
 
         let cluster_ids: Vec<_> = plan.cluster_ids().to_vec();
@@ -51,13 +48,7 @@ impl WateringExecutionService {
             .propagate_last_watered(&cluster_ids, now)
             .await?;
 
-        self.event_bus
-            .publish(DomainEvent::WateringPlanStatusChanged {
-                plan_id: plan.id,
-                cluster_ids,
-                new_status: WateringPlanStatus::Finished,
-            })
-            .await;
+        self.event_bus.publish_all(events).await;
 
         Ok(plan)
     }

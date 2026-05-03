@@ -32,6 +32,7 @@ use url::Url;
 use crate::domain::{
     Id,
     cluster::TreeCluster,
+    events::DomainEvent,
     shared::{
         distance::Distance,
         provenance::{Provenance, ProviderId},
@@ -227,12 +228,14 @@ impl WateringPlan {
     /// Transitions `Active → Finished`.
     ///
     /// Requires exactly one [`WateringPlanEvaluation`] per `cluster_id` that
-    /// is currently assigned (checked by `cluster_id` value at call time).
-    /// Missing evaluations result in [`WateringPlanError::EvaluationMissingForCluster`].
+    /// is currently assigned. Missing evaluations result in
+    /// [`WateringPlanError::EvaluationMissingForCluster`]. On success returns
+    /// a [`DomainEvent::WateringPlanFinished`] with the cluster IDs and
+    /// evaluations cloned for the event payload.
     pub fn finish(
         &mut self,
         evaluations: &[WateringPlanEvaluation],
-    ) -> Result<(), WateringPlanError> {
+    ) -> Result<Vec<DomainEvent>, WateringPlanError> {
         if self.status != WateringPlanStatus::Active {
             return Err(WateringPlanError::InvalidStateTransition {
                 from: self.status,
@@ -247,7 +250,12 @@ impl WateringPlan {
             }
         }
         self.status = WateringPlanStatus::Finished;
-        Ok(())
+        Ok(vec![DomainEvent::WateringPlanFinished {
+            plan_id: self.id,
+            cluster_ids: self.cluster_ids.clone(),
+            finished_at: chrono::Utc::now(),
+            evaluations: evaluations.to_vec(),
+        }])
     }
 
     #[allow(dead_code)]
@@ -374,7 +382,7 @@ mod tests {
     }
 
     #[test]
-    fn finish_succeeds_when_all_clusters_have_evaluations() {
+    fn finish_succeeds_emits_event_when_all_clusters_have_evaluations() {
         let mut p = fixed_plan();
         p.start().unwrap();
         let evals = vec![
@@ -389,8 +397,13 @@ mod tests {
                 consumed_water: 50.0,
             },
         ];
-        p.finish(&evals).unwrap();
+        let events = p.finish(&evals).unwrap();
         assert_eq!(p.status(), WateringPlanStatus::Finished);
+        assert_eq!(events.len(), 1);
+        assert!(matches!(
+            events[0],
+            DomainEvent::WateringPlanFinished { .. }
+        ));
     }
 
     #[test]
