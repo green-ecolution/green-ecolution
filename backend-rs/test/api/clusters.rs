@@ -574,7 +574,7 @@ async fn tree_position_update_recalculates_cluster_center() {
     assert!((before_body["latitude"].as_f64().unwrap() - 53.50).abs() < 0.001);
     assert!((before_body["longitude"].as_f64().unwrap() - 9.90).abs() < 0.001);
 
-    // Move tree to (53.60, 10.10) → TreeUpdated event → cluster recalc
+    // Move tree to (53.60, 10.10) → TreeCoordinateChanged event → cluster recalc
     let update_body = serde_json::json!({
         "species": "Eiche",
         "number": "T-POS",
