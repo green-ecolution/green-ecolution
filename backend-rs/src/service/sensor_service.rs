@@ -11,7 +11,7 @@ use crate::domain::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
     },
-    tree::TreeWriter,
+    tree::{TreeReader, TreeWriter},
 };
 
 use super::{ServiceError, event_bus::EventBus};
@@ -21,6 +21,7 @@ pub struct SensorService {
     writer: Arc<dyn SensorWriter>,
     reading_reader: Arc<dyn SensorReadingReader>,
     reading_writer: Arc<dyn SensorReadingWriter>,
+    tree_reader: Arc<dyn TreeReader>,
     tree_writer: Arc<dyn TreeWriter>,
     event_bus: Arc<dyn EventBus>,
 }
@@ -31,6 +32,7 @@ impl SensorService {
         writer: Arc<dyn SensorWriter>,
         reading_reader: Arc<dyn SensorReadingReader>,
         reading_writer: Arc<dyn SensorReadingWriter>,
+        tree_reader: Arc<dyn TreeReader>,
         tree_writer: Arc<dyn TreeWriter>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
@@ -39,6 +41,7 @@ impl SensorService {
             writer,
             reading_reader,
             reading_writer,
+            tree_reader,
             tree_writer,
             event_bus,
         }
@@ -100,14 +103,13 @@ impl SensorService {
 
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
     pub async fn delete(&self, id: &SensorId) -> Result<(), ServiceError> {
-        self.tree_writer.unlink_sensor_id(id).await?;
+        let mut events = Vec::new();
+        if let Some(mut tree) = self.tree_reader.by_sensor_id(id).await? {
+            events.extend(tree.detach_sensor());
+            self.tree_writer.save(&tree).await?;
+        }
         self.writer.delete(id).await?;
-        self.event_bus
-            .publish(DomainEvent::SensorDeleted {
-                sensor_id: id.clone(),
-                affected_tree_ids: vec![],
-            })
-            .await;
+        self.event_bus.publish_all(events).await;
         Ok(())
     }
 

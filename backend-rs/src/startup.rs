@@ -146,7 +146,7 @@ impl Application {
         // Domain services
         let region_service = Arc::new(RegionService::new(region_reader, region_writer));
         let tree_service = Arc::new(TreeService::new(
-            tree_reader,
+            tree_reader.clone(),
             tree_writer.clone(),
             event_bus.clone(),
         ));
@@ -155,6 +155,7 @@ impl Application {
             sensor_writer,
             sensor_reading_reader,
             sensor_reading_writer,
+            tree_reader.clone(),
             tree_writer.clone(),
             event_bus.clone(),
         ));
