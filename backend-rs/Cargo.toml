@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/server"]
+members = ["crates/server", "crates/domain"]
 
 [workspace.package]
 version = "0.1.0"
@@ -13,7 +13,7 @@ homepage = "https://green-ecolution.de"
 publish = false
 
 [workspace.dependencies]
-# Cross-crate shared deps. Domain crate (added in Task 3) will pull from here too.
+# Shared across all workspace crates.
 async-trait = "0.1.89"
 chrono = { version = "0.4.44", default-features = false, features = ["clock", "serde"] }
 secrecy = { version = "0.10.3", features = ["serde"] }
