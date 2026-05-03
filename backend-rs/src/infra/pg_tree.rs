@@ -488,26 +488,4 @@ impl TreeWriter for PgTreeRepository {
 
         Ok(())
     }
-
-    #[tracing::instrument(level = "trace", skip_all)]
-    async fn unlink_cluster_id(&self, cluster_id: Id<TreeCluster>) -> Result<(), RepositoryError> {
-        sqlx::query!(
-            "UPDATE trees SET tree_cluster_id = NULL WHERE tree_cluster_id = $1",
-            cluster_id.value()
-        )
-        .execute(&self.pool)
-        .await?;
-        Ok(())
-    }
-
-    #[tracing::instrument(level = "trace", skip_all)]
-    async fn unlink_sensor_id(&self, sensor_id: &SensorId) -> Result<(), RepositoryError> {
-        sqlx::query!(
-            "UPDATE trees SET sensor_id = NULL, watering_status = 'unknown' WHERE sensor_id = $1",
-            sensor_id.as_str()
-        )
-        .execute(&self.pool)
-        .await?;
-        Ok(())
-    }
 }

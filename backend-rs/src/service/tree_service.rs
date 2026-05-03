@@ -188,14 +188,4 @@ impl TreeService {
     pub async fn distinct_planting_years(&self) -> Result<Vec<PlantingYear>, ServiceError> {
         Ok(self.reader.distinct_planting_years().await?)
     }
-
-    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %cluster_id))]
-    pub async fn unlink_cluster_id(&self, cluster_id: Id<TreeCluster>) -> Result<(), ServiceError> {
-        Ok(self.writer.unlink_cluster_id(cluster_id).await?)
-    }
-
-    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %sensor_id))]
-    pub async fn unlink_sensor_id(&self, sensor_id: &SensorId) -> Result<(), ServiceError> {
-        Ok(self.writer.unlink_sensor_id(sensor_id).await?)
-    }
 }

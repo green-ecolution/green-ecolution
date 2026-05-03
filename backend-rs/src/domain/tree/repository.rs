@@ -60,8 +60,4 @@ pub trait TreeWriter: Send + Sync {
     async fn save_new(&self, draft: TreeDraft) -> Result<Tree, RepositoryError>;
     async fn save(&self, tree: &Tree) -> Result<(), RepositoryError>;
     async fn delete(&self, id: Id<Tree>) -> Result<(), RepositoryError>;
-    /// Removes the cluster foreign key from every tree that references `cluster_id`.
-    async fn unlink_cluster_id(&self, cluster_id: Id<TreeCluster>) -> Result<(), RepositoryError>;
-    /// Removes the sensor foreign key from the tree that references `sensor_id`.
-    async fn unlink_sensor_id(&self, sensor_id: &SensorId) -> Result<(), RepositoryError>;
 }
