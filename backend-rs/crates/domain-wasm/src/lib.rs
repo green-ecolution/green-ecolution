@@ -6,6 +6,7 @@
 mod cluster_draft;
 mod field_validators;
 mod issue;
+mod plan_draft;
 mod tree_draft;
 mod vehicle_draft;
 
