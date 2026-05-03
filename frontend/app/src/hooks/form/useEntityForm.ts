@@ -1,17 +1,15 @@
 import { useMutation, useQueryClient, QueryClient } from '@tanstack/react-query'
 import createToast from '@/hooks/createToast'
 import { useNavigate } from '@tanstack/react-router'
-import { DefaultValues, FieldValues, useForm } from 'react-hook-form'
-import { zodResolver } from '@/lib/zodResolver'
+import { DefaultValues, FieldValues, Resolver, useForm } from 'react-hook-form'
 import { useFormNavigationBlocker } from './useFormNavigationBlocker'
 import { useFormDraft } from '@/store/form/useFormDraft'
 import { useCallback } from 'react'
 import { FormType, MutationType } from '@/store/form/formDraftSlice'
-import { z } from 'zod'
 
 export interface EntityFormConfig<TForm extends FieldValues, TCreate, TUpdate, TEntity> {
   formType: FormType
-  schema: z.ZodType<TForm>
+  resolver: Resolver<TForm>
 
   createFn: (body: TCreate) => Promise<TEntity>
   updateFn: (id: string, body: TUpdate) => Promise<TEntity>
@@ -52,7 +50,7 @@ export function useEntityForm<
 
   const form = useForm<TForm>({
     defaultValues: opts.initForm,
-    resolver: zodResolver(config.schema),
+    resolver: config.resolver,
   })
 
   const saveDraft = useCallback(() => {

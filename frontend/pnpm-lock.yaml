@@ -26,6 +26,9 @@ importers:
       '@green-ecolution/backend-client':
         specifier: workspace:*
         version: link:../packages/backend-client
+      '@green-ecolution/domain-wasm':
+        specifier: workspace:*
+        version: link:../packages/domain-wasm
       '@green-ecolution/plugin-interface':
         specifier: workspace:*
         version: link:../packages/plugin-interface
