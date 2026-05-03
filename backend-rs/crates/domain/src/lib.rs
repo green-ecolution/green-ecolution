@@ -22,6 +22,7 @@ pub mod auth;
 pub mod cluster;
 pub mod error;
 pub mod evaluation;
+pub mod event_bus;
 pub mod events;
 pub mod info;
 pub mod plugin;
