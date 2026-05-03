@@ -20,6 +20,14 @@ pub trait EventHandler: Send + Sync {
 #[async_trait::async_trait]
 pub trait EventBus: Send + Sync {
     async fn publish(&self, event: DomainEvent);
+
+    /// Publishes a batch of events sequentially. Default implementation
+    /// iterates over `publish`; concrete buses may override for batching.
+    async fn publish_all(&self, events: Vec<DomainEvent>) {
+        for event in events {
+            self.publish(event).await;
+        }
+    }
 }
 
 pub struct InMemoryEventBus {
