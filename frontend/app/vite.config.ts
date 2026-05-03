@@ -5,6 +5,8 @@ import path from 'path'
 import tanstackRouter from '@tanstack/router-plugin/vite'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import { VitePWA } from 'vite-plugin-pwa'
+import wasm from 'vite-plugin-wasm'
+import topLevelAwait from 'vite-plugin-top-level-await'
 
 //
 // https://vitejs.dev/config/
@@ -22,6 +24,8 @@ export default defineConfig({
       },
     }),
     ...(!process.env.USE_TRAEFIK ? [basicSsl()] : []),
+    wasm(),
+    topLevelAwait(),
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['images/favicons/favicon.svg', 'images/favicons/apple-touch-icon.png'],
