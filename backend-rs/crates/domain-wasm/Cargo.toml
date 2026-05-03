@@ -21,3 +21,13 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 serde-wasm-bindgen = "0.6.5"
 
+# Activate uuid's js entropy backend for the wasm32 target so
+# `domain` (which depends on uuid v4) compiles to WebAssembly.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+uuid = { workspace = true, features = ["js"] }
+
+# wasm-pack's bundled wasm-opt rejects bulk-memory and non-trapping
+# float-to-int ops emitted by modern rustc; skip the optimisation pass.
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+

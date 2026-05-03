@@ -693,10 +693,12 @@ dependencies = [
 name = "domain-wasm"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "domain",
  "serde",
  "serde-wasm-bindgen",
  "serde_json",
+ "uuid",
  "wasm-bindgen",
 ]
 

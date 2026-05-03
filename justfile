@@ -56,8 +56,13 @@ _compile-backend:
     mkdir -p bin
     cp {{ backend_dir }}/target/release/{{ binary_name }} bin/{{ binary_name }}
 
+# Build the domain WASM bindings into frontend/packages/domain-wasm/pkg
+build-domain-wasm:
+    @echo "Building domain WASM bindings..."
+    nix shell nixpkgs#wasm-pack -c bash -c "cd {{ backend_dir }} && wasm-pack build crates/domain-wasm --target bundler --out-dir ../../../{{ frontend_dir }}/packages/domain-wasm/pkg --release"
+
 # Build frontend (pnpm)
-build-frontend:
+build-frontend: build-domain-wasm
     @echo "Building frontend..."
     @command -v pnpm >/dev/null 2>&1 || { echo "pnpm missing"; exit 1; }
     cd {{ frontend_dir }} && pnpm install --frozen-lockfile
