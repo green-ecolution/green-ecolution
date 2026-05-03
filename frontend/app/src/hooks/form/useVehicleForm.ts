@@ -4,9 +4,9 @@ import createToast from '@/hooks/createToast'
 import { useNavigate } from '@tanstack/react-router'
 import type { Vehicle, VehicleCreate, VehicleUpdate } from '@/api/backendApi'
 import { vehicleApi } from '@/api/backendApi'
-import { VehicleForm, vehicleSchema } from '@/schema/vehicleSchema'
+import { VehicleForm } from '@/schema/vehicleSchema'
+import { vehicleDraftResolver } from '@green-ecolution/domain-wasm'
 import { DefaultValues, useForm } from 'react-hook-form'
-import { zodResolver } from '@/lib/zodResolver'
 
 export const useVehicleForm = (
   mutationType: 'create' | 'update',
@@ -18,7 +18,7 @@ export const useVehicleForm = (
 
   const form = useForm<VehicleForm>({
     defaultValues: opts.initForm,
-    resolver: zodResolver(vehicleSchema),
+    resolver: vehicleDraftResolver<VehicleForm>(),
   })
 
   const { mutate, isError, error } = useMutation({
