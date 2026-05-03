@@ -1,16 +1,16 @@
+use async_trait::async_trait;
 use chrono::NaiveTime;
+use serde_json::Value;
 use sqlx::PgPool;
 
 use crate::domain::{
     Id, RepositoryError,
-    shared::{
-        distance::Distance,
-        pagination::{Page, Pagination},
-        provider_info::ProviderInfo,
-    },
+    cluster::TreeCluster,
+    shared::pagination::{Page, Pagination},
     watering_plan::{
-        WateringPlan, WateringPlanCreate, WateringPlanQuery, WateringPlanRepository,
-        WateringPlanStatus, WateringPlanUpdate,
+        WateringPlan, WateringPlanDraft, WateringPlanEvaluation, WateringPlanReader,
+        WateringPlanSearchQuery, WateringPlanSnapshot, WateringPlanStatus, WateringPlanView,
+        WateringPlanWriter,
     },
 };
 
@@ -24,27 +24,30 @@ impl PgWateringPlanRepository {
     }
 }
 
-#[async_trait::async_trait]
-impl WateringPlanRepository for PgWateringPlanRepository {
+#[async_trait]
+impl WateringPlanReader for PgWateringPlanRepository {
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn all(
-        &self,
-        query: WateringPlanQuery,
-        pagination: Pagination,
-    ) -> Result<Page<WateringPlan>, RepositoryError> {
-        let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
-        let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
+    async fn by_id(&self, id: Id<WateringPlan>) -> Result<WateringPlan, RepositoryError> {
+        struct Row {
+            id: i32,
+            date: chrono::NaiveDate,
+            description: String,
+            status: WateringPlanStatus,
+            distance: Option<f64>,
+            total_water_required: Option<f64>,
+            cancellation_note: String,
+            gpx_url: Option<String>,
+            refill_count: i32,
+            duration: f64,
+            provider: Option<String>,
+            additional_informations: Option<Value>,
+            vehicle_ids: Vec<i32>,
+            cluster_ids: Vec<i32>,
+        }
 
-        let total = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) AS "count!: i64" FROM watering_plans
-            WHERE ($1::text IS NULL OR provider = $1)"#,
-            query.provider,
-        )
-        .fetch_one(&self.pool)
-        .await? as u64;
-
-        let rows = sqlx::query!(
-            r#"SELECT wp.id, wp.created_at, wp.updated_at, wp.date, wp.description,
+        let row = sqlx::query_as!(
+            Row,
+            r#"SELECT wp.id, wp.date, wp.description,
                       wp.status AS "status: WateringPlanStatus",
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.gpx_url, wp.refill_count, wp.duration,
@@ -54,55 +57,59 @@ impl WateringPlanRepository for PgWateringPlanRepository {
             FROM watering_plans wp
             LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id
             LEFT JOIN tree_cluster_watering_plans twp ON twp.watering_plan_id = wp.id
-            WHERE ($1::text IS NULL OR wp.provider = $1)
-            GROUP BY wp.id
-            ORDER BY wp.date DESC
-            LIMIT $2 OFFSET $3"#,
-            query.provider,
-            limit,
-            offset,
+            WHERE wp.id = $1
+            GROUP BY wp.id"#,
+            id.value()
         )
-        .fetch_all(&self.pool)
-        .await?;
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(RepositoryError::NotFound)?;
 
-        let items = rows
-            .into_iter()
-            .map(|row| {
-                // TODO: Transporter/Trailer distinction is based on insertion order - needs a role column in the junction table
-                let transporter_id = row.vehicle_ids.first().copied().map(Id::new);
-                let trailer_id = row.vehicle_ids.get(1).copied().map(Id::new);
+        let transporter_id = row.vehicle_ids.first().copied();
+        let trailer_id = row.vehicle_ids.get(1).copied();
 
-                WateringPlan {
-                    id: Id::new(row.id),
-                    created_at: row.created_at.and_utc(),
-                    updated_at: row.updated_at.and_utc(),
-                    date: row.date.and_time(NaiveTime::MIN).and_utc(),
-                    description: Some(row.description),
-                    status: row.status,
-                    distance: row.distance.and_then(|d| Distance::new(d).ok()),
-                    total_water_required: row.total_water_required,
-                    cluster_ids: row.cluster_ids.into_iter().map(Id::new).collect(),
-                    transporter_id,
-                    trailer_id,
-                    cancellation_note: Some(row.cancellation_note),
-                    evaluation: None,
-                    gpx_url: row.gpx_url.and_then(|u| u.parse().ok()),
-                    refill_count: row.refill_count as u32,
-                    duration: std::time::Duration::from_secs_f64(row.duration),
-                    provider_info: ProviderInfo {
-                        provider: row.provider,
-                        additional_info: row.additional_informations,
-                    },
-                }
-            })
-            .collect();
-
-        Ok(Page { items, total })
+        Ok(WateringPlan::reconstitute(WateringPlanSnapshot {
+            id: row.id,
+            date: row.date.and_time(NaiveTime::MIN).and_utc(),
+            description: Some(row.description).filter(|s| !s.is_empty()),
+            status: row.status,
+            distance: row.distance,
+            total_water_required: row.total_water_required,
+            cluster_ids: row.cluster_ids,
+            transporter_id,
+            trailer_id,
+            cancellation_note: Some(row.cancellation_note).filter(|s| !s.is_empty()),
+            gpx_url: row.gpx_url.and_then(|u| u.parse().ok()),
+            refill_count: row.refill_count,
+            duration: std::time::Duration::from_secs_f64(row.duration),
+            provider: row.provider,
+            additional_info: row.additional_informations,
+        }))
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn by_id(&self, id: Id<WateringPlan>) -> Result<WateringPlan, RepositoryError> {
-        let row = sqlx::query!(
+    async fn view_by_id(&self, id: Id<WateringPlan>) -> Result<WateringPlanView, RepositoryError> {
+        struct Row {
+            id: i32,
+            created_at: chrono::NaiveDateTime,
+            updated_at: chrono::NaiveDateTime,
+            date: chrono::NaiveDate,
+            description: String,
+            status: WateringPlanStatus,
+            distance: Option<f64>,
+            total_water_required: Option<f64>,
+            cancellation_note: String,
+            gpx_url: Option<String>,
+            refill_count: i32,
+            duration: f64,
+            provider: Option<String>,
+            additional_informations: Option<Value>,
+            vehicle_ids: Vec<i32>,
+            cluster_ids: Vec<i32>,
+        }
+
+        let row = sqlx::query_as!(
+            Row,
             r#"SELECT wp.id, wp.created_at, wp.updated_at, wp.date, wp.description,
                       wp.status AS "status: WateringPlanStatus",
                       wp.distance, wp.total_water_required, wp.cancellation_note,
@@ -121,61 +128,176 @@ impl WateringPlanRepository for PgWateringPlanRepository {
         .await?
         .ok_or(RepositoryError::NotFound)?;
 
-        // TODO: Transporter/Trailer distinction is based on insertion order - needs a role column in the junction table
-        let transporter_id = row.vehicle_ids.first().copied().map(Id::new);
-        let trailer_id = row.vehicle_ids.get(1).copied().map(Id::new);
+        let transporter_id = row.vehicle_ids.first().copied();
+        let trailer_id = row.vehicle_ids.get(1).copied();
 
-        Ok(WateringPlan {
-            id: Id::new(row.id),
+        Ok(WateringPlanView {
+            id: row.id,
             created_at: row.created_at.and_utc(),
             updated_at: row.updated_at.and_utc(),
             date: row.date.and_time(NaiveTime::MIN).and_utc(),
-            description: Some(row.description),
+            description: Some(row.description).filter(|s| !s.is_empty()),
             status: row.status,
-            distance: row.distance.and_then(|d| Distance::new(d).ok()),
+            distance: row.distance,
             total_water_required: row.total_water_required,
-            cluster_ids: row.cluster_ids.into_iter().map(Id::new).collect(),
+            cluster_ids: row.cluster_ids,
             transporter_id,
             trailer_id,
-            cancellation_note: Some(row.cancellation_note),
-            evaluation: None,
+            cancellation_note: Some(row.cancellation_note).filter(|s| !s.is_empty()),
             gpx_url: row.gpx_url.and_then(|u| u.parse().ok()),
-            refill_count: row.refill_count as u32,
+            refill_count: row.refill_count,
             duration: std::time::Duration::from_secs_f64(row.duration),
-            provider_info: ProviderInfo {
-                provider: row.provider,
-                additional_info: row.additional_informations,
-            },
+            provider: row.provider,
+            additional_info: row.additional_informations,
         })
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn create(&self, entity: WateringPlanCreate) -> Result<WateringPlan, RepositoryError> {
+    async fn view_search(
+        &self,
+        query: WateringPlanSearchQuery,
+        pagination: Pagination,
+    ) -> Result<Page<WateringPlanView>, RepositoryError> {
+        let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
+        let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
+        let provider = query.provider.as_ref().map(|p| p.as_str().to_owned());
+
+        let total = sqlx::query_scalar!(
+            r#"SELECT COUNT(*) AS "count!: i64" FROM watering_plans
+            WHERE ($1::text IS NULL OR provider = $1)"#,
+            provider,
+        )
+        .fetch_one(&self.pool)
+        .await? as u64;
+
+        struct Row {
+            id: i32,
+            created_at: chrono::NaiveDateTime,
+            updated_at: chrono::NaiveDateTime,
+            date: chrono::NaiveDate,
+            description: String,
+            status: WateringPlanStatus,
+            distance: Option<f64>,
+            total_water_required: Option<f64>,
+            cancellation_note: String,
+            gpx_url: Option<String>,
+            refill_count: i32,
+            duration: f64,
+            provider: Option<String>,
+            additional_informations: Option<Value>,
+            vehicle_ids: Vec<i32>,
+            cluster_ids: Vec<i32>,
+        }
+
+        let rows = sqlx::query_as!(
+            Row,
+            r#"SELECT wp.id, wp.created_at, wp.updated_at, wp.date, wp.description,
+                      wp.status AS "status: WateringPlanStatus",
+                      wp.distance, wp.total_water_required, wp.cancellation_note,
+                      wp.gpx_url, wp.refill_count, wp.duration,
+                      wp.provider, wp.additional_informations,
+                      COALESCE(ARRAY_AGG(DISTINCT vwp.vehicle_id) FILTER (WHERE vwp.vehicle_id IS NOT NULL), ARRAY[]::int[]) AS "vehicle_ids!: Vec<i32>",
+                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::int[]) AS "cluster_ids!: Vec<i32>"
+            FROM watering_plans wp
+            LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id
+            LEFT JOIN tree_cluster_watering_plans twp ON twp.watering_plan_id = wp.id
+            WHERE ($1::text IS NULL OR wp.provider = $1)
+            GROUP BY wp.id
+            ORDER BY wp.date DESC
+            LIMIT $2 OFFSET $3"#,
+            provider,
+            limit,
+            offset,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        let items = rows
+            .into_iter()
+            .map(|row| {
+                let transporter_id = row.vehicle_ids.first().copied();
+                let trailer_id = row.vehicle_ids.get(1).copied();
+                WateringPlanView {
+                    id: row.id,
+                    created_at: row.created_at.and_utc(),
+                    updated_at: row.updated_at.and_utc(),
+                    date: row.date.and_time(NaiveTime::MIN).and_utc(),
+                    description: Some(row.description).filter(|s| !s.is_empty()),
+                    status: row.status,
+                    distance: row.distance,
+                    total_water_required: row.total_water_required,
+                    cluster_ids: row.cluster_ids,
+                    transporter_id,
+                    trailer_id,
+                    cancellation_note: Some(row.cancellation_note).filter(|s| !s.is_empty()),
+                    gpx_url: row.gpx_url.and_then(|u| u.parse().ok()),
+                    refill_count: row.refill_count,
+                    duration: std::time::Duration::from_secs_f64(row.duration),
+                    provider: row.provider,
+                    additional_info: row.additional_informations,
+                }
+            })
+            .collect();
+
+        Ok(Page { items, total })
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn evaluations(
+        &self,
+        plan_id: Id<WateringPlan>,
+    ) -> Result<Vec<WateringPlanEvaluation>, RepositoryError> {
+        struct Row {
+            tree_cluster_id: i32,
+            consumed_water: f64,
+        }
+
+        let rows = sqlx::query_as!(
+            Row,
+            r#"SELECT tree_cluster_id, consumed_water
+            FROM tree_cluster_watering_plans
+            WHERE watering_plan_id = $1"#,
+            plan_id.value()
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|row| WateringPlanEvaluation {
+                watering_plan_id: plan_id,
+                cluster_id: Id::new(row.tree_cluster_id),
+                consumed_water: row.consumed_water,
+            })
+            .collect())
+    }
+}
+
+#[async_trait]
+impl WateringPlanWriter for PgWateringPlanRepository {
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn save_new(&self, draft: WateringPlanDraft) -> Result<WateringPlan, RepositoryError> {
         let mut tx = self.pool.begin().await?;
 
         let row = sqlx::query!(
             r#"INSERT INTO watering_plans (date, description, status, provider, additional_informations)
             VALUES ($1, $2, 'planned', $3, $4)
-            RETURNING id, created_at, updated_at, date, description,
-                      status AS "status: WateringPlanStatus",
-                      distance, total_water_required, cancellation_note,
-                      gpx_url, refill_count, duration,
-                      provider, additional_informations"#,
-            entity.date.date_naive(),
-            entity.description,
-            entity.provider_info.provider,
-            entity.provider_info.additional_info,
+            RETURNING id"#,
+            draft.date.date_naive(),
+            draft.description.as_deref().unwrap_or(""),
+            draft.provenance.provider().map(|p| p.as_str()),
+            draft.provenance.additional_info(),
         )
         .fetch_one(&mut *tx)
         .await?;
 
         let plan_id = row.id;
 
-        let mut vehicle_ids = Vec::new();
-        if let Some(ref id) = entity.transporter_id {
+        let mut vehicle_ids: Vec<i32> = Vec::new();
+        if let Some(ref id) = draft.transporter_id {
             vehicle_ids.push(id.value());
         }
-        if let Some(ref id) = entity.trailer_id {
+        if let Some(ref id) = draft.trailer_id {
             vehicle_ids.push(id.value());
         }
         if !vehicle_ids.is_empty() {
@@ -188,7 +310,7 @@ impl WateringPlanRepository for PgWateringPlanRepository {
             .await?;
         }
 
-        let cluster_id_values: Vec<i32> = entity.cluster_ids.iter().map(|id| id.value()).collect();
+        let cluster_id_values: Vec<i32> = draft.cluster_ids.iter().map(|id| id.value()).collect();
         if !cluster_id_values.is_empty() {
             sqlx::query!(
                 "INSERT INTO tree_cluster_watering_plans (tree_cluster_id, watering_plan_id) SELECT UNNEST($1::int[]), $2",
@@ -201,67 +323,181 @@ impl WateringPlanRepository for PgWateringPlanRepository {
 
         tx.commit().await?;
 
-        Ok(WateringPlan {
-            id: Id::new(plan_id),
-            created_at: row.created_at.and_utc(),
-            updated_at: row.updated_at.and_utc(),
-            date: row.date.and_time(NaiveTime::MIN).and_utc(),
-            description: Some(row.description),
-            status: row.status,
-            distance: None,
-            total_water_required: None,
-            cluster_ids: entity.cluster_ids,
-            transporter_id: entity.transporter_id,
-            trailer_id: entity.trailer_id,
-            cancellation_note: Some(row.cancellation_note),
-            evaluation: None,
-            gpx_url: None,
-            refill_count: 0,
-            duration: std::time::Duration::ZERO,
-            provider_info: entity.provider_info,
-        })
+        self.by_id(Id::new(plan_id)).await
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn update(
-        &self,
-        id: Id<WateringPlan>,
-        entity: WateringPlanUpdate,
-    ) -> Result<WateringPlan, RepositoryError> {
-        sqlx::query!(
+    async fn save(&self, plan: &WateringPlan) -> Result<(), RepositoryError> {
+        let mut tx = self.pool.begin().await?;
+
+        let result = sqlx::query!(
             r#"UPDATE watering_plans SET
-                date = COALESCE($2, date),
-                description = COALESCE($3, description),
-                status = COALESCE($4, status),
-                cancellation_note = COALESCE($5, cancellation_note),
-                provider = COALESCE($6, provider),
-                additional_informations = COALESCE($7, additional_informations)
+                date = $2,
+                description = $3,
+                status = $4,
+                cancellation_note = $5,
+                distance = $6,
+                total_water_required = $7,
+                refill_count = $8,
+                duration = $9,
+                gpx_url = $10,
+                provider = $11,
+                additional_informations = $12
             WHERE id = $1"#,
-            id.value(),
-            entity.date.map(|d| d.date_naive()),
-            entity.description,
-            entity.status as Option<WateringPlanStatus>,
-            entity.cancellation_note,
-            entity
-                .provider_info
-                .as_ref()
-                .and_then(|p| p.provider.as_deref()),
-            entity
-                .provider_info
-                .as_ref()
-                .and_then(|p| p.additional_info.clone()),
+            plan.id.value(),
+            plan.date.date_naive(),
+            plan.description.as_deref().unwrap_or(""),
+            plan.status() as WateringPlanStatus,
+            plan.cancellation_note().unwrap_or(""),
+            plan.distance.as_ref().map(|d| d.meters()),
+            plan.total_water_required,
+            plan.refill_count as i32,
+            plan.duration.as_secs_f64(),
+            plan.gpx_url.as_ref().map(|u| u.as_str()),
+            plan.provenance().provider().map(|p| p.as_str()),
+            plan.provenance().additional_info(),
         )
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
 
-        self.by_id(id).await
+        if result.rows_affected() == 0 {
+            return Err(RepositoryError::NotFound);
+        }
+
+        // rewrite vehicle join rows
+        sqlx::query!(
+            "DELETE FROM vehicle_watering_plans WHERE watering_plan_id = $1",
+            plan.id.value()
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        let mut vehicle_ids: Vec<i32> = Vec::new();
+        if let Some(id) = plan.transporter_id() {
+            vehicle_ids.push(id.value());
+        }
+        if let Some(id) = plan.trailer_id() {
+            vehicle_ids.push(id.value());
+        }
+        if !vehicle_ids.is_empty() {
+            sqlx::query!(
+                "INSERT INTO vehicle_watering_plans (vehicle_id, watering_plan_id) SELECT UNNEST($1::int[]), $2",
+                &vehicle_ids,
+                plan.id.value()
+            )
+            .execute(&mut *tx)
+            .await?;
+        }
+
+        // rewrite cluster join rows
+        sqlx::query!(
+            "DELETE FROM tree_cluster_watering_plans WHERE watering_plan_id = $1",
+            plan.id.value()
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        let cluster_id_values: Vec<i32> = plan.cluster_ids().iter().map(|id| id.value()).collect();
+        if !cluster_id_values.is_empty() {
+            sqlx::query!(
+                "INSERT INTO tree_cluster_watering_plans (tree_cluster_id, watering_plan_id) SELECT UNNEST($1::int[]), $2",
+                &cluster_id_values,
+                plan.id.value()
+            )
+            .execute(&mut *tx)
+            .await?;
+        }
+
+        tx.commit().await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn save_evaluations(
+        &self,
+        plan_id: Id<WateringPlan>,
+        evaluations: &[WateringPlanEvaluation],
+    ) -> Result<(), RepositoryError> {
+        let mut tx = self.pool.begin().await?;
+
+        sqlx::query!(
+            "DELETE FROM tree_cluster_watering_plans WHERE watering_plan_id = $1",
+            plan_id.value()
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        for eval in evaluations {
+            sqlx::query!(
+                "INSERT INTO tree_cluster_watering_plans (tree_cluster_id, watering_plan_id, consumed_water) VALUES ($1, $2, $3)",
+                eval.cluster_id.value(),
+                plan_id.value(),
+                eval.consumed_water,
+            )
+            .execute(&mut *tx)
+            .await?;
+        }
+
+        tx.commit().await?;
+        Ok(())
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn delete(&self, id: Id<WateringPlan>) -> Result<(), RepositoryError> {
-        sqlx::query!("DELETE FROM watering_plans WHERE id = $1", id.value())
-            .execute(&self.pool)
+        let mut tx = self.pool.begin().await?;
+
+        sqlx::query!(
+            "DELETE FROM vehicle_watering_plans WHERE watering_plan_id = $1",
+            id.value()
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        sqlx::query!(
+            "DELETE FROM tree_cluster_watering_plans WHERE watering_plan_id = $1",
+            id.value()
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        let result = sqlx::query!("DELETE FROM watering_plans WHERE id = $1", id.value())
+            .execute(&mut *tx)
             .await?;
+
+        if result.rows_affected() == 0 {
+            return Err(RepositoryError::NotFound);
+        }
+
+        tx.commit().await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn propagate_last_watered(
+        &self,
+        cluster_ids: &[Id<TreeCluster>],
+        ts: chrono::DateTime<chrono::Utc>,
+    ) -> Result<(), RepositoryError> {
+        let ids: Vec<i32> = cluster_ids.iter().map(|id| id.value()).collect();
+        let mut tx = self.pool.begin().await?;
+
+        sqlx::query!(
+            "UPDATE tree_clusters SET last_watered = $2 WHERE id = ANY($1)",
+            &ids,
+            ts.naive_utc(),
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        sqlx::query!(
+            "UPDATE trees SET last_watered = $2 WHERE tree_cluster_id = ANY($1)",
+            &ids,
+            ts.naive_utc(),
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
         Ok(())
     }
 }

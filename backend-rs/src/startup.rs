@@ -31,6 +31,7 @@ use crate::{
         tree_service::TreeService,
         user_service::UserService,
         vehicle_service::VehicleService,
+        watering_execution_service::WateringExecutionService,
         watering_plan_service::WateringPlanService,
     },
 };
@@ -90,8 +91,11 @@ impl Application {
         let cluster_reader: Arc<dyn crate::domain::cluster::TreeClusterReader> =
             cluster_repo.clone();
         let cluster_writer: Arc<dyn crate::domain::cluster::TreeClusterWriter> = cluster_repo;
-        let watering_plan_repo: Arc<dyn crate::domain::watering_plan::WateringPlanRepository> =
-            Arc::new(PgWateringPlanRepository::new(pool.clone()));
+        let watering_plan_repo = Arc::new(PgWateringPlanRepository::new(pool.clone()));
+        let watering_plan_reader: Arc<dyn crate::domain::watering_plan::WateringPlanReader> =
+            watering_plan_repo.clone();
+        let watering_plan_writer: Arc<dyn crate::domain::watering_plan::WateringPlanWriter> =
+            watering_plan_repo;
         let evaluation_repo: Arc<dyn crate::domain::evaluation::EvaluationRepository> =
             Arc::new(PgEvaluationRepository::new(pool));
 
@@ -161,8 +165,16 @@ impl Application {
             tree_writer,
             event_bus.clone(),
         ));
-        let watering_plan_service =
-            Arc::new(WateringPlanService::new(watering_plan_repo, event_bus));
+        let watering_plan_service = Arc::new(WateringPlanService::new(
+            watering_plan_reader.clone(),
+            watering_plan_writer.clone(),
+            event_bus.clone(),
+        ));
+        let watering_execution_service = Arc::new(WateringExecutionService::new(
+            watering_plan_reader,
+            watering_plan_writer,
+            event_bus.clone(),
+        ));
         let evaluation_service = Arc::new(EvaluationService::new(evaluation_repo));
         let info_provider: Arc<dyn crate::domain::info::SystemInfoProvider> =
             Arc::new(DefaultSystemInfoProvider::new());
@@ -174,6 +186,7 @@ impl Application {
             vehicle_service,
             cluster_service,
             watering_plan_service,
+            watering_execution_service,
             evaluation_service,
             auth_service,
             user_service,

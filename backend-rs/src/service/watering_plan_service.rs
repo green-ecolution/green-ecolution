@@ -2,75 +2,135 @@ use std::sync::Arc;
 
 use crate::domain::{
     Id,
-    events::DomainEvent,
-    shared::pagination::{Page, Pagination},
+    cluster::TreeCluster,
+    shared::{
+        pagination::{Page, Pagination},
+        provenance::Provenance,
+    },
+    vehicle::Vehicle,
     watering_plan::{
-        WateringPlan, WateringPlanCreate, WateringPlanQuery, WateringPlanRepository,
-        WateringPlanStatus, WateringPlanUpdate,
+        WateringPlan, WateringPlanDraft, WateringPlanError, WateringPlanEvaluation,
+        WateringPlanReader, WateringPlanSearchQuery, WateringPlanView, WateringPlanWriter,
     },
 };
 
 use super::{ServiceError, event_bus::EventBus};
 
 pub struct WateringPlanService {
-    watering_plan_repo: Arc<dyn WateringPlanRepository>,
+    reader: Arc<dyn WateringPlanReader>,
+    writer: Arc<dyn WateringPlanWriter>,
+    #[allow(dead_code)]
     event_bus: Arc<dyn EventBus>,
 }
 
 impl WateringPlanService {
     pub fn new(
-        watering_plan_repo: Arc<dyn WateringPlanRepository>,
+        reader: Arc<dyn WateringPlanReader>,
+        writer: Arc<dyn WateringPlanWriter>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
         Self {
-            watering_plan_repo,
+            reader,
+            writer,
             event_bus,
         }
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn all(
+    pub async fn search_view(
         &self,
-        query: WateringPlanQuery,
+        query: WateringPlanSearchQuery,
         pagination: Pagination,
-    ) -> Result<Page<WateringPlan>, ServiceError> {
-        Ok(self.watering_plan_repo.all(query, pagination).await?)
+    ) -> Result<Page<WateringPlanView>, ServiceError> {
+        Ok(self.reader.view_search(query, pagination).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(plan.id = %id))]
     pub async fn by_id(&self, id: Id<WateringPlan>) -> Result<WateringPlan, ServiceError> {
-        Ok(self.watering_plan_repo.by_id(id).await?)
-    }
-
-    #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn create(&self, input: WateringPlanCreate) -> Result<WateringPlan, ServiceError> {
-        Ok(self.watering_plan_repo.create(input).await?)
+        Ok(self.reader.by_id(id).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(plan.id = %id))]
-    pub async fn update(
+    pub async fn view_by_id(&self, id: Id<WateringPlan>) -> Result<WateringPlanView, ServiceError> {
+        Ok(self.reader.view_by_id(id).await?)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(plan.id = %id))]
+    pub async fn evaluations(
         &self,
         id: Id<WateringPlan>,
-        input: WateringPlanUpdate,
+    ) -> Result<Vec<WateringPlanEvaluation>, ServiceError> {
+        Ok(self.reader.evaluations(id).await?)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn create(&self, draft: WateringPlanDraft) -> Result<WateringPlan, ServiceError> {
+        Ok(self.writer.save_new(draft).await?)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(plan.id = %id))]
+    pub async fn replace_details(
+        &self,
+        id: Id<WateringPlan>,
+        date: chrono::DateTime<chrono::Utc>,
+        description: Option<String>,
+        cluster_ids: Vec<Id<TreeCluster>>,
+        transporter_id: Option<Id<Vehicle>>,
+        trailer_id: Option<Id<Vehicle>>,
+        provenance: Provenance,
     ) -> Result<WateringPlan, ServiceError> {
-        let new_status = input.status;
-        let plan = self.watering_plan_repo.update(id, input).await?;
+        let mut plan = self.reader.by_id(id).await?;
+        plan.replace_details(
+            date,
+            description,
+            cluster_ids,
+            transporter_id,
+            trailer_id,
+            provenance,
+        )
+        .map_err(map_plan_error)?;
+        self.writer.save(&plan).await?;
+        Ok(plan)
+    }
 
-        if let Some(status @ WateringPlanStatus::Finished) = new_status {
-            self.event_bus
-                .publish(DomainEvent::WateringPlanStatusChanged {
-                    plan_id: plan.id,
-                    cluster_ids: plan.cluster_ids.clone(),
-                    new_status: status,
-                })
-                .await;
-        }
+    #[tracing::instrument(level = "debug", skip_all, fields(plan.id = %id))]
+    pub async fn start(&self, id: Id<WateringPlan>) -> Result<WateringPlan, ServiceError> {
+        let mut plan = self.reader.by_id(id).await?;
+        plan.start().map_err(map_plan_error)?;
+        self.writer.save(&plan).await?;
+        Ok(plan)
+    }
 
+    #[tracing::instrument(level = "debug", skip_all, fields(plan.id = %id))]
+    pub async fn cancel(
+        &self,
+        id: Id<WateringPlan>,
+        note: String,
+    ) -> Result<WateringPlan, ServiceError> {
+        let mut plan = self.reader.by_id(id).await?;
+        plan.cancel(note).map_err(map_plan_error)?;
+        self.writer.save(&plan).await?;
+        Ok(plan)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(plan.id = %id))]
+    pub async fn fail(
+        &self,
+        id: Id<WateringPlan>,
+        note: String,
+    ) -> Result<WateringPlan, ServiceError> {
+        let mut plan = self.reader.by_id(id).await?;
+        plan.fail(note).map_err(map_plan_error)?;
+        self.writer.save(&plan).await?;
         Ok(plan)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(plan.id = %id))]
     pub async fn delete(&self, id: Id<WateringPlan>) -> Result<(), ServiceError> {
-        Ok(self.watering_plan_repo.delete(id).await?)
+        Ok(self.writer.delete(id).await?)
     }
+}
+
+fn map_plan_error(e: WateringPlanError) -> ServiceError {
+    ServiceError::InvalidInput(e.to_string())
 }

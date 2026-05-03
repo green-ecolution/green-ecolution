@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM vehicle_watering_plans WHERE watering_plan_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a136644633c0c0143364fd48bb3d5a9630d6f313868f1352d19842d631960de2"
+}

@@ -8,6 +8,7 @@ pub mod sensor_service;
 pub mod tree_service;
 pub mod user_service;
 pub mod vehicle_service;
+pub mod watering_execution_service;
 pub mod watering_plan_service;
 
 use crate::domain::{DomainError, RepositoryError};

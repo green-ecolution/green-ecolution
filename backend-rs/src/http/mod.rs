@@ -22,7 +22,8 @@ use crate::{
         auth_service::AuthService, cluster_service::ClusterService,
         evaluation_service::EvaluationService, region_service::RegionService,
         sensor_service::SensorService, tree_service::TreeService, user_service::UserService,
-        vehicle_service::VehicleService, watering_plan_service::WateringPlanService,
+        vehicle_service::VehicleService, watering_execution_service::WateringExecutionService,
+        watering_plan_service::WateringPlanService,
     },
 };
 
@@ -37,6 +38,7 @@ pub struct AppState {
     pub vehicle_service: Arc<VehicleService>,
     pub cluster_service: Arc<ClusterService>,
     pub watering_plan_service: Arc<WateringPlanService>,
+    pub watering_execution_service: Arc<WateringExecutionService>,
     pub evaluation_service: Arc<EvaluationService>,
     pub auth_service: Arc<AuthService>,
     pub user_service: Arc<UserService>,

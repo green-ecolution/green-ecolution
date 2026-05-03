@@ -1,10 +1,16 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::domain::{
-    DomainError, Id,
-    shared::provider_info::ProviderInfo,
-    watering_plan::{WateringPlan, WateringPlanCreate, WateringPlanUpdate},
+use crate::{
+    domain::{
+        Id,
+        shared::{
+            error::ValidationError,
+            provenance::{Provenance, ProviderId},
+        },
+        watering_plan::{WateringPlanDraft, WateringPlanEvaluation, WateringPlanView},
+    },
+    service::ServiceError,
 };
 
 use super::{WateringPlanStatus, cluster::TreeClusterInListResponse, vehicle::VehicleResponse};
@@ -86,8 +92,8 @@ pub struct WateringPlanResponse {
     pub additional_information: Option<serde_json::Value>,
 }
 
-pub struct WateringPlanView {
-    pub plan: WateringPlan,
+pub struct WateringPlanDetailView {
+    pub view: WateringPlanView,
     pub transporter: VehicleResponse,
     pub trailer: Option<VehicleResponse>,
     pub clusters: Vec<TreeClusterInListResponse>,
@@ -95,33 +101,33 @@ pub struct WateringPlanView {
     pub evaluation: Vec<EvaluationValueResponse>,
 }
 
-impl From<WateringPlanView> for WateringPlanResponse {
-    fn from(view: WateringPlanView) -> Self {
-        let p = &view.plan;
+impl From<WateringPlanDetailView> for WateringPlanResponse {
+    fn from(d: WateringPlanDetailView) -> Self {
+        let v = &d.view;
         Self {
-            id: p.id.value(),
-            created_at: p.created_at.to_rfc3339(),
-            updated_at: p.updated_at.to_rfc3339(),
-            date: p.date.to_rfc3339(),
-            description: p.description.clone().unwrap_or_default(),
-            status: p.status.into(),
-            distance: p.distance.map(|d| d.meters()).unwrap_or_default(),
-            total_water_required: p.total_water_required.unwrap_or_default(),
-            cancellation_note: p.cancellation_note.clone().unwrap_or_default(),
-            gpx_url: p
+            id: v.id,
+            created_at: v.created_at.to_rfc3339(),
+            updated_at: v.updated_at.to_rfc3339(),
+            date: v.date.to_rfc3339(),
+            description: v.description.clone().unwrap_or_default(),
+            status: v.status.into(),
+            distance: v.distance.unwrap_or_default(),
+            total_water_required: v.total_water_required.unwrap_or_default(),
+            cancellation_note: v.cancellation_note.clone().unwrap_or_default(),
+            gpx_url: v
                 .gpx_url
                 .as_ref()
                 .map(|u| u.to_string())
                 .unwrap_or_default(),
-            refill_count: p.refill_count,
-            duration: p.duration.as_secs_f64(),
-            transporter: view.transporter,
-            trailer: view.trailer,
-            treeclusters: view.clusters,
-            user_ids: view.user_ids,
-            evaluation: view.evaluation,
-            provider: p.provider_info.provider.clone(),
-            additional_information: p.provider_info.additional_info.clone(),
+            refill_count: v.refill_count.max(0) as u32,
+            duration: v.duration.as_secs_f64(),
+            transporter: d.transporter,
+            trailer: d.trailer,
+            treeclusters: d.clusters,
+            user_ids: d.user_ids,
+            evaluation: d.evaluation,
+            provider: v.provider.clone(),
+            additional_information: v.additional_info.clone(),
         }
     }
 }
@@ -178,33 +184,33 @@ pub struct WateringPlanInListResponse {
     pub additional_information: Option<serde_json::Value>,
 }
 
-pub struct WateringPlanInListView {
-    pub plan: WateringPlan,
+pub struct WateringPlanInListDetailView {
+    pub view: WateringPlanView,
     pub transporter: VehicleResponse,
     pub trailer: Option<VehicleResponse>,
     pub clusters: Vec<TreeClusterInListResponse>,
     pub user_ids: Vec<String>,
 }
 
-impl From<WateringPlanInListView> for WateringPlanInListResponse {
-    fn from(view: WateringPlanInListView) -> Self {
-        let p = &view.plan;
+impl From<WateringPlanInListDetailView> for WateringPlanInListResponse {
+    fn from(d: WateringPlanInListDetailView) -> Self {
+        let v = &d.view;
         Self {
-            id: p.id.value(),
-            created_at: p.created_at.to_rfc3339(),
-            updated_at: p.updated_at.to_rfc3339(),
-            date: p.date.to_rfc3339(),
-            description: p.description.clone().unwrap_or_default(),
-            status: p.status.into(),
-            distance: p.distance.map(|d| d.meters()).unwrap_or_default(),
-            total_water_required: p.total_water_required.unwrap_or_default(),
-            cancellation_note: p.cancellation_note.clone().unwrap_or_default(),
-            transporter: view.transporter,
-            trailer: view.trailer,
-            treeclusters: view.clusters,
-            user_ids: view.user_ids,
-            provider: p.provider_info.provider.clone(),
-            additional_information: p.provider_info.additional_info.clone(),
+            id: v.id,
+            created_at: v.created_at.to_rfc3339(),
+            updated_at: v.updated_at.to_rfc3339(),
+            date: v.date.to_rfc3339(),
+            description: v.description.clone().unwrap_or_default(),
+            status: v.status.into(),
+            distance: v.distance.unwrap_or_default(),
+            total_water_required: v.total_water_required.unwrap_or_default(),
+            cancellation_note: v.cancellation_note.clone().unwrap_or_default(),
+            transporter: d.transporter,
+            trailer: d.trailer,
+            treeclusters: d.clusters,
+            user_ids: d.user_ids,
+            provider: v.provider.clone(),
+            additional_information: v.additional_info.clone(),
         }
     }
 }
@@ -298,6 +304,19 @@ pub struct EvaluationValueRequest {
     pub consumed_water: f64,
 }
 
+impl EvaluationValueRequest {
+    pub fn into_domain(
+        self,
+        plan_id: Id<crate::domain::watering_plan::WateringPlan>,
+    ) -> WateringPlanEvaluation {
+        WateringPlanEvaluation {
+            watering_plan_id: plan_id,
+            cluster_id: Id::new(self.tree_cluster_id),
+            consumed_water: self.consumed_water,
+        }
+    }
+}
+
 /// Request body for calculating a watering route.
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct RouteRequest {
@@ -313,47 +332,40 @@ pub struct RouteRequest {
     pub trailer_id: Option<i32>,
 }
 
-fn parse_date(s: &str) -> Result<DateTime<Utc>, DomainError> {
+fn parse_date(s: &str) -> Result<DateTime<Utc>, ServiceError> {
     DateTime::parse_from_rfc3339(s)
         .map(|dt| dt.with_timezone(&Utc))
-        .map_err(|e| DomainError::InvalidInput(format!("invalid date: {e}")))
+        .map_err(|e| ServiceError::InvalidInput(format!("invalid date: {e}")))
 }
 
-impl TryFrom<WateringPlanCreateRequest> for WateringPlanCreate {
-    type Error = DomainError;
+fn invalid(e: ValidationError) -> ServiceError {
+    ServiceError::InvalidInput(e.to_string())
+}
+
+impl TryFrom<WateringPlanCreateRequest> for WateringPlanDraft {
+    type Error = ServiceError;
 
     fn try_from(req: WateringPlanCreateRequest) -> Result<Self, Self::Error> {
+        let date = parse_date(&req.date)?;
+        let provenance = Provenance::new(
+            req.provider
+                .map(ProviderId::new)
+                .transpose()
+                .map_err(invalid)?,
+            req.additional_information,
+        );
+        let description = if req.description.is_empty() {
+            None
+        } else {
+            Some(req.description)
+        };
         Ok(Self {
-            date: parse_date(&req.date)?,
-            description: req.description,
+            date,
+            description,
             cluster_ids: req.tree_cluster_ids.into_iter().map(Id::new).collect(),
             transporter_id: Some(Id::new(req.transporter_id)),
             trailer_id: req.trailer_id.map(Id::new),
-            provider_info: ProviderInfo {
-                provider: req.provider,
-                additional_info: req.additional_information,
-            },
-        })
-    }
-}
-
-impl TryFrom<WateringPlanUpdateRequest> for WateringPlanUpdate {
-    type Error = DomainError;
-
-    fn try_from(req: WateringPlanUpdateRequest) -> Result<Self, Self::Error> {
-        Ok(Self {
-            date: Some(parse_date(&req.date)?),
-            description: Some(req.description),
-            cluster_ids: Some(req.tree_cluster_ids.into_iter().map(Id::new).collect()),
-            transporter_id: Some(Id::new(req.transporter_id)),
-            trailer_id: req.trailer_id.map(Id::new),
-            cancellation_note: Some(req.cancellation_note),
-            status: Some(req.status.into()),
-            evaluation: None,
-            provider_info: Some(ProviderInfo {
-                provider: req.provider,
-                additional_info: req.additional_information,
-            }),
+            provenance,
         })
     }
 }

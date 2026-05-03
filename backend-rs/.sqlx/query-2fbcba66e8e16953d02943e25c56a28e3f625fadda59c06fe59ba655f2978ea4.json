@@ -1,0 +1,39 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE watering_plans SET\n                date = $2,\n                description = $3,\n                status = $4,\n                cancellation_note = $5,\n                distance = $6,\n                total_water_required = $7,\n                refill_count = $8,\n                duration = $9,\n                gpx_url = $10,\n                provider = $11,\n                additional_informations = $12\n            WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Date",
+        "Text",
+        {
+          "Custom": {
+            "name": "watering_plan_status",
+            "kind": {
+              "Enum": [
+                "planned",
+                "active",
+                "canceled",
+                "finished",
+                "not competed",
+                "unknown"
+              ]
+            }
+          }
+        },
+        "Text",
+        "Float8",
+        "Float8",
+        "Int4",
+        "Float8",
+        "Text",
+        "Text",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2fbcba66e8e16953d02943e25c56a28e3f625fadda59c06fe59ba655f2978ea4"
+}

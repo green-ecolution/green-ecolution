@@ -10,8 +10,13 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     domain::{
         Id,
-        shared::pagination::Pagination,
-        watering_plan::{WateringPlan, WateringPlanQuery},
+        shared::{
+            pagination::Pagination,
+            provenance::{Provenance, ProviderId},
+        },
+        watering_plan::{
+            WateringPlanSearchQuery, WateringPlanStatus as DomainStatus, WateringPlanView,
+        },
     },
     http::{
         AppState,
@@ -21,8 +26,9 @@ use crate::{
                 cluster::TreeClusterInListResponse,
                 vehicle::VehicleResponse,
                 watering_plan::{
-                    WateringPlanCreateRequest, WateringPlanInListResponse, WateringPlanInListView,
-                    WateringPlanResponse, WateringPlanUpdateRequest, WateringPlanView,
+                    EvaluationValueResponse, WateringPlanCreateRequest, WateringPlanDetailView,
+                    WateringPlanInListDetailView, WateringPlanInListResponse, WateringPlanResponse,
+                    WateringPlanUpdateRequest,
                 },
             },
             pagination::PaginationParams,
@@ -43,31 +49,34 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         ))
 }
 
-async fn resolve_plan_relations(
+async fn resolve_view_relations(
     state: &AppState,
-    plan: &WateringPlan,
+    view: &WateringPlanView,
 ) -> Result<
     (
         VehicleResponse,
         Option<VehicleResponse>,
         Vec<TreeClusterInListResponse>,
+        Vec<EvaluationValueResponse>,
     ),
     ServiceError,
 > {
-    let transporter_id = plan
+    let transporter_id = view
         .transporter_id
+        .map(Id::new)
         .ok_or_else(|| ServiceError::InvalidInput("watering plan has no transporter".into()))?;
     let transporter =
         VehicleResponse::from(&state.vehicle_service.view_by_id(transporter_id).await?);
 
-    let trailer = match plan.trailer_id {
+    let trailer = match view.trailer_id {
         Some(id) => Some(VehicleResponse::from(
-            &state.vehicle_service.view_by_id(id).await?,
+            &state.vehicle_service.view_by_id(Id::new(id)).await?,
         )),
         None => None,
     };
 
-    let clusters = state.cluster_service.by_ids(&plan.cluster_ids).await?;
+    let cluster_ids: Vec<_> = view.cluster_ids.iter().copied().map(Id::new).collect();
+    let clusters = state.cluster_service.by_ids(&cluster_ids).await?;
     let region_ids: Vec<_> = clusters.iter().filter_map(|c| c.region_id()).collect();
     let regions = state.region_service.by_ids(&region_ids).await?;
     let region_map: HashMap<_, _> = regions.iter().map(|r| (r.id, r)).collect();
@@ -80,7 +89,23 @@ async fn resolve_plan_relations(
         })
         .collect();
 
-    Ok((transporter, trailer, cluster_responses))
+    let plan_id = Id::new(view.id);
+    let evals = state.watering_plan_service.evaluations(plan_id).await?;
+    let evaluation_responses: Vec<EvaluationValueResponse> = evals
+        .into_iter()
+        .map(|e| EvaluationValueResponse {
+            watering_plan_id: e.watering_plan_id.value(),
+            tree_cluster_id: e.cluster_id.value(),
+            consumed_water: e.consumed_water,
+        })
+        .collect();
+
+    Ok((
+        transporter,
+        trailer,
+        cluster_responses,
+        evaluation_responses,
+    ))
 }
 
 #[utoipa::path(get, path = "/watering-plans", tag = "Watering Plans",
@@ -101,40 +126,44 @@ pub async fn list_watering_plans(
     let pagination = Pagination::from(&params);
     let page = state
         .watering_plan_service
-        .all(WateringPlanQuery::default(), pagination)
+        .search_view(WateringPlanSearchQuery::default(), pagination)
         .await?;
 
     let vehicle_ids: Vec<_> = page
         .items
         .iter()
-        .flat_map(|p| [p.transporter_id, p.trailer_id].into_iter().flatten())
+        .flat_map(|v| {
+            [v.transporter_id, v.trailer_id]
+                .into_iter()
+                .flatten()
+                .map(Id::new)
+        })
         .collect();
     let vehicles = state.vehicle_service.view_by_ids(&vehicle_ids).await?;
-    let vehicle_map: HashMap<_, _> = vehicles.iter().map(|v| (Id::from(v.id), v)).collect();
+    let vehicle_map: HashMap<_, _> = vehicles.iter().map(|v| (v.id, v)).collect();
 
     let cluster_ids: Vec<_> = page
         .items
         .iter()
-        .flat_map(|p| &p.cluster_ids)
-        .copied()
+        .flat_map(|v| v.cluster_ids.iter().copied().map(Id::new))
         .collect();
     let clusters = state.cluster_service.by_ids(&cluster_ids).await?;
     let region_ids: Vec<_> = clusters.iter().filter_map(|c| c.region_id()).collect();
     let regions = state.region_service.by_ids(&region_ids).await?;
     let region_map: HashMap<_, _> = regions.iter().map(|r| (r.id, r)).collect();
-    let cluster_map: HashMap<_, _> = clusters.iter().map(|c| (c.id, c)).collect();
+    let cluster_map: HashMap<_, _> = clusters.iter().map(|c| (c.id.value(), c)).collect();
 
-    let response = ListResponse::from_page_with(page, &pagination, |plan: &WateringPlan| {
-        let transporter = plan
+    let response = ListResponse::from_page_with(page, &pagination, |view: &WateringPlanView| {
+        let transporter = view
             .transporter_id
             .and_then(|id| vehicle_map.get(&id))
             .map(|v| VehicleResponse::from(*v))
             .expect("watering plan must have a transporter");
-        let trailer = plan
+        let trailer = view
             .trailer_id
             .and_then(|id| vehicle_map.get(&id))
             .map(|v| VehicleResponse::from(*v));
-        let plan_clusters: Vec<TreeClusterInListResponse> = plan
+        let plan_clusters: Vec<TreeClusterInListResponse> = view
             .cluster_ids
             .iter()
             .filter_map(|cid| cluster_map.get(cid))
@@ -144,8 +173,8 @@ pub async fn list_watering_plans(
             })
             .collect();
 
-        WateringPlanInListResponse::from(WateringPlanInListView {
-            plan: plan.clone(),
+        WateringPlanInListResponse::from(WateringPlanInListDetailView {
+            view: view.clone(),
             transporter,
             trailer,
             clusters: plan_clusters,
@@ -172,16 +201,17 @@ pub async fn get_watering_plan(
     State(state): State<Arc<AppState>>,
     Path(id): Path<i32>,
 ) -> Result<Json<WateringPlanResponse>, ServiceError> {
-    let plan = state.watering_plan_service.by_id(Id::from(id)).await?;
-    let (transporter, trailer, clusters) = resolve_plan_relations(&state, &plan).await?;
+    let view = state.watering_plan_service.view_by_id(Id::from(id)).await?;
+    let (transporter, trailer, clusters, evaluation) =
+        resolve_view_relations(&state, &view).await?;
 
-    let response = WateringPlanResponse::from(WateringPlanView {
-        plan,
+    let response = WateringPlanResponse::from(WateringPlanDetailView {
+        view,
         transporter,
         trailer,
         clusters,
         user_ids: vec![],
-        evaluation: vec![],
+        evaluation,
     });
 
     Ok(Json(response))
@@ -203,17 +233,19 @@ pub async fn create_watering_plan(
     State(state): State<Arc<AppState>>,
     Json(entity): Json<WateringPlanCreateRequest>,
 ) -> Result<(StatusCode, Json<WateringPlanResponse>), ServiceError> {
-    let create = entity.try_into().map_err(ServiceError::Domain)?;
-    let plan = state.watering_plan_service.create(create).await?;
-    let (transporter, trailer, clusters) = resolve_plan_relations(&state, &plan).await?;
+    let draft = entity.try_into()?;
+    let plan = state.watering_plan_service.create(draft).await?;
+    let view = state.watering_plan_service.view_by_id(plan.id).await?;
+    let (transporter, trailer, clusters, evaluation) =
+        resolve_view_relations(&state, &view).await?;
 
-    let response = WateringPlanResponse::from(WateringPlanView {
-        plan,
+    let response = WateringPlanResponse::from(WateringPlanDetailView {
+        view,
         transporter,
         trailer,
         clusters,
         user_ids: vec![],
-        evaluation: vec![],
+        evaluation,
     });
 
     Ok((StatusCode::CREATED, Json(response)))
@@ -237,20 +269,105 @@ pub async fn update_watering_plan(
     Path(id): Path<i32>,
     Json(entity): Json<WateringPlanUpdateRequest>,
 ) -> Result<Json<WateringPlanResponse>, ServiceError> {
-    let update = entity.try_into().map_err(ServiceError::Domain)?;
-    let plan = state
-        .watering_plan_service
-        .update(Id::from(id), update)
-        .await?;
-    let (transporter, trailer, clusters) = resolve_plan_relations(&state, &plan).await?;
+    let plan_id = Id::from(id);
+    let current = state.watering_plan_service.by_id(plan_id).await?;
+    let new_status: DomainStatus = entity.status.into();
 
-    let response = WateringPlanResponse::from(WateringPlanView {
-        plan,
+    if current.status() == DomainStatus::Planned {
+        let date = parse_date(&entity.date)?;
+        let cluster_ids = entity
+            .tree_cluster_ids
+            .iter()
+            .copied()
+            .map(Id::new)
+            .collect();
+        let provenance = Provenance::new(
+            entity
+                .provider
+                .clone()
+                .map(ProviderId::new)
+                .transpose()
+                .map_err(invalid)?,
+            entity.additional_information.clone(),
+        );
+        let description = if entity.description.is_empty() {
+            None
+        } else {
+            Some(entity.description.clone())
+        };
+        let transporter_id = Some(Id::new(entity.transporter_id));
+        let trailer_id = entity.trailer_id.map(Id::new);
+        state
+            .watering_plan_service
+            .replace_details(
+                plan_id,
+                date,
+                description,
+                cluster_ids,
+                transporter_id,
+                trailer_id,
+                provenance,
+            )
+            .await?;
+    }
+
+    match (current.status(), new_status) {
+        (a, b) if a == b => {}
+        (DomainStatus::Planned, DomainStatus::Active) => {
+            state.watering_plan_service.start(plan_id).await?;
+        }
+        (DomainStatus::Planned | DomainStatus::Active, DomainStatus::Canceled) => {
+            if entity.cancellation_note.trim().is_empty() {
+                return Err(ServiceError::InvalidInput(
+                    "cancellation_note required".into(),
+                ));
+            }
+            state
+                .watering_plan_service
+                .cancel(plan_id, entity.cancellation_note)
+                .await?;
+        }
+        (DomainStatus::Active, DomainStatus::NotCompleted) => {
+            if entity.cancellation_note.trim().is_empty() {
+                return Err(ServiceError::InvalidInput(
+                    "cancellation_note required".into(),
+                ));
+            }
+            state
+                .watering_plan_service
+                .fail(plan_id, entity.cancellation_note)
+                .await?;
+        }
+        (DomainStatus::Active, DomainStatus::Finished) => {
+            let evaluations: Vec<_> = entity
+                .evaluation
+                .unwrap_or_default()
+                .into_iter()
+                .map(|e| e.into_domain(plan_id))
+                .collect();
+            state
+                .watering_execution_service
+                .finish(plan_id, evaluations)
+                .await?;
+        }
+        (from, to) => {
+            return Err(ServiceError::InvalidInput(format!(
+                "invalid status transition from {from:?} to {to:?}"
+            )));
+        }
+    }
+
+    let view = state.watering_plan_service.view_by_id(plan_id).await?;
+    let (transporter, trailer, clusters, evaluation) =
+        resolve_view_relations(&state, &view).await?;
+
+    let response = WateringPlanResponse::from(WateringPlanDetailView {
+        view,
         transporter,
         trailer,
         clusters,
         user_ids: vec![],
-        evaluation: vec![],
+        evaluation,
     });
 
     Ok(Json(response))
@@ -306,4 +423,14 @@ pub async fn get_gpx_file(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn preview_route(State(_state): State<Arc<AppState>>) -> Result<Json<()>, ServiceError> {
     todo!()
+}
+
+fn parse_date(s: &str) -> Result<chrono::DateTime<chrono::Utc>, ServiceError> {
+    chrono::DateTime::parse_from_rfc3339(s)
+        .map(|dt| dt.with_timezone(&chrono::Utc))
+        .map_err(|e| ServiceError::InvalidInput(format!("invalid date: {e}")))
+}
+
+fn invalid(e: crate::domain::shared::error::ValidationError) -> ServiceError {
+    ServiceError::InvalidInput(e.to_string())
 }

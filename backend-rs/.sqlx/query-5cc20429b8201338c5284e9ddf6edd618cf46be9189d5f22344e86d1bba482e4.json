@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM tree_cluster_watering_plans WHERE watering_plan_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5cc20429b8201338c5284e9ddf6edd618cf46be9189d5f22344e86d1bba482e4"
+}

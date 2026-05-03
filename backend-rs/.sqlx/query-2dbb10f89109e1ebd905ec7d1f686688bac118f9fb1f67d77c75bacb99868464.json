@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO watering_plans (date, description, status, provider, additional_informations)\n            VALUES ($1, $2, 'planned', $3, $4)\n            RETURNING id, created_at, updated_at, date, description,\n                      status AS \"status: WateringPlanStatus\",\n                      distance, total_water_required, cancellation_note,\n                      gpx_url, refill_count, duration,\n                      provider, additional_informations",
+  "query": "SELECT wp.id, wp.date, wp.description,\n                      wp.status AS \"status: WateringPlanStatus\",\n                      wp.distance, wp.total_water_required, wp.cancellation_note,\n                      wp.gpx_url, wp.refill_count, wp.duration,\n                      wp.provider, wp.additional_informations,\n                      COALESCE(ARRAY_AGG(DISTINCT vwp.vehicle_id) FILTER (WHERE vwp.vehicle_id IS NOT NULL), ARRAY[]::int[]) AS \"vehicle_ids!: Vec<i32>\",\n                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::int[]) AS \"cluster_ids!: Vec<i32>\"\n            FROM watering_plans wp\n            LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id\n            LEFT JOIN tree_cluster_watering_plans twp ON twp.watering_plan_id = wp.id\n            WHERE wp.id = $1\n            GROUP BY wp.id",
   "describe": {
     "columns": [
       {
@@ -10,26 +10,16 @@
       },
       {
         "ordinal": 1,
-        "name": "created_at",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 2,
-        "name": "updated_at",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 3,
         "name": "date",
         "type_info": "Date"
       },
       {
-        "ordinal": 4,
+        "ordinal": 2,
         "name": "description",
         "type_info": "Text"
       },
       {
-        "ordinal": 5,
+        "ordinal": 3,
         "name": "status: WateringPlanStatus",
         "type_info": {
           "Custom": {
@@ -48,52 +38,59 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 4,
         "name": "distance",
         "type_info": "Float8"
       },
       {
-        "ordinal": 7,
+        "ordinal": 5,
         "name": "total_water_required",
         "type_info": "Float8"
       },
       {
-        "ordinal": 8,
+        "ordinal": 6,
         "name": "cancellation_note",
         "type_info": "Text"
       },
       {
-        "ordinal": 9,
+        "ordinal": 7,
         "name": "gpx_url",
         "type_info": "Text"
       },
       {
-        "ordinal": 10,
+        "ordinal": 8,
         "name": "refill_count",
         "type_info": "Int4"
       },
       {
-        "ordinal": 11,
+        "ordinal": 9,
         "name": "duration",
         "type_info": "Float8"
       },
       {
-        "ordinal": 12,
+        "ordinal": 10,
         "name": "provider",
         "type_info": "Text"
       },
       {
-        "ordinal": 13,
+        "ordinal": 11,
         "name": "additional_informations",
         "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 12,
+        "name": "vehicle_ids!: Vec<i32>",
+        "type_info": "Int4Array"
+      },
+      {
+        "ordinal": 13,
+        "name": "cluster_ids!: Vec<i32>",
+        "type_info": "Int4Array"
       }
     ],
     "parameters": {
       "Left": [
-        "Date",
-        "Text",
-        "Text",
-        "Jsonb"
+        "Int4"
       ]
     },
     "nullable": [
@@ -101,8 +98,6 @@
       false,
       false,
       false,
-      false,
-      false,
       true,
       true,
       false,
@@ -110,8 +105,10 @@
       false,
       false,
       true,
-      true
+      true,
+      null,
+      null
     ]
   },
-  "hash": "27c04b304e09451f6c5b8b6636822217eec8e1c0136a868aaf3c337921536878"
+  "hash": "2dbb10f89109e1ebd905ec7d1f686688bac118f9fb1f67d77c75bacb99868464"
 }
