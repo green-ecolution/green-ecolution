@@ -75,6 +75,51 @@ impl TreeReader for PgTreeRepository {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
+    async fn by_sensor_id(&self, sensor_id: &SensorId) -> Result<Option<Tree>, RepositoryError> {
+        let snap = sqlx::query_as!(
+            TreeSnapshot,
+            r#"SELECT id, tree_cluster_id AS cluster_id, sensor_id,
+                      planting_year, species, number AS tree_number,
+                      latitude, longitude,
+                      watering_status AS "watering_status: WateringStatus",
+                      description,
+                      last_watered AS "last_watered: DateTime<Utc>",
+                      provider,
+                      additional_informations AS additional_info
+            FROM trees WHERE sensor_id = $1 LIMIT 1"#,
+            sensor_id.as_str()
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(snap.map(Tree::reconstitute))
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn by_cluster_id(
+        &self,
+        cluster_id: Id<TreeCluster>,
+    ) -> Result<Vec<Tree>, RepositoryError> {
+        let snaps = sqlx::query_as!(
+            TreeSnapshot,
+            r#"SELECT id, tree_cluster_id AS cluster_id, sensor_id,
+                      planting_year, species, number AS tree_number,
+                      latitude, longitude,
+                      watering_status AS "watering_status: WateringStatus",
+                      description,
+                      last_watered AS "last_watered: DateTime<Utc>",
+                      provider,
+                      additional_informations AS additional_info
+            FROM trees WHERE tree_cluster_id = $1"#,
+            cluster_id.value()
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(snaps.into_iter().map(Tree::reconstitute).collect())
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn view_by_id(&self, id: Id<Tree>) -> Result<TreeView, RepositoryError> {
         let row = sqlx::query!(
             r#"SELECT id, created_at, updated_at, tree_cluster_id, sensor_id,

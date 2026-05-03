@@ -19,6 +19,14 @@ pub trait TreeReader: Send + Sync {
     async fn by_id(&self, id: Id<Tree>) -> Result<Tree, RepositoryError>;
     async fn by_ids(&self, ids: &[Id<Tree>]) -> Result<Vec<Tree>, RepositoryError>;
 
+    /// Loads the [`Tree`] (aggregate) bound to `sensor_id`, if any.
+    /// Returns `Ok(None)` if no tree is currently linked to that sensor.
+    async fn by_sensor_id(&self, sensor_id: &SensorId) -> Result<Option<Tree>, RepositoryError>;
+
+    /// Loads all trees that belong to `cluster_id`. Empty vec if the cluster
+    /// has no trees.
+    async fn by_cluster_id(&self, cluster_id: Id<TreeCluster>) -> Result<Vec<Tree>, RepositoryError>;
+
     /// Returns [`TreeView`] — includes audit timestamps.
     async fn view_by_id(&self, id: Id<Tree>) -> Result<TreeView, RepositoryError>;
     async fn view_by_ids(&self, ids: &[Id<Tree>]) -> Result<Vec<TreeView>, RepositoryError>;
