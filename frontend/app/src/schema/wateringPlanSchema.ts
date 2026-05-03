@@ -1,36 +1,19 @@
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import { z } from 'zod'
 
-export const wateringPlanSchemaBase = z.object({
-  date: z.coerce.date(),
-  status: z
-    .nativeEnum(WateringPlanStatus)
-    .refine((value) => Object.values(WateringPlanStatus).includes(value), {
-      message: 'Kein korrekter Status.',
-    }),
-  transporterId: z.coerce.number().int().positive(),
-  trailerId: z.coerce.number().int().positive().optional(),
-  driverIds: z.array(z.string().uuid()),
-  clusterIds: z.array(z.number()),
-  description: z.string(),
-})
-
-const startOfToday = () => {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return today
+export interface WateringPlanForm {
+  date: Date
+  status: WateringPlanStatus
+  transporterId: number
+  trailerId?: number
+  driverIds: string[]
+  clusterIds: number[]
+  description: string
 }
 
-export const wateringPlanSchema = wateringPlanSchemaBase.extend({
-  date: z.coerce.date().refine((date) => date >= startOfToday(), {
-    message: 'Datum muss heute oder in der Zukunft liegen',
-  }),
-  driverIds: z
-    .array(z.string().uuid())
-    .min(1, { message: 'Es muss mindestens ein Mitwarbeiter ausgewählt werden' }),
-  clusterIds: z.array(z.number()).min(1),
-})
-
+// State-machine action schemas — these validate transition inputs (not draft
+// shape), so they keep their Zod schema until corresponding domain validators
+// are added.
 export const wateringPlanFinishedSchema = z.object({
   evaluation: z.array(
     z.object({
@@ -53,7 +36,6 @@ export const wateringPlanOtherStatusSchema = z.object({
     }),
 })
 
-export type WateringPlanForm = z.infer<typeof wateringPlanSchema>
 export type WateringPlanFinishedForm = z.infer<typeof wateringPlanFinishedSchema>
 export type WateringPlanCancelForm = z.infer<typeof wateringPlanCancelSchema>
 export type WateringPlanOtherStatusUpdateForm = z.infer<typeof wateringPlanOtherStatusSchema>
