@@ -127,6 +127,7 @@ impl SensorService {
         self.event_bus
             .publish(DomainEvent::SensorDataReceived {
                 sensor_id,
+                ts: chrono::Utc::now(),
                 data: serde_json::Value::Null,
             })
             .await;

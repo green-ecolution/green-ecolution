@@ -79,10 +79,12 @@ impl TreeService {
     pub async fn create(&self, draft: TreeDraft) -> Result<Tree, ServiceError> {
         let tree = self.writer.save_new(draft).await?;
         let cluster_id = tree.cluster_id();
+        let sensor_id = tree.sensor_id().cloned();
         self.event_bus
             .publish(DomainEvent::TreeCreated {
                 tree_id: tree.id,
                 cluster_id,
+                sensor_id,
             })
             .await;
         Ok(tree)
@@ -174,11 +176,13 @@ impl TreeService {
     pub async fn delete(&self, id: Id<Tree>) -> Result<(), ServiceError> {
         let tree = self.reader.by_id(id).await?;
         let cluster_id = tree.cluster_id();
+        let had_sensor = tree.sensor_id().is_some();
         self.writer.delete(id).await?;
         self.event_bus
             .publish(DomainEvent::TreeDeleted {
                 tree_id: id,
                 cluster_id,
+                had_sensor,
             })
             .await;
         Ok(())
