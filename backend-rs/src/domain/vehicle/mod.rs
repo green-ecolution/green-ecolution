@@ -193,6 +193,20 @@ pub struct VehicleSearchQuery {
     pub provider: Option<ProviderId>,
 }
 
+/// Replacement input for [`Vehicle`] updates.
+#[derive(Debug, Clone)]
+pub struct VehicleUpdate {
+    pub number_plate: NumberPlate,
+    pub description: Option<String>,
+    pub water_capacity: WaterCapacity,
+    pub status: VehicleStatus,
+    pub vehicle_type: VehicleType,
+    pub model: VehicleModel,
+    pub driving_license: DrivingLicense,
+    pub dimension: VehicleDimension,
+    pub provenance: Provenance,
+}
+
 impl Vehicle {
     #[allow(dead_code)]
     pub(crate) fn reconstitute(snap: VehicleSnapshot) -> Self {
@@ -229,27 +243,16 @@ impl Vehicle {
         &self.provenance
     }
 
-    pub fn replace_details(
-        &mut self,
-        number_plate: NumberPlate,
-        description: Option<String>,
-        water_capacity: WaterCapacity,
-        status: VehicleStatus,
-        vehicle_type: VehicleType,
-        model: VehicleModel,
-        driving_license: DrivingLicense,
-        dimension: VehicleDimension,
-        provenance: Provenance,
-    ) {
-        self.number_plate = number_plate;
-        self.description = description;
-        self.water_capacity = water_capacity;
-        self.status = status;
-        self.vehicle_type = vehicle_type;
-        self.model = model;
-        self.driving_license = driving_license;
-        self.dimension = dimension;
-        self.provenance = provenance;
+    pub fn replace_details(&mut self, update: VehicleUpdate) {
+        self.number_plate = update.number_plate;
+        self.description = update.description;
+        self.water_capacity = update.water_capacity;
+        self.status = update.status;
+        self.vehicle_type = update.vehicle_type;
+        self.model = update.model;
+        self.driving_license = update.driving_license;
+        self.dimension = update.dimension;
+        self.provenance = update.provenance;
     }
 
     /// Marks the vehicle as archived at `at`.

@@ -11,7 +11,8 @@ use crate::{
     domain::{
         Id,
         cluster::{
-            ClusterAddress, ClusterName, TreeClusterDraft, TreeClusterSearchQuery, TreeClusterView,
+            ClusterAddress, ClusterName, TreeClusterDraft, TreeClusterSearchQuery,
+            TreeClusterUpdate, TreeClusterView,
         },
         region::Region,
         sensor::SensorId,
@@ -202,32 +203,24 @@ pub async fn update_cluster(
     Json(entity): Json<TreeClusterUpdateRequest>,
 ) -> Result<Json<TreeClusterResponse>, ServiceError> {
     let cluster_id = Id::from(id);
-    let name =
-        ClusterName::new(entity.name).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
-    let address = ClusterAddress::new(entity.address)
-        .map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
-    let soil_condition = Some(entity.soil_condition.into());
-    let tree_ids: Vec<_> = entity.tree_ids.into_iter().map(Id::new).collect();
-    let provenance = Provenance::new(
-        entity
-            .provider
-            .map(ProviderId::new)
-            .transpose()
-            .map_err(|e: ValidationError| ServiceError::InvalidInput(e.to_string()))?,
-        entity.additional_information,
-    );
-    state
-        .cluster_service
-        .replace(
-            cluster_id,
-            name,
-            address,
-            entity.description,
-            soil_condition,
-            tree_ids,
-            provenance,
-        )
-        .await?;
+    let update = TreeClusterUpdate {
+        name: ClusterName::new(entity.name)
+            .map_err(|e| ServiceError::InvalidInput(e.to_string()))?,
+        address: ClusterAddress::new(entity.address)
+            .map_err(|e| ServiceError::InvalidInput(e.to_string()))?,
+        description: entity.description,
+        soil_condition: Some(entity.soil_condition.into()),
+        tree_ids: entity.tree_ids.into_iter().map(Id::new).collect(),
+        provenance: Provenance::new(
+            entity
+                .provider
+                .map(ProviderId::new)
+                .transpose()
+                .map_err(|e: ValidationError| ServiceError::InvalidInput(e.to_string()))?,
+            entity.additional_information,
+        ),
+    };
+    state.cluster_service.replace(cluster_id, update).await?;
     let view = state.cluster_service.view_by_id(cluster_id).await?;
     let response = build_cluster_response(&state, &view).await?;
     Ok(Json(response))

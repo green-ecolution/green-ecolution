@@ -127,6 +127,17 @@ pub struct TreeClusterSearchQuery {
     pub provider: Option<ProviderId>,
 }
 
+/// Replacement input for [`TreeCluster`] updates.
+#[derive(Debug, Clone)]
+pub struct TreeClusterUpdate {
+    pub name: ClusterName,
+    pub address: ClusterAddress,
+    pub description: String,
+    pub soil_condition: Option<SoilCondition>,
+    pub tree_ids: Vec<Id<Tree>>,
+    pub provenance: Provenance,
+}
+
 impl TreeCluster {
     #[allow(dead_code)]
     pub(crate) fn reconstitute(snap: TreeClusterSnapshot) -> Self {

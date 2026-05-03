@@ -27,6 +27,12 @@ impl DefaultSystemInfoProvider {
     }
 }
 
+impl Default for DefaultSystemInfoProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[async_trait::async_trait]
 impl SystemInfoProvider for DefaultSystemInfoProvider {
     async fn app_info(&self) -> Result<App, RepositoryError> {

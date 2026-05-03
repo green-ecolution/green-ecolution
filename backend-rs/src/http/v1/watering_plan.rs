@@ -15,7 +15,8 @@ use crate::{
             provenance::{Provenance, ProviderId},
         },
         watering_plan::{
-            WateringPlanSearchQuery, WateringPlanStatus as DomainStatus, WateringPlanView,
+            WateringPlanSearchQuery, WateringPlanStatus as DomainStatus, WateringPlanUpdate,
+            WateringPlanView,
         },
     },
     http::{
@@ -274,40 +275,34 @@ pub async fn update_watering_plan(
     let new_status: DomainStatus = entity.status.into();
 
     if current.status() == DomainStatus::Planned {
-        let date = parse_date(&entity.date)?;
-        let cluster_ids = entity
-            .tree_cluster_ids
-            .iter()
-            .copied()
-            .map(Id::new)
-            .collect();
-        let provenance = Provenance::new(
-            entity
-                .provider
-                .clone()
-                .map(ProviderId::new)
-                .transpose()
-                .map_err(invalid)?,
-            entity.additional_information.clone(),
-        );
-        let description = if entity.description.is_empty() {
-            None
-        } else {
-            Some(entity.description.clone())
+        let update = WateringPlanUpdate {
+            date: parse_date(&entity.date)?,
+            description: if entity.description.is_empty() {
+                None
+            } else {
+                Some(entity.description.clone())
+            },
+            cluster_ids: entity
+                .tree_cluster_ids
+                .iter()
+                .copied()
+                .map(Id::new)
+                .collect(),
+            transporter_id: Some(Id::new(entity.transporter_id)),
+            trailer_id: entity.trailer_id.map(Id::new),
+            provenance: Provenance::new(
+                entity
+                    .provider
+                    .clone()
+                    .map(ProviderId::new)
+                    .transpose()
+                    .map_err(invalid)?,
+                entity.additional_information.clone(),
+            ),
         };
-        let transporter_id = Some(Id::new(entity.transporter_id));
-        let trailer_id = entity.trailer_id.map(Id::new);
         state
             .watering_plan_service
-            .replace_details(
-                plan_id,
-                date,
-                description,
-                cluster_ids,
-                transporter_id,
-                trailer_id,
-                provenance,
-            )
+            .replace_details(plan_id, update)
             .await?;
     }
 

@@ -2,14 +2,10 @@ use std::sync::Arc;
 
 use crate::domain::{
     Id,
-    shared::{
-        pagination::{Page, Pagination},
-        provenance::Provenance,
-        water_capacity::WaterCapacity,
-    },
+    shared::pagination::{Page, Pagination},
     vehicle::{
-        DrivingLicense, NumberPlate, Vehicle, VehicleDimension, VehicleDraft, VehicleModel,
-        VehicleReader, VehicleSearchQuery, VehicleStatus, VehicleType, VehicleView, VehicleWriter,
+        NumberPlate, Vehicle, VehicleDraft, VehicleReader, VehicleSearchQuery, VehicleType,
+        VehicleUpdate, VehicleView, VehicleWriter,
     },
 };
 
@@ -74,32 +70,13 @@ impl VehicleService {
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(vehicle.id = %id))]
-    #[allow(clippy::too_many_arguments)]
     pub async fn replace(
         &self,
         id: Id<Vehicle>,
-        number_plate: NumberPlate,
-        description: Option<String>,
-        water_capacity: WaterCapacity,
-        status: VehicleStatus,
-        vehicle_type: VehicleType,
-        model: VehicleModel,
-        driving_license: DrivingLicense,
-        dimension: VehicleDimension,
-        provenance: Provenance,
+        update: VehicleUpdate,
     ) -> Result<Vehicle, ServiceError> {
         let mut vehicle = self.reader.by_id(id).await?;
-        vehicle.replace_details(
-            number_plate,
-            description,
-            water_capacity,
-            status,
-            vehicle_type,
-            model,
-            driving_license,
-            dimension,
-            provenance,
-        );
+        vehicle.replace_details(update);
         self.writer.save(&vehicle).await?;
         Ok(vehicle)
     }

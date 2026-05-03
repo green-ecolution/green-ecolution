@@ -216,20 +216,10 @@ impl VehicleCreateRequest {
     }
 }
 
-pub struct VehicleUpdateFields {
-    pub number_plate: NumberPlate,
-    pub description: Option<String>,
-    pub water_capacity: WaterCapacity,
-    pub status: crate::domain::vehicle::VehicleStatus,
-    pub vehicle_type: crate::domain::vehicle::VehicleType,
-    pub model: VehicleModel,
-    pub driving_license: crate::domain::vehicle::DrivingLicense,
-    pub dimension: VehicleDimension,
-    pub provenance: Provenance,
-}
-
 impl VehicleUpdateRequest {
-    pub fn into_fields(self) -> Result<VehicleUpdateFields, crate::service::ServiceError> {
+    pub fn into_update(
+        self,
+    ) -> Result<crate::domain::vehicle::VehicleUpdate, crate::service::ServiceError> {
         let number_plate = NumberPlate::new(self.number_plate)
             .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
         let model = VehicleModel::new(self.model)
@@ -240,7 +230,7 @@ impl VehicleUpdateRequest {
             .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
         let provenance = parse_provenance(self.provider, self.additional_information)?;
 
-        Ok(VehicleUpdateFields {
+        Ok(crate::domain::vehicle::VehicleUpdate {
             number_plate,
             description: self.description,
             water_capacity,

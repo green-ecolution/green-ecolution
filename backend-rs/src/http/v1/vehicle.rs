@@ -116,22 +116,8 @@ pub async fn update_vehicle(
     Path(id): Path<i32>,
     Json(entity): Json<VehicleUpdateRequest>,
 ) -> Result<Json<VehicleResponse>, ServiceError> {
-    let fields = entity.into_fields()?;
-    let vehicle = state
-        .vehicle_service
-        .replace(
-            Id::from(id),
-            fields.number_plate,
-            fields.description,
-            fields.water_capacity,
-            fields.status,
-            fields.vehicle_type,
-            fields.model,
-            fields.driving_license,
-            fields.dimension,
-            fields.provenance,
-        )
-        .await?;
+    let update = entity.into_update()?;
+    let vehicle = state.vehicle_service.replace(Id::from(id), update).await?;
     let view = state.vehicle_service.view_by_id(vehicle.id).await?;
     Ok(Json(VehicleResponse::from(&view)))
 }

@@ -2,15 +2,11 @@ use std::sync::Arc;
 
 use crate::domain::{
     Id,
-    cluster::TreeCluster,
-    shared::{
-        pagination::{Page, Pagination},
-        provenance::Provenance,
-    },
-    vehicle::Vehicle,
+    shared::pagination::{Page, Pagination},
     watering_plan::{
         WateringPlan, WateringPlanDraft, WateringPlanError, WateringPlanEvaluation,
-        WateringPlanReader, WateringPlanSearchQuery, WateringPlanView, WateringPlanWriter,
+        WateringPlanReader, WateringPlanSearchQuery, WateringPlanUpdate, WateringPlanView,
+        WateringPlanWriter,
     },
 };
 
@@ -72,23 +68,10 @@ impl WateringPlanService {
     pub async fn replace_details(
         &self,
         id: Id<WateringPlan>,
-        date: chrono::DateTime<chrono::Utc>,
-        description: Option<String>,
-        cluster_ids: Vec<Id<TreeCluster>>,
-        transporter_id: Option<Id<Vehicle>>,
-        trailer_id: Option<Id<Vehicle>>,
-        provenance: Provenance,
+        update: WateringPlanUpdate,
     ) -> Result<WateringPlan, ServiceError> {
         let mut plan = self.reader.by_id(id).await?;
-        plan.replace_details(
-            date,
-            description,
-            cluster_ids,
-            transporter_id,
-            trailer_id,
-            provenance,
-        )
-        .map_err(map_plan_error)?;
+        plan.replace_details(update).map_err(map_plan_error)?;
         self.writer.save(&plan).await?;
         Ok(plan)
     }

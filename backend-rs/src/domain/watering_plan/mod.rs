@@ -97,6 +97,18 @@ pub struct WateringPlanSearchQuery {
     pub provider: Option<ProviderId>,
 }
 
+/// Replacement input for [`WateringPlan`] field edits while still
+/// in [`WateringPlanStatus::Planned`].
+#[derive(Debug, Clone)]
+pub struct WateringPlanUpdate {
+    pub date: DateTime<Utc>,
+    pub description: Option<String>,
+    pub cluster_ids: Vec<Id<TreeCluster>>,
+    pub transporter_id: Option<Id<Vehicle>>,
+    pub trailer_id: Option<Id<Vehicle>>,
+    pub provenance: Provenance,
+}
+
 impl WateringPlan {
     #[allow(dead_code)]
     pub(crate) fn reconstitute(snap: WateringPlanSnapshot) -> Self {
@@ -150,22 +162,14 @@ impl WateringPlan {
     }
 
     /// Updates editable fields. Only allowed while status is [`WateringPlanStatus::Planned`].
-    pub fn replace_details(
-        &mut self,
-        date: DateTime<Utc>,
-        description: Option<String>,
-        cluster_ids: Vec<Id<TreeCluster>>,
-        transporter_id: Option<Id<Vehicle>>,
-        trailer_id: Option<Id<Vehicle>>,
-        provenance: Provenance,
-    ) -> Result<(), WateringPlanError> {
+    pub fn replace_details(&mut self, update: WateringPlanUpdate) -> Result<(), WateringPlanError> {
         self.ensure_planned()?;
-        self.date = date;
-        self.description = description;
-        self.cluster_ids = cluster_ids;
-        self.transporter_id = transporter_id;
-        self.trailer_id = trailer_id;
-        self.provenance = provenance;
+        self.date = update.date;
+        self.description = update.description;
+        self.cluster_ids = update.cluster_ids;
+        self.transporter_id = update.transporter_id;
+        self.trailer_id = update.trailer_id;
+        self.provenance = update.provenance;
         Ok(())
     }
 
@@ -394,14 +398,14 @@ mod tests {
         let mut p = fixed_plan();
         let date = p.date;
         p.start().unwrap();
-        let result = p.replace_details(
+        let result = p.replace_details(WateringPlanUpdate {
             date,
-            Some("new desc".to_string()),
-            vec![Id::new(3)],
-            Some(Id::new(11)),
-            None,
-            Provenance::default(),
-        );
+            description: Some("new desc".to_string()),
+            cluster_ids: vec![Id::new(3)],
+            transporter_id: Some(Id::new(11)),
+            trailer_id: None,
+            provenance: Provenance::default(),
+        });
         assert!(matches!(
             result,
             Err(WateringPlanError::CannotMutateAfterStart)

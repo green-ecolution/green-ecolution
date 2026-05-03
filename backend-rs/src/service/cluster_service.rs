@@ -3,14 +3,13 @@ use std::sync::Arc;
 use crate::domain::{
     Id,
     cluster::{
-        ClusterAddress, ClusterName, SoilCondition, TreeCluster, TreeClusterDraft,
-        TreeClusterReader, TreeClusterSearchQuery, TreeClusterView, TreeClusterWriter,
+        TreeCluster, TreeClusterDraft, TreeClusterReader, TreeClusterSearchQuery,
+        TreeClusterUpdate, TreeClusterView, TreeClusterWriter,
     },
     events::DomainEvent,
     shared::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
-        provenance::Provenance,
     },
     tree::TreeWriter,
 };
@@ -78,17 +77,18 @@ impl ClusterService {
     pub async fn replace(
         &self,
         id: Id<TreeCluster>,
-        name: ClusterName,
-        address: ClusterAddress,
-        description: String,
-        soil_condition: Option<SoilCondition>,
-        tree_ids: Vec<Id<crate::domain::tree::Tree>>,
-        provenance: Provenance,
+        update: TreeClusterUpdate,
     ) -> Result<TreeCluster, ServiceError> {
         let mut cluster = self.reader.by_id(id).await?;
-        let trees_changed = cluster.tree_ids != tree_ids;
-        cluster.replace_details(name, address, description, soil_condition, provenance);
-        cluster.replace_trees(tree_ids);
+        let trees_changed = cluster.tree_ids != update.tree_ids;
+        cluster.replace_details(
+            update.name,
+            update.address,
+            update.description,
+            update.soil_condition,
+            update.provenance,
+        );
+        cluster.replace_trees(update.tree_ids);
         self.writer.save(&cluster).await?;
         if trees_changed {
             self.event_bus

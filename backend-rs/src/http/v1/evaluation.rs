@@ -38,15 +38,15 @@ pub async fn get_evaluation(
 
     let tree_page = state
         .tree_service
-        .search_view(TreeSearchQuery::default(), count_pagination.clone())
+        .search_view(TreeSearchQuery::default(), count_pagination)
         .await?;
     let cluster_page = state
         .cluster_service
-        .search_view(TreeClusterSearchQuery::default(), count_pagination.clone())
+        .search_view(TreeClusterSearchQuery::default(), count_pagination)
         .await?;
     let sensor_page = state
         .sensor_service
-        .search_view(SensorSearchQuery::default(), count_pagination.clone())
+        .search_view(SensorSearchQuery::default(), count_pagination)
         .await?;
     let watering_plan_page = state
         .watering_plan_service
