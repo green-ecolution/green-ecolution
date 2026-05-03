@@ -378,6 +378,43 @@ impl TreeReader for PgTreeRepository {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
+    async fn find_nearest(
+        &self,
+        coord: Coordinate,
+        radius: Distance,
+    ) -> Result<Option<Tree>, RepositoryError> {
+        let snap = sqlx::query_as!(
+            TreeSnapshot,
+            r#"SELECT id, tree_cluster_id AS cluster_id, sensor_id,
+                      planting_year, species, number AS tree_number,
+                      latitude, longitude,
+                      watering_status AS "watering_status: WateringStatus",
+                      description,
+                      last_watered AS "last_watered: DateTime<Utc>",
+                      provider,
+                      additional_informations AS additional_info
+            FROM trees
+            WHERE ST_DWithin(
+                geometry::geography,
+                ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,
+                $3
+            )
+            ORDER BY ST_Distance(
+                geometry::geography,
+                ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography
+            ) ASC
+            LIMIT 1"#,
+            coord.latitude(),
+            coord.longitude(),
+            radius.meters(),
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(snap.map(Tree::reconstitute))
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn distinct_planting_years(&self) -> Result<Vec<PlantingYear>, RepositoryError> {
         let rows = sqlx::query_scalar!(
             "SELECT DISTINCT planting_year FROM trees ORDER BY planting_year ASC"

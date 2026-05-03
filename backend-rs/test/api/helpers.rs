@@ -1,7 +1,10 @@
-use std::sync::OnceLock;
+use std::sync::{Arc, OnceLock};
 
 use green_ecolution::{
     configuration::{AuthSettings, CorsSettings},
+    domain::sensor::data::MqttPayload,
+    http::AppState,
+    service::ServiceError,
     startup::Application,
 };
 use secrecy::SecretString;
@@ -14,6 +17,7 @@ pub struct TestApp {
     pub address: String,
     pub port: u16,
     pub db_pool: PgPool,
+    pub state: Arc<AppState>,
 }
 
 impl TestApp {
@@ -49,6 +53,18 @@ impl TestApp {
             .send()
             .await
             .expect("failed to execute request")
+    }
+
+    /// Drives the MQTT ingest path directly without spinning up a broker.
+    /// `payload` is JSON in the same shape the production MQTT subscriber
+    /// builds before calling [`SensorService::handle_message`].
+    pub async fn handle_mqtt_message(
+        &self,
+        payload: serde_json::Value,
+    ) -> Result<(), ServiceError> {
+        let typed: MqttPayload = serde_json::from_value(payload)
+            .expect("test payload must deserialise into MqttPayload");
+        self.state.sensor_service.handle_message(typed).await
     }
 }
 
@@ -173,11 +189,13 @@ pub async fn spawn_app_with_auth(auth: AuthSettings) -> TestApp {
     .await
     .expect("failed to build application");
     let port = app.port();
+    let state = app.state();
     tokio::spawn(app.run_until_stopped());
 
     TestApp {
         address: format!("http://127.0.0.1:{port}"),
         port,
         db_pool,
+        state,
     }
 }

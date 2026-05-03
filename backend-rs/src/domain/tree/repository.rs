@@ -51,6 +51,15 @@ pub trait TreeReader: Send + Sync {
         limit: u32,
     ) -> Result<Vec<TreeViewWithDistance>, RepositoryError>;
 
+    /// Returns the [`Tree`] aggregate closest to `coord` within `radius`, or
+    /// `Ok(None)` if no tree is within range. Used by the sensor ingest path
+    /// to auto-link a freshly-arrived sensor to the nearest tree.
+    async fn find_nearest(
+        &self,
+        coord: Coordinate,
+        radius: Distance,
+    ) -> Result<Option<Tree>, RepositoryError>;
+
     async fn distinct_planting_years(&self) -> Result<Vec<PlantingYear>, RepositoryError>;
 }
 

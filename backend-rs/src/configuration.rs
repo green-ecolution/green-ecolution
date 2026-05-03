@@ -12,6 +12,8 @@ pub struct Settings {
     pub log: LogSettings,
     pub cors: CorsSettings,
     pub auth: AuthSettings,
+    #[serde(default)]
+    pub mqtt: MqttSettings,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -72,6 +74,38 @@ pub struct LogSettings {
 #[derive(serde::Deserialize, Clone)]
 pub struct CorsSettings {
     pub allowed_origins: Vec<String>,
+}
+
+#[derive(serde::Deserialize, Clone, Default)]
+pub struct MqttSettings {
+    /// When false the subscriber task is not started. Defaults to `false` so
+    /// integration tests and dev runs without a broker stay green.
+    #[serde(default)]
+    pub enabled: bool,
+    /// Broker URL, e.g. `mqtt://localhost:1883` or `mqtts://broker:8883`.
+    #[serde(default)]
+    pub broker_url: String,
+    /// Stable client identifier — defaults to `green-ecolution-rs`.
+    #[serde(default = "default_client_id")]
+    pub client_id: String,
+    /// Topic filter to subscribe to (single string; wildcards `+`/`#` allowed).
+    #[serde(default)]
+    pub topic: String,
+    #[serde(default)]
+    pub username: Option<String>,
+    #[serde(default)]
+    pub password: Option<SecretString>,
+    /// Keep-alive in seconds for the broker connection.
+    #[serde(default = "default_keep_alive_secs")]
+    pub keep_alive_secs: u16,
+}
+
+fn default_client_id() -> String {
+    "green-ecolution-rs".to_string()
+}
+
+fn default_keep_alive_secs() -> u16 {
+    30
 }
 
 #[derive(serde::Deserialize, Clone)]

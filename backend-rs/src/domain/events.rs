@@ -10,7 +10,7 @@ use chrono::{DateTime, Utc};
 use crate::domain::{
     Id,
     cluster::TreeCluster,
-    sensor::SensorId,
+    sensor::{SensorId, data::Watermark},
     shared::watering_status::WateringStatus,
     tree::Tree,
     watering_plan::{WateringPlan, WateringPlanEvaluation},
@@ -56,10 +56,12 @@ pub enum DomainEvent {
     /// Emitted when a cluster's tree list changes so that centroid,
     /// watering status, and region can be recalculated.
     ClusterTreesChanged { cluster_id: Id<TreeCluster> },
+    /// Emitted after a sensor reading is persisted. Carries the parsed
+    /// watermarks so subscribers don't have to re-parse the raw JSON payload.
     SensorDataReceived {
         sensor_id: SensorId,
         ts: DateTime<Utc>,
-        data: serde_json::Value,
+        watermarks: Vec<Watermark>,
     },
     WateringPlanStarted {
         plan_id: Id<WateringPlan>,

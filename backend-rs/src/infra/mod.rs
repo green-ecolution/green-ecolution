@@ -1,6 +1,7 @@
 use crate::domain::RepositoryError;
 
 pub mod keycloak;
+pub mod mqtt;
 pub mod pg_cluster;
 pub mod pg_evaluation;
 pub mod pg_region;

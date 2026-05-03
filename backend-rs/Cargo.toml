@@ -39,6 +39,7 @@ include_dir = "0.7"
 jsonwebtoken = "9.3"
 log = "0.4"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+rumqttc = "0.25"
 secrecy = { version = "0.10.3", features = ["serde"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde-aux = "4.7.0"

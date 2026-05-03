@@ -65,7 +65,7 @@ impl EventHandler for ClusterStatusAggregatorHandler {
         !self.affected_cluster_ids(event).is_empty()
     }
 
-    async fn handle(&self, event: &DomainEvent) -> Result<(), EventHandlerError> {
+    async fn handle(&self, event: &DomainEvent) -> Result<Vec<DomainEvent>, EventHandlerError> {
         for cluster_id in self.affected_cluster_ids(event) {
             let mut cluster = match self.cluster_reader.by_id(cluster_id).await {
                 Ok(c) => c,
@@ -86,6 +86,6 @@ impl EventHandler for ClusterStatusAggregatorHandler {
             cluster.recalculate_watering_status(&statuses);
             self.cluster_writer.save(&cluster).await?;
         }
-        Ok(())
+        Ok(vec![])
     }
 }

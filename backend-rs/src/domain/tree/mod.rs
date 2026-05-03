@@ -16,13 +16,13 @@ pub mod repository;
 pub mod snapshot;
 pub mod view;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Datelike, Utc};
 
 use crate::domain::{
     Id,
     cluster::TreeCluster,
     events::DomainEvent,
-    sensor::SensorId,
+    sensor::{SensorId, data::Watermark},
     shared::{
         coordinates::Coordinate,
         error::ValidationError,
@@ -268,6 +268,81 @@ impl Tree {
     pub fn mark_watered_at(&mut self, ts: DateTime<Utc>) {
         self.last_watered = Some(ts);
     }
+
+    /// Derives a [`WateringStatus`] from three watermark readings (depths 30,
+    /// 60, 90 cm) and the tree's age, mirroring the calibration the Go backend
+    /// uses. Tree age is `today.year() - planting_year`. Year 0 and 1 share
+    /// thresholds; year 2 widens the depth-30 band; year 3 has no Moderate
+    /// (only Good or Bad). Beyond year 3 returns
+    /// [`TreeError::BeyondMonitoring`].
+    ///
+    /// The worst per-depth score wins (Good < Moderate < Bad).
+    pub fn calculate_watering_status(
+        &self,
+        watermarks: &[Watermark],
+        today: DateTime<Utc>,
+    ) -> Result<WateringStatus, TreeError> {
+        let (w30, w60, w90) = sort_watermarks(watermarks)?;
+        let lifetime = (today.year() as i64) - (self.planting_year.year() as i64);
+
+        const LO_DEFAULT: i32 = 25;
+        const HI_DEFAULT: i32 = 33;
+        const LO_Y2_D30: i32 = 62;
+        const HI_Y2_D30: i32 = 81;
+        const LO_Y3_D30: i32 = 1585;
+        const LO_Y3_D60: i32 = 80;
+        const LO_Y3_D90: i32 = 80;
+        const NO_MODERATE: i32 = -1;
+
+        let scores = match lifetime {
+            0 | 1 => [
+                map_kpa(w30.centibar, LO_DEFAULT, HI_DEFAULT),
+                map_kpa(w60.centibar, LO_DEFAULT, HI_DEFAULT),
+                map_kpa(w90.centibar, LO_DEFAULT, HI_DEFAULT),
+            ],
+            2 => [
+                map_kpa(w30.centibar, LO_Y2_D30, HI_Y2_D30),
+                map_kpa(w60.centibar, LO_DEFAULT, HI_DEFAULT),
+                map_kpa(w90.centibar, LO_DEFAULT, HI_DEFAULT),
+            ],
+            3 => [
+                map_kpa(w30.centibar, LO_Y3_D30, NO_MODERATE),
+                map_kpa(w60.centibar, LO_Y3_D60, NO_MODERATE),
+                map_kpa(w90.centibar, LO_Y3_D90, NO_MODERATE),
+            ],
+            l if l < 0 => return Err(TreeError::BeyondMonitoring),
+            _ => return Err(TreeError::BeyondMonitoring),
+        };
+
+        let worst = scores.iter().copied().max().expect("scores has 3 elements");
+        Ok(match worst {
+            0 => WateringStatus::Good,
+            1 => WateringStatus::Moderate,
+            _ => WateringStatus::Bad,
+        })
+    }
+}
+
+fn sort_watermarks(w: &[Watermark]) -> Result<(Watermark, Watermark, Watermark), TreeError> {
+    if w.len() != 3 {
+        return Err(TreeError::MalformedWatermarks);
+    }
+    let mut s = [w[0], w[1], w[2]];
+    s.sort_by_key(|m| m.depth);
+    if s[0].depth != 30 || s[1].depth != 60 || s[2].depth != 90 {
+        return Err(TreeError::MalformedWatermarks);
+    }
+    Ok((s[0], s[1], s[2]))
+}
+
+fn map_kpa(centibar: i32, lower: i32, higher: i32) -> i32 {
+    if centibar < lower {
+        0
+    } else if centibar < higher {
+        1
+    } else {
+        2
+    }
 }
 
 #[cfg(test)]
@@ -497,5 +572,121 @@ mod tests {
         let ts = Utc::now();
         t.mark_watered_at(ts);
         assert_eq!(t.last_watered, Some(ts));
+    }
+
+    fn wm(depth: i32, centibar: i32) -> Watermark {
+        Watermark {
+            depth,
+            resistance: 0,
+            centibar,
+        }
+    }
+
+    fn tree_planted_in(year: u32) -> Tree {
+        let mut t = fixed_tree();
+        t.planting_year = PlantingYear::reconstitute(year);
+        t
+    }
+
+    fn jan_first(year: i32) -> DateTime<Utc> {
+        use chrono::TimeZone;
+        Utc.with_ymd_and_hms(year, 1, 1, 0, 0, 0).unwrap()
+    }
+
+    #[test]
+    fn watering_status_year0_and_1_share_default_thresholds() {
+        let t = tree_planted_in(2024);
+        let today = jan_first(2024);
+        let dry = vec![wm(30, 50), wm(60, 50), wm(90, 50)];
+        assert_eq!(
+            t.calculate_watering_status(&dry, today).unwrap(),
+            WateringStatus::Bad
+        );
+        let wet = vec![wm(30, 5), wm(60, 5), wm(90, 5)];
+        assert_eq!(
+            t.calculate_watering_status(&wet, today).unwrap(),
+            WateringStatus::Good
+        );
+        let mod_ = vec![wm(30, 28), wm(60, 5), wm(90, 5)];
+        assert_eq!(
+            t.calculate_watering_status(&mod_, today).unwrap(),
+            WateringStatus::Moderate
+        );
+    }
+
+    #[test]
+    fn watering_status_year2_uses_wider_depth30_band() {
+        let t = tree_planted_in(2022);
+        let today = jan_first(2024);
+        let just_under_y2_d30_lower = vec![wm(30, 60), wm(60, 5), wm(90, 5)];
+        assert_eq!(
+            t.calculate_watering_status(&just_under_y2_d30_lower, today)
+                .unwrap(),
+            WateringStatus::Good,
+            "centibar=60 is below 62 lower bound for year-2 depth 30"
+        );
+        let in_y2_moderate = vec![wm(30, 70), wm(60, 5), wm(90, 5)];
+        assert_eq!(
+            t.calculate_watering_status(&in_y2_moderate, today).unwrap(),
+            WateringStatus::Moderate
+        );
+    }
+
+    #[test]
+    fn watering_status_year3_has_no_moderate() {
+        let t = tree_planted_in(2021);
+        let today = jan_first(2024);
+        let high_d30 = vec![wm(30, 200), wm(60, 5), wm(90, 5)];
+        assert_eq!(
+            t.calculate_watering_status(&high_d30, today).unwrap(),
+            WateringStatus::Good,
+            "year-3 depth-30 lower bound is 1585; 200 < 1585 is Good"
+        );
+        let bad_d60 = vec![wm(30, 100), wm(60, 100), wm(90, 5)];
+        assert_eq!(
+            t.calculate_watering_status(&bad_d60, today).unwrap(),
+            WateringStatus::Bad,
+            "year-3 depth-60 lower bound is 80; 100 >= 80 with no moderate band → Bad"
+        );
+    }
+
+    #[test]
+    fn watering_status_beyond_year3_rejects() {
+        let t = tree_planted_in(2020);
+        let today = jan_first(2025);
+        let any = vec![wm(30, 5), wm(60, 5), wm(90, 5)];
+        assert_eq!(
+            t.calculate_watering_status(&any, today).unwrap_err(),
+            TreeError::BeyondMonitoring
+        );
+    }
+
+    #[test]
+    fn watering_status_rejects_malformed_watermark_set() {
+        let t = tree_planted_in(2024);
+        let today = jan_first(2024);
+        let only_two = vec![wm(30, 5), wm(60, 5)];
+        assert_eq!(
+            t.calculate_watering_status(&only_two, today).unwrap_err(),
+            TreeError::MalformedWatermarks
+        );
+        let wrong_depth = vec![wm(30, 5), wm(45, 5), wm(90, 5)];
+        assert_eq!(
+            t.calculate_watering_status(&wrong_depth, today)
+                .unwrap_err(),
+            TreeError::MalformedWatermarks
+        );
+    }
+
+    #[test]
+    fn watering_status_takes_worst_among_depths() {
+        let t = tree_planted_in(2024);
+        let today = jan_first(2024);
+        let mixed = vec![wm(30, 5), wm(60, 28), wm(90, 50)];
+        assert_eq!(
+            t.calculate_watering_status(&mixed, today).unwrap(),
+            WateringStatus::Bad,
+            "any depth in Bad band makes the whole reading Bad"
+        );
     }
 }

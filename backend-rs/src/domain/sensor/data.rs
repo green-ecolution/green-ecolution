@@ -55,9 +55,30 @@ impl SensorReading {
     }
 }
 
-#[derive(Debug, Clone)]
+/// Single Watermark soil-tension reading at a fixed depth in centimetres.
+///
+/// Centibar (kPa) is what the watering-status calibration tables consume;
+/// resistance is recorded for raw-data archival.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Watermark {
     pub depth: i32,
     pub resistance: i32,
     pub centibar: i32,
+}
+
+/// Typed MQTT payload from a tree sensor (one uplink message).
+///
+/// Mirrors the Go backend's `MqttPayload`: device id, position, environmental
+/// readings, and three watermark readings at depths 30/60/90 cm. Used both as
+/// the input to [`crate::service::sensor_service::SensorService::handle_message`]
+/// and as the JSON shape persisted in the `sensor_data` table.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct MqttPayload {
+    pub device: String,
+    pub battery: f64,
+    pub humidity: f64,
+    pub temperature: f64,
+    pub latitude: f64,
+    pub longitude: f64,
+    pub watermarks: Vec<Watermark>,
 }

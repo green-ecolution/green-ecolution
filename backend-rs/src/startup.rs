@@ -4,12 +4,13 @@ use sqlx::{PgPool, postgres::PgPoolOptions};
 use tokio::net::TcpListener;
 
 use crate::{
-    configuration::{AuthSettings, CorsSettings, DatabaseSettings, Settings},
+    configuration::{AuthSettings, CorsSettings, DatabaseSettings, MqttSettings, Settings},
     domain::auth::AuthRepository,
     domain::user::UserRepository,
     http::{AppState, auth::AuthLayer, router},
     infra::{
         keycloak::{JwksProvider, KeycloakAuthRepository, KeycloakClient, KeycloakUserRepository},
+        mqtt::spawn_mqtt_subscriber,
         pg_cluster::PgTreeClusterRepository,
         pg_evaluation::PgEvaluationRepository,
         pg_region::PgRegionRepository,
@@ -26,6 +27,7 @@ use crate::{
         event_bus::{EventBus, InMemoryEventBus},
         handlers::cluster_recalc::ClusterRecalculationHandler,
         handlers::cluster_status::ClusterStatusAggregatorHandler,
+        handlers::tree_watering::TreeWateringFromSensorHandler,
         region_service::RegionService,
         sensor_service::SensorService,
         tree_service::TreeService,
@@ -53,14 +55,44 @@ impl Application {
             .expect("failed to connect to database");
 
         let address = format!("{}:{}", config.application.host, config.application.port);
-        Self::build_with_pool(
+        let app = Self::build_with_pool(
             pool,
             &address,
             config.application.base_url,
             config.cors,
             config.auth,
         )
-        .await
+        .await?;
+
+        // Background tasks. MQTT only fires when explicitly enabled in config;
+        // failure to spawn is logged but does not abort startup so the HTTP
+        // server still comes up.
+        if let Err(e) =
+            spawn_mqtt_subscriber(config.mqtt.clone(), app.state.sensor_service.clone())
+        {
+            tracing::error!(error = %e, "mqtt subscriber not started");
+        }
+
+        Ok(app)
+    }
+
+    /// Variant that takes mqtt settings explicitly. Used by tests that
+    /// construct `Application` from a pool but want to drive (or skip) the
+    /// MQTT subscriber independently.
+    #[allow(dead_code)]
+    pub async fn build_with_mqtt(
+        pool: PgPool,
+        address: &str,
+        base_url: String,
+        cors: CorsSettings,
+        auth: AuthSettings,
+        mqtt: MqttSettings,
+    ) -> Result<Self, std::io::Error> {
+        let app = Self::build_with_pool(pool, address, base_url, cors, auth).await?;
+        if let Err(e) = spawn_mqtt_subscriber(mqtt, app.state.sensor_service.clone()) {
+            tracing::error!(error = %e, "mqtt subscriber not started");
+        }
+        Ok(app)
     }
 
     pub async fn build_with_pool(
@@ -135,11 +167,16 @@ impl Application {
             cluster_writer.clone(),
             tree_reader.clone(),
         ));
+        let tree_watering_handler = Arc::new(TreeWateringFromSensorHandler::new(
+            tree_reader.clone(),
+            tree_writer.clone(),
+        ));
 
         // Event bus
         let handlers: Vec<Arc<dyn crate::service::event_bus::EventHandler>> = vec![
             cluster_recalc_handler as Arc<dyn crate::service::event_bus::EventHandler>,
             cluster_status_handler as Arc<dyn crate::service::event_bus::EventHandler>,
+            tree_watering_handler as Arc<dyn crate::service::event_bus::EventHandler>,
         ];
         let event_bus: Arc<dyn EventBus> = Arc::new(InMemoryEventBus::new(handlers));
 
@@ -213,6 +250,13 @@ impl Application {
 
     pub fn port(&self) -> u16 {
         self.port
+    }
+
+    /// Shared application state — exposed so background tasks (MQTT
+    /// ingestor, scheduled jobs) and integration tests can call services
+    /// directly without going through HTTP.
+    pub fn state(&self) -> Arc<AppState> {
+        self.state.clone()
     }
 
     pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {

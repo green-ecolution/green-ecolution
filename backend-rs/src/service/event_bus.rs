@@ -14,7 +14,10 @@ pub enum EventHandlerError {
 pub trait EventHandler: Send + Sync {
     fn name(&self) -> &str;
     fn handles(&self, event: &DomainEvent) -> bool;
-    async fn handle(&self, event: &DomainEvent) -> Result<(), EventHandlerError>;
+    /// Reacts to `event` and returns any follow-up events the handler wants
+    /// the bus to publish next. Returning `Ok(vec![])` is the common case
+    /// (handler had a side effect but did not produce new domain events).
+    async fn handle(&self, event: &DomainEvent) -> Result<Vec<DomainEvent>, EventHandlerError>;
 }
 
 #[async_trait::async_trait]
@@ -43,14 +46,18 @@ impl InMemoryEventBus {
 #[async_trait::async_trait]
 impl EventBus for InMemoryEventBus {
     async fn publish(&self, event: DomainEvent) {
-        for handler in self.handlers.iter().filter(|h| h.handles(&event)) {
-            if let Err(e) = handler.handle(&event).await {
-                tracing::error!(
-                    handler = handler.name(),
-                    error = %e,
-                    event = ?event,
-                    "event handler failed"
-                );
+        let mut queue: Vec<DomainEvent> = vec![event];
+        while let Some(event) = queue.pop() {
+            for handler in self.handlers.iter().filter(|h| h.handles(&event)) {
+                match handler.handle(&event).await {
+                    Ok(follow_ups) => queue.extend(follow_ups),
+                    Err(e) => tracing::error!(
+                        handler = handler.name(),
+                        error = %e,
+                        event = ?event,
+                        "event handler failed"
+                    ),
+                }
             }
         }
     }
