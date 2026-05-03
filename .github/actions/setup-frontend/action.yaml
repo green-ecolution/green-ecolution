@@ -1,5 +1,5 @@
 name: "Setup Frontend"
-description: "Shared setup for frontend CI jobs: pnpm + Node.js + install deps"
+description: "Shared setup for frontend CI jobs: pnpm + Node.js + Rust/wasm-pack + install deps"
 runs:
   using: "composite"
   steps:
@@ -11,6 +11,29 @@ runs:
         node-version: "24"
         cache: "pnpm"
         cache-dependency-path: "./frontend/pnpm-lock.yaml"
+    - name: Install just
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends just
+    - name: Setup Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: wasm32-unknown-unknown
+    - name: Install wasm-pack
+      uses: jetli/wasm-pack-action@v0.4.0
+      with:
+        version: latest
+    - name: Cache cargo registry + target
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          backend-rs/target
+        key: ${{ runner.os }}-cargo-domain-wasm-${{ hashFiles('backend-rs/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-domain-wasm-
     - name: Install dependencies
       shell: bash
       working-directory: ./frontend
