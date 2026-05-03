@@ -4,8 +4,11 @@ use chrono::Utc;
 use uuid::Uuid;
 
 use crate::domain::{
-    shared::pagination::{Page, Pagination},
-    user::{User, UserCreate, UserRepository, UserRole, UserStatus},
+    shared::{
+        email::Email,
+        pagination::{Page, Pagination},
+    },
+    user::{User, UserCreate, UserRepository, UserRole, UserStatus, Username},
     vehicle::DrivingLicense,
 };
 
@@ -83,10 +86,10 @@ fn demo_user() -> User {
     User {
         id: Uuid::nil(),
         created_at: Utc::now(),
-        username: "ttester".into(),
+        username: Username::reconstitute("ttester".to_string()),
         first_name: "Toni".into(),
         last_name: "Tester".into(),
-        email: "toni.tester@green-ecolution.de".into(),
+        email: Email::reconstitute("toni.tester@green-ecolution.de".to_string()),
         email_verified: true,
         employee_id: None,
         phone_number: None,
@@ -112,10 +115,11 @@ fn demo_user_page(pagination: Pagination) -> Page<User> {
 }
 
 fn synthesize_registered_user(entity: UserCreate) -> User {
-    let mut roles: Vec<UserRole> = entity.roles.iter().filter_map(|r| r.parse().ok()).collect();
-    if roles.is_empty() {
-        roles.push(UserRole::Unknown);
-    }
+    let roles = if entity.roles.is_empty() {
+        vec![UserRole::GreenEcolution]
+    } else {
+        entity.roles.clone()
+    };
     User {
         id: Uuid::new_v4(),
         created_at: Utc::now(),

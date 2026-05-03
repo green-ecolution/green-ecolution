@@ -10,7 +10,6 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     domain::{
-        DomainError,
         auth::AuthUser,
         shared::pagination::Pagination,
         user::{UserCreate as DomainUserCreate, UserRole as DomainUserRole},
@@ -209,7 +208,7 @@ pub async fn list_users_by_role(
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<UserResponse>>, ServiceError> {
     let role = DomainUserRole::from_str(&role_id)
-        .map_err(|e: DomainError| ServiceError::InvalidInput(e.to_string()))?;
+        .map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
     let pagination = Pagination::from(&params);
     let page = state.user_service.by_role(role, pagination).await?;
     Ok(Json(ListResponse::from_page(page, &pagination)))

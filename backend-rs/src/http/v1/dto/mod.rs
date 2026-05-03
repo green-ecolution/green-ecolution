@@ -181,8 +181,6 @@ pub enum UserRole {
     GreenEcolution,
     /// Smarte Grenzregion project team member.
     SmarteGrenzregion,
-    /// Role could not be determined.
-    Unknown,
 }
 
 /// Availability status of a user.
@@ -194,8 +192,6 @@ pub enum UserStatus {
     Available,
     /// User is currently absent.
     Absent,
-    /// Availability could not be determined.
-    Unknown,
 }
 
 // -- From impls: DTO -> Domain --

@@ -1,5 +1,6 @@
 pub mod coordinates;
 pub mod distance;
+pub mod email;
 pub mod error;
 pub mod field_update;
 pub mod pagination;

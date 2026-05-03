@@ -3,11 +3,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::domain::{
     auth::{ClientToken, LoginResponse as DomainLoginResponse},
+    shared::{email::Email, error::ValidationError},
     user::{
         User as DomainUser, UserCreate as DomainUserCreate, UserRole as DomainUserRole,
-        UserStatus as DomainUserStatus,
+        UserStatus as DomainUserStatus, Username,
     },
 };
+use crate::service::ServiceError;
 
 use super::{DrivingLicense, UserRole, UserStatus};
 
@@ -212,7 +214,6 @@ impl From<DomainUserRole> for UserRole {
             DomainUserRole::Tbz => UserRole::Tbz,
             DomainUserRole::GreenEcolution => UserRole::GreenEcolution,
             DomainUserRole::SmarteGrenzregion => UserRole::SmarteGrenzregion,
-            DomainUserRole::Unknown => UserRole::Unknown,
         }
     }
 }
@@ -223,7 +224,6 @@ impl From<UserRole> for DomainUserRole {
             UserRole::Tbz => DomainUserRole::Tbz,
             UserRole::GreenEcolution => DomainUserRole::GreenEcolution,
             UserRole::SmarteGrenzregion => DomainUserRole::SmarteGrenzregion,
-            UserRole::Unknown => DomainUserRole::Unknown,
         }
     }
 }
@@ -233,7 +233,6 @@ impl From<DomainUserStatus> for UserStatus {
         match value {
             DomainUserStatus::Available => UserStatus::Available,
             DomainUserStatus::Absent => UserStatus::Absent,
-            DomainUserStatus::Unknown => UserStatus::Unknown,
         }
     }
 }
@@ -243,10 +242,10 @@ impl From<&DomainUser> for UserResponse {
         Self {
             id: value.id.to_string(),
             created_at: value.created_at.to_rfc3339(),
-            username: value.username.clone(),
+            username: value.username.as_str().to_string(),
             first_name: value.first_name.clone(),
             last_name: value.last_name.clone(),
-            email: value.email.clone(),
+            email: value.email.as_str().to_string(),
             email_verified: value.email_verified,
             employee_id: value.employee_id.clone().unwrap_or_default(),
             phone_number: value.phone_number.clone().unwrap_or_default(),
@@ -268,24 +267,34 @@ impl From<&DomainUser> for UserResponse {
 }
 
 impl TryFrom<UserRegisterRequest> for DomainUserCreate {
-    type Error = crate::domain::DomainError;
+    type Error = ServiceError;
 
     fn try_from(value: UserRegisterRequest) -> Result<Self, Self::Error> {
+        let username =
+            Username::new(value.username).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+        let email = Email::new(value.email)
+            .map_err(|e: ValidationError| ServiceError::InvalidInput(e.to_string()))?;
+        let roles = value
+            .roles
+            .iter()
+            .map(|s| s.parse::<DomainUserRole>())
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
         let avatar_url = value
             .avatar_url
             .as_deref()
             .filter(|s| !s.is_empty())
             .map(url::Url::parse)
             .transpose()
-            .map_err(|e| crate::domain::DomainError::InvalidInput(format!("avatar_url: {e}")))?;
+            .map_err(|e| ServiceError::InvalidInput(format!("avatar_url: {e}")))?;
 
         Ok(Self {
-            username: value.username,
+            username,
             first_name: value.first_name,
             last_name: value.last_name,
-            email: value.email,
+            email,
             password: SecretString::from(value.password),
-            roles: value.roles,
+            roles,
             employee_id: value.employee_id.filter(|s| !s.is_empty()),
             phone_number: value.phone_number.filter(|s| !s.is_empty()),
             avatar_url,

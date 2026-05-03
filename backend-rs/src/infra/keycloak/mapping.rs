@@ -7,7 +7,8 @@ use uuid::Uuid;
 
 use crate::domain::{
     RepositoryError,
-    user::{User, UserRole, UserStatus},
+    shared::email::Email,
+    user::{User, UserRole, UserStatus, Username},
     vehicle::DrivingLicense,
 };
 
@@ -72,15 +73,15 @@ impl KcUser {
             .map(UserStatus::from_str)
             .transpose()
             .map_err(RepositoryError::from)?
-            .unwrap_or(UserStatus::Unknown);
+            .unwrap_or(UserStatus::Available);
 
         Ok(User {
             id,
             created_at,
-            username: self.username.unwrap_or_default(),
+            username: Username::reconstitute(self.username.unwrap_or_default()),
             first_name: self.first_name.unwrap_or_default(),
             last_name: self.last_name.unwrap_or_default(),
-            email: self.email.unwrap_or_default(),
+            email: Email::reconstitute(self.email.unwrap_or_default()),
             email_verified: self.email_verified.unwrap_or(false),
             employee_id,
             phone_number,
@@ -166,7 +167,7 @@ mod tests {
         attrs.insert("status".into(), vec!["available".into()]);
 
         let user = kc_user_with_attrs(attrs).try_into_domain().unwrap();
-        assert_eq!(user.username, "jdoe");
+        assert_eq!(user.username.as_str(), "jdoe");
         assert_eq!(user.phone_number.as_deref(), Some("+49 123"));
         assert_eq!(user.employee_id.as_deref(), Some("EMP-1"));
         assert_eq!(user.roles, vec![UserRole::Tbz, UserRole::GreenEcolution]);
@@ -183,6 +184,6 @@ mod tests {
             .try_into_domain()
             .unwrap();
         assert!(user.roles.is_empty());
-        assert_eq!(user.status, UserStatus::Unknown);
+        assert_eq!(user.status, UserStatus::Available);
     }
 }

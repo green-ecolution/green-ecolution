@@ -107,14 +107,20 @@ impl UserRepository for KeycloakUserRepository {
             attributes.insert("avatar_url".into(), vec![avatar.to_string()]);
         }
         if !entity.roles.is_empty() {
-            attributes.insert(ATTR_USER_ROLES.into(), vec![entity.roles.join(",")]);
+            let roles_str = entity
+                .roles
+                .iter()
+                .map(UserRole::as_str)
+                .collect::<Vec<_>>()
+                .join(",");
+            attributes.insert(ATTR_USER_ROLES.into(), vec![roles_str]);
         }
 
         let body = json!({
-            "username": entity.username,
+            "username": entity.username.as_str(),
             "firstName": entity.first_name,
             "lastName": entity.last_name,
-            "email": entity.email,
+            "email": entity.email.as_str(),
             "enabled": true,
             "emailVerified": false,
             "attributes": attributes,
@@ -135,7 +141,7 @@ impl UserRepository for KeycloakUserRepository {
             StatusCode::CONFLICT => {
                 return Err(RepositoryError::AlreadyExists(format!(
                     "username/email already exists: {}",
-                    entity.username
+                    entity.username.as_str()
                 )));
             }
             status => {
@@ -363,15 +369,14 @@ impl KeycloakUserRepository {
         &self,
         token: &str,
         user_id: &str,
-        role_names: &[String],
+        roles: &[UserRole],
     ) -> Result<(), RepositoryError> {
-        // Resolve role IDs by name.
-        let mut wanted_roles: Vec<KcRole> = Vec::with_capacity(role_names.len());
-        for name in role_names {
+        let mut wanted_roles: Vec<KcRole> = Vec::with_capacity(roles.len());
+        for role in roles {
             let mut url = self.client.admin_realm_roles_url();
             url.path_segments_mut()
                 .map_err(|_| RepositoryError::Internal("invalid roles url".into()))?
-                .push(name);
+                .push(role.as_str());
             let resp = self
                 .client
                 .http()
@@ -381,7 +386,7 @@ impl KeycloakUserRepository {
                 .await
                 .map_err(|e| RepositoryError::Internal(format!("role lookup transport: {e}")))?;
             if !resp.status().is_success() {
-                tracing::warn!(role = %name, status = %resp.status(), "role lookup failed; skipping");
+                tracing::warn!(role = role.as_str(), status = %resp.status(), "role lookup failed; skipping");
                 continue;
             }
             let role: KcRole = resp
