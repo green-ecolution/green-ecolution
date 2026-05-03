@@ -240,7 +240,7 @@ infra-down:
 generate-sqlx:
     @echo "Refreshing sqlx offline cache..."
     @command -v cargo-sqlx >/dev/null 2>&1 || { echo "sqlx-cli missing (cargo install sqlx-cli --no-default-features --features rustls,postgres)"; exit 1; }
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" cargo sqlx prepare
+    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" cargo sqlx prepare --workspace
 
 # Run frontend code generation (pnpm generate:local)
 generate-frontend:
@@ -311,20 +311,20 @@ tidy:
 lint:
     @echo "cargo fmt --check + clippy + Frontend lint..."
     cd {{ backend_dir }} && cargo fmt --all -- --check
-    cd {{ backend_dir }} && cargo clippy --all-targets --all-features -- -D warnings
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
     cd {{ frontend_dir }} && pnpm run lint
 
 # Run Rust + frontend tests
 test:
     @echo "Rust tests..."
-    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo test --locked
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo test --workspace --locked
     @echo "Frontend tests..."
     cd {{ frontend_dir }} && pnpm run test
 
 # Run Rust tests with verbose output
 test-verbose:
     @echo "Rust tests (verbose)..."
-    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo test --locked -- --nocapture
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo test --workspace --locked -- --nocapture
 
 # Clean build artifacts
 clean:
