@@ -11,7 +11,7 @@ use crate::domain::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
     },
-    tree::TreeWriter,
+    tree::{TreeReader, TreeWriter},
 };
 
 use super::{ServiceError, event_bus::EventBus};
@@ -19,6 +19,7 @@ use super::{ServiceError, event_bus::EventBus};
 pub struct ClusterService {
     reader: Arc<dyn TreeClusterReader>,
     writer: Arc<dyn TreeClusterWriter>,
+    tree_reader: Arc<dyn TreeReader>,
     tree_writer: Arc<dyn TreeWriter>,
     event_bus: Arc<dyn EventBus>,
 }
@@ -27,12 +28,14 @@ impl ClusterService {
     pub fn new(
         reader: Arc<dyn TreeClusterReader>,
         writer: Arc<dyn TreeClusterWriter>,
+        tree_reader: Arc<dyn TreeReader>,
         tree_writer: Arc<dyn TreeWriter>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
         Self {
             reader,
             writer,
+            tree_reader,
             tree_writer,
             event_bus,
         }
@@ -100,8 +103,14 @@ impl ClusterService {
 
     #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
     pub async fn delete(&self, id: Id<TreeCluster>) -> Result<(), ServiceError> {
-        self.tree_writer.unlink_cluster_id(id).await?;
+        let trees = self.tree_reader.by_cluster_id(id).await?;
+        let mut events = Vec::new();
+        for mut tree in trees {
+            events.extend(tree.move_to_cluster(None));
+            self.tree_writer.save(&tree).await?;
+        }
         self.writer.delete(id).await?;
+        self.event_bus.publish_all(events).await;
         Ok(())
     }
 

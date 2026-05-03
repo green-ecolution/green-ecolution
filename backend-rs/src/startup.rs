@@ -163,6 +163,7 @@ impl Application {
         let cluster_service = Arc::new(ClusterService::new(
             cluster_reader,
             cluster_writer,
+            tree_reader.clone(),
             tree_writer,
             event_bus.clone(),
         ));
