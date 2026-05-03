@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::time::Duration;
 
 use secrecy::{ExposeSecret, SecretString};
@@ -157,13 +158,43 @@ impl From<LogLevel> for log::LevelFilter {
     }
 }
 
-pub fn get_configuration() -> Result<Settings, config::ConfigError> {
-    let base_path = std::env::current_dir().expect("Failed to determine the current directory");
+/// Errors that can occur while loading the application configuration.
+///
+/// Construction is intentionally separated from `config::ConfigError` so the
+/// binary can render actionable startup diagnostics (working directory,
+/// `APP_ENVIRONMENT`, expected file layout) before tracing is initialized.
+#[derive(Debug, thiserror::Error)]
+pub enum ConfigError {
+    #[error("could not determine the current working directory")]
+    CurrentDir(#[source] std::io::Error),
+
+    #[error("APP_ENVIRONMENT={value:?} is not a supported environment: {reason}")]
+    InvalidEnvironment { value: String, reason: String },
+
+    #[error("config directory does not exist: {0}")]
+    ConfigDirMissing(PathBuf),
+
+    #[error(transparent)]
+    Source(#[from] config::ConfigError),
+}
+
+pub fn get_configuration() -> Result<Settings, ConfigError> {
+    let base_path = std::env::current_dir().map_err(ConfigError::CurrentDir)?;
     let configuration_dir = base_path.join("config");
-    let environment: Environment = std::env::var("APP_ENVIRONMENT")
-        .unwrap_or_else(|_| "local".into())
-        .try_into()
-        .expect("Failed to parse APP_ENVIRONMENT");
+
+    if !configuration_dir.is_dir() {
+        return Err(ConfigError::ConfigDirMissing(configuration_dir));
+    }
+
+    let env_value = std::env::var("APP_ENVIRONMENT").unwrap_or_else(|_| "local".into());
+    let environment: Environment =
+        env_value
+            .clone()
+            .try_into()
+            .map_err(|reason| ConfigError::InvalidEnvironment {
+                value: env_value,
+                reason,
+            })?;
 
     let env_filename = format!("{}.yaml", environment.as_str());
 
@@ -177,7 +208,7 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
         )
         .build()?;
 
-    settings.try_deserialize::<Settings>()
+    Ok(settings.try_deserialize::<Settings>()?)
 }
 
 #[derive(Debug, Clone, serde::Deserialize, Default)]
