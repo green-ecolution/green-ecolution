@@ -102,10 +102,9 @@ pub fn validate_vehicle_dimension(
             // — strip the prefix to derive the form path.
             let path = match &err {
                 domain::shared::error::ValidationError::OutOfRange { field, .. }
-                | domain::shared::error::ValidationError::InvalidFormat { field, .. } => field
-                    .rsplit('.')
-                    .next()
-                    .unwrap_or("dimension"),
+                | domain::shared::error::ValidationError::InvalidFormat { field, .. } => {
+                    field.rsplit('.').next().unwrap_or("dimension")
+                }
                 _ => "dimension",
             };
             let issue = ValidationIssue::from_error(&err, path);
