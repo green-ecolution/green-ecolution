@@ -31,8 +31,8 @@ export default defineConfig({
       includeAssets: ['images/favicons/favicon.svg', 'images/favicons/apple-touch-icon.png'],
       manifest: false,
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,wasm}'],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
       devOptions: {
         enabled: false,
@@ -75,6 +75,13 @@ export default defineConfig({
   },
   build: {
     target: 'esnext',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'domain-wasm': ['@green-ecolution/domain-wasm'],
+        },
+      },
+    },
   },
   resolve: {
     alias: {
