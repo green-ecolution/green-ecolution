@@ -2,9 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import FormForTree from './FormForTree'
-import { treeSchema, TreeForm } from '@/schema/treeSchema'
+import { TreeForm } from '@/schema/treeSchema'
 import { FormProvider, useForm } from 'react-hook-form'
-import { zodResolver } from '@/lib/zodResolver'
+import { treeDraftResolver } from '@green-ecolution/domain-wasm'
 import { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@green-ecolution/ui'
@@ -23,7 +23,7 @@ function TestWrapper({
 
   const methods = useForm<TreeForm>({
     defaultValues,
-    resolver: zodResolver(treeSchema),
+    resolver: treeDraftResolver,
     mode: 'onChange',
   })
 
