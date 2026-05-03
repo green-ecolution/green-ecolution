@@ -1,6 +1,6 @@
-import type { FieldErrors, FieldValues, Resolver, ResolverResult } from 'react-hook-form'
+import type { FieldError, FieldErrors, FieldValues, Resolver, ResolverResult } from 'react-hook-form'
 import { translateIssue } from './messages'
-import type { TreeForm, TreeclusterForm, ValidationIssue, VehicleForm, WateringPlanForm } from './types'
+import type { ValidationIssue } from './types'
 import {
   validateTreeClusterDraft,
   validateTreeDraft,
@@ -10,26 +10,40 @@ import {
 
 type RawValidator = (input: unknown) => ValidationIssue[]
 
-function buildResolver<TForm extends FieldValues>(validate: RawValidator): Resolver<TForm> {
+function makeResolver<TForm extends FieldValues>(validate: RawValidator): Resolver<TForm> {
   return async (values): Promise<ResolverResult<TForm>> => {
     const issues = validate(values)
     if (issues.length === 0) {
       return { values, errors: {} }
     }
-    const errors: FieldErrors<TForm> = {}
+    const errors: Record<string, FieldError> = {}
     for (const issue of issues) {
-      // RHF FieldErrors uses any to allow string-keyed assignment.
-      // Casting once is cleaner than fighting the type for unknown shapes.
-      ;(errors as Record<string, { type: string; message: string }>)[issue.path] = {
+      errors[issue.path] = {
         type: issue.key,
         message: translateIssue(issue),
       }
     }
-    return { values: {}, errors }
+    // RHF's FieldErrors<TForm> uses statically-keyed types; runtime issue.path
+    // is dynamic, so the structurally-equivalent record needs one boundary cast.
+    return { values: {}, errors: errors as FieldErrors<TForm> }
   }
 }
 
-export const treeDraftResolver: Resolver<TreeForm> = buildResolver<TreeForm>(validateTreeDraft as RawValidator)
-export const clusterDraftResolver: Resolver<TreeclusterForm> = buildResolver<TreeclusterForm>(validateTreeClusterDraft as RawValidator)
-export const vehicleDraftResolver: Resolver<VehicleForm> = buildResolver<VehicleForm>(validateVehicleDraft as RawValidator)
-export const wateringPlanDraftResolver: Resolver<WateringPlanForm> = buildResolver<WateringPlanForm>(validateWateringPlanDraft as RawValidator)
+// wasm-bindgen emits `(input: any) => any` for these exports; tighten the
+// return type at the boundary so the rest of the module is fully typed.
+const treeValidator = validateTreeDraft as RawValidator
+const clusterValidator = validateTreeClusterDraft as RawValidator
+const vehicleValidator = validateVehicleDraft as RawValidator
+const wateringPlanValidator = validateWateringPlanDraft as RawValidator
+
+export const treeDraftResolver = <TForm extends FieldValues>(): Resolver<TForm> =>
+  makeResolver<TForm>(treeValidator)
+
+export const clusterDraftResolver = <TForm extends FieldValues>(): Resolver<TForm> =>
+  makeResolver<TForm>(clusterValidator)
+
+export const vehicleDraftResolver = <TForm extends FieldValues>(): Resolver<TForm> =>
+  makeResolver<TForm>(vehicleValidator)
+
+export const wateringPlanDraftResolver = <TForm extends FieldValues>(): Resolver<TForm> =>
+  makeResolver<TForm>(wateringPlanValidator)

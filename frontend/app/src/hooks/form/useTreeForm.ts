@@ -9,7 +9,7 @@ import { EntityFormConfig, useEntityForm } from './useEntityForm'
 
 const treeConfig: EntityFormConfig<TreeForm, TreeCreate, TreeUpdate, Tree> = {
   formType: 'tree',
-  resolver: treeDraftResolver,
+  resolver: treeDraftResolver<TreeForm>(),
 
   createFn: (body) => treeApi.createTree({ treeCreateRequest: body }),
   updateFn: (id, body) => treeApi.updateTree({ treeId: Number(id), treeUpdateRequest: body }),

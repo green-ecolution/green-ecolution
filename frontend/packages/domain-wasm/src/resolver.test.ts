@@ -22,10 +22,15 @@ const validTreeForm: TreeForm = {
   sensorId: '-1',
 }
 
+const resolver = treeDraftResolver<TreeForm>()
+
 describe('treeDraftResolver', () => {
   it('returns values when validation passes', async () => {
     vi.mocked(validateTreeDraft).mockReturnValueOnce([])
-    const result = await treeDraftResolver(validTreeForm, undefined, {} as never)
+    const result = await resolver(validTreeForm, undefined, {
+      fields: {},
+      shouldUseNativeValidation: false,
+    })
     expect(result.values).toEqual(validTreeForm)
     expect(result.errors).toEqual({})
   })
@@ -39,13 +44,13 @@ describe('treeDraftResolver', () => {
         params: {},
       },
     ])
-    const result = await treeDraftResolver(
+    const result = await resolver(
       { ...validTreeForm, species: '' },
       undefined,
-      {} as never,
+      { fields: {}, shouldUseNativeValidation: false },
     )
     expect(result.values).toEqual({})
-    expect(result.errors.species).toMatchObject({
+    expect('species' in result.errors && result.errors.species).toMatchObject({
       type: 'tree.species.empty',
       message: 'Art ist erforderlich.',
     })
@@ -60,7 +65,12 @@ describe('treeDraftResolver', () => {
         params: {},
       },
     ])
-    const result = await treeDraftResolver(validTreeForm, undefined, {} as never)
-    expect(result.errors.plantingYear?.message).toBe('tree.planting_year.unknown')
+    const result = await resolver(validTreeForm, undefined, {
+      fields: {},
+      shouldUseNativeValidation: false,
+    })
+    expect(
+      'plantingYear' in result.errors && result.errors.plantingYear?.message,
+    ).toBe('tree.planting_year.unknown')
   })
 })

@@ -23,7 +23,7 @@ function TestWrapper({
 
   const methods = useForm<TreeForm>({
     defaultValues,
-    resolver: treeDraftResolver,
+    resolver: treeDraftResolver<TreeForm>(),
     mode: 'onChange',
   })
 
