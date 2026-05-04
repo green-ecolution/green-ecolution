@@ -26,6 +26,7 @@ use crate::{
     shared::{
         coordinates::Coordinate,
         error::ValidationError,
+        geo::BoundingBox,
         provenance::{Provenance, ProviderId},
         string_value::NonEmptyString,
         watering_status::WateringStatus,
@@ -126,6 +127,7 @@ pub struct TreeSearchQuery {
     pub cluster_id: Option<Id<TreeCluster>>,
     pub sensor_id: Option<SensorId>,
     pub provider: Option<ProviderId>,
+    pub bbox: Option<BoundingBox>,
 }
 
 impl Tree {
