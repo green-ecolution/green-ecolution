@@ -19,111 +19,111 @@ SELECT setval('vehicles_id_seq', (SELECT MAX(id) FROM vehicles));
 
 INSERT INTO tree_clusters (id, name, watering_status, moisture_level, region_id, address, description, soil_condition, latitude, longitude, geometry)
 VALUES
-  (1, 'Solitüde Strand', 'just watered', 0.85, 1, 'Solitüde Strand', 'Alle Bäume am Strand', 'sandig', 54.82128536520703, 9.488152515892045, ST_SetSRID(ST_MakePoint(54.82128536520703, 9.488152515892045), 4326)),
-  (2, 'Sankt-Jürgen-Platz', 'moderate', 0.5, 1, 'Ulmenstraße', 'Bäume beim Sankt-Jürgen-Platz', 'schluffig', 54.78805731048199, 9.44400186680097, ST_SetSRID(ST_MakePoint(54.78805731048199, 9.44400186680097), 4326)),
-  (3, 'Flensburger Stadion', 'unknown', 0.7, 1, 'Flensburger Stadion', 'Alle Bäume in der Gegend des Stadions in Mürwik', 'schluffig', 54.802163, 9.446398, ST_SetSRID(ST_MakePoint(54.802163, 9.446398), 4326)),
-  (4, 'Campus Hochschule', 'bad', 0.1, 4, 'Thomas-Finke Straße', 'Gruppe ist besonders anfällig', 'schluffig', 54.77576059694547, 9.450720736264868, ST_SetSRID(ST_MakePoint(54.77576059694547, 9.450720736264868), 4326)),
-  (5, 'Mathildenstraße', 'bad', 0.4, 10, 'Mathildenstraße', 'Sehr enge Straße und dadurch schlecht zu bewässern.', 'schluffig', 54.78219253876479, 9.423978982828825, ST_SetSRID(ST_MakePoint(54.78219253876479, 9.423978982828825), 4326)),
-  (6, 'Nordstadt', 'good', 0.8, 13, 'Apenrader Straße', 'Guter Baumbestand mit großen Kronen.', 'sandig', 54.807162, 9.423138, ST_SetSRID(ST_MakePoint(54.807162, 9.423138), 4326)),
-  (7, 'TSB Neustadt', 'just watered', 0.9, 13, 'Ecknerstraße', 'Kleiner Baumbestand.', 'sandig', 54.797162, 9.419620, ST_SetSRID(ST_MakePoint(54.797162, 9.419620), 4326)),
-  (8, 'Seniorenanlage Valentinerhof', 'bad', 0.15, 13, 'Auf dem Geländer der Seniorenanlage', 'Sehr viel versiegelter Boden.', 'sandig', 54.76994251235151, 9.441111747447234, ST_SetSRID(ST_MakePoint(54.76994251235151, 9.441111747447234), 4326)),
-  (9, 'Peelwatt', 'unknown', 0.3, 13, 'Peelwatt halt', 'Sehr viel versiegelter Boden.', 'sandig', 54.76671656688957, 9.456136954289867, ST_SetSRID(ST_MakePoint(54.76671656688957, 9.456136954289867), 4326)),
-  (10, 'Lautrupsbach', 'moderate', 0.45, 13, 'An der Nordstraße', 'Sehr viel versiegelter Boden.', 'sandig', 54.79265065021804, 9.454269041383837, ST_SetSRID(ST_MakePoint(54.76671656688957, 9.454269041383837), 4326));
+  (1, 'Solitüde Strand', 'just watered', 0.85, 1, 'Solitüde Strand', 'Alle Bäume am Strand', 'sandig', 54.82128536520703, 9.488152515892045, ST_SetSRID(ST_MakePoint(9.488152515892045, 54.82128536520703), 4326)),
+  (2, 'Sankt-Jürgen-Platz', 'moderate', 0.5, 1, 'Ulmenstraße', 'Bäume beim Sankt-Jürgen-Platz', 'schluffig', 54.78805731048199, 9.44400186680097, ST_SetSRID(ST_MakePoint(9.44400186680097, 54.78805731048199), 4326)),
+  (3, 'Flensburger Stadion', 'unknown', 0.7, 1, 'Flensburger Stadion', 'Alle Bäume in der Gegend des Stadions in Mürwik', 'schluffig', 54.802163, 9.446398, ST_SetSRID(ST_MakePoint(9.446398, 54.802163), 4326)),
+  (4, 'Campus Hochschule', 'bad', 0.1, 4, 'Thomas-Finke Straße', 'Gruppe ist besonders anfällig', 'schluffig', 54.77576059694547, 9.450720736264868, ST_SetSRID(ST_MakePoint(9.450720736264868, 54.77576059694547), 4326)),
+  (5, 'Mathildenstraße', 'bad', 0.4, 10, 'Mathildenstraße', 'Sehr enge Straße und dadurch schlecht zu bewässern.', 'schluffig', 54.78219253876479, 9.423978982828825, ST_SetSRID(ST_MakePoint(9.423978982828825, 54.78219253876479), 4326)),
+  (6, 'Nordstadt', 'good', 0.8, 13, 'Apenrader Straße', 'Guter Baumbestand mit großen Kronen.', 'sandig', 54.807162, 9.423138, ST_SetSRID(ST_MakePoint(9.423138, 54.807162), 4326)),
+  (7, 'TSB Neustadt', 'just watered', 0.9, 13, 'Ecknerstraße', 'Kleiner Baumbestand.', 'sandig', 54.797162, 9.419620, ST_SetSRID(ST_MakePoint(9.419620, 54.797162), 4326)),
+  (8, 'Seniorenanlage Valentinerhof', 'bad', 0.15, 13, 'Auf dem Geländer der Seniorenanlage', 'Sehr viel versiegelter Boden.', 'sandig', 54.76994251235151, 9.441111747447234, ST_SetSRID(ST_MakePoint(9.441111747447234, 54.76994251235151), 4326)),
+  (9, 'Peelwatt', 'unknown', 0.3, 13, 'Peelwatt halt', 'Sehr viel versiegelter Boden.', 'sandig', 54.76671656688957, 9.456136954289867, ST_SetSRID(ST_MakePoint(9.456136954289867, 54.76671656688957), 4326)),
+  (10, 'Lautrupsbach', 'moderate', 0.45, 13, 'An der Nordstraße', 'Sehr viel versiegelter Boden.', 'sandig', 54.79265065021804, 9.454269041383837, ST_SetSRID(ST_MakePoint(9.454269041383837, 54.76671656688957), 4326));
 SELECT setval('tree_clusters_id_seq', (SELECT MAX(id) FROM tree_clusters));
 
 INSERT INTO sensors (id, status, latitude, longitude, geometry)
 VALUES
-    ('sensor-1', 'offline', 54.82124518093376, 9.485702120628517, ST_SetSRID(ST_MakePoint(54.82124518093376, 9.485702120628517), 4326)),
-    ('sensor-2', 'offline', 54.8215076622281, 9.487153277881877, ST_SetSRID(ST_MakePoint(54.8215076622281, 9.487153277881877), 4326)),
-    ('sensor-3', 'offline', 54.78780993841013, 9.444052105200551, ST_SetSRID(ST_MakePoint(54.78780993841013, 9.444052105200551), 4326)),
-    ('sensor-4', 'offline', 54.775679885633636, 9.451171073968197, ST_SetSRID(ST_MakePoint(54.775679885633636, 9.451171073968197), 4326)),
-    ('sensor-5', 'offline', 54.782630, 9.423792, ST_SetSRID(ST_MakePoint(54.782630, 9.423792), 4326)),
-    ('sensor-6', 'offline', 54.796916, 9.421332, ST_SetSRID(ST_MakePoint(54.796916, 9.421332), 4326)),
-    ('sensor-7', 'offline', 54.7697451282801, 9.439562555553788, ST_SetSRID(ST_MakePoint(54.7697451282801, 9.439562555553788), 4326)),
-    ('sensor-8', 'offline', 54.792472, 9.450000, ST_SetSRID(ST_MakePoint(54.792472, 9.450000), 4326));
+    ('sensor-1', 'offline', 54.82124518093376, 9.485702120628517, ST_SetSRID(ST_MakePoint(9.485702120628517, 54.82124518093376), 4326)),
+    ('sensor-2', 'offline', 54.8215076622281, 9.487153277881877, ST_SetSRID(ST_MakePoint(9.487153277881877, 54.8215076622281), 4326)),
+    ('sensor-3', 'offline', 54.78780993841013, 9.444052105200551, ST_SetSRID(ST_MakePoint(9.444052105200551, 54.78780993841013), 4326)),
+    ('sensor-4', 'offline', 54.775679885633636, 9.451171073968197, ST_SetSRID(ST_MakePoint(9.451171073968197, 54.775679885633636), 4326)),
+    ('sensor-5', 'offline', 54.782630, 9.423792, ST_SetSRID(ST_MakePoint(9.423792, 54.782630), 4326)),
+    ('sensor-6', 'offline', 54.796916, 9.421332, ST_SetSRID(ST_MakePoint(9.421332, 54.796916), 4326)),
+    ('sensor-7', 'offline', 54.7697451282801, 9.439562555553788, ST_SetSRID(ST_MakePoint(9.439562555553788, 54.7697451282801), 4326)),
+    ('sensor-8', 'offline', 54.792472, 9.450000, ST_SetSRID(ST_MakePoint(9.450000, 54.792472), 4326));
 
 INSERT INTO trees (tree_cluster_id, sensor_id, planting_year, species, number, latitude, longitude, geometry, watering_status, description)
 VALUES
-  (1, 'sensor-1', 2023, 'Quercus robur', 1005, 54.82124518093376, 9.485702120628517, ST_SetSRID(ST_MakePoint(54.82124518093376, 9.485702120628517), 4326), 'good', 'Dieser Baum wurde im August das letzte mal gestuzt'),
-  (1, 'sensor-2', 2023, 'Quercus robur', 1006, 54.8215076622281, 9.487153277881877, ST_SetSRID(ST_MakePoint(54.8215076622281, 9.487153277881877), 4326), 'good', ''),
-  (1, NULL, 2023, 'Quercus robur', 1007, 54.82078826498143, 9.489684366114483, ST_SetSRID(ST_MakePoint(54.82078826498143, 9.489684366114483), 4326), 'unknown', ''),
-  (1, NULL, 2023, 'Quercus robur', 1001, 54.820834078576304, 9.486398528109389, ST_SetSRID(ST_MakePoint(54.820834078576304, 9.486398528109389), 4326), 'unknown', ''),
-  (1, NULL, 2023, 'Quercus robur', 1002, 54.82008971976509, 9.488979617332221, ST_SetSRID(ST_MakePoint(54.82008971976509, 9.488979617332221), 4326), 'unknown', ''),
-  (1, NULL, 2023, 'Quercus robur', 1003, 54.82061210171266, 9.486168703385617, ST_SetSRID(ST_MakePoint(54.82061210171266, 9.486168703385617), 4326), 'unknown', ''),
-  (1, NULL, 2023, 'Quercus robur', 1004, 54.8199067243877, 9.487106513347264, ST_SetSRID(ST_MakePoint(54.8199067243877, 9.487106513347264), 4326), 'unknown', ''),
-  (1, NULL, 2023, 'Quercus robur', 2001, 54.821248829192285, 9.48996664076417, ST_SetSRID(ST_MakePoint(54.821248829192285, 9.48996664076417), 4326), 'unknown', ''),
+  (1, 'sensor-1', 2023, 'Quercus robur', 1005, 54.82124518093376, 9.485702120628517, ST_SetSRID(ST_MakePoint(9.485702120628517, 54.82124518093376), 4326), 'good', 'Dieser Baum wurde im August das letzte mal gestuzt'),
+  (1, 'sensor-2', 2023, 'Quercus robur', 1006, 54.8215076622281, 9.487153277881877, ST_SetSRID(ST_MakePoint(9.487153277881877, 54.8215076622281), 4326), 'good', ''),
+  (1, NULL, 2023, 'Quercus robur', 1007, 54.82078826498143, 9.489684366114483, ST_SetSRID(ST_MakePoint(9.489684366114483, 54.82078826498143), 4326), 'unknown', ''),
+  (1, NULL, 2023, 'Quercus robur', 1001, 54.820834078576304, 9.486398528109389, ST_SetSRID(ST_MakePoint(9.486398528109389, 54.820834078576304), 4326), 'unknown', ''),
+  (1, NULL, 2023, 'Quercus robur', 1002, 54.82008971976509, 9.488979617332221, ST_SetSRID(ST_MakePoint(9.488979617332221, 54.82008971976509), 4326), 'unknown', ''),
+  (1, NULL, 2023, 'Quercus robur', 1003, 54.82061210171266, 9.486168703385617, ST_SetSRID(ST_MakePoint(9.486168703385617, 54.82061210171266), 4326), 'unknown', ''),
+  (1, NULL, 2023, 'Quercus robur', 1004, 54.8199067243877, 9.487106513347264, ST_SetSRID(ST_MakePoint(9.487106513347264, 54.8199067243877), 4326), 'unknown', ''),
+  (1, NULL, 2023, 'Quercus robur', 2001, 54.821248829192285, 9.48996664076417, ST_SetSRID(ST_MakePoint(9.48996664076417, 54.821248829192285), 4326), 'unknown', ''),
 
-  (2, 'sensor-3', 2022, 'Quercus robur', 1008, 54.78780993841013, 9.444052105200551, ST_SetSRID(ST_MakePoint(54.78780993841013, 9.444052105200551), 4326), 'moderate', ''),
-  (2, NULL, 2022, 'Quercus robur', 1009, 54.78836553796373, 9.444075995492044, ST_SetSRID(ST_MakePoint(54.78836553796373, 9.444075995492044), 4326), 'unknown', ''),
-  (2, NULL, 2022, 'Quercus robur', 1010, 54.787768612518455, 9.443996361187065, ST_SetSRID(ST_MakePoint(54.787768612518455, 9.443996361187065), 4326), 'unknown', ''),
-  (2, NULL, 2022, 'Quercus robur', 1010, 54.78826721846835, 9.443595915277797, ST_SetSRID(ST_MakePoint(54.78826721846835, 9.443595915277797), 4326), 'unknown', ''),
-  (2, NULL, 2022, 'Quercus robur', 1010, 54.78810634901004, 9.44443262510434, ST_SetSRID(ST_MakePoint(54.78810634901004, 9.44443262510434), 4326), 'unknown', ''),
-  (2, NULL, 2022, 'Quercus robur', 1010, 54.78815894101875, 9.443955271421238, ST_SetSRID(ST_MakePoint(54.78815894101875, 9.443955271421238), 4326), 'unknown', ''),
+  (2, 'sensor-3', 2022, 'Quercus robur', 1008, 54.78780993841013, 9.444052105200551, ST_SetSRID(ST_MakePoint(9.444052105200551, 54.78780993841013), 4326), 'moderate', ''),
+  (2, NULL, 2022, 'Quercus robur', 1009, 54.78836553796373, 9.444075995492044, ST_SetSRID(ST_MakePoint(9.444075995492044, 54.78836553796373), 4326), 'unknown', ''),
+  (2, NULL, 2022, 'Quercus robur', 1010, 54.787768612518455, 9.443996361187065, ST_SetSRID(ST_MakePoint(9.443996361187065, 54.787768612518455), 4326), 'unknown', ''),
+  (2, NULL, 2022, 'Quercus robur', 1010, 54.78826721846835, 9.443595915277797, ST_SetSRID(ST_MakePoint(9.443595915277797, 54.78826721846835), 4326), 'unknown', ''),
+  (2, NULL, 2022, 'Quercus robur', 1010, 54.78810634901004, 9.44443262510434, ST_SetSRID(ST_MakePoint(9.44443262510434, 54.78810634901004), 4326), 'unknown', ''),
+  (2, NULL, 2022, 'Quercus robur', 1010, 54.78815894101875, 9.443955271421238, ST_SetSRID(ST_MakePoint(9.443955271421238, 54.78815894101875), 4326), 'unknown', ''),
 
-  (3, NULL, 2023, 'Betula pendula', 1034, 54.801718, 9.444797, ST_SetSRID(ST_MakePoint(54.801718, 9.444797), 4326), 'unknown', ''),
-  (3, NULL, 2023, 'Betula pendula', 1035, 54.800797, 9.444271, ST_SetSRID(ST_MakePoint(54.800797, 9.444271), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
-  (3, NULL, 2023, 'Betula pendula', 1036, 54.801539, 9.446741, ST_SetSRID(ST_MakePoint(54.801539, 9.446741), 4326), 'unknown', ''),
-  (3, NULL, 2023, 'Betula pendula', 1037, 54.799796, 9.443927, ST_SetSRID(ST_MakePoint(54.799796, 9.443927), 4326), 'unknown', ''),
-  (3, NULL, 2023, 'Betula pendula', 1038, 54.804052, 9.447900, ST_SetSRID(ST_MakePoint(54.804052, 9.447900), 4326), 'unknown', ''),
+  (3, NULL, 2023, 'Betula pendula', 1034, 54.801718, 9.444797, ST_SetSRID(ST_MakePoint(9.444797, 54.801718), 4326), 'unknown', ''),
+  (3, NULL, 2023, 'Betula pendula', 1035, 54.800797, 9.444271, ST_SetSRID(ST_MakePoint(9.444271, 54.800797), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
+  (3, NULL, 2023, 'Betula pendula', 1036, 54.801539, 9.446741, ST_SetSRID(ST_MakePoint(9.446741, 54.801539), 4326), 'unknown', ''),
+  (3, NULL, 2023, 'Betula pendula', 1037, 54.799796, 9.443927, ST_SetSRID(ST_MakePoint(9.443927, 54.799796), 4326), 'unknown', ''),
+  (3, NULL, 2023, 'Betula pendula', 1038, 54.804052, 9.447900, ST_SetSRID(ST_MakePoint(9.447900, 54.804052), 4326), 'unknown', ''),
 
-  (4, 'sensor-4', 2022, 'Tilia intermedia', 1029, 54.775679885633636, 9.451171073968197, ST_SetSRID(ST_MakePoint(54.775679885633636, 9.451171073968197), 4326), 'bad', ''),
-  (4, NULL, 2022, 'Tilia intermedia', 1027, 54.776120, 9.450891, ST_SetSRID(ST_MakePoint(54.776120, 9.450891), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
-  (4, NULL, 2022, 'Tilia intermedia', 1028, 54.776058, 9.450311, ST_SetSRID(ST_MakePoint(54.776058, 9.450311), 4326), 'unknown', ''),
-  (4, NULL, 2022, 'Tilia intermedia', 1029, 54.775709, 9.447762, ST_SetSRID(ST_MakePoint(54.775709, 9.447762), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
-  (4, NULL, 2022, 'Tilia intermedia', 1026, 54.776145, 9.449785, ST_SetSRID(ST_MakePoint(54.776145, 9.449785), 4326), 'unknown', ''),
-  (4, NULL, 2022, 'Tilia intermedia', 1026, 54.774986825456224, 9.451846963834953, ST_SetSRID(ST_MakePoint(54.774986825456224, 9.451846963834953), 4326), 'unknown', 'UNSER TEST BAUM'),
+  (4, 'sensor-4', 2022, 'Tilia intermedia', 1029, 54.775679885633636, 9.451171073968197, ST_SetSRID(ST_MakePoint(9.451171073968197, 54.775679885633636), 4326), 'bad', ''),
+  (4, NULL, 2022, 'Tilia intermedia', 1027, 54.776120, 9.450891, ST_SetSRID(ST_MakePoint(9.450891, 54.776120), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
+  (4, NULL, 2022, 'Tilia intermedia', 1028, 54.776058, 9.450311, ST_SetSRID(ST_MakePoint(9.450311, 54.776058), 4326), 'unknown', ''),
+  (4, NULL, 2022, 'Tilia intermedia', 1029, 54.775709, 9.447762, ST_SetSRID(ST_MakePoint(9.447762, 54.775709), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
+  (4, NULL, 2022, 'Tilia intermedia', 1026, 54.776145, 9.449785, ST_SetSRID(ST_MakePoint(9.449785, 54.776145), 4326), 'unknown', ''),
+  (4, NULL, 2022, 'Tilia intermedia', 1026, 54.774986825456224, 9.451846963834953, ST_SetSRID(ST_MakePoint(9.451846963834953, 54.774986825456224), 4326), 'unknown', 'UNSER TEST BAUM'),
 
-  (5, 'sensor-5', 2021, 'Fraxinus ornus Obelisk', 1021, 54.782630, 9.423792, ST_SetSRID(ST_MakePoint(54.782630, 9.423792), 4326), 'bad', ''),
-  (5, NULL, 2021, 'Fraxinus ornus Obelisk', 1022, 54.782463, 9.423727, ST_SetSRID(ST_MakePoint(54.782463, 9.423727), 4326), 'unknown', ''),
-  (5, NULL, 2021, 'Fraxinus ornus Obelisk', 1023, 54.782296, 9.424178, ST_SetSRID(ST_MakePoint(54.782296, 9.424178), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
-  (5, NULL, 2022, 'Fraxinus ornus Obelisk', 1024, 54.782043, 9.424188, ST_SetSRID(ST_MakePoint(54.782043, 9.424188), 4326), 'unknown', ''),
-  (5, NULL, 2022, 'Fraxinus ornus Obelisk', 1025, 54.781753, 9.424936, ST_SetSRID(ST_MakePoint(54.781753, 9.424936), 4326), 'unknown', ''),
+  (5, 'sensor-5', 2021, 'Fraxinus ornus Obelisk', 1021, 54.782630, 9.423792, ST_SetSRID(ST_MakePoint(9.423792, 54.782630), 4326), 'bad', ''),
+  (5, NULL, 2021, 'Fraxinus ornus Obelisk', 1022, 54.782463, 9.423727, ST_SetSRID(ST_MakePoint(9.423727, 54.782463), 4326), 'unknown', ''),
+  (5, NULL, 2021, 'Fraxinus ornus Obelisk', 1023, 54.782296, 9.424178, ST_SetSRID(ST_MakePoint(9.424178, 54.782296), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
+  (5, NULL, 2022, 'Fraxinus ornus Obelisk', 1024, 54.782043, 9.424188, ST_SetSRID(ST_MakePoint(9.424188, 54.782043), 4326), 'unknown', ''),
+  (5, NULL, 2022, 'Fraxinus ornus Obelisk', 1025, 54.781753, 9.424936, ST_SetSRID(ST_MakePoint(9.424936, 54.781753), 4326), 'unknown', ''),
 
-  (6, NULL, 2023, 'Acer platanoides Schwedleri', 1039, 54.806287, 9.423469, ST_SetSRID(ST_MakePoint(54.806287, 9.423469), 4326), 'unknown', ''),
-  (6, NULL, 2023, 'Acer platanoides Schwedleri', 1040, 54.807212, 9.422752, ST_SetSRID(ST_MakePoint(54.807212, 9.422752), 4326), 'unknown', ''),
-  (6, NULL, 2023, 'Acer platanoides Schwedleri', 1041, 54.806606, 9.422773, ST_SetSRID(ST_MakePoint(54.806606, 9.422773), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
-  (6, NULL, 2023, 'Acer platanoides Schwedleri', 1042, 54.807787, 9.422354, ST_SetSRID(ST_MakePoint(54.807787, 9.422354), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
+  (6, NULL, 2023, 'Acer platanoides Schwedleri', 1039, 54.806287, 9.423469, ST_SetSRID(ST_MakePoint(9.423469, 54.806287), 4326), 'unknown', ''),
+  (6, NULL, 2023, 'Acer platanoides Schwedleri', 1040, 54.807212, 9.422752, ST_SetSRID(ST_MakePoint(9.422752, 54.807212), 4326), 'unknown', ''),
+  (6, NULL, 2023, 'Acer platanoides Schwedleri', 1041, 54.806606, 9.422773, ST_SetSRID(ST_MakePoint(9.422773, 54.806606), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
+  (6, NULL, 2023, 'Acer platanoides Schwedleri', 1042, 54.807787, 9.422354, ST_SetSRID(ST_MakePoint(9.422354, 54.807787), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
 
-  (7, 'sensor-6', 2022, 'Acer platanoides Schwedleri', 1043, 54.796916, 9.421332, ST_SetSRID(ST_MakePoint(54.796916, 9.421332), 4326), 'good', ''),
-  (7, NULL, 2022, 'Acer platanoides Schwedleri', 1044, 54.797330, 9.419002, ST_SetSRID(ST_MakePoint(54.797330, 9.419002), 4326), 'unknown', ''),
-  (7, NULL, 2022, 'Acer platanoides Schwedleri', 1045, 54.797114, 9.417843, ST_SetSRID(ST_MakePoint(54.797114, 9.417843), 4326), 'unknown', ''),
+  (7, 'sensor-6', 2022, 'Acer platanoides Schwedleri', 1043, 54.796916, 9.421332, ST_SetSRID(ST_MakePoint(9.421332, 54.796916), 4326), 'good', ''),
+  (7, NULL, 2022, 'Acer platanoides Schwedleri', 1044, 54.797330, 9.419002, ST_SetSRID(ST_MakePoint(9.419002, 54.797330), 4326), 'unknown', ''),
+  (7, NULL, 2022, 'Acer platanoides Schwedleri', 1045, 54.797114, 9.417843, ST_SetSRID(ST_MakePoint(9.417843, 54.797114), 4326), 'unknown', ''),
 
-  (8, 'sensor-7', 2023, 'Populus cf. suaveolens', 1052, 54.7697451282801, 9.439562555553788, ST_SetSRID(ST_MakePoint(54.7697451282801, 9.439562555553788), 4326), 'bad', ''),
-  (8, NULL, 2023, 'Populus cf. suaveolens', 5555, 54.76932352301634, 9.441299419876234, ST_SetSRID(ST_MakePoint(54.76932352301634, 9.441299419876234), 4326), 'unknown', ''),
-  (8, NULL, 2023, 'Populus cf. suaveolens', 4444, 54.76915329290317, 9.441851862902759, ST_SetSRID(ST_MakePoint(54.76915329290317, 9.441851862902759), 4326), 'unknown', ''),
-  (8, NULL, 2023, 'Populus cf. suaveolens', 3333, 54.770304653528044, 9.44233994363491, ST_SetSRID(ST_MakePoint(54.770304653528044, 9.44233994363491), 4326), 'unknown', ''),
-  (8, NULL, 2023, 'Populus cf. suaveolens', 2222, 54.771043653535294, 9.440740347234932, ST_SetSRID(ST_MakePoint(54.771043653535294, 9.440740347234932), 4326), 'unknown', ''),
+  (8, 'sensor-7', 2023, 'Populus cf. suaveolens', 1052, 54.7697451282801, 9.439562555553788, ST_SetSRID(ST_MakePoint(9.439562555553788, 54.7697451282801), 4326), 'bad', ''),
+  (8, NULL, 2023, 'Populus cf. suaveolens', 5555, 54.76932352301634, 9.441299419876234, ST_SetSRID(ST_MakePoint(9.441299419876234, 54.76932352301634), 4326), 'unknown', ''),
+  (8, NULL, 2023, 'Populus cf. suaveolens', 4444, 54.76915329290317, 9.441851862902759, ST_SetSRID(ST_MakePoint(9.441851862902759, 54.76915329290317), 4326), 'unknown', ''),
+  (8, NULL, 2023, 'Populus cf. suaveolens', 3333, 54.770304653528044, 9.44233994363491, ST_SetSRID(ST_MakePoint(9.44233994363491, 54.770304653528044), 4326), 'unknown', ''),
+  (8, NULL, 2023, 'Populus cf. suaveolens', 2222, 54.771043653535294, 9.440740347234932, ST_SetSRID(ST_MakePoint(9.440740347234932, 54.771043653535294), 4326), 'unknown', ''),
 
-  (9, NULL, 2024, 'Tilia x vulgaris', 1015, 54.76752937879732, 9.457372632491829, ST_SetSRID(ST_MakePoint(54.76752937879732, 9.457372632491829), 4326), 'unknown', ''),
-  (9, NULL, 2024, 'Tilia x vulgaris', 1015, 54.767564688002714, 9.453443844886783, ST_SetSRID(ST_MakePoint(54.767564688002714, 9.453443844886783), 4326), 'unknown', ''),
-  (9, NULL, 2024, 'Tilia x vulgaris', 1015, 54.765620842535895, 9.4575523046762, ST_SetSRID(ST_MakePoint(54.765620842535895, 9.4575523046762), 4326), 'unknown', ''),
-  (9, NULL, 2024, 'Tilia x vulgaris', 1015, 54.76725516472003, 9.456833592389275, ST_SetSRID(ST_MakePoint(54.76725516472003, 9.456833592389275), 4326), 'unknown', ''),
+  (9, NULL, 2024, 'Tilia x vulgaris', 1015, 54.76752937879732, 9.457372632491829, ST_SetSRID(ST_MakePoint(9.457372632491829, 54.76752937879732), 4326), 'unknown', ''),
+  (9, NULL, 2024, 'Tilia x vulgaris', 1015, 54.767564688002714, 9.453443844886783, ST_SetSRID(ST_MakePoint(9.453443844886783, 54.767564688002714), 4326), 'unknown', ''),
+  (9, NULL, 2024, 'Tilia x vulgaris', 1015, 54.765620842535895, 9.4575523046762, ST_SetSRID(ST_MakePoint(9.4575523046762, 54.765620842535895), 4326), 'unknown', ''),
+  (9, NULL, 2024, 'Tilia x vulgaris', 1015, 54.76725516472003, 9.456833592389275, ST_SetSRID(ST_MakePoint(9.456833592389275, 54.76725516472003), 4326), 'unknown', ''),
 
-  (10, 'sensor-8', 2023, 'Alnus glutinosa', 1030, 54.792472, 9.452773, ST_SetSRID(ST_MakePoint(54.792472, 9.452773), 4326), 'moderate', ''),
-  (10, NULL, 2023, 'Alnus glutinosa', 1031, 54.792782, 9.453795, ST_SetSRID(ST_MakePoint(54.792782, 9.453795), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
-  (10, NULL, 2023, 'Alnus glutinosa', 1032, 54.792837, 9.454880, ST_SetSRID(ST_MakePoint(54.792837, 9.454880), 4326), 'unknown', ''),
-  (10, NULL, 2023, 'Alnus glutinosa', 1033, 54.792435, 9.455545, ST_SetSRID(ST_MakePoint(54.792435, 9.455545), 4326), 'unknown', ''),
+  (10, 'sensor-8', 2023, 'Alnus glutinosa', 1030, 54.792472, 9.452773, ST_SetSRID(ST_MakePoint(9.452773, 54.792472), 4326), 'moderate', ''),
+  (10, NULL, 2023, 'Alnus glutinosa', 1031, 54.792782, 9.453795, ST_SetSRID(ST_MakePoint(9.453795, 54.792782), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
+  (10, NULL, 2023, 'Alnus glutinosa', 1032, 54.792837, 9.454880, ST_SetSRID(ST_MakePoint(9.454880, 54.792837), 4326), 'unknown', ''),
+  (10, NULL, 2023, 'Alnus glutinosa', 1033, 54.792435, 9.455545, ST_SetSRID(ST_MakePoint(9.455545, 54.792435), 4326), 'unknown', ''),
 
-  (NULL, NULL, 2024, 'Carpinus betulus', 1015, 54.783739, 9.426823, ST_SetSRID(ST_MakePoint(54.783739, 9.426823), 4326), 'unknown', ''),
-  (NULL, NULL, 2022, 'Carpinus betulus', 1017, 54.785981, 9.430668, ST_SetSRID(ST_MakePoint(54.785981, 9.430668), 4326), 'unknown', ''),
-  (NULL, NULL, 2022, 'Carpinus betulus', 1018, 54.786269, 9.431758, ST_SetSRID(ST_MakePoint(54.786269, 9.431758), 4326), 'unknown', ''),
-  (NULL, NULL, 2022, 'Carpinus betulus', 1019, 54.787339, 9.431701, ST_SetSRID(ST_MakePoint(54.787339, 9.431701), 4326), 'unknown', ''),
-  (NULL, NULL, 2021, 'Carpinus betulus', 1020, 54.786656, 9.432243, ST_SetSRID(ST_MakePoint(54.786656, 9.432243), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
-  (NULL, NULL, 2022, 'Populus cf. suaveolens', 1051, 54.769030, 9.429936, ST_SetSRID(ST_MakePoint(54.769030, 9.429936), 4326), 'unknown', ''),
-  (NULL, NULL, 2021, 'Populus cf. suaveolens', 1053, 54.775237, 9.441981, ST_SetSRID(ST_MakePoint(54.775237, 9.441981), 4326), 'unknown', ''),
-  (NULL, NULL, 2022, 'Populus cf. suaveolens', 1054, 54.780192, 9.459607, ST_SetSRID(ST_MakePoint(54.780192, 9.459607), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
-  (NULL, NULL, 2021, 'Populus cf. suaveolens', 1055, 54.785043, 9.418210, ST_SetSRID(ST_MakePoint(54.785043, 9.418210), 4326), 'unknown', ''),
-  (NULL, NULL, 2022, 'Fraxinus excelsior', 1056, 54.779697, 9.440026, ST_SetSRID(ST_MakePoint(54.779697, 9.440026), 4326), 'unknown', ''),
-  (NULL, NULL, 2020, 'Fraxinus excelsior', 1057, 54.785147, 9.438903, ST_SetSRID(ST_MakePoint(54.785147, 9.438903), 4326), 'unknown', ''),
-  (NULL, NULL, 2020, 'Fraxinus excelsior', 1058, 54.788205, 9.454699, ST_SetSRID(ST_MakePoint(54.788205, 9.454699), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
-  (NULL, NULL, 2020, 'Fraxinus excelsior', 1059, 54.804054, 9.469544, ST_SetSRID(ST_MakePoint(54.804054, 9.469544), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
-  (NULL, NULL, 2024, 'Acer pseudoplatanus', 1060, 54.813655, 9.477633, ST_SetSRID(ST_MakePoint(54.813655, 9.477633), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
-  (NULL, NULL, 2024, 'Acer pseudoplatanus', 1061, 54.811001, 9.484132, ST_SetSRID(ST_MakePoint(54.811001, 9.484132), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
-  (NULL, NULL, 2024, 'Acer pseudoplatanus', 1062, 54.790366, 9.472744, ST_SetSRID(ST_MakePoint(54.790366, 9.472744), 4326), 'unknown', '');
+  (NULL, NULL, 2024, 'Carpinus betulus', 1015, 54.783739, 9.426823, ST_SetSRID(ST_MakePoint(9.426823, 54.783739), 4326), 'unknown', ''),
+  (NULL, NULL, 2022, 'Carpinus betulus', 1017, 54.785981, 9.430668, ST_SetSRID(ST_MakePoint(9.430668, 54.785981), 4326), 'unknown', ''),
+  (NULL, NULL, 2022, 'Carpinus betulus', 1018, 54.786269, 9.431758, ST_SetSRID(ST_MakePoint(9.431758, 54.786269), 4326), 'unknown', ''),
+  (NULL, NULL, 2022, 'Carpinus betulus', 1019, 54.787339, 9.431701, ST_SetSRID(ST_MakePoint(9.431701, 54.787339), 4326), 'unknown', ''),
+  (NULL, NULL, 2021, 'Carpinus betulus', 1020, 54.786656, 9.432243, ST_SetSRID(ST_MakePoint(9.432243, 54.786656), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
+  (NULL, NULL, 2022, 'Populus cf. suaveolens', 1051, 54.769030, 9.429936, ST_SetSRID(ST_MakePoint(9.429936, 54.769030), 4326), 'unknown', ''),
+  (NULL, NULL, 2021, 'Populus cf. suaveolens', 1053, 54.775237, 9.441981, ST_SetSRID(ST_MakePoint(9.441981, 54.775237), 4326), 'unknown', ''),
+  (NULL, NULL, 2022, 'Populus cf. suaveolens', 1054, 54.780192, 9.459607, ST_SetSRID(ST_MakePoint(9.459607, 54.780192), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
+  (NULL, NULL, 2021, 'Populus cf. suaveolens', 1055, 54.785043, 9.418210, ST_SetSRID(ST_MakePoint(9.418210, 54.785043), 4326), 'unknown', ''),
+  (NULL, NULL, 2022, 'Fraxinus excelsior', 1056, 54.779697, 9.440026, ST_SetSRID(ST_MakePoint(9.440026, 54.779697), 4326), 'unknown', ''),
+  (NULL, NULL, 2020, 'Fraxinus excelsior', 1057, 54.785147, 9.438903, ST_SetSRID(ST_MakePoint(9.438903, 54.785147), 4326), 'unknown', ''),
+  (NULL, NULL, 2020, 'Fraxinus excelsior', 1058, 54.788205, 9.454699, ST_SetSRID(ST_MakePoint(9.454699, 54.788205), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
+  (NULL, NULL, 2020, 'Fraxinus excelsior', 1059, 54.804054, 9.469544, ST_SetSRID(ST_MakePoint(9.469544, 54.804054), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
+  (NULL, NULL, 2024, 'Acer pseudoplatanus', 1060, 54.813655, 9.477633, ST_SetSRID(ST_MakePoint(9.477633, 54.813655), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
+  (NULL, NULL, 2024, 'Acer pseudoplatanus', 1061, 54.811001, 9.484132, ST_SetSRID(ST_MakePoint(9.484132, 54.811001), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt'),
+  (NULL, NULL, 2024, 'Acer pseudoplatanus', 1062, 54.790366, 9.472744, ST_SetSRID(ST_MakePoint(9.472744, 54.790366), 4326), 'unknown', '');
 
 INSERT INTO trees (tree_cluster_id, sensor_id, planting_year, species, number, latitude, longitude, geometry, watering_status, description, last_watered)
 VALUES
-  (NULL, NULL, 2023, 'Quercus robur', 1065, 54.780394213230196, 9.417514801025392, ST_SetSRID(ST_MakePoint(54.780394213230196, 9.417514801025392), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '2025-02-14 12:34:56');
+  (NULL, NULL, 2023, 'Quercus robur', 1065, 54.780394213230196, 9.417514801025392, ST_SetSRID(ST_MakePoint(9.417514801025392, 54.780394213230196), 4326), 'unknown', 'Dieser Baum wurde im August das letzte mal gestuzt', '2025-02-14 12:34:56');
 
 SELECT setval('trees_id_seq', (SELECT MAX(id) FROM trees));
 
@@ -365,3 +365,17 @@ VALUES
   (3, 3, 40.0),
   (3, 4, 0.0),
   (3, 5, 0.0);
+
+-- Safety net: rebuild geometry from lat/lng columns in case a future row is added
+-- with the wrong ST_MakePoint argument order (PostGIS expects lng, lat).
+UPDATE tree_clusters
+   SET geometry = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)
+ WHERE longitude IS NOT NULL AND latitude IS NOT NULL;
+
+UPDATE trees
+   SET geometry = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)
+ WHERE longitude IS NOT NULL AND latitude IS NOT NULL;
+
+UPDATE sensors
+   SET geometry = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)
+ WHERE longitude IS NOT NULL AND latitude IS NOT NULL;

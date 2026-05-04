@@ -669,3 +669,13 @@ VALUES
 -- Update sequence to continue from max ID
 SELECT setval('trees_id_seq', (SELECT MAX(id) FROM trees));
 
+
+-- Geometry blobs above were encoded with X=latitude, Y=longitude (inverted PostGIS
+-- convention). Rebuild from lat/lng columns so ST_Intersects bbox queries work.
+UPDATE tree_clusters
+   SET geometry = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)
+ WHERE longitude IS NOT NULL AND latitude IS NOT NULL;
+
+UPDATE trees
+   SET geometry = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)
+ WHERE longitude IS NOT NULL AND latitude IS NOT NULL;
