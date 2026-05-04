@@ -2,7 +2,9 @@ use async_trait::async_trait;
 
 use crate::{
     Id, RepositoryError,
-    cluster::{ClusterMarker, TreeCluster, TreeClusterDraft, TreeClusterSearchQuery, TreeClusterView},
+    cluster::{
+        ClusterMarker, TreeCluster, TreeClusterDraft, TreeClusterSearchQuery, TreeClusterView,
+    },
     shared::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
