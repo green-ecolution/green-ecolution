@@ -4,7 +4,7 @@ import { z } from 'zod'
 import Map from '@/components/map/Map'
 import MapController from '@/components/map/MapController'
 import ZoomControls from '@/components/map/ZoomControls'
-import { treeClusterQuery, treeQuery } from '@/api/queries'
+import { clusterMarkersQuery } from '@/api/queries'
 import { Loading } from '@green-ecolution/ui'
 import { Suspense } from 'react'
 
@@ -33,11 +33,8 @@ export const Route = createFileRoute('/_protected/map')({
   }),
   loader: ({ context: { queryClient }, deps: { lat, lng, zoom } }) => {
     queryClient
-      .prefetchQuery(treeClusterQuery())
-      .catch((error) => console.error('Prefetching "treeClusterQuery" failed:', error))
-    queryClient
-      .prefetchQuery(treeQuery())
-      .catch((error) => console.error('Prefetching "treeQuery" failed:', error))
+      .prefetchQuery(clusterMarkersQuery())
+      .catch((error) => console.error('Prefetching "clusterMarkersQuery" failed:', error))
 
     useStore.setState({ mapCenter: [lat, lng], mapZoom: zoom })
 
