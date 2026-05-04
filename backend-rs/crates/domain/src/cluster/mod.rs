@@ -12,6 +12,7 @@
 //! [`TreeClusterView`] adds audit fields for HTTP responses.
 
 pub mod error;
+pub mod marker;
 pub mod repository;
 pub mod snapshot;
 pub mod soil_condition;
@@ -33,6 +34,7 @@ use crate::{
 };
 
 pub use error::ClusterError;
+pub use marker::ClusterMarker;
 pub use repository::{TreeClusterReader, TreeClusterWriter};
 #[doc(hidden)]
 pub use snapshot::TreeClusterSnapshot;
