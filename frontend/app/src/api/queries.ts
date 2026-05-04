@@ -1,7 +1,8 @@
-import { queryOptions } from '@tanstack/react-query'
+import { queryOptions, keepPreviousData } from '@tanstack/react-query'
 import {
   AppInfoResponse,
   clusterApi,
+  ClusterMarkerListResponse,
   DataStatisticsResponse,
   EvaluationResponse,
   infoApi,
@@ -13,6 +14,7 @@ import {
   ListResponseVehicleResponse,
   ListResponseWateringPlanInListResponse,
   ListSensorsRequest,
+  ListTreeMarkersRequest,
   ListTreesRequest,
   ListUsersRequest,
   ListVehiclesRequest,
@@ -26,12 +28,14 @@ import {
   ServerInfoResponse,
   ServicesInfoResponse,
   TreeClusterResponse,
+  TreeMarkerListResponse,
   TreeResponse,
   treeApi,
   userApi,
   vehicleApi,
   VehicleResponse,
   WateringPlanResponse,
+  WateringStatus,
   wateringPlanApi,
   evaluationApi,
 } from './backendApi'
@@ -226,4 +230,50 @@ export const nearestTreeQuery = (params: { lat: number; lng: number; limit?: num
     queryKey: ['trees', 'nearest', params.lat, params.lng, params.limit],
     queryFn: () =>
       treeApi.getNearestTrees({ lat: params.lat, lng: params.lng, limit: params.limit }),
+  })
+
+export interface BoundingBox {
+  swLat: number
+  swLng: number
+  neLat: number
+  neLng: number
+}
+
+const formatBBox = (b: BoundingBox): string =>
+  `${b.swLat.toFixed(5)},${b.swLng.toFixed(5)},${b.neLat.toFixed(5)},${b.neLng.toFixed(5)}`
+
+export interface TreeMarkersFilters {
+  hasCluster?: boolean
+  plantingYears?: number[]
+  wateringStatuses?: WateringStatus[]
+}
+
+export const treeMarkersQuery = (params: { bbox: BoundingBox } & TreeMarkersFilters) =>
+  queryOptions<TreeMarkerListResponse>({
+    queryKey: [
+      'trees',
+      'markers',
+      formatBBox(params.bbox),
+      {
+        hasCluster: params.hasCluster,
+        plantingYears: params.plantingYears,
+        wateringStatuses: params.wateringStatuses,
+      },
+    ],
+    queryFn: () =>
+      treeApi.listTreeMarkers({
+        bbox: formatBBox(params.bbox),
+        hasCluster: params.hasCluster,
+        plantingYear: params.plantingYears,
+        wateringStatus: params.wateringStatuses,
+      } satisfies ListTreeMarkersRequest),
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  })
+
+export const clusterMarkersQuery = () =>
+  queryOptions<ClusterMarkerListResponse>({
+    queryKey: ['clusters', 'markers'],
+    queryFn: () => clusterApi.listClusterMarkers(),
+    staleTime: 5 * 60_000,
   })
