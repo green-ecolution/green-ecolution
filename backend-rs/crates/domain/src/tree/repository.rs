@@ -9,7 +9,9 @@ use crate::{
         distance::Distance,
         pagination::{Page, Pagination},
     },
-    tree::{PlantingYear, Tree, TreeDraft, TreeSearchQuery, TreeView, TreeViewWithDistance},
+    tree::{
+        PlantingYear, Tree, TreeDraft, TreeMarker, TreeSearchQuery, TreeView, TreeViewWithDistance,
+    },
 };
 
 /// Read-side access to trees, including aggregate hydration and the
@@ -59,6 +61,16 @@ pub trait TreeReader: Send + Sync {
         coord: Coordinate,
         radius: Distance,
     ) -> Result<Option<Tree>, RepositoryError>;
+
+    /// Returns marker-projected trees matching `query`.
+    ///
+    /// Caller responsibility: pass `query.bbox` or filters that bound the
+    /// result. Without a bbox, every tree is returned — the HTTP layer enforces
+    /// the contract.
+    async fn view_markers(
+        &self,
+        query: TreeSearchQuery,
+    ) -> Result<Vec<TreeMarker>, RepositoryError>;
 
     async fn distinct_planting_years(&self) -> Result<Vec<PlantingYear>, RepositoryError>;
 }

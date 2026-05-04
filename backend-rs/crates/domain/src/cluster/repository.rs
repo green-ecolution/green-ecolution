@@ -2,7 +2,7 @@ use async_trait::async_trait;
 
 use crate::{
     Id, RepositoryError,
-    cluster::{TreeCluster, TreeClusterDraft, TreeClusterSearchQuery, TreeClusterView},
+    cluster::{ClusterMarker, TreeCluster, TreeClusterDraft, TreeClusterSearchQuery, TreeClusterView},
     shared::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
@@ -26,6 +26,10 @@ pub trait TreeClusterReader: Send + Sync {
         query: TreeClusterSearchQuery,
         pagination: Pagination,
     ) -> Result<Page<TreeClusterView>, RepositoryError>;
+
+    /// Returns marker-projected clusters that have a centroid.
+    /// Archived clusters and clusters without trees are excluded.
+    async fn view_markers(&self) -> Result<Vec<ClusterMarker>, RepositoryError>;
 
     /// Returns the DB-persisted centroid for a cluster, or `None` if the
     /// cluster currently has no trees.
