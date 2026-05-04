@@ -3,7 +3,7 @@ use std::sync::Arc;
 use domain::{
     Id,
     cluster::{
-        TreeCluster, TreeClusterDraft, TreeClusterReader, TreeClusterSearchQuery,
+        ClusterMarker, TreeCluster, TreeClusterDraft, TreeClusterReader, TreeClusterSearchQuery,
         TreeClusterUpdate, TreeClusterView, TreeClusterWriter,
     },
     events::DomainEvent,
@@ -48,6 +48,11 @@ impl ClusterService {
         pagination: Pagination,
     ) -> Result<Page<TreeClusterView>, ServiceError> {
         Ok(self.reader.view_search(query, pagination).await?)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn view_markers(&self) -> Result<Vec<ClusterMarker>, ServiceError> {
+        Ok(self.reader.view_markers().await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]

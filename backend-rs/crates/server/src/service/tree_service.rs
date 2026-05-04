@@ -12,8 +12,8 @@ use domain::{
         watering_status::WateringStatus,
     },
     tree::{
-        PlantingYear, Tree, TreeDraft, TreeReader, TreeSearchQuery, TreeView, TreeViewWithDistance,
-        TreeWriter,
+        PlantingYear, Tree, TreeDraft, TreeMarker, TreeReader, TreeSearchQuery, TreeView,
+        TreeViewWithDistance, TreeWriter,
     },
 };
 
@@ -45,6 +45,14 @@ impl TreeService {
         pagination: Pagination,
     ) -> Result<Page<TreeView>, ServiceError> {
         Ok(self.reader.view_search(query, pagination).await?)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn view_markers(
+        &self,
+        query: TreeSearchQuery,
+    ) -> Result<Vec<TreeMarker>, ServiceError> {
+        Ok(self.reader.view_markers(query).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(tree.id = %id))]
