@@ -1,4 +1,4 @@
-import type { Tree, TreeCluster, ClusterMarkerResponse } from '@/api/backendApi'
+import type { ClusterMarkerResponse, Tree, TreeCluster, TreeMarkerResponse } from '@/api/backendApi'
 import useStore from '@/store/store'
 import WithAllTrees from './WithAllTrees'
 import WithAllClusters from './WithAllClusters'
@@ -7,7 +7,7 @@ import { useDeferredValue } from 'react'
 const defaultSelectedTrees: number[] = []
 
 interface WithTreesAndClustersProps {
-  onClickTree?: (tree: Tree) => void
+  onClickTree?: (tree: TreeMarkerResponse | Tree) => void
   onClickCluster?: (cluster: ClusterMarkerResponse | TreeCluster) => void
   selectedTrees?: number[]
   zoomThreshold?: number

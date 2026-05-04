@@ -5,7 +5,7 @@ import MapSelectEntitiesModal from '@/components/map/MapSelectEntitiesModal'
 import SensorMarker from '@/components/map/marker/SensorMarker'
 import WithFilterableTrees from '@/components/map/marker/WithFilterableTrees'
 import createToast from '@/hooks/createToast'
-import { Tree, TreeUpdateRequest } from '@/api/backendApi'
+import { Tree, TreeMarkerResponse, TreeUpdateRequest } from '@/api/backendApi'
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useState } from 'react'
@@ -102,7 +102,7 @@ function LinkTreeToSensor() {
       />
       <WithFilterableTrees
         selectedTrees={treeId ? [treeId] : []}
-        onClick={(tree: Tree) => setTreeId(tree.id)}
+        onClick={(tree: TreeMarkerResponse | Tree) => setTreeId(tree.id)}
       />
       <SensorMarker sensor={sensor} />
     </>

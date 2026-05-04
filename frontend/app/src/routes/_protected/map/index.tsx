@@ -1,6 +1,6 @@
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router'
 import MapButtons from '@/components/map/MapButtons'
-import type { ClusterMarkerResponse, Tree, TreeCluster } from '@/api/backendApi'
+import type { ClusterMarkerResponse, Tree, TreeCluster, TreeMarkerResponse } from '@/api/backendApi'
 import { useQuery } from '@tanstack/react-query'
 import { treeQuery } from '@/api/queries'
 import { useCallback, useMemo, useRef } from 'react'
@@ -42,7 +42,7 @@ function MapView() {
   })
 
   const handleTreeClick = useCallback(
-    (tree: Tree) => {
+    (tree: TreeMarkerResponse | Tree) => {
       navigate({ to: `/trees/$treeId`, params: { treeId: tree.id.toString() } }).catch((error) =>
         console.error('Navigation failed:', error),
       )

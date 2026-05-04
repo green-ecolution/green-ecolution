@@ -1,4 +1,4 @@
-import type { Tree } from '@/api/backendApi'
+import type { Tree, TreeMarkerResponse } from '@/api/backendApi'
 import { memo, useCallback, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { treeQuery } from '@/api/queries'
@@ -20,7 +20,7 @@ import {
 import { MoveRight, X } from 'lucide-react'
 
 export interface WithFilterableTreesProps {
-  onClick?: (tree: Tree) => void
+  onClick?: (tree: TreeMarkerResponse | Tree) => void
   selectedTrees?: number[]
   hasHighlightedTree?: number
 }

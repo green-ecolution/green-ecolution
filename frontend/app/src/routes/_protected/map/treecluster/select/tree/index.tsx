@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
-import { Tree } from '@/api/backendApi'
+import { Tree, TreeMarkerResponse } from '@/api/backendApi'
 import { useCallback, useRef, useState } from 'react'
 import SelectedCard from '@/components/general/cards/SelectedCard'
 import WithFilterableTrees from '@/components/map/marker/WithFilterableTrees'
@@ -108,7 +108,7 @@ function SelectTrees() {
     setTreeIds((prev) => prev.filter((id) => id !== treeId))
   }
 
-  const handleTreeClick = (tree: Tree) => {
+  const handleTreeClick = (tree: TreeMarkerResponse | Tree) => {
     if (treeIds.includes(tree.id)) setTreeIds((prev) => prev.filter((id) => id !== tree.id))
     else setTreeIds((prev) => [...prev, tree.id])
   }
