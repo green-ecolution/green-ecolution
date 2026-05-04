@@ -11,6 +11,7 @@
 //! is returned by proximity searches.
 
 pub mod error;
+pub mod marker;
 pub mod planting_year;
 pub mod repository;
 pub mod snapshot;
@@ -34,6 +35,7 @@ use crate::{
 };
 
 pub use error::TreeError;
+pub use marker::TreeMarker;
 pub use planting_year::PlantingYear;
 pub use repository::{TreeReader, TreeWriter};
 #[doc(hidden)]
