@@ -1,7 +1,5 @@
-import type { Tree, TreeMarkerResponse } from '@/api/backendApi'
+import type { WateringStatus, TreeMarkerResponse } from '@/api/backendApi'
 import { memo, useCallback, useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { treeQuery } from '@/api/queries'
 import FilterProvider, { useFilter, Filters } from '@/context/FilterContext'
 import FilterButton from '@/components/general/buttons/FilterButton'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
@@ -20,13 +18,13 @@ import {
 import { MoveRight, X } from 'lucide-react'
 
 export interface WithFilterableTreesProps {
-  onClick?: (tree: TreeMarkerResponse | Tree) => void
+  onClick?: (tree: TreeMarkerResponse) => void
   selectedTrees?: number[]
   hasHighlightedTree?: number
 }
 
 interface AppliedFilters {
-  wateringStatuses?: string[]
+  wateringStatuses?: WateringStatus[]
   hasCluster?: boolean
   plantingYears?: number[]
 }
@@ -45,19 +43,15 @@ const FilterableTreesContent = memo(
       [appliedFilters.wateringStatuses, appliedFilters.hasCluster, appliedFilters.plantingYears],
     )
 
-    // TODO: wateringStatuses, hasCluster, plantingYears filter params are not yet supported in the new API
-    const { data: treesRes } = useQuery({
-      enabled: hasActiveFilter,
-      ...treeQuery({}),
-    })
-
     if (hasActiveFilter) {
       return (
         <WithFilterdTrees
           onClick={onClick}
           selectedTrees={selectedTrees}
           hasHighlightedTree={hasHighlightedTree}
-          filterdTrees={treesRes?.data ?? []}
+          hasCluster={appliedFilters.hasCluster}
+          plantingYears={appliedFilters.plantingYears}
+          wateringStatuses={appliedFilters.wateringStatuses}
         />
       )
     }
@@ -112,7 +106,7 @@ const FilterableTreesInner = memo(
 
     const handleSubmit = useCallback(() => {
       setAppliedFilters({
-        wateringStatuses: filters.statusTags.length > 0 ? filters.statusTags : undefined,
+        wateringStatuses: filters.statusTags.length > 0 ? (filters.statusTags as WateringStatus[]) : undefined,
         hasCluster: filters.hasCluster,
         plantingYears: filters.plantingYears.length > 0 ? filters.plantingYears : undefined,
       })

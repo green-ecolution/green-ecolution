@@ -1,8 +1,6 @@
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router'
 import MapButtons from '@/components/map/MapButtons'
 import type { ClusterMarkerResponse, Tree, TreeCluster, TreeMarkerResponse } from '@/api/backendApi'
-import { useQuery } from '@tanstack/react-query'
-import { treeQuery } from '@/api/queries'
 import { useCallback, useMemo, useRef } from 'react'
 import Dialog from '@/components/general/filter/Dialog'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
@@ -33,13 +31,6 @@ function MapView() {
       search.plantingYears !== undefined,
     [search.hasCluster, search.plantingYears],
   )
-
-  // TODO: The Rust backend list endpoint doesn't support filter params yet.
-  // Once filter support is added, pass hasCluster/plantingYears here.
-  const { data: treesRes } = useQuery({
-    enabled: hasActiveFilter,
-    ...treeQuery(),
-  })
 
   const handleTreeClick = useCallback(
     (tree: TreeMarkerResponse | Tree) => {
@@ -92,7 +83,8 @@ function MapView() {
           onClick={handleTreeClick}
           selectedTrees={search.tree ? [search.tree] : []}
           hasHighlightedTree={search.tree}
-          filterdTrees={treesRes?.data ?? []}
+          hasCluster={search.hasCluster}
+          plantingYears={search.plantingYears}
         />
       ) : (
         <WithTreesAndClusters
