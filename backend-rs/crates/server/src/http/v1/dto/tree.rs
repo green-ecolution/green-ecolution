@@ -96,6 +96,76 @@ where
     deserializer.deserialize_option(OptVecI32Visitor)
 }
 
+// serde_urlencoded (used by axum's Query extractor) does not support repeated keys
+// into Vec<T>. This deserializer accepts both a single scalar ("good") and a sequence.
+fn deserialize_optional_vec_watering_status<'de, D>(
+    deserializer: D,
+) -> Result<Option<Vec<super::WateringStatus>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use serde::de::{Error, IntoDeserializer, SeqAccess, Visitor};
+    use std::fmt;
+
+    use super::WateringStatus;
+
+    struct OptVecVisitor;
+
+    impl<'de> Visitor<'de> for OptVecVisitor {
+        type Value = Option<Vec<WateringStatus>>;
+
+        fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            f.write_str("a watering_status string, a sequence of them, or null")
+        }
+
+        fn visit_none<E: Error>(self) -> Result<Self::Value, E> {
+            Ok(None)
+        }
+
+        fn visit_some<D2: Deserializer<'de>>(self, d: D2) -> Result<Self::Value, D2::Error> {
+            d.deserialize_any(InnerVisitor).map(Some)
+        }
+
+        fn visit_str<E: Error>(self, v: &str) -> Result<Self::Value, E> {
+            let item = WateringStatus::deserialize(v.into_deserializer())?;
+            Ok(Some(vec![item]))
+        }
+
+        fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
+            let mut out = Vec::new();
+            while let Some(v) = seq.next_element::<WateringStatus>()? {
+                out.push(v);
+            }
+            Ok(Some(out))
+        }
+    }
+
+    struct InnerVisitor;
+
+    impl<'de> Visitor<'de> for InnerVisitor {
+        type Value = Vec<WateringStatus>;
+
+        fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            f.write_str("a watering_status string or a sequence of them")
+        }
+
+        fn visit_str<E: Error>(self, v: &str) -> Result<Self::Value, E> {
+            let item = WateringStatus::deserialize(v.into_deserializer())?;
+            Ok(vec![item])
+        }
+
+        fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
+            let mut out = Vec::new();
+            while let Some(v) = seq.next_element::<WateringStatus>()? {
+                out.push(v);
+            }
+            Ok(out)
+        }
+    }
+
+    deserializer.deserialize_option(OptVecVisitor)
+}
+
 /// An individual tree managed by the system.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct TreeResponse {
@@ -310,7 +380,7 @@ pub struct TreeMarkerQueryParams {
     #[serde(default, deserialize_with = "deserialize_optional_vec_i32")]
     pub planting_year: Option<Vec<i32>>,
     #[param(nullable)]
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_optional_vec_watering_status")]
     pub watering_status: Option<Vec<WateringStatus>>,
 }
 

@@ -350,3 +350,35 @@ async fn list_tree_markers_rejects_malformed_bbox() {
     let resp = app.get("/api/v1/trees/markers?bbox=garbage").await;
     assert_eq!(resp.status().as_u16(), 400);
 }
+
+#[tokio::test]
+async fn list_tree_markers_filters_by_watering_status() {
+    let app = spawn_app().await;
+
+    let body = serde_json::json!({
+        "species": "Eiche",
+        "number": "T-WS",
+        "planting_year": 2020,
+        "latitude": 54.79,
+        "longitude": 9.44,
+        "description": "x"
+    });
+    let resp = app.post_json("/api/v1/trees", &body).await;
+    assert_eq!(resp.status().as_u16(), 201);
+
+    // The seeded tree's status is `unknown` (no sensor). Filtering by `unknown`
+    // should return it; filtering by `good` should not.
+    let resp = app
+        .get("/api/v1/trees/markers?bbox=54.78,9.40,54.81,9.46&watering_status=unknown")
+        .await;
+    assert_eq!(resp.status().as_u16(), 200);
+    let json: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(json["data"].as_array().unwrap().len(), 1);
+
+    let resp = app
+        .get("/api/v1/trees/markers?bbox=54.78,9.40,54.81,9.46&watering_status=good")
+        .await;
+    assert_eq!(resp.status().as_u16(), 200);
+    let json: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(json["data"].as_array().unwrap().len(), 0);
+}
