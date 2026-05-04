@@ -15,12 +15,12 @@ use domain::{
 use super::{WateringStatus, sensor::SensorResponse};
 
 // serde_urlencoded (used by axum's Query extractor) does not support repeated keys
-// into Vec<T>. This deserializer accepts both a single scalar ("2020") and a sequence.
+// into Vec<T>. This deserializer accepts a single scalar ("2020") or null.
 fn deserialize_optional_vec_i32<'de, D>(deserializer: D) -> Result<Option<Vec<i32>>, D::Error>
 where
     D: Deserializer<'de>,
 {
-    use serde::de::{Error, SeqAccess, Visitor};
+    use serde::de::{Error, Visitor};
     use std::fmt;
 
     struct OptVecI32Visitor;
@@ -29,7 +29,7 @@ where
         type Value = Option<Vec<i32>>;
 
         fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            f.write_str("an integer, a string integer, a sequence of integers, or null")
+            f.write_str("an integer, a string integer, or null")
         }
 
         fn visit_none<E: Error>(self) -> Result<Self::Value, E> {
@@ -52,14 +52,6 @@ where
             let n = v.parse::<i32>().map_err(E::custom)?;
             Ok(Some(vec![n]))
         }
-
-        fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
-            let mut out = Vec::new();
-            while let Some(v) = seq.next_element::<i32>()? {
-                out.push(v);
-            }
-            Ok(Some(out))
-        }
     }
 
     struct InnerVisitor;
@@ -68,7 +60,7 @@ where
         type Value = Vec<i32>;
 
         fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            f.write_str("an integer, a string integer, or a sequence of integers")
+            f.write_str("an integer or a string integer")
         }
 
         fn visit_i64<E: Error>(self, v: i64) -> Result<Self::Value, E> {
@@ -83,28 +75,20 @@ where
             let n = v.parse::<i32>().map_err(E::custom)?;
             Ok(vec![n])
         }
-
-        fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
-            let mut out = Vec::new();
-            while let Some(v) = seq.next_element::<i32>()? {
-                out.push(v);
-            }
-            Ok(out)
-        }
     }
 
     deserializer.deserialize_option(OptVecI32Visitor)
 }
 
 // serde_urlencoded (used by axum's Query extractor) does not support repeated keys
-// into Vec<T>. This deserializer accepts both a single scalar ("good") and a sequence.
+// into Vec<T>. This deserializer accepts a single scalar ("good") or null.
 fn deserialize_optional_vec_watering_status<'de, D>(
     deserializer: D,
 ) -> Result<Option<Vec<super::WateringStatus>>, D::Error>
 where
     D: Deserializer<'de>,
 {
-    use serde::de::{Error, IntoDeserializer, SeqAccess, Visitor};
+    use serde::de::{Error, IntoDeserializer, Visitor};
     use std::fmt;
 
     use super::WateringStatus;
@@ -115,7 +99,7 @@ where
         type Value = Option<Vec<WateringStatus>>;
 
         fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            f.write_str("a watering_status string, a sequence of them, or null")
+            f.write_str("a watering_status string or null")
         }
 
         fn visit_none<E: Error>(self) -> Result<Self::Value, E> {
@@ -130,14 +114,6 @@ where
             let item = WateringStatus::deserialize(v.into_deserializer())?;
             Ok(Some(vec![item]))
         }
-
-        fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
-            let mut out = Vec::new();
-            while let Some(v) = seq.next_element::<WateringStatus>()? {
-                out.push(v);
-            }
-            Ok(Some(out))
-        }
     }
 
     struct InnerVisitor;
@@ -146,20 +122,12 @@ where
         type Value = Vec<WateringStatus>;
 
         fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            f.write_str("a watering_status string or a sequence of them")
+            f.write_str("a watering_status string")
         }
 
         fn visit_str<E: Error>(self, v: &str) -> Result<Self::Value, E> {
             let item = WateringStatus::deserialize(v.into_deserializer())?;
             Ok(vec![item])
-        }
-
-        fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
-            let mut out = Vec::new();
-            while let Some(v) = seq.next_element::<WateringStatus>()? {
-                out.push(v);
-            }
-            Ok(out)
         }
     }
 
@@ -377,9 +345,11 @@ pub struct TreeMarkerQueryParams {
     #[serde(default)]
     pub has_cluster: Option<bool>,
     #[param(nullable)]
+    // Single value only; repeated keys are not collected by serde_urlencoded.
     #[serde(default, deserialize_with = "deserialize_optional_vec_i32")]
     pub planting_year: Option<Vec<i32>>,
     #[param(nullable)]
+    // Single value only; repeated keys are not collected by serde_urlencoded.
     #[serde(default, deserialize_with = "deserialize_optional_vec_watering_status")]
     pub watering_status: Option<Vec<WateringStatus>>,
 }

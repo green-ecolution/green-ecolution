@@ -264,6 +264,18 @@ impl From<DomainWateringStatus> for WateringStatus {
     }
 }
 
+impl From<WateringStatus> for DomainWateringStatus {
+    fn from(value: WateringStatus) -> Self {
+        match value {
+            WateringStatus::Good => Self::Good,
+            WateringStatus::Moderate => Self::Moderate,
+            WateringStatus::Bad => Self::Bad,
+            WateringStatus::JustWatered => Self::JustWatered,
+            WateringStatus::Unknown => Self::Unknown,
+        }
+    }
+}
+
 impl From<DomainSoilCondition> for SoilCondition {
     fn from(value: DomainSoilCondition) -> Self {
         match value {

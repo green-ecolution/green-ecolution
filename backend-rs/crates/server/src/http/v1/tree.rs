@@ -248,20 +248,6 @@ pub async fn get_nearest_trees(
     todo!()
 }
 
-fn dto_status_to_domain(
-    s: crate::http::v1::dto::WateringStatus,
-) -> domain::shared::watering_status::WateringStatus {
-    use crate::http::v1::dto::WateringStatus as Dto;
-    use domain::shared::watering_status::WateringStatus as Dom;
-    match s {
-        Dto::Good => Dom::Good,
-        Dto::Moderate => Dom::Moderate,
-        Dto::Bad => Dom::Bad,
-        Dto::JustWatered => Dom::JustWatered,
-        Dto::Unknown => Dom::Unknown,
-    }
-}
-
 #[utoipa::path(get, path = "/trees/markers", tag = "Trees",
     operation_id = "listTreeMarkers",
     summary = "List tree markers in a bounding box",
@@ -284,7 +270,6 @@ pub async fn list_tree_markers(
 
     let planting_years = params
         .planting_year
-        .clone()
         .unwrap_or_default()
         .into_iter()
         .map(|y| PlantingYear::new(y as u32))
@@ -293,10 +278,9 @@ pub async fn list_tree_markers(
 
     let watering_statuses = params
         .watering_status
-        .clone()
         .unwrap_or_default()
         .into_iter()
-        .map(dto_status_to_domain)
+        .map(domain::shared::watering_status::WateringStatus::from)
         .collect();
 
     let query = TreeSearchQuery {
