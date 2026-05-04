@@ -5,8 +5,8 @@ use domain::cluster::snapshot::TreeClusterSnapshot;
 use domain::{
     Id, RepositoryError,
     cluster::{
-        SoilCondition, TreeCluster, TreeClusterDraft, TreeClusterReader, TreeClusterSearchQuery,
-        TreeClusterView, TreeClusterWriter,
+        ClusterMarker, SoilCondition, TreeCluster, TreeClusterDraft, TreeClusterReader,
+        TreeClusterSearchQuery, TreeClusterView, TreeClusterWriter,
     },
     shared::{
         coordinates::Coordinate,
@@ -245,6 +245,38 @@ impl TreeClusterReader for PgTreeClusterRepository {
             .collect();
 
         Ok(Page { items, total })
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn view_markers(&self) -> Result<Vec<ClusterMarker>, RepositoryError> {
+        let rows = sqlx::query!(
+            r#"SELECT tc.id, tc.name,
+                      tc.latitude AS "latitude!: f64",
+                      tc.longitude AS "longitude!: f64",
+                      tc.watering_status AS "watering_status: WateringStatus",
+                      COUNT(t.id) AS "tree_count!: i64"
+            FROM tree_clusters tc
+            LEFT JOIN trees t ON t.tree_cluster_id = tc.id
+            WHERE tc.archived = false
+              AND tc.latitude IS NOT NULL
+              AND tc.longitude IS NOT NULL
+            GROUP BY tc.id
+            ORDER BY tc.id"#
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|row| ClusterMarker {
+                id: row.id,
+                name: row.name,
+                latitude: row.latitude,
+                longitude: row.longitude,
+                watering_status: row.watering_status,
+                tree_count: u32::try_from(row.tree_count).unwrap_or(0),
+            })
+            .collect())
     }
 
     #[tracing::instrument(level = "trace", skip_all)]

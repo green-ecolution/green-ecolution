@@ -13,8 +13,8 @@ use domain::{
         watering_status::WateringStatus,
     },
     tree::{
-        PlantingYear, Tree, TreeDraft, TreeReader, TreeSearchQuery, TreeView, TreeViewWithDistance,
-        TreeWriter,
+        PlantingYear, Tree, TreeDraft, TreeMarker, TreeReader, TreeSearchQuery, TreeView,
+        TreeViewWithDistance, TreeWriter,
     },
 };
 
@@ -309,6 +309,63 @@ impl TreeReader for PgTreeRepository {
             .collect();
 
         Ok(Page { items, total })
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn view_markers(
+        &self,
+        query: TreeSearchQuery,
+    ) -> Result<Vec<TreeMarker>, RepositoryError> {
+        let watering_statuses: Vec<WateringStatus> = query.watering_statuses;
+        let planting_years: Vec<i32> = query
+            .planting_years
+            .iter()
+            .map(|py| py.year() as i32)
+            .collect();
+        let provider = query.provider.as_ref().map(|p| p.as_str().to_string());
+        let bbox = query.bbox;
+
+        let rows = sqlx::query!(
+            r#"SELECT id, latitude, longitude, number,
+                      watering_status AS "watering_status: WateringStatus",
+                      (sensor_id IS NOT NULL) AS "has_sensor!: bool"
+            FROM trees
+            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))
+              AND ($2::int[] = '{}' OR planting_year = ANY($2))
+              AND ($3::text IS NULL OR provider = $3)
+              AND ($4::bool IS NULL
+                   OR ($4 = true AND tree_cluster_id IS NOT NULL)
+                   OR ($4 = false AND tree_cluster_id IS NULL))
+              AND ($5::bool IS FALSE
+                   OR ST_Intersects(
+                       geometry,
+                       ST_MakeEnvelope($6, $7, $8, $9, 4326)
+                   ))
+            ORDER BY id"#,
+            &watering_statuses as &[WateringStatus],
+            &planting_years,
+            provider.as_deref(),
+            query.has_cluster,
+            bbox.is_some(),
+            bbox.map(|b| b.sw_lng()),
+            bbox.map(|b| b.sw_lat()),
+            bbox.map(|b| b.ne_lng()),
+            bbox.map(|b| b.ne_lat()),
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|row| TreeMarker {
+                id: row.id,
+                latitude: row.latitude,
+                longitude: row.longitude,
+                watering_status: row.watering_status,
+                tree_number: row.number,
+                has_sensor: row.has_sensor,
+            })
+            .collect())
     }
 
     #[tracing::instrument(level = "trace", skip_all)]

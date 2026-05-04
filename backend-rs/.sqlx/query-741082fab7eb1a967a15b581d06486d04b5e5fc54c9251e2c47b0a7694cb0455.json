@@ -1,0 +1,93 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, latitude, longitude, number,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      (sensor_id IS NOT NULL) AS \"has_sensor!: bool\"\n            FROM trees\n            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))\n              AND ($2::int[] = '{}' OR planting_year = ANY($2))\n              AND ($3::text IS NULL OR provider = $3)\n              AND ($4::bool IS NULL\n                   OR ($4 = true AND tree_cluster_id IS NOT NULL)\n                   OR ($4 = false AND tree_cluster_id IS NULL))\n              AND ($5::bool IS FALSE\n                   OR ST_Intersects(\n                       geometry,\n                       ST_MakeEnvelope($6, $7, $8, $9, 4326)\n                   ))\n            ORDER BY id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "latitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 2,
+        "name": "longitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 3,
+        "name": "number",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "watering_status: WateringStatus",
+        "type_info": {
+          "Custom": {
+            "name": "watering_status",
+            "kind": {
+              "Enum": [
+                "good",
+                "moderate",
+                "bad",
+                "unknown",
+                "just watered"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "has_sensor!: bool",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "watering_status[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "watering_status",
+                  "kind": {
+                    "Enum": [
+                      "good",
+                      "moderate",
+                      "bad",
+                      "unknown",
+                      "just watered"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "Int4Array",
+        "Text",
+        "Bool",
+        "Bool",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "741082fab7eb1a967a15b581d06486d04b5e5fc54c9251e2c47b0a7694cb0455"
+}
