@@ -14,8 +14,9 @@ use crate::{
             dto::{
                 ListResponse,
                 tree::{
-                    NearestTreeListResponse, NearestTreeParams, TreeCreateRequest, TreeResponse,
-                    TreeUpdateRequest,
+                    NearestTreeListResponse, NearestTreeParams, TreeCreateRequest,
+                    TreeMarkerListResponse, TreeMarkerQueryParams, TreeMarkerResponse,
+                    TreeResponse, TreeUpdateRequest,
                 },
             },
             pagination::PaginationParams,
@@ -27,13 +28,14 @@ use domain::{
     Id,
     sensor::SensorId,
     shared::{error::ValidationError, pagination::Pagination},
-    tree::{TreeDraft, TreeSearchQuery, TreeView},
+    tree::{PlantingYear, TreeDraft, TreeMarker, TreeSearchQuery, TreeView},
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .routes(routes!(list_trees, create_tree))
         .routes(routes!(list_planting_years))
+        .routes(routes!(list_tree_markers))
         .routes(routes!(get_nearest_trees))
         .routes(routes!(get_tree, update_tree, delete_tree))
 }
@@ -244,4 +246,68 @@ pub async fn get_nearest_trees(
     Query(_params): Query<NearestTreeParams>,
 ) -> Result<Json<NearestTreeListResponse>, ServiceError> {
     todo!()
+}
+
+fn dto_status_to_domain(
+    s: crate::http::v1::dto::WateringStatus,
+) -> domain::shared::watering_status::WateringStatus {
+    use crate::http::v1::dto::WateringStatus as Dto;
+    use domain::shared::watering_status::WateringStatus as Dom;
+    match s {
+        Dto::Good => Dom::Good,
+        Dto::Moderate => Dom::Moderate,
+        Dto::Bad => Dom::Bad,
+        Dto::JustWatered => Dom::JustWatered,
+        Dto::Unknown => Dom::Unknown,
+    }
+}
+
+#[utoipa::path(get, path = "/trees/markers", tag = "Trees",
+    operation_id = "listTreeMarkers",
+    summary = "List tree markers in a bounding box",
+    description = "Returns minimal tree markers (id, lat, lng, watering_status, number, has_sensor) \
+                   intersecting the given bounding box. Optional filter parameters narrow the result. \
+                   Not paginated — the bounding box bounds the result.",
+    params(TreeMarkerQueryParams),
+    responses(
+        (status = 200, description = "Marker list", body = TreeMarkerListResponse),
+        (status = 400, description = "Invalid bbox or filter parameter"),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn list_tree_markers(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<TreeMarkerQueryParams>,
+) -> Result<Json<TreeMarkerListResponse>, ServiceError> {
+    let bbox = params.parse_bbox().map_err(ServiceError::InvalidInput)?;
+
+    let planting_years = params
+        .planting_year
+        .clone()
+        .unwrap_or_default()
+        .into_iter()
+        .map(|y| PlantingYear::new(y as u32))
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+
+    let watering_statuses = params
+        .watering_status
+        .clone()
+        .unwrap_or_default()
+        .into_iter()
+        .map(dto_status_to_domain)
+        .collect();
+
+    let query = TreeSearchQuery {
+        watering_statuses,
+        has_cluster: params.has_cluster,
+        planting_years,
+        bbox: Some(bbox),
+        ..Default::default()
+    };
+
+    let markers: Vec<TreeMarker> = state.tree_service.view_markers(query).await?;
+    let data = markers.iter().map(TreeMarkerResponse::from).collect();
+    Ok(Json(TreeMarkerListResponse { data }))
 }

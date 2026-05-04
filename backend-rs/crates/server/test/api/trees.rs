@@ -259,3 +259,94 @@ async fn list_planting_years_returns_distinct_years() {
     let years: Vec<i32> = response.json().await.unwrap();
     assert_eq!(years, vec![2018, 2020, 2022]);
 }
+
+#[tokio::test]
+async fn list_tree_markers_requires_bbox() {
+    let app = spawn_app().await;
+    let response = app.get("/api/v1/trees/markers").await;
+    assert_eq!(response.status().as_u16(), 400);
+}
+
+#[tokio::test]
+async fn list_tree_markers_returns_empty_for_far_bbox() {
+    let app = spawn_app().await;
+
+    let body = serde_json::json!({
+        "species": "Eiche",
+        "number": "T-001",
+        "planting_year": 2020,
+        "latitude": 54.79,
+        "longitude": 9.44,
+        "description": "x"
+    });
+    let resp = app.post_json("/api/v1/trees", &body).await;
+    assert_eq!(resp.status().as_u16(), 201);
+
+    let resp = app
+        .get("/api/v1/trees/markers?bbox=52.4,13.3,52.6,13.5")
+        .await;
+    assert_eq!(resp.status().as_u16(), 200);
+    let json: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(json["data"].as_array().unwrap().len(), 0);
+}
+
+#[tokio::test]
+async fn list_tree_markers_returns_trees_inside_bbox() {
+    let app = spawn_app().await;
+
+    let body = serde_json::json!({
+        "species": "Eiche",
+        "number": "T-002",
+        "planting_year": 2020,
+        "latitude": 54.79,
+        "longitude": 9.44,
+        "description": "x"
+    });
+    let resp = app.post_json("/api/v1/trees", &body).await;
+    assert_eq!(resp.status().as_u16(), 201);
+
+    let resp = app
+        .get("/api/v1/trees/markers?bbox=54.78,9.40,54.81,9.46")
+        .await;
+    assert_eq!(resp.status().as_u16(), 200);
+    let json: serde_json::Value = resp.json().await.unwrap();
+    let data = json["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1);
+    assert_eq!(data[0]["number"], "T-002");
+    assert_eq!(data[0]["has_sensor"], false);
+    assert!(data[0]["latitude"].as_f64().unwrap() > 54.78);
+}
+
+#[tokio::test]
+async fn list_tree_markers_combines_bbox_and_planting_year() {
+    let app = spawn_app().await;
+
+    let make = |number: &str, year: i32| {
+        serde_json::json!({
+            "species": "Eiche",
+            "number": number,
+            "planting_year": year,
+            "latitude": 54.79,
+            "longitude": 9.44,
+            "description": "x"
+        })
+    };
+
+    app.post_json("/api/v1/trees", &make("T-A", 2020)).await;
+    app.post_json("/api/v1/trees", &make("T-B", 2021)).await;
+
+    let resp = app
+        .get("/api/v1/trees/markers?bbox=54.78,9.40,54.81,9.46&planting_year=2020")
+        .await;
+    let json: serde_json::Value = resp.json().await.unwrap();
+    let data = json["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1);
+    assert_eq!(data[0]["number"], "T-A");
+}
+
+#[tokio::test]
+async fn list_tree_markers_rejects_malformed_bbox() {
+    let app = spawn_app().await;
+    let resp = app.get("/api/v1/trees/markers?bbox=garbage").await;
+    assert_eq!(resp.status().as_u16(), 400);
+}

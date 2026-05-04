@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use domain::{
     Id,
@@ -13,6 +13,88 @@ use domain::{
 };
 
 use super::{WateringStatus, sensor::SensorResponse};
+
+// serde_urlencoded (used by axum's Query extractor) does not support repeated keys
+// into Vec<T>. This deserializer accepts both a single scalar ("2020") and a sequence.
+fn deserialize_optional_vec_i32<'de, D>(deserializer: D) -> Result<Option<Vec<i32>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use serde::de::{Error, SeqAccess, Visitor};
+    use std::fmt;
+
+    struct OptVecI32Visitor;
+
+    impl<'de> Visitor<'de> for OptVecI32Visitor {
+        type Value = Option<Vec<i32>>;
+
+        fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            f.write_str("an integer, a string integer, a sequence of integers, or null")
+        }
+
+        fn visit_none<E: Error>(self) -> Result<Self::Value, E> {
+            Ok(None)
+        }
+
+        fn visit_some<D2: Deserializer<'de>>(self, d: D2) -> Result<Self::Value, D2::Error> {
+            d.deserialize_any(InnerVisitor).map(Some)
+        }
+
+        fn visit_i64<E: Error>(self, v: i64) -> Result<Self::Value, E> {
+            Ok(Some(vec![v as i32]))
+        }
+
+        fn visit_u64<E: Error>(self, v: u64) -> Result<Self::Value, E> {
+            Ok(Some(vec![v as i32]))
+        }
+
+        fn visit_str<E: Error>(self, v: &str) -> Result<Self::Value, E> {
+            let n = v.parse::<i32>().map_err(E::custom)?;
+            Ok(Some(vec![n]))
+        }
+
+        fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
+            let mut out = Vec::new();
+            while let Some(v) = seq.next_element::<i32>()? {
+                out.push(v);
+            }
+            Ok(Some(out))
+        }
+    }
+
+    struct InnerVisitor;
+
+    impl<'de> Visitor<'de> for InnerVisitor {
+        type Value = Vec<i32>;
+
+        fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            f.write_str("an integer, a string integer, or a sequence of integers")
+        }
+
+        fn visit_i64<E: Error>(self, v: i64) -> Result<Self::Value, E> {
+            Ok(vec![v as i32])
+        }
+
+        fn visit_u64<E: Error>(self, v: u64) -> Result<Self::Value, E> {
+            Ok(vec![v as i32])
+        }
+
+        fn visit_str<E: Error>(self, v: &str) -> Result<Self::Value, E> {
+            let n = v.parse::<i32>().map_err(E::custom)?;
+            Ok(vec![n])
+        }
+
+        fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
+            let mut out = Vec::new();
+            while let Some(v) = seq.next_element::<i32>()? {
+                out.push(v);
+            }
+            Ok(out)
+        }
+    }
+
+    deserializer.deserialize_option(OptVecI32Visitor)
+}
 
 /// An individual tree managed by the system.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -225,7 +307,7 @@ pub struct TreeMarkerQueryParams {
     #[serde(default)]
     pub has_cluster: Option<bool>,
     #[param(nullable)]
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_optional_vec_i32")]
     pub planting_year: Option<Vec<i32>>,
     #[param(nullable)]
     #[serde(default)]
