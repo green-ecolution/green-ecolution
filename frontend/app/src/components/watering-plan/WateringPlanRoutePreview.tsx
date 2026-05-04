@@ -3,7 +3,13 @@ import { Suspense } from 'react'
 import { Loading } from '@green-ecolution/ui'
 import ShowRoutePreview from '../map/marker/ShowRoutePreview'
 import { WithTreesAndClusters } from '../map/marker/WithAllClusterAndTrees'
-import type { ClusterMarkerResponse, Tree, TreeCluster, TreeMarkerResponse, WateringPlan } from '@/api/backendApi'
+import type {
+  ClusterMarkerResponse,
+  Tree,
+  TreeCluster,
+  TreeMarkerResponse,
+  WateringPlan,
+} from '@/api/backendApi'
 import { useNavigate } from '@tanstack/react-router'
 import Map from '../map/Map'
 

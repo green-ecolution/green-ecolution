@@ -36,7 +36,7 @@ let fakeMapInstance: ReturnType<typeof fakeMap>
 
 beforeEach(() => {
   vi.useFakeTimers()
-  fakeMapInstance = fakeMap({ south: 54.78, west: 9.40, north: 54.81, east: 9.46 })
+  fakeMapInstance = fakeMap({ south: 54.78, west: 9.4, north: 54.81, east: 9.46 })
 })
 
 afterEach(() => {
@@ -91,7 +91,7 @@ describe('useViewportBBox', () => {
     const { result } = renderHook(() => useViewportBBox())
     const before = result.current
     act(() => {
-      fakeMapInstance.setBounds({ south: 55.0, west: 9.40, north: 55.1, east: 9.46 })
+      fakeMapInstance.setBounds({ south: 55.0, west: 9.4, north: 55.1, east: 9.46 })
       fakeMapInstance.fire('moveend')
       vi.advanceTimersByTime(250)
     })

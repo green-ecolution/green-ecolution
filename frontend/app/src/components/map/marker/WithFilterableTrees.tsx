@@ -106,7 +106,8 @@ const FilterableTreesInner = memo(
 
     const handleSubmit = useCallback(() => {
       setAppliedFilters({
-        wateringStatuses: filters.statusTags.length > 0 ? (filters.statusTags as WateringStatus[]) : undefined,
+        wateringStatuses:
+          filters.statusTags.length > 0 ? (filters.statusTags as WateringStatus[]) : undefined,
         hasCluster: filters.hasCluster,
         plantingYears: filters.plantingYears.length > 0 ? filters.plantingYears : undefined,
       })

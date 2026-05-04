@@ -26,9 +26,7 @@ function MapView() {
   const dialogRef = useRef<HTMLDivElement>(null)
 
   const hasActiveFilter = useMemo(
-    () =>
-      search.hasCluster !== undefined ||
-      search.plantingYears !== undefined,
+    () => search.hasCluster !== undefined || search.plantingYears !== undefined,
     [search.hasCluster, search.plantingYears],
   )
 
