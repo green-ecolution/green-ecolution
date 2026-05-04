@@ -2,7 +2,9 @@ use serde::{Deserialize, Serialize};
 
 use domain::{
     Id,
-    cluster::{ClusterAddress, ClusterName, TreeCluster, TreeClusterDraft, TreeClusterView},
+    cluster::{
+        ClusterAddress, ClusterMarker, ClusterName, TreeCluster, TreeClusterDraft, TreeClusterView,
+    },
     region::Region,
     shared::{
         error::ValidationError,
@@ -237,4 +239,37 @@ impl TryFrom<TreeClusterCreateRequest> for TreeClusterDraft {
             ),
         })
     }
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct ClusterMarkerResponse {
+    #[schema(example = 7)]
+    pub id: i32,
+    #[schema(example = "Stadtpark")]
+    pub name: String,
+    #[schema(example = 54.7937, minimum = -90.0, maximum = 90.0)]
+    pub latitude: f64,
+    #[schema(example = 9.4469, minimum = -180.0, maximum = 180.0)]
+    pub longitude: f64,
+    pub watering_status: super::WateringStatus,
+    #[schema(example = 12, minimum = 0)]
+    pub tree_count: u32,
+}
+
+impl From<&ClusterMarker> for ClusterMarkerResponse {
+    fn from(m: &ClusterMarker) -> Self {
+        Self {
+            id: m.id,
+            name: m.name.clone(),
+            latitude: m.latitude,
+            longitude: m.longitude,
+            watering_status: m.watering_status.into(),
+            tree_count: m.tree_count,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct ClusterMarkerListResponse {
+    pub data: Vec<ClusterMarkerResponse>,
 }

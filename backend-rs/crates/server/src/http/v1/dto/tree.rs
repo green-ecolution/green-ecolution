@@ -6,9 +6,10 @@ use domain::{
     shared::{
         coordinates::Coordinate,
         error::ValidationError,
+        geo::BoundingBox,
         provenance::{Provenance, ProviderId},
     },
-    tree::{PlantingYear, Species, TreeDraft, TreeNumber, TreeView},
+    tree::{PlantingYear, Species, TreeDraft, TreeMarker, TreeNumber, TreeView},
 };
 
 use super::{WateringStatus, sensor::SensorResponse};
@@ -180,4 +181,82 @@ pub struct TreeUpdateRequest {
     #[schema(value_type = Object, nullable)]
     #[serde(default)]
     pub additional_information: Option<serde_json::Value>,
+}
+
+/// Lightweight tree marker for the map.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct TreeMarkerResponse {
+    #[schema(example = 1)]
+    pub id: i32,
+    #[schema(example = 54.7937, minimum = -90.0, maximum = 90.0)]
+    pub latitude: f64,
+    #[schema(example = 9.4469, minimum = -180.0, maximum = 180.0)]
+    pub longitude: f64,
+    pub watering_status: WateringStatus,
+    #[schema(example = "T-2024-0042")]
+    pub number: String,
+    pub has_sensor: bool,
+}
+
+impl From<&TreeMarker> for TreeMarkerResponse {
+    fn from(m: &TreeMarker) -> Self {
+        Self {
+            id: m.id,
+            latitude: m.latitude,
+            longitude: m.longitude,
+            watering_status: m.watering_status.into(),
+            number: m.tree_number.clone(),
+            has_sensor: m.has_sensor,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct TreeMarkerListResponse {
+    pub data: Vec<TreeMarkerResponse>,
+}
+
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+pub struct TreeMarkerQueryParams {
+    /// Format: `swLat,swLng,neLat,neLng`. Required.
+    #[param(example = "54.78,9.40,54.81,9.46")]
+    pub bbox: String,
+    #[param(nullable)]
+    #[serde(default)]
+    pub has_cluster: Option<bool>,
+    #[param(nullable)]
+    #[serde(default)]
+    pub planting_year: Option<Vec<i32>>,
+    #[param(nullable)]
+    #[serde(default)]
+    pub watering_status: Option<Vec<WateringStatus>>,
+}
+
+impl TreeMarkerQueryParams {
+    pub fn parse_bbox(&self) -> Result<BoundingBox, String> {
+        let parts: Vec<&str> = self.bbox.split(',').collect();
+        if parts.len() != 4 {
+            return Err(format!(
+                "bbox must be 'swLat,swLng,neLat,neLng' (got {} parts)",
+                parts.len()
+            ));
+        }
+        let sw_lat: f64 = parts[0]
+            .trim()
+            .parse()
+            .map_err(|e| format!("sw_lat: {e}"))?;
+        let sw_lng: f64 = parts[1]
+            .trim()
+            .parse()
+            .map_err(|e| format!("sw_lng: {e}"))?;
+        let ne_lat: f64 = parts[2]
+            .trim()
+            .parse()
+            .map_err(|e| format!("ne_lat: {e}"))?;
+        let ne_lng: f64 = parts[3]
+            .trim()
+            .parse()
+            .map_err(|e| format!("ne_lng: {e}"))?;
+        BoundingBox::try_new(sw_lat, sw_lng, ne_lat, ne_lng).map_err(|e| e.to_string())
+    }
 }
