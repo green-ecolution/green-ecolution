@@ -14,8 +14,8 @@ use crate::{
             dto::{
                 ListResponse,
                 cluster::{
-                    TreeClusterCreateRequest, TreeClusterInListResponse, TreeClusterResponse,
-                    TreeClusterUpdateRequest,
+                    ClusterMarkerListResponse, ClusterMarkerResponse, TreeClusterCreateRequest,
+                    TreeClusterInListResponse, TreeClusterResponse, TreeClusterUpdateRequest,
                 },
                 tree::TreeResponse,
             },
@@ -42,6 +42,7 @@ use domain::{
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .routes(routes!(list_clusters, create_cluster))
+        .routes(routes!(list_cluster_markers))
         .routes(routes!(get_cluster, update_cluster, delete_cluster))
 }
 
@@ -247,4 +248,26 @@ pub async fn delete_cluster(
 ) -> Result<StatusCode, ServiceError> {
     state.cluster_service.delete(Id::from(id)).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    get,
+    path = "/clusters/markers",
+    tag = "Tree Clusters",
+    operation_id = "listClusterMarkers",
+    summary = "List cluster markers",
+    description = "Returns lightweight markers (id, name, lat, lng, status, tree_count) \
+                   for all non-archived clusters with a centroid. Not paginated.",
+    responses(
+        (status = 200, description = "Marker list", body = ClusterMarkerListResponse),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn list_cluster_markers(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<ClusterMarkerListResponse>, ServiceError> {
+    let markers = state.cluster_service.view_markers().await?;
+    let data = markers.iter().map(ClusterMarkerResponse::from).collect();
+    Ok(Json(ClusterMarkerListResponse { data }))
 }

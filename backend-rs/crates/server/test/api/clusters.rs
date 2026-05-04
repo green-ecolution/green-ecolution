@@ -743,6 +743,69 @@ async fn attaching_sensor_to_tree_recalculates_cluster_status() {
 }
 
 #[tokio::test]
+async fn list_cluster_markers_returns_empty_when_none_exist() {
+    let app = spawn_app().await;
+    let resp = app.get("/api/v1/clusters/markers").await;
+    assert_eq!(resp.status().as_u16(), 200);
+    let json: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(json["data"].as_array().unwrap().len(), 0);
+}
+
+#[tokio::test]
+async fn list_cluster_markers_excludes_clusters_without_centroid() {
+    let app = spawn_app().await;
+
+    let cluster_body = serde_json::json!({
+        "name": "Empty Park",
+        "address": "Nowhere 1",
+        "description": "Test",
+        "soil_condition": "sandig",
+        "tree_ids": [],
+    });
+    let resp = app.post_json("/api/v1/clusters", &cluster_body).await;
+    assert_eq!(resp.status().as_u16(), 201);
+
+    let resp = app.get("/api/v1/clusters/markers").await;
+    let json: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(json["data"].as_array().unwrap().len(), 0);
+}
+
+#[tokio::test]
+async fn list_cluster_markers_includes_cluster_with_trees() {
+    let app = spawn_app().await;
+
+    let cluster_body = serde_json::json!({
+        "name": "Stadtpark",
+        "address": "Parkweg 1",
+        "description": "Test",
+        "soil_condition": "sandig",
+        "tree_ids": [],
+    });
+    let cluster_resp = app.post_json("/api/v1/clusters", &cluster_body).await;
+    let cluster: serde_json::Value = cluster_resp.json().await.unwrap();
+    let cluster_id = cluster["id"].as_i64().unwrap();
+
+    let tree_body = serde_json::json!({
+        "species": "Eiche",
+        "number": "T-CL-001",
+        "planting_year": 2020,
+        "latitude": 54.79,
+        "longitude": 9.44,
+        "description": "x",
+        "tree_cluster_id": cluster_id
+    });
+    let resp = app.post_json("/api/v1/trees", &tree_body).await;
+    assert_eq!(resp.status().as_u16(), 201);
+
+    let resp = app.get("/api/v1/clusters/markers").await;
+    let json: serde_json::Value = resp.json().await.unwrap();
+    let data = json["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1);
+    assert_eq!(data[0]["name"], "Stadtpark");
+    assert_eq!(data[0]["tree_count"], 1);
+}
+
+#[tokio::test]
 async fn tree_position_update_recalculates_cluster_center() {
     let app = spawn_app().await;
 
