@@ -2,8 +2,8 @@
 //! aggregate.
 //!
 //! Provides: `ValidationError`, `NonEmptyString`, `Email`, `Coordinate`,
-//! `Distance`, `WaterCapacity`, `Provenance`, `Pagination`, `WateringStatus`,
-//! and the helper types in `string_value`.
+//! `BoundingBox`, `Distance`, `WaterCapacity`, `Provenance`, `Pagination`,
+//! `WateringStatus`, and the helper types in `string_value`.
 
 pub mod coordinates;
 pub mod distance;

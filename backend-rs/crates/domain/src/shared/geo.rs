@@ -60,13 +60,29 @@ impl BoundingBox {
                 reason: format!("sw_lng ({sw_lng}) must be < ne_lng ({ne_lng})"),
             });
         }
-        Ok(Self { sw_lat, sw_lng, ne_lat, ne_lng })
+        Ok(Self {
+            sw_lat,
+            sw_lng,
+            ne_lat,
+            ne_lng,
+        })
     }
 
-    pub fn sw_lat(&self) -> f64 { self.sw_lat }
-    pub fn sw_lng(&self) -> f64 { self.sw_lng }
-    pub fn ne_lat(&self) -> f64 { self.ne_lat }
-    pub fn ne_lng(&self) -> f64 { self.ne_lng }
+    pub fn sw_lat(&self) -> f64 {
+        self.sw_lat
+    }
+
+    pub fn sw_lng(&self) -> f64 {
+        self.sw_lng
+    }
+
+    pub fn ne_lat(&self) -> f64 {
+        self.ne_lat
+    }
+
+    pub fn ne_lng(&self) -> f64 {
+        self.ne_lng
+    }
 }
 
 #[cfg(test)]
