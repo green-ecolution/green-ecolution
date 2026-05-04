@@ -65,6 +65,7 @@ export interface ListUsersByRoleRequest {
 
 export interface LoginUserRequest {
     redirectUrl?: string | null;
+    codeChallenge?: string | null;
 }
 
 export interface LogoutUserRequest {
@@ -268,6 +269,10 @@ export class UsersApi extends runtime.BaseAPI {
 
         if (requestParameters['redirectUrl'] != null) {
             queryParameters['redirect_url'] = requestParameters['redirectUrl'];
+        }
+
+        if (requestParameters['codeChallenge'] != null) {
+            queryParameters['code_challenge'] = requestParameters['codeChallenge'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};

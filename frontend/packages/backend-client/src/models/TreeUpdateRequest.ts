@@ -20,61 +20,61 @@ import { mapValues } from '../runtime';
  */
 export interface TreeUpdateRequest {
     /**
-     * Provider-specific metadata as arbitrary JSON.
+     * 
      * @type {object}
      * @memberof TreeUpdateRequest
      */
     additionalInformation?: object | null;
     /**
-     * Additional notes or description.
+     * 
      * @type {string}
      * @memberof TreeUpdateRequest
      */
     description: string;
     /**
-     * Geographic latitude (WGS 84).
+     * 
      * @type {number}
      * @memberof TreeUpdateRequest
      */
     latitude: number;
     /**
-     * Geographic longitude (WGS 84).
+     * 
      * @type {number}
      * @memberof TreeUpdateRequest
      */
     longitude: number;
     /**
-     * Internal tree identification number.
+     * 
      * @type {string}
      * @memberof TreeUpdateRequest
      */
     number: string;
     /**
-     * Year the tree was planted.
+     * 
      * @type {number}
      * @memberof TreeUpdateRequest
      */
     plantingYear: number;
     /**
-     * Name of the data provider.
+     * 
      * @type {string}
      * @memberof TreeUpdateRequest
      */
     provider?: string | null;
     /**
-     * Sensor ID to link to this tree.
+     * 
      * @type {string}
      * @memberof TreeUpdateRequest
      */
     sensorId?: string | null;
     /**
-     * Tree species name.
+     * 
      * @type {string}
      * @memberof TreeUpdateRequest
      */
     species: string;
     /**
-     * Cluster ID to assign this tree to.
+     * 
      * @type {number}
      * @memberof TreeUpdateRequest
      */

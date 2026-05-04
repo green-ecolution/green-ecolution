@@ -35,91 +35,91 @@ import {
  */
 export interface ListResponseTreeResponseDataInner {
     /**
-     * Provider-specific metadata as arbitrary JSON.
+     * 
      * @type {object}
      * @memberof ListResponseTreeResponseDataInner
      */
     additionalInformation?: object | null;
     /**
-     * Timestamp when the tree was registered (RFC 3339).
+     * 
      * @type {string}
      * @memberof ListResponseTreeResponseDataInner
      */
     createdAt: string;
     /**
-     * Additional notes or description.
+     * 
      * @type {string}
      * @memberof ListResponseTreeResponseDataInner
      */
     description: string;
     /**
-     * Unique tree identifier.
+     * 
      * @type {number}
      * @memberof ListResponseTreeResponseDataInner
      */
     id: number;
     /**
-     * Timestamp of the last watering event (RFC 3339).
+     * 
      * @type {string}
      * @memberof ListResponseTreeResponseDataInner
      */
     lastWatered?: string | null;
     /**
-     * Geographic latitude (WGS 84).
+     * 
      * @type {number}
      * @memberof ListResponseTreeResponseDataInner
      */
     latitude: number;
     /**
-     * Geographic longitude (WGS 84).
+     * 
      * @type {number}
      * @memberof ListResponseTreeResponseDataInner
      */
     longitude: number;
     /**
-     * Internal tree identification number.
+     * 
      * @type {string}
      * @memberof ListResponseTreeResponseDataInner
      */
     number: string;
     /**
-     * Year the tree was planted.
+     * 
      * @type {number}
      * @memberof ListResponseTreeResponseDataInner
      */
     plantingYear: number;
     /**
-     * Name of the data provider that created this tree.
+     * 
      * @type {string}
      * @memberof ListResponseTreeResponseDataInner
      */
     provider?: string | null;
     /**
-     * Associated sensor, if linked.
+     * 
      * @type {SensorResponse}
      * @memberof ListResponseTreeResponseDataInner
      */
     sensor?: SensorResponse | null;
     /**
-     * Tree species name.
+     * 
      * @type {string}
      * @memberof ListResponseTreeResponseDataInner
      */
     species: string;
     /**
-     * ID of the cluster this tree belongs to, if assigned.
+     * 
      * @type {number}
      * @memberof ListResponseTreeResponseDataInner
      */
     treeClusterId?: number | null;
     /**
-     * Timestamp of the last update (RFC 3339).
+     * 
      * @type {string}
      * @memberof ListResponseTreeResponseDataInner
      */
     updatedAt: string;
     /**
-     * Current watering status based on sensor data.
+     * 
      * @type {WateringStatus}
      * @memberof ListResponseTreeResponseDataInner
      */

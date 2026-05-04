@@ -20,61 +20,61 @@ import { mapValues } from '../runtime';
  */
 export interface TreeCreateRequest {
     /**
-     * Provider-specific metadata as arbitrary JSON.
+     * 
      * @type {object}
      * @memberof TreeCreateRequest
      */
     additionalInformation?: object | null;
     /**
-     * Additional notes or description.
+     * 
      * @type {string}
      * @memberof TreeCreateRequest
      */
     description: string;
     /**
-     * Geographic latitude (WGS 84).
+     * 
      * @type {number}
      * @memberof TreeCreateRequest
      */
     latitude: number;
     /**
-     * Geographic longitude (WGS 84).
+     * 
      * @type {number}
      * @memberof TreeCreateRequest
      */
     longitude: number;
     /**
-     * Internal tree identification number.
+     * 
      * @type {string}
      * @memberof TreeCreateRequest
      */
     number: string;
     /**
-     * Year the tree was planted.
+     * 
      * @type {number}
      * @memberof TreeCreateRequest
      */
     plantingYear: number;
     /**
-     * Name of the data provider creating this tree.
+     * 
      * @type {string}
      * @memberof TreeCreateRequest
      */
     provider?: string | null;
     /**
-     * Sensor ID to link to this tree.
+     * 
      * @type {string}
      * @memberof TreeCreateRequest
      */
     sensorId?: string | null;
     /**
-     * Tree species name.
+     * 
      * @type {string}
      * @memberof TreeCreateRequest
      */
     species: string;
     /**
-     * Cluster ID to assign this tree to.
+     * 
      * @type {number}
      * @memberof TreeCreateRequest
      */

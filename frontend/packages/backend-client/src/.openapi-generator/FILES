@@ -13,6 +13,8 @@ apis/index.ts
 index.ts
 models/AppInfoResponse.ts
 models/ClientTokenResponse.ts
+models/ClusterMarkerListResponse.ts
+models/ClusterMarkerResponse.ts
 models/DataStatisticsResponse.ts
 models/DrivingLicense.ts
 models/EvaluationResponse.ts
@@ -58,6 +60,8 @@ models/TreeClusterInListResponse.ts
 models/TreeClusterResponse.ts
 models/TreeClusterUpdateRequest.ts
 models/TreeCreateRequest.ts
+models/TreeMarkerListResponse.ts
+models/TreeMarkerResponse.ts
 models/TreeResponse.ts
 models/TreeUpdateRequest.ts
 models/TreeWithDistanceResponse.ts

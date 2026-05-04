@@ -2,6 +2,8 @@
 /* eslint-disable */
 export * from './AppInfoResponse';
 export * from './ClientTokenResponse';
+export * from './ClusterMarkerListResponse';
+export * from './ClusterMarkerResponse';
 export * from './DataStatisticsResponse';
 export * from './DrivingLicense';
 export * from './EvaluationResponse';
@@ -47,6 +49,8 @@ export * from './TreeClusterInListResponse';
 export * from './TreeClusterResponse';
 export * from './TreeClusterUpdateRequest';
 export * from './TreeCreateRequest';
+export * from './TreeMarkerListResponse';
+export * from './TreeMarkerResponse';
 export * from './TreeResponse';
 export * from './TreeUpdateRequest';
 export * from './TreeWithDistanceResponse';

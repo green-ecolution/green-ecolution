@@ -42,103 +42,103 @@ import {
  */
 export interface ListResponseTreeClusterInListResponseDataInner {
     /**
-     * Provider-specific metadata as a free-form JSON object.
+     * 
      * @type {object}
      * @memberof ListResponseTreeClusterInListResponseDataInner
      */
     additionalInformation?: object | null;
     /**
-     * Street address or location description.
+     * 
      * @type {string}
      * @memberof ListResponseTreeClusterInListResponseDataInner
      */
     address: string;
     /**
-     * Whether the cluster has been archived and is no longer actively managed.
+     * 
      * @type {boolean}
      * @memberof ListResponseTreeClusterInListResponseDataInner
      */
     archived: boolean;
     /**
-     * Timestamp when the cluster was created (RFC 3339).
+     * 
      * @type {string}
      * @memberof ListResponseTreeClusterInListResponseDataInner
      */
     createdAt: string;
     /**
-     * Longer description of the cluster and its trees.
+     * 
      * @type {string}
      * @memberof ListResponseTreeClusterInListResponseDataInner
      */
     description: string;
     /**
-     * Unique identifier of the tree cluster.
+     * 
      * @type {number}
      * @memberof ListResponseTreeClusterInListResponseDataInner
      */
     id: number;
     /**
-     * Timestamp of the last watering event (RFC 3339), if available.
+     * 
      * @type {string}
      * @memberof ListResponseTreeClusterInListResponseDataInner
      */
     lastWatered?: string | null;
     /**
-     * Latitude of the cluster centroid (WGS 84).
+     * 
      * @type {number}
      * @memberof ListResponseTreeClusterInListResponseDataInner
      */
     latitude: number;
     /**
-     * Longitude of the cluster centroid (WGS 84).
+     * 
      * @type {number}
      * @memberof ListResponseTreeClusterInListResponseDataInner
      */
     longitude: number;
     /**
-     * Average soil-moisture level across cluster sensors (0.0 = dry, 1.0 = saturated).
+     * 
      * @type {number}
      * @memberof ListResponseTreeClusterInListResponseDataInner
      */
     moistureLevel: number;
     /**
-     * Human-readable name of the cluster.
+     * 
      * @type {string}
      * @memberof ListResponseTreeClusterInListResponseDataInner
      */
     name: string;
     /**
-     * Identifier of the data provider that created this cluster.
+     * 
      * @type {string}
      * @memberof ListResponseTreeClusterInListResponseDataInner
      */
     provider?: string | null;
     /**
-     * Region the cluster belongs to, if assigned.
+     * 
      * @type {RegionResponse}
      * @memberof ListResponseTreeClusterInListResponseDataInner
      */
     region?: RegionResponse | null;
     /**
-     * Dominant soil condition of the cluster area.
+     * 
      * @type {SoilCondition}
      * @memberof ListResponseTreeClusterInListResponseDataInner
      */
     soilCondition: SoilCondition;
     /**
-     * IDs of trees belonging to this cluster.
+     * 
      * @type {Array<number>}
      * @memberof ListResponseTreeClusterInListResponseDataInner
      */
     treeIds: Array<number>;
     /**
-     * Timestamp when the cluster was last updated (RFC 3339).
+     * 
      * @type {string}
      * @memberof ListResponseTreeClusterInListResponseDataInner
      */
     updatedAt: string;
     /**
-     * Current watering status derived from sensor data.
+     * 
      * @type {WateringStatus}
      * @memberof ListResponseTreeClusterInListResponseDataInner
      */

@@ -28,43 +28,43 @@ import {
  */
 export interface TreeClusterUpdateRequest {
     /**
-     * Provider-specific metadata as a free-form JSON object.
+     * 
      * @type {object}
      * @memberof TreeClusterUpdateRequest
      */
     additionalInformation?: object | null;
     /**
-     * Street address or location description.
+     * 
      * @type {string}
      * @memberof TreeClusterUpdateRequest
      */
     address: string;
     /**
-     * Longer description of the cluster and its trees.
+     * 
      * @type {string}
      * @memberof TreeClusterUpdateRequest
      */
     description: string;
     /**
-     * Human-readable name of the cluster.
+     * 
      * @type {string}
      * @memberof TreeClusterUpdateRequest
      */
     name: string;
     /**
-     * Identifier of the data provider updating this cluster.
+     * 
      * @type {string}
      * @memberof TreeClusterUpdateRequest
      */
     provider?: string | null;
     /**
-     * Soil condition of the cluster area.
+     * 
      * @type {SoilCondition}
      * @memberof TreeClusterUpdateRequest
      */
     soilCondition: SoilCondition;
     /**
-     * IDs of existing trees to assign to this cluster.
+     * 
      * @type {Array<number>}
      * @memberof TreeClusterUpdateRequest
      */

@@ -28,7 +28,7 @@ import {
  */
 export interface NearestTreeListResponse {
     /**
-     * List of trees sorted by distance (ascending).
+     * 
      * @type {Array<TreeWithDistanceResponse>}
      * @memberof NearestTreeListResponse
      */

@@ -18,8 +18,10 @@ import type {
   ListResponseTreeResponse,
   NearestTreeListResponse,
   TreeCreateRequest,
+  TreeMarkerListResponse,
   TreeResponse,
   TreeUpdateRequest,
+  WateringStatus,
 } from '../models/index';
 import {
     ListResponseTreeResponseFromJSON,
@@ -28,10 +30,14 @@ import {
     NearestTreeListResponseToJSON,
     TreeCreateRequestFromJSON,
     TreeCreateRequestToJSON,
+    TreeMarkerListResponseFromJSON,
+    TreeMarkerListResponseToJSON,
     TreeResponseFromJSON,
     TreeResponseToJSON,
     TreeUpdateRequestFromJSON,
     TreeUpdateRequestToJSON,
+    WateringStatusFromJSON,
+    WateringStatusToJSON,
 } from '../models/index';
 
 export interface CreateTreeRequest {
@@ -54,6 +60,13 @@ export interface GetTreeRequest {
 
 export interface GetTreeBySensorRequest {
     sensorId: string;
+}
+
+export interface ListTreeMarkersRequest {
+    bbox: string;
+    hasCluster?: boolean | null;
+    plantingYear?: Array<number> | null;
+    wateringStatus?: Array<WateringStatus> | null;
 }
 
 export interface ListTreesRequest {
@@ -313,6 +326,60 @@ export class TreesApi extends runtime.BaseAPI {
      */
     async listPlantingYears(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<number>> {
         const response = await this.listPlantingYearsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns minimal tree markers (id, lat, lng, watering_status, number, has_sensor) intersecting the given bounding box. Optional filter parameters narrow the result. Not paginated — the bounding box bounds the result.
+     * List tree markers in a bounding box
+     */
+    async listTreeMarkersRaw(requestParameters: ListTreeMarkersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreeMarkerListResponse>> {
+        if (requestParameters['bbox'] == null) {
+            throw new runtime.RequiredError(
+                'bbox',
+                'Required parameter "bbox" was null or undefined when calling listTreeMarkers().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['bbox'] != null) {
+            queryParameters['bbox'] = requestParameters['bbox'];
+        }
+
+        if (requestParameters['hasCluster'] != null) {
+            queryParameters['has_cluster'] = requestParameters['hasCluster'];
+        }
+
+        if (requestParameters['plantingYear'] != null) {
+            queryParameters['planting_year'] = requestParameters['plantingYear'];
+        }
+
+        if (requestParameters['wateringStatus'] != null) {
+            queryParameters['watering_status'] = requestParameters['wateringStatus'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/api/v1/trees/markers`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TreeMarkerListResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns minimal tree markers (id, lat, lng, watering_status, number, has_sensor) intersecting the given bounding box. Optional filter parameters narrow the result. Not paginated — the bounding box bounds the result.
+     * List tree markers in a bounding box
+     */
+    async listTreeMarkers(requestParameters: ListTreeMarkersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TreeMarkerListResponse> {
+        const response = await this.listTreeMarkersRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

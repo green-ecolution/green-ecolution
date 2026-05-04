@@ -25,6 +25,13 @@ export interface LoginTokenRequest {
      * @memberof LoginTokenRequest
      */
     code: string;
+    /**
+     * PKCE code verifier matching the `code_challenge` sent on /login. Required
+     * when the frontend client is public (no secret); omitted otherwise.
+     * @type {string}
+     * @memberof LoginTokenRequest
+     */
+    codeVerifier?: string | null;
 }
 
 /**
@@ -46,6 +53,7 @@ export function LoginTokenRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     return {
         
         'code': json['code'],
+        'codeVerifier': json['code_verifier'] == null ? undefined : json['code_verifier'],
     };
 }
 
@@ -61,6 +69,7 @@ export function LoginTokenRequestToJSONTyped(value?: LoginTokenRequest | null, i
     return {
         
         'code': value['code'],
+        'code_verifier': value['codeVerifier'],
     };
 }
 

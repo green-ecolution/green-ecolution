@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ClusterMarkerListResponse,
   ListResponseTreeClusterInListResponse,
   TreeClusterCreateRequest,
   TreeClusterResponse,
   TreeClusterUpdateRequest,
 } from '../models/index';
 import {
+    ClusterMarkerListResponseFromJSON,
+    ClusterMarkerListResponseToJSON,
     ListResponseTreeClusterInListResponseFromJSON,
     ListResponseTreeClusterInListResponseToJSON,
     TreeClusterCreateRequestFromJSON,
@@ -173,6 +176,37 @@ export class TreeClustersApi extends runtime.BaseAPI {
      */
     async getCluster(requestParameters: GetClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TreeClusterResponse> {
         const response = await this.getClusterRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns lightweight markers (id, name, lat, lng, status, tree_count) for all non-archived clusters with a centroid. Not paginated.
+     * List cluster markers
+     */
+    async listClusterMarkersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ClusterMarkerListResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/api/v1/clusters/markers`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ClusterMarkerListResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns lightweight markers (id, name, lat, lng, status, tree_count) for all non-archived clusters with a centroid. Not paginated.
+     * List cluster markers
+     */
+    async listClusterMarkers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ClusterMarkerListResponse> {
+        const response = await this.listClusterMarkersRaw(initOverrides);
         return await response.value();
     }
 

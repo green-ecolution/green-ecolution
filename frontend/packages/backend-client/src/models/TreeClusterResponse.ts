@@ -49,103 +49,103 @@ import {
  */
 export interface TreeClusterResponse {
     /**
-     * Provider-specific metadata as a free-form JSON object.
+     * 
      * @type {object}
      * @memberof TreeClusterResponse
      */
     additionalInformation?: object | null;
     /**
-     * Street address or location description.
+     * 
      * @type {string}
      * @memberof TreeClusterResponse
      */
     address: string;
     /**
-     * Whether the cluster has been archived and is no longer actively managed.
+     * 
      * @type {boolean}
      * @memberof TreeClusterResponse
      */
     archived: boolean;
     /**
-     * Timestamp when the cluster was created (RFC 3339).
+     * 
      * @type {string}
      * @memberof TreeClusterResponse
      */
     createdAt: string;
     /**
-     * Longer description of the cluster and its trees.
+     * 
      * @type {string}
      * @memberof TreeClusterResponse
      */
     description: string;
     /**
-     * Unique identifier of the tree cluster.
+     * 
      * @type {number}
      * @memberof TreeClusterResponse
      */
     id: number;
     /**
-     * Timestamp of the last watering event (RFC 3339), if available.
+     * 
      * @type {string}
      * @memberof TreeClusterResponse
      */
     lastWatered?: string | null;
     /**
-     * Latitude of the cluster centroid (WGS 84).
+     * 
      * @type {number}
      * @memberof TreeClusterResponse
      */
     latitude: number;
     /**
-     * Longitude of the cluster centroid (WGS 84).
+     * 
      * @type {number}
      * @memberof TreeClusterResponse
      */
     longitude: number;
     /**
-     * Average soil-moisture level across cluster sensors (0.0 = dry, 1.0 = saturated).
+     * 
      * @type {number}
      * @memberof TreeClusterResponse
      */
     moistureLevel: number;
     /**
-     * Human-readable name of the cluster.
+     * 
      * @type {string}
      * @memberof TreeClusterResponse
      */
     name: string;
     /**
-     * Identifier of the data provider that created this cluster.
+     * 
      * @type {string}
      * @memberof TreeClusterResponse
      */
     provider?: string | null;
     /**
-     * Region the cluster belongs to, if assigned.
+     * 
      * @type {RegionResponse}
      * @memberof TreeClusterResponse
      */
     region?: RegionResponse | null;
     /**
-     * Dominant soil condition of the cluster area.
+     * 
      * @type {SoilCondition}
      * @memberof TreeClusterResponse
      */
     soilCondition: SoilCondition;
     /**
-     * Full tree objects belonging to this cluster.
+     * 
      * @type {Array<TreeResponse>}
      * @memberof TreeClusterResponse
      */
     trees: Array<TreeResponse>;
     /**
-     * Timestamp when the cluster was last updated (RFC 3339).
+     * 
      * @type {string}
      * @memberof TreeClusterResponse
      */
     updatedAt: string;
     /**
-     * Current watering status derived from sensor data.
+     * 
      * @type {WateringStatus}
      * @memberof TreeClusterResponse
      */

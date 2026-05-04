@@ -28,13 +28,13 @@ import {
  */
 export interface TreeWithDistanceResponse {
     /**
-     * Distance from the reference point in meters.
+     * 
      * @type {number}
      * @memberof TreeWithDistanceResponse
      */
     distanceMeters: number;
     /**
-     * The tree data.
+     * 
      * @type {TreeResponse}
      * @memberof TreeWithDistanceResponse
      */

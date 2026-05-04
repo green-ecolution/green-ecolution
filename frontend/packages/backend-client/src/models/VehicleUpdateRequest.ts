@@ -52,7 +52,7 @@ export interface VehicleUpdateRequest {
      * @type {string}
      * @memberof VehicleUpdateRequest
      */
-    description: string;
+    description?: string | null;
     /**
      * Required driving license class to operate this vehicle.
      * @type {DrivingLicense}
@@ -127,7 +127,6 @@ export interface VehicleUpdateRequest {
  * Check if a given object implements the VehicleUpdateRequest interface.
  */
 export function instanceOfVehicleUpdateRequest(value: object): value is VehicleUpdateRequest {
-    if (!('description' in value) || value['description'] === undefined) return false;
     if (!('drivingLicense' in value) || value['drivingLicense'] === undefined) return false;
     if (!('height' in value) || value['height'] === undefined) return false;
     if (!('length' in value) || value['length'] === undefined) return false;
@@ -152,7 +151,7 @@ export function VehicleUpdateRequestFromJSONTyped(json: any, ignoreDiscriminator
     return {
         
         'additionalInformation': json['additional_information'] == null ? undefined : json['additional_information'],
-        'description': json['description'],
+        'description': json['description'] == null ? undefined : json['description'],
         'drivingLicense': DrivingLicenseFromJSON(json['driving_license']),
         'height': json['height'],
         'length': json['length'],
