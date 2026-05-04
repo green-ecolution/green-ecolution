@@ -1,4 +1,4 @@
-import type { Tree, TreeClusterInList, TreeCluster } from '@/api/backendApi'
+import type { Tree, TreeCluster, ClusterMarkerResponse } from '@/api/backendApi'
 import useStore from '@/store/store'
 import WithAllTrees from './WithAllTrees'
 import WithAllClusters from './WithAllClusters'
@@ -8,7 +8,7 @@ const defaultSelectedTrees: number[] = []
 
 interface WithTreesAndClustersProps {
   onClickTree?: (tree: Tree) => void
-  onClickCluster?: (cluster: TreeClusterInList | TreeCluster) => void
+  onClickCluster?: (cluster: ClusterMarkerResponse | TreeCluster) => void
   selectedTrees?: number[]
   zoomThreshold?: number
   activeFilter?: boolean

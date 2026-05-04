@@ -3,7 +3,7 @@ import { Suspense } from 'react'
 import { Loading } from '@green-ecolution/ui'
 import ShowRoutePreview from '../map/marker/ShowRoutePreview'
 import { WithTreesAndClusters } from '../map/marker/WithAllClusterAndTrees'
-import type { Tree, TreeCluster, TreeClusterInList, WateringPlan } from '@/api/backendApi'
+import type { ClusterMarkerResponse, Tree, TreeCluster, WateringPlan } from '@/api/backendApi'
 import { useNavigate } from '@tanstack/react-router'
 import Map from '../map/Map'
 
@@ -20,7 +20,7 @@ const WateringPlanPreviewRoute = ({ wateringPlan }: WateringPlanPreviewRouteProp
     )
   }
 
-  const handleClusterClick = (cluster: TreeClusterInList | TreeCluster) => {
+  const handleClusterClick = (cluster: ClusterMarkerResponse | TreeCluster) => {
     navigate({
       to: `/treecluster/$treeclusterId`,
       params: { treeclusterId: cluster.id.toString() },

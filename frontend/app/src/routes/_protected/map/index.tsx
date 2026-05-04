@@ -1,6 +1,6 @@
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router'
 import MapButtons from '@/components/map/MapButtons'
-import type { Tree, TreeCluster, TreeClusterInList } from '@/api/backendApi'
+import type { ClusterMarkerResponse, Tree, TreeCluster } from '@/api/backendApi'
 import { useQuery } from '@tanstack/react-query'
 import { treeQuery } from '@/api/queries'
 import { useCallback, useMemo, useRef } from 'react'
@@ -51,7 +51,7 @@ function MapView() {
   )
 
   const handleClusterClick = useCallback(
-    (cluster: TreeClusterInList | TreeCluster) => {
+    (cluster: ClusterMarkerResponse | TreeCluster) => {
       navigate({
         to: `/treecluster/$treeclusterId`,
         params: { treeclusterId: cluster.id.toString() },

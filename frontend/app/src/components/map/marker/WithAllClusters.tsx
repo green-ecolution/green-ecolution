@@ -1,6 +1,6 @@
-import type { TreeClusterInList } from '@/api/backendApi'
+import type { ClusterMarkerResponse } from '@/api/backendApi'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { treeClusterQuery } from '@/api/queries'
+import { clusterMarkersQuery } from '@/api/queries'
 import MarkerList from './MarkerList'
 import { ClusterIcon } from '../markerIcons'
 import { getStatusColor } from '../utils'
@@ -16,7 +16,7 @@ const tooltipOptions = {
 }
 
 export interface WithAllClustersProps {
-  onClick?: (cluster: TreeClusterInList) => void
+  onClick?: (cluster: ClusterMarkerResponse) => void
   highlightedClusters?: number[]
   disabledClusters?: number[]
 }
@@ -27,36 +27,25 @@ const WithAllClusters = memo(
     highlightedClusters = defaultHighlighted,
     disabledClusters = defaultDisabled,
   }: WithAllClustersProps) => {
-    const { data } = useSuspenseQuery(treeClusterQuery())
-
-    const filteredData = useMemo(
-      () =>
-        data.data.filter(
-          (cluster) =>
-            cluster.latitude !== null &&
-            cluster.longitude !== null &&
-            cluster.treeIds !== undefined,
-        ),
-      [data.data],
-    )
-    const deferredData = useDeferredValue(filteredData)
+    const { data } = useSuspenseQuery(clusterMarkersQuery())
+    const deferredData = useDeferredValue(data.data)
 
     const highlightedSet = useMemo(() => new Set(highlightedClusters), [highlightedClusters])
     const disabledSet = useMemo(() => new Set(disabledClusters), [disabledClusters])
 
     const getIcon = useCallback(
-      (c: TreeClusterInList) =>
+      (c: ClusterMarkerResponse) =>
         ClusterIcon(
           getStatusColor(c.wateringStatus),
           highlightedSet.has(c.id),
           disabledSet.has(c.id),
-          c.treeIds?.length ?? 0,
+          c.treeCount,
         ),
       [highlightedSet, disabledSet],
     )
 
-    const getId = useCallback((c: TreeClusterInList) => c.id, [])
-    const getTooltip = useCallback((c: TreeClusterInList) => c.name, [])
+    const getId = useCallback((c: ClusterMarkerResponse) => c.id, [])
+    const getTooltip = useCallback((c: ClusterMarkerResponse) => c.name, [])
 
     return (
       <MarkerList
