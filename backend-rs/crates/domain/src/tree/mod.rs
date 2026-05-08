@@ -135,6 +135,14 @@ impl Tree {
         &self.provenance
     }
 
+    /// Replaces all freely editable fields. `cluster_id` and `sensor_id` are
+    /// not part of this update because they have their own
+    /// transition-emitting methods (`move_to_cluster`, `attach_sensor`,
+    /// `detach_sensor`). Only a `coordinate` change emits an event:
+    /// `TreeCoordinateChanged` is consumed by the cluster recalc handler to
+    /// update centroid and region. The other fields (species, tree_number,
+    /// planting_year, description, provenance) have no subscribers, so they
+    /// change silently.
     pub fn replace_details(
         &mut self,
         species: Species,

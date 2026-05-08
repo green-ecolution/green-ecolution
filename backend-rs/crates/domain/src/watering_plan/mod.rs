@@ -168,7 +168,12 @@ impl WateringPlan {
         Ok(())
     }
 
-    /// Updates editable fields. Only allowed while status is [`WateringPlanStatus::Planned`].
+    /// Updates editable fields (date, description, cluster set, vehicles,
+    /// provenance). Only allowed while status is
+    /// [`WateringPlanStatus::Planned`] — once the plan starts, the only legal
+    /// changes are status transitions (`start`/`cancel`/`fail`/`finish`),
+    /// each of which emits its own event. No events are emitted here because
+    /// edits to a planned plan have no cross-aggregate side effects.
     pub fn replace_details(&mut self, update: WateringPlanUpdate) -> Result<(), WateringPlanError> {
         self.ensure_planned()?;
         self.date = update.date;

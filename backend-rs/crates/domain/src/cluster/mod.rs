@@ -144,6 +144,12 @@ impl TreeCluster {
         &self.provenance
     }
 
+    /// Replaces the freely editable display fields. None of these have
+    /// subscribers, so no event is emitted. Tree membership goes through
+    /// `replace_trees` (with `ClusterTreesChanged` published from the service
+    /// when the set actually changed); centroid, region, watering status and
+    /// the archived flag are private and only changed through their own
+    /// recalculation methods.
     pub fn replace_details(
         &mut self,
         name: ClusterName,

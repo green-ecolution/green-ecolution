@@ -207,6 +207,10 @@ impl Vehicle {
         &self.provenance
     }
 
+    /// Replaces every editable field at once. Vehicle is a passive tracking
+    /// aggregate with no domain-event subscribers, so no events are emitted.
+    /// `archived_at` is *not* set here — that flag carries domain meaning and
+    /// only flips via `archive()` (idempotent).
     pub fn replace_details(&mut self, update: VehicleUpdate) {
         self.number_plate = update.number_plate;
         self.description = update.description;
