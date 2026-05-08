@@ -55,33 +55,34 @@ impl EventHandler for ClusterRecalculationHandler {
         "cluster_recalculation"
     }
 
-    fn handles(&self, event: &DomainEvent) -> bool {
-        !self.affected_cluster_ids(event).is_empty()
-    }
-
     async fn handle(&self, event: &DomainEvent) -> Result<Vec<DomainEvent>, EventHandlerError> {
         for cluster_id in self.affected_cluster_ids(event) {
             let mut cluster = match self.cluster_reader.by_id(cluster_id).await {
                 Ok(c) => c,
-                Err(_) => continue,
+                Err(e) => {
+                    tracing::warn!(error = %e, %cluster_id, "skipping cluster recalc; load failed");
+                    continue;
+                }
             };
 
-            let trees = self
-                .tree_reader
-                .by_ids(&cluster.tree_ids)
-                .await
-                .unwrap_or_default();
+            let trees = match self.tree_reader.by_ids(&cluster.tree_ids).await {
+                Ok(t) => t,
+                Err(e) => {
+                    tracing::warn!(error = %e, %cluster_id, "skipping cluster recalc; tree load failed");
+                    continue;
+                }
+            };
             let coords: Vec<_> = trees.iter().map(|t| t.coordinate).collect();
             cluster.recalculate_centroid(&coords);
 
             let region_id = match cluster.coordinates() {
-                Some(center) => self
-                    .region_reader
-                    .by_point(center)
-                    .await
-                    .ok()
-                    .flatten()
-                    .map(|r| r.id),
+                Some(center) => match self.region_reader.by_point(center).await {
+                    Ok(r) => r.map(|r| r.id),
+                    Err(e) => {
+                        tracing::warn!(error = %e, %cluster_id, "region lookup failed; clearing region");
+                        None
+                    }
+                },
                 None => None,
             };
             cluster.assign_region(region_id);

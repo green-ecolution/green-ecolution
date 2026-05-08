@@ -25,9 +25,7 @@ use crate::{
     region::Region,
     shared::{
         coordinates::Coordinate,
-        error::ValidationError,
         provenance::{Provenance, ProviderId},
-        string_value::NonEmptyString,
         watering_status::WateringStatus,
     },
     tree::Tree,
@@ -41,52 +39,14 @@ pub use snapshot::TreeClusterSnapshot;
 pub use soil_condition::SoilCondition;
 pub use view::TreeClusterView;
 
-/// Human-readable cluster name, 1–255 characters after trimming.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ClusterName(NonEmptyString);
-
-impl ClusterName {
-    pub fn new(value: impl Into<String>) -> Result<Self, ValidationError> {
-        Ok(Self(NonEmptyString::new(value, "cluster.name", 1, 255)?))
-    }
-
-    pub fn reconstitute(value: String) -> Self {
-        Self(NonEmptyString::reconstitute(value))
-    }
-
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
+crate::newtype_nonempty! {
+    /// Human-readable cluster name, 1–255 characters after trimming.
+    ClusterName, "cluster.name", 1, 255
 }
 
-impl std::fmt::Display for ClusterName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-/// Street address or location description for a cluster, 1–512 characters.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ClusterAddress(NonEmptyString);
-
-impl ClusterAddress {
-    pub fn new(value: impl Into<String>) -> Result<Self, ValidationError> {
-        Ok(Self(NonEmptyString::new(value, "cluster.address", 1, 512)?))
-    }
-
-    pub fn reconstitute(value: String) -> Self {
-        Self(NonEmptyString::reconstitute(value))
-    }
-
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
-}
-
-impl std::fmt::Display for ClusterAddress {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
+crate::newtype_nonempty! {
+    /// Street address or location description for a cluster, 1–512 characters.
+    ClusterAddress, "cluster.address", 1, 512
 }
 
 #[derive(Debug, Clone, PartialEq)]

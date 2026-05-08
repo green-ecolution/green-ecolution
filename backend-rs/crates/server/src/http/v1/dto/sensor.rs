@@ -1,8 +1,31 @@
+use std::collections::HashMap;
+
 use serde::Serialize;
 
-use domain::sensor::{SensorView, data::SensorReadingView};
+use domain::sensor::{SensorId, SensorView, data::SensorReadingView};
+
+use crate::service::{ServiceError, sensor_service::SensorService};
 
 use super::SensorStatus;
+
+/// Resolves a batch of raw sensor-id strings (e.g. from `TreeView::sensor_id`)
+/// into a lookup map keyed by id. Strings that fail [`SensorId`] validation
+/// are skipped silently — the caller already produced them, so an invalid
+/// value indicates dirty data, not a 400-worthy request error.
+pub async fn resolve_sensors_by_str_ids<'a, I>(
+    sensor_service: &SensorService,
+    raw_ids: I,
+) -> Result<HashMap<String, SensorView>, ServiceError>
+where
+    I: IntoIterator<Item = &'a str>,
+{
+    let ids: Vec<SensorId> = raw_ids
+        .into_iter()
+        .filter_map(|s| SensorId::new(s).ok())
+        .collect();
+    let sensors = sensor_service.view_by_ids(&ids).await?;
+    Ok(sensors.into_iter().map(|s| (s.id.clone(), s)).collect())
+}
 
 /// A single data payload received from a LoRaWAN sensor.
 #[derive(Debug, Serialize, utoipa::ToSchema)]

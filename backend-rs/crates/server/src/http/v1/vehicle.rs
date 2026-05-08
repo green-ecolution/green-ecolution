@@ -204,8 +204,7 @@ pub async fn get_vehicle_by_plate(
     State(state): State<Arc<AppState>>,
     Path(plate): Path<String>,
 ) -> Result<Json<VehicleResponse>, ServiceError> {
-    let number_plate = domain::vehicle::NumberPlate::new(plate)
-        .map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+    let number_plate = domain::vehicle::NumberPlate::new(plate)?;
     let vehicle = state
         .vehicle_service
         .by_plate(&number_plate)

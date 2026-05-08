@@ -9,38 +9,16 @@ pub mod error;
 pub mod repository;
 pub mod snapshot;
 
-use crate::{
-    Id,
-    shared::{error::ValidationError, provenance::ProviderId, string_value::NonEmptyString},
-};
+use crate::{Id, shared::provenance::ProviderId};
 
 pub use error::RegionError;
 pub use repository::{RegionReader, RegionWriter};
 #[doc(hidden)]
 pub use snapshot::RegionSnapshot;
 
-/// Region name, 1–255 characters after trimming.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct RegionName(NonEmptyString);
-
-impl RegionName {
-    pub fn new(value: impl Into<String>) -> Result<Self, ValidationError> {
-        Ok(Self(NonEmptyString::new(value, "region.name", 1, 255)?))
-    }
-
-    pub fn reconstitute(value: String) -> Self {
-        Self(NonEmptyString::reconstitute(value))
-    }
-
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
-}
-
-impl std::fmt::Display for RegionName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
+crate::newtype_nonempty! {
+    /// Region name, 1–255 characters after trimming.
+    RegionName, "region.name", 1, 255
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

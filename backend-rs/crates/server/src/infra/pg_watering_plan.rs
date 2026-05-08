@@ -4,7 +4,7 @@ use serde_json::Value;
 use sqlx::PgPool;
 
 use domain::{
-    Id, RepositoryError,
+    Id, IdSliceExt, RawId, RepositoryError,
     cluster::TreeCluster,
     shared::pagination::{Page, Pagination},
     watering_plan::{
@@ -29,7 +29,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
     #[tracing::instrument(level = "trace", skip_all)]
     async fn by_id(&self, id: Id<WateringPlan>) -> Result<WateringPlan, RepositoryError> {
         struct Row {
-            id: i32,
+            id: RawId,
             date: chrono::NaiveDate,
             description: String,
             status: WateringPlanStatus,
@@ -41,8 +41,8 @@ impl WateringPlanReader for PgWateringPlanRepository {
             duration: f64,
             provider: Option<String>,
             additional_informations: Option<Value>,
-            vehicle_ids: Vec<i32>,
-            cluster_ids: Vec<i32>,
+            vehicle_ids: Vec<RawId>,
+            cluster_ids: Vec<RawId>,
         }
 
         let row = sqlx::query_as!(
@@ -52,8 +52,8 @@ impl WateringPlanReader for PgWateringPlanRepository {
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.gpx_url, wp.refill_count, wp.duration,
                       wp.provider, wp.additional_informations,
-                      COALESCE(ARRAY_AGG(DISTINCT vwp.vehicle_id) FILTER (WHERE vwp.vehicle_id IS NOT NULL), ARRAY[]::int[]) AS "vehicle_ids!: Vec<i32>",
-                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::int[]) AS "cluster_ids!: Vec<i32>"
+                      COALESCE(ARRAY_AGG(DISTINCT vwp.vehicle_id) FILTER (WHERE vwp.vehicle_id IS NOT NULL), ARRAY[]::int[]) AS "vehicle_ids!: Vec<RawId>",
+                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::int[]) AS "cluster_ids!: Vec<RawId>"
             FROM watering_plans wp
             LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id
             LEFT JOIN tree_cluster_watering_plans twp ON twp.watering_plan_id = wp.id
@@ -90,7 +90,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
     #[tracing::instrument(level = "trace", skip_all)]
     async fn view_by_id(&self, id: Id<WateringPlan>) -> Result<WateringPlanView, RepositoryError> {
         struct Row {
-            id: i32,
+            id: RawId,
             created_at: chrono::NaiveDateTime,
             updated_at: chrono::NaiveDateTime,
             date: chrono::NaiveDate,
@@ -104,8 +104,8 @@ impl WateringPlanReader for PgWateringPlanRepository {
             duration: f64,
             provider: Option<String>,
             additional_informations: Option<Value>,
-            vehicle_ids: Vec<i32>,
-            cluster_ids: Vec<i32>,
+            vehicle_ids: Vec<RawId>,
+            cluster_ids: Vec<RawId>,
         }
 
         let row = sqlx::query_as!(
@@ -115,8 +115,8 @@ impl WateringPlanReader for PgWateringPlanRepository {
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.gpx_url, wp.refill_count, wp.duration,
                       wp.provider, wp.additional_informations,
-                      COALESCE(ARRAY_AGG(DISTINCT vwp.vehicle_id) FILTER (WHERE vwp.vehicle_id IS NOT NULL), ARRAY[]::int[]) AS "vehicle_ids!: Vec<i32>",
-                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::int[]) AS "cluster_ids!: Vec<i32>"
+                      COALESCE(ARRAY_AGG(DISTINCT vwp.vehicle_id) FILTER (WHERE vwp.vehicle_id IS NOT NULL), ARRAY[]::int[]) AS "vehicle_ids!: Vec<RawId>",
+                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::int[]) AS "cluster_ids!: Vec<RawId>"
             FROM watering_plans wp
             LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id
             LEFT JOIN tree_cluster_watering_plans twp ON twp.watering_plan_id = wp.id
@@ -171,7 +171,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
         .await? as u64;
 
         struct Row {
-            id: i32,
+            id: RawId,
             created_at: chrono::NaiveDateTime,
             updated_at: chrono::NaiveDateTime,
             date: chrono::NaiveDate,
@@ -185,8 +185,8 @@ impl WateringPlanReader for PgWateringPlanRepository {
             duration: f64,
             provider: Option<String>,
             additional_informations: Option<Value>,
-            vehicle_ids: Vec<i32>,
-            cluster_ids: Vec<i32>,
+            vehicle_ids: Vec<RawId>,
+            cluster_ids: Vec<RawId>,
         }
 
         let rows = sqlx::query_as!(
@@ -196,8 +196,8 @@ impl WateringPlanReader for PgWateringPlanRepository {
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.gpx_url, wp.refill_count, wp.duration,
                       wp.provider, wp.additional_informations,
-                      COALESCE(ARRAY_AGG(DISTINCT vwp.vehicle_id) FILTER (WHERE vwp.vehicle_id IS NOT NULL), ARRAY[]::int[]) AS "vehicle_ids!: Vec<i32>",
-                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::int[]) AS "cluster_ids!: Vec<i32>"
+                      COALESCE(ARRAY_AGG(DISTINCT vwp.vehicle_id) FILTER (WHERE vwp.vehicle_id IS NOT NULL), ARRAY[]::int[]) AS "vehicle_ids!: Vec<RawId>",
+                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::int[]) AS "cluster_ids!: Vec<RawId>"
             FROM watering_plans wp
             LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id
             LEFT JOIN tree_cluster_watering_plans twp ON twp.watering_plan_id = wp.id
@@ -248,7 +248,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
         plan_id: Id<WateringPlan>,
     ) -> Result<Vec<WateringPlanEvaluation>, RepositoryError> {
         struct Row {
-            tree_cluster_id: i32,
+            tree_cluster_id: RawId,
             consumed_water: f64,
         }
 
@@ -293,7 +293,7 @@ impl WateringPlanWriter for PgWateringPlanRepository {
 
         let plan_id = row.id;
 
-        let mut vehicle_ids: Vec<i32> = Vec::new();
+        let mut vehicle_ids: Vec<RawId> = Vec::new();
         if let Some(ref id) = draft.transporter_id {
             vehicle_ids.push(id.value());
         }
@@ -310,7 +310,7 @@ impl WateringPlanWriter for PgWateringPlanRepository {
             .await?;
         }
 
-        let cluster_id_values: Vec<i32> = draft.cluster_ids.iter().map(|id| id.value()).collect();
+        let cluster_id_values: Vec<RawId> = draft.cluster_ids.to_values();
         if !cluster_id_values.is_empty() {
             sqlx::query!(
                 "INSERT INTO tree_cluster_watering_plans (tree_cluster_id, watering_plan_id) SELECT UNNEST($1::int[]), $2",
@@ -372,7 +372,7 @@ impl WateringPlanWriter for PgWateringPlanRepository {
         .execute(&mut *tx)
         .await?;
 
-        let mut vehicle_ids: Vec<i32> = Vec::new();
+        let mut vehicle_ids: Vec<RawId> = Vec::new();
         if let Some(id) = plan.transporter_id() {
             vehicle_ids.push(id.value());
         }
@@ -397,7 +397,7 @@ impl WateringPlanWriter for PgWateringPlanRepository {
         .execute(&mut *tx)
         .await?;
 
-        let cluster_id_values: Vec<i32> = plan.cluster_ids().iter().map(|id| id.value()).collect();
+        let cluster_id_values: Vec<RawId> = plan.cluster_ids().to_values();
         if !cluster_id_values.is_empty() {
             sqlx::query!(
                 "INSERT INTO tree_cluster_watering_plans (tree_cluster_id, watering_plan_id) SELECT UNNEST($1::int[]), $2",
@@ -478,7 +478,7 @@ impl WateringPlanWriter for PgWateringPlanRepository {
         cluster_ids: &[Id<TreeCluster>],
         ts: chrono::DateTime<chrono::Utc>,
     ) -> Result<(), RepositoryError> {
-        let ids: Vec<i32> = cluster_ids.iter().map(|id| id.value()).collect();
+        let ids: Vec<RawId> = cluster_ids.to_values();
         let mut tx = self.pool.begin().await?;
 
         sqlx::query!(

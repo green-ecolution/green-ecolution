@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use domain::{IdSliceExt, RawId};
 use sqlx::PgPool;
 
 use domain::cluster::snapshot::TreeClusterSnapshot;
@@ -39,7 +40,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
-                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS "tree_ids!: Vec<i32>"
+                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS "tree_ids!: Vec<RawId>"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
             WHERE tc.id = $1
@@ -55,7 +56,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn by_ids(&self, ids: &[Id<TreeCluster>]) -> Result<Vec<TreeCluster>, RepositoryError> {
-        let id_values: Vec<i32> = ids.iter().map(|id| id.value()).collect();
+        let id_values: Vec<RawId> = ids.to_values();
         let snaps = sqlx::query_as!(
             TreeClusterSnapshot,
             r#"SELECT tc.id, tc.name, tc.address, tc.description,
@@ -66,7 +67,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
-                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS "tree_ids!: Vec<i32>"
+                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS "tree_ids!: Vec<RawId>"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
             WHERE tc.id = ANY($1)
@@ -90,7 +91,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
-                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS "tree_ids!: Vec<i32>"
+                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS "tree_ids!: Vec<RawId>"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
             WHERE tc.id = $1
@@ -127,7 +128,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
         &self,
         ids: &[Id<TreeCluster>],
     ) -> Result<Vec<TreeClusterView>, RepositoryError> {
-        let id_values: Vec<i32> = ids.iter().map(|id| id.value()).collect();
+        let id_values: Vec<RawId> = ids.to_values();
         let rows = sqlx::query!(
             r#"SELECT tc.id, tc.created_at, tc.updated_at, tc.name, tc.address, tc.description,
                       tc.archived, tc.moisture_level, tc.region_id,
@@ -137,7 +138,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
-                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS "tree_ids!: Vec<i32>"
+                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS "tree_ids!: Vec<RawId>"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
             WHERE tc.id = ANY($1)
@@ -203,7 +204,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
-                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS "tree_ids!: Vec<i32>"
+                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS "tree_ids!: Vec<RawId>"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
             WHERE ($1::watering_status[] = '{}' OR tc.watering_status = ANY($1))
@@ -328,7 +329,7 @@ impl TreeClusterWriter for PgTreeClusterRepository {
         .fetch_one(&mut *tx)
         .await?;
 
-        let tree_id_values: Vec<i32> = draft.tree_ids.iter().map(|id| id.value()).collect();
+        let tree_id_values: Vec<RawId> = draft.tree_ids.to_values();
         if !tree_id_values.is_empty() {
             sqlx::query!(
                 "UPDATE trees SET tree_cluster_id = $1 WHERE id = ANY($2)",
@@ -389,7 +390,7 @@ impl TreeClusterWriter for PgTreeClusterRepository {
             return Err(RepositoryError::NotFound);
         }
 
-        let tree_id_values: Vec<i32> = cluster.tree_ids.iter().map(|id| id.value()).collect();
+        let tree_id_values: Vec<RawId> = cluster.tree_ids.to_values();
         sqlx::query!(
             r#"UPDATE trees SET tree_cluster_id = CASE
                 WHEN id = ANY($2) THEN $1

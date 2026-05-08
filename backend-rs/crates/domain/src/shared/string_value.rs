@@ -56,6 +56,52 @@ impl std::fmt::Display for NonEmptyString {
     }
 }
 
+/// Generates a `NonEmptyString`-backed newtype with the standard set of
+/// constructors (`new`, `reconstitute`), `as_str` accessor, and a `Display`
+/// impl. Variable: name, field label, min/max length.
+///
+/// ```ignore
+/// newtype_nonempty! {
+///     /// Botanical or common species name, 1–255 characters after trimming.
+///     Species, "tree.species", 1, 255
+/// }
+/// ```
+#[macro_export]
+macro_rules! newtype_nonempty {
+    (
+        $(#[$attr:meta])*
+        $name:ident, $label:literal, $min:literal, $max:literal $(,)?
+    ) => {
+        $(#[$attr])*
+        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+        pub struct $name($crate::shared::string_value::NonEmptyString);
+
+        impl $name {
+            pub fn new(
+                value: impl Into<String>,
+            ) -> ::std::result::Result<Self, $crate::shared::error::ValidationError> {
+                Ok(Self($crate::shared::string_value::NonEmptyString::new(
+                    value, $label, $min, $max,
+                )?))
+            }
+
+            pub fn reconstitute(value: String) -> Self {
+                Self($crate::shared::string_value::NonEmptyString::reconstitute(value))
+            }
+
+            pub fn as_str(&self) -> &str {
+                self.0.as_str()
+            }
+        }
+
+        impl ::std::fmt::Display for $name {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+                self.0.fmt(f)
+            }
+        }
+    };
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -12,10 +12,10 @@ pub enum EventHandlerError {
 #[async_trait::async_trait]
 pub trait EventHandler: Send + Sync {
     fn name(&self) -> &str;
-    fn handles(&self, event: &DomainEvent) -> bool;
     /// Reacts to `event` and returns any follow-up events the handler wants
-    /// the bus to publish next. Returning `Ok(vec![])` is the common case
-    /// (handler had a side effect but did not produce new domain events).
+    /// the bus to publish next. Handlers receive every event and must decide
+    /// internally whether the variant is relevant — return `Ok(vec![])` for
+    /// no-ops or unrelated events.
     async fn handle(&self, event: &DomainEvent) -> Result<Vec<DomainEvent>, EventHandlerError>;
 }
 

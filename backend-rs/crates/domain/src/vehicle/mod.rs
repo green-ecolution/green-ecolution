@@ -21,7 +21,6 @@ use crate::{
     shared::{
         error::ValidationError,
         provenance::{Provenance, ProviderId},
-        string_value::NonEmptyString,
         water_capacity::WaterCapacity,
     },
 };
@@ -67,57 +66,14 @@ pub enum VehicleType {
     Trailer,
 }
 
-/// Vehicle registration plate, 1–32 characters after trimming.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct NumberPlate(NonEmptyString);
-
-impl NumberPlate {
-    pub fn new(value: impl Into<String>) -> Result<Self, ValidationError> {
-        Ok(Self(NonEmptyString::new(
-            value,
-            "vehicle.number_plate",
-            1,
-            32,
-        )?))
-    }
-
-    pub fn reconstitute(value: String) -> Self {
-        Self(NonEmptyString::reconstitute(value))
-    }
-
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
+crate::newtype_nonempty! {
+    /// Vehicle registration plate, 1–32 characters after trimming.
+    NumberPlate, "vehicle.number_plate", 1, 32
 }
 
-impl std::fmt::Display for NumberPlate {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-/// Vehicle make/model string, 1–128 characters after trimming.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct VehicleModel(NonEmptyString);
-
-impl VehicleModel {
-    pub fn new(value: impl Into<String>) -> Result<Self, ValidationError> {
-        Ok(Self(NonEmptyString::new(value, "vehicle.model", 1, 128)?))
-    }
-
-    pub fn reconstitute(value: String) -> Self {
-        Self(NonEmptyString::reconstitute(value))
-    }
-
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
-}
-
-impl std::fmt::Display for VehicleModel {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
+crate::newtype_nonempty! {
+    /// Vehicle make/model string, 1–128 characters after trimming.
+    VehicleModel, "vehicle.model", 1, 128
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

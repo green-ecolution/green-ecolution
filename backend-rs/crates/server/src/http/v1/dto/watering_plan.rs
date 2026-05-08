@@ -4,10 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::service::ServiceError;
 use domain::{
     Id,
-    shared::{
-        error::ValidationError,
-        provenance::{Provenance, ProviderId},
-    },
+    shared::provenance::{Provenance, ProviderId},
     watering_plan::{WateringPlanDraft, WateringPlanEvaluation, WateringPlanView},
 };
 
@@ -336,20 +333,13 @@ fn parse_date(s: &str) -> Result<DateTime<Utc>, ServiceError> {
         .map_err(|e| ServiceError::InvalidInput(format!("invalid date: {e}")))
 }
 
-fn invalid(e: ValidationError) -> ServiceError {
-    ServiceError::InvalidInput(e.to_string())
-}
-
 impl TryFrom<WateringPlanCreateRequest> for WateringPlanDraft {
     type Error = ServiceError;
 
     fn try_from(req: WateringPlanCreateRequest) -> Result<Self, Self::Error> {
         let date = parse_date(&req.date)?;
         let provenance = Provenance::new(
-            req.provider
-                .map(ProviderId::new)
-                .transpose()
-                .map_err(invalid)?,
+            req.provider.map(ProviderId::new).transpose()?,
             req.additional_information,
         );
         let description = if req.description.is_empty() {

@@ -2,7 +2,7 @@ use sqlx::PgPool;
 
 use domain::region::RegionSnapshot;
 use domain::{
-    Id, RepositoryError,
+    Id, IdSliceExt, RawId, RepositoryError,
     region::{Region, RegionDraft, RegionName, RegionReader, RegionSearchQuery, RegionWriter},
     shared::{
         coordinates::Coordinate,
@@ -37,7 +37,7 @@ impl RegionReader for PgRegionRepository {
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn by_ids(&self, ids: &[Id<Region>]) -> Result<Vec<Region>, RepositoryError> {
-        let id_values: Vec<i32> = ids.iter().map(|id| id.value()).collect();
+        let id_values: Vec<RawId> = ids.to_values();
         let regions = sqlx::query_as!(
             RegionSnapshot,
             r#"SELECT id, name FROM regions WHERE id = ANY($1)"#,

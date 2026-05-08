@@ -4,7 +4,7 @@ use serde_json::Value;
 use sqlx::PgPool;
 
 use domain::{
-    Id, RepositoryError,
+    Id, IdSliceExt, RawId, RepositoryError,
     shared::pagination::{Page, Pagination},
     vehicle::{
         DrivingLicense, NumberPlate, Vehicle, VehicleDraft, VehicleReader, VehicleSearchQuery,
@@ -52,7 +52,7 @@ impl VehicleReader for PgVehicleRepository {
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn by_ids(&self, ids: &[Id<Vehicle>]) -> Result<Vec<Vehicle>, RepositoryError> {
-        let id_values: Vec<i32> = ids.iter().map(|id| id.value()).collect();
+        let id_values: Vec<RawId> = ids.to_values();
         let snaps = sqlx::query_as!(
             VehicleSnapshot,
             r#"SELECT id,
@@ -104,7 +104,7 @@ impl VehicleReader for PgVehicleRepository {
     #[tracing::instrument(level = "trace", skip_all)]
     async fn view_by_id(&self, id: Id<Vehicle>) -> Result<VehicleView, RepositoryError> {
         struct Row {
-            id: i32,
+            id: RawId,
             created_at: chrono::NaiveDateTime,
             updated_at: chrono::NaiveDateTime,
             archived_at: Option<chrono::NaiveDateTime>,
@@ -167,10 +167,10 @@ impl VehicleReader for PgVehicleRepository {
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn view_by_ids(&self, ids: &[Id<Vehicle>]) -> Result<Vec<VehicleView>, RepositoryError> {
-        let id_values: Vec<i32> = ids.iter().map(|id| id.value()).collect();
+        let id_values: Vec<RawId> = ids.to_values();
 
         struct Row {
-            id: i32,
+            id: RawId,
             created_at: chrono::NaiveDateTime,
             updated_at: chrono::NaiveDateTime,
             archived_at: Option<chrono::NaiveDateTime>,
@@ -244,7 +244,7 @@ impl VehicleReader for PgVehicleRepository {
         let provider = query.provider.as_ref().map(|p| p.as_str().to_owned());
 
         struct Row {
-            id: i32,
+            id: RawId,
             created_at: chrono::NaiveDateTime,
             updated_at: chrono::NaiveDateTime,
             archived_at: Option<chrono::NaiveDateTime>,

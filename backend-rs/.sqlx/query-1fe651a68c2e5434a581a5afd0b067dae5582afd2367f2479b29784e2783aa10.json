@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT tc.id, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: Option<SoilCondition>\",\n                      tc.latitude, tc.longitude,\n                      tc.last_watered AS \"last_watered: DateTime<Utc>\",\n                      tc.provider,\n                      tc.additional_informations AS additional_info,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS \"tree_ids!: Vec<i32>\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.id = $1\n            GROUP BY tc.id",
+  "query": "SELECT tc.id, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: Option<SoilCondition>\",\n                      tc.latitude, tc.longitude,\n                      tc.last_watered AS \"last_watered: DateTime<Utc>\",\n                      tc.provider,\n                      tc.additional_informations AS additional_info,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS \"tree_ids!: Vec<RawId>\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.id = $1\n            GROUP BY tc.id",
   "describe": {
     "columns": [
       {
@@ -101,7 +101,7 @@
       },
       {
         "ordinal": 14,
-        "name": "tree_ids!: Vec<i32>",
+        "name": "tree_ids!: Vec<RawId>",
         "type_info": "Int4Array"
       }
     ],
@@ -128,5 +128,5 @@
       null
     ]
   },
-  "hash": "572ab6deb6290b1007b1e7728750966690dcad50babbdab67646b9e4cbe6a39b"
+  "hash": "1fe651a68c2e5434a581a5afd0b067dae5582afd2367f2479b29784e2783aa10"
 }

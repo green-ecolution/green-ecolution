@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use axum::{
     Json,
@@ -13,6 +13,7 @@ use crate::{
         v1::{
             dto::{
                 ListResponse,
+                sensor::resolve_sensors_by_str_ids,
                 tree::{
                     NearestTreeListResponse, NearestTreeParams, TreeCreateRequest,
                     TreeMarkerListResponse, TreeMarkerQueryParams, TreeMarkerResponse,
@@ -27,7 +28,7 @@ use crate::{
 use domain::{
     Id,
     sensor::SensorId,
-    shared::{error::ValidationError, pagination::Pagination},
+    shared::pagination::Pagination,
     tree::{PlantingYear, TreeDraft, TreeMarker, TreeSearchQuery, TreeView},
 };
 
@@ -61,24 +62,14 @@ pub async fn list_trees(
         .search_view(TreeSearchQuery::default(), pagination)
         .await?;
 
-    let sensor_ids: Vec<SensorId> = page
-        .items
-        .iter()
-        .filter_map(|t| {
-            t.sensor_id
-                .as_deref()
-                .map(SensorId::new)
-                .and_then(Result::ok)
-        })
-        .collect();
-    let sensors = state.sensor_service.view_by_ids(&sensor_ids).await?;
-    let sensor_map: HashMap<&str, _> = sensors.iter().map(|s| (s.id.as_str(), s)).collect();
+    let sensor_map = resolve_sensors_by_str_ids(
+        &state.sensor_service,
+        page.items.iter().filter_map(|t| t.sensor_id.as_deref()),
+    )
+    .await?;
 
     let response = ListResponse::from_page_with(page, &pagination, |tree: &TreeView| {
-        let sensor = tree
-            .sensor_id
-            .as_deref()
-            .and_then(|id| sensor_map.get(id).copied());
+        let sensor = tree.sensor_id.as_deref().and_then(|id| sensor_map.get(id));
         TreeResponse::from((tree, sensor))
     });
     Ok(Json(response))
@@ -103,8 +94,7 @@ pub async fn get_tree(
     let tree = state.tree_service.view_by_id(Id::from(id)).await?;
     let sensor = match &tree.sensor_id {
         Some(sid) => {
-            let sensor_id =
-                SensorId::new(sid).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+            let sensor_id = SensorId::new(sid)?;
             Some(state.sensor_service.view_by_id(&sensor_id).await?)
         }
         None => None,
@@ -128,15 +118,12 @@ pub async fn create_tree(
     State(state): State<Arc<AppState>>,
     Json(entity): Json<TreeCreateRequest>,
 ) -> Result<(StatusCode, Json<TreeResponse>), ServiceError> {
-    let draft: TreeDraft = entity
-        .try_into()
-        .map_err(|e: ValidationError| ServiceError::InvalidInput(e.to_string()))?;
+    let draft: TreeDraft = entity.try_into()?;
     let tree = state.tree_service.create(draft).await?;
     let view = state.tree_service.view_by_id(tree.id).await?;
     let sensor = match view.sensor_id.as_deref() {
         Some(sid) => {
-            let sensor_id =
-                SensorId::new(sid).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+            let sensor_id = SensorId::new(sid)?;
             Some(state.sensor_service.view_by_id(&sensor_id).await?)
         }
         None => None,
@@ -177,15 +164,12 @@ pub async fn update_tree(
         provider: entity.provider,
         additional_information: entity.additional_information,
     };
-    let draft: TreeDraft = create
-        .try_into()
-        .map_err(|e: ValidationError| ServiceError::InvalidInput(e.to_string()))?;
+    let draft: TreeDraft = create.try_into()?;
     let tree = state.tree_service.replace(Id::from(id), draft).await?;
     let view = state.tree_service.view_by_id(tree.id).await?;
     let sensor = match view.sensor_id.as_deref() {
         Some(sid) => {
-            let sensor_id =
-                SensorId::new(sid).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+            let sensor_id = SensorId::new(sid)?;
             Some(state.sensor_service.view_by_id(&sensor_id).await?)
         }
         None => None,
@@ -273,8 +257,7 @@ pub async fn list_tree_markers(
         .unwrap_or_default()
         .into_iter()
         .map(|y| PlantingYear::new(y as u32))
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+        .collect::<Result<Vec<_>, _>>()?;
 
     let watering_statuses = params
         .watering_status

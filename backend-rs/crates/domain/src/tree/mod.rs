@@ -26,10 +26,8 @@ use crate::{
     sensor::{SensorId, data::Watermark},
     shared::{
         coordinates::Coordinate,
-        error::ValidationError,
         geo::BoundingBox,
         provenance::{Provenance, ProviderId},
-        string_value::NonEmptyString,
         watering_status::WateringStatus,
     },
 };
@@ -42,52 +40,14 @@ pub use repository::{TreeReader, TreeWriter};
 pub use snapshot::TreeSnapshot;
 pub use view::{TreeView, TreeViewWithDistance};
 
-/// Botanical or common species name, 1–255 characters after trimming.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Species(NonEmptyString);
-
-impl Species {
-    pub fn new(value: impl Into<String>) -> Result<Self, ValidationError> {
-        Ok(Self(NonEmptyString::new(value, "tree.species", 1, 255)?))
-    }
-
-    pub fn reconstitute(value: String) -> Self {
-        Self(NonEmptyString::reconstitute(value))
-    }
-
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
+crate::newtype_nonempty! {
+    /// Botanical or common species name, 1–255 characters after trimming.
+    Species, "tree.species", 1, 255
 }
 
-impl std::fmt::Display for Species {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-/// Municipality-assigned tree identifier (e.g. `"FL-001"`), 1–64 characters.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct TreeNumber(NonEmptyString);
-
-impl TreeNumber {
-    pub fn new(value: impl Into<String>) -> Result<Self, ValidationError> {
-        Ok(Self(NonEmptyString::new(value, "tree.number", 1, 64)?))
-    }
-
-    pub fn reconstitute(value: String) -> Self {
-        Self(NonEmptyString::reconstitute(value))
-    }
-
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
-}
-
-impl std::fmt::Display for TreeNumber {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
+crate::newtype_nonempty! {
+    /// Municipality-assigned tree identifier (e.g. `"FL-001"`), 1–64 characters.
+    TreeNumber, "tree.number", 1, 64
 }
 
 #[derive(Debug, Clone, PartialEq)]

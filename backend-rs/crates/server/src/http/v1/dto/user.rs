@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::service::ServiceError;
 use domain::{
     auth::{ClientToken, LoginResponse as DomainLoginResponse},
-    shared::{email::Email, error::ValidationError},
+    shared::email::Email,
     user::{
         UserCreate as DomainUserCreate, UserRole as DomainUserRole, UserStatus as DomainUserStatus,
         UserView as DomainUserView, Username,
@@ -270,10 +270,8 @@ impl TryFrom<UserRegisterRequest> for DomainUserCreate {
     type Error = ServiceError;
 
     fn try_from(value: UserRegisterRequest) -> Result<Self, Self::Error> {
-        let username =
-            Username::new(value.username).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
-        let email = Email::new(value.email)
-            .map_err(|e: ValidationError| ServiceError::InvalidInput(e.to_string()))?;
+        let username = Username::new(value.username)?;
+        let email = Email::new(value.email)?;
         let roles = value
             .roles
             .iter()

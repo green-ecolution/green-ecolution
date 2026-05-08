@@ -61,22 +61,23 @@ impl EventHandler for ClusterStatusAggregatorHandler {
         "cluster_status_aggregator"
     }
 
-    fn handles(&self, event: &DomainEvent) -> bool {
-        !self.affected_cluster_ids(event).is_empty()
-    }
-
     async fn handle(&self, event: &DomainEvent) -> Result<Vec<DomainEvent>, EventHandlerError> {
         for cluster_id in self.affected_cluster_ids(event) {
             let mut cluster = match self.cluster_reader.by_id(cluster_id).await {
                 Ok(c) => c,
-                Err(_) => continue,
+                Err(e) => {
+                    tracing::warn!(error = %e, %cluster_id, "skipping cluster status update; load failed");
+                    continue;
+                }
             };
 
-            let trees = self
-                .tree_reader
-                .by_ids(&cluster.tree_ids)
-                .await
-                .unwrap_or_default();
+            let trees = match self.tree_reader.by_ids(&cluster.tree_ids).await {
+                Ok(t) => t,
+                Err(e) => {
+                    tracing::warn!(error = %e, %cluster_id, "skipping cluster status update; tree load failed");
+                    continue;
+                }
+            };
             let statuses: Vec<_> = trees
                 .iter()
                 .filter(|t| t.sensor_id().is_some())

@@ -291,12 +291,7 @@ pub async fn update_watering_plan(
             transporter_id: Some(Id::new(entity.transporter_id)),
             trailer_id: entity.trailer_id.map(Id::new),
             provenance: Provenance::new(
-                entity
-                    .provider
-                    .clone()
-                    .map(ProviderId::new)
-                    .transpose()
-                    .map_err(invalid)?,
+                entity.provider.clone().map(ProviderId::new).transpose()?,
                 entity.additional_information.clone(),
             ),
         };
@@ -424,8 +419,4 @@ fn parse_date(s: &str) -> Result<chrono::DateTime<chrono::Utc>, ServiceError> {
     chrono::DateTime::parse_from_rfc3339(s)
         .map(|dt| dt.with_timezone(&chrono::Utc))
         .map_err(|e| ServiceError::InvalidInput(format!("invalid date: {e}")))
-}
-
-fn invalid(e: domain::shared::error::ValidationError) -> ServiceError {
-    ServiceError::InvalidInput(e.to_string())
 }

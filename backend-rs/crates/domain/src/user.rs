@@ -19,7 +19,6 @@ use crate::{
         email::Email,
         error::ValidationError,
         pagination::{Page, Pagination},
-        string_value::NonEmptyString,
     },
     vehicle::DrivingLicense,
 };
@@ -88,28 +87,9 @@ impl FromStr for UserStatus {
     }
 }
 
-/// Keycloak username, 1–64 characters after trimming.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Username(NonEmptyString);
-
-impl Username {
-    pub fn new(value: impl Into<String>) -> Result<Self, ValidationError> {
-        Ok(Self(NonEmptyString::new(value, "user.username", 1, 64)?))
-    }
-
-    pub fn reconstitute(value: String) -> Self {
-        Self(NonEmptyString::reconstitute(value))
-    }
-
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
-}
-
-impl std::fmt::Display for Username {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
+crate::newtype_nonempty! {
+    /// Keycloak username, 1–64 characters after trimming.
+    Username, "user.username", 1, 64
 }
 
 /// Flat read model for a Keycloak-managed user.

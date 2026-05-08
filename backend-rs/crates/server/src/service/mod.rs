@@ -11,7 +11,7 @@ pub mod vehicle_service;
 pub mod watering_execution_service;
 pub mod watering_plan_service;
 
-use domain::RepositoryError;
+use domain::{RepositoryError, shared::error::ValidationError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum ServiceError {
@@ -21,6 +21,12 @@ pub enum ServiceError {
     InvalidInput(String),
     #[error(transparent)]
     Auth(#[from] AuthError),
+}
+
+impl From<ValidationError> for ServiceError {
+    fn from(err: ValidationError) -> Self {
+        Self::InvalidInput(err.to_string())
+    }
 }
 
 #[derive(Debug, thiserror::Error)]

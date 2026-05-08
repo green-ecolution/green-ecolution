@@ -1,30 +1,9 @@
 use serde_json::Value;
 
-use crate::shared::{error::ValidationError, string_value::NonEmptyString};
-
-/// Opaque provider identifier (e.g. `"tbz"`, `"smarte-grenzregion"`),
-/// 1–64 characters after trimming.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ProviderId(NonEmptyString);
-
-impl ProviderId {
-    pub fn new(value: impl Into<String>) -> Result<Self, ValidationError> {
-        Ok(Self(NonEmptyString::new(value, "provider", 1, 64)?))
-    }
-
-    pub fn reconstitute(value: String) -> Self {
-        Self(NonEmptyString::reconstitute(value))
-    }
-
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
-}
-
-impl std::fmt::Display for ProviderId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
+crate::newtype_nonempty! {
+    /// Opaque provider identifier (e.g. `"tbz"`, `"smarte-grenzregion"`),
+    /// 1–64 characters after trimming.
+    ProviderId, "provider", 1, 64
 }
 
 /// Attribution metadata attached to most aggregates.

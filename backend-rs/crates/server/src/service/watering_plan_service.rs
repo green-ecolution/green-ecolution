@@ -78,11 +78,7 @@ impl WateringPlanService {
 
     #[tracing::instrument(level = "debug", skip_all, fields(plan.id = %id))]
     pub async fn start(&self, id: Id<WateringPlan>) -> Result<WateringPlan, ServiceError> {
-        let mut plan = self.reader.by_id(id).await?;
-        let events = plan.start().map_err(map_plan_error)?;
-        self.writer.save(&plan).await?;
-        self.event_bus.publish_all(events).await;
-        Ok(plan)
+        self.transition(id, |plan| plan.start()).await
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(plan.id = %id))]
@@ -91,11 +87,7 @@ impl WateringPlanService {
         id: Id<WateringPlan>,
         note: String,
     ) -> Result<WateringPlan, ServiceError> {
-        let mut plan = self.reader.by_id(id).await?;
-        let events = plan.cancel(note).map_err(map_plan_error)?;
-        self.writer.save(&plan).await?;
-        self.event_bus.publish_all(events).await;
-        Ok(plan)
+        self.transition(id, move |plan| plan.cancel(note)).await
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(plan.id = %id))]
@@ -104,8 +96,18 @@ impl WateringPlanService {
         id: Id<WateringPlan>,
         note: String,
     ) -> Result<WateringPlan, ServiceError> {
+        self.transition(id, move |plan| plan.fail(note)).await
+    }
+
+    /// Loads the plan, applies a state-transition closure, persists, and
+    /// publishes the resulting events. Used by `start`, `cancel`, `fail`;
+    /// `replace_details` doesn't fit because it emits no events.
+    async fn transition<F>(&self, id: Id<WateringPlan>, f: F) -> Result<WateringPlan, ServiceError>
+    where
+        F: FnOnce(&mut WateringPlan) -> Result<Vec<DomainEvent>, WateringPlanError>,
+    {
         let mut plan = self.reader.by_id(id).await?;
-        let events = plan.fail(note).map_err(map_plan_error)?;
+        let events = f(&mut plan).map_err(map_plan_error)?;
         self.writer.save(&plan).await?;
         self.event_bus.publish_all(events).await;
         Ok(plan)

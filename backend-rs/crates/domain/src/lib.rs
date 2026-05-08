@@ -55,12 +55,14 @@ pub enum RepositoryError {
     Internal(String),
 }
 
+pub type RawId = i32;
+
 /// Typed integer identity.
 ///
 /// The phantom type parameter prevents accidental cross-aggregate comparisons
 /// (e.g. `Id<Tree>` cannot be compared with `Id<Vehicle>` at compile time).
 #[derive(Debug)]
-pub struct Id<T>(i32, PhantomData<T>);
+pub struct Id<T>(RawId, PhantomData<T>);
 
 impl<T> Clone for Id<T> {
     fn clone(&self) -> Self {
@@ -84,8 +86,8 @@ impl<T> std::hash::Hash for Id<T> {
     }
 }
 
-impl<T> From<i32> for Id<T> {
-    fn from(value: i32) -> Self {
+impl<T> From<RawId> for Id<T> {
+    fn from(value: RawId) -> Self {
         Self::new(value)
     }
 }
@@ -97,11 +99,33 @@ impl<T> std::fmt::Display for Id<T> {
 }
 
 impl<T> Id<T> {
-    pub fn new(id: i32) -> Self {
+    pub fn new(id: RawId) -> Self {
         Self(id, PhantomData)
     }
 
-    pub fn value(&self) -> i32 {
+    pub fn value(&self) -> RawId {
         self.0
+    }
+}
+
+pub trait IdSliceExt {
+    fn to_values(&self) -> Vec<RawId>;
+}
+
+impl<T> IdSliceExt for [Id<T>] {
+    fn to_values(&self) -> Vec<RawId> {
+        self.iter().map(Id::value).collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{Id, IdSliceExt};
+
+    #[test]
+    fn id_slice_ext_extracts_inner_values() {
+        struct Marker;
+        let ids: Vec<Id<Marker>> = vec![Id::new(1), Id::new(2), Id::new(3)];
+        assert_eq!(ids.to_values(), vec![1, 2, 3]);
     }
 }

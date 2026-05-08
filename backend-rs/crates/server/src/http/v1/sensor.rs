@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use axum::{
     Json,
-    extract::{Path, Query, State},
+    extract::{Query, State},
     http::StatusCode,
 };
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -10,6 +10,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     http::{
         AppState,
+        extractors::SensorIdPath,
         v1::{
             dto::{
                 ListResponse,
@@ -21,11 +22,7 @@ use crate::{
     },
     service::ServiceError,
 };
-use domain::{
-    RepositoryError,
-    sensor::{SensorId, SensorSearchQuery},
-    shared::pagination::Pagination,
-};
+use domain::{RepositoryError, sensor::SensorSearchQuery, shared::pagination::Pagination};
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
@@ -70,12 +67,11 @@ pub async fn list_sensors(
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %id))]
+#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
 pub async fn get_sensor(
     State(state): State<Arc<AppState>>,
-    Path(id): Path<String>,
+    SensorIdPath(sensor_id): SensorIdPath,
 ) -> Result<Json<SensorResponse>, ServiceError> {
-    let sensor_id = SensorId::new(id).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
     let view = state.sensor_service.view_by_id(&sensor_id).await?;
     Ok(Json(SensorResponse::from(&view)))
 }
@@ -91,12 +87,11 @@ pub async fn get_sensor(
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %id))]
+#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
 pub async fn delete_sensor(
     State(state): State<Arc<AppState>>,
-    Path(id): Path<String>,
+    SensorIdPath(sensor_id): SensorIdPath,
 ) -> Result<StatusCode, ServiceError> {
-    let sensor_id = SensorId::new(id).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
     state.sensor_service.delete(&sensor_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -111,12 +106,11 @@ pub async fn delete_sensor(
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %id))]
+#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
 pub async fn list_sensor_data(
     State(state): State<Arc<AppState>>,
-    Path(id): Path<String>,
+    SensorIdPath(sensor_id): SensorIdPath,
 ) -> Result<Json<Vec<SensorDataResponse>>, ServiceError> {
-    let sensor_id = SensorId::new(id).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
     let readings = state
         .sensor_service
         .view_history(&sensor_id, 10_000)
@@ -139,10 +133,8 @@ pub async fn list_sensor_data(
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
 pub async fn get_tree_by_sensor(
     State(state): State<Arc<AppState>>,
-    Path(sensor_id): Path<String>,
+    SensorIdPath(sensor_id): SensorIdPath,
 ) -> Result<Json<TreeResponse>, ServiceError> {
-    let sensor_id =
-        SensorId::new(sensor_id).map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
     let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
     let tree = state
         .tree_service

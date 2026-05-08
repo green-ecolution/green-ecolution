@@ -18,7 +18,7 @@ impl EventBus for InMemoryEventBus {
     async fn publish(&self, event: DomainEvent) {
         let mut queue: Vec<DomainEvent> = vec![event];
         while let Some(event) = queue.pop() {
-            for handler in self.handlers.iter().filter(|h| h.handles(&event)) {
+            for handler in &self.handlers {
                 match handler.handle(&event).await {
                     Ok(follow_ups) => queue.extend(follow_ups),
                     Err(e) => tracing::error!(

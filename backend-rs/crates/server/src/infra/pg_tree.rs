@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use domain::{IdSliceExt, RawId};
 use sqlx::PgPool;
 
 use domain::tree::snapshot::TreeSnapshot;
@@ -54,7 +55,7 @@ impl TreeReader for PgTreeRepository {
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn by_ids(&self, ids: &[Id<Tree>]) -> Result<Vec<Tree>, RepositoryError> {
-        let id_values: Vec<i32> = ids.iter().map(|id| id.value()).collect();
+        let id_values: Vec<RawId> = ids.to_values();
         let snaps = sqlx::query_as!(
             TreeSnapshot,
             r#"SELECT id, tree_cluster_id AS cluster_id, sensor_id,
@@ -195,7 +196,7 @@ impl TreeReader for PgTreeRepository {
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn view_by_ids(&self, ids: &[Id<Tree>]) -> Result<Vec<TreeView>, RepositoryError> {
-        let id_values: Vec<i32> = ids.iter().map(|id| id.value()).collect();
+        let id_values: Vec<RawId> = ids.to_values();
         let rows = sqlx::query!(
             r#"SELECT id, created_at, updated_at, tree_cluster_id, sensor_id,
                       planting_year, species, number, latitude, longitude,

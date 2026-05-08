@@ -17,6 +17,7 @@ use crate::{
                     ClusterMarkerListResponse, ClusterMarkerResponse, TreeClusterCreateRequest,
                     TreeClusterInListResponse, TreeClusterResponse, TreeClusterUpdateRequest,
                 },
+                sensor::resolve_sensors_by_str_ids,
                 tree::TreeResponse,
             },
             pagination::PaginationParams,
@@ -31,9 +32,7 @@ use domain::{
         TreeClusterView,
     },
     region::Region,
-    sensor::SensorId,
     shared::{
-        error::ValidationError,
         pagination::Pagination,
         provenance::{Provenance, ProviderId},
     },
@@ -59,25 +58,16 @@ async fn build_cluster_response(
         cluster.tree_ids.iter().map(|&id| Id::new(id)).collect();
     let trees = state.tree_service.view_by_ids(&tree_ids).await?;
 
-    let sensor_ids: Vec<SensorId> = trees
-        .iter()
-        .filter_map(|t| {
-            t.sensor_id
-                .as_deref()
-                .map(SensorId::new)
-                .and_then(Result::ok)
-        })
-        .collect();
-    let sensors = state.sensor_service.view_by_ids(&sensor_ids).await?;
-    let sensor_map: HashMap<&str, _> = sensors.iter().map(|s| (s.id.as_str(), s)).collect();
+    let sensor_map = resolve_sensors_by_str_ids(
+        &state.sensor_service,
+        trees.iter().filter_map(|t| t.sensor_id.as_deref()),
+    )
+    .await?;
 
     let tree_responses: Vec<TreeResponse> = trees
         .iter()
         .map(|t| {
-            let sensor = t
-                .sensor_id
-                .as_deref()
-                .and_then(|id| sensor_map.get(id).copied());
+            let sensor = t.sensor_id.as_deref().and_then(|id| sensor_map.get(id));
             TreeResponse::from((t, sensor))
         })
         .collect();
@@ -173,9 +163,7 @@ pub async fn create_cluster(
     State(state): State<Arc<AppState>>,
     Json(entity): Json<TreeClusterCreateRequest>,
 ) -> Result<(StatusCode, Json<TreeClusterResponse>), ServiceError> {
-    let draft: TreeClusterDraft = entity
-        .try_into()
-        .map_err(|e: ValidationError| ServiceError::InvalidInput(e.to_string()))?;
+    let draft: TreeClusterDraft = entity.try_into()?;
     let cluster = state.cluster_service.create(draft).await?;
     let view = state.cluster_service.view_by_id(cluster.id).await?;
     let response = build_cluster_response(&state, &view).await?;
@@ -205,19 +193,13 @@ pub async fn update_cluster(
 ) -> Result<Json<TreeClusterResponse>, ServiceError> {
     let cluster_id = Id::from(id);
     let update = TreeClusterUpdate {
-        name: ClusterName::new(entity.name)
-            .map_err(|e| ServiceError::InvalidInput(e.to_string()))?,
-        address: ClusterAddress::new(entity.address)
-            .map_err(|e| ServiceError::InvalidInput(e.to_string()))?,
+        name: ClusterName::new(entity.name)?,
+        address: ClusterAddress::new(entity.address)?,
         description: entity.description,
         soil_condition: Some(entity.soil_condition.into()),
         tree_ids: entity.tree_ids.into_iter().map(Id::new).collect(),
         provenance: Provenance::new(
-            entity
-                .provider
-                .map(ProviderId::new)
-                .transpose()
-                .map_err(|e: ValidationError| ServiceError::InvalidInput(e.to_string()))?,
+            entity.provider.map(ProviderId::new).transpose()?,
             entity.additional_information,
         ),
     };

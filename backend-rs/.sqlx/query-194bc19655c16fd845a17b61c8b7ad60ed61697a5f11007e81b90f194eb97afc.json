@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT tc.id, tc.created_at, tc.updated_at, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: Option<SoilCondition>\",\n                      tc.latitude, tc.longitude,\n                      tc.last_watered AS \"last_watered: DateTime<Utc>\",\n                      tc.provider,\n                      tc.additional_informations AS additional_info,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS \"tree_ids!: Vec<i32>\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE ($1::watering_status[] = '{}' OR tc.watering_status = ANY($1))\n              AND ($2::int[] = '{}' OR tc.region_id = ANY($2))\n              AND ($3::text IS NULL OR tc.provider = $3)\n            GROUP BY tc.id\n            ORDER BY tc.name ASC, tc.id ASC\n            LIMIT $4 OFFSET $5",
+  "query": "SELECT tc.id, tc.created_at, tc.updated_at, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: Option<SoilCondition>\",\n                      tc.latitude, tc.longitude,\n                      tc.last_watered AS \"last_watered: DateTime<Utc>\",\n                      tc.provider,\n                      tc.additional_informations AS additional_info,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS \"tree_ids!: Vec<RawId>\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.id = $1\n            GROUP BY tc.id",
   "describe": {
     "columns": [
       {
@@ -111,37 +111,13 @@
       },
       {
         "ordinal": 16,
-        "name": "tree_ids!: Vec<i32>",
+        "name": "tree_ids!: Vec<RawId>",
         "type_info": "Int4Array"
       }
     ],
     "parameters": {
       "Left": [
-        {
-          "Custom": {
-            "name": "watering_status[]",
-            "kind": {
-              "Array": {
-                "Custom": {
-                  "name": "watering_status",
-                  "kind": {
-                    "Enum": [
-                      "good",
-                      "moderate",
-                      "bad",
-                      "unknown",
-                      "just watered"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        "Int4Array",
-        "Text",
-        "Int8",
-        "Int8"
+        "Int4"
       ]
     },
     "nullable": [
@@ -164,5 +140,5 @@
       null
     ]
   },
-  "hash": "5bfb936bfa95e7a4468ad0929e72c47cb1aa3e6c04d3fbbf3dda5ce65f4f8952"
+  "hash": "194bc19655c16fd845a17b61c8b7ad60ed61697a5f11007e81b90f194eb97afc"
 }

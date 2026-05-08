@@ -59,10 +59,6 @@ impl EventHandler for TreeWateringFromSensorHandler {
         "tree_watering_from_sensor"
     }
 
-    fn handles(&self, event: &DomainEvent) -> bool {
-        matches!(event, DomainEvent::SensorDataReceived { .. })
-    }
-
     async fn handle(&self, event: &DomainEvent) -> Result<Vec<DomainEvent>, EventHandlerError> {
         let DomainEvent::SensorDataReceived {
             sensor_id,

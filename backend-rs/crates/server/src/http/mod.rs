@@ -28,6 +28,7 @@ use crate::{
 use domain::info::SystemInfoProvider;
 
 pub mod auth;
+pub mod extractors;
 mod tracing;
 pub mod v1;
 
