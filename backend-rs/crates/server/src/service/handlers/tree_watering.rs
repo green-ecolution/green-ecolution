@@ -37,7 +37,9 @@ impl TreeWateringFromSensorHandler {
         let Some(mut tree) = self.tree_reader.by_sensor_id(sensor_id).await? else {
             return Ok(vec![]);
         };
-        let new_status = match tree.calculate_watering_status(watermarks, Utc::now()) {
+        let new_status = match tree
+            .calculate_watering_status_from_watermarks(watermarks, Utc::now())
+        {
             Ok(s) => s,
             Err(e) => {
                 tracing::debug!(error = %e, "skipping tree watering update; calibration rejected payload");
