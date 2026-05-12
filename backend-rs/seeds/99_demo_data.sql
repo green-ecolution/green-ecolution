@@ -31,16 +31,27 @@ VALUES
   (10, 'Lautrupsbach', 'moderate', 0.45, 13, 'An der Nordstraße', 'Sehr viel versiegelter Boden.', 'sandig', 54.79265065021804, 9.454269041383837, ST_SetSRID(ST_MakePoint(9.454269041383837, 54.76671656688957), 4326));
 SELECT setval('tree_clusters_id_seq', (SELECT MAX(id) FROM tree_clusters));
 
-INSERT INTO sensors (id, status, latitude, longitude, geometry)
+INSERT INTO sensors (id, status, type, model_id)
 VALUES
-    ('sensor-1', 'offline', 54.82124518093376, 9.485702120628517, ST_SetSRID(ST_MakePoint(9.485702120628517, 54.82124518093376), 4326)),
-    ('sensor-2', 'offline', 54.8215076622281, 9.487153277881877, ST_SetSRID(ST_MakePoint(9.487153277881877, 54.8215076622281), 4326)),
-    ('sensor-3', 'offline', 54.78780993841013, 9.444052105200551, ST_SetSRID(ST_MakePoint(9.444052105200551, 54.78780993841013), 4326)),
-    ('sensor-4', 'offline', 54.775679885633636, 9.451171073968197, ST_SetSRID(ST_MakePoint(9.451171073968197, 54.775679885633636), 4326)),
-    ('sensor-5', 'offline', 54.782630, 9.423792, ST_SetSRID(ST_MakePoint(9.423792, 54.782630), 4326)),
-    ('sensor-6', 'offline', 54.796916, 9.421332, ST_SetSRID(ST_MakePoint(9.421332, 54.796916), 4326)),
-    ('sensor-7', 'offline', 54.7697451282801, 9.439562555553788, ST_SetSRID(ST_MakePoint(9.439562555553788, 54.7697451282801), 4326)),
-    ('sensor-8', 'offline', 54.792472, 9.450000, ST_SetSRID(ST_MakePoint(9.450000, 54.792472), 4326));
+    ('sensor-1', 'offline', 'lorawan', 1),
+    ('sensor-2', 'offline', 'lorawan', 1),
+    ('sensor-3', 'offline', 'lorawan', 1),
+    ('sensor-4', 'offline', 'lorawan', 1),
+    ('sensor-5', 'offline', 'lorawan', 1),
+    ('sensor-6', 'offline', 'lorawan', 1),
+    ('sensor-7', 'offline', 'lorawan', 1),
+    ('sensor-8', 'offline', 'lorawan', 1);
+
+INSERT INTO sensor_lorawan (id, serial_number, dev_eui, app_eui, app_key)
+VALUES
+    ('sensor-1', '', '', '', ''),
+    ('sensor-2', '', '', '', ''),
+    ('sensor-3', '', '', '', ''),
+    ('sensor-4', '', '', '', ''),
+    ('sensor-5', '', '', '', ''),
+    ('sensor-6', '', '', '', ''),
+    ('sensor-7', '', '', '', ''),
+    ('sensor-8', '', '', '', '');
 
 INSERT INTO trees (tree_cluster_id, sensor_id, planting_year, species, number, latitude, longitude, geometry, watering_status, description)
 VALUES
@@ -376,6 +387,13 @@ UPDATE trees
    SET geometry = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)
  WHERE longitude IS NOT NULL AND latitude IS NOT NULL;
 
-UPDATE sensors
-   SET geometry = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)
- WHERE longitude IS NOT NULL AND latitude IS NOT NULL;
+-- Prepared sensors (GES-1000) to exercise the activate flow during demos.
+INSERT INTO sensors (id, status, type, model_id)
+VALUES
+    ('sensor-prepared-1', 'prepared', 'lorawan', 2),
+    ('sensor-prepared-2', 'prepared', 'lorawan', 2);
+
+INSERT INTO sensor_lorawan (id, serial_number, dev_eui, app_eui, app_key)
+VALUES
+    ('sensor-prepared-1', '', '', '', ''),
+    ('sensor-prepared-2', '', '', '', '');
