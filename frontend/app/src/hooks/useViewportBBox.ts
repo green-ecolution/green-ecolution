@@ -46,10 +46,12 @@ export function useViewportBBox(opts?: UseViewportBBoxOptions): BoundingBox | nu
     )
   })
 
-  // Ref tracks the current buffered bbox synchronously so the debounced
-  // comparison sees the latest value without waiting for a render cycle.
+  // Ref mirrors bbox so the debounced comparison reads the latest value
+  // without re-subscribing the move/zoom listeners on every state change.
   const bboxRef = useRef(bbox)
-  bboxRef.current = bbox
+  useEffect(() => {
+    bboxRef.current = bbox
+  }, [bbox])
 
   useEffect(() => {
     if (!map) return
