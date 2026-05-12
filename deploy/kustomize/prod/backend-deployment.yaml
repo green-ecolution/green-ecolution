@@ -10,34 +10,32 @@ spec:
     spec:
       initContainers:
         - name: init-migrations
-          image: init-migrations-image
+          image: backend-image
           imagePullPolicy: Always
+          command: ["./migrate"]
+          args: ["up"]
           env:
-            - name: MIGRATION_WITH_SEED
-              value: "false"
-            - name: MIGRATION_WITH_DB_RESET
-              value: "false"
-            - name: POSTGRES_DB
+            - name: APP_DATABASE__DATABASE_NAME
               valueFrom:
                 configMapKeyRef:
                   name: backend-config
                   key: GE_SERVER_DATABASE_NAME
-            - name: POSTGRES_HOST
+            - name: APP_DATABASE__HOST
               valueFrom:
                 configMapKeyRef:
                   name: backend-config
                   key: GE_SERVER_DATABASE_HOST
-            - name: POSTGRES_PORT
+            - name: APP_DATABASE__PORT
               valueFrom:
                 configMapKeyRef:
                   name: backend-config
                   key: GE_SERVER_DATABASE_PORT
-            - name: POSTGRES_USER
+            - name: APP_DATABASE__USERNAME
               valueFrom:
                 secretKeyRef:
                   name: backend-secrets
                   key: GE_SERVER_DATABASE_USERNAME
-            - name: POSTGRES_PASSWORD
+            - name: APP_DATABASE__PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: backend-secrets

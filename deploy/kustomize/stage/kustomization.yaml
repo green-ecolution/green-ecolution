@@ -11,9 +11,6 @@ images:
 - name: frontend-image
   newName: ghcr.io/green-ecolution/green-ecolution/frontend
   newTag: v0.1.2-25fc262-stage
-- name: init-migrations-image
-  newName: ghcr.io/green-ecolution/green-ecolution/migrations-postgres
-  newTag: v0.1.2-25fc262-stage
 generators:
 - ./secret-generator.yaml
 patches:
