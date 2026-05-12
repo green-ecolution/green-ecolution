@@ -13,6 +13,7 @@ use crate::{
         pg_evaluation::PgEvaluationRepository,
         pg_region::PgRegionRepository,
         pg_sensor::PgSensorRepository,
+        pg_sensor_model::PgSensorModelRepository,
         pg_tree::PgTreeRepository,
         pg_vehicle::PgVehicleRepository,
         pg_watering_plan::PgWateringPlanRepository,
@@ -103,6 +104,9 @@ impl Application {
         let sensor_reading_reader: Arc<dyn domain::sensor::SensorReadingReader> =
             sensor_repo.clone();
         let sensor_reading_writer: Arc<dyn domain::sensor::SensorReadingWriter> = sensor_repo;
+        let sensor_model_repo = Arc::new(PgSensorModelRepository::new(pool.clone()));
+        let sensor_model_reader: Arc<dyn domain::sensor_model::SensorModelReader> =
+            sensor_model_repo;
         let vehicle_repo = Arc::new(PgVehicleRepository::new(pool.clone()));
         let vehicle_reader: Arc<dyn domain::vehicle::VehicleReader> = vehicle_repo.clone();
         let vehicle_writer: Arc<dyn domain::vehicle::VehicleWriter> = vehicle_repo;
@@ -161,6 +165,7 @@ impl Application {
             sensor_writer,
             sensor_reading_reader,
             sensor_reading_writer,
+            sensor_model_reader,
             tree_reader.clone(),
             tree_writer.clone(),
             event_bus.clone(),

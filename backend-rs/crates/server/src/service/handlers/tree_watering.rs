@@ -4,8 +4,7 @@ use chrono::Utc;
 
 use crate::service::event_bus::{EventHandler, EventHandlerError};
 use domain::{
-    events::DomainEvent,
-    sensor::{SensorId, data::Watermark},
+    events::{DomainEvent, SensorDataReceivedPayload, SensorReadings},
     tree::{TreeReader, TreeWriter},
 };
 
@@ -13,9 +12,10 @@ use domain::{
 /// watering-status decision on the linked tree.
 ///
 /// Looks up the tree currently bound to the reading's sensor, asks the tree
-/// aggregate to score the watermarks against its calibration table, and
-/// returns the `TreeWateringStatusChanged` events the aggregate produces (the
-/// bus chains them so the cluster status aggregator picks them up).
+/// aggregate to score the readings against the calibration appropriate for the
+/// sensor family (Watermark vs. volumetric), and returns the
+/// `TreeWateringStatusChanged` events the aggregate produces (the bus chains
+/// them so the cluster status aggregator picks them up).
 pub struct TreeWateringFromSensorHandler {
     tree_reader: Arc<dyn TreeReader>,
     tree_writer: Arc<dyn TreeWriter>,
@@ -31,15 +31,18 @@ impl TreeWateringFromSensorHandler {
 
     async fn handle_inner(
         &self,
-        sensor_id: &SensorId,
-        watermarks: &[Watermark],
+        payload: &SensorDataReceivedPayload,
     ) -> Result<Vec<DomainEvent>, EventHandlerError> {
-        let Some(mut tree) = self.tree_reader.by_sensor_id(sensor_id).await? else {
+        let Some(mut tree) = self.tree_reader.by_sensor_id(&payload.sensor_id).await? else {
             return Ok(vec![]);
         };
-        let new_status = match tree
-            .calculate_watering_status_from_watermarks(watermarks, Utc::now())
-        {
+        let outcome = match &payload.readings {
+            SensorReadings::Watermarks(w) => {
+                tree.calculate_watering_status_from_watermarks(w, Utc::now())
+            }
+            SensorReadings::Volumetrics(v) => tree.calculate_watering_status_from_volumetric(v),
+        };
+        let new_status = match outcome {
             Ok(s) => s,
             Err(e) => {
                 tracing::debug!(error = %e, "skipping tree watering update; calibration rejected payload");
@@ -65,9 +68,6 @@ impl EventHandler for TreeWateringFromSensorHandler {
         let DomainEvent::SensorDataReceived(payload) = event else {
             return Ok(vec![]);
         };
-        let domain::events::SensorReadings::Watermarks(watermarks) = &payload.readings else {
-            return Ok(vec![]);
-        };
-        self.handle_inner(&payload.sensor_id, watermarks).await
+        self.handle_inner(payload).await
     }
 }

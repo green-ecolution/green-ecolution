@@ -21,6 +21,10 @@ pub enum ServiceError {
     InvalidInput(String),
     #[error(transparent)]
     Auth(#[from] AuthError),
+    #[error("tree already has a different sensor")]
+    TreeAlreadyHasSensor,
+    #[error("sensor is already activated")]
+    AlreadyActivated,
 }
 
 impl From<ValidationError> for ServiceError {

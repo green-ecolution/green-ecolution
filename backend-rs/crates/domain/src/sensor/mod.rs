@@ -13,6 +13,7 @@
 
 pub mod data;
 pub mod error;
+pub mod payload;
 pub mod repository;
 pub mod snapshot;
 pub mod view;
