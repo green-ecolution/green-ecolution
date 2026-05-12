@@ -51,8 +51,12 @@ impl SystemInfoProvider for DefaultSystemInfoProvider {
             rust_version: format!("rustc {}", env!("CARGO_PKG_RUST_VERSION")),
             build_time: Utc::now(),
             git: Git {
-                branch: option_env!("GE_GIT_BRANCH").unwrap_or("unknown").to_string(),
-                commit: option_env!("GE_GIT_COMMIT").unwrap_or("unknown").to_string(),
+                branch: option_env!("GE_GIT_BRANCH")
+                    .unwrap_or("unknown")
+                    .to_string(),
+                commit: option_env!("GE_GIT_COMMIT")
+                    .unwrap_or("unknown")
+                    .to_string(),
                 repository: "https://github.com/green-ecolution/backend-rs"
                     .parse()
                     .unwrap(),
