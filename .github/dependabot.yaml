@@ -74,23 +74,8 @@ updates:
           - "minor"
           - "patch"
 
-  - package-ecosystem: "gomod"
-    directory: "/backend"
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies: backend"
-    groups:
-      minor-and-patch:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "gomod"
-    directory: "/backend/pkg/plugin"
+  - package-ecosystem: "cargo"
+    directory: "/backend-rs"
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
@@ -117,7 +102,7 @@ updates:
           - "*"
 
   - package-ecosystem: "docker"
-    directory: "/backend"
+    directory: "/backend-rs"
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
@@ -126,14 +111,6 @@ updates:
 
   - package-ecosystem: "docker"
     directory: "/frontend"
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies: docker"
-
-  - package-ecosystem: "docker"
-    directory: "/.docker/migrations"
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
