@@ -221,7 +221,11 @@ pub struct LorawanCredentialsRequest {
     pub dev_eui: String,
     #[schema(example = "70b3d57ed0000000", min_length = 16, max_length = 16)]
     pub app_eui: String,
-    #[schema(example = "00112233445566778899aabbccddeeff", min_length = 32, max_length = 32)]
+    #[schema(
+        example = "00112233445566778899aabbccddeeff",
+        min_length = 32,
+        max_length = 32
+    )]
     pub app_key: String,
     #[serde(default)]
     #[schema(nullable)]

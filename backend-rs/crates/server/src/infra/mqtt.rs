@@ -234,7 +234,10 @@ fn build_ges_1000(
     })
 }
 
-fn normalize_eco_drizzler(model: &SensorModel, payload: &EcoDrizzlerPayload) -> Vec<NormalizedValue> {
+fn normalize_eco_drizzler(
+    model: &SensorModel,
+    payload: &EcoDrizzlerPayload,
+) -> Vec<NormalizedValue> {
     let mut out = Vec::with_capacity(payload.watermarks.len() + 2);
     for w in &payload.watermarks {
         if let Some(model_ability_id) =
@@ -330,9 +333,7 @@ mod tests {
     use super::*;
     use domain::{
         Id,
-        sensor_model::{
-            SensorAbility, SensorAbilityUnit, SensorModelAbility, SensorModelName,
-        },
+        sensor_model::{SensorAbility, SensorAbilityUnit, SensorModelAbility, SensorModelName},
     };
     use serde_json::json;
 
@@ -437,12 +438,8 @@ mod tests {
             description: None,
             abilities: vec![],
         };
-        let err = build_ingest(
-            &model,
-            &json!({"device": "x"}),
-            SensorId::new("x").unwrap(),
-        )
-        .unwrap_err();
+        let err =
+            build_ingest(&model, &json!({"device": "x"}), SensorId::new("x").unwrap()).unwrap_err();
         assert!(matches!(err, MqttSubscriberError::Decode(_)));
     }
 }

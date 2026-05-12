@@ -129,11 +129,7 @@ impl SensorService {
     /// transition; rejects rebinding to a different tree or activating an
     /// already-active sensor.
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id, tree.id = tree_id))]
-    pub async fn activate(
-        &self,
-        id: &SensorId,
-        tree_id: i32,
-    ) -> Result<SensorView, ServiceError> {
+    pub async fn activate(&self, id: &SensorId, tree_id: i32) -> Result<SensorView, ServiceError> {
         let mut sensor = self.reader.by_id(id).await?;
         let tid = Id::<Tree>::new(tree_id);
         let mut tree = self.tree_reader.by_id(tid).await?;

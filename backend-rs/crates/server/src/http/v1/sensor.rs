@@ -224,7 +224,10 @@ pub async fn activate_sensor(
     SensorIdPath(sensor_id): SensorIdPath,
     Json(body): Json<ActivateSensorRequest>,
 ) -> Result<Json<SensorResponse>, ServiceError> {
-    let view = state.sensor_service.activate(&sensor_id, body.tree_id).await?;
+    let view = state
+        .sensor_service
+        .activate(&sensor_id, body.tree_id)
+        .await?;
     Ok(Json(SensorResponse::from(&view)))
 }
 
