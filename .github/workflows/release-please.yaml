@@ -33,6 +33,55 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
+      # release-please bumps backend-rs/Cargo.toml's workspace version on the
+      # release PR but does not touch Cargo.lock. Sync it here so the release
+      # PR stays buildable with --locked.
+      - name: Get bot user id
+        if: ${{ steps.release.outputs.pr }}
+        id: get-user-id
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve release PR branch
+        if: ${{ steps.release.outputs.pr }}
+        id: pr-branch
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          PR_NUMBER=$(echo '${{ steps.release.outputs.pr }}' | jq -r '.number')
+          BRANCH=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}" --jq '.head.ref')
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Checkout release PR branch
+        if: ${{ steps.release.outputs.pr }}
+        uses: actions/checkout@v6
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          ref: ${{ steps.pr-branch.outputs.branch }}
+          fetch-depth: 0
+
+      - name: Setup Rust toolchain
+        if: ${{ steps.release.outputs.pr }}
+        uses: ./.github/actions/setup-backend
+
+      - name: Sync Cargo.lock with bumped workspace version
+        if: ${{ steps.release.outputs.pr }}
+        run: |
+          set -euo pipefail
+          cargo update \
+            --manifest-path backend-rs/Cargo.toml \
+            -p server -p domain -p domain-wasm
+          if git diff --quiet backend-rs/Cargo.lock; then
+            echo "Cargo.lock already in sync"
+            exit 0
+          fi
+          git config user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
+          git add backend-rs/Cargo.lock
+          git commit -m "chore: sync Cargo.lock after release-please version bump"
+          git push origin "${{ steps.pr-branch.outputs.branch }}"
+
       - name: Output release info
         if: ${{ steps.release.outputs.release_created == 'true' }}
         run: |
