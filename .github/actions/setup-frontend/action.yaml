@@ -38,3 +38,6 @@ runs:
       shell: bash
       working-directory: ./frontend
       run: pnpm install --frozen-lockfile
+    - name: Build domain WASM bindings
+      shell: bash
+      run: just build-domain-wasm

@@ -80,6 +80,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-frontend
       - uses: docker/setup-buildx-action@v4
       - name: Test frontend Dockerfile
         uses: docker/build-push-action@v7

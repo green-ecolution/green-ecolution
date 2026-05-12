@@ -188,7 +188,7 @@ jobs:
 
   build-frontend:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     needs: [check-release-pr, determine-environment]
     if: needs.check-release-pr.outputs.should-build == 'true'
     permissions:
@@ -199,6 +199,8 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ needs.determine-environment.outputs.checkout-ref }}
+
+      - uses: ./.github/actions/setup-frontend
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
