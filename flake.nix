@@ -60,9 +60,8 @@
 
       si = self.sourceInfo or {};
       gitCommit = si.rev or si.dirtyRev or "local";
-      # sourceInfo does not expose branch/repo url; keep as placeholders
       gitBranch = "local";
-      gitRepo = "local";
+      gitRepo = "https://github.com/green-ecolution/green-ecolution";
 
       buildDate =
         if si ? lastModifiedDate
@@ -99,43 +98,34 @@
         dontFixup = true;
       };
 
-      backend = pkgs.buildGoModule rec {
+      backend = pkgs.rustPlatform.buildRustPackage rec {
         inherit meta;
         pname = "green-ecolution";
         version = "0.1.2"; # x-release-please-version
-        src = lib.cleanSource ./backend;
+        src = lib.cleanSource ./backend-rs;
 
-        subPackages = ["."];
-        ldflags = [
-          "-s"
-          "-w"
-          "-X main.version=${version}"
-          "-X github.com/green-ecolution/backend/internal/storage/local/info.version=${version}"
-          "-X github.com/green-ecolution/backend/internal/storage/local/info.gitCommit=${gitCommit}"
-          "-X github.com/green-ecolution/backend/internal/storage/local/info.gitBranch=${gitBranch}"
-          "-X github.com/green-ecolution/backend/internal/storage/local/info.gitRepository=${gitRepo}"
-          "-X github.com/green-ecolution/backend/internal/storage/local/info.buildTime=${buildDate}"
-        ];
+        cargoLock = {
+          lockFile = ./backend-rs/Cargo.lock;
+        };
 
+        nativeBuildInputs = with pkgs; [clang lld];
+
+        cargoBuildFlags = ["--bin" "green-ecolution" "--bin" "migrate"];
+
+        # Tests rely on testcontainers (live Postgres)
         doCheck = false;
-        excludedPackages = ["pkg/*"];
-        vendorHash = "sha256-uQVRzSFILxMhesQucVNXFiKIiBDWzF/teO056vIaAyM=";
-        env.CGO_ENABLED = 0;
 
-        postInstall = ''
-          if [ -e "$out/bin/backend" ]; then
-            mv "$out/bin/backend" "$out/bin/green-ecolution"
-          fi
-        '';
+        env = {
+          SQLX_OFFLINE = "true";
+          GE_VERSION = version;
+          GE_GIT_COMMIT = gitCommit;
+          GE_GIT_BRANCH = gitBranch;
+          GE_GIT_REPOSITORY = gitRepo;
+          GE_BUILD_TIME = buildDate;
+        };
       };
 
-      default = backend.overrideAttrs (_: {
-        name = "green-ecolution";
-        preBuild = ''
-          mkdir -p frontend/dist
-          cp -r ${frontend}/* frontend/dist/
-        '';
-      });
+      default = backend;
     });
 
     devShells = forEachSupportedSystem ({pkgs}: let
