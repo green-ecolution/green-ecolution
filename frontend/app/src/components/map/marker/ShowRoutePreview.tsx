@@ -16,11 +16,7 @@ const ShowRoutePreview = ({ transporterId, trailerId, selectedClustersIds }: Sho
   // restore the route visualization (markers + GeoJSON layer).
   useSuspenseQuery(routePreviewQuery(transporterId, selectedClustersIds, trailerId))
 
-  return (
-    <>
-      {/* Route preview is not yet implemented in the Rust backend */}
-    </>
-  )
+  return <>{/* Route preview is not yet implemented in the Rust backend */}</>
 }
 
 export default ShowRoutePreview

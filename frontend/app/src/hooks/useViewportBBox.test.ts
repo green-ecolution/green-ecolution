@@ -4,7 +4,7 @@ import { useViewportBBox, expandBBox, fitsInside } from './useViewportBBox'
 import type { BoundingBox } from '@/api/queries'
 
 const fakeMap = (bounds: { south: number; west: number; north: number; east: number }) => {
-  let listeners: Record<string, Array<() => void>> = {}
+  const listeners: Record<string, (() => void)[]> = {}
   return {
     getBounds: () => ({
       getSouth: () => bounds.south,

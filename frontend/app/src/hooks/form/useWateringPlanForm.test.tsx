@@ -96,9 +96,7 @@ describe('useWateringPlanForm', () => {
     )
 
     expect(result.current.form.getValues('transporterId')).toBe(1)
-    expect(result.current.form.getValues('status')).toBe(
-      WateringPlanStatus.Planned,
-    )
+    expect(result.current.form.getValues('status')).toBe(WateringPlanStatus.Planned)
     expect(result.current.form.getValues('driverIds')).toEqual([
       '550e8400-e29b-41d4-a716-446655440000',
     ])

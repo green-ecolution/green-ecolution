@@ -58,9 +58,7 @@ const FilterableClustersContent = memo(
     )
 
     // TODO: wateringStatuses and regions filter params are not yet supported in the new API
-    const { data } = useSuspenseQuery(
-      treeClusterQuery(hasActiveFilter ? {} : undefined),
-    )
+    const { data } = useSuspenseQuery(treeClusterQuery(hasActiveFilter ? {} : undefined))
 
     const filteredData = useMemo(
       () =>

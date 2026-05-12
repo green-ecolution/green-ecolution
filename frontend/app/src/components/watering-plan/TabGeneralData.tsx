@@ -93,16 +93,15 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
             description={statusDetails.description}
           />
         </li>
-        {wateringPlan?.status === WateringPlanStatus.Canceled &&
-          wateringPlan.cancellationNote && (
-            <li>
-              <StatusCard
-                label="Notiz zum Abbruch"
-                value=""
-                description={wateringPlan.cancellationNote}
-              />
-            </li>
-          )}
+        {wateringPlan?.status === WateringPlanStatus.Canceled && wateringPlan.cancellationNote && (
+          <li>
+            <StatusCard
+              label="Notiz zum Abbruch"
+              value=""
+              description={wateringPlan.cancellationNote}
+            />
+          </li>
+        )}
         {wateringPlan?.status === WateringPlanStatus.Finished && (
           <li>
             <StatusCard

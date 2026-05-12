@@ -9,12 +9,7 @@ import {
   wateringPlanQuery,
   wateringPlanIdQuery,
 } from './queries'
-import type {
-  Tree,
-  Vehicle,
-  TreeCluster,
-  WateringPlan,
-} from '@/api/backendApi'
+import type { Tree, Vehicle, TreeCluster, WateringPlan } from '@/api/backendApi'
 import type {
   ListResponseTreeResponse,
   ListResponseVehicleResponse,

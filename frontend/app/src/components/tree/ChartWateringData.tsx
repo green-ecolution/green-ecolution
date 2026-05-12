@@ -41,7 +41,7 @@ const ChartWateringData: React.FC<ChartWateringDataProps> = ({ sensorId }) => {
         name: format(new Date(entry.updatedAt), 'dd.MM.yyyy'),
       }
 
-      const watermarks = ((payload.watermarks as Watermark[]) ?? [])
+      const watermarks = (payload.watermarks as Watermark[]) ?? []
       watermarks.forEach((watermark: Watermark) => {
         formattedEntry[`depth_${watermark.depth}`] = watermark.resistance
       })

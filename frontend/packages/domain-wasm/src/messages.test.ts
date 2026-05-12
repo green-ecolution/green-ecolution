@@ -17,9 +17,7 @@ describe('translateIssue', () => {
 
   it('returns the German message for tree.number.empty', () => {
     expect(
-      translateIssue(
-        issue({ path: 'number', field: 'tree.number', key: 'tree.number.empty' }),
-      ),
+      translateIssue(issue({ path: 'number', field: 'tree.number', key: 'tree.number.empty' })),
     ).toBe('Baumnummer ist erforderlich.')
   })
 
@@ -36,9 +34,7 @@ describe('translateIssue', () => {
   })
 
   it('falls back to the i18n key when no entry exists', () => {
-    const text = translateIssue(
-      issue({ key: 'unknown.key.empty', field: 'unknown.key' }),
-    )
+    const text = translateIssue(issue({ key: 'unknown.key.empty', field: 'unknown.key' }))
     expect(text).toBe('unknown.key.empty')
   })
 })

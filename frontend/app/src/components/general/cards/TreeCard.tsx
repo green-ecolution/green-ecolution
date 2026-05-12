@@ -18,9 +18,7 @@ const TreeCard: React.FC<TreeCardProps> = ({ tree, showTreeClusterInfo = true })
     ...treeClusterIdQuery(clusterId!),
     enabled: clusterId !== null,
   })
-  const statusDetails = getWateringStatusDetails(
-    tree.wateringStatus ?? WateringStatus.Unknown,
-  )
+  const statusDetails = getWateringStatusDetails(tree.wateringStatus ?? WateringStatus.Unknown)
 
   const columns = showTreeClusterInfo ? '1fr 1.5fr 1fr 1fr' : '1.5fr 2fr 1fr'
 

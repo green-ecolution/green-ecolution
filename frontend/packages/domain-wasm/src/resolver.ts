@@ -1,4 +1,10 @@
-import type { FieldError, FieldErrors, FieldValues, Resolver, ResolverResult } from 'react-hook-form'
+import type {
+  FieldError,
+  FieldErrors,
+  FieldValues,
+  Resolver,
+  ResolverResult,
+} from 'react-hook-form'
 import { translateIssue } from './messages'
 import type { ValidationIssue } from './types'
 import {

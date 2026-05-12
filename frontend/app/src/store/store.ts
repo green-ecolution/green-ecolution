@@ -5,10 +5,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { ClientTokenResponse, DrivingLicense } from '@green-ecolution/backend-client'
 import { decodeJWT } from '@/lib/utils'
 import { KeycloakJWT } from '@/lib/types/keycloak'
-import {
-  parseUserRole,
-  UserRoleOrUnknown,
-} from '@/hooks/details/useDetailsForUserRole'
+import { parseUserRole, UserRoleOrUnknown } from '@/hooks/details/useDetailsForUserRole'
 import {
   parseUserStatus,
   UNKNOWN_USER_STATUS,

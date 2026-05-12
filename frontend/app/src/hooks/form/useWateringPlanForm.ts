@@ -17,7 +17,11 @@ const wateringPlanConfig: EntityFormConfig<
   resolver: wateringPlanDraftResolver<WateringPlanForm>(),
 
   createFn: (body) => wateringPlanApi.createWateringPlan({ wateringPlanCreateRequest: body }),
-  updateFn: (id, body) => wateringPlanApi.updateWateringPlan({ wateringPlanId: Number(id), wateringPlanUpdateRequest: body }),
+  updateFn: (id, body) =>
+    wateringPlanApi.updateWateringPlan({
+      wateringPlanId: Number(id),
+      wateringPlanUpdateRequest: body,
+    }),
 
   invalidateQueries: (data, queryClient: QueryClient) => {
     queryClient

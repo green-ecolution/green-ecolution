@@ -25,9 +25,7 @@ interface TabWateringStatusProps {
 }
 
 const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
-  const wateringStatus = getWateringStatusDetails(
-    tree?.wateringStatus ?? WateringStatus.Unknown,
-  )
+  const wateringStatus = getWateringStatusDetails(tree?.wateringStatus ?? WateringStatus.Unknown)
 
   return (
     <>
@@ -92,17 +90,19 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
             <div aria-hidden="true" className="mb-10 lg:mb-0 lg:w-60 lg:col-start-2 xl:w-80">
               <TreeDeciduous className="w-11 h-11 mx-auto mb-4" />
               <ul className="flex flex-col gap-y-3">
-                {(((tree?.sensor.latestData.data as SensorPayload)?.watermarks) ?? []).map((watermark: Watermark) => (
-                  <li key={watermark.depth} className={`rounded-xl text-center py-3 bg-dark-50`}>
-                    <p className={`inline relative pl-8`}>
-                      <span className="font-semibold">{watermark.centibar} Zentibar</span>
-                      <span className="text-dark-800 font-normal">
-                        &nbsp;·&nbsp;
-                        {watermark.depth} cm
-                      </span>
-                    </p>
-                  </li>
-                ))}
+                {((tree?.sensor.latestData.data as SensorPayload)?.watermarks ?? []).map(
+                  (watermark: Watermark) => (
+                    <li key={watermark.depth} className={`rounded-xl text-center py-3 bg-dark-50`}>
+                      <p className={`inline relative pl-8`}>
+                        <span className="font-semibold">{watermark.centibar} Zentibar</span>
+                        <span className="text-dark-800 font-normal">
+                          &nbsp;·&nbsp;
+                          {watermark.depth} cm
+                        </span>
+                      </p>
+                    </li>
+                  ),
+                )}
               </ul>
             </div>
 
@@ -114,25 +114,27 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
               </header>
 
               <ul className="flex flex-col gap-y-3 lg:contents">
-                {(((tree?.sensor.latestData.data as SensorPayload)?.watermarks) ?? []).map((watermark: Watermark) => (
-                  <li
-                    key={watermark.depth}
-                    className="flex flex-col gap-y-3 border-b border-b-dark-300 pb-3 lg:py-3 lg:grid lg:grid-cols-3 lg:gap-5"
-                  >
-                    <h3 className="font-medium text-lg">
-                      <span className="lg:hidden">Bodentiefe von </span>
-                      {watermark.depth} cm
-                    </h3>
-                    <div>
-                      <dt className="inline lg:hidden">Wert in Zentibar:</dt>
-                      <dd className="inline">{watermark.centibar} cb</dd>
-                    </div>
-                    <div>
-                      <dt className="inline lg:hidden">Ohmscher Widerstand:</dt>
-                      <dd className="inline">{watermark.resistance} Ω</dd>
-                    </div>
-                  </li>
-                ))}
+                {((tree?.sensor.latestData.data as SensorPayload)?.watermarks ?? []).map(
+                  (watermark: Watermark) => (
+                    <li
+                      key={watermark.depth}
+                      className="flex flex-col gap-y-3 border-b border-b-dark-300 pb-3 lg:py-3 lg:grid lg:grid-cols-3 lg:gap-5"
+                    >
+                      <h3 className="font-medium text-lg">
+                        <span className="lg:hidden">Bodentiefe von </span>
+                        {watermark.depth} cm
+                      </h3>
+                      <div>
+                        <dt className="inline lg:hidden">Wert in Zentibar:</dt>
+                        <dd className="inline">{watermark.centibar} cb</dd>
+                      </div>
+                      <div>
+                        <dt className="inline lg:hidden">Ohmscher Widerstand:</dt>
+                        <dd className="inline">{watermark.resistance} Ω</dd>
+                      </div>
+                    </li>
+                  ),
+                )}
               </ul>
             </div>
           </div>

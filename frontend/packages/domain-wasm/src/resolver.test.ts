@@ -44,11 +44,10 @@ describe('treeDraftResolver', () => {
         params: {},
       },
     ])
-    const result = await resolver(
-      { ...validTreeForm, species: '' },
-      undefined,
-      { fields: {}, shouldUseNativeValidation: false },
-    )
+    const result = await resolver({ ...validTreeForm, species: '' }, undefined, {
+      fields: {},
+      shouldUseNativeValidation: false,
+    })
     expect(result.values).toEqual({})
     expect('species' in result.errors && result.errors.species).toMatchObject({
       type: 'tree.species.empty',
@@ -69,8 +68,8 @@ describe('treeDraftResolver', () => {
       fields: {},
       shouldUseNativeValidation: false,
     })
-    expect(
-      'plantingYear' in result.errors && result.errors.plantingYear?.message,
-    ).toBe('tree.planting_year.unknown')
+    expect('plantingYear' in result.errors && result.errors.plantingYear?.message).toBe(
+      'tree.planting_year.unknown',
+    )
   })
 })

@@ -10,8 +10,7 @@ const messages: Record<string, Renderer> = {
   'tree.number.empty': () => 'Baumnummer ist erforderlich.',
   'tree.number.tooShort': (p) => `Baumnummer muss mindestens ${p.min} Zeichen lang sein.`,
   'tree.number.tooLong': (p) => `Baumnummer darf maximal ${p.max} Zeichen lang sein.`,
-  'tree.planting_year.outOfRange': (p) =>
-    `Pflanzjahr muss zwischen ${p.min} und ${p.max} liegen.`,
+  'tree.planting_year.outOfRange': (p) => `Pflanzjahr muss zwischen ${p.min} und ${p.max} liegen.`,
   'tree.planting_year.invalidFormat': () => 'Pflanzjahr muss eine ganze Zahl sein.',
 
   // Coordinate
@@ -33,10 +32,8 @@ const messages: Record<string, Renderer> = {
 
   // Vehicle
   'vehicle.number_plate.empty': () => 'Kennzeichen ist erforderlich.',
-  'vehicle.number_plate.tooShort': (p) =>
-    `Kennzeichen muss mindestens ${p.min} Zeichen lang sein.`,
-  'vehicle.number_plate.tooLong': (p) =>
-    `Kennzeichen darf maximal ${p.max} Zeichen lang sein.`,
+  'vehicle.number_plate.tooShort': (p) => `Kennzeichen muss mindestens ${p.min} Zeichen lang sein.`,
+  'vehicle.number_plate.tooLong': (p) => `Kennzeichen darf maximal ${p.max} Zeichen lang sein.`,
   'vehicle.model.empty': () => 'Modell ist erforderlich.',
   'vehicle.model.tooShort': (p) => `Modell muss mindestens ${p.min} Zeichen lang sein.`,
   'vehicle.model.tooLong': (p) => `Modell darf maximal ${p.max} Zeichen lang sein.`,
@@ -56,10 +53,8 @@ const messages: Record<string, Renderer> = {
   'vehicle.status.invalidFormat': () => 'Kein korrekter Fahrzeugstatus.',
 
   // Watering plan
-  'watering_plan.cluster_ids.empty': () =>
-    'Es muss mindestens ein Cluster ausgewählt werden.',
-  'watering_plan.driver_ids.empty': () =>
-    'Es muss mindestens ein Mitarbeiter ausgewählt werden.',
+  'watering_plan.cluster_ids.empty': () => 'Es muss mindestens ein Cluster ausgewählt werden.',
+  'watering_plan.driver_ids.empty': () => 'Es muss mindestens ein Mitarbeiter ausgewählt werden.',
   'watering_plan.transporter_id.empty': () => 'Es muss ein Transportfahrzeug ausgewählt werden.',
   'watering_plan.transporter_id.outOfRange': () =>
     'Es muss ein gültiges Transportfahrzeug ausgewählt werden.',

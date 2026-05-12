@@ -81,7 +81,7 @@ const SensorDashboard = ({ sensor, sensorTree: linkedTree }: SensorDashboardProp
               label="Akkustand"
               value={
                 (sensor?.latestData?.data as Record<string, number> | undefined)?.battery
-                  ? `${((sensor.latestData!.data as Record<string, number>).battery).toFixed(2)} V`
+                  ? `${(sensor.latestData!.data as Record<string, number>).battery.toFixed(2)} V`
                   : 'Keine Angabe'
               }
               isLarge

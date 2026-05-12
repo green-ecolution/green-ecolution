@@ -90,9 +90,7 @@ describe('useTreeClusterForm', () => {
 
     expect(result.current.form.getValues('name')).toBe('Test Cluster')
     expect(result.current.form.getValues('address')).toBe('Test Address 123')
-    expect(result.current.form.getValues('soilCondition')).toBe(
-      SoilCondition.Sandig,
-    )
+    expect(result.current.form.getValues('soilCondition')).toBe(SoilCondition.Sandig)
     expect(result.current.form.getValues('treeIds')).toEqual([])
   })
 

@@ -42,12 +42,8 @@ function NewWateringPlan() {
 
   const navigate = useNavigate({ from: Route.fullPath })
   const { data: users } = useSuspenseQuery(userRoleQuery('tbz'))
-  const { data: trailers } = useSuspenseQuery(
-    vehicleQuery(),
-  )
-  const { data: transporters } = useSuspenseQuery(
-    vehicleQuery(),
-  )
+  const { data: trailers } = useSuspenseQuery(vehicleQuery())
+  const { data: transporters } = useSuspenseQuery(vehicleQuery())
   const { mutate, isError, error, form, navigationBlocker, saveDraft } = useWateringPlanForm(
     'create',
     {

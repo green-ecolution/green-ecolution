@@ -77,9 +77,7 @@ describe('validateDriverLicenses', () => {
     makeVehicle(1, DrivingLicense.B, VehicleType.Transporter),
     makeVehicle(2, DrivingLicense.C, VehicleType.Transporter),
   ]
-  const trailers = [
-    makeVehicle(10, DrivingLicense.Be, VehicleType.Trailer),
-  ]
+  const trailers = [makeVehicle(10, DrivingLicense.Be, VehicleType.Trailer)]
 
   it('returns valid when no drivers selected', () => {
     const result = validateDriverLicenses([], [], transporters, trailers, 1)
@@ -112,10 +110,7 @@ describe('validateDriverLicenses', () => {
   })
 
   it('returns valid when at least one driver qualifies', () => {
-    const users = [
-      makeUser('u1', [DrivingLicense.B]),
-      makeUser('u2', [DrivingLicense.C]),
-    ]
+    const users = [makeUser('u1', [DrivingLicense.B]), makeUser('u2', [DrivingLicense.C])]
     const result = validateDriverLicenses(['u1', 'u2'], users, transporters, trailers, 2)
     expect(result.valid).toBe(true)
   })

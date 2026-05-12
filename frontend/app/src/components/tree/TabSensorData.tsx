@@ -19,9 +19,7 @@ const TabSensorData: React.FC<TabSensorDataProps> = ({ tree }) => {
     ? format(new Date(tree?.sensor?.latestData?.updatedAt).getTime(), 'HH:mm')
     : 'Keine Angabe'
 
-  const sensorStatusDetails = getSensorStatusDetails(
-    tree?.sensor?.status ?? SensorStatus.Prepared,
-  )
+  const sensorStatusDetails = getSensorStatusDetails(tree?.sensor?.status ?? SensorStatus.Prepared)
 
   return (
     <>
@@ -40,7 +38,7 @@ const TabSensorData: React.FC<TabSensorDataProps> = ({ tree }) => {
             label="Akkustand"
             value={
               (tree?.sensor?.latestData?.data as Record<string, number> | undefined)?.battery
-                ? `${((tree.sensor!.latestData!.data as Record<string, number>).battery).toFixed(2)} V`
+                ? `${(tree.sensor!.latestData!.data as Record<string, number>).battery.toFixed(2)} V`
                 : 'Keine Angabe'
             }
             isLarge

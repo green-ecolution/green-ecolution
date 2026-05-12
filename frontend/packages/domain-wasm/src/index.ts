@@ -1,4 +1,10 @@
-export type { ValidationIssue, TreeForm, TreeclusterForm, VehicleForm, WateringPlanForm } from './types'
+export type {
+  ValidationIssue,
+  TreeForm,
+  TreeclusterForm,
+  VehicleForm,
+  WateringPlanForm,
+} from './types'
 export { translateIssue } from './messages'
 
 // Re-export all wasm-bindgen functions.

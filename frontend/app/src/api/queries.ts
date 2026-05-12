@@ -83,7 +83,7 @@ export const sensorQuery = (params?: ListSensorsRequest) =>
   })
 
 export const sensorDataQuery = (id: string) =>
-  queryOptions<Array<SensorDataResponse>>({
+  queryOptions<SensorDataResponse[]>({
     queryKey: ['sensor data', id],
     queryFn: () =>
       sensorApi.listSensorData({

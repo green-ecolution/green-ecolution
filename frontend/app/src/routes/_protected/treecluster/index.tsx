@@ -71,10 +71,7 @@ function Treecluster() {
 
 const TreeclusterWithProvider = () => {
   return (
-    <FilterProvider
-      initialStatus={[]}
-      initialRegions={[]}
-    >
+    <FilterProvider initialStatus={[]} initialRegions={[]}>
       <Treecluster />
     </FilterProvider>
   )
