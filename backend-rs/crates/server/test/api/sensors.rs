@@ -62,10 +62,6 @@ async fn list_sensors_returns_inserted_sensors() {
     assert_eq!(body["pagination"]["total_records"], 2);
 }
 
-// FIXME(phase-10): response shape changed (latitude/longitude moved into
-// optional `coordinate`, derived from the linked tree). Rewrite the assertions
-// once the new DTO is finalised.
-#[ignore]
 #[tokio::test]
 async fn get_sensor_returns_full_response() {
     let app = spawn_app().await;
@@ -79,8 +75,11 @@ async fn get_sensor_returns_full_response() {
     let sensor: serde_json::Value = response.json().await.unwrap();
     assert_eq!(sensor["id"], "sensor-100");
     assert_eq!(sensor["status"], "online");
-    assert_eq!(sensor["latitude"], 53.55);
-    assert_eq!(sensor["longitude"], 9.99);
+    assert_eq!(sensor["sensor_type"], "lorawan");
+    assert_eq!(sensor["model"]["id"], 1);
+    // No tree linked → coordinate / linked_tree_id are omitted.
+    assert!(sensor.get("coordinate").is_none_or(|c| c.is_null()));
+    assert!(sensor.get("linked_tree_id").is_none_or(|c| c.is_null()));
 }
 
 #[tokio::test]
@@ -239,37 +238,53 @@ fn payload(device: &str, lat: f64, lng: f64, centibar: i32) -> serde_json::Value
     })
 }
 
-// FIXME(phase-10): auto-create + nearest-tree linking on MQTT ingest was
-// removed; sensors must now be registered explicitly. Re-enable once the new
-// activation flow is in place.
-#[ignore]
 #[tokio::test]
-async fn handle_message_creates_sensor_links_nearest_tree_and_updates_watering_status() {
+async fn handle_message_via_create_and_activate_updates_watering_status() {
     let app = spawn_app().await;
 
-    sqlx::query!(
-        r#"INSERT INTO trees (planting_year, species, number, latitude, longitude,
-                              geometry, description)
+    // 1. Register a prepared sensor through the public API.
+    let create_body = serde_json::json!({
+        "id": "sensor-mq-1",
+        "sensor_type": "lorawan",
+        "model_id": 1,
+        "lorawan": {
+            "serial_number": "SN", "dev_eui": "a81758fffe0c3b52",
+            "app_eui": "70b3d57ed00abcd1", "app_key": "00112233445566778899aabbccddeeff"
+        }
+    });
+    let r = app.post_json("/api/v1/sensors", &create_body).await;
+    assert_eq!(r.status().as_u16(), 201);
+
+    // 2. Insert a tree (planted this year so year=0 calibration applies)
+    //    and activate the sensor against it.
+    let planting_year: i32 = chrono::Utc::now()
+        .date_naive()
+        .format("%Y")
+        .to_string()
+        .parse()
+        .unwrap();
+    let tree_id: i32 = sqlx::query_scalar!(
+        r#"INSERT INTO trees (planting_year, species, number, latitude, longitude, geometry, description)
         VALUES ($1, 'Eiche', 'T-MQ-1', 53.55, 9.99,
-                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test')"#,
-        chrono::Utc::now()
-            .date_naive()
-            .format("%Y")
-            .to_string()
-            .parse::<i32>()
-            .unwrap(),
+                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test')
+        RETURNING id"#,
+        planting_year,
     )
-    .execute(&app.db_pool)
+    .fetch_one(&app.db_pool)
     .await
     .unwrap();
+    let act = app
+        .post_json(
+            "/api/v1/sensors/sensor-mq-1/activate",
+            &serde_json::json!({ "tree_id": tree_id }),
+        )
+        .await;
+    assert_eq!(act.status().as_u16(), 200);
 
-    // 50 centibar with 0/1-year defaults (lower=25, higher=33) → score=2 → Bad.
+    // 3. 50 centibar with 0/1-year defaults (lower=25, higher=33) → score=2 → Bad.
     app.handle_mqtt_message(payload("sensor-mq-1", 53.55, 9.99, 50))
         .await
         .expect("handle_message should succeed");
-
-    let sensor_resp = app.get("/api/v1/sensors/sensor-mq-1").await;
-    assert_eq!(sensor_resp.status().as_u16(), 200);
 
     let tree_status: String = sqlx::query_scalar!(
         r#"SELECT watering_status::text AS "ws!" FROM trees WHERE number = 'T-MQ-1'"#,
@@ -277,10 +292,7 @@ async fn handle_message_creates_sensor_links_nearest_tree_and_updates_watering_s
     .fetch_one(&app.db_pool)
     .await
     .unwrap();
-    assert_eq!(
-        tree_status, "bad",
-        "tree at sensor's coordinate should be linked and watered status updated to bad"
-    );
+    assert_eq!(tree_status, "bad");
 
     let linked_sensor: Option<String> =
         sqlx::query_scalar!("SELECT sensor_id FROM trees WHERE number = 'T-MQ-1'")

@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT COUNT(*) AS \"count!\"\n           FROM sensor_data_ability_values dav\n           JOIN sensor_data sd ON sd.id = dav.sensor_data_id\n           WHERE sd.sensor_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "3eead345f8a32fbbefb613134571cedc070419f78cab9f4046edfd32e741d71e"
+}
