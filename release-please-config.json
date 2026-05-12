@@ -40,6 +40,11 @@
       "type": "generic",
       "path": "flake.nix",
       "glob": "flake.nix"
+    },
+    {
+      "type": "generic",
+      "path": "backend-rs/Cargo.toml",
+      "glob": "backend-rs/Cargo.toml"
     }
   ],
   "packages": {
