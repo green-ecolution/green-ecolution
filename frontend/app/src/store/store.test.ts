@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { UserStatus, DrivingLicense, UserRole } from '@green-ecolution/backend-client'
+import { UNKNOWN_USER_STATUS } from '@/hooks/details/useDetailsForUserStatus'
 import useStore from './store'
 
 // Mock localStorage
@@ -94,7 +95,7 @@ describe('Store - User Slice', () => {
       lastName: '',
       drivingLicenses: [],
       userRoles: [],
-      userStatus: UserStatus.Unknown,
+      userStatus: UNKNOWN_USER_STATUS,
     })
   })
 
@@ -134,7 +135,7 @@ describe('Store - User Slice', () => {
     expect(useStore.getState().username).toBe('testuser')
     expect(useStore.getState().drivingLicenses).toEqual([])
     expect(useStore.getState().userRoles).toEqual([])
-    expect(useStore.getState().userStatus).toBe(UserStatus.Unknown)
+    expect(useStore.getState().userStatus).toBe(UNKNOWN_USER_STATUS)
   })
 
   it('isUserEmpty returns true when user data is empty', () => {
@@ -160,7 +161,7 @@ describe('Store - User Slice', () => {
       lastName: 'User',
       drivingLicenses: [], // Empty - should NOT affect result
       userRoles: [], // Empty - should NOT affect result
-      userStatus: UserStatus.Unknown, // Unknown - should NOT affect result
+      userStatus: UNKNOWN_USER_STATUS, // Unknown - should NOT affect result
     })
 
     expect(useStore.getState().isUserEmpty()).toBe(false)
@@ -185,7 +186,7 @@ describe('Store - User Slice', () => {
     expect(useStore.getState().lastName).toBe('')
     expect(useStore.getState().drivingLicenses).toEqual([])
     expect(useStore.getState().userRoles).toEqual([])
-    expect(useStore.getState().userStatus).toBe(UserStatus.Unknown)
+    expect(useStore.getState().userStatus).toBe(UNKNOWN_USER_STATUS)
   })
 })
 

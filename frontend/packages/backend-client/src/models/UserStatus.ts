@@ -19,8 +19,7 @@
  */
 export const UserStatus = {
     Available: 'available',
-    Absent: 'absent',
-    Unknown: 'unknown'
+    Absent: 'absent'
 } as const;
 export type UserStatus = typeof UserStatus[keyof typeof UserStatus];
 

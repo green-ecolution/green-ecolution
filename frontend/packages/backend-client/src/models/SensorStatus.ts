@@ -18,9 +18,9 @@
  * @export
  */
 export const SensorStatus = {
+    Prepared: 'prepared',
     Online: 'online',
-    Offline: 'offline',
-    Unknown: 'unknown'
+    Offline: 'offline'
 } as const;
 export type SensorStatus = typeof SensorStatus[keyof typeof SensorStatus];
 

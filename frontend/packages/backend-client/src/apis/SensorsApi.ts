@@ -15,18 +15,36 @@
 
 import * as runtime from '../runtime';
 import type {
+  ActivateSensorRequest,
+  CreateSensorRequest,
   ListResponseSensorResponse,
   SensorDataResponse,
+  SensorModelResponse,
   SensorResponse,
 } from '../models/index';
 import {
+    ActivateSensorRequestFromJSON,
+    ActivateSensorRequestToJSON,
+    CreateSensorRequestFromJSON,
+    CreateSensorRequestToJSON,
     ListResponseSensorResponseFromJSON,
     ListResponseSensorResponseToJSON,
     SensorDataResponseFromJSON,
     SensorDataResponseToJSON,
+    SensorModelResponseFromJSON,
+    SensorModelResponseToJSON,
     SensorResponseFromJSON,
     SensorResponseToJSON,
 } from '../models/index';
+
+export interface ActivateSensorOperationRequest {
+    sensorId: string;
+    activateSensorRequest: ActivateSensorRequest;
+}
+
+export interface CreateSensorOperationRequest {
+    createSensorRequest: CreateSensorRequest;
+}
 
 export interface DeleteSensorRequest {
     sensorId: string;
@@ -34,6 +52,10 @@ export interface DeleteSensorRequest {
 
 export interface GetSensorRequest {
     sensorId: string;
+}
+
+export interface GetSensorModelRequest {
+    id: number;
 }
 
 export interface ListSensorDataRequest {
@@ -49,6 +71,96 @@ export interface ListSensorsRequest {
  * 
  */
 export class SensorsApi extends runtime.BaseAPI {
+
+    /**
+     * Transitions a sensor from `Prepared` to `Offline` and attaches it to the given tree. Idempotent if the sensor is already attached to the same tree.
+     * Activate a prepared sensor by binding it to a tree
+     */
+    async activateSensorRaw(requestParameters: ActivateSensorOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
+        if (requestParameters['sensorId'] == null) {
+            throw new runtime.RequiredError(
+                'sensorId',
+                'Required parameter "sensorId" was null or undefined when calling activateSensor().'
+            );
+        }
+
+        if (requestParameters['activateSensorRequest'] == null) {
+            throw new runtime.RequiredError(
+                'activateSensorRequest',
+                'Required parameter "activateSensorRequest" was null or undefined when calling activateSensor().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/api/v1/sensors/{sensor_id}/activate`;
+        urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ActivateSensorRequestToJSON(requestParameters['activateSensorRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SensorResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Transitions a sensor from `Prepared` to `Offline` and attaches it to the given tree. Idempotent if the sensor is already attached to the same tree.
+     * Activate a prepared sensor by binding it to a tree
+     */
+    async activateSensor(requestParameters: ActivateSensorOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorResponse> {
+        const response = await this.activateSensorRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates a sensor record in `Prepared` state. The sensor must later be bound to a tree via `POST /sensors/{sensor_id}/activate` before it starts receiving data.
+     * Register a new (prepared) sensor unit
+     */
+    async createSensorRaw(requestParameters: CreateSensorOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
+        if (requestParameters['createSensorRequest'] == null) {
+            throw new runtime.RequiredError(
+                'createSensorRequest',
+                'Required parameter "createSensorRequest" was null or undefined when calling createSensor().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/api/v1/sensors`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CreateSensorRequestToJSON(requestParameters['createSensorRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SensorResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Creates a sensor record in `Prepared` state. The sensor must later be bound to a tree via `POST /sensors/{sensor_id}/activate` before it starts receiving data.
+     * Register a new (prepared) sensor unit
+     */
+    async createSensor(requestParameters: CreateSensorOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorResponse> {
+        const response = await this.createSensorRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Permanently deletes a sensor by its EUI identifier.
@@ -128,6 +240,43 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
+     * Get a single sensor model
+     */
+    async getSensorModelRaw(requestParameters: GetSensorModelRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorModelResponse>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling getSensorModel().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/api/v1/sensors/models/{id}`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SensorModelResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Get a single sensor model
+     */
+    async getSensorModel(requestParameters: GetSensorModelRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorModelResponse> {
+        const response = await this.getSensorModelRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Returns all historical data readings for a sensor.
      * List sensor data
      */
@@ -163,6 +312,37 @@ export class SensorsApi extends runtime.BaseAPI {
      */
     async listSensorData(requestParameters: ListSensorDataRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<SensorDataResponse>> {
         const response = await this.listSensorDataRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns every sensor model registered in the catalogue along with its abilities (e.g. soil tension at 30/60/90 cm).
+     * List all supported sensor models
+     */
+    async listSensorModelsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<SensorModelResponse>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/api/v1/sensors/models`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(SensorModelResponseFromJSON));
+    }
+
+    /**
+     * Returns every sensor model registered in the catalogue along with its abilities (e.g. soil tension at 30/60/90 cm).
+     * List all supported sensor models
+     */
+    async listSensorModels(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<SensorModelResponse>> {
+        const response = await this.listSensorModelsRaw(initOverrides);
         return await response.value();
     }
 

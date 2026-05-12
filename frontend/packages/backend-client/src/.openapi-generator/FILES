@@ -11,10 +11,12 @@ apis/VehiclesApi.ts
 apis/WateringPlansApi.ts
 apis/index.ts
 index.ts
+models/ActivateSensorRequest.ts
 models/AppInfoResponse.ts
 models/ClientTokenResponse.ts
 models/ClusterMarkerListResponse.ts
 models/ClusterMarkerResponse.ts
+models/CreateSensorRequest.ts
 models/DataStatisticsResponse.ts
 models/DrivingLicense.ts
 models/EvaluationResponse.ts
@@ -38,6 +40,8 @@ models/ListResponseWateringPlanInListResponseDataInner.ts
 models/LoginResponse.ts
 models/LoginTokenRequest.ts
 models/LogoutRequest.ts
+models/LorawanCredentialsRequest.ts
+models/LorawanInfoResponse.ts
 models/MapInfoResponse.ts
 models/NearestTreeListResponse.ts
 models/PaginationResponse.ts
@@ -48,9 +52,15 @@ models/PluginResponse.ts
 models/RefreshTokenRequest.ts
 models/RegionEvaluationResponse.ts
 models/RegionResponse.ts
+models/SensorAbilityUnitDto.ts
+models/SensorCoordinate.ts
 models/SensorDataResponse.ts
+models/SensorModelAbilityResponse.ts
+models/SensorModelResponse.ts
+models/SensorModelSummaryResponse.ts
 models/SensorResponse.ts
 models/SensorStatus.ts
+models/SensorTypeResponse.ts
 models/ServerInfoResponse.ts
 models/ServiceStatusResponse.ts
 models/ServicesInfoResponse.ts

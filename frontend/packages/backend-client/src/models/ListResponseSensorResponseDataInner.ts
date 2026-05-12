@@ -13,6 +13,27 @@
  */
 
 import { mapValues } from '../runtime';
+import type { SensorCoordinate } from './SensorCoordinate';
+import {
+    SensorCoordinateFromJSON,
+    SensorCoordinateFromJSONTyped,
+    SensorCoordinateToJSON,
+    SensorCoordinateToJSONTyped,
+} from './SensorCoordinate';
+import type { SensorTypeResponse } from './SensorTypeResponse';
+import {
+    SensorTypeResponseFromJSON,
+    SensorTypeResponseFromJSONTyped,
+    SensorTypeResponseToJSON,
+    SensorTypeResponseToJSONTyped,
+} from './SensorTypeResponse';
+import type { LorawanInfoResponse } from './LorawanInfoResponse';
+import {
+    LorawanInfoResponseFromJSON,
+    LorawanInfoResponseFromJSONTyped,
+    LorawanInfoResponseToJSON,
+    LorawanInfoResponseToJSONTyped,
+} from './LorawanInfoResponse';
 import type { SensorDataResponse } from './SensorDataResponse';
 import {
     SensorDataResponseFromJSON,
@@ -20,6 +41,13 @@ import {
     SensorDataResponseToJSON,
     SensorDataResponseToJSONTyped,
 } from './SensorDataResponse';
+import type { SensorModelSummaryResponse } from './SensorModelSummaryResponse';
+import {
+    SensorModelSummaryResponseFromJSON,
+    SensorModelSummaryResponseFromJSONTyped,
+    SensorModelSummaryResponseToJSON,
+    SensorModelSummaryResponseToJSONTyped,
+} from './SensorModelSummaryResponse';
 import type { SensorStatus } from './SensorStatus';
 import {
     SensorStatusFromJSON,
@@ -41,6 +69,12 @@ export interface ListResponseSensorResponseDataInner {
      */
     additionalInformation?: object | null;
     /**
+     * WGS-84 coordinate derived from the linked tree (if any).
+     * @type {SensorCoordinate}
+     * @memberof ListResponseSensorResponseDataInner
+     */
+    coordinate?: SensorCoordinate | null;
+    /**
      * Timestamp when the sensor was registered (RFC 3339).
      * @type {string}
      * @memberof ListResponseSensorResponseDataInner
@@ -59,23 +93,35 @@ export interface ListResponseSensorResponseDataInner {
      */
     latestData?: SensorDataResponse | null;
     /**
-     * Latitude of the sensor location (WGS 84).
+     * Database id of the linked tree, if the sensor is currently attached.
      * @type {number}
      * @memberof ListResponseSensorResponseDataInner
      */
-    latitude: number;
+    linkedTreeId?: number | null;
     /**
-     * Longitude of the sensor location (WGS 84).
-     * @type {number}
+     * LoRaWAN credentials (omits `app_key`).
+     * @type {LorawanInfoResponse}
      * @memberof ListResponseSensorResponseDataInner
      */
-    longitude: number;
+    lorawan?: LorawanInfoResponse | null;
+    /**
+     * Sensor model summary (id + display name).
+     * @type {SensorModelSummaryResponse}
+     * @memberof ListResponseSensorResponseDataInner
+     */
+    model: SensorModelSummaryResponse;
     /**
      * Name of the data provider or integration (e.g. "ttn", "chirpstack").
      * @type {string}
      * @memberof ListResponseSensorResponseDataInner
      */
     provider?: string | null;
+    /**
+     * Bus/protocol class of the sensor.
+     * @type {SensorTypeResponse}
+     * @memberof ListResponseSensorResponseDataInner
+     */
+    sensorType: SensorTypeResponse;
     /**
      * Current connectivity status of the sensor.
      * @type {SensorStatus}
@@ -98,8 +144,8 @@ export interface ListResponseSensorResponseDataInner {
 export function instanceOfListResponseSensorResponseDataInner(value: object): value is ListResponseSensorResponseDataInner {
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
-    if (!('latitude' in value) || value['latitude'] === undefined) return false;
-    if (!('longitude' in value) || value['longitude'] === undefined) return false;
+    if (!('model' in value) || value['model'] === undefined) return false;
+    if (!('sensorType' in value) || value['sensorType'] === undefined) return false;
     if (!('status' in value) || value['status'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
     return true;
@@ -116,12 +162,15 @@ export function ListResponseSensorResponseDataInnerFromJSONTyped(json: any, igno
     return {
         
         'additionalInformation': json['additional_information'] == null ? undefined : json['additional_information'],
+        'coordinate': json['coordinate'] == null ? undefined : SensorCoordinateFromJSON(json['coordinate']),
         'createdAt': json['created_at'],
         'id': json['id'],
         'latestData': json['latest_data'] == null ? undefined : SensorDataResponseFromJSON(json['latest_data']),
-        'latitude': json['latitude'],
-        'longitude': json['longitude'],
+        'linkedTreeId': json['linked_tree_id'] == null ? undefined : json['linked_tree_id'],
+        'lorawan': json['lorawan'] == null ? undefined : LorawanInfoResponseFromJSON(json['lorawan']),
+        'model': SensorModelSummaryResponseFromJSON(json['model']),
         'provider': json['provider'] == null ? undefined : json['provider'],
+        'sensorType': SensorTypeResponseFromJSON(json['sensor_type']),
         'status': SensorStatusFromJSON(json['status']),
         'updatedAt': json['updated_at'],
     };
@@ -139,12 +188,15 @@ export function ListResponseSensorResponseDataInnerToJSONTyped(value?: ListRespo
     return {
         
         'additional_information': value['additionalInformation'],
+        'coordinate': SensorCoordinateToJSON(value['coordinate']),
         'created_at': value['createdAt'],
         'id': value['id'],
         'latest_data': SensorDataResponseToJSON(value['latestData']),
-        'latitude': value['latitude'],
-        'longitude': value['longitude'],
+        'linked_tree_id': value['linkedTreeId'],
+        'lorawan': LorawanInfoResponseToJSON(value['lorawan']),
+        'model': SensorModelSummaryResponseToJSON(value['model']),
         'provider': value['provider'],
+        'sensor_type': SensorTypeResponseToJSON(value['sensorType']),
         'status': SensorStatusToJSON(value['status']),
         'updated_at': value['updatedAt'],
     };

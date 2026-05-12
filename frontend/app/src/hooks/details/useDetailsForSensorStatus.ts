@@ -5,10 +5,10 @@ const SensorStatusProperties: Record<
   SensorStatus,
   { color: StatusColor; label: string; description: string }
 > = {
-  [SensorStatus.Unknown]: {
+  [SensorStatus.Prepared]: {
     color: 'outline-dark',
-    label: 'Unbekannt',
-    description: 'Der Status ist unbekannt.',
+    label: 'Vorbereitet',
+    description: 'Der Sensor ist registriert, aber noch nicht aktiviert.',
   },
   [SensorStatus.Offline]: {
     color: 'outline-red',

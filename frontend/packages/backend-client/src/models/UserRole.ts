@@ -20,8 +20,7 @@
 export const UserRole = {
     Tbz: 'tbz',
     GreenEcolution: 'green-ecolution',
-    SmarteGrenzregion: 'smarte-grenzregion',
-    Unknown: 'unknown'
+    SmarteGrenzregion: 'smarte-grenzregion'
 } as const;
 export type UserRole = typeof UserRole[keyof typeof UserRole];
 

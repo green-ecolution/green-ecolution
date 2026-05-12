@@ -1,13 +1,17 @@
 import { UserStatus } from '@green-ecolution/backend-client'
 import { StatusColor } from './useDetailsForWateringPlanStatus'
 
+// Local sentinel for statuses outside the backend enum (e.g. unparseable JWT claims).
+export const UNKNOWN_USER_STATUS = 'unknown' as const
+export type UserStatusOrUnknown = UserStatus | typeof UNKNOWN_USER_STATUS
+
 export const UserStatusOptions: {
-  value: UserStatus
+  value: UserStatusOrUnknown
   label: string
   color: StatusColor
 }[] = [
   {
-    value: UserStatus.Unknown,
+    value: UNKNOWN_USER_STATUS,
     label: 'Unbekannt',
     color: 'outline-dark',
   },
@@ -23,16 +27,16 @@ export const UserStatusOptions: {
   },
 ]
 
-export const getUserStatusDetails = (userStatus: UserStatus) =>
+export const getUserStatusDetails = (userStatus: UserStatusOrUnknown) =>
   UserStatusOptions.find((option) => option.value === userStatus) ?? UserStatusOptions[0]
 
-export const parseUserStatus = (status: string): UserStatus => {
+export const parseUserStatus = (status: string): UserStatusOrUnknown => {
   switch (status.toLowerCase()) {
     case 'absent':
       return UserStatus.Absent
     case 'available':
       return UserStatus.Available
     default:
-      return UserStatus.Unknown
+      return UNKNOWN_USER_STATUS
   }
 }

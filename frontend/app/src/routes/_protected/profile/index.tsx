@@ -1,10 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useUserStore } from '@/store/store'
 import { UserRound } from 'lucide-react'
-import { getUserRoleDetails } from '@/hooks/details/useDetailsForUserRole'
+import { getUserRoleDetails, UserRoleOrUnknown } from '@/hooks/details/useDetailsForUserRole'
 import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
 import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
-import { DrivingLicense, UserRole } from '@green-ecolution/backend-client'
+import { DrivingLicense } from '@green-ecolution/backend-client'
 import { Avatar, AvatarFallback, Badge, DetailedList } from '@green-ecolution/ui'
 
 export const Route = createFileRoute('/_protected/profile/')({
@@ -39,7 +39,7 @@ function Profile() {
             </h2>
             <ul className="mt-2 flex flex-col gap-2 xl:mt-4">
               {user.userRoles?.length > 0 &&
-                user.userRoles.map((role: UserRole) => (
+                user.userRoles.map((role: UserRoleOrUnknown) => (
                   <li key={getUserRoleDetails(role).label}>
                     <Badge variant="outline-green-light" size="lg">
                       {getUserRoleDetails(role).label}
@@ -74,7 +74,7 @@ function Profile() {
           {
             label: 'Rollen:',
             value: user.userRoles
-              .map((role: UserRole) => getUserRoleDetails(role).label)
+              .map((role: UserRoleOrUnknown) => getUserRoleDetails(role).label)
               .join(', '),
           },
           { label: 'E-Mail:', value: user.email ?? 'Keine Angabe' },

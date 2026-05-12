@@ -20,7 +20,7 @@ const TabSensorData: React.FC<TabSensorDataProps> = ({ tree }) => {
     : 'Keine Angabe'
 
   const sensorStatusDetails = getSensorStatusDetails(
-    tree?.sensor?.status ?? SensorStatus.Unknown,
+    tree?.sensor?.status ?? SensorStatus.Prepared,
   )
 
   return (

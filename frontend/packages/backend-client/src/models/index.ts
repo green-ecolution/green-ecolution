@@ -1,9 +1,11 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './ActivateSensorRequest';
 export * from './AppInfoResponse';
 export * from './ClientTokenResponse';
 export * from './ClusterMarkerListResponse';
 export * from './ClusterMarkerResponse';
+export * from './CreateSensorRequest';
 export * from './DataStatisticsResponse';
 export * from './DrivingLicense';
 export * from './EvaluationResponse';
@@ -27,6 +29,8 @@ export * from './ListResponseWateringPlanInListResponseDataInner';
 export * from './LoginResponse';
 export * from './LoginTokenRequest';
 export * from './LogoutRequest';
+export * from './LorawanCredentialsRequest';
+export * from './LorawanInfoResponse';
 export * from './MapInfoResponse';
 export * from './NearestTreeListResponse';
 export * from './PaginationResponse';
@@ -37,9 +41,15 @@ export * from './PluginResponse';
 export * from './RefreshTokenRequest';
 export * from './RegionEvaluationResponse';
 export * from './RegionResponse';
+export * from './SensorAbilityUnitDto';
+export * from './SensorCoordinate';
 export * from './SensorDataResponse';
+export * from './SensorModelAbilityResponse';
+export * from './SensorModelResponse';
+export * from './SensorModelSummaryResponse';
 export * from './SensorResponse';
 export * from './SensorStatus';
+export * from './SensorTypeResponse';
 export * from './ServerInfoResponse';
 export * from './ServiceStatusResponse';
 export * from './ServicesInfoResponse';

@@ -2,11 +2,18 @@ import { create, StateCreator } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import { useShallow } from 'zustand/react/shallow'
-import { ClientTokenResponse, DrivingLicense, UserRole, UserStatus } from '@green-ecolution/backend-client'
+import { ClientTokenResponse, DrivingLicense } from '@green-ecolution/backend-client'
 import { decodeJWT } from '@/lib/utils'
 import { KeycloakJWT } from '@/lib/types/keycloak'
-import { parseUserRole } from '@/hooks/details/useDetailsForUserRole'
-import { parseUserStatus } from '@/hooks/details/useDetailsForUserStatus'
+import {
+  parseUserRole,
+  UserRoleOrUnknown,
+} from '@/hooks/details/useDetailsForUserRole'
+import {
+  parseUserStatus,
+  UNKNOWN_USER_STATUS,
+  UserStatusOrUnknown,
+} from '@/hooks/details/useDetailsForUserStatus'
 import { parseDrivingLicense } from '@/hooks/details/useDetailsForDrivingLicense'
 import { FormDraftSlice } from './form/formDraftSlice'
 
@@ -28,8 +35,8 @@ interface UserSlice {
   firstName: string
   lastName: string
   drivingLicenses: DrivingLicense[]
-  userRoles: UserRole[]
-  userStatus: UserStatus
+  userRoles: UserRoleOrUnknown[]
+  userStatus: UserStatusOrUnknown
   setUserFromJwt: (jwt: string) => void
   isUserEmpty: () => boolean
   clearUser: () => void
@@ -86,7 +93,7 @@ const createUserSlice: StateCreator<Store, Mutators, [], UserSlice> = (set, get)
   lastName: '',
   drivingLicenses: [],
   userRoles: [],
-  userStatus: UserStatus.Unknown,
+  userStatus: UNKNOWN_USER_STATUS,
   setUserFromJwt: (jwt) =>
     set((state) => {
       const jwtInfo = decodeJWT<KeycloakJWT>(jwt)
@@ -114,7 +121,7 @@ const createUserSlice: StateCreator<Store, Mutators, [], UserSlice> = (set, get)
       state.lastName = ''
       state.drivingLicenses = []
       state.userRoles = []
-      state.userStatus = UserStatus.Unknown
+      state.userStatus = UNKNOWN_USER_STATUS
     }),
 })
 

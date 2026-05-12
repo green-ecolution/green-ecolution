@@ -1,8 +1,12 @@
 import { UserRole } from '@green-ecolution/backend-client'
 
-export const UserRoleOptions = [
+// Local sentinel for roles not yet mapped to the backend's enum.
+export const UNKNOWN_USER_ROLE = 'unknown' as const
+export type UserRoleOrUnknown = UserRole | typeof UNKNOWN_USER_ROLE
+
+export const UserRoleOptions: { value: UserRoleOrUnknown; label: string }[] = [
   {
-    value: UserRole.Unknown,
+    value: UNKNOWN_USER_ROLE,
     label: 'Keine Angabe',
   },
   {
@@ -19,10 +23,10 @@ export const UserRoleOptions = [
   },
 ]
 
-export const getUserRoleDetails = (userRole: UserRole) =>
+export const getUserRoleDetails = (userRole: UserRoleOrUnknown) =>
   UserRoleOptions.find((option) => option.value === userRole) ?? UserRoleOptions[0]
 
-export const parseUserRole = (role: string): UserRole => {
+export const parseUserRole = (role: string): UserRoleOrUnknown => {
   switch (role) {
     case 'tbz':
       return UserRole.Tbz
@@ -31,6 +35,6 @@ export const parseUserRole = (role: string): UserRole => {
     case 'smarte-grenzregion':
       return UserRole.SmarteGrenzregion
     default:
-      return UserRole.Unknown
+      return UNKNOWN_USER_ROLE
   }
 }

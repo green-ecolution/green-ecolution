@@ -34,11 +34,11 @@ const SensorDashboard = ({ sensor, sensorTree: linkedTree }: SensorDashboardProp
     },
     {
       label: 'Latitude',
-      value: `${sensor?.latitude ?? 'Keine Angabe'}`,
+      value: `${sensor?.coordinate?.latitude ?? 'Keine Angabe'}`,
     },
     {
       label: 'Longitude',
-      value: `${sensor?.longitude ?? 'Keine Angabe'}`,
+      value: `${sensor?.coordinate?.longitude ?? 'Keine Angabe'}`,
     },
   ]
 
@@ -126,22 +126,25 @@ const SensorDashboard = ({ sensor, sensorTree: linkedTree }: SensorDashboardProp
             <div>
               <p className="font-bold text-3xl text-red mb-2">Keine Verknüpfung</p>
               <p className="text-sm mb-4">
-                Es war nicht möglich anhand der GPS-Daten den Sensor einem Baum oder einem Beet
-                zuzuweisen oder er wurde manuell unverknüpft.
+                {sensor.coordinate
+                  ? 'Es war nicht möglich anhand der GPS-Daten den Sensor einem Baum oder einem Beet zuzuweisen oder er wurde manuell unverknüpft.'
+                  : 'Dieser Sensor wurde noch nicht aktiviert und hat keinen Standort. Verknüpfen Sie ihn mit einem Baum, um ihn zu aktivieren.'}
               </p>
-              <GeneralLink
-                theme="grey"
-                label="Vegetation verknüpfen"
-                link={{
-                  to: '/map/sensor/select/tree',
-                  search: {
-                    lat: sensor.latitude,
-                    lng: sensor.longitude,
-                    zoom: 18,
-                    sensorId: sensor.id,
-                  },
-                }}
-              />
+              {sensor.coordinate && (
+                <GeneralLink
+                  theme="grey"
+                  label="Vegetation verknüpfen"
+                  link={{
+                    to: '/map/sensor/select/tree',
+                    search: {
+                      lat: sensor.coordinate.latitude,
+                      lng: sensor.coordinate.longitude,
+                      zoom: 18,
+                      sensorId: sensor.id,
+                    },
+                  }}
+                />
+              )}
             </div>
           )}
         </div>
