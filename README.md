@@ -5,9 +5,6 @@
   <img alt="License" src="https://img.shields.io/github/license/green-ecolution/green-ecolution.svg"/>
   <img alt="Maintained yes" src="https://img.shields.io/badge/Maintained%3F-yes-green.svg"/>
   <img alt="Code coverage" src="https://raw.githubusercontent.com/green-ecolution/green-ecolution/badges/.badges/main/coverage.svg"/>
-  <a href="https://pkg.go.dev/github.com/green-ecolution/green-ecolution/backend">
-    <img src="https://pkg.go.dev/badge/github.com/green-ecolution/green-ecolution/backend.svg" alt="Go Reference">
-  </a>
 </p>
 
 # :seedling: Green Ecolution
@@ -50,14 +47,15 @@ Open `https://<your-ip>.green-ecolution.dev:3443` (or your custom domain).
 
 ### Requirements
 
-- Go (with CGO enabled)
+- Rust toolchain (rustup, includes cargo)
 - Node.js + pnpm (`corepack enable`)
 - Docker + Docker Compose
+- [`sqlx-cli`](https://crates.io/crates/sqlx-cli) (`cargo install sqlx-cli --no-default-features --features rustls,postgres`) for migrations and offline-cache regeneration
 
 ### Installation
 
 ```bash
-just setup       # Install Go and pnpm dependencies
+just setup       # cargo fetch + pnpm install
 just build       # Build frontend + backend
 ```
 
@@ -66,16 +64,16 @@ just build       # Build frontend + backend
 | Command | Description |
 |---------|-------------|
 | `just run-dev` | Backend + frontend dev via Traefik |
-| `just run-live` | Backend with hot reload (standalone) |
+| `just run-live` | Backend with bacon hot reload |
 | `just run-docker` | Full stack via Docker Compose |
 | `just infra-up` | Start infrastructure only |
 | `just dns-setup` | Create Porkbun DNS records for HTTPS |
 | `just dns-cleanup` | Remove Porkbun DNS records |
-| `just test` | Run all tests |
-| `just lint` | Lint Go + frontend |
-| `just generate` | Run code generation (sqlc, mappers, swagger) |
+| `just test` | Run all tests (Rust workspace + frontend) |
+| `just lint` | Lint Rust workspace + frontend |
+| `just generate-sqlx` | Refresh sqlx offline query cache |
 | `just migrate-up` | Apply database migrations |
-| `just migrate-new name=...` | Create new migration |
+| `just migrate-new <name>` | Create new migration |
 
 > For a reproducible dev environment, you can also use `nix develop`.
 
@@ -106,11 +104,14 @@ When running `just infra-up`, these services are available via Traefik:
 ## Architecture
 
 ```
-backend/    → Go (Fiber, sqlc, pgx) - REST API, MQTT subscriber, auth
-frontend/   → React (Vite, TanStack Router/Query, Zustand, Tailwind)
+backend-rs/  → Rust (axum, sqlx, tokio) - REST API, MQTT subscriber, auth
+frontend/    → React (Vite, TanStack Router/Query, Zustand, Tailwind)
 ```
 
-The backend embeds the compiled frontend and serves it as a single binary.
+The backend is a Cargo workspace with two crates: a portable `domain` crate
+(no sqlx/axum/tokio dependencies, reusable on WASM / mobile targets) and a
+`server` crate that wires up the Postgres adapters, Keycloak integration,
+MQTT subscriber, and the axum HTTP layer.
 
 ## PWA
 
@@ -158,9 +159,9 @@ cd frontend/app && pnpm build && pnpm preview
 
 ## Configuration
 
-All settings via environment variables (prefix `GE_`) or YAML files in `backend/config/`.
+All settings via environment variables (prefix `APP_`, separator `__`) or YAML files in `backend-rs/config/` (`base.yaml`, `local.yaml`, `production.yaml`). The active profile is selected by `APP_ENVIRONMENT`.
 
-Key areas: `server.database.*`, `auth.oidc_provider.*`, `routing.*`, `s3.*`, `mqtt.*`
+Key areas: `application.*`, `database.*`, `auth.*`, `mqtt.*`, `log.*`
 
 See `compose.app.yaml` for examples.
 

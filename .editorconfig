@@ -43,8 +43,14 @@ tab_width = 4
 [Makefile]
 indent_style = tab
 
+# === Rust ===
+[*.rs]
+indent_style = space
+indent_size = 4
+max_line_length = 100
+
 # === Ignore generated / dist ===
-[{bin,dist,frontend/dist,backend/frontend/dist}/**]
+[{bin,dist,frontend/dist,frontend/app/dist,backend-rs/target}/**]
 insert_final_newline = false
 trim_trailing_whitespace = false
 

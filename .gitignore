@@ -320,3 +320,8 @@ dev-dist
 .direnv
 .pre-commit-config.yaml
 /bin
+
+## Rust
+backend-rs/target/
+**/*.rs.bk
+.bacon-locations
