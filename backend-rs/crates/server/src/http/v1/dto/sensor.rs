@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use domain::sensor::{
-    SensorId, SensorView,
+    SensorId, SensorType, SensorView,
     data::SensorReadingView,
     view::{LorawanInfo, SensorModelSummary},
 };
+use domain::sensor_model::{SensorAbilityUnit, SensorModel};
 
 use crate::service::{ServiceError, sensor_service::SensorService};
 
@@ -111,7 +112,7 @@ impl From<&LorawanInfo> for LorawanInfoResponse {
 }
 
 /// Sensor type (currently only LoRaWAN).
-#[derive(Debug, Serialize, utoipa::ToSchema)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SensorTypeResponse {
     Lorawan,
@@ -121,6 +122,14 @@ impl From<domain::sensor::SensorType> for SensorTypeResponse {
     fn from(value: domain::sensor::SensorType) -> Self {
         match value {
             domain::sensor::SensorType::Lorawan => Self::Lorawan,
+        }
+    }
+}
+
+impl From<SensorTypeResponse> for SensorType {
+    fn from(value: SensorTypeResponse) -> Self {
+        match value {
+            SensorTypeResponse::Lorawan => Self::Lorawan,
         }
     }
 }
@@ -198,6 +207,126 @@ impl From<&SensorView> for SensorResponse {
             latest_data: value.latest_reading.as_ref().map(SensorDataResponse::from),
             provider: value.provider.as_ref().map(|p| p.as_str().to_owned()),
             additional_information: value.additional_info.clone(),
+        }
+    }
+}
+
+/// LoRaWAN credentials supplied when registering a new sensor. `app_key` is
+/// write-only and never echoed back in responses.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct LorawanCredentialsRequest {
+    #[schema(example = "SN-2024-0001")]
+    pub serial_number: String,
+    #[schema(example = "a81758fffe0c3b52", min_length = 16, max_length = 16)]
+    pub dev_eui: String,
+    #[schema(example = "70b3d57ed0000000", min_length = 16, max_length = 16)]
+    pub app_eui: String,
+    #[schema(example = "00112233445566778899aabbccddeeff", min_length = 32, max_length = 32)]
+    pub app_key: String,
+    #[serde(default)]
+    #[schema(nullable)]
+    pub at_pin: Option<String>,
+    #[serde(default)]
+    #[schema(nullable)]
+    pub ota_pin: Option<String>,
+    #[serde(default)]
+    #[schema(value_type = Option<Object>, nullable)]
+    pub config: Option<serde_json::Value>,
+}
+
+/// Request body for `POST /sensors` — registers a prepared sensor unit.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct CreateSensorRequest {
+    /// Sensor identifier (EUI), 1–64 characters after trimming.
+    #[schema(example = "eui-a81758fffe0c3b52")]
+    pub id: String,
+    pub sensor_type: SensorTypeResponse,
+    /// `SensorModel` id; must reference an existing model.
+    #[schema(example = 1)]
+    pub model_id: i32,
+    #[serde(default)]
+    #[schema(example = "tbz", nullable)]
+    pub provider: Option<String>,
+    #[serde(default)]
+    #[schema(value_type = Option<Object>, nullable)]
+    pub additional_information: Option<serde_json::Value>,
+    /// Required when `sensor_type = lorawan`.
+    #[serde(default)]
+    #[schema(nullable)]
+    pub lorawan: Option<LorawanCredentialsRequest>,
+}
+
+/// Request body for `POST /sensors/{sensor_id}/activate` — binds a prepared
+/// sensor to a tree.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct ActivateSensorRequest {
+    #[schema(example = 42)]
+    pub tree_id: i32,
+}
+
+/// Physical quantity reported by a sensor ability.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+#[schema(example = "centibar")]
+pub enum SensorAbilityUnitDto {
+    Percent,
+    Centibar,
+    Ohm,
+    Celsius,
+}
+
+impl From<SensorAbilityUnit> for SensorAbilityUnitDto {
+    fn from(value: SensorAbilityUnit) -> Self {
+        match value {
+            SensorAbilityUnit::Percent => Self::Percent,
+            SensorAbilityUnit::Centibar => Self::Centibar,
+            SensorAbilityUnit::Ohm => Self::Ohm,
+            SensorAbilityUnit::Celsius => Self::Celsius,
+        }
+    }
+}
+
+/// A single ability (e.g. soil tension at 60 cm) supported by a sensor model.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct SensorModelAbilityResponse {
+    #[schema(example = 2)]
+    pub id: i32,
+    #[schema(example = "soil_tension")]
+    pub ability: String,
+    pub unit: SensorAbilityUnitDto,
+    #[schema(example = 60)]
+    pub depth_cm: i32,
+}
+
+/// Full description of a supported sensor model and its abilities.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct SensorModelResponse {
+    #[schema(example = 1)]
+    pub id: i32,
+    #[schema(example = "EcoDrizzler")]
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable)]
+    pub description: Option<String>,
+    pub abilities: Vec<SensorModelAbilityResponse>,
+}
+
+impl From<&SensorModel> for SensorModelResponse {
+    fn from(m: &SensorModel) -> Self {
+        Self {
+            id: m.id.value(),
+            name: m.name.as_str().to_owned(),
+            description: m.description.clone(),
+            abilities: m
+                .abilities
+                .iter()
+                .map(|a| SensorModelAbilityResponse {
+                    id: a.id,
+                    ability: a.ability.name.as_str().to_owned(),
+                    unit: a.ability.unit.into(),
+                    depth_cm: a.depth_cm,
+                })
+                .collect(),
         }
     }
 }
