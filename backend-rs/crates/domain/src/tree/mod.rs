@@ -16,6 +16,7 @@ pub mod planting_year;
 pub mod repository;
 pub mod snapshot;
 pub mod view;
+mod volumetric_calibration;
 mod watermark_calibration;
 
 use chrono::{DateTime, Datelike, Utc};
@@ -265,6 +266,18 @@ impl Tree {
             1 => WateringStatus::Moderate,
             _ => WateringStatus::Bad,
         })
+    }
+
+    /// Derives a [`WateringStatus`] from volumetric soil-moisture readings
+    /// (GES-1000 family). Sibling of
+    /// [`calculate_watering_status_from_watermarks`]; the tree aggregate
+    /// itself stays calibration-agnostic — the service layer picks which
+    /// sibling to call based on the linked sensor's model.
+    pub fn calculate_watering_status_from_volumetric(
+        &self,
+        readings: &[crate::sensor::data::VolumetricReading],
+    ) -> Result<WateringStatus, TreeError> {
+        volumetric_calibration::classify(readings)
     }
 }
 

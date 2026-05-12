@@ -83,3 +83,9 @@ pub struct MqttPayload {
     pub longitude: f64,
     pub watermarks: Vec<Watermark>,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct VolumetricReading {
+    pub depth_cm: i32,
+    pub moisture_percent: f64,
+}

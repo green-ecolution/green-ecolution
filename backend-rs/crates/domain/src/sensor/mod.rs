@@ -1,9 +1,11 @@
-//! Sensor aggregate — LoRaWAN (or similar) devices mounted on trees.
+//! Sensor aggregate — LoRaWAN (or similar) devices linked to trees.
 //!
-//! The aggregate ([`Sensor`]) tracks connectivity status and physical location.
-//! Time-series readings live in the [`data`] sub-module as the `SensorReading`
-//! sub-aggregate. The view ([`SensorView`]) adds `created_at` / `updated_at`
-//! audit fields and embeds the latest reading for HTTP responses.
+//! The aggregate ([`Sensor`]) tracks connectivity status, sensor type, and
+//! model identity. The physical position is no longer part of the aggregate
+//! itself: location is derived from the linked tree. Time-series readings live
+//! in the [`data`] sub-module as the `SensorReading` sub-aggregate. The view
+//! ([`SensorView`]) adds `created_at` / `updated_at` audit fields and embeds
+//! the latest reading for HTTP responses.
 //!
 //! The `recorded_at` field on `SensorReading` is what the domain calls the
 //! event timestamp; the DB column is named `created_at`, but the aggregate
@@ -15,13 +17,16 @@ pub mod repository;
 pub mod snapshot;
 pub mod view;
 
-use crate::shared::{
-    coordinates::Coordinate,
-    provenance::{Provenance, ProviderId},
+use crate::{
+    Id,
+    sensor_model::SensorModel,
+    shared::provenance::{Provenance, ProviderId},
 };
 
 pub use error::SensorError;
-pub use repository::{SensorReader, SensorReadingReader, SensorReadingWriter, SensorWriter};
+pub use repository::{
+    NormalizedValue, SensorReader, SensorReadingReader, SensorReadingWriter, SensorWriter,
+};
 #[doc(hidden)]
 pub use snapshot::SensorSnapshot;
 pub use view::SensorView;
@@ -33,9 +38,30 @@ pub use view::SensorView;
     sqlx(type_name = "sensor_status", rename_all = "snake_case")
 )]
 pub enum SensorStatus {
+    Prepared,
     Online,
     Offline,
-    Unknown,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "sqlx", derive(sqlx::Type))]
+#[cfg_attr(
+    feature = "sqlx",
+    sqlx(type_name = "sensor_type", rename_all = "snake_case")
+)]
+pub enum SensorType {
+    Lorawan,
+}
+
+#[derive(Debug, Clone)]
+pub struct LorawanCredentials {
+    pub serial_number: crate::shared::string_value::NonEmptyString,
+    pub dev_eui: crate::shared::string_value::NonEmptyString,
+    pub app_eui: crate::shared::string_value::NonEmptyString,
+    pub app_key: secrecy::SecretString,
+    pub at_pin: Option<String>,
+    pub ota_pin: Option<String>,
+    pub config: Option<serde_json::Value>,
 }
 
 crate::newtype_nonempty! {
@@ -43,21 +69,24 @@ crate::newtype_nonempty! {
     SensorId, "sensor.id", 1, 64
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Sensor {
     pub id: SensorId,
-    pub status: SensorStatus,
-    pub coordinate: Coordinate,
     pub provenance: Provenance,
+    status: SensorStatus,
+    sensor_type: SensorType,
+    model_id: Id<SensorModel>,
+    lorawan: Option<LorawanCredentials>,
 }
 
 /// Input for creating a new [`Sensor`].
 #[derive(Debug, Clone)]
 pub struct SensorDraft {
     pub id: SensorId,
-    pub status: SensorStatus,
-    pub coordinate: Coordinate,
+    pub sensor_type: SensorType,
+    pub model_id: Id<SensorModel>,
     pub provenance: Provenance,
+    pub lorawan: LorawanCredentials,
 }
 
 impl Sensor {
@@ -65,11 +94,40 @@ impl Sensor {
     pub fn reconstitute(snap: SensorSnapshot) -> Self {
         Self {
             id: SensorId::reconstitute(snap.id),
-            status: snap.status,
-            coordinate: Coordinate::new(snap.latitude, snap.longitude).expect(
-                "DB coordinate values must be valid; row was persisted only after validation",
-            ),
             provenance: Provenance::reconstitute(snap.provider, snap.additional_info),
+            status: snap.status,
+            sensor_type: snap.sensor_type,
+            model_id: Id::new(snap.model_id),
+            lorawan: snap.lorawan,
+        }
+    }
+
+    pub fn status(&self) -> SensorStatus {
+        self.status
+    }
+
+    pub fn sensor_type(&self) -> SensorType {
+        self.sensor_type
+    }
+
+    pub fn model_id(&self) -> Id<SensorModel> {
+        self.model_id
+    }
+
+    pub fn lorawan(&self) -> Option<&LorawanCredentials> {
+        self.lorawan.as_ref()
+    }
+
+    /// Prepared -> Offline (activated, awaiting first reading).
+    pub fn activate(&mut self) -> Result<Vec<crate::events::DomainEvent>, SensorError> {
+        match self.status {
+            SensorStatus::Prepared => {
+                self.status = SensorStatus::Offline;
+                Ok(vec![crate::events::DomainEvent::SensorActivated {
+                    sensor_id: self.id.clone(),
+                }])
+            }
+            _ => Err(SensorError::AlreadyActivated),
         }
     }
 
@@ -78,13 +136,6 @@ impl Sensor {
             return;
         }
         self.status = new;
-    }
-
-    pub fn move_to(&mut self, new: Coordinate) {
-        if self.coordinate == new {
-            return;
-        }
-        self.coordinate = new;
     }
 }
 
@@ -101,9 +152,11 @@ mod tests {
     fn fixed_sensor() -> Sensor {
         Sensor {
             id: SensorId::new("eui-a81758fffe0c3b52").unwrap(),
-            status: SensorStatus::Online,
-            coordinate: Coordinate::new(54.7937, 9.4469).unwrap(),
             provenance: Provenance::default(),
+            status: SensorStatus::Online,
+            sensor_type: SensorType::Lorawan,
+            model_id: Id::new(1),
+            lorawan: None,
         }
     }
 
@@ -127,29 +180,37 @@ mod tests {
     fn change_status_to_same_is_noop() {
         let mut s = fixed_sensor();
         s.change_status(SensorStatus::Online);
-        assert_eq!(s.status, SensorStatus::Online);
+        assert_eq!(s.status(), SensorStatus::Online);
     }
 
     #[test]
     fn change_status_to_different_changes_status() {
         let mut s = fixed_sensor();
         s.change_status(SensorStatus::Offline);
-        assert_eq!(s.status, SensorStatus::Offline);
+        assert_eq!(s.status(), SensorStatus::Offline);
     }
 
     #[test]
-    fn move_to_same_coord_is_noop() {
+    fn activate_from_prepared_transitions_to_offline_and_emits_event() {
+        use crate::events::DomainEvent;
         let mut s = fixed_sensor();
-        let original = s.coordinate;
-        s.move_to(Coordinate::new(54.7937, 9.4469).unwrap());
-        assert_eq!(s.coordinate, original);
+        s.status = SensorStatus::Prepared;
+        let events = s.activate().unwrap();
+        assert_eq!(s.status(), SensorStatus::Offline);
+        assert_eq!(events.len(), 1);
+        match &events[0] {
+            DomainEvent::SensorActivated { sensor_id } => {
+                assert_eq!(sensor_id.as_str(), "eui-a81758fffe0c3b52")
+            }
+            other => panic!("unexpected event: {other:?}"),
+        }
     }
 
     #[test]
-    fn move_to_new_coord_changes_position() {
+    fn activate_from_non_prepared_returns_already_activated() {
         let mut s = fixed_sensor();
-        let new = Coordinate::new(53.0, 9.0).unwrap();
-        s.move_to(new);
-        assert_eq!(s.coordinate, new);
+        s.status = SensorStatus::Online;
+        assert!(matches!(s.activate(), Err(SensorError::AlreadyActivated)));
+        assert_eq!(s.status(), SensorStatus::Online);
     }
 }

@@ -10,11 +10,26 @@ use chrono::{DateTime, Utc};
 use crate::{
     Id,
     cluster::TreeCluster,
-    sensor::{SensorId, data::Watermark},
+    sensor::{
+        SensorId,
+        data::{VolumetricReading, Watermark},
+    },
     shared::watering_status::WateringStatus,
     tree::Tree,
     watering_plan::{WateringPlan, WateringPlanEvaluation},
 };
+
+#[derive(Debug, Clone)]
+pub enum SensorReadings {
+    Watermarks(Vec<Watermark>),
+    Volumetrics(Vec<VolumetricReading>),
+}
+
+#[derive(Debug, Clone)]
+pub struct SensorDataReceivedPayload {
+    pub sensor_id: SensorId,
+    pub readings: SensorReadings,
+}
 
 /// Domain events published after successful aggregate mutations.
 #[derive(Debug, Clone)]
@@ -57,12 +72,10 @@ pub enum DomainEvent {
     /// watering status, and region can be recalculated.
     ClusterTreesChanged { cluster_id: Id<TreeCluster> },
     /// Emitted after a sensor reading is persisted. Carries the parsed
-    /// watermarks so subscribers don't have to re-parse the raw JSON payload.
-    SensorDataReceived {
-        sensor_id: SensorId,
-        ts: DateTime<Utc>,
-        watermarks: Vec<Watermark>,
-    },
+    /// readings so subscribers don't have to re-parse the raw JSON payload.
+    SensorDataReceived(SensorDataReceivedPayload),
+    /// Emitted when a sensor transitions from `Prepared` to `Offline`.
+    SensorActivated { sensor_id: SensorId },
     WateringPlanStarted {
         plan_id: Id<WateringPlan>,
         cluster_ids: Vec<Id<TreeCluster>>,

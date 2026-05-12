@@ -12,4 +12,7 @@ pub enum TreeError {
     /// Tree is older than the monitoring window the calibration table covers.
     #[error("tree age exceeds monitored growth period (year > 3)")]
     BeyondMonitoring,
+    /// Volumetric soil-moisture readings were empty or contained non-finite values.
+    #[error("volumetric readings empty or invalid")]
+    MalformedVolumetric,
 }

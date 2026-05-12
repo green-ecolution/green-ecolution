@@ -9,6 +9,12 @@ use crate::{
     shared::pagination::{Page, Pagination},
 };
 
+#[derive(Debug, Clone)]
+pub struct NormalizedValue {
+    pub model_ability_id: i32,
+    pub value: rust_decimal::Decimal,
+}
+
 /// Read-side access to sensors, including aggregate hydration and the
 /// HTTP-friendly [`SensorView`] read model.
 #[async_trait]
@@ -55,4 +61,12 @@ pub trait SensorReadingReader: Send + Sync {
 #[async_trait]
 pub trait SensorReadingWriter: Send + Sync {
     async fn record(&self, draft: SensorReadingDraft) -> Result<(), RepositoryError>;
+
+    /// Persist a raw reading alongside its normalized per-ability values.
+    async fn record_with_normalized(
+        &self,
+        sensor_id: &SensorId,
+        raw: serde_json::Value,
+        normalized: &[NormalizedValue],
+    ) -> Result<(), RepositoryError>;
 }

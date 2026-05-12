@@ -6,4 +6,6 @@ use crate::shared::error::ValidationError;
 pub enum SensorError {
     #[error(transparent)]
     Validation(#[from] ValidationError),
+    #[error("sensor is already activated")]
+    AlreadyActivated,
 }

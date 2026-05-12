@@ -1,22 +1,46 @@
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 
-use crate::sensor::{SensorStatus, data::SensorReadingView};
+use crate::{
+    sensor::{SensorStatus, SensorType, data::SensorReadingView},
+    shared::{coordinates::Coordinate, provenance::ProviderId},
+};
 
 /// HTTP-side read model for a sensor.
 ///
 /// Adds audit fields (`created_at`, `updated_at`) and embeds the
 /// `latest_reading` for convenience. Uses primitive types rather than value
-/// objects so HTTP serialisation doesn't need to unwrap newtypes.
+/// objects so HTTP serialisation doesn't need to unwrap newtypes. Coordinate
+/// and tree linkage are derived from the linked tree (the sensor aggregate
+/// itself no longer stores a position).
 #[derive(Debug, Clone)]
 pub struct SensorView {
     pub id: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub status: SensorStatus,
-    pub latitude: f64,
-    pub longitude: f64,
-    pub provider: Option<String>,
+    pub sensor_type: SensorType,
+    pub coordinate: Option<Coordinate>,
+    pub linked_tree_id: Option<i32>,
+    pub provider: Option<ProviderId>,
     pub additional_info: Option<Value>,
+    pub model: SensorModelSummary,
+    pub lorawan: Option<LorawanInfo>,
     pub latest_reading: Option<SensorReadingView>,
+}
+
+#[derive(Debug, Clone)]
+pub struct SensorModelSummary {
+    pub id: i32,
+    pub name: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct LorawanInfo {
+    pub serial_number: String,
+    pub dev_eui: String,
+    pub app_eui: String,
+    pub at_pin: Option<String>,
+    pub ota_pin: Option<String>,
+    pub config: Option<serde_json::Value>,
 }
