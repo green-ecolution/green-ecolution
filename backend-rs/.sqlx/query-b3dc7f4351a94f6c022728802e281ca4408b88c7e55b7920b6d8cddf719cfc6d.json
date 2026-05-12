@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT sma.id           AS mapping_id,\n                  sma.depth_cm,\n                  sa.id             AS ability_id,\n                  sa.ability        AS ability_name,\n                  sa.unit           AS \"unit: SensorAbilityUnit\"\n           FROM sensor_model_abilities sma\n           JOIN sensor_abilities       sa ON sa.id = sma.sensor_ability_id\n           WHERE sma.sensor_model_id = $1\n           ORDER BY sa.id, sma.depth_cm",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "mapping_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "depth_cm",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "ability_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "ability_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "unit: SensorAbilityUnit",
+        "type_info": {
+          "Custom": {
+            "name": "sensor_ability_unit",
+            "kind": {
+              "Enum": [
+                "percent",
+                "centibar",
+                "ohm",
+                "celsius"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "b3dc7f4351a94f6c022728802e281ca4408b88c7e55b7920b6d8cddf719cfc6d"
+}

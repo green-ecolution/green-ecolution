@@ -41,12 +41,13 @@ jsonwebtoken = "9.3"
 log = "0.4"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 rumqttc = "0.25"
+rust_decimal = { version = "1.42", default-features = false }
 secrecy = { workspace = true }
 serde = { workspace = true }
 serde-aux = "4.7.0"
 serde_json = { workspace = true }
 serde_urlencoded = "0.7"
-sqlx = { workspace = true, features = ["macros", "migrate", "runtime-tokio", "tls-rustls", "postgres", "chrono", "uuid", "json"] }
+sqlx = { workspace = true, features = ["macros", "migrate", "runtime-tokio", "tls-rustls", "postgres", "chrono", "uuid", "json", "rust_decimal"] }
 thiserror = { workspace = true }
 tokio = { version = "1.52.1", features = ["full"] }
 tower = "0.5"

@@ -605,8 +605,16 @@ async fn cluster_update_tree_ids_recalculates_center() {
 
 async fn insert_sensor(app: &helpers::TestApp, id: &str) {
     sqlx::query!(
-        r#"INSERT INTO sensors (id, status, latitude, longitude, geometry)
-        VALUES ($1, 'online', 53.55, 9.99, ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326))"#,
+        r#"INSERT INTO sensors (id, status, type, model_id)
+        VALUES ($1, 'online', 'lorawan', 1)"#,
+        id,
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    sqlx::query!(
+        r#"INSERT INTO sensor_lorawan (id, serial_number, dev_eui, app_eui, app_key)
+        VALUES ($1, '', '', '', '')"#,
         id,
     )
     .execute(&app.db_pool)

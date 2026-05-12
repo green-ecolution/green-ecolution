@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO sensor_lorawan (id, serial_number, dev_eui, app_eui, app_key)\n            VALUES ($1, '', '', '', '')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0ff06d00ad62cbb79f623cbb8c6763de1a3db1cc4fe1e257b970e8887d3c2626"
+}

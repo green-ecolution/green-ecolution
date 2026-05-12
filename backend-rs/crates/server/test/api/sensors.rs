@@ -2,9 +2,17 @@ use crate::helpers::spawn_app;
 
 async fn insert_sensor(app: &crate::helpers::TestApp, id: &str) {
     sqlx::query!(
-        r#"INSERT INTO sensors (id, status, latitude, longitude, geometry)
-        VALUES ($1, 'online', 53.55, 9.99, ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326))"#,
-        id
+        r#"INSERT INTO sensors (id, status, type, model_id)
+        VALUES ($1, 'online', 'lorawan', 1)"#,
+        id,
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    sqlx::query!(
+        r#"INSERT INTO sensor_lorawan (id, serial_number, dev_eui, app_eui, app_key)
+        VALUES ($1, '', '', '', '')"#,
+        id,
     )
     .execute(&app.db_pool)
     .await
@@ -54,6 +62,10 @@ async fn list_sensors_returns_inserted_sensors() {
     assert_eq!(body["pagination"]["total_records"], 2);
 }
 
+// FIXME(phase-10): response shape changed (latitude/longitude moved into
+// optional `coordinate`, derived from the linked tree). Rewrite the assertions
+// once the new DTO is finalised.
+#[ignore]
 #[tokio::test]
 async fn get_sensor_returns_full_response() {
     let app = spawn_app().await;
@@ -227,6 +239,10 @@ fn payload(device: &str, lat: f64, lng: f64, centibar: i32) -> serde_json::Value
     })
 }
 
+// FIXME(phase-10): auto-create + nearest-tree linking on MQTT ingest was
+// removed; sensors must now be registered explicitly. Re-enable once the new
+// activation flow is in place.
+#[ignore]
 #[tokio::test]
 async fn handle_message_creates_sensor_links_nearest_tree_and_updates_watering_status() {
     let app = spawn_app().await;

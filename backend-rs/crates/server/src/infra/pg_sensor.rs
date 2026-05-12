@@ -1,14 +1,23 @@
 use async_trait::async_trait;
+use rust_decimal::Decimal;
 use sqlx::PgPool;
 
 use domain::{
     RepositoryError,
     sensor::{
-        Sensor, SensorDraft, SensorId, SensorReader, SensorReadingReader, SensorReadingWriter,
-        SensorSearchQuery, SensorSnapshot, SensorStatus, SensorView, SensorWriter,
+        LorawanCredentials, Sensor, SensorDraft, SensorId, SensorReader, SensorReadingReader,
+        SensorReadingWriter, SensorSearchQuery, SensorSnapshot, SensorStatus, SensorType,
+        SensorView, SensorWriter,
         data::{SensorReading, SensorReadingDraft, SensorReadingSnapshot, SensorReadingView},
+        repository::NormalizedValue,
+        view::{LorawanInfo, SensorModelSummary},
     },
-    shared::pagination::{Page, Pagination},
+    shared::{
+        coordinates::Coordinate,
+        pagination::{Page, Pagination},
+        provenance::ProviderId,
+        string_value::NonEmptyString,
+    },
 };
 
 pub struct PgSensorRepository {
@@ -25,52 +34,123 @@ impl PgSensorRepository {
 impl SensorReader for PgSensorRepository {
     #[tracing::instrument(level = "trace", skip_all)]
     async fn by_id(&self, id: &SensorId) -> Result<Sensor, RepositoryError> {
-        let snap = sqlx::query_as!(
-            SensorSnapshot,
-            r#"SELECT id,
-                      status AS "status: SensorStatus",
-                      latitude, longitude,
-                      provider,
-                      additional_informations AS additional_info
-            FROM sensors WHERE id = $1"#,
+        let row = sqlx::query!(
+            r#"SELECT s.id,
+                      s.status        AS "status: SensorStatus",
+                      s.type          AS "sensor_type: SensorType",
+                      s.model_id,
+                      s.provider,
+                      s.additional_informations AS "additional_info: serde_json::Value",
+                      sl.serial_number AS "serial_number?",
+                      sl.dev_eui       AS "dev_eui?",
+                      sl.app_eui       AS "app_eui?",
+                      sl.app_key       AS "app_key?",
+                      sl.at_pin,
+                      sl.ota_pin,
+                      sl.config        AS "config: serde_json::Value"
+            FROM sensors s
+            LEFT JOIN sensor_lorawan sl ON sl.id = s.id
+            WHERE s.id = $1"#,
             id.as_str()
         )
         .fetch_optional(&self.pool)
         .await?
         .ok_or(RepositoryError::NotFound)?;
 
-        Ok(Sensor::reconstitute(snap))
+        let lorawan = build_lorawan(
+            row.serial_number,
+            row.dev_eui,
+            row.app_eui,
+            row.app_key,
+            row.at_pin,
+            row.ota_pin,
+            row.config,
+        )?;
+        Ok(Sensor::reconstitute(SensorSnapshot {
+            id: row.id,
+            status: row.status,
+            sensor_type: row.sensor_type,
+            model_id: row.model_id,
+            provider: row.provider,
+            additional_info: row.additional_info,
+            lorawan,
+        }))
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn by_ids(&self, ids: &[SensorId]) -> Result<Vec<Sensor>, RepositoryError> {
         let ids: Vec<&str> = ids.iter().map(SensorId::as_str).collect();
 
-        let snaps = sqlx::query_as!(
-            SensorSnapshot,
-            r#"SELECT id,
-                      status AS "status: SensorStatus",
-                      latitude, longitude,
-                      provider,
-                      additional_informations AS additional_info
-            FROM sensors WHERE id = ANY($1::text[])"#,
+        let rows = sqlx::query!(
+            r#"SELECT s.id,
+                      s.status        AS "status: SensorStatus",
+                      s.type          AS "sensor_type: SensorType",
+                      s.model_id,
+                      s.provider,
+                      s.additional_informations AS "additional_info: serde_json::Value",
+                      sl.serial_number AS "serial_number?",
+                      sl.dev_eui       AS "dev_eui?",
+                      sl.app_eui       AS "app_eui?",
+                      sl.app_key       AS "app_key?",
+                      sl.at_pin,
+                      sl.ota_pin,
+                      sl.config        AS "config: serde_json::Value"
+            FROM sensors s
+            LEFT JOIN sensor_lorawan sl ON sl.id = s.id
+            WHERE s.id = ANY($1::text[])"#,
             &ids as &[&str]
         )
         .fetch_all(&self.pool)
         .await?;
 
-        Ok(snaps.into_iter().map(Sensor::reconstitute).collect())
+        rows.into_iter()
+            .map(|r| {
+                let lorawan = build_lorawan(
+                    r.serial_number,
+                    r.dev_eui,
+                    r.app_eui,
+                    r.app_key,
+                    r.at_pin,
+                    r.ota_pin,
+                    r.config,
+                )?;
+                Ok(Sensor::reconstitute(SensorSnapshot {
+                    id: r.id,
+                    status: r.status,
+                    sensor_type: r.sensor_type,
+                    model_id: r.model_id,
+                    provider: r.provider,
+                    additional_info: r.additional_info,
+                    lorawan,
+                }))
+            })
+            .collect()
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn view_by_id(&self, id: &SensorId) -> Result<SensorView, RepositoryError> {
         let row = sqlx::query!(
-            r#"SELECT id, created_at, updated_at,
-                      status AS "status: SensorStatus",
-                      latitude, longitude,
-                      provider,
-                      additional_informations AS additional_info
-            FROM sensors WHERE id = $1"#,
+            r#"SELECT s.id, s.created_at, s.updated_at,
+                      s.status        AS "status: SensorStatus",
+                      s.type          AS "sensor_type: SensorType",
+                      s.provider,
+                      s.additional_informations AS "additional_info: serde_json::Value",
+                      sm.id           AS model_id,
+                      sm.name         AS model_name,
+                      t.id            AS "linked_tree_id?",
+                      t.latitude      AS "tree_lat?",
+                      t.longitude     AS "tree_lng?",
+                      sl.serial_number AS "serial_number?",
+                      sl.dev_eui       AS "dev_eui?",
+                      sl.app_eui       AS "app_eui?",
+                      sl.at_pin,
+                      sl.ota_pin,
+                      sl.config        AS "config: serde_json::Value"
+            FROM sensors s
+            INNER JOIN sensor_models sm ON sm.id = s.model_id
+            LEFT JOIN sensor_lorawan sl ON sl.id = s.id
+            LEFT JOIN trees t          ON t.sensor_id = s.id
+            WHERE s.id = $1"#,
             id.as_str()
         )
         .fetch_optional(&self.pool)
@@ -98,10 +178,23 @@ impl SensorReader for PgSensorRepository {
             created_at: row.created_at.and_utc(),
             updated_at: row.updated_at.and_utc(),
             status: row.status,
-            latitude: row.latitude,
-            longitude: row.longitude,
-            provider: row.provider,
+            sensor_type: row.sensor_type,
+            coordinate: build_coord(row.tree_lat, row.tree_lng)?,
+            linked_tree_id: row.linked_tree_id,
+            provider: row.provider.map(ProviderId::reconstitute),
             additional_info: row.additional_info,
+            model: SensorModelSummary {
+                id: row.model_id,
+                name: row.model_name,
+            },
+            lorawan: build_lorawan_info(
+                row.serial_number,
+                row.dev_eui,
+                row.app_eui,
+                row.at_pin,
+                row.ota_pin,
+                row.config,
+            ),
             latest_reading,
         })
     }
@@ -111,32 +204,60 @@ impl SensorReader for PgSensorRepository {
         let ids: Vec<&str> = ids.iter().map(SensorId::as_str).collect();
 
         let rows = sqlx::query!(
-            r#"SELECT id, created_at, updated_at,
-                      status AS "status: SensorStatus",
-                      latitude, longitude,
-                      provider,
-                      additional_informations AS additional_info
-            FROM sensors WHERE id = ANY($1::text[])"#,
+            r#"SELECT s.id, s.created_at, s.updated_at,
+                      s.status        AS "status: SensorStatus",
+                      s.type          AS "sensor_type: SensorType",
+                      s.provider,
+                      s.additional_informations AS "additional_info: serde_json::Value",
+                      sm.id           AS model_id,
+                      sm.name         AS model_name,
+                      t.id            AS "linked_tree_id?",
+                      t.latitude      AS "tree_lat?",
+                      t.longitude     AS "tree_lng?",
+                      sl.serial_number AS "serial_number?",
+                      sl.dev_eui       AS "dev_eui?",
+                      sl.app_eui       AS "app_eui?",
+                      sl.at_pin,
+                      sl.ota_pin,
+                      sl.config        AS "config: serde_json::Value"
+            FROM sensors s
+            INNER JOIN sensor_models sm ON sm.id = s.model_id
+            LEFT JOIN sensor_lorawan sl ON sl.id = s.id
+            LEFT JOIN trees t          ON t.sensor_id = s.id
+            WHERE s.id = ANY($1::text[])"#,
             &ids as &[&str]
         )
         .fetch_all(&self.pool)
         .await?;
 
-        // latest_reading omitted to avoid N+1 per-row subqueries on batch endpoints
-        Ok(rows
-            .into_iter()
-            .map(|r| SensorView {
-                id: r.id,
-                created_at: r.created_at.and_utc(),
-                updated_at: r.updated_at.and_utc(),
-                status: r.status,
-                latitude: r.latitude,
-                longitude: r.longitude,
-                provider: r.provider,
-                additional_info: r.additional_info,
-                latest_reading: None,
+        rows.into_iter()
+            .map(|r| {
+                Ok(SensorView {
+                    id: r.id,
+                    created_at: r.created_at.and_utc(),
+                    updated_at: r.updated_at.and_utc(),
+                    status: r.status,
+                    sensor_type: r.sensor_type,
+                    coordinate: build_coord(r.tree_lat, r.tree_lng)?,
+                    linked_tree_id: r.linked_tree_id,
+                    provider: r.provider.map(ProviderId::reconstitute),
+                    additional_info: r.additional_info,
+                    model: SensorModelSummary {
+                        id: r.model_id,
+                        name: r.model_name,
+                    },
+                    lorawan: build_lorawan_info(
+                        r.serial_number,
+                        r.dev_eui,
+                        r.app_eui,
+                        r.at_pin,
+                        r.ota_pin,
+                        r.config,
+                    ),
+                    latest_reading: None,
+                })
             })
-            .collect())
+            .collect()
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
@@ -158,14 +279,28 @@ impl SensorReader for PgSensorRepository {
         .await? as u64;
 
         let rows = sqlx::query!(
-            r#"SELECT id, created_at, updated_at,
-                      status AS "status: SensorStatus",
-                      latitude, longitude,
-                      provider,
-                      additional_informations AS additional_info
-            FROM sensors
-            WHERE ($1::text IS NULL OR provider = $1)
-            ORDER BY id
+            r#"SELECT s.id, s.created_at, s.updated_at,
+                      s.status        AS "status: SensorStatus",
+                      s.type          AS "sensor_type: SensorType",
+                      s.provider,
+                      s.additional_informations AS "additional_info: serde_json::Value",
+                      sm.id           AS model_id,
+                      sm.name         AS model_name,
+                      t.id            AS "linked_tree_id?",
+                      t.latitude      AS "tree_lat?",
+                      t.longitude     AS "tree_lng?",
+                      sl.serial_number AS "serial_number?",
+                      sl.dev_eui       AS "dev_eui?",
+                      sl.app_eui       AS "app_eui?",
+                      sl.at_pin,
+                      sl.ota_pin,
+                      sl.config        AS "config: serde_json::Value"
+            FROM sensors s
+            INNER JOIN sensor_models sm ON sm.id = s.model_id
+            LEFT JOIN sensor_lorawan sl ON sl.id = s.id
+            LEFT JOIN trees t          ON t.sensor_id = s.id
+            WHERE ($1::text IS NULL OR s.provider = $1)
+            ORDER BY s.id
             LIMIT $2 OFFSET $3"#,
             provider,
             limit,
@@ -174,21 +309,35 @@ impl SensorReader for PgSensorRepository {
         .fetch_all(&self.pool)
         .await?;
 
-        // latest_reading omitted to avoid N+1 per-row subqueries on list endpoints
         let items = rows
             .into_iter()
-            .map(|r| SensorView {
-                id: r.id,
-                created_at: r.created_at.and_utc(),
-                updated_at: r.updated_at.and_utc(),
-                status: r.status,
-                latitude: r.latitude,
-                longitude: r.longitude,
-                provider: r.provider,
-                additional_info: r.additional_info,
-                latest_reading: None,
+            .map(|r| {
+                Ok(SensorView {
+                    id: r.id,
+                    created_at: r.created_at.and_utc(),
+                    updated_at: r.updated_at.and_utc(),
+                    status: r.status,
+                    sensor_type: r.sensor_type,
+                    coordinate: build_coord(r.tree_lat, r.tree_lng)?,
+                    linked_tree_id: r.linked_tree_id,
+                    provider: r.provider.map(ProviderId::reconstitute),
+                    additional_info: r.additional_info,
+                    model: SensorModelSummary {
+                        id: r.model_id,
+                        name: r.model_name,
+                    },
+                    lorawan: build_lorawan_info(
+                        r.serial_number,
+                        r.dev_eui,
+                        r.app_eui,
+                        r.at_pin,
+                        r.ota_pin,
+                        r.config,
+                    ),
+                    latest_reading: None,
+                })
             })
-            .collect();
+            .collect::<Result<Vec<_>, RepositoryError>>()?;
 
         Ok(Page { items, total })
     }
@@ -198,49 +347,52 @@ impl SensorReader for PgSensorRepository {
 impl SensorWriter for PgSensorRepository {
     #[tracing::instrument(level = "trace", skip_all)]
     async fn save_new(&self, draft: SensorDraft) -> Result<Sensor, RepositoryError> {
-        let lat = draft.coordinate.latitude();
-        let lng = draft.coordinate.longitude();
+        let mut tx = self.pool.begin().await?;
 
-        let snap = sqlx::query_as!(
-            SensorSnapshot,
-            r#"INSERT INTO sensors (id, status, latitude, longitude, geometry, provider, additional_informations)
-            VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint($4, $3), 4326), $5, $6)
-            RETURNING id,
-                      status AS "status: SensorStatus",
-                      latitude, longitude,
-                      provider,
-                      additional_informations AS additional_info"#,
+        sqlx::query!(
+            r#"INSERT INTO sensors (id, type, model_id, provider, additional_informations)
+            VALUES ($1, $2, $3, $4, $5)"#,
             draft.id.as_str(),
-            draft.status as SensorStatus,
-            lat,
-            lng,
+            draft.sensor_type as SensorType,
+            draft.model_id.value(),
             draft.provenance.provider().map(|p| p.as_str()),
             draft.provenance.additional_info().cloned(),
         )
-        .fetch_one(&self.pool)
+        .execute(&mut *tx)
         .await?;
 
-        Ok(Sensor::reconstitute(snap))
+        let lorawan = &draft.lorawan;
+        sqlx::query!(
+            r#"INSERT INTO sensor_lorawan
+                (id, serial_number, dev_eui, app_eui, app_key, at_pin, ota_pin, config)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#,
+            draft.id.as_str(),
+            lorawan.serial_number.as_str(),
+            lorawan.dev_eui.as_str(),
+            lorawan.app_eui.as_str(),
+            secrecy::ExposeSecret::expose_secret(&lorawan.app_key),
+            lorawan.at_pin,
+            lorawan.ota_pin,
+            lorawan.config,
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+
+        self.by_id(&draft.id).await
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn save(&self, sensor: &Sensor) -> Result<(), RepositoryError> {
-        let lat = sensor.coordinate.latitude();
-        let lng = sensor.coordinate.longitude();
-
         let result = sqlx::query!(
             r#"UPDATE sensors SET
                 status = $2,
-                latitude = $3,
-                longitude = $4,
-                geometry = ST_SetSRID(ST_MakePoint($4, $3), 4326),
-                provider = $5,
-                additional_informations = $6
+                provider = $3,
+                additional_informations = $4
             WHERE id = $1"#,
             sensor.id.as_str(),
-            sensor.status as SensorStatus,
-            lat,
-            lng,
+            sensor.status() as SensorStatus,
             sensor.provenance.provider().map(|p| p.as_str()),
             sensor.provenance.additional_info().cloned(),
         )
@@ -348,4 +500,99 @@ impl SensorReadingWriter for PgSensorRepository {
 
         Ok(())
     }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn record_with_normalized(
+        &self,
+        sensor_id: &SensorId,
+        raw: serde_json::Value,
+        normalized: &[NormalizedValue],
+    ) -> Result<(), RepositoryError> {
+        let mut tx = self.pool.begin().await?;
+
+        let reading_id = sqlx::query_scalar!(
+            r#"INSERT INTO sensor_data (sensor_id, data) VALUES ($1, $2) RETURNING id"#,
+            sensor_id.as_str(),
+            raw,
+        )
+        .fetch_one(&mut *tx)
+        .await?;
+
+        if !normalized.is_empty() {
+            let ability_ids: Vec<i32> = normalized.iter().map(|n| n.model_ability_id).collect();
+            let values: Vec<Decimal> = normalized.iter().map(|n| n.value).collect();
+            sqlx::query!(
+                r#"INSERT INTO sensor_data_ability_values
+                    (sensor_data_id, sensor_model_ability_id, value)
+                SELECT $1, ability, val
+                FROM UNNEST($2::int[], $3::numeric[]) AS t(ability, val)"#,
+                reading_id,
+                &ability_ids,
+                &values as &[Decimal],
+            )
+            .execute(&mut *tx)
+            .await?;
+        }
+
+        tx.commit().await?;
+        Ok(())
+    }
+}
+
+/// Builds [`LorawanCredentials`] from the joined row. Returns `Ok(None)` only
+/// when the join missed (no `sensor_lorawan` row); otherwise validates the
+/// non-empty fields and surfaces a [`RepositoryError::DataIntegrity`] on bad
+/// data.
+fn build_lorawan(
+    serial_number: Option<String>,
+    dev_eui: Option<String>,
+    app_eui: Option<String>,
+    app_key: Option<String>,
+    at_pin: Option<String>,
+    ota_pin: Option<String>,
+    config: Option<serde_json::Value>,
+) -> Result<Option<LorawanCredentials>, RepositoryError> {
+    let (Some(serial_number), Some(dev_eui), Some(app_eui), Some(app_key)) =
+        (serial_number, dev_eui, app_eui, app_key)
+    else {
+        return Ok(None);
+    };
+    Ok(Some(LorawanCredentials {
+        serial_number: NonEmptyString::reconstitute(serial_number),
+        dev_eui: NonEmptyString::reconstitute(dev_eui),
+        app_eui: NonEmptyString::reconstitute(app_eui),
+        app_key: secrecy::SecretString::from(app_key),
+        at_pin,
+        ota_pin,
+        config,
+    }))
+}
+
+fn build_lorawan_info(
+    serial_number: Option<String>,
+    dev_eui: Option<String>,
+    app_eui: Option<String>,
+    at_pin: Option<String>,
+    ota_pin: Option<String>,
+    config: Option<serde_json::Value>,
+) -> Option<LorawanInfo> {
+    let (Some(serial_number), Some(dev_eui), Some(app_eui)) = (serial_number, dev_eui, app_eui)
+    else {
+        return None;
+    };
+    Some(LorawanInfo {
+        serial_number,
+        dev_eui,
+        app_eui,
+        at_pin,
+        ota_pin,
+        config,
+    })
+}
+
+fn build_coord(lat: Option<f64>, lng: Option<f64>) -> Result<Option<Coordinate>, RepositoryError> {
+    let (Some(lat), Some(lng)) = (lat, lng) else {
+        return Ok(None);
+    };
+    Ok(Some(Coordinate::new(lat, lng)?))
 }

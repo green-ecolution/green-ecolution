@@ -99,12 +99,12 @@ pub enum SoilCondition {
 #[serde(rename_all = "snake_case")]
 #[schema(example = "online")]
 pub enum SensorStatus {
+    /// Sensor record exists but has not been activated yet.
+    Prepared,
     /// Sensor is transmitting data within expected intervals.
     Online,
     /// Sensor has not transmitted data within the expected interval.
     Offline,
-    /// Sensor connectivity status could not be determined.
-    Unknown,
 }
 
 /// European driving license category required to operate a vehicle.
@@ -291,9 +291,9 @@ impl From<DomainSoilCondition> for SoilCondition {
 impl From<DomainSensorStatus> for SensorStatus {
     fn from(value: DomainSensorStatus) -> Self {
         match value {
+            DomainSensorStatus::Prepared => Self::Prepared,
             DomainSensorStatus::Online => Self::Online,
             DomainSensorStatus::Offline => Self::Offline,
-            DomainSensorStatus::Unknown => Self::Unknown,
         }
     }
 }

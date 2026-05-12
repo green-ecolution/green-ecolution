@@ -1,25 +1,15 @@
 use std::sync::Arc;
 
 use domain::{
-    RepositoryError,
-    events::DomainEvent,
+    events::{DomainEvent, SensorDataReceivedPayload, SensorReadings},
     sensor::{
         Sensor, SensorDraft, SensorId, SensorReader, SensorReadingReader, SensorReadingWriter,
         SensorSearchQuery, SensorStatus, SensorView, SensorWriter,
         data::{MqttPayload, SensorReadingDraft, SensorReadingView},
     },
-    shared::{
-        coordinates::Coordinate,
-        distance::Distance,
-        pagination::{Page, Pagination},
-        provenance::Provenance,
-    },
+    shared::pagination::{Page, Pagination},
     tree::{TreeReader, TreeWriter},
 };
-
-/// Radius (metres) within which an auto-created sensor is linked to the
-/// nearest tree. Mirrors the Go backend's `FindNearestTree` query.
-const AUTO_LINK_RADIUS_M: f64 = 3.0;
 
 use super::{ServiceError, event_bus::EventBus};
 
@@ -101,14 +91,6 @@ impl SensorService {
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
-    pub async fn move_to(&self, id: &SensorId, new: Coordinate) -> Result<Sensor, ServiceError> {
-        let mut sensor = self.reader.by_id(id).await?;
-        sensor.move_to(new);
-        self.writer.save(&sensor).await?;
-        Ok(sensor)
-    }
-
-    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
     pub async fn delete(&self, id: &SensorId) -> Result<(), ServiceError> {
         let mut events = Vec::new();
         if let Some(mut tree) = self.tree_reader.by_sensor_id(id).await? {
@@ -129,80 +111,33 @@ impl SensorService {
         Ok(self.reading_reader.view_history(sensor_id, limit).await?)
     }
 
-    /// Ingests one MQTT uplink message: get-or-create the sensor, refresh its
-    /// position and status, persist the raw reading, and publish
-    /// [`DomainEvent::SensorDataReceived`] for subscribers.
-    ///
-    /// Idempotent on the sensor record. Auto-link to the nearest tree happens
-    /// only on first sight (inside [`Self::ensure_sensor`]).
+    /// Ingests one MQTT uplink message: bump the sensor's status to `Online`
+    /// if needed, persist the raw reading, and publish
+    /// [`DomainEvent::SensorDataReceived`] for subscribers. The sensor must
+    /// already exist (registration is an explicit step in the new schema).
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %payload.device))]
     pub async fn handle_message(&self, payload: MqttPayload) -> Result<(), ServiceError> {
         let sensor_id = SensorId::new(payload.device.clone())?;
-        let coord = Coordinate::new(payload.latitude, payload.longitude)?;
-        let mut sensor = self.ensure_sensor(&sensor_id, coord).await?;
-        self.update_position(&mut sensor, coord).await?;
+        let mut sensor = self.reader.by_id(&sensor_id).await?;
+        self.bump_online(&mut sensor).await?;
         self.record_reading(sensor.id, payload).await
     }
 
-    /// Loads the sensor record by id, or creates a new `Online` record at
-    /// `coord` and auto-links it to the nearest tree (within
-    /// [`AUTO_LINK_RADIUS_M`]). Position/status of an existing record are
-    /// NOT touched here — see [`Self::update_position`].
-    async fn ensure_sensor(
-        &self,
-        sensor_id: &SensorId,
-        coord: Coordinate,
-    ) -> Result<Sensor, ServiceError> {
-        match self.reader.by_id(sensor_id).await {
-            Ok(existing) => Ok(existing),
-            Err(RepositoryError::NotFound) => {
-                let draft = SensorDraft {
-                    id: sensor_id.clone(),
-                    status: SensorStatus::Online,
-                    coordinate: coord,
-                    provenance: Provenance::default(),
-                };
-                let created = self.writer.save_new(draft).await?;
-                self.try_link_to_nearest_tree(&created).await?;
-                Ok(created)
-            }
-            Err(e) => Err(e.into()),
-        }
-    }
-
-    /// Bumps the sensor's coordinate and status to `Online` if either drifted
-    /// from the incoming uplink. Persists only when something actually
-    /// changed; no-op for freshly-created sensors.
-    async fn update_position(
-        &self,
-        sensor: &mut Sensor,
-        coord: Coordinate,
-    ) -> Result<(), ServiceError> {
-        let mut changed = false;
-        if sensor.coordinate != coord {
-            sensor.move_to(coord);
-            changed = true;
-        }
-        if sensor.status != SensorStatus::Online {
+    async fn bump_online(&self, sensor: &mut Sensor) -> Result<(), ServiceError> {
+        if sensor.status() != SensorStatus::Online {
             sensor.change_status(SensorStatus::Online);
-            changed = true;
-        }
-        if changed {
             self.writer.save(sensor).await?;
         }
         Ok(())
     }
 
-    /// Persists the raw payload as a [`SensorReading`] and publishes
-    /// [`DomainEvent::SensorDataReceived`] for downstream subscribers (tree
-    /// status calibration, dashboards, …).
     async fn record_reading(
         &self,
         sensor_id: SensorId,
         payload: MqttPayload,
     ) -> Result<(), ServiceError> {
         let data = serde_json::to_value(&payload).map_err(|e| {
-            ServiceError::Repository(RepositoryError::Internal(format!(
+            ServiceError::Repository(domain::RepositoryError::Internal(format!(
                 "failed to serialise mqtt payload: {e}"
             )))
         })?;
@@ -216,28 +151,12 @@ impl SensorService {
             .await?;
 
         self.event_bus
-            .publish(DomainEvent::SensorDataReceived {
+            .publish(DomainEvent::SensorDataReceived(SensorDataReceivedPayload {
                 sensor_id,
-                ts: chrono::Utc::now(),
-                watermarks,
-            })
+                readings: SensorReadings::Watermarks(watermarks),
+            }))
             .await;
 
-        Ok(())
-    }
-
-    async fn try_link_to_nearest_tree(&self, sensor: &Sensor) -> Result<(), ServiceError> {
-        let radius = Distance::new(AUTO_LINK_RADIUS_M).expect("3.0 is a valid distance");
-        let Some(mut tree) = self
-            .tree_reader
-            .find_nearest(sensor.coordinate, radius)
-            .await?
-        else {
-            return Ok(());
-        };
-        let events = tree.attach_sensor(sensor.id.clone());
-        self.tree_writer.save(&tree).await?;
-        self.event_bus.publish_all(events).await;
         Ok(())
     }
 }

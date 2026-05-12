@@ -62,14 +62,12 @@ impl EventHandler for TreeWateringFromSensorHandler {
     }
 
     async fn handle(&self, event: &DomainEvent) -> Result<Vec<DomainEvent>, EventHandlerError> {
-        let DomainEvent::SensorDataReceived {
-            sensor_id,
-            watermarks,
-            ..
-        } = event
-        else {
+        let DomainEvent::SensorDataReceived(payload) = event else {
             return Ok(vec![]);
         };
-        self.handle_inner(sensor_id, watermarks).await
+        let domain::events::SensorReadings::Watermarks(watermarks) = &payload.readings else {
+            return Ok(vec![]);
+        };
+        self.handle_inner(&payload.sensor_id, watermarks).await
     }
 }

@@ -2,7 +2,11 @@ use std::collections::HashMap;
 
 use serde::Serialize;
 
-use domain::sensor::{SensorId, SensorView, data::SensorReadingView};
+use domain::sensor::{
+    SensorId, SensorView,
+    data::SensorReadingView,
+    view::{LorawanInfo, SensorModelSummary},
+};
 
 use crate::service::{ServiceError, sensor_service::SensorService};
 
@@ -53,6 +57,74 @@ impl From<&SensorReadingView> for SensorDataResponse {
     }
 }
 
+/// WGS-84 coordinate exposed in sensor responses (derived from the linked tree).
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct SensorCoordinate {
+    #[schema(example = 54.7937, minimum = -90.0, maximum = 90.0)]
+    pub latitude: f64,
+    #[schema(example = 9.4469, minimum = -180.0, maximum = 180.0)]
+    pub longitude: f64,
+}
+
+/// Summary view of the [`SensorModel`] this sensor belongs to.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct SensorModelSummaryResponse {
+    pub id: i32,
+    pub name: String,
+}
+
+impl From<&SensorModelSummary> for SensorModelSummaryResponse {
+    fn from(value: &SensorModelSummary) -> Self {
+        Self {
+            id: value.id,
+            name: value.name.clone(),
+        }
+    }
+}
+
+/// LoRaWAN connection details exposed publicly (omits `app_key`).
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct LorawanInfoResponse {
+    pub serial_number: String,
+    pub dev_eui: String,
+    pub app_eui: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub at_pin: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ota_pin: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(value_type = Option<Object>, nullable)]
+    pub config: Option<serde_json::Value>,
+}
+
+impl From<&LorawanInfo> for LorawanInfoResponse {
+    fn from(value: &LorawanInfo) -> Self {
+        Self {
+            serial_number: value.serial_number.clone(),
+            dev_eui: value.dev_eui.clone(),
+            app_eui: value.app_eui.clone(),
+            at_pin: value.at_pin.clone(),
+            ota_pin: value.ota_pin.clone(),
+            config: value.config.clone(),
+        }
+    }
+}
+
+/// Sensor type (currently only LoRaWAN).
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum SensorTypeResponse {
+    Lorawan,
+}
+
+impl From<domain::sensor::SensorType> for SensorTypeResponse {
+    fn from(value: domain::sensor::SensorType) -> Self {
+        match value {
+            domain::sensor::SensorType::Lorawan => Self::Lorawan,
+        }
+    }
+}
+
 /// A LoRaWAN sensor used for soil moisture monitoring.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SensorResponse {
@@ -71,13 +143,26 @@ pub struct SensorResponse {
     /// Current connectivity status of the sensor.
     pub status: SensorStatus,
 
-    /// Latitude of the sensor location (WGS 84).
-    #[schema(example = 54.7937, minimum = -90.0, maximum = 90.0)]
-    pub latitude: f64,
+    /// Bus/protocol class of the sensor.
+    pub sensor_type: SensorTypeResponse,
 
-    /// Longitude of the sensor location (WGS 84).
-    #[schema(example = 9.4469, minimum = -180.0, maximum = 180.0)]
-    pub longitude: f64,
+    /// Sensor model summary (id + display name).
+    pub model: SensorModelSummaryResponse,
+
+    /// WGS-84 coordinate derived from the linked tree (if any).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable)]
+    pub coordinate: Option<SensorCoordinate>,
+
+    /// Database id of the linked tree, if the sensor is currently attached.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(example = 42, nullable)]
+    pub linked_tree_id: Option<i32>,
+
+    /// LoRaWAN credentials (omits `app_key`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable)]
+    pub lorawan: Option<LorawanInfoResponse>,
 
     /// Most recent data payload from the sensor, if available.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -102,10 +187,16 @@ impl From<&SensorView> for SensorResponse {
             created_at: value.created_at.to_rfc3339(),
             updated_at: value.updated_at.to_rfc3339(),
             status: value.status.into(),
-            latitude: value.latitude,
-            longitude: value.longitude,
+            sensor_type: value.sensor_type.into(),
+            model: SensorModelSummaryResponse::from(&value.model),
+            coordinate: value.coordinate.map(|c| SensorCoordinate {
+                latitude: c.latitude(),
+                longitude: c.longitude(),
+            }),
+            linked_tree_id: value.linked_tree_id,
+            lorawan: value.lorawan.as_ref().map(LorawanInfoResponse::from),
             latest_data: value.latest_reading.as_ref().map(SensorDataResponse::from),
-            provider: value.provider.clone(),
+            provider: value.provider.as_ref().map(|p| p.as_str().to_owned()),
             additional_information: value.additional_info.clone(),
         }
     }
