@@ -16,7 +16,20 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
     cargo chef cook --release --locked --recipe-path recipe.json
 
 COPY . .
-ENV SQLX_OFFLINE=true
+
+ARG GE_VERSION=dev
+ARG GE_GIT_COMMIT=unknown
+ARG GE_GIT_BRANCH=unknown
+ARG GE_GIT_REPOSITORY=https://github.com/green-ecolution/green-ecolution
+ARG GE_BUILD_TIME=unknown
+
+ENV SQLX_OFFLINE=true \
+    GE_VERSION=$GE_VERSION \
+    GE_GIT_COMMIT=$GE_GIT_COMMIT \
+    GE_GIT_BRANCH=$GE_GIT_BRANCH \
+    GE_GIT_REPOSITORY=$GE_GIT_REPOSITORY \
+    GE_BUILD_TIME=$GE_BUILD_TIME
+
 RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
     --mount=type=cache,target=/usr/local/cargo/git,sharing=locked \
     --mount=type=cache,target=/app/target,sharing=locked \
