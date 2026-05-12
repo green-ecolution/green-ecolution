@@ -302,13 +302,11 @@ jobs:
           cd ./deploy/kustomize/${ENV}
           kustomize edit set image backend-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}
           kustomize edit set image frontend-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${TAG}
-          kustomize edit set image init-migrations-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}
 
           if [[ "$IS_RELEASE" == "true" ]]; then
             cd ../demo
             kustomize edit set image backend-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}
             kustomize edit set image frontend-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${TAG}
-            kustomize edit set image init-migrations-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}
           fi
 
       - name: Commit and push changes
