@@ -1,36 +1,61 @@
-FROM lukemathwalker/cargo-chef:latest-rust-1.94 AS chef
+FROM lukemathwalker/cargo-chef:latest-rust-1.94@sha256:d5a1cca12f21de999e5b221b5c6ff5635080f4b8d5e58053241ff169e0fc60f6 AS chef
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends lld clang \
-  && rm -rf /var/lib/apt/lists/*
 
 FROM chef AS planner
 COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
+RUN apt-get update && apt-get install -y --no-install-recommends lld clang \
+  && rm -rf /var/lib/apt/lists/*
+
 COPY --from=planner /app/recipe.json recipe.json
-RUN cargo chef cook --release --locked --recipe-path recipe.json
+RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
+    --mount=type=cache,target=/usr/local/cargo/git,sharing=locked \
+    --mount=type=cache,target=/app/target,sharing=locked \
+    cargo chef cook --release --locked --recipe-path recipe.json
 
 COPY . .
 ENV SQLX_OFFLINE=true
-RUN cargo build --release --locked --bin green-ecolution --bin migrate
+RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
+    --mount=type=cache,target=/usr/local/cargo/git,sharing=locked \
+    --mount=type=cache,target=/app/target,sharing=locked \
+    cargo build --release --locked --bin green-ecolution --bin migrate \
+    && cp target/release/green-ecolution /usr/local/bin/green-ecolution \
+    && cp target/release/migrate /usr/local/bin/migrate
 
-FROM debian:bookworm-slim AS runtime
+FROM debian:bookworm-slim@sha256:67b30a61dc87758f0caf819646104f29ecbda97d920aaf5edc834128ac8493d3 AS runtime
 WORKDIR /app
 
+ARG APP_VERSION=dev
+ARG APP_REVISION=unknown
+
+LABEL org.opencontainers.image.title="green-ecolution" \
+      org.opencontainers.image.description="Smart irrigation and green-space management platform for municipal urban greenery." \
+      org.opencontainers.image.source="https://github.com/green-ecolution/green-ecolution" \
+      org.opencontainers.image.documentation="https://github.com/green-ecolution/green-ecolution#readme" \
+      org.opencontainers.image.url="https://green-ecolution.de" \
+      org.opencontainers.image.vendor="Green Ecolution" \
+      org.opencontainers.image.licenses="AGPL-3.0-or-later" \
+      org.opencontainers.image.version="${APP_VERSION}" \
+      org.opencontainers.image.revision="${APP_REVISION}"
+
 RUN apt-get update -y \
-  && apt-get install -y --no-install-recommends ca-certificates \
-  && apt-get clean -y \
+  && apt-get install -y --no-install-recommends ca-certificates tini wget \
   && rm -rf /var/lib/apt/lists/* \
   && groupadd --gid 10001 app \
   && useradd --uid 10001 --gid app --no-create-home --shell /usr/sbin/nologin app
 
-COPY --from=builder --chown=app:app /app/target/release/green-ecolution green-ecolution
-COPY --from=builder --chown=app:app /app/target/release/migrate migrate
-COPY --chown=app:app config config
+COPY --from=builder --chown=10001:10001 /usr/local/bin/green-ecolution green-ecolution
+COPY --from=builder --chown=10001:10001 /usr/local/bin/migrate migrate
+COPY --chown=10001:10001 config config
 
-USER app
+USER 10001:10001
 EXPOSE 3020
 
 ENV APP_ENVIRONMENT=production
-ENTRYPOINT ["./green-ecolution"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:3020/health || exit 1
+
+ENTRYPOINT ["/usr/bin/tini", "--", "./green-ecolution"]

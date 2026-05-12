@@ -2,6 +2,23 @@ services:
   backend:
     build:
       context: ./backend-rs/
+      args:
+        - APP_VERSION=${APP_VERSION:-dev}
+        - APP_REVISION=${APP_GIT_COMMIT:-unknown}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/health",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
     depends_on:
       db:
         condition: service_healthy
@@ -71,6 +88,9 @@ services:
   migrations:
     build:
       context: ./backend-rs/
+      args:
+        - APP_VERSION=${APP_VERSION:-dev}
+        - APP_REVISION=${APP_GIT_COMMIT:-unknown}
     entrypoint: ["./migrate"]
     command: ["reset", "--with-seed"]
     depends_on:
