@@ -29,6 +29,7 @@ use domain::info::SystemInfoProvider;
 
 pub mod auth;
 pub mod extractors;
+pub mod health;
 mod tracing;
 pub mod v1;
 
@@ -81,6 +82,7 @@ pub fn router(
     auth_layer: AuthLayer,
 ) -> Router {
     let (router, mut api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
+        .merge(health::routes())
         .nest("/api/v1", v1::router(auth_layer))
         .split_for_parts();
 
