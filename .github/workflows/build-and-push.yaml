@@ -139,41 +139,6 @@ jobs:
           echo "image-tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
           echo "Environment: $ENV, Tag Suffix: $TAG_SUFFIX, Is Release: $IS_RELEASE, Image Tag: $IMAGE_TAG"
 
-  build-migrations:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [check-release-pr, determine-environment]
-    if: needs.check-release-pr.outputs.should-build == 'true'
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ needs.determine-environment.outputs.checkout-ref }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@v4
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push postgres migrations
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: ./.docker/migrations/Dockerfile.postgres
-          platforms: linux/amd64
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:${{ needs.determine-environment.outputs.image-tag }}
-          cache-from: type=gha,scope=build-migrations
-          cache-to: type=gha,mode=max,scope=build-migrations
-
   build-backend:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -188,10 +153,6 @@ jobs:
         with:
           ref: ${{ needs.determine-environment.outputs.checkout-ref }}
 
-      - name: Set build time
-        id: build-time
-        run: echo "timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
@@ -202,21 +163,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set build time
+        id: build-time
+        run: echo "timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
+
       - name: Build and push backend
         uses: docker/build-push-action@v7
         with:
-          context: ./backend
-          file: ./backend/Dockerfile
+          context: ./backend-rs
+          file: ./backend-rs/Dockerfile
           platforms: linux/amd64
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${{ needs.determine-environment.outputs.image-tag }}
           build-args: |
-            ENV=${{ needs.determine-environment.outputs.environment }}
             APP_VERSION=${{ needs.determine-environment.outputs.image-tag }}
-            APP_GIT_COMMIT=${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-            APP_GIT_BRANCH=${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
-            APP_GIT_REPOSITORY=${{ github.repository }}
-            APP_BUILD_TIME=${{ steps.build-time.outputs.timestamp }}
+            APP_REVISION=${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+            GE_VERSION=${{ needs.determine-environment.outputs.image-tag }}
+            GE_GIT_COMMIT=${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+            GE_GIT_BRANCH=${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
+            GE_GIT_REPOSITORY=https://github.com/${{ github.repository }}
+            GE_BUILD_TIME=${{ steps.build-time.outputs.timestamp }}
           cache-from: type=gha,scope=build-backend
           cache-to: type=gha,mode=max,scope=build-backend
 
@@ -263,13 +229,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs:
-      [
-        check-release-pr,
-        determine-environment,
-        build-migrations,
-        build-backend,
-        build-frontend,
-      ]
+      [check-release-pr, determine-environment, build-backend, build-frontend]
     if: needs.check-release-pr.outputs.should-build == 'true'
     outputs:
       target-branch: ${{ steps.target.outputs.branch }}
@@ -342,14 +302,13 @@ jobs:
           cd ./deploy/kustomize/${ENV}
           kustomize edit set image backend-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}
           kustomize edit set image frontend-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${TAG}
-          kustomize edit set image init-migrations-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:${TAG}
+          kustomize edit set image init-migrations-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}
 
-          # Also update demo environment on release
           if [[ "$IS_RELEASE" == "true" ]]; then
             cd ../demo
             kustomize edit set image backend-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}
             kustomize edit set image frontend-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${TAG}
-            kustomize edit set image init-migrations-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:${TAG}
+            kustomize edit set image init-migrations-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}
           fi
 
       - name: Commit and push changes
@@ -403,7 +362,6 @@ jobs:
           ### 🐳 Docker Images
           - Backend: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}\`
           - Frontend: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${TAG}\`
-          - Migrations: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:${TAG}\`
 
           ### 🔄 ArgoCD
           ArgoCD is configured to track the \`${PR_BRANCH}\` branch for stage deployments.
@@ -421,7 +379,6 @@ jobs:
       [
         check-release-pr,
         determine-environment,
-        build-migrations,
         build-backend,
         build-frontend,
         update-kustomize,
@@ -450,7 +407,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "* Backend: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}\`" >> $GITHUB_STEP_SUMMARY
           echo "* Frontend: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${TAG}\`" >> $GITHUB_STEP_SUMMARY
-          echo "* Migrations: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/migrations-postgres:${TAG}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📦 Kustomize" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
