@@ -10,6 +10,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CARGO_TERM_COLOR: always
+  SQLX_OFFLINE: "true"
+
 jobs:
   changes:
     runs-on: ubuntu-latest
@@ -22,7 +26,7 @@ jobs:
         with:
           filters: |
             backend:
-              - 'backend/**'
+              - 'backend-rs/**'
               - 'justfile'
               - '.github/workflows/backend-pr.yaml'
               - '.github/actions/setup-backend/**'
@@ -31,110 +35,94 @@ jobs:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
 
       - name: Setup Dependencies
         uses: ./.github/actions/setup-backend
 
-      - name: Build backend
-        run: just build-backend
+      - name: Check domain crate stays portable
+        working-directory: ./backend-rs
+        run: cargo build -p domain --no-default-features --locked
 
-      - name: Test
-        working-directory: ./backend
-        run: go test -cover ./...
+      - name: Build workspace
+        working-directory: ./backend-rs
+        run: cargo build --workspace --locked
+
+      - name: Verify Docker daemon (testcontainers prerequisite)
+        run: docker version
+
+      - name: Test workspace
+        working-directory: ./backend-rs
+        run: cargo test --workspace --locked
 
   lint:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-backend
 
-      - name: Run go fmt check
-        working-directory: ./backend
-        run: |
-          if [ -n "$(gofmt -l .)" ]; then
-            echo "Go code is not formatted. Please run 'go fmt ./...'"
-            gofmt -d .
-            exit 1
-          fi
+      - name: cargo fmt
+        working-directory: ./backend-rs
+        run: cargo fmt --all -- --check
 
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9
+      - name: cargo clippy
+        working-directory: ./backend-rs
+        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+
+  check_sqlx_prepared:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 5s
+        ports:
+          - 5432:5432
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+      SQLX_OFFLINE: "false"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-backend
+
+      - name: Install sqlx-cli
+        uses: taiki-e/install-action@v2
         with:
-          version: v2.11.4
-          working-directory: ./backend
-          args: --timeout=5m
+          tool: sqlx-cli
 
-  check_generated_backend:
-    needs: changes
-    if: needs.changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ./.github/actions/setup-backend
-      - name: Generate backend code
-        run: just generate-backend
-      - name: Check generated code is fresh
-        run: |
-          if [[ -n $(git status --porcelain) ]]; then
-            echo "::error::Backend generated code is out of date."
-            echo "Please run 'just generate-backend' locally and commit the updated files."
-            echo
-            echo "Modified files:"
-            git status --short
-            echo
-            git diff
-            exit 1
-          fi
-          echo "Generated backend code is up to date."
+      - name: Apply migrations
+        run: just migrate-up
 
-  check_generated_client:
-    needs: changes
-    if: needs.changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ./.github/actions/setup-backend
-      - name: Generate OpenAPI client
-        run: just generate-client
-      - name: Check generated client is fresh
-        run: |
-          if [[ -n $(git status --porcelain) ]]; then
-            echo "::error::Generated OpenAPI client is out of date."
-            echo "Please run 'just generate-client' locally and commit the updated files."
-            echo
-            echo "Modified files:"
-            git status --short
-            echo
-            git diff
-            exit 1
-          fi
-          echo "Generated client is up to date."
-
-  test_pkg_client:
-    needs: changes
-    if: needs.changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ./.github/actions/setup-backend
-      - name: Test pkg/client
-        working-directory: ./backend/pkg/client
-        run: go test ./...
+      - name: Check that queries are fresh
+        working-directory: ./backend-rs
+        run: cargo sqlx prepare --workspace --check -- --all-targets
 
   test_migrations:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     services:
       postgres:
         image: postgis/postgis:17-3.5
@@ -159,32 +147,34 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-backend
-      - name: Test migrations up
+
+      - name: Apply migrations up
         run: just migrate-up
-      - name: Test migrations down
-        run: just migrate-down
+
+      - name: Reset and re-apply migrations
+        run: just migrate-reset
 
   test_dockerfile:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
       - uses: docker/setup-buildx-action@v4
       - name: Test backend Dockerfile
         uses: docker/build-push-action@v7
         with:
-          context: ./backend
-          file: ./backend/Dockerfile
+          context: ./backend-rs
+          file: ./backend-rs/Dockerfile
           push: false
-          tags: backend:test
+          tags: backend-rs:test
           cache-from: type=gha,scope=backend-dockerfile
           cache-to: type=gha,mode=max,scope=backend-dockerfile
 
   pr-ok:
     if: always()
-    needs: [build_and_test, lint, check_generated_backend, check_generated_client, test_pkg_client, test_migrations, test_dockerfile]
+    needs: [build_and_test, lint, check_sqlx_prepared, test_migrations, test_dockerfile]
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:
@@ -193,9 +183,7 @@ jobs:
           results=(
             "${{ needs.build_and_test.result }}"
             "${{ needs.lint.result }}"
-            "${{ needs.check_generated_backend.result }}"
-            "${{ needs.check_generated_client.result }}"
-            "${{ needs.test_pkg_client.result }}"
+            "${{ needs.check_sqlx_prepared.result }}"
             "${{ needs.test_migrations.result }}"
             "${{ needs.test_dockerfile.result }}"
           )

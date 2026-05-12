@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "backend/**"
+      - "backend-rs/**"
       - ".github/workflows/coverage.yaml"
 
 permissions:
@@ -15,26 +15,85 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CARGO_TERM_COLOR: always
+  SQLX_OFFLINE: "true"
+
 jobs:
   coverage:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
-      - uses: ./.github/actions/setup-backend
-
-      - name: Run tests with coverage
-        working-directory: ./backend
-        run: |
-          PKGS=$(go list ./... | grep -v '/docs')
-          go test $PKGS -coverprofile=./cover.out -covermode=atomic -coverpkg=$(echo "$PKGS" | tr '\n' ',')
-
-      - name: Generate coverage badge
-        uses: vladopajic/go-test-coverage@v2
         with:
-          profile: ./backend/cover.out
-          source-dir: ./backend
-          local-prefix: github.com/green-ecolution/green-ecolution/backend
-          git-token: ${{ github.token }}
-          git-branch: badges
-          git-file-name: .badges/${{ github.ref_name }}/coverage.svg
+          fetch-depth: 0
+
+      - name: Install just
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends just jq
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend-rs
+          cache-on-failure: "true"
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Run coverage
+        working-directory: ./backend-rs
+        run: cargo llvm-cov --workspace --locked --summary-only --json > coverage.json
+
+      - name: Generate coverage badge SVG
+        run: |
+          set -euo pipefail
+          pct=$(jq -r '.data[0].totals.lines.percent' backend-rs/coverage.json)
+          pct_int=$(printf "%.0f" "$pct")
+          if   [ "$pct_int" -ge 80 ]; then color="brightgreen"
+          elif [ "$pct_int" -ge 60 ]; then color="yellow"
+          else color="red"
+          fi
+          mkdir -p out
+          curl -sSfL "https://img.shields.io/badge/coverage-${pct_int}%25-${color}.svg" -o "out/coverage.svg"
+          echo "Coverage: ${pct_int}% (${color})"
+
+      - name: Commit badge to badges branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          BRANCH="${{ github.ref_name }}"
+          REL_PATH=".badges/${BRANCH}/coverage.svg"
+
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+          if git ls-remote --exit-code --heads origin badges >/dev/null 2>&1; then
+            git fetch origin badges
+            git worktree add /tmp/badges-wt origin/badges
+            (cd /tmp/badges-wt && git checkout -B badges)
+          else
+            git worktree add --detach /tmp/badges-wt
+            (cd /tmp/badges-wt && git checkout --orphan badges && git rm -rf . >/dev/null 2>&1 || true)
+          fi
+
+          mkdir -p "/tmp/badges-wt/.badges/${BRANCH}"
+          cp out/coverage.svg "/tmp/badges-wt/${REL_PATH}"
+
+          cd /tmp/badges-wt
+          git add "${REL_PATH}"
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update coverage badge for ${BRANCH}"
+            git push origin badges
+          else
+            echo "No badge changes."
+          fi
