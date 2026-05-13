@@ -10,6 +10,7 @@ homepage.workspace = true
 description = "Green Ecolution backend server"
 readme = "../../../README.md"
 publish.workspace = true
+build = "build.rs"
 
 [lib]
 path = "src/lib.rs"
@@ -74,3 +75,6 @@ rsa = { version = "0.9", features = ["sha2"] }
 testcontainers = { version = "0.26", features = ["watchdog"] }
 testcontainers-modules = { version = "0.14", features = ["postgres"] }
 wiremock = "0.6.5"
+
+[build-dependencies]
+chrono = { workspace = true }
