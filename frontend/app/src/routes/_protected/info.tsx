@@ -629,7 +629,9 @@ function SystemTabContent({
               {serverData && (
                 <div>
                   <p className="text-sm text-dark-500 mb-1">Uptime</p>
-                  <p className="text-2xl font-bold font-lato">{formatUptime(serverData.uptimeSeconds)}</p>
+                  <p className="text-2xl font-bold font-lato">
+                    {formatUptime(serverData.uptimeSeconds)}
+                  </p>
                   <p className="text-xs text-dark-400 mt-1">seit letztem Neustart</p>
                 </div>
               )}
@@ -991,7 +993,9 @@ function ServerTabContent({ serverData, formatUptime }: ServerTabContentProps) {
                   <Clock className="size-4 text-dark-500" />
                   <p className="text-sm text-dark-500">Uptime</p>
                 </div>
-                <p className="text-2xl font-bold font-lato">{formatUptime(serverData.uptimeSeconds)}</p>
+                <p className="text-2xl font-bold font-lato">
+                  {formatUptime(serverData.uptimeSeconds)}
+                </p>
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-2">
