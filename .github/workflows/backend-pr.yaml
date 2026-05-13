@@ -172,9 +172,17 @@ jobs:
           cache-from: type=gha,scope=backend-dockerfile
           cache-to: type=gha,mode=max,scope=backend-dockerfile
 
-  pr-ok:
+  backend-pr-ok:
+    name: Backend PR OK
     if: always()
-    needs: [build_and_test, lint, check_sqlx_prepared, test_migrations, test_dockerfile]
+    needs:
+      [
+        build_and_test,
+        lint,
+        check_sqlx_prepared,
+        test_migrations,
+        test_dockerfile,
+      ]
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:

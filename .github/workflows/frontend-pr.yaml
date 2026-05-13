@@ -118,7 +118,8 @@ jobs:
           fi
           echo "Generated frontend code is up to date."
 
-  pr-ok:
+  frontend-pr-ok:
+    name: Frontend PR OK
     if: always()
     needs: [build, lint, test, test_dockerfile, check_generated]
     runs-on: ubuntu-latest
