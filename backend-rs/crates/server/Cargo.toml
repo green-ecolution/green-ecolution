@@ -53,6 +53,7 @@ serde-aux = "4.7.0"
 serde_json = { workspace = true }
 serde_urlencoded = "0.7"
 sqlx = { workspace = true, features = ["macros", "migrate", "runtime-tokio", "tls-rustls", "postgres", "chrono", "uuid", "json", "rust_decimal"] }
+sysinfo = { version = "0.38", default-features = false, features = ["system"] }
 thiserror = { workspace = true }
 tokio = { version = "1.52.3", features = ["full"] }
 tower = "0.5"
