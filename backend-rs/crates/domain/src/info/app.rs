@@ -1,6 +1,5 @@
 //! App-level metadata: version, build, git, server, map.
 
-use std::net::IpAddr;
 use std::time::Duration;
 
 use chrono::{DateTime, Utc};
@@ -31,7 +30,6 @@ pub struct Server {
     pub arch: String,
     pub hostname: String,
     pub url: Url,
-    pub ip: IpAddr,
     pub port: u16,
     pub interface: String,
     pub uptime: Duration,

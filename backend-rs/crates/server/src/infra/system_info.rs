@@ -1,12 +1,9 @@
-use std::net::IpAddr;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use chrono::Utc;
 
 use domain::RepositoryError;
-use domain::info::{
-    App, DataStatistics, Git, Map, Server, ServiceStatus, SystemInfoProvider, VersionInfo,
-};
+use domain::info::{App, Git, Map, Server, SystemInfoProvider, VersionInfo};
 
 pub struct DefaultSystemInfoProvider {
     start_time: Instant,
@@ -81,32 +78,9 @@ impl SystemInfoProvider for DefaultSystemInfoProvider {
             arch: std::env::consts::ARCH.to_string(),
             hostname,
             url: "http://localhost:3000".parse().unwrap(),
-            ip: IpAddr::from([127, 0, 0, 1]),
             port: 3000,
             interface: "0.0.0.0".to_string(),
             uptime: self.start_time.elapsed(),
-        })
-    }
-
-    async fn services_info(&self) -> Result<ServiceStatus, RepositoryError> {
-        use domain::info::{ServiceMessage, ServiceName};
-        Ok(ServiceStatus {
-            name: ServiceName::Postgres,
-            enabled: true,
-            healthy: true,
-            response_time: Duration::from_millis(0),
-            last_checked: Utc::now(),
-            message: ServiceMessage::Connected,
-        })
-    }
-
-    async fn statistics_info(&self) -> Result<DataStatistics, RepositoryError> {
-        Ok(DataStatistics {
-            tree_count: 0,
-            sensor_count: 0,
-            vehicle_count: 0,
-            cluster_count: 0,
-            watering_plan_count: 0,
         })
     }
 }

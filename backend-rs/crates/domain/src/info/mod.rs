@@ -17,6 +17,19 @@ pub trait SystemInfoProvider: Send + Sync {
     async fn app_info(&self) -> Result<App, RepositoryError>;
     async fn map_info(&self) -> Result<Map, RepositoryError>;
     async fn server_info(&self) -> Result<Server, RepositoryError>;
-    async fn services_info(&self) -> Result<ServiceStatus, RepositoryError>;
-    async fn statistics_info(&self) -> Result<DataStatistics, RepositoryError>;
+}
+
+#[async_trait::async_trait]
+pub trait HealthSnapshotReader: Send + Sync {
+    async fn snapshot(&self) -> Vec<ServiceStatus>;
+}
+
+#[async_trait::async_trait]
+pub trait RuntimeStatsProvider: Send + Sync {
+    async fn snapshot(&self) -> RuntimeStats;
+}
+
+#[async_trait::async_trait]
+pub trait StatisticsReader: Send + Sync {
+    async fn statistics(&self) -> Result<DataStatistics, RepositoryError>;
 }

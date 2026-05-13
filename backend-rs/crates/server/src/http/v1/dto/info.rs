@@ -113,10 +113,6 @@ pub struct ServerInfoResponse {
     #[schema(example = "https://api.green-ecolution.de")]
     pub url: String,
 
-    /// IP address the server is bound to.
-    #[schema(example = "0.0.0.0")]
-    pub ip: String,
-
     /// TCP port the server listens on.
     #[schema(example = 3000)]
     pub port: u16,
@@ -137,7 +133,6 @@ impl From<&Server> for ServerInfoResponse {
             arch: value.arch.clone(),
             hostname: value.hostname.clone(),
             url: value.url.to_string(),
-            ip: value.ip.to_string(),
             port: value.port,
             interface: value.interface.clone(),
             uptime: format!("{}s", value.uptime.as_secs()),
