@@ -51,10 +51,10 @@ jobs:
             experimental-features = nix-command flakes
 
       - name: Update frontend pnpm hash
-        run: nix-shell -p nix-update --run "nix-update --flake --version=skip frontend"
+        run: nix shell nixpkgs#nix-update --command nix-update --flake --version=skip frontend
 
       - name: Update backend cargo hash
-        run: nix-shell -p nix-update --run "nix-update --flake --version=skip backend"
+        run: nix shell nixpkgs#nix-update --command nix-update --flake --version=skip backend
 
       - name: Commit and push
         run: |
