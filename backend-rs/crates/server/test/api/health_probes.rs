@@ -139,3 +139,50 @@ async fn mqtt_probe_reports_state_flag() {
     assert!(!status.healthy);
     assert_eq!(status.message, ServiceMessage::NoConnection);
 }
+
+use domain::info::HealthSnapshotReader;
+use server::infra::health::spawn as spawn_health;
+
+struct FakeProbe {
+    name: ServiceName,
+    healthy: bool,
+}
+
+#[async_trait::async_trait]
+impl HealthProbe for FakeProbe {
+    fn name(&self) -> ServiceName {
+        self.name
+    }
+    async fn check(&self) -> domain::info::ServiceStatus {
+        domain::info::ServiceStatus {
+            name: self.name,
+            enabled: true,
+            healthy: self.healthy,
+            response_time: Duration::ZERO,
+            last_checked: chrono::Utc::now(),
+            message: if self.healthy {
+                ServiceMessage::Connected
+            } else {
+                ServiceMessage::NoConnection
+            },
+        }
+    }
+}
+
+#[tokio::test]
+async fn health_coordinator_aggregates_probes_after_first_tick() {
+    let probes: Vec<Arc<dyn HealthProbe>> = vec![
+        Arc::new(FakeProbe { name: ServiceName::Postgres, healthy: true }),
+        Arc::new(FakeProbe { name: ServiceName::Keycloak, healthy: false }),
+    ];
+    let (coord, handle) = spawn_health(probes, Duration::from_millis(50));
+
+    tokio::time::sleep(Duration::from_millis(150)).await;
+
+    let snapshot = coord.snapshot().await;
+    assert_eq!(snapshot.len(), 2);
+    assert!(snapshot.iter().any(|s| s.name == ServiceName::Postgres && s.healthy));
+    assert!(snapshot.iter().any(|s| s.name == ServiceName::Keycloak && !s.healthy));
+
+    handle.abort();
+}
