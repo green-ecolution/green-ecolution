@@ -251,8 +251,13 @@ generate-sqlx:
     @command -v cargo-sqlx >/dev/null 2>&1 || { echo "sqlx-cli missing (cargo install sqlx-cli --no-default-features --features rustls,postgres)"; exit 1; }
     cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" cargo sqlx prepare --workspace -- --tests
 
-# Run frontend code generation (pnpm generate:local)
-generate-frontend:
+# Dump the OpenAPI spec from the Rust backend into the frontend client package
+dump-openapi:
+    @echo "Dumping OpenAPI spec from Rust backend..."
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo run --quiet --locked --bin dump-openapi > ../{{ frontend_dir }}/packages/backend-client/api-docs.json
+
+# Run frontend code generation (refreshes api-docs.json from Rust backend, then runs pnpm generate:local)
+generate-frontend: dump-openapi
     @echo "Generating frontend..."
     @command -v pnpm >/dev/null 2>&1 || { echo "pnpm missing (hint: corepack enable)"; exit 1; }
     cd {{ frontend_dir }} && pnpm install --frozen-lockfile

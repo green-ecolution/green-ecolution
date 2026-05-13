@@ -75,6 +75,19 @@ pub struct AppState {
 )]
 struct ApiDoc;
 
+// Builds the OpenAPI document without any runtime state. Used by the
+// `dump-openapi` binary so the frontend client can be regenerated without
+// starting the server (or running its dependencies).
+pub fn openapi_doc(base_url: &str) -> utoipa::openapi::OpenApi {
+    let (_, mut api) = OpenApiRouter::<Arc<AppState>>::with_openapi(ApiDoc::openapi())
+        .merge(health::routes())
+        .nest("/api/v1", v1::public_router().merge(v1::protected_router()))
+        .split_for_parts();
+
+    api.servers = Some(vec![Server::new(base_url)]);
+    api
+}
+
 pub fn router(
     state: Arc<AppState>,
     base_url: &str,

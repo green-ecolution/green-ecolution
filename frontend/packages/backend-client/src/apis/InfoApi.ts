@@ -194,4 +194,34 @@ export class InfoApi extends runtime.BaseAPI {
         return await response.value();
     }
 
+    /**
+     * Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /api/v1/info/services for a deep services health check.
+     * Liveness probe
+     */
+    async healthRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/health`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /api/v1/info/services for a deep services health check.
+     * Liveness probe
+     */
+    async health(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.healthRaw(initOverrides);
+    }
+
 }

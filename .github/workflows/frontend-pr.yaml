@@ -96,10 +96,12 @@ jobs:
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-frontend
+      - name: Dump OpenAPI spec from Rust backend
+        run: just dump-openapi
       - name: Generate frontend code
         working-directory: ./frontend
         run: pnpm generate:local
@@ -107,7 +109,7 @@ jobs:
         run: |
           if [[ -n $(git status --porcelain) ]]; then
             echo "::error::Generated frontend code is out of date."
-            echo "Please run 'just generate-frontend' (or 'pnpm generate:local' in ./frontend) locally and commit the updated files."
+            echo "Please run 'just generate-frontend' locally and commit the updated files (api-docs.json + src/)."
             echo
             git status --short
             echo

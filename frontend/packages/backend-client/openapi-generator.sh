@@ -2,7 +2,7 @@
 
 API_DOCS_SOURCE=$1
 SERVER=$2
-API_DOCS_PATH="swagger/doc.json"
+API_DOCS_PATH="api-docs/openapi.json"
 API_DOCS_FILE="./api-docs.json"
 
 function fetch_api_docs() {

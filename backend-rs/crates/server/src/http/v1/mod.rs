@@ -19,13 +19,15 @@ pub mod user;
 pub mod vehicle;
 pub mod watering_plan;
 
-pub fn router(auth_layer: AuthLayer) -> OpenApiRouter<Arc<AppState>> {
-    let public = OpenApiRouter::new()
+pub fn public_router() -> OpenApiRouter<Arc<AppState>> {
+    OpenApiRouter::new()
         .merge(info::routes())
         .merge(plugin::routes())
-        .merge(user::public_routes());
+        .merge(user::public_routes())
+}
 
-    let protected = OpenApiRouter::new()
+pub fn protected_router() -> OpenApiRouter<Arc<AppState>> {
+    OpenApiRouter::new()
         .merge(region::routes())
         .merge(cluster::routes())
         .merge(evaluation::routes())
@@ -34,10 +36,11 @@ pub fn router(auth_layer: AuthLayer) -> OpenApiRouter<Arc<AppState>> {
         .merge(user::protected_routes())
         .merge(vehicle::routes())
         .merge(watering_plan::routes())
-        .layer(middleware::from_fn_with_state(
-            auth_layer,
-            crate::http::auth::auth_middleware,
-        ));
+}
 
-    public.merge(protected)
+pub fn router(auth_layer: AuthLayer) -> OpenApiRouter<Arc<AppState>> {
+    public_router().merge(protected_router().layer(middleware::from_fn_with_state(
+        auth_layer,
+        crate::http::auth::auth_middleware,
+    )))
 }

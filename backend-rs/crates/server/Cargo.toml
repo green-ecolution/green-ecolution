@@ -22,6 +22,10 @@ name = "green-ecolution"
 path = "src/bin/migrate.rs"
 name = "migrate"
 
+[[bin]]
+path = "src/bin/dump-openapi.rs"
+name = "dump-openapi"
+
 [[test]]
 name = "api"
 path = "test/api/main.rs"
