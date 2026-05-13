@@ -1,3 +1,4 @@
+pub mod health;
 pub mod keycloak;
 pub mod mqtt;
 pub mod pg_cluster;
