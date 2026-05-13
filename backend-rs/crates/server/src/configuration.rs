@@ -15,6 +15,10 @@ pub struct Settings {
     pub auth: AuthSettings,
     #[serde(default)]
     pub mqtt: MqttSettings,
+    #[serde(default)]
+    pub map: MapSettings,
+    #[serde(default)]
+    pub info: InfoSettings,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -107,6 +111,58 @@ fn default_client_id() -> String {
 
 fn default_keep_alive_secs() -> u16 {
     30
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct MapSettings {
+    pub center: [f64; 2],
+    pub bbox: [f64; 4],
+}
+
+impl Default for MapSettings {
+    fn default() -> Self {
+        Self {
+            center: [54.792277136221905, 9.43580607453268],
+            bbox: [54.714822, 9.285796, 54.860127, 9.583800],
+        }
+    }
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct InfoSettings {
+    #[serde(default = "default_health_check_interval_secs")]
+    pub health_check_interval_secs: u64,
+    #[serde(default = "default_health_probe_timeout_secs")]
+    pub health_probe_timeout_secs: u64,
+    #[serde(default = "default_runtime_stats_interval_secs")]
+    pub runtime_stats_interval_secs: u64,
+    #[serde(default)]
+    pub update_check_repo: Option<String>,
+    #[serde(default = "default_update_check_interval_secs")]
+    pub update_check_interval_secs: u64,
+    #[serde(default = "default_repository_url")]
+    pub repository_url: String,
+}
+
+impl Default for InfoSettings {
+    fn default() -> Self {
+        Self {
+            health_check_interval_secs: default_health_check_interval_secs(),
+            health_probe_timeout_secs: default_health_probe_timeout_secs(),
+            runtime_stats_interval_secs: default_runtime_stats_interval_secs(),
+            update_check_repo: None,
+            update_check_interval_secs: default_update_check_interval_secs(),
+            repository_url: default_repository_url(),
+        }
+    }
+}
+
+fn default_health_check_interval_secs() -> u64 { 30 }
+fn default_health_probe_timeout_secs() -> u64 { 5 }
+fn default_runtime_stats_interval_secs() -> u64 { 2 }
+fn default_update_check_interval_secs() -> u64 { 86_400 }
+fn default_repository_url() -> String {
+    "https://github.com/green-ecolution/backend-rs/".to_string()
 }
 
 #[derive(serde::Deserialize, Clone)]
