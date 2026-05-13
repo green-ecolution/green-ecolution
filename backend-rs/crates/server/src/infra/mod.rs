@@ -9,3 +9,4 @@ pub mod pg_tree;
 pub mod pg_vehicle;
 pub mod pg_watering_plan;
 pub mod system_info;
+pub mod update_checker;
