@@ -26,7 +26,7 @@ pub struct DefaultSystemInfoProvider {
 }
 
 impl DefaultSystemInfoProvider {
-    #[cfg(test)]
+    #[doc(hidden)]
     pub fn new_for_test() -> Self {
         use crate::configuration::{ApplicationSettings, InfoSettings, MapSettings};
         let stub_settings = Settings {
