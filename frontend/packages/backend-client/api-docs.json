@@ -2409,11 +2409,10 @@
       },
       "AppInfoResponse": {
         "type": "object",
-        "description": "Top-level application info combining version, build, git, and map data.",
         "required": [
           "version",
           "versionInfo",
-          "goVersion",
+          "rustVersion",
           "buildTime",
           "git",
           "map"
@@ -2421,30 +2420,24 @@
         "properties": {
           "buildTime": {
             "type": "string",
-            "description": "ISO 8601 timestamp of when the binary was built.",
             "example": "2024-08-01T10:00:00+00:00"
           },
           "git": {
-            "$ref": "#/components/schemas/GitInfoResponse",
-            "description": "Git metadata for the current build."
-          },
-          "goVersion": {
-            "type": "string",
-            "description": "Rust compiler version used for the build (serialized as \"goVersion\" for backward compatibility).",
-            "example": "1.82.0"
+            "$ref": "#/components/schemas/GitInfoResponse"
           },
           "map": {
-            "$ref": "#/components/schemas/MapInfoResponse",
-            "description": "Default map viewport configuration."
+            "$ref": "#/components/schemas/MapInfoResponse"
+          },
+          "rustVersion": {
+            "type": "string",
+            "example": "1.88.0"
           },
           "version": {
             "type": "string",
-            "description": "Application version string.",
             "example": "0.1.0"
           },
           "versionInfo": {
-            "$ref": "#/components/schemas/VersionInfoResponse",
-            "description": "Detailed version and update information."
+            "$ref": "#/components/schemas/VersionInfoResponse"
           }
         }
       },
@@ -2593,6 +2586,24 @@
           }
         }
       },
+      "CpuStatsResponse": {
+        "type": "object",
+        "required": [
+          "cores",
+          "usagePercent"
+        ],
+        "properties": {
+          "cores": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "usagePercent": {
+            "type": "number",
+            "format": "float"
+          }
+        }
+      },
       "CreateSensorRequest": {
         "type": "object",
         "description": "Request body for `POST /sensors` - registers a prepared sensor unit.",
@@ -2644,7 +2655,6 @@
       },
       "DataStatisticsResponse": {
         "type": "object",
-        "description": "Aggregate counts of core domain entities in the system.",
         "required": [
           "treeCount",
           "sensorCount",
@@ -2656,32 +2666,58 @@
           "sensorCount": {
             "type": "integer",
             "format": "int64",
-            "description": "Total number of sensors.",
             "example": 85
           },
           "treeClusterCount": {
             "type": "integer",
             "format": "int64",
-            "description": "Total number of tree clusters.",
             "example": 28
           },
           "treeCount": {
             "type": "integer",
             "format": "int64",
-            "description": "Total number of trees.",
             "example": 342
           },
           "vehicleCount": {
             "type": "integer",
             "format": "int64",
-            "description": "Total number of vehicles.",
             "example": 12
           },
           "wateringPlanCount": {
             "type": "integer",
             "format": "int64",
-            "description": "Total number of watering plans.",
             "example": 15
+          }
+        }
+      },
+      "DbPoolStatsResponse": {
+        "type": "object",
+        "required": [
+          "size",
+          "idle",
+          "active",
+          "max"
+        ],
+        "properties": {
+          "active": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "idle": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "max": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
           }
         }
       },
@@ -2830,7 +2866,6 @@
       },
       "GitInfoResponse": {
         "type": "object",
-        "description": "Git repository metadata for the current build.",
         "required": [
           "branch",
           "commit",
@@ -2839,18 +2874,15 @@
         "properties": {
           "branch": {
             "type": "string",
-            "description": "Branch the build was created from.",
             "example": "main"
           },
           "commit": {
             "type": "string",
-            "description": "Short commit hash of the build.",
             "example": "a1b2c3d"
           },
           "repository": {
             "type": "string",
-            "description": "URL of the source repository.",
-            "example": "https://github.com/green-ecolution/backend"
+            "example": "https://github.com/green-ecolution/backend-rs/"
           }
         }
       },
@@ -3793,7 +3825,6 @@
       },
       "MapInfoResponse": {
         "type": "object",
-        "description": "Default map viewport configuration (center point and bounding box).",
         "required": [
           "center",
           "bbox"
@@ -3805,7 +3836,6 @@
               "type": "number",
               "format": "double"
             },
-            "description": "Bounding box as [south, west, north, east].",
             "example": [
               54.75,
               9.4,
@@ -3819,11 +3849,29 @@
               "type": "number",
               "format": "double"
             },
-            "description": "Center of the map as [latitude, longitude].",
             "example": [
               54.7937,
               9.4469
             ]
+          }
+        }
+      },
+      "MemoryStatsResponse": {
+        "type": "object",
+        "required": [
+          "residentBytes",
+          "virtualBytes"
+        ],
+        "properties": {
+          "residentBytes": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "virtualBytes": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
           }
         }
       },
@@ -4045,6 +4093,25 @@
           "version": "1.0.0"
         }
       },
+      "ProcessStatsResponse": {
+        "type": "object",
+        "required": [
+          "uptimeSeconds",
+          "threads"
+        ],
+        "properties": {
+          "threads": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "uptimeSeconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          }
+        }
+      },
       "RefreshTokenRequest": {
         "type": "object",
         "description": "Request body for refreshing an access token.",
@@ -4104,6 +4171,38 @@
         "example": {
           "id": "0190a8e9-7c4f-7000-8000-000000000000",
           "name": "Stadtpark Flensburg"
+        }
+      },
+      "RuntimeStatsResponse": {
+        "type": "object",
+        "required": [
+          "memory",
+          "cpu",
+          "tokio",
+          "dbPool",
+          "process",
+          "timestamp"
+        ],
+        "properties": {
+          "cpu": {
+            "$ref": "#/components/schemas/CpuStatsResponse"
+          },
+          "dbPool": {
+            "$ref": "#/components/schemas/DbPoolStatsResponse"
+          },
+          "memory": {
+            "$ref": "#/components/schemas/MemoryStatsResponse"
+          },
+          "process": {
+            "$ref": "#/components/schemas/ProcessStatsResponse"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tokio": {
+            "$ref": "#/components/schemas/TokioStatsResponse"
+          }
         }
       },
       "SensorAbilityUnitDto": {
@@ -4369,116 +4468,90 @@
       },
       "ServerInfoResponse": {
         "type": "object",
-        "description": "Host and runtime details of the server.",
         "required": [
           "os",
           "arch",
           "hostname",
           "url",
-          "ip",
           "port",
           "interface",
-          "uptime"
+          "uptimeSeconds"
         ],
         "properties": {
           "arch": {
             "type": "string",
-            "description": "CPU architecture.",
             "example": "x86_64"
           },
           "hostname": {
             "type": "string",
-            "description": "Machine hostname.",
             "example": "green-ecolution-prod"
           },
           "interface": {
             "type": "string",
-            "description": "Network interface the server is bound to.",
-            "example": "0.0.0.0"
-          },
-          "ip": {
-            "type": "string",
-            "description": "IP address the server is bound to.",
             "example": "0.0.0.0"
           },
           "os": {
             "type": "string",
-            "description": "Operating system name.",
             "example": "linux"
           },
           "port": {
             "type": "integer",
             "format": "int32",
-            "description": "TCP port the server listens on.",
             "example": 3000,
             "minimum": 0
           },
-          "uptime": {
-            "type": "string",
-            "description": "Server uptime in seconds (e.g. \"86400s\").",
-            "example": "86400s"
+          "uptimeSeconds": {
+            "type": "integer",
+            "format": "int64",
+            "example": 86400,
+            "minimum": 0
           },
           "url": {
             "type": "string",
-            "description": "Public-facing URL of the server.",
             "example": "https://api.green-ecolution.de"
           }
         }
       },
       "ServiceStatusResponse": {
         "type": "object",
-        "description": "Health and availability status of an individual backend service.",
         "required": [
           "name",
           "enabled",
-          "healthy"
+          "healthy",
+          "lastChecked",
+          "responseTimeMs",
+          "message"
         ],
         "properties": {
           "enabled": {
             "type": "boolean",
-            "description": "Whether the service is enabled in the configuration.",
             "example": true
           },
           "healthy": {
             "type": "boolean",
-            "description": "Whether the last health check succeeded.",
             "example": true
           },
           "lastChecked": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "ISO 8601 timestamp of the last health check.",
+            "type": "string",
             "example": "2024-08-01T12:00:00+00:00"
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Human-readable status message.",
-            "example": "OK"
+            "type": "string",
+            "example": "service.status.connected"
           },
           "name": {
             "type": "string",
-            "description": "Name of the service (e.g. \"database\", \"s3\", \"routing\").",
             "example": "database"
           },
           "responseTimeMs": {
-            "type": [
-              "number",
-              "null"
-            ],
+            "type": "number",
             "format": "double",
-            "description": "Response time of the last health check in milliseconds.",
             "example": 2.5
           }
         }
       },
       "ServicesInfoResponse": {
         "type": "object",
-        "description": "Collection of service status entries.",
         "required": [
           "items"
         ],
@@ -4487,8 +4560,7 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ServiceStatusResponse"
-            },
-            "description": "List of monitored backend services and their current status."
+            }
           }
         }
       },
@@ -4503,6 +4575,25 @@
           "unknown"
         ],
         "example": "sandig"
+      },
+      "TokioStatsResponse": {
+        "type": "object",
+        "required": [
+          "workerThreads",
+          "blockingThreads"
+        ],
+        "properties": {
+          "blockingThreads": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "workerThreads": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
       },
       "TreeClusterCreateRequest": {
         "type": "object",
@@ -5740,7 +5831,6 @@
       },
       "VersionInfoResponse": {
         "type": "object",
-        "description": "Version information for the running application, including update status.",
         "required": [
           "current",
           "latest",
@@ -5752,32 +5842,26 @@
         "properties": {
           "current": {
             "type": "string",
-            "description": "Currently deployed version string.",
             "example": "0.1.0"
           },
           "isDevelopment": {
             "type": "boolean",
-            "description": "Whether this instance is running in development mode.",
             "example": true
           },
           "isStage": {
             "type": "boolean",
-            "description": "Whether this instance is running in a staging environment.",
             "example": false
           },
           "latest": {
             "type": "string",
-            "description": "Latest available version from the release channel.",
             "example": "0.1.0"
           },
           "releaseUrl": {
             "type": "string",
-            "description": "URL to the GitHub releases page.",
-            "example": "https://github.com/green-ecolution/backend/releases"
+            "example": "https://github.com/green-ecolution/backend-rs/releases/"
           },
           "updateAvailable": {
             "type": "boolean",
-            "description": "Whether a newer version is available.",
             "example": false
           }
         }

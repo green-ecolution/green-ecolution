@@ -14,55 +14,49 @@
 
 import { mapValues } from '../runtime';
 /**
- * Host and runtime details of the server.
+ * 
  * @export
  * @interface ServerInfoResponse
  */
 export interface ServerInfoResponse {
     /**
-     * CPU architecture.
+     * 
      * @type {string}
      * @memberof ServerInfoResponse
      */
     arch: string;
     /**
-     * Machine hostname.
+     * 
      * @type {string}
      * @memberof ServerInfoResponse
      */
     hostname: string;
     /**
-     * Network interface the server is bound to.
+     * 
      * @type {string}
      * @memberof ServerInfoResponse
      */
     _interface: string;
     /**
-     * IP address the server is bound to.
-     * @type {string}
-     * @memberof ServerInfoResponse
-     */
-    ip: string;
-    /**
-     * Operating system name.
+     * 
      * @type {string}
      * @memberof ServerInfoResponse
      */
     os: string;
     /**
-     * TCP port the server listens on.
+     * 
      * @type {number}
      * @memberof ServerInfoResponse
      */
     port: number;
     /**
-     * Server uptime in seconds (e.g. "86400s").
-     * @type {string}
+     * 
+     * @type {number}
      * @memberof ServerInfoResponse
      */
-    uptime: string;
+    uptimeSeconds: number;
     /**
-     * Public-facing URL of the server.
+     * 
      * @type {string}
      * @memberof ServerInfoResponse
      */
@@ -76,10 +70,9 @@ export function instanceOfServerInfoResponse(value: object): value is ServerInfo
     if (!('arch' in value) || value['arch'] === undefined) return false;
     if (!('hostname' in value) || value['hostname'] === undefined) return false;
     if (!('_interface' in value) || value['_interface'] === undefined) return false;
-    if (!('ip' in value) || value['ip'] === undefined) return false;
     if (!('os' in value) || value['os'] === undefined) return false;
     if (!('port' in value) || value['port'] === undefined) return false;
-    if (!('uptime' in value) || value['uptime'] === undefined) return false;
+    if (!('uptimeSeconds' in value) || value['uptimeSeconds'] === undefined) return false;
     if (!('url' in value) || value['url'] === undefined) return false;
     return true;
 }
@@ -97,10 +90,9 @@ export function ServerInfoResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'arch': json['arch'],
         'hostname': json['hostname'],
         '_interface': json['interface'],
-        'ip': json['ip'],
         'os': json['os'],
         'port': json['port'],
-        'uptime': json['uptime'],
+        'uptimeSeconds': json['uptimeSeconds'],
         'url': json['url'],
     };
 }
@@ -119,10 +111,9 @@ export function ServerInfoResponseToJSONTyped(value?: ServerInfoResponse | null,
         'arch': value['arch'],
         'hostname': value['hostname'],
         'interface': value['_interface'],
-        'ip': value['ip'],
         'os': value['os'],
         'port': value['port'],
-        'uptime': value['uptime'],
+        'uptimeSeconds': value['uptimeSeconds'],
         'url': value['url'],
     };
 }

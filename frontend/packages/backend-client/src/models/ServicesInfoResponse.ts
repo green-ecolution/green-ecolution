@@ -22,13 +22,13 @@ import {
 } from './ServiceStatusResponse';
 
 /**
- * Collection of service status entries.
+ * 
  * @export
  * @interface ServicesInfoResponse
  */
 export interface ServicesInfoResponse {
     /**
-     * List of monitored backend services and their current status.
+     * 
      * @type {Array<ServiceStatusResponse>}
      * @memberof ServicesInfoResponse
      */

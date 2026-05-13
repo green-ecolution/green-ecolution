@@ -77,7 +77,15 @@ pub struct AppState {
         (name = "Info", description = "Application metadata including version information, server status, map configuration, service health, and data statistics."),
         (name = "Users", description = "User management and OAuth2/OIDC authentication via Keycloak. Handles login flows, token management, and user registration."),
         (name = "Plugins", description = "Plugin registration and lifecycle management. External plugins can register, authenticate, and maintain heartbeat connections."),
-    )
+    ),
+    components(schemas(
+        crate::http::v1::dto::runtime_stats::RuntimeStatsResponse,
+        crate::http::v1::dto::runtime_stats::MemoryStatsResponse,
+        crate::http::v1::dto::runtime_stats::CpuStatsResponse,
+        crate::http::v1::dto::runtime_stats::TokioStatsResponse,
+        crate::http::v1::dto::runtime_stats::DbPoolStatsResponse,
+        crate::http::v1::dto::runtime_stats::ProcessStatsResponse,
+    ))
 )]
 struct ApiDoc;
 
