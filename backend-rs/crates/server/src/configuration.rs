@@ -234,6 +234,39 @@ pub enum ConfigError {
     Source(#[from] config::ConfigError),
 }
 
+impl Settings {
+    /// Build a `Settings` value for integration tests. Database settings are
+    /// dummy — the test pool is created separately and passed to
+    /// `Application::build_with_pool`.
+    pub fn for_test(auth: AuthSettings) -> Self {
+        Self {
+            database: DatabaseSettings {
+                username: "postgres".into(),
+                password: SecretString::from("postgres".to_string()),
+                port: 5432,
+                host: "127.0.0.1".into(),
+                database_name: "postgres".into(),
+                require_ssl: false,
+                max_connections: 1,
+                log_statements_level: LogLevel::Warn,
+                slow_query_threshold_ms: 1000,
+            },
+            application: ApplicationSettings {
+                port: 0,
+                host: "127.0.0.1".into(),
+                base_url: "http://127.0.0.1".into(),
+                environment: Environment::Local,
+            },
+            log: LogSettings { level: "warn".into(), format: LogFormat::Pretty },
+            cors: CorsSettings { allowed_origins: vec!["*".into()] },
+            auth,
+            mqtt: MqttSettings::default(),
+            map: MapSettings::default(),
+            info: InfoSettings::default(),
+        }
+    }
+}
+
 pub fn get_configuration() -> Result<Settings, ConfigError> {
     let base_path = std::env::current_dir().map_err(ConfigError::CurrentDir)?;
     let configuration_dir = base_path.join("config");

@@ -26,56 +26,6 @@ pub struct DefaultSystemInfoProvider {
 }
 
 impl DefaultSystemInfoProvider {
-    #[doc(hidden)]
-    pub fn new_for_test() -> Self {
-        use crate::configuration::{ApplicationSettings, InfoSettings, MapSettings};
-        let stub_settings = Settings {
-            database: crate::configuration::DatabaseSettings {
-                username: "postgres".into(),
-                password: secrecy::SecretString::from("postgres".to_string()),
-                port: 5432,
-                host: "127.0.0.1".into(),
-                database_name: "postgres".into(),
-                require_ssl: false,
-                max_connections: 1,
-                log_statements_level: crate::configuration::LogLevel::Warn,
-                slow_query_threshold_ms: 1000,
-            },
-            application: ApplicationSettings {
-                port: 0,
-                host: "127.0.0.1".into(),
-                base_url: "http://127.0.0.1".into(),
-                environment: Environment::Local,
-            },
-            log: crate::configuration::LogSettings {
-                level: "warn".into(),
-                format: crate::configuration::LogFormat::Pretty,
-            },
-            cors: crate::configuration::CorsSettings {
-                allowed_origins: vec!["*".into()],
-            },
-            auth: crate::configuration::AuthSettings {
-                enabled: false,
-                issuer_url: "http://127.0.0.1".into(),
-                frontend_client_id: "test".into(),
-                backend_client_id: "test".into(),
-                backend_client_secret: secrecy::SecretString::from("secret".to_string()),
-                jwks_refresh_interval_secs: 60,
-                jwks_refresh_timeout_secs: 5,
-                default_redirect_url: "http://127.0.0.1/cb".into(),
-                expected_audience: None,
-            },
-            mqtt: crate::configuration::MqttSettings::default(),
-            map: MapSettings::default(),
-            info: InfoSettings::default(),
-        };
-        let checker = Arc::new(UpdateChecker::new(
-            env!("CARGO_PKG_VERSION").to_string(),
-            None,
-        ));
-        Self::new(&stub_settings, checker)
-    }
-
     pub fn new(settings: &Settings, update_checker: Arc<UpdateChecker>) -> Self {
         let repository_url: Url = settings
             .info
