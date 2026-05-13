@@ -6,6 +6,7 @@ pub mod health;
 pub mod helpers;
 pub mod info;
 pub mod regions;
+pub mod runtime_stats;
 pub mod sensor_activate;
 pub mod sensor_create;
 pub mod sensor_models;
