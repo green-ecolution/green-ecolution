@@ -39,6 +39,10 @@ impl TestApp {
             .expect("GES-1000 model must exist after migrations")
     }
 
+    pub fn ws_url(&self) -> String {
+        self.address.replacen("http://", "ws://", 1)
+    }
+
     pub async fn get(&self, path: &str) -> reqwest::Response {
         reqwest::Client::new()
             .get(format!("{}{}", self.address, path))
@@ -207,5 +211,10 @@ pub async fn spawn_app_with_auth(auth: AuthSettings) -> TestApp {
     let state = app.state();
     tokio::spawn(app.run_until_stopped());
 
-    TestApp { address: format!("http://127.0.0.1:{port}"), port, db_pool, state }
+    TestApp {
+        address: format!("http://127.0.0.1:{port}"),
+        port,
+        db_pool,
+        state,
+    }
 }
