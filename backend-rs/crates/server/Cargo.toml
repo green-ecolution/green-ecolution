@@ -41,7 +41,7 @@ domain = { path = "../domain", features = ["sqlx"] }
 futures = "0.3"
 hostname = "0.4"
 include_dir = "0.7"
-jsonwebtoken = "10.4"
+jsonwebtoken = { version = "10.4", default-features = false, features = ["use_pem", "aws_lc_rs"] }
 log = "0.4"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 rumqttc = "0.25"
