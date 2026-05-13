@@ -37,7 +37,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
     && cp target/release/green-ecolution /usr/local/bin/green-ecolution \
     && cp target/release/migrate /usr/local/bin/migrate
 
-FROM debian:bookworm-slim@sha256:67b30a61dc87758f0caf819646104f29ecbda97d920aaf5edc834128ac8493d3 AS runtime
+FROM debian:trixie-slim@sha256:109e2c65005bf160609e4ba6acf7783752f8502ad218e298253428690b9eaa4b AS runtime
 WORKDIR /app
 
 ARG APP_VERSION=dev
