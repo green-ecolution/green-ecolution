@@ -1,9 +1,13 @@
+use std::sync::Arc;
+use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use domain::info::{ServiceMessage, ServiceName};
 use server::infra::health::keycloak_probe::KeycloakProbe;
+use server::infra::health::mqtt_probe::MqttProbe;
 use server::infra::health::pg_probe::PgProbe;
 use server::infra::health::probe::HealthProbe;
+use server::infra::mqtt::MqttHealthState;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -110,4 +114,28 @@ async fn keycloak_probe_handles_trailing_slash_in_issuer() {
     );
     let status = probe.check().await;
     assert!(status.healthy);
+}
+
+#[tokio::test]
+async fn mqtt_probe_disabled() {
+    let state = Arc::new(MqttHealthState::default());
+    let probe = MqttProbe::new(false, state);
+    let status = probe.check().await;
+    assert!(!status.enabled);
+    assert_eq!(status.message, ServiceMessage::Disabled);
+}
+
+#[tokio::test]
+async fn mqtt_probe_reports_state_flag() {
+    let state = Arc::new(MqttHealthState::default());
+    state.connected.store(true, Ordering::Relaxed);
+    let probe = MqttProbe::new(true, state.clone());
+    let status = probe.check().await;
+    assert!(status.healthy);
+    assert_eq!(status.message, ServiceMessage::Connected);
+
+    state.connected.store(false, Ordering::Relaxed);
+    let status = probe.check().await;
+    assert!(!status.healthy);
+    assert_eq!(status.message, ServiceMessage::NoConnection);
 }

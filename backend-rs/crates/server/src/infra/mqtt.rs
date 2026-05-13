@@ -6,9 +6,21 @@
 //! `topic`) to start the background task. The task reconnects automatically
 //! through `rumqttc`'s `EventLoop` and survives broker outages.
 
-use std::{str::FromStr, sync::Arc, time::Duration};
+use std::{
+    str::FromStr,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+    time::Duration,
+};
 
 use rumqttc::{AsyncClient, Event, EventLoop, Incoming, MqttOptions, QoS, Transport};
+
+#[derive(Default)]
+pub struct MqttHealthState {
+    pub connected: AtomicBool,
+}
 use rust_decimal::Decimal;
 use secrecy::ExposeSecret;
 use serde_json::Value;
@@ -29,16 +41,18 @@ use domain::{
     sensor_model::{SensorAbilityName, SensorModel},
 };
 
-/// Spawns the MQTT subscriber as a tokio task. Returns `Ok(())` if disabled
-/// or if the task started successfully. The task itself logs and recovers
+/// Spawns the MQTT subscriber as a tokio task. Returns `Ok(Arc<MqttHealthState>)` if
+/// disabled or if the task started successfully. The task itself logs and recovers
 /// from connection errors; the caller does not await its completion.
 pub fn spawn(
     settings: MqttSettings,
     sensor_service: Arc<SensorService>,
-) -> Result<(), MqttSubscriberError> {
+) -> Result<Arc<MqttHealthState>, MqttSubscriberError> {
+    let state = Arc::new(MqttHealthState::default());
+
     if !settings.enabled {
         tracing::info!("mqtt subscriber disabled due to config (mqtt.enabled = false)");
-        return Ok(());
+        return Ok(state);
     }
     if settings.broker_url.is_empty() || settings.topic.is_empty() {
         return Err(MqttSubscriberError::MissingConfig);
@@ -46,16 +60,17 @@ pub fn spawn(
 
     let (client, eventloop) = build_client(&settings)?;
     let topic = settings.topic.clone();
+    let task_state = state.clone();
 
     tokio::spawn(async move {
         if let Err(e) = client.subscribe(&topic, QoS::AtLeastOnce).await {
             tracing::error!(error = %e, %topic, "mqtt subscribe failed");
             return;
         }
-        run_event_loop(eventloop, sensor_service).await;
+        run_event_loop(eventloop, sensor_service, task_state).await;
     });
 
-    Ok(())
+    Ok(state)
 }
 
 fn build_client(settings: &MqttSettings) -> Result<(AsyncClient, EventLoop), MqttSubscriberError> {
@@ -83,16 +98,27 @@ fn build_client(settings: &MqttSettings) -> Result<(AsyncClient, EventLoop), Mqt
     Ok(AsyncClient::new(opts, 32))
 }
 
-async fn run_event_loop(mut eventloop: EventLoop, sensor_service: Arc<SensorService>) {
+async fn run_event_loop(
+    mut eventloop: EventLoop,
+    sensor_service: Arc<SensorService>,
+    state: Arc<MqttHealthState>,
+) {
     loop {
         match eventloop.poll().await {
+            Ok(Event::Incoming(Incoming::ConnAck(_))) => {
+                state.connected.store(true, Ordering::Relaxed);
+            }
             Ok(Event::Incoming(Incoming::Publish(pub_pkt))) => {
                 if let Err(e) = handle_publish(&pub_pkt.payload, &sensor_service).await {
                     tracing::warn!(error = %e, "mqtt message dropped");
                 }
             }
+            Ok(Event::Incoming(Incoming::Disconnect)) => {
+                state.connected.store(false, Ordering::Relaxed);
+            }
             Ok(_) => {}
             Err(e) => {
+                state.connected.store(false, Ordering::Relaxed);
                 tracing::warn!(error = %e, "mqtt eventloop error; reconnecting");
                 tokio::time::sleep(Duration::from_secs(2)).await;
             }

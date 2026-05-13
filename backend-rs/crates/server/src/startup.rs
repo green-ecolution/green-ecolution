@@ -78,8 +78,9 @@ impl Application {
         mqtt: MqttSettings,
     ) -> Result<Self, std::io::Error> {
         let app = Self::build_with_pool(pool, address, base_url, cors, auth).await?;
-        if let Err(e) = infra::mqtt::spawn(mqtt, app.state.sensor_service.clone()) {
-            tracing::error!(error = %e, "mqtt subscriber not started");
+        match infra::mqtt::spawn(mqtt, app.state.sensor_service.clone()) {
+            Ok(_state) => {}
+            Err(e) => tracing::error!(error = %e, "mqtt subscriber not started"),
         }
         Ok(app)
     }
@@ -249,7 +250,8 @@ pub async fn get_connection_pool(config: &DatabaseSettings) -> Result<PgPool, sq
 /// `config`. Failures are logged and the HTTP server still comes up — a
 /// missing broker should not bring down a running deployment.
 fn spawn_background_tasks(config: &Settings, app: &Application) {
-    if let Err(e) = infra::mqtt::spawn(config.mqtt.clone(), app.state.sensor_service.clone()) {
-        tracing::error!(error = %e, "mqtt subscriber not started");
+    match infra::mqtt::spawn(config.mqtt.clone(), app.state.sensor_service.clone()) {
+        Ok(_state) => {}
+        Err(e) => tracing::error!(error = %e, "mqtt subscriber not started"),
     }
 }
