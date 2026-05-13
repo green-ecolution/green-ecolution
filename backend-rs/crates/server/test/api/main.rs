@@ -3,6 +3,7 @@ pub mod auth_helpers;
 pub mod clusters;
 pub mod evaluation;
 pub mod health;
+pub mod health_probes;
 pub mod helpers;
 pub mod info;
 pub mod regions;
