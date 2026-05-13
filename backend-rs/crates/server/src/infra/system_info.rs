@@ -89,13 +89,14 @@ impl SystemInfoProvider for DefaultSystemInfoProvider {
     }
 
     async fn services_info(&self) -> Result<ServiceStatus, RepositoryError> {
+        use domain::info::{ServiceMessage, ServiceName};
         Ok(ServiceStatus {
-            name: "database".to_string(),
+            name: ServiceName::Postgres,
             enabled: true,
             healthy: true,
             response_time: Duration::from_millis(0),
             last_checked: Utc::now(),
-            message: "ok".to_string(),
+            message: ServiceMessage::Connected,
         })
     }
 

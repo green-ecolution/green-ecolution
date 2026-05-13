@@ -5,7 +5,7 @@ pub mod service;
 pub mod statistics;
 
 pub use app::{App, Git, Map, Server, VersionInfo};
-pub use service::ServiceStatus;
+pub use service::{ServiceMessage, ServiceName, ServiceStatus};
 pub use statistics::DataStatistics;
 
 use crate::RepositoryError;

@@ -179,12 +179,12 @@ pub struct ServiceStatusResponse {
 impl From<&ServiceStatus> for ServiceStatusResponse {
     fn from(value: &ServiceStatus) -> Self {
         Self {
-            name: value.name.clone(),
+            name: value.name.as_key().to_string(),
             enabled: value.enabled,
             healthy: value.healthy,
             last_checked: Some(value.last_checked.to_rfc3339()),
             response_time_ms: Some(value.response_time.as_secs_f64() * 1000.0),
-            message: Some(value.message.clone()),
+            message: Some(value.message.as_key().to_string()),
         }
     }
 }
