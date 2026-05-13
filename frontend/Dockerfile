@@ -1,7 +1,7 @@
 #############################################
 # base
 #############################################
-FROM node:25-alpine AS base
+FROM node:26-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN npm install -g pnpm
