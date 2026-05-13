@@ -65,10 +65,22 @@ mod tests {
 
     #[test]
     fn service_message_keys_match_frontend_i18n() {
-        assert_eq!(ServiceMessage::Connected.as_key(), "service.status.connected");
-        assert_eq!(ServiceMessage::NoConnection.as_key(), "service.status.no_connection");
+        assert_eq!(
+            ServiceMessage::Connected.as_key(),
+            "service.status.connected"
+        );
+        assert_eq!(
+            ServiceMessage::NoConnection.as_key(),
+            "service.status.no_connection"
+        );
         assert_eq!(ServiceMessage::Disabled.as_key(), "service.status.disabled");
-        assert_eq!(ServiceMessage::ConnectionError.as_key(), "service.status.connection_error");
-        assert_eq!(ServiceMessage::NotConfigured.as_key(), "service.status.not_configured");
+        assert_eq!(
+            ServiceMessage::ConnectionError.as_key(),
+            "service.status.connection_error"
+        );
+        assert_eq!(
+            ServiceMessage::NotConfigured.as_key(),
+            "service.status.not_configured"
+        );
     }
 }

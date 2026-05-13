@@ -80,5 +80,8 @@ async fn ws_stats_closes_on_client_disconnect() {
     ws.send(Message::Close(None)).await.unwrap();
 
     let result = tokio::time::timeout(Duration::from_secs(2), ws.next()).await;
-    assert!(result.is_ok(), "server should drop the connection within 2s");
+    assert!(
+        result.is_ok(),
+        "server should drop the connection within 2s"
+    );
 }

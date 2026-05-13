@@ -26,7 +26,9 @@ use crate::{
         watering_plan_service::WateringPlanService,
     },
 };
-use domain::info::{HealthSnapshotReader, RuntimeStatsProvider, StatisticsReader, SystemInfoProvider};
+use domain::info::{
+    HealthSnapshotReader, RuntimeStatsProvider, StatisticsReader, SystemInfoProvider,
+};
 
 pub mod auth;
 pub mod extractors;

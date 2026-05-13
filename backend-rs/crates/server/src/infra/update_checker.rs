@@ -23,7 +23,11 @@ pub struct UpdateChecker {
 impl UpdateChecker {
     pub fn new(current: String, repo: Option<String>) -> Self {
         let latest = RwLock::new(current.clone());
-        Self { current, latest, repo }
+        Self {
+            current,
+            latest,
+            repo,
+        }
     }
 
     pub fn current(&self) -> &str {

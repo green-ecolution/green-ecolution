@@ -41,13 +41,12 @@ impl RuntimeStatsProvider for DefaultRuntimeStatsProvider {
     #[tracing::instrument(level = "trace", skip(self))]
     async fn snapshot(&self) -> RuntimeStats {
         let (memory, cpu_proc, threads) = {
-            let mut sys = self.system.lock().expect("sysinfo mutex must not be poisoned");
+            let mut sys = self
+                .system
+                .lock()
+                .expect("sysinfo mutex must not be poisoned");
             let refresh = ProcessRefreshKind::nothing().with_cpu().with_memory();
-            sys.refresh_processes_specifics(
-                ProcessesToUpdate::Some(&[self.pid]),
-                true,
-                refresh,
-            );
+            sys.refresh_processes_specifics(ProcessesToUpdate::Some(&[self.pid]), true, refresh);
             let proc = sys.process(self.pid);
             let (resident, virt, cpu, threads) = proc
                 .map(|p| {

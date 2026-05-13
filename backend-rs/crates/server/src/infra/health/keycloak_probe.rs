@@ -22,7 +22,12 @@ impl KeycloakProbe {
             let trimmed = s.trim_end_matches('/');
             Url::parse(&format!("{trimmed}/.well-known/openid-configuration")).ok()
         });
-        Self { enabled, well_known_url, client, timeout }
+        Self {
+            enabled,
+            well_known_url,
+            client,
+            timeout,
+        }
     }
 }
 

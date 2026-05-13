@@ -64,8 +64,12 @@ impl Application {
         settings: Settings,
     ) -> Result<Self, std::io::Error> {
         // ---- 1. Auth scaffolding ----
-        let AuthStack { auth_service, user_service, auth_layer, jwks } =
-            infra::keycloak::build(&settings.auth).await?;
+        let AuthStack {
+            auth_service,
+            user_service,
+            auth_layer,
+            jwks,
+        } = infra::keycloak::build(&settings.auth).await?;
         let token_validator = auth_layer.validator.clone();
 
         // ---- 2. Shared HTTP client ----
@@ -81,8 +85,9 @@ impl Application {
         ));
 
         // ---- 4. SystemInfoProvider ----
-        let info_provider: Arc<dyn domain::info::SystemInfoProvider> =
-            Arc::new(DefaultSystemInfoProvider::new(&settings, update_checker.clone()));
+        let info_provider: Arc<dyn domain::info::SystemInfoProvider> = Arc::new(
+            DefaultSystemInfoProvider::new(&settings, update_checker.clone()),
+        );
 
         // ---- 5. Runtime + statistics readers ----
         let runtime_stats_provider: Arc<dyn RuntimeStatsProvider> =
@@ -280,4 +285,3 @@ pub async fn get_connection_pool(config: &DatabaseSettings) -> Result<PgPool, sq
         .connect_with(config.connection_options())
         .await
 }
-

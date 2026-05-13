@@ -16,7 +16,10 @@ async fn no_update_when_versions_match() {
 async fn refresh_no_op_when_repo_unset() {
     let checker = UpdateChecker::new("0.1.0".into(), None);
     let client = reqwest::Client::new();
-    checker.refresh_with_base(&client, "http://unused/").await.unwrap();
+    checker
+        .refresh_with_base(&client, "http://unused/")
+        .await
+        .unwrap();
     assert_eq!(checker.latest().await, "0.1.0");
 }
 
@@ -33,7 +36,10 @@ async fn refresh_reports_newer_release() {
 
     let checker = Arc::new(UpdateChecker::new("0.1.0".into(), Some("org/repo".into())));
     let client = reqwest::Client::new();
-    checker.refresh_with_base(&client, &mock.uri()).await.unwrap();
+    checker
+        .refresh_with_base(&client, &mock.uri())
+        .await
+        .unwrap();
 
     assert_eq!(checker.latest().await, "0.2.0");
     assert!(checker.update_available().await);
@@ -52,7 +58,10 @@ async fn refresh_strips_leading_v_for_comparison() {
 
     let checker = Arc::new(UpdateChecker::new("0.1.0".into(), Some("org/repo".into())));
     let client = reqwest::Client::new();
-    checker.refresh_with_base(&client, &mock.uri()).await.unwrap();
+    checker
+        .refresh_with_base(&client, &mock.uri())
+        .await
+        .unwrap();
 
     assert!(!checker.update_available().await);
 }

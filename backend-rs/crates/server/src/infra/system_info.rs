@@ -44,8 +44,12 @@ impl DefaultSystemInfoProvider {
                 .map(|dt| dt.with_timezone(&Utc))
                 .unwrap_or_else(|_| Utc::now()),
             git: Git {
-                branch: option_env!("GE_GIT_BRANCH").unwrap_or("unknown").to_string(),
-                commit: option_env!("GE_GIT_COMMIT").unwrap_or("unknown").to_string(),
+                branch: option_env!("GE_GIT_BRANCH")
+                    .unwrap_or("unknown")
+                    .to_string(),
+                commit: option_env!("GE_GIT_COMMIT")
+                    .unwrap_or("unknown")
+                    .to_string(),
                 repository: repository_url,
             },
             map: Map {

@@ -70,7 +70,10 @@ async fn get_info_returns_rust_version_not_go_version() {
     let body: serde_json::Value = response.json().await.unwrap();
 
     assert!(body.get("rustVersion").is_some(), "rustVersion missing");
-    assert!(body.get("goVersion").is_none(), "goVersion must not be present");
+    assert!(
+        body.get("goVersion").is_none(),
+        "goVersion must not be present"
+    );
     assert!(body["rustVersion"].as_str().unwrap().len() > 0);
     assert!(body["buildTime"].is_string());
 }
@@ -82,8 +85,14 @@ async fn get_server_returns_uptime_seconds_and_no_ip() {
     let response = app.get("/api/v1/info/server").await;
     let body: serde_json::Value = response.json().await.unwrap();
 
-    assert!(body["uptimeSeconds"].as_u64().is_some(), "uptimeSeconds must be a number");
-    assert!(body.get("uptime").is_none(), "old uptime string form must be gone");
+    assert!(
+        body["uptimeSeconds"].as_u64().is_some(),
+        "uptimeSeconds must be a number"
+    );
+    assert!(
+        body.get("uptime").is_none(),
+        "old uptime string form must be gone"
+    );
     assert!(body.get("ip").is_none(), "ip must not be present");
     assert!(body["url"].as_str().unwrap().starts_with("http"));
     assert!(body["port"].as_u64().is_some());
@@ -101,14 +110,14 @@ async fn get_services_returns_expected_keys() {
     let body: serde_json::Value = response.json().await.unwrap();
 
     let items = body["items"].as_array().expect("items array");
-    let names: HashSet<&str> = items
-        .iter()
-        .map(|s| s["name"].as_str().unwrap())
-        .collect();
+    let names: HashSet<&str> = items.iter().map(|s| s["name"].as_str().unwrap()).collect();
 
     assert!(names.contains("database"), "database probe missing");
     assert!(names.contains("auth"), "auth probe missing");
-    assert!(!names.contains("mqtt"), "mqtt should not appear when disabled");
+    assert!(
+        !names.contains("mqtt"),
+        "mqtt should not appear when disabled"
+    );
 
     for item in items {
         assert!(item["lastChecked"].is_string());
@@ -131,6 +140,9 @@ async fn get_statistics_returns_counts() {
         "treeClusterCount",
         "wateringPlanCount",
     ] {
-        assert!(body[key].as_i64().is_some(), "{key} missing or not a number");
+        assert!(
+            body[key].as_i64().is_some(),
+            "{key} missing or not a number"
+        );
     }
 }

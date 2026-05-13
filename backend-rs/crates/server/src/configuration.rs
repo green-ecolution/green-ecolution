@@ -157,10 +157,18 @@ impl Default for InfoSettings {
     }
 }
 
-fn default_health_check_interval_secs() -> u64 { 30 }
-fn default_health_probe_timeout_secs() -> u64 { 5 }
-fn default_runtime_stats_interval_secs() -> u64 { 2 }
-fn default_update_check_interval_secs() -> u64 { 86_400 }
+fn default_health_check_interval_secs() -> u64 {
+    30
+}
+fn default_health_probe_timeout_secs() -> u64 {
+    5
+}
+fn default_runtime_stats_interval_secs() -> u64 {
+    2
+}
+fn default_update_check_interval_secs() -> u64 {
+    86_400
+}
 fn default_repository_url() -> String {
     "https://github.com/green-ecolution/backend-rs/".to_string()
 }
@@ -257,8 +265,13 @@ impl Settings {
                 base_url: "http://127.0.0.1".into(),
                 environment: Environment::Local,
             },
-            log: LogSettings { level: "warn".into(), format: LogFormat::Pretty },
-            cors: CorsSettings { allowed_origins: vec!["*".into()] },
+            log: LogSettings {
+                level: "warn".into(),
+                format: LogFormat::Pretty,
+            },
+            cors: CorsSettings {
+                allowed_origins: vec!["*".into()],
+            },
             auth,
             mqtt: MqttSettings::default(),
             map: MapSettings::default(),

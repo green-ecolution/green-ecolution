@@ -172,8 +172,14 @@ impl HealthProbe for FakeProbe {
 #[tokio::test]
 async fn health_coordinator_aggregates_probes_after_first_tick() {
     let probes: Vec<Arc<dyn HealthProbe>> = vec![
-        Arc::new(FakeProbe { name: ServiceName::Postgres, healthy: true }),
-        Arc::new(FakeProbe { name: ServiceName::Keycloak, healthy: false }),
+        Arc::new(FakeProbe {
+            name: ServiceName::Postgres,
+            healthy: true,
+        }),
+        Arc::new(FakeProbe {
+            name: ServiceName::Keycloak,
+            healthy: false,
+        }),
     ];
     let (coord, handle) = spawn_health(probes, Duration::from_millis(50));
 
@@ -181,8 +187,16 @@ async fn health_coordinator_aggregates_probes_after_first_tick() {
 
     let snapshot = coord.snapshot().await;
     assert_eq!(snapshot.len(), 2);
-    assert!(snapshot.iter().any(|s| s.name == ServiceName::Postgres && s.healthy));
-    assert!(snapshot.iter().any(|s| s.name == ServiceName::Keycloak && !s.healthy));
+    assert!(
+        snapshot
+            .iter()
+            .any(|s| s.name == ServiceName::Postgres && s.healthy)
+    );
+    assert!(
+        snapshot
+            .iter()
+            .any(|s| s.name == ServiceName::Keycloak && !s.healthy)
+    );
 
     handle.abort();
 }
