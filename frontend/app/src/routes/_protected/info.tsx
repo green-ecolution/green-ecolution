@@ -105,29 +105,13 @@ function translateServiceMessage(key?: string): string {
   return serviceMessageMap[key] ?? key
 }
 
-function formatUptime(uptime: string): string {
-  // Parse Go duration format: "1h2m3.456s", "53m56.204970015s", "2h30m", etc.
-  let totalSeconds = 0
-
-  const hourMatch = /(\d+)h/.exec(uptime)
-  const minMatch = /(\d+)m/.exec(uptime)
-  const secMatch = /([\d.]+)s/.exec(uptime)
-
-  if (hourMatch) totalSeconds += parseInt(hourMatch[1], 10) * 3600
-  if (minMatch) totalSeconds += parseInt(minMatch[1], 10) * 60
-  if (secMatch) totalSeconds += Math.floor(parseFloat(secMatch[1]))
-
-  const days = Math.floor(totalSeconds / 86400)
-  const hours = Math.floor((totalSeconds % 86400) / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-
-  if (days > 0) {
-    return `${days} Tag${days > 1 ? 'e' : ''}, ${hours}h ${minutes}m`
-  }
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`
-  }
-  return `${minutes} Minuten`
+function formatUptime(seconds: number): string {
+  const days = Math.floor(seconds / 86400)
+  const hours = Math.floor((seconds % 86400) / 3600)
+  const mins = Math.floor((seconds % 3600) / 60)
+  if (days > 0) return `${days}d ${hours}h`
+  if (hours > 0) return `${hours}h ${mins}m`
+  return `${mins}m`
 }
 
 function getVersionStatusProps(versionInfo: VersionInfoResponse) {
@@ -516,7 +500,7 @@ function DataStatCard({ icon, label, value, subtitle, color, href }: DataStatCar
 interface SystemTabContentProps {
   data: {
     versionInfo: VersionInfoResponse
-    goVersion: string
+    rustVersion: string
   }
   servicesData:
     | {
@@ -526,7 +510,7 @@ interface SystemTabContentProps {
   servicesLoading: boolean
   serverData:
     | {
-        uptime: string
+        uptimeSeconds: number
       }
     | undefined
   versionProps: {
@@ -535,7 +519,7 @@ interface SystemTabContentProps {
     description: React.ReactNode
   }
   totalServices: number
-  formatUptime: (uptime: string) => string
+  formatUptime: (seconds: number) => string
 }
 
 const serviceIconMap: Record<string, React.ReactNode> = {
@@ -645,14 +629,14 @@ function SystemTabContent({
               {serverData && (
                 <div>
                   <p className="text-sm text-dark-500 mb-1">Uptime</p>
-                  <p className="text-2xl font-bold font-lato">{formatUptime(serverData.uptime)}</p>
+                  <p className="text-2xl font-bold font-lato">{formatUptime(serverData.uptimeSeconds)}</p>
                   <p className="text-xs text-dark-400 mt-1">seit letztem Neustart</p>
                 </div>
               )}
               <div>
-                <p className="text-sm text-dark-500 mb-1">Go Runtime</p>
-                <p className="text-2xl font-bold font-mono">{data.goVersion.replace('go', '')}</p>
-                <p className="text-xs text-dark-400 mt-1">Backend Version</p>
+                <p className="text-sm text-dark-500 mb-1">Backend</p>
+                <p className="text-2xl font-bold font-mono">Rust {data.rustVersion}</p>
+                <p className="text-xs text-dark-400 mt-1">Runtime Version</p>
               </div>
             </div>
           </CardContent>
@@ -754,7 +738,7 @@ interface SoftwareTabContentProps {
   data: {
     version: string
     buildTime: string
-    goVersion: string
+    rustVersion: string
     git: {
       branch: string
       commit: string
@@ -821,34 +805,34 @@ function SoftwareTabContent({ data }: SoftwareTabContentProps) {
         </Card>
 
         <Card className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent" />
           <CardContent className="pt-6 relative">
             <div className="flex items-start justify-between mb-6">
               <div>
-                <p className="text-sm font-medium text-dark-600 mb-1">Go Runtime</p>
-                <p className="text-5xl font-bold font-lato text-cyan-600 tracking-tight">
-                  {data.goVersion.replace('go', '')}
+                <p className="text-sm font-medium text-dark-600 mb-1">Rust Runtime</p>
+                <p className="text-5xl font-bold font-lato text-orange-600 tracking-tight">
+                  {data.rustVersion}
                 </p>
               </div>
-              <div className="p-3 bg-cyan-500/10 rounded-xl">
-                <Code className="size-8 text-cyan-600" />
+              <div className="p-3 bg-orange-500/10 rounded-xl">
+                <Code className="size-8 text-orange-600" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-dark-200">
               <div>
                 <p className="text-xs text-dark-500 mb-1">Sprache</p>
-                <p className="font-medium">Go (Golang)</p>
+                <p className="font-medium">Rust</p>
               </div>
               <div>
-                <p className="text-xs text-dark-500 mb-1">Dokumentation</p>
+                <p className="text-xs text-dark-500 mb-1">Repository</p>
                 <a
-                  href="https://pkg.go.dev/github.com/green-ecolution/green-ecolution/backend"
+                  href={data.git.repository}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-medium text-cyan-600 hover:underline"
+                  className="inline-flex items-center gap-1 font-medium text-orange-600 hover:underline"
                 >
-                  pkg.go.dev
+                  GitHub
                   <ExternalLink className="size-3" />
                 </a>
               </div>
@@ -967,24 +951,14 @@ interface ServerTabContentProps {
     os: string
     arch: string
     port: number
-    uptime: string
-    ip: string
+    uptimeSeconds: number
     _interface: string
     url: string
   }
-  formatUptime: (uptime: string) => string
+  formatUptime: (seconds: number) => string
 }
 
 function ServerTabContent({ serverData, formatUptime }: ServerTabContentProps) {
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      toast.success('In Zwischenablage kopiert')
-    } catch {
-      toast.error('Kopieren fehlgeschlagen')
-    }
-  }
-
   return (
     <div className="space-y-6">
       {/* Server hero */}
@@ -1017,7 +991,7 @@ function ServerTabContent({ serverData, formatUptime }: ServerTabContentProps) {
                   <Clock className="size-4 text-dark-500" />
                   <p className="text-sm text-dark-500">Uptime</p>
                 </div>
-                <p className="text-2xl font-bold font-lato">{formatUptime(serverData.uptime)}</p>
+                <p className="text-2xl font-bold font-lato">{formatUptime(serverData.uptimeSeconds)}</p>
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-2">
@@ -1048,24 +1022,7 @@ function ServerTabContent({ serverData, formatUptime }: ServerTabContentProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="p-4 bg-dark-100/50 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Globe className="size-4 text-dark-500" />
-                <p className="text-sm text-dark-500">IP-Adresse</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <code className="font-mono text-lg font-medium flex-1">{serverData.ip}</code>
-                <button
-                  onClick={() => void copyToClipboard(serverData.ip)}
-                  className="p-1.5 hover:bg-dark-200 rounded transition-colors cursor-pointer"
-                  title="Kopieren"
-                >
-                  <Copy className="size-4 text-dark-500 hover:text-dark-700" />
-                </button>
-              </div>
-            </div>
-
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="p-4 bg-dark-100/50 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <Network className="size-4 text-dark-500" />
