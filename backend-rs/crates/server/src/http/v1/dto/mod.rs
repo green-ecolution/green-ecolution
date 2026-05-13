@@ -3,6 +3,7 @@ pub mod evaluation;
 pub mod info;
 pub mod plugin;
 pub mod region;
+pub mod runtime_stats;
 pub mod sensor;
 pub mod tree;
 pub mod user;
