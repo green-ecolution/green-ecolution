@@ -3,7 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
 use rsa::{
-    RsaPrivateKey, RsaPublicKey, pkcs1::EncodeRsaPrivateKey, pkcs8::LineEnding,
+    RsaPrivateKey, RsaPublicKey, pkcs1::EncodeRsaPrivateKey, pkcs8::LineEnding, rand_core::OsRng,
     traits::PublicKeyParts,
 };
 use secrecy::SecretString;
@@ -27,7 +27,7 @@ pub struct AuthHarness {
 
 impl AuthHarness {
     pub async fn start() -> Self {
-        let mut rng = rand::thread_rng();
+        let mut rng = OsRng;
         let private = RsaPrivateKey::new(&mut rng, 2048).expect("rsa keygen");
         let public = RsaPublicKey::from(&private);
 
