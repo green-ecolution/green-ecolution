@@ -73,5 +73,5 @@ quickcheck_macros = "1"
 rand = "0.10"
 rsa = { version = "0.9", features = ["sha2"] }
 testcontainers = { version = "0.25", features = ["watchdog"] }
-testcontainers-modules = { version = "0.13", features = ["postgres"] }
+testcontainers-modules = { version = "0.14", features = ["postgres"] }
 wiremock = "0.6.5"
