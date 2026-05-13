@@ -176,7 +176,7 @@ services:
       - "127.0.0.1:5432:5432"
 
   pgadmin:
-    image: dpage/pgadmin4:9.14.0
+    image: dpage/pgadmin4:9.15.0
     entrypoint: /bin/sh
     command: >
       -c "echo \"$$SERVERS_JSON\" > /tmp/servers.json &&
@@ -301,7 +301,7 @@ services:
       - "traefik.http.routers.valhalla.rule=Host(`valhalla.${APP_HOST:-localhost}`)"
       - "traefik.http.routers.valhalla.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
   reverse-proxy:
-    image: traefik:v3.6.13
+    image: traefik:v3.7.0
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
