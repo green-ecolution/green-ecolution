@@ -69,12 +69,14 @@ utoipa-swagger-ui = { version = "9", features = ["axum", "vendored"] }
 [dev-dependencies]
 claims = "0.8"
 domain = { path = "../domain", features = ["sqlx"] }
+futures-util = "0.3"
 libc = "0.2"
 quickcheck = "1"
 quickcheck_macros = "1"
 rsa = { version = "0.9", features = ["sha2"] }
 testcontainers = { version = "0.26", features = ["watchdog"] }
 testcontainers-modules = { version = "0.14", features = ["postgres"] }
+tokio-tungstenite = "0.29"
 wiremock = "0.6.5"
 
 [build-dependencies]

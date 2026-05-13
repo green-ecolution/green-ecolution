@@ -18,3 +18,4 @@ pub mod trees;
 pub mod update_checker;
 pub mod vehicle;
 pub mod watering_plans;
+pub mod ws_stats;
