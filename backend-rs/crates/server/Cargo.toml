@@ -34,7 +34,7 @@ path = "test/api/main.rs"
 [dependencies]
 anyhow = "1.0.102"
 async-trait = { workspace = true }
-axum = { version = "0.8.9", features = ["json"] }
+axum = { version = "0.8.9", features = ["json", "ws"] }
 base64 = "0.22"
 chrono = { workspace = true }
 config = "0.15.23"

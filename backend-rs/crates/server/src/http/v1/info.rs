@@ -8,7 +8,7 @@ use crate::{
         AppState,
         v1::dto::info::{
             AppInfoResponse, DataStatisticsResponse, GitInfoResponse, MapInfoResponse,
-            ServerInfoResponse, ServicesInfoResponse, VersionInfoResponse,
+            ServerInfoResponse, ServiceStatusResponse, ServicesInfoResponse, VersionInfoResponse,
         },
     },
     service::ServiceError,
@@ -95,9 +95,12 @@ pub async fn get_server_info(
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn get_services_info(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<Json<ServicesInfoResponse>, ServiceError> {
-    Ok(Json(ServicesInfoResponse { items: vec![] }))
+    let snapshot = state.health_reader.snapshot().await;
+    Ok(Json(ServicesInfoResponse {
+        items: snapshot.iter().map(ServiceStatusResponse::from).collect(),
+    }))
 }
 
 #[utoipa::path(get, path = "/info/statistics", tag = "Info",
@@ -111,13 +114,8 @@ pub async fn get_services_info(
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn get_statistics(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<Json<DataStatisticsResponse>, ServiceError> {
-    Ok(Json(DataStatisticsResponse {
-        tree_count: 0,
-        sensor_count: 0,
-        vehicle_count: 0,
-        cluster_count: 0,
-        watering_plan_count: 0,
-    }))
+    let stats = state.statistics_reader.statistics().await?;
+    Ok(Json(DataStatisticsResponse::from(&stats)))
 }

@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::time::Duration;
 
 use axum::{Router, http::HeaderValue};
 use tower_http::{
@@ -14,7 +15,7 @@ use utoipa_swagger_ui::SwaggerUi;
 use crate::{
     configuration::CorsSettings,
     http::{
-        auth::AuthLayer,
+        auth::{AuthLayer, validator::TokenValidator},
         tracing::{MakeRequestUuid, REQUEST_ID_HEADER, make_span, on_response},
     },
     service::{
@@ -25,7 +26,7 @@ use crate::{
         watering_plan_service::WateringPlanService,
     },
 };
-use domain::info::SystemInfoProvider;
+use domain::info::{HealthSnapshotReader, RuntimeStatsProvider, StatisticsReader, SystemInfoProvider};
 
 pub mod auth;
 pub mod extractors;
@@ -45,6 +46,11 @@ pub struct AppState {
     pub auth_service: Arc<AuthService>,
     pub user_service: Arc<UserService>,
     pub info_provider: Arc<dyn SystemInfoProvider>,
+    pub health_reader: Arc<dyn HealthSnapshotReader>,
+    pub runtime_stats_provider: Arc<dyn RuntimeStatsProvider>,
+    pub statistics_reader: Arc<dyn StatisticsReader>,
+    pub token_validator: Arc<TokenValidator>,
+    pub runtime_stats_push_interval: Duration,
 }
 
 #[derive(OpenApi)]

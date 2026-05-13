@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::time::Duration;
 
 use sqlx::{PgPool, postgres::PgPoolOptions};
 use tokio::net::TcpListener;
@@ -17,6 +18,8 @@ use crate::{
         pg_tree::PgTreeRepository,
         pg_vehicle::PgVehicleRepository,
         pg_watering_plan::PgWateringPlanRepository,
+        runtime_stats::DefaultRuntimeStatsProvider,
+        statistics_repo::PgStatisticsRepo,
         system_info::DefaultSystemInfoProvider,
     },
     service::{
@@ -34,6 +37,7 @@ use crate::{
         watering_plan_service::WateringPlanService,
     },
 };
+use domain::info::{HealthSnapshotReader, RuntimeStatsProvider, StatisticsReader};
 
 pub struct Application {
     port: u16,
@@ -131,7 +135,7 @@ impl Application {
         let watering_plan_writer: Arc<dyn domain::watering_plan::WateringPlanWriter> =
             watering_plan_repo;
         let evaluation_repo: Arc<dyn domain::evaluation::EvaluationRepository> =
-            Arc::new(PgEvaluationRepository::new(pool));
+            Arc::new(PgEvaluationRepository::new(pool.clone()));
 
         let AuthStack {
             auth_service,
@@ -202,6 +206,24 @@ impl Application {
         ));
         let evaluation_service = Arc::new(EvaluationService::new(evaluation_repo));
 
+        // Placeholder health reader — Phase 13 wires probes and a background task.
+        let health_reader: Arc<dyn HealthSnapshotReader> = {
+            struct Empty;
+            #[async_trait::async_trait]
+            impl HealthSnapshotReader for Empty {
+                async fn snapshot(&self) -> Vec<domain::info::ServiceStatus> {
+                    vec![]
+                }
+            }
+            Arc::new(Empty)
+        };
+        let runtime_stats_provider: Arc<dyn RuntimeStatsProvider> =
+            Arc::new(DefaultRuntimeStatsProvider::new(pool.clone()));
+        let statistics_reader: Arc<dyn StatisticsReader> =
+            Arc::new(PgStatisticsRepo::new(pool.clone()));
+        let token_validator = auth_layer.validator.clone();
+        let runtime_stats_push_interval = Duration::from_secs(2);
+
         let state = Arc::new(AppState {
             region_service,
             tree_service,
@@ -214,6 +236,11 @@ impl Application {
             auth_service,
             user_service,
             info_provider,
+            health_reader,
+            runtime_stats_provider,
+            statistics_reader,
+            token_validator,
+            runtime_stats_push_interval,
         });
 
         let listener = TcpListener::bind(address).await?;
