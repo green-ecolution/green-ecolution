@@ -1,10 +1,12 @@
 //! System-info and health DTOs returned by the `/info` endpoints.
 
 pub mod app;
+pub mod runtime;
 pub mod service;
 pub mod statistics;
 
 pub use app::{App, Git, Map, Server, VersionInfo};
+pub use runtime::{CpuStats, DbPoolStats, MemoryStats, ProcessStats, RuntimeStats, TokioStats};
 pub use service::{ServiceMessage, ServiceName, ServiceStatus};
 pub use statistics::DataStatistics;
 
