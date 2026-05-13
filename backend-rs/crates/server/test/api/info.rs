@@ -74,7 +74,7 @@ async fn get_info_returns_rust_version_not_go_version() {
         body.get("goVersion").is_none(),
         "goVersion must not be present"
     );
-    assert!(body["rustVersion"].as_str().unwrap().len() > 0);
+    assert!(!body["rustVersion"].as_str().unwrap().is_empty());
     assert!(body["buildTime"].is_string());
 }
 
