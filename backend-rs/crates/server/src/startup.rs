@@ -51,6 +51,14 @@ impl Application {
             .await
             .expect("failed to connect to database");
 
+        let update_checker = Arc::new(crate::infra::update_checker::UpdateChecker::new(
+            env!("CARGO_PKG_VERSION").to_string(),
+            config.info.update_check_repo.clone(),
+        ));
+        let info_provider: Arc<dyn domain::info::SystemInfoProvider> = Arc::new(
+            DefaultSystemInfoProvider::new(&config, update_checker),
+        );
+
         let address = format!("{}:{}", config.application.host, config.application.port);
         let app = Self::build_with_pool(
             pool,
@@ -58,6 +66,7 @@ impl Application {
             config.application.base_url.clone(),
             config.cors.clone(),
             config.auth.clone(),
+            info_provider,
         )
         .await?;
 
@@ -76,8 +85,9 @@ impl Application {
         cors: CorsSettings,
         auth: AuthSettings,
         mqtt: MqttSettings,
+        info_provider: Arc<dyn domain::info::SystemInfoProvider>,
     ) -> Result<Self, std::io::Error> {
-        let app = Self::build_with_pool(pool, address, base_url, cors, auth).await?;
+        let app = Self::build_with_pool(pool, address, base_url, cors, auth, info_provider).await?;
         match infra::mqtt::spawn(mqtt, app.state.sensor_service.clone()) {
             Ok(_state) => {}
             Err(e) => tracing::error!(error = %e, "mqtt subscriber not started"),
@@ -91,6 +101,7 @@ impl Application {
         base_url: String,
         cors: CorsSettings,
         auth: AuthSettings,
+        info_provider: Arc<dyn domain::info::SystemInfoProvider>,
     ) -> Result<Self, std::io::Error> {
         // Repositories
         let region_repo = Arc::new(PgRegionRepository::new(pool.clone()));
@@ -190,8 +201,6 @@ impl Application {
             event_bus.clone(),
         ));
         let evaluation_service = Arc::new(EvaluationService::new(evaluation_repo));
-        let info_provider: Arc<dyn domain::info::SystemInfoProvider> =
-            Arc::new(DefaultSystemInfoProvider::new());
 
         let state = Arc::new(AppState {
             region_service,

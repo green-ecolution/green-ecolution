@@ -5,6 +5,7 @@ use secrecy::SecretString;
 use server::{
     configuration::{AuthSettings, CorsSettings},
     http::AppState,
+    infra::system_info::DefaultSystemInfoProvider,
     service::ServiceError,
     startup::Application,
 };
@@ -195,6 +196,8 @@ pub async fn spawn_app_with_auth(auth: AuthSettings) -> TestApp {
     let container = shared_container().await;
     let (_db_name, db_pool) = create_test_database(container.host_port).await;
 
+    let info_provider: Arc<dyn domain::info::SystemInfoProvider> =
+        Arc::new(DefaultSystemInfoProvider::new_for_test());
     let app = Application::build_with_pool(
         db_pool.clone(),
         "127.0.0.1:0",
@@ -203,6 +206,7 @@ pub async fn spawn_app_with_auth(auth: AuthSettings) -> TestApp {
             allowed_origins: vec!["*".to_string()],
         },
         auth,
+        info_provider,
     )
     .await
     .expect("failed to build application");
