@@ -11,6 +11,7 @@ pub mod sensor_create;
 pub mod sensor_models;
 pub mod sensor_mqtt;
 pub mod sensors;
+pub mod statistics;
 pub mod trees;
 pub mod update_checker;
 pub mod vehicle;

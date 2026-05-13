@@ -1,0 +1,44 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                (SELECT COUNT(*) FROM trees)                                AS \"tree_count!: i64\",\n                (SELECT COUNT(*) FROM sensors)                              AS \"sensor_count!: i64\",\n                (SELECT COUNT(*) FROM vehicles WHERE archived_at IS NULL)   AS \"vehicle_count!: i64\",\n                (SELECT COUNT(*) FROM tree_clusters WHERE archived = false) AS \"cluster_count!: i64\",\n                (SELECT COUNT(*) FROM watering_plans)                       AS \"watering_plan_count!: i64\"\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "tree_count!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "sensor_count!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "vehicle_count!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "cluster_count!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "watering_plan_count!: i64",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "7995e6bb979e2dafb2ccf4295d74a80b3ad338ee86a8017c610e960a77a5efcc"
+}
