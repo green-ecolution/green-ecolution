@@ -15,7 +15,7 @@ use super::SensorStatus;
 
 /// Resolves a batch of raw sensor-id strings (e.g. from `TreeView::sensor_id`)
 /// into a lookup map keyed by id. Strings that fail [`SensorId`] validation
-/// are skipped silently — the caller already produced them, so an invalid
+/// are skipped silently - the caller already produced them, so an invalid
 /// value indicates dirty data, not a 400-worthy request error.
 pub async fn resolve_sensors_by_str_ids<'a, I>(
     sensor_service: &SensorService,
@@ -83,7 +83,35 @@ impl From<&SensorModelSummary> for SensorModelSummaryResponse {
     }
 }
 
-/// LoRaWAN connection details exposed publicly (omits `app_key`).
+/// LoRaWAN credentials that must never cross the HTTP boundary:
+/// - `APPKEY`  - OTAA root key (full device impersonation)
+/// - `APPSKEY` - application session key (decrypts uplinks)
+/// - `NWKSKEY` - network session key (forges MAC frames)
+/// - `PWORD`   - device AT-interface password
+///
+/// Comparison is case-insensitive because vendor exports normalise casing
+/// inconsistently across firmware revisions.
+const SENSITIVE_LORAWAN_CONFIG_KEYS: &[&str] = &["APPKEY", "APPSKEY", "NWKSKEY", "PWORD"];
+
+fn redact_lorawan_config(config: &serde_json::Value) -> serde_json::Value {
+    let serde_json::Value::Object(map) = config else {
+        return config.clone();
+    };
+    serde_json::Value::Object(
+        map.iter()
+            .filter(|(k, _)| {
+                !SENSITIVE_LORAWAN_CONFIG_KEYS
+                    .iter()
+                    .any(|sensitive| sensitive.eq_ignore_ascii_case(k))
+            })
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect(),
+    )
+}
+
+/// LoRaWAN connection details exposed publicly. The `config` map is filtered
+/// via [`redact_lorawan_config`] to strip OTAA / session keys and the device
+/// password before serialization.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct LorawanInfoResponse {
     pub serial_number: String,
@@ -106,7 +134,7 @@ impl From<&LorawanInfo> for LorawanInfoResponse {
             app_eui: value.app_eui.clone(),
             at_pin: value.at_pin.clone(),
             ota_pin: value.ota_pin.clone(),
-            config: value.config.clone(),
+            config: value.config.as_ref().map(redact_lorawan_config),
         }
     }
 }
@@ -238,7 +266,7 @@ pub struct LorawanCredentialsRequest {
     pub config: Option<serde_json::Value>,
 }
 
-/// Request body for `POST /sensors` — registers a prepared sensor unit.
+/// Request body for `POST /sensors` - registers a prepared sensor unit.
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateSensorRequest {
     /// Sensor identifier (EUI), 1–64 characters after trimming.
@@ -260,7 +288,7 @@ pub struct CreateSensorRequest {
     pub lorawan: Option<LorawanCredentialsRequest>,
 }
 
-/// Request body for `POST /sensors/{sensor_id}/activate` — binds a prepared
+/// Request body for `POST /sensors/{sensor_id}/activate` - binds a prepared
 /// sensor to a tree.
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct ActivateSensorRequest {
@@ -332,5 +360,71 @@ impl From<&SensorModel> for SensorModelResponse {
                 })
                 .collect(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn redact_lorawan_config_strips_known_secret_keys() {
+        let input = json!({
+            "APPKEY": "leak",
+            "APPSKEY": "leak",
+            "NWKSKEY": "leak",
+            "PWORD": "leak",
+            "DEUI": "public",
+            "TDC": "60000",
+        });
+        let out = redact_lorawan_config(&input);
+        let obj = out.as_object().expect("object");
+        assert!(!obj.contains_key("APPKEY"));
+        assert!(!obj.contains_key("APPSKEY"));
+        assert!(!obj.contains_key("NWKSKEY"));
+        assert!(!obj.contains_key("PWORD"));
+        assert_eq!(obj.get("DEUI").and_then(|v| v.as_str()), Some("public"));
+        assert_eq!(obj.get("TDC").and_then(|v| v.as_str()), Some("60000"));
+    }
+
+    #[test]
+    fn redact_lorawan_config_is_case_insensitive() {
+        let input = json!({
+            "appkey": "leak",
+            "AppSKey": "leak",
+            "PwOrD": "leak",
+        });
+        let out = redact_lorawan_config(&input);
+        assert!(out.as_object().expect("object").is_empty());
+    }
+
+    #[test]
+    fn redact_lorawan_config_passes_through_non_object_values() {
+        let input = json!("not an object");
+        assert_eq!(redact_lorawan_config(&input), input);
+    }
+
+    #[test]
+    fn lorawan_info_response_redacts_secrets_via_from_impl() {
+        let info = LorawanInfo {
+            serial_number: "LA1".into(),
+            dev_eui: "AA".into(),
+            app_eui: "BB".into(),
+            at_pin: Some("CC".into()),
+            ota_pin: Some("DD".into()),
+            config: Some(json!({
+                "APPKEY": "leak",
+                "DEUI": "public",
+            })),
+        };
+        let dto = LorawanInfoResponse::from(&info);
+        let cfg = dto.config.expect("config present");
+        let obj = cfg.as_object().expect("object");
+        assert!(!obj.contains_key("APPKEY"));
+        assert!(obj.contains_key("DEUI"));
+        // Top-level identifiers pass through unchanged.
+        assert_eq!(dto.at_pin.as_deref(), Some("CC"));
+        assert_eq!(dto.ota_pin.as_deref(), Some("DD"));
     }
 }

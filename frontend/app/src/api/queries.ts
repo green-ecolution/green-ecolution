@@ -23,6 +23,7 @@ import {
   NearestTreeListResponse,
   regionApi,
   SensorDataResponse,
+  SensorModelResponse,
   SensorResponse,
   sensorApi,
   ServerInfoResponse,
@@ -98,6 +99,13 @@ export const sensorIdQuery = (id: string) =>
       sensorApi.getSensor({
         sensorId: id,
       }),
+  })
+
+export const sensorModelIdQuery = (id: number) =>
+  queryOptions<SensorModelResponse>({
+    queryKey: ['sensor-model', id],
+    queryFn: () => sensorApi.getSensorModel({ id }),
+    enabled: Number.isInteger(id) && id > 0,
   })
 
 export const treeQuery = (params?: ListTreesRequest) =>

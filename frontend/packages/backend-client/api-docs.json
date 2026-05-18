@@ -2395,7 +2395,7 @@
     "schemas": {
       "ActivateSensorRequest": {
         "type": "object",
-        "description": "Request body for `POST /sensors/{sensor_id}/activate` — binds a prepared\nsensor to a tree.",
+        "description": "Request body for `POST /sensors/{sensor_id}/activate` - binds a prepared\nsensor to a tree.",
         "required": [
           "tree_id"
         ],
@@ -2595,7 +2595,7 @@
       },
       "CreateSensorRequest": {
         "type": "object",
-        "description": "Request body for `POST /sensors` — registers a prepared sensor unit.",
+        "description": "Request body for `POST /sensors` - registers a prepared sensor unit.",
         "required": [
           "id",
           "sensor_type",
@@ -3764,7 +3764,7 @@
       },
       "LorawanInfoResponse": {
         "type": "object",
-        "description": "LoRaWAN connection details exposed publicly (omits `app_key`).",
+        "description": "LoRaWAN connection details exposed publicly. The `config` map is filtered\nvia [`redact_lorawan_config`] to strip OTAA / session keys and the device\npassword before serialization.",
         "required": [
           "serial_number",
           "dev_eui",

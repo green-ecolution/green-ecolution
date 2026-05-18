@@ -29,7 +29,7 @@ import {
 } from './LorawanCredentialsRequest';
 
 /**
- * Request body for `POST /sensors` — registers a prepared sensor unit.
+ * Request body for `POST /sensors` - registers a prepared sensor unit.
  * @export
  * @interface CreateSensorRequest
  */

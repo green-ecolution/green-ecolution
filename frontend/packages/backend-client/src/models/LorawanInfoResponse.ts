@@ -14,7 +14,9 @@
 
 import { mapValues } from '../runtime';
 /**
- * LoRaWAN connection details exposed publicly (omits `app_key`).
+ * LoRaWAN connection details exposed publicly. The `config` map is filtered
+ * via [`redact_lorawan_config`] to strip OTAA / session keys and the device
+ * password before serialization.
  * @export
  * @interface LorawanInfoResponse
  */

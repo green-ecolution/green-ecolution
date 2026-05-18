@@ -16,13 +16,10 @@ export const Route = createFileRoute('/_protected/sensors/$sensorId/')({
 function SingleSensor() {
   const sensorId = Route.useParams().sensorId
   const { data: sensor } = useSuspenseQuery(sensorIdQuery(sensorId))
-  // TODO: treeSensorIdQuery was removed — the Rust backend needs a dedicated
-  // "get tree by sensor ID" endpoint before this can be restored.
-  const linkedTree = undefined
 
   return (
     <div className="container mt-6">
-      <SensorDashboard sensor={sensor} sensorTree={linkedTree} />
+      <SensorDashboard sensor={sensor} />
     </div>
   )
 }
