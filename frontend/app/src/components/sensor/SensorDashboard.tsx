@@ -1,154 +1,30 @@
 import BackLink from '@/components/general/links/BackLink'
-import GeneralLink from '../general/links/GeneralLink'
-import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
-import { format, formatDistanceToNow } from 'date-fns'
-import { de } from 'date-fns/locale'
-import { DetailedList, StatusCard } from '@green-ecolution/ui'
-import type { Sensor, Tree } from '@/api/backendApi'
+import SensorAbilitiesSection from './detail/SensorAbilitiesSection'
+import SensorHero from './detail/SensorHero'
+import SensorIdentitySection from './detail/SensorIdentitySection'
+import SensorLinkedTreeSection from './detail/SensorLinkedTreeSection'
+import SensorLocationSection from './detail/SensorLocationSection'
+import SensorLorawanConfigSection from './detail/SensorLorawanConfigSection'
+import SensorStatusGrid from './detail/SensorStatusGrid'
+import type { Sensor } from '@/api/backendApi'
 
 interface SensorDashboardProps {
   sensor: Sensor
-  sensorTree?: Tree
 }
 
-const SensorDashboard = ({ sensor, sensorTree: linkedTree }: SensorDashboardProps) => {
-  const createdDate = sensor?.createdAt
-    ? format(new Date(sensor?.createdAt), 'dd.MM.yyyy')
-    : 'Keine Angabe'
-  const updatedDate = sensor?.latestData?.createdAt
-    ? formatDistanceToNow(sensor?.latestData?.updatedAt, { locale: de })
-    : 'Keine Angabe'
-
-  const generalSensorData = [
-    {
-      label: 'Anzahl verbaute Sensoren',
-      value: '3 Sensoren',
-    },
-    {
-      label: 'Erstellt am',
-      value: createdDate ?? 'Keine Angabe',
-    },
-    {
-      label: 'Letztes Update',
-      value: updatedDate ?? 'Keine Angabe',
-    },
-    {
-      label: 'Latitude',
-      value: `${sensor?.coordinate?.latitude ?? 'Keine Angabe'}`,
-    },
-    {
-      label: 'Longitude',
-      value: `${sensor?.coordinate?.longitude ?? 'Keine Angabe'}`,
-    },
-  ]
-
+const SensorDashboard = ({ sensor }: SensorDashboardProps) => {
   return (
     <>
-      <BackLink link={{ to: '/sensors' }} label="Zu allen Sensoren" />
-      <article className="flex flex-col gap-y-6 2xl:flex-row 2xl:items-center 2xl:gap-x-10">
-        <div className="2xl:w-4/5">
-          <h1 className="font-lato font-bold text-3xl mb-4 flex flex-wrap items-center gap-4 lg:text-4xl xl:text-5xl">
-            Sensor ID: {sensor.id}
-          </h1>
-          <p>
-            Jeder Sensor sollte mit einer Vegetationsform verknüpft sein. Auf dieser
-            Untersichtsseite wird veranschaulicht, ob der aktuelle Sensor Daten liefern kann, wann
-            der Sensor das letzte Mal Daten geliefert hat und wie der aktuelle Akkustand des Sensors
-            ist. Falls der Sensor zu keinem Baum oder Beet hinzugefügt worden ist, kann hier die
-            Verknüpfung manuell hergestellt werden.
-          </p>
-        </div>
-      </article>
-
-      <section className="mt-10">
-        <ul className="flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
-          <li>
-            {(() => {
-              const statusDetails = getSensorStatusDetails(sensor.status)
-              return (
-                <StatusCard
-                  status={statusDetails.color}
-                  indicator="dot"
-                  label="Status des Sensors"
-                  value={statusDetails.label}
-                  description={statusDetails.description}
-                />
-              )
-            })()}
-          </li>
-          <li>
-            <StatusCard
-              label="Akkustand"
-              value={
-                (sensor?.latestData?.data as Record<string, number> | undefined)?.battery
-                  ? `${(sensor.latestData!.data as Record<string, number>).battery.toFixed(2)} V`
-                  : 'Keine Angabe'
-              }
-              isLarge
-              description="Ab einem Wert von 2.8 V schaltet sich die Batterie ab."
-            />
-          </li>
-          <li>
-            <StatusCard
-              label="Letztes Update"
-              value={updatedDate}
-              description="Letzte Datenübermittlung"
-            />
-          </li>
-        </ul>
-      </section>
-
-      <section className="mt-16 md:grid md:gap-x-11 md:grid-cols-2">
-        <div className="mb-6 md:mb-0">
-          <DetailedList headline="Daten zum Sensor" details={generalSensorData} columns={1} />
-        </div>
-
-        <div
-          className={`h-max flex flex-col gap-y-3 rounded-xl p-6 ${linkedTree ? 'bg-dark-50' : 'bg-red-50'}`}
-        >
-          <h2 className="text-sm text-dark-700 font-medium">Verknüpfte Vegetation</h2>
-          {linkedTree ? (
-            <div>
-              <p className="font-bold text-3xl mb-2">Baum: {linkedTree.number}</p>
-              <p className="text-sm mb-4">
-                Longitude: {linkedTree.longitude} <br />
-                Latitude: {linkedTree.latitude}
-              </p>
-              <GeneralLink
-                label="Zur verknüpften Vegetation"
-                link={{
-                  to: '/trees/$treeId',
-                  params: { treeId: String(linkedTree.id) },
-                }}
-              />
-            </div>
-          ) : (
-            <div>
-              <p className="font-bold text-3xl text-red mb-2">Keine Verknüpfung</p>
-              <p className="text-sm mb-4">
-                {sensor.coordinate
-                  ? 'Es war nicht möglich anhand der GPS-Daten den Sensor einem Baum oder einem Beet zuzuweisen oder er wurde manuell unverknüpft.'
-                  : 'Dieser Sensor wurde noch nicht aktiviert und hat keinen Standort. Verknüpfen Sie ihn mit einem Baum, um ihn zu aktivieren.'}
-              </p>
-              {sensor.coordinate && (
-                <GeneralLink
-                  theme="grey"
-                  label="Vegetation verknüpfen"
-                  link={{
-                    to: '/map/sensor/select/tree',
-                    search: {
-                      lat: sensor.coordinate.latitude,
-                      lng: sensor.coordinate.longitude,
-                      zoom: 18,
-                      sensorId: sensor.id,
-                    },
-                  }}
-                />
-              )}
-            </div>
-          )}
-        </div>
-      </section>
+      <BackLink link={{ to: '/sensors', search: { page: 1 } }} label="Zu allen Sensoren" />
+      <div className="flex flex-col gap-10 pb-16">
+        <SensorHero sensor={sensor} />
+        <SensorStatusGrid sensor={sensor} />
+        <SensorIdentitySection sensor={sensor} />
+        <SensorAbilitiesSection sensor={sensor} />
+        <SensorLocationSection sensor={sensor} />
+        <SensorLinkedTreeSection sensor={sensor} />
+        <SensorLorawanConfigSection sensor={sensor} />
+      </div>
     </>
   )
 }
