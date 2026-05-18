@@ -1,10 +1,6 @@
 import { StatusCard } from '@green-ecolution/ui'
 import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
-import {
-  formatBatteryVoltage,
-  formatLastSeen,
-  parseBatteryVoltage,
-} from './latestDataParsing'
+import { formatBatteryVoltage, formatLastSeen, parseBatteryVoltage } from './latestDataParsing'
 import type { Sensor } from '@/api/backendApi'
 
 interface SensorStatusGridProps {

@@ -72,9 +72,7 @@ const ConfigRow = ({ configKey, value }: ConfigRowProps) => {
       <TableCell className="font-mono text-xs font-semibold align-top">
         <span className="flex items-center gap-1.5">
           {configKey}
-          {sensitive && (
-            <ShieldAlert className="size-3 text-yellow" aria-label="Sensible Daten" />
-          )}
+          {sensitive && <ShieldAlert className="size-3 text-yellow" aria-label="Sensible Daten" />}
         </span>
       </TableCell>
       <TableCell className="font-mono text-xs break-all whitespace-pre-wrap text-foreground">
@@ -85,11 +83,7 @@ const ConfigRow = ({ configKey, value }: ConfigRowProps) => {
               sensitive && !revealed && 'tracking-[0.2em] text-dark-600 select-none',
             )}
           >
-            {isEmpty ? (
-              <span className="text-muted-foreground italic">leer</span>
-            ) : (
-              displayed
-            )}
+            {isEmpty ? <span className="text-muted-foreground italic">leer</span> : displayed}
           </span>
           {sensitive && !isEmpty && (
             <button
@@ -118,10 +112,7 @@ const SensorLorawanConfigSection = ({ sensor }: SensorLorawanConfigSectionProps)
     return Object.entries(config).sort(([a], [b]) => a.localeCompare(b))
   }, [config])
 
-  const hasSecrets = useMemo(
-    () => entries.some(([k]) => isSensitiveConfigKey(k)),
-    [entries],
-  )
+  const hasSecrets = useMemo(() => entries.some(([k]) => isSensitiveConfigKey(k)), [entries])
 
   const filtered = useMemo(() => {
     if (!query.trim()) return entries
@@ -224,9 +215,7 @@ const SensorLorawanConfigSection = ({ sensor }: SensorLorawanConfigSectionProps)
                   <TableHead className="w-44 font-mono text-xs uppercase tracking-wider">
                     Schlüssel
                   </TableHead>
-                  <TableHead className="font-mono text-xs uppercase tracking-wider">
-                    Wert
-                  </TableHead>
+                  <TableHead className="font-mono text-xs uppercase tracking-wider">Wert</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

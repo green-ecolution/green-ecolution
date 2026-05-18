@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request body for `POST /sensors/{sensor_id}/activate` — binds a prepared
+ * Request body for `POST /sensors/{sensor_id}/activate` - binds a prepared
  * sensor to a tree.
  * @export
  * @interface ActivateSensorRequest

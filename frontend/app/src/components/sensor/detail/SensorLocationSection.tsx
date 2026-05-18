@@ -39,17 +39,13 @@ const SensorLocationSection = ({ sensor }: SensorLocationSectionProps) => {
                 <dt className="text-xs uppercase tracking-widest text-muted-foreground">
                   Latitude
                 </dt>
-                <dd className="font-mono font-semibold text-base">
-                  {coord.latitude.toFixed(6)}°
-                </dd>
+                <dd className="font-mono font-semibold text-base">{coord.latitude.toFixed(6)}°</dd>
               </div>
               <div className="flex flex-col gap-1">
                 <dt className="text-xs uppercase tracking-widest text-muted-foreground">
                   Longitude
                 </dt>
-                <dd className="font-mono font-semibold text-base">
-                  {coord.longitude.toFixed(6)}°
-                </dd>
+                <dd className="font-mono font-semibold text-base">{coord.longitude.toFixed(6)}°</dd>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Die Position wird vom verknüpften Baum übernommen.
@@ -63,8 +59,8 @@ const SensorLocationSection = ({ sensor }: SensorLocationSectionProps) => {
               <AlertContent>
                 <AlertTitle>Sensor noch nicht im Feld</AlertTitle>
                 <AlertDescription>
-                  Dieser Sensor wurde noch nicht aktiviert und hat keinen Standort. Sobald er
-                  einem Baum oder Beet zugeordnet wird, erscheint hier eine Karte.
+                  Dieser Sensor wurde noch nicht aktiviert und hat keinen Standort. Sobald er einem
+                  Baum oder Beet zugeordnet wird, erscheint hier eine Karte.
                 </AlertDescription>
               </AlertContent>
             </div>

@@ -73,8 +73,8 @@ const SensorActionsMenu = ({ sensorId }: SensorActionsMenuProps) => {
           <AlertDialogTitle>Sensor wirklich löschen?</AlertDialogTitle>
           <AlertDialogDescription>
             Diese Aktion kann nicht rückgängig gemacht werden. Der Sensor{' '}
-            <code className="font-mono text-foreground">{sensorId}</code> wird inklusive
-            seiner LoRaWAN-Konfiguration und aller Messdaten dauerhaft entfernt.
+            <code className="font-mono text-foreground">{sensorId}</code> wird inklusive seiner
+            LoRaWAN-Konfiguration und aller Messdaten dauerhaft entfernt.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

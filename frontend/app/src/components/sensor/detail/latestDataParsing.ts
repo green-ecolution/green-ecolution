@@ -17,16 +17,12 @@ export const parseBatteryVoltage = (
   return typeof v === 'number' ? v : null
 }
 
-export const formatBatteryVoltage = (
-  latestData: SensorDataResponse | null | undefined,
-): string => {
+export const formatBatteryVoltage = (latestData: SensorDataResponse | null | undefined): string => {
   const v = parseBatteryVoltage(latestData)
   return v === null ? '-' : `${v.toFixed(2)} V`
 }
 
-export const formatLastSeen = (
-  latestData: SensorDataResponse | null | undefined,
-): string => {
+export const formatLastSeen = (latestData: SensorDataResponse | null | undefined): string => {
   const ts = latestData?.updatedAt ?? latestData?.createdAt
   if (!ts) return '-'
   try {

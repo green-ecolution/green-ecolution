@@ -97,9 +97,7 @@ const SensorLinkedTreeSection = ({ sensor }: SensorLinkedTreeSectionProps) => {
               <p className="font-lato font-bold text-xl mt-1 truncate">
                 {tree.species || 'Unbekannte Art'}
               </p>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                Gepflanzt {tree.plantingYear}
-              </p>
+              <p className="text-sm text-muted-foreground mt-0.5">Gepflanzt {tree.plantingYear}</p>
             </div>
             <ArrowUpRight className="size-5 text-muted-foreground group-hover:text-green-dark transition shrink-0" />
           </Link>
