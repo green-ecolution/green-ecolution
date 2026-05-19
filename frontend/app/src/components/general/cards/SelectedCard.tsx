@@ -3,9 +3,9 @@ import SelectedCardTree from './selected_card/SelectedCardTree'
 import SelectedCardCluster from './selected_card/SelectedCardTreeCluster'
 
 export interface SelectedCardProps {
-  id: number
+  id: string
   type: 'tree' | 'cluster'
-  onClick?: (id: number) => void
+  onClick?: (id: string) => void
 }
 
 const SelectedCard: React.FC<SelectedCardProps> = ({ onClick, id, type }) => {

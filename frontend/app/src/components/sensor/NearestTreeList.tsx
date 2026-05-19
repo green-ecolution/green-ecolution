@@ -17,8 +17,8 @@ function formatDistance(meters: number): string {
 
 interface NearestTreeListProps {
   trees: TreeWithDistance[]
-  selectedTreeId: number | null
-  onSelect: (treeId: number) => void
+  selectedTreeId: string | null
+  onSelect: (treeId: string) => void
 }
 
 const NearestTreeListItem = ({

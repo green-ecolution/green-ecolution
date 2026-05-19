@@ -19,8 +19,8 @@ import {
 } from '@green-ecolution/ui'
 import { MoveRight, X } from 'lucide-react'
 
-const defaultHighlighted: number[] = []
-const defaultDisabled: number[] = []
+const defaultHighlighted: string[] = []
+const defaultDisabled: string[] = []
 
 const tooltipOptions = {
   direction: 'top' as const,
@@ -30,8 +30,8 @@ const tooltipOptions = {
 
 export interface WithFilterableClustersProps {
   onClick?: (cluster: TreeClusterInList) => void
-  highlightedClusters?: number[]
-  disabledClusters?: number[]
+  highlightedClusters?: string[]
+  disabledClusters?: string[]
 }
 
 interface AppliedFilters {

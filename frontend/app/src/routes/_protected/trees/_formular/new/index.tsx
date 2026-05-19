@@ -51,8 +51,8 @@ const defaultForm = (lat: number, lng: number) => ({
   latitude: lat,
   longitude: lng,
   plantingYear: new Date().getFullYear(),
-  treeClusterId: -1,
-  sensorId: '-1',
+  treeClusterId: null,
+  sensorId: null,
 })
 
 function NewTree() {
@@ -74,7 +74,7 @@ function NewTree() {
     mutate({
       ...data,
       sensorId: data.sensorId && data.sensorId !== '-1' ? data.sensorId : undefined,
-      treeClusterId: data.treeClusterId && data.treeClusterId <= 0 ? undefined : data.treeClusterId,
+      treeClusterId: data.treeClusterId && data.treeClusterId !== '' ? data.treeClusterId : null,
     })
   }
 

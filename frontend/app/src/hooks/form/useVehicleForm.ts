@@ -29,7 +29,7 @@ export const useVehicleForm = (
         })
       } else if (mutationType === 'update' && opts.vehicleId) {
         return vehicleApi.updateVehicle({
-          vehicleId: Number(opts.vehicleId),
+          vehicleId: opts.vehicleId,
           vehicleUpdateRequest: vehicle as VehicleUpdate,
         })
       }

@@ -16,7 +16,7 @@ export interface EntityFormConfig<TForm extends FieldValues, TCreate, TUpdate, T
 
   invalidateQueries: (data: TEntity, queryClient: QueryClient) => void
 
-  successRoute: (id: number) => { to: string; params: Record<string, string> }
+  successRoute: (id: string) => { to: string; params: Record<string, string> }
   replaceOnSuccess?: boolean
   allowedPaths: string[]
 
@@ -37,7 +37,7 @@ export function useEntityForm<
   TForm extends FieldValues,
   TCreate,
   TUpdate,
-  TEntity extends { id: number },
+  TEntity extends { id: string },
 >(
   config: EntityFormConfig<TForm, TCreate, TUpdate, TEntity>,
   mutationType: MutationType,

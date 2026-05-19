@@ -7,7 +7,7 @@ import MarkerList from './MarkerList'
 import { getStatusColor } from '../utils'
 import { memo, useCallback, useDeferredValue, useMemo } from 'react'
 
-const defaultSelectedTrees: number[] = []
+const defaultSelectedTrees: string[] = []
 const emptyMarkers: TreeMarkerResponse[] = []
 
 const tooltipOptions = {
@@ -18,8 +18,8 @@ const tooltipOptions = {
 
 export interface WithAllTreesProps {
   onClick?: (tree: TreeMarkerResponse) => void
-  selectedTrees?: number[]
-  hasHighlightedTree?: number
+  selectedTrees?: string[]
+  hasHighlightedTree?: string
 }
 
 const WithAllTrees = memo(

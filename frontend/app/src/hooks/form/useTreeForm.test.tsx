@@ -50,8 +50,8 @@ const defaultInitForm = {
   number: 'T-001',
   species: 'Oak',
   plantingYear: 2023,
-  treeClusterId: -1,
-  sensorId: '-1',
+  treeClusterId: null,
+  sensorId: null,
   description: '',
 }
 
@@ -89,13 +89,13 @@ describe('useTreeForm', () => {
 
   it('calls createTree API when mutationType is create', async () => {
     const mockResponse = {
-      id: 1,
+      id: 'tree-uuid-1',
       number: 'T-001',
       species: 'Oak',
       latitude: 53.5511,
       longitude: 9.9937,
       plantingYear: 2023,
-    } as Tree
+    } as unknown as Tree
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const createTreeMock = vi.mocked(treeApi.createTree)
     createTreeMock.mockResolvedValueOnce(mockResponse)
@@ -129,13 +129,13 @@ describe('useTreeForm', () => {
 
   it('calls updateTree API when mutationType is update', async () => {
     const mockResponse = {
-      id: 5,
+      id: 'tree-uuid-5',
       number: 'T-005',
       species: 'Maple',
       latitude: 53.5511,
       longitude: 9.9937,
       plantingYear: 2022,
-    } as Tree
+    } as unknown as Tree
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const updateTreeMock = vi.mocked(treeApi.updateTree)
     updateTreeMock.mockResolvedValueOnce(mockResponse)
@@ -166,7 +166,7 @@ describe('useTreeForm', () => {
     await waitFor(() => {
       expect(updateTreeMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          treeId: 5,
+          treeId: '5',
           treeUpdateRequest: expect.objectContaining({ species: 'Maple' }) as unknown,
         }),
       )
@@ -186,13 +186,13 @@ describe('useTreeForm', () => {
   describe('draft management', () => {
     it('clears draft on successful mutation', async () => {
       const mockResponse = {
-        id: 1,
+        id: 'tree-uuid-1',
         number: 'T-001',
         species: 'Oak',
         latitude: 53.5511,
         longitude: 9.9937,
         plantingYear: 2023,
-      } as Tree
+      } as unknown as Tree
       // eslint-disable-next-line @typescript-eslint/unbound-method
       const createTreeMock = vi.mocked(treeApi.createTree)
       createTreeMock.mockResolvedValueOnce(mockResponse)

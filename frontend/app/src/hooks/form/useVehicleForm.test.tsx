@@ -79,10 +79,10 @@ describe('useVehicleForm', () => {
 
   it('calls createVehicle API when mutationType is create', async () => {
     const mockResponse = {
-      id: 1,
+      id: 'vehicle-uuid-1',
       numberPlate: 'HH-AB-1234',
       model: 'Mercedes Sprinter',
-    } as Vehicle
+    } as unknown as Vehicle
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const createMock = vi.mocked(vehicleApi.createVehicle)
     createMock.mockResolvedValueOnce(mockResponse)
@@ -121,10 +121,10 @@ describe('useVehicleForm', () => {
 
   it('calls updateVehicle API when mutationType is update', async () => {
     const mockResponse = {
-      id: 5,
+      id: 'vehicle-uuid-5',
       numberPlate: 'HH-XY-5678',
       model: 'VW Crafter',
-    } as Vehicle
+    } as unknown as Vehicle
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const updateMock = vi.mocked(vehicleApi.updateVehicle)
     updateMock.mockResolvedValueOnce(mockResponse)
@@ -159,7 +159,7 @@ describe('useVehicleForm', () => {
     await waitFor(() => {
       expect(updateMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          vehicleId: 5,
+          vehicleId: '5',
           vehicleUpdateRequest: expect.objectContaining({
             numberPlate: 'HH-XY-5678',
           }) as unknown,
@@ -170,9 +170,9 @@ describe('useVehicleForm', () => {
 
   it('passes numeric fields correctly to API', async () => {
     const mockResponse = {
-      id: 1,
+      id: 'vehicle-uuid-1',
       numberPlate: 'HH-AB-1234',
-    } as Vehicle
+    } as unknown as Vehicle
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const createMock = vi.mocked(vehicleApi.createVehicle)
     createMock.mockResolvedValueOnce(mockResponse)

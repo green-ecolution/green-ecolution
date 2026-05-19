@@ -51,21 +51,21 @@ futureDate.setDate(futureDate.getDate() + 7)
 const defaultInitForm = {
   date: futureDate,
   status: WateringPlanStatus.Planned,
-  transporterId: 1,
-  trailerId: 2,
+  transporterId: 'transporter-uuid-1',
+  trailerId: 'trailer-uuid-2',
   driverIds: ['550e8400-e29b-41d4-a716-446655440000'],
-  clusterIds: [1, 2],
+  clusterIds: ['cluster-uuid-1', 'cluster-uuid-2'],
   description: '',
 }
 
 function createMockWateringPlan(overrides: Partial<WateringPlan> = {}): WateringPlan {
   return {
-    id: 1,
+    id: 'plan-uuid-1',
     date: futureDate.toISOString(),
     status: WateringPlanStatus.Planned,
     description: '',
     transporter: {
-      id: 1,
+      id: 'transporter-uuid-1',
       numberPlate: 'HH-AB-1234',
       type: 'transporter',
       status: 'available',
@@ -76,7 +76,7 @@ function createMockWateringPlan(overrides: Partial<WateringPlan> = {}): Watering
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     ...overrides,
-  } as WateringPlan
+  } as unknown as WateringPlan
 }
 
 describe('useWateringPlanForm', () => {
@@ -95,12 +95,15 @@ describe('useWateringPlanForm', () => {
       { wrapper: createWrapper() },
     )
 
-    expect(result.current.form.getValues('transporterId')).toBe(1)
+    expect(result.current.form.getValues('transporterId')).toBe('transporter-uuid-1')
     expect(result.current.form.getValues('status')).toBe(WateringPlanStatus.Planned)
     expect(result.current.form.getValues('driverIds')).toEqual([
       '550e8400-e29b-41d4-a716-446655440000',
     ])
-    expect(result.current.form.getValues('clusterIds')).toEqual([1, 2])
+    expect(result.current.form.getValues('clusterIds')).toEqual([
+      'cluster-uuid-1',
+      'cluster-uuid-2',
+    ])
   })
 
   it('returns form methods and mutation state', () => {
@@ -131,9 +134,9 @@ describe('useWateringPlanForm', () => {
     act(() => {
       result.current.mutate({
         date: futureDate.toISOString(),
-        transporterId: 1,
+        transporterId: 'transporter-uuid-1',
         userIds: ['550e8400-e29b-41d4-a716-446655440000'],
-        treeClusterIds: [1, 2],
+        treeClusterIds: ['cluster-uuid-1', 'cluster-uuid-2'],
         description: '',
       })
     })
@@ -143,9 +146,9 @@ describe('useWateringPlanForm', () => {
       expect(createMock).toHaveBeenCalledWith({
         wateringPlanCreateRequest: {
           date: futureDate.toISOString(),
-          transporterId: 1,
+          transporterId: 'transporter-uuid-1',
           userIds: ['550e8400-e29b-41d4-a716-446655440000'],
-          treeClusterIds: [1, 2],
+          treeClusterIds: ['cluster-uuid-1', 'cluster-uuid-2'],
           description: '',
         },
       })
@@ -154,7 +157,7 @@ describe('useWateringPlanForm', () => {
 
   it('calls updateWateringPlan API when mutationType is update', async () => {
     const mockResponse = createMockWateringPlan({
-      id: 5,
+      id: 'plan-uuid-5',
       status: WateringPlanStatus.Active,
     })
     // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -175,9 +178,9 @@ describe('useWateringPlanForm', () => {
       result.current.mutate({
         date: futureDate.toISOString(),
         status: WateringPlanStatus.Active,
-        transporterId: 1,
+        transporterId: 'transporter-uuid-1',
         userIds: ['550e8400-e29b-41d4-a716-446655440000'],
-        treeClusterIds: [1, 2],
+        treeClusterIds: ['cluster-uuid-1', 'cluster-uuid-2'],
         description: '',
         cancellationNote: '',
       })
@@ -186,11 +189,11 @@ describe('useWateringPlanForm', () => {
     await waitFor(() => {
       expect(updateMock).toHaveBeenCalledTimes(1)
       expect(updateMock).toHaveBeenCalledWith({
-        wateringPlanId: 5,
+        wateringPlanId: '5',
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         wateringPlanUpdateRequest: expect.objectContaining({
           status: WateringPlanStatus.Active,
-          transporterId: 1,
+          transporterId: 'transporter-uuid-1',
         }),
       })
     })
@@ -217,9 +220,9 @@ describe('useWateringPlanForm', () => {
       act(() => {
         result.current.mutate({
           date: futureDate.toISOString(),
-          transporterId: 1,
+          transporterId: 'transporter-uuid-1',
           userIds: ['550e8400-e29b-41d4-a716-446655440000'],
-          treeClusterIds: [1, 2],
+          treeClusterIds: ['cluster-uuid-1', 'cluster-uuid-2'],
           description: '',
         })
       })

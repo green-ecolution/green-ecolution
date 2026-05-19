@@ -19,7 +19,7 @@ const wateringPlanConfig: EntityFormConfig<
   createFn: (body) => wateringPlanApi.createWateringPlan({ wateringPlanCreateRequest: body }),
   updateFn: (id, body) =>
     wateringPlanApi.updateWateringPlan({
-      wateringPlanId: Number(id),
+      wateringPlanId: id,
       wateringPlanUpdateRequest: body,
     }),
 

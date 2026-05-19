@@ -12,7 +12,7 @@ const treeConfig: EntityFormConfig<TreeForm, TreeCreate, TreeUpdate, Tree> = {
   resolver: treeDraftResolver<TreeForm>(),
 
   createFn: (body) => treeApi.createTree({ treeCreateRequest: body }),
-  updateFn: (id, body) => treeApi.updateTree({ treeId: Number(id), treeUpdateRequest: body }),
+  updateFn: (id, body) => treeApi.updateTree({ treeId: id, treeUpdateRequest: body }),
 
   invalidateQueries: (data, queryClient: QueryClient) => {
     queryClient

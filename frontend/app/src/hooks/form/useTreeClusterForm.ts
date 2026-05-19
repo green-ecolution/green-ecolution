@@ -18,7 +18,7 @@ const treeClusterConfig: EntityFormConfig<
 
   createFn: (body) => clusterApi.createCluster({ treeClusterCreateRequest: body }),
   updateFn: (id, body) =>
-    clusterApi.updateCluster({ clusterId: Number(id), treeClusterUpdateRequest: body }),
+    clusterApi.updateCluster({ clusterId: id, treeClusterUpdateRequest: body }),
 
   invalidateQueries: (data, queryClient: QueryClient) => {
     queryClient

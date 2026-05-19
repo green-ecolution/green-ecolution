@@ -55,7 +55,7 @@ const makeUser = (id: string, licenses: DrivingLicense[]): User => ({
   status: UserStatus.Available,
 })
 
-const makeVehicle = (id: number, license: DrivingLicense, type: VehicleType): Vehicle => ({
+const makeVehicle = (id: string, license: DrivingLicense, type: VehicleType): Vehicle => ({
   id,
   numberPlate: `HH-${id}`,
   drivingLicense: license,
@@ -74,13 +74,13 @@ const makeVehicle = (id: number, license: DrivingLicense, type: VehicleType): Ve
 
 describe('validateDriverLicenses', () => {
   const transporters = [
-    makeVehicle(1, DrivingLicense.B, VehicleType.Transporter),
-    makeVehicle(2, DrivingLicense.C, VehicleType.Transporter),
+    makeVehicle('v1', DrivingLicense.B, VehicleType.Transporter),
+    makeVehicle('v2', DrivingLicense.C, VehicleType.Transporter),
   ]
-  const trailers = [makeVehicle(10, DrivingLicense.Be, VehicleType.Trailer)]
+  const trailers = [makeVehicle('v10', DrivingLicense.Be, VehicleType.Trailer)]
 
   it('returns valid when no drivers selected', () => {
-    const result = validateDriverLicenses([], [], transporters, trailers, 1)
+    const result = validateDriverLicenses([], [], transporters, trailers, 'v1')
     expect(result.valid).toBe(true)
   })
 
@@ -92,38 +92,38 @@ describe('validateDriverLicenses', () => {
 
   it('returns valid when driver has matching license', () => {
     const users = [makeUser('u1', [DrivingLicense.C])]
-    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 2)
+    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 'v2')
     expect(result.valid).toBe(true)
   })
 
   it('returns invalid when driver lacks required license', () => {
     const users = [makeUser('u1', [DrivingLicense.B])]
-    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 2)
+    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 'v2')
     expect(result.valid).toBe(false)
     expect(result.message).toBeDefined()
   })
 
   it('uses hierarchy: C driver satisfies B vehicle', () => {
     const users = [makeUser('u1', [DrivingLicense.C])]
-    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 1)
+    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 'v1')
     expect(result.valid).toBe(true)
   })
 
   it('returns valid when at least one driver qualifies', () => {
     const users = [makeUser('u1', [DrivingLicense.B]), makeUser('u2', [DrivingLicense.C])]
-    const result = validateDriverLicenses(['u1', 'u2'], users, transporters, trailers, 2)
+    const result = validateDriverLicenses(['u1', 'u2'], users, transporters, trailers, 'v2')
     expect(result.valid).toBe(true)
   })
 
   it('validates transporter + trailer combination', () => {
     const users = [makeUser('u1', [DrivingLicense.Ce])]
-    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 2, 10)
+    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 'v2', 'v10')
     expect(result.valid).toBe(true)
   })
 
   it('fails transporter + trailer when no driver qualifies for both', () => {
     const users = [makeUser('u1', [DrivingLicense.C])]
-    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 2, 10)
+    const result = validateDriverLicenses(['u1'], users, transporters, trailers, 'v2', 'v10')
     expect(result.valid).toBe(false)
   })
 })

@@ -27,7 +27,7 @@ interface SensorGeolocationSummaryProps {
   errorMessage: string | null
   onScanAgain: () => void
   onRelocate: () => void
-  onConfirmTree?: (treeId: number) => void
+  onConfirmTree?: (treeId: string) => void
 }
 
 const MapPlaceholder = ({ status }: { status: GeolocationStatus }) => {
@@ -65,7 +65,7 @@ const SensorGeolocationSummary = ({
   const noticeStatus: 'denied' | 'unsupported' | 'error' | null =
     status === 'denied' || status === 'unsupported' || status === 'error' ? status : null
 
-  const [selectedTreeId, setSelectedTreeId] = useState<number | null>(null)
+  const [selectedTreeId, setSelectedTreeId] = useState<string | null>(null)
   const [confirmed, setConfirmed] = useState(false)
 
   const {

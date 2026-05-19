@@ -47,8 +47,8 @@ futureDate.setDate(futureDate.getDate() + 7)
 const defaultFormValues: WateringPlanForm = {
   date: futureDate,
   status: WateringPlanStatus.Planned,
-  transporterId: -1,
-  trailerId: -1,
+  transporterId: '',
+  trailerId: undefined,
   driverIds: [],
   clusterIds: [],
   description: '',
@@ -56,30 +56,30 @@ const defaultFormValues: WateringPlanForm = {
 
 const mockTransporters = [
   {
-    id: 1,
+    id: 'vehicle-uuid-1',
     numberPlate: 'HH-AB-1234',
     drivingLicense: DrivingLicense.B,
     type: VehicleType.Transporter,
     status: VehicleStatus.Available,
   },
   {
-    id: 2,
+    id: 'vehicle-uuid-2',
     numberPlate: 'HH-XY-5678',
     drivingLicense: DrivingLicense.C,
     type: VehicleType.Transporter,
     status: VehicleStatus.Available,
   },
-] as Vehicle[]
+] as unknown as Vehicle[]
 
 const mockTrailers = [
   {
-    id: 10,
+    id: 'vehicle-uuid-10',
     numberPlate: 'HH-TR-0001',
     drivingLicense: DrivingLicense.Be,
     type: VehicleType.Trailer,
     status: VehicleStatus.Available,
   },
-] as Vehicle[]
+] as unknown as Vehicle[]
 
 const mockUsers = [
   {

@@ -4,16 +4,16 @@ import WithAllTrees from './WithAllTrees'
 import WithAllClusters from './WithAllClusters'
 import { useDeferredValue } from 'react'
 
-const defaultSelectedTrees: number[] = []
+const defaultSelectedTrees: string[] = []
 
 interface WithTreesAndClustersProps {
   onClickTree?: (tree: TreeMarkerResponse | Tree) => void
   onClickCluster?: (cluster: ClusterMarkerResponse | TreeCluster) => void
-  selectedTrees?: number[]
+  selectedTrees?: string[]
   zoomThreshold?: number
   activeFilter?: boolean
-  hasHighlightedTree?: number
-  hasHighlightedCluster?: number
+  hasHighlightedTree?: string
+  hasHighlightedCluster?: string
 }
 
 export const WithTreesAndClusters = ({

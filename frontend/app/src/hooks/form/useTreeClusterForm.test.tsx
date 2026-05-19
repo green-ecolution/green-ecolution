@@ -50,12 +50,12 @@ const defaultInitForm = {
   address: 'Test Address 123',
   description: '',
   soilCondition: SoilCondition.Sandig,
-  treeIds: [] as number[],
+  treeIds: [] as string[],
 }
 
 function createMockTreeCluster(overrides: Partial<TreeCluster> = {}): TreeCluster {
   return {
-    id: 1,
+    id: 'cluster-uuid-1',
     name: 'Test Cluster',
     address: 'Test Address 123',
     description: '',
@@ -145,7 +145,7 @@ describe('useTreeClusterForm', () => {
 
   it('calls updateTreeCluster API when mutationType is update', async () => {
     const mockResponse = createMockTreeCluster({
-      id: 5,
+      id: 'cluster-uuid-5',
       name: 'Updated Cluster',
       address: 'Updated Address',
       soilCondition: SoilCondition.Lehmig,
@@ -179,7 +179,7 @@ describe('useTreeClusterForm', () => {
     await waitFor(() => {
       expect(updateMock).toHaveBeenCalledTimes(1)
       expect(updateMock).toHaveBeenCalledWith({
-        clusterId: 5,
+        clusterId: '5',
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         treeClusterUpdateRequest: expect.objectContaining({
           name: 'Updated Cluster',

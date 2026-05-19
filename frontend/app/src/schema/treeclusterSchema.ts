@@ -5,5 +5,5 @@ export interface TreeclusterForm {
   address: string
   description: string
   soilCondition: SoilCondition
-  treeIds: number[]
+  treeIds: string[]
 }

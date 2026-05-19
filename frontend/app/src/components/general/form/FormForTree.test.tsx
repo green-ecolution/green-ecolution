@@ -41,15 +41,15 @@ const defaultFormValues: TreeForm = {
   number: '',
   species: '',
   plantingYear: 2024,
-  treeClusterId: -1,
-  sensorId: '-1',
+  treeClusterId: null,
+  sensorId: null,
   description: '',
 }
 
 const mockTreeClusters = [
-  { id: 1, name: 'Cluster A' },
-  { id: 2, name: 'Cluster B' },
-] as TreeClusterInList[]
+  { id: 'cluster-uuid-1', name: 'Cluster A' },
+  { id: 'cluster-uuid-2', name: 'Cluster B' },
+] as unknown as TreeClusterInList[]
 
 const mockSensors = [
   { id: 'sensor-1', status: 'online' },

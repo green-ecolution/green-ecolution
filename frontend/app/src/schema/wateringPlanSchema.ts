@@ -4,10 +4,10 @@ import { z } from 'zod'
 export interface WateringPlanForm {
   date: Date
   status: WateringPlanStatus
-  transporterId: number
-  trailerId?: number
+  transporterId: string
+  trailerId?: string
   driverIds: string[]
-  clusterIds: number[]
+  clusterIds: string[]
   description: string
 }
 
@@ -18,8 +18,8 @@ export const wateringPlanFinishedSchema = z.object({
   evaluation: z.array(
     z.object({
       consumedWater: z.coerce.number().positive(),
-      treeClusterId: z.number(),
-      wateringPlanId: z.number(),
+      treeClusterId: z.string().uuid(),
+      wateringPlanId: z.string().uuid(),
     }),
   ),
 })

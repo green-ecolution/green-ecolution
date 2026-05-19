@@ -12,7 +12,7 @@ const mapSearchParamsSchema = z.object({
   selected: z.string().optional(),
   lat: z.number().default(useStore.getState().mapCenter[0]).catch(useStore.getState().mapCenter[0]),
   lng: z.number().default(useStore.getState().mapCenter[1]).catch(useStore.getState().mapCenter[1]),
-  clusterId: z.number().optional(),
+  clusterId: z.string().optional(),
   sensorId: z.string().optional(),
   zoom: z
     .number()

@@ -24,7 +24,7 @@ export const Route = createFileRoute('/_protected/map/sensor/select/tree/')({
 
 function LinkTreeToSensor() {
   const queryClient = useQueryClient()
-  const [treeId, setTreeId] = useState<number | undefined>()
+  const [treeId, setTreeId] = useState<string | undefined>()
   const [showDefault, setShowDefault] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const navigate = useNavigate({ from: Route.fullPath })
@@ -35,7 +35,7 @@ function LinkTreeToSensor() {
   const { mutate } = useMutation({
     mutationFn: (tree: TreeUpdateRequest) =>
       treeApi.updateTree({
-        treeId: Number(treeId),
+        treeId: treeId!,
         treeUpdateRequest: tree,
       }),
     onSuccess: () => handleOnUpdateSuccess(),

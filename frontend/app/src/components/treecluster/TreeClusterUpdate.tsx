@@ -63,7 +63,7 @@ const TreeClusterUpdate = ({ clusterId, formState }: TreeClusterUpdateProps) => 
 
   const handleDeleteTreeCluster = () => {
     return clusterApi.deleteCluster({
-      clusterId: Number(clusterId),
+      clusterId,
     })
   }
 
@@ -75,7 +75,7 @@ const TreeClusterUpdate = ({ clusterId, formState }: TreeClusterUpdateProps) => 
         lat: mapPosition.lat,
         lng: mapPosition.lng,
         zoom: mapPosition.zoom,
-        clusterId: Number(clusterId),
+        clusterId,
         treeIds: form.getValues('treeIds'),
         formType: 'update',
       },

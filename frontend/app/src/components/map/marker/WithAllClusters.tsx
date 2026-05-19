@@ -6,8 +6,8 @@ import { ClusterIcon } from '../markerIcons'
 import { getStatusColor } from '../utils'
 import { memo, useCallback, useDeferredValue, useMemo } from 'react'
 
-const defaultHighlighted: number[] = []
-const defaultDisabled: number[] = []
+const defaultHighlighted: string[] = []
+const defaultDisabled: string[] = []
 
 const tooltipOptions = {
   direction: 'top' as const,
@@ -17,8 +17,8 @@ const tooltipOptions = {
 
 export interface WithAllClustersProps {
   onClick?: (cluster: ClusterMarkerResponse) => void
-  highlightedClusters?: number[]
-  disabledClusters?: number[]
+  highlightedClusters?: string[]
+  disabledClusters?: string[]
 }
 
 const WithAllClusters = memo(

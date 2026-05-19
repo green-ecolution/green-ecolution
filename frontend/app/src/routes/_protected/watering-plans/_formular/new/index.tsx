@@ -28,7 +28,7 @@ export const Route = createFileRoute('/_protected/watering-plans/_formular/new/'
 const defaultForm: DefaultValues<WateringPlanForm> = {
   date: new Date(),
   description: '',
-  transporterId: -1,
+  transporterId: '',
   trailerId: undefined,
   clusterIds: [],
   status: WateringPlanStatus.Planned,
@@ -60,7 +60,7 @@ function NewWateringPlan() {
     mutate({
       ...data,
       date: data.date.toISOString(),
-      trailerId: data.trailerId && data.trailerId !== -1 ? data.trailerId : undefined,
+      trailerId: data.trailerId && data.trailerId !== '-1' ? data.trailerId : undefined,
       userIds: data.driverIds,
       treeClusterIds: data.clusterIds,
     })
