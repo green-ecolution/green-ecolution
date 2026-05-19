@@ -146,8 +146,8 @@
             "description": "Cluster ID",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -184,8 +184,8 @@
             "description": "Cluster ID",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -232,8 +232,8 @@
             "description": "Cluster ID",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -682,8 +682,8 @@
             "description": "Region ID",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -845,8 +845,8 @@
             "description": "Sensor model ID",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -1349,8 +1349,8 @@
             "description": "Tree ID",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -1387,8 +1387,8 @@
             "description": "Tree ID",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -1435,8 +1435,8 @@
             "description": "Tree ID",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -1943,8 +1943,8 @@
             "description": "Vehicle ID",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -2015,8 +2015,8 @@
             "description": "Vehicle ID",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -2053,8 +2053,8 @@
             "description": "Vehicle ID",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -2101,8 +2101,8 @@
             "description": "Vehicle ID",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -2271,8 +2271,8 @@
             "description": "Watering plan ID",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -2309,8 +2309,8 @@
             "description": "Watering plan ID",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -2357,8 +2357,8 @@
             "description": "Watering plan ID",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -2401,9 +2401,9 @@
         ],
         "properties": {
           "tree_id": {
-            "type": "integer",
-            "format": "int32",
-            "example": 42
+            "type": "string",
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           }
         }
       },
@@ -2560,9 +2560,9 @@
         ],
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32",
-            "example": 7
+            "type": "string",
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "latitude": {
             "type": "number",
@@ -2625,10 +2625,10 @@
             ]
           },
           "model_id": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "uuid",
             "description": "`SensorModel` id; must reference an existing model.",
-            "example": 1
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "provider": {
             "type": [
@@ -2785,18 +2785,16 @@
             "minimum": 0
           },
           "tree_cluster_id": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "uuid",
             "description": "Identifier of the tree cluster that was evaluated.",
-            "example": 3,
-            "minimum": 1
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "watering_plan_id": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "uuid",
             "description": "Identifier of the watering plan this evaluation belongs to.",
-            "example": 1,
-            "minimum": 1
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           }
         }
       },
@@ -2817,18 +2815,16 @@
             "minimum": 0
           },
           "tree_cluster_id": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "uuid",
             "description": "Identifier of the tree cluster that was evaluated.",
-            "example": 3,
-            "minimum": 1
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "watering_plan_id": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "uuid",
             "description": "Identifier of the watering plan this evaluation belongs to.",
-            "example": 1,
-            "minimum": 1
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           }
         }
       },
@@ -2876,10 +2872,10 @@
               ],
               "properties": {
                 "id": {
-                  "type": "integer",
-                  "format": "int32",
+                  "type": "string",
+                  "format": "uuid",
                   "description": "Unique region identifier.",
-                  "example": 1
+                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
                 },
                 "name": {
                   "type": "string",
@@ -2888,7 +2884,7 @@
                 }
               },
               "example": {
-                "id": 1,
+                "id": "0190a8e9-7c4f-7000-8000-000000000000",
                 "name": "Stadtpark Flensburg"
               }
             }
@@ -2960,12 +2956,12 @@
                 },
                 "linked_tree_id": {
                   "type": [
-                    "integer",
+                    "string",
                     "null"
                   ],
-                  "format": "int32",
+                  "format": "uuid",
                   "description": "Database id of the linked tree, if the sensor is currently attached.",
-                  "example": 42
+                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
                 },
                 "lorawan": {
                   "oneOf": [
@@ -3062,10 +3058,9 @@
                   "example": "Baumgruppe im nördlichen Parkbereich"
                 },
                 "id": {
-                  "type": "integer",
-                  "format": "int32",
-                  "example": 1,
-                  "minimum": 1
+                  "type": "string",
+                  "format": "uuid",
+                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
                 },
                 "last_watered": {
                   "type": [
@@ -3122,13 +3117,11 @@
                 "tree_ids": {
                   "type": "array",
                   "items": {
-                    "type": "integer",
-                    "format": "int32"
+                    "type": "string",
+                    "format": "uuid"
                   },
                   "example": [
-                    1,
-                    2,
-                    3
+                    "0190a8e9-7c4f-7000-8000-000000000000"
                   ]
                 },
                 "updated_at": {
@@ -3186,9 +3179,9 @@
                   "example": "Standort nahe Spielplatz"
                 },
                 "id": {
-                  "type": "integer",
-                  "format": "int32",
-                  "example": 1
+                  "type": "string",
+                  "format": "uuid",
+                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
                 },
                 "last_watered": {
                   "type": [
@@ -3245,11 +3238,11 @@
                 },
                 "tree_cluster_id": {
                   "type": [
-                    "integer",
+                    "string",
                     "null"
                   ],
-                  "format": "int32",
-                  "example": 5
+                  "format": "uuid",
+                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
                 },
                 "updated_at": {
                   "type": "string",
@@ -3455,11 +3448,10 @@
                   "minimum": 0
                 },
                 "id": {
-                  "type": "integer",
-                  "format": "int32",
+                  "type": "string",
+                  "format": "uuid",
                   "description": "Unique identifier of the vehicle.",
-                  "example": 1,
-                  "minimum": 1
+                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
                 },
                 "length": {
                   "type": "number",
@@ -3590,11 +3582,10 @@
                   "minimum": 0
                 },
                 "id": {
-                  "type": "integer",
-                  "format": "int32",
+                  "type": "string",
+                  "format": "uuid",
                   "description": "Unique identifier of the watering plan.",
-                  "example": 1,
-                  "minimum": 1
+                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
                 },
                 "provider": {
                   "type": [
@@ -4099,10 +4090,10 @@
         ],
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "uuid",
             "description": "Unique region identifier.",
-            "example": 1
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "name": {
             "type": "string",
@@ -4111,7 +4102,7 @@
           }
         },
         "example": {
-          "id": 1,
+          "id": "0190a8e9-7c4f-7000-8000-000000000000",
           "name": "Stadtpark Flensburg"
         }
       },
@@ -4154,6 +4145,7 @@
         "type": "object",
         "description": "A single data payload received from a LoRaWAN sensor.",
         "required": [
+          "id",
           "created_at",
           "updated_at",
           "data"
@@ -4167,6 +4159,12 @@
           "data": {
             "type": "object",
             "description": "Raw sensor payload as a JSON object (structure depends on the sensor type)."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the reading.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "updated_at": {
             "type": "string",
@@ -4195,9 +4193,9 @@
             "example": 60
           },
           "id": {
-            "type": "integer",
-            "format": "int32",
-            "example": 2
+            "type": "string",
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "unit": {
             "$ref": "#/components/schemas/SensorAbilityUnitDto"
@@ -4226,9 +4224,9 @@
             ]
           },
           "id": {
-            "type": "integer",
-            "format": "int32",
-            "example": 1
+            "type": "string",
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "name": {
             "type": "string",
@@ -4245,8 +4243,9 @@
         ],
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "name": {
             "type": "string"
@@ -4306,12 +4305,12 @@
           },
           "linked_tree_id": {
             "type": [
-              "integer",
+              "string",
               "null"
             ],
-            "format": "int32",
+            "format": "uuid",
             "description": "Database id of the linked tree, if the sensor is currently attached.",
-            "example": 42
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "lorawan": {
             "oneOf": [
@@ -4547,13 +4546,11 @@
           "tree_ids": {
             "type": "array",
             "items": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             },
             "example": [
-              1,
-              2,
-              3
+              "0190a8e9-7c4f-7000-8000-000000000000"
             ]
           }
         }
@@ -4600,10 +4597,9 @@
             "example": "Baumgruppe im nördlichen Parkbereich"
           },
           "id": {
-            "type": "integer",
-            "format": "int32",
-            "example": 1,
-            "minimum": 1
+            "type": "string",
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "last_watered": {
             "type": [
@@ -4660,13 +4656,11 @@
           "tree_ids": {
             "type": "array",
             "items": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             },
             "example": [
-              1,
-              2,
-              3
+              "0190a8e9-7c4f-7000-8000-000000000000"
             ]
           },
           "updated_at": {
@@ -4720,10 +4714,9 @@
             "example": "Baumgruppe im nördlichen Parkbereich"
           },
           "id": {
-            "type": "integer",
-            "format": "int32",
-            "example": 1,
-            "minimum": 1
+            "type": "string",
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "last_watered": {
             "type": [
@@ -4834,13 +4827,11 @@
           "tree_ids": {
             "type": "array",
             "items": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             },
             "example": [
-              1,
-              2,
-              3
+              "0190a8e9-7c4f-7000-8000-000000000000"
             ]
           }
         }
@@ -4912,11 +4903,11 @@
           },
           "tree_cluster_id": {
             "type": [
-              "integer",
+              "string",
               "null"
             ],
-            "format": "int32",
-            "example": 5
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           }
         }
       },
@@ -4950,9 +4941,9 @@
             "type": "boolean"
           },
           "id": {
-            "type": "integer",
-            "format": "int32",
-            "example": 1
+            "type": "string",
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "latitude": {
             "type": "number",
@@ -5008,9 +4999,9 @@
             "example": "Standort nahe Spielplatz"
           },
           "id": {
-            "type": "integer",
-            "format": "int32",
-            "example": 1
+            "type": "string",
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "last_watered": {
             "type": [
@@ -5067,11 +5058,11 @@
           },
           "tree_cluster_id": {
             "type": [
-              "integer",
+              "string",
               "null"
             ],
-            "format": "int32",
-            "example": 5
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "updated_at": {
             "type": "string",
@@ -5149,11 +5140,11 @@
           },
           "tree_cluster_id": {
             "type": [
-              "integer",
+              "string",
               "null"
             ],
-            "format": "int32",
-            "example": 5
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           }
         }
       },
@@ -5563,11 +5554,10 @@
             "minimum": 0
           },
           "id": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "uuid",
             "description": "Unique identifier of the vehicle.",
-            "example": 1,
-            "minimum": 1
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "length": {
             "type": "number",
@@ -5830,31 +5820,28 @@
           },
           "trailer_id": {
             "type": [
-              "integer",
+              "string",
               "null"
             ],
-            "format": "int32",
+            "format": "uuid",
             "description": "Identifier of the trailer vehicle to use, if any.",
-            "example": 2
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "transporter_id": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "uuid",
             "description": "Identifier of the transporter vehicle to use.",
-            "example": 1,
-            "minimum": 1
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "tree_cluster_ids": {
             "type": "array",
             "items": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             },
             "description": "List of tree cluster identifiers to include in the plan.",
             "example": [
-              1,
-              2,
-              3
+              "0190a8e9-7c4f-7000-8000-000000000000"
             ]
           },
           "user_ids": {
@@ -5922,11 +5909,10 @@
             "minimum": 0
           },
           "id": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "uuid",
             "description": "Unique identifier of the watering plan.",
-            "example": 1,
-            "minimum": 1
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "provider": {
             "type": [
@@ -6062,11 +6048,10 @@
             "example": "/api/v1/watering-plans/route/gpx/route-2024-08-15.gpx"
           },
           "id": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "uuid",
             "description": "Unique identifier of the watering plan.",
-            "example": 1,
-            "minimum": 1
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "provider": {
             "type": [
@@ -6205,31 +6190,28 @@
           },
           "trailer_id": {
             "type": [
-              "integer",
+              "string",
               "null"
             ],
-            "format": "int32",
+            "format": "uuid",
             "description": "Identifier of the trailer vehicle to use, if any.",
-            "example": 2
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "transporter_id": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "uuid",
             "description": "Identifier of the transporter vehicle to use.",
-            "example": 1,
-            "minimum": 1
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "tree_cluster_ids": {
             "type": "array",
             "items": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             },
             "description": "List of tree cluster identifiers to include in the plan.",
             "example": [
-              1,
-              2,
-              3
+              "0190a8e9-7c4f-7000-8000-000000000000"
             ]
           },
           "user_ids": {

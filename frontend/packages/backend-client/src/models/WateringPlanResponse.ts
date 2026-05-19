@@ -104,10 +104,10 @@ export interface WateringPlanResponse {
     gpxUrl: string;
     /**
      * Unique identifier of the watering plan.
-     * @type {number}
+     * @type {string}
      * @memberof WateringPlanResponse
      */
-    id: number;
+    id: string;
     /**
      * Name of the external data provider that supplied this record.
      * @type {string}

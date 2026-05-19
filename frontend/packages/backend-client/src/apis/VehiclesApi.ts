@@ -32,7 +32,7 @@ import {
 } from '../models/index';
 
 export interface ArchiveVehicleRequest {
-    vehicleId: number;
+    vehicleId: string;
 }
 
 export interface CreateVehicleRequest {
@@ -40,11 +40,11 @@ export interface CreateVehicleRequest {
 }
 
 export interface DeleteVehicleRequest {
-    vehicleId: number;
+    vehicleId: string;
 }
 
 export interface GetVehicleRequest {
-    vehicleId: number;
+    vehicleId: string;
 }
 
 export interface GetVehicleByPlateRequest {
@@ -62,7 +62,7 @@ export interface ListVehiclesRequest {
 }
 
 export interface UpdateVehicleRequest {
-    vehicleId: number;
+    vehicleId: string;
     vehicleUpdateRequest: VehicleUpdateRequest;
 }
 

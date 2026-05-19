@@ -75,10 +75,10 @@ export interface TreeUpdateRequest {
     species: string;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof TreeUpdateRequest
      */
-    treeClusterId?: number | null;
+    treeClusterId?: string | null;
 }
 
 /**

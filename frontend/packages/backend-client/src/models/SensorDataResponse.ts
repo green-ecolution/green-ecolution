@@ -32,6 +32,12 @@ export interface SensorDataResponse {
      */
     data: object;
     /**
+     * Unique identifier of the reading.
+     * @type {string}
+     * @memberof SensorDataResponse
+     */
+    id: string;
+    /**
      * Timestamp when the data was last modified (RFC 3339).
      * @type {string}
      * @memberof SensorDataResponse
@@ -45,6 +51,7 @@ export interface SensorDataResponse {
 export function instanceOfSensorDataResponse(value: object): value is SensorDataResponse {
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
     if (!('data' in value) || value['data'] === undefined) return false;
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
     return true;
 }
@@ -61,6 +68,7 @@ export function SensorDataResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         
         'createdAt': json['created_at'],
         'data': json['data'],
+        'id': json['id'],
         'updatedAt': json['updated_at'],
     };
 }
@@ -78,6 +86,7 @@ export function SensorDataResponseToJSONTyped(value?: SensorDataResponse | null,
         
         'created_at': value['createdAt'],
         'data': value['data'],
+        'id': value['id'],
         'updated_at': value['updatedAt'],
     };
 }

@@ -27,16 +27,16 @@ export interface EvaluationValueRequest {
     consumedWater: number;
     /**
      * Identifier of the tree cluster that was evaluated.
-     * @type {number}
+     * @type {string}
      * @memberof EvaluationValueRequest
      */
-    treeClusterId: number;
+    treeClusterId: string;
     /**
      * Identifier of the watering plan this evaluation belongs to.
-     * @type {number}
+     * @type {string}
      * @memberof EvaluationValueRequest
      */
-    wateringPlanId: number;
+    wateringPlanId: string;
 }
 
 /**

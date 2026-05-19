@@ -21,10 +21,10 @@ import { mapValues } from '../runtime';
 export interface SensorModelSummaryResponse {
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof SensorModelSummaryResponse
      */
-    id: number;
+    id: string;
     /**
      * 
      * @type {string}

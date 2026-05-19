@@ -54,10 +54,10 @@ export interface CreateSensorRequest {
     lorawan?: LorawanCredentialsRequest | null;
     /**
      * `SensorModel` id; must reference an existing model.
-     * @type {number}
+     * @type {string}
      * @memberof CreateSensorRequest
      */
-    modelId: number;
+    modelId: string;
     /**
      * 
      * @type {string}

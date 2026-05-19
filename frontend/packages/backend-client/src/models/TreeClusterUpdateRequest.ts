@@ -65,10 +65,10 @@ export interface TreeClusterUpdateRequest {
     soilCondition: SoilCondition;
     /**
      * 
-     * @type {Array<number>}
+     * @type {Array<string>}
      * @memberof TreeClusterUpdateRequest
      */
-    treeIds: Array<number>;
+    treeIds: Array<string>;
 }
 
 

@@ -54,10 +54,10 @@ export interface ListResponseTreeResponseDataInner {
     description: string;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof ListResponseTreeResponseDataInner
      */
-    id: number;
+    id: string;
     /**
      * 
      * @type {string}
@@ -108,10 +108,10 @@ export interface ListResponseTreeResponseDataInner {
     species: string;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof ListResponseTreeResponseDataInner
      */
-    treeClusterId?: number | null;
+    treeClusterId?: string | null;
     /**
      * 
      * @type {string}

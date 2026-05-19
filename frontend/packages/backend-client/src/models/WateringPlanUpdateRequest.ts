@@ -78,22 +78,22 @@ export interface WateringPlanUpdateRequest {
     status: WateringPlanStatus;
     /**
      * Identifier of the trailer vehicle to use, if any.
-     * @type {number}
+     * @type {string}
      * @memberof WateringPlanUpdateRequest
      */
-    trailerId?: number | null;
+    trailerId?: string | null;
     /**
      * Identifier of the transporter vehicle to use.
-     * @type {number}
+     * @type {string}
      * @memberof WateringPlanUpdateRequest
      */
-    transporterId: number;
+    transporterId: string;
     /**
      * List of tree cluster identifiers to include in the plan.
-     * @type {Array<number>}
+     * @type {Array<string>}
      * @memberof WateringPlanUpdateRequest
      */
-    treeClusterIds: Array<number>;
+    treeClusterIds: Array<string>;
     /**
      * List of user identifiers assigned to execute this plan.
      * @type {Array<string>}

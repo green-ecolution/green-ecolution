@@ -22,10 +22,10 @@ import { mapValues } from '../runtime';
 export interface ActivateSensorRequest {
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof ActivateSensorRequest
      */
-    treeId: number;
+    treeId: string;
 }
 
 /**

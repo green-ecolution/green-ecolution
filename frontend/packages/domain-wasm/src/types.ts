@@ -12,8 +12,8 @@ export interface TreeForm {
   latitude: number
   longitude: number
   description: string
-  treeClusterId: number
-  sensorId: string
+  treeClusterId: string | null
+  sensorId: string | null
   provider?: string
 }
 
@@ -22,7 +22,7 @@ export interface TreeclusterForm {
   address: string
   description: string
   soilCondition: string
-  treeIds: number[]
+  treeIds: string[]
 }
 
 export interface VehicleForm {
@@ -42,9 +42,9 @@ export interface VehicleForm {
 export interface WateringPlanForm {
   date: Date
   status: string
-  transporterId: number
-  trailerId?: number
+  transporterId: string
+  trailerId?: string
   driverIds: string[]
-  clusterIds: number[]
+  clusterIds: string[]
   description: string
 }

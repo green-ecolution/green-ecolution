@@ -36,7 +36,7 @@ export interface CreateWateringPlanRequest {
 }
 
 export interface DeleteWateringPlanRequest {
-    wateringPlanId: number;
+    wateringPlanId: string;
 }
 
 export interface GetGpxFileRequest {
@@ -44,7 +44,7 @@ export interface GetGpxFileRequest {
 }
 
 export interface GetWateringPlanRequest {
-    wateringPlanId: number;
+    wateringPlanId: string;
 }
 
 export interface ListWateringPlansRequest {
@@ -53,7 +53,7 @@ export interface ListWateringPlansRequest {
 }
 
 export interface UpdateWateringPlanRequest {
-    wateringPlanId: number;
+    wateringPlanId: string;
     wateringPlanUpdateRequest: WateringPlanUpdateRequest;
 }
 

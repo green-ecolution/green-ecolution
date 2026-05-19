@@ -41,10 +41,10 @@ export interface SensorModelResponse {
     description?: string | null;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof SensorModelResponse
      */
-    id: number;
+    id: string;
     /**
      * 
      * @type {string}
