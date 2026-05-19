@@ -252,7 +252,7 @@ pub async fn list_sensor_models(
 #[utoipa::path(get, path = "/sensors/models/{id}", tag = "Sensors",
     operation_id = "getSensorModel",
     summary = "Get a single sensor model",
-    params(("id" = i32, Path, description = "Sensor model ID")),
+    params(("id" = uuid::Uuid, Path, description = "Sensor model ID")),
     responses(
         (status = 200, description = "Sensor model", body = SensorModelResponse),
         (status = 404, description = "Sensor model not found"),
@@ -262,7 +262,7 @@ pub async fn list_sensor_models(
 #[tracing::instrument(level = "info", skip_all, fields(model.id = %id))]
 pub async fn get_sensor_model(
     State(state): State<Arc<AppState>>,
-    Path(id): Path<i32>,
+    Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<SensorModelResponse>, ServiceError> {
     let model = state
         .sensor_service

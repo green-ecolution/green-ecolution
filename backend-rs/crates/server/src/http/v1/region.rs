@@ -58,17 +58,17 @@ pub async fn list_regions(
     operation_id = "getRegion",
     summary = "Get a region",
     description = "Returns a single region by its unique identifier.",
-    params(("region_id" = i32, Path, description = "Region ID")),
+    params(("region_id" = uuid::Uuid, Path, description = "Region ID")),
     responses(
         (status = 200, description = "Region found", body = RegionResponse),
         (status = 404, description = "Region not found"),
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(region.id = region_id))]
+#[tracing::instrument(level = "info", skip_all, fields(region.id = %region_id))]
 pub async fn get_region(
     State(state): State<Arc<AppState>>,
-    Path(region_id): Path<i32>,
+    Path(region_id): Path<uuid::Uuid>,
 ) -> Result<Json<RegionResponse>, ServiceError> {
     let region = state.region_service.by_id(Id::new(region_id)).await?;
     Ok(Json(RegionResponse::from(&region)))

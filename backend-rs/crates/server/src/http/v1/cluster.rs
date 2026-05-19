@@ -128,17 +128,17 @@ pub async fn list_clusters(
     operation_id = "getCluster",
     summary = "Get a tree cluster",
     description = "Returns a single tree cluster by its unique identifier, including fully resolved tree objects.",
-    params(("cluster_id" = i32, Path, description = "Cluster ID")),
+    params(("cluster_id" = uuid::Uuid, Path, description = "Cluster ID")),
     responses(
         (status = 200, description = "Cluster found", body = TreeClusterResponse),
         (status = 404, description = "Cluster not found"),
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(cluster.id = id))]
+#[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]
 pub async fn get_cluster(
     State(state): State<Arc<AppState>>,
-    Path(id): Path<i32>,
+    Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<TreeClusterResponse>, ServiceError> {
     let view = state.cluster_service.view_by_id(Id::from(id)).await?;
     let response = build_cluster_response(&state, &view).await?;
@@ -177,7 +177,7 @@ pub async fn create_cluster(
     operation_id = "updateCluster",
     summary = "Update a tree cluster",
     description = "Updates an existing tree cluster identified by its ID and returns the updated resource.",
-    params(("cluster_id" = i32, Path, description = "Cluster ID")),
+    params(("cluster_id" = uuid::Uuid, Path, description = "Cluster ID")),
     request_body = TreeClusterUpdateRequest,
     responses(
         (status = 200, description = "Cluster updated", body = TreeClusterResponse),
@@ -185,10 +185,10 @@ pub async fn create_cluster(
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(cluster.id = id))]
+#[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]
 pub async fn update_cluster(
     State(state): State<Arc<AppState>>,
-    Path(id): Path<i32>,
+    Path(id): Path<uuid::Uuid>,
     Json(entity): Json<TreeClusterUpdateRequest>,
 ) -> Result<Json<TreeClusterResponse>, ServiceError> {
     let cluster_id = Id::from(id);
@@ -216,17 +216,17 @@ pub async fn update_cluster(
     operation_id = "deleteCluster",
     summary = "Delete a tree cluster",
     description = "Deletes a tree cluster identified by its ID.",
-    params(("cluster_id" = i32, Path, description = "Cluster ID")),
+    params(("cluster_id" = uuid::Uuid, Path, description = "Cluster ID")),
     responses(
         (status = 204, description = "Cluster deleted"),
         (status = 404, description = "Cluster not found"),
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(cluster.id = id))]
+#[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]
 pub async fn delete_cluster(
     State(state): State<Arc<AppState>>,
-    Path(id): Path<i32>,
+    Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
     state.cluster_service.delete(Id::from(id)).await?;
     Ok(StatusCode::NO_CONTENT)

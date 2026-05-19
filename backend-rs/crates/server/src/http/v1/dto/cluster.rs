@@ -17,8 +17,8 @@ use super::{SoilCondition, WateringStatus, region::RegionResponse, tree::TreeRes
 /// Full representation of a tree cluster including its resolved tree relations.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct TreeClusterResponse {
-    #[schema(example = 1, minimum = 1)]
-    pub id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub id: uuid::Uuid,
     #[schema(example = "2024-06-15T12:00:00+00:00")]
     pub created_at: String,
     #[schema(example = "2024-07-10T08:30:00+00:00")]
@@ -88,8 +88,8 @@ impl TreeClusterResponse {
 /// Compact representation of a tree cluster used in list endpoints (tree IDs instead of full objects).
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct TreeClusterInListResponse {
-    #[schema(example = 1, minimum = 1)]
-    pub id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub id: uuid::Uuid,
     #[schema(example = "2024-06-15T12:00:00+00:00")]
     pub created_at: String,
     #[schema(example = "2024-07-10T08:30:00+00:00")]
@@ -122,8 +122,8 @@ pub struct TreeClusterInListResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(example = "2024-07-10T08:00:00+00:00", nullable)]
     pub last_watered: Option<String>,
-    #[schema(example = json!([1, 2, 3]))]
-    pub tree_ids: Vec<i32>,
+    #[schema(example = json!(["0190a8e9-7c4f-7000-8000-000000000000"]))]
+    pub tree_ids: Vec<uuid::Uuid>,
 }
 
 impl From<(&TreeClusterView, Option<&Region>)> for TreeClusterInListResponse {
@@ -192,8 +192,8 @@ pub struct TreeClusterCreateRequest {
     #[schema(example = "Baumgruppe im nördlichen Parkbereich")]
     pub description: String,
     pub soil_condition: SoilCondition,
-    #[schema(example = json!([1, 2, 3]))]
-    pub tree_ids: Vec<i32>,
+    #[schema(example = json!(["0190a8e9-7c4f-7000-8000-000000000000"]))]
+    pub tree_ids: Vec<uuid::Uuid>,
     #[serde(default)]
     #[schema(example = "green-ecolution", nullable)]
     pub provider: Option<String>,
@@ -212,8 +212,8 @@ pub struct TreeClusterUpdateRequest {
     #[schema(example = "Baumgruppe im nördlichen Parkbereich")]
     pub description: String,
     pub soil_condition: SoilCondition,
-    #[schema(example = json!([1, 2, 3]))]
-    pub tree_ids: Vec<i32>,
+    #[schema(example = json!(["0190a8e9-7c4f-7000-8000-000000000000"]))]
+    pub tree_ids: Vec<uuid::Uuid>,
     #[serde(default)]
     #[schema(example = "green-ecolution", nullable)]
     pub provider: Option<String>,
@@ -243,8 +243,8 @@ impl TryFrom<TreeClusterCreateRequest> for TreeClusterDraft {
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct ClusterMarkerResponse {
-    #[schema(example = 7)]
-    pub id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub id: uuid::Uuid,
     #[schema(example = "Stadtpark")]
     pub name: String,
     #[schema(example = 54.7937, minimum = -90.0, maximum = 90.0)]

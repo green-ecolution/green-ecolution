@@ -59,17 +59,17 @@ pub async fn list_vehicles(
     operation_id = "getVehicle",
     summary = "Get a vehicle",
     description = "Returns a single vehicle by its ID.",
-    params(("vehicle_id" = i32, Path, description = "Vehicle ID")),
+    params(("vehicle_id" = uuid::Uuid, Path, description = "Vehicle ID")),
     responses(
         (status = 200, description = "Vehicle found", body = VehicleResponse),
         (status = 404, description = "Vehicle not found"),
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(vehicle.id = id))]
+#[tracing::instrument(level = "info", skip_all, fields(vehicle.id = %id))]
 pub async fn get_vehicle(
     State(state): State<Arc<AppState>>,
-    Path(id): Path<i32>,
+    Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<VehicleResponse>, ServiceError> {
     let view = state.vehicle_service.view_by_id(Id::from(id)).await?;
     Ok(Json(VehicleResponse::from(&view)))
@@ -102,7 +102,7 @@ pub async fn create_vehicle(
     operation_id = "updateVehicle",
     summary = "Update a vehicle",
     description = "Updates the details of an existing vehicle.",
-    params(("vehicle_id" = i32, Path, description = "Vehicle ID")),
+    params(("vehicle_id" = uuid::Uuid, Path, description = "Vehicle ID")),
     request_body = VehicleUpdateRequest,
     responses(
         (status = 200, description = "Vehicle updated", body = VehicleResponse),
@@ -110,10 +110,10 @@ pub async fn create_vehicle(
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(vehicle.id = id))]
+#[tracing::instrument(level = "info", skip_all, fields(vehicle.id = %id))]
 pub async fn update_vehicle(
     State(state): State<Arc<AppState>>,
-    Path(id): Path<i32>,
+    Path(id): Path<uuid::Uuid>,
     Json(entity): Json<VehicleUpdateRequest>,
 ) -> Result<Json<VehicleResponse>, ServiceError> {
     let update = entity.into_update()?;
@@ -126,17 +126,17 @@ pub async fn update_vehicle(
     operation_id = "deleteVehicle",
     summary = "Delete a vehicle",
     description = "Permanently deletes a vehicle.",
-    params(("vehicle_id" = i32, Path, description = "Vehicle ID")),
+    params(("vehicle_id" = uuid::Uuid, Path, description = "Vehicle ID")),
     responses(
         (status = 204, description = "Vehicle deleted"),
         (status = 404, description = "Vehicle not found"),
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(vehicle.id = id))]
+#[tracing::instrument(level = "info", skip_all, fields(vehicle.id = %id))]
 pub async fn delete_vehicle(
     State(state): State<Arc<AppState>>,
-    Path(id): Path<i32>,
+    Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
     state.vehicle_service.delete(Id::from(id)).await?;
     Ok(StatusCode::NO_CONTENT)
@@ -172,17 +172,17 @@ pub async fn list_archived_vehicles(
     operation_id = "archiveVehicle",
     summary = "Archive a vehicle",
     description = "Moves a vehicle to the archived state.",
-    params(("vehicle_id" = i32, Path, description = "Vehicle ID")),
+    params(("vehicle_id" = uuid::Uuid, Path, description = "Vehicle ID")),
     responses(
         (status = 204, description = "Vehicle archived"),
         (status = 404, description = "Vehicle not found"),
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(vehicle.id = id))]
+#[tracing::instrument(level = "info", skip_all, fields(vehicle.id = %id))]
 pub async fn archive_vehicle(
     State(state): State<Arc<AppState>>,
-    Path(id): Path<i32>,
+    Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
     state.vehicle_service.archive(Id::from(id)).await?;
     Ok(StatusCode::NO_CONTENT)

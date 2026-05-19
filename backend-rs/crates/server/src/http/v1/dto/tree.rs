@@ -137,8 +137,8 @@ where
 /// An individual tree managed by the system.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct TreeResponse {
-    #[schema(example = 1)]
-    pub id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub id: uuid::Uuid,
     #[schema(example = "2024-01-15T10:30:00+00:00")]
     pub created_at: String,
     #[schema(example = "2024-06-20T14:00:00+00:00")]
@@ -156,9 +156,9 @@ pub struct TreeResponse {
     pub watering_status: WateringStatus,
     #[schema(example = "Standort nahe Spielplatz")]
     pub description: String,
-    #[schema(example = 5, nullable)]
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub tree_cluster_id: Option<i32>,
+    pub tree_cluster_id: Option<uuid::Uuid>,
     #[schema(nullable)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sensor: Option<SensorResponse>,
@@ -236,9 +236,9 @@ pub struct TreeCreateRequest {
     pub longitude: f64,
     #[schema(example = "Standort nahe Spielplatz")]
     pub description: String,
-    #[schema(example = 5, nullable)]
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     #[serde(default)]
-    pub tree_cluster_id: Option<i32>,
+    pub tree_cluster_id: Option<uuid::Uuid>,
     #[schema(example = "eui-a81758fffe0c3b52", nullable)]
     #[serde(default)]
     pub sensor_id: Option<String>,
@@ -289,9 +289,9 @@ pub struct TreeUpdateRequest {
     pub longitude: f64,
     #[schema(example = "Standort nahe Spielplatz")]
     pub description: String,
-    #[schema(example = 5, nullable)]
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     #[serde(default)]
-    pub tree_cluster_id: Option<i32>,
+    pub tree_cluster_id: Option<uuid::Uuid>,
     #[schema(example = "eui-a81758fffe0c3b52", nullable)]
     #[serde(default)]
     pub sensor_id: Option<String>,
@@ -306,8 +306,8 @@ pub struct TreeUpdateRequest {
 /// Lightweight tree marker for the map.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct TreeMarkerResponse {
-    #[schema(example = 1)]
-    pub id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub id: uuid::Uuid,
     #[schema(example = 54.7937, minimum = -90.0, maximum = 90.0)]
     pub latitude: f64,
     #[schema(example = 9.4469, minimum = -180.0, maximum = 180.0)]

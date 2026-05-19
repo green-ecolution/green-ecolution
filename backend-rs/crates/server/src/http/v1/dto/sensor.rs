@@ -35,6 +35,10 @@ where
 /// A single data payload received from a LoRaWAN sensor.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SensorDataResponse {
+    /// Unique identifier of the reading.
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub id: uuid::Uuid,
+
     /// Timestamp when the data was first recorded (RFC 3339).
     #[schema(example = "2025-06-01T08:00:00+00:00")]
     pub created_at: String,
@@ -51,6 +55,7 @@ pub struct SensorDataResponse {
 impl From<&SensorReadingView> for SensorDataResponse {
     fn from(value: &SensorReadingView) -> Self {
         Self {
+            id: value.id,
             created_at: value.created_at.to_rfc3339(),
             updated_at: value.updated_at.to_rfc3339(),
             data: value.data.clone(),
@@ -70,7 +75,8 @@ pub struct SensorCoordinate {
 /// Summary view of the [`SensorModel`] this sensor belongs to.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SensorModelSummaryResponse {
-    pub id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub id: uuid::Uuid,
     pub name: String,
 }
 
@@ -193,8 +199,8 @@ pub struct SensorResponse {
 
     /// Database id of the linked tree, if the sensor is currently attached.
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[schema(example = 42, nullable)]
-    pub linked_tree_id: Option<i32>,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
+    pub linked_tree_id: Option<uuid::Uuid>,
 
     /// LoRaWAN credentials (omits `app_key`).
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -274,8 +280,8 @@ pub struct CreateSensorRequest {
     pub id: String,
     pub sensor_type: SensorTypeResponse,
     /// `SensorModel` id; must reference an existing model.
-    #[schema(example = 1)]
-    pub model_id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub model_id: uuid::Uuid,
     #[serde(default)]
     #[schema(example = "tbz", nullable)]
     pub provider: Option<String>,
@@ -292,8 +298,8 @@ pub struct CreateSensorRequest {
 /// sensor to a tree.
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct ActivateSensorRequest {
-    #[schema(example = 42)]
-    pub tree_id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub tree_id: uuid::Uuid,
 }
 
 /// Physical quantity reported by a sensor ability.
@@ -321,8 +327,8 @@ impl From<SensorAbilityUnit> for SensorAbilityUnitDto {
 /// A single ability (e.g. soil tension at 60 cm) supported by a sensor model.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SensorModelAbilityResponse {
-    #[schema(example = 2)]
-    pub id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub id: uuid::Uuid,
     #[schema(example = "soil_tension")]
     pub ability: String,
     pub unit: SensorAbilityUnitDto,
@@ -333,8 +339,8 @@ pub struct SensorModelAbilityResponse {
 /// Full description of a supported sensor model and its abilities.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SensorModelResponse {
-    #[schema(example = 1)]
-    pub id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub id: uuid::Uuid,
     #[schema(example = "EcoDrizzler")]
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
