@@ -81,12 +81,14 @@ async fn get_evaluation_counts_vehicles_and_sensors() {
     }
 
     // Create sensors via SQL (no create endpoint)
+    let model_id = app.ecodrizzler_model_id().await;
     for i in 1..=4 {
         let id = format!("sensor-eval-{}", i);
         sqlx::query!(
             r#"INSERT INTO sensors (id, status, type, model_id)
-            VALUES ($1, 'online', 'lorawan', 1)"#,
+            VALUES ($1, 'online', 'lorawan', $2)"#,
             id,
+            model_id,
         )
         .execute(&app.db_pool)
         .await
@@ -129,7 +131,7 @@ async fn get_evaluation_includes_vehicle_watering_plan_stats() {
         )
         .await;
     let vehicle: serde_json::Value = vehicle_resp.json().await.unwrap();
-    let vid = vehicle["id"].as_i64().unwrap();
+    let vid = vehicle["id"].as_str().unwrap();
 
     // Create watering plans with this vehicle
     for _ in 0..3 {
@@ -163,8 +165,11 @@ async fn get_evaluation_includes_region_watering_plan_stats() {
 
     // Create region with geometry
     let wkt = "MULTIPOLYGON(((9.98 53.54, 10.0 53.54, 10.0 53.56, 9.98 53.56, 9.98 53.54)))";
+    let region_id = uuid::Uuid::now_v7();
     sqlx::query!(
-        r#"INSERT INTO regions (name, geometry) VALUES ($1, ST_SetSRID(ST_GeomFromText($2), 4326))"#,
+        r#"INSERT INTO regions (id, name, geometry)
+        VALUES ($1, $2, ST_SetSRID(ST_GeomFromText($3), 4326))"#,
+        region_id,
         "Altstadt",
         wkt,
     )
@@ -183,7 +188,7 @@ async fn get_evaluation_includes_region_watering_plan_stats() {
     });
     app.post_json("/api/v1/trees", &tree_body).await;
 
-    let tree_id: i32 = sqlx::query_scalar!("SELECT id FROM trees WHERE number = 'T-REVAL'")
+    let tree_id: uuid::Uuid = sqlx::query_scalar!("SELECT id FROM trees WHERE number = 'T-REVAL'")
         .fetch_one(&app.db_pool)
         .await
         .unwrap();
@@ -202,7 +207,7 @@ async fn get_evaluation_includes_region_watering_plan_stats() {
         )
         .await;
     let cluster: serde_json::Value = cluster_resp.json().await.unwrap();
-    let cid = cluster["id"].as_i64().unwrap();
+    let cid = cluster["id"].as_str().unwrap();
 
     // Create vehicle + watering plan linked to cluster
     let vehicle_resp = app
@@ -221,7 +226,7 @@ async fn get_evaluation_includes_region_watering_plan_stats() {
         )
         .await;
     let vehicle: serde_json::Value = vehicle_resp.json().await.unwrap();
-    let vid = vehicle["id"].as_i64().unwrap();
+    let vid = vehicle["id"].as_str().unwrap();
 
     app.post_json(
         "/api/v1/watering-plans",

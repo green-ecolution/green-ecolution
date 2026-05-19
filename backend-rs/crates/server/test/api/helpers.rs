@@ -21,6 +21,24 @@ pub struct TestApp {
 }
 
 impl TestApp {
+    /// Look up the seeded `EcoDrizzler` sensor model UUID. Migrations seed two
+    /// well-known models by name — tests reference them through this helper
+    /// since the integer ids no longer exist after the UUID migration.
+    pub async fn ecodrizzler_model_id(&self) -> Uuid {
+        sqlx::query_scalar!(r#"SELECT id FROM sensor_models WHERE name = 'EcoDrizzler'"#)
+            .fetch_one(&self.db_pool)
+            .await
+            .expect("EcoDrizzler model must exist after migrations")
+    }
+
+    /// Look up the seeded `GES-1000` sensor model UUID.
+    pub async fn ges_1000_model_id(&self) -> Uuid {
+        sqlx::query_scalar!(r#"SELECT id FROM sensor_models WHERE name = 'GES-1000'"#)
+            .fetch_one(&self.db_pool)
+            .await
+            .expect("GES-1000 model must exist after migrations")
+    }
+
     pub async fn get(&self, path: &str) -> reqwest::Response {
         reqwest::Client::new()
             .get(format!("{}{}", self.address, path))

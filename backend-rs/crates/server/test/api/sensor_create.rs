@@ -1,7 +1,8 @@
 use crate::helpers::spawn_app;
 use serde_json::json;
+use uuid::Uuid;
 
-fn valid_create_body(id: &str, model_id: i32) -> serde_json::Value {
+fn valid_create_body(id: &str, model_id: Uuid) -> serde_json::Value {
     json!({
         "id": id,
         "sensor_type": "lorawan",
@@ -18,15 +19,16 @@ fn valid_create_body(id: &str, model_id: i32) -> serde_json::Value {
 #[tokio::test]
 async fn create_sensor_returns_201_with_prepared_status() {
     let app = spawn_app().await;
+    let model_id = app.ecodrizzler_model_id().await;
     let resp = app
-        .post_json("/api/v1/sensors", &valid_create_body("eui-001", 1))
+        .post_json("/api/v1/sensors", &valid_create_body("eui-001", model_id))
         .await;
     assert_eq!(resp.status().as_u16(), 201);
     let body: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(body["id"], "eui-001");
     assert_eq!(body["status"], "prepared");
     assert_eq!(body["sensor_type"], "lorawan");
-    assert_eq!(body["model"]["id"], 1);
+    assert_eq!(body["model"]["id"], model_id.to_string());
     assert_eq!(body["model"]["name"], "EcoDrizzler");
     assert!(body.get("coordinate").is_none_or(|c| c.is_null()));
     assert!(body.get("linked_tree_id").is_none_or(|c| c.is_null()));
@@ -36,7 +38,10 @@ async fn create_sensor_returns_201_with_prepared_status() {
 async fn create_sensor_with_unknown_model_returns_404() {
     let app = spawn_app().await;
     let resp = app
-        .post_json("/api/v1/sensors", &valid_create_body("eui-002", 9999))
+        .post_json(
+            "/api/v1/sensors",
+            &valid_create_body("eui-002", Uuid::now_v7()),
+        )
         .await;
     assert_eq!(resp.status().as_u16(), 404);
 }
@@ -44,7 +49,8 @@ async fn create_sensor_with_unknown_model_returns_404() {
 #[tokio::test]
 async fn create_sensor_with_duplicate_id_returns_409() {
     let app = spawn_app().await;
-    let body = valid_create_body("eui-dup", 1);
+    let model_id = app.ecodrizzler_model_id().await;
+    let body = valid_create_body("eui-dup", model_id);
     let first = app.post_json("/api/v1/sensors", &body).await;
     assert_eq!(first.status().as_u16(), 201);
     let second = app.post_json("/api/v1/sensors", &body).await;
@@ -54,7 +60,8 @@ async fn create_sensor_with_duplicate_id_returns_409() {
 #[tokio::test]
 async fn create_sensor_with_invalid_hex_returns_400() {
     let app = spawn_app().await;
-    let mut bad = valid_create_body("eui-bad", 1);
+    let model_id = app.ecodrizzler_model_id().await;
+    let mut bad = valid_create_body("eui-bad", model_id);
     bad["lorawan"]["dev_eui"] = json!("not-hex-not-hex");
     let resp = app.post_json("/api/v1/sensors", &bad).await;
     assert_eq!(resp.status().as_u16(), 400);
@@ -63,10 +70,11 @@ async fn create_sensor_with_invalid_hex_returns_400() {
 #[tokio::test]
 async fn create_sensor_missing_lorawan_block_returns_400() {
     let app = spawn_app().await;
+    let model_id = app.ecodrizzler_model_id().await;
     let body = json!({
         "id": "eui-nolora",
         "sensor_type": "lorawan",
-        "model_id": 1
+        "model_id": model_id,
     });
     let resp = app.post_json("/api/v1/sensors", &body).await;
     assert_eq!(resp.status().as_u16(), 400);
@@ -75,12 +83,13 @@ async fn create_sensor_missing_lorawan_block_returns_400() {
 #[tokio::test]
 async fn create_sensor_for_ges_1000_returns_201() {
     let app = spawn_app().await;
+    let model_id = app.ges_1000_model_id().await;
     let resp = app
-        .post_json("/api/v1/sensors", &valid_create_body("eui-ges-1", 2))
+        .post_json("/api/v1/sensors", &valid_create_body("eui-ges-1", model_id))
         .await;
     assert_eq!(resp.status().as_u16(), 201);
     let body: serde_json::Value = resp.json().await.unwrap();
-    assert_eq!(body["model"]["id"], 2);
+    assert_eq!(body["model"]["id"], model_id.to_string());
     assert_eq!(body["model"]["name"], "GES-1000");
     assert_eq!(body["status"], "prepared");
 }

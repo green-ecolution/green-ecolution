@@ -42,7 +42,7 @@ async fn create_cluster(app: &helpers::TestApp) -> serde_json::Value {
     resp.json().await.unwrap()
 }
 
-fn plan_body(transporter_id: i64, cluster_ids: Vec<i64>) -> serde_json::Value {
+fn plan_body(transporter_id: &str, cluster_ids: Vec<&str>) -> serde_json::Value {
     serde_json::json!({
         "date": "2026-05-01T08:00:00Z",
         "description": "Bewaesserung Innenstadt",
@@ -76,7 +76,9 @@ async fn list_watering_plans_returns_empty_list() {
 async fn get_watering_plan_returns_404_for_nonexistent_id() {
     let app = spawn_app().await;
 
-    let response = app.get("/api/v1/watering-plans/999").await;
+    let response = app
+        .get(&format!("/api/v1/watering-plans/{}", uuid::Uuid::now_v7()))
+        .await;
 
     assert_eq!(response.status().as_u16(), 404);
 }
@@ -86,7 +88,7 @@ async fn create_watering_plan_returns_201() {
     let app = spawn_app().await;
 
     let transporter = create_transporter(&app).await;
-    let tid = transporter["id"].as_i64().unwrap();
+    let tid = transporter["id"].as_str().unwrap();
 
     let response = app
         .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
@@ -105,9 +107,9 @@ async fn create_watering_plan_with_clusters() {
     let app = spawn_app().await;
 
     let transporter = create_transporter(&app).await;
-    let tid = transporter["id"].as_i64().unwrap();
+    let tid = transporter["id"].as_str().unwrap();
     let cluster = create_cluster(&app).await;
-    let cid = cluster["id"].as_i64().unwrap();
+    let cid = cluster["id"].as_str().unwrap();
 
     let response = app
         .post_json("/api/v1/watering-plans", &plan_body(tid, vec![cid]))
@@ -125,9 +127,9 @@ async fn create_watering_plan_with_trailer() {
     let app = spawn_app().await;
 
     let transporter = create_transporter(&app).await;
-    let tid = transporter["id"].as_i64().unwrap();
+    let tid = transporter["id"].as_str().unwrap();
     let trailer = create_trailer(&app).await;
-    let trailer_id = trailer["id"].as_i64().unwrap();
+    let trailer_id = trailer["id"].as_str().unwrap();
 
     let mut body = plan_body(tid, vec![]);
     body["trailer_id"] = serde_json::json!(trailer_id);
@@ -147,7 +149,7 @@ async fn create_watering_plan_with_invalid_date_returns_400() {
     let app = spawn_app().await;
 
     let transporter = create_transporter(&app).await;
-    let tid = transporter["id"].as_i64().unwrap();
+    let tid = transporter["id"].as_str().unwrap();
 
     let body = serde_json::json!({
         "date": "not-a-date",
@@ -167,13 +169,13 @@ async fn get_watering_plan_returns_full_response() {
     let app = spawn_app().await;
 
     let transporter = create_transporter(&app).await;
-    let tid = transporter["id"].as_i64().unwrap();
+    let tid = transporter["id"].as_str().unwrap();
 
     let create_resp = app
         .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
         .await;
     let created: serde_json::Value = create_resp.json().await.unwrap();
-    let id = created["id"].as_i64().unwrap();
+    let id = created["id"].as_str().unwrap();
 
     let response = app.get(&format!("/api/v1/watering-plans/{}", id)).await;
 
@@ -189,13 +191,13 @@ async fn update_watering_plan_changes_description() {
     let app = spawn_app().await;
 
     let transporter = create_transporter(&app).await;
-    let tid = transporter["id"].as_i64().unwrap();
+    let tid = transporter["id"].as_str().unwrap();
 
     let create_resp = app
         .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
         .await;
     let created: serde_json::Value = create_resp.json().await.unwrap();
-    let id = created["id"].as_i64().unwrap();
+    let id = created["id"].as_str().unwrap();
 
     let update_body = serde_json::json!({
         "date": "2026-05-01T08:00:00Z",
@@ -223,13 +225,13 @@ async fn delete_watering_plan_returns_204() {
     let app = spawn_app().await;
 
     let transporter = create_transporter(&app).await;
-    let tid = transporter["id"].as_i64().unwrap();
+    let tid = transporter["id"].as_str().unwrap();
 
     let create_resp = app
         .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
         .await;
     let created: serde_json::Value = create_resp.json().await.unwrap();
-    let id = created["id"].as_i64().unwrap();
+    let id = created["id"].as_str().unwrap();
 
     let response = app.delete(&format!("/api/v1/watering-plans/{}", id)).await;
     assert_eq!(response.status().as_u16(), 204);
@@ -243,7 +245,7 @@ async fn list_watering_plans_respects_pagination() {
     let app = spawn_app().await;
 
     let transporter = create_transporter(&app).await;
-    let tid = transporter["id"].as_i64().unwrap();
+    let tid = transporter["id"].as_str().unwrap();
 
     for _ in 0..5 {
         app.post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
@@ -264,7 +266,7 @@ async fn list_watering_plans_includes_resolved_vehicles() {
     let app = spawn_app().await;
 
     let transporter = create_transporter(&app).await;
-    let tid = transporter["id"].as_i64().unwrap();
+    let tid = transporter["id"].as_str().unwrap();
 
     app.post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
         .await;
@@ -277,8 +279,8 @@ async fn list_watering_plans_includes_resolved_vehicles() {
 }
 
 fn update_body_with_status(
-    transporter_id: i64,
-    cluster_ids: Vec<i64>,
+    transporter_id: &str,
+    cluster_ids: Vec<&str>,
     status: &str,
     cancellation_note: &str,
     evaluation: serde_json::Value,
@@ -300,10 +302,10 @@ async fn finish_watering_plan_propagates_last_watered_and_persists_evaluations()
     let app = spawn_app().await;
 
     let transporter = create_transporter(&app).await;
-    let tid = transporter["id"].as_i64().unwrap();
+    let tid = transporter["id"].as_str().unwrap();
 
     let cluster = create_cluster(&app).await;
-    let cid = cluster["id"].as_i64().unwrap();
+    let cid = cluster["id"].as_str().unwrap();
     assert!(
         cluster["last_watered"].is_null(),
         "cluster should start without last_watered"
@@ -313,7 +315,7 @@ async fn finish_watering_plan_propagates_last_watered_and_persists_evaluations()
         .post_json("/api/v1/watering-plans", &plan_body(tid, vec![cid]))
         .await;
     let plan: serde_json::Value = create_resp.json().await.unwrap();
-    let plan_id = plan["id"].as_i64().unwrap();
+    let plan_id = plan["id"].as_str().unwrap();
 
     let activate = update_body_with_status(tid, vec![cid], "active", "", serde_json::json!([]));
     let activate_resp = app
@@ -358,15 +360,15 @@ async fn finish_without_evaluation_for_cluster_returns_400() {
     let app = spawn_app().await;
 
     let transporter = create_transporter(&app).await;
-    let tid = transporter["id"].as_i64().unwrap();
+    let tid = transporter["id"].as_str().unwrap();
     let cluster = create_cluster(&app).await;
-    let cid = cluster["id"].as_i64().unwrap();
+    let cid = cluster["id"].as_str().unwrap();
 
     let create_resp = app
         .post_json("/api/v1/watering-plans", &plan_body(tid, vec![cid]))
         .await;
     let plan: serde_json::Value = create_resp.json().await.unwrap();
-    let plan_id = plan["id"].as_i64().unwrap();
+    let plan_id = plan["id"].as_str().unwrap();
 
     app.put_json(
         &format!("/api/v1/watering-plans/{}", plan_id),
@@ -388,13 +390,13 @@ async fn cancel_active_watering_plan_with_note_succeeds() {
     let app = spawn_app().await;
 
     let transporter = create_transporter(&app).await;
-    let tid = transporter["id"].as_i64().unwrap();
+    let tid = transporter["id"].as_str().unwrap();
 
     let create_resp = app
         .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
         .await;
     let plan: serde_json::Value = create_resp.json().await.unwrap();
-    let plan_id = plan["id"].as_i64().unwrap();
+    let plan_id = plan["id"].as_str().unwrap();
 
     app.put_json(
         &format!("/api/v1/watering-plans/{}", plan_id),

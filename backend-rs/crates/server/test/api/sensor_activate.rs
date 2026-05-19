@@ -1,7 +1,8 @@
 use crate::helpers::{TestApp, spawn_app};
 use serde_json::json;
+use uuid::Uuid;
 
-fn create_body(id: &str, model_id: i32) -> serde_json::Value {
+fn create_body(id: &str, model_id: Uuid) -> serde_json::Value {
     json!({
         "id": id,
         "sensor_type": "lorawan",
@@ -16,7 +17,10 @@ fn create_body(id: &str, model_id: i32) -> serde_json::Value {
 }
 
 async fn create_prepared_sensor(app: &TestApp, id: &str) {
-    let r = app.post_json("/api/v1/sensors", &create_body(id, 1)).await;
+    let model_id = app.ecodrizzler_model_id().await;
+    let r = app
+        .post_json("/api/v1/sensors", &create_body(id, model_id))
+        .await;
     assert_eq!(
         r.status().as_u16(),
         201,
@@ -24,18 +28,20 @@ async fn create_prepared_sensor(app: &TestApp, id: &str) {
     );
 }
 
-async fn insert_tree(app: &TestApp, number: &str) -> i32 {
-    sqlx::query_scalar!(
-        r#"INSERT INTO trees (planting_year, species, number, latitude, longitude, geometry, description)
-        VALUES (2020, 'Eiche', $1, $2, $3, ST_SetSRID(ST_MakePoint($3, $2), 4326), 'Test')
-        RETURNING id"#,
+async fn insert_tree(app: &TestApp, number: &str) -> Uuid {
+    let id = Uuid::now_v7();
+    sqlx::query!(
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description)
+        VALUES ($1, 2020, 'Eiche', $2, $3, $4, ST_SetSRID(ST_MakePoint($4, $3), 4326), 'Test')"#,
+        id,
         number,
         54.79_f64,
         9.45_f64,
     )
-    .fetch_one(&app.db_pool)
+    .execute(&app.db_pool)
     .await
-    .unwrap()
+    .unwrap();
+    id
 }
 
 #[tokio::test]
@@ -53,7 +59,7 @@ async fn activate_happy_path_returns_200_with_coordinate_and_link() {
     assert_eq!(r.status().as_u16(), 200);
     let body: serde_json::Value = r.json().await.unwrap();
     assert_eq!(body["status"], "offline");
-    assert_eq!(body["linked_tree_id"], tree_id);
+    assert_eq!(body["linked_tree_id"], tree_id.to_string());
     assert!(body["coordinate"]["latitude"].as_f64().is_some());
     assert!(body["coordinate"]["longitude"].as_f64().is_some());
 }
@@ -151,7 +157,7 @@ async fn activate_unknown_tree_returns_404() {
     let r = app
         .post_json(
             "/api/v1/sensors/eui-act-6/activate",
-            &json!({ "tree_id": 999_999 }),
+            &json!({ "tree_id": Uuid::now_v7() }),
         )
         .await;
     assert_eq!(r.status().as_u16(), 404);

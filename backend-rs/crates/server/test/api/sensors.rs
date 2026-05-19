@@ -1,10 +1,12 @@
 use crate::helpers::spawn_app;
 
 async fn insert_sensor(app: &crate::helpers::TestApp, id: &str) {
+    let model_id = app.ecodrizzler_model_id().await;
     sqlx::query!(
         r#"INSERT INTO sensors (id, status, type, model_id)
-        VALUES ($1, 'online', 'lorawan', 1)"#,
+        VALUES ($1, 'online', 'lorawan', $2)"#,
         id,
+        model_id,
     )
     .execute(&app.db_pool)
     .await
@@ -66,6 +68,7 @@ async fn list_sensors_returns_inserted_sensors() {
 async fn get_sensor_returns_full_response() {
     let app = spawn_app().await;
 
+    let model_id = app.ecodrizzler_model_id().await;
     insert_sensor(&app, "sensor-100").await;
 
     let response = app.get("/api/v1/sensors/sensor-100").await;
@@ -76,7 +79,7 @@ async fn get_sensor_returns_full_response() {
     assert_eq!(sensor["id"], "sensor-100");
     assert_eq!(sensor["status"], "online");
     assert_eq!(sensor["sensor_type"], "lorawan");
-    assert_eq!(sensor["model"]["id"], 1);
+    assert_eq!(sensor["model"]["id"], model_id.to_string());
     // No tree linked → coordinate / linked_tree_id are omitted.
     assert!(sensor.get("coordinate").is_none_or(|c| c.is_null()));
     assert!(sensor.get("linked_tree_id").is_none_or(|c| c.is_null()));
@@ -116,7 +119,8 @@ async fn list_sensor_data_returns_inserted_data() {
     insert_sensor(&app, "sensor-data").await;
 
     sqlx::query!(
-        r#"INSERT INTO sensor_data (sensor_id, data) VALUES ($1, $2)"#,
+        r#"INSERT INTO sensor_data (id, sensor_id, data) VALUES ($1, $2, $3)"#,
+        uuid::Uuid::now_v7(),
         "sensor-data",
         serde_json::json!({"temperature": 22.5})
     )
@@ -157,10 +161,11 @@ async fn delete_sensor_unlinks_from_tree() {
     insert_sensor(&app, "sensor-unlink").await;
 
     sqlx::query!(
-        r#"INSERT INTO trees (sensor_id, planting_year, species, number, latitude, longitude,
+        r#"INSERT INTO trees (id, sensor_id, planting_year, species, number, latitude, longitude,
                               geometry, description)
-        VALUES ('sensor-unlink', 2020, 'Eiche', 'T-UNL', 53.55, 9.99,
+        VALUES ($1, 'sensor-unlink', 2020, 'Eiche', 'T-UNL', 53.55, 9.99,
                 ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test')"#,
+        uuid::Uuid::now_v7(),
     )
     .execute(&app.db_pool)
     .await
@@ -183,10 +188,11 @@ async fn get_tree_by_sensor_returns_linked_tree() {
 
     insert_sensor(&app, "sensor-tree").await;
     sqlx::query!(
-        r#"INSERT INTO trees (sensor_id, planting_year, species, number, latitude, longitude,
+        r#"INSERT INTO trees (id, sensor_id, planting_year, species, number, latitude, longitude,
                               geometry, description)
-        VALUES ('sensor-tree', 2020, 'Eiche', 'T-LINK', 53.55, 9.99,
+        VALUES ($1, 'sensor-tree', 2020, 'Eiche', 'T-LINK', 53.55, 9.99,
                 ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test')"#,
+        uuid::Uuid::now_v7(),
     )
     .execute(&app.db_pool)
     .await
@@ -243,10 +249,11 @@ async fn handle_message_via_create_and_activate_updates_watering_status() {
     let app = spawn_app().await;
 
     // 1. Register a prepared sensor through the public API.
+    let model_id = app.ecodrizzler_model_id().await;
     let create_body = serde_json::json!({
         "id": "sensor-mq-1",
         "sensor_type": "lorawan",
-        "model_id": 1,
+        "model_id": model_id,
         "lorawan": {
             "serial_number": "SN", "dev_eui": "a81758fffe0c3b52",
             "app_eui": "70b3d57ed00abcd1", "app_key": "00112233445566778899aabbccddeeff"
@@ -263,14 +270,15 @@ async fn handle_message_via_create_and_activate_updates_watering_status() {
         .to_string()
         .parse()
         .unwrap();
-    let tree_id: i32 = sqlx::query_scalar!(
-        r#"INSERT INTO trees (planting_year, species, number, latitude, longitude, geometry, description)
-        VALUES ($1, 'Eiche', 'T-MQ-1', 53.55, 9.99,
-                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test')
-        RETURNING id"#,
+    let tree_id = uuid::Uuid::now_v7();
+    sqlx::query!(
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description)
+        VALUES ($1, $2, 'Eiche', 'T-MQ-1', 53.55, 9.99,
+                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test')"#,
+        tree_id,
         planting_year,
     )
-    .fetch_one(&app.db_pool)
+    .execute(&app.db_pool)
     .await
     .unwrap();
     let act = app
@@ -308,10 +316,11 @@ async fn handle_message_known_sensor_updates_only_status_and_publishes_event() {
 
     insert_sensor(&app, "sensor-known").await;
     sqlx::query!(
-        r#"INSERT INTO trees (sensor_id, planting_year, species, number, latitude, longitude,
+        r#"INSERT INTO trees (id, sensor_id, planting_year, species, number, latitude, longitude,
                               geometry, description, watering_status)
-        VALUES ('sensor-known', $1, 'Eiche', 'T-KN', 53.55, 9.99,
+        VALUES ($1, 'sensor-known', $2, 'Eiche', 'T-KN', 53.55, 9.99,
                 ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', 'unknown')"#,
+        uuid::Uuid::now_v7(),
         chrono::Utc::now()
             .date_naive()
             .format("%Y")
