@@ -3,6 +3,7 @@ use std::time::Duration;
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 use url::Url;
+use uuid::Uuid;
 
 use crate::watering_plan::WateringPlanStatus;
 
@@ -10,15 +11,15 @@ use crate::watering_plan::WateringPlanStatus;
 #[doc(hidden)]
 #[derive(Debug, Clone)]
 pub struct WateringPlanSnapshot {
-    pub id: i32,
+    pub id: Uuid,
     pub date: DateTime<Utc>,
     pub description: Option<String>,
     pub status: WateringPlanStatus,
     pub distance: Option<f64>,
     pub total_water_required: Option<f64>,
-    pub cluster_ids: Vec<i32>,
-    pub transporter_id: Option<i32>,
-    pub trailer_id: Option<i32>,
+    pub cluster_ids: Vec<Uuid>,
+    pub transporter_id: Option<Uuid>,
+    pub trailer_id: Option<Uuid>,
     pub cancellation_note: Option<String>,
     pub gpx_url: Option<Url>,
     pub refill_count: i32,

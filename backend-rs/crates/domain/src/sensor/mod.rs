@@ -156,7 +156,7 @@ mod tests {
             provenance: Provenance::default(),
             status: SensorStatus::Online,
             sensor_type: SensorType::Lorawan,
-            model_id: Id::new(1),
+            model_id: Id::new_v7(),
             lorawan: None,
         }
     }

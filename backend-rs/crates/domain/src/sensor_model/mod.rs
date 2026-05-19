@@ -28,7 +28,7 @@ pub struct SensorModel {
 }
 
 impl SensorModel {
-    pub fn ability_id_for(&self, name: SensorAbilityName, depth_cm: i32) -> Option<i32> {
+    pub fn ability_id_for(&self, name: SensorAbilityName, depth_cm: i32) -> Option<uuid::Uuid> {
         self.abilities
             .iter()
             .find(|a| a.ability.name == name && a.depth_cm == depth_cm)
@@ -48,56 +48,63 @@ impl SensorModel {
 mod tests {
     use super::*;
 
-    fn eco_drizzler() -> SensorModel {
+    fn eco_drizzler() -> (SensorModel, [uuid::Uuid; 4]) {
+        let tension_ability = uuid::Uuid::now_v7();
+        let moisture_ability = uuid::Uuid::now_v7();
+        let st_30 = uuid::Uuid::now_v7();
+        let st_60 = uuid::Uuid::now_v7();
+        let st_90 = uuid::Uuid::now_v7();
+        let moisture_15_id = uuid::Uuid::now_v7();
         let st = |id, depth_cm| SensorModelAbility {
             id,
             ability: SensorAbility {
-                id: 1,
+                id: tension_ability,
                 name: SensorAbilityName::SoilTension,
                 unit: SensorAbilityUnit::Centibar,
             },
             depth_cm,
         };
         let moisture_15 = SensorModelAbility {
-            id: 4,
+            id: moisture_15_id,
             ability: SensorAbility {
-                id: 2,
+                id: moisture_ability,
                 name: SensorAbilityName::SoilMoisture,
                 unit: SensorAbilityUnit::Percent,
             },
             depth_cm: 15,
         };
-        SensorModel {
-            id: Id::new(1),
+        let model = SensorModel {
+            id: Id::new_v7(),
             name: SensorModelName::new("EcoDrizzler").unwrap(),
             description: None,
-            abilities: vec![st(1, 30), st(2, 60), st(3, 90), moisture_15],
-        }
+            abilities: vec![st(st_30, 30), st(st_60, 60), st(st_90, 90), moisture_15],
+        };
+        (model, [st_30, st_60, st_90, moisture_15_id])
     }
 
     #[test]
     fn ability_id_for_known_returns_some() {
-        let m = eco_drizzler();
+        let (m, ids) = eco_drizzler();
         assert_eq!(
             m.ability_id_for(SensorAbilityName::SoilTension, 60),
-            Some(2)
+            Some(ids[1])
         );
         assert_eq!(
             m.ability_id_for(SensorAbilityName::SoilMoisture, 15),
-            Some(4)
+            Some(ids[3])
         );
     }
 
     #[test]
     fn ability_id_for_unknown_returns_none() {
-        let m = eco_drizzler();
+        let (m, _) = eco_drizzler();
         assert_eq!(m.ability_id_for(SensorAbilityName::SoilTension, 99), None);
         assert_eq!(m.ability_id_for(SensorAbilityName::Humidity, 15), None);
     }
 
     #[test]
     fn depths_for_returns_all_matching() {
-        let m = eco_drizzler();
+        let (m, _) = eco_drizzler();
         let mut depths = m.depths_for(SensorAbilityName::SoilTension);
         depths.sort();
         assert_eq!(depths, vec![30, 60, 90]);

@@ -11,7 +11,7 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct NormalizedValue {
-    pub model_ability_id: i32,
+    pub model_ability_id: uuid::Uuid,
     pub value: rust_decimal::Decimal,
 }
 

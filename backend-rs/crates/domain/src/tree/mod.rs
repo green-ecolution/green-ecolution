@@ -288,7 +288,7 @@ mod tests {
 
     fn fixed_tree() -> Tree {
         Tree {
-            id: Id::new(1),
+            id: Id::new_v7(),
             planting_year: PlantingYear::new(2020).unwrap(),
             species: Species::new("Quercus robur").unwrap(),
             tree_number: TreeNumber::new("FL-001").unwrap(),
@@ -333,7 +333,7 @@ mod tests {
     #[test]
     fn move_to_new_cluster_emits_event_and_updates() {
         let mut t = fixed_tree();
-        let target = Id::new(42);
+        let target: Id<TreeCluster> = Id::new_v7();
         let events = t.move_to_cluster(Some(target));
         assert_eq!(t.cluster_id(), Some(target));
         assert_eq!(events.len(), 1);
@@ -350,8 +350,8 @@ mod tests {
     #[test]
     fn move_to_other_cluster_emits_event_with_from_and_to() {
         let mut t = fixed_tree();
-        let a = Id::new(10);
-        let b = Id::new(20);
+        let a: Id<TreeCluster> = Id::new_v7();
+        let b: Id<TreeCluster> = Id::new_v7();
         t.move_to_cluster(Some(a));
         let events = t.move_to_cluster(Some(b));
         assert_eq!(t.cluster_id(), Some(b));
@@ -367,7 +367,7 @@ mod tests {
     #[test]
     fn move_out_of_cluster_emits_event_with_to_none() {
         let mut t = fixed_tree();
-        let a = Id::new(10);
+        let a: Id<TreeCluster> = Id::new_v7();
         t.move_to_cluster(Some(a));
         let events = t.move_to_cluster(None);
         assert!(t.cluster_id().is_none());

@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde_json::Value;
+use uuid::Uuid;
 
 use crate::shared::watering_status::WateringStatus;
 
@@ -7,8 +8,8 @@ use crate::shared::watering_status::WateringStatus;
 #[doc(hidden)]
 #[derive(Debug, Clone)]
 pub struct TreeSnapshot {
-    pub id: i32,
-    pub cluster_id: Option<i32>,
+    pub id: Uuid,
+    pub cluster_id: Option<Uuid>,
     pub sensor_id: Option<String>,
     pub planting_year: i32,
     pub species: String,

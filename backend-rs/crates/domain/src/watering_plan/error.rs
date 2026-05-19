@@ -21,5 +21,5 @@ pub enum WateringPlanError {
     /// given `cluster_id`. Every cluster currently assigned to the plan must
     /// have exactly one evaluation entry.
     #[error("evaluation missing for cluster {0}")]
-    EvaluationMissingForCluster(i32),
+    EvaluationMissingForCluster(uuid::Uuid),
 }

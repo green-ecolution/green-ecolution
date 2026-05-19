@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde_json::Value;
+use uuid::Uuid;
 
 use crate::vehicle::{DrivingLicense, VehicleStatus, VehicleType};
 
@@ -7,7 +8,7 @@ use crate::vehicle::{DrivingLicense, VehicleStatus, VehicleType};
 #[doc(hidden)]
 #[derive(Debug, Clone)]
 pub struct VehicleSnapshot {
-    pub id: i32,
+    pub id: Uuid,
     pub archived_at: Option<DateTime<Utc>>,
     pub number_plate: String,
     pub description: Option<String>,

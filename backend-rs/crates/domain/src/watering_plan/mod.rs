@@ -302,9 +302,11 @@ mod tests {
     use chrono::TimeZone;
     use claims::assert_err;
 
-    fn fixed_plan() -> WateringPlan {
-        WateringPlan {
-            id: Id::new(1),
+    fn fixed_plan() -> (WateringPlan, [Id<crate::cluster::TreeCluster>; 2]) {
+        let c1: Id<crate::cluster::TreeCluster> = Id::new_v7();
+        let c2: Id<crate::cluster::TreeCluster> = Id::new_v7();
+        let plan = WateringPlan {
+            id: Id::new_v7(),
             date: Utc.with_ymd_and_hms(2026, 6, 1, 8, 0, 0).unwrap(),
             description: None,
             distance: None,
@@ -313,17 +315,18 @@ mod tests {
             refill_count: 0,
             duration: Duration::default(),
             status: WateringPlanStatus::Planned,
-            cluster_ids: vec![Id::new(1), Id::new(2)],
-            transporter_id: Some(Id::new(10)),
+            cluster_ids: vec![c1, c2],
+            transporter_id: Some(Id::new_v7()),
             trailer_id: None,
             cancellation_note: None,
             provenance: Provenance::default(),
-        }
+        };
+        (plan, [c1, c2])
     }
 
     #[test]
     fn start_from_planned_succeeds() {
-        let mut p = fixed_plan();
+        let (mut p, [c1, c2]) = fixed_plan();
         let events = p.start().unwrap();
         assert_eq!(p.status(), WateringPlanStatus::Active);
         assert_eq!(events.len(), 1);
@@ -333,7 +336,7 @@ mod tests {
                 cluster_ids,
             } => {
                 assert_eq!(*plan_id, p.id);
-                assert_eq!(cluster_ids, &vec![Id::new(1), Id::new(2)]);
+                assert_eq!(cluster_ids, &vec![c1, c2]);
             }
             other => panic!("expected WateringPlanStarted, got {other:?}"),
         }
@@ -341,21 +344,21 @@ mod tests {
 
     #[test]
     fn start_from_active_rejects() {
-        let mut p = fixed_plan();
+        let (mut p, _) = fixed_plan();
         p.start().unwrap();
         assert_err!(p.start());
     }
 
     #[test]
     fn cancel_requires_note() {
-        let mut p = fixed_plan();
+        let (mut p, _) = fixed_plan();
         assert_err!(p.cancel("".to_string()));
         assert_err!(p.cancel("   ".to_string()));
     }
 
     #[test]
     fn cancel_from_planned_succeeds() {
-        let mut p = fixed_plan();
+        let (mut p, [c1, c2]) = fixed_plan();
         let events = p.cancel("not needed".to_string()).unwrap();
         assert_eq!(p.status(), WateringPlanStatus::Canceled);
         assert_eq!(p.cancellation_note(), Some("not needed"));
@@ -366,7 +369,7 @@ mod tests {
                 cluster_ids,
             } => {
                 assert_eq!(*plan_id, p.id);
-                assert_eq!(cluster_ids, &vec![Id::new(1), Id::new(2)]);
+                assert_eq!(cluster_ids, &vec![c1, c2]);
             }
             other => panic!("expected WateringPlanCanceled, got {other:?}"),
         }
@@ -374,7 +377,7 @@ mod tests {
 
     #[test]
     fn cancel_from_active_succeeds() {
-        let mut p = fixed_plan();
+        let (mut p, _) = fixed_plan();
         p.start().unwrap();
         let events = p.cancel("aborted mid-run".to_string()).unwrap();
         assert_eq!(p.status(), WateringPlanStatus::Canceled);
@@ -387,17 +390,17 @@ mod tests {
 
     #[test]
     fn cancel_from_finished_rejects() {
-        let mut p = fixed_plan();
+        let (mut p, [c1, c2]) = fixed_plan();
         p.start().unwrap();
         p.finish(&[
             WateringPlanEvaluation {
                 watering_plan_id: p.id,
-                cluster_id: Id::new(1),
+                cluster_id: c1,
                 consumed_water: 100.0,
             },
             WateringPlanEvaluation {
                 watering_plan_id: p.id,
-                cluster_id: Id::new(2),
+                cluster_id: c2,
                 consumed_water: 50.0,
             },
         ])
@@ -407,7 +410,7 @@ mod tests {
 
     #[test]
     fn fail_only_from_active() {
-        let mut p = fixed_plan();
+        let (mut p, [c1, c2]) = fixed_plan();
         assert_err!(p.fail("breakdown".to_string()));
         p.start().unwrap();
         let events = p.fail("breakdown".to_string()).unwrap();
@@ -420,7 +423,7 @@ mod tests {
                 cluster_ids,
             } => {
                 assert_eq!(*plan_id, p.id);
-                assert_eq!(cluster_ids, &vec![Id::new(1), Id::new(2)]);
+                assert_eq!(cluster_ids, &vec![c1, c2]);
             }
             other => panic!("expected WateringPlanFailed, got {other:?}"),
         }
@@ -428,7 +431,7 @@ mod tests {
 
     #[test]
     fn fail_requires_note() {
-        let mut p = fixed_plan();
+        let (mut p, _) = fixed_plan();
         p.start().unwrap();
         assert_err!(p.fail("".to_string()));
         assert_err!(p.fail("   ".to_string()));
@@ -436,39 +439,40 @@ mod tests {
 
     #[test]
     fn finish_requires_active() {
-        let mut p = fixed_plan();
+        let (mut p, _) = fixed_plan();
         assert_err!(p.finish(&[]));
     }
 
     #[test]
     fn finish_requires_evaluation_per_cluster() {
-        let mut p = fixed_plan();
+        let (mut p, [c1, c2]) = fixed_plan();
         p.start().unwrap();
         let only_one = vec![WateringPlanEvaluation {
             watering_plan_id: p.id,
-            cluster_id: Id::new(1),
+            cluster_id: c1,
             consumed_water: 100.0,
         }];
         let err = p.finish(&only_one).unwrap_err();
+        let missing = c2.value();
         assert!(matches!(
             err,
-            WateringPlanError::EvaluationMissingForCluster(2)
+            WateringPlanError::EvaluationMissingForCluster(uuid) if uuid == missing
         ));
     }
 
     #[test]
     fn finish_succeeds_emits_event_when_all_clusters_have_evaluations() {
-        let mut p = fixed_plan();
+        let (mut p, [c1, c2]) = fixed_plan();
         p.start().unwrap();
         let evals = vec![
             WateringPlanEvaluation {
                 watering_plan_id: p.id,
-                cluster_id: Id::new(1),
+                cluster_id: c1,
                 consumed_water: 100.0,
             },
             WateringPlanEvaluation {
                 watering_plan_id: p.id,
-                cluster_id: Id::new(2),
+                cluster_id: c2,
                 consumed_water: 50.0,
             },
         ];
@@ -483,7 +487,7 @@ mod tests {
                 ..
             } => {
                 assert_eq!(*plan_id, p.id);
-                assert_eq!(cluster_ids, &vec![Id::new(1), Id::new(2)]);
+                assert_eq!(cluster_ids, &vec![c1, c2]);
                 assert_eq!(evaluations.len(), 2);
             }
             other => panic!("expected WateringPlanFinished, got {other:?}"),
@@ -492,14 +496,14 @@ mod tests {
 
     #[test]
     fn start_from_canceled_rejects() {
-        let mut p = fixed_plan();
+        let (mut p, _) = fixed_plan();
         p.cancel("done".to_string()).unwrap();
         assert_err!(p.start());
     }
 
     #[test]
     fn cancel_from_notcompleted_rejects() {
-        let mut p = fixed_plan();
+        let (mut p, _) = fixed_plan();
         p.start().unwrap();
         p.fail("breakdown".to_string()).unwrap();
         assert_err!(p.cancel("too late".to_string()));
@@ -507,7 +511,7 @@ mod tests {
 
     #[test]
     fn replace_details_from_canceled_rejects() {
-        let mut p = fixed_plan();
+        let (mut p, _) = fixed_plan();
         p.cancel("nope".to_string()).unwrap();
         let result = p.replace_details(WateringPlanUpdate {
             date: p.date,
@@ -525,7 +529,7 @@ mod tests {
 
     #[test]
     fn set_metrics_overwrites_run_results() {
-        let mut p = fixed_plan();
+        let (mut p, _) = fixed_plan();
         let dist = crate::shared::distance::Distance::new(1234.0).unwrap();
         let url: Url = "https://example.com/run.gpx".parse().unwrap();
         p.set_metrics(
@@ -544,14 +548,14 @@ mod tests {
 
     #[test]
     fn replace_details_only_when_planned() {
-        let mut p = fixed_plan();
+        let (mut p, _) = fixed_plan();
         let date = p.date;
         p.start().unwrap();
         let result = p.replace_details(WateringPlanUpdate {
             date,
             description: Some("new desc".to_string()),
-            cluster_ids: vec![Id::new(3)],
-            transporter_id: Some(Id::new(11)),
+            cluster_ids: vec![Id::new_v7()],
+            transporter_id: Some(Id::new_v7()),
             trailer_id: None,
             provenance: Provenance::default(),
         });

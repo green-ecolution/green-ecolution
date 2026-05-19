@@ -82,7 +82,7 @@ pub struct TreeClusterDraft {
 #[derive(Debug, Default, Clone)]
 pub struct TreeClusterSearchQuery {
     pub watering_statuses: Vec<WateringStatus>,
-    pub regions: Vec<i32>,
+    pub regions: Vec<uuid::Uuid>,
     pub ids: Vec<Id<TreeCluster>>,
     pub provider: Option<ProviderId>,
 }
@@ -234,7 +234,7 @@ mod tests {
 
     fn fixed_cluster() -> TreeCluster {
         TreeCluster {
-            id: Id::new(1),
+            id: Id::new_v7(),
             name: ClusterName::new("Cluster Stadtpark Nord").unwrap(),
             address: ClusterAddress::new("Stadtpark 1, 24937 Flensburg").unwrap(),
             description: "Baumgruppe".to_string(),
@@ -331,15 +331,18 @@ mod tests {
     #[test]
     fn assign_region_sets_id() {
         let mut c = fixed_cluster();
-        c.assign_region(Some(Id::new(7)));
-        assert_eq!(c.region_id(), Some(Id::new(7)));
+        let region: Id<crate::region::Region> = Id::new_v7();
+        c.assign_region(Some(region));
+        assert_eq!(c.region_id(), Some(region));
     }
 
     #[test]
     fn replace_trees_replaces_set() {
         let mut c = fixed_cluster();
-        c.replace_trees(vec![Id::new(1), Id::new(2)]);
-        assert_eq!(c.tree_ids, vec![Id::new(1), Id::new(2)]);
+        let t1: Id<crate::tree::Tree> = Id::new_v7();
+        let t2: Id<crate::tree::Tree> = Id::new_v7();
+        c.replace_trees(vec![t1, t2]);
+        assert_eq!(c.tree_ids, vec![t1, t2]);
     }
 
     #[test]

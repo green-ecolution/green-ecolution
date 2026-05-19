@@ -1,15 +1,16 @@
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
 use serde_json::Value;
+use uuid::Uuid;
 
 use crate::sensor::SensorId;
 
 /// A single time-series measurement from a sensor.
 ///
-/// `recorded_at` is the domain name for the event timestamp; the underlying
-/// DB column is called `created_at`.
+/// `recorded_at` is the domain name for the event timestamp; it is derived
+/// from the UUID v7 `id` (which encodes the original creation time).
 #[derive(Debug, Clone, PartialEq)]
 pub struct SensorReading {
-    pub id: i32,
+    pub id: Uuid,
     pub sensor_id: SensorId,
     pub recorded_at: DateTime<Utc>,
     pub data: Value,
@@ -24,11 +25,12 @@ pub struct SensorReadingDraft {
 
 /// HTTP-side read model for a sensor reading.
 ///
-/// Exposes the timestamp as `created_at` (matching the DB column name and the
-/// existing API contract) rather than the domain's `recorded_at`.
+/// `created_at` is derived from the UUID v7 timestamp embedded in `id` to
+/// preserve the existing API contract after the `sensor_data.created_at`
+/// column was dropped in the UUID migration.
 #[derive(Debug, Clone)]
 pub struct SensorReadingView {
-    pub id: i32,
+    pub id: Uuid,
     pub sensor_id: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -38,22 +40,29 @@ pub struct SensorReadingView {
 #[doc(hidden)]
 #[derive(Debug, Clone)]
 pub struct SensorReadingSnapshot {
-    pub id: i32,
+    pub id: Uuid,
     pub sensor_id: String,
-    pub recorded_at: NaiveDateTime,
     pub data: Value,
 }
 
 impl SensorReading {
     #[doc(hidden)]
     pub fn reconstitute(snap: SensorReadingSnapshot) -> Self {
+        let recorded_at = uuid_v7_timestamp(&snap.id).unwrap_or_else(Utc::now);
         Self {
             id: snap.id,
             sensor_id: SensorId::reconstitute(snap.sensor_id),
-            recorded_at: snap.recorded_at.and_utc(),
+            recorded_at,
             data: snap.data,
         }
     }
+}
+
+/// Extracts the UNIX timestamp embedded in a UUID v7. Returns `None` for
+/// non-v7 UUIDs (legacy v4 data, etc.).
+pub(crate) fn uuid_v7_timestamp(id: &Uuid) -> Option<DateTime<Utc>> {
+    let (seconds, nanos) = id.get_timestamp()?.to_unix();
+    DateTime::<Utc>::from_timestamp(seconds as i64, nanos)
 }
 
 /// Single Watermark soil-tension reading at a fixed depth in centimetres.
