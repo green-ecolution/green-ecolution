@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE trees SET tree_cluster_id = $1 WHERE id = ANY($2::uuid[])",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "de9d90eb713bab35438527c6ec8df2302c2586d97e8904cf0b724432ab92e516"
+}

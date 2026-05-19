@@ -338,38 +338,40 @@ mod tests {
     use serde_json::json;
 
     fn eco_drizzler_model() -> SensorModel {
-        let st = |id, depth_cm| SensorModelAbility {
-            id,
+        let tension_ability_id = uuid::Uuid::now_v7();
+        let st = move |depth_cm| SensorModelAbility {
+            id: uuid::Uuid::now_v7(),
             ability: SensorAbility {
-                id: 1,
+                id: tension_ability_id,
                 name: SensorAbilityName::SoilTension,
                 unit: SensorAbilityUnit::Centibar,
             },
             depth_cm,
         };
         SensorModel {
-            id: Id::new(1),
+            id: Id::new_v7(),
             name: SensorModelName::new("EcoDrizzler").unwrap(),
             description: None,
-            abilities: vec![st(1, 30), st(2, 60), st(3, 90)],
+            abilities: vec![st(30), st(60), st(90)],
         }
     }
 
     fn ges_1000_model() -> SensorModel {
-        let moisture = |id, depth_cm| SensorModelAbility {
-            id,
+        let moisture_ability_id = uuid::Uuid::now_v7();
+        let moisture = move |depth_cm| SensorModelAbility {
+            id: uuid::Uuid::now_v7(),
             ability: SensorAbility {
-                id: 2,
+                id: moisture_ability_id,
                 name: SensorAbilityName::SoilMoisture,
                 unit: SensorAbilityUnit::Percent,
             },
             depth_cm,
         };
         SensorModel {
-            id: Id::new(2),
+            id: Id::new_v7(),
             name: SensorModelName::new("GES-1000").unwrap(),
             description: None,
-            abilities: vec![moisture(10, 30), moisture(11, 60), moisture(12, 90)],
+            abilities: vec![moisture(30), moisture(60), moisture(90)],
         }
     }
 
@@ -433,7 +435,7 @@ mod tests {
     #[test]
     fn build_ingest_rejects_unknown_model() {
         let model = SensorModel {
-            id: Id::new(99),
+            id: Id::new_v7(),
             name: SensorModelName::new("UnknownModel").unwrap(),
             description: None,
             abilities: vec![],

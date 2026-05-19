@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE tree_clusters SET last_watered = $2 WHERE id = ANY($1::uuid[])",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "UuidArray",
+        "Timestamp"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b6da3f17405f7e82e7a00211441b0132776c53f96b3cbba2bd13dc3962be945f"
+}

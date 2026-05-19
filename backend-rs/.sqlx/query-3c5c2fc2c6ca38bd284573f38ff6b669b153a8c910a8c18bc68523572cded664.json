@@ -1,0 +1,162 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT tc.id, tc.updated_at, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: Option<SoilCondition>\",\n                      tc.latitude, tc.longitude,\n                      tc.last_watered AS \"last_watered: DateTime<Utc>\",\n                      tc.provider,\n                      tc.additional_informations AS additional_info,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS \"tree_ids!: Vec<RawId>\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE ($1::watering_status[] = '{}' OR tc.watering_status = ANY($1))\n              AND ($2::uuid[] = '{}' OR tc.region_id = ANY($2))\n              AND ($3::text IS NULL OR tc.provider = $3)\n            GROUP BY tc.id\n            ORDER BY tc.name ASC, tc.id ASC\n            LIMIT $4 OFFSET $5",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 2,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "address",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "archived",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 6,
+        "name": "moisture_level",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 7,
+        "name": "region_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 8,
+        "name": "watering_status: WateringStatus",
+        "type_info": {
+          "Custom": {
+            "name": "watering_status",
+            "kind": {
+              "Enum": [
+                "good",
+                "moderate",
+                "bad",
+                "unknown",
+                "just watered"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "soil_condition: Option<SoilCondition>",
+        "type_info": {
+          "Custom": {
+            "name": "tree_soil_condition",
+            "kind": {
+              "Enum": [
+                "schluffig",
+                "sandig",
+                "lehmig",
+                "tonig",
+                "unknown"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "latitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 11,
+        "name": "longitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 12,
+        "name": "last_watered: DateTime<Utc>",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 13,
+        "name": "provider",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 14,
+        "name": "additional_info",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 15,
+        "name": "tree_ids!: Vec<RawId>",
+        "type_info": "UuidArray"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "watering_status[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "watering_status",
+                  "kind": {
+                    "Enum": [
+                      "good",
+                      "moderate",
+                      "bad",
+                      "unknown",
+                      "just watered"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "UuidArray",
+        "Text",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      null
+    ]
+  },
+  "hash": "3c5c2fc2c6ca38bd284573f38ff6b669b153a8c910a8c18bc68523572cded664"
+}

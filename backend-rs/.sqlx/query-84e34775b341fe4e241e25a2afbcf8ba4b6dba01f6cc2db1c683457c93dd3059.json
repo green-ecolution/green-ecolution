@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO regions (id, name, geometry)\n        VALUES ($1, $2, ST_SetSRID(ST_GeomFromText($3), 4326))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "84e34775b341fe4e241e25a2afbcf8ba4b6dba01f6cc2db1c683457c93dd3059"
+}

@@ -16,7 +16,7 @@
             }
           }
         },
-        "Int4",
+        "Uuid",
         "Text",
         "Jsonb"
       ]

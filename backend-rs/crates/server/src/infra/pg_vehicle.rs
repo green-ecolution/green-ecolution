@@ -67,7 +67,7 @@ impl VehicleReader for PgVehicleRepository {
                       height, width, length, weight,
                       provider,
                       additional_informations AS additional_info
-            FROM vehicles WHERE id = ANY($1)"#,
+            FROM vehicles WHERE id = ANY($1::uuid[])"#,
             &id_values
         )
         .fetch_all(&self.pool)
@@ -105,7 +105,6 @@ impl VehicleReader for PgVehicleRepository {
     async fn view_by_id(&self, id: Id<Vehicle>) -> Result<VehicleView, RepositoryError> {
         struct Row {
             id: RawId,
-            created_at: chrono::NaiveDateTime,
             updated_at: chrono::NaiveDateTime,
             archived_at: Option<chrono::NaiveDateTime>,
             number_plate: String,
@@ -125,7 +124,7 @@ impl VehicleReader for PgVehicleRepository {
 
         let row = sqlx::query_as!(
             Row,
-            r#"SELECT id, created_at, updated_at,
+            r#"SELECT id, updated_at,
                       archived_at,
                       number_plate,
                       description,
@@ -144,9 +143,10 @@ impl VehicleReader for PgVehicleRepository {
         .await?
         .ok_or(RepositoryError::NotFound)?;
 
+        let created_at = Id::<Vehicle>::new(row.id).created_at().unwrap_or_default();
         Ok(VehicleView {
             id: row.id,
-            created_at: row.created_at.and_utc(),
+            created_at,
             updated_at: row.updated_at.and_utc(),
             archived_at: row.archived_at.map(|dt| dt.and_utc()),
             number_plate: row.number_plate,
@@ -171,7 +171,6 @@ impl VehicleReader for PgVehicleRepository {
 
         struct Row {
             id: RawId,
-            created_at: chrono::NaiveDateTime,
             updated_at: chrono::NaiveDateTime,
             archived_at: Option<chrono::NaiveDateTime>,
             number_plate: String,
@@ -191,7 +190,7 @@ impl VehicleReader for PgVehicleRepository {
 
         let rows = sqlx::query_as!(
             Row,
-            r#"SELECT id, created_at, updated_at,
+            r#"SELECT id, updated_at,
                       archived_at,
                       number_plate,
                       description,
@@ -203,7 +202,7 @@ impl VehicleReader for PgVehicleRepository {
                       height, width, length, weight,
                       provider,
                       additional_informations AS "additional_info: Value"
-            FROM vehicles WHERE id = ANY($1)"#,
+            FROM vehicles WHERE id = ANY($1::uuid[])"#,
             &id_values
         )
         .fetch_all(&self.pool)
@@ -211,24 +210,27 @@ impl VehicleReader for PgVehicleRepository {
 
         Ok(rows
             .into_iter()
-            .map(|row| VehicleView {
-                id: row.id,
-                created_at: row.created_at.and_utc(),
-                updated_at: row.updated_at.and_utc(),
-                archived_at: row.archived_at.map(|dt| dt.and_utc()),
-                number_plate: row.number_plate,
-                description: row.description,
-                water_capacity: row.water_capacity,
-                status: row.status,
-                vehicle_type: row.vehicle_type,
-                model: row.model,
-                driving_license: row.driving_license,
-                height: row.height,
-                width: row.width,
-                length: row.length,
-                weight: row.weight,
-                provider: row.provider,
-                additional_info: row.additional_info,
+            .map(|row| {
+                let created_at = Id::<Vehicle>::new(row.id).created_at().unwrap_or_default();
+                VehicleView {
+                    id: row.id,
+                    created_at,
+                    updated_at: row.updated_at.and_utc(),
+                    archived_at: row.archived_at.map(|dt| dt.and_utc()),
+                    number_plate: row.number_plate,
+                    description: row.description,
+                    water_capacity: row.water_capacity,
+                    status: row.status,
+                    vehicle_type: row.vehicle_type,
+                    model: row.model,
+                    driving_license: row.driving_license,
+                    height: row.height,
+                    width: row.width,
+                    length: row.length,
+                    weight: row.weight,
+                    provider: row.provider,
+                    additional_info: row.additional_info,
+                }
             })
             .collect())
     }
@@ -245,7 +247,6 @@ impl VehicleReader for PgVehicleRepository {
 
         struct Row {
             id: RawId,
-            created_at: chrono::NaiveDateTime,
             updated_at: chrono::NaiveDateTime,
             archived_at: Option<chrono::NaiveDateTime>,
             number_plate: String,
@@ -279,7 +280,7 @@ impl VehicleReader for PgVehicleRepository {
 
         let rows = sqlx::query_as!(
             Row,
-            r#"SELECT id, created_at, updated_at,
+            r#"SELECT id, updated_at,
                       archived_at,
                       number_plate,
                       description,
@@ -310,24 +311,27 @@ impl VehicleReader for PgVehicleRepository {
 
         let items = rows
             .into_iter()
-            .map(|row| VehicleView {
-                id: row.id,
-                created_at: row.created_at.and_utc(),
-                updated_at: row.updated_at.and_utc(),
-                archived_at: row.archived_at.map(|dt| dt.and_utc()),
-                number_plate: row.number_plate,
-                description: row.description,
-                water_capacity: row.water_capacity,
-                status: row.status,
-                vehicle_type: row.vehicle_type,
-                model: row.model,
-                driving_license: row.driving_license,
-                height: row.height,
-                width: row.width,
-                length: row.length,
-                weight: row.weight,
-                provider: row.provider,
-                additional_info: row.additional_info,
+            .map(|row| {
+                let created_at = Id::<Vehicle>::new(row.id).created_at().unwrap_or_default();
+                VehicleView {
+                    id: row.id,
+                    created_at,
+                    updated_at: row.updated_at.and_utc(),
+                    archived_at: row.archived_at.map(|dt| dt.and_utc()),
+                    number_plate: row.number_plate,
+                    description: row.description,
+                    water_capacity: row.water_capacity,
+                    status: row.status,
+                    vehicle_type: row.vehicle_type,
+                    model: row.model,
+                    driving_license: row.driving_license,
+                    height: row.height,
+                    width: row.width,
+                    length: row.length,
+                    weight: row.weight,
+                    provider: row.provider,
+                    additional_info: row.additional_info,
+                }
             })
             .collect();
 
@@ -352,12 +356,13 @@ impl VehicleReader for PgVehicleRepository {
 impl VehicleWriter for PgVehicleRepository {
     #[tracing::instrument(level = "trace", skip_all)]
     async fn save_new(&self, draft: VehicleDraft) -> Result<Vehicle, RepositoryError> {
+        let id = Id::<Vehicle>::new_v7();
         let snap = sqlx::query_as!(
             VehicleSnapshot,
-            r#"INSERT INTO vehicles (number_plate, description, water_capacity, type, status,
+            r#"INSERT INTO vehicles (id, number_plate, description, water_capacity, type, status,
                                      model, driving_license, height, length, width, weight,
                                      provider, additional_informations)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             RETURNING id,
                       archived_at AS "archived_at: DateTime<chrono::Utc>",
                       number_plate,
@@ -370,6 +375,7 @@ impl VehicleWriter for PgVehicleRepository {
                       height, width, length, weight,
                       provider,
                       additional_informations AS additional_info"#,
+            id.value(),
             draft.number_plate.as_str(),
             draft.description,
             draft.water_capacity.liters(),

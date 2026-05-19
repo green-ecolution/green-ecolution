@@ -40,7 +40,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
-                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS "tree_ids!: Vec<RawId>"
+                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
             WHERE tc.id = $1
@@ -67,10 +67,10 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
-                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS "tree_ids!: Vec<RawId>"
+                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
-            WHERE tc.id = ANY($1)
+            WHERE tc.id = ANY($1::uuid[])
             GROUP BY tc.id"#,
             &id_values
         )
@@ -83,7 +83,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
     #[tracing::instrument(level = "trace", skip_all)]
     async fn view_by_id(&self, id: Id<TreeCluster>) -> Result<TreeClusterView, RepositoryError> {
         let row = sqlx::query!(
-            r#"SELECT tc.id, tc.created_at, tc.updated_at, tc.name, tc.address, tc.description,
+            r#"SELECT tc.id, tc.updated_at, tc.name, tc.address, tc.description,
                       tc.archived, tc.moisture_level, tc.region_id,
                       tc.watering_status AS "watering_status: WateringStatus",
                       tc.soil_condition AS "soil_condition: Option<SoilCondition>",
@@ -91,7 +91,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
-                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS "tree_ids!: Vec<RawId>"
+                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
             WHERE tc.id = $1
@@ -102,9 +102,13 @@ impl TreeClusterReader for PgTreeClusterRepository {
         .await?
         .ok_or(RepositoryError::NotFound)?;
 
+        let created_at = Id::<TreeCluster>::new(row.id)
+            .created_at()
+            .unwrap_or_else(Utc::now);
+
         Ok(TreeClusterView {
             id: row.id,
-            created_at: row.created_at.and_utc(),
+            created_at,
             updated_at: row.updated_at.and_utc(),
             name: row.name,
             address: row.address,
@@ -130,7 +134,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
     ) -> Result<Vec<TreeClusterView>, RepositoryError> {
         let id_values: Vec<RawId> = ids.to_values();
         let rows = sqlx::query!(
-            r#"SELECT tc.id, tc.created_at, tc.updated_at, tc.name, tc.address, tc.description,
+            r#"SELECT tc.id, tc.updated_at, tc.name, tc.address, tc.description,
                       tc.archived, tc.moisture_level, tc.region_id,
                       tc.watering_status AS "watering_status: WateringStatus",
                       tc.soil_condition AS "soil_condition: Option<SoilCondition>",
@@ -138,10 +142,10 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
-                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS "tree_ids!: Vec<RawId>"
+                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
-            WHERE tc.id = ANY($1)
+            WHERE tc.id = ANY($1::uuid[])
             GROUP BY tc.id"#,
             &id_values
         )
@@ -150,24 +154,29 @@ impl TreeClusterReader for PgTreeClusterRepository {
 
         Ok(rows
             .into_iter()
-            .map(|row| TreeClusterView {
-                id: row.id,
-                created_at: row.created_at.and_utc(),
-                updated_at: row.updated_at.and_utc(),
-                name: row.name,
-                address: row.address,
-                description: row.description,
-                watering_status: row.watering_status,
-                last_watered: row.last_watered,
-                moisture_level: row.moisture_level,
-                region_id: row.region_id,
-                archived: row.archived,
-                latitude: row.latitude,
-                longitude: row.longitude,
-                soil_condition: row.soil_condition,
-                tree_ids: row.tree_ids,
-                provider: row.provider,
-                additional_info: row.additional_info,
+            .map(|row| {
+                let created_at = Id::<TreeCluster>::new(row.id)
+                    .created_at()
+                    .unwrap_or_else(Utc::now);
+                TreeClusterView {
+                    id: row.id,
+                    created_at,
+                    updated_at: row.updated_at.and_utc(),
+                    name: row.name,
+                    address: row.address,
+                    description: row.description,
+                    watering_status: row.watering_status,
+                    last_watered: row.last_watered,
+                    moisture_level: row.moisture_level,
+                    region_id: row.region_id,
+                    archived: row.archived,
+                    latitude: row.latitude,
+                    longitude: row.longitude,
+                    soil_condition: row.soil_condition,
+                    tree_ids: row.tree_ids,
+                    provider: row.provider,
+                    additional_info: row.additional_info,
+                }
             })
             .collect())
     }
@@ -186,7 +195,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
         let total = sqlx::query_scalar!(
             r#"SELECT COUNT(*) AS "count!: i64" FROM tree_clusters tc
             WHERE ($1::watering_status[] = '{}' OR tc.watering_status = ANY($1))
-              AND ($2::int[] = '{}' OR tc.region_id = ANY($2))
+              AND ($2::uuid[] = '{}' OR tc.region_id = ANY($2))
               AND ($3::text IS NULL OR tc.provider = $3)"#,
             &watering_statuses as &[WateringStatus],
             &query.regions,
@@ -196,7 +205,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
         .await? as u64;
 
         let rows = sqlx::query!(
-            r#"SELECT tc.id, tc.created_at, tc.updated_at, tc.name, tc.address, tc.description,
+            r#"SELECT tc.id, tc.updated_at, tc.name, tc.address, tc.description,
                       tc.archived, tc.moisture_level, tc.region_id,
                       tc.watering_status AS "watering_status: WateringStatus",
                       tc.soil_condition AS "soil_condition: Option<SoilCondition>",
@@ -204,11 +213,11 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
-                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::int[]) AS "tree_ids!: Vec<RawId>"
+                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
             WHERE ($1::watering_status[] = '{}' OR tc.watering_status = ANY($1))
-              AND ($2::int[] = '{}' OR tc.region_id = ANY($2))
+              AND ($2::uuid[] = '{}' OR tc.region_id = ANY($2))
               AND ($3::text IS NULL OR tc.provider = $3)
             GROUP BY tc.id
             ORDER BY tc.name ASC, tc.id ASC
@@ -224,24 +233,29 @@ impl TreeClusterReader for PgTreeClusterRepository {
 
         let items = rows
             .into_iter()
-            .map(|row| TreeClusterView {
-                id: row.id,
-                created_at: row.created_at.and_utc(),
-                updated_at: row.updated_at.and_utc(),
-                name: row.name,
-                address: row.address,
-                description: row.description,
-                watering_status: row.watering_status,
-                last_watered: row.last_watered,
-                moisture_level: row.moisture_level,
-                region_id: row.region_id,
-                archived: row.archived,
-                latitude: row.latitude,
-                longitude: row.longitude,
-                soil_condition: row.soil_condition,
-                tree_ids: row.tree_ids,
-                provider: row.provider,
-                additional_info: row.additional_info,
+            .map(|row| {
+                let created_at = Id::<TreeCluster>::new(row.id)
+                    .created_at()
+                    .unwrap_or_else(Utc::now);
+                TreeClusterView {
+                    id: row.id,
+                    created_at,
+                    updated_at: row.updated_at.and_utc(),
+                    name: row.name,
+                    address: row.address,
+                    description: row.description,
+                    watering_status: row.watering_status,
+                    last_watered: row.last_watered,
+                    moisture_level: row.moisture_level,
+                    region_id: row.region_id,
+                    archived: row.archived,
+                    latitude: row.latitude,
+                    longitude: row.longitude,
+                    soil_condition: row.soil_condition,
+                    tree_ids: row.tree_ids,
+                    provider: row.provider,
+                    additional_info: row.additional_info,
+                }
             })
             .collect();
 
@@ -311,13 +325,14 @@ impl TreeClusterWriter for PgTreeClusterRepository {
         let soil = draft.soil_condition.unwrap_or(SoilCondition::Unknown);
         let provider = draft.provenance.provider().map(|p| p.as_str().to_string());
         let additional_info = draft.provenance.additional_info().cloned();
+        let id = Id::<TreeCluster>::new_v7();
 
-        let row = sqlx::query!(
-            r#"INSERT INTO tree_clusters (name, address, description, moisture_level,
+        sqlx::query!(
+            r#"INSERT INTO tree_clusters (id, name, address, description, moisture_level,
                                           watering_status, soil_condition,
                                           provider, additional_informations)
-            VALUES ($1, $2, $3, $4, 'unknown', $5, $6, $7)
-            RETURNING id"#,
+            VALUES ($1, $2, $3, $4, $5, 'unknown', $6, $7, $8)"#,
+            id.value(),
             draft.name.as_str(),
             draft.address.as_str(),
             draft.description,
@@ -326,14 +341,14 @@ impl TreeClusterWriter for PgTreeClusterRepository {
             provider,
             additional_info,
         )
-        .fetch_one(&mut *tx)
+        .execute(&mut *tx)
         .await?;
 
         let tree_id_values: Vec<RawId> = draft.tree_ids.to_values();
         if !tree_id_values.is_empty() {
             sqlx::query!(
-                "UPDATE trees SET tree_cluster_id = $1 WHERE id = ANY($2)",
-                row.id,
+                "UPDATE trees SET tree_cluster_id = $1 WHERE id = ANY($2::uuid[])",
+                id.value(),
                 &tree_id_values
             )
             .execute(&mut *tx)
@@ -342,7 +357,7 @@ impl TreeClusterWriter for PgTreeClusterRepository {
 
         tx.commit().await?;
 
-        self.by_id(Id::new(row.id)).await
+        self.by_id(id).await
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
@@ -393,10 +408,10 @@ impl TreeClusterWriter for PgTreeClusterRepository {
         let tree_id_values: Vec<RawId> = cluster.tree_ids.to_values();
         sqlx::query!(
             r#"UPDATE trees SET tree_cluster_id = CASE
-                WHEN id = ANY($2) THEN $1
+                WHEN id = ANY($2::uuid[]) THEN $1
                 ELSE NULL
             END
-            WHERE tree_cluster_id = $1 OR id = ANY($2)"#,
+            WHERE tree_cluster_id = $1 OR id = ANY($2::uuid[])"#,
             cluster.id.value(),
             &tree_id_values,
         )

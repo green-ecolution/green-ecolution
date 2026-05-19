@@ -5,7 +5,7 @@
     "columns": [],
     "parameters": {
       "Left": [
-        "Int4",
+        "Uuid",
         "Text",
         "Text",
         "Text",
@@ -27,7 +27,7 @@
         "Jsonb",
         "Float8",
         "Float8",
-        "Int4",
+        "Uuid",
         {
           "Custom": {
             "name": "watering_status",

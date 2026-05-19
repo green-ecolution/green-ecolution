@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO watering_plans (id, date, description, status, provider, additional_informations)\n            VALUES ($1, $2, $3, 'planned', $4, $5)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Date",
+        "Text",
+        "Text",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "99b9b967fb3cb2cbb855e4baac097849c8f7f19837bab4a2b0e1bfd83974e15a"
+}
