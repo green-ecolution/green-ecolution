@@ -1165,7 +1165,7 @@
           "Trees"
         ],
         "summary": "List tree markers in a bounding box",
-        "description": "Returns minimal tree markers (id, lat, lng, watering_status, number, has_sensor) intersecting the given bounding box. Optional filter parameters narrow the result. Not paginated \u2014 the bounding box bounds the result.",
+        "description": "Returns minimal tree markers (id, lat, lng, watering_status, number, has_sensor) intersecting the given bounding box. Optional filter parameters narrow the result. Not paginated — the bounding box bounds the result.",
         "operationId": "listTreeMarkers",
         "parameters": [
           {
@@ -2413,6 +2413,8 @@
           "version",
           "versionInfo",
           "rustVersion",
+          "rustChannel",
+          "rustEdition",
           "buildTime",
           "git",
           "map"
@@ -2427,6 +2429,14 @@
           },
           "map": {
             "$ref": "#/components/schemas/MapInfoResponse"
+          },
+          "rustChannel": {
+            "type": "string",
+            "example": "stable"
+          },
+          "rustEdition": {
+            "type": "string",
+            "example": "2024"
           },
           "rustVersion": {
             "type": "string",
@@ -2603,7 +2613,7 @@
           },
           "id": {
             "type": "string",
-            "description": "Sensor identifier (EUI), 1\u201364 characters after trimming.",
+            "description": "Sensor identifier (EUI), 1–64 characters after trimming.",
             "example": "eui-a81758fffe0c3b52"
           },
           "lorawan": {
@@ -3038,7 +3048,7 @@
                 },
                 "description": {
                   "type": "string",
-                  "example": "Baumgruppe im n\u00f6rdlichen Parkbereich"
+                  "example": "Baumgruppe im nördlichen Parkbereich"
                 },
                 "id": {
                   "type": "string",
@@ -3417,7 +3427,7 @@
                 "description": {
                   "type": "string",
                   "description": "Human-readable description of the vehicle.",
-                  "example": "Gro\u00dfes Bew\u00e4sserungsfahrzeug f\u00fcr den Innenstadtbereich"
+                  "example": "Großes Bewässerungsfahrzeug für den Innenstadtbereich"
                 },
                 "driving_license": {
                   "$ref": "#/components/schemas/DrivingLicense",
@@ -3555,7 +3565,7 @@
                 "description": {
                   "type": "string",
                   "description": "Human-readable description of the watering plan.",
-                  "example": "Bew\u00e4sserungsplan Stadtpark Nord"
+                  "example": "Bewässerungsplan Stadtpark Nord"
                 },
                 "distance": {
                   "type": "number",
@@ -4480,7 +4490,7 @@
           },
           "description": {
             "type": "string",
-            "example": "Baumgruppe im n\u00f6rdlichen Parkbereich"
+            "example": "Baumgruppe im nördlichen Parkbereich"
           },
           "name": {
             "type": "string",
@@ -4547,7 +4557,7 @@
           },
           "description": {
             "type": "string",
-            "example": "Baumgruppe im n\u00f6rdlichen Parkbereich"
+            "example": "Baumgruppe im nördlichen Parkbereich"
           },
           "id": {
             "type": "string",
@@ -4664,7 +4674,7 @@
           },
           "description": {
             "type": "string",
-            "example": "Baumgruppe im n\u00f6rdlichen Parkbereich"
+            "example": "Baumgruppe im nördlichen Parkbereich"
           },
           "id": {
             "type": "string",
@@ -4761,7 +4771,7 @@
           },
           "description": {
             "type": "string",
-            "example": "Baumgruppe im n\u00f6rdlichen Parkbereich"
+            "example": "Baumgruppe im nördlichen Parkbereich"
           },
           "name": {
             "type": "string",
@@ -5359,7 +5369,7 @@
               "null"
             ],
             "description": "Human-readable description of the vehicle.",
-            "example": "Gro\u00dfes Bew\u00e4sserungsfahrzeug f\u00fcr den Innenstadtbereich"
+            "example": "Großes Bewässerungsfahrzeug für den Innenstadtbereich"
           },
           "driving_license": {
             "$ref": "#/components/schemas/DrivingLicense",
@@ -5493,7 +5503,7 @@
           "description": {
             "type": "string",
             "description": "Human-readable description of the vehicle.",
-            "example": "Gro\u00dfes Bew\u00e4sserungsfahrzeug f\u00fcr den Innenstadtbereich"
+            "example": "Großes Bewässerungsfahrzeug für den Innenstadtbereich"
           },
           "driving_license": {
             "$ref": "#/components/schemas/DrivingLicense",
@@ -5622,7 +5632,7 @@
               "null"
             ],
             "description": "Human-readable description of the vehicle.",
-            "example": "Gro\u00dfes Bew\u00e4sserungsfahrzeug f\u00fcr den Innenstadtbereich"
+            "example": "Großes Bewässerungsfahrzeug für den Innenstadtbereich"
           },
           "driving_license": {
             "$ref": "#/components/schemas/DrivingLicense",
@@ -5754,7 +5764,7 @@
           "description": {
             "type": "string",
             "description": "Human-readable description of the watering plan.",
-            "example": "Bew\u00e4sserungsplan Stadtpark Nord"
+            "example": "Bewässerungsplan Stadtpark Nord"
           },
           "provider": {
             "type": [
@@ -5845,7 +5855,7 @@
           "description": {
             "type": "string",
             "description": "Human-readable description of the watering plan.",
-            "example": "Bew\u00e4sserungsplan Stadtpark Nord"
+            "example": "Bewässerungsplan Stadtpark Nord"
           },
           "distance": {
             "type": "number",
@@ -5965,7 +5975,7 @@
           "description": {
             "type": "string",
             "description": "Human-readable description of the watering plan.",
-            "example": "Bew\u00e4sserungsplan Stadtpark Nord"
+            "example": "Bewässerungsplan Stadtpark Nord"
           },
           "distance": {
             "type": "number",
@@ -6110,7 +6120,7 @@
           "description": {
             "type": "string",
             "description": "Human-readable description of the watering plan.",
-            "example": "Bew\u00e4sserungsplan Stadtpark Nord"
+            "example": "Bewässerungsplan Stadtpark Nord"
           },
           "evaluation": {
             "type": [
@@ -6193,7 +6203,7 @@
     },
     {
       "name": "Tree Clusters",
-      "description": "Manage tree clusters \u2014 logical groupings of trees that share soil conditions and watering schedules. Clusters are the primary unit for watering plan assignments."
+      "description": "Manage tree clusters — logical groupings of trees that share soil conditions and watering schedules. Clusters are the primary unit for watering plan assignments."
     },
     {
       "name": "Trees",

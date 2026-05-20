@@ -181,6 +181,12 @@ pub struct AppInfoResponse {
     #[serde(rename = "rustVersion")]
     #[schema(example = "1.88.0")]
     pub rust_version: String,
+    #[serde(rename = "rustChannel")]
+    #[schema(example = "stable")]
+    pub rust_channel: String,
+    #[serde(rename = "rustEdition")]
+    #[schema(example = "2024")]
+    pub rust_edition: String,
     #[serde(rename = "buildTime")]
     #[schema(example = "2024-08-01T10:00:00+00:00")]
     pub build_time: String,

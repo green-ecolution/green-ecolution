@@ -42,6 +42,8 @@ pub async fn get_info(
         version: app.version,
         version_info: VersionInfoResponse::from(&app.version_info),
         rust_version: app.rust_version,
+        rust_channel: app.rust_channel,
+        rust_edition: app.rust_edition,
         build_time: app.build_time.to_rfc3339(),
         git: GitInfoResponse::from(&app.git),
         map: MapInfoResponse::from(&app.map),

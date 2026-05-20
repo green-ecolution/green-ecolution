@@ -18,9 +18,12 @@ async fn get_info_returns_version() {
     let response = app.get("/api/v1/info").await;
     let body: serde_json::Value = response.json().await.unwrap();
 
-    assert!(body["version"].is_string());
-    assert!(!body["version"].as_str().unwrap().is_empty());
-    assert_eq!(body["version"], env!("CARGO_PKG_VERSION"));
+    let version = body["version"].as_str().expect("version is a string");
+    // Test binary is compiled in debug mode → version must carry the +dev.{commit} suffix.
+    assert!(
+        version.starts_with(&format!("{}+dev.", env!("CARGO_PKG_VERSION"))),
+        "expected +dev.<commit> suffix on debug build, got {version}"
+    );
 }
 
 #[tokio::test]
@@ -63,18 +66,19 @@ async fn get_info_returns_map_info() {
 }
 
 #[tokio::test]
-async fn get_info_returns_rust_version_not_go_version() {
+async fn get_info_returns_rust_metadata() {
     let app = spawn_app().await;
 
     let response = app.get("/api/v1/info").await;
     let body: serde_json::Value = response.json().await.unwrap();
 
-    assert!(body.get("rustVersion").is_some(), "rustVersion missing");
     assert!(
         body.get("goVersion").is_none(),
         "goVersion must not be present"
     );
     assert!(!body["rustVersion"].as_str().unwrap().is_empty());
+    assert!(!body["rustChannel"].as_str().unwrap().is_empty());
+    assert_eq!(body["rustEdition"], "2024");
     assert!(body["buildTime"].is_string());
 }
 

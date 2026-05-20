@@ -46,6 +46,8 @@ pub struct App {
     pub version: String,
     pub version_info: VersionInfo,
     pub rust_version: String,
+    pub rust_channel: String,
+    pub rust_edition: String,
     pub build_time: DateTime<Utc>,
     pub git: Git,
     pub server: Server,

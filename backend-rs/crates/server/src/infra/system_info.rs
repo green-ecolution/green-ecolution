@@ -14,6 +14,8 @@ pub struct DefaultSystemInfoProvider {
     start_time: Instant,
     version: String,
     rust_version: String,
+    rust_channel: String,
+    rust_edition: String,
     build_time: DateTime<Utc>,
     git: Git,
     map: Map,
@@ -36,10 +38,16 @@ impl DefaultSystemInfoProvider {
             .join("releases/")
             .expect("releases/ must be appendable to repository_url");
 
+        let commit = option_env!("GE_GIT_COMMIT").unwrap_or("unknown");
+        let is_stage = matches!(settings.application.environment, Environment::Staging);
+        let version = build_display_version(env!("CARGO_PKG_VERSION"), commit, is_stage);
+
         Self {
             start_time: Instant::now(),
-            version: env!("CARGO_PKG_VERSION").to_string(),
+            version,
             rust_version: env!("GE_RUSTC_VERSION").to_string(),
+            rust_channel: env!("GE_RUST_CHANNEL").to_string(),
+            rust_edition: env!("GE_RUST_EDITION").to_string(),
             build_time: DateTime::parse_from_rfc3339(env!("GE_BUILD_TIME"))
                 .map(|dt| dt.with_timezone(&Utc))
                 .unwrap_or_else(|_| Utc::now()),
@@ -47,9 +55,7 @@ impl DefaultSystemInfoProvider {
                 branch: option_env!("GE_GIT_BRANCH")
                     .unwrap_or("unknown")
                     .to_string(),
-                commit: option_env!("GE_GIT_COMMIT")
-                    .unwrap_or("unknown")
-                    .to_string(),
+                commit: commit.to_string(),
                 repository: repository_url,
             },
             map: Map {
@@ -64,9 +70,19 @@ impl DefaultSystemInfoProvider {
                 .expect("application.base_url must be a valid URL"),
             bind_interface: settings.application.host.clone(),
             bind_port: settings.application.port,
-            is_stage: matches!(settings.application.environment, Environment::Staging),
+            is_stage,
             update_checker,
         }
+    }
+}
+
+fn build_display_version(raw: &str, commit: &str, is_stage: bool) -> String {
+    if cfg!(debug_assertions) {
+        format!("{raw}+dev.{commit}")
+    } else if is_stage {
+        format!("{raw}+stage.{commit}")
+    } else {
+        raw.to_string()
     }
 }
 
@@ -87,6 +103,8 @@ impl SystemInfoProvider for DefaultSystemInfoProvider {
                 release_url: self.release_url.clone(),
             },
             rust_version: self.rust_version.clone(),
+            rust_channel: self.rust_channel.clone(),
+            rust_edition: self.rust_edition.clone(),
             build_time: self.build_time,
             git: self.git.clone(),
             server: self.server_info().await?,

@@ -64,6 +64,18 @@ export interface AppInfoResponse {
      * @type {string}
      * @memberof AppInfoResponse
      */
+    rustChannel: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AppInfoResponse
+     */
+    rustEdition: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AppInfoResponse
+     */
     rustVersion: string;
     /**
      * 
@@ -86,6 +98,8 @@ export function instanceOfAppInfoResponse(value: object): value is AppInfoRespon
     if (!('buildTime' in value) || value['buildTime'] === undefined) return false;
     if (!('git' in value) || value['git'] === undefined) return false;
     if (!('map' in value) || value['map'] === undefined) return false;
+    if (!('rustChannel' in value) || value['rustChannel'] === undefined) return false;
+    if (!('rustEdition' in value) || value['rustEdition'] === undefined) return false;
     if (!('rustVersion' in value) || value['rustVersion'] === undefined) return false;
     if (!('version' in value) || value['version'] === undefined) return false;
     if (!('versionInfo' in value) || value['versionInfo'] === undefined) return false;
@@ -105,6 +119,8 @@ export function AppInfoResponseFromJSONTyped(json: any, ignoreDiscriminator: boo
         'buildTime': json['buildTime'],
         'git': GitInfoResponseFromJSON(json['git']),
         'map': MapInfoResponseFromJSON(json['map']),
+        'rustChannel': json['rustChannel'],
+        'rustEdition': json['rustEdition'],
         'rustVersion': json['rustVersion'],
         'version': json['version'],
         'versionInfo': VersionInfoResponseFromJSON(json['versionInfo']),
@@ -125,6 +141,8 @@ export function AppInfoResponseToJSONTyped(value?: AppInfoResponse | null, ignor
         'buildTime': value['buildTime'],
         'git': GitInfoResponseToJSON(value['git']),
         'map': MapInfoResponseToJSON(value['map']),
+        'rustChannel': value['rustChannel'],
+        'rustEdition': value['rustEdition'],
         'rustVersion': value['rustVersion'],
         'version': value['version'],
         'versionInfo': VersionInfoResponseToJSON(value['versionInfo']),
