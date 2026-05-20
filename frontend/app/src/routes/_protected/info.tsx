@@ -1040,9 +1040,7 @@ function BuildStatusCard({ env, visual, versionInfo }: BuildStatusCardProps) {
                 <CheckCircle2 className="size-5 text-green-dark" />
               )}
               <p className="font-medium">
-                {versionInfo.updateAvailable
-                  ? 'Neue Version verfügbar'
-                  : 'Software ist aktuell'}
+                {versionInfo.updateAvailable ? 'Neue Version verfügbar' : 'Software ist aktuell'}
               </p>
             </div>
             {versionInfo.updateAvailable && (

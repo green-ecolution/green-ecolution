@@ -6,10 +6,7 @@ fn main() {
     println!("cargo:rustc-env=GE_BUILD_TIME={build_time}");
 
     let rustc_release = rustc_release_line();
-    let rustc_version = rustc_release
-        .as_deref()
-        .unwrap_or("unknown")
-        .to_string();
+    let rustc_version = rustc_release.as_deref().unwrap_or("unknown").to_string();
     println!("cargo:rustc-env=GE_RUSTC_VERSION={rustc_version}");
 
     let rust_channel = rustc_release
