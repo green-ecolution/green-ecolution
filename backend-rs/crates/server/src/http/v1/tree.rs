@@ -91,7 +91,7 @@ pub async fn get_tree(
     State(state): State<Arc<AppState>>,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<TreeResponse>, ServiceError> {
-    let tree = state.tree_service.view_by_id(Id::from(id)).await?;
+    let tree = state.tree_service.view_by_id(Id::new(id)).await?;
     let sensor = match &tree.sensor_id {
         Some(sid) => {
             let sensor_id = SensorId::new(sid)?;
@@ -165,7 +165,7 @@ pub async fn update_tree(
         additional_information: entity.additional_information,
     };
     let draft: TreeDraft = create.try_into()?;
-    let tree = state.tree_service.replace(Id::from(id), draft).await?;
+    let tree = state.tree_service.replace(Id::new(id), draft).await?;
     let view = state.tree_service.view_by_id(tree.id).await?;
     let sensor = match view.sensor_id.as_deref() {
         Some(sid) => {
@@ -193,7 +193,7 @@ pub async fn delete_tree(
     State(state): State<Arc<AppState>>,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
-    state.tree_service.delete(Id::from(id)).await?;
+    state.tree_service.delete(Id::new(id)).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 

@@ -315,16 +315,10 @@ CREATE INDEX idx_sensors_provider ON sensors (provider);
 CREATE TRIGGER update_sensors_updated_at
     BEFORE UPDATE ON sensors FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- == sensor_lorawan (id stays text, not rebuilt for column order but the
---    parent table was just dropped via CASCADE, so the row is gone too —
---    we need to restore it. We saved it implicitly: sensor_lorawan rows
---    referenced sensors by id, and we kept the same sensor ids above. But
---    DROP TABLE sensors CASCADE removed sensor_lorawan as well via the FK?
---    No: it only removes the *FK constraint*, not the child table. The
---    child table is left with dangling rows (no FK to enforce). However
---    the constraint comment above already DROPped sensor_lorawan_id_fkey,
---    so the CASCADE is a no-op for sensor_lorawan rows, and the table
---    still exists with all data intact.) ==
+-- == sensor_lorawan (id stays text, table not rebuilt) ==
+--    `DROP TABLE sensors CASCADE` above only drops *dependent objects*
+--    (FK constraints, views) — it does not drop `sensor_lorawan` itself,
+--    so its rows survive. The FK to `sensors.id` is recreated in step 5.
 
 -- == sensor_data ==
 CREATE TABLE sensor_data_new (

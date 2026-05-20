@@ -132,11 +132,10 @@ impl SensorService {
     pub async fn activate(
         &self,
         id: &SensorId,
-        tree_id: uuid::Uuid,
+        tree_id: Id<Tree>,
     ) -> Result<SensorView, ServiceError> {
         let mut sensor = self.reader.by_id(id).await?;
-        let tid = Id::<Tree>::new(tree_id);
-        let mut tree = self.tree_reader.by_id(tid).await?;
+        let mut tree = self.tree_reader.by_id(tree_id).await?;
 
         let already_bound_here = tree.sensor_id() == Some(id);
         let activated = sensor.status() != SensorStatus::Prepared;

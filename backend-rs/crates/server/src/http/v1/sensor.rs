@@ -226,7 +226,7 @@ pub async fn activate_sensor(
 ) -> Result<Json<SensorResponse>, ServiceError> {
     let view = state
         .sensor_service
-        .activate(&sensor_id, body.tree_id)
+        .activate(&sensor_id, Id::new(body.tree_id))
         .await?;
     Ok(Json(SensorResponse::from(&view)))
 }

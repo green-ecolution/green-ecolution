@@ -202,7 +202,7 @@ pub async fn get_watering_plan(
     State(state): State<Arc<AppState>>,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<WateringPlanResponse>, ServiceError> {
-    let view = state.watering_plan_service.view_by_id(Id::from(id)).await?;
+    let view = state.watering_plan_service.view_by_id(Id::new(id)).await?;
     let (transporter, trailer, clusters, evaluation) =
         resolve_view_relations(&state, &view).await?;
 
@@ -270,7 +270,7 @@ pub async fn update_watering_plan(
     Path(id): Path<uuid::Uuid>,
     Json(entity): Json<WateringPlanUpdateRequest>,
 ) -> Result<Json<WateringPlanResponse>, ServiceError> {
-    let plan_id = Id::from(id);
+    let plan_id = Id::new(id);
     let current = state.watering_plan_service.by_id(plan_id).await?;
     let new_status: DomainStatus = entity.status.into();
 
@@ -379,7 +379,7 @@ pub async fn delete_watering_plan(
     State(state): State<Arc<AppState>>,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
-    state.watering_plan_service.delete(Id::from(id)).await?;
+    state.watering_plan_service.delete(Id::new(id)).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 

@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde_json::Value;
 use uuid::Uuid;
 
-use crate::sensor::SensorId;
+use crate::{sensor::SensorId, uuid_v7_timestamp};
 
 /// A single time-series measurement from a sensor.
 ///
@@ -48,7 +48,8 @@ pub struct SensorReadingSnapshot {
 impl SensorReading {
     #[doc(hidden)]
     pub fn reconstitute(snap: SensorReadingSnapshot) -> Self {
-        let recorded_at = uuid_v7_timestamp(&snap.id).unwrap_or_else(Utc::now);
+        let recorded_at = uuid_v7_timestamp(&snap.id)
+            .expect("sensor_data.id is minted as uuid v7; non-v7 ids would be a schema bug");
         Self {
             id: snap.id,
             sensor_id: SensorId::reconstitute(snap.sensor_id),
@@ -56,13 +57,6 @@ impl SensorReading {
             data: snap.data,
         }
     }
-}
-
-/// Extracts the UNIX timestamp embedded in a UUID v7. Returns `None` for
-/// non-v7 UUIDs (legacy v4 data, etc.).
-pub(crate) fn uuid_v7_timestamp(id: &Uuid) -> Option<DateTime<Utc>> {
-    let (seconds, nanos) = id.get_timestamp()?.to_unix();
-    DateTime::<Utc>::from_timestamp(seconds as i64, nanos)
 }
 
 /// Single Watermark soil-tension reading at a fixed depth in centimetres.

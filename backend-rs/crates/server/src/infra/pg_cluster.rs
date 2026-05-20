@@ -1,5 +1,6 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use domain::{IdSliceExt, RawId};
+use serde_json::Value;
 use sqlx::PgPool;
 
 use domain::cluster::snapshot::TreeClusterSnapshot;
@@ -23,6 +24,57 @@ pub struct PgTreeClusterRepository {
 impl PgTreeClusterRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
+    }
+}
+
+/// Flat row shape for every `view_*` query on `tree_clusters` (incl. the
+/// trees aggregate join). Field names match the SELECT column names so the
+/// `.sqlx/` query cache stays valid; `From` derives `created_at` from the
+/// UUID v7 id.
+#[allow(dead_code)] // fields are read via the `From<TreeClusterViewRow>` impl
+struct TreeClusterViewRow {
+    id: RawId,
+    updated_at: NaiveDateTime,
+    name: String,
+    address: String,
+    description: String,
+    archived: bool,
+    moisture_level: f64,
+    region_id: Option<RawId>,
+    watering_status: WateringStatus,
+    soil_condition: Option<SoilCondition>,
+    latitude: Option<f64>,
+    longitude: Option<f64>,
+    last_watered: Option<DateTime<Utc>>,
+    provider: Option<String>,
+    additional_info: Option<Value>,
+    tree_ids: Vec<RawId>,
+}
+
+impl From<TreeClusterViewRow> for TreeClusterView {
+    fn from(row: TreeClusterViewRow) -> Self {
+        let created_at = Id::<TreeCluster>::new(row.id)
+            .created_at()
+            .expect("tree_clusters.id is minted as uuid v7");
+        Self {
+            id: row.id,
+            created_at,
+            updated_at: row.updated_at.and_utc(),
+            name: row.name,
+            address: row.address,
+            description: row.description,
+            watering_status: row.watering_status,
+            last_watered: row.last_watered,
+            moisture_level: row.moisture_level,
+            region_id: row.region_id,
+            archived: row.archived,
+            latitude: row.latitude,
+            longitude: row.longitude,
+            soil_condition: row.soil_condition,
+            tree_ids: row.tree_ids,
+            provider: row.provider,
+            additional_info: row.additional_info,
+        }
     }
 }
 
@@ -82,7 +134,8 @@ impl TreeClusterReader for PgTreeClusterRepository {
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn view_by_id(&self, id: Id<TreeCluster>) -> Result<TreeClusterView, RepositoryError> {
-        let row = sqlx::query!(
+        let row = sqlx::query_as!(
+            TreeClusterViewRow,
             r#"SELECT tc.id, tc.updated_at, tc.name, tc.address, tc.description,
                       tc.archived, tc.moisture_level, tc.region_id,
                       tc.watering_status AS "watering_status: WateringStatus",
@@ -102,29 +155,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
         .await?
         .ok_or(RepositoryError::NotFound)?;
 
-        let created_at = Id::<TreeCluster>::new(row.id)
-            .created_at()
-            .unwrap_or_else(Utc::now);
-
-        Ok(TreeClusterView {
-            id: row.id,
-            created_at,
-            updated_at: row.updated_at.and_utc(),
-            name: row.name,
-            address: row.address,
-            description: row.description,
-            watering_status: row.watering_status,
-            last_watered: row.last_watered,
-            moisture_level: row.moisture_level,
-            region_id: row.region_id,
-            archived: row.archived,
-            latitude: row.latitude,
-            longitude: row.longitude,
-            soil_condition: row.soil_condition,
-            tree_ids: row.tree_ids,
-            provider: row.provider,
-            additional_info: row.additional_info,
-        })
+        Ok(row.into())
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
@@ -133,7 +164,8 @@ impl TreeClusterReader for PgTreeClusterRepository {
         ids: &[Id<TreeCluster>],
     ) -> Result<Vec<TreeClusterView>, RepositoryError> {
         let id_values: Vec<RawId> = ids.to_values();
-        let rows = sqlx::query!(
+        let rows = sqlx::query_as!(
+            TreeClusterViewRow,
             r#"SELECT tc.id, tc.updated_at, tc.name, tc.address, tc.description,
                       tc.archived, tc.moisture_level, tc.region_id,
                       tc.watering_status AS "watering_status: WateringStatus",
@@ -152,33 +184,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
         .fetch_all(&self.pool)
         .await?;
 
-        Ok(rows
-            .into_iter()
-            .map(|row| {
-                let created_at = Id::<TreeCluster>::new(row.id)
-                    .created_at()
-                    .unwrap_or_else(Utc::now);
-                TreeClusterView {
-                    id: row.id,
-                    created_at,
-                    updated_at: row.updated_at.and_utc(),
-                    name: row.name,
-                    address: row.address,
-                    description: row.description,
-                    watering_status: row.watering_status,
-                    last_watered: row.last_watered,
-                    moisture_level: row.moisture_level,
-                    region_id: row.region_id,
-                    archived: row.archived,
-                    latitude: row.latitude,
-                    longitude: row.longitude,
-                    soil_condition: row.soil_condition,
-                    tree_ids: row.tree_ids,
-                    provider: row.provider,
-                    additional_info: row.additional_info,
-                }
-            })
-            .collect())
+        Ok(rows.into_iter().map(Into::into).collect())
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
@@ -204,7 +210,8 @@ impl TreeClusterReader for PgTreeClusterRepository {
         .fetch_one(&self.pool)
         .await? as u64;
 
-        let rows = sqlx::query!(
+        let rows = sqlx::query_as!(
+            TreeClusterViewRow,
             r#"SELECT tc.id, tc.updated_at, tc.name, tc.address, tc.description,
                       tc.archived, tc.moisture_level, tc.region_id,
                       tc.watering_status AS "watering_status: WateringStatus",
@@ -231,33 +238,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
         .fetch_all(&self.pool)
         .await?;
 
-        let items = rows
-            .into_iter()
-            .map(|row| {
-                let created_at = Id::<TreeCluster>::new(row.id)
-                    .created_at()
-                    .unwrap_or_else(Utc::now);
-                TreeClusterView {
-                    id: row.id,
-                    created_at,
-                    updated_at: row.updated_at.and_utc(),
-                    name: row.name,
-                    address: row.address,
-                    description: row.description,
-                    watering_status: row.watering_status,
-                    last_watered: row.last_watered,
-                    moisture_level: row.moisture_level,
-                    region_id: row.region_id,
-                    archived: row.archived,
-                    latitude: row.latitude,
-                    longitude: row.longitude,
-                    soil_condition: row.soil_condition,
-                    tree_ids: row.tree_ids,
-                    provider: row.provider,
-                    additional_info: row.additional_info,
-                }
-            })
-            .collect();
+        let items = rows.into_iter().map(Into::into).collect();
 
         Ok(Page { items, total })
     }

@@ -19,6 +19,7 @@ use domain::{
         provenance::ProviderId,
         string_value::NonEmptyString,
     },
+    uuid_v7_timestamp,
 };
 
 pub struct PgSensorRepository {
@@ -169,7 +170,7 @@ impl SensorReader for PgSensorRepository {
         .fetch_optional(&self.pool)
         .await?
         .map(|r| SensorReadingView {
-            created_at: uuid_created_at(&r.id),
+            created_at: uuid_v7_timestamp(&r.id).expect("sensor_data.id is minted as uuid v7"),
             id: r.id,
             sensor_id: r.sensor_id,
             updated_at: r.updated_at.and_utc(),
@@ -479,7 +480,7 @@ impl SensorReadingReader for PgSensorRepository {
         Ok(rows
             .into_iter()
             .map(|r| SensorReadingView {
-                created_at: uuid_created_at(&r.id),
+                created_at: uuid_v7_timestamp(&r.id).expect("sensor_data.id is minted as uuid v7"),
                 id: r.id,
                 sensor_id: r.sensor_id,
                 updated_at: r.updated_at.and_utc(),
@@ -602,16 +603,4 @@ fn build_coord(lat: Option<f64>, lng: Option<f64>) -> Result<Option<Coordinate>,
         return Ok(None);
     };
     Ok(Some(Coordinate::new(lat, lng)?))
-}
-
-/// Derives the creation timestamp from a UUID v7's embedded Unix-epoch field.
-/// Falls back to `now()` on the (theoretically impossible) v4 / nil UUIDs so
-/// the API contract for `created_at` always returns a valid timestamp.
-fn uuid_created_at(id: &Uuid) -> chrono::DateTime<chrono::Utc> {
-    id.get_timestamp()
-        .and_then(|ts| {
-            let (seconds, nanos) = ts.to_unix();
-            chrono::DateTime::<chrono::Utc>::from_timestamp(seconds as i64, nanos)
-        })
-        .unwrap_or_else(chrono::Utc::now)
 }

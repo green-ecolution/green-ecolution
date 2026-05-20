@@ -92,12 +92,6 @@ impl<T> std::hash::Hash for Id<T> {
     }
 }
 
-impl<T> From<RawId> for Id<T> {
-    fn from(value: RawId) -> Self {
-        Self::new(value)
-    }
-}
-
 impl<T> std::fmt::Display for Id<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
@@ -126,9 +120,19 @@ impl<T> Id<T> {
     /// Returns `None` for non-v7 UUIDs (legacy data rehydrated as v4 etc.).
     /// Used by views to populate `created_at` without a dedicated DB column.
     pub fn created_at(&self) -> Option<DateTime<Utc>> {
-        let (seconds, nanos) = self.0.get_timestamp()?.to_unix();
-        DateTime::<Utc>::from_timestamp(seconds as i64, nanos)
+        uuid_v7_timestamp(&self.0)
     }
+}
+
+/// Extract the embedded UNIX timestamp from a UUID v7.
+///
+/// Returns `None` for non-v7 UUIDs. Prefer [`Id::created_at`] when you already
+/// have a typed `Id<T>`; this free function exists for callsites that hold a
+/// raw `Uuid` (e.g. sub-entity rows like `SensorReading` whose id has no
+/// aggregate type tag).
+pub fn uuid_v7_timestamp(id: &Uuid) -> Option<DateTime<Utc>> {
+    let (seconds, nanos) = id.get_timestamp()?.to_unix();
+    DateTime::<Utc>::from_timestamp(i64::try_from(seconds).ok()?, nanos)
 }
 
 pub trait IdSliceExt {

@@ -71,7 +71,7 @@ pub async fn get_vehicle(
     State(state): State<Arc<AppState>>,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<VehicleResponse>, ServiceError> {
-    let view = state.vehicle_service.view_by_id(Id::from(id)).await?;
+    let view = state.vehicle_service.view_by_id(Id::new(id)).await?;
     Ok(Json(VehicleResponse::from(&view)))
 }
 
@@ -117,7 +117,7 @@ pub async fn update_vehicle(
     Json(entity): Json<VehicleUpdateRequest>,
 ) -> Result<Json<VehicleResponse>, ServiceError> {
     let update = entity.into_update()?;
-    let vehicle = state.vehicle_service.replace(Id::from(id), update).await?;
+    let vehicle = state.vehicle_service.replace(Id::new(id), update).await?;
     let view = state.vehicle_service.view_by_id(vehicle.id).await?;
     Ok(Json(VehicleResponse::from(&view)))
 }
@@ -138,7 +138,7 @@ pub async fn delete_vehicle(
     State(state): State<Arc<AppState>>,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
-    state.vehicle_service.delete(Id::from(id)).await?;
+    state.vehicle_service.delete(Id::new(id)).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -184,7 +184,7 @@ pub async fn archive_vehicle(
     State(state): State<Arc<AppState>>,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
-    state.vehicle_service.archive(Id::from(id)).await?;
+    state.vehicle_service.archive(Id::new(id)).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 

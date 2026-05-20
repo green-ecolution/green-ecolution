@@ -264,9 +264,7 @@ impl WateringPlan {
         }
         for cluster_id in &self.cluster_ids {
             if !evaluations.iter().any(|e| e.cluster_id == *cluster_id) {
-                return Err(WateringPlanError::EvaluationMissingForCluster(
-                    cluster_id.value(),
-                ));
+                return Err(WateringPlanError::EvaluationMissingForCluster(*cluster_id));
             }
         }
         self.status = WateringPlanStatus::Finished;
@@ -453,10 +451,9 @@ mod tests {
             consumed_water: 100.0,
         }];
         let err = p.finish(&only_one).unwrap_err();
-        let missing = c2.value();
         assert!(matches!(
             err,
-            WateringPlanError::EvaluationMissingForCluster(uuid) if uuid == missing
+            WateringPlanError::EvaluationMissingForCluster(id) if id == c2
         ));
     }
 

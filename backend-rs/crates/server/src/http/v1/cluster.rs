@@ -140,7 +140,7 @@ pub async fn get_cluster(
     State(state): State<Arc<AppState>>,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<TreeClusterResponse>, ServiceError> {
-    let view = state.cluster_service.view_by_id(Id::from(id)).await?;
+    let view = state.cluster_service.view_by_id(Id::new(id)).await?;
     let response = build_cluster_response(&state, &view).await?;
     Ok(Json(response))
 }
@@ -191,7 +191,7 @@ pub async fn update_cluster(
     Path(id): Path<uuid::Uuid>,
     Json(entity): Json<TreeClusterUpdateRequest>,
 ) -> Result<Json<TreeClusterResponse>, ServiceError> {
-    let cluster_id = Id::from(id);
+    let cluster_id = Id::new(id);
     let update = TreeClusterUpdate {
         name: ClusterName::new(entity.name)?,
         address: ClusterAddress::new(entity.address)?,
@@ -228,7 +228,7 @@ pub async fn delete_cluster(
     State(state): State<Arc<AppState>>,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
-    state.cluster_service.delete(Id::from(id)).await?;
+    state.cluster_service.delete(Id::new(id)).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
