@@ -114,10 +114,14 @@ async fn get_services_returns_expected_keys() {
 
     assert!(names.contains("database"), "database probe missing");
     assert!(names.contains("auth"), "auth probe missing");
-    assert!(
-        !names.contains("mqtt"),
-        "mqtt should not appear when disabled"
-    );
+    assert!(names.contains("mqtt"), "mqtt probe missing");
+
+    let mqtt = items
+        .iter()
+        .find(|s| s["name"] == "mqtt")
+        .expect("mqtt entry present");
+    assert_eq!(mqtt["enabled"], false, "mqtt should report as disabled");
+    assert_eq!(mqtt["message"], "service.status.disabled");
 
     for item in items {
         assert!(item["lastChecked"].is_string());

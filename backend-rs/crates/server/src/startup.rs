@@ -200,7 +200,7 @@ impl Application {
         use crate::infra::health::mqtt_probe::MqttProbe;
         use crate::infra::health::pg_probe::PgProbe;
         use crate::infra::health::{HealthProbe, spawn as spawn_health};
-        let mut probes: Vec<Arc<dyn HealthProbe>> = vec![
+        let probes: Vec<Arc<dyn HealthProbe>> = vec![
             Arc::new(PgProbe::new(pool.clone())),
             Arc::new(KeycloakProbe::new(
                 settings.auth.enabled,
@@ -208,10 +208,8 @@ impl Application {
                 http_client.clone(),
                 Duration::from_secs(settings.info.health_probe_timeout_secs),
             )),
+            Arc::new(MqttProbe::new(settings.mqtt.enabled, mqtt_state.clone())),
         ];
-        if settings.mqtt.enabled {
-            probes.push(Arc::new(MqttProbe::new(true, mqtt_state.clone())));
-        }
         let (health_coordinator, _health_handle) = spawn_health(
             probes,
             Duration::from_secs(settings.info.health_check_interval_secs),
