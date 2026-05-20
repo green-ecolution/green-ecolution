@@ -82,6 +82,39 @@ jobs:
           git commit -m "chore: sync Cargo.lock after release-please version bump"
           git push origin "${{ steps.pr-branch.outputs.branch }}"
 
+      - name: Setup pnpm
+        if: ${{ steps.release.outputs.pr }}
+        uses: pnpm/action-setup@v5
+        with:
+          package_json_file: "./frontend/package.json"
+
+      - name: Setup Node
+        if: ${{ steps.release.outputs.pr }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "pnpm"
+          cache-dependency-path: "./frontend/pnpm-lock.yaml"
+
+      - name: Regenerate backend client after version bump
+        if: ${{ steps.release.outputs.pr }}
+        run: |
+          set -euo pipefail
+          just dump-openapi
+          cd frontend
+          pnpm install --frozen-lockfile
+          pnpm generate:local
+          cd ..
+          if git diff --quiet -- frontend/packages/backend-client; then
+            echo "Backend client already in sync"
+            exit 0
+          fi
+          git config user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
+          git add frontend/packages/backend-client/api-docs.json frontend/packages/backend-client/src
+          git commit -m "chore: regenerate backend client after release-please version bump"
+          git push origin "${{ steps.pr-branch.outputs.branch }}"
+
       - name: Output release info
         if: ${{ steps.release.outputs.release_created == 'true' }}
         run: |
