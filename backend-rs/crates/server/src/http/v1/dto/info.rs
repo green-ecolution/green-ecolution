@@ -58,16 +58,16 @@ impl From<&Git> for GitInfoResponse {
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct MapInfoResponse {
     #[schema(example = json!([54.7937, 9.4469]))]
-    pub center: Vec<f64>,
+    pub center: [f64; 2],
     #[schema(example = json!([54.75, 9.40, 54.83, 9.50]))]
-    pub bbox: Vec<f64>,
+    pub bbox: [f64; 4],
 }
 
 impl From<&Map> for MapInfoResponse {
     fn from(value: &Map) -> Self {
         Self {
-            center: value.center.to_vec(),
-            bbox: value.bbox.to_vec(),
+            center: value.center,
+            bbox: value.bbox,
         }
     }
 }

@@ -16,11 +16,6 @@ use std::{
 };
 
 use rumqttc::{AsyncClient, Event, EventLoop, Incoming, MqttOptions, QoS, Transport};
-
-#[derive(Default)]
-pub struct MqttHealthState {
-    pub connected: AtomicBool,
-}
 use rust_decimal::Decimal;
 use secrecy::ExposeSecret;
 use serde_json::Value;
@@ -40,6 +35,11 @@ use domain::{
     },
     sensor_model::{SensorAbilityName, SensorModel},
 };
+
+#[derive(Default)]
+pub struct MqttHealthState {
+    pub connected: AtomicBool,
+}
 
 /// Spawns the MQTT subscriber as a tokio task. Returns `Ok(Arc<MqttHealthState>)` if
 /// disabled or if the task started successfully. The task itself logs and recovers

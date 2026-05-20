@@ -26,11 +26,13 @@ impl HealthSnapshotReader for HealthCoordinator {
     }
 }
 
-pub fn spawn(
+pub async fn spawn(
     probes: Vec<Arc<dyn HealthProbe>>,
     interval_duration: Duration,
 ) -> (Arc<HealthCoordinator>, JoinHandle<()>) {
-    let snapshot = Arc::new(RwLock::new(Vec::with_capacity(probes.len())));
+    let initial = futures::future::join_all(probes.iter().map(|p| p.check())).await;
+    let snapshot = Arc::new(RwLock::new(initial));
+
     let coordinator = Arc::new(HealthCoordinator {
         snapshot: snapshot.clone(),
     });
@@ -38,6 +40,7 @@ pub fn spawn(
     let handle = tokio::spawn(async move {
         let mut ticker = interval(interval_duration);
         ticker.set_missed_tick_behavior(MissedTickBehavior::Skip);
+        ticker.tick().await;
         loop {
             ticker.tick().await;
             let results = futures::future::join_all(probes.iter().map(|p| p.check())).await;

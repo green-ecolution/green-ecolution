@@ -107,9 +107,6 @@ async fn get_server_returns_uptime_seconds_and_no_ip() {
 async fn get_services_returns_expected_keys() {
     let app = spawn_app().await;
 
-    // Test fixture sets health_check_interval_secs = 1; wait one tick + slack.
-    tokio::time::sleep(std::time::Duration::from_millis(1200)).await;
-
     let response = app.get("/api/v1/info/services").await;
     let body: serde_json::Value = response.json().await.unwrap();
 

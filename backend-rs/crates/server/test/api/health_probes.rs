@@ -181,9 +181,7 @@ async fn health_coordinator_aggregates_probes_after_first_tick() {
             healthy: false,
         }),
     ];
-    let (coord, handle) = spawn_health(probes, Duration::from_millis(50));
-
-    tokio::time::sleep(Duration::from_millis(150)).await;
+    let (coord, handle) = spawn_health(probes, Duration::from_millis(50)).await;
 
     let snapshot = coord.snapshot().await;
     assert_eq!(snapshot.len(), 2);

@@ -5,8 +5,6 @@ use std::time::Duration;
 use chrono::{DateTime, Utc};
 use url::Url;
 
-use super::ServiceStatus;
-
 #[derive(Debug, Clone)]
 pub struct VersionInfo {
     pub current: String,
@@ -50,7 +48,5 @@ pub struct App {
     pub rust_edition: String,
     pub build_time: DateTime<Utc>,
     pub git: Git,
-    pub server: Server,
     pub map: Map,
-    pub services: Vec<ServiceStatus>,
 }

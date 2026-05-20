@@ -42,7 +42,7 @@ pub struct Application {
     port: u16,
     listener: TcpListener,
     state: Arc<AppState>,
-    base_url: String,
+    base_url: url::Url,
     cors: CorsSettings,
     auth_layer: AuthLayer,
     _jwks: Arc<JwksProvider>,
@@ -210,7 +210,8 @@ impl Application {
         let (health_coordinator, _health_handle) = spawn_health(
             probes,
             Duration::from_secs(settings.info.health_check_interval_secs),
-        );
+        )
+        .await;
         let health_reader: Arc<dyn HealthSnapshotReader> = health_coordinator;
 
         // ---- 11. UpdateChecker background refresh loop ----
@@ -264,7 +265,12 @@ impl Application {
     }
 
     pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {
-        let app = router(self.state, &self.base_url, &self.cors, self.auth_layer);
+        let app = router(
+            self.state,
+            self.base_url.as_str(),
+            &self.cors,
+            self.auth_layer,
+        );
         tracing::info!("listening on {}", self.listener.local_addr()?);
         axum::serve(self.listener, app).await
     }

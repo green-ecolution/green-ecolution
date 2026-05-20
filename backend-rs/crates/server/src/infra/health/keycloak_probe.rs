@@ -20,7 +20,18 @@ impl KeycloakProbe {
     pub fn new(enabled: bool, issuer_url: Option<&str>, client: Client, timeout: Duration) -> Self {
         let well_known_url = issuer_url.and_then(|s| {
             let trimmed = s.trim_end_matches('/');
-            Url::parse(&format!("{trimmed}/.well-known/openid-configuration")).ok()
+            let candidate = format!("{trimmed}/.well-known/openid-configuration");
+            match Url::parse(&candidate) {
+                Ok(url) => Some(url),
+                Err(error) => {
+                    tracing::warn!(
+                        %error,
+                        issuer_url = s,
+                        "keycloak probe will report NotConfigured: issuer_url is not a valid URL"
+                    );
+                    None
+                }
+            }
         });
         Self {
             enabled,

@@ -2,9 +2,11 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use secrecy::{ExposeSecret, SecretString};
+use serde::Deserialize;
 use serde_aux::field_attributes::deserialize_number_from_string;
 use sqlx::ConnectOptions;
 use sqlx::postgres::{PgConnectOptions, PgSslMode};
+use url::Url;
 
 #[derive(serde::Deserialize, Clone)]
 pub struct Settings {
@@ -65,9 +67,18 @@ pub struct ApplicationSettings {
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
     pub host: String,
-    pub base_url: String,
+    #[serde(deserialize_with = "deserialize_url")]
+    pub base_url: Url,
     #[serde(default)]
     pub environment: Environment,
+}
+
+fn deserialize_url<'de, D>(deserializer: D) -> Result<Url, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let raw = String::deserialize(deserializer)?;
+    Url::parse(&raw).map_err(serde::de::Error::custom)
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -138,8 +149,11 @@ pub struct InfoSettings {
     pub update_check_repo: Option<String>,
     #[serde(default = "default_update_check_interval_secs")]
     pub update_check_interval_secs: u64,
-    #[serde(default = "default_repository_url")]
-    pub repository_url: String,
+    #[serde(
+        default = "default_repository_url",
+        deserialize_with = "deserialize_url"
+    )]
+    pub repository_url: Url,
 }
 
 impl Default for InfoSettings {
@@ -163,8 +177,9 @@ fn default_health_probe_timeout_secs() -> u64 {
 fn default_update_check_interval_secs() -> u64 {
     86_400
 }
-fn default_repository_url() -> String {
-    "https://github.com/green-ecolution/backend-rs/".to_string()
+fn default_repository_url() -> Url {
+    Url::parse("https://github.com/green-ecolution/backend-rs/")
+        .expect("default repository_url must parse")
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -256,7 +271,7 @@ impl Settings {
             application: ApplicationSettings {
                 port: 0,
                 host: "127.0.0.1".into(),
-                base_url: "http://127.0.0.1".into(),
+                base_url: Url::parse("http://127.0.0.1").expect("test base_url"),
                 environment: Environment::Local,
             },
             log: LogSettings {

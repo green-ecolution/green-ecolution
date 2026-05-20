@@ -15,7 +15,8 @@ fn main() {
         .unwrap_or("unknown");
     println!("cargo:rustc-env=GE_RUST_CHANNEL={rust_channel}");
 
-    println!("cargo:rustc-env=GE_RUST_EDITION=2024");
+    let edition = rust_edition().unwrap_or_else(|| "unknown".to_string());
+    println!("cargo:rustc-env=GE_RUST_EDITION={edition}");
 
     let git_commit = env_or("GE_GIT_COMMIT", || {
         run_git(&["rev-parse", "--short", "HEAD"]).unwrap_or_else(|| "unknown".into())
@@ -30,8 +31,19 @@ fn main() {
         println!("cargo:rerun-if-env-changed={var}");
     }
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=../../Cargo.toml");
     println!("cargo:rerun-if-changed=../../../.git/HEAD");
     println!("cargo:rerun-if-changed=../../../.git/refs");
+}
+
+fn rust_edition() -> Option<String> {
+    let manifest = std::fs::read_to_string("../../Cargo.toml").ok()?;
+    manifest.lines().find_map(|line| {
+        let trimmed = line.trim();
+        let rest = trimmed.strip_prefix("edition")?.trim_start();
+        let value = rest.strip_prefix('=')?.trim();
+        Some(value.trim_matches('"').to_string())
+    })
 }
 
 fn rustc_release_line() -> Option<String> {
