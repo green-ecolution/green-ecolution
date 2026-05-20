@@ -4,7 +4,7 @@ application:
 database:
   require_ssl: false
 log:
-  level: "info,sqlx::query=debug,tower_http=debug"
+  level: "info"
 auth:
   enabled: true
   issuer_url: "http://auth.localhost:3000/realms/green-ecolution"
