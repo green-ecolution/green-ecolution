@@ -26,7 +26,7 @@ RUN if [ "$ENV" == "dev" ]; then \
 #############################################
 # Nginx
 #############################################
-FROM nginx:1.29 AS runner
+FROM nginx:1.31 AS runner
 RUN rm -rf /etc/nginx/conf.d/default.conf && cat <<EOF > /etc/nginx/conf.d/nginx.conf
 server {
     listen       80;
