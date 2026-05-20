@@ -93,10 +93,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
                 Verknüpftes Fahrzeug
                 <span className="text-destructive ml-1">*</span>
               </Label>
-              <Select
-                value={field.value ?? ''}
-                onValueChange={(val) => field.onChange(val)}
-              >
+              <Select value={field.value ?? ''} onValueChange={(val) => field.onChange(val)}>
                 <SelectTrigger id="transporterId">
                   <SelectValue placeholder="Wählen Sie ein Fahrzeug aus" />
                 </SelectTrigger>
