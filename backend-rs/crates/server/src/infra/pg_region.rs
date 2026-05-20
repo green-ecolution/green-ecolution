@@ -40,7 +40,7 @@ impl RegionReader for PgRegionRepository {
         let id_values: Vec<RawId> = ids.to_values();
         let regions = sqlx::query_as!(
             RegionSnapshot,
-            r#"SELECT id, name FROM regions WHERE id = ANY($1)"#,
+            r#"SELECT id, name FROM regions WHERE id = ANY($1::uuid[])"#,
             &id_values
         )
         .fetch_all(&self.pool)
@@ -116,15 +116,19 @@ impl RegionReader for PgRegionRepository {
 impl RegionWriter for PgRegionRepository {
     #[tracing::instrument(level = "trace", skip_all)]
     async fn save_new(&self, draft: RegionDraft) -> Result<Region, RepositoryError> {
-        sqlx::query_as!(
-            RegionSnapshot,
-            r#"INSERT INTO regions (name) VALUES ($1) RETURNING id, name"#,
+        let id = Id::<Region>::new_v7();
+        sqlx::query!(
+            r#"INSERT INTO regions (id, name) VALUES ($1, $2)"#,
+            id.value(),
             draft.name.as_str()
         )
-        .fetch_one(&self.pool)
-        .await
-        .map(Region::reconstitute)
-        .map_err(Into::into)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(Region {
+            id,
+            name: draft.name,
+        })
     }
 
     #[tracing::instrument(level = "trace", skip_all)]

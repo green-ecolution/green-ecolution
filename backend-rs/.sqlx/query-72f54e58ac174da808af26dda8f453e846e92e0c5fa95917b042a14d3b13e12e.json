@@ -41,7 +41,7 @@
       {
         "ordinal": 3,
         "name": "model_id",
-        "type_info": "Int4"
+        "type_info": "Uuid"
       },
       {
         "ordinal": 4,

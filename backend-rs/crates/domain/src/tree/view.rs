@@ -1,18 +1,19 @@
 use chrono::{DateTime, Utc};
 use serde_json::Value;
+use uuid::Uuid;
 
 use crate::shared::{distance::Distance, watering_status::WateringStatus};
 
 /// HTTP-side read model for a tree.
 ///
-/// Uses primitive types rather than value objects; includes audit timestamps
-/// absent from the aggregate.
+/// Uses primitive types rather than value objects; `created_at` is derived
+/// from the UUID v7 `id` (no DB column).
 #[derive(Debug, Clone)]
 pub struct TreeView {
-    pub id: i32,
+    pub id: Uuid,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub cluster_id: Option<i32>,
+    pub cluster_id: Option<Uuid>,
     pub sensor_id: Option<String>,
     pub planting_year: u32,
     pub species: String,

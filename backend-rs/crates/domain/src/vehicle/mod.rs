@@ -246,7 +246,7 @@ mod tests {
 
     fn fixed_vehicle() -> Vehicle {
         Vehicle {
-            id: Id::new(1),
+            id: Id::new_v7(),
             number_plate: NumberPlate::new("FL-AB-123").unwrap(),
             description: None,
             water_capacity: WaterCapacity::new(1000.0).unwrap(),

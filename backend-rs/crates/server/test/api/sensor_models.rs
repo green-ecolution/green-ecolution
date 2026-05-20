@@ -15,7 +15,10 @@ async fn list_sensor_models_returns_seeded_models() {
 #[tokio::test]
 async fn get_sensor_model_returns_abilities_for_eco_drizzler() {
     let app = spawn_app().await;
-    let r = app.get("/api/v1/sensors/models/1").await;
+    let model_id = app.ecodrizzler_model_id().await;
+    let r = app
+        .get(&format!("/api/v1/sensors/models/{}", model_id))
+        .await;
     assert_eq!(r.status().as_u16(), 200);
     let body: serde_json::Value = r.json().await.unwrap();
     assert_eq!(body["name"], "EcoDrizzler");
@@ -33,7 +36,10 @@ async fn get_sensor_model_returns_abilities_for_eco_drizzler() {
 #[tokio::test]
 async fn get_sensor_model_returns_abilities_for_ges_1000() {
     let app = spawn_app().await;
-    let r = app.get("/api/v1/sensors/models/2").await;
+    let model_id = app.ges_1000_model_id().await;
+    let r = app
+        .get(&format!("/api/v1/sensors/models/{}", model_id))
+        .await;
     assert_eq!(r.status().as_u16(), 200);
     let body: serde_json::Value = r.json().await.unwrap();
     assert_eq!(body["name"], "GES-1000");
@@ -48,6 +54,8 @@ async fn get_sensor_model_returns_abilities_for_ges_1000() {
 #[tokio::test]
 async fn get_unknown_sensor_model_returns_404() {
     let app = spawn_app().await;
-    let r = app.get("/api/v1/sensors/models/9999").await;
+    let r = app
+        .get(&format!("/api/v1/sensors/models/{}", uuid::Uuid::now_v7()))
+        .await;
     assert_eq!(r.status().as_u16(), 404);
 }

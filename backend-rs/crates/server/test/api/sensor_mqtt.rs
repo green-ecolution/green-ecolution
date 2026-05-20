@@ -6,8 +6,9 @@ use domain::{
 use rust_decimal::Decimal;
 use serde_json::json;
 use server::service::sensor_service::ReadingIngest;
+use uuid::Uuid;
 
-fn create_body(id: &str, model_id: i32) -> serde_json::Value {
+fn create_body(id: &str, model_id: Uuid) -> serde_json::Value {
     json!({
         "id": id,
         "sensor_type": "lorawan",
@@ -21,7 +22,7 @@ fn create_body(id: &str, model_id: i32) -> serde_json::Value {
     })
 }
 
-async fn create_sensor(app: &TestApp, id: &str, model_id: i32) {
+async fn create_sensor(app: &TestApp, id: &str, model_id: Uuid) {
     let r = app
         .post_json("/api/v1/sensors", &create_body(id, model_id))
         .await;
@@ -41,7 +42,7 @@ async fn ability_value_count(app: &TestApp, sensor_id: &str) -> i64 {
     .unwrap()
 }
 
-async fn insert_tree(app: &TestApp, number: &str) -> i32 {
+async fn insert_tree(app: &TestApp, number: &str) -> Uuid {
     // planted this year so the year=0 calibration table applies and the
     // watering handler produces a status (not BeyondMonitoring).
     let planting_year: i32 = chrono::Utc::now()
@@ -50,24 +51,27 @@ async fn insert_tree(app: &TestApp, number: &str) -> i32 {
         .to_string()
         .parse()
         .unwrap();
-    sqlx::query_scalar!(
-        r#"INSERT INTO trees (planting_year, species, number, latitude, longitude, geometry, description)
-        VALUES ($1, 'Eiche', $2, $3, $4, ST_SetSRID(ST_MakePoint($4, $3), 4326), 'Test')
-        RETURNING id"#,
+    let id = Uuid::now_v7();
+    sqlx::query!(
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description)
+        VALUES ($1, $2, 'Eiche', $3, $4, $5, ST_SetSRID(ST_MakePoint($5, $4), 4326), 'Test')"#,
+        id,
         planting_year,
         number,
         54.79_f64,
         9.45_f64,
     )
-    .fetch_one(&app.db_pool)
+    .execute(&app.db_pool)
     .await
-    .unwrap()
+    .unwrap();
+    id
 }
 
 #[tokio::test]
 async fn ecodrizzler_handle_message_writes_normalized_values_and_bumps_online() {
     let app = spawn_app().await;
-    create_sensor(&app, "eui-mqtt-eco", 1).await;
+    let model_id = app.ecodrizzler_model_id().await;
+    create_sensor(&app, "eui-mqtt-eco", model_id).await;
 
     let payload = json!({
         "device": "eui-mqtt-eco",
@@ -99,7 +103,8 @@ async fn ecodrizzler_handle_message_writes_normalized_values_and_bumps_online() 
 #[tokio::test]
 async fn ecodrizzler_handle_message_updates_linked_tree_watering_status() {
     let app = spawn_app().await;
-    create_sensor(&app, "eui-mqtt-eco-2", 1).await;
+    let model_id = app.ecodrizzler_model_id().await;
+    create_sensor(&app, "eui-mqtt-eco-2", model_id).await;
     let tree_id = insert_tree(&app, "T-MQ-ECO-2").await;
 
     let r = app
@@ -138,7 +143,8 @@ async fn ecodrizzler_handle_message_updates_linked_tree_watering_status() {
 #[tokio::test]
 async fn ges_1000_ingest_writes_volumetric_normalized_values() {
     let app = spawn_app().await;
-    create_sensor(&app, "eui-mqtt-ges", 2).await;
+    let model_id = app.ges_1000_model_id().await;
+    create_sensor(&app, "eui-mqtt-ges", model_id).await;
     // `handle_message` is EcoDrizzler-specific; the GES-1000 dispatch lives in
     // `infra::mqtt::build_ges_1000` which is private. Call `ingest_reading`
     // directly with the pre-built normalized values — that is what the MQTT
@@ -146,7 +152,7 @@ async fn ges_1000_ingest_writes_volumetric_normalized_values() {
     let model = app
         .state
         .sensor_service
-        .model_by_id(domain::Id::new(2))
+        .model_by_id(domain::Id::new(model_id))
         .await
         .unwrap();
     let ab_30 = model
@@ -202,12 +208,13 @@ async fn ges_1000_ingest_writes_volumetric_normalized_values() {
 #[tokio::test]
 async fn prepared_sensor_ingest_persists_reading_without_tree_link() {
     let app = spawn_app().await;
-    create_sensor(&app, "eui-mqtt-prep", 2).await;
+    let model_id = app.ges_1000_model_id().await;
+    create_sensor(&app, "eui-mqtt-prep", model_id).await;
 
     let model = app
         .state
         .sensor_service
-        .model_by_id(domain::Id::new(2))
+        .model_by_id(domain::Id::new(model_id))
         .await
         .unwrap();
     let ab_30 = model

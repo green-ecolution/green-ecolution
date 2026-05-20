@@ -67,7 +67,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
     mutate({
       ...data,
       date: data.date.toISOString(),
-      trailerId: data.trailerId && data.trailerId !== -1 ? data.trailerId : undefined,
+      trailerId: data.trailerId && data.trailerId !== '-1' ? data.trailerId : undefined,
       treeClusterIds: data.clusterIds,
       userIds: data.driverIds,
       cancellationNote: '', // TODO: why cancel note in update ???
@@ -86,7 +86,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         lat: mapPosition.lat,
         lng: mapPosition.lng,
         zoom: mapPosition.zoom,
-        wateringPlanId: Number(wateringPlanId),
+        wateringPlanId,
         trailerId: form.getValues('trailerId'),
         transporterId: form.getValues('transporterId'),
         clusterIds: form.getValues('clusterIds'),
@@ -97,7 +97,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
 
   const handleDeleteWateringPlan = () => {
     return wateringPlanApi.deleteWateringPlan({
-      wateringPlanId: Number(wateringPlanId),
+      wateringPlanId,
     })
   }
 

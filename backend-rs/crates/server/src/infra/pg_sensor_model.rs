@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use async_trait::async_trait;
 use sqlx::PgPool;
+use uuid::Uuid;
 
 use domain::{
     Id, RepositoryError,
@@ -67,7 +68,7 @@ impl SensorModelReader for PgSensorModelRepository {
 }
 
 fn build_model(
-    id: i32,
+    id: Uuid,
     name: String,
     description: Option<String>,
     abilities: Vec<SensorModelAbility>,
@@ -82,7 +83,7 @@ fn build_model(
 
 async fn load_abilities(
     pool: &PgPool,
-    model_id: i32,
+    model_id: Uuid,
 ) -> Result<Vec<SensorModelAbility>, RepositoryError> {
     let rows = sqlx::query!(
         r#"SELECT sma.id           AS mapping_id,

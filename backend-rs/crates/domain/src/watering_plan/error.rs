@@ -1,5 +1,7 @@
 use thiserror::Error;
 
+use crate::Id;
+use crate::cluster::TreeCluster;
 use crate::shared::error::ValidationError;
 use crate::watering_plan::WateringPlanStatus;
 
@@ -21,5 +23,5 @@ pub enum WateringPlanError {
     /// given `cluster_id`. Every cluster currently assigned to the plan must
     /// have exactly one evaluation entry.
     #[error("evaluation missing for cluster {0}")]
-    EvaluationMissingForCluster(i32),
+    EvaluationMissingForCluster(Id<TreeCluster>),
 }

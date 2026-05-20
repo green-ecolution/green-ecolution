@@ -54,10 +54,10 @@ export interface TreeResponse {
     description: string;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof TreeResponse
      */
-    id: number;
+    id: string;
     /**
      * 
      * @type {string}
@@ -108,10 +108,10 @@ export interface TreeResponse {
     species: string;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof TreeResponse
      */
-    treeClusterId?: number | null;
+    treeClusterId?: string | null;
     /**
      * 
      * @type {string}

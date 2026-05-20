@@ -55,7 +55,7 @@ function NewSensor() {
     }
   }
 
-  const handleConfirmTree = useCallback((_treeId: number) => {
+  const handleConfirmTree = useCallback((_treeId: string) => {
     // Tree assignment stored for future backend linking
   }, [])
 

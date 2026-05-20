@@ -42,8 +42,8 @@ const TreeUpdate = ({ treeId, clusters, sensors }: TreeUpdateProps) => {
         number: data.number,
         species: data.species,
         plantingYear: data.plantingYear,
-        treeClusterId: data.treeClusterId ?? -1,
-        sensorId: data.sensor?.id ?? '-1',
+        treeClusterId: data.treeClusterId ?? null,
+        sensorId: data.sensor?.id ?? null,
         description: data.description,
         provider: data.provider ?? undefined,
       },
@@ -56,14 +56,14 @@ const TreeUpdate = ({ treeId, clusters, sensors }: TreeUpdateProps) => {
   const onSubmit = (data: TreeForm) => {
     mutate({
       ...data,
-      sensorId: data.sensorId && data.sensorId === '-1' ? undefined : data.sensorId,
-      treeClusterId: data.treeClusterId && data.treeClusterId <= 0 ? undefined : data.treeClusterId,
+      sensorId: data.sensorId ?? undefined,
+      treeClusterId: data.treeClusterId ?? undefined,
     })
   }
 
   const handleDeleteTree = () => {
     return treeApi.deleteTree({
-      treeId: Number(treeId),
+      treeId,
     })
   }
 
@@ -72,7 +72,7 @@ const TreeUpdate = ({ treeId, clusters, sensors }: TreeUpdateProps) => {
     navigate({
       to: '/map/tree/edit',
       search: {
-        treeId: Number(treeId),
+        treeId,
         lat: form.getValues('latitude'),
         lng: form.getValues('longitude'),
         treeLat: form.getValues('latitude'),

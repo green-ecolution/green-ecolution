@@ -19,8 +19,8 @@ import { MoveRight, X } from 'lucide-react'
 
 export interface WithFilterableTreesProps {
   onClick?: (tree: TreeMarkerResponse) => void
-  selectedTrees?: number[]
-  hasHighlightedTree?: number
+  selectedTrees?: string[]
+  hasHighlightedTree?: string
 }
 
 interface AppliedFilters {

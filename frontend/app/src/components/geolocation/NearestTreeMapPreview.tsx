@@ -13,8 +13,8 @@ interface NearestTreeMapPreviewProps {
   sensorLng: number
   sensorAccuracy?: number | null
   trees: TreeWithDistance[]
-  selectedTreeId: number | null
-  onSelectTree?: (treeId: number) => void
+  selectedTreeId: string | null
+  onSelectTree?: (treeId: string) => void
   className?: string
 }
 

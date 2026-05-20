@@ -45,22 +45,22 @@ export interface WateringPlanCreateRequest {
     provider?: string | null;
     /**
      * Identifier of the trailer vehicle to use, if any.
-     * @type {number}
+     * @type {string}
      * @memberof WateringPlanCreateRequest
      */
-    trailerId?: number | null;
+    trailerId?: string | null;
     /**
      * Identifier of the transporter vehicle to use.
-     * @type {number}
+     * @type {string}
      * @memberof WateringPlanCreateRequest
      */
-    transporterId: number;
+    transporterId: string;
     /**
      * List of tree cluster identifiers to include in the plan.
-     * @type {Array<number>}
+     * @type {Array<string>}
      * @memberof WateringPlanCreateRequest
      */
-    treeClusterIds: Array<number>;
+    treeClusterIds: Array<string>;
     /**
      * List of user identifiers assigned to execute this plan.
      * @type {Array<string>}

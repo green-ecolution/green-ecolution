@@ -41,26 +41,13 @@ import {
   evaluationApi,
 } from './backendApi'
 
-/**
- * Check if a string ID is a valid positive integer.
- */
-const isValidNumericId = (id: string | undefined): boolean => {
-  if (id === undefined || id === null || id === '') return false
-  const num = Number(id)
-  return !isNaN(num) && Number.isInteger(num) && num > 0
-}
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /**
- * Parse a string ID to a positive integer.
- * Throws an error for invalid IDs.
+ * Check if a string is a valid UUID. Backend identifiers are UUID v7;
+ * the regex accepts any UUID version since the frontend never inspects bits.
  */
-const parseNumericId = (id: string): number => {
-  const num = Number(id)
-  if (isNaN(num) || !Number.isInteger(num) || num <= 0) {
-    throw new Error(`Invalid ID: ${id}`)
-  }
-  return num
-}
+const isValidUuid = (id: string | undefined): boolean => typeof id === 'string' && UUID_RE.test(id)
 
 export const treeClusterQuery = (params?: ListClustersRequest) =>
   queryOptions<ListResponseTreeClusterInListResponse>({
@@ -73,8 +60,8 @@ export const treeClusterQuery = (params?: ListClustersRequest) =>
 export const treeClusterIdQuery = (id: string) =>
   queryOptions<TreeClusterResponse>({
     queryKey: ['treecluster', id],
-    queryFn: () => clusterApi.getCluster({ clusterId: parseNumericId(id) }),
-    enabled: isValidNumericId(id),
+    queryFn: () => clusterApi.getCluster({ clusterId: id }),
+    enabled: isValidUuid(id),
   })
 
 export const sensorQuery = (params?: ListSensorsRequest) =>
@@ -101,11 +88,11 @@ export const sensorIdQuery = (id: string) =>
       }),
   })
 
-export const sensorModelIdQuery = (id: number) =>
+export const sensorModelIdQuery = (id: string) =>
   queryOptions<SensorModelResponse>({
     queryKey: ['sensor-model', id],
     queryFn: () => sensorApi.getSensorModel({ id }),
-    enabled: Number.isInteger(id) && id > 0,
+    enabled: isValidUuid(id),
   })
 
 export const treeQuery = (params?: ListTreesRequest) =>
@@ -117,8 +104,8 @@ export const treeQuery = (params?: ListTreesRequest) =>
 export const treeIdQuery = (id: string) =>
   queryOptions<TreeResponse>({
     queryKey: ['tree', id],
-    queryFn: () => treeApi.getTree({ treeId: parseNumericId(id) }),
-    enabled: isValidNumericId(id),
+    queryFn: () => treeApi.getTree({ treeId: id }),
+    enabled: isValidUuid(id),
   })
 
 // TODO: The Rust backend changed this endpoint to /trees/{tree_id}/sensors/{sensor_id}
@@ -182,8 +169,8 @@ export const vehicleQuery = (params?: ListVehiclesRequest) => {
 export const vehicleIdQuery = (id: string) =>
   queryOptions<VehicleResponse>({
     queryKey: ['vehicle', id],
-    queryFn: () => vehicleApi.getVehicle({ vehicleId: parseNumericId(id) }),
-    enabled: isValidNumericId(id),
+    queryFn: () => vehicleApi.getVehicle({ vehicleId: id }),
+    enabled: isValidUuid(id),
   })
 
 export const wateringPlanQuery = (params?: ListWateringPlansRequest) =>
@@ -195,8 +182,8 @@ export const wateringPlanQuery = (params?: ListWateringPlansRequest) =>
 export const wateringPlanIdQuery = (id: string) =>
   queryOptions<WateringPlanResponse>({
     queryKey: ['watering-plan', id],
-    queryFn: () => wateringPlanApi.getWateringPlan({ wateringPlanId: parseNumericId(id) }),
-    enabled: isValidNumericId(id),
+    queryFn: () => wateringPlanApi.getWateringPlan({ wateringPlanId: id }),
+    enabled: isValidUuid(id),
   })
 
 export const userQuery = (params?: ListUsersRequest) => {
@@ -218,9 +205,9 @@ export const userRoleQuery = (role: string) =>
 // TODO: previewRoute() currently takes no parameters in the generated client.
 // The Rust backend endpoint needs a request body (RouteRequest) to be functional.
 export const routePreviewQuery = (
-  transporterId: number,
-  clusterIds: number[],
-  _trailerId?: number,
+  transporterId: string,
+  clusterIds: string[],
+  _trailerId?: string,
 ) =>
   queryOptions({
     queryKey: ['route', 'preview', `transporter:${transporterId}`, ...clusterIds],

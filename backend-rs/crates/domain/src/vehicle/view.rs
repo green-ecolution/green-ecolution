@@ -1,14 +1,15 @@
 use chrono::{DateTime, Utc};
 use serde_json::Value;
+use uuid::Uuid;
 
 use crate::vehicle::{DrivingLicense, VehicleStatus, VehicleType};
 
 /// HTTP-side read model for a vehicle.
 ///
-/// Adds `created_at` / `updated_at` audit timestamps absent from the aggregate.
+/// `created_at` is derived from the UUID v7 `id`; `updated_at` is the DB column.
 #[derive(Debug, Clone)]
 pub struct VehicleView {
-    pub id: i32,
+    pub id: Uuid,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub archived_at: Option<DateTime<Utc>>,

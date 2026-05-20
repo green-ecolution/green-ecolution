@@ -2,13 +2,13 @@ import { routePreviewQuery } from '@/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
 
 export interface ShowRoutePreview {
-  transporterId: number
-  trailerId?: number
-  selectedClustersIds: number[]
+  transporterId: string
+  trailerId?: string
+  selectedClustersIds: string[]
 }
 
 const ShowRoutePreview = ({ transporterId, trailerId, selectedClustersIds }: ShowRoutePreview) => {
-  if (trailerId === -1) {
+  if (trailerId === '' || trailerId === '-1') {
     trailerId = undefined
   }
   // TODO: previewRoute() currently returns void (stub).

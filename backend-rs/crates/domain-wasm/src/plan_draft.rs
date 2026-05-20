@@ -17,22 +17,28 @@ pub(crate) struct WateringPlanDraftInput {
     #[allow(dead_code)] // free-text DTO field, not validated
     pub description: Option<String>,
     #[serde(default)]
-    pub cluster_ids: Vec<i32>,
+    pub cluster_ids: Vec<String>,
     #[serde(default)]
-    pub transporter_id: Option<i32>,
+    pub transporter_id: Option<String>,
     #[serde(default)]
     #[allow(dead_code)] // accepted but not currently validated
-    pub trailer_id: Option<i32>,
+    pub trailer_id: Option<String>,
     #[serde(default)]
     pub driver_ids: Vec<String>,
     #[serde(default)]
     pub status: Option<String>,
 }
 
+/// Treat `Some("")` as "not provided" — RHF stores unselected select inputs
+/// as the empty string rather than `undefined`.
+fn non_empty(value: Option<&str>) -> Option<&str> {
+    value.and_then(|v| (!v.is_empty()).then_some(v))
+}
+
 pub(crate) fn collect_plan_issues(input: &WateringPlanDraftInput) -> Vec<ValidationIssue> {
     let mut issues = Vec::new();
 
-    if input.cluster_ids.is_empty() {
+    if input.cluster_ids.iter().all(|s| s.is_empty()) {
         issues.push(ValidationIssue::from_error(
             &ValidationError::EmptyString {
                 field: "watering_plan.cluster_ids",
@@ -63,38 +69,15 @@ pub(crate) fn collect_plan_issues(input: &WateringPlanDraftInput) -> Vec<Validat
         }
     }
 
-    match input.transporter_id {
-        None => issues.push(ValidationIssue::from_error(
+    if non_empty(input.transporter_id.as_deref()).is_none() {
+        issues.push(ValidationIssue::from_error(
             &ValidationError::EmptyString {
                 field: "watering_plan.transporter_id",
             },
             "transporterId",
-        )),
-        Some(id) if id <= 0 => issues.push(ValidationIssue::from_error(
-            &ValidationError::OutOfRange {
-                field: "watering_plan.transporter_id",
-                min: 1.0,
-                max: f64::MAX,
-                got: id as f64,
-            },
-            "transporterId",
-        )),
-        Some(_) => {}
-    }
-
-    if let Some(id) = input.trailer_id
-        && id <= 0
-    {
-        issues.push(ValidationIssue::from_error(
-            &ValidationError::OutOfRange {
-                field: "watering_plan.trailer_id",
-                min: 1.0,
-                max: f64::MAX,
-                got: id as f64,
-            },
-            "trailerId",
         ));
     }
+    // trailer_id is optional; nothing to do when None or empty.
 
     if let Some(status) = input.status.as_deref()
         && let Some(issue) =
@@ -144,8 +127,8 @@ mod tests {
         WateringPlanDraftInput {
             date: future_date(),
             description: None,
-            cluster_ids: vec![1, 2],
-            transporter_id: Some(10),
+            cluster_ids: vec!["cluster-a".into(), "cluster-b".into()],
+            transporter_id: Some("vehicle-1".into()),
             trailer_id: None,
             driver_ids: vec!["00000000-0000-0000-0000-000000000001".into()],
             status: Some("planned".into()),
@@ -167,6 +150,14 @@ mod tests {
     }
 
     #[test]
+    fn cluster_ids_of_only_empty_strings_yields_issue() {
+        let mut input = valid();
+        input.cluster_ids = vec!["".into(), "".into()];
+        let issues = collect_plan_issues(&input);
+        assert!(issues.iter().any(|i| i.path == "clusterIds"));
+    }
+
+    #[test]
     fn missing_transporter_yields_issue() {
         let mut input = valid();
         input.transporter_id = None;
@@ -175,23 +166,23 @@ mod tests {
     }
 
     #[test]
-    fn non_positive_transporter_yields_issue() {
+    fn empty_transporter_yields_issue() {
         let mut input = valid();
-        input.transporter_id = Some(0);
+        input.transporter_id = Some("".into());
         let issues = collect_plan_issues(&input);
         let issue = issues
             .iter()
             .find(|i| i.path == "transporterId")
             .expect("transporterId issue");
-        assert_eq!(issue.key, "watering_plan.transporter_id.outOfRange");
+        assert_eq!(issue.key, "watering_plan.transporter_id.empty");
     }
 
     #[test]
-    fn non_positive_trailer_yields_issue() {
+    fn empty_trailer_is_accepted() {
         let mut input = valid();
-        input.trailer_id = Some(-1);
+        input.trailer_id = Some("".into());
         let issues = collect_plan_issues(&input);
-        assert!(issues.iter().any(|i| i.path == "trailerId"));
+        assert!(issues.iter().all(|i| i.path != "trailerId"));
     }
 
     #[test]

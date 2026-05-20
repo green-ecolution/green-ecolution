@@ -1,3 +1,5 @@
+use uuid::Uuid;
+
 use crate::shared::watering_status::WateringStatus;
 
 /// Lightweight projection of a tree intended for map markers.
@@ -6,7 +8,7 @@ use crate::shared::watering_status::WateringStatus;
 /// whether a sensor exists. It is *not* an aggregate hydration target.
 #[derive(Debug, Clone)]
 pub struct TreeMarker {
-    pub id: i32,
+    pub id: Uuid,
     pub latitude: f64,
     pub longitude: f64,
     pub watering_status: WateringStatus,

@@ -29,10 +29,10 @@ import {
 export interface ClusterMarkerResponse {
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof ClusterMarkerResponse
      */
-    id: number;
+    id: string;
     /**
      * 
      * @type {number}

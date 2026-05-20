@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, sensor_id, data\n            FROM sensor_data WHERE sensor_id = $1\n            ORDER BY id DESC LIMIT $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "sensor_id",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "data",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "4715875bec6041946bad43d0583a1037f1726af5a83cb041527f7406b95fb6a3"
+}

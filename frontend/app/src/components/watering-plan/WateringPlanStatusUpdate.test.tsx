@@ -6,15 +6,19 @@ import type { WateringPlan } from '@/api/backendApi'
 import { FinishedWateringPlan, CancelWateringPlan } from './WateringPlanStatusUpdate'
 
 vi.mock('../general/cards/SelectedCard', () => ({
-  default: ({ id }: { id: number }) => <div data-testid={`selected-card-${id}`}>Cluster {id}</div>,
+  default: ({ id }: { id: string }) => <div data-testid={`selected-card-${id}`}>Cluster {id}</div>,
 }))
 
+const PLAN_ID = '0190a8e9-7c4f-7000-8000-000000000001'
+const CLUSTER_ID = '0190a8e9-7c4f-7000-8000-000000000010'
+const VEHICLE_ID = '0190a8e9-7c4f-7000-8000-000000000020'
+
 const mockLoadedData = {
-  id: 1,
+  id: PLAN_ID,
   date: '2026-03-01T00:00:00Z',
   status: WateringPlanStatus.Active,
-  treeclusters: [{ id: 10, name: 'Cluster A', treeIds: [1, 2, 3, 4, 5] }],
-  transporter: { id: 1 },
+  treeclusters: [{ id: CLUSTER_ID, name: 'Cluster A', treeIds: [1, 2, 3, 4, 5] }],
+  transporter: { id: VEHICLE_ID },
 } as unknown as WateringPlan
 
 describe('FinishedWateringPlan', () => {
@@ -28,7 +32,7 @@ describe('FinishedWateringPlan', () => {
     render(
       <FinishedWateringPlan
         onSubmit={mockOnSubmit}
-        wateringPlanId="1"
+        wateringPlanId={PLAN_ID}
         loadedData={mockLoadedData}
       />,
     )
@@ -44,7 +48,7 @@ describe('FinishedWateringPlan', () => {
     render(
       <FinishedWateringPlan
         onSubmit={mockOnSubmit}
-        wateringPlanId="1"
+        wateringPlanId={PLAN_ID}
         loadedData={mockLoadedData}
       />,
     )
@@ -68,7 +72,7 @@ describe('FinishedWateringPlan', () => {
     render(
       <FinishedWateringPlan
         onSubmit={mockOnSubmit}
-        wateringPlanId="1"
+        wateringPlanId={PLAN_ID}
         loadedData={mockLoadedData}
       />,
     )

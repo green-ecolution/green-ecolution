@@ -22,7 +22,7 @@ import { z } from 'zod'
 const editTreeParams = z.object({
   treeLat: z.number(),
   treeLng: z.number(),
-  treeId: z.number().optional(),
+  treeId: z.string().optional(),
   formType: z.enum(['create', 'update']),
 })
 
@@ -82,7 +82,7 @@ function EditTree() {
         if (treeId) {
           return navigate({
             to: `/trees/$treeId/edit`,
-            params: { treeId: treeId.toString() },
+            params: { treeId },
           })
         } else {
           throw new Error('treeId is undefined in update tree step')

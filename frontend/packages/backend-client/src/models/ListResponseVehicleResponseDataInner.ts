@@ -79,10 +79,10 @@ export interface ListResponseVehicleResponseDataInner {
     height: number;
     /**
      * Unique identifier of the vehicle.
-     * @type {number}
+     * @type {string}
      * @memberof ListResponseVehicleResponseDataInner
      */
-    id: number;
+    id: string;
     /**
      * Vehicle length in meters.
      * @type {number}

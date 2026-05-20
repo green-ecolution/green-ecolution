@@ -79,19 +79,19 @@ pub async fn list_trees(
     operation_id = "getTree",
     summary = "Get a tree by ID",
     description = "Returns a single tree by its ID, including associated sensor data.",
-    params(("tree_id" = i32, Path, description = "Tree ID")),
+    params(("tree_id" = uuid::Uuid, Path, description = "Tree ID")),
     responses(
         (status = 200, description = "Tree found", body = TreeResponse),
         (status = 404, description = "Tree not found"),
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(tree.id = id))]
+#[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
 pub async fn get_tree(
     State(state): State<Arc<AppState>>,
-    Path(id): Path<i32>,
+    Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<TreeResponse>, ServiceError> {
-    let tree = state.tree_service.view_by_id(Id::from(id)).await?;
+    let tree = state.tree_service.view_by_id(Id::new(id)).await?;
     let sensor = match &tree.sensor_id {
         Some(sid) => {
             let sensor_id = SensorId::new(sid)?;
@@ -138,7 +138,7 @@ pub async fn create_tree(
     operation_id = "updateTree",
     summary = "Update a tree",
     description = "Performs a full replacement update of a tree by its ID.",
-    params(("tree_id" = i32, Path, description = "Tree ID")),
+    params(("tree_id" = uuid::Uuid, Path, description = "Tree ID")),
     request_body = TreeUpdateRequest,
     responses(
         (status = 200, description = "Tree updated", body = TreeResponse),
@@ -146,10 +146,10 @@ pub async fn create_tree(
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(tree.id = id))]
+#[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
 pub async fn update_tree(
     State(state): State<Arc<AppState>>,
-    Path(id): Path<i32>,
+    Path(id): Path<uuid::Uuid>,
     Json(entity): Json<TreeUpdateRequest>,
 ) -> Result<Json<TreeResponse>, ServiceError> {
     let create = TreeCreateRequest {
@@ -165,7 +165,7 @@ pub async fn update_tree(
         additional_information: entity.additional_information,
     };
     let draft: TreeDraft = create.try_into()?;
-    let tree = state.tree_service.replace(Id::from(id), draft).await?;
+    let tree = state.tree_service.replace(Id::new(id), draft).await?;
     let view = state.tree_service.view_by_id(tree.id).await?;
     let sensor = match view.sensor_id.as_deref() {
         Some(sid) => {
@@ -181,19 +181,19 @@ pub async fn update_tree(
     operation_id = "deleteTree",
     summary = "Delete a tree",
     description = "Permanently deletes a tree by its ID.",
-    params(("tree_id" = i32, Path, description = "Tree ID")),
+    params(("tree_id" = uuid::Uuid, Path, description = "Tree ID")),
     responses(
         (status = 204, description = "Tree deleted"),
         (status = 404, description = "Tree not found"),
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(tree.id = id))]
+#[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
 pub async fn delete_tree(
     State(state): State<Arc<AppState>>,
-    Path(id): Path<i32>,
+    Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
-    state.tree_service.delete(Id::from(id)).await?;
+    state.tree_service.delete(Id::new(id)).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 

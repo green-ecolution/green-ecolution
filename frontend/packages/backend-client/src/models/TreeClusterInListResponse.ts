@@ -73,10 +73,10 @@ export interface TreeClusterInListResponse {
     description: string;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof TreeClusterInListResponse
      */
-    id: number;
+    id: string;
     /**
      * 
      * @type {string}
@@ -127,10 +127,10 @@ export interface TreeClusterInListResponse {
     soilCondition: SoilCondition;
     /**
      * 
-     * @type {Array<number>}
+     * @type {Array<string>}
      * @memberof TreeClusterInListResponse
      */
-    treeIds: Array<number>;
+    treeIds: Array<string>;
     /**
      * 
      * @type {string}

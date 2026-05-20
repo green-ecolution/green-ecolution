@@ -21,10 +21,10 @@ import { mapValues } from '../runtime';
 export interface ListResponseRegionResponseDataInner {
     /**
      * Unique region identifier.
-     * @type {number}
+     * @type {string}
      * @memberof ListResponseRegionResponseDataInner
      */
-    id: number;
+    id: string;
     /**
      * Human-readable name of the region.
      * @type {string}

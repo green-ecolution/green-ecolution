@@ -55,7 +55,7 @@ export interface GetSensorRequest {
 }
 
 export interface GetSensorModelRequest {
-    id: number;
+    id: string;
 }
 
 export interface ListSensorDataRequest {

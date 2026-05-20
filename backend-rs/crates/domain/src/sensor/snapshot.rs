@@ -1,4 +1,5 @@
 use serde_json::Value;
+use uuid::Uuid;
 
 use crate::sensor::{LorawanCredentials, SensorStatus, SensorType};
 
@@ -9,7 +10,7 @@ pub struct SensorSnapshot {
     pub id: String,
     pub status: SensorStatus,
     pub sensor_type: SensorType,
-    pub model_id: i32,
+    pub model_id: Uuid,
     pub provider: Option<String>,
     pub additional_info: Option<Value>,
     pub lorawan: Option<LorawanCredentials>,

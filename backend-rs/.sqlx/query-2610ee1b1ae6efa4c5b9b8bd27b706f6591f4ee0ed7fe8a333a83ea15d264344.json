@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO tree_cluster_watering_plans (tree_cluster_id, watering_plan_id) SELECT UNNEST($1::uuid[]), $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "UuidArray",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2610ee1b1ae6efa4c5b9b8bd27b706f6591f4ee0ed7fe8a333a83ea15d264344"
+}

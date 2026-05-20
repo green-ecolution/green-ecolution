@@ -93,10 +93,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
                 Verknüpftes Fahrzeug
                 <span className="text-destructive ml-1">*</span>
               </Label>
-              <Select
-                value={field.value?.toString()}
-                onValueChange={(val) => field.onChange(Number(val))}
-              >
+              <Select value={field.value ?? ''} onValueChange={(val) => field.onChange(val)}>
                 <SelectTrigger id="transporterId">
                   <SelectValue placeholder="Wählen Sie ein Fahrzeug aus" />
                 </SelectTrigger>
@@ -123,8 +120,8 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
             <div className="flex flex-col gap-y-2">
               <Label htmlFor="trailerId">Verknüpfter Anhänger</Label>
               <Select
-                value={field.value?.toString() ?? '-1'}
-                onValueChange={(val) => field.onChange(val === '-1' ? undefined : Number(val))}
+                value={field.value ?? '-1'}
+                onValueChange={(val) => field.onChange(val === '-1' ? undefined : val)}
               >
                 <SelectTrigger id="trailerId">
                   <SelectValue placeholder="Wählen Sie einen Anhänger aus, sofern vorhanden" />

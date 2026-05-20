@@ -50,7 +50,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const { mutate, isError, error } = useMutation({
     mutationFn: (wateringPlan: WateringPlanUpdate) =>
       wateringPlanApi.updateWateringPlan({
-        wateringPlanId: Number(wateringPlanId),
+        wateringPlanId: wateringPlanId,
         wateringPlanUpdateRequest: wateringPlan,
       }),
 
@@ -247,10 +247,10 @@ export const FinishedWateringPlan = ({
     mode: 'onChange',
     resolver: zodResolver(wateringPlanFinishedSchema),
     defaultValues: {
-      evaluation: loadedData.treeclusters.map((cluster: { treeIds?: number[]; id: number }) => ({
+      evaluation: loadedData.treeclusters.map((cluster: { treeIds?: string[]; id: string }) => ({
         consumedWater: (cluster.treeIds?.length ?? 1) * 80,
         treeClusterId: cluster.id,
-        wateringPlanId: Number(wateringPlanId),
+        wateringPlanId: wateringPlanId,
       })),
     },
   })

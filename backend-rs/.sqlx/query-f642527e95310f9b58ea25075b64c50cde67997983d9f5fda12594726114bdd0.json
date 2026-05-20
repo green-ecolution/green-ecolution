@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO regions (id, name) VALUES ($1, 'Altstadt'), ($2, 'Neustadt')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f642527e95310f9b58ea25075b64c50cde67997983d9f5fda12594726114bdd0"
+}

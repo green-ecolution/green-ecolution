@@ -14,11 +14,11 @@ use super::{WateringPlanStatus, cluster::TreeClusterInListResponse, vehicle::Veh
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct EvaluationValueResponse {
     /// Identifier of the watering plan this evaluation belongs to.
-    #[schema(example = 1, minimum = 1)]
-    pub watering_plan_id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub watering_plan_id: uuid::Uuid,
     /// Identifier of the tree cluster that was evaluated.
-    #[schema(example = 3, minimum = 1)]
-    pub tree_cluster_id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub tree_cluster_id: uuid::Uuid,
     /// Amount of water consumed for this cluster in liters.
     #[schema(example = 5000.0, minimum = 0.0)]
     pub consumed_water: f64,
@@ -30,8 +30,8 @@ pub struct EvaluationValueResponse {
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct WateringPlanResponse {
     /// Unique identifier of the watering plan.
-    #[schema(example = 1, minimum = 1)]
-    pub id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub id: uuid::Uuid,
     /// Timestamp when the watering plan was created (RFC 3339).
     #[schema(example = "2024-08-10T09:00:00+00:00")]
     pub created_at: String,
@@ -133,8 +133,8 @@ impl From<WateringPlanDetailView> for WateringPlanResponse {
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct WateringPlanInListResponse {
     /// Unique identifier of the watering plan.
-    #[schema(example = 1, minimum = 1)]
-    pub id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub id: uuid::Uuid,
     /// Timestamp when the watering plan was created (RFC 3339).
     #[schema(example = "2024-08-10T09:00:00+00:00")]
     pub created_at: String,
@@ -222,18 +222,18 @@ pub struct WateringPlanCreateRequest {
     #[schema(example = "Bewässerungsplan Stadtpark Nord")]
     pub description: String,
     /// Identifier of the transporter vehicle to use.
-    #[schema(example = 1, minimum = 1)]
-    pub transporter_id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub transporter_id: uuid::Uuid,
     /// List of tree cluster identifiers to include in the plan.
-    #[schema(example = json!([1, 2, 3]))]
-    pub tree_cluster_ids: Vec<i32>,
+    #[schema(example = json!(["0190a8e9-7c4f-7000-8000-000000000000"]))]
+    pub tree_cluster_ids: Vec<uuid::Uuid>,
     /// List of user identifiers assigned to execute this plan.
     #[schema(example = json!(["user-uuid-1"]))]
     pub user_ids: Vec<String>,
     /// Identifier of the trailer vehicle to use, if any.
     #[serde(default)]
-    #[schema(example = 2, nullable)]
-    pub trailer_id: Option<i32>,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
+    pub trailer_id: Option<uuid::Uuid>,
     /// Name of the external data provider that supplied this record.
     #[serde(default)]
     #[schema(example = "green_ecolution", nullable)]
@@ -256,11 +256,11 @@ pub struct WateringPlanUpdateRequest {
     /// Updated status of the watering plan.
     pub status: WateringPlanStatus,
     /// Identifier of the transporter vehicle to use.
-    #[schema(example = 1, minimum = 1)]
-    pub transporter_id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub transporter_id: uuid::Uuid,
     /// List of tree cluster identifiers to include in the plan.
-    #[schema(example = json!([1, 2, 3]))]
-    pub tree_cluster_ids: Vec<i32>,
+    #[schema(example = json!(["0190a8e9-7c4f-7000-8000-000000000000"]))]
+    pub tree_cluster_ids: Vec<uuid::Uuid>,
     /// List of user identifiers assigned to execute this plan.
     #[schema(example = json!(["user-uuid-1"]))]
     pub user_ids: Vec<String>,
@@ -269,8 +269,8 @@ pub struct WateringPlanUpdateRequest {
     pub cancellation_note: String,
     /// Identifier of the trailer vehicle to use, if any.
     #[serde(default)]
-    #[schema(example = 2, nullable)]
-    pub trailer_id: Option<i32>,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
+    pub trailer_id: Option<uuid::Uuid>,
     /// Per-cluster evaluation results for the watering run.
     #[serde(default)]
     #[schema(nullable)]
@@ -289,11 +289,11 @@ pub struct WateringPlanUpdateRequest {
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct EvaluationValueRequest {
     /// Identifier of the watering plan this evaluation belongs to.
-    #[schema(example = 1, minimum = 1)]
-    pub watering_plan_id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub watering_plan_id: uuid::Uuid,
     /// Identifier of the tree cluster that was evaluated.
-    #[schema(example = 3, minimum = 1)]
-    pub tree_cluster_id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub tree_cluster_id: uuid::Uuid,
     /// Amount of water consumed for this cluster in liters.
     #[schema(example = 5000.0, minimum = 0.0)]
     pub consumed_water: f64,
@@ -316,15 +316,15 @@ impl EvaluationValueRequest {
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct RouteRequest {
     /// List of tree cluster identifiers to include in the route.
-    #[schema(example = json!([1, 2, 3]))]
-    pub cluster_ids: Vec<i32>,
+    #[schema(example = json!(["0190a8e9-7c4f-7000-8000-000000000000"]))]
+    pub cluster_ids: Vec<uuid::Uuid>,
     /// Identifier of the transporter vehicle to use.
-    #[schema(example = 1, minimum = 1)]
-    pub transporter_id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub transporter_id: uuid::Uuid,
     /// Identifier of the trailer vehicle to use, if any.
     #[serde(default)]
-    #[schema(example = 2, nullable)]
-    pub trailer_id: Option<i32>,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
+    pub trailer_id: Option<uuid::Uuid>,
 }
 
 fn parse_date(s: &str) -> Result<DateTime<Utc>, ServiceError> {

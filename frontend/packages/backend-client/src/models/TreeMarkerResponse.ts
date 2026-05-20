@@ -35,10 +35,10 @@ export interface TreeMarkerResponse {
     hasSensor: boolean;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof TreeMarkerResponse
      */
-    id: number;
+    id: string;
     /**
      * 
      * @type {number}

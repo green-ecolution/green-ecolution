@@ -52,14 +52,14 @@ pub struct UnknownAbility(pub String);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SensorAbility {
-    pub id: i32,
+    pub id: uuid::Uuid,
     pub name: SensorAbilityName,
     pub unit: SensorAbilityUnit,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SensorModelAbility {
-    pub id: i32,
+    pub id: uuid::Uuid,
     pub ability: SensorAbility,
     pub depth_cm: i32,
 }

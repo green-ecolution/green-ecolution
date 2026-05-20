@@ -39,11 +39,11 @@ export interface CreateClusterRequest {
 }
 
 export interface DeleteClusterRequest {
-    clusterId: number;
+    clusterId: string;
 }
 
 export interface GetClusterRequest {
-    clusterId: number;
+    clusterId: string;
 }
 
 export interface ListClustersRequest {
@@ -52,7 +52,7 @@ export interface ListClustersRequest {
 }
 
 export interface UpdateClusterRequest {
-    clusterId: number;
+    clusterId: string;
     treeClusterUpdateRequest: TreeClusterUpdateRequest;
 }
 

@@ -79,10 +79,10 @@ export interface ListResponseWateringPlanInListResponseDataInner {
     distance: number;
     /**
      * Unique identifier of the watering plan.
-     * @type {number}
+     * @type {string}
      * @memberof ListResponseWateringPlanInListResponseDataInner
      */
-    id: number;
+    id: string;
     /**
      * Name of the external data provider that supplied this record.
      * @type {string}

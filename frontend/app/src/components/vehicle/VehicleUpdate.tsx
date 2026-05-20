@@ -39,7 +39,7 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
 
   const handleArchiveVehicle = () => {
     return vehicleApi.archiveVehicle({
-      vehicleId: Number(vehicleId),
+      vehicleId,
     })
   }
 

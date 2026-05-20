@@ -14,8 +14,8 @@ use super::{DrivingLicense, VehicleStatus, VehicleType};
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct VehicleResponse {
     /// Unique identifier of the vehicle.
-    #[schema(example = 1, minimum = 1)]
-    pub id: i32,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub id: uuid::Uuid,
     /// Timestamp when the vehicle was created (RFC 3339).
     #[schema(example = "2025-01-15T08:30:00Z")]
     pub created_at: String,

@@ -24,11 +24,11 @@ import { z } from 'zod'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 
 const mapSelectClusterSchema = z.object({
-  transporterId: z.coerce.number().optional(),
-  trailerId: z.coerce.number().optional(),
+  transporterId: z.string().optional(),
+  trailerId: z.string().optional(),
   formType: z.enum(['create', 'update']),
-  clusterIds: z.array(z.number().int()),
-  wateringPlanId: z.number().optional(),
+  clusterIds: z.array(z.string()),
+  wateringPlanId: z.string().optional(),
 })
 
 export const Route = createFileRoute('/_protected/map/watering-plan/select/cluster/')({
@@ -41,7 +41,7 @@ export const Route = createFileRoute('/_protected/map/watering-plan/select/clust
 
 function SelectCluster() {
   const { trailerId, transporterId, formType, clusterIds: searchClusterIds } = Route.useSearch()
-  const [clusterIds, setClusterIds] = useState<number[]>(searchClusterIds)
+  const [clusterIds, setClusterIds] = useState<string[]>(searchClusterIds)
   const [showError, setShowError] = useState(false)
   const navigate = useNavigate({ from: Route.fullPath })
   const { wateringPlanId } = Route.useSearch()
@@ -75,11 +75,11 @@ function SelectCluster() {
   const { data: clusters } = useSuspenseQuery(treeClusterQuery())
   const { data: transporter } = useQuery({
     ...vehicleIdQuery(transporterId?.toString() ?? '-1'),
-    enabled: !!transporterId && transporterId !== -1,
+    enabled: !!transporterId && transporterId !== '-1',
   })
   const { data: trailer } = useQuery({
     ...vehicleIdQuery(trailerId?.toString() ?? '-1'),
-    enabled: !!trailerId && trailerId !== -1,
+    enabled: !!trailerId && trailerId !== '-1',
   })
 
   const handleNavigateBack = useCallback(() => {
@@ -120,7 +120,7 @@ function SelectCluster() {
     handleNavigateBack().catch((error) => console.error('Navigation failed:', error))
   }
 
-  const handleDelete = (clusterId: number) => {
+  const handleDelete = (clusterId: string) => {
     setClusterIds((prev) => prev.filter((id) => id !== clusterId))
   }
 
@@ -154,7 +154,7 @@ function SelectCluster() {
   const { showNotice, notice } = useMemo(() => {
     const errors = []
 
-    if (!transporterId || transporterId === -1) {
+    if (!transporterId || transporterId === '-1') {
       errors.push('Um eine Route generieren zu können, muss ein Fahrzeug ausgewählt werden.')
     }
 
@@ -200,7 +200,7 @@ function SelectCluster() {
         disabledClusters={disabledClusters}
       />
 
-      {clusterIds.length > 0 && transporterId && transporterId != -1 && (
+      {clusterIds.length > 0 && transporterId && transporterId !== '-1' && (
         <ShowRoutePreview
           selectedClustersIds={clusterIds}
           transporterId={transporterId}

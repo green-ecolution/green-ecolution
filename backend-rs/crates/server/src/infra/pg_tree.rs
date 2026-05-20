@@ -1,5 +1,6 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use domain::{IdSliceExt, RawId};
+use serde_json::Value;
 use sqlx::PgPool;
 
 use domain::tree::snapshot::TreeSnapshot;
@@ -26,6 +27,98 @@ pub struct PgTreeRepository {
 impl PgTreeRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
+    }
+}
+
+/// Flat row shape shared by every `view_*` query on `trees`. Field names
+/// match the column names from `SELECT id, updated_at, tree_cluster_id, …`
+/// so the original SQL (and `.sqlx/` query cache) stays unchanged; the
+/// rename to `TreeView` (`tree_cluster_id` → `cluster_id`, `number` →
+/// `tree_number`) happens in the `From` impl.
+struct TreeViewRow {
+    id: RawId,
+    updated_at: NaiveDateTime,
+    tree_cluster_id: Option<RawId>,
+    sensor_id: Option<String>,
+    planting_year: i32,
+    species: String,
+    number: String,
+    latitude: f64,
+    longitude: f64,
+    watering_status: WateringStatus,
+    description: Option<String>,
+    last_watered: Option<DateTime<Utc>>,
+    provider: Option<String>,
+    additional_info: Option<Value>,
+}
+
+impl From<TreeViewRow> for TreeView {
+    fn from(row: TreeViewRow) -> Self {
+        let created_at = Id::<Tree>::new(row.id)
+            .created_at()
+            .expect("trees.id is minted as uuid v7");
+        Self {
+            id: row.id,
+            created_at,
+            updated_at: row.updated_at.and_utc(),
+            cluster_id: row.tree_cluster_id,
+            sensor_id: row.sensor_id,
+            planting_year: row.planting_year as u32,
+            species: row.species,
+            tree_number: row.number,
+            latitude: row.latitude,
+            longitude: row.longitude,
+            watering_status: row.watering_status,
+            description: row.description,
+            last_watered: row.last_watered,
+            provider: row.provider,
+            additional_info: row.additional_info,
+        }
+    }
+}
+
+/// `view_nearest` extends [`TreeViewRow`] with the haversine distance from
+/// the query point.
+struct TreeViewWithDistanceRow {
+    id: RawId,
+    updated_at: NaiveDateTime,
+    tree_cluster_id: Option<RawId>,
+    sensor_id: Option<String>,
+    planting_year: i32,
+    species: String,
+    number: String,
+    latitude: f64,
+    longitude: f64,
+    watering_status: WateringStatus,
+    description: Option<String>,
+    last_watered: Option<DateTime<Utc>>,
+    provider: Option<String>,
+    additional_info: Option<Value>,
+    distance: f64,
+}
+
+impl TryFrom<TreeViewWithDistanceRow> for TreeViewWithDistance {
+    type Error = RepositoryError;
+
+    fn try_from(row: TreeViewWithDistanceRow) -> Result<Self, Self::Error> {
+        let distance = Distance::new(row.distance)?;
+        let tree = TreeView::from(TreeViewRow {
+            id: row.id,
+            updated_at: row.updated_at,
+            tree_cluster_id: row.tree_cluster_id,
+            sensor_id: row.sensor_id,
+            planting_year: row.planting_year,
+            species: row.species,
+            number: row.number,
+            latitude: row.latitude,
+            longitude: row.longitude,
+            watering_status: row.watering_status,
+            description: row.description,
+            last_watered: row.last_watered,
+            provider: row.provider,
+            additional_info: row.additional_info,
+        });
+        Ok(Self { tree, distance })
     }
 }
 
@@ -66,7 +159,7 @@ impl TreeReader for PgTreeRepository {
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
                       additional_informations AS additional_info
-            FROM trees WHERE id = ANY($1)"#,
+            FROM trees WHERE id = ANY($1::uuid[])"#,
             &id_values
         )
         .fetch_all(&self.pool)
@@ -122,8 +215,9 @@ impl TreeReader for PgTreeRepository {
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn view_by_id(&self, id: Id<Tree>) -> Result<TreeView, RepositoryError> {
-        let row = sqlx::query!(
-            r#"SELECT id, created_at, updated_at, tree_cluster_id, sensor_id,
+        let row = sqlx::query_as!(
+            TreeViewRow,
+            r#"SELECT id, updated_at, tree_cluster_id, sensor_id,
                       planting_year, species, number, latitude, longitude,
                       watering_status AS "watering_status: WateringStatus",
                       description,
@@ -137,23 +231,7 @@ impl TreeReader for PgTreeRepository {
         .await?
         .ok_or(RepositoryError::NotFound)?;
 
-        Ok(TreeView {
-            id: row.id,
-            created_at: row.created_at.and_utc(),
-            updated_at: row.updated_at.and_utc(),
-            cluster_id: row.tree_cluster_id,
-            sensor_id: row.sensor_id,
-            planting_year: row.planting_year as u32,
-            species: row.species,
-            tree_number: row.number,
-            latitude: row.latitude,
-            longitude: row.longitude,
-            watering_status: row.watering_status,
-            description: row.description,
-            last_watered: row.last_watered,
-            provider: row.provider,
-            additional_info: row.additional_info,
-        })
+        Ok(row.into())
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
@@ -161,8 +239,9 @@ impl TreeReader for PgTreeRepository {
         &self,
         sensor_id: &SensorId,
     ) -> Result<Option<TreeView>, RepositoryError> {
-        let row = sqlx::query!(
-            r#"SELECT id, created_at, updated_at, tree_cluster_id, sensor_id,
+        let row = sqlx::query_as!(
+            TreeViewRow,
+            r#"SELECT id, updated_at, tree_cluster_id, sensor_id,
                       planting_year, species, number, latitude, longitude,
                       watering_status AS "watering_status: WateringStatus",
                       description,
@@ -175,62 +254,28 @@ impl TreeReader for PgTreeRepository {
         .fetch_optional(&self.pool)
         .await?;
 
-        Ok(row.map(|row| TreeView {
-            id: row.id,
-            created_at: row.created_at.and_utc(),
-            updated_at: row.updated_at.and_utc(),
-            cluster_id: row.tree_cluster_id,
-            sensor_id: row.sensor_id,
-            planting_year: row.planting_year as u32,
-            species: row.species,
-            tree_number: row.number,
-            latitude: row.latitude,
-            longitude: row.longitude,
-            watering_status: row.watering_status,
-            description: row.description,
-            last_watered: row.last_watered,
-            provider: row.provider,
-            additional_info: row.additional_info,
-        }))
+        Ok(row.map(Into::into))
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn view_by_ids(&self, ids: &[Id<Tree>]) -> Result<Vec<TreeView>, RepositoryError> {
         let id_values: Vec<RawId> = ids.to_values();
-        let rows = sqlx::query!(
-            r#"SELECT id, created_at, updated_at, tree_cluster_id, sensor_id,
+        let rows = sqlx::query_as!(
+            TreeViewRow,
+            r#"SELECT id, updated_at, tree_cluster_id, sensor_id,
                       planting_year, species, number, latitude, longitude,
                       watering_status AS "watering_status: WateringStatus",
                       description,
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
                       additional_informations AS additional_info
-            FROM trees WHERE id = ANY($1)"#,
+            FROM trees WHERE id = ANY($1::uuid[])"#,
             &id_values
         )
         .fetch_all(&self.pool)
         .await?;
 
-        Ok(rows
-            .into_iter()
-            .map(|row| TreeView {
-                id: row.id,
-                created_at: row.created_at.and_utc(),
-                updated_at: row.updated_at.and_utc(),
-                cluster_id: row.tree_cluster_id,
-                sensor_id: row.sensor_id,
-                planting_year: row.planting_year as u32,
-                species: row.species,
-                tree_number: row.number,
-                latitude: row.latitude,
-                longitude: row.longitude,
-                watering_status: row.watering_status,
-                description: row.description,
-                last_watered: row.last_watered,
-                provider: row.provider,
-                additional_info: row.additional_info,
-            })
-            .collect())
+        Ok(rows.into_iter().map(Into::into).collect())
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
@@ -263,8 +308,9 @@ impl TreeReader for PgTreeRepository {
         .fetch_one(&self.pool)
         .await? as u64;
 
-        let rows = sqlx::query!(
-            r#"SELECT id, created_at, updated_at, tree_cluster_id, sensor_id,
+        let rows = sqlx::query_as!(
+            TreeViewRow,
+            r#"SELECT id, updated_at, tree_cluster_id, sensor_id,
                       planting_year, species, number, latitude, longitude,
                       watering_status AS "watering_status: WateringStatus",
                       description,
@@ -288,26 +334,7 @@ impl TreeReader for PgTreeRepository {
         .fetch_all(&self.pool)
         .await?;
 
-        let items = rows
-            .into_iter()
-            .map(|row| TreeView {
-                id: row.id,
-                created_at: row.created_at.and_utc(),
-                updated_at: row.updated_at.and_utc(),
-                cluster_id: row.tree_cluster_id,
-                sensor_id: row.sensor_id,
-                planting_year: row.planting_year as u32,
-                species: row.species,
-                tree_number: row.number,
-                latitude: row.latitude,
-                longitude: row.longitude,
-                watering_status: row.watering_status,
-                description: row.description,
-                last_watered: row.last_watered,
-                provider: row.provider,
-                additional_info: row.additional_info,
-            })
-            .collect();
+        let items = rows.into_iter().map(Into::into).collect();
 
         Ok(Page { items, total })
     }
@@ -376,7 +403,8 @@ impl TreeReader for PgTreeRepository {
         radius: Distance,
         limit: u32,
     ) -> Result<Vec<TreeViewWithDistance>, RepositoryError> {
-        let rows = sqlx::query!(
+        let rows = sqlx::query_as!(
+            TreeViewWithDistanceRow,
             r#"WITH distances AS (
                 SELECT *,
                     ST_Distance(
@@ -390,7 +418,7 @@ impl TreeReader for PgTreeRepository {
                     $3
                 )
             )
-            SELECT id, created_at, updated_at, tree_cluster_id, sensor_id,
+            SELECT id, updated_at, tree_cluster_id, sensor_id,
                       planting_year, species, number, latitude, longitude,
                       watering_status AS "watering_status: WateringStatus",
                       description,
@@ -409,30 +437,7 @@ impl TreeReader for PgTreeRepository {
         .fetch_all(&self.pool)
         .await?;
 
-        rows.into_iter()
-            .map(|row| {
-                Ok(TreeViewWithDistance {
-                    tree: TreeView {
-                        id: row.id,
-                        created_at: row.created_at.and_utc(),
-                        updated_at: row.updated_at.and_utc(),
-                        cluster_id: row.tree_cluster_id,
-                        sensor_id: row.sensor_id,
-                        planting_year: row.planting_year as u32,
-                        species: row.species,
-                        tree_number: row.number,
-                        latitude: row.latitude,
-                        longitude: row.longitude,
-                        watering_status: row.watering_status,
-                        description: row.description,
-                        last_watered: row.last_watered,
-                        provider: row.provider,
-                        additional_info: row.additional_info,
-                    },
-                    distance: Distance::new(row.distance)?,
-                })
-            })
-            .collect()
+        rows.into_iter().map(TryInto::try_into).collect()
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
@@ -493,22 +498,15 @@ impl TreeWriter for PgTreeRepository {
     async fn save_new(&self, draft: TreeDraft) -> Result<Tree, RepositoryError> {
         let lat = draft.coordinate.latitude();
         let lng = draft.coordinate.longitude();
+        let id = Id::<Tree>::new_v7();
 
-        let snap = sqlx::query_as!(
-            TreeSnapshot,
-            r#"INSERT INTO trees (tree_cluster_id, sensor_id, planting_year, species, number,
+        sqlx::query!(
+            r#"INSERT INTO trees (id, tree_cluster_id, sensor_id, planting_year, species, number,
                                   description, watering_status, latitude, longitude,
                                   geometry, provider, additional_informations)
-            VALUES ($1, $2, $3, $4, $5, $6, 'unknown', $7, $8,
-                    ST_SetSRID(ST_MakePoint($8, $7), 4326), $9, $10)
-            RETURNING id, tree_cluster_id AS cluster_id, sensor_id,
-                      planting_year, species, number AS tree_number,
-                      latitude, longitude,
-                      watering_status AS "watering_status: WateringStatus",
-                      description,
-                      last_watered AS "last_watered: DateTime<Utc>",
-                      provider,
-                      additional_informations AS additional_info"#,
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 'unknown', $8, $9,
+                    ST_SetSRID(ST_MakePoint($9, $8), 4326), $10, $11)"#,
+            id.value(),
             draft.cluster_id.map(|id| id.value()),
             draft.sensor_id.as_ref().map(|s| s.as_str().to_string()),
             draft.planting_year.year() as i32,
@@ -520,10 +518,10 @@ impl TreeWriter for PgTreeRepository {
             draft.provenance.provider().map(|p| p.as_str().to_string()),
             draft.provenance.additional_info().cloned(),
         )
-        .fetch_one(&self.pool)
+        .execute(&self.pool)
         .await?;
 
-        Ok(Tree::reconstitute(snap))
+        self.by_id(id).await
     }
 
     #[tracing::instrument(level = "trace", skip_all)]

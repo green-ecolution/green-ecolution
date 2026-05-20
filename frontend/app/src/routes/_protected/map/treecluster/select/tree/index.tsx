@@ -21,7 +21,7 @@ import { TreeclusterForm } from '@/schema/treeclusterSchema'
 
 const selectTreesInClusterParams = z.object({
   formType: z.enum(['create', 'update']),
-  treeIds: z.array(z.number().int()),
+  treeIds: z.array(z.string()),
 })
 
 export const Route = createFileRoute('/_protected/map/treecluster/select/tree/')({
@@ -32,7 +32,7 @@ export const Route = createFileRoute('/_protected/map/treecluster/select/tree/')
 
 function SelectTrees() {
   const { formType, treeIds: searchTreeIds } = Route.useSearch()
-  const [treeIds, setTreeIds] = useState<number[]>(searchTreeIds)
+  const [treeIds, setTreeIds] = useState<string[]>(searchTreeIds)
   const [showError, setShowError] = useState(false)
   const navigate = useNavigate({ from: Route.fullPath })
   const { clusterId } = Route.useSearch()
@@ -104,7 +104,7 @@ function SelectTrees() {
 
   const handleCancel = () => handleNavigateBack()
 
-  const handleDeleteTree = (treeId: number) => {
+  const handleDeleteTree = (treeId: string) => {
     setTreeIds((prev) => prev.filter((id) => id !== treeId))
   }
 

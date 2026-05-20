@@ -24,7 +24,9 @@ async fn list_trees_returns_empty_list() {
 async fn get_trees_returns_404_for_nonexistent_id() {
     let app = spawn_app().await;
 
-    let response = app.get("/api/v1/trees/999").await;
+    let response = app
+        .get(&format!("/api/v1/trees/{}", uuid::Uuid::now_v7()))
+        .await;
 
     assert_eq!(response.status().as_u16(), 404);
 }
@@ -102,7 +104,7 @@ async fn create_tree_with_cluster_links_it() {
     });
     let cluster_resp = app.post_json("/api/v1/clusters", &cluster_body).await;
     let cluster: serde_json::Value = cluster_resp.json().await.unwrap();
-    let cluster_id = cluster["id"].as_i64().unwrap();
+    let cluster_id = cluster["id"].as_str().unwrap();
 
     let tree_body = serde_json::json!({
         "species": "Buche",
@@ -137,7 +139,7 @@ async fn get_tree_returns_full_response() {
 
     let create_resp = app.post_json("/api/v1/trees", &body).await;
     let created: serde_json::Value = create_resp.json().await.unwrap();
-    let id = created["id"].as_i64().unwrap();
+    let id = created["id"].as_str().unwrap();
 
     let response = app.get(&format!("/api/v1/trees/{}", id)).await;
 
@@ -165,7 +167,7 @@ async fn update_tree_changes_species() {
 
     let create_resp = app.post_json("/api/v1/trees", &body).await;
     let created: serde_json::Value = create_resp.json().await.unwrap();
-    let id = created["id"].as_i64().unwrap();
+    let id = created["id"].as_str().unwrap();
 
     let update_body = serde_json::json!({
         "species": "Buche",
@@ -202,7 +204,7 @@ async fn delete_tree_returns_204() {
 
     let create_resp = app.post_json("/api/v1/trees", &body).await;
     let created: serde_json::Value = create_resp.json().await.unwrap();
-    let id = created["id"].as_i64().unwrap();
+    let id = created["id"].as_str().unwrap();
 
     let response = app.delete(&format!("/api/v1/trees/{}", id)).await;
     assert_eq!(response.status().as_u16(), 204);

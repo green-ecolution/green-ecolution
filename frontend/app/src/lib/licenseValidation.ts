@@ -27,8 +27,8 @@ export function validateDriverLicenses(
   users: User[],
   transporters: Vehicle[],
   trailers: Vehicle[],
-  transporterId?: number,
-  trailerId?: number,
+  transporterId?: string,
+  trailerId?: string,
 ): { valid: boolean; message?: string } {
   if (!driverIds || driverIds.length === 0) {
     return { valid: true }
@@ -36,14 +36,14 @@ export function validateDriverLicenses(
 
   const requiredLicenses: DrivingLicense[] = []
 
-  if (transporterId !== undefined && transporterId > 0) {
+  if (transporterId !== undefined && transporterId !== '' && transporterId !== '-1') {
     const transporter = transporters.find((t) => t.id === transporterId)
     if (transporter) {
       requiredLicenses.push(transporter.drivingLicense)
     }
   }
 
-  if (trailerId !== undefined && trailerId > 0) {
+  if (trailerId !== undefined && trailerId !== '' && trailerId !== '-1') {
     const trailer = trailers.find((t) => t.id === trailerId)
     if (trailer) {
       requiredLicenses.push(trailer.drivingLicense)

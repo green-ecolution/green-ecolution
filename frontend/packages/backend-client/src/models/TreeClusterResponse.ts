@@ -80,10 +80,10 @@ export interface TreeClusterResponse {
     description: string;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof TreeClusterResponse
      */
-    id: number;
+    id: string;
     /**
      * 
      * @type {string}

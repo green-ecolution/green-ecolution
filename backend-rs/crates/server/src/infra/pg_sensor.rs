@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use rust_decimal::Decimal;
 use sqlx::PgPool;
+use uuid::Uuid;
 
 use domain::{
     RepositoryError,
@@ -18,6 +19,7 @@ use domain::{
         provenance::ProviderId,
         string_value::NonEmptyString,
     },
+    uuid_v7_timestamp,
 };
 
 pub struct PgSensorRepository {
@@ -157,18 +159,20 @@ impl SensorReader for PgSensorRepository {
         .await?
         .ok_or(RepositoryError::NotFound)?;
 
+        // sensor_data.created_at was dropped; order by id (UUID v7) which
+        // preserves chronological order via its embedded timestamp.
         let latest_reading = sqlx::query!(
-            r#"SELECT id, sensor_id, created_at, updated_at, data
+            r#"SELECT id, sensor_id, updated_at, data
             FROM sensor_data WHERE sensor_id = $1
-            ORDER BY created_at DESC LIMIT 1"#,
+            ORDER BY id DESC LIMIT 1"#,
             id.as_str()
         )
         .fetch_optional(&self.pool)
         .await?
         .map(|r| SensorReadingView {
+            created_at: uuid_v7_timestamp(&r.id).expect("sensor_data.id is minted as uuid v7"),
             id: r.id,
             sensor_id: r.sensor_id,
-            created_at: r.created_at.and_utc(),
             updated_at: r.updated_at.and_utc(),
             data: r.data,
         });
@@ -430,9 +434,9 @@ impl SensorReadingReader for PgSensorRepository {
     ) -> Result<Vec<SensorReading>, RepositoryError> {
         let snaps = sqlx::query_as!(
             SensorReadingSnapshot,
-            r#"SELECT id, sensor_id, created_at AS recorded_at, data
+            r#"SELECT id, sensor_id, data
             FROM sensor_data WHERE sensor_id = $1
-            ORDER BY created_at DESC LIMIT $2"#,
+            ORDER BY id DESC LIMIT $2"#,
             sensor_id.as_str(),
             limit,
         )
@@ -446,9 +450,9 @@ impl SensorReadingReader for PgSensorRepository {
     async fn latest(&self, sensor_id: &SensorId) -> Result<Option<SensorReading>, RepositoryError> {
         let snap = sqlx::query_as!(
             SensorReadingSnapshot,
-            r#"SELECT id, sensor_id, created_at AS recorded_at, data
+            r#"SELECT id, sensor_id, data
             FROM sensor_data WHERE sensor_id = $1
-            ORDER BY created_at DESC LIMIT 1"#,
+            ORDER BY id DESC LIMIT 1"#,
             sensor_id.as_str(),
         )
         .fetch_optional(&self.pool)
@@ -464,9 +468,9 @@ impl SensorReadingReader for PgSensorRepository {
         limit: i64,
     ) -> Result<Vec<SensorReadingView>, RepositoryError> {
         let rows = sqlx::query!(
-            r#"SELECT id, sensor_id, created_at, updated_at, data
+            r#"SELECT id, sensor_id, updated_at, data
             FROM sensor_data WHERE sensor_id = $1
-            ORDER BY created_at DESC LIMIT $2"#,
+            ORDER BY id DESC LIMIT $2"#,
             sensor_id.as_str(),
             limit,
         )
@@ -476,9 +480,9 @@ impl SensorReadingReader for PgSensorRepository {
         Ok(rows
             .into_iter()
             .map(|r| SensorReadingView {
+                created_at: uuid_v7_timestamp(&r.id).expect("sensor_data.id is minted as uuid v7"),
                 id: r.id,
                 sensor_id: r.sensor_id,
-                created_at: r.created_at.and_utc(),
                 updated_at: r.updated_at.and_utc(),
                 data: r.data,
             })
@@ -490,8 +494,10 @@ impl SensorReadingReader for PgSensorRepository {
 impl SensorReadingWriter for PgSensorRepository {
     #[tracing::instrument(level = "trace", skip_all)]
     async fn record(&self, draft: SensorReadingDraft) -> Result<(), RepositoryError> {
+        let reading_id = Uuid::now_v7();
         sqlx::query!(
-            r#"INSERT INTO sensor_data (sensor_id, data) VALUES ($1, $2)"#,
+            r#"INSERT INTO sensor_data (id, sensor_id, data) VALUES ($1, $2, $3)"#,
+            reading_id,
             draft.sensor_id.as_str(),
             draft.data,
         )
@@ -510,22 +516,24 @@ impl SensorReadingWriter for PgSensorRepository {
     ) -> Result<(), RepositoryError> {
         let mut tx = self.pool.begin().await?;
 
-        let reading_id = sqlx::query_scalar!(
-            r#"INSERT INTO sensor_data (sensor_id, data) VALUES ($1, $2) RETURNING id"#,
+        let reading_id = Uuid::now_v7();
+        sqlx::query!(
+            r#"INSERT INTO sensor_data (id, sensor_id, data) VALUES ($1, $2, $3)"#,
+            reading_id,
             sensor_id.as_str(),
             raw,
         )
-        .fetch_one(&mut *tx)
+        .execute(&mut *tx)
         .await?;
 
         if !normalized.is_empty() {
-            let ability_ids: Vec<i32> = normalized.iter().map(|n| n.model_ability_id).collect();
+            let ability_ids: Vec<Uuid> = normalized.iter().map(|n| n.model_ability_id).collect();
             let values: Vec<Decimal> = normalized.iter().map(|n| n.value).collect();
             sqlx::query!(
                 r#"INSERT INTO sensor_data_ability_values
                     (sensor_data_id, sensor_model_ability_id, value)
                 SELECT $1, ability, val
-                FROM UNNEST($2::int[], $3::numeric[]) AS t(ability, val)"#,
+                FROM UNNEST($2::uuid[], $3::numeric[]) AS t(ability, val)"#,
                 reading_id,
                 &ability_ids,
                 &values as &[Decimal],

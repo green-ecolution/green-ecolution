@@ -24,7 +24,9 @@ async fn list_clusters_returns_empty_list() {
 async fn get_clusters_returns_404_for_nonexistent_id() {
     let app = spawn_app().await;
 
-    let response = app.get("/api/v1/clusters/999").await;
+    let response = app
+        .get(&format!("/api/v1/clusters/{}", uuid::Uuid::now_v7()))
+        .await;
 
     assert_eq!(response.status().as_u16(), 404);
 }
@@ -56,18 +58,15 @@ async fn create_cluster_returns_201() {
 async fn create_cluster_with_trees_links_them() {
     let app = spawn_app().await;
 
+    let tree_id = uuid::Uuid::now_v7();
     sqlx::query!(
-        r#"INSERT INTO trees (planting_year, species, number, latitude, longitude, geometry, description)
-        VALUES (2020, 'Eiche', 'T-001', 53.55, 9.99, ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test')"#
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description)
+        VALUES ($1, 2020, 'Eiche', 'T-001', 53.55, 9.99, ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test')"#,
+        tree_id,
     )
     .execute(&app.db_pool)
     .await
     .unwrap();
-
-    let tree_id: i32 = sqlx::query_scalar!("SELECT id FROM trees LIMIT 1")
-        .fetch_one(&app.db_pool)
-        .await
-        .unwrap();
 
     let body = serde_json::json!({
         "name": "Stadtpark",
@@ -83,7 +82,7 @@ async fn create_cluster_with_trees_links_them() {
 
     let cluster: serde_json::Value = response.json().await.unwrap();
     assert_eq!(cluster["trees"].as_array().unwrap().len(), 1);
-    assert_eq!(cluster["trees"][0]["id"], tree_id);
+    assert_eq!(cluster["trees"][0]["id"], tree_id.to_string());
 }
 
 #[tokio::test]
@@ -100,7 +99,7 @@ async fn get_cluster_returns_full_response() {
 
     let create_resp = app.post_json("/api/v1/clusters", &body).await;
     let created: serde_json::Value = create_resp.json().await.unwrap();
-    let id = created["id"].as_i64().unwrap();
+    let id = created["id"].as_str().unwrap();
 
     let response = app.get(&format!("/api/v1/clusters/{}", id)).await;
 
@@ -125,7 +124,7 @@ async fn update_cluster_changes_name() {
 
     let create_resp = app.post_json("/api/v1/clusters", &body).await;
     let created: serde_json::Value = create_resp.json().await.unwrap();
-    let id = created["id"].as_i64().unwrap();
+    let id = created["id"].as_str().unwrap();
 
     let update_body = serde_json::json!({
         "name": "Neu",
@@ -159,7 +158,7 @@ async fn delete_cluster_returns_204() {
 
     let create_resp = app.post_json("/api/v1/clusters", &body).await;
     let created: serde_json::Value = create_resp.json().await.unwrap();
-    let id = created["id"].as_i64().unwrap();
+    let id = created["id"].as_str().unwrap();
 
     let response = app.delete(&format!("/api/v1/clusters/{}", id)).await;
     assert_eq!(response.status().as_u16(), 204);
@@ -172,17 +171,21 @@ async fn delete_cluster_returns_204() {
 async fn delete_cluster_unlinks_trees_and_keeps_them_alive() {
     let app = spawn_app().await;
 
+    let tree_1 = uuid::Uuid::now_v7();
+    let tree_2 = uuid::Uuid::now_v7();
     sqlx::query!(
-        r#"INSERT INTO trees (planting_year, species, number, latitude, longitude, geometry, description)
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description)
         VALUES
-            (2020, 'Eiche', 'T-DEL-1', 53.55, 9.99, ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'A'),
-            (2021, 'Linde', 'T-DEL-2', 53.56, 9.98, ST_SetSRID(ST_MakePoint(9.98, 53.56), 4326), 'B')"#
+            ($1, 2020, 'Eiche', 'T-DEL-1', 53.55, 9.99, ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'A'),
+            ($2, 2021, 'Linde', 'T-DEL-2', 53.56, 9.98, ST_SetSRID(ST_MakePoint(9.98, 53.56), 4326), 'B')"#,
+        tree_1,
+        tree_2,
     )
     .execute(&app.db_pool)
     .await
     .unwrap();
 
-    let tree_ids: Vec<i32> = sqlx::query_scalar!(
+    let tree_ids: Vec<uuid::Uuid> = sqlx::query_scalar!(
         "SELECT id FROM trees WHERE number IN ('T-DEL-1', 'T-DEL-2') ORDER BY number"
     )
     .fetch_all(&app.db_pool)
@@ -200,14 +203,14 @@ async fn delete_cluster_unlinks_trees_and_keeps_them_alive() {
 
     let create_resp = app.post_json("/api/v1/clusters", &body).await;
     let created: serde_json::Value = create_resp.json().await.unwrap();
-    let cluster_id = created["id"].as_i64().unwrap();
+    let cluster_id = created["id"].as_str().unwrap();
 
     let response = app
         .delete(&format!("/api/v1/clusters/{}", cluster_id))
         .await;
     assert_eq!(response.status().as_u16(), 204);
 
-    let remaining: Vec<(i32, Option<i32>)> = sqlx::query_as(
+    let remaining: Vec<(uuid::Uuid, Option<uuid::Uuid>)> = sqlx::query_as(
         "SELECT id, tree_cluster_id FROM trees WHERE number IN ('T-DEL-1', 'T-DEL-2') ORDER BY number",
     )
     .fetch_all(&app.db_pool)
@@ -250,21 +253,28 @@ async fn list_clusters_respects_pagination() {
 
 // -- Event handler integration tests --
 
-async fn insert_tree_at(app: &helpers::TestApp, lat: f64, lng: f64, number: &str) -> i32 {
-    sqlx::query_scalar!(
-        r#"INSERT INTO trees (planting_year, species, number, latitude, longitude, geometry, description)
-        VALUES (2020, 'Eiche', $1, $2, $3, ST_SetSRID(ST_MakePoint($3, $2), 4326), 'Test')
-        RETURNING id"#,
+async fn insert_tree_at(app: &helpers::TestApp, lat: f64, lng: f64, number: &str) -> uuid::Uuid {
+    let id = uuid::Uuid::now_v7();
+    sqlx::query!(
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description)
+        VALUES ($1, 2020, 'Eiche', $2, $3, $4, ST_SetSRID(ST_MakePoint($4, $3), 4326), 'Test')"#,
+        id,
         number,
         lat,
         lng,
     )
-    .fetch_one(&app.db_pool)
+    .execute(&app.db_pool)
     .await
-    .unwrap()
+    .unwrap();
+    id
 }
 
-async fn insert_region_covering(app: &helpers::TestApp, name: &str, lat: f64, lng: f64) -> i32 {
+async fn insert_region_covering(
+    app: &helpers::TestApp,
+    name: &str,
+    lat: f64,
+    lng: f64,
+) -> uuid::Uuid {
     let wkt = format!(
         "MULTIPOLYGON((({} {}, {} {}, {} {}, {} {}, {} {})))",
         lng - 0.01,
@@ -278,16 +288,18 @@ async fn insert_region_covering(app: &helpers::TestApp, name: &str, lat: f64, ln
         lng - 0.01,
         lat - 0.01,
     );
-    sqlx::query_scalar!(
-        r#"INSERT INTO regions (name, geometry)
-        VALUES ($1, ST_SetSRID(ST_GeomFromText($2), 4326))
-        RETURNING id"#,
+    let id = uuid::Uuid::now_v7();
+    sqlx::query!(
+        r#"INSERT INTO regions (id, name, geometry)
+        VALUES ($1, $2, ST_SetSRID(ST_GeomFromText($3), 4326))"#,
+        id,
         name,
         wkt,
     )
-    .fetch_one(&app.db_pool)
+    .execute(&app.db_pool)
     .await
-    .unwrap()
+    .unwrap();
+    id
 }
 
 #[tokio::test]
@@ -308,7 +320,7 @@ async fn create_cluster_with_trees_computes_center_point() {
     assert_eq!(response.status().as_u16(), 201);
 
     let cluster: serde_json::Value = response.json().await.unwrap();
-    let id = cluster["id"].as_i64().unwrap();
+    let id = cluster["id"].as_str().unwrap();
 
     // Fetch again to see the recalculated values
     let get_resp = app.get(&format!("/api/v1/clusters/{}", id)).await;
@@ -339,7 +351,7 @@ async fn create_cluster_with_trees_assigns_region() {
     assert_eq!(response.status().as_u16(), 201);
 
     let cluster: serde_json::Value = response.json().await.unwrap();
-    let id = cluster["id"].as_i64().unwrap();
+    let id = cluster["id"].as_str().unwrap();
 
     let get_resp = app.get(&format!("/api/v1/clusters/{}", id)).await;
     let cluster: serde_json::Value = get_resp.json().await.unwrap();
@@ -362,7 +374,7 @@ async fn tree_create_triggers_cluster_recalculation() {
     });
     let cluster_resp = app.post_json("/api/v1/clusters", &cluster_body).await;
     let cluster: serde_json::Value = cluster_resp.json().await.unwrap();
-    let cluster_id = cluster["id"].as_i64().unwrap();
+    let cluster_id = cluster["id"].as_str().unwrap();
 
     // Cluster should have no coordinates yet
     assert_eq!(cluster["latitude"].as_f64().unwrap(), 0.0);
@@ -412,7 +424,7 @@ async fn tree_create_triggers_region_assignment() {
     });
     let cluster_resp = app.post_json("/api/v1/clusters", &cluster_body).await;
     let cluster: serde_json::Value = cluster_resp.json().await.unwrap();
-    let cluster_id = cluster["id"].as_i64().unwrap();
+    let cluster_id = cluster["id"].as_str().unwrap();
 
     // No region yet
     assert!(cluster["region"].is_null());
@@ -455,7 +467,7 @@ async fn tree_delete_triggers_cluster_coordinate_reset() {
     });
     let cluster_resp = app.post_json("/api/v1/clusters", &cluster_body).await;
     let cluster: serde_json::Value = cluster_resp.json().await.unwrap();
-    let cluster_id = cluster["id"].as_i64().unwrap();
+    let cluster_id = cluster["id"].as_str().unwrap();
 
     // Verify cluster has coordinates
     let get_resp = app.get(&format!("/api/v1/clusters/{}", cluster_id)).await;
@@ -494,7 +506,7 @@ async fn tree_move_to_other_cluster_recalculates_both() {
         )
         .await;
     let cluster_a: serde_json::Value = cluster_a_resp.json().await.unwrap();
-    let cluster_a_id = cluster_a["id"].as_i64().unwrap();
+    let cluster_a_id = cluster_a["id"].as_str().unwrap();
 
     let cluster_b_resp = app
         .post_json(
@@ -509,7 +521,7 @@ async fn tree_move_to_other_cluster_recalculates_both() {
         )
         .await;
     let cluster_b: serde_json::Value = cluster_b_resp.json().await.unwrap();
-    let cluster_b_id = cluster_b["id"].as_i64().unwrap();
+    let cluster_b_id = cluster_b["id"].as_str().unwrap();
 
     // Verify initial state: both clusters have coordinates from their trees
     let a = app.get(&format!("/api/v1/clusters/{}", cluster_a_id)).await;
@@ -572,7 +584,7 @@ async fn cluster_update_tree_ids_recalculates_center() {
         )
         .await;
     let cluster: serde_json::Value = cluster_resp.json().await.unwrap();
-    let cluster_id = cluster["id"].as_i64().unwrap();
+    let cluster_id = cluster["id"].as_str().unwrap();
 
     // Center should be ~(53.55, 10.0) with both trees
     let before = app.get(&format!("/api/v1/clusters/{}", cluster_id)).await;
@@ -604,10 +616,12 @@ async fn cluster_update_tree_ids_recalculates_center() {
 // -- ClusterStatusAggregator (sensor-equipped tree status → cluster status) --
 
 async fn insert_sensor(app: &helpers::TestApp, id: &str) {
+    let model_id = app.ecodrizzler_model_id().await;
     sqlx::query!(
         r#"INSERT INTO sensors (id, status, type, model_id)
-        VALUES ($1, 'online', 'lorawan', 1)"#,
+        VALUES ($1, 'online', 'lorawan', $2)"#,
         id,
+        model_id,
     )
     .execute(&app.db_pool)
     .await
@@ -627,21 +641,23 @@ async fn insert_tree_with(
     number: &str,
     sensor_id: Option<&str>,
     watering_status: &str,
-) -> i32 {
-    sqlx::query_scalar!(
-        r#"INSERT INTO trees (planting_year, species, number, latitude, longitude,
+) -> uuid::Uuid {
+    let id = uuid::Uuid::now_v7();
+    sqlx::query!(
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude,
                               geometry, description, sensor_id, watering_status)
-        VALUES (2020, 'Eiche', $1, 53.55, 9.99,
-                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', $2,
-                $3::text::watering_status)
-        RETURNING id"#,
+        VALUES ($1, 2020, 'Eiche', $2, 53.55, 9.99,
+                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', $3,
+                $4::text::watering_status)"#,
+        id,
         number,
         sensor_id,
         watering_status,
     )
-    .fetch_one(&app.db_pool)
+    .execute(&app.db_pool)
     .await
-    .unwrap()
+    .unwrap();
+    id
 }
 
 #[tokio::test]
@@ -665,7 +681,7 @@ async fn cluster_status_takes_majority_among_sensor_equipped_trees() {
     });
     let resp = app.post_json("/api/v1/clusters", &body).await;
     let cluster: serde_json::Value = resp.json().await.unwrap();
-    let cid = cluster["id"].as_i64().unwrap();
+    let cid = cluster["id"].as_str().unwrap();
 
     let after = app.get(&format!("/api/v1/clusters/{}", cid)).await;
     let after: serde_json::Value = after.json().await.unwrap();
@@ -691,7 +707,7 @@ async fn cluster_status_is_unknown_with_only_sensorless_trees() {
     });
     let resp = app.post_json("/api/v1/clusters", &body).await;
     let cluster: serde_json::Value = resp.json().await.unwrap();
-    let cid = cluster["id"].as_i64().unwrap();
+    let cid = cluster["id"].as_str().unwrap();
 
     let after = app.get(&format!("/api/v1/clusters/{}", cid)).await;
     let after: serde_json::Value = after.json().await.unwrap();
@@ -718,7 +734,7 @@ async fn attaching_sensor_to_tree_recalculates_cluster_status() {
         )
         .await;
     let cluster: serde_json::Value = cluster_resp.json().await.unwrap();
-    let cid = cluster["id"].as_i64().unwrap();
+    let cid = cluster["id"].as_str().unwrap();
 
     let before = app.get(&format!("/api/v1/clusters/{}", cid)).await;
     let before: serde_json::Value = before.json().await.unwrap();
@@ -791,7 +807,7 @@ async fn list_cluster_markers_includes_cluster_with_trees() {
     });
     let cluster_resp = app.post_json("/api/v1/clusters", &cluster_body).await;
     let cluster: serde_json::Value = cluster_resp.json().await.unwrap();
-    let cluster_id = cluster["id"].as_i64().unwrap();
+    let cluster_id = cluster["id"].as_str().unwrap();
 
     let tree_body = serde_json::json!({
         "species": "Eiche",
@@ -833,7 +849,7 @@ async fn tree_position_update_recalculates_cluster_center() {
         )
         .await;
     let cluster: serde_json::Value = cluster_resp.json().await.unwrap();
-    let cluster_id = cluster["id"].as_i64().unwrap();
+    let cluster_id = cluster["id"].as_str().unwrap();
 
     // Verify initial center at (53.50, 9.90)
     let before = app.get(&format!("/api/v1/clusters/{}", cluster_id)).await;

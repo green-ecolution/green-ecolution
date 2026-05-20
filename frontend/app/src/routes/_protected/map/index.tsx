@@ -15,8 +15,8 @@ import WithFilterdTrees from '@/components/map/marker/WithFilterdTrees'
 const mapFilterSchema = z.object({
   hasCluster: z.boolean().optional(),
   plantingYears: z.array(z.number()).optional(),
-  tree: z.number().optional(),
-  cluster: z.number().optional(),
+  tree: z.string().optional(),
+  cluster: z.string().optional(),
 })
 
 function MapView() {

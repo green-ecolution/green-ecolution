@@ -73,8 +73,8 @@ const FormForTree = (props: FormForTreeProps) => {
               <div className="flex flex-col gap-y-2">
                 <Label htmlFor="treeClusterId">Bewässerungsgruppe</Label>
                 <Select
-                  value={field.value?.toString() ?? '-1'}
-                  onValueChange={(val) => field.onChange(Number(val))}
+                  value={field.value ?? '-1'}
+                  onValueChange={(val) => field.onChange(val === '-1' ? null : val)}
                 >
                   <SelectTrigger id="treeClusterId">
                     <SelectValue placeholder="Wählen Sie eine Bewässerungsgruppe aus" />

@@ -62,7 +62,7 @@ mod tests {
 
     fn fixed_region() -> Region {
         Region {
-            id: Id::new(1),
+            id: Id::new_v7(),
             name: RegionName::new("Flensburg").unwrap(),
         }
     }

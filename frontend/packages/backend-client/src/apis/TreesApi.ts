@@ -45,7 +45,7 @@ export interface CreateTreeRequest {
 }
 
 export interface DeleteTreeRequest {
-    treeId: number;
+    treeId: string;
 }
 
 export interface GetNearestTreesRequest {
@@ -55,7 +55,7 @@ export interface GetNearestTreesRequest {
 }
 
 export interface GetTreeRequest {
-    treeId: number;
+    treeId: string;
 }
 
 export interface GetTreeBySensorRequest {
@@ -75,7 +75,7 @@ export interface ListTreesRequest {
 }
 
 export interface UpdateTreeRequest {
-    treeId: number;
+    treeId: string;
     treeUpdateRequest: TreeUpdateRequest;
 }
 

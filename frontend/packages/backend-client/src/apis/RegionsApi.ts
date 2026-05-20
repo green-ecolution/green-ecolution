@@ -26,7 +26,7 @@ import {
 } from '../models/index';
 
 export interface GetRegionRequest {
-    regionId: number;
+    regionId: string;
 }
 
 export interface ListRegionsRequest {

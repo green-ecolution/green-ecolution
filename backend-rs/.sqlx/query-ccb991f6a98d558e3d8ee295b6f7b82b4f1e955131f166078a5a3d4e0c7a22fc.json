@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO tree_clusters (id, name, address, description, moisture_level,\n                                          watering_status, soil_condition,\n                                          provider, additional_informations)\n            VALUES ($1, $2, $3, $4, $5, 'unknown', $6, $7, $8)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Float8",
+        {
+          "Custom": {
+            "name": "tree_soil_condition",
+            "kind": {
+              "Enum": [
+                "schluffig",
+                "sandig",
+                "lehmig",
+                "tonig",
+                "unknown"
+              ]
+            }
+          }
+        },
+        "Text",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ccb991f6a98d558e3d8ee295b6f7b82b4f1e955131f166078a5a3d4e0c7a22fc"
+}

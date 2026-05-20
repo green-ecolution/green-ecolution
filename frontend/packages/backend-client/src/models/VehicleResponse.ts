@@ -79,10 +79,10 @@ export interface VehicleResponse {
     height: number;
     /**
      * Unique identifier of the vehicle.
-     * @type {number}
+     * @type {string}
      * @memberof VehicleResponse
      */
-    id: number;
+    id: string;
     /**
      * Vehicle length in meters.
      * @type {number}

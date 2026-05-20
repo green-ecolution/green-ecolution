@@ -190,19 +190,19 @@ pub async fn list_watering_plans(
     operation_id = "getWateringPlan",
     summary = "Get a watering plan",
     description = "Returns full watering plan detail including evaluation values.",
-    params(("watering_plan_id" = i32, Path, description = "Watering plan ID")),
+    params(("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID")),
     responses(
         (status = 200, description = "Watering plan found", body = WateringPlanResponse),
         (status = 404, description = "Watering plan not found"),
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(plan.id = id))]
+#[tracing::instrument(level = "info", skip_all, fields(plan.id = %id))]
 pub async fn get_watering_plan(
     State(state): State<Arc<AppState>>,
-    Path(id): Path<i32>,
+    Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<WateringPlanResponse>, ServiceError> {
-    let view = state.watering_plan_service.view_by_id(Id::from(id)).await?;
+    let view = state.watering_plan_service.view_by_id(Id::new(id)).await?;
     let (transporter, trailer, clusters, evaluation) =
         resolve_view_relations(&state, &view).await?;
 
@@ -256,7 +256,7 @@ pub async fn create_watering_plan(
     operation_id = "updateWateringPlan",
     summary = "Update a watering plan",
     description = "Updates the details or status of an existing watering plan.",
-    params(("watering_plan_id" = i32, Path, description = "Watering plan ID")),
+    params(("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID")),
     request_body = WateringPlanUpdateRequest,
     responses(
         (status = 200, description = "Watering plan updated", body = WateringPlanResponse),
@@ -264,13 +264,13 @@ pub async fn create_watering_plan(
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(plan.id = id))]
+#[tracing::instrument(level = "info", skip_all, fields(plan.id = %id))]
 pub async fn update_watering_plan(
     State(state): State<Arc<AppState>>,
-    Path(id): Path<i32>,
+    Path(id): Path<uuid::Uuid>,
     Json(entity): Json<WateringPlanUpdateRequest>,
 ) -> Result<Json<WateringPlanResponse>, ServiceError> {
-    let plan_id = Id::from(id);
+    let plan_id = Id::new(id);
     let current = state.watering_plan_service.by_id(plan_id).await?;
     let new_status: DomainStatus = entity.status.into();
 
@@ -367,19 +367,19 @@ pub async fn update_watering_plan(
     operation_id = "deleteWateringPlan",
     summary = "Delete a watering plan",
     description = "Permanently deletes a watering plan.",
-    params(("watering_plan_id" = i32, Path, description = "Watering plan ID")),
+    params(("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID")),
     responses(
         (status = 204, description = "Watering plan deleted"),
         (status = 404, description = "Watering plan not found"),
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(plan.id = id))]
+#[tracing::instrument(level = "info", skip_all, fields(plan.id = %id))]
 pub async fn delete_watering_plan(
     State(state): State<Arc<AppState>>,
-    Path(id): Path<i32>,
+    Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
-    state.watering_plan_service.delete(Id::from(id)).await?;
+    state.watering_plan_service.delete(Id::new(id)).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 

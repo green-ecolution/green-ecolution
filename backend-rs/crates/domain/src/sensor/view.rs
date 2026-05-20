@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde_json::Value;
+use uuid::Uuid;
 
 use crate::{
     sensor::{SensorStatus, SensorType, data::SensorReadingView},
@@ -9,10 +10,8 @@ use crate::{
 /// HTTP-side read model for a sensor.
 ///
 /// Adds audit fields (`created_at`, `updated_at`) and embeds the
-/// `latest_reading` for convenience. Uses primitive types rather than value
-/// objects so HTTP serialisation doesn't need to unwrap newtypes. Coordinate
-/// and tree linkage are derived from the linked tree (the sensor aggregate
-/// itself no longer stores a position).
+/// `latest_reading` for convenience. The sensor's own id is a LoRaWAN EUI
+/// (String); only foreign-key targets use UUIDs.
 #[derive(Debug, Clone)]
 pub struct SensorView {
     pub id: String,
@@ -21,7 +20,7 @@ pub struct SensorView {
     pub status: SensorStatus,
     pub sensor_type: SensorType,
     pub coordinate: Option<Coordinate>,
-    pub linked_tree_id: Option<i32>,
+    pub linked_tree_id: Option<Uuid>,
     pub provider: Option<ProviderId>,
     pub additional_info: Option<Value>,
     pub model: SensorModelSummary,
@@ -31,7 +30,7 @@ pub struct SensorView {
 
 #[derive(Debug, Clone)]
 pub struct SensorModelSummary {
-    pub id: i32,
+    pub id: Uuid,
     pub name: String,
 }
 

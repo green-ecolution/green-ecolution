@@ -18,6 +18,9 @@
 
 use std::marker::PhantomData;
 
+use chrono::{DateTime, Utc};
+use uuid::Uuid;
+
 pub mod auth;
 pub mod cluster;
 pub mod error;
@@ -56,12 +59,14 @@ pub enum RepositoryError {
     Internal(String),
 }
 
-pub type RawId = i32;
+pub type RawId = Uuid;
 
-/// Typed integer identity.
+/// Typed UUID v7 identity.
 ///
 /// The phantom type parameter prevents accidental cross-aggregate comparisons
 /// (e.g. `Id<Tree>` cannot be compared with `Id<Vehicle>` at compile time).
+/// New identifiers are generated as UUID v7 via [`Id::new_v7`]; the embedded
+/// 48-bit timestamp is recoverable via [`Id::created_at`].
 #[derive(Debug)]
 pub struct Id<T>(RawId, PhantomData<T>);
 
@@ -87,12 +92,6 @@ impl<T> std::hash::Hash for Id<T> {
     }
 }
 
-impl<T> From<RawId> for Id<T> {
-    fn from(value: RawId) -> Self {
-        Self::new(value)
-    }
-}
-
 impl<T> std::fmt::Display for Id<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
@@ -100,13 +99,40 @@ impl<T> std::fmt::Display for Id<T> {
 }
 
 impl<T> Id<T> {
+    /// Build an `Id<T>` from an existing UUID. Use this in `reconstitute`
+    /// paths where the value comes from the database.
     pub fn new(id: RawId) -> Self {
         Self(id, PhantomData)
+    }
+
+    /// Generate a fresh UUID v7 identifier — the only way to mint a new id
+    /// for an aggregate being persisted for the first time.
+    pub fn new_v7() -> Self {
+        Self(Uuid::now_v7(), PhantomData)
     }
 
     pub fn value(&self) -> RawId {
         self.0
     }
+
+    /// Extract the embedded UUID v7 timestamp.
+    ///
+    /// Returns `None` for non-v7 UUIDs (legacy data rehydrated as v4 etc.).
+    /// Used by views to populate `created_at` without a dedicated DB column.
+    pub fn created_at(&self) -> Option<DateTime<Utc>> {
+        uuid_v7_timestamp(&self.0)
+    }
+}
+
+/// Extract the embedded UNIX timestamp from a UUID v7.
+///
+/// Returns `None` for non-v7 UUIDs. Prefer [`Id::created_at`] when you already
+/// have a typed `Id<T>`; this free function exists for callsites that hold a
+/// raw `Uuid` (e.g. sub-entity rows like `SensorReading` whose id has no
+/// aggregate type tag).
+pub fn uuid_v7_timestamp(id: &Uuid) -> Option<DateTime<Utc>> {
+    let (seconds, nanos) = id.get_timestamp()?.to_unix();
+    DateTime::<Utc>::from_timestamp(i64::try_from(seconds).ok()?, nanos)
 }
 
 pub trait IdSliceExt {
@@ -121,12 +147,42 @@ impl<T> IdSliceExt for [Id<T>] {
 
 #[cfg(test)]
 mod tests {
+    use chrono::Utc;
+    use uuid::Uuid;
+
     use crate::{Id, IdSliceExt};
+
+    #[derive(Debug)]
+    struct Marker;
 
     #[test]
     fn id_slice_ext_extracts_inner_values() {
-        struct Marker;
-        let ids: Vec<Id<Marker>> = vec![Id::new(1), Id::new(2), Id::new(3)];
-        assert_eq!(ids.to_values(), vec![1, 2, 3]);
+        let a = Uuid::now_v7();
+        let b = Uuid::now_v7();
+        let ids: Vec<Id<Marker>> = vec![Id::new(a), Id::new(b)];
+        assert_eq!(ids.to_values(), vec![a, b]);
+    }
+
+    #[test]
+    fn new_v7_produces_distinct_ids() {
+        let a: Id<Marker> = Id::new_v7();
+        let b: Id<Marker> = Id::new_v7();
+        assert_ne!(a, b);
+        assert_eq!(a.value().get_version_num(), 7);
+    }
+
+    #[test]
+    fn created_at_recovers_v7_timestamp() {
+        let id: Id<Marker> = Id::new_v7();
+        let recovered = id.created_at().expect("v7 must encode a timestamp");
+        let now = Utc::now();
+        let delta = (now - recovered).num_milliseconds().abs();
+        assert!(delta < 5_000, "recovered timestamp drifted by {delta} ms");
+    }
+
+    #[test]
+    fn created_at_returns_none_for_v4() {
+        let id: Id<Marker> = Id::new(Uuid::new_v4());
+        assert!(id.created_at().is_none());
     }
 }

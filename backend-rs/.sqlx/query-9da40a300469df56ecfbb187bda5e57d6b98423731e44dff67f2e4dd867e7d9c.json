@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO sensor_data_ability_values\n                    (sensor_data_id, sensor_model_ability_id, value)\n                SELECT $1, ability, val\n                FROM UNNEST($2::uuid[], $3::numeric[]) AS t(ability, val)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray",
+        "NumericArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9da40a300469df56ecfbb187bda5e57d6b98423731e44dff67f2e4dd867e7d9c"
+}

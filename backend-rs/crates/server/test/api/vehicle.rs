@@ -40,7 +40,9 @@ async fn list_vehicles_returns_empty_list() {
 async fn get_vehicles_returns_404_for_nonexistent_id() {
     let app = spawn_app().await;
 
-    let response = app.get("/api/v1/vehicles/999").await;
+    let response = app
+        .get(&format!("/api/v1/vehicles/{}", uuid::Uuid::now_v7()))
+        .await;
 
     assert_eq!(response.status().as_u16(), 404);
 }
@@ -84,7 +86,7 @@ async fn get_vehicle_returns_full_response() {
         .post_json("/api/v1/vehicles", &vehicle_json("FL-GE 100"))
         .await;
     let created: serde_json::Value = create_resp.json().await.unwrap();
-    let id = created["id"].as_i64().unwrap();
+    let id = created["id"].as_str().unwrap();
 
     let response = app.get(&format!("/api/v1/vehicles/{}", id)).await;
 
@@ -121,7 +123,7 @@ async fn update_vehicle_changes_model() {
         .post_json("/api/v1/vehicles", &vehicle_json("FL-GE 300"))
         .await;
     let created: serde_json::Value = create_resp.json().await.unwrap();
-    let id = created["id"].as_i64().unwrap();
+    let id = created["id"].as_str().unwrap();
 
     let mut update_body = vehicle_json("FL-GE 300");
     update_body["model"] = serde_json::json!("Mercedes Actros");
@@ -144,7 +146,7 @@ async fn delete_vehicle_returns_204() {
         .post_json("/api/v1/vehicles", &vehicle_json("FL-GE 400"))
         .await;
     let created: serde_json::Value = create_resp.json().await.unwrap();
-    let id = created["id"].as_i64().unwrap();
+    let id = created["id"].as_str().unwrap();
 
     let response = app.delete(&format!("/api/v1/vehicles/{}", id)).await;
     assert_eq!(response.status().as_u16(), 204);
@@ -161,7 +163,7 @@ async fn archive_vehicle_hides_from_default_list() {
         .post_json("/api/v1/vehicles", &vehicle_json("FL-GE 500"))
         .await;
     let created: serde_json::Value = create_resp.json().await.unwrap();
-    let id = created["id"].as_i64().unwrap();
+    let id = created["id"].as_str().unwrap();
 
     let archive_resp = app
         .post_json(

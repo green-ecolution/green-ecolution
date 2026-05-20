@@ -94,10 +94,10 @@ export interface SensorResponse {
     latestData?: SensorDataResponse | null;
     /**
      * Database id of the linked tree, if the sensor is currently attached.
-     * @type {number}
+     * @type {string}
      * @memberof SensorResponse
      */
-    linkedTreeId?: number | null;
+    linkedTreeId?: string | null;
     /**
      * LoRaWAN credentials (omits `app_key`).
      * @type {LorawanInfoResponse}

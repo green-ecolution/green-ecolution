@@ -41,10 +41,10 @@ export interface SensorModelAbilityResponse {
     depthCm: number;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof SensorModelAbilityResponse
      */
-    id: number;
+    id: string;
     /**
      * 
      * @type {SensorAbilityUnitDto}
