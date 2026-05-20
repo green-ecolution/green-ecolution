@@ -54,7 +54,6 @@ pub struct AppState {
 #[openapi(
     info(
         title = "Green Ecolution API",
-        version = "0.1.0",
         description = "REST API for the Green Ecolution smart irrigation and green-space management platform. \
             Combines IoT sensor data, route optimization, and automated maintenance scheduling \
             to help municipalities manage urban greenery efficiently. \
