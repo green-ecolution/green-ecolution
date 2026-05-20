@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import {
   Card,
@@ -12,14 +12,14 @@ import {
   type ChartConfig,
 } from '@green-ecolution/ui'
 import { Activity, Cpu, Database, MemoryStick, RefreshCw } from 'lucide-react'
-import type { RuntimeStatsResponse } from '@green-ecolution/backend-client'
-import { basePath } from '@/api/backendApi'
-import useStore from '@/store/store'
+import { useRuntimeStatsSocket } from '@/hooks/useRuntimeStatsSocket'
 
 interface ChartDataPoint {
   time: string
   memory: number
 }
+
+const BYTES_PER_MB = 1024 * 1024
 
 const chartConfig: ChartConfig = {
   memory: {
@@ -28,132 +28,31 @@ const chartConfig: ChartConfig = {
   },
 }
 
-const MAX_RECONNECT_ATTEMPTS = 5
-
 function formatBytes(bytes: number): string {
-  const mb = bytes / 1024 / 1024
-  return `${mb.toFixed(1)} MB`
+  return `${(bytes / BYTES_PER_MB).toFixed(1)} MB`
 }
 
 function formatTime(ms: number): string {
   const d = new Date(ms)
-  return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`
+  const hh = d.getHours().toString().padStart(2, '0')
+  const mm = d.getMinutes().toString().padStart(2, '0')
+  const ss = d.getSeconds().toString().padStart(2, '0')
+  return `${hh}:${mm}:${ss}`
 }
 
 export function RuntimeStats() {
-  const [stats, setStats] = useState<RuntimeStatsResponse | null>(null)
-  const [chartData, setChartData] = useState<ChartDataPoint[]>([])
-  const [connectionStatus, setConnectionStatus] = useState<
-    'connecting' | 'connected' | 'disconnected'
-  >('connecting')
-  const [error, setError] = useState<string | null>(null)
-  const wsRef = useRef<WebSocket | null>(null)
-  const mountedRef = useRef(true)
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const reconnectAttemptsRef = useRef(0)
-  const connectRef = useRef<(() => void) | null>(null)
+  const { status, stats, history, error, reconnect } = useRuntimeStatsSocket()
 
-  const scheduleReconnect = useCallback(() => {
-    if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
-      setConnectionStatus('disconnected')
-      setError('Maximale Verbindungsversuche erreicht')
-      return
-    }
-    const delay = Math.min(1000 * 2 ** reconnectAttemptsRef.current, 30000)
-    reconnectAttemptsRef.current++
-    setConnectionStatus('connecting')
-    setError(`Verbindung unterbrochen, reconnect in ${delay / 1000}s...`)
-    reconnectTimeoutRef.current = setTimeout(() => {
-      if (mountedRef.current && connectRef.current) connectRef.current()
-    }, delay)
-  }, [])
+  const chartData = useMemo<ChartDataPoint[]>(
+    () =>
+      history.map((point) => ({
+        time: formatTime(point.timestamp),
+        memory: point.memoryBytes / BYTES_PER_MB,
+      })),
+    [history],
+  )
 
-  const connect = useCallback(() => {
-    if (!mountedRef.current) return
-    if (wsRef.current) {
-      wsRef.current.close()
-      wsRef.current = null
-    }
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current)
-      reconnectTimeoutRef.current = null
-    }
-    setConnectionStatus('connecting')
-    setError(null)
-
-    const accessToken = useStore.getState().token?.accessToken
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const host = window.location.host
-    const tokenParam = accessToken ? `?token=${encodeURIComponent(accessToken)}` : ''
-    const wsUrl = `${protocol}//${host}${basePath}/v1/ws/stats${tokenParam}`
-
-    const ws = new WebSocket(wsUrl)
-    wsRef.current = ws
-
-    ws.onopen = () => {
-      if (!mountedRef.current) return
-      reconnectAttemptsRef.current = 0
-      setConnectionStatus('connected')
-    }
-
-    ws.onmessage = (event: MessageEvent<string>) => {
-      if (!mountedRef.current) return
-      try {
-        const data = JSON.parse(event.data) as RuntimeStatsResponse
-        if (typeof data.memory?.residentBytes !== 'number') {
-          console.error('Invalid WebSocket data format')
-          return
-        }
-        setStats(data)
-        setChartData((prev) => {
-          const newPoint: ChartDataPoint = {
-            time: formatTime(data.timestamp),
-            memory: data.memory.residentBytes / 1024 / 1024,
-          }
-          return [...prev, newPoint].slice(-60)
-        })
-      } catch (e) {
-        console.error('Failed to parse WebSocket message:', e)
-      }
-    }
-
-    ws.onclose = (event) => {
-      if (!mountedRef.current) return
-      wsRef.current = null
-      if (event.code === 1000 || event.code === 1001) {
-        setConnectionStatus('disconnected')
-        return
-      }
-      scheduleReconnect()
-    }
-
-    ws.onerror = () => {
-      if (!mountedRef.current) return
-      setError('WebSocket-Fehler aufgetreten')
-    }
-  }, [scheduleReconnect])
-
-  useEffect(() => {
-    connectRef.current = connect
-  }, [connect])
-
-  useEffect(() => {
-    mountedRef.current = true
-    const initTimeout = setTimeout(() => {
-      if (mountedRef.current) connect()
-    }, 100)
-    return () => {
-      mountedRef.current = false
-      clearTimeout(initTimeout)
-      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
-      if (wsRef.current) {
-        wsRef.current.close(1000, 'Component unmounted')
-        wsRef.current = null
-      }
-    }
-  }, [connect])
-
-  if (connectionStatus === 'connecting') {
+  if (status === 'connecting' && !stats) {
     return (
       <div className="flex items-center gap-2 text-dark-600">
         <RefreshCw className="size-4 animate-spin" />
@@ -162,17 +61,12 @@ export function RuntimeStats() {
     )
   }
 
-  const handleManualReconnect = () => {
-    reconnectAttemptsRef.current = 0
-    connect()
-  }
-
-  if (connectionStatus === 'disconnected') {
+  if (status === 'disconnected') {
     return (
       <div className="text-dark-600">
         <p>
           WebSocket-Verbindung getrennt.{' '}
-          <button onClick={handleManualReconnect} className="text-green-dark hover:underline">
+          <button onClick={reconnect} className="text-green-dark hover:underline">
             Erneut verbinden
           </button>
         </p>
@@ -181,7 +75,7 @@ export function RuntimeStats() {
     )
   }
 
-  if (connectionStatus === 'connected' && !stats) {
+  if (!stats) {
     return (
       <div className="flex items-center gap-2 text-dark-600">
         <RefreshCw className="size-4 animate-spin" />
@@ -189,8 +83,6 @@ export function RuntimeStats() {
       </div>
     )
   }
-
-  if (!stats) return null
 
   return (
     <div className="space-y-8">
