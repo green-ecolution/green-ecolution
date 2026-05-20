@@ -1,5 +1,4 @@
 use std::sync::Arc;
-use std::time::Duration;
 
 use axum::{Router, http::HeaderValue};
 use tower_http::{
@@ -26,9 +25,7 @@ use crate::{
         watering_plan_service::WateringPlanService,
     },
 };
-use domain::info::{
-    HealthSnapshotReader, RuntimeStatsProvider, StatisticsReader, SystemInfoProvider,
-};
+use domain::info::{HealthSnapshotReader, StatisticsReader, SystemInfoProvider};
 
 pub mod auth;
 pub mod extractors;
@@ -49,10 +46,8 @@ pub struct AppState {
     pub user_service: Arc<UserService>,
     pub info_provider: Arc<dyn SystemInfoProvider>,
     pub health_reader: Arc<dyn HealthSnapshotReader>,
-    pub runtime_stats_provider: Arc<dyn RuntimeStatsProvider>,
     pub statistics_reader: Arc<dyn StatisticsReader>,
     pub token_validator: Arc<TokenValidator>,
-    pub runtime_stats_push_interval: Duration,
 }
 
 #[derive(OpenApi)]
@@ -80,14 +75,6 @@ pub struct AppState {
         (name = "Users", description = "User management and OAuth2/OIDC authentication via Keycloak. Handles login flows, token management, and user registration."),
         (name = "Plugins", description = "Plugin registration and lifecycle management. External plugins can register, authenticate, and maintain heartbeat connections."),
     ),
-    components(schemas(
-        crate::http::v1::dto::runtime_stats::RuntimeStatsResponse,
-        crate::http::v1::dto::runtime_stats::MemoryStatsResponse,
-        crate::http::v1::dto::runtime_stats::CpuStatsResponse,
-        crate::http::v1::dto::runtime_stats::TokioStatsResponse,
-        crate::http::v1::dto::runtime_stats::DbPoolStatsResponse,
-        crate::http::v1::dto::runtime_stats::ProcessStatsResponse,
-    ))
 )]
 struct ApiDoc;
 

@@ -34,7 +34,7 @@ path = "test/api/main.rs"
 [dependencies]
 anyhow = "1.0.102"
 async-trait = { workspace = true }
-axum = { version = "0.8.9", features = ["json", "ws"] }
+axum = { version = "0.8.9", features = ["json"] }
 base64 = "0.22"
 chrono = { workspace = true }
 config = "0.15.23"
@@ -53,7 +53,6 @@ serde-aux = "4.7.0"
 serde_json = { workspace = true }
 serde_urlencoded = "0.7"
 sqlx = { workspace = true, features = ["macros", "migrate", "runtime-tokio", "tls-rustls", "postgres", "chrono", "uuid", "json", "rust_decimal"] }
-sysinfo = { version = "0.38", default-features = false, features = ["system"] }
 thiserror = { workspace = true }
 tokio = { version = "1.52.3", features = ["full"] }
 tower = "0.5"
@@ -69,14 +68,12 @@ utoipa-swagger-ui = { version = "9", features = ["axum", "vendored"] }
 [dev-dependencies]
 claims = "0.8"
 domain = { path = "../domain", features = ["sqlx"] }
-futures-util = "0.3"
 libc = "0.2"
 quickcheck = "1"
 quickcheck_macros = "1"
 rsa = { version = "0.9", features = ["sha2"] }
 testcontainers = { version = "0.26", features = ["watchdog"] }
 testcontainers-modules = { version = "0.14", features = ["postgres"] }
-tokio-tungstenite = "0.29"
 wiremock = "0.6.5"
 
 [build-dependencies]

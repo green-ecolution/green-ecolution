@@ -16,10 +16,8 @@ models/AppInfoResponse.ts
 models/ClientTokenResponse.ts
 models/ClusterMarkerListResponse.ts
 models/ClusterMarkerResponse.ts
-models/CpuStatsResponse.ts
 models/CreateSensorRequest.ts
 models/DataStatisticsResponse.ts
-models/DbPoolStatsResponse.ts
 models/DrivingLicense.ts
 models/EvaluationResponse.ts
 models/EvaluationValueRequest.ts
@@ -45,18 +43,15 @@ models/LogoutRequest.ts
 models/LorawanCredentialsRequest.ts
 models/LorawanInfoResponse.ts
 models/MapInfoResponse.ts
-models/MemoryStatsResponse.ts
 models/NearestTreeListResponse.ts
 models/PaginationResponse.ts
 models/PluginAuthRequest.ts
 models/PluginListResponse.ts
 models/PluginRegisterRequest.ts
 models/PluginResponse.ts
-models/ProcessStatsResponse.ts
 models/RefreshTokenRequest.ts
 models/RegionEvaluationResponse.ts
 models/RegionResponse.ts
-models/RuntimeStatsResponse.ts
 models/SensorAbilityUnitDto.ts
 models/SensorCoordinate.ts
 models/SensorDataResponse.ts
@@ -70,7 +65,6 @@ models/ServerInfoResponse.ts
 models/ServiceStatusResponse.ts
 models/ServicesInfoResponse.ts
 models/SoilCondition.ts
-models/TokioStatsResponse.ts
 models/TreeClusterCreateRequest.ts
 models/TreeClusterInListResponse.ts
 models/TreeClusterResponse.ts

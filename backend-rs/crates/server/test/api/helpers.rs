@@ -39,10 +39,6 @@ impl TestApp {
             .expect("GES-1000 model must exist after migrations")
     }
 
-    pub fn ws_url(&self) -> String {
-        self.address.replacen("http://", "ws://", 1)
-    }
-
     pub async fn get(&self, path: &str) -> reqwest::Response {
         reqwest::Client::new()
             .get(format!("{}{}", self.address, path))
@@ -201,7 +197,6 @@ pub async fn spawn_app_with_auth(auth: AuthSettings) -> TestApp {
 
     let mut settings = Settings::for_test(auth);
     settings.info.health_check_interval_secs = 1;
-    settings.info.runtime_stats_interval_secs = 1;
     settings.info.update_check_repo = None;
 
     let app = Application::build_with_pool(db_pool.clone(), "127.0.0.1:0", settings)

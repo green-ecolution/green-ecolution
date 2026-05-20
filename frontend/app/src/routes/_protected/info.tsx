@@ -1,5 +1,4 @@
 import { infoQuery, serverInfoQuery, servicesInfoQuery, statisticsQuery } from '@/api/queries'
-import { RuntimeStats } from '@/components/info/RuntimeStats'
 import {
   Card,
   CardContent,
@@ -53,7 +52,7 @@ import {
 import type { ServiceStatusResponse, VersionInfoResponse } from '@green-ecolution/backend-client'
 import { Bar, BarChart, XAxis, YAxis, Cell } from 'recharts'
 
-const tabSchema = z.enum(['system', 'data', 'software', 'server', 'runtime']).catch('system')
+const tabSchema = z.enum(['system', 'data', 'software', 'server']).catch('system')
 
 export const Route = createFileRoute('/_protected/info')({
   component: Info,
@@ -169,7 +168,7 @@ function Info() {
   const hasServerInfo = serverData?.hostname
 
   // Fallback to 'system' if tab requires server info but it's not available
-  const activeTab = (tab === 'server' || tab === 'runtime') && !hasServerInfo ? 'system' : tab
+  const activeTab = tab === 'server' && !hasServerInfo ? 'system' : tab
 
   return (
     <div className="container mt-6">
@@ -211,14 +210,6 @@ function Info() {
               </Link>
             </TabsTrigger>
           )}
-          {hasServerInfo && (
-            <TabsTrigger value="runtime" asChild>
-              <Link to="/info" search={{ tab: 'runtime' }}>
-                <Activity className="size-5" />
-                Runtime
-              </Link>
-            </TabsTrigger>
-          )}
         </TabsList>
 
         <TabsContent value="system">
@@ -246,12 +237,6 @@ function Info() {
         <TabsContent value="data">
           <DataTabContent statsData={statsData} />
         </TabsContent>
-
-        {hasServerInfo && (
-          <TabsContent value="runtime">
-            <RuntimeStats />
-          </TabsContent>
-        )}
       </Tabs>
     </div>
   )

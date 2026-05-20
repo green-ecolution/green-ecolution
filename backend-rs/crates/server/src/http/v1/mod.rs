@@ -18,14 +18,12 @@ pub mod tree;
 pub mod user;
 pub mod vehicle;
 pub mod watering_plan;
-pub mod ws;
 
 pub fn public_router() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .merge(info::routes())
         .merge(plugin::routes())
         .merge(user::public_routes())
-        .route("/ws/stats", axum::routing::get(ws::ws_stats))
 }
 
 pub fn protected_router() -> OpenApiRouter<Arc<AppState>> {

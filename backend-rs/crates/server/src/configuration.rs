@@ -134,8 +134,6 @@ pub struct InfoSettings {
     pub health_check_interval_secs: u64,
     #[serde(default = "default_health_probe_timeout_secs")]
     pub health_probe_timeout_secs: u64,
-    #[serde(default = "default_runtime_stats_interval_secs")]
-    pub runtime_stats_interval_secs: u64,
     #[serde(default)]
     pub update_check_repo: Option<String>,
     #[serde(default = "default_update_check_interval_secs")]
@@ -149,7 +147,6 @@ impl Default for InfoSettings {
         Self {
             health_check_interval_secs: default_health_check_interval_secs(),
             health_probe_timeout_secs: default_health_probe_timeout_secs(),
-            runtime_stats_interval_secs: default_runtime_stats_interval_secs(),
             update_check_repo: None,
             update_check_interval_secs: default_update_check_interval_secs(),
             repository_url: default_repository_url(),
@@ -162,9 +159,6 @@ fn default_health_check_interval_secs() -> u64 {
 }
 fn default_health_probe_timeout_secs() -> u64 {
     5
-}
-fn default_runtime_stats_interval_secs() -> u64 {
-    2
 }
 fn default_update_check_interval_secs() -> u64 {
     86_400

@@ -18,7 +18,6 @@ use crate::{
         pg_tree::PgTreeRepository,
         pg_vehicle::PgVehicleRepository,
         pg_watering_plan::PgWateringPlanRepository,
-        runtime_stats::DefaultRuntimeStatsProvider,
         statistics_repo::PgStatisticsRepo,
         system_info::DefaultSystemInfoProvider,
     },
@@ -37,7 +36,7 @@ use crate::{
         watering_plan_service::WateringPlanService,
     },
 };
-use domain::info::{HealthSnapshotReader, RuntimeStatsProvider, StatisticsReader};
+use domain::info::{HealthSnapshotReader, StatisticsReader};
 
 pub struct Application {
     port: u16,
@@ -89,9 +88,7 @@ impl Application {
             DefaultSystemInfoProvider::new(&settings, update_checker.clone()),
         );
 
-        // ---- 5. Runtime + statistics readers ----
-        let runtime_stats_provider: Arc<dyn RuntimeStatsProvider> =
-            Arc::new(DefaultRuntimeStatsProvider::new(pool.clone()));
+        // ---- 5. Statistics reader ----
         let statistics_reader: Arc<dyn StatisticsReader> =
             Arc::new(PgStatisticsRepo::new(pool.clone()));
 
@@ -237,12 +234,8 @@ impl Application {
             user_service,
             info_provider,
             health_reader,
-            runtime_stats_provider,
             statistics_reader,
             token_validator,
-            runtime_stats_push_interval: Duration::from_secs(
-                settings.info.runtime_stats_interval_secs,
-            ),
         });
 
         // ---- 13. Listener + return ----

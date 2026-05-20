@@ -1165,7 +1165,7 @@
           "Trees"
         ],
         "summary": "List tree markers in a bounding box",
-        "description": "Returns minimal tree markers (id, lat, lng, watering_status, number, has_sensor) intersecting the given bounding box. Optional filter parameters narrow the result. Not paginated — the bounding box bounds the result.",
+        "description": "Returns minimal tree markers (id, lat, lng, watering_status, number, has_sensor) intersecting the given bounding box. Optional filter parameters narrow the result. Not paginated \u2014 the bounding box bounds the result.",
         "operationId": "listTreeMarkers",
         "parameters": [
           {
@@ -2586,24 +2586,6 @@
           }
         }
       },
-      "CpuStatsResponse": {
-        "type": "object",
-        "required": [
-          "cores",
-          "usagePercent"
-        ],
-        "properties": {
-          "cores": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "usagePercent": {
-            "type": "number",
-            "format": "float"
-          }
-        }
-      },
       "CreateSensorRequest": {
         "type": "object",
         "description": "Request body for `POST /sensors` - registers a prepared sensor unit.",
@@ -2621,7 +2603,7 @@
           },
           "id": {
             "type": "string",
-            "description": "Sensor identifier (EUI), 1–64 characters after trimming.",
+            "description": "Sensor identifier (EUI), 1\u201364 characters after trimming.",
             "example": "eui-a81758fffe0c3b52"
           },
           "lorawan": {
@@ -2687,37 +2669,6 @@
             "type": "integer",
             "format": "int64",
             "example": 15
-          }
-        }
-      },
-      "DbPoolStatsResponse": {
-        "type": "object",
-        "required": [
-          "size",
-          "idle",
-          "active",
-          "max"
-        ],
-        "properties": {
-          "active": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "idle": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "max": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
           }
         }
       },
@@ -3087,7 +3038,7 @@
                 },
                 "description": {
                   "type": "string",
-                  "example": "Baumgruppe im nördlichen Parkbereich"
+                  "example": "Baumgruppe im n\u00f6rdlichen Parkbereich"
                 },
                 "id": {
                   "type": "string",
@@ -3466,7 +3417,7 @@
                 "description": {
                   "type": "string",
                   "description": "Human-readable description of the vehicle.",
-                  "example": "Großes Bewässerungsfahrzeug für den Innenstadtbereich"
+                  "example": "Gro\u00dfes Bew\u00e4sserungsfahrzeug f\u00fcr den Innenstadtbereich"
                 },
                 "driving_license": {
                   "$ref": "#/components/schemas/DrivingLicense",
@@ -3604,7 +3555,7 @@
                 "description": {
                   "type": "string",
                   "description": "Human-readable description of the watering plan.",
-                  "example": "Bewässerungsplan Stadtpark Nord"
+                  "example": "Bew\u00e4sserungsplan Stadtpark Nord"
                 },
                 "distance": {
                   "type": "number",
@@ -3856,25 +3807,6 @@
           }
         }
       },
-      "MemoryStatsResponse": {
-        "type": "object",
-        "required": [
-          "residentBytes",
-          "virtualBytes"
-        ],
-        "properties": {
-          "residentBytes": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          },
-          "virtualBytes": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          }
-        }
-      },
       "NearestTreeListResponse": {
         "type": "object",
         "description": "Non-paginated list of nearest trees with distance information.",
@@ -4093,25 +4025,6 @@
           "version": "1.0.0"
         }
       },
-      "ProcessStatsResponse": {
-        "type": "object",
-        "required": [
-          "uptimeSeconds",
-          "threads"
-        ],
-        "properties": {
-          "threads": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "uptimeSeconds": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          }
-        }
-      },
       "RefreshTokenRequest": {
         "type": "object",
         "description": "Request body for refreshing an access token.",
@@ -4171,38 +4084,6 @@
         "example": {
           "id": "0190a8e9-7c4f-7000-8000-000000000000",
           "name": "Stadtpark Flensburg"
-        }
-      },
-      "RuntimeStatsResponse": {
-        "type": "object",
-        "required": [
-          "memory",
-          "cpu",
-          "tokio",
-          "dbPool",
-          "process",
-          "timestamp"
-        ],
-        "properties": {
-          "cpu": {
-            "$ref": "#/components/schemas/CpuStatsResponse"
-          },
-          "dbPool": {
-            "$ref": "#/components/schemas/DbPoolStatsResponse"
-          },
-          "memory": {
-            "$ref": "#/components/schemas/MemoryStatsResponse"
-          },
-          "process": {
-            "$ref": "#/components/schemas/ProcessStatsResponse"
-          },
-          "timestamp": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "tokio": {
-            "$ref": "#/components/schemas/TokioStatsResponse"
-          }
         }
       },
       "SensorAbilityUnitDto": {
@@ -4576,25 +4457,6 @@
         ],
         "example": "sandig"
       },
-      "TokioStatsResponse": {
-        "type": "object",
-        "required": [
-          "workerThreads",
-          "blockingThreads"
-        ],
-        "properties": {
-          "blockingThreads": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "workerThreads": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          }
-        }
-      },
       "TreeClusterCreateRequest": {
         "type": "object",
         "description": "Request body for creating a new tree cluster.",
@@ -4618,7 +4480,7 @@
           },
           "description": {
             "type": "string",
-            "example": "Baumgruppe im nördlichen Parkbereich"
+            "example": "Baumgruppe im n\u00f6rdlichen Parkbereich"
           },
           "name": {
             "type": "string",
@@ -4685,7 +4547,7 @@
           },
           "description": {
             "type": "string",
-            "example": "Baumgruppe im nördlichen Parkbereich"
+            "example": "Baumgruppe im n\u00f6rdlichen Parkbereich"
           },
           "id": {
             "type": "string",
@@ -4802,7 +4664,7 @@
           },
           "description": {
             "type": "string",
-            "example": "Baumgruppe im nördlichen Parkbereich"
+            "example": "Baumgruppe im n\u00f6rdlichen Parkbereich"
           },
           "id": {
             "type": "string",
@@ -4899,7 +4761,7 @@
           },
           "description": {
             "type": "string",
-            "example": "Baumgruppe im nördlichen Parkbereich"
+            "example": "Baumgruppe im n\u00f6rdlichen Parkbereich"
           },
           "name": {
             "type": "string",
@@ -5497,7 +5359,7 @@
               "null"
             ],
             "description": "Human-readable description of the vehicle.",
-            "example": "Großes Bewässerungsfahrzeug für den Innenstadtbereich"
+            "example": "Gro\u00dfes Bew\u00e4sserungsfahrzeug f\u00fcr den Innenstadtbereich"
           },
           "driving_license": {
             "$ref": "#/components/schemas/DrivingLicense",
@@ -5631,7 +5493,7 @@
           "description": {
             "type": "string",
             "description": "Human-readable description of the vehicle.",
-            "example": "Großes Bewässerungsfahrzeug für den Innenstadtbereich"
+            "example": "Gro\u00dfes Bew\u00e4sserungsfahrzeug f\u00fcr den Innenstadtbereich"
           },
           "driving_license": {
             "$ref": "#/components/schemas/DrivingLicense",
@@ -5760,7 +5622,7 @@
               "null"
             ],
             "description": "Human-readable description of the vehicle.",
-            "example": "Großes Bewässerungsfahrzeug für den Innenstadtbereich"
+            "example": "Gro\u00dfes Bew\u00e4sserungsfahrzeug f\u00fcr den Innenstadtbereich"
           },
           "driving_license": {
             "$ref": "#/components/schemas/DrivingLicense",
@@ -5892,7 +5754,7 @@
           "description": {
             "type": "string",
             "description": "Human-readable description of the watering plan.",
-            "example": "Bewässerungsplan Stadtpark Nord"
+            "example": "Bew\u00e4sserungsplan Stadtpark Nord"
           },
           "provider": {
             "type": [
@@ -5983,7 +5845,7 @@
           "description": {
             "type": "string",
             "description": "Human-readable description of the watering plan.",
-            "example": "Bewässerungsplan Stadtpark Nord"
+            "example": "Bew\u00e4sserungsplan Stadtpark Nord"
           },
           "distance": {
             "type": "number",
@@ -6103,7 +5965,7 @@
           "description": {
             "type": "string",
             "description": "Human-readable description of the watering plan.",
-            "example": "Bewässerungsplan Stadtpark Nord"
+            "example": "Bew\u00e4sserungsplan Stadtpark Nord"
           },
           "distance": {
             "type": "number",
@@ -6248,7 +6110,7 @@
           "description": {
             "type": "string",
             "description": "Human-readable description of the watering plan.",
-            "example": "Bewässerungsplan Stadtpark Nord"
+            "example": "Bew\u00e4sserungsplan Stadtpark Nord"
           },
           "evaluation": {
             "type": [
@@ -6331,7 +6193,7 @@
     },
     {
       "name": "Tree Clusters",
-      "description": "Manage tree clusters — logical groupings of trees that share soil conditions and watering schedules. Clusters are the primary unit for watering plan assignments."
+      "description": "Manage tree clusters \u2014 logical groupings of trees that share soil conditions and watering schedules. Clusters are the primary unit for watering plan assignments."
     },
     {
       "name": "Trees",

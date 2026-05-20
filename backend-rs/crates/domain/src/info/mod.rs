@@ -1,12 +1,10 @@
 //! System-info and health DTOs returned by the `/info` endpoints.
 
 pub mod app;
-pub mod runtime;
 pub mod service;
 pub mod statistics;
 
 pub use app::{App, Git, Map, Server, VersionInfo};
-pub use runtime::{CpuStats, DbPoolStats, MemoryStats, ProcessStats, RuntimeStats, TokioStats};
 pub use service::{ServiceMessage, ServiceName, ServiceStatus};
 pub use statistics::DataStatistics;
 
@@ -22,11 +20,6 @@ pub trait SystemInfoProvider: Send + Sync {
 #[async_trait::async_trait]
 pub trait HealthSnapshotReader: Send + Sync {
     async fn snapshot(&self) -> Vec<ServiceStatus>;
-}
-
-#[async_trait::async_trait]
-pub trait RuntimeStatsProvider: Send + Sync {
-    async fn snapshot(&self) -> RuntimeStats;
 }
 
 #[async_trait::async_trait]
