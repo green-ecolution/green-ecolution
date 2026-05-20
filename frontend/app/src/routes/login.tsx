@@ -22,7 +22,7 @@ export const Route = createFileRoute('/login')({
       redirect_url: redirectUrl,
       code_challenge: challenge,
     })
-    const response = await fetch(`${basePath}/api/v1/users/login?${params.toString()}`)
+    const response = await fetch(`${basePath}/v1/users/login?${params.toString()}`)
     if (!response.ok) {
       throw new Error(`login init failed: ${response.status}`)
     }

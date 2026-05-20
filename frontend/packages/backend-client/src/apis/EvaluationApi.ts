@@ -37,7 +37,7 @@ export class EvaluationApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/evaluation`;
+        let urlPath = `/v1/evaluation`;
 
         const response = await this.request({
             path: urlPath,

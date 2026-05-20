@@ -98,7 +98,7 @@ export class SensorsApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/api/v1/sensors/{sensor_id}/activate`;
+        let urlPath = `/v1/sensors/{sensor_id}/activate`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
         const response = await this.request({
@@ -140,7 +140,7 @@ export class SensorsApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/api/v1/sensors`;
+        let urlPath = `/v1/sensors`;
 
         const response = await this.request({
             path: urlPath,
@@ -179,7 +179,7 @@ export class SensorsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/sensors/{sensor_id}`;
+        let urlPath = `/v1/sensors/{sensor_id}`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
         const response = await this.request({
@@ -217,7 +217,7 @@ export class SensorsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/sensors/{sensor_id}`;
+        let urlPath = `/v1/sensors/{sensor_id}`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
         const response = await this.request({
@@ -255,7 +255,7 @@ export class SensorsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/sensors/models/{id}`;
+        let urlPath = `/v1/sensors/models/{id}`;
         urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
 
         const response = await this.request({
@@ -293,7 +293,7 @@ export class SensorsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/sensors/{sensor_id}/data`;
+        let urlPath = `/v1/sensors/{sensor_id}/data`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
         const response = await this.request({
@@ -325,7 +325,7 @@ export class SensorsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/sensors/models`;
+        let urlPath = `/v1/sensors/models`;
 
         const response = await this.request({
             path: urlPath,
@@ -364,7 +364,7 @@ export class SensorsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/sensors`;
+        let urlPath = `/v1/sensors`;
 
         const response = await this.request({
             path: urlPath,

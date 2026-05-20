@@ -100,7 +100,7 @@ export class UsersApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/api/v1/users`;
+        let urlPath = `/v1/users`;
 
         const response = await this.request({
             path: urlPath,
@@ -152,7 +152,7 @@ export class UsersApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/api/v1/users/login/token`;
+        let urlPath = `/v1/users/login/token`;
 
         const response = await this.request({
             path: urlPath,
@@ -192,7 +192,7 @@ export class UsersApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/users`;
+        let urlPath = `/v1/users`;
 
         const response = await this.request({
             path: urlPath,
@@ -238,7 +238,7 @@ export class UsersApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/users/role/{role_id}`;
+        let urlPath = `/v1/users/role/{role_id}`;
         urlPath = urlPath.replace(`{${"role_id"}}`, encodeURIComponent(String(requestParameters['roleId'])));
 
         const response = await this.request({
@@ -278,7 +278,7 @@ export class UsersApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/users/login`;
+        let urlPath = `/v1/users/login`;
 
         const response = await this.request({
             path: urlPath,
@@ -318,7 +318,7 @@ export class UsersApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/api/v1/users/logout`;
+        let urlPath = `/v1/users/logout`;
 
         const response = await this.request({
             path: urlPath,
@@ -358,7 +358,7 @@ export class UsersApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/api/v1/users/token/refresh`;
+        let urlPath = `/v1/users/token/refresh`;
 
         const response = await this.request({
             path: urlPath,

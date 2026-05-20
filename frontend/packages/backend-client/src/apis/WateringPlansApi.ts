@@ -81,7 +81,7 @@ export class WateringPlansApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/api/v1/watering-plans`;
+        let urlPath = `/v1/watering-plans`;
 
         const response = await this.request({
             path: urlPath,
@@ -120,7 +120,7 @@ export class WateringPlansApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/watering-plans/{watering_plan_id}`;
+        let urlPath = `/v1/watering-plans/{watering_plan_id}`;
         urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
 
         const response = await this.request({
@@ -158,7 +158,7 @@ export class WateringPlansApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/watering-plans/route/gpx/{gpx_name}`;
+        let urlPath = `/v1/watering-plans/route/gpx/{gpx_name}`;
         urlPath = urlPath.replace(`{${"gpx_name"}}`, encodeURIComponent(String(requestParameters['gpxName'])));
 
         const response = await this.request({
@@ -196,7 +196,7 @@ export class WateringPlansApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/watering-plans/{watering_plan_id}`;
+        let urlPath = `/v1/watering-plans/{watering_plan_id}`;
         urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
 
         const response = await this.request({
@@ -236,7 +236,7 @@ export class WateringPlansApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/watering-plans`;
+        let urlPath = `/v1/watering-plans`;
 
         const response = await this.request({
             path: urlPath,
@@ -267,7 +267,7 @@ export class WateringPlansApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/watering-plans/route/preview`;
+        let urlPath = `/v1/watering-plans/route/preview`;
 
         const response = await this.request({
             path: urlPath,
@@ -313,7 +313,7 @@ export class WateringPlansApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/api/v1/watering-plans/{watering_plan_id}`;
+        let urlPath = `/v1/watering-plans/{watering_plan_id}`;
         urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
 
         const response = await this.request({

@@ -80,7 +80,7 @@ export class TreeClustersApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/api/v1/clusters`;
+        let urlPath = `/v1/clusters`;
 
         const response = await this.request({
             path: urlPath,
@@ -119,7 +119,7 @@ export class TreeClustersApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/clusters/{cluster_id}`;
+        let urlPath = `/v1/clusters/{cluster_id}`;
         urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
 
         const response = await this.request({
@@ -157,7 +157,7 @@ export class TreeClustersApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/clusters/{cluster_id}`;
+        let urlPath = `/v1/clusters/{cluster_id}`;
         urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
 
         const response = await this.request({
@@ -189,7 +189,7 @@ export class TreeClustersApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/clusters/markers`;
+        let urlPath = `/v1/clusters/markers`;
 
         const response = await this.request({
             path: urlPath,
@@ -228,7 +228,7 @@ export class TreeClustersApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/clusters`;
+        let urlPath = `/v1/clusters`;
 
         const response = await this.request({
             path: urlPath,
@@ -275,7 +275,7 @@ export class TreeClustersApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/api/v1/clusters/{cluster_id}`;
+        let urlPath = `/v1/clusters/{cluster_id}`;
         urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
 
         const response = await this.request({

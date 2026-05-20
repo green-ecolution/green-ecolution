@@ -87,7 +87,7 @@ pub fn openapi_doc(base_url: &str) -> utoipa::openapi::OpenApi {
         .nest("/api/v1", v1::public_router().merge(v1::protected_router()))
         .split_for_parts();
 
-    api.servers = Some(vec![Server::new(base_url)]);
+    rewrite_paths_for_client(&mut api, base_url);
     api
 }
 
@@ -102,7 +102,7 @@ pub fn router(
         .nest("/api/v1", v1::router(auth_layer))
         .split_for_parts();
 
-    api.servers = Some(vec![Server::new(base_url)]);
+    rewrite_paths_for_client(&mut api, base_url);
 
     let trace_layer = TraceLayer::new_for_http()
         .make_span_with(make_span)
@@ -116,6 +116,20 @@ pub fn router(
         .layer(trace_layer)
         .layer(SetRequestIdLayer::new(REQUEST_ID_HEADER, MakeRequestUuid))
         .with_state(state)
+}
+
+fn rewrite_paths_for_client(api: &mut utoipa::openapi::OpenApi, base_url: &str) {
+    let rewritten: utoipa::openapi::path::PathsMap<_, _> = std::mem::take(&mut api.paths.paths)
+        .into_iter()
+        .map(|(key, item)| {
+            let new_key = key.strip_prefix("/api").map(String::from).unwrap_or(key);
+            (new_key, item)
+        })
+        .collect();
+    api.paths.paths = rewritten;
+
+    let server_url = format!("{}/api", base_url.trim_end_matches('/'));
+    api.servers = Some(vec![Server::new(server_url)]);
 }
 
 fn cors_layer(config: &CorsSettings) -> CorsLayer {

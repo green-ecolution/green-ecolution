@@ -20,7 +20,7 @@ export const Route = createFileRoute('/auth/callback')({
     const redirectUrl = `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}`
 
     const response = await fetch(
-      `${basePath}/api/v1/users/login/token?redirect_url=${encodeURIComponent(redirectUrl)}`,
+      `${basePath}/v1/users/login/token?redirect_url=${encodeURIComponent(redirectUrl)}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

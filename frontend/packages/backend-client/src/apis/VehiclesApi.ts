@@ -88,7 +88,7 @@ export class VehiclesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/vehicles/archived/{vehicle_id}`;
+        let urlPath = `/v1/vehicles/archived/{vehicle_id}`;
         urlPath = urlPath.replace(`{${"vehicle_id"}}`, encodeURIComponent(String(requestParameters['vehicleId'])));
 
         const response = await this.request({
@@ -128,7 +128,7 @@ export class VehiclesApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/api/v1/vehicles`;
+        let urlPath = `/v1/vehicles`;
 
         const response = await this.request({
             path: urlPath,
@@ -167,7 +167,7 @@ export class VehiclesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/vehicles/{vehicle_id}`;
+        let urlPath = `/v1/vehicles/{vehicle_id}`;
         urlPath = urlPath.replace(`{${"vehicle_id"}}`, encodeURIComponent(String(requestParameters['vehicleId'])));
 
         const response = await this.request({
@@ -205,7 +205,7 @@ export class VehiclesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/vehicles/{vehicle_id}`;
+        let urlPath = `/v1/vehicles/{vehicle_id}`;
         urlPath = urlPath.replace(`{${"vehicle_id"}}`, encodeURIComponent(String(requestParameters['vehicleId'])));
 
         const response = await this.request({
@@ -244,7 +244,7 @@ export class VehiclesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/vehicles/plate/{plate}`;
+        let urlPath = `/v1/vehicles/plate/{plate}`;
         urlPath = urlPath.replace(`{${"plate"}}`, encodeURIComponent(String(requestParameters['plate'])));
 
         const response = await this.request({
@@ -284,7 +284,7 @@ export class VehiclesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/vehicles/archived`;
+        let urlPath = `/v1/vehicles/archived`;
 
         const response = await this.request({
             path: urlPath,
@@ -323,7 +323,7 @@ export class VehiclesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/vehicles`;
+        let urlPath = `/v1/vehicles`;
 
         const response = await this.request({
             path: urlPath,
@@ -370,7 +370,7 @@ export class VehiclesApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/api/v1/vehicles/{vehicle_id}`;
+        let urlPath = `/v1/vehicles/{vehicle_id}`;
         urlPath = urlPath.replace(`{${"vehicle_id"}}`, encodeURIComponent(String(requestParameters['vehicleId'])));
 
         const response = await this.request({
