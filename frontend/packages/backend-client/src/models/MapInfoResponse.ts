@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- * Default map viewport configuration (center point and bounding box).
+ * 
  * @export
  * @interface MapInfoResponse
  */
 export interface MapInfoResponse {
     /**
-     * Bounding box as [south, west, north, east].
+     * 
      * @type {Array<number>}
      * @memberof MapInfoResponse
      */
     bbox: Array<number>;
     /**
-     * Center of the map as [latitude, longitude].
+     * 
      * @type {Array<number>}
      * @memberof MapInfoResponse
      */

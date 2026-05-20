@@ -61,7 +61,6 @@
       si = self.sourceInfo or {};
       gitCommit = si.rev or si.dirtyRev or "local";
       gitBranch = "local";
-      gitRepo = "https://github.com/green-ecolution/green-ecolution";
 
       buildDate =
         if si ? lastModifiedDate
@@ -117,10 +116,8 @@
 
         env = {
           SQLX_OFFLINE = "true";
-          GE_VERSION = version;
           GE_GIT_COMMIT = gitCommit;
           GE_GIT_BRANCH = gitBranch;
-          GE_GIT_REPOSITORY = gitRepo;
           GE_BUILD_TIME = buildDate;
         };
       };

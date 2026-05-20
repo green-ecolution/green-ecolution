@@ -14,7 +14,7 @@ use utoipa_swagger_ui::SwaggerUi;
 use crate::{
     configuration::CorsSettings,
     http::{
-        auth::AuthLayer,
+        auth::{AuthLayer, validator::TokenValidator},
         tracing::{MakeRequestUuid, REQUEST_ID_HEADER, make_span, on_response},
     },
     service::{
@@ -25,7 +25,7 @@ use crate::{
         watering_plan_service::WateringPlanService,
     },
 };
-use domain::info::SystemInfoProvider;
+use domain::info::{HealthSnapshotReader, StatisticsReader, SystemInfoProvider};
 
 pub mod auth;
 pub mod extractors;
@@ -45,6 +45,9 @@ pub struct AppState {
     pub auth_service: Arc<AuthService>,
     pub user_service: Arc<UserService>,
     pub info_provider: Arc<dyn SystemInfoProvider>,
+    pub health_reader: Arc<dyn HealthSnapshotReader>,
+    pub statistics_reader: Arc<dyn StatisticsReader>,
+    pub token_validator: Arc<TokenValidator>,
 }
 
 #[derive(OpenApi)]
@@ -71,7 +74,7 @@ pub struct AppState {
         (name = "Info", description = "Application metadata including version information, server status, map configuration, service health, and data statistics."),
         (name = "Users", description = "User management and OAuth2/OIDC authentication via Keycloak. Handles login flows, token management, and user registration."),
         (name = "Plugins", description = "Plugin registration and lifecycle management. External plugins can register, authenticate, and maintain heartbeat connections."),
-    )
+    ),
 )]
 struct ApiDoc;
 

@@ -14,37 +14,37 @@
 
 import { mapValues } from '../runtime';
 /**
- * Aggregate counts of core domain entities in the system.
+ * 
  * @export
  * @interface DataStatisticsResponse
  */
 export interface DataStatisticsResponse {
     /**
-     * Total number of sensors.
+     * 
      * @type {number}
      * @memberof DataStatisticsResponse
      */
     sensorCount: number;
     /**
-     * Total number of tree clusters.
+     * 
      * @type {number}
      * @memberof DataStatisticsResponse
      */
     treeClusterCount: number;
     /**
-     * Total number of trees.
+     * 
      * @type {number}
      * @memberof DataStatisticsResponse
      */
     treeCount: number;
     /**
-     * Total number of vehicles.
+     * 
      * @type {number}
      * @memberof DataStatisticsResponse
      */
     vehicleCount: number;
     /**
-     * Total number of watering plans.
+     * 
      * @type {number}
      * @memberof DataStatisticsResponse
      */

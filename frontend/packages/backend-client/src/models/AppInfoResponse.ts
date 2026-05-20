@@ -36,43 +36,55 @@ import {
 } from './GitInfoResponse';
 
 /**
- * Top-level application info combining version, build, git, and map data.
+ * 
  * @export
  * @interface AppInfoResponse
  */
 export interface AppInfoResponse {
     /**
-     * ISO 8601 timestamp of when the binary was built.
+     * 
      * @type {string}
      * @memberof AppInfoResponse
      */
     buildTime: string;
     /**
-     * Git metadata for the current build.
+     * 
      * @type {GitInfoResponse}
      * @memberof AppInfoResponse
      */
     git: GitInfoResponse;
     /**
-     * Rust compiler version used for the build (serialized as "goVersion" for backward compatibility).
-     * @type {string}
-     * @memberof AppInfoResponse
-     */
-    goVersion: string;
-    /**
-     * Default map viewport configuration.
+     * 
      * @type {MapInfoResponse}
      * @memberof AppInfoResponse
      */
     map: MapInfoResponse;
     /**
-     * Application version string.
+     * 
+     * @type {string}
+     * @memberof AppInfoResponse
+     */
+    rustChannel: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AppInfoResponse
+     */
+    rustEdition: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AppInfoResponse
+     */
+    rustVersion: string;
+    /**
+     * 
      * @type {string}
      * @memberof AppInfoResponse
      */
     version: string;
     /**
-     * Detailed version and update information.
+     * 
      * @type {VersionInfoResponse}
      * @memberof AppInfoResponse
      */
@@ -85,8 +97,10 @@ export interface AppInfoResponse {
 export function instanceOfAppInfoResponse(value: object): value is AppInfoResponse {
     if (!('buildTime' in value) || value['buildTime'] === undefined) return false;
     if (!('git' in value) || value['git'] === undefined) return false;
-    if (!('goVersion' in value) || value['goVersion'] === undefined) return false;
     if (!('map' in value) || value['map'] === undefined) return false;
+    if (!('rustChannel' in value) || value['rustChannel'] === undefined) return false;
+    if (!('rustEdition' in value) || value['rustEdition'] === undefined) return false;
+    if (!('rustVersion' in value) || value['rustVersion'] === undefined) return false;
     if (!('version' in value) || value['version'] === undefined) return false;
     if (!('versionInfo' in value) || value['versionInfo'] === undefined) return false;
     return true;
@@ -104,8 +118,10 @@ export function AppInfoResponseFromJSONTyped(json: any, ignoreDiscriminator: boo
         
         'buildTime': json['buildTime'],
         'git': GitInfoResponseFromJSON(json['git']),
-        'goVersion': json['goVersion'],
         'map': MapInfoResponseFromJSON(json['map']),
+        'rustChannel': json['rustChannel'],
+        'rustEdition': json['rustEdition'],
+        'rustVersion': json['rustVersion'],
         'version': json['version'],
         'versionInfo': VersionInfoResponseFromJSON(json['versionInfo']),
     };
@@ -124,8 +140,10 @@ export function AppInfoResponseToJSONTyped(value?: AppInfoResponse | null, ignor
         
         'buildTime': value['buildTime'],
         'git': GitInfoResponseToJSON(value['git']),
-        'goVersion': value['goVersion'],
         'map': MapInfoResponseToJSON(value['map']),
+        'rustChannel': value['rustChannel'],
+        'rustEdition': value['rustEdition'],
+        'rustVersion': value['rustVersion'],
         'version': value['version'],
         'versionInfo': VersionInfoResponseToJSON(value['versionInfo']),
     };

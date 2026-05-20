@@ -1,10 +1,11 @@
 use std::sync::Arc;
+use std::time::Duration;
 
 use sqlx::{PgPool, postgres::PgPoolOptions};
 use tokio::net::TcpListener;
 
 use crate::{
-    configuration::{AuthSettings, CorsSettings, DatabaseSettings, MqttSettings, Settings},
+    configuration::{CorsSettings, DatabaseSettings, Settings},
     http::{AppState, auth::AuthLayer, router},
     infra::{
         self,
@@ -17,6 +18,7 @@ use crate::{
         pg_tree::PgTreeRepository,
         pg_vehicle::PgVehicleRepository,
         pg_watering_plan::PgWateringPlanRepository,
+        statistics_repo::PgStatisticsRepo,
         system_info::DefaultSystemInfoProvider,
     },
     service::{
@@ -34,12 +36,13 @@ use crate::{
         watering_plan_service::WateringPlanService,
     },
 };
+use domain::info::{HealthSnapshotReader, StatisticsReader};
 
 pub struct Application {
     port: u16,
     listener: TcpListener,
     state: Arc<AppState>,
-    base_url: String,
+    base_url: url::Url,
     cors: CorsSettings,
     auth_layer: AuthLayer,
     _jwks: Arc<JwksProvider>,
@@ -50,48 +53,46 @@ impl Application {
         let pool = get_connection_pool(&config.database)
             .await
             .expect("failed to connect to database");
-
         let address = format!("{}:{}", config.application.host, config.application.port);
-        let app = Self::build_with_pool(
-            pool,
-            &address,
-            config.application.base_url.clone(),
-            config.cors.clone(),
-            config.auth.clone(),
-        )
-        .await?;
-
-        spawn_background_tasks(&config, &app);
-        Ok(app)
-    }
-
-    /// Variant that takes mqtt settings explicitly. Used by tests that
-    /// construct `Application` from a pool but want to drive (or skip) the
-    /// MQTT subscriber independently.
-    #[allow(dead_code)]
-    pub async fn build_with_mqtt(
-        pool: PgPool,
-        address: &str,
-        base_url: String,
-        cors: CorsSettings,
-        auth: AuthSettings,
-        mqtt: MqttSettings,
-    ) -> Result<Self, std::io::Error> {
-        let app = Self::build_with_pool(pool, address, base_url, cors, auth).await?;
-        if let Err(e) = infra::mqtt::spawn(mqtt, app.state.sensor_service.clone()) {
-            tracing::error!(error = %e, "mqtt subscriber not started");
-        }
-        Ok(app)
+        Self::build_with_pool(pool, &address, config).await
     }
 
     pub async fn build_with_pool(
         pool: PgPool,
         address: &str,
-        base_url: String,
-        cors: CorsSettings,
-        auth: AuthSettings,
+        settings: Settings,
     ) -> Result<Self, std::io::Error> {
-        // Repositories
+        // ---- 1. Auth scaffolding ----
+        let AuthStack {
+            auth_service,
+            user_service,
+            auth_layer,
+            jwks,
+        } = infra::keycloak::build(&settings.auth).await?;
+        let token_validator = auth_layer.validator.clone();
+
+        // ---- 2. Shared HTTP client ----
+        let http_client = reqwest::Client::builder()
+            .timeout(Duration::from_secs(settings.info.health_probe_timeout_secs))
+            .build()
+            .expect("reqwest client must build");
+
+        // ---- 3. UpdateChecker ----
+        let update_checker = Arc::new(crate::infra::update_checker::UpdateChecker::new(
+            env!("CARGO_PKG_VERSION").to_string(),
+            settings.info.update_check_repo.clone(),
+        ));
+
+        // ---- 4. SystemInfoProvider ----
+        let info_provider: Arc<dyn domain::info::SystemInfoProvider> = Arc::new(
+            DefaultSystemInfoProvider::new(&settings, update_checker.clone()),
+        );
+
+        // ---- 5. Statistics reader ----
+        let statistics_reader: Arc<dyn StatisticsReader> =
+            Arc::new(PgStatisticsRepo::new(pool.clone()));
+
+        // ---- 6. Repositories ----
         let region_repo = Arc::new(PgRegionRepository::new(pool.clone()));
         let region_reader: Arc<dyn domain::region::RegionReader> = region_repo.clone();
         let region_writer: Arc<dyn domain::region::RegionWriter> = region_repo;
@@ -119,16 +120,9 @@ impl Application {
         let watering_plan_writer: Arc<dyn domain::watering_plan::WateringPlanWriter> =
             watering_plan_repo;
         let evaluation_repo: Arc<dyn domain::evaluation::EvaluationRepository> =
-            Arc::new(PgEvaluationRepository::new(pool));
+            Arc::new(PgEvaluationRepository::new(pool.clone()));
 
-        let AuthStack {
-            auth_service,
-            user_service,
-            auth_layer,
-            jwks,
-        } = infra::keycloak::build(&auth).await?;
-
-        // Event handlers
+        // ---- 7. Event handlers + bus ----
         let cluster_recalc_handler = Arc::new(ClusterRecalculationHandler::new(
             cluster_reader.clone(),
             cluster_writer.clone(),
@@ -144,8 +138,6 @@ impl Application {
             tree_reader.clone(),
             tree_writer.clone(),
         ));
-
-        // Event bus
         let handlers: Vec<Arc<dyn crate::service::event_bus::EventHandler>> = vec![
             cluster_recalc_handler as Arc<dyn crate::service::event_bus::EventHandler>,
             cluster_status_handler as Arc<dyn crate::service::event_bus::EventHandler>,
@@ -153,7 +145,7 @@ impl Application {
         ];
         let event_bus: Arc<dyn EventBus> = Arc::new(InMemoryEventBus::new(handlers));
 
-        // Domain services
+        // ---- 8. Domain services ----
         let region_service = Arc::new(RegionService::new(region_reader, region_writer));
         let tree_service = Arc::new(TreeService::new(
             tree_reader.clone(),
@@ -189,9 +181,47 @@ impl Application {
             event_bus.clone(),
         ));
         let evaluation_service = Arc::new(EvaluationService::new(evaluation_repo));
-        let info_provider: Arc<dyn domain::info::SystemInfoProvider> =
-            Arc::new(DefaultSystemInfoProvider::new());
 
+        // ---- 9. MQTT subscriber (before probes — captures MqttHealthState) ----
+        let mqtt_state: Arc<crate::infra::mqtt::MqttHealthState> =
+            match infra::mqtt::spawn(settings.mqtt.clone(), sensor_service.clone()) {
+                Ok(state) => state,
+                Err(e) => {
+                    tracing::error!(error = %e, "mqtt subscriber not started");
+                    Arc::new(crate::infra::mqtt::MqttHealthState::default())
+                }
+            };
+
+        // ---- 10. Health probes ----
+        use crate::infra::health::keycloak_probe::KeycloakProbe;
+        use crate::infra::health::mqtt_probe::MqttProbe;
+        use crate::infra::health::pg_probe::PgProbe;
+        use crate::infra::health::{HealthProbe, spawn as spawn_health};
+        let probes: Vec<Arc<dyn HealthProbe>> = vec![
+            Arc::new(PgProbe::new(pool.clone())),
+            Arc::new(KeycloakProbe::new(
+                settings.auth.enabled,
+                Some(&settings.auth.issuer_url),
+                http_client.clone(),
+                Duration::from_secs(settings.info.health_probe_timeout_secs),
+            )),
+            Arc::new(MqttProbe::new(settings.mqtt.enabled, mqtt_state.clone())),
+        ];
+        let (health_coordinator, _health_handle) = spawn_health(
+            probes,
+            Duration::from_secs(settings.info.health_check_interval_secs),
+        )
+        .await;
+        let health_reader: Arc<dyn HealthSnapshotReader> = health_coordinator;
+
+        // ---- 11. UpdateChecker background refresh loop ----
+        let _update_handle = crate::infra::update_checker::spawn(
+            update_checker.clone(),
+            http_client,
+            Duration::from_secs(settings.info.update_check_interval_secs),
+        );
+
+        // ---- 12. AppState ----
         let state = Arc::new(AppState {
             region_service,
             tree_service,
@@ -204,17 +234,20 @@ impl Application {
             auth_service,
             user_service,
             info_provider,
+            health_reader,
+            statistics_reader,
+            token_validator,
         });
 
+        // ---- 13. Listener + return ----
         let listener = TcpListener::bind(address).await?;
         let port = listener.local_addr()?.port();
-
         Ok(Self {
             port,
             listener,
             state,
-            base_url,
-            cors,
+            base_url: settings.application.base_url,
+            cors: settings.cors,
             auth_layer,
             _jwks: jwks,
         })
@@ -232,7 +265,12 @@ impl Application {
     }
 
     pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {
-        let app = router(self.state, &self.base_url, &self.cors, self.auth_layer);
+        let app = router(
+            self.state,
+            self.base_url.as_str(),
+            &self.cors,
+            self.auth_layer,
+        );
         tracing::info!("listening on {}", self.listener.local_addr()?);
         axum::serve(self.listener, app).await
     }
@@ -243,13 +281,4 @@ pub async fn get_connection_pool(config: &DatabaseSettings) -> Result<PgPool, sq
         .max_connections(config.max_connections)
         .connect_with(config.connection_options())
         .await
-}
-
-/// Starts every background task that has its `enabled` flag set in
-/// `config`. Failures are logged and the HTTP server still comes up — a
-/// missing broker should not bring down a running deployment.
-fn spawn_background_tasks(config: &Settings, app: &Application) {
-    if let Err(e) = infra::mqtt::spawn(config.mqtt.clone(), app.state.sensor_service.clone()) {
-        tracing::error!(error = %e, "mqtt subscriber not started");
-    }
 }

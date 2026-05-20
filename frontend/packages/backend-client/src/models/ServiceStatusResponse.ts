@@ -14,47 +14,47 @@
 
 import { mapValues } from '../runtime';
 /**
- * Health and availability status of an individual backend service.
+ * 
  * @export
  * @interface ServiceStatusResponse
  */
 export interface ServiceStatusResponse {
     /**
-     * Whether the service is enabled in the configuration.
+     * 
      * @type {boolean}
      * @memberof ServiceStatusResponse
      */
     enabled: boolean;
     /**
-     * Whether the last health check succeeded.
+     * 
      * @type {boolean}
      * @memberof ServiceStatusResponse
      */
     healthy: boolean;
     /**
-     * ISO 8601 timestamp of the last health check.
+     * 
      * @type {string}
      * @memberof ServiceStatusResponse
      */
-    lastChecked?: string | null;
+    lastChecked: string;
     /**
-     * Human-readable status message.
+     * 
      * @type {string}
      * @memberof ServiceStatusResponse
      */
-    message?: string | null;
+    message: string;
     /**
-     * Name of the service (e.g. "database", "s3", "routing").
+     * 
      * @type {string}
      * @memberof ServiceStatusResponse
      */
     name: string;
     /**
-     * Response time of the last health check in milliseconds.
+     * 
      * @type {number}
      * @memberof ServiceStatusResponse
      */
-    responseTimeMs?: number | null;
+    responseTimeMs: number;
 }
 
 /**
@@ -63,7 +63,10 @@ export interface ServiceStatusResponse {
 export function instanceOfServiceStatusResponse(value: object): value is ServiceStatusResponse {
     if (!('enabled' in value) || value['enabled'] === undefined) return false;
     if (!('healthy' in value) || value['healthy'] === undefined) return false;
+    if (!('lastChecked' in value) || value['lastChecked'] === undefined) return false;
+    if (!('message' in value) || value['message'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
+    if (!('responseTimeMs' in value) || value['responseTimeMs'] === undefined) return false;
     return true;
 }
 
@@ -79,10 +82,10 @@ export function ServiceStatusResponseFromJSONTyped(json: any, ignoreDiscriminato
         
         'enabled': json['enabled'],
         'healthy': json['healthy'],
-        'lastChecked': json['lastChecked'] == null ? undefined : json['lastChecked'],
-        'message': json['message'] == null ? undefined : json['message'],
+        'lastChecked': json['lastChecked'],
+        'message': json['message'],
         'name': json['name'],
-        'responseTimeMs': json['responseTimeMs'] == null ? undefined : json['responseTimeMs'],
+        'responseTimeMs': json['responseTimeMs'],
     };
 }
 

@@ -14,43 +14,43 @@
 
 import { mapValues } from '../runtime';
 /**
- * Version information for the running application, including update status.
+ * 
  * @export
  * @interface VersionInfoResponse
  */
 export interface VersionInfoResponse {
     /**
-     * Currently deployed version string.
+     * 
      * @type {string}
      * @memberof VersionInfoResponse
      */
     current: string;
     /**
-     * Whether this instance is running in development mode.
+     * 
      * @type {boolean}
      * @memberof VersionInfoResponse
      */
     isDevelopment: boolean;
     /**
-     * Whether this instance is running in a staging environment.
+     * 
      * @type {boolean}
      * @memberof VersionInfoResponse
      */
     isStage: boolean;
     /**
-     * Latest available version from the release channel.
+     * 
      * @type {string}
      * @memberof VersionInfoResponse
      */
     latest: string;
     /**
-     * URL to the GitHub releases page.
+     * 
      * @type {string}
      * @memberof VersionInfoResponse
      */
     releaseUrl: string;
     /**
-     * Whether a newer version is available.
+     * 
      * @type {boolean}
      * @memberof VersionInfoResponse
      */

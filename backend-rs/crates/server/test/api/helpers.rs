@@ -3,7 +3,7 @@ use std::sync::{Arc, OnceLock};
 use domain::sensor::data::MqttPayload;
 use secrecy::SecretString;
 use server::{
-    configuration::{AuthSettings, CorsSettings},
+    configuration::{AuthSettings, Settings},
     http::AppState,
     service::ServiceError,
     startup::Application,
@@ -195,17 +195,13 @@ pub async fn spawn_app_with_auth(auth: AuthSettings) -> TestApp {
     let container = shared_container().await;
     let (_db_name, db_pool) = create_test_database(container.host_port).await;
 
-    let app = Application::build_with_pool(
-        db_pool.clone(),
-        "127.0.0.1:0",
-        "http://127.0.0.1".to_string(),
-        CorsSettings {
-            allowed_origins: vec!["*".to_string()],
-        },
-        auth,
-    )
-    .await
-    .expect("failed to build application");
+    let mut settings = Settings::for_test(auth);
+    settings.info.health_check_interval_secs = 1;
+    settings.info.update_check_repo = None;
+
+    let app = Application::build_with_pool(db_pool.clone(), "127.0.0.1:0", settings)
+        .await
+        .expect("failed to build application");
     let port = app.port();
     let state = app.state();
     tokio::spawn(app.run_until_stopped());

@@ -2,9 +2,11 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use secrecy::{ExposeSecret, SecretString};
+use serde::Deserialize;
 use serde_aux::field_attributes::deserialize_number_from_string;
 use sqlx::ConnectOptions;
 use sqlx::postgres::{PgConnectOptions, PgSslMode};
+use url::Url;
 
 #[derive(serde::Deserialize, Clone)]
 pub struct Settings {
@@ -15,6 +17,10 @@ pub struct Settings {
     pub auth: AuthSettings,
     #[serde(default)]
     pub mqtt: MqttSettings,
+    #[serde(default)]
+    pub map: MapSettings,
+    #[serde(default)]
+    pub info: InfoSettings,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -61,9 +67,18 @@ pub struct ApplicationSettings {
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
     pub host: String,
-    pub base_url: String,
+    #[serde(deserialize_with = "deserialize_url")]
+    pub base_url: Url,
     #[serde(default)]
     pub environment: Environment,
+}
+
+fn deserialize_url<'de, D>(deserializer: D) -> Result<Url, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let raw = String::deserialize(deserializer)?;
+    Url::parse(&raw).map_err(serde::de::Error::custom)
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -107,6 +122,64 @@ fn default_client_id() -> String {
 
 fn default_keep_alive_secs() -> u16 {
     30
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct MapSettings {
+    pub center: [f64; 2],
+    pub bbox: [f64; 4],
+}
+
+impl Default for MapSettings {
+    fn default() -> Self {
+        Self {
+            center: [54.792277136221905, 9.43580607453268],
+            bbox: [54.714822, 9.285796, 54.860127, 9.583800],
+        }
+    }
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct InfoSettings {
+    #[serde(default = "default_health_check_interval_secs")]
+    pub health_check_interval_secs: u64,
+    #[serde(default = "default_health_probe_timeout_secs")]
+    pub health_probe_timeout_secs: u64,
+    #[serde(default)]
+    pub update_check_repo: Option<String>,
+    #[serde(default = "default_update_check_interval_secs")]
+    pub update_check_interval_secs: u64,
+    #[serde(
+        default = "default_repository_url",
+        deserialize_with = "deserialize_url"
+    )]
+    pub repository_url: Url,
+}
+
+impl Default for InfoSettings {
+    fn default() -> Self {
+        Self {
+            health_check_interval_secs: default_health_check_interval_secs(),
+            health_probe_timeout_secs: default_health_probe_timeout_secs(),
+            update_check_repo: None,
+            update_check_interval_secs: default_update_check_interval_secs(),
+            repository_url: default_repository_url(),
+        }
+    }
+}
+
+fn default_health_check_interval_secs() -> u64 {
+    30
+}
+fn default_health_probe_timeout_secs() -> u64 {
+    5
+}
+fn default_update_check_interval_secs() -> u64 {
+    86_400
+}
+fn default_repository_url() -> Url {
+    Url::parse("https://github.com/green-ecolution/backend-rs/")
+        .expect("default repository_url must parse")
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -178,6 +251,44 @@ pub enum ConfigError {
     Source(#[from] config::ConfigError),
 }
 
+impl Settings {
+    /// Build a `Settings` value for integration tests. Database settings are
+    /// dummy — the test pool is created separately and passed to
+    /// `Application::build_with_pool`.
+    pub fn for_test(auth: AuthSettings) -> Self {
+        Self {
+            database: DatabaseSettings {
+                username: "postgres".into(),
+                password: SecretString::from("postgres".to_string()),
+                port: 5432,
+                host: "127.0.0.1".into(),
+                database_name: "postgres".into(),
+                require_ssl: false,
+                max_connections: 1,
+                log_statements_level: LogLevel::Warn,
+                slow_query_threshold_ms: 1000,
+            },
+            application: ApplicationSettings {
+                port: 0,
+                host: "127.0.0.1".into(),
+                base_url: Url::parse("http://127.0.0.1").expect("test base_url"),
+                environment: Environment::Local,
+            },
+            log: LogSettings {
+                level: "warn".into(),
+                format: LogFormat::Pretty,
+            },
+            cors: CorsSettings {
+                allowed_origins: vec!["*".into()],
+            },
+            auth,
+            mqtt: MqttSettings::default(),
+            map: MapSettings::default(),
+            info: InfoSettings::default(),
+        }
+    }
+}
+
 pub fn get_configuration() -> Result<Settings, ConfigError> {
     let base_path = std::env::current_dir().map_err(ConfigError::CurrentDir)?;
     let configuration_dir = base_path.join("config");
@@ -208,7 +319,12 @@ pub fn get_configuration() -> Result<Settings, ConfigError> {
         )
         .build()?;
 
-    Ok(settings.try_deserialize::<Settings>()?)
+    let mut settings: Settings = settings.try_deserialize()?;
+    // `APP_ENVIRONMENT` selects the yaml file — keep `application.environment`
+    // in sync so consumers (e.g. version suffix logic) don't have to read the
+    // env var directly.
+    settings.application.environment = environment;
+    Ok(settings)
 }
 
 #[derive(Debug, Clone, serde::Deserialize, Default)]
@@ -216,6 +332,7 @@ pub fn get_configuration() -> Result<Settings, ConfigError> {
 pub enum Environment {
     #[default]
     Local,
+    Staging,
     Production,
 }
 
@@ -223,6 +340,7 @@ impl Environment {
     pub fn as_str(&self) -> &'static str {
         match self {
             Environment::Local => "local",
+            Environment::Staging => "staging",
             Environment::Production => "production",
         }
     }
@@ -234,10 +352,10 @@ impl TryFrom<String> for Environment {
     fn try_from(value: String) -> Result<Self, Self::Error> {
         match value.to_lowercase().as_str() {
             "local" => Ok(Self::Local),
+            "staging" => Ok(Self::Staging),
             "production" => Ok(Self::Production),
             other => Err(format!(
-                "{} is not a supported environment. Use either `local` or `production`.",
-                other
+                "{other} is not a supported environment. Use `local`, `staging`, or `production`."
             )),
         }
     }

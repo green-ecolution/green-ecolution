@@ -5,6 +5,9 @@ services:
       args:
         - APP_VERSION=${APP_VERSION:-dev}
         - APP_REVISION=${APP_GIT_COMMIT:-unknown}
+        - GE_GIT_COMMIT=${APP_GIT_COMMIT:-unknown}
+        - GE_GIT_BRANCH=${APP_GIT_BRANCH:-unknown}
+        - GE_BUILD_TIME=${APP_BUILD_TIME:-unknown}
     healthcheck:
       test:
         [
@@ -91,6 +94,9 @@ services:
       args:
         - APP_VERSION=${APP_VERSION:-dev}
         - APP_REVISION=${APP_GIT_COMMIT:-unknown}
+        - GE_GIT_COMMIT=${APP_GIT_COMMIT:-unknown}
+        - GE_GIT_BRANCH=${APP_GIT_BRANCH:-unknown}
+        - GE_BUILD_TIME=${APP_BUILD_TIME:-unknown}
     entrypoint: ["./migrate"]
     command: ["reset", "--with-seed"]
     depends_on:

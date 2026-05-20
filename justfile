@@ -219,7 +219,7 @@ run-docker: _acme-init _ensure-valhalla build-domain-wasm
     APP_VERSION="{{ app_version }}" \
     APP_GIT_COMMIT="{{ app_git_commit }}" \
     APP_GIT_BRANCH="{{ app_git_branch }}" \
-    APP_BUILD_TIME="now" \
+    APP_BUILD_TIME="{{ app_build_time }}" \
     docker compose -f compose.yaml -f compose.app.yaml up -d --build
 
 # Start infrastructure services

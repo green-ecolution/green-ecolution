@@ -14,25 +14,25 @@
 
 import { mapValues } from '../runtime';
 /**
- * Git repository metadata for the current build.
+ * 
  * @export
  * @interface GitInfoResponse
  */
 export interface GitInfoResponse {
     /**
-     * Branch the build was created from.
+     * 
      * @type {string}
      * @memberof GitInfoResponse
      */
     branch: string;
     /**
-     * Short commit hash of the build.
+     * 
      * @type {string}
      * @memberof GitInfoResponse
      */
     commit: string;
     /**
-     * URL of the source repository.
+     * 
      * @type {string}
      * @memberof GitInfoResponse
      */

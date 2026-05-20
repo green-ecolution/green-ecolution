@@ -178,10 +178,8 @@ jobs:
           build-args: |
             APP_VERSION=${{ needs.determine-environment.outputs.image-tag }}
             APP_REVISION=${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-            GE_VERSION=${{ needs.determine-environment.outputs.image-tag }}
             GE_GIT_COMMIT=${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
             GE_GIT_BRANCH=${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
-            GE_GIT_REPOSITORY=https://github.com/${{ github.repository }}
             GE_BUILD_TIME=${{ steps.build-time.outputs.timestamp }}
           cache-from: type=gha,scope=build-backend
           cache-to: type=gha,mode=max,scope=build-backend

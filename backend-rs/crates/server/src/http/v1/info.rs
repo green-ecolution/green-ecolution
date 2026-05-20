@@ -42,6 +42,8 @@ pub async fn get_info(
         version: app.version,
         version_info: VersionInfoResponse::from(&app.version_info),
         rust_version: app.rust_version,
+        rust_channel: app.rust_channel,
+        rust_edition: app.rust_edition,
         build_time: app.build_time.to_rfc3339(),
         git: GitInfoResponse::from(&app.git),
         map: MapInfoResponse::from(&app.map),
@@ -97,9 +99,9 @@ pub async fn get_server_info(
 pub async fn get_services_info(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<ServicesInfoResponse>, ServiceError> {
-    let service = state.info_provider.services_info().await?;
+    let snapshot = state.health_reader.snapshot().await;
     Ok(Json(ServicesInfoResponse {
-        items: vec![ServiceStatusResponse::from(&service)],
+        items: snapshot.iter().map(ServiceStatusResponse::from).collect(),
     }))
 }
 
@@ -116,6 +118,6 @@ pub async fn get_services_info(
 pub async fn get_statistics(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<DataStatisticsResponse>, ServiceError> {
-    let stats = state.info_provider.statistics_info().await?;
+    let stats = state.statistics_reader.statistics().await?;
     Ok(Json(DataStatisticsResponse::from(&stats)))
 }

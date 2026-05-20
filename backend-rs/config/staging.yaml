@@ -1,0 +1,12 @@
+application:
+  host: "0.0.0.0"
+  base_url: "https://app.stage.green-ecolution.de"
+database:
+  require_ssl: true
+  max_connections: 20
+log:
+  level: "info,sqlx=warn"
+  format: "json"
+cors:
+  allowed_origins:
+    - "https://app.stage.green-ecolution.de"
