@@ -304,7 +304,12 @@ pub fn get_configuration() -> Result<Settings, ConfigError> {
         )
         .build()?;
 
-    Ok(settings.try_deserialize::<Settings>()?)
+    let mut settings: Settings = settings.try_deserialize()?;
+    // `APP_ENVIRONMENT` selects the yaml file — keep `application.environment`
+    // in sync so consumers (e.g. version suffix logic) don't have to read the
+    // env var directly.
+    settings.application.environment = environment;
+    Ok(settings)
 }
 
 #[derive(Debug, Clone, serde::Deserialize, Default)]
