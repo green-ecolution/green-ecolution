@@ -52,7 +52,7 @@ services:
       # Settings struct exposes those sections.
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`${APP_HOST:-localhost}`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.rule=Host(`${APP_HOST:-localhost}`) && (PathPrefix(`/api`) || PathPrefix(`/swagger-ui`) || PathPrefix(`/api-docs`))"
       - "traefik.http.routers.backend.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
 
@@ -61,7 +61,7 @@ services:
       context: ./frontend
       args:
         - ENV=dev
-        - BASEURL=
+        - BASEURL=/api
         - APP_VERSION=${APP_VERSION:-$(git describe --tags --always --dirty)}
     healthcheck:
       test:

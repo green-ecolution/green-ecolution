@@ -103,7 +103,7 @@ export class TreesApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/api/v1/trees`;
+        let urlPath = `/v1/trees`;
 
         const response = await this.request({
             path: urlPath,
@@ -142,7 +142,7 @@ export class TreesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/trees/{tree_id}`;
+        let urlPath = `/v1/trees/{tree_id}`;
         urlPath = urlPath.replace(`{${"tree_id"}}`, encodeURIComponent(String(requestParameters['treeId'])));
 
         const response = await this.request({
@@ -199,7 +199,7 @@ export class TreesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/trees/nearest`;
+        let urlPath = `/v1/trees/nearest`;
 
         const response = await this.request({
             path: urlPath,
@@ -237,7 +237,7 @@ export class TreesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/trees/{tree_id}`;
+        let urlPath = `/v1/trees/{tree_id}`;
         urlPath = urlPath.replace(`{${"tree_id"}}`, encodeURIComponent(String(requestParameters['treeId'])));
 
         const response = await this.request({
@@ -276,7 +276,7 @@ export class TreesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/sensors/{sensor_id}/tree`;
+        let urlPath = `/v1/sensors/{sensor_id}/tree`;
         urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
 
         const response = await this.request({
@@ -308,7 +308,7 @@ export class TreesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/trees/planting-years`;
+        let urlPath = `/v1/trees/planting-years`;
 
         const response = await this.request({
             path: urlPath,
@@ -362,7 +362,7 @@ export class TreesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/trees/markers`;
+        let urlPath = `/v1/trees/markers`;
 
         const response = await this.request({
             path: urlPath,
@@ -401,7 +401,7 @@ export class TreesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/trees`;
+        let urlPath = `/v1/trees`;
 
         const response = await this.request({
             path: urlPath,
@@ -448,7 +448,7 @@ export class TreesApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/api/v1/trees/{tree_id}`;
+        let urlPath = `/v1/trees/{tree_id}`;
         urlPath = urlPath.replace(`{${"tree_id"}}`, encodeURIComponent(String(requestParameters['treeId'])));
 
         const response = await this.request({

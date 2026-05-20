@@ -56,7 +56,7 @@ export class RegionsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/regions/{region_id}`;
+        let urlPath = `/v1/regions/{region_id}`;
         urlPath = urlPath.replace(`{${"region_id"}}`, encodeURIComponent(String(requestParameters['regionId'])));
 
         const response = await this.request({
@@ -96,7 +96,7 @@ export class RegionsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/regions`;
+        let urlPath = `/v1/regions`;
 
         const response = await this.request({
             path: urlPath,

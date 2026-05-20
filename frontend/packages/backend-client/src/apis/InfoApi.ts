@@ -49,7 +49,7 @@ export class InfoApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/info`;
+        let urlPath = `/v1/info`;
 
         const response = await this.request({
             path: urlPath,
@@ -80,7 +80,7 @@ export class InfoApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/info/map`;
+        let urlPath = `/v1/info/map`;
 
         const response = await this.request({
             path: urlPath,
@@ -111,7 +111,7 @@ export class InfoApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/info/server`;
+        let urlPath = `/v1/info/server`;
 
         const response = await this.request({
             path: urlPath,
@@ -142,7 +142,7 @@ export class InfoApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/info/services`;
+        let urlPath = `/v1/info/services`;
 
         const response = await this.request({
             path: urlPath,
@@ -173,7 +173,7 @@ export class InfoApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/info/statistics`;
+        let urlPath = `/v1/info/statistics`;
 
         const response = await this.request({
             path: urlPath,
@@ -195,7 +195,7 @@ export class InfoApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /api/v1/info/services for a deep services health check.
+     * Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /v1/info/services for a deep services health check.
      * Liveness probe
      */
     async healthRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -217,7 +217,7 @@ export class InfoApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /api/v1/info/services for a deep services health check.
+     * Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /v1/info/services for a deep services health check.
      * Liveness probe
      */
     async health(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {

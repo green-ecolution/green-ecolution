@@ -15,11 +15,26 @@
   },
   "servers": [
     {
-      "url": "http://127.0.0.1:3020"
+      "url": "http://127.0.0.1:3020/api"
     }
   ],
   "paths": {
-    "/api/v1/clusters": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Info"
+        ],
+        "summary": "Liveness probe",
+        "description": "Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /v1/info/services for a deep services health check.",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Server is alive"
+          }
+        }
+      }
+    },
+    "/v1/clusters": {
       "get": {
         "tags": [
           "Tree Clusters"
@@ -106,7 +121,7 @@
         }
       }
     },
-    "/api/v1/clusters/markers": {
+    "/v1/clusters/markers": {
       "get": {
         "tags": [
           "Tree Clusters"
@@ -131,7 +146,7 @@
         }
       }
     },
-    "/api/v1/clusters/{cluster_id}": {
+    "/v1/clusters/{cluster_id}": {
       "get": {
         "tags": [
           "Tree Clusters"
@@ -250,7 +265,7 @@
         }
       }
     },
-    "/api/v1/evaluation": {
+    "/v1/evaluation": {
       "get": {
         "tags": [
           "Evaluation"
@@ -275,7 +290,7 @@
         }
       }
     },
-    "/api/v1/info": {
+    "/v1/info": {
       "get": {
         "tags": [
           "Info"
@@ -300,7 +315,7 @@
         }
       }
     },
-    "/api/v1/info/map": {
+    "/v1/info/map": {
       "get": {
         "tags": [
           "Info"
@@ -325,7 +340,7 @@
         }
       }
     },
-    "/api/v1/info/server": {
+    "/v1/info/server": {
       "get": {
         "tags": [
           "Info"
@@ -350,7 +365,7 @@
         }
       }
     },
-    "/api/v1/info/services": {
+    "/v1/info/services": {
       "get": {
         "tags": [
           "Info"
@@ -375,7 +390,7 @@
         }
       }
     },
-    "/api/v1/info/statistics": {
+    "/v1/info/statistics": {
       "get": {
         "tags": [
           "Info"
@@ -400,7 +415,7 @@
         }
       }
     },
-    "/api/v1/plugins": {
+    "/v1/plugins": {
       "get": {
         "tags": [
           "Plugins"
@@ -461,7 +476,7 @@
         }
       }
     },
-    "/api/v1/plugins/{plugin_slug}": {
+    "/v1/plugins/{plugin_slug}": {
       "get": {
         "tags": [
           "Plugins"
@@ -500,7 +515,7 @@
         }
       }
     },
-    "/api/v1/plugins/{plugin_slug}/heartbeat": {
+    "/v1/plugins/{plugin_slug}/heartbeat": {
       "post": {
         "tags": [
           "Plugins"
@@ -532,7 +547,7 @@
         }
       }
     },
-    "/api/v1/plugins/{plugin_slug}/token/refresh": {
+    "/v1/plugins/{plugin_slug}/token/refresh": {
       "post": {
         "tags": [
           "Plugins"
@@ -581,7 +596,7 @@
         }
       }
     },
-    "/api/v1/plugins/{plugin_slug}/unregister": {
+    "/v1/plugins/{plugin_slug}/unregister": {
       "post": {
         "tags": [
           "Plugins"
@@ -613,7 +628,7 @@
         }
       }
     },
-    "/api/v1/regions": {
+    "/v1/regions": {
       "get": {
         "tags": [
           "Regions"
@@ -667,7 +682,7 @@
         }
       }
     },
-    "/api/v1/regions/{region_id}": {
+    "/v1/regions/{region_id}": {
       "get": {
         "tags": [
           "Regions"
@@ -707,7 +722,7 @@
         }
       }
     },
-    "/api/v1/sensors": {
+    "/v1/sensors": {
       "get": {
         "tags": [
           "Sensors"
@@ -803,7 +818,7 @@
         }
       }
     },
-    "/api/v1/sensors/models": {
+    "/v1/sensors/models": {
       "get": {
         "tags": [
           "Sensors"
@@ -831,7 +846,7 @@
         }
       }
     },
-    "/api/v1/sensors/models/{id}": {
+    "/v1/sensors/models/{id}": {
       "get": {
         "tags": [
           "Sensors"
@@ -870,7 +885,7 @@
         }
       }
     },
-    "/api/v1/sensors/{sensor_id}": {
+    "/v1/sensors/{sensor_id}": {
       "get": {
         "tags": [
           "Sensors"
@@ -939,7 +954,7 @@
         }
       }
     },
-    "/api/v1/sensors/{sensor_id}/activate": {
+    "/v1/sensors/{sensor_id}/activate": {
       "post": {
         "tags": [
           "Sensors"
@@ -991,7 +1006,7 @@
         }
       }
     },
-    "/api/v1/sensors/{sensor_id}/data": {
+    "/v1/sensors/{sensor_id}/data": {
       "get": {
         "tags": [
           "Sensors"
@@ -1030,7 +1045,7 @@
         }
       }
     },
-    "/api/v1/sensors/{sensor_id}/tree": {
+    "/v1/sensors/{sensor_id}/tree": {
       "get": {
         "tags": [
           "Trees"
@@ -1069,7 +1084,7 @@
         }
       }
     },
-    "/api/v1/trees": {
+    "/v1/trees": {
       "get": {
         "tags": [
           "Trees"
@@ -1159,7 +1174,7 @@
         }
       }
     },
-    "/api/v1/trees/markers": {
+    "/v1/trees/markers": {
       "get": {
         "tags": [
           "Trees"
@@ -1239,7 +1254,7 @@
         }
       }
     },
-    "/api/v1/trees/nearest": {
+    "/v1/trees/nearest": {
       "get": {
         "tags": [
           "Trees"
@@ -1305,7 +1320,7 @@
         }
       }
     },
-    "/api/v1/trees/planting-years": {
+    "/v1/trees/planting-years": {
       "get": {
         "tags": [
           "Trees"
@@ -1334,7 +1349,7 @@
         }
       }
     },
-    "/api/v1/trees/{tree_id}": {
+    "/v1/trees/{tree_id}": {
       "get": {
         "tags": [
           "Trees"
@@ -1453,7 +1468,7 @@
         }
       }
     },
-    "/api/v1/users": {
+    "/v1/users": {
       "get": {
         "tags": [
           "Users"
@@ -1552,7 +1567,7 @@
         }
       }
     },
-    "/api/v1/users/login": {
+    "/v1/users/login": {
       "get": {
         "tags": [
           "Users"
@@ -1603,7 +1618,7 @@
         }
       }
     },
-    "/api/v1/users/login/token": {
+    "/v1/users/login/token": {
       "post": {
         "tags": [
           "Users"
@@ -1649,7 +1664,7 @@
         }
       }
     },
-    "/api/v1/users/logout": {
+    "/v1/users/logout": {
       "post": {
         "tags": [
           "Users"
@@ -1677,7 +1692,7 @@
         }
       }
     },
-    "/api/v1/users/role/{role_id}": {
+    "/v1/users/role/{role_id}": {
       "get": {
         "tags": [
           "Users"
@@ -1746,7 +1761,7 @@
         }
       }
     },
-    "/api/v1/users/token/refresh": {
+    "/v1/users/token/refresh": {
       "post": {
         "tags": [
           "Users"
@@ -1781,7 +1796,7 @@
         }
       }
     },
-    "/api/v1/vehicles": {
+    "/v1/vehicles": {
       "get": {
         "tags": [
           "Vehicles"
@@ -1874,7 +1889,7 @@
         }
       }
     },
-    "/api/v1/vehicles/archived": {
+    "/v1/vehicles/archived": {
       "get": {
         "tags": [
           "Vehicles"
@@ -1928,7 +1943,7 @@
         }
       }
     },
-    "/api/v1/vehicles/archived/{vehicle_id}": {
+    "/v1/vehicles/archived/{vehicle_id}": {
       "post": {
         "tags": [
           "Vehicles"
@@ -1961,7 +1976,7 @@
         }
       }
     },
-    "/api/v1/vehicles/plate/{plate}": {
+    "/v1/vehicles/plate/{plate}": {
       "get": {
         "tags": [
           "Vehicles"
@@ -2000,7 +2015,7 @@
         }
       }
     },
-    "/api/v1/vehicles/{vehicle_id}": {
+    "/v1/vehicles/{vehicle_id}": {
       "get": {
         "tags": [
           "Vehicles"
@@ -2119,7 +2134,7 @@
         }
       }
     },
-    "/api/v1/watering-plans": {
+    "/v1/watering-plans": {
       "get": {
         "tags": [
           "Watering Plans"
@@ -2209,7 +2224,7 @@
         }
       }
     },
-    "/api/v1/watering-plans/route/gpx/{gpx_name}": {
+    "/v1/watering-plans/route/gpx/{gpx_name}": {
       "get": {
         "tags": [
           "Watering Plans"
@@ -2238,7 +2253,7 @@
         }
       }
     },
-    "/api/v1/watering-plans/route/preview": {
+    "/v1/watering-plans/route/preview": {
       "post": {
         "tags": [
           "Watering Plans"
@@ -2256,7 +2271,7 @@
         }
       }
     },
-    "/api/v1/watering-plans/{watering_plan_id}": {
+    "/v1/watering-plans/{watering_plan_id}": {
       "get": {
         "tags": [
           "Watering Plans"
@@ -2371,21 +2386,6 @@
           },
           "500": {
             "description": "Internal server error"
-          }
-        }
-      }
-    },
-    "/health": {
-      "get": {
-        "tags": [
-          "Info"
-        ],
-        "summary": "Liveness probe",
-        "description": "Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /api/v1/info/services for a deep services health check.",
-        "operationId": "health",
-        "responses": {
-          "200": {
-            "description": "Server is alive"
           }
         }
       }

@@ -40,7 +40,7 @@ async function performTokenRefresh(): Promise<void> {
     })
   }
 
-  const res = await fetch(`${basePath}/api/v1/users/token/refresh`, {
+  const res = await fetch(`${basePath}/v1/users/token/refresh`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refresh_token: refreshToken }),

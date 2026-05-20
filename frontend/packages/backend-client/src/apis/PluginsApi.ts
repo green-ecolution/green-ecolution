@@ -77,7 +77,7 @@ export class PluginsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/plugins/{plugin_slug}`;
+        let urlPath = `/v1/plugins/{plugin_slug}`;
         urlPath = urlPath.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug'])));
 
         const response = await this.request({
@@ -109,7 +109,7 @@ export class PluginsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/plugins`;
+        let urlPath = `/v1/plugins`;
 
         const response = await this.request({
             path: urlPath,
@@ -147,7 +147,7 @@ export class PluginsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/plugins/{plugin_slug}/heartbeat`;
+        let urlPath = `/v1/plugins/{plugin_slug}/heartbeat`;
         urlPath = urlPath.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug'])));
 
         const response = await this.request({
@@ -194,7 +194,7 @@ export class PluginsApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/api/v1/plugins/{plugin_slug}/token/refresh`;
+        let urlPath = `/v1/plugins/{plugin_slug}/token/refresh`;
         urlPath = urlPath.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug'])));
 
         const response = await this.request({
@@ -236,7 +236,7 @@ export class PluginsApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/api/v1/plugins`;
+        let urlPath = `/v1/plugins`;
 
         const response = await this.request({
             path: urlPath,
@@ -275,7 +275,7 @@ export class PluginsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/api/v1/plugins/{plugin_slug}/unregister`;
+        let urlPath = `/v1/plugins/{plugin_slug}/unregister`;
         urlPath = urlPath.replace(`{${"plugin_slug"}}`, encodeURIComponent(String(requestParameters['pluginSlug'])));
 
         const response = await this.request({
