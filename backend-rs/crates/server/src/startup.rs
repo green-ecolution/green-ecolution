@@ -6,7 +6,7 @@ use tokio::net::TcpListener;
 
 use crate::{
     configuration::{CorsSettings, DatabaseSettings, Settings},
-    http::{AppState, auth::AuthLayer, router},
+    http::{AppState, FeatureFlags, auth::AuthLayer, router},
     infra::{
         self,
         keycloak::{AuthStack, JwksProvider},
@@ -237,6 +237,10 @@ impl Application {
             health_reader,
             statistics_reader,
             token_validator,
+            feature_flags: FeatureFlags {
+                routing_enabled: settings.routing.enabled,
+                plugins_enabled: settings.plugins.enabled,
+            },
         });
 
         // ---- 13. Listener + return ----
