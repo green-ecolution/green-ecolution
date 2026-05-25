@@ -4,43 +4,26 @@ kind: ConfigMap
 metadata:
   name: backend-config
 data:
-  GE_SERVER_APP_URL: "https://app.green-ecolution.de"
-  GE_SERVER_DEVELOPMENT: "true"
+  APP_ENVIRONMENT: "production"
+  APP_APPLICATION__PORT: "3000"
+  APP_APPLICATION__BASE_URL: "https://app.green-ecolution.de"
 
-  GE_SERVER_DATABASE_HOST: "postgresql.postgres.svc.cluster.local"
-  GE_SERVER_DATABASE_PORT: "5432"
-  GE_SERVER_DATABASE_TIMEOUT: "30s"
-  GE_SERVER_DATABASE_NAME: "green-ecolution-prod"
+  APP_DATABASE__HOST: "postgresql.postgres.svc.cluster.local"
+  APP_DATABASE__PORT: "5432"
+  APP_DATABASE__DATABASE_NAME: "green-ecolution-prod"
+  APP_DATABASE__REQUIRE_SSL: "false"
 
-  GE_MQTT_BROKER: "eu1.cloud.thethings.industries:1883"
-  GE_MQTT_TOPIC: "v3/sgr-students@zde/devices/+/up"
+  APP_AUTH__ENABLED: "true"
+  # NOTE: previous Go config pointed to green-ecolution-dev realm (with prod
+  # realm commented out). Preserving current realm here — switch to
+  # green-ecolution-prod when that realm is provisioned.
+  APP_AUTH__ISSUER_URL: "https://auth.green-ecolution.de/realms/green-ecolution-dev"
+  APP_AUTH__FRONTEND_CLIENT_ID: "green-ecolution-frontend"
+  APP_AUTH__BACKEND_CLIENT_ID: "green-ecolution-backend"
+  APP_AUTH__DEFAULT_REDIRECT_URL: "https://app.green-ecolution.de"
 
-  GE_AUTH_KEYCLOAK_BASEURL: "https://auth.green-ecolution.de"
-  # GE_AUTH_KEYCLOAK_REALM: "green-ecolution-prod"
-  GE_AUTH_KEYCLOAK_REALM: "green-ecolution-dev"
-  GE_AUTH_KEYCLOAK_CLIENT_ID: "green-ecolution-backend"
-  GE_AUTH_KEYCLOAK_FRONTEND_CLIENT_ID: "green-ecolution-frontend"
-  GE_AUTH_OIDC_PROVIDER_AUTH_URL: "https://auth.green-ecolution.de/realms/green-ecolution-dev/protocol/openid-connect/auth"
-  GE_AUTH_OIDC_PROVIDER_TOKEN_URL: "https://auth.green-ecolution.de/realms/green-ecolution-dev/protocol/openid-connect/token"
-  # GE_AUTH_KEYCLOAK_FRONTEND_AUTH_URL: "https://auth.green-ecolution.de/realms/green-ecolution-prod/protocol/openid-connect/auth"
-  # GE_AUTH_KEYCLOAK_FRONTEND_TOKEN_URL: "https://auth.green-ecolution.de/realms/green-ecolution-prod/protocol/openid-connect/token"
-  GE_ROUTING_START_POINT: "9.434764259345679,54.768731253913806"
-  GE_ROUTING_END_POINT: "9.434764259345679,54.768731253913806"
-  GE_ROUTING_WATERING_POINT: "9.434764259345679,54.768731253913806"
-  GE_ROUTING_VALHALLA_HOST: "http://valhalla.routing.svc.cluster.local"
-  GE_ROUTING_VALHALLA_OPTIMIZATION_VROOM_HOST: "http://vroom.routing.svc.cluster.local"
-  GE_ROUTING_ORS_HOST: "http://ors.routing.svc.local"
-  GE_ROUTING_ORS_OPTIMIZATION_VROOM_HOST: "http://vroom.routing.svc.cluster.local"
-  GE_S3_ENDPOINT: "minio-hl.minio.svc.cluster.local:9000"
-  GE_S3_REGION: "us-east-1"
-  GE_S3_USE_SSL: "false"
-  GE_S3_ROUTE-GPX_BUCKET: "routes-gpx-prod"
-  GE_S3_ROUTE-GPX_ACCESSKEY: "routes-gpx-prod"
-
-  GE_MAP_CENTER: "54.792277136221905,9.43580607453268"
-  GE_MAP_BBOX: "54.714822,9.285796,54.860127,9.583800"
-  GE_MAP_NEAREST_TREE_MAX_RADIUS: "500"
-  GE_MAP_NEAREST_TREE_DEFAULT_LIMIT: "10"
-  GE_MAP_NEAREST_TREE_MAX_LIMIT: "50"
+  APP_MQTT__ENABLED: "true"
+  APP_MQTT__BROKER_URL: "mqtt://eu1.cloud.thethings.industries:1883"
+  APP_MQTT__TOPIC: "v3/sgr-students@zde/devices/+/up"
 
   TZ: "Europe/Berlin"

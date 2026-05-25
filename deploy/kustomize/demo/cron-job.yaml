@@ -14,30 +14,9 @@ spec:
               imagePullPolicy: Always
               command: ["./migrate"]
               args: ["reset", "--with-seed"]
-              env:
-                - name: APP_DATABASE__DATABASE_NAME
-                  valueFrom:
-                    configMapKeyRef:
-                      name: backend-config
-                      key: GE_SERVER_DATABASE_NAME
-                - name: APP_DATABASE__HOST
-                  valueFrom:
-                    configMapKeyRef:
-                      name: backend-config
-                      key: GE_SERVER_DATABASE_HOST
-                - name: APP_DATABASE__PORT
-                  valueFrom:
-                    configMapKeyRef:
-                      name: backend-config
-                      key: GE_SERVER_DATABASE_PORT
-                - name: APP_DATABASE__USERNAME
-                  valueFrom:
-                    secretKeyRef:
-                      name: backend-secrets
-                      key: GE_SERVER_DATABASE_USERNAME
-                - name: APP_DATABASE__PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: backend-secrets
-                      key: GE_SERVER_DATABASE_PASSWORD
+              envFrom:
+                - configMapRef:
+                    name: backend-config
+                - secretRef:
+                    name: backend-secrets
           restartPolicy: OnFailure

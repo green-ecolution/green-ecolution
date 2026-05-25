@@ -48,7 +48,7 @@ spec:
           periodSeconds: 10
         readinessProbe:
           httpGet:
-            path: /ready
+            path: /health
             port: 3000
           initialDelaySeconds: 5
           timeoutSeconds: 2
@@ -60,9 +60,6 @@ spec:
               name: backend-config
           - secretRef:
               name: backend-secrets
-        env:
-          - name: PORT
-            value: "3000"
         ports:
         - containerPort: 3000
           name: backend
