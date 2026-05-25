@@ -198,3 +198,25 @@ async fn health_coordinator_aggregates_probes_after_first_tick() {
 
     handle.abort();
 }
+
+#[tokio::test]
+async fn feature_probe_disabled_reports_disabled_message() {
+    use server::infra::health::feature_probe::FeatureProbe;
+    let probe = FeatureProbe::new(ServiceName::Routing, false);
+    let status = probe.check().await;
+    assert_eq!(probe.name(), ServiceName::Routing);
+    assert!(!status.enabled);
+    assert!(!status.healthy);
+    assert_eq!(status.message, ServiceMessage::Disabled);
+}
+
+#[tokio::test]
+async fn feature_probe_enabled_reports_connected() {
+    use server::infra::health::feature_probe::FeatureProbe;
+    let probe = FeatureProbe::new(ServiceName::Plugins, true);
+    let status = probe.check().await;
+    assert_eq!(probe.name(), ServiceName::Plugins);
+    assert!(status.enabled);
+    assert!(status.healthy);
+    assert_eq!(status.message, ServiceMessage::Connected);
+}
