@@ -70,6 +70,7 @@ pub async fn list_plugins(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn register_plugin(
     State(state): State<Arc<AppState>>,
+    // Bytes instead of Json<T>: Json would reject invalid/empty bodies with 422 before guard() fires.
     _body: Bytes,
 ) -> Result<(StatusCode, Json<ClientTokenResponse>), ServiceError> {
     guard(&state)?;
@@ -135,6 +136,7 @@ pub async fn plugin_heartbeat(
 pub async fn plugin_refresh_token(
     State(state): State<Arc<AppState>>,
     Path(_slug): Path<String>,
+    // Bytes instead of Json<T>: Json would reject invalid/empty bodies with 422 before guard() fires.
     _body: Bytes,
 ) -> Result<Json<ClientTokenResponse>, ServiceError> {
     guard(&state)?;
