@@ -9,6 +9,8 @@ pub enum ServiceName {
     Postgres,
     Keycloak,
     Mqtt,
+    Routing,
+    Plugins,
 }
 
 impl ServiceName {
@@ -17,6 +19,8 @@ impl ServiceName {
             Self::Postgres => "database",
             Self::Keycloak => "auth",
             Self::Mqtt => "mqtt",
+            Self::Routing => "routing",
+            Self::Plugins => "plugins",
         }
     }
 }
@@ -61,6 +65,8 @@ mod tests {
         assert_eq!(ServiceName::Postgres.as_key(), "database");
         assert_eq!(ServiceName::Keycloak.as_key(), "auth");
         assert_eq!(ServiceName::Mqtt.as_key(), "mqtt");
+        assert_eq!(ServiceName::Routing.as_key(), "routing");
+        assert_eq!(ServiceName::Plugins.as_key(), "plugins");
     }
 
     #[test]
