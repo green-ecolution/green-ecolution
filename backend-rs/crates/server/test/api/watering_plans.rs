@@ -414,3 +414,36 @@ async fn cancel_active_watering_plan_with_note_succeeds() {
     let body: serde_json::Value = cancel_resp.json().await.unwrap();
     assert_eq!(body["status"], "canceled");
 }
+
+#[tokio::test]
+async fn preview_route_returns_503_when_routing_disabled() {
+    let app = spawn_app().await;
+
+    let response = app
+        .post_json(
+            "/api/v1/watering-plans/route/preview",
+            &serde_json::json!({}),
+        )
+        .await;
+
+    assert_eq!(response.status().as_u16(), 503);
+    let body = response.text().await.unwrap_or_default();
+    assert!(
+        body.contains("routing"),
+        "expected error body to mention routing, got: {body}"
+    );
+}
+
+#[tokio::test]
+async fn get_gpx_file_returns_503_when_routing_disabled() {
+    let app = spawn_app().await;
+
+    let response = app.get("/api/v1/watering-plans/route/gpx/sample.gpx").await;
+
+    assert_eq!(response.status().as_u16(), 503);
+    let body = response.text().await.unwrap_or_default();
+    assert!(
+        body.contains("routing"),
+        "expected error body to mention routing, got: {body}"
+    );
+}

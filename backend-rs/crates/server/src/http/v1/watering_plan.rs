@@ -390,14 +390,18 @@ pub async fn delete_watering_plan(
     params(("gpx_name" = String, Path, description = "GPX file name")),
     responses(
         (status = 200, description = "GPX file"),
+        (status = 503, description = "Routing feature is disabled"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn get_gpx_file(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
     Path(_name): Path<String>,
 ) -> Result<Json<()>, ServiceError> {
+    if !state.feature_flags.routing_enabled {
+        return Err(ServiceError::FeatureDisabled { feature: "routing" });
+    }
     todo!()
 }
 
@@ -407,11 +411,15 @@ pub async fn get_gpx_file(
     description = "Calculates and previews an optimized watering route without creating a plan.",
     responses(
         (status = 200, description = "Route preview"),
+        (status = 503, description = "Routing feature is disabled"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
-pub async fn preview_route(State(_state): State<Arc<AppState>>) -> Result<Json<()>, ServiceError> {
+pub async fn preview_route(State(state): State<Arc<AppState>>) -> Result<Json<()>, ServiceError> {
+    if !state.feature_flags.routing_enabled {
+        return Err(ServiceError::FeatureDisabled { feature: "routing" });
+    }
     todo!()
 }
 
