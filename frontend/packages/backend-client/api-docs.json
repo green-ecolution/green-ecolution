@@ -436,6 +436,9 @@
           },
           "500": {
             "description": "Internal server error"
+          },
+          "503": {
+            "description": "Plugins feature is disabled"
           }
         }
       },
@@ -472,6 +475,9 @@
           },
           "500": {
             "description": "Internal server error"
+          },
+          "503": {
+            "description": "Plugins feature is disabled"
           }
         }
       }
@@ -511,6 +517,9 @@
           },
           "500": {
             "description": "Internal server error"
+          },
+          "503": {
+            "description": "Plugins feature is disabled"
           }
         }
       }
@@ -543,6 +552,9 @@
           },
           "500": {
             "description": "Internal server error"
+          },
+          "503": {
+            "description": "Plugins feature is disabled"
           }
         }
       }
@@ -592,6 +604,9 @@
           },
           "500": {
             "description": "Internal server error"
+          },
+          "503": {
+            "description": "Plugins feature is disabled"
           }
         }
       }
@@ -624,6 +639,9 @@
           },
           "500": {
             "description": "Internal server error"
+          },
+          "503": {
+            "description": "Plugins feature is disabled"
           }
         }
       }
@@ -2249,6 +2267,9 @@
           },
           "500": {
             "description": "Internal server error"
+          },
+          "503": {
+            "description": "Routing feature is disabled"
           }
         }
       }
@@ -2267,6 +2288,9 @@
           },
           "500": {
             "description": "Internal server error"
+          },
+          "503": {
+            "description": "Routing feature is disabled"
           }
         }
       }
