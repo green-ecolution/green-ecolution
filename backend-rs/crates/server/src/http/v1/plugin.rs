@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use axum::{
     Json,
+    body::Bytes,
     extract::{Path, State},
     http::StatusCode,
 };
@@ -29,19 +30,28 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(unregister_plugin))
 }
 
+fn guard(state: &AppState) -> Result<(), ServiceError> {
+    if !state.feature_flags.plugins_enabled {
+        return Err(ServiceError::FeatureDisabled { feature: "plugins" });
+    }
+    Ok(())
+}
+
 #[utoipa::path(get, path = "/plugins", tag = "Plugins",
     operation_id = "listPlugins",
     summary = "List all plugins",
     description = "Returns all registered plugins.",
     responses(
         (status = 200, description = "List of registered plugins", body = PluginListResponse),
+        (status = 503, description = "Plugins feature is disabled"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_plugins(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<Json<PluginListResponse>, ServiceError> {
+    guard(&state)?;
     todo!()
 }
 
@@ -53,14 +63,16 @@ pub async fn list_plugins(
     responses(
         (status = 201, description = "Plugin registered", body = ClientTokenResponse),
         (status = 400, description = "Invalid input"),
+        (status = 503, description = "Plugins feature is disabled"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn register_plugin(
-    State(_state): State<Arc<AppState>>,
-    Json(_entity): Json<PluginRegisterRequest>,
+    State(state): State<Arc<AppState>>,
+    _body: Bytes,
 ) -> Result<(StatusCode, Json<ClientTokenResponse>), ServiceError> {
+    guard(&state)?;
     todo!()
 }
 
@@ -72,14 +84,16 @@ pub async fn register_plugin(
     responses(
         (status = 200, description = "Plugin found", body = PluginResponse),
         (status = 404, description = "Plugin not found"),
+        (status = 503, description = "Plugins feature is disabled"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn get_plugin(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
     Path(_slug): Path<String>,
 ) -> Result<Json<PluginResponse>, ServiceError> {
+    guard(&state)?;
     todo!()
 }
 
@@ -91,14 +105,16 @@ pub async fn get_plugin(
     responses(
         (status = 200, description = "Heartbeat received"),
         (status = 404, description = "Plugin not found"),
+        (status = 503, description = "Plugins feature is disabled"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn plugin_heartbeat(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
     Path(_slug): Path<String>,
 ) -> Result<Json<String>, ServiceError> {
+    guard(&state)?;
     todo!()
 }
 
@@ -111,15 +127,17 @@ pub async fn plugin_heartbeat(
     responses(
         (status = 200, description = "Token refreshed", body = ClientTokenResponse),
         (status = 404, description = "Plugin not found"),
+        (status = 503, description = "Plugins feature is disabled"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn plugin_refresh_token(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
     Path(_slug): Path<String>,
-    Json(_entity): Json<PluginAuthRequest>,
+    _body: Bytes,
 ) -> Result<Json<ClientTokenResponse>, ServiceError> {
+    guard(&state)?;
     todo!()
 }
 
@@ -131,13 +149,15 @@ pub async fn plugin_refresh_token(
     responses(
         (status = 204, description = "Plugin unregistered"),
         (status = 404, description = "Plugin not found"),
+        (status = 503, description = "Plugins feature is disabled"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn unregister_plugin(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
     Path(_slug): Path<String>,
 ) -> Result<StatusCode, ServiceError> {
+    guard(&state)?;
     todo!()
 }

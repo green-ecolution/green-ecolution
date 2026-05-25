@@ -173,8 +173,14 @@ async fn services_info_lists_routing_and_plugins_disabled_by_default() {
     };
 
     let routing = by_name("routing");
-    assert_eq!(routing.get("enabled").and_then(|v| v.as_bool()), Some(false));
+    assert_eq!(
+        routing.get("enabled").and_then(|v| v.as_bool()),
+        Some(false)
+    );
 
     let plugins = by_name("plugins");
-    assert_eq!(plugins.get("enabled").and_then(|v| v.as_bool()), Some(false));
+    assert_eq!(
+        plugins.get("enabled").and_then(|v| v.as_bool()),
+        Some(false)
+    );
 }
