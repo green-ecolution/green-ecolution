@@ -1,5 +1,5 @@
-import { routePreviewQuery } from '@/api/queries'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { servicesInfoQuery } from '@/api/queries'
+import { useQuery } from '@tanstack/react-query'
 
 export interface ShowRoutePreview {
   transporterId: string
@@ -7,16 +7,16 @@ export interface ShowRoutePreview {
   selectedClustersIds: string[]
 }
 
-const ShowRoutePreview = ({ transporterId, trailerId, selectedClustersIds }: ShowRoutePreview) => {
-  if (trailerId === '' || trailerId === '-1') {
-    trailerId = undefined
+const ShowRoutePreview = (_props: ShowRoutePreview) => {
+  const { data: services } = useQuery(servicesInfoQuery())
+  const routing = services?.items.find((item) => item.name === 'routing')
+  if (!routing?.enabled) {
+    return null
   }
-  // TODO: previewRoute() currently returns void (stub).
-  // Once the Rust backend implements the route preview endpoint with proper GeoJSON response,
-  // restore the route visualization (markers + GeoJSON layer).
-  useSuspenseQuery(routePreviewQuery(transporterId, selectedClustersIds, trailerId))
 
-  return <>{/* Route preview is not yet implemented in the Rust backend */}</>
+  // TODO: when routing.enabled flips to true, restore the call to
+  // wateringPlanApi.previewRoute() and render the GeoJSON layer.
+  return null
 }
 
 export default ShowRoutePreview
