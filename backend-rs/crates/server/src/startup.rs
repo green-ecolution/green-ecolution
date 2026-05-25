@@ -9,7 +9,12 @@ use crate::{
     http::{AppState, FeatureFlags, auth::AuthLayer, router},
     infra::{
         self,
+        health::{
+            HealthProbe, feature_probe::FeatureProbe, keycloak_probe::KeycloakProbe,
+            mqtt_probe::MqttProbe, pg_probe::PgProbe, spawn as spawn_health,
+        },
         keycloak::{AuthStack, JwksProvider},
+        mqtt::MqttHealthState,
         pg_cluster::PgTreeClusterRepository,
         pg_evaluation::PgEvaluationRepository,
         pg_region::PgRegionRepository,
@@ -20,11 +25,12 @@ use crate::{
         pg_watering_plan::PgWateringPlanRepository,
         statistics_repo::PgStatisticsRepo,
         system_info::DefaultSystemInfoProvider,
+        update_checker::UpdateChecker,
     },
     service::{
         cluster_service::ClusterService,
         evaluation_service::EvaluationService,
-        event_bus::{EventBus, InMemoryEventBus},
+        event_bus::{EventBus, EventHandler, InMemoryEventBus},
         handlers::cluster_recalc::ClusterRecalculationHandler,
         handlers::cluster_status::ClusterStatusAggregatorHandler,
         handlers::tree_watering::TreeWateringFromSensorHandler,
@@ -36,7 +42,7 @@ use crate::{
         watering_plan_service::WateringPlanService,
     },
 };
-use domain::info::{HealthSnapshotReader, StatisticsReader};
+use domain::info::{HealthSnapshotReader, ServiceName, StatisticsReader, SystemInfoProvider};
 
 pub struct Application {
     port: u16,
@@ -62,7 +68,6 @@ impl Application {
         address: &str,
         settings: Settings,
     ) -> Result<Self, std::io::Error> {
-        // ---- 1. Auth scaffolding ----
         let AuthStack {
             auth_service,
             user_service,
@@ -71,181 +76,44 @@ impl Application {
         } = infra::keycloak::build(&settings.auth).await?;
         let token_validator = auth_layer.validator.clone();
 
-        // ---- 2. Shared HTTP client ----
-        let http_client = reqwest::Client::builder()
-            .timeout(Duration::from_secs(settings.info.health_probe_timeout_secs))
-            .build()
-            .expect("reqwest client must build");
-
-        // ---- 3. UpdateChecker ----
-        let update_checker = Arc::new(crate::infra::update_checker::UpdateChecker::new(
+        let probe_http_client =
+            build_http_client(Duration::from_secs(settings.info.health_probe_timeout_secs));
+        let update_checker = Arc::new(UpdateChecker::new(
             env!("CARGO_PKG_VERSION").to_string(),
             settings.info.update_check_repo.clone(),
         ));
-
-        // ---- 4. SystemInfoProvider ----
-        let info_provider: Arc<dyn domain::info::SystemInfoProvider> = Arc::new(
-            DefaultSystemInfoProvider::new(&settings, update_checker.clone()),
-        );
-
-        // ---- 5. Statistics reader ----
-        let statistics_reader: Arc<dyn StatisticsReader> =
-            Arc::new(PgStatisticsRepo::new(pool.clone()));
-
-        // ---- 6. Repositories ----
-        let region_repo = Arc::new(PgRegionRepository::new(pool.clone()));
-        let region_reader: Arc<dyn domain::region::RegionReader> = region_repo.clone();
-        let region_writer: Arc<dyn domain::region::RegionWriter> = region_repo;
-        let tree_repo = Arc::new(PgTreeRepository::new(pool.clone()));
-        let tree_reader: Arc<dyn domain::tree::TreeReader> = tree_repo.clone();
-        let tree_writer: Arc<dyn domain::tree::TreeWriter> = tree_repo;
-        let sensor_repo = Arc::new(PgSensorRepository::new(pool.clone()));
-        let sensor_reader: Arc<dyn domain::sensor::SensorReader> = sensor_repo.clone();
-        let sensor_writer: Arc<dyn domain::sensor::SensorWriter> = sensor_repo.clone();
-        let sensor_reading_reader: Arc<dyn domain::sensor::SensorReadingReader> =
-            sensor_repo.clone();
-        let sensor_reading_writer: Arc<dyn domain::sensor::SensorReadingWriter> = sensor_repo;
-        let sensor_model_repo = Arc::new(PgSensorModelRepository::new(pool.clone()));
-        let sensor_model_reader: Arc<dyn domain::sensor_model::SensorModelReader> =
-            sensor_model_repo;
-        let vehicle_repo = Arc::new(PgVehicleRepository::new(pool.clone()));
-        let vehicle_reader: Arc<dyn domain::vehicle::VehicleReader> = vehicle_repo.clone();
-        let vehicle_writer: Arc<dyn domain::vehicle::VehicleWriter> = vehicle_repo;
-        let cluster_repo = Arc::new(PgTreeClusterRepository::new(pool.clone()));
-        let cluster_reader: Arc<dyn domain::cluster::TreeClusterReader> = cluster_repo.clone();
-        let cluster_writer: Arc<dyn domain::cluster::TreeClusterWriter> = cluster_repo;
-        let watering_plan_repo = Arc::new(PgWateringPlanRepository::new(pool.clone()));
-        let watering_plan_reader: Arc<dyn domain::watering_plan::WateringPlanReader> =
-            watering_plan_repo.clone();
-        let watering_plan_writer: Arc<dyn domain::watering_plan::WateringPlanWriter> =
-            watering_plan_repo;
-        let evaluation_repo: Arc<dyn domain::evaluation::EvaluationRepository> =
-            Arc::new(PgEvaluationRepository::new(pool.clone()));
-
-        // ---- 7. Event handlers + bus ----
-        let cluster_recalc_handler = Arc::new(ClusterRecalculationHandler::new(
-            cluster_reader.clone(),
-            cluster_writer.clone(),
-            tree_reader.clone(),
-            region_reader.clone(),
-        ));
-        let cluster_status_handler = Arc::new(ClusterStatusAggregatorHandler::new(
-            cluster_reader.clone(),
-            cluster_writer.clone(),
-            tree_reader.clone(),
-        ));
-        let tree_watering_handler = Arc::new(TreeWateringFromSensorHandler::new(
-            tree_reader.clone(),
-            tree_writer.clone(),
-        ));
-        let handlers: Vec<Arc<dyn crate::service::event_bus::EventHandler>> = vec![
-            cluster_recalc_handler as Arc<dyn crate::service::event_bus::EventHandler>,
-            cluster_status_handler as Arc<dyn crate::service::event_bus::EventHandler>,
-            tree_watering_handler as Arc<dyn crate::service::event_bus::EventHandler>,
-        ];
-        let event_bus: Arc<dyn EventBus> = Arc::new(InMemoryEventBus::new(handlers));
-
-        // ---- 8. Domain services ----
-        let region_service = Arc::new(RegionService::new(region_reader, region_writer));
-        let tree_service = Arc::new(TreeService::new(
-            tree_reader.clone(),
-            tree_writer.clone(),
-            event_bus.clone(),
-        ));
-        let sensor_service = Arc::new(SensorService::new(
-            sensor_reader,
-            sensor_writer,
-            sensor_reading_reader,
-            sensor_reading_writer,
-            sensor_model_reader,
-            tree_reader.clone(),
-            tree_writer.clone(),
-            event_bus.clone(),
-        ));
-        let vehicle_service = Arc::new(VehicleService::new(vehicle_reader, vehicle_writer));
-        let cluster_service = Arc::new(ClusterService::new(
-            cluster_reader,
-            cluster_writer,
-            tree_reader.clone(),
-            tree_writer,
-            event_bus.clone(),
-        ));
-        let watering_plan_service = Arc::new(WateringPlanService::new(
-            watering_plan_reader.clone(),
-            watering_plan_writer.clone(),
-            event_bus.clone(),
-        ));
-        let watering_execution_service = Arc::new(WateringExecutionService::new(
-            watering_plan_reader,
-            watering_plan_writer,
-            event_bus.clone(),
-        ));
-        let evaluation_service = Arc::new(EvaluationService::new(evaluation_repo));
-
-        // ---- 9. MQTT subscriber (before probes — captures MqttHealthState) ----
-        let mqtt_state: Arc<crate::infra::mqtt::MqttHealthState> =
-            match infra::mqtt::spawn(settings.mqtt.clone(), sensor_service.clone()) {
-                Ok(state) => state,
-                Err(e) => {
-                    tracing::error!(error = %e, "mqtt subscriber not started");
-                    Arc::new(crate::infra::mqtt::MqttHealthState::default())
-                }
-            };
-
-        // ---- 10. Health probes ----
-        use crate::infra::health::feature_probe::FeatureProbe;
-        use crate::infra::health::keycloak_probe::KeycloakProbe;
-        use crate::infra::health::mqtt_probe::MqttProbe;
-        use crate::infra::health::pg_probe::PgProbe;
-        use crate::infra::health::{HealthProbe, spawn as spawn_health};
-        use domain::info::ServiceName;
-        let probes: Vec<Arc<dyn HealthProbe>> = vec![
-            Arc::new(PgProbe::new(pool.clone())),
-            Arc::new(KeycloakProbe::new(
-                settings.auth.enabled,
-                Some(&settings.auth.issuer_url),
-                http_client.clone(),
-                Duration::from_secs(settings.info.health_probe_timeout_secs),
-            )),
-            Arc::new(MqttProbe::new(settings.mqtt.enabled, mqtt_state.clone())),
-            Arc::new(FeatureProbe::new(
-                ServiceName::Routing,
-                settings.routing.enabled,
-            )),
-            Arc::new(FeatureProbe::new(
-                ServiceName::Plugins,
-                settings.plugins.enabled,
-            )),
-        ];
-        let (health_coordinator, _health_handle) = spawn_health(
-            probes,
-            Duration::from_secs(settings.info.health_check_interval_secs),
-        )
-        .await;
-        let health_reader: Arc<dyn HealthSnapshotReader> = health_coordinator;
-
-        // ---- 11. UpdateChecker background refresh loop ----
-        let _update_handle = crate::infra::update_checker::spawn(
+        let info_provider: Arc<dyn SystemInfoProvider> = Arc::new(DefaultSystemInfoProvider::new(
+            &settings,
             update_checker.clone(),
-            http_client,
+        ));
+
+        let repos = Repositories::build(&pool);
+        let event_bus = build_event_bus(&repos);
+        let services = Services::build(&repos, event_bus);
+
+        let mqtt_state = spawn_mqtt_subscriber(&settings, services.sensor.clone());
+        let health_reader =
+            spawn_health_probes(&pool, &settings, probe_http_client.clone(), mqtt_state).await;
+        let _update_handle = infra::update_checker::spawn(
+            update_checker,
+            probe_http_client,
             Duration::from_secs(settings.info.update_check_interval_secs),
         );
 
-        // ---- 12. AppState ----
         let state = Arc::new(AppState {
-            region_service,
-            tree_service,
-            sensor_service,
-            vehicle_service,
-            cluster_service,
-            watering_plan_service,
-            watering_execution_service,
-            evaluation_service,
+            region_service: services.region,
+            tree_service: services.tree,
+            sensor_service: services.sensor,
+            vehicle_service: services.vehicle,
+            cluster_service: services.cluster,
+            watering_plan_service: services.watering_plan,
+            watering_execution_service: services.watering_execution,
+            evaluation_service: services.evaluation,
             auth_service,
             user_service,
             info_provider,
             health_reader,
-            statistics_reader,
+            statistics_reader: repos.statistics,
             token_validator,
             feature_flags: FeatureFlags {
                 routing_enabled: settings.routing.enabled,
@@ -253,7 +121,6 @@ impl Application {
             },
         });
 
-        // ---- 13. Listener + return ----
         let listener = TcpListener::bind(address).await?;
         let port = listener.local_addr()?.port();
         Ok(Self {
@@ -295,4 +162,187 @@ pub async fn get_connection_pool(config: &DatabaseSettings) -> Result<PgPool, sq
         .max_connections(config.max_connections)
         .connect_with(config.connection_options())
         .await
+}
+
+struct Repositories {
+    region_reader: Arc<dyn domain::region::RegionReader>,
+    region_writer: Arc<dyn domain::region::RegionWriter>,
+    tree_reader: Arc<dyn domain::tree::TreeReader>,
+    tree_writer: Arc<dyn domain::tree::TreeWriter>,
+    sensor_reader: Arc<dyn domain::sensor::SensorReader>,
+    sensor_writer: Arc<dyn domain::sensor::SensorWriter>,
+    sensor_reading_reader: Arc<dyn domain::sensor::SensorReadingReader>,
+    sensor_reading_writer: Arc<dyn domain::sensor::SensorReadingWriter>,
+    sensor_model_reader: Arc<dyn domain::sensor_model::SensorModelReader>,
+    vehicle_reader: Arc<dyn domain::vehicle::VehicleReader>,
+    vehicle_writer: Arc<dyn domain::vehicle::VehicleWriter>,
+    cluster_reader: Arc<dyn domain::cluster::TreeClusterReader>,
+    cluster_writer: Arc<dyn domain::cluster::TreeClusterWriter>,
+    watering_plan_reader: Arc<dyn domain::watering_plan::WateringPlanReader>,
+    watering_plan_writer: Arc<dyn domain::watering_plan::WateringPlanWriter>,
+    evaluation: Arc<dyn domain::evaluation::EvaluationRepository>,
+    statistics: Arc<dyn StatisticsReader>,
+}
+
+impl Repositories {
+    fn build(pool: &PgPool) -> Self {
+        let region_repo = Arc::new(PgRegionRepository::new(pool.clone()));
+        let tree_repo = Arc::new(PgTreeRepository::new(pool.clone()));
+        let sensor_repo = Arc::new(PgSensorRepository::new(pool.clone()));
+        let vehicle_repo = Arc::new(PgVehicleRepository::new(pool.clone()));
+        let cluster_repo = Arc::new(PgTreeClusterRepository::new(pool.clone()));
+        let watering_plan_repo = Arc::new(PgWateringPlanRepository::new(pool.clone()));
+
+        Self {
+            region_reader: region_repo.clone(),
+            region_writer: region_repo,
+            tree_reader: tree_repo.clone(),
+            tree_writer: tree_repo,
+            sensor_reader: sensor_repo.clone(),
+            sensor_writer: sensor_repo.clone(),
+            sensor_reading_reader: sensor_repo.clone(),
+            sensor_reading_writer: sensor_repo,
+            sensor_model_reader: Arc::new(PgSensorModelRepository::new(pool.clone())),
+            vehicle_reader: vehicle_repo.clone(),
+            vehicle_writer: vehicle_repo,
+            cluster_reader: cluster_repo.clone(),
+            cluster_writer: cluster_repo,
+            watering_plan_reader: watering_plan_repo.clone(),
+            watering_plan_writer: watering_plan_repo,
+            evaluation: Arc::new(PgEvaluationRepository::new(pool.clone())),
+            statistics: Arc::new(PgStatisticsRepo::new(pool.clone())),
+        }
+    }
+}
+
+struct Services {
+    region: Arc<RegionService>,
+    tree: Arc<TreeService>,
+    sensor: Arc<SensorService>,
+    vehicle: Arc<VehicleService>,
+    cluster: Arc<ClusterService>,
+    watering_plan: Arc<WateringPlanService>,
+    watering_execution: Arc<WateringExecutionService>,
+    evaluation: Arc<EvaluationService>,
+}
+
+impl Services {
+    fn build(repos: &Repositories, event_bus: Arc<dyn EventBus>) -> Self {
+        Self {
+            region: Arc::new(RegionService::new(
+                repos.region_reader.clone(),
+                repos.region_writer.clone(),
+            )),
+            tree: Arc::new(TreeService::new(
+                repos.tree_reader.clone(),
+                repos.tree_writer.clone(),
+                event_bus.clone(),
+            )),
+            sensor: Arc::new(SensorService::new(
+                repos.sensor_reader.clone(),
+                repos.sensor_writer.clone(),
+                repos.sensor_reading_reader.clone(),
+                repos.sensor_reading_writer.clone(),
+                repos.sensor_model_reader.clone(),
+                repos.tree_reader.clone(),
+                repos.tree_writer.clone(),
+                event_bus.clone(),
+            )),
+            vehicle: Arc::new(VehicleService::new(
+                repos.vehicle_reader.clone(),
+                repos.vehicle_writer.clone(),
+            )),
+            cluster: Arc::new(ClusterService::new(
+                repos.cluster_reader.clone(),
+                repos.cluster_writer.clone(),
+                repos.tree_reader.clone(),
+                repos.tree_writer.clone(),
+                event_bus.clone(),
+            )),
+            watering_plan: Arc::new(WateringPlanService::new(
+                repos.watering_plan_reader.clone(),
+                repos.watering_plan_writer.clone(),
+                event_bus.clone(),
+            )),
+            watering_execution: Arc::new(WateringExecutionService::new(
+                repos.watering_plan_reader.clone(),
+                repos.watering_plan_writer.clone(),
+                event_bus,
+            )),
+            evaluation: Arc::new(EvaluationService::new(repos.evaluation.clone())),
+        }
+    }
+}
+
+fn build_http_client(timeout: Duration) -> reqwest::Client {
+    reqwest::Client::builder()
+        .timeout(timeout)
+        .build()
+        .expect("reqwest client must build")
+}
+
+fn build_event_bus(repos: &Repositories) -> Arc<dyn EventBus> {
+    let handlers: Vec<Arc<dyn EventHandler>> = vec![
+        Arc::new(ClusterRecalculationHandler::new(
+            repos.cluster_reader.clone(),
+            repos.cluster_writer.clone(),
+            repos.tree_reader.clone(),
+            repos.region_reader.clone(),
+        )),
+        Arc::new(ClusterStatusAggregatorHandler::new(
+            repos.cluster_reader.clone(),
+            repos.cluster_writer.clone(),
+            repos.tree_reader.clone(),
+        )),
+        Arc::new(TreeWateringFromSensorHandler::new(
+            repos.tree_reader.clone(),
+            repos.tree_writer.clone(),
+        )),
+    ];
+    Arc::new(InMemoryEventBus::new(handlers))
+}
+
+fn spawn_mqtt_subscriber(
+    settings: &Settings,
+    sensor_service: Arc<SensorService>,
+) -> Arc<MqttHealthState> {
+    match infra::mqtt::spawn(settings.mqtt.clone(), sensor_service) {
+        Ok(state) => state,
+        Err(e) => {
+            tracing::error!(error = %e, "mqtt subscriber not started");
+            Arc::new(MqttHealthState::default())
+        }
+    }
+}
+
+async fn spawn_health_probes(
+    pool: &PgPool,
+    settings: &Settings,
+    probe_http_client: reqwest::Client,
+    mqtt_state: Arc<MqttHealthState>,
+) -> Arc<dyn HealthSnapshotReader> {
+    let probes: Vec<Arc<dyn HealthProbe>> = vec![
+        Arc::new(PgProbe::new(pool.clone())),
+        Arc::new(KeycloakProbe::new(
+            settings.auth.enabled,
+            Some(&settings.auth.issuer_url),
+            probe_http_client,
+            Duration::from_secs(settings.info.health_probe_timeout_secs),
+        )),
+        Arc::new(MqttProbe::new(settings.mqtt.enabled, mqtt_state)),
+        Arc::new(FeatureProbe::new(
+            ServiceName::Routing,
+            settings.routing.enabled,
+        )),
+        Arc::new(FeatureProbe::new(
+            ServiceName::Plugins,
+            settings.plugins.enabled,
+        )),
+    ];
+    let (coordinator, _handle) = spawn_health(
+        probes,
+        Duration::from_secs(settings.info.health_check_interval_secs),
+    )
+    .await;
+    coordinator
 }
