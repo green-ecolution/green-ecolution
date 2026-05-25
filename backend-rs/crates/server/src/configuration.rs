@@ -21,6 +21,10 @@ pub struct Settings {
     pub map: MapSettings,
     #[serde(default)]
     pub info: InfoSettings,
+    #[serde(default)]
+    pub routing: RoutingSettings,
+    #[serde(default)]
+    pub plugins: PluginsSettings,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -122,6 +126,18 @@ fn default_client_id() -> String {
 
 fn default_keep_alive_secs() -> u16 {
     30
+}
+
+#[derive(serde::Deserialize, Clone, Default)]
+pub struct RoutingSettings {
+    #[serde(default)]
+    pub enabled: bool,
+}
+
+#[derive(serde::Deserialize, Clone, Default)]
+pub struct PluginsSettings {
+    #[serde(default)]
+    pub enabled: bool,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -285,6 +301,8 @@ impl Settings {
             mqtt: MqttSettings::default(),
             map: MapSettings::default(),
             info: InfoSettings::default(),
+            routing: RoutingSettings::default(),
+            plugins: PluginsSettings::default(),
         }
     }
 }

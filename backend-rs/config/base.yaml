@@ -31,3 +31,7 @@ map:
 info:
   update_check_repo: "green-ecolution/green-ecolution"
   repository_url: "https://github.com/green-ecolution/"
+routing:
+  enabled: false
+plugins:
+  enabled: false
