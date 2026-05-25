@@ -97,11 +97,17 @@ impl DefaultSystemInfoProvider {
 }
 
 fn build_display_version(raw: &str, commit: &str, kind: BuildKind) -> String {
+    let commit = short_commit_sha(commit);
     match kind {
         BuildKind::Dev => format!("{raw}+dev.{commit}"),
         BuildKind::Stage => format!("{raw}+stage.{commit}"),
         BuildKind::Release => raw.to_string(),
     }
+}
+
+fn short_commit_sha(commit: &str) -> &str {
+    const SHORT_LEN: usize = 7;
+    commit.get(..SHORT_LEN).unwrap_or(commit)
 }
 
 #[async_trait::async_trait]
@@ -179,6 +185,37 @@ mod tests {
             build_display_version("0.1.0", "abc1234", BuildKind::Release),
             "0.1.0"
         );
+    }
+
+    #[test]
+    fn stage_build_truncates_full_length_sha() {
+        assert_eq!(
+            build_display_version(
+                "0.2.0",
+                "58b06957bb2f464c555da47a98c6bf5563312e4f",
+                BuildKind::Stage,
+            ),
+            "0.2.0+stage.58b0695"
+        );
+    }
+
+    #[test]
+    fn dev_build_truncates_full_length_sha() {
+        assert_eq!(
+            build_display_version(
+                "0.2.0",
+                "58b06957bb2f464c555da47a98c6bf5563312e4f",
+                BuildKind::Dev,
+            ),
+            "0.2.0+dev.58b0695"
+        );
+    }
+
+    #[test]
+    fn short_commit_passthrough_when_already_short() {
+        assert_eq!(short_commit_sha("abc1234"), "abc1234");
+        assert_eq!(short_commit_sha("unknown"), "unknown");
+        assert_eq!(short_commit_sha("abc"), "abc");
     }
 
     #[test]

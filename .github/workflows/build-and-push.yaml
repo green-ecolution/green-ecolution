@@ -167,6 +167,12 @@ jobs:
         id: build-time
         run: echo "timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
 
+      - name: Compute short SHA
+        id: short-sha
+        run: |
+          FULL_SHA="${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}"
+          echo "short=$(echo $FULL_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
+
       - name: Build and push backend
         uses: docker/build-push-action@v7
         with:
@@ -178,7 +184,7 @@ jobs:
           build-args: |
             APP_VERSION=${{ needs.determine-environment.outputs.image-tag }}
             APP_REVISION=${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-            GE_GIT_COMMIT=${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+            GE_GIT_COMMIT=${{ steps.short-sha.outputs.short }}
             GE_GIT_BRANCH=${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
             GE_BUILD_TIME=${{ steps.build-time.outputs.timestamp }}
           cache-from: type=gha,scope=build-backend
