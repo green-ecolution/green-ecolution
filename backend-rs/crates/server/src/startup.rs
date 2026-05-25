@@ -6,7 +6,7 @@ use tokio::net::TcpListener;
 
 use crate::{
     configuration::{CorsSettings, DatabaseSettings, Settings},
-    http::{AppState, auth::AuthLayer, router},
+    http::{AppState, FeatureFlags, auth::AuthLayer, router},
     infra::{
         self,
         keycloak::{AuthStack, JwksProvider},
@@ -193,10 +193,12 @@ impl Application {
             };
 
         // ---- 10. Health probes ----
+        use crate::infra::health::feature_probe::FeatureProbe;
         use crate::infra::health::keycloak_probe::KeycloakProbe;
         use crate::infra::health::mqtt_probe::MqttProbe;
         use crate::infra::health::pg_probe::PgProbe;
         use crate::infra::health::{HealthProbe, spawn as spawn_health};
+        use domain::info::ServiceName;
         let probes: Vec<Arc<dyn HealthProbe>> = vec![
             Arc::new(PgProbe::new(pool.clone())),
             Arc::new(KeycloakProbe::new(
@@ -206,6 +208,14 @@ impl Application {
                 Duration::from_secs(settings.info.health_probe_timeout_secs),
             )),
             Arc::new(MqttProbe::new(settings.mqtt.enabled, mqtt_state.clone())),
+            Arc::new(FeatureProbe::new(
+                ServiceName::Routing,
+                settings.routing.enabled,
+            )),
+            Arc::new(FeatureProbe::new(
+                ServiceName::Plugins,
+                settings.plugins.enabled,
+            )),
         ];
         let (health_coordinator, _health_handle) = spawn_health(
             probes,
@@ -237,6 +247,10 @@ impl Application {
             health_reader,
             statistics_reader,
             token_validator,
+            feature_flags: FeatureFlags {
+                routing_enabled: settings.routing.enabled,
+                plugins_enabled: settings.plugins.enabled,
+            },
         });
 
         // ---- 13. Listener + return ----

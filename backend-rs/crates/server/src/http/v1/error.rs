@@ -46,6 +46,9 @@ impl IntoResponse for ServiceError {
             e @ (ServiceError::TreeAlreadyHasSensor | ServiceError::AlreadyActivated) => {
                 (StatusCode::CONFLICT, e.to_string()).into_response()
             }
+            e @ ServiceError::FeatureDisabled { .. } => {
+                (StatusCode::SERVICE_UNAVAILABLE, e.to_string()).into_response()
+            }
         }
     }
 }

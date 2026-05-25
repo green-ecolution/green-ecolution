@@ -33,6 +33,12 @@ pub mod health;
 mod tracing;
 pub mod v1;
 
+#[derive(Debug, Clone, Copy)]
+pub struct FeatureFlags {
+    pub routing_enabled: bool,
+    pub plugins_enabled: bool,
+}
+
 pub struct AppState {
     pub region_service: Arc<RegionService>,
     pub tree_service: Arc<TreeService>,
@@ -48,6 +54,7 @@ pub struct AppState {
     pub health_reader: Arc<dyn HealthSnapshotReader>,
     pub statistics_reader: Arc<dyn StatisticsReader>,
     pub token_validator: Arc<TokenValidator>,
+    pub feature_flags: FeatureFlags,
 }
 
 #[derive(OpenApi)]

@@ -202,18 +202,6 @@ export const userRoleQuery = (role: string) =>
       }),
   })
 
-// TODO: previewRoute() currently takes no parameters in the generated client.
-// The Rust backend endpoint needs a request body (RouteRequest) to be functional.
-export const routePreviewQuery = (
-  transporterId: string,
-  clusterIds: string[],
-  _trailerId?: string,
-) =>
-  queryOptions({
-    queryKey: ['route', 'preview', `transporter:${transporterId}`, ...clusterIds],
-    queryFn: () => console.log('not implemented'), // () => wateringPlanApi.previewRoute(),
-  })
-
 export const plantingYearsQuery = () =>
   queryOptions<number[]>({
     queryKey: ['planting-years'],

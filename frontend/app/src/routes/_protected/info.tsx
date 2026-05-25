@@ -38,6 +38,7 @@ import {
   Monitor,
   Network,
   Package,
+  Puzzle,
   Radio,
   Server,
   Settings,
@@ -82,6 +83,7 @@ const serviceNameMap: Record<string, string> = {
   s3: 'S3 Speicher',
   routing: 'Routing (Valhalla)',
   vroom: 'Routenoptimierung (Vroom)',
+  plugins: 'Plugin-System',
 }
 
 function getServiceDisplayName(name: string): string {
@@ -514,6 +516,7 @@ const serviceIconMap: Record<string, React.ReactNode> = {
   s3: <HardDrive className="size-4" />,
   routing: <Network className="size-4" />,
   vroom: <Zap className="size-4" />,
+  plugins: <Puzzle className="size-4" />,
 }
 
 function SystemTabContent({

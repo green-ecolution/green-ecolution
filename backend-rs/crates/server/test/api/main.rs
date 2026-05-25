@@ -6,6 +6,7 @@ pub mod health;
 pub mod health_probes;
 pub mod helpers;
 pub mod info;
+pub mod plugins;
 pub mod regions;
 pub mod sensor_activate;
 pub mod sensor_create;

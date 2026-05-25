@@ -151,3 +151,36 @@ async fn get_statistics_returns_counts() {
         );
     }
 }
+
+#[tokio::test]
+async fn services_info_lists_routing_and_plugins_disabled_by_default() {
+    let app = spawn_app().await;
+
+    let response = app.get("/api/v1/info/services").await;
+    assert_eq!(response.status().as_u16(), 200);
+
+    let body: serde_json::Value = response.json().await.expect("json body");
+    let items = body
+        .get("items")
+        .and_then(|v| v.as_array())
+        .expect("items array");
+
+    let by_name = |name: &str| -> &serde_json::Value {
+        items
+            .iter()
+            .find(|i| i.get("name").and_then(|n| n.as_str()) == Some(name))
+            .unwrap_or_else(|| panic!("missing service entry: {name}"))
+    };
+
+    let routing = by_name("routing");
+    assert_eq!(
+        routing.get("enabled").and_then(|v| v.as_bool()),
+        Some(false)
+    );
+
+    let plugins = by_name("plugins");
+    assert_eq!(
+        plugins.get("enabled").and_then(|v| v.as_bool()),
+        Some(false)
+    );
+}
