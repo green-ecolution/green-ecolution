@@ -101,7 +101,7 @@ pub struct MqttSettings {
     /// Broker URL, e.g. `mqtt://localhost:1883` or `mqtts://broker:8883`.
     #[serde(default)]
     pub broker_url: String,
-    /// Stable client identifier — defaults to `green-ecolution-rs`.
+    /// Stable client identifier — defaults to `green-ecolution`.
     #[serde(default = "default_client_id")]
     pub client_id: String,
     /// Topic filter to subscribe to (single string; wildcards `+`/`#` allowed).
@@ -117,7 +117,7 @@ pub struct MqttSettings {
 }
 
 fn default_client_id() -> String {
-    "green-ecolution-rs".to_string()
+    "green-ecolution".to_string()
 }
 
 fn default_keep_alive_secs() -> u16 {

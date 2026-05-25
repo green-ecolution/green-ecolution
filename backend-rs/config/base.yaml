@@ -23,7 +23,7 @@ mqtt:
   enabled: false
   broker_url: ""
   topic: ""
-  client_id: "green-ecolution-rs"
+  client_id: "green-ecolution"
   keep_alive_secs: 30
 map:
   center: [54.792277136221905, 9.43580607453268]
