@@ -48,11 +48,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            # Skip if latest commit was pushed by our app bot (kustomize update)
-            AUTHOR=$(gh api "repos/${{ github.repository }}/commits/${{ github.event.pull_request.head.sha }}" --jq '.author.login // empty')
-            if [[ "$AUTHOR" == *"[bot]" ]]; then
+            CHANGED=$(gh api "repos/${{ github.repository }}/commits/${{ github.event.pull_request.head.sha }}" --jq '.files[].filename')
+            NON_KUSTOMIZE=$(echo "$CHANGED" | grep -v '^deploy/kustomize/' || true)
+            if [[ -n "$CHANGED" && -z "$NON_KUSTOMIZE" ]]; then
               echo "should-build=false" >> $GITHUB_OUTPUT
-              echo "ℹ️ Skipping: latest commit authored by bot ($AUTHOR)"
+              echo "ℹ️ Skipping: HEAD only changes deploy/kustomize/** (self-update loop)"
               exit 0
             fi
 
