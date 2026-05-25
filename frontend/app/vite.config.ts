@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
@@ -8,9 +8,32 @@ import { VitePWA } from 'vite-plugin-pwa'
 import wasm from 'vite-plugin-wasm'
 import topLevelAwait from 'vite-plugin-top-level-await'
 
+const useTraefik = !!process.env.USE_TRAEFIK
+
+// Replace Vite's "Local: localhost:5173" banner with the Traefik URL so the
+// dev URL the user should actually open stays visible after Vite starts.
+function publicDevUrlBanner(): Plugin {
+  return {
+    name: 'gec:public-dev-url-banner',
+    configureServer(server) {
+      const url = process.env.PUBLIC_DEV_URL ?? 'http://localhost:3000'
+      const cyan = (s: string) => `\x1b[36m${s}\x1b[0m`
+      const bold = (s: string) => `\x1b[1m${s}\x1b[0m`
+      const dim = (s: string) => `\x1b[2m${s}\x1b[0m`
+      server.printUrls = () => {
+        process.stdout.write(
+          `\n  ${cyan('➜')}  ${bold('Dev environment')}: ${cyan(url)}\n` +
+            `     ${dim('proxied via Traefik (backend :3030, vite :5173)')}\n\n`,
+        )
+      }
+    },
+  }
+}
+
 //
 // https://vitejs.dev/config/
 export default defineConfig({
+  clearScreen: !useTraefik,
   plugins: [
     tanstackRouter({
       target: 'react',
@@ -23,7 +46,8 @@ export default defineConfig({
         plugins: ['babel-plugin-react-compiler'],
       },
     }),
-    ...(!process.env.USE_TRAEFIK ? [basicSsl()] : []),
+    ...(!useTraefik ? [basicSsl()] : []),
+    ...(useTraefik ? [publicDevUrlBanner()] : []),
     wasm(),
     topLevelAwait(),
     VitePWA({
@@ -43,7 +67,7 @@ export default defineConfig({
     host: true,
     allowedHosts: true,
     proxy: {
-      ...(process.env.USE_TRAEFIK
+      ...(useTraefik
         ? {
             '/api': {
               target: `http://localhost:3030`,
@@ -53,7 +77,7 @@ export default defineConfig({
           }
         : {
             '/api-local': {
-              target: `http://localhost:3020`,
+              target: `http://localhost:3030`,
               changeOrigin: true,
               rewrite: (path) => path.replace(/^\/api-local/, '/api'),
               ws: true,

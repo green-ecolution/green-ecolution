@@ -1,7 +1,7 @@
 http:
   routers:
     backend-dev:
-      rule: "Host(`${APP_HOST}`) && PathPrefix(`/api`)"
+      rule: "Host(`${APP_HOST}`) && (PathPrefix(`/api`) || PathPrefix(`/swagger-ui`) || PathPrefix(`/api-docs`))"
       entryPoints: [${TRAEFIK_ENTRYPOINT}]
       service: backend-dev
     frontend-dev:

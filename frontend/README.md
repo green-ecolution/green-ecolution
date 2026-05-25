@@ -137,7 +137,7 @@ Or directly with pnpm:
 pnpm run dev
 ```
 
-By default, it connects to the local backend at `http://localhost:3000/api`.
+By default, it proxies API requests via `/api-local` to a local backend on `http://localhost:3030` (Vite dev proxy). Use `just run-dev` if you want both backend and frontend behind Traefik on `http://localhost:3000`.
 To use a remote backend (e.g. staging or production):
 
 ```bash

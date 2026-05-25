@@ -11,6 +11,7 @@ description = "Green Ecolution backend server"
 readme = "../../../README.md"
 publish.workspace = true
 build = "build.rs"
+default-run = "green-ecolution"
 
 [lib]
 path = "src/lib.rs"

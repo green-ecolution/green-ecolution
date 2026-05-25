@@ -134,7 +134,7 @@ run-dev:
     @echo "Starting dev environment ({{ app_host }})..."
     @echo "  Backend:  {{ app_proto }}://{{ app_host }}:{{ app_port }}/api"
     @echo "  Frontend: {{ app_proto }}://{{ app_host }}:{{ app_port }}"
-    sed -e 's|${APP_HOST}|{{ app_host }}|g' \
+    @sed -e 's|${APP_HOST}|{{ app_host }}|g' \
         -e 's|${TRAEFIK_ENTRYPOINT}|{{ traefik_entrypoint }}|g' \
         .docker/infra/traefik/dynamic/dev-services.yaml.tmpl \
         > .docker/infra/traefik/dynamic/dev-services.yaml
@@ -143,7 +143,6 @@ run-dev:
         APP_ENVIRONMENT=local \
         SQLX_OFFLINE=true \
         APP_APPLICATION__HOST=0.0.0.0 \
-        APP_APPLICATION__PORT=3030 \
         APP_APPLICATION__BASE_URL={{ app_proto }}://{{ app_host }}:{{ app_port }} \
         APP_DATABASE__HOST={{ postgres_host }} \
         APP_DATABASE__PORT={{ postgres_port }} \
@@ -153,7 +152,11 @@ run-dev:
         APP_LOG__LEVEL=debug \
         APP_LOG__FORMAT=pretty \
         bacon --headless --job run -- --bin {{ binary_name }} ) & \
-      ( cd {{ frontend_dir }} && USE_TRAEFIK=1 VITE_BACKEND_BASEURL= pnpm run dev ) & \
+      ( cd {{ frontend_dir }} && \
+        USE_TRAEFIK=1 \
+        VITE_BACKEND_BASEURL=/api \
+        PUBLIC_DEV_URL={{ app_proto }}://{{ app_host }}:{{ app_port }} \
+        pnpm run dev ) & \
       wait
 
 # Set up ACME storage for Let's Encrypt

@@ -8,7 +8,7 @@ use server::http::openapi_doc;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let base_url = env::args()
         .nth(1)
-        .unwrap_or_else(|| "http://127.0.0.1:3020".to_string());
+        .unwrap_or_else(|| "http://127.0.0.1:3030".to_string());
 
     let openapi = openapi_doc(&base_url);
     println!("{}", openapi.to_pretty_json()?);
