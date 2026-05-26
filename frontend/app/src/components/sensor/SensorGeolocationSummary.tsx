@@ -1,9 +1,10 @@
-import { nearestTreeQuery } from '@/api/queries'
+import { nearestTreeQuery, treeIdQuery } from '@/api/queries'
 import GeolocationPermissionNotice from '@/components/geolocation/GeolocationPermissionNotice'
 import GPSStatusCard from '@/components/geolocation/GPSStatusCard'
 import LocationMapPreview from '@/components/geolocation/LocationMapPreview'
 import NearestTreeMapPreview from '@/components/geolocation/NearestTreeMapPreview'
 import NearestTreeList from '@/components/sensor/NearestTreeList'
+import SensorTreePickerSheet from '@/components/sensor/SensorTreePickerSheet'
 import type { GeolocationFix, GeolocationStatus } from '@/hooks/useGeolocation'
 import {
   Button,
@@ -17,7 +18,15 @@ import {
   toast,
 } from '@green-ecolution/ui'
 import { useQuery } from '@tanstack/react-query'
-import { CheckCircle2, Crosshair, Loader2, MapPin, RotateCw, TreeDeciduous } from 'lucide-react'
+import {
+  CheckCircle2,
+  Crosshair,
+  Loader2,
+  MapPin,
+  RotateCw,
+  Search,
+  TreeDeciduous,
+} from 'lucide-react'
 import { useCallback, useState } from 'react'
 
 interface SensorGeolocationSummaryProps {
@@ -67,6 +76,7 @@ const SensorGeolocationSummary = ({
 
   const [selectedTreeId, setSelectedTreeId] = useState<string | null>(null)
   const [confirmed, setConfirmed] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   const {
     data: nearestTrees,
@@ -84,12 +94,21 @@ const SensorGeolocationSummary = ({
   const trees = nearestTrees?.data ?? []
   const selectedTree = trees.find((t) => t.tree.id === selectedTreeId)
 
+  const isSelectionInNearest =
+    selectedTreeId !== null && trees.some((t) => t.tree.id === selectedTreeId)
+
+  const { data: selectedTreeOutside } = useQuery({
+    ...treeIdQuery(selectedTreeId ?? ''),
+    enabled: selectedTreeId !== null && !isSelectionInNearest,
+  })
+
   const handleConfirm = useCallback(() => {
-    if (!selectedTree) return
+    const treeNumber = selectedTree?.tree.number ?? selectedTreeOutside?.number
+    if (!selectedTreeId || treeNumber == null) return
     setConfirmed(true)
-    toast.success(`Sensor wird Baum ${selectedTree.tree.number} zugeordnet`)
-    onConfirmTree?.(selectedTree.tree.id)
-  }, [selectedTree, onConfirmTree])
+    toast.success(`Sensor wird Baum ${treeNumber} zugeordnet`)
+    onConfirmTree?.(selectedTreeId)
+  }, [selectedTreeId, selectedTree, selectedTreeOutside, onConfirmTree])
 
   return (
     <div className="mx-auto w-full max-w-3xl pb-[env(safe-area-inset-bottom)]">
@@ -172,6 +191,42 @@ const SensorGeolocationSummary = ({
           </div>
         )}
 
+        {/* Manual picker button */}
+        <div className="md:col-span-2">
+          <Button
+            variant="outline"
+            onClick={() => setPickerOpen(true)}
+            className="w-full sm:w-auto"
+          >
+            <Search className="size-4" />
+            Anderen Baum auswählen
+          </Button>
+        </div>
+
+        {/* Out-of-nearest selection summary */}
+        {selectedTreeOutside && (
+          <div className="md:col-span-2">
+            <div className="rounded-xl border border-green-dark/30 bg-green-dark-50/30 p-4">
+              <p className="text-xs uppercase tracking-wide font-semibold text-green-dark mb-1">
+                Ausgewählter Baum
+              </p>
+              <div className="flex items-baseline gap-3 text-sm">
+                <span className="font-semibold">{selectedTreeOutside.species}</span>
+                <span className="font-mono text-xs text-dark-600">
+                  {selectedTreeOutside.number}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <SensorTreePickerSheet
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          selectedTreeId={selectedTreeId}
+          onSelect={setSelectedTreeId}
+        />
+
         {/* Confirmed notice */}
         {confirmed && (
           <div className="md:col-span-2">
@@ -192,7 +247,7 @@ const SensorGeolocationSummary = ({
             <MapPin className="size-4" />
             Erneut lokalisieren
           </Button>
-          {trees.length > 0 && (
+          {(trees.length > 0 || selectedTreeOutside != null) && (
             <Button
               onClick={handleConfirm}
               disabled={!selectedTreeId || confirmed}
