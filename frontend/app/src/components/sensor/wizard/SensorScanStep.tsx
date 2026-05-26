@@ -1,7 +1,14 @@
 import QRScannerView from '@/components/scanner/QRScannerView'
 import type { SensorResponse } from '@green-ecolution/backend-client'
 import { Button, CopyableText, Loading } from '@green-ecolution/ui'
-import { AlertTriangle, CheckCircle2, RotateCw, ScanSearch, WifiOff } from 'lucide-react'
+import {
+  AlertTriangle,
+  Barcode,
+  CheckCircle2,
+  RotateCw,
+  ScanSearch,
+  WifiOff,
+} from 'lucide-react'
 
 interface SensorScanStepProps {
   scannedSensorId: string | null
@@ -74,7 +81,36 @@ const SensorScanStep = ({
   }
 
   if (isLookupError) {
-    const notFound = lookupErrorStatus === 404
+    const kind: 'notFound' | 'badRequest' | 'network' =
+      lookupErrorStatus === 404
+        ? 'notFound'
+        : lookupErrorStatus === 400
+          ? 'badRequest'
+          : 'network'
+
+    const content = {
+      notFound: {
+        icon: <ScanSearch className="size-8" />,
+        title: 'Sensor nicht gefunden',
+        description: 'Diese Sensor-ID ist im System nicht hinterlegt.',
+        hint: 'Vergewissere dich, dass die Sensoreinheit über die Verwaltung im System registriert wurde, oder kontaktiere den Admin.',
+      },
+      badRequest: {
+        icon: <Barcode className="size-8" />,
+        title: 'Sensor-ID ungültig',
+        description: 'Die gescannte ID entspricht nicht dem erwarteten Format.',
+        hint: 'Bitte prüfe, ob du den korrekten QR-Code auf der Sensoreinheit gescannt hast.',
+      },
+      network: {
+        icon: <WifiOff className="size-8" />,
+        title: 'Abgleich fehlgeschlagen',
+        description: 'Der Abgleich mit der Datenbank konnte nicht ausgeführt werden.',
+        hint: 'Bitte prüfe deine Internetverbindung und versuche es erneut.',
+      },
+    }[kind]
+
+    const showRetry = kind === 'network'
+
     return (
       <div className="mx-auto max-w-xl py-6 md:py-10">
         <div className="rounded-2xl border-2 border-red-200 bg-red-50/40 p-6 md:p-10 shadow-sm">
@@ -83,18 +119,14 @@ const SensorScanStep = ({
               className="flex size-16 items-center justify-center rounded-full bg-red text-white"
               aria-hidden
             >
-              {notFound ? <ScanSearch className="size-8" /> : <WifiOff className="size-8" />}
+              {content.icon}
             </div>
 
             <div className="space-y-2">
               <h2 className="font-lato font-bold text-2xl md:text-3xl text-foreground">
-                {notFound ? 'Sensor nicht gefunden' : 'Abgleich fehlgeschlagen'}
+                {content.title}
               </h2>
-              <p className="text-sm text-muted-foreground max-w-prose">
-                {notFound
-                  ? 'Diese Sensor-ID ist im System nicht hinterlegt.'
-                  : 'Der Abgleich mit der Datenbank konnte nicht ausgeführt werden.'}
-              </p>
+              <p className="text-sm text-muted-foreground max-w-prose">{content.description}</p>
             </div>
 
             <div className="w-full max-w-sm rounded-xl border border-red-200/70 bg-background px-4 py-3 text-left">
@@ -106,21 +138,17 @@ const SensorScanStep = ({
               </p>
             </div>
 
-            <p className="text-xs text-muted-foreground max-w-prose">
-              {notFound
-                ? 'Vergewissere dich, dass die Sensoreinheit über die Verwaltung im System registriert wurde, oder kontaktiere den Admin.'
-                : 'Bitte prüfe deine Internetverbindung und versuche es erneut.'}
-            </p>
+            <p className="text-xs text-muted-foreground max-w-prose">{content.hint}</p>
 
             <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
-              {!notFound && (
+              {showRetry && (
                 <Button onClick={onRetryLookup} className="sm:min-w-[180px]">
                   <RotateCw className="size-4" />
                   Erneut prüfen
                 </Button>
               )}
               <Button
-                variant={notFound ? 'default' : 'outline'}
+                variant={showRetry ? 'outline' : 'default'}
                 onClick={onScanAgain}
                 className="sm:min-w-[200px]"
               >
