@@ -159,7 +159,7 @@ function NewSensor() {
       completedSteps={completedSteps}
       onStepClick={handleStepClick}
       onBack={state.step === 1 ? undefined : handleBack}
-      onNext={state.step === 4 || (state.step === 1 && !verifiedSensor) ? undefined : handleNext}
+      onNext={state.step === 4 || state.step === 1 ? undefined : handleNext}
       canGoNext={canGoNext}
     >
       {state.step === 1 && (
@@ -178,6 +178,7 @@ function NewSensor() {
           }}
           onScanAgain={() => dispatch({ type: 'scanCleared' })}
           onRetryLookup={() => void sensorLookup.refetch()}
+          onContinue={handleNext}
         />
       )}
       {state.step === 2 && (

@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   Barcode,
   CheckCircle2,
+  ChevronRight,
   RotateCw,
   ScanSearch,
   WifiOff,
@@ -19,6 +20,7 @@ interface SensorScanStepProps {
   onScanned: (sensorId: string) => void
   onScanAgain: () => void
   onRetryLookup: () => void
+  onContinue: () => void
 }
 
 const dateFormatter = new Intl.DateTimeFormat('de-DE', {
@@ -52,6 +54,7 @@ const SensorScanStep = ({
   onScanned,
   onScanAgain,
   onRetryLookup,
+  onContinue,
 }: SensorScanStepProps) => {
   if (!scannedSensorId) {
     return (
@@ -212,27 +215,46 @@ const SensorScanStep = ({
 
   if (sensor) {
     return (
-      <div className="space-y-6">
-        <header className="space-y-2">
-          <h1 className="font-lato font-bold text-3xl lg:text-4xl">Sensor erkannt</h1>
-          <p className="text-sm text-muted-foreground max-w-prose">
-            Der Sensor ist im System bekannt und zur Aktivierung freigegeben. Tippe auf „Weiter", um
-            mit dem GPS-Standort fortzufahren, oder scanne einen anderen Sensor.
-          </p>
-        </header>
+      <div className="mx-auto max-w-xl py-6 md:py-10">
+        <div className="rounded-2xl border-2 border-green-dark/30 bg-green-dark-50/40 p-6 md:p-10 shadow-sm">
+          <div className="flex flex-col items-center text-center space-y-5">
+            <div
+              className="flex size-16 items-center justify-center rounded-full bg-green-dark text-white"
+              aria-hidden
+            >
+              <CheckCircle2 className="size-8" />
+            </div>
 
-        <div className="rounded-2xl border border-green-dark/30 bg-green-dark-50/30 p-4 md:p-5 space-y-3">
-          <div className="flex items-center gap-2 text-sm font-medium text-green-dark">
-            <CheckCircle2 className="size-4" aria-hidden />
-            <span>Status: Bereit zur Aktivierung</span>
+            <div className="space-y-2">
+              <h2 className="font-lato font-bold text-2xl md:text-3xl text-foreground">
+                Sensor erkannt
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-prose">
+                Im System bekannt und zur Aktivierung freigegeben.
+              </p>
+            </div>
+
+            <div className="w-full max-w-sm rounded-xl border border-green-dark/30 bg-background px-4 py-3 text-left space-y-1">
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-green-dark/80">
+                Sensor-ID · Status: Bereit
+              </p>
+              <p className="font-mono text-sm md:text-base font-semibold text-foreground break-all">
+                {sensor.id}
+              </p>
+            </div>
+
+            <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
+              <Button variant="outline" onClick={onScanAgain} className="sm:min-w-[200px]">
+                <RotateCw className="size-4" />
+                Anderen Sensor scannen
+              </Button>
+              <Button onClick={onContinue} className="sm:min-w-[200px]">
+                Weiter
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
           </div>
-          <CopyableText value={sensor.id} label="Sensor-ID" />
         </div>
-
-        <Button variant="outline" onClick={onScanAgain} className="w-full sm:w-auto">
-          <RotateCw className="size-4" />
-          Anderen Sensor scannen
-        </Button>
       </div>
     )
   }
