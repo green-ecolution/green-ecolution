@@ -28,6 +28,9 @@ mqtt:
 map:
   center: [54.792277136221905, 9.43580607453268]
   bbox: [54.714822, 9.285796, 54.860127, 9.583800]
+  nearest_tree_max_radius: 500.0
+  nearest_tree_default_limit: 10
+  nearest_tree_max_limit: 50
 info:
   update_check_repo: "green-ecolution/green-ecolution"
   repository_url: "https://github.com/green-ecolution/"

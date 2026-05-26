@@ -384,3 +384,132 @@ async fn list_tree_markers_filters_by_watering_status() {
     let json: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(json["data"].as_array().unwrap().len(), 0);
 }
+
+#[tokio::test]
+async fn get_nearest_trees_returns_sorted_by_distance() {
+    let app = spawn_app().await;
+
+    // Three trees: T-NEAR (closest), T-MID, T-FAR.
+    let make = |number: &str, lat: f64, lng: f64| {
+        serde_json::json!({
+            "species": "Eiche",
+            "number": number,
+            "planting_year": 2020,
+            "latitude": lat,
+            "longitude": lng,
+            "description": "x"
+        })
+    };
+    // ~111m/0.001° latitude — keep all three within the 500m default radius.
+    app.post_json("/api/v1/trees", &make("T-NEAR", 54.7900, 9.4400))
+        .await;
+    app.post_json("/api/v1/trees", &make("T-MID", 54.7905, 9.4400))
+        .await;
+    app.post_json("/api/v1/trees", &make("T-FAR", 54.7920, 9.4400))
+        .await;
+
+    let resp = app
+        .get("/api/v1/trees/nearest?lat=54.7900&lng=9.4400&limit=3")
+        .await;
+    assert_eq!(resp.status().as_u16(), 200);
+    let json: serde_json::Value = resp.json().await.unwrap();
+    let data = json["data"].as_array().unwrap();
+    assert_eq!(data.len(), 3);
+    assert_eq!(data[0]["tree"]["number"], "T-NEAR");
+    assert_eq!(data[1]["tree"]["number"], "T-MID");
+    assert_eq!(data[2]["tree"]["number"], "T-FAR");
+
+    let d0 = data[0]["distance_meters"].as_f64().unwrap();
+    let d1 = data[1]["distance_meters"].as_f64().unwrap();
+    let d2 = data[2]["distance_meters"].as_f64().unwrap();
+    assert!(d0 <= d1 && d1 <= d2, "distances must be ascending");
+    assert!(d0 < 1.0, "closest tree should be ~0m away, got {d0}");
+}
+
+#[tokio::test]
+async fn get_nearest_trees_clamps_limit_to_max() {
+    let app = spawn_app().await;
+
+    // Seed more trees than max_limit (50) would be expensive; we instead verify
+    // that an absurdly high limit is accepted (no 400) and the response contains
+    // at most the existing trees.
+    let body = serde_json::json!({
+        "species": "Eiche",
+        "number": "T-CLAMP",
+        "planting_year": 2020,
+        "latitude": 54.79,
+        "longitude": 9.44,
+        "description": "x"
+    });
+    app.post_json("/api/v1/trees", &body).await;
+
+    let resp = app
+        .get("/api/v1/trees/nearest?lat=54.79&lng=9.44&limit=999999")
+        .await;
+    assert_eq!(resp.status().as_u16(), 200);
+    let json: serde_json::Value = resp.json().await.unwrap();
+    assert!(!json["data"].as_array().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn get_nearest_trees_uses_default_limit_when_omitted() {
+    let app = spawn_app().await;
+
+    let body = serde_json::json!({
+        "species": "Eiche",
+        "number": "T-DEFLIM",
+        "planting_year": 2020,
+        "latitude": 54.79,
+        "longitude": 9.44,
+        "description": "x"
+    });
+    app.post_json("/api/v1/trees", &body).await;
+
+    let resp = app.get("/api/v1/trees/nearest?lat=54.79&lng=9.44").await;
+    assert_eq!(resp.status().as_u16(), 200);
+}
+
+#[tokio::test]
+async fn get_nearest_trees_rejects_invalid_coordinates() {
+    let app = spawn_app().await;
+
+    let resp = app.get("/api/v1/trees/nearest?lat=200&lng=9.44").await;
+    assert_eq!(resp.status().as_u16(), 400);
+
+    let resp = app.get("/api/v1/trees/nearest?lat=54.79&lng=999").await;
+    assert_eq!(resp.status().as_u16(), 400);
+}
+
+#[tokio::test]
+async fn get_nearest_trees_excludes_trees_outside_radius() {
+    let app = spawn_app().await;
+
+    // T-CLOSE is within ~10m; T-OUT is ~2km away (outside the 500m default radius).
+    let make = |number: &str, lat: f64, lng: f64| {
+        serde_json::json!({
+            "species": "Eiche",
+            "number": number,
+            "planting_year": 2020,
+            "latitude": lat,
+            "longitude": lng,
+            "description": "x"
+        })
+    };
+    app.post_json("/api/v1/trees", &make("T-CLOSE", 54.7900, 9.4400))
+        .await;
+    app.post_json("/api/v1/trees", &make("T-OUT", 54.8100, 9.4400))
+        .await;
+
+    let resp = app
+        .get("/api/v1/trees/nearest?lat=54.7900&lng=9.4400&limit=10")
+        .await;
+    let json: serde_json::Value = resp.json().await.unwrap();
+    let numbers: Vec<&str> = json["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|t| t["tree"]["number"].as_str().unwrap())
+        .collect();
+    assert!(numbers.contains(&"T-CLOSE"));
+    assert!(!numbers.contains(&"T-OUT"));
+}

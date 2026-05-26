@@ -17,7 +17,7 @@ use crate::{
                 tree::{
                     NearestTreeListResponse, NearestTreeParams, TreeCreateRequest,
                     TreeMarkerListResponse, TreeMarkerQueryParams, TreeMarkerResponse,
-                    TreeResponse, TreeUpdateRequest,
+                    TreeResponse, TreeUpdateRequest, TreeWithDistanceResponse,
                 },
             },
             pagination::PaginationParams,
@@ -28,7 +28,7 @@ use crate::{
 use domain::{
     Id,
     sensor::SensorId,
-    shared::pagination::Pagination,
+    shared::{coordinates::Coordinate, distance::Distance, pagination::Pagination},
     tree::{PlantingYear, TreeDraft, TreeMarker, TreeSearchQuery, TreeView},
 };
 
@@ -226,10 +226,46 @@ pub async fn list_planting_years(
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn get_nearest_trees(
-    State(_state): State<Arc<AppState>>,
-    Query(_params): Query<NearestTreeParams>,
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<NearestTreeParams>,
 ) -> Result<Json<NearestTreeListResponse>, ServiceError> {
-    todo!()
+    let limits = state.nearest_tree_limits;
+    let coord = Coordinate::new(params.lat, params.lng)?;
+    let radius = Distance::new(limits.max_radius_meters)?;
+    let limit = params
+        .limit
+        .map(|l| l.min(u32::MAX as u64) as u32)
+        .filter(|&l| l > 0)
+        .unwrap_or(limits.default_limit)
+        .min(limits.max_limit);
+
+    let results = state
+        .tree_service
+        .view_nearest(coord, radius, limit)
+        .await?;
+
+    let sensor_map = resolve_sensors_by_str_ids(
+        &state.sensor_service,
+        results.iter().filter_map(|t| t.tree.sensor_id.as_deref()),
+    )
+    .await?;
+
+    let data = results
+        .iter()
+        .map(|t| {
+            let sensor = t
+                .tree
+                .sensor_id
+                .as_deref()
+                .and_then(|id| sensor_map.get(id));
+            TreeWithDistanceResponse {
+                tree: TreeResponse::from((&t.tree, sensor)),
+                distance_meters: t.distance.meters(),
+            }
+        })
+        .collect();
+
+    Ok(Json(NearestTreeListResponse { data }))
 }
 
 #[utoipa::path(get, path = "/trees/markers", tag = "Trees",

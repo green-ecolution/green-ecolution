@@ -39,6 +39,13 @@ pub struct FeatureFlags {
     pub plugins_enabled: bool,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct NearestTreeLimits {
+    pub max_radius_meters: f64,
+    pub default_limit: u32,
+    pub max_limit: u32,
+}
+
 pub struct AppState {
     pub region_service: Arc<RegionService>,
     pub tree_service: Arc<TreeService>,
@@ -55,6 +62,7 @@ pub struct AppState {
     pub statistics_reader: Arc<dyn StatisticsReader>,
     pub token_validator: Arc<TokenValidator>,
     pub feature_flags: FeatureFlags,
+    pub nearest_tree_limits: NearestTreeLimits,
 }
 
 #[derive(OpenApi)]

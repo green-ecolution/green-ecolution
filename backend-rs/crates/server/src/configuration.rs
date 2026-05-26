@@ -144,6 +144,22 @@ pub struct PluginsSettings {
 pub struct MapSettings {
     pub center: [f64; 2],
     pub bbox: [f64; 4],
+    #[serde(default = "default_nearest_tree_max_radius")]
+    pub nearest_tree_max_radius: f64,
+    #[serde(default = "default_nearest_tree_default_limit")]
+    pub nearest_tree_default_limit: u32,
+    #[serde(default = "default_nearest_tree_max_limit")]
+    pub nearest_tree_max_limit: u32,
+}
+
+fn default_nearest_tree_max_radius() -> f64 {
+    500.0
+}
+fn default_nearest_tree_default_limit() -> u32 {
+    10
+}
+fn default_nearest_tree_max_limit() -> u32 {
+    50
 }
 
 impl Default for MapSettings {
@@ -151,6 +167,9 @@ impl Default for MapSettings {
         Self {
             center: [54.792277136221905, 9.43580607453268],
             bbox: [54.714822, 9.285796, 54.860127, 9.583800],
+            nearest_tree_max_radius: default_nearest_tree_max_radius(),
+            nearest_tree_default_limit: default_nearest_tree_default_limit(),
+            nearest_tree_max_limit: default_nearest_tree_max_limit(),
         }
     }
 }

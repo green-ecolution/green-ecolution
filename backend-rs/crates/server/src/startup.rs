@@ -6,7 +6,7 @@ use tokio::net::TcpListener;
 
 use crate::{
     configuration::{CorsSettings, DatabaseSettings, Settings},
-    http::{AppState, FeatureFlags, auth::AuthLayer, router},
+    http::{AppState, FeatureFlags, NearestTreeLimits, auth::AuthLayer, router},
     infra::{
         self,
         health::{
@@ -118,6 +118,11 @@ impl Application {
             feature_flags: FeatureFlags {
                 routing_enabled: settings.routing.enabled,
                 plugins_enabled: settings.plugins.enabled,
+            },
+            nearest_tree_limits: NearestTreeLimits {
+                max_radius_meters: settings.map.nearest_tree_max_radius,
+                default_limit: settings.map.nearest_tree_default_limit,
+                max_limit: settings.map.nearest_tree_max_limit,
             },
         });
 
