@@ -9,6 +9,10 @@ const fix = {
   latitude: 54.79,
   longitude: 9.43,
   accuracy: 8,
+  altitude: null,
+  altitudeAccuracy: null,
+  heading: null,
+  speed: null,
   timestamp: 1_710_000_000_000,
 }
 
