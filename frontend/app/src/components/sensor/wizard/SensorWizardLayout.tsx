@@ -56,21 +56,22 @@ const SensorWizardLayout = ({
 
       <div className="mx-auto w-full max-w-3xl">{children}</div>
 
-      {!hideFooter && (
+      {!hideFooter && (onBack ?? onNext) && (
         <div className="mx-auto mt-8 flex w-full max-w-3xl flex-col gap-2 sm:flex-row sm:justify-between">
-          <Button
-            variant="outline"
-            onClick={onBack}
-            disabled={!onBack}
-            className="sm:w-auto"
-          >
-            <ChevronLeft className="size-4" />
-            Zurück
-          </Button>
-          <Button onClick={onNext} disabled={!canGoNext} className="sm:w-auto">
-            {nextLabel}
-            <ChevronRight className="size-4" />
-          </Button>
+          {onBack ? (
+            <Button variant="outline" onClick={onBack} className="sm:w-auto">
+              <ChevronLeft className="size-4" />
+              Zurück
+            </Button>
+          ) : (
+            <span />
+          )}
+          {onNext && (
+            <Button onClick={onNext} disabled={!canGoNext} className="sm:w-auto">
+              {nextLabel}
+              <ChevronRight className="size-4" />
+            </Button>
+          )}
         </div>
       )}
     </div>

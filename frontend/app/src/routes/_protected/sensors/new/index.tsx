@@ -137,7 +137,6 @@ function NewSensor() {
       onBack={state.step === 1 ? undefined : handleBack}
       onNext={state.step === 4 ? undefined : handleNext}
       canGoNext={canGoNext}
-      hideFooter={state.step === 4}
     >
       {state.step === 1 && (
         <SensorScanStep

@@ -77,7 +77,7 @@ export const Stepper = ({
                 <button
                   type="button"
                   onClick={() => onStepClick?.(index1)}
-                  className="flex items-center gap-2 md:gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-dark/40"
+                  className="flex items-center gap-2 md:gap-3 rounded-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-dark/40"
                 >
                   <span className={circleVariants({ state })}>
                     <Check className="size-4" aria-hidden />
