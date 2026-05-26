@@ -37,10 +37,10 @@ const SensorReviewStep = ({
   const isError = status === 'error'
 
   return (
-    <div className="space-y-4">
-      <header className="space-y-1">
-        <h2 className="text-xl font-semibold">Zuordnung prüfen</h2>
-        <p className="text-sm text-muted-foreground">
+    <div className="space-y-6">
+      <header className="space-y-2">
+        <h1 className="font-lato font-bold text-3xl lg:text-4xl">Zuordnung prüfen</h1>
+        <p className="text-sm text-muted-foreground max-w-prose">
           Bestätige Sensor, Baum und Standort. Mit „Sensor aktivieren" wird die Verknüpfung
           gespeichert.
         </p>

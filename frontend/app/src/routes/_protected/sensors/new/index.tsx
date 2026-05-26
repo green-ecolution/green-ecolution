@@ -140,8 +140,6 @@ function NewSensor() {
     >
       {state.step === 1 && (
         <SensorScanStep
-          gpsPosition={position}
-          gpsStatus={gpsStatus}
           scannedSensorId={state.sensorId}
           onScanned={(id) => {
             dispatch({ type: 'qrScanned', sensorId: id })

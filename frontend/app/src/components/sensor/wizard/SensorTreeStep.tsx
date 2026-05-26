@@ -56,10 +56,10 @@ const SensorTreeStep = ({ position, selectedTreeId, onSelect }: SensorTreeStepPr
   }
 
   return (
-    <div className="space-y-4">
-      <header className="space-y-1">
-        <h2 className="text-xl font-semibold">Baum zuordnen</h2>
-        <p className="text-sm text-muted-foreground">
+    <div className="space-y-6">
+      <header className="space-y-2">
+        <h1 className="font-lato font-bold text-3xl lg:text-4xl">Baum zuordnen</h1>
+        <p className="text-sm text-muted-foreground max-w-prose">
           Wähle den Baum aus, an dem der Sensor angebracht wird. Der Vorschlag basiert auf
           dem erfassten Standort.
         </p>

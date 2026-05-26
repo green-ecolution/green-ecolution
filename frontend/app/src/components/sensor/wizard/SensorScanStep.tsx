@@ -1,30 +1,24 @@
-import InlineGPSReadout from '@/components/geolocation/InlineGPSReadout'
 import QRScannerView from '@/components/scanner/QRScannerView'
-import type { GeolocationFix, GeolocationStatus } from '@/hooks/useGeolocation'
 import { Button, CopyableText } from '@green-ecolution/ui'
 import { CheckCircle2, RotateCw } from 'lucide-react'
 
 interface SensorScanStepProps {
-  gpsPosition: GeolocationFix | null
-  gpsStatus: GeolocationStatus
   scannedSensorId: string | null
   onScanned: (sensorId: string) => void
   onScanAgain: () => void
 }
 
 const SensorScanStep = ({
-  gpsPosition,
-  gpsStatus,
   scannedSensorId,
   onScanned,
   onScanAgain,
 }: SensorScanStepProps) => {
   if (scannedSensorId) {
     return (
-      <div className="space-y-4">
-        <header className="space-y-1">
-          <h2 className="text-xl font-semibold">Sensor erkannt</h2>
-          <p className="text-sm text-muted-foreground">
+      <div className="space-y-6">
+        <header className="space-y-2">
+          <h1 className="font-lato font-bold text-3xl lg:text-4xl">Sensor erkannt</h1>
+          <p className="text-sm text-muted-foreground max-w-prose">
             Tippe auf „Weiter", um mit dem GPS-Standort fortzufahren, oder scanne einen anderen
             Sensor.
           </p>
@@ -47,19 +41,14 @@ const SensorScanStep = ({
   }
 
   return (
-    <div className="space-y-4">
-      <header className="space-y-1">
-        <h2 className="text-xl font-semibold">Sensor-QR scannen</h2>
-        <p className="text-sm text-muted-foreground">
-          Halte den QR-Code auf der Sensoreinheit in den Scan-Rahmen. Dein Standort wird im
-          Hintergrund bereits erfasst.
+    <div className="space-y-6">
+      <header className="space-y-2">
+        <h1 className="font-lato font-bold text-3xl lg:text-4xl">Sensor-QR scannen</h1>
+        <p className="text-sm text-muted-foreground max-w-prose">
+          Halte den QR-Code auf der Sensoreinheit in den Scan-Rahmen.
         </p>
       </header>
-      <QRScannerView
-        continueLabel="Sensor übernehmen"
-        onContinue={onScanned}
-        extra={<InlineGPSReadout position={gpsPosition} status={gpsStatus} />}
-      />
+      <QRScannerView continueLabel="Sensor übernehmen" onContinue={onScanned} />
     </div>
   )
 }
