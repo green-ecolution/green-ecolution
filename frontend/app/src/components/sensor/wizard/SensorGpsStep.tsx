@@ -35,12 +35,7 @@ const MapPlaceholder = ({ status }: { status: GeolocationStatus }) => {
   )
 }
 
-const SensorGpsStep = ({
-  position,
-  status,
-  errorMessage,
-  onRelocate,
-}: SensorGpsStepProps) => {
+const SensorGpsStep = ({ position, status, errorMessage, onRelocate }: SensorGpsStepProps) => {
   const noticeStatus: 'denied' | 'unsupported' | 'error' | null =
     status === 'denied' || status === 'unsupported' || status === 'error' ? status : null
 
@@ -49,7 +44,8 @@ const SensorGpsStep = ({
       <header className="space-y-2">
         <h1 className="font-lato font-bold text-3xl lg:text-4xl">Standort bestätigen</h1>
         <p className="text-sm text-muted-foreground max-w-prose">
-          Überprüfe den erfassten GPS-Standort. Bei Bedarf kannst du erneut lokalisieren.
+          Mit deinem aktuellen Standort suchen wir im nächsten Schritt den passenden Baum in der
+          Datenbank. Gespeichert wird am Sensor nur die Baum-Zuordnung, nicht deine Koordinaten.
         </p>
       </header>
       <div className="grid gap-4 md:grid-cols-2 md:gap-6">
