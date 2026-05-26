@@ -583,13 +583,10 @@ impl TreeWriter for PgTreeRepository {
     }
 }
 
-/// Escapes Postgres `LIKE`/`ILIKE` wildcards in user-provided input so the
-/// stored pattern is matched literally. Used together with `ESCAPE '\'` in
-/// the SQL clause.
+/// Escapes `\`, `%`, `_` for use inside an ILIKE pattern with `ESCAPE '\'`.
 ///
-/// Backslash MUST be escaped first; otherwise an injected `\%` would survive
-/// as a usable wildcard.
-#[allow(dead_code)] // Used in tree name search (Task 3)
+/// Backslash must be escaped first so an injected `\%` does not survive as a
+/// usable wildcard.
 fn like_escape(input: &str) -> String {
     let mut out = String::with_capacity(input.len());
     for ch in input.chars() {
@@ -630,7 +627,6 @@ mod like_escape_tests {
 
     #[test]
     fn escapes_backslash_first() {
-        // Backslash must be escaped before % and _ so we don't double-escape.
         assert_eq!(like_escape(r"a\b"), r"a\\b");
     }
 
