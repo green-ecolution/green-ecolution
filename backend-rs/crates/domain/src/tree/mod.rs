@@ -92,6 +92,10 @@ pub struct TreeSearchQuery {
     pub sensor_id: Option<SensorId>,
     pub provider: Option<ProviderId>,
     pub bbox: Option<BoundingBox>,
+    /// Free-text filter that case-insensitively matches `tree_number` or
+    /// `species`. Already-trimmed and non-empty when `Some`; LIKE wildcards
+    /// are escaped at the repository boundary, not by the caller.
+    pub q: Option<String>,
 }
 
 impl Tree {
