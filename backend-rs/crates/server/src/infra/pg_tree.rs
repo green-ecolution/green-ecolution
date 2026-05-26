@@ -293,17 +293,20 @@ impl TreeReader for PgTreeRepository {
         let provider = query.provider.as_ref().map(|p| p.as_str().to_string());
         let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
         let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
+        let q_pattern: Option<String> = query.q.as_deref().map(|s| format!("%{}%", like_escape(s)));
 
         let total = sqlx::query_scalar!(
             r#"SELECT COUNT(*) AS "count!: i64" FROM trees
             WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))
               AND ($2::int[] = '{}' OR planting_year = ANY($2))
               AND ($3::text IS NULL OR provider = $3)
-              AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))"#,
+              AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))
+              AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\' OR species ILIKE $5 ESCAPE '\')"#,
             &watering_statuses as &[WateringStatus],
             &planting_years,
             provider.as_deref(),
             query.has_cluster,
+            q_pattern.as_deref(),
         )
         .fetch_one(&self.pool)
         .await? as u64;
@@ -322,12 +325,14 @@ impl TreeReader for PgTreeRepository {
               AND ($2::int[] = '{}' OR planting_year = ANY($2))
               AND ($3::text IS NULL OR provider = $3)
               AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))
+              AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\' OR species ILIKE $5 ESCAPE '\')
             ORDER BY number ASC
-            LIMIT $5 OFFSET $6"#,
+            LIMIT $6 OFFSET $7"#,
             &watering_statuses as &[WateringStatus],
             &planting_years,
             provider.as_deref(),
             query.has_cluster,
+            q_pattern.as_deref(),
             limit,
             offset,
         )
@@ -580,5 +585,58 @@ impl TreeWriter for PgTreeRepository {
         }
 
         Ok(())
+    }
+}
+
+/// Escapes `\`, `%`, `_` for use inside an ILIKE pattern with `ESCAPE '\'`.
+///
+/// Backslash must be escaped first so an injected `\%` does not survive as a
+/// usable wildcard.
+fn like_escape(input: &str) -> String {
+    let mut out = String::with_capacity(input.len());
+    for ch in input.chars() {
+        match ch {
+            '\\' => out.push_str(r"\\"),
+            '%' => out.push_str(r"\%"),
+            '_' => out.push_str(r"\_"),
+            other => out.push(other),
+        }
+    }
+    out
+}
+
+#[cfg(test)]
+mod like_escape_tests {
+    use super::like_escape;
+
+    #[test]
+    fn empty_input_returns_empty() {
+        assert_eq!(like_escape(""), "");
+    }
+
+    #[test]
+    fn plain_input_unchanged() {
+        assert_eq!(like_escape("Eiche"), "Eiche");
+        assert_eq!(like_escape("T-001"), "T-001");
+    }
+
+    #[test]
+    fn escapes_percent() {
+        assert_eq!(like_escape("50%"), r"50\%");
+    }
+
+    #[test]
+    fn escapes_underscore() {
+        assert_eq!(like_escape("a_b"), r"a\_b");
+    }
+
+    #[test]
+    fn escapes_backslash_first() {
+        assert_eq!(like_escape(r"a\b"), r"a\\b");
+    }
+
+    #[test]
+    fn escapes_combined() {
+        assert_eq!(like_escape(r"50%\_x"), r"50\%\\\_x");
     }
 }

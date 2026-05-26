@@ -75,11 +75,11 @@ impl From<&PaginationParams> for Pagination {
     }
 }
 
-fn default_page() -> u64 {
+pub fn default_page() -> u64 {
     DEFAULT_PAGE
 }
 
-fn default_per_page() -> u64 {
+pub fn default_per_page() -> u64 {
     DEFAULT_PER_PAGE
 }
 

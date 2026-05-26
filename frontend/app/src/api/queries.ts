@@ -97,7 +97,9 @@ export const sensorModelIdQuery = (id: string) =>
 
 export const treeQuery = (params?: ListTreesRequest) =>
   queryOptions<ListResponseTreeResponse>({
-    queryKey: ['trees', params?.page, params?.perPage].filter((e) => e != undefined || e != null),
+    queryKey: ['trees', params?.page, params?.perPage, ...(params?.q ? [params.q] : [])].filter(
+      (e) => e !== undefined && e !== null,
+    ),
     queryFn: () => treeApi.listTrees(params),
   })
 

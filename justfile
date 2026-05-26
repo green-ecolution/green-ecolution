@@ -35,6 +35,8 @@ s3_dev_endpoint    := if porkbun_api_key != "" { "s3." + app_host + ":" + app_po
 s3_use_ssl         := if porkbun_api_key != "" { "true" } else { "false" }
 
 db_url := "postgres://" + postgres_user + ":" + postgres_password + "@" + postgres_host + ":" + postgres_port + "/" + postgres_db
+sqlx_prepare_db := "sqlx_prepare"
+sqlx_prepare_db_url := "postgres://" + postgres_user + ":" + postgres_password + "@" + postgres_host + ":" + postgres_port + "/" + sqlx_prepare_db
 
 # Show available recipes
 default:
@@ -249,10 +251,13 @@ infra-down:
     docker compose -f compose.yaml down -v
 
 # Refresh sqlx offline query cache (.sqlx/) — requires running DB and sqlx-cli
-generate-sqlx:
-    @echo "Refreshing sqlx offline cache..."
+generate-sqlx: _migrate-build
+    @echo "Refreshing sqlx offline cache against a clean migrated DB ({{ sqlx_prepare_db }})..."
     @command -v cargo-sqlx >/dev/null 2>&1 || { echo "sqlx-cli missing (cargo install sqlx-cli --no-default-features --features rustls,postgres)"; exit 1; }
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" cargo sqlx prepare --workspace -- --tests
+    -cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" cargo sqlx database drop -y
+    cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" cargo sqlx database create
+    cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" ./target/debug/migrate up
+    cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" cargo sqlx prepare --workspace -- --all-targets
 
 # Dump the OpenAPI spec from the Rust backend into the frontend client package
 dump-openapi:

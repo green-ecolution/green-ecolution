@@ -1,4 +1,4 @@
-use crate::helpers::spawn_app;
+use crate::helpers::{TestApp, spawn_app};
 
 #[tokio::test]
 async fn list_trees_returns_200() {
@@ -512,4 +512,133 @@ async fn get_nearest_trees_excludes_trees_outside_radius() {
         .collect();
     assert!(numbers.contains(&"T-CLOSE"));
     assert!(!numbers.contains(&"T-OUT"));
+}
+
+async fn insert_q_seed(app: &TestApp) {
+    sqlx::query!(
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description)
+        VALUES
+            ($1, 2020, 'Eiche',  'T-001',    54.79, 9.44, ST_SetSRID(ST_MakePoint(9.44, 54.79), 4326), 'a'),
+            ($2, 2021, 'Buche',  'T-50%STR', 54.79, 9.44, ST_SetSRID(ST_MakePoint(9.44, 54.79), 4326), 'b'),
+            ($3, 2022, 'Ahorn',  'T-1000',   54.79, 9.44, ST_SetSRID(ST_MakePoint(9.44, 54.79), 4326), 'c')"#,
+        uuid::Uuid::now_v7(),
+        uuid::Uuid::now_v7(),
+        uuid::Uuid::now_v7(),
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn list_trees_filters_by_q_on_tree_number() {
+    let app = spawn_app().await;
+    insert_q_seed(&app).await;
+
+    let r = app.get("/api/v1/trees?q=T-001").await;
+    assert_eq!(r.status().as_u16(), 200);
+    let body: serde_json::Value = r.json().await.unwrap();
+    let data = body["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1);
+    assert_eq!(data[0]["number"], "T-001");
+}
+
+#[tokio::test]
+async fn list_trees_filters_by_q_on_species() {
+    let app = spawn_app().await;
+    insert_q_seed(&app).await;
+
+    let r = app.get("/api/v1/trees?q=Buche").await;
+    assert_eq!(r.status().as_u16(), 200);
+    let body: serde_json::Value = r.json().await.unwrap();
+    let data = body["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1);
+    assert_eq!(data[0]["species"], "Buche");
+}
+
+#[tokio::test]
+async fn list_trees_q_is_case_insensitive() {
+    let app = spawn_app().await;
+    insert_q_seed(&app).await;
+
+    let r = app.get("/api/v1/trees?q=eiche").await;
+    assert_eq!(r.status().as_u16(), 200);
+    let body: serde_json::Value = r.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 1);
+}
+
+#[tokio::test]
+async fn list_trees_q_is_trimmed_and_treats_empty_as_unset() {
+    let app = spawn_app().await;
+    insert_q_seed(&app).await;
+
+    let r = app.get("/api/v1/trees?q=%20%20%20").await;
+    assert_eq!(r.status().as_u16(), 200);
+    let body: serde_json::Value = r.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 3);
+
+    let r = app.get("/api/v1/trees?q=%20Eiche%20").await;
+    assert_eq!(r.status().as_u16(), 200);
+    let body: serde_json::Value = r.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 1);
+}
+
+#[tokio::test]
+async fn list_trees_q_escapes_like_wildcards() {
+    let app = spawn_app().await;
+    insert_q_seed(&app).await;
+
+    // `%25` is URL-encoded `%`; the handler must treat it as a literal `%`
+    // in the LIKE pattern, matching only `T-50%STR` and not all three rows.
+    let r = app.get("/api/v1/trees?q=50%25").await;
+    assert_eq!(r.status().as_u16(), 200);
+    let body: serde_json::Value = r.json().await.unwrap();
+    let data = body["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1);
+    assert_eq!(data[0]["number"], "T-50%STR");
+}
+
+#[tokio::test]
+async fn list_trees_q_rejects_overlong_input() {
+    let app = spawn_app().await;
+    let long = "x".repeat(101);
+    let r = app.get(&format!("/api/v1/trees?q={long}")).await;
+    assert_eq!(r.status().as_u16(), 400);
+}
+
+#[tokio::test]
+async fn list_trees_q_paginates_correctly() {
+    let app = spawn_app().await;
+    insert_q_seed(&app).await;
+
+    let r = app.get("/api/v1/trees?q=T-&per_page=2&page=1").await;
+    assert_eq!(r.status().as_u16(), 200);
+    let body: serde_json::Value = r.json().await.unwrap();
+    let data = body["data"].as_array().unwrap();
+    assert_eq!(data.len(), 2);
+    assert_eq!(body["pagination"]["total_records"], 3);
+}
+
+#[tokio::test]
+async fn list_trees_q_treats_sql_injection_payload_as_literal() {
+    let app = spawn_app().await;
+    insert_q_seed(&app).await;
+
+    for payload in &["' OR 1=1 --", "'; DROP TABLE trees;--", "%' OR '1"] {
+        let url = format!("/api/v1/trees?q={}", urlencoding::encode(payload));
+        let r = app.get(&url).await;
+        assert_eq!(r.status().as_u16(), 200, "payload {payload} did not 200");
+        let body: serde_json::Value = r.json().await.unwrap();
+        assert_eq!(
+            body["data"].as_array().unwrap().len(),
+            0,
+            "payload {payload} matched rows",
+        );
+    }
+
+    // Confirm the table is still intact after injection attempts.
+    let r = app.get("/api/v1/trees?q=Eiche").await;
+    assert_eq!(r.status().as_u16(), 200);
+    let body: serde_json::Value = r.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 1);
 }

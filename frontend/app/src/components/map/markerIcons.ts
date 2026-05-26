@@ -3,8 +3,10 @@ import { SVG_CACHE } from './markerSvgCache'
 
 const iconCache = new Map<string, L.DivIcon>()
 
-const markerHtmlStyles = (color: string) => `
+const markerHtmlStyles = (color: string, isDisabled: boolean) => `
   background-color: ${color};
+  opacity: ${isDisabled ? '0.6' : '1'};
+  cursor: ${isDisabled ? 'not-allowed' : 'pointer'};
   width: 2rem;
   height: 2rem;
   position: absolute;
@@ -78,16 +80,21 @@ const makerRouteWrapperStyles = () => `
   font-family: Nunito, sans-serif;
 `
 
-export const TreeMarkerIcon = (color: string, isSelected: boolean, isHighlighted: boolean) => {
-  const key = `tree-${color}-${isSelected}-${isHighlighted}`
+export const TreeMarkerIcon = (
+  color: string,
+  isSelected: boolean,
+  isHighlighted: boolean,
+  hasSensor: boolean,
+) => {
+  const key = `tree-${color}-${isSelected}-${isHighlighted}-${hasSensor}`
   let icon = iconCache.get(key)
   if (!icon) {
     icon = L.divIcon({
       iconAnchor: [0, 24],
       popupAnchor: [0, -36],
-      html: `<figure style="${makerWrapperStyles(isSelected, isHighlighted)}">
-        <span style="${markerHtmlStyles(color)}">
-          ${isSelected ? SVG_CACHE.check : SVG_CACHE.tree}
+      html: `<figure style="${makerWrapperStyles(isSelected && !hasSensor, isHighlighted && !hasSensor)}">
+        <span style="${markerHtmlStyles(color, hasSensor)}">
+          ${isSelected && !hasSensor ? SVG_CACHE.check : SVG_CACHE.tree}
         </span>
       </figure>`,
     })
@@ -122,7 +129,7 @@ export const ClusterIcon = (
 const sensorMarkerIconCached = L.divIcon({
   iconAnchor: [0, 24],
   html: `<figure style="${makerWrapperStyles(false, true)}">
-        <span style="${markerHtmlStyles('#454545')}">
+        <span style="${markerHtmlStyles('#454545', false)}">
           ${SVG_CACHE.sensor}
         </span>
       </figure>`,
@@ -148,7 +155,7 @@ export const RouteIcon = (label: string) => {
 const refillIconCached = L.divIcon({
   iconAnchor: [12, 12],
   html: `<figure style="${makerWrapperStyles(false, false)}">
-      <span style="${markerHtmlStyles('#454545')}">
+      <span style="${markerHtmlStyles('#454545', false)}">
         ${SVG_CACHE.paintBucket}
       </span>
     </figure>`,

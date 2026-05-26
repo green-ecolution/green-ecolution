@@ -88,16 +88,15 @@ const NearestTreeMapPreview = ({
           const statusDetails = getWateringStatusDetails(
             tree.wateringStatus ?? WateringStatus.Unknown,
           )
-          const isSelected = tree.id === selectedTreeId
+          const isAssigned = tree.sensor != null
+          const isSelected = !isAssigned && tree.id === selectedTreeId
 
           return (
             <Marker
               key={tree.id}
               position={[tree.latitude, tree.longitude]}
-              icon={TreeMarkerIcon(statusDetails.colorHex, isSelected, false)}
-              eventHandlers={{
-                click: () => onSelectTree?.(tree.id),
-              }}
+              icon={TreeMarkerIcon(statusDetails.colorHex, isSelected, false, isAssigned)}
+              eventHandlers={isAssigned ? {} : { click: () => onSelectTree?.(tree.id) }}
             />
           )
         })}

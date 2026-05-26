@@ -10,17 +10,14 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     http::{
         AppState,
-        v1::{
-            dto::{
-                ListResponse,
-                sensor::resolve_sensors_by_str_ids,
-                tree::{
-                    NearestTreeListResponse, NearestTreeParams, TreeCreateRequest,
-                    TreeMarkerListResponse, TreeMarkerQueryParams, TreeMarkerResponse,
-                    TreeResponse, TreeUpdateRequest, TreeWithDistanceResponse,
-                },
+        v1::dto::{
+            ListResponse,
+            sensor::resolve_sensors_by_str_ids,
+            tree::{
+                NearestTreeListResponse, NearestTreeParams, TreeCreateRequest, TreeListParams,
+                TreeMarkerListResponse, TreeMarkerQueryParams, TreeMarkerResponse, TreeResponse,
+                TreeUpdateRequest, TreeWithDistanceResponse,
             },
-            pagination::PaginationParams,
         },
     },
     service::ServiceError,
@@ -41,26 +38,52 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(get_tree, update_tree, delete_tree))
 }
 
+const TREE_LIST_Q_MAX_LEN: usize = 100;
+
 #[utoipa::path(get, path = "/trees", tag = "Trees",
     operation_id = "listTrees",
     summary = "List all trees",
-    description = "Returns a paginated list of all trees with their associated sensor data.",
-    params(PaginationParams),
+    description = "Returns a paginated list of all trees with their associated sensor data. \
+                   Optional `q` parameter case-insensitively filters by tree number or species.",
+    params(TreeListParams),
     responses(
         (status = 200, description = "Paginated list of trees", body = ListResponse<TreeResponse>),
+        (status = 400, description = "Invalid query parameter"),
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all)]
+#[tracing::instrument(level = "info", skip_all, fields(q.len = tracing::field::Empty))]
 pub async fn list_trees(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<TreeListParams>,
 ) -> Result<Json<ListResponse<TreeResponse>>, ServiceError> {
-    let pagination = Pagination::from(&params);
-    let page = state
-        .tree_service
-        .search_view(TreeSearchQuery::default(), pagination)
-        .await?;
+    let pagination = Pagination::new(params.page, params.per_page);
+
+    let q = params
+        .q
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(str::to_owned);
+
+    if let Some(ref qv) = q
+        && qv.chars().count() > TREE_LIST_Q_MAX_LEN
+    {
+        return Err(ServiceError::InvalidInput(format!(
+            "q must be at most {TREE_LIST_Q_MAX_LEN} characters"
+        )));
+    }
+
+    if let Some(ref qv) = q {
+        tracing::Span::current().record("q.len", qv.chars().count());
+    }
+
+    let query = TreeSearchQuery {
+        q,
+        ..TreeSearchQuery::default()
+    };
+
+    let page = state.tree_service.search_view(query, pagination).await?;
 
     let sensor_map = resolve_sensors_by_str_ids(
         &state.sensor_service,

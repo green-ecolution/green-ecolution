@@ -92,6 +92,8 @@ pub struct TreeSearchQuery {
     pub sensor_id: Option<SensorId>,
     pub provider: Option<ProviderId>,
     pub bbox: Option<BoundingBox>,
+    /// Case-insensitive text filter on tree number or species.
+    pub q: Option<String>,
 }
 
 impl Tree {

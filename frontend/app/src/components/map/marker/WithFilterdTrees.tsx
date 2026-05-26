@@ -54,6 +54,7 @@ const WithFilterdTrees = memo(
           getStatusColor(t.wateringStatus),
           selectedSet.has(t.id),
           hasHighlightedTree === t.id,
+          false,
         ),
       [selectedSet, hasHighlightedTree],
     )

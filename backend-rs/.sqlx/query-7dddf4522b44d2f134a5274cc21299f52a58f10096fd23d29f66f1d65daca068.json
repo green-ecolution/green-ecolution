@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT COUNT(*) AS \"count!: i64\" FROM trees\n            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))\n              AND ($2::int[] = '{}' OR planting_year = ANY($2))\n              AND ($3::text IS NULL OR provider = $3)\n              AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))",
+  "query": "SELECT COUNT(*) AS \"count!: i64\" FROM trees\n            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))\n              AND ($2::int[] = '{}' OR planting_year = ANY($2))\n              AND ($3::text IS NULL OR provider = $3)\n              AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))\n              AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\\' OR species ILIKE $5 ESCAPE '\\')",
   "describe": {
     "columns": [
       {
@@ -34,12 +34,13 @@
         },
         "Int4Array",
         "Text",
-        "Bool"
+        "Bool",
+        "Text"
       ]
     },
     "nullable": [
       null
     ]
   },
-  "hash": "a83d50ddbcbffa2b168d8c2cce7ea193a31d53cf1c1a67a14f4506cfd61040b7"
+  "hash": "7dddf4522b44d2f134a5274cc21299f52a58f10096fd23d29f66f1d65daca068"
 }
