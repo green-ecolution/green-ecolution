@@ -41,14 +41,14 @@ FROM (VALUES
 
 INSERT INTO sensor_lorawan (id, serial_number, dev_eui, app_eui, app_key)
 VALUES
-    ('sensor-1', '', '', '', ''),
-    ('sensor-2', '', '', '', ''),
-    ('sensor-3', '', '', '', ''),
-    ('sensor-4', '', '', '', ''),
-    ('sensor-5', '', '', '', ''),
-    ('sensor-6', '', '', '', ''),
-    ('sensor-7', '', '', '', ''),
-    ('sensor-8', '', '', '', '');
+    ('sensor-1', 'ECO-DRZ-2024-0001', '70B3D57ED0060001', '70B3D57ED0030000', '2B7E151628AED2A6ABF7158809CF4F3C'),
+    ('sensor-2', 'ECO-DRZ-2024-0002', '70B3D57ED0060002', '70B3D57ED0030000', 'A0B1C2D3E4F506172839405162738495'),
+    ('sensor-3', 'ECO-DRZ-2024-0003', '70B3D57ED0060003', '70B3D57ED0030000', 'F1E2D3C4B5A697887766554433221100'),
+    ('sensor-4', 'ECO-DRZ-2024-0004', '70B3D57ED0060004', '70B3D57ED0030000', '0123456789ABCDEFFEDCBA9876543210'),
+    ('sensor-5', 'ECO-DRZ-2024-0005', '70B3D57ED0060005', '70B3D57ED0030000', 'CAFEBABEDEADBEEF0BADF00DBAADC0DE'),
+    ('sensor-6', 'ECO-DRZ-2024-0006', '70B3D57ED0060006', '70B3D57ED0030000', '1A2B3C4D5E6F70819203040506070809'),
+    ('sensor-7', 'ECO-DRZ-2024-0007', '70B3D57ED0060007', '70B3D57ED0030000', '9F8E7D6C5B4A39281706050403020100'),
+    ('sensor-8', 'ECO-DRZ-2024-0008', '70B3D57ED0060008', '70B3D57ED0030000', '00112233445566778899AABBCCDDEEFF');
 
 INSERT INTO trees (id, tree_cluster_id, sensor_id, planting_year, species, number, latitude, longitude, geometry, watering_status, description) VALUES
   (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, 'sensor-1', 2023, 'Quercus robur', 1005, 54.82124518093376, 9.485702120628517, ST_SetSRID(ST_MakePoint(9.485702120628517, 54.82124518093376), 4326), 'good', 'Dieser Baum wurde im August das letzte mal gestuzt'),
@@ -382,5 +382,5 @@ FROM (VALUES
 
 INSERT INTO sensor_lorawan (id, serial_number, dev_eui, app_eui, app_key)
 VALUES
-    ('sensor-prepared-1', '', '', '', ''),
-    ('sensor-prepared-2', '', '', '', '');
+    ('sensor-prepared-1', 'GES-2026-0001', '0004A30B00AB0001', '0004A30B00AB0000', 'AAB1C2D3E4F506172839405162738401'),
+    ('sensor-prepared-2', 'GES-2026-0002', '0004A30B00AB0002', '0004A30B00AB0000', 'BBC2D3E4F50617283940516273840102');
