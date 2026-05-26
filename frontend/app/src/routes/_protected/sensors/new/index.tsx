@@ -8,6 +8,7 @@ import SensorWizardLayout from '@/components/sensor/wizard/SensorWizardLayout'
 import SensorWizardSuccess from '@/components/sensor/wizard/SensorWizardSuccess'
 import {
   INITIAL_WIZARD_STATE,
+  normalizeSensorId,
   wizardReducer,
   type WizardStep,
 } from '@/components/sensor/wizard/state'
@@ -169,7 +170,7 @@ function NewSensor() {
           lookupErrorStatus={resolveResponseStatus(sensorLookup.error)}
           sensor={sensorLookup.data ?? null}
           onScanned={(id) => {
-            dispatch({ type: 'qrScanned', sensorId: id })
+            dispatch({ type: 'qrScanned', sensorId: normalizeSensorId(id) })
             if (position) {
               dispatch({ type: 'gpsFrozen', fix: position })
               stop()

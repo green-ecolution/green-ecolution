@@ -1,5 +1,25 @@
 import { describe, expect, it } from 'vitest'
-import { INITIAL_WIZARD_STATE, wizardReducer, type WizardState } from './state'
+import {
+  INITIAL_WIZARD_STATE,
+  normalizeSensorId,
+  wizardReducer,
+  type WizardState,
+} from './state'
+
+describe('normalizeSensorId', () => {
+  it('prepends eui- and lowercases a raw hex EUI', () => {
+    expect(normalizeSensorId('A8404131AF5E6451')).toBe('eui-a8404131af5e6451')
+  })
+
+  it('does not double-prefix an id that already has eui-', () => {
+    expect(normalizeSensorId('eui-A8404131AF5E6451')).toBe('eui-a8404131af5e6451')
+    expect(normalizeSensorId('EUI-a8404131af5e6451')).toBe('eui-a8404131af5e6451')
+  })
+
+  it('trims surrounding whitespace', () => {
+    expect(normalizeSensorId('  A8404131AF5E6451  ')).toBe('eui-a8404131af5e6451')
+  })
+})
 
 const fix = {
   latitude: 54.79,

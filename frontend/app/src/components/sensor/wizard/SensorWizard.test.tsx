@@ -6,7 +6,7 @@ import type React from 'react'
 
 vi.mock('@/components/scanner/QRScannerView', () => ({
   default: ({ onContinue }: { onContinue: (id: string) => void }) => (
-    <button onClick={() => onContinue('EUI-TEST-001')}>__scan_now__</button>
+    <button onClick={() => onContinue('A8404131AF5E6451')}>__scan_now__</button>
   ),
 }))
 
@@ -110,7 +110,7 @@ vi.mock('@/api/queries', async () => {
   }
 })
 
-const activateMock = vi.fn().mockResolvedValue({ id: 'EUI-TEST-001' })
+const activateMock = vi.fn().mockResolvedValue({ id: 'eui-a8404131af5e6451' })
 vi.mock('@/api/backendApi', () => ({
   sensorApi: { activateSensor: (...args: unknown[]) => activateMock(...args) as unknown },
 }))
@@ -173,7 +173,7 @@ describe('Sensor wizard', () => {
     await user.click(screen.getByRole('button', { name: /^weiter/i }))
 
     await screen.findByText('Zuordnung prüfen')
-    expect(screen.getByText('EUI-TEST-001')).toBeInTheDocument()
+    expect(screen.getByText('eui-a8404131af5e6451')).toBeInTheDocument()
     expect(screen.getByText('Tilia cordata')).toBeInTheDocument()
     expect(screen.getByText('0815')).toBeInTheDocument()
 
@@ -181,7 +181,7 @@ describe('Sensor wizard', () => {
 
     await waitFor(() => {
       expect(activateMock).toHaveBeenCalledWith({
-        sensorId: 'EUI-TEST-001',
+        sensorId: 'eui-a8404131af5e6451',
         activateSensorRequest: { treeId: 'tree-1' },
       })
     })

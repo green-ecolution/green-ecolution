@@ -1,5 +1,10 @@
 import type { GeolocationFix } from '@/hooks/useGeolocation'
 
+export const normalizeSensorId = (raw: string): string => {
+  const trimmed = raw.trim().toLowerCase()
+  return trimmed.startsWith('eui-') ? trimmed : `eui-${trimmed}`
+}
+
 export type WizardStep = 1 | 2 | 3 | 4
 
 export type SubmissionState = 'idle' | 'pending' | 'success' | 'error'
