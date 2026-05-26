@@ -203,6 +203,19 @@ pub struct TreeWithDistanceResponse {
     pub distance_meters: f64,
 }
 
+/// Query parameters for the paginated tree list endpoint.
+#[derive(Debug, serde::Deserialize, utoipa::IntoParams)]
+pub struct TreeListParams {
+    #[param(default = 1, minimum = 1, example = 1)]
+    #[serde(default = "crate::http::v1::pagination::default_page")]
+    pub page: u64,
+    #[param(default = 25, minimum = 1, maximum = 100, example = 25)]
+    #[serde(default = "crate::http::v1::pagination::default_per_page")]
+    pub per_page: u64,
+    #[param(example = "Eiche")]
+    pub q: Option<String>,
+}
+
 /// Query parameters for finding the nearest trees to a given point.
 #[derive(Debug, serde::Deserialize, utoipa::IntoParams)]
 pub struct NearestTreeParams {
