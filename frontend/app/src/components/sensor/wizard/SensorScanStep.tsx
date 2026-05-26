@@ -8,11 +8,7 @@ interface SensorScanStepProps {
   onScanAgain: () => void
 }
 
-const SensorScanStep = ({
-  scannedSensorId,
-  onScanned,
-  onScanAgain,
-}: SensorScanStepProps) => {
+const SensorScanStep = ({ scannedSensorId, onScanned, onScanAgain }: SensorScanStepProps) => {
   if (scannedSensorId) {
     return (
       <div className="space-y-6">

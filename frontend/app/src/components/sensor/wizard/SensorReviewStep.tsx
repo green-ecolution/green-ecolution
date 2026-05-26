@@ -1,10 +1,5 @@
 import type { SubmissionState } from './state'
-import {
-  AccuracyBadge,
-  Button,
-  CopyableText,
-  InlineAlert,
-} from '@green-ecolution/ui'
+import { AccuracyBadge, Button, CopyableText, InlineAlert } from '@green-ecolution/ui'
 import { Loader2, ShieldCheck, TreeDeciduous } from 'lucide-react'
 
 interface SensorReviewStepProps {
@@ -73,15 +68,9 @@ const SensorReviewStep = ({
         </div>
       </div>
 
-      {isError && errorMessage && (
-        <InlineAlert variant="destructive" description={errorMessage} />
-      )}
+      {isError && errorMessage && <InlineAlert variant="destructive" description={errorMessage} />}
 
-      <Button
-        onClick={onActivate}
-        disabled={isPending}
-        className="w-full sm:w-auto"
-      >
+      <Button onClick={onActivate} disabled={isPending} className="w-full sm:w-auto">
         {isPending ? (
           <>
             <Loader2 className="size-4 animate-spin" />

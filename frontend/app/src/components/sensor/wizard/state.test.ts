@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  INITIAL_WIZARD_STATE,
-  wizardReducer,
-  type WizardState,
-} from './state'
+import { INITIAL_WIZARD_STATE, wizardReducer, type WizardState } from './state'
 
 const fix = {
   latitude: 54.79,
@@ -69,9 +65,9 @@ describe('wizardReducer', () => {
     }
     const next = wizardReducer(seeded, {
       type: 'gpsFrozen',
-      fix: { ...fix, latitude: 54.80 },
+      fix: { ...fix, latitude: 54.8 },
     })
-    expect(next.frozenFix?.latitude).toBe(54.80)
+    expect(next.frozenFix?.latitude).toBe(54.8)
     expect(next.selectedTreeId).toBeNull()
     expect(next.selectedTreeNumber).toBeNull()
   })
@@ -149,8 +145,6 @@ describe('wizardReducer', () => {
       submission: 'success',
       errorMessage: null,
     }
-    expect(wizardReducer(seeded, { type: 'resetForNextSensor' })).toEqual(
-      INITIAL_WIZARD_STATE,
-    )
+    expect(wizardReducer(seeded, { type: 'resetForNextSensor' })).toEqual(INITIAL_WIZARD_STATE)
   })
 })

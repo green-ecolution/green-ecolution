@@ -22,12 +22,7 @@ describe('Stepper', () => {
     const user = userEvent.setup()
     const onStepClick = vi.fn()
     render(
-      <Stepper
-        steps={STEPS}
-        currentStep={3}
-        completedSteps={[1, 2]}
-        onStepClick={onStepClick}
-      />,
+      <Stepper steps={STEPS} currentStep={3} completedSteps={[1, 2]} onStepClick={onStepClick} />,
     )
 
     await user.click(screen.getByRole('button', { name: /scan/i }))

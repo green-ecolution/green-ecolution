@@ -116,7 +116,9 @@ vi.mock('@tanstack/react-router', async () => {
       ...config,
       options: config,
     }),
-    Link: ({ children, ...rest }: { children: React.ReactNode; [key: string]: unknown }) => <a {...rest}>{children}</a>,
+    Link: ({ children, ...rest }: { children: React.ReactNode; [key: string]: unknown }) => (
+      <a {...rest}>{children}</a>
+    ),
   }
 })
 
@@ -126,8 +128,9 @@ const renderRoute = () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
-  const Component = (NewSensorRoute as unknown as { options: { component: () => React.JSX.Element } })
-    .options.component
+  const Component = (
+    NewSensorRoute as unknown as { options: { component: () => React.JSX.Element } }
+  ).options.component
   return render(
     <QueryClientProvider client={queryClient}>
       <Component />

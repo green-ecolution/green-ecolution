@@ -21,7 +21,12 @@ export const Route = createFileRoute('/_protected/sensors/new/')({
 
 const resolveResponseStatus = (err: unknown): number | null => {
   if (err instanceof Response) return err.status
-  if (err != null && typeof err === 'object' && 'response' in err && err.response instanceof Response)
+  if (
+    err != null &&
+    typeof err === 'object' &&
+    'response' in err &&
+    err.response instanceof Response
+  )
     return err.response.status
   return null
 }
@@ -37,7 +42,13 @@ function NewSensor() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [state, dispatch] = useReducer(wizardReducer, INITIAL_WIZARD_STATE)
-  const { status: gpsStatus, position, errorMessage: gpsError, stop, relocate } = useGeolocation({
+  const {
+    status: gpsStatus,
+    position,
+    errorMessage: gpsError,
+    stop,
+    relocate,
+  } = useGeolocation({
     autoStart: true,
   })
 
@@ -66,8 +77,7 @@ function NewSensor() {
         queryClient.invalidateQueries({ queryKey: ['tree', state.selectedTreeId] }),
       ])
     },
-    onError: (err) =>
-      dispatch({ type: 'submissionError', message: mapActivateError(err) }),
+    onError: (err) => dispatch({ type: 'submissionError', message: mapActivateError(err) }),
   })
 
   const handleRelocate = useCallback(async () => {
@@ -135,9 +145,7 @@ function NewSensor() {
       completedSteps={completedSteps}
       onStepClick={handleStepClick}
       onBack={state.step === 1 ? undefined : handleBack}
-      onNext={
-        state.step === 4 || (state.step === 1 && !state.sensorId) ? undefined : handleNext
-      }
+      onNext={state.step === 4 || (state.step === 1 && !state.sensorId) ? undefined : handleNext}
       canGoNext={canGoNext}
     >
       {state.step === 1 && (

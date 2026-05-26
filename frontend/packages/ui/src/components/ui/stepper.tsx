@@ -89,11 +89,7 @@ export const Stepper = ({
               ) : (
                 <span className="flex items-center gap-2 md:gap-3">
                   <span className={circleVariants({ state })}>
-                    {state === 'completed' ? (
-                      <Check className="size-4" aria-hidden />
-                    ) : (
-                      index1
-                    )}
+                    {state === 'completed' ? <Check className="size-4" aria-hidden /> : index1}
                   </span>
                   <span
                     className={cn(

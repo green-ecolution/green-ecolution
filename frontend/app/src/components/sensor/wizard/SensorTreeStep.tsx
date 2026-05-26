@@ -60,8 +60,8 @@ const SensorTreeStep = ({ position, selectedTreeId, onSelect }: SensorTreeStepPr
       <header className="space-y-2">
         <h1 className="font-lato font-bold text-3xl lg:text-4xl">Baum zuordnen</h1>
         <p className="text-sm text-muted-foreground max-w-prose">
-          Wähle den Baum aus, an dem der Sensor angebracht wird. Der Vorschlag basiert auf
-          dem erfassten Standort.
+          Wähle den Baum aus, an dem der Sensor angebracht wird. Der Vorschlag basiert auf dem
+          erfassten Standort.
         </p>
       </header>
 
@@ -115,11 +115,7 @@ const SensorTreeStep = ({ position, selectedTreeId, onSelect }: SensorTreeStepPr
         />
       )}
 
-      <Button
-        variant="outline"
-        onClick={() => setPickerOpen(true)}
-        className="w-full sm:w-auto"
-      >
+      <Button variant="outline" onClick={() => setPickerOpen(true)} className="w-full sm:w-auto">
         <Search className="size-4" />
         Anderen Baum auswählen
       </Button>
