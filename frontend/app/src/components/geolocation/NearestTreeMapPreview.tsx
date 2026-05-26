@@ -96,7 +96,6 @@ const NearestTreeMapPreview = ({
               key={tree.id}
               position={[tree.latitude, tree.longitude]}
               icon={TreeMarkerIcon(statusDetails.colorHex, isSelected, false, isAssigned)}
-              opacity={isAssigned ? 0.55 : 1}
               eventHandlers={isAssigned ? {} : { click: () => onSelectTree?.(tree.id) }}
             />
           )
