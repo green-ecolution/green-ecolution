@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  INITIAL_WIZARD_STATE,
-  normalizeSensorId,
-  wizardReducer,
-  type WizardState,
-} from './state'
+import { INITIAL_WIZARD_STATE, normalizeSensorId, wizardReducer, type WizardState } from './state'
 
 describe('normalizeSensorId', () => {
   it('prepends eui- and lowercases a raw hex EUI', () => {

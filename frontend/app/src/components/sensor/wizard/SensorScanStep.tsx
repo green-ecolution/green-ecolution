@@ -85,11 +85,7 @@ const SensorScanStep = ({
 
   if (isLookupError) {
     const kind: 'notFound' | 'badRequest' | 'network' =
-      lookupErrorStatus === 404
-        ? 'notFound'
-        : lookupErrorStatus === 400
-          ? 'badRequest'
-          : 'network'
+      lookupErrorStatus === 404 ? 'notFound' : lookupErrorStatus === 400 ? 'badRequest' : 'network'
 
     const content = {
       notFound: {
