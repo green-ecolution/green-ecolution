@@ -1108,13 +1108,12 @@
           "Trees"
         ],
         "summary": "List all trees",
-        "description": "Returns a paginated list of all trees with their associated sensor data.",
+        "description": "Returns a paginated list of all trees with their associated sensor data. Optional `q` parameter case-insensitively filters by tree number or species.",
         "operationId": "listTrees",
         "parameters": [
           {
             "name": "page",
             "in": "query",
-            "description": "Page number to retrieve (1-based).",
             "required": false,
             "schema": {
               "type": "integer",
@@ -1127,7 +1126,6 @@
           {
             "name": "per_page",
             "in": "query",
-            "description": "Number of items per page.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -1137,6 +1135,18 @@
               "minimum": 1
             },
             "example": 25
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "example": "Eiche"
           }
         ],
         "responses": {
@@ -1149,6 +1159,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid query parameter"
           },
           "500": {
             "description": "Internal server error"

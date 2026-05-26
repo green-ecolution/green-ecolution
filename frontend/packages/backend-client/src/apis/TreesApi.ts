@@ -72,6 +72,7 @@ export interface ListTreeMarkersRequest {
 export interface ListTreesRequest {
     page?: number;
     perPage?: number;
+    q?: string | null;
 }
 
 export interface UpdateTreeRequest {
@@ -384,7 +385,7 @@ export class TreesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all trees with their associated sensor data.
+     * Returns a paginated list of all trees with their associated sensor data. Optional `q` parameter case-insensitively filters by tree number or species.
      * List all trees
      */
     async listTreesRaw(requestParameters: ListTreesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseTreeResponse>> {
@@ -396,6 +397,10 @@ export class TreesApi extends runtime.BaseAPI {
 
         if (requestParameters['perPage'] != null) {
             queryParameters['per_page'] = requestParameters['perPage'];
+        }
+
+        if (requestParameters['q'] != null) {
+            queryParameters['q'] = requestParameters['q'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -414,7 +419,7 @@ export class TreesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all trees with their associated sensor data.
+     * Returns a paginated list of all trees with their associated sensor data. Optional `q` parameter case-insensitively filters by tree number or species.
      * List all trees
      */
     async listTrees(requestParameters: ListTreesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseTreeResponse> {
