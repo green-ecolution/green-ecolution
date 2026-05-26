@@ -135,7 +135,9 @@ function NewSensor() {
       completedSteps={completedSteps}
       onStepClick={handleStepClick}
       onBack={state.step === 1 ? undefined : handleBack}
-      onNext={state.step === 4 ? undefined : handleNext}
+      onNext={
+        state.step === 4 || (state.step === 1 && !state.sensorId) ? undefined : handleNext
+      }
       canGoNext={canGoNext}
     >
       {state.step === 1 && (
