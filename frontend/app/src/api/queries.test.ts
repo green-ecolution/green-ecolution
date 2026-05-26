@@ -84,6 +84,28 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(treeApi.listTrees).toHaveBeenCalledWith(params)
       })
+
+      it('includes q in the query key when provided', () => {
+        const options = treeQuery({ page: 1, perPage: 10, q: 'Eiche' })
+        expect(options.queryKey).toEqual(['trees', 1, 10, 'Eiche'])
+      })
+
+      it('omits q from the query key when not provided', () => {
+        const options = treeQuery({ page: 1, perPage: 10 })
+        expect(options.queryKey).toEqual(['trees', 1, 10])
+      })
+
+      it('passes q to treeApi.listTrees', async () => {
+        const mockResponse = { data: [] } as unknown as ListResponseTreeResponse
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        vi.mocked(treeApi.listTrees).mockResolvedValueOnce(mockResponse)
+
+        const options = treeQuery({ page: 1, perPage: 10, q: 'Eiche' })
+        await options.queryFn!({} as never)
+
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        expect(treeApi.listTrees).toHaveBeenCalledWith({ page: 1, perPage: 10, q: 'Eiche' })
+      })
     })
 
     describe('treeIdQuery', () => {
