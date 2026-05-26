@@ -76,59 +76,59 @@ const SensorScanStep = ({
   if (isLookupError) {
     const notFound = lookupErrorStatus === 404
     return (
-      <div className="space-y-6">
-        <header className="space-y-2">
-          <h1 className="font-lato font-bold text-3xl lg:text-4xl">
-            {notFound ? 'Sensor nicht gefunden' : 'Abgleich fehlgeschlagen'}
-          </h1>
-          <p className="text-sm text-muted-foreground max-w-prose">
-            {notFound
-              ? 'Die gescannte Sensor-ID ist im System nicht hinterlegt. Bitte den QR-Code prüfen oder einen anderen Sensor scannen.'
-              : 'Der Abgleich mit der Datenbank ist fehlgeschlagen. Bitte prüfe deine Internetverbindung und versuche es erneut.'}
-          </p>
-        </header>
-
-        <div className="overflow-hidden rounded-2xl border border-red-200 bg-red-50/50">
-          <div className="flex items-center gap-4 p-5 md:p-6">
+      <div className="mx-auto max-w-xl py-6 md:py-10">
+        <div className="rounded-2xl border-2 border-red-200 bg-red-50/40 p-6 md:p-10 shadow-sm">
+          <div className="flex flex-col items-center text-center space-y-5">
             <div
-              className="flex size-12 shrink-0 items-center justify-center rounded-full bg-red-100 text-red"
+              className="flex size-16 items-center justify-center rounded-full bg-red text-white"
               aria-hidden
             >
-              {notFound ? <ScanSearch className="size-6" /> : <WifiOff className="size-6" />}
+              {notFound ? <ScanSearch className="size-8" /> : <WifiOff className="size-8" />}
             </div>
-            <div className="min-w-0 flex-1 space-y-1">
-              <p className="text-[11px] uppercase tracking-wider font-semibold text-red/80">
-                Gescannte Sensor-ID
+
+            <div className="space-y-2">
+              <h2 className="font-lato font-bold text-2xl md:text-3xl text-foreground">
+                {notFound ? 'Sensor nicht gefunden' : 'Abgleich fehlgeschlagen'}
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-prose">
+                {notFound
+                  ? 'Diese Sensor-ID ist im System nicht hinterlegt.'
+                  : 'Der Abgleich mit der Datenbank konnte nicht ausgeführt werden.'}
+              </p>
+            </div>
+
+            <div className="w-full max-w-sm rounded-xl border border-red-200/70 bg-background px-4 py-3 text-left">
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-red/80 mb-1">
+                Gescannte ID
               </p>
               <p className="font-mono text-sm md:text-base font-semibold text-foreground break-all">
                 {scannedSensorId}
               </p>
             </div>
-          </div>
-          <div className="border-t border-red-200/70 bg-red-50/80 px-5 py-3 md:px-6">
-            <p className="text-xs leading-relaxed text-red/90">
+
+            <p className="text-xs text-muted-foreground max-w-prose">
               {notFound
                 ? 'Vergewissere dich, dass die Sensoreinheit über die Verwaltung im System registriert wurde, oder kontaktiere den Admin.'
-                : 'Sobald die Verbindung wieder steht, kannst du die Prüfung erneut anstoßen.'}
+                : 'Bitte prüfe deine Internetverbindung und versuche es erneut.'}
             </p>
-          </div>
-        </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row">
-          {!notFound && (
-            <Button onClick={onRetryLookup} className="w-full sm:w-auto">
-              <RotateCw className="size-4" />
-              Erneut prüfen
-            </Button>
-          )}
-          <Button
-            variant={notFound ? 'default' : 'outline'}
-            onClick={onScanAgain}
-            className="w-full sm:w-auto"
-          >
-            <RotateCw className="size-4" />
-            Anderen Sensor scannen
-          </Button>
+            <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
+              {!notFound && (
+                <Button onClick={onRetryLookup} className="sm:min-w-[180px]">
+                  <RotateCw className="size-4" />
+                  Erneut prüfen
+                </Button>
+              )}
+              <Button
+                variant={notFound ? 'default' : 'outline'}
+                onClick={onScanAgain}
+                className="sm:min-w-[200px]"
+              >
+                <RotateCw className="size-4" />
+                Anderen Sensor scannen
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -137,46 +137,47 @@ const SensorScanStep = ({
   if (sensor && sensor.status !== 'prepared') {
     const isOnline = sensor.status === 'online'
     return (
-      <div className="space-y-6">
-        <header className="space-y-2">
-          <h1 className="font-lato font-bold text-3xl lg:text-4xl">Sensor nicht aktivierbar</h1>
-          <p className="text-sm text-muted-foreground max-w-prose">
-            {isOnline
-              ? 'Dieser Sensor ist bereits aktiviert und einem Baum zugeordnet. Bitte einen anderen Sensor scannen.'
-              : 'Dieser Sensor wurde bereits aktiviert und ist derzeit offline. Eine erneute Aktivierung ist nicht möglich.'}
-          </p>
-        </header>
-
-        <div className="overflow-hidden rounded-2xl border border-yellow-200 bg-yellow-50">
-          <div className="flex items-center gap-4 p-5 md:p-6">
+      <div className="mx-auto max-w-xl py-6 md:py-10">
+        <div className="rounded-2xl border-2 border-yellow-200 bg-yellow-50 p-6 md:p-10 shadow-sm">
+          <div className="flex flex-col items-center text-center space-y-5">
             <div
-              className="flex size-12 shrink-0 items-center justify-center rounded-full bg-yellow-100 text-yellow-900"
+              className="flex size-16 items-center justify-center rounded-full bg-yellow text-yellow-900"
               aria-hidden
             >
-              <AlertTriangle className="size-6" />
+              <AlertTriangle className="size-8" />
             </div>
-            <div className="min-w-0 flex-1 space-y-1">
-              <p className="text-[11px] uppercase tracking-wider font-semibold text-yellow-900/80">
+
+            <div className="space-y-2">
+              <h2 className="font-lato font-bold text-2xl md:text-3xl text-foreground">
+                Sensor nicht aktivierbar
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-prose">
+                {isOnline
+                  ? 'Dieser Sensor ist bereits aktiviert und einem Baum zugeordnet.'
+                  : 'Dieser Sensor wurde bereits aktiviert und ist derzeit offline.'}
+              </p>
+            </div>
+
+            <div className="w-full max-w-sm rounded-xl border border-yellow-200/70 bg-background px-4 py-3 text-left space-y-1">
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-yellow-900/80">
                 Status: {isOnline ? 'Online' : 'Offline'}
               </p>
               <p className="font-mono text-sm md:text-base font-semibold text-foreground break-all">
                 {sensor.id}
               </p>
+              {sensor.latestData?.createdAt && (
+                <p className="text-xs text-muted-foreground pt-1">
+                  Zuletzt gesehen: {formatLatestData(sensor.latestData.createdAt)}
+                </p>
+              )}
             </div>
-          </div>
-          {sensor.latestData?.createdAt && (
-            <div className="border-t border-yellow-200/70 bg-yellow-100/40 px-5 py-3 md:px-6">
-              <p className="text-xs text-yellow-900/90">
-                Zuletzt gesehen: {formatLatestData(sensor.latestData.createdAt)}
-              </p>
-            </div>
-          )}
-        </div>
 
-        <Button onClick={onScanAgain} className="w-full sm:w-auto">
-          <RotateCw className="size-4" />
-          Anderen Sensor scannen
-        </Button>
+            <Button onClick={onScanAgain} className="w-full sm:w-auto sm:min-w-[200px]">
+              <RotateCw className="size-4" />
+              Anderen Sensor scannen
+            </Button>
+          </div>
+        </div>
       </div>
     )
   }
