@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
@@ -188,6 +188,27 @@ describe('Sensor wizard', () => {
 
     await user.click(screen.getByRole('button', { name: /nächsten sensor/i }))
     expect(await screen.findByText('Sensor-QR scannen')).toBeInTheDocument()
+  })
+
+  it('blocks the stepper from skipping ahead after the sensor id is cleared', async () => {
+    const user = userEvent.setup()
+    renderRoute()
+
+    await user.click(screen.getByText('__scan_now__'))
+    await screen.findByText('Standort bestätigen')
+    await user.click(screen.getByRole('button', { name: /^weiter/i }))
+    await user.click(await screen.findByText('Tilia cordata'))
+
+    const stepper = screen.getByRole('navigation', { name: /fortschritt/i })
+    await user.click(within(stepper).getByRole('button', { name: /qr-scan/i }))
+    await screen.findByText('Sensor erkannt')
+
+    await user.click(screen.getByRole('button', { name: /anderen sensor scannen/i }))
+    await screen.findByText('Sensor-QR scannen')
+
+    expect(within(stepper).queryByRole('button', { name: /^gps/i })).not.toBeInTheDocument()
+    expect(within(stepper).queryByRole('button', { name: /^baum/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^weiter/i })).not.toBeInTheDocument()
   })
 
   it('keeps state on activation error and shows the error', async () => {

@@ -192,8 +192,11 @@ function getCompletedSteps(state: {
   selectedTreeId: string | null
 }) {
   const done: number[] = []
-  if (state.sensorId) done.push(1)
-  if (state.frozenFix) done.push(2)
-  if (state.selectedTreeId) done.push(3)
+  if (!state.sensorId) return done
+  done.push(1)
+  if (!state.frozenFix) return done
+  done.push(2)
+  if (!state.selectedTreeId) return done
+  done.push(3)
   return done
 }
