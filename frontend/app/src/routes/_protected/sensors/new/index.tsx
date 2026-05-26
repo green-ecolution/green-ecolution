@@ -61,8 +61,6 @@ function NewSensor() {
     }
   }, [state.sensorId, state.frozenFix, position, stop])
 
-  const completedSteps = getCompletedSteps(state)
-
   const sensorLookup = useQuery({
     ...sensorIdQuery(state.sensorId ?? ''),
     enabled: !!state.sensorId,
@@ -70,6 +68,12 @@ function NewSensor() {
   })
 
   const verifiedSensor = sensorLookup.data?.status === 'prepared' ? sensorLookup.data : null
+
+  const completedSteps = getCompletedSteps({
+    sensorVerified: Boolean(verifiedSensor),
+    frozenFix: state.frozenFix,
+    selectedTreeId: state.selectedTreeId,
+  })
 
   const activateMutation = useMutation({
     mutationFn: () =>
@@ -207,17 +211,17 @@ function NewSensor() {
   )
 }
 
-function getCompletedSteps(state: {
-  sensorId: string | null
+function getCompletedSteps(args: {
+  sensorVerified: boolean
   frozenFix: unknown
   selectedTreeId: string | null
 }) {
   const done: number[] = []
-  if (!state.sensorId) return done
+  if (!args.sensorVerified) return done
   done.push(1)
-  if (!state.frozenFix) return done
+  if (!args.frozenFix) return done
   done.push(2)
-  if (!state.selectedTreeId) return done
+  if (!args.selectedTreeId) return done
   done.push(3)
   return done
 }
