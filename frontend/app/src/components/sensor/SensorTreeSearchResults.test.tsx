@@ -28,12 +28,15 @@ function makeTree(overrides: Partial<TreeResponse> = {}): TreeResponse {
   }
 }
 
-function makeListResponse(trees: TreeResponse[]): ListResponseTreeResponse {
+function makeListResponse(
+  trees: TreeResponse[],
+  totalRecords = trees.length,
+): ListResponseTreeResponse {
   return {
     data: trees,
     pagination: {
-      totalRecords: trees.length,
-      totalPages: 1,
+      totalRecords,
+      totalPages: Math.max(1, Math.ceil(totalRecords / 20)),
       currentPage: 1,
       perPage: 20,
     },
@@ -77,6 +80,17 @@ describe('SensorTreeSearchResults', () => {
     const row = await screen.findByRole('button', { name: /Eiche/ })
     fireEvent.click(row)
     expect(onSelect).toHaveBeenCalledWith('tree-a')
+  })
+
+  it('shows total count when more results exist than loaded items', async () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    vi.mocked(treeApi.listTrees).mockResolvedValueOnce(
+      makeListResponse([makeTree({ id: 'tree-a', species: 'Eiche', number: 'T-1' })], 429),
+    )
+
+    renderWithClient(<SensorTreeSearchResults q="T-" selectedTreeId={null} onSelect={vi.fn()} />)
+
+    expect(await screen.findByText(/1 von 429 Treffern/)).toBeInTheDocument()
   })
 
   it('marks rows whose tree has a sensor as not selectable', async () => {

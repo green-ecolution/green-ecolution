@@ -17,6 +17,18 @@ class ResizeObserverMock {
 }
 global.ResizeObserver = ResizeObserverMock
 
+// Mock IntersectionObserver (not available in jsdom)
+class IntersectionObserverMock {
+  root = null
+  rootMargin = ''
+  thresholds = []
+  observe = vi.fn()
+  unobserve = vi.fn()
+  disconnect = vi.fn()
+  takeRecords = vi.fn(() => [])
+}
+global.IntersectionObserver = IntersectionObserverMock as unknown as typeof IntersectionObserver
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

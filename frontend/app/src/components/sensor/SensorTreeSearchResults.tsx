@@ -1,4 +1,4 @@
-import { treeQuery } from '@/api/queries'
+import { treeApi } from '@/api/backendApi'
 import {
   Alert,
   AlertContent,
@@ -10,8 +10,9 @@ import {
   cn,
 } from '@green-ecolution/ui'
 import type { TreeResponse } from '@green-ecolution/backend-client'
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
 import { Check, Search, TreeDeciduous } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 
 interface SensorTreeSearchResultsProps {
   q: string
@@ -24,12 +25,35 @@ const PER_PAGE = 20
 const SensorTreeSearchResults = ({ q, selectedTreeId, onSelect }: SensorTreeSearchResultsProps) => {
   const trimmed = q.trim()
   const enabled = trimmed.length > 0
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
 
-  const { data, isLoading, isError, refetch } = useQuery({
-    ...treeQuery({ page: 1, perPage: PER_PAGE, q: trimmed }),
-    enabled,
-    placeholderData: keepPreviousData,
-  })
+  const { data, isLoading, isError, refetch, hasNextPage, fetchNextPage, isFetchingNextPage } =
+    useInfiniteQuery({
+      queryKey: ['trees', 'search', trimmed],
+      queryFn: ({ pageParam }) =>
+        treeApi.listTrees({ page: pageParam, perPage: PER_PAGE, q: trimmed }),
+      initialPageParam: 1,
+      getNextPageParam: (lastPage, allPages) => {
+        const total = lastPage.pagination?.totalRecords ?? 0
+        const loaded = allPages.reduce((sum, p) => sum + (p.data?.length ?? 0), 0)
+        return loaded < total ? allPages.length + 1 : undefined
+      },
+      enabled,
+      placeholderData: keepPreviousData,
+    })
+
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el || !hasNextPage || isFetchingNextPage) return
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) void fetchNextPage()
+      },
+      { rootMargin: '0px 0px 200px 0px' },
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   if (!enabled) {
     return (
@@ -58,7 +82,9 @@ const SensorTreeSearchResults = ({ q, selectedTreeId, onSelect }: SensorTreeSear
     )
   }
 
-  const items = data?.data ?? []
+  const items = data?.pages.flatMap((p) => p.data ?? []) ?? []
+  const total = data?.pages[data.pages.length - 1]?.pagination?.totalRecords ?? items.length
+
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-10 text-dark-600">
@@ -70,17 +96,30 @@ const SensorTreeSearchResults = ({ q, selectedTreeId, onSelect }: SensorTreeSear
   }
 
   return (
-    <ul className="flex flex-col gap-2" role="radiogroup" aria-label="Baum aus Suchergebnis wählen">
-      {items.map((tree) => (
-        <li key={tree.id}>
-          <ResultRow
-            tree={tree}
-            selected={tree.id === selectedTreeId}
-            onSelect={() => onSelect(tree.id)}
-          />
-        </li>
-      ))}
-    </ul>
+    <div className="flex flex-col gap-2">
+      <p className="text-xs text-dark-600">
+        {items.length} von {total} Treffern
+      </p>
+      <ul
+        className="flex flex-col gap-2"
+        role="radiogroup"
+        aria-label="Baum aus Suchergebnis wählen"
+      >
+        {items.map((tree) => (
+          <li key={tree.id}>
+            <ResultRow
+              tree={tree}
+              selected={tree.id === selectedTreeId}
+              onSelect={() => onSelect(tree.id)}
+            />
+          </li>
+        ))}
+      </ul>
+      <div ref={sentinelRef} aria-hidden className="h-1" />
+      {isFetchingNextPage && (
+        <Loading className="py-3 justify-center" label="Weitere Bäume werden geladen…" />
+      )}
+    </div>
   )
 }
 
