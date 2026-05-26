@@ -31,6 +31,7 @@ const NearestTreeListItem = ({
   onSelect: () => void
 }) => {
   const { tree, distanceMeters } = entry
+  const isAssigned = tree.sensor != null
 
   const clusterId = tree.treeClusterId ? String(tree.treeClusterId) : null
   const { data: clusterRes } = useQuery({
@@ -41,32 +42,34 @@ const NearestTreeListItem = ({
   return (
     <button
       type="button"
-      onClick={onSelect}
-      aria-pressed={isSelected}
+      onClick={isAssigned ? undefined : onSelect}
+      aria-pressed={!isAssigned && isSelected}
+      aria-disabled={isAssigned || undefined}
+      disabled={isAssigned}
       className={cn(
         'relative w-full text-left rounded-xl border bg-white p-4 shadow-cards',
         'transition-all duration-200 ease-in-out',
-        'hover:bg-green-dark-50/50',
+        !isAssigned && 'hover:bg-green-dark-50/50',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-dark focus-visible:ring-offset-2',
-        isSelected
+        isAssigned && 'opacity-70 cursor-not-allowed',
+        !isAssigned && isSelected
           ? 'border-green-dark ring-2 ring-green-dark/20 bg-green-dark-50/30'
           : 'border-dark-100',
       )}
     >
       <div className="flex items-start gap-3">
-        {/* Selection indicator */}
         <div
           className={cn(
             'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
-            isSelected ? 'border-green-dark bg-green-dark text-white' : 'border-dark-200 bg-white',
+            !isAssigned && isSelected
+              ? 'border-green-dark bg-green-dark text-white'
+              : 'border-dark-200 bg-white',
           )}
         >
-          {isSelected && <Check className="size-3" strokeWidth={3} />}
+          {!isAssigned && isSelected && <Check className="size-3" strokeWidth={3} />}
         </div>
 
-        {/* Content */}
         <div className="min-w-0 flex-1">
-          {/* Top row: species + distance */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <TreeDeciduous className="size-4 shrink-0 text-green-dark" aria-hidden />
@@ -78,7 +81,6 @@ const NearestTreeListItem = ({
             </Badge>
           </div>
 
-          {/* Details row */}
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-dark-800">
             <span className="font-mono text-xs text-dark-600">{tree.number}</span>
             <span className="text-dark-200" aria-hidden>
@@ -87,6 +89,16 @@ const NearestTreeListItem = ({
             <span className="text-dark-600 text-xs">
               {tree.treeClusterId ? (clusterRes?.name ?? '…') : 'Nicht zugeordnet'}
             </span>
+            {isAssigned && (
+              <>
+                <span className="text-dark-200" aria-hidden>
+                  |
+                </span>
+                <Badge variant="muted" size="default" aria-label="Sensor zugeordnet">
+                  Sensor zugeordnet
+                </Badge>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -96,8 +108,10 @@ const NearestTreeListItem = ({
 
 const NearestTreeList = ({ trees, selectedTreeId, onSelect }: NearestTreeListProps) => {
   useEffect(() => {
-    if (selectedTreeId === null && trees.length > 0) {
-      onSelect(trees[0].tree.id)
+    if (selectedTreeId !== null) return
+    const firstSelectable = trees.find((entry) => entry.tree.sensor == null)
+    if (firstSelectable) {
+      onSelect(firstSelectable.tree.id)
     }
   }, [trees, selectedTreeId, onSelect])
 
