@@ -97,6 +97,16 @@ vi.mock('@/api/queries', async () => {
       queryKey: ['cluster-test'],
       queryFn: () => Promise.resolve({ id: 'cluster-1', name: 'Test Cluster' }),
     }),
+    sensorIdQuery: (id: string) => ({
+      queryKey: ['sensor', id],
+      queryFn: () =>
+        Promise.resolve({
+          id,
+          status: 'prepared' as const,
+          latestData: null,
+          linkedTreeId: null,
+        }),
+    }),
   }
 })
 
@@ -151,6 +161,9 @@ describe('Sensor wizard', () => {
     expect(screen.getByText('Sensor-QR scannen')).toBeInTheDocument()
     await user.click(screen.getByText('__scan_now__'))
 
+    await screen.findByText(/bereit zur aktivierung/i)
+    await user.click(screen.getByRole('button', { name: /^weiter/i }))
+
     await screen.findByText('Standort bestätigen')
     await user.click(screen.getByRole('button', { name: /^weiter/i }))
 
@@ -181,6 +194,8 @@ describe('Sensor wizard', () => {
     renderRoute()
 
     await user.click(screen.getByText('__scan_now__'))
+    await screen.findByText(/bereit zur aktivierung/i)
+    await user.click(screen.getByRole('button', { name: /^weiter/i }))
     await screen.findByText('Standort bestätigen')
     await user.click(screen.getByRole('button', { name: /^weiter/i }))
     await screen.findByText('Baum zuordnen')
@@ -198,6 +213,8 @@ describe('Sensor wizard', () => {
     renderRoute()
 
     await user.click(screen.getByText('__scan_now__'))
+    await screen.findByText(/bereit zur aktivierung/i)
+    await user.click(screen.getByRole('button', { name: /^weiter/i }))
     await screen.findByText('Standort bestätigen')
     await user.click(screen.getByRole('button', { name: /^weiter/i }))
     await user.click(await screen.findByText('Tilia cordata'))
@@ -220,6 +237,8 @@ describe('Sensor wizard', () => {
     renderRoute()
 
     await user.click(screen.getByText('__scan_now__'))
+    await screen.findByText(/bereit zur aktivierung/i)
+    await user.click(screen.getByRole('button', { name: /^weiter/i }))
     await screen.findByText('Standort bestätigen')
     await user.click(screen.getByRole('button', { name: /^weiter/i }))
     await user.click(await screen.findByText('Tilia cordata'))

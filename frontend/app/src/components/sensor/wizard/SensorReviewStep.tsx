@@ -68,21 +68,24 @@ const SensorReviewStep = ({
         </div>
       </div>
 
-      {isError && errorMessage && <InlineAlert variant="destructive" description={errorMessage} />}
-
-      <Button onClick={onActivate} disabled={isPending} className="w-full sm:w-auto">
-        {isPending ? (
-          <>
-            <Loader2 className="size-4 animate-spin" />
-            Aktiviere …
-          </>
-        ) : (
-          <>
-            <ShieldCheck className="size-4" />
-            Sensor aktivieren
-          </>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+        {isError && errorMessage && (
+          <InlineAlert variant="destructive" description={errorMessage} />
         )}
-      </Button>
+        <Button onClick={onActivate} disabled={isPending} className="w-full sm:w-auto sm:ml-auto">
+          {isPending ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Aktiviere …
+            </>
+          ) : (
+            <>
+              <ShieldCheck className="size-4" />
+              Sensor aktivieren
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   )
 }

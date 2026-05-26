@@ -1,4 +1,5 @@
 import { sensorApi } from '@/api/backendApi'
+import { sensorIdQuery } from '@/api/queries'
 import SensorGpsStep from '@/components/sensor/wizard/SensorGpsStep'
 import SensorReviewStep from '@/components/sensor/wizard/SensorReviewStep'
 import SensorScanStep from '@/components/sensor/wizard/SensorScanStep'
@@ -11,7 +12,7 @@ import {
   type WizardStep,
 } from '@/components/sensor/wizard/state'
 import useGeolocation from '@/hooks/useGeolocation'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useReducer } from 'react'
 
@@ -61,6 +62,14 @@ function NewSensor() {
   }, [state.sensorId, state.frozenFix, position, stop])
 
   const completedSteps = getCompletedSteps(state)
+
+  const sensorLookup = useQuery({
+    ...sensorIdQuery(state.sensorId ?? ''),
+    enabled: !!state.sensorId,
+    retry: false,
+  })
+
+  const verifiedSensor = sensorLookup.data?.status === 'prepared' ? sensorLookup.data : null
 
   const activateMutation = useMutation({
     mutationFn: () =>
@@ -135,7 +144,7 @@ function NewSensor() {
   }
 
   const canGoNext =
-    (state.step === 1 && Boolean(state.sensorId)) ||
+    (state.step === 1 && Boolean(verifiedSensor)) ||
     (state.step === 2 && Boolean(state.frozenFix)) ||
     (state.step === 3 && Boolean(state.selectedTreeId))
 
@@ -145,21 +154,25 @@ function NewSensor() {
       completedSteps={completedSteps}
       onStepClick={handleStepClick}
       onBack={state.step === 1 ? undefined : handleBack}
-      onNext={state.step === 4 || (state.step === 1 && !state.sensorId) ? undefined : handleNext}
+      onNext={state.step === 4 || (state.step === 1 && !verifiedSensor) ? undefined : handleNext}
       canGoNext={canGoNext}
     >
       {state.step === 1 && (
         <SensorScanStep
           scannedSensorId={state.sensorId}
+          isLookupLoading={!!state.sensorId && sensorLookup.isFetching}
+          isLookupError={sensorLookup.isError}
+          lookupErrorStatus={resolveResponseStatus(sensorLookup.error)}
+          sensor={sensorLookup.data ?? null}
           onScanned={(id) => {
             dispatch({ type: 'qrScanned', sensorId: id })
             if (position) {
               dispatch({ type: 'gpsFrozen', fix: position })
               stop()
             }
-            dispatch({ type: 'goToStep', step: 2 })
           }}
           onScanAgain={() => dispatch({ type: 'scanCleared' })}
+          onRetryLookup={() => void sensorLookup.refetch()}
         />
       )}
       {state.step === 2 && (
