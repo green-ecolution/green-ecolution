@@ -75,6 +75,7 @@ quickcheck_macros = "1"
 rsa = { version = "0.9", features = ["sha2"] }
 testcontainers = { version = "0.26", features = ["watchdog"] }
 testcontainers-modules = { version = "0.14", features = ["postgres"] }
+urlencoding = "2"
 wiremock = "0.6.5"
 
 [build-dependencies]
