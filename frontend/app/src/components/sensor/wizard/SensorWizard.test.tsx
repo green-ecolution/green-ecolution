@@ -112,7 +112,7 @@ vi.mock('@tanstack/react-router', async () => {
   return {
     ...actual,
     useNavigate: () => navigateMock,
-    createFileRoute: (_path: string) => (config: { component: () => JSX.Element }) => ({
+    createFileRoute: (_path: string) => (config: { component: () => React.JSX.Element }) => ({
       ...config,
       options: config,
     }),
@@ -126,7 +126,7 @@ const renderRoute = () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
-  const Component = (NewSensorRoute as unknown as { options: { component: () => JSX.Element } })
+  const Component = (NewSensorRoute as unknown as { options: { component: () => React.JSX.Element } })
     .options.component
   return render(
     <QueryClientProvider client={queryClient}>
