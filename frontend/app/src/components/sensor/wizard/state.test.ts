@@ -39,6 +39,21 @@ describe('wizardReducer', () => {
     expect(next.selectedTreeSpecies).toBeNull()
   })
 
+  it('scanCleared nullifies sensorId but keeps the rest of the state', () => {
+    const seeded: WizardState = {
+      ...INITIAL_WIZARD_STATE,
+      sensorId: 'EUI-1',
+      frozenFix: fix,
+      selectedTreeId: 'tree-a',
+      selectedTreeNumber: '1',
+      selectedTreeSpecies: 'Acer',
+    }
+    const next = wizardReducer(seeded, { type: 'scanCleared' })
+    expect(next.sensorId).toBeNull()
+    expect(next.frozenFix).toEqual(fix)
+    expect(next.selectedTreeId).toBe('tree-a')
+  })
+
   it('gpsFrozen invalidates the selected tree (different position)', () => {
     const seeded: WizardState = {
       ...INITIAL_WIZARD_STATE,

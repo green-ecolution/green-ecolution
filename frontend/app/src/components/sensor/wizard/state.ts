@@ -17,6 +17,7 @@ export interface WizardState {
 
 export type WizardAction =
   | { type: 'qrScanned'; sensorId: string }
+  | { type: 'scanCleared' }
   | { type: 'gpsFrozen'; fix: GeolocationFix }
   | { type: 'gpsCleared' }
   | { type: 'treeSelected'; treeId: string; number: string; species: string }
@@ -54,6 +55,8 @@ export const wizardReducer = (state: WizardState, action: WizardAction): WizardS
         submission: 'idle',
         errorMessage: null,
       }
+    case 'scanCleared':
+      return { ...state, sensorId: null }
     case 'gpsFrozen':
       return { ...state, frozenFix: action.fix, ...clearTree }
     case 'gpsCleared':

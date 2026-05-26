@@ -142,6 +142,7 @@ function NewSensor() {
         <SensorScanStep
           gpsPosition={position}
           gpsStatus={gpsStatus}
+          scannedSensorId={state.sensorId}
           onScanned={(id) => {
             dispatch({ type: 'qrScanned', sensorId: id })
             if (position) {
@@ -150,6 +151,7 @@ function NewSensor() {
             }
             dispatch({ type: 'goToStep', step: 2 })
           }}
+          onScanAgain={() => dispatch({ type: 'scanCleared' })}
         />
       )}
       {state.step === 2 && (
