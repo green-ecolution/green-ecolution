@@ -47,16 +47,12 @@ function renderWithClient(ui: ReactNode) {
 
 describe('SensorTreeSearchResults', () => {
   it('shows idle hint when q is empty', () => {
-    renderWithClient(
-      <SensorTreeSearchResults q="" selectedTreeId={null} onSelect={vi.fn()} />,
-    )
+    renderWithClient(<SensorTreeSearchResults q="" selectedTreeId={null} onSelect={vi.fn()} />)
     expect(screen.getByText(/Tippe Baumnummer oder Baumart/i)).toBeInTheDocument()
   })
 
   it('shows idle hint when q is only whitespace', () => {
-    renderWithClient(
-      <SensorTreeSearchResults q="   " selectedTreeId={null} onSelect={vi.fn()} />,
-    )
+    renderWithClient(<SensorTreeSearchResults q="   " selectedTreeId={null} onSelect={vi.fn()} />)
     expect(screen.getByText(/Tippe Baumnummer oder Baumart/i)).toBeInTheDocument()
   })
 
@@ -64,9 +60,7 @@ describe('SensorTreeSearchResults', () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     vi.mocked(treeApi.listTrees).mockResolvedValueOnce(makeListResponse([]))
 
-    renderWithClient(
-      <SensorTreeSearchResults q="xyz" selectedTreeId={null} onSelect={vi.fn()} />,
-    )
+    renderWithClient(<SensorTreeSearchResults q="xyz" selectedTreeId={null} onSelect={vi.fn()} />)
 
     expect(await screen.findByText(/Keine Bäume gefunden/i)).toBeInTheDocument()
   })
@@ -78,9 +72,7 @@ describe('SensorTreeSearchResults', () => {
     )
 
     const onSelect = vi.fn()
-    renderWithClient(
-      <SensorTreeSearchResults q="T-" selectedTreeId={null} onSelect={onSelect} />,
-    )
+    renderWithClient(<SensorTreeSearchResults q="T-" selectedTreeId={null} onSelect={onSelect} />)
 
     const row = await screen.findByRole('button', { name: /Eiche/ })
     fireEvent.click(row)
@@ -96,15 +88,20 @@ describe('SensorTreeSearchResults', () => {
           id: 'tree-b',
           species: 'Buche',
           number: 'T-2',
-          sensor: { id: 'eui', status: 'online', createdAt: '', updatedAt: '' },
+          sensor: {
+            id: 'eui',
+            status: 'online',
+            createdAt: '',
+            updatedAt: '',
+            model: { id: 'model-1', name: 'EcoDrizzler' },
+            sensorType: 'lorawan',
+          },
         }),
       ]),
     )
 
     const onSelect = vi.fn()
-    renderWithClient(
-      <SensorTreeSearchResults q="T-" selectedTreeId={null} onSelect={onSelect} />,
-    )
+    renderWithClient(<SensorTreeSearchResults q="T-" selectedTreeId={null} onSelect={onSelect} />)
 
     const buche = await screen.findByRole('button', { name: /Buche/ })
     expect(buche).toHaveAttribute('aria-disabled', 'true')
