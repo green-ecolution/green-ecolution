@@ -25,6 +25,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "vitest.config.ts"],
   "references": [{ "path": "./tsconfig.build.json" }]
 }
