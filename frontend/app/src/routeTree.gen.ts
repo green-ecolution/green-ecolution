@@ -566,7 +566,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof ProtectedSettingsRouteRouteWithChildren
   '/team': typeof ProtectedTeamRouteRouteWithChildren
   '/treecluster': typeof ProtectedTreeclusterRouteRouteWithChildren
-  '/trees': typeof ProtectedTreesFormularRouteWithChildren
+  '/trees': typeof ProtectedTreesRouteRouteWithChildren
   '/vehicles': typeof ProtectedVehiclesRouteRouteWithChildren
   '/watering-plans': typeof ProtectedWateringPlansRouteRouteWithChildren
   '/dashboard': typeof ProtectedDashboardRoute

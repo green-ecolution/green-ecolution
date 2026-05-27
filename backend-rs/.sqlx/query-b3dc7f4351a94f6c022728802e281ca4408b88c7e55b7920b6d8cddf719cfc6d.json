@@ -34,7 +34,8 @@
                 "percent",
                 "centibar",
                 "ohm",
-                "celsius"
+                "celsius",
+                "volt"
               ]
             }
           }

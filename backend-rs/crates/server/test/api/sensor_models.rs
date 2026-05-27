@@ -44,11 +44,19 @@ async fn get_sensor_model_returns_abilities_for_ges_1000() {
     let body: serde_json::Value = r.json().await.unwrap();
     assert_eq!(body["name"], "GES-1000");
     let abilities = body["abilities"].as_array().unwrap();
-    assert_eq!(abilities.len(), 2);
-    for a in abilities {
-        assert_eq!(a["ability"], "soil_moisture");
-        assert_eq!(a["unit"], "percent");
-    }
+    assert_eq!(abilities.len(), 5, "abilities = {abilities:#?}");
+    let depths_for = |name: &str| {
+        let mut ds: Vec<i64> = abilities
+            .iter()
+            .filter(|a| a["ability"] == name)
+            .filter_map(|a| a["depth_cm"].as_i64())
+            .collect();
+        ds.sort_unstable();
+        ds
+    };
+    assert_eq!(depths_for("soil_moisture"), vec![40, 80]);
+    assert_eq!(depths_for("temperature"), vec![40, 80]);
+    assert_eq!(depths_for("battery"), vec![0]);
 }
 
 #[tokio::test]

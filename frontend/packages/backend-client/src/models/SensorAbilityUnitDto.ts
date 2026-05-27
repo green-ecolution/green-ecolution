@@ -21,7 +21,8 @@ export const SensorAbilityUnitDto = {
     Percent: 'percent',
     Centibar: 'centibar',
     Ohm: 'ohm',
-    Celsius: 'celsius'
+    Celsius: 'celsius',
+    Volt: 'volt'
 } as const;
 export type SensorAbilityUnitDto = typeof SensorAbilityUnitDto[keyof typeof SensorAbilityUnitDto];
 
