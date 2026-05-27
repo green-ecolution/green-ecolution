@@ -13,7 +13,7 @@ spec:
           image: backend-image
           imagePullPolicy: Always
           command: ["./migrate"]
-          args: ["reset", "--with-seed"]
+          args: ["up"]
           envFrom:
             - configMapRef:
                 name: backend-config
