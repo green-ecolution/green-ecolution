@@ -1,97 +1,229 @@
-import BackLink from '@/components/general/links/BackLink'
-import InlineGPSReadout from '@/components/geolocation/InlineGPSReadout'
-import QRScannerView from '@/components/scanner/QRScannerView'
-import SensorGeolocationSummary from '@/components/sensor/SensorGeolocationSummary'
-import useGeolocation, { type GeolocationFix } from '@/hooks/useGeolocation'
-import { createFileRoute } from '@tanstack/react-router'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { sensorApi } from '@/api/backendApi'
+import { sensorIdQuery } from '@/api/queries'
+import SensorGpsStep from '@/components/sensor/wizard/SensorGpsStep'
+import SensorReviewStep from '@/components/sensor/wizard/SensorReviewStep'
+import SensorScanStep from '@/components/sensor/wizard/SensorScanStep'
+import SensorTreeStep from '@/components/sensor/wizard/SensorTreeStep'
+import SensorWizardLayout from '@/components/sensor/wizard/SensorWizardLayout'
+import SensorWizardSuccess from '@/components/sensor/wizard/SensorWizardSuccess'
+import {
+  INITIAL_WIZARD_STATE,
+  normalizeSensorId,
+  wizardReducer,
+  type WizardStep,
+} from '@/components/sensor/wizard/state'
+import useGeolocation from '@/hooks/useGeolocation'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useCallback, useEffect, useReducer } from 'react'
 
 export const Route = createFileRoute('/_protected/sensors/new/')({
   component: NewSensor,
 })
 
+const resolveResponseStatus = (err: unknown): number | null => {
+  if (err instanceof Response) return err.status
+  if (
+    err != null &&
+    typeof err === 'object' &&
+    'response' in err &&
+    err.response instanceof Response
+  )
+    return err.response.status
+  return null
+}
+
+const mapActivateError = (err: unknown): string => {
+  const status = resolveResponseStatus(err)
+  if (status === 404) return 'Sensor existiert nicht (mehr). Bitte erneut scannen.'
+  if (status === 409) return 'Sensor ist bereits einem Baum zugeordnet.'
+  return 'Aktivierung fehlgeschlagen. Bitte erneut versuchen.'
+}
+
 function NewSensor() {
-  // Start GPS in parallel with the QR-scan so a fix is usually ready by the
-  // time the technician confirms the scanned sensor.
-  const { status, position, errorMessage, stop, relocate } = useGeolocation({ autoStart: true })
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const [state, dispatch] = useReducer(wizardReducer, INITIAL_WIZARD_STATE)
+  const {
+    status: gpsStatus,
+    position,
+    errorMessage: gpsError,
+    stop,
+    relocate,
+  } = useGeolocation({
+    autoStart: true,
+  })
 
-  const [scannedSensorId, setScannedSensorId] = useState<string | null>(null)
-  // Frozen snapshot shown in the summary. Decouples the displayed fix from
-  // further watchPosition updates so the map / accuracy don't keep drifting
-  // after the user has accepted the sensor.
-  const [frozenFix, setFrozenFix] = useState<GeolocationFix | null>(null)
-  const pendingStopRef = useRef(false)
-
+  // Freeze the live fix once a sensor was scanned; later steps work on the snapshot.
   useEffect(() => {
-    if (!pendingStopRef.current || !position) return
-    pendingStopRef.current = false
-    stop()
-  }, [position, stop])
-
-  const handleContinue = (sensorId: string) => {
-    setScannedSensorId(sensorId)
-    if (position) {
-      setFrozenFix(position)
+    if (state.sensorId && !state.frozenFix && position) {
+      dispatch({ type: 'gpsFrozen', fix: position })
       stop()
-    } else {
-      pendingStopRef.current = true
     }
-  }
+  }, [state.sensorId, state.frozenFix, position, stop])
 
-  const handleScanAgain = () => {
-    setScannedSensorId(null)
-    setFrozenFix(null)
-    pendingStopRef.current = false
-    void relocate()
-  }
+  const sensorLookup = useQuery({
+    ...sensorIdQuery(state.sensorId ?? ''),
+    enabled: !!state.sensorId,
+    retry: false,
+  })
 
-  const handleRelocate = async () => {
-    setFrozenFix(null)
-    pendingStopRef.current = false
+  const verifiedSensor = sensorLookup.data?.status === 'prepared' ? sensorLookup.data : null
+
+  const completedSteps = getCompletedSteps({
+    sensorVerified: Boolean(verifiedSensor),
+    frozenFix: state.frozenFix,
+    selectedTreeId: state.selectedTreeId,
+  })
+
+  const activateMutation = useMutation({
+    mutationFn: () =>
+      sensorApi.activateSensor({
+        sensorId: state.sensorId!,
+        activateSensorRequest: { treeId: state.selectedTreeId! },
+      }),
+    onMutate: () => dispatch({ type: 'submissionStart' }),
+    onSuccess: async () => {
+      dispatch({ type: 'submissionSuccess' })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['sensors'] }),
+        queryClient.invalidateQueries({ queryKey: ['sensor', state.sensorId] }),
+        queryClient.invalidateQueries({ queryKey: ['tree', state.selectedTreeId] }),
+      ])
+    },
+    onError: (err) => dispatch({ type: 'submissionError', message: mapActivateError(err) }),
+  })
+
+  const handleRelocate = useCallback(async () => {
+    dispatch({ type: 'gpsCleared' })
     const next = await relocate().catch(() => null)
     if (next) {
-      setFrozenFix(next)
+      dispatch({ type: 'gpsFrozen', fix: next })
       stop()
     }
+  }, [relocate, stop])
+
+  const handleStepClick = useCallback(
+    (target: WizardStep) => dispatch({ type: 'goToStep', step: target }),
+    [],
+  )
+
+  const handleBack = useCallback(() => {
+    if (state.step > 1) {
+      dispatch({ type: 'goToStep', step: (state.step - 1) as WizardStep })
+    }
+  }, [state.step])
+
+  const handleNext = useCallback(() => {
+    if (state.step < 4) {
+      dispatch({ type: 'goToStep', step: (state.step + 1) as WizardStep })
+    }
+  }, [state.step])
+
+  const handleResetForNext = useCallback(() => {
+    dispatch({ type: 'resetForNextSensor' })
+    void relocate()
+  }, [relocate])
+
+  const handleBackToOverview = useCallback(() => {
+    void navigate({ to: '/sensors', search: { page: 1 } })
+  }, [navigate])
+
+  if (state.submission === 'success') {
+    return (
+      <SensorWizardLayout
+        step={4}
+        completedSteps={[1, 2, 3, 4]}
+        onStepClick={handleStepClick}
+        canGoNext={false}
+        hideFooter
+      >
+        <SensorWizardSuccess
+          sensorId={state.sensorId ?? ''}
+          treeNumber={state.selectedTreeNumber ?? ''}
+          onNext={handleResetForNext}
+          onBackToOverview={handleBackToOverview}
+        />
+      </SensorWizardLayout>
+    )
   }
 
-  const handleConfirmTree = useCallback((_treeId: string) => {
-    // Tree assignment stored for future backend linking
-  }, [])
-
-  const summaryFix = frozenFix ?? (scannedSensorId ? position : null)
+  const canGoNext =
+    (state.step === 1 && Boolean(verifiedSensor)) ||
+    (state.step === 2 && Boolean(state.frozenFix)) ||
+    (state.step === 3 && Boolean(state.selectedTreeId))
 
   return (
-    <div className="container mt-6">
-      <BackLink label="Zurück zur Sensorübersicht" link={{ to: '/sensors' }} />
-      <article className="2xl:w-4/5 mb-8 md:mb-10">
-        <h1 className="font-lato font-bold text-3xl mb-2 lg:text-4xl xl:text-5xl">
-          Sensor hinzufügen
-        </h1>
-        <p className="text-sm text-muted-foreground max-w-prose">
-          {scannedSensorId
-            ? 'Überprüfe Sensor-ID und Standort. Anhand des erfassten GPS-Standorts wird automatisch der nächstgelegene Baum gesucht und mit dem Sensor verknüpft.'
-            : 'Scanne den QR-Code auf der Sensoreinheit, um den Sensor zu identifizieren. Parallel wird dein GPS-Standort ermittelt, um den nächstgelegenen Baum automatisch zu finden und mit dem Sensor zu verknüpfen.'}
-        </p>
-      </article>
-
-      {scannedSensorId ? (
-        <SensorGeolocationSummary
-          sensorId={scannedSensorId}
-          position={summaryFix}
-          status={status}
-          errorMessage={errorMessage}
-          onScanAgain={handleScanAgain}
-          onRelocate={handleRelocate}
-          onConfirmTree={handleConfirmTree}
-        />
-      ) : (
-        <QRScannerView
-          continueLabel="Sensor übernehmen"
-          onContinue={handleContinue}
-          extra={<InlineGPSReadout position={position} status={status} />}
+    <SensorWizardLayout
+      step={state.step}
+      completedSteps={completedSteps}
+      onStepClick={handleStepClick}
+      onBack={state.step === 1 ? undefined : handleBack}
+      onNext={state.step === 4 || state.step === 1 ? undefined : handleNext}
+      canGoNext={canGoNext}
+    >
+      {state.step === 1 && (
+        <SensorScanStep
+          scannedSensorId={state.sensorId}
+          isLookupLoading={!!state.sensorId && sensorLookup.isFetching}
+          isLookupError={sensorLookup.isError}
+          lookupErrorStatus={resolveResponseStatus(sensorLookup.error)}
+          sensor={sensorLookup.data ?? null}
+          onScanned={(id) => {
+            dispatch({ type: 'qrScanned', sensorId: normalizeSensorId(id) })
+            if (position) {
+              dispatch({ type: 'gpsFrozen', fix: position })
+              stop()
+            }
+          }}
+          onScanAgain={() => dispatch({ type: 'scanCleared' })}
+          onRetryLookup={() => void sensorLookup.refetch()}
+          onContinue={handleNext}
         />
       )}
-    </div>
+      {state.step === 2 && (
+        <SensorGpsStep
+          position={state.frozenFix}
+          status={gpsStatus}
+          errorMessage={gpsError}
+          onRelocate={() => void handleRelocate()}
+        />
+      )}
+      {state.step === 3 && state.frozenFix && (
+        <SensorTreeStep
+          position={state.frozenFix}
+          selectedTreeId={state.selectedTreeId}
+          onSelect={(treeId, number, species) =>
+            dispatch({ type: 'treeSelected', treeId, number, species })
+          }
+        />
+      )}
+      {state.step === 4 && state.frozenFix && state.sensorId && state.selectedTreeId && (
+        <SensorReviewStep
+          sensorId={state.sensorId}
+          treeNumber={state.selectedTreeNumber ?? ''}
+          treeSpecies={state.selectedTreeSpecies ?? ''}
+          position={state.frozenFix}
+          status={state.submission}
+          errorMessage={state.errorMessage}
+          onActivate={() => activateMutation.mutate()}
+        />
+      )}
+    </SensorWizardLayout>
   )
+}
+
+function getCompletedSteps(args: {
+  sensorVerified: boolean
+  frozenFix: unknown
+  selectedTreeId: string | null
+}) {
+  const done: number[] = []
+  if (!args.sensorVerified) return done
+  done.push(1)
+  if (!args.frozenFix) return done
+  done.push(2)
+  if (!args.selectedTreeId) return done
+  done.push(3)
+  return done
 }

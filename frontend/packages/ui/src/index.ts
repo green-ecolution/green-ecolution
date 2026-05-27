@@ -251,6 +251,10 @@ export type { SliderProps } from './components/ui/slider'
 export { StatusCard, statusCardVariants } from './components/ui/status-card'
 export type { StatusCardProps, StatusVariant } from './components/ui/status-card'
 
+// Stepper
+export { Stepper } from './components/ui/stepper'
+export type { StepperProps, StepDefinition } from './components/ui/stepper'
+
 // Table
 export {
   Table,
