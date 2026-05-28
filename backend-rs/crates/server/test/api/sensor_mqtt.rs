@@ -155,38 +155,38 @@ async fn ges_1000_ingest_writes_volumetric_normalized_values() {
         .model_by_id(domain::Id::new(model_id))
         .await
         .unwrap();
-    let ab_30 = model
-        .ability_id_for(domain::sensor_model::SensorAbilityName::SoilMoisture, 30)
+    let ab_40 = model
+        .ability_id_for(domain::sensor_model::SensorAbilityName::SoilMoisture, 40)
         .unwrap();
-    let ab_90 = model
-        .ability_id_for(domain::sensor_model::SensorAbilityName::SoilMoisture, 90)
+    let ab_80 = model
+        .ability_id_for(domain::sensor_model::SensorAbilityName::SoilMoisture, 80)
         .unwrap();
 
     let normalized = vec![
         NormalizedValue {
-            model_ability_id: ab_30,
+            model_ability_id: ab_40,
             value: Decimal::from_f64_retain(42.0).unwrap(),
         },
         NormalizedValue {
-            model_ability_id: ab_90,
+            model_ability_id: ab_80,
             value: Decimal::from_f64_retain(25.0).unwrap(),
         },
     ];
     let typed = SensorReadings::Volumetrics(vec![
         VolumetricReading {
-            depth_cm: 30,
+            depth_cm: 40,
             moisture_percent: 42.0,
         },
         VolumetricReading {
-            depth_cm: 90,
+            depth_cm: 80,
             moisture_percent: 25.0,
         },
     ]);
     let raw_payload = json!({
         "device": "eui-mqtt-ges",
         "readings": [
-            {"ability": "soil_moisture", "depth": 30, "value": 42.0},
-            {"ability": "soil_moisture", "depth": 90, "value": 25.0},
+            {"ability": "soil_moisture", "depth": 40, "value": 42.0},
+            {"ability": "soil_moisture", "depth": 80, "value": 25.0},
         ]
     });
 
@@ -217,11 +217,11 @@ async fn prepared_sensor_ingest_persists_reading_without_tree_link() {
         .model_by_id(domain::Id::new(model_id))
         .await
         .unwrap();
-    let ab_30 = model
-        .ability_id_for(domain::sensor_model::SensorAbilityName::SoilMoisture, 30)
+    let ab_40 = model
+        .ability_id_for(domain::sensor_model::SensorAbilityName::SoilMoisture, 40)
         .unwrap();
     let normalized = vec![NormalizedValue {
-        model_ability_id: ab_30,
+        model_ability_id: ab_40,
         value: Decimal::from_f64_retain(33.0).unwrap(),
     }];
 
@@ -232,7 +232,7 @@ async fn prepared_sensor_ingest_persists_reading_without_tree_link() {
             raw_payload: json!({"device": "eui-mqtt-prep"}),
             normalized,
             typed: SensorReadings::Volumetrics(vec![VolumetricReading {
-                depth_cm: 30,
+                depth_cm: 40,
                 moisture_percent: 33.0,
             }]),
         })

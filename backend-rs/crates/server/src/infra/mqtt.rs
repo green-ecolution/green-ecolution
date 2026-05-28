@@ -30,7 +30,7 @@ use domain::{
     sensor::{
         SensorId,
         data::{VolumetricReading, Watermark},
-        payload::{EcoDrizzlerPayload, GenericReadingPayload},
+        payload::{EcoDrizzlerPayload, GenericReadingPayload, PayloadReading},
         repository::NormalizedValue,
     },
     sensor_model::{SensorAbilityName, SensorModel},
@@ -130,8 +130,10 @@ async fn handle_publish(
     raw: &[u8],
     sensor_service: &SensorService,
 ) -> Result<(), MqttSubscriberError> {
-    let body = unwrap_envelope(raw)?;
-    let device = pick_device(&body)?;
+    let envelope: Value =
+        serde_json::from_slice(raw).map_err(|e| MqttSubscriberError::Decode(e.to_string()))?;
+    let device = pick_device(&envelope)?;
+    let body = unwrap_envelope(&envelope);
     let sensor_id = SensorId::new(device)
         .map_err(|e| MqttSubscriberError::Decode(format!("invalid sensor id: {e}")))?;
 
@@ -151,31 +153,43 @@ async fn handle_publish(
         .map_err(|e| MqttSubscriberError::Service(e.to_string()))
 }
 
-/// Decodes the TTN-style envelope (`{"uplink_message":{"decoded_payload":…}}`)
-/// or returns the raw body if no envelope is present — useful for direct
-/// publish testing.
-fn unwrap_envelope(raw: &[u8]) -> Result<Value, MqttSubscriberError> {
-    let v: Value =
-        serde_json::from_slice(raw).map_err(|e| MqttSubscriberError::Decode(e.to_string()))?;
+/// Handles both TTN envelopes (`data.uplink_message.decoded_payload` and
+/// `uplink_message.decoded_payload`) and a flat body for direct publish tests.
+fn unwrap_envelope(v: &Value) -> Value {
     if let Some(decoded) = v
-        .get("uplink_message")
-        .and_then(|u| u.get("decoded_payload"))
+        .pointer("/data/uplink_message/decoded_payload")
+        .or_else(|| v.pointer("/uplink_message/decoded_payload"))
     {
-        return Ok(decoded.clone());
+        return decoded.clone();
     }
-    Ok(v)
+    v.clone()
 }
 
+/// `identifiers[]` is scanned, not indexed: TTN does not guarantee that
+/// `device_ids` is the first entry.
 fn pick_device(v: &Value) -> Result<String, MqttSubscriberError> {
-    v.get("device")
-        .and_then(|x| x.as_str())
-        .map(str::to_owned)
-        .or_else(|| {
-            v.get("deviceName")
+    let direct = [
+        "/data/end_device_ids/device_id",
+        "/end_device_ids/device_id",
+        "/device",
+        "/deviceName",
+    ];
+    for p in direct {
+        if let Some(s) = v.pointer(p).and_then(|x| x.as_str()) {
+            return Ok(s.to_owned());
+        }
+    }
+    if let Some(arr) = v.pointer("/identifiers").and_then(|x| x.as_array()) {
+        for entry in arr {
+            if let Some(s) = entry
+                .pointer("/device_ids/device_id")
                 .and_then(|x| x.as_str())
-                .map(str::to_owned)
-        })
-        .ok_or_else(|| MqttSubscriberError::Decode("missing device id".into()))
+            {
+                return Ok(s.to_owned());
+            }
+        }
+    }
+    Err(MqttSubscriberError::Decode("missing device id".into()))
 }
 
 fn build_ingest(
@@ -217,8 +231,16 @@ fn build_ges_1000(
     body: &Value,
     sensor_id: SensorId,
 ) -> Result<ReadingIngest, MqttSubscriberError> {
-    let payload: GenericReadingPayload = serde_json::from_value(body.clone())
-        .map_err(|e| MqttSubscriberError::Decode(e.to_string()))?;
+    let payload: GenericReadingPayload = match serde_json::from_value(body.clone()) {
+        Ok(p) => p,
+        Err(e) => {
+            tracing::trace!(
+                error = %e,
+                "generic ges-1000 payload decode failed; falling back to TTN shape"
+            );
+            decode_ttn_ges_1000(body, &sensor_id)?
+        }
+    };
     let raw_payload =
         serde_json::to_value(&payload).map_err(|e| MqttSubscriberError::Decode(e.to_string()))?;
 
@@ -316,6 +338,69 @@ fn decode_ttn_eco_drizzler(decoded: &Value) -> Result<EcoDrizzlerPayload, MqttSu
     })
 }
 
+/// Depth comes from the probe `id`, not the JSON key position, so swapped
+/// probes or reordered keys do not silently invert depths. Battery-only
+/// payloads are rejected to avoid emitting an empty `Volumetrics` event.
+fn decode_ttn_ges_1000(
+    decoded: &Value,
+    sensor_id: &SensorId,
+) -> Result<GenericReadingPayload, MqttSubscriberError> {
+    let battery = decoded.get("battery_v").and_then(|x| x.as_f64());
+    let mut readings = Vec::new();
+    for key in ["sensor1", "sensor2"] {
+        let Some(s) = decoded.get(key) else { continue };
+        let probe_id = s.get("id").and_then(|x| x.as_i64());
+        let Some(depth) = probe_id.and_then(probe_id_to_depth_cm) else {
+            tracing::warn!(
+                probe = %key,
+                id = ?probe_id,
+                "ges-1000 probe has missing or unknown id; skipping readings"
+            );
+            continue;
+        };
+        if let Some(v) = s.get("humidity").and_then(|x| x.as_f64()) {
+            readings.push(PayloadReading {
+                ability: "soil_moisture".into(),
+                depth,
+                value: v,
+            });
+        }
+        if let Some(v) = s.get("temperature").and_then(|x| x.as_f64()) {
+            readings.push(PayloadReading {
+                ability: "temperature".into(),
+                depth,
+                value: v,
+            });
+        }
+    }
+    if readings.is_empty() {
+        return Err(MqttSubscriberError::Decode(
+            "ges-1000 payload has no probe readings (sensor1/sensor2 missing or empty)".into(),
+        ));
+    }
+    if let Some(v) = battery {
+        readings.push(PayloadReading {
+            ability: "battery".into(),
+            depth: 0,
+            value: v,
+        });
+    }
+    Ok(GenericReadingPayload {
+        device: sensor_id.as_str().to_owned(),
+        battery,
+        readings,
+    })
+}
+
+/// GES-1000 firmware assigns id 1 to the 40 cm probe, id 2 to 80 cm.
+fn probe_id_to_depth_cm(id: i64) -> Option<i32> {
+    match id {
+        1 => Some(40),
+        2 => Some(80),
+        _ => None,
+    }
+}
+
 fn pick_string(v: &Value, key: &str) -> Result<String, MqttSubscriberError> {
     v.get(key)
         .and_then(|x| x.as_str())
@@ -382,34 +467,136 @@ mod tests {
         }
     }
 
+    /// Mirrors the production schema set by migration 20260527124126.
     fn ges_1000_model() -> SensorModel {
-        let moisture_ability_id = uuid::Uuid::now_v7();
-        let moisture = move |depth_cm| SensorModelAbility {
-            id: uuid::Uuid::now_v7(),
-            ability: SensorAbility {
-                id: moisture_ability_id,
-                name: SensorAbilityName::SoilMoisture,
-                unit: SensorAbilityUnit::Percent,
-            },
-            depth_cm,
-        };
+        fn ma(
+            ability_id: uuid::Uuid,
+            name: SensorAbilityName,
+            unit: SensorAbilityUnit,
+            depth_cm: i32,
+        ) -> SensorModelAbility {
+            SensorModelAbility {
+                id: uuid::Uuid::now_v7(),
+                ability: SensorAbility {
+                    id: ability_id,
+                    name,
+                    unit,
+                },
+                depth_cm,
+            }
+        }
+        let moisture_id = uuid::Uuid::now_v7();
+        let temperature_id = uuid::Uuid::now_v7();
+        let battery_id = uuid::Uuid::now_v7();
         SensorModel {
             id: Id::new_v7(),
             name: SensorModelName::new("GES-1000").unwrap(),
             description: None,
-            abilities: vec![moisture(30), moisture(60), moisture(90)],
+            abilities: vec![
+                ma(
+                    moisture_id,
+                    SensorAbilityName::SoilMoisture,
+                    SensorAbilityUnit::Percent,
+                    40,
+                ),
+                ma(
+                    moisture_id,
+                    SensorAbilityName::SoilMoisture,
+                    SensorAbilityUnit::Percent,
+                    80,
+                ),
+                ma(
+                    temperature_id,
+                    SensorAbilityName::Temperature,
+                    SensorAbilityUnit::Celsius,
+                    40,
+                ),
+                ma(
+                    temperature_id,
+                    SensorAbilityName::Temperature,
+                    SensorAbilityUnit::Celsius,
+                    80,
+                ),
+                ma(
+                    battery_id,
+                    SensorAbilityName::Battery,
+                    SensorAbilityUnit::Volt,
+                    0,
+                ),
+            ],
         }
     }
 
     #[test]
     fn unwrap_envelope_handles_ttn_and_flat() {
         let env = json!({"uplink_message": {"decoded_payload": {"device": "eui-1"}}});
-        let v = unwrap_envelope(&serde_json::to_vec(&env).unwrap()).unwrap();
+        let v = unwrap_envelope(&env);
         assert_eq!(v["device"], "eui-1");
 
         let flat = json!({"device": "eui-2"});
-        let v = unwrap_envelope(&serde_json::to_vec(&flat).unwrap()).unwrap();
+        let v = unwrap_envelope(&flat);
         assert_eq!(v["device"], "eui-2");
+    }
+
+    #[test]
+    fn unwrap_envelope_handles_as_up_data_forward() {
+        let env = json!({
+            "name": "as.up.data.forward",
+            "data": {
+                "end_device_ids": {"device_id": "eui-a8404107bf5e6409"},
+                "uplink_message": {
+                    "decoded_payload": {"avgHumid": 13.2, "avgTemperature": 13.8}
+                }
+            }
+        });
+        let v = unwrap_envelope(&env);
+        assert_eq!(v["avgHumid"], 13.2);
+        assert_eq!(v["avgTemperature"], 13.8);
+    }
+
+    #[test]
+    fn pick_device_reads_as_up_data_forward_envelope() {
+        let env = json!({
+            "data": {"end_device_ids": {"device_id": "eui-a8404107bf5e6409"}}
+        });
+        assert_eq!(pick_device(&env).unwrap(), "eui-a8404107bf5e6409");
+    }
+
+    #[test]
+    fn pick_device_reads_identifiers_envelope() {
+        let env = json!({
+            "identifiers": [
+                {"device_ids": {"device_id": "eui-a8404131af5e6451"}}
+            ]
+        });
+        assert_eq!(pick_device(&env).unwrap(), "eui-a8404131af5e6451");
+    }
+
+    #[test]
+    fn pick_device_iterates_identifiers_when_device_ids_is_not_first() {
+        let env = json!({
+            "identifiers": [
+                {"application_ids": {"application_id": "tbz-lns"}},
+                {"gateway_ids": {"gateway_id": "gw-1"}},
+                {"device_ids": {"device_id": "eui-a8404131af5e6451"}}
+            ]
+        });
+        assert_eq!(pick_device(&env).unwrap(), "eui-a8404131af5e6451");
+    }
+
+    #[test]
+    fn pick_device_falls_back_to_flat_device_field() {
+        assert_eq!(pick_device(&json!({"device": "eui-x"})).unwrap(), "eui-x");
+        assert_eq!(
+            pick_device(&json!({"deviceName": "eui-y"})).unwrap(),
+            "eui-y"
+        );
+    }
+
+    #[test]
+    fn pick_device_reports_missing_id() {
+        let err = pick_device(&json!({})).unwrap_err();
+        assert!(matches!(err, MqttSubscriberError::Decode(ref s) if s == "missing device id"));
     }
 
     #[test]
@@ -439,9 +626,9 @@ mod tests {
             "device": "eui-ges",
             "battery": 3.7,
             "readings": [
-                {"ability": "soil_moisture", "depth": 30, "value": 42.0},
-                {"ability": "soil_moisture", "depth": 90, "value": 25.0},
-                {"ability": "salinity",      "depth": 30, "value": 1.0},
+                {"ability": "soil_moisture", "depth": 40, "value": 42.0},
+                {"ability": "soil_moisture", "depth": 80, "value": 25.0},
+                {"ability": "salinity",      "depth": 40, "value": 1.0},
                 {"ability": "soil_moisture", "depth": 99, "value": 9.0},
             ]
         });
@@ -451,11 +638,86 @@ mod tests {
         match ingest.typed {
             SensorReadings::Volumetrics(ref v) => {
                 assert_eq!(v.len(), 2);
-                assert_eq!(v[0].depth_cm, 30);
-                assert_eq!(v[1].depth_cm, 90);
+                assert_eq!(v[0].depth_cm, 40);
+                assert_eq!(v[1].depth_cm, 80);
             }
             _ => panic!("expected Volumetrics"),
         }
+    }
+
+    #[test]
+    fn build_ges_1000_parses_ttn_sensor_pair() {
+        let body = json!({
+            "avgHumid": 47.5,
+            "avgTemperature": 18.6,
+            "battery_v": 3.582,
+            "sensor1": { "humidity": 43.5, "id": 1, "temperature": 18.5 },
+            "sensor2": { "humidity": 51.6, "id": 2, "temperature": 18.7 }
+        });
+        let model = ges_1000_model();
+        let ingest = build_ges_1000(
+            &model,
+            &body,
+            SensorId::new("eui-a8404131af5e6451").unwrap(),
+        )
+        .unwrap();
+        assert_eq!(ingest.normalized.len(), 5);
+        match ingest.typed {
+            SensorReadings::Volumetrics(ref v) => {
+                assert_eq!(v.len(), 2);
+                assert_eq!(v[0].depth_cm, 40);
+                assert_eq!(v[0].moisture_percent, 43.5);
+                assert_eq!(v[1].depth_cm, 80);
+                assert_eq!(v[1].moisture_percent, 51.6);
+            }
+            _ => panic!("expected Volumetrics"),
+        }
+    }
+
+    #[test]
+    fn decode_ttn_ges_1000_maps_probe_id_to_depth_regardless_of_key_order() {
+        // Inverted key/id order would have flipped depths under positional mapping.
+        let body = json!({
+            "sensor1": { "humidity": 51.6, "id": 2, "temperature": 18.7 },
+            "sensor2": { "humidity": 43.5, "id": 1, "temperature": 18.5 }
+        });
+        let payload =
+            decode_ttn_ges_1000(&body, &SensorId::new("eui-a8404131af5e6451").unwrap()).unwrap();
+        let moisture: Vec<_> = payload
+            .readings
+            .iter()
+            .filter(|r| r.ability == "soil_moisture")
+            .collect();
+        assert_eq!(moisture.len(), 2);
+        assert_eq!(moisture[0].depth, 80);
+        assert_eq!(moisture[0].value, 51.6);
+        assert_eq!(moisture[1].depth, 40);
+        assert_eq!(moisture[1].value, 43.5);
+    }
+
+    #[test]
+    fn decode_ttn_ges_1000_skips_probe_with_unknown_id() {
+        let body = json!({
+            "sensor1": { "humidity": 43.5, "id": 1, "temperature": 18.5 },
+            "sensor2": { "humidity": 99.9, "id": 7, "temperature": 99.9 }
+        });
+        let payload = decode_ttn_ges_1000(&body, &SensorId::new("eui-ges").unwrap()).unwrap();
+        assert_eq!(payload.readings.len(), 2);
+        assert!(payload.readings.iter().all(|r| r.depth == 40));
+    }
+
+    #[test]
+    fn decode_ttn_ges_1000_rejects_empty_payload() {
+        let body = json!({ "avgHumid": 0.0, "avgTemperature": 0.0 });
+        let err = decode_ttn_ges_1000(&body, &SensorId::new("eui-x").unwrap()).unwrap_err();
+        assert!(matches!(err, MqttSubscriberError::Decode(_)));
+    }
+
+    #[test]
+    fn decode_ttn_ges_1000_rejects_battery_only_payload() {
+        let body = json!({ "battery_v": 3.58 });
+        let err = decode_ttn_ges_1000(&body, &SensorId::new("eui-x").unwrap()).unwrap_err();
+        assert!(matches!(err, MqttSubscriberError::Decode(_)));
     }
 
     #[test]

@@ -311,6 +311,7 @@ pub enum SensorAbilityUnitDto {
     Centibar,
     Ohm,
     Celsius,
+    Volt,
 }
 
 impl From<SensorAbilityUnit> for SensorAbilityUnitDto {
@@ -320,6 +321,7 @@ impl From<SensorAbilityUnit> for SensorAbilityUnitDto {
             SensorAbilityUnit::Centibar => Self::Centibar,
             SensorAbilityUnit::Ohm => Self::Ohm,
             SensorAbilityUnit::Celsius => Self::Celsius,
+            SensorAbilityUnit::Volt => Self::Volt,
         }
     }
 }

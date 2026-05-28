@@ -21,6 +21,6 @@ data:
 
   APP_MQTT__ENABLED: "true"
   APP_MQTT__BROKER_URL: "mqtt://eu1.cloud.thethings.industries:1883"
-  APP_MQTT__TOPIC: "v3/sgr-students@zde/devices/+/up"
+  APP_MQTT__TOPIC: "v3/bodenfeuchtetbz@smarte-grenzregion-lns/devices/+/up"
 
   TZ: "Europe/Berlin"

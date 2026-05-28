@@ -4140,7 +4140,8 @@
           "percent",
           "centibar",
           "ohm",
-          "celsius"
+          "celsius",
+          "volt"
         ],
         "example": "centibar"
       },
