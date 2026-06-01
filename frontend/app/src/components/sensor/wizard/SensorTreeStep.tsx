@@ -1,10 +1,12 @@
 import { nearestTreeQuery, treeIdQuery } from '@/api/queries'
+import GeolocationPermissionNotice from '@/components/geolocation/GeolocationPermissionNotice'
 import LocationMapPreview from '@/components/geolocation/LocationMapPreview'
 import NearestTreeMapPreview from '@/components/geolocation/NearestTreeMapPreview'
 import NearestTreeList from '@/components/sensor/NearestTreeList'
 import SensorTreePickerSheet from '@/components/sensor/SensorTreePickerSheet'
-import type { GeolocationFix } from '@/hooks/useGeolocation'
+import type { GeolocationFix, GeolocationStatus } from '@/hooks/useGeolocation'
 import {
+  AccuracyBadge,
   Alert,
   AlertContent,
   AlertDescription,
@@ -14,16 +16,26 @@ import {
   Loading,
 } from '@green-ecolution/ui'
 import { useQuery } from '@tanstack/react-query'
-import { Search } from 'lucide-react'
+import { Loader2, MapPin, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 interface SensorTreeStepProps {
-  position: GeolocationFix
+  position: GeolocationFix | null
+  status: GeolocationStatus
+  errorMessage: string | null
   selectedTreeId: string | null
   onSelect: (treeId: string, number: string, species: string) => void
+  onRelocate: () => void
 }
 
-const SensorTreeStep = ({ position, selectedTreeId, onSelect }: SensorTreeStepProps) => {
+const SensorTreeStep = ({
+  position,
+  status,
+  errorMessage,
+  selectedTreeId,
+  onSelect,
+  onRelocate,
+}: SensorTreeStepProps) => {
   const [pickerOpen, setPickerOpen] = useState(false)
 
   const {
@@ -32,7 +44,8 @@ const SensorTreeStep = ({ position, selectedTreeId, onSelect }: SensorTreeStepPr
     isError: treesError,
     refetch: refetchTrees,
   } = useQuery({
-    ...nearestTreeQuery({ lat: position.latitude, lng: position.longitude }),
+    ...nearestTreeQuery({ lat: position?.latitude ?? 0, lng: position?.longitude ?? 0 }),
+    enabled: !!position,
   })
 
   const trees = nearestTrees?.data ?? []
@@ -55,38 +68,76 @@ const SensorTreeStep = ({ position, selectedTreeId, onSelect }: SensorTreeStepPr
     if (t) onSelect(t.id, t.number, t.species)
   }
 
+  const gpsNotice: 'denied' | 'unsupported' | 'error' | null =
+    status === 'denied' || status === 'unsupported' || status === 'error' ? status : null
+  const gpsPending = !position && !gpsNotice
+
   return (
     <div className="space-y-6">
       <header className="space-y-2">
         <h1 className="font-lato font-bold text-3xl lg:text-4xl">Baum zuordnen</h1>
         <p className="text-sm text-muted-foreground max-w-prose">
-          Wähle den Baum aus, an dem der Sensor angebracht wird. Der Vorschlag basiert auf dem
-          erfassten Standort.
+          Wähle den Baum aus, an dem der Sensor angebracht wird. Der Vorschlag basiert auf deinem
+          aktuellen Standort. Gespeichert wird am Sensor nur die Baum-Zuordnung, nicht deine
+          Koordinaten.
         </p>
       </header>
 
-      <div>
-        {trees.length > 0 ? (
-          <NearestTreeMapPreview
-            sensorLat={position.latitude}
-            sensorLng={position.longitude}
-            sensorAccuracy={position.accuracy}
-            trees={trees}
-            selectedTreeId={selectedTreeId}
-            onSelectTree={handleNearestSelect}
-          />
-        ) : (
-          <LocationMapPreview
-            latitude={position.latitude}
-            longitude={position.longitude}
-            accuracyMeters={position.accuracy}
-          />
-        )}
-      </div>
+      {position && (
+        <div className="flex items-center gap-3 text-sm">
+          <AccuracyBadge accuracyMeters={position.accuracy} />
+          <Button variant="link" size="sm" className="h-auto px-0" onClick={onRelocate}>
+            <MapPin className="size-4" />
+            Standort aktualisieren
+          </Button>
+        </div>
+      )}
 
-      {treesLoading && <Loading size="default" label="Bäume in der Nähe werden gesucht…" />}
+      {gpsPending && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex items-center gap-3 text-sm text-muted-foreground"
+        >
+          <Loader2 className="size-5 animate-spin" aria-hidden />
+          Standort wird ermittelt …
+        </div>
+      )}
 
-      {treesError && (
+      {gpsNotice && (
+        <GeolocationPermissionNotice
+          status={gpsNotice}
+          errorMessage={errorMessage}
+          onRetry={gpsNotice === 'unsupported' ? undefined : onRelocate}
+        />
+      )}
+
+      {position && (
+        <div>
+          {trees.length > 0 ? (
+            <NearestTreeMapPreview
+              sensorLat={position.latitude}
+              sensorLng={position.longitude}
+              sensorAccuracy={position.accuracy}
+              trees={trees}
+              selectedTreeId={selectedTreeId}
+              onSelectTree={handleNearestSelect}
+            />
+          ) : (
+            <LocationMapPreview
+              latitude={position.latitude}
+              longitude={position.longitude}
+              accuracyMeters={position.accuracy}
+            />
+          )}
+        </div>
+      )}
+
+      {position && treesLoading && (
+        <Loading size="default" label="Bäume in der Nähe werden gesucht…" />
+      )}
+
+      {position && treesError && (
         <Alert variant="destructive">
           <AlertContent>
             <AlertTitle>Baumsuche fehlgeschlagen</AlertTitle>
@@ -100,7 +151,7 @@ const SensorTreeStep = ({ position, selectedTreeId, onSelect }: SensorTreeStepPr
         </Alert>
       )}
 
-      {!treesLoading && !treesError && trees.length === 0 && (
+      {position && !treesLoading && !treesError && trees.length === 0 && (
         <InlineAlert
           variant="warning"
           description="Es wurden keine Bäume in der Nähe gefunden. Wähle den Baum manuell aus."

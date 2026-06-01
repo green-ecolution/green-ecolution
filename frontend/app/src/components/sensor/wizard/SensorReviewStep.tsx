@@ -11,7 +11,7 @@ interface SensorReviewStepProps {
     longitude: number
     accuracy: number
     timestamp: number
-  }
+  } | null
   status: SubmissionState
   errorMessage: string | null
   onActivate: () => void
@@ -55,17 +55,19 @@ const SensorReviewStep = ({
           </div>
         </div>
 
-        <div className="rounded-xl border border-dark-100 p-4">
-          <p className="text-xs uppercase tracking-wide font-semibold text-muted-foreground mb-2">
-            Standort
-          </p>
-          <p className="text-sm tabular-nums">
-            {formatCoordinate(position.latitude)}, {formatCoordinate(position.longitude)}
-          </p>
-          <div className="mt-2">
-            <AccuracyBadge accuracyMeters={position.accuracy} />
+        {position && (
+          <div className="rounded-xl border border-dark-100 p-4">
+            <p className="text-xs uppercase tracking-wide font-semibold text-muted-foreground mb-2">
+              Standort
+            </p>
+            <p className="text-sm tabular-nums">
+              {formatCoordinate(position.latitude)}, {formatCoordinate(position.longitude)}
+            </p>
+            <div className="mt-2">
+              <AccuracyBadge accuracyMeters={position.accuracy} />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">

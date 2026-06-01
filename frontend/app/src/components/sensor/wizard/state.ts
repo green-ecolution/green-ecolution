@@ -5,7 +5,7 @@ export const normalizeSensorId = (raw: string): string => {
   return trimmed.startsWith('eui-') ? trimmed : `eui-${trimmed}`
 }
 
-export type WizardStep = 1 | 2 | 3 | 4
+export type WizardStep = 1 | 2 | 3
 
 export type SubmissionState = 'idle' | 'pending' | 'success' | 'error'
 

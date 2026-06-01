@@ -18,10 +18,6 @@ vi.mock('@/components/geolocation/NearestTreeMapPreview', () => ({
   default: () => <div data-testid="nearest-tree-map-preview" />,
 }))
 
-vi.mock('@/components/geolocation/GPSStatusCard', () => ({
-  default: () => <div data-testid="gps-status-card" />,
-}))
-
 vi.mock('@/components/geolocation/GeolocationPermissionNotice', () => ({
   default: () => <div data-testid="geolocation-permission-notice" />,
 }))
@@ -32,7 +28,7 @@ vi.mock('@/components/sensor/SensorTreePickerSheet', () => ({
 
 vi.mock('@/hooks/useGeolocation', () => ({
   default: () => ({
-    status: 'success' as const,
+    status: 'watching' as const,
     position: {
       latitude: 54.79,
       longitude: 9.43,
@@ -154,7 +150,7 @@ beforeEach(() => {
 })
 
 describe('Sensor wizard', () => {
-  it('walks through scan → gps → tree → review → success', async () => {
+  it('walks through scan → tree → review → success', async () => {
     const user = userEvent.setup()
     renderRoute()
 
@@ -162,9 +158,6 @@ describe('Sensor wizard', () => {
     await user.click(screen.getByText('__scan_now__'))
 
     await screen.findByText('Sensor erkannt')
-    await user.click(screen.getByRole('button', { name: /^weiter/i }))
-
-    await screen.findByText('Standort bestätigen')
     await user.click(screen.getByRole('button', { name: /^weiter/i }))
 
     await screen.findByText('Baum zuordnen')
@@ -196,8 +189,6 @@ describe('Sensor wizard', () => {
     await user.click(screen.getByText('__scan_now__'))
     await screen.findByText('Sensor erkannt')
     await user.click(screen.getByRole('button', { name: /^weiter/i }))
-    await screen.findByText('Standort bestätigen')
-    await user.click(screen.getByRole('button', { name: /^weiter/i }))
     await screen.findByText('Baum zuordnen')
     await user.click(await screen.findByText('Tilia cordata'))
     await user.click(screen.getByRole('button', { name: /^weiter/i }))
@@ -215,8 +206,7 @@ describe('Sensor wizard', () => {
     await user.click(screen.getByText('__scan_now__'))
     await screen.findByText('Sensor erkannt')
     await user.click(screen.getByRole('button', { name: /^weiter/i }))
-    await screen.findByText('Standort bestätigen')
-    await user.click(screen.getByRole('button', { name: /^weiter/i }))
+    await screen.findByText('Baum zuordnen')
     await user.click(await screen.findByText('Tilia cordata'))
 
     const stepper = screen.getByRole('navigation', { name: /fortschritt/i })
@@ -226,7 +216,6 @@ describe('Sensor wizard', () => {
     await user.click(screen.getByRole('button', { name: /anderen sensor scannen/i }))
     await screen.findByText('Sensor-QR scannen')
 
-    expect(within(stepper).queryByRole('button', { name: /^gps/i })).not.toBeInTheDocument()
     expect(within(stepper).queryByRole('button', { name: /^baum/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^weiter/i })).not.toBeInTheDocument()
   })
@@ -239,8 +228,7 @@ describe('Sensor wizard', () => {
     await user.click(screen.getByText('__scan_now__'))
     await screen.findByText('Sensor erkannt')
     await user.click(screen.getByRole('button', { name: /^weiter/i }))
-    await screen.findByText('Standort bestätigen')
-    await user.click(screen.getByRole('button', { name: /^weiter/i }))
+    await screen.findByText('Baum zuordnen')
     await user.click(await screen.findByText('Tilia cordata'))
     await user.click(screen.getByRole('button', { name: /^weiter/i }))
     await user.click(await screen.findByRole('button', { name: /sensor aktivieren/i }))
