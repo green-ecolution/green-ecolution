@@ -4,7 +4,7 @@ export const Route = createFileRoute('/_protected/sensors/new')({
   component: Outlet,
   loader: () => ({
     crumb: {
-      title: 'Sensor hinzufügen',
+      title: 'Sensor aktivieren',
     },
   }),
 })

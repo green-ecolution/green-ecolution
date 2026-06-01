@@ -4,7 +4,7 @@ import Pagination from '@/components/general/Pagination'
 import SensorList from '@/components/sensor/SensorList'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useLoaderData } from '@tanstack/react-router'
-import { Plus } from 'lucide-react'
+import { Zap } from 'lucide-react'
 import { z } from 'zod'
 
 export const Route = createFileRoute('/_protected/sensors/')({
@@ -42,8 +42,8 @@ function Sensors() {
         </article>
         <Button asChild size="sm" className="w-full sm:w-auto sm:shrink-0">
           <Link to="/sensors/new">
-            <Plus />
-            Sensor hinzufügen
+            <Zap />
+            Sensor aktivieren
           </Link>
         </Button>
       </div>
