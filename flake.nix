@@ -161,6 +161,7 @@
           clang
           lld
           bacon
+          wasm-pack
           # Deploy tooling
           kustomize
           ksops

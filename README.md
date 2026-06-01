@@ -25,13 +25,17 @@ Urban green spaces need water - but how much, and when? City maintenance teams o
 
 ## Quick Start
 
-The fastest way to run everything locally:
+For a development setup with hot reload:
 
 ```bash
-just run-dev     # Start infra, run migrations, launch backend + frontend
+just infra-up    # Start infra (Postgres, Keycloak, Traefik, MinIO, Valhalla, Vroom)
+just migrate-up  # Apply database migrations
+just run-dev     # Run backend (hot reload) + frontend
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+To run everything in containers with a single command (infra + app + migrations), use `just run-docker` instead.
 
 ### With HTTPS (Let's Encrypt)
 
@@ -39,7 +43,9 @@ For valid TLS certificates (required for PWA testing on mobile), you need a doma
 
 1. Copy `.env.example` to `.env` and add your Porkbun API keys (and optionally `DOMAIN`)
 2. Create DNS records: `just dns-setup`
-3. Start dev environment: `just run-dev`
+3. Start infra: `just infra-up`
+4. Apply migrations: `just migrate-up`
+5. Start dev environment: `just run-dev`
 
 Open `https://<your-ip>.green-ecolution.dev:3443` (or your custom domain).
 
@@ -50,6 +56,9 @@ Open `https://<your-ip>.green-ecolution.dev:3443` (or your custom domain).
 - Rust toolchain (rustup, includes cargo)
 - Node.js + pnpm (`corepack enable`)
 - Docker + Docker Compose
+- [`just`](https://github.com/casey/just) — command runner (`cargo install just`)
+- [`wasm-pack`](https://github.com/rustwasm/wasm-pack) (`cargo install wasm-pack`) — builds the domain WASM bindings, required by `just build`
+- [`bacon`](https://github.com/Canop/bacon) (`cargo install bacon`) — live reload, required by `just run-dev` / `just run-live`
 - [`sqlx-cli`](https://crates.io/crates/sqlx-cli) (`cargo install sqlx-cli --no-default-features --features rustls,postgres`) for migrations and offline-cache regeneration
 
 ### Installation
@@ -67,39 +76,40 @@ just build       # Build frontend + backend
 | `just run-live` | Backend with bacon hot reload |
 | `just run-docker` | Full stack via Docker Compose |
 | `just infra-up` | Start infrastructure only |
-| `just dns-setup` | Create Porkbun DNS records for HTTPS |
-| `just dns-cleanup` | Remove Porkbun DNS records |
 | `just test` | Run all tests (Rust workspace + frontend) |
 | `just lint` | Lint Rust workspace + frontend |
 | `just generate-sqlx` | Refresh sqlx offline query cache |
 | `just migrate-up` | Apply database migrations |
 | `just migrate-new <name>` | Create new migration |
+| `just seed-up` | Apply seed data on top of the migrated DB |
 
 > For a reproducible dev environment, you can also use `nix develop`.
 
 ### Services
 
-When running `just infra-up`, these services are available via Traefik:
+`just infra-up` starts these services and routes them via Traefik. The Backend API is not part of the infra stack — it becomes available once you run `just run-dev` or `just run-docker`.
 
 **Without Porkbun keys** (HTTP on port 3000):
 
 | Service | URL |
 |---------|-----|
-| Backend API | <http://localhost:3000/api> |
+| Backend API | <http://localhost:3000/api> (needs `run-dev` / `run-docker`) |
 | Keycloak | <http://auth.localhost:3000> |
 | MinIO Console | <http://minio.localhost:3000> |
 | pgAdmin | <http://pgadmin.localhost:3000> |
 | Valhalla | <http://valhalla.localhost:3000> |
+| Vroom | <http://vroom.localhost:3000> |
 
 **With Porkbun keys** (HTTPS on port 3443, valid Let's Encrypt certs):
 
 | Service | URL |
 |---------|-----|
-| Backend API | `https://<ip>.green-ecolution.dev:3443/api` |
+| Backend API | `https://<ip>.green-ecolution.dev:3443/api` (needs `run-dev` / `run-docker`) |
 | Keycloak | `https://auth.<ip>.green-ecolution.dev:3443` |
 | MinIO Console | `https://minio.<ip>.green-ecolution.dev:3443` |
 | pgAdmin | `https://pgadmin.<ip>.green-ecolution.dev:3443` |
 | Valhalla | `https://valhalla.<ip>.green-ecolution.dev:3443` |
+| Vroom | `https://vroom.<ip>.green-ecolution.dev:3443` |
 
 ## Architecture
 

@@ -61,11 +61,8 @@ _compile-backend:
 # Build the domain WASM bindings into frontend/packages/domain-wasm/pkg
 build-domain-wasm:
     @echo "Building domain WASM bindings..."
-    @if command -v wasm-pack >/dev/null 2>&1; then \
-        cd {{ backend_dir }} && wasm-pack build crates/domain-wasm --target bundler --out-dir ../../../{{ frontend_dir }}/packages/domain-wasm/pkg --release; \
-    else \
-        nix shell nixpkgs#wasm-pack -c bash -c "cd {{ backend_dir }} && wasm-pack build crates/domain-wasm --target bundler --out-dir ../../../{{ frontend_dir }}/packages/domain-wasm/pkg --release"; \
-    fi
+    @command -v wasm-pack >/dev/null 2>&1 || { echo "wasm-pack missing (cargo install wasm-pack)"; exit 1; }
+    cd {{ backend_dir }} && wasm-pack build crates/domain-wasm --target bundler --out-dir ../../../{{ frontend_dir }}/packages/domain-wasm/pkg --release
 
 # Build frontend (pnpm)
 build-frontend: build-domain-wasm
@@ -119,7 +116,7 @@ run: build
 # Run backend with live reload (bacon)
 run-live:
     @echo "Running backend live (bacon)..."
-    @command -v bacon >/dev/null 2>&1 || { echo "bacon missing — run: cargo install bacon (or: nix shell nixpkgs#bacon)"; exit 1; }
+    @command -v bacon >/dev/null 2>&1 || { echo "bacon missing — run: cargo install bacon"; exit 1; }
     cd {{ backend_dir }} && SQLX_OFFLINE=true APP_ENVIRONMENT=local bacon --headless --job run -- --bin {{ binary_name }}
 
 # Run frontend dev server
@@ -132,7 +129,7 @@ fe-preview:
 
 # Backend + frontend dev via Traefik
 run-dev:
-    @command -v bacon >/dev/null 2>&1 || { echo "bacon missing — run: cargo install bacon (or: nix shell nixpkgs#bacon)"; exit 1; }
+    @command -v bacon >/dev/null 2>&1 || { echo "bacon missing — run: cargo install bacon"; exit 1; }
     @echo "Starting dev environment ({{ app_host }})..."
     @echo "  Backend:  {{ app_proto }}://{{ app_host }}:{{ app_port }}/api"
     @echo "  Frontend: {{ app_proto }}://{{ app_host }}:{{ app_port }}"

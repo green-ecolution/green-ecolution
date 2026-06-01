@@ -31,6 +31,9 @@ Be respectful and constructive in all interactions. We welcome contributors of a
 - Rust toolchain (rustup, includes cargo)
 - Node.js + pnpm (`corepack enable`)
 - Docker + Docker Compose
+- `just` — command runner (`cargo install just`)
+- `wasm-pack` (`cargo install wasm-pack`) — builds the domain WASM bindings, required by `just build`
+- `bacon` (`cargo install bacon`) — live reload, required by `just run-dev` / `just run-live`
 - `sqlx-cli` (`cargo install sqlx-cli --no-default-features --features rustls,postgres`) for migrations and offline-cache regeneration
 
 ### Installation
@@ -57,7 +60,7 @@ For a reproducible environment, use `nix develop`.
 | `just lint` | Lint Rust workspace + frontend |
 | `just generate` | Run code generation |
 | `just migrate-up` | Apply database migrations |
-| `just sqlx-prepare` | Refresh sqlx offline query cache (after changing any `query!` / `query_as!`) |
+| `just generate-sqlx` | Refresh sqlx offline query cache (after changing any `query!` / `query_as!`) |
 
 ## Making Changes
 
@@ -204,7 +207,7 @@ Use the [Feature Request template](https://github.com/green-ecolution/green-ecol
 ### Rust (Backend)
 
 - Format with `cargo fmt --all` and lint with `cargo clippy --workspace --all-targets --all-features -- -D warnings` before pushing.
-- Build with `--locked` and rely on `SQLX_OFFLINE=true` for CI; refresh the cache with `just sqlx-prepare` whenever a `query!` / `query_as!` invocation changes.
+- Build with `--locked` and rely on `SQLX_OFFLINE=true` for CI; refresh the cache with `just generate-sqlx` whenever a `query!` / `query_as!` invocation changes.
 - Domain code (`backend-rs/crates/domain/`) must not depend on `sqlx`, `axum`, `tokio`, `reqwest`, `rumqttc`, or `tracing-subscriber`. `cargo build -p domain --no-default-features --locked` must stay green so the crate remains portable to WASM / mobile targets.
 - Aggregate invariants live in private fields with intent-named methods that return `Vec<DomainEvent>`. HTTP handlers return `*View` types, never raw aggregates.
 - Errors are typed: repository traits return `RepositoryError`; the HTTP layer maps to `ApiError`. Avoid `unwrap()` / `expect()` / `panic!` outside `reconstitute` paths and tests.
