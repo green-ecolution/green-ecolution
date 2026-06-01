@@ -100,14 +100,14 @@ describe('wizardReducer', () => {
   })
 
   it('goToStep allows jumping back to any step', () => {
-    const seeded: WizardState = { ...INITIAL_WIZARD_STATE, step: 4 }
+    const seeded: WizardState = { ...INITIAL_WIZARD_STATE, step: 3 }
     expect(wizardReducer(seeded, { type: 'goToStep', step: 2 }).step).toBe(2)
     expect(wizardReducer(seeded, { type: 'goToStep', step: 1 }).step).toBe(1)
   })
 
   it('goToStep is a no-op when jumping forward past the current step', () => {
-    const seeded: WizardState = { ...INITIAL_WIZARD_STATE, step: 2 }
-    expect(wizardReducer(seeded, { type: 'goToStep', step: 4 }).step).toBe(2)
+    const seeded: WizardState = { ...INITIAL_WIZARD_STATE, step: 1 }
+    expect(wizardReducer(seeded, { type: 'goToStep', step: 3 }).step).toBe(1)
   })
 
   it('goToStep allows moving to the immediate next step', () => {
@@ -123,7 +123,7 @@ describe('wizardReducer', () => {
   it('submissionSuccess marks state as success and clears error', () => {
     const seeded: WizardState = {
       ...INITIAL_WIZARD_STATE,
-      step: 4,
+      step: 3,
       submission: 'pending',
       errorMessage: 'whoops',
     }
@@ -135,7 +135,7 @@ describe('wizardReducer', () => {
   it('submissionError keeps step + data, sets error message', () => {
     const seeded: WizardState = {
       ...INITIAL_WIZARD_STATE,
-      step: 4,
+      step: 3,
       sensorId: 'S',
       submission: 'pending',
     }
@@ -143,7 +143,7 @@ describe('wizardReducer', () => {
       type: 'submissionError',
       message: 'boom',
     })
-    expect(next.step).toBe(4)
+    expect(next.step).toBe(3)
     expect(next.sensorId).toBe('S')
     expect(next.submission).toBe('error')
     expect(next.errorMessage).toBe('boom')
@@ -151,7 +151,7 @@ describe('wizardReducer', () => {
 
   it('resetForNextSensor returns to initial state', () => {
     const seeded: WizardState = {
-      step: 4,
+      step: 3,
       sensorId: 'S',
       frozenFix: fix,
       selectedTreeId: 'T',

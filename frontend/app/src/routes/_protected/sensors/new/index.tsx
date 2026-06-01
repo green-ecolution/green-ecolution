@@ -1,6 +1,5 @@
 import { sensorApi } from '@/api/backendApi'
 import { sensorIdQuery } from '@/api/queries'
-import SensorGpsStep from '@/components/sensor/wizard/SensorGpsStep'
 import SensorReviewStep from '@/components/sensor/wizard/SensorReviewStep'
 import SensorScanStep from '@/components/sensor/wizard/SensorScanStep'
 import SensorTreeStep from '@/components/sensor/wizard/SensorTreeStep'
@@ -72,7 +71,6 @@ function NewSensor() {
 
   const completedSteps = getCompletedSteps({
     sensorVerified: Boolean(verifiedSensor),
-    frozenFix: state.frozenFix,
     selectedTreeId: state.selectedTreeId,
   })
 
@@ -115,7 +113,7 @@ function NewSensor() {
   }, [state.step])
 
   const handleNext = useCallback(() => {
-    if (state.step < 4) {
+    if (state.step < 3) {
       dispatch({ type: 'goToStep', step: (state.step + 1) as WizardStep })
     }
   }, [state.step])
@@ -132,8 +130,8 @@ function NewSensor() {
   if (state.submission === 'success') {
     return (
       <SensorWizardLayout
-        step={4}
-        completedSteps={[1, 2, 3, 4]}
+        step={3}
+        completedSteps={[1, 2, 3]}
         onStepClick={handleStepClick}
         canGoNext={false}
         hideFooter
@@ -150,8 +148,7 @@ function NewSensor() {
 
   const canGoNext =
     (state.step === 1 && Boolean(verifiedSensor)) ||
-    (state.step === 2 && Boolean(state.frozenFix)) ||
-    (state.step === 3 && Boolean(state.selectedTreeId))
+    (state.step === 2 && Boolean(state.selectedTreeId))
 
   return (
     <SensorWizardLayout
@@ -159,7 +156,7 @@ function NewSensor() {
       completedSteps={completedSteps}
       onStepClick={handleStepClick}
       onBack={state.step === 1 ? undefined : handleBack}
-      onNext={state.step === 4 || state.step === 1 ? undefined : handleNext}
+      onNext={state.step === 3 || state.step === 1 ? undefined : handleNext}
       canGoNext={canGoNext}
     >
       {state.step === 1 && (
@@ -182,23 +179,18 @@ function NewSensor() {
         />
       )}
       {state.step === 2 && (
-        <SensorGpsStep
+        <SensorTreeStep
           position={state.frozenFix}
           status={gpsStatus}
           errorMessage={gpsError}
-          onRelocate={() => void handleRelocate()}
-        />
-      )}
-      {state.step === 3 && state.frozenFix && (
-        <SensorTreeStep
-          position={state.frozenFix}
           selectedTreeId={state.selectedTreeId}
           onSelect={(treeId, number, species) =>
             dispatch({ type: 'treeSelected', treeId, number, species })
           }
+          onRelocate={() => void handleRelocate()}
         />
       )}
-      {state.step === 4 && state.frozenFix && state.sensorId && state.selectedTreeId && (
+      {state.step === 3 && state.sensorId && state.selectedTreeId && (
         <SensorReviewStep
           sensorId={state.sensorId}
           treeNumber={state.selectedTreeNumber ?? ''}
@@ -213,17 +205,11 @@ function NewSensor() {
   )
 }
 
-function getCompletedSteps(args: {
-  sensorVerified: boolean
-  frozenFix: unknown
-  selectedTreeId: string | null
-}) {
+function getCompletedSteps(args: { sensorVerified: boolean; selectedTreeId: string | null }) {
   const done: number[] = []
   if (!args.sensorVerified) return done
   done.push(1)
-  if (!args.frozenFix) return done
-  done.push(2)
   if (!args.selectedTreeId) return done
-  done.push(3)
+  done.push(2)
   return done
 }

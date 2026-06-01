@@ -5,7 +5,6 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 const STEPS: StepDefinition[] = [
   { id: 'scan', label: 'QR-Scan' },
-  { id: 'gps', label: 'GPS' },
   { id: 'tree', label: 'Baum' },
   { id: 'confirm', label: 'Bestätigen' },
 ]
