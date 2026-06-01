@@ -8,10 +8,10 @@ resources:
 images:
 - name: backend-image
   newName: ghcr.io/green-ecolution/green-ecolution/backend
-  newTag: v0.2.0
+  newTag: v0.1.2
 - name: frontend-image
   newName: ghcr.io/green-ecolution/green-ecolution/frontend
-  newTag: v0.2.0
+  newTag: v0.1.2
 generators:
 - ./secret-generator.yaml
 patches:
