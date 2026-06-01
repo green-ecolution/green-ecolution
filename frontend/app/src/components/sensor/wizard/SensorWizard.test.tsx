@@ -28,7 +28,7 @@ vi.mock('@/components/sensor/SensorTreePickerSheet', () => ({
 
 vi.mock('@/hooks/useGeolocation', () => ({
   default: () => ({
-    status: 'success' as const,
+    status: 'watching' as const,
     position: {
       latitude: 54.79,
       longitude: 9.43,
