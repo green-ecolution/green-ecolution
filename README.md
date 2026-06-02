@@ -54,6 +54,7 @@ Open `https://<your-ip>.green-ecolution.dev:3443` (or your custom domain).
 ### Requirements
 
 - Rust toolchain (rustup, includes cargo)
+- WASM target (`rustup target add wasm32-unknown-unknown`) — required for WASM builds used by the domain bindings
 - Node.js + pnpm (`corepack enable`)
 - Docker + Docker Compose
 - [`just`](https://github.com/casey/just) — command runner (`cargo install just`)
