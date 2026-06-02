@@ -34,6 +34,16 @@ interface FormForWateringPlanProps {
 const startOfToday = new Date()
 startOfToday.setHours(0, 0, 0, 0)
 
+const getDrivingLicensesString = (user: User) => {
+  if (!user.drivingLicenses || user.drivingLicenses.length === 0) {
+    return 'Keinen Führerschein'
+  }
+
+  return user.drivingLicenses
+    .map((drivingLicense: DrivingLicense) => getDrivingLicenseDetails(drivingLicense).label)
+    .join(', ')
+}
+
 const FormForWateringPlan = (props: FormForWateringPlanProps) => {
   const { register, handleSubmit, control } = useFormContext<WateringPlanForm>()
   const { isValid, errors } = useFormState({ control })
@@ -52,16 +62,6 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
     watchedTransporterId,
     watchedTrailerId,
   )
-
-  const getDrivingLicensesString = (user: User) => {
-    if (!user.drivingLicenses || user.drivingLicenses.length === 0) {
-      return 'Keinen Führerschein'
-    }
-
-    return user.drivingLicenses
-      .map((drivingLicense: DrivingLicense) => getDrivingLicenseDetails(drivingLicense).label)
-      .join(', ')
-  }
 
   return (
     <form

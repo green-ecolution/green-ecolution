@@ -23,12 +23,12 @@ interface FormForVehicleProps {
   onSubmit: SubmitHandler<VehicleForm>
 }
 
+const translateNum = (e: React.ChangeEvent<HTMLInputElement>) =>
+  (e.target.value = e.target.value.replace(',', '.'))
+
 const FormForVehicle = (props: FormForVehicleProps) => {
   const { register, handleSubmit, control } = useFormContext<VehicleForm>()
   const { isValid, errors } = useFormState({ control })
-
-  const translateNum = (e: React.ChangeEvent<HTMLInputElement>) =>
-    (e.target.value = e.target.value.replace(',', '.'))
 
   return (
     <form

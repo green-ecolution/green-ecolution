@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { BarcodeDetector as BarcodeDetectorType } from 'barcode-detector/pure'
 
 export type ScannerStatus =
@@ -49,7 +49,7 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
   const [scannedData, setScannedData] = useState<string | null>(null)
 
   // Release camera + cancel any pending frame callbacks.
-  const releaseStream = useCallback(() => {
+  const releaseStream = () => {
     cancelledRef.current = true
     streamRef.current?.getTracks().forEach((track) => {
       track.stop()
@@ -58,9 +58,9 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
     if (videoRef.current) {
       videoRef.current.srcObject = null
     }
-  }, [])
+  }
 
-  const startScanning = useCallback(async (): Promise<void> => {
+  const startScanning = async (): Promise<void> => {
     if (!videoRef.current) return
     if (startingRef.current || streamRef.current) return
     startingRef.current = true
@@ -177,17 +177,17 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
     }
 
     scheduleNext()
-  }, [releaseStream])
+  }
 
-  const stopScanning = useCallback(() => {
+  const stopScanning = () => {
     releaseStream()
     setStatus('idle')
-  }, [releaseStream])
+  }
 
-  const resetScan = useCallback(() => {
+  const resetScan = () => {
     setScannedData(null)
     setStatus('idle')
-  }, [])
+  }
 
   // Always release the camera on unmount
   useEffect(() => {

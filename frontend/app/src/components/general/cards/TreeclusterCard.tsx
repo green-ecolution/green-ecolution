@@ -26,7 +26,7 @@ const TreeclusterCard: React.FC<TreeclusterCardProps> = ({ treecluster }) => {
         <ListCardTitle>{treecluster.name}</ListCardTitle>
 
         <ListCardMeta>
-          <MapPin className="w-5 h-5" />
+          <MapPin className="size-5" />
           <p>
             <span>{treecluster.address}, </span>
             <br />
@@ -37,7 +37,7 @@ const TreeclusterCard: React.FC<TreeclusterCardProps> = ({ treecluster }) => {
         </ListCardMeta>
 
         <ListCardMeta>
-          <TreeIcon className="w-5 h-5 mt-0.5" />
+          <TreeIcon className="size-5 mt-0.5" />
           <p>
             {treecluster.treeIds ? treecluster.treeIds?.length : 0}
             {treecluster.treeIds?.length === 1 ? ' Baum' : ' Bäume'}

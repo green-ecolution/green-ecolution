@@ -23,7 +23,7 @@ function ProfileButton() {
     <NavLink
       key="nav-your-profile"
       label="Ihr Profil"
-      icon={<Settings className="w-5 h-5" />}
+      icon={<Settings className="size-5" />}
       to="/profile"
       navIsOpen={true}
       closeSidebar={() => toggleOverlay(false)}
@@ -31,7 +31,7 @@ function ProfileButton() {
     <NavLink
       key="nav-logout"
       label="Abmelden"
-      icon={<LogOut className="w-5 h-5" />}
+      icon={<LogOut className="size-5" />}
       to="/logout"
       preload={false}
       navIsOpen={true}
@@ -43,7 +43,7 @@ function ProfileButton() {
     <NavLink
       key="nav-header-login"
       label="Anmelden"
-      icon={<LogIn className="w-5 h-5" />}
+      icon={<LogIn className="size-5" />}
       to="/login"
       preload={false}
       navIsOpen={true}
@@ -66,11 +66,11 @@ function ProfileButton() {
       >
         <Avatar>
           <AvatarFallback variant={isAuthenticated ? 'user' : 'guest'}>
-            {isAuthenticated ? userInitials : <UserRound className="w-5 h-5 stroke-2" />}
+            {isAuthenticated ? userInitials : <UserRound className="size-5 stroke-2" />}
           </AvatarFallback>
         </Avatar>
         <ChevronDown
-          className={`w-5 h-5 text-dark transition-all ease-in-out duration-300 ${open ? 'rotate-180' : ''}`}
+          className={`size-5 text-dark transition-all ease-in-out duration-300 ${open ? 'rotate-180' : ''}`}
         />
       </button>
 

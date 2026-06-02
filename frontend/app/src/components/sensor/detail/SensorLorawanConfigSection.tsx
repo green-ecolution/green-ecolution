@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Alert,
   AlertContent,
@@ -107,23 +107,19 @@ const SensorLorawanConfigSection = ({ sensor }: SensorLorawanConfigSectionProps)
   const [expanded, setExpanded] = useState(false)
   const [query, setQuery] = useState('')
 
-  const entries = useMemo(() => {
-    if (!config) return []
-    return Object.entries(config).sort(([a], [b]) => a.localeCompare(b))
-  }, [config])
+  const entries = !config ? [] : Object.entries(config).sort(([a], [b]) => a.localeCompare(b))
 
-  const hasSecrets = useMemo(() => entries.some(([k]) => isSensitiveConfigKey(k)), [entries])
+  const hasSecrets = entries.some(([k]) => isSensitiveConfigKey(k))
 
-  const filtered = useMemo(() => {
-    if (!query.trim()) return entries
-    const q = query.toLowerCase()
-    return entries.filter(
-      ([k, v]) =>
-        k.toLowerCase().includes(q) ||
-        // Don't expose sensitive values via filter matches.
-        (!isSensitiveConfigKey(k) && stringifyValue(v).toLowerCase().includes(q)),
-    )
-  }, [entries, query])
+  const q = query.toLowerCase()
+  const filtered = !query.trim()
+    ? entries
+    : entries.filter(
+        ([k, v]) =>
+          k.toLowerCase().includes(q) ||
+          // Don't expose sensitive values via filter matches.
+          (!isSensitiveConfigKey(k) && stringifyValue(v).toLowerCase().includes(q)),
+      )
 
   if (!config || entries.length === 0) return null
 

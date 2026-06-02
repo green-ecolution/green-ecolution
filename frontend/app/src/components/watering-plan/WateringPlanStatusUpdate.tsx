@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 import BackLink from '../general/links/BackLink'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { WateringPlan, WateringPlanUpdate } from '@/api/backendApi'
@@ -81,58 +81,55 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const date = format(new Date(loadedData.date), 'dd.MM.yyyy')
   const statusDetails = getWateringPlanStatusDetails(loadedData.status)
 
-  const formByStatus = useCallback(
-    (status: WateringPlanStatus) => {
-      const onSubmitFinished: SubmitHandler<WateringPlanFinishedForm> = (data) => {
-        mutate({
-          ...loadedData,
-          status: WateringPlanStatus.Finished,
-          evaluation: data.evaluation,
-          transporterId: loadedData.transporter.id,
-          treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
-        })
-      }
+  const formByStatus = (status: WateringPlanStatus) => {
+    const onSubmitFinished: SubmitHandler<WateringPlanFinishedForm> = (data) => {
+      mutate({
+        ...loadedData,
+        status: WateringPlanStatus.Finished,
+        evaluation: data.evaluation,
+        transporterId: loadedData.transporter.id,
+        treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
+      })
+    }
 
-      const onSubmitCancel: SubmitHandler<WateringPlanCancelForm> = (data) => {
-        mutate({
-          ...loadedData,
-          status: WateringPlanStatus.Canceled,
-          cancellationNote: data.cancellationNote,
-          transporterId: loadedData.transporter.id,
-          treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
-        })
-      }
+    const onSubmitCancel: SubmitHandler<WateringPlanCancelForm> = (data) => {
+      mutate({
+        ...loadedData,
+        status: WateringPlanStatus.Canceled,
+        cancellationNote: data.cancellationNote,
+        transporterId: loadedData.transporter.id,
+        treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
+      })
+    }
 
-      const onSubmitOtherStatus = (status: WateringPlanStatus) => {
-        mutate({
-          ...loadedData,
-          status,
-          transporterId: loadedData.transporter.id,
-          treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
-        })
-      }
-      switch (status) {
-        case 'canceled':
-          return <CancelWateringPlan onSubmit={onSubmitCancel} />
-        case 'finished':
-          return (
-            <FinishedWateringPlan
-              onSubmit={onSubmitFinished}
-              wateringPlanId={wateringPlanId}
-              loadedData={loadedData}
-            />
-          )
-        default:
-          return (
-            <Button onClick={() => onSubmitOtherStatus(status)} type="submit" className="mt-10">
-              Speichern
-              <MoveRight className="icon-arrow-animate" />
-            </Button>
-          )
-      }
-    },
-    [loadedData, wateringPlanId, mutate],
-  )
+    const onSubmitOtherStatus = (status: WateringPlanStatus) => {
+      mutate({
+        ...loadedData,
+        status,
+        transporterId: loadedData.transporter.id,
+        treeClusterIds: loadedData.treeclusters.map((cluster) => cluster.id),
+      })
+    }
+    switch (status) {
+      case 'canceled':
+        return <CancelWateringPlan onSubmit={onSubmitCancel} />
+      case 'finished':
+        return (
+          <FinishedWateringPlan
+            onSubmit={onSubmitFinished}
+            wateringPlanId={wateringPlanId}
+            loadedData={loadedData}
+          />
+        )
+      default:
+        return (
+          <Button onClick={() => onSubmitOtherStatus(status)} type="submit" className="mt-10">
+            Speichern
+            <MoveRight className="icon-arrow-animate" />
+          </Button>
+        )
+    }
+  }
 
   return (
     <>

@@ -1,7 +1,7 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useMapEvents } from 'react-leaflet/hooks'
 import useStore from '@/store/store'
-import { useCallback, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 
 const DEBOUNCE_MS = 150
 
@@ -12,23 +12,20 @@ const MapController = () => {
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const scheduleUpdate = useCallback(
-    (lat: number, lng: number, zoom: number) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-      timeoutRef.current = setTimeout(() => {
-        setCenter([lat, lng])
-        setZoom(zoom)
-        navigate({
-          to: '.',
-          search: (prev) => ({ ...prev, lat, lng, zoom }),
-          replace: true,
-        }).catch((error) => console.error('Navigation failed:', error))
-      }, DEBOUNCE_MS)
-    },
-    [navigate, setCenter, setZoom],
-  )
+  const scheduleUpdate = (lat: number, lng: number, zoom: number) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+    timeoutRef.current = setTimeout(() => {
+      setCenter([lat, lng])
+      setZoom(zoom)
+      navigate({
+        to: '.',
+        search: (prev) => ({ ...prev, lat, lng, zoom }),
+        replace: true,
+      }).catch((error) => console.error('Navigation failed:', error))
+    }, DEBOUNCE_MS)
+  }
 
   useEffect(() => {
     return () => {

@@ -38,7 +38,7 @@ function EntityNotFound({ entityName, backTo, backLabel }: EntityNotFoundProps) 
           <div className="mt-8">
             <Button asChild variant="outline" className="group gap-2 px-6">
               <Link to={backTo}>
-                <MoveLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                <MoveLeft className="size-4 transition-transform group-hover:-translate-x-1" />
                 {backLabel}
               </Link>
             </Button>

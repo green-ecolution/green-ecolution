@@ -1,5 +1,5 @@
 import L from 'leaflet'
-import { useCallback, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useMap } from 'react-leaflet'
 
 interface WithLocation {
@@ -38,7 +38,7 @@ const MarkerList = <T extends WithLocation>({
     iconRef.current = icon
   })
 
-  const updateVisibleMarkers = useCallback(() => {
+  const updateVisibleMarkers = () => {
     if (!map) return
 
     const bounds = map.getBounds()
@@ -78,7 +78,7 @@ const MarkerList = <T extends WithLocation>({
         markerMap.set(id, { marker, data: item })
       }
     })
-  }, [map, getId, tooltipContent, tooltipOptions])
+  }
 
   useEffect(() => {
     dataRef.current = data

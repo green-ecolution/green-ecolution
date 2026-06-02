@@ -92,19 +92,19 @@ const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
         <Tabs defaultValue="watering" className="mt-10">
           <TabsList>
             <TabsTrigger value="watering">
-              <TreeIcon className="w-5 h-5" />
+              <TreeIcon className="size-5" />
               <span className="hidden group-data-[state=active]:block lg:block">
                 Bewässerungsdaten
               </span>
             </TabsTrigger>
             <TabsTrigger value="general">
-              <File className="w-5 h-5" />
+              <File className="size-5" />
               <span className="hidden group-data-[state=active]:block lg:block">
                 Allgemeine Daten
               </span>
             </TabsTrigger>
             <TabsTrigger value="sensor">
-              <SensorIcon className="w-5 h-5" />
+              <SensorIcon className="size-5" />
               <span className="hidden group-data-[state=active]:block lg:block">Sensordaten</span>
             </TabsTrigger>
           </TabsList>

@@ -792,16 +792,16 @@ interface SoftwareTabContentProps {
   }
 }
 
-function SoftwareTabContent({ data }: SoftwareTabContentProps) {
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      toast.success('In Zwischenablage kopiert')
-    } catch {
-      toast.error('Kopieren fehlgeschlagen')
-    }
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    toast.success('In Zwischenablage kopiert')
+  } catch {
+    toast.error('Kopieren fehlgeschlagen')
   }
+}
 
+function SoftwareTabContent({ data }: SoftwareTabContentProps) {
   const buildDate = new Date(data.buildTime)
   const env = getBuildEnv(data.versionInfo)
   const visual = envVisuals[env]

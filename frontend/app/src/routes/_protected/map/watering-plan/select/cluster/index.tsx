@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
 import { TreeClusterInList } from '@/api/backendApi'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   AlertDialog,
   AlertDialogContent,
@@ -67,10 +67,10 @@ function SelectCluster() {
     withResolver: true,
   })
 
-  const handleConfirmLeave = useCallback(() => {
+  const handleConfirmLeave = () => {
     draft.clear()
     proceed?.()
-  }, [proceed, draft])
+  }
 
   const { data: clusters } = useSuspenseQuery(treeClusterQuery())
   const { data: transporter } = useQuery({
@@ -82,7 +82,7 @@ function SelectCluster() {
     enabled: !!trailerId && trailerId !== '-1',
   })
 
-  const handleNavigateBack = useCallback(() => {
+  const handleNavigateBack = () => {
     allowNavigationRef.current = true
     switch (formType) {
       case 'update':
@@ -95,7 +95,7 @@ function SelectCluster() {
           to: '/watering-plans/new',
         })
     }
-  }, [navigate, formType, wateringPlanId])
+  }
 
   const handleSave = () => {
     if (clusterIds.length === 0) {
@@ -151,24 +151,20 @@ function SelectCluster() {
       .map((cluster) => cluster.id)
   }, [transporter, trailer, clusters.data])
 
-  const { showNotice, notice } = useMemo(() => {
-    const errors = []
+  const errors = []
 
-    if (!transporterId || transporterId === '-1') {
-      errors.push('Um eine Route generieren zu können, muss ein Fahrzeug ausgewählt werden.')
-    }
+  if (!transporterId || transporterId === '-1') {
+    errors.push('Um eine Route generieren zu können, muss ein Fahrzeug ausgewählt werden.')
+  }
 
-    if (disabledClusters.length > 0) {
-      errors.push(
-        'Ausgegraute Bewässerungsgruppen sind ausgeschlossen, da das Fahrzeug nicht genügend Wasserkapazität hat.',
-      )
-    }
+  if (disabledClusters.length > 0) {
+    errors.push(
+      'Ausgegraute Bewässerungsgruppen sind ausgeschlossen, da das Fahrzeug nicht genügend Wasserkapazität hat.',
+    )
+  }
 
-    return {
-      showNotice: errors.length > 0,
-      notice: errors,
-    }
-  }, [transporterId, disabledClusters])
+  const showNotice = errors.length > 0
+  const notice = errors
 
   return (
     <>

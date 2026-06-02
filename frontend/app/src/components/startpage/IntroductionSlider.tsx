@@ -5,61 +5,61 @@ import SensorIcon from '../icons/Sensor'
 import TreeIcon from '../icons/Tree'
 import { i18nTranslated } from '../../lib/sliderTranslations'
 
+const facts = [
+  {
+    id: 1,
+    label: 'Entwicklung einer Sensorlösung',
+    icon: SensorIcon,
+    description:
+      'Daten zur Bodenfeuchte werden mithilfe von in unterschiedlicher Tiefe platzierten Sensoren geliefert.',
+  },
+  {
+    id: 2,
+    label: 'Auswertung der Messdaten',
+    icon: PieChart,
+    description:
+      'Auswertung der durch Sensoren übermittelten Daten für eine bedarfsgerechte Bewässerung von Bäumen.',
+  },
+  {
+    id: 3,
+    label: 'Augenmerk auf Jungbäume',
+    icon: TreeIcon,
+    description:
+      'Jungbäume sind besonders hitzeanfällig und daher äußerst schutzbedürftig. Aus diesem Grund werden Bäume in deren ersten drei Standjahren überwacht.',
+  },
+  {
+    id: 4,
+    label: 'Monitoring mehrerer Standorte',
+    icon: MapPin,
+    description:
+      'Unter Verwendung des LoRaWan-Netzes können verschiedene Standorte überwacht und weitere einfach eingebunden werden.',
+  },
+  {
+    id: 5,
+    label: 'Vereinfachte Einsatzplanung',
+    icon: Car,
+    description:
+      'Einsatzfahrten zur Bewässerung können digital und schnell geplant werden. Dabei können Informationen wie die Mitarbeitenden sowie genutzte Fahrzeuge und deren Wasserkapazität hinterlegt werden.',
+  },
+  {
+    id: 6,
+    label: 'Dynamische Routenplanung',
+    icon: Route,
+    description:
+      'Dynamische Berechnung von Bewässerungsrouten mithilfe von Open-Source Software (Valhalla & Vroom).',
+  },
+]
+
+const breakpoints = {
+  640: {
+    perPage: 2,
+  },
+  1024: {
+    destroy: true,
+  },
+}
+
 const IntroductionSlider = () => {
-  const facts = [
-    {
-      id: 1,
-      label: 'Entwicklung einer Sensorlösung',
-      icon: SensorIcon,
-      description:
-        'Daten zur Bodenfeuchte werden mithilfe von in unterschiedlicher Tiefe platzierten Sensoren geliefert.',
-    },
-    {
-      id: 2,
-      label: 'Auswertung der Messdaten',
-      icon: PieChart,
-      description:
-        'Auswertung der durch Sensoren übermittelten Daten für eine bedarfsgerechte Bewässerung von Bäumen.',
-    },
-    {
-      id: 3,
-      label: 'Augenmerk auf Jungbäume',
-      icon: TreeIcon,
-      description:
-        'Jungbäume sind besonders hitzeanfällig und daher äußerst schutzbedürftig. Aus diesem Grund werden Bäume in deren ersten drei Standjahren überwacht.',
-    },
-    {
-      id: 4,
-      label: 'Monitoring mehrerer Standorte',
-      icon: MapPin,
-      description:
-        'Unter Verwendung des LoRaWan-Netzes können verschiedene Standorte überwacht und weitere einfach eingebunden werden.',
-    },
-    {
-      id: 5,
-      label: 'Vereinfachte Einsatzplanung',
-      icon: Car,
-      description:
-        'Einsatzfahrten zur Bewässerung können digital und schnell geplant werden. Dabei können Informationen wie die Mitarbeitenden sowie genutzte Fahrzeuge und deren Wasserkapazität hinterlegt werden.',
-    },
-    {
-      id: 6,
-      label: 'Dynamische Routenplanung',
-      icon: Route,
-      description:
-        'Dynamische Berechnung von Bewässerungsrouten mithilfe von Open-Source Software (Valhalla & Vroom).',
-    },
-  ]
-
-  const breakpoints = {
-    640: {
-      perPage: 2,
-    },
-    1024: {
-      destroy: true,
-    },
-  }
-
   return (
     <section className="container my-20 lg:my-28">
       <div className="rounded-xl bg-green-dark-100 p-6 md:p-10 lg:pb-6">

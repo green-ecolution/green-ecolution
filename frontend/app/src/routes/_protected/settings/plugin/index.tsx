@@ -23,7 +23,7 @@ function PluginView() {
         </p>
       </article>
 
-      <Suspense fallback={<div>Laden von Plugins...</div>}>
+      <Suspense fallback={<div>Laden von Plugins…</div>}>
         <PluginList />
       </Suspense>
     </div>

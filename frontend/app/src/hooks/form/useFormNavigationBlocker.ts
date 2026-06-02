@@ -1,5 +1,5 @@
 import { useBlocker } from '@tanstack/react-router'
-import { useCallback, useRef } from 'react'
+import { useRef } from 'react'
 
 export interface UseFormNavigationBlockerOptions {
   isDirty: boolean
@@ -45,18 +45,18 @@ export const useFormNavigationBlocker = ({
     withResolver: true,
   })
 
-  const allowNavigation = useCallback(() => {
+  const allowNavigation = () => {
     allowNavigationRef.current = true
-  }, [])
+  }
 
-  const closeModal = useCallback(() => {
+  const closeModal = () => {
     reset?.()
-  }, [reset])
+  }
 
-  const confirmLeave = useCallback(() => {
+  const confirmLeave = () => {
     onLeave?.()
     proceed?.()
-  }, [onLeave, proceed])
+  }
 
   return {
     isModalOpen: status === 'blocked',

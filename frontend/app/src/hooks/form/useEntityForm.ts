@@ -4,7 +4,6 @@ import { useNavigate } from '@tanstack/react-router'
 import { DefaultValues, FieldValues, Resolver, useForm } from 'react-hook-form'
 import { useFormNavigationBlocker } from './useFormNavigationBlocker'
 import { useFormDraft } from '@/store/form/useFormDraft'
-import { useCallback } from 'react'
 import { FormType, MutationType } from '@/store/form/formDraftSlice'
 
 export interface EntityFormConfig<TForm extends FieldValues, TCreate, TUpdate, TEntity> {
@@ -53,12 +52,12 @@ export function useEntityForm<
     resolver: config.resolver,
   })
 
-  const saveDraft = useCallback(() => {
+  const saveDraft = () => {
     const data = form.getValues()
     if (data && Object.keys(data).length > 0) {
       draft.setData(data)
     }
-  }, [form, draft])
+  }
 
   const navigationBlocker = useFormNavigationBlocker({
     isDirty: form.formState.isDirty || draft.hasChanges,

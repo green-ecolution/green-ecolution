@@ -88,7 +88,7 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
 
           <div className="lg:grid lg:grid-cols-[auto_15rem] lg:items-end lg:gap-x-10 xl:gap-x-20 xl:grid-cols-[auto_20rem]">
             <div aria-hidden="true" className="mb-10 lg:mb-0 lg:w-60 lg:col-start-2 xl:w-80">
-              <TreeDeciduous className="w-11 h-11 mx-auto mb-4" />
+              <TreeDeciduous className="size-11 mx-auto mb-4" />
               <ul className="flex flex-col gap-y-3">
                 {((tree?.sensor.latestData.data as SensorPayload)?.watermarks ?? []).map(
                   (watermark: Watermark) => (

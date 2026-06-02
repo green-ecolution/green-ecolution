@@ -5,7 +5,6 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMapStore } from '@/store/store'
 import { sensorQuery, treeClusterQuery } from '@/api/queries'
 import { useTreeForm } from '@/hooks/form/useTreeForm'
-import { useCallback } from 'react'
 import { z } from 'zod'
 import { useTreeDraft } from '@/store/form/useFormDraft'
 import { FormProvider } from 'react-hook-form'
@@ -78,7 +77,7 @@ function NewTree() {
     })
   }
 
-  const handleOnChangeLocation = useCallback(() => {
+  const handleOnChangeLocation = () => {
     saveDraft()
     navigate({
       to: '/map/tree/edit',
@@ -91,7 +90,7 @@ function NewTree() {
         zoom: mapZoom,
       },
     }).catch((error) => console.error('Navigation failed:', error))
-  }, [form, mapZoom, navigate, saveDraft])
+  }
 
   return (
     <div className="container mt-6">

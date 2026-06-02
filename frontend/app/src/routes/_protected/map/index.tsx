@@ -1,7 +1,7 @@
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router'
 import MapButtons from '@/components/map/MapButtons'
 import type { ClusterMarkerResponse, Tree, TreeCluster, TreeMarkerResponse } from '@/api/backendApi'
-import { useCallback, useMemo, useRef } from 'react'
+import { useRef } from 'react'
 import Dialog from '@/components/general/filter/Dialog'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
 import FilterProvider from '@/context/FilterContext'
@@ -25,40 +25,28 @@ function MapView() {
   const { enableDragging, disableDragging } = useMapInteractions()
   const dialogRef = useRef<HTMLDivElement>(null)
 
-  const hasActiveFilter = useMemo(
-    () => search.hasCluster !== undefined || search.plantingYears !== undefined,
-    [search.hasCluster, search.plantingYears],
-  )
+  const hasActiveFilter = search.hasCluster !== undefined || search.plantingYears !== undefined
 
-  const handleTreeClick = useCallback(
-    (tree: TreeMarkerResponse | Tree) => {
-      navigate({ to: `/trees/$treeId`, params: { treeId: tree.id.toString() } }).catch((error) =>
-        console.error('Navigation failed:', error),
-      )
-    },
-    [navigate],
-  )
+  const handleTreeClick = (tree: TreeMarkerResponse | Tree) => {
+    navigate({ to: `/trees/$treeId`, params: { treeId: tree.id.toString() } }).catch((error) =>
+      console.error('Navigation failed:', error),
+    )
+  }
 
-  const handleClusterClick = useCallback(
-    (cluster: ClusterMarkerResponse | TreeCluster) => {
-      navigate({
-        to: `/treecluster/$treeclusterId`,
-        params: { treeclusterId: cluster.id.toString() },
-      }).catch((error) => console.error('Navigation failed:', error))
-    },
-    [navigate],
-  )
+  const handleClusterClick = (cluster: ClusterMarkerResponse | TreeCluster) => {
+    navigate({
+      to: `/treecluster/$treeclusterId`,
+      params: { treeclusterId: cluster.id.toString() },
+    }).catch((error) => console.error('Navigation failed:', error))
+  }
 
-  const handleMapInteractions = useCallback(
-    (isOpen: boolean) => {
-      if (isOpen) {
-        disableDragging()
-      } else {
-        enableDragging()
-      }
-    },
-    [disableDragging, enableDragging],
-  )
+  const handleMapInteractions = (isOpen: boolean) => {
+    if (isOpen) {
+      disableDragging()
+    } else {
+      enableDragging()
+    }
+  }
 
   return (
     <>

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React from 'react'
 
 interface OptionProps {
   name: string
@@ -10,18 +10,15 @@ interface OptionProps {
 }
 
 const Option: React.FC<OptionProps> = ({ name, label, value, children, checked, onChange }) => {
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLInputElement>) => {
-      if (event.key === 'Enter') {
-        event.preventDefault()
-        const syntheticEvent = {
-          target: { name, value: value ?? label, checked: !checked },
-        } as React.ChangeEvent<HTMLInputElement>
-        onChange(syntheticEvent)
-      }
-    },
-    [name, value, label, checked, onChange],
-  )
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      const syntheticEvent = {
+        target: { name, value: value ?? label, checked: !checked },
+      } as React.ChangeEvent<HTMLInputElement>
+      onChange(syntheticEvent)
+    }
+  }
 
   return (
     <label
@@ -35,7 +32,7 @@ const Option: React.FC<OptionProps> = ({ name, label, value, children, checked, 
         value={value ?? label}
         onChange={onChange}
         onKeyDown={handleKeyDown}
-        className="opacity-0 w-0 h-0"
+        className="opacity-0 size-0"
       />
       {children && <div>{children}</div>}
       <span>{label}</span>

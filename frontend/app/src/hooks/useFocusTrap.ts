@@ -1,4 +1,4 @@
-import { useEffect, useRef, RefObject, useCallback } from 'react'
+import { useEffect, useRef, RefObject } from 'react'
 
 const FOCUSABLE_SELECTOR = [
   'a[href]',
@@ -21,12 +21,12 @@ export function useFocusTrap<T extends HTMLElement = HTMLElement>(
   const containerRef = useRef<T | null>(null)
   const previousActiveElement = useRef<HTMLElement | null>(null)
 
-  const getFocusableElements = useCallback((): HTMLElement[] => {
+  const getFocusableElements = (): HTMLElement[] => {
     if (!containerRef.current) return []
     return Array.from(
       containerRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
     ).filter((el) => el.offsetParent !== null)
-  }, [])
+  }
 
   useEffect(() => {
     if (!enabled) return

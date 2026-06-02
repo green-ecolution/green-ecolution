@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
 import { Tree, TreeMarkerResponse } from '@/api/backendApi'
-import { useCallback, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import SelectedCard from '@/components/general/cards/SelectedCard'
 import WithFilterableTrees from '@/components/map/marker/WithFilterableTrees'
 import MapSelectEntitiesModal from '@/components/map/MapSelectEntitiesModal'
@@ -59,12 +59,12 @@ function SelectTrees() {
     withResolver: true,
   })
 
-  const handleConfirmLeave = useCallback(() => {
+  const handleConfirmLeave = () => {
     draft.clear()
     proceed?.()
-  }, [proceed, draft])
+  }
 
-  const handleNavigateBack = useCallback(() => {
+  const handleNavigateBack = () => {
     allowNavigationRef.current = true
     switch (formType) {
       case 'create':
@@ -77,7 +77,7 @@ function SelectTrees() {
           params: { treeclusterId: clusterId?.toString() ?? '' },
         })
     }
-  }, [navigate, formType, clusterId])
+  }
 
   const handleSave = () => {
     if (treeIds.length === 0) {

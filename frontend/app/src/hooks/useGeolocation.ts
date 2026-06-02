@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export type GeolocationStatus =
   | 'idle'
@@ -91,14 +91,14 @@ const useGeolocation = ({
   const [history, setHistory] = useState<GeolocationFix[]>([])
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const clearWatch = useCallback(() => {
+  const clearWatch = () => {
     if (watchIdRef.current !== null && navigator.geolocation) {
       navigator.geolocation.clearWatch(watchIdRef.current)
     }
     watchIdRef.current = null
-  }, [])
+  }
 
-  const settlePending = useCallback((fix: GeolocationFix | null, error?: unknown) => {
+  const settlePending = (fix: GeolocationFix | null, error?: unknown) => {
     if (error && pendingRejectRef.current) {
       pendingRejectRef.current(error)
     } else if (pendingResolveRef.current) {
@@ -106,47 +106,41 @@ const useGeolocation = ({
     }
     pendingResolveRef.current = null
     pendingRejectRef.current = null
-  }, [])
+  }
 
-  const handleSuccess = useCallback(
-    (raw: GeolocationPosition) => {
-      const fix = toFix(raw)
-      setPosition(fix)
-      setStatus('watching')
-      // A successful fix implicitly clears a stale transient error.
-      setErrorMessage(null)
-      if (trackHistory) {
-        setHistory((prev) => [fix, ...prev].slice(0, 200))
-      }
-      if (!locatedRef.current) {
-        locatedRef.current = true
-        onLocatedRef.current?.(fix)
-        settlePending(fix)
-      }
-    },
-    [trackHistory, settlePending],
-  )
+  const handleSuccess = (raw: GeolocationPosition) => {
+    const fix = toFix(raw)
+    setPosition(fix)
+    setStatus('watching')
+    // A successful fix implicitly clears a stale transient error.
+    setErrorMessage(null)
+    if (trackHistory) {
+      setHistory((prev) => [fix, ...prev].slice(0, 200))
+    }
+    if (!locatedRef.current) {
+      locatedRef.current = true
+      onLocatedRef.current?.(fix)
+      settlePending(fix)
+    }
+  }
 
-  const handleError = useCallback(
-    (err: GeolocationPositionError) => {
-      setErrorMessage(err.message || null)
-      if (err.code === err.PERMISSION_DENIED) {
-        setStatus('denied')
-        clearWatch()
-        settlePending(null, err)
-        return
-      }
-      // POSITION_UNAVAILABLE / TIMEOUT — keep watching, surface as error state
-      // only when we have no fix yet; otherwise stay in 'watching' with last value.
-      if (!locatedRef.current) {
-        setStatus('error')
-        settlePending(null, err)
-      }
-    },
-    [clearWatch, settlePending],
-  )
+  const handleError = (err: GeolocationPositionError) => {
+    setErrorMessage(err.message || null)
+    if (err.code === err.PERMISSION_DENIED) {
+      setStatus('denied')
+      clearWatch()
+      settlePending(null, err)
+      return
+    }
+    // POSITION_UNAVAILABLE / TIMEOUT — keep watching, surface as error state
+    // only when we have no fix yet; otherwise stay in 'watching' with last value.
+    if (!locatedRef.current) {
+      setStatus('error')
+      settlePending(null, err)
+    }
+  }
 
-  const start = useCallback((): Promise<GeolocationFix | null> => {
+  const start = (): Promise<GeolocationFix | null> => {
     // Already watching — return a no-op promise resolving to the last fix.
     if (watchIdRef.current !== null) {
       return Promise.resolve(position)
@@ -210,14 +204,14 @@ const useGeolocation = ({
 
       void run()
     })
-  }, [handleSuccess, handleError, settlePending, position])
+  }
 
-  const stop = useCallback(() => {
+  const stop = () => {
     clearWatch()
     setStatus('idle')
-  }, [clearWatch])
+  }
 
-  const reset = useCallback(() => {
+  const reset = () => {
     clearWatch()
     locatedRef.current = false
     settlePending(null)
@@ -225,9 +219,9 @@ const useGeolocation = ({
     setHistory([])
     setErrorMessage(null)
     setStatus('idle')
-  }, [clearWatch, settlePending])
+  }
 
-  const relocate = useCallback((): Promise<GeolocationFix | null> => {
+  const relocate = (): Promise<GeolocationFix | null> => {
     clearWatch()
     locatedRef.current = false
     settlePending(null)
@@ -235,7 +229,7 @@ const useGeolocation = ({
     // Keep the stale `position` visible until the next fix arrives — feels
     // smoother than flashing an empty state.
     return start()
-  }, [clearWatch, settlePending, start])
+  }
 
   // autoStart on mount; options are captured via optionsRef so this runs once.
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { createContext, useState, ReactNode, use, useMemo } from 'react'
+import React, { createContext, useState, ReactNode, use } from 'react'
 
 export interface Filters {
   statusTags: string[]
@@ -92,19 +92,16 @@ const FilterProvider: React.FC<FilterProviderProps> = ({
     setPlantingYears([])
   }
 
-  const context = useMemo(
-    () => ({
-      filters: { statusTags, regionTags, hasCluster, plantingYears },
-      handleStatusChange,
-      handleRegionChange,
-      handleClusterChange,
-      handlePlantingYearChange,
-      handlePlantingYearRangeChange,
-      resetFilters,
-      applyOldStateToTags,
-    }),
-    [hasCluster, plantingYears, regionTags, statusTags],
-  )
+  const context = {
+    filters: { statusTags, regionTags, hasCluster, plantingYears },
+    handleStatusChange,
+    handleRegionChange,
+    handleClusterChange,
+    handlePlantingYearChange,
+    handlePlantingYearRangeChange,
+    resetFilters,
+    applyOldStateToTags,
+  }
 
   return <FilterContext value={context}>{children}</FilterContext>
 }

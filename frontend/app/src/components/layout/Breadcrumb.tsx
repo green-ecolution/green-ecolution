@@ -9,13 +9,13 @@ import {
   BreadcrumbSeparator,
 } from '@green-ecolution/ui'
 
+const rootBreadcrumb = {
+  title: 'Dashboard',
+  path: '/dashboard',
+}
+
 function Breadcrumb() {
   const breadcrumbs = useBreadcrumbs()
-
-  const rootBreadcrumb = {
-    title: 'Dashboard',
-    path: '/dashboard',
-  }
 
   const isLastItem = (index: number) => index === breadcrumbs.length - 1
 

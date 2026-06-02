@@ -2,6 +2,21 @@ import { useLocation } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { infoQuery } from '@/api/queries'
 
+const navItems = [
+  {
+    url: 'mailto:info@green-ecolution.de',
+    label: 'Kontakt',
+  },
+  {
+    url: 'https://green-ecolution.de/impressum',
+    label: 'Impressum',
+  },
+  {
+    url: 'https://green-ecolution.de/datenschutz',
+    label: 'Datenschutz',
+  },
+]
+
 function Footer() {
   const location = useLocation()
   const isMapPage = location.pathname.includes('/map')
@@ -10,21 +25,6 @@ function Footer() {
   const version = appInfo?.version?.startsWith('v')
     ? appInfo.version
     : `v${appInfo?.version ?? 'unkown'}`
-
-  const navItems = [
-    {
-      url: 'mailto:info@green-ecolution.de',
-      label: 'Kontakt',
-    },
-    {
-      url: 'https://green-ecolution.de/impressum',
-      label: 'Impressum',
-    },
-    {
-      url: 'https://green-ecolution.de/datenschutz',
-      label: 'Datenschutz',
-    },
-  ]
 
   return (
     <footer className={`bg-white lg:pl-20 mt-16 ${isMapPage ? 'hidden' : ''}`}>

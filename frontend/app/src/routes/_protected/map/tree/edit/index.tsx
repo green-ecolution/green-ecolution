@@ -16,7 +16,7 @@ import { TreeForm } from '@/schema/treeSchema'
 import { useMapStore } from '@/store/store'
 import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
 import { LatLng } from 'leaflet'
-import { useCallback, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { z } from 'zod'
 
 const editTreeParams = z.object({
@@ -65,12 +65,12 @@ function EditTree() {
     withResolver: true,
   })
 
-  const handleConfirmLeave = useCallback(() => {
+  const handleConfirmLeave = () => {
     draft.clear()
     proceed?.()
-  }, [proceed, draft])
+  }
 
-  const handleNavigateBack = useCallback(() => {
+  const handleNavigateBack = () => {
     allowNavigationRef.current = true
     switch (formType) {
       case 'create':
@@ -93,7 +93,7 @@ function EditTree() {
           search: { lat: treeLatLng.lat, lng: treeLatLng.lng, zoom },
         })
     }
-  }, [formType, navigate, treeLatLng.lat, treeLatLng.lng, treeId, zoom])
+  }
 
   const handleSave = () => {
     const originalLat = draft.data?.latitude ?? treeLat

@@ -26,7 +26,8 @@
     "build-storybook": "pnpm --filter @green-ecolution/ui build-storybook"
   },
   "devDependencies": {
-    "prettier": "^3.8.3"
+    "prettier": "^3.8.3",
+    "react-doctor": "^0.2.16"
   },
   "packageManager": "pnpm@10.20.0"
 }

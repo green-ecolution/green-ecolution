@@ -14,7 +14,7 @@ import {
 import useGeolocation from '@/hooks/useGeolocation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useCallback, useEffect, useReducer } from 'react'
+import { useEffect, useReducer } from 'react'
 
 export const Route = createFileRoute('/_protected/sensors/new/')({
   component: NewSensor,
@@ -92,40 +92,37 @@ function NewSensor() {
     onError: (err) => dispatch({ type: 'submissionError', message: mapActivateError(err) }),
   })
 
-  const handleRelocate = useCallback(async () => {
+  const handleRelocate = async () => {
     dispatch({ type: 'gpsCleared' })
     const next = await relocate().catch(() => null)
     if (next) {
       dispatch({ type: 'gpsFrozen', fix: next })
       stop()
     }
-  }, [relocate, stop])
+  }
 
-  const handleStepClick = useCallback(
-    (target: WizardStep) => dispatch({ type: 'goToStep', step: target }),
-    [],
-  )
+  const handleStepClick = (target: WizardStep) => dispatch({ type: 'goToStep', step: target })
 
-  const handleBack = useCallback(() => {
+  const handleBack = () => {
     if (state.step > 1) {
       dispatch({ type: 'goToStep', step: (state.step - 1) as WizardStep })
     }
-  }, [state.step])
+  }
 
-  const handleNext = useCallback(() => {
+  const handleNext = () => {
     if (state.step < 3) {
       dispatch({ type: 'goToStep', step: (state.step + 1) as WizardStep })
     }
-  }, [state.step])
+  }
 
-  const handleResetForNext = useCallback(() => {
+  const handleResetForNext = () => {
     dispatch({ type: 'resetForNextSensor' })
     void relocate()
-  }, [relocate])
+  }
 
-  const handleBackToOverview = useCallback(() => {
+  const handleBackToOverview = () => {
     void navigate({ to: '/sensors', search: { page: 1 } })
-  }, [navigate])
+  }
 
   if (state.submission === 'success') {
     return (

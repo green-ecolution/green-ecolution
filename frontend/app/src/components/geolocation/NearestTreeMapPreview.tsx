@@ -5,7 +5,6 @@ import type { TreeWithDistance } from '@/api/backendApi'
 import { WateringStatus } from '@green-ecolution/backend-client'
 import { cn } from '@green-ecolution/ui'
 import L from 'leaflet'
-import { useMemo } from 'react'
 import { Circle, MapContainer, Marker, TileLayer } from 'react-leaflet'
 
 interface NearestTreeMapPreviewProps {
@@ -30,16 +29,14 @@ const NearestTreeMapPreview = ({
   const sensorPos = L.latLng(sensorLat, sensorLng)
   const radius = sensorAccuracy && sensorAccuracy > 0 ? sensorAccuracy : null
 
-  const bounds = useMemo(() => {
-    const points: L.LatLngExpression[] = [
-      [sensorLat, sensorLng],
-      ...trees.map((t) => [t.tree.latitude, t.tree.longitude] as L.LatLngTuple),
-    ]
-    if (points.length < 2) {
-      return L.latLngBounds([sensorPos, sensorPos]).pad(0.5)
-    }
-    return L.latLngBounds(points).pad(0.3)
-  }, [sensorLat, sensorLng, sensorPos, trees])
+  const points: L.LatLngExpression[] = [
+    [sensorLat, sensorLng],
+    ...trees.map((t) => [t.tree.latitude, t.tree.longitude] as L.LatLngTuple),
+  ]
+  const bounds =
+    points.length < 2
+      ? L.latLngBounds([sensorPos, sensorPos]).pad(0.5)
+      : L.latLngBounds(points).pad(0.3)
 
   return (
     <div

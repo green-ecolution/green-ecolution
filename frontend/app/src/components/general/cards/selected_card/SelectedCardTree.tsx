@@ -35,7 +35,7 @@ const SelectedCardTree = ({ onClick, id }: SelectedCardTreeProps) => {
             className="text-dark-600 hover:text-red"
             onClick={() => onClick(id)}
           >
-            <Trash2 className="w-5 h-5" />
+            <Trash2 className="size-5" />
             <span className="sr-only">Baum aus Auswahl löschen</span>
           </Button>
         </ListCardActions>

@@ -1,6 +1,6 @@
 import Lottie from 'lottie-react'
 import cableAnimation from '../../animations/cableAnimation.json'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import ButtonLink from '../general/links/ButtonLink'
 import { MoveRight, RefreshCw } from 'lucide-react'
 import useStore from '@/store/store'
@@ -23,7 +23,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary
 
   const isAuthenticated = useStore((state) => state.isAuthenticated)
 
-  const checkResponseErrorMessage = useCallback(async () => {
+  const checkResponseErrorMessage = async () => {
     if (error instanceof ResponseError) {
       const json: unknown = await error.response.clone().json()
       if (isHTTPError(json)) {
@@ -32,7 +32,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary
         setErrorMessage('Unbekannter Fehler')
       }
     }
-  }, [error])
+  }
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- async data fetching pattern

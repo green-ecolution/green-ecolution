@@ -1,4 +1,4 @@
-import React, { useEffect, useState, Ref, useCallback, useId } from 'react'
+import React, { useEffect, useState, Ref, useId } from 'react'
 import { Button } from '@green-ecolution/ui'
 import { MoveRight, X } from 'lucide-react'
 import useMapInteractions from '@/hooks/useMapInteractions'
@@ -33,14 +33,11 @@ const MapSelectEntitiesModal = ({
     returnFocusOnDeactivate: true,
   })
 
-  const handleEscapeKey = useCallback(
-    (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && openModal && !isLargeScreen) {
-        setOpenModal(false)
-      }
-    },
-    [openModal, isLargeScreen],
-  )
+  const handleEscapeKey = (event: KeyboardEvent) => {
+    if (event.key === 'Escape' && openModal && !isLargeScreen) {
+      setOpenModal(false)
+    }
+  }
 
   useEffect(() => {
     if (isLargeScreen) {

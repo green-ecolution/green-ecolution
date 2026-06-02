@@ -8,7 +8,7 @@ import createToast from '@/hooks/createToast'
 import { Tree, TreeMarkerResponse, TreeUpdateRequest } from '@/api/backendApi'
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 
 export const Route = createFileRoute('/_protected/map/sensor/select/tree/')({
   component: LinkTreeToSensor,
@@ -51,12 +51,12 @@ function LinkTreeToSensor() {
       .catch(console.log)
   }
 
-  const handleNavigateBack = useCallback(() => {
+  const handleNavigateBack = () => {
     return navigate({
       to: `/sensors/$sensorId`,
       params: { sensorId: sensorId?.toString() ?? '' },
     })
-  }, [navigate, sensorId])
+  }
 
   const handleSave = async () => {
     setErrorMessage(null)

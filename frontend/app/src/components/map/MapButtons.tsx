@@ -40,7 +40,7 @@ const MapButtons = () => {
             className="group flex items-center gap-x-2 !text-green-dark font-medium text-base mb-4"
           >
             Neuen Baum manuell hinzufügen
-            <MoveRight className="w-4 h-4 transition-all ease-in-out duration-300 group-hover:translate-x-1" />
+            <MoveRight className="size-4 transition-all ease-in-out duration-300 group-hover:translate-x-1" />
           </Link>
         </DialogContent>
       </Dialog>

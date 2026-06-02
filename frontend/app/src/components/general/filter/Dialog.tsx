@@ -1,4 +1,4 @@
-import { Ref, useEffect, useMemo, useState } from 'react'
+import { Ref, useEffect, useState } from 'react'
 import FilterButton from '../buttons/FilterButton'
 import {
   Button,
@@ -95,14 +95,11 @@ const Dialog = ({
     setIsOpen(true)
   }
 
-  const count = useMemo(
-    () =>
-      filters.statusTags.length +
-      filters.regionTags.length +
-      (filters.hasCluster !== undefined ? 1 : 0) +
-      filters.plantingYears.length,
-    [filters],
-  )
+  const count =
+    filters.statusTags.length +
+    filters.regionTags.length +
+    (filters.hasCluster !== undefined ? 1 : 0) +
+    filters.plantingYears.length
 
   useEffect(() => {
     if (!onToggleOpen) return

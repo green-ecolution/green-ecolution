@@ -1,32 +1,31 @@
 import { Link } from '@tanstack/react-router'
 import { LinkCard, LinkCardTitle, LinkCardDescription, LinkCardFooter } from '@green-ecolution/ui'
 
-const QuickLinks = () => {
-  const cards = [
-    {
-      id: 1,
-      url: '/map',
-      description: 'Alle Bewässerungsgruppen & Bäume auf der Karte anzeigen lassen',
-      headline: 'Karte inkl. Verortung aller Bäume',
-      linkLabel: 'Zur Karte',
-    },
-    {
-      id: 2,
-      url: '/sensors',
-      description: 'Zeigt alle verbauten Sensoren inkl. Akkustand, Messwerte, …',
-      headline: 'Liste aller verbauten Sensoren',
-      linkLabel: 'Zu den Sensoren',
-    },
-    {
-      id: 3,
-      url: '/watering-plans',
-      description:
-        'Listenansicht, aller Einsatzpläne, die geplant, abgeschlossen, aktiv etc. sind.',
-      headline: 'Auflistung der Einsatzpläne & Routenplanung',
-      linkLabel: 'Zu den Einsatzplänen',
-    },
-  ]
+const cards = [
+  {
+    id: 1,
+    url: '/map',
+    description: 'Alle Bewässerungsgruppen & Bäume auf der Karte anzeigen lassen',
+    headline: 'Karte inkl. Verortung aller Bäume',
+    linkLabel: 'Zur Karte',
+  },
+  {
+    id: 2,
+    url: '/sensors',
+    description: 'Zeigt alle verbauten Sensoren inkl. Akkustand, Messwerte, …',
+    headline: 'Liste aller verbauten Sensoren',
+    linkLabel: 'Zu den Sensoren',
+  },
+  {
+    id: 3,
+    url: '/watering-plans',
+    description: 'Listenansicht, aller Einsatzpläne, die geplant, abgeschlossen, aktiv etc. sind.',
+    headline: 'Auflistung der Einsatzpläne & Routenplanung',
+    linkLabel: 'Zu den Einsatzplänen',
+  },
+]
 
+const QuickLinks = () => {
   return (
     <section className="container border-t border-t-dark-100 pt-10 mt-20 lg:pt-28 lg:mt-28">
       <article className="text-center max-w-screen-lg mx-auto">

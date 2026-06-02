@@ -1,5 +1,5 @@
 import { MapContainer, TileLayer } from 'react-leaflet'
-import React, { useMemo } from 'react'
+import React, { useRef } from 'react'
 import useStore from '@/store/store'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { mapInfoQuery } from '@/api/queries'
@@ -18,7 +18,9 @@ const Map = ({ width = '100%', height = 'calc(100dvh - 4.563rem)', children }: M
   const maxZoom = useStore((state) => state.mapMaxZoom)
   const minZoom = useStore((state) => state.mapMinZoom)
 
-  const time = useMemo(() => new Date().getTime(), [])
+  // Stable per-mount timestamp used as MapContainer key to force a fresh instance
+  // when the Map component is remounted. Captured once via useRef.
+  const time = useRef(new Date().getTime()).current
 
   return (
     <MapContainer

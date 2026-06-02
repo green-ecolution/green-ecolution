@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: readonly string[]
@@ -49,6 +49,18 @@ const detectPlatform = (): PWAPlatform => {
   return 'desktop'
 }
 
+const promptInstall = async () => {
+  if (!deferredPrompt) return
+  const evt = deferredPrompt
+  try {
+    await evt.prompt()
+    await evt.userChoice
+  } finally {
+    deferredPrompt = null
+    notify()
+  }
+}
+
 export interface UsePWAInstallReturn {
   /** True when the app runs as an installed PWA (standalone display mode) */
   isStandalone: boolean
@@ -86,19 +98,7 @@ const usePWAInstall = (): UsePWAInstallReturn => {
     }
   }, [])
 
-  const platform = useMemo(detectPlatform, [])
-
-  const promptInstall = useCallback(async () => {
-    if (!deferredPrompt) return
-    const evt = deferredPrompt
-    try {
-      await evt.prompt()
-      await evt.userChoice
-    } finally {
-      deferredPrompt = null
-      notify()
-    }
-  }, [])
+  const platform = detectPlatform()
 
   return { isStandalone, platform, canPromptInstall, promptInstall }
 }
