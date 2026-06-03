@@ -13,12 +13,17 @@ export const filterSearchSchema = z.object({
 
 export type FilterSearch = z.infer<typeof filterSearchSchema>
 
-export const filtersFromSearch = (search: FilterSearch): Filters => ({
-  statusTags: search.wateringStatuses ?? [],
-  regionTags: search.regions ?? [],
-  hasCluster: search.hasCluster,
-  plantingYears: search.plantingYears ?? [],
-})
+// Parses instead of trusting the caller: useSearch({strict:false}) merges every
+// route's search schema, so the filter keys arrive widened (e.g. string[]).
+export const filtersFromSearch = (search: unknown): Filters => {
+  const parsed = filterSearchSchema.parse(search)
+  return {
+    statusTags: parsed.wateringStatuses ?? [],
+    regionTags: parsed.regions ?? [],
+    hasCluster: parsed.hasCluster,
+    plantingYears: parsed.plantingYears ?? [],
+  }
+}
 
 export const searchFromFilters = (filters: Filters): FilterSearch => ({
   wateringStatuses:

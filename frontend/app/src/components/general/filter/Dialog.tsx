@@ -8,9 +8,9 @@ import {
   DialogTitle,
 } from '@green-ecolution/ui'
 import { MoveRight, X } from 'lucide-react'
-import { useNavigate } from '@tanstack/react-router'
-import { useFilter, Filters } from '@/context/FilterContext'
-import useStore from '@/store/store'
+import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useFilter } from '@/context/FilterContext'
+import { filtersFromSearch, searchFromFilters } from '@/lib/filterSearchSchema'
 
 interface DialogProps {
   headline: string
@@ -29,79 +29,56 @@ const Dialog = ({
   onToggleOpen,
 }: DialogProps) => {
   const [isOpen, setIsOpen] = useState(false)
-  const [oldValues, setOldValues] = useState<Filters>({
-    statusTags: [],
-    regionTags: [],
-    hasCluster: undefined,
-    plantingYears: [],
-  })
   const navigate = useNavigate()
-  const mapCenter = useStore((state) => state.mapCenter)
-  const mapZoom = useStore((state) => state.mapZoom)
-  const mapPosition = { lat: mapCenter[0], lng: mapCenter[1], zoom: mapZoom }
-
+  const search = useSearch({ strict: false })
   const { filters, resetFilters, applyOldStateToTags } = useFilter()
+
+  const appliedFilters = useMemo(() => filtersFromSearch(search), [search])
 
   const handleSubmit = () => {
     setIsOpen(false)
     navigate({
       to: fullUrlPath,
-      search: () => ({
-        lat: isOnMap ? mapPosition.lat : undefined,
-        lng: isOnMap ? mapPosition.lng : undefined,
-        zoom: isOnMap ? mapPosition.zoom : undefined,
-        wateringStatuses: filters.statusTags.length > 0 ? filters.statusTags : undefined,
-        regions: filters.regionTags.length > 0 ? filters.regionTags : undefined,
-        hasCluster: filters.hasCluster ?? undefined,
-        plantingYears: filters.plantingYears.length > 0 ? filters.plantingYears : undefined,
+      search: (prev: Record<string, unknown>) => ({
+        ...prev,
+        ...searchFromFilters(filters),
+        page: undefined,
       }),
     }).catch((error) => console.error('Navigation failed:', error))
   }
 
   const handleReset = () => {
-    applyOldStateToTags({
-      statusTags: [],
-      regionTags: [],
-      hasCluster: undefined,
-      plantingYears: [],
-    })
     resetFilters()
     setIsOpen(false)
-
-    if (isOnMap) {
-      navigate({
-        to: fullUrlPath,
-        search: {
-          lat: mapPosition.lat,
-          lng: mapPosition.lng,
-          zoom: mapPosition.zoom,
-        },
-      }).catch((error) => console.error('Navigation failed:', error))
-    } else {
-      navigate({
-        to: fullUrlPath,
-        replace: true,
-      }).catch((error) => console.error('Navigation failed:', error))
-    }
+    navigate({
+      to: fullUrlPath,
+      search: (prev: Record<string, unknown>) => ({
+        ...prev,
+        wateringStatuses: undefined,
+        regions: undefined,
+        hasCluster: undefined,
+        plantingYears: undefined,
+        page: undefined,
+      }),
+    }).catch((error) => console.error('Navigation failed:', error))
   }
 
   const handleClose = () => {
     setIsOpen(false)
-    applyOldStateToTags(oldValues)
   }
 
   const handleOpen = () => {
-    setOldValues(filters)
+    applyOldStateToTags(appliedFilters)
     setIsOpen(true)
   }
 
   const count = useMemo(
     () =>
-      filters.statusTags.length +
-      filters.regionTags.length +
-      (filters.hasCluster !== undefined ? 1 : 0) +
-      filters.plantingYears.length,
-    [filters],
+      appliedFilters.statusTags.length +
+      appliedFilters.regionTags.length +
+      (appliedFilters.hasCluster !== undefined ? 1 : 0) +
+      appliedFilters.plantingYears.length,
+    [appliedFilters],
   )
 
   useEffect(() => {
