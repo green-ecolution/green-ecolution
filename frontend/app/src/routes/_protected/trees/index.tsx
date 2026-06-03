@@ -18,6 +18,7 @@ const treeFilterSchema = z.object({
   wateringStatuses: z.array(z.string()).optional(),
   hasCluster: z.boolean().optional(),
   plantingYears: z.array(z.number()).optional(),
+  page: z.number().catch(1),
 })
 
 function Trees() {
@@ -26,7 +27,7 @@ function Trees() {
   })
   const { data: treesRes } = useSuspenseQuery(
     treeQuery({
-      page: page ?? 1,
+      page,
       perPage: 10,
     }),
   )
@@ -108,7 +109,7 @@ export const Route = createFileRoute('/_protected/trees/')({
     wateringStatuses: search.wateringStatuses ?? undefined,
     hasCluster: search.hasCluster ?? undefined,
     plantingYears: search.plantingYears ?? undefined,
-    page: 1,
+    page: search.page,
   }),
   loader: ({
     deps: { page, wateringStatuses, hasCluster, plantingYears },
