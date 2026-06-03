@@ -180,6 +180,23 @@ impl From<(&TreeCluster, Option<&Region>)> for TreeClusterInListResponse {
     }
 }
 
+/// Query parameters for the paginated cluster list endpoint.
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+pub struct ClusterListParams {
+    #[param(default = 1, minimum = 1, example = 1)]
+    #[serde(default = "crate::http::v1::pagination::default_page")]
+    pub page: u64,
+    #[param(default = 25, minimum = 1, maximum = 100, example = 25)]
+    #[serde(default = "crate::http::v1::pagination::default_per_page")]
+    pub per_page: u64,
+    /// Repeatable: `?watering_status=good&watering_status=bad`.
+    #[serde(default)]
+    pub watering_status: Vec<WateringStatus>,
+    /// Repeatable: `?region=<uuid>&region=<uuid>`.
+    #[serde(default)]
+    pub region: Vec<uuid::Uuid>,
+}
+
 // -- Requests --
 
 /// Request body for creating a new tree cluster.

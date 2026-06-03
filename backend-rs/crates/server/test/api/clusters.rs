@@ -829,6 +829,86 @@ async fn list_cluster_markers_includes_cluster_with_trees() {
     assert_eq!(data[0]["tree_count"], 1);
 }
 
+async fn create_cluster_named(app: &helpers::TestApp, name: &str) -> String {
+    let body = serde_json::json!({
+        "name": name,
+        "address": "Parkweg 1",
+        "description": "Test",
+        "soil_condition": "sandig",
+        "tree_ids": []
+    });
+    let resp = app.post_json("/api/v1/clusters", &body).await;
+    assert_eq!(resp.status().as_u16(), 201);
+    let cluster: serde_json::Value = resp.json().await.unwrap();
+    cluster["id"].as_str().unwrap().to_string()
+}
+
+#[tokio::test]
+async fn list_clusters_filters_by_watering_status() {
+    let app = spawn_app().await;
+    create_cluster_named(&app, "Cluster A").await;
+    create_cluster_named(&app, "Cluster B").await;
+
+    // freshly created clusters have status "unknown"
+    let response = app.get("/api/v1/clusters?watering_status=unknown").await;
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 2);
+
+    let response = app.get("/api/v1/clusters?watering_status=good").await;
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 0);
+}
+
+#[tokio::test]
+async fn list_clusters_accepts_repeated_watering_statuses() {
+    let app = spawn_app().await;
+    create_cluster_named(&app, "Cluster A").await;
+
+    let response = app
+        .get("/api/v1/clusters?watering_status=good&watering_status=unknown")
+        .await;
+
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 1);
+}
+
+#[tokio::test]
+async fn list_clusters_filters_by_region() {
+    let app = spawn_app().await;
+    let cluster_a = create_cluster_named(&app, "Cluster A").await;
+    create_cluster_named(&app, "Cluster B").await;
+
+    // Region assignment normally happens via spatial lookup; set it directly
+    // to keep the test deterministic.
+    let region_id = uuid::Uuid::now_v7();
+    sqlx::query("INSERT INTO regions (id, name) VALUES ($1, $2)")
+        .bind(region_id)
+        .bind("Mürwik")
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+    sqlx::query("UPDATE tree_clusters SET region_id = $1 WHERE id = $2")
+        .bind(region_id)
+        .bind(uuid::Uuid::parse_str(&cluster_a).unwrap())
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+
+    let response = app
+        .get(&format!("/api/v1/clusters?region={region_id}"))
+        .await;
+    let body: serde_json::Value = response.json().await.unwrap();
+    let data = body["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1);
+    assert_eq!(data[0]["name"], "Cluster A");
+
+    let other = uuid::Uuid::now_v7();
+    let response = app.get(&format!("/api/v1/clusters?region={other}")).await;
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 0);
+}
+
 #[tokio::test]
 async fn tree_position_update_recalculates_cluster_center() {
     let app = spawn_app().await;
