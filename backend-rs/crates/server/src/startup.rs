@@ -87,7 +87,10 @@ impl Application {
             update_checker.clone(),
         ));
 
-        let repos = Repositories::build(&pool);
+        let sensor_offline_after = chrono::Duration::seconds(
+            i64::try_from(settings.sensor.offline_after_secs).unwrap_or(i64::MAX),
+        );
+        let repos = Repositories::build(&pool, sensor_offline_after);
         let event_bus = build_event_bus(&repos);
         let services = Services::build(&repos, event_bus);
 
@@ -190,10 +193,10 @@ struct Repositories {
 }
 
 impl Repositories {
-    fn build(pool: &PgPool) -> Self {
+    fn build(pool: &PgPool, sensor_offline_after: chrono::Duration) -> Self {
         let region_repo = Arc::new(PgRegionRepository::new(pool.clone()));
         let tree_repo = Arc::new(PgTreeRepository::new(pool.clone()));
-        let sensor_repo = Arc::new(PgSensorRepository::new(pool.clone()));
+        let sensor_repo = Arc::new(PgSensorRepository::new(pool.clone(), sensor_offline_after));
         let vehicle_repo = Arc::new(PgVehicleRepository::new(pool.clone()));
         let cluster_repo = Arc::new(PgTreeClusterRepository::new(pool.clone()));
         let watering_plan_repo = Arc::new(PgWateringPlanRepository::new(pool.clone()));

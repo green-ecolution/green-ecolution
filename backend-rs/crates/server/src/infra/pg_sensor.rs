@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use chrono::Utc;
 use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -7,9 +8,10 @@ use domain::{
     RepositoryError,
     sensor::{
         LorawanCredentials, Sensor, SensorDraft, SensorId, SensorReader, SensorReadingReader,
-        SensorReadingWriter, SensorSearchQuery, SensorSnapshot, SensorStatus, SensorType,
-        SensorView, SensorWriter,
+        SensorReadingWriter, SensorSearchQuery, SensorSnapshot, SensorType, SensorView,
+        SensorWriter,
         data::{SensorReading, SensorReadingDraft, SensorReadingSnapshot, SensorReadingView},
+        derive_connectivity,
         repository::NormalizedValue,
         view::{LorawanInfo, SensorModelSummary},
     },
@@ -24,11 +26,15 @@ use domain::{
 
 pub struct PgSensorRepository {
     pool: PgPool,
+    offline_after: chrono::Duration,
 }
 
 impl PgSensorRepository {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(pool: PgPool, offline_after: chrono::Duration) -> Self {
+        Self {
+            pool,
+            offline_after,
+        }
     }
 }
 
@@ -38,7 +44,7 @@ impl SensorReader for PgSensorRepository {
     async fn by_id(&self, id: &SensorId) -> Result<Sensor, RepositoryError> {
         let row = sqlx::query!(
             r#"SELECT s.id,
-                      s.status        AS "status: SensorStatus",
+                      s.activated_at,
                       s.type          AS "sensor_type: SensorType",
                       s.model_id,
                       s.provider,
@@ -70,7 +76,7 @@ impl SensorReader for PgSensorRepository {
         )?;
         Ok(Sensor::reconstitute(SensorSnapshot {
             id: row.id,
-            status: row.status,
+            activated_at: row.activated_at.map(|t| t.and_utc()),
             sensor_type: row.sensor_type,
             model_id: row.model_id,
             provider: row.provider,
@@ -85,7 +91,7 @@ impl SensorReader for PgSensorRepository {
 
         let rows = sqlx::query!(
             r#"SELECT s.id,
-                      s.status        AS "status: SensorStatus",
+                      s.activated_at,
                       s.type          AS "sensor_type: SensorType",
                       s.model_id,
                       s.provider,
@@ -118,7 +124,7 @@ impl SensorReader for PgSensorRepository {
                 )?;
                 Ok(Sensor::reconstitute(SensorSnapshot {
                     id: r.id,
-                    status: r.status,
+                    activated_at: r.activated_at.map(|t| t.and_utc()),
                     sensor_type: r.sensor_type,
                     model_id: r.model_id,
                     provider: r.provider,
@@ -133,7 +139,7 @@ impl SensorReader for PgSensorRepository {
     async fn view_by_id(&self, id: &SensorId) -> Result<SensorView, RepositoryError> {
         let row = sqlx::query!(
             r#"SELECT s.id, s.created_at, s.updated_at,
-                      s.status        AS "status: SensorStatus",
+                      s.activated_at,
                       s.type          AS "sensor_type: SensorType",
                       s.provider,
                       s.additional_informations AS "additional_info: serde_json::Value",
@@ -177,11 +183,18 @@ impl SensorReader for PgSensorRepository {
             data: r.data,
         });
 
+        let status = derive_connectivity(
+            row.activated_at.map(|t| t.and_utc()),
+            latest_reading.as_ref().map(|r| r.created_at),
+            Utc::now(),
+            self.offline_after,
+        );
+
         Ok(SensorView {
             id: row.id,
             created_at: row.created_at.and_utc(),
             updated_at: row.updated_at.and_utc(),
-            status: row.status,
+            status,
             sensor_type: row.sensor_type,
             coordinate: build_coord(row.tree_lat, row.tree_lng)?,
             linked_tree_id: row.linked_tree_id,
@@ -209,7 +222,7 @@ impl SensorReader for PgSensorRepository {
 
         let rows = sqlx::query!(
             r#"SELECT s.id, s.created_at, s.updated_at,
-                      s.status        AS "status: SensorStatus",
+                      s.activated_at,
                       s.type          AS "sensor_type: SensorType",
                       s.provider,
                       s.additional_informations AS "additional_info: serde_json::Value",
@@ -223,7 +236,9 @@ impl SensorReader for PgSensorRepository {
                       sl.app_eui       AS "app_eui?",
                       sl.at_pin,
                       sl.ota_pin,
-                      sl.config        AS "config: serde_json::Value"
+                      sl.config        AS "config: serde_json::Value",
+                      (SELECT sd.id FROM sensor_data sd WHERE sd.sensor_id = s.id
+                       ORDER BY sd.id DESC LIMIT 1) AS "last_reading_id?: Uuid"
             FROM sensors s
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
@@ -236,11 +251,17 @@ impl SensorReader for PgSensorRepository {
 
         rows.into_iter()
             .map(|r| {
+                let status = derive_connectivity(
+                    r.activated_at.map(|t| t.and_utc()),
+                    r.last_reading_id.and_then(|id| uuid_v7_timestamp(&id)),
+                    Utc::now(),
+                    self.offline_after,
+                );
                 Ok(SensorView {
                     id: r.id,
                     created_at: r.created_at.and_utc(),
                     updated_at: r.updated_at.and_utc(),
-                    status: r.status,
+                    status,
                     sensor_type: r.sensor_type,
                     coordinate: build_coord(r.tree_lat, r.tree_lng)?,
                     linked_tree_id: r.linked_tree_id,
@@ -284,7 +305,7 @@ impl SensorReader for PgSensorRepository {
 
         let rows = sqlx::query!(
             r#"SELECT s.id, s.created_at, s.updated_at,
-                      s.status        AS "status: SensorStatus",
+                      s.activated_at,
                       s.type          AS "sensor_type: SensorType",
                       s.provider,
                       s.additional_informations AS "additional_info: serde_json::Value",
@@ -298,7 +319,9 @@ impl SensorReader for PgSensorRepository {
                       sl.app_eui       AS "app_eui?",
                       sl.at_pin,
                       sl.ota_pin,
-                      sl.config        AS "config: serde_json::Value"
+                      sl.config        AS "config: serde_json::Value",
+                      (SELECT sd.id FROM sensor_data sd WHERE sd.sensor_id = s.id
+                       ORDER BY sd.id DESC LIMIT 1) AS "last_reading_id?: Uuid"
             FROM sensors s
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
@@ -316,11 +339,17 @@ impl SensorReader for PgSensorRepository {
         let items = rows
             .into_iter()
             .map(|r| {
+                let status = derive_connectivity(
+                    r.activated_at.map(|t| t.and_utc()),
+                    r.last_reading_id.and_then(|id| uuid_v7_timestamp(&id)),
+                    Utc::now(),
+                    self.offline_after,
+                );
                 Ok(SensorView {
                     id: r.id,
                     created_at: r.created_at.and_utc(),
                     updated_at: r.updated_at.and_utc(),
-                    status: r.status,
+                    status,
                     sensor_type: r.sensor_type,
                     coordinate: build_coord(r.tree_lat, r.tree_lng)?,
                     linked_tree_id: r.linked_tree_id,
@@ -391,12 +420,12 @@ impl SensorWriter for PgSensorRepository {
     async fn save(&self, sensor: &Sensor) -> Result<(), RepositoryError> {
         let result = sqlx::query!(
             r#"UPDATE sensors SET
-                status = $2,
+                activated_at = $2,
                 provider = $3,
                 additional_informations = $4
             WHERE id = $1"#,
             sensor.id.as_str(),
-            sensor.status() as SensorStatus,
+            sensor.activated_at().map(|t| t.naive_utc()),
             sensor.provenance.provider().map(|p| p.as_str()),
             sensor.provenance.additional_info().cloned(),
         )

@@ -618,8 +618,8 @@ async fn cluster_update_tree_ids_recalculates_center() {
 async fn insert_sensor(app: &helpers::TestApp, id: &str) {
     let model_id = app.ecodrizzler_model_id().await;
     sqlx::query!(
-        r#"INSERT INTO sensors (id, status, type, model_id)
-        VALUES ($1, 'online', 'lorawan', $2)"#,
+        r#"INSERT INTO sensors (id, activated_at, type, model_id)
+        VALUES ($1, NOW(), 'lorawan', $2)"#,
         id,
         model_id,
     )

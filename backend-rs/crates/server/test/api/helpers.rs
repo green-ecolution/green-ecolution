@@ -1,11 +1,16 @@
 use std::sync::{Arc, OnceLock};
 
-use domain::sensor::data::MqttPayload;
+use domain::{
+    events::SensorReadings,
+    sensor::{SensorId, data::Watermark, repository::NormalizedValue},
+    sensor_model::SensorAbilityName,
+};
+use rust_decimal::Decimal;
 use secrecy::SecretString;
 use server::{
     configuration::{AuthSettings, Settings},
     http::AppState,
-    service::ServiceError,
+    service::{ServiceError, sensor_service::ReadingIngest},
     startup::Application,
 };
 use sqlx::{Connection, Executor, PgConnection, PgPool, postgres::PgPoolOptions};
@@ -73,16 +78,75 @@ impl TestApp {
             .expect("failed to execute request")
     }
 
-    /// Drives the MQTT ingest path directly without spinning up a broker.
-    /// `payload` is JSON in the same shape the production MQTT subscriber
-    /// builds before calling [`SensorService::handle_message`].
-    pub async fn handle_mqtt_message(
+    /// Mirrors what `infra::mqtt::build_eco_drizzler` produces after parsing:
+    /// three watermarks (30/60/90 cm) plus temperature and humidity at 15 cm.
+    pub async fn ingest_ecodrizzler(
         &self,
-        payload: serde_json::Value,
+        sensor_id: &str,
+        centibar: i32,
     ) -> Result<(), ServiceError> {
-        let typed: MqttPayload = serde_json::from_value(payload)
-            .expect("test payload must deserialise into MqttPayload");
-        self.state.sensor_service.handle_message(typed).await
+        let model_id = self.ecodrizzler_model_id().await;
+        let model = self
+            .state
+            .sensor_service
+            .model_by_id(domain::Id::new(model_id))
+            .await
+            .expect("ecodrizzler model exists");
+
+        let watermarks = vec![
+            Watermark {
+                depth: 30,
+                resistance: 0,
+                centibar,
+            },
+            Watermark {
+                depth: 60,
+                resistance: 0,
+                centibar,
+            },
+            Watermark {
+                depth: 90,
+                resistance: 0,
+                centibar,
+            },
+        ];
+        let mut normalized: Vec<NormalizedValue> = watermarks
+            .iter()
+            .filter_map(|w| {
+                model
+                    .ability_id_for(SensorAbilityName::SoilTension, w.depth)
+                    .map(|id| NormalizedValue {
+                        model_ability_id: id,
+                        value: Decimal::from(w.centibar),
+                    })
+            })
+            .collect();
+        if let Some(id) = model.ability_id_for(SensorAbilityName::Temperature, 15) {
+            normalized.push(NormalizedValue {
+                model_ability_id: id,
+                value: Decimal::from(18),
+            });
+        }
+        if let Some(id) = model.ability_id_for(SensorAbilityName::Humidity, 15) {
+            normalized.push(NormalizedValue {
+                model_ability_id: id,
+                value: Decimal::new(4, 1),
+            });
+        }
+
+        let raw_payload = serde_json::json!({
+            "device": sensor_id,
+            "watermarks": &watermarks,
+        });
+        self.state
+            .sensor_service
+            .ingest_reading(ReadingIngest {
+                sensor_id: SensorId::new(sensor_id).expect("valid sensor id"),
+                raw_payload,
+                normalized,
+                typed: SensorReadings::Watermarks(watermarks),
+            })
+            .await
     }
 }
 

@@ -22,6 +22,8 @@ pub struct Settings {
     #[serde(default)]
     pub info: InfoSettings,
     #[serde(default)]
+    pub sensor: SensorSettings,
+    #[serde(default)]
     pub routing: RoutingSettings,
     #[serde(default)]
     pub plugins: PluginsSettings,
@@ -218,6 +220,25 @@ fn default_repository_url() -> Url {
 }
 
 #[derive(serde::Deserialize, Clone)]
+pub struct SensorSettings {
+    /// Activated sensors with no reading newer than this are shown as offline.
+    #[serde(default = "default_sensor_offline_after_secs")]
+    pub offline_after_secs: u64,
+}
+
+impl Default for SensorSettings {
+    fn default() -> Self {
+        Self {
+            offline_after_secs: default_sensor_offline_after_secs(),
+        }
+    }
+}
+
+fn default_sensor_offline_after_secs() -> u64 {
+    86_400
+}
+
+#[derive(serde::Deserialize, Clone)]
 pub struct AuthSettings {
     pub enabled: bool,
     pub issuer_url: String,
@@ -320,6 +341,7 @@ impl Settings {
             mqtt: MqttSettings::default(),
             map: MapSettings::default(),
             info: InfoSettings::default(),
+            sensor: SensorSettings::default(),
             routing: RoutingSettings::default(),
             plugins: PluginsSettings::default(),
         }

@@ -34,6 +34,8 @@ map:
 info:
   update_check_repo: "green-ecolution/green-ecolution"
   repository_url: "https://github.com/green-ecolution/"
+sensor:
+  offline_after_secs: 86400
 routing:
   enabled: false
 plugins:
