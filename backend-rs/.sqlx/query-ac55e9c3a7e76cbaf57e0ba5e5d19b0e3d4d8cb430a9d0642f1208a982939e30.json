@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO sensors (id, activated_at, type, model_id)\n        VALUES ($1, $2, 'lorawan', $3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Timestamp",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ac55e9c3a7e76cbaf57e0ba5e5d19b0e3d4d8cb430a9d0642f1208a982939e30"
+}
