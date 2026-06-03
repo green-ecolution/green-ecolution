@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT s.id, s.created_at, s.updated_at,\n                      s.status        AS \"status: SensorStatus\",\n                      s.type          AS \"sensor_type: SensorType\",\n                      s.provider,\n                      s.additional_informations AS \"additional_info: serde_json::Value\",\n                      sm.id           AS model_id,\n                      sm.name         AS model_name,\n                      t.id            AS \"linked_tree_id?\",\n                      t.latitude      AS \"tree_lat?\",\n                      t.longitude     AS \"tree_lng?\",\n                      sl.serial_number AS \"serial_number?\",\n                      sl.dev_eui       AS \"dev_eui?\",\n                      sl.app_eui       AS \"app_eui?\",\n                      sl.at_pin,\n                      sl.ota_pin,\n                      sl.config        AS \"config: serde_json::Value\"\n            FROM sensors s\n            INNER JOIN sensor_models sm ON sm.id = s.model_id\n            LEFT JOIN sensor_lorawan sl ON sl.id = s.id\n            LEFT JOIN trees t          ON t.sensor_id = s.id\n            WHERE ($1::text IS NULL OR s.provider = $1)\n            ORDER BY s.id\n            LIMIT $2 OFFSET $3",
+  "query": "SELECT s.id, s.created_at, s.updated_at,\n                      s.activated_at,\n                      s.type          AS \"sensor_type: SensorType\",\n                      s.provider,\n                      s.additional_informations AS \"additional_info: serde_json::Value\",\n                      sm.id           AS model_id,\n                      sm.name         AS model_name,\n                      t.id            AS \"linked_tree_id?\",\n                      t.latitude      AS \"tree_lat?\",\n                      t.longitude     AS \"tree_lng?\",\n                      sl.serial_number AS \"serial_number?\",\n                      sl.dev_eui       AS \"dev_eui?\",\n                      sl.app_eui       AS \"app_eui?\",\n                      sl.at_pin,\n                      sl.ota_pin,\n                      sl.config        AS \"config: serde_json::Value\",\n                      (SELECT sd.id FROM sensor_data sd WHERE sd.sensor_id = s.id\n                       ORDER BY sd.id DESC LIMIT 1) AS \"last_reading_id?: Uuid\"\n            FROM sensors s\n            INNER JOIN sensor_models sm ON sm.id = s.model_id\n            LEFT JOIN sensor_lorawan sl ON sl.id = s.id\n            LEFT JOIN trees t          ON t.sensor_id = s.id\n            WHERE s.id = ANY($1::text[])",
   "describe": {
     "columns": [
       {
@@ -20,19 +20,8 @@
       },
       {
         "ordinal": 3,
-        "name": "status: SensorStatus",
-        "type_info": {
-          "Custom": {
-            "name": "sensor_status",
-            "kind": {
-              "Enum": [
-                "prepared",
-                "online",
-                "offline"
-              ]
-            }
-          }
-        }
+        "name": "activated_at",
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 4,
@@ -112,35 +101,39 @@
         "ordinal": 17,
         "name": "config: serde_json::Value",
         "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 18,
+        "name": "last_reading_id?: Uuid",
+        "type_info": "Uuid"
       }
     ],
     "parameters": {
       "Left": [
-        "Text",
-        "Int8",
-        "Int8"
+        "TextArray"
       ]
     },
     "nullable": [
       false,
       false,
       false,
-      false,
+      true,
       false,
       true,
       true,
       false,
       false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
       true,
       true,
-      true
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      null
     ]
   },
-  "hash": "b242c27bedd99f0269bad373a1a0b2231c09615401acdb803f617bb9e6a1453d"
+  "hash": "bff976b25086330383ea028ff90422094cb4c8b9b198237415dc3d85bfb76271"
 }

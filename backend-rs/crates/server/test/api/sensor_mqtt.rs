@@ -68,25 +68,20 @@ async fn insert_tree(app: &TestApp, number: &str) -> Uuid {
 }
 
 #[tokio::test]
-async fn ecodrizzler_handle_message_writes_normalized_values_and_bumps_online() {
+async fn ecodrizzler_ingest_writes_normalized_values_and_derives_online() {
     let app = spawn_app().await;
     let model_id = app.ecodrizzler_model_id().await;
     create_sensor(&app, "eui-mqtt-eco", model_id).await;
+    let tree_id = insert_tree(&app, "T-MQ-ECO-1").await;
+    let r = app
+        .post_json(
+            "/api/v1/sensors/eui-mqtt-eco/activate",
+            &json!({ "tree_id": tree_id }),
+        )
+        .await;
+    assert_eq!(r.status().as_u16(), 200);
 
-    let payload = json!({
-        "device": "eui-mqtt-eco",
-        "battery": 3.6,
-        "humidity": 0.4,
-        "temperature": 18.0,
-        "latitude": 54.79,
-        "longitude": 9.45,
-        "watermarks": [
-            {"depth": 30, "resistance": 1200, "centibar": 45},
-            {"depth": 60, "resistance": 800,  "centibar": 28},
-            {"depth": 90, "resistance": 600,  "centibar": 18},
-        ]
-    });
-    app.handle_mqtt_message(payload)
+    app.ingest_ecodrizzler("eui-mqtt-eco", 45)
         .await
         .expect("ingest succeeds");
 
@@ -94,14 +89,13 @@ async fn ecodrizzler_handle_message_writes_normalized_values_and_bumps_online() 
     let count = ability_value_count(&app, "eui-mqtt-eco").await;
     assert_eq!(count, 5, "expected 5 normalized values, got {count}");
 
-    // Sensor was prepared; handle_message bumps to online for any ingest.
     let view = app.get("/api/v1/sensors/eui-mqtt-eco").await;
     let body: serde_json::Value = view.json().await.unwrap();
     assert_eq!(body["status"], "online");
 }
 
 #[tokio::test]
-async fn ecodrizzler_handle_message_updates_linked_tree_watering_status() {
+async fn ecodrizzler_ingest_updates_linked_tree_watering_status() {
     let app = spawn_app().await;
     let model_id = app.ecodrizzler_model_id().await;
     create_sensor(&app, "eui-mqtt-eco-2", model_id).await;
@@ -116,20 +110,7 @@ async fn ecodrizzler_handle_message_updates_linked_tree_watering_status() {
     assert_eq!(r.status().as_u16(), 200);
 
     // 5 centibar across all depths → score=0 per depth (year 0/1 calibration) → Good.
-    let payload = json!({
-        "device": "eui-mqtt-eco-2",
-        "battery": 3.6,
-        "humidity": 0.4,
-        "temperature": 18.0,
-        "latitude": 54.79,
-        "longitude": 9.45,
-        "watermarks": [
-            {"depth": 30, "resistance": 0, "centibar": 5},
-            {"depth": 60, "resistance": 0, "centibar": 5},
-            {"depth": 90, "resistance": 0, "centibar": 5},
-        ]
-    });
-    app.handle_mqtt_message(payload).await.unwrap();
+    app.ingest_ecodrizzler("eui-mqtt-eco-2", 5).await.unwrap();
 
     let status: String = sqlx::query_scalar!(
         r#"SELECT watering_status::text AS "ws!" FROM trees WHERE number = 'T-MQ-ECO-2'"#
@@ -145,10 +126,8 @@ async fn ges_1000_ingest_writes_volumetric_normalized_values() {
     let app = spawn_app().await;
     let model_id = app.ges_1000_model_id().await;
     create_sensor(&app, "eui-mqtt-ges", model_id).await;
-    // `handle_message` is EcoDrizzler-specific; the GES-1000 dispatch lives in
-    // `infra::mqtt::build_ges_1000` which is private. Call `ingest_reading`
-    // directly with the pre-built normalized values — that is what the MQTT
-    // adapter would do after parsing.
+    // The GES-1000 dispatch lives in `infra::mqtt::build_ges_1000`, which is
+    // private; call `ingest_reading` with pre-built normalized values instead.
     let model = app
         .state
         .sensor_service
@@ -249,7 +228,7 @@ async fn prepared_sensor_ingest_persists_reading_without_tree_link() {
     .unwrap();
     assert_eq!(reading_count, 1);
 
-    // Direct ingest_reading does not bump_online; sensor stays prepared.
+    // Never activated → derived status stays prepared regardless of readings.
     let view = app.get("/api/v1/sensors/eui-mqtt-prep").await;
     let body: serde_json::Value = view.json().await.unwrap();
     assert_eq!(body["status"], "prepared");

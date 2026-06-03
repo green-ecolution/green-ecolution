@@ -85,8 +85,8 @@ async fn get_evaluation_counts_vehicles_and_sensors() {
     for i in 1..=4 {
         let id = format!("sensor-eval-{}", i);
         sqlx::query!(
-            r#"INSERT INTO sensors (id, status, type, model_id)
-            VALUES ($1, 'online', 'lorawan', $2)"#,
+            r#"INSERT INTO sensors (id, activated_at, type, model_id)
+            VALUES ($1, NOW(), 'lorawan', $2)"#,
             id,
             model_id,
         )

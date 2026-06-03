@@ -3,8 +3,8 @@ use crate::helpers::spawn_app;
 async fn insert_sensor(app: &crate::helpers::TestApp, id: &str) {
     let model_id = app.ecodrizzler_model_id().await;
     sqlx::query!(
-        r#"INSERT INTO sensors (id, status, type, model_id)
-        VALUES ($1, 'online', 'lorawan', $2)"#,
+        r#"INSERT INTO sensors (id, activated_at, type, model_id)
+        VALUES ($1, NOW(), 'lorawan', $2)"#,
         id,
         model_id,
     )
@@ -77,7 +77,7 @@ async fn get_sensor_returns_full_response() {
 
     let sensor: serde_json::Value = response.json().await.unwrap();
     assert_eq!(sensor["id"], "sensor-100");
-    assert_eq!(sensor["status"], "online");
+    assert_eq!(sensor["status"], "offline");
     assert_eq!(sensor["sensor_type"], "lorawan");
     assert_eq!(sensor["model"]["id"], model_id.to_string());
     // No tree linked → coordinate / linked_tree_id are omitted.
@@ -226,26 +226,8 @@ async fn get_tree_by_sensor_returns_404_when_no_tree_linked() {
     assert_eq!(response.status().as_u16(), 404);
 }
 
-// -- MQTT ingest path: handle_message → auto-create + map-to-tree + watering --
-
-fn payload(device: &str, lat: f64, lng: f64, centibar: i32) -> serde_json::Value {
-    serde_json::json!({
-        "device": device,
-        "battery": 3.6,
-        "humidity": 0.4,
-        "temperature": 18.5,
-        "latitude": lat,
-        "longitude": lng,
-        "watermarks": [
-            {"depth": 30, "resistance": 0, "centibar": centibar},
-            {"depth": 60, "resistance": 0, "centibar": centibar},
-            {"depth": 90, "resistance": 0, "centibar": centibar},
-        ]
-    })
-}
-
 #[tokio::test]
-async fn handle_message_via_create_and_activate_updates_watering_status() {
+async fn ingest_via_create_and_activate_updates_watering_status() {
     let app = spawn_app().await;
 
     // 1. Register a prepared sensor through the public API.
@@ -290,9 +272,9 @@ async fn handle_message_via_create_and_activate_updates_watering_status() {
     assert_eq!(act.status().as_u16(), 200);
 
     // 3. 50 centibar with 0/1-year defaults (lower=25, higher=33) → score=2 → Bad.
-    app.handle_mqtt_message(payload("sensor-mq-1", 53.55, 9.99, 50))
+    app.ingest_ecodrizzler("sensor-mq-1", 50)
         .await
-        .expect("handle_message should succeed");
+        .expect("ingest should succeed");
 
     let tree_status: String = sqlx::query_scalar!(
         r#"SELECT watering_status::text AS "ws!" FROM trees WHERE number = 'T-MQ-1'"#,
@@ -311,7 +293,7 @@ async fn handle_message_via_create_and_activate_updates_watering_status() {
 }
 
 #[tokio::test]
-async fn handle_message_known_sensor_updates_only_status_and_publishes_event() {
+async fn ingest_for_known_sensor_updates_tree_watering_status() {
     let app = spawn_app().await;
 
     insert_sensor(&app, "sensor-known").await;
@@ -333,9 +315,7 @@ async fn handle_message_known_sensor_updates_only_status_and_publishes_event() {
     .unwrap();
 
     // 5 centibar < 25 lower → score=0 → Good.
-    app.handle_mqtt_message(payload("sensor-known", 53.55, 9.99, 5))
-        .await
-        .unwrap();
+    app.ingest_ecodrizzler("sensor-known", 5).await.unwrap();
 
     let tree_status: String = sqlx::query_scalar!(
         r#"SELECT watering_status::text AS "ws!" FROM trees WHERE number = 'T-KN'"#,

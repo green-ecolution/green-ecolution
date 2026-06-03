@@ -26,18 +26,18 @@ INSERT INTO tree_clusters (id, name, watering_status, moisture_level, region_id,
   ('019e3fcb-2a53-7fc1-bc32-9c8885df5027'::uuid, 'Lautrupsbach', 'moderate', 0.45, (SELECT id FROM regions WHERE name = 'Nordstadt'), 'An der Nordstraße', 'Sehr viel versiegelter Boden.', 'sandig', 54.79265065021804, 9.454269041383837, ST_SetSRID(ST_MakePoint(9.454269041383837, 54.76671656688957), 4326));
 
 
-INSERT INTO sensors (id, status, type, model_id)
-SELECT v.id, v.status::sensor_status, v.type::sensor_type, (SELECT id FROM sensor_models WHERE name = 'EcoDrizzler')
+INSERT INTO sensors (id, activated_at, type, model_id)
+SELECT v.id, CURRENT_TIMESTAMP, v.type::sensor_type, (SELECT id FROM sensor_models WHERE name = 'EcoDrizzler')
 FROM (VALUES
-    ('sensor-1', 'offline', 'lorawan'),
-    ('sensor-2', 'offline', 'lorawan'),
-    ('sensor-3', 'offline', 'lorawan'),
-    ('sensor-4', 'offline', 'lorawan'),
-    ('sensor-5', 'offline', 'lorawan'),
-    ('sensor-6', 'offline', 'lorawan'),
-    ('sensor-7', 'offline', 'lorawan'),
-    ('sensor-8', 'offline', 'lorawan')
-) AS v(id, status, type);
+    ('sensor-1', 'lorawan'),
+    ('sensor-2', 'lorawan'),
+    ('sensor-3', 'lorawan'),
+    ('sensor-4', 'lorawan'),
+    ('sensor-5', 'lorawan'),
+    ('sensor-6', 'lorawan'),
+    ('sensor-7', 'lorawan'),
+    ('sensor-8', 'lorawan')
+) AS v(id, type);
 
 INSERT INTO sensor_lorawan (id, serial_number, dev_eui, app_eui, app_key)
 VALUES
@@ -373,12 +373,12 @@ UPDATE trees
 
 -- Prepared sensors (GES-1000) to exercise the activate flow during demos.
 
-INSERT INTO sensors (id, status, type, model_id)
-SELECT v.id, v.status::sensor_status, v.type::sensor_type, (SELECT id FROM sensor_models WHERE name = 'GES-1000')
+INSERT INTO sensors (id, type, model_id)
+SELECT v.id, v.type::sensor_type, (SELECT id FROM sensor_models WHERE name = 'GES-1000')
 FROM (VALUES
-    ('sensor-prepared-1', 'prepared', 'lorawan'),
-    ('sensor-prepared-2', 'prepared', 'lorawan')
-) AS v(id, status, type);
+    ('sensor-prepared-1', 'lorawan'),
+    ('sensor-prepared-2', 'lorawan')
+) AS v(id, type);
 
 INSERT INTO sensor_lorawan (id, serial_number, dev_eui, app_eui, app_key)
 VALUES

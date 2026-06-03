@@ -70,23 +70,6 @@ pub struct Watermark {
     pub centibar: i32,
 }
 
-/// Typed MQTT payload from a tree sensor (one uplink message).
-///
-/// Mirrors the Go backend's `MqttPayload`: device id, position, environmental
-/// readings, and three watermark readings at depths 30/60/90 cm. Used both as
-/// the input to [`crate::service::sensor_service::SensorService::handle_message`]
-/// and as the JSON shape persisted in the `sensor_data` table.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct MqttPayload {
-    pub device: String,
-    pub battery: f64,
-    pub humidity: f64,
-    pub temperature: f64,
-    pub latitude: f64,
-    pub longitude: f64,
-    pub watermarks: Vec<Watermark>,
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct VolumetricReading {
     pub depth_cm: i32,

@@ -1,11 +1,13 @@
 //! Sensor aggregate — LoRaWAN (or similar) devices linked to trees.
 //!
-//! The aggregate ([`Sensor`]) tracks connectivity status, sensor type, and
-//! model identity. The physical position is no longer part of the aggregate
-//! itself: location is derived from the linked tree. Time-series readings live
-//! in the [`data`] sub-module as the `SensorReading` sub-aggregate. The view
-//! ([`SensorView`]) adds `created_at` / `updated_at` audit fields and embeds
-//! the latest reading for HTTP responses.
+//! The aggregate ([`Sensor`]) tracks the provisioning lifecycle (`activated_at`,
+//! `None` = prepared), sensor type, and model identity. Connectivity
+//! (online/offline) is **derived** from reading recency via
+//! [`derive_connectivity`], never stored. The physical position is no longer
+//! part of the aggregate itself: location is derived from the linked tree.
+//! Time-series readings live in the [`data`] sub-module as the `SensorReading`
+//! sub-aggregate. The view ([`SensorView`]) adds `created_at` / `updated_at`
+//! audit fields and embeds the latest reading for HTTP responses.
 //!
 //! The `recorded_at` field on `SensorReading` is what the domain calls the
 //! event timestamp; the DB column is named `created_at`, but the aggregate
@@ -17,6 +19,8 @@ pub mod payload;
 pub mod repository;
 pub mod snapshot;
 pub mod view;
+
+use chrono::{DateTime, Duration, Utc};
 
 use crate::{
     Id,
@@ -32,16 +36,32 @@ pub use repository::{
 pub use snapshot::SensorSnapshot;
 pub use view::SensorView;
 
+/// Display-only connectivity state, derived via [`derive_connectivity`] —
+/// never stored. `Prepared` mirrors `activated_at == None` on the aggregate.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[cfg_attr(feature = "sqlx", derive(sqlx::Type))]
-#[cfg_attr(
-    feature = "sqlx",
-    sqlx(type_name = "sensor_status", rename_all = "snake_case")
-)]
 pub enum SensorStatus {
     Prepared,
     Online,
     Offline,
+}
+
+/// Derives the connectivity shown to clients. Connectivity is never stored:
+/// a sensor cannot enforce "I am online" — it is an observation about the
+/// recency of its telemetry. Unactivated sensors stay `Prepared` regardless
+/// of readings; the staleness boundary is inclusive.
+pub fn derive_connectivity(
+    activated_at: Option<DateTime<Utc>>,
+    last_reading_at: Option<DateTime<Utc>>,
+    now: DateTime<Utc>,
+    offline_after: Duration,
+) -> SensorStatus {
+    if activated_at.is_none() {
+        return SensorStatus::Prepared;
+    }
+    match last_reading_at {
+        Some(at) if now - at <= offline_after => SensorStatus::Online,
+        _ => SensorStatus::Offline,
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -74,7 +94,7 @@ crate::newtype_nonempty! {
 pub struct Sensor {
     pub id: SensorId,
     pub provenance: Provenance,
-    status: SensorStatus,
+    activated_at: Option<DateTime<Utc>>,
     sensor_type: SensorType,
     model_id: Id<SensorModel>,
     lorawan: Option<LorawanCredentials>,
@@ -96,15 +116,33 @@ impl Sensor {
         Self {
             id: SensorId::reconstitute(snap.id),
             provenance: Provenance::reconstitute(snap.provider, snap.additional_info),
-            status: snap.status,
+            activated_at: snap.activated_at,
             sensor_type: snap.sensor_type,
             model_id: Id::new(snap.model_id),
             lorawan: snap.lorawan,
         }
     }
 
-    pub fn status(&self) -> SensorStatus {
-        self.status
+    pub fn activated_at(&self) -> Option<DateTime<Utc>> {
+        self.activated_at
+    }
+
+    pub fn is_activated(&self) -> bool {
+        self.activated_at.is_some()
+    }
+
+    /// Prepared (never activated) -> activated at `at`, awaiting first reading.
+    pub fn activate(
+        &mut self,
+        at: DateTime<Utc>,
+    ) -> Result<Vec<crate::events::DomainEvent>, SensorError> {
+        if self.is_activated() {
+            return Err(SensorError::AlreadyActivated);
+        }
+        self.activated_at = Some(at);
+        Ok(vec![crate::events::DomainEvent::SensorActivated {
+            sensor_id: self.id.clone(),
+        }])
     }
 
     pub fn sensor_type(&self) -> SensorType {
@@ -118,26 +156,6 @@ impl Sensor {
     pub fn lorawan(&self) -> Option<&LorawanCredentials> {
         self.lorawan.as_ref()
     }
-
-    /// Prepared -> Offline (activated, awaiting first reading).
-    pub fn activate(&mut self) -> Result<Vec<crate::events::DomainEvent>, SensorError> {
-        match self.status {
-            SensorStatus::Prepared => {
-                self.status = SensorStatus::Offline;
-                Ok(vec![crate::events::DomainEvent::SensorActivated {
-                    sensor_id: self.id.clone(),
-                }])
-            }
-            _ => Err(SensorError::AlreadyActivated),
-        }
-    }
-
-    pub fn change_status(&mut self, new: SensorStatus) {
-        if self.status == new {
-            return;
-        }
-        self.status = new;
-    }
 }
 
 #[derive(Debug, Default, Clone)]
@@ -150,11 +168,16 @@ mod tests {
     use super::*;
     use claims::{assert_err, assert_ok};
 
+    fn fixed_now() -> chrono::DateTime<Utc> {
+        use chrono::TimeZone;
+        Utc.with_ymd_and_hms(2026, 6, 3, 12, 0, 0).unwrap()
+    }
+
     fn fixed_sensor() -> Sensor {
         Sensor {
             id: SensorId::new("eui-a81758fffe0c3b52").unwrap(),
             provenance: Provenance::default(),
-            status: SensorStatus::Online,
+            activated_at: Some(fixed_now()),
             sensor_type: SensorType::Lorawan,
             model_id: Id::new_v7(),
             lorawan: None,
@@ -178,26 +201,14 @@ mod tests {
     }
 
     #[test]
-    fn change_status_to_same_is_noop() {
-        let mut s = fixed_sensor();
-        s.change_status(SensorStatus::Online);
-        assert_eq!(s.status(), SensorStatus::Online);
-    }
-
-    #[test]
-    fn change_status_to_different_changes_status() {
-        let mut s = fixed_sensor();
-        s.change_status(SensorStatus::Offline);
-        assert_eq!(s.status(), SensorStatus::Offline);
-    }
-
-    #[test]
-    fn activate_from_prepared_transitions_to_offline_and_emits_event() {
+    fn activate_sets_timestamp_and_emits_event() {
         use crate::events::DomainEvent;
         let mut s = fixed_sensor();
-        s.status = SensorStatus::Prepared;
-        let events = s.activate().unwrap();
-        assert_eq!(s.status(), SensorStatus::Offline);
+        s.activated_at = None;
+        let at = fixed_now();
+        let events = s.activate(at).unwrap();
+        assert!(s.is_activated());
+        assert_eq!(s.activated_at(), Some(at));
         assert_eq!(events.len(), 1);
         match &events[0] {
             DomainEvent::SensorActivated { sensor_id } => {
@@ -208,10 +219,73 @@ mod tests {
     }
 
     #[test]
-    fn activate_from_non_prepared_returns_already_activated() {
+    fn activate_twice_returns_already_activated() {
         let mut s = fixed_sensor();
-        s.status = SensorStatus::Online;
-        assert!(matches!(s.activate(), Err(SensorError::AlreadyActivated)));
-        assert_eq!(s.status(), SensorStatus::Online);
+        let original = s.activated_at();
+        assert!(matches!(
+            s.activate(fixed_now()),
+            Err(SensorError::AlreadyActivated)
+        ));
+        assert_eq!(s.activated_at(), original);
+    }
+
+    mod derive_connectivity_tests {
+        use super::super::*;
+        use chrono::TimeZone;
+
+        fn now() -> DateTime<Utc> {
+            Utc.with_ymd_and_hms(2026, 6, 3, 12, 0, 0).unwrap()
+        }
+
+        fn threshold() -> Duration {
+            Duration::hours(24)
+        }
+
+        #[test]
+        fn unactivated_sensor_stays_prepared_even_with_fresh_reading() {
+            let status =
+                derive_connectivity(None, Some(now() - Duration::minutes(5)), now(), threshold());
+            assert_eq!(status, SensorStatus::Prepared);
+        }
+
+        #[test]
+        fn activated_sensor_with_fresh_reading_is_online() {
+            let status = derive_connectivity(
+                Some(now() - Duration::days(30)),
+                Some(now() - Duration::hours(1)),
+                now(),
+                threshold(),
+            );
+            assert_eq!(status, SensorStatus::Online);
+        }
+
+        #[test]
+        fn activated_sensor_with_stale_reading_is_offline() {
+            let status = derive_connectivity(
+                Some(now() - Duration::days(30)),
+                Some(now() - Duration::hours(25)),
+                now(),
+                threshold(),
+            );
+            assert_eq!(status, SensorStatus::Offline);
+        }
+
+        #[test]
+        fn activated_sensor_without_reading_is_offline() {
+            let status =
+                derive_connectivity(Some(now() - Duration::minutes(1)), None, now(), threshold());
+            assert_eq!(status, SensorStatus::Offline);
+        }
+
+        #[test]
+        fn reading_exactly_at_threshold_is_online() {
+            let status = derive_connectivity(
+                Some(now() - Duration::days(30)),
+                Some(now() - Duration::hours(24)),
+                now(),
+                threshold(),
+            );
+            assert_eq!(status, SensorStatus::Online);
+        }
     }
 }

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT s.id,\n                      s.status        AS \"status: SensorStatus\",\n                      s.type          AS \"sensor_type: SensorType\",\n                      s.model_id,\n                      s.provider,\n                      s.additional_informations AS \"additional_info: serde_json::Value\",\n                      sl.serial_number AS \"serial_number?\",\n                      sl.dev_eui       AS \"dev_eui?\",\n                      sl.app_eui       AS \"app_eui?\",\n                      sl.app_key       AS \"app_key?\",\n                      sl.at_pin,\n                      sl.ota_pin,\n                      sl.config        AS \"config: serde_json::Value\"\n            FROM sensors s\n            LEFT JOIN sensor_lorawan sl ON sl.id = s.id\n            WHERE s.id = ANY($1::text[])",
+  "query": "SELECT s.id,\n                      s.activated_at,\n                      s.type          AS \"sensor_type: SensorType\",\n                      s.model_id,\n                      s.provider,\n                      s.additional_informations AS \"additional_info: serde_json::Value\",\n                      sl.serial_number AS \"serial_number?\",\n                      sl.dev_eui       AS \"dev_eui?\",\n                      sl.app_eui       AS \"app_eui?\",\n                      sl.app_key       AS \"app_key?\",\n                      sl.at_pin,\n                      sl.ota_pin,\n                      sl.config        AS \"config: serde_json::Value\"\n            FROM sensors s\n            LEFT JOIN sensor_lorawan sl ON sl.id = s.id\n            WHERE s.id = $1",
   "describe": {
     "columns": [
       {
@@ -10,19 +10,8 @@
       },
       {
         "ordinal": 1,
-        "name": "status: SensorStatus",
-        "type_info": {
-          "Custom": {
-            "name": "sensor_status",
-            "kind": {
-              "Enum": [
-                "prepared",
-                "online",
-                "offline"
-              ]
-            }
-          }
-        }
+        "name": "activated_at",
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 2,
@@ -91,24 +80,24 @@
     ],
     "parameters": {
       "Left": [
-        "TextArray"
+        "Text"
       ]
     },
     "nullable": [
       false,
+      true,
+      false,
+      false,
+      true,
+      true,
       false,
       false,
       false,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
+      false,
       true,
       true,
       true
     ]
   },
-  "hash": "dc67e1647ab446ae89467e464a3a0547bc9532a9d4cb39545f3500a58860f186"
+  "hash": "588a8105868f39edccd1b4f905d2af6d8d3bee1896a9279baf4f7fc9c769fe46"
 }
