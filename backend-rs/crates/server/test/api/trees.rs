@@ -480,6 +480,60 @@ async fn get_nearest_trees_rejects_invalid_coordinates() {
     assert_eq!(resp.status().as_u16(), 400);
 }
 
+async fn create_tree_with(
+    app: &TestApp,
+    number: &str,
+    planting_year: i32,
+    cluster_id: Option<&str>,
+) -> String {
+    let mut body = serde_json::json!({
+        "species": "Eiche",
+        "number": number,
+        "planting_year": planting_year,
+        "latitude": 54.79,
+        "longitude": 9.43,
+        "description": "Testbaum"
+    });
+    if let Some(cid) = cluster_id {
+        body["tree_cluster_id"] = serde_json::json!(cid);
+    }
+    let resp = app.post_json("/api/v1/trees", &body).await;
+    assert_eq!(resp.status().as_u16(), 201);
+    let tree: serde_json::Value = resp.json().await.unwrap();
+    tree["id"].as_str().unwrap().to_string()
+}
+
+#[tokio::test]
+async fn list_tree_markers_accepts_repeated_filter_params() {
+    let app = spawn_app().await;
+    create_tree_with(&app, "T-001", 2018, None).await;
+    create_tree_with(&app, "T-002", 2020, None).await;
+    create_tree_with(&app, "T-003", 2022, None).await;
+
+    let response = app
+        .get("/api/v1/trees/markers?bbox=54.78,9.40,54.81,9.46&planting_year=2018&planting_year=2020")
+        .await;
+
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 2);
+}
+
+#[tokio::test]
+async fn list_tree_markers_accepts_repeated_watering_statuses() {
+    let app = spawn_app().await;
+    create_tree_with(&app, "T-001", 2018, None).await;
+
+    let response = app
+        .get("/api/v1/trees/markers?bbox=54.78,9.40,54.81,9.46&watering_status=good&watering_status=unknown")
+        .await;
+
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    // freshly created trees have status "unknown"
+    assert_eq!(body["data"].as_array().unwrap().len(), 1);
+}
+
 #[tokio::test]
 async fn get_nearest_trees_excludes_trees_outside_radius() {
     let app = spawn_app().await;

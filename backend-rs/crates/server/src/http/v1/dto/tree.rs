@@ -1,4 +1,4 @@
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 
 use domain::{
     Id,
@@ -13,126 +13,6 @@ use domain::{
 };
 
 use super::{WateringStatus, sensor::SensorResponse};
-
-// serde_urlencoded (used by axum's Query extractor) does not support repeated keys
-// into Vec<T>. This deserializer accepts a single scalar ("2020") or null.
-fn deserialize_optional_vec_i32<'de, D>(deserializer: D) -> Result<Option<Vec<i32>>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    use serde::de::{Error, Visitor};
-    use std::fmt;
-
-    struct OptVecI32Visitor;
-
-    impl<'de> Visitor<'de> for OptVecI32Visitor {
-        type Value = Option<Vec<i32>>;
-
-        fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            f.write_str("an integer, a string integer, or null")
-        }
-
-        fn visit_none<E: Error>(self) -> Result<Self::Value, E> {
-            Ok(None)
-        }
-
-        fn visit_some<D2: Deserializer<'de>>(self, d: D2) -> Result<Self::Value, D2::Error> {
-            d.deserialize_any(InnerVisitor).map(Some)
-        }
-
-        fn visit_i64<E: Error>(self, v: i64) -> Result<Self::Value, E> {
-            Ok(Some(vec![v as i32]))
-        }
-
-        fn visit_u64<E: Error>(self, v: u64) -> Result<Self::Value, E> {
-            Ok(Some(vec![v as i32]))
-        }
-
-        fn visit_str<E: Error>(self, v: &str) -> Result<Self::Value, E> {
-            let n = v.parse::<i32>().map_err(E::custom)?;
-            Ok(Some(vec![n]))
-        }
-    }
-
-    struct InnerVisitor;
-
-    impl<'de> Visitor<'de> for InnerVisitor {
-        type Value = Vec<i32>;
-
-        fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            f.write_str("an integer or a string integer")
-        }
-
-        fn visit_i64<E: Error>(self, v: i64) -> Result<Self::Value, E> {
-            Ok(vec![v as i32])
-        }
-
-        fn visit_u64<E: Error>(self, v: u64) -> Result<Self::Value, E> {
-            Ok(vec![v as i32])
-        }
-
-        fn visit_str<E: Error>(self, v: &str) -> Result<Self::Value, E> {
-            let n = v.parse::<i32>().map_err(E::custom)?;
-            Ok(vec![n])
-        }
-    }
-
-    deserializer.deserialize_option(OptVecI32Visitor)
-}
-
-// serde_urlencoded (used by axum's Query extractor) does not support repeated keys
-// into Vec<T>. This deserializer accepts a single scalar ("good") or null.
-fn deserialize_optional_vec_watering_status<'de, D>(
-    deserializer: D,
-) -> Result<Option<Vec<super::WateringStatus>>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    use serde::de::{Error, IntoDeserializer, Visitor};
-    use std::fmt;
-
-    use super::WateringStatus;
-
-    struct OptVecVisitor;
-
-    impl<'de> Visitor<'de> for OptVecVisitor {
-        type Value = Option<Vec<WateringStatus>>;
-
-        fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            f.write_str("a watering_status string or null")
-        }
-
-        fn visit_none<E: Error>(self) -> Result<Self::Value, E> {
-            Ok(None)
-        }
-
-        fn visit_some<D2: Deserializer<'de>>(self, d: D2) -> Result<Self::Value, D2::Error> {
-            d.deserialize_any(InnerVisitor).map(Some)
-        }
-
-        fn visit_str<E: Error>(self, v: &str) -> Result<Self::Value, E> {
-            let item = WateringStatus::deserialize(v.into_deserializer())?;
-            Ok(Some(vec![item]))
-        }
-    }
-
-    struct InnerVisitor;
-
-    impl<'de> Visitor<'de> for InnerVisitor {
-        type Value = Vec<WateringStatus>;
-
-        fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            f.write_str("a watering_status string")
-        }
-
-        fn visit_str<E: Error>(self, v: &str) -> Result<Self::Value, E> {
-            let item = WateringStatus::deserialize(v.into_deserializer())?;
-            Ok(vec![item])
-        }
-    }
-
-    deserializer.deserialize_option(OptVecVisitor)
-}
 
 /// An individual tree managed by the system.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -357,14 +237,12 @@ pub struct TreeMarkerQueryParams {
     #[param(nullable)]
     #[serde(default)]
     pub has_cluster: Option<bool>,
-    #[param(nullable)]
-    // Single value only; repeated keys are not collected by serde_urlencoded.
-    #[serde(default, deserialize_with = "deserialize_optional_vec_i32")]
-    pub planting_year: Option<Vec<i32>>,
-    #[param(nullable)]
-    // Single value only; repeated keys are not collected by serde_urlencoded.
-    #[serde(default, deserialize_with = "deserialize_optional_vec_watering_status")]
-    pub watering_status: Option<Vec<WateringStatus>>,
+    /// Repeatable: `?planting_year=2018&planting_year=2020`.
+    #[serde(default)]
+    pub planting_year: Vec<i32>,
+    /// Repeatable: `?watering_status=good&watering_status=bad`.
+    #[serde(default)]
+    pub watering_status: Vec<WateringStatus>,
 }
 
 impl TreeMarkerQueryParams {

@@ -2,9 +2,10 @@ use std::sync::Arc;
 
 use axum::{
     Json,
-    extract::{Path, Query, State},
+    extract::{Path, State},
     http::StatusCode,
 };
+use axum_extra::extract::Query;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
@@ -313,14 +314,12 @@ pub async fn list_tree_markers(
 
     let planting_years = params
         .planting_year
-        .unwrap_or_default()
         .into_iter()
         .map(|y| PlantingYear::new(y as u32))
         .collect::<Result<Vec<_>, _>>()?;
 
     let watering_statuses = params
         .watering_status
-        .unwrap_or_default()
         .into_iter()
         .map(domain::shared::watering_status::WateringStatus::from)
         .collect();

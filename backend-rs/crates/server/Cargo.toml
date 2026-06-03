@@ -36,6 +36,7 @@ path = "test/api/main.rs"
 anyhow = "1.0.102"
 async-trait = { workspace = true }
 axum = { version = "0.8.9", features = ["json"] }
+axum-extra = { version = "0.12", features = ["query"] }
 base64 = "0.22"
 chrono = { workspace = true }
 config = "0.15.23"
