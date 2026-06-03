@@ -798,3 +798,18 @@ async fn list_trees_rejects_invalid_watering_status() {
 
     assert_eq!(response.status().as_u16(), 400);
 }
+
+#[tokio::test]
+async fn list_trees_accepts_url_encoded_just_watered_status() {
+    let app = spawn_app().await;
+    create_tree_with(&app, "T-001", 2018, None).await;
+
+    // "just watered" carries a space; pin the %20 round-trip through serde_html_form.
+    let response = app
+        .get("/api/v1/trees?watering_status=just%20watered")
+        .await;
+
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 0);
+}
