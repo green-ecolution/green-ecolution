@@ -45,7 +45,8 @@ const TREE_LIST_Q_MAX_LEN: usize = 100;
     operation_id = "listTrees",
     summary = "List all trees",
     description = "Returns a paginated list of all trees with their associated sensor data. \
-                   Optional `q` parameter case-insensitively filters by tree number or species.",
+                   Optional `q` parameter case-insensitively filters by tree number or species. \
+                   Optional filter parameters (watering_status, has_cluster, planting_year) narrow the result; array parameters are repeatable.",
     params(TreeListParams),
     responses(
         (status = 200, description = "Paginated list of trees", body = ListResponse<TreeResponse>),
@@ -79,8 +80,23 @@ pub async fn list_trees(
         tracing::Span::current().record("q.len", qv.chars().count());
     }
 
+    let watering_statuses = params
+        .watering_status
+        .into_iter()
+        .map(domain::shared::watering_status::WateringStatus::from)
+        .collect();
+
+    let planting_years = params
+        .planting_year
+        .into_iter()
+        .map(|y| PlantingYear::new(y as u32))
+        .collect::<Result<Vec<_>, _>>()?;
+
     let query = TreeSearchQuery {
         q,
+        watering_statuses,
+        has_cluster: params.has_cluster,
+        planting_years,
         ..TreeSearchQuery::default()
     };
 

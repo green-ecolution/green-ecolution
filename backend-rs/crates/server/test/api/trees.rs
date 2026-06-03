@@ -696,3 +696,105 @@ async fn list_trees_q_treats_sql_injection_payload_as_literal() {
     let body: serde_json::Value = r.json().await.unwrap();
     assert_eq!(body["data"].as_array().unwrap().len(), 1);
 }
+
+#[tokio::test]
+async fn list_trees_filters_by_planting_year() {
+    let app = spawn_app().await;
+    create_tree_with(&app, "T-001", 2018, None).await;
+    create_tree_with(&app, "T-002", 2020, None).await;
+
+    let response = app.get("/api/v1/trees?planting_year=2018").await;
+
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    let data = body["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1);
+    assert_eq!(data[0]["number"], "T-001");
+    assert_eq!(body["pagination"]["total_records"], 1);
+}
+
+#[tokio::test]
+async fn list_trees_filters_by_multiple_planting_years() {
+    let app = spawn_app().await;
+    create_tree_with(&app, "T-001", 2018, None).await;
+    create_tree_with(&app, "T-002", 2020, None).await;
+    create_tree_with(&app, "T-003", 2022, None).await;
+
+    let response = app
+        .get("/api/v1/trees?planting_year=2018&planting_year=2020")
+        .await;
+
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 2);
+}
+
+#[tokio::test]
+async fn list_trees_filters_by_has_cluster() {
+    let app = spawn_app().await;
+    let cluster_body = serde_json::json!({
+        "name": "Stadtpark",
+        "address": "Parkweg 1",
+        "description": "Test",
+        "soil_condition": "sandig",
+        "tree_ids": []
+    });
+    let cluster_resp = app.post_json("/api/v1/clusters", &cluster_body).await;
+    let cluster: serde_json::Value = cluster_resp.json().await.unwrap();
+    let cluster_id = cluster["id"].as_str().unwrap();
+
+    create_tree_with(&app, "T-001", 2018, Some(cluster_id)).await;
+    create_tree_with(&app, "T-002", 2020, None).await;
+
+    let response = app.get("/api/v1/trees?has_cluster=true").await;
+    let body: serde_json::Value = response.json().await.unwrap();
+    let data = body["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1);
+    assert_eq!(data[0]["number"], "T-001");
+
+    let response = app.get("/api/v1/trees?has_cluster=false").await;
+    let body: serde_json::Value = response.json().await.unwrap();
+    let data = body["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1);
+    assert_eq!(data[0]["number"], "T-002");
+}
+
+#[tokio::test]
+async fn list_trees_filters_by_watering_status() {
+    let app = spawn_app().await;
+    create_tree_with(&app, "T-001", 2018, None).await;
+    create_tree_with(&app, "T-002", 2020, None).await;
+
+    // freshly created trees have status "unknown"
+    let response = app.get("/api/v1/trees?watering_status=unknown").await;
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 2);
+
+    let response = app.get("/api/v1/trees?watering_status=good").await;
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 0);
+}
+
+#[tokio::test]
+async fn list_trees_combines_filters() {
+    let app = spawn_app().await;
+    create_tree_with(&app, "T-001", 2018, None).await;
+    create_tree_with(&app, "T-002", 2020, None).await;
+
+    let response = app
+        .get("/api/v1/trees?planting_year=2018&watering_status=unknown")
+        .await;
+
+    let body: serde_json::Value = response.json().await.unwrap();
+    let data = body["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1);
+    assert_eq!(data[0]["number"], "T-001");
+}
+
+#[tokio::test]
+async fn list_trees_rejects_invalid_watering_status() {
+    let app = spawn_app().await;
+
+    let response = app.get("/api/v1/trees?watering_status=bogus").await;
+
+    assert_eq!(response.status().as_u16(), 400);
+}

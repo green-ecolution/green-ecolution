@@ -94,6 +94,15 @@ pub struct TreeListParams {
     pub per_page: u64,
     #[param(example = "Eiche")]
     pub q: Option<String>,
+    /// Repeatable: `?watering_status=good&watering_status=bad`.
+    #[serde(default)]
+    pub watering_status: Vec<WateringStatus>,
+    #[param(nullable)]
+    #[serde(default)]
+    pub has_cluster: Option<bool>,
+    /// Repeatable: `?planting_year=2018&planting_year=2020`.
+    #[serde(default)]
+    pub planting_year: Vec<i32>,
 }
 
 /// Query parameters for finding the nearest trees to a given point.
