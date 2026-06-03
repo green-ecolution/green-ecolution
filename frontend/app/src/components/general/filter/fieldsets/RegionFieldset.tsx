@@ -16,8 +16,9 @@ const RegionFieldset = () => {
         <Option
           key={region.id}
           label={region.name}
-          name={String(region.id)}
-          checked={filters.regionTags.includes(region.name)}
+          name={region.id}
+          value={region.id}
+          checked={filters.regionTags.includes(region.id)}
           onChange={handleRegionChange}
         />
       ))}
