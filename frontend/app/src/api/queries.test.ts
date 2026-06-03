@@ -55,8 +55,7 @@ describe('Query Functions', () => {
       it('includes pagination params in query key', () => {
         const options = treeQuery({ page: 2 })
 
-        expect(options.queryKey).toContain('trees')
-        expect(options.queryKey).toContain(2)
+        expect(options.queryKey).toEqual(['trees', 'list', { page: 2 }])
       })
 
       it('calls treeApi.listTrees when queryFn is executed', async () => {
@@ -87,12 +86,16 @@ describe('Query Functions', () => {
 
       it('includes q in the query key when provided', () => {
         const options = treeQuery({ page: 1, perPage: 10, q: 'Eiche' })
-        expect(options.queryKey).toEqual(['trees', 1, 10, 'Eiche'])
+        expect(options.queryKey).toEqual(['trees', 'list', { page: 1, perPage: 10, q: 'Eiche' }])
       })
 
-      it('omits q from the query key when not provided', () => {
-        const options = treeQuery({ page: 1, perPage: 10 })
-        expect(options.queryKey).toEqual(['trees', 1, 10])
+      it('includes filter params in the query key', () => {
+        const options = treeQuery({ page: 1, perPage: 10, wateringStatus: ['good'] })
+        expect(options.queryKey).toEqual([
+          'trees',
+          'list',
+          { page: 1, perPage: 10, wateringStatus: ['good'] },
+        ])
       })
 
       it('passes q to treeApi.listTrees', async () => {

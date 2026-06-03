@@ -51,9 +51,7 @@ const isValidUuid = (id: string | undefined): boolean => typeof id === 'string' 
 
 export const treeClusterQuery = (params?: ListClustersRequest) =>
   queryOptions<ListResponseTreeClusterInListResponse>({
-    queryKey: ['treeclusters', params?.page, params?.perPage].filter(
-      (e) => e != undefined || e != null,
-    ),
+    queryKey: ['treeclusters', 'list', params ?? {}],
     queryFn: () => clusterApi.listClusters(params),
   })
 
@@ -97,9 +95,7 @@ export const sensorModelIdQuery = (id: string) =>
 
 export const treeQuery = (params?: ListTreesRequest) =>
   queryOptions<ListResponseTreeResponse>({
-    queryKey: ['trees', params?.page, params?.perPage, ...(params?.q ? [params.q] : [])].filter(
-      (e) => e !== undefined && e !== null,
-    ),
+    queryKey: ['trees', 'list', params ?? {}],
     queryFn: () => treeApi.listTrees(params),
   })
 
