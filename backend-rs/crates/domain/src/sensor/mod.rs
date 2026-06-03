@@ -18,6 +18,8 @@ pub mod repository;
 pub mod snapshot;
 pub mod view;
 
+use chrono::{DateTime, Duration, Utc};
+
 use crate::{
     Id,
     sensor_model::SensorModel,
@@ -42,6 +44,25 @@ pub enum SensorStatus {
     Prepared,
     Online,
     Offline,
+}
+
+/// Derives the connectivity shown to clients. Connectivity is never stored:
+/// a sensor cannot enforce "I am online" — it is an observation about the
+/// recency of its telemetry. Unactivated sensors stay `Prepared` regardless
+/// of readings; the staleness boundary is inclusive.
+pub fn derive_connectivity(
+    activated_at: Option<DateTime<Utc>>,
+    last_reading_at: Option<DateTime<Utc>>,
+    now: DateTime<Utc>,
+    offline_after: Duration,
+) -> SensorStatus {
+    if activated_at.is_none() {
+        return SensorStatus::Prepared;
+    }
+    match last_reading_at {
+        Some(at) if now - at <= offline_after => SensorStatus::Online,
+        _ => SensorStatus::Offline,
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -213,5 +234,65 @@ mod tests {
         s.status = SensorStatus::Online;
         assert!(matches!(s.activate(), Err(SensorError::AlreadyActivated)));
         assert_eq!(s.status(), SensorStatus::Online);
+    }
+
+    mod derive_connectivity_tests {
+        use super::super::*;
+        use chrono::TimeZone;
+
+        fn now() -> DateTime<Utc> {
+            Utc.with_ymd_and_hms(2026, 6, 3, 12, 0, 0).unwrap()
+        }
+
+        fn threshold() -> Duration {
+            Duration::hours(24)
+        }
+
+        #[test]
+        fn unactivated_sensor_stays_prepared_even_with_fresh_reading() {
+            let status =
+                derive_connectivity(None, Some(now() - Duration::minutes(5)), now(), threshold());
+            assert_eq!(status, SensorStatus::Prepared);
+        }
+
+        #[test]
+        fn activated_sensor_with_fresh_reading_is_online() {
+            let status = derive_connectivity(
+                Some(now() - Duration::days(30)),
+                Some(now() - Duration::hours(1)),
+                now(),
+                threshold(),
+            );
+            assert_eq!(status, SensorStatus::Online);
+        }
+
+        #[test]
+        fn activated_sensor_with_stale_reading_is_offline() {
+            let status = derive_connectivity(
+                Some(now() - Duration::days(30)),
+                Some(now() - Duration::hours(25)),
+                now(),
+                threshold(),
+            );
+            assert_eq!(status, SensorStatus::Offline);
+        }
+
+        #[test]
+        fn activated_sensor_without_reading_is_offline() {
+            let status =
+                derive_connectivity(Some(now() - Duration::minutes(1)), None, now(), threshold());
+            assert_eq!(status, SensorStatus::Offline);
+        }
+
+        #[test]
+        fn reading_exactly_at_threshold_is_online() {
+            let status = derive_connectivity(
+                Some(now() - Duration::days(30)),
+                Some(now() - Duration::hours(24)),
+                now(),
+                threshold(),
+            );
+            assert_eq!(status, SensorStatus::Online);
+        }
     }
 }
