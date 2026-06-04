@@ -12,7 +12,7 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
-    configuration::CorsSettings,
+    configuration::{AuthSettings, CorsSettings},
     http::{
         auth::{AuthLayer, validator::TokenValidator},
         tracing::{MakeRequestUuid, REQUEST_ID_HEADER, make_span, on_response},
@@ -62,6 +62,7 @@ pub struct AppState {
     pub token_validator: Arc<TokenValidator>,
     pub feature_flags: FeatureFlags,
     pub nearest_tree_limits: NearestTreeLimits,
+    pub frontend_config_js: std::sync::Arc<str>,
 }
 
 #[derive(OpenApi)]
@@ -91,9 +92,27 @@ pub struct AppState {
 )]
 struct ApiDoc;
 
-// Builds the OpenAPI document without any runtime state. Used by the
-// `dump-openapi` binary so the frontend client can be regenerated without
-// starting the server (or running its dependencies).
+pub fn render_frontend_config_js(auth: &AuthSettings) -> String {
+    let env = serde_json::json!({
+        "VITE_AUTH_BYPASS": (!auth.enabled).to_string(),
+        "VITE_OIDC_AUTHORITY": auth.issuer_url,
+        "VITE_OIDC_CLIENT_ID": auth.frontend_client_id,
+    });
+    format!("window._env_ = {env};\n")
+}
+
+async fn frontend_config_js(
+    axum::extract::State(state): axum::extract::State<Arc<AppState>>,
+) -> impl axum::response::IntoResponse {
+    (
+        [(
+            axum::http::header::CONTENT_TYPE,
+            "application/javascript; charset=utf-8",
+        )],
+        state.frontend_config_js.to_string(),
+    )
+}
+
 pub fn openapi_doc(base_url: &str) -> utoipa::openapi::OpenApi {
     let (_, mut api) = OpenApiRouter::<Arc<AppState>>::with_openapi(ApiDoc::openapi())
         .merge(health::routes())
@@ -123,6 +142,7 @@ pub fn router(
         .on_failure(DefaultOnFailure::new().level(::tracing::Level::ERROR));
 
     router
+        .route("/api/config.js", axum::routing::get(frontend_config_js))
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api))
         .layer(cors_layer(cors))
         .layer(PropagateRequestIdLayer::new(REQUEST_ID_HEADER))

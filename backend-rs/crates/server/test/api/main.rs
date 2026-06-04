@@ -1,5 +1,6 @@
 pub mod auth;
 pub mod auth_helpers;
+pub mod config_js;
 pub mod clusters;
 pub mod evaluation;
 pub mod health;

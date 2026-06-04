@@ -125,6 +125,7 @@ impl Application {
                 default_limit: settings.map.nearest_tree_default_limit,
                 max_limit: settings.map.nearest_tree_max_limit,
             },
+            frontend_config_js: crate::http::render_frontend_config_js(&settings.auth).into(),
         });
 
         let listener = TcpListener::bind(address).await?;
