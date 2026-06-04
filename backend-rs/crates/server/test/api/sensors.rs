@@ -21,6 +21,18 @@ async fn insert_sensor(app: &crate::helpers::TestApp, id: &str) {
     .unwrap();
 }
 
+async fn insert_reading(app: &crate::helpers::TestApp, sensor_id: &str, data: serde_json::Value) {
+    sqlx::query!(
+        r#"INSERT INTO sensor_data (id, sensor_id, data) VALUES ($1, $2, $3)"#,
+        uuid::Uuid::now_v7(),
+        sensor_id,
+        data,
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+}
+
 #[tokio::test]
 async fn list_sensors_returns_200() {
     let app = spawn_app().await;
@@ -290,6 +302,72 @@ async fn ingest_via_create_and_activate_updates_watering_status() {
             .await
             .unwrap();
     assert_eq!(linked_sensor.as_deref(), Some("sensor-mq-1"));
+}
+
+#[tokio::test]
+async fn list_sensors_includes_latest_reading() {
+    let app = spawn_app().await;
+
+    insert_sensor(&app, "sensor-latest").await;
+    insert_reading(
+        &app,
+        "sensor-latest",
+        serde_json::json!({"temperature": 22.5}),
+    )
+    .await;
+
+    let response = app.get("/api/v1/sensors").await;
+    let body: serde_json::Value = response.json().await.unwrap();
+
+    let sensor = &body["data"][0];
+    assert_eq!(sensor["id"], "sensor-latest");
+
+    let latest = &sensor["latest_data"];
+    assert!(
+        !latest.is_null(),
+        "latest_data should be present in the list response, got: {sensor}"
+    );
+    assert_eq!(latest["data"]["temperature"], 22.5);
+    assert!(latest["id"].is_string());
+    assert!(latest["created_at"].is_string());
+    assert!(latest["updated_at"].is_string());
+}
+
+#[tokio::test]
+async fn list_trees_embeds_sensor_latest_reading() {
+    let app = spawn_app().await;
+
+    insert_sensor(&app, "sensor-tree-data").await;
+    sqlx::query!(
+        r#"INSERT INTO trees (id, sensor_id, planting_year, species, number, latitude, longitude,
+                              geometry, description)
+        VALUES ($1, 'sensor-tree-data', 2020, 'Eiche', 'T-DATA', 53.55, 9.99,
+                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test')"#,
+        uuid::Uuid::now_v7(),
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    insert_reading(
+        &app,
+        "sensor-tree-data",
+        serde_json::json!({"temperature": 19.1}),
+    )
+    .await;
+
+    // The tree list endpoint batch-resolves embedded sensors via view_by_ids.
+    let response = app.get("/api/v1/trees").await;
+    assert_eq!(response.status().as_u16(), 200);
+
+    let body: serde_json::Value = response.json().await.unwrap();
+    let tree = &body["data"][0];
+    let latest = &tree["sensor"]["latest_data"];
+    assert!(
+        !latest.is_null(),
+        "latest_data should be embedded via view_by_ids, got: {}",
+        tree["sensor"]
+    );
+    assert_eq!(latest["data"]["temperature"], 19.1);
 }
 
 #[tokio::test]

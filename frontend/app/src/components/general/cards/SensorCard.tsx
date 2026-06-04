@@ -35,7 +35,6 @@ const SensorCard: React.FC<SensorCardProps> = ({ sensor }) => {
 
         <div>
           <ListCardTitle className="mb-0.5">ID: {sensor.id}</ListCardTitle>
-          {/* TODO: treeSensorIdQuery was removed - needs a dedicated endpoint in the Rust backend */}
           <p className="text-dark-800 text-sm">Sensor-Details</p>
         </div>
 
