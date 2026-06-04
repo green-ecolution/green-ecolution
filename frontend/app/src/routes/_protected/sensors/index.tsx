@@ -32,7 +32,7 @@ function Sensors() {
 
   return (
     <div className="container mt-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between 2xl:w-4/5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <article className="flex-1">
           <h1 className="font-lato font-bold text-3xl mb-2 lg:text-4xl xl:text-5xl">Sensoren</h1>
           <p className="text-sm text-muted-foreground max-w-prose">
