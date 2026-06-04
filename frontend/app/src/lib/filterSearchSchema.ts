@@ -2,8 +2,6 @@ import { z } from 'zod'
 import { WateringStatus } from '@green-ecolution/backend-client'
 import type { Filters } from '@/context/FilterContext'
 
-// Single source of truth for filter search params. Routes pick the subset
-// they support so the schemas can never diverge again (GECO-133).
 export const filterSearchSchema = z.object({
   wateringStatuses: z.array(z.enum(WateringStatus)).optional().catch(undefined),
   regions: z.array(z.string()).optional().catch(undefined),
