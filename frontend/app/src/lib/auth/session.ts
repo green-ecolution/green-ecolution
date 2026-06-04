@@ -1,4 +1,3 @@
-import type { User } from 'oidc-client-ts'
 import { getUserManager, isAuthBypass } from './userManager'
 import { DEMO_ACCESS_TOKEN } from './demoUser'
 import { sanitizeReturnTo } from './redirect'
@@ -8,7 +7,6 @@ export interface SigninOptions {
 }
 
 export interface AuthSession {
-  getUser(): Promise<User | null>
   getAccessToken(): Promise<string | null>
   isAuthenticated(): Promise<boolean>
   signinRedirect(opts?: SigninOptions): Promise<void>
@@ -18,10 +16,6 @@ export interface AuthSession {
 
 export class OidcAuthSession implements AuthSession {
   private mgr = getUserManager()
-
-  async getUser(): Promise<User | null> {
-    return this.mgr.getUser()
-  }
 
   async getAccessToken(): Promise<string | null> {
     const user = await this.mgr.getUser()
@@ -40,6 +34,7 @@ export class OidcAuthSession implements AuthSession {
 
   async signinCallback(): Promise<string> {
     const user = await this.mgr.signinCallback()
+    // state is the opaque payload we passed to signinRedirect; its shape is our own convention
     const returnTo = (user?.state as { returnTo?: string } | undefined)?.returnTo
     return sanitizeReturnTo(returnTo)
   }
@@ -50,9 +45,6 @@ export class OidcAuthSession implements AuthSession {
 }
 
 export class DemoAuthSession implements AuthSession {
-  async getUser(): Promise<User | null> {
-    return null
-  }
   async getAccessToken(): Promise<string | null> {
     return DEMO_ACCESS_TOKEN
   }

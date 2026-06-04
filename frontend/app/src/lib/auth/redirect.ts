@@ -2,7 +2,7 @@ const FALLBACK = '/dashboard'
 
 export function sanitizeReturnTo(raw: string | undefined | null): string {
   if (!raw || !raw.startsWith('/')) return FALLBACK
-  // Reject protocol-relative URLs (//) and backslash escapes
+  // //, /\\, and https:// all slip past the startsWith('/') check — open-redirect vectors
   if (raw.startsWith('//') || raw.startsWith('/\\')) return FALLBACK
   return raw
 }

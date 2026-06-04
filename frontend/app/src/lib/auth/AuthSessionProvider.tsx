@@ -27,6 +27,7 @@ function RealBridge({ children }: { children: ReactNode }) {
 }
 
 export function AuthSessionProvider({ children }: { children: ReactNode }) {
+  // VITE_AUTH_BYPASS is a build-time constant, so this branch is stable across the component's lifetime.
   if (isAuthBypass()) {
     const demo: AuthSessionContextValue = {
       isAuthenticated: true,

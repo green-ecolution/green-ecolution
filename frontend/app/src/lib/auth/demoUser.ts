@@ -1,4 +1,4 @@
-export interface DemoProfile {
+interface DemoProfile {
   preferred_username: string
   email: string
   given_name: string
@@ -8,7 +8,7 @@ export interface DemoProfile {
   status: string
 }
 
-export const DEMO_PROFILE: DemoProfile = {
+const DEMO_PROFILE: DemoProfile = {
   preferred_username: 'ttester',
   email: 'toni.tester@green-ecolution.de',
   given_name: 'Toni',
