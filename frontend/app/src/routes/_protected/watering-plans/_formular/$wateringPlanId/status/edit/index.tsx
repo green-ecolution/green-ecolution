@@ -1,6 +1,6 @@
 import { Loading } from '@green-ecolution/ui'
 import WateringPlanStatusUpdate from '@/components/watering-plan/WateringPlanStatusUpdate'
-import useStore from '@/store/store'
+import { getAuthSession } from '@/lib/auth/session'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 
 const wateringPlanFormRoute = getRouteApi('/_protected/watering-plans/_formular/$wateringPlanId')
@@ -12,8 +12,8 @@ export const Route = createFileRoute(
   pendingComponent: () => (
     <Loading className="mt-20 justify-center" label="Einsatzplan wird geladen …" />
   ),
-  loader: () => {
-    if (!useStore.getState().isAuthenticated) return
+  loader: async () => {
+    if (!(await getAuthSession().isAuthenticated())) return
   },
 })
 

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useUserStore } from '@/store/store'
+import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 import { UserRound } from 'lucide-react'
 import { getUserRoleDetails, UserRoleOrUnknown } from '@/hooks/details/useDetailsForUserRole'
 import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
@@ -12,7 +12,7 @@ export const Route = createFileRoute('/_protected/profile/')({
 })
 
 function Profile() {
-  const user = useUserStore()
+  const user = useCurrentUser()
 
   return (
     <div className="container mt-6">

@@ -1,5 +1,5 @@
 import { Loading } from '@green-ecolution/ui'
-import useStore from '@/store/store'
+import { getAuthSession } from '@/lib/auth/session'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import VehicleUpdate from '@/components/vehicle/VehicleUpdate'
 
@@ -10,8 +10,8 @@ export const Route = createFileRoute('/_protected/vehicles/_formular/$vehicleId/
   pendingComponent: () => (
     <Loading className="mt-20 justify-center" label="Fahrzeug wird geladen …" />
   ),
-  loader: () => {
-    if (!useStore.getState().isAuthenticated) return
+  loader: async () => {
+    if (!(await getAuthSession().isAuthenticated())) return
   },
 })
 

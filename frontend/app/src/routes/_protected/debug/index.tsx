@@ -1,7 +1,8 @@
 import KV from '@/components/debug/KV'
 import { boolBadge } from '@/components/debug/badgeHelpers'
-import useStore from '@/store/store'
-import { useAuthStore, useMapStore, useUserStore } from '@/store/store'
+import useStore, { useMapStore } from '@/store/store'
+import { useAuthSession } from '@/lib/auth/AuthSessionProvider'
+import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 import {
   Badge,
   Button,
@@ -43,9 +44,9 @@ const copyToClipboard = async (text: string) => {
 }
 
 function Debug() {
-  const authStore = useAuthStore()
+  const auth = useAuthSession()
   const mapStore = useMapStore()
-  const userStore = useUserStore()
+  const userStore = useCurrentUser()
   const formDrafts = useStore((s) => s.formDrafts)
 
   const [env] = useState(() => ({
@@ -123,30 +124,21 @@ function Debug() {
               <CardTitle className="text-base">Authentifizierung</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2 text-sm">
-              <KV label="Angemeldet">{boolBadge(authStore.isAuthenticated)}</KV>
-              <KV label="Token vorhanden">{boolBadge(!!authStore.token)}</KV>
+              <KV label="Angemeldet">{boolBadge(auth.isAuthenticated)}</KV>
+              <KV label="Token vorhanden">{boolBadge(!!auth.accessToken)}</KV>
               <KV label="Ablauf">
                 <span className="font-mono text-xs">
-                  {authStore.token?.expiry
-                    ? new Date(authStore.token.expiry).toLocaleString('de-DE')
-                    : '—'}
+                  {auth.expiresAt ? auth.expiresAt.toLocaleString('de-DE') : '—'}
                 </span>
-              </KV>
-              <KV label="Läuft bald ab">
-                {authStore.token ? (
-                  boolBadge(authStore.isTokenExpiringSoon())
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                )}
               </KV>
               <KV label="Access-Token">
                 <span className="inline-flex items-center gap-1.5">
                   <span className="font-mono text-xs break-all text-muted-foreground">
-                    {authStore.token?.accessToken ? truncate(authStore.token.accessToken) : '—'}
+                    {auth.accessToken ? truncate(auth.accessToken) : '—'}
                   </span>
-                  {authStore.token?.accessToken && (
+                  {auth.accessToken && (
                     <button
-                      onClick={() => void copyToClipboard(authStore.token!.accessToken)}
+                      onClick={() => void copyToClipboard(auth.accessToken!)}
                       className="p-1 hover:bg-dark-200 rounded transition-colors shrink-0 cursor-pointer"
                       title="Access-Token kopieren"
                     >
@@ -158,11 +150,11 @@ function Debug() {
               <KV label="Refresh-Token">
                 <span className="inline-flex items-center gap-1.5">
                   <span className="font-mono text-xs break-all text-muted-foreground">
-                    {authStore.token?.refreshToken ? truncate(authStore.token.refreshToken) : '—'}
+                    {auth.refreshToken ? truncate(auth.refreshToken) : '—'}
                   </span>
-                  {authStore.token?.refreshToken && (
+                  {auth.refreshToken && (
                     <button
-                      onClick={() => void copyToClipboard(authStore.token!.refreshToken)}
+                      onClick={() => void copyToClipboard(auth.refreshToken!)}
                       className="p-1 hover:bg-dark-200 rounded transition-colors shrink-0 cursor-pointer"
                       title="Refresh-Token kopieren"
                     >
