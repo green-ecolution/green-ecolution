@@ -6,6 +6,9 @@ interface ImportMetaEnv {
 
   readonly VITE_BACKEND_BASEURL?: string
   readonly VITE_APP_CITY?: string
+  readonly VITE_OIDC_AUTHORITY?: string
+  readonly VITE_OIDC_CLIENT_ID?: string
+  readonly VITE_AUTH_BYPASS?: string
 }
 
 interface ImportMeta {
