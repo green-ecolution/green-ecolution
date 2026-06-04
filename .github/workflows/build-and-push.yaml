@@ -224,17 +224,10 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ needs.determine-environment.outputs.image-tag }}
-          # Frontend OIDC build args mirror the per-env backend auth config
-          # (deploy/kustomize/<env>/config.yaml). prod currently targets the
-          # green-ecolution-dev realm (prod realm not yet provisioned) with the
-          # green-ecolution-frontend client; switch in lockstep with the backend.
           build-args: |
             ENV=${{ needs.determine-environment.outputs.environment == 'stage' && 'dev' || 'prod' }}
             BASEURL=/api
             APP_VERSION=${{ needs.determine-environment.outputs.image-tag }}
-            VITE_AUTH_BYPASS=false
-            VITE_OIDC_AUTHORITY=${{ needs.determine-environment.outputs.environment == 'stage' && 'https://auth.green-ecolution.de/realms/green-ecolution-stage' || 'https://auth.green-ecolution.de/realms/green-ecolution-dev' }}
-            VITE_OIDC_CLIENT_ID=${{ needs.determine-environment.outputs.environment == 'stage' && 'frontend' || 'green-ecolution-frontend' }}
           cache-from: type=gha,scope=build-frontend
           cache-to: type=gha,mode=max,scope=build-frontend
 
