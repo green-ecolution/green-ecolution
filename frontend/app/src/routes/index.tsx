@@ -7,14 +7,14 @@ import { Button } from '@green-ecolution/ui'
 import Lottie from 'lottie-react'
 import dashboardAnimation from '../../src/animations/dashboardAnimation.json'
 import QuickLinks from '@/components/startpage/QuickLinks'
-import useStore from '@/store/store'
+import { useAuthSession } from '@/lib/auth/authSessionContext'
 
 export const Route = createFileRoute('/')({
   component: Startpage,
 })
 
 function Startpage() {
-  const isAuthenticated = useStore((state) => state.isAuthenticated)
+  const { isAuthenticated } = useAuthSession()
 
   return (
     <>

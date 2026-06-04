@@ -2,10 +2,10 @@ import Lottie from 'lottie-react'
 import cableAnimation from '../../animations/cableAnimation.json'
 import ButtonLink from '../general/links/ButtonLink'
 import { MoveRight } from 'lucide-react'
-import useStore from '@/store/store'
+import { useAuthSession } from '@/lib/auth/authSessionContext'
 
 function NotFound() {
-  const isAuthenticated = useStore((state) => state.isAuthenticated)
+  const { isAuthenticated } = useAuthSession()
 
   return (
     <>

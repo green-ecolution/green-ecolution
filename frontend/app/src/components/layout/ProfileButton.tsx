@@ -1,16 +1,15 @@
 import { ChevronDown, LogIn, LogOut, Settings, UserRound } from 'lucide-react'
-import useStore from '@/store/store'
 import { useState } from 'react'
 import NavLink from '../navigation/NavLink'
 import useOutsideClick from '@/hooks/useOutsideClick'
 import { Avatar, AvatarFallback } from '@green-ecolution/ui'
+import { useAuthSession } from '@/lib/auth/authSessionContext'
+import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 
 function ProfileButton() {
   const [open, setOpen] = useState(false)
-  const firstName = useStore((state) => state.firstName)
-  const lastName = useStore((state) => state.lastName)
-  const email = useStore((state) => state.email)
-  const isAuthenticated = useStore((state) => state.isAuthenticated)
+  const { isAuthenticated } = useAuthSession()
+  const { firstName, lastName, email } = useCurrentUser()
 
   const toggleOverlay = (state: boolean) => {
     setOpen(state)

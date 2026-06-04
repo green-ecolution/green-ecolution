@@ -2,42 +2,7 @@ import { create, StateCreator } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import { useShallow } from 'zustand/react/shallow'
-import { ClientTokenResponse, DrivingLicense } from '@green-ecolution/backend-client'
-import { decodeJWT } from '@/lib/utils'
-import { KeycloakJWT } from '@/lib/types/keycloak'
-import { parseUserRole, UserRoleOrUnknown } from '@/hooks/details/useDetailsForUserRole'
-import {
-  parseUserStatus,
-  UNKNOWN_USER_STATUS,
-  UserStatusOrUnknown,
-} from '@/hooks/details/useDetailsForUserStatus'
-import { parseDrivingLicense } from '@/hooks/details/useDetailsForDrivingLicense'
 import { FormDraftSlice } from './form/formDraftSlice'
-
-// =============================================================================
-// Types
-// =============================================================================
-
-interface AuthSlice {
-  isAuthenticated: boolean
-  token: ClientTokenResponse | null
-  setToken: (token: ClientTokenResponse) => void
-  clearAuth: () => void
-  isTokenExpiringSoon: (bufferSeconds?: number) => boolean
-}
-
-interface UserSlice {
-  username: string
-  email: string
-  firstName: string
-  lastName: string
-  drivingLicenses: DrivingLicense[]
-  userRoles: UserRoleOrUnknown[]
-  userStatus: UserStatusOrUnknown
-  setUserFromJwt: (jwt: string) => void
-  isUserEmpty: () => boolean
-  clearUser: () => void
-}
 
 interface MapSlice {
   mapCenter: [number, number]
@@ -50,77 +15,8 @@ interface MapSlice {
   setShowSelectModal: (show: boolean) => void
 }
 
-type Store = AuthSlice & UserSlice & MapSlice & FormDraftSlice
+type Store = MapSlice & FormDraftSlice
 type Mutators = [['zustand/devtools', never], ['zustand/immer', never]]
-
-// =============================================================================
-// Slices
-// =============================================================================
-
-const createAuthSlice: StateCreator<Store, Mutators, [], AuthSlice> = (set) => ({
-  isAuthenticated: !!localStorage.getItem('refreshToken'),
-  token: null,
-  setToken: (token) =>
-    set((state) => {
-      localStorage.setItem('refreshToken', token.refreshToken)
-      state.isAuthenticated = true
-      state.token = token
-    }),
-  clearAuth: () =>
-    set((state) => {
-      localStorage.removeItem('refreshToken')
-      state.isAuthenticated = false
-      state.token = null
-    }),
-  isTokenExpiringSoon: (bufferSeconds = 60) => {
-    const token = useStore.getState().token
-    if (!token?.expiry) {
-      return true // No token = treat as expiring
-    }
-    const expiryTime = new Date(token.expiry).getTime()
-    const now = Date.now()
-    return now >= expiryTime - bufferSeconds * 1000
-  },
-})
-
-const createUserSlice: StateCreator<Store, Mutators, [], UserSlice> = (set, get) => ({
-  username: '',
-  email: '',
-  firstName: '',
-  lastName: '',
-  drivingLicenses: [],
-  userRoles: [],
-  userStatus: UNKNOWN_USER_STATUS,
-  setUserFromJwt: (jwt) =>
-    set((state) => {
-      const jwtInfo = decodeJWT<KeycloakJWT>(jwt)
-      if (jwtInfo) {
-        state.username = jwtInfo.preferred_username
-        state.email = jwtInfo.email
-        state.firstName = jwtInfo.given_name
-        state.lastName = jwtInfo.family_name
-        state.drivingLicenses = jwtInfo.driving_licenses
-          ? jwtInfo.driving_licenses.map(parseDrivingLicense)
-          : []
-        state.userRoles = jwtInfo.user_roles ? jwtInfo.user_roles.map(parseUserRole) : []
-        state.userStatus = parseUserStatus(jwtInfo.status)
-      }
-    }),
-  isUserEmpty: () => {
-    const s = get()
-    return !s.username || !s.email || !s.firstName || !s.lastName
-  },
-  clearUser: () =>
-    set((state) => {
-      state.username = ''
-      state.email = ''
-      state.firstName = ''
-      state.lastName = ''
-      state.drivingLicenses = []
-      state.userRoles = []
-      state.userStatus = UNKNOWN_USER_STATUS
-    }),
-})
 
 const createMapSlice: StateCreator<Store, Mutators, [], MapSlice> = (set) => ({
   mapCenter: [54.792277136221905, 9.43580607453268],
@@ -176,45 +72,14 @@ const createFormDraftSlice: StateCreator<Store, Mutators, [], FormDraftSlice> = 
     }),
 })
 
-// =============================================================================
-// Store
-// =============================================================================
-
 const useStore = create<Store>()(
   devtools(
     immer((...a) => ({
-      ...createAuthSlice(...a),
-      ...createUserSlice(...a),
       ...createMapSlice(...a),
       ...createFormDraftSlice(...a),
     })),
   ),
 )
-
-// =============================================================================
-// Selectors (defined outside hooks for stable references)
-// =============================================================================
-
-const authSelector = (s: Store) => ({
-  isAuthenticated: s.isAuthenticated,
-  token: s.token,
-  setToken: s.setToken,
-  clearAuth: s.clearAuth,
-  isTokenExpiringSoon: s.isTokenExpiringSoon,
-})
-
-const userSelector = (s: Store) => ({
-  username: s.username,
-  email: s.email,
-  firstName: s.firstName,
-  lastName: s.lastName,
-  drivingLicenses: s.drivingLicenses,
-  userRoles: s.userRoles,
-  userStatus: s.userStatus,
-  setUserFromJwt: s.setUserFromJwt,
-  isUserEmpty: s.isUserEmpty,
-  clearUser: s.clearUser,
-})
 
 const mapSelector = (s: Store) => ({
   mapCenter: s.mapCenter,
@@ -227,12 +92,6 @@ const mapSelector = (s: Store) => ({
   setShowSelectModal: s.setShowSelectModal,
 })
 
-// =============================================================================
-// Selector Hooks
-// =============================================================================
-
-export const useAuthStore = () => useStore(useShallow(authSelector))
-export const useUserStore = () => useStore(useShallow(userSelector))
 export const useMapStore = () => useStore(useShallow(mapSelector))
 
 export default useStore

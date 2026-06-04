@@ -21,7 +21,7 @@ import TabGeneralData from './TabGeneralData'
 import TreeClusterList from '../treecluster/TreeClusterList'
 import ButtonLink from '../general/links/ButtonLink'
 import { useMutation } from '@tanstack/react-query'
-import useStore from '@/store/store'
+import { useAuthSession } from '@/lib/auth/authSessionContext'
 import { basePath, WateringPlan } from '@/api/backendApi'
 import createToast from '@/hooks/createToast'
 import WateringPlanPreviewRoute from './WateringPlanRoutePreview'
@@ -33,7 +33,7 @@ interface WateringPlanDashboardProps {
 
 const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => {
   const statusDetails = getWateringPlanStatusDetails(wateringPlan.status)
-  const accessToken = useStore((state) => state.token?.accessToken)
+  const { accessToken } = useAuthSession()
   const showToast = createToast()
 
   const date = wateringPlan?.date
