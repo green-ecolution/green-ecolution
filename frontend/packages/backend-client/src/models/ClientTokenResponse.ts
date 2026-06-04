@@ -14,67 +14,67 @@
 
 import { mapValues } from '../runtime';
 /**
- * OIDC token response containing access, ID, and refresh tokens.
+ * OIDC token response. Used by the plugin subsystem for plugin client auth.
  * @export
  * @interface ClientTokenResponse
  */
 export interface ClientTokenResponse {
     /**
-     * JWT access token for API authorization.
+     * 
      * @type {string}
      * @memberof ClientTokenResponse
      */
     accessToken: string;
     /**
-     * Access token lifetime in seconds.
+     * 
      * @type {number}
      * @memberof ClientTokenResponse
      */
     expiresIn: number;
     /**
-     * Absolute expiry timestamp of the access token (RFC 3339).
+     * 
      * @type {string}
      * @memberof ClientTokenResponse
      */
     expiry: string;
     /**
-     * JWT ID token containing user identity claims.
+     * 
      * @type {string}
      * @memberof ClientTokenResponse
      */
     idToken: string;
     /**
-     * Not-before policy timestamp (usually 0).
+     * 
      * @type {number}
      * @memberof ClientTokenResponse
      */
     notBeforePolicy: number;
     /**
-     * Refresh token lifetime in seconds.
+     * 
      * @type {number}
      * @memberof ClientTokenResponse
      */
     refreshExpiresIn: number;
     /**
-     * Refresh token for obtaining new access tokens.
+     * 
      * @type {string}
      * @memberof ClientTokenResponse
      */
     refreshToken: string;
     /**
-     * OAuth2 scopes granted.
+     * 
      * @type {string}
      * @memberof ClientTokenResponse
      */
     scope: string;
     /**
-     * Unique session identifier.
+     * 
      * @type {string}
      * @memberof ClientTokenResponse
      */
     sessionState: string;
     /**
-     * Token type, typically "Bearer".
+     * 
      * @type {string}
      * @memberof ClientTokenResponse
      */

@@ -1653,131 +1653,6 @@
         }
       }
     },
-    "/v1/users/login": {
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Initiate login",
-        "description": "Initiate OAuth2/OIDC login flow.",
-        "operationId": "loginUser",
-        "parameters": [
-          {
-            "name": "redirect_url",
-            "in": "query",
-            "description": "Where Keycloak should redirect to after a successful login.",
-            "required": false,
-            "schema": {
-              "type": [
-                "string",
-                "null"
-              ]
-            }
-          },
-          {
-            "name": "code_challenge",
-            "in": "query",
-            "description": "PKCE code challenge (base64url(sha256(verifier))). When present the\nbackend appends `code_challenge_method=S256` to the auth URL.",
-            "required": false,
-            "schema": {
-              "type": [
-                "string",
-                "null"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Login URL",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoginResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid redirect_url"
-          }
-        }
-      }
-    },
-    "/v1/users/login/token": {
-      "post": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Exchange auth code for tokens",
-        "description": "Exchange an authorization code for access/refresh tokens.",
-        "operationId": "exchangeLoginToken",
-        "parameters": [
-          {
-            "name": "redirect_url",
-            "in": "query",
-            "description": "The same redirect URL the SPA used in the initial /login call.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginTokenRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Token response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClientTokenResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid code or redirect_url"
-          }
-        }
-      }
-    },
-    "/v1/users/logout": {
-      "post": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Logout user",
-        "description": "Invalidate a user session.",
-        "operationId": "logoutUser",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LogoutRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "Logged out"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      }
-    },
     "/v1/users/role/{role_id}": {
       "get": {
         "tags": [
@@ -1843,41 +1718,6 @@
           },
           "500": {
             "description": "Internal server error"
-          }
-        }
-      }
-    },
-    "/v1/users/token/refresh": {
-      "post": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Refresh access token",
-        "description": "Obtain a new access token using a refresh token.",
-        "operationId": "refreshToken",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefreshTokenRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Refreshed token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClientTokenResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid refresh token"
           }
         }
       }
@@ -2545,7 +2385,7 @@
       },
       "ClientTokenResponse": {
         "type": "object",
-        "description": "OIDC token response containing access, ID, and refresh tokens.",
+        "description": "OIDC token response. Used by the plugin subsystem for plugin client auth.",
         "required": [
           "access_token",
           "id_token",
@@ -2560,60 +2400,40 @@
         ],
         "properties": {
           "access_token": {
-            "type": "string",
-            "description": "JWT access token for API authorization.",
-            "example": "eyJhbGciOiJSUzI1NiIs..."
+            "type": "string"
           },
           "expires_in": {
             "type": "integer",
             "format": "int32",
-            "description": "Access token lifetime in seconds.",
-            "example": 300,
             "minimum": 0
           },
           "expiry": {
-            "type": "string",
-            "description": "Absolute expiry timestamp of the access token (RFC 3339).",
-            "example": "2024-08-01T13:00:00+00:00"
+            "type": "string"
           },
           "id_token": {
-            "type": "string",
-            "description": "JWT ID token containing user identity claims.",
-            "example": "eyJhbGciOiJSUzI1NiIs..."
+            "type": "string"
           },
           "not_before_policy": {
             "type": "integer",
             "format": "int32",
-            "description": "Not-before policy timestamp (usually 0).",
-            "example": 0,
             "minimum": 0
           },
           "refresh_expires_in": {
             "type": "integer",
             "format": "int32",
-            "description": "Refresh token lifetime in seconds.",
-            "example": 1800,
             "minimum": 0
           },
           "refresh_token": {
-            "type": "string",
-            "description": "Refresh token for obtaining new access tokens.",
-            "example": "eyJhbGciOiJSUzI1NiIs..."
+            "type": "string"
           },
           "scope": {
-            "type": "string",
-            "description": "OAuth2 scopes granted.",
-            "example": "openid profile email"
+            "type": "string"
           },
           "session_state": {
-            "type": "string",
-            "description": "Unique session identifier.",
-            "example": "550e8400-e29b-41d4-a716-446655440000"
+            "type": "string"
           },
           "token_type": {
-            "type": "string",
-            "description": "Token type, typically \"Bearer\".",
-            "example": "Bearer"
+            "type": "string"
           }
         },
         "example": {
@@ -3736,56 +3556,6 @@
           }
         }
       },
-      "LoginResponse": {
-        "type": "object",
-        "description": "Response containing the OIDC login URL for browser-based authentication.",
-        "required": [
-          "login_url"
-        ],
-        "properties": {
-          "login_url": {
-            "type": "string",
-            "description": "Full OIDC authorization URL the client should redirect to.",
-            "example": "https://auth.green-ecolution.de/auth/realms/green-ecolution/protocol/openid-connect/auth?client_id=green-ecolution&redirect_uri=https%3A%2F%2Fapp.green-ecolution.de%2Fcallback&response_type=code&scope=openid+profile+email"
-          }
-        }
-      },
-      "LoginTokenRequest": {
-        "type": "object",
-        "description": "Request body for exchanging an authorization code for tokens.",
-        "required": [
-          "code"
-        ],
-        "properties": {
-          "code": {
-            "type": "string",
-            "description": "Authorization code received from the OIDC provider callback.",
-            "example": "abc123-auth-code"
-          },
-          "code_verifier": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "PKCE code verifier matching the `code_challenge` sent on /login. Required\nwhen the frontend client is public (no secret); omitted otherwise.",
-            "example": "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
-          }
-        }
-      },
-      "LogoutRequest": {
-        "type": "object",
-        "description": "Request body for logging out a user session.",
-        "required": [
-          "refresh_token"
-        ],
-        "properties": {
-          "refresh_token": {
-            "type": "string",
-            "description": "Refresh token of the session to invalidate.",
-            "example": "eyJhbGciOiJSUzI1NiIs..."
-          }
-        }
-      },
       "LorawanCredentialsRequest": {
         "type": "object",
         "description": "LoRaWAN credentials supplied when registering a new sensor. `app_key` is\nwrite-only and never echoed back in responses.",
@@ -4125,20 +3895,6 @@
           "name": "Weather Provider Plugin",
           "slug": "weather-provider",
           "version": "1.0.0"
-        }
-      },
-      "RefreshTokenRequest": {
-        "type": "object",
-        "description": "Request body for refreshing an access token.",
-        "required": [
-          "refresh_token"
-        ],
-        "properties": {
-          "refresh_token": {
-            "type": "string",
-            "description": "Refresh token used to obtain a new access token.",
-            "example": "eyJhbGciOiJSUzI1NiIs..."
-          }
         }
       },
       "RegionEvaluationResponse": {

@@ -15,28 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
-  ClientTokenResponse,
   ListResponseUserResponse,
-  LoginResponse,
-  LoginTokenRequest,
-  LogoutRequest,
-  RefreshTokenRequest,
   UserRegisterRequest,
   UserResponse,
 } from '../models/index';
 import {
-    ClientTokenResponseFromJSON,
-    ClientTokenResponseToJSON,
     ListResponseUserResponseFromJSON,
     ListResponseUserResponseToJSON,
-    LoginResponseFromJSON,
-    LoginResponseToJSON,
-    LoginTokenRequestFromJSON,
-    LoginTokenRequestToJSON,
-    LogoutRequestFromJSON,
-    LogoutRequestToJSON,
-    RefreshTokenRequestFromJSON,
-    RefreshTokenRequestToJSON,
     UserRegisterRequestFromJSON,
     UserRegisterRequestToJSON,
     UserResponseFromJSON,
@@ -45,11 +30,6 @@ import {
 
 export interface CreateUserRequest {
     userRegisterRequest: UserRegisterRequest;
-}
-
-export interface ExchangeLoginTokenRequest {
-    redirectUrl: string;
-    loginTokenRequest: LoginTokenRequest;
 }
 
 export interface ListUsersRequest {
@@ -61,19 +41,6 @@ export interface ListUsersByRoleRequest {
     roleId: string;
     page?: number;
     perPage?: number;
-}
-
-export interface LoginUserRequest {
-    redirectUrl?: string | null;
-    codeChallenge?: string | null;
-}
-
-export interface LogoutUserRequest {
-    logoutRequest: LogoutRequest;
-}
-
-export interface RefreshTokenOperationRequest {
-    refreshTokenRequest: RefreshTokenRequest;
 }
 
 /**
@@ -119,58 +86,6 @@ export class UsersApi extends runtime.BaseAPI {
      */
     async createUser(requestParameters: CreateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserResponse> {
         const response = await this.createUserRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Exchange an authorization code for access/refresh tokens.
-     * Exchange auth code for tokens
-     */
-    async exchangeLoginTokenRaw(requestParameters: ExchangeLoginTokenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ClientTokenResponse>> {
-        if (requestParameters['redirectUrl'] == null) {
-            throw new runtime.RequiredError(
-                'redirectUrl',
-                'Required parameter "redirectUrl" was null or undefined when calling exchangeLoginToken().'
-            );
-        }
-
-        if (requestParameters['loginTokenRequest'] == null) {
-            throw new runtime.RequiredError(
-                'loginTokenRequest',
-                'Required parameter "loginTokenRequest" was null or undefined when calling exchangeLoginToken().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['redirectUrl'] != null) {
-            queryParameters['redirect_url'] = requestParameters['redirectUrl'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-
-        let urlPath = `/v1/users/login/token`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: LoginTokenRequestToJSON(requestParameters['loginTokenRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => ClientTokenResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Exchange an authorization code for access/refresh tokens.
-     * Exchange auth code for tokens
-     */
-    async exchangeLoginToken(requestParameters: ExchangeLoginTokenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ClientTokenResponse> {
-        const response = await this.exchangeLoginTokenRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -257,126 +172,6 @@ export class UsersApi extends runtime.BaseAPI {
      */
     async listUsersByRole(requestParameters: ListUsersByRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseUserResponse> {
         const response = await this.listUsersByRoleRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Initiate OAuth2/OIDC login flow.
-     * Initiate login
-     */
-    async loginUserRaw(requestParameters: LoginUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LoginResponse>> {
-        const queryParameters: any = {};
-
-        if (requestParameters['redirectUrl'] != null) {
-            queryParameters['redirect_url'] = requestParameters['redirectUrl'];
-        }
-
-        if (requestParameters['codeChallenge'] != null) {
-            queryParameters['code_challenge'] = requestParameters['codeChallenge'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-
-        let urlPath = `/v1/users/login`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => LoginResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Initiate OAuth2/OIDC login flow.
-     * Initiate login
-     */
-    async loginUser(requestParameters: LoginUserRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LoginResponse> {
-        const response = await this.loginUserRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Invalidate a user session.
-     * Logout user
-     */
-    async logoutUserRaw(requestParameters: LogoutUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['logoutRequest'] == null) {
-            throw new runtime.RequiredError(
-                'logoutRequest',
-                'Required parameter "logoutRequest" was null or undefined when calling logoutUser().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-
-        let urlPath = `/v1/users/logout`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: LogoutRequestToJSON(requestParameters['logoutRequest']),
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Invalidate a user session.
-     * Logout user
-     */
-    async logoutUser(requestParameters: LogoutUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.logoutUserRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     * Obtain a new access token using a refresh token.
-     * Refresh access token
-     */
-    async refreshTokenRaw(requestParameters: RefreshTokenOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ClientTokenResponse>> {
-        if (requestParameters['refreshTokenRequest'] == null) {
-            throw new runtime.RequiredError(
-                'refreshTokenRequest',
-                'Required parameter "refreshTokenRequest" was null or undefined when calling refreshToken().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-
-        let urlPath = `/v1/users/token/refresh`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: RefreshTokenRequestToJSON(requestParameters['refreshTokenRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => ClientTokenResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Obtain a new access token using a refresh token.
-     * Refresh access token
-     */
-    async refreshToken(requestParameters: RefreshTokenOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ClientTokenResponse> {
-        const response = await this.refreshTokenRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

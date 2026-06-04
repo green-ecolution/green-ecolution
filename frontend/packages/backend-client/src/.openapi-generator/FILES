@@ -37,9 +37,6 @@ models/ListResponseVehicleResponse.ts
 models/ListResponseVehicleResponseDataInner.ts
 models/ListResponseWateringPlanInListResponse.ts
 models/ListResponseWateringPlanInListResponseDataInner.ts
-models/LoginResponse.ts
-models/LoginTokenRequest.ts
-models/LogoutRequest.ts
 models/LorawanCredentialsRequest.ts
 models/LorawanInfoResponse.ts
 models/MapInfoResponse.ts
@@ -49,7 +46,6 @@ models/PluginAuthRequest.ts
 models/PluginListResponse.ts
 models/PluginRegisterRequest.ts
 models/PluginResponse.ts
-models/RefreshTokenRequest.ts
 models/RegionEvaluationResponse.ts
 models/RegionResponse.ts
 models/SensorAbilityUnitDto.ts
