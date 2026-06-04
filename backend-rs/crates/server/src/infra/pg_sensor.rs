@@ -165,8 +165,6 @@ impl SensorReader for PgSensorRepository {
         .await?
         .ok_or(RepositoryError::NotFound)?;
 
-        // sensor_data.created_at was dropped; order by id (UUID v7) which
-        // preserves chronological order via its embedded timestamp.
         let latest_reading = sqlx::query!(
             r#"SELECT id, sensor_id, updated_at, data
             FROM sensor_data WHERE sensor_id = $1
@@ -237,12 +235,20 @@ impl SensorReader for PgSensorRepository {
                       sl.at_pin,
                       sl.ota_pin,
                       sl.config        AS "config: serde_json::Value",
-                      (SELECT sd.id FROM sensor_data sd WHERE sd.sensor_id = s.id
-                       ORDER BY sd.id DESC LIMIT 1) AS "last_reading_id?: Uuid"
+                      lr.id            AS "last_reading_id?: Uuid",
+                      lr.updated_at    AS "last_reading_updated_at?",
+                      lr.data          AS "last_reading_data?"
             FROM sensors s
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
             LEFT JOIN trees t          ON t.sensor_id = s.id
+            LEFT JOIN LATERAL (
+                SELECT sd.id, sd.updated_at, sd.data
+                FROM sensor_data sd
+                WHERE sd.sensor_id = s.id
+                ORDER BY sd.id DESC
+                LIMIT 1
+            ) lr ON true
             WHERE s.id = ANY($1::text[])"#,
             &ids as &[&str]
         )
@@ -251,9 +257,15 @@ impl SensorReader for PgSensorRepository {
 
         rows.into_iter()
             .map(|r| {
+                let latest_reading = build_latest_reading(
+                    &r.id,
+                    r.last_reading_id,
+                    r.last_reading_updated_at,
+                    r.last_reading_data,
+                );
                 let status = derive_connectivity(
                     r.activated_at.map(|t| t.and_utc()),
-                    r.last_reading_id.and_then(|id| uuid_v7_timestamp(&id)),
+                    latest_reading.as_ref().map(|lr| lr.created_at),
                     Utc::now(),
                     self.offline_after,
                 );
@@ -279,7 +291,7 @@ impl SensorReader for PgSensorRepository {
                         r.ota_pin,
                         r.config,
                     ),
-                    latest_reading: None,
+                    latest_reading,
                 })
             })
             .collect()
@@ -320,12 +332,20 @@ impl SensorReader for PgSensorRepository {
                       sl.at_pin,
                       sl.ota_pin,
                       sl.config        AS "config: serde_json::Value",
-                      (SELECT sd.id FROM sensor_data sd WHERE sd.sensor_id = s.id
-                       ORDER BY sd.id DESC LIMIT 1) AS "last_reading_id?: Uuid"
+                      lr.id            AS "last_reading_id?: Uuid",
+                      lr.updated_at    AS "last_reading_updated_at?",
+                      lr.data          AS "last_reading_data?"
             FROM sensors s
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
             LEFT JOIN trees t          ON t.sensor_id = s.id
+            LEFT JOIN LATERAL (
+                SELECT sd.id, sd.updated_at, sd.data
+                FROM sensor_data sd
+                WHERE sd.sensor_id = s.id
+                ORDER BY sd.id DESC
+                LIMIT 1
+            ) lr ON true
             WHERE ($1::text IS NULL OR s.provider = $1)
             ORDER BY s.id
             LIMIT $2 OFFSET $3"#,
@@ -339,9 +359,15 @@ impl SensorReader for PgSensorRepository {
         let items = rows
             .into_iter()
             .map(|r| {
+                let latest_reading = build_latest_reading(
+                    &r.id,
+                    r.last_reading_id,
+                    r.last_reading_updated_at,
+                    r.last_reading_data,
+                );
                 let status = derive_connectivity(
                     r.activated_at.map(|t| t.and_utc()),
-                    r.last_reading_id.and_then(|id| uuid_v7_timestamp(&id)),
+                    latest_reading.as_ref().map(|lr| lr.created_at),
                     Utc::now(),
                     self.offline_after,
                 );
@@ -367,7 +393,7 @@ impl SensorReader for PgSensorRepository {
                         r.ota_pin,
                         r.config,
                     ),
-                    latest_reading: None,
+                    latest_reading,
                 })
             })
             .collect::<Result<Vec<_>, RepositoryError>>()?;
@@ -624,6 +650,27 @@ fn build_lorawan_info(
         at_pin,
         ota_pin,
         config,
+    })
+}
+
+/// Builds the embedded `latest_reading` from a LATERAL-joined newest row.
+/// All three columns come from the same `LEFT JOIN LATERAL`, so they are
+/// either all present (a reading exists) or all absent.
+fn build_latest_reading(
+    sensor_id: &str,
+    id: Option<Uuid>,
+    updated_at: Option<chrono::NaiveDateTime>,
+    data: Option<serde_json::Value>,
+) -> Option<SensorReadingView> {
+    let (Some(id), Some(updated_at), Some(data)) = (id, updated_at, data) else {
+        return None;
+    };
+    Some(SensorReadingView {
+        created_at: uuid_v7_timestamp(&id).expect("sensor_data.id is minted as uuid v7"),
+        id,
+        sensor_id: sensor_id.to_owned(),
+        updated_at: updated_at.and_utc(),
+        data,
     })
 }
 
