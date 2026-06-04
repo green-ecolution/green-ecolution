@@ -9,7 +9,7 @@ import {
 } from '@/hooks/details/useDetailsForUserStatus'
 import { parseDrivingLicense } from '@/hooks/details/useDetailsForDrivingLicense'
 import { DrivingLicense } from '@green-ecolution/backend-client'
-import { useAuthSession } from './AuthSessionProvider'
+import { useAuthSession } from './authSessionContext'
 
 export interface CurrentUser {
   username: string

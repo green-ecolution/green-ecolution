@@ -45,22 +45,26 @@ export class OidcAuthSession implements AuthSession {
 }
 
 export class DemoAuthSession implements AuthSession {
-  async getAccessToken(): Promise<string | null> {
-    return DEMO_ACCESS_TOKEN
+  getAccessToken(): Promise<string | null> {
+    return Promise.resolve(DEMO_ACCESS_TOKEN)
   }
-  async isAuthenticated(): Promise<boolean> {
-    return true
+  isAuthenticated(): Promise<boolean> {
+    return Promise.resolve(true)
   }
-  async signinRedirect(_opts?: SigninOptions): Promise<void> {}
-  async signinCallback(): Promise<string> {
-    return '/dashboard'
+  signinRedirect(_opts?: SigninOptions): Promise<void> {
+    return Promise.resolve()
   }
-  async signoutRedirect(): Promise<void> {}
+  signinCallback(): Promise<string> {
+    return Promise.resolve('/dashboard')
+  }
+  signoutRedirect(): Promise<void> {
+    return Promise.resolve()
+  }
 }
 
 let session: AuthSession | null = null
 
 export function getAuthSession(): AuthSession {
-  if (!session) session = isAuthBypass() ? new DemoAuthSession() : new OidcAuthSession()
+  session ??= isAuthBypass() ? new DemoAuthSession() : new OidcAuthSession()
   return session
 }

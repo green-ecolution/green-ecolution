@@ -29,6 +29,6 @@ function buildSettings(): UserManagerSettings {
 let manager: UserManager | null = null
 
 export function getUserManager(): UserManager {
-  if (!manager) manager = new UserManager(buildSettings())
+  manager ??= new UserManager(buildSettings())
   return manager
 }

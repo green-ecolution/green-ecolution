@@ -1,7 +1,7 @@
 import KV from '@/components/debug/KV'
 import { boolBadge } from '@/components/debug/badgeHelpers'
 import useStore, { useMapStore } from '@/store/store'
-import { useAuthSession } from '@/lib/auth/AuthSessionProvider'
+import { useAuthSession } from '@/lib/auth/authSessionContext'
 import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 import {
   Badge,
