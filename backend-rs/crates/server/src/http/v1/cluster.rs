@@ -2,25 +2,24 @@ use std::{collections::HashMap, sync::Arc};
 
 use axum::{
     Json,
-    extract::{Path, Query, State},
+    extract::{Path, State},
     http::StatusCode,
 };
+use axum_extra::extract::Query;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     http::{
         AppState,
-        v1::{
-            dto::{
-                ListResponse,
-                cluster::{
-                    ClusterMarkerListResponse, ClusterMarkerResponse, TreeClusterCreateRequest,
-                    TreeClusterInListResponse, TreeClusterResponse, TreeClusterUpdateRequest,
-                },
-                sensor::resolve_sensors_by_str_ids,
-                tree::TreeResponse,
+        v1::dto::{
+            ListResponse,
+            cluster::{
+                ClusterListParams, ClusterMarkerListResponse, ClusterMarkerResponse,
+                TreeClusterCreateRequest, TreeClusterInListResponse, TreeClusterResponse,
+                TreeClusterUpdateRequest,
             },
-            pagination::PaginationParams,
+            sensor::resolve_sensors_by_str_ids,
+            tree::TreeResponse,
         },
     },
     service::ServiceError,
@@ -85,8 +84,9 @@ async fn build_cluster_response(
     tag = "Tree Clusters",
     operation_id = "listClusters",
     summary = "List all tree clusters",
-    description = "Returns a paginated list of all tree clusters with a compact representation including region info.",
-    params(PaginationParams),
+    description = "Returns a paginated list of all tree clusters with a compact representation including region info. \
+                   Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable.",
+    params(ClusterListParams),
     responses(
         (status = 200, description = "Paginated list of tree clusters", body = ListResponse<TreeClusterInListResponse>),
         (status = 500, description = "Internal server error"),
@@ -95,13 +95,19 @@ async fn build_cluster_response(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_clusters(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<ClusterListParams>,
 ) -> Result<Json<ListResponse<TreeClusterInListResponse>>, ServiceError> {
-    let pagination = Pagination::from(&params);
-    let page = state
-        .cluster_service
-        .search_view(TreeClusterSearchQuery::default(), pagination)
-        .await?;
+    let pagination = Pagination::new(params.page, params.per_page);
+    let query = TreeClusterSearchQuery {
+        watering_statuses: params
+            .watering_status
+            .into_iter()
+            .map(domain::shared::watering_status::WateringStatus::from)
+            .collect(),
+        regions: params.region,
+        ..TreeClusterSearchQuery::default()
+    };
+    let page = state.cluster_service.search_view(query, pagination).await?;
 
     let region_ids: Vec<Id<Region>> = page
         .items

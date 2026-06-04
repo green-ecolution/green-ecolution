@@ -20,6 +20,7 @@ import type {
   TreeClusterCreateRequest,
   TreeClusterResponse,
   TreeClusterUpdateRequest,
+  WateringStatus,
 } from '../models/index';
 import {
     ClusterMarkerListResponseFromJSON,
@@ -32,6 +33,8 @@ import {
     TreeClusterResponseToJSON,
     TreeClusterUpdateRequestFromJSON,
     TreeClusterUpdateRequestToJSON,
+    WateringStatusFromJSON,
+    WateringStatusToJSON,
 } from '../models/index';
 
 export interface CreateClusterRequest {
@@ -49,6 +52,8 @@ export interface GetClusterRequest {
 export interface ListClustersRequest {
     page?: number;
     perPage?: number;
+    wateringStatus?: Array<WateringStatus>;
+    region?: Array<string>;
 }
 
 export interface UpdateClusterRequest {
@@ -211,7 +216,7 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all tree clusters with a compact representation including region info.
+     * Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable.
      * List all tree clusters
      */
     async listClustersRaw(requestParameters: ListClustersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseTreeClusterInListResponse>> {
@@ -223,6 +228,14 @@ export class TreeClustersApi extends runtime.BaseAPI {
 
         if (requestParameters['perPage'] != null) {
             queryParameters['per_page'] = requestParameters['perPage'];
+        }
+
+        if (requestParameters['wateringStatus'] != null) {
+            queryParameters['watering_status'] = requestParameters['wateringStatus'];
+        }
+
+        if (requestParameters['region'] != null) {
+            queryParameters['region'] = requestParameters['region'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -241,7 +254,7 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all tree clusters with a compact representation including region info.
+     * Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable.
      * List all tree clusters
      */
     async listClusters(requestParameters: ListClustersRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseTreeClusterInListResponse> {

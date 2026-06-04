@@ -7,7 +7,7 @@ const parseSearch = (input: Record<string, unknown>) =>
 
 const loaderDeps = Route.options.loaderDeps as unknown as (opts: {
   search: Record<string, unknown>
-}) => { page: number }
+}) => Record<string, unknown>
 
 describe('/trees route pagination (GECO-129)', () => {
   it('parses page from search params', () => {
@@ -21,5 +21,32 @@ describe('/trees route pagination (GECO-129)', () => {
 
   it('passes page from search params through loaderDeps', () => {
     expect(loaderDeps({ search: { page: 3 } }).page).toBe(3)
+  })
+})
+
+describe('/trees route filters (GECO-133)', () => {
+  it('parses filter params from search', () => {
+    const result = parseSearch({
+      wateringStatuses: ['good'],
+      hasCluster: true,
+      plantingYears: [2020],
+    }) as Record<string, unknown>
+    expect(result.wateringStatuses).toEqual(['good'])
+    expect(result.hasCluster).toBe(true)
+    expect(result.plantingYears).toEqual([2020])
+  })
+
+  it('drops invalid watering statuses instead of throwing', () => {
+    const result = parseSearch({ wateringStatuses: ['bogus'], page: 1 }) as Record<string, unknown>
+    expect(result.wateringStatuses).toBeUndefined()
+  })
+
+  it('passes filters through loaderDeps', () => {
+    const deps = loaderDeps({
+      search: { page: 1, wateringStatuses: ['good'], hasCluster: false, plantingYears: [2018] },
+    })
+    expect(deps.wateringStatuses).toEqual(['good'])
+    expect(deps.hasCluster).toBe(false)
+    expect(deps.plantingYears).toEqual([2018])
   })
 })

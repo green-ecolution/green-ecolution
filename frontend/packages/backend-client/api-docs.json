@@ -40,13 +40,12 @@
           "Tree Clusters"
         ],
         "summary": "List all tree clusters",
-        "description": "Returns a paginated list of all tree clusters with a compact representation including region info.",
+        "description": "Returns a paginated list of all tree clusters with a compact representation including region info. Optional filter parameters (watering_status, region) narrow the result; array parameters are repeatable.",
         "operationId": "listClusters",
         "parameters": [
           {
             "name": "page",
             "in": "query",
-            "description": "Page number to retrieve (1-based).",
             "required": false,
             "schema": {
               "type": "integer",
@@ -59,7 +58,6 @@
           {
             "name": "per_page",
             "in": "query",
-            "description": "Number of items per page.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -69,6 +67,31 @@
               "minimum": 1
             },
             "example": 25
+          },
+          {
+            "name": "watering_status",
+            "in": "query",
+            "description": "Repeatable: `?watering_status=good&watering_status=bad`.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/WateringStatus"
+              }
+            }
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "description": "Repeatable: `?region=<uuid>&region=<uuid>`.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
           }
         ],
         "responses": {
@@ -1108,7 +1131,7 @@
           "Trees"
         ],
         "summary": "List all trees",
-        "description": "Returns a paginated list of all trees with their associated sensor data. Optional `q` parameter case-insensitively filters by tree number or species.",
+        "description": "Returns a paginated list of all trees with their associated sensor data. Optional `q` parameter case-insensitively filters by tree number or species. Optional filter parameters (watering_status, has_cluster, planting_year) narrow the result; array parameters are repeatable.",
         "operationId": "listTrees",
         "parameters": [
           {
@@ -1147,6 +1170,42 @@
               ]
             },
             "example": "Eiche"
+          },
+          {
+            "name": "watering_status",
+            "in": "query",
+            "description": "Repeatable: `?watering_status=good&watering_status=bad`.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/WateringStatus"
+              }
+            }
+          },
+          {
+            "name": "has_cluster",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "planting_year",
+            "in": "query",
+            "description": "Repeatable: `?planting_year=2018&planting_year=2020`.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
           }
         ],
         "responses": {
@@ -1238,12 +1297,10 @@
           {
             "name": "planting_year",
             "in": "query",
+            "description": "Repeatable: `?planting_year=2018&planting_year=2020`.",
             "required": false,
             "schema": {
-              "type": [
-                "array",
-                "null"
-              ],
+              "type": "array",
               "items": {
                 "type": "integer",
                 "format": "int32"
@@ -1253,12 +1310,10 @@
           {
             "name": "watering_status",
             "in": "query",
+            "description": "Repeatable: `?watering_status=good&watering_status=bad`.",
             "required": false,
             "schema": {
-              "type": [
-                "array",
-                "null"
-              ],
+              "type": "array",
               "items": {
                 "$ref": "#/components/schemas/WateringStatus"
               }

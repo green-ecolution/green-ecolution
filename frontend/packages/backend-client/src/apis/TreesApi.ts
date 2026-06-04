@@ -65,14 +65,17 @@ export interface GetTreeBySensorRequest {
 export interface ListTreeMarkersRequest {
     bbox: string;
     hasCluster?: boolean | null;
-    plantingYear?: Array<number> | null;
-    wateringStatus?: Array<WateringStatus> | null;
+    plantingYear?: Array<number>;
+    wateringStatus?: Array<WateringStatus>;
 }
 
 export interface ListTreesRequest {
     page?: number;
     perPage?: number;
     q?: string | null;
+    wateringStatus?: Array<WateringStatus>;
+    hasCluster?: boolean | null;
+    plantingYear?: Array<number>;
 }
 
 export interface UpdateTreeRequest {
@@ -385,7 +388,7 @@ export class TreesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all trees with their associated sensor data. Optional `q` parameter case-insensitively filters by tree number or species.
+     * Returns a paginated list of all trees with their associated sensor data. Optional `q` parameter case-insensitively filters by tree number or species. Optional filter parameters (watering_status, has_cluster, planting_year) narrow the result; array parameters are repeatable.
      * List all trees
      */
     async listTreesRaw(requestParameters: ListTreesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseTreeResponse>> {
@@ -401,6 +404,18 @@ export class TreesApi extends runtime.BaseAPI {
 
         if (requestParameters['q'] != null) {
             queryParameters['q'] = requestParameters['q'];
+        }
+
+        if (requestParameters['wateringStatus'] != null) {
+            queryParameters['watering_status'] = requestParameters['wateringStatus'];
+        }
+
+        if (requestParameters['hasCluster'] != null) {
+            queryParameters['has_cluster'] = requestParameters['hasCluster'];
+        }
+
+        if (requestParameters['plantingYear'] != null) {
+            queryParameters['planting_year'] = requestParameters['plantingYear'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -419,7 +434,7 @@ export class TreesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of all trees with their associated sensor data. Optional `q` parameter case-insensitively filters by tree number or species.
+     * Returns a paginated list of all trees with their associated sensor data. Optional `q` parameter case-insensitively filters by tree number or species. Optional filter parameters (watering_status, has_cluster, planting_year) narrow the result; array parameters are repeatable.
      * List all trees
      */
     async listTrees(requestParameters: ListTreesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseTreeResponse> {

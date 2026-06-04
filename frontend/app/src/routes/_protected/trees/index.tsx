@@ -1,6 +1,6 @@
 import { Loading } from '@green-ecolution/ui'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, useLoaderData } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import ButtonLink from '@/components/general/links/ButtonLink'
 import { Plus } from 'lucide-react'
 import TreeCard from '@/components/general/cards/TreeCard'
@@ -13,22 +13,21 @@ import PlantingYearFieldset from '@/components/general/filter/fieldsets/Planting
 import FilterProvider from '@/context/FilterContext'
 import { treeQuery } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
+import { filterSearchSchema } from '@/lib/filterSearchSchema'
 
-const treeFilterSchema = z.object({
-  wateringStatuses: z.array(z.string()).optional(),
-  hasCluster: z.boolean().optional(),
-  plantingYears: z.array(z.number()).optional(),
-  page: z.number().catch(1),
-})
+const treeFilterSchema = filterSearchSchema
+  .pick({ wateringStatuses: true, hasCluster: true, plantingYears: true })
+  .extend({ page: z.number().catch(1) })
 
 function Trees() {
-  const { page } = useLoaderData({
-    from: '/_protected/trees/',
-  })
+  const { page, wateringStatuses, hasCluster, plantingYears } = Route.useSearch()
   const { data: treesRes } = useSuspenseQuery(
     treeQuery({
       page,
       perPage: 10,
+      wateringStatus: wateringStatuses,
+      hasCluster,
+      plantingYear: plantingYears,
     }),
   )
 
@@ -87,41 +86,36 @@ function Trees() {
   )
 }
 
-const TreesWithProvider = () => {
-  const search = useLoaderData({ from: '/_protected/trees/' })
-
-  return (
-    <FilterProvider
-      initialStatus={search.wateringStatuses}
-      initialHasCluster={search.hasCluster}
-      initialPlantingYears={search.plantingYears}
-    >
-      <Trees />
-    </FilterProvider>
-  )
-}
+const TreesWithProvider = () => (
+  <FilterProvider>
+    <Trees />
+  </FilterProvider>
+)
 
 export const Route = createFileRoute('/_protected/trees/')({
   component: TreesWithProvider,
   validateSearch: treeFilterSchema,
   pendingComponent: () => <Loading className="mt-20 justify-center" label="Daten werden geladen" />,
   loaderDeps: ({ search }) => ({
-    wateringStatuses: search.wateringStatuses ?? undefined,
-    hasCluster: search.hasCluster ?? undefined,
-    plantingYears: search.plantingYears ?? undefined,
     page: search.page,
+    wateringStatuses: search.wateringStatuses,
+    hasCluster: search.hasCluster,
+    plantingYears: search.plantingYears,
   }),
   loader: ({
     deps: { page, wateringStatuses, hasCluster, plantingYears },
     context: { queryClient },
   }) => {
-    const query = queryClient.prefetchQuery(
-      treeQuery({
-        page,
-        perPage: 10,
-      }),
-    )
-
-    return { page, wateringStatuses, hasCluster, plantingYears, query }
+    queryClient
+      .prefetchQuery(
+        treeQuery({
+          page,
+          perPage: 10,
+          wateringStatus: wateringStatuses,
+          hasCluster,
+          plantingYear: plantingYears,
+        }),
+      )
+      .catch((error) => console.error('Prefetching "treeQuery" failed:', error))
   },
 })

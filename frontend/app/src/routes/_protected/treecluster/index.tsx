@@ -1,4 +1,4 @@
-import { createFileRoute, useLoaderData } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import ButtonLink from '@/components/general/links/ButtonLink'
 import { Plus } from 'lucide-react'
@@ -12,19 +12,20 @@ import RegionFieldset from '@/components/general/filter/fieldsets/RegionFieldset
 import { z } from 'zod'
 import { treeClusterQuery } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
+import { filterSearchSchema } from '@/lib/filterSearchSchema'
 
-const treeclusterFilterSchema = z.object({
-  wateringStatuses: z.array(z.string()).optional(),
-  regions: z.array(z.string()).optional(),
-  page: z.number().catch(1),
-})
+const treeclusterFilterSchema = filterSearchSchema
+  .pick({ wateringStatuses: true, regions: true })
+  .extend({ page: z.number().catch(1) })
 
 function Treecluster() {
-  const { page } = useLoaderData({ from: '/_protected/treecluster/' })
+  const { page, wateringStatuses, regions } = Route.useSearch()
   const { data: clustersRes } = useSuspenseQuery(
     treeClusterQuery({
-      page: page,
+      page,
       perPage: 5,
+      wateringStatus: wateringStatuses,
+      region: regions,
     }),
   )
 
@@ -69,39 +70,32 @@ function Treecluster() {
   )
 }
 
-const TreeclusterWithProvider = () => {
-  return (
-    <FilterProvider initialStatus={[]} initialRegions={[]}>
-      <Treecluster />
-    </FilterProvider>
-  )
-}
+const TreeclusterWithProvider = () => (
+  <FilterProvider>
+    <Treecluster />
+  </FilterProvider>
+)
 
 export const Route = createFileRoute('/_protected/treecluster/')({
   component: TreeclusterWithProvider,
   validateSearch: treeclusterFilterSchema,
   pendingComponent: () => <Loading className="mt-20 justify-center" label="Daten werden geladen" />,
   loaderDeps: ({ search }) => ({
-    wateringStatuses:
-      search.wateringStatuses && search.wateringStatuses.length > 0
-        ? search.wateringStatuses
-        : undefined,
-
-    regions: search.regions && search.regions.length > 0 ? search.regions : undefined,
-
     page: search.page,
+    wateringStatuses: search.wateringStatuses,
+    regions: search.regions,
   }),
-  loader: ({ context: { queryClient }, deps: { page } }) => {
+  loader: ({ context: { queryClient }, deps: { page, wateringStatuses, regions } }) => {
     queryClient
       .prefetchQuery(
         treeClusterQuery({
           page,
           perPage: 5,
+          wateringStatus: wateringStatuses,
+          region: regions,
         }),
       )
       .catch((error) => console.error('Prefetching "treeClusterQuery" failed:', error))
-
-    return { page }
   },
 })
 

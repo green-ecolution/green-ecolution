@@ -22,28 +22,14 @@ interface FilterContextType {
 export const FilterContext = createContext<FilterContextType | undefined>(undefined)
 
 interface FilterProviderProps {
-  initialStatus?: string[]
-  initialRegions?: string[]
-  initialHasCluster?: boolean | undefined
-  initialPlantingYears?: number[]
   children: ReactNode
 }
 
-const defaultInitStatus: string[] = []
-const defaultInitRegions: string[] = []
-const defaultInitPlantingYears: number[] = []
-
-const FilterProvider: React.FC<FilterProviderProps> = ({
-  initialStatus = defaultInitStatus,
-  initialRegions = defaultInitRegions,
-  initialHasCluster = undefined,
-  initialPlantingYears = defaultInitPlantingYears,
-  children,
-}) => {
-  const [statusTags, setStatusTags] = useState(initialStatus)
-  const [regionTags, setRegionTags] = useState(initialRegions)
-  const [plantingYears, setPlantingYears] = useState(initialPlantingYears)
-  const [hasCluster, setHasCluster] = useState(initialHasCluster)
+const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
+  const [statusTags, setStatusTags] = useState<string[]>([])
+  const [regionTags, setRegionTags] = useState<string[]>([])
+  const [plantingYears, setPlantingYears] = useState<number[]>([])
+  const [hasCluster, setHasCluster] = useState<boolean | undefined>(undefined)
 
   const handleStatusChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { checked, value } = event.target
