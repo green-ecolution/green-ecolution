@@ -9,6 +9,8 @@ import { routeTree } from './routeTree.gen'
 import NotFound from './components/layout/NotFound'
 import ErrorFallback from './components/layout/ErrorFallback'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { getAuthSession } from '@/lib/auth/session'
+import { AuthSessionProvider } from '@/lib/auth/AuthSessionProvider'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,10 +22,13 @@ const queryClient = new QueryClient({
   },
 })
 
+const auth = getAuthSession()
+
 const router = createRouter({
   routeTree,
   context: {
     queryClient,
+    auth,
   },
   defaultErrorComponent: ({ error, reset }) => (
     <ErrorFallback error={error} resetErrorBoundary={reset} />
@@ -76,7 +81,9 @@ if (!isPWA) {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <AuthSessionProvider>
+        <RouterProvider router={router} />
+      </AuthSessionProvider>
     </QueryClientProvider>
   </React.StrictMode>,
 )
