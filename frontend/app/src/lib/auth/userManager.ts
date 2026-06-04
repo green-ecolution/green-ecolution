@@ -1,12 +1,13 @@
 import { UserManager, WebStorageStateStore, type UserManagerSettings } from 'oidc-client-ts'
+import { readAuthBypass, readOidcAuthority, readOidcClientId } from './runtimeConfig'
 
 export function isAuthBypass(): boolean {
-  return import.meta.env.VITE_AUTH_BYPASS === 'true'
+  return readAuthBypass()
 }
 
 function buildSettings(): UserManagerSettings {
-  const authority = import.meta.env.VITE_OIDC_AUTHORITY
-  const client_id = import.meta.env.VITE_OIDC_CLIENT_ID
+  const authority = readOidcAuthority()
+  const client_id = readOidcClientId()
   if (!authority || !client_id) {
     throw new Error('VITE_OIDC_AUTHORITY and VITE_OIDC_CLIENT_ID are required when auth is enabled')
   }
