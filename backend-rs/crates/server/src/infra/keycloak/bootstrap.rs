@@ -1,4 +1,4 @@
-//! Auth feature bootstrap. Constructs the full Keycloak-backed auth stack
+//! Auth feature bootstrap. Constructs the Keycloak-backed auth stack
 //! and starts the JWKS refresher when `enabled = true`.
 
 use std::sync::Arc;
@@ -6,21 +6,17 @@ use std::sync::Arc;
 use crate::{
     configuration::AuthSettings,
     http::auth::AuthLayer,
-    service::{
-        auth_service::{AuthService, AuthServiceConfig},
-        user_service::UserService,
-    },
+    service::user_service::UserService,
 };
 
-use super::{JwksProvider, KeycloakAuthRepository, KeycloakClient, KeycloakUserRepository};
+use super::{JwksProvider, KeycloakClient, KeycloakUserRepository};
 
 /// Composed auth dependencies returned by [`build`].
 ///
 /// The HTTP layer takes [`AuthLayer`]; [`AppState`](crate::http::AppState)
-/// takes the two services. `_jwks` is held by `Application` purely for
+/// takes the service. `_jwks` is held by `Application` purely for
 /// ownership: dropping it would stop the background refresh loop.
 pub struct AuthStack {
-    pub auth_service: Arc<AuthService>,
     pub user_service: Arc<UserService>,
     pub auth_layer: AuthLayer,
     pub jwks: Arc<JwksProvider>,
@@ -49,17 +45,11 @@ pub async fn build(settings: &AuthSettings) -> Result<AuthStack, std::io::Error>
         );
     }
 
-    let auth_repo = Arc::new(KeycloakAuthRepository::new(kc_client.clone()));
     let user_repo = Arc::new(KeycloakUserRepository::new(kc_client));
-
-    let auth_service_config = AuthServiceConfig::from_settings(settings)
-        .map_err(|e| std::io::Error::other(format!("auth service config: {e}")))?;
-    let auth_service = Arc::new(AuthService::new(auth_repo, auth_service_config));
     let user_service = Arc::new(UserService::new(user_repo, settings.enabled));
     let auth_layer = AuthLayer::new(jwks.clone(), settings);
 
     Ok(AuthStack {
-        auth_service,
         user_service,
         auth_layer,
         jwks,

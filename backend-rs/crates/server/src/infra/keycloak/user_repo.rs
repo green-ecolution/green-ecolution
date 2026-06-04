@@ -255,36 +255,6 @@ impl UserRepository for KeycloakUserRepository {
         }
         Ok(out)
     }
-
-    async fn revoke_session(&self, refresh_token: &str) -> Result<(), RepositoryError> {
-        let form: Vec<(&str, &str)> = vec![
-            ("client_id", self.client.frontend_client_id.as_str()),
-            ("refresh_token", refresh_token),
-        ];
-
-        let resp = self
-            .client
-            .http()
-            .post(self.client.logout_url())
-            .form(&form)
-            .send()
-            .await
-            .map_err(|e| RepositoryError::Internal(format!("logout transport: {e}")))?;
-
-        match resp.status() {
-            StatusCode::NO_CONTENT | StatusCode::OK => Ok(()),
-            StatusCode::BAD_REQUEST | StatusCode::UNAUTHORIZED => {
-                // Token already invalid — treat as success.
-                Ok(())
-            }
-            status => {
-                let body = resp.text().await.unwrap_or_default();
-                Err(RepositoryError::Internal(format!(
-                    "logout failed ({status}): {body}"
-                )))
-            }
-        }
-    }
 }
 
 impl KeycloakUserRepository {

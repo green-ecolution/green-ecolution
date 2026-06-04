@@ -18,10 +18,10 @@ use crate::{
         tracing::{MakeRequestUuid, REQUEST_ID_HEADER, make_span, on_response},
     },
     service::{
-        auth_service::AuthService, cluster_service::ClusterService,
-        evaluation_service::EvaluationService, region_service::RegionService,
-        sensor_service::SensorService, tree_service::TreeService, user_service::UserService,
-        vehicle_service::VehicleService, watering_execution_service::WateringExecutionService,
+        cluster_service::ClusterService, evaluation_service::EvaluationService,
+        region_service::RegionService, sensor_service::SensorService, tree_service::TreeService,
+        user_service::UserService, vehicle_service::VehicleService,
+        watering_execution_service::WateringExecutionService,
         watering_plan_service::WateringPlanService,
     },
 };
@@ -55,7 +55,6 @@ pub struct AppState {
     pub watering_plan_service: Arc<WateringPlanService>,
     pub watering_execution_service: Arc<WateringExecutionService>,
     pub evaluation_service: Arc<EvaluationService>,
-    pub auth_service: Arc<AuthService>,
     pub user_service: Arc<UserService>,
     pub info_provider: Arc<dyn SystemInfoProvider>,
     pub health_reader: Arc<dyn HealthSnapshotReader>,

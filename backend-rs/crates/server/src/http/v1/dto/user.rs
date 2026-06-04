@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::service::ServiceError;
 use domain::{
-    auth::{ClientToken, LoginResponse as DomainLoginResponse},
     shared::email::Email,
     user::{
         UserCreate as DomainUserCreate, UserRole as DomainUserRole, UserStatus as DomainUserStatus,
@@ -114,100 +113,6 @@ pub struct UserRegisterRequest {
     pub avatar_url: Option<String>,
 }
 
-/// Response containing the OIDC login URL for browser-based authentication.
-#[derive(Debug, Serialize, utoipa::ToSchema)]
-pub struct LoginResponse {
-    /// Full OIDC authorization URL the client should redirect to.
-    #[schema(
-        example = "https://auth.green-ecolution.de/auth/realms/green-ecolution/protocol/openid-connect/auth?client_id=green-ecolution&redirect_uri=https%3A%2F%2Fapp.green-ecolution.de%2Fcallback&response_type=code&scope=openid+profile+email"
-    )]
-    pub login_url: String,
-}
-
-impl From<&DomainLoginResponse> for LoginResponse {
-    fn from(value: &DomainLoginResponse) -> Self {
-        Self {
-            login_url: value.login_url.to_string(),
-        }
-    }
-}
-
-/// Request body for exchanging an authorization code for tokens.
-#[derive(Debug, Deserialize, utoipa::ToSchema)]
-pub struct LoginTokenRequest {
-    /// Authorization code received from the OIDC provider callback.
-    #[schema(example = "abc123-auth-code")]
-    pub code: String,
-    /// PKCE code verifier matching the `code_challenge` sent on /login. Required
-    /// when the frontend client is public (no secret); omitted otherwise.
-    #[serde(default)]
-    #[schema(example = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk", nullable)]
-    pub code_verifier: Option<String>,
-}
-
-/// Request body for logging out a user session.
-#[derive(Debug, Deserialize, utoipa::ToSchema)]
-pub struct LogoutRequest {
-    /// Refresh token of the session to invalidate.
-    #[schema(example = "eyJhbGciOiJSUzI1NiIs...")]
-    pub refresh_token: String,
-}
-
-/// Request body for refreshing an access token.
-#[derive(Debug, Deserialize, utoipa::ToSchema)]
-pub struct RefreshTokenRequest {
-    /// Refresh token used to obtain a new access token.
-    #[schema(example = "eyJhbGciOiJSUzI1NiIs...")]
-    pub refresh_token: String,
-}
-
-/// OIDC token response containing access, ID, and refresh tokens.
-#[derive(Debug, Serialize, utoipa::ToSchema)]
-#[schema(example = json!({
-    "access_token": "eyJhbGciOiJSUzI1NiIs...",
-    "id_token": "eyJhbGciOiJSUzI1NiIs...",
-    "expiry": "2024-08-01T13:00:00+00:00",
-    "expires_in": 300,
-    "refresh_expires_in": 1800,
-    "refresh_token": "eyJhbGciOiJSUzI1NiIs...",
-    "token_type": "Bearer",
-    "not_before_policy": 0,
-    "session_state": "550e8400-e29b-41d4-a716-446655440000",
-    "scope": "openid profile email"
-}))]
-pub struct ClientTokenResponse {
-    /// JWT access token for API authorization.
-    #[schema(example = "eyJhbGciOiJSUzI1NiIs...")]
-    pub access_token: String,
-    /// JWT ID token containing user identity claims.
-    #[schema(example = "eyJhbGciOiJSUzI1NiIs...")]
-    pub id_token: String,
-    /// Absolute expiry timestamp of the access token (RFC 3339).
-    #[schema(example = "2024-08-01T13:00:00+00:00")]
-    pub expiry: String,
-    /// Access token lifetime in seconds.
-    #[schema(example = 300)]
-    pub expires_in: u32,
-    /// Refresh token lifetime in seconds.
-    #[schema(example = 1800)]
-    pub refresh_expires_in: u32,
-    /// Refresh token for obtaining new access tokens.
-    #[schema(example = "eyJhbGciOiJSUzI1NiIs...")]
-    pub refresh_token: String,
-    /// Token type, typically "Bearer".
-    #[schema(example = "Bearer")]
-    pub token_type: String,
-    /// Not-before policy timestamp (usually 0).
-    #[schema(example = 0)]
-    pub not_before_policy: u32,
-    /// Unique session identifier.
-    #[schema(example = "550e8400-e29b-41d4-a716-446655440000")]
-    pub session_state: String,
-    /// OAuth2 scopes granted.
-    #[schema(example = "openid profile email")]
-    pub scope: String,
-}
-
 impl From<DomainUserRole> for UserRole {
     fn from(value: DomainUserRole) -> Self {
         match value {
@@ -266,6 +171,33 @@ impl From<&DomainUserView> for UserResponse {
     }
 }
 
+/// OIDC token response. Used by the plugin subsystem for plugin client auth.
+#[derive(Debug, serde::Serialize, utoipa::ToSchema)]
+#[schema(example = json!({
+    "access_token": "eyJhbGciOiJSUzI1NiIs...",
+    "id_token": "eyJhbGciOiJSUzI1NiIs...",
+    "expiry": "2024-08-01T13:00:00+00:00",
+    "expires_in": 300,
+    "refresh_expires_in": 1800,
+    "refresh_token": "eyJhbGciOiJSUzI1NiIs...",
+    "token_type": "Bearer",
+    "not_before_policy": 0,
+    "session_state": "550e8400-e29b-41d4-a716-446655440000",
+    "scope": "openid profile email"
+}))]
+pub struct ClientTokenResponse {
+    pub access_token: String,
+    pub id_token: String,
+    pub expiry: String,
+    pub expires_in: u32,
+    pub refresh_expires_in: u32,
+    pub refresh_token: String,
+    pub token_type: String,
+    pub not_before_policy: u32,
+    pub session_state: String,
+    pub scope: String,
+}
+
 impl TryFrom<UserRegisterRequest> for DomainUserCreate {
     type Error = ServiceError;
 
@@ -297,22 +229,5 @@ impl TryFrom<UserRegisterRequest> for DomainUserCreate {
             phone_number: value.phone_number.filter(|s| !s.is_empty()),
             avatar_url,
         })
-    }
-}
-
-impl From<&ClientToken> for ClientTokenResponse {
-    fn from(value: &ClientToken) -> Self {
-        Self {
-            access_token: value.access_token.clone(),
-            id_token: value.id_token.clone(),
-            expiry: value.expiry.to_rfc3339(),
-            expires_in: value.expires_in,
-            refresh_expires_in: value.refresh_expires_in,
-            refresh_token: value.refresh_token.clone(),
-            token_type: value.token_type.clone(),
-            not_before_policy: value.not_before_policy,
-            session_state: value.session_state.clone(),
-            scope: value.scope.clone(),
-        }
     }
 }

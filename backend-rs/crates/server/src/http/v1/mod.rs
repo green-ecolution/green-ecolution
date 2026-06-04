@@ -23,7 +23,6 @@ pub fn public_router() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .merge(info::routes())
         .merge(plugin::routes())
-        .merge(user::public_routes())
 }
 
 pub fn protected_router() -> OpenApiRouter<Arc<AppState>> {

@@ -71,17 +71,9 @@ impl UserService {
         Ok(self.user_repo.by_ids(ids).await?)
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn revoke_session(&self, refresh_token: &str) -> Result<(), ServiceError> {
-        if !self.enabled {
-            return Ok(());
-        }
-        Ok(self.user_repo.revoke_session(refresh_token).await?)
-    }
 }
 
-// Must stay in lockstep with `auth_service::dummy_token` and the middleware
-// bypass identity — login claims, AuthUser, and user-list entry agree.
+// Must match the anonymous demo user injected by auth_middleware when auth.enabled = false.
 fn demo_user() -> UserView {
     UserView {
         id: Uuid::nil(),
