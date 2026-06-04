@@ -35,8 +35,12 @@ export function useCurrentUser(): CurrentUser {
   const { accessToken } = useAuthSession()
   return useMemo(() => {
     if (!accessToken) return EMPTY
-    const jwt = decodeJWT<KeycloakJWT>(accessToken)
-    if (!jwt) return EMPTY
+    let jwt: KeycloakJWT
+    try {
+      jwt = decodeJWT<KeycloakJWT>(accessToken)
+    } catch {
+      return EMPTY
+    }
     return {
       username: jwt.preferred_username,
       email: jwt.email,

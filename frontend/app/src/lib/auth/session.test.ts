@@ -14,4 +14,9 @@ describe('DemoAuthSession', () => {
     await expect(s.signinRedirect({ returnTo: '/x' })).resolves.toBeUndefined()
     await expect(s.signoutRedirect()).resolves.toBeUndefined()
   })
+
+  it('signinCallback returns the default route', async () => {
+    const s = new DemoAuthSession()
+    expect(await s.signinCallback()).toBe('/dashboard')
+  })
 })
