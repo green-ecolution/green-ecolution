@@ -2385,7 +2385,7 @@
       },
       "ClientTokenResponse": {
         "type": "object",
-        "description": "OIDC token response. Used by the plugin subsystem for plugin client auth.",
+        "description": "OIDC token response containing access, ID, and refresh tokens.",
         "required": [
           "access_token",
           "id_token",
@@ -6080,7 +6080,7 @@
     },
     {
       "name": "Users",
-      "description": "User management and OAuth2/OIDC authentication via Keycloak. Handles login flows, token management, and user registration."
+      "description": "User registration and role management. Authentication is handled directly against Keycloak."
     },
     {
       "name": "Plugins",

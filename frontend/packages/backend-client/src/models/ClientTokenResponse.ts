@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * OIDC token response. Used by the plugin subsystem for plugin client auth.
+ * OIDC token response containing access, ID, and refresh tokens.
  * @export
  * @interface ClientTokenResponse
  */
