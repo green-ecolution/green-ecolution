@@ -119,13 +119,9 @@ run-live:
     @command -v bacon >/dev/null 2>&1 || { echo "bacon missing — run: cargo install bacon"; exit 1; }
     cd {{ backend_dir }} && SQLX_OFFLINE=true APP_ENVIRONMENT=local bacon --headless --job run -- --bin {{ binary_name }}
 
-# Run frontend dev server (real OIDC; needs Keycloak via infra-up — set VITE_AUTH_BYPASS=true to skip)
+# Run frontend dev server
 fe-dev:
-    cd {{ frontend_dir }} && \
-      VITE_AUTH_BYPASS=false \
-      VITE_OIDC_AUTHORITY=http://auth.localhost:3000/realms/green-ecolution \
-      VITE_OIDC_CLIENT_ID=frontend \
-      pnpm run dev
+    cd {{ frontend_dir }} && pnpm run dev
 
 # Preview frontend build
 fe-preview:
@@ -158,9 +154,6 @@ run-dev:
       ( cd {{ frontend_dir }} && \
         USE_TRAEFIK=1 \
         VITE_BACKEND_BASEURL=/api \
-        VITE_AUTH_BYPASS=false \
-        VITE_OIDC_AUTHORITY={{ app_proto }}://auth.{{ app_host }}:{{ app_port }}/realms/green-ecolution \
-        VITE_OIDC_CLIENT_ID=frontend \
         PUBLIC_DEV_URL={{ app_proto }}://{{ app_host }}:{{ app_port }} \
         pnpm run dev ) & \
       wait
