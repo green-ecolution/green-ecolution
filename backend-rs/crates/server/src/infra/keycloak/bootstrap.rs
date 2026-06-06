@@ -4,9 +4,7 @@
 use std::sync::Arc;
 
 use crate::{
-    configuration::AuthSettings,
-    http::auth::AuthLayer,
-    service::user_service::UserService,
+    configuration::AuthSettings, http::auth::AuthLayer, service::user_service::UserService,
 };
 
 use super::{JwksProvider, KeycloakClient, KeycloakUserRepository};

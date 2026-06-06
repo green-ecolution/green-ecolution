@@ -70,7 +70,6 @@ impl UserService {
         }
         Ok(self.user_repo.by_ids(ids).await?)
     }
-
 }
 
 // Must match the anonymous demo user injected by auth_middleware when auth.enabled = false.
