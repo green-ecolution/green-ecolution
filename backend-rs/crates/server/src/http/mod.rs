@@ -12,16 +12,16 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
-    configuration::CorsSettings,
+    configuration::{AuthSettings, CorsSettings},
     http::{
         auth::{AuthLayer, validator::TokenValidator},
         tracing::{MakeRequestUuid, REQUEST_ID_HEADER, make_span, on_response},
     },
     service::{
-        auth_service::AuthService, cluster_service::ClusterService,
-        evaluation_service::EvaluationService, region_service::RegionService,
-        sensor_service::SensorService, tree_service::TreeService, user_service::UserService,
-        vehicle_service::VehicleService, watering_execution_service::WateringExecutionService,
+        cluster_service::ClusterService, evaluation_service::EvaluationService,
+        region_service::RegionService, sensor_service::SensorService, tree_service::TreeService,
+        user_service::UserService, vehicle_service::VehicleService,
+        watering_execution_service::WateringExecutionService,
         watering_plan_service::WateringPlanService,
     },
 };
@@ -55,7 +55,6 @@ pub struct AppState {
     pub watering_plan_service: Arc<WateringPlanService>,
     pub watering_execution_service: Arc<WateringExecutionService>,
     pub evaluation_service: Arc<EvaluationService>,
-    pub auth_service: Arc<AuthService>,
     pub user_service: Arc<UserService>,
     pub info_provider: Arc<dyn SystemInfoProvider>,
     pub health_reader: Arc<dyn HealthSnapshotReader>,
@@ -63,6 +62,7 @@ pub struct AppState {
     pub token_validator: Arc<TokenValidator>,
     pub feature_flags: FeatureFlags,
     pub nearest_tree_limits: NearestTreeLimits,
+    pub frontend_config_js: std::sync::Arc<str>,
 }
 
 #[derive(OpenApi)]
@@ -86,15 +86,33 @@ pub struct AppState {
         (name = "Watering Plans", description = "Create and manage watering plans that combine tree clusters, vehicles, and optimized routes. Plans track status from planning through execution."),
         (name = "Evaluation", description = "Aggregated statistics and evaluation data across all managed resources. Provides insights on watering plan coverage by region and vehicle usage."),
         (name = "Info", description = "Application metadata including version information, server status, map configuration, service health, and data statistics."),
-        (name = "Users", description = "User management and OAuth2/OIDC authentication via Keycloak. Handles login flows, token management, and user registration."),
+        (name = "Users", description = "User registration and role management. Authentication is handled directly against Keycloak."),
         (name = "Plugins", description = "Plugin registration and lifecycle management. External plugins can register, authenticate, and maintain heartbeat connections."),
     ),
 )]
 struct ApiDoc;
 
-// Builds the OpenAPI document without any runtime state. Used by the
-// `dump-openapi` binary so the frontend client can be regenerated without
-// starting the server (or running its dependencies).
+pub fn render_frontend_config_js(auth: &AuthSettings) -> String {
+    let env = serde_json::json!({
+        "VITE_AUTH_BYPASS": (!auth.enabled).to_string(),
+        "VITE_OIDC_AUTHORITY": auth.issuer_url,
+        "VITE_OIDC_CLIENT_ID": auth.frontend_client_id,
+    });
+    format!("window._env_ = {env};\n")
+}
+
+async fn frontend_config_js(
+    axum::extract::State(state): axum::extract::State<Arc<AppState>>,
+) -> impl axum::response::IntoResponse {
+    (
+        [(
+            axum::http::header::CONTENT_TYPE,
+            "application/javascript; charset=utf-8",
+        )],
+        state.frontend_config_js.to_string(),
+    )
+}
+
 pub fn openapi_doc(base_url: &str) -> utoipa::openapi::OpenApi {
     let (_, mut api) = OpenApiRouter::<Arc<AppState>>::with_openapi(ApiDoc::openapi())
         .merge(health::routes())
@@ -124,6 +142,7 @@ pub fn router(
         .on_failure(DefaultOnFailure::new().level(::tracing::Level::ERROR));
 
     router
+        .route("/api/config.js", axum::routing::get(frontend_config_js))
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api))
         .layer(cors_layer(cors))
         .layer(PropagateRequestIdLayer::new(REQUEST_ID_HEADER))

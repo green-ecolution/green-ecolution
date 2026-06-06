@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useUserStore } from '@/store/store'
+import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 import { LinkCard, LinkCardTitle, LinkCardDescription, LinkCardFooter } from '@green-ecolution/ui'
 
 export const Route = createFileRoute('/_protected/dashboard')({
@@ -7,7 +7,7 @@ export const Route = createFileRoute('/_protected/dashboard')({
 })
 
 function Dashboard() {
-  const user = useUserStore()
+  const user = useCurrentUser()
 
   const cards = [
     {

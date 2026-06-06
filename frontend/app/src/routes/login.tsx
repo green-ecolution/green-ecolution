@@ -1,5 +1,5 @@
-import { basePath } from '@/api/backendApi'
-import { deriveCodeChallenge, generateCodeVerifier, storeVerifier } from '@/lib/pkce'
+import { getAuthSession } from '@/lib/auth/session'
+import { sanitizeReturnTo } from '@/lib/auth/redirect'
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 
@@ -9,24 +9,8 @@ const loginSchema = z.object({
 
 export const Route = createFileRoute('/login')({
   validateSearch: loginSchema,
-  loaderDeps: ({ search: { redirect } }) => ({
-    redirect: redirect ?? '/dashboard',
-  }),
+  loaderDeps: ({ search: { redirect } }) => ({ redirect }),
   loader: async ({ deps: { redirect } }) => {
-    const verifier = generateCodeVerifier()
-    const challenge = await deriveCodeChallenge(verifier)
-    storeVerifier(verifier)
-
-    const redirectUrl = `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}`
-    const params = new URLSearchParams({
-      redirect_url: redirectUrl,
-      code_challenge: challenge,
-    })
-    const response = await fetch(`${basePath}/v1/users/login?${params.toString()}`)
-    if (!response.ok) {
-      throw new Error(`login init failed: ${response.status}`)
-    }
-    const { login_url: loginUrl } = (await response.json()) as { login_url: string }
-    window.location.href = loginUrl
+    await getAuthSession().signinRedirect({ returnTo: sanitizeReturnTo(redirect) })
   },
 })

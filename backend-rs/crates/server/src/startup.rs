@@ -69,7 +69,6 @@ impl Application {
         settings: Settings,
     ) -> Result<Self, std::io::Error> {
         let AuthStack {
-            auth_service,
             user_service,
             auth_layer,
             jwks,
@@ -112,7 +111,6 @@ impl Application {
             watering_plan_service: services.watering_plan,
             watering_execution_service: services.watering_execution,
             evaluation_service: services.evaluation,
-            auth_service,
             user_service,
             info_provider,
             health_reader,
@@ -127,6 +125,7 @@ impl Application {
                 default_limit: settings.map.nearest_tree_default_limit,
                 max_limit: settings.map.nearest_tree_max_limit,
             },
+            frontend_config_js: crate::http::render_frontend_config_js(&settings.auth).into(),
         });
 
         let listener = TcpListener::bind(address).await?;

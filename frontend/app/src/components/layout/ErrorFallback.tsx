@@ -3,7 +3,7 @@ import cableAnimation from '../../animations/cableAnimation.json'
 import React, { useCallback, useEffect, useState } from 'react'
 import ButtonLink from '../general/links/ButtonLink'
 import { MoveRight, RefreshCw } from 'lucide-react'
-import useStore from '@/store/store'
+import { useAuthSession } from '@/lib/auth/authSessionContext'
 import { ResponseError } from '@green-ecolution/backend-client'
 import { isHTTPError } from '@/lib/utils'
 import { Button } from '@green-ecolution/ui'
@@ -21,7 +21,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary
     }
   })
 
-  const isAuthenticated = useStore((state) => state.isAuthenticated)
+  const { isAuthenticated } = useAuthSession()
 
   const checkResponseErrorMessage = useCallback(async () => {
     if (error instanceof ResponseError) {

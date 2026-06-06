@@ -142,5 +142,4 @@ pub trait UserRepository: Send + Sync {
         pagination: Pagination,
     ) -> Result<Page<UserView>, RepositoryError>;
     async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserView>, RepositoryError>;
-    async fn revoke_session(&self, refresh_token: &str) -> Result<(), RepositoryError>;
 }

@@ -38,7 +38,7 @@ impl TokenValidator {
     }
 
     pub fn anonymous_user() -> AuthUser {
-        // Must stay in sync with `auth_service::dummy_token` claims so the demo identity is consistent.
+        // Must match the anonymous demo user injected by auth_middleware when auth.enabled = false.
         AuthUser {
             id: Uuid::nil(),
             username: Some("ttester".into()),

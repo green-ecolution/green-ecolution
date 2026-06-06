@@ -16,7 +16,7 @@ import { LinkProps } from '@tanstack/react-router'
 import NavLink from '../navigation/NavLink'
 import NavHeadline from '../navigation/NavHeadline'
 import NavHeader from '../navigation/NavHeader'
-import useStore from '@/store/store'
+import { useAuthSession } from '@/lib/auth/authSessionContext'
 import Tree from '../icons/Tree'
 import SensorIcon from '../icons/Sensor'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -57,7 +57,7 @@ const publicNavData: NavSectionData[] = [
 
 const Navigation: React.FC<NavigationProps> = ({ isOpen, openSidebar, closeSidebar }) => {
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
-  const isLoggedIn = useStore((state) => state.isAuthenticated)
+  const { isAuthenticated: isLoggedIn } = useAuthSession()
 
   const handleMouseOver = useCallback(() => {
     if (isLargeScreen) openSidebar()

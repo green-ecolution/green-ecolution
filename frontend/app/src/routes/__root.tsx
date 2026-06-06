@@ -1,4 +1,5 @@
 import App from '@/App'
+import type { AuthSession } from '@/lib/auth/session'
 import { QueryClient } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { createRootRouteWithContext } from '@tanstack/react-router'
@@ -15,6 +16,7 @@ const TanStackRouterDevtools =
 
 interface RouterContext {
   queryClient: QueryClient
+  auth: AuthSession
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({

@@ -1,4 +1,3 @@
-pub mod auth_service;
 pub mod cluster_service;
 pub mod evaluation_service;
 pub mod event_bus;
