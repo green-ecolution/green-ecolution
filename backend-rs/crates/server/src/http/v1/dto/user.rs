@@ -171,7 +171,7 @@ impl From<&DomainUserView> for UserResponse {
     }
 }
 
-/// OIDC token response. Used by the plugin subsystem for plugin client auth.
+/// OIDC token response containing access, ID, and refresh tokens.
 #[derive(Debug, serde::Serialize, utoipa::ToSchema)]
 #[schema(example = json!({
     "access_token": "eyJhbGciOiJSUzI1NiIs...",
