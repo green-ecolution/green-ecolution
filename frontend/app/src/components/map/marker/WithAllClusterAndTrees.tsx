@@ -2,6 +2,7 @@ import type { ClusterMarkerResponse, Tree, TreeCluster, TreeMarkerResponse } fro
 import useStore from '@/store/store'
 import WithAllTrees from './WithAllTrees'
 import WithAllClusters from './WithAllClusters'
+import WithAllClusterBoundaries from './WithAllClusterBoundaries'
 import { useDeferredValue } from 'react'
 
 const defaultSelectedTrees: string[] = []
@@ -14,6 +15,7 @@ interface WithTreesAndClustersProps {
   activeFilter?: boolean
   hasHighlightedTree?: string
   hasHighlightedCluster?: string
+  showClusterBoundaries?: boolean
 }
 
 export const WithTreesAndClusters = ({
@@ -24,6 +26,7 @@ export const WithTreesAndClusters = ({
   activeFilter = false,
   hasHighlightedTree,
   hasHighlightedCluster,
+  showClusterBoundaries = false,
 }: WithTreesAndClustersProps) => {
   const zoom = useStore((state) => state.mapZoom)
   const deferredZoom = useDeferredValue(zoom)
@@ -32,11 +35,14 @@ export const WithTreesAndClusters = ({
   return (
     <>
       {showTrees ? (
-        <WithAllTrees
-          onClick={onClickTree}
-          selectedTrees={selectedTrees}
-          hasHighlightedTree={hasHighlightedTree}
-        />
+        <>
+          <WithAllTrees
+            onClick={onClickTree}
+            selectedTrees={selectedTrees}
+            hasHighlightedTree={hasHighlightedTree}
+          />
+          {showClusterBoundaries && <WithAllClusterBoundaries />}
+        </>
       ) : (
         <WithAllClusters
           onClick={onClickCluster}

@@ -95,6 +95,7 @@ function MapView() {
           onClickCluster={handleClusterClick}
           hasHighlightedTree={search.tree}
           hasHighlightedCluster={search.cluster}
+          showClusterBoundaries
         />
       )}
     </>
