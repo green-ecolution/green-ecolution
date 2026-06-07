@@ -90,8 +90,8 @@ export const TreeMarkerIcon = (
   let icon = iconCache.get(key)
   if (!icon) {
     icon = L.divIcon({
-      iconAnchor: [0, 24],
-      popupAnchor: [0, -36],
+      iconAnchor: [4, 4],
+      popupAnchor: [0, -16],
       html: `<figure style="${makerWrapperStyles(isSelected && !hasSensor, isHighlighted && !hasSensor)}">
         <span style="${markerHtmlStyles(color, hasSensor)}">
           ${isSelected && !hasSensor ? SVG_CACHE.check : SVG_CACHE.tree}
@@ -113,8 +113,8 @@ export const ClusterIcon = (
   let icon = iconCache.get(key)
   if (!icon) {
     icon = L.divIcon({
-      iconAnchor: [0, 24],
-      popupAnchor: [0, -36],
+      iconAnchor: [2, 2],
+      popupAnchor: [0, -16],
       html: `<figure style="${makerClusterWrapperStyles(isHighlighted, isDisabled)}">
         <span style="${markerClusterHtmlStyles(color, isDisabled)}">
           ${includedTrees}
