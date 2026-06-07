@@ -21,7 +21,7 @@ use domain::{
 /// outermost trees inside the drawn area and rounds off the corners. A buffer
 /// also turns the degenerate hulls (1 tree → point, 2 trees → line) into a
 /// proper polygon, so no special-casing is needed.
-const CLUSTER_BOUNDARY_BUFFER_METERS: f64 = 5.0;
+const CLUSTER_BOUNDARY_BUFFER_METERS: f64 = 10.0;
 
 pub struct PgTreeClusterRepository {
     pool: PgPool,
