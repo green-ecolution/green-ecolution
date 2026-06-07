@@ -14,6 +14,8 @@ index.ts
 models/ActivateSensorRequest.ts
 models/AppInfoResponse.ts
 models/ClientTokenResponse.ts
+models/ClusterBoundaryListResponse.ts
+models/ClusterBoundaryResponse.ts
 models/ClusterMarkerListResponse.ts
 models/ClusterMarkerResponse.ts
 models/CreateSensorRequest.ts
