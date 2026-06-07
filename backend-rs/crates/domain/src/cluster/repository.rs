@@ -3,7 +3,8 @@ use async_trait::async_trait;
 use crate::{
     Id, RepositoryError,
     cluster::{
-        ClusterMarker, TreeCluster, TreeClusterDraft, TreeClusterSearchQuery, TreeClusterView,
+        ClusterBoundaryView, ClusterMarker, TreeCluster, TreeClusterDraft, TreeClusterSearchQuery,
+        TreeClusterView,
     },
     shared::{
         coordinates::Coordinate,
@@ -32,6 +33,11 @@ pub trait TreeClusterReader: Send + Sync {
     /// Returns marker-projected clusters that have a centroid.
     /// Archived clusters and clusters without trees are excluded.
     async fn view_markers(&self) -> Result<Vec<ClusterMarker>, RepositoryError>;
+
+    /// Returns one convex-hull boundary polygon (GeoJSON, buffered in meters)
+    /// per non-archived cluster that has at least one geo-located tree.
+    /// Clusters without trees are omitted.
+    async fn boundaries(&self) -> Result<Vec<ClusterBoundaryView>, RepositoryError>;
 
     /// Returns the DB-persisted centroid for a cluster, or `None` if the
     /// cluster currently has no trees.

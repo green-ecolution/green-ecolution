@@ -14,9 +14,9 @@ use crate::{
         v1::dto::{
             ListResponse,
             cluster::{
-                ClusterListParams, ClusterMarkerListResponse, ClusterMarkerResponse,
-                TreeClusterCreateRequest, TreeClusterInListResponse, TreeClusterResponse,
-                TreeClusterUpdateRequest,
+                ClusterBoundaryListResponse, ClusterBoundaryResponse, ClusterListParams,
+                ClusterMarkerListResponse, ClusterMarkerResponse, TreeClusterCreateRequest,
+                TreeClusterInListResponse, TreeClusterResponse, TreeClusterUpdateRequest,
             },
             sensor::resolve_sensors_by_str_ids,
             tree::TreeResponse,
@@ -41,6 +41,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .routes(routes!(list_clusters, create_cluster))
         .routes(routes!(list_cluster_markers))
+        .routes(routes!(list_cluster_boundaries))
         .routes(routes!(get_cluster, update_cluster, delete_cluster))
 }
 
@@ -258,4 +259,29 @@ pub async fn list_cluster_markers(
     let markers = state.cluster_service.view_markers().await?;
     let data = markers.iter().map(ClusterMarkerResponse::from).collect();
     Ok(Json(ClusterMarkerListResponse { data }))
+}
+
+#[utoipa::path(
+    get,
+    path = "/clusters/boundaries",
+    tag = "Tree Clusters",
+    operation_id = "listClusterBoundaries",
+    summary = "List cluster boundaries",
+    description = "Returns a convex-hull boundary polygon (GeoJSON, buffered by a fixed margin in meters) \
+                   around the trees of each non-archived cluster. Not paginated.",
+    responses(
+        (status = 200, description = "Boundary list", body = ClusterBoundaryListResponse),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn list_cluster_boundaries(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<ClusterBoundaryListResponse>, ServiceError> {
+    let boundaries = state.cluster_service.boundaries().await?;
+    let data = boundaries
+        .iter()
+        .map(ClusterBoundaryResponse::from)
+        .collect();
+    Ok(Json(ClusterBoundaryListResponse { data }))
 }

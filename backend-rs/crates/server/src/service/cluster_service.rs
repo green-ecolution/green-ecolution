@@ -3,8 +3,8 @@ use std::sync::Arc;
 use domain::{
     Id,
     cluster::{
-        ClusterMarker, TreeCluster, TreeClusterDraft, TreeClusterReader, TreeClusterSearchQuery,
-        TreeClusterUpdate, TreeClusterView, TreeClusterWriter,
+        ClusterBoundaryView, ClusterMarker, TreeCluster, TreeClusterDraft, TreeClusterReader,
+        TreeClusterSearchQuery, TreeClusterUpdate, TreeClusterView, TreeClusterWriter,
     },
     events::DomainEvent,
     shared::{
@@ -53,6 +53,11 @@ impl ClusterService {
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn view_markers(&self) -> Result<Vec<ClusterMarker>, ServiceError> {
         Ok(self.reader.view_markers().await?)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn boundaries(&self) -> Result<Vec<ClusterBoundaryView>, ServiceError> {
+        Ok(self.reader.boundaries().await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]

@@ -966,3 +966,77 @@ async fn tree_position_update_recalculates_cluster_center() {
         "Cluster lng should be ~10.10, got {after_lng}"
     );
 }
+
+// -- Cluster boundary (convex hull) --
+
+#[tokio::test]
+async fn list_cluster_boundaries_returns_empty_when_none_exist() {
+    let app = spawn_app().await;
+    let resp = app.get("/api/v1/clusters/boundaries").await;
+    assert_eq!(resp.status().as_u16(), 200);
+    let json: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(json["data"].as_array().unwrap().len(), 0);
+}
+
+#[tokio::test]
+async fn list_cluster_boundaries_returns_polygon_for_cluster_with_trees() {
+    let app = spawn_app().await;
+
+    // Three trees forming a triangle → a real convex hull.
+    let t1 = insert_tree_at(&app, 53.550, 9.990, "T-BND-1").await;
+    let t2 = insert_tree_at(&app, 53.560, 9.990, "T-BND-2").await;
+    let t3 = insert_tree_at(&app, 53.555, 10.000, "T-BND-3").await;
+
+    let body = serde_json::json!({
+        "name": "Boundary Cluster",
+        "address": "Hüllenweg 1",
+        "description": "Test",
+        "soil_condition": "sandig",
+        "tree_ids": [t1, t2, t3],
+    });
+    let resp = app.post_json("/api/v1/clusters", &body).await;
+    assert_eq!(resp.status().as_u16(), 201);
+
+    let resp = app.get("/api/v1/clusters/boundaries").await;
+    assert_eq!(resp.status().as_u16(), 200);
+    let json: serde_json::Value = resp.json().await.unwrap();
+    let data = json["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1, "one non-archived cluster with trees");
+
+    assert_eq!(data[0]["name"], "Boundary Cluster");
+    assert_eq!(data[0]["watering_status"], "unknown");
+    // GeoJSON geometry: a buffered hull is always a Polygon.
+    assert_eq!(data[0]["boundary"]["type"], "Polygon");
+    let rings = data[0]["boundary"]["coordinates"].as_array().unwrap();
+    assert!(
+        !rings.is_empty(),
+        "polygon must have at least an exterior ring"
+    );
+    assert!(
+        rings[0].as_array().unwrap().len() >= 4,
+        "a polygon ring is closed and has >= 4 positions"
+    );
+}
+
+#[tokio::test]
+async fn list_cluster_boundaries_handles_single_tree_as_buffered_circle() {
+    let app = spawn_app().await;
+
+    let t1 = insert_tree_at(&app, 53.55, 9.99, "T-BND-SINGLE").await;
+    let body = serde_json::json!({
+        "name": "Single Tree Cluster",
+        "address": "Einzelweg 1",
+        "description": "Test",
+        "soil_condition": "sandig",
+        "tree_ids": [t1],
+    });
+    let resp = app.post_json("/api/v1/clusters", &body).await;
+    assert_eq!(resp.status().as_u16(), 201);
+
+    let resp = app.get("/api/v1/clusters/boundaries").await;
+    let json: serde_json::Value = resp.json().await.unwrap();
+    let data = json["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1);
+    // Buffering a single point yields a Polygon (circle), not a Point.
+    assert_eq!(data[0]["boundary"]["type"], "Polygon");
+}
