@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Polygon } from 'react-leaflet'
-import { useDeferredValue } from 'react'
+import { memo, useDeferredValue } from 'react'
 import { clusterBoundariesQuery } from '@/api/queries'
 import { getStatusColor } from '../utils'
 
@@ -10,7 +10,7 @@ interface PolygonGeoJson {
   coordinates: number[][][]
 }
 
-const WithAllClusterBoundaries = () => {
+const WithAllClusterBoundaries = memo(() => {
   const { data } = useSuspenseQuery(clusterBoundariesQuery())
   const deferred = useDeferredValue(data.data)
 
@@ -36,6 +36,8 @@ const WithAllClusterBoundaries = () => {
       })}
     </>
   )
-}
+})
+
+WithAllClusterBoundaries.displayName = 'WithAllClusterBoundaries'
 
 export default WithAllClusterBoundaries
