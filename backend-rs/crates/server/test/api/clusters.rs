@@ -1040,3 +1040,37 @@ async fn list_cluster_boundaries_handles_single_tree_as_buffered_circle() {
     // Buffering a single point yields a Polygon (circle), not a Point.
     assert_eq!(data[0]["boundary"]["type"], "Polygon");
 }
+
+#[tokio::test]
+async fn list_cluster_boundaries_excludes_archived_clusters() {
+    let app = spawn_app().await;
+
+    let t1 = insert_tree_at(&app, 53.550, 9.990, "T-BND-ARCH-1").await;
+    let t2 = insert_tree_at(&app, 53.560, 9.990, "T-BND-ARCH-2").await;
+    let t3 = insert_tree_at(&app, 53.555, 10.000, "T-BND-ARCH-3").await;
+
+    let body = serde_json::json!({
+        "name": "Archived Cluster",
+        "address": "Archivweg 1",
+        "description": "Test",
+        "soil_condition": "sandig",
+        "tree_ids": [t1, t2, t3],
+    });
+    let resp = app.post_json("/api/v1/clusters", &body).await;
+    let cluster: serde_json::Value = resp.json().await.unwrap();
+    let id = uuid::Uuid::parse_str(cluster["id"].as_str().unwrap()).unwrap();
+
+    sqlx::query("UPDATE tree_clusters SET archived = true WHERE id = $1")
+        .bind(id)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+
+    let resp = app.get("/api/v1/clusters/boundaries").await;
+    let json: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(
+        json["data"].as_array().unwrap().len(),
+        0,
+        "archived clusters must be excluded from boundaries"
+    );
+}
