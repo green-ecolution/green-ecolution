@@ -301,7 +301,7 @@ services:
       - "traefik.http.routers.valhalla.rule=Host(`valhalla.${APP_HOST:-localhost}`)"
       - "traefik.http.routers.valhalla.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
   reverse-proxy:
-    image: traefik:v3.7.1
+    image: traefik:v3.7.4
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
