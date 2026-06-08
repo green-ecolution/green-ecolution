@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 use domain::{
     Id,
     cluster::{
-        ClusterAddress, ClusterMarker, ClusterName, TreeCluster, TreeClusterDraft, TreeClusterView,
+        ClusterAddress, ClusterBoundaryView, ClusterMarker, ClusterName, TreeCluster,
+        TreeClusterDraft, TreeClusterView,
     },
     region::Region,
     shared::{
@@ -289,4 +290,32 @@ impl From<&ClusterMarker> for ClusterMarkerResponse {
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct ClusterMarkerListResponse {
     pub data: Vec<ClusterMarkerResponse>,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct ClusterBoundaryResponse {
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub id: uuid::Uuid,
+    #[schema(example = "Stadtpark")]
+    pub name: String,
+    pub watering_status: super::WateringStatus,
+    /// GeoJSON polygon (convex hull of the cluster's trees, buffered in meters).
+    #[schema(value_type = Object)]
+    pub boundary: serde_json::Value,
+}
+
+impl From<&ClusterBoundaryView> for ClusterBoundaryResponse {
+    fn from(b: &ClusterBoundaryView) -> Self {
+        Self {
+            id: b.cluster_id,
+            name: b.name.clone(),
+            watering_status: b.watering_status.into(),
+            boundary: b.boundary.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct ClusterBoundaryListResponse {
+    pub data: Vec<ClusterBoundaryResponse>,
 }

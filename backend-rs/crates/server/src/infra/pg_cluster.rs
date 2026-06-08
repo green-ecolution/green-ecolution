@@ -7,8 +7,8 @@ use domain::cluster::snapshot::TreeClusterSnapshot;
 use domain::{
     Id, RepositoryError,
     cluster::{
-        ClusterMarker, SoilCondition, TreeCluster, TreeClusterDraft, TreeClusterReader,
-        TreeClusterSearchQuery, TreeClusterView, TreeClusterWriter,
+        ClusterBoundaryView, ClusterMarker, SoilCondition, TreeCluster, TreeClusterDraft,
+        TreeClusterReader, TreeClusterSearchQuery, TreeClusterView, TreeClusterWriter,
     },
     shared::{
         coordinates::Coordinate,
@@ -16,6 +16,12 @@ use domain::{
         watering_status::WateringStatus,
     },
 };
+
+/// Boundary buffer applied to a cluster's convex hull, in meters. Keeps the
+/// outermost trees inside the drawn area and rounds off the corners. A buffer
+/// also turns the degenerate hulls (1 tree → point, 2 trees → line) into a
+/// proper polygon, so no special-casing is needed.
+const CLUSTER_BOUNDARY_BUFFER_METERS: f64 = 10.0;
 
 pub struct PgTreeClusterRepository {
     pool: PgPool,
@@ -294,6 +300,40 @@ impl TreeClusterReader for PgTreeClusterRepository {
             (Some(x), Some(y)) => Coordinate::new(y, x).ok(),
             _ => None,
         })
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn boundaries(&self) -> Result<Vec<ClusterBoundaryView>, RepositoryError> {
+        let rows = sqlx::query!(
+            r#"SELECT
+                tc.id                                            AS "cluster_id!",
+                tc.name                                          AS "name!",
+                tc.watering_status AS "watering_status: WateringStatus",
+                ST_AsGeoJSON(
+                    ST_Buffer(
+                        ST_ConvexHull(ST_Collect(t.geometry))::geography,
+                        $1::float8
+                    )::geometry
+                )::jsonb                                         AS "boundary!: serde_json::Value"
+            FROM trees t
+            JOIN tree_clusters tc ON tc.id = t.tree_cluster_id
+            WHERE t.geometry IS NOT NULL
+              AND tc.archived = false
+            GROUP BY tc.id, tc.name, tc.watering_status"#,
+            CLUSTER_BOUNDARY_BUFFER_METERS,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|row| ClusterBoundaryView {
+                cluster_id: row.cluster_id,
+                name: row.name,
+                watering_status: row.watering_status,
+                boundary: row.boundary,
+            })
+            .collect())
     }
 }
 

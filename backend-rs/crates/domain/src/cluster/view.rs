@@ -27,3 +27,14 @@ pub struct TreeClusterView {
     pub provider: Option<String>,
     pub additional_info: Option<Value>,
 }
+
+/// Read model for a cluster's map boundary: a GeoJSON polygon (convex hull of
+/// the cluster's trees, buffered in meters). `boundary` holds the raw GeoJSON
+/// geometry object exactly as produced by PostGIS `ST_AsGeoJSON`.
+#[derive(Debug, Clone)]
+pub struct ClusterBoundaryView {
+    pub cluster_id: Uuid,
+    pub name: String,
+    pub watering_status: WateringStatus,
+    pub boundary: Value,
+}

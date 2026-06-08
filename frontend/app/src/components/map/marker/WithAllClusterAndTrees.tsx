@@ -2,6 +2,7 @@ import type { ClusterMarkerResponse, Tree, TreeCluster, TreeMarkerResponse } fro
 import useStore from '@/store/store'
 import WithAllTrees from './WithAllTrees'
 import WithAllClusters from './WithAllClusters'
+import WithAllClusterBoundaries from './WithAllClusterBoundaries'
 import { useDeferredValue } from 'react'
 
 const defaultSelectedTrees: string[] = []
@@ -32,11 +33,14 @@ export const WithTreesAndClusters = ({
   return (
     <>
       {showTrees ? (
-        <WithAllTrees
-          onClick={onClickTree}
-          selectedTrees={selectedTrees}
-          hasHighlightedTree={hasHighlightedTree}
-        />
+        <>
+          <WithAllTrees
+            onClick={onClickTree}
+            selectedTrees={selectedTrees}
+            hasHighlightedTree={hasHighlightedTree}
+          />
+          <WithAllClusterBoundaries />
+        </>
       ) : (
         <WithAllClusters
           onClick={onClickCluster}

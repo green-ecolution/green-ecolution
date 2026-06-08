@@ -144,6 +144,31 @@
         }
       }
     },
+    "/v1/clusters/boundaries": {
+      "get": {
+        "tags": [
+          "Tree Clusters"
+        ],
+        "summary": "List cluster boundaries",
+        "description": "Returns a convex-hull boundary polygon (GeoJSON, buffered by a fixed margin in meters) around the trees of each non-archived cluster. Not paginated.",
+        "operationId": "listClusterBoundaries",
+        "responses": {
+          "200": {
+            "description": "Boundary list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClusterBoundaryListResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/v1/clusters/markers": {
       "get": {
         "tags": [
@@ -2447,6 +2472,47 @@
           "scope": "openid profile email",
           "session_state": "550e8400-e29b-41d4-a716-446655440000",
           "token_type": "Bearer"
+        }
+      },
+      "ClusterBoundaryListResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClusterBoundaryResponse"
+            }
+          }
+        }
+      },
+      "ClusterBoundaryResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "watering_status",
+          "boundary"
+        ],
+        "properties": {
+          "boundary": {
+            "type": "object",
+            "description": "GeoJSON polygon (convex hull of the cluster's trees, buffered in meters)."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "name": {
+            "type": "string",
+            "example": "Stadtpark"
+          },
+          "watering_status": {
+            "$ref": "#/components/schemas/WateringStatus"
+          }
         }
       },
       "ClusterMarkerListResponse": {

@@ -2,6 +2,7 @@ import { queryOptions, keepPreviousData } from '@tanstack/react-query'
 import {
   AppInfoResponse,
   clusterApi,
+  ClusterBoundaryListResponse,
   ClusterMarkerListResponse,
   DataStatisticsResponse,
   EvaluationResponse,
@@ -256,5 +257,12 @@ export const clusterMarkersQuery = () =>
   queryOptions<ClusterMarkerListResponse>({
     queryKey: ['clusters', 'markers'],
     queryFn: () => clusterApi.listClusterMarkers(),
+    staleTime: 5 * 60_000,
+  })
+
+export const clusterBoundariesQuery = () =>
+  queryOptions<ClusterBoundaryListResponse>({
+    queryKey: ['clusters', 'boundaries'],
+    queryFn: () => clusterApi.listClusterBoundaries(),
     staleTime: 5 * 60_000,
   })

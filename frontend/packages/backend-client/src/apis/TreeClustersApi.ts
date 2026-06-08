@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ClusterBoundaryListResponse,
   ClusterMarkerListResponse,
   ListResponseTreeClusterInListResponse,
   TreeClusterCreateRequest,
@@ -23,6 +24,8 @@ import type {
   WateringStatus,
 } from '../models/index';
 import {
+    ClusterBoundaryListResponseFromJSON,
+    ClusterBoundaryListResponseToJSON,
     ClusterMarkerListResponseFromJSON,
     ClusterMarkerListResponseToJSON,
     ListResponseTreeClusterInListResponseFromJSON,
@@ -181,6 +184,37 @@ export class TreeClustersApi extends runtime.BaseAPI {
      */
     async getCluster(requestParameters: GetClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TreeClusterResponse> {
         const response = await this.getClusterRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns a convex-hull boundary polygon (GeoJSON, buffered by a fixed margin in meters) around the trees of each non-archived cluster. Not paginated.
+     * List cluster boundaries
+     */
+    async listClusterBoundariesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ClusterBoundaryListResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/clusters/boundaries`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ClusterBoundaryListResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns a convex-hull boundary polygon (GeoJSON, buffered by a fixed margin in meters) around the trees of each non-archived cluster. Not paginated.
+     * List cluster boundaries
+     */
+    async listClusterBoundaries(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ClusterBoundaryListResponse> {
+        const response = await this.listClusterBoundariesRaw(initOverrides);
         return await response.value();
     }
 

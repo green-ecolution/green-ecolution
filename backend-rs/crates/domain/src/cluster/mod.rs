@@ -37,7 +37,7 @@ pub use repository::{TreeClusterReader, TreeClusterWriter};
 #[doc(hidden)]
 pub use snapshot::TreeClusterSnapshot;
 pub use soil_condition::SoilCondition;
-pub use view::TreeClusterView;
+pub use view::{ClusterBoundaryView, TreeClusterView};
 
 crate::newtype_nonempty! {
     /// Human-readable cluster name, 1–255 characters after trimming.
