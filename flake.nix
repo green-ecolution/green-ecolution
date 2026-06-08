@@ -70,7 +70,7 @@
       frontend = pkgs.stdenv.mkDerivation rec {
         inherit meta;
         pname = "frontend";
-        version = "0.2.0"; # x-release-please-version
+        version = "0.2.1"; # x-release-please-version
         src = lib.cleanSource ./frontend;
 
         nativeBuildInputs = with pkgs; [nodejs pnpm pnpmConfigHook];
@@ -100,7 +100,7 @@
       backend = pkgs.rustPlatform.buildRustPackage rec {
         inherit meta;
         pname = "green-ecolution";
-        version = "0.2.0"; # x-release-please-version
+        version = "0.2.1"; # x-release-please-version
         src = lib.cleanSource ./backend-rs;
 
         cargoLock = {

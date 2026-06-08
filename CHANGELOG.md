@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.2.1](https://github.com/green-ecolution/green-ecolution/compare/v0.2.0...v0.2.1) (2026-06-08)
+
+
+### Bug Fixes
+
+* **auth:** repair token-expiry login flow via OIDC rework (GECO-141) ([#819](https://github.com/green-ecolution/green-ecolution/issues/819)) ([f1ec12f](https://github.com/green-ecolution/green-ecolution/commit/f1ec12f0e5a01f2ccfc324e748c342aa6c813088))
+* button position 'Sensor aktivieren' (GECO-136) ([c0dc080](https://github.com/green-ecolution/green-ecolution/commit/c0dc0800e71b95344ef87480d484d4c2bbf08e8f))
+* **frontend:** restore pagination on tree list (GECO-129) ([#816](https://github.com/green-ecolution/green-ecolution/issues/816)) ([f55b8c0](https://github.com/green-ecolution/green-ecolution/commit/f55b8c0d1fafecbd976631589ae55aa4faf3842d))
+* restore filter function on map, tree and cluster lists (GECO-133) ([#817](https://github.com/green-ecolution/green-ecolution/issues/817)) ([1d26e00](https://github.com/green-ecolution/green-ecolution/commit/1d26e00665ef53f42c475e4c2d8838932ef62ad7))
+* **sensor:** populate latest_reading in view_search and view_by_ids (GECO-144) ([#818](https://github.com/green-ecolution/green-ecolution/issues/818)) ([f397eb8](https://github.com/green-ecolution/green-ecolution/commit/f397eb8f89e5b33f48d3f90af1beee9e9b212c06))
+* **sensors:** derive sensor connectivity status from reading recency (GECO-132) ([#815](https://github.com/green-ecolution/green-ecolution/issues/815)) ([7d4377f](https://github.com/green-ecolution/green-ecolution/commit/7d4377f27a2051f38db6b5a4167d73d72a06346c))
+* **sensors:** rename 'Sensor hinzufügen' to 'Sensor aktivieren' (GECO-135) ([#804](https://github.com/green-ecolution/green-ecolution/issues/804)) ([583e4c7](https://github.com/green-ecolution/green-ecolution/commit/583e4c71d5cb9eefaa8aec470a4b30b91f78bd68))
+
 ## [0.2.0](https://github.com/green-ecolution/green-ecolution/compare/v0.1.2...v0.2.0) (2026-06-01)
 
 
