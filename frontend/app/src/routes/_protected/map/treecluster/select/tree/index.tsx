@@ -3,6 +3,7 @@ import { Tree, TreeMarkerResponse } from '@/api/backendApi'
 import { useCallback, useRef, useState } from 'react'
 import SelectedCard from '@/components/general/cards/SelectedCard'
 import WithFilterableTrees from '@/components/map/marker/WithFilterableTrees'
+import WithAllClusterBoundaries from '@/components/map/marker/WithAllClusterBoundaries'
 import MapSelectEntitiesModal from '@/components/map/MapSelectEntitiesModal'
 import {
   AlertDialog,
@@ -137,6 +138,7 @@ function SelectTrees() {
         }
       />
       <WithFilterableTrees selectedTrees={treeIds} onClick={handleTreeClick} />
+      <WithAllClusterBoundaries />
 
       <AlertDialog open={status === 'blocked'} onOpenChange={(open) => !open && reset?.()}>
         <AlertDialogContent>
