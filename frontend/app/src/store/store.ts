@@ -10,9 +10,11 @@ interface MapSlice {
   mapMinZoom: number
   mapMaxZoom: number
   showSelectModal: boolean
+  mapSearchTerm: string
   setMapCenter: (center: [number, number]) => void
   setMapZoom: (zoom: number) => void
   setShowSelectModal: (show: boolean) => void
+  setMapSearchTerm: (term: string) => void
 }
 
 type Store = MapSlice & FormDraftSlice
@@ -24,6 +26,7 @@ const createMapSlice: StateCreator<Store, Mutators, [], MapSlice> = (set) => ({
   mapMinZoom: 13,
   mapMaxZoom: 18,
   showSelectModal: false,
+  mapSearchTerm: '',
   setMapCenter: (center) =>
     set((state) => {
       state.mapCenter = center
@@ -35,6 +38,10 @@ const createMapSlice: StateCreator<Store, Mutators, [], MapSlice> = (set) => ({
   setShowSelectModal: (show) =>
     set((state) => {
       state.showSelectModal = show
+    }),
+  setMapSearchTerm: (term) =>
+    set((state) => {
+      state.mapSearchTerm = term
     }),
 })
 
