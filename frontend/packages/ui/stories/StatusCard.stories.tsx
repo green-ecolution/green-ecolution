@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { StatusCard } from '../src/components/ui/status-card'
-import { ArrowUp, Code, FlaskConical, Circle } from 'lucide-react'
+import { ArrowUp, Code, FlaskConical } from 'lucide-react'
 
 const meta: Meta<typeof StatusCard> = {
   title: 'UI/StatusCard',
@@ -20,6 +20,10 @@ const meta: Meta<typeof StatusCard> = {
     isLarge: {
       control: 'boolean',
       description: 'Use larger text for value',
+    },
+    progress: {
+      control: { type: 'range', min: 0, max: 100, step: 1 },
+      description: 'Optionaler Fortschrittsbalken (0–100), eingefärbt nach status',
     },
   },
 }
@@ -62,6 +66,26 @@ export const LargeValue: Story = {
     description: 'Wert bezeichnet den Wassergehalt im Boden.',
     isLarge: true,
   },
+}
+
+export const WithProgress: Story = {
+  args: {
+    label: 'Bodenfeuchte',
+    value: '14 %',
+    status: 'red',
+    progress: 14,
+  },
+}
+
+export const ProgressVariants: Story = {
+  render: () => (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <StatusCard status="red" label="Bodenfeuchte" value="14 %" progress={14} />
+      <StatusCard status="yellow" label="Bodenfeuchte" value="28 %" progress={28} />
+      <StatusCard status="green-light" label="Bodenfeuchte" value="44 %" progress={44} />
+      <StatusCard status="green-dark" label="Bodenfeuchte" value="72 %" progress={72} />
+    </div>
+  ),
 }
 
 export const StatusVariants: Story = {
