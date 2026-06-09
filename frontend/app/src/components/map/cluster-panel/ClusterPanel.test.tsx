@@ -1,0 +1,52 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, cleanup, userEvent, waitFor } from '@/test/utils'
+
+const getCluster = vi.fn()
+vi.mock('@/api/backendApi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/api/backendApi')>()
+  return { ...actual, clusterApi: { getCluster: (...a: unknown[]) => getCluster(...a) as unknown } }
+})
+vi.mock('@/hooks/useMapInteractions', () => ({
+  default: () => ({ enableDragging: vi.fn(), disableDragging: vi.fn() }),
+}))
+vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => true }))
+
+import ClusterPanel from './ClusterPanel'
+
+const VALID_ID = '11111111-1111-4111-8111-111111111111'
+const cluster = {
+  id: VALID_ID,
+  name: 'Hafenspitze',
+  address: 'Schiffbrücke 12',
+  description: '',
+  soilCondition: 'sandig',
+  moistureLevel: 14,
+  wateringStatus: 'bad',
+  lastWatered: null,
+  trees: [],
+}
+
+beforeEach(() => vi.clearAllMocks())
+afterEach(cleanup)
+
+describe('ClusterPanel', () => {
+  it('shows the view for a loaded cluster, then switches to edit on pencil', async () => {
+    getCluster.mockResolvedValue(cluster)
+    render(<ClusterPanel clusterId={VALID_ID} onClose={vi.fn()} onOpenDashboard={vi.fn()} />)
+
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Hafenspitze' })).toBeInTheDocument(),
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Gruppe bearbeiten' }))
+    expect(screen.getByRole('button', { name: 'Speichern' })).toBeInTheDocument()
+  })
+
+  it('calls onClose from the close button', async () => {
+    getCluster.mockResolvedValue(cluster)
+    const onClose = vi.fn()
+    render(<ClusterPanel clusterId={VALID_ID} onClose={onClose} onOpenDashboard={vi.fn()} />)
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Hafenspitze' })).toBeInTheDocument())
+    await userEvent.click(screen.getByRole('button', { name: 'Seitenansicht schließen' }))
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+})
