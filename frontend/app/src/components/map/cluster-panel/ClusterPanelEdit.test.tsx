@@ -38,14 +38,24 @@ afterEach(cleanup)
 describe('ClusterPanelEdit', () => {
   it('renders the name field with the initial value', () => {
     render(
-      <ClusterPanelEdit treecluster={cluster} onCancel={vi.fn()} onClose={vi.fn()} onSaved={vi.fn()} />,
+      <ClusterPanelEdit
+        treecluster={cluster}
+        onCancel={vi.fn()}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+      />,
     )
     expect(screen.getByLabelText(/Name/)).toHaveValue('Hafenspitze')
   })
 
   it('submits on save', async () => {
     render(
-      <ClusterPanelEdit treecluster={cluster} onCancel={vi.fn()} onClose={vi.fn()} onSaved={vi.fn()} />,
+      <ClusterPanelEdit
+        treecluster={cluster}
+        onCancel={vi.fn()}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+      />,
     )
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
     expect(onSubmit).toHaveBeenCalled()
@@ -54,7 +64,12 @@ describe('ClusterPanelEdit', () => {
   it('cancels', async () => {
     const onCancel = vi.fn()
     render(
-      <ClusterPanelEdit treecluster={cluster} onCancel={onCancel} onClose={vi.fn()} onSaved={vi.fn()} />,
+      <ClusterPanelEdit
+        treecluster={cluster}
+        onCancel={onCancel}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+      />,
     )
     await userEvent.click(screen.getByRole('button', { name: 'Abbrechen' }))
     expect(onCancel).toHaveBeenCalledTimes(1)

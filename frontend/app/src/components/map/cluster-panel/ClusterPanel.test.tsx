@@ -52,7 +52,9 @@ describe('ClusterPanel', () => {
     getCluster.mockResolvedValue(cluster)
     const onClose = vi.fn()
     render(<ClusterPanel clusterId={VALID_ID} onClose={onClose} onOpenDashboard={vi.fn()} />)
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Hafenspitze' })).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Hafenspitze' })).toBeInTheDocument(),
+    )
     await userEvent.click(screen.getByRole('button', { name: 'Seitenansicht schließen' }))
     expect(onClose).toHaveBeenCalledTimes(1)
   })

@@ -8,7 +8,10 @@ import { useClusterPanelEdit } from './useClusterPanelEdit'
 const updateCluster = vi.fn()
 vi.mock('@/api/backendApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/api/backendApi')>()
-  return { ...actual, clusterApi: { updateCluster: (...args: unknown[]) => updateCluster(...args) as unknown } }
+  return {
+    ...actual,
+    clusterApi: { updateCluster: (...args: unknown[]) => updateCluster(...args) as unknown },
+  }
 })
 vi.mock('@green-ecolution/domain-wasm', () => ({
   clusterDraftResolver: () => (values: unknown) => Promise.resolve({ values, errors: {} }),
@@ -26,7 +29,9 @@ const cluster = {
 } as unknown as TreeClusterResponse
 
 const wrapper = ({ children }: { children: ReactNode }) => {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+  const qc = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  })
   return <QueryClientProvider client={qc}>{children}</QueryClientProvider>
 }
 

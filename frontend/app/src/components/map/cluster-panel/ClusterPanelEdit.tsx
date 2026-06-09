@@ -52,7 +52,12 @@ const ClusterPanelEdit = ({ treecluster, onCancel, onClose, onSaved }: ClusterPa
       </header>
 
       <FormField label="Name" required error={errors.name?.message} {...register('name')} />
-      <FormField label="Adresse" required error={errors.address?.message} {...register('address')} />
+      <FormField
+        label="Adresse"
+        required
+        error={errors.address?.message}
+        {...register('address')}
+      />
 
       <Controller
         name="soilCondition"

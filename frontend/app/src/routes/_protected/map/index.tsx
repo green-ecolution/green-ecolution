@@ -7,12 +7,10 @@ import { WithTreesAndClusters } from '@/components/map/marker/WithAllClusterAndT
 import WithAllClusters from '@/components/map/marker/WithAllClusters'
 import { filterSearchSchema } from '@/lib/filterSearchSchema'
 
-const mapFilterSchema = filterSearchSchema
-  .pick({ wateringStatuses: true })
-  .extend({
-    tree: z.string().optional(),
-    cluster: z.string().optional(),
-  })
+const mapFilterSchema = filterSearchSchema.pick({ wateringStatuses: true }).extend({
+  tree: z.string().optional(),
+  cluster: z.string().optional(),
+})
 
 function MapView() {
   const navigate = useNavigate({ from: '/map' })
