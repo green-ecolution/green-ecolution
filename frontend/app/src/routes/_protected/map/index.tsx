@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import MapButtons from '@/components/map/MapButtons'
 import type { ClusterMarkerResponse, Tree, TreeCluster, TreeMarkerResponse } from '@/api/backendApi'
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import Dialog from '@/components/general/filter/Dialog'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
 import FilterProvider from '@/context/FilterContext'
@@ -12,6 +12,11 @@ import useMapInteractions from '@/hooks/useMapInteractions'
 import { WithTreesAndClusters } from '@/components/map/marker/WithAllClusterAndTrees'
 import WithFilterdTrees from '@/components/map/marker/WithFilterdTrees'
 import { filterSearchSchema } from '@/lib/filterSearchSchema'
+import { WateringStatus } from '@green-ecolution/backend-client'
+import { Plus } from 'lucide-react'
+import ButtonLink from '@/components/general/links/ButtonLink'
+import MapFilterToolbar from '@/components/map/MapFilterToolbar'
+import ClusterPanel from '@/components/map/cluster-panel/ClusterPanel'
 
 const mapFilterSchema = filterSearchSchema
   .pick({ wateringStatuses: true, hasCluster: true, plantingYears: true })
@@ -25,6 +30,7 @@ function MapView() {
   const search = Route.useSearch()
   const { enableDragging, disableDragging } = useMapInteractions()
   const dialogRef = useRef<HTMLDivElement>(null)
+  const [searchTerm, setSearchTerm] = useState('')
 
   const hasActiveFilter = useMemo(
     () =>
@@ -46,11 +52,39 @@ function MapView() {
   const handleClusterClick = useCallback(
     (cluster: ClusterMarkerResponse | TreeCluster) => {
       navigate({
-        to: `/treecluster/$treeclusterId`,
-        params: { treeclusterId: cluster.id.toString() },
+        to: '/map',
+        search: (prev) => ({ ...prev, cluster: cluster.id.toString() }),
       }).catch((error) => console.error('Navigation failed:', error))
     },
     [navigate],
+  )
+
+  const handleClosePanel = useCallback(() => {
+    navigate({ to: '/map', search: (prev) => ({ ...prev, cluster: undefined }) }).catch((error) =>
+      console.error('Navigation failed:', error),
+    )
+  }, [navigate])
+
+  const handleOpenDashboard = useCallback(() => {
+    if (!search.cluster) return
+    navigate({
+      to: '/treecluster/$treeclusterId',
+      params: { treeclusterId: search.cluster },
+    }).catch((error) => console.error('Navigation failed:', error))
+  }, [navigate, search.cluster])
+
+  const handleToggleStatus = useCallback(
+    (status: WateringStatus) => {
+      const current = search.wateringStatuses ?? []
+      const next = current.includes(status)
+        ? current.filter((s) => s !== status)
+        : [...current, status]
+      navigate({
+        to: '/map',
+        search: (prev) => ({ ...prev, wateringStatuses: next.length ? next : undefined }),
+      }).catch((error) => console.error('Navigation failed:', error))
+    },
+    [navigate, search.wateringStatuses],
   )
 
   const handleMapInteractions = useCallback(
@@ -66,19 +100,26 @@ function MapView() {
 
   return (
     <>
-      <div className="absolute top-6 left-4 z-[1000]">
-        <Dialog
-          ref={dialogRef}
-          headline="Bäume filtern"
-          isOnMap
-          fullUrlPath={Route.fullPath}
-          onToggleOpen={handleMapInteractions}
-        >
-          <StatusFieldset />
-          <ClusterFieldset />
-          <PlantingYearFieldset />
-        </Dialog>
-      </div>
+      <MapFilterToolbar
+        searchTerm={searchTerm}
+        onSearchTermChange={setSearchTerm}
+        statuses={search.wateringStatuses ?? []}
+        onToggleStatus={handleToggleStatus}
+        filterSlot={
+          <Dialog
+            ref={dialogRef}
+            headline="Bäume filtern"
+            isOnMap
+            fullUrlPath={Route.fullPath}
+            onToggleOpen={handleMapInteractions}
+          >
+            <StatusFieldset />
+            <ClusterFieldset />
+            <PlantingYearFieldset />
+          </Dialog>
+        }
+        createSlot={<ButtonLink icon={Plus} label="Gruppe anlegen" link={{ to: '/treecluster/new' }} />}
+      />
       <MapButtons />
       {hasActiveFilter ? (
         <WithFilterdTrees
@@ -95,6 +136,14 @@ function MapView() {
           onClickCluster={handleClusterClick}
           hasHighlightedTree={search.tree}
           hasHighlightedCluster={search.cluster}
+          nameFilter={searchTerm}
+        />
+      )}
+      {search.cluster && (
+        <ClusterPanel
+          clusterId={search.cluster}
+          onClose={handleClosePanel}
+          onOpenDashboard={handleOpenDashboard}
         />
       )}
     </>
