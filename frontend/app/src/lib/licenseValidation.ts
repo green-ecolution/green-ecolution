@@ -1,25 +1,11 @@
 import { DrivingLicense } from '@green-ecolution/backend-client'
+import { licenseSatisfies as wasmLicenseSatisfies } from '@green-ecolution/domain-wasm'
 import type { User, Vehicle } from '@/api/backendApi'
 
-// Keep in sync with backend: internal/service/domain/watering_plan/watering_plan.go
+// Single source of truth lives in the Rust domain (DrivingLicense::satisfies),
+// shared via WASM. No TS-side hierarchy logic remains, so it cannot drift.
 export function licenseSatisfies(held: DrivingLicense, required: DrivingLicense): boolean {
-  if (held === required) {
-    return true
-  }
-  switch (held) {
-    case DrivingLicense.Be:
-      return required === DrivingLicense.B
-    case DrivingLicense.C:
-      return required === DrivingLicense.B
-    case DrivingLicense.Ce:
-      return (
-        required === DrivingLicense.B ||
-        required === DrivingLicense.Be ||
-        required === DrivingLicense.C
-      )
-    default:
-      return false
-  }
+  return wasmLicenseSatisfies(held, required)
 }
 
 export function validateDriverLicenses(

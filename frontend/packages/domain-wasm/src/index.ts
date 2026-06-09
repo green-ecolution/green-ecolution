@@ -23,6 +23,7 @@ export {
   validateDistance,
   validateEmail,
   validateUsername,
+  licenseSatisfies,
   validateSensorId,
   validateTreeDraft,
   validateTreeClusterDraft,

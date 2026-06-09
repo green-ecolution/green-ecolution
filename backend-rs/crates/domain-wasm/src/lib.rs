@@ -7,6 +7,7 @@ mod cluster_draft;
 mod coerce;
 mod field_validators;
 mod issue;
+mod license;
 mod plan_draft;
 mod tree_draft;
 mod vehicle_draft;
