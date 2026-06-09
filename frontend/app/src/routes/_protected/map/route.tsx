@@ -112,7 +112,7 @@ function MapRoot() {
           onOpenChange={(open) => {
             if (!open) handleClosePanel()
           }}
-          snapPoints={['16rem', 1]}
+          snapPoints={['260px', 1]}
         >
           <DrawerContent>
             <DrawerTitle className="sr-only">Baumgruppen-Details</DrawerTitle>
