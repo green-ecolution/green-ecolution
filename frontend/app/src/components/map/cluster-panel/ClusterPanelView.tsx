@@ -1,10 +1,11 @@
 import { ComponentProps } from 'react'
-import { MapPin, MoveRight, Pencil, RadioTower, X } from 'lucide-react'
+import { MoveRight, Pencil, RadioTower, X } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { Badge, Button, StatusCard } from '@green-ecolution/ui'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { roundTo } from '@/lib/utils'
+import Tree from '@/components/icons/Tree'
 import type { TreeClusterResponse } from '@/api/backendApi'
 import { latestSensorReading, sortTreesSensorFirst, summarizeTopSpecies } from './clusterPanelUtils'
 
@@ -122,7 +123,7 @@ const ClusterPanelView = ({
               {tree.sensor ? (
                 <RadioTower className="size-4 shrink-0 text-green-dark" />
               ) : (
-                <MapPin className="size-4 shrink-0 text-dark-400" />
+                <Tree className="size-4 shrink-0 text-dark-400" />
               )}
               <span className="min-w-0 flex-1 truncate">
                 <span className="font-medium text-dark-800">{tree.species}</span>
