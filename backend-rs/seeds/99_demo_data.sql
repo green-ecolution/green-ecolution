@@ -328,7 +328,7 @@ INSERT INTO watering_plans (id, date, description, status, distance, total_water
   ('019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, '2025-09-22', 'New watering plan for the west side of the city', 'planned', 63.0, 720.0, ''),
   ('019e3fcb-2a5d-7e82-afe5-626abd96274d'::uuid, '2025-08-03', 'New watering plan for the east side of the city', 'active', 63.0, 600.0, ''),
   ('019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid, '2025-06-12', 'Very important watering plan due to no rainfall', 'finished', 63.0, 1320.0, ''),
-  ('019e3fcb-2a5d-7e3b-a202-44acf2ffcb71'::uuid, '2025-06-10', 'New watering plan for the south side of the city', 'not competed', 63.0, 600.0, ''),
+  ('019e3fcb-2a5d-7e3b-a202-44acf2ffcb71'::uuid, '2025-06-10', 'New watering plan for the south side of the city', 'not completed', 63.0, 600.0, ''),
   ('019e3fcb-2a5d-7e0d-840e-fe831360cfdb'::uuid, '2025-06-04', 'Canceled due to flood', 'canceled', 63.0, 600.0, 'The watering plan was cancelled due to various reasons.');
 
 

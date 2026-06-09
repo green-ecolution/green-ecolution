@@ -30,7 +30,7 @@
                 "active",
                 "canceled",
                 "finished",
-                "not competed",
+                "not completed",
                 "unknown"
               ]
             }

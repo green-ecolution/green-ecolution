@@ -149,7 +149,7 @@ pub enum VehicleType {
 }
 
 /// Lifecycle status of a watering plan.
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 #[schema(example = "planned")]
 pub enum WateringPlanStatus {
@@ -162,7 +162,7 @@ pub enum WateringPlanStatus {
     /// Plan was completed successfully.
     Finished,
     /// Plan was started but could not be completed.
-    #[serde(rename = "not competed")]
+    #[serde(rename = "not completed")]
     NotCompleted,
     /// Plan status could not be determined.
     Unknown,
@@ -339,5 +339,22 @@ impl From<DomainWateringPlanStatus> for WateringPlanStatus {
             DomainWateringPlanStatus::NotCompleted => Self::NotCompleted,
             DomainWateringPlanStatus::Unknown => Self::Unknown,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn watering_plan_status_not_completed_serializes_correctly() {
+        let json = serde_json::to_string(&WateringPlanStatus::NotCompleted).unwrap();
+        assert_eq!(json, "\"not completed\"");
+
+        let back: WateringPlanStatus = serde_json::from_str("\"not completed\"").unwrap();
+        assert_eq!(back, WateringPlanStatus::NotCompleted);
+
+        // Regression guard: the old misspelled value is no longer accepted.
+        assert!(serde_json::from_str::<WateringPlanStatus>("\"not competed\"").is_err());
     }
 }

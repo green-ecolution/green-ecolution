@@ -63,8 +63,8 @@ pub enum WateringPlanStatus {
     Active,
     Canceled,
     Finished,
-    #[serde(rename = "not competed")]
-    #[cfg_attr(feature = "sqlx", sqlx(rename = "not competed"))]
+    #[serde(rename = "not completed")]
+    #[cfg_attr(feature = "sqlx", sqlx(rename = "not completed"))]
     NotCompleted,
     Unknown,
 }
@@ -551,6 +551,14 @@ mod tests {
         assert_eq!(p.refill_count, 3);
         assert_eq!(p.duration, Duration::from_secs(60 * 45));
         assert_eq!(p.gpx_url, Some(url));
+    }
+
+    #[test]
+    fn not_completed_serializes_with_correct_spelling() {
+        let json = serde_json::to_string(&WateringPlanStatus::NotCompleted).unwrap();
+        assert_eq!(json, "\"not completed\"");
+        let back: WateringPlanStatus = serde_json::from_str("\"not completed\"").unwrap();
+        assert_eq!(back, WateringPlanStatus::NotCompleted);
     }
 
     #[test]
