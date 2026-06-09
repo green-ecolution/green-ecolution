@@ -14,7 +14,8 @@ import MapResizeHandler from '@/components/map/MapResizeHandler'
 import MapToolbarBar from '@/components/map/MapToolbarBar'
 import ClusterPanel from '@/components/map/cluster-panel/ClusterPanel'
 import { clusterBoundariesQuery, clusterMarkersQuery } from '@/api/queries'
-import { Loading } from '@green-ecolution/ui'
+import { Drawer, DrawerContent, DrawerTitle, Loading } from '@green-ecolution/ui'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { Suspense, useCallback } from 'react'
 
 const mapSearchParamsSchema = z.object({
@@ -62,6 +63,7 @@ function MapRoot() {
   const matchRoute = useMatchRoute()
   const navigate = useNavigate()
   const search = useSearch({ strict: false })
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const isIndex = !!matchRoute({ to: '/map', fuzzy: false })
   const panelClusterId = isIndex ? search.cluster : undefined
 
@@ -93,8 +95,8 @@ function MapRoot() {
             </Suspense>
           </Map>
         </div>
-        {panelClusterId && (
-          <aside className="fixed inset-x-0 bottom-0 top-[4.563rem] z-[1100] bg-white lg:static lg:inset-auto lg:z-auto lg:w-[28rem] lg:shrink-0 lg:border-l lg:border-dark-100">
+        {isDesktop && panelClusterId && (
+          <aside className="w-[28rem] shrink-0 border-l border-dark-100 bg-white">
             <ClusterPanel
               clusterId={panelClusterId}
               onClose={handleClosePanel}
@@ -103,6 +105,29 @@ function MapRoot() {
           </aside>
         )}
       </div>
+
+      {!isDesktop && (
+        <Drawer
+          open={!!panelClusterId}
+          onOpenChange={(open) => {
+            if (!open) handleClosePanel()
+          }}
+          snapPoints={['16rem', 1]}
+        >
+          <DrawerContent>
+            <DrawerTitle className="sr-only">Baumgruppen-Details</DrawerTitle>
+            {panelClusterId && (
+              <div className="min-h-0 flex-1 overflow-hidden">
+                <ClusterPanel
+                  clusterId={panelClusterId}
+                  onClose={handleClosePanel}
+                  onOpenDashboard={handleOpenDashboard}
+                />
+              </div>
+            )}
+          </DrawerContent>
+        </Drawer>
+      )}
     </div>
   )
 }
