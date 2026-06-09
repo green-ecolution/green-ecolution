@@ -91,3 +91,31 @@ pub(crate) fn sort_watermarks(
     }
     Ok((s[0], s[1], s[2]))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[quickcheck_macros::quickcheck]
+    fn map_kpa_is_monotonic_in_centibar(c: i32, lower: i32, higher: i32) -> bool {
+        map_kpa(c, lower, higher) <= map_kpa(c.saturating_add(1), lower, higher)
+    }
+
+    #[quickcheck_macros::quickcheck]
+    fn map_kpa_is_always_in_range(c: i32, lower: i32, higher: i32) -> bool {
+        (0..=2).contains(&map_kpa(c, lower, higher))
+    }
+
+    #[quickcheck_macros::quickcheck]
+    fn no_moderate_band_never_scores_moderate(c: i32, lower: u16) -> bool {
+        // Real thresholds are non-negative; u16 keeps `lower >= 0 > NO_MODERATE`,
+        // so the Moderate branch (lower <= c < NO_MODERATE) is unreachable.
+        map_kpa(c, lower as i32, NO_MODERATE) != 1
+    }
+
+    #[quickcheck_macros::quickcheck]
+    fn year_three_scores_collapse_moderate(w30: i32, w60: i32, w90: i32) -> bool {
+        let tuning = PhaseTuning::for_year(3).expect("year 3 has a calibration table");
+        tuning.score(w30, w60, w90).iter().all(|&s| s != 1)
+    }
+}
