@@ -373,4 +373,61 @@ mod tests {
         c.mark_watered_at(ts);
         assert_eq!(c.last_watered, Some(ts));
     }
+
+    // --- Property tests for recalculate_watering_status ---
+
+    #[derive(Debug, Clone)]
+    struct StatusSeq(Vec<WateringStatus>);
+
+    impl quickcheck::Arbitrary for StatusSeq {
+        fn arbitrary(g: &mut quickcheck::Gen) -> Self {
+            let choices = [
+                WateringStatus::Good,
+                WateringStatus::Moderate,
+                WateringStatus::Bad,
+                WateringStatus::JustWatered,
+                WateringStatus::Unknown,
+            ];
+            let len = usize::arbitrary(g) % 8; // 0..=7 statuses
+            let seq = (0..len).map(|_| *g.choose(&choices).unwrap()).collect();
+            Self(seq)
+        }
+    }
+
+    #[quickcheck_macros::quickcheck]
+    fn majority_result_is_an_input_or_unknown_when_empty(seq: StatusSeq) -> bool {
+        let mut c = fixed_cluster();
+        c.recalculate_watering_status(&seq.0);
+        let result = c.watering_status();
+        if seq.0.is_empty() {
+            result == WateringStatus::Unknown
+        } else {
+            seq.0.contains(&result)
+        }
+    }
+
+    #[quickcheck_macros::quickcheck]
+    fn majority_is_scale_invariant(seq: StatusSeq) -> bool {
+        let mut a = fixed_cluster();
+        a.recalculate_watering_status(&seq.0);
+
+        let doubled: Vec<_> = seq.0.iter().chain(seq.0.iter()).copied().collect();
+        let mut b = fixed_cluster();
+        b.recalculate_watering_status(&doubled);
+
+        a.watering_status() == b.watering_status()
+    }
+
+    #[quickcheck_macros::quickcheck]
+    fn appending_bad_never_lowers_severity(seq: StatusSeq) -> bool {
+        let mut before = fixed_cluster();
+        before.recalculate_watering_status(&seq.0);
+
+        let mut appended = seq.0.clone();
+        appended.push(WateringStatus::Bad);
+        let mut after = fixed_cluster();
+        after.recalculate_watering_status(&appended);
+
+        super::severity(after.watering_status()) >= super::severity(before.watering_status())
+    }
 }
