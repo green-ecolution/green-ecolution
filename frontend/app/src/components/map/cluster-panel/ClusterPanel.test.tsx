@@ -41,6 +41,13 @@ describe('ClusterPanel', () => {
     expect(screen.getByRole('button', { name: 'Speichern' })).toBeInTheDocument()
   })
 
+  it('shows an error state for an invalid (non-uuid) id without hanging on the spinner', () => {
+    render(<ClusterPanel clusterId="not-a-uuid" onClose={vi.fn()} onOpenDashboard={vi.fn()} />)
+    expect(screen.getByText(/konnte nicht geladen werden/)).toBeInTheDocument()
+    expect(screen.queryByText(/Lade Baumgruppe/)).not.toBeInTheDocument()
+    expect(getCluster).not.toHaveBeenCalled()
+  })
+
   it('calls onClose from the close button', async () => {
     getCluster.mockResolvedValue(cluster)
     const onClose = vi.fn()

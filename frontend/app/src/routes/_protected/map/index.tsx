@@ -105,6 +105,7 @@ function MapView() {
         onSearchTermChange={setSearchTerm}
         statuses={search.wateringStatuses ?? []}
         onToggleStatus={handleToggleStatus}
+        searchDisabled={hasActiveFilter}
         filterSlot={
           <Dialog
             ref={dialogRef}

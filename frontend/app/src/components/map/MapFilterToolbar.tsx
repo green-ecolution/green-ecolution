@@ -11,6 +11,8 @@ interface MapFilterToolbarProps {
   onToggleStatus: (status: WateringStatus) => void
   filterSlot: ReactNode
   createSlot: ReactNode
+  /** Namenssuche greift nur in der Gruppen-Ansicht; bei aktivem Filter zeigt die Karte Bäume. */
+  searchDisabled?: boolean
 }
 
 const QUICK_STATUSES: WateringStatus[] = [WateringStatus.Bad, WateringStatus.Moderate]
@@ -22,6 +24,7 @@ const MapFilterToolbar = ({
   onToggleStatus,
   filterSlot,
   createSlot,
+  searchDisabled = false,
 }: MapFilterToolbarProps) => (
   <div className="absolute left-4 right-4 top-4 z-[1000] flex flex-wrap items-center gap-2 font-nunito-sans lg:right-auto">
     <div className="relative">
@@ -30,7 +33,9 @@ const MapFilterToolbar = ({
         value={searchTerm}
         onChange={(event) => onSearchTermChange(event.target.value)}
         placeholder="Baumgruppe…"
-        className="w-56 rounded-full border-transparent bg-white pl-9 shadow-cards focus-visible:border-green-dark"
+        disabled={searchDisabled}
+        title={searchDisabled ? 'Suche ist bei aktivem Filter nicht verfügbar' : undefined}
+        className="w-56 rounded-full border-transparent bg-white pl-9 shadow-cards focus-visible:border-green-dark disabled:opacity-60"
       />
     </div>
 
