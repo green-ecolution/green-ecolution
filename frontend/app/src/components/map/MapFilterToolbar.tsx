@@ -23,14 +23,14 @@ const MapFilterToolbar = ({
   filterSlot,
   createSlot,
 }: MapFilterToolbarProps) => (
-  <div className="absolute top-4 left-4 right-4 z-[1000] flex flex-wrap items-center gap-3 font-nunito-sans lg:right-auto">
+  <div className="absolute left-4 right-4 top-4 z-[1000] flex flex-wrap items-center gap-2 font-nunito-sans lg:right-auto">
     <div className="relative">
-      <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-dark-400" />
+      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-dark-400" />
       <Input
         value={searchTerm}
         onChange={(event) => onSearchTermChange(event.target.value)}
         placeholder="Baumgruppe…"
-        className="bg-white pl-9 shadow-cards"
+        className="w-56 rounded-full border-transparent bg-white pl-9 shadow-cards focus-visible:border-green-dark"
       />
     </div>
 
@@ -46,17 +46,24 @@ const MapFilterToolbar = ({
             type="button"
             aria-pressed={active}
             onClick={() => onToggleStatus(status)}
-            className={`rounded-full border px-3 py-1.5 text-sm shadow-cards transition-colors ${
-              active ? 'bg-dark-100 border-dark-300' : 'bg-white border-dark-200'
+            className={`flex items-center gap-2 rounded-full border px-3 py-2 text-sm shadow-cards transition-colors ${
+              active
+                ? 'border-dark-300 bg-dark-100 text-dark-900'
+                : 'border-transparent bg-white text-dark-700 hover:bg-dark-50'
             }`}
           >
+            <span
+              className="size-2 rounded-full"
+              style={{ backgroundColor: details.colorHex }}
+              aria-hidden="true"
+            />
             {details.label}
           </button>
         )
       })}
     </div>
 
-    <div className="ml-auto lg:ml-4">{createSlot}</div>
+    <div className="ml-auto lg:ml-2">{createSlot}</div>
   </div>
 )
 

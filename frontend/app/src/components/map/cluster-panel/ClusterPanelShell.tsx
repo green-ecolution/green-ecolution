@@ -35,7 +35,7 @@ const ClusterPanelShell = ({ onClose, children }: ClusterPanelShellProps) => {
       variant="ghost"
       size="icon"
       aria-label="Seitenansicht schließen"
-      className="absolute right-4 top-4 z-10 text-dark-400 hover:text-dark-600"
+      className="text-dark-400 hover:bg-dark-50 hover:text-dark-700"
       onClick={onClose}
     >
       <X />
@@ -49,10 +49,10 @@ const ClusterPanelShell = ({ onClose, children }: ClusterPanelShellProps) => {
         aria-label="Baumgruppen-Details"
         onMouseEnter={disableDragging}
         onMouseLeave={enableDragging}
-        className="absolute z-[1030] top-4 right-4 bottom-4 w-[26rem] max-w-[calc(100%-2rem)] overflow-y-auto rounded-xl bg-white p-6 shadow-xl font-nunito-sans"
+        className="absolute right-4 top-4 bottom-4 z-[1030] flex w-[28rem] max-w-[calc(100%-2rem)] flex-col rounded-2xl border border-dark-100 bg-white font-nunito-sans shadow-xl animate-in fade-in slide-in-from-right-4 duration-200"
       >
-        {closeButton}
-        {children}
+        <div className="flex shrink-0 justify-end px-3 pt-3">{closeButton}</div>
+        <div className="grow overflow-y-auto px-6 pb-7">{children}</div>
       </div>
     )
   }
@@ -61,17 +61,20 @@ const ClusterPanelShell = ({ onClose, children }: ClusterPanelShellProps) => {
     <>
       <div
         onClick={onClose}
-        className="fixed inset-0 z-[1020] bg-dark-900/80"
+        className="fixed inset-0 z-[1020] bg-dark-900/60 backdrop-blur-sm animate-in fade-in"
         aria-hidden="true"
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Baumgruppen-Details"
-        className="fixed z-[1030] inset-x-3 bottom-3 top-24 overflow-y-auto rounded-xl bg-white p-6 shadow-xl font-nunito-sans"
+        className="fixed inset-x-0 bottom-0 top-24 z-[1030] flex flex-col rounded-t-2xl bg-white font-nunito-sans shadow-xl animate-in slide-in-from-bottom-4 duration-200"
       >
-        {closeButton}
-        {children}
+        <div className="flex justify-center pt-3">
+          <span className="h-1.5 w-12 rounded-full bg-dark-200" aria-hidden="true" />
+        </div>
+        <div className="flex shrink-0 justify-end px-3">{closeButton}</div>
+        <div className="grow overflow-y-auto px-5 pb-7">{children}</div>
       </div>
     </>
   )
