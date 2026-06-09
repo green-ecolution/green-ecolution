@@ -17,10 +17,10 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "react-hook-form": "^7.77.0"
+    "react-hook-form": "^7.78.0"
   },
   "devDependencies": {
-    "@types/node": "^25.9.1",
+    "@types/node": "^25.9.2",
     "typescript": "^5.9.3",
     "vitest": "^4.1.8"
   }
