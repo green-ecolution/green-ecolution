@@ -11,6 +11,7 @@ import Map from '@/components/map/Map'
 import MapController from '@/components/map/MapController'
 import ZoomControls from '@/components/map/ZoomControls'
 import MapResizeHandler from '@/components/map/MapResizeHandler'
+import MapBackgroundClick from '@/components/map/MapBackgroundClick'
 import MapToolbarBar from '@/components/map/MapToolbarBar'
 import ClusterPanel from '@/components/map/cluster-panel/ClusterPanel'
 import { clusterBoundariesQuery, clusterMarkersQuery } from '@/api/queries'
@@ -90,6 +91,7 @@ function MapRoot() {
             <MapController />
             <ZoomControls />
             <MapResizeHandler />
+            <MapBackgroundClick onBackgroundClick={handleClosePanel} />
             <Suspense fallback={<Loading className="mt-20 justify-center" label="Lade Karte..." />}>
               <Outlet />
             </Suspense>
@@ -98,6 +100,7 @@ function MapRoot() {
         {isDesktop && panelClusterId && (
           <aside className="w-[28rem] shrink-0 border-l border-dark-100 bg-white">
             <ClusterPanel
+              key={panelClusterId}
               clusterId={panelClusterId}
               onClose={handleClosePanel}
               onOpenDashboard={handleOpenDashboard}
@@ -112,13 +115,15 @@ function MapRoot() {
           onOpenChange={(open) => {
             if (!open) handleClosePanel()
           }}
+          modal={false}
           snapPoints={['260px', 1]}
         >
-          <DrawerContent>
+          <DrawerContent showOverlay={false}>
             <DrawerTitle className="sr-only">Baumgruppen-Details</DrawerTitle>
             {panelClusterId && (
               <div className="min-h-0 flex-1 overflow-hidden">
                 <ClusterPanel
+                  key={panelClusterId}
                   clusterId={panelClusterId}
                   onClose={handleClosePanel}
                   onOpenDashboard={handleOpenDashboard}
