@@ -22,7 +22,7 @@ export const WateringPlanStatus = {
     Active: 'active',
     Canceled: 'canceled',
     Finished: 'finished',
-    NotCompeted: 'not competed',
+    NotCompleted: 'not completed',
     Unknown: 'unknown'
 } as const;
 export type WateringPlanStatus = typeof WateringPlanStatus[keyof typeof WateringPlanStatus];

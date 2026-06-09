@@ -35,7 +35,7 @@ export const WateringPlanStatusOptions: {
     description: 'Der Einsatzplan wurde erfolgreich beendet.',
   },
   {
-    value: WateringPlanStatus.NotCompeted,
+    value: WateringPlanStatus.NotCompleted,
     label: 'Nicht angetreten',
     color: 'outline-dark',
     description: 'Der Einsatzplan wurde nicht angetreten.',
@@ -54,7 +54,7 @@ export const getWateringPlanStatusDetails = (status: WateringPlanStatus) =>
 
 export const showWateringPlanStatusButton = (wateringPlan: WateringPlan): boolean => {
   return (
-    wateringPlan.status !== WateringPlanStatus.NotCompeted &&
+    wateringPlan.status !== WateringPlanStatus.NotCompleted &&
     wateringPlan.status !== WateringPlanStatus.Finished &&
     wateringPlan.status !== WateringPlanStatus.Canceled
   )
