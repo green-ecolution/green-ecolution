@@ -35,18 +35,16 @@ impl WateringExecutionService {
         evaluations: Vec<WateringPlanEvaluation>,
     ) -> Result<WateringPlan, ServiceError> {
         let mut plan = self.reader.by_id(id).await?;
+        let now = Utc::now();
         let events = plan
-            .finish(&evaluations)
+            .finish(&evaluations, now)
             .map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
 
         let cluster_ids: Vec<_> = plan.cluster_ids().to_vec();
-        let now = Utc::now();
 
         self.writer.save(&plan).await?;
         self.writer.save_evaluations(plan.id, &evaluations).await?;
-        self.writer
-            .propagate_last_watered(&cluster_ids, now)
-            .await?;
+        self.writer.propagate_last_watered(&cluster_ids, now).await?;
 
         self.event_bus.publish_all(events).await;
 

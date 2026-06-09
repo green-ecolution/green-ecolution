@@ -249,12 +249,13 @@ impl WateringPlan {
     ///
     /// Requires exactly one [`WateringPlanEvaluation`] per `cluster_id` that
     /// is currently assigned. Missing evaluations result in
-    /// [`WateringPlanError::EvaluationMissingForCluster`]. On success returns
-    /// a [`DomainEvent::WateringPlanFinished`] with the cluster IDs and
-    /// evaluations cloned for the event payload.
+    /// [`WateringPlanError::EvaluationMissingForCluster`]. `finished_at` is
+    /// supplied by the caller (the service) so the aggregate stays clock-pure
+    /// and the event timestamp matches the service's own `last_watered` write.
     pub fn finish(
         &mut self,
         evaluations: &[WateringPlanEvaluation],
+        finished_at: DateTime<Utc>,
     ) -> Result<Vec<DomainEvent>, WateringPlanError> {
         if self.status != WateringPlanStatus::Active {
             return Err(WateringPlanError::InvalidStateTransition {
@@ -271,7 +272,7 @@ impl WateringPlan {
         Ok(vec![DomainEvent::WateringPlanFinished {
             plan_id: self.id,
             cluster_ids: self.cluster_ids.clone(),
-            finished_at: chrono::Utc::now(),
+            finished_at,
             evaluations: evaluations.to_vec(),
         }])
     }
@@ -320,6 +321,10 @@ mod tests {
             provenance: Provenance::default(),
         };
         (plan, [c1, c2])
+    }
+
+    fn finished_ts() -> DateTime<Utc> {
+        Utc.with_ymd_and_hms(2026, 6, 2, 10, 0, 0).unwrap()
     }
 
     #[test]
@@ -390,18 +395,21 @@ mod tests {
     fn cancel_from_finished_rejects() {
         let (mut p, [c1, c2]) = fixed_plan();
         p.start().unwrap();
-        p.finish(&[
-            WateringPlanEvaluation {
-                watering_plan_id: p.id,
-                cluster_id: c1,
-                consumed_water: 100.0,
-            },
-            WateringPlanEvaluation {
-                watering_plan_id: p.id,
-                cluster_id: c2,
-                consumed_water: 50.0,
-            },
-        ])
+        p.finish(
+            &[
+                WateringPlanEvaluation {
+                    watering_plan_id: p.id,
+                    cluster_id: c1,
+                    consumed_water: 100.0,
+                },
+                WateringPlanEvaluation {
+                    watering_plan_id: p.id,
+                    cluster_id: c2,
+                    consumed_water: 50.0,
+                },
+            ],
+            finished_ts(),
+        )
         .unwrap();
         assert_err!(p.cancel("too late".to_string()));
     }
@@ -438,7 +446,7 @@ mod tests {
     #[test]
     fn finish_requires_active() {
         let (mut p, _) = fixed_plan();
-        assert_err!(p.finish(&[]));
+        assert_err!(p.finish(&[], finished_ts()));
     }
 
     #[test]
@@ -450,7 +458,7 @@ mod tests {
             cluster_id: c1,
             consumed_water: 100.0,
         }];
-        let err = p.finish(&only_one).unwrap_err();
+        let err = p.finish(&only_one, finished_ts()).unwrap_err();
         assert!(matches!(
             err,
             WateringPlanError::EvaluationMissingForCluster(id) if id == c2
@@ -473,7 +481,8 @@ mod tests {
                 consumed_water: 50.0,
             },
         ];
-        let events = p.finish(&evals).unwrap();
+        let finished_at = finished_ts();
+        let events = p.finish(&evals, finished_at).unwrap();
         assert_eq!(p.status(), WateringPlanStatus::Finished);
         assert_eq!(events.len(), 1);
         match &events[0] {
@@ -481,11 +490,12 @@ mod tests {
                 plan_id,
                 cluster_ids,
                 evaluations,
-                ..
+                finished_at: emitted_at,
             } => {
                 assert_eq!(*plan_id, p.id);
                 assert_eq!(cluster_ids, &vec![c1, c2]);
                 assert_eq!(evaluations.len(), 2);
+                assert_eq!(*emitted_at, finished_at);
             }
             other => panic!("expected WateringPlanFinished, got {other:?}"),
         }
