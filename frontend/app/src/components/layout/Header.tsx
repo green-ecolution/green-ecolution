@@ -11,13 +11,6 @@ function Header() {
   const isStartPage = location.pathname === '/'
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
 
-  const openSidebar = useCallback(() => {
-    setOpen(true)
-    if (!isLargeScreen) {
-      document.body.classList.add('overflow-y-hidden')
-    }
-  }, [isLargeScreen])
-
   const closeSidebar = useCallback(() => {
     setOpen(false)
     if (!isLargeScreen) {
@@ -36,7 +29,7 @@ function Header() {
   }, [isLargeScreen])
 
   return (
-    <header className="relative z-10 bg-white lg:pl-20">
+    <header className="relative z-10 bg-white lg:pl-[16rem]">
       <div className="container text-sm border-b border-dark-50 py-4 flex justify-between items-center">
         {!isLargeScreen && (
           <Button
@@ -57,7 +50,7 @@ function Header() {
         <ProfileButton />
       </div>
 
-      <Navigation isOpen={open} openSidebar={openSidebar} closeSidebar={closeSidebar} />
+      <Navigation isOpen={open} closeSidebar={closeSidebar} />
     </header>
   )
 }

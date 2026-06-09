@@ -27,7 +27,7 @@ function Footer() {
   ]
 
   return (
-    <footer className={`bg-white lg:pl-20 mt-16 ${isMapPage ? 'hidden' : ''}`}>
+    <footer className={`bg-white lg:pl-[16rem] mt-16 ${isMapPage ? 'hidden' : ''}`}>
       <div className="container text-sm border-t border-dark-50 py-4 lg:flex lg:justify-between lg:items-center">
         <p className="text-dark-400 mb-5 lg:mb-0">
           Smartes Grünflächenmanagement - Green Ecolution {version}

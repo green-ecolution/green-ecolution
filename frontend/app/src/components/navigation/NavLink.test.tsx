@@ -23,8 +23,8 @@ describe('NavLink', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    // Suppress React warnings about navIsOpen and closeSidebar props on DOM elements
-    // These props are intentionally spread to the Link component and filtered internally
+    // Suppress React warnings about closeSidebar prop on DOM elements;
+    // it is destructured out before spreading the rest onto Link.
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(noop)
   })
 
@@ -48,7 +48,6 @@ describe('NavLink', () => {
             label="Einstellungen"
             icon={<Settings data-testid="settings-icon" className="w-5 h-5" />}
             to="/settings"
-            navIsOpen={true}
             closeSidebar={mockCloseSidebar}
           />
         </ul>
@@ -91,7 +90,6 @@ describe('NavLink', () => {
             label="Einstellungen"
             icon={<Settings className="w-5 h-5" />}
             to="/settings"
-            navIsOpen={true}
             closeSidebar={mockCloseSidebar}
           />
         </ul>
@@ -139,7 +137,6 @@ describe('NavLink', () => {
             label="Einstellungen"
             icon={<Settings className="w-5 h-5" />}
             to="/settings"
-            navIsOpen={true}
             closeSidebar={mockCloseSidebar}
           />
         </ul>
@@ -187,7 +184,6 @@ describe('NavLink', () => {
               label="Ausloggen"
               icon={<Settings className="w-5 h-5" />}
               to="/logout"
-              navIsOpen={true}
               closeSidebar={mockCloseSidebar}
               preload={false}
             />
@@ -241,7 +237,6 @@ describe('NavLink', () => {
               label="Anmelden"
               icon={<Settings className="w-5 h-5" />}
               to="/login"
-              navIsOpen={true}
               closeSidebar={mockCloseSidebar}
               preload={false}
             />
@@ -295,7 +290,6 @@ describe('NavLink', () => {
               label="Einstellungen"
               icon={<Settings className="w-5 h-5" />}
               to="/settings"
-              navIsOpen={true}
               closeSidebar={mockCloseSidebar}
               preload="intent"
             />
@@ -350,7 +344,6 @@ describe('NavLink', () => {
               label="Ausloggen"
               icon={<LogOut className="w-5 h-5" />}
               to="/logout"
-              navIsOpen={true}
               closeSidebar={mockCloseSidebar}
               preload={false}
             />
@@ -387,7 +380,7 @@ describe('NavLink', () => {
   })
 
   describe('Label visibility', () => {
-    it('shows label when navIsOpen is true', async () => {
+    it('renders the label inline next to the icon', async () => {
       const rootRoute = createRootRoute({
         component: () => <Outlet />,
       })
@@ -401,7 +394,6 @@ describe('NavLink', () => {
               label="Einstellungen"
               icon={<Settings className="w-5 h-5" />}
               to="/settings"
-              navIsOpen={true}
               closeSidebar={mockCloseSidebar}
             />
           </ul>
@@ -425,49 +417,7 @@ describe('NavLink', () => {
       await waitFor(() => {
         const label = screen.getByText('Einstellungen')
         expect(label).toBeInTheDocument()
-        expect(label).toHaveClass('lg:opacity-100', 'lg:block')
-      })
-    })
-
-    it('hides label when navIsOpen is false', async () => {
-      const rootRoute = createRootRoute({
-        component: () => <Outlet />,
-      })
-
-      const indexRoute = createRoute({
-        getParentRoute: () => rootRoute,
-        path: '/',
-        component: () => (
-          <ul>
-            <NavLink
-              label="Einstellungen"
-              icon={<Settings className="w-5 h-5" />}
-              to="/settings"
-              navIsOpen={false}
-              closeSidebar={mockCloseSidebar}
-            />
-          </ul>
-        ),
-      })
-
-      const settingsRoute = createRoute({
-        getParentRoute: () => rootRoute,
-        path: '/settings',
-        component: () => <div data-testid="settings-page">Settings</div>,
-      })
-
-      const routeTree = rootRoute.addChildren([indexRoute, settingsRoute])
-      const router = createRouter({
-        routeTree,
-        history: createMemoryHistory({ initialEntries: ['/'] }),
-      })
-
-      render(<RouterProvider router={router} />)
-
-      await waitFor(() => {
-        const label = screen.getByText('Einstellungen')
-        expect(label).toBeInTheDocument()
-        expect(label).toHaveClass('lg:opacity-0', 'lg:hidden')
+        expect(label).toBeVisible()
       })
     })
   })
