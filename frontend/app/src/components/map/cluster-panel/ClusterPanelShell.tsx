@@ -18,7 +18,11 @@ const ClusterPanelShell = ({ onClose, children }: ClusterPanelShellProps) => {
     return () => document.removeEventListener('keydown', handleEscape)
   }, [handleEscape])
 
-  return <div className="flex h-full flex-col overflow-y-auto p-6 font-nunito-sans">{children}</div>
+  return (
+    <div className="flex h-full flex-col overflow-y-auto px-6 pb-6 pt-4 font-nunito-sans">
+      {children}
+    </div>
+  )
 }
 
 export default ClusterPanelShell

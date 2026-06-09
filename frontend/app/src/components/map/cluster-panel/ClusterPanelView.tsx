@@ -54,7 +54,7 @@ const ClusterPanelView = ({
     : 'Keine Angabe'
 
   return (
-    <div className="flex flex-col gap-y-7">
+    <div className="flex flex-col gap-y-5">
       <header className="flex items-center justify-between gap-3">
         <Badge variant={FILLED_BADGE[status.color] ?? 'muted'} size="lg" className="gap-1.5">
           <span
@@ -78,7 +78,7 @@ const ClusterPanelView = ({
             variant="ghost"
             size="icon"
             aria-label="Seitenansicht schließen"
-            className="rounded-full bg-dark-50 text-dark-500 hover:bg-dark-100 hover:text-dark-700"
+            className="hidden rounded-full bg-dark-50 text-dark-500 hover:bg-dark-100 hover:text-dark-700 lg:flex"
             onClick={onClose}
           >
             <X />
@@ -95,6 +95,11 @@ const ClusterPanelView = ({
           {species && ` · ${species}`}
         </p>
       </div>
+
+      <Button onClick={onOpenDashboard} className="group w-full lg:order-last">
+        Zum Dashboard
+        <MoveRight className="icon-arrow-animate" />
+      </Button>
 
       <div className="grid grid-cols-2 gap-4">
         <StatusCard
@@ -149,11 +154,6 @@ const ClusterPanelView = ({
           </button>
         )}
       </section>
-
-      <Button onClick={onOpenDashboard} className="group w-full">
-        Zum Dashboard
-        <MoveRight className="icon-arrow-animate" />
-      </Button>
     </div>
   )
 }

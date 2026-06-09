@@ -44,7 +44,7 @@ const ClusterPanelEdit = ({ treecluster, onCancel, onClose, onSaved }: ClusterPa
           variant="ghost"
           size="icon"
           aria-label="Seitenansicht schließen"
-          className="rounded-full bg-dark-50 text-dark-500 hover:bg-dark-100 hover:text-dark-700"
+          className="hidden rounded-full bg-dark-50 text-dark-500 hover:bg-dark-100 hover:text-dark-700 lg:flex"
           onClick={onClose}
         >
           <X />
