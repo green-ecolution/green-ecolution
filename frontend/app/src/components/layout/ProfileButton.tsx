@@ -24,7 +24,6 @@ function ProfileButton() {
       label="Ihr Profil"
       icon={<Settings className="w-5 h-5" />}
       to="/profile"
-      navIsOpen={true}
       closeSidebar={() => toggleOverlay(false)}
     />,
     <NavLink
@@ -33,7 +32,6 @@ function ProfileButton() {
       icon={<LogOut className="w-5 h-5" />}
       to="/logout"
       preload={false}
-      navIsOpen={true}
       closeSidebar={() => toggleOverlay(false)}
     />,
   ]
@@ -45,7 +43,6 @@ function ProfileButton() {
       icon={<LogIn className="w-5 h-5" />}
       to="/login"
       preload={false}
-      navIsOpen={true}
       closeSidebar={() => toggleOverlay(false)}
     />,
   ]

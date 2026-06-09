@@ -12,7 +12,7 @@ const NavHeader: React.FC<NavHeader> = ({ closeSidebar }) => {
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
 
   return (
-    <div className="relative mb-10 flex items-center justify-between">
+    <div className="relative mb-6 flex items-start justify-between">
       <Link
         to="/dashboard"
         className="block transition-all ease-in-out duration-300 hover:opacity-75"
@@ -20,14 +20,9 @@ const NavHeader: React.FC<NavHeader> = ({ closeSidebar }) => {
         onClick={closeSidebar}
       >
         <img
-          className="h-4 lg:hidden"
-          src="/images/logo/logo-large-white.svg"
-          alt="Logo von Green Ecolution"
-        />
-        <img
-          className="hidden w-7 mx-2.5 lg:block"
-          src="/images/logo/logo-icon-white.svg"
-          alt="Logo von Green Ecolution"
+          className="h-9 w-auto"
+          src="/images/logo/logo-with-text-white.svg"
+          alt="Logo von Green Ecolution — Smartes Grünflächenmanagement"
         />
       </Link>
       {!isLargeScreen && (

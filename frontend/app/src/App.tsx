@@ -11,7 +11,7 @@ function App() {
   return (
     <>
       <Header />
-      <main className="flex-1 lg:pl-20">
+      <main className="flex-1 lg:pl-[16rem]">
         <Outlet />
       </main>
       <Footer />

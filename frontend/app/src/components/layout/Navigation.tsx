@@ -23,7 +23,6 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface NavigationProps {
   isOpen: boolean
-  openSidebar: () => void
   closeSidebar: () => void
 }
 
@@ -55,17 +54,27 @@ const publicNavData: NavSectionData[] = [
   },
 ]
 
-const Navigation: React.FC<NavigationProps> = ({ isOpen, openSidebar, closeSidebar }) => {
+// Settings and logout are pinned to the bottom of the sidebar, separate from
+// the navigation sections.
+const footerNavData: NavLinkData[] = [
+  {
+    key: 'nav-settings',
+    label: 'Einstellungen',
+    icon: <Settings className="w-5 h-5" />,
+    to: '/settings',
+  },
+  {
+    key: 'nav-logout',
+    label: 'Abmelden',
+    icon: <LogOut className="w-5 h-5" />,
+    to: '/logout',
+    preload: false,
+  },
+]
+
+const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
   const { isAuthenticated: isLoggedIn } = useAuthSession()
-
-  const handleMouseOver = useCallback(() => {
-    if (isLargeScreen) openSidebar()
-  }, [isLargeScreen, openSidebar])
-
-  const handleMouseOut = useCallback(() => {
-    if (isLargeScreen) closeSidebar()
-  }, [isLargeScreen, closeSidebar])
 
   const handleNavLinkClick = useCallback(() => {
     if (!isLargeScreen) closeSidebar()
@@ -138,12 +147,6 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, openSidebar, closeSideb
             icon: <PieChart className="w-5 h-5" />,
             to: '/evaluations',
           },
-          {
-            key: 'nav-more-settings',
-            label: 'Einstellungen',
-            icon: <Settings className="w-5 h-5" />,
-            to: '/settings',
-          },
           // Hide the debug navigation entry in the production build
           ...(process.env.NODE_ENV !== 'production'
             ? [
@@ -155,13 +158,6 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, openSidebar, closeSideb
                 } as NavLinkData,
               ]
             : []),
-          {
-            key: 'nav-more-logout',
-            label: 'Ausloggen',
-            icon: <LogOut className="w-5 h-5" />,
-            to: '/logout',
-            preload: false,
-          },
         ],
       },
     ],
@@ -174,24 +170,24 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, openSidebar, closeSideb
     <nav
       id="main-navigation"
       aria-label="Hauptnavigation"
-      onMouseLeave={handleMouseOut}
-      onMouseEnter={handleMouseOver}
-      className={`fixed inset-0 z-50 bg-dark w-screen overflow-hidden h-screen ease-in-out duration-300 transition-[width,left,visibility]
-        ${isOpen ? 'visible block left-0 lg:w-[17rem] lg:rounded-r-xl' : 'invisible -left-full lg:visible lg:w-[5rem] lg:left-0'}`}
+      className={`fixed inset-0 z-50 bg-dark w-screen h-screen flex flex-col ease-in-out duration-300 transition-[left,visibility]
+        lg:left-0 lg:w-[16rem] lg:visible
+        ${isOpen ? 'visible left-0' : 'invisible -left-full'}`}
     >
-      <div className="relative px-4 py-5 h-full overflow-y-auto no-scrollbar">
+      <div className="shrink-0 px-4 pt-5">
         <NavHeader closeSidebar={closeSidebar} />
+      </div>
 
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto no-scrollbar px-4">
         {navigationData.map((section) => (
           <React.Fragment key={section.id}>
-            <NavHeadline label={section.headline} navIsOpen={isOpen} />
-            <ul className="mb-10">
+            <NavHeadline label={section.headline} />
+            <ul className="mb-6 space-y-1">
               {section.links.map(({ key, label, icon, ...linkProps }) => (
                 <NavLink
                   key={key}
                   label={label}
                   icon={icon}
-                  navIsOpen={isOpen}
                   closeSidebar={handleNavLinkClick}
                   {...linkProps}
                 />
@@ -199,6 +195,24 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, openSidebar, closeSideb
             </ul>
           </React.Fragment>
         ))}
+
+        {/* Settings + logout: pinned to the bottom on desktop (lg:mt-auto),
+            inline at the end of the scrollable list on the mobile overlay. */}
+        {isLoggedIn && (
+          <div className="pb-4 lg:mt-auto lg:border-t lg:border-dark-400/30 lg:pt-4">
+            <ul className="space-y-1">
+              {footerNavData.map(({ key, label, icon, ...linkProps }) => (
+                <NavLink
+                  key={key}
+                  label={label}
+                  icon={icon}
+                  closeSidebar={handleNavLinkClick}
+                  {...linkProps}
+                />
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </nav>
   )

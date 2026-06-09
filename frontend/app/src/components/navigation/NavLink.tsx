@@ -5,19 +5,11 @@ interface NavLinkProps extends LinkProps {
   label: string
   icon: ReactNode
   isExternalLink?: boolean
-  navIsOpen?: boolean
   closeSidebar: () => void
 }
 
 const NavLink = (props: NavLinkProps) => {
-  const {
-    label,
-    icon,
-    isExternalLink = false,
-    navIsOpen = false,
-    closeSidebar,
-    ...linkProps
-  } = props
+  const { label, icon, isExternalLink = false, closeSidebar, ...linkProps } = props
 
   return (
     <li className="relative">
@@ -32,16 +24,11 @@ const NavLink = (props: NavLinkProps) => {
           className: 'border-transparent',
         }}
         onClick={closeSidebar}
-        className="text-light border text-base block p-3.5 rounded-2xl transition-all ease-in-out duration-300 hover:bg-green-light/20 hover:text-green-light-200"
+        className="flex items-center gap-x-3 text-light border text-sm px-3 py-2.5 rounded-xl transition-all ease-in-out duration-300 hover:bg-green-light/20 hover:text-green-light-200"
         {...linkProps}
       >
-        {icon}
-        <span
-          className={`font-lato font-semibold tracking-[0.1] transition-all ease-in-out duration-300 absolute left-14 top-3
-            ${navIsOpen ? 'lg:opacity-100 lg:block' : 'lg:opacity-0 lg:hidden'}`}
-        >
-          {label}
-        </span>
+        <span className="shrink-0">{icon}</span>
+        <span className="font-lato font-semibold tracking-[0.1]">{label}</span>
       </Link>
     </li>
   )
