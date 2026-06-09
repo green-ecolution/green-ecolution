@@ -94,7 +94,7 @@ function MapRoot() {
           </Map>
         </div>
         {panelClusterId && (
-          <aside className="fixed inset-0 z-[1100] bg-white lg:static lg:inset-auto lg:z-auto lg:w-[28rem] lg:shrink-0 lg:border-l lg:border-dark-100">
+          <aside className="fixed inset-x-0 bottom-0 top-[4.563rem] z-[1100] bg-white lg:static lg:inset-auto lg:z-auto lg:w-[28rem] lg:shrink-0 lg:border-l lg:border-dark-100">
             <ClusterPanel
               clusterId={panelClusterId}
               onClose={handleClosePanel}

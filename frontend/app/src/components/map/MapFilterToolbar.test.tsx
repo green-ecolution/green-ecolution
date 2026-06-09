@@ -26,15 +26,17 @@ describe('MapFilterToolbar', () => {
     expect(onSearchTermChange).toHaveBeenCalled()
   })
 
-  it('toggles a status chip', async () => {
+  it('toggles a status chip after expanding the controls', async () => {
     const onToggleStatus = vi.fn()
     renderToolbar({ onToggleStatus })
+    await userEvent.click(screen.getByRole('button', { name: 'Filter und Aktionen' }))
     await userEvent.click(screen.getByRole('button', { name: 'Sehr trocken' }))
     expect(onToggleStatus).toHaveBeenCalledWith(WateringStatus.Bad)
   })
 
-  it('renders the filter and create slots', () => {
+  it('reveals the filter and create slots behind the mobile toggle', async () => {
     renderToolbar()
+    await userEvent.click(screen.getByRole('button', { name: 'Filter und Aktionen' }))
     expect(screen.getByRole('button', { name: 'Filter' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Gruppe anlegen' })).toBeInTheDocument()
   })

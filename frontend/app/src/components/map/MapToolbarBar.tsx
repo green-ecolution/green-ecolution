@@ -1,12 +1,12 @@
 import { useCallback } from 'react'
-import { useNavigate, useSearch } from '@tanstack/react-router'
+import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { WateringStatus } from '@green-ecolution/backend-client'
+import { Button } from '@green-ecolution/ui'
 import useStore from '@/store/store'
 import FilterProvider from '@/context/FilterContext'
 import Dialog from '@/components/general/filter/Dialog'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
-import ButtonLink from '@/components/general/links/ButtonLink'
 import MapFilterToolbar from './MapFilterToolbar'
 import MapButtons from './MapButtons'
 
@@ -44,9 +44,14 @@ const MapToolbarBar = () => {
             </Dialog>
           }
           createSlot={
-            <div className="ml-auto flex items-center gap-2">
+            <div className="flex items-center gap-2 lg:ml-auto">
               <MapButtons />
-              <ButtonLink icon={Plus} label="Gruppe anlegen" link={{ to: '/treecluster/new' }} />
+              <Button asChild>
+                <Link to="/treecluster/new">
+                  <span className="hidden sm:inline">Gruppe anlegen</span>
+                  <Plus />
+                </Link>
+              </Button>
             </div>
           }
         />
