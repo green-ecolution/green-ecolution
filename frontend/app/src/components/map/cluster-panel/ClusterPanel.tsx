@@ -10,9 +10,10 @@ interface ClusterPanelProps {
   clusterId: string
   onClose: () => void
   onOpenDashboard: () => void
+  onExpand?: () => void
 }
 
-const ClusterPanel = ({ clusterId, onClose, onOpenDashboard }: ClusterPanelProps) => {
+const ClusterPanel = ({ clusterId, onClose, onOpenDashboard, onExpand }: ClusterPanelProps) => {
   const [mode, setMode] = useState<'view' | 'edit'>('view')
   const { data, isError } = useQuery(treeClusterIdQuery(clusterId))
   const failed = !isValidUuid(clusterId) || isError
@@ -23,7 +24,10 @@ const ClusterPanel = ({ clusterId, onClose, onOpenDashboard }: ClusterPanelProps
         mode === 'view' ? (
           <ClusterPanelView
             treecluster={data}
-            onEdit={() => setMode('edit')}
+            onEdit={() => {
+              setMode('edit')
+              onExpand?.()
+            }}
             onClose={onClose}
             onOpenDashboard={onOpenDashboard}
           />

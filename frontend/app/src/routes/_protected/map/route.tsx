@@ -17,7 +17,7 @@ import ClusterPanel from '@/components/map/cluster-panel/ClusterPanel'
 import { clusterBoundariesQuery, clusterMarkersQuery } from '@/api/queries'
 import { Drawer, DrawerContent, DrawerTitle, Loading } from '@green-ecolution/ui'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
-import { Suspense, useCallback } from 'react'
+import { Suspense, useCallback, useState } from 'react'
 
 const mapSearchParamsSchema = z.object({
   selected: z.string().optional(),
@@ -68,11 +68,16 @@ function MapRoot() {
   const isIndex = !!matchRoute({ to: '/map', fuzzy: false })
   const panelClusterId = isIndex ? search.cluster : undefined
 
+  const [snapPoint, setSnapPoint] = useState<number | string | null>('260px')
+
   const handleClosePanel = useCallback(() => {
+    setSnapPoint('260px')
     navigate({ to: '/map', search: (prev) => ({ ...prev, cluster: undefined }) }).catch((error) =>
       console.error('Navigation failed:', error),
     )
   }, [navigate])
+
+  const handleExpandPanel = useCallback(() => setSnapPoint(1), [])
 
   const handleOpenDashboard = useCallback(() => {
     if (!panelClusterId) return
@@ -117,6 +122,8 @@ function MapRoot() {
           }}
           modal={false}
           snapPoints={['260px', 1]}
+          activeSnapPoint={snapPoint}
+          setActiveSnapPoint={setSnapPoint}
         >
           <DrawerContent showOverlay={false}>
             <DrawerTitle className="sr-only">Baumgruppen-Details</DrawerTitle>
@@ -127,6 +134,7 @@ function MapRoot() {
                   clusterId={panelClusterId}
                   onClose={handleClosePanel}
                   onOpenDashboard={handleOpenDashboard}
+                  onExpand={handleExpandPanel}
                 />
               </div>
             )}
