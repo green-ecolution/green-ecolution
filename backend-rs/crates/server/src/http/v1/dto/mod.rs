@@ -149,7 +149,9 @@ pub enum VehicleType {
 }
 
 /// Lifecycle status of a watering plan.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, utoipa::ToSchema,
+)]
 #[serde(rename_all = "snake_case")]
 #[schema(example = "planned")]
 pub enum WateringPlanStatus {

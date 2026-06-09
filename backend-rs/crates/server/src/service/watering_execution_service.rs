@@ -44,7 +44,9 @@ impl WateringExecutionService {
 
         self.writer.save(&plan).await?;
         self.writer.save_evaluations(plan.id, &evaluations).await?;
-        self.writer.propagate_last_watered(&cluster_ids, now).await?;
+        self.writer
+            .propagate_last_watered(&cluster_ids, now)
+            .await?;
 
         self.event_bus.publish_all(events).await;
 
