@@ -15,6 +15,7 @@ interface WithTreesAndClustersProps {
   activeFilter?: boolean
   hasHighlightedTree?: string
   hasHighlightedCluster?: string
+  nameFilter?: string
 }
 
 export const WithTreesAndClusters = ({
@@ -25,6 +26,7 @@ export const WithTreesAndClusters = ({
   activeFilter = false,
   hasHighlightedTree,
   hasHighlightedCluster,
+  nameFilter,
 }: WithTreesAndClustersProps) => {
   const zoom = useStore((state) => state.mapZoom)
   const deferredZoom = useDeferredValue(zoom)
@@ -45,6 +47,7 @@ export const WithTreesAndClusters = ({
         <WithAllClusters
           onClick={onClickCluster}
           highlightedClusters={hasHighlightedCluster ? [hasHighlightedCluster] : []}
+          nameFilter={nameFilter}
         />
       )}
     </>

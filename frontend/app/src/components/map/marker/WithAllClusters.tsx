@@ -5,6 +5,7 @@ import MarkerList from './MarkerList'
 import { ClusterIcon } from '../markerIcons'
 import { getStatusColor } from '../utils'
 import { memo, useCallback, useDeferredValue, useMemo } from 'react'
+import { filterMarkersByName } from '../cluster-panel/clusterPanelUtils'
 
 const defaultHighlighted: string[] = []
 const defaultDisabled: string[] = []
@@ -19,6 +20,7 @@ export interface WithAllClustersProps {
   onClick?: (cluster: ClusterMarkerResponse) => void
   highlightedClusters?: string[]
   disabledClusters?: string[]
+  nameFilter?: string
 }
 
 const WithAllClusters = memo(
@@ -26,9 +28,14 @@ const WithAllClusters = memo(
     onClick,
     highlightedClusters = defaultHighlighted,
     disabledClusters = defaultDisabled,
+    nameFilter,
   }: WithAllClustersProps) => {
     const { data } = useSuspenseQuery(clusterMarkersQuery())
-    const deferredData = useDeferredValue(data.data)
+    const filtered = useMemo(
+      () => filterMarkersByName(data.data, nameFilter ?? ''),
+      [data.data, nameFilter],
+    )
+    const deferredData = useDeferredValue(filtered)
 
     const highlightedSet = useMemo(() => new Set(highlightedClusters), [highlightedClusters])
     const disabledSet = useMemo(() => new Set(disabledClusters), [disabledClusters])
