@@ -15,9 +15,6 @@ interface ClusterPanelProps {
 const ClusterPanel = ({ clusterId, onClose, onOpenDashboard }: ClusterPanelProps) => {
   const [mode, setMode] = useState<'view' | 'edit'>('view')
   const { data, isError } = useQuery(treeClusterIdQuery(clusterId))
-
-  // An invalid id leaves the query disabled (never resolves), so treat it as a
-  // load failure instead of an endless spinner.
   const failed = !isValidUuid(clusterId) || isError
 
   return (
@@ -27,12 +24,14 @@ const ClusterPanel = ({ clusterId, onClose, onOpenDashboard }: ClusterPanelProps
           <ClusterPanelView
             treecluster={data}
             onEdit={() => setMode('edit')}
+            onClose={onClose}
             onOpenDashboard={onOpenDashboard}
           />
         ) : (
           <ClusterPanelEdit
             treecluster={data}
             onCancel={() => setMode('view')}
+            onClose={onClose}
             onSaved={() => setMode('view')}
           />
         )

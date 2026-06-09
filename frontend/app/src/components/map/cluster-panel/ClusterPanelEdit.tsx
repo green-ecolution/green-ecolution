@@ -1,4 +1,5 @@
 import { Controller } from 'react-hook-form'
+import { X } from 'lucide-react'
 import {
   Button,
   FormField,
@@ -17,10 +18,11 @@ import { useClusterPanelEdit } from './useClusterPanelEdit'
 interface ClusterPanelEditProps {
   treecluster: TreeClusterResponse
   onCancel: () => void
+  onClose: () => void
   onSaved: () => void
 }
 
-const ClusterPanelEdit = ({ treecluster, onCancel, onSaved }: ClusterPanelEditProps) => {
+const ClusterPanelEdit = ({ treecluster, onCancel, onClose, onSaved }: ClusterPanelEditProps) => {
   const { form, onSubmit, isPending } = useClusterPanelEdit(treecluster, { onSaved })
   const {
     register,
@@ -36,6 +38,19 @@ const ClusterPanelEdit = ({ treecluster, onCancel, onSaved }: ClusterPanelEditPr
         void onSubmit()
       }}
     >
+      <header className="flex items-center justify-between gap-3">
+        <h2 className="font-lato text-xl font-bold text-dark-900">Gruppe bearbeiten</h2>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Seitenansicht schließen"
+          className="rounded-full bg-dark-50 text-dark-500 hover:bg-dark-100 hover:text-dark-700"
+          onClick={onClose}
+        >
+          <X />
+        </Button>
+      </header>
+
       <FormField label="Name" required error={errors.name?.message} {...register('name')} />
       <FormField label="Adresse" required error={errors.address?.message} {...register('address')} />
 
