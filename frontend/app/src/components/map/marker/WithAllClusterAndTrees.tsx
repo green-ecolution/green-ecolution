@@ -10,6 +10,7 @@ const defaultSelectedTrees: string[] = []
 interface WithTreesAndClustersProps {
   onClickTree?: (tree: TreeMarkerResponse | Tree) => void
   onClickCluster?: (cluster: ClusterMarkerResponse | TreeCluster) => void
+  onClickBoundary?: (clusterId: string) => void
   selectedTrees?: string[]
   zoomThreshold?: number
   activeFilter?: boolean
@@ -21,6 +22,7 @@ interface WithTreesAndClustersProps {
 export const WithTreesAndClusters = ({
   onClickTree,
   onClickCluster,
+  onClickBoundary,
   selectedTrees = defaultSelectedTrees,
   zoomThreshold = 17,
   activeFilter = false,
@@ -41,7 +43,7 @@ export const WithTreesAndClusters = ({
             selectedTrees={selectedTrees}
             hasHighlightedTree={hasHighlightedTree}
           />
-          <WithAllClusterBoundaries />
+          <WithAllClusterBoundaries onClick={onClickBoundary} />
         </>
       ) : (
         <WithAllClusters

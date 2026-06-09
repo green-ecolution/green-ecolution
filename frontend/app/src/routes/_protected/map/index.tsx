@@ -38,6 +38,15 @@ function MapView() {
     [navigate],
   )
 
+  const handleBoundaryClick = useCallback(
+    (clusterId: string) => {
+      navigate({ to: '/map', search: (prev) => ({ ...prev, cluster: clusterId }) }).catch((error) =>
+        console.error('Navigation failed:', error),
+      )
+    },
+    [navigate],
+  )
+
   return hasActiveFilter ? (
     <WithAllClusters
       onClick={handleClusterClick}
@@ -49,6 +58,7 @@ function MapView() {
     <WithTreesAndClusters
       onClickTree={handleTreeClick}
       onClickCluster={handleClusterClick}
+      onClickBoundary={handleBoundaryClick}
       hasHighlightedTree={search.tree}
       hasHighlightedCluster={search.cluster}
       nameFilter={searchTerm}
