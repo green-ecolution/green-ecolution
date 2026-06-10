@@ -50,8 +50,8 @@ struct Args {
     provider: String,
 }
 
-/// Raw row read from the cadastre. All casts happen in `SOURCE_QUERY` so the
-/// external schema's exact column types (int vs text) don't matter here.
+/// All casts happen in `SOURCE_QUERY`, so the external schema's exact column
+/// types (int vs text) are irrelevant here.
 struct KatasterRow {
     objectid: i32,
     baumnummer: Option<String>,
@@ -61,8 +61,8 @@ struct KatasterRow {
     hochwert: Option<f64>,
 }
 
-/// Target-shaped fields ready to upsert. Holds raw GK3 coordinates; the SQL
-/// reprojects them via ST_Transform.
+/// Coordinates are GK3 (EPSG:31467); the upsert SQL reprojects them to 4326
+/// via ST_Transform, so they stay unprojected in Rust.
 struct TreeImport {
     number: String,
     species: String,
@@ -72,8 +72,8 @@ struct TreeImport {
     additional_info: Value,
 }
 
-/// Pure mapping cadastre row → import. Returns `None` when the point is
-/// unusable (NULL or zero coordinates) so the caller can skip it.
+/// Returns `None` when either coordinate is NULL or zero — the caller must
+/// skip such rows since they cannot be placed.
 fn map_row(row: &KatasterRow, provider: &str) -> Option<TreeImport> {
     let (rechtswert, hochwert) = match (row.rechtswert, row.hochwert) {
         (Some(r), Some(h)) if r != 0.0 && h != 0.0 => (r, h),
@@ -96,11 +96,13 @@ fn map_row(row: &KatasterRow, provider: &str) -> Option<TreeImport> {
         .map(str::to_owned)
         .unwrap_or_else(|| "Unbekannt".to_string());
 
+    // Provenance snapshot of the raw source values; cleaned values live in the
+    // top-level `number`/`species` columns.
     let additional_info = json!({
         "kataster_objectid": row.objectid,
         "source": provider,
         "gattung": row.gattung,
-        "baumnummer": number,
+        "baumnummer": row.baumnummer,
     });
 
     Some(TreeImport {
@@ -184,6 +186,10 @@ async fn main() -> Result<()> {
         .await
         .context("querying metadata_baum.baumkataster")?;
 
+    // One transaction for the whole run: a crash mid-import rolls everything
+    // back so the cadastre stays the consistent source of truth. The young-tree
+    // filter keeps the set small enough that the held transaction is not a
+    // concern.
     let mut tx = target.begin().await.context("begin target transaction")?;
     let (mut scanned, mut inserted, mut updated, mut skipped) = (0usize, 0usize, 0usize, 0usize);
 
