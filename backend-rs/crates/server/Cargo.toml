@@ -28,6 +28,10 @@ name = "migrate"
 path = "src/bin/dump-openapi.rs"
 name = "dump-openapi"
 
+[[bin]]
+path = "src/bin/import_kataster.rs"
+name = "import-kataster"
+
 [[test]]
 name = "api"
 path = "test/api/main.rs"
