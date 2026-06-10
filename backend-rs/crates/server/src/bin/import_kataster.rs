@@ -1,14 +1,36 @@
 use anyhow::{Context, Result};
 use chrono::{Datelike, Utc};
 use serde_json::{Value, json};
-#[allow(unused_imports)]
 use server::configuration::get_configuration;
 use sqlx::{PgPool, Row};
 use std::env;
-#[allow(unused_imports)]
 use uuid::Uuid;
 
 const DEFAULT_PROVIDER: &str = "tbz-baumkataster";
+
+const UPDATE_SQL: &str = r#"
+    UPDATE trees SET
+        number = $1,
+        species = $2,
+        planting_year = $3,
+        latitude = ST_Y(g.geom),
+        longitude = ST_X(g.geom),
+        geometry = g.geom,
+        provider = $4,
+        additional_informations = $5
+    FROM (SELECT ST_Transform(ST_SetSRID(ST_MakePoint($6, $7), 31467), 4326) AS geom) g
+    WHERE provider = $4
+      AND additional_informations->>'kataster_objectid' = $8
+"#;
+
+const INSERT_SQL: &str = r#"
+    INSERT INTO trees
+        (id, number, species, planting_year, latitude, longitude, geometry,
+         watering_status, provider, additional_informations)
+    SELECT $1, $2, $3, $4, ST_Y(g.geom), ST_X(g.geom), g.geom,
+           'unknown', $5, $6
+    FROM (SELECT ST_Transform(ST_SetSRID(ST_MakePoint($7, $8), 31467), 4326) AS geom) g
+"#;
 
 const SOURCE_QUERY: &str = r#"
     SELECT
@@ -22,7 +44,6 @@ const SOURCE_QUERY: &str = r#"
     WHERE "PFLANZJAHR"::int >= $1
 "#;
 
-#[allow(dead_code)] // dry_run used in the upsert task
 struct Args {
     dry_run: bool,
     year_cutoff: Option<i32>,
@@ -42,7 +63,6 @@ struct KatasterRow {
 
 /// Target-shaped fields ready to upsert. Holds raw GK3 coordinates; the SQL
 /// reprojects them via ST_Transform.
-#[allow(dead_code)] // fields consumed in the upsert task
 struct TreeImport {
     number: String,
     species: String,
@@ -153,26 +173,70 @@ async fn main() -> Result<()> {
         .await
         .context("connecting to source DB")?;
 
+    let config = get_configuration().context("loading Green Ecolution configuration")?;
+    let target = PgPool::connect_with(config.database.connection_options())
+        .await
+        .context("connecting to target (Green Ecolution) DB")?;
+
     let rows = sqlx::query(SOURCE_QUERY)
         .bind(cutoff)
         .fetch_all(&source)
         .await
         .context("querying metadata_baum.baumkataster")?;
 
-    let (mut scanned, mut mappable, mut skipped) = (0usize, 0usize, 0usize);
+    let mut tx = target.begin().await.context("begin target transaction")?;
+    let (mut scanned, mut inserted, mut updated, mut skipped) = (0usize, 0usize, 0usize, 0usize);
+
     for row in &rows {
         scanned += 1;
         let kr = read_row(row)?;
-        match map_row(&kr, &args.provider) {
-            Some(_) => mappable += 1,
-            None => {
-                skipped += 1;
-                eprintln!("skip objectid={}: missing/zero coordinates", kr.objectid);
-            }
+        let Some(imp) = map_row(&kr, &args.provider) else {
+            skipped += 1;
+            eprintln!("skip objectid={}: missing/zero coordinates", kr.objectid);
+            continue;
+        };
+
+        let affected = sqlx::query(UPDATE_SQL)
+            .bind(&imp.number)
+            .bind(&imp.species)
+            .bind(imp.planting_year)
+            .bind(&args.provider)
+            .bind(&imp.additional_info)
+            .bind(imp.rechtswert)
+            .bind(imp.hochwert)
+            .bind(kr.objectid.to_string())
+            .execute(&mut *tx)
+            .await
+            .with_context(|| format!("update objectid={}", kr.objectid))?
+            .rows_affected();
+
+        if affected == 0 {
+            sqlx::query(INSERT_SQL)
+                .bind(Uuid::now_v7())
+                .bind(&imp.number)
+                .bind(&imp.species)
+                .bind(imp.planting_year)
+                .bind(&args.provider)
+                .bind(&imp.additional_info)
+                .bind(imp.rechtswert)
+                .bind(imp.hochwert)
+                .execute(&mut *tx)
+                .await
+                .with_context(|| format!("insert objectid={}", kr.objectid))?;
+            inserted += 1;
+        } else {
+            updated += 1;
         }
     }
 
-    println!("[read-only] cutoff>={cutoff} · geprüft {scanned} · abbildbar {mappable} · übersprungen {skipped}");
+    if args.dry_run {
+        tx.rollback().await.context("rollback")?;
+        println!("[dry-run] keine Änderungen committet");
+    } else {
+        tx.commit().await.context("commit")?;
+    }
+
+    println!("geprüft {scanned} · neu {inserted} · aktualisiert {updated} · übersprungen {skipped}");
     Ok(())
 }
 
