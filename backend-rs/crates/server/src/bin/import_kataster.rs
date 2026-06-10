@@ -20,7 +20,7 @@ const UPDATE_SQL: &str = r#"
         additional_informations = $5
     FROM (SELECT ST_Transform(ST_SetSRID(ST_MakePoint($6, $7), 31467), 4326) AS geom) g
     WHERE provider = $4
-      AND additional_informations->>'kataster_objectid' = $8
+      AND additional_informations->>'object_id' = $8
 "#;
 
 const INSERT_SQL: &str = r#"
@@ -74,7 +74,7 @@ struct TreeImport {
 
 /// Returns `None` when either coordinate is NULL or zero — the caller must
 /// skip such rows since they cannot be placed.
-fn map_row(row: &KatasterRow, provider: &str) -> Option<TreeImport> {
+fn map_row(row: &KatasterRow) -> Option<TreeImport> {
     let (rechtswert, hochwert) = match (row.rechtswert, row.hochwert) {
         (Some(r), Some(h)) if r != 0.0 && h != 0.0 => (r, h),
         _ => return None,
@@ -96,14 +96,9 @@ fn map_row(row: &KatasterRow, provider: &str) -> Option<TreeImport> {
         .map(str::to_owned)
         .unwrap_or_else(|| "Unbekannt".to_string());
 
-    // Provenance snapshot of the raw source values; cleaned values live in the
-    // top-level `number`/`species` columns.
-    let additional_info = json!({
-        "kataster_objectid": row.objectid,
-        "source": provider,
-        "gattung": row.gattung,
-        "baumnummer": row.baumnummer,
-    });
+    // `object_id` is the cadastre OBJECTID under the existing GE convention; it
+    // is the match key that lets re-imports overwrite instead of duplicate.
+    let additional_info = json!({ "object_id": row.objectid });
 
     Some(TreeImport {
         number,
@@ -194,7 +189,7 @@ async fn main() -> Result<()> {
     for row in &rows {
         scanned += 1;
         let kr = read_row(row)?;
-        let Some(imp) = map_row(&kr, &args.provider) else {
+        let Some(imp) = map_row(&kr) else {
             skipped += 1;
             eprintln!("skip objectid={}: missing/zero coordinates", kr.objectid);
             continue;
@@ -261,7 +256,7 @@ mod tests {
 
     #[test]
     fn trims_baumnummer() {
-        let imp = map_row(&sample(), DEFAULT_PROVIDER).unwrap();
+        let imp = map_row(&sample()).unwrap();
         assert_eq!(imp.number, "10");
     }
 
@@ -269,41 +264,40 @@ mod tests {
     fn blank_baumnummer_falls_back_to_objectid() {
         let mut r = sample();
         r.baumnummer = Some("   ".into());
-        assert_eq!(map_row(&r, DEFAULT_PROVIDER).unwrap().number, "30492");
+        assert_eq!(map_row(&r).unwrap().number, "30492");
     }
 
     #[test]
     fn null_baumnummer_falls_back_to_objectid() {
         let mut r = sample();
         r.baumnummer = None;
-        assert_eq!(map_row(&r, DEFAULT_PROVIDER).unwrap().number, "30492");
+        assert_eq!(map_row(&r).unwrap().number, "30492");
     }
 
     #[test]
     fn null_gattung_becomes_unbekannt() {
         let mut r = sample();
         r.gattung = None;
-        assert_eq!(map_row(&r, DEFAULT_PROVIDER).unwrap().species, "Unbekannt");
+        assert_eq!(map_row(&r).unwrap().species, "Unbekannt");
     }
 
     #[test]
     fn missing_coordinate_is_skipped() {
         let mut r = sample();
         r.rechtswert = None;
-        assert!(map_row(&r, DEFAULT_PROVIDER).is_none());
+        assert!(map_row(&r).is_none());
     }
 
     #[test]
     fn zero_coordinate_is_skipped() {
         let mut r = sample();
         r.hochwert = Some(0.0);
-        assert!(map_row(&r, DEFAULT_PROVIDER).is_none());
+        assert!(map_row(&r).is_none());
     }
 
     #[test]
-    fn additional_info_carries_objectid_and_provider() {
-        let imp = map_row(&sample(), "custom-provider").unwrap();
-        assert_eq!(imp.additional_info["kataster_objectid"], 30492);
-        assert_eq!(imp.additional_info["source"], "custom-provider");
+    fn additional_info_carries_object_id() {
+        let imp = map_row(&sample()).unwrap();
+        assert_eq!(imp.additional_info["object_id"], 30492);
     }
 }
