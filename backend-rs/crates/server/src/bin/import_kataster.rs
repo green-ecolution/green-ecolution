@@ -186,10 +186,8 @@ async fn main() -> Result<()> {
         .await
         .context("querying metadata_baum.baumkataster")?;
 
-    // One transaction for the whole run: a crash mid-import rolls everything
-    // back so the cadastre stays the consistent source of truth. The young-tree
-    // filter keeps the set small enough that the held transaction is not a
-    // concern.
+    // Single transaction for the whole run: a crash rolls back entirely so the
+    // cadastre stays the consistent source of truth.
     let mut tx = target.begin().await.context("begin target transaction")?;
     let (mut scanned, mut inserted, mut updated, mut skipped) = (0usize, 0usize, 0usize, 0usize);
 
