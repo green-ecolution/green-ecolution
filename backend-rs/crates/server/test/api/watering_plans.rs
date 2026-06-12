@@ -35,7 +35,7 @@ async fn create_cluster(app: &helpers::TestApp) -> serde_json::Value {
         "name": "Testcluster",
         "address": "Testweg 1",
         "description": "Test",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": []
     });
     let resp = app.post_json("/api/v1/clusters", &body).await;
