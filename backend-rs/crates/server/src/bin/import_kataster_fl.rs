@@ -50,8 +50,6 @@ struct Args {
     provider: String,
 }
 
-/// All casts happen in `SOURCE_QUERY`, so the external schema's exact column
-/// types (int vs text) are irrelevant here.
 struct KatasterRow {
     objectid: i32,
     baumnummer: Option<String>,
@@ -72,8 +70,6 @@ struct TreeImport {
     additional_info: Value,
 }
 
-/// Returns `None` when either coordinate is NULL or zero — the caller must
-/// skip such rows since they cannot be placed.
 fn map_row(row: &KatasterRow) -> Option<TreeImport> {
     let (rechtswert, hochwert) = match (row.rechtswert, row.hochwert) {
         (Some(r), Some(h)) if r != 0.0 && h != 0.0 => (r, h),
@@ -181,8 +177,6 @@ async fn main() -> Result<()> {
         .await
         .context("querying metadata_baum.baumkataster")?;
 
-    // Single transaction for the whole run: a crash rolls back entirely so the
-    // cadastre stays the consistent source of truth.
     let mut tx = target.begin().await.context("begin target transaction")?;
     let (mut scanned, mut inserted, mut updated, mut skipped) = (0usize, 0usize, 0usize, 0usize);
 
@@ -235,7 +229,9 @@ async fn main() -> Result<()> {
         tx.commit().await.context("commit")?;
     }
 
-    println!("geprüft {scanned} · neu {inserted} · aktualisiert {updated} · übersprungen {skipped}");
+    println!(
+        "geprüft {scanned} · neu {inserted} · aktualisiert {updated} · übersprungen {skipped}"
+    );
     Ok(())
 }
 
