@@ -32,6 +32,7 @@ use crate::{
         evaluation_service::EvaluationService,
         event_bus::{EventBus, EventHandler, InMemoryEventBus},
         handlers::cluster_recalc::ClusterRecalculationHandler,
+        handlers::cluster_soil_recalc::ClusterSoilRecalcHandler,
         handlers::cluster_status::ClusterStatusAggregatorHandler,
         handlers::tree_watering::TreeWateringFromSensorHandler,
         region_service::RegionService,
@@ -295,6 +296,12 @@ fn build_event_bus(repos: &Repositories) -> Arc<dyn EventBus> {
             repos.cluster_writer.clone(),
             repos.tree_reader.clone(),
             repos.region_reader.clone(),
+        )),
+        Arc::new(ClusterSoilRecalcHandler::new(
+            repos.tree_reader.clone(),
+            repos.tree_writer.clone(),
+            repos.cluster_reader.clone(),
+            repos.sensor_reading_reader.clone(),
         )),
         Arc::new(ClusterStatusAggregatorHandler::new(
             repos.cluster_reader.clone(),

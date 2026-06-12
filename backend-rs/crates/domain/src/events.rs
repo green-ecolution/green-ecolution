@@ -71,6 +71,9 @@ pub enum DomainEvent {
     /// Emitted when a cluster's tree list changes so that centroid,
     /// watering status, and region can be recalculated.
     ClusterTreesChanged { cluster_id: Id<TreeCluster> },
+    /// Emitted when a cluster's `soil_condition` changes so that the
+    /// volumetric watering status of member trees can be recomputed.
+    ClusterSoilConditionChanged { cluster_id: Id<TreeCluster> },
     /// Emitted after a sensor reading is persisted. Carries the parsed
     /// readings so subscribers don't have to re-parse the raw JSON payload.
     SensorDataReceived(SensorDataReceivedPayload),
