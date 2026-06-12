@@ -304,6 +304,8 @@ fn build_event_bus(repos: &Repositories) -> Arc<dyn EventBus> {
         Arc::new(TreeWateringFromSensorHandler::new(
             repos.tree_reader.clone(),
             repos.tree_writer.clone(),
+            repos.cluster_reader.clone(),
+            repos.sensor_reading_reader.clone(),
         )),
     ];
     Arc::new(InMemoryEventBus::new(handlers))
