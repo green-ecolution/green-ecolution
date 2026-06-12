@@ -1,7 +1,10 @@
 use crate::helpers::{TestApp, spawn_app};
 use domain::{
+    Id,
+    cluster::{ClusterAddress, SoilCondition, TreeClusterUpdate},
     events::SensorReadings,
     sensor::{SensorId, data::VolumetricReading, repository::NormalizedValue},
+    shared::provenance::Provenance,
 };
 use rust_decimal::Decimal;
 use serde_json::json;
@@ -361,4 +364,82 @@ async fn volumetric_status_depends_on_soil_and_age() {
     .await;
     ingest_moisture(&app, "eui-soil-young", model_id, 25.0, 15.0).await;
     assert_eq!(watering_status(&app, "T-SOIL-YOUNG").await, "good");
+}
+
+async fn cluster_watering_status(app: &TestApp, cluster_id: Uuid) -> String {
+    sqlx::query_scalar::<_, String>("SELECT watering_status::text FROM tree_clusters WHERE id = $1")
+        .bind(cluster_id)
+        .fetch_one(&app.db_pool)
+        .await
+        .unwrap()
+}
+
+/// Changing a cluster's soil condition must re-derive the watering status of
+/// member trees and roll it up to the cluster.
+///
+/// Setup: Su3 cluster, established tree (5 y), moisture 13% at 40 + 80 cm.
+/// Under Su3 (min=12): 13% → Good for both depths → tree Good, cluster Good.
+/// After soil change to Uu (min=20): 13% → Bad for both depths → tree Bad, cluster Bad.
+#[tokio::test]
+async fn soil_condition_change_retriggers_tree_and_cluster_status() {
+    let app = spawn_app().await;
+    let model_id = app.ges_1000_model_id().await;
+
+    // Su3: min @ 40 cm = 12, min @ 80 cm ≈ 10.8; 13 % is Good at both depths.
+    let cluster_id = insert_cluster_with_soil(&app, "Su3").await;
+
+    create_sensor(&app, "eui-soil-change", model_id).await;
+    let tree_id = insert_tree_in_cluster(&app, "T-SOIL-CHG", cluster_id, 5).await;
+    app.post_json(
+        "/api/v1/sensors/eui-soil-change/activate",
+        &json!({ "tree_id": tree_id }),
+    )
+    .await;
+
+    // 13% moisture at both depths → Good under Su3.
+    ingest_moisture(&app, "eui-soil-change", model_id, 13.0, 13.0).await;
+    assert_eq!(
+        watering_status(&app, "T-SOIL-CHG").await,
+        "good",
+        "pre-condition: tree should be good under Su3"
+    );
+    assert_eq!(
+        cluster_watering_status(&app, cluster_id).await,
+        "good",
+        "pre-condition: cluster should be good under Su3"
+    );
+
+    // Change soil to Uu: min @ 40 cm = 20, min @ 80 cm = 20; 13% is Bad at both.
+    let cluster = app
+        .state
+        .cluster_service
+        .by_id(Id::new(cluster_id))
+        .await
+        .unwrap();
+    app.state
+        .cluster_service
+        .replace(
+            Id::new(cluster_id),
+            TreeClusterUpdate {
+                name: cluster.name.clone(),
+                address: ClusterAddress::new(cluster.address.as_str()).unwrap(),
+                description: cluster.description.clone(),
+                soil_condition: Some(SoilCondition::Uu),
+                tree_ids: cluster.tree_ids.clone(),
+                provenance: Provenance::default(),
+            },
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(
+        watering_status(&app, "T-SOIL-CHG").await,
+        "bad",
+        "tree must be bad after soil changed to Uu"
+    );
+    assert_eq!(
+        cluster_watering_status(&app, cluster_id).await,
+        "bad",
+        "cluster must be bad after soil changed to Uu"
+    );
 }
