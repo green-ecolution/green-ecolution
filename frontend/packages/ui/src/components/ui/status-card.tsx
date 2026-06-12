@@ -63,6 +63,33 @@ const dotVariants = cva('w-4 h-4 rounded-full', {
   },
 })
 
+const progressFillVariants = cva('block h-full rounded-full transition-[width]', {
+  variants: {
+    status: {
+      default: 'bg-dark-400',
+      red: 'bg-red',
+      yellow: 'bg-yellow',
+      'green-dark': 'bg-green-dark',
+      'green-light': 'bg-green-light',
+      'outline-dark': 'bg-dark-400',
+      'outline-red': 'bg-red',
+      'outline-yellow': 'bg-yellow',
+      'outline-green-dark': 'bg-green-dark',
+      'outline-green-light': 'bg-green-light',
+      secondary: 'bg-dark-400',
+      destructive: 'bg-red',
+      outline: 'bg-dark-400',
+      success: 'bg-green-dark',
+      warning: 'bg-yellow',
+      error: 'bg-red',
+      muted: 'bg-dark-400',
+    },
+  },
+  defaultVariants: {
+    status: 'default',
+  },
+})
+
 type StatusVariant = NonNullable<VariantProps<typeof statusCardVariants>['status']>
 
 const statusToBadgeVariant: Record<StatusVariant, BadgeProps['variant']> = {
@@ -93,6 +120,8 @@ interface StatusCardProps
   indicator?: 'dot' | 'badge' | 'none'
   isLarge?: boolean
   icon?: React.ReactNode
+  /** Renders a progress bar (0–100) below the value, colored to match `status`. */
+  progress?: number
 }
 
 const StatusCard = React.forwardRef<HTMLDivElement, StatusCardProps>(
@@ -106,6 +135,7 @@ const StatusCard = React.forwardRef<HTMLDivElement, StatusCardProps>(
       indicator = 'none',
       isLarge = false,
       icon,
+      progress,
       ...props
     },
     ref,
@@ -132,6 +162,14 @@ const StatusCard = React.forwardRef<HTMLDivElement, StatusCardProps>(
             <span>{value}</span>
           )}
         </div>
+        {progress != null && (
+          <span className="block h-1.5 w-full overflow-hidden rounded-full bg-dark-200">
+            <span
+              className={progressFillVariants({ status })}
+              style={{ width: `${Math.max(0, Math.min(100, progress))}%` }}
+            />
+          </span>
+        )}
         {description && <p className="text-sm">{description}</p>}
       </div>
     )

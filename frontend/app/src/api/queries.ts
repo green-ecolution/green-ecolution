@@ -48,7 +48,8 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
  * Check if a string is a valid UUID. Backend identifiers are UUID v7;
  * the regex accepts any UUID version since the frontend never inspects bits.
  */
-const isValidUuid = (id: string | undefined): boolean => typeof id === 'string' && UUID_RE.test(id)
+export const isValidUuid = (id: string | undefined): boolean =>
+  typeof id === 'string' && UUID_RE.test(id)
 
 export const treeClusterQuery = (params?: ListClustersRequest) =>
   queryOptions<ListResponseTreeClusterInListResponse>({

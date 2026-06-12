@@ -11,11 +11,15 @@ Element.prototype.scrollIntoView = vi.fn()
 
 // Mock ResizeObserver (not available in jsdom)
 class ResizeObserverMock {
+  callback: ResizeObserverCallback
   observe = vi.fn()
   unobserve = vi.fn()
   disconnect = vi.fn()
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback
+  }
 }
-global.ResizeObserver = ResizeObserverMock
+global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver
 
 // Mock IntersectionObserver (not available in jsdom)
 class IntersectionObserverMock {
