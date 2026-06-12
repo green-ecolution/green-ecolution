@@ -1,15 +1,5 @@
 import { MoveRight } from 'lucide-react'
-import {
-  FormField,
-  TextareaField,
-  Label,
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-  Button,
-} from '@green-ecolution/ui'
+import { FormField, TextareaField, Label, Combobox, Button } from '@green-ecolution/ui'
 import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-hook-form'
 import { SoilConditionOptions } from '@/hooks/details/useDetailsForSoilCondition'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
@@ -52,18 +42,14 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
                 Bodenbeschaffenheit
                 <span className="text-destructive ml-1">*</span>
               </Label>
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger id="soilCondition">
-                  <SelectValue placeholder="Wählen Sie eine Bodenbeschaffenheit aus" />
-                </SelectTrigger>
-                <SelectContent>
-                  {SoilConditionOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                id="soilCondition"
+                options={SoilConditionOptions}
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Wähle eine Bodenbeschaffenheit aus"
+                searchPlaceholder="Code oder Bezeichnung suchen…"
+              />
               {errors.soilCondition?.message && (
                 <p className="text-sm text-destructive">{errors.soilCondition.message}</p>
               )}
