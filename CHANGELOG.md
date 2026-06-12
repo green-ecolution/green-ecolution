@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.3.0](https://github.com/green-ecolution/green-ecolution/compare/v0.2.1...v0.3.0) (2026-06-12)
+
+
+### Features
+
+* **import:** add import-kataster-fl CLI to upsert Flensburg cadastre trees ([#829](https://github.com/green-ecolution/green-ecolution/issues/829)) ([11b8266](https://github.com/green-ecolution/green-ecolution/commit/11b82665863499e6f3dad96dde8f101d1181a79a))
+* **map:** show watering-group boundary around clustered trees (GECO-150) ([#820](https://github.com/green-ecolution/green-ecolution/issues/820)) ([b02c24f](https://github.com/green-ecolution/green-ecolution/commit/b02c24f72019a74e16e07a3804fb41745eb47942))
+* **nav:** redesign sidebar as always-expanded rail ([#826](https://github.com/green-ecolution/green-ecolution/issues/826)) ([a97a606](https://github.com/green-ecolution/green-ecolution/commit/a97a6069fa1e154312e5d615098da2857d305d1b))
+* **watering:** soil-type and age-aware status for volumetric soil-moisture sensors (GECO-151) ([#828](https://github.com/green-ecolution/green-ecolution/issues/828)) ([fea763f](https://github.com/green-ecolution/green-ecolution/commit/fea763fd88a8f756ca1f8dfbce2ba8f840c77ff7))
+
 ## [0.2.1](https://github.com/green-ecolution/green-ecolution/compare/v0.2.0...v0.2.1) (2026-06-08)
 
 

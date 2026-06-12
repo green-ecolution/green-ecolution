@@ -7,10 +7,10 @@ resources:
 images:
 - name: backend-image
   newName: ghcr.io/green-ecolution/green-ecolution/backend
-  newTag: v0.2.1-55f148c-stage
+  newTag: v0.3.0-0fd6b4c-stage
 - name: frontend-image
   newName: ghcr.io/green-ecolution/green-ecolution/frontend
-  newTag: v0.2.1-55f148c-stage
+  newTag: v0.3.0-0fd6b4c-stage
 generators:
 - ./secret-generator.yaml
 patches:
