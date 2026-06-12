@@ -306,6 +306,11 @@ migrate-status: _migrate-build
     @echo "Migration status..."
     cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate info
 
+# Import the Flensburg tree cadastre into Green Ecolution.
+# Requires KATASTER_SOURCE_URL. Pass flags via ARGS, e.g. `just import-kataster-fl --dry-run`.
+import-kataster-fl *ARGS:
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo run --bin import-kataster-fl -- {{ ARGS }}
+
 # Apply seeds on top of the current DB (assumes empty/migrated schema)
 seed-up: _migrate-build
     @echo "Applying seeds..."
