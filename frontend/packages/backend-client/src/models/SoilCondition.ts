@@ -14,14 +14,44 @@
 
 
 /**
- * Soil condition classification of a tree cluster site.
+ * KA5 soil texture class of a tree cluster site (KA5 short code).
  * @export
  */
 export const SoilCondition = {
-    Schluffig: 'schluffig',
-    Sandig: 'sandig',
-    Lehmig: 'lehmig',
-    Tonig: 'tonig',
+    Ss: 'Ss',
+    Sl2: 'Sl2',
+    Sl3: 'Sl3',
+    Sl4: 'Sl4',
+    Slu: 'Slu',
+    St2: 'St2',
+    St3: 'St3',
+    Su2: 'Su2',
+    Su3: 'Su3',
+    Su4: 'Su4',
+    Ls2: 'Ls2',
+    Ls3: 'Ls3',
+    Ls4: 'Ls4',
+    Lt2: 'Lt2',
+    Lt3: 'Lt3',
+    Lts: 'Lts',
+    Lu: 'Lu',
+    Uu: 'Uu',
+    Uls: 'Uls',
+    Us: 'Us',
+    Ut2: 'Ut2',
+    Ut3: 'Ut3',
+    Ut4: 'Ut4',
+    Tt: 'Tt',
+    Tl: 'Tl',
+    Tu2: 'Tu2',
+    Tu3: 'Tu3',
+    Tu4: 'Tu4',
+    Ts2: 'Ts2',
+    Ts3: 'Ts3',
+    Ts4: 'Ts4',
+    FS: 'fS',
+    MS: 'mS',
+    GS: 'gS',
     Unknown: 'unknown'
 } as const;
 export type SoilCondition = typeof SoilCondition[keyof typeof SoilCondition];
