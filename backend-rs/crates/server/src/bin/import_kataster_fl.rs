@@ -150,7 +150,7 @@ fn parse_args() -> Result<Args> {
 
 fn print_usage() {
     eprintln!(
-        "import-kataster — Flensburg Baumkataster -> Green Ecolution\n\n\
+        "import-kataster-fl — Flensburg Baumkataster -> Green Ecolution\n\n\
          Env:\n  KATASTER_SOURCE_URL   source Postgres connection string (required)\n\
          Target DB resolved from Green Ecolution config (config/*.yaml + APP_DATABASE__* env)\n\n\
          Flags:\n  --dry-run             run everything in a transaction, then roll back\n  \
