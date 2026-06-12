@@ -206,6 +206,21 @@ export type {
   ListCardStatusProps,
 } from './components/ui/list-card'
 
+// Command
+export {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandSeparator,
+} from './components/ui/command'
+
+// Combobox
+export { Combobox } from './components/ui/combobox'
+export type { ComboboxProps, ComboboxOption } from './components/ui/combobox'
+
 // MultiSelect
 export { MultiSelect } from './components/ui/multi-select'
 export type { MultiSelectProps, MultiSelectOption } from './components/ui/multi-select'

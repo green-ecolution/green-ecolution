@@ -56,7 +56,7 @@ mod tests {
             name: "Park West".into(),
             address: "Mainstreet 1".into(),
             description: "".into(),
-            soil_condition: Some("schluffig".into()),
+            soil_condition: Some("Uu".into()),
         }
     }
 

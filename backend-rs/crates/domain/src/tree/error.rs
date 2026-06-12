@@ -15,4 +15,7 @@ pub enum TreeError {
     /// Volumetric soil-moisture readings were empty or contained non-finite values.
     #[error("volumetric readings empty or invalid")]
     MalformedVolumetric,
+    /// Cluster soil type is `Unknown` (or unset), so no KA5 calibration applies.
+    #[error("soil type is uncalibrated (unknown)")]
+    UncalibratedSoil,
 }

@@ -22,6 +22,7 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     Id,
+    events::DomainEvent,
     region::Region,
     shared::{
         coordinates::Coordinate,
@@ -144,12 +145,13 @@ impl TreeCluster {
         &self.provenance
     }
 
-    /// Replaces the freely editable display fields. None of these have
-    /// subscribers, so no event is emitted. Tree membership goes through
-    /// `replace_trees` (with `ClusterTreesChanged` published from the service
-    /// when the set actually changed); centroid, region, watering status and
-    /// the archived flag are private and only changed through their own
-    /// recalculation methods.
+    /// Replaces the freely editable display fields. Emits
+    /// `ClusterSoilConditionChanged` when `soil_condition` actually changes;
+    /// the other fields have no subscribers and change silently. Tree
+    /// membership goes through `replace_trees` (with `ClusterTreesChanged`
+    /// published from the service when the set actually changed); centroid,
+    /// region, watering status and the archived flag are private and only
+    /// changed through their own recalculation methods.
     pub fn replace_details(
         &mut self,
         name: ClusterName,
@@ -157,12 +159,19 @@ impl TreeCluster {
         description: String,
         soil_condition: Option<SoilCondition>,
         provenance: Provenance,
-    ) {
+    ) -> Vec<DomainEvent> {
+        let mut events = Vec::new();
+        if self.soil_condition != soil_condition {
+            events.push(DomainEvent::ClusterSoilConditionChanged {
+                cluster_id: self.id,
+            });
+        }
         self.name = name;
         self.address = address;
         self.description = description;
         self.soil_condition = soil_condition;
         self.provenance = provenance;
+        events
     }
 
     pub fn replace_trees(&mut self, tree_ids: Vec<Id<Tree>>) {
@@ -240,7 +249,7 @@ mod tests {
             description: "Baumgruppe".to_string(),
             moisture_level: 0.5,
             last_watered: None,
-            soil_condition: Some(SoilCondition::Lehmig),
+            soil_condition: Some(SoilCondition::Lu),
             tree_ids: vec![],
             watering_status: WateringStatus::Unknown,
             coordinates: None,
@@ -352,18 +361,43 @@ mod tests {
             Some(crate::shared::provenance::ProviderId::new("tbz").unwrap()),
             None,
         );
-        c.replace_details(
+        // Lu → Ss: soil changed, expect one event.
+        let events = c.replace_details(
             ClusterName::new("Neuer Name").unwrap(),
             ClusterAddress::new("Neue Adresse 5").unwrap(),
             "Neue Beschreibung".to_string(),
-            Some(SoilCondition::Sandig),
+            Some(SoilCondition::Ss),
             new_provenance.clone(),
         );
         assert_eq!(c.name.as_str(), "Neuer Name");
         assert_eq!(c.address.as_str(), "Neue Adresse 5");
         assert_eq!(c.description, "Neue Beschreibung");
-        assert_eq!(c.soil_condition, Some(SoilCondition::Sandig));
+        assert_eq!(c.soil_condition, Some(SoilCondition::Ss));
         assert_eq!(c.provenance(), &new_provenance);
+        assert_eq!(
+            events.len(),
+            1,
+            "soil changed: expected ClusterSoilConditionChanged"
+        );
+        assert!(matches!(
+            events[0],
+            crate::events::DomainEvent::ClusterSoilConditionChanged { cluster_id }
+                if cluster_id == c.id
+        ));
+    }
+
+    #[test]
+    fn replace_details_emits_no_event_when_soil_unchanged() {
+        let mut c = fixed_cluster(); // soil_condition = Some(Lu)
+        let provenance = c.provenance().clone();
+        let events = c.replace_details(
+            c.name.clone(),
+            c.address.clone(),
+            c.description.clone(),
+            Some(SoilCondition::Lu),
+            provenance,
+        );
+        assert!(events.is_empty(), "same soil value must not emit an event");
     }
 
     #[test]

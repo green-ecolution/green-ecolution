@@ -39,7 +39,7 @@ async fn create_cluster_returns_201() {
         "name": "Stadtpark",
         "address": "Parkweg 1",
         "description": "Cluster im Stadtpark",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": []
     });
 
@@ -50,7 +50,7 @@ async fn create_cluster_returns_201() {
     let cluster: serde_json::Value = response.json().await.unwrap();
     assert_eq!(cluster["name"], "Stadtpark");
     assert_eq!(cluster["address"], "Parkweg 1");
-    assert_eq!(cluster["soil_condition"], "sandig");
+    assert_eq!(cluster["soil_condition"], "Su3");
     assert_eq!(cluster["trees"].as_array().unwrap().len(), 0);
 }
 
@@ -72,7 +72,7 @@ async fn create_cluster_with_trees_links_them() {
         "name": "Stadtpark",
         "address": "Parkweg 1",
         "description": "Cluster mit Baum",
-        "soil_condition": "lehmig",
+        "soil_condition": "Lu",
         "tree_ids": [tree_id]
     });
 
@@ -93,7 +93,7 @@ async fn get_cluster_returns_full_response() {
         "name": "Marktplatz",
         "address": "Markt 1",
         "description": "Cluster am Markt",
-        "soil_condition": "tonig",
+        "soil_condition": "Tt",
         "tree_ids": []
     });
 
@@ -118,7 +118,7 @@ async fn update_cluster_changes_name() {
         "name": "Alt",
         "address": "Strasse 1",
         "description": "Beschreibung",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": []
     });
 
@@ -130,7 +130,7 @@ async fn update_cluster_changes_name() {
         "name": "Neu",
         "address": "Strasse 1",
         "description": "Beschreibung",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": []
     });
 
@@ -152,7 +152,7 @@ async fn delete_cluster_returns_204() {
         "name": "Loeschen",
         "address": "Weg 1",
         "description": "Wird geloescht",
-        "soil_condition": "schluffig",
+        "soil_condition": "Uu",
         "tree_ids": []
     });
 
@@ -197,7 +197,7 @@ async fn delete_cluster_unlinks_trees_and_keeps_them_alive() {
         "name": "Cluster mit Baeumen",
         "address": "Allee 1",
         "description": "Wird geloescht, Baeume bleiben",
-        "soil_condition": "lehmig",
+        "soil_condition": "Lu",
         "tree_ids": tree_ids,
     });
 
@@ -235,7 +235,7 @@ async fn list_clusters_respects_pagination() {
             "name": format!("Cluster {}", i),
             "address": format!("Adresse {}", i),
             "description": "Test",
-            "soil_condition": "sandig",
+            "soil_condition": "Su3",
             "tree_ids": []
         });
         app.post_json("/api/v1/clusters", &body).await;
@@ -312,7 +312,7 @@ async fn create_cluster_with_trees_computes_center_point() {
         "name": "Center Test",
         "address": "Testweg",
         "description": "Test",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": [tree_id]
     });
 
@@ -343,7 +343,7 @@ async fn create_cluster_with_trees_assigns_region() {
         "name": "Region Test",
         "address": "Regionweg",
         "description": "Test",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": [tree_id]
     });
 
@@ -369,7 +369,7 @@ async fn tree_create_triggers_cluster_recalculation() {
         "name": "Recalc Test",
         "address": "Test",
         "description": "Test",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": []
     });
     let cluster_resp = app.post_json("/api/v1/clusters", &cluster_body).await;
@@ -419,7 +419,7 @@ async fn tree_create_triggers_region_assignment() {
         "name": "Region Assign",
         "address": "Test",
         "description": "Test",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": []
     });
     let cluster_resp = app.post_json("/api/v1/clusters", &cluster_body).await;
@@ -462,7 +462,7 @@ async fn tree_delete_triggers_cluster_coordinate_reset() {
         "name": "Delete Reset",
         "address": "Test",
         "description": "Test",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": [tree_id]
     });
     let cluster_resp = app.post_json("/api/v1/clusters", &cluster_body).await;
@@ -500,7 +500,7 @@ async fn tree_move_to_other_cluster_recalculates_both() {
                 "name": "Cluster A",
                 "address": "A",
                 "description": "A",
-                "soil_condition": "sandig",
+                "soil_condition": "Su3",
                 "tree_ids": [tree_a_id]
             }),
         )
@@ -515,7 +515,7 @@ async fn tree_move_to_other_cluster_recalculates_both() {
                 "name": "Cluster B",
                 "address": "B",
                 "description": "B",
-                "soil_condition": "sandig",
+                "soil_condition": "Su3",
                 "tree_ids": [tree_b_id]
             }),
         )
@@ -578,7 +578,7 @@ async fn cluster_update_tree_ids_recalculates_center() {
                 "name": "Remove Test",
                 "address": "X",
                 "description": "X",
-                "soil_condition": "sandig",
+                "soil_condition": "Su3",
                 "tree_ids": [tree1_id, tree2_id]
             }),
         )
@@ -597,7 +597,7 @@ async fn cluster_update_tree_ids_recalculates_center() {
         "name": "Remove Test",
         "address": "X",
         "description": "X",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": [tree2_id]
     });
     app.put_json(&format!("/api/v1/clusters/{}", cluster_id), &update_body)
@@ -676,7 +676,7 @@ async fn cluster_status_takes_majority_among_sensor_equipped_trees() {
         "name": "Status Aggregator",
         "address": "Test",
         "description": "Test",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": [t_good_1, t_good_2, t_bad, t_sensorless],
     });
     let resp = app.post_json("/api/v1/clusters", &body).await;
@@ -702,7 +702,7 @@ async fn cluster_status_is_unknown_with_only_sensorless_trees() {
         "name": "Sensorless Cluster",
         "address": "Test",
         "description": "Test",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": [t1, t2],
     });
     let resp = app.post_json("/api/v1/clusters", &body).await;
@@ -728,7 +728,7 @@ async fn attaching_sensor_to_tree_recalculates_cluster_status() {
                 "name": "Attach Test",
                 "address": "Test",
                 "description": "Test",
-                "soil_condition": "sandig",
+                "soil_condition": "Su3",
                 "tree_ids": [tree_id],
             }),
         )
@@ -783,7 +783,7 @@ async fn list_cluster_markers_excludes_clusters_without_centroid() {
         "name": "Empty Park",
         "address": "Nowhere 1",
         "description": "Test",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": [],
     });
     let resp = app.post_json("/api/v1/clusters", &cluster_body).await;
@@ -802,7 +802,7 @@ async fn list_cluster_markers_includes_cluster_with_trees() {
         "name": "Stadtpark",
         "address": "Parkweg 1",
         "description": "Test",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": [],
     });
     let cluster_resp = app.post_json("/api/v1/clusters", &cluster_body).await;
@@ -834,7 +834,7 @@ async fn create_cluster_named(app: &helpers::TestApp, name: &str) -> String {
         "name": name,
         "address": "Parkweg 1",
         "description": "Test",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": []
     });
     let resp = app.post_json("/api/v1/clusters", &body).await;
@@ -923,7 +923,7 @@ async fn tree_position_update_recalculates_cluster_center() {
                 "name": "Position Test",
                 "address": "X",
                 "description": "X",
-                "soil_condition": "sandig",
+                "soil_condition": "Su3",
                 "tree_ids": [tree_id]
             }),
         )
@@ -991,7 +991,7 @@ async fn list_cluster_boundaries_returns_polygon_for_cluster_with_trees() {
         "name": "Boundary Cluster",
         "address": "Hüllenweg 1",
         "description": "Test",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": [t1, t2, t3],
     });
     let resp = app.post_json("/api/v1/clusters", &body).await;
@@ -1027,7 +1027,7 @@ async fn list_cluster_boundaries_handles_single_tree_as_buffered_circle() {
         "name": "Single Tree Cluster",
         "address": "Einzelweg 1",
         "description": "Test",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": [t1],
     });
     let resp = app.post_json("/api/v1/clusters", &body).await;
@@ -1053,7 +1053,7 @@ async fn list_cluster_boundaries_excludes_archived_clusters() {
         "name": "Archived Cluster",
         "address": "Archivweg 1",
         "description": "Test",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": [t1, t2, t3],
     });
     let resp = app.post_json("/api/v1/clusters", &body).await;

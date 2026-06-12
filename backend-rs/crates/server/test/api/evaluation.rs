@@ -48,7 +48,7 @@ async fn get_evaluation_counts_trees_and_clusters() {
             "name": format!("Cluster {}", i),
             "address": "Test",
             "description": "Test",
-            "soil_condition": "sandig",
+            "soil_condition": "Su3",
             "tree_ids": []
         });
         app.post_json("/api/v1/clusters", &body).await;
@@ -201,7 +201,7 @@ async fn get_evaluation_includes_region_watering_plan_stats() {
                 "name": "Eval Cluster",
                 "address": "Test",
                 "description": "Test",
-                "soil_condition": "sandig",
+                "soil_condition": "Su3",
                 "tree_ids": [tree_id]
             }),
         )

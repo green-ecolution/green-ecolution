@@ -94,7 +94,7 @@ impl ClusterService {
     ) -> Result<TreeCluster, ServiceError> {
         let mut cluster = self.reader.by_id(id).await?;
         let trees_changed = cluster.tree_ids != update.tree_ids;
-        cluster.replace_details(
+        let mut events = cluster.replace_details(
             update.name,
             update.address,
             update.description,
@@ -104,10 +104,9 @@ impl ClusterService {
         cluster.replace_trees(update.tree_ids);
         self.writer.save(&cluster).await?;
         if trees_changed {
-            self.event_bus
-                .publish(DomainEvent::ClusterTreesChanged { cluster_id: id })
-                .await;
+            events.push(DomainEvent::ClusterTreesChanged { cluster_id: id });
         }
+        self.event_bus.publish_all(events).await;
         Ok(cluster)
     }
 

@@ -49,7 +49,7 @@ const defaultInitForm = {
   name: 'Test Cluster',
   address: 'Test Address 123',
   description: '',
-  soilCondition: SoilCondition.Sandig,
+  soilCondition: SoilCondition.Ss,
   treeIds: [] as string[],
 }
 
@@ -59,7 +59,7 @@ function createMockTreeCluster(overrides: Partial<TreeCluster> = {}): TreeCluste
     name: 'Test Cluster',
     address: 'Test Address 123',
     description: '',
-    soilCondition: SoilCondition.Sandig,
+    soilCondition: SoilCondition.Ss,
     wateringStatus: WateringStatus.Good,
     trees: [],
     archived: false,
@@ -90,7 +90,7 @@ describe('useTreeClusterForm', () => {
 
     expect(result.current.form.getValues('name')).toBe('Test Cluster')
     expect(result.current.form.getValues('address')).toBe('Test Address 123')
-    expect(result.current.form.getValues('soilCondition')).toBe(SoilCondition.Sandig)
+    expect(result.current.form.getValues('soilCondition')).toBe(SoilCondition.Ss)
     expect(result.current.form.getValues('treeIds')).toEqual([])
   })
 
@@ -124,7 +124,7 @@ describe('useTreeClusterForm', () => {
         name: 'Test Cluster',
         address: 'Test Address 123',
         description: '',
-        soilCondition: SoilCondition.Sandig,
+        soilCondition: SoilCondition.Ss,
         treeIds: [],
       })
     })
@@ -136,7 +136,7 @@ describe('useTreeClusterForm', () => {
           name: 'Test Cluster',
           address: 'Test Address 123',
           description: '',
-          soilCondition: SoilCondition.Sandig,
+          soilCondition: SoilCondition.Ss,
           treeIds: [],
         },
       })
@@ -148,7 +148,7 @@ describe('useTreeClusterForm', () => {
       id: 'cluster-uuid-5',
       name: 'Updated Cluster',
       address: 'Updated Address',
-      soilCondition: SoilCondition.Lehmig,
+      soilCondition: SoilCondition.Lu,
     })
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const updateMock = vi.mocked(clusterApi.updateCluster)
@@ -158,7 +158,7 @@ describe('useTreeClusterForm', () => {
       ...defaultInitForm,
       name: 'Updated Cluster',
       address: 'Updated Address',
-      soilCondition: SoilCondition.Lehmig,
+      soilCondition: SoilCondition.Lu,
     }
 
     const { result } = renderHook(
@@ -171,7 +171,7 @@ describe('useTreeClusterForm', () => {
         name: 'Updated Cluster',
         address: 'Updated Address',
         description: '',
-        soilCondition: SoilCondition.Lehmig,
+        soilCondition: SoilCondition.Lu,
         treeIds: [],
       })
     })
@@ -212,7 +212,7 @@ describe('useTreeClusterForm', () => {
           name: 'Test Cluster',
           address: 'Test Address 123',
           description: '',
-          soilCondition: SoilCondition.Sandig,
+          soilCondition: SoilCondition.Ss,
           treeIds: [],
         })
       })

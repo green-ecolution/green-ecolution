@@ -517,6 +517,40 @@ impl SensorReadingReader for PgSensorRepository {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
+    async fn latest_volumetric_moisture(
+        &self,
+        sensor_id: &SensorId,
+    ) -> Result<Vec<domain::sensor::data::VolumetricReading>, RepositoryError> {
+        let rows = sqlx::query!(
+            r#"SELECT sma.depth_cm AS "depth_cm!",
+                      dav.value::float8 AS "moisture_percent!"
+               FROM sensor_data sd
+               JOIN sensor_data_ability_values dav ON dav.sensor_data_id = sd.id
+               JOIN sensor_model_abilities sma ON sma.id = dav.sensor_model_ability_id
+               JOIN sensor_abilities sa ON sa.id = sma.sensor_ability_id
+               WHERE sd.sensor_id = $1
+                 AND sa.ability = 'soil_moisture'
+                 AND sd.id = (
+                     SELECT id FROM sensor_data
+                     WHERE sensor_id = $1
+                     ORDER BY id DESC LIMIT 1
+                 )
+               ORDER BY sma.depth_cm"#,
+            sensor_id.as_str(),
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|r| domain::sensor::data::VolumetricReading {
+                depth_cm: r.depth_cm,
+                moisture_percent: r.moisture_percent,
+            })
+            .collect())
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn view_history(
         &self,
         sensor_id: &SensorId,

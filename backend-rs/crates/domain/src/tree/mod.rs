@@ -270,16 +270,16 @@ impl Tree {
         })
     }
 
-    /// Derives a [`WateringStatus`] from volumetric soil-moisture readings
-    /// (GES-1000 family). Sibling of
-    /// [`calculate_watering_status_from_watermarks`]; the tree aggregate
-    /// itself stays calibration-agnostic — the service layer picks which
-    /// sibling to call based on the linked sensor's model.
+    /// Derives a [`WateringStatus`] from volumetric soil-moisture readings,
+    /// the cluster's KA5 `soil` type, and the tree's age.
     pub fn calculate_watering_status_from_volumetric(
         &self,
         readings: &[crate::sensor::data::VolumetricReading],
+        soil: crate::cluster::SoilCondition,
+        today: DateTime<Utc>,
     ) -> Result<WateringStatus, TreeError> {
-        volumetric_calibration::classify(readings)
+        let lifetime = (today.year() as i64) - (self.planting_year.year() as i64);
+        volumetric_calibration::classify(readings, soil, lifetime)
     }
 }
 
@@ -634,6 +634,29 @@ mod tests {
                 .unwrap(),
             WateringStatus::Bad,
             "any depth in Bad band makes the whole reading Bad"
+        );
+    }
+
+    #[test]
+    fn volumetric_status_uses_soil_and_age() {
+        use crate::cluster::SoilCondition;
+        let t = fixed_tree(); // planting_year 2020
+        let today = "2025-06-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap();
+        let readings = [
+            crate::sensor::data::VolumetricReading {
+                depth_cm: 40,
+                moisture_percent: 25.0,
+            },
+            crate::sensor::data::VolumetricReading {
+                depth_cm: 80,
+                moisture_percent: 15.0,
+            },
+        ];
+        // Established (2025-2020=5): worst-case over both depths on Uu → Bad.
+        assert_eq!(
+            t.calculate_watering_status_from_volumetric(&readings, SoilCondition::Uu, today)
+                .unwrap(),
+            WateringStatus::Bad
         );
     }
 }

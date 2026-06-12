@@ -99,7 +99,7 @@ async fn create_tree_with_cluster_links_it() {
         "name": "Stadtpark",
         "address": "Parkweg 1",
         "description": "Test",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": []
     });
     let cluster_resp = app.post_json("/api/v1/clusters", &cluster_body).await;
@@ -735,7 +735,7 @@ async fn list_trees_filters_by_has_cluster() {
         "name": "Stadtpark",
         "address": "Parkweg 1",
         "description": "Test",
-        "soil_condition": "sandig",
+        "soil_condition": "Su3",
         "tree_ids": []
     });
     let cluster_resp = app.post_json("/api/v1/clusters", &cluster_body).await;

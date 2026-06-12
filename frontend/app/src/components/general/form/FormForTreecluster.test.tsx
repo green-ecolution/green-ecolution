@@ -68,7 +68,7 @@ describe('FormForTreecluster', () => {
     expect(screen.getByLabelText(/kurze beschreibung/i)).toBeInTheDocument()
   })
 
-  it('renders soil condition select with options', async () => {
+  it('renders soil condition combobox with KA5 options', async () => {
     const user = userEvent.setup()
 
     render(
@@ -85,10 +85,10 @@ describe('FormForTreecluster', () => {
     await user.click(soilSelect)
 
     const listbox = await screen.findByRole('listbox')
-    expect(within(listbox).getByText('Schluffig')).toBeInTheDocument()
-    expect(within(listbox).getByText('Sandig')).toBeInTheDocument()
-    expect(within(listbox).getByText('Lehmig')).toBeInTheDocument()
-    expect(within(listbox).getByText('Tonig')).toBeInTheDocument()
+    expect(within(listbox).getByText('Ss – Reinsand')).toBeInTheDocument()
+    expect(within(listbox).getByText('Uu – reiner Schluff')).toBeInTheDocument()
+    expect(within(listbox).getByText('Lu – schluffiger Lehm')).toBeInTheDocument()
+    expect(within(listbox).getByText('Tt – reiner Ton')).toBeInTheDocument()
     expect(within(listbox).getByText('Unbekannt')).toBeInTheDocument()
   })
 
@@ -224,11 +224,11 @@ describe('FormForTreecluster', () => {
     await user.click(soilSelect)
 
     const listbox = await screen.findByRole('listbox')
-    await user.click(within(listbox).getByText('Sandig'))
+    await user.click(within(listbox).getByText('Ss – Reinsand'))
 
     await waitFor(() => {
       expect(screen.getByRole('combobox', { name: /bodenbeschaffenheit/i })).toHaveTextContent(
-        /sandig/i,
+        'Ss – Reinsand',
       )
     })
   })

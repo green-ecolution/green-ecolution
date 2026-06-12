@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT sma.depth_cm AS \"depth_cm!\",\n                      dav.value::float8 AS \"moisture_percent!\"\n               FROM sensor_data sd\n               JOIN sensor_data_ability_values dav ON dav.sensor_data_id = sd.id\n               JOIN sensor_model_abilities sma ON sma.id = dav.sensor_model_ability_id\n               JOIN sensor_abilities sa ON sa.id = sma.sensor_ability_id\n               WHERE sd.sensor_id = $1\n                 AND sa.ability = 'soil_moisture'\n                 AND sd.id = (\n                     SELECT id FROM sensor_data\n                     WHERE sensor_id = $1\n                     ORDER BY id DESC LIMIT 1\n                 )\n               ORDER BY sma.depth_cm",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "depth_cm!",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "moisture_percent!",
+        "type_info": "Float8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "0b0215cd0794cdebdcd32768d176971523c156c91d9321c7fe0177e1c493023c"
+}
