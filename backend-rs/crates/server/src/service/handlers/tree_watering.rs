@@ -10,12 +10,8 @@ use domain::{
     tree::{TreeReader, TreeWriter},
 };
 
-/// Subscriber that turns each `SensorDataReceived` event into a fresh
-/// watering-status decision on the linked tree.
-///
-/// Watermark readings keep using the event payload. Volumetric (soil-moisture)
-/// readings are re-read from `sensor_data_ability_values` and scored against
-/// the cluster's KA5 soil type and the tree's age.
+/// Turns each `SensorDataReceived` event into a fresh watering-status decision
+/// on the linked tree.
 pub struct TreeWateringFromSensorHandler {
     tree_reader: Arc<dyn TreeReader>,
     tree_writer: Arc<dyn TreeWriter>,
@@ -51,7 +47,6 @@ impl TreeWateringFromSensorHandler {
                 tree.calculate_watering_status_from_watermarks(w, Utc::now())
             }
             SensorReadings::Volumetrics(_) => {
-                // Soil type flows from the linked cluster; without one we can't calibrate.
                 let Some(cluster_id) = tree.cluster_id() else {
                     tracing::debug!("skipping volumetric status; tree has no cluster");
                     return Ok(vec![]);

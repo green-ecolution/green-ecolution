@@ -1,6 +1,6 @@
 -- Migrate tree_soil_condition from 4 coarse textures to the 31 KA5 Feinbodenarten
--- + 3 Reinsande (Bodenkundliche Kartieranleitung, 5. Aufl.). Existing coarse
--- values are remapped to a representative KA5 code per Hauptbodenart.
+-- + 3 Reinsande. Existing coarse values are remapped to a representative KA5
+-- code per Hauptbodenart.
 ALTER TYPE tree_soil_condition RENAME TO tree_soil_condition_old;
 
 CREATE TYPE tree_soil_condition AS ENUM (

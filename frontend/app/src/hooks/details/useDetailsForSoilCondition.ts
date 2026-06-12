@@ -6,7 +6,7 @@ export interface SoilConditionOption {
   group: string
 }
 
-// KA5 fine soil types; German names per Geologischer Dienst NRW / LGB-RLP.
+// KA5 fine soil types, grouped by Hauptbodenart.
 export const SoilConditionOptions: SoilConditionOption[] = [
   { value: SoilCondition.Ss, label: 'Ss – Reinsand', group: 'Sande' },
   { value: SoilCondition.Su2, label: 'Su2 – schwach schluffiger Sand', group: 'Sande' },

@@ -1,30 +1,20 @@
-//! Calibration for capacitive volumetric soil-moisture sensors.
-//!
-//! Volumetric sensors report water content as a percentage (VWC, Vol.-%).
-//! Thresholds follow the REW model (Relative Extractable Water): a soil is in
-//! moderate stress below `VWC_min = PWP + 0.4·nFK_eff` and in acute stress
-//! below `VWC_crit = PWP + 0.3·nFK_eff`. Hydrological values per KA5 fine soil
-//! type come from BGR/DIN 4220 (Tabelle 17.1); we use the *grundwasserfrei*
-//! convention (`nFK_eff = nFK − eGp`) appropriate for freely-draining sites.
-//! The worst (driest) score across the considered depths wins.
-//!
-//! Age weighting: young trees (< 3 years) have shallow roots, so only the
-//! 40 cm probe is considered; established trees use both depths.
+//! Derives the watering status from volumetric soil-moisture readings using
+//! per-soil-type, per-depth REW thresholds. Young trees (< 3 years) are scored
+//! on the 40 cm probe only; older trees use both depths, worst case wins.
 
 use crate::cluster::SoilCondition;
 use crate::sensor::data::VolumetricReading;
 use crate::shared::watering_status::WateringStatus;
 use crate::tree::TreeError;
 
-/// REW coefficient for the onset of moderate stress (documented Granier
-/// standard; spec decision 1).
+/// REW coefficient for the onset of moderate stress.
 const REW_MIN: f64 = 0.40;
-/// REW coefficient for acute stress (spec decision).
+/// REW coefficient for acute stress.
 const REW_CRIT: f64 = 0.30;
-/// Below this lifetime the 80 cm probe is ignored (shallow roots).
+/// Below this lifetime the 80 cm probe is ignored.
 const YOUNG_TREE_YEARS: i64 = 3;
 
-/// KA5/DIN 4220 hydrological values for one soil type at a fixed depth, in Vol.-%.
+/// Hydrological values for one soil type at a fixed depth, in Vol.-%.
 struct DepthParams {
     fk: i32,
     nfk: i32,
@@ -32,7 +22,7 @@ struct DepthParams {
 }
 
 impl DepthParams {
-    /// `(VWC_min, VWC_crit)` in Vol.-% under the grundwasserfrei convention.
+    /// `(VWC_min, VWC_crit)` thresholds in Vol.-%.
     fn thresholds(&self) -> (f64, f64) {
         let nfk_eff = (self.nfk - self.egp) as f64;
         let pwp = (self.fk - self.nfk) as f64;
@@ -40,8 +30,7 @@ impl DepthParams {
     }
 }
 
-/// Lookup of `(FK, nFK, eGp)` for `soil` at `depth_cm` (only 40 / 80 defined).
-/// Values transcribed from BGR Tabelle 17.1 (ρt3 = 40 cm, ρt4+5 = 80 cm).
+/// Lookup of `(FK, nFK, eGp)` for `soil` at `depth_cm` (only 40 cm and 80 cm defined).
 fn depth_params(soil: SoilCondition, depth_cm: i32) -> Option<DepthParams> {
     // (fk40, nfk40, egp40, fk80, nfk80, egp80)
     let (fk40, nfk40, egp40, fk80, nfk80, egp80) = match soil {
@@ -117,8 +106,6 @@ pub(crate) fn classify(
         return Err(TreeError::UncalibratedSoil);
     }
 
-    // Age weighting: young trees → prefer the 40 cm probe; fall back to all
-    // available readings if the 40 cm probe is missing.
     let prefer_40_only = lifetime_years < YOUNG_TREE_YEARS;
     let has_40 = readings.iter().any(|r| r.depth_cm == 40);
     let considered = readings.iter().filter(|r| {

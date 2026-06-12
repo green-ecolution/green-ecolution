@@ -272,9 +272,6 @@ impl Tree {
 
     /// Derives a [`WateringStatus`] from volumetric soil-moisture readings,
     /// the cluster's KA5 `soil` type, and the tree's age.
-    /// Sibling of [`calculate_watering_status_from_watermarks`]; the tree
-    /// aggregate stays calibration-agnostic — the handler supplies the soil
-    /// type from the linked cluster.
     pub fn calculate_watering_status_from_volumetric(
         &self,
         readings: &[crate::sensor::data::VolumetricReading],
