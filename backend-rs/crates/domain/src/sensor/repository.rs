@@ -55,6 +55,14 @@ pub trait SensorReadingReader: Send + Sync {
         sensor_id: &SensorId,
         limit: i64,
     ) -> Result<Vec<SensorReadingView>, RepositoryError>;
+
+    /// Returns the per-depth `soil_moisture` values of the sensor's most recent
+    /// reading, read from `sensor_data_ability_values`. Empty if the latest
+    /// reading carried no normalized soil-moisture values.
+    async fn latest_volumetric_moisture(
+        &self,
+        sensor_id: &SensorId,
+    ) -> Result<Vec<crate::sensor::data::VolumetricReading>, RepositoryError>;
 }
 
 /// Write-side access to sensor readings.
