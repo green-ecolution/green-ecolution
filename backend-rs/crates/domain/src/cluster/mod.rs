@@ -240,7 +240,7 @@ mod tests {
             description: "Baumgruppe".to_string(),
             moisture_level: 0.5,
             last_watered: None,
-            soil_condition: Some(SoilCondition::Lehmig),
+            soil_condition: Some(SoilCondition::Lu),
             tree_ids: vec![],
             watering_status: WateringStatus::Unknown,
             coordinates: None,
@@ -356,13 +356,13 @@ mod tests {
             ClusterName::new("Neuer Name").unwrap(),
             ClusterAddress::new("Neue Adresse 5").unwrap(),
             "Neue Beschreibung".to_string(),
-            Some(SoilCondition::Sandig),
+            Some(SoilCondition::Ss),
             new_provenance.clone(),
         );
         assert_eq!(c.name.as_str(), "Neuer Name");
         assert_eq!(c.address.as_str(), "Neue Adresse 5");
         assert_eq!(c.description, "Neue Beschreibung");
-        assert_eq!(c.soil_condition, Some(SoilCondition::Sandig));
+        assert_eq!(c.soil_condition, Some(SoilCondition::Ss));
         assert_eq!(c.provenance(), &new_provenance);
     }
 
