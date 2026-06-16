@@ -131,7 +131,7 @@ function getVersionStatusProps(versionInfo: VersionInfoResponse) {
     }
   }
   if (versionInfo.updateAvailable && versionInfo.latest) {
-    const releaseNotesUrl = `https://green-ecolution.de/releases/${versionInfo.latest}`
+    const releaseNotesUrl = `https://green-ecolution.de/releases/v${versionInfo.latest}`
     return {
       status: 'yellow' as const,
       icon: <ArrowUp className="text-yellow" />,
@@ -590,7 +590,7 @@ function SystemTabContent({
             </div>
             {data.versionInfo.updateAvailable && data.versionInfo.latest && (
               <a
-                href={`https://green-ecolution.de/releases/${data.versionInfo.latest}`}
+                href={`https://green-ecolution.de/releases/v${data.versionInfo.latest}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-green-dark hover:underline"
@@ -1053,7 +1053,7 @@ function BuildStatusCard({ env, visual, versionInfo }: BuildStatusCardProps) {
               </p>
             )}
             <a
-              href={`https://green-ecolution.de/releases/${versionInfo.latest}`}
+              href={`https://green-ecolution.de/releases/v${versionInfo.latest}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-green-dark hover:underline"
