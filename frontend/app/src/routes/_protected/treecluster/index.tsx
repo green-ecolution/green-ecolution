@@ -5,6 +5,7 @@ import { Plus } from 'lucide-react'
 import { Loading } from '@green-ecolution/ui'
 import FilterProvider from '@/context/FilterContext'
 import TreeClusterList from '@/components/treecluster/TreeClusterList'
+import ClusterCardGrid from '@/components/treecluster/ClusterCardGrid'
 import Pagination from '@/components/general/Pagination'
 import Dialog from '@/components/general/filter/Dialog'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
@@ -35,6 +36,7 @@ function Treecluster() {
     sort = 'name',
     order = 'asc',
     soil,
+    view = 'cards',
   } = Route.useSearch()
   const { data: clustersRes } = useSuspenseQuery(
     treeClusterQuery({
@@ -74,14 +76,20 @@ function Treecluster() {
           </Dialog>
         </div>
 
-        <ListCardHeader columns="1fr 2fr 1.5fr 1fr">
-          <p>Status</p>
-          <p>Name</p>
-          <p>Standort</p>
-          <p>Anzahl d. Bäume</p>
-        </ListCardHeader>
+        {view === 'table' ? (
+          <>
+            <ListCardHeader columns="1fr 2fr 1.5fr 1fr">
+              <p>Status</p>
+              <p>Name</p>
+              <p>Standort</p>
+              <p>Anzahl d. Bäume</p>
+            </ListCardHeader>
 
-        <TreeClusterList data={clustersRes.data} />
+            <TreeClusterList data={clustersRes.data} />
+          </>
+        ) : (
+          <ClusterCardGrid data={clustersRes.data} />
+        )}
         {clustersRes.pagination && clustersRes.pagination?.totalPages > 1 && (
           <Pagination pagination={clustersRes.pagination} />
         )}
