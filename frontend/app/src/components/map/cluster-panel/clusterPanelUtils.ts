@@ -1,5 +1,15 @@
 import type { SensorDataResponse, TreeResponse } from '@/api/backendApi'
 
+export const sortTreesSensorFirst = (trees: TreeResponse[]): TreeResponse[] =>
+  trees
+    .map((tree, index) => ({ tree, index }))
+    .sort((a, b) => {
+      const aHasSensor = a.tree.sensor != null ? 0 : 1
+      const bHasSensor = b.tree.sensor != null ? 0 : 1
+      return aHasSensor - bHasSensor || a.index - b.index
+    })
+    .map(({ tree }) => tree)
+
 export const summarizeTopSpecies = (trees: TreeResponse[], limit = 2): string => {
   const counts = new Map<string, number>()
   for (const { species } of trees) {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { TreeResponse } from '@/api/backendApi'
-import { summarizeTopSpecies, latestSensorReading } from './clusterPanelUtils'
+import { sortTreesSensorFirst, summarizeTopSpecies, latestSensorReading } from './clusterPanelUtils'
 
 const tree = (over: Partial<TreeResponse>): TreeResponse =>
   ({
@@ -17,6 +17,26 @@ const tree = (over: Partial<TreeResponse>): TreeResponse =>
     sensor: over.sensor ?? null,
     ...over,
   }) as TreeResponse
+
+describe('sortTreesSensorFirst', () => {
+  it('puts trees with a sensor before trees without, keeping relative order', () => {
+    const a = tree({ id: 'a', sensor: null })
+    const b = tree({ id: 'b', sensor: { id: 's1' } as never })
+    const c = tree({ id: 'c', sensor: null })
+    const d = tree({ id: 'd', sensor: { id: 's2' } as never })
+
+    const result = sortTreesSensorFirst([a, b, c, d]).map((t) => t.id)
+
+    expect(result).toEqual(['b', 'd', 'a', 'c'])
+  })
+
+  it('does not mutate the input array', () => {
+    const input = [tree({ id: 'a', sensor: null }), tree({ id: 'b', sensor: {} as never })]
+    const copy = [...input]
+    sortTreesSensorFirst(input)
+    expect(input).toEqual(copy)
+  })
+})
 
 describe('summarizeTopSpecies', () => {
   it('returns the two most frequent species, comma-joined', () => {
