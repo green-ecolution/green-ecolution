@@ -13,8 +13,9 @@ import ZoomControls from '@/components/map/ZoomControls'
 import MapBackgroundClick from '@/components/map/MapBackgroundClick'
 import ClusterPanel from '@/components/map/cluster-panel/ClusterPanel'
 import { clusterBoundariesQuery, clusterMarkersQuery } from '@/api/queries'
-import { Loading } from '@green-ecolution/ui'
-import { Suspense, useCallback } from 'react'
+import { Drawer, DrawerContent, DrawerTitle, Loading } from '@green-ecolution/ui'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { Suspense, useCallback, useState } from 'react'
 
 const mapSearchParamsSchema = z.object({
   selected: z.string().optional(),
@@ -61,14 +62,20 @@ function MapRoot() {
   const matchRoute = useMatchRoute()
   const navigate = useNavigate()
   const search = useSearch({ strict: false })
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const isIndex = !!matchRoute({ to: '/map', fuzzy: false })
   const panelClusterId = isIndex ? search.cluster : undefined
 
+  const [snapPoint, setSnapPoint] = useState<number | string | null>('260px')
+
   const handleClosePanel = useCallback(() => {
+    setSnapPoint('260px')
     navigate({ to: '/map', search: (prev) => ({ ...prev, cluster: undefined }) }).catch((error) =>
       console.error('Navigation failed:', error),
     )
   }, [navigate])
+
+  const handleExpandPanel = useCallback(() => setSnapPoint(1), [])
 
   const handleOpenDashboard = useCallback(() => {
     if (!panelClusterId) return
@@ -91,7 +98,7 @@ function MapRoot() {
             </Suspense>
           </Map>
         </div>
-        {panelClusterId && (
+        {isDesktop && panelClusterId && (
           <aside
             key={panelClusterId}
             className="w-[28rem] shrink-0 border-l border-dark-100 bg-white animate-in slide-in-from-right-[100%] duration-300 ease-out"
@@ -104,6 +111,34 @@ function MapRoot() {
           </aside>
         )}
       </div>
+
+      {!isDesktop && (
+        <Drawer
+          open={!!panelClusterId}
+          onOpenChange={(open) => {
+            if (!open) handleClosePanel()
+          }}
+          modal={false}
+          snapPoints={['260px', 1]}
+          activeSnapPoint={snapPoint}
+          setActiveSnapPoint={setSnapPoint}
+        >
+          <DrawerContent showOverlay={false}>
+            <DrawerTitle className="sr-only">Baumgruppen-Details</DrawerTitle>
+            {panelClusterId && (
+              <div className="min-h-0 flex-1 overflow-hidden">
+                <ClusterPanel
+                  key={panelClusterId}
+                  clusterId={panelClusterId}
+                  onClose={handleClosePanel}
+                  onOpenDashboard={handleOpenDashboard}
+                  onExpand={handleExpandPanel}
+                />
+              </div>
+            )}
+          </DrawerContent>
+        </Drawer>
+      )}
     </div>
   )
 }

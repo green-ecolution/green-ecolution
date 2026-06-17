@@ -255,6 +255,20 @@ export {
   SelectScrollDownButton,
 } from './components/ui/select'
 
+// Drawer
+export {
+  Drawer,
+  DrawerPortal,
+  DrawerOverlay,
+  DrawerTrigger,
+  DrawerClose,
+  DrawerContent,
+  DrawerHeader,
+  DrawerFooter,
+  DrawerTitle,
+  DrawerDescription,
+} from './components/ui/drawer'
+
 // Separator
 export { Separator } from './components/ui/separator'
 
