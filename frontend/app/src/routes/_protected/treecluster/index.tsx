@@ -11,6 +11,7 @@ import Dialog from '@/components/general/filter/Dialog'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
 import RegionFieldset from '@/components/general/filter/fieldsets/RegionFieldset'
 import SoilFieldset from '@/components/general/filter/fieldsets/SoilFieldset'
+import ClusterToolbar from '@/components/treecluster/ClusterToolbar'
 import { z } from 'zod'
 import { treeClusterQuery } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
@@ -70,7 +71,8 @@ function Treecluster() {
       </article>
 
       <section className="mt-10">
-        <div className="flex justify-end mb-6 lg:mb-10">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 lg:mb-10">
+          <ClusterToolbar />
           <Dialog headline="Bewässerungsgruppen filtern" fullUrlPath={Route.fullPath}>
             <StatusFieldset />
             <RegionFieldset />
