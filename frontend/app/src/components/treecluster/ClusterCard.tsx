@@ -53,8 +53,8 @@ const ClusterCard: React.FC<ClusterCardProps> = ({ treecluster, index = 0 }) => 
   return (
     <Card
       variant="outlined"
-      style={{ animationDelay: `${Math.min(index, 12) * 60}ms`, opacity: 0 }}
-      className="group relative flex h-full flex-col overflow-hidden animate-[fadeInUp_0.5s_ease-out_forwards] transition-shadow duration-300 hover:shadow-md focus-within:shadow-md"
+      style={{ animationDelay: `${Math.min(index, 12) * 60}ms` }}
+      className="group relative flex h-full flex-col overflow-hidden motion-safe:animate-[fadeInUp_0.5s_ease-out_both] transition-shadow duration-300 hover:shadow-md focus-within:shadow-md"
     >
       <span
         aria-hidden
