@@ -46,9 +46,18 @@ function MapView() {
   const handleClusterClick = useCallback(
     (cluster: ClusterMarkerResponse | TreeCluster) => {
       navigate({
-        to: `/treecluster/$treeclusterId`,
-        params: { treeclusterId: cluster.id.toString() },
+        to: '/map',
+        search: (prev) => ({ ...prev, cluster: cluster.id.toString() }),
       }).catch((error) => console.error('Navigation failed:', error))
+    },
+    [navigate],
+  )
+
+  const handleBoundaryClick = useCallback(
+    (clusterId: string) => {
+      navigate({ to: '/map', search: (prev) => ({ ...prev, cluster: clusterId }) }).catch((error) =>
+        console.error('Navigation failed:', error),
+      )
     },
     [navigate],
   )
@@ -93,6 +102,7 @@ function MapView() {
         <WithTreesAndClusters
           onClickTree={handleTreeClick}
           onClickCluster={handleClusterClick}
+          onClickBoundary={handleBoundaryClick}
           hasHighlightedTree={search.tree}
           hasHighlightedCluster={search.cluster}
         />

@@ -63,7 +63,10 @@ const MarkerList = <T extends WithLocation>({
       if (!markerMap.has(id) && bounds.contains([item.latitude, item.longitude])) {
         const markerIcon =
           typeof iconRef.current === 'function' ? iconRef.current(item) : iconRef.current
-        const marker = L.marker([item.latitude, item.longitude], { icon: markerIcon })
+        const marker = L.marker([item.latitude, item.longitude], {
+          icon: markerIcon,
+          bubblingMouseEvents: false,
+        })
 
         if (tooltipContent) {
           if (typeof tooltipContent === 'function') {

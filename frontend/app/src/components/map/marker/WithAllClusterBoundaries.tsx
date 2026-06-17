@@ -31,7 +31,11 @@ const FILL_OPACITY = 0.15
 const metersPerPixel = (lat: number, zoom: number) =>
   (MERCATOR_RESOLUTION_Z0 * Math.cos((lat * Math.PI) / 180)) / 2 ** zoom
 
-const WithAllClusterBoundaries = memo(() => {
+interface WithAllClusterBoundariesProps {
+  onClick?: (clusterId: string) => void
+}
+
+const WithAllClusterBoundaries = memo(({ onClick }: WithAllClusterBoundariesProps) => {
   const { data } = useSuspenseQuery(clusterBoundariesQuery())
   const zoom = useStore((s) => s.mapZoom)
 
@@ -86,8 +90,9 @@ const WithAllClusterBoundaries = memo(() => {
           <Polygon
             key={b.id}
             positions={b.ring}
+            eventHandlers={onClick ? { click: () => onClick(b.id) } : undefined}
             pathOptions={{
-              className: 'cluster-boundary',
+              className: onClick ? 'cluster-boundary cursor-pointer' : 'cluster-boundary',
               color: b.color,
               fillColor: b.color,
               fillOpacity: FILL_OPACITY,
@@ -95,6 +100,7 @@ const WithAllClusterBoundaries = memo(() => {
               opacity,
               lineJoin: 'round',
               lineCap: 'round',
+              bubblingMouseEvents: false,
             }}
           />
         )
