@@ -17,7 +17,9 @@ import * as runtime from '../runtime';
 import type {
   ClusterBoundaryListResponse,
   ClusterMarkerListResponse,
+  ClusterStatisticsResponse,
   ListResponseTreeClusterInListResponse,
+  SoilCondition,
   TreeClusterCreateRequest,
   TreeClusterResponse,
   TreeClusterUpdateRequest,
@@ -28,8 +30,12 @@ import {
     ClusterBoundaryListResponseToJSON,
     ClusterMarkerListResponseFromJSON,
     ClusterMarkerListResponseToJSON,
+    ClusterStatisticsResponseFromJSON,
+    ClusterStatisticsResponseToJSON,
     ListResponseTreeClusterInListResponseFromJSON,
     ListResponseTreeClusterInListResponseToJSON,
+    SoilConditionFromJSON,
+    SoilConditionToJSON,
     TreeClusterCreateRequestFromJSON,
     TreeClusterCreateRequestToJSON,
     TreeClusterResponseFromJSON,
@@ -57,6 +63,10 @@ export interface ListClustersRequest {
     perPage?: number;
     wateringStatus?: Array<WateringStatus>;
     region?: Array<string>;
+    soilCondition?: Array<SoilCondition>;
+    query?: string | null;
+    sort?: string | null;
+    order?: string | null;
 }
 
 export interface UpdateClusterRequest {
@@ -188,6 +198,37 @@ export class TreeClustersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Counts of non-archived clusters per watering status, plus total clusters and total trees in clusters.
+     * Cluster statistics
+     */
+    async getClusterStatisticsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ClusterStatisticsResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/clusters/statistics`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ClusterStatisticsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Counts of non-archived clusters per watering status, plus total clusters and total trees in clusters.
+     * Cluster statistics
+     */
+    async getClusterStatistics(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ClusterStatisticsResponse> {
+        const response = await this.getClusterStatisticsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Returns a convex-hull boundary polygon (GeoJSON, buffered by a fixed margin in meters) around the trees of each non-archived cluster. Not paginated.
      * List cluster boundaries
      */
@@ -270,6 +311,22 @@ export class TreeClustersApi extends runtime.BaseAPI {
 
         if (requestParameters['region'] != null) {
             queryParameters['region'] = requestParameters['region'];
+        }
+
+        if (requestParameters['soilCondition'] != null) {
+            queryParameters['soil_condition'] = requestParameters['soilCondition'];
+        }
+
+        if (requestParameters['query'] != null) {
+            queryParameters['query'] = requestParameters['query'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+
+        if (requestParameters['order'] != null) {
+            queryParameters['order'] = requestParameters['order'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};

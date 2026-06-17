@@ -7,6 +7,7 @@ export * from './ClusterBoundaryListResponse';
 export * from './ClusterBoundaryResponse';
 export * from './ClusterMarkerListResponse';
 export * from './ClusterMarkerResponse';
+export * from './ClusterStatisticsResponse';
 export * from './CreateSensorRequest';
 export * from './DataStatisticsResponse';
 export * from './DrivingLicense';

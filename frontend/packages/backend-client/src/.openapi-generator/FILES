@@ -18,6 +18,7 @@ models/ClusterBoundaryListResponse.ts
 models/ClusterBoundaryResponse.ts
 models/ClusterMarkerListResponse.ts
 models/ClusterMarkerResponse.ts
+models/ClusterStatisticsResponse.ts
 models/CreateSensorRequest.ts
 models/DataStatisticsResponse.ts
 models/DrivingLicense.ts
