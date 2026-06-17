@@ -4,6 +4,7 @@ import {
   clusterApi,
   ClusterBoundaryListResponse,
   ClusterMarkerListResponse,
+  ClusterStatisticsResponse,
   DataStatisticsResponse,
   EvaluationResponse,
   infoApi,
@@ -55,6 +56,13 @@ export const treeClusterQuery = (params?: ListClustersRequest) =>
   queryOptions<ListResponseTreeClusterInListResponse>({
     queryKey: ['treeclusters', 'list', params ?? {}],
     queryFn: () => clusterApi.listClusters(params),
+  })
+
+export const clusterStatisticsQuery = () =>
+  queryOptions<ClusterStatisticsResponse>({
+    queryKey: ['clusters', 'statistics'],
+    queryFn: () => clusterApi.getClusterStatistics(),
+    staleTime: 60_000,
   })
 
 export const treeClusterIdQuery = (id: string) =>

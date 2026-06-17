@@ -13,19 +13,39 @@ import { z } from 'zod'
 import { treeClusterQuery } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
 import { filterSearchSchema } from '@/lib/filterSearchSchema'
+import { SoilCondition } from '@/api/backendApi'
 
 const treeclusterFilterSchema = filterSearchSchema
   .pick({ wateringStatuses: true, regions: true })
-  .extend({ page: z.number().catch(1) })
+  .extend({
+    page: z.number().catch(1),
+    q: z.string().optional().catch(undefined),
+    sort: z.enum(['name', 'moisture', 'trees']).optional().catch(undefined),
+    order: z.enum(['asc', 'desc']).optional().catch(undefined),
+    soil: z.array(z.string()).optional().catch(undefined),
+    view: z.enum(['cards', 'table']).optional().catch(undefined),
+  })
 
 function Treecluster() {
-  const { page, wateringStatuses, regions } = Route.useSearch()
+  const {
+    page,
+    wateringStatuses,
+    regions,
+    q,
+    sort = 'name',
+    order = 'asc',
+    soil,
+  } = Route.useSearch()
   const { data: clustersRes } = useSuspenseQuery(
     treeClusterQuery({
       page,
-      perPage: 5,
+      perPage: 12,
       wateringStatus: wateringStatuses,
       region: regions,
+      query: q,
+      sort,
+      order,
+      soilCondition: soil as SoilCondition[] | undefined,
     }),
   )
 
@@ -84,15 +104,26 @@ export const Route = createFileRoute('/_protected/treecluster/')({
     page: search.page,
     wateringStatuses: search.wateringStatuses,
     regions: search.regions,
+    q: search.q,
+    sort: search.sort,
+    order: search.order,
+    soil: search.soil,
   }),
-  loader: ({ context: { queryClient }, deps: { page, wateringStatuses, regions } }) => {
+  loader: ({
+    context: { queryClient },
+    deps: { page, wateringStatuses, regions, q, sort = 'name', order = 'asc', soil },
+  }) => {
     queryClient
       .prefetchQuery(
         treeClusterQuery({
           page,
-          perPage: 5,
+          perPage: 12,
           wateringStatus: wateringStatuses,
           region: regions,
+          query: q,
+          sort,
+          order,
+          soilCondition: soil as SoilCondition[] | undefined,
         }),
       )
       .catch((error) => console.error('Prefetching "treeClusterQuery" failed:', error))
