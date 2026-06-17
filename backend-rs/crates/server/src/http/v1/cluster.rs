@@ -15,8 +15,9 @@ use crate::{
             ListResponse,
             cluster::{
                 ClusterBoundaryListResponse, ClusterBoundaryResponse, ClusterListParams,
-                ClusterMarkerListResponse, ClusterMarkerResponse, TreeClusterCreateRequest,
-                TreeClusterInListResponse, TreeClusterResponse, TreeClusterUpdateRequest,
+                ClusterMarkerListResponse, ClusterMarkerResponse, ClusterStatisticsResponse,
+                TreeClusterCreateRequest, TreeClusterInListResponse, TreeClusterResponse,
+                TreeClusterUpdateRequest,
             },
             sensor::resolve_sensors_by_str_ids,
             tree::TreeResponse,
@@ -40,6 +41,7 @@ use domain::{
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .routes(routes!(list_clusters, create_cluster))
+        .routes(routes!(cluster_statistics))
         .routes(routes!(list_cluster_markers))
         .routes(routes!(list_cluster_boundaries))
         .routes(routes!(get_cluster, update_cluster, delete_cluster))
@@ -300,4 +302,24 @@ pub async fn list_cluster_boundaries(
         .map(ClusterBoundaryResponse::from)
         .collect();
     Ok(Json(ClusterBoundaryListResponse { data }))
+}
+
+#[utoipa::path(
+    get,
+    path = "/clusters/statistics",
+    tag = "Tree Clusters",
+    operation_id = "getClusterStatistics",
+    summary = "Cluster statistics",
+    description = "Counts of non-archived clusters per watering status, plus total clusters and total trees in clusters.",
+    responses(
+        (status = 200, description = "Cluster statistics", body = ClusterStatisticsResponse),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn cluster_statistics(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<ClusterStatisticsResponse>, ServiceError> {
+    let stats = state.cluster_service.statistics().await?;
+    Ok(Json(ClusterStatisticsResponse::from(stats)))
 }

@@ -1075,6 +1075,109 @@ async fn list_cluster_boundaries_excludes_archived_clusters() {
     );
 }
 
+// -- GET /clusters/statistics --
+
+#[tokio::test]
+async fn cluster_statistics_returns_correct_counts() {
+    let app = spawn_app().await;
+
+    // Two trees for cluster A (bad), one tree for cluster B (bad), two trees for cluster C (good)
+    let t1 = insert_tree_at(&app, 53.55, 9.99, "T-STAT-1").await;
+    let t2 = insert_tree_at(&app, 53.56, 9.98, "T-STAT-2").await;
+    let t3 = insert_tree_at(&app, 53.57, 9.97, "T-STAT-3").await;
+    let t4 = insert_tree_at(&app, 53.58, 9.96, "T-STAT-4").await;
+    let t5 = insert_tree_at(&app, 53.59, 9.95, "T-STAT-5").await;
+
+    let cluster_a_resp = app
+        .post_json(
+            "/api/v1/clusters",
+            &serde_json::json!({
+                "name": "Stats Cluster A",
+                "address": "Stat Allee 1",
+                "description": "bad cluster 1",
+                "soil_condition": "Su3",
+                "tree_ids": [t1, t2],
+            }),
+        )
+        .await;
+    assert_eq!(cluster_a_resp.status().as_u16(), 201);
+    let cluster_a: serde_json::Value = cluster_a_resp.json().await.unwrap();
+    let cluster_a_id = uuid::Uuid::parse_str(cluster_a["id"].as_str().unwrap()).unwrap();
+
+    let cluster_b_resp = app
+        .post_json(
+            "/api/v1/clusters",
+            &serde_json::json!({
+                "name": "Stats Cluster B",
+                "address": "Stat Allee 2",
+                "description": "bad cluster 2",
+                "soil_condition": "Su3",
+                "tree_ids": [t3],
+            }),
+        )
+        .await;
+    assert_eq!(cluster_b_resp.status().as_u16(), 201);
+    let cluster_b: serde_json::Value = cluster_b_resp.json().await.unwrap();
+    let cluster_b_id = uuid::Uuid::parse_str(cluster_b["id"].as_str().unwrap()).unwrap();
+
+    let cluster_c_resp = app
+        .post_json(
+            "/api/v1/clusters",
+            &serde_json::json!({
+                "name": "Stats Cluster C",
+                "address": "Stat Allee 3",
+                "description": "good cluster",
+                "soil_condition": "Su3",
+                "tree_ids": [t4, t5],
+            }),
+        )
+        .await;
+    assert_eq!(cluster_c_resp.status().as_u16(), 201);
+    let cluster_c: serde_json::Value = cluster_c_resp.json().await.unwrap();
+    let cluster_c_id = uuid::Uuid::parse_str(cluster_c["id"].as_str().unwrap()).unwrap();
+
+    // Force watering_status directly — no sensor data needed
+    sqlx::query("UPDATE tree_clusters SET watering_status = 'bad' WHERE id = $1")
+        .bind(cluster_a_id)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+    sqlx::query("UPDATE tree_clusters SET watering_status = 'bad' WHERE id = $1")
+        .bind(cluster_b_id)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+    sqlx::query("UPDATE tree_clusters SET watering_status = 'good' WHERE id = $1")
+        .bind(cluster_c_id)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+
+    let resp = app.get("/api/v1/clusters/statistics").await;
+    assert_eq!(resp.status().as_u16(), 200);
+
+    let stats: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(
+        stats["total"].as_i64().unwrap(),
+        3,
+        "three non-archived clusters"
+    );
+    assert_eq!(stats["bad"].as_i64().unwrap(), 2, "two clusters set to bad");
+    assert_eq!(
+        stats["good"].as_i64().unwrap(),
+        1,
+        "one cluster set to good"
+    );
+    assert_eq!(
+        stats["trees"].as_i64().unwrap(),
+        5,
+        "five trees across all clusters"
+    );
+    assert_eq!(stats["moderate"].as_i64().unwrap(), 0);
+    assert_eq!(stats["justWatered"].as_i64().unwrap(), 0);
+    assert_eq!(stats["unknown"].as_i64().unwrap(), 0);
+}
+
 // -- list_clusters: query search, sort=moisture, sensorCount --
 
 #[tokio::test]
@@ -1143,7 +1246,11 @@ async fn list_clusters_search_sort_and_sensor_count() {
     assert_eq!(resp.status().as_u16(), 200);
     let body: serde_json::Value = resp.json().await.unwrap();
     let data = body["data"].as_array().unwrap();
-    assert_eq!(data.len(), 1, "query=Hafen should return exactly one cluster");
+    assert_eq!(
+        data.len(),
+        1,
+        "query=Hafen should return exactly one cluster"
+    );
     assert_eq!(data[0]["name"], "Hafenspitze");
     assert_eq!(
         data[0]["sensorCount"].as_i64().unwrap(),
@@ -1152,17 +1259,12 @@ async fn list_clusters_search_sort_and_sensor_count() {
     );
 
     // 2. sort=moisture&order=asc → Hafenspitze (0.2) before Zob-Vorplatz (0.8)
-    let resp = app
-        .get("/api/v1/clusters?sort=moisture&order=asc")
-        .await;
+    let resp = app.get("/api/v1/clusters?sort=moisture&order=asc").await;
     assert_eq!(resp.status().as_u16(), 200);
     let body: serde_json::Value = resp.json().await.unwrap();
     let data = body["data"].as_array().unwrap();
     assert!(data.len() >= 2, "at least two clusters must be present");
-    let names: Vec<&str> = data
-        .iter()
-        .filter_map(|c| c["name"].as_str())
-        .collect();
+    let names: Vec<&str> = data.iter().filter_map(|c| c["name"].as_str()).collect();
     let hafen_pos = names.iter().position(|&n| n == "Hafenspitze").unwrap();
     let zob_pos = names.iter().position(|&n| n == "Zob-Vorplatz").unwrap();
     assert!(

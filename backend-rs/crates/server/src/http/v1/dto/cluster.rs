@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use domain::{
     Id,
     cluster::{
-        ClusterAddress, ClusterBoundaryView, ClusterMarker, ClusterName, TreeCluster,
-        TreeClusterDraft, TreeClusterView,
+        ClusterAddress, ClusterBoundaryView, ClusterMarker, ClusterName, ClusterStatistics,
+        TreeCluster, TreeClusterDraft, TreeClusterView,
     },
     region::Region,
     shared::{
@@ -335,4 +335,30 @@ impl From<&ClusterBoundaryView> for ClusterBoundaryResponse {
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct ClusterBoundaryListResponse {
     pub data: Vec<ClusterBoundaryResponse>,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct ClusterStatisticsResponse {
+    pub total: i64,
+    pub trees: i64,
+    pub bad: i64,
+    pub moderate: i64,
+    pub good: i64,
+    #[serde(rename = "justWatered")]
+    pub just_watered: i64,
+    pub unknown: i64,
+}
+
+impl From<ClusterStatistics> for ClusterStatisticsResponse {
+    fn from(v: ClusterStatistics) -> Self {
+        Self {
+            total: v.total,
+            trees: v.trees,
+            bad: v.bad,
+            moderate: v.moderate,
+            good: v.good,
+            just_watered: v.just_watered,
+            unknown: v.unknown,
+        }
+    }
 }
