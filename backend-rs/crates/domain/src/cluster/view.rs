@@ -24,6 +24,7 @@ pub struct TreeClusterView {
     pub longitude: Option<f64>,
     pub soil_condition: Option<SoilCondition>,
     pub tree_ids: Vec<Uuid>,
+    pub sensor_count: i64,
     pub provider: Option<String>,
     pub additional_info: Option<Value>,
 }
