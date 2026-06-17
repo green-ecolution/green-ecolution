@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { TreeResponse } from '@/api/backendApi'
-import { summarizeTopSpecies } from './clusterPanelUtils'
+import { summarizeTopSpecies, latestSensorReading } from './clusterPanelUtils'
 
 const tree = (over: Partial<TreeResponse>): TreeResponse =>
   ({
@@ -31,5 +31,26 @@ describe('summarizeTopSpecies', () => {
 
   it('returns an empty string for no trees', () => {
     expect(summarizeTopSpecies([])).toBe('')
+  })
+})
+
+describe('latestSensorReading', () => {
+  const treeWith = (createdAt: string | null): TreeResponse =>
+    ({
+      sensor: createdAt ? { latestData: { createdAt, data: {} } } : null,
+    }) as unknown as TreeResponse
+
+  it('returns the most recent reading across trees', () => {
+    const trees = [
+      treeWith('2026-06-01T10:00:00Z'),
+      treeWith(null),
+      treeWith('2026-06-09T08:00:00Z'),
+      treeWith('2026-06-05T12:00:00Z'),
+    ]
+    expect(latestSensorReading(trees)?.createdAt).toBe('2026-06-09T08:00:00Z')
+  })
+
+  it('returns undefined when no tree has a sensor reading', () => {
+    expect(latestSensorReading([treeWith(null), treeWith(null)])).toBeUndefined()
   })
 })

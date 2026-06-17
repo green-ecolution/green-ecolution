@@ -1,15 +1,22 @@
 import { ComponentProps } from 'react'
 import { MoveRight, Pencil, X } from 'lucide-react'
-import { Badge, Button } from '@green-ecolution/ui'
+import { format, formatDistanceToNow } from 'date-fns'
+import { de } from 'date-fns/locale'
+import { Badge, Button, StatusCard } from '@green-ecolution/ui'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { roundTo } from '@/lib/utils'
 import type { TreeClusterResponse } from '@/api/backendApi'
-import { summarizeTopSpecies } from './clusterPanelUtils'
+import { latestSensorReading, summarizeTopSpecies } from './clusterPanelUtils'
 
 interface ClusterPanelViewProps {
   treecluster: TreeClusterResponse
   onEdit: () => void
   onClose: () => void
   onOpenDashboard: () => void
+}
+
+interface SensorPayload {
+  temperature?: number
 }
 
 const FILLED_BADGE: Record<string, ComponentProps<typeof Badge>['variant']> = {
@@ -28,6 +35,17 @@ const ClusterPanelView = ({
   const status = getWateringStatusDetails(treecluster.wateringStatus)
   const species = summarizeTopSpecies(treecluster.trees)
   const treeCount = treecluster.trees.length
+  const moisturePercent = Math.round(treecluster.moistureLevel * 100)
+  const reading = latestSensorReading(treecluster.trees)
+  const temperatureValue = (reading?.data as SensorPayload | undefined)?.temperature
+  const temperature =
+    typeof temperatureValue === 'number' ? `${roundTo(temperatureValue, 1)} °C` : 'Keine Daten'
+  const lastMeasurement = reading
+    ? formatDistanceToNow(new Date(reading.createdAt), { addSuffix: true, locale: de })
+    : 'Keine Daten'
+  const lastWatered = treecluster.lastWatered
+    ? format(new Date(treecluster.lastWatered), 'dd.MM.yyyy')
+    : 'Keine Angabe'
 
   return (
     <div className="flex flex-col gap-y-5">
@@ -76,6 +94,19 @@ const ClusterPanelView = ({
         Zum Dashboard
         <MoveRight className="icon-arrow-animate" />
       </Button>
+
+      <div className="grid grid-cols-2 gap-4">
+        <StatusCard
+          status={status.color}
+          label="Bodenfeuchte"
+          value={`${moisturePercent} %`}
+          progress={moisturePercent}
+          isLarge
+        />
+        <StatusCard label="Bodentemperatur" value={temperature} isLarge />
+        <StatusCard label="Letzte Messung" value={lastMeasurement} />
+        <StatusCard label="Letzte Bewässerung" value={lastWatered} />
+      </div>
     </div>
   )
 }
