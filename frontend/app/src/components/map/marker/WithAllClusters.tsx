@@ -1,10 +1,11 @@
-import type { ClusterMarkerResponse } from '@/api/backendApi'
+import type { ClusterMarkerResponse, WateringStatus } from '@/api/backendApi'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { clusterMarkersQuery } from '@/api/queries'
 import MarkerList from './MarkerList'
 import { ClusterIcon } from '../markerIcons'
 import { getStatusColor } from '../utils'
 import { memo, useCallback, useDeferredValue, useMemo } from 'react'
+import { filterMarkersByName, filterMarkersByStatus } from '../cluster-panel/clusterPanelUtils'
 
 const defaultHighlighted: string[] = []
 const defaultDisabled: string[] = []
@@ -19,6 +20,8 @@ export interface WithAllClustersProps {
   onClick?: (cluster: ClusterMarkerResponse) => void
   highlightedClusters?: string[]
   disabledClusters?: string[]
+  nameFilter?: string
+  statusFilter?: WateringStatus[]
 }
 
 const WithAllClusters = memo(
@@ -26,9 +29,15 @@ const WithAllClusters = memo(
     onClick,
     highlightedClusters = defaultHighlighted,
     disabledClusters = defaultDisabled,
+    nameFilter,
+    statusFilter,
   }: WithAllClustersProps) => {
     const { data } = useSuspenseQuery(clusterMarkersQuery())
-    const deferredData = useDeferredValue(data.data)
+    const filtered = useMemo(
+      () => filterMarkersByStatus(filterMarkersByName(data.data, nameFilter ?? ''), statusFilter),
+      [data.data, nameFilter, statusFilter],
+    )
+    const deferredData = useDeferredValue(filtered)
 
     const highlightedSet = useMemo(() => new Set(highlightedClusters), [highlightedClusters])
     const disabledSet = useMemo(() => new Set(disabledClusters), [disabledClusters])

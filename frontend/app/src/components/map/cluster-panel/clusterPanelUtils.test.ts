@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import type { TreeResponse } from '@/api/backendApi'
-import { sortTreesSensorFirst, summarizeTopSpecies, latestSensorReading } from './clusterPanelUtils'
+import type { ClusterMarkerResponse } from '@/api/backendApi'
+import {
+  sortTreesSensorFirst,
+  summarizeTopSpecies,
+  filterMarkersByName,
+  filterMarkersByStatus,
+  latestSensorReading,
+} from './clusterPanelUtils'
 
 const tree = (over: Partial<TreeResponse>): TreeResponse =>
   ({
@@ -51,6 +58,43 @@ describe('summarizeTopSpecies', () => {
 
   it('returns an empty string for no trees', () => {
     expect(summarizeTopSpecies([])).toBe('')
+  })
+})
+
+describe('filterMarkersByName', () => {
+  const m = (name: string): ClusterMarkerResponse => ({ id: name, name }) as ClusterMarkerResponse
+
+  it('returns all markers for an empty term', () => {
+    const data = [m('Hafenspitze'), m('Bahnhof')]
+    expect(filterMarkersByName(data, '')).toEqual(data)
+  })
+
+  it('filters case-insensitively by name substring', () => {
+    const data = [m('Hafenspitze'), m('Bahnhof'), m('Hafenstraße')]
+    expect(filterMarkersByName(data, 'hafen').map((x) => x.name)).toEqual([
+      'Hafenspitze',
+      'Hafenstraße',
+    ])
+  })
+})
+
+describe('filterMarkersByStatus', () => {
+  const m = (id: string, wateringStatus: string): ClusterMarkerResponse =>
+    ({ id, name: id, wateringStatus }) as ClusterMarkerResponse
+
+  const data = [m('a', 'bad'), m('b', 'good'), m('c', 'moderate'), m('d', 'bad')]
+
+  it('returns all markers when no statuses given', () => {
+    expect(filterMarkersByStatus(data, undefined)).toEqual(data)
+    expect(filterMarkersByStatus(data, [])).toEqual(data)
+  })
+
+  it('keeps only markers whose status is selected', () => {
+    expect(filterMarkersByStatus(data, ['bad'] as never).map((x) => x.id)).toEqual(['a', 'd'])
+    expect(filterMarkersByStatus(data, ['good', 'moderate'] as never).map((x) => x.id)).toEqual([
+      'b',
+      'c',
+    ])
   })
 })
 

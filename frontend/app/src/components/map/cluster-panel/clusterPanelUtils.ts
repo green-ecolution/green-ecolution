@@ -1,4 +1,9 @@
-import type { SensorDataResponse, TreeResponse } from '@/api/backendApi'
+import type {
+  ClusterMarkerResponse,
+  SensorDataResponse,
+  TreeResponse,
+  WateringStatus,
+} from '@/api/backendApi'
 
 export const sortTreesSensorFirst = (trees: TreeResponse[]): TreeResponse[] =>
   trees
@@ -20,6 +25,23 @@ export const summarizeTopSpecies = (trees: TreeResponse[], limit = 2): string =>
     .slice(0, limit)
     .map(([species]) => species)
     .join(', ')
+}
+
+export const filterMarkersByName = (
+  markers: ClusterMarkerResponse[],
+  term: string,
+): ClusterMarkerResponse[] => {
+  const needle = term.trim().toLowerCase()
+  if (!needle) return markers
+  return markers.filter((m) => m.name.toLowerCase().includes(needle))
+}
+
+export const filterMarkersByStatus = (
+  markers: ClusterMarkerResponse[],
+  statuses: WateringStatus[] | undefined,
+): ClusterMarkerResponse[] => {
+  if (!statuses || statuses.length === 0) return markers
+  return markers.filter((m) => statuses.includes(m.wateringStatus))
 }
 
 export const latestSensorReading = (trees: TreeResponse[]): SensorDataResponse | undefined => {

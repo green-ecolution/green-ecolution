@@ -10,7 +10,9 @@ import { z } from 'zod'
 import Map from '@/components/map/Map'
 import MapController from '@/components/map/MapController'
 import ZoomControls from '@/components/map/ZoomControls'
+import MapResizeHandler from '@/components/map/MapResizeHandler'
 import MapBackgroundClick from '@/components/map/MapBackgroundClick'
+import MapToolbarBar from '@/components/map/MapToolbarBar'
 import ClusterPanel from '@/components/map/cluster-panel/ClusterPanel'
 import { clusterBoundariesQuery, clusterMarkersQuery } from '@/api/queries'
 import { Drawer, DrawerContent, DrawerTitle, Loading } from '@green-ecolution/ui'
@@ -87,11 +89,13 @@ function MapRoot() {
 
   return (
     <div className="flex h-[calc(100dvh-4.563rem)] flex-col">
+      {isIndex && <MapToolbarBar />}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div className="relative flex-1">
           <Map height="100%">
             <MapController />
             <ZoomControls />
+            <MapResizeHandler />
             <MapBackgroundClick onBackgroundClick={handleClosePanel} />
             <Suspense fallback={<Loading className="mt-20 justify-center" label="Lade Karte..." />}>
               <Outlet />
