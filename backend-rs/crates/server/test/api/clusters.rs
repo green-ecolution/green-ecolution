@@ -1074,3 +1074,99 @@ async fn list_cluster_boundaries_excludes_archived_clusters() {
         "archived clusters must be excluded from boundaries"
     );
 }
+
+// -- list_clusters: query search, sort=moisture, sensorCount --
+
+#[tokio::test]
+async fn list_clusters_search_sort_and_sensor_count() {
+    let app = spawn_app().await;
+
+    // Sensor for one of the Hafenspitze trees
+    insert_sensor(&app, "s-hafen-1").await;
+
+    // Hafenspitze: 3 trees, 1 with a sensor
+    let t_hafen_1 = insert_tree_with(&app, "T-HAFEN-1", Some("s-hafen-1"), "unknown").await;
+    let t_hafen_2 = insert_tree_with(&app, "T-HAFEN-2", None, "unknown").await;
+    let t_hafen_3 = insert_tree_with(&app, "T-HAFEN-3", None, "unknown").await;
+
+    // Zob-Vorplatz: 1 tree, no sensor
+    let t_zob = insert_tree_with(&app, "T-ZOB-1", None, "unknown").await;
+
+    let hafen_resp = app
+        .post_json(
+            "/api/v1/clusters",
+            &serde_json::json!({
+                "name": "Hafenspitze",
+                "address": "Hafen 1",
+                "description": "Test",
+                "soil_condition": "Su3",
+                "tree_ids": [t_hafen_1, t_hafen_2, t_hafen_3],
+            }),
+        )
+        .await;
+    assert_eq!(hafen_resp.status().as_u16(), 201);
+    let hafen: serde_json::Value = hafen_resp.json().await.unwrap();
+    let hafen_id = uuid::Uuid::parse_str(hafen["id"].as_str().unwrap()).unwrap();
+
+    let zob_resp = app
+        .post_json(
+            "/api/v1/clusters",
+            &serde_json::json!({
+                "name": "Zob-Vorplatz",
+                "address": "Zob 1",
+                "description": "Test",
+                "soil_condition": "Su3",
+                "tree_ids": [t_zob],
+            }),
+        )
+        .await;
+    assert_eq!(zob_resp.status().as_u16(), 201);
+    let zob: serde_json::Value = zob_resp.json().await.unwrap();
+    let zob_id = uuid::Uuid::parse_str(zob["id"].as_str().unwrap()).unwrap();
+
+    // Give Hafenspitze lower moisture so it sorts before Zob-Vorplatz on asc
+    sqlx::query("UPDATE tree_clusters SET moisture_level = $1 WHERE id = $2")
+        .bind(0.2_f64)
+        .bind(hafen_id)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+    sqlx::query("UPDATE tree_clusters SET moisture_level = $1 WHERE id = $2")
+        .bind(0.8_f64)
+        .bind(zob_id)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+
+    // 1. query=Hafen → only Hafenspitze, sensorCount == 1
+    let resp = app.get("/api/v1/clusters?query=Hafen").await;
+    assert_eq!(resp.status().as_u16(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    let data = body["data"].as_array().unwrap();
+    assert_eq!(data.len(), 1, "query=Hafen should return exactly one cluster");
+    assert_eq!(data[0]["name"], "Hafenspitze");
+    assert_eq!(
+        data[0]["sensorCount"].as_i64().unwrap(),
+        1,
+        "Hafenspitze has 1 sensor-equipped tree"
+    );
+
+    // 2. sort=moisture&order=asc → Hafenspitze (0.2) before Zob-Vorplatz (0.8)
+    let resp = app
+        .get("/api/v1/clusters?sort=moisture&order=asc")
+        .await;
+    assert_eq!(resp.status().as_u16(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    let data = body["data"].as_array().unwrap();
+    assert!(data.len() >= 2, "at least two clusters must be present");
+    let names: Vec<&str> = data
+        .iter()
+        .filter_map(|c| c["name"].as_str())
+        .collect();
+    let hafen_pos = names.iter().position(|&n| n == "Hafenspitze").unwrap();
+    let zob_pos = names.iter().position(|&n| n == "Zob-Vorplatz").unwrap();
+    assert!(
+        hafen_pos < zob_pos,
+        "Hafenspitze (moisture 0.2) must come before Zob-Vorplatz (moisture 0.8) when sorted asc"
+    );
+}
