@@ -125,6 +125,9 @@ pub struct TreeClusterInListResponse {
     pub last_watered: Option<String>,
     #[schema(example = json!(["0190a8e9-7c4f-7000-8000-000000000000"]))]
     pub tree_ids: Vec<uuid::Uuid>,
+    #[serde(rename = "sensorCount")]
+    #[schema(example = 3, minimum = 0)]
+    pub sensor_count: i64,
 }
 
 impl From<(&TreeClusterView, Option<&Region>)> for TreeClusterInListResponse {
@@ -150,6 +153,7 @@ impl From<(&TreeClusterView, Option<&Region>)> for TreeClusterInListResponse {
             additional_information: view.additional_info.clone(),
             last_watered: view.last_watered.map(|dt| dt.to_rfc3339()),
             tree_ids: view.tree_ids.clone(),
+            sensor_count: view.sensor_count,
         }
     }
 }
@@ -177,6 +181,7 @@ impl From<(&TreeCluster, Option<&Region>)> for TreeClusterInListResponse {
             additional_information: c.provenance().additional_info().cloned(),
             last_watered: c.last_watered.map(|dt| dt.to_rfc3339()),
             tree_ids: c.tree_ids.iter().map(|id| id.value()).collect(),
+            sensor_count: 0,
         }
     }
 }
@@ -196,6 +201,18 @@ pub struct ClusterListParams {
     /// Repeatable: `?region=<uuid>&region=<uuid>`.
     #[serde(default)]
     pub region: Vec<uuid::Uuid>,
+    /// Repeatable: `?soil_condition=Ss&soil_condition=Sl2`.
+    #[serde(default)]
+    pub soil_condition: Vec<SoilCondition>,
+    /// Free-text search across cluster name and address.
+    #[param(example = "Hafen")]
+    pub query: Option<String>,
+    /// Sort field. Allowed: `name|moisture|trees`.
+    #[param(example = "name")]
+    pub sort: Option<String>,
+    /// Sort direction. Allowed: `asc|desc`.
+    #[param(example = "asc")]
+    pub order: Option<String>,
 }
 
 // -- Requests --

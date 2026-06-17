@@ -207,7 +207,11 @@ impl TreeClusterReader for PgTreeClusterRepository {
         let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
         let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
         let provider = query.provider.as_ref().map(|p| p.as_str().to_string());
-        let search = query.query.as_deref().map(str::trim).filter(|s| !s.is_empty());
+        let search = query
+            .query
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty());
         let sort = query.sort.as_str();
         let order = query.order.as_str();
 

@@ -27,8 +27,8 @@ use crate::{
 use domain::{
     Id,
     cluster::{
-        ClusterAddress, ClusterName, TreeClusterDraft, TreeClusterSearchQuery, TreeClusterUpdate,
-        TreeClusterView,
+        ClusterAddress, ClusterName, ClusterSort, SortOrder, TreeClusterDraft,
+        TreeClusterSearchQuery, TreeClusterUpdate, TreeClusterView,
     },
     region::Region,
     shared::{
@@ -106,6 +106,22 @@ pub async fn list_clusters(
             .map(domain::shared::watering_status::WateringStatus::from)
             .collect(),
         regions: params.region,
+        soil_conditions: params
+            .soil_condition
+            .into_iter()
+            .map(domain::cluster::SoilCondition::from)
+            .collect(),
+        query: params.query.filter(|s| !s.trim().is_empty()),
+        sort: params
+            .sort
+            .as_deref()
+            .and_then(|s| s.parse::<ClusterSort>().ok())
+            .unwrap_or_default(),
+        order: params
+            .order
+            .as_deref()
+            .and_then(|s| s.parse::<SortOrder>().ok())
+            .unwrap_or_default(),
         ..TreeClusterSearchQuery::default()
     };
     let page = state.cluster_service.search_view(query, pagination).await?;
