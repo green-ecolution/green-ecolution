@@ -15,8 +15,8 @@
     "build": "tsc"
   },
   "devDependencies": {
-    "@openapitools/openapi-generator-cli": "^2.35.0",
-    "@types/node": "^25.9.2",
+    "@openapitools/openapi-generator-cli": "^2.38.0",
+    "@types/node": "^25.9.3",
     "typescript": "^5.9.3"
   }
 }
