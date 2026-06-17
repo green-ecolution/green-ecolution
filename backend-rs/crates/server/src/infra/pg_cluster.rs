@@ -7,8 +7,9 @@ use domain::cluster::snapshot::TreeClusterSnapshot;
 use domain::{
     Id, RepositoryError,
     cluster::{
-        ClusterBoundaryView, ClusterMarker, SoilCondition, TreeCluster, TreeClusterDraft,
-        TreeClusterReader, TreeClusterSearchQuery, TreeClusterView, TreeClusterWriter,
+        ClusterBoundaryView, ClusterMarker, ClusterStatistics, SoilCondition, TreeCluster,
+        TreeClusterDraft, TreeClusterReader, TreeClusterSearchQuery, TreeClusterView,
+        TreeClusterWriter,
     },
     shared::{
         coordinates::Coordinate,
@@ -362,6 +363,38 @@ impl TreeClusterReader for PgTreeClusterRepository {
                 boundary: row.boundary,
             })
             .collect())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn statistics(&self) -> Result<ClusterStatistics, RepositoryError> {
+        let row = sqlx::query!(
+            r#"SELECT
+                COUNT(*)                                                  AS "total!: i64",
+                COUNT(*) FILTER (WHERE watering_status = 'bad')           AS "bad!: i64",
+                COUNT(*) FILTER (WHERE watering_status = 'moderate')      AS "moderate!: i64",
+                COUNT(*) FILTER (WHERE watering_status = 'good')          AS "good!: i64",
+                COUNT(*) FILTER (WHERE watering_status = 'just watered')  AS "just_watered!: i64",
+                COUNT(*) FILTER (WHERE watering_status = 'unknown')       AS "unknown!: i64",
+                COALESCE((
+                    SELECT COUNT(*) FROM trees t
+                    JOIN tree_clusters c ON t.tree_cluster_id = c.id
+                    WHERE c.archived = false
+                ), 0)                                                     AS "trees!: i64"
+            FROM tree_clusters
+            WHERE archived = false"#
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(ClusterStatistics {
+            total: row.total,
+            trees: row.trees,
+            bad: row.bad,
+            moderate: row.moderate,
+            good: row.good,
+            just_watered: row.just_watered,
+            unknown: row.unknown,
+        })
     }
 }
 

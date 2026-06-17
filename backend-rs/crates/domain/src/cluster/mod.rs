@@ -40,6 +40,17 @@ pub use snapshot::TreeClusterSnapshot;
 pub use soil_condition::SoilCondition;
 pub use view::{ClusterBoundaryView, TreeClusterView};
 
+#[derive(Debug, Clone, Default)]
+pub struct ClusterStatistics {
+    pub total: i64,
+    pub trees: i64,
+    pub bad: i64,
+    pub moderate: i64,
+    pub good: i64,
+    pub just_watered: i64,
+    pub unknown: i64,
+}
+
 crate::newtype_nonempty! {
     /// Human-readable cluster name, 1–255 characters after trimming.
     ClusterName, "cluster.name", 1, 255
