@@ -10,6 +10,7 @@ import Pagination from '@/components/general/Pagination'
 import Dialog from '@/components/general/filter/Dialog'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
 import RegionFieldset from '@/components/general/filter/fieldsets/RegionFieldset'
+import SoilFieldset from '@/components/general/filter/fieldsets/SoilFieldset'
 import { z } from 'zod'
 import { treeClusterQuery } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
@@ -73,6 +74,7 @@ function Treecluster() {
           <Dialog headline="Bewässerungsgruppen filtern" fullUrlPath={Route.fullPath}>
             <StatusFieldset />
             <RegionFieldset />
+            <SoilFieldset />
           </Dialog>
         </div>
 

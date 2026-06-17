@@ -46,6 +46,7 @@ describe('filtersFromSearch / searchFromFilters', () => {
       searchFromFilters({
         statusTags: [],
         regionTags: ['r1'],
+        soilTags: [],
         hasCluster: undefined,
         plantingYears: [],
       }),

@@ -56,6 +56,7 @@ const Dialog = ({
         ...prev,
         wateringStatuses: undefined,
         regions: undefined,
+        soil: undefined,
         hasCluster: undefined,
         plantingYears: undefined,
         page: undefined,
@@ -76,6 +77,7 @@ const Dialog = ({
     () =>
       appliedFilters.statusTags.length +
       appliedFilters.regionTags.length +
+      appliedFilters.soilTags.length +
       (appliedFilters.hasCluster !== undefined ? 1 : 0) +
       appliedFilters.plantingYears.length,
     [appliedFilters],
