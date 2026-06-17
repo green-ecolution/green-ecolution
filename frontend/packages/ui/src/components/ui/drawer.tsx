@@ -1,0 +1,113 @@
+import * as React from 'react'
+import { Drawer as DrawerPrimitive } from 'vaul'
+
+import { cn } from '@/lib/utils'
+
+const Drawer = ({
+  shouldScaleBackground = false,
+  ...props
+}: React.ComponentProps<typeof DrawerPrimitive.Root>) => {
+  // vaul leaves the underlying Radix dialog modal, so a controlled non-modal
+  // drawer never clears body{pointer-events:none}; restore it so the page
+  // behind the drawer stays interactive (e.g. panning the map on mobile).
+  // The rAF re-applies it after Radix sets the lock in a follow-up commit.
+  React.useEffect(() => {
+    if (props.modal !== false || !props.open) return
+    const enableBackground = () => {
+      document.body.style.pointerEvents = 'auto'
+    }
+    enableBackground()
+    const raf = requestAnimationFrame(enableBackground)
+    return () => {
+      cancelAnimationFrame(raf)
+      document.body.style.pointerEvents = ''
+    }
+  }, [props.modal, props.open])
+
+  return <DrawerPrimitive.Root shouldScaleBackground={shouldScaleBackground} {...props} />
+}
+Drawer.displayName = 'Drawer'
+
+const DrawerTrigger = DrawerPrimitive.Trigger
+const DrawerPortal = DrawerPrimitive.Portal
+const DrawerClose = DrawerPrimitive.Close
+
+const DrawerOverlay = React.forwardRef<
+  React.ComponentRef<typeof DrawerPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <DrawerPrimitive.Overlay
+    ref={ref}
+    className={cn('fixed inset-0 z-[1100] bg-dark-900/50', className)}
+    {...props}
+  />
+))
+DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName
+
+const DrawerContent = React.forwardRef<
+  React.ComponentRef<typeof DrawerPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & { showOverlay?: boolean }
+>(({ className, children, showOverlay = true, ...props }, ref) => (
+  <DrawerPortal>
+    {showOverlay && <DrawerOverlay />}
+    <DrawerPrimitive.Content
+      ref={ref}
+      className={cn(
+        'fixed inset-x-0 bottom-0 z-[1110] flex h-full max-h-[96dvh] flex-col rounded-t-2xl bg-white font-nunito-sans shadow-xl outline-none',
+        className,
+      )}
+      {...props}
+    >
+      <div className="mx-auto mt-3 h-1.5 w-12 shrink-0 rounded-full bg-dark-200" />
+      {children}
+    </DrawerPrimitive.Content>
+  </DrawerPortal>
+))
+DrawerContent.displayName = 'DrawerContent'
+
+const DrawerHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn('grid gap-1.5 p-4 text-center sm:text-left', className)} {...props} />
+)
+DrawerHeader.displayName = 'DrawerHeader'
+
+const DrawerFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn('mt-auto flex flex-col gap-2 p-4', className)} {...props} />
+)
+DrawerFooter.displayName = 'DrawerFooter'
+
+const DrawerTitle = React.forwardRef<
+  React.ComponentRef<typeof DrawerPrimitive.Title>,
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Title>
+>(({ className, ...props }, ref) => (
+  <DrawerPrimitive.Title
+    ref={ref}
+    className={cn('font-lato text-lg font-semibold text-dark-900', className)}
+    {...props}
+  />
+))
+DrawerTitle.displayName = DrawerPrimitive.Title.displayName
+
+const DrawerDescription = React.forwardRef<
+  React.ComponentRef<typeof DrawerPrimitive.Description>,
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Description>
+>(({ className, ...props }, ref) => (
+  <DrawerPrimitive.Description
+    ref={ref}
+    className={cn('text-sm text-dark-600', className)}
+    {...props}
+  />
+))
+DrawerDescription.displayName = DrawerPrimitive.Description.displayName
+
+export {
+  Drawer,
+  DrawerPortal,
+  DrawerOverlay,
+  DrawerTrigger,
+  DrawerClose,
+  DrawerContent,
+  DrawerHeader,
+  DrawerFooter,
+  DrawerTitle,
+  DrawerDescription,
+}

@@ -1,38 +1,23 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import MapButtons from '@/components/map/MapButtons'
 import type { ClusterMarkerResponse, Tree, TreeCluster, TreeMarkerResponse } from '@/api/backendApi'
-import { useCallback, useMemo, useRef } from 'react'
-import Dialog from '@/components/general/filter/Dialog'
-import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
-import FilterProvider from '@/context/FilterContext'
+import { useCallback } from 'react'
 import { z } from 'zod'
-import ClusterFieldset from '@/components/general/filter/fieldsets/ClusterFieldset'
-import PlantingYearFieldset from '@/components/general/filter/fieldsets/PlantingYearFieldset'
-import useMapInteractions from '@/hooks/useMapInteractions'
+import useStore from '@/store/store'
 import { WithTreesAndClusters } from '@/components/map/marker/WithAllClusterAndTrees'
-import WithFilterdTrees from '@/components/map/marker/WithFilterdTrees'
+import WithAllClusters from '@/components/map/marker/WithAllClusters'
 import { filterSearchSchema } from '@/lib/filterSearchSchema'
 
-const mapFilterSchema = filterSearchSchema
-  .pick({ wateringStatuses: true, hasCluster: true, plantingYears: true })
-  .extend({
-    tree: z.string().optional(),
-    cluster: z.string().optional(),
-  })
+const mapFilterSchema = filterSearchSchema.pick({ wateringStatuses: true }).extend({
+  tree: z.string().optional(),
+  cluster: z.string().optional(),
+})
 
 function MapView() {
   const navigate = useNavigate({ from: '/map' })
   const search = Route.useSearch()
-  const { enableDragging, disableDragging } = useMapInteractions()
-  const dialogRef = useRef<HTMLDivElement>(null)
+  const searchTerm = useStore((state) => state.mapSearchTerm)
 
-  const hasActiveFilter = useMemo(
-    () =>
-      search.wateringStatuses !== undefined ||
-      search.hasCluster !== undefined ||
-      search.plantingYears !== undefined,
-    [search.wateringStatuses, search.hasCluster, search.plantingYears],
-  )
+  const hasActiveFilter = search.wateringStatuses !== undefined
 
   const handleTreeClick = useCallback(
     (tree: TreeMarkerResponse | Tree) => {
@@ -46,68 +31,42 @@ function MapView() {
   const handleClusterClick = useCallback(
     (cluster: ClusterMarkerResponse | TreeCluster) => {
       navigate({
-        to: `/treecluster/$treeclusterId`,
-        params: { treeclusterId: cluster.id.toString() },
+        to: '/map',
+        search: (prev) => ({ ...prev, cluster: cluster.id.toString() }),
       }).catch((error) => console.error('Navigation failed:', error))
     },
     [navigate],
   )
 
-  const handleMapInteractions = useCallback(
-    (isOpen: boolean) => {
-      if (isOpen) {
-        disableDragging()
-      } else {
-        enableDragging()
-      }
+  const handleBoundaryClick = useCallback(
+    (clusterId: string) => {
+      navigate({ to: '/map', search: (prev) => ({ ...prev, cluster: clusterId }) }).catch((error) =>
+        console.error('Navigation failed:', error),
+      )
     },
-    [disableDragging, enableDragging],
+    [navigate],
   )
 
-  return (
-    <>
-      <div className="absolute top-6 left-4 z-[1000]">
-        <Dialog
-          ref={dialogRef}
-          headline="Bäume filtern"
-          isOnMap
-          fullUrlPath={Route.fullPath}
-          onToggleOpen={handleMapInteractions}
-        >
-          <StatusFieldset />
-          <ClusterFieldset />
-          <PlantingYearFieldset />
-        </Dialog>
-      </div>
-      <MapButtons />
-      {hasActiveFilter ? (
-        <WithFilterdTrees
-          onClick={handleTreeClick}
-          selectedTrees={search.tree ? [search.tree] : []}
-          hasHighlightedTree={search.tree}
-          hasCluster={search.hasCluster}
-          plantingYears={search.plantingYears}
-          wateringStatuses={search.wateringStatuses}
-        />
-      ) : (
-        <WithTreesAndClusters
-          onClickTree={handleTreeClick}
-          onClickCluster={handleClusterClick}
-          hasHighlightedTree={search.tree}
-          hasHighlightedCluster={search.cluster}
-        />
-      )}
-    </>
+  return hasActiveFilter ? (
+    <WithAllClusters
+      onClick={handleClusterClick}
+      highlightedClusters={search.cluster ? [search.cluster] : []}
+      nameFilter={searchTerm}
+      statusFilter={search.wateringStatuses}
+    />
+  ) : (
+    <WithTreesAndClusters
+      onClickTree={handleTreeClick}
+      onClickCluster={handleClusterClick}
+      onClickBoundary={handleBoundaryClick}
+      hasHighlightedTree={search.tree}
+      hasHighlightedCluster={search.cluster}
+      nameFilter={searchTerm}
+    />
   )
 }
 
-const MapViewWithProvider = () => (
-  <FilterProvider>
-    <MapView />
-  </FilterProvider>
-)
-
 export const Route = createFileRoute('/_protected/map/')({
-  component: MapViewWithProvider,
+  component: MapView,
   validateSearch: mapFilterSchema,
 })

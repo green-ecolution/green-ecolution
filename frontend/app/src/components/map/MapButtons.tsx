@@ -13,17 +13,16 @@ import { useState } from 'react'
 const MapButtons = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   return (
-    <div className="relative">
-      <div className="absolute z-[1000] top-6 left-36 flex gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setIsModalOpen(!isModalOpen)}
-          className="rounded-full shadow-cards bg-white border-0"
-        >
-          <Settings className="!size-6 text-dark-800" />
-        </Button>
-      </div>
+    <>
+      <Button
+        variant="outline"
+        size="icon"
+        aria-label="Kataster-Einstellungen"
+        onClick={() => setIsModalOpen(!isModalOpen)}
+        className="rounded-full shadow-cards bg-white border-dark-200"
+      >
+        <Settings className="!size-5 text-dark-800" />
+      </Button>
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>
           <DialogHeader>
@@ -44,7 +43,7 @@ const MapButtons = () => {
           </Link>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }
 
