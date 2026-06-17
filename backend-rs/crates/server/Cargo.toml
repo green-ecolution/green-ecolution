@@ -62,7 +62,7 @@ sqlx = { workspace = true, features = ["macros", "migrate", "runtime-tokio", "tl
 thiserror = { workspace = true }
 tokio = { version = "1.52.3", features = ["full"] }
 tower = "0.5"
-tower-http = { version = "0.6.11", features = ["cors", "trace", "request-id"] }
+tower-http = { version = "0.7.0", features = ["cors", "trace", "request-id"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 url = { workspace = true }
