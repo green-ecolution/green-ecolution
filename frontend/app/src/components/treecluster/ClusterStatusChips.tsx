@@ -1,35 +1,34 @@
 import React from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { Badge } from '@green-ecolution/ui'
+import { X } from 'lucide-react'
 import { clusterStatisticsQuery } from '@/api/queries'
 import { WateringStatus } from '@/api/backendApi'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 
-const PRIMARY_STATUSES = [WateringStatus.Bad, WateringStatus.Moderate, WateringStatus.Good] as const
+const STATUSES = [
+  WateringStatus.Bad,
+  WateringStatus.Moderate,
+  WateringStatus.Good,
+  WateringStatus.JustWatered,
+  WateringStatus.Unknown,
+] as const
 
-const ClusterStatusChips: React.FC = () => {
+const ALWAYS_SHOWN: WateringStatus[] = [
+  WateringStatus.Bad,
+  WateringStatus.Moderate,
+  WateringStatus.Good,
+]
+
+const ClusterStatusChips: React.FC<{ className?: string }> = ({ className }) => {
   const { data: stats } = useSuspenseQuery(clusterStatisticsQuery())
   const search = useSearch({ strict: false })
   const navigate = useNavigate()
 
-  const wateringStatuses =
+  const active =
     'wateringStatuses' in search
-      ? (search.wateringStatuses as WateringStatus[] | undefined)
-      : undefined
-  const active = wateringStatuses ?? []
-
-  const toggle = (status: WateringStatus) => {
-    const next = active.includes(status) ? active.filter((s) => s !== status) : [...active, status]
-    navigate({
-      to: '/treecluster',
-      search: (prev: Record<string, unknown>) => ({
-        ...prev,
-        wateringStatuses: next.length ? next : undefined,
-        page: 1,
-      }),
-    }).catch((error) => console.error('Navigation failed:', error))
-  }
+      ? ((search.wateringStatuses as WateringStatus[] | undefined) ?? [])
+      : []
 
   const countFor = (status: WateringStatus): number => {
     switch (status) {
@@ -46,13 +45,27 @@ const ClusterStatusChips: React.FC = () => {
     }
   }
 
-  return (
-    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-      <span className="text-sm text-dark-600">
-        {stats.total} Gruppen · {stats.trees} Bäume
-      </span>
+  const toggle = (status: WateringStatus) => {
+    const next = active.includes(status) ? active.filter((s) => s !== status) : [...active, status]
+    navigate({
+      to: '/treecluster',
+      search: (prev: Record<string, unknown>) => ({
+        ...prev,
+        wateringStatuses: next.length ? next : undefined,
+        page: 1,
+      }),
+    }).catch((error) => console.error('Navigation failed:', error))
+  }
 
-      {PRIMARY_STATUSES.map((status) => {
+  const visible = STATUSES.filter((s) => ALWAYS_SHOWN.includes(s) || countFor(s) > 0)
+
+  return (
+    <div
+      role="group"
+      aria-label="Nach Bewässerungszustand filtern"
+      className={`flex flex-wrap items-center gap-2 ${className ?? ''}`}
+    >
+      {visible.map((status) => {
         const details = getWateringStatusDetails(status)
         const isActive = active.includes(status)
         return (
@@ -61,26 +74,25 @@ const ClusterStatusChips: React.FC = () => {
             type="button"
             aria-pressed={isActive}
             onClick={() => toggle(status)}
-            className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-full"
+            className={[
+              'inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+              isActive
+                ? 'border-green-dark bg-dark-50 font-medium text-dark-900'
+                : 'border-dark-200 bg-white text-dark-700 hover:border-green-dark hover:bg-dark-50',
+            ].join(' ')}
           >
-            <Badge variant={isActive ? details.color : 'muted'}>
-              {countFor(status)} {details.label}
-            </Badge>
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: details.colorHex }}
+              aria-hidden
+            />
+            <span className="font-semibold tabular-nums">{countFor(status)}</span>
+            <span className="text-dark-600">{details.label}</span>
+            {isActive && <X className="h-3.5 w-3.5 shrink-0 text-dark-500" aria-hidden />}
           </button>
         )
       })}
-
-      {stats.justWatered > 0 && (
-        <Badge variant="muted">
-          {stats.justWatered} {getWateringStatusDetails(WateringStatus.JustWatered).label}
-        </Badge>
-      )}
-
-      {stats.unknown > 0 && (
-        <Badge variant="muted">
-          {stats.unknown} {getWateringStatusDetails(WateringStatus.Unknown).label}
-        </Badge>
-      )}
     </div>
   )
 }
