@@ -20,7 +20,7 @@ import { ListCardHeader } from '@green-ecolution/ui'
 import { filterSearchSchema } from '@/lib/filterSearchSchema'
 import { SoilCondition } from '@/api/backendApi'
 
-export const treeclusterFilterSchema = filterSearchSchema
+const treeclusterFilterSchema = filterSearchSchema
   .pick({ wateringStatuses: true, regions: true })
   .extend({
     page: z.number().catch(1),

@@ -1,10 +1,7 @@
 import React from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { LayoutGrid, Table } from 'lucide-react'
-import { z } from 'zod'
-import { treeclusterFilterSchema } from '@/routes/_protected/treecluster/index'
 
-type SearchParams = z.infer<typeof treeclusterFilterSchema>
 type ViewOption = 'cards' | 'table'
 
 const OPTIONS: { value: ViewOption; label: string; icon: React.ElementType }[] = [
@@ -17,11 +14,12 @@ const ClusterViewToggle: React.FC = () => {
   const view: ViewOption =
     'view' in search && (search.view === 'cards' || search.view === 'table') ? search.view : 'cards'
   const navigate = useNavigate()
+  const page = typeof search.page === 'number' ? search.page : 1
 
   const handleSelect = (v: ViewOption) => {
     navigate({
       to: '/treecluster',
-      search: (prev) => ({ ...(prev as SearchParams), view: v }),
+      search: (prev: Record<string, unknown>) => ({ ...prev, page, view: v }),
     }).catch((error) => console.error('Navigation failed:', error))
   }
 
