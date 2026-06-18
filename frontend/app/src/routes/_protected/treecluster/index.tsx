@@ -82,7 +82,7 @@ function Treecluster() {
 
       <section className="mt-8">
         <div className="mb-6 flex flex-col gap-3 lg:mb-8">
-          <div className="flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="flex items-center gap-2 sm:flex-wrap sm:gap-3">
             <ClusterToolbar />
             <Dialog headline="Bewässerungsgruppen filtern" fullUrlPath={Route.fullPath}>
               <StatusFieldset />
@@ -90,7 +90,9 @@ function Treecluster() {
               <SoilFieldset />
             </Dialog>
           </div>
-          <ClusterStatusChips />
+          <div className="hidden sm:block">
+            <ClusterStatusChips />
+          </div>
         </div>
 
         {!clustersRes ? (
