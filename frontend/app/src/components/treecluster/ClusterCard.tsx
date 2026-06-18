@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from '@tanstack/react-router'
-import { ArrowRight, MapPin } from 'lucide-react'
+import { ArrowRight, Layers, MapPin } from 'lucide-react'
 import { Badge, Card } from '@green-ecolution/ui'
 import TreeIcon from '@/components/icons/Tree'
 import ClusterTreeDots from '@/components/treecluster/ClusterTreeDots'
@@ -11,7 +11,6 @@ import type { TreeClusterInList } from '@/api/backendApi'
 
 interface ClusterCardProps {
   treecluster: TreeClusterInList
-  index?: number
 }
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24
@@ -35,16 +34,16 @@ const Metric: React.FC<{
   label: string
   value: React.ReactNode
 }> = ({ icon, label, value }) => (
-  <div className="flex flex-col gap-1">
-    <span className="flex items-center gap-1.5 text-xs text-dark-600">
+  <div className="flex min-w-0 flex-col gap-1">
+    <span className="flex items-center gap-1.5 whitespace-nowrap text-xs text-dark-600">
       {icon}
       {label}
     </span>
-    <span className="font-lato font-semibold text-dark-900 truncate">{value}</span>
+    <span className="font-lato font-semibold text-dark-900">{value}</span>
   </div>
 )
 
-const ClusterCard: React.FC<ClusterCardProps> = ({ treecluster, index = 0 }) => {
+const ClusterCard: React.FC<ClusterCardProps> = ({ treecluster }) => {
   const status = getWateringStatusDetails(treecluster.wateringStatus)
   const treeCount = treecluster.treeIds?.length ?? 0
   const hasSoil = treecluster.soilCondition && treecluster.soilCondition !== SoilCondition.Unknown
@@ -53,19 +52,12 @@ const ClusterCard: React.FC<ClusterCardProps> = ({ treecluster, index = 0 }) => 
   return (
     <Card
       variant="outlined"
-      style={{ animationDelay: `${Math.min(index, 12) * 60}ms` }}
-      className="group relative flex h-full flex-col overflow-hidden motion-safe:animate-[fadeInUp_0.5s_ease-out_both] transition-shadow duration-300 hover:shadow-md focus-within:shadow-md"
+      className="group flex h-full flex-col transition-shadow duration-300 hover:shadow-md focus-within:shadow-md"
     >
-      <span
-        aria-hidden
-        className="absolute inset-y-0 left-0 w-1"
-        style={{ backgroundColor: status.colorHex }}
-      />
-
       <Link
         to="/treecluster/$treeclusterId"
         params={{ treeclusterId: treecluster.id.toString() }}
-        className="flex flex-1 flex-col gap-5 p-6 pl-7 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:rounded-xl"
+        className="flex flex-1 flex-col gap-5 p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:rounded-xl"
         aria-label={`Details zur Bewässerungsgruppe ${treecluster.name}`}
       >
         <header className="flex items-start justify-between gap-3">
@@ -94,15 +86,17 @@ const ClusterCard: React.FC<ClusterCardProps> = ({ treecluster, index = 0 }) => 
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 border-y border-border py-4">
-          <Metric icon={<TreeIcon className="h-3.5 w-3.5" />} label="Bäume" value={treeCount} />
+        <div className="flex flex-col gap-3 border-y border-border py-4">
+          <div className="grid grid-cols-2 gap-3">
+            <Metric icon={<TreeIcon className="h-3.5 w-3.5" />} label="Bäume" value={treeCount} />
+            <Metric
+              icon={<span className="h-2 w-2 shrink-0 rounded-full bg-green-dark" aria-hidden />}
+              label="Sensor-Bäume"
+              value={treecluster.sensorCount}
+            />
+          </div>
           <Metric
-            icon={<span className="h-2 w-2 rounded-full bg-green-dark" aria-hidden />}
-            label="Sensor-Bäume"
-            value={treecluster.sensorCount}
-          />
-          <Metric
-            icon={<MapPin className="h-3.5 w-3.5" aria-hidden />}
+            icon={<Layers className="h-3.5 w-3.5 shrink-0" aria-hidden />}
             label="Bodenart"
             value={soilLabel}
           />

@@ -17,9 +17,9 @@ const ClusterCardGrid: React.FC<ClusterCardGridProps> = ({ data }) => {
 
   return (
     <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-      {data.map((cluster, index) => (
+      {data.map((cluster) => (
         <li key={cluster.id} className="h-full">
-          <ClusterCard treecluster={cluster} index={index} />
+          <ClusterCard treecluster={cluster} />
         </li>
       ))}
     </ul>
