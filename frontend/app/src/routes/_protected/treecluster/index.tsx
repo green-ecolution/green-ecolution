@@ -15,7 +15,7 @@ import ClusterToolbar from '@/components/treecluster/ClusterToolbar'
 import ClusterStatusChips from '@/components/treecluster/ClusterStatusChips'
 import ClusterViewToggle from '@/components/treecluster/ClusterViewToggle'
 import { z } from 'zod'
-import { treeClusterQuery, clusterStatisticsQuery } from '@/api/queries'
+import { treeClusterQuery, clusterStatisticsQuery, regionsQuery } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
 import { filterSearchSchema } from '@/lib/filterSearchSchema'
 import { SoilCondition } from '@/api/backendApi'
@@ -165,6 +165,9 @@ export const Route = createFileRoute('/_protected/treecluster/')({
     queryClient
       .prefetchQuery(clusterStatisticsQuery())
       .catch((error) => console.error('Prefetching "clusterStatisticsQuery" failed:', error))
+    queryClient
+      .prefetchQuery(regionsQuery())
+      .catch((error) => console.error('Prefetching "regionsQuery" failed:', error))
   },
 })
 
