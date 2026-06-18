@@ -15,7 +15,7 @@ import ClusterToolbar from '@/components/treecluster/ClusterToolbar'
 import ClusterStatusChips from '@/components/treecluster/ClusterStatusChips'
 import ClusterViewToggle from '@/components/treecluster/ClusterViewToggle'
 import { z } from 'zod'
-import { treeClusterQuery } from '@/api/queries'
+import { treeClusterQuery, clusterStatisticsQuery } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
 import { filterSearchSchema } from '@/lib/filterSearchSchema'
 import { SoilCondition } from '@/api/backendApi'
@@ -57,33 +57,35 @@ function Treecluster() {
 
   return (
     <div className="container mt-6">
-      <article className="2xl:w-4/5">
-        <h1 className="font-lato font-bold text-3xl mb-4 lg:text-4xl xl:text-5xl">
-          Auflistung der Bewässerungsgruppen
-        </h1>
-        <p className="mb-5">
-          Hier finden Sie eine Übersicht aller Bewässerungsgruppen. Eine Bewässerungsgruppe besteht
-          aus mehreren Bäumen, welche aufgrund ihrer Nähe und Standortbedinungen in einer Gruppe
-          zusammengefasst wurden. Die Ausstattung einzelner Bäume mit Sensoren erlaubt eine
-          Gesamtaussage über den Bewässerungszustand der vollständigen Gruppe. Die Auswertung der
-          Daten aller Sensoren einer Bewässerungsgruppe liefert Handlungsempfehlungen für diese
-          Gruppe.
-        </p>
-        <ButtonLink icon={Plus} label="Neue Gruppe erstellen" link={{ to: '/treecluster/new' }} />
-      </article>
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <article className="2xl:w-3/5">
+          <h1 className="font-lato font-bold text-3xl mb-3 lg:text-4xl xl:text-5xl">
+            Bewässerungsgruppen
+          </h1>
+          <p className="text-dark-600">
+            Hier finden Sie eine Übersicht aller Bewässerungsgruppen. Eine Bewässerungsgruppe
+            besteht aus mehreren Bäumen, welche aufgrund ihrer Nähe und Standortbedinungen in einer
+            Gruppe zusammengefasst wurden. Die Ausstattung einzelner Bäume mit Sensoren erlaubt eine
+            Gesamtaussage über den Bewässerungszustand der vollständigen Gruppe.
+          </p>
+        </article>
+        <div className="flex shrink-0 items-center gap-3">
+          <ClusterViewToggle />
+          <ButtonLink icon={Plus} label="Gruppe anlegen" link={{ to: '/treecluster/new' }} />
+        </div>
+      </header>
 
-      <section className="mt-10">
-        <ClusterStatusChips />
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 lg:mb-10 mt-4">
-          <ClusterToolbar />
-          <div className="flex items-center gap-3">
-            <ClusterViewToggle />
+      <section className="mt-8">
+        <div className="mb-6 flex flex-col gap-4 lg:mb-8 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            <ClusterToolbar />
             <Dialog headline="Bewässerungsgruppen filtern" fullUrlPath={Route.fullPath}>
               <StatusFieldset />
               <RegionFieldset />
               <SoilFieldset />
             </Dialog>
           </div>
+          <ClusterStatusChips />
         </div>
 
         {view === 'table' ? (
@@ -145,6 +147,9 @@ export const Route = createFileRoute('/_protected/treecluster/')({
         }),
       )
       .catch((error) => console.error('Prefetching "treeClusterQuery" failed:', error))
+    queryClient
+      .prefetchQuery(clusterStatisticsQuery())
+      .catch((error) => console.error('Prefetching "clusterStatisticsQuery" failed:', error))
   },
 })
 
