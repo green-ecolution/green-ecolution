@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery, useSuspenseQuery, keepPreviousData } from '@tanstack/react-query'
 import ButtonLink from '@/components/general/links/ButtonLink'
 import { Plus } from 'lucide-react'
 import { Loading } from '@green-ecolution/ui'
@@ -42,8 +42,8 @@ function Treecluster() {
     soil,
     view = 'cards',
   } = Route.useSearch()
-  const { data: clustersRes } = useSuspenseQuery(
-    treeClusterQuery({
+  const { data: clustersRes, isPlaceholderData } = useQuery({
+    ...treeClusterQuery({
       page,
       perPage: 12,
       wateringStatus: wateringStatuses,
@@ -53,7 +53,8 @@ function Treecluster() {
       order,
       soilCondition: soil as SoilCondition[] | undefined,
     }),
-  )
+    placeholderData: keepPreviousData,
+  })
   const { data: stats } = useSuspenseQuery(clusterStatisticsQuery())
 
   return (
@@ -92,22 +93,32 @@ function Treecluster() {
           <ClusterStatusChips />
         </div>
 
-        {view === 'table' ? (
-          <>
-            <ListCardHeader columns="1fr 2fr 1.5fr 1fr">
-              <p>Status</p>
-              <p>Name</p>
-              <p>Standort</p>
-              <p>Anzahl d. Bäume</p>
-            </ListCardHeader>
-
-            <TreeClusterList data={clustersRes.data} />
-          </>
+        {!clustersRes ? (
+          <Loading className="mt-10 justify-center" label="Daten werden geladen" />
         ) : (
-          <ClusterCardGrid data={clustersRes.data} />
-        )}
-        {clustersRes.pagination && clustersRes.pagination?.totalPages > 1 && (
-          <Pagination pagination={clustersRes.pagination} />
+          <div
+            className="transition-opacity duration-200"
+            style={{ opacity: isPlaceholderData ? 0.6 : 1 }}
+            aria-busy={isPlaceholderData}
+          >
+            {view === 'table' ? (
+              <>
+                <ListCardHeader columns="1fr 2fr 1.5fr 1fr">
+                  <p>Status</p>
+                  <p>Name</p>
+                  <p>Standort</p>
+                  <p>Anzahl d. Bäume</p>
+                </ListCardHeader>
+
+                <TreeClusterList data={clustersRes.data} />
+              </>
+            ) : (
+              <ClusterCardGrid data={clustersRes.data} />
+            )}
+            {clustersRes.pagination && clustersRes.pagination?.totalPages > 1 && (
+              <Pagination pagination={clustersRes.pagination} />
+            )}
+          </div>
         )}
       </section>
     </div>
