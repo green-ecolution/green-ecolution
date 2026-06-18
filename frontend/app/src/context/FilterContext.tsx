@@ -18,6 +18,9 @@ interface FilterContextType {
   handlePlantingYearRangeChange: (range: number[]) => void
   resetFilters: () => void
   applyOldStateToTags: (oldValues: Filters) => void
+  setStatusTags: (value: string[]) => void
+  setRegionTags: (value: string[]) => void
+  setSoilTags: (value: string[]) => void
 }
 
 /* eslint-disable-next-line react-refresh/only-export-components */
@@ -99,6 +102,9 @@ const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
       handlePlantingYearRangeChange,
       resetFilters,
       applyOldStateToTags,
+      setStatusTags,
+      setRegionTags,
+      setSoilTags,
     }),
     [hasCluster, plantingYears, regionTags, soilTags, statusTags],
   )

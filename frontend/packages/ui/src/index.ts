@@ -225,6 +225,13 @@ export type { ComboboxProps, ComboboxOption } from './components/ui/combobox'
 export { MultiSelect } from './components/ui/multi-select'
 export type { MultiSelectProps, MultiSelectOption } from './components/ui/multi-select'
 
+// MultiSelectCombobox
+export { MultiSelectCombobox } from './components/ui/multi-select-combobox'
+export type {
+  MultiSelectComboboxProps,
+  MultiSelectComboboxOption,
+} from './components/ui/multi-select-combobox'
+
 // Popover
 export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor } from './components/ui/popover'
 

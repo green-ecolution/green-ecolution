@@ -1,30 +1,32 @@
-import Option from '../Option'
 import { useFilter } from '@/context/FilterContext'
 import { SoilConditionOptions } from '@/hooks/details/useDetailsForSoilCondition'
+import { MultiSelectCombobox } from '@green-ecolution/ui'
+import SelectedTagList from '../SelectedTagList'
+
+const SOIL_OPTIONS = SoilConditionOptions.map((option) => ({
+  value: option.value,
+  label: option.label,
+  group: option.group,
+}))
 
 const SoilFieldset = () => {
-  const { filters, handleSoilChange } = useFilter()
-
-  const groups = Array.from(new Set(SoilConditionOptions.map((o) => o.group)))
+  const { filters, setSoilTags } = useFilter()
 
   return (
     <fieldset className="mt-6">
       <legend className="font-lato font-semibold text-dark-600 mb-2">Bodenart:</legend>
-      {groups.map((group) => (
-        <div key={group} className="mb-3">
-          <p className="text-sm text-dark-400 mb-1">{group}</p>
-          {SoilConditionOptions.filter((o) => o.group === group).map((opt) => (
-            <Option
-              key={opt.value}
-              label={opt.label}
-              name={opt.value}
-              value={opt.value}
-              checked={filters.soilTags.includes(opt.value)}
-              onChange={handleSoilChange}
-            />
-          ))}
-        </div>
-      ))}
+      <MultiSelectCombobox
+        options={SOIL_OPTIONS}
+        value={filters.soilTags}
+        onChange={setSoilTags}
+        placeholder="Alle Bodenarten"
+        searchPlaceholder="Bodenart suchen"
+      />
+      <SelectedTagList
+        options={SOIL_OPTIONS}
+        value={filters.soilTags}
+        onRemove={(v) => setSoilTags(filters.soilTags.filter((tag) => tag !== v))}
+      />
     </fieldset>
   )
 }
