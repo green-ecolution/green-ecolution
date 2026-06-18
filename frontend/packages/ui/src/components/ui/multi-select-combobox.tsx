@@ -52,7 +52,24 @@ const MultiSelectCombobox = React.forwardRef<HTMLButtonElement, MultiSelectCombo
     ref,
   ) => {
     const [open, setOpen] = React.useState(false)
+    const [container, setContainer] = React.useState<HTMLElement | null>(null)
+    const triggerRef = React.useRef<HTMLButtonElement | null>(null)
     const selected = React.useMemo(() => new Set(value), [value])
+
+    const setTriggerRef = (node: HTMLButtonElement | null) => {
+      triggerRef.current = node
+      if (typeof ref === 'function') ref(node)
+      else if (ref) ref.current = node
+    }
+
+    // Portal into the surrounding dialog (if any) so the list scrolls despite the
+    // dialog's scroll-lock; falls back to the default body portal otherwise.
+    const handleOpenChange = (next: boolean) => {
+      if (next) {
+        setContainer((triggerRef.current?.closest('[role="dialog"]') as HTMLElement | null) ?? null)
+      }
+      setOpen(next)
+    }
 
     const groups = React.useMemo(() => {
       const map = new Map<string, MultiSelectComboboxOption[]>()
@@ -78,10 +95,10 @@ const MultiSelectCombobox = React.forwardRef<HTMLButtonElement, MultiSelectCombo
           : `${value.length} ausgewählt`
 
     return (
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <button
-            ref={ref}
+            ref={setTriggerRef}
             id={id}
             type="button"
             role="combobox"
@@ -98,7 +115,11 @@ const MultiSelectCombobox = React.forwardRef<HTMLButtonElement, MultiSelectCombo
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-0">
+        <PopoverContent
+          align="start"
+          container={container}
+          className="w-[var(--radix-popover-trigger-width)] p-0"
+        >
           <Command>
             {searchable && <CommandInput placeholder={searchPlaceholder} />}
             <CommandList>
