@@ -13,13 +13,14 @@ import RegionFieldset from '@/components/general/filter/fieldsets/RegionFieldset
 import SoilFieldset from '@/components/general/filter/fieldsets/SoilFieldset'
 import ClusterToolbar from '@/components/treecluster/ClusterToolbar'
 import ClusterStatusChips from '@/components/treecluster/ClusterStatusChips'
+import ClusterViewToggle from '@/components/treecluster/ClusterViewToggle'
 import { z } from 'zod'
 import { treeClusterQuery } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
 import { filterSearchSchema } from '@/lib/filterSearchSchema'
 import { SoilCondition } from '@/api/backendApi'
 
-const treeclusterFilterSchema = filterSearchSchema
+export const treeclusterFilterSchema = filterSearchSchema
   .pick({ wateringStatuses: true, regions: true })
   .extend({
     page: z.number().catch(1),
@@ -75,11 +76,14 @@ function Treecluster() {
         <ClusterStatusChips />
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6 lg:mb-10 mt-4">
           <ClusterToolbar />
-          <Dialog headline="Bewässerungsgruppen filtern" fullUrlPath={Route.fullPath}>
-            <StatusFieldset />
-            <RegionFieldset />
-            <SoilFieldset />
-          </Dialog>
+          <div className="flex items-center gap-3">
+            <ClusterViewToggle />
+            <Dialog headline="Bewässerungsgruppen filtern" fullUrlPath={Route.fullPath}>
+              <StatusFieldset />
+              <RegionFieldset />
+              <SoilFieldset />
+            </Dialog>
+          </div>
         </div>
 
         {view === 'table' ? (
