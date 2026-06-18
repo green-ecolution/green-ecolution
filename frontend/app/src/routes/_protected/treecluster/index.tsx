@@ -67,14 +67,14 @@ function Treecluster() {
           <p className="mt-2 font-lato font-semibold text-dark-700">
             {stats.total} Gruppen · {stats.trees} Bäume
           </p>
-          <p className="mt-3 text-sm text-dark-600">
+          <p className="mt-3 hidden text-sm text-dark-600 md:block">
             Hier finden Sie eine Übersicht aller Bewässerungsgruppen. Eine Bewässerungsgruppe
             besteht aus mehreren Bäumen, welche aufgrund ihrer Nähe und Standortbedinungen in einer
             Gruppe zusammengefasst wurden. Die Ausstattung einzelner Bäume mit Sensoren erlaubt eine
             Gesamtaussage über den Bewässerungszustand der vollständigen Gruppe.
           </p>
         </article>
-        <div className="flex shrink-0 items-center gap-3">
+        <div className="flex w-full shrink-0 items-center justify-between gap-3 sm:w-auto sm:justify-start">
           <ClusterViewToggle />
           <ButtonLink icon={Plus} label="Gruppe anlegen" link={{ to: '/treecluster/new' }} />
         </div>
@@ -82,7 +82,7 @@ function Treecluster() {
 
       <section className="mt-8">
         <div className="mb-6 flex flex-col gap-3 lg:mb-8">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <ClusterToolbar />
             <Dialog headline="Bewässerungsgruppen filtern" fullUrlPath={Route.fullPath}>
               <StatusFieldset />

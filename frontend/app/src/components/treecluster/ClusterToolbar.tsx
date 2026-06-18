@@ -44,8 +44,8 @@ const ClusterToolbar: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <div className="relative max-w-xs flex-1">
+    <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+      <div className="relative w-full sm:max-w-xs sm:flex-1">
         <Search
           className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-dark-400"
           aria-hidden
@@ -59,7 +59,7 @@ const ClusterToolbar: React.FC = () => {
         />
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex w-full items-center gap-2 sm:w-auto">
         <ArrowDownUp className="h-4 w-4 shrink-0 text-dark-600" aria-hidden />
         <Combobox
           options={SORT_OPTIONS}
@@ -67,7 +67,7 @@ const ClusterToolbar: React.FC = () => {
           onChange={handleSortChange}
           placeholder="Sortieren"
           searchPlaceholder="Sortierung suchen"
-          className="w-44"
+          className="w-full sm:w-44"
         />
       </div>
     </div>
