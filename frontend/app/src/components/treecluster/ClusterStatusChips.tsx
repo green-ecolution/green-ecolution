@@ -63,7 +63,7 @@ const ClusterStatusChips: React.FC<{ className?: string }> = ({ className }) => 
     <div
       role="group"
       aria-label="Nach Bewässerungszustand filtern"
-      className={`flex flex-wrap items-center gap-2 ${className ?? ''}`}
+      className={`flex items-center gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0 ${className ?? ''}`}
     >
       {visible.map((status) => {
         const details = getWateringStatusDetails(status)
@@ -75,7 +75,7 @@ const ClusterStatusChips: React.FC<{ className?: string }> = ({ className }) => 
             aria-pressed={isActive}
             onClick={() => toggle(status)}
             className={[
-              'inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition',
+              'inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
               isActive
                 ? 'border-green-dark bg-dark-50 font-medium text-dark-900'

@@ -74,7 +74,7 @@ function Treecluster() {
             Gesamtaussage über den Bewässerungszustand der vollständigen Gruppe.
           </p>
         </article>
-        <div className="flex w-full shrink-0 items-center justify-between gap-3 sm:w-auto sm:justify-start">
+        <div className="flex shrink-0 flex-wrap items-center gap-3">
           <ClusterViewToggle />
           <ButtonLink icon={Plus} label="Gruppe anlegen" link={{ to: '/treecluster/new' }} />
         </div>
