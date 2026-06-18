@@ -61,13 +61,14 @@ const ClusterToolbar: React.FC = () => {
 
       <div className="flex w-full items-center gap-2 sm:w-auto">
         <ArrowDownUp className="h-4 w-4 shrink-0 text-dark-600" aria-hidden />
+        <span className="shrink-0 whitespace-nowrap text-sm text-dark-600">Sortieren:</span>
         <Combobox
           options={SORT_OPTIONS}
           value={search.sort ?? 'name'}
           onChange={handleSortChange}
           placeholder="Sortieren"
           searchPlaceholder="Sortierung suchen"
-          className="w-full sm:w-44"
+          className="min-w-0 flex-1 sm:w-48 sm:flex-none"
         />
       </div>
     </div>
