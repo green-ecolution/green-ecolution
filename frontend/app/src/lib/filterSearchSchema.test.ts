@@ -36,6 +36,7 @@ describe('filtersFromSearch / searchFromFilters', () => {
     ).toEqual({
       statusTags: ['good'],
       regionTags: [],
+      soilTags: [],
       hasCluster: false,
       plantingYears: [2020],
     })
@@ -46,6 +47,7 @@ describe('filtersFromSearch / searchFromFilters', () => {
       searchFromFilters({
         statusTags: [],
         regionTags: ['r1'],
+        soilTags: [],
         hasCluster: undefined,
         plantingYears: [],
       }),

@@ -3,8 +3,9 @@ use std::sync::Arc;
 use domain::{
     Id,
     cluster::{
-        ClusterBoundaryView, ClusterMarker, TreeCluster, TreeClusterDraft, TreeClusterReader,
-        TreeClusterSearchQuery, TreeClusterUpdate, TreeClusterView, TreeClusterWriter,
+        ClusterBoundaryView, ClusterMarker, ClusterStatistics, TreeCluster, TreeClusterDraft,
+        TreeClusterReader, TreeClusterSearchQuery, TreeClusterUpdate, TreeClusterView,
+        TreeClusterWriter,
     },
     events::DomainEvent,
     shared::{
@@ -126,6 +127,11 @@ impl ClusterService {
     #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
     pub async fn archive(&self, id: Id<TreeCluster>) -> Result<(), ServiceError> {
         Ok(self.writer.archive(id).await?)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn statistics(&self) -> Result<ClusterStatistics, ServiceError> {
+        Ok(self.reader.statistics().await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]

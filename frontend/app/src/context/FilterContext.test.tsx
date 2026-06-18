@@ -154,6 +154,7 @@ describe('FilterContext', () => {
       const oldState = {
         statusTags: ['good'],
         regionTags: ['region1'],
+        soilTags: [],
         hasCluster: true,
         plantingYears: [2024],
       }

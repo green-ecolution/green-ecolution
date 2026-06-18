@@ -92,6 +92,57 @@
                 "format": "uuid"
               }
             }
+          },
+          {
+            "name": "soil_condition",
+            "in": "query",
+            "description": "Repeatable: `?soil_condition=Ss&soil_condition=Sl2`.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/SoilCondition"
+              }
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "description": "Free-text search across cluster name and address.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "example": "Hafen"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field. Allowed: `name|moisture|trees`.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "example": "name"
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort direction. Allowed: `asc|desc`.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "example": "asc"
           }
         ],
         "responses": {
@@ -184,6 +235,31 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClusterMarkerListResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v1/clusters/statistics": {
+      "get": {
+        "tags": [
+          "Tree Clusters"
+        ],
+        "summary": "Cluster statistics",
+        "description": "Counts of non-archived clusters per watering status, plus total clusters and total trees in clusters.",
+        "operationId": "getClusterStatistics",
+        "responses": {
+          "200": {
+            "description": "Cluster statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClusterStatisticsResponse"
                 }
               }
             }
@@ -2574,6 +2650,48 @@
           }
         }
       },
+      "ClusterStatisticsResponse": {
+        "type": "object",
+        "required": [
+          "total",
+          "trees",
+          "bad",
+          "moderate",
+          "good",
+          "justWatered",
+          "unknown"
+        ],
+        "properties": {
+          "bad": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "good": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "justWatered": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "moderate": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "trees": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unknown": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "CreateSensorRequest": {
         "type": "object",
         "description": "Request body for `POST /sensors` - registers a prepared sensor unit.",
@@ -3003,7 +3121,8 @@
                 "latitude",
                 "longitude",
                 "archived",
-                "tree_ids"
+                "tree_ids",
+                "sensorCount"
               ],
               "properties": {
                 "additional_information": {
@@ -3081,6 +3200,12 @@
                       "$ref": "#/components/schemas/RegionResponse"
                     }
                   ]
+                },
+                "sensorCount": {
+                  "type": "integer",
+                  "format": "int64",
+                  "example": 3,
+                  "minimum": 0
                 },
                 "soil_condition": {
                   "$ref": "#/components/schemas/SoilCondition"
@@ -4479,7 +4604,8 @@
           "latitude",
           "longitude",
           "archived",
-          "tree_ids"
+          "tree_ids",
+          "sensorCount"
         ],
         "properties": {
           "additional_information": {
@@ -4557,6 +4683,12 @@
                 "$ref": "#/components/schemas/RegionResponse"
               }
             ]
+          },
+          "sensorCount": {
+            "type": "integer",
+            "format": "int64",
+            "example": 3,
+            "minimum": 0
           },
           "soil_condition": {
             "$ref": "#/components/schemas/SoilCondition"

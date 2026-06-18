@@ -40,6 +40,17 @@ pub use snapshot::TreeClusterSnapshot;
 pub use soil_condition::SoilCondition;
 pub use view::{ClusterBoundaryView, TreeClusterView};
 
+#[derive(Debug, Clone, Default)]
+pub struct ClusterStatistics {
+    pub total: i64,
+    pub trees: i64,
+    pub bad: i64,
+    pub moderate: i64,
+    pub good: i64,
+    pub just_watered: i64,
+    pub unknown: i64,
+}
+
 crate::newtype_nonempty! {
     /// Human-readable cluster name, 1–255 characters after trimming.
     ClusterName, "cluster.name", 1, 255
@@ -80,12 +91,73 @@ pub struct TreeClusterDraft {
     pub provenance: Provenance,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ClusterSort {
+    #[default]
+    Name,
+    Moisture,
+    Trees,
+}
+
+impl ClusterSort {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ClusterSort::Name => "name",
+            ClusterSort::Moisture => "moisture",
+            ClusterSort::Trees => "trees",
+        }
+    }
+}
+
+impl std::str::FromStr for ClusterSort {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "name" => Ok(ClusterSort::Name),
+            "moisture" => Ok(ClusterSort::Moisture),
+            "trees" => Ok(ClusterSort::Trees),
+            _ => Err(()),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum SortOrder {
+    #[default]
+    Asc,
+    Desc,
+}
+
+impl SortOrder {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            SortOrder::Asc => "asc",
+            SortOrder::Desc => "desc",
+        }
+    }
+}
+
+impl std::str::FromStr for SortOrder {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "asc" => Ok(SortOrder::Asc),
+            "desc" => Ok(SortOrder::Desc),
+            _ => Err(()),
+        }
+    }
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct TreeClusterSearchQuery {
     pub watering_statuses: Vec<WateringStatus>,
     pub regions: Vec<uuid::Uuid>,
     pub ids: Vec<Id<TreeCluster>>,
     pub provider: Option<ProviderId>,
+    pub query: Option<String>,
+    pub soil_conditions: Vec<SoilCondition>,
+    pub sort: ClusterSort,
+    pub order: SortOrder,
 }
 
 /// Replacement input for [`TreeCluster`] updates.

@@ -76,6 +76,7 @@ const FilterableTreesInner = memo(
     const [oldValues, setOldValues] = useState<Filters>({
       statusTags: [],
       regionTags: [],
+      soilTags: [],
       hasCluster: undefined,
       plantingYears: [],
     })
@@ -119,6 +120,7 @@ const FilterableTreesInner = memo(
       applyOldStateToTags({
         statusTags: [],
         regionTags: [],
+        soilTags: [],
         hasCluster: undefined,
         plantingYears: [],
       })

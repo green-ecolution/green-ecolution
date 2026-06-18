@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use domain::{
     Id,
     cluster::{
-        ClusterAddress, ClusterBoundaryView, ClusterMarker, ClusterName, TreeCluster,
-        TreeClusterDraft, TreeClusterView,
+        ClusterAddress, ClusterBoundaryView, ClusterMarker, ClusterName, ClusterStatistics,
+        TreeCluster, TreeClusterDraft, TreeClusterView,
     },
     region::Region,
     shared::{
@@ -125,6 +125,9 @@ pub struct TreeClusterInListResponse {
     pub last_watered: Option<String>,
     #[schema(example = json!(["0190a8e9-7c4f-7000-8000-000000000000"]))]
     pub tree_ids: Vec<uuid::Uuid>,
+    #[serde(rename = "sensorCount")]
+    #[schema(example = 3, minimum = 0)]
+    pub sensor_count: i64,
 }
 
 impl From<(&TreeClusterView, Option<&Region>)> for TreeClusterInListResponse {
@@ -150,6 +153,7 @@ impl From<(&TreeClusterView, Option<&Region>)> for TreeClusterInListResponse {
             additional_information: view.additional_info.clone(),
             last_watered: view.last_watered.map(|dt| dt.to_rfc3339()),
             tree_ids: view.tree_ids.clone(),
+            sensor_count: view.sensor_count,
         }
     }
 }
@@ -177,6 +181,7 @@ impl From<(&TreeCluster, Option<&Region>)> for TreeClusterInListResponse {
             additional_information: c.provenance().additional_info().cloned(),
             last_watered: c.last_watered.map(|dt| dt.to_rfc3339()),
             tree_ids: c.tree_ids.iter().map(|id| id.value()).collect(),
+            sensor_count: 0,
         }
     }
 }
@@ -196,6 +201,18 @@ pub struct ClusterListParams {
     /// Repeatable: `?region=<uuid>&region=<uuid>`.
     #[serde(default)]
     pub region: Vec<uuid::Uuid>,
+    /// Repeatable: `?soil_condition=Ss&soil_condition=Sl2`.
+    #[serde(default)]
+    pub soil_condition: Vec<SoilCondition>,
+    /// Free-text search across cluster name and address.
+    #[param(example = "Hafen")]
+    pub query: Option<String>,
+    /// Sort field. Allowed: `name|moisture|trees`.
+    #[param(example = "name")]
+    pub sort: Option<String>,
+    /// Sort direction. Allowed: `asc|desc`.
+    #[param(example = "asc")]
+    pub order: Option<String>,
 }
 
 // -- Requests --
@@ -318,4 +335,30 @@ impl From<&ClusterBoundaryView> for ClusterBoundaryResponse {
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct ClusterBoundaryListResponse {
     pub data: Vec<ClusterBoundaryResponse>,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct ClusterStatisticsResponse {
+    pub total: i64,
+    pub trees: i64,
+    pub bad: i64,
+    pub moderate: i64,
+    pub good: i64,
+    #[serde(rename = "justWatered")]
+    pub just_watered: i64,
+    pub unknown: i64,
+}
+
+impl From<ClusterStatistics> for ClusterStatisticsResponse {
+    fn from(v: ClusterStatistics) -> Self {
+        Self {
+            total: v.total,
+            trees: v.trees,
+            bad: v.bad,
+            moderate: v.moderate,
+            good: v.good,
+            just_watered: v.just_watered,
+            unknown: v.unknown,
+        }
+    }
 }

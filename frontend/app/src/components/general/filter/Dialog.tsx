@@ -1,4 +1,4 @@
-import { Ref, useEffect, useMemo, useState } from 'react'
+import { Ref, Suspense, useEffect, useMemo, useState } from 'react'
 import FilterButton from '../buttons/FilterButton'
 import {
   Button,
@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  Loading,
 } from '@green-ecolution/ui'
 import { MoveRight, X } from 'lucide-react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
@@ -56,6 +57,7 @@ const Dialog = ({
         ...prev,
         wateringStatuses: undefined,
         regions: undefined,
+        soil: undefined,
         hasCluster: undefined,
         plantingYears: undefined,
         page: undefined,
@@ -76,6 +78,7 @@ const Dialog = ({
     () =>
       appliedFilters.statusTags.length +
       appliedFilters.regionTags.length +
+      appliedFilters.soilTags.length +
       (appliedFilters.hasCluster !== undefined ? 1 : 0) +
       appliedFilters.plantingYears.length,
     [appliedFilters],
@@ -106,7 +109,11 @@ const Dialog = ({
           <DialogHeader>
             <DialogTitle>{headline}</DialogTitle>
           </DialogHeader>
-          {children}
+          <Suspense
+            fallback={<Loading className="py-8 justify-center" label="Filter werden geladen" />}
+          >
+            {children}
+          </Suspense>
 
           <div className="flex flex-wrap gap-5 mt-6">
             <Button type="button" onClick={handleSubmit}>

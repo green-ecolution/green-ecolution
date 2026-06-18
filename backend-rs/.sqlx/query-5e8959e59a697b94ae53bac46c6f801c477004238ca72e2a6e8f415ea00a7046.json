@@ -1,0 +1,96 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT COUNT(*) AS \"count!: i64\" FROM tree_clusters tc\n            WHERE ($1::watering_status[] = '{}' OR tc.watering_status = ANY($1))\n              AND ($2::uuid[] = '{}' OR tc.region_id = ANY($2))\n              AND ($3::text IS NULL OR tc.provider = $3)\n              AND ($4::text IS NULL OR tc.name ILIKE '%' || $4 || '%')\n              AND ($5::tree_soil_condition[] = '{}' OR tc.soil_condition = ANY($5))",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!: i64",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "watering_status[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "watering_status",
+                  "kind": {
+                    "Enum": [
+                      "good",
+                      "moderate",
+                      "bad",
+                      "unknown",
+                      "just watered"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "UuidArray",
+        "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "tree_soil_condition[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "tree_soil_condition",
+                  "kind": {
+                    "Enum": [
+                      "Ss",
+                      "Sl2",
+                      "Sl3",
+                      "Sl4",
+                      "Slu",
+                      "St2",
+                      "St3",
+                      "Su2",
+                      "Su3",
+                      "Su4",
+                      "Ls2",
+                      "Ls3",
+                      "Ls4",
+                      "Lt2",
+                      "Lt3",
+                      "Lts",
+                      "Lu",
+                      "Uu",
+                      "Uls",
+                      "Us",
+                      "Ut2",
+                      "Ut3",
+                      "Ut4",
+                      "Tt",
+                      "Tl",
+                      "Tu2",
+                      "Tu3",
+                      "Tu4",
+                      "Ts2",
+                      "Ts3",
+                      "Ts4",
+                      "fS",
+                      "mS",
+                      "gS",
+                      "unknown"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "5e8959e59a697b94ae53bac46c6f801c477004238ca72e2a6e8f415ea00a7046"
+}

@@ -3,6 +3,7 @@ import React, { createContext, useState, ReactNode, use, useMemo } from 'react'
 export interface Filters {
   statusTags: string[]
   regionTags: string[]
+  soilTags: string[]
   hasCluster: boolean | undefined
   plantingYears: number[]
 }
@@ -11,11 +12,15 @@ interface FilterContextType {
   filters: Filters
   handleStatusChange: (event: React.ChangeEvent<HTMLInputElement>) => void
   handleRegionChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+  handleSoilChange: (event: React.ChangeEvent<HTMLInputElement>) => void
   handleClusterChange: (event: React.ChangeEvent<HTMLInputElement>) => void
   handlePlantingYearChange: (event: React.ChangeEvent<HTMLInputElement>) => void
   handlePlantingYearRangeChange: (range: number[]) => void
   resetFilters: () => void
   applyOldStateToTags: (oldValues: Filters) => void
+  setStatusTags: (value: string[]) => void
+  setRegionTags: (value: string[]) => void
+  setSoilTags: (value: string[]) => void
 }
 
 /* eslint-disable-next-line react-refresh/only-export-components */
@@ -28,6 +33,7 @@ interface FilterProviderProps {
 const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
   const [statusTags, setStatusTags] = useState<string[]>([])
   const [regionTags, setRegionTags] = useState<string[]>([])
+  const [soilTags, setSoilTags] = useState<string[]>([])
   const [plantingYears, setPlantingYears] = useState<number[]>([])
   const [hasCluster, setHasCluster] = useState<boolean | undefined>(undefined)
 
@@ -39,6 +45,11 @@ const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
   const handleRegionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { checked, value } = event.target
     setRegionTags((prev) => (checked ? [...prev, value] : prev.filter((tag) => tag !== value)))
+  }
+
+  const handleSoilChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { checked, value } = event.target
+    setSoilTags((prev) => (checked ? [...prev, value] : prev.filter((tag) => tag !== value)))
   }
 
   const handleClusterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,6 +78,7 @@ const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
   const applyOldStateToTags = (oldValues: Filters) => {
     setStatusTags(oldValues.statusTags)
     setRegionTags(oldValues.regionTags)
+    setSoilTags(oldValues.soilTags)
     setHasCluster(oldValues.hasCluster)
     setPlantingYears(oldValues.plantingYears)
   }
@@ -74,22 +86,27 @@ const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
   const resetFilters = () => {
     setStatusTags([])
     setRegionTags([])
+    setSoilTags([])
     setHasCluster(undefined)
     setPlantingYears([])
   }
 
   const context = useMemo(
     () => ({
-      filters: { statusTags, regionTags, hasCluster, plantingYears },
+      filters: { statusTags, regionTags, soilTags, hasCluster, plantingYears },
       handleStatusChange,
       handleRegionChange,
+      handleSoilChange,
       handleClusterChange,
       handlePlantingYearChange,
       handlePlantingYearRangeChange,
       resetFilters,
       applyOldStateToTags,
+      setStatusTags,
+      setRegionTags,
+      setSoilTags,
     }),
-    [hasCluster, plantingYears, regionTags, statusTags],
+    [hasCluster, plantingYears, regionTags, soilTags, statusTags],
   )
 
   return <FilterContext value={context}>{children}</FilterContext>

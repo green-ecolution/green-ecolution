@@ -121,6 +121,12 @@ export interface TreeClusterInListResponse {
     region?: RegionResponse | null;
     /**
      * 
+     * @type {number}
+     * @memberof TreeClusterInListResponse
+     */
+    sensorCount: number;
+    /**
+     * 
      * @type {SoilCondition}
      * @memberof TreeClusterInListResponse
      */
@@ -160,6 +166,7 @@ export function instanceOfTreeClusterInListResponse(value: object): value is Tre
     if (!('longitude' in value) || value['longitude'] === undefined) return false;
     if (!('moistureLevel' in value) || value['moistureLevel'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
+    if (!('sensorCount' in value) || value['sensorCount'] === undefined) return false;
     if (!('soilCondition' in value) || value['soilCondition'] === undefined) return false;
     if (!('treeIds' in value) || value['treeIds'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
@@ -190,6 +197,7 @@ export function TreeClusterInListResponseFromJSONTyped(json: any, ignoreDiscrimi
         'name': json['name'],
         'provider': json['provider'] == null ? undefined : json['provider'],
         'region': json['region'] == null ? undefined : RegionResponseFromJSON(json['region']),
+        'sensorCount': json['sensorCount'],
         'soilCondition': SoilConditionFromJSON(json['soil_condition']),
         'treeIds': json['tree_ids'],
         'updatedAt': json['updated_at'],
@@ -221,6 +229,7 @@ export function TreeClusterInListResponseToJSONTyped(value?: TreeClusterInListRe
         'name': value['name'],
         'provider': value['provider'],
         'region': RegionResponseToJSON(value['region']),
+        'sensorCount': value['sensorCount'],
         'soil_condition': SoilConditionToJSON(value['soilCondition']),
         'tree_ids': value['treeIds'],
         'updated_at': value['updatedAt'],

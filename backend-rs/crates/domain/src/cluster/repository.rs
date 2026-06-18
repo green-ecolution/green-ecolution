@@ -3,8 +3,8 @@ use async_trait::async_trait;
 use crate::{
     Id, RepositoryError,
     cluster::{
-        ClusterBoundaryView, ClusterMarker, TreeCluster, TreeClusterDraft, TreeClusterSearchQuery,
-        TreeClusterView,
+        ClusterBoundaryView, ClusterMarker, ClusterStatistics, TreeCluster, TreeClusterDraft,
+        TreeClusterSearchQuery, TreeClusterView,
     },
     shared::{
         coordinates::Coordinate,
@@ -45,6 +45,8 @@ pub trait TreeClusterReader: Send + Sync {
         &self,
         id: Id<TreeCluster>,
     ) -> Result<Option<Coordinate>, RepositoryError>;
+
+    async fn statistics(&self) -> Result<ClusterStatistics, RepositoryError>;
 }
 
 /// Write-side access to tree clusters.

@@ -1,30 +1,35 @@
 import { useFilter } from '@/context/FilterContext'
-import Option from '../Option'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { WateringStatus } from '@green-ecolution/backend-client'
+import { MultiSelectCombobox } from '@green-ecolution/ui'
+import SelectedTagList from '../SelectedTagList'
+
+const STATUS_OPTIONS = Object.values(WateringStatus).map((value) => ({
+  value,
+  label: getWateringStatusDetails(value).label,
+}))
 
 const StatusFieldset = () => {
-  const { filters, handleStatusChange } = useFilter()
+  const { filters, setStatusTags } = useFilter()
+
   return (
     <fieldset>
       <legend className="font-lato font-semibold text-dark-600 mb-2">
         Zustand der Bewässerung:
       </legend>
-      {Object.entries(WateringStatus).map(([, statusValue]) => (
-        <Option
-          key={statusValue}
-          value={statusValue}
-          label={getWateringStatusDetails(statusValue).label}
-          name={statusValue}
-          checked={filters.statusTags.includes(statusValue)}
-          onChange={handleStatusChange}
-        >
-          <div
-            className="w-4 h-4 rounded-full"
-            style={{ backgroundColor: getWateringStatusDetails(statusValue).colorHex }}
-          />
-        </Option>
-      ))}
+      <MultiSelectCombobox
+        options={STATUS_OPTIONS}
+        value={filters.statusTags}
+        onChange={setStatusTags}
+        searchable={false}
+        placeholder="Alle Zustände"
+        summaryThreshold={2}
+      />
+      <SelectedTagList
+        options={STATUS_OPTIONS}
+        value={filters.statusTags}
+        onRemove={(v) => setStatusTags(filters.statusTags.filter((tag) => tag !== v))}
+      />
     </fieldset>
   )
 }
