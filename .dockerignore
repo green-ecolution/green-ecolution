@@ -1,0 +1,8 @@
+**/node_modules
+**/target
+**/dist
+**/pkg
+**/dev-dist
+.git
+.github
+**/*.log
