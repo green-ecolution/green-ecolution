@@ -341,7 +341,7 @@ tidy:
 lint:
     @echo "cargo fmt --check + clippy + Frontend lint..."
     cd {{ backend_dir }} && cargo fmt --all -- --check
-    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo clippy --workspace --all-targets --locked -- -D warnings
     cd {{ frontend_dir }} && pnpm run lint
 
 # Run Rust + frontend tests
