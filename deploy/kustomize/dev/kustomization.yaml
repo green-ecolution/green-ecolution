@@ -3,14 +3,10 @@ kind: Kustomization
 resources:
 - ingress.yaml
 - ../base/backend
-- ../base/frontend
 images:
 - name: backend-image
   newName: ghcr.io/green-ecolution/green-ecolution/backend
   newTag: 68b9adb
-- name: frontend-image
-  newName: ghcr.io/green-ecolution/green-ecolution/frontend
-  newTag: dcf94c8
 generators:
 - ./secret-generator.yaml
 patches:

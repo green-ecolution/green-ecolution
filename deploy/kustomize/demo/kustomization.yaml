@@ -4,13 +4,9 @@ resources:
 - ingress.yaml
 - cron-job.yaml
 - ../base/backend
-- ../base/frontend
 images:
 - name: backend-image
   newName: ghcr.io/green-ecolution/green-ecolution/backend
-  newTag: v0.2.1
-- name: frontend-image
-  newName: ghcr.io/green-ecolution/green-ecolution/frontend
   newTag: v0.2.1
 generators:
 - ./secret-generator.yaml

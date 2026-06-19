@@ -12,18 +12,11 @@ spec:
     - host: app.stage.green-ecolution.de
       http:
         paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: backend
-                port:
-                  number: 80
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: frontend
+                name: backend
                 port:
                   number: 80
   tls:
