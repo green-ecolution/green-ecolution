@@ -72,7 +72,10 @@ jobs:
 
       - name: cargo clippy
         working-directory: ./backend-rs
-        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+        # NOTE: embed-frontend is intentionally excluded — it requires a built
+        # frontend/app/dist at compile time and is validated by the
+        # test_dockerfile job (full image build). Keep lint dist-free.
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
 
   check_sqlx_prepared:
     needs: changes
@@ -158,14 +161,14 @@ jobs:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
       - uses: docker/setup-buildx-action@v4
       - name: Test backend Dockerfile
         uses: docker/build-push-action@v7
         with:
-          context: ./backend-rs
+          context: .
           file: ./backend-rs/Dockerfile
           push: false
           tags: backend-rs:test
