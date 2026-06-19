@@ -143,10 +143,15 @@ pub fn router(
         .on_response(on_response)
         .on_failure(DefaultOnFailure::new().level(::tracing::Level::ERROR));
 
-    router
+    let app = router
         .route("/api/config.js", axum::routing::get(frontend_config_js))
-        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api))
-        .layer(cors_layer(cors))
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api));
+
+    // Serve the embedded SPA for every non-API route (client-side routing).
+    #[cfg(feature = "embed-frontend")]
+    let app = app.fallback(static_files::spa_fallback);
+
+    app.layer(cors_layer(cors))
         .layer(PropagateRequestIdLayer::new(REQUEST_ID_HEADER))
         .layer(trace_layer)
         .layer(SetRequestIdLayer::new(REQUEST_ID_HEADER, MakeRequestUuid))
