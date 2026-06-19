@@ -58,6 +58,12 @@ _compile-backend:
     mkdir -p bin
     cp {{ backend_dir }}/target/release/{{ binary_name }} bin/{{ binary_name }}
 
+# Compile the server binary WITH the embedded SPA (requires built frontend dist).
+_compile-backend-embed:
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --release --locked --features embed-frontend --bin {{ binary_name }}
+    mkdir -p bin
+    cp {{ backend_dir }}/target/release/{{ binary_name }} bin/{{ binary_name }}
+
 # Build the domain WASM bindings into frontend/packages/domain-wasm/pkg
 build-domain-wasm:
     @echo "Building domain WASM bindings..."
@@ -72,13 +78,13 @@ build-frontend: build-domain-wasm
     cd {{ frontend_dir }} && pnpm run build
     @echo "Frontend build done."
 
-# Build the Rust backend
+# Backend-only release build (no embedded SPA; no frontend dist required).
 build-backend: _compile-backend
-    @echo "Backend build done."
+    @echo "Backend build done (no embedded frontend)."
 
-# Full build: frontend + backend
-build: build-frontend _compile-backend
-    @echo "Build done."
+# Full build: frontend + backend with the SPA embedded into the binary.
+build: build-frontend _compile-backend-embed
+    @echo "Build done (frontend embedded)."
 
 # Build for all platforms
 build-all: build-frontend
@@ -90,21 +96,21 @@ build-all: build-frontend
 # Build for darwin (requires `rustup target add x86_64-apple-darwin` and a cross linker)
 build-darwin:
     @echo "Building backend for darwin (x86_64)..."
-    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --release --locked --target x86_64-apple-darwin --bin {{ binary_name }}
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --release --locked --features embed-frontend --target x86_64-apple-darwin --bin {{ binary_name }}
     mkdir -p bin
     cp {{ backend_dir }}/target/x86_64-apple-darwin/release/{{ binary_name }} bin/{{ binary_name }}-darwin
 
 # Build for linux (musl static binary; requires `rustup target add x86_64-unknown-linux-musl`)
 build-linux:
     @echo "Building backend for linux (x86_64-musl)..."
-    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --release --locked --target x86_64-unknown-linux-musl --bin {{ binary_name }}
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --release --locked --features embed-frontend --target x86_64-unknown-linux-musl --bin {{ binary_name }}
     mkdir -p bin
     cp {{ backend_dir }}/target/x86_64-unknown-linux-musl/release/{{ binary_name }} bin/{{ binary_name }}-linux
 
 # Build for windows (requires `rustup target add x86_64-pc-windows-gnu` and mingw-w64)
 build-windows:
     @echo "Building backend for windows (x86_64-gnu)..."
-    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --release --locked --target x86_64-pc-windows-gnu --bin {{ binary_name }}
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --release --locked --features embed-frontend --target x86_64-pc-windows-gnu --bin {{ binary_name }}
     mkdir -p bin
     cp {{ backend_dir }}/target/x86_64-pc-windows-gnu/release/{{ binary_name }}.exe bin/{{ binary_name }}-windows.exe
 
