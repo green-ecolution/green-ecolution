@@ -138,7 +138,6 @@ jobs:
 
           Docker images will be available after merge:
           * Backend: \`ghcr.io/green-ecolution/green-ecolution/backend:${VERSION}\`
-          * Frontend: \`ghcr.io/green-ecolution/green-ecolution/frontend:${VERSION}\`
           * Migrations: \`ghcr.io/green-ecolution/green-ecolution/migrations-postgres:${VERSION}\`
 
           "

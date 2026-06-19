@@ -73,25 +73,6 @@ jobs:
         working-directory: ./frontend
         run: pnpm test
 
-  test_dockerfile:
-    needs: changes
-    if: needs.changes.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ./.github/actions/setup-frontend
-      - uses: docker/setup-buildx-action@v4
-      - name: Test frontend Dockerfile
-        uses: docker/build-push-action@v7
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
-          push: false
-          tags: frontend:test
-          cache-from: type=gha,scope=frontend-dockerfile
-          cache-to: type=gha,mode=max,scope=frontend-dockerfile
-
   check_generated:
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
@@ -121,7 +102,7 @@ jobs:
   frontend-pr-ok:
     name: Frontend PR OK
     if: always()
-    needs: [build, lint, test, test_dockerfile, check_generated]
+    needs: [build, lint, test, check_generated]
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:
@@ -131,7 +112,6 @@ jobs:
             "${{ needs.build.result }}"
             "${{ needs.lint.result }}"
             "${{ needs.test.result }}"
-            "${{ needs.test_dockerfile.result }}"
             "${{ needs.check_generated.result }}"
           )
           for r in "${results[@]}"; do
