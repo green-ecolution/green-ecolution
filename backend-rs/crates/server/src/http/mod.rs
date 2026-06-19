@@ -32,6 +32,8 @@ pub mod extractors;
 pub mod health;
 mod tracing;
 pub mod v1;
+#[cfg(any(feature = "embed-frontend", test))]
+mod static_files;
 
 #[derive(Debug, Clone, Copy)]
 pub struct FeatureFlags {

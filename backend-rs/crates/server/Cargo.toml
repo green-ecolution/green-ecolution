@@ -52,6 +52,7 @@ jsonwebtoken = { version = "10.4", default-features = false, features = ["use_pe
 log = "0.4"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 rumqttc = "0.25"
+rust-embed = { version = "8", features = ["mime-guess"] }
 rust_decimal = { version = "1.42", default-features = false }
 secrecy = { workspace = true }
 serde = { workspace = true }
@@ -70,6 +71,11 @@ uuid = { workspace = true }
 utoipa = { version = "5", features = ["axum_extras", "uuid"] }
 utoipa-axum = "0.2"
 utoipa-swagger-ui = { version = "9", features = ["axum", "vendored"] }
+
+[features]
+# Embeds the built frontend (frontend/app/dist) into the server binary.
+# Non-default: cargo test / clippy / migrate builds need no dist.
+embed-frontend = []
 
 [dev-dependencies]
 claims = "0.8"
