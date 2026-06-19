@@ -1,8 +1,11 @@
 services:
   backend:
+    image: green-ecolution:local
     build:
-      context: ./backend-rs/
+      context: .
+      dockerfile: backend-rs/Dockerfile
       args:
+        - BASEURL=/api
         - APP_VERSION=${APP_VERSION:-dev}
         - APP_REVISION=${APP_GIT_COMMIT:-unknown}
         - GE_GIT_COMMIT=${APP_GIT_COMMIT:-unknown}
@@ -52,51 +55,12 @@ services:
       # Settings struct exposes those sections.
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`${APP_HOST:-localhost}`) && (PathPrefix(`/api`) || PathPrefix(`/swagger-ui`) || PathPrefix(`/api-docs`))"
+      - "traefik.http.routers.backend.rule=Host(`${APP_HOST:-localhost}`)"
       - "traefik.http.routers.backend.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
 
-  frontend:
-    build:
-      context: ./frontend
-      args:
-        - ENV=dev
-        - BASEURL=/api
-        - APP_VERSION=${APP_VERSION:-$(git describe --tags --always --dirty)}
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "curl",
-          "--silent",
-          "--fail-with-body",
-          "--max-time",
-          "5",
-          "http://localhost:80/status",
-        ]
-      interval: 2s
-      timeout: 10s
-      retries: 5
-    depends_on:
-      keycloak:
-        condition: service_healthy
-      backend:
-        condition: service_started
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`${APP_HOST:-localhost}`)"
-      - "traefik.http.routers.frontend.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
-      - "traefik.http.services.frontend.loadbalancer.server.port=80"
-
   migrations:
-    build:
-      context: ./backend-rs/
-      args:
-        - APP_VERSION=${APP_VERSION:-dev}
-        - APP_REVISION=${APP_GIT_COMMIT:-unknown}
-        - GE_GIT_COMMIT=${APP_GIT_COMMIT:-unknown}
-        - GE_GIT_BRANCH=${APP_GIT_BRANCH:-unknown}
-        - GE_BUILD_TIME=${APP_BUILD_TIME:-unknown}
+    image: green-ecolution:local
     entrypoint: ["./migrate"]
     command: ["reset", "--with-seed"]
     depends_on:
