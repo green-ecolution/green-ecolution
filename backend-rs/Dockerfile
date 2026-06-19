@@ -3,7 +3,7 @@
 #############################################
 # Stage 1: domain WASM bindings (wasm-pack)
 #############################################
-FROM rust:1.96-bookworm AS wasm
+FROM rust:1.96-bookworm@sha256:19817ead3289c8c631c73df281e18b59b172f6a31f4f563290f69cddd06c30e9 AS wasm
 RUN rustup target add wasm32-unknown-unknown \
   && curl -sSf https://rustwasm.github.io/wasm-pack/installer/init.sh | sh
 WORKDIR /repo
@@ -14,9 +14,9 @@ RUN wasm-pack build backend-rs/crates/domain-wasm --target bundler \
 #############################################
 # Stage 2: frontend (Vite) build
 #############################################
-FROM node:26-alpine AS frontend
+FROM node:26-alpine@sha256:a2dc166a387cc6ca1e62d0c8e265e49ca985d6e60abc9fe6e6c3d6ce8e63f606 AS frontend
 ENV PNPM_HOME="/pnpm" PATH="/pnpm:$PATH"
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.20.0
 WORKDIR /repo/frontend
 COPY frontend/ .
 COPY --from=wasm /out/pkg packages/domain-wasm/pkg
