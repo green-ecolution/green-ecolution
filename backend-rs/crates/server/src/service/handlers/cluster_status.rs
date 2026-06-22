@@ -66,7 +66,7 @@ impl EventHandler for ClusterStatusAggregatorHandler {
             let mut cluster = match self.cluster_reader.by_id(cluster_id).await {
                 Ok(c) => c,
                 Err(e) => {
-                    tracing::warn!(error = %e, %cluster_id, "skipping cluster status update; load failed");
+                    tracing::warn!(error = %e, cluster.id = %cluster_id, "skipping cluster status update; load failed");
                     continue;
                 }
             };
@@ -74,7 +74,7 @@ impl EventHandler for ClusterStatusAggregatorHandler {
             let trees = match self.tree_reader.by_ids(&cluster.tree_ids).await {
                 Ok(t) => t,
                 Err(e) => {
-                    tracing::warn!(error = %e, %cluster_id, "skipping cluster status update; tree load failed");
+                    tracing::warn!(error = %e, cluster.id = %cluster_id, "skipping cluster status update; tree load failed");
                     continue;
                 }
             };

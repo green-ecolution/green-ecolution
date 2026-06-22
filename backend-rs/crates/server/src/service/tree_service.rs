@@ -182,7 +182,7 @@ impl TreeService {
         Ok(())
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(limit))]
+    #[tracing::instrument(level = "debug", skip_all, fields(query.limit = limit))]
     pub async fn view_nearest(
         &self,
         coord: Coordinate,

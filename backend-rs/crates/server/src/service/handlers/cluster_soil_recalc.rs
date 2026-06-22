@@ -55,7 +55,7 @@ impl EventHandler for ClusterSoilRecalcHandler {
         let cluster = match self.cluster_reader.by_id(*cluster_id).await {
             Ok(c) => c,
             Err(e) => {
-                tracing::warn!(error = %e, %cluster_id, "skipping soil recalc; cluster load failed");
+                tracing::warn!(error = %e, cluster.id = %cluster_id, "skipping soil recalc; cluster load failed");
                 return Ok(vec![]);
             }
         };
@@ -64,7 +64,7 @@ impl EventHandler for ClusterSoilRecalcHandler {
         let trees = match self.tree_reader.by_ids(&cluster.tree_ids).await {
             Ok(t) => t,
             Err(e) => {
-                tracing::warn!(error = %e, %cluster_id, "skipping soil recalc; tree load failed");
+                tracing::warn!(error = %e, cluster.id = %cluster_id, "skipping soil recalc; tree load failed");
                 return Ok(vec![]);
             }
         };
@@ -81,7 +81,7 @@ impl EventHandler for ClusterSoilRecalcHandler {
             {
                 Ok(r) => r,
                 Err(e) => {
-                    tracing::debug!(error = %e, sensor = %sensor_id, "skipping tree; reading fetch failed");
+                    tracing::debug!(error = %e, sensor.id = %sensor_id, "skipping tree; reading fetch failed");
                     continue;
                 }
             };
@@ -92,7 +92,7 @@ impl EventHandler for ClusterSoilRecalcHandler {
             ) {
                 Ok(s) => s,
                 Err(e) => {
-                    tracing::debug!(error = %e, sensor = %sensor_id, "skipping tree; calibration rejected");
+                    tracing::debug!(error = %e, sensor.id = %sensor_id, "skipping tree; calibration rejected");
                     continue;
                 }
             };

@@ -356,7 +356,7 @@ impl KeycloakUserRepository {
                 .await
                 .map_err(|e| RepositoryError::Internal(format!("role lookup transport: {e}")))?;
             if !resp.status().is_success() {
-                tracing::warn!(role = role.as_str(), status = %resp.status(), "role lookup failed; skipping");
+                tracing::warn!(keycloak.role = role.as_str(), keycloak.status = %resp.status(), "role lookup failed; skipping");
                 continue;
             }
             let role: KcRole = resp
