@@ -5,9 +5,13 @@
 //! [`spa_fallback`]: a real asset is returned as-is, everything else returns
 //! `index.html` so the client-side router takes over. Unmatched `/api/...`
 //! paths are excluded so they keep returning a proper 404, not the SPA shell.
+//!
+//! Each asset carries a strong `ETag` (the embedded sha256) so revalidatable
+//! responses (`index.html`, the service worker, the manifest) answer a matching
+//! `If-None-Match` with `304 Not Modified` instead of resending the body.
 
 use axum::{
-    body::Body,
+    body::{Body, Bytes},
     http::{StatusCode, header},
     response::{IntoResponse, Response},
 };
@@ -15,31 +19,78 @@ use rust_embed::RustEmbed;
 
 const INDEX_HTML: &str = "index.html";
 
-/// Returns the embedded asset at `path`, or `index.html` as the SPA fallback.
-fn serve_embedded<A: RustEmbed>(path: &str) -> Response {
+fn serve_embedded<A: RustEmbed>(path: &str, if_none_match: Option<&str>) -> Response {
     let key = path.trim_start_matches('/');
     if let Some(file) = A::get(key) {
-        return asset_response(key, file);
+        return asset_response(key, file, if_none_match);
     }
     match A::get(INDEX_HTML) {
-        Some(index) => asset_response(INDEX_HTML, index),
+        Some(index) => asset_response(INDEX_HTML, index, if_none_match),
         None => StatusCode::NOT_FOUND.into_response(),
     }
 }
 
-fn asset_response(path: &str, file: rust_embed::EmbeddedFile) -> Response {
-    let mime = file.metadata.mimetype();
+fn asset_response(
+    path: &str,
+    file: rust_embed::EmbeddedFile,
+    if_none_match: Option<&str>,
+) -> Response {
+    let etag = etag_for(&file);
     let cache = cache_control_for(path);
+
+    if if_none_match.is_some_and(|m| m == etag) {
+        return Response::builder()
+            .status(StatusCode::NOT_MODIFIED)
+            .header(header::ETAG, &etag)
+            .header(header::CACHE_CONTROL, cache)
+            .body(Body::empty())
+            .expect("304 response headers are always valid");
+    }
+
+    let content_type = content_type_for(file.metadata.mimetype());
+    // In release builds `data` borrows the binary's rodata; serve it zero-copy
+    // instead of cloning the whole asset on every request.
+    let body = match file.data {
+        std::borrow::Cow::Borrowed(bytes) => Body::from(Bytes::from_static(bytes)),
+        std::borrow::Cow::Owned(bytes) => Body::from(bytes),
+    };
     Response::builder()
-        .header(header::CONTENT_TYPE, mime)
+        .header(header::CONTENT_TYPE, content_type)
         .header(header::CACHE_CONTROL, cache)
-        .body(Body::from(file.data.into_owned()))
+        .header(header::ETAG, &etag)
+        .body(body)
         .expect("asset response headers are always valid")
 }
 
-/// Hash-named Vite assets are immutable; the shell and service worker revalidate.
+fn etag_for(file: &rust_embed::EmbeddedFile) -> String {
+    use std::fmt::Write;
+    let hash = file.metadata.sha256_hash();
+    let mut etag = String::with_capacity(2 + hash.len() * 2);
+    etag.push('"');
+    for byte in hash {
+        let _ = write!(etag, "{byte:02x}");
+    }
+    etag.push('"');
+    etag
+}
+
+/// `mime_guess` omits the charset; text assets must declare UTF-8 explicitly.
+fn content_type_for(mime: &str) -> String {
+    if mime.starts_with("text/") {
+        format!("{mime}; charset=utf-8")
+    } else {
+        mime.to_owned()
+    }
+}
+
+/// Hash-named Vite assets are immutable; the shell, service worker and manifest
+/// revalidate (cheaply, via ETag).
 fn cache_control_for(path: &str) -> &'static str {
-    if path == INDEX_HTML || path.ends_with("sw.js") || path.ends_with(".webmanifest") {
+    if path == INDEX_HTML
+        || path.ends_with("sw.js")
+        || path.ends_with(".webmanifest")
+        || path.ends_with("manifest.json")
+    {
         "no-cache"
     } else if path.starts_with("assets/") {
         "public, max-age=31536000, immutable"
@@ -56,12 +107,11 @@ fn is_reserved_api_path(path: &str) -> bool {
         || path.starts_with("/api-docs")
 }
 
-/// SPA fallback gate: reserved API paths 404, everything else serves the SPA.
-fn spa_or_404<A: RustEmbed>(path: &str) -> Response {
+fn spa_or_404<A: RustEmbed>(path: &str, if_none_match: Option<&str>) -> Response {
     if is_reserved_api_path(path) {
         return StatusCode::NOT_FOUND.into_response();
     }
-    serve_embedded::<A>(path)
+    serve_embedded::<A>(path, if_none_match)
 }
 
 #[cfg(feature = "embed-frontend")]
@@ -69,10 +119,12 @@ fn spa_or_404<A: RustEmbed>(path: &str) -> Response {
 #[folder = "../../../frontend/app/dist"]
 struct FrontendAssets;
 
-/// axum fallback handler — serves the embedded SPA for non-API routes.
 #[cfg(feature = "embed-frontend")]
-pub async fn spa_fallback(uri: axum::http::Uri) -> Response {
-    spa_or_404::<FrontendAssets>(uri.path())
+pub async fn spa_fallback(uri: axum::http::Uri, headers: axum::http::HeaderMap) -> Response {
+    let if_none_match = headers
+        .get(header::IF_NONE_MATCH)
+        .and_then(|value| value.to_str().ok());
+    spa_or_404::<FrontendAssets>(uri.path(), if_none_match)
 }
 
 #[cfg(test)]
@@ -93,10 +145,11 @@ mod tests {
     }
 
     #[test]
-    fn cache_control_no_cache_for_shell_and_sw() {
+    fn cache_control_no_cache_for_shell_sw_and_manifest() {
         assert_eq!(cache_control_for("index.html"), "no-cache");
         assert_eq!(cache_control_for("sw.js"), "no-cache");
         assert_eq!(cache_control_for("manifest.webmanifest"), "no-cache");
+        assert_eq!(cache_control_for("manifest.json"), "no-cache");
     }
 
     #[test]
@@ -110,7 +163,7 @@ mod tests {
 
     #[tokio::test]
     async fn serves_hashed_asset_with_immutable_cache() {
-        let resp = spa_or_404::<TestAssets>("/assets/app.abc123.js");
+        let resp = spa_or_404::<TestAssets>("/assets/app.abc123.js", None);
         assert_eq!(resp.status(), StatusCode::OK);
         assert_eq!(
             resp.headers()[header::CACHE_CONTROL],
@@ -122,23 +175,37 @@ mod tests {
 
     #[tokio::test]
     async fn serves_wasm_with_correct_mime() {
-        let resp = spa_or_404::<TestAssets>("/domain.wasm");
+        let resp = spa_or_404::<TestAssets>("/domain.wasm", None);
         assert_eq!(resp.status(), StatusCode::OK);
         assert_eq!(resp.headers()[header::CONTENT_TYPE], "application/wasm");
     }
 
     #[tokio::test]
     async fn unknown_path_serves_index_html() {
-        let resp = spa_or_404::<TestAssets>("/dashboard/trees/5");
+        let resp = spa_or_404::<TestAssets>("/dashboard/trees/5", None);
         assert_eq!(resp.status(), StatusCode::OK);
         let ct = resp.headers()[header::CONTENT_TYPE].to_str().unwrap();
         assert!(ct.starts_with("text/html"));
+        assert!(ct.contains("charset=utf-8"));
         assert_eq!(resp.headers()[header::CACHE_CONTROL], "no-cache");
     }
 
     #[tokio::test]
     async fn reserved_api_path_returns_404_not_spa() {
-        let resp = spa_or_404::<TestAssets>("/api/v1/unknown");
+        let resp = spa_or_404::<TestAssets>("/api/v1/unknown", None);
         assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+    }
+
+    #[tokio::test]
+    async fn matching_if_none_match_returns_304() {
+        let first = spa_or_404::<TestAssets>("/assets/app.abc123.js", None);
+        let etag = first.headers()[header::ETAG].to_str().unwrap().to_owned();
+
+        let cached = spa_or_404::<TestAssets>("/assets/app.abc123.js", Some(&etag));
+        assert_eq!(cached.status(), StatusCode::NOT_MODIFIED);
+        assert_eq!(cached.headers()[header::ETAG], etag);
+
+        let body = to_bytes(cached.into_body(), usize::MAX).await.unwrap();
+        assert!(body.is_empty());
     }
 }

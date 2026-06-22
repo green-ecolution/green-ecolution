@@ -30,10 +30,10 @@ use domain::info::{HealthSnapshotReader, StatisticsReader, SystemInfoProvider};
 pub mod auth;
 pub mod extractors;
 pub mod health;
-mod tracing;
-pub mod v1;
 #[cfg(any(feature = "embed-frontend", test))]
 mod static_files;
+mod tracing;
+pub mod v1;
 
 #[derive(Debug, Clone, Copy)]
 pub struct FeatureFlags {
@@ -147,7 +147,6 @@ pub fn router(
         .route("/api/config.js", axum::routing::get(frontend_config_js))
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api));
 
-    // Serve the embedded SPA for every non-API route (client-side routing).
     #[cfg(feature = "embed-frontend")]
     let app = app.fallback(static_files::spa_fallback);
 
