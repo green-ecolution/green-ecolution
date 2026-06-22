@@ -23,7 +23,12 @@ COPY --from=wasm /out/pkg packages/domain-wasm/pkg
 ARG BASEURL="/api"
 ARG APP_VERSION="dev"
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
-RUN APP_VERSION="$APP_VERSION" VITE_BACKEND_BASEURL="$BASEURL" pnpm build
+ARG FRONTEND_MODE="production"
+RUN if [ "$FRONTEND_MODE" = "staging" ]; then \
+      APP_VERSION="$APP_VERSION" VITE_BACKEND_BASEURL="$BASEURL" pnpm build:stage; \
+    else \
+      APP_VERSION="$APP_VERSION" VITE_BACKEND_BASEURL="$BASEURL" pnpm build; \
+    fi
 
 #############################################
 # Stage 3: cargo-chef planner

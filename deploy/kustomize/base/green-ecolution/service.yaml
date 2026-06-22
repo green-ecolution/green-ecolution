@@ -2,13 +2,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: backend
+  name: green-ecolution
 spec:
   selector:
-    app: backend
+    app: green-ecolution
   type: ClusterIP
   ports:
-  - name: backend
+  - name: green-ecolution
     protocol: TCP
     port: 80
     targetPort: 3000

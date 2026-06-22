@@ -177,11 +177,12 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: ./backend-rs/Dockerfile
+          file: ./Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${{ needs.determine-environment.outputs.image-tag }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}:${{ needs.determine-environment.outputs.image-tag }}
           build-args: |
+            FRONTEND_MODE=${{ needs.determine-environment.outputs.environment == 'stage' && 'staging' || 'production' }}
             BASEURL=/api
             APP_VERSION=${{ needs.determine-environment.outputs.image-tag }}
             APP_REVISION=${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -266,11 +267,11 @@ jobs:
           IS_RELEASE="${{ needs.determine-environment.outputs.is-release }}"
 
           cd ./deploy/kustomize/${ENV}
-          kustomize edit set image backend-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}
+          kustomize edit set image green-ecolution-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}:${TAG}
 
           if [[ "$IS_RELEASE" == "true" ]]; then
             cd ../demo
-            kustomize edit set image backend-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}
+            kustomize edit set image green-ecolution-image=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}:${TAG}
           fi
 
       - name: Commit and push changes
@@ -322,7 +323,7 @@ jobs:
           Preview the changes at https://app.stage.green-ecolution.de
 
           ### 🐳 Docker Images
-          - Backend (combined): \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}\`
+          - Combined image: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}:${TAG}\`
 
           ### 🔄 ArgoCD
           ArgoCD is configured to track the \`${PR_BRANCH}\` branch for stage deployments.
@@ -365,7 +366,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🐳 Docker Images" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "* Backend: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${TAG}\`" >> $GITHUB_STEP_SUMMARY
+          echo "* Combined image: \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}:${TAG}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📦 Kustomize" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

@@ -10,7 +10,7 @@ spec:
         spec:
           containers:
             - name: init-migrations
-              image: backend-image
+              image: green-ecolution-image
               imagePullPolicy: Always
               command: ["./migrate"]
               args: ["reset", "--with-seed"]

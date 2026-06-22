@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
+      image: ${{ steps.filter.outputs.image }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v4
@@ -30,6 +31,13 @@ jobs:
               - 'justfile'
               - '.github/workflows/backend-pr.yaml'
               - '.github/actions/setup-backend/**'
+            image:
+              - 'backend-rs/**'
+              - 'frontend/**'
+              - 'Dockerfile'
+              - '.dockerignore'
+              - 'justfile'
+              - '.github/workflows/backend-pr.yaml'
 
   build_and_test:
     needs: changes
@@ -159,19 +167,20 @@ jobs:
 
   test_dockerfile:
     needs: changes
-    if: needs.changes.outputs.backend == 'true'
+    # Combined image bundles the SPA, so frontend changes must rebuild it too.
+    if: needs.changes.outputs.image == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
       - uses: docker/setup-buildx-action@v4
-      - name: Test backend Dockerfile
+      - name: Test combined Dockerfile
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: ./backend-rs/Dockerfile
+          file: ./Dockerfile
           push: false
-          tags: backend-rs:test
+          tags: green-ecolution:test
           cache-from: type=gha,scope=backend-dockerfile
           cache-to: type=gha,mode=max,scope=backend-dockerfile
 

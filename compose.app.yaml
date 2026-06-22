@@ -1,10 +1,11 @@
 services:
-  backend:
+  green-ecolution:
     image: green-ecolution:local
     build:
       context: .
-      dockerfile: backend-rs/Dockerfile
+      dockerfile: Dockerfile
       args:
+        - FRONTEND_MODE=staging
         - BASEURL=/api
         - APP_VERSION=${APP_VERSION:-dev}
         - APP_REVISION=${APP_GIT_COMMIT:-unknown}
@@ -55,9 +56,9 @@ services:
       # Settings struct exposes those sections.
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`${APP_HOST:-localhost}`)"
-      - "traefik.http.routers.backend.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
-      - "traefik.http.services.backend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.green-ecolution.rule=Host(`${APP_HOST:-localhost}`)"
+      - "traefik.http.routers.green-ecolution.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.services.green-ecolution.loadbalancer.server.port=3000"
 
   migrations:
     image: green-ecolution:local

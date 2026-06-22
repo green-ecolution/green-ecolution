@@ -3,13 +3,13 @@ kind: Kustomization
 resources:
 - ingress.yaml
 - cron-job.yaml
-- ../base/backend
+- ../base/green-ecolution
 images:
-- name: backend-image
-  newName: ghcr.io/green-ecolution/green-ecolution/backend
+- name: green-ecolution-image
+  newName: ghcr.io/green-ecolution/green-ecolution
   newTag: v0.2.1
 generators:
 - ./secret-generator.yaml
 patches:
 - path: config.yaml
-- path: backend-deployment.yaml
+- path: green-ecolution-deployment.yaml

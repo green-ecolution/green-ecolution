@@ -16,7 +16,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: backend
+                name: green-ecolution
                 port:
                   number: 80
   tls:

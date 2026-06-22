@@ -2,15 +2,15 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: backend
+  name: green-ecolution
   labels:
-    app: backend
+    app: green-ecolution
 spec:
   template:
     spec:
       initContainers:
         - name: init-migrations
-          image: backend-image
+          image: green-ecolution-image
           imagePullPolicy: Always
           command: ["./migrate"]
           args: ["up"]
