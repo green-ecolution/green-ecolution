@@ -107,7 +107,7 @@ impl JwksProvider {
                 }
                 Err(err) => {
                     tracing::warn!(
-                        kid = %jwk.kid,
+                        keycloak.jwk.kid = %jwk.kid,
                         error = %err,
                         "failed to build decoding key from jwk"
                     );
@@ -124,7 +124,7 @@ impl JwksProvider {
         let mut state = self.state.write().await;
         state.keys = keys;
         state.last_refresh = Some(Instant::now());
-        tracing::info!(count = state.keys.len(), "loaded JWKS keys");
+        tracing::info!(keycloak.jwks.count = state.keys.len(), "loaded JWKS keys");
         Ok(())
     }
 

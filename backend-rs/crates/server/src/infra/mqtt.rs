@@ -64,7 +64,7 @@ pub fn spawn(
 
     tokio::spawn(async move {
         if let Err(e) = client.subscribe(&topic, QoS::AtLeastOnce).await {
-            tracing::error!(error = %e, %topic, "mqtt subscribe failed");
+            tracing::error!(error = %e, mqtt.topic = %topic, "mqtt subscribe failed");
             return;
         }
         run_event_loop(eventloop, sensor_service, task_state).await;
@@ -250,14 +250,14 @@ fn build_ges_1000(
         let name = match SensorAbilityName::from_str(&r.ability) {
             Ok(n) => n,
             Err(e) => {
-                tracing::warn!(error = %e, ability = %r.ability, "dropping reading with unknown ability");
+                tracing::warn!(error = %e, sensor.ability = %r.ability, "dropping reading with unknown ability");
                 continue;
             }
         };
         let Some(model_ability_id) = model.ability_id_for(name, r.depth) else {
             tracing::warn!(
-                ability = %r.ability,
-                depth = r.depth,
+                sensor.ability = %r.ability,
+                sensor.depth_cm = r.depth,
                 "dropping reading with no matching model ability"
             );
             continue;
@@ -352,8 +352,8 @@ fn decode_ttn_ges_1000(
         let probe_id = s.get("id").and_then(|x| x.as_i64());
         let Some(depth) = probe_id.and_then(probe_id_to_depth_cm) else {
             tracing::warn!(
-                probe = %key,
-                id = ?probe_id,
+                sensor.probe = %key,
+                sensor.probe_id = ?probe_id,
                 "ges-1000 probe has missing or unknown id; skipping readings"
             );
             continue;

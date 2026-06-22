@@ -60,7 +60,7 @@ impl EventHandler for ClusterRecalculationHandler {
             let mut cluster = match self.cluster_reader.by_id(cluster_id).await {
                 Ok(c) => c,
                 Err(e) => {
-                    tracing::warn!(error = %e, %cluster_id, "skipping cluster recalc; load failed");
+                    tracing::warn!(error = %e, cluster.id = %cluster_id, "skipping cluster recalc; load failed");
                     continue;
                 }
             };
@@ -68,7 +68,7 @@ impl EventHandler for ClusterRecalculationHandler {
             let trees = match self.tree_reader.by_ids(&cluster.tree_ids).await {
                 Ok(t) => t,
                 Err(e) => {
-                    tracing::warn!(error = %e, %cluster_id, "skipping cluster recalc; tree load failed");
+                    tracing::warn!(error = %e, cluster.id = %cluster_id, "skipping cluster recalc; tree load failed");
                     continue;
                 }
             };
@@ -79,7 +79,7 @@ impl EventHandler for ClusterRecalculationHandler {
                 Some(center) => match self.region_reader.by_point(center).await {
                     Ok(r) => r.map(|r| r.id),
                     Err(e) => {
-                        tracing::warn!(error = %e, %cluster_id, "region lookup failed; clearing region");
+                        tracing::warn!(error = %e, cluster.id = %cluster_id, "region lookup failed; clearing region");
                         None
                     }
                 },

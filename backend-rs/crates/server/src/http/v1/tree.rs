@@ -54,7 +54,7 @@ const TREE_LIST_Q_MAX_LEN: usize = 100;
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all, fields(q.len = tracing::field::Empty))]
+#[tracing::instrument(level = "info", skip_all, fields(query.len = tracing::field::Empty))]
 pub async fn list_trees(
     State(state): State<Arc<AppState>>,
     Query(params): Query<TreeListParams>,
@@ -77,7 +77,7 @@ pub async fn list_trees(
     }
 
     if let Some(ref qv) = q {
-        tracing::Span::current().record("q.len", qv.chars().count());
+        tracing::Span::current().record("query.len", qv.chars().count());
     }
 
     let watering_statuses = params

@@ -26,7 +26,7 @@ impl KeycloakProbe {
                 Err(error) => {
                     tracing::warn!(
                         %error,
-                        issuer_url = s,
+                        auth.issuer_url = s,
                         "keycloak probe will report NotConfigured: issuer_url is not a valid URL"
                     );
                     None

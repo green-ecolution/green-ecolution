@@ -59,7 +59,7 @@ impl VehicleService {
         Ok(self.reader.view_by_ids(ids).await?)
     }
 
-    #[tracing::instrument(level = "debug", skip_all, fields(plate = %plate))]
+    #[tracing::instrument(level = "debug", skip_all, fields(vehicle.plate = %plate))]
     pub async fn by_plate(&self, plate: &NumberPlate) -> Result<Option<Vehicle>, ServiceError> {
         Ok(self.reader.by_plate(plate).await?)
     }

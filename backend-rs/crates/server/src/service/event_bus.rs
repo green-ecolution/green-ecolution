@@ -22,7 +22,7 @@ impl EventBus for InMemoryEventBus {
                 match handler.handle(&event).await {
                     Ok(follow_ups) => queue.extend(follow_ups),
                     Err(e) => tracing::error!(
-                        handler = handler.name(),
+                        event.handler = handler.name(),
                         error = %e,
                         event = ?event,
                         "event handler failed"
