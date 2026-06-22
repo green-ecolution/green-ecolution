@@ -87,28 +87,25 @@ build: build-frontend _compile-backend-embed
     @echo "Build done (frontend embedded)."
 
 # Build for all platforms
-build-all: build-frontend
-    @echo "Building backend for all platforms..."
-    @just build-linux
-    @just build-darwin
-    @just build-windows
+build-all: build-frontend build-linux build-darwin build-windows
+    @echo "All platform builds done (frontend embedded)."
 
 # Build for darwin (requires `rustup target add x86_64-apple-darwin` and a cross linker)
-build-darwin:
+build-darwin: build-frontend
     @echo "Building backend for darwin (x86_64)..."
     cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --release --locked --features embed-frontend --target x86_64-apple-darwin --bin {{ binary_name }}
     mkdir -p bin
     cp {{ backend_dir }}/target/x86_64-apple-darwin/release/{{ binary_name }} bin/{{ binary_name }}-darwin
 
 # Build for linux (musl static binary; requires `rustup target add x86_64-unknown-linux-musl`)
-build-linux:
+build-linux: build-frontend
     @echo "Building backend for linux (x86_64-musl)..."
     cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --release --locked --features embed-frontend --target x86_64-unknown-linux-musl --bin {{ binary_name }}
     mkdir -p bin
     cp {{ backend_dir }}/target/x86_64-unknown-linux-musl/release/{{ binary_name }} bin/{{ binary_name }}-linux
 
 # Build for windows (requires `rustup target add x86_64-pc-windows-gnu` and mingw-w64)
-build-windows:
+build-windows: build-frontend
     @echo "Building backend for windows (x86_64-gnu)..."
     cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --release --locked --features embed-frontend --target x86_64-pc-windows-gnu --bin {{ binary_name }}
     mkdir -p bin
