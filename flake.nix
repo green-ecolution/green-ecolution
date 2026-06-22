@@ -80,7 +80,7 @@
         pnpmDeps = pkgs.fetchPnpmDeps {
           inherit pname version src;
           fetcherVersion = 2;
-          hash = "sha256-8tOB4s2ha7OERKxui3XNWAVkm69rwQEiMNfXiFx1k4g=";
+          hash = "sha256-XNZwz0vul26NvP4oxmpAczbr4Wd0lZlA1vntqWQoQKE=";
         };
 
         buildPhase = ''
