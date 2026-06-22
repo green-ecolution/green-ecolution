@@ -17,7 +17,7 @@ impl Email {
         if !looks_like_email(&trimmed) {
             return Err(ValidationError::InvalidFormat {
                 field: "email",
-                reason: format!("'{trimmed}' is not a valid email"),
+                reason: "must be a valid email address".to_string(),
             });
         }
         Ok(Self(trimmed))

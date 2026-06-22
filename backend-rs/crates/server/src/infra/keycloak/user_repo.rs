@@ -65,9 +65,8 @@ impl KeycloakUserRepository {
 
         if !resp.status().is_success() {
             let status = resp.status();
-            let body = resp.text().await.unwrap_or_default();
             return Err(RepositoryError::Internal(format!(
-                "service-account token denied ({status}): {body}"
+                "service-account token denied ({status})"
             )));
         }
 
@@ -145,9 +144,8 @@ impl UserRepository for KeycloakUserRepository {
                 )));
             }
             status => {
-                let body = create_resp.text().await.unwrap_or_default();
                 return Err(RepositoryError::Internal(format!(
-                    "create user failed ({status}): {body}"
+                    "create user failed ({status})"
                 )));
             }
         }
@@ -176,9 +174,8 @@ impl UserRepository for KeycloakUserRepository {
             .map_err(|e| RepositoryError::Internal(format!("reset-password transport: {e}")))?;
         if !pwd_resp.status().is_success() {
             let status = pwd_resp.status();
-            let body = pwd_resp.text().await.unwrap_or_default();
             return Err(RepositoryError::Internal(format!(
-                "reset-password failed ({status}): {body}"
+                "reset-password failed ({status})"
             )));
         }
 
@@ -197,9 +194,8 @@ impl UserRepository for KeycloakUserRepository {
             .map_err(|e| RepositoryError::Internal(format!("read-back transport: {e}")))?;
         if !read_resp.status().is_success() {
             let status = read_resp.status();
-            let body = read_resp.text().await.unwrap_or_default();
             return Err(RepositoryError::Internal(format!(
-                "read-back failed ({status}): {body}"
+                "read-back failed ({status})"
             )));
         }
         let kc_user: KcUser = read_resp
@@ -246,9 +242,8 @@ impl UserRepository for KeycloakUserRepository {
                 }
                 StatusCode::NOT_FOUND => continue,
                 status => {
-                    let body = resp.text().await.unwrap_or_default();
                     return Err(RepositoryError::Internal(format!(
-                        "by_ids failed ({status}): {body}"
+                        "by_ids failed ({status})"
                     )));
                 }
             }
@@ -286,9 +281,8 @@ impl KeycloakUserRepository {
             .map_err(|e| RepositoryError::Internal(format!("list users transport: {e}")))?;
         if !resp.status().is_success() {
             let status = resp.status();
-            let body = resp.text().await.unwrap_or_default();
             return Err(RepositoryError::Internal(format!(
-                "list users failed ({status}): {body}"
+                "list users failed ({status})"
             )));
         }
         let kc_users: Vec<KcUser> = resp
@@ -389,9 +383,8 @@ impl KeycloakUserRepository {
             .map_err(|e| RepositoryError::Internal(format!("role assign transport: {e}")))?;
         if !resp.status().is_success() {
             let status = resp.status();
-            let body = resp.text().await.unwrap_or_default();
             return Err(RepositoryError::Internal(format!(
-                "role assign failed ({status}): {body}"
+                "role assign failed ({status})"
             )));
         }
         Ok(())
