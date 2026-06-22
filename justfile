@@ -350,6 +350,11 @@ test-verbose:
     @echo "Rust tests (verbose)..."
     cd {{ backend_dir }} && SQLX_OFFLINE=true cargo test --workspace --locked -- --nocapture
 
+# Build and open the Rust API docs in the browser (includes the logging field convention from telemetry.rs)
+docs:
+    @echo "Building Rust docs..."
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo doc --workspace --no-deps --locked --open
+
 # Clean build artifacts
 clean:
     @echo "Cleaning..."
