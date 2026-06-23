@@ -333,6 +333,51 @@ async fn create_cluster_with_trees_computes_center_point() {
 }
 
 #[tokio::test]
+async fn create_cluster_with_trees_persists_geometry_column() {
+    let app = spawn_app().await;
+
+    let tree_id = insert_tree_at(&app, 53.55, 9.99, "T-GEOM").await;
+
+    let body = serde_json::json!({
+        "name": "Geometry Test",
+        "address": "Testweg",
+        "description": "Test",
+        "soil_condition": "Su3",
+        "tree_ids": [tree_id]
+    });
+
+    let response = app.post_json("/api/v1/clusters", &body).await;
+    assert_eq!(response.status().as_u16(), 201);
+
+    let cluster: serde_json::Value = response.json().await.unwrap();
+    let id = uuid::Uuid::parse_str(cluster["id"].as_str().unwrap()).unwrap();
+
+    let row = sqlx::query!(
+        r#"SELECT ST_X(geometry)::float8 AS "x: f64", ST_Y(geometry)::float8 AS "y: f64"
+           FROM tree_clusters WHERE id = $1"#,
+        id,
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+
+    let x = row
+        .x
+        .expect("geometry column should be populated, not NULL");
+    let y = row
+        .y
+        .expect("geometry column should be populated, not NULL");
+    assert!(
+        (y - 53.55).abs() < 0.001,
+        "geometry latitude should be ~53.55, got {y}"
+    );
+    assert!(
+        (x - 9.99).abs() < 0.001,
+        "geometry longitude should be ~9.99, got {x}"
+    );
+}
+
+#[tokio::test]
 async fn create_cluster_with_trees_assigns_region() {
     let app = spawn_app().await;
 

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE tree_clusters SET\n                name = $2, address = $3, description = $4, soil_condition = $5,\n                provider = $6, additional_informations = $7,\n                latitude = $8, longitude = $9, region_id = $10,\n                watering_status = $11, last_watered = $12, archived = $13,\n                moisture_level = $14\n            WHERE id = $1",
+  "query": "UPDATE tree_clusters SET\n                name = $2, address = $3, description = $4, soil_condition = $5,\n                provider = $6, additional_informations = $7,\n                latitude = $8, longitude = $9,\n                geometry = ST_SetSRID(ST_MakePoint($9, $8), 4326),\n                region_id = $10,\n                watering_status = $11, last_watered = $12, archived = $13,\n                moisture_level = $14\n            WHERE id = $1",
   "describe": {
     "columns": [],
     "parameters": {
@@ -79,5 +79,5 @@
     },
     "nullable": []
   },
-  "hash": "c6bd1a3dc9a71cf5c506060499a8fc84367a1537007a6d7f32459835c0a2d8f6"
+  "hash": "c4e898e8e3de73e04f3182c0db8b509d1ce12a4c7025d3195f9989f51e1bc946"
 }
