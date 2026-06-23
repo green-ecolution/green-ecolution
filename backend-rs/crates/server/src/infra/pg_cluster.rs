@@ -461,7 +461,9 @@ impl TreeClusterWriter for PgTreeClusterRepository {
             r#"UPDATE tree_clusters SET
                 name = $2, address = $3, description = $4, soil_condition = $5,
                 provider = $6, additional_informations = $7,
-                latitude = $8, longitude = $9, region_id = $10,
+                latitude = $8, longitude = $9,
+                geometry = ST_SetSRID(ST_MakePoint($9, $8), 4326),
+                region_id = $10,
                 watering_status = $11, last_watered = $12, archived = $13,
                 moisture_level = $14
             WHERE id = $1"#,

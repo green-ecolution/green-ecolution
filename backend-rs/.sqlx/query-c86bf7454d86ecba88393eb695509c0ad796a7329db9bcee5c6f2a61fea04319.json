@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT ST_X(geometry)::float8 AS \"x: f64\", ST_Y(geometry)::float8 AS \"y: f64\"\n           FROM tree_clusters WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "x: f64",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 1,
+        "name": "y: f64",
+        "type_info": "Float8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "c86bf7454d86ecba88393eb695509c0ad796a7329db9bcee5c6f2a61fea04319"
+}
