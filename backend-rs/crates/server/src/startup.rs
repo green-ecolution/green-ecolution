@@ -10,8 +10,9 @@ use crate::{
     infra::{
         self,
         health::{
-            HealthProbe, feature_probe::FeatureProbe, keycloak_probe::KeycloakProbe,
-            mqtt_probe::MqttProbe, pg_probe::PgProbe, spawn as spawn_health,
+            DefaultReadiness, HealthProbe, feature_probe::FeatureProbe,
+            keycloak_probe::KeycloakProbe, mqtt_probe::MqttProbe, pg_probe::PgProbe,
+            spawn as spawn_health,
         },
         keycloak::{AuthStack, JwksProvider},
         mqtt::MqttHealthState,
@@ -43,7 +44,9 @@ use crate::{
         watering_plan_service::WateringPlanService,
     },
 };
-use domain::info::{HealthSnapshotReader, ServiceName, StatisticsReader, SystemInfoProvider};
+use domain::info::{
+    HealthSnapshotReader, ReadinessReader, ServiceName, StatisticsReader, SystemInfoProvider,
+};
 
 pub struct Application {
     port: u16,
@@ -95,7 +98,7 @@ impl Application {
         let services = Services::build(&repos, event_bus);
 
         let mqtt_state = spawn_mqtt_subscriber(&settings, services.sensor.clone());
-        let health_reader =
+        let (health_reader, readiness_reader) =
             spawn_health_probes(&pool, &settings, probe_http_client.clone(), mqtt_state).await;
         let _update_handle = infra::update_checker::spawn(
             update_checker,
@@ -115,6 +118,7 @@ impl Application {
             user_service,
             info_provider,
             health_reader,
+            readiness_reader,
             statistics_reader: repos.statistics,
             token_validator,
             feature_flags: FeatureFlags {
@@ -336,9 +340,13 @@ async fn spawn_health_probes(
     settings: &Settings,
     probe_http_client: reqwest::Client,
     mqtt_state: Arc<MqttHealthState>,
-) -> Arc<dyn HealthSnapshotReader> {
+) -> (Arc<dyn HealthSnapshotReader>, Arc<dyn ReadinessReader>) {
+    let pg_probe: Arc<dyn HealthProbe> = Arc::new(PgProbe::new(pool.clone()));
+    let readiness: Arc<dyn ReadinessReader> =
+        Arc::new(DefaultReadiness::new(vec![pg_probe.clone()]));
+
     let probes: Vec<Arc<dyn HealthProbe>> = vec![
-        Arc::new(PgProbe::new(pool.clone())),
+        pg_probe,
         Arc::new(KeycloakProbe::new(
             settings.auth.enabled,
             Some(&settings.auth.issuer_url),
@@ -360,5 +368,5 @@ async fn spawn_health_probes(
         Duration::from_secs(settings.info.health_check_interval_secs),
     )
     .await;
-    coordinator
+    (coordinator, readiness)
 }

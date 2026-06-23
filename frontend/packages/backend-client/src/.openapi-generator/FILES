@@ -49,6 +49,7 @@ models/PluginAuthRequest.ts
 models/PluginListResponse.ts
 models/PluginRegisterRequest.ts
 models/PluginResponse.ts
+models/ReadinessResponse.ts
 models/RegionEvaluationResponse.ts
 models/RegionResponse.ts
 models/SensorAbilityUnitDto.ts

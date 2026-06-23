@@ -25,11 +25,43 @@
           "Info"
         ],
         "summary": "Liveness probe",
-        "description": "Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /v1/info/services for a deep services health check.",
+        "description": "Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /ready for a readiness probe that verifies critical dependencies, or /v1/info/services for a deep services health check.",
         "operationId": "health",
         "responses": {
           "200": {
             "description": "Server is alive"
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "tags": [
+          "Info"
+        ],
+        "summary": "Readiness probe",
+        "description": "Readiness probe for container orchestrators. Verifies that critical dependencies (the database) are reachable and returns 200 only when the service can serve traffic; returns 503 otherwise so the pod is pulled from the load balancer. Optional services (auth, MQTT) are reported by /v1/info/services and do not gate readiness.",
+        "operationId": "readiness",
+        "responses": {
+          "200": {
+            "description": "Service is ready to serve traffic",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A critical dependency is unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -4086,6 +4118,25 @@
           "name": "Weather Provider Plugin",
           "slug": "weather-provider",
           "version": "1.0.0"
+        }
+      },
+      "ReadinessResponse": {
+        "type": "object",
+        "required": [
+          "ready",
+          "services"
+        ],
+        "properties": {
+          "ready": {
+            "type": "boolean",
+            "example": true
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceStatusResponse"
+            }
+          }
         }
       },
       "RegionEvaluationResponse": {

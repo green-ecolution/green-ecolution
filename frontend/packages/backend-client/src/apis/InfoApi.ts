@@ -18,6 +18,7 @@ import type {
   AppInfoResponse,
   DataStatisticsResponse,
   MapInfoResponse,
+  ReadinessResponse,
   ServerInfoResponse,
   ServicesInfoResponse,
 } from '../models/index';
@@ -28,6 +29,8 @@ import {
     DataStatisticsResponseToJSON,
     MapInfoResponseFromJSON,
     MapInfoResponseToJSON,
+    ReadinessResponseFromJSON,
+    ReadinessResponseToJSON,
     ServerInfoResponseFromJSON,
     ServerInfoResponseToJSON,
     ServicesInfoResponseFromJSON,
@@ -195,7 +198,7 @@ export class InfoApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /v1/info/services for a deep services health check.
+     * Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /ready for a readiness probe that verifies critical dependencies, or /v1/info/services for a deep services health check.
      * Liveness probe
      */
     async healthRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -217,11 +220,42 @@ export class InfoApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /v1/info/services for a deep services health check.
+     * Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /ready for a readiness probe that verifies critical dependencies, or /v1/info/services for a deep services health check.
      * Liveness probe
      */
     async health(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.healthRaw(initOverrides);
+    }
+
+    /**
+     * Readiness probe for container orchestrators. Verifies that critical dependencies (the database) are reachable and returns 200 only when the service can serve traffic; returns 503 otherwise so the pod is pulled from the load balancer. Optional services (auth, MQTT) are reported by /v1/info/services and do not gate readiness.
+     * Readiness probe
+     */
+    async readinessRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReadinessResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/ready`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReadinessResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Readiness probe for container orchestrators. Verifies that critical dependencies (the database) are reachable and returns 200 only when the service can serve traffic; returns 503 otherwise so the pod is pulled from the load balancer. Optional services (auth, MQTT) are reported by /v1/info/services and do not gate readiness.
+     * Readiness probe
+     */
+    async readiness(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReadinessResponse> {
+        const response = await this.readinessRaw(initOverrides);
+        return await response.value();
     }
 
 }
