@@ -38,6 +38,7 @@ export * from './PluginAuthRequest';
 export * from './PluginListResponse';
 export * from './PluginRegisterRequest';
 export * from './PluginResponse';
+export * from './ReadinessResponse';
 export * from './RegionEvaluationResponse';
 export * from './RegionResponse';
 export * from './SensorAbilityUnitDto';

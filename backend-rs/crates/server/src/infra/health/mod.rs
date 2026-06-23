@@ -3,8 +3,10 @@ pub mod keycloak_probe;
 pub mod mqtt_probe;
 pub mod pg_probe;
 pub mod probe;
+pub mod readiness;
 
 pub use probe::HealthProbe;
+pub use readiness::DefaultReadiness;
 
 use std::sync::Arc;
 use std::time::Duration;

@@ -25,7 +25,7 @@ use crate::{
         watering_plan_service::WateringPlanService,
     },
 };
-use domain::info::{HealthSnapshotReader, StatisticsReader, SystemInfoProvider};
+use domain::info::{HealthSnapshotReader, ReadinessReader, StatisticsReader, SystemInfoProvider};
 
 pub mod auth;
 pub mod extractors;
@@ -58,6 +58,7 @@ pub struct AppState {
     pub user_service: Arc<UserService>,
     pub info_provider: Arc<dyn SystemInfoProvider>,
     pub health_reader: Arc<dyn HealthSnapshotReader>,
+    pub readiness_reader: Arc<dyn ReadinessReader>,
     pub statistics_reader: Arc<dyn StatisticsReader>,
     pub token_validator: Arc<TokenValidator>,
     pub feature_flags: FeatureFlags,
