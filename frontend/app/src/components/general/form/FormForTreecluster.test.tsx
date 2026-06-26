@@ -244,6 +244,6 @@ describe('FormForTreecluster', () => {
       </TestWrapper>,
     )
 
-    expect(screen.getByText(/hier können sie zugehörige bäume verlinken/i)).toBeInTheDocument()
+    expect(screen.getByText(/noch keine bäume ausgewählt/i)).toBeInTheDocument()
   })
 })
