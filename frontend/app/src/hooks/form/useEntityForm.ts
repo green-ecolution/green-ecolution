@@ -31,6 +31,7 @@ export interface EntityFormConfig<TForm extends FieldValues, TCreate, TUpdate, T
 export interface EntityFormOptions<TForm> {
   entityId?: string
   initForm?: DefaultValues<TForm>
+  disableNavigationBlock?: boolean
 }
 
 export function useEntityForm<
@@ -61,7 +62,7 @@ export function useEntityForm<
   }, [form, draft])
 
   const navigationBlocker = useFormNavigationBlocker({
-    isDirty: form.formState.isDirty || draft.hasChanges,
+    isDirty: opts.disableNavigationBlock ? false : form.formState.isDirty || draft.hasChanges,
     allowedPaths: config.allowedPaths,
     onLeave: draft.clear,
     message: mutationType === 'create' ? config.messages.createLeave : config.messages.updateLeave,

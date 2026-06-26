@@ -1,5 +1,4 @@
 import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
-import { TreeClusterInList } from '@/api/backendApi'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import {
   AlertDialog,
@@ -10,18 +9,17 @@ import {
   AlertDialogFooter,
   AlertDialogAction,
   AlertDialogCancel,
+  Button,
   InlineAlert,
 } from '@green-ecolution/ui'
 import { MoveRight, X } from 'lucide-react'
-import { WateringPlanForm } from '@/schema/wateringPlanSchema'
-import MapSelectEntitiesModal from '@/components/map/MapSelectEntitiesModal'
-import WithFilterableClusters from '@/components/map/marker/WithFilterableClusters'
-import ShowRoutePreview from '@/components/map/marker/ShowRoutePreview'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
-import { treeClusterQuery, vehicleIdQuery } from '@/api/queries'
-import SelectedCard from '@/components/general/cards/SelectedCard'
 import { z } from 'zod'
+import { WateringPlanForm } from '@/schema/wateringPlanSchema'
+import { treeClusterQuery, vehicleIdQuery } from '@/api/queries'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
+import SelectEntities from '@/components/general/form/types/SelectEntities'
+import useSelectableClusterLayer from '@/components/map-gl/layers/useSelectableClusterLayer'
 
 const mapSelectClusterSchema = z.object({
   transporterId: z.string().optional(),
@@ -34,9 +32,7 @@ const mapSelectClusterSchema = z.object({
 export const Route = createFileRoute('/_protected/map/watering-plan/select/cluster/')({
   component: SelectCluster,
   validateSearch: mapSelectClusterSchema,
-  loader: ({ context: { queryClient } }) => {
-    return queryClient.prefetchQuery(treeClusterQuery())
-  },
+  loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(treeClusterQuery()),
 })
 
 function SelectCluster() {
@@ -91,11 +87,35 @@ function SelectCluster() {
           params: { wateringPlanId: String(wateringPlanId) },
         })
       case 'create':
-        return navigate({
-          to: '/watering-plans/new',
-        })
+        return navigate({ to: '/watering-plans/new' })
     }
   }, [navigate, formType, wateringPlanId])
+
+  const disabledClusters = useMemo(() => {
+    if (!transporter) return clusters.data.map((cluster) => cluster.id)
+
+    const totalCapacity = trailer
+      ? transporter.waterCapacity + trailer.waterCapacity
+      : transporter.waterCapacity
+
+    return clusters.data
+      .filter((cluster) => {
+        const neededWater = (cluster.treeIds?.length ?? 0) * 80
+        return neededWater > totalCapacity
+      })
+      .map((cluster) => cluster.id)
+  }, [transporter, trailer, clusters.data])
+
+  const handleToggle = useCallback((id: string) => {
+    setShowError(false)
+    setClusterIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }, [])
+
+  useSelectableClusterLayer({
+    selectedIds: clusterIds,
+    disabledIds: disabledClusters,
+    onToggle: handleToggle,
+  })
 
   const handleSave = () => {
     if (clusterIds.length === 0) {
@@ -117,39 +137,8 @@ function SelectCluster() {
       draft.markChanged()
     }
 
-    handleNavigateBack().catch((error) => console.error('Navigation failed:', error))
+    handleNavigateBack()?.catch((error) => console.error('Navigation failed:', error))
   }
-
-  const handleDelete = (clusterId: string) => {
-    setClusterIds((prev) => prev.filter((id) => id !== clusterId))
-  }
-
-  const handleClick = (cluster: TreeClusterInList) => {
-    if (disabledClusters.includes(cluster.id)) return
-
-    setClusterIds((prev) => {
-      if (prev.includes(cluster.id)) {
-        return prev.filter((id) => id !== cluster.id)
-      }
-      return [...prev, cluster.id]
-    })
-  }
-
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- complex filter logic
-  const disabledClusters = useMemo(() => {
-    if (!transporter) return clusters.data.map((cluster) => cluster.id)
-
-    const totalCapacity = trailer
-      ? transporter.waterCapacity + trailer.waterCapacity
-      : transporter.waterCapacity
-
-    return clusters.data
-      .filter((cluster) => {
-        const neededWater = (cluster.treeIds?.length ?? 0) * 80
-        return neededWater > totalCapacity
-      })
-      .map((cluster) => cluster.id)
-  }, [transporter, trailer, clusters.data])
 
   const { showNotice, notice } = useMemo(() => {
     const errors = []
@@ -164,49 +153,54 @@ function SelectCluster() {
       )
     }
 
-    return {
-      showNotice: errors.length > 0,
-      notice: errors,
-    }
+    return { showNotice: errors.length > 0, notice: errors }
   }, [transporterId, disabledClusters])
 
   return (
     <>
-      <MapSelectEntitiesModal
-        onSave={handleSave}
-        onCancel={() => void handleNavigateBack()}
-        disabled={clusterIds.length === 0}
-        title="Ausgewählte Bewässerungsgruppen:"
-        content={
-          <ul>
-            {showNotice && <InlineAlert className="mb-4" description={notice.join(' ')} />}
-            {(clusterIds?.length || 0) === 0 || showError ? (
-              <li className="text-dark-600 font-semibold text-sm">
-                <p>Hier können Sie zugehörigen Gruppen verlinken.</p>
-              </li>
-            ) : (
-              clusterIds.map((clusterId) => (
-                <li key={clusterId}>
-                  <SelectedCard type="cluster" id={clusterId} onClick={handleDelete} />
-                </li>
-              ))
-            )}
-          </ul>
-        }
-      />
-      <WithFilterableClusters
-        onClick={handleClick}
-        highlightedClusters={clusterIds}
-        disabledClusters={disabledClusters}
-      />
+      <div className="absolute top-4 right-4 z-[1030] flex max-h-[calc(100%-2rem)] w-[30rem] max-w-[calc(100%-2rem)] flex-col rounded-xl bg-white p-5 font-nunito-sans shadow-xl">
+        <div className="mb-4 flex shrink-0 items-center justify-between gap-4">
+          <h2 className="font-lato text-lg font-semibold">Bewässerungsgruppen auswählen</h2>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Abbrechen"
+            onClick={() => void handleNavigateBack()}
+          >
+            <X />
+          </Button>
+        </div>
+        <p className="mb-5 shrink-0 text-sm text-dark-600">
+          Klicke die Gruppen auf der Karte an, die in diesen Bewässerungsplan aufgenommen werden
+          sollen.
+        </p>
+        {showNotice && <InlineAlert className="mb-4 shrink-0" description={notice.join(' ')} />}
 
-      {clusterIds.length > 0 && transporterId && transporterId !== '-1' && (
-        <ShowRoutePreview
-          selectedClustersIds={clusterIds}
-          transporterId={transporterId}
-          trailerId={trailerId}
+        <SelectEntities
+          onDelete={() => {}} // eslint-disable-line
+          onChange={setClusterIds}
+          entityIds={clusterIds}
+          type="cluster"
+          label="Bewässerungsgruppen"
+          fill
+          emptyHint="Klicke eine Gruppe auf der Karte an, um sie hinzuzufügen."
         />
-      )}
+        {showError && clusterIds.length === 0 && (
+          <p className="mt-2 shrink-0 text-sm font-semibold text-red">
+            Bitte wähle mindestens eine Bewässerungsgruppe aus.
+          </p>
+        )}
+
+        <Button
+          type="button"
+          onClick={handleSave}
+          disabled={clusterIds.length === 0}
+          className="mt-4 w-full shrink-0"
+        >
+          Übernehmen
+          <MoveRight className="icon-arrow-animate" />
+        </Button>
+      </div>
 
       <AlertDialog open={status === 'blocked'} onOpenChange={(open) => !open && reset?.()}>
         <AlertDialogContent>

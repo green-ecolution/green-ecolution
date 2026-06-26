@@ -1,7 +1,7 @@
 import React, { useEffect, useState, Ref, useCallback, useId } from 'react'
 import { Button } from '@green-ecolution/ui'
 import { MoveRight, X } from 'lucide-react'
-import useMapInteractions from '@/hooks/useMapInteractions'
+import useMapInteractions from '@/components/map-gl/useMapInteractions'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 

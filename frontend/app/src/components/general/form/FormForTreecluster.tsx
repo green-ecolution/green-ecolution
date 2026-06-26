@@ -7,11 +7,13 @@ import FormError from './FormError'
 import SelectEntities from './types/SelectEntities'
 
 interface FormForTreeClusterProps {
-  onAddTrees: () => void
+  onAddTrees?: () => void
   onSubmit: SubmitHandler<TreeclusterForm>
   displayError: boolean
   errorMessage?: string
   onBlur?: () => void
+  fullWidth?: boolean
+  emptyHint?: string
 }
 
 const FormForTreecluster = (props: FormForTreeClusterProps) => {
@@ -21,11 +23,15 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
   return (
     <form
       key="cluster-register"
-      className="flex flex-col gap-y-6 lg:grid lg:grid-cols-2 lg:gap-11"
+      className={
+        props.fullWidth
+          ? 'flex min-h-0 flex-1 flex-col gap-y-6'
+          : 'flex flex-col gap-y-6 lg:grid lg:grid-cols-2 lg:gap-11'
+      }
       onSubmit={handleSubmit(props.onSubmit)}
       onBlur={props.onBlur}
     >
-      <div className="flex flex-col gap-y-6">
+      <div className={props.fullWidth ? 'flex shrink-0 flex-col gap-y-6' : 'flex flex-col gap-y-6'}>
         <FormField label="Name" error={errors.name?.message} required {...register('name')} />
         <FormField
           label="Adresse"
@@ -49,6 +55,7 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
                 onChange={field.onChange}
                 placeholder="Wähle eine Bodenbeschaffenheit aus"
                 searchPlaceholder="Code oder Bezeichnung suchen…"
+                contentClassName="z-[2000]"
               />
               {errors.soilCondition?.message && (
                 <p className="text-sm text-destructive">{errors.soilCondition.message}</p>
@@ -76,13 +83,19 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
             onAdd={props.onAddTrees}
             type="tree"
             label="Bäume"
+            fill={props.fullWidth}
+            emptyHint={props.emptyHint}
           />
         )}
       />
 
       <FormError show={props.displayError} error={props.errorMessage} />
 
-      <Button type="submit" disabled={!isValid} className="mt-10 lg:col-span-full lg:w-fit">
+      <Button
+        type="submit"
+        disabled={!isValid}
+        className={props.fullWidth ? 'mt-2 w-full shrink-0' : 'mt-10 lg:col-span-full lg:w-fit'}
+      >
         Speichern
         <MoveRight className="icon-arrow-animate" />
       </Button>

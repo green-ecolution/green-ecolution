@@ -47,7 +47,7 @@ const MapToolbarBar = () => {
             <div className="flex items-center gap-2 lg:ml-auto">
               <MapButtons />
               <Button asChild>
-                <Link to="/treecluster/new">
+                <Link to="/map/treecluster/new" search={(prev) => prev}>
                   <span className="hidden sm:inline">Gruppe anlegen</span>
                   <Plus />
                 </Link>

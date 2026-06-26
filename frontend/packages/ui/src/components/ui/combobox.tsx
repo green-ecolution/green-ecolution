@@ -29,6 +29,7 @@ export interface ComboboxProps {
   id?: string
   disabled?: boolean
   className?: string
+  contentClassName?: string
 }
 
 const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
@@ -43,6 +44,7 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
       id,
       disabled,
       className,
+      contentClassName,
     },
     ref,
   ) => {
@@ -83,7 +85,10 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-0">
+        <PopoverContent
+          align="start"
+          className={cn('w-[var(--radix-popover-trigger-width)] p-0', contentClassName)}
+        >
           <Command>
             <CommandInput placeholder={searchPlaceholder} />
             <CommandList>

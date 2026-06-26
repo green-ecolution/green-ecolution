@@ -1,12 +1,14 @@
-import { SensorMarkerIcon, TreeMarkerIcon } from '@/components/map/markerIcons'
-import ZoomControls from '@/components/map/ZoomControls'
-import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
-import type { TreeWithDistance } from '@/api/backendApi'
-import { WateringStatus } from '@green-ecolution/backend-client'
+import { useEffect, useMemo, useRef } from 'react'
+import { Marker, type GeoJSONSource, type LngLatBoundsLike } from 'maplibre-gl'
 import { cn } from '@green-ecolution/ui'
-import L from 'leaflet'
-import { useMemo } from 'react'
-import { Circle, MapContainer, Marker, TileLayer } from 'react-leaflet'
+import { WateringStatus } from '@green-ecolution/backend-client'
+import type { TreeWithDistance } from '@/api/backendApi'
+import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
+import { useMaplibreMap } from '@/components/map-gl/MapContext'
+import MapPreview from '@/components/map-gl/MapPreview'
+import SensorMarker from '@/components/map-gl/SensorMarker'
+import { metersCircle } from '@/components/map-gl/metersCircle'
+import { isMapAlive } from '@/components/map-gl/mapReady'
 
 interface NearestTreeMapPreviewProps {
   sensorLat: number
@@ -18,6 +20,97 @@ interface NearestTreeMapPreviewProps {
   className?: string
 }
 
+const ACCURACY_SOURCE = 'gec-nearest-accuracy'
+const ACCURACY_FILL = 'gec-nearest-accuracy-fill'
+const ACCURACY_LINE = 'gec-nearest-accuracy-line'
+
+const buildTreeElement = (colorHex: string, isSelected: boolean, isAssigned: boolean) => {
+  const el = document.createElement('div')
+  el.style.width = '20px'
+  el.style.height = '20px'
+  el.style.borderRadius = '9999px'
+  el.style.background = colorHex
+  el.style.border = '2px solid #ffffff'
+  el.style.boxShadow = isSelected ? '0 0 0 3px #486725' : '0 1px 3px rgba(0,0,0,0.4)'
+  el.style.opacity = isAssigned ? '0.45' : '1'
+  el.style.cursor = isAssigned ? 'default' : 'pointer'
+  return el
+}
+
+const NearestTreeLayers = ({
+  sensorLat,
+  sensorLng,
+  sensorAccuracy,
+  trees,
+  selectedTreeId,
+  onSelectTree,
+}: Omit<NearestTreeMapPreviewProps, 'className'>) => {
+  const map = useMaplibreMap()
+  const markersRef = useRef<Marker[]>([])
+  const onSelectRef = useRef(onSelectTree)
+  useEffect(() => {
+    onSelectRef.current = onSelectTree
+  })
+
+  useEffect(() => {
+    if (!map.getSource(ACCURACY_SOURCE)) {
+      map.addSource(ACCURACY_SOURCE, {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      })
+      map.addLayer({
+        id: ACCURACY_FILL,
+        type: 'fill',
+        source: ACCURACY_SOURCE,
+        paint: { 'fill-color': '#486725', 'fill-opacity': 0.15 },
+      })
+      map.addLayer({
+        id: ACCURACY_LINE,
+        type: 'line',
+        source: ACCURACY_SOURCE,
+        paint: { 'line-color': '#486725', 'line-width': 1.5 },
+      })
+    }
+    return () => {
+      if (!isMapAlive(map)) return
+      for (const id of [ACCURACY_LINE, ACCURACY_FILL]) {
+        if (map.getLayer(id)) map.removeLayer(id)
+      }
+      if (map.getSource(ACCURACY_SOURCE)) map.removeSource(ACCURACY_SOURCE)
+    }
+  }, [map])
+
+  useEffect(() => {
+    if (!isMapAlive(map)) return
+    const features =
+      sensorAccuracy && sensorAccuracy > 0
+        ? [metersCircle(sensorLng, sensorLat, sensorAccuracy)]
+        : []
+    map.getSource<GeoJSONSource>(ACCURACY_SOURCE)?.setData({ type: 'FeatureCollection', features })
+  }, [map, sensorLng, sensorLat, sensorAccuracy])
+
+  useEffect(() => {
+    for (const m of markersRef.current) m.remove()
+    markersRef.current = trees.map((entry) => {
+      const { tree } = entry
+      const { colorHex } = getWateringStatusDetails(tree.wateringStatus ?? WateringStatus.Unknown)
+      const isAssigned = tree.sensor != null
+      const isSelected = !isAssigned && tree.id === selectedTreeId
+      const el = buildTreeElement(colorHex, isSelected, isAssigned)
+      if (!isAssigned) {
+        el.addEventListener('click', () => onSelectRef.current?.(tree.id))
+      }
+      return new Marker({ element: el }).setLngLat([tree.longitude, tree.latitude]).addTo(map)
+    })
+    return () => {
+      for (const m of markersRef.current) m.remove()
+      markersRef.current = []
+    }
+  }, [map, trees, selectedTreeId])
+
+  return null
+}
+
 const NearestTreeMapPreview = ({
   sensorLat,
   sensorLng,
@@ -27,85 +120,42 @@ const NearestTreeMapPreview = ({
   onSelectTree,
   className,
 }: NearestTreeMapPreviewProps) => {
-  const sensorPos = L.latLng(sensorLat, sensorLng)
-  const radius = sensorAccuracy && sensorAccuracy > 0 ? sensorAccuracy : null
-
-  const bounds = useMemo(() => {
-    const points: L.LatLngExpression[] = [
-      [sensorLat, sensorLng],
-      ...trees.map((t) => [t.tree.latitude, t.tree.longitude] as L.LatLngTuple),
+  const bounds = useMemo<LngLatBoundsLike>(() => {
+    const lngs = [sensorLng, ...trees.map((t) => t.tree.longitude)]
+    const lats = [sensorLat, ...trees.map((t) => t.tree.latitude)]
+    let w = Math.min(...lngs)
+    let e = Math.max(...lngs)
+    let s = Math.min(...lats)
+    let n = Math.max(...lats)
+    const padX = (e - w) * 0.3 || 0.001
+    const padY = (n - s) * 0.3 || 0.001
+    w -= padX
+    e += padX
+    s -= padY
+    n += padY
+    return [
+      [w, s],
+      [e, n],
     ]
-    if (points.length < 2) {
-      return L.latLngBounds([sensorPos, sensorPos]).pad(0.5)
-    }
-    return L.latLngBounds(points).pad(0.3)
-  }, [sensorLat, sensorLng, sensorPos, trees])
+  }, [sensorLng, sensorLat, trees])
 
   return (
-    <div
-      aria-label="Karte mit Sensor-Position und nahegelegenen Bäumen"
-      className={cn(
-        'relative w-full overflow-hidden rounded-2xl border border-dark-100 shadow-cards',
-        'aspect-[4/3] sm:aspect-[16/10]',
-        className,
-      )}
+    <MapPreview
+      bounds={bounds}
+      interactive
+      ariaLabel="Karte mit Sensor-Position und nahegelegenen Bäumen"
+      className={cn('aspect-[4/3] sm:aspect-[16/10]', className)}
     >
-      <MapContainer
-        preferCanvas
-        zoomControl={false}
-        attributionControl={false}
-        dragging={true}
-        touchZoom={true}
-        doubleClickZoom={true}
-        scrollWheelZoom={true}
-        boxZoom={true}
-        keyboard={true}
-        className="z-0 h-full w-full"
-        bounds={bounds}
-        maxZoom={19}
-        minZoom={3}
-      >
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" keepBuffer={2} />
-
-        {radius && (
-          <Circle
-            center={sensorPos}
-            radius={radius}
-            pathOptions={{
-              color: 'oklch(0.62 0.20 145)',
-              fillColor: 'oklch(0.62 0.20 145)',
-              fillOpacity: 0.15,
-              weight: 1.5,
-            }}
-          />
-        )}
-
-        <ZoomControls />
-        <Marker position={sensorPos} icon={SensorMarkerIcon()} />
-
-        {trees.map((entry) => {
-          const { tree } = entry
-          const statusDetails = getWateringStatusDetails(
-            tree.wateringStatus ?? WateringStatus.Unknown,
-          )
-          const isAssigned = tree.sensor != null
-          const isSelected = !isAssigned && tree.id === selectedTreeId
-
-          return (
-            <Marker
-              key={tree.id}
-              position={[tree.latitude, tree.longitude]}
-              icon={TreeMarkerIcon(statusDetails.colorHex, isSelected, false, isAssigned)}
-              eventHandlers={isAssigned ? {} : { click: () => onSelectTree?.(tree.id) }}
-            />
-          )
-        })}
-      </MapContainer>
-
-      <span className="pointer-events-none absolute bottom-1 right-2 text-[10px] text-dark-600/80 font-mono bg-white/70 px-1 rounded">
-        © OpenStreetMap
-      </span>
-    </div>
+      <SensorMarker lng={sensorLng} lat={sensorLat} />
+      <NearestTreeLayers
+        sensorLat={sensorLat}
+        sensorLng={sensorLng}
+        sensorAccuracy={sensorAccuracy}
+        trees={trees}
+        selectedTreeId={selectedTreeId}
+        onSelectTree={onSelectTree}
+      />
+    </MapPreview>
   )
 }
 

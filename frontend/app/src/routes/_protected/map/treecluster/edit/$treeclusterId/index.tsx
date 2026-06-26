@@ -1,0 +1,165 @@
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useCallback, useEffect, useState } from 'react'
+import { FormProvider, useWatch, type DefaultValues, type SubmitHandler } from 'react-hook-form'
+import { useSuspenseQuery } from '@tanstack/react-query'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Button,
+} from '@green-ecolution/ui'
+import { MoveRight, Trash2, X } from 'lucide-react'
+import type { TreeResponse } from '@green-ecolution/backend-client'
+import { clusterApi } from '@/api/backendApi'
+import { treeClusterIdQuery } from '@/api/queries'
+import { TreeclusterForm } from '@/schema/treeclusterSchema'
+import FormForTreecluster from '@/components/general/form/FormForTreecluster'
+import { useTreeClusterForm } from '@/hooks/form/useTreeClusterForm'
+import createToast from '@/hooks/createToast'
+import { useMaplibreMap } from '@/components/map-gl/MapContext'
+import { isMapAlive } from '@/components/map-gl/mapReady'
+import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
+import useSelectableTreeLayer from '@/components/map-gl/layers/useSelectableTreeLayer'
+
+export const Route = createFileRoute('/_protected/map/treecluster/edit/$treeclusterId/')({
+  component: EditClusterOnMap,
+  loader: ({ context: { queryClient }, params: { treeclusterId } }) =>
+    queryClient.prefetchQuery(treeClusterIdQuery(treeclusterId)),
+})
+
+function EditClusterOnMap() {
+  const { treeclusterId } = Route.useParams()
+  const navigate = useNavigate({ from: Route.fullPath })
+  const showToast = createToast()
+  const map = useMaplibreMap()
+  const { data: cluster } = useSuspenseQuery(treeClusterIdQuery(treeclusterId))
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
+  useEffect(() => {
+    if (!isMapAlive(map)) return
+    const trees = cluster.trees ?? []
+    if (trees.length > 0) {
+      const lngs = trees.map((t) => t.longitude)
+      const lats = trees.map((t) => t.latitude)
+      map.fitBounds(
+        [
+          [Math.min(...lngs), Math.min(...lats)],
+          [Math.max(...lngs), Math.max(...lats)],
+        ],
+        { padding: 60, maxZoom: 17 },
+      )
+    } else if (cluster.longitude !== 0 || cluster.latitude !== 0) {
+      map.flyTo({ center: [cluster.longitude, cluster.latitude], zoom: 17 })
+    }
+    // Frame the group once when the panel opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map])
+
+  const initForm: DefaultValues<TreeclusterForm> = {
+    name: cluster.name,
+    address: cluster.address,
+    description: cluster.description,
+    soilCondition: cluster.soilCondition,
+    treeIds: cluster.trees?.map((tree: TreeResponse) => tree.id) ?? [],
+  }
+
+  const { mutate, isError, error, form, saveDraft } = useTreeClusterForm('update', {
+    clusterId: treeclusterId,
+    initForm,
+    disableNavigationBlock: true,
+  })
+  const treeIds = useWatch({ control: form.control, name: 'treeIds' }) ?? []
+
+  const toggleTree = useCallback(
+    (id: string) => {
+      const current = form.getValues('treeIds') ?? []
+      const next = current.includes(id) ? current.filter((x) => x !== id) : [...current, id]
+      form.setValue('treeIds', next, { shouldValidate: true, shouldDirty: true })
+    },
+    [form],
+  )
+
+  useClusterBoundaryLayer({ interactive: false })
+  useSelectableTreeLayer({ selectedIds: treeIds, onToggle: toggleTree })
+
+  const onSubmit: SubmitHandler<TreeclusterForm> = (data) => {
+    mutate({ ...data, treeIds: data.treeIds ?? [] })
+  }
+
+  const handleCancel = () => {
+    navigate({ to: '/map', search: (prev) => prev }).catch((error) =>
+      console.error('Navigation failed:', error),
+    )
+  }
+
+  const handleDelete = () => {
+    clusterApi
+      .deleteCluster({ clusterId: treeclusterId })
+      .then(() => navigate({ to: '/treecluster', search: { page: 1 } }))
+      .then(() => showToast('Die Bewässerungsgruppe wurde gelöscht.'))
+      .catch((error) => {
+        console.error('Delete failed:', error)
+        showToast('Die Bewässerungsgruppe konnte nicht gelöscht werden.', 'error')
+      })
+  }
+
+  return (
+    <div className="absolute top-4 right-4 z-[1030] flex max-h-[calc(100%-2rem)] w-[30rem] max-w-[calc(100%-2rem)] flex-col rounded-xl bg-white p-5 font-nunito-sans shadow-xl">
+      <div className="mb-4 flex shrink-0 items-center justify-between gap-4">
+        <h2 className="font-lato text-lg font-semibold">Bewässerungsgruppe bearbeiten</h2>
+        <Button variant="ghost" size="icon" aria-label="Abbrechen" onClick={handleCancel}>
+          <X />
+        </Button>
+      </div>
+      <p className="mb-5 shrink-0 text-sm text-dark-600">
+        Klicke Bäume auf der Karte an, um sie der Gruppe hinzuzufügen oder zu entfernen.
+      </p>
+      <FormProvider {...form}>
+        <FormForTreecluster
+          displayError={isError}
+          errorMessage={error?.message}
+          onSubmit={onSubmit}
+          onBlur={saveDraft}
+          fullWidth
+          emptyHint="Klicke einen Baum auf der Karte an, um ihn zur Liste hinzuzufügen."
+        />
+      </FormProvider>
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={() => setConfirmDelete(true)}
+        className="mt-3 shrink-0 self-start text-red hover:text-red"
+      >
+        <Trash2 className="size-4" />
+        Gruppe löschen
+      </Button>
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bewässerungsgruppe löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchtest du die Bewässerungsgruppe wirklich löschen? Die zugehörigen Bäume bleiben
+              erhalten.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              Abbrechen
+              <X />
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>
+              Löschen
+              <MoveRight className="icon-arrow-animate" />
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+}

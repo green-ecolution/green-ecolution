@@ -36,6 +36,7 @@ const MapButtons = () => {
             to="/map/tree/new"
             preload="intent"
             search={(prev) => prev}
+            onClick={() => setIsModalOpen(false)}
             className="group flex items-center gap-x-2 !text-green-dark font-medium text-base mb-4"
           >
             Neuen Baum manuell hinzufügen
