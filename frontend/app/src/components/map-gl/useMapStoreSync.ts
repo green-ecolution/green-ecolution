@@ -24,9 +24,17 @@ const useMapStoreSync = () => {
       if (timer.current) clearTimeout(timer.current)
       timer.current = setTimeout(() => {
         const center = map.getCenter()
+        // The /map route validates `zoom` as an integer; MapLibre's zoom is
+        // fractional, so round it or the param fails validation and resets to
+        // mapMinZoom — which would clear the individual-tree layer.
         navigate({
           to: '.',
-          search: (prev) => ({ ...prev, lat: center.lat, lng: center.lng, zoom: map.getZoom() }),
+          search: (prev) => ({
+            ...prev,
+            lat: center.lat,
+            lng: center.lng,
+            zoom: Math.round(map.getZoom()),
+          }),
           replace: true,
         }).catch((error) => console.error('Navigation failed:', error))
       }, URL_SYNC_DEBOUNCE_MS)

@@ -19,6 +19,7 @@ import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import { treeClusterQuery, vehicleIdQuery } from '@/api/queries'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import SelectEntities from '@/components/general/form/types/SelectEntities'
+import MapPanel from '@/components/map-gl/MapPanel'
 import useSelectableClusterLayer from '@/components/map-gl/layers/useSelectableClusterLayer'
 
 const mapSelectClusterSchema = z.object({
@@ -158,18 +159,7 @@ function SelectCluster() {
 
   return (
     <>
-      <div className="absolute top-4 right-4 z-[1030] flex max-h-[calc(100%-2rem)] w-[30rem] max-w-[calc(100%-2rem)] flex-col rounded-xl bg-white p-5 font-nunito-sans shadow-xl">
-        <div className="mb-4 flex shrink-0 items-center justify-between gap-4">
-          <h2 className="font-lato text-lg font-semibold">Bewässerungsgruppen auswählen</h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Abbrechen"
-            onClick={() => void handleNavigateBack()}
-          >
-            <X />
-          </Button>
-        </div>
+      <MapPanel title="Bewässerungsgruppen auswählen" onClose={() => void handleNavigateBack()}>
         <p className="mb-5 shrink-0 text-sm text-dark-600">
           Klicke die Gruppen auf der Karte an, die in diesen Bewässerungsplan aufgenommen werden
           sollen.
@@ -200,7 +190,7 @@ function SelectCluster() {
           Übernehmen
           <MoveRight className="icon-arrow-animate" />
         </Button>
-      </div>
+      </MapPanel>
 
       <AlertDialog open={status === 'blocked'} onOpenChange={(open) => !open && reset?.()}>
         <AlertDialogContent>

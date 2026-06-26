@@ -62,6 +62,17 @@ const MapPreview = ({
     if (bounds) map.fitBounds(bounds, FIT_OPTIONS)
   }, [map, bounds])
 
+  // Only react to an actual center change, never on first run: the initial center
+  // is set at construction and children may frame the map imperatively (fitBounds).
+  const appliedCenterRef = useRef(center)
+  useEffect(() => {
+    if (!map || bounds || !center) return
+    const prev = appliedCenterRef.current
+    if (prev?.[0] === center[0] && prev?.[1] === center[1]) return
+    appliedCenterRef.current = center
+    map.setCenter(center)
+  }, [map, bounds, center])
+
   return (
     <div
       role={interactive ? undefined : 'img'}

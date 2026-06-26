@@ -1,12 +1,12 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback } from 'react'
 import { FormProvider, useWatch, type DefaultValues, type SubmitHandler } from 'react-hook-form'
-import { Button } from '@green-ecolution/ui'
-import { X } from 'lucide-react'
 import { SoilCondition } from '@/api/backendApi'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
 import FormForTreecluster from '@/components/general/form/FormForTreecluster'
+import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import { useTreeClusterForm } from '@/hooks/form/useTreeClusterForm'
+import MapPanel from '@/components/map-gl/MapPanel'
 import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
 import useSelectableTreeLayer from '@/components/map-gl/layers/useSelectableTreeLayer'
 
@@ -21,10 +21,12 @@ const defaultForm: DefaultValues<TreeclusterForm> = {
 
 function NewClusterOnMap() {
   const navigate = useNavigate({ from: Route.fullPath })
-  const { mutate, isError, error, form, saveDraft } = useTreeClusterForm('create', {
-    initForm: defaultForm,
-    disableNavigationBlock: true,
-  })
+  const { mutate, isError, error, form, navigationBlocker, saveDraft } = useTreeClusterForm(
+    'create',
+    {
+      initForm: defaultForm,
+    },
+  )
   const treeIds = useWatch({ control: form.control, name: 'treeIds' }) ?? []
 
   const toggleTree = useCallback(
@@ -50,26 +52,24 @@ function NewClusterOnMap() {
   }
 
   return (
-    <div className="absolute top-4 right-4 z-[1030] flex max-h-[calc(100%-2rem)] w-[30rem] max-w-[calc(100%-2rem)] flex-col rounded-xl bg-white p-5 font-nunito-sans shadow-xl">
-      <div className="mb-4 flex shrink-0 items-center justify-between gap-4">
-        <h2 className="font-lato text-lg font-semibold">Neue Bewässerungsgruppe</h2>
-        <Button variant="ghost" size="icon" aria-label="Abbrechen" onClick={handleCancel}>
-          <X />
-        </Button>
-      </div>
-      <p className="mb-5 shrink-0 text-sm text-dark-600">
-        Klicke Bäume auf der Karte an, um sie der Gruppe hinzuzufügen oder zu entfernen.
-      </p>
-      <FormProvider {...form}>
-        <FormForTreecluster
-          displayError={isError}
-          errorMessage={error?.message}
-          onSubmit={onSubmit}
-          onBlur={saveDraft}
-          fullWidth
-          emptyHint="Klicke einen Baum auf der Karte an, um ihn zur Liste hinzuzufügen."
-        />
-      </FormProvider>
-    </div>
+    <>
+      <MapPanel title="Neue Bewässerungsgruppe" onClose={handleCancel}>
+        <p className="mb-5 shrink-0 text-sm text-dark-600">
+          Klicke Bäume auf der Karte an, um sie der Gruppe hinzuzufügen oder zu entfernen.
+        </p>
+        <FormProvider {...form}>
+          <FormForTreecluster
+            displayError={isError}
+            errorMessage={error?.message}
+            onSubmit={onSubmit}
+            onBlur={saveDraft}
+            fullWidth
+            emptyHint="Klicke einen Baum auf der Karte an, um ihn zur Liste hinzuzufügen."
+          />
+        </FormProvider>
+      </MapPanel>
+
+      <UnsavedChangesDialog blocker={navigationBlocker} />
+    </>
   )
 }

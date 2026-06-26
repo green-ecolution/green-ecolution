@@ -2,14 +2,15 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { FormProvider } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { Button } from '@green-ecolution/ui'
-import { MapPin, X } from 'lucide-react'
+import { MapPin } from 'lucide-react'
 import { sensorQuery, treeClusterQuery } from '@/api/queries'
 import { useTreeForm } from '@/hooks/form/useTreeForm'
 import { TreeForm } from '@/schema/treeSchema'
 import FormForTree from '@/components/general/form/FormForTree'
+import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import { useMapClick, type MapClickLngLat } from '@/components/map-gl/useMapClick'
 import DraggableMarker from '@/components/map-gl/DraggableMarker'
+import MapPanel from '@/components/map-gl/MapPanel'
 import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
 import useClusterMarkerLayer from '@/components/map-gl/layers/useClusterMarkerLayer'
 import useTreeLayers from '@/components/map-gl/layers/useTreeLayers'
@@ -42,11 +43,12 @@ function NewTree() {
   useClusterMarkerLayer({ interactive: false })
   useTreeLayers({ interactive: false })
 
-  useMapClick(setPos)
+  // Only the first map click sets the location; afterwards the tree is moved by
+  // dragging its marker, so a stray background click must not relocate it.
+  useMapClick((p) => setPos((prev) => prev ?? p))
 
-  const { mutate, isError, error, form, saveDraft } = useTreeForm('create', {
+  const { mutate, isError, error, form, navigationBlocker, saveDraft } = useTreeForm('create', {
     initForm: defaultForm(),
-    disableNavigationBlock: true,
   })
 
   useEffect(() => {
@@ -58,8 +60,8 @@ function NewTree() {
   const onSubmit = (data: TreeForm) => {
     mutate({
       ...data,
-      sensorId: data.sensorId && data.sensorId !== '-1' ? data.sensorId : undefined,
-      treeClusterId: data.treeClusterId && data.treeClusterId !== '' ? data.treeClusterId : null,
+      sensorId: data.sensorId ?? undefined,
+      treeClusterId: data.treeClusterId ?? null,
     })
   }
 
@@ -71,14 +73,7 @@ function NewTree() {
 
   return (
     <>
-      <div className="absolute z-[1030] top-4 right-4 w-[30rem] max-w-[calc(100%-2rem)] max-h-[calc(100%-2rem)] overflow-y-auto rounded-xl bg-white shadow-xl p-5 font-nunito-sans">
-        <div className="mb-4 flex items-center justify-between gap-4">
-          <h2 className="font-lato text-lg font-semibold">Neuen Baum erfassen</h2>
-          <Button variant="ghost" size="icon" aria-label="Abbrechen" onClick={handleCancel}>
-            <X />
-          </Button>
-        </div>
-
+      <MapPanel title="Neuen Baum erfassen" onClose={handleCancel} className="overflow-y-auto">
         {pos ? (
           <>
             <div className="mb-5 flex items-center gap-3 rounded-lg bg-dark-50 px-3 py-2.5">
@@ -112,9 +107,11 @@ function NewTree() {
             danach noch verschieben.
           </p>
         )}
-      </div>
+      </MapPanel>
 
       {pos && <DraggableMarker lng={pos.lng} lat={pos.lat} onDragEnd={setPos} />}
+
+      <UnsavedChangesDialog blocker={navigationBlocker} />
     </>
   )
 }

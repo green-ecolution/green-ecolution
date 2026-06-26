@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Marker } from 'maplibre-gl'
 import { useMaplibreMap } from './MapContext'
 
@@ -15,6 +15,7 @@ const SENSOR_ICON_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="n
 // sensor accents used elsewhere in the app.
 const SensorMarker = ({ lng, lat }: SensorMarkerProps) => {
   const map = useMaplibreMap()
+  const markerRef = useRef<Marker | null>(null)
 
   useEffect(() => {
     const el = document.createElement('div')
@@ -22,10 +23,18 @@ const SensorMarker = ({ lng, lat }: SensorMarkerProps) => {
       'grid size-8 place-items-center rounded-full border-2 border-white bg-green-dark text-white shadow-[0_2px_6px_rgba(0,0,0,0.35)]'
     el.innerHTML = SENSOR_ICON_SVG
     const marker = new Marker({ element: el }).setLngLat([lng, lat]).addTo(map)
+    markerRef.current = marker
     return () => {
       marker.remove()
+      markerRef.current = null
     }
-  }, [map, lng, lat])
+    // Create the marker once; position updates happen in the effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map])
+
+  useEffect(() => {
+    markerRef.current?.setLngLat([lng, lat])
+  }, [lng, lat])
 
   return null
 }

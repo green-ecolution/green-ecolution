@@ -16,6 +16,7 @@ import {
 } from '../mapStyle'
 import useViewportBBox from '../hooks/useViewportBBox'
 import { isMapAlive } from '../mapReady'
+import { usePointerCursor } from './usePointerCursor'
 
 export interface UseSelectableTreeLayerOptions {
   selectedIds: string[]
@@ -127,25 +128,17 @@ const useSelectableTreeLayer = ({ selectedIds, onToggle }: UseSelectableTreeLaye
     map.getSource<GeoJSONSource>(SOURCES.selectTrees)?.setData(toFC(data?.data ?? [], selectedSet))
   }, [map, data, selectedSet])
 
+  usePointerCursor(LAYERS.selectTreePoints)
+
   useEffect(() => {
     const onClick = (e: MapLayerMouseEvent) => {
       const feature = e.features?.[0]
       if (!feature) return
       onToggle(feature.properties?.id as string)
     }
-    const enter = () => {
-      map.getCanvas().style.cursor = 'pointer'
-    }
-    const leave = () => {
-      map.getCanvas().style.cursor = ''
-    }
     map.on('click', LAYERS.selectTreePoints, onClick)
-    map.on('mouseenter', LAYERS.selectTreePoints, enter)
-    map.on('mouseleave', LAYERS.selectTreePoints, leave)
     return () => {
       map.off('click', LAYERS.selectTreePoints, onClick)
-      map.off('mouseenter', LAYERS.selectTreePoints, enter)
-      map.off('mouseleave', LAYERS.selectTreePoints, leave)
     }
   }, [map, onToggle])
 }

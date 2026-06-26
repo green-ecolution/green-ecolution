@@ -6,6 +6,7 @@ import { clusterMarkersQuery } from '@/api/queries'
 import { useMaplibreMap } from '../MapContext'
 import { LAYERS, SOURCES, STATUS_COLOR_EXPRESSION } from '../mapStyle'
 import { isMapAlive } from '../mapReady'
+import { usePointerCursor } from './usePointerCursor'
 
 export interface UseSelectableClusterLayerOptions {
   selectedIds: string[]
@@ -100,6 +101,8 @@ const useSelectableClusterLayer = ({
     map.getSource<GeoJSONSource>(SOURCES.selectClusters)?.setData(fc)
   }, [map, data, selectedSet, disabledSet])
 
+  usePointerCursor(LAYERS.selectClusterPoints)
+
   useEffect(() => {
     const onClick = (e: MapLayerMouseEvent) => {
       const feature = e.features?.[0]
@@ -107,19 +110,9 @@ const useSelectableClusterLayer = ({
       if (feature.properties?.disabled) return
       onToggle(feature.properties?.id as string)
     }
-    const enter = () => {
-      map.getCanvas().style.cursor = 'pointer'
-    }
-    const leave = () => {
-      map.getCanvas().style.cursor = ''
-    }
     map.on('click', LAYERS.selectClusterPoints, onClick)
-    map.on('mouseenter', LAYERS.selectClusterPoints, enter)
-    map.on('mouseleave', LAYERS.selectClusterPoints, leave)
     return () => {
       map.off('click', LAYERS.selectClusterPoints, onClick)
-      map.off('mouseenter', LAYERS.selectClusterPoints, enter)
-      map.off('mouseleave', LAYERS.selectClusterPoints, leave)
     }
   }, [map, onToggle])
 }

@@ -7,6 +7,7 @@ import { clusterBoundariesQuery } from '@/api/queries'
 import { useMaplibreMap } from '../MapContext'
 import { LAYERS, SOURCES, STATUS_COLOR_EXPRESSION } from '../mapStyle'
 import { isMapAlive } from '../mapReady'
+import { usePointerCursor } from './usePointerCursor'
 
 export interface UseClusterBoundaryLayerOptions {
   onBoundaryClick?: (clusterId: string) => void
@@ -102,6 +103,8 @@ const useClusterBoundaryLayer = ({
     ])
   }, [map, selectedClusterId])
 
+  usePointerCursor(LAYERS.boundaryFill, interactive)
+
   useEffect(() => {
     if (!interactive) return
     const onClick = (e: MapLayerMouseEvent) => {
@@ -109,19 +112,9 @@ const useClusterBoundaryLayer = ({
       if (!feature) return
       onBoundaryClick?.(feature.properties?.id as string)
     }
-    const enter = () => {
-      map.getCanvas().style.cursor = 'pointer'
-    }
-    const leave = () => {
-      map.getCanvas().style.cursor = ''
-    }
     map.on('click', LAYERS.boundaryFill, onClick)
-    map.on('mouseenter', LAYERS.boundaryFill, enter)
-    map.on('mouseleave', LAYERS.boundaryFill, leave)
     return () => {
       map.off('click', LAYERS.boundaryFill, onClick)
-      map.off('mouseenter', LAYERS.boundaryFill, enter)
-      map.off('mouseleave', LAYERS.boundaryFill, leave)
     }
   }, [map, onBoundaryClick, interactive])
 }

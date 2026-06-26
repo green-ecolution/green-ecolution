@@ -2,13 +2,14 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useState } from 'react'
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { Button } from '@green-ecolution/ui'
-import { MoveRight, X } from 'lucide-react'
+import { MoveRight } from 'lucide-react'
 import { z } from 'zod'
 import { treeApi, type TreeUpdateRequest } from '@/api/backendApi'
 import { sensorIdQuery, treeIdQuery } from '@/api/queries'
 import SelectedCard from '@/components/general/cards/SelectedCard'
 import createToast from '@/hooks/createToast'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
+import MapPanel from '@/components/map-gl/MapPanel'
 import SensorMarker from '@/components/map-gl/SensorMarker'
 import useSelectableTreeLayer from '@/components/map-gl/layers/useSelectableTreeLayer'
 import { isMapAlive } from '@/components/map-gl/mapReady'
@@ -93,18 +94,11 @@ function LinkTreeToSensor() {
   return (
     <>
       {lng != null && lat != null && <SensorMarker lng={lng} lat={lat} />}
-      <div className="absolute top-4 right-4 z-[1030] flex max-h-[calc(100%-2rem)] w-[26rem] max-w-[calc(100%-2rem)] flex-col rounded-xl bg-white p-5 font-nunito-sans shadow-xl">
-        <div className="mb-4 flex shrink-0 items-center justify-between gap-4">
-          <h2 className="font-lato text-lg font-semibold">Baum verknüpfen</h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Abbrechen"
-            onClick={() => void handleNavigateBack()}
-          >
-            <X />
-          </Button>
-        </div>
+      <MapPanel
+        title="Baum verknüpfen"
+        onClose={() => void handleNavigateBack()}
+        className="w-[26rem]"
+      >
         <p className="mb-5 shrink-0 text-sm text-dark-600">
           Klicke den Baum auf der Karte an, mit dem dieser Sensor verknüpft werden soll.
         </p>
@@ -136,7 +130,7 @@ function LinkTreeToSensor() {
           Verknüpfen
           <MoveRight className="icon-arrow-animate" />
         </Button>
-      </div>
+      </MapPanel>
     </>
   )
 }

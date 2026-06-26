@@ -18,9 +18,12 @@ import type { TreeResponse } from '@green-ecolution/backend-client'
 import { clusterApi } from '@/api/backendApi'
 import { treeClusterIdQuery } from '@/api/queries'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
+import EntityNotFound from '@/components/layout/EntityNotFound'
 import FormForTreecluster from '@/components/general/form/FormForTreecluster'
+import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import { useTreeClusterForm } from '@/hooks/form/useTreeClusterForm'
 import createToast from '@/hooks/createToast'
+import MapPanel from '@/components/map-gl/MapPanel'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
 import { isMapAlive } from '@/components/map-gl/mapReady'
 import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
@@ -30,6 +33,13 @@ export const Route = createFileRoute('/_protected/map/treecluster/edit/$treeclus
   component: EditClusterOnMap,
   loader: ({ context: { queryClient }, params: { treeclusterId } }) =>
     queryClient.prefetchQuery(treeClusterIdQuery(treeclusterId)),
+  errorComponent: () => (
+    <EntityNotFound
+      entityName="Bewässerungsgruppe"
+      backTo="/treecluster"
+      backLabel="Zur Gruppenliste"
+    />
+  ),
 })
 
 function EditClusterOnMap() {
@@ -68,11 +78,13 @@ function EditClusterOnMap() {
     treeIds: cluster.trees?.map((tree: TreeResponse) => tree.id) ?? [],
   }
 
-  const { mutate, isError, error, form, saveDraft } = useTreeClusterForm('update', {
-    clusterId: treeclusterId,
-    initForm,
-    disableNavigationBlock: true,
-  })
+  const { mutate, isError, error, form, navigationBlocker, saveDraft } = useTreeClusterForm(
+    'update',
+    {
+      clusterId: treeclusterId,
+      initForm,
+    },
+  )
   const treeIds = useWatch({ control: form.control, name: 'treeIds' }) ?? []
 
   const toggleTree = useCallback(
@@ -98,6 +110,7 @@ function EditClusterOnMap() {
   }
 
   const handleDelete = () => {
+    navigationBlocker.allowNavigation()
     clusterApi
       .deleteCluster({ clusterId: treeclusterId })
       .then(() => navigate({ to: '/treecluster', search: { page: 1 } }))
@@ -109,35 +122,31 @@ function EditClusterOnMap() {
   }
 
   return (
-    <div className="absolute top-4 right-4 z-[1030] flex max-h-[calc(100%-2rem)] w-[30rem] max-w-[calc(100%-2rem)] flex-col rounded-xl bg-white p-5 font-nunito-sans shadow-xl">
-      <div className="mb-4 flex shrink-0 items-center justify-between gap-4">
-        <h2 className="font-lato text-lg font-semibold">Bewässerungsgruppe bearbeiten</h2>
-        <Button variant="ghost" size="icon" aria-label="Abbrechen" onClick={handleCancel}>
-          <X />
+    <>
+      <MapPanel title="Bewässerungsgruppe bearbeiten" onClose={handleCancel}>
+        <p className="mb-5 shrink-0 text-sm text-dark-600">
+          Klicke Bäume auf der Karte an, um sie der Gruppe hinzuzufügen oder zu entfernen.
+        </p>
+        <FormProvider {...form}>
+          <FormForTreecluster
+            displayError={isError}
+            errorMessage={error?.message}
+            onSubmit={onSubmit}
+            onBlur={saveDraft}
+            fullWidth
+            emptyHint="Klicke einen Baum auf der Karte an, um ihn zur Liste hinzuzufügen."
+          />
+        </FormProvider>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => setConfirmDelete(true)}
+          className="mt-3 shrink-0 self-start text-red hover:text-red"
+        >
+          <Trash2 className="size-4" />
+          Gruppe löschen
         </Button>
-      </div>
-      <p className="mb-5 shrink-0 text-sm text-dark-600">
-        Klicke Bäume auf der Karte an, um sie der Gruppe hinzuzufügen oder zu entfernen.
-      </p>
-      <FormProvider {...form}>
-        <FormForTreecluster
-          displayError={isError}
-          errorMessage={error?.message}
-          onSubmit={onSubmit}
-          onBlur={saveDraft}
-          fullWidth
-          emptyHint="Klicke einen Baum auf der Karte an, um ihn zur Liste hinzuzufügen."
-        />
-      </FormProvider>
-      <Button
-        type="button"
-        variant="ghost"
-        onClick={() => setConfirmDelete(true)}
-        className="mt-3 shrink-0 self-start text-red hover:text-red"
-      >
-        <Trash2 className="size-4" />
-        Gruppe löschen
-      </Button>
+      </MapPanel>
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
@@ -160,6 +169,8 @@ function EditClusterOnMap() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+
+      <UnsavedChangesDialog blocker={navigationBlocker} />
+    </>
   )
 }

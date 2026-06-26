@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { Marker, type GeoJSONSource, type LngLatBoundsLike } from 'maplibre-gl'
+import { Marker, type LngLatBoundsLike } from 'maplibre-gl'
 import { cn } from '@green-ecolution/ui'
 import { WateringStatus } from '@green-ecolution/backend-client'
 import type { TreeWithDistance } from '@/api/backendApi'
@@ -7,8 +7,7 @@ import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringS
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
 import MapPreview from '@/components/map-gl/MapPreview'
 import SensorMarker from '@/components/map-gl/SensorMarker'
-import { metersCircle } from '@/components/map-gl/metersCircle'
-import { isMapAlive } from '@/components/map-gl/mapReady'
+import { useAccuracyRing } from '@/components/map-gl/hooks/useAccuracyRing'
 
 interface NearestTreeMapPreviewProps {
   sensorLat: number
@@ -19,10 +18,6 @@ interface NearestTreeMapPreviewProps {
   onSelectTree?: (treeId: string) => void
   className?: string
 }
-
-const ACCURACY_SOURCE = 'gec-nearest-accuracy'
-const ACCURACY_FILL = 'gec-nearest-accuracy-fill'
-const ACCURACY_LINE = 'gec-nearest-accuracy-line'
 
 const buildTreeElement = (colorHex: string, isSelected: boolean, isAssigned: boolean) => {
   const el = document.createElement('div')
@@ -52,42 +47,7 @@ const NearestTreeLayers = ({
     onSelectRef.current = onSelectTree
   })
 
-  useEffect(() => {
-    if (!map.getSource(ACCURACY_SOURCE)) {
-      map.addSource(ACCURACY_SOURCE, {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] },
-      })
-      map.addLayer({
-        id: ACCURACY_FILL,
-        type: 'fill',
-        source: ACCURACY_SOURCE,
-        paint: { 'fill-color': '#486725', 'fill-opacity': 0.15 },
-      })
-      map.addLayer({
-        id: ACCURACY_LINE,
-        type: 'line',
-        source: ACCURACY_SOURCE,
-        paint: { 'line-color': '#486725', 'line-width': 1.5 },
-      })
-    }
-    return () => {
-      if (!isMapAlive(map)) return
-      for (const id of [ACCURACY_LINE, ACCURACY_FILL]) {
-        if (map.getLayer(id)) map.removeLayer(id)
-      }
-      if (map.getSource(ACCURACY_SOURCE)) map.removeSource(ACCURACY_SOURCE)
-    }
-  }, [map])
-
-  useEffect(() => {
-    if (!isMapAlive(map)) return
-    const features =
-      sensorAccuracy && sensorAccuracy > 0
-        ? [metersCircle(sensorLng, sensorLat, sensorAccuracy)]
-        : []
-    map.getSource<GeoJSONSource>(ACCURACY_SOURCE)?.setData({ type: 'FeatureCollection', features })
-  }, [map, sensorLng, sensorLat, sensorAccuracy])
+  useAccuracyRing(map, 'gec-nearest', sensorLng, sensorLat, sensorAccuracy)
 
   useEffect(() => {
     for (const m of markersRef.current) m.remove()

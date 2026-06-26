@@ -16,6 +16,7 @@ import {
 } from '../mapStyle'
 import useViewportBBox from '../hooks/useViewportBBox'
 import { isMapAlive } from '../mapReady'
+import { usePointerCursor } from './usePointerCursor'
 
 const treesToFC = (trees: TreeMarkerResponse[]): FeatureCollection<Point> => ({
   type: 'FeatureCollection',
@@ -113,6 +114,8 @@ const useTreeLayers = ({
     map.getSource<GeoJSONSource>(SOURCES.treePoints)?.setData(treesToFC(data?.data ?? []))
   }, [map, data])
 
+  usePointerCursor(LAYERS.treePoints, interactive)
+
   useEffect(() => {
     if (!interactive) return
     const onClick = (e: MapLayerMouseEvent) => {
@@ -120,19 +123,9 @@ const useTreeLayers = ({
       if (!feature) return
       onTreeClick?.(feature.properties?.id as string)
     }
-    const enter = () => {
-      map.getCanvas().style.cursor = 'pointer'
-    }
-    const leave = () => {
-      map.getCanvas().style.cursor = ''
-    }
     map.on('click', LAYERS.treePoints, onClick)
-    map.on('mouseenter', LAYERS.treePoints, enter)
-    map.on('mouseleave', LAYERS.treePoints, leave)
     return () => {
       map.off('click', LAYERS.treePoints, onClick)
-      map.off('mouseenter', LAYERS.treePoints, enter)
-      map.off('mouseleave', LAYERS.treePoints, leave)
     }
   }, [map, onTreeClick, interactive])
 }

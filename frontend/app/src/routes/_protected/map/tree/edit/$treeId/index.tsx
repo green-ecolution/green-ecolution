@@ -19,8 +19,11 @@ import { treeApi } from '@/api/backendApi'
 import { TreeForm } from '@/schema/treeSchema'
 import { useTreeForm } from '@/hooks/form/useTreeForm'
 import createToast from '@/hooks/createToast'
+import EntityNotFound from '@/components/layout/EntityNotFound'
 import FormForTree from '@/components/general/form/FormForTree'
+import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import DraggableMarker, { type DraggableMarkerLngLat } from '@/components/map-gl/DraggableMarker'
+import MapPanel from '@/components/map-gl/MapPanel'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
 import { isMapAlive } from '@/components/map-gl/mapReady'
 import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
@@ -40,6 +43,9 @@ export const Route = createFileRoute('/_protected/map/tree/edit/$treeId/')({
       .prefetchQuery(treeClusterQuery())
       .catch((error) => console.error('Prefetching "treeClusterQuery" failed:', error))
   },
+  errorComponent: () => (
+    <EntityNotFound entityName="Baum" backTo="/trees" backLabel="Zur Baumliste" />
+  ),
 })
 
 function EditTreeOnMap() {
@@ -67,10 +73,9 @@ function EditTreeOnMap() {
     provider: tree.provider ?? undefined,
   }
 
-  const { mutate, isError, error, form, saveDraft } = useTreeForm('update', {
+  const { mutate, isError, error, form, navigationBlocker, saveDraft } = useTreeForm('update', {
     treeId,
     initForm,
-    disableNavigationBlock: true,
   })
 
   useClusterBoundaryLayer({ interactive: false })
@@ -108,9 +113,10 @@ function EditTreeOnMap() {
   }
 
   const handleDelete = () => {
+    navigationBlocker.allowNavigation()
     treeApi
       .deleteTree({ treeId })
-      .then(() => navigate({ to: '/trees', search: { page: 1 } }))
+      .then(() => navigate({ to: '/map', search: (prev) => prev }))
       .then(() => showToast('Der Baum wurde gelöscht.'))
       .catch((error) => {
         console.error('Delete failed:', error)
@@ -122,13 +128,7 @@ function EditTreeOnMap() {
     <>
       {!isProvider && <DraggableMarker lng={pos.lng} lat={pos.lat} onDragEnd={handleDragEnd} />}
 
-      <div className="absolute top-4 right-4 z-[1030] flex max-h-[calc(100%-2rem)] w-[30rem] max-w-[calc(100%-2rem)] flex-col overflow-y-auto rounded-xl bg-white p-5 font-nunito-sans shadow-xl">
-        <div className="mb-4 flex shrink-0 items-center justify-between gap-4">
-          <h2 className="font-lato text-lg font-semibold">Baum bearbeiten</h2>
-          <Button variant="ghost" size="icon" aria-label="Abbrechen" onClick={handleCancel}>
-            <X />
-          </Button>
-        </div>
+      <MapPanel title="Baum bearbeiten" onClose={handleCancel} className="overflow-y-auto">
         {!isProvider && (
           <p className="mb-5 shrink-0 text-sm text-dark-600">
             Ziehe den Marker auf der Karte, um den Standort des Baums anzupassen.
@@ -158,7 +158,7 @@ function EditTreeOnMap() {
             Baum löschen
           </Button>
         )}
-      </div>
+      </MapPanel>
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
@@ -181,6 +181,8 @@ function EditTreeOnMap() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <UnsavedChangesDialog blocker={navigationBlocker} />
     </>
   )
 }

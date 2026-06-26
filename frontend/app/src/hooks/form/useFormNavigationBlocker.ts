@@ -37,7 +37,7 @@ export const useFormNavigationBlocker = ({
 
       // Same route, only search params changed (e.g. the map syncing lat/lng/zoom
       // into the URL) is not "leaving the page".
-      if (next.pathname === current.pathname) {
+      if (next.pathname === current?.pathname) {
         return false
       }
 

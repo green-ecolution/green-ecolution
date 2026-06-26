@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react'
+import { Suspense, useCallback, useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Loading } from '@green-ecolution/ui'
@@ -20,15 +20,19 @@ const RoutePreviewLayers = ({ clusterIds }: { clusterIds: string[] }) => {
   const navigate = useNavigate()
   const { data: markers } = useSuspenseQuery(clusterMarkersQuery())
 
-  const navToCluster = (id: string) =>
-    navigate({ to: '/treecluster/$treeclusterId', params: { treeclusterId: id } }).catch((error) =>
-      console.error('Navigation failed:', error),
-    )
+  const navToCluster = useCallback(
+    (id: string) =>
+      navigate({ to: '/treecluster/$treeclusterId', params: { treeclusterId: id } }).catch(
+        (error) => console.error('Navigation failed:', error),
+      ),
+    [navigate],
+  )
 
   // Route polyline rendering is restored once the backend routing service ships;
   // until then the preview only shows the plan's clusters for context.
   useClusterBoundaryLayer({ onBoundaryClick: navToCluster })
-  useClusterMarkerLayer({ onClusterClick: navToCluster })
+  // flyToOnClick off: the click navigates away, so animating the unmounting map is wasted.
+  useClusterMarkerLayer({ onClusterClick: navToCluster, flyToOnClick: false })
 
   useEffect(() => {
     if (!isMapAlive(map)) return

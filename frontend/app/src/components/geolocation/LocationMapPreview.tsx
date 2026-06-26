@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react'
-import { Marker, type GeoJSONSource } from 'maplibre-gl'
+import { Marker } from 'maplibre-gl'
 import { cn } from '@green-ecolution/ui'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
 import MapPreview from '@/components/map-gl/MapPreview'
-import { metersCircle } from '@/components/map-gl/metersCircle'
+import { useAccuracyRing } from '@/components/map-gl/hooks/useAccuracyRing'
 import { isMapAlive } from '@/components/map-gl/mapReady'
 
 interface LocationMapPreviewProps {
@@ -23,10 +23,6 @@ interface LocationMapPreviewProps {
   follow?: boolean
 }
 
-const ACCURACY_SOURCE = 'gec-preview-accuracy'
-const ACCURACY_FILL = 'gec-preview-accuracy-fill'
-const ACCURACY_LINE = 'gec-preview-accuracy-line'
-
 const PositionLayers = ({
   latitude,
   longitude,
@@ -39,32 +35,9 @@ const PositionLayers = ({
   useEffect(() => {
     const marker = new Marker({ color: '#486725' }).setLngLat([longitude, latitude]).addTo(map)
     markerRef.current = marker
-    if (!map.getSource(ACCURACY_SOURCE)) {
-      map.addSource(ACCURACY_SOURCE, {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] },
-      })
-      map.addLayer({
-        id: ACCURACY_FILL,
-        type: 'fill',
-        source: ACCURACY_SOURCE,
-        paint: { 'fill-color': '#486725', 'fill-opacity': 0.15 },
-      })
-      map.addLayer({
-        id: ACCURACY_LINE,
-        type: 'line',
-        source: ACCURACY_SOURCE,
-        paint: { 'line-color': '#486725', 'line-width': 1.5 },
-      })
-    }
     return () => {
       marker.remove()
       markerRef.current = null
-      if (!isMapAlive(map)) return
-      for (const id of [ACCURACY_LINE, ACCURACY_FILL]) {
-        if (map.getLayer(id)) map.removeLayer(id)
-      }
-      if (map.getSource(ACCURACY_SOURCE)) map.removeSource(ACCURACY_SOURCE)
     }
     // Created once; position updates happen in the effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -72,13 +45,9 @@ const PositionLayers = ({
 
   useEffect(() => {
     markerRef.current?.setLngLat([longitude, latitude])
-    if (!isMapAlive(map)) return
-    const features =
-      accuracyMeters && accuracyMeters > 0
-        ? [metersCircle(longitude, latitude, accuracyMeters)]
-        : []
-    map.getSource<GeoJSONSource>(ACCURACY_SOURCE)?.setData({ type: 'FeatureCollection', features })
-  }, [map, longitude, latitude, accuracyMeters])
+  }, [longitude, latitude])
+
+  useAccuracyRing(map, 'gec-preview', longitude, latitude, accuracyMeters)
 
   useEffect(() => {
     if (!follow || !isMapAlive(map)) return

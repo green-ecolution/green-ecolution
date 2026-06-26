@@ -7,7 +7,10 @@ vi.mock('@tanstack/react-router', () => ({
   useBlocker: vi.fn(),
 }))
 
-type ShouldBlockFn = (args: { next: { pathname: string } }) => boolean
+type ShouldBlockFn = (args: {
+  next: { pathname: string }
+  current?: { pathname: string }
+}) => boolean
 
 describe('useFormNavigationBlocker', () => {
   const mockProceed = vi.fn()
@@ -51,6 +54,21 @@ describe('useFormNavigationBlocker', () => {
 
       const shouldBlock = capturedShouldBlockFn({ next: { pathname: '/some/path' } })
       expect(shouldBlock).toBe(true)
+    })
+
+    it('does not block when only search params change on the same route', () => {
+      renderHook(() =>
+        useFormNavigationBlocker({
+          isDirty: true,
+          message: 'Test message',
+        }),
+      )
+
+      const shouldBlock = capturedShouldBlockFn({
+        next: { pathname: '/map/tree/new' },
+        current: { pathname: '/map/tree/new' },
+      })
+      expect(shouldBlock).toBe(false)
     })
 
     it('does not block when navigating to allowed path', () => {

@@ -107,7 +107,10 @@ const FormForTree = (props: FormForTreeProps) => {
           render={({ field }) => (
             <div className="flex flex-col gap-y-2">
               <Label htmlFor="sensorId">Verknüpfter Sensor</Label>
-              <Select value={field.value ?? '-1'} onValueChange={field.onChange}>
+              <Select
+                value={field.value ?? '-1'}
+                onValueChange={(val) => field.onChange(val === '-1' ? null : val)}
+              >
                 <SelectTrigger id="sensorId">
                   <SelectValue placeholder="Wählen Sie einen Sensor aus, sofern vorhanden" />
                 </SelectTrigger>

@@ -7,12 +7,14 @@ import { clusterMarkersQuery } from '@/api/queries'
 import { useMaplibreMap } from '../MapContext'
 import { LAYERS, SOURCES, STATUS_COLOR_EXPRESSION, TREE_ZOOM_THRESHOLD } from '../mapStyle'
 import { isMapAlive } from '../mapReady'
+import { usePointerCursor } from './usePointerCursor'
 
 export interface UseClusterMarkerLayerOptions {
   onClusterClick?: (clusterId: string) => void
   wateringStatuses?: WateringStatus[]
   nameFilter?: string
   interactive?: boolean
+  flyToOnClick?: boolean
 }
 
 const useClusterMarkerLayer = ({
@@ -20,6 +22,7 @@ const useClusterMarkerLayer = ({
   wateringStatuses,
   nameFilter,
   interactive = true,
+  flyToOnClick = true,
 }: UseClusterMarkerLayerOptions = {}) => {
   const map = useMaplibreMap()
   const { data } = useSuspenseQuery(clusterMarkersQuery())
@@ -93,33 +96,27 @@ const useClusterMarkerLayer = ({
     map.getSource<GeoJSONSource>(SOURCES.clusterMarkers)?.setData(fc)
   }, [map, data, wateringStatuses, nameFilter])
 
+  usePointerCursor(LAYERS.clusterMarkers, interactive)
+
   useEffect(() => {
     if (!interactive) return
     const onClick = (e: MapLayerMouseEvent) => {
       const feature = e.features?.[0]
       if (!feature) return
-      const geometry = feature.geometry as Point
-      map.flyTo({
-        center: [geometry.coordinates[0], geometry.coordinates[1]],
-        zoom: TREE_ZOOM_THRESHOLD + 1,
-      })
+      if (flyToOnClick) {
+        const geometry = feature.geometry as Point
+        map.flyTo({
+          center: [geometry.coordinates[0], geometry.coordinates[1]],
+          zoom: TREE_ZOOM_THRESHOLD + 1,
+        })
+      }
       onClusterClick?.(feature.properties?.id as string)
     }
-    const enter = () => {
-      map.getCanvas().style.cursor = 'pointer'
-    }
-    const leave = () => {
-      map.getCanvas().style.cursor = ''
-    }
     map.on('click', LAYERS.clusterMarkers, onClick)
-    map.on('mouseenter', LAYERS.clusterMarkers, enter)
-    map.on('mouseleave', LAYERS.clusterMarkers, leave)
     return () => {
       map.off('click', LAYERS.clusterMarkers, onClick)
-      map.off('mouseenter', LAYERS.clusterMarkers, enter)
-      map.off('mouseleave', LAYERS.clusterMarkers, leave)
     }
-  }, [map, onClusterClick, interactive])
+  }, [map, onClusterClick, interactive, flyToOnClick])
 }
 
 export default useClusterMarkerLayer
