@@ -1,7 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './css/site.css'
-import 'leaflet/dist/leaflet.css'
 import '@splidejs/react-splide/css'
 
 import { createRouter, RouterProvider } from '@tanstack/react-router'
