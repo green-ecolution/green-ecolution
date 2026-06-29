@@ -4,13 +4,14 @@ import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
 
 const PER_PAGE = 20
 
-export const useTreeSearch = (q: string) => {
+export const useTreeSearch = (q: string, showAll = false) => {
   const trimmed = q.trim()
-  const enabled = trimmed.length > 0
+  const enabled = showAll || trimmed.length > 0
 
   const query = useInfiniteQuery({
     queryKey: ['trees', 'search', trimmed],
-    queryFn: ({ pageParam }) => treeApi.listTrees({ page: pageParam, perPage: PER_PAGE, q: trimmed }),
+    queryFn: ({ pageParam }) =>
+      treeApi.listTrees({ page: pageParam, perPage: PER_PAGE, q: trimmed || undefined }),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       const total = lastPage.pagination?.totalRecords ?? 0

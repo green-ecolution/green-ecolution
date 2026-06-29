@@ -17,9 +17,15 @@ interface SensorTreeSearchResultsProps {
   q: string
   selectedTreeId: string | null
   onSelect: (treeId: string) => void
+  showAll?: boolean
 }
 
-const SensorTreeSearchResults = ({ q, selectedTreeId, onSelect }: SensorTreeSearchResultsProps) => {
+const SensorTreeSearchResults = ({
+  q,
+  selectedTreeId,
+  onSelect,
+  showAll = false,
+}: SensorTreeSearchResultsProps) => {
   const sentinelRef = useRef<HTMLDivElement | null>(null)
   const {
     enabled,
@@ -32,7 +38,7 @@ const SensorTreeSearchResults = ({ q, selectedTreeId, onSelect }: SensorTreeSear
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-  } = useTreeSearch(q)
+  } = useTreeSearch(q, showAll)
 
   useEffect(() => {
     const el = sentinelRef.current
@@ -78,8 +84,14 @@ const SensorTreeSearchResults = ({ q, selectedTreeId, onSelect }: SensorTreeSear
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-10 text-dark-600">
         <Search className="size-6 text-dark-400" aria-hidden />
-        <p className="text-sm">Keine Bäume gefunden für „{trimmed}".</p>
-        <p className="text-xs text-dark-500">Prüfe Schreibweise oder Baumnummer.</p>
+        {trimmed ? (
+          <>
+            <p className="text-sm">Keine Bäume gefunden für „{trimmed}".</p>
+            <p className="text-xs text-dark-500">Prüfe Schreibweise oder Baumnummer.</p>
+          </>
+        ) : (
+          <p className="text-sm">Es sind keine Bäume vorhanden.</p>
+        )}
       </div>
     )
   }
@@ -87,7 +99,7 @@ const SensorTreeSearchResults = ({ q, selectedTreeId, onSelect }: SensorTreeSear
   return (
     <div className="flex flex-col gap-2">
       <p className="text-xs text-dark-600">
-        {items.length} von {total} Treffern
+        {items.length} von {total} {trimmed ? 'Treffern' : 'Bäumen'}
       </p>
       <ul
         className="flex flex-col gap-2"

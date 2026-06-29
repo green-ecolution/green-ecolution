@@ -1,5 +1,6 @@
 import {
   Button,
+  Checkbox,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -12,6 +13,7 @@ import {
 import { useMemo, useState } from 'react'
 import type { LngLatBoundsLike } from 'maplibre-gl'
 import type { Sensor } from '@/api/backendApi'
+import { useMapStore } from '@/store/store'
 import { useTreeSearch } from '@/hooks/useTreeSearch'
 import MapPreview from '@/components/map-gl/MapPreview'
 import SelectableTreeMarkers from '@/components/map-gl/SelectableTreeMarkers'
@@ -53,7 +55,9 @@ const DialogBody = ({
   onSelect: (treeId: string) => void
 }) => {
   const [q, setQ] = useState('')
-  const { items } = useTreeSearch(q)
+  const [showAll, setShowAll] = useState(false)
+  const { items } = useTreeSearch(q, showAll)
+  const { mapCenter, mapZoom } = useMapStore()
 
   const bounds = useMemo<LngLatBoundsLike | undefined>(() => {
     if (items.length === 0) return undefined
@@ -75,22 +79,36 @@ const DialogBody = ({
     ]
   }, [items])
 
-  const center: [number, number] | undefined = sensor.coordinate
+  const center: [number, number] = sensor.coordinate
     ? [sensor.coordinate.longitude, sensor.coordinate.latitude]
-    : undefined
+    : [mapCenter[1], mapCenter[0]]
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 px-6 pb-2 sm:flex-row">
       <div className="flex min-h-0 flex-1 flex-col gap-3">
         <SensorTreeSearchInput value={q} onChange={setQ} />
+        <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-dark-700">
+          <Checkbox
+            checked={showAll}
+            onCheckedChange={(value) => setShowAll(value === true)}
+            aria-label="Alle Bäume anzeigen"
+          />
+          Alle Bäume anzeigen
+        </label>
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <SensorTreeSearchResults q={q} selectedTreeId={selectedTreeId} onSelect={onSelect} />
+          <SensorTreeSearchResults
+            q={q}
+            selectedTreeId={selectedTreeId}
+            onSelect={onSelect}
+            showAll={showAll}
+          />
         </div>
       </div>
       <div className="sm:w-1/2">
         <MapPreview
           bounds={bounds}
           center={center}
+          zoom={mapZoom}
           interactive
           ariaLabel="Karte zur Baumauswahl"
           className={cn('aspect-[4/3] sm:aspect-auto sm:h-full')}
