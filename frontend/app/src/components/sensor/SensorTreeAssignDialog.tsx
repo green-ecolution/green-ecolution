@@ -10,11 +10,12 @@ import {
   InlineAlert,
   cn,
 } from '@green-ecolution/ui'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { LngLatBoundsLike } from 'maplibre-gl'
 import type { Sensor } from '@/api/backendApi'
 import { useMapStore } from '@/store/store'
 import { useTreeSearch } from '@/hooks/useTreeSearch'
+import { useMaplibreMap } from '@/components/map-gl/MapContext'
 import MapPreview from '@/components/map-gl/MapPreview'
 import SelectableTreeMarkers from '@/components/map-gl/SelectableTreeMarkers'
 import SensorTreeSearchInput from './SensorTreeSearchInput'
@@ -45,6 +46,16 @@ const COPY: Record<AssignMode, { title: string; description: string; confirm: st
   },
 }
 
+const FOCUS_ZOOM = 18
+
+const FocusTree = ({ lng, lat }: { lng: number; lat: number }) => {
+  const map = useMaplibreMap()
+  useEffect(() => {
+    map.flyTo({ center: [lng, lat], zoom: FOCUS_ZOOM })
+  }, [map, lng, lat])
+  return null
+}
+
 const DialogBody = ({
   sensor,
   selectedTreeId,
@@ -59,8 +70,13 @@ const DialogBody = ({
   const { items } = useTreeSearch(q, showAll)
   const { mapCenter, mapZoom } = useMapStore()
 
+  const selectedTree = useMemo(
+    () => items.find((t) => t.id === selectedTreeId) ?? null,
+    [items, selectedTreeId],
+  )
+
   const bounds = useMemo<LngLatBoundsLike | undefined>(() => {
-    if (items.length === 0) return undefined
+    if (selectedTree || items.length === 0) return undefined
     const lngs = items.map((t) => t.longitude)
     const lats = items.map((t) => t.latitude)
     let w = Math.min(...lngs)
@@ -77,7 +93,7 @@ const DialogBody = ({
       [w, s],
       [e, n],
     ]
-  }, [items])
+  }, [items, selectedTree])
 
   const center: [number, number] = sensor.coordinate
     ? [sensor.coordinate.longitude, sensor.coordinate.latitude]
@@ -114,6 +130,7 @@ const DialogBody = ({
           className={cn('aspect-[4/3] sm:aspect-auto sm:h-full')}
         >
           <SelectableTreeMarkers trees={items} selectedTreeId={selectedTreeId} onSelect={onSelect} />
+          {selectedTree && <FocusTree lng={selectedTree.longitude} lat={selectedTree.latitude} />}
         </MapPreview>
       </div>
     </div>
