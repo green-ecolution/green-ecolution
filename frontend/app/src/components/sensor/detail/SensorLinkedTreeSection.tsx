@@ -15,6 +15,7 @@ import {
 import { ArrowUpRight, Link2, TreeDeciduous, Unlink2 } from 'lucide-react'
 import { treeIdQuery } from '@/api/queries'
 import type { Sensor } from '@/api/backendApi'
+import { useSensorActions } from './SensorActionsContext'
 
 interface SensorLinkedTreeSectionProps {
   sensor: Sensor
@@ -24,6 +25,7 @@ const SensorLinkedTreeSection = ({ sensor }: SensorLinkedTreeSectionProps) => {
   const hasLink = sensor.linkedTreeId != null
   const treeIdStr = hasLink ? String(sensor.linkedTreeId) : ''
   const { data: tree, isLoading, isError } = useQuery(treeIdQuery(treeIdStr))
+  const actions = useSensorActions()
 
   return (
     <Card variant="outlined">
@@ -46,24 +48,17 @@ const SensorLinkedTreeSection = ({ sensor }: SensorLinkedTreeSectionProps) => {
                   Dieser Sensor ist mit keinem Baum verknüpft. Ohne Verknüpfung können seine
                   Messdaten keiner Vegetation zugeordnet werden.
                 </AlertDescription>
-                {sensor.coordinate && (
-                  <div className="mt-3">
-                    <Button variant="outline" size="sm" asChild className="gap-2 [&_svg]:size-4">
-                      <Link
-                        to="/map/sensor/select/tree"
-                        search={{
-                          lat: sensor.coordinate.latitude,
-                          lng: sensor.coordinate.longitude,
-                          zoom: 18,
-                          sensorId: sensor.id,
-                        }}
-                      >
-                        <Link2 />
-                        Auf der Karte verknüpfen
-                      </Link>
-                    </Button>
-                  </div>
-                )}
+                <div className="mt-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 [&_svg]:size-4"
+                    onClick={() => actions.requestActivate()}
+                  >
+                    <Link2 />
+                    Aktivieren & Baum zuweisen
+                  </Button>
+                </div>
               </AlertContent>
             </div>
           </Alert>
