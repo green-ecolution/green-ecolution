@@ -72,7 +72,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
       </article>
 
       <section className="mt-10">
-        <ul className="flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-4">
+        <ul className="flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 xl:grid-cols-4">
           <li className="h-full">
             <StatusCard
               status={wateringStatus.color}

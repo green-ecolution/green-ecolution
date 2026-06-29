@@ -171,14 +171,14 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
       id="main-navigation"
       aria-label="Hauptnavigation"
       className={`fixed inset-0 z-50 bg-dark w-screen h-screen flex flex-col ease-in-out duration-300 transition-[left,visibility]
-        lg:left-0 lg:w-[16rem] lg:visible
+        lg:left-0 lg:w-[4.5rem] lg:visible xl:w-[16rem]
         ${isOpen ? 'visible left-0' : 'invisible -left-full'}`}
     >
-      <div className="shrink-0 px-4 pt-5">
+      <div className="shrink-0 px-4 pt-5 lg:px-2 xl:px-4">
         <NavHeader closeSidebar={closeSidebar} />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto no-scrollbar px-4">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto no-scrollbar px-4 lg:px-2 xl:px-4">
         {navigationData.map((section) => (
           <React.Fragment key={section.id}>
             <NavHeadline label={section.headline} />
