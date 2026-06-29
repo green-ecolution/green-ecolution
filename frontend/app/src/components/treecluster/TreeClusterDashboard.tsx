@@ -65,7 +65,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
           label="Gruppe bearbeiten"
           color="grey"
           link={{
-            to: '/treecluster/$treeclusterId/edit',
+            to: '/map/treecluster/edit/$treeclusterId',
             params: { treeclusterId: treecluster.id.toString() },
           }}
         />

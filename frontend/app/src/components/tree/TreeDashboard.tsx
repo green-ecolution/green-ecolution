@@ -82,7 +82,7 @@ const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
           label="Baum bearbeiten"
           color="grey"
           link={{
-            to: `/trees/$treeId/edit`,
+            to: `/map/tree/edit/$treeId`,
             params: { treeId: String(tree.id) },
           }}
         />

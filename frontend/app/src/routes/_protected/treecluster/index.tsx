@@ -76,7 +76,7 @@ function Treecluster() {
         </article>
         <div className="flex shrink-0 flex-wrap items-center gap-3">
           <ClusterViewToggle />
-          <ButtonLink icon={Plus} label="Gruppe anlegen" link={{ to: '/treecluster/new' }} />
+          <ButtonLink icon={Plus} label="Gruppe anlegen" link={{ to: '/map/treecluster/new' }} />
         </div>
       </header>
 

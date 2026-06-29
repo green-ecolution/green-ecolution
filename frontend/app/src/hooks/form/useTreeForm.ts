@@ -32,7 +32,7 @@ const treeConfig: EntityFormConfig<TreeForm, TreeCreate, TreeUpdate, Tree> = {
     to: '/trees/$treeId',
     params: { treeId: id.toString() },
   }),
-  allowedPaths: ['/map/tree/edit'],
+  allowedPaths: [],
 
   messages: {
     createLeave:
@@ -46,10 +46,11 @@ const treeConfig: EntityFormConfig<TreeForm, TreeCreate, TreeUpdate, Tree> = {
 
 export const useTreeForm = (
   mutationType: 'create' | 'update',
-  opts: { treeId?: string; initForm?: DefaultValues<TreeForm> },
+  opts: { treeId?: string; initForm?: DefaultValues<TreeForm>; disableNavigationBlock?: boolean },
 ) => {
   return useEntityForm<TreeForm, TreeCreate, TreeUpdate, Tree>(treeConfig, mutationType, {
     entityId: opts.treeId,
     initForm: opts.initForm,
+    disableNavigationBlock: opts.disableNavigationBlock,
   })
 }

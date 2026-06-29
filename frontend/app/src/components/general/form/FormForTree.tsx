@@ -21,9 +21,11 @@ interface FormForTreeProps {
   sensors: Sensor[]
   displayError: boolean
   errorMessage?: string
-  onChangeLocation: () => void
+  onChangeLocation?: () => void
   onSubmit: SubmitHandler<TreeForm>
   onBlur?: () => void
+  hideLocation?: boolean
+  fullWidth?: boolean
 }
 
 const FormForTree = (props: FormForTreeProps) => {
@@ -32,7 +34,11 @@ const FormForTree = (props: FormForTreeProps) => {
 
   return (
     <form
-      className="flex flex-col gap-y-6 lg:grid lg:grid-cols-2 lg:gap-11"
+      className={
+        props.fullWidth
+          ? 'flex flex-col gap-y-6'
+          : 'flex flex-col gap-y-6 lg:grid lg:grid-cols-2 lg:gap-11'
+      }
       onSubmit={handleSubmit(props.onSubmit)}
       onBlur={props.onBlur}
     >
@@ -79,7 +85,7 @@ const FormForTree = (props: FormForTreeProps) => {
                   <SelectTrigger id="treeClusterId">
                     <SelectValue placeholder="Wählen Sie eine Bewässerungsgruppe aus" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[2000]">
                     <SelectItem value="-1">Keine Bewässerungsgruppe</SelectItem>
                     {props.treeClusters.map((cluster) => (
                       <SelectItem key={cluster.id} value={cluster.id.toString()}>
@@ -101,11 +107,14 @@ const FormForTree = (props: FormForTreeProps) => {
           render={({ field }) => (
             <div className="flex flex-col gap-y-2">
               <Label htmlFor="sensorId">Verknüpfter Sensor</Label>
-              <Select value={field.value ?? '-1'} onValueChange={field.onChange}>
+              <Select
+                value={field.value ?? '-1'}
+                onValueChange={(val) => field.onChange(val === '-1' ? null : val)}
+              >
                 <SelectTrigger id="sensorId">
                   <SelectValue placeholder="Wählen Sie einen Sensor aus, sofern vorhanden" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[2000]">
                   <SelectItem value="-1">Kein Sensor</SelectItem>
                   {props.sensors.map((sensor) => (
                     <SelectItem key={sensor.id} value={sensor.id.toString()}>
@@ -128,7 +137,7 @@ const FormForTree = (props: FormForTreeProps) => {
         />
       </div>
 
-      {!props.isReadonly && (
+      {!props.isReadonly && !props.hideLocation && (
         <div>
           <p className="block font-semibold text-dark-800 mb-2.5">Standort des Baumes</p>
           <div>
@@ -141,16 +150,27 @@ const FormForTree = (props: FormForTreeProps) => {
             </p>
           </div>
 
-          <Button type="button" variant="outline" onClick={props.onChangeLocation} className="mt-6">
-            Standort des Baumes anpassen
-            <MapPin />
-          </Button>
+          {props.onChangeLocation && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={props.onChangeLocation}
+              className="mt-6"
+            >
+              Standort des Baumes anpassen
+              <MapPin />
+            </Button>
+          )}
         </div>
       )}
 
       <FormError show={props.displayError} error={props.errorMessage} />
 
-      <Button type="submit" className="mt-10 lg:col-span-full lg:w-fit" disabled={!isValid}>
+      <Button
+        type="submit"
+        className={props.fullWidth ? 'mt-8 w-full' : 'mt-10 lg:col-span-full lg:w-fit'}
+        disabled={!isValid}
+      >
         Speichern
         <MoveRight className="icon-arrow-animate" />
       </Button>

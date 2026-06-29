@@ -2,16 +2,14 @@ import useStore from '@/store/store'
 import {
   createFileRoute,
   Outlet,
-  useMatchRoute,
+  useLocation,
   useNavigate,
   useSearch,
 } from '@tanstack/react-router'
 import { z } from 'zod'
-import Map from '@/components/map/Map'
-import MapController from '@/components/map/MapController'
-import ZoomControls from '@/components/map/ZoomControls'
-import MapResizeHandler from '@/components/map/MapResizeHandler'
-import MapBackgroundClick from '@/components/map/MapBackgroundClick'
+import MapCanvas from '@/components/map-gl/MapCanvas'
+import MapControls from '@/components/map-gl/MapControls'
+import MapBackgroundClick from '@/components/map-gl/MapBackgroundClick'
 import MapToolbarBar from '@/components/map/MapToolbarBar'
 import ClusterPanel from '@/components/map/cluster-panel/ClusterPanel'
 import { clusterBoundariesQuery, clusterMarkersQuery } from '@/api/queries'
@@ -61,11 +59,13 @@ export const Route = createFileRoute('/_protected/map')({
 })
 
 function MapRoot() {
-  const matchRoute = useMatchRoute()
+  const { pathname } = useLocation()
   const navigate = useNavigate()
   const search = useSearch({ strict: false })
   const isDesktop = useMediaQuery('(min-width: 1024px)')
-  const isIndex = !!matchRoute({ to: '/map', fuzzy: false })
+  // Reactive exact-match: matchRoute() didn't reliably re-render MapRoot on
+  // pathname-only changes, leaving isIndex stale across /map ↔ sub-route nav.
+  const isIndex = pathname === '/map' || pathname === '/map/'
   const panelClusterId = isIndex ? search.cluster : undefined
 
   const [snapPoint, setSnapPoint] = useState<number | string | null>('260px')
@@ -92,15 +92,17 @@ function MapRoot() {
       {isIndex && <MapToolbarBar />}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div className="relative flex-1">
-          <Map height="100%">
-            <MapController />
-            <ZoomControls />
-            <MapResizeHandler />
-            <MapBackgroundClick onBackgroundClick={handleClosePanel} />
-            <Suspense fallback={<Loading className="mt-20 justify-center" label="Lade Karte..." />}>
-              <Outlet />
-            </Suspense>
-          </Map>
+          <Suspense fallback={<Loading className="mt-20 justify-center" label="Lade Karte..." />}>
+            <MapCanvas>
+              <MapControls />
+              {isIndex && <MapBackgroundClick onBackground={handleClosePanel} />}
+              <Suspense
+                fallback={<Loading className="mt-20 justify-center" label="Lade Karte..." />}
+              >
+                <Outlet />
+              </Suspense>
+            </MapCanvas>
+          </Suspense>
         </div>
         {isDesktop && panelClusterId && (
           <aside

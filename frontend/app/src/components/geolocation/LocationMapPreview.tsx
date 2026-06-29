@@ -1,18 +1,10 @@
-import defaultIconPng from 'leaflet/dist/images/marker-icon.png'
-import shadowIconPng from 'leaflet/dist/images/marker-shadow.png'
-import L, { Icon } from 'leaflet'
-import { useEffect } from 'react'
-import { Circle, MapContainer, Marker, TileLayer, useMap } from 'react-leaflet'
+import { useEffect, useRef } from 'react'
+import { Marker } from 'maplibre-gl'
 import { cn } from '@green-ecolution/ui'
-
-const markerIcon = new Icon({
-  iconUrl: defaultIconPng,
-  shadowUrl: shadowIconPng,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-})
+import { useMaplibreMap } from '@/components/map-gl/MapContext'
+import MapPreview from '@/components/map-gl/MapPreview'
+import { useAccuracyRing } from '@/components/map-gl/hooks/useAccuracyRing'
+import { isMapAlive } from '@/components/map-gl/mapReady'
 
 interface LocationMapPreviewProps {
   latitude: number
@@ -25,28 +17,45 @@ interface LocationMapPreviewProps {
   zoom?: number
   /** ARIA label for the wrapper. */
   ariaLabel?: string
-  /**
-   * When `true`, users can pan and pinch-zoom. Default: `false` — the preview
-   * stays locked on the reported position, which is the right default for
-   * onboarding summaries where the map is an anchor, not a tool.
-   */
+  /** When `true`, users can pan and pinch-zoom. Default: `false`. */
   interactive?: boolean
-  /**
-   * Keep the marker centered as the position updates. When `true`, re-centers
-   * only if the new position drifts out of the current viewport, so a user
-   * who panned manually isn't yanked back to center on every update.
-   * Default: `true`.
-   */
+  /** Re-center if the position drifts out of the viewport. Default: `true`. */
   follow?: boolean
 }
 
-const FollowPosition = ({ latitude, longitude }: { latitude: number; longitude: number }) => {
-  const map = useMap()
+const PositionLayers = ({
+  latitude,
+  longitude,
+  accuracyMeters,
+  follow,
+}: Pick<LocationMapPreviewProps, 'latitude' | 'longitude' | 'accuracyMeters' | 'follow'>) => {
+  const map = useMaplibreMap()
+  const markerRef = useRef<Marker | null>(null)
+
   useEffect(() => {
-    const next = L.latLng(latitude, longitude)
-    if (map.getBounds().contains(next)) return
-    map.panTo(next, { animate: true })
-  }, [map, latitude, longitude])
+    const marker = new Marker({ color: '#486725' }).setLngLat([longitude, latitude]).addTo(map)
+    markerRef.current = marker
+    return () => {
+      marker.remove()
+      markerRef.current = null
+    }
+    // Created once; position updates happen in the effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map])
+
+  useEffect(() => {
+    markerRef.current?.setLngLat([longitude, latitude])
+  }, [longitude, latitude])
+
+  useAccuracyRing(map, 'gec-preview', longitude, latitude, accuracyMeters)
+
+  useEffect(() => {
+    if (!follow || !isMapAlive(map)) return
+    if (!map.getBounds().contains([longitude, latitude])) {
+      map.easeTo({ center: [longitude, latitude] })
+    }
+  }, [map, longitude, latitude, follow])
+
   return null
 }
 
@@ -59,58 +68,21 @@ const LocationMapPreview = ({
   ariaLabel = 'Karte mit aktueller GPS-Position',
   interactive = false,
   follow = true,
-}: LocationMapPreviewProps) => {
-  const center = L.latLng(latitude, longitude)
-  const radius = accuracyMeters && accuracyMeters > 0 ? accuracyMeters : null
-
-  return (
-    <div
-      // A dragging/zooming container isn't an `img` — set role only when locked.
-      role={interactive ? undefined : 'img'}
-      aria-label={ariaLabel}
-      className={cn(
-        'relative w-full overflow-hidden rounded-2xl border border-dark-100 shadow-cards',
-        'aspect-[4/3] sm:aspect-[16/10]',
-        className,
-      )}
-    >
-      <MapContainer
-        preferCanvas
-        zoomControl={false}
-        attributionControl={false}
-        dragging={interactive}
-        touchZoom={interactive}
-        doubleClickZoom={interactive}
-        scrollWheelZoom={interactive}
-        boxZoom={interactive}
-        keyboard={interactive}
-        className="z-0 h-full w-full"
-        center={center}
-        zoom={zoom}
-        maxZoom={19}
-        minZoom={3}
-      >
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" keepBuffer={2} />
-        {radius && (
-          <Circle
-            center={center}
-            radius={radius}
-            pathOptions={{
-              color: 'oklch(0.62 0.20 145)',
-              fillColor: 'oklch(0.62 0.20 145)',
-              fillOpacity: 0.15,
-              weight: 1.5,
-            }}
-          />
-        )}
-        <Marker position={center} icon={markerIcon} />
-        {follow && <FollowPosition latitude={latitude} longitude={longitude} />}
-      </MapContainer>
-      <span className="pointer-events-none absolute bottom-1 right-2 text-[10px] text-dark-600/80 font-mono bg-white/70 px-1 rounded">
-        © OpenStreetMap
-      </span>
-    </div>
-  )
-}
+}: LocationMapPreviewProps) => (
+  <MapPreview
+    center={[longitude, latitude]}
+    zoom={zoom}
+    interactive={interactive}
+    ariaLabel={ariaLabel}
+    className={cn('aspect-[4/3] sm:aspect-[16/10]', className)}
+  >
+    <PositionLayers
+      latitude={latitude}
+      longitude={longitude}
+      accuracyMeters={accuracyMeters}
+      follow={follow}
+    />
+  </MapPreview>
+)
 
 export default LocationMapPreview

@@ -25,13 +25,19 @@ export const useFormNavigationBlocker = ({
   const allowNavigationRef = useRef(false)
 
   const { proceed, reset, status } = useBlocker({
-    shouldBlockFn: ({ next }) => {
+    shouldBlockFn: ({ current, next }) => {
       if (allowNavigationRef.current) {
         allowNavigationRef.current = false
         return false
       }
 
       if (!isDirty) {
+        return false
+      }
+
+      // Same route, only search params changed (e.g. the map syncing lat/lng/zoom
+      // into the URL) is not "leaving the page".
+      if (next.pathname === current?.pathname) {
         return false
       }
 

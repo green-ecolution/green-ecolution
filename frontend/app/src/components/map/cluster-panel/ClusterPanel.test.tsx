@@ -6,9 +6,6 @@ vi.mock('@/api/backendApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/api/backendApi')>()
   return { ...actual, clusterApi: { getCluster: (...a: unknown[]) => getCluster(...a) as unknown } }
 })
-vi.mock('@/hooks/useMapInteractions', () => ({
-  default: () => ({ enableDragging: vi.fn(), disableDragging: vi.fn() }),
-}))
 vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => true }))
 
 import ClusterPanel from './ClusterPanel'

@@ -103,6 +103,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           'domain-wasm': ['@green-ecolution/domain-wasm'],
+          maplibre: ['maplibre-gl'],
         },
       },
     },

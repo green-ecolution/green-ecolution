@@ -34,7 +34,7 @@ const treeClusterConfig: EntityFormConfig<
     params: { treeclusterId: id.toString() },
   }),
   replaceOnSuccess: true,
-  allowedPaths: ['/map/treecluster/select/tree'],
+  allowedPaths: [],
 
   messages: {
     createLeave:
@@ -48,7 +48,11 @@ const treeClusterConfig: EntityFormConfig<
 
 export const useTreeClusterForm = (
   mutationType: 'create' | 'update',
-  opts: { clusterId?: string; initForm?: DefaultValues<TreeclusterForm> },
+  opts: {
+    clusterId?: string
+    initForm?: DefaultValues<TreeclusterForm>
+    disableNavigationBlock?: boolean
+  },
 ) => {
   return useEntityForm<TreeclusterForm, TreeClusterCreate, TreeClusterUpdate, TreeCluster>(
     treeClusterConfig,
@@ -56,6 +60,7 @@ export const useTreeClusterForm = (
     {
       entityId: opts.clusterId,
       initForm: opts.initForm,
+      disableNavigationBlock: opts.disableNavigationBlock,
     },
   )
 }
