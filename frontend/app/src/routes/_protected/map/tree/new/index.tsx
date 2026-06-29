@@ -73,7 +73,12 @@ function NewTree() {
 
   return (
     <>
-      <MapPanel title="Neuen Baum erfassen" onClose={handleCancel} className="overflow-y-auto">
+      <MapPanel
+        title="Neuen Baum erfassen"
+        onClose={handleCancel}
+        className="overflow-y-auto"
+        mobileCollapsedSnap="260px"
+      >
         {pos ? (
           <>
             <div className="mb-5 flex items-center gap-3 rounded-lg bg-dark-50 px-3 py-2.5">
