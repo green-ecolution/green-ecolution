@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@green-ecolution/ui'
-import { ArrowUpRight, Link2, TreeDeciduous, Unlink2 } from 'lucide-react'
+import { ArrowUpRight, Link2, Link2Off, TreeDeciduous } from 'lucide-react'
 import { treeIdQuery } from '@/api/queries'
 import type { Sensor } from '@/api/backendApi'
 import { useSensorActions } from './SensorActionsContext'
@@ -32,7 +32,7 @@ const SensorLinkedTreeSection = ({ sensor }: SensorLinkedTreeSectionProps) => {
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className="grid place-items-center size-9 rounded-lg bg-green-dark-50 text-green-dark">
-            {hasLink ? <Link2 className="size-5" /> : <Unlink2 className="size-5" />}
+            {hasLink ? <Link2 className="size-5" /> : <Link2Off className="size-5" />}
           </div>
           <CardTitle>Verknüpfter Baum</CardTitle>
         </div>

@@ -11,7 +11,7 @@ import {
   AlertDialogTitle,
   toast,
 } from '@green-ecolution/ui'
-import { Unlink2 } from 'lucide-react'
+import { Link2Off } from 'lucide-react'
 import type { Sensor } from '@/api/backendApi'
 import { mapActivateError, mapDeactivateError, mapReassignError } from '@/api/sensorErrors'
 import {
@@ -108,12 +108,13 @@ const SensorActionsProvider = ({ sensor, children }: PropsWithChildren<{ sensor:
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogIcon variant="destructive">
-              <Unlink2 />
+              <Link2Off />
             </AlertDialogIcon>
-            <AlertDialogTitle>Baum entfernen und Sensor zurücksetzen?</AlertDialogTitle>
+            <AlertDialogTitle>Baumverknüpfung aufheben und Sensor zurücksetzen?</AlertDialogTitle>
             <AlertDialogDescription>
-              Die Verknüpfung wird gelöst und der Sensor auf den Zustand „Prepared" zurückgesetzt.
-              Anschließend kann er wie ein neuer Sensor an einem anderen Baum aktiviert werden.
+              Die Verknüpfung zum Baum wird aufgehoben und der Sensor auf den Zustand „Vorbereitet"
+              zurückgesetzt. Anschließend kann er wie ein neuer Sensor an einem anderen Baum
+              aktiviert werden.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -131,7 +132,7 @@ const SensorActionsProvider = ({ sensor, children }: PropsWithChildren<{ sensor:
                 })
               }}
             >
-              {deactivate.isPending ? 'Wird zurückgesetzt …' : 'Entfernen'}
+              {deactivate.isPending ? 'Wird aufgehoben …' : 'Verknüpfung aufheben'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

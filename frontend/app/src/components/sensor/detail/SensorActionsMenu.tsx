@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ChevronDown, Link2, Replace, Trash2, Unlink2 } from 'lucide-react'
+import { ChevronDown, Link2, Link2Off, Replace, Trash2 } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -69,8 +69,8 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
                 Baum ändern
               </DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer" onSelect={() => actions.requestRemove()}>
-                <Unlink2 className="mr-2 size-4" />
-                Baum entfernen
+                <Link2Off className="mr-2 size-4" />
+                Baumverknüpfung aufheben
               </DropdownMenuItem>
             </>
           )}
