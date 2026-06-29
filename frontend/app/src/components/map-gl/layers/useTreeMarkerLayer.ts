@@ -5,7 +5,6 @@ import type { WateringStatus } from '@green-ecolution/backend-client'
 import { useMaplibreMap } from '../MapContext'
 import { STATUS_COLOR_EXPRESSION, TREE_ICON_IMAGE, TREE_ICON_URL } from '../mapStyle'
 import { isMapAlive } from '../mapReady'
-import { usePointerCursor } from './usePointerCursor'
 
 export interface TreeMarkerPoint {
   id: string
@@ -159,7 +158,22 @@ const useTreeMarkerLayer = ({
     map.getSource<GeoJSONSource>(sourceId)?.setData(fc)
   }, [map, sourceId, fc])
 
-  usePointerCursor(circleLayerId, interactive)
+  useEffect(() => {
+    if (!interactive) return
+    const onMove = (e: MapLayerMouseEvent) => {
+      const disabled = Boolean(e.features?.[0]?.properties?.disabled)
+      map.getCanvas().style.cursor = disabled ? 'not-allowed' : 'pointer'
+    }
+    const onLeave = () => {
+      map.getCanvas().style.cursor = ''
+    }
+    map.on('mousemove', circleLayerId, onMove)
+    map.on('mouseleave', circleLayerId, onLeave)
+    return () => {
+      map.off('mousemove', circleLayerId, onMove)
+      map.off('mouseleave', circleLayerId, onLeave)
+    }
+  }, [map, circleLayerId, interactive])
 
   useEffect(() => {
     if (!interactive) return
