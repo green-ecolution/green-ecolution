@@ -10,14 +10,18 @@ import {
   InlineAlert,
   cn,
 } from '@green-ecolution/ui'
-import { useEffect, useMemo, useState } from 'react'
-import type { LngLatBoundsLike } from 'maplibre-gl'
-import type { Sensor } from '@/api/backendApi'
+import { Suspense, useEffect, useMemo, useState } from 'react'
+import type { ExpressionSpecification, LngLatBoundsLike } from 'maplibre-gl'
+import { WateringStatus } from '@/api/backendApi'
+import type { Sensor, TreeResponse } from '@/api/backendApi'
 import { useMapStore } from '@/store/store'
 import { useTreeSearch } from '@/hooks/useTreeSearch'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
 import MapPreview from '@/components/map-gl/MapPreview'
-import SelectableTreeMarkers from '@/components/map-gl/SelectableTreeMarkers'
+import useTreeMarkerLayer, {
+  type TreeMarkerPoint,
+} from '@/components/map-gl/layers/useTreeMarkerLayer'
+import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
 import SensorTreeSearchInput from './SensorTreeSearchInput'
 import SensorTreeSearchResults from './SensorTreeSearchResults'
 
@@ -53,6 +57,68 @@ const FocusTree = ({ lng, lat }: { lng: number; lat: number }) => {
   useEffect(() => {
     map.flyTo({ center: [lng, lat], zoom: FOCUS_ZOOM })
   }, [map, lng, lat])
+  return null
+}
+
+const DIALOG_CIRCLE_RADIUS: ExpressionSpecification = [
+  'interpolate',
+  ['linear'],
+  ['zoom'],
+  13,
+  8,
+  17,
+  11,
+  22,
+  14,
+]
+
+const DIALOG_ICON_SIZE: ExpressionSpecification = [
+  'interpolate',
+  ['linear'],
+  ['zoom'],
+  13,
+  0.38,
+  17,
+  0.52,
+  22,
+  0.7,
+]
+
+const DialogClusterBoundaries = () => {
+  useClusterBoundaryLayer({ interactive: false })
+  return null
+}
+
+const DialogTreeMarkers = ({
+  trees,
+  selectedTreeId,
+  onSelect,
+}: {
+  trees: TreeResponse[]
+  selectedTreeId: string | null
+  onSelect: (treeId: string) => void
+}) => {
+  const points = useMemo<TreeMarkerPoint[]>(
+    () =>
+      trees.map((t) => ({
+        id: t.id,
+        longitude: t.longitude,
+        latitude: t.latitude,
+        status: t.wateringStatus ?? WateringStatus.Unknown,
+        disabled: t.sensor != null,
+        selected: t.id === selectedTreeId,
+      })),
+    [trees, selectedTreeId],
+  )
+  useTreeMarkerLayer({
+    trees: points,
+    sourceId: 'gec-dialog-trees',
+    circleLayerId: 'gec-dialog-tree-circle',
+    iconLayerId: 'gec-dialog-tree-icon',
+    circleRadius: DIALOG_CIRCLE_RADIUS,
+    iconSize: DIALOG_ICON_SIZE,
+    onTreeClick: onSelect,
+  })
   return null
 }
 
@@ -131,7 +197,10 @@ const DialogBody = ({
           ariaLabel="Karte zur Baumauswahl"
           className={cn('aspect-[4/3] sm:aspect-auto sm:h-full')}
         >
-          <SelectableTreeMarkers
+          <Suspense fallback={null}>
+            <DialogClusterBoundaries />
+          </Suspense>
+          <DialogTreeMarkers
             trees={visibleItems}
             selectedTreeId={selectedTreeId}
             onSelect={onSelect}
