@@ -160,6 +160,62 @@ impl SensorService {
         Ok(())
     }
 
+    /// Moves an activated sensor's tree link to `new_tree_id`. Requires the
+    /// sensor to be activated; rejects a tree that already holds a different
+    /// sensor. Idempotent when the sensor is already linked to `new_tree_id`.
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id, tree.id = %new_tree_id))]
+    pub async fn reassign_tree(
+        &self,
+        id: &SensorId,
+        new_tree_id: Id<Tree>,
+    ) -> Result<SensorView, ServiceError> {
+        let sensor = self.reader.by_id(id).await?;
+        if !sensor.is_activated() {
+            return Err(ServiceError::NotActivated);
+        }
+
+        let mut target = self.tree_reader.by_id(new_tree_id).await?;
+        if target.sensor_id() == Some(id) {
+            return Ok(self.reader.view_by_id(id).await?);
+        }
+        if let Some(other) = target.sensor_id()
+            && other != id
+        {
+            return Err(ServiceError::TreeAlreadyHasSensor);
+        }
+
+        let mut events = Vec::new();
+        if let Some(mut current) = self.tree_reader.by_sensor_id(id).await? {
+            events.extend(current.detach_sensor());
+            self.tree_writer.save(&current).await?;
+        }
+        events.extend(target.attach_sensor(id.clone()));
+        self.tree_writer.save(&target).await?;
+        self.event_bus.publish_all(events).await;
+
+        Ok(self.reader.view_by_id(id).await?)
+    }
+
+    /// Resets an activated sensor back to `Prepared` and removes its tree
+    /// link. Idempotent: an already prepared sensor is returned unchanged.
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
+    pub async fn deactivate(&self, id: &SensorId) -> Result<SensorView, ServiceError> {
+        let mut sensor = self.reader.by_id(id).await?;
+        if !sensor.is_activated() {
+            return Ok(self.reader.view_by_id(id).await?);
+        }
+
+        let mut events = sensor.deactivate()?;
+        if let Some(mut tree) = self.tree_reader.by_sensor_id(id).await? {
+            events.extend(tree.detach_sensor());
+            self.tree_writer.save(&tree).await?;
+        }
+        self.writer.save(&sensor).await?;
+        self.event_bus.publish_all(events).await;
+
+        Ok(self.reader.view_by_id(id).await?)
+    }
+
     #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %sensor_id))]
     pub async fn view_history(
         &self,
