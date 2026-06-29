@@ -79,6 +79,9 @@ pub enum DomainEvent {
     SensorDataReceived(SensorDataReceivedPayload),
     /// Emitted when a sensor transitions from `Prepared` to `Offline`.
     SensorActivated { sensor_id: SensorId },
+    /// Emitted when an activated sensor is reset back to `Prepared`,
+    /// dropping its tree link. Inverse of `SensorActivated`.
+    SensorDeactivated { sensor_id: SensorId },
     WateringPlanStarted {
         plan_id: Id<WateringPlan>,
         cluster_ids: Vec<Id<TreeCluster>>,
