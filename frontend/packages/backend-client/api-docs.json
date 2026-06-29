@@ -1256,6 +1256,93 @@
             "description": "Internal server error"
           }
         }
+      },
+      "put": {
+        "tags": [
+          "Sensors"
+        ],
+        "summary": "Move an activated sensor to a different tree",
+        "description": "Re-links an already activated sensor to `tree_id`. Rejects a tree that already has a different sensor and a sensor that is not yet activated. Idempotent if the sensor is already linked to that tree.",
+        "operationId": "setSensorTree",
+        "parameters": [
+          {
+            "name": "sensor_id",
+            "in": "path",
+            "description": "Sensor ID (EUI)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSensorTreeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Sensor re-linked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SensorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sensor or tree not found"
+          },
+          "409": {
+            "description": "Conflict: sensor not activated or tree already linked"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Sensors"
+        ],
+        "summary": "Remove a sensor's tree link and reset it to prepared",
+        "description": "Detaches the sensor from its tree and deactivates it, returning it to the `Prepared` state. Idempotent for an already prepared sensor.",
+        "operationId": "removeSensorTree",
+        "parameters": [
+          {
+            "name": "sensor_id",
+            "in": "path",
+            "description": "Sensor ID (EUI)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sensor reset to prepared",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SensorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sensor not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
       }
     },
     "/v1/trees": {
@@ -4543,6 +4630,20 @@
             "items": {
               "$ref": "#/components/schemas/ServiceStatusResponse"
             }
+          }
+        }
+      },
+      "SetSensorTreeRequest": {
+        "type": "object",
+        "description": "Request body for `PUT /sensors/{sensor_id}/tree` - links an activated\nsensor to (or moves it to) the given tree.",
+        "required": [
+          "tree_id"
+        ],
+        "properties": {
+          "tree_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           }
         }
       },
