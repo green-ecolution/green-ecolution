@@ -29,7 +29,7 @@ function Header() {
   }, [isLargeScreen])
 
   return (
-    <header className="relative z-10 bg-white lg:pl-[16rem]">
+    <header className="relative z-10 bg-white lg:pl-[4.5rem] xl:pl-[16rem]">
       <div className="container text-sm border-b border-dark-50 py-4 flex justify-between items-center">
         {!isLargeScreen && (
           <Button

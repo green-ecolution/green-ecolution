@@ -24,11 +24,13 @@ const NavLink = (props: NavLinkProps) => {
           className: 'border-transparent',
         }}
         onClick={closeSidebar}
-        className="flex items-center gap-x-3 text-light border text-sm px-3 py-2.5 rounded-xl transition-all ease-in-out duration-300 hover:bg-green-light/20 hover:text-green-light-200"
+        title={label}
+        aria-label={label}
+        className="flex items-center gap-x-3 text-light border text-sm px-3 py-2.5 rounded-xl transition-all ease-in-out duration-300 hover:bg-green-light/20 hover:text-green-light-200 lg:justify-center lg:px-2 xl:justify-start xl:px-3"
         {...linkProps}
       >
         <span className="shrink-0">{icon}</span>
-        <span className="font-lato font-semibold tracking-[0.1]">{label}</span>
+        <span className="font-lato font-semibold tracking-[0.1] lg:hidden xl:inline">{label}</span>
       </Link>
     </li>
   )
