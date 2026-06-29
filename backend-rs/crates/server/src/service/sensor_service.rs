@@ -191,6 +191,7 @@ impl From<SensorError> for ServiceError {
     fn from(err: SensorError) -> Self {
         match err {
             SensorError::AlreadyActivated => ServiceError::AlreadyActivated,
+            SensorError::NotActivated => ServiceError::NotActivated,
             SensorError::Validation(e) => ServiceError::InvalidInput(e.to_string()),
         }
     }
