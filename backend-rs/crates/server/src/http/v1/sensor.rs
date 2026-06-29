@@ -43,7 +43,11 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(get_sensor, delete_sensor))
         .routes(routes!(activate_sensor))
         .routes(routes!(list_sensor_data))
-        .routes(routes!(get_tree_by_sensor, set_sensor_tree, remove_sensor_tree))
+        .routes(routes!(
+            get_tree_by_sensor,
+            set_sensor_tree,
+            remove_sensor_tree
+        ))
         .routes(routes!(list_sensor_models))
         .routes(routes!(get_sensor_model))
 }

@@ -21,7 +21,6 @@ export const Route = createFileRoute('/_protected/sensors/new/')({
   component: NewSensor,
 })
 
-
 function NewSensor() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()

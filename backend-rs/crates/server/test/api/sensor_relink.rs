@@ -21,7 +21,11 @@ async fn create_prepared_sensor(app: &TestApp, id: &str) {
     let r = app
         .post_json("/api/v1/sensors", &create_body(id, model_id))
         .await;
-    assert_eq!(r.status().as_u16(), 201, "expected sensor create to succeed");
+    assert_eq!(
+        r.status().as_u16(),
+        201,
+        "expected sensor create to succeed"
+    );
 }
 
 async fn insert_tree(app: &TestApp, number: &str) -> Uuid {
@@ -59,7 +63,10 @@ async fn reassign_moves_sensor_to_new_tree() {
     activate(&app, "eui-rel-1", tree_a).await;
 
     let r = app
-        .put_json("/api/v1/sensors/eui-rel-1/tree", &json!({ "tree_id": tree_b }))
+        .put_json(
+            "/api/v1/sensors/eui-rel-1/tree",
+            &json!({ "tree_id": tree_b }),
+        )
         .await;
     assert_eq!(r.status().as_u16(), 200);
     let body: serde_json::Value = r.json().await.unwrap();
@@ -82,7 +89,10 @@ async fn reassign_to_tree_with_other_sensor_conflicts() {
     activate(&app, "eui-rel-2b", tree_b).await;
 
     let r = app
-        .put_json("/api/v1/sensors/eui-rel-2a/tree", &json!({ "tree_id": tree_b }))
+        .put_json(
+            "/api/v1/sensors/eui-rel-2a/tree",
+            &json!({ "tree_id": tree_b }),
+        )
         .await;
     assert_eq!(r.status().as_u16(), 409);
 }
@@ -94,7 +104,10 @@ async fn reassign_on_prepared_sensor_conflicts() {
     let tree = insert_tree(&app, "T-REL-5").await;
 
     let r = app
-        .put_json("/api/v1/sensors/eui-rel-5/tree", &json!({ "tree_id": tree }))
+        .put_json(
+            "/api/v1/sensors/eui-rel-5/tree",
+            &json!({ "tree_id": tree }),
+        )
         .await;
     assert_eq!(r.status().as_u16(), 409);
 }
