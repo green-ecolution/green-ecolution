@@ -13,6 +13,18 @@ import { Check, Search, TreeDeciduous } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTreeSearch } from '@/hooks/useTreeSearch'
 
+// The list scrolls inside a modal's overflow container, not the viewport, so the
+// infinite-scroll observer must use that container as its root.
+const nearestScrollParent = (el: HTMLElement): HTMLElement | null => {
+  let node = el.parentElement
+  while (node) {
+    const overflowY = getComputedStyle(node).overflowY
+    if (overflowY === 'auto' || overflowY === 'scroll') return node
+    node = node.parentElement
+  }
+  return null
+}
+
 interface SensorTreeSearchResultsProps {
   q: string
   selectedTreeId: string | null
@@ -47,11 +59,11 @@ const SensorTreeSearchResults = ({
       (entries) => {
         if (entries[0]?.isIntersecting) void fetchNextPage()
       },
-      { rootMargin: '0px 0px 200px 0px' },
+      { root: nearestScrollParent(el), rootMargin: '0px 0px 200px 0px' },
     )
     obs.observe(el)
     return () => obs.disconnect()
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, items.length])
 
   if (!enabled) {
     return (

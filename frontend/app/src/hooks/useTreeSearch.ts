@@ -20,6 +20,9 @@ export const useTreeSearch = (q: string, showAll = false) => {
     },
     enabled,
     placeholderData: keepPreviousData,
+    // Avoid a full multi-page refetch when the query is re-enabled (toggling
+    // "show all"); that refetch races with fetchNextPage and stalls paging.
+    staleTime: 5 * 60 * 1000,
   })
 
   const items: TreeResponse[] = query.data?.pages.flatMap((p) => p.data ?? []) ?? []
