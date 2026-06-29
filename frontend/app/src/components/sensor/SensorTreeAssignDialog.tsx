@@ -44,9 +44,9 @@ const COPY: Record<AssignMode, { title: string; description: string; confirm: st
     confirm: 'Aktivieren',
   },
   reassign: {
-    title: 'Baum ändern',
-    description: 'Wähle den neuen Baum, an den dieser Sensor umgehängt werden soll.',
-    confirm: 'Baum übernehmen',
+    title: 'Anderen Baum zuweisen',
+    description: 'Wähle den neuen Baum, dem dieser Sensor zugeordnet werden soll.',
+    confirm: 'Baum zuweisen',
   },
 }
 

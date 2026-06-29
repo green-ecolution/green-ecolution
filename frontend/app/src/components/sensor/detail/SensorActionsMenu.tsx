@@ -66,7 +66,7 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
             <>
               <DropdownMenuItem className="cursor-pointer" onSelect={() => actions.requestReassign()}>
                 <Replace className="mr-2 size-4" />
-                Baum ändern
+                Anderen Baum zuweisen
               </DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer" onSelect={() => actions.requestRemove()}>
                 <Link2Off className="mr-2 size-4" />
