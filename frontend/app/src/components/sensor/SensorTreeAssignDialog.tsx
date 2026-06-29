@@ -11,9 +11,11 @@ import {
   cn,
 } from '@green-ecolution/ui'
 import { Suspense, useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import type { ExpressionSpecification, LngLatBoundsLike } from 'maplibre-gl'
 import { WateringStatus } from '@/api/backendApi'
 import type { Sensor, TreeResponse } from '@/api/backendApi'
+import { treeIdQuery } from '@/api/queries'
 import { useMapStore } from '@/store/store'
 import { useTreeSearch } from '@/hooks/useTreeSearch'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
@@ -123,15 +125,27 @@ const DialogTreeMarkers = ({
 }
 
 const DialogBody = ({
+  mode,
   sensor,
   selectedTreeId,
   onSelect,
 }: {
+  mode: AssignMode
   sensor: Sensor
   selectedTreeId: string | null
   onSelect: (treeId: string) => void
 }) => {
-  const [q, setQ] = useState('')
+  const linkedTreeId = sensor.linkedTreeId
+  const { data: currentTree } = useQuery({
+    ...treeIdQuery(linkedTreeId != null ? String(linkedTreeId) : ''),
+    enabled: mode === 'reassign' && linkedTreeId != null,
+  })
+
+  // Reassign opens seeded with the current tree (cached from the detail page) so
+  // it appears in the list; the user can clear it to pick another.
+  const [q, setQ] = useState(() =>
+    mode === 'reassign' && currentTree?.number ? currentTree.number : '',
+  )
   const [showAll, setShowAll] = useState(false)
   const { items, enabled } = useTreeSearch(q, showAll)
   const { mapCenter, mapZoom } = useMapStore()
@@ -143,8 +157,16 @@ const DialogBody = ({
     [visibleItems, selectedTreeId],
   )
 
+  // Camera target: the selected tree, else (reassign) the sensor's current tree.
+  const focus = useMemo<[number, number] | null>(() => {
+    if (selectedTree) return [selectedTree.longitude, selectedTree.latitude]
+    if (mode === 'reassign' && sensor.coordinate)
+      return [sensor.coordinate.longitude, sensor.coordinate.latitude]
+    return null
+  }, [selectedTree, mode, sensor.coordinate])
+
   const bounds = useMemo<LngLatBoundsLike | undefined>(() => {
-    if (selectedTree || visibleItems.length === 0) return undefined
+    if (focus || visibleItems.length === 0) return undefined
     const lngs = visibleItems.map((t) => t.longitude)
     const lats = visibleItems.map((t) => t.latitude)
     let w = Math.min(...lngs)
@@ -161,7 +183,7 @@ const DialogBody = ({
       [w, s],
       [e, n],
     ]
-  }, [visibleItems, selectedTree])
+  }, [focus, visibleItems])
 
   const center: [number, number] = sensor.coordinate
     ? [sensor.coordinate.longitude, sensor.coordinate.latitude]
@@ -205,7 +227,7 @@ const DialogBody = ({
             selectedTreeId={selectedTreeId}
             onSelect={onSelect}
           />
-          {selectedTree && <FocusTree lng={selectedTree.longitude} lat={selectedTree.latitude} />}
+          {focus && <FocusTree lng={focus[0]} lat={focus[1]} />}
         </MapPreview>
       </div>
     </div>
@@ -240,6 +262,7 @@ const SensorTreeAssignDialog = ({
 
         <DialogBody
           key={open ? 'open' : 'closed'}
+          mode={mode}
           sensor={sensor}
           selectedTreeId={selectedTreeId}
           onSelect={setSelectedTreeId}
