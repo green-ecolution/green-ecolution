@@ -1,5 +1,6 @@
 import { sensorApi } from '@/api/backendApi'
 import { sensorIdQuery } from '@/api/queries'
+import { mapActivateError, resolveResponseStatus } from '@/api/sensorErrors'
 import SensorReviewStep from '@/components/sensor/wizard/SensorReviewStep'
 import SensorScanStep from '@/components/sensor/wizard/SensorScanStep'
 import SensorTreeStep from '@/components/sensor/wizard/SensorTreeStep'
@@ -20,24 +21,6 @@ export const Route = createFileRoute('/_protected/sensors/new/')({
   component: NewSensor,
 })
 
-const resolveResponseStatus = (err: unknown): number | null => {
-  if (err instanceof Response) return err.status
-  if (
-    err != null &&
-    typeof err === 'object' &&
-    'response' in err &&
-    err.response instanceof Response
-  )
-    return err.response.status
-  return null
-}
-
-const mapActivateError = (err: unknown): string => {
-  const status = resolveResponseStatus(err)
-  if (status === 404) return 'Sensor existiert nicht (mehr). Bitte erneut scannen.'
-  if (status === 409) return 'Sensor ist bereits einem Baum zugeordnet.'
-  return 'Aktivierung fehlgeschlagen. Bitte erneut versuchen.'
-}
 
 function NewSensor() {
   const navigate = useNavigate()
