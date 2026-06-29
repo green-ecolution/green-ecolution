@@ -52,6 +52,9 @@ const SensorTreeSearchResults = ({
     isFetchingNextPage,
   } = useTreeSearch(q, showAll)
 
+  // `enabled` is a dependency because the sentinel only exists once the list is
+  // shown; without it the observer never attaches when re-enabling over cached
+  // results (item count and hasNextPage stay unchanged).
   useEffect(() => {
     const el = sentinelRef.current
     if (!el || !hasNextPage || isFetchingNextPage) return
@@ -63,7 +66,7 @@ const SensorTreeSearchResults = ({
     )
     obs.observe(el)
     return () => obs.disconnect()
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage, items.length])
+  }, [enabled, hasNextPage, isFetchingNextPage, fetchNextPage, items.length])
 
   if (!enabled) {
     return (
