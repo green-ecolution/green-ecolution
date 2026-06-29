@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { Suspense, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   Alert,
   AlertContent,
@@ -12,12 +13,46 @@ import {
   cn,
 } from '@green-ecolution/ui'
 import { ChevronDown, MapPin, MapPinOff } from 'lucide-react'
+import { treeMarkersQuery } from '@/api/queries'
 import MapPreview from '@/components/map-gl/MapPreview'
 import SensorMarker from '@/components/map-gl/SensorMarker'
+import useViewportBBox from '@/components/map-gl/hooks/useViewportBBox'
+import useTreeMarkerLayer, {
+  type TreeMarkerPoint,
+} from '@/components/map-gl/layers/useTreeMarkerLayer'
+import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
 import type { Sensor } from '@/api/backendApi'
 
 interface SensorLocationSectionProps {
   sensor: Sensor
+}
+
+const LocationTreeLayer = () => {
+  const bbox = useViewportBBox()
+  const { data } = useQuery(treeMarkersQuery({ bbox }))
+  const trees = useMemo<TreeMarkerPoint[]>(
+    () =>
+      (data?.data ?? []).map((t) => ({
+        id: t.id,
+        longitude: t.longitude,
+        latitude: t.latitude,
+        status: t.wateringStatus,
+      })),
+    [data],
+  )
+  useTreeMarkerLayer({
+    trees,
+    sourceId: 'gec-location-trees',
+    circleLayerId: 'gec-location-tree-circle',
+    iconLayerId: 'gec-location-tree-icon',
+    interactive: false,
+  })
+  return null
+}
+
+const LocationClusterBoundaries = () => {
+  useClusterBoundaryLayer({ interactive: false })
+  return null
 }
 
 const SensorLocationSection = ({ sensor }: SensorLocationSectionProps) => {
@@ -55,9 +90,14 @@ const SensorLocationSection = ({ sensor }: SensorLocationSectionProps) => {
             <MapPreview
               center={[coord.longitude, coord.latitude]}
               zoom={17}
-              ariaLabel="Karte mit der Sensor-Position"
+              interactive
+              ariaLabel="Karte mit der Sensor-Position, nahegelegenen Bäumen und Bewässerungsgruppen"
               className="h-72 sm:h-80"
             >
+              <Suspense fallback={null}>
+                <LocationClusterBoundaries />
+              </Suspense>
+              <LocationTreeLayer />
               <SensorMarker lng={coord.longitude} lat={coord.latitude} />
             </MapPreview>
 

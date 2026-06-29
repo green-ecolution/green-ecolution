@@ -17,7 +17,7 @@ use crate::{
                 ListResponse,
                 sensor::{
                     ActivateSensorRequest, CreateSensorRequest, LorawanCredentialsRequest,
-                    SensorDataResponse, SensorModelResponse, SensorResponse,
+                    SensorDataResponse, SensorModelResponse, SensorResponse, SetSensorTreeRequest,
                 },
                 tree::TreeResponse,
             },
@@ -43,7 +43,11 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(get_sensor, delete_sensor))
         .routes(routes!(activate_sensor))
         .routes(routes!(list_sensor_data))
-        .routes(routes!(get_tree_by_sensor))
+        .routes(routes!(
+            get_tree_by_sensor,
+            set_sensor_tree,
+            remove_sensor_tree
+        ))
         .routes(routes!(list_sensor_models))
         .routes(routes!(get_sensor_model))
 }
@@ -228,6 +232,56 @@ pub async fn activate_sensor(
         .sensor_service
         .activate(&sensor_id, Id::new(body.tree_id))
         .await?;
+    Ok(Json(SensorResponse::from(&view)))
+}
+
+#[utoipa::path(put, path = "/sensors/{sensor_id}/tree", tag = "Sensors",
+    operation_id = "setSensorTree",
+    summary = "Move an activated sensor to a different tree",
+    description = "Re-links an already activated sensor to `tree_id`. Rejects a \
+        tree that already has a different sensor and a sensor that is not yet \
+        activated. Idempotent if the sensor is already linked to that tree.",
+    params(("sensor_id" = String, Path, description = "Sensor ID (EUI)")),
+    request_body = SetSensorTreeRequest,
+    responses(
+        (status = 200, description = "Sensor re-linked", body = SensorResponse),
+        (status = 404, description = "Sensor or tree not found"),
+        (status = 409, description = "Conflict: sensor not activated or tree already linked"),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
+pub async fn set_sensor_tree(
+    State(state): State<Arc<AppState>>,
+    SensorIdPath(sensor_id): SensorIdPath,
+    Json(body): Json<SetSensorTreeRequest>,
+) -> Result<Json<SensorResponse>, ServiceError> {
+    let view = state
+        .sensor_service
+        .reassign_tree(&sensor_id, Id::new(body.tree_id))
+        .await?;
+    Ok(Json(SensorResponse::from(&view)))
+}
+
+#[utoipa::path(delete, path = "/sensors/{sensor_id}/tree", tag = "Sensors",
+    operation_id = "removeSensorTree",
+    summary = "Remove a sensor's tree link and reset it to prepared",
+    description = "Detaches the sensor from its tree and deactivates it, \
+        returning it to the `Prepared` state. Idempotent for an already \
+        prepared sensor.",
+    params(("sensor_id" = String, Path, description = "Sensor ID (EUI)")),
+    responses(
+        (status = 200, description = "Sensor reset to prepared", body = SensorResponse),
+        (status = 404, description = "Sensor not found"),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
+pub async fn remove_sensor_tree(
+    State(state): State<Arc<AppState>>,
+    SensorIdPath(sensor_id): SensorIdPath,
+) -> Result<Json<SensorResponse>, ServiceError> {
+    let view = state.sensor_service.deactivate(&sensor_id).await?;
     Ok(Json(SensorResponse::from(&view)))
 }
 

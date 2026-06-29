@@ -60,7 +60,7 @@ const SensorHero = ({ sensor }: SensorHeroProps) => {
       </div>
 
       <div className="md:self-start md:pt-2">
-        <SensorActionsMenu sensorId={sensor.id} />
+        <SensorActionsMenu sensor={sensor} />
       </div>
     </header>
   )

@@ -302,6 +302,14 @@ pub struct ActivateSensorRequest {
     pub tree_id: uuid::Uuid,
 }
 
+/// Request body for `PUT /sensors/{sensor_id}/tree` - links an activated
+/// sensor to (or moves it to) the given tree.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct SetSensorTreeRequest {
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub tree_id: uuid::Uuid,
+}
+
 /// Physical quantity reported by a sensor ability.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]

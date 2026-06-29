@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ChevronDown, Trash2 } from 'lucide-react'
+import { ChevronDown, Link2, Link2Off, Replace, Trash2 } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,13 +19,18 @@ import {
   DropdownMenuTrigger,
   toast,
 } from '@green-ecolution/ui'
+import type { Sensor } from '@/api/backendApi'
 import { sensorApi } from '@/api/backendApi'
+import { useSensorActions } from './SensorActionsContext'
 
 interface SensorActionsMenuProps {
-  sensorId: string
+  sensor: Sensor
 }
 
-const SensorActionsMenu = ({ sensorId }: SensorActionsMenuProps) => {
+const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
+  const sensorId = sensor.id
+  const actions = useSensorActions()
+  const isPrepared = sensor.status === 'prepared'
   const [dialogOpen, setDialogOpen] = useState(false)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -52,6 +57,26 @@ const SensorActionsMenu = ({ sensorId }: SensorActionsMenuProps) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-56">
+          {isPrepared ? (
+            <DropdownMenuItem className="cursor-pointer" onSelect={() => actions.requestActivate()}>
+              <Link2 className="mr-2 size-4" />
+              Aktivieren & Baum zuweisen
+            </DropdownMenuItem>
+          ) : (
+            <>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onSelect={() => actions.requestReassign()}
+              >
+                <Replace className="mr-2 size-4" />
+                Anderen Baum zuweisen
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onSelect={() => actions.requestRemove()}>
+                <Link2Off className="mr-2 size-4" />
+                Baumverknüpfung aufheben
+              </DropdownMenuItem>
+            </>
+          )}
           <DropdownMenuItem
             className="text-destructive focus:text-destructive cursor-pointer"
             onSelect={(e) => {

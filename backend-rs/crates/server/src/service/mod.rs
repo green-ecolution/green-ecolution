@@ -24,6 +24,8 @@ pub enum ServiceError {
     TreeAlreadyHasSensor,
     #[error("sensor is already activated")]
     AlreadyActivated,
+    #[error("sensor is not activated")]
+    NotActivated,
     #[error("{feature} feature is disabled")]
     FeatureDisabled { feature: &'static str },
 }

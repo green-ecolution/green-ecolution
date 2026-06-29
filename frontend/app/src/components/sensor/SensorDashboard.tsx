@@ -1,5 +1,6 @@
 import BackLink from '@/components/general/links/BackLink'
 import SensorAbilitiesSection from './detail/SensorAbilitiesSection'
+import SensorActionsProvider from './detail/SensorActionsContext'
 import SensorHero from './detail/SensorHero'
 import SensorIdentitySection from './detail/SensorIdentitySection'
 import SensorLinkedTreeSection from './detail/SensorLinkedTreeSection'
@@ -14,7 +15,7 @@ interface SensorDashboardProps {
 
 const SensorDashboard = ({ sensor }: SensorDashboardProps) => {
   return (
-    <>
+    <SensorActionsProvider sensor={sensor}>
       <BackLink link={{ to: '/sensors', search: { page: 1 } }} label="Zu allen Sensoren" />
       <div className="flex flex-col gap-10 pb-16">
         <SensorHero sensor={sensor} />
@@ -25,7 +26,7 @@ const SensorDashboard = ({ sensor }: SensorDashboardProps) => {
         <SensorLinkedTreeSection sensor={sensor} />
         <SensorLorawanConfigSection sensor={sensor} />
       </div>
-    </>
+    </SensorActionsProvider>
   )
 }
 

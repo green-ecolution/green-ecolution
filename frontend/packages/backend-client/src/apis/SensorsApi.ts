@@ -21,6 +21,7 @@ import type {
   SensorDataResponse,
   SensorModelResponse,
   SensorResponse,
+  SetSensorTreeRequest,
 } from '../models/index';
 import {
     ActivateSensorRequestFromJSON,
@@ -35,6 +36,8 @@ import {
     SensorModelResponseToJSON,
     SensorResponseFromJSON,
     SensorResponseToJSON,
+    SetSensorTreeRequestFromJSON,
+    SetSensorTreeRequestToJSON,
 } from '../models/index';
 
 export interface ActivateSensorOperationRequest {
@@ -65,6 +68,15 @@ export interface ListSensorDataRequest {
 export interface ListSensorsRequest {
     page?: number;
     perPage?: number;
+}
+
+export interface RemoveSensorTreeRequest {
+    sensorId: string;
+}
+
+export interface SetSensorTreeOperationRequest {
+    sensorId: string;
+    setSensorTreeRequest: SetSensorTreeRequest;
 }
 
 /**
@@ -382,6 +394,94 @@ export class SensorsApi extends runtime.BaseAPI {
      */
     async listSensors(requestParameters: ListSensorsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseSensorResponse> {
         const response = await this.listSensorsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Detaches the sensor from its tree and deactivates it, returning it to the `Prepared` state. Idempotent for an already prepared sensor.
+     * Remove a sensor\'s tree link and reset it to prepared
+     */
+    async removeSensorTreeRaw(requestParameters: RemoveSensorTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
+        if (requestParameters['sensorId'] == null) {
+            throw new runtime.RequiredError(
+                'sensorId',
+                'Required parameter "sensorId" was null or undefined when calling removeSensorTree().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/sensors/{sensor_id}/tree`;
+        urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SensorResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Detaches the sensor from its tree and deactivates it, returning it to the `Prepared` state. Idempotent for an already prepared sensor.
+     * Remove a sensor\'s tree link and reset it to prepared
+     */
+    async removeSensorTree(requestParameters: RemoveSensorTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorResponse> {
+        const response = await this.removeSensorTreeRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Re-links an already activated sensor to `tree_id`. Rejects a tree that already has a different sensor and a sensor that is not yet activated. Idempotent if the sensor is already linked to that tree.
+     * Move an activated sensor to a different tree
+     */
+    async setSensorTreeRaw(requestParameters: SetSensorTreeOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SensorResponse>> {
+        if (requestParameters['sensorId'] == null) {
+            throw new runtime.RequiredError(
+                'sensorId',
+                'Required parameter "sensorId" was null or undefined when calling setSensorTree().'
+            );
+        }
+
+        if (requestParameters['setSensorTreeRequest'] == null) {
+            throw new runtime.RequiredError(
+                'setSensorTreeRequest',
+                'Required parameter "setSensorTreeRequest" was null or undefined when calling setSensorTree().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/sensors/{sensor_id}/tree`;
+        urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: SetSensorTreeRequestToJSON(requestParameters['setSensorTreeRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SensorResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Re-links an already activated sensor to `tree_id`. Rejects a tree that already has a different sensor and a sensor that is not yet activated. Idempotent if the sensor is already linked to that tree.
+     * Move an activated sensor to a different tree
+     */
+    async setSensorTree(requestParameters: SetSensorTreeOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorResponse> {
+        const response = await this.setSensorTreeRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -8,4 +8,6 @@ pub enum SensorError {
     Validation(#[from] ValidationError),
     #[error("sensor is already activated")]
     AlreadyActivated,
+    #[error("sensor is not activated")]
+    NotActivated,
 }

@@ -145,6 +145,18 @@ impl Sensor {
         }])
     }
 
+    /// Activated -> Prepared. Used when a sensor is taken out of service and
+    /// its tree link removed. Inverse of [`Sensor::activate`].
+    pub fn deactivate(&mut self) -> Result<Vec<crate::events::DomainEvent>, SensorError> {
+        if !self.is_activated() {
+            return Err(SensorError::NotActivated);
+        }
+        self.activated_at = None;
+        Ok(vec![crate::events::DomainEvent::SensorDeactivated {
+            sensor_id: self.id.clone(),
+        }])
+    }
+
     pub fn sensor_type(&self) -> SensorType {
         self.sensor_type
     }
@@ -227,6 +239,38 @@ mod tests {
             Err(SensorError::AlreadyActivated)
         ));
         assert_eq!(s.activated_at(), original);
+    }
+
+    #[test]
+    fn deactivate_clears_timestamp_and_emits_event() {
+        use crate::events::DomainEvent;
+        let mut s = fixed_sensor(); // fixture is already activated
+        let events = s.deactivate().unwrap();
+        assert!(!s.is_activated());
+        assert_eq!(s.activated_at(), None);
+        assert_eq!(events.len(), 1);
+        match &events[0] {
+            DomainEvent::SensorDeactivated { sensor_id } => {
+                assert_eq!(sensor_id.as_str(), "eui-a81758fffe0c3b52")
+            }
+            other => panic!("unexpected event: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn deactivate_when_not_activated_returns_not_activated() {
+        let mut s = fixed_sensor();
+        s.activated_at = None;
+        assert!(matches!(s.deactivate(), Err(SensorError::NotActivated)));
+        assert_eq!(s.activated_at(), None);
+    }
+
+    #[test]
+    fn activate_after_deactivate_is_allowed() {
+        let mut s = fixed_sensor();
+        s.deactivate().unwrap();
+        assert_ok!(s.activate(fixed_now()));
+        assert!(s.is_activated());
     }
 
     mod derive_connectivity_tests {

@@ -1,4 +1,3 @@
-import { treeApi } from '@/api/backendApi'
 import {
   Alert,
   AlertContent,
@@ -10,38 +9,52 @@ import {
   cn,
 } from '@green-ecolution/ui'
 import type { TreeResponse } from '@green-ecolution/backend-client'
-import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
 import { Check, Search, TreeDeciduous } from 'lucide-react'
 import { useEffect, useRef } from 'react'
+import { useTreeSearch } from '@/hooks/useTreeSearch'
+
+// The list scrolls inside a modal's overflow container, not the viewport, so the
+// infinite-scroll observer must use that container as its root.
+const nearestScrollParent = (el: HTMLElement): HTMLElement | null => {
+  let node = el.parentElement
+  while (node) {
+    const overflowY = getComputedStyle(node).overflowY
+    if (overflowY === 'auto' || overflowY === 'scroll') return node
+    node = node.parentElement
+  }
+  return null
+}
 
 interface SensorTreeSearchResultsProps {
   q: string
   selectedTreeId: string | null
   onSelect: (treeId: string) => void
+  showAll?: boolean
 }
 
-const PER_PAGE = 20
-
-const SensorTreeSearchResults = ({ q, selectedTreeId, onSelect }: SensorTreeSearchResultsProps) => {
-  const trimmed = q.trim()
-  const enabled = trimmed.length > 0
+const SensorTreeSearchResults = ({
+  q,
+  selectedTreeId,
+  onSelect,
+  showAll = false,
+}: SensorTreeSearchResultsProps) => {
   const sentinelRef = useRef<HTMLDivElement | null>(null)
+  const {
+    enabled,
+    trimmed,
+    items,
+    total,
+    isLoading,
+    isError,
+    refetch,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useTreeSearch(q, showAll)
 
-  const { data, isLoading, isError, refetch, hasNextPage, fetchNextPage, isFetchingNextPage } =
-    useInfiniteQuery({
-      queryKey: ['trees', 'search', trimmed],
-      queryFn: ({ pageParam }) =>
-        treeApi.listTrees({ page: pageParam, perPage: PER_PAGE, q: trimmed }),
-      initialPageParam: 1,
-      getNextPageParam: (lastPage, allPages) => {
-        const total = lastPage.pagination?.totalRecords ?? 0
-        const loaded = allPages.reduce((sum, p) => sum + (p.data?.length ?? 0), 0)
-        return loaded < total ? allPages.length + 1 : undefined
-      },
-      enabled,
-      placeholderData: keepPreviousData,
-    })
-
+  // `enabled` is a dependency because the sentinel only exists once the list is
+  // shown; without it the observer never attaches when re-enabling over cached
+  // results (item count and hasNextPage stay unchanged).
   useEffect(() => {
     const el = sentinelRef.current
     if (!el || !hasNextPage || isFetchingNextPage) return
@@ -49,11 +62,11 @@ const SensorTreeSearchResults = ({ q, selectedTreeId, onSelect }: SensorTreeSear
       (entries) => {
         if (entries[0]?.isIntersecting) void fetchNextPage()
       },
-      { rootMargin: '0px 0px 200px 0px' },
+      { root: nearestScrollParent(el), rootMargin: '0px 0px 200px 0px' },
     )
     obs.observe(el)
     return () => obs.disconnect()
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+  }, [enabled, hasNextPage, isFetchingNextPage, fetchNextPage, items.length])
 
   if (!enabled) {
     return (
@@ -82,15 +95,18 @@ const SensorTreeSearchResults = ({ q, selectedTreeId, onSelect }: SensorTreeSear
     )
   }
 
-  const items = data?.pages.flatMap((p) => p.data ?? []) ?? []
-  const total = data?.pages[data.pages.length - 1]?.pagination?.totalRecords ?? items.length
-
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-10 text-dark-600">
         <Search className="size-6 text-dark-400" aria-hidden />
-        <p className="text-sm">Keine Bäume gefunden für „{trimmed}".</p>
-        <p className="text-xs text-dark-500">Prüfe Schreibweise oder Baumnummer.</p>
+        {trimmed ? (
+          <>
+            <p className="text-sm">Keine Bäume gefunden für „{trimmed}".</p>
+            <p className="text-xs text-dark-500">Prüfe Schreibweise oder Baumnummer.</p>
+          </>
+        ) : (
+          <p className="text-sm">Es sind keine Bäume vorhanden.</p>
+        )}
       </div>
     )
   }
@@ -98,7 +114,7 @@ const SensorTreeSearchResults = ({ q, selectedTreeId, onSelect }: SensorTreeSear
   return (
     <div className="flex flex-col gap-2">
       <p className="text-xs text-dark-600">
-        {items.length} von {total} Treffern
+        {items.length} von {total} {trimmed ? 'Treffern' : 'Bäumen'}
       </p>
       <ul
         className="flex flex-col gap-2"
