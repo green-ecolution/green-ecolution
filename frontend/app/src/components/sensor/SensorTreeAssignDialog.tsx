@@ -67,18 +67,20 @@ const DialogBody = ({
 }) => {
   const [q, setQ] = useState('')
   const [showAll, setShowAll] = useState(false)
-  const { items } = useTreeSearch(q, showAll)
+  const { items, enabled } = useTreeSearch(q, showAll)
   const { mapCenter, mapZoom } = useMapStore()
 
+  const visibleItems = useMemo(() => (enabled ? items : []), [enabled, items])
+
   const selectedTree = useMemo(
-    () => items.find((t) => t.id === selectedTreeId) ?? null,
-    [items, selectedTreeId],
+    () => visibleItems.find((t) => t.id === selectedTreeId) ?? null,
+    [visibleItems, selectedTreeId],
   )
 
   const bounds = useMemo<LngLatBoundsLike | undefined>(() => {
-    if (selectedTree || items.length === 0) return undefined
-    const lngs = items.map((t) => t.longitude)
-    const lats = items.map((t) => t.latitude)
+    if (selectedTree || visibleItems.length === 0) return undefined
+    const lngs = visibleItems.map((t) => t.longitude)
+    const lats = visibleItems.map((t) => t.latitude)
     let w = Math.min(...lngs)
     let e = Math.max(...lngs)
     let s = Math.min(...lats)
@@ -93,7 +95,7 @@ const DialogBody = ({
       [w, s],
       [e, n],
     ]
-  }, [items, selectedTree])
+  }, [visibleItems, selectedTree])
 
   const center: [number, number] = sensor.coordinate
     ? [sensor.coordinate.longitude, sensor.coordinate.latitude]
@@ -129,7 +131,11 @@ const DialogBody = ({
           ariaLabel="Karte zur Baumauswahl"
           className={cn('aspect-[4/3] sm:aspect-auto sm:h-full')}
         >
-          <SelectableTreeMarkers trees={items} selectedTreeId={selectedTreeId} onSelect={onSelect} />
+          <SelectableTreeMarkers
+            trees={visibleItems}
+            selectedTreeId={selectedTreeId}
+            onSelect={onSelect}
+          />
           {selectedTree && <FocusTree lng={selectedTree.longitude} lat={selectedTree.latitude} />}
         </MapPreview>
       </div>
