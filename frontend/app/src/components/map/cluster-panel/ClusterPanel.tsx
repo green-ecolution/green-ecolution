@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Loading } from '@green-ecolution/ui'
+import { Button, Loading } from '@green-ecolution/ui'
+import { Pencil } from 'lucide-react'
 import { isValidUuid, treeClusterIdQuery } from '@/api/queries'
+import MapPanel from '@/components/map-gl/MapPanel'
 import ClusterPanelShell from './ClusterPanelShell'
 import ClusterPanelView from './ClusterPanelView'
 import ClusterPanelEdit from './ClusterPanelEdit'
@@ -11,42 +13,66 @@ interface ClusterPanelProps {
   onClose: () => void
   onOpenDashboard: () => void
   onExpand?: () => void
+  activeSnapPoint?: number | string | null
+  setActiveSnapPoint?: (snap: number | string | null) => void
 }
 
-const ClusterPanel = ({ clusterId, onClose, onOpenDashboard, onExpand }: ClusterPanelProps) => {
+const ClusterPanel = ({
+  clusterId,
+  onClose,
+  onOpenDashboard,
+  onExpand,
+  activeSnapPoint,
+  setActiveSnapPoint,
+}: ClusterPanelProps) => {
   const [mode, setMode] = useState<'view' | 'edit'>('view')
   const { data, isError } = useQuery(treeClusterIdQuery(clusterId))
   const failed = !isValidUuid(clusterId) || isError
 
+  const startEdit = () => {
+    setMode('edit')
+    onExpand?.()
+  }
+
+  const title = mode === 'edit' ? 'Gruppe bearbeiten' : (data?.name ?? 'Baumgruppe')
+
+  const headerAction =
+    data && mode === 'view' ? (
+      <Button variant="ghost" size="icon" aria-label="Gruppe bearbeiten" onClick={startEdit}>
+        <Pencil />
+      </Button>
+    ) : undefined
+
   return (
-    <ClusterPanelShell onClose={onClose}>
-      {data ? (
-        mode === 'view' ? (
-          <ClusterPanelView
-            treecluster={data}
-            onEdit={() => {
-              setMode('edit')
-              onExpand?.()
-            }}
-            onClose={onClose}
-            onOpenDashboard={onOpenDashboard}
-          />
+    <MapPanel
+      title={title}
+      headerAction={headerAction}
+      onClose={onClose}
+      closeLabel="Seitenansicht schließen"
+      mobileCollapsedSnap="260px"
+      activeSnapPoint={activeSnapPoint}
+      setActiveSnapPoint={setActiveSnapPoint}
+    >
+      <ClusterPanelShell onClose={onClose}>
+        {data ? (
+          mode === 'view' ? (
+            <ClusterPanelView treecluster={data} onOpenDashboard={onOpenDashboard} />
+          ) : (
+            <ClusterPanelEdit
+              treecluster={data}
+              onCancel={() => setMode('view')}
+              onSaved={() => setMode('view')}
+            />
+          )
+        ) : failed ? (
+          <p className="py-10 text-center text-dark-600">
+            Die Baumgruppe konnte nicht geladen werden.
+          </p>
         ) : (
-          <ClusterPanelEdit
-            treecluster={data}
-            onCancel={() => setMode('view')}
-            onClose={onClose}
-            onSaved={() => setMode('view')}
-          />
-        )
-      ) : failed ? (
-        <p className="py-10 text-center text-dark-600">
-          Die Baumgruppe konnte nicht geladen werden.
-        </p>
-      ) : (
-        <Loading className="justify-center py-10" label="Lade Baumgruppe..." />
-      )}
-    </ClusterPanelShell>
+          <Loading className="justify-center py-10" label="Lade Baumgruppe..." />
+        )}
+      </ClusterPanelShell>
+    </MapPanel>
   )
 }
 
