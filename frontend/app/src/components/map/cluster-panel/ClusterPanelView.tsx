@@ -1,5 +1,5 @@
 import { ComponentProps } from 'react'
-import { MoveRight, Pencil, RadioTower, X } from 'lucide-react'
+import { MoveRight, RadioTower } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { Badge, Button, StatusCard } from '@green-ecolution/ui'
@@ -11,8 +11,6 @@ import { latestSensorReading, sortTreesSensorFirst, summarizeTopSpecies } from '
 
 interface ClusterPanelViewProps {
   treecluster: TreeClusterResponse
-  onEdit: () => void
-  onClose: () => void
   onOpenDashboard: () => void
 }
 
@@ -29,12 +27,7 @@ const FILLED_BADGE: Record<string, ComponentProps<typeof Badge>['variant']> = {
   'outline-green-dark': 'success',
 }
 
-const ClusterPanelView = ({
-  treecluster,
-  onEdit,
-  onClose,
-  onOpenDashboard,
-}: ClusterPanelViewProps) => {
+const ClusterPanelView = ({ treecluster, onOpenDashboard }: ClusterPanelViewProps) => {
   const status = getWateringStatusDetails(treecluster.wateringStatus)
   const species = summarizeTopSpecies(treecluster.trees)
   const sortedTrees = sortTreesSensorFirst(treecluster.trees)
@@ -55,7 +48,7 @@ const ClusterPanelView = ({
 
   return (
     <div className="flex flex-col gap-y-5">
-      <header className="flex items-center justify-between gap-3">
+      <div className="space-y-2">
         <Badge variant={FILLED_BADGE[status.color] ?? 'muted'} size="lg" className="gap-1.5">
           <span
             className="size-1.5 rounded-full"
@@ -64,32 +57,6 @@ const ClusterPanelView = ({
           />
           {status.label}
         </Badge>
-        <div className="flex items-center gap-1.5">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Gruppe bearbeiten"
-            className="rounded-full bg-dark-50 text-dark-500 hover:bg-dark-100 hover:text-green-dark"
-            onClick={onEdit}
-          >
-            <Pencil className="stroke-[1.5]" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Seitenansicht schließen"
-            className="hidden rounded-full bg-dark-50 text-dark-500 hover:bg-dark-100 hover:text-dark-700 lg:flex"
-            onClick={onClose}
-          >
-            <X />
-          </Button>
-        </div>
-      </header>
-
-      <div className="space-y-1.5">
-        <h2 className="font-lato text-3xl font-bold leading-tight text-dark-900">
-          {treecluster.name}
-        </h2>
         <p className="text-sm text-dark-600">
           {treecluster.address} · {treeCount} {treeCount === 1 ? 'Baum' : 'Bäume'}
           {species && ` · ${species}`}

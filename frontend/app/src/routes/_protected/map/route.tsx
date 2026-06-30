@@ -13,8 +13,7 @@ import MapBackgroundClick from '@/components/map-gl/MapBackgroundClick'
 import MapToolbarBar from '@/components/map/MapToolbarBar'
 import ClusterPanel from '@/components/map/cluster-panel/ClusterPanel'
 import { clusterBoundariesQuery, clusterMarkersQuery } from '@/api/queries'
-import { Drawer, DrawerContent, DrawerTitle, Loading } from '@green-ecolution/ui'
-import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { Loading } from '@green-ecolution/ui'
 import { Suspense, useCallback, useState } from 'react'
 
 const mapSearchParamsSchema = z.object({
@@ -62,7 +61,6 @@ function MapRoot() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const search = useSearch({ strict: false })
-  const isDesktop = useMediaQuery('(min-width: 1024px)')
   // Reactive exact-match: matchRoute() didn't reliably re-render MapRoot on
   // pathname-only changes, leaving isIndex stale across /map ↔ sub-route nav.
   const isIndex = pathname === '/map' || pathname === '/map/'
@@ -103,48 +101,19 @@ function MapRoot() {
               </Suspense>
             </MapCanvas>
           </Suspense>
-        </div>
-        {isDesktop && panelClusterId && (
-          <aside
-            key={panelClusterId}
-            className="w-[28rem] shrink-0 border-l border-dark-100 bg-white animate-in slide-in-from-right-[100%] duration-300 ease-out"
-          >
+          {panelClusterId && (
             <ClusterPanel
+              key={panelClusterId}
               clusterId={panelClusterId}
               onClose={handleClosePanel}
               onOpenDashboard={handleOpenDashboard}
+              onExpand={handleExpandPanel}
+              activeSnapPoint={snapPoint}
+              setActiveSnapPoint={setSnapPoint}
             />
-          </aside>
-        )}
+          )}
+        </div>
       </div>
-
-      {!isDesktop && (
-        <Drawer
-          open={!!panelClusterId}
-          onOpenChange={(open) => {
-            if (!open) handleClosePanel()
-          }}
-          modal={false}
-          snapPoints={['260px', 1]}
-          activeSnapPoint={snapPoint}
-          setActiveSnapPoint={setSnapPoint}
-        >
-          <DrawerContent showOverlay={false}>
-            <DrawerTitle className="sr-only">Baumgruppen-Details</DrawerTitle>
-            {panelClusterId && (
-              <div className="min-h-0 flex-1 overflow-hidden">
-                <ClusterPanel
-                  key={panelClusterId}
-                  clusterId={panelClusterId}
-                  onClose={handleClosePanel}
-                  onOpenDashboard={handleOpenDashboard}
-                  onExpand={handleExpandPanel}
-                />
-              </div>
-            )}
-          </DrawerContent>
-        </Drawer>
-      )}
     </div>
   )
 }
