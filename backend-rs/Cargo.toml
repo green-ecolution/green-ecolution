@@ -3,7 +3,7 @@ resolver = "3"
 members = ["crates/server", "crates/domain", "crates/domain-wasm"]
 
 [workspace.package]
-version = "0.2.1" # x-release-please-version
+version = "0.3.0" # x-release-please-version
 edition = "2024"
 rust-version = "1.88"
 authors = ["Cedrik Hoffmann <choffmann@green-ecolution.de>"]

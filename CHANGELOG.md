@@ -11,6 +11,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.3.0](https://github.com/green-ecolution/green-ecolution/compare/v0.2.1...v0.3.0) (2026-07-01)
+
+
+### Features
+
+* **health:** add readiness endpoint with dependency check (GECO-231) ([#849](https://github.com/green-ecolution/green-ecolution/issues/849)) ([5617a4f](https://github.com/green-ecolution/green-ecolution/commit/5617a4f224da5c8d4606260fa593eca9285d1927))
+* **import:** add import-kataster-fl CLI to upsert Flensburg cadastre trees ([#829](https://github.com/green-ecolution/green-ecolution/issues/829)) ([11b8266](https://github.com/green-ecolution/green-ecolution/commit/11b82665863499e6f3dad96dde8f101d1181a79a))
+* **logging:** flatten JSON log output for Loki ingestion (GECO-230) ([#847](https://github.com/green-ecolution/green-ecolution/issues/847)) ([4a55e4a](https://github.com/green-ecolution/green-ecolution/commit/4a55e4ac4ff1ef64ebb8e015a1ddf450d637c7b2))
+* **logging:** lift request_id to a top-level log field (GECO-227) ([#848](https://github.com/green-ecolution/green-ecolution/issues/848)) ([f670756](https://github.com/green-ecolution/green-ecolution/commit/f67075691a0bcc7582b689fec7e3ef71b2db675f))
+* **map:** cluster detail side panel with docked layout and mobile drawer (GECO-196) ([#827](https://github.com/green-ecolution/green-ecolution/issues/827)) ([5fdf2a8](https://github.com/green-ecolution/green-ecolution/commit/5fdf2a8c5f421692eeb6def9733d41ee2452e2ef))
+* **map:** rebuild the interactive map on MapLibre GL (GECO-250) ([#851](https://github.com/green-ecolution/green-ecolution/issues/851)) ([fc96b2f](https://github.com/green-ecolution/green-ecolution/commit/fc96b2f3428b10289acad73f7bc3736da50ae60b))
+* **map:** show watering-group boundary around clustered trees (GECO-150) ([#820](https://github.com/green-ecolution/green-ecolution/issues/820)) ([b02c24f](https://github.com/green-ecolution/green-ecolution/commit/b02c24f72019a74e16e07a3804fb41745eb47942))
+* **nav:** redesign sidebar as always-expanded rail ([#826](https://github.com/green-ecolution/green-ecolution/issues/826)) ([a97a606](https://github.com/green-ecolution/green-ecolution/commit/a97a6069fa1e154312e5d615098da2857d305d1b))
+* **sensor:** activate and relink sensors to trees from the detail page without QR (GECO-258) ([#853](https://github.com/green-ecolution/green-ecolution/issues/853)) ([84093d5](https://github.com/green-ecolution/green-ecolution/commit/84093d5343247e373095521968ef0e5ce573803b))
+* **sensor:** capture and visualize LoRaWAN signal strength (GECO-218) ([#861](https://github.com/green-ecolution/green-ecolution/issues/861)) ([244affa](https://github.com/green-ecolution/green-ecolution/commit/244affa6acffadef271932539b28dfbf14012dd3))
+* **treecluster:** card-grid overview with search, filters, sorting & status statistics (GECO-212) ([#837](https://github.com/green-ecolution/green-ecolution/issues/837)) ([4ec0d87](https://github.com/green-ecolution/green-ecolution/commit/4ec0d872ed464ef110955a23e38a0c5e05c6e413))
+* **watering:** soil-type and age-aware status for volumetric soil-moisture sensors (GECO-151) ([#828](https://github.com/green-ecolution/green-ecolution/issues/828)) ([fea763f](https://github.com/green-ecolution/green-ecolution/commit/fea763fd88a8f756ca1f8dfbce2ba8f840c77ff7))
+
+
+### Bug Fixes
+
+* **cluster:** persist geometry column on tree cluster save (GECO-248) ([#850](https://github.com/green-ecolution/green-ecolution/issues/850)) ([9dfbbef](https://github.com/green-ecolution/green-ecolution/commit/9dfbbef01b3bc08b961eb84473a002b894ecc379))
+* correct release notes URL ([#836](https://github.com/green-ecolution/green-ecolution/issues/836)) ([4d33374](https://github.com/green-ecolution/green-ecolution/commit/4d33374b886b1cf3817e7eb88512dfa69e175388))
+* **layout:** collapse sidebar to icon rail on iPad-width viewports ([#854](https://github.com/green-ecolution/green-ecolution/issues/854)) ([a20a991](https://github.com/green-ecolution/green-ecolution/commit/a20a991d62db758ed13aa86165df429675593262))
+* **logging:** stop leaking Keycloak error bodies and email values into logs (GECO-229) ([#839](https://github.com/green-ecolution/green-ecolution/issues/839)) ([b4f9ef8](https://github.com/green-ecolution/green-ecolution/commit/b4f9ef8e3bbbd963d85c3bc9a9cd89c90ad5bf0a))
+* **map:** float cluster detail panel over the map with shared dialog chrome ([#859](https://github.com/green-ecolution/green-ecolution/issues/859)) ([3127887](https://github.com/green-ecolution/green-ecolution/commit/3127887598941b9d2624d7c854f6966f23746a0a))
+* **map:** make tree/cluster create panels usable on mobile ([#852](https://github.com/green-ecolution/green-ecolution/issues/852)) ([16564c1](https://github.com/green-ecolution/green-ecolution/commit/16564c10cc35c576193ba4ba9b96835f19ee73ac))
+* **treecluster:** poll cluster dashboard so watering status updates without reload ([#860](https://github.com/green-ecolution/green-ecolution/issues/860)) ([4f6adaa](https://github.com/green-ecolution/green-ecolution/commit/4f6adaa63c0e8839a8259fe1a7bc843ba017d7fc))
+
 ## [0.2.1](https://github.com/green-ecolution/green-ecolution/compare/v0.2.0...v0.2.1) (2026-06-08)
 
 
