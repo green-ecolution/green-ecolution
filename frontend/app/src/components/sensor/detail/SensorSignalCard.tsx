@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
   SignalBars,
-  type BadgeProps,
 } from '@green-ecolution/ui'
 import { Signal } from 'lucide-react'
 import type { Sensor } from '@/api/backendApi'
@@ -16,15 +15,9 @@ import {
   signalLevelFromRssi,
   SIGNAL_LEVEL_LABEL,
   SIGNAL_LEVEL_TEXT_COLOR,
-  type SignalLevel,
+  SIGNAL_LEVEL_BADGE_VARIANT,
 } from './signalParsing'
 import ChartSignalData from './ChartSignalData'
-
-const LEVEL_BADGE_VARIANT: Record<SignalLevel, BadgeProps['variant']> = {
-  good: 'success',
-  fair: 'warning',
-  weak: 'error',
-}
 
 interface SensorSignalCardProps {
   sensor: Sensor
@@ -51,7 +44,9 @@ const SensorSignalCard = ({ sensor }: SensorSignalCardProps) => {
             </div>
             <CardTitle>Signal</CardTitle>
           </div>
-          {level && <Badge variant={LEVEL_BADGE_VARIANT[level]}>{SIGNAL_LEVEL_LABEL[level]}</Badge>}
+          {level && (
+            <Badge variant={SIGNAL_LEVEL_BADGE_VARIANT[level]}>{SIGNAL_LEVEL_LABEL[level]}</Badge>
+          )}
         </div>
       </CardHeader>
       <CardContent>

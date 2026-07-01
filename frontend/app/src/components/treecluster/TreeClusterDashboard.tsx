@@ -107,11 +107,10 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
               description="Wird aktualisiert, sobald ein Einsatzplan mit dieser Gruppe als »Beendet« markiert wird."
             />
           </li>
-          <li className="h-full">
-            <ClusterSignalCard treecluster={treecluster} />
-          </li>
         </ul>
       </section>
+
+      <ClusterSignalCard treecluster={treecluster} />
 
       <section className="mt-16">
         <h2 className="text-xl font-bold font-lato mb-10">Alle zugehörigen Bäume</h2>

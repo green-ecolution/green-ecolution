@@ -44,3 +44,11 @@ export const SIGNAL_LEVEL_TEXT_COLOR: Record<SignalLevel, string> = {
   fair: 'text-yellow-900',
   weak: 'text-red',
 }
+
+// Kept as plain string literals so this module stays UI-agnostic; the values
+// are valid `Badge` variants.
+export const SIGNAL_LEVEL_BADGE_VARIANT: Record<SignalLevel, 'success' | 'warning' | 'error'> = {
+  good: 'success',
+  fair: 'warning',
+  weak: 'error',
+}
