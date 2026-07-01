@@ -171,7 +171,7 @@ services:
       timeout: 5s
       retries: 10
     volumes:
-      - db_data:/bitnami/postgresql
+      - db_data:/var/lib/postgresql/data
     ports:
       - "127.0.0.1:5432:5432"
 
