@@ -77,8 +77,7 @@ pub struct VolumetricReading {
 }
 
 /// LoRaWAN radio quality for one received uplink, reduced to the strongest
-/// receiving gateway. Not stored as columns; embedded in the reading's `data`
-/// JSON under the `signal` key, mirroring how `battery` lives there.
+/// receiving gateway (highest RSSI).
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct SignalQuality {
     pub rssi_dbm: i32,
