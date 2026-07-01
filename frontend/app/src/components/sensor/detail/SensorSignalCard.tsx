@@ -54,7 +54,7 @@ const SensorSignalCard = ({ sensor }: SensorSignalCardProps) => {
           <p className="text-muted-foreground">Keine Signaldaten empfangen.</p>
         ) : (
           <>
-            <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="flex items-end gap-4">
                 <SignalBars
                   filled={signalBarsFromRssi(signal.rssiDbm)}
@@ -66,7 +66,7 @@ const SensorSignalCard = ({ sensor }: SensorSignalCardProps) => {
                   <span className="ml-1.5 text-base font-semibold text-muted-foreground">dBm</span>
                 </p>
               </div>
-              <dl className="ml-auto flex gap-3">
+              <dl className="grid grid-cols-2 gap-3 sm:flex">
                 <Stat label="SNR" value={`${signal.snrDb} dB`} />
                 <Stat label="Gateways" value={String(signal.gatewayCount)} />
               </dl>
