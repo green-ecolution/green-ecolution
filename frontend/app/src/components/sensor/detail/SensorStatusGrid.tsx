@@ -1,6 +1,7 @@
 import { StatusCard } from '@green-ecolution/ui'
 import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
 import { formatBatteryVoltage, formatLastSeen, parseBatteryVoltage } from './latestDataParsing'
+import { formatSendInterval } from './configParsing'
 import type { Sensor } from '@/api/backendApi'
 
 interface SensorStatusGridProps {
@@ -12,6 +13,7 @@ const SensorStatusGrid = ({ sensor }: SensorStatusGridProps) => {
   const battery = parseBatteryVoltage(sensor.latestData)
   const batteryStatus =
     battery === null ? 'default' : battery < 2.8 ? 'outline-red' : 'outline-green-dark'
+  const sendInterval = formatSendInterval(sensor)
 
   return (
     <section aria-labelledby="sensor-status-heading">
@@ -45,7 +47,11 @@ const SensorStatusGrid = ({ sensor }: SensorStatusGridProps) => {
           <StatusCard
             label="Letztes Signal"
             value={formatLastSeen(sensor.latestData)}
-            description="Letzte Datenübermittlung"
+            description={
+              sendInterval
+                ? `Letzte Datenübermittlung · sendet ${sendInterval}`
+                : 'Letzte Datenübermittlung'
+            }
           />
         </li>
       </ul>
