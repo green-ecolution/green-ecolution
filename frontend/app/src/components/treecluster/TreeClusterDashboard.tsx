@@ -1,4 +1,5 @@
 import TreeCard from '@/components/general/cards/TreeCard'
+import ClusterSignalCard from './ClusterSignalCard'
 import BackLink from '@/components/general/links/BackLink'
 import ButtonLink from '@/components/general/links/ButtonLink'
 import { Pencil } from 'lucide-react'
@@ -105,6 +106,9 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
               value={lastWateredDate}
               description="Wird aktualisiert, sobald ein Einsatzplan mit dieser Gruppe als »Beendet« markiert wird."
             />
+          </li>
+          <li className="h-full">
+            <ClusterSignalCard treecluster={treecluster} />
           </li>
         </ul>
       </section>
