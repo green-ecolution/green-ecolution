@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
   SignalBars,
-  cn,
   type BadgeProps,
 } from '@green-ecolution/ui'
 import { Signal } from 'lucide-react'
@@ -64,7 +63,8 @@ const SensorSignalCard = ({ sensor }: SensorSignalCardProps) => {
               <div className="flex items-end gap-4">
                 <SignalBars
                   filled={signalBarsFromRssi(signal.rssiDbm)}
-                  className={cn('h-12', SIGNAL_LEVEL_TEXT_COLOR[level])}
+                  size="lg"
+                  className={SIGNAL_LEVEL_TEXT_COLOR[level]}
                 />
                 <p className="text-4xl font-bold leading-none text-green-dark tabular-nums">
                   {signal.rssiDbm}

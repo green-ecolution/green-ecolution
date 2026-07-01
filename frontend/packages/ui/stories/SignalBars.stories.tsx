@@ -9,7 +9,7 @@ const meta: Meta<typeof SignalBars> = {
     docs: {
       description: {
         component:
-          'Vier aufsteigende Balken für Signalstärke (0–4). Die Balken nutzen `bg-current`; die Farbe wird über eine `text-*`-Klasse gesetzt. Genutzt für GPS-Genauigkeit und LoRaWAN-Signalstärke.',
+          'Vier aufsteigende Balken für Signalstärke (0–4). Die Balken nutzen `bg-current`; die Farbe wird über eine `text-*`-Klasse gesetzt. Über `size` (`sm`/`md`/`lg`) lässt sich die Dicke steuern. Genutzt für GPS-Genauigkeit (`sm`) und LoRaWAN-Signalstärke (`lg`).',
       },
     },
   },
@@ -21,7 +21,7 @@ type Story = StoryObj<typeof SignalBars>
 export const Gut: Story = {
   render: () => (
     <span className="text-green-dark">
-      <SignalBars filled={4} className="h-8" />
+      <SignalBars filled={4} size="lg" />
     </span>
   ),
 }
@@ -29,7 +29,7 @@ export const Gut: Story = {
 export const Ausreichend: Story = {
   render: () => (
     <span className="text-yellow-900">
-      <SignalBars filled={2} className="h-8" />
+      <SignalBars filled={2} size="lg" />
     </span>
   ),
 }
@@ -37,7 +37,17 @@ export const Ausreichend: Story = {
 export const Schwach: Story = {
   render: () => (
     <span className="text-red">
-      <SignalBars filled={1} className="h-8" />
+      <SignalBars filled={1} size="lg" />
     </span>
+  ),
+}
+
+export const Groessen: Story = {
+  render: () => (
+    <div className="flex items-end gap-6 text-green-dark">
+      <SignalBars filled={3} size="sm" />
+      <SignalBars filled={3} size="md" />
+      <SignalBars filled={3} size="lg" />
+    </div>
   ),
 }
