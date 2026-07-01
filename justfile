@@ -158,6 +158,31 @@ run-dev:
         pnpm run dev ) & \
       wait
 
+# Backend + frontend locally in production mode via Traefik (release binary + prod frontend build; no devtools/debug)
+run-prod: build-domain-wasm _compile-backend
+    @echo "Building frontend (production)..."
+    cd {{ frontend_dir }} && pnpm install --frozen-lockfile
+    cd {{ frontend_dir }} && VITE_BACKEND_BASEURL=/api APP_VERSION={{ app_version }} pnpm run build
+    @echo "Starting prod-like environment ({{ app_host }})..."
+    @echo "  App: {{ app_proto }}://{{ app_host }}:{{ app_port }}"
+    @sed -e 's|${APP_HOST}|{{ app_host }}|g' \
+        -e 's|${TRAEFIK_ENTRYPOINT}|{{ traefik_entrypoint }}|g' \
+        .docker/infra/traefik/dynamic/dev-services.yaml.tmpl \
+        > .docker/infra/traefik/dynamic/dev-services.yaml
+    trap 'rm -f .docker/infra/traefik/dynamic/dev-services.yaml; kill 0' EXIT; \
+      ( cd {{ backend_dir }} && \
+        APP_ENVIRONMENT=local \
+        APP_APPLICATION__HOST=0.0.0.0 \
+        APP_APPLICATION__BASE_URL={{ app_proto }}://{{ app_host }}:{{ app_port }} \
+        APP_DATABASE__HOST={{ postgres_host }} \
+        APP_DATABASE__PORT={{ postgres_port }} \
+        APP_DATABASE__DATABASE_NAME={{ postgres_db }} \
+        APP_DATABASE__USERNAME={{ postgres_user }} \
+        APP_DATABASE__PASSWORD={{ postgres_password }} \
+        ../bin/{{ binary_name }} ) & \
+      ( cd {{ frontend_dir }} && USE_TRAEFIK=1 pnpm run preview ) & \
+      wait
+
 # Set up ACME storage for Let's Encrypt
 _acme-init:
     @if [ -n "{{ porkbun_api_key }}" ]; then \

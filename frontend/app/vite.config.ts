@@ -91,6 +91,15 @@ export default defineConfig({
       },
     },
   },
+  // `just run-prod` serves the production build behind Traefik on 5173 (the
+  // port the dev-services router expects); host/allowedHosts let the docker
+  // Traefik reach it via host.docker.internal.
+  preview: {
+    host: true,
+    allowedHosts: true,
+    port: 5173,
+    strictPort: true,
+  },
   define: {
     // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string must fall back to npm_package_version
     __APP_VERSION__: JSON.stringify(process.env.APP_VERSION || process.env.npm_package_version),
