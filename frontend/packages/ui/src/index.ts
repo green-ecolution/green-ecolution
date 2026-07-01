@@ -9,6 +9,10 @@ export {
 } from './components/ui/accuracy-badge'
 export type { AccuracyBadgeProps, AccuracyLevel } from './components/ui/accuracy-badge'
 
+// SignalBars
+export { SignalBars } from './components/ui/signal-bars'
+export type { SignalBarsProps } from './components/ui/signal-bars'
+
 // Alert
 export {
   Alert,

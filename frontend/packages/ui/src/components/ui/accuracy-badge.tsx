@@ -3,6 +3,8 @@ import { cva, type VariantProps } from 'class-variance-authority'
 
 import { cn } from '@/lib/utils'
 
+import { SignalBars } from './signal-bars'
+
 const accuracyBadgeVariants = cva(
   'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold leading-none tabular-nums transition-colors',
   {
@@ -47,32 +49,6 @@ const BAR_COUNT: Record<AccuracyLevel, number> = {
   searching: 0,
 }
 
-const BAR_HEIGHTS = ['h-[30%]', 'h-[55%]', 'h-[80%]', 'h-full'] as const
-
-const SignalBars = ({ level }: { level: AccuracyLevel }) => {
-  const filled = BAR_COUNT[level]
-  const isLive = level === 'excellent' || level === 'good'
-  return (
-    <span aria-hidden className="flex h-3.5 items-end gap-[2px]">
-      {BAR_HEIGHTS.map((h, i) => {
-        const isFilled = i < filled
-        const isLeading = i === filled - 1
-        return (
-          <span
-            key={i}
-            className={cn(
-              'w-[3px] rounded-[1px] bg-current',
-              h,
-              isFilled ? 'opacity-90' : 'opacity-25',
-              isFilled && isLeading && isLive && 'animate-pulse',
-            )}
-          />
-        )
-      })}
-    </span>
-  )
-}
-
 const formatMeters = (m: number): string => {
   if (m >= 100) return `${Math.round(m)} m`
   if (m < 10) return `~${m.toFixed(1)} m`
@@ -109,7 +85,7 @@ const AccuracyBadge = React.forwardRef<HTMLSpanElement, AccuracyBadgeProps>(
         className={cn(accuracyBadgeVariants({ level }), className)}
         {...rest}
       >
-        <SignalBars level={level} />
+        <SignalBars filled={BAR_COUNT[level]} live={level === 'excellent' || level === 'good'} />
         <span>{label}</span>
         {value && <span className="ml-0.5 text-[0.95em] font-normal opacity-70">{value}</span>}
       </span>
