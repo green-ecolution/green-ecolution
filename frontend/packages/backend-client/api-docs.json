@@ -4334,6 +4334,17 @@
             "description": "Unique identifier of the reading.",
             "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
+          "signal": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SignalResponse",
+                "description": "LoRaWAN radio quality of the strongest gateway for this reading, if present."
+              }
+            ]
+          },
           "updated_at": {
             "type": "string",
             "description": "Timestamp when the data was last modified (RFC 3339).",
@@ -4644,6 +4655,36 @@
             "type": "string",
             "format": "uuid",
             "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          }
+        }
+      },
+      "SignalResponse": {
+        "type": "object",
+        "description": "LoRaWAN radio quality of the strongest receiving gateway for a reading.",
+        "required": [
+          "rssi_dbm",
+          "snr_db",
+          "gateway_count"
+        ],
+        "properties": {
+          "gateway_count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of gateways that received this uplink.",
+            "example": 2,
+            "minimum": 0
+          },
+          "rssi_dbm": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Received signal strength indicator in dBm (higher/less-negative is better).",
+            "example": -104
+          },
+          "snr_db": {
+            "type": "number",
+            "format": "float",
+            "description": "Signal-to-noise ratio in dB.",
+            "example": 2.5
           }
         }
       },
