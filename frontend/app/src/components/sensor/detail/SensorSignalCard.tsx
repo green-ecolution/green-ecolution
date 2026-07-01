@@ -1,12 +1,5 @@
 import { Suspense } from 'react'
-import {
-  Badge,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  SignalBars,
-} from '@green-ecolution/ui'
+import { Badge, Card, CardContent, CardHeader, CardTitle, SignalBars } from '@green-ecolution/ui'
 import { Signal } from 'lucide-react'
 import type { Sensor } from '@/api/backendApi'
 import {

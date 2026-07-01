@@ -3,7 +3,7 @@ import type { SensorData } from '@/api/backendApi'
 import { parseSignal, signalBarsFromRssi, signalLevelFromRssi } from './signalParsing'
 
 const withSignal = (rssiDbm: number) =>
-  ({ signal: { rssiDbm, snrDb: 0, gatewayCount: 1 } } as unknown as SensorData)
+  ({ signal: { rssiDbm, snrDb: 0, gatewayCount: 1 } }) as unknown as SensorData
 
 describe('signalParsing', () => {
   it('parses signal from latestData', () => {

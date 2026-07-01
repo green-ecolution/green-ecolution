@@ -7,10 +7,8 @@ const treeWith = (num: string, rssiDbm: number | null): Tree =>
     id: num,
     number: num,
     sensor:
-      rssiDbm === null
-        ? null
-        : { latestData: { signal: { rssiDbm, snrDb: 0, gatewayCount: 1 } } },
-  } as unknown as Tree)
+      rssiDbm === null ? null : { latestData: { signal: { rssiDbm, snrDb: 0, gatewayCount: 1 } } },
+  }) as unknown as Tree
 
 describe('clusterSignalSummary', () => {
   it('counts levels and finds the weakest sensor', () => {

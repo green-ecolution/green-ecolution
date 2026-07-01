@@ -17,7 +17,11 @@ const SingleReading = ({ rssiDbm, treeNumber }: { rssiDbm: number; treeNumber: s
   const level = signalLevelFromRssi(rssiDbm)
   return (
     <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-      <SignalBars filled={signalBarsFromRssi(rssiDbm)} size="md" className={SIGNAL_LEVEL_TEXT_COLOR[level]} />
+      <SignalBars
+        filled={signalBarsFromRssi(rssiDbm)}
+        size="md"
+        className={SIGNAL_LEVEL_TEXT_COLOR[level]}
+      />
       <p className="text-2xl font-bold leading-none text-green-dark tabular-nums">
         {rssiDbm}
         <span className="ml-1 text-sm font-semibold text-dark-600">dBm</span>
@@ -28,7 +32,15 @@ const SingleReading = ({ rssiDbm, treeNumber }: { rssiDbm: number; treeNumber: s
   )
 }
 
-const LegendItem = ({ colorClass, count, label }: { colorClass: string; count: number; label: string }) => (
+const LegendItem = ({
+  colorClass,
+  count,
+  label,
+}: {
+  colorClass: string
+  count: number
+  label: string
+}) => (
   <span>
     <span className={`mr-1 inline-block size-2 rounded-sm align-middle ${colorClass}`} />
     {count} {label}
@@ -42,14 +54,22 @@ const Distribution = ({ summary }: { summary: ClusterSignalSummary }) => {
     <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-8">
       <div className="lg:flex-1">
         <span className="flex h-2.5 overflow-hidden rounded-full bg-dark-200">
-          {summary.good > 0 && <span className="bg-green-dark" style={{ width: pct(summary.good) }} />}
+          {summary.good > 0 && (
+            <span className="bg-green-dark" style={{ width: pct(summary.good) }} />
+          )}
           {summary.fair > 0 && <span className="bg-yellow" style={{ width: pct(summary.fair) }} />}
           {summary.weak > 0 && <span className="bg-red" style={{ width: pct(summary.weak) }} />}
         </span>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-dark-700">
-          {summary.good > 0 && <LegendItem colorClass="bg-green-dark" count={summary.good} label="gut" />}
-          {summary.fair > 0 && <LegendItem colorClass="bg-yellow" count={summary.fair} label="ausreichend" />}
-          {summary.weak > 0 && <LegendItem colorClass="bg-red" count={summary.weak} label="schwach" />}
+          {summary.good > 0 && (
+            <LegendItem colorClass="bg-green-dark" count={summary.good} label="gut" />
+          )}
+          {summary.fair > 0 && (
+            <LegendItem colorClass="bg-yellow" count={summary.fair} label="ausreichend" />
+          )}
+          {summary.weak > 0 && (
+            <LegendItem colorClass="bg-red" count={summary.weak} label="schwach" />
+          )}
         </div>
       </div>
       {summary.weakest && (
@@ -92,7 +112,10 @@ const ClusterSignalCard = ({ treecluster }: ClusterSignalCardProps) => {
         </div>
 
         {summary.total === 1 && summary.weakest ? (
-          <SingleReading rssiDbm={summary.weakest.rssiDbm} treeNumber={summary.weakest.treeNumber} />
+          <SingleReading
+            rssiDbm={summary.weakest.rssiDbm}
+            treeNumber={summary.weakest.treeNumber}
+          />
         ) : (
           <Distribution summary={summary} />
         )}
