@@ -1,4 +1,5 @@
 import TreeCard from '@/components/general/cards/TreeCard'
+import ClusterSignalCard from './ClusterSignalCard'
 import BackLink from '@/components/general/links/BackLink'
 import ButtonLink from '@/components/general/links/ButtonLink'
 import { Pencil } from 'lucide-react'
@@ -108,6 +109,8 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
           </li>
         </ul>
       </section>
+
+      <ClusterSignalCard treecluster={treecluster} />
 
       <section className="mt-16">
         <h2 className="text-xl font-bold font-lato mb-10">Alle zugehörigen Bäume</h2>

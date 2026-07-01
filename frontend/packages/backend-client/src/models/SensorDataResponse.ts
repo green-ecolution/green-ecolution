@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { SignalResponse } from './SignalResponse';
+import {
+    SignalResponseFromJSON,
+    SignalResponseFromJSONTyped,
+    SignalResponseToJSON,
+    SignalResponseToJSONTyped,
+} from './SignalResponse';
+
 /**
  * A single data payload received from a LoRaWAN sensor.
  * @export
@@ -37,6 +45,12 @@ export interface SensorDataResponse {
      * @memberof SensorDataResponse
      */
     id: string;
+    /**
+     * LoRaWAN radio quality of the strongest gateway for this reading, if present.
+     * @type {SignalResponse}
+     * @memberof SensorDataResponse
+     */
+    signal?: SignalResponse | null;
     /**
      * Timestamp when the data was last modified (RFC 3339).
      * @type {string}
@@ -69,6 +83,7 @@ export function SensorDataResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'createdAt': json['created_at'],
         'data': json['data'],
         'id': json['id'],
+        'signal': json['signal'] == null ? undefined : SignalResponseFromJSON(json['signal']),
         'updatedAt': json['updated_at'],
     };
 }
@@ -87,6 +102,7 @@ export function SensorDataResponseToJSONTyped(value?: SensorDataResponse | null,
         'created_at': value['createdAt'],
         'data': value['data'],
         'id': value['id'],
+        'signal': SignalResponseToJSON(value['signal']),
         'updated_at': value['updatedAt'],
     };
 }

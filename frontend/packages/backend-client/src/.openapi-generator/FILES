@@ -65,6 +65,7 @@ models/ServerInfoResponse.ts
 models/ServiceStatusResponse.ts
 models/ServicesInfoResponse.ts
 models/SetSensorTreeRequest.ts
+models/SignalResponse.ts
 models/SoilCondition.ts
 models/TreeClusterCreateRequest.ts
 models/TreeClusterInListResponse.ts

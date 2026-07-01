@@ -54,6 +54,7 @@ export * from './ServerInfoResponse';
 export * from './ServiceStatusResponse';
 export * from './ServicesInfoResponse';
 export * from './SetSensorTreeRequest';
+export * from './SignalResponse';
 export * from './SoilCondition';
 export * from './TreeClusterCreateRequest';
 export * from './TreeClusterInListResponse';

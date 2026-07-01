@@ -7,6 +7,7 @@ import SensorLinkedTreeSection from './detail/SensorLinkedTreeSection'
 import SensorLocationSection from './detail/SensorLocationSection'
 import SensorLorawanConfigSection from './detail/SensorLorawanConfigSection'
 import SensorStatusGrid from './detail/SensorStatusGrid'
+import SensorSignalSection from './detail/SensorSignalSection'
 import type { Sensor } from '@/api/backendApi'
 
 interface SensorDashboardProps {
@@ -20,6 +21,7 @@ const SensorDashboard = ({ sensor }: SensorDashboardProps) => {
       <div className="flex flex-col gap-10 pb-16">
         <SensorHero sensor={sensor} />
         <SensorStatusGrid sensor={sensor} />
+        <SensorSignalSection sensor={sensor} />
         <SensorIdentitySection sensor={sensor} />
         <SensorAbilitiesSection sensor={sensor} />
         <SensorLocationSection sensor={sensor} />

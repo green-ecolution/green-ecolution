@@ -29,7 +29,7 @@ use domain::{
     events::SensorReadings,
     sensor::{
         SensorId,
-        data::{VolumetricReading, Watermark},
+        data::{SignalQuality, VolumetricReading, Watermark},
         payload::{EcoDrizzlerPayload, GenericReadingPayload, PayloadReading},
         repository::NormalizedValue,
     },
@@ -146,7 +146,10 @@ async fn handle_publish(
         .await
         .map_err(|e| MqttSubscriberError::Service(e.to_string()))?;
 
-    let ingest = build_ingest(&model, &body, sensor_id)?;
+    let mut ingest = build_ingest(&model, &body, sensor_id)?;
+    if let Some(signal) = extract_signal(&envelope) {
+        merge_signal(&mut ingest.raw_payload, signal);
+    }
     sensor_service
         .ingest_reading(ingest)
         .await
@@ -163,6 +166,36 @@ fn unwrap_envelope(v: &Value) -> Value {
         return decoded.clone();
     }
     v.clone()
+}
+
+/// Reduces TTN `rx_metadata` (one entry per receiving gateway) to the strongest
+/// gateway (highest RSSI). Returns `None` for flat/non-TTN publishes that carry
+/// no gateway metadata.
+fn extract_signal(envelope: &Value) -> Option<SignalQuality> {
+    let rx = envelope
+        .pointer("/data/uplink_message/rx_metadata")
+        .or_else(|| envelope.pointer("/uplink_message/rx_metadata"))
+        .and_then(|v| v.as_array())?;
+    let (rssi, gw) = rx
+        .iter()
+        .filter_map(|gw| gw.get("rssi").and_then(|r| r.as_i64()).map(|r| (r, gw)))
+        .max_by_key(|(rssi, _)| *rssi)?;
+    let snr = gw.get("snr").and_then(|s| s.as_f64()).unwrap_or(0.0) as f32;
+    Some(SignalQuality {
+        rssi_dbm: rssi as i32,
+        snr_db: snr,
+        gateway_count: rx.len().min(u8::MAX as usize) as u8,
+    })
+}
+
+/// Embeds signal metadata into the stored payload under `signal`. No-op if the
+/// payload root is not a JSON object.
+fn merge_signal(raw_payload: &mut Value, signal: SignalQuality) {
+    if let Value::Object(map) = raw_payload
+        && let Ok(v) = serde_json::to_value(signal)
+    {
+        map.insert("signal".to_string(), v);
+    }
 }
 
 /// `identifiers[]` is scanned, not indexed: TTN does not guarantee that
@@ -731,5 +764,39 @@ mod tests {
         let err =
             build_ingest(&model, &json!({"device": "x"}), SensorId::new("x").unwrap()).unwrap_err();
         assert!(matches!(err, MqttSubscriberError::Decode(_)));
+    }
+
+    #[test]
+    fn extract_signal_picks_strongest_gateway() {
+        let env = json!({
+            "data": { "uplink_message": { "rx_metadata": [
+                {"gateway_ids": {"gateway_id": "gw-1"}, "rssi": -119, "snr": -7.0},
+                {"gateway_ids": {"gateway_id": "gw-2"}, "rssi": -104, "snr": 2.5}
+            ]}}
+        });
+        let s = extract_signal(&env).expect("signal present");
+        assert_eq!(s.rssi_dbm, -104);
+        assert!((s.snr_db - 2.5).abs() < 1e-6);
+        assert_eq!(s.gateway_count, 2);
+    }
+
+    #[test]
+    fn extract_signal_none_without_rx_metadata() {
+        assert!(extract_signal(&json!({"device": "eui-x"})).is_none());
+    }
+
+    #[test]
+    fn merge_signal_adds_signal_key() {
+        let mut payload = json!({"battery": 3.6});
+        merge_signal(
+            &mut payload,
+            SignalQuality {
+                rssi_dbm: -104,
+                snr_db: 2.5,
+                gateway_count: 2,
+            },
+        );
+        assert_eq!(payload["signal"]["rssi_dbm"], -104);
+        assert_eq!(payload["signal"]["gateway_count"], 2);
     }
 }

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use domain::sensor::{
     SensorId, SensorType, SensorView,
-    data::SensorReadingView,
+    data::{SensorReadingView, SignalQuality},
     view::{LorawanInfo, SensorModelSummary},
 };
 use domain::sensor_model::{SensorAbilityUnit, SensorModel};
@@ -32,6 +32,30 @@ where
     Ok(sensors.into_iter().map(|s| (s.id.clone(), s)).collect())
 }
 
+/// LoRaWAN radio quality of the strongest receiving gateway for a reading.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct SignalResponse {
+    /// Received signal strength indicator in dBm (higher/less-negative is better).
+    #[schema(example = -104)]
+    pub rssi_dbm: i32,
+    /// Signal-to-noise ratio in dB.
+    #[schema(example = 2.5)]
+    pub snr_db: f32,
+    /// Number of gateways that received this uplink.
+    #[schema(example = 2)]
+    pub gateway_count: u8,
+}
+
+impl From<SignalQuality> for SignalResponse {
+    fn from(s: SignalQuality) -> Self {
+        Self {
+            rssi_dbm: s.rssi_dbm,
+            snr_db: s.snr_db,
+            gateway_count: s.gateway_count,
+        }
+    }
+}
+
 /// A single data payload received from a LoRaWAN sensor.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SensorDataResponse {
@@ -50,6 +74,11 @@ pub struct SensorDataResponse {
     /// Raw sensor payload as a JSON object (structure depends on the sensor type).
     #[schema(value_type = Object, example = json!({"humidity": 42.5, "temperature": 18.3}))]
     pub data: serde_json::Value,
+
+    /// LoRaWAN radio quality of the strongest gateway for this reading, if present.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable)]
+    pub signal: Option<SignalResponse>,
 }
 
 impl From<&SensorReadingView> for SensorDataResponse {
@@ -59,6 +88,11 @@ impl From<&SensorReadingView> for SensorDataResponse {
             created_at: value.created_at.to_rfc3339(),
             updated_at: value.updated_at.to_rfc3339(),
             data: value.data.clone(),
+            signal: value
+                .data
+                .get("signal")
+                .and_then(|v| serde_json::from_value::<SignalQuality>(v.clone()).ok())
+                .map(SignalResponse::from),
         }
     }
 }
@@ -442,5 +476,36 @@ mod tests {
         // Top-level identifiers pass through unchanged.
         assert_eq!(dto.at_pin.as_deref(), Some("CC"));
         assert_eq!(dto.ota_pin.as_deref(), Some("DD"));
+    }
+
+    #[test]
+    fn sensor_data_response_exposes_signal_from_data() {
+        let view = SensorReadingView {
+            id: uuid::Uuid::now_v7(),
+            sensor_id: "eui-1".into(),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+            data: json!({
+                "battery": 3.6,
+                "signal": {"rssi_dbm": -104, "snr_db": 2.5, "gateway_count": 2}
+            }),
+        };
+        let dto = SensorDataResponse::from(&view);
+        let sig = dto.signal.expect("signal present");
+        assert_eq!(sig.rssi_dbm, -104);
+        assert!((sig.snr_db - 2.5).abs() < 1e-6);
+        assert_eq!(sig.gateway_count, 2);
+    }
+
+    #[test]
+    fn sensor_data_response_signal_absent_when_missing() {
+        let view = SensorReadingView {
+            id: uuid::Uuid::now_v7(),
+            sensor_id: "eui-1".into(),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+            data: json!({"battery": 3.6}),
+        };
+        assert!(SensorDataResponse::from(&view).signal.is_none());
     }
 }
