@@ -75,3 +75,30 @@ pub struct VolumetricReading {
     pub depth_cm: i32,
     pub moisture_percent: f64,
 }
+
+/// LoRaWAN radio quality for one received uplink, reduced to the strongest
+/// receiving gateway. Not stored as columns; embedded in the reading's `data`
+/// JSON under the `signal` key, mirroring how `battery` lives there.
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct SignalQuality {
+    pub rssi_dbm: i32,
+    pub snr_db: f32,
+    pub gateway_count: u8,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn signal_quality_serializes_snake_case() {
+        let s = SignalQuality {
+            rssi_dbm: -110,
+            snr_db: -2.0,
+            gateway_count: 3,
+        };
+        let v = serde_json::to_value(s).expect("serialize");
+        assert_eq!(v["rssi_dbm"], -110);
+        assert_eq!(v["gateway_count"], 3);
+    }
+}
