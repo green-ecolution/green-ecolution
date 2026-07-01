@@ -16,21 +16,29 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+const DAY_MS = 24 * 60 * 60 * 1000
+
 interface ChartSignalDataProps {
   sensorId: string
 }
 
 const ChartSignalData: React.FC<ChartSignalDataProps> = ({ sensorId }) => {
   const { data: sensorDataRes } = useSuspenseQuery(sensorDataQuery(sensorId))
+  // Plot against the reading timestamp (numeric X axis) rather than a formatted
+  // date string: same-day readings would otherwise collapse to one category and
+  // the tooltip would stick to the first point.
   const signalData = sensorDataRes
     .filter((entry) => typeof entry.signal?.rssiDbm === 'number')
     .map((entry) => ({
-      name: format(new Date(entry.updatedAt), 'dd.MM.yyyy'),
-      rssi: entry.signal?.rssiDbm,
+      ts: new Date(entry.updatedAt).getTime(),
+      rssi: entry.signal!.rssiDbm,
     }))
-    .reverse()
+    .sort((a, b) => a.ts - b.ts)
 
   if (signalData.length <= 1) return null
+
+  const spanMs = signalData[signalData.length - 1].ts - signalData[0].ts
+  const tickPattern = spanMs > 2 * DAY_MS ? 'dd.MM.' : 'HH:mm'
 
   return (
     <div className="mt-6 border-t border-dark-100 pt-5">
@@ -47,7 +55,17 @@ const ChartSignalData: React.FC<ChartSignalDataProps> = ({ sensorId }) => {
             </linearGradient>
           </defs>
           <CartesianGrid vertical={false} strokeDasharray="3 3" />
-          <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} minTickGap={24} />
+          <XAxis
+            dataKey="ts"
+            type="number"
+            scale="time"
+            domain={['dataMin', 'dataMax']}
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            minTickGap={40}
+            tickFormatter={(value) => format(new Date(value as number), tickPattern)}
+          />
           <YAxis
             tickLine={false}
             axisLine={false}
@@ -55,7 +73,17 @@ const ChartSignalData: React.FC<ChartSignalDataProps> = ({ sensorId }) => {
             tickMargin={4}
             domain={['dataMin - 2', 'dataMax + 2']}
           />
-          <ChartTooltip content={<ChartTooltipContent />} />
+          <ChartTooltip
+            content={
+              <ChartTooltipContent
+                labelFormatter={(_, payload) => {
+                  const point = payload?.[0] as { payload?: { ts?: number } } | undefined
+                  const ts = point?.payload?.ts
+                  return ts ? format(new Date(ts), 'dd.MM.yyyy HH:mm') : ''
+                }}
+              />
+            }
+          />
           <Area
             type="monotone"
             dataKey="rssi"
