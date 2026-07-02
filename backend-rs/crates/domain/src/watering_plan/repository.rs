@@ -32,9 +32,12 @@ pub trait WateringPlanReader: Send + Sync {
 pub trait WateringPlanWriter: Send + Sync {
     async fn save_new(&self, draft: WateringPlanDraft) -> Result<WateringPlan, RepositoryError>;
     async fn save(&self, plan: &WateringPlan) -> Result<(), RepositoryError>;
-    async fn save_evaluations(
+    /// Persists a finished plan together with its per-cluster evaluations
+    /// atomically — a partial write must not leave a `Finished` plan whose
+    /// recorded water consumption is missing.
+    async fn save_finished(
         &self,
-        plan_id: Id<WateringPlan>,
+        plan: &WateringPlan,
         evaluations: &[WateringPlanEvaluation],
     ) -> Result<(), RepositoryError>;
     async fn delete(&self, id: Id<WateringPlan>) -> Result<(), RepositoryError>;

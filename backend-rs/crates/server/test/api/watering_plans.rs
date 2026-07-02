@@ -480,3 +480,87 @@ async fn watering_plan_roles_survive_unfavorable_vehicle_id_order() {
     assert_eq!(got["transporter"]["id"], tid);
     assert_eq!(got["trailer"]["id"], trailer_id);
 }
+
+#[tokio::test]
+async fn list_watering_plans_skips_plan_without_transporter() {
+    let app = spawn_app().await;
+
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let cluster = create_cluster(&app).await;
+    let cid = cluster["id"].as_str().unwrap();
+    let created = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![cid]))
+        .await;
+    assert_eq!(created.status().as_u16(), 201);
+
+    // Data-integrity edge case: a plan without any vehicle join rows must not
+    // take down the whole list endpoint.
+    sqlx::query("INSERT INTO watering_plans (id, date, description, status) VALUES ($1, '2026-05-01', 'kaputt', 'planned')")
+        .bind(uuid::Uuid::now_v7())
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+
+    let response = app.get("/api/v1/watering-plans").await;
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(
+        body["data"].as_array().unwrap().len(),
+        1,
+        "the transporter-less plan must be skipped, not panic the endpoint"
+    );
+}
+
+#[tokio::test]
+async fn finished_plan_keeps_consumed_water_across_save() {
+    use domain::watering_plan::{WateringPlanReader, WateringPlanWriter};
+    use server::infra::pg_watering_plan::PgWateringPlanRepository;
+
+    let app = spawn_app().await;
+
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let cluster = create_cluster(&app).await;
+    let cid = cluster["id"].as_str().unwrap();
+
+    let create_resp = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![cid]))
+        .await;
+    let plan: serde_json::Value = create_resp.json().await.unwrap();
+    let plan_id = plan["id"].as_str().unwrap();
+
+    let activate = update_body_with_status(tid, vec![cid], "active", "", serde_json::json!([]));
+    app.put_json(&format!("/api/v1/watering-plans/{}", plan_id), &activate)
+        .await;
+    let finish = update_body_with_status(
+        tid,
+        vec![cid],
+        "finished",
+        "",
+        serde_json::json!([{
+            "watering_plan_id": plan_id,
+            "tree_cluster_id": cid,
+            "consumed_water": 42.5
+        }]),
+    );
+    let finish_resp = app
+        .put_json(&format!("/api/v1/watering-plans/{}", plan_id), &finish)
+        .await;
+    assert_eq!(finish_resp.status().as_u16(), 200);
+
+    // A later aggregate save (any write path touching the plan) must not
+    // reset the recorded consumption to the column default.
+    let repo = PgWateringPlanRepository::new(app.db_pool.clone());
+    let id = domain::Id::new(plan_id.parse().unwrap());
+    let aggregate = repo.by_id(id).await.unwrap();
+    repo.save(&aggregate).await.unwrap();
+
+    let evals = repo.evaluations(id).await.unwrap();
+    assert_eq!(evals.len(), 1);
+    assert!(
+        (evals[0].consumed_water - 42.5).abs() < 1e-9,
+        "consumed_water must survive a re-save, got {}",
+        evals[0].consumed_water
+    );
+}

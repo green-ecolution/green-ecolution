@@ -42,8 +42,7 @@ impl WateringExecutionService {
         let cluster_ids: Vec<_> = plan.cluster_ids().to_vec();
         let now = Utc::now();
 
-        self.writer.save(&plan).await?;
-        self.writer.save_evaluations(plan.id, &evaluations).await?;
+        self.writer.save_finished(&plan, &evaluations).await?;
         self.writer
             .propagate_last_watered(&cluster_ids, now)
             .await?;
