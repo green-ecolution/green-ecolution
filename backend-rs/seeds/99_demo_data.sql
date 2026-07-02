@@ -332,13 +332,13 @@ INSERT INTO watering_plans (id, date, description, status, distance, total_water
   ('019e3fcb-2a5d-7e0d-840e-fe831360cfdb'::uuid, '2025-06-04', 'Canceled due to flood', 'canceled', 63.0, 600.0, 'The watering plan was cancelled due to various reasons.');
 
 
-INSERT INTO vehicle_watering_plans (vehicle_id, watering_plan_id) VALUES
-  ('019e3fcb-2a51-7e7e-9392-c4e6dfb61845'::uuid, '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid),
-  ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid),
-  ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, '019e3fcb-2a5d-7e82-afe5-626abd96274d'::uuid),
-  ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, '019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid),
-  ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, '019e3fcb-2a5d-7e3b-a202-44acf2ffcb71'::uuid),
-  ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, '019e3fcb-2a5d-7e0d-840e-fe831360cfdb'::uuid);
+INSERT INTO vehicle_watering_plans (vehicle_id, watering_plan_id, role) VALUES
+  ('019e3fcb-2a51-7e7e-9392-c4e6dfb61845'::uuid, '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, 'transporter'),
+  ('019e3fcb-2a52-7c3c-8ef9-faf356e13d59'::uuid, '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid, 'trailer'),
+  ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, '019e3fcb-2a5d-7e82-afe5-626abd96274d'::uuid, 'transporter'),
+  ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, '019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid, 'transporter'),
+  ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, '019e3fcb-2a5d-7e3b-a202-44acf2ffcb71'::uuid, 'transporter'),
+  ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, '019e3fcb-2a5d-7e0d-840e-fe831360cfdb'::uuid, 'transporter');
 
 
 INSERT INTO user_watering_plans (user_id, watering_plan_id) VALUES
