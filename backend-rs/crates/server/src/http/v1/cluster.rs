@@ -81,6 +81,8 @@ async fn build_cluster_response(
     ))
 }
 
+const CLUSTER_LIST_QUERY_MAX_LEN: usize = 100;
+
 #[utoipa::path(
     get,
     path = "/clusters",
@@ -92,6 +94,7 @@ async fn build_cluster_response(
     params(ClusterListParams),
     responses(
         (status = 200, description = "Paginated list of tree clusters", body = ListResponse<TreeClusterInListResponse>),
+        (status = 400, description = "Invalid query parameter"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -101,6 +104,14 @@ pub async fn list_clusters(
     Query(params): Query<ClusterListParams>,
 ) -> Result<Json<ListResponse<TreeClusterInListResponse>>, ServiceError> {
     let pagination = Pagination::new(params.page, params.per_page);
+    let search = params.query.filter(|s| !s.trim().is_empty());
+    if let Some(ref qv) = search
+        && qv.chars().count() > CLUSTER_LIST_QUERY_MAX_LEN
+    {
+        return Err(ServiceError::InvalidInput(format!(
+            "query must be at most {CLUSTER_LIST_QUERY_MAX_LEN} characters"
+        )));
+    }
     let query = TreeClusterSearchQuery {
         watering_statuses: params
             .watering_status
@@ -113,7 +124,7 @@ pub async fn list_clusters(
             .into_iter()
             .map(domain::cluster::SoilCondition::from)
             .collect(),
-        query: params.query.filter(|s| !s.trim().is_empty()),
+        query: search,
         sort: params
             .sort
             .as_deref()

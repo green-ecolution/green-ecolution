@@ -3,6 +3,7 @@ use domain::{IdSliceExt, RawId};
 use serde_json::Value;
 use sqlx::PgPool;
 
+use crate::infra::sql::like_escape;
 use domain::cluster::snapshot::TreeClusterSnapshot;
 use domain::{
     Id, RepositoryError,
@@ -212,7 +213,9 @@ impl TreeClusterReader for PgTreeClusterRepository {
             .query
             .as_deref()
             .map(str::trim)
-            .filter(|s| !s.is_empty());
+            .filter(|s| !s.is_empty())
+            .map(|s| format!("%{}%", like_escape(s)));
+        let search = search.as_deref();
         let sort = query.sort.as_str();
         let order = query.order.as_str();
 
@@ -221,7 +224,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
             WHERE ($1::watering_status[] = '{}' OR tc.watering_status = ANY($1))
               AND ($2::uuid[] = '{}' OR tc.region_id = ANY($2))
               AND ($3::text IS NULL OR tc.provider = $3)
-              AND ($4::text IS NULL OR tc.name ILIKE '%' || $4 || '%')
+              AND ($4::text IS NULL OR tc.name ILIKE $4 ESCAPE '\')
               AND ($5::tree_soil_condition[] = '{}' OR tc.soil_condition = ANY($5))"#,
             &watering_statuses as &[WateringStatus],
             &query.regions,
@@ -249,7 +252,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
             WHERE ($1::watering_status[] = '{}' OR tc.watering_status = ANY($1))
               AND ($2::uuid[] = '{}' OR tc.region_id = ANY($2))
               AND ($3::text IS NULL OR tc.provider = $3)
-              AND ($4::text IS NULL OR tc.name ILIKE '%' || $4 || '%')
+              AND ($4::text IS NULL OR tc.name ILIKE $4 ESCAPE '\')
               AND ($5::tree_soil_condition[] = '{}' OR tc.soil_condition = ANY($5))
             GROUP BY tc.id
             ORDER BY

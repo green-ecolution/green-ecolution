@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE tree_cluster_watering_plans t\n               SET consumed_water = e.consumed_water\n               FROM (SELECT UNNEST($2::uuid[]) AS cluster_id, UNNEST($3::float8[]) AS consumed_water) e\n               WHERE t.watering_plan_id = $1 AND t.tree_cluster_id = e.cluster_id",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray",
+        "Float8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c24fdc93ea4435afbe565c8ee1e9cbab7e873562886fa76e33ad18b049eab9da"
+}
