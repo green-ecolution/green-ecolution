@@ -12,7 +12,7 @@ use domain::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
     },
-    tree::{TreeReader, TreeWriter},
+    tree::{Tree, TreeReader, TreeWriter},
 };
 
 use super::{ServiceError, event_bus::EventBus};
@@ -78,12 +78,13 @@ impl ClusterService {
 
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn create(&self, draft: TreeClusterDraft) -> Result<TreeCluster, ServiceError> {
+        let source_events = self.source_cluster_events(&draft.tree_ids, None).await?;
         let cluster = self.writer.save_new(draft).await?;
-        self.event_bus
-            .publish(DomainEvent::ClusterTreesChanged {
-                cluster_id: cluster.id,
-            })
-            .await;
+        let mut events = vec![DomainEvent::ClusterTreesChanged {
+            cluster_id: cluster.id,
+        }];
+        events.extend(source_events);
+        self.event_bus.publish_all(events).await;
         Ok(cluster)
     }
 
@@ -94,7 +95,9 @@ impl ClusterService {
         update: TreeClusterUpdate,
     ) -> Result<TreeCluster, ServiceError> {
         let mut cluster = self.reader.by_id(id).await?;
-        let trees_changed = cluster.tree_ids != update.tree_ids;
+        let source_events = self
+            .source_cluster_events(&update.tree_ids, Some(id))
+            .await?;
         let mut events = cluster.replace_details(
             update.name,
             update.address,
@@ -102,13 +105,35 @@ impl ClusterService {
             update.soil_condition,
             update.provenance,
         );
-        cluster.replace_trees(update.tree_ids);
+        events.extend(cluster.replace_trees(update.tree_ids));
         self.writer.save(&cluster).await?;
-        if trees_changed {
-            events.push(DomainEvent::ClusterTreesChanged { cluster_id: id });
-        }
+        events.extend(source_events);
         self.event_bus.publish_all(events).await;
         Ok(cluster)
+    }
+
+    /// Assigning trees to a cluster implicitly pulls them out of the cluster
+    /// they currently belong to (the repo save rewrites `tree_cluster_id`).
+    /// Those source clusters need a `ClusterTreesChanged` too, or their
+    /// centroid, region, and watering status stay stale.
+    async fn source_cluster_events(
+        &self,
+        tree_ids: &[Id<Tree>],
+        target: Option<Id<TreeCluster>>,
+    ) -> Result<Vec<DomainEvent>, ServiceError> {
+        if tree_ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        let trees = self.tree_reader.by_ids(tree_ids).await?;
+        let sources: std::collections::HashSet<Id<TreeCluster>> = trees
+            .iter()
+            .filter_map(|t| t.cluster_id())
+            .filter(|cid| Some(*cid) != target)
+            .collect();
+        Ok(sources
+            .into_iter()
+            .map(|cluster_id| DomainEvent::ClusterTreesChanged { cluster_id })
+            .collect())
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]

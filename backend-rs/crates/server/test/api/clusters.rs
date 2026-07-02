@@ -658,6 +658,120 @@ async fn cluster_update_tree_ids_recalculates_center() {
     );
 }
 
+#[tokio::test]
+async fn cluster_update_stealing_tree_recalculates_source_cluster() {
+    let app = spawn_app().await;
+
+    let tree_a_id = insert_tree_at(&app, 53.50, 9.90, "T-STEAL-A").await;
+    let tree_b_id = insert_tree_at(&app, 53.60, 10.10, "T-STEAL-B").await;
+
+    let cluster_a_resp = app
+        .post_json(
+            "/api/v1/clusters",
+            &serde_json::json!({
+                "name": "Steal Source",
+                "address": "A",
+                "description": "A",
+                "soil_condition": "Su3",
+                "tree_ids": [tree_a_id]
+            }),
+        )
+        .await;
+    let cluster_a: serde_json::Value = cluster_a_resp.json().await.unwrap();
+    let cluster_a_id = cluster_a["id"].as_str().unwrap();
+
+    let cluster_b_resp = app
+        .post_json(
+            "/api/v1/clusters",
+            &serde_json::json!({
+                "name": "Steal Target",
+                "address": "B",
+                "description": "B",
+                "soil_condition": "Su3",
+                "tree_ids": [tree_b_id]
+            }),
+        )
+        .await;
+    let cluster_b: serde_json::Value = cluster_b_resp.json().await.unwrap();
+    let cluster_b_id = cluster_b["id"].as_str().unwrap();
+
+    // Pull tree_a into cluster B via cluster update (steals it from A)
+    let update_body = serde_json::json!({
+        "name": "Steal Target",
+        "address": "B",
+        "description": "B",
+        "soil_condition": "Su3",
+        "tree_ids": [tree_b_id, tree_a_id]
+    });
+    let update_resp = app
+        .put_json(&format!("/api/v1/clusters/{}", cluster_b_id), &update_body)
+        .await;
+    assert_eq!(update_resp.status().as_u16(), 200);
+
+    // Source cluster A lost its only tree → coordinates must be reset
+    let a_after = app.get(&format!("/api/v1/clusters/{}", cluster_a_id)).await;
+    let a_after_body: serde_json::Value = a_after.json().await.unwrap();
+    assert_eq!(
+        a_after_body["latitude"].as_f64().unwrap(),
+        0.0,
+        "source cluster must be recalculated after its tree was pulled away"
+    );
+
+    // Target cluster B now holds both trees → center between them
+    let b_after = app.get(&format!("/api/v1/clusters/{}", cluster_b_id)).await;
+    let b_after_body: serde_json::Value = b_after.json().await.unwrap();
+    let b_lat = b_after_body["latitude"].as_f64().unwrap();
+    assert!(
+        (b_lat - 53.55).abs() < 0.01,
+        "target cluster center should be ~53.55, got {b_lat}"
+    );
+}
+
+#[tokio::test]
+async fn cluster_create_stealing_tree_recalculates_source_cluster() {
+    let app = spawn_app().await;
+
+    let tree_id = insert_tree_at(&app, 53.50, 9.90, "T-STEAL-C").await;
+
+    let source_resp = app
+        .post_json(
+            "/api/v1/clusters",
+            &serde_json::json!({
+                "name": "Create Steal Source",
+                "address": "A",
+                "description": "A",
+                "soil_condition": "Su3",
+                "tree_ids": [tree_id]
+            }),
+        )
+        .await;
+    let source: serde_json::Value = source_resp.json().await.unwrap();
+    let source_id = source["id"].as_str().unwrap();
+
+    // Creating a new cluster with the same tree steals it from the source
+    let create_resp = app
+        .post_json(
+            "/api/v1/clusters",
+            &serde_json::json!({
+                "name": "Create Steal Target",
+                "address": "B",
+                "description": "B",
+                "soil_condition": "Su3",
+                "tree_ids": [tree_id]
+            }),
+        )
+        .await;
+    assert_eq!(create_resp.status().as_u16(), 201);
+
+    let source_after = app.get(&format!("/api/v1/clusters/{}", source_id)).await;
+    let source_after_body: serde_json::Value = source_after.json().await.unwrap();
+    assert_eq!(
+        source_after_body["latitude"].as_f64().unwrap(),
+        0.0,
+        "source cluster must be recalculated after its tree was pulled away on create"
+    );
+}
+
 // -- ClusterStatusAggregator (sensor-equipped tree status → cluster status) --
 
 async fn insert_sensor(app: &helpers::TestApp, id: &str) {
