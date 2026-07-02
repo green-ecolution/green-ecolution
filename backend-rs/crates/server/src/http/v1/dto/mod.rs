@@ -55,6 +55,20 @@ impl<T: Serialize + utoipa::ToSchema> ListResponse<T> {
             pagination: PaginationResponse::new(page.total, pagination),
         }
     }
+
+    /// Like [`Self::from_page_with`], but drops items the mapping declines.
+    /// Use this when a data inconsistency in a single item (logged by the
+    /// caller) must not take down the whole list response. `total` still
+    /// reflects the unfiltered count.
+    pub fn from_page_filter_map<D, F>(page: Page<D>, pagination: &Pagination, map_fn: F) -> Self
+    where
+        F: FnMut(&D) -> Option<T>,
+    {
+        Self {
+            data: page.items.iter().filter_map(map_fn).collect(),
+            pagination: PaginationResponse::new(page.total, pagination),
+        }
+    }
 }
 
 // -- Shared enums used across multiple DTOs --

@@ -245,6 +245,87 @@ impl WateringPlanReader for PgWateringPlanRepository {
     }
 }
 
+/// Persists the plan row and syncs both join tables inside the caller's
+/// transaction. Cluster rows are diffed rather than rewritten so surviving
+/// rows keep their `consumed_water` (a full delete + reinsert silently reset
+/// recorded evaluations to the column default).
+async fn persist_plan(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    plan: &WateringPlan,
+) -> Result<(), RepositoryError> {
+    let result = sqlx::query!(
+        r#"UPDATE watering_plans SET
+            date = $2,
+            description = $3,
+            status = $4,
+            cancellation_note = $5,
+            distance = $6,
+            total_water_required = $7,
+            refill_count = $8,
+            duration = $9,
+            gpx_url = $10,
+            provider = $11,
+            additional_informations = $12
+        WHERE id = $1"#,
+        plan.id.value(),
+        plan.date.date_naive(),
+        plan.description.as_deref().unwrap_or(""),
+        plan.status() as WateringPlanStatus,
+        plan.cancellation_note().unwrap_or(""),
+        plan.distance.as_ref().map(|d| d.meters()),
+        plan.total_water_required,
+        plan.refill_count as i32,
+        plan.duration.as_secs_f64(),
+        plan.gpx_url.as_ref().map(|u| u.as_str()),
+        plan.provenance().provider().map(|p| p.as_str()),
+        plan.provenance().additional_info(),
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(RepositoryError::NotFound);
+    }
+
+    sqlx::query!(
+        "DELETE FROM vehicle_watering_plans WHERE watering_plan_id = $1",
+        plan.id.value()
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    insert_vehicle_roles(
+        tx,
+        plan.id.value(),
+        plan.transporter_id().map(|id| id.value()),
+        plan.trailer_id().map(|id| id.value()),
+    )
+    .await?;
+
+    let cluster_id_values: Vec<RawId> = plan.cluster_ids().to_values();
+    sqlx::query!(
+        "DELETE FROM tree_cluster_watering_plans WHERE watering_plan_id = $1 AND tree_cluster_id <> ALL($2::uuid[])",
+        plan.id.value(),
+        &cluster_id_values,
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    if !cluster_id_values.is_empty() {
+        sqlx::query!(
+            r#"INSERT INTO tree_cluster_watering_plans (tree_cluster_id, watering_plan_id)
+               SELECT UNNEST($1::uuid[]), $2
+               ON CONFLICT (tree_cluster_id, watering_plan_id) DO NOTHING"#,
+            &cluster_id_values,
+            plan.id.value(),
+        )
+        .execute(&mut **tx)
+        .await?;
+    }
+
+    Ok(())
+}
+
 /// Writes the transporter/trailer join rows with their role. The role column
 /// (not uuid order) is what `by_id` / the view queries decode the slots from.
 async fn insert_vehicle_roles(
@@ -320,105 +401,33 @@ impl WateringPlanWriter for PgWateringPlanRepository {
     #[tracing::instrument(level = "trace", skip_all)]
     async fn save(&self, plan: &WateringPlan) -> Result<(), RepositoryError> {
         let mut tx = self.pool.begin().await?;
-
-        let result = sqlx::query!(
-            r#"UPDATE watering_plans SET
-                date = $2,
-                description = $3,
-                status = $4,
-                cancellation_note = $5,
-                distance = $6,
-                total_water_required = $7,
-                refill_count = $8,
-                duration = $9,
-                gpx_url = $10,
-                provider = $11,
-                additional_informations = $12
-            WHERE id = $1"#,
-            plan.id.value(),
-            plan.date.date_naive(),
-            plan.description.as_deref().unwrap_or(""),
-            plan.status() as WateringPlanStatus,
-            plan.cancellation_note().unwrap_or(""),
-            plan.distance.as_ref().map(|d| d.meters()),
-            plan.total_water_required,
-            plan.refill_count as i32,
-            plan.duration.as_secs_f64(),
-            plan.gpx_url.as_ref().map(|u| u.as_str()),
-            plan.provenance().provider().map(|p| p.as_str()),
-            plan.provenance().additional_info(),
-        )
-        .execute(&mut *tx)
-        .await?;
-
-        if result.rows_affected() == 0 {
-            return Err(RepositoryError::NotFound);
-        }
-
-        // rewrite vehicle join rows
-        sqlx::query!(
-            "DELETE FROM vehicle_watering_plans WHERE watering_plan_id = $1",
-            plan.id.value()
-        )
-        .execute(&mut *tx)
-        .await?;
-
-        insert_vehicle_roles(
-            &mut tx,
-            plan.id.value(),
-            plan.transporter_id().map(|id| id.value()),
-            plan.trailer_id().map(|id| id.value()),
-        )
-        .await?;
-
-        // rewrite cluster join rows
-        sqlx::query!(
-            "DELETE FROM tree_cluster_watering_plans WHERE watering_plan_id = $1",
-            plan.id.value()
-        )
-        .execute(&mut *tx)
-        .await?;
-
-        let cluster_id_values: Vec<RawId> = plan.cluster_ids().to_values();
-        if !cluster_id_values.is_empty() {
-            sqlx::query!(
-                "INSERT INTO tree_cluster_watering_plans (tree_cluster_id, watering_plan_id) SELECT UNNEST($1::uuid[]), $2",
-                &cluster_id_values,
-                plan.id.value()
-            )
-            .execute(&mut *tx)
-            .await?;
-        }
-
+        persist_plan(&mut tx, plan).await?;
         tx.commit().await?;
         Ok(())
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn save_evaluations(
+    async fn save_finished(
         &self,
-        plan_id: Id<WateringPlan>,
+        plan: &WateringPlan,
         evaluations: &[WateringPlanEvaluation],
     ) -> Result<(), RepositoryError> {
         let mut tx = self.pool.begin().await?;
+        persist_plan(&mut tx, plan).await?;
 
+        let cluster_ids: Vec<RawId> = evaluations.iter().map(|e| e.cluster_id.value()).collect();
+        let amounts: Vec<f64> = evaluations.iter().map(|e| e.consumed_water).collect();
         sqlx::query!(
-            "DELETE FROM tree_cluster_watering_plans WHERE watering_plan_id = $1",
-            plan_id.value()
+            r#"UPDATE tree_cluster_watering_plans t
+               SET consumed_water = e.consumed_water
+               FROM (SELECT UNNEST($2::uuid[]) AS cluster_id, UNNEST($3::float8[]) AS consumed_water) e
+               WHERE t.watering_plan_id = $1 AND t.tree_cluster_id = e.cluster_id"#,
+            plan.id.value(),
+            &cluster_ids,
+            &amounts,
         )
         .execute(&mut *tx)
         .await?;
-
-        for eval in evaluations {
-            sqlx::query!(
-                "INSERT INTO tree_cluster_watering_plans (tree_cluster_id, watering_plan_id, consumed_water) VALUES ($1, $2, $3)",
-                eval.cluster_id.value(),
-                plan_id.value(),
-                eval.consumed_water,
-            )
-            .execute(&mut *tx)
-            .await?;
-        }
 
         tx.commit().await?;
         Ok(())

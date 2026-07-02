@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM tree_cluster_watering_plans WHERE watering_plan_id = $1 AND tree_cluster_id <> ALL($2::uuid[])",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5ee9928d66dab6ff3e6bc026bf446a2fbf4e5a1110bf81d397341466d49fb4f7"
+}

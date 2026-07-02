@@ -1431,3 +1431,28 @@ async fn list_clusters_search_sort_and_sensor_count() {
         "Hafenspitze (moisture 0.2) must come before Zob-Vorplatz (moisture 0.8) when sorted asc"
     );
 }
+
+#[tokio::test]
+async fn list_clusters_query_escapes_like_wildcards() {
+    let app = spawn_app().await;
+    create_cluster_named(&app, "Wildcard Alpha").await;
+    create_cluster_named(&app, "Wildcard Beta").await;
+
+    // %25 = a literal '%' — it must match nothing, not everything.
+    let response = app.get("/api/v1/clusters?query=%25").await;
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(
+        body["data"].as_array().unwrap().len(),
+        0,
+        "a literal % in the search query must not act as a wildcard"
+    );
+}
+
+#[tokio::test]
+async fn list_clusters_query_rejects_overlong_input() {
+    let app = spawn_app().await;
+    let q = "a".repeat(101);
+    let response = app.get(&format!("/api/v1/clusters?query={q}")).await;
+    assert_eq!(response.status().as_u16(), 400);
+}

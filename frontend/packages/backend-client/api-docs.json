@@ -188,6 +188,9 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid query parameter"
+          },
           "500": {
             "description": "Internal server error"
           }
