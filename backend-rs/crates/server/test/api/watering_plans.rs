@@ -447,3 +447,36 @@ async fn get_gpx_file_returns_503_when_routing_disabled() {
         "expected error body to mention routing, got: {body}"
     );
 }
+
+#[tokio::test]
+async fn watering_plan_roles_survive_unfavorable_vehicle_id_order() {
+    let app = spawn_app().await;
+
+    // Trailer first: its uuid v7 sorts before the transporter's, which used
+    // to swap the roles in the positional ARRAY_AGG(DISTINCT ...) decoding.
+    let trailer = create_trailer(&app).await;
+    let trailer_id = trailer["id"].as_str().unwrap();
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let cluster = create_cluster(&app).await;
+    let cid = cluster["id"].as_str().unwrap();
+
+    let mut body = plan_body(tid, vec![cid]);
+    body["trailer_id"] = serde_json::json!(trailer_id);
+    let resp = app.post_json("/api/v1/watering-plans", &body).await;
+    assert_eq!(resp.status().as_u16(), 201);
+    let plan: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(plan["transporter"]["id"], tid);
+    assert_eq!(plan["trailer"]["id"], trailer_id);
+
+    // Re-read must decode the same roles.
+    let get = app
+        .get(&format!(
+            "/api/v1/watering-plans/{}",
+            plan["id"].as_str().unwrap()
+        ))
+        .await;
+    let got: serde_json::Value = get.json().await.unwrap();
+    assert_eq!(got["transporter"]["id"], tid);
+    assert_eq!(got["trailer"]["id"], trailer_id);
+}
