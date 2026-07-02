@@ -78,6 +78,8 @@ export const sensorQuery = (params?: ListSensorsRequest) =>
     queryFn: () => sensorApi.listSensors(params),
   })
 
+// Sensor ids are LoRaWAN EUIs (e.g. "eui-a81758fffe0c3b52"), not UUIDs,
+// so these queries only guard against empty ids.
 export const sensorDataQuery = (id: string) =>
   queryOptions<SensorDataResponse[]>({
     queryKey: ['sensor data', id],
@@ -85,6 +87,7 @@ export const sensorDataQuery = (id: string) =>
       sensorApi.listSensorData({
         sensorId: id,
       }),
+    enabled: id !== '',
   })
 
 export const sensorIdQuery = (id: string) =>
@@ -94,6 +97,7 @@ export const sensorIdQuery = (id: string) =>
       sensorApi.getSensor({
         sensorId: id,
       }),
+    enabled: id !== '',
   })
 
 export const sensorModelIdQuery = (id: string) =>
@@ -167,12 +171,11 @@ export const evaluationQuery = () =>
     queryFn: () => evaluationApi.getEvaluation(),
   })
 
-export const vehicleQuery = (params?: ListVehiclesRequest) => {
-  return queryOptions<ListResponseVehicleResponse>({
-    queryKey: ['vehicle', params?.page].filter((e) => e != undefined || e != null),
+export const vehicleQuery = (params?: ListVehiclesRequest) =>
+  queryOptions<ListResponseVehicleResponse>({
+    queryKey: ['vehicles', 'list', params ?? {}],
     queryFn: () => vehicleApi.listVehicles(params),
   })
-}
 
 export const vehicleIdQuery = (id: string) =>
   queryOptions<VehicleResponse>({

@@ -9,6 +9,7 @@ import { Suspense } from 'react'
 import { Loading } from '@green-ecolution/ui'
 import { VehicleForm } from '@/schema/vehicleSchema'
 import FormForVehicle from '../general/form/FormForVehicle'
+import UnsavedChangesDialog from '../general/form/UnsavedChangesDialog'
 import { useVehicleForm } from '@/hooks/form/useVehicleForm'
 
 interface VehicleUpdateProps {
@@ -32,7 +33,10 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
       description: data.description,
     }),
   )
-  const { mutate, isError, error, form } = useVehicleForm('update', { vehicleId, initForm })
+  const { mutate, isError, error, form, navigationBlocker } = useVehicleForm('update', {
+    vehicleId,
+    initForm,
+  })
   const onSubmit: SubmitHandler<VehicleForm> = (data) => {
     mutate(data)
   }
@@ -79,6 +83,8 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
           redirectUrl={{ to: '/vehicles' }}
         />
       </Suspense>
+
+      <UnsavedChangesDialog blocker={navigationBlocker} />
     </>
   )
 }
