@@ -25,8 +25,8 @@ impl PgWateringPlanRepository {
 }
 
 /// Flat row shape shared by `view_by_id` and `view_search` on
-/// `watering_plans`. `From` derives `created_at` from the UUID v7 id and
-/// extracts `transporter_id` / `trailer_id` from the two-vehicle join.
+/// `watering_plans`. `From` derives `created_at` from the UUID v7 id;
+/// transporter/trailer come from the role column on the vehicle join table.
 #[allow(dead_code)] // fields are read via the `From<WateringPlanViewRow>` impl
 struct WateringPlanViewRow {
     id: RawId,
@@ -42,7 +42,8 @@ struct WateringPlanViewRow {
     duration: f64,
     provider: Option<String>,
     additional_informations: Option<Value>,
-    vehicle_ids: Vec<RawId>,
+    transporter_id: Option<RawId>,
+    trailer_id: Option<RawId>,
     cluster_ids: Vec<RawId>,
 }
 
@@ -51,8 +52,8 @@ impl From<WateringPlanViewRow> for WateringPlanView {
         let created_at = Id::<WateringPlan>::new(row.id)
             .created_at()
             .expect("watering_plans.id is minted as uuid v7");
-        let transporter_id = row.vehicle_ids.first().copied();
-        let trailer_id = row.vehicle_ids.get(1).copied();
+        let transporter_id = row.transporter_id;
+        let trailer_id = row.trailer_id;
         Self {
             id: row.id,
             created_at,
@@ -92,7 +93,8 @@ impl WateringPlanReader for PgWateringPlanRepository {
             duration: f64,
             provider: Option<String>,
             additional_informations: Option<Value>,
-            vehicle_ids: Vec<RawId>,
+            transporter_id: Option<RawId>,
+            trailer_id: Option<RawId>,
             cluster_ids: Vec<RawId>,
         }
 
@@ -103,7 +105,8 @@ impl WateringPlanReader for PgWateringPlanRepository {
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.gpx_url, wp.refill_count, wp.duration,
                       wp.provider, wp.additional_informations,
-                      COALESCE(ARRAY_AGG(DISTINCT vwp.vehicle_id) FILTER (WHERE vwp.vehicle_id IS NOT NULL), ARRAY[]::uuid[]) AS "vehicle_ids!: Vec<RawId>",
+                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS "transporter_id: RawId",
+                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS "trailer_id: RawId",
                       COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS "cluster_ids!: Vec<RawId>"
             FROM watering_plans wp
             LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id
@@ -116,8 +119,8 @@ impl WateringPlanReader for PgWateringPlanRepository {
         .await?
         .ok_or(RepositoryError::NotFound)?;
 
-        let transporter_id = row.vehicle_ids.first().copied();
-        let trailer_id = row.vehicle_ids.get(1).copied();
+        let transporter_id = row.transporter_id;
+        let trailer_id = row.trailer_id;
 
         Ok(WateringPlan::reconstitute(WateringPlanSnapshot {
             id: row.id,
@@ -147,7 +150,8 @@ impl WateringPlanReader for PgWateringPlanRepository {
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.gpx_url, wp.refill_count, wp.duration,
                       wp.provider, wp.additional_informations,
-                      COALESCE(ARRAY_AGG(DISTINCT vwp.vehicle_id) FILTER (WHERE vwp.vehicle_id IS NOT NULL), ARRAY[]::uuid[]) AS "vehicle_ids!: Vec<RawId>",
+                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS "transporter_id: RawId",
+                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS "trailer_id: RawId",
                       COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS "cluster_ids!: Vec<RawId>"
             FROM watering_plans wp
             LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id
@@ -188,7 +192,8 @@ impl WateringPlanReader for PgWateringPlanRepository {
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.gpx_url, wp.refill_count, wp.duration,
                       wp.provider, wp.additional_informations,
-                      COALESCE(ARRAY_AGG(DISTINCT vwp.vehicle_id) FILTER (WHERE vwp.vehicle_id IS NOT NULL), ARRAY[]::uuid[]) AS "vehicle_ids!: Vec<RawId>",
+                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS "transporter_id: RawId",
+                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS "trailer_id: RawId",
                       COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS "cluster_ids!: Vec<RawId>"
             FROM watering_plans wp
             LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id
@@ -240,6 +245,35 @@ impl WateringPlanReader for PgWateringPlanRepository {
     }
 }
 
+/// Writes the transporter/trailer join rows with their role. The role column
+/// (not uuid order) is what `by_id` / the view queries decode the slots from.
+async fn insert_vehicle_roles(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    plan_id: RawId,
+    transporter_id: Option<RawId>,
+    trailer_id: Option<RawId>,
+) -> Result<(), RepositoryError> {
+    if let Some(id) = transporter_id {
+        sqlx::query!(
+            "INSERT INTO vehicle_watering_plans (vehicle_id, watering_plan_id, role) VALUES ($1, $2, 'transporter')",
+            id,
+            plan_id,
+        )
+        .execute(&mut **tx)
+        .await?;
+    }
+    if let Some(id) = trailer_id {
+        sqlx::query!(
+            "INSERT INTO vehicle_watering_plans (vehicle_id, watering_plan_id, role) VALUES ($1, $2, 'trailer')",
+            id,
+            plan_id,
+        )
+        .execute(&mut **tx)
+        .await?;
+    }
+    Ok(())
+}
+
 #[async_trait]
 impl WateringPlanWriter for PgWateringPlanRepository {
     #[tracing::instrument(level = "trace", skip_all)]
@@ -259,22 +293,13 @@ impl WateringPlanWriter for PgWateringPlanRepository {
         .execute(&mut *tx)
         .await?;
 
-        let mut vehicle_ids: Vec<RawId> = Vec::new();
-        if let Some(ref id) = draft.transporter_id {
-            vehicle_ids.push(id.value());
-        }
-        if let Some(ref id) = draft.trailer_id {
-            vehicle_ids.push(id.value());
-        }
-        if !vehicle_ids.is_empty() {
-            sqlx::query!(
-                "INSERT INTO vehicle_watering_plans (vehicle_id, watering_plan_id) SELECT UNNEST($1::uuid[]), $2",
-                &vehicle_ids,
-                plan_id.value()
-            )
-            .execute(&mut *tx)
-            .await?;
-        }
+        insert_vehicle_roles(
+            &mut tx,
+            plan_id.value(),
+            draft.transporter_id.map(|id| id.value()),
+            draft.trailer_id.map(|id| id.value()),
+        )
+        .await?;
 
         let cluster_id_values: Vec<RawId> = draft.cluster_ids.to_values();
         if !cluster_id_values.is_empty() {
@@ -338,22 +363,13 @@ impl WateringPlanWriter for PgWateringPlanRepository {
         .execute(&mut *tx)
         .await?;
 
-        let mut vehicle_ids: Vec<RawId> = Vec::new();
-        if let Some(id) = plan.transporter_id() {
-            vehicle_ids.push(id.value());
-        }
-        if let Some(id) = plan.trailer_id() {
-            vehicle_ids.push(id.value());
-        }
-        if !vehicle_ids.is_empty() {
-            sqlx::query!(
-                "INSERT INTO vehicle_watering_plans (vehicle_id, watering_plan_id) SELECT UNNEST($1::uuid[]), $2",
-                &vehicle_ids,
-                plan.id.value()
-            )
-            .execute(&mut *tx)
-            .await?;
-        }
+        insert_vehicle_roles(
+            &mut tx,
+            plan.id.value(),
+            plan.transporter_id().map(|id| id.value()),
+            plan.trailer_id().map(|id| id.value()),
+        )
+        .await?;
 
         // rewrite cluster join rows
         sqlx::query!(

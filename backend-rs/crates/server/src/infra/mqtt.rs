@@ -41,18 +41,20 @@ pub struct MqttHealthState {
     pub connected: AtomicBool,
 }
 
-/// Spawns the MQTT subscriber as a tokio task. Returns `Ok(Arc<MqttHealthState>)` if
-/// disabled or if the task started successfully. The task itself logs and recovers
-/// from connection errors; the caller does not await its completion.
+/// Spawns the MQTT subscriber as a tokio task. Returns the health state and,
+/// when the subscriber actually started, its `JoinHandle` so the caller can
+/// await a clean stop. The task itself logs and recovers from connection
+/// errors and exits when `shutdown` signals (or its sender is dropped).
 pub fn spawn(
     settings: MqttSettings,
     sensor_service: Arc<SensorService>,
-) -> Result<Arc<MqttHealthState>, MqttSubscriberError> {
+    shutdown: tokio::sync::watch::Receiver<bool>,
+) -> Result<(Arc<MqttHealthState>, Option<tokio::task::JoinHandle<()>>), MqttSubscriberError> {
     let state = Arc::new(MqttHealthState::default());
 
     if !settings.enabled {
         tracing::info!("mqtt subscriber disabled due to config (mqtt.enabled = false)");
-        return Ok(state);
+        return Ok((state, None));
     }
     if settings.broker_url.is_empty() || settings.topic.is_empty() {
         return Err(MqttSubscriberError::MissingConfig);
@@ -62,15 +64,19 @@ pub fn spawn(
     let topic = settings.topic.clone();
     let task_state = state.clone();
 
-    tokio::spawn(async move {
-        if let Err(e) = client.subscribe(&topic, QoS::AtLeastOnce).await {
-            tracing::error!(error = %e, mqtt.topic = %topic, "mqtt subscribe failed");
-            return;
-        }
-        run_event_loop(eventloop, sensor_service, task_state).await;
+    let handle = tokio::spawn(async move {
+        run_event_loop(
+            client,
+            &topic,
+            eventloop,
+            sensor_service,
+            task_state,
+            shutdown,
+        )
+        .await;
     });
 
-    Ok(state)
+    Ok((state, Some(handle)))
 }
 
 fn build_client(settings: &MqttSettings) -> Result<(AsyncClient, EventLoop), MqttSubscriberError> {
@@ -99,14 +105,33 @@ fn build_client(settings: &MqttSettings) -> Result<(AsyncClient, EventLoop), Mqt
 }
 
 async fn run_event_loop(
+    client: AsyncClient,
+    topic: &str,
     mut eventloop: EventLoop,
     sensor_service: Arc<SensorService>,
     state: Arc<MqttHealthState>,
+    mut shutdown: tokio::sync::watch::Receiver<bool>,
 ) {
     loop {
-        match eventloop.poll().await {
+        let event = tokio::select! {
+            // `changed()` also resolves (with Err) when the sender is dropped;
+            // both mean the application is going down. An in-flight
+            // `handle_publish` below is never interrupted by this.
+            _ = shutdown.changed() => {
+                tracing::info!("mqtt subscriber shutting down");
+                return;
+            }
+            event = eventloop.poll() => event,
+        };
+        match event {
             Ok(Event::Incoming(Incoming::ConnAck(_))) => {
                 state.connected.store(true, Ordering::Relaxed);
+                // Subscriptions are not replayed by the broker across
+                // reconnects (clean session), so (re-)subscribe on every
+                // ConnAck — including the very first one.
+                if let Err(e) = client.subscribe(topic, QoS::AtLeastOnce).await {
+                    tracing::error!(error = %e, mqtt.topic = %topic, "mqtt subscribe failed");
+                }
             }
             Ok(Event::Incoming(Incoming::Publish(pub_pkt))) => {
                 if let Err(e) = handle_publish(&pub_pkt.payload, &sensor_service).await {

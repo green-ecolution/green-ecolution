@@ -220,8 +220,8 @@ impl TreeCluster {
     /// Replaces the freely editable display fields. Emits
     /// `ClusterSoilConditionChanged` when `soil_condition` actually changes;
     /// the other fields have no subscribers and change silently. Tree
-    /// membership goes through `replace_trees` (with `ClusterTreesChanged`
-    /// published from the service when the set actually changed); centroid,
+    /// membership goes through `replace_trees` (which emits
+    /// `ClusterTreesChanged` when the set actually changed); centroid,
     /// region, watering status and the archived flag are private and only
     /// changed through their own recalculation methods.
     pub fn replace_details(
@@ -246,8 +246,19 @@ impl TreeCluster {
         events
     }
 
-    pub fn replace_trees(&mut self, tree_ids: Vec<Id<Tree>>) {
+    /// Replaces the tree membership. Emits `ClusterTreesChanged` only when the
+    /// membership actually changes as a *set* — the same trees in a different
+    /// request order are a no-op.
+    pub fn replace_trees(&mut self, tree_ids: Vec<Id<Tree>>) -> Vec<DomainEvent> {
+        let old: std::collections::HashSet<Id<Tree>> = self.tree_ids.iter().copied().collect();
+        let new: std::collections::HashSet<Id<Tree>> = tree_ids.iter().copied().collect();
         self.tree_ids = tree_ids;
+        if old == new {
+            return Vec::new();
+        }
+        vec![DomainEvent::ClusterTreesChanged {
+            cluster_id: self.id,
+        }]
     }
 
     /// Recalculates the geographic centroid from the given coordinates.
@@ -418,12 +429,40 @@ mod tests {
     }
 
     #[test]
-    fn replace_trees_replaces_set() {
+    fn replace_trees_replaces_set_and_emits_event() {
         let mut c = fixed_cluster();
         let t1: Id<crate::tree::Tree> = Id::new_v7();
         let t2: Id<crate::tree::Tree> = Id::new_v7();
-        c.replace_trees(vec![t1, t2]);
+        let events = c.replace_trees(vec![t1, t2]);
         assert_eq!(c.tree_ids, vec![t1, t2]);
+        assert_eq!(events.len(), 1);
+        assert!(matches!(
+            events[0],
+            DomainEvent::ClusterTreesChanged { cluster_id } if cluster_id == c.id
+        ));
+    }
+
+    #[test]
+    fn replace_trees_same_set_in_different_order_emits_no_event() {
+        let mut c = fixed_cluster();
+        let t1: Id<crate::tree::Tree> = Id::new_v7();
+        let t2: Id<crate::tree::Tree> = Id::new_v7();
+        let _ = c.replace_trees(vec![t1, t2]);
+        let events = c.replace_trees(vec![t2, t1]);
+        assert!(
+            events.is_empty(),
+            "same membership in request order must not emit an event"
+        );
+    }
+
+    #[test]
+    fn replace_trees_removal_emits_event() {
+        let mut c = fixed_cluster();
+        let t1: Id<crate::tree::Tree> = Id::new_v7();
+        let t2: Id<crate::tree::Tree> = Id::new_v7();
+        let _ = c.replace_trees(vec![t1, t2]);
+        let events = c.replace_trees(vec![t1]);
+        assert_eq!(events.len(), 1);
     }
 
     #[test]

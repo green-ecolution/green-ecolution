@@ -813,3 +813,130 @@ async fn list_trees_accepts_url_encoded_just_watered_status() {
     let body: serde_json::Value = response.json().await.unwrap();
     assert_eq!(body["data"].as_array().unwrap().len(), 0);
 }
+
+// -- Sensor uniqueness: one sensor must never be linked to two trees --
+
+async fn insert_sensor(app: &TestApp, id: &str) {
+    let model_id = app.ecodrizzler_model_id().await;
+    sqlx::query!(
+        r#"INSERT INTO sensors (id, activated_at, type, model_id)
+        VALUES ($1, NOW(), 'lorawan', $2)"#,
+        id,
+        model_id,
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    sqlx::query!(
+        r#"INSERT INTO sensor_lorawan (id, serial_number, dev_eui, app_eui, app_key)
+        VALUES ($1, '', '', '', '')"#,
+        id,
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+}
+
+async fn insert_tree_with_sensor(app: &TestApp, number: &str, sensor_id: &str) -> uuid::Uuid {
+    let id = uuid::Uuid::now_v7();
+    sqlx::query!(
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude,
+                              geometry, description, sensor_id, watering_status)
+        VALUES ($1, 2020, 'Eiche', $2, 53.55, 9.99,
+                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', $3,
+                $4::text::watering_status)"#,
+        id,
+        number,
+        Some(sensor_id),
+        "unknown",
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    id
+}
+
+#[tokio::test]
+async fn create_tree_with_sensor_of_other_tree_returns_409() {
+    let app = spawn_app().await;
+    insert_sensor(&app, "eui-conflict-1").await;
+    insert_tree_with_sensor(&app, "T-CONF-1", "eui-conflict-1").await;
+
+    let body = serde_json::json!({
+        "species": "Eiche",
+        "number": "T-CONF-2",
+        "planting_year": 2020,
+        "latitude": 53.56,
+        "longitude": 9.98,
+        "description": "Testbaum",
+        "sensor_id": "eui-conflict-1"
+    });
+    let response = app.post_json("/api/v1/trees", &body).await;
+
+    assert_eq!(response.status().as_u16(), 409);
+}
+
+#[tokio::test]
+async fn update_tree_with_sensor_of_other_tree_returns_409() {
+    let app = spawn_app().await;
+    insert_sensor(&app, "eui-conflict-2").await;
+    let holder = insert_tree_with_sensor(&app, "T-CONF-3", "eui-conflict-2").await;
+
+    let create = serde_json::json!({
+        "species": "Eiche",
+        "number": "T-CONF-4",
+        "planting_year": 2020,
+        "latitude": 53.56,
+        "longitude": 9.98,
+        "description": "Testbaum"
+    });
+    let created: serde_json::Value = app
+        .post_json("/api/v1/trees", &create)
+        .await
+        .json()
+        .await
+        .unwrap();
+    let other_id = created["id"].as_str().unwrap();
+
+    let update = serde_json::json!({
+        "species": "Eiche",
+        "number": "T-CONF-4",
+        "planting_year": 2020,
+        "latitude": 53.56,
+        "longitude": 9.98,
+        "description": "Testbaum",
+        "sensor_id": "eui-conflict-2"
+    });
+    let response = app
+        .put_json(&format!("/api/v1/trees/{other_id}"), &update)
+        .await;
+
+    assert_eq!(response.status().as_u16(), 409);
+
+    // The sensor must still belong to the original tree
+    let holder_after = app.get(&format!("/api/v1/trees/{holder}")).await;
+    let holder_body: serde_json::Value = holder_after.json().await.unwrap();
+    assert_eq!(holder_body["sensor"]["id"], "eui-conflict-2");
+}
+
+#[tokio::test]
+async fn update_tree_keeping_its_own_sensor_returns_200() {
+    let app = spawn_app().await;
+    insert_sensor(&app, "eui-conflict-3").await;
+    let tree_id = insert_tree_with_sensor(&app, "T-CONF-5", "eui-conflict-3").await;
+
+    let update = serde_json::json!({
+        "species": "Eiche",
+        "number": "T-CONF-5",
+        "planting_year": 2020,
+        "latitude": 53.55,
+        "longitude": 9.99,
+        "description": "Testbaum",
+        "sensor_id": "eui-conflict-3"
+    });
+    let response = app
+        .put_json(&format!("/api/v1/trees/{tree_id}"), &update)
+        .await;
+
+    assert_eq!(response.status().as_u16(), 200);
+}

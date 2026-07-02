@@ -56,6 +56,8 @@ pub struct Application {
     cors: CorsSettings,
     auth_layer: AuthLayer,
     _jwks: Arc<JwksProvider>,
+    shutdown_tx: tokio::sync::watch::Sender<bool>,
+    mqtt_handle: Option<tokio::task::JoinHandle<()>>,
 }
 
 impl Application {
@@ -97,7 +99,9 @@ impl Application {
         let event_bus = build_event_bus(&repos);
         let services = Services::build(&repos, event_bus);
 
-        let mqtt_state = spawn_mqtt_subscriber(&settings, services.sensor.clone());
+        let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
+        let (mqtt_state, mqtt_handle) =
+            spawn_mqtt_subscriber(&settings, services.sensor.clone(), shutdown_rx);
         let (health_reader, readiness_reader) =
             spawn_health_probes(&pool, &settings, probe_http_client.clone(), mqtt_state).await;
         let _update_handle = infra::update_checker::spawn(
@@ -143,6 +147,8 @@ impl Application {
             cors: settings.cors,
             auth_layer,
             _jwks: jwks,
+            shutdown_tx,
+            mqtt_handle,
         })
     }
 
@@ -157,6 +163,9 @@ impl Application {
         self.state.clone()
     }
 
+    /// Serves HTTP until SIGTERM / ctrl-c, then drains in-flight requests,
+    /// signals background tasks to stop, and waits (bounded) for the MQTT
+    /// subscriber so an in-flight ingest is not cut off mid-write.
     pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {
         let app = router(
             self.state,
@@ -165,8 +174,43 @@ impl Application {
             self.auth_layer,
         );
         tracing::info!("listening on {}", self.listener.local_addr()?);
-        axum::serve(self.listener, app).await
+        axum::serve(self.listener, app)
+            .with_graceful_shutdown(shutdown_signal())
+            .await?;
+
+        let _ = self.shutdown_tx.send(true);
+        if let Some(handle) = self.mqtt_handle
+            && tokio::time::timeout(Duration::from_secs(10), handle)
+                .await
+                .is_err()
+        {
+            tracing::warn!("mqtt subscriber did not stop within 10s; exiting anyway");
+        }
+        Ok(())
     }
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("ctrl-c handler must install");
+    };
+    #[cfg(unix)]
+    let terminate = async {
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("SIGTERM handler must install")
+            .recv()
+            .await;
+    };
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
+    tracing::info!("shutdown signal received; draining in-flight requests");
 }
 
 pub async fn get_connection_pool(config: &DatabaseSettings) -> Result<PgPool, sqlx::Error> {
@@ -325,12 +369,13 @@ fn build_event_bus(repos: &Repositories) -> Arc<dyn EventBus> {
 fn spawn_mqtt_subscriber(
     settings: &Settings,
     sensor_service: Arc<SensorService>,
-) -> Arc<MqttHealthState> {
-    match infra::mqtt::spawn(settings.mqtt.clone(), sensor_service) {
-        Ok(state) => state,
+    shutdown: tokio::sync::watch::Receiver<bool>,
+) -> (Arc<MqttHealthState>, Option<tokio::task::JoinHandle<()>>) {
+    match infra::mqtt::spawn(settings.mqtt.clone(), sensor_service, shutdown) {
+        Ok((state, handle)) => (state, handle),
         Err(e) => {
             tracing::error!(error = %e, "mqtt subscriber not started");
-            Arc::new(MqttHealthState::default())
+            (Arc::new(MqttHealthState::default()), None)
         }
     }
 }
