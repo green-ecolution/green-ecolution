@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.4.0](https://github.com/green-ecolution/green-ecolution/compare/v0.3.0...v0.4.0) (2026-07-02)
+
+
+### Features
+
+* **sensor:** show LoRaWAN send interval on "Letztes Signal" card (GECO-264) ([#862](https://github.com/green-ecolution/green-ecolution/issues/862)) ([55ee510](https://github.com/green-ecolution/green-ecolution/commit/55ee510b4246a57fff9b345db2cdd8943e6882b0))
+
+
+### Bug Fixes
+
+* **backend:** harden MQTT ingest, vehicle roles, cluster events and API error responses ([#865](https://github.com/green-ecolution/green-ecolution/issues/865)) ([602a395](https://github.com/green-ecolution/green-ecolution/commit/602a39561af090c13a8d823591e2cfb455fe14d5))
+* **backend:** watering-plan data integrity, list resilience and cluster search hardening ([#866](https://github.com/green-ecolution/green-ecolution/issues/866)) ([ce6e6ab](https://github.com/green-ecolution/green-ecolution/commit/ce6e6ab674f78ebf33c506abf63eaa707c90b9f9))
+
 ## [0.3.0](https://github.com/green-ecolution/green-ecolution/compare/v0.2.1...v0.3.0) (2026-07-01)
 
 
