@@ -83,8 +83,27 @@ impl TreeService {
         Ok(self.reader.view_by_sensor_id(sensor_id).await?)
     }
 
+    /// Rejects a sensor that is already linked to a different tree. Moving a
+    /// sensor between trees is an explicit flow (`SensorService::reassign_tree`),
+    /// not a side effect of tree edits.
+    async fn ensure_sensor_unassigned(
+        &self,
+        sensor_id: &SensorId,
+        tree_id: Option<Id<Tree>>,
+    ) -> Result<(), ServiceError> {
+        if let Some(holder) = self.reader.by_sensor_id(sensor_id).await?
+            && Some(holder.id) != tree_id
+        {
+            return Err(ServiceError::SensorAlreadyAssigned);
+        }
+        Ok(())
+    }
+
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn create(&self, draft: TreeDraft) -> Result<Tree, ServiceError> {
+        if let Some(ref sid) = draft.sensor_id {
+            self.ensure_sensor_unassigned(sid, None).await?;
+        }
         let tree = self.writer.save_new(draft).await?;
         self.event_bus
             .publish(DomainEvent::TreeCreated {
@@ -98,6 +117,9 @@ impl TreeService {
 
     #[tracing::instrument(level = "debug", skip_all, fields(tree.id = %id))]
     pub async fn replace(&self, id: Id<Tree>, draft: TreeDraft) -> Result<Tree, ServiceError> {
+        if let Some(ref sid) = draft.sensor_id {
+            self.ensure_sensor_unassigned(sid, Some(id)).await?;
+        }
         let mut tree = self.reader.by_id(id).await?;
         let mut events = Vec::new();
         events.extend(tree.replace_details(
@@ -137,6 +159,7 @@ impl TreeService {
         id: Id<Tree>,
         sensor_id: SensorId,
     ) -> Result<Tree, ServiceError> {
+        self.ensure_sensor_unassigned(&sensor_id, Some(id)).await?;
         let mut tree = self.reader.by_id(id).await?;
         let events = tree.attach_sensor(sensor_id);
         self.writer.save(&tree).await?;

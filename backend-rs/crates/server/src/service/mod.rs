@@ -22,6 +22,8 @@ pub enum ServiceError {
     Auth(#[from] AuthError),
     #[error("tree already has a different sensor")]
     TreeAlreadyHasSensor,
+    #[error("sensor is already assigned to another tree")]
+    SensorAlreadyAssigned,
     #[error("sensor is already activated")]
     AlreadyActivated,
     #[error("sensor is not activated")]

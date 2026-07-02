@@ -44,6 +44,7 @@ impl IntoResponse for ServiceError {
             ServiceError::InvalidInput(msg) => (StatusCode::BAD_REQUEST, msg).into_response(),
             ServiceError::Auth(e) => e.into_response(),
             e @ (ServiceError::TreeAlreadyHasSensor
+            | ServiceError::SensorAlreadyAssigned
             | ServiceError::AlreadyActivated
             | ServiceError::NotActivated) => (StatusCode::CONFLICT, e.to_string()).into_response(),
             e @ ServiceError::FeatureDisabled { .. } => {
