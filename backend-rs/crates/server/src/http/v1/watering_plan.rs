@@ -154,34 +154,43 @@ pub async fn list_watering_plans(
     let region_map: HashMap<_, _> = regions.iter().map(|r| (r.id, r)).collect();
     let cluster_map: HashMap<_, _> = clusters.iter().map(|c| (c.id.value(), c)).collect();
 
-    let response = ListResponse::from_page_with(page, &pagination, |view: &WateringPlanView| {
-        let transporter = view
-            .transporter_id
-            .and_then(|id| vehicle_map.get(&id))
-            .map(|v| VehicleResponse::from(*v))
-            .expect("watering plan must have a transporter");
-        let trailer = view
-            .trailer_id
-            .and_then(|id| vehicle_map.get(&id))
-            .map(|v| VehicleResponse::from(*v));
-        let plan_clusters: Vec<TreeClusterInListResponse> = view
-            .cluster_ids
-            .iter()
-            .filter_map(|cid| cluster_map.get(cid))
-            .map(|c| {
-                let region = c.region_id().and_then(|rid| region_map.get(&rid).copied());
-                TreeClusterInListResponse::from((*c, region))
-            })
-            .collect();
+    let response =
+        ListResponse::from_page_filter_map(page, &pagination, |view: &WateringPlanView| {
+            let Some(transporter) = view
+                .transporter_id
+                .and_then(|id| vehicle_map.get(&id))
+                .map(|v| VehicleResponse::from(*v))
+            else {
+                tracing::warn!(
+                    plan.id = %view.id,
+                    "skipping watering plan without resolvable transporter"
+                );
+                return None;
+            };
+            let trailer = view
+                .trailer_id
+                .and_then(|id| vehicle_map.get(&id))
+                .map(|v| VehicleResponse::from(*v));
+            let plan_clusters: Vec<TreeClusterInListResponse> = view
+                .cluster_ids
+                .iter()
+                .filter_map(|cid| cluster_map.get(cid))
+                .map(|c| {
+                    let region = c.region_id().and_then(|rid| region_map.get(&rid).copied());
+                    TreeClusterInListResponse::from((*c, region))
+                })
+                .collect();
 
-        WateringPlanInListResponse::from(WateringPlanInListDetailView {
-            view: view.clone(),
-            transporter,
-            trailer,
-            clusters: plan_clusters,
-            user_ids: vec![],
-        })
-    });
+            Some(WateringPlanInListResponse::from(
+                WateringPlanInListDetailView {
+                    view: view.clone(),
+                    transporter,
+                    trailer,
+                    clusters: plan_clusters,
+                    user_ids: vec![],
+                },
+            ))
+        });
 
     Ok(Json(response))
 }
