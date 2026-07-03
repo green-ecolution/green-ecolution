@@ -6,6 +6,7 @@ database:
   username: "postgres"
   password: "postgres"
   database_name: "postgres"
+  schema: "public"
   max_connections: 5
   log_statements_level: "debug"
   slow_query_threshold_ms: 500

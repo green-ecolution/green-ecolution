@@ -37,12 +37,29 @@ pub struct DatabaseSettings {
     pub port: u16,
     pub host: String,
     pub database_name: String,
+    #[serde(default = "default_schema")]
+    pub schema: String,
     pub require_ssl: bool,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub max_connections: u32,
     pub log_statements_level: LogLevel,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub slow_query_threshold_ms: u64,
+}
+
+fn default_schema() -> String {
+    "public".to_string()
+}
+
+// Non-public schemas still need `public` on the path so PostGIS/pgcrypto
+// (installed there on managed Postgres) resolve unqualified. No spaces:
+// the value is passed as a single `-c search_path=...` connection option.
+pub fn search_path_for(schema: &str) -> String {
+    if schema == "public" {
+        "public".to_string()
+    } else {
+        format!("{schema},public")
+    }
 }
 
 impl DatabaseSettings {
@@ -60,6 +77,7 @@ impl DatabaseSettings {
             .port(self.port)
             .database(&self.database_name)
             .ssl_mode(ssl_mode)
+            .options([("search_path", search_path_for(&self.schema))])
             .log_statements(self.log_statements_level.into())
             .log_slow_statements(
                 log::LevelFilter::Warn,
@@ -319,6 +337,7 @@ impl Settings {
                 port: 5432,
                 host: "127.0.0.1".into(),
                 database_name: "postgres".into(),
+                schema: "public".into(),
                 require_ssl: false,
                 max_connections: 1,
                 log_statements_level: LogLevel::Warn,

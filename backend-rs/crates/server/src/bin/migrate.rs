@@ -1,12 +1,74 @@
 use include_dir::{Dir, include_dir};
-use secrecy::ExposeSecret;
 use server::configuration::get_configuration;
 use sqlx::postgres::PgConnectOptions;
-use sqlx::{Connection, Executor, PgConnection, PgPool, migrate::Migrator};
+use sqlx::{Executor, PgPool, migrate::Migrator};
 use std::env;
 
 static MIGRATOR: Migrator = sqlx::migrate!("../../migrations");
 static SEEDS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../seeds");
+
+// Reset wipes app-owned objects in-place instead of DROP/CREATE DATABASE:
+// managed Postgres (e.g. OVH) rejects connecting to template1 and forbids
+// dropping databases. Extension objects (postgis' spatial_ref_sys, geometry
+// type, pgcrypto) are skipped via pg_depend deptype='e' because the app user
+// is not allowed to recreate them. Only the target `schema` is touched.
+fn reset_sql(schema: &str) -> String {
+    format!(
+        r#"
+DO $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN
+        SELECT c.relname
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = '{schema}'
+          AND c.relkind = 'r'
+          AND NOT EXISTS (
+              SELECT 1 FROM pg_depend d WHERE d.objid = c.oid AND d.deptype = 'e'
+          )
+    LOOP
+        EXECUTE format('DROP TABLE IF EXISTS %I.%I CASCADE', '{schema}', r.relname);
+    END LOOP;
+
+    FOR r IN
+        SELECT t.typname
+        FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = '{schema}'
+          AND t.typtype = 'e'
+          AND NOT EXISTS (
+              SELECT 1 FROM pg_depend d WHERE d.objid = t.oid AND d.deptype = 'e'
+          )
+    LOOP
+        EXECUTE format('DROP TYPE IF EXISTS %I.%I CASCADE', '{schema}', r.typname);
+    END LOOP;
+END $$;
+"#
+    )
+}
+
+// Reject anything that isn't a bare identifier: `schema` is interpolated into
+// dynamic SQL (reset_sql / ensure_schema), so this is the injection guard.
+fn validate_schema(schema: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let ok = !schema.is_empty()
+        && schema
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'_')
+        && !schema.as_bytes()[0].is_ascii_digit();
+    if ok {
+        Ok(())
+    } else {
+        Err(format!("invalid schema name: {schema:?} (expected [A-Za-z_][A-Za-z0-9_]*)").into())
+    }
+}
+
+async fn ensure_schema(pool: &PgPool, schema: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pool.execute(format!(r#"CREATE SCHEMA IF NOT EXISTS "{schema}""#).as_str())
+        .await?;
+    Ok(())
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -14,12 +76,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cmd = args.next().unwrap_or_else(|| "up".into());
     let flags: Vec<String> = args.collect();
     let with_seed = flags.iter().any(|f| f == "--with-seed");
+    let schema_override = flags
+        .iter()
+        .position(|f| f == "--schema")
+        .and_then(|i| flags.get(i + 1))
+        .cloned();
 
-    let (admin_options, app_options, db_name) = resolve_options()?;
+    let (app_options, schema) = resolve_options(schema_override)?;
 
     match cmd.as_str() {
         "up" | "run" => {
             let pool = PgPool::connect_with(app_options).await?;
+            ensure_schema(&pool, &schema).await?;
             MIGRATOR.run(&pool).await?;
             println!("Migrations applied");
             if with_seed {
@@ -45,23 +113,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         "reset" => {
-            let mut admin = PgConnection::connect_with(&admin_options).await?;
-            let terminate = format!(
-                "SELECT pg_terminate_backend(pid) FROM pg_stat_activity \
-                 WHERE datname = '{db_name}' AND pid <> pg_backend_pid()"
-            );
-            let _ = admin.execute(terminate.as_str()).await;
-            admin
-                .execute(format!(r#"DROP DATABASE IF EXISTS "{db_name}""#).as_str())
-                .await?;
-            admin
-                .execute(format!(r#"CREATE DATABASE "{db_name}""#).as_str())
-                .await?;
-            admin.close().await?;
-
             let pool = PgPool::connect_with(app_options).await?;
+            ensure_schema(&pool, &schema).await?;
+            pool.execute(reset_sql(&schema).as_str()).await?;
             MIGRATOR.run(&pool).await?;
-            println!("Database '{db_name}' dropped, recreated, and migrated");
+            println!("Schema '{schema}' wiped and migrated");
             if with_seed {
                 run_seeds(&pool).await?;
             }
@@ -142,58 +198,44 @@ async fn run_seed_downs(pool: &PgPool) -> Result<(), Box<dyn std::error::Error>>
     Ok(())
 }
 
-fn resolve_options()
--> Result<(PgConnectOptions, PgConnectOptions, String), Box<dyn std::error::Error>> {
+fn resolve_options(
+    schema_override: Option<String>,
+) -> Result<(PgConnectOptions, String), Box<dyn std::error::Error>> {
     if let Ok(url) = env::var("DATABASE_URL") {
-        let app: PgConnectOptions = url.parse()?;
-        let db_name = app
-            .get_database()
-            .map(|s| s.to_string())
-            .unwrap_or_else(|| "postgres".into());
-        let admin = app.clone().database(admin_db(&db_name));
-        Ok((admin, app, db_name))
+        let schema = schema_override
+            .or_else(|| env::var("APP_DATABASE__SCHEMA").ok())
+            .unwrap_or_else(|| "public".into());
+        validate_schema(&schema)?;
+        let options = url.parse::<PgConnectOptions>()?.options([(
+            "search_path",
+            server::configuration::search_path_for(&schema),
+        )]);
+        Ok((options, schema))
     } else {
-        let cfg = get_configuration()?;
-        let app = PgConnectOptions::new()
-            .host(&cfg.database.host)
-            .port(cfg.database.port)
-            .username(&cfg.database.username)
-            .password(cfg.database.password.expose_secret())
-            .database(&cfg.database.database_name)
-            .ssl_mode(if cfg.database.require_ssl {
-                sqlx::postgres::PgSslMode::Require
-            } else {
-                sqlx::postgres::PgSslMode::Prefer
-            });
-        let admin = app.clone().database(admin_db(&cfg.database.database_name));
-        Ok((admin, app, cfg.database.database_name))
-    }
-}
-
-// Pick a system DB to connect to for DROP/CREATE that is guaranteed not to
-// be the target DB itself (Postgres refuses to drop a DB you're connected to).
-fn admin_db(target: &str) -> &'static str {
-    if target == "template1" {
-        "postgres"
-    } else {
-        "template1"
+        let mut db = get_configuration()?.database;
+        if let Some(schema) = schema_override {
+            db.schema = schema;
+        }
+        validate_schema(&db.schema)?;
+        Ok((db.connection_options(), db.schema))
     }
 }
 
 fn print_usage() {
     eprintln!(
-        "Usage: migrate [up|info|reset|seed|seed-down|help] [--with-seed]\n\
+        "Usage: migrate [up|info|reset|seed|seed-down|help] [--with-seed] [--schema NAME]\n\
          \n\
          Commands:\n\
            up         Apply all pending migrations (default)\n\
            info       Show applied/pending migrations\n\
-           reset      Drop and recreate the database, then migrate (DESTRUCTIVE)\n\
+           reset      Wipe all app tables/types in the target schema, then migrate (DESTRUCTIVE)\n\
            seed       Apply all *.sql seed files (dev/demo data)\n\
            seed-down  Apply all *.down.sql files in reverse order to remove seed data\n\
            help       Show this message\n\
          \n\
          Flags:\n\
            --with-seed   After up/reset, also apply all seed files\n\
+           --schema NAME Target schema (default: public, or APP_DATABASE__SCHEMA)\n\
          \n\
          Configuration: reads APP_DATABASE__* env vars (same as the server),\n\
          or DATABASE_URL as override."
