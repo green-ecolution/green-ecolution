@@ -45,7 +45,9 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const showToast = createToast()
-  const [status, setStatus] = useState(() => getWateringPlanStatusDetails(loadedData.status))
+  // Details of the persisted status; `status` below tracks the user's selection.
+  const statusDetails = getWateringPlanStatusDetails(loadedData.status)
+  const [status, setStatus] = useState(statusDetails)
 
   const { mutate, isError, error } = useMutation({
     mutationFn: (wateringPlan: WateringPlanUpdate) =>
@@ -79,7 +81,6 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   })
 
   const date = format(new Date(loadedData.date), 'dd.MM.yyyy')
-  const statusDetails = getWateringPlanStatusDetails(loadedData.status)
 
   const formByStatus = useCallback(
     (status: WateringPlanStatus) => {

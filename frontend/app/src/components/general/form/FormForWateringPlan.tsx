@@ -1,4 +1,3 @@
-import { MoveRight } from 'lucide-react'
 import {
   DatePickerField,
   TextareaField,
@@ -9,9 +8,9 @@ import {
   SelectContent,
   SelectItem,
   MultiSelect,
-  Button,
 } from '@green-ecolution/ui'
 import FormError from './FormError'
+import FormSubmitButton from './FormSubmitButton'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import type { User, Vehicle } from '@/api/backendApi'
 import type { DrivingLicense } from '@green-ecolution/backend-client'
@@ -196,14 +195,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
 
       <FormError show={props.displayError} error={props.errorMessage} />
 
-      <Button
-        type="submit"
-        disabled={!isValid || !licenseCheck.valid}
-        className="mt-10 lg:col-span-full lg:w-fit"
-      >
-        Speichern
-        <MoveRight className="icon-arrow-animate" />
-      </Button>
+      <FormSubmitButton disabled={!isValid || !licenseCheck.valid} />
     </form>
   )
 }

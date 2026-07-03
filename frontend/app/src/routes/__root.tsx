@@ -6,7 +6,7 @@ import { createRootRouteWithContext } from '@tanstack/react-router'
 import React from 'react'
 
 const TanStackRouterDevtools =
-  process.env.NODE_ENV === 'production'
+  import.meta.env.PROD
     ? () => null
     : React.lazy(() =>
         import('@tanstack/react-router-devtools').then((res) => ({

@@ -39,7 +39,7 @@ const SelectedCardTree = ({ onClick, id }: SelectedCardTreeProps) => {
             type="button"
             variant="ghost"
             size="icon"
-            className="text-dark-600 hover:text-red"
+            className="text-dark-600 hover:text-destructive"
             onClick={() => onClick(id)}
           >
             <Trash2 className="w-5 h-5" />

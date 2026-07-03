@@ -4,7 +4,7 @@ import SelectedCard from '../../cards/SelectedCard'
 import { Button } from '@green-ecolution/ui'
 
 interface SelectEntitiesProps {
-  onChange?: (entries: string[]) => void // TODO: make not optinal after refactoring
+  onChange: (entries: string[]) => void
   entityIds: string[]
   onAdd?: () => void
   label: string
@@ -33,7 +33,7 @@ const SelectEntities: React.FC<SelectEntitiesProps> = ({
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <p className="block font-semibold text-dark-800">
           Zugehörige {label}
-          {required && <span className="text-red">&nbsp;*</span>}
+          {required && <span className="text-destructive">&nbsp;*</span>}
         </p>
         {hasEntities && (
           <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-dark-100 px-2 py-0.5 text-xs font-semibold tabular-nums text-dark-600">
@@ -57,7 +57,7 @@ const SelectEntities: React.FC<SelectEntitiesProps> = ({
                 type={type}
                 id={entityId}
                 onClick={(id) => {
-                  onChange?.(entityIds.filter((i) => i !== id))
+                  onChange(entityIds.filter((i) => i !== id))
                 }}
               />
             </li>
@@ -66,7 +66,7 @@ const SelectEntities: React.FC<SelectEntitiesProps> = ({
       ) : (
         <div className="rounded-lg border border-dashed border-dark-200 bg-dark-50/60 px-4 py-6 text-center text-sm">
           {required ? (
-            <p className="font-semibold text-red">
+            <p className="font-semibold text-destructive">
               Es muss mindestens eine Auswahl getroffen werden.
             </p>
           ) : (

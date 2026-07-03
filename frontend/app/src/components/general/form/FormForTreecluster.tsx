@@ -1,9 +1,9 @@
-import { MoveRight } from 'lucide-react'
-import { FormField, TextareaField, Label, Combobox, Button } from '@green-ecolution/ui'
+import { FormField, TextareaField, Label, Combobox } from '@green-ecolution/ui'
 import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-hook-form'
 import { SoilConditionOptions } from '@/hooks/details/useDetailsForSoilCondition'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
 import FormError from './FormError'
+import FormSubmitButton from './FormSubmitButton'
 import SelectEntities from './types/SelectEntities'
 
 interface FormForTreeClusterProps {
@@ -89,14 +89,10 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
 
       <FormError show={props.displayError} error={props.errorMessage} />
 
-      <Button
-        type="submit"
+      <FormSubmitButton
         disabled={!isValid}
-        className={props.fullWidth ? 'mt-2 w-full shrink-0' : 'mt-10 lg:col-span-full lg:w-fit'}
-      >
-        Speichern
-        <MoveRight className="icon-arrow-animate" />
-      </Button>
+        className={props.fullWidth ? 'mt-2 w-full shrink-0' : undefined}
+      />
     </form>
   )
 }

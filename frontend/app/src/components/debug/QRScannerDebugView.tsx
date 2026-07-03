@@ -1,8 +1,7 @@
 import type { BarcodeDetector as BarcodeDetectorType } from 'barcode-detector/pure'
 import KV from './KV'
-import { boolBadge } from './badgeHelpers'
+import { boolBadge, formatTime, permissionBadge, type PermissionLabel } from './badgeHelpers'
 import {
-  Badge,
   Button,
   CameraViewport,
   Card,
@@ -36,30 +35,6 @@ interface ScanEntry {
   bboxHeight: number
 }
 
-type PermissionLabel = PermissionState | 'unknown' | 'unavailable'
-
-const permissionBadge = (state: PermissionLabel) => {
-  switch (state) {
-    case 'granted':
-      return <Badge variant="success">{state}</Badge>
-    case 'denied':
-      return <Badge variant="error">{state}</Badge>
-    case 'prompt':
-      return <Badge variant="warning">{state}</Badge>
-    default:
-      return <Badge variant="muted">{state}</Badge>
-  }
-}
-
-const formatTime = (ts: number) => {
-  const d = new Date(ts)
-  return (
-    d.toLocaleTimeString('de-DE', { hour12: false }) +
-    '.' +
-    String(d.getMilliseconds()).padStart(3, '0')
-  )
-}
-
 const QRScannerDebugView = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -72,21 +47,19 @@ const QRScannerDebugView = () => {
   const [error, setError] = useState<string | null>(null)
   const [flash, setFlash] = useState(false)
   const [scans, setScans] = useState<ScanEntry[]>([])
-  const [env, setEnv] = useState<EnvInfo>({
-    hasGetUserMedia: false,
-    hasNativeDetector: false,
-    supportedFormats: null,
-    hasVideoFrameCallback: false,
-    isSecureContext: false,
-    userAgent: '',
-  })
-  const [permission, setPermission] = useState<PermissionLabel>('unknown')
-
-  // Collect environment info once on mount
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const info: EnvInfo = {
+  // Captured once on first render — window/navigator are stable within a session.
+  const [env, setEnv] = useState<EnvInfo>(() => {
+    if (typeof window === 'undefined') {
+      return {
+        hasGetUserMedia: false,
+        hasNativeDetector: false,
+        supportedFormats: null,
+        hasVideoFrameCallback: false,
+        isSecureContext: false,
+        userAgent: '',
+      }
+    }
+    return {
       hasGetUserMedia: !!navigator.mediaDevices?.getUserMedia,
       hasNativeDetector: !!window.BarcodeDetector,
       supportedFormats: null,
@@ -94,7 +67,12 @@ const QRScannerDebugView = () => {
       isSecureContext: window.isSecureContext,
       userAgent: navigator.userAgent,
     }
-    setEnv(info)
+  })
+  const [permission, setPermission] = useState<PermissionLabel>('unknown')
+
+  // Supported formats need async feature detection.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
 
     const loadFormats = async () => {
       try {

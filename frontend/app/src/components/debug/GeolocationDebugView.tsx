@@ -2,7 +2,7 @@ import GPSStatusCard from '@/components/geolocation/GPSStatusCard'
 import LocationMapPreview from '@/components/geolocation/LocationMapPreview'
 import useGeolocation, { type GeolocationStatus } from '@/hooks/useGeolocation'
 import KV from './KV'
-import { boolBadge } from './badgeHelpers'
+import { boolBadge, formatTime, permissionBadge, type PermissionLabel } from './badgeHelpers'
 import {
   Badge,
   Button,
@@ -27,21 +27,6 @@ interface EnvInfo {
   userAgent: string
 }
 
-type PermissionLabel = PermissionState | 'unknown' | 'unavailable'
-
-const permissionBadge = (state: PermissionLabel) => {
-  switch (state) {
-    case 'granted':
-      return <Badge variant="success">{state}</Badge>
-    case 'denied':
-      return <Badge variant="error">{state}</Badge>
-    case 'prompt':
-      return <Badge variant="warning">{state}</Badge>
-    default:
-      return <Badge variant="muted">{state}</Badge>
-  }
-}
-
 const statusBadge = (status: GeolocationStatus) => {
   switch (status) {
     case 'watching':
@@ -57,15 +42,6 @@ const statusBadge = (status: GeolocationStatus) => {
     default:
       return <Badge variant="muted">idle</Badge>
   }
-}
-
-const formatTime = (ts: number) => {
-  const d = new Date(ts)
-  return (
-    d.toLocaleTimeString('de-DE', { hour12: false }) +
-    '.' +
-    String(d.getMilliseconds()).padStart(3, '0')
-  )
 }
 
 const EmptyMapState = ({ status }: { status: GeolocationStatus }) => {

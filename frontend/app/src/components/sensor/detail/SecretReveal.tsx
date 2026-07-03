@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { Check, Copy, Eye, EyeOff, ShieldAlert } from 'lucide-react'
 import { cn, toast } from '@green-ecolution/ui'
 import { SECRET_MASK } from './secrets'
+import { useSecretReveal } from '@/hooks/useSecretReveal'
 
 interface SecretRevealProps {
   label: string
@@ -11,17 +12,8 @@ interface SecretRevealProps {
 }
 
 const SecretReveal = ({ label, value, autoHideSeconds = 10 }: SecretRevealProps) => {
-  const [revealed, setRevealed] = useState(false)
+  const { revealed, toggle } = useSecretReveal(autoHideSeconds)
   const [copied, setCopied] = useState(false)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    if (!revealed) return
-    timerRef.current = setTimeout(() => setRevealed(false), autoHideSeconds * 1000)
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current)
-    }
-  }, [revealed, autoHideSeconds])
 
   const handleCopy = () => {
     navigator.clipboard.writeText(value).then(
@@ -51,7 +43,7 @@ const SecretReveal = ({ label, value, autoHideSeconds = 10 }: SecretRevealProps)
         <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex gap-0.5">
           <button
             type="button"
-            onClick={() => setRevealed((v) => !v)}
+            onClick={toggle}
             aria-label={revealed ? `${label} verbergen` : `${label} anzeigen`}
             aria-pressed={revealed}
             className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-dark-100 transition-colors cursor-pointer"

@@ -1,6 +1,6 @@
 import { VehicleForm } from '@/schema/vehicleSchema'
 import FormError from './FormError'
-import { MoveRight } from 'lucide-react'
+import FormSubmitButton from './FormSubmitButton'
 import {
   FormField,
   TextareaField,
@@ -10,7 +10,6 @@ import {
   SelectValue,
   SelectContent,
   SelectItem,
-  Button,
 } from '@green-ecolution/ui'
 import { VehicleTypeOptions } from '@/hooks/details/useDetailsForVehicleType'
 import { DrivingLicenseOptions } from '@/hooks/details/useDetailsForDrivingLicense'
@@ -187,10 +186,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
 
       <FormError show={props.displayError} error={props.errorMessage} />
 
-      <Button type="submit" className="mt-10 lg:col-span-full lg:w-fit" disabled={!isValid}>
-        Speichern
-        <MoveRight className="icon-arrow-animate" />
-      </Button>
+      <FormSubmitButton disabled={!isValid} />
     </form>
   )
 }

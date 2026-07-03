@@ -11,8 +11,9 @@ import {
   Button,
 } from '@green-ecolution/ui'
 import { Sensor, TreeClusterInList } from '@/api/backendApi'
-import { MapPin, MoveRight } from 'lucide-react'
+import { MapPin } from 'lucide-react'
 import FormError from './FormError'
+import FormSubmitButton from './FormSubmitButton'
 import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-hook-form'
 
 interface FormForTreeProps {
@@ -166,14 +167,10 @@ const FormForTree = (props: FormForTreeProps) => {
 
       <FormError show={props.displayError} error={props.errorMessage} />
 
-      <Button
-        type="submit"
-        className={props.fullWidth ? 'mt-8 w-full' : 'mt-10 lg:col-span-full lg:w-fit'}
+      <FormSubmitButton
         disabled={!isValid}
-      >
-        Speichern
-        <MoveRight className="icon-arrow-animate" />
-      </Button>
+        className={props.fullWidth ? 'mt-8 w-full' : undefined}
+      />
     </form>
   )
 }

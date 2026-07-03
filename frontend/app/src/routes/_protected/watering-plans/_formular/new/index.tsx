@@ -9,17 +9,7 @@ import FormForWateringPlan from '@/components/general/form/FormForWateringPlan'
 import useStore from '@/store/store'
 import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-  AlertDialogCancel,
-} from '@green-ecolution/ui'
-import { MoveRight, X } from 'lucide-react'
+import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 
 export const Route = createFileRoute('/_protected/watering-plans/_formular/new/')({
   component: NewWateringPlan,
@@ -114,27 +104,7 @@ function NewWateringPlan() {
         </FormProvider>
       </section>
 
-      <AlertDialog
-        open={navigationBlocker.isModalOpen}
-        onOpenChange={(open) => !open && navigationBlocker.closeModal()}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Seite verlassen?</AlertDialogTitle>
-            <AlertDialogDescription>{navigationBlocker.message}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={navigationBlocker.closeModal}>
-              Abbrechen
-              <X />
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={navigationBlocker.confirmLeave}>
-              Verlassen
-              <MoveRight className="icon-arrow-animate" />
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <UnsavedChangesDialog blocker={navigationBlocker} />
     </div>
   )
 }
