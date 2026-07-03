@@ -23,6 +23,7 @@ import {
   ListWateringPlansRequest,
   MapInfoResponse,
   NearestTreeListResponse,
+  pluginApi,
   regionApi,
   SensorDataResponse,
   SensorModelResponse,
@@ -72,9 +73,12 @@ export const treeClusterIdQuery = (id: string) =>
     enabled: isValidUuid(id),
   })
 
+/** Partial key matching every sensor list page; use for broad invalidation. */
+export const sensorsKey = ['sensors'] as const
+
 export const sensorQuery = (params?: ListSensorsRequest) =>
   queryOptions<ListResponseSensorResponse>({
-    queryKey: ['sensors', params?.page ?? '1'],
+    queryKey: [...sensorsKey, params?.page ?? '1'],
     queryFn: () => sensorApi.listSensors(params),
   })
 
@@ -202,6 +206,12 @@ export const userRoleQuery = (role: string) =>
       userApi.listUsersByRole({
         roleId: role,
       }),
+  })
+
+export const pluginsQuery = () =>
+  queryOptions({
+    queryKey: ['plugins'],
+    queryFn: () => pluginApi.listPlugins(),
   })
 
 export const plantingYearsQuery = () =>

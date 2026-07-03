@@ -1,5 +1,5 @@
 import { Loading } from '@green-ecolution/ui'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import ButtonLink from '@/components/general/links/ButtonLink'
 import { Plus } from 'lucide-react'
@@ -14,22 +14,29 @@ import FilterProvider from '@/context/FilterContext'
 import { treeQuery } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
 import { filterSearchSchema } from '@/lib/filterSearchSchema'
+import { pendingLoading, prefetch } from '@/lib/router'
 
 const treeFilterSchema = filterSearchSchema
   .pick({ wateringStatuses: true, hasCluster: true, plantingYears: true })
-  .extend({ page: z.number().catch(1) })
+  .extend({ page: z.number().int().min(1).catch(1) })
 
 function Trees() {
   const { page, wateringStatuses, hasCluster, plantingYears } = Route.useSearch()
-  const { data: treesRes } = useSuspenseQuery(
-    treeQuery({
+  const {
+    data: treesRes,
+    isPlaceholderData,
+    error,
+  } = useQuery({
+    ...treeQuery({
       page,
       perPage: 10,
       wateringStatus: wateringStatuses,
       hasCluster,
       plantingYear: plantingYears,
     }),
-  )
+    placeholderData: keepPreviousData,
+  })
+  if (error) throw error
 
   return (
     <div className="container mt-6">
@@ -65,21 +72,31 @@ function Trees() {
           <p>Baumnummer</p>
           <p>Bewässerungsgruppe</p>
         </ListCardHeader>
-        <ul>
-          {treesRes.data?.length === 0 ? (
-            <li className="text-center text-dark-600 mt-10">
-              <p>Es wurden leider keine Bäume gefunden.</p>
-            </li>
-          ) : (
-            treesRes.data?.map((tree) => (
-              <li key={tree.id} className="mb-5 last:mb-0">
-                <TreeCard tree={tree} />
-              </li>
-            ))
-          )}
-        </ul>
-        {treesRes.pagination && treesRes.pagination?.totalPages > 1 && (
-          <Pagination pagination={treesRes.pagination} />
+        {!treesRes ? (
+          <Loading className="mt-10 justify-center" label="Daten werden geladen" />
+        ) : (
+          <div
+            className="transition-opacity duration-200"
+            style={{ opacity: isPlaceholderData ? 0.6 : 1 }}
+            aria-busy={isPlaceholderData}
+          >
+            <ul>
+              {treesRes.data?.length === 0 ? (
+                <li className="text-center text-dark-600 mt-10">
+                  <p>Es wurden leider keine Bäume gefunden.</p>
+                </li>
+              ) : (
+                treesRes.data?.map((tree) => (
+                  <li key={tree.id} className="mb-5 last:mb-0">
+                    <TreeCard tree={tree} />
+                  </li>
+                ))
+              )}
+            </ul>
+            {treesRes.pagination && treesRes.pagination?.totalPages > 1 && (
+              <Pagination pagination={treesRes.pagination} />
+            )}
+          </div>
         )}
       </section>
     </div>
@@ -95,7 +112,7 @@ const TreesWithProvider = () => (
 export const Route = createFileRoute('/_protected/trees/')({
   component: TreesWithProvider,
   validateSearch: treeFilterSchema,
-  pendingComponent: () => <Loading className="mt-20 justify-center" label="Daten werden geladen" />,
+  pendingComponent: pendingLoading('Daten werden geladen'),
   loaderDeps: ({ search }) => ({
     page: search.page,
     wateringStatuses: search.wateringStatuses,
@@ -106,16 +123,16 @@ export const Route = createFileRoute('/_protected/trees/')({
     deps: { page, wateringStatuses, hasCluster, plantingYears },
     context: { queryClient },
   }) => {
-    queryClient
-      .prefetchQuery(
-        treeQuery({
-          page,
-          perPage: 10,
-          wateringStatus: wateringStatuses,
-          hasCluster,
-          plantingYear: plantingYears,
-        }),
-      )
-      .catch((error) => console.error('Prefetching "treeQuery" failed:', error))
+    prefetch(
+      queryClient,
+      treeQuery({
+        page,
+        perPage: 10,
+        wateringStatus: wateringStatuses,
+        hasCluster,
+        plantingYear: plantingYears,
+      }),
+      'treeQuery',
+    )
   },
 })

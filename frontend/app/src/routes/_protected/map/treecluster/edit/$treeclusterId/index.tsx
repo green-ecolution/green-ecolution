@@ -18,7 +18,7 @@ import type { TreeResponse } from '@green-ecolution/backend-client'
 import { clusterApi } from '@/api/backendApi'
 import { treeClusterIdQuery } from '@/api/queries'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
-import EntityNotFound from '@/components/layout/EntityNotFound'
+import { entityNotFound } from '@/lib/router'
 import FormForTreecluster from '@/components/general/form/FormForTreecluster'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import { useTreeClusterForm } from '@/hooks/form/useTreeClusterForm'
@@ -33,13 +33,11 @@ export const Route = createFileRoute('/_protected/map/treecluster/edit/$treeclus
   component: EditClusterOnMap,
   loader: ({ context: { queryClient }, params: { treeclusterId } }) =>
     queryClient.prefetchQuery(treeClusterIdQuery(treeclusterId)),
-  errorComponent: () => (
-    <EntityNotFound
-      entityName="Bewässerungsgruppe"
-      backTo="/treecluster"
-      backLabel="Zur Gruppenliste"
-    />
-  ),
+  errorComponent: entityNotFound({
+    entityName: 'Bewässerungsgruppe',
+    backTo: '/treecluster',
+    backLabel: 'Zur Gruppenliste',
+  }),
 })
 
 function EditClusterOnMap() {

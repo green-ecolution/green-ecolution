@@ -3,34 +3,38 @@ import WateringPlanCard from '@/components/general/cards/WateringPlanCard'
 import { Loading } from '@green-ecolution/ui'
 import ButtonLink from '@/components/general/links/ButtonLink'
 import Pagination from '@/components/general/Pagination'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, useLoaderData } from '@tanstack/react-router'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
+import { createFileRoute } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { z } from 'zod'
 import { ListCardHeader } from '@green-ecolution/ui'
+import { pendingLoading, prefetch } from '@/lib/router'
 
 export const Route = createFileRoute('/_protected/watering-plans/')({
   component: WateringPlans,
-  pendingComponent: () => <Loading className="mt-20 justify-center" label="Daten werden geladen" />,
+  pendingComponent: pendingLoading('Daten werden geladen'),
   validateSearch: z.object({
-    page: z.number().default(1),
+    page: z.number().int().min(1).catch(1),
   }),
   loaderDeps: ({ search: { page } }) => ({
-    page: page || 1,
+    page,
   }),
   loader: ({ context: { queryClient }, deps: { page } }) => {
-    queryClient
-      .prefetchQuery(wateringPlanQuery({ page: page, perPage: 5 }))
-      .catch((error) => console.error('Prefetching "wateringPlanQuery" failed', error))
-    return { page }
+    prefetch(queryClient, wateringPlanQuery({ page, perPage: 5 }), 'wateringPlanQuery')
   },
 })
 
 function WateringPlans() {
-  const search = useLoaderData({ from: '/_protected/watering-plans/' })
-  const { data: wateringPlanRes } = useSuspenseQuery(
-    wateringPlanQuery({ page: search.page, perPage: 5 }),
-  )
+  const { page } = Route.useSearch()
+  const {
+    data: wateringPlanRes,
+    isPlaceholderData,
+    error,
+  } = useQuery({
+    ...wateringPlanQuery({ page, perPage: 5 }),
+    placeholderData: keepPreviousData,
+  })
+  if (error) throw error
 
   return (
     <div className="container mt-6">
@@ -58,21 +62,31 @@ function WateringPlans() {
           <p>Mitarbeitenden</p>
           <p>Bewässerungsgruppen</p>
         </ListCardHeader>
-        <ul>
-          {wateringPlanRes.data?.length === 0 ? (
-            <li className="text-center text-dark-600 mt-10">
-              <p>Es wurden leider keine Einsatzpläne gefunden.</p>
-            </li>
-          ) : (
-            wateringPlanRes.data?.map((wateringPlan) => (
-              <li key={wateringPlan.id} className="mb-5 last:mb-0">
-                <WateringPlanCard wateringPlan={wateringPlan} />
-              </li>
-            ))
-          )}
-        </ul>
-        {wateringPlanRes.pagination && wateringPlanRes.pagination?.totalPages > 1 && (
-          <Pagination pagination={wateringPlanRes.pagination} />
+        {!wateringPlanRes ? (
+          <Loading className="mt-10 justify-center" label="Daten werden geladen" />
+        ) : (
+          <div
+            className="transition-opacity duration-200"
+            style={{ opacity: isPlaceholderData ? 0.6 : 1 }}
+            aria-busy={isPlaceholderData}
+          >
+            <ul>
+              {wateringPlanRes.data?.length === 0 ? (
+                <li className="text-center text-dark-600 mt-10">
+                  <p>Es wurden leider keine Einsatzpläne gefunden.</p>
+                </li>
+              ) : (
+                wateringPlanRes.data?.map((wateringPlan) => (
+                  <li key={wateringPlan.id} className="mb-5 last:mb-0">
+                    <WateringPlanCard wateringPlan={wateringPlan} />
+                  </li>
+                ))
+              )}
+            </ul>
+            {wateringPlanRes.pagination && wateringPlanRes.pagination?.totalPages > 1 && (
+              <Pagination pagination={wateringPlanRes.pagination} />
+            )}
+          </div>
         )}
       </section>
     </div>

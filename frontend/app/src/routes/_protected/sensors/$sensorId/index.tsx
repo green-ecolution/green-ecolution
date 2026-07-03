@@ -1,20 +1,20 @@
 import { sensorIdQuery } from '@/api/queries'
-import { Loading } from '@green-ecolution/ui'
 import SensorDashboard from '@/components/sensor/SensorDashboard'
+import { pendingLoading } from '@/lib/router'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, getRouteApi } from '@tanstack/react-router'
+
+const sensorRoute = getRouteApi('/_protected/sensors/$sensorId')
 
 export const Route = createFileRoute('/_protected/sensors/$sensorId/')({
   component: SingleSensor,
-  pendingComponent: () => (
-    <Loading className="mt-20 justify-center" label="Sensoren werden geladen …" />
-  ),
-  loader: ({ params, context }) =>
-    context.queryClient.prefetchQuery(sensorIdQuery(params.sensorId)),
+  pendingComponent: pendingLoading('Sensoren werden geladen …'),
 })
 
 function SingleSensor() {
-  const sensorId = Route.useParams().sensorId
+  const { sensorId } = sensorRoute.useParams()
+  // Live query instead of loader data: sensor status changes via MQTT and
+  // must refresh on invalidation/window focus, like the treecluster dashboard.
   const { data: sensor } = useSuspenseQuery(sensorIdQuery(sensorId))
 
   return (

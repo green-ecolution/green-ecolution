@@ -4,6 +4,7 @@ import { FormProvider } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { MapPin } from 'lucide-react'
 import { sensorQuery, treeClusterQuery } from '@/api/queries'
+import { prefetch } from '@/lib/router'
 import { useTreeForm } from '@/hooks/form/useTreeForm'
 import { TreeForm } from '@/schema/treeSchema'
 import FormForTree from '@/components/general/form/FormForTree'
@@ -18,12 +19,8 @@ import useTreeLayers from '@/components/map-gl/layers/useTreeLayers'
 export const Route = createFileRoute('/_protected/map/tree/new/')({
   component: NewTree,
   loader: ({ context: { queryClient } }) => {
-    queryClient
-      .prefetchQuery(sensorQuery())
-      .catch((error) => console.error('Prefetching "sensorQuery" failed:', error))
-    queryClient
-      .prefetchQuery(treeClusterQuery())
-      .catch((error) => console.error('Prefetching "treeClusterQuery" failed:', error))
+    prefetch(queryClient, sensorQuery(), 'sensorQuery')
+    prefetch(queryClient, treeClusterQuery(), 'treeClusterQuery')
   },
 })
 

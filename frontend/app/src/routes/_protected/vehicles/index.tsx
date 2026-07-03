@@ -1,36 +1,41 @@
 import VehicleCard from '@/components/general/cards/VehicleCard'
 import { Loading } from '@green-ecolution/ui'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, useLoaderData } from '@tanstack/react-router'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
+import { createFileRoute } from '@tanstack/react-router'
 import ButtonLink from '@/components/general/links/ButtonLink'
 import { Plus } from 'lucide-react'
 import Pagination from '@/components/general/Pagination'
 import { z } from 'zod'
 import { vehicleQuery } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
+import { pendingLoading, prefetch } from '@/lib/router'
 
 export const Route = createFileRoute('/_protected/vehicles/')({
   component: Vehicles,
-  pendingComponent: () => (
-    <Loading className="mt-20 justify-center" label="Fahrzeuge wird geladen …" />
-  ),
+  pendingComponent: pendingLoading('Fahrzeuge wird geladen …'),
   validateSearch: z.object({
-    page: z.number().default(1),
+    page: z.number().int().min(1).catch(1),
   }),
   loaderDeps: ({ search: { page } }) => ({
-    page: page || 1,
+    page,
   }),
   loader: ({ context: { queryClient }, deps: { page } }) => {
-    queryClient
-      .prefetchQuery(vehicleQuery({ page, perPage: 5 }))
-      .catch((error) => console.error('Prefetching "vehicleQuery" failed:', error))
-    return { page }
+    prefetch(queryClient, vehicleQuery({ page, perPage: 5 }), 'vehicleQuery')
   },
 })
 
 function Vehicles() {
-  const search = useLoaderData({ from: '/_protected/vehicles/' })
-  const { data: vehicleRes } = useSuspenseQuery(vehicleQuery({ page: search.page, perPage: 5 }))
+  const { page } = Route.useSearch()
+  const {
+    data: vehicleRes,
+    isPlaceholderData,
+    error,
+  } = useQuery({
+    ...vehicleQuery({ page, perPage: 5 }),
+    placeholderData: keepPreviousData,
+  })
+  if (error) throw error
+
   return (
     <div className="container mt-6">
       <article className="mb-20 2xl:w-4/5">
@@ -52,21 +57,31 @@ function Vehicles() {
           <p>Modell</p>
           <p>Führerscheinklasse</p>
         </ListCardHeader>
-        <ul>
-          {vehicleRes.data?.length === 0 ? (
-            <li className="text-center text-dark-600 mt-10">
-              <p>Es wurden leider keine Fahrzeuge gefunden.</p>
-            </li>
-          ) : (
-            vehicleRes.data?.map((vehicle) => (
-              <li key={vehicle.id} className="mb-5 last:mb-0">
-                <VehicleCard vehicle={vehicle} />
-              </li>
-            ))
-          )}
-        </ul>
-        {vehicleRes.pagination && vehicleRes.pagination?.totalPages > 1 && (
-          <Pagination pagination={vehicleRes.pagination} />
+        {!vehicleRes ? (
+          <Loading className="mt-10 justify-center" label="Fahrzeuge wird geladen …" />
+        ) : (
+          <div
+            className="transition-opacity duration-200"
+            style={{ opacity: isPlaceholderData ? 0.6 : 1 }}
+            aria-busy={isPlaceholderData}
+          >
+            <ul>
+              {vehicleRes.data?.length === 0 ? (
+                <li className="text-center text-dark-600 mt-10">
+                  <p>Es wurden leider keine Fahrzeuge gefunden.</p>
+                </li>
+              ) : (
+                vehicleRes.data?.map((vehicle) => (
+                  <li key={vehicle.id} className="mb-5 last:mb-0">
+                    <VehicleCard vehicle={vehicle} />
+                  </li>
+                ))
+              )}
+            </ul>
+            {vehicleRes.pagination && vehicleRes.pagination?.totalPages > 1 && (
+              <Pagination pagination={vehicleRes.pagination} />
+            )}
+          </div>
         )}
       </section>
     </div>

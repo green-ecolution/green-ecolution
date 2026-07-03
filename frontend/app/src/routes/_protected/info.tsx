@@ -1,4 +1,5 @@
 import { infoQuery, serverInfoQuery, servicesInfoQuery, statisticsQuery } from '@/api/queries'
+import { pendingLoading, prefetch } from '@/lib/router'
 import {
   Card,
   CardContent,
@@ -57,17 +58,13 @@ const tabSchema = z.enum(['system', 'data', 'software', 'server']).catch('system
 
 export const Route = createFileRoute('/_protected/info')({
   component: Info,
-  pendingComponent: () => (
-    <Loading className="mt-20 justify-center" label="Lade Systeminformationen" />
-  ),
+  pendingComponent: pendingLoading('Lade Systeminformationen'),
   validateSearch: z.object({
     tab: tabSchema.default('system'),
   }),
   loader: ({ context: { queryClient } }) => {
-    Promise.all([
-      queryClient.prefetchQuery(infoQuery()),
-      queryClient.prefetchQuery(servicesInfoQuery()),
-    ]).catch((error) => console.error('Prefetching info queries failed', error))
+    prefetch(queryClient, infoQuery(), 'infoQuery')
+    prefetch(queryClient, servicesInfoQuery(), 'servicesInfoQuery')
     return {
       crumb: {
         title: 'Systeminformationen',

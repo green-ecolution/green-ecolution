@@ -19,7 +19,7 @@ import { treeApi } from '@/api/backendApi'
 import { TreeForm } from '@/schema/treeSchema'
 import { useTreeForm } from '@/hooks/form/useTreeForm'
 import createToast from '@/hooks/createToast'
-import EntityNotFound from '@/components/layout/EntityNotFound'
+import { entityNotFound, prefetch } from '@/lib/router'
 import FormForTree from '@/components/general/form/FormForTree'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import DraggableMarker, { type DraggableMarkerLngLat } from '@/components/map-gl/DraggableMarker'
@@ -33,19 +33,15 @@ import useTreeLayers from '@/components/map-gl/layers/useTreeLayers'
 export const Route = createFileRoute('/_protected/map/tree/edit/$treeId/')({
   component: EditTreeOnMap,
   loader: ({ context: { queryClient }, params: { treeId } }) => {
-    queryClient
-      .prefetchQuery(treeIdQuery(treeId))
-      .catch((error) => console.error('Prefetching "treeIdQuery" failed:', error))
-    queryClient
-      .prefetchQuery(sensorQuery())
-      .catch((error) => console.error('Prefetching "sensorQuery" failed:', error))
-    queryClient
-      .prefetchQuery(treeClusterQuery())
-      .catch((error) => console.error('Prefetching "treeClusterQuery" failed:', error))
+    prefetch(queryClient, treeIdQuery(treeId), 'treeIdQuery')
+    prefetch(queryClient, sensorQuery(), 'sensorQuery')
+    prefetch(queryClient, treeClusterQuery(), 'treeClusterQuery')
   },
-  errorComponent: () => (
-    <EntityNotFound entityName="Baum" backTo="/trees" backLabel="Zur Baumliste" />
-  ),
+  errorComponent: entityNotFound({
+    entityName: 'Baum',
+    backTo: '/trees',
+    backLabel: 'Zur Baumliste',
+  }),
 })
 
 function EditTreeOnMap() {

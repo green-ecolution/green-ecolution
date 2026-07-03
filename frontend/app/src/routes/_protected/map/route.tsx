@@ -13,6 +13,7 @@ import MapBackgroundClick from '@/components/map-gl/MapBackgroundClick'
 import MapToolbarBar from '@/components/map/MapToolbarBar'
 import ClusterPanel from '@/components/map/cluster-panel/ClusterPanel'
 import { clusterBoundariesQuery, clusterMarkersQuery } from '@/api/queries'
+import { pendingLoading, prefetch } from '@/lib/router'
 import { Loading } from '@green-ecolution/ui'
 import { Suspense, useCallback, useState } from 'react'
 
@@ -40,13 +41,8 @@ export const Route = createFileRoute('/_protected/map')({
     zoom,
   }),
   loader: ({ context: { queryClient }, deps: { lat, lng, zoom } }) => {
-    queryClient
-      .prefetchQuery(clusterMarkersQuery())
-      .catch((error) => console.error('Prefetching "clusterMarkersQuery" failed:', error))
-
-    queryClient
-      .prefetchQuery(clusterBoundariesQuery())
-      .catch((error) => console.error('Prefetching "clusterBoundariesQuery" failed:', error))
+    prefetch(queryClient, clusterMarkersQuery(), 'clusterMarkersQuery')
+    prefetch(queryClient, clusterBoundariesQuery(), 'clusterBoundariesQuery')
 
     useStore.setState({ mapCenter: [lat, lng], mapZoom: zoom })
 
@@ -54,7 +50,7 @@ export const Route = createFileRoute('/_protected/map')({
       crumb: { title: 'Karte' },
     }
   },
-  pendingComponent: () => <Loading className="mt-20 justify-center" label="Lade Karte..." />,
+  pendingComponent: pendingLoading('Lade Karte...'),
 })
 
 function MapRoot() {

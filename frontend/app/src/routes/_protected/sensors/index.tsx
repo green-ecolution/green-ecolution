@@ -2,33 +2,37 @@ import { sensorQuery } from '@/api/queries'
 import { Button, ListCardHeader, Loading } from '@green-ecolution/ui'
 import Pagination from '@/components/general/Pagination'
 import SensorList from '@/components/sensor/SensorList'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, useLoaderData } from '@tanstack/react-router'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { Zap } from 'lucide-react'
 import { z } from 'zod'
+import { pendingLoading, prefetch } from '@/lib/router'
 
 export const Route = createFileRoute('/_protected/sensors/')({
   component: Sensors,
-  pendingComponent: () => (
-    <Loading className="mt-20 justify-center" label="Sensoren werden geladen" />
-  ),
+  pendingComponent: pendingLoading('Sensoren werden geladen'),
   validateSearch: z.object({
-    page: z.number().catch(1),
+    page: z.number().int().min(1).catch(1),
   }),
   loaderDeps: ({ search: { page } }) => ({
     page,
   }),
   loader: ({ context: { queryClient }, deps: { page } }) => {
-    queryClient
-      .prefetchQuery(sensorQuery({ page, perPage: 5 }))
-      .catch((error) => console.error('Prefetching "sensorQuery" failed:', error))
-    return { page }
+    prefetch(queryClient, sensorQuery({ page, perPage: 5 }), 'sensorQuery')
   },
 })
 
 function Sensors() {
-  const { page } = useLoaderData({ from: '/_protected/sensors/' })
-  const { data: sensorsRes } = useSuspenseQuery(sensorQuery({ page, perPage: 5 }))
+  const { page } = Route.useSearch()
+  const {
+    data: sensorsRes,
+    isPlaceholderData,
+    error,
+  } = useQuery({
+    ...sensorQuery({ page, perPage: 5 }),
+    placeholderData: keepPreviousData,
+  })
+  if (error) throw error
 
   return (
     <div className="container mt-6">
@@ -56,9 +60,19 @@ function Sensors() {
           <p>Letztes Datenupdate</p>
         </ListCardHeader>
 
-        <SensorList data={sensorsRes.data} />
-        {sensorsRes.pagination && sensorsRes.pagination?.totalPages > 1 && (
-          <Pagination pagination={sensorsRes.pagination} />
+        {!sensorsRes ? (
+          <Loading className="mt-10 justify-center" label="Sensoren werden geladen" />
+        ) : (
+          <div
+            className="transition-opacity duration-200"
+            style={{ opacity: isPlaceholderData ? 0.6 : 1 }}
+            aria-busy={isPlaceholderData}
+          >
+            <SensorList data={sensorsRes.data} />
+            {sensorsRes.pagination && sensorsRes.pagination?.totalPages > 1 && (
+              <Pagination pagination={sensorsRes.pagination} />
+            )}
+          </div>
         )}
       </section>
     </div>

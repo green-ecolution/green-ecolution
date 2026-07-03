@@ -1,6 +1,6 @@
-import { Loading } from '@green-ecolution/ui'
 import TreeClusterDashboard from '@/components/treecluster/TreeClusterDashboard'
 import { treeClusterIdQuery } from '@/api/queries'
+import { pendingLoading } from '@/lib/router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 
@@ -8,13 +8,13 @@ const treeclusterRoute = getRouteApi('/_protected/treecluster/$treeclusterId')
 
 export const Route = createFileRoute('/_protected/treecluster/$treeclusterId/')({
   component: SingleTreecluster,
-  pendingComponent: () => (
-    <Loading className="mt-20 justify-center" label="Bewässerungsgruppe wird geladen …" />
-  ),
+  pendingComponent: pendingLoading('Bewässerungsgruppe wird geladen …'),
 })
 
 function SingleTreecluster() {
   const { treeclusterId } = treeclusterRoute.useParams()
+  // Live query instead of loader data: cluster status changes via MQTT-driven
+  // sensor readings and must keep polling.
   const { data: treecluster } = useSuspenseQuery({
     ...treeClusterIdQuery(treeclusterId),
     refetchInterval: 30_000,

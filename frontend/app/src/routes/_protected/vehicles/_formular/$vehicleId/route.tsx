@@ -1,19 +1,13 @@
 import { vehicleIdQuery } from '@/api/queries'
-import EntityNotFound from '@/components/layout/EntityNotFound'
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { entityRoute } from '@/lib/router'
+import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/_protected/vehicles/_formular/$vehicleId')({
-  component: () => <Outlet />,
-  loader: async ({ context: { queryClient }, params: { vehicleId } }) => {
-    const vehicle = await queryClient.fetchQuery(vehicleIdQuery(vehicleId))
-    return {
-      vehicle,
-      crumb: {
-        title: 'Fahrzeug ' + vehicle.numberPlate,
-      },
-    }
-  },
-  errorComponent: () => (
-    <EntityNotFound entityName="Fahrzeug" backTo="/vehicles" backLabel="Zur Fahrzeugliste" />
-  ),
-})
+export const Route = createFileRoute('/_protected/vehicles/_formular/$vehicleId')(
+  entityRoute({
+    key: 'vehicle',
+    query: vehicleIdQuery,
+    idParam: 'vehicleId',
+    title: (vehicle) => `Fahrzeug ${vehicle.numberPlate}`,
+    notFound: { entityName: 'Fahrzeug', backTo: '/vehicles', backLabel: 'Zur Fahrzeugliste' },
+  }),
+)

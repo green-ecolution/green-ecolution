@@ -1,12 +1,4 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
+import { crumbRoute } from '@/lib/router'
 
-export const Route = createFileRoute('/_protected/vehicles')({
-  component: Outlet,
-  loader: () => {
-    return {
-      crumb: {
-        title: 'Fahrzeuge',
-      },
-    }
-  },
-})
+export const Route = createFileRoute('/_protected/vehicles')(crumbRoute('Fahrzeuge'))

@@ -1,5 +1,5 @@
-import { Loading } from '@green-ecolution/ui'
 import { getAuthSession } from '@/lib/auth/session'
+import { pendingLoading } from '@/lib/router'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import VehicleUpdate from '@/components/vehicle/VehicleUpdate'
 
@@ -7,9 +7,7 @@ const vehicleFormRoute = getRouteApi('/_protected/vehicles/_formular/$vehicleId'
 
 export const Route = createFileRoute('/_protected/vehicles/_formular/$vehicleId/edit/')({
   component: EditVehicle,
-  pendingComponent: () => (
-    <Loading className="mt-20 justify-center" label="Fahrzeug wird geladen …" />
-  ),
+  pendingComponent: pendingLoading('Fahrzeug wird geladen …'),
   loader: async () => {
     if (!(await getAuthSession().isAuthenticated())) return
   },
