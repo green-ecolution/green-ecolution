@@ -32,10 +32,5 @@ export function useFormDraft<T>(formType: FormType, mutationType: MutationType) 
   )
 }
 
-export const useTreeDraft = <T>(mutationType: MutationType) => useFormDraft<T>('tree', mutationType)
-
-export const useClusterDraft = <T>(mutationType: MutationType) =>
-  useFormDraft<T>('cluster', mutationType)
-
 export const useWateringPlanDraft = <T>(mutationType: MutationType) =>
   useFormDraft<T>('wateringplan', mutationType)

@@ -252,7 +252,6 @@ function Debug() {
             <KV label="Max-Zoom">
               <span className="font-mono">{mapStore.mapMaxZoom}</span>
             </KV>
-            <KV label="Auswahl-Modal">{boolBadge(mapStore.showSelectModal)}</KV>
           </CardContent>
         </Card>
 

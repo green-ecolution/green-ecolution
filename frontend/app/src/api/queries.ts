@@ -120,15 +120,6 @@ export const treeIdQuery = (id: string) =>
     enabled: isValidUuid(id),
   })
 
-// TODO: The Rust backend changed this endpoint to /trees/{tree_id}/sensors/{sensor_id}
-// which requires both IDs. The Go backend had /tree/sensor/{sensor_id}.
-// This query needs a dedicated "get tree by sensor ID" endpoint in the Rust backend.
-// export const treeSensorIdQuery = (id: string) =>
-//   queryOptions<TreeResponse>({
-//     queryKey: ['tree-sensor', id],
-//     queryFn: () => treeApi.getTreeSensor({ treeId: ???, sensorId: id }),
-//   })
-
 export const regionsQuery = () =>
   queryOptions({
     queryKey: ['regions'],

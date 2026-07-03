@@ -20,5 +20,3 @@ function SingleWateringPlan() {
     </div>
   )
 }
-
-export default SingleWateringPlan

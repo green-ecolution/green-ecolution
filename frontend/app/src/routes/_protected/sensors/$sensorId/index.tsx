@@ -23,5 +23,3 @@ function SingleSensor() {
     </div>
   )
 }
-
-export default SingleSensor

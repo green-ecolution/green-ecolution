@@ -76,8 +76,6 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
         name="treeIds"
         render={({ field: { value, onChange } }) => (
           <SelectEntities
-            // eslint-disable-next-line
-            onDelete={() => {}} // TODO: remove
             onChange={onChange}
             entityIds={value}
             onAdd={props.onAddTrees}

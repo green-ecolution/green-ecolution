@@ -4,7 +4,6 @@ import SelectedCard from '../../cards/SelectedCard'
 import { Button } from '@green-ecolution/ui'
 
 interface SelectEntitiesProps {
-  onDelete: (itemId: string) => void
   onChange?: (entries: string[]) => void // TODO: make not optinal after refactoring
   entityIds: string[]
   onAdd?: () => void

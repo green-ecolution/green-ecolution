@@ -172,5 +172,3 @@ export const Route = createFileRoute('/_protected/treecluster/')({
       .catch((error) => console.error('Prefetching "regionsQuery" failed:', error))
   },
 })
-
-export default TreeclusterWithProvider

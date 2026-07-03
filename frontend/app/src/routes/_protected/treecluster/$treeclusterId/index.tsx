@@ -27,5 +27,3 @@ function SingleTreecluster() {
     </div>
   )
 }
-
-export default SingleTreecluster

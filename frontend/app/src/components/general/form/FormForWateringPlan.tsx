@@ -185,8 +185,6 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
         name="clusterIds"
         render={({ field: { value, onChange } }) => (
           <SelectEntities
-            // eslint-disable-next-line
-            onDelete={() => {}} // TODO: remove
             onChange={onChange}
             entityIds={value}
             onAdd={props.onAddCluster}

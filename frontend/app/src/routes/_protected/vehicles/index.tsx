@@ -21,7 +21,9 @@ export const Route = createFileRoute('/_protected/vehicles/')({
     page: page || 1,
   }),
   loader: ({ context: { queryClient }, deps: { page } }) => {
-    queryClient.prefetchQuery(vehicleQuery({ page, perPage: 5 })).catch(console.log)
+    queryClient
+      .prefetchQuery(vehicleQuery({ page, perPage: 5 }))
+      .catch((error) => console.error('Prefetching "vehicleQuery" failed:', error))
     return { page }
   },
 })

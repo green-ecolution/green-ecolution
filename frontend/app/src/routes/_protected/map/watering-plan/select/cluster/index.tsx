@@ -167,7 +167,6 @@ function SelectCluster() {
         {showNotice && <InlineAlert className="mb-4 shrink-0" description={notice.join(' ')} />}
 
         <SelectEntities
-          onDelete={() => {}} // eslint-disable-line
           onChange={setClusterIds}
           entityIds={clusterIds}
           type="cluster"

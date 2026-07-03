@@ -45,9 +45,3 @@
     transform: translateX(0);
   }
 }
-
-.cluster-boundary {
-  transition:
-    stroke-width 250ms ease-out,
-    stroke-opacity 250ms ease-out;
-}

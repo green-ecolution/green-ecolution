@@ -138,5 +138,3 @@ function NewWateringPlan() {
     </div>
   )
 }
-
-export default NewWateringPlan

@@ -20,5 +20,3 @@ function SingleVehicle() {
     </div>
   )
 }
-
-export default SingleVehicle
