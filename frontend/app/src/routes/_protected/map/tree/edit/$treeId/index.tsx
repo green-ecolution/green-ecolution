@@ -2,18 +2,8 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useState } from 'react'
 import { FormProvider, type DefaultValues } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  Button,
-} from '@green-ecolution/ui'
-import { MoveRight, Trash2, X } from 'lucide-react'
+import { Button } from '@green-ecolution/ui'
+import { Trash2 } from 'lucide-react'
 import { sensorQuery, treeClusterQuery, treeIdQuery } from '@/api/queries'
 import { treeApi } from '@/api/backendApi'
 import { TreeForm } from '@/schema/treeSchema'
@@ -21,6 +11,7 @@ import { useTreeForm } from '@/hooks/form/useTreeForm'
 import createToast from '@/hooks/createToast'
 import { entityNotFound, prefetch } from '@/lib/router'
 import FormForTree from '@/components/general/form/FormForTree'
+import DeleteConfirmDialog from '@/components/general/DeleteConfirmDialog'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import DraggableMarker, { type DraggableMarkerLngLat } from '@/components/map-gl/DraggableMarker'
 import MapPanel from '@/components/map-gl/MapPanel'
@@ -156,27 +147,13 @@ function EditTreeOnMap() {
         )}
       </MapPanel>
 
-      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Baum löschen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Möchtest du diesen Baum wirklich löschen? Diese Aktion kann nicht rückgängig gemacht
-              werden.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>
-              Abbrechen
-              <X />
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>
-              Löschen
-              <MoveRight className="icon-arrow-animate" />
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title="Baum löschen?"
+        description="Möchtest du diesen Baum wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+        onConfirm={handleDelete}
+      />
 
       <UnsavedChangesDialog blocker={navigationBlocker} />
     </>

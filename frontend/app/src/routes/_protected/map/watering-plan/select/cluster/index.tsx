@@ -1,24 +1,15 @@
-import { createFileRoute, useNavigate, useBlocker } from '@tanstack/react-router'
-import { useCallback, useMemo, useRef, useState } from 'react'
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-  AlertDialogCancel,
-  Button,
-  InlineAlert,
-} from '@green-ecolution/ui'
-import { MoveRight, X } from 'lucide-react'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useCallback, useMemo, useState } from 'react'
+import { Button, InlineAlert } from '@green-ecolution/ui'
+import { MoveRight } from 'lucide-react'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import { treeClusterQuery, vehicleIdQuery } from '@/api/queries'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
+import { useFormNavigationBlocker } from '@/hooks/form/useFormNavigationBlocker'
 import SelectEntities from '@/components/general/form/types/SelectEntities'
+import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import MapPanel from '@/components/map-gl/MapPanel'
 import useSelectableClusterLayer from '@/components/map-gl/layers/useSelectableClusterLayer'
 
@@ -42,32 +33,15 @@ function SelectCluster() {
   const [showError, setShowError] = useState(false)
   const navigate = useNavigate({ from: Route.fullPath })
   const { wateringPlanId } = Route.useSearch()
-  const allowNavigationRef = useRef(false)
   const draft = useWateringPlanDraft<WateringPlanForm>(formType)
 
-  const { proceed, reset, status } = useBlocker({
-    shouldBlockFn: ({ next }) => {
-      if (allowNavigationRef.current) {
-        allowNavigationRef.current = false
-        return false
-      }
-
-      const isAllowedPath =
-        next.pathname.startsWith('/watering-plans/') ||
-        next.pathname.startsWith('/map/watering-plan/select/cluster')
-      if (isAllowedPath) {
-        return false
-      }
-
-      return true
-    },
-    withResolver: true,
+  const navigationBlocker = useFormNavigationBlocker({
+    isDirty: true,
+    allowedPaths: ['/watering-plans/', '/map/watering-plan/select/cluster'],
+    onLeave: () => draft.clear(),
+    message:
+      'Möchtest du die Seite wirklich verlassen? Deine Eingaben gehen verloren, wenn du jetzt gehst.',
   })
-
-  const handleConfirmLeave = useCallback(() => {
-    draft.clear()
-    proceed?.()
-  }, [proceed, draft])
 
   const { data: clusters } = useSuspenseQuery(treeClusterQuery())
   const { data: transporter } = useQuery({
@@ -79,8 +53,10 @@ function SelectCluster() {
     enabled: !!trailerId && trailerId !== '-1',
   })
 
+  const { allowNavigation } = navigationBlocker
+
   const handleNavigateBack = useCallback(() => {
-    allowNavigationRef.current = true
+    allowNavigation()
     switch (formType) {
       case 'update':
         return navigate({
@@ -90,7 +66,7 @@ function SelectCluster() {
       case 'create':
         return navigate({ to: '/watering-plans/new' })
     }
-  }, [navigate, formType, wateringPlanId])
+  }, [navigate, formType, wateringPlanId, allowNavigation])
 
   const disabledClusters = useMemo(() => {
     if (!transporter) return clusters.data.map((cluster) => cluster.id)
@@ -191,27 +167,7 @@ function SelectCluster() {
         </Button>
       </MapPanel>
 
-      <AlertDialog open={status === 'blocked'} onOpenChange={(open) => !open && reset?.()}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Seite verlassen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Möchtest du die Seite wirklich verlassen? Deine Eingaben gehen verloren, wenn du jetzt
-              gehst.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => reset?.()}>
-              Abbrechen
-              <X />
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmLeave}>
-              Verlassen
-              <MoveRight className="icon-arrow-animate" />
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <UnsavedChangesDialog blocker={navigationBlocker} />
     </>
   )
 }
