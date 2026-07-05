@@ -1,12 +1,8 @@
 import {
   DatePickerField,
   TextareaField,
+  SelectField,
   Label,
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
   MultiSelect,
 } from '@green-ecolution/ui'
 import FormError from './FormError'
@@ -87,58 +83,43 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
           name="transporterId"
           control={control}
           render={({ field }) => (
-            <div className="flex flex-col gap-y-2">
-              <Label htmlFor="transporterId">
-                Verknüpftes Fahrzeug
-                <span className="text-destructive ml-1">*</span>
-              </Label>
-              <Select value={field.value ?? ''} onValueChange={(val) => field.onChange(val)}>
-                <SelectTrigger id="transporterId">
-                  <SelectValue placeholder="Wählen Sie ein Fahrzeug aus" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="-1">Kein Fahrzeug</SelectItem>
-                  {props.transporters.map((transporter) => (
-                    <SelectItem key={transporter.id} value={transporter.id.toString()}>
-                      {transporter.numberPlate} ·{' '}
-                      {getDrivingLicenseDetails(transporter.drivingLicense).label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.transporterId?.message && (
-                <p className="text-sm text-destructive">{errors.transporterId.message}</p>
-              )}
-            </div>
+            <SelectField
+              id="transporterId"
+              label="Verknüpftes Fahrzeug"
+              placeholder="Wählen Sie ein Fahrzeug aus"
+              required
+              value={field.value ?? ''}
+              onValueChange={(val) => field.onChange(val)}
+              error={errors.transporterId?.message}
+              options={[
+                { value: '-1', label: 'Kein Fahrzeug' },
+                ...props.transporters.map((transporter) => ({
+                  value: transporter.id.toString(),
+                  label: `${transporter.numberPlate} · ${getDrivingLicenseDetails(transporter.drivingLicense).label}`,
+                })),
+              ]}
+            />
           )}
         />
         <Controller
           name="trailerId"
           control={control}
           render={({ field }) => (
-            <div className="flex flex-col gap-y-2">
-              <Label htmlFor="trailerId">Verknüpfter Anhänger</Label>
-              <Select
-                value={field.value ?? '-1'}
-                onValueChange={(val) => field.onChange(val === '-1' ? undefined : val)}
-              >
-                <SelectTrigger id="trailerId">
-                  <SelectValue placeholder="Wählen Sie einen Anhänger aus, sofern vorhanden" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="-1">Keinen Anhänger</SelectItem>
-                  {props.trailers.map((trailer) => (
-                    <SelectItem key={trailer.id} value={trailer.id.toString()}>
-                      {trailer.numberPlate} ·{' '}
-                      {getDrivingLicenseDetails(trailer.drivingLicense).label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.trailerId?.message && (
-                <p className="text-sm text-destructive">{errors.trailerId.message}</p>
-              )}
-            </div>
+            <SelectField
+              id="trailerId"
+              label="Verknüpfter Anhänger"
+              placeholder="Wählen Sie einen Anhänger aus, sofern vorhanden"
+              value={field.value ?? '-1'}
+              onValueChange={(val) => field.onChange(val === '-1' ? undefined : val)}
+              error={errors.trailerId?.message}
+              options={[
+                { value: '-1', label: 'Keinen Anhänger' },
+                ...props.trailers.map((trailer) => ({
+                  value: trailer.id.toString(),
+                  label: `${trailer.numberPlate} · ${getDrivingLicenseDetails(trailer.drivingLicense).label}`,
+                })),
+              ]}
+            />
           )}
         />
         <Controller

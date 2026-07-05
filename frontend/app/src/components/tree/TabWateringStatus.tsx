@@ -4,6 +4,7 @@ import React from 'react'
 import { TreeDeciduous } from 'lucide-react'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { StatusCard } from '@green-ecolution/ui'
+import StatusCardGrid from '../general/StatusCardGrid'
 import ChartWateringData from './ChartWateringData'
 import { format } from 'date-fns'
 import { roundTo } from '@/lib/utils'
@@ -29,7 +30,7 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
 
   return (
     <>
-      <ul className="flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-4">
+      <StatusCardGrid columns={4}>
         <li>
           <StatusCard
             status={wateringStatus.color}
@@ -72,7 +73,7 @@ const TabWateringStatus: React.FC<TabWateringStatusProps> = ({ tree }) => {
             description="Wird aktualisiert, sobald ein Einsatzplan mit diesem Baum als »Beendet« markiert wird."
           />
         </li>
-      </ul>
+      </StatusCardGrid>
 
       {tree?.sensor?.latestData && (
         <section className="mt-16">

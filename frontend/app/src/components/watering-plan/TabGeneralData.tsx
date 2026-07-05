@@ -1,6 +1,7 @@
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { WateringPlan } from '@/api/backendApi'
 import { DetailedList, StatusCard } from '@green-ecolution/ui'
+import StatusCardGrid from '../general/StatusCardGrid'
 import { format, formatDuration, intervalToDuration } from 'date-fns'
 import { getWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -83,7 +84,7 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
 
   return (
     <>
-      <ul className="flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
+      <StatusCardGrid>
         <li>
           <StatusCard
             status={statusDetails.color}
@@ -120,7 +121,7 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
             description="Einsatz startet in der Schleswiger Straße"
           />
         </li>
-      </ul>
+      </StatusCardGrid>
 
       <section className="mt-16">
         <DetailedList headline="Daten zur Einsatzplanung" details={wateringPlanData} />

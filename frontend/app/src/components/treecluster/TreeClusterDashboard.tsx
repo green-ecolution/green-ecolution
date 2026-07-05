@@ -1,8 +1,6 @@
 import TreeCard from '@/components/general/cards/TreeCard'
 import ClusterSignalCard from './ClusterSignalCard'
-import BackLink from '@/components/general/links/BackLink'
-import ButtonLink from '@/components/general/links/ButtonLink'
-import { Pencil } from 'lucide-react'
+import EntityDetailHeader from '@/components/general/EntityDetailHeader'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import GeneralLink from '../general/links/GeneralLink'
 import { format } from 'date-fns'
@@ -28,49 +26,43 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
 
   return (
     <>
-      <BackLink link={{ to: '/treecluster' }} label="Zu allen Bewässerungsgruppen" />
-      <article className="flex flex-col gap-y-6 2xl:flex-row 2xl:items-center 2xl:gap-x-10">
-        <div className="2xl:w-4/5">
-          <h1 className="font-lato font-bold text-3xl mb-4 lg:text-4xl xl:text-5xl">
-            Bewässerungsgruppe: {treecluster.name}
-          </h1>
-          {treecluster.description && <p className="mb-4">{treecluster.description}</p>}
-          {treecluster.trees?.length === 0 ? (
-            <Alert variant="destructive" className="flex gap-4">
-              <AlertIcon variant="destructive" />
-              <AlertContent>
-                <AlertTitle>Keine Bäume zugewiesen</AlertTitle>
-                <AlertDescription>
-                  Diese Baumgruppe enthält keine Bäume und hat daher keinen Standort.
-                </AlertDescription>
-              </AlertContent>
-            </Alert>
-          ) : (
-            <GeneralLink
-              link={{
-                to: '/map',
-                search: {
-                  lat: treecluster.latitude,
-                  lng: treecluster.longitude,
-                  zoom: 16,
-                  cluster: treecluster.id,
-                },
-              }}
-              label="Auf der Karte anzeigen"
-            />
-          )}
-        </div>
-        <ButtonLink
-          icon={Pencil}
-          iconClassName="stroke-1"
-          label="Gruppe bearbeiten"
-          color="grey"
-          link={{
+      <EntityDetailHeader
+        backLink={{ link: { to: '/treecluster' }, label: 'Zu allen Bewässerungsgruppen' }}
+        title={<>Bewässerungsgruppe: {treecluster.name}</>}
+        editLink={{
+          label: 'Gruppe bearbeiten',
+          link: {
             to: '/map/treecluster/edit/$treeclusterId',
             params: { treeclusterId: treecluster.id.toString() },
-          }}
-        />
-      </article>
+          },
+        }}
+      >
+        {treecluster.description && <p className="mb-4">{treecluster.description}</p>}
+        {treecluster.trees?.length === 0 ? (
+          <Alert variant="destructive" className="flex gap-4">
+            <AlertIcon variant="destructive" />
+            <AlertContent>
+              <AlertTitle>Keine Bäume zugewiesen</AlertTitle>
+              <AlertDescription>
+                Diese Baumgruppe enthält keine Bäume und hat daher keinen Standort.
+              </AlertDescription>
+            </AlertContent>
+          </Alert>
+        ) : (
+          <GeneralLink
+            link={{
+              to: '/map',
+              search: {
+                lat: treecluster.latitude,
+                lng: treecluster.longitude,
+                zoom: 16,
+                cluster: treecluster.id,
+              },
+            }}
+            label="Auf der Karte anzeigen"
+          />
+        )}
+      </EntityDetailHeader>
 
       <section className="mt-10">
         <ul className="flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 xl:grid-cols-4">

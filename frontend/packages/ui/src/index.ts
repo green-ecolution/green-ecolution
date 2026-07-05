@@ -266,6 +266,9 @@ export {
   SelectScrollDownButton,
 } from './components/ui/select'
 
+export { SelectField } from './components/ui/select-field'
+export type { SelectFieldProps, SelectFieldOption } from './components/ui/select-field'
+
 // Drawer
 export {
   Drawer,

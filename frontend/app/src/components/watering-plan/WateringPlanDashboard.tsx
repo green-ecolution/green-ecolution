@@ -1,4 +1,5 @@
-import BackLink from '../general/links/BackLink'
+import EntityDetailHeader from '../general/EntityDetailHeader'
+import EntityList from '../general/EntityList'
 import {
   Badge,
   Button,
@@ -16,9 +17,9 @@ import {
   showWateringPlanStatusButton,
 } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { format } from 'date-fns'
-import { File, FolderClosed, MoveRight, Pencil, Route } from 'lucide-react'
+import { File, FolderClosed, MoveRight, Route } from 'lucide-react'
 import TabGeneralData from './TabGeneralData'
-import TreeClusterList from '../treecluster/TreeClusterList'
+import TreeclusterCard from '../general/cards/TreeclusterCard'
 import ButtonLink from '../general/links/ButtonLink'
 import { useMutation } from '@tanstack/react-query'
 import { useAuthSession } from '@/lib/auth/authSessionContext'
@@ -73,56 +74,53 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
 
   return (
     <>
-      <BackLink link={{ to: '/watering-plans' }} label="Alle Einsatzpläne" />
-      <article className="flex flex-col gap-y-6 xl:flex-row xl:items-start xl:gap-x-10">
-        <div className="xl:w-4/5">
-          <h1 className="font-lato font-bold text-3xl mb-4 flex flex-wrap items-center gap-4 lg:text-4xl xl:text-5xl">
-            Einsatzplan für den {date}
-            <Badge variant={statusDetails?.color ?? 'outline-dark'} size="lg">
-              {statusDetails?.label ?? 'Keine Angabe'}
-            </Badge>
-          </h1>
-          {wateringPlan.description && <p className="mb-4">{wateringPlan.description}</p>}
-          <div className="flex flex-wrap gap-4 items-center">
-            {showWateringPlanStatusButton(wateringPlan) && (
-              <ButtonLink
-                link={{
-                  to: '/watering-plans/$wateringPlanId/status/edit',
-                  params: { wateringPlanId: wateringPlan.id.toString() },
-                }}
-                label="Status aktualisieren"
-                icon={MoveRight}
-              />
-            )}
-            <Button variant="nav" onClick={() => mutate()} className="p-0 h-auto [&_svg]:size-4">
-              Route herunterladen
-              <MoveRight className="icon-arrow-animate" />
-            </Button>
-          </div>
-          {wateringPlan.distance == 0 && (
-            <Alert variant="destructive" className="mt-6 flex items-center gap-3">
-              <AlertIcon variant="destructive" />
-              <AlertContent>
-                <AlertDescription>
-                  Die Route für diesen Einsatzplan konnte nicht berechnet werden. Bitte überprüfen
-                  Sie, ob das ausgewählte Fahrzeug über ausreichend Wasserkapazität für die
-                  gewählten Bewässerungsgruppen verfügt.
-                </AlertDescription>
-              </AlertContent>
-            </Alert>
-          )}
-        </div>
-        <ButtonLink
-          icon={Pencil}
-          iconClassName="stroke-1"
-          label="Einsatz bearbeiten"
-          color="grey"
-          link={{
+      <EntityDetailHeader
+        breakpoint="xl"
+        backLink={{ link: { to: '/watering-plans' }, label: 'Alle Einsatzpläne' }}
+        title={<>Einsatzplan für den {date}</>}
+        badge={
+          <Badge variant={statusDetails?.color ?? 'outline-dark'} size="lg">
+            {statusDetails?.label ?? 'Keine Angabe'}
+          </Badge>
+        }
+        editLink={{
+          label: 'Einsatz bearbeiten',
+          link: {
             to: `/watering-plans/$wateringPlanId/edit`,
             params: { wateringPlanId: String(wateringPlan.id) },
-          }}
-        />
-      </article>
+          },
+        }}
+      >
+        {wateringPlan.description && <p className="mb-4">{wateringPlan.description}</p>}
+        <div className="flex flex-wrap gap-4 items-center">
+          {showWateringPlanStatusButton(wateringPlan) && (
+            <ButtonLink
+              link={{
+                to: '/watering-plans/$wateringPlanId/status/edit',
+                params: { wateringPlanId: wateringPlan.id.toString() },
+              }}
+              label="Status aktualisieren"
+              icon={MoveRight}
+            />
+          )}
+          <Button variant="nav" onClick={() => mutate()} className="p-0 h-auto [&_svg]:size-4">
+            Route herunterladen
+            <MoveRight className="icon-arrow-animate" />
+          </Button>
+        </div>
+        {wateringPlan.distance == 0 && (
+          <Alert variant="destructive" className="mt-6 flex items-center gap-3">
+            <AlertIcon variant="destructive" />
+            <AlertContent>
+              <AlertDescription>
+                Die Route für diesen Einsatzplan konnte nicht berechnet werden. Bitte überprüfen
+                Sie, ob das ausgewählte Fahrzeug über ausreichend Wasserkapazität für die gewählten
+                Bewässerungsgruppen verfügt.
+              </AlertDescription>
+            </AlertContent>
+          </Alert>
+        )}
+      </EntityDetailHeader>
 
       <Tabs defaultValue="general" className="mt-10">
         <TabsList>
@@ -149,7 +147,12 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
           <TabGeneralData wateringPlan={wateringPlan} />
         </TabsContent>
         <TabsContent value="clusters">
-          <TreeClusterList data={wateringPlan.treeclusters} />
+          <EntityList
+            items={wateringPlan.treeclusters}
+            getKey={(cluster) => cluster.id}
+            emptyMessage="Es wurden leider keine Bewässerungsgruppen gefunden."
+            renderItem={(cluster) => <TreeclusterCard treecluster={cluster} />}
+          />
         </TabsContent>
         {wateringPlan.distance > 0 && (
           <TabsContent value="route">

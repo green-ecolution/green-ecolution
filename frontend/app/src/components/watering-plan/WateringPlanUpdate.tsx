@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
-import BackLink from '../general/links/BackLink'
+import FormPageHeader from '../general/FormPageHeader'
 import { useInitFormQuery } from '@/hooks/form/useInitForm'
 import { userRoleQuery, vehicleQuery, wateringPlanIdQuery } from '@/api/queries'
 import { format } from 'date-fns'
@@ -93,17 +93,16 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
 
   return (
     <>
-      <article className="2xl:w-4/5">
-        <BackLink
-          label="Zurück zum Einsatzplan"
-          link={{
+      <FormPageHeader
+        backLink={{
+          label: 'Zurück zum Einsatzplan',
+          link: {
             to: `/watering-plans/$wateringPlanId`,
             params: { wateringPlanId: wateringPlanId?.toString() },
-          }}
-        />
-        <h1 className="font-lato font-bold text-3xl mb-4 lg:text-4xl xl:text-5xl">
-          Einsatzplan für den {date} bearbeiten
-        </h1>
+          },
+        }}
+        title={<>Einsatzplan für den {date} bearbeiten</>}
+      >
         <p>
           Der Einsatzplan kann in dieser Ansicht editiert werden, falls bestimmte Daten nicht mehr
           stimmen oder z. B. bestimmte Informationen zusätzlich hinterlegt werden müssen. Ein
@@ -123,7 +122,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
             />
           </p>
         )}
-      </article>
+      </FormPageHeader>
 
       <section className="mt-10">
         <FormProvider {...form}>

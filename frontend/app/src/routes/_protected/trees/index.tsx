@@ -5,6 +5,8 @@ import ButtonLink from '@/components/general/links/ButtonLink'
 import { Plus } from 'lucide-react'
 import TreeCard from '@/components/general/cards/TreeCard'
 import { z } from 'zod'
+import EntityList from '@/components/general/EntityList'
+import ListPageHeader from '@/components/general/ListPageHeader'
 import Pagination from '@/components/general/Pagination'
 import Dialog from '@/components/general/filter/Dialog'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
@@ -40,23 +42,25 @@ function Trees() {
 
   return (
     <div className="container mt-6">
-      <article className="mb-20 2xl:w-4/5">
-        <h1 className="font-lato font-bold text-3xl mb-4 lg:text-4xl xl:text-5xl">
-          Auflistung aller Bäume
-        </h1>
-        <p className="mb-5">
-          Hier finden Sie eine Übersicht aller Bäume in einer Listenansicht. Die Bäume lassen sich
-          allerdings auch auf einer{' '}
-          <a
-            href="/map"
-            className="text-green underline hover:text-green-light focus:text-green-light-50"
-          >
-            Karte
-          </a>
-          &nbsp;visualisieren.
-        </p>
-        <ButtonLink icon={Plus} label="Neuen Baum erstellen" link={{ to: '/map/tree/new' }} />
-      </article>
+      <ListPageHeader
+        title="Auflistung aller Bäume"
+        description={
+          <>
+            Hier finden Sie eine Übersicht aller Bäume in einer Listenansicht. Die Bäume lassen sich
+            allerdings auch auf einer{' '}
+            <a
+              href="/map"
+              className="text-green underline hover:text-green-light focus:text-green-light-50"
+            >
+              Karte
+            </a>
+            &nbsp;visualisieren.
+          </>
+        }
+        action={
+          <ButtonLink icon={Plus} label="Neuen Baum erstellen" link={{ to: '/map/tree/new' }} />
+        }
+      />
 
       <section className="mt-10">
         <div className="flex justify-end mb-6 lg:mb-10">
@@ -80,19 +84,12 @@ function Trees() {
             style={{ opacity: isPlaceholderData ? 0.6 : 1 }}
             aria-busy={isPlaceholderData}
           >
-            <ul>
-              {treesRes.data?.length === 0 ? (
-                <li className="text-center text-dark-600 mt-10">
-                  <p>Es wurden leider keine Bäume gefunden.</p>
-                </li>
-              ) : (
-                treesRes.data?.map((tree) => (
-                  <li key={tree.id} className="mb-5 last:mb-0">
-                    <TreeCard tree={tree} />
-                  </li>
-                ))
-              )}
-            </ul>
+            <EntityList
+              items={treesRes.data}
+              getKey={(tree) => tree.id}
+              emptyMessage="Es wurden leider keine Bäume gefunden."
+              renderItem={(tree) => <TreeCard tree={tree} />}
+            />
             {treesRes.pagination && treesRes.pagination?.totalPages > 1 && (
               <Pagination pagination={treesRes.pagination} />
             )}

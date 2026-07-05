@@ -1,4 +1,4 @@
-import BackLink from '../general/links/BackLink'
+import FormPageHeader from '../general/FormPageHeader'
 import DeleteSection from '../treecluster/DeleteSection'
 import type { Vehicle } from '@/api/backendApi'
 import { useInitFormQuery } from '@/hooks/form/useInitForm'
@@ -49,19 +49,18 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
 
   return (
     <>
-      <article className="2xl:w-4/5">
-        <BackLink
-          label="Zurück zur Fahrzeugübersicht"
-          link={{
+      <FormPageHeader
+        backLink={{
+          label: 'Zurück zur Fahrzeugübersicht',
+          link: {
             to: `/vehicles/$vehicleId`,
             params: { vehicleId: vehicleId?.toString() ?? '' },
-          }}
-        />
-        <h1 className="font-lato font-bold text-3xl mb-4 lg:text-4xl xl:text-5xl">
-          Fahrzeug {loadedData?.numberPlate} bearbeiten
-        </h1>
+          },
+        }}
+        title={<>Fahrzeug {loadedData?.numberPlate} bearbeiten</>}
+      >
         <p className="mb-5">Hier können Sie das Fahrzeug bearbeiten.</p>
-      </article>
+      </FormPageHeader>
 
       <section className="mt-10">
         <FormProvider {...form}>

@@ -1,4 +1,4 @@
-import BackLink from '../general/links/BackLink'
+import EntityDetailHeader from '../general/EntityDetailHeader'
 import {
   Alert,
   AlertContent,
@@ -12,8 +12,7 @@ import {
   TabsContent,
 } from '@green-ecolution/ui'
 import GeneralLink from '../general/links/GeneralLink'
-import ButtonLink from '../general/links/ButtonLink'
-import { File, Pencil } from 'lucide-react'
+import { File } from 'lucide-react'
 import TreeIcon from '../icons/Tree'
 import SensorIcon from '../icons/Sensor'
 import TabWateringStatus from './TabWateringStatus'
@@ -29,64 +28,60 @@ interface TreeDashboardProps {
 const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
   return (
     <>
-      <BackLink link={{ to: '/trees' }} label="Zu allen Bäumen" />
-      <article className="flex flex-col gap-y-6 2xl:flex-row 2xl:items-center 2xl:gap-x-10">
-        <div className="2xl:w-4/5">
-          <h1 className="font-lato font-bold text-3xl mb-4 flex flex-wrap items-center gap-4 lg:text-4xl xl:text-5xl">
-            Baum: {tree.number}
-            <Badge variant="green-dark" size="lg">
-              {tree.provider ?? 'manuell erstellt'}
-            </Badge>
-          </h1>
-          {tree.treeClusterId && treeCluster ? (
-            <p className="text-dark-600 text-lg">
-              <span>Bewässerungsgruppe: {treeCluster?.name}</span>
-              {', '}
-              <span>
-                Standort: {treeCluster?.address}, {treeCluster?.region?.name}
-              </span>
-            </p>
-          ) : (
-            <p className="text-dark-600 text-lg">
-              Dieser Baum ist keiner Bewässerungsgruppe zugeordnet.
-            </p>
-          )}
-          {tree.description && <p>{tree.description}</p>}
-          <div className="flex mt-4 flex-wrap gap-x-10">
-            <GeneralLink
-              label="Auf der Karte anzeigen"
-              link={{
-                to: '/map',
-                search: {
-                  lat: tree.latitude,
-                  lng: tree.longitude,
-                  zoom: 18,
-                  tree: tree.id,
-                },
-              }}
-            />
-            {tree.treeClusterId && treeCluster && (
-              <GeneralLink
-                label="Zur Bewässerungsgruppe"
-                link={{
-                  to: `/treecluster/$treeclusterId`,
-                  params: { treeclusterId: String(tree.treeClusterId) },
-                }}
-              />
-            )}
-          </div>
-        </div>
-        <ButtonLink
-          icon={Pencil}
-          iconClassName="stroke-1"
-          label="Baum bearbeiten"
-          color="grey"
-          link={{
+      <EntityDetailHeader
+        backLink={{ link: { to: '/trees' }, label: 'Zu allen Bäumen' }}
+        title={<>Baum: {tree.number}</>}
+        badge={
+          <Badge variant="green-dark" size="lg">
+            {tree.provider ?? 'manuell erstellt'}
+          </Badge>
+        }
+        editLink={{
+          label: 'Baum bearbeiten',
+          link: {
             to: `/map/tree/edit/$treeId`,
             params: { treeId: String(tree.id) },
-          }}
-        />
-      </article>
+          },
+        }}
+      >
+        {tree.treeClusterId && treeCluster ? (
+          <p className="text-dark-600 text-lg">
+            <span>Bewässerungsgruppe: {treeCluster?.name}</span>
+            {', '}
+            <span>
+              Standort: {treeCluster?.address}, {treeCluster?.region?.name}
+            </span>
+          </p>
+        ) : (
+          <p className="text-dark-600 text-lg">
+            Dieser Baum ist keiner Bewässerungsgruppe zugeordnet.
+          </p>
+        )}
+        {tree.description && <p>{tree.description}</p>}
+        <div className="flex mt-4 flex-wrap gap-x-10">
+          <GeneralLink
+            label="Auf der Karte anzeigen"
+            link={{
+              to: '/map',
+              search: {
+                lat: tree.latitude,
+                lng: tree.longitude,
+                zoom: 18,
+                tree: tree.id,
+              },
+            }}
+          />
+          {tree.treeClusterId && treeCluster && (
+            <GeneralLink
+              label="Zur Bewässerungsgruppe"
+              link={{
+                to: `/treecluster/$treeclusterId`,
+                params: { treeclusterId: String(tree.treeClusterId) },
+              }}
+            />
+          )}
+        </div>
+      </EntityDetailHeader>
 
       {tree?.sensor ? (
         <Tabs defaultValue="watering" className="mt-10">

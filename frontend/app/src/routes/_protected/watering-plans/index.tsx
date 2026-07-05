@@ -2,6 +2,8 @@ import { wateringPlanQuery } from '@/api/queries'
 import WateringPlanCard from '@/components/general/cards/WateringPlanCard'
 import { Loading } from '@green-ecolution/ui'
 import ButtonLink from '@/components/general/links/ButtonLink'
+import EntityList from '@/components/general/EntityList'
+import ListPageHeader from '@/components/general/ListPageHeader'
 import Pagination from '@/components/general/Pagination'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
@@ -38,21 +40,17 @@ function WateringPlans() {
 
   return (
     <div className="container mt-6">
-      <article className="mb-20 2xl:w-4/5">
-        <h1 className="font-lato font-bold text-3xl mb-4 lg:text-4xl xl:text-5xl">
-          Alle Einsatzpläne
-        </h1>
-        <p className="mb-5">
-          Hier finden Sie eine Übersicht aller Einsatzpläne. Ein Einsatzplan beschreibt eine
-          Bewässerungsfahrt mehrerer Bewässerungsgruppen. Die Bewässerungsfahrten können dadurch
-          dynamisch und schnell geplant
-        </p>
-        <ButtonLink
-          icon={Plus}
-          label="Neuen Einsatzplan erstellen"
-          link={{ to: '/watering-plans/new' }}
-        />
-      </article>
+      <ListPageHeader
+        title="Alle Einsatzpläne"
+        description="Hier finden Sie eine Übersicht aller Einsatzpläne. Ein Einsatzplan beschreibt eine Bewässerungsfahrt mehrerer Bewässerungsgruppen. Die Bewässerungsfahrten können dadurch dynamisch und schnell geplant"
+        action={
+          <ButtonLink
+            icon={Plus}
+            label="Neuen Einsatzplan erstellen"
+            link={{ to: '/watering-plans/new' }}
+          />
+        }
+      />
 
       <section className="mt-10">
         <ListCardHeader columns="1.3fr 1.5fr 1fr 1.5fr 1.5fr">
@@ -70,19 +68,12 @@ function WateringPlans() {
             style={{ opacity: isPlaceholderData ? 0.6 : 1 }}
             aria-busy={isPlaceholderData}
           >
-            <ul>
-              {wateringPlanRes.data?.length === 0 ? (
-                <li className="text-center text-dark-600 mt-10">
-                  <p>Es wurden leider keine Einsatzpläne gefunden.</p>
-                </li>
-              ) : (
-                wateringPlanRes.data?.map((wateringPlan) => (
-                  <li key={wateringPlan.id} className="mb-5 last:mb-0">
-                    <WateringPlanCard wateringPlan={wateringPlan} />
-                  </li>
-                ))
-              )}
-            </ul>
+            <EntityList
+              items={wateringPlanRes.data}
+              getKey={(wateringPlan) => wateringPlan.id}
+              emptyMessage="Es wurden leider keine Einsatzpläne gefunden."
+              renderItem={(wateringPlan) => <WateringPlanCard wateringPlan={wateringPlan} />}
+            />
             {wateringPlanRes.pagination && wateringPlanRes.pagination?.totalPages > 1 && (
               <Pagination pagination={wateringPlanRes.pagination} />
             )}

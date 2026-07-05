@@ -4,8 +4,9 @@ import ButtonLink from '@/components/general/links/ButtonLink'
 import { Plus } from 'lucide-react'
 import { Loading } from '@green-ecolution/ui'
 import FilterProvider from '@/context/FilterContext'
-import TreeClusterList from '@/components/treecluster/TreeClusterList'
-import ClusterCardGrid from '@/components/treecluster/ClusterCardGrid'
+import EntityList from '@/components/general/EntityList'
+import TreeclusterCard from '@/components/general/cards/TreeclusterCard'
+import ClusterCard from '@/components/treecluster/ClusterCard'
 import Pagination from '@/components/general/Pagination'
 import Dialog from '@/components/general/filter/Dialog'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
@@ -118,10 +119,21 @@ function Treecluster() {
                   <p>Anzahl d. Bäume</p>
                 </ListCardHeader>
 
-                <TreeClusterList data={clustersRes.data} />
+                <EntityList
+                  items={clustersRes.data}
+                  getKey={(cluster) => cluster.id}
+                  emptyMessage="Es wurden leider keine Bewässerungsgruppen gefunden."
+                  renderItem={(cluster) => <TreeclusterCard treecluster={cluster} />}
+                />
               </>
             ) : (
-              <ClusterCardGrid data={clustersRes.data} />
+              <EntityList
+                layout="grid"
+                items={clustersRes.data}
+                getKey={(cluster) => cluster.id}
+                emptyMessage="Es wurden leider keine Bewässerungsgruppen gefunden."
+                renderItem={(cluster) => <ClusterCard treecluster={cluster} />}
+              />
             )}
             {clustersRes.pagination && clustersRes.pagination?.totalPages > 1 && (
               <Pagination pagination={clustersRes.pagination} />

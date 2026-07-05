@@ -1,7 +1,8 @@
 import { sensorQuery } from '@/api/queries'
 import { Button, ListCardHeader, Loading } from '@green-ecolution/ui'
 import Pagination from '@/components/general/Pagination'
-import SensorList from '@/components/sensor/SensorList'
+import EntityList from '@/components/general/EntityList'
+import SensorCard from '@/components/general/cards/SensorCard'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Zap } from 'lucide-react'
@@ -68,7 +69,12 @@ function Sensors() {
             style={{ opacity: isPlaceholderData ? 0.6 : 1 }}
             aria-busy={isPlaceholderData}
           >
-            <SensorList data={sensorsRes.data} />
+            <EntityList
+              items={sensorsRes.data}
+              getKey={(sensor) => sensor.id}
+              emptyMessage="Es wurden keine Sensoren gefunden."
+              renderItem={(sensor) => <SensorCard sensor={sensor} />}
+            />
             {sensorsRes.pagination && sensorsRes.pagination?.totalPages > 1 && (
               <Pagination pagination={sensorsRes.pagination} />
             )}
