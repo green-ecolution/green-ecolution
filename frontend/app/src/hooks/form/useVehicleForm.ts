@@ -12,8 +12,7 @@ const vehicleConfig: EntityFormConfig<VehicleForm, VehicleCreate, VehicleUpdate,
   resolver: vehicleDraftResolver<VehicleForm>(),
 
   createFn: (body) => vehicleApi.createVehicle({ vehicleCreateRequest: body }),
-  updateFn: (id, body) =>
-    vehicleApi.updateVehicle({ vehicleId: id, vehicleUpdateRequest: body }),
+  updateFn: (id, body) => vehicleApi.updateVehicle({ vehicleId: id, vehicleUpdateRequest: body }),
 
   invalidateQueries: (data, queryClient: QueryClient) => {
     queryClient
