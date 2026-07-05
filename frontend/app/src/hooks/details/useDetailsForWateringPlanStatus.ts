@@ -1,8 +1,7 @@
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { WateringPlan } from '@/api/backendApi'
-import type { BadgeProps } from '@green-ecolution/ui'
-
-export type StatusColor = NonNullable<BadgeProps['variant']>
+import { createEnumLookup } from '@/lib/enumLookup'
+import type { StatusColor } from './types'
 
 export const WateringPlanStatusOptions: {
   value: WateringPlanStatus
@@ -48,9 +47,7 @@ export const WateringPlanStatusOptions: {
   },
 ]
 
-export const getWateringPlanStatusDetails = (status: WateringPlanStatus) =>
-  WateringPlanStatusOptions.find((option) => option.value === status) ??
-  WateringPlanStatusOptions[0]
+export const getWateringPlanStatusDetails = createEnumLookup(WateringPlanStatusOptions)
 
 export const showWateringPlanStatusButton = (wateringPlan: WateringPlan): boolean => {
   return (

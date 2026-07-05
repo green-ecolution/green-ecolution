@@ -1,6 +1,6 @@
-import type { BarcodeDetector as BarcodeDetectorType } from 'barcode-detector/pure'
 import KV from './KV'
-import { boolBadge, formatTime, permissionBadge, type PermissionLabel } from './badgeHelpers'
+import { boolBadge, formatTime, permissionBadge, type PermissionLabel } from './debugHelpers'
+import useQRScanner, { type DetectionMeta } from '@/hooks/useQRScanner'
 import {
   Button,
   CameraViewport,
@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@green-ecolution/ui'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface EnvInfo {
   hasGetUserMedia: boolean
@@ -36,15 +36,9 @@ interface ScanEntry {
 }
 
 const QRScannerDebugView = () => {
-  const videoRef = useRef<HTMLVideoElement | null>(null)
-  const streamRef = useRef<MediaStream | null>(null)
-  const detectorRef = useRef<InstanceType<typeof BarcodeDetectorType> | null>(null)
-  const runningRef = useRef(false)
   const lastScanRef = useRef<{ value: string; time: number } | null>(null)
   const scanIdRef = useRef(0)
 
-  const [running, setRunning] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [flash, setFlash] = useState(false)
   const [scans, setScans] = useState<ScanEntry[]>([])
   // Captured once on first render — window/navigator are stable within a session.
@@ -69,6 +63,39 @@ const QRScannerDebugView = () => {
     }
   })
   const [permission, setPermission] = useState<PermissionLabel>('unknown')
+
+  const handleDetect = useCallback((raw: string, meta: DetectionMeta) => {
+    const now = meta.timestamp
+    const last = lastScanRef.current
+    // Dedupe: same value within 1s is considered the same sighting
+    if (last?.value !== raw || now - last.time > 1000) {
+      lastScanRef.current = { value: raw, time: now }
+      const entry: ScanEntry = {
+        id: ++scanIdRef.current,
+        timestamp: now,
+        rawValue: raw,
+        format: meta.format,
+        bboxWidth: Math.round(meta.boundingBox.width),
+        bboxHeight: Math.round(meta.boundingBox.height),
+      }
+      setScans((prev) => [entry, ...prev].slice(0, 100))
+      setFlash(true)
+      window.setTimeout(() => setFlash(false), 500)
+    }
+  }, [])
+
+  const { videoRef, status, errorMessage, startScanning, stopScanning } = useQRScanner({
+    onDetect: handleDetect,
+  })
+
+  const running = status === 'scanning'
+  const error =
+    errorMessage ??
+    (status === 'unsupported'
+      ? 'getUserMedia not available (insecure context?)'
+      : status === 'denied'
+        ? 'Camera permission denied'
+        : null)
 
   // Supported formats need async feature detection.
   useEffect(() => {
@@ -107,105 +134,10 @@ const QRScannerDebugView = () => {
     }
   }, [])
 
-  const releaseStream = () => {
-    runningRef.current = false
-    streamRef.current?.getTracks().forEach((t) => t.stop())
-    streamRef.current = null
-    if (videoRef.current) videoRef.current.srcObject = null
-  }
-
-  const scheduleNext = (cb: () => void) => {
-    if (env.hasVideoFrameCallback && videoRef.current) {
-      videoRef.current.requestVideoFrameCallback(cb)
-    } else {
-      requestAnimationFrame(cb)
-    }
-  }
-
-  const tick = async (): Promise<void> => {
-    if (!runningRef.current) return
-    const video = videoRef.current
-    const detector = detectorRef.current
-    if (video && detector && video.readyState >= 2 && !video.paused) {
-      try {
-        const codes = await detector.detect(video)
-        if (!runningRef.current) return
-        if (codes.length > 0) {
-          const code = codes[0]
-          const raw = code.rawValue ?? ''
-          const now = Date.now()
-          const last = lastScanRef.current
-          // Dedupe: same value within 1s is considered the same sighting
-          if (last?.value !== raw || now - last.time > 1000) {
-            lastScanRef.current = { value: raw, time: now }
-            const bbox = code.boundingBox
-            const entry: ScanEntry = {
-              id: ++scanIdRef.current,
-              timestamp: now,
-              rawValue: raw,
-              format: String(code.format),
-              bboxWidth: Math.round(bbox.width),
-              bboxHeight: Math.round(bbox.height),
-            }
-            setScans((prev) => [entry, ...prev].slice(0, 100))
-            setFlash(true)
-            window.setTimeout(() => setFlash(false), 500)
-          }
-        }
-      } catch (err) {
-        console.debug('detect() threw', err)
-      }
-    }
-    scheduleNext(() => void tick())
-  }
-
-  const handleStart = async () => {
-    setError(null)
-    if (!videoRef.current) return
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setError('getUserMedia not available (insecure context?)')
-      return
-    }
-    try {
-      if (!detectorRef.current) {
-        const Detector =
-          window.BarcodeDetector ?? (await import('barcode-detector/pure')).BarcodeDetector
-        detectorRef.current = new Detector({ formats: ['qr_code'] })
-      }
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
-        audio: false,
-      })
-      streamRef.current = stream
-      videoRef.current.srcObject = stream
-      await videoRef.current.play()
-      runningRef.current = true
-      setRunning(true)
-      void tick()
-    } catch (err) {
-      const message = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
-      setError(message)
-      releaseStream()
-      setRunning(false)
-    }
-  }
-
-  const handleStop = () => {
-    releaseStream()
-    setRunning(false)
-  }
-
   const handleClear = () => {
     setScans([])
     lastScanRef.current = null
   }
-
-  // Release camera on unmount
-  useEffect(() => {
-    return () => {
-      releaseStream()
-    }
-  }, [])
 
   return (
     <div className="flex flex-col gap-6">
@@ -258,10 +190,10 @@ const QRScannerDebugView = () => {
 
       {/* Controls */}
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" onClick={handleStart} disabled={running}>
+        <Button size="sm" onClick={() => void startScanning()} disabled={running}>
           Scanner starten
         </Button>
-        <Button size="sm" variant="outline" onClick={handleStop} disabled={!running}>
+        <Button size="sm" variant="outline" onClick={stopScanning} disabled={!running}>
           Scanner stoppen
         </Button>
         <Button size="sm" variant="ghost" onClick={handleClear} disabled={scans.length === 0}>

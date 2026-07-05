@@ -6,6 +6,7 @@ interface FormSubmitButtonProps {
   className?: string
 }
 
+/** Passing `className` replaces the default layout classes instead of merging with them. */
 const FormSubmitButton = ({
   disabled,
   className = 'mt-10 lg:col-span-full lg:w-fit',

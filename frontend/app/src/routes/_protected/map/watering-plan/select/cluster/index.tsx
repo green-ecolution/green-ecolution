@@ -151,7 +151,7 @@ function SelectCluster() {
           emptyHint="Klicke eine Gruppe auf der Karte an, um sie hinzuzufügen."
         />
         {showError && clusterIds.length === 0 && (
-          <p className="mt-2 shrink-0 text-sm font-semibold text-red">
+          <p className="mt-2 shrink-0 text-sm font-semibold text-destructive">
             Bitte wähle mindestens eine Bewässerungsgruppe aus.
           </p>
         )}

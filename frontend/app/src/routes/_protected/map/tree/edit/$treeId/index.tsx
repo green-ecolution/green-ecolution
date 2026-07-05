@@ -139,7 +139,7 @@ function EditTreeOnMap() {
             type="button"
             variant="ghost"
             onClick={() => setConfirmDelete(true)}
-            className="mt-3 shrink-0 self-start text-red hover:text-red"
+            className="mt-3 shrink-0 self-start text-destructive hover:text-destructive"
           >
             <Trash2 className="size-4" />
             Baum löschen

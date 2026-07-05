@@ -1,5 +1,5 @@
 import { WateringStatus } from '@green-ecolution/backend-client'
-import { StatusColor } from './useDetailsForWateringPlanStatus'
+import { StatusColor } from './types'
 
 const WateringStatusProperties: Record<
   WateringStatus,

@@ -1,4 +1,5 @@
 import { UserRole } from '@green-ecolution/backend-client'
+import { createEnumLookup, createEnumParser } from '@/lib/enumLookup'
 
 // Local sentinel for roles not yet mapped to the backend's enum.
 export const UNKNOWN_USER_ROLE = 'unknown' as const
@@ -23,18 +24,13 @@ export const UserRoleOptions: { value: UserRoleOrUnknown; label: string }[] = [
   },
 ]
 
-export const getUserRoleDetails = (userRole: UserRoleOrUnknown) =>
-  UserRoleOptions.find((option) => option.value === userRole) ?? UserRoleOptions[0]
+export const getUserRoleDetails = createEnumLookup(UserRoleOptions)
 
-export const parseUserRole = (role: string): UserRoleOrUnknown => {
-  switch (role) {
-    case 'tbz':
-      return UserRole.Tbz
-    case 'green-ecolution':
-      return UserRole.GreenEcolution
-    case 'smarte-grenzregion':
-      return UserRole.SmarteGrenzregion
-    default:
-      return UNKNOWN_USER_ROLE
-  }
-}
+export const parseUserRole = createEnumParser<UserRoleOrUnknown>(
+  {
+    tbz: UserRole.Tbz,
+    'green-ecolution': UserRole.GreenEcolution,
+    'smarte-grenzregion': UserRole.SmarteGrenzregion,
+  },
+  UNKNOWN_USER_ROLE,
+)

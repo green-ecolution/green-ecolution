@@ -2,7 +2,7 @@ import GPSStatusCard from '@/components/geolocation/GPSStatusCard'
 import LocationMapPreview from '@/components/geolocation/LocationMapPreview'
 import useGeolocation, { type GeolocationStatus } from '@/hooks/useGeolocation'
 import KV from './KV'
-import { boolBadge, formatTime, permissionBadge, type PermissionLabel } from './badgeHelpers'
+import { boolBadge, formatTime, permissionBadge, type PermissionLabel } from './debugHelpers'
 import {
   Badge,
   Button,

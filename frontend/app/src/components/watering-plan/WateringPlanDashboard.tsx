@@ -21,12 +21,9 @@ import { File, FolderClosed, MoveRight, Route } from 'lucide-react'
 import TabGeneralData from './TabGeneralData'
 import TreeclusterCard from '../general/cards/TreeclusterCard'
 import ButtonLink from '../general/links/ButtonLink'
-import { useMutation } from '@tanstack/react-query'
-import { useAuthSession } from '@/lib/auth/authSessionContext'
-import { basePath, WateringPlan } from '@/api/backendApi'
-import createToast from '@/hooks/createToast'
+import { WateringPlan } from '@/api/backendApi'
+import { useDownloadGpx } from '@/hooks/useDownloadGpx'
 import WateringPlanPreviewRoute from './WateringPlanRoutePreview'
-import { isHTTPError } from '@/lib/utils'
 
 interface WateringPlanDashboardProps {
   wateringPlan: WateringPlan
@@ -34,43 +31,12 @@ interface WateringPlanDashboardProps {
 
 const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => {
   const statusDetails = getWateringPlanStatusDetails(wateringPlan.status)
-  const { accessToken } = useAuthSession()
-  const showToast = createToast()
 
   const date = wateringPlan?.date
     ? format(new Date(wateringPlan?.date), 'dd.MM.yyyy')
     : 'Keine Angabe'
 
-  const { mutate } = useMutation({
-    mutationFn: async () => {
-      const resp = await fetch(`${basePath}${wateringPlan.gpxUrl}`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-
-      if (resp.status !== 200) {
-        const json: unknown = await resp.json()
-        const errorMsg = isHTTPError(json) ? json.error : 'Unbekannter Fehler'
-        throw new Error(errorMsg)
-      }
-
-      const blob = await resp.blob()
-
-      const objUrl = window.URL.createObjectURL(blob)
-
-      const a = document.createElement('a')
-      a.href = objUrl
-      a.download = resp.headers.get('Content-Disposition')?.split('filename=')[1] ?? 'route.gpx'
-      a.click()
-
-      window.URL.revokeObjectURL(objUrl)
-    },
-    onError: (error) => {
-      showToast(error.message, 'error')
-    },
-  })
+  const { mutate: downloadGpx } = useDownloadGpx(wateringPlan.gpxUrl)
 
   return (
     <>
@@ -103,7 +69,7 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
               icon={MoveRight}
             />
           )}
-          <Button variant="nav" onClick={() => mutate()} className="p-0 h-auto [&_svg]:size-4">
+          <Button variant="nav" onClick={() => downloadGpx()} className="p-0 h-auto [&_svg]:size-4">
             Route herunterladen
             <MoveRight className="icon-arrow-animate" />
           </Button>

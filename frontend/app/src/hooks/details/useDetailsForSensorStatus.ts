@@ -1,5 +1,5 @@
 import { SensorStatus } from '@green-ecolution/backend-client'
-import type { StatusColor } from './useDetailsForWateringPlanStatus'
+import type { StatusColor } from './types'
 
 const SensorStatusProperties: Record<
   SensorStatus,

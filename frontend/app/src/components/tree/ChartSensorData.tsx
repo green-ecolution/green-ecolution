@@ -1,16 +1,16 @@
 import { sensorDataQuery } from '@/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
-import {
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  Area,
-  AreaChart,
-} from 'recharts'
+import { Area } from 'recharts'
+import { type ChartConfig } from '@green-ecolution/ui'
+import TimeSeriesChart from './TimeSeriesChart'
+
+const chartConfig = {
+  battery: {
+    label: 'Batteriewerte in Volt',
+    color: '#4C7741',
+  },
+} satisfies ChartConfig
 
 interface ChartSensorDataProps {
   sensorId: string
@@ -25,37 +25,28 @@ const ChartSensorData: React.FC<ChartSensorDataProps> = ({ sensorId }) => {
     }))
     .reverse()
 
+  if (sensorDataRes.length <= 1) return null
+
   return (
-    <>
-      {sensorDataRes.length > 1 && (
-        <section className="mt-16">
-          <h2 className="font-bold font-lato text-xl mb-4">Akkulaufzeit im Verlaufe der Zeit</h2>
-          <p className="mb-6">
-            In diesem Abschnitt wird die Batteriewerte in Volt ausgegeben, die im System
-            abgespeichert wurden.
-            <br />
-            Anhand dessen kann nachvollzogen werden, wie sich die Batterie im Laufe der Zeit
-            entlädt.
-          </p>
-          <ResponsiveContainer height={400} width="100%">
-            <AreaChart data={batteryData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Area
-                type="monotone"
-                dataKey="battery"
-                name="Batteriewerte in Volt"
-                stroke="#4C7741"
-                fill="#D9E8D5"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </section>
-      )}
-    </>
+    <section className="mt-16">
+      <h2 className="font-bold font-lato text-xl mb-4">Akkulaufzeit im Verlaufe der Zeit</h2>
+      <p className="mb-6">
+        In diesem Abschnitt wird die Batteriewerte in Volt ausgegeben, die im System abgespeichert
+        wurden.
+        <br />
+        Anhand dessen kann nachvollzogen werden, wie sich die Batterie im Laufe der Zeit entlädt.
+      </p>
+      <TimeSeriesChart variant="area" config={chartConfig} data={batteryData}>
+        <Area
+          type="monotone"
+          dataKey="battery"
+          stroke="var(--color-battery)"
+          strokeWidth={2}
+          fill="var(--color-battery)"
+          fillOpacity={0.15}
+        />
+      </TimeSeriesChart>
+    </section>
   )
 }
 

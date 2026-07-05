@@ -1,5 +1,5 @@
 import KV from '@/components/debug/KV'
-import { boolBadge } from '@/components/debug/badgeHelpers'
+import { boolBadge } from '@/components/debug/debugHelpers'
 import useStore, { useMapStore } from '@/store/store'
 import { useAuthSession } from '@/lib/auth/authSessionContext'
 import { useCurrentUser } from '@/lib/auth/useCurrentUser'

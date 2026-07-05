@@ -34,9 +34,8 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const showToast = createToast()
-  // Details of the persisted status; `status` below tracks the user's selection.
   const statusDetails = getWateringPlanStatusDetails(loadedData.status)
-  const [status, setStatus] = useState(statusDetails)
+  const [selectedStatus, setSelectedStatus] = useState(statusDetails)
 
   const { mutate, isError, error } = useMutation({
     mutationFn: (wateringPlan: WateringPlanUpdate) =>
@@ -158,14 +157,14 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
             label="Status des Einsatzes"
             placeholder="Wählen Sie einen Status aus"
             required
-            value={status.value}
+            value={selectedStatus.value}
             onValueChange={(value) => {
-              setStatus(getWateringPlanStatusDetails(value as WateringPlanStatus))
+              setSelectedStatus(getWateringPlanStatusDetails(value as WateringPlanStatus))
             }}
             options={WateringPlanStatusOptions}
           />
         </div>
-        {formByStatus(status.value)}
+        {formByStatus(selectedStatus.value)}
         <FormError show={isError} error={error?.message} />
       </section>
     </>
