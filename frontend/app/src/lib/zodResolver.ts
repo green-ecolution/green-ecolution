@@ -3,16 +3,6 @@ import type { z } from 'zod'
 
 type ZodSchema<T> = z.ZodType<T>
 
-interface ResolverSuccess<TFieldValues extends FieldValues> {
-  values: TFieldValues
-  errors: Record<string, never>
-}
-
-interface ResolverError<TFieldValues extends FieldValues> {
-  values: Record<string, never>
-  errors: FieldErrors<TFieldValues>
-}
-
 /**
  * Custom zodResolver wrapper for Zod v4 compatibility with react-hook-form.
  *
@@ -29,7 +19,7 @@ export function zodResolver<TOutput extends FieldValues>(
       return {
         values: result.data,
         errors: {},
-      } as ResolverSuccess<TOutput>
+      }
     }
 
     const errors: FieldErrors<TOutput> = {}
@@ -47,6 +37,6 @@ export function zodResolver<TOutput extends FieldValues>(
     return {
       values: {},
       errors,
-    } as ResolverError<TOutput>
+    }
   }
 }

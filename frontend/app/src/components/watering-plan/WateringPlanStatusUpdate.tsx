@@ -159,7 +159,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
             required
             value={selectedStatus.value}
             onValueChange={(value) => {
-              setSelectedStatus(getWateringPlanStatusDetails(value as WateringPlanStatus))
+              setSelectedStatus(getWateringPlanStatusDetails(value))
             }}
             options={WateringPlanStatusOptions}
           />

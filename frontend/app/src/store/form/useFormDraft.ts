@@ -21,7 +21,7 @@ export function useFormDraft<T>(formType: FormType, mutationType: MutationType) 
 
   return useMemo(
     () => ({
-      data: (draft?.data ?? null) as T | null,
+      data: draft?.data ?? null,
       hasChanges: draft?.hasChanges ?? false,
       setData,
       updateData,

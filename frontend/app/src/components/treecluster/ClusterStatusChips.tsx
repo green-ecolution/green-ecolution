@@ -25,10 +25,7 @@ const ClusterStatusChips: React.FC<{ className?: string }> = ({ className }) => 
   const search = useSearch({ strict: false })
   const navigate = useNavigate()
 
-  const active =
-    'wateringStatuses' in search
-      ? ((search.wateringStatuses as WateringStatus[] | undefined) ?? [])
-      : []
+  const active = 'wateringStatuses' in search ? (search.wateringStatuses ?? []) : []
 
   const countFor = (status: WateringStatus): number => {
     switch (status) {

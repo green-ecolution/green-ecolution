@@ -119,7 +119,7 @@ const QRScannerDebugView = () => {
     let status: PermissionStatus | null = null
     const sub = async () => {
       try {
-        status = await navigator.permissions.query({ name: 'camera' as PermissionName })
+        status = await navigator.permissions.query({ name: 'camera' })
         setPermission(status.state)
         status.onchange = () => {
           if (status) setPermission(status.state)

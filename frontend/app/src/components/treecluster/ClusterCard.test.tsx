@@ -27,7 +27,7 @@ function makeCluster(overrides: Partial<TreeClusterInList> = {}): TreeClusterInL
     longitude: 9.43,
     moistureLevel: 0,
     wateringStatus: WateringStatus.Bad,
-    region: { id: '1', name: 'Mürwik' } as TreeClusterInList['region'],
+    region: { id: '1', name: 'Mürwik' },
     treeIds: ['1', '2', '3'],
     sensorCount: 1,
     soilCondition: SoilCondition.Ss,
