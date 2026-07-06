@@ -1,12 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 export type GeolocationStatus =
-  | 'idle'
-  | 'requesting'
-  | 'watching'
-  | 'denied'
-  | 'unsupported'
-  | 'error'
+  'idle' | 'requesting' | 'watching' | 'denied' | 'unsupported' | 'error'
 
 export interface GeolocationFix {
   latitude: number
