@@ -17,7 +17,7 @@
     "generate:stage": "pnpm --filter backend-client generate:stage",
     "generate:local": "pnpm --filter backend-client generate:local",
     "ci": "pnpm --filter backend-client generate:ci",
-    "lint": "prettier --check . && pnpm --filter frontend lint",
+    "lint": "prettier --check . && pnpm --filter='!green-ecolution-frontend' -r lint",
     "lint:ui": "pnpm --filter @green-ecolution/ui lint",
     "test": "pnpm --filter frontend test:run",
     "preview": "pnpm --filter frontend preview",
