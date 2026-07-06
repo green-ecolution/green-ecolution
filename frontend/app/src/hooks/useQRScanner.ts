@@ -99,7 +99,7 @@ const useQRScanner = ({ onScan, onDetect }: UseQRScannerOptions = {}): UseQRScan
     // Optional permission pre-flight. Some browsers (Firefox) throw for 'camera'.
     try {
       const perm = await navigator.permissions.query({
-        name: 'camera' as PermissionName,
+        name: 'camera',
       })
       if (perm.state === 'denied') {
         setStatus('denied')

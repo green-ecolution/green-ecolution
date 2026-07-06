@@ -97,7 +97,7 @@ const GeolocationDebugView = () => {
     let handler: (() => void) | null = null
     const sub = async () => {
       try {
-        permStatus = await navigator.permissions.query({ name: 'geolocation' as PermissionName })
+        permStatus = await navigator.permissions.query({ name: 'geolocation' })
         setPermission(permStatus.state)
         handler = () => {
           if (permStatus) setPermission(permStatus.state)

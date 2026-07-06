@@ -183,7 +183,7 @@ describe('Form → Map → Form roundtrip (Bug Prevention)', () => {
       expect(useStore.getState().formDrafts['cluster-update']).toBeUndefined()
 
       useStore.getState().updateFormDraft<TestClusterForm>('cluster-update', (prev) => ({
-        ...(prev ?? ({} as TestClusterForm)),
+        ...(prev ?? {}),
         treeIds: [101, 102, 103],
       }))
 
@@ -196,7 +196,7 @@ describe('Form → Map → Form roundtrip (Bug Prevention)', () => {
       expect(useStore.getState().formDrafts['wateringplan-update']).toBeUndefined()
 
       useStore.getState().updateFormDraft<TestWateringPlanForm>('wateringplan-update', (prev) => ({
-        ...(prev ?? ({} as TestWateringPlanForm)),
+        ...(prev ?? {}),
         clusterIds: [10, 20, 30],
       }))
 
@@ -208,7 +208,7 @@ describe('Form → Map → Form roundtrip (Bug Prevention)', () => {
       expect(useStore.getState().formDrafts['tree-update']).toBeUndefined()
 
       useStore.getState().updateFormDraft<TestTreeForm>('tree-update', (prev) => ({
-        ...(prev ?? ({} as TestTreeForm)),
+        ...(prev ?? {}),
         latitude: 54.123,
         longitude: 9.456,
       }))

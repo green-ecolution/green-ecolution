@@ -19,7 +19,7 @@ class ResizeObserverMock {
     this.callback = callback
   }
 }
-global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver
+globalThis.ResizeObserver = ResizeObserverMock
 
 // Mock IntersectionObserver (not available in jsdom)
 class IntersectionObserverMock {
@@ -35,7 +35,7 @@ class IntersectionObserverMock {
     this.callback = callback
   }
 }
-global.IntersectionObserver = IntersectionObserverMock as unknown as typeof IntersectionObserver
+globalThis.IntersectionObserver = IntersectionObserverMock as unknown as typeof IntersectionObserver
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {

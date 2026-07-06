@@ -179,7 +179,7 @@ const useGeolocation = ({
         // Optional permission pre-flight (not supported everywhere — Safari throws).
         try {
           const perm = await navigator.permissions.query({
-            name: 'geolocation' as PermissionName,
+            name: 'geolocation',
           })
           if (perm.state === 'denied') {
             setStatus('denied')

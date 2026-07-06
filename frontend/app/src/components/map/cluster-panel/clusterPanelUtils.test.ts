@@ -9,21 +9,20 @@ import {
   latestSensorReading,
 } from './clusterPanelUtils'
 
-const tree = (over: Partial<TreeResponse>): TreeResponse =>
-  ({
-    id: over.id ?? '1',
-    createdAt: '',
-    updatedAt: '',
-    description: '',
-    latitude: 0,
-    longitude: 0,
-    number: over.number ?? '0001',
-    plantingYear: 2000,
-    species: over.species ?? 'Stieleiche',
-    wateringStatus: 'unknown',
-    sensor: over.sensor ?? null,
-    ...over,
-  }) as TreeResponse
+const tree = (over: Partial<TreeResponse>): TreeResponse => ({
+  id: over.id ?? '1',
+  createdAt: '',
+  updatedAt: '',
+  description: '',
+  latitude: 0,
+  longitude: 0,
+  number: over.number ?? '0001',
+  plantingYear: 2000,
+  species: over.species ?? 'Stieleiche',
+  wateringStatus: 'unknown',
+  sensor: over.sensor ?? null,
+  ...over,
+})
 
 describe('sortTreesSensorFirst', () => {
   it('puts trees with a sensor before trees without, keeping relative order', () => {
