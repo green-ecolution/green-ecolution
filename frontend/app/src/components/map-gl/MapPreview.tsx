@@ -30,15 +30,17 @@ const MapPreview = ({
 }: MapPreviewProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<MaplibreMap | null>(null)
+  // Construction-time options; later changes are handled by the effects below.
+  const initialOptions = useRef({ center, zoom, interactive })
 
   useEffect(() => {
     if (!containerRef.current) return
     const m = new maplibregl.Map({
       container: containerRef.current,
       style: OPENFREEMAP_STYLE_URL,
-      interactive,
-      center: center ?? [0, 0],
-      zoom,
+      interactive: initialOptions.current.interactive,
+      center: initialOptions.current.center ?? [0, 0],
+      zoom: initialOptions.current.zoom,
       attributionControl: { compact: true },
     })
     // Under React StrictMode the map is created, torn down and recreated in the
@@ -53,8 +55,6 @@ const MapPreview = ({
       m.remove()
       setMap(null)
     }
-    // Created once; controlled position updates happen in the effect below.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {

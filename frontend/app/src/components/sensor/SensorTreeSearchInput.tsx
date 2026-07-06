@@ -16,11 +16,15 @@ const SensorTreeSearchInput = ({
   placeholder = 'Baumnummer oder Baumart suchen…',
 }: SensorTreeSearchInputProps) => {
   const [local, setLocal] = useState(value)
+  const [syncedValue, setSyncedValue] = useState(value)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
+  // Mirror the controlled value into local state when it changes externally,
+  // without an effect (see React "You Might Not Need an Effect").
+  if (value !== syncedValue) {
+    setSyncedValue(value)
     setLocal(value)
-  }, [value])
+  }
 
   useEffect(
     () => () => {

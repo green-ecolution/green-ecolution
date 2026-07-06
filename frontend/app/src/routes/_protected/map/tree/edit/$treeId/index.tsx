@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { FormProvider, type DefaultValues } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Button } from '@green-ecolution/ui'
@@ -69,11 +69,12 @@ function EditTreeOnMap() {
   useClusterMarkerLayer({ interactive: false })
   useTreeLayers({ interactive: false })
 
+  // Frame the tree once when the panel opens; later coordinate edits are driven
+  // by the draggable marker, not this fly-to.
+  const initialCoord = useRef({ lng: tree.longitude, lat: tree.latitude })
   useEffect(() => {
     if (!isMapAlive(map)) return
-    map.flyTo({ center: [tree.longitude, tree.latitude], zoom: 18 })
-    // Frame the tree once when the panel opens.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    map.flyTo({ center: [initialCoord.current.lng, initialCoord.current.lat], zoom: 18 })
   }, [map])
 
   const handleDragEnd = useCallback(

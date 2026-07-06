@@ -32,7 +32,7 @@ const readBounds = (map: MaplibreMap): BoundingBox => {
 // previously-fetched buffer, so the tree query refetches rarely.
 const useViewportBBox = (): BoundingBox => {
   const map = useMaplibreMap()
-  const [bbox, setBBox] = useState<BoundingBox>(() => expand(readBounds(map), BUFFER))
+  const [bbox, setBbox] = useState<BoundingBox>(() => expand(readBounds(map), BUFFER))
   const bboxRef = useRef(bbox)
   useEffect(() => {
     bboxRef.current = bbox
@@ -46,7 +46,7 @@ const useViewportBBox = (): BoundingBox => {
       if (fitsInside(current, prev)) return
       const next = expand(current, BUFFER)
       bboxRef.current = next
-      setBBox(next)
+      setBbox(next)
     }
     const onMove = () => {
       if (timer) clearTimeout(timer)

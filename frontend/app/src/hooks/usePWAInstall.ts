@@ -86,7 +86,7 @@ const usePWAInstall = (): UsePWAInstallReturn => {
     }
   }, [])
 
-  const platform = useMemo(detectPlatform, [])
+  const platform = useMemo(() => detectPlatform(), [])
 
   const promptInstall = useCallback(async () => {
     if (!deferredPrompt) return

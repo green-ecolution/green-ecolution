@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { FormProvider, useWatch, type DefaultValues, type SubmitHandler } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Button } from '@green-ecolution/ui'
@@ -39,9 +39,12 @@ function EditClusterOnMap() {
   const { data: cluster } = useSuspenseQuery(treeClusterIdQuery(treeclusterId))
   const [confirmDelete, setConfirmDelete] = useState(false)
 
+  // Frame the group once when the panel opens.
+  const initialCluster = useRef(cluster)
   useEffect(() => {
     if (!isMapAlive(map)) return
-    const trees = cluster.trees ?? []
+    const framed = initialCluster.current
+    const trees = framed.trees ?? []
     if (trees.length > 0) {
       const lngs = trees.map((t) => t.longitude)
       const lats = trees.map((t) => t.latitude)
@@ -52,11 +55,9 @@ function EditClusterOnMap() {
         ],
         { padding: 60, maxZoom: 17 },
       )
-    } else if (cluster.longitude !== 0 || cluster.latitude !== 0) {
-      map.flyTo({ center: [cluster.longitude, cluster.latitude], zoom: 17 })
+    } else if (framed.longitude !== 0 || framed.latitude !== 0) {
+      map.flyTo({ center: [framed.longitude, framed.latitude], zoom: 17 })
     }
-    // Frame the group once when the panel opens.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map])
 
   const initForm: DefaultValues<TreeclusterForm> = {
