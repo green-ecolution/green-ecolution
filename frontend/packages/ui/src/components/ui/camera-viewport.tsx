@@ -36,10 +36,14 @@ const CameraViewport = React.forwardRef<HTMLDivElement, CameraViewportProps>(
   ) => {
     const showVideo = state === 'scanning' || state === 'success'
 
+    // Bump a tick on each rising edge of `flash` to re-key the animated
+    // elements and restart their one-shot animation, without an effect.
     const [flashTick, setFlashTick] = React.useState(0)
-    React.useEffect(() => {
+    const [prevFlash, setPrevFlash] = React.useState(flash)
+    if (flash !== prevFlash) {
+      setPrevFlash(flash)
       if (flash) setFlashTick((t) => t + 1)
-    }, [flash])
+    }
 
     return (
       <div

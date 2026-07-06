@@ -31,16 +31,17 @@ const PositionLayers = ({
 }: Pick<LocationMapPreviewProps, 'latitude' | 'longitude' | 'accuracyMeters' | 'follow'>) => {
   const map = useMaplibreMap()
   const markerRef = useRef<Marker | null>(null)
+  const initialPos = useRef({ longitude, latitude })
 
   useEffect(() => {
-    const marker = new Marker({ color: '#486725' }).setLngLat([longitude, latitude]).addTo(map)
+    const marker = new Marker({ color: '#486725' })
+      .setLngLat([initialPos.current.longitude, initialPos.current.latitude])
+      .addTo(map)
     markerRef.current = marker
     return () => {
       marker.remove()
       markerRef.current = null
     }
-    // Created once; position updates happen in the effect below.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map])
 
   useEffect(() => {

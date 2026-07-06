@@ -22,7 +22,8 @@ const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
     { className, label, description, error, value, onChange, onClear, accept, id, ...props },
     ref,
   ) => {
-    const inputId = id || React.useId()
+    const generatedId = React.useId()
+    const inputId = id || generatedId
     const inputRef = React.useRef<HTMLInputElement>(null)
 
     React.useImperativeHandle(ref, () => inputRef.current!)

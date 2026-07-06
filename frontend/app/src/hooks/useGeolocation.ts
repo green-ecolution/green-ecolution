@@ -237,17 +237,23 @@ const useGeolocation = ({
     return start()
   }, [clearWatch, settlePending, start])
 
-  // autoStart on mount; options are captured via optionsRef so this runs once.
+  // autoStart on mount; `start` is read via a ref so its changing identity
+  // (it depends on `position`) doesn't retrigger this mount-only effect.
+  const startRef = useRef(start)
   useEffect(() => {
-    if (autoStart) {
-      void start()
+    startRef.current = start
+  }, [start])
+
+  const autoStartRef = useRef(autoStart)
+  useEffect(() => {
+    if (autoStartRef.current) {
+      void startRef.current()
     }
     return () => {
       clearWatch()
       settlePending(null)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [clearWatch, settlePending])
 
   return {
     status,

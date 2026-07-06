@@ -17,6 +17,7 @@ interface DraggableMarkerProps {
 const DraggableMarker = ({ lng, lat, onDragEnd, onDrag }: DraggableMarkerProps) => {
   const map = useMaplibreMap()
   const markerRef = useRef<Marker | null>(null)
+  const initialPos = useRef({ lng, lat })
   const onDragEndRef = useRef(onDragEnd)
   const onDragRef = useRef(onDrag)
   useEffect(() => {
@@ -26,7 +27,7 @@ const DraggableMarker = ({ lng, lat, onDragEnd, onDrag }: DraggableMarkerProps) 
 
   useEffect(() => {
     const marker = new Marker({ draggable: true, color: '#486725' })
-      .setLngLat([lng, lat])
+      .setLngLat([initialPos.current.lng, initialPos.current.lat])
       .addTo(map)
     marker.on('drag', () => {
       const p = marker.getLngLat()
@@ -41,8 +42,6 @@ const DraggableMarker = ({ lng, lat, onDragEnd, onDrag }: DraggableMarkerProps) 
       marker.remove()
       markerRef.current = null
     }
-    // Create the marker once; controlled position updates happen in the effect below.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map])
 
   useEffect(() => {

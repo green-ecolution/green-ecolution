@@ -39,7 +39,9 @@ type PaginationLinkProps = {
 } & Pick<ButtonProps, 'size'> &
   React.ComponentProps<'a'>
 
-const PaginationLink = ({ className, isActive, size = 'icon', ...props }: PaginationLinkProps) => (
+// `size` is accepted for API parity but not applied to the plain anchor;
+// pull it out so it doesn't leak onto the DOM element.
+const PaginationLink = ({ className, isActive, size: _size, ...props }: PaginationLinkProps) => (
   <a
     data-slot="pagination-link"
     aria-current={isActive ? 'page' : undefined}
