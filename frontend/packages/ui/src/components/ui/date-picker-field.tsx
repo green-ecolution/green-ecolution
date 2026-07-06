@@ -41,7 +41,8 @@ function DatePickerField({
   fromDate,
   toDate,
 }: DatePickerFieldProps) {
-  const inputId = id || React.useId()
+  const generatedId = React.useId()
+  const inputId = id || generatedId
   const [open, setOpen] = React.useState(false)
 
   return (

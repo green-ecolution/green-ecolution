@@ -14,7 +14,8 @@ export interface FormFieldProps extends React.InputHTMLAttributes<HTMLInputEleme
 
 const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
   ({ className, label, error, description, hideLabel, id, ...props }, ref) => {
-    const inputId = id || React.useId()
+    const generatedId = React.useId()
+    const inputId = id || generatedId
 
     return (
       <div data-slot="form-field" className={cn('flex flex-col gap-y-2', className)}>
@@ -68,7 +69,8 @@ export interface TextareaFieldProps extends React.TextareaHTMLAttributes<HTMLTex
 
 const TextareaField = React.forwardRef<HTMLTextAreaElement, TextareaFieldProps>(
   ({ className, label, error, description, hideLabel, id, ...props }, ref) => {
-    const inputId = id || React.useId()
+    const generatedId = React.useId()
+    const inputId = id || generatedId
 
     return (
       <div data-slot="textarea-field" className={cn('flex flex-col gap-y-2', className)}>
