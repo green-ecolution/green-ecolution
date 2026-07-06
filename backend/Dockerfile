@@ -65,6 +65,6 @@ EXPOSE 3020
 ENV APP_ENVIRONMENT=production
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:3020/health || exit 1
+  CMD wget --quiet --tries=1 --spider http://localhost:3020/api/health || exit 1
 
 ENTRYPOINT ["/usr/bin/tini", "--", "./green-ecolution"]

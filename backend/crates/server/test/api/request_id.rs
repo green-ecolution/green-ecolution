@@ -4,7 +4,7 @@ use crate::helpers::spawn_app;
 async fn response_carries_generated_x_request_id_header() {
     let app = spawn_app().await;
 
-    let response = app.get("/health").await;
+    let response = app.get("/api/health").await;
 
     let header = response
         .headers()
@@ -22,7 +22,7 @@ async fn response_echoes_client_supplied_x_request_id_header() {
     let app = spawn_app().await;
 
     let response = reqwest::Client::new()
-        .get(format!("{}/health", app.address))
+        .get(format!("{}/api/health", app.address))
         .header("x-request-id", "test-correlation-123")
         .send()
         .await

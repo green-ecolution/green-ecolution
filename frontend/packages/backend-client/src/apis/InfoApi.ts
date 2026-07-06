@@ -198,7 +198,7 @@ export class InfoApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /ready for a readiness probe that verifies critical dependencies, or /v1/info/services for a deep services health check.
+     * Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /api/ready for a readiness probe that verifies critical dependencies, or /api/v1/info/services for a deep services health check.
      * Liveness probe
      */
     async healthRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -220,7 +220,7 @@ export class InfoApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /ready for a readiness probe that verifies critical dependencies, or /v1/info/services for a deep services health check.
+     * Lightweight liveness probe for container orchestrators. Returns 200 OK while the HTTP server is responsive; performs no downstream service checks. Use /api/ready for a readiness probe that verifies critical dependencies, or /api/v1/info/services for a deep services health check.
      * Liveness probe
      */
     async health(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -228,7 +228,7 @@ export class InfoApi extends runtime.BaseAPI {
     }
 
     /**
-     * Readiness probe for container orchestrators. Verifies that critical dependencies (the database) are reachable and returns 200 only when the service can serve traffic; returns 503 otherwise so the pod is pulled from the load balancer. Optional services (auth, MQTT) are reported by /v1/info/services and do not gate readiness.
+     * Readiness probe for container orchestrators. Verifies that critical dependencies (the database) are reachable and returns 200 only when the service can serve traffic; returns 503 otherwise so the pod is pulled from the load balancer. Optional services (auth, MQTT) are reported by /api/v1/info/services and do not gate readiness.
      * Readiness probe
      */
     async readinessRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReadinessResponse>> {
@@ -250,7 +250,7 @@ export class InfoApi extends runtime.BaseAPI {
     }
 
     /**
-     * Readiness probe for container orchestrators. Verifies that critical dependencies (the database) are reachable and returns 200 only when the service can serve traffic; returns 503 otherwise so the pod is pulled from the load balancer. Optional services (auth, MQTT) are reported by /v1/info/services and do not gate readiness.
+     * Readiness probe for container orchestrators. Verifies that critical dependencies (the database) are reachable and returns 200 only when the service can serve traffic; returns 503 otherwise so the pod is pulled from the load balancer. Optional services (auth, MQTT) are reported by /api/v1/info/services and do not gate readiness.
      * Readiness probe
      */
     async readiness(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReadinessResponse> {
