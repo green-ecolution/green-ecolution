@@ -116,7 +116,7 @@ async fn frontend_config_js(
 
 pub fn openapi_doc(base_url: &str) -> utoipa::openapi::OpenApi {
     let (_, mut api) = OpenApiRouter::<Arc<AppState>>::with_openapi(ApiDoc::openapi())
-        .merge(health::routes())
+        .nest("/api", health::routes())
         .nest("/api/v1", v1::public_router().merge(v1::protected_router()))
         .split_for_parts();
 
@@ -131,7 +131,7 @@ pub fn router(
     auth_layer: AuthLayer,
 ) -> Router {
     let (router, mut api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
-        .merge(health::routes())
+        .nest("/api", health::routes())
         .nest("/api/v1", v1::router(auth_layer))
         .split_for_parts();
 

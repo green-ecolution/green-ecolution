@@ -21,8 +21,8 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     summary = "Liveness probe",
     description = "Lightweight liveness probe for container orchestrators. \
         Returns 200 OK while the HTTP server is responsive; performs no \
-        downstream service checks. Use /ready for a readiness probe \
-        that verifies critical dependencies, or /v1/info/services for a deep \
+        downstream service checks. Use /api/ready for a readiness probe \
+        that verifies critical dependencies, or /api/v1/info/services for a deep \
         services health check.",
     responses(
         (status = 200, description = "Server is alive"),
@@ -47,7 +47,7 @@ pub struct ReadinessResponse {
         critical dependencies (the database) are reachable and returns 200 only \
         when the service can serve traffic; returns 503 otherwise so the pod is \
         pulled from the load balancer. Optional services (auth, MQTT) are \
-        reported by /v1/info/services and do not gate readiness.",
+        reported by /api/v1/info/services and do not gate readiness.",
     responses(
         (status = 200, description = "Service is ready to serve traffic", body = ReadinessResponse),
         (status = 503, description = "A critical dependency is unavailable", body = ReadinessResponse),
