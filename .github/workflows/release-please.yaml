@@ -80,7 +80,6 @@ jobs:
           git config user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
           git add backend-rs/Cargo.lock
           git commit -m "chore: sync Cargo.lock after release-please version bump"
-          git push origin "${{ steps.pr-branch.outputs.branch }}"
 
       - name: Setup pnpm
         if: ${{ steps.release.outputs.pr }}
@@ -113,6 +112,10 @@ jobs:
           git config user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
           git add frontend/packages/backend-client/api-docs.json frontend/packages/backend-client/src
           git commit -m "chore: regenerate backend client after release-please version bump"
+
+      - name: Push changes
+        if: ${{ steps.release.outputs.pr }}
+        run: |
           git push origin "${{ steps.pr-branch.outputs.branch }}"
 
       - name: Output release info
