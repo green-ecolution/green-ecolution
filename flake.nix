@@ -125,18 +125,7 @@
       default = backend;
     });
 
-    devShells = forEachSupportedSystem ({pkgs}: let
-      ksops = pkgs.kustomize-sops.overrideAttrs (old: {
-        installPhase = ''
-          runHook preInstall
-          mkdir -p $out
-          dir="$GOPATH/bin"
-          mv "$dir/kustomize-sops" "$dir/ksops" || true
-          [ -e "$dir" ] && cp -r $dir $out
-          runHook postInstall
-        '';
-      });
-    in {
+    devShells = forEachSupportedSystem ({pkgs}: {
       default = pkgs.mkShell {
         name = "dev-shell";
         packages = with pkgs; [
@@ -162,9 +151,6 @@
           lld
           bacon
           wasm-pack
-          # Deploy tooling
-          kustomize
-          ksops
         ];
         shellHook = ''
           echo "Dev shell loaded 🧪"
