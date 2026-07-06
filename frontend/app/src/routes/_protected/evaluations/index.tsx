@@ -1,14 +1,13 @@
 import { evaluationQuery } from '@/api/queries'
+import StatusCardGrid from '@/components/general/StatusCardGrid'
 import { StatusCard } from '@green-ecolution/ui'
-import { Loading } from '@green-ecolution/ui'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
+import { pendingLoading } from '@/lib/router'
 
 export const Route = createFileRoute('/_protected/evaluations/')({
   component: Evaluation,
-  pendingComponent: () => (
-    <Loading className="mt-20 justify-center" label="Auswertungen werden geladen" />
-  ),
+  pendingComponent: pendingLoading('Auswertungen werden geladen'),
   loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(evaluationQuery()),
 })
 
@@ -36,7 +35,7 @@ function Evaluation() {
           <h2 className="font-lato font-bold text-2xl mb-4">
             Erhobene Daten zu Bäumen, Bewässerungsgruppen & Sensoren:
           </h2>
-          <ul className="flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <StatusCardGrid>
             <li>
               <StatusCard
                 label="Anzahl an Bewässerungsgruppen"
@@ -58,14 +57,14 @@ function Evaluation() {
                 description="Es werden auch Sensoren einberechnet, die nicht mit einer Vegetation verknüpft sind.."
               />
             </li>
-          </ul>
+          </StatusCardGrid>
         </section>
 
         <section className="mt-16">
           <h2 className="font-lato font-bold text-2xl mb-4">
             Erhobene Daten zu den Einsatzplänen:
           </h2>
-          <ul className="flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <StatusCardGrid>
             <li>
               <StatusCard
                 label="Anzahl an Einsatzfahrten"
@@ -87,7 +86,7 @@ function Evaluation() {
                 description="Dies beschreibt die Anzahl aller Mitarbeitenden, die zu Einsatzplänen verlinkt wurden. Dopplungen wurden nicht exkludiert."
               />
             </li>
-          </ul>
+          </StatusCardGrid>
         </section>
 
         <EvaluationList

@@ -150,8 +150,21 @@ describe('Query Functions', () => {
       it('returns correct query options for fetching all vehicles', () => {
         const options = vehicleQuery()
 
-        expect(options.queryKey).toContain('vehicle')
+        expect(options.queryKey).toEqual(['vehicles', 'list', {}])
         expect(options.queryFn).toBeDefined()
+      })
+
+      it('does not collide with vehicleIdQuery keys', () => {
+        const listOptions = vehicleQuery({ page: 1 })
+        const detailOptions = vehicleIdQuery('1')
+
+        expect(listOptions.queryKey[0]).not.toBe(detailOptions.queryKey[0])
+      })
+
+      it('includes pagination params in query key', () => {
+        const options = vehicleQuery({ page: 2 })
+
+        expect(options.queryKey).toEqual(['vehicles', 'list', { page: 2 }])
       })
 
       it('calls vehicleApi.listVehicles when queryFn is executed', async () => {

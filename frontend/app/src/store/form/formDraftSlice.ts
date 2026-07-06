@@ -1,4 +1,4 @@
-export type FormType = 'tree' | 'cluster' | 'wateringplan'
+export type FormType = 'tree' | 'cluster' | 'wateringplan' | 'vehicle'
 export type MutationType = 'create' | 'update'
 
 export type FormDraftKey = `${FormType}-${MutationType}`

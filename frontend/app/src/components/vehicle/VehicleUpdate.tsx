@@ -1,4 +1,4 @@
-import BackLink from '../general/links/BackLink'
+import FormPageHeader from '../general/FormPageHeader'
 import DeleteSection from '../treecluster/DeleteSection'
 import type { Vehicle } from '@/api/backendApi'
 import { useInitFormQuery } from '@/hooks/form/useInitForm'
@@ -9,6 +9,7 @@ import { Suspense } from 'react'
 import { Loading } from '@green-ecolution/ui'
 import { VehicleForm } from '@/schema/vehicleSchema'
 import FormForVehicle from '../general/form/FormForVehicle'
+import UnsavedChangesDialog from '../general/form/UnsavedChangesDialog'
 import { useVehicleForm } from '@/hooks/form/useVehicleForm'
 
 interface VehicleUpdateProps {
@@ -32,7 +33,10 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
       description: data.description,
     }),
   )
-  const { mutate, isError, error, form } = useVehicleForm('update', { vehicleId, initForm })
+  const { mutate, isError, error, form, navigationBlocker } = useVehicleForm('update', {
+    vehicleId,
+    initForm,
+  })
   const onSubmit: SubmitHandler<VehicleForm> = (data) => {
     mutate(data)
   }
@@ -45,19 +49,18 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
 
   return (
     <>
-      <article className="2xl:w-4/5">
-        <BackLink
-          label="Zurück zur Fahrzeugübersicht"
-          link={{
+      <FormPageHeader
+        backLink={{
+          label: 'Zurück zur Fahrzeugübersicht',
+          link: {
             to: `/vehicles/$vehicleId`,
             params: { vehicleId: vehicleId?.toString() ?? '' },
-          }}
-        />
-        <h1 className="font-lato font-bold text-3xl mb-4 lg:text-4xl xl:text-5xl">
-          Fahrzeug {loadedData?.numberPlate} bearbeiten
-        </h1>
+          },
+        }}
+        title={<>Fahrzeug {loadedData?.numberPlate} bearbeiten</>}
+      >
         <p className="mb-5">Hier können Sie das Fahrzeug bearbeiten.</p>
-      </article>
+      </FormPageHeader>
 
       <section className="mt-10">
         <FormProvider {...form}>
@@ -79,6 +82,8 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
           redirectUrl={{ to: '/vehicles' }}
         />
       </Suspense>
+
+      <UnsavedChangesDialog blocker={navigationBlocker} />
     </>
   )
 }

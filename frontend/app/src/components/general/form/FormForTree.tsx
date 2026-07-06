@@ -1,18 +1,9 @@
 import { TreeForm } from '@/schema/treeSchema'
-import {
-  FormField,
-  TextareaField,
-  Label,
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-  Button,
-} from '@green-ecolution/ui'
+import { FormField, TextareaField, SelectField, Button } from '@green-ecolution/ui'
 import { Sensor, TreeClusterInList } from '@/api/backendApi'
-import { MapPin, MoveRight } from 'lucide-react'
+import { MapPin } from 'lucide-react'
 import FormError from './FormError'
+import FormSubmitButton from './FormSubmitButton'
 import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-hook-form'
 
 interface FormForTreeProps {
@@ -76,28 +67,22 @@ const FormForTree = (props: FormForTreeProps) => {
             name="treeClusterId"
             control={control}
             render={({ field }) => (
-              <div className="flex flex-col gap-y-2">
-                <Label htmlFor="treeClusterId">Bewässerungsgruppe</Label>
-                <Select
-                  value={field.value ?? '-1'}
-                  onValueChange={(val) => field.onChange(val === '-1' ? null : val)}
-                >
-                  <SelectTrigger id="treeClusterId">
-                    <SelectValue placeholder="Wählen Sie eine Bewässerungsgruppe aus" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[2000]">
-                    <SelectItem value="-1">Keine Bewässerungsgruppe</SelectItem>
-                    {props.treeClusters.map((cluster) => (
-                      <SelectItem key={cluster.id} value={cluster.id.toString()}>
-                        {cluster.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.treeClusterId?.message && (
-                  <p className="text-sm text-destructive">{errors.treeClusterId.message}</p>
-                )}
-              </div>
+              <SelectField
+                id="treeClusterId"
+                label="Bewässerungsgruppe"
+                placeholder="Wählen Sie eine Bewässerungsgruppe aus"
+                contentClassName="z-[2000]"
+                value={field.value ?? '-1'}
+                onValueChange={(val) => field.onChange(val === '-1' ? null : val)}
+                error={errors.treeClusterId?.message}
+                options={[
+                  { value: '-1', label: 'Keine Bewässerungsgruppe' },
+                  ...props.treeClusters.map((cluster) => ({
+                    value: cluster.id.toString(),
+                    label: cluster.name,
+                  })),
+                ]}
+              />
             )}
           />
         )}
@@ -105,28 +90,22 @@ const FormForTree = (props: FormForTreeProps) => {
           name="sensorId"
           control={control}
           render={({ field }) => (
-            <div className="flex flex-col gap-y-2">
-              <Label htmlFor="sensorId">Verknüpfter Sensor</Label>
-              <Select
-                value={field.value ?? '-1'}
-                onValueChange={(val) => field.onChange(val === '-1' ? null : val)}
-              >
-                <SelectTrigger id="sensorId">
-                  <SelectValue placeholder="Wählen Sie einen Sensor aus, sofern vorhanden" />
-                </SelectTrigger>
-                <SelectContent className="z-[2000]">
-                  <SelectItem value="-1">Kein Sensor</SelectItem>
-                  {props.sensors.map((sensor) => (
-                    <SelectItem key={sensor.id} value={sensor.id.toString()}>
-                      Sensor {sensor.id}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.sensorId?.message && (
-                <p className="text-sm text-destructive">{errors.sensorId.message}</p>
-              )}
-            </div>
+            <SelectField
+              id="sensorId"
+              label="Verknüpfter Sensor"
+              placeholder="Wählen Sie einen Sensor aus, sofern vorhanden"
+              contentClassName="z-[2000]"
+              value={field.value ?? '-1'}
+              onValueChange={(val) => field.onChange(val === '-1' ? null : val)}
+              error={errors.sensorId?.message}
+              options={[
+                { value: '-1', label: 'Kein Sensor' },
+                ...props.sensors.map((sensor) => ({
+                  value: sensor.id.toString(),
+                  label: `Sensor ${sensor.id}`,
+                })),
+              ]}
+            />
           )}
         />
         <TextareaField
@@ -166,14 +145,10 @@ const FormForTree = (props: FormForTreeProps) => {
 
       <FormError show={props.displayError} error={props.errorMessage} />
 
-      <Button
-        type="submit"
-        className={props.fullWidth ? 'mt-8 w-full' : 'mt-10 lg:col-span-full lg:w-fit'}
+      <FormSubmitButton
         disabled={!isValid}
-      >
-        Speichern
-        <MoveRight className="icon-arrow-animate" />
-      </Button>
+        className={props.fullWidth ? 'mt-8 w-full' : undefined}
+      />
     </form>
   )
 }

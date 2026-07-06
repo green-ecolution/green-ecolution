@@ -1,5 +1,6 @@
 import { VehicleStatus } from '@green-ecolution/backend-client'
-import { StatusColor } from './useDetailsForWateringPlanStatus'
+import { createEnumLookup } from '@/lib/enumLookup'
+import { StatusColor } from './types'
 
 export const VehicleStatusOptions: {
   value: VehicleStatus
@@ -38,5 +39,4 @@ export const VehicleStatusOptions: {
   },
 ]
 
-export const getVehicleStatusDetails = (status: VehicleStatus) =>
-  VehicleStatusOptions.find((option) => option.value === status) ?? VehicleStatusOptions[0]
+export const getVehicleStatusDetails = createEnumLookup(VehicleStatusOptions)

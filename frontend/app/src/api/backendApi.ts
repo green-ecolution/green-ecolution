@@ -96,3 +96,19 @@ export type { NearestTreeListResponse as NearestTreeList } from '@green-ecolutio
 export type { TreeWithDistanceResponse as TreeWithDistance } from '@green-ecolution/backend-client'
 export type { EvaluationValueResponse as EvaluationValue } from '@green-ecolution/backend-client'
 export type { PaginationResponse as Pagination } from '@green-ecolution/backend-client'
+
+export interface SensorPayloadWatermark {
+  depth: number
+  centibar: number
+  resistance: number
+}
+
+/**
+ * Shape of `SensorData.data` — untyped in the OpenAPI spec, so consumers cast to this.
+ * All fields may be absent depending on the sensor model (watermark vs. volumetric readings).
+ */
+export interface SensorPayload {
+  humidity?: number
+  temperature?: number
+  watermarks?: SensorPayloadWatermark[]
+}

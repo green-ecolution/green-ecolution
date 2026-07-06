@@ -9,11 +9,9 @@ interface MapSlice {
   mapZoom: number
   mapMinZoom: number
   mapMaxZoom: number
-  showSelectModal: boolean
   mapSearchTerm: string
   setMapCenter: (center: [number, number]) => void
   setMapZoom: (zoom: number) => void
-  setShowSelectModal: (show: boolean) => void
   setMapSearchTerm: (term: string) => void
 }
 
@@ -25,7 +23,6 @@ const createMapSlice: StateCreator<Store, Mutators, [], MapSlice> = (set) => ({
   mapZoom: 13,
   mapMinZoom: 13,
   mapMaxZoom: 18,
-  showSelectModal: false,
   mapSearchTerm: '',
   setMapCenter: (center) =>
     set((state) => {
@@ -34,10 +31,6 @@ const createMapSlice: StateCreator<Store, Mutators, [], MapSlice> = (set) => ({
   setMapZoom: (zoom) =>
     set((state) => {
       state.mapZoom = zoom
-    }),
-  setShowSelectModal: (show) =>
-    set((state) => {
-      state.showSelectModal = show
     }),
   setMapSearchTerm: (term) =>
     set((state) => {
@@ -93,10 +86,8 @@ const mapSelector = (s: Store) => ({
   mapZoom: s.mapZoom,
   mapMinZoom: s.mapMinZoom,
   mapMaxZoom: s.mapMaxZoom,
-  showSelectModal: s.showSelectModal,
   setMapCenter: s.setMapCenter,
   setMapZoom: s.setMapZoom,
-  setShowSelectModal: s.setShowSelectModal,
 })
 
 export const useMapStore = () => useStore(useShallow(mapSelector))

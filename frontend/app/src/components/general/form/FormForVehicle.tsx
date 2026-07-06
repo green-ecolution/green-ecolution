@@ -1,17 +1,7 @@
 import { VehicleForm } from '@/schema/vehicleSchema'
 import FormError from './FormError'
-import { MoveRight } from 'lucide-react'
-import {
-  FormField,
-  TextareaField,
-  Label,
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-  Button,
-} from '@green-ecolution/ui'
+import FormSubmitButton from './FormSubmitButton'
+import { FormField, TextareaField, SelectField } from '@green-ecolution/ui'
 import { VehicleTypeOptions } from '@/hooks/details/useDetailsForVehicleType'
 import { DrivingLicenseOptions } from '@/hooks/details/useDetailsForDrivingLicense'
 import { VehicleStatusOptions } from '@/hooks/details/useDetailsForVehicleStatus'
@@ -53,27 +43,16 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         name="type"
         control={control}
         render={({ field }) => (
-          <div className="flex flex-col gap-y-2">
-            <Label htmlFor="type">
-              Fahrzeugtyp
-              <span className="text-destructive ml-1">*</span>
-            </Label>
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger id="type">
-                <SelectValue placeholder="Fahrzeugtyp" />
-              </SelectTrigger>
-              <SelectContent>
-                {VehicleTypeOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.type?.message && (
-              <p className="text-sm text-destructive">{errors.type.message}</p>
-            )}
-          </div>
+          <SelectField
+            id="type"
+            label="Fahrzeugtyp"
+            placeholder="Fahrzeugtyp"
+            required
+            value={field.value}
+            onValueChange={field.onChange}
+            error={errors.type?.message}
+            options={VehicleTypeOptions}
+          />
         )}
       />
       <FormField
@@ -88,54 +67,32 @@ const FormForVehicle = (props: FormForVehicleProps) => {
         name="status"
         control={control}
         render={({ field }) => (
-          <div className="flex flex-col gap-y-2">
-            <Label htmlFor="status">
-              Aktueller Status
-              <span className="text-destructive ml-1">*</span>
-            </Label>
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Aktueller Fahrzeugstatus" />
-              </SelectTrigger>
-              <SelectContent>
-                {VehicleStatusOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.status?.message && (
-              <p className="text-sm text-destructive">{errors.status.message}</p>
-            )}
-          </div>
+          <SelectField
+            id="status"
+            label="Aktueller Status"
+            placeholder="Aktueller Fahrzeugstatus"
+            required
+            value={field.value}
+            onValueChange={field.onChange}
+            error={errors.status?.message}
+            options={VehicleStatusOptions}
+          />
         )}
       />
       <Controller
         name="drivingLicense"
         control={control}
         render={({ field }) => (
-          <div className="flex flex-col gap-y-2">
-            <Label htmlFor="drivingLicense">
-              Führerscheinklasse
-              <span className="text-destructive ml-1">*</span>
-            </Label>
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger id="drivingLicense">
-                <SelectValue placeholder="Wählen Sie eine Führerscheinklasse aus" />
-              </SelectTrigger>
-              <SelectContent>
-                {DrivingLicenseOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.drivingLicense?.message && (
-              <p className="text-sm text-destructive">{errors.drivingLicense.message}</p>
-            )}
-          </div>
+          <SelectField
+            id="drivingLicense"
+            label="Führerscheinklasse"
+            placeholder="Wählen Sie eine Führerscheinklasse aus"
+            required
+            value={field.value}
+            onValueChange={field.onChange}
+            error={errors.drivingLicense?.message}
+            options={DrivingLicenseOptions}
+          />
         )}
       />
       <FormField
@@ -187,10 +144,7 @@ const FormForVehicle = (props: FormForVehicleProps) => {
 
       <FormError show={props.displayError} error={props.errorMessage} />
 
-      <Button type="submit" className="mt-10 lg:col-span-full lg:w-fit" disabled={!isValid}>
-        Speichern
-        <MoveRight className="icon-arrow-animate" />
-      </Button>
+      <FormSubmitButton disabled={!isValid} />
     </form>
   )
 }

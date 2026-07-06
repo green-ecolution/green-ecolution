@@ -23,6 +23,7 @@ import {
   ListWateringPlansRequest,
   MapInfoResponse,
   NearestTreeListResponse,
+  pluginApi,
   regionApi,
   SensorDataResponse,
   SensorModelResponse,
@@ -72,12 +73,17 @@ export const treeClusterIdQuery = (id: string) =>
     enabled: isValidUuid(id),
   })
 
+/** Partial key matching every sensor list page; use for broad invalidation. */
+export const sensorsKey = ['sensors'] as const
+
 export const sensorQuery = (params?: ListSensorsRequest) =>
   queryOptions<ListResponseSensorResponse>({
-    queryKey: ['sensors', params?.page ?? '1'],
+    queryKey: [...sensorsKey, params?.page ?? '1'],
     queryFn: () => sensorApi.listSensors(params),
   })
 
+// Sensor ids are LoRaWAN EUIs (e.g. "eui-a81758fffe0c3b52"), not UUIDs,
+// so these queries only guard against empty ids.
 export const sensorDataQuery = (id: string) =>
   queryOptions<SensorDataResponse[]>({
     queryKey: ['sensor data', id],
@@ -85,6 +91,7 @@ export const sensorDataQuery = (id: string) =>
       sensorApi.listSensorData({
         sensorId: id,
       }),
+    enabled: id !== '',
   })
 
 export const sensorIdQuery = (id: string) =>
@@ -94,6 +101,7 @@ export const sensorIdQuery = (id: string) =>
       sensorApi.getSensor({
         sensorId: id,
       }),
+    enabled: id !== '',
   })
 
 export const sensorModelIdQuery = (id: string) =>
@@ -115,15 +123,6 @@ export const treeIdQuery = (id: string) =>
     queryFn: () => treeApi.getTree({ treeId: id }),
     enabled: isValidUuid(id),
   })
-
-// TODO: The Rust backend changed this endpoint to /trees/{tree_id}/sensors/{sensor_id}
-// which requires both IDs. The Go backend had /tree/sensor/{sensor_id}.
-// This query needs a dedicated "get tree by sensor ID" endpoint in the Rust backend.
-// export const treeSensorIdQuery = (id: string) =>
-//   queryOptions<TreeResponse>({
-//     queryKey: ['tree-sensor', id],
-//     queryFn: () => treeApi.getTreeSensor({ treeId: ???, sensorId: id }),
-//   })
 
 export const regionsQuery = () =>
   queryOptions({
@@ -167,12 +166,11 @@ export const evaluationQuery = () =>
     queryFn: () => evaluationApi.getEvaluation(),
   })
 
-export const vehicleQuery = (params?: ListVehiclesRequest) => {
-  return queryOptions<ListResponseVehicleResponse>({
-    queryKey: ['vehicle', params?.page].filter((e) => e != undefined || e != null),
+export const vehicleQuery = (params?: ListVehiclesRequest) =>
+  queryOptions<ListResponseVehicleResponse>({
+    queryKey: ['vehicles', 'list', params ?? {}],
     queryFn: () => vehicleApi.listVehicles(params),
   })
-}
 
 export const vehicleIdQuery = (id: string) =>
   queryOptions<VehicleResponse>({
@@ -208,6 +206,12 @@ export const userRoleQuery = (role: string) =>
       userApi.listUsersByRole({
         roleId: role,
       }),
+  })
+
+export const pluginsQuery = () =>
+  queryOptions({
+    queryKey: ['plugins'],
+    queryFn: () => pluginApi.listPlugins(),
   })
 
 export const plantingYearsQuery = () =>

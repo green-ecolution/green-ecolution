@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Suspense } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { pluginApi } from '@/api/backendApi'
+import { pluginsQuery } from '@/api/queries'
 import type { PluginResponse } from '@/api/backendApi'
 import { LinkCard, LinkCardTitle, LinkCardDescription, LinkCardFooter } from '@green-ecolution/ui'
 
@@ -31,10 +31,7 @@ function PluginView() {
 }
 
 const PluginList = () => {
-  const { data: pluginList } = useQuery({
-    queryKey: ['pluginList'],
-    queryFn: () => pluginApi.listPlugins(),
-  })
+  const { data: pluginList } = useQuery(pluginsQuery())
 
   return (
     <>

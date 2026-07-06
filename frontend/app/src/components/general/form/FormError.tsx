@@ -5,10 +5,10 @@ interface FormErrorProps {
 
 const FormError = ({ error, show }: FormErrorProps) => {
   return (
-    <div className={`text-red font-semibold text-sm mt-10 ${show ? '' : 'hidden'}`}>
+    <div className={`text-destructive font-semibold text-sm mt-10 ${show ? '' : 'hidden'}`}>
       <p className="mb-2">
-        Es ist leider ein Problem aufgetreten. Bitte probieren Sie es erneut oder wenden Sie sich an
-        einen Systemadministrierenden.
+        Es ist leider ein Problem aufgetreten. Bitte probiere es erneut oder wende dich an einen
+        Systemadministrierenden.
       </p>
       {error && <p>Fehlermeldung: {error}</p>}
     </div>

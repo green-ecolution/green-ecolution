@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Alert,
   AlertContent,
@@ -32,6 +32,7 @@ import {
 } from 'lucide-react'
 import type { Sensor } from '@/api/backendApi'
 import { SECRET_MASK, isSensitiveConfigKey, redactConfig } from './secrets'
+import { useSecretReveal } from '@/hooks/useSecretReveal'
 
 interface SensorLorawanConfigSectionProps {
   sensor: Sensor
@@ -55,13 +56,7 @@ interface ConfigRowProps {
 
 const ConfigRow = ({ configKey, value }: ConfigRowProps) => {
   const sensitive = isSensitiveConfigKey(configKey)
-  const [revealed, setRevealed] = useState(false)
-
-  useEffect(() => {
-    if (!sensitive || !revealed) return
-    const t = setTimeout(() => setRevealed(false), AUTO_HIDE_SECONDS * 1000)
-    return () => clearTimeout(t)
-  }, [sensitive, revealed])
+  const { revealed, toggle } = useSecretReveal(AUTO_HIDE_SECONDS)
 
   const isEmpty = value === null || value === undefined || value === ''
   const stringified = stringifyValue(value)
@@ -88,7 +83,7 @@ const ConfigRow = ({ configKey, value }: ConfigRowProps) => {
           {sensitive && !isEmpty && (
             <button
               type="button"
-              onClick={() => setRevealed((v) => !v)}
+              onClick={toggle}
               aria-label={revealed ? `${configKey} verbergen` : `${configKey} anzeigen`}
               aria-pressed={revealed}
               className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-dark-100 transition shrink-0 cursor-pointer"

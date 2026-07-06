@@ -6,16 +6,12 @@ import { Badge, Button, StatusCard } from '@green-ecolution/ui'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { roundTo } from '@/lib/utils'
 import Tree from '@/components/icons/Tree'
-import type { TreeClusterResponse } from '@/api/backendApi'
+import type { SensorPayload, TreeClusterResponse } from '@/api/backendApi'
 import { latestSensorReading, sortTreesSensorFirst, summarizeTopSpecies } from './clusterPanelUtils'
 
 interface ClusterPanelViewProps {
   treecluster: TreeClusterResponse
   onOpenDashboard: () => void
-}
-
-interface SensorPayload {
-  temperature?: number
 }
 
 const PREVIEW_COUNT = 3

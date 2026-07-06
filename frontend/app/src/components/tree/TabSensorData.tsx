@@ -3,6 +3,7 @@ import { StatusCard } from '@green-ecolution/ui'
 import { getSensorStatusDetails } from '@/hooks/details/useDetailsForSensorStatus'
 import { format } from 'date-fns'
 import GeneralLink from '../general/links/GeneralLink'
+import StatusCardGrid from '../general/StatusCardGrid'
 import ChartSensorData from './ChartSensorData'
 import { SensorStatus } from '@green-ecolution/backend-client'
 import type { Tree } from '@/api/backendApi'
@@ -23,7 +24,7 @@ const TabSensorData: React.FC<TabSensorDataProps> = ({ tree }) => {
 
   return (
     <>
-      <ul className="mb-5 flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 lg:grid-cols-3">
+      <StatusCardGrid className="mb-5">
         <li>
           <StatusCard
             status={sensorStatusDetails.color}
@@ -53,7 +54,7 @@ const TabSensorData: React.FC<TabSensorDataProps> = ({ tree }) => {
             description={`am ${updatedDate}`}
           />
         </li>
-      </ul>
+      </StatusCardGrid>
       <GeneralLink
         label="Zum verknüpften Sensor"
         link={{

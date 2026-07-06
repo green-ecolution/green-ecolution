@@ -10,15 +10,29 @@ export type ScannerStatus =
   | 'unsupported'
   | 'error'
 
+export interface DetectionMeta {
+  format: string
+  boundingBox: DOMRectReadOnly
+  timestamp: number
+}
+
 interface UseQRScannerOptions {
   /** Invoked once a QR code has been successfully decoded */
   onScan?: (value: string) => void
+  /**
+   * Continuous inspection mode (debug tooling): report every detected code with
+   * metadata and keep the camera running instead of stopping on the first hit.
+   * Takes precedence over `onScan`; `scannedData`/`status: 'scanned'` are never set.
+   */
+  onDetect?: (value: string, meta: DetectionMeta) => void
 }
 
 interface UseQRScannerReturn {
   videoRef: React.RefObject<HTMLVideoElement | null>
   status: ScannerStatus
   scannedData: string | null
+  /** Detail text of the last failure, e.g. 'NotAllowedError: Permission denied' */
+  errorMessage: string | null
   startScanning: () => Promise<void>
   stopScanning: () => void
   resetScan: () => void
@@ -33,7 +47,10 @@ const resolveBarcodeDetector = async (): Promise<typeof BarcodeDetectorType> => 
   return mod.BarcodeDetector
 }
 
-const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn => {
+const formatError = (err: unknown): string =>
+  err instanceof Error ? `${err.name}: ${err.message}` : String(err)
+
+const useQRScanner = ({ onScan, onDetect }: UseQRScannerOptions = {}): UseQRScannerReturn => {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const detectorRef = useRef<InstanceType<typeof BarcodeDetectorType> | null>(null)
@@ -41,12 +58,15 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
   const startingRef = useRef(false)
 
   const onScanRef = useRef(onScan)
+  const onDetectRef = useRef(onDetect)
   useEffect(() => {
     onScanRef.current = onScan
-  }, [onScan])
+    onDetectRef.current = onDetect
+  }, [onScan, onDetect])
 
   const [status, setStatus] = useState<ScannerStatus>('idle')
   const [scannedData, setScannedData] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   // Release camera + cancel any pending frame callbacks.
   const releaseStream = useCallback(() => {
@@ -66,6 +86,7 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
     startingRef.current = true
 
     setStatus('requesting')
+    setErrorMessage(null)
     cancelledRef.current = false
 
     // Unsupported browser (no secure context, or very old)
@@ -96,6 +117,7 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
         detectorRef.current = new Detector({ formats: ['qr_code'] })
       } catch (err) {
         console.error('Failed to initialise BarcodeDetector', err)
+        setErrorMessage(formatError(err))
         setStatus('error')
         startingRef.current = false
         return
@@ -117,6 +139,7 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
       videoRef.current.srcObject = stream
     } catch (err) {
       const name = err instanceof DOMException ? err.name : ''
+      setErrorMessage(formatError(err))
       if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
         setStatus('denied')
       } else {
@@ -151,9 +174,18 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
         try {
           const codes = await detector.detect(video)
           if (cancelledRef.current) return
-          if (codes.length > 0 && codes[0].rawValue) {
-            handleSuccess(codes[0].rawValue)
-            return
+          if (codes.length > 0) {
+            const code = codes[0]
+            if (onDetectRef.current) {
+              onDetectRef.current(code.rawValue ?? '', {
+                format: String(code.format),
+                boundingBox: code.boundingBox,
+                timestamp: Date.now(),
+              })
+            } else if (code.rawValue) {
+              handleSuccess(code.rawValue)
+              return
+            }
           }
         } catch (err) {
           // Detection can fail transiently (e.g. mid-frame). Keep scanning.
@@ -200,6 +232,7 @@ const useQRScanner = ({ onScan }: UseQRScannerOptions = {}): UseQRScannerReturn 
     videoRef,
     status,
     scannedData,
+    errorMessage,
     startScanning,
     stopScanning,
     resetScan,

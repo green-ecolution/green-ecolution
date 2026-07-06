@@ -21,6 +21,7 @@ import {
 } from '@green-ecolution/ui'
 import type { Sensor } from '@/api/backendApi'
 import { sensorApi } from '@/api/backendApi'
+import { sensorsKey } from '@/api/queries'
 import { useSensorActions } from './SensorActionsContext'
 
 interface SensorActionsMenuProps {
@@ -39,7 +40,7 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
     mutationFn: () => sensorApi.deleteSensor({ sensorId }),
     onSuccess: async () => {
       toast.success('Sensor wurde gelöscht.')
-      await queryClient.invalidateQueries({ queryKey: ['sensors'] })
+      await queryClient.invalidateQueries({ queryKey: sensorsKey })
       await navigate({ to: '/sensors', search: { page: 1 } })
     },
     onError: () => {

@@ -1,10 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
 import { useVehicleForm } from './useVehicleForm'
 import { Toaster } from '@green-ecolution/ui'
 import { VehicleType, DrivingLicense, VehicleStatus } from '@green-ecolution/backend-client'
+import useStore from '@/store/store'
 
 vi.mock('@/api/backendApi', () => ({
   vehicleApi: {
@@ -13,8 +14,16 @@ vi.mock('@/api/backendApi', () => ({
   },
 }))
 
+const mockUseBlocker = vi.fn().mockReturnValue({
+  proceed: vi.fn(),
+  reset: vi.fn(),
+  status: 'idle',
+})
+
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn().mockResolvedValue(undefined),
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  useBlocker: (...args: unknown[]) => mockUseBlocker(...args),
 }))
 
 import { vehicleApi } from '@/api/backendApi'
@@ -53,6 +62,11 @@ const defaultInitForm = {
 describe('useVehicleForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    useStore.getState().clearAllFormDrafts()
+  })
+
+  afterEach(() => {
+    useStore.getState().clearAllFormDrafts()
   })
 
   it('initializes form with provided default values', () => {
@@ -204,6 +218,43 @@ describe('useVehicleForm', () => {
           }) as unknown,
         }),
       )
+    })
+  })
+
+  describe('draft management', () => {
+    it('clears draft on successful mutation', async () => {
+      const mockResponse = {
+        id: 'vehicle-uuid-1',
+        numberPlate: 'HH-AB-1234',
+      } as unknown as Vehicle
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      const createMock = vi.mocked(vehicleApi.createVehicle)
+      createMock.mockResolvedValueOnce(mockResponse)
+
+      useStore.getState().setFormDraft('vehicle-create', defaultInitForm)
+
+      const { result } = renderHook(() => useVehicleForm('create', { initForm: defaultInitForm }), {
+        wrapper: createWrapper(),
+      })
+
+      expect(useStore.getState().formDrafts['vehicle-create']).toBeDefined()
+
+      act(() => {
+        result.current.mutate({ ...defaultInitForm })
+      })
+
+      await waitFor(() => {
+        expect(useStore.getState().formDrafts['vehicle-create']).toBeUndefined()
+      })
+    })
+
+    it('returns navigationBlocker with correct message', () => {
+      const { result } = renderHook(() => useVehicleForm('create', { initForm: defaultInitForm }), {
+        wrapper: createWrapper(),
+      })
+
+      expect(result.current.navigationBlocker).toBeDefined()
+      expect(result.current.navigationBlocker.message).toContain('Fahrzeug')
     })
   })
 })

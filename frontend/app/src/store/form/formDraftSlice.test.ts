@@ -374,6 +374,8 @@ describe('Type safety for FormDraftKey', () => {
       'cluster-update',
       'wateringplan-create',
       'wateringplan-update',
+      'vehicle-create',
+      'vehicle-update',
     ]
 
     validKeys.forEach((key) => {

@@ -1,10 +1,6 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
+import { crumbRoute } from '@/lib/router'
 
-export const Route = createFileRoute('/_protected/map/tree/new')({
-  component: () => <Outlet />,
-  loader: () => {
-    return {
-      crumb: { title: 'Baum Standort erfassen' },
-    }
-  },
-})
+export const Route = createFileRoute('/_protected/map/tree/new')(
+  crumbRoute('Baum Standort erfassen'),
+)

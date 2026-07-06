@@ -1,5 +1,5 @@
-import { Loading } from '@green-ecolution/ui'
 import WateringPlanUpdate from '@/components/watering-plan/WateringPlanUpdate'
+import { pendingLoading } from '@/lib/router'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
@@ -8,9 +8,7 @@ const wateringPlanFormRoute = getRouteApi('/_protected/watering-plans/_formular/
 
 export const Route = createFileRoute('/_protected/watering-plans/_formular/$wateringPlanId/edit/')({
   component: EditWateringPlan,
-  pendingComponent: () => (
-    <Loading className="mt-20 justify-center" label="Einsatzplan wird geladen …" />
-  ),
+  pendingComponent: pendingLoading('Einsatzplan wird geladen …'),
 })
 
 function EditWateringPlan() {

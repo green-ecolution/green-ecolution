@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import BackLink from '../general/links/BackLink'
+import FormPageHeader from '../general/FormPageHeader'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { WateringPlan, WateringPlanUpdate } from '@/api/backendApi'
 import { wateringPlanIdQuery, wateringPlanQuery } from '@/api/queries'
@@ -10,18 +10,7 @@ import {
   getWateringPlanStatusDetails,
   WateringPlanStatusOptions,
 } from '@/hooks/details/useDetailsForWateringPlanStatus'
-import {
-  Badge,
-  TextareaField,
-  FormField,
-  Label,
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-  Button,
-} from '@green-ecolution/ui'
+import { Badge, TextareaField, FormField, SelectField, Button } from '@green-ecolution/ui'
 import {
   WateringPlanFinishedForm,
   wateringPlanFinishedSchema,
@@ -45,7 +34,8 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const showToast = createToast()
-  const [status, setStatus] = useState(() => getWateringPlanStatusDetails(loadedData.status))
+  const statusDetails = getWateringPlanStatusDetails(loadedData.status)
+  const [selectedStatus, setSelectedStatus] = useState(statusDetails)
 
   const { mutate, isError, error } = useMutation({
     mutationFn: (wateringPlan: WateringPlanUpdate) =>
@@ -79,7 +69,6 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   })
 
   const date = format(new Date(loadedData.date), 'dd.MM.yyyy')
-  const statusDetails = getWateringPlanStatusDetails(loadedData.status)
 
   const formByStatus = useCallback(
     (status: WateringPlanStatus) => {
@@ -136,17 +125,16 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
 
   return (
     <>
-      <article className="2xl:w-4/5">
-        <BackLink
-          label="Zurück zm Einsatzplan"
-          link={{
+      <FormPageHeader
+        backLink={{
+          label: 'Zurück zm Einsatzplan',
+          link: {
             to: `/watering-plans/$wateringPlanId`,
             params: { wateringPlanId },
-          }}
-        />
-        <h1 className="font-lato font-bold text-3xl mb-4 lg:text-4xl xl:text-5xl">
-          Status vom Einsatzplan {date} bearbeiten
-        </h1>
+          },
+        }}
+        title={<>Status vom Einsatzplan {date} bearbeiten</>}
+      >
         <p className="flex gap-x-3 mb-5">
           <strong>Aktueller Status:</strong>
           <Badge variant={statusDetails.color} size="lg">
@@ -160,35 +148,23 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
           zudem angegeben werden, mit wie viel Wasser die zugehörigen Bewässerungsgruppen bewässert
           wurden.
         </p>
-      </article>
+      </FormPageHeader>
 
       <section className="mt-10">
         <div className="flex flex-col gap-y-6 md:w-1/2">
-          <div className="flex flex-col gap-y-2">
-            <Label htmlFor="status">
-              Status des Einsatzes
-              <span className="text-destructive ml-1">*</span>
-            </Label>
-            <Select
-              value={status.value}
-              onValueChange={(value) => {
-                setStatus(getWateringPlanStatusDetails(value as WateringPlanStatus))
-              }}
-            >
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Wählen Sie einen Status aus" />
-              </SelectTrigger>
-              <SelectContent>
-                {WateringPlanStatusOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <SelectField
+            id="status"
+            label="Status des Einsatzes"
+            placeholder="Wählen Sie einen Status aus"
+            required
+            value={selectedStatus.value}
+            onValueChange={(value) => {
+              setSelectedStatus(getWateringPlanStatusDetails(value as WateringPlanStatus))
+            }}
+            options={WateringPlanStatusOptions}
+          />
         </div>
-        {formByStatus(status.value)}
+        {formByStatus(selectedStatus.value)}
         <FormError show={isError} error={error?.message} />
       </section>
     </>

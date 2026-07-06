@@ -1,25 +1,6 @@
-import { wateringPlanIdQuery } from '@/api/queries'
-import EntityNotFound from '@/components/layout/EntityNotFound'
-import { createFileRoute, Outlet } from '@tanstack/react-router'
-import { format } from 'date-fns'
+import { wateringPlanEntityRoute } from '@/routes/_protected/watering-plans/$wateringPlanId/route'
+import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_protected/watering-plans/_formular/$wateringPlanId')({
-  component: () => <Outlet />,
-  loader: async ({ context: { queryClient }, params: { wateringPlanId } }) => {
-    const wateringPlan = await queryClient.fetchQuery(wateringPlanIdQuery(wateringPlanId))
-    const title = wateringPlan?.date
-      ? `Einsatz: ${format(new Date(wateringPlan?.date), 'dd.MM.yyyy')}`
-      : `Einsatz: ${wateringPlan.id}`
-    return {
-      wateringPlan,
-      crumb: { title },
-    }
-  },
-  errorComponent: () => (
-    <EntityNotFound
-      entityName="Einsatzplan"
-      backTo="/watering-plans"
-      backLabel="Zur Einsatzliste"
-    />
-  ),
+  ...wateringPlanEntityRoute,
 })

@@ -1,10 +1,4 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
+import { crumbRoute } from '@/lib/router'
 
-export const Route = createFileRoute('/_protected/sensors/new')({
-  component: Outlet,
-  loader: () => ({
-    crumb: {
-      title: 'Sensor aktivieren',
-    },
-  }),
-})
+export const Route = createFileRoute('/_protected/sensors/new')(crumbRoute('Sensor aktivieren'))

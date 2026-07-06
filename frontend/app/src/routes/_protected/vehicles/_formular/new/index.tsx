@@ -1,5 +1,6 @@
 import { VehicleType, DrivingLicense, VehicleStatus } from '@green-ecolution/backend-client'
 import FormForVehicle from '@/components/general/form/FormForVehicle'
+import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import BackLink from '@/components/general/links/BackLink'
 import { VehicleForm } from '@/schema/vehicleSchema'
 import { createFileRoute } from '@tanstack/react-router'
@@ -23,7 +24,9 @@ const defaultForm: DefaultValues<VehicleForm> = {
 }
 
 function NewVehicle() {
-  const { mutate, isError, error, form } = useVehicleForm('create', { initForm: defaultForm })
+  const { mutate, isError, error, form, navigationBlocker } = useVehicleForm('create', {
+    initForm: defaultForm,
+  })
   const onSubmit = (data: VehicleForm) => {
     mutate({ ...data })
   }
@@ -53,6 +56,8 @@ function NewVehicle() {
           />
         </FormProvider>
       </section>
+
+      <UnsavedChangesDialog blocker={navigationBlocker} />
     </div>
   )
 }

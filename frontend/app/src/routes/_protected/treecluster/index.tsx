@@ -4,8 +4,9 @@ import ButtonLink from '@/components/general/links/ButtonLink'
 import { Plus } from 'lucide-react'
 import { Loading } from '@green-ecolution/ui'
 import FilterProvider from '@/context/FilterContext'
-import TreeClusterList from '@/components/treecluster/TreeClusterList'
-import ClusterCardGrid from '@/components/treecluster/ClusterCardGrid'
+import EntityList from '@/components/general/EntityList'
+import TreeclusterCard from '@/components/general/cards/TreeclusterCard'
+import ClusterCard from '@/components/treecluster/ClusterCard'
 import Pagination from '@/components/general/Pagination'
 import Dialog from '@/components/general/filter/Dialog'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
@@ -18,12 +19,13 @@ import { z } from 'zod'
 import { treeClusterQuery, clusterStatisticsQuery, regionsQuery } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
 import { filterSearchSchema } from '@/lib/filterSearchSchema'
+import { pendingLoading, prefetch } from '@/lib/router'
 import { SoilCondition } from '@/api/backendApi'
 
 const treeclusterFilterSchema = filterSearchSchema
   .pick({ wateringStatuses: true, regions: true })
   .extend({
-    page: z.number().catch(1),
+    page: z.number().int().min(1).catch(1),
     q: z.string().optional().catch(undefined),
     sort: z.enum(['name', 'moisture', 'trees']).optional().catch(undefined),
     order: z.enum(['asc', 'desc']).optional().catch(undefined),
@@ -42,7 +44,11 @@ function Treecluster() {
     soil,
     view = 'cards',
   } = Route.useSearch()
-  const { data: clustersRes, isPlaceholderData } = useQuery({
+  const {
+    data: clustersRes,
+    isPlaceholderData,
+    error,
+  } = useQuery({
     ...treeClusterQuery({
       page,
       perPage: 12,
@@ -56,6 +62,7 @@ function Treecluster() {
     placeholderData: keepPreviousData,
   })
   const { data: stats } = useSuspenseQuery(clusterStatisticsQuery())
+  if (error) throw error
 
   return (
     <div className="container mt-6">
@@ -112,10 +119,21 @@ function Treecluster() {
                   <p>Anzahl d. Bäume</p>
                 </ListCardHeader>
 
-                <TreeClusterList data={clustersRes.data} />
+                <EntityList
+                  items={clustersRes.data}
+                  getKey={(cluster) => cluster.id}
+                  emptyMessage="Es wurden leider keine Bewässerungsgruppen gefunden."
+                  renderItem={(cluster) => <TreeclusterCard treecluster={cluster} />}
+                />
               </>
             ) : (
-              <ClusterCardGrid data={clustersRes.data} />
+              <EntityList
+                layout="grid"
+                items={clustersRes.data}
+                getKey={(cluster) => cluster.id}
+                emptyMessage="Es wurden leider keine Bewässerungsgruppen gefunden."
+                renderItem={(cluster) => <ClusterCard treecluster={cluster} />}
+              />
             )}
             {clustersRes.pagination && clustersRes.pagination?.totalPages > 1 && (
               <Pagination pagination={clustersRes.pagination} />
@@ -136,7 +154,7 @@ const TreeclusterWithProvider = () => (
 export const Route = createFileRoute('/_protected/treecluster/')({
   component: TreeclusterWithProvider,
   validateSearch: treeclusterFilterSchema,
-  pendingComponent: () => <Loading className="mt-20 justify-center" label="Daten werden geladen" />,
+  pendingComponent: pendingLoading('Daten werden geladen'),
   loaderDeps: ({ search }) => ({
     page: search.page,
     wateringStatuses: search.wateringStatuses,
@@ -150,27 +168,21 @@ export const Route = createFileRoute('/_protected/treecluster/')({
     context: { queryClient },
     deps: { page, wateringStatuses, regions, q, sort = 'name', order = 'asc', soil },
   }) => {
-    queryClient
-      .prefetchQuery(
-        treeClusterQuery({
-          page,
-          perPage: 12,
-          wateringStatus: wateringStatuses,
-          region: regions,
-          query: q,
-          sort,
-          order,
-          soilCondition: soil as SoilCondition[] | undefined,
-        }),
-      )
-      .catch((error) => console.error('Prefetching "treeClusterQuery" failed:', error))
-    queryClient
-      .prefetchQuery(clusterStatisticsQuery())
-      .catch((error) => console.error('Prefetching "clusterStatisticsQuery" failed:', error))
-    queryClient
-      .prefetchQuery(regionsQuery())
-      .catch((error) => console.error('Prefetching "regionsQuery" failed:', error))
+    prefetch(
+      queryClient,
+      treeClusterQuery({
+        page,
+        perPage: 12,
+        wateringStatus: wateringStatuses,
+        region: regions,
+        query: q,
+        sort,
+        order,
+        soilCondition: soil as SoilCondition[] | undefined,
+      }),
+      'treeClusterQuery',
+    )
+    prefetch(queryClient, clusterStatisticsQuery(), 'clusterStatisticsQuery')
+    prefetch(queryClient, regionsQuery(), 'regionsQuery')
   },
 })
-
-export default TreeclusterWithProvider

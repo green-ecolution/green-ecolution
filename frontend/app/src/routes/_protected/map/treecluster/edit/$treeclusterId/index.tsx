@@ -2,24 +2,15 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useState } from 'react'
 import { FormProvider, useWatch, type DefaultValues, type SubmitHandler } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  Button,
-} from '@green-ecolution/ui'
-import { MoveRight, Trash2, X } from 'lucide-react'
+import { Button } from '@green-ecolution/ui'
+import { Trash2 } from 'lucide-react'
 import type { TreeResponse } from '@green-ecolution/backend-client'
 import { clusterApi } from '@/api/backendApi'
 import { treeClusterIdQuery } from '@/api/queries'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
-import EntityNotFound from '@/components/layout/EntityNotFound'
+import { entityNotFound } from '@/lib/router'
 import FormForTreecluster from '@/components/general/form/FormForTreecluster'
+import DeleteConfirmDialog from '@/components/general/DeleteConfirmDialog'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import { useTreeClusterForm } from '@/hooks/form/useTreeClusterForm'
 import createToast from '@/hooks/createToast'
@@ -33,13 +24,11 @@ export const Route = createFileRoute('/_protected/map/treecluster/edit/$treeclus
   component: EditClusterOnMap,
   loader: ({ context: { queryClient }, params: { treeclusterId } }) =>
     queryClient.prefetchQuery(treeClusterIdQuery(treeclusterId)),
-  errorComponent: () => (
-    <EntityNotFound
-      entityName="Bewässerungsgruppe"
-      backTo="/treecluster"
-      backLabel="Zur Gruppenliste"
-    />
-  ),
+  errorComponent: entityNotFound({
+    entityName: 'Bewässerungsgruppe',
+    backTo: '/treecluster',
+    backLabel: 'Zur Gruppenliste',
+  }),
 })
 
 function EditClusterOnMap() {
@@ -141,34 +130,20 @@ function EditClusterOnMap() {
           type="button"
           variant="ghost"
           onClick={() => setConfirmDelete(true)}
-          className="mt-3 shrink-0 self-start text-red hover:text-red"
+          className="mt-3 shrink-0 self-start text-destructive hover:text-destructive"
         >
           <Trash2 className="size-4" />
           Gruppe löschen
         </Button>
       </MapPanel>
 
-      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Bewässerungsgruppe löschen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Möchtest du die Bewässerungsgruppe wirklich löschen? Die zugehörigen Bäume bleiben
-              erhalten.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>
-              Abbrechen
-              <X />
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>
-              Löschen
-              <MoveRight className="icon-arrow-animate" />
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title="Bewässerungsgruppe löschen?"
+        description="Möchtest du die Bewässerungsgruppe wirklich löschen? Die zugehörigen Bäume bleiben erhalten."
+        onConfirm={handleDelete}
+      />
 
       <UnsavedChangesDialog blocker={navigationBlocker} />
     </>

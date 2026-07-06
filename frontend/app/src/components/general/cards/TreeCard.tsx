@@ -45,7 +45,7 @@ const TreeCard: React.FC<TreeCardProps> = ({ tree, showTreeClusterInfo = true })
             {tree.treeClusterId ? (
               <span>{clusterRes?.name}</span>
             ) : (
-              <span className="text-red">Nicht zugeordnet</span>
+              <span className="text-destructive">Nicht zugeordnet</span>
             )}
           </ListCardDescription>
         )}

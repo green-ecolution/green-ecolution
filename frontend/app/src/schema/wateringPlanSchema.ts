@@ -1,14 +1,9 @@
+import type { WateringPlanForm as WateringPlanFormBase } from '@green-ecolution/domain-wasm'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import { z } from 'zod'
 
-export interface WateringPlanForm {
-  date: Date
+export type WateringPlanForm = Omit<WateringPlanFormBase, 'status'> & {
   status: WateringPlanStatus
-  transporterId: string
-  trailerId?: string
-  driverIds: string[]
-  clusterIds: string[]
-  description: string
 }
 
 // State-machine action schemas — these validate transition inputs (not draft
