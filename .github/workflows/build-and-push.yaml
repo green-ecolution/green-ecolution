@@ -255,7 +255,7 @@ jobs:
             gh api -X DELETE "repos/${{ github.repository }}/issues/comments/${COMMENT_ID}"
           done
 
-          gh pr comment ${PR_NUMBER} --body "${MARKER}
+          gh pr comment ${PR_NUMBER} --repo "${{ github.repository }}" --body "${MARKER}
           ## 🚀 Stage Images Built
 
           Docker images for this release PR have been built and pushed to \`${{ env.REGISTRY }}\`.
