@@ -15,5 +15,5 @@ runs:
     - name: Cache cargo build
       uses: Swatinem/rust-cache@v2
       with:
-        workspaces: backend-rs
+        workspaces: backend
         cache-on-failure: "true"

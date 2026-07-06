@@ -1,7 +1,7 @@
 services:
   backend:
     build:
-      context: ./backend-rs/
+      context: ./backend/
       args:
         - APP_VERSION=${APP_VERSION:-dev}
         - APP_REVISION=${APP_GIT_COMMIT:-unknown}
@@ -90,7 +90,7 @@ services:
 
   migrations:
     build:
-      context: ./backend-rs/
+      context: ./backend/
       args:
         - APP_VERSION=${APP_VERSION:-dev}
         - APP_REVISION=${APP_GIT_COMMIT:-unknown}

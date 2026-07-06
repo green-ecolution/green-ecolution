@@ -1,7 +1,7 @@
 set dotenv-load
 set shell := ["bash", "-euc"]
 
-backend_dir      := "backend-rs"
+backend_dir      := "backend"
 frontend_dir     := "frontend"
 frontend_dist    := frontend_dir / "app/dist"
 binary_name      := "green-ecolution"

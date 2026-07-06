@@ -58,8 +58,8 @@
     },
     {
       "type": "generic",
-      "path": "backend-rs/Cargo.toml",
-      "glob": "backend-rs/Cargo.toml"
+      "path": "backend/Cargo.toml",
+      "glob": "backend/Cargo.toml"
     }
   ],
   "packages": {

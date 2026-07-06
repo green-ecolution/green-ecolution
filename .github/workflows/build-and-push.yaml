@@ -166,8 +166,8 @@ jobs:
       - name: Build and push backend
         uses: docker/build-push-action@v7
         with:
-          context: ./backend-rs
-          file: ./backend-rs/Dockerfile
+          context: ./backend
+          file: ./backend/Dockerfile
           platforms: linux/amd64
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${{ needs.determine-environment.outputs.image-tag }}
@@ -276,12 +276,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     needs:
-      [
-        check-release-pr,
-        determine-environment,
-        build-backend,
-        build-frontend,
-      ]
+      [check-release-pr, determine-environment, build-backend, build-frontend]
     if: needs.check-release-pr.outputs.should-build == 'true' && always()
     steps:
       - name: Log build information

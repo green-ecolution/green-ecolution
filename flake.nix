@@ -101,10 +101,10 @@
         inherit meta;
         pname = "green-ecolution";
         version = "0.3.0"; # x-release-please-version
-        src = lib.cleanSource ./backend-rs;
+        src = lib.cleanSource ./backend;
 
         cargoLock = {
-          lockFile = ./backend-rs/Cargo.lock;
+          lockFile = ./backend/Cargo.lock;
         };
 
         nativeBuildInputs = with pkgs; [clang lld];

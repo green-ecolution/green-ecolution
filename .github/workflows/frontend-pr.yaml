@@ -23,10 +23,10 @@ jobs:
           filters: |
             frontend:
               - 'frontend/**'
-              - 'backend-rs/crates/domain/**'
-              - 'backend-rs/crates/domain-wasm/**'
-              - 'backend-rs/Cargo.toml'
-              - 'backend-rs/Cargo.lock'
+              - 'backend/crates/domain/**'
+              - 'backend/crates/domain-wasm/**'
+              - 'backend/Cargo.toml'
+              - 'backend/Cargo.lock'
               - 'justfile'
               - '.github/workflows/frontend-pr.yaml'
               - '.github/actions/setup-frontend/**'

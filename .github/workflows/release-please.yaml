@@ -33,7 +33,7 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      # release-please bumps backend-rs/Cargo.toml's workspace version on the
+      # release-please bumps backend/Cargo.toml's workspace version on the
       # release PR but does not touch Cargo.lock. Sync it here so the release
       # PR stays buildable with --locked.
       - name: Get bot user id
@@ -70,15 +70,15 @@ jobs:
         run: |
           set -euo pipefail
           cargo update \
-            --manifest-path backend-rs/Cargo.toml \
+            --manifest-path backend/Cargo.toml \
             -p server -p domain -p domain-wasm
-          if git diff --quiet backend-rs/Cargo.lock; then
+          if git diff --quiet backend/Cargo.lock; then
             echo "Cargo.lock already in sync"
             exit 0
           fi
           git config user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
           git config user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
-          git add backend-rs/Cargo.lock
+          git add backend/Cargo.lock
           git commit -m "chore: sync Cargo.lock after release-please version bump"
 
       - name: Setup pnpm

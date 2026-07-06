@@ -30,8 +30,8 @@ runs:
         path: |
           ~/.cargo/registry
           ~/.cargo/git
-          backend-rs/target
-        key: ${{ runner.os }}-cargo-domain-wasm-${{ hashFiles('backend-rs/Cargo.lock') }}
+          backend/target
+        key: ${{ runner.os }}-cargo-domain-wasm-${{ hashFiles('backend/Cargo.lock') }}
         restore-keys: |
           ${{ runner.os }}-cargo-domain-wasm-
     - name: Install dependencies

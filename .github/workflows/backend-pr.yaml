@@ -26,7 +26,7 @@ jobs:
         with:
           filters: |
             backend:
-              - 'backend-rs/**'
+              - 'backend/**'
               - 'justfile'
               - '.github/workflows/backend-pr.yaml'
               - '.github/actions/setup-backend/**'
@@ -43,18 +43,18 @@ jobs:
         uses: ./.github/actions/setup-backend
 
       - name: Check domain crate stays portable
-        working-directory: ./backend-rs
+        working-directory: ./backend
         run: cargo build -p domain --no-default-features --locked
 
       - name: Build workspace
-        working-directory: ./backend-rs
+        working-directory: ./backend
         run: cargo build --workspace --locked
 
       - name: Verify Docker daemon (testcontainers prerequisite)
         run: docker version
 
       - name: Test workspace
-        working-directory: ./backend-rs
+        working-directory: ./backend
         run: cargo test --workspace --locked
 
   lint:
@@ -67,11 +67,11 @@ jobs:
       - uses: ./.github/actions/setup-backend
 
       - name: cargo fmt
-        working-directory: ./backend-rs
+        working-directory: ./backend
         run: cargo fmt --all -- --check
 
       - name: cargo clippy
-        working-directory: ./backend-rs
+        working-directory: ./backend
         run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 
   check_sqlx_prepared:
@@ -115,7 +115,7 @@ jobs:
         run: just migrate-up
 
       - name: Check that queries are fresh
-        working-directory: ./backend-rs
+        working-directory: ./backend
         run: cargo sqlx prepare --workspace --check -- --all-targets
 
   test_migrations:
@@ -165,10 +165,10 @@ jobs:
       - name: Test backend Dockerfile
         uses: docker/build-push-action@v7
         with:
-          context: ./backend-rs
-          file: ./backend-rs/Dockerfile
+          context: ./backend
+          file: ./backend/Dockerfile
           push: false
-          tags: backend-rs:test
+          tags: backend:test
           cache-from: type=gha,scope=backend-dockerfile
           cache-to: type=gha,mode=max,scope=backend-dockerfile
 

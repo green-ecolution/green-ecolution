@@ -115,7 +115,7 @@ just build       # Build frontend + backend
 ## Architecture
 
 ```
-backend-rs/  → Rust (axum, sqlx, tokio) - REST API, MQTT subscriber, auth
+backend/  → Rust (axum, sqlx, tokio) - REST API, MQTT subscriber, auth
 frontend/    → React (Vite, TanStack Router/Query, Zustand, Tailwind)
 ```
 
@@ -170,7 +170,7 @@ cd frontend/app && pnpm build && pnpm preview
 
 ## Configuration
 
-All settings via environment variables (prefix `APP_`, separator `__`) or YAML files in `backend-rs/config/` (`base.yaml`, `local.yaml`, `production.yaml`). The active profile is selected by `APP_ENVIRONMENT`.
+All settings via environment variables (prefix `APP_`, separator `__`) or YAML files in `backend/config/` (`base.yaml`, `local.yaml`, `production.yaml`). The active profile is selected by `APP_ENVIRONMENT`.
 
 Key areas: `application.*`, `database.*`, `auth.*`, `mqtt.*`, `log.*`
 

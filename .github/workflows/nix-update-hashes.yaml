@@ -3,7 +3,7 @@ name: "Update Nix hashes"
 on:
   pull_request:
     paths:
-      - "backend-rs/Cargo.lock"
+      - "backend/Cargo.lock"
       - "frontend/pnpm-lock.yaml"
   workflow_dispatch:
 

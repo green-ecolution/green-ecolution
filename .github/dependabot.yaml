@@ -75,7 +75,7 @@ updates:
           - "patch"
 
   - package-ecosystem: "cargo"
-    directory: "/backend-rs"
+    directory: "/backend"
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
@@ -102,7 +102,7 @@ updates:
           - "*"
 
   - package-ecosystem: "docker"
-    directory: "/backend-rs"
+    directory: "/backend"
     schedule:
       interval: weekly
     open-pull-requests-limit: 5

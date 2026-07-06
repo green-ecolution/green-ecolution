@@ -3061,7 +3061,7 @@
           },
           "repository": {
             "type": "string",
-            "example": "https://github.com/green-ecolution/backend-rs/"
+            "example": "https://github.com/green-ecolution/green-ecolution/"
           }
         }
       },
@@ -6003,7 +6003,7 @@
           },
           "releaseUrl": {
             "type": "string",
-            "example": "https://github.com/green-ecolution/backend-rs/releases/"
+            "example": "https://github.com/green-ecolution/green-ecolution/releases/"
           },
           "updateAvailable": {
             "type": "boolean",

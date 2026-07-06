@@ -143,12 +143,14 @@ BREAKING CHANGE: Tree response now includes nested cluster object
 ## Pull Request Process
 
 1. **Update your branch:**
+
    ```bash
    git fetch upstream
    git rebase upstream/main
    ```
 
 2. **Push your branch:**
+
    ```bash
    git push -u origin feature/your-feature-name
    ```
@@ -208,10 +210,10 @@ Use the [Feature Request template](https://github.com/green-ecolution/green-ecol
 
 - Format with `cargo fmt --all` and lint with `cargo clippy --workspace --all-targets --all-features -- -D warnings` before pushing.
 - Build with `--locked` and rely on `SQLX_OFFLINE=true` for CI; refresh the cache with `just generate-sqlx` whenever a `query!` / `query_as!` invocation changes.
-- Domain code (`backend-rs/crates/domain/`) must not depend on `sqlx`, `axum`, `tokio`, `reqwest`, `rumqttc`, or `tracing-subscriber`. `cargo build -p domain --no-default-features --locked` must stay green so the crate remains portable to WASM / mobile targets.
+- Domain code (`backend/crates/domain/`) must not depend on `sqlx`, `axum`, `tokio`, `reqwest`, `rumqttc`, or `tracing-subscriber`. `cargo build -p domain --no-default-features --locked` must stay green so the crate remains portable to WASM / mobile targets.
 - Aggregate invariants live in private fields with intent-named methods that return `Vec<DomainEvent>`. HTTP handlers return `*View` types, never raw aggregates.
 - Errors are typed: repository traits return `RepositoryError`; the HTTP layer maps to `ApiError`. Avoid `unwrap()` / `expect()` / `panic!` outside `reconstitute` paths and tests.
-- Write tests next to the code (`#[cfg(test)] mod tests`) for unit tests; integration tests live in `backend-rs/crates/server/test/api/`.
+- Write tests next to the code (`#[cfg(test)] mod tests`) for unit tests; integration tests live in `backend/crates/server/test/api/`.
 
 ### TypeScript/React (Frontend)
 
@@ -230,7 +232,7 @@ Use the [Feature Request template](https://github.com/green-ecolution/green-ecol
 ## Project Structure
 
 ```
-backend-rs/                  Cargo workspace (Rust API)
+backend/                  Cargo workspace (Rust API)
   Cargo.toml                 workspace manifest (resolver = "3")
   crates/
     domain/                  portable domain layer (aggregates, value objects,

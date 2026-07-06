@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "backend-rs/**"
+      - "backend/**"
       - ".github/workflows/coverage.yaml"
 
 permissions:
@@ -41,7 +41,7 @@ jobs:
       - name: Cache cargo build
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: backend-rs
+          workspaces: backend
           cache-on-failure: "true"
 
       - name: Install cargo-llvm-cov
@@ -50,13 +50,13 @@ jobs:
           tool: cargo-llvm-cov
 
       - name: Run coverage
-        working-directory: ./backend-rs
+        working-directory: ./backend
         run: cargo llvm-cov --workspace --locked --summary-only --json > coverage.json
 
       - name: Generate coverage badge SVG
         run: |
           set -euo pipefail
-          pct=$(jq -r '.data[0].totals.lines.percent' backend-rs/coverage.json)
+          pct=$(jq -r '.data[0].totals.lines.percent' backend/coverage.json)
           pct_int=$(printf "%.0f" "$pct")
           if   [ "$pct_int" -ge 80 ]; then color="brightgreen"
           elif [ "$pct_int" -ge 60 ]; then color="yellow"
