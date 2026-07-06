@@ -1,5 +1,6 @@
 import { defineConfig, type Plugin } from 'vite'
-import react from '@vitejs/plugin-react'
+import react, { reactCompilerPreset } from '@vitejs/plugin-react'
+import babel from '@rolldown/plugin-babel'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 import tanstackRouter from '@tanstack/router-plugin/vite'
@@ -41,11 +42,8 @@ export default defineConfig({
       quoteStyle: 'single',
     }),
     tailwindcss(),
-    react({
-      babel: {
-        plugins: ['babel-plugin-react-compiler'],
-      },
-    }),
+    react(),
+    babel({ presets: [reactCompilerPreset()] }),
     ...(!useTraefik ? [basicSsl()] : []),
     ...(useTraefik ? [publicDevUrlBanner()] : []),
     wasm(),
@@ -110,9 +108,11 @@ export default defineConfig({
     target: 'esnext',
     rollupOptions: {
       output: {
-        manualChunks: {
-          'domain-wasm': ['@green-ecolution/domain-wasm'],
-          maplibre: ['maplibre-gl'],
+        advancedChunks: {
+          groups: [
+            { name: 'domain-wasm', test: /[\\/]domain-wasm[\\/]/ },
+            { name: 'maplibre', test: /maplibre-gl/ },
+          ],
         },
       },
     },
