@@ -46,12 +46,15 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@babel/core": "^8.0.1",
     "@eslint/js": "^10.0.1",
+    "@rolldown/plugin-babel": "^0.2.3",
     "@tailwindcss/vite": "^4.3.1",
     "@tanstack/router-plugin": "1.168.19",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
+    "@types/babel__core": "^7.20.5",
     "@types/geojson": "^7946.0.16",
     "@types/node": "^26.1.0",
     "@types/react": "^19.2.15",
