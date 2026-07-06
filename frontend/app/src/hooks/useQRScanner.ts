@@ -2,13 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { BarcodeDetector as BarcodeDetectorType } from 'barcode-detector/pure'
 
 export type ScannerStatus =
-  | 'idle'
-  | 'requesting'
-  | 'scanning'
-  | 'scanned'
-  | 'denied'
-  | 'unsupported'
-  | 'error'
+  'idle' | 'requesting' | 'scanning' | 'scanned' | 'denied' | 'unsupported' | 'error'
 
 export interface DetectionMeta {
   format: string
