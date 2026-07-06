@@ -1,5 +1,0 @@
-# https://kubernetes.io/docs/concepts/configuration/configmap/
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: backend-config
