@@ -9,7 +9,6 @@ const cluster = {
   address: 'Schiffbrücke 12',
   description: '',
   soilCondition: 'sandig',
-  moistureLevel: 0.14,
   wateringStatus: 'bad',
   lastWatered: null,
   region: { name: 'Flensburg' },
@@ -43,9 +42,10 @@ describe('ClusterPanelView', () => {
     expect(items[0]).toHaveTextContent('Sensor-Baum')
   })
 
-  it('shows the moisture level scaled to a percentage', () => {
+  it('shows the watering status with label and description', () => {
     render(<ClusterPanelView treecluster={cluster} onOpenDashboard={vi.fn()} />)
-    expect(screen.getByText('14 %')).toBeInTheDocument()
+    expect(screen.getByText('Bewässerungszustand')).toBeInTheDocument()
+    expect(screen.getByText('Sehr trocken')).toBeInTheDocument()
   })
 
   it('shows the soil temperature from the latest sensor reading', () => {

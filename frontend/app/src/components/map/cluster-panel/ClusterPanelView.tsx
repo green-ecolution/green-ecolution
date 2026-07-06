@@ -1,4 +1,3 @@
-import { ComponentProps } from 'react'
 import { MoveRight, RadioTower } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
@@ -16,13 +15,6 @@ interface ClusterPanelViewProps {
 
 const PREVIEW_COUNT = 3
 
-const FILLED_BADGE: Record<string, ComponentProps<typeof Badge>['variant']> = {
-  'outline-red': 'error',
-  'outline-yellow': 'warning',
-  'outline-green-light': 'success',
-  'outline-green-dark': 'success',
-}
-
 const ClusterPanelView = ({ treecluster, onOpenDashboard }: ClusterPanelViewProps) => {
   const status = getWateringStatusDetails(treecluster.wateringStatus)
   const species = summarizeTopSpecies(treecluster.trees)
@@ -30,7 +22,6 @@ const ClusterPanelView = ({ treecluster, onOpenDashboard }: ClusterPanelViewProp
   const previewTrees = sortedTrees.slice(0, PREVIEW_COUNT)
   const remaining = sortedTrees.length - previewTrees.length
   const treeCount = treecluster.trees.length
-  const moisturePercent = Math.round(treecluster.moistureLevel * 100)
   const reading = latestSensorReading(treecluster.trees)
   const temperatureValue = (reading?.data as SensorPayload | undefined)?.temperature
   const temperature =
@@ -44,20 +35,10 @@ const ClusterPanelView = ({ treecluster, onOpenDashboard }: ClusterPanelViewProp
 
   return (
     <div className="flex flex-col gap-y-5">
-      <div className="space-y-2">
-        <Badge variant={FILLED_BADGE[status.color] ?? 'muted'} size="lg" className="gap-1.5">
-          <span
-            className="size-1.5 rounded-full"
-            style={{ backgroundColor: status.colorHex }}
-            aria-hidden="true"
-          />
-          {status.label}
-        </Badge>
-        <p className="text-sm text-dark-600">
-          {treecluster.address} · {treeCount} {treeCount === 1 ? 'Baum' : 'Bäume'}
-          {species && ` · ${species}`}
-        </p>
-      </div>
+      <p className="text-sm text-dark-600">
+        {treecluster.address} · {treeCount} {treeCount === 1 ? 'Baum' : 'Bäume'}
+        {species && ` · ${species}`}
+      </p>
 
       <Button onClick={onOpenDashboard} className="group w-full lg:order-last">
         Zum Dashboard
@@ -67,10 +48,10 @@ const ClusterPanelView = ({ treecluster, onOpenDashboard }: ClusterPanelViewProp
       <div className="grid grid-cols-2 gap-4">
         <StatusCard
           status={status.color}
-          label="Bodenfeuchte"
-          value={`${moisturePercent} %`}
-          progress={moisturePercent}
-          isLarge
+          indicator="dot"
+          label="Bewässerungszustand"
+          value={status.label}
+          description={status.description}
         />
         <StatusCard label="Bodentemperatur" value={temperature} isLarge />
         <StatusCard label="Letzte Messung" value={lastMeasurement} />
