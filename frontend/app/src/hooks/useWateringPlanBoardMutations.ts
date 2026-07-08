@@ -24,6 +24,8 @@ export const toUpdateRequest = (
   treeClusterIds: plan.treeclusters.map((cluster) => cluster.id),
   userIds: plan.userIds,
   cancellationNote: plan.cancellationNote,
+  provider: plan.provider,
+  additionalInformation: plan.additionalInformation,
   ...overrides,
 })
 
@@ -35,9 +37,13 @@ export const useWateringPlanBoardMutations = () => {
   const showToast = createToast()
 
   const invalidateBoard = () => {
+    // cancelQueries is scoped to board to avoid aborting unrelated watering-plan queries; invalidate is broad for consistency.
     queryClient
       .invalidateQueries({ queryKey: ['watering-plans'] })
       .catch((error) => console.error('Invalidate watering-plans failed:', error))
+    queryClient
+      .invalidateQueries({ queryKey: ['watering-plan'] })
+      .catch((error) => console.error('Invalidate watering-plan failed:', error))
   }
 
   const update = (plan: WateringPlanInList, overrides: Partial<WateringPlanUpdateRequest>) =>

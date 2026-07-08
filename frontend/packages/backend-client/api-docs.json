@@ -2323,6 +2323,7 @@
           {
             "name": "page",
             "in": "query",
+            "description": "Page number to retrieve (1-based).",
             "required": false,
             "schema": {
               "type": "integer",
@@ -2335,6 +2336,7 @@
           {
             "name": "per_page",
             "in": "query",
+            "description": "Number of items per page.",
             "required": false,
             "schema": {
               "type": "integer",

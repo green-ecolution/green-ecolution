@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import FormPageHeader from '../general/FormPageHeader'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { WateringPlan, WateringPlanUpdate } from '@/api/backendApi'
-import { wateringPlanIdQuery, wateringPlanQuery } from '@/api/queries'
+import { wateringPlanIdQuery } from '@/api/queries'
 import { format } from 'date-fns'
 import { MoveRight } from 'lucide-react'
 import FormError from '../general/form/FormError'
@@ -49,8 +49,8 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
         .invalidateQueries(wateringPlanIdQuery(String(data.id)))
         .catch((error) => console.error('Invalidate "waterinPlanIdQuery" failed', error))
       queryClient
-        .invalidateQueries(wateringPlanQuery())
-        .catch((error) => console.error('Invalidate "wateringPlanQuery" failed:', error))
+        .invalidateQueries({ queryKey: ['watering-plans'] })
+        .catch((error) => console.error('Invalidate "watering-plans" failed:', error))
 
       navigate({
         to: `/watering-plans/$wateringPlanId`,

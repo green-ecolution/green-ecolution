@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
-import { wateringPlanIdQuery, wateringPlanQuery } from '@/api/queries'
+import { wateringPlanIdQuery } from '@/api/queries'
 import type { WateringPlan, WateringPlanCreate, WateringPlanUpdate } from '@/api/backendApi'
 import { wateringPlanApi } from '@/api/backendApi'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
@@ -28,8 +28,8 @@ const wateringPlanConfig: EntityFormConfig<
       .invalidateQueries(wateringPlanIdQuery(String(data.id)))
       .catch((error) => console.error('Invalidate "wateringPlanIdQuery" failed', error))
     queryClient
-      .invalidateQueries(wateringPlanQuery())
-      .catch((error) => console.error('Invalidate "wateringPlanQuery" failed:', error))
+      .invalidateQueries({ queryKey: ['watering-plans'] })
+      .catch((error) => console.error('Invalidate "watering-plans" failed:', error))
   },
 
   successRoute: (id) => ({
