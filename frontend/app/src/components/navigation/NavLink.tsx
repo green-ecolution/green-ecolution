@@ -10,7 +10,14 @@ interface NavLinkProps extends LinkProps {
 }
 
 const NavLink = (props: NavLinkProps) => {
-  const { label, icon, isExternalLink = false, collapsed = false, closeSidebar, ...linkProps } = props
+  const {
+    label,
+    icon,
+    isExternalLink = false,
+    collapsed = false,
+    closeSidebar,
+    ...linkProps
+  } = props
 
   return (
     <li className="relative">
