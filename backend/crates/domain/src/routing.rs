@@ -42,10 +42,15 @@ pub struct OptimizedRoute {
 
 #[async_trait::async_trait]
 pub trait RouteOptimizer: Send + Sync {
+    /// Optimizes a watering route for the given vehicle, optional trailer, and stops.
+    ///
+    /// A depot override sets both the vehicle start and the return depot;
+    /// `None` uses the adapter's configured default.
     async fn optimize(
         &self,
         transporter: &Vehicle,
         trailer: Option<&Vehicle>,
         stops: &[RouteStop],
+        depot: Option<Coordinate>,
     ) -> Result<OptimizedRoute, RoutingError>;
 }

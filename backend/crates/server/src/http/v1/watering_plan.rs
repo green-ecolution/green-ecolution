@@ -295,6 +295,7 @@ pub async fn update_watering_plan(
             } else {
                 Some(entity.description.clone())
             },
+            start_point_name: None,
             cluster_ids: entity
                 .tree_cluster_ids
                 .iter()

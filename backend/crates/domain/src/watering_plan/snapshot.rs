@@ -14,6 +14,7 @@ pub struct WateringPlanSnapshot {
     pub id: Uuid,
     pub date: DateTime<Utc>,
     pub description: Option<String>,
+    pub start_point_name: Option<String>,
     pub status: WateringPlanStatus,
     pub distance: Option<f64>,
     pub total_water_required: Option<f64>,

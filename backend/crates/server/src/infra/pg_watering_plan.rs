@@ -36,6 +36,7 @@ struct WateringPlanViewRow {
     updated_at: NaiveDateTime,
     date: NaiveDate,
     description: String,
+    start_point_name: Option<String>,
     status: WateringPlanStatus,
     distance: Option<f64>,
     total_water_required: Option<f64>,
@@ -63,6 +64,7 @@ impl From<WateringPlanViewRow> for WateringPlanView {
             updated_at: row.updated_at.and_utc(),
             date: row.date.and_time(NaiveTime::MIN).and_utc(),
             description: Some(row.description).filter(|s| !s.is_empty()),
+            start_point_name: row.start_point_name,
             status: row.status,
             distance: row.distance,
             total_water_required: row.total_water_required,
@@ -87,6 +89,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             id: RawId,
             date: chrono::NaiveDate,
             description: String,
+            start_point_name: Option<String>,
             status: WateringPlanStatus,
             distance: Option<f64>,
             total_water_required: Option<f64>,
@@ -104,7 +107,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
 
         let row = sqlx::query_as!(
             Row,
-            r#"SELECT wp.id, wp.date, wp.description,
+            r#"SELECT wp.id, wp.date, wp.description, wp.start_point_name,
                       wp.status AS "status: WateringPlanStatus",
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.gpx_url, wp.refill_count, wp.duration,
@@ -130,6 +133,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             id: row.id,
             date: row.date.and_time(NaiveTime::MIN).and_utc(),
             description: Some(row.description).filter(|s| !s.is_empty()),
+            start_point_name: row.start_point_name,
             status: row.status,
             distance: row.distance,
             total_water_required: row.total_water_required,
@@ -150,7 +154,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
     async fn view_by_id(&self, id: Id<WateringPlan>) -> Result<WateringPlanView, RepositoryError> {
         let row = sqlx::query_as!(
             WateringPlanViewRow,
-            r#"SELECT wp.id, wp.updated_at, wp.date, wp.description,
+            r#"SELECT wp.id, wp.updated_at, wp.date, wp.description, wp.start_point_name,
                       wp.status AS "status: WateringPlanStatus",
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.gpx_url, wp.refill_count, wp.duration,
@@ -192,7 +196,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
 
         let rows = sqlx::query_as!(
             WateringPlanViewRow,
-            r#"SELECT wp.id, wp.updated_at, wp.date, wp.description,
+            r#"SELECT wp.id, wp.updated_at, wp.date, wp.description, wp.start_point_name,
                       wp.status AS "status: WateringPlanStatus",
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.gpx_url, wp.refill_count, wp.duration,
@@ -301,7 +305,8 @@ async fn persist_plan(
             gpx_url = $10,
             provider = $11,
             additional_informations = $12,
-            route_geometry = $13
+            route_geometry = $13,
+            start_point_name = $14
         WHERE id = $1"#,
         plan.id.value(),
         plan.date.date_naive(),
@@ -316,6 +321,7 @@ async fn persist_plan(
         plan.provenance().provider().map(|p| p.as_str()),
         plan.provenance().additional_info(),
         geometry_to_json(plan.route_geometry()) as Option<Value>,
+        plan.start_point_name.as_deref(),
     )
     .execute(&mut **tx)
     .await?;
@@ -400,13 +406,14 @@ impl WateringPlanWriter for PgWateringPlanRepository {
 
         let plan_id = Id::<WateringPlan>::new_v7();
         sqlx::query!(
-            r#"INSERT INTO watering_plans (id, date, description, status, provider, additional_informations)
-            VALUES ($1, $2, $3, 'planned', $4, $5)"#,
+            r#"INSERT INTO watering_plans (id, date, description, status, provider, additional_informations, start_point_name)
+            VALUES ($1, $2, $3, 'planned', $4, $5, $6)"#,
             plan_id.value(),
             draft.date.date_naive(),
             draft.description.as_deref().unwrap_or(""),
             draft.provenance.provider().map(|p| p.as_str()),
             draft.provenance.additional_info(),
+            draft.start_point_name.as_deref(),
         )
         .execute(&mut *tx)
         .await?;

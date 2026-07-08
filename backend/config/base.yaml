@@ -40,8 +40,8 @@ sensor:
 routing:
   enabled: false
   streamlet_url: "http://localhost:2510"
-  start_point: { lat: 54.768731253913806, lon: 9.434764259345679 }
-  end_point: { lat: 54.768731253913806, lon: 9.434764259345679 }
+  depots:
+    - { name: "Betriebshof Schleswiger Straße", lat: 54.768731253913806, lon: 9.434764259345679 }
   watering_points:
     - { lat: 54.76860193975328, lon: 9.433882457296733 }
     - { lat: 54.80483727816614, lon: 9.4475320291977 }

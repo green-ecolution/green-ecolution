@@ -397,6 +397,7 @@ impl TryFrom<WateringPlanCreateRequest> for WateringPlanDraft {
         Ok(Self {
             date,
             description,
+            start_point_name: None,
             cluster_ids: req.tree_cluster_ids.into_iter().map(Id::new).collect(),
             transporter_id: Some(Id::new(req.transporter_id)),
             trailer_id: req.trailer_id.map(Id::new),

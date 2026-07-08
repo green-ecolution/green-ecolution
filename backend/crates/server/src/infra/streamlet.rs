@@ -23,8 +23,7 @@ const REFILL_DURATION_SECS: f64 = 0.0;
 pub struct StreamletRouteOptimizer {
     client: reqwest::Client,
     solve_url: String,
-    start: LocationDto,
-    depot: LocationDto,
+    default_depot: LocationDto,
     refills: Vec<LocationDto>,
 }
 
@@ -151,11 +150,24 @@ impl StreamletRouteOptimizer {
             .timeout(Duration::from_secs(30))
             .build()
             .expect("reqwest client must build");
+
+        let default_depot = if let Some(first) = settings.depots.first() {
+            LocationDto {
+                lat: first.lat,
+                lon: first.lon,
+            }
+        } else {
+            tracing::warn!("routing.depots is empty; falling back to hardcoded Flensburg depot");
+            LocationDto {
+                lat: 54.768731253913806,
+                lon: 9.434764259345679,
+            }
+        };
+
         Self {
             client,
             solve_url: format!("{}/v1/solve", settings.streamlet_url.trim_end_matches('/')),
-            start: settings.start_point.into(),
-            depot: settings.end_point.into(),
+            default_depot,
             refills: settings
                 .watering_points
                 .iter()
@@ -170,13 +182,20 @@ impl StreamletRouteOptimizer {
         transporter: &Vehicle,
         trailer: Option<&Vehicle>,
         stops: &[RouteStop],
+        depot: Option<Coordinate>,
     ) -> SolveRequestDto {
+        let effective_depot = depot
+            .map(|c| LocationDto {
+                lat: c.latitude(),
+                lon: c.longitude(),
+            })
+            .unwrap_or(self.default_depot);
         let capacity = transporter.water_capacity.liters()
             + trailer.map(|t| t.water_capacity.liters()).unwrap_or(0.0);
         let dim = transporter.dimension;
         let vehicle = VehicleDto {
             id: 1,
-            start: self.start,
+            start: effective_depot,
             tank: TankDto {
                 capacity,
                 level: capacity,
@@ -222,7 +241,7 @@ impl StreamletRouteOptimizer {
                 vehicles: vec![vehicle],
                 depots: vec![DepotDto {
                     id: 1,
-                    location: self.depot,
+                    location: effective_depot,
                 }],
                 customers,
                 refill_stations,
@@ -262,8 +281,9 @@ impl RouteOptimizer for StreamletRouteOptimizer {
         transporter: &Vehicle,
         trailer: Option<&Vehicle>,
         stops: &[RouteStop],
+        depot: Option<Coordinate>,
     ) -> Result<OptimizedRoute, RoutingError> {
-        let request = self.build_request(transporter, trailer, stops);
+        let request = self.build_request(transporter, trailer, stops, depot);
         let response = self
             .client
             .post(&self.solve_url)
@@ -417,7 +437,7 @@ mod tests {
         let trailer = vehicle(VehicleType::Trailer, 1000.0);
         let stops = stops();
         let route = optimizer(&server.uri())
-            .optimize(&transporter, Some(&trailer), &stops)
+            .optimize(&transporter, Some(&trailer), &stops, None)
             .await
             .unwrap();
 
@@ -449,8 +469,80 @@ mod tests {
             body["problem"]["refill_stations"].as_array().unwrap().len(),
             2
         );
-        // depot = end_point, polyline geometry requested
+        // None depot → both vehicle start and depot use the configured default
+        let default_lat = 54.768731253913806;
+        let default_lon = 9.434764259345679;
+        assert!(
+            (body["problem"]["vehicles"][0]["start"]["lat"]
+                .as_f64()
+                .unwrap()
+                - default_lat)
+                .abs()
+                < 1e-9
+        );
+        assert!(
+            (body["problem"]["depots"][0]["location"]["lat"]
+                .as_f64()
+                .unwrap()
+                - default_lat)
+                .abs()
+                < 1e-9
+        );
+        assert!(
+            (body["problem"]["vehicles"][0]["start"]["lon"]
+                .as_f64()
+                .unwrap()
+                - default_lon)
+                .abs()
+                < 1e-9
+        );
+        assert!(
+            (body["problem"]["depots"][0]["location"]["lon"]
+                .as_f64()
+                .unwrap()
+                - default_lon)
+                .abs()
+                < 1e-9
+        );
+        // polyline geometry requested
         assert_eq!(body["options"]["geometry"], "polyline");
+    }
+
+    #[tokio::test]
+    async fn optimize_uses_depot_override_for_start_and_depot() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/v1/solve"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(ok_body(&encoded_line())))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let transporter = vehicle(VehicleType::Transporter, 2000.0);
+        let override_coord = Coordinate::new(54.9, 9.5).unwrap();
+        optimizer(&server.uri())
+            .optimize(&transporter, None, &stops(), Some(override_coord))
+            .await
+            .unwrap();
+
+        let requests = server.received_requests().await.unwrap();
+        let body: serde_json::Value = requests[0].body_json().unwrap();
+        assert!(
+            (body["problem"]["vehicles"][0]["start"]["lat"]
+                .as_f64()
+                .unwrap()
+                - 54.9)
+                .abs()
+                < 1e-9
+        );
+        assert!(
+            (body["problem"]["depots"][0]["location"]["lat"]
+                .as_f64()
+                .unwrap()
+                - 54.9)
+                .abs()
+                < 1e-9
+        );
     }
 
     #[tokio::test]
@@ -467,7 +559,7 @@ mod tests {
         let transporter = vehicle(VehicleType::Transporter, 2000.0);
         let stops = stops();
         let route = optimizer(&server.uri())
-            .optimize(&transporter, None, &stops)
+            .optimize(&transporter, None, &stops, None)
             .await
             .unwrap();
         assert_eq!(route.unserved, vec![stops[1].cluster_id]);
@@ -489,7 +581,7 @@ mod tests {
                 .await;
             let transporter = vehicle(VehicleType::Transporter, 2000.0);
             let err = optimizer(&server.uri())
-                .optimize(&transporter, None, &stops())
+                .optimize(&transporter, None, &stops(), None)
                 .await
                 .unwrap_err();
             match err {
@@ -507,7 +599,7 @@ mod tests {
         let transporter = vehicle(VehicleType::Transporter, 2000.0);
         // port 1 is never listening
         let err = optimizer("http://127.0.0.1:1")
-            .optimize(&transporter, None, &stops())
+            .optimize(&transporter, None, &stops(), None)
             .await
             .unwrap_err();
         assert!(matches!(err, RoutingError::Unavailable(_)));
@@ -526,7 +618,7 @@ mod tests {
 
         let transporter = vehicle(VehicleType::Transporter, 2000.0);
         let err = optimizer(&server.uri())
-            .optimize(&transporter, None, &stops())
+            .optimize(&transporter, None, &stops(), None)
             .await
             .unwrap_err();
         assert!(matches!(err, RoutingError::Failed(_)));

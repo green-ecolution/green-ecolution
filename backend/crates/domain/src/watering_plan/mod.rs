@@ -75,6 +75,7 @@ pub struct WateringPlan {
     pub id: Id<WateringPlan>,
     pub date: DateTime<Utc>,
     pub description: Option<String>,
+    pub start_point_name: Option<String>,
     pub distance: Option<Distance>,
     pub total_water_required: Option<f64>,
     pub gpx_url: Option<Url>,
@@ -95,6 +96,7 @@ pub struct WateringPlan {
 pub struct WateringPlanDraft {
     pub date: DateTime<Utc>,
     pub description: Option<String>,
+    pub start_point_name: Option<String>,
     pub cluster_ids: Vec<Id<TreeCluster>>,
     pub transporter_id: Option<Id<Vehicle>>,
     pub trailer_id: Option<Id<Vehicle>>,
@@ -112,6 +114,7 @@ pub struct WateringPlanSearchQuery {
 pub struct WateringPlanUpdate {
     pub date: DateTime<Utc>,
     pub description: Option<String>,
+    pub start_point_name: Option<String>,
     pub cluster_ids: Vec<Id<TreeCluster>>,
     pub transporter_id: Option<Id<Vehicle>>,
     pub trailer_id: Option<Id<Vehicle>>,
@@ -125,6 +128,7 @@ impl WateringPlan {
             id: Id::new(snap.id),
             date: snap.date,
             description: snap.description,
+            start_point_name: snap.start_point_name,
             distance: snap.distance.and_then(|m| Distance::new(m).ok()),
             total_water_required: snap.total_water_required,
             gpx_url: snap.gpx_url,
@@ -185,6 +189,7 @@ impl WateringPlan {
         self.ensure_planned()?;
         self.date = update.date;
         self.description = update.description;
+        self.start_point_name = update.start_point_name;
         self.cluster_ids = update.cluster_ids;
         self.transporter_id = update.transporter_id;
         self.trailer_id = update.trailer_id;
@@ -315,6 +320,7 @@ mod tests {
             id: Id::new_v7(),
             date: Utc.with_ymd_and_hms(2026, 6, 1, 8, 0, 0).unwrap(),
             description: None,
+            start_point_name: None,
             distance: None,
             total_water_required: None,
             gpx_url: None,
@@ -522,6 +528,7 @@ mod tests {
         let result = p.replace_details(WateringPlanUpdate {
             date: p.date,
             description: None,
+            start_point_name: None,
             cluster_ids: vec![],
             transporter_id: None,
             trailer_id: None,
@@ -559,6 +566,25 @@ mod tests {
     }
 
     #[test]
+    fn replace_details_sets_start_point_name() {
+        let (mut p, [c1, c2]) = fixed_plan();
+        p.replace_details(WateringPlanUpdate {
+            date: p.date,
+            description: None,
+            start_point_name: Some("Betriebshof Schleswiger Straße".to_string()),
+            cluster_ids: vec![c1, c2],
+            transporter_id: p.transporter_id(),
+            trailer_id: None,
+            provenance: Provenance::default(),
+        })
+        .unwrap();
+        assert_eq!(
+            p.start_point_name.as_deref(),
+            Some("Betriebshof Schleswiger Straße")
+        );
+    }
+
+    #[test]
     fn replace_details_only_when_planned() {
         let (mut p, _) = fixed_plan();
         let date = p.date;
@@ -566,6 +592,7 @@ mod tests {
         let result = p.replace_details(WateringPlanUpdate {
             date,
             description: Some("new desc".to_string()),
+            start_point_name: None,
             cluster_ids: vec![Id::new_v7()],
             transporter_id: Some(Id::new_v7()),
             trailer_id: None,

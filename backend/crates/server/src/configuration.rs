@@ -154,16 +154,22 @@ pub struct GeoPoint {
     pub lon: f64,
 }
 
+#[derive(Debug, Clone, serde::Deserialize)]
+pub struct NamedGeoPoint {
+    pub name: String,
+    pub lat: f64,
+    pub lon: f64,
+}
+
 #[derive(serde::Deserialize, Clone)]
 pub struct RoutingSettings {
     #[serde(default)]
     pub enabled: bool,
     #[serde(default = "default_streamlet_url")]
     pub streamlet_url: String,
-    #[serde(default = "default_depot_point")]
-    pub start_point: GeoPoint,
-    #[serde(default = "default_depot_point")]
-    pub end_point: GeoPoint,
+    // First entry is the default depot (start and return point).
+    #[serde(default = "default_depots")]
+    pub depots: Vec<NamedGeoPoint>,
     #[serde(default = "default_watering_points")]
     pub watering_points: Vec<GeoPoint>,
     #[serde(default = "default_tree_demand_liters")]
@@ -175,8 +181,7 @@ impl Default for RoutingSettings {
         Self {
             enabled: false,
             streamlet_url: default_streamlet_url(),
-            start_point: default_depot_point(),
-            end_point: default_depot_point(),
+            depots: default_depots(),
             watering_points: default_watering_points(),
             tree_demand_liters: default_tree_demand_liters(),
         }
@@ -187,11 +192,12 @@ fn default_streamlet_url() -> String {
     "http://localhost:2510".to_string()
 }
 
-fn default_depot_point() -> GeoPoint {
-    GeoPoint {
+fn default_depots() -> Vec<NamedGeoPoint> {
+    vec![NamedGeoPoint {
+        name: "Betriebshof Schleswiger Straße".into(),
         lat: 54.768731253913806,
         lon: 9.434764259345679,
-    }
+    }]
 }
 
 fn default_watering_points() -> Vec<GeoPoint> {
@@ -507,6 +513,8 @@ mod tests {
         assert_eq!(settings.streamlet_url, "http://localhost:2510");
         assert_eq!(settings.watering_points.len(), 2);
         assert_eq!(settings.tree_demand_liters, 80.0);
-        assert!((settings.start_point.lat - 54.768731253913806).abs() < 1e-9);
+        assert_eq!(settings.depots.len(), 1);
+        assert_eq!(settings.depots[0].name, "Betriebshof Schleswiger Straße");
+        assert!((settings.depots[0].lat - 54.768731253913806).abs() < 1e-9);
     }
 }
