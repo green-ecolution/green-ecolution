@@ -275,6 +275,7 @@ pub async fn spawn_app_with_routing(streamlet_url: &str) -> TestApp {
             name: "Depot Nord".to_string(),
             lat: 54.81,
             lon: 9.45,
+            watering_point: false,
         });
     spawn_with_settings(settings).await
 }

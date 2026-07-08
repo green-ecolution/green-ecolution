@@ -41,10 +41,14 @@ routing:
   enabled: false
   streamlet_url: "http://localhost:2510"
   depots:
-    - { name: "Betriebshof Schleswiger Straße", lat: 54.768731253913806, lon: 9.434764259345679 }
-  watering_points:
-    - { lat: 54.76860193975328, lon: 9.433882457296733 }
-    - { lat: 54.80483727816614, lon: 9.4475320291977 }
+    - name: "Betriebshof Schleswiger Straße"
+      lat: 54.76879146396569
+      lon: 9.434803531218018
+      watering_point: true
+    - name: "Klärwerk Kielseng"
+      lat: 54.80518123149477
+      lon: 9.447145106541388
+      watering_point: true
   tree_demand_liters: 80.0
 plugins:
   enabled: false

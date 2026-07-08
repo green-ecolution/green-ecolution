@@ -148,17 +148,13 @@ fn default_keep_alive_secs() -> u16 {
     30
 }
 
-#[derive(Debug, Clone, Copy, serde::Deserialize)]
-pub struct GeoPoint {
-    pub lat: f64,
-    pub lon: f64,
-}
-
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct NamedGeoPoint {
     pub name: String,
     pub lat: f64,
     pub lon: f64,
+    #[serde(default)]
+    pub watering_point: bool,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -170,8 +166,6 @@ pub struct RoutingSettings {
     // First entry is the default depot (start and return point).
     #[serde(default = "default_depots")]
     pub depots: Vec<NamedGeoPoint>,
-    #[serde(default = "default_watering_points")]
-    pub watering_points: Vec<GeoPoint>,
     #[serde(default = "default_tree_demand_liters")]
     pub tree_demand_liters: f64,
 }
@@ -182,7 +176,6 @@ impl Default for RoutingSettings {
             enabled: false,
             streamlet_url: default_streamlet_url(),
             depots: default_depots(),
-            watering_points: default_watering_points(),
             tree_demand_liters: default_tree_demand_liters(),
         }
     }
@@ -193,22 +186,18 @@ fn default_streamlet_url() -> String {
 }
 
 pub(crate) fn default_depots() -> Vec<NamedGeoPoint> {
-    vec![NamedGeoPoint {
-        name: "Betriebshof Schleswiger Straße".into(),
-        lat: 54.768731253913806,
-        lon: 9.434764259345679,
-    }]
-}
-
-fn default_watering_points() -> Vec<GeoPoint> {
     vec![
-        GeoPoint {
-            lat: 54.76860193975328,
-            lon: 9.433882457296733,
+        NamedGeoPoint {
+            name: "Betriebshof Schleswiger Straße".into(),
+            lat: 54.76879146396569,
+            lon: 9.434803531218018,
+            watering_point: true,
         },
-        GeoPoint {
-            lat: 54.80483727816614,
-            lon: 9.4475320291977,
+        NamedGeoPoint {
+            name: "Klärwerk Kielseng".into(),
+            lat: 54.80518123149477,
+            lon: 9.447145106541388,
+            watering_point: true,
         },
     ]
 }
@@ -511,10 +500,12 @@ mod tests {
         let settings = RoutingSettings::default();
         assert!(!settings.enabled);
         assert_eq!(settings.streamlet_url, "http://localhost:2510");
-        assert_eq!(settings.watering_points.len(), 2);
         assert_eq!(settings.tree_demand_liters, 80.0);
-        assert_eq!(settings.depots.len(), 1);
+        assert_eq!(settings.depots.len(), 2);
         assert_eq!(settings.depots[0].name, "Betriebshof Schleswiger Straße");
-        assert!((settings.depots[0].lat - 54.768731253913806).abs() < 1e-9);
+        assert!((settings.depots[0].lat - 54.76879146396569).abs() < 1e-9);
+        assert!(settings.depots[0].watering_point);
+        assert_eq!(settings.depots[1].name, "Klärwerk Kielseng");
+        assert!(settings.depots[1].watering_point);
     }
 }

@@ -12,7 +12,7 @@ use domain::{
     vehicle::Vehicle,
 };
 
-use crate::configuration::{GeoPoint, RoutingSettings};
+use crate::configuration::RoutingSettings;
 
 // Parity with the retired Go/Vroom setup: full-day shift, zero service and
 // refill durations keep the solver time-unconstrained.
@@ -31,15 +31,6 @@ pub struct StreamletRouteOptimizer {
 struct LocationDto {
     lat: f64,
     lon: f64,
-}
-
-impl From<GeoPoint> for LocationDto {
-    fn from(p: GeoPoint) -> Self {
-        Self {
-            lat: p.lat,
-            lon: p.lon,
-        }
-    }
 }
 
 #[derive(Serialize)]
@@ -151,33 +142,37 @@ impl StreamletRouteOptimizer {
             .build()
             .expect("reqwest client must build");
 
-        let default_depot = if let Some(first) = settings.depots.first() {
-            LocationDto {
-                lat: first.lat,
-                lon: first.lon,
-            }
-        } else {
+        let fallback;
+        let effective_depots: &[_] = if settings.depots.is_empty() {
             tracing::warn!("routing.depots is empty; falling back to hardcoded Flensburg depot");
-            let fallback = crate::configuration::default_depots();
-            let first = fallback
-                .first()
-                .expect("default_depots always has one entry");
-            LocationDto {
-                lat: first.lat,
-                lon: first.lon,
-            }
+            fallback = crate::configuration::default_depots();
+            &fallback
+        } else {
+            &settings.depots
         };
+
+        let first = effective_depots
+            .first()
+            .expect("effective_depots is non-empty");
+        let default_depot = LocationDto {
+            lat: first.lat,
+            lon: first.lon,
+        };
+
+        let refills = effective_depots
+            .iter()
+            .filter(|d| d.watering_point)
+            .map(|d| LocationDto {
+                lat: d.lat,
+                lon: d.lon,
+            })
+            .collect();
 
         Self {
             client,
             solve_url: format!("{}/v1/solve", settings.streamlet_url.trim_end_matches('/')),
             default_depot,
-            refills: settings
-                .watering_points
-                .iter()
-                .copied()
-                .map(Into::into)
-                .collect(),
+            refills,
         }
     }
 
@@ -468,14 +463,14 @@ mod tests {
         assert_eq!(body["problem"]["customers"][0]["id"], 1);
         assert_eq!(body["problem"]["customers"][0]["demand"], 160.0);
         assert_eq!(body["problem"]["customers"][1]["demand"], 240.0);
-        // both configured refill stations present
+        // both depots are flagged watering_point=true → 2 refill stations
         assert_eq!(
             body["problem"]["refill_stations"].as_array().unwrap().len(),
             2
         );
-        // None depot → both vehicle start and depot use the configured default
-        let default_lat = 54.768731253913806;
-        let default_lon = 9.434764259345679;
+        // None depot → both vehicle start and depot use the configured default (first depot)
+        let default_lat = 54.76879146396569;
+        let default_lon = 9.434803531218018;
         assert!(
             (body["problem"]["vehicles"][0]["start"]["lat"]
                 .as_f64()
@@ -642,5 +637,55 @@ mod tests {
             .await
             .unwrap_err();
         assert!(matches!(err, RoutingError::Failed(_)));
+    }
+
+    #[tokio::test]
+    async fn unflagged_depot_is_excluded_from_refill_stations() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/v1/solve"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(ok_body(&encoded_line())))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let settings = crate::configuration::RoutingSettings {
+            streamlet_url: server.uri(),
+            depots: vec![
+                crate::configuration::NamedGeoPoint {
+                    name: "Flagged".into(),
+                    lat: 54.77,
+                    lon: 9.43,
+                    watering_point: true,
+                },
+                crate::configuration::NamedGeoPoint {
+                    name: "Unflagged".into(),
+                    lat: 54.80,
+                    lon: 9.45,
+                    watering_point: false,
+                },
+            ],
+            ..Default::default()
+        };
+        let opt = StreamletRouteOptimizer::new(&settings);
+        let transporter = vehicle(VehicleType::Transporter, 2000.0);
+        opt.optimize(&transporter, None, &stops(), None)
+            .await
+            .unwrap();
+
+        let requests = server.received_requests().await.unwrap();
+        let body: serde_json::Value = requests[0].body_json().unwrap();
+        assert_eq!(
+            body["problem"]["refill_stations"].as_array().unwrap().len(),
+            1
+        );
+        assert!(
+            (body["problem"]["refill_stations"][0]["location"]["lat"]
+                .as_f64()
+                .unwrap()
+                - 54.77)
+                .abs()
+                < 1e-9
+        );
     }
 }
