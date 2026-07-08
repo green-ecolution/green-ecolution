@@ -16,10 +16,13 @@ import { LinkProps } from '@tanstack/react-router'
 import NavLink from '../navigation/NavLink'
 import NavHeadline from '../navigation/NavHeadline'
 import NavHeader from '../navigation/NavHeader'
+import SidebarToggle from '../navigation/SidebarToggle'
 import { useAuthSession } from '@/lib/auth/authSessionContext'
 import Tree from '../icons/Tree'
 import SensorIcon from '../icons/Sensor'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed'
+import useStore from '@/store/store'
 
 interface NavigationProps {
   isOpen: boolean
@@ -156,6 +159,8 @@ const protectedNavData: NavSectionData[] = [
 const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
   const { isAuthenticated: isLoggedIn } = useAuthSession()
+  const collapsed = useSidebarCollapsed()
+  const setSidebarCollapsed = useStore((s) => s.setSidebarCollapsed)
 
   const handleNavLinkClick = useCallback(() => {
     if (!isLargeScreen) closeSidebar()
@@ -167,24 +172,27 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
     <nav
       id="main-navigation"
       aria-label="Hauptnavigation"
-      className={`fixed inset-0 z-50 bg-dark w-screen h-screen flex flex-col ease-in-out duration-300 transition-[left,visibility]
-        lg:left-0 lg:w-[4.5rem] lg:visible xl:w-[16rem]
+      className={`fixed inset-0 z-50 bg-dark w-screen h-screen flex flex-col ease-in-out duration-300 transition-[left,width,visibility]
+        lg:left-0 lg:visible ${collapsed ? 'lg:w-[4.5rem]' : 'lg:w-[16rem]'}
         ${isOpen ? 'visible left-0' : 'invisible -left-full'}`}
     >
-      <div className="shrink-0 px-4 pt-5 lg:px-2 xl:px-4">
-        <NavHeader closeSidebar={closeSidebar} />
+      <div className={`shrink-0 px-4 pt-5 ${collapsed ? 'lg:px-2' : ''}`}>
+        <NavHeader closeSidebar={closeSidebar} collapsed={collapsed} />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto no-scrollbar px-4 lg:px-2 xl:px-4">
+      <div
+        className={`flex min-h-0 flex-1 flex-col overflow-y-auto no-scrollbar px-4 ${collapsed ? 'lg:px-2' : ''}`}
+      >
         {navigationData.map((section) => (
           <React.Fragment key={section.id}>
-            <NavHeadline label={section.headline} />
+            <NavHeadline label={section.headline} collapsed={collapsed} />
             <ul className="mb-6 space-y-1">
               {section.links.map(({ key, label, icon, ...linkProps }) => (
                 <NavLink
                   key={key}
                   label={label}
                   icon={icon}
+                  collapsed={collapsed}
                   closeSidebar={handleNavLinkClick}
                   {...linkProps}
                 />
@@ -194,22 +202,32 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
         ))}
 
         {/* Settings + logout: pinned to the bottom on desktop (lg:mt-auto),
-            inline at the end of the scrollable list on the mobile overlay. */}
-        {isLoggedIn && (
-          <div className="pb-4 lg:mt-auto lg:border-t lg:border-dark-400/30 lg:pt-4">
-            <ul className="space-y-1">
-              {footerNavData.map(({ key, label, icon, ...linkProps }) => (
+            inline at the end of the scrollable list on the mobile overlay.
+            The collapse toggle only exists from lg up; logged-out users still
+            get it, so the block hides on mobile when logged out. */}
+        <div
+          className={`pb-4 lg:mt-auto lg:border-t lg:border-dark-400/30 lg:pt-4 ${isLoggedIn ? '' : 'hidden lg:block'}`}
+        >
+          <ul className="space-y-1">
+            <li className="relative hidden lg:block">
+              <SidebarToggle
+                collapsed={collapsed}
+                onToggle={() => setSidebarCollapsed(!collapsed)}
+              />
+            </li>
+            {isLoggedIn &&
+              footerNavData.map(({ key, label, icon, ...linkProps }) => (
                 <NavLink
                   key={key}
                   label={label}
                   icon={icon}
+                  collapsed={collapsed}
                   closeSidebar={handleNavLinkClick}
                   {...linkProps}
                 />
               ))}
-            </ul>
-          </div>
-        )}
+          </ul>
+        </div>
       </div>
     </nav>
   )

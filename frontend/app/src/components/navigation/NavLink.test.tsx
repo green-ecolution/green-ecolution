@@ -420,5 +420,84 @@ describe('NavLink', () => {
         expect(label).toBeVisible()
       })
     })
+
+    it('hides the label on desktop widths when collapsed', async () => {
+      const rootRoute = createRootRoute({
+        component: () => <Outlet />,
+      })
+
+      const indexRoute = createRoute({
+        getParentRoute: () => rootRoute,
+        path: '/',
+        component: () => (
+          <ul>
+            <NavLink
+              label="Einstellungen"
+              icon={<Settings className="w-5 h-5" />}
+              to="/settings"
+              collapsed
+              closeSidebar={mockCloseSidebar}
+            />
+          </ul>
+        ),
+      })
+
+      const settingsRoute = createRoute({
+        getParentRoute: () => rootRoute,
+        path: '/settings',
+        component: () => <div data-testid="settings-page">Settings</div>,
+      })
+
+      const routeTree = rootRoute.addChildren([indexRoute, settingsRoute])
+      const router = createRouter({
+        routeTree,
+        history: createMemoryHistory({ initialEntries: ['/'] }),
+      })
+
+      render(<RouterProvider router={router} />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Einstellungen')).toHaveClass('lg:hidden')
+      })
+    })
+
+    it('does not hide the label when not collapsed', async () => {
+      const rootRoute = createRootRoute({
+        component: () => <Outlet />,
+      })
+
+      const indexRoute = createRoute({
+        getParentRoute: () => rootRoute,
+        path: '/',
+        component: () => (
+          <ul>
+            <NavLink
+              label="Einstellungen"
+              icon={<Settings className="w-5 h-5" />}
+              to="/settings"
+              closeSidebar={mockCloseSidebar}
+            />
+          </ul>
+        ),
+      })
+
+      const settingsRoute = createRoute({
+        getParentRoute: () => rootRoute,
+        path: '/settings',
+        component: () => <div data-testid="settings-page">Settings</div>,
+      })
+
+      const routeTree = rootRoute.addChildren([indexRoute, settingsRoute])
+      const router = createRouter({
+        routeTree,
+        history: createMemoryHistory({ initialEntries: ['/'] }),
+      })
+
+      render(<RouterProvider router={router} />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Einstellungen')).not.toHaveClass('lg:hidden')
+      })
+    })
   })
 })

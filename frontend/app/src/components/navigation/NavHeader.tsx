@@ -6,13 +6,16 @@ import { Button } from '@green-ecolution/ui'
 
 interface NavHeader {
   closeSidebar: () => void
+  collapsed?: boolean
 }
 
-const NavHeader: React.FC<NavHeader> = ({ closeSidebar }) => {
+const NavHeader: React.FC<NavHeader> = ({ closeSidebar, collapsed = false }) => {
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
 
   return (
-    <div className="relative mb-6 flex items-start justify-between lg:justify-center xl:justify-between">
+    <div
+      className={`relative mb-6 flex items-start justify-between ${collapsed ? 'lg:justify-center' : ''}`}
+    >
       <Link
         to="/dashboard"
         className="block transition-all ease-in-out duration-300 hover:opacity-75"
@@ -20,12 +23,12 @@ const NavHeader: React.FC<NavHeader> = ({ closeSidebar }) => {
         onClick={closeSidebar}
       >
         <img
-          className="h-9 w-auto lg:hidden xl:block"
+          className={`h-9 w-auto ${collapsed ? 'lg:hidden' : ''}`}
           src="/images/logo/logo-with-text-white.svg"
           alt="Logo von Green Ecolution — Smartes Grünflächenmanagement"
         />
         <img
-          className="hidden h-9 w-auto lg:block xl:hidden"
+          className={`hidden h-9 w-auto ${collapsed ? 'lg:block' : ''}`}
           src="/images/logo/logo-icon-white.svg"
           alt="Green Ecolution"
         />
