@@ -148,10 +148,67 @@ fn default_keep_alive_secs() -> u16 {
     30
 }
 
-#[derive(serde::Deserialize, Clone, Default)]
+#[derive(Debug, Clone, Copy, serde::Deserialize)]
+pub struct GeoPoint {
+    pub lat: f64,
+    pub lon: f64,
+}
+
+#[derive(serde::Deserialize, Clone)]
 pub struct RoutingSettings {
     #[serde(default)]
     pub enabled: bool,
+    #[serde(default = "default_streamlet_url")]
+    pub streamlet_url: String,
+    #[serde(default = "default_depot_point")]
+    pub start_point: GeoPoint,
+    #[serde(default = "default_depot_point")]
+    pub end_point: GeoPoint,
+    #[serde(default = "default_watering_points")]
+    pub watering_points: Vec<GeoPoint>,
+    #[serde(default = "default_tree_demand_liters")]
+    pub tree_demand_liters: f64,
+}
+
+impl Default for RoutingSettings {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            streamlet_url: default_streamlet_url(),
+            start_point: default_depot_point(),
+            end_point: default_depot_point(),
+            watering_points: default_watering_points(),
+            tree_demand_liters: default_tree_demand_liters(),
+        }
+    }
+}
+
+fn default_streamlet_url() -> String {
+    "http://localhost:2510".to_string()
+}
+
+fn default_depot_point() -> GeoPoint {
+    GeoPoint {
+        lat: 54.768731253913806,
+        lon: 9.434764259345679,
+    }
+}
+
+fn default_watering_points() -> Vec<GeoPoint> {
+    vec![
+        GeoPoint {
+            lat: 54.76860193975328,
+            lon: 9.433882457296733,
+        },
+        GeoPoint {
+            lat: 54.80483727816614,
+            lon: 9.4475320291977,
+        },
+    ]
+}
+
+fn default_tree_demand_liters() -> f64 {
+    80.0
 }
 
 #[derive(serde::Deserialize, Clone, Default)]
@@ -436,5 +493,20 @@ impl TryFrom<String> for Environment {
                 "{other} is not a supported environment. Use `local`, `staging`, or `production`."
             )),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn routing_settings_defaults_are_flensburg() {
+        let settings = RoutingSettings::default();
+        assert!(!settings.enabled);
+        assert_eq!(settings.streamlet_url, "http://localhost:2510");
+        assert_eq!(settings.watering_points.len(), 2);
+        assert_eq!(settings.tree_demand_liters, 80.0);
+        assert!((settings.start_point.lat - 54.768731253913806).abs() < 1e-9);
     }
 }

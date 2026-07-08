@@ -241,6 +241,8 @@ services:
     environment:
       STREAMLET_ADDR: "0.0.0.0:3000"
       STREAMLET_VALHALLA_URL: "http://valhalla:8002"
+    ports:
+      - "127.0.0.1:2510:3000"
     depends_on:
       valhalla:
         condition: service_healthy

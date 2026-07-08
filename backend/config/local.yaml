@@ -12,3 +12,5 @@ auth:
   backend_client_id: "backend"
   backend_client_secret: "cVBGgWNlbwSLydLZfZMvTvmNCeiSmLGP"
   default_redirect_url: "http://localhost:3000/auth/callback"
+routing:
+  enabled: true
