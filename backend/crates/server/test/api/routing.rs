@@ -149,6 +149,7 @@ async fn route_endpoint_returns_404_without_route() {
     let resp = app
         .post_json("/api/v1/watering-plans", &plan_body(tid, &cid))
         .await;
+    assert_eq!(resp.status().as_u16(), 201);
     let plan: serde_json::Value = resp.json().await.unwrap();
     let plan_id = plan["id"].as_str().unwrap();
 
