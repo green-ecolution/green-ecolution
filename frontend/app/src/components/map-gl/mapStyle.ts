@@ -36,6 +36,7 @@ export const SOURCES = {
   clusterBoundaries: 'gec-cluster-boundaries',
   selectTrees: 'gec-select-trees',
   selectClusters: 'gec-select-clusters',
+  route: 'gec-route',
 } as const
 
 export const LAYERS = {
@@ -50,6 +51,14 @@ export const LAYERS = {
   selectTreeCheck: 'gec-select-tree-check',
   selectClusterPoints: 'gec-select-cluster-points',
   selectClusterCount: 'gec-select-cluster-count',
+  routeCasing: 'gec-route-casing',
+  routeLine: 'gec-route-line',
+} as const
+
+export const ROUTE_COLORS = {
+  // hex approximation of the UI theme's --green-dark (MapLibre can't parse oklch)
+  line: '#4B6E3F',
+  casing: '#ffffff',
 } as const
 
 export const TREE_ICON_IMAGE = 'gec-tree-icon-image'

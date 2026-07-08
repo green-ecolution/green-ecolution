@@ -52,6 +52,9 @@ models/PluginResponse.ts
 models/ReadinessResponse.ts
 models/RegionEvaluationResponse.ts
 models/RegionResponse.ts
+models/RouteGeometry.ts
+models/RouteRequest.ts
+models/RouteResponse.ts
 models/SensorAbilityUnitDto.ts
 models/SensorCoordinate.ts
 models/SensorDataResponse.ts

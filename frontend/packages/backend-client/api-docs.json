@@ -2373,38 +2373,6 @@
         }
       }
     },
-    "/v1/watering-plans/route/gpx/{gpx_name}": {
-      "get": {
-        "tags": [
-          "Watering Plans"
-        ],
-        "summary": "Download GPX file",
-        "description": "Downloads the optimized watering route as a GPX file.",
-        "operationId": "getGpxFile",
-        "parameters": [
-          {
-            "name": "gpx_name",
-            "in": "path",
-            "description": "GPX file name",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "GPX file"
-          },
-          "500": {
-            "description": "Internal server error"
-          },
-          "503": {
-            "description": "Routing feature is disabled"
-          }
-        }
-      }
-    },
     "/v1/watering-plans/route/preview": {
       "post": {
         "tags": [
@@ -2413,12 +2381,35 @@
         "summary": "Preview route",
         "description": "Calculates and previews an optimized watering route without creating a plan.",
         "operationId": "previewRoute",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouteRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
-            "description": "Route preview"
+            "description": "Route preview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Route problem rejected by the optimizer"
           },
           "500": {
             "description": "Internal server error"
+          },
+          "502": {
+            "description": "Routing engine unavailable"
           },
           "503": {
             "description": "Routing feature is disabled"
@@ -2541,6 +2532,88 @@
           },
           "500": {
             "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v1/watering-plans/{watering_plan_id}/route": {
+      "get": {
+        "tags": [
+          "Watering Plans"
+        ],
+        "summary": "Get the optimized route of a watering plan",
+        "description": "Returns the persisted optimized route as GeoJSON LineString geometry with metrics.",
+        "operationId": "getWateringPlanRoute",
+        "parameters": [
+          {
+            "name": "watering_plan_id",
+            "in": "path",
+            "description": "Watering plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Optimized route",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plan not found or has no route"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "503": {
+            "description": "Routing feature is disabled"
+          }
+        }
+      }
+    },
+    "/v1/watering-plans/{watering_plan_id}/route/gpx": {
+      "get": {
+        "tags": [
+          "Watering Plans"
+        ],
+        "summary": "Download GPX file",
+        "description": "Renders the optimized watering route of a plan as a GPX track.",
+        "operationId": "getGpxFile",
+        "parameters": [
+          {
+            "name": "watering_plan_id",
+            "in": "path",
+            "description": "Watering plan ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GPX file",
+            "content": {
+              "application/gpx+xml": {}
+            }
+          },
+          "404": {
+            "description": "Plan not found or has no route"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "503": {
+            "description": "Routing feature is disabled"
           }
         }
       }
@@ -4274,6 +4347,123 @@
         "example": {
           "id": "0190a8e9-7c4f-7000-8000-000000000000",
           "name": "Stadtpark Flensburg"
+        }
+      },
+      "RouteGeometry": {
+        "type": "object",
+        "description": "GeoJSON LineString geometry of an optimized watering route.",
+        "required": [
+          "type",
+          "coordinates"
+        ],
+        "properties": {
+          "coordinates": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "format": "double"
+              }
+            },
+            "description": "Route coordinates as GeoJSON positions (longitude, latitude).",
+            "example": [
+              [
+                9.4347,
+                54.7687
+              ],
+              [
+                9.4358,
+                54.7922
+              ]
+            ]
+          },
+          "type": {
+            "type": "string",
+            "description": "GeoJSON geometry type, always \"LineString\".",
+            "example": "LineString"
+          }
+        }
+      },
+      "RouteRequest": {
+        "type": "object",
+        "description": "Request body for calculating a watering route.",
+        "required": [
+          "cluster_ids",
+          "transporter_id"
+        ],
+        "properties": {
+          "cluster_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "List of tree cluster identifiers to include in the route.",
+            "example": [
+              "0190a8e9-7c4f-7000-8000-000000000000"
+            ]
+          },
+          "trailer_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Identifier of the trailer vehicle to use, if any.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "transporter_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifier of the transporter vehicle to use.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          }
+        }
+      },
+      "RouteResponse": {
+        "type": "object",
+        "description": "Optimized watering route (persisted for a plan, or a preview).",
+        "required": [
+          "distance",
+          "duration",
+          "refill_count",
+          "total_water_required",
+          "geometry"
+        ],
+        "properties": {
+          "distance": {
+            "type": "number",
+            "format": "double",
+            "description": "Total route distance in meters.",
+            "example": 12500.0,
+            "minimum": 0
+          },
+          "duration": {
+            "type": "number",
+            "format": "double",
+            "description": "Estimated total driving duration in seconds.",
+            "example": 3600.0,
+            "minimum": 0
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/RouteGeometry",
+            "description": "Route geometry as a GeoJSON LineString."
+          },
+          "refill_count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of water refill stops on the route.",
+            "example": 2,
+            "minimum": 0
+          },
+          "total_water_required": {
+            "type": "number",
+            "format": "double",
+            "description": "Total water demand of all routed clusters in liters.",
+            "example": 24000.0,
+            "minimum": 0
+          }
         }
       },
       "SensorAbilityUnitDto": {
@@ -6274,7 +6464,7 @@
           "gpx_url": {
             "type": "string",
             "description": "URL to the downloadable GPX route file.",
-            "example": "/api/v1/watering-plans/route/gpx/route-2024-08-15.gpx"
+            "example": "/v1/watering-plans/0190a8e9-7c4f-7000-8000-000000000000/route/gpx"
           },
           "id": {
             "type": "string",

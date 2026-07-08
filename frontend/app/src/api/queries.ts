@@ -25,6 +25,8 @@ import {
   NearestTreeListResponse,
   pluginApi,
   regionApi,
+  ResponseError,
+  RouteResponse,
   SensorDataResponse,
   SensorModelResponse,
   SensorResponse,
@@ -189,6 +191,22 @@ export const wateringPlanIdQuery = (id: string) =>
   queryOptions<WateringPlanResponse>({
     queryKey: ['watering-plan', id],
     queryFn: () => wateringPlanApi.getWateringPlan({ wateringPlanId: id }),
+    enabled: isValidUuid(id),
+  })
+
+export const wateringPlanRouteQuery = (id: string) =>
+  queryOptions<RouteResponse | null>({
+    queryKey: ['watering-plan-route', id],
+    queryFn: async () => {
+      try {
+        return await wateringPlanApi.getWateringPlanRoute({ wateringPlanId: id })
+      } catch (error) {
+        // 404: plan has no computed route; 503: routing feature disabled.
+        if (error instanceof ResponseError && [404, 503].includes(error.response.status))
+          return null
+        throw error
+      }
+    },
     enabled: isValidUuid(id),
   })
 
