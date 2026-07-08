@@ -256,12 +256,24 @@ pub async fn spawn_app() -> TestApp {
 }
 
 pub async fn spawn_app_with_auth(auth: AuthSettings) -> TestApp {
-    let container = shared_container().await;
-    let (_db_name, db_pool) = create_test_database(container.host_port).await;
-
     let mut settings = Settings::for_test(auth);
     settings.info.health_check_interval_secs = 1;
     settings.info.update_check_repo = None;
+    spawn_with_settings(settings).await
+}
+
+pub async fn spawn_app_with_routing(streamlet_url: &str) -> TestApp {
+    let mut settings = Settings::for_test(disabled_auth_settings());
+    settings.info.health_check_interval_secs = 1;
+    settings.info.update_check_repo = None;
+    settings.routing.enabled = true;
+    settings.routing.streamlet_url = streamlet_url.to_string();
+    spawn_with_settings(settings).await
+}
+
+async fn spawn_with_settings(settings: Settings) -> TestApp {
+    let container = shared_container().await;
+    let (_db_name, db_pool) = create_test_database(container.host_port).await;
 
     let app = Application::build_with_pool(db_pool.clone(), "127.0.0.1:0", settings)
         .await

@@ -10,6 +10,7 @@ pub mod info;
 pub mod plugins;
 pub mod regions;
 pub mod request_id;
+pub mod routing;
 pub mod sensor_activate;
 pub mod sensor_create;
 pub mod sensor_models;
