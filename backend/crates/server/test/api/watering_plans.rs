@@ -670,7 +670,68 @@ async fn list_watering_plans_filters_by_status() {
         .await
         .unwrap();
     assert_eq!(unfiltered["data"].as_array().unwrap().len(), 2);
-    let _ = planned;
+    let planned_id = planned["id"].as_str().unwrap();
+    let unfiltered_ids: Vec<&str> = unfiltered["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|p| p["id"].as_str())
+        .collect();
+    assert!(
+        unfiltered_ids.contains(&planned_id),
+        "unfiltered list must include the planned plan, got: {unfiltered_ids:?}"
+    );
+}
+
+#[tokio::test]
+async fn list_watering_plans_returns_correct_user_ids_and_clusters_under_multiple_joins() {
+    // Guards the ARRAY_AGG(DISTINCT ...) aggregation under three LEFT JOINs: a plan with
+    // 2 users and 2 clusters must not fan out rows and duplicate or lose entries.
+    let app = spawn_app().await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+
+    let cluster1 = create_cluster(&app).await;
+    let cid1 = cluster1["id"].as_str().unwrap();
+    let cluster2 = create_cluster(&app).await;
+    let cid2 = cluster2["id"].as_str().unwrap();
+
+    let user1 = uuid::Uuid::now_v7().to_string();
+    let user2 = uuid::Uuid::now_v7().to_string();
+
+    let mut body = plan_body(tid, vec![cid1, cid2]);
+    body["user_ids"] = serde_json::json!([user1, user2]);
+    let resp = app.post_json("/api/v1/watering-plans", &body).await;
+    assert_eq!(resp.status().as_u16(), 201);
+
+    let list: serde_json::Value = app
+        .get("/api/v1/watering-plans?status=planned")
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    let plan = &list["data"][0];
+    let mut got_users: Vec<&str> = plan["user_ids"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|v| v.as_str())
+        .collect();
+    got_users.sort_unstable();
+
+    let mut expected_users = vec![user1.as_str(), user2.as_str()];
+    expected_users.sort_unstable();
+
+    assert_eq!(
+        got_users, expected_users,
+        "user_ids must contain exactly 2 distinct entries"
+    );
+    assert_eq!(
+        plan["treeclusters"].as_array().unwrap().len(),
+        2,
+        "treeclusters must contain exactly 2 entries"
+    );
 }
 
 #[tokio::test]

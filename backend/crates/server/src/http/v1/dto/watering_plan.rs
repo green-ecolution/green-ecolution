@@ -16,9 +16,11 @@ use super::{WateringPlanStatus, cluster::TreeClusterInListResponse, vehicle::Veh
 /// Query parameters for the paginated watering plan list endpoint.
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct WateringPlanListParams {
+    /// Page number to retrieve (1-based).
     #[param(default = 1, minimum = 1, example = 1)]
     #[serde(default = "crate::http::v1::pagination::default_page")]
     pub page: u64,
+    /// Number of items per page.
     #[param(default = 25, minimum = 1, maximum = 100, example = 25)]
     #[serde(default = "crate::http::v1::pagination::default_per_page")]
     pub per_page: u64,
