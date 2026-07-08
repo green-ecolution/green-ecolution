@@ -4,7 +4,10 @@ use serde::{Deserialize, Serialize};
 use crate::service::ServiceError;
 use domain::{
     Id,
-    shared::{coordinates::Coordinate, provenance::{Provenance, ProviderId}},
+    shared::{
+        coordinates::Coordinate,
+        provenance::{Provenance, ProviderId},
+    },
     watering_plan::{WateringPlanDraft, WateringPlanEvaluation, WateringPlanView},
 };
 

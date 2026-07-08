@@ -6,7 +6,10 @@ use sqlx::PgPool;
 use domain::{
     Id, IdSliceExt, RawId, RepositoryError,
     cluster::TreeCluster,
-    shared::{coordinates::Coordinate, pagination::{Page, Pagination}},
+    shared::{
+        coordinates::Coordinate,
+        pagination::{Page, Pagination},
+    },
     watering_plan::{
         WateringPlan, WateringPlanDraft, WateringPlanEvaluation, WateringPlanReader,
         WateringPlanSearchQuery, WateringPlanSnapshot, WateringPlanStatus, WateringPlanView,
@@ -270,7 +273,11 @@ fn json_to_geometry(value: Option<Value>) -> Result<Option<Vec<Coordinate>>, Rep
         })
         .collect::<Result<Vec<_>, _>>()?;
     // Empty geometry means "no route" — collapse to None so readers get one representation.
-    Ok(if coords.is_empty() { None } else { Some(coords) })
+    Ok(if coords.is_empty() {
+        None
+    } else {
+        Some(coords)
+    })
 }
 
 /// Persists the plan row and syncs both join tables inside the caller's

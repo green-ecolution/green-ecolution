@@ -64,9 +64,10 @@ impl IntoResponse for ServiceError {
             | ServiceError::NotActivated) => (StatusCode::CONFLICT, e.to_string()).into_response(),
             ServiceError::Routing(e) => {
                 let (status, message) = match &e {
-                    RoutingError::Unavailable(_) => {
-                        (StatusCode::BAD_GATEWAY, "routing engine unavailable".to_string())
-                    }
+                    RoutingError::Unavailable(_) => (
+                        StatusCode::BAD_GATEWAY,
+                        "routing engine unavailable".to_string(),
+                    ),
                     RoutingError::InvalidProblem(_) => {
                         (StatusCode::UNPROCESSABLE_ENTITY, e.to_string())
                     }

@@ -36,7 +36,10 @@ struct LocationDto {
 
 impl From<GeoPoint> for LocationDto {
     fn from(p: GeoPoint) -> Self {
-        Self { lat: p.lat, lon: p.lon }
+        Self {
+            lat: p.lat,
+            lon: p.lon,
+        }
     }
 }
 
@@ -153,7 +156,12 @@ impl StreamletRouteOptimizer {
             solve_url: format!("{}/v1/solve", settings.streamlet_url.trim_end_matches('/')),
             start: settings.start_point.into(),
             depot: settings.end_point.into(),
-            refills: settings.watering_points.iter().copied().map(Into::into).collect(),
+            refills: settings
+                .watering_points
+                .iter()
+                .copied()
+                .map(Into::into)
+                .collect(),
         }
     }
 
@@ -169,14 +177,20 @@ impl StreamletRouteOptimizer {
         let vehicle = VehicleDto {
             id: 1,
             start: self.start,
-            tank: TankDto { capacity, level: capacity },
+            tank: TankDto {
+                capacity,
+                level: capacity,
+            },
             kind: KindDto::Truck {
                 width: dim.width,
                 height: dim.height,
                 length: dim.length,
                 weight: dim.weight,
             },
-            shift: ShiftDto { start: 0.0, end: SHIFT_END_SECS },
+            shift: ShiftDto {
+                start: 0.0,
+                end: SHIFT_END_SECS,
+            },
             max_trips: None,
         };
         let customers = stops
@@ -206,11 +220,16 @@ impl StreamletRouteOptimizer {
         SolveRequestDto {
             problem: ProblemDto {
                 vehicles: vec![vehicle],
-                depots: vec![DepotDto { id: 1, location: self.depot }],
+                depots: vec![DepotDto {
+                    id: 1,
+                    location: self.depot,
+                }],
                 customers,
                 refill_stations,
             },
-            options: OptionsDto { geometry: "polyline" },
+            options: OptionsDto {
+                geometry: "polyline",
+            },
         }
     }
 }
@@ -219,7 +238,9 @@ impl StreamletRouteOptimizer {
 fn decode_geometry(routes: &[RouteDto]) -> Result<Vec<Coordinate>, RoutingError> {
     let mut coords = Vec::new();
     for route in routes {
-        let Some(geometry) = &route.geometry else { continue };
+        let Some(geometry) = &route.geometry else {
+            continue;
+        };
         for leg in geometry.value.split(';').filter(|l| !l.is_empty()) {
             let line = polyline::decode_polyline(leg, 6)
                 .map_err(|e| RoutingError::Failed(format!("invalid polyline: {e}")))?;
@@ -307,9 +328,7 @@ mod tests {
     use super::*;
     use domain::routing::{RouteOptimizer, RouteStop};
     use domain::shared::coordinates::Coordinate;
-    use domain::vehicle::{
-        DrivingLicense, Vehicle, VehicleSnapshot, VehicleStatus, VehicleType,
-    };
+    use domain::vehicle::{DrivingLicense, Vehicle, VehicleSnapshot, VehicleStatus, VehicleType};
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -417,13 +436,19 @@ mod tests {
         assert_eq!(body["problem"]["vehicles"][0]["tank"]["capacity"], 3000.0);
         assert_eq!(body["problem"]["vehicles"][0]["tank"]["level"], 3000.0);
         // truck kind carries transporter dimensions (weight in kg)
-        assert_eq!(body["problem"]["vehicles"][0]["kind"]["Truck"]["weight"], 3500.0);
+        assert_eq!(
+            body["problem"]["vehicles"][0]["kind"]["Truck"]["weight"],
+            3500.0
+        );
         // demand passthrough, ids 1..n
         assert_eq!(body["problem"]["customers"][0]["id"], 1);
         assert_eq!(body["problem"]["customers"][0]["demand"], 160.0);
         assert_eq!(body["problem"]["customers"][1]["demand"], 240.0);
         // both configured refill stations present
-        assert_eq!(body["problem"]["refill_stations"].as_array().unwrap().len(), 2);
+        assert_eq!(
+            body["problem"]["refill_stations"].as_array().unwrap().len(),
+            2
+        );
         // depot = end_point, polyline geometry requested
         assert_eq!(body["options"]["geometry"], "polyline");
     }
@@ -450,9 +475,12 @@ mod tests {
 
     #[tokio::test]
     async fn optimize_maps_status_codes_to_routing_errors() {
-        for (status, is_invalid, is_unavailable) in
-            [(422, true, false), (502, false, true), (504, false, true), (500, false, false)]
-        {
+        for (status, is_invalid, is_unavailable) in [
+            (422, true, false),
+            (502, false, true),
+            (504, false, true),
+            (500, false, false),
+        ] {
             let server = MockServer::start().await;
             Mock::given(method("POST"))
                 .and(path("/v1/solve"))

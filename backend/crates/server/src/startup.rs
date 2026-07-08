@@ -99,8 +99,9 @@ impl Application {
         let event_bus = build_event_bus(&repos);
         let route_optimizer: Option<Arc<dyn domain::routing::RouteOptimizer>> =
             settings.routing.enabled.then(|| {
-                Arc::new(infra::streamlet::StreamletRouteOptimizer::new(&settings.routing))
-                    as Arc<dyn domain::routing::RouteOptimizer>
+                Arc::new(infra::streamlet::StreamletRouteOptimizer::new(
+                    &settings.routing,
+                )) as Arc<dyn domain::routing::RouteOptimizer>
             });
         let services = Services::build(
             &repos,

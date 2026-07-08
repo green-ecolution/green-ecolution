@@ -5,10 +5,7 @@ use serde_json::Value;
 use url::Url;
 use uuid::Uuid;
 
-use crate::{
-    shared::coordinates::Coordinate,
-    watering_plan::WateringPlanStatus,
-};
+use crate::{shared::coordinates::Coordinate, watering_plan::WateringPlanStatus};
 
 /// Raw DB-row mapping used exclusively for aggregate rehydration.
 #[doc(hidden)]

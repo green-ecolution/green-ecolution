@@ -18,8 +18,9 @@ use crate::{
                 vehicle::VehicleResponse,
                 watering_plan::{
                     EvaluationValueResponse, RouteGeometry, RouteRequest, RouteResponse,
-                    WateringPlanCreateRequest, WateringPlanDetailView, WateringPlanInListDetailView,
-                    WateringPlanInListResponse, WateringPlanResponse, WateringPlanUpdateRequest,
+                    WateringPlanCreateRequest, WateringPlanDetailView,
+                    WateringPlanInListDetailView, WateringPlanInListResponse, WateringPlanResponse,
+                    WateringPlanUpdateRequest,
                 },
             },
             gpx,
