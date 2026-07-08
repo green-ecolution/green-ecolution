@@ -173,9 +173,10 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
 
 interface CancelPlanProps {
   onSubmit: SubmitHandler<WateringPlanCancelForm>
+  submitLabel?: string
 }
 
-export const CancelWateringPlan = ({ onSubmit }: CancelPlanProps) => {
+export const CancelWateringPlan = ({ onSubmit, submitLabel = 'Speichern' }: CancelPlanProps) => {
   const {
     register,
     handleSubmit,
@@ -196,7 +197,7 @@ export const CancelWateringPlan = ({ onSubmit }: CancelPlanProps) => {
       />
 
       <Button type="submit" disabled={!isValid} className="mt-10">
-        Speichern
+        {submitLabel}
         <MoveRight className="icon-arrow-animate" />
       </Button>
     </form>
@@ -206,13 +207,15 @@ export const CancelWateringPlan = ({ onSubmit }: CancelPlanProps) => {
 interface FinishedPlanProps {
   onSubmit: SubmitHandler<WateringPlanFinishedForm>
   wateringPlanId: string
-  loadedData: WateringPlan
+  loadedData: Pick<WateringPlan, 'treeclusters'>
+  submitLabel?: string
 }
 
 export const FinishedWateringPlan = ({
   wateringPlanId,
   onSubmit,
   loadedData,
+  submitLabel = 'Speichern',
 }: FinishedPlanProps) => {
   const {
     register,
@@ -266,7 +269,7 @@ export const FinishedWateringPlan = ({
       </fieldset>
 
       <Button type="submit" disabled={!isValid} className="mt-10">
-        Speichern
+        {submitLabel}
         <MoveRight className="icon-arrow-animate" />
       </Button>
     </form>
