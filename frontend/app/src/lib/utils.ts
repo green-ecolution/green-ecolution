@@ -30,3 +30,7 @@ export function isHTTPError(data: unknown): data is HTTPError {
     typeof data === 'object' && data !== null && 'error' in data && typeof data.error === 'string'
   )
 }
+
+export function formatLiters(liters: number): string {
+  return `${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(liters)} L`
+}
