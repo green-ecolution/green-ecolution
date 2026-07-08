@@ -1,5 +1,6 @@
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import React from 'react'
+import { navItemClasses } from './navItemStyles'
 
 interface SidebarToggleProps {
   collapsed: boolean
@@ -14,7 +15,7 @@ const SidebarToggle: React.FC<SidebarToggleProps> = ({ collapsed, onToggle }) =>
     aria-controls="main-navigation"
     aria-label={collapsed ? 'Seitennavigation ausklappen' : 'Seitennavigation einklappen'}
     title={collapsed ? 'Ausklappen' : 'Einklappen'}
-    className={`flex w-full items-center gap-x-3 text-light border border-transparent text-sm py-2.5 rounded-xl transition-all ease-in-out duration-300 hover:bg-green-light/20 hover:text-green-light-200 ${collapsed ? 'justify-center px-2' : 'justify-start px-3'}`}
+    className={`${navItemClasses} w-full border-transparent ${collapsed ? 'justify-center px-2' : 'justify-start px-3'}`}
   >
     <span className="shrink-0">
       {collapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}

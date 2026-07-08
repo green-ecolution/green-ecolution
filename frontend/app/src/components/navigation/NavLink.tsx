@@ -1,5 +1,6 @@
 import { Link, LinkProps } from '@tanstack/react-router'
 import { ReactNode } from 'react'
+import { navItemClasses } from './navItemStyles'
 
 interface NavLinkProps extends LinkProps {
   label: string
@@ -34,7 +35,7 @@ const NavLink = (props: NavLinkProps) => {
         onClick={closeSidebar}
         title={label}
         aria-label={label}
-        className={`flex items-center gap-x-3 text-light border text-sm px-3 py-2.5 rounded-xl transition-all ease-in-out duration-300 hover:bg-green-light/20 hover:text-green-light-200 ${collapsed ? 'lg:justify-center lg:px-2' : ''}`}
+        className={`${navItemClasses} px-3 ${collapsed ? 'lg:justify-center lg:px-2' : ''}`}
         {...linkProps}
       >
         <span className="shrink-0">{icon}</span>
