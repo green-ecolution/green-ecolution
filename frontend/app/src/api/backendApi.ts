@@ -24,13 +24,17 @@ const headers: HTTPHeaders = {
   Accept: 'application/json',
 }
 
-const backendFetch: FetchAPI = async (resource, config) => {
+const withAuthHeader = async (
+  config: RequestInit | undefined,
+): Promise<RequestInit | undefined> => {
   const token = await getAuthSession().getAccessToken()
-  const updatedConfig = token
+  return token
     ? { ...config, headers: { ...config?.headers, Authorization: `Bearer ${token}` } }
     : config
+}
 
-  const response = await fetch(resource, updatedConfig)
+const backendFetch: FetchAPI = async (resource, config) => {
+  const response = await fetch(resource, await withAuthHeader(config))
 
   // axum's Json extractor rejects malformed bodies with 422 before our handlers run,
   // so treat it like 401 and force a fresh sign-in.
@@ -41,6 +45,10 @@ const backendFetch: FetchAPI = async (resource, config) => {
   }
   return response
 }
+
+// preview errors must stay silent — a 422 here is a routing problem, not an auth problem.
+const silentFetch: FetchAPI = async (resource, config) =>
+  fetch(resource, await withAuthHeader(config))
 
 const configParams: ConfigurationParameters = {
   basePath,
@@ -54,6 +62,8 @@ const configParams: ConfigurationParameters = {
 
 const config = new Configuration(configParams)
 
+const silentConfig = new Configuration({ ...configParams, fetchApi: silentFetch })
+
 export const treeApi = new TreesApi(config)
 export const clusterApi = new TreeClustersApi(config)
 export const infoApi = new InfoApi(config)
@@ -64,6 +74,7 @@ export const sensorApi = new SensorsApi(config)
 export const vehicleApi = new VehiclesApi(config)
 export const pluginApi = new PluginsApi(config)
 export const wateringPlanApi = new WateringPlansApi(config)
+export const wateringPlanPreviewApi = new WateringPlansApi(silentConfig)
 export const routingApi = new RoutingApi(config)
 
 export * from '@green-ecolution/backend-client'

@@ -45,6 +45,7 @@ import {
   WateringPlanResponse,
   WateringStatus,
   wateringPlanApi,
+  wateringPlanPreviewApi,
   evaluationApi,
 } from './backendApi'
 
@@ -221,7 +222,7 @@ export const routePreviewQuery = (
     queryKey: ['route-preview', clusterIds.slice().sort(), transporterId, startPointName ?? null],
     queryFn: async () => {
       try {
-        return await wateringPlanApi.previewRoute({
+        return await wateringPlanPreviewApi.previewRoute({
           routeRequest: { clusterIds, transporterId, startPointName },
         })
       } catch {

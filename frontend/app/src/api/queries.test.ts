@@ -8,6 +8,7 @@ import {
   treeClusterIdQuery,
   wateringPlanQuery,
   wateringPlanIdQuery,
+  routePreviewQuery,
 } from './queries'
 import type { Tree, Vehicle, TreeCluster, WateringPlan } from '@/api/backendApi'
 import type {
@@ -15,6 +16,7 @@ import type {
   ListResponseVehicleResponse,
   ListResponseTreeClusterInListResponse,
   ListResponseWateringPlanInListResponse,
+  RouteResponse,
 } from '@green-ecolution/backend-client'
 
 vi.mock('./backendApi', () => ({
@@ -34,9 +36,18 @@ vi.mock('./backendApi', () => ({
     listWateringPlans: vi.fn(),
     getWateringPlan: vi.fn(),
   },
+  wateringPlanPreviewApi: {
+    previewRoute: vi.fn(),
+  },
 }))
 
-import { treeApi, vehicleApi, clusterApi, wateringPlanApi } from './backendApi'
+import {
+  treeApi,
+  vehicleApi,
+  clusterApi,
+  wateringPlanApi,
+  wateringPlanPreviewApi,
+} from './backendApi'
 
 describe('Query Functions', () => {
   beforeEach(() => {
@@ -328,6 +339,42 @@ describe('Query Functions', () => {
           wateringPlanId: 'plan-uuid-1',
         })
         expect(result).toEqual(mockPlan)
+      })
+    })
+
+    describe('routePreviewQuery', () => {
+      it('returns route on success', async () => {
+        const mockRoute = { routes: [] } as unknown as RouteResponse
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        vi.mocked(wateringPlanPreviewApi.previewRoute).mockResolvedValueOnce(mockRoute)
+
+        const options = routePreviewQuery(['cluster-1'], 'vehicle-1')
+        const result = await options.queryFn!({} as never)
+
+        expect(result).toEqual(mockRoute)
+      })
+
+      it('returns null on any error instead of propagating', async () => {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        vi.mocked(wateringPlanPreviewApi.previewRoute).mockRejectedValueOnce(new Error('422'))
+
+        const options = routePreviewQuery(['cluster-1'], 'vehicle-1')
+        const result = await options.queryFn!({} as never)
+
+        expect(result).toBeNull()
+      })
+
+      it('uses wateringPlanPreviewApi, not wateringPlanApi', async () => {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        vi.mocked(wateringPlanPreviewApi.previewRoute).mockResolvedValueOnce({} as RouteResponse)
+
+        const options = routePreviewQuery(['cluster-1'], 'vehicle-1')
+        await options.queryFn!({} as never)
+
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        expect(wateringPlanPreviewApi.previewRoute).toHaveBeenCalled()
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        expect(wateringPlanApi.listWateringPlans).not.toHaveBeenCalled()
       })
     })
   })
