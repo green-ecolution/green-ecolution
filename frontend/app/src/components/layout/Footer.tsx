@@ -1,10 +1,12 @@
 import { useLocation } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { infoQuery } from '@/api/queries'
+import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed'
 
 function Footer() {
   const location = useLocation()
   const isMapPage = location.pathname.includes('/map')
+  const collapsed = useSidebarCollapsed()
   const { data: appInfo } = useQuery(infoQuery())
 
   const version = appInfo?.version?.startsWith('v')
@@ -27,7 +29,9 @@ function Footer() {
   ]
 
   return (
-    <footer className={`bg-white lg:pl-[4.5rem] xl:pl-[16rem] mt-16 ${isMapPage ? 'hidden' : ''}`}>
+    <footer
+      className={`bg-white transition-[padding] ease-in-out duration-300 mt-16 ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-[16rem]'} ${isMapPage ? 'hidden' : ''}`}
+    >
       <div className="container text-sm border-t border-dark-50 py-4 lg:flex lg:justify-between lg:items-center">
         <p className="text-dark-400 mb-5 lg:mb-0">
           Smartes Grünflächenmanagement - Green Ecolution {version}

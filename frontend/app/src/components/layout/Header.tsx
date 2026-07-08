@@ -4,12 +4,14 @@ import Navigation from './Navigation'
 import Breadcrumb from './Breadcrumb'
 import ProfileButton from './ProfileButton'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed'
 import { Button } from '@green-ecolution/ui'
 
 function Header() {
   const [open, setOpen] = useState(false)
   const isStartPage = location.pathname === '/'
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
+  const collapsed = useSidebarCollapsed()
 
   const closeSidebar = useCallback(() => {
     setOpen(false)
@@ -29,7 +31,9 @@ function Header() {
   }, [isLargeScreen])
 
   return (
-    <header className="relative z-10 bg-white lg:pl-[4.5rem] xl:pl-[16rem]">
+    <header
+      className={`relative z-10 bg-white transition-[padding] ease-in-out duration-300 ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-[16rem]'}`}
+    >
       <div className="container text-sm border-b border-dark-50 py-4 flex justify-between items-center">
         {!isLargeScreen && (
           <Button
