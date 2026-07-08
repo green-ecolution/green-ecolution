@@ -98,7 +98,7 @@ const useStore = create<Store>()(
         ...createFormDraftSlice(...a),
       })),
       {
-        name: 'green-ecolution-sidebar',
+        name: 'green-ecolution-preferences',
         partialize: (s) => ({ sidebarCollapsed: s.sidebarCollapsed }),
       },
     ),

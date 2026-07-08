@@ -22,7 +22,7 @@ describe('sidebarSlice', () => {
   it('persists only sidebarCollapsed to localStorage', () => {
     useStore.getState().setSidebarCollapsed(true)
 
-    const raw = localStorage.getItem('green-ecolution-sidebar')
+    const raw = localStorage.getItem('green-ecolution-preferences')
     expect(raw).not.toBeNull()
 
     const persisted = JSON.parse(raw!) as { state: Record<string, unknown> }
