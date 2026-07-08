@@ -36,36 +36,12 @@ env:
   IMAGE_PREFIX: green-ecolution/green-ecolution
 
 jobs:
-  check-release-pr:
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    outputs:
-      should-build: ${{ steps.check.outputs.should-build }}
-    steps:
-      - name: Check if should build
-        id: check
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            if [[ "${{ contains(github.event.pull_request.labels.*.name, 'autorelease: pending') }}" == "true" ]]; then
-              echo "should-build=true" >> $GITHUB_OUTPUT
-              echo "✅ Release PR detected, will build"
-            else
-              echo "should-build=false" >> $GITHUB_OUTPUT
-              echo "ℹ️ Not a release PR, skipping build"
-            fi
-          else
-            # Tag push or workflow_dispatch - always build
-            echo "should-build=true" >> $GITHUB_OUTPUT
-            echo "✅ Tag or manual trigger, will build"
-          fi
-
   determine-environment:
     runs-on: ubuntu-latest
     timeout-minutes: 2
-    needs: check-release-pr
-    if: needs.check-release-pr.outputs.should-build == 'true'
+    # PRs only build when they are release-please PRs; tags and manual
+    # dispatches always build.
+    if: "${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'autorelease: pending') }}"
     outputs:
       environment: ${{ steps.set-env.outputs.environment }}
       is-release: ${{ steps.set-env.outputs.is-release }}
@@ -74,6 +50,8 @@ jobs:
     steps:
       - name: Determine environment and tag suffix
         id: set-env
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             ENV="${{ github.event.inputs.environment }}"
@@ -106,7 +84,6 @@ jobs:
             CHECKOUT_REF="${{ github.event.pull_request.head.sha }}"
 
             # Extract version from PR title
-            PR_TITLE="${{ github.event.pull_request.title }}"
             VERSION=$(echo "$PR_TITLE" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 
             if [[ -n "$VERSION" ]]; then
@@ -132,8 +109,7 @@ jobs:
   build-backend:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [check-release-pr, determine-environment]
-    if: needs.check-release-pr.outputs.should-build == 'true'
+    needs: determine-environment
     permissions:
       contents: read
       packages: write
@@ -183,8 +159,7 @@ jobs:
   build-frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [check-release-pr, determine-environment]
-    if: needs.check-release-pr.outputs.should-build == 'true'
+    needs: determine-environment
     permissions:
       contents: read
       packages: write
@@ -224,9 +199,8 @@ jobs:
   comment-stage:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs:
-      [check-release-pr, determine-environment, build-backend, build-frontend]
-    if: needs.check-release-pr.outputs.should-build == 'true' && github.event_name == 'pull_request'
+    needs: [determine-environment, build-backend, build-frontend]
+    if: github.event_name == 'pull_request'
     permissions:
       contents: read
       pull-requests: write
@@ -275,9 +249,8 @@ jobs:
   log-build-info:
     runs-on: ubuntu-latest
     timeout-minutes: 2
-    needs:
-      [check-release-pr, determine-environment, build-backend, build-frontend]
-    if: needs.check-release-pr.outputs.should-build == 'true' && always()
+    needs: [determine-environment, build-backend, build-frontend]
+    if: always() && needs.determine-environment.result == 'success'
     steps:
       - name: Log build information
         run: |
