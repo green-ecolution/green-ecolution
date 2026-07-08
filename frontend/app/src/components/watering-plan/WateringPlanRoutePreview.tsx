@@ -49,12 +49,20 @@ const RoutePreviewLayers = ({ planId, clusterIds }: { planId: string; clusterIds
         .map((c) => [c.longitude, c.latitude] as [number, number])
     }
     if (points.length === 0) return
-    const lngs = points.map((p) => p[0])
-    const lats = points.map((p) => p[1])
+    let minLng = points[0][0]
+    let maxLng = points[0][0]
+    let minLat = points[0][1]
+    let maxLat = points[0][1]
+    for (const [lng, lat] of points) {
+      if (lng < minLng) minLng = lng
+      if (lng > maxLng) maxLng = lng
+      if (lat < minLat) minLat = lat
+      if (lat > maxLat) maxLat = lat
+    }
     map.fitBounds(
       [
-        [Math.min(...lngs), Math.min(...lats)],
-        [Math.max(...lngs), Math.max(...lats)],
+        [minLng, minLat],
+        [maxLng, maxLat],
       ],
       { padding: 64, maxZoom: 16 },
     )
