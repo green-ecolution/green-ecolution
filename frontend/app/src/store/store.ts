@@ -1,5 +1,5 @@
 import { create, StateCreator } from 'zustand'
-import { devtools } from 'zustand/middleware'
+import { devtools, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import { useShallow } from 'zustand/react/shallow'
 import { FormDraftSlice } from './form/formDraftSlice'
@@ -15,8 +15,17 @@ interface MapSlice {
   setMapSearchTerm: (term: string) => void
 }
 
-type Store = MapSlice & FormDraftSlice
-type Mutators = [['zustand/devtools', never], ['zustand/immer', never]]
+interface SidebarSlice {
+  sidebarCollapsed: boolean | null
+  setSidebarCollapsed: (collapsed: boolean) => void
+}
+
+type Store = MapSlice & SidebarSlice & FormDraftSlice
+type Mutators = [
+  ['zustand/devtools', never],
+  ['zustand/persist', unknown],
+  ['zustand/immer', never],
+]
 
 const createMapSlice: StateCreator<Store, Mutators, [], MapSlice> = (set) => ({
   mapCenter: [54.792277136221905, 9.43580607453268],
@@ -35,6 +44,14 @@ const createMapSlice: StateCreator<Store, Mutators, [], MapSlice> = (set) => ({
   setMapSearchTerm: (term) =>
     set((state) => {
       state.mapSearchTerm = term
+    }),
+})
+
+const createSidebarSlice: StateCreator<Store, Mutators, [], SidebarSlice> = (set) => ({
+  sidebarCollapsed: null,
+  setSidebarCollapsed: (collapsed) =>
+    set((state) => {
+      state.sidebarCollapsed = collapsed
     }),
 })
 
@@ -74,10 +91,17 @@ const createFormDraftSlice: StateCreator<Store, Mutators, [], FormDraftSlice> = 
 
 const useStore = create<Store>()(
   devtools(
-    immer((...a) => ({
-      ...createMapSlice(...a),
-      ...createFormDraftSlice(...a),
-    })),
+    persist(
+      immer((...a) => ({
+        ...createMapSlice(...a),
+        ...createSidebarSlice(...a),
+        ...createFormDraftSlice(...a),
+      })),
+      {
+        name: 'green-ecolution-sidebar',
+        partialize: (s) => ({ sidebarCollapsed: s.sidebarCollapsed }),
+      },
+    ),
   ),
 )
 
