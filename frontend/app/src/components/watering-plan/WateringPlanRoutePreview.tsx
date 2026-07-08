@@ -32,10 +32,10 @@ const RoutePreviewLayers = ({ planId, clusterIds }: { planId: string; clusterIds
 
   const routeCoordinates = route?.geometry.coordinates as [number, number][] | undefined
 
-  useClusterBoundaryLayer({ onBoundaryClick: navToCluster })
+  useClusterBoundaryLayer({ onBoundaryClick: navToCluster, clusterIds })
   useRouteLayer({ coordinates: routeCoordinates })
   // flyToOnClick off: the click navigates away, so animating the unmounting map is wasted.
-  useClusterMarkerLayer({ onClusterClick: navToCluster, flyToOnClick: false })
+  useClusterMarkerLayer({ onClusterClick: navToCluster, clusterIds, flyToOnClick: false })
 
   useEffect(() => {
     if (!isMapAlive(map)) return

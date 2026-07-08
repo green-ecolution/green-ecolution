@@ -21,6 +21,10 @@ export function roundTo(n: number, digits: number) {
   return Number(Math.round(Number(n + 'e' + digits)) + 'e-' + digits)
 }
 
+export function formatKm(meters: number): string {
+  return `${roundTo(meters / 1000, 2)} km`
+}
+
 export function isHTTPError(data: unknown): data is HTTPError {
   return (
     typeof data === 'object' && data !== null && 'error' in data && typeof data.error === 'string'

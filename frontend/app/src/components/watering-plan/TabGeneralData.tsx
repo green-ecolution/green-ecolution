@@ -7,7 +7,7 @@ import { getWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWater
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { userQuery } from '@/api/queries'
 import { de } from 'date-fns/locale'
-import { roundTo } from '@/lib/utils'
+import { formatKm } from '@/lib/utils'
 
 interface TabGeneralDataProps {
   wateringPlan: WateringPlan
@@ -26,7 +26,7 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
   }[] = [
     {
       label: 'Länge der Route',
-      value: wateringPlan.distance ? `${roundTo(wateringPlan.distance, 2)} km` : 'Keine Angabe',
+      value: wateringPlan.distance ? formatKm(wateringPlan.distance) : 'Keine Angabe',
     },
     {
       label: 'Startpunkt',
@@ -116,7 +116,7 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
         <li>
           <StatusCard
             label="Länge der Route"
-            value={`${roundTo(wateringPlan.distance, 2)} km`}
+            value={formatKm(wateringPlan.distance)}
             isLarge
             description="Einsatz startet in der Schleswiger Straße"
           />
