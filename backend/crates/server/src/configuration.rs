@@ -192,7 +192,7 @@ fn default_streamlet_url() -> String {
     "http://localhost:2510".to_string()
 }
 
-fn default_depots() -> Vec<NamedGeoPoint> {
+pub(crate) fn default_depots() -> Vec<NamedGeoPoint> {
     vec![NamedGeoPoint {
         name: "Betriebshof Schleswiger Straße".into(),
         lat: 54.768731253913806,

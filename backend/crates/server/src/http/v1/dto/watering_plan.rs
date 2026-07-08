@@ -244,7 +244,7 @@ pub struct WateringPlanCreateRequest {
     #[serde(default)]
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     pub trailer_id: Option<uuid::Uuid>,
-    /// Named start/return point for the route. Must match a configured depot name.
+    /// Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.
     #[serde(default)]
     #[schema(example = "Betriebshof Schleswiger Straße", nullable)]
     pub start_point_name: Option<String>,
@@ -285,7 +285,7 @@ pub struct WateringPlanUpdateRequest {
     #[serde(default)]
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     pub trailer_id: Option<uuid::Uuid>,
-    /// Named start/return point for the route. Must match a configured depot name.
+    /// Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.
     #[serde(default)]
     #[schema(example = "Betriebshof Schleswiger Straße", nullable)]
     pub start_point_name: Option<String>,
@@ -343,7 +343,7 @@ pub struct RouteRequest {
     #[serde(default)]
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     pub trailer_id: Option<uuid::Uuid>,
-    /// Named start/return point for the route. Must match a configured depot name.
+    /// Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.
     #[serde(default)]
     #[schema(example = "Betriebshof Schleswiger Straße", nullable)]
     pub start_point_name: Option<String>,

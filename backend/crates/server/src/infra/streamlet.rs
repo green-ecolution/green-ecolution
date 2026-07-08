@@ -158,9 +158,13 @@ impl StreamletRouteOptimizer {
             }
         } else {
             tracing::warn!("routing.depots is empty; falling back to hardcoded Flensburg depot");
+            let fallback = crate::configuration::default_depots();
+            let first = fallback
+                .first()
+                .expect("default_depots always has one entry");
             LocationDto {
-                lat: 54.768731253913806,
-                lon: 9.434764259345679,
+                lat: first.lat,
+                lon: first.lon,
             }
         };
 
