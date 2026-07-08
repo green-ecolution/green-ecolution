@@ -4,6 +4,8 @@
 //!
 //! ```text
 //! Planned ──start()──► Active ──finish(evals)──► Finished
+//!    ▲                   │
+//!    └──revert_start()───┤
 //!    │                   │
 //!    └──cancel(note)──┐  └──fail(note)──► NotCompleted
 //!                     ▼
@@ -217,6 +219,21 @@ impl WateringPlan {
         }
         self.status = WateringPlanStatus::Active;
         Ok(vec![DomainEvent::WateringPlanStarted {
+            plan_id: self.id,
+            cluster_ids: self.cluster_ids.clone(),
+        }])
+    }
+
+    /// Transitions `Active → Planned`, undoing an accidental start.
+    pub fn revert_start(&mut self) -> Result<Vec<DomainEvent>, WateringPlanError> {
+        if self.status != WateringPlanStatus::Active {
+            return Err(WateringPlanError::InvalidStateTransition {
+                from: self.status,
+                to: WateringPlanStatus::Planned,
+            });
+        }
+        self.status = WateringPlanStatus::Planned;
+        Ok(vec![DomainEvent::WateringPlanStartReverted {
             plan_id: self.id,
             cluster_ids: self.cluster_ids.clone(),
         }])
@@ -616,6 +633,36 @@ mod tests {
             result,
             Err(WateringPlanError::CannotMutateAfterStart)
         ));
+    }
+
+    #[test]
+    fn revert_start_from_active_returns_to_planned() {
+        let (mut p, [c1, c2]) = fixed_plan();
+        p.start().unwrap();
+        let events = p.revert_start().unwrap();
+        assert_eq!(p.status(), WateringPlanStatus::Planned);
+        assert_eq!(events.len(), 1);
+        match &events[0] {
+            DomainEvent::WateringPlanStartReverted {
+                plan_id,
+                cluster_ids,
+            } => {
+                assert_eq!(*plan_id, p.id);
+                assert_eq!(cluster_ids, &vec![c1, c2]);
+            }
+            other => panic!("expected WateringPlanStartReverted, got {other:?}"),
+        }
+        p.start().unwrap();
+        assert_eq!(p.status(), WateringPlanStatus::Active);
+    }
+
+    #[test]
+    fn revert_start_only_from_active() {
+        let (mut p, _) = fixed_plan();
+        assert_err!(p.revert_start());
+        p.start().unwrap();
+        p.fail("breakdown".to_string()).unwrap();
+        assert_err!(p.revert_start());
     }
 
     #[test]

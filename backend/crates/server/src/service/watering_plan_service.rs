@@ -134,6 +134,11 @@ impl WateringPlanService {
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(plan.id = %id))]
+    pub async fn revert_start(&self, id: Id<WateringPlan>) -> Result<WateringPlan, ServiceError> {
+        self.transition(id, |plan| plan.revert_start()).await
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(plan.id = %id))]
     pub async fn cancel(
         &self,
         id: Id<WateringPlan>,

@@ -326,6 +326,9 @@ pub async fn update_watering_plan(
         (DomainStatus::Planned, DomainStatus::Active) => {
             state.watering_plan_service.start(plan_id).await?;
         }
+        (DomainStatus::Active, DomainStatus::Planned) => {
+            state.watering_plan_service.revert_start(plan_id).await?;
+        }
         (DomainStatus::Planned | DomainStatus::Active, DomainStatus::Canceled) => {
             if entity.cancellation_note.trim().is_empty() {
                 return Err(ServiceError::InvalidInput(

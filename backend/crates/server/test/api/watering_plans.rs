@@ -747,6 +747,53 @@ async fn create_watering_plan_with_invalid_user_id_returns_400() {
 }
 
 #[tokio::test]
+async fn revert_started_watering_plan_returns_to_planned() {
+    let app = spawn_app().await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+
+    let plan: serde_json::Value = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
+        .await
+        .json()
+        .await
+        .unwrap();
+    let plan_id = plan["id"].as_str().unwrap();
+
+    let mut update = serde_json::json!({
+        "date": "2026-05-01T08:00:00Z",
+        "description": "Bewaesserung Innenstadt",
+        "status": "active",
+        "transporter_id": tid,
+        "tree_cluster_ids": [],
+        "user_ids": [],
+        "cancellation_note": ""
+    });
+    let resp = app
+        .put_json(&format!("/api/v1/watering-plans/{plan_id}"), &update)
+        .await;
+    assert_eq!(resp.status().as_u16(), 200);
+
+    update["status"] = serde_json::json!("planned");
+    let reverted: serde_json::Value = app
+        .put_json(&format!("/api/v1/watering-plans/{plan_id}"), &update)
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(reverted["status"], "planned");
+
+    update["status"] = serde_json::json!("active");
+    let restarted: serde_json::Value = app
+        .put_json(&format!("/api/v1/watering-plans/{plan_id}"), &update)
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(restarted["status"], "active");
+}
+
+#[tokio::test]
 async fn route_geometry_round_trips_through_repository() {
     use domain::shared::{coordinates::Coordinate, distance::Distance};
     use domain::watering_plan::{WateringPlanReader, WateringPlanWriter};
