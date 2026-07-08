@@ -24,6 +24,7 @@ pub struct WateringPlanService {
     event_bus: Arc<dyn EventBus>,
     route_optimizer: Option<Arc<dyn RouteOptimizer>>,
     tree_demand_liters: f64,
+    start_points: Vec<(String, domain::shared::coordinates::Coordinate)>,
 }
 
 /// Result of a route computation: the optimized route plus the summed
@@ -43,6 +44,7 @@ impl WateringPlanService {
         event_bus: Arc<dyn EventBus>,
         route_optimizer: Option<Arc<dyn RouteOptimizer>>,
         tree_demand_liters: f64,
+        start_points: Vec<(String, domain::shared::coordinates::Coordinate)>,
     ) -> Self {
         Self {
             reader,
@@ -52,6 +54,21 @@ impl WateringPlanService {
             event_bus,
             route_optimizer,
             tree_demand_liters,
+            start_points,
+        }
+    }
+
+    fn resolve_start_point(
+        &self,
+        name: Option<&str>,
+    ) -> Option<domain::shared::coordinates::Coordinate> {
+        let name = name?;
+        match self.start_points.iter().find(|(n, _)| n == name) {
+            Some((_, coord)) => Some(*coord),
+            None => {
+                tracing::warn!(start_point_name = %name, "unknown start point name; using default depot");
+                None
+            }
         }
     }
 
@@ -140,8 +157,9 @@ impl WateringPlanService {
         cluster_ids: Vec<Id<TreeCluster>>,
         transporter_id: Id<Vehicle>,
         trailer_id: Option<Id<Vehicle>>,
+        start_point_name: Option<String>,
     ) -> Result<ComputedRoute, ServiceError> {
-        self.compute_route(&cluster_ids, transporter_id, trailer_id)
+        self.compute_route(&cluster_ids, transporter_id, trailer_id, start_point_name)
             .await
     }
 
@@ -152,7 +170,12 @@ impl WateringPlanService {
             return;
         };
         match self
-            .compute_route(plan.cluster_ids(), transporter_id, plan.trailer_id())
+            .compute_route(
+                plan.cluster_ids(),
+                transporter_id,
+                plan.trailer_id(),
+                plan.start_point_name.clone(),
+            )
             .await
         {
             Ok(computed) => {
@@ -179,6 +202,7 @@ impl WateringPlanService {
         cluster_ids: &[Id<TreeCluster>],
         transporter_id: Id<Vehicle>,
         trailer_id: Option<Id<Vehicle>>,
+        start_point_name: Option<String>,
     ) -> Result<ComputedRoute, ServiceError> {
         let optimizer = self
             .route_optimizer
@@ -205,8 +229,9 @@ impl WateringPlanService {
                 "no cluster with coordinates to route".into(),
             ));
         }
+        let depot = self.resolve_start_point(start_point_name.as_deref());
         let route = optimizer
-            .optimize(&transporter, trailer.as_ref(), &stops, None)
+            .optimize(&transporter, trailer.as_ref(), &stops, depot)
             .await?;
         if !route.unserved.is_empty() {
             tracing::warn!(

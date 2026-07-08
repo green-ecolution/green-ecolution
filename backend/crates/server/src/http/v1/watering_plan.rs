@@ -295,7 +295,7 @@ pub async fn update_watering_plan(
             } else {
                 Some(entity.description.clone())
             },
-            start_point_name: None,
+            start_point_name: entity.start_point_name.clone(),
             cluster_ids: entity
                 .tree_cluster_ids
                 .iter()
@@ -463,6 +463,7 @@ pub async fn preview_route(
             req.cluster_ids.into_iter().map(Id::new).collect(),
             Id::new(req.transporter_id),
             req.trailer_id.map(Id::new),
+            req.start_point_name,
         )
         .await?;
     Ok(Json(RouteResponse {

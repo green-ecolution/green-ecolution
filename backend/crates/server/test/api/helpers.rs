@@ -268,6 +268,14 @@ pub async fn spawn_app_with_routing(streamlet_url: &str) -> TestApp {
     settings.info.update_check_repo = None;
     settings.routing.enabled = true;
     settings.routing.streamlet_url = streamlet_url.to_string();
+    settings
+        .routing
+        .depots
+        .push(server::configuration::NamedGeoPoint {
+            name: "Depot Nord".to_string(),
+            lat: 54.81,
+            lon: 9.45,
+        });
     spawn_with_settings(settings).await
 }
 

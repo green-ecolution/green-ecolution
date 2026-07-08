@@ -103,11 +103,36 @@ impl Application {
                     &settings.routing,
                 )) as Arc<dyn domain::routing::RouteOptimizer>
             });
+        let start_points: Vec<(String, domain::shared::coordinates::Coordinate)> = settings
+            .routing
+            .depots
+            .iter()
+            .filter_map(|d| {
+                match domain::shared::coordinates::Coordinate::new(d.lat, d.lon) {
+                    Ok(coord) => Some((d.name.clone(), coord)),
+                    Err(e) => {
+                        tracing::warn!(name = %d.name, error = %e, "skipping depot with invalid coordinates");
+                        None
+                    }
+                }
+            })
+            .collect();
+        let routing_start_points: Vec<crate::http::v1::dto::routing::StartPointResponse> = settings
+            .routing
+            .depots
+            .iter()
+            .map(|d| crate::http::v1::dto::routing::StartPointResponse {
+                name: d.name.clone(),
+                lat: d.lat,
+                lon: d.lon,
+            })
+            .collect();
         let services = Services::build(
             &repos,
             event_bus,
             route_optimizer,
             settings.routing.tree_demand_liters,
+            start_points,
         );
 
         let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
@@ -146,6 +171,7 @@ impl Application {
                 max_limit: settings.map.nearest_tree_max_limit,
             },
             frontend_config_js: crate::http::render_frontend_config_js(&settings.auth).into(),
+            routing_start_points,
         });
 
         let listener = TcpListener::bind(address).await?;
@@ -299,6 +325,7 @@ impl Services {
         event_bus: Arc<dyn EventBus>,
         route_optimizer: Option<Arc<dyn domain::routing::RouteOptimizer>>,
         tree_demand_liters: f64,
+        start_points: Vec<(String, domain::shared::coordinates::Coordinate)>,
     ) -> Self {
         Self {
             region: Arc::new(RegionService::new(
@@ -339,6 +366,7 @@ impl Services {
                 event_bus.clone(),
                 route_optimizer,
                 tree_demand_liters,
+                start_points,
             )),
             watering_execution: Arc::new(WateringExecutionService::new(
                 repos.watering_plan_reader.clone(),

@@ -80,6 +80,10 @@ pub struct WateringPlanResponse {
     pub user_ids: Vec<String>,
     /// Per-cluster evaluation results after the watering run.
     pub evaluation: Vec<EvaluationValueResponse>,
+    /// Named start/return point for the route.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(example = "Betriebshof Schleswiger Straße", nullable)]
+    pub start_point_name: Option<String>,
     /// Name of the external data provider that supplied this record.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(example = "green_ecolution", nullable)]
@@ -126,6 +130,7 @@ impl From<WateringPlanDetailView> for WateringPlanResponse {
             treeclusters: d.clusters,
             user_ids: d.user_ids,
             evaluation: d.evaluation,
+            start_point_name: v.start_point_name.clone(),
             provider: v.provider.clone(),
             additional_information: v.additional_info.clone(),
         }
@@ -239,6 +244,10 @@ pub struct WateringPlanCreateRequest {
     #[serde(default)]
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     pub trailer_id: Option<uuid::Uuid>,
+    /// Named start/return point for the route. Must match a configured depot name.
+    #[serde(default)]
+    #[schema(example = "Betriebshof Schleswiger Straße", nullable)]
+    pub start_point_name: Option<String>,
     /// Name of the external data provider that supplied this record.
     #[serde(default)]
     #[schema(example = "green_ecolution", nullable)]
@@ -276,6 +285,10 @@ pub struct WateringPlanUpdateRequest {
     #[serde(default)]
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     pub trailer_id: Option<uuid::Uuid>,
+    /// Named start/return point for the route. Must match a configured depot name.
+    #[serde(default)]
+    #[schema(example = "Betriebshof Schleswiger Straße", nullable)]
+    pub start_point_name: Option<String>,
     /// Per-cluster evaluation results for the watering run.
     #[serde(default)]
     #[schema(nullable)]
@@ -330,6 +343,10 @@ pub struct RouteRequest {
     #[serde(default)]
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     pub trailer_id: Option<uuid::Uuid>,
+    /// Named start/return point for the route. Must match a configured depot name.
+    #[serde(default)]
+    #[schema(example = "Betriebshof Schleswiger Straße", nullable)]
+    pub start_point_name: Option<String>,
 }
 
 /// GeoJSON LineString geometry of an optimized watering route.
@@ -397,7 +414,7 @@ impl TryFrom<WateringPlanCreateRequest> for WateringPlanDraft {
         Ok(Self {
             date,
             description,
-            start_point_name: None,
+            start_point_name: req.start_point_name,
             cluster_ids: req.tree_cluster_ids.into_iter().map(Id::new).collect(),
             transporter_id: Some(Id::new(req.transporter_id)),
             trailer_id: req.trailer_id.map(Id::new),

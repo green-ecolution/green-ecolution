@@ -274,3 +274,83 @@ async fn route_endpoint_returns_503_when_routing_disabled() {
         "expected error body to mention routing, got: {body}"
     );
 }
+
+#[tokio::test]
+async fn start_points_endpoint_lists_configured_points() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+
+    let resp = app.get("/api/v1/routing/start-points").await;
+    assert_eq!(resp.status().as_u16(), 200);
+    let points: serde_json::Value = resp.json().await.unwrap();
+    let arr = points.as_array().unwrap();
+    assert!(!arr.is_empty());
+    assert_eq!(arr[0]["name"], "Betriebshof Schleswiger Straße");
+}
+
+#[tokio::test]
+async fn start_points_endpoint_returns_503_when_disabled() {
+    let app = spawn_app().await;
+    let resp = app.get("/api/v1/routing/start-points").await;
+    assert_eq!(resp.status().as_u16(), 503);
+}
+
+#[tokio::test]
+async fn plan_with_start_point_name_routes_from_that_depot() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let cid = create_cluster_with_tree(&app).await;
+
+    let mut body = plan_body(tid, &cid);
+    body["start_point_name"] = serde_json::Value::String("Depot Nord".to_string());
+    let resp = app.post_json("/api/v1/watering-plans", &body).await;
+    assert_eq!(resp.status().as_u16(), 201);
+    let plan: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(plan["start_point_name"], "Depot Nord");
+
+    // Check that streamlet received a depot near Depot Nord (lat≈54.81)
+    let requests = streamlet.received_requests().await.unwrap();
+    let last = requests.last().unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&last.body).unwrap();
+    let depot_lat = body["problem"]["depots"][0]["location"]["lat"]
+        .as_f64()
+        .unwrap();
+    assert!(
+        (depot_lat - 54.81).abs() < 0.01,
+        "expected depot lat≈54.81, got {depot_lat}"
+    );
+}
+
+#[tokio::test]
+async fn preview_with_start_point_name_uses_that_depot() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let cid = create_cluster_with_tree(&app).await;
+
+    let resp = app
+        .post_json(
+            "/api/v1/watering-plans/route/preview",
+            &serde_json::json!({
+                "cluster_ids": [cid],
+                "transporter_id": tid,
+                "start_point_name": "Depot Nord"
+            }),
+        )
+        .await;
+    assert_eq!(resp.status().as_u16(), 200);
+
+    let requests = streamlet.received_requests().await.unwrap();
+    let last = requests.last().unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&last.body).unwrap();
+    let depot_lat = body["problem"]["depots"][0]["location"]["lat"]
+        .as_f64()
+        .unwrap();
+    assert!(
+        (depot_lat - 54.81).abs() < 0.01,
+        "expected depot lat≈54.81, got {depot_lat}"
+    );
+}
