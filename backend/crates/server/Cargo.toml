@@ -80,8 +80,8 @@ libc = "0.2"
 quickcheck = "1"
 quickcheck_macros = "1"
 rsa = { version = "0.9", features = ["sha2"] }
-testcontainers = { version = "0.26", features = ["watchdog"] }
-testcontainers-modules = { version = "0.14", features = ["postgres"] }
+testcontainers = { version = "0.27", features = ["watchdog"] }
+testcontainers-modules = { version = "0.15", features = ["postgres"] }
 urlencoding = "2"
 wiremock = "0.6.5"
 
