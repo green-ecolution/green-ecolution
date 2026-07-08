@@ -422,7 +422,10 @@ async fn preview_route_returns_503_when_routing_disabled() {
     let response = app
         .post_json(
             "/api/v1/watering-plans/route/preview",
-            &serde_json::json!({}),
+            &serde_json::json!({
+                "cluster_ids": ["0190a8e9-7c4f-7000-8000-000000000000"],
+                "transporter_id": "0190a8e9-7c4f-7000-8000-000000000000"
+            }),
         )
         .await;
 
@@ -438,7 +441,9 @@ async fn preview_route_returns_503_when_routing_disabled() {
 async fn get_gpx_file_returns_503_when_routing_disabled() {
     let app = spawn_app().await;
 
-    let response = app.get("/api/v1/watering-plans/route/gpx/sample.gpx").await;
+    let response = app
+        .get("/api/v1/watering-plans/0190a8e9-7c4f-7000-8000-000000000000/route/gpx")
+        .await;
 
     assert_eq!(response.status().as_u16(), 503);
     let body = response.text().await.unwrap_or_default();

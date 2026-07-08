@@ -3,7 +3,8 @@ use std::{collections::HashMap, sync::Arc};
 use axum::{
     Json,
     extract::{Path, Query, State},
-    http::StatusCode,
+    http::{StatusCode, header},
+    response::IntoResponse,
 };
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -16,11 +17,12 @@ use crate::{
                 cluster::TreeClusterInListResponse,
                 vehicle::VehicleResponse,
                 watering_plan::{
-                    EvaluationValueResponse, WateringPlanCreateRequest, WateringPlanDetailView,
-                    WateringPlanInListDetailView, WateringPlanInListResponse, WateringPlanResponse,
-                    WateringPlanUpdateRequest,
+                    EvaluationValueResponse, RouteGeometry, RouteRequest, RouteResponse,
+                    WateringPlanCreateRequest, WateringPlanDetailView, WateringPlanInListDetailView,
+                    WateringPlanInListResponse, WateringPlanResponse, WateringPlanUpdateRequest,
                 },
             },
+            gpx,
             pagination::PaginationParams,
         },
     },
@@ -41,8 +43,9 @@ use domain::{
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .routes(routes!(list_watering_plans, create_watering_plan))
-        .routes(routes!(get_gpx_file))
         .routes(routes!(preview_route))
+        .routes(routes!(get_watering_plan_route))
+        .routes(routes!(get_gpx_file))
         .routes(routes!(
             get_watering_plan,
             update_watering_plan,
@@ -392,44 +395,122 @@ pub async fn delete_watering_plan(
     Ok(StatusCode::NO_CONTENT)
 }
 
-#[utoipa::path(get, path = "/watering-plans/route/gpx/{gpx_name}", tag = "Watering Plans",
-    operation_id = "getGpxFile",
-    summary = "Download GPX file",
-    description = "Downloads the optimized watering route as a GPX file.",
-    params(("gpx_name" = String, Path, description = "GPX file name")),
+fn route_response_from_plan(
+    plan: &domain::watering_plan::WateringPlan,
+) -> Result<RouteResponse, ServiceError> {
+    let geometry = plan
+        .route_geometry()
+        .ok_or(ServiceError::Repository(domain::RepositoryError::NotFound))?;
+    Ok(RouteResponse {
+        distance: plan.distance.map(|d| d.meters()).unwrap_or_default(),
+        duration: plan.duration.as_secs_f64(),
+        refill_count: plan.refill_count,
+        total_water_required: plan.total_water_required.unwrap_or_default(),
+        geometry: RouteGeometry::from_coordinates(geometry),
+    })
+}
+
+#[utoipa::path(get, path = "/watering-plans/{watering_plan_id}/route", tag = "Watering Plans",
+    operation_id = "getWateringPlanRoute",
+    summary = "Get the optimized route of a watering plan",
+    description = "Returns the persisted optimized route as GeoJSON LineString geometry with metrics.",
+    params(("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID")),
     responses(
-        (status = 200, description = "GPX file"),
+        (status = 200, description = "Optimized route", body = RouteResponse),
+        (status = 404, description = "Plan not found or has no route"),
         (status = 503, description = "Routing feature is disabled"),
         (status = 500, description = "Internal server error"),
     )
 )]
-#[tracing::instrument(level = "info", skip_all)]
-pub async fn get_gpx_file(
+#[tracing::instrument(level = "info", skip_all, fields(plan.id = %id))]
+pub async fn get_watering_plan_route(
     State(state): State<Arc<AppState>>,
-    Path(_name): Path<String>,
-) -> Result<Json<()>, ServiceError> {
+    Path(id): Path<uuid::Uuid>,
+) -> Result<Json<RouteResponse>, ServiceError> {
     if !state.feature_flags.routing_enabled {
         return Err(ServiceError::FeatureDisabled { feature: "routing" });
     }
-    todo!()
+    let plan = state.watering_plan_service.by_id(Id::new(id)).await?;
+    Ok(Json(route_response_from_plan(&plan)?))
 }
 
 #[utoipa::path(post, path = "/watering-plans/route/preview", tag = "Watering Plans",
     operation_id = "previewRoute",
     summary = "Preview route",
     description = "Calculates and previews an optimized watering route without creating a plan.",
+    request_body = RouteRequest,
     responses(
-        (status = 200, description = "Route preview"),
+        (status = 200, description = "Route preview", body = RouteResponse),
+        (status = 422, description = "Route problem rejected by the optimizer"),
+        (status = 502, description = "Routing engine unavailable"),
         (status = 503, description = "Routing feature is disabled"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
-pub async fn preview_route(State(state): State<Arc<AppState>>) -> Result<Json<()>, ServiceError> {
+pub async fn preview_route(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<RouteRequest>,
+) -> Result<Json<RouteResponse>, ServiceError> {
     if !state.feature_flags.routing_enabled {
         return Err(ServiceError::FeatureDisabled { feature: "routing" });
     }
-    todo!()
+    let computed = state
+        .watering_plan_service
+        .preview_route(
+            req.cluster_ids.into_iter().map(Id::new).collect(),
+            Id::new(req.transporter_id),
+            req.trailer_id.map(Id::new),
+        )
+        .await?;
+    Ok(Json(RouteResponse {
+        distance: computed.route.distance.meters(),
+        duration: computed.route.duration.as_secs_f64(),
+        refill_count: computed.route.refill_count,
+        total_water_required: computed.total_water_liters,
+        geometry: RouteGeometry::from_coordinates(&computed.route.geometry),
+    }))
+}
+
+#[utoipa::path(get, path = "/watering-plans/{watering_plan_id}/route/gpx", tag = "Watering Plans",
+    operation_id = "getGpxFile",
+    summary = "Download GPX file",
+    description = "Renders the optimized watering route of a plan as a GPX track.",
+    params(("watering_plan_id" = uuid::Uuid, Path, description = "Watering plan ID")),
+    responses(
+        (status = 200, description = "GPX file", content_type = "application/gpx+xml"),
+        (status = 404, description = "Plan not found or has no route"),
+        (status = 503, description = "Routing feature is disabled"),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(plan.id = %id))]
+pub async fn get_gpx_file(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<uuid::Uuid>,
+) -> Result<impl IntoResponse, ServiceError> {
+    if !state.feature_flags.routing_enabled {
+        return Err(ServiceError::FeatureDisabled { feature: "routing" });
+    }
+    let plan = state.watering_plan_service.by_id(Id::new(id)).await?;
+    let geometry = plan
+        .route_geometry()
+        .ok_or(ServiceError::Repository(domain::RepositoryError::NotFound))?;
+    let name = format!("Bewässerungsroute {}", plan.date.format("%Y-%m-%d"));
+    let body = gpx::render_gpx(&name, geometry);
+    Ok((
+        [
+            (header::CONTENT_TYPE, "application/gpx+xml".to_string()),
+            (
+                header::CONTENT_DISPOSITION,
+                format!(
+                    "attachment; filename=route-{}.gpx",
+                    plan.date.format("%Y-%m-%d")
+                ),
+            ),
+        ],
+        body,
+    ))
 }
 
 fn parse_date(s: &str) -> Result<chrono::DateTime<chrono::Utc>, ServiceError> {

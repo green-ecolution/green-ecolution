@@ -9,6 +9,7 @@ pub mod cluster;
 pub mod dto;
 pub mod error;
 pub mod evaluation;
+pub mod gpx;
 pub mod info;
 pub mod pagination;
 pub mod plugin;
