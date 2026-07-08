@@ -5,6 +5,7 @@ backend_dir      := "backend"
 frontend_dir     := "frontend"
 frontend_dist    := frontend_dir / "app/dist"
 binary_name      := "green-ecolution"
+valhalla_tiles_dir := ".docker/infra/valhalla/custom_files"
 
 app_version        := `git describe --tags --always --dirty 2>/dev/null || echo "dev"`
 app_git_commit     := `git rev-parse --short HEAD 2>/dev/null || echo "unknown"`
@@ -195,12 +196,57 @@ _acme-init:
       echo "No Porkbun API keys set — running without TLS."; \
     fi
 
-# Download Valhalla OSM data if missing
+# Build patched Valhalla tiles into custom_files using the streamlet pipeline
+# images. Same flow as the streamlet CI, but builds locally and skips the
+# S3 upload (-m), so no secrets are needed. CONSTRUCTION=1 pulls in the TBZ
+# roadworks changeset; default skips it for reproducible dev tiles.
+_build-valhalla-tiles:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    skip="$([[ "${CONSTRUCTION:-0}" == "1" ]] && echo false || echo true)"
+    work="$(mktemp -d)"
+    trap 'rm -rf "$work"' EXIT
+    mkdir -p "{{ valhalla_tiles_dir }}"
+    echo "Building patched PBF (SKIP_CONSTRUCTION=$skip)..."
+    docker run --rm -u "$USER_ID" \
+      -v "$work:/work" \
+      -e DATA_DIR=/work -e OUTPUT_PATH=/work \
+      -e OUTPUT_FILENAME=flensburg-updated.osm.pbf \
+      -e SKIP_CONSTRUCTION="$skip" \
+      ghcr.io/green-ecolution/streamlet/pbf-patch:latest
+    echo "Building Valhalla tiles into {{ valhalla_tiles_dir }}..."
+    docker run --rm -u "$USER_ID" \
+      -v "$(pwd)/{{ valhalla_tiles_dir }}:/custom_files" \
+      -v "$work:/data" \
+      -e PBF_PATH=/data/flensburg-updated.osm.pbf \
+      ghcr.io/green-ecolution/streamlet/generate-valhalla:latest -m
+    rm -f "{{ valhalla_tiles_dir }}/flensburg-updated.osm.pbf"
+    rmdir "{{ valhalla_tiles_dir }}/data" 2>/dev/null || true
+
+# Build patched Valhalla tiles only if they are missing
 _ensure-valhalla:
-    mkdir -p .docker/infra/valhalla/custom_files
-    test -f .docker/infra/valhalla/custom_files/sh.osm.pbf || \
-      wget https://download.geofabrik.de/europe/germany/schleswig-holstein-latest.osm.pbf \
-        -O .docker/infra/valhalla/custom_files/sh.osm.pbf
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -f "{{ valhalla_tiles_dir }}/valhalla_tiles.tar" ]; then
+      echo "Valhalla tiles present — skipping build."
+    else
+      just _build-valhalla-tiles
+    fi
+
+# (Re)build patched Valhalla tiles from scratch (CONSTRUCTION=1 for TBZ roadworks)
+valhalla-tiles:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Removing existing Valhalla tiles..."
+    # Wipe as root inside a container: the valhalla serve container may leave
+    # root-owned files behind that the host user cannot delete directly.
+    if [ -d "{{ valhalla_tiles_dir }}" ]; then
+      docker run --rm -u 0 --entrypoint find \
+        -v "$(pwd)/{{ valhalla_tiles_dir }}:/custom_files" \
+        ghcr.io/green-ecolution/streamlet/generate-valhalla:latest \
+        /custom_files -mindepth 1 -delete
+    fi
+    just _build-valhalla-tiles
 
 # Create Porkbun DNS records for local dev
 dns-setup:

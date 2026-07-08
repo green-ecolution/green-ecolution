@@ -19,7 +19,7 @@ Urban green spaces need water - but how much, and when? City maintenance teams o
 
 - 🌳 **Tree management** - Track trees and tree clusters, monitor their watering status
 - 📡 **Sensor integration** - Receive soil moisture data via LoRaWAN/MQTT in real-time
-- 🗺️ **Route optimization** - Generate efficient watering routes using Valhalla + Vroom
+- 🗺️ **Route optimization** - Generate efficient watering routes using Valhalla + Streamlet
 - 🚛 **Fleet management** - Manage vehicles, assign drivers, track watering plans
 - 📊 **Analytics** - Evaluate water consumption and team performance
 
@@ -28,7 +28,7 @@ Urban green spaces need water - but how much, and when? City maintenance teams o
 For a development setup with hot reload:
 
 ```bash
-just infra-up    # Start infra (Postgres, Keycloak, Traefik, MinIO, Valhalla, Vroom)
+just infra-up    # Start infra (Postgres, Keycloak, Traefik, MinIO, Valhalla, Streamlet)
 just migrate-up  # Apply database migrations
 just run-dev     # Run backend (hot reload) + frontend
 ```
@@ -99,7 +99,7 @@ just build       # Build frontend + backend
 | MinIO Console | <http://minio.localhost:3000> |
 | pgAdmin | <http://pgadmin.localhost:3000> |
 | Valhalla | <http://valhalla.localhost:3000> |
-| Vroom | <http://vroom.localhost:3000> |
+| Streamlet | <http://streamlet.localhost:3000> |
 
 **With Porkbun keys** (HTTPS on port 3443, valid Let's Encrypt certs):
 
@@ -110,7 +110,7 @@ just build       # Build frontend + backend
 | MinIO Console | `https://minio.<ip>.green-ecolution.dev:3443` |
 | pgAdmin | `https://pgadmin.<ip>.green-ecolution.dev:3443` |
 | Valhalla | `https://valhalla.<ip>.green-ecolution.dev:3443` |
-| Vroom | `https://vroom.<ip>.green-ecolution.dev:3443` |
+| Streamlet | `https://streamlet.<ip>.green-ecolution.dev:3443` |
 
 ## Architecture
 

@@ -236,26 +236,14 @@ services:
   #   networks:
   #     - app-network
 
-  vroom:
-    image: ghcr.io/vroom-project/vroom-docker:v1.15.0
-    volumes:
-      - ./.docker/infra/vroom:/conf
+  streamlet:
+    image: ghcr.io/green-ecolution/streamlet/server:latest
     environment:
-      VROOM_ROUTER: valhalla
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "curl",
-          "--silent",
-          "--fail-with-body",
-          "--max-time",
-          "5",
-          "http://localhost:3000/health",
-        ]
-      interval: 2s
-      timeout: 10s
-      retries: 5
+      STREAMLET_ADDR: "0.0.0.0:3000"
+      STREAMLET_VALHALLA_URL: "http://valhalla:8002"
+    depends_on:
+      valhalla:
+        condition: service_healthy
     deploy:
       resources:
         reservations:
@@ -266,10 +254,10 @@ services:
           memory: 150m
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.vroom.rule=Host(`vroom.${APP_HOST:-localhost}`)"
-      - "traefik.http.routers.vroom.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.streamlet.rule=Host(`streamlet.${APP_HOST:-localhost}`)"
+      - "traefik.http.routers.streamlet.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
   valhalla:
-    image: ghcr.io/gis-ops/docker-valhalla/valhalla:3.5.1
+    image: ghcr.io/valhalla/valhalla-scripted:3.6.0
     volumes:
       - ./.docker/infra/valhalla/custom_files:/custom_files
     environment:
