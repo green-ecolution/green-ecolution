@@ -117,16 +117,17 @@ impl Application {
                 }
             })
             .collect();
-        let routing_start_points: Vec<crate::http::v1::dto::routing::StartPointResponse> = settings
-            .routing
-            .depots
-            .iter()
-            .map(|d| crate::http::v1::dto::routing::StartPointResponse {
-                name: d.name.clone(),
-                lat: d.lat,
-                lon: d.lon,
-            })
-            .collect();
+        let routing_start_points: Vec<crate::http::v1::dto::routing::StartPointResponse> =
+            start_points
+                .iter()
+                .map(
+                    |(name, coord)| crate::http::v1::dto::routing::StartPointResponse {
+                        name: name.clone(),
+                        lat: coord.latitude(),
+                        lon: coord.longitude(),
+                    },
+                )
+                .collect();
         let services = Services::build(
             &repos,
             event_bus,
