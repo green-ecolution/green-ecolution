@@ -571,6 +571,60 @@ async fn finished_plan_keeps_consumed_water_across_save() {
 }
 
 #[tokio::test]
+async fn watering_plan_user_ids_round_trip() {
+    let app = spawn_app().await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let user_id = uuid::Uuid::now_v7().to_string();
+
+    let mut body = plan_body(tid, vec![]);
+    body["user_ids"] = serde_json::json!([user_id]);
+    let response = app.post_json("/api/v1/watering-plans", &body).await;
+    assert_eq!(response.status().as_u16(), 201);
+    let plan: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(plan["user_ids"], serde_json::json!([user_id]));
+
+    let list: serde_json::Value = app
+        .get("/api/v1/watering-plans")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(list["data"][0]["user_ids"], serde_json::json!([user_id]));
+
+    let other_user = uuid::Uuid::now_v7().to_string();
+    let update = serde_json::json!({
+        "date": "2026-05-01T08:00:00Z",
+        "description": "Bewaesserung Innenstadt",
+        "status": "planned",
+        "transporter_id": tid,
+        "tree_cluster_ids": [],
+        "user_ids": [other_user],
+        "cancellation_note": ""
+    });
+    let plan_id = plan["id"].as_str().unwrap();
+    let updated: serde_json::Value = app
+        .put_json(&format!("/api/v1/watering-plans/{plan_id}"), &update)
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(updated["user_ids"], serde_json::json!([other_user]));
+}
+
+#[tokio::test]
+async fn create_watering_plan_with_invalid_user_id_returns_400() {
+    let app = spawn_app().await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+
+    let mut body = plan_body(tid, vec![]);
+    body["user_ids"] = serde_json::json!(["kein-uuid"]);
+    let response = app.post_json("/api/v1/watering-plans", &body).await;
+    assert_eq!(response.status().as_u16(), 400);
+}
+
+#[tokio::test]
 async fn route_geometry_round_trips_through_repository() {
     use domain::shared::{coordinates::Coordinate, distance::Distance};
     use domain::watering_plan::{WateringPlanReader, WateringPlanWriter};

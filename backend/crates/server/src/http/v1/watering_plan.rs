@@ -20,7 +20,7 @@ use crate::{
                     EvaluationValueResponse, RouteGeometry, RouteRequest, RouteResponse,
                     WateringPlanCreateRequest, WateringPlanDetailView,
                     WateringPlanInListDetailView, WateringPlanInListResponse, WateringPlanResponse,
-                    WateringPlanUpdateRequest,
+                    WateringPlanUpdateRequest, parse_user_ids,
                 },
             },
             gpx,
@@ -191,7 +191,7 @@ pub async fn list_watering_plans(
                     transporter,
                     trailer,
                     clusters: plan_clusters,
-                    user_ids: vec![],
+                    user_ids: view.user_ids.iter().map(|u| u.to_string()).collect(),
                 },
             ))
         });
@@ -220,11 +220,11 @@ pub async fn get_watering_plan(
         resolve_view_relations(&state, &view).await?;
 
     let response = WateringPlanResponse::from(WateringPlanDetailView {
+        user_ids: view.user_ids.iter().map(|u| u.to_string()).collect(),
         view,
         transporter,
         trailer,
         clusters,
-        user_ids: vec![],
         evaluation,
     });
 
@@ -254,11 +254,11 @@ pub async fn create_watering_plan(
         resolve_view_relations(&state, &view).await?;
 
     let response = WateringPlanResponse::from(WateringPlanDetailView {
+        user_ids: view.user_ids.iter().map(|u| u.to_string()).collect(),
         view,
         transporter,
         trailer,
         clusters,
-        user_ids: vec![],
         evaluation,
     });
 
@@ -308,6 +308,7 @@ pub async fn update_watering_plan(
                 entity.provider.clone().map(ProviderId::new).transpose()?,
                 entity.additional_information.clone(),
             ),
+            user_ids: parse_user_ids(&entity.user_ids)?,
         };
         state
             .watering_plan_service
@@ -366,11 +367,11 @@ pub async fn update_watering_plan(
         resolve_view_relations(&state, &view).await?;
 
     let response = WateringPlanResponse::from(WateringPlanDetailView {
+        user_ids: view.user_ids.iter().map(|u| u.to_string()).collect(),
         view,
         transporter,
         trailer,
         clusters,
-        user_ids: vec![],
         evaluation,
     });
 

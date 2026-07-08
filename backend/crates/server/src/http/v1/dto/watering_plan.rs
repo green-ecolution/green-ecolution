@@ -397,6 +397,15 @@ fn parse_date(s: &str) -> Result<DateTime<Utc>, ServiceError> {
         .map_err(|e| ServiceError::InvalidInput(format!("invalid date: {e}")))
 }
 
+pub(crate) fn parse_user_ids(ids: &[String]) -> Result<Vec<uuid::Uuid>, ServiceError> {
+    ids.iter()
+        .map(|s| {
+            s.parse::<uuid::Uuid>()
+                .map_err(|e| ServiceError::InvalidInput(format!("invalid user id '{s}': {e}")))
+        })
+        .collect()
+}
+
 impl TryFrom<WateringPlanCreateRequest> for WateringPlanDraft {
     type Error = ServiceError;
 
@@ -419,6 +428,7 @@ impl TryFrom<WateringPlanCreateRequest> for WateringPlanDraft {
             transporter_id: Some(Id::new(req.transporter_id)),
             trailer_id: req.trailer_id.map(Id::new),
             provenance,
+            user_ids: parse_user_ids(&req.user_ids)?,
         })
     }
 }

@@ -22,6 +22,7 @@ pub struct WateringPlanView {
     pub distance: Option<f64>,
     pub total_water_required: Option<f64>,
     pub cluster_ids: Vec<Uuid>,
+    pub user_ids: Vec<Uuid>,
     pub transporter_id: Option<Uuid>,
     pub trailer_id: Option<Uuid>,
     pub cancellation_note: Option<String>,

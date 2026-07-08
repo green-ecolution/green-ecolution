@@ -49,6 +49,7 @@ struct WateringPlanViewRow {
     transporter_id: Option<RawId>,
     trailer_id: Option<RawId>,
     cluster_ids: Vec<RawId>,
+    user_ids: Vec<RawId>,
 }
 
 impl From<WateringPlanViewRow> for WateringPlanView {
@@ -69,6 +70,7 @@ impl From<WateringPlanViewRow> for WateringPlanView {
             distance: row.distance,
             total_water_required: row.total_water_required,
             cluster_ids: row.cluster_ids,
+            user_ids: row.user_ids,
             transporter_id,
             trailer_id,
             cancellation_note: Some(row.cancellation_note).filter(|s| !s.is_empty()),
@@ -102,6 +104,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             transporter_id: Option<RawId>,
             trailer_id: Option<RawId>,
             cluster_ids: Vec<RawId>,
+            user_ids: Vec<RawId>,
             route_geometry: Option<Value>,
         }
 
@@ -114,10 +117,12 @@ impl WateringPlanReader for PgWateringPlanRepository {
                       wp.provider, wp.additional_informations, wp.route_geometry,
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS "transporter_id: RawId",
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS "trailer_id: RawId",
-                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS "cluster_ids!: Vec<RawId>"
+                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS "cluster_ids!: Vec<RawId>",
+                      COALESCE(ARRAY_AGG(DISTINCT uwp.user_id) FILTER (WHERE uwp.user_id IS NOT NULL), ARRAY[]::uuid[]) AS "user_ids!: Vec<RawId>"
             FROM watering_plans wp
             LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id
             LEFT JOIN tree_cluster_watering_plans twp ON twp.watering_plan_id = wp.id
+            LEFT JOIN user_watering_plans uwp ON uwp.watering_plan_id = wp.id
             WHERE wp.id = $1
             GROUP BY wp.id"#,
             id.value()
@@ -138,6 +143,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             distance: row.distance,
             total_water_required: row.total_water_required,
             cluster_ids: row.cluster_ids,
+            user_ids: row.user_ids,
             transporter_id,
             trailer_id,
             cancellation_note: Some(row.cancellation_note).filter(|s| !s.is_empty()),
@@ -161,10 +167,12 @@ impl WateringPlanReader for PgWateringPlanRepository {
                       wp.provider, wp.additional_informations,
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS "transporter_id: RawId",
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS "trailer_id: RawId",
-                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS "cluster_ids!: Vec<RawId>"
+                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS "cluster_ids!: Vec<RawId>",
+                      COALESCE(ARRAY_AGG(DISTINCT uwp.user_id) FILTER (WHERE uwp.user_id IS NOT NULL), ARRAY[]::uuid[]) AS "user_ids!: Vec<RawId>"
             FROM watering_plans wp
             LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id
             LEFT JOIN tree_cluster_watering_plans twp ON twp.watering_plan_id = wp.id
+            LEFT JOIN user_watering_plans uwp ON uwp.watering_plan_id = wp.id
             WHERE wp.id = $1
             GROUP BY wp.id"#,
             id.value()
@@ -203,10 +211,12 @@ impl WateringPlanReader for PgWateringPlanRepository {
                       wp.provider, wp.additional_informations,
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS "transporter_id: RawId",
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS "trailer_id: RawId",
-                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS "cluster_ids!: Vec<RawId>"
+                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS "cluster_ids!: Vec<RawId>",
+                      COALESCE(ARRAY_AGG(DISTINCT uwp.user_id) FILTER (WHERE uwp.user_id IS NOT NULL), ARRAY[]::uuid[]) AS "user_ids!: Vec<RawId>"
             FROM watering_plans wp
             LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id
             LEFT JOIN tree_cluster_watering_plans twp ON twp.watering_plan_id = wp.id
+            LEFT JOIN user_watering_plans uwp ON uwp.watering_plan_id = wp.id
             WHERE ($1::text IS NULL OR wp.provider = $1)
             GROUP BY wp.id
             ORDER BY wp.date DESC
@@ -345,6 +355,24 @@ async fn persist_plan(
     )
     .await?;
 
+    sqlx::query!(
+        "DELETE FROM user_watering_plans WHERE watering_plan_id = $1",
+        plan.id.value()
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    let user_id_values: Vec<RawId> = plan.user_ids().to_vec();
+    if !user_id_values.is_empty() {
+        sqlx::query!(
+            "INSERT INTO user_watering_plans (user_id, watering_plan_id) SELECT UNNEST($1::uuid[]), $2",
+            &user_id_values,
+            plan.id.value(),
+        )
+        .execute(&mut **tx)
+        .await?;
+    }
+
     let cluster_id_values: Vec<RawId> = plan.cluster_ids().to_values();
     sqlx::query!(
         "DELETE FROM tree_cluster_watering_plans WHERE watering_plan_id = $1 AND tree_cluster_id <> ALL($2::uuid[])",
@@ -432,6 +460,16 @@ impl WateringPlanWriter for PgWateringPlanRepository {
                 "INSERT INTO tree_cluster_watering_plans (tree_cluster_id, watering_plan_id) SELECT UNNEST($1::uuid[]), $2",
                 &cluster_id_values,
                 plan_id.value()
+            )
+            .execute(&mut *tx)
+            .await?;
+        }
+
+        if !draft.user_ids.is_empty() {
+            sqlx::query!(
+                "INSERT INTO user_watering_plans (user_id, watering_plan_id) SELECT UNNEST($1::uuid[]), $2",
+                &draft.user_ids,
+                plan_id.value(),
             )
             .execute(&mut *tx)
             .await?;
