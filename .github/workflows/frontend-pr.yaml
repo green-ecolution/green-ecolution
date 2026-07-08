@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
+      docker: ${{ steps.filter.outputs.docker }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
@@ -30,6 +31,11 @@ jobs:
               - 'justfile'
               - '.github/workflows/frontend-pr.yaml'
               - '.github/actions/setup-frontend/**'
+            docker:
+              - 'frontend/Dockerfile'
+              - 'frontend/.dockerignore'
+              - 'frontend/pnpm-lock.yaml'
+              - '.github/workflows/frontend-pr.yaml'
 
   build:
     needs: changes
@@ -73,9 +79,11 @@ jobs:
         working-directory: ./frontend
         run: pnpm test
 
+  # The app build is already covered by the build job; this only needs to
+  # run when the image definition itself changes.
   test_dockerfile:
     needs: changes
-    if: needs.changes.outputs.frontend == 'true'
+    if: needs.changes.outputs.docker == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
