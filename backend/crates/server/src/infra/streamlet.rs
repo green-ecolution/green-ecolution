@@ -536,10 +536,26 @@ mod tests {
                 < 1e-9
         );
         assert!(
+            (body["problem"]["vehicles"][0]["start"]["lon"]
+                .as_f64()
+                .unwrap()
+                - 9.5)
+                .abs()
+                < 1e-9
+        );
+        assert!(
             (body["problem"]["depots"][0]["location"]["lat"]
                 .as_f64()
                 .unwrap()
                 - 54.9)
+                .abs()
+                < 1e-9
+        );
+        assert!(
+            (body["problem"]["depots"][0]["location"]["lon"]
+                .as_f64()
+                .unwrap()
+                - 9.5)
                 .abs()
                 < 1e-9
         );

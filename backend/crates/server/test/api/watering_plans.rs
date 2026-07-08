@@ -599,9 +599,11 @@ async fn route_geometry_round_trips_through_repository() {
         None,
         Some(geometry.clone()),
     );
+    plan.start_point_name = Some("Depot Nord".to_string());
     repo.save(&plan).await.unwrap();
 
     let reloaded = repo.by_id(domain::Id::new(plan_id)).await.unwrap();
     assert_eq!(reloaded.route_geometry(), Some(geometry.as_slice()));
     assert_eq!(reloaded.distance.map(|d| d.meters()), Some(1234.0));
+    assert_eq!(reloaded.start_point_name.as_deref(), Some("Depot Nord"));
 }
