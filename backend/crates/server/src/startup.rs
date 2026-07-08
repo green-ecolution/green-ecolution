@@ -97,7 +97,17 @@ impl Application {
         );
         let repos = Repositories::build(&pool, sensor_offline_after);
         let event_bus = build_event_bus(&repos);
-        let services = Services::build(&repos, event_bus);
+        let route_optimizer: Option<Arc<dyn domain::routing::RouteOptimizer>> =
+            settings.routing.enabled.then(|| {
+                Arc::new(infra::streamlet::StreamletRouteOptimizer::new(&settings.routing))
+                    as Arc<dyn domain::routing::RouteOptimizer>
+            });
+        let services = Services::build(
+            &repos,
+            event_bus,
+            route_optimizer,
+            settings.routing.tree_demand_liters,
+        );
 
         let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
         let (mqtt_state, mqtt_handle) =
@@ -283,7 +293,12 @@ struct Services {
 }
 
 impl Services {
-    fn build(repos: &Repositories, event_bus: Arc<dyn EventBus>) -> Self {
+    fn build(
+        repos: &Repositories,
+        event_bus: Arc<dyn EventBus>,
+        route_optimizer: Option<Arc<dyn domain::routing::RouteOptimizer>>,
+        tree_demand_liters: f64,
+    ) -> Self {
         Self {
             region: Arc::new(RegionService::new(
                 repos.region_reader.clone(),
@@ -318,7 +333,11 @@ impl Services {
             watering_plan: Arc::new(WateringPlanService::new(
                 repos.watering_plan_reader.clone(),
                 repos.watering_plan_writer.clone(),
+                repos.cluster_reader.clone(),
+                repos.vehicle_reader.clone(),
                 event_bus.clone(),
+                route_optimizer,
+                tree_demand_liters,
             )),
             watering_execution: Arc::new(WateringExecutionService::new(
                 repos.watering_plan_reader.clone(),

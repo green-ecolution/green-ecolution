@@ -10,7 +10,7 @@ pub mod vehicle_service;
 pub mod watering_execution_service;
 pub mod watering_plan_service;
 
-use domain::{RepositoryError, shared::error::ValidationError};
+use domain::{RepositoryError, routing::RoutingError, shared::error::ValidationError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum ServiceError {
@@ -30,6 +30,8 @@ pub enum ServiceError {
     NotActivated,
     #[error("{feature} feature is disabled")]
     FeatureDisabled { feature: &'static str },
+    #[error(transparent)]
+    Routing(#[from] RoutingError),
 }
 
 impl From<ValidationError> for ServiceError {
