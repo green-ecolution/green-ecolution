@@ -613,6 +613,67 @@ async fn watering_plan_user_ids_round_trip() {
 }
 
 #[tokio::test]
+async fn list_watering_plans_filters_by_status() {
+    let app = spawn_app().await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+
+    let planned: serde_json::Value = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
+        .await
+        .json()
+        .await
+        .unwrap();
+    let active: serde_json::Value = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    let start = serde_json::json!({
+        "date": "2026-05-01T08:00:00Z",
+        "description": "Bewaesserung Innenstadt",
+        "status": "active",
+        "transporter_id": tid,
+        "tree_cluster_ids": [],
+        "user_ids": [],
+        "cancellation_note": ""
+    });
+    let active_id = active["id"].as_str().unwrap();
+    let resp = app
+        .put_json(&format!("/api/v1/watering-plans/{active_id}"), &start)
+        .await;
+    assert_eq!(resp.status().as_u16(), 200);
+
+    let only_active: serde_json::Value = app
+        .get("/api/v1/watering-plans?status=active")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(only_active["data"].as_array().unwrap().len(), 1);
+    assert_eq!(only_active["data"][0]["id"], active["id"]);
+
+    let both: serde_json::Value = app
+        .get("/api/v1/watering-plans?status=active&status=planned")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(both["data"].as_array().unwrap().len(), 2);
+
+    let unfiltered: serde_json::Value = app
+        .get("/api/v1/watering-plans")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(unfiltered["data"].as_array().unwrap().len(), 2);
+    let _ = planned;
+}
+
+#[tokio::test]
 async fn create_watering_plan_with_invalid_user_id_returns_400() {
     let app = spawn_app().await;
     let transporter = create_transporter(&app).await;

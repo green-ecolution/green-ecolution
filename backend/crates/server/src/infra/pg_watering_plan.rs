@@ -193,11 +193,14 @@ impl WateringPlanReader for PgWateringPlanRepository {
         let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
         let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
         let provider = query.provider.as_ref().map(|p| p.as_str().to_owned());
+        let statuses: Vec<WateringPlanStatus> = query.statuses;
 
         let total = sqlx::query_scalar!(
             r#"SELECT COUNT(*) AS "count!: i64" FROM watering_plans
-            WHERE ($1::text IS NULL OR provider = $1)"#,
+            WHERE ($1::text IS NULL OR provider = $1)
+              AND ($2::watering_plan_status[] = '{}' OR status = ANY($2))"#,
             provider,
+            &statuses as &[WateringPlanStatus],
         )
         .fetch_one(&self.pool)
         .await? as u64;
@@ -218,10 +221,12 @@ impl WateringPlanReader for PgWateringPlanRepository {
             LEFT JOIN tree_cluster_watering_plans twp ON twp.watering_plan_id = wp.id
             LEFT JOIN user_watering_plans uwp ON uwp.watering_plan_id = wp.id
             WHERE ($1::text IS NULL OR wp.provider = $1)
+              AND ($2::watering_plan_status[] = '{}' OR wp.status = ANY($2))
             GROUP BY wp.id
             ORDER BY wp.date DESC
-            LIMIT $2 OFFSET $3"#,
+            LIMIT $3 OFFSET $4"#,
             provider,
+            &statuses as &[WateringPlanStatus],
             limit,
             offset,
         )

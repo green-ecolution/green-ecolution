@@ -108,6 +108,7 @@ pub struct WateringPlanDraft {
 #[derive(Debug, Default, Clone)]
 pub struct WateringPlanSearchQuery {
     pub provider: Option<ProviderId>,
+    pub statuses: Vec<WateringPlanStatus>,
 }
 
 /// Replacement input for [`WateringPlan`] field edits while still

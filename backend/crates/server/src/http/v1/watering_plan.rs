@@ -2,10 +2,11 @@ use std::{collections::HashMap, sync::Arc};
 
 use axum::{
     Json,
-    extract::{Path, Query, State},
+    extract::{Path, State},
     http::{StatusCode, header},
     response::IntoResponse,
 };
+use axum_extra::extract::Query;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
@@ -19,12 +20,12 @@ use crate::{
                 watering_plan::{
                     EvaluationValueResponse, RouteGeometry, RouteRequest, RouteResponse,
                     WateringPlanCreateRequest, WateringPlanDetailView,
-                    WateringPlanInListDetailView, WateringPlanInListResponse, WateringPlanResponse,
-                    WateringPlanUpdateRequest, parse_user_ids,
+                    WateringPlanInListDetailView, WateringPlanInListResponse,
+                    WateringPlanListParams, WateringPlanResponse, WateringPlanUpdateRequest,
+                    parse_user_ids,
                 },
             },
             gpx,
-            pagination::PaginationParams,
         },
     },
     service::ServiceError,
@@ -116,8 +117,8 @@ async fn resolve_view_relations(
 #[utoipa::path(get, path = "/watering-plans", tag = "Watering Plans",
     operation_id = "listWateringPlans",
     summary = "List all watering plans",
-    description = "Returns a paginated list of watering plans with embedded vehicles and clusters.",
-    params(PaginationParams),
+    description = "Returns a paginated list of watering plans with embedded vehicles and clusters. Optional filter parameter (status) narrows the result; the array parameter is repeatable.",
+    params(WateringPlanListParams),
     responses(
         (status = 200, description = "Paginated list of watering plans", body = ListResponse<WateringPlanInListResponse>),
         (status = 500, description = "Internal server error"),
@@ -126,12 +127,16 @@ async fn resolve_view_relations(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_watering_plans(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<WateringPlanListParams>,
 ) -> Result<Json<ListResponse<WateringPlanInListResponse>>, ServiceError> {
-    let pagination = Pagination::from(&params);
+    let pagination = Pagination::new(params.page, params.per_page);
+    let query = WateringPlanSearchQuery {
+        statuses: params.status.into_iter().map(Into::into).collect(),
+        ..Default::default()
+    };
     let page = state
         .watering_plan_service
-        .search_view(WateringPlanSearchQuery::default(), pagination)
+        .search_view(query, pagination)
         .await?;
 
     let vehicle_ids: Vec<_> = page

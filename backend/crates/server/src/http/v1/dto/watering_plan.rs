@@ -13,6 +13,20 @@ use domain::{
 
 use super::{WateringPlanStatus, cluster::TreeClusterInListResponse, vehicle::VehicleResponse};
 
+/// Query parameters for the paginated watering plan list endpoint.
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+pub struct WateringPlanListParams {
+    #[param(default = 1, minimum = 1, example = 1)]
+    #[serde(default = "crate::http::v1::pagination::default_page")]
+    pub page: u64,
+    #[param(default = 25, minimum = 1, maximum = 100, example = 25)]
+    #[serde(default = "crate::http::v1::pagination::default_per_page")]
+    pub per_page: u64,
+    /// Repeatable: `?status=planned&status=active`.
+    #[serde(default)]
+    pub status: Vec<WateringPlanStatus>,
+}
+
 /// Evaluation result for a single tree cluster within a watering plan.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct EvaluationValueResponse {
