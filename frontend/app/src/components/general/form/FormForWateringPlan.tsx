@@ -115,7 +115,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
             />
           )}
         />
-        {startPoints != null && (
+        {startPoints != null && startPoints.length > 0 && (
           <Controller
             name="startPointName"
             control={control}

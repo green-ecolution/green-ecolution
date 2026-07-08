@@ -71,7 +71,7 @@ export interface WateringPlanUpdateRequest {
      */
     provider?: string | null;
     /**
-     * Named start/return point for the route. Must match a configured depot name.
+     * Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.
      * @type {string}
      * @memberof WateringPlanUpdateRequest
      */

@@ -85,9 +85,9 @@ function NewWateringPlan() {
           Ein Einsatzplan bildet eine Bewässerungsroute ab, indem ihr ein Fahrzeug, einen Anhänger,
           Mitarbeitende und anzufahrende Bewässerungsgruppen zugewiesen werden können. Ein neu
           erstellter Einsatzplan wird automatisch als »geplant« eingestuft. Anhand der
-          Bewässerungsgruppen und die Anzahl der Bäume wird berechnet, wie viel Wasser zum
-          bewässsern benötigt wird. Der Startpunkt des Einsatzes kann aus den konfigurierten
-          Depotstandorten ausgewählt werden.
+          Bewässerungsgruppen und die Anzahl der Bäume wird berechnet, wie viel Wasser zum bewässern
+          benötigt wird. Der Startpunkt des Einsatzes kann aus den konfigurierten Depotstandorten
+          ausgewählt werden.
         </p>
       </article>
 
