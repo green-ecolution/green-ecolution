@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
+      docker: ${{ steps.filter.outputs.docker }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
@@ -30,6 +31,11 @@ jobs:
               - 'justfile'
               - '.github/workflows/backend-pr.yaml'
               - '.github/actions/setup-backend/**'
+            docker:
+              - 'backend/Dockerfile'
+              - 'backend/.dockerignore'
+              - 'backend/Cargo.lock'
+              - '.github/workflows/backend-pr.yaml'
 
   build_and_test:
     needs: changes
@@ -46,16 +52,39 @@ jobs:
         working-directory: ./backend
         run: cargo build -p domain --no-default-features --locked
 
-      - name: Build workspace
-        working-directory: ./backend
-        run: cargo build --workspace --locked
-
       - name: Verify Docker daemon (testcontainers prerequisite)
         run: docker version
 
       - name: Test workspace
         working-directory: ./backend
         run: cargo test --workspace --locked
+
+  msrv:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Read MSRV from Cargo.toml
+        id: msrv
+        run: echo "msrv=$(grep -m1 '^rust-version' backend/Cargo.toml | cut -d'"' -f2)" >> "$GITHUB_OUTPUT"
+
+      - name: Setup MSRV toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ steps.msrv.outputs.msrv }}
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend
+          cache-on-failure: "true"
+
+      - name: Check workspace with MSRV
+        working-directory: ./backend
+        run: cargo check --workspace --locked
 
   lint:
     needs: changes
@@ -154,9 +183,11 @@ jobs:
       - name: Reset and re-apply migrations
         run: just migrate-reset
 
+  # Full workspace compilation is already covered by build_and_test; this
+  # only needs to run when the image definition itself changes.
   test_dockerfile:
     needs: changes
-    if: needs.changes.outputs.backend == 'true'
+    if: needs.changes.outputs.docker == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -178,6 +209,7 @@ jobs:
     needs:
       [
         build_and_test,
+        msrv,
         lint,
         check_sqlx_prepared,
         test_migrations,
@@ -190,6 +222,7 @@ jobs:
         run: |
           results=(
             "${{ needs.build_and_test.result }}"
+            "${{ needs.msrv.result }}"
             "${{ needs.lint.result }}"
             "${{ needs.check_sqlx_prepared.result }}"
             "${{ needs.test_migrations.result }}"
