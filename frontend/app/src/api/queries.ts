@@ -212,6 +212,25 @@ export const wateringPlanRouteQuery = (id: string) =>
     enabled: isValidUuid(id),
   })
 
+export const routePreviewQuery = (
+  clusterIds: string[],
+  transporterId: string,
+  startPointName?: string | null,
+) =>
+  queryOptions<RouteResponse | null>({
+    queryKey: ['route-preview', clusterIds.slice().sort(), transporterId, startPointName ?? null],
+    queryFn: async () => {
+      try {
+        return await wateringPlanApi.previewRoute({
+          routeRequest: { clusterIds, transporterId, startPointName },
+        })
+      } catch {
+        return null
+      }
+    },
+    retry: false,
+  })
+
 export const userQuery = (params?: ListUsersRequest) => {
   return queryOptions<ListResponseUserResponse>({
     queryKey: ['users', params],
