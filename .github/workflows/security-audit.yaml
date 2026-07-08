@@ -1,0 +1,33 @@
+name: "Security Audit"
+
+# cargo-deny: RustSec advisories, license compliance, banned crates, sources.
+# Runs on dependency changes and weekly to catch newly published advisories.
+
+on:
+  pull_request:
+    paths:
+      - "backend/Cargo.toml"
+      - "backend/Cargo.lock"
+      - "backend/crates/**/Cargo.toml"
+      - "backend/deny.toml"
+      - ".github/workflows/security-audit.yaml"
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cargo-deny:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: ./backend/Cargo.toml

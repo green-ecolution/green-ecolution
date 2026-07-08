@@ -1,0 +1,55 @@
+# cargo-deny configuration — checked in CI (security-audit workflow).
+# Docs: https://embarkstudios.github.io/cargo-deny/
+
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+yanked = "deny"
+ignore = [
+  # rustls-webpki 0.102.x pulled in by rumqttc (direct pin, no fixed 0.102
+  # release exists). All require certificate misissuance or CRL usage to
+  # exploit. Remove once rumqttc moves to webpki >= 0.103.
+  "RUSTSEC-2026-0098",
+  "RUSTSEC-2026-0099",
+  "RUSTSEC-2026-0104",
+  "RUSTSEC-2026-0049",
+  # paste is unmaintained but still pulled in by utoipa-axum; no safe
+  # upgrade available.
+  "RUSTSEC-2024-0436",
+  # rsa Marvin attack: dev-only (generates JWT test keys in the integration
+  # suite), timing side channel is irrelevant there. No fixed release yet.
+  "RUSTSEC-2023-0071",
+  # rustls-pemfile is unmaintained; still required by rumqttc's use-rustls
+  # feature.
+  "RUSTSEC-2025-0134",
+]
+
+[licenses]
+version = 2
+allow = [
+  # own workspace crates
+  "AGPL-3.0-or-later",
+  "MIT",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Zlib",
+  "MPL-2.0",
+  "CC0-1.0",
+  "Unicode-3.0",
+  # webpki-roots (Mozilla CA bundle)
+  "CDLA-Permissive-2.0",
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+allow-wildcard-paths = true
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
