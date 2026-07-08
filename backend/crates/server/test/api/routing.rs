@@ -207,6 +207,59 @@ async fn gpx_download_renders_track_from_geometry() {
 }
 
 #[tokio::test]
+async fn editing_plan_clears_stale_route_when_recompute_fails() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let cid = create_cluster_with_tree(&app).await;
+
+    // Create plan — first solve succeeds, plan gets route metrics.
+    let resp = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, &cid))
+        .await;
+    assert_eq!(resp.status().as_u16(), 201);
+    let plan: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(plan["distance"], 12500.0);
+    let plan_id = plan["id"].as_str().unwrap();
+    let route_resp = app
+        .get(&format!("/api/v1/watering-plans/{plan_id}/route"))
+        .await;
+    assert_eq!(route_resp.status().as_u16(), 200);
+
+    // Make the next solve call fail.
+    streamlet.reset().await;
+    Mock::given(method("POST"))
+        .and(path("/v1/solve"))
+        .respond_with(ResponseTemplate::new(500))
+        .mount(&streamlet)
+        .await;
+
+    // Edit the plan — recompute fails, so stale route must be cleared.
+    let update_body = serde_json::json!({
+        "date": "2026-08-15T06:00:00+00:00",
+        "description": "Edited",
+        "status": "planned",
+        "transporter_id": tid,
+        "tree_cluster_ids": [cid],
+        "user_ids": [],
+        "cancellation_note": ""
+    });
+    let update_resp = app
+        .put_json(&format!("/api/v1/watering-plans/{plan_id}"), &update_body)
+        .await;
+    assert_eq!(update_resp.status().as_u16(), 200);
+    let updated: serde_json::Value = update_resp.json().await.unwrap();
+    assert_eq!(updated["distance"], 0.0, "stale distance must be cleared");
+
+    // Route endpoint must return 404 — no geometry stored.
+    let route_after = app
+        .get(&format!("/api/v1/watering-plans/{plan_id}/route"))
+        .await;
+    assert_eq!(route_after.status().as_u16(), 404);
+}
+
+#[tokio::test]
 async fn route_endpoint_returns_503_when_routing_disabled() {
     let app = spawn_app().await;
 

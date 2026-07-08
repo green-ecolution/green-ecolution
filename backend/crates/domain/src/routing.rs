@@ -1,7 +1,7 @@
 //! Route-optimization port.
 //!
 //! Mirrors the `event_bus` pattern: the domain defines the trait and the
-//! portable value types; a server-side adapter (Streamlet) implements it.
+//! portable value types; a server-side adapter implements it.
 //! Depot and refill locations are configuration owned by the adapter, not
 //! part of this port.
 

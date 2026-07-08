@@ -512,4 +512,23 @@ mod tests {
             .unwrap_err();
         assert!(matches!(err, RoutingError::Unavailable(_)));
     }
+
+    #[tokio::test]
+    async fn optimize_reports_malformed_polyline_as_failed() {
+        let server = MockServer::start().await;
+        // "!!!" contains bytes < 63 which polyline::decode_polyline rejects
+        let body = ok_body("!!!not-a-polyline");
+        Mock::given(method("POST"))
+            .and(path("/v1/solve"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(body))
+            .mount(&server)
+            .await;
+
+        let transporter = vehicle(VehicleType::Transporter, 2000.0);
+        let err = optimizer(&server.uri())
+            .optimize(&transporter, None, &stops())
+            .await
+            .unwrap_err();
+        assert!(matches!(err, RoutingError::Failed(_)));
+    }
 }

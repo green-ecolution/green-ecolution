@@ -99,6 +99,11 @@ impl WateringPlanService {
     ) -> Result<WateringPlan, ServiceError> {
         let mut plan = self.reader.by_id(id).await?;
         plan.replace_details(update).map_err(map_plan_error)?;
+        if self.route_optimizer.is_some() {
+            // Edited cluster/vehicle set invalidates the old route; a failed
+            // recompute must leave the "no route" state, not a stale track.
+            plan.set_metrics(None, None, 0, std::time::Duration::ZERO, None, None);
+        }
         self.writer.save(&plan).await?;
         if self.route_optimizer.is_some() {
             self.apply_route(&mut plan).await;
