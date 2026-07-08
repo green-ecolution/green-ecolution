@@ -13,6 +13,22 @@ use domain::{
 
 use super::{WateringPlanStatus, cluster::TreeClusterInListResponse, vehicle::VehicleResponse};
 
+/// Query parameters for the paginated watering plan list endpoint.
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+pub struct WateringPlanListParams {
+    /// Page number to retrieve (1-based).
+    #[param(default = 1, minimum = 1, example = 1)]
+    #[serde(default = "crate::http::v1::pagination::default_page")]
+    pub page: u64,
+    /// Number of items per page.
+    #[param(default = 25, minimum = 1, maximum = 100, example = 25)]
+    #[serde(default = "crate::http::v1::pagination::default_per_page")]
+    pub per_page: u64,
+    /// Repeatable: `?status=planned&status=active`.
+    #[serde(default)]
+    pub status: Vec<WateringPlanStatus>,
+}
+
 /// Evaluation result for a single tree cluster within a watering plan.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct EvaluationValueResponse {
@@ -397,6 +413,15 @@ fn parse_date(s: &str) -> Result<DateTime<Utc>, ServiceError> {
         .map_err(|e| ServiceError::InvalidInput(format!("invalid date: {e}")))
 }
 
+pub(crate) fn parse_user_ids(ids: &[String]) -> Result<Vec<uuid::Uuid>, ServiceError> {
+    ids.iter()
+        .map(|s| {
+            s.parse::<uuid::Uuid>()
+                .map_err(|e| ServiceError::InvalidInput(format!("invalid user id '{s}': {e}")))
+        })
+        .collect()
+}
+
 impl TryFrom<WateringPlanCreateRequest> for WateringPlanDraft {
     type Error = ServiceError;
 
@@ -419,6 +444,7 @@ impl TryFrom<WateringPlanCreateRequest> for WateringPlanDraft {
             transporter_id: Some(Id::new(req.transporter_id)),
             trailer_id: req.trailer_id.map(Id::new),
             provenance,
+            user_ids: parse_user_ids(&req.user_ids)?,
         })
     }
 }

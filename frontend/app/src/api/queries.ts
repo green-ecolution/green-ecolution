@@ -1,4 +1,4 @@
-import { queryOptions, keepPreviousData } from '@tanstack/react-query'
+import { queryOptions, infiniteQueryOptions, keepPreviousData } from '@tanstack/react-query'
 import {
   AppInfoResponse,
   clusterApi,
@@ -43,11 +43,13 @@ import {
   vehicleApi,
   VehicleResponse,
   WateringPlanResponse,
+  WateringPlanStatus,
   WateringStatus,
   wateringPlanApi,
   wateringPlanPreviewApi,
   evaluationApi,
 } from './backendApi'
+import { DONE_STATUSES } from '@/lib/wateringPlanBoard'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -332,4 +334,27 @@ export const routingStartPointsQuery = () =>
       }
     },
     staleTime: Infinity,
+  })
+
+export const wateringPlanBoardColumnQuery = (statuses: WateringPlanStatus[]) =>
+  queryOptions<ListResponseWateringPlanInListResponse>({
+    queryKey: ['watering-plans', 'board', statuses],
+    queryFn: () => wateringPlanApi.listWateringPlans({ status: statuses, page: 1, perPage: 100 }),
+  })
+
+export const wateringPlanBoardDoneQuery = () =>
+  infiniteQueryOptions({
+    queryKey: ['watering-plans', 'board', 'done'],
+    queryFn: ({ pageParam }) =>
+      wateringPlanApi.listWateringPlans({ status: DONE_STATUSES, page: pageParam, perPage: 20 }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.pagination?.nextPage ? lastPage.pagination.currentPage + 1 : undefined,
+  })
+
+export const suggestedClustersQuery = () =>
+  queryOptions<ListResponseTreeClusterInListResponse>({
+    queryKey: ['treeclusters', 'list', { wateringStatus: [WateringStatus.Bad] }],
+    queryFn: () =>
+      clusterApi.listClusters({ wateringStatus: [WateringStatus.Bad], page: 1, perPage: 50 }),
   })

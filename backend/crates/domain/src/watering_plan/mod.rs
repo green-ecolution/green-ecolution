@@ -4,6 +4,8 @@
 //!
 //! ```text
 //! Planned ──start()──► Active ──finish(evals)──► Finished
+//!    ▲                   │
+//!    └──revert_start()───┤
 //!    │                   │
 //!    └──cancel(note)──┐  └──fail(note)──► NotCompleted
 //!                     ▼
@@ -89,6 +91,7 @@ pub struct WateringPlan {
     cancellation_note: Option<String>,
     provenance: Provenance,
     route_geometry: Option<Vec<Coordinate>>,
+    user_ids: Vec<uuid::Uuid>,
 }
 
 /// Input for creating a new [`WateringPlan`].
@@ -101,11 +104,13 @@ pub struct WateringPlanDraft {
     pub transporter_id: Option<Id<Vehicle>>,
     pub trailer_id: Option<Id<Vehicle>>,
     pub provenance: Provenance,
+    pub user_ids: Vec<uuid::Uuid>,
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct WateringPlanSearchQuery {
     pub provider: Option<ProviderId>,
+    pub statuses: Vec<WateringPlanStatus>,
 }
 
 /// Replacement input for [`WateringPlan`] field edits while still
@@ -119,6 +124,7 @@ pub struct WateringPlanUpdate {
     pub transporter_id: Option<Id<Vehicle>>,
     pub trailer_id: Option<Id<Vehicle>>,
     pub provenance: Provenance,
+    pub user_ids: Vec<uuid::Uuid>,
 }
 
 impl WateringPlan {
@@ -141,6 +147,7 @@ impl WateringPlan {
             cancellation_note: snap.cancellation_note,
             provenance: Provenance::reconstitute(snap.provider, snap.additional_info),
             route_geometry: snap.route_geometry,
+            user_ids: snap.user_ids,
         }
     }
 
@@ -150,6 +157,10 @@ impl WateringPlan {
 
     pub fn cluster_ids(&self) -> &[Id<TreeCluster>] {
         &self.cluster_ids
+    }
+
+    pub fn user_ids(&self) -> &[uuid::Uuid] {
+        &self.user_ids
     }
 
     pub fn transporter_id(&self) -> Option<Id<Vehicle>> {
@@ -194,6 +205,7 @@ impl WateringPlan {
         self.transporter_id = update.transporter_id;
         self.trailer_id = update.trailer_id;
         self.provenance = update.provenance;
+        self.user_ids = update.user_ids;
         Ok(())
     }
 
@@ -207,6 +219,21 @@ impl WateringPlan {
         }
         self.status = WateringPlanStatus::Active;
         Ok(vec![DomainEvent::WateringPlanStarted {
+            plan_id: self.id,
+            cluster_ids: self.cluster_ids.clone(),
+        }])
+    }
+
+    /// Transitions `Active → Planned`, undoing an accidental start.
+    pub fn revert_start(&mut self) -> Result<Vec<DomainEvent>, WateringPlanError> {
+        if self.status != WateringPlanStatus::Active {
+            return Err(WateringPlanError::InvalidStateTransition {
+                from: self.status,
+                to: WateringPlanStatus::Planned,
+            });
+        }
+        self.status = WateringPlanStatus::Planned;
+        Ok(vec![DomainEvent::WateringPlanStartReverted {
             plan_id: self.id,
             cluster_ids: self.cluster_ids.clone(),
         }])
@@ -333,6 +360,7 @@ mod tests {
             cancellation_note: None,
             provenance: Provenance::default(),
             route_geometry: None,
+            user_ids: vec![],
         };
         (plan, [c1, c2])
     }
@@ -533,6 +561,7 @@ mod tests {
             transporter_id: None,
             trailer_id: None,
             provenance: Provenance::default(),
+            user_ids: vec![],
         });
         assert!(matches!(
             result,
@@ -576,6 +605,7 @@ mod tests {
             transporter_id: p.transporter_id(),
             trailer_id: None,
             provenance: Provenance::default(),
+            user_ids: vec![],
         })
         .unwrap();
         assert_eq!(
@@ -597,10 +627,60 @@ mod tests {
             transporter_id: Some(Id::new_v7()),
             trailer_id: None,
             provenance: Provenance::default(),
+            user_ids: vec![],
         });
         assert!(matches!(
             result,
             Err(WateringPlanError::CannotMutateAfterStart)
         ));
+    }
+
+    #[test]
+    fn revert_start_from_active_returns_to_planned() {
+        let (mut p, [c1, c2]) = fixed_plan();
+        p.start().unwrap();
+        let events = p.revert_start().unwrap();
+        assert_eq!(p.status(), WateringPlanStatus::Planned);
+        assert_eq!(events.len(), 1);
+        match &events[0] {
+            DomainEvent::WateringPlanStartReverted {
+                plan_id,
+                cluster_ids,
+            } => {
+                assert_eq!(*plan_id, p.id);
+                assert_eq!(cluster_ids, &vec![c1, c2]);
+            }
+            other => panic!("expected WateringPlanStartReverted, got {other:?}"),
+        }
+        p.start().unwrap();
+        assert_eq!(p.status(), WateringPlanStatus::Active);
+    }
+
+    #[test]
+    fn revert_start_only_from_active() {
+        let (mut p, _) = fixed_plan();
+        assert_err!(p.revert_start());
+        p.start().unwrap();
+        p.fail("breakdown".to_string()).unwrap();
+        assert_err!(p.revert_start());
+    }
+
+    #[test]
+    fn replace_details_updates_assigned_users() {
+        let (mut p, [c1, c2]) = fixed_plan();
+        let u1 = uuid::Uuid::now_v7();
+        let u2 = uuid::Uuid::now_v7();
+        p.replace_details(WateringPlanUpdate {
+            date: p.date,
+            description: None,
+            start_point_name: None,
+            cluster_ids: vec![c1, c2],
+            transporter_id: p.transporter_id(),
+            trailer_id: None,
+            user_ids: vec![u1, u2],
+            provenance: Provenance::default(),
+        })
+        .unwrap();
+        assert_eq!(p.user_ids(), &[u1, u2]);
     }
 }

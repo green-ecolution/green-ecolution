@@ -571,6 +571,229 @@ async fn finished_plan_keeps_consumed_water_across_save() {
 }
 
 #[tokio::test]
+async fn watering_plan_user_ids_round_trip() {
+    let app = spawn_app().await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let user_id = uuid::Uuid::now_v7().to_string();
+
+    let mut body = plan_body(tid, vec![]);
+    body["user_ids"] = serde_json::json!([user_id]);
+    let response = app.post_json("/api/v1/watering-plans", &body).await;
+    assert_eq!(response.status().as_u16(), 201);
+    let plan: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(plan["user_ids"], serde_json::json!([user_id]));
+
+    let list: serde_json::Value = app
+        .get("/api/v1/watering-plans")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(list["data"][0]["user_ids"], serde_json::json!([user_id]));
+
+    let other_user = uuid::Uuid::now_v7().to_string();
+    let update = serde_json::json!({
+        "date": "2026-05-01T08:00:00Z",
+        "description": "Bewaesserung Innenstadt",
+        "status": "planned",
+        "transporter_id": tid,
+        "tree_cluster_ids": [],
+        "user_ids": [other_user],
+        "cancellation_note": ""
+    });
+    let plan_id = plan["id"].as_str().unwrap();
+    let updated: serde_json::Value = app
+        .put_json(&format!("/api/v1/watering-plans/{plan_id}"), &update)
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(updated["user_ids"], serde_json::json!([other_user]));
+}
+
+#[tokio::test]
+async fn list_watering_plans_filters_by_status() {
+    let app = spawn_app().await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+
+    let planned: serde_json::Value = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
+        .await
+        .json()
+        .await
+        .unwrap();
+    let active: serde_json::Value = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    let start = serde_json::json!({
+        "date": "2026-05-01T08:00:00Z",
+        "description": "Bewaesserung Innenstadt",
+        "status": "active",
+        "transporter_id": tid,
+        "tree_cluster_ids": [],
+        "user_ids": [],
+        "cancellation_note": ""
+    });
+    let active_id = active["id"].as_str().unwrap();
+    let resp = app
+        .put_json(&format!("/api/v1/watering-plans/{active_id}"), &start)
+        .await;
+    assert_eq!(resp.status().as_u16(), 200);
+
+    let only_active: serde_json::Value = app
+        .get("/api/v1/watering-plans?status=active")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(only_active["data"].as_array().unwrap().len(), 1);
+    assert_eq!(only_active["data"][0]["id"], active["id"]);
+
+    let both: serde_json::Value = app
+        .get("/api/v1/watering-plans?status=active&status=planned")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(both["data"].as_array().unwrap().len(), 2);
+
+    let unfiltered: serde_json::Value = app
+        .get("/api/v1/watering-plans")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(unfiltered["data"].as_array().unwrap().len(), 2);
+    let planned_id = planned["id"].as_str().unwrap();
+    let unfiltered_ids: Vec<&str> = unfiltered["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|p| p["id"].as_str())
+        .collect();
+    assert!(
+        unfiltered_ids.contains(&planned_id),
+        "unfiltered list must include the planned plan, got: {unfiltered_ids:?}"
+    );
+}
+
+#[tokio::test]
+async fn list_watering_plans_returns_correct_user_ids_and_clusters_under_multiple_joins() {
+    // Guards the ARRAY_AGG(DISTINCT ...) aggregation under three LEFT JOINs: a plan with
+    // 2 users and 2 clusters must not fan out rows and duplicate or lose entries.
+    let app = spawn_app().await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+
+    let cluster1 = create_cluster(&app).await;
+    let cid1 = cluster1["id"].as_str().unwrap();
+    let cluster2 = create_cluster(&app).await;
+    let cid2 = cluster2["id"].as_str().unwrap();
+
+    let user1 = uuid::Uuid::now_v7().to_string();
+    let user2 = uuid::Uuid::now_v7().to_string();
+
+    let mut body = plan_body(tid, vec![cid1, cid2]);
+    body["user_ids"] = serde_json::json!([user1, user2]);
+    let resp = app.post_json("/api/v1/watering-plans", &body).await;
+    assert_eq!(resp.status().as_u16(), 201);
+
+    let list: serde_json::Value = app
+        .get("/api/v1/watering-plans?status=planned")
+        .await
+        .json()
+        .await
+        .unwrap();
+
+    let plan = &list["data"][0];
+    let mut got_users: Vec<&str> = plan["user_ids"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|v| v.as_str())
+        .collect();
+    got_users.sort_unstable();
+
+    let mut expected_users = vec![user1.as_str(), user2.as_str()];
+    expected_users.sort_unstable();
+
+    assert_eq!(
+        got_users, expected_users,
+        "user_ids must contain exactly 2 distinct entries"
+    );
+    assert_eq!(
+        plan["treeclusters"].as_array().unwrap().len(),
+        2,
+        "treeclusters must contain exactly 2 entries"
+    );
+}
+
+#[tokio::test]
+async fn create_watering_plan_with_invalid_user_id_returns_400() {
+    let app = spawn_app().await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+
+    let mut body = plan_body(tid, vec![]);
+    body["user_ids"] = serde_json::json!(["kein-uuid"]);
+    let response = app.post_json("/api/v1/watering-plans", &body).await;
+    assert_eq!(response.status().as_u16(), 400);
+}
+
+#[tokio::test]
+async fn revert_started_watering_plan_returns_to_planned() {
+    let app = spawn_app().await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+
+    let plan: serde_json::Value = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
+        .await
+        .json()
+        .await
+        .unwrap();
+    let plan_id = plan["id"].as_str().unwrap();
+
+    let mut update = serde_json::json!({
+        "date": "2026-05-01T08:00:00Z",
+        "description": "Bewaesserung Innenstadt",
+        "status": "active",
+        "transporter_id": tid,
+        "tree_cluster_ids": [],
+        "user_ids": [],
+        "cancellation_note": ""
+    });
+    let resp = app
+        .put_json(&format!("/api/v1/watering-plans/{plan_id}"), &update)
+        .await;
+    assert_eq!(resp.status().as_u16(), 200);
+
+    update["status"] = serde_json::json!("planned");
+    let reverted: serde_json::Value = app
+        .put_json(&format!("/api/v1/watering-plans/{plan_id}"), &update)
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(reverted["status"], "planned");
+
+    update["status"] = serde_json::json!("active");
+    let restarted: serde_json::Value = app
+        .put_json(&format!("/api/v1/watering-plans/{plan_id}"), &update)
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(restarted["status"], "active");
+}
+
+#[tokio::test]
 async fn route_geometry_round_trips_through_repository() {
     use domain::shared::{coordinates::Coordinate, distance::Distance};
     use domain::watering_plan::{WateringPlanReader, WateringPlanWriter};

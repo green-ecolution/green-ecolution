@@ -2,10 +2,11 @@ use std::{collections::HashMap, sync::Arc};
 
 use axum::{
     Json,
-    extract::{Path, Query, State},
+    extract::{Path, State},
     http::{StatusCode, header},
     response::IntoResponse,
 };
+use axum_extra::extract::Query;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
@@ -19,12 +20,12 @@ use crate::{
                 watering_plan::{
                     EvaluationValueResponse, RouteGeometry, RouteRequest, RouteResponse,
                     WateringPlanCreateRequest, WateringPlanDetailView,
-                    WateringPlanInListDetailView, WateringPlanInListResponse, WateringPlanResponse,
-                    WateringPlanUpdateRequest,
+                    WateringPlanInListDetailView, WateringPlanInListResponse,
+                    WateringPlanListParams, WateringPlanResponse, WateringPlanUpdateRequest,
+                    parse_user_ids,
                 },
             },
             gpx,
-            pagination::PaginationParams,
         },
     },
     service::ServiceError,
@@ -116,8 +117,8 @@ async fn resolve_view_relations(
 #[utoipa::path(get, path = "/watering-plans", tag = "Watering Plans",
     operation_id = "listWateringPlans",
     summary = "List all watering plans",
-    description = "Returns a paginated list of watering plans with embedded vehicles and clusters.",
-    params(PaginationParams),
+    description = "Returns a paginated list of watering plans with embedded vehicles and clusters. Optional filter parameter (status) narrows the result; the array parameter is repeatable.",
+    params(WateringPlanListParams),
     responses(
         (status = 200, description = "Paginated list of watering plans", body = ListResponse<WateringPlanInListResponse>),
         (status = 500, description = "Internal server error"),
@@ -126,12 +127,16 @@ async fn resolve_view_relations(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_watering_plans(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<WateringPlanListParams>,
 ) -> Result<Json<ListResponse<WateringPlanInListResponse>>, ServiceError> {
-    let pagination = Pagination::from(&params);
+    let pagination = Pagination::new(params.page, params.per_page);
+    let query = WateringPlanSearchQuery {
+        statuses: params.status.into_iter().map(Into::into).collect(),
+        ..Default::default()
+    };
     let page = state
         .watering_plan_service
-        .search_view(WateringPlanSearchQuery::default(), pagination)
+        .search_view(query, pagination)
         .await?;
 
     let vehicle_ids: Vec<_> = page
@@ -191,7 +196,7 @@ pub async fn list_watering_plans(
                     transporter,
                     trailer,
                     clusters: plan_clusters,
-                    user_ids: vec![],
+                    user_ids: view.user_ids.iter().map(|u| u.to_string()).collect(),
                 },
             ))
         });
@@ -220,11 +225,11 @@ pub async fn get_watering_plan(
         resolve_view_relations(&state, &view).await?;
 
     let response = WateringPlanResponse::from(WateringPlanDetailView {
+        user_ids: view.user_ids.iter().map(|u| u.to_string()).collect(),
         view,
         transporter,
         trailer,
         clusters,
-        user_ids: vec![],
         evaluation,
     });
 
@@ -254,11 +259,11 @@ pub async fn create_watering_plan(
         resolve_view_relations(&state, &view).await?;
 
     let response = WateringPlanResponse::from(WateringPlanDetailView {
+        user_ids: view.user_ids.iter().map(|u| u.to_string()).collect(),
         view,
         transporter,
         trailer,
         clusters,
-        user_ids: vec![],
         evaluation,
     });
 
@@ -308,6 +313,7 @@ pub async fn update_watering_plan(
                 entity.provider.clone().map(ProviderId::new).transpose()?,
                 entity.additional_information.clone(),
             ),
+            user_ids: parse_user_ids(&entity.user_ids)?,
         };
         state
             .watering_plan_service
@@ -319,6 +325,9 @@ pub async fn update_watering_plan(
         (a, b) if a == b => {}
         (DomainStatus::Planned, DomainStatus::Active) => {
             state.watering_plan_service.start(plan_id).await?;
+        }
+        (DomainStatus::Active, DomainStatus::Planned) => {
+            state.watering_plan_service.revert_start(plan_id).await?;
         }
         (DomainStatus::Planned | DomainStatus::Active, DomainStatus::Canceled) => {
             if entity.cancellation_note.trim().is_empty() {
@@ -366,11 +375,11 @@ pub async fn update_watering_plan(
         resolve_view_relations(&state, &view).await?;
 
     let response = WateringPlanResponse::from(WateringPlanDetailView {
+        user_ids: view.user_ids.iter().map(|u| u.to_string()).collect(),
         view,
         transporter,
         trailer,
         clusters,
-        user_ids: vec![],
         evaluation,
     });
 

@@ -86,6 +86,10 @@ pub enum DomainEvent {
         plan_id: Id<WateringPlan>,
         cluster_ids: Vec<Id<TreeCluster>>,
     },
+    WateringPlanStartReverted {
+        plan_id: Id<WateringPlan>,
+        cluster_ids: Vec<Id<TreeCluster>>,
+    },
     WateringPlanCanceled {
         plan_id: Id<WateringPlan>,
         cluster_ids: Vec<Id<TreeCluster>>,

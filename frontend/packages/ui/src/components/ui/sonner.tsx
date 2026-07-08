@@ -28,6 +28,8 @@ const Toaster = ({ className, ...props }: ToasterProps) => {
             'w-fit bg-dark text-white rounded-[1.875rem] flex items-center gap-x-3 pr-5 pl-3 py-3',
           title: 'text-sm font-semibold',
           description: 'text-sm text-white/70 mt-0.5',
+          actionButton:
+            'ml-1 shrink-0 rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-light',
         },
       }}
       icons={{

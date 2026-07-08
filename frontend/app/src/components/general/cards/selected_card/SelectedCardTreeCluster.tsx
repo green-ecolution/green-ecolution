@@ -21,16 +21,17 @@ const SelectedCardCluster = ({ onClick, id }: SelectedCardClusterProps) => {
     <ListCard size="compact" hoverable={false} className="mb-3">
       <ListCardStatus status={statusDetails.color} />
       <ListCardContent>
-        <span className="font-medium">
-          <strong className="font-semibold">Bewässerungsgruppe:</strong>
-          {data ? (
-            <>
-              &nbsp;{data.name} · {id}
-            </>
-          ) : (
-            <>&nbsp;Lädt…</>
-          )}
-        </span>
+        {data ? (
+          <div className="min-w-0">
+            <p className="truncate font-semibold text-dark">{data.name}</p>
+            <p className="truncate text-xs tabular-nums text-dark-600">
+              {data.trees.length} {data.trees.length === 1 ? 'Baum' : 'Bäume'}
+              {data.address && <> · {data.address}</>}
+            </p>
+          </div>
+        ) : (
+          <span className="text-dark-600">Lädt…</span>
+        )}
       </ListCardContent>
       {onClick && (
         <ListCardActions>
