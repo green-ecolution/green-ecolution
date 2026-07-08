@@ -16,6 +16,8 @@
 import * as runtime from '../runtime';
 import type {
   ListResponseWateringPlanInListResponse,
+  RouteRequest,
+  RouteResponse,
   WateringPlanCreateRequest,
   WateringPlanResponse,
   WateringPlanUpdateRequest,
@@ -23,6 +25,10 @@ import type {
 import {
     ListResponseWateringPlanInListResponseFromJSON,
     ListResponseWateringPlanInListResponseToJSON,
+    RouteRequestFromJSON,
+    RouteRequestToJSON,
+    RouteResponseFromJSON,
+    RouteResponseToJSON,
     WateringPlanCreateRequestFromJSON,
     WateringPlanCreateRequestToJSON,
     WateringPlanResponseFromJSON,
@@ -40,16 +46,24 @@ export interface DeleteWateringPlanRequest {
 }
 
 export interface GetGpxFileRequest {
-    gpxName: string;
+    wateringPlanId: string;
 }
 
 export interface GetWateringPlanRequest {
     wateringPlanId: string;
 }
 
+export interface GetWateringPlanRouteRequest {
+    wateringPlanId: string;
+}
+
 export interface ListWateringPlansRequest {
     page?: number;
     perPage?: number;
+}
+
+export interface PreviewRouteRequest {
+    routeRequest: RouteRequest;
 }
 
 export interface UpdateWateringPlanRequest {
@@ -142,14 +156,14 @@ export class WateringPlansApi extends runtime.BaseAPI {
     }
 
     /**
-     * Downloads the optimized watering route as a GPX file.
+     * Renders the optimized watering route of a plan as a GPX track.
      * Download GPX file
      */
     async getGpxFileRaw(requestParameters: GetGpxFileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['gpxName'] == null) {
+        if (requestParameters['wateringPlanId'] == null) {
             throw new runtime.RequiredError(
-                'gpxName',
-                'Required parameter "gpxName" was null or undefined when calling getGpxFile().'
+                'wateringPlanId',
+                'Required parameter "wateringPlanId" was null or undefined when calling getGpxFile().'
             );
         }
 
@@ -158,8 +172,8 @@ export class WateringPlansApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
 
-        let urlPath = `/v1/watering-plans/route/gpx/{gpx_name}`;
-        urlPath = urlPath.replace(`{${"gpx_name"}}`, encodeURIComponent(String(requestParameters['gpxName'])));
+        let urlPath = `/v1/watering-plans/{watering_plan_id}/route/gpx`;
+        urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
 
         const response = await this.request({
             path: urlPath,
@@ -172,7 +186,7 @@ export class WateringPlansApi extends runtime.BaseAPI {
     }
 
     /**
-     * Downloads the optimized watering route as a GPX file.
+     * Renders the optimized watering route of a plan as a GPX track.
      * Download GPX file
      */
     async getGpxFile(requestParameters: GetGpxFileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -219,6 +233,45 @@ export class WateringPlansApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns the persisted optimized route as GeoJSON LineString geometry with metrics.
+     * Get the optimized route of a watering plan
+     */
+    async getWateringPlanRouteRaw(requestParameters: GetWateringPlanRouteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RouteResponse>> {
+        if (requestParameters['wateringPlanId'] == null) {
+            throw new runtime.RequiredError(
+                'wateringPlanId',
+                'Required parameter "wateringPlanId" was null or undefined when calling getWateringPlanRoute().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/watering-plans/{watering_plan_id}/route`;
+        urlPath = urlPath.replace(`{${"watering_plan_id"}}`, encodeURIComponent(String(requestParameters['wateringPlanId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RouteResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the persisted optimized route as GeoJSON LineString geometry with metrics.
+     * Get the optimized route of a watering plan
+     */
+    async getWateringPlanRoute(requestParameters: GetWateringPlanRouteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RouteResponse> {
+        const response = await this.getWateringPlanRouteRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Returns a paginated list of watering plans with embedded vehicles and clusters.
      * List all watering plans
      */
@@ -261,10 +314,19 @@ export class WateringPlansApi extends runtime.BaseAPI {
      * Calculates and previews an optimized watering route without creating a plan.
      * Preview route
      */
-    async previewRouteRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async previewRouteRaw(requestParameters: PreviewRouteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RouteResponse>> {
+        if (requestParameters['routeRequest'] == null) {
+            throw new runtime.RequiredError(
+                'routeRequest',
+                'Required parameter "routeRequest" was null or undefined when calling previewRoute().'
+            );
+        }
+
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
 
 
         let urlPath = `/v1/watering-plans/route/preview`;
@@ -274,17 +336,19 @@ export class WateringPlansApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
+            body: RouteRequestToJSON(requestParameters['routeRequest']),
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => RouteResponseFromJSON(jsonValue));
     }
 
     /**
      * Calculates and previews an optimized watering route without creating a plan.
      * Preview route
      */
-    async previewRoute(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.previewRouteRaw(initOverrides);
+    async previewRoute(requestParameters: PreviewRouteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RouteResponse> {
+        const response = await this.previewRouteRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**

@@ -39,5 +39,16 @@ sensor:
   offline_after_secs: 86400
 routing:
   enabled: false
+  streamlet_url: "http://localhost:2510"
+  depots:
+    - name: "Betriebshof Schleswiger Straße"
+      lat: 54.76879146396569
+      lon: 9.434803531218018
+      watering_point: true
+    - name: "Klärwerk Kielseng"
+      lat: 54.80518123149477
+      lon: 9.447145106541388
+      watering_point: true
+  tree_demand_liters: 80.0
 plugins:
   enabled: false

@@ -64,6 +64,7 @@ pub struct AppState {
     pub feature_flags: FeatureFlags,
     pub nearest_tree_limits: NearestTreeLimits,
     pub frontend_config_js: std::sync::Arc<str>,
+    pub routing_start_points: Vec<crate::http::v1::dto::routing::StartPointResponse>,
 }
 
 #[derive(OpenApi)]
@@ -89,6 +90,7 @@ pub struct AppState {
         (name = "Info", description = "Application metadata including version information, server status, map configuration, service health, and data statistics."),
         (name = "Users", description = "User registration and role management. Authentication is handled directly against Keycloak."),
         (name = "Plugins", description = "Plugin registration and lifecycle management. External plugins can register, authenticate, and maintain heartbeat connections."),
+        (name = "Routing", description = "Routing configuration and start point management. Exposes the named depot locations available for watering route optimization."),
     ),
 )]
 struct ApiDoc;

@@ -34,6 +34,7 @@ use crate::{
     cluster::TreeCluster,
     events::DomainEvent,
     shared::{
+        coordinates::Coordinate,
         distance::Distance,
         provenance::{Provenance, ProviderId},
     },
@@ -74,6 +75,7 @@ pub struct WateringPlan {
     pub id: Id<WateringPlan>,
     pub date: DateTime<Utc>,
     pub description: Option<String>,
+    pub start_point_name: Option<String>,
     pub distance: Option<Distance>,
     pub total_water_required: Option<f64>,
     pub gpx_url: Option<Url>,
@@ -86,6 +88,7 @@ pub struct WateringPlan {
     trailer_id: Option<Id<Vehicle>>,
     cancellation_note: Option<String>,
     provenance: Provenance,
+    route_geometry: Option<Vec<Coordinate>>,
 }
 
 /// Input for creating a new [`WateringPlan`].
@@ -93,6 +96,7 @@ pub struct WateringPlan {
 pub struct WateringPlanDraft {
     pub date: DateTime<Utc>,
     pub description: Option<String>,
+    pub start_point_name: Option<String>,
     pub cluster_ids: Vec<Id<TreeCluster>>,
     pub transporter_id: Option<Id<Vehicle>>,
     pub trailer_id: Option<Id<Vehicle>>,
@@ -110,6 +114,7 @@ pub struct WateringPlanSearchQuery {
 pub struct WateringPlanUpdate {
     pub date: DateTime<Utc>,
     pub description: Option<String>,
+    pub start_point_name: Option<String>,
     pub cluster_ids: Vec<Id<TreeCluster>>,
     pub transporter_id: Option<Id<Vehicle>>,
     pub trailer_id: Option<Id<Vehicle>>,
@@ -123,6 +128,7 @@ impl WateringPlan {
             id: Id::new(snap.id),
             date: snap.date,
             description: snap.description,
+            start_point_name: snap.start_point_name,
             distance: snap.distance.and_then(|m| Distance::new(m).ok()),
             total_water_required: snap.total_water_required,
             gpx_url: snap.gpx_url,
@@ -134,6 +140,7 @@ impl WateringPlan {
             trailer_id: snap.trailer_id.map(Id::new),
             cancellation_note: snap.cancellation_note,
             provenance: Provenance::reconstitute(snap.provider, snap.additional_info),
+            route_geometry: snap.route_geometry,
         }
     }
 
@@ -161,6 +168,10 @@ impl WateringPlan {
         &self.provenance
     }
 
+    pub fn route_geometry(&self) -> Option<&[Coordinate]> {
+        self.route_geometry.as_deref()
+    }
+
     fn ensure_planned(&self) -> Result<(), WateringPlanError> {
         if self.status != WateringPlanStatus::Planned {
             return Err(WateringPlanError::CannotMutateAfterStart);
@@ -178,6 +189,7 @@ impl WateringPlan {
         self.ensure_planned()?;
         self.date = update.date;
         self.description = update.description;
+        self.start_point_name = update.start_point_name;
         self.cluster_ids = update.cluster_ids;
         self.transporter_id = update.transporter_id;
         self.trailer_id = update.trailer_id;
@@ -276,7 +288,6 @@ impl WateringPlan {
         }])
     }
 
-    #[allow(dead_code)]
     pub fn set_metrics(
         &mut self,
         distance: Option<Distance>,
@@ -284,12 +295,14 @@ impl WateringPlan {
         refill_count: u32,
         duration: Duration,
         gpx_url: Option<Url>,
+        route_geometry: Option<Vec<Coordinate>>,
     ) {
         self.distance = distance;
         self.total_water_required = total_water_required;
         self.refill_count = refill_count;
         self.duration = duration;
         self.gpx_url = gpx_url;
+        self.route_geometry = route_geometry;
     }
 }
 
@@ -307,6 +320,7 @@ mod tests {
             id: Id::new_v7(),
             date: Utc.with_ymd_and_hms(2026, 6, 1, 8, 0, 0).unwrap(),
             description: None,
+            start_point_name: None,
             distance: None,
             total_water_required: None,
             gpx_url: None,
@@ -318,6 +332,7 @@ mod tests {
             trailer_id: None,
             cancellation_note: None,
             provenance: Provenance::default(),
+            route_geometry: None,
         };
         (plan, [c1, c2])
     }
@@ -513,6 +528,7 @@ mod tests {
         let result = p.replace_details(WateringPlanUpdate {
             date: p.date,
             description: None,
+            start_point_name: None,
             cluster_ids: vec![],
             transporter_id: None,
             trailer_id: None,
@@ -529,18 +545,43 @@ mod tests {
         let (mut p, _) = fixed_plan();
         let dist = crate::shared::distance::Distance::new(1234.0).unwrap();
         let url: Url = "https://example.com/run.gpx".parse().unwrap();
+        let geometry = vec![
+            Coordinate::new(54.76, 9.43).unwrap(),
+            Coordinate::new(54.80, 9.44).unwrap(),
+        ];
         p.set_metrics(
             Some(dist),
             Some(99.5),
             3,
             Duration::from_secs(60 * 45),
             Some(url.clone()),
+            Some(geometry.clone()),
         );
         assert_eq!(p.distance, Some(dist));
         assert_eq!(p.total_water_required, Some(99.5));
         assert_eq!(p.refill_count, 3);
         assert_eq!(p.duration, Duration::from_secs(60 * 45));
         assert_eq!(p.gpx_url, Some(url));
+        assert_eq!(p.route_geometry(), Some(geometry.as_slice()));
+    }
+
+    #[test]
+    fn replace_details_sets_start_point_name() {
+        let (mut p, [c1, c2]) = fixed_plan();
+        p.replace_details(WateringPlanUpdate {
+            date: p.date,
+            description: None,
+            start_point_name: Some("Betriebshof Schleswiger Straße".to_string()),
+            cluster_ids: vec![c1, c2],
+            transporter_id: p.transporter_id(),
+            trailer_id: None,
+            provenance: Provenance::default(),
+        })
+        .unwrap();
+        assert_eq!(
+            p.start_point_name.as_deref(),
+            Some("Betriebshof Schleswiger Straße")
+        );
     }
 
     #[test]
@@ -551,6 +592,7 @@ mod tests {
         let result = p.replace_details(WateringPlanUpdate {
             date,
             description: Some("new desc".to_string()),
+            start_point_name: None,
             cluster_ids: vec![Id::new_v7()],
             transporter_id: Some(Id::new_v7()),
             trailer_id: None,

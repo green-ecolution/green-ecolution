@@ -15,6 +15,7 @@ export interface UseClusterBoundaryLayerOptions {
   wateringStatuses?: WateringStatus[]
   nameFilter?: string
   interactive?: boolean
+  clusterIds?: string[]
 }
 
 const useClusterBoundaryLayer = ({
@@ -23,6 +24,7 @@ const useClusterBoundaryLayer = ({
   wateringStatuses,
   nameFilter,
   interactive = true,
+  clusterIds,
 }: UseClusterBoundaryLayerOptions = {}) => {
   const map = useMaplibreMap()
   const { data } = useSuspenseQuery(clusterBoundariesQuery())
@@ -63,6 +65,7 @@ const useClusterBoundaryLayer = ({
   useEffect(() => {
     if (!isMapAlive(map)) return
     const statusSet = wateringStatuses?.length ? new Set(wateringStatuses) : null
+    const idSet = clusterIds?.length ? new Set(clusterIds) : null
     const term = nameFilter?.trim().toLowerCase() ?? ''
     const fc: FeatureCollection<Polygon> = {
       type: 'FeatureCollection',
@@ -70,6 +73,7 @@ const useClusterBoundaryLayer = ({
         .filter(
           (b) =>
             (!statusSet || statusSet.has(b.wateringStatus)) &&
+            (!idSet || idSet.has(b.id)) &&
             (!term || b.name.toLowerCase().includes(term)),
         )
         .map((b) => ({
@@ -79,7 +83,7 @@ const useClusterBoundaryLayer = ({
         })),
     }
     map.getSource<GeoJSONSource>(SOURCES.clusterBoundaries)?.setData(fc)
-  }, [map, data, wateringStatuses, nameFilter])
+  }, [map, data, wateringStatuses, clusterIds, nameFilter])
 
   useEffect(() => {
     if (

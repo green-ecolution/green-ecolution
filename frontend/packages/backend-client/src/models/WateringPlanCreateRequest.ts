@@ -44,6 +44,12 @@ export interface WateringPlanCreateRequest {
      */
     provider?: string | null;
     /**
+     * Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.
+     * @type {string}
+     * @memberof WateringPlanCreateRequest
+     */
+    startPointName?: string | null;
+    /**
      * Identifier of the trailer vehicle to use, if any.
      * @type {string}
      * @memberof WateringPlanCreateRequest
@@ -95,6 +101,7 @@ export function WateringPlanCreateRequestFromJSONTyped(json: any, ignoreDiscrimi
         'date': json['date'],
         'description': json['description'],
         'provider': json['provider'] == null ? undefined : json['provider'],
+        'startPointName': json['start_point_name'] == null ? undefined : json['start_point_name'],
         'trailerId': json['trailer_id'] == null ? undefined : json['trailer_id'],
         'transporterId': json['transporter_id'],
         'treeClusterIds': json['tree_cluster_ids'],
@@ -117,6 +124,7 @@ export function WateringPlanCreateRequestToJSONTyped(value?: WateringPlanCreateR
         'date': value['date'],
         'description': value['description'],
         'provider': value['provider'],
+        'start_point_name': value['startPointName'],
         'trailer_id': value['trailerId'],
         'transporter_id': value['transporterId'],
         'tree_cluster_ids': value['treeClusterIds'],

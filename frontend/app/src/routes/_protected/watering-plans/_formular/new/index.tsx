@@ -23,6 +23,7 @@ const defaultForm: DefaultValues<WateringPlanForm> = {
   clusterIds: [],
   status: WateringPlanStatus.Planned,
   driverIds: [],
+  startPointName: undefined,
 }
 
 function NewWateringPlan() {
@@ -53,6 +54,7 @@ function NewWateringPlan() {
       trailerId: data.trailerId && data.trailerId !== '-1' ? data.trailerId : undefined,
       userIds: data.driverIds,
       treeClusterIds: data.clusterIds,
+      startPointName: data.startPointName,
     })
   }
 
@@ -83,9 +85,9 @@ function NewWateringPlan() {
           Ein Einsatzplan bildet eine Bewässerungsroute ab, indem ihr ein Fahrzeug, einen Anhänger,
           Mitarbeitende und anzufahrende Bewässerungsgruppen zugewiesen werden können. Ein neu
           erstellter Einsatzplan wird automatisch als »geplant« eingestuft. Anhand der
-          Bewässerungsgruppen und die Anzahl der Bäume wird berechnet, wie viel Wasser zum
-          bewässsern benötigt wird. Ein Einsatzplan startet immer an der Hauptzentrale des TBZ in
-          der Schleswiger Straße in Flensburg.
+          Bewässerungsgruppen und die Anzahl der Bäume wird berechnet, wie viel Wasser zum bewässern
+          benötigt wird. Der Startpunkt des Einsatzes kann aus den konfigurierten Depotstandorten
+          ausgewählt werden.
         </p>
       </article>
 

@@ -4,7 +4,10 @@ use serde::{Deserialize, Serialize};
 use crate::service::ServiceError;
 use domain::{
     Id,
-    shared::provenance::{Provenance, ProviderId},
+    shared::{
+        coordinates::Coordinate,
+        provenance::{Provenance, ProviderId},
+    },
     watering_plan::{WateringPlanDraft, WateringPlanEvaluation, WateringPlanView},
 };
 
@@ -56,7 +59,7 @@ pub struct WateringPlanResponse {
     #[schema(example = "Regen vorhergesagt")]
     pub cancellation_note: String,
     /// URL to the downloadable GPX route file.
-    #[schema(example = "/api/v1/watering-plans/route/gpx/route-2024-08-15.gpx")]
+    #[schema(example = "/v1/watering-plans/0190a8e9-7c4f-7000-8000-000000000000/route/gpx")]
     pub gpx_url: String,
     /// Number of water refill stops required during the run.
     #[schema(example = 2, minimum = 0)]
@@ -77,6 +80,10 @@ pub struct WateringPlanResponse {
     pub user_ids: Vec<String>,
     /// Per-cluster evaluation results after the watering run.
     pub evaluation: Vec<EvaluationValueResponse>,
+    /// Named start/return point for the route.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(example = "Betriebshof Schleswiger Straße", nullable)]
+    pub start_point_name: Option<String>,
     /// Name of the external data provider that supplied this record.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(example = "green_ecolution", nullable)]
@@ -109,11 +116,13 @@ impl From<WateringPlanDetailView> for WateringPlanResponse {
             distance: v.distance.unwrap_or_default(),
             total_water_required: v.total_water_required.unwrap_or_default(),
             cancellation_note: v.cancellation_note.clone().unwrap_or_default(),
-            gpx_url: v
-                .gpx_url
-                .as_ref()
-                .map(|u| u.to_string())
-                .unwrap_or_default(),
+            // Path is relative to the frontend's API basePath; the stored
+            // gpx_url column is unused since GPX is rendered on the fly.
+            gpx_url: if v.distance.is_some() {
+                format!("/v1/watering-plans/{}/route/gpx", v.id)
+            } else {
+                String::new()
+            },
             refill_count: v.refill_count.max(0) as u32,
             duration: v.duration.as_secs_f64(),
             transporter: d.transporter,
@@ -121,6 +130,7 @@ impl From<WateringPlanDetailView> for WateringPlanResponse {
             treeclusters: d.clusters,
             user_ids: d.user_ids,
             evaluation: d.evaluation,
+            start_point_name: v.start_point_name.clone(),
             provider: v.provider.clone(),
             additional_information: v.additional_info.clone(),
         }
@@ -234,6 +244,10 @@ pub struct WateringPlanCreateRequest {
     #[serde(default)]
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     pub trailer_id: Option<uuid::Uuid>,
+    /// Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.
+    #[serde(default)]
+    #[schema(example = "Betriebshof Schleswiger Straße", nullable)]
+    pub start_point_name: Option<String>,
     /// Name of the external data provider that supplied this record.
     #[serde(default)]
     #[schema(example = "green_ecolution", nullable)]
@@ -271,6 +285,10 @@ pub struct WateringPlanUpdateRequest {
     #[serde(default)]
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     pub trailer_id: Option<uuid::Uuid>,
+    /// Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.
+    #[serde(default)]
+    #[schema(example = "Betriebshof Schleswiger Straße", nullable)]
+    pub start_point_name: Option<String>,
     /// Per-cluster evaluation results for the watering run.
     #[serde(default)]
     #[schema(nullable)]
@@ -325,6 +343,52 @@ pub struct RouteRequest {
     #[serde(default)]
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
     pub trailer_id: Option<uuid::Uuid>,
+    /// Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.
+    #[serde(default)]
+    #[schema(example = "Betriebshof Schleswiger Straße", nullable)]
+    pub start_point_name: Option<String>,
+}
+
+/// GeoJSON LineString geometry of an optimized watering route.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct RouteGeometry {
+    /// GeoJSON geometry type, always "LineString".
+    #[schema(example = "LineString")]
+    pub r#type: String,
+    /// Route coordinates as GeoJSON positions (longitude, latitude).
+    #[schema(example = json!([[9.4347, 54.7687], [9.4358, 54.7922]]))]
+    pub coordinates: Vec<[f64; 2]>,
+}
+
+impl RouteGeometry {
+    pub fn from_coordinates(coords: &[Coordinate]) -> Self {
+        Self {
+            r#type: "LineString".to_string(),
+            coordinates: coords
+                .iter()
+                .map(|c| [c.longitude(), c.latitude()])
+                .collect(),
+        }
+    }
+}
+
+/// Optimized watering route (persisted for a plan, or a preview).
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct RouteResponse {
+    /// Total route distance in meters.
+    #[schema(example = 12500.0, minimum = 0.0)]
+    pub distance: f64,
+    /// Estimated total driving duration in seconds.
+    #[schema(example = 3600.0, minimum = 0.0)]
+    pub duration: f64,
+    /// Number of water refill stops on the route.
+    #[schema(example = 2, minimum = 0)]
+    pub refill_count: u32,
+    /// Total water demand of all routed clusters in liters.
+    #[schema(example = 24000.0, minimum = 0.0)]
+    pub total_water_required: f64,
+    /// Route geometry as a GeoJSON LineString.
+    pub geometry: RouteGeometry,
 }
 
 fn parse_date(s: &str) -> Result<DateTime<Utc>, ServiceError> {
@@ -350,6 +414,7 @@ impl TryFrom<WateringPlanCreateRequest> for WateringPlanDraft {
         Ok(Self {
             date,
             description,
+            start_point_name: req.start_point_name,
             cluster_ids: req.tree_cluster_ids.into_iter().map(Id::new).collect(),
             transporter_id: Some(Id::new(req.transporter_id)),
             trailer_id: req.trailer_id.map(Id::new),

@@ -1,17 +1,18 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button, InlineAlert } from '@green-ecolution/ui'
 import { MoveRight } from 'lucide-react'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
-import { treeClusterQuery, vehicleIdQuery } from '@/api/queries'
+import { routePreviewQuery, treeClusterQuery, vehicleIdQuery } from '@/api/queries'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import { useFormNavigationBlocker } from '@/hooks/form/useFormNavigationBlocker'
 import SelectEntities from '@/components/general/form/types/SelectEntities'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import MapPanel from '@/components/map-gl/MapPanel'
 import useSelectableClusterLayer from '@/components/map-gl/layers/useSelectableClusterLayer'
+import useRouteLayer from '@/components/map-gl/layers/useRouteLayer'
 
 const mapSelectClusterSchema = z.object({
   transporterId: z.string().optional(),
@@ -52,6 +53,22 @@ function SelectCluster() {
     ...vehicleIdQuery(trailerId?.toString() ?? '-1'),
     enabled: !!trailerId && trailerId !== '-1',
   })
+
+  const [debouncedClusterIds, setDebouncedClusterIds] = useState<string[]>(clusterIds)
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedClusterIds(clusterIds), 600)
+    return () => clearTimeout(id)
+  }, [clusterIds])
+
+  const previewEnabled = debouncedClusterIds.length > 0 && !!transporterId && transporterId !== '-1'
+  const { data: previewRoute } = useQuery({
+    ...routePreviewQuery(debouncedClusterIds, transporterId ?? '', draft.data?.startPointName),
+    enabled: previewEnabled,
+  })
+  const routeCoordinates = previewEnabled
+    ? (previewRoute?.geometry?.coordinates as [number, number][] | undefined)
+    : undefined
+  useRouteLayer({ coordinates: routeCoordinates })
 
   const { allowNavigation } = navigationBlocker
 

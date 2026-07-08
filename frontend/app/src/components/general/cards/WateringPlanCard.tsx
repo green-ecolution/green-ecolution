@@ -4,7 +4,7 @@ import { Link } from '@tanstack/react-router'
 import React from 'react'
 import { Badge, ListCard, ListCardTitle, ListCardDescription } from '@green-ecolution/ui'
 import { format } from 'date-fns'
-import { roundTo } from '@/lib/utils'
+import { formatKm } from '@/lib/utils'
 
 interface WateringPlanCardProps {
   wateringPlan: WateringPlanInList
@@ -44,7 +44,7 @@ const WateringPlanCard: React.FC<WateringPlanCardProps> = ({ wateringPlan }) => 
 
         <ListCardDescription>
           <span className="lg:sr-only">Länge:&nbsp;</span>
-          {`${roundTo(wateringPlan.distance, 2)} km`}
+          {formatKm(wateringPlan.distance)}
         </ListCardDescription>
 
         <ListCardDescription>

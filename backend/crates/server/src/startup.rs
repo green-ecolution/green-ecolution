@@ -97,7 +97,44 @@ impl Application {
         );
         let repos = Repositories::build(&pool, sensor_offline_after);
         let event_bus = build_event_bus(&repos);
-        let services = Services::build(&repos, event_bus);
+        let route_optimizer: Option<Arc<dyn domain::routing::RouteOptimizer>> =
+            settings.routing.enabled.then(|| {
+                Arc::new(infra::streamlet::StreamletRouteOptimizer::new(
+                    &settings.routing,
+                )) as Arc<dyn domain::routing::RouteOptimizer>
+            });
+        let start_points: Vec<(String, domain::shared::coordinates::Coordinate)> = settings
+            .routing
+            .depots
+            .iter()
+            .filter_map(|d| {
+                match domain::shared::coordinates::Coordinate::new(d.lat, d.lon) {
+                    Ok(coord) => Some((d.name.clone(), coord)),
+                    Err(e) => {
+                        tracing::warn!(name = %d.name, error = %e, "skipping depot with invalid coordinates");
+                        None
+                    }
+                }
+            })
+            .collect();
+        let routing_start_points: Vec<crate::http::v1::dto::routing::StartPointResponse> =
+            start_points
+                .iter()
+                .map(
+                    |(name, coord)| crate::http::v1::dto::routing::StartPointResponse {
+                        name: name.clone(),
+                        lat: coord.latitude(),
+                        lon: coord.longitude(),
+                    },
+                )
+                .collect();
+        let services = Services::build(
+            &repos,
+            event_bus,
+            route_optimizer,
+            settings.routing.tree_demand_liters,
+            start_points,
+        );
 
         let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
         let (mqtt_state, mqtt_handle) =
@@ -135,6 +172,7 @@ impl Application {
                 max_limit: settings.map.nearest_tree_max_limit,
             },
             frontend_config_js: crate::http::render_frontend_config_js(&settings.auth).into(),
+            routing_start_points,
         });
 
         let listener = TcpListener::bind(address).await?;
@@ -283,7 +321,13 @@ struct Services {
 }
 
 impl Services {
-    fn build(repos: &Repositories, event_bus: Arc<dyn EventBus>) -> Self {
+    fn build(
+        repos: &Repositories,
+        event_bus: Arc<dyn EventBus>,
+        route_optimizer: Option<Arc<dyn domain::routing::RouteOptimizer>>,
+        tree_demand_liters: f64,
+        start_points: Vec<(String, domain::shared::coordinates::Coordinate)>,
+    ) -> Self {
         Self {
             region: Arc::new(RegionService::new(
                 repos.region_reader.clone(),
@@ -318,7 +362,12 @@ impl Services {
             watering_plan: Arc::new(WateringPlanService::new(
                 repos.watering_plan_reader.clone(),
                 repos.watering_plan_writer.clone(),
+                repos.cluster_reader.clone(),
+                repos.vehicle_reader.clone(),
                 event_bus.clone(),
+                route_optimizer,
+                tree_demand_liters,
+                start_points,
             )),
             watering_execution: Arc::new(WateringExecutionService::new(
                 repos.watering_plan_reader.clone(),

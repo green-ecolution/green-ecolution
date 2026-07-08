@@ -25,12 +25,16 @@ import {
   NearestTreeListResponse,
   pluginApi,
   regionApi,
+  ResponseError,
+  RouteResponse,
+  routingApi,
   SensorDataResponse,
   SensorModelResponse,
   SensorResponse,
   sensorApi,
   ServerInfoResponse,
   ServicesInfoResponse,
+  StartPointResponse,
   TreeClusterResponse,
   TreeMarkerListResponse,
   TreeResponse,
@@ -41,6 +45,7 @@ import {
   WateringPlanResponse,
   WateringStatus,
   wateringPlanApi,
+  wateringPlanPreviewApi,
   evaluationApi,
 } from './backendApi'
 
@@ -192,6 +197,41 @@ export const wateringPlanIdQuery = (id: string) =>
     enabled: isValidUuid(id),
   })
 
+export const wateringPlanRouteQuery = (id: string) =>
+  queryOptions<RouteResponse | null>({
+    queryKey: ['watering-plan-route', id],
+    queryFn: async () => {
+      try {
+        return await wateringPlanApi.getWateringPlanRoute({ wateringPlanId: id })
+      } catch (error) {
+        // 404: plan has no computed route; 503: routing feature disabled.
+        if (error instanceof ResponseError && [404, 503].includes(error.response.status))
+          return null
+        throw error
+      }
+    },
+    enabled: isValidUuid(id),
+  })
+
+export const routePreviewQuery = (
+  clusterIds: string[],
+  transporterId: string,
+  startPointName?: string | null,
+) =>
+  queryOptions<RouteResponse | null>({
+    queryKey: ['route-preview', clusterIds.slice().sort(), transporterId, startPointName ?? null],
+    queryFn: async () => {
+      try {
+        return await wateringPlanPreviewApi.previewRoute({
+          routeRequest: { clusterIds, transporterId, startPointName },
+        })
+      } catch {
+        return null
+      }
+    },
+    retry: false,
+  })
+
 export const userQuery = (params?: ListUsersRequest) => {
   return queryOptions<ListResponseUserResponse>({
     queryKey: ['users', params],
@@ -278,4 +318,18 @@ export const clusterBoundariesQuery = () =>
     queryKey: ['clusters', 'boundaries'],
     queryFn: () => clusterApi.listClusterBoundaries(),
     staleTime: 5 * 60_000,
+  })
+
+export const routingStartPointsQuery = () =>
+  queryOptions<StartPointResponse[] | null>({
+    queryKey: ['routing-start-points'],
+    queryFn: async () => {
+      try {
+        return await routingApi.listRoutingStartPoints()
+      } catch (error) {
+        if (error instanceof ResponseError && error.response.status === 503) return null
+        throw error
+      }
+    },
+    staleTime: Infinity,
   })

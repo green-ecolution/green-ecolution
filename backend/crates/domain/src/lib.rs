@@ -30,6 +30,7 @@ pub mod events;
 pub mod info;
 pub mod plugin;
 pub mod region;
+pub mod routing;
 pub mod sensor;
 pub mod sensor_model;
 pub mod shared;

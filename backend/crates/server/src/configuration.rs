@@ -148,10 +148,62 @@ fn default_keep_alive_secs() -> u16 {
     30
 }
 
-#[derive(serde::Deserialize, Clone, Default)]
+#[derive(Debug, Clone, serde::Deserialize)]
+pub struct NamedGeoPoint {
+    pub name: String,
+    pub lat: f64,
+    pub lon: f64,
+    #[serde(default)]
+    pub watering_point: bool,
+}
+
+#[derive(serde::Deserialize, Clone)]
 pub struct RoutingSettings {
     #[serde(default)]
     pub enabled: bool,
+    #[serde(default = "default_streamlet_url")]
+    pub streamlet_url: String,
+    // First entry is the default depot (start and return point).
+    #[serde(default = "default_depots")]
+    pub depots: Vec<NamedGeoPoint>,
+    #[serde(default = "default_tree_demand_liters")]
+    pub tree_demand_liters: f64,
+}
+
+impl Default for RoutingSettings {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            streamlet_url: default_streamlet_url(),
+            depots: default_depots(),
+            tree_demand_liters: default_tree_demand_liters(),
+        }
+    }
+}
+
+fn default_streamlet_url() -> String {
+    "http://localhost:2510".to_string()
+}
+
+pub(crate) fn default_depots() -> Vec<NamedGeoPoint> {
+    vec![
+        NamedGeoPoint {
+            name: "Betriebshof Schleswiger Straße".into(),
+            lat: 54.76879146396569,
+            lon: 9.434803531218018,
+            watering_point: true,
+        },
+        NamedGeoPoint {
+            name: "Klärwerk Kielseng".into(),
+            lat: 54.80518123149477,
+            lon: 9.447145106541388,
+            watering_point: true,
+        },
+    ]
+}
+
+fn default_tree_demand_liters() -> f64 {
+    80.0
 }
 
 #[derive(serde::Deserialize, Clone, Default)]
@@ -436,5 +488,24 @@ impl TryFrom<String> for Environment {
                 "{other} is not a supported environment. Use `local`, `staging`, or `production`."
             )),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn routing_settings_defaults_are_flensburg() {
+        let settings = RoutingSettings::default();
+        assert!(!settings.enabled);
+        assert_eq!(settings.streamlet_url, "http://localhost:2510");
+        assert_eq!(settings.tree_demand_liters, 80.0);
+        assert_eq!(settings.depots.len(), 2);
+        assert_eq!(settings.depots[0].name, "Betriebshof Schleswiger Straße");
+        assert!((settings.depots[0].lat - 54.76879146396569).abs() < 1e-9);
+        assert!(settings.depots[0].watering_point);
+        assert_eq!(settings.depots[1].name, "Klärwerk Kielseng");
+        assert!(settings.depots[1].watering_point);
     }
 }

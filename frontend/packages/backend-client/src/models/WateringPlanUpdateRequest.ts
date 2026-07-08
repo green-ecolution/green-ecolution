@@ -71,6 +71,12 @@ export interface WateringPlanUpdateRequest {
      */
     provider?: string | null;
     /**
+     * Name of the configured start point to depart from and return to. Unknown names fall back to the default depot.
+     * @type {string}
+     * @memberof WateringPlanUpdateRequest
+     */
+    startPointName?: string | null;
+    /**
      * Updated status of the watering plan.
      * @type {WateringPlanStatus}
      * @memberof WateringPlanUpdateRequest
@@ -134,6 +140,7 @@ export function WateringPlanUpdateRequestFromJSONTyped(json: any, ignoreDiscrimi
         'description': json['description'],
         'evaluation': json['evaluation'] == null ? undefined : ((json['evaluation'] as Array<any>).map(EvaluationValueRequestFromJSON)),
         'provider': json['provider'] == null ? undefined : json['provider'],
+        'startPointName': json['start_point_name'] == null ? undefined : json['start_point_name'],
         'status': WateringPlanStatusFromJSON(json['status']),
         'trailerId': json['trailer_id'] == null ? undefined : json['trailer_id'],
         'transporterId': json['transporter_id'],
@@ -159,6 +166,7 @@ export function WateringPlanUpdateRequestToJSONTyped(value?: WateringPlanUpdateR
         'description': value['description'],
         'evaluation': value['evaluation'] == null ? undefined : ((value['evaluation'] as Array<any>).map(EvaluationValueRequestToJSON)),
         'provider': value['provider'],
+        'start_point_name': value['startPointName'],
         'status': WateringPlanStatusToJSON(value['status']),
         'trailer_id': value['trailerId'],
         'transporter_id': value['transporterId'],

@@ -1,7 +1,7 @@
 use axum::{http::StatusCode, response::IntoResponse};
 
 use crate::service::{AuthError, ServiceError};
-use domain::RepositoryError;
+use domain::{RepositoryError, routing::RoutingError};
 
 /// Repository error details carry raw driver output (constraint and table
 /// names, connection errors). They are logged server-side; clients only ever
@@ -62,6 +62,23 @@ impl IntoResponse for ServiceError {
             | ServiceError::SensorAlreadyAssigned
             | ServiceError::AlreadyActivated
             | ServiceError::NotActivated) => (StatusCode::CONFLICT, e.to_string()).into_response(),
+            ServiceError::Routing(e) => {
+                let (status, message) = match &e {
+                    RoutingError::Unavailable(_) => (
+                        StatusCode::BAD_GATEWAY,
+                        "routing engine unavailable".to_string(),
+                    ),
+                    RoutingError::InvalidProblem(_) => {
+                        (StatusCode::UNPROCESSABLE_ENTITY, e.to_string())
+                    }
+                    RoutingError::Failed(_) => (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "route optimization failed".to_string(),
+                    ),
+                };
+                tracing::error!(error = %e, kind = "routing", "request failed");
+                (status, message).into_response()
+            }
             e @ ServiceError::FeatureDisabled { .. } => {
                 (StatusCode::SERVICE_UNAVAILABLE, e.to_string()).into_response()
             }

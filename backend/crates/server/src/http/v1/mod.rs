@@ -9,10 +9,12 @@ pub mod cluster;
 pub mod dto;
 pub mod error;
 pub mod evaluation;
+pub mod gpx;
 pub mod info;
 pub mod pagination;
 pub mod plugin;
 pub mod region;
+pub mod routing;
 pub mod sensor;
 pub mod tree;
 pub mod user;
@@ -30,6 +32,7 @@ pub fn protected_router() -> OpenApiRouter<Arc<AppState>> {
         .merge(region::routes())
         .merge(cluster::routes())
         .merge(evaluation::routes())
+        .merge(routing::routes())
         .merge(sensor::routes())
         .merge(tree::routes())
         .merge(user::protected_routes())

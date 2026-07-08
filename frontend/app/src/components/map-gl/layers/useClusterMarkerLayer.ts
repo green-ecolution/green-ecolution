@@ -15,6 +15,7 @@ export interface UseClusterMarkerLayerOptions {
   nameFilter?: string
   interactive?: boolean
   flyToOnClick?: boolean
+  clusterIds?: string[]
 }
 
 const useClusterMarkerLayer = ({
@@ -23,6 +24,7 @@ const useClusterMarkerLayer = ({
   nameFilter,
   interactive = true,
   flyToOnClick = true,
+  clusterIds,
 }: UseClusterMarkerLayerOptions = {}) => {
   const map = useMaplibreMap()
   const { data } = useSuspenseQuery(clusterMarkersQuery())
@@ -78,6 +80,7 @@ const useClusterMarkerLayer = ({
   useEffect(() => {
     if (!isMapAlive(map)) return
     const statusSet = wateringStatuses?.length ? new Set(wateringStatuses) : null
+    const idSet = clusterIds?.length ? new Set(clusterIds) : null
     const term = nameFilter?.trim().toLowerCase() ?? ''
     const fc: FeatureCollection<Point> = {
       type: 'FeatureCollection',
@@ -85,6 +88,7 @@ const useClusterMarkerLayer = ({
         .filter(
           (c) =>
             (!statusSet || statusSet.has(c.wateringStatus)) &&
+            (!idSet || idSet.has(c.id)) &&
             (!term || c.name.toLowerCase().includes(term)),
         )
         .map((c) => ({
@@ -94,7 +98,7 @@ const useClusterMarkerLayer = ({
         })),
     }
     map.getSource<GeoJSONSource>(SOURCES.clusterMarkers)?.setData(fc)
-  }, [map, data, wateringStatuses, nameFilter])
+  }, [map, data, wateringStatuses, clusterIds, nameFilter])
 
   usePointerCursor(LAYERS.clusterMarkers, interactive)
 

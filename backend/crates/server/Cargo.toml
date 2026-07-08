@@ -70,10 +70,12 @@ uuid = { workspace = true }
 utoipa = { version = "5", features = ["axum_extras", "uuid"] }
 utoipa-axum = "0.2"
 utoipa-swagger-ui = { version = "9", features = ["axum", "vendored"] }
+polyline = "0.11.0"
 
 [dev-dependencies]
 claims = "0.8"
 domain = { path = "../domain", features = ["sqlx"] }
+geo-types = "0.7.19"
 libc = "0.2"
 quickcheck = "1"
 quickcheck_macros = "1"

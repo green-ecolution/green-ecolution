@@ -6,7 +6,10 @@ use sqlx::PgPool;
 use domain::{
     Id, IdSliceExt, RawId, RepositoryError,
     cluster::TreeCluster,
-    shared::pagination::{Page, Pagination},
+    shared::{
+        coordinates::Coordinate,
+        pagination::{Page, Pagination},
+    },
     watering_plan::{
         WateringPlan, WateringPlanDraft, WateringPlanEvaluation, WateringPlanReader,
         WateringPlanSearchQuery, WateringPlanSnapshot, WateringPlanStatus, WateringPlanView,
@@ -33,6 +36,7 @@ struct WateringPlanViewRow {
     updated_at: NaiveDateTime,
     date: NaiveDate,
     description: String,
+    start_point_name: Option<String>,
     status: WateringPlanStatus,
     distance: Option<f64>,
     total_water_required: Option<f64>,
@@ -60,6 +64,7 @@ impl From<WateringPlanViewRow> for WateringPlanView {
             updated_at: row.updated_at.and_utc(),
             date: row.date.and_time(NaiveTime::MIN).and_utc(),
             description: Some(row.description).filter(|s| !s.is_empty()),
+            start_point_name: row.start_point_name,
             status: row.status,
             distance: row.distance,
             total_water_required: row.total_water_required,
@@ -84,6 +89,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             id: RawId,
             date: chrono::NaiveDate,
             description: String,
+            start_point_name: Option<String>,
             status: WateringPlanStatus,
             distance: Option<f64>,
             total_water_required: Option<f64>,
@@ -96,15 +102,16 @@ impl WateringPlanReader for PgWateringPlanRepository {
             transporter_id: Option<RawId>,
             trailer_id: Option<RawId>,
             cluster_ids: Vec<RawId>,
+            route_geometry: Option<Value>,
         }
 
         let row = sqlx::query_as!(
             Row,
-            r#"SELECT wp.id, wp.date, wp.description,
+            r#"SELECT wp.id, wp.date, wp.description, wp.start_point_name,
                       wp.status AS "status: WateringPlanStatus",
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.gpx_url, wp.refill_count, wp.duration,
-                      wp.provider, wp.additional_informations,
+                      wp.provider, wp.additional_informations, wp.route_geometry,
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS "transporter_id: RawId",
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS "trailer_id: RawId",
                       COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS "cluster_ids!: Vec<RawId>"
@@ -126,6 +133,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             id: row.id,
             date: row.date.and_time(NaiveTime::MIN).and_utc(),
             description: Some(row.description).filter(|s| !s.is_empty()),
+            start_point_name: row.start_point_name,
             status: row.status,
             distance: row.distance,
             total_water_required: row.total_water_required,
@@ -138,6 +146,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             duration: std::time::Duration::from_secs_f64(row.duration),
             provider: row.provider,
             additional_info: row.additional_informations,
+            route_geometry: json_to_geometry(row.route_geometry)?,
         }))
     }
 
@@ -145,7 +154,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
     async fn view_by_id(&self, id: Id<WateringPlan>) -> Result<WateringPlanView, RepositoryError> {
         let row = sqlx::query_as!(
             WateringPlanViewRow,
-            r#"SELECT wp.id, wp.updated_at, wp.date, wp.description,
+            r#"SELECT wp.id, wp.updated_at, wp.date, wp.description, wp.start_point_name,
                       wp.status AS "status: WateringPlanStatus",
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.gpx_url, wp.refill_count, wp.duration,
@@ -187,7 +196,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
 
         let rows = sqlx::query_as!(
             WateringPlanViewRow,
-            r#"SELECT wp.id, wp.updated_at, wp.date, wp.description,
+            r#"SELECT wp.id, wp.updated_at, wp.date, wp.description, wp.start_point_name,
                       wp.status AS "status: WateringPlanStatus",
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.gpx_url, wp.refill_count, wp.duration,
@@ -245,6 +254,36 @@ impl WateringPlanReader for PgWateringPlanRepository {
     }
 }
 
+fn geometry_to_json(geometry: Option<&[Coordinate]>) -> Option<Value> {
+    geometry.map(|coords| {
+        Value::Array(
+            coords
+                .iter()
+                .map(|c| serde_json::json!([c.latitude(), c.longitude()]))
+                .collect(),
+        )
+    })
+}
+
+fn json_to_geometry(value: Option<Value>) -> Result<Option<Vec<Coordinate>>, RepositoryError> {
+    let Some(value) = value else { return Ok(None) };
+    let pairs: Vec<(f64, f64)> = serde_json::from_value(value)
+        .map_err(|e| RepositoryError::DataIntegrity(format!("invalid route_geometry: {e}")))?;
+    let coords = pairs
+        .into_iter()
+        .map(|(lat, lon)| {
+            Coordinate::new(lat, lon)
+                .map_err(|e| RepositoryError::DataIntegrity(format!("invalid route_geometry: {e}")))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    // Empty geometry means "no route" — collapse to None so readers get one representation.
+    Ok(if coords.is_empty() {
+        None
+    } else {
+        Some(coords)
+    })
+}
+
 /// Persists the plan row and syncs both join tables inside the caller's
 /// transaction. Cluster rows are diffed rather than rewritten so surviving
 /// rows keep their `consumed_water` (a full delete + reinsert silently reset
@@ -265,7 +304,9 @@ async fn persist_plan(
             duration = $9,
             gpx_url = $10,
             provider = $11,
-            additional_informations = $12
+            additional_informations = $12,
+            route_geometry = $13,
+            start_point_name = $14
         WHERE id = $1"#,
         plan.id.value(),
         plan.date.date_naive(),
@@ -279,6 +320,8 @@ async fn persist_plan(
         plan.gpx_url.as_ref().map(|u| u.as_str()),
         plan.provenance().provider().map(|p| p.as_str()),
         plan.provenance().additional_info(),
+        geometry_to_json(plan.route_geometry()) as Option<Value>,
+        plan.start_point_name.as_deref(),
     )
     .execute(&mut **tx)
     .await?;
@@ -363,13 +406,14 @@ impl WateringPlanWriter for PgWateringPlanRepository {
 
         let plan_id = Id::<WateringPlan>::new_v7();
         sqlx::query!(
-            r#"INSERT INTO watering_plans (id, date, description, status, provider, additional_informations)
-            VALUES ($1, $2, $3, 'planned', $4, $5)"#,
+            r#"INSERT INTO watering_plans (id, date, description, status, provider, additional_informations, start_point_name)
+            VALUES ($1, $2, $3, 'planned', $4, $5, $6)"#,
             plan_id.value(),
             draft.date.date_naive(),
             draft.description.as_deref().unwrap_or(""),
             draft.provenance.provider().map(|p| p.as_str()),
             draft.provenance.additional_info(),
+            draft.start_point_name.as_deref(),
         )
         .execute(&mut *tx)
         .await?;
@@ -490,5 +534,38 @@ impl WateringPlanWriter for PgWateringPlanRepository {
 
         tx.commit().await?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn json_to_geometry_none_and_empty_collapse_to_none() {
+        assert_eq!(json_to_geometry(None).unwrap(), None);
+        assert_eq!(json_to_geometry(Some(serde_json::json!([]))).unwrap(), None);
+    }
+
+    #[test]
+    fn json_to_geometry_round_trips_pairs() {
+        let coords = vec![
+            Coordinate::new(54.76, 9.43).unwrap(),
+            Coordinate::new(54.80, 9.44).unwrap(),
+        ];
+        let json = geometry_to_json(Some(&coords)).unwrap();
+        assert_eq!(json_to_geometry(Some(json)).unwrap(), Some(coords));
+    }
+
+    #[test]
+    fn json_to_geometry_rejects_malformed_json() {
+        let err = json_to_geometry(Some(serde_json::json!({"lat": 1.0}))).unwrap_err();
+        assert!(matches!(err, RepositoryError::DataIntegrity(_)));
+    }
+
+    #[test]
+    fn json_to_geometry_rejects_out_of_range_coordinates() {
+        let err = json_to_geometry(Some(serde_json::json!([[999.0, 9.43]]))).unwrap_err();
+        assert!(matches!(err, RepositoryError::DataIntegrity(_)));
     }
 }

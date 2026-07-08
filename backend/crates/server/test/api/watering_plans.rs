@@ -422,7 +422,10 @@ async fn preview_route_returns_503_when_routing_disabled() {
     let response = app
         .post_json(
             "/api/v1/watering-plans/route/preview",
-            &serde_json::json!({}),
+            &serde_json::json!({
+                "cluster_ids": ["0190a8e9-7c4f-7000-8000-000000000000"],
+                "transporter_id": "0190a8e9-7c4f-7000-8000-000000000000"
+            }),
         )
         .await;
 
@@ -438,7 +441,9 @@ async fn preview_route_returns_503_when_routing_disabled() {
 async fn get_gpx_file_returns_503_when_routing_disabled() {
     let app = spawn_app().await;
 
-    let response = app.get("/api/v1/watering-plans/route/gpx/sample.gpx").await;
+    let response = app
+        .get("/api/v1/watering-plans/0190a8e9-7c4f-7000-8000-000000000000/route/gpx")
+        .await;
 
     assert_eq!(response.status().as_u16(), 503);
     let body = response.text().await.unwrap_or_default();
@@ -563,4 +568,42 @@ async fn finished_plan_keeps_consumed_water_across_save() {
         "consumed_water must survive a re-save, got {}",
         evals[0].consumed_water
     );
+}
+
+#[tokio::test]
+async fn route_geometry_round_trips_through_repository() {
+    use domain::shared::{coordinates::Coordinate, distance::Distance};
+    use domain::watering_plan::{WateringPlanReader, WateringPlanWriter};
+    use server::infra::pg_watering_plan::PgWateringPlanRepository;
+
+    let app = spawn_app().await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let resp = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, vec![]))
+        .await;
+    let plan_json: serde_json::Value = resp.json().await.unwrap();
+    let plan_id: uuid::Uuid = plan_json["id"].as_str().unwrap().parse().unwrap();
+
+    let repo = PgWateringPlanRepository::new(app.db_pool.clone());
+    let mut plan = repo.by_id(domain::Id::new(plan_id)).await.unwrap();
+    let geometry = vec![
+        Coordinate::new(54.76, 9.43).unwrap(),
+        Coordinate::new(54.80, 9.44).unwrap(),
+    ];
+    plan.set_metrics(
+        Some(Distance::new(1234.0).unwrap()),
+        Some(160.0),
+        1,
+        std::time::Duration::from_secs(900),
+        None,
+        Some(geometry.clone()),
+    );
+    plan.start_point_name = Some("Depot Nord".to_string());
+    repo.save(&plan).await.unwrap();
+
+    let reloaded = repo.by_id(domain::Id::new(plan_id)).await.unwrap();
+    assert_eq!(reloaded.route_geometry(), Some(geometry.as_slice()));
+    assert_eq!(reloaded.distance.map(|d| d.meters()), Some(1234.0));
+    assert_eq!(reloaded.start_point_name.as_deref(), Some("Depot Nord"));
 }

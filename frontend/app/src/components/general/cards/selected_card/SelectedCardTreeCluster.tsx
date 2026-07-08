@@ -1,6 +1,6 @@
 import { treeClusterIdQuery } from '@/api/queries'
 import { SelectedCardProps } from '../SelectedCard'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { Trash2 } from 'lucide-react'
 import {
@@ -14,8 +14,8 @@ import {
 interface SelectedCardClusterProps extends Omit<SelectedCardProps, 'type'> {}
 
 const SelectedCardCluster = ({ onClick, id }: SelectedCardClusterProps) => {
-  const { data } = useSuspenseQuery(treeClusterIdQuery(String(id)))
-  const statusDetails = getWateringStatusDetails(data.wateringStatus)
+  const { data } = useQuery(treeClusterIdQuery(String(id)))
+  const statusDetails = getWateringStatusDetails(data?.wateringStatus ?? 'unknown')
 
   return (
     <ListCard size="compact" hoverable={false} className="mb-3">
@@ -23,7 +23,13 @@ const SelectedCardCluster = ({ onClick, id }: SelectedCardClusterProps) => {
       <ListCardContent>
         <span className="font-medium">
           <strong className="font-semibold">Bewässerungsgruppe:</strong>
-          &nbsp;{data.name} · {id}
+          {data ? (
+            <>
+              &nbsp;{data.name} · {id}
+            </>
+          ) : (
+            <>&nbsp;Lädt…</>
+          )}
         </span>
       </ListCardContent>
       {onClick && (
