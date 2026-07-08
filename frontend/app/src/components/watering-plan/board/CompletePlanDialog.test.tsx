@@ -54,7 +54,8 @@ describe('CompletePlanDialog', () => {
   it('submits a cancellation with note', async () => {
     const user = userEvent.setup()
     updateWateringPlan.mockResolvedValueOnce({})
-    render(<CompletePlanDialog plan={plan} onClose={vi.fn()} />, { wrapper: createWrapper() })
+    const onClose = vi.fn()
+    render(<CompletePlanDialog plan={plan} onClose={onClose} />, { wrapper: createWrapper() })
 
     await user.click(screen.getByRole('radio', { name: /abgebrochen/i }))
     await user.type(screen.getByLabelText(/grund des abbruchs/i), 'Fahrzeug defekt')
@@ -66,6 +67,7 @@ describe('CompletePlanDialog', () => {
     }
     expect(request.wateringPlanUpdateRequest.status).toBe(WateringPlanStatus.Canceled)
     expect(request.wateringPlanUpdateRequest.cancellationNote).toBe('Fahrzeug defekt')
+    await waitFor(() => expect(onClose).toHaveBeenCalled())
   })
 
   it('renders the evaluation form in finished mode', () => {

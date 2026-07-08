@@ -73,5 +73,6 @@ describe('CancelPlanDialog', () => {
   it('renders nothing while closed', () => {
     render(<CancelPlanDialog plan={null} onClose={vi.fn()} />, { wrapper: createWrapper() })
     expect(screen.queryByText(/einsatz abbrechen/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/grund des abbruchs/i)).not.toBeInTheDocument()
   })
 })
