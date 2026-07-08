@@ -6,7 +6,7 @@ use sqlx::PgPool;
 use domain::{
     Id, IdSliceExt, RawId, RepositoryError,
     cluster::TreeCluster,
-    shared::pagination::{Page, Pagination},
+    shared::{coordinates::Coordinate, pagination::{Page, Pagination}},
     watering_plan::{
         WateringPlan, WateringPlanDraft, WateringPlanEvaluation, WateringPlanReader,
         WateringPlanSearchQuery, WateringPlanSnapshot, WateringPlanStatus, WateringPlanView,
@@ -96,6 +96,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             transporter_id: Option<RawId>,
             trailer_id: Option<RawId>,
             cluster_ids: Vec<RawId>,
+            route_geometry: Option<Value>,
         }
 
         let row = sqlx::query_as!(
@@ -104,7 +105,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
                       wp.status AS "status: WateringPlanStatus",
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.gpx_url, wp.refill_count, wp.duration,
-                      wp.provider, wp.additional_informations,
+                      wp.provider, wp.additional_informations, wp.route_geometry,
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS "transporter_id: RawId",
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS "trailer_id: RawId",
                       COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS "cluster_ids!: Vec<RawId>"
@@ -138,6 +139,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             duration: std::time::Duration::from_secs_f64(row.duration),
             provider: row.provider,
             additional_info: row.additional_informations,
+            route_geometry: json_to_geometry(row.route_geometry)?,
         }))
     }
 
@@ -245,6 +247,31 @@ impl WateringPlanReader for PgWateringPlanRepository {
     }
 }
 
+fn geometry_to_json(geometry: Option<&[Coordinate]>) -> Option<Value> {
+    geometry.map(|coords| {
+        Value::Array(
+            coords
+                .iter()
+                .map(|c| serde_json::json!([c.latitude(), c.longitude()]))
+                .collect(),
+        )
+    })
+}
+
+fn json_to_geometry(value: Option<Value>) -> Result<Option<Vec<Coordinate>>, RepositoryError> {
+    let Some(value) = value else { return Ok(None) };
+    let pairs: Vec<(f64, f64)> = serde_json::from_value(value)
+        .map_err(|e| RepositoryError::DataIntegrity(format!("invalid route_geometry: {e}")))?;
+    pairs
+        .into_iter()
+        .map(|(lat, lon)| {
+            Coordinate::new(lat, lon)
+                .map_err(|e| RepositoryError::DataIntegrity(format!("invalid route_geometry: {e}")))
+        })
+        .collect::<Result<Vec<_>, _>>()
+        .map(Some)
+}
+
 /// Persists the plan row and syncs both join tables inside the caller's
 /// transaction. Cluster rows are diffed rather than rewritten so surviving
 /// rows keep their `consumed_water` (a full delete + reinsert silently reset
@@ -265,7 +292,8 @@ async fn persist_plan(
             duration = $9,
             gpx_url = $10,
             provider = $11,
-            additional_informations = $12
+            additional_informations = $12,
+            route_geometry = $13
         WHERE id = $1"#,
         plan.id.value(),
         plan.date.date_naive(),
@@ -279,6 +307,7 @@ async fn persist_plan(
         plan.gpx_url.as_ref().map(|u| u.as_str()),
         plan.provenance().provider().map(|p| p.as_str()),
         plan.provenance().additional_info(),
+        geometry_to_json(plan.route_geometry()) as Option<Value>,
     )
     .execute(&mut **tx)
     .await?;

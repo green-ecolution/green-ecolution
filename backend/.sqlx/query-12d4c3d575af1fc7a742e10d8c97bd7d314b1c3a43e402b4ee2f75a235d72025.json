@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT wp.id, wp.date, wp.description,\n                      wp.status AS \"status: WateringPlanStatus\",\n                      wp.distance, wp.total_water_required, wp.cancellation_note,\n                      wp.gpx_url, wp.refill_count, wp.duration,\n                      wp.provider, wp.additional_informations,\n                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS \"transporter_id: RawId\",\n                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS \"trailer_id: RawId\",\n                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS \"cluster_ids!: Vec<RawId>\"\n            FROM watering_plans wp\n            LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id\n            LEFT JOIN tree_cluster_watering_plans twp ON twp.watering_plan_id = wp.id\n            WHERE wp.id = $1\n            GROUP BY wp.id",
+  "query": "SELECT wp.id, wp.date, wp.description,\n                      wp.status AS \"status: WateringPlanStatus\",\n                      wp.distance, wp.total_water_required, wp.cancellation_note,\n                      wp.gpx_url, wp.refill_count, wp.duration,\n                      wp.provider, wp.additional_informations, wp.route_geometry,\n                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS \"transporter_id: RawId\",\n                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS \"trailer_id: RawId\",\n                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS \"cluster_ids!: Vec<RawId>\"\n            FROM watering_plans wp\n            LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id\n            LEFT JOIN tree_cluster_watering_plans twp ON twp.watering_plan_id = wp.id\n            WHERE wp.id = $1\n            GROUP BY wp.id",
   "describe": {
     "columns": [
       {
@@ -79,16 +79,21 @@
       },
       {
         "ordinal": 12,
+        "name": "route_geometry",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 13,
         "name": "transporter_id: RawId",
         "type_info": "Uuid"
       },
       {
-        "ordinal": 13,
+        "ordinal": 14,
         "name": "trailer_id: RawId",
         "type_info": "Uuid"
       },
       {
-        "ordinal": 14,
+        "ordinal": 15,
         "name": "cluster_ids!: Vec<RawId>",
         "type_info": "UuidArray"
       }
@@ -111,10 +116,11 @@
       false,
       true,
       true,
+      true,
       null,
       null,
       null
     ]
   },
-  "hash": "e9ceb99494da5057cde57c5cf5ae96ecd5c4f69358f03b1cbf0d8e5d0da5b58f"
+  "hash": "12d4c3d575af1fc7a742e10d8c97bd7d314b1c3a43e402b4ee2f75a235d72025"
 }
