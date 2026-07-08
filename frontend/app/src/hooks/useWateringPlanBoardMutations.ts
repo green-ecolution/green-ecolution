@@ -52,6 +52,37 @@ export const useWateringPlanBoardMutations = () => {
       wateringPlanUpdateRequest: toUpdateRequest(plan, overrides),
     })
 
+  const revertStart = useMutation({
+    mutationFn: (plan: WateringPlanInList) => update(plan, { status: WateringPlanStatus.Planned }),
+    onMutate: async (plan) => {
+      await queryClient.cancelQueries({ queryKey: ['watering-plans', 'board'] })
+      const previousPlanned =
+        queryClient.getQueryData<ListResponseWateringPlanInListResponse>(plannedKey)
+      const previousActive =
+        queryClient.getQueryData<ListResponseWateringPlanInListResponse>(activeKey)
+      if (previousActive) {
+        queryClient.setQueryData(activeKey, {
+          ...previousActive,
+          data: previousActive.data.filter((p) => p.id !== plan.id),
+        })
+      }
+      if (previousPlanned) {
+        queryClient.setQueryData(plannedKey, {
+          ...previousPlanned,
+          data: [{ ...plan, status: WateringPlanStatus.Planned }, ...previousPlanned.data],
+        })
+      }
+      return { previousPlanned, previousActive }
+    },
+    onError: (error, _plan, context) => {
+      if (context?.previousPlanned) queryClient.setQueryData(plannedKey, context.previousPlanned)
+      if (context?.previousActive) queryClient.setQueryData(activeKey, context.previousActive)
+      showToast(`Der Start konnte nicht rückgängig gemacht werden: ${error.message}`, 'error')
+    },
+    onSuccess: () => showToast('Start rückgängig gemacht.'),
+    onSettled: invalidateBoard,
+  })
+
   const startPlan = useMutation({
     mutationFn: (plan: WateringPlanInList) => update(plan, { status: WateringPlanStatus.Active }),
     onMutate: async (plan) => {
@@ -79,7 +110,10 @@ export const useWateringPlanBoardMutations = () => {
       if (context?.previousActive) queryClient.setQueryData(activeKey, context.previousActive)
       showToast(`Der Einsatz konnte nicht gestartet werden: ${error.message}`, 'error')
     },
-    onSuccess: () => showToast('Einsatz gestartet.'),
+    onSuccess: (_data, plan) =>
+      showToast('Einsatz gestartet.', 'success', {
+        action: { label: 'Rückgängig', onClick: () => revertStart.mutate(plan) },
+      }),
     onSettled: invalidateBoard,
   })
 
@@ -116,5 +150,5 @@ export const useWateringPlanBoardMutations = () => {
     },
   })
 
-  return { startPlan, cancelPlan, finishPlan, assignUsers }
+  return { revertStart, startPlan, cancelPlan, finishPlan, assignUsers }
 }
