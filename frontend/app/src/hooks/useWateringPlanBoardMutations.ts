@@ -47,8 +47,7 @@ export const useWateringPlanBoardMutations = () => {
     })
 
   const startPlan = useMutation({
-    mutationFn: (plan: WateringPlanInList) =>
-      update(plan, { status: WateringPlanStatus.Active }),
+    mutationFn: (plan: WateringPlanInList) => update(plan, { status: WateringPlanStatus.Active }),
     onMutate: async (plan) => {
       await queryClient.cancelQueries({ queryKey: ['watering-plans', 'board'] })
       const previousPlanned =

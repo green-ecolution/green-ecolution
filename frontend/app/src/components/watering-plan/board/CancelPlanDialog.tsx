@@ -10,7 +10,7 @@ import {
 import type { WateringPlanInList } from '@/api/backendApi'
 import { CancelWateringPlan } from '../WateringPlanStatusUpdate'
 import { useWateringPlanBoardMutations } from '@/hooks/useWateringPlanBoardMutations'
-import { formatBoardDate } from './WateringPlanBoardCard'
+import { formatBoardDate } from './format'
 
 interface CancelPlanDialogProps {
   plan: WateringPlanInList | null
@@ -31,8 +31,8 @@ const CancelPlanDialog = ({ plan, onClose }: CancelPlanDialogProps) => {
           <DialogDescription>
             {plan && (
               <>
-                Der Einsatz vom {formatBoardDate(plan.date)} wird abgebrochen. Geben Sie dafür
-                einen Grund an.
+                Der Einsatz vom {formatBoardDate(plan.date)} wird abgebrochen. Geben Sie dafür einen
+                Grund an.
               </>
             )}
           </DialogDescription>
@@ -41,10 +41,7 @@ const CancelPlanDialog = ({ plan, onClose }: CancelPlanDialogProps) => {
           <CancelWateringPlan
             submitLabel="Einsatz abbrechen"
             onSubmit={(data) =>
-              cancelPlan.mutate(
-                { plan, note: data.cancellationNote },
-                { onSuccess: onClose },
-              )
+              cancelPlan.mutate({ plan, note: data.cancellationNote }, { onSuccess: onClose })
             }
           />
         )}

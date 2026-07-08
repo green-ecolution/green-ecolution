@@ -36,8 +36,7 @@ const kanbanColumnVariants = cva(
 )
 
 export interface KanbanColumnProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof kanbanColumnVariants> {}
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof kanbanColumnVariants> {}
 
 const KanbanColumn = React.forwardRef<HTMLDivElement, KanbanColumnProps>(
   ({ className, tone, state, ...props }, ref) => (
@@ -56,8 +55,17 @@ interface KanbanColumnHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   count?: number
 }
 
-const KanbanColumnHeader = ({ icon, title, count, className, ...props }: KanbanColumnHeaderProps) => (
-  <div className={cn('flex items-center gap-2 px-1 pt-1 text-dark-800 [&>svg]:size-4', className)} {...props}>
+const KanbanColumnHeader = ({
+  icon,
+  title,
+  count,
+  className,
+  ...props
+}: KanbanColumnHeaderProps) => (
+  <div
+    className={cn('flex items-center gap-2 px-1 pt-1 text-dark-800 [&>svg]:size-4', className)}
+    {...props}
+  >
     {icon}
     <h2 className="font-lato text-sm font-semibold">{title}</h2>
     {count !== undefined && (
@@ -83,8 +91,7 @@ const kanbanCardVariants = cva(
 )
 
 export interface KanbanCardProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof kanbanCardVariants> {}
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof kanbanCardVariants> {}
 
 const KanbanCard = React.forwardRef<HTMLDivElement, KanbanCardProps>(
   ({ className, state, ...props }, ref) => (
@@ -93,7 +100,11 @@ const KanbanCard = React.forwardRef<HTMLDivElement, KanbanCardProps>(
 )
 KanbanCard.displayName = 'KanbanCard'
 
-const KanbanDropHint = ({ label, className, ...props }: { label: string } & React.HTMLAttributes<HTMLDivElement>) => (
+const KanbanDropHint = ({
+  label,
+  className,
+  ...props
+}: { label: string } & React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
       'flex h-16 items-center justify-center rounded-xl border-2 border-dashed border-green-dark bg-white/60 text-sm font-semibold text-green-dark',

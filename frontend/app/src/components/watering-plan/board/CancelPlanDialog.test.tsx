@@ -8,12 +8,15 @@ import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import CancelPlanDialog from './CancelPlanDialog'
 import type { WateringPlanInList } from '@/api/backendApi'
 
-const updateWateringPlan = vi.fn()
+const updateWateringPlan = vi.fn<(...args: unknown[]) => Promise<unknown>>()
 vi.mock('@/api/backendApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/api/backendApi')>()
   return {
     ...actual,
-    wateringPlanApi: { ...actual.wateringPlanApi, updateWateringPlan: (...args: unknown[]) => updateWateringPlan(...args) },
+    wateringPlanApi: {
+      ...actual.wateringPlanApi,
+      updateWateringPlan: (...args: unknown[]) => updateWateringPlan(...args),
+    },
   }
 })
 vi.mock('@tanstack/react-router', () => ({

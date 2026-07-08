@@ -23,8 +23,12 @@ const PlanCard = ({ title, groups, liters }: { title: string; groups: number; li
   <KanbanCard>
     <p className="font-lato font-semibold text-dark">{title}</p>
     <div className="mt-2 flex flex-wrap gap-1.5">
-      <Badge variant="muted" className="tabular-nums">{groups} Gruppen</Badge>
-      <Badge variant="muted" className="tabular-nums">{liters}</Badge>
+      <Badge variant="muted" className="tabular-nums">
+        {groups} Gruppen
+      </Badge>
+      <Badge variant="muted" className="tabular-nums">
+        {liters}
+      </Badge>
       <Badge variant="muted">FL-GE-A01</Badge>
     </div>
   </KanbanCard>

@@ -9,7 +9,11 @@ interface ClusterSuggestionCardProps {
   onSelectedChange: (selected: boolean) => void
 }
 
-const ClusterSuggestionCard = ({ cluster, selected, onSelectedChange }: ClusterSuggestionCardProps) => {
+const ClusterSuggestionCard = ({
+  cluster,
+  selected,
+  onSelectedChange,
+}: ClusterSuggestionCardProps) => {
   const statusDetails = getWateringStatusDetails(cluster.wateringStatus)
 
   return (

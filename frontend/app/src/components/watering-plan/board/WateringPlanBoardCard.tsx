@@ -1,22 +1,12 @@
 import { Link } from '@tanstack/react-router'
-import { format } from 'date-fns'
-import { de } from 'date-fns/locale'
-import {
-  Avatar,
-  AvatarFallback,
-  Badge,
-  KanbanCard,
-} from '@green-ecolution/ui'
+import { Avatar, AvatarFallback, Badge, KanbanCard } from '@green-ecolution/ui'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { User, WateringPlanInList } from '@/api/backendApi'
 import { getWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { columnForStatus } from '@/lib/wateringPlanBoard'
 import { formatLiters } from '@/lib/utils'
 import type { ReactNode } from 'react'
-
-export function userInitials(user: User): string {
-  return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
-}
+import { userInitials, formatBoardDate } from './format'
 
 const statusDot: Record<WateringPlanStatus, string> = {
   [WateringPlanStatus.Planned]: 'bg-dark-300',
@@ -27,12 +17,6 @@ const statusDot: Record<WateringPlanStatus, string> = {
   [WateringPlanStatus.Unknown]: 'bg-dark-300',
 }
 
-export function formatBoardDate(iso: string): string {
-  const date = new Date(iso)
-  const sameYear = date.getFullYear() === new Date().getFullYear()
-  return format(date, sameYear ? 'EEEEEE, d. MMMM' : 'EEEEEE, d. MMMM yyyy', { locale: de })
-}
-
 interface WateringPlanBoardCardProps {
   plan: WateringPlanInList
   users: User[]
@@ -40,7 +24,12 @@ interface WateringPlanBoardCardProps {
   cardState?: 'idle' | 'dragging' | 'ghost'
 }
 
-const WateringPlanBoardCard = ({ plan, users, assignSlot, cardState }: WateringPlanBoardCardProps) => {
+const WateringPlanBoardCard = ({
+  plan,
+  users,
+  assignSlot,
+  cardState,
+}: WateringPlanBoardCardProps) => {
   const column = columnForStatus(plan.status)
   const statusDetails = getWateringPlanStatusDetails(plan.status)
   const assigned = users.filter((u) => plan.userIds.includes(u.id))

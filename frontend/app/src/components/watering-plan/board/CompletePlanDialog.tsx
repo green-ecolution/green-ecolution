@@ -11,11 +11,8 @@ import {
 } from '@green-ecolution/ui'
 import type { WateringPlanInList } from '@/api/backendApi'
 import { CancelWateringPlan, FinishedWateringPlan } from '../WateringPlanStatusUpdate'
-import {
-  useWateringPlanBoardMutations,
-  type PlanEvaluation,
-} from '@/hooks/useWateringPlanBoardMutations'
-import { formatBoardDate } from './WateringPlanBoardCard'
+import { useWateringPlanBoardMutations } from '@/hooks/useWateringPlanBoardMutations'
+import { formatBoardDate } from './format'
 
 type CompleteMode = 'finished' | 'canceled'
 
@@ -75,10 +72,7 @@ const CompletePlanDialog = ({ plan, onClose }: CompletePlanDialogProps) => {
             loadedData={{ treeclusters: plan.treeclusters }}
             submitLabel="Einsatz abschließen"
             onSubmit={(data) =>
-              finishPlan.mutate(
-                { plan, evaluation: data.evaluation as PlanEvaluation },
-                { onSuccess: onClose },
-              )
+              finishPlan.mutate({ plan, evaluation: data.evaluation }, { onSuccess: onClose })
             }
           />
         )}
