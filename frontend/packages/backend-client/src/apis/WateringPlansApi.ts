@@ -20,6 +20,7 @@ import type {
   RouteResponse,
   WateringPlanCreateRequest,
   WateringPlanResponse,
+  WateringPlanStatus,
   WateringPlanUpdateRequest,
 } from '../models/index';
 import {
@@ -33,6 +34,8 @@ import {
     WateringPlanCreateRequestToJSON,
     WateringPlanResponseFromJSON,
     WateringPlanResponseToJSON,
+    WateringPlanStatusFromJSON,
+    WateringPlanStatusToJSON,
     WateringPlanUpdateRequestFromJSON,
     WateringPlanUpdateRequestToJSON,
 } from '../models/index';
@@ -60,6 +63,7 @@ export interface GetWateringPlanRouteRequest {
 export interface ListWateringPlansRequest {
     page?: number;
     perPage?: number;
+    status?: Array<WateringPlanStatus>;
 }
 
 export interface PreviewRouteRequest {
@@ -272,7 +276,7 @@ export class WateringPlansApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of watering plans with embedded vehicles and clusters.
+     * Returns a paginated list of watering plans with embedded vehicles and clusters. Optional filter parameter (status) narrows the result; the array parameter is repeatable.
      * List all watering plans
      */
     async listWateringPlansRaw(requestParameters: ListWateringPlansRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseWateringPlanInListResponse>> {
@@ -284,6 +288,10 @@ export class WateringPlansApi extends runtime.BaseAPI {
 
         if (requestParameters['perPage'] != null) {
             queryParameters['per_page'] = requestParameters['perPage'];
+        }
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -302,7 +310,7 @@ export class WateringPlansApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of watering plans with embedded vehicles and clusters.
+     * Returns a paginated list of watering plans with embedded vehicles and clusters. Optional filter parameter (status) narrows the result; the array parameter is repeatable.
      * List all watering plans
      */
     async listWateringPlans(requestParameters: ListWateringPlansRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseWateringPlanInListResponse> {

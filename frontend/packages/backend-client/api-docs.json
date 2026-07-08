@@ -2317,13 +2317,12 @@
           "Watering Plans"
         ],
         "summary": "List all watering plans",
-        "description": "Returns a paginated list of watering plans with embedded vehicles and clusters.",
+        "description": "Returns a paginated list of watering plans with embedded vehicles and clusters. Optional filter parameter (status) narrows the result; the array parameter is repeatable.",
         "operationId": "listWateringPlans",
         "parameters": [
           {
             "name": "page",
             "in": "query",
-            "description": "Page number to retrieve (1-based).",
             "required": false,
             "schema": {
               "type": "integer",
@@ -2336,7 +2335,6 @@
           {
             "name": "per_page",
             "in": "query",
-            "description": "Number of items per page.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -2346,6 +2344,18 @@
               "minimum": 1
             },
             "example": 25
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Repeatable: `?status=planned&status=active`.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/WateringPlanStatus"
+              }
+            }
           }
         ],
         "responses": {
