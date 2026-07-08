@@ -262,14 +262,15 @@ fn json_to_geometry(value: Option<Value>) -> Result<Option<Vec<Coordinate>>, Rep
     let Some(value) = value else { return Ok(None) };
     let pairs: Vec<(f64, f64)> = serde_json::from_value(value)
         .map_err(|e| RepositoryError::DataIntegrity(format!("invalid route_geometry: {e}")))?;
-    pairs
+    let coords = pairs
         .into_iter()
         .map(|(lat, lon)| {
             Coordinate::new(lat, lon)
                 .map_err(|e| RepositoryError::DataIntegrity(format!("invalid route_geometry: {e}")))
         })
-        .collect::<Result<Vec<_>, _>>()
-        .map(Some)
+        .collect::<Result<Vec<_>, _>>()?;
+    // Empty geometry means "no route" — collapse to None so readers get one representation.
+    Ok(if coords.is_empty() { None } else { Some(coords) })
 }
 
 /// Persists the plan row and syncs both join tables inside the caller's
@@ -519,5 +520,38 @@ impl WateringPlanWriter for PgWateringPlanRepository {
 
         tx.commit().await?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn json_to_geometry_none_and_empty_collapse_to_none() {
+        assert_eq!(json_to_geometry(None).unwrap(), None);
+        assert_eq!(json_to_geometry(Some(serde_json::json!([]))).unwrap(), None);
+    }
+
+    #[test]
+    fn json_to_geometry_round_trips_pairs() {
+        let coords = vec![
+            Coordinate::new(54.76, 9.43).unwrap(),
+            Coordinate::new(54.80, 9.44).unwrap(),
+        ];
+        let json = geometry_to_json(Some(&coords)).unwrap();
+        assert_eq!(json_to_geometry(Some(json)).unwrap(), Some(coords));
+    }
+
+    #[test]
+    fn json_to_geometry_rejects_malformed_json() {
+        let err = json_to_geometry(Some(serde_json::json!({"lat": 1.0}))).unwrap_err();
+        assert!(matches!(err, RepositoryError::DataIntegrity(_)));
+    }
+
+    #[test]
+    fn json_to_geometry_rejects_out_of_range_coordinates() {
+        let err = json_to_geometry(Some(serde_json::json!([[999.0, 9.43]]))).unwrap_err();
+        assert!(matches!(err, RepositoryError::DataIntegrity(_)));
     }
 }
