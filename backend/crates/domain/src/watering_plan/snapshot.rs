@@ -5,7 +5,10 @@ use serde_json::Value;
 use url::Url;
 use uuid::Uuid;
 
-use crate::watering_plan::WateringPlanStatus;
+use crate::{
+    shared::coordinates::Coordinate,
+    watering_plan::WateringPlanStatus,
+};
 
 /// Raw DB-row mapping used exclusively for aggregate rehydration.
 #[doc(hidden)]
@@ -26,4 +29,5 @@ pub struct WateringPlanSnapshot {
     pub duration: Duration,
     pub provider: Option<String>,
     pub additional_info: Option<Value>,
+    pub route_geometry: Option<Vec<Coordinate>>,
 }

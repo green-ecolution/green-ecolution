@@ -34,6 +34,7 @@ use crate::{
     cluster::TreeCluster,
     events::DomainEvent,
     shared::{
+        coordinates::Coordinate,
         distance::Distance,
         provenance::{Provenance, ProviderId},
     },
@@ -86,6 +87,7 @@ pub struct WateringPlan {
     trailer_id: Option<Id<Vehicle>>,
     cancellation_note: Option<String>,
     provenance: Provenance,
+    route_geometry: Option<Vec<Coordinate>>,
 }
 
 /// Input for creating a new [`WateringPlan`].
@@ -134,6 +136,7 @@ impl WateringPlan {
             trailer_id: snap.trailer_id.map(Id::new),
             cancellation_note: snap.cancellation_note,
             provenance: Provenance::reconstitute(snap.provider, snap.additional_info),
+            route_geometry: snap.route_geometry,
         }
     }
 
@@ -159,6 +162,10 @@ impl WateringPlan {
 
     pub fn provenance(&self) -> &Provenance {
         &self.provenance
+    }
+
+    pub fn route_geometry(&self) -> Option<&[Coordinate]> {
+        self.route_geometry.as_deref()
     }
 
     fn ensure_planned(&self) -> Result<(), WateringPlanError> {
@@ -276,7 +283,6 @@ impl WateringPlan {
         }])
     }
 
-    #[allow(dead_code)]
     pub fn set_metrics(
         &mut self,
         distance: Option<Distance>,
@@ -284,12 +290,14 @@ impl WateringPlan {
         refill_count: u32,
         duration: Duration,
         gpx_url: Option<Url>,
+        route_geometry: Option<Vec<Coordinate>>,
     ) {
         self.distance = distance;
         self.total_water_required = total_water_required;
         self.refill_count = refill_count;
         self.duration = duration;
         self.gpx_url = gpx_url;
+        self.route_geometry = route_geometry;
     }
 }
 
@@ -318,6 +326,7 @@ mod tests {
             trailer_id: None,
             cancellation_note: None,
             provenance: Provenance::default(),
+            route_geometry: None,
         };
         (plan, [c1, c2])
     }
@@ -529,18 +538,24 @@ mod tests {
         let (mut p, _) = fixed_plan();
         let dist = crate::shared::distance::Distance::new(1234.0).unwrap();
         let url: Url = "https://example.com/run.gpx".parse().unwrap();
+        let geometry = vec![
+            Coordinate::new(54.76, 9.43).unwrap(),
+            Coordinate::new(54.80, 9.44).unwrap(),
+        ];
         p.set_metrics(
             Some(dist),
             Some(99.5),
             3,
             Duration::from_secs(60 * 45),
             Some(url.clone()),
+            Some(geometry.clone()),
         );
         assert_eq!(p.distance, Some(dist));
         assert_eq!(p.total_water_required, Some(99.5));
         assert_eq!(p.refill_count, 3);
         assert_eq!(p.duration, Duration::from_secs(60 * 45));
         assert_eq!(p.gpx_url, Some(url));
+        assert_eq!(p.route_geometry(), Some(geometry.as_slice()));
     }
 
     #[test]
