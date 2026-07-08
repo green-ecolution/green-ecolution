@@ -4,8 +4,8 @@ import { DetailedList, StatusCard } from '@green-ecolution/ui'
 import StatusCardGrid from '../general/StatusCardGrid'
 import { format, formatDuration, intervalToDuration } from 'date-fns'
 import { getWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { userQuery } from '@/api/queries'
+import { useSuspenseQuery, useQuery } from '@tanstack/react-query'
+import { userQuery, routingStartPointsQuery } from '@/api/queries'
 import { de } from 'date-fns/locale'
 import { formatKm } from '@/lib/utils'
 
@@ -15,6 +15,8 @@ interface TabGeneralDataProps {
 
 const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
   const { data: userRes } = useSuspenseQuery(userQuery())
+  const { data: startPoints } = useQuery(routingStartPointsQuery())
+  const defaultStartPointName = startPoints?.[0]?.name
 
   const updatedDate = wateringPlan?.updatedAt
     ? format(new Date(wateringPlan.updatedAt), 'dd.MM.yyyy')
@@ -30,7 +32,7 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
     },
     {
       label: 'Startpunkt',
-      value: 'Schleswiger Straße, Hauptzentrale',
+      value: wateringPlan.startPointName ?? defaultStartPointName ?? 'Keine Angabe',
     },
     {
       label: 'Benötigtes Wasser',
@@ -118,7 +120,11 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
             label="Länge der Route"
             value={formatKm(wateringPlan.distance)}
             isLarge
-            description="Einsatz startet in der Schleswiger Straße"
+            description={
+              (wateringPlan.startPointName ?? defaultStartPointName)
+                ? `Einsatz startet: ${wateringPlan.startPointName ?? defaultStartPointName}`
+                : undefined
+            }
           />
         </li>
       </StatusCardGrid>

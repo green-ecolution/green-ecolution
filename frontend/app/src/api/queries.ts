@@ -27,12 +27,14 @@ import {
   regionApi,
   ResponseError,
   RouteResponse,
+  routingApi,
   SensorDataResponse,
   SensorModelResponse,
   SensorResponse,
   sensorApi,
   ServerInfoResponse,
   ServicesInfoResponse,
+  StartPointResponse,
   TreeClusterResponse,
   TreeMarkerListResponse,
   TreeResponse,
@@ -296,4 +298,18 @@ export const clusterBoundariesQuery = () =>
     queryKey: ['clusters', 'boundaries'],
     queryFn: () => clusterApi.listClusterBoundaries(),
     staleTime: 5 * 60_000,
+  })
+
+export const routingStartPointsQuery = () =>
+  queryOptions<StartPointResponse[] | null>({
+    queryKey: ['routing-start-points'],
+    queryFn: async () => {
+      try {
+        return await routingApi.listRoutingStartPoints()
+      } catch (error) {
+        if (error instanceof ResponseError && error.response.status === 503) return null
+        throw error
+      }
+    },
+    staleTime: Infinity,
   })

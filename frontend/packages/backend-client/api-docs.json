@@ -899,6 +899,34 @@
         }
       }
     },
+    "/v1/routing/start-points": {
+      "get": {
+        "tags": [
+          "Routing"
+        ],
+        "summary": "List routing start points",
+        "description": "Returns the configured named start/return points for watering routes. The first entry is the default.",
+        "operationId": "listRoutingStartPoints",
+        "responses": {
+          "200": {
+            "description": "List of start points",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StartPointResponse"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Routing feature is disabled"
+          }
+        }
+      }
+    },
     "/v1/sensors": {
       "get": {
         "tags": [
@@ -4404,6 +4432,14 @@
               "0190a8e9-7c4f-7000-8000-000000000000"
             ]
           },
+          "start_point_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Named start/return point for the route. Must match a configured depot name.",
+            "example": "Betriebshof Schleswiger Straße"
+          },
           "trailer_id": {
             "type": [
               "string",
@@ -4922,6 +4958,28 @@
           "unknown"
         ],
         "example": "Lu"
+      },
+      "StartPointResponse": {
+        "type": "object",
+        "description": "Named departure/return point for watering routes. The first entry is the default.",
+        "required": [
+          "name",
+          "lat",
+          "lon"
+        ],
+        "properties": {
+          "lat": {
+            "type": "number",
+            "format": "double"
+          },
+          "lon": {
+            "type": "number",
+            "format": "double"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
       },
       "TreeClusterCreateRequest": {
         "type": "object",
@@ -6237,6 +6295,14 @@
             "description": "Name of the external data provider that supplied this record.",
             "example": "green_ecolution"
           },
+          "start_point_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Named start/return point for the route. Must match a configured depot name.",
+            "example": "Betriebshof Schleswiger Straße"
+          },
           "trailer_id": {
             "type": [
               "string",
@@ -6487,6 +6553,14 @@
             "example": 2,
             "minimum": 0
           },
+          "start_point_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Named start/return point for the route.",
+            "example": "Betriebshof Schleswiger Straße"
+          },
           "status": {
             "$ref": "#/components/schemas/WateringPlanStatus",
             "description": "Current status of the watering plan."
@@ -6603,6 +6677,14 @@
             "description": "Name of the external data provider that supplied this record.",
             "example": "green_ecolution"
           },
+          "start_point_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Named start/return point for the route. Must match a configured depot name.",
+            "example": "Betriebshof Schleswiger Straße"
+          },
           "status": {
             "$ref": "#/components/schemas/WateringPlanStatus",
             "description": "Updated status of the watering plan."
@@ -6699,6 +6781,10 @@
     {
       "name": "Plugins",
       "description": "Plugin registration and lifecycle management. External plugins can register, authenticate, and maintain heartbeat connections."
+    },
+    {
+      "name": "Routing",
+      "description": "Routing configuration and start point management. Exposes the named depot locations available for watering route optimization."
     }
   ]
 }

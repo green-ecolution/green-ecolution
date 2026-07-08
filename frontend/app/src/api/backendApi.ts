@@ -7,6 +7,7 @@ import {
   InfoApi,
   PluginsApi,
   RegionsApi,
+  RoutingApi,
   SensorsApi,
   TreesApi,
   TreeClustersApi,
@@ -63,6 +64,7 @@ export const sensorApi = new SensorsApi(config)
 export const vehicleApi = new VehiclesApi(config)
 export const pluginApi = new PluginsApi(config)
 export const wateringPlanApi = new WateringPlansApi(config)
+export const routingApi = new RoutingApi(config)
 
 export * from '@green-ecolution/backend-client'
 

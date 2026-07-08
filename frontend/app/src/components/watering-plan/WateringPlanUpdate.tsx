@@ -36,6 +36,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         clusterIds: data.treeclusters.map((cluster) => cluster.id),
         status: data.status,
         driverIds: data.userIds,
+        startPointName: data.startPointName ?? undefined,
       },
   )
   const { mutate, isError, error, form, navigationBlocker, saveDraft } = useWateringPlanForm(
@@ -60,6 +61,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
       trailerId: data.trailerId && data.trailerId !== '-1' ? data.trailerId : undefined,
       treeClusterIds: data.clusterIds,
       userIds: data.driverIds,
+      startPointName: data.startPointName,
       cancellationNote: '', // TODO: why cancel note in update ???
     })
   }

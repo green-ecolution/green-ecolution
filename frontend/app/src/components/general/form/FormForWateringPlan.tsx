@@ -14,6 +14,8 @@ import SelectEntities from './types/SelectEntities'
 import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
 import { validateDriverLicenses } from '@/lib/licenseValidation'
 import { Controller, SubmitHandler, useFormContext, useFormState, useWatch } from 'react-hook-form'
+import { useQuery } from '@tanstack/react-query'
+import { routingStartPointsQuery } from '@/api/queries'
 
 interface FormForWateringPlanProps {
   displayError: boolean
@@ -32,6 +34,8 @@ startOfToday.setHours(0, 0, 0, 0)
 const FormForWateringPlan = (props: FormForWateringPlanProps) => {
   const { register, handleSubmit, control } = useFormContext<WateringPlanForm>()
   const { isValid, errors } = useFormState({ control })
+
+  const { data: startPoints } = useQuery(routingStartPointsQuery())
 
   const watchedTransporterId = useWatch<WateringPlanForm, 'transporterId'>({
     name: 'transporterId',
@@ -101,6 +105,26 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
             />
           )}
         />
+        {startPoints != null && (
+          <Controller
+            name="startPointName"
+            control={control}
+            render={({ field }) => (
+              <SelectField
+                id="startPointName"
+                label="Startpunkt"
+                placeholder="Startpunkt auswählen"
+                value={field.value ?? startPoints[0]?.name ?? ''}
+                onValueChange={(val) => field.onChange(val)}
+                error={errors.startPointName?.message}
+                options={startPoints.map((sp) => ({
+                  value: sp.name,
+                  label: sp.name,
+                }))}
+              />
+            )}
+          />
+        )}
         <Controller
           name="trailerId"
           control={control}

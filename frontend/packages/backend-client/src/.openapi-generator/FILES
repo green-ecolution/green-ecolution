@@ -3,6 +3,7 @@ apis/EvaluationApi.ts
 apis/InfoApi.ts
 apis/PluginsApi.ts
 apis/RegionsApi.ts
+apis/RoutingApi.ts
 apis/SensorsApi.ts
 apis/TreeClustersApi.ts
 apis/TreesApi.ts
@@ -70,6 +71,7 @@ models/ServicesInfoResponse.ts
 models/SetSensorTreeRequest.ts
 models/SignalResponse.ts
 models/SoilCondition.ts
+models/StartPointResponse.ts
 models/TreeClusterCreateRequest.ts
 models/TreeClusterInListResponse.ts
 models/TreeClusterResponse.ts

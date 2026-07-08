@@ -26,6 +26,12 @@ export interface RouteRequest {
      */
     clusterIds: Array<string>;
     /**
+     * Named start/return point for the route. Must match a configured depot name.
+     * @type {string}
+     * @memberof RouteRequest
+     */
+    startPointName?: string | null;
+    /**
      * Identifier of the trailer vehicle to use, if any.
      * @type {string}
      * @memberof RouteRequest
@@ -59,6 +65,7 @@ export function RouteRequestFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return {
         
         'clusterIds': json['cluster_ids'],
+        'startPointName': json['start_point_name'] == null ? undefined : json['start_point_name'],
         'trailerId': json['trailer_id'] == null ? undefined : json['trailer_id'],
         'transporterId': json['transporter_id'],
     };
@@ -76,6 +83,7 @@ export function RouteRequestToJSONTyped(value?: RouteRequest | null, ignoreDiscr
     return {
         
         'cluster_ids': value['clusterIds'],
+        'start_point_name': value['startPointName'],
         'trailer_id': value['trailerId'],
         'transporter_id': value['transporterId'],
     };

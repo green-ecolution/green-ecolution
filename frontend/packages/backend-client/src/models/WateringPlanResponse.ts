@@ -121,6 +121,12 @@ export interface WateringPlanResponse {
      */
     refillCount: number;
     /**
+     * Named start/return point for the route.
+     * @type {string}
+     * @memberof WateringPlanResponse
+     */
+    startPointName?: string | null;
+    /**
      * Current status of the watering plan.
      * @type {WateringPlanStatus}
      * @memberof WateringPlanResponse
@@ -211,6 +217,7 @@ export function WateringPlanResponseFromJSONTyped(json: any, ignoreDiscriminator
         'id': json['id'],
         'provider': json['provider'] == null ? undefined : json['provider'],
         'refillCount': json['refill_count'],
+        'startPointName': json['start_point_name'] == null ? undefined : json['start_point_name'],
         'status': WateringPlanStatusFromJSON(json['status']),
         'totalWaterRequired': json['total_water_required'],
         'trailer': json['trailer'] == null ? undefined : VehicleResponseFromJSON(json['trailer']),
@@ -244,6 +251,7 @@ export function WateringPlanResponseToJSONTyped(value?: WateringPlanResponse | n
         'id': value['id'],
         'provider': value['provider'],
         'refill_count': value['refillCount'],
+        'start_point_name': value['startPointName'],
         'status': WateringPlanStatusToJSON(value['status']),
         'total_water_required': value['totalWaterRequired'],
         'trailer': VehicleResponseToJSON(value['trailer']),
