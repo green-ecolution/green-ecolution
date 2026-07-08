@@ -78,6 +78,7 @@ const CompletePlanDialog = ({ plan, onClose }: CompletePlanDialogProps) => {
         )}
         {plan && mode === 'canceled' && (
           <CancelWateringPlan
+            className="w-full"
             submitLabel="Einsatz abbrechen"
             onSubmit={(data) =>
               cancelPlan.mutate({ plan, note: data.cancellationNote }, { onSuccess: onClose })

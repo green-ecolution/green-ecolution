@@ -174,9 +174,14 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
 interface CancelPlanProps {
   onSubmit: SubmitHandler<WateringPlanCancelForm>
   submitLabel?: string
+  className?: string
 }
 
-export const CancelWateringPlan = ({ onSubmit, submitLabel = 'Speichern' }: CancelPlanProps) => {
+export const CancelWateringPlan = ({
+  onSubmit,
+  submitLabel = 'Speichern',
+  className = 'md:w-1/2',
+}: CancelPlanProps) => {
   const {
     register,
     handleSubmit,
@@ -187,7 +192,7 @@ export const CancelWateringPlan = ({ onSubmit, submitLabel = 'Speichern' }: Canc
   })
 
   return (
-    <form className="md:w-1/2" onSubmit={handleSubmit(onSubmit)}>
+    <form className={className} onSubmit={handleSubmit(onSubmit)}>
       <TextareaField
         placeholder="Warum wurde der Einsatz abgebrochen?"
         label="Grund des Abbruchs"

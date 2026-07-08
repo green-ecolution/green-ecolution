@@ -39,6 +39,7 @@ const CancelPlanDialog = ({ plan, onClose }: CancelPlanDialogProps) => {
         </DialogHeader>
         {plan && (
           <CancelWateringPlan
+            className="w-full"
             submitLabel="Einsatz abbrechen"
             onSubmit={(data) =>
               cancelPlan.mutate({ plan, note: data.cancellationNote }, { onSuccess: onClose })
