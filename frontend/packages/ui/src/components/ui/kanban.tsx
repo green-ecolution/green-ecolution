@@ -7,7 +7,7 @@ const KanbanBoard = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDi
     <div
       ref={ref}
       className={cn(
-        'flex items-start gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none',
+        'flex items-stretch gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none',
         className,
       )}
       {...props}
@@ -119,7 +119,7 @@ const KanbanDropHint = ({
 const KanbanColumnEmpty = ({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => (
   <p
     className={cn(
-      'rounded-xl border border-dashed border-dark-200 p-4 text-center text-sm text-dark-600',
+      'flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-dark-200 p-4 text-center text-sm text-dark-600',
       className,
     )}
     {...props}
