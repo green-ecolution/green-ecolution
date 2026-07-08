@@ -16,8 +16,14 @@ const ClusterSuggestionCard = ({
 }: ClusterSuggestionCardProps) => {
   const statusDetails = getWateringStatusDetails(cluster.wateringStatus)
 
+  const toggleOnCardClick = (event: React.MouseEvent) => {
+    // Link keeps navigating, checkbox already toggles itself — don't double-toggle.
+    if ((event.target as HTMLElement).closest('a, [role="checkbox"]')) return
+    onSelectedChange(!selected)
+  }
+
   return (
-    <KanbanCard className="flex items-start gap-3">
+    <KanbanCard className="flex cursor-pointer items-start gap-3" onClick={toggleOnCardClick}>
       <Checkbox
         checked={selected}
         onCheckedChange={(checked) => onSelectedChange(checked === true)}
