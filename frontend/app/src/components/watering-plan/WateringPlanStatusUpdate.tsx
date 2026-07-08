@@ -4,7 +4,7 @@ import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { WateringPlan, WateringPlanUpdate } from '@/api/backendApi'
 import { wateringPlanIdQuery } from '@/api/queries'
 import { format } from 'date-fns'
-import { MoveRight } from 'lucide-react'
+import { Droplet, MoveRight } from 'lucide-react'
 import FormError from '../general/form/FormError'
 import {
   getWateringPlanStatusDetails,
@@ -19,7 +19,6 @@ import {
 } from '@/schema/wateringPlanSchema'
 import { zodResolver } from '@/lib/zodResolver'
 import { SubmitHandler, useFieldArray, useForm } from 'react-hook-form'
-import SelectedCard from '../general/cards/SelectedCard'
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { wateringPlanApi } from '@/api/backendApi'
 import { useNavigate } from '@tanstack/react-router'
@@ -253,23 +252,45 @@ export const FinishedWateringPlan = ({
         <p className="-mt-2 text-sm text-dark-600 mb-2.5">
           Die Standardwerte ergeben sich aus 80 Litern pro Baum einer Bewässerungsgruppe.
         </p>
-        <ul className="flex flex-col gap-y-5">
-          {fields.map((field, index) => (
-            <li key={field.treeClusterId} className="grid grid-cols-1 gap-y-2 md:grid-cols-2">
-              <SelectedCard type="cluster" id={loadedData?.treeclusters[index].id} />
-              <div className="relative flex flex-wrap items-center md:mb-3 md:ml-6">
-                <FormField
-                  type="number"
-                  label="Liter"
-                  defaultValue={field.consumedWater}
-                  className="max-w-32"
-                  hideLabel
-                  {...register(`evaluation.${index}.consumedWater`)}
-                />
-                <span className="absolute left-[8.5rem] top-1/2 -translate-y-1/2 ml-2">Liter</span>
-              </div>
-            </li>
-          ))}
+        <ul className="flex flex-col">
+          {fields.map((field, index) => {
+            const cluster = loadedData.treeclusters[index]
+            const treeCount = cluster.treeIds.length
+            return (
+              <li
+                key={field.treeClusterId}
+                className="flex items-center justify-between gap-4 border-b border-dark-100 py-3 last:border-0"
+              >
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <span
+                    aria-hidden
+                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-green-light-100"
+                  >
+                    <Droplet className="size-4 text-green-dark" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-dark">{cluster.name}</p>
+                    {treeCount > 0 && (
+                      <p className="text-xs tabular-nums text-dark-600">
+                        {treeCount} {treeCount === 1 ? 'Baum' : 'Bäume'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <FormField
+                    type="number"
+                    label={`Liter für ${cluster.name}`}
+                    defaultValue={field.consumedWater}
+                    className="max-w-28"
+                    hideLabel
+                    {...register(`evaluation.${index}.consumedWater`)}
+                  />
+                  <span className="text-sm text-dark-600">Liter</span>
+                </div>
+              </li>
+            )
+          })}
         </ul>
       </fieldset>
 
