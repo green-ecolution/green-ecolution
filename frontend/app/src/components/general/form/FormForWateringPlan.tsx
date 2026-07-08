@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import {
   DatePickerField,
   TextareaField,
@@ -32,10 +33,19 @@ const startOfToday = new Date()
 startOfToday.setHours(0, 0, 0, 0)
 
 const FormForWateringPlan = (props: FormForWateringPlanProps) => {
-  const { register, handleSubmit, control } = useFormContext<WateringPlanForm>()
+  const { register, handleSubmit, control, setValue, getValues } =
+    useFormContext<WateringPlanForm>()
   const { isValid, errors } = useFormState({ control })
 
   const { data: startPoints } = useQuery(routingStartPointsQuery())
+
+  useEffect(() => {
+    if (!startPoints?.length) return
+    if (!getValues('startPointName')) {
+      // Untouched select must submit the default depot, not undefined.
+      setValue('startPointName', startPoints[0].name)
+    }
+  }, [startPoints, getValues, setValue])
 
   const watchedTransporterId = useWatch<WateringPlanForm, 'transporterId'>({
     name: 'transporterId',
@@ -114,7 +124,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
                 id="startPointName"
                 label="Startpunkt"
                 placeholder="Startpunkt auswählen"
-                value={field.value ?? startPoints[0]?.name ?? ''}
+                value={field.value ?? ''}
                 onValueChange={(val) => field.onChange(val)}
                 error={errors.startPointName?.message}
                 options={startPoints.map((sp) => ({
