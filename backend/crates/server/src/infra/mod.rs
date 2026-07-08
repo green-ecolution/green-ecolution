@@ -11,5 +11,6 @@ pub mod pg_vehicle;
 pub mod pg_watering_plan;
 pub(crate) mod sql;
 pub mod statistics_repo;
+pub mod streamlet;
 pub mod system_info;
 pub mod update_checker;
