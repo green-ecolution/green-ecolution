@@ -178,6 +178,19 @@ export {
   inputGroupButtonVariants,
 } from './components/ui/input-group'
 
+// Kanban
+export {
+  KanbanBoard,
+  KanbanColumn,
+  KanbanColumnHeader,
+  KanbanCard,
+  KanbanDropHint,
+  KanbanColumnEmpty,
+  kanbanColumnVariants,
+  kanbanCardVariants,
+} from './components/ui/kanban'
+export type { KanbanColumnProps, KanbanCardProps } from './components/ui/kanban'
+
 // Label
 export { Label } from './components/ui/label'
 
