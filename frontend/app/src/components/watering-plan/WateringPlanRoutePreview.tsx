@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Loading } from '@green-ecolution/ui'
@@ -11,31 +11,30 @@ import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBounda
 import useClusterMarkerLayer from '@/components/map-gl/layers/useClusterMarkerLayer'
 import useRouteLayer from '@/components/map-gl/layers/useRouteLayer'
 import { isMapAlive } from '@/components/map-gl/mapReady'
+import ClusterPanel from '@/components/map/cluster-panel/ClusterPanel'
 
 interface WateringPlanPreviewRouteProps {
   wateringPlan: WateringPlan
 }
 
-const RoutePreviewLayers = ({ planId, clusterIds }: { planId: string; clusterIds: string[] }) => {
+const RoutePreviewLayers = ({
+  planId,
+  clusterIds,
+  onSelectCluster,
+}: {
+  planId: string
+  clusterIds: string[]
+  onSelectCluster: (id: string) => void
+}) => {
   const map = useMaplibreMap()
-  const navigate = useNavigate()
   const { data: markers } = useSuspenseQuery(clusterMarkersQuery())
   const { data: route } = useSuspenseQuery(wateringPlanRouteQuery(planId))
 
-  const navToCluster = useCallback(
-    (id: string) =>
-      navigate({ to: '/treecluster/$treeclusterId', params: { treeclusterId: id } }).catch(
-        (error) => console.error('Navigation failed:', error),
-      ),
-    [navigate],
-  )
-
   const routeCoordinates = route?.geometry.coordinates as [number, number][] | undefined
 
-  useClusterBoundaryLayer({ onBoundaryClick: navToCluster, clusterIds })
+  useClusterBoundaryLayer({ onBoundaryClick: onSelectCluster, clusterIds })
   useRouteLayer({ coordinates: routeCoordinates })
-  // flyToOnClick off: the click navigates away, so animating the unmounting map is wasted.
-  useClusterMarkerLayer({ onClusterClick: navToCluster, clusterIds, flyToOnClick: false })
+  useClusterMarkerLayer({ onClusterClick: onSelectCluster, clusterIds, flyToOnClick: false })
 
   useEffect(() => {
     if (!isMapAlive(map)) return
@@ -74,6 +73,24 @@ const RoutePreviewLayers = ({ planId, clusterIds }: { planId: string; clusterIds
 const WateringPlanPreviewRoute = ({ wateringPlan }: WateringPlanPreviewRouteProps) => {
   const [centerLat, centerLng] = useStore.getState().mapCenter
   const clusterIds = wateringPlan.treeclusters.map((tc) => tc.id)
+  const [selectedClusterId, setSelectedClusterId] = useState<string | null>(null)
+  const navigate = useNavigate()
+
+  const handleSelectCluster = useCallback((id: string) => {
+    setSelectedClusterId(id)
+  }, [])
+
+  const handleClosePanel = useCallback(() => {
+    setSelectedClusterId(null)
+  }, [])
+
+  const handleOpenDashboard = useCallback(() => {
+    if (!selectedClusterId) return
+    navigate({
+      to: '/treecluster/$treeclusterId',
+      params: { treeclusterId: selectedClusterId },
+    }).catch((error) => console.error('Navigation failed:', error))
+  }, [navigate, selectedClusterId])
 
   return (
     <MapPreview
@@ -84,8 +101,22 @@ const WateringPlanPreviewRoute = ({ wateringPlan }: WateringPlanPreviewRouteProp
       ariaLabel="Karte mit der Route und den Bewässerungsgruppen des Plans"
     >
       <Suspense fallback={<Loading className="justify-center" label="Lade Karte..." />}>
-        <RoutePreviewLayers planId={wateringPlan.id} clusterIds={clusterIds} />
+        <RoutePreviewLayers
+          planId={wateringPlan.id}
+          clusterIds={clusterIds}
+          onSelectCluster={handleSelectCluster}
+        />
       </Suspense>
+      {selectedClusterId && (
+        <Suspense fallback={null}>
+          <ClusterPanel
+            key={selectedClusterId}
+            clusterId={selectedClusterId}
+            onClose={handleClosePanel}
+            onOpenDashboard={handleOpenDashboard}
+          />
+        </Suspense>
+      )}
     </MapPreview>
   )
 }
