@@ -239,7 +239,13 @@ impl WateringPlanService {
             .collect();
 
         let route = optimizer
-            .optimize(&transporter, trailer.as_ref(), &stops, depot, &refill_stations)
+            .optimize(
+                &transporter,
+                trailer.as_ref(),
+                &stops,
+                depot,
+                &refill_stations,
+            )
             .await?;
         if !route.unserved.is_empty() {
             tracing::warn!(

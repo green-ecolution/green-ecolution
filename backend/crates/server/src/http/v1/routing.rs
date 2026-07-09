@@ -84,7 +84,10 @@ pub async fn update_start_point(
 ) -> Result<Json<StartPointResponse>, ServiceError> {
     ensure_routing(&state)?;
     let update = req.into_update()?;
-    let sp = state.start_point_service.update(Id::new(id), update).await?;
+    let sp = state
+        .start_point_service
+        .update(Id::new(id), update)
+        .await?;
     Ok(Json(StartPointResponse::from(&sp)))
 }
 
