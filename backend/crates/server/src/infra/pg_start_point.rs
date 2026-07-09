@@ -111,10 +111,15 @@ impl StartPointWriter for PgStartPointRepository {
     #[tracing::instrument(level = "trace", skip_all)]
     async fn set_default(&self, id: Id<StartPoint>) -> Result<(), RepositoryError> {
         // Single statement: exactly one row ends up TRUE, so the partial unique
-        // index is never violated mid-transaction.
-        let result = sqlx::query!(r#"UPDATE depots SET is_default = (id = $1)"#, id.value())
-            .execute(&self.pool)
-            .await?;
+        // index is never violated mid-statement. EXISTS guard turns an unknown id
+        // into a no-op update instead of clearing every row's default.
+        let result = sqlx::query!(
+            r#"UPDATE depots SET is_default = (id = $1)
+               WHERE EXISTS (SELECT 1 FROM depots WHERE id = $1)"#,
+            id.value()
+        )
+        .execute(&self.pool)
+        .await?;
 
         if result.rows_affected() == 0 {
             return Err(RepositoryError::NotFound);

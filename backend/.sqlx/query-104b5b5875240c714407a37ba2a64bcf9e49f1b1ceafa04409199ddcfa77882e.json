@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE depots SET is_default = (id = $1)\n               WHERE EXISTS (SELECT 1 FROM depots WHERE id = $1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "104b5b5875240c714407a37ba2a64bcf9e49f1b1ceafa04409199ddcfa77882e"
+}
