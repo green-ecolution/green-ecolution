@@ -428,6 +428,67 @@ async fn set_default_moves_default_flag() {
 }
 
 #[tokio::test]
+async fn set_default_back_to_lower_ctid_row_succeeds() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+
+    let list: serde_json::Value = app
+        .get("/api/v1/routing/start-points")
+        .await
+        .json()
+        .await
+        .unwrap();
+    let arr = list.as_array().unwrap();
+    let find = |name: &str| {
+        arr.iter().find(|p| p["name"] == name).unwrap()["id"]
+            .as_str()
+            .unwrap()
+            .to_string()
+    };
+    // Betriebshof is the seeded default and was inserted first (lowest ctid).
+    let betriebshof = find("Betriebshof Schleswiger Straße");
+    let klaerwerk = find("Klärwerk Kielseng");
+
+    // Move default forward to Klärwerk (higher ctid) — always worked.
+    let r1 = app
+        .post_json(
+            &format!("/api/v1/routing/start-points/{klaerwerk}/default"),
+            &serde_json::json!({}),
+        )
+        .await;
+    assert_eq!(r1.status().as_u16(), 204);
+
+    // Move default BACK to Betriebshof (lower ctid). The old single-statement
+    // UPDATE would raise a transient unique violation (HTTP 409) here.
+    let r2 = app
+        .post_json(
+            &format!("/api/v1/routing/start-points/{betriebshof}/default"),
+            &serde_json::json!({}),
+        )
+        .await;
+    assert_eq!(
+        r2.status().as_u16(),
+        204,
+        "set_default must be order-independent"
+    );
+
+    let after: serde_json::Value = app
+        .get("/api/v1/routing/start-points")
+        .await
+        .json()
+        .await
+        .unwrap();
+    let defaults: Vec<&str> = after
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|p| p["is_default"] == true)
+        .map(|p| p["name"].as_str().unwrap())
+        .collect();
+    assert_eq!(defaults, vec!["Betriebshof Schleswiger Straße"]);
+}
+
+#[tokio::test]
 async fn delete_default_start_point_is_rejected() {
     let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
     let app = spawn_app_with_routing(&streamlet.uri()).await;

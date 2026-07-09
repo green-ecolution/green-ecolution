@@ -110,20 +110,33 @@ impl StartPointWriter for PgStartPointRepository {
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn set_default(&self, id: Id<StartPoint>) -> Result<(), RepositoryError> {
-        // Single statement: exactly one row ends up TRUE, so the partial unique
-        // index is never violated mid-statement. EXISTS guard turns an unknown id
-        // into a no-op update instead of clearing every row's default.
-        let result = sqlx::query!(
-            r#"UPDATE depots SET is_default = (id = $1)
-               WHERE EXISTS (SELECT 1 FROM depots WHERE id = $1)"#,
+        let mut tx = self.pool.begin().await?;
+
+        let exists: bool = sqlx::query_scalar!(
+            r#"SELECT EXISTS(SELECT 1 FROM depots WHERE id = $1) AS "exists!""#,
             id.value()
         )
-        .execute(&self.pool)
+        .fetch_one(&mut *tx)
         .await?;
-
-        if result.rows_affected() == 0 {
+        if !exists {
             return Err(RepositoryError::NotFound);
         }
+
+        // Two statements in one transaction: clearing all defaults completes
+        // (emptying the partial unique index) before the target is set, so no
+        // transient two-defaults state can violate depots_single_default —
+        // unlike a single UPDATE, which the index checks per row mid-statement.
+        sqlx::query!(r#"UPDATE depots SET is_default = FALSE WHERE is_default"#)
+            .execute(&mut *tx)
+            .await?;
+        sqlx::query!(
+            r#"UPDATE depots SET is_default = TRUE WHERE id = $1"#,
+            id.value()
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
         Ok(())
     }
 }
