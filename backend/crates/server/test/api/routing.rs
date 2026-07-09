@@ -354,3 +354,201 @@ async fn preview_with_start_point_name_uses_that_depot() {
         "expected depot lat≈54.81, got {depot_lat}"
     );
 }
+
+#[tokio::test]
+async fn create_and_list_start_point() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+
+    let resp = app
+        .post_json(
+            "/api/v1/routing/start-points",
+            &serde_json::json!({"name": "Depot Süd", "lat": 54.75, "lon": 9.43, "watering_point": true}),
+        )
+        .await;
+    assert_eq!(resp.status().as_u16(), 201);
+    let created: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(created["name"], "Depot Süd");
+    assert_eq!(created["is_default"], false);
+    assert_eq!(created["watering_point"], true);
+
+    let list = app.get("/api/v1/routing/start-points").await;
+    let arr: serde_json::Value = list.json().await.unwrap();
+    let names: Vec<&str> = arr
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|p| p["name"].as_str().unwrap())
+        .collect();
+    assert!(names.contains(&"Depot Süd"));
+}
+
+#[tokio::test]
+async fn set_default_moves_default_flag() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+
+    let list: serde_json::Value = app
+        .get("/api/v1/routing/start-points")
+        .await
+        .json()
+        .await
+        .unwrap();
+    let arr = list.as_array().unwrap();
+    // Find a non-default point ("Depot Nord").
+    let target = arr.iter().find(|p| p["name"] == "Depot Nord").unwrap();
+    let target_id = target["id"].as_str().unwrap();
+
+    let resp = app
+        .post_json(
+            &format!("/api/v1/routing/start-points/{target_id}/default"),
+            &serde_json::json!({}),
+        )
+        .await;
+    assert_eq!(resp.status().as_u16(), 204);
+
+    let after: serde_json::Value = app
+        .get("/api/v1/routing/start-points")
+        .await
+        .json()
+        .await
+        .unwrap();
+    let defaults: Vec<&str> = after
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|p| p["is_default"] == true)
+        .map(|p| p["name"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        defaults,
+        vec!["Depot Nord"],
+        "exactly one default, now Depot Nord"
+    );
+}
+
+#[tokio::test]
+async fn delete_default_start_point_is_rejected() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+
+    let list: serde_json::Value = app
+        .get("/api/v1/routing/start-points")
+        .await
+        .json()
+        .await
+        .unwrap();
+    let default = list
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|p| p["is_default"] == true)
+        .unwrap();
+    let id = default["id"].as_str().unwrap();
+
+    let resp = app
+        .delete(&format!("/api/v1/routing/start-points/{id}"))
+        .await;
+    assert_eq!(resp.status().as_u16(), 400);
+}
+
+#[tokio::test]
+async fn delete_non_default_start_point_succeeds() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+
+    let list: serde_json::Value = app
+        .get("/api/v1/routing/start-points")
+        .await
+        .json()
+        .await
+        .unwrap();
+    let target = list
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|p| p["name"] == "Depot Nord")
+        .unwrap();
+    let id = target["id"].as_str().unwrap();
+
+    let resp = app
+        .delete(&format!("/api/v1/routing/start-points/{id}"))
+        .await;
+    assert_eq!(resp.status().as_u16(), 204);
+}
+
+#[tokio::test]
+async fn set_default_unknown_id_returns_404() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+
+    let resp = app
+        .post_json(
+            "/api/v1/routing/start-points/0190a8e9-7c4f-7000-8000-000000000000/default",
+            &serde_json::json!({}),
+        )
+        .await;
+    assert_eq!(resp.status().as_u16(), 404);
+}
+
+#[tokio::test]
+async fn refill_stations_sent_to_streamlet_are_only_watering_points() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let cid = create_cluster_with_tree(&app).await;
+
+    let resp = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, &cid))
+        .await;
+    assert_eq!(resp.status().as_u16(), 201);
+
+    let requests = streamlet.received_requests().await.unwrap();
+    let last = requests.last().unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&last.body).unwrap();
+    let refills = body["problem"]["refill_stations"].as_array().unwrap();
+    assert_eq!(
+        refills.len(),
+        2,
+        "only the two watering_point depots are refill stations"
+    );
+    assert!(
+        refills
+            .iter()
+            .all(|r| (r["location"]["lat"].as_f64().unwrap() - 54.81).abs() > 0.001),
+        "Depot Nord (watering_point=false) must not be a refill station"
+    );
+}
+
+#[tokio::test]
+async fn preview_with_unknown_start_point_name_falls_back_to_default() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let cid = create_cluster_with_tree(&app).await;
+
+    let resp = app
+        .post_json(
+            "/api/v1/watering-plans/route/preview",
+            &serde_json::json!({
+                "cluster_ids": [cid],
+                "transporter_id": tid,
+                "start_point_name": "Kein solcher Punkt"
+            }),
+        )
+        .await;
+    assert_eq!(resp.status().as_u16(), 200);
+
+    let requests = streamlet.received_requests().await.unwrap();
+    let last = requests.last().unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&last.body).unwrap();
+    let depot_lat = body["problem"]["depots"][0]["location"]["lat"]
+        .as_f64()
+        .unwrap();
+    assert!(
+        (depot_lat - 54.76879).abs() < 0.001,
+        "expected fallback to default depot Betriebshof (lat≈54.76879), got {depot_lat}"
+    );
+}
