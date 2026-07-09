@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE depots SET name = $2, lat = $3, lon = $4, watering_point = $5\n               WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Float8",
+        "Float8",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fb5fcd36c7230e886338caa053f8b9f9dea79593666c8c159546c7cb956511cc"
+}
