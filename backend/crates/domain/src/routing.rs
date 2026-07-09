@@ -2,8 +2,6 @@
 //!
 //! Mirrors the `event_bus` pattern: the domain defines the trait and the
 //! portable value types; a server-side adapter implements it.
-//! Depot and refill locations are configuration owned by the adapter, not
-//! part of this port.
 
 use crate::{
     Id,
@@ -42,15 +40,16 @@ pub struct OptimizedRoute {
 
 #[async_trait::async_trait]
 pub trait RouteOptimizer: Send + Sync {
-    /// Optimizes a watering route for the given vehicle, optional trailer, and stops.
-    ///
-    /// A depot override sets both the vehicle start and the return depot;
-    /// `None` uses the adapter's configured default.
+    /// Optimizes a watering route for the given vehicle, optional trailer, and
+    /// stops. `depot` is the resolved start/return location and
+    /// `refill_stations` are the water refill points, both supplied by the
+    /// caller (loaded from persistence), not owned by the adapter.
     async fn optimize(
         &self,
         transporter: &Vehicle,
         trailer: Option<&Vehicle>,
         stops: &[RouteStop],
-        depot: Option<Coordinate>,
+        depot: Coordinate,
+        refill_stations: &[Coordinate],
     ) -> Result<OptimizedRoute, RoutingError>;
 }
