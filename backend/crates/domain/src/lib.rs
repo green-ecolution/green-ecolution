@@ -33,6 +33,7 @@ pub mod region;
 pub mod routing;
 pub mod sensor;
 pub mod sensor_model;
+pub mod start_point;
 pub mod shared;
 pub mod tree;
 pub mod user;
