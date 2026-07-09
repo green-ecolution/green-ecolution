@@ -173,7 +173,7 @@ const WateringPlanBoard = () => {
       onDragEnd={handleDragEnd}
       onDragCancel={() => setActiveDrag(null)}
     >
-      <KanbanBoard>
+      <KanbanBoard className="justify-center-safe pt-0.5">
         <SuggestionsColumn />
         <DroppableColumn
           id="planned"
