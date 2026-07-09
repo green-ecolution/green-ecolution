@@ -23,7 +23,7 @@ import {
   TableRow,
 } from '@green-ecolution/ui'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { Copy, MapPin, QrCode } from 'lucide-react'
+import { Copy, MapPin, QrCode, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from '@green-ecolution/ui'
 import { Eye } from 'lucide-react'
@@ -40,6 +40,23 @@ const copyToClipboard = async (text: string) => {
     toast.success('In Zwischenablage kopiert')
   } catch {
     toast.error('Kopieren fehlgeschlagen')
+  }
+}
+
+const clearServiceWorkerAndCache = async () => {
+  try {
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations()
+      await Promise.all(registrations.map((reg) => reg.unregister()))
+    }
+    if ('caches' in window) {
+      const keys = await caches.keys()
+      await Promise.all(keys.map((key) => caches.delete(key)))
+    }
+    toast.success('Service Worker und Cache gelöscht – Seite wird neu geladen')
+    setTimeout(() => window.location.reload(), 800)
+  } catch {
+    toast.error('Löschen fehlgeschlagen')
   }
 }
 
@@ -79,6 +96,10 @@ function Debug() {
             <MapPin />
             GPS-Ortung öffnen
           </Link>
+        </Button>
+        <Button variant="destructive" size="sm" onClick={() => void clearServiceWorkerAndCache()}>
+          <Trash2 />
+          Service Worker &amp; Cache löschen
         </Button>
       </div>
 
