@@ -21,6 +21,7 @@ use crate::{
         pg_region::PgRegionRepository,
         pg_sensor::PgSensorRepository,
         pg_sensor_model::PgSensorModelRepository,
+        pg_start_point::PgStartPointRepository,
         pg_tree::PgTreeRepository,
         pg_vehicle::PgVehicleRepository,
         pg_watering_plan::PgWateringPlanRepository,
@@ -38,6 +39,7 @@ use crate::{
         handlers::tree_watering::TreeWateringFromSensorHandler,
         region_service::RegionService,
         sensor_service::SensorService,
+        start_point_service::StartPointService,
         tree_service::TreeService,
         vehicle_service::VehicleService,
         watering_execution_service::WateringExecutionService,
@@ -103,37 +105,13 @@ impl Application {
                     &settings.routing,
                 )) as Arc<dyn domain::routing::RouteOptimizer>
             });
-        let start_points: Vec<(String, domain::shared::coordinates::Coordinate)> = settings
-            .routing
-            .depots
-            .iter()
-            .filter_map(|d| {
-                match domain::shared::coordinates::Coordinate::new(d.lat, d.lon) {
-                    Ok(coord) => Some((d.name.clone(), coord)),
-                    Err(e) => {
-                        tracing::warn!(name = %d.name, error = %e, "skipping depot with invalid coordinates");
-                        None
-                    }
-                }
-            })
-            .collect();
-        let routing_start_points: Vec<crate::http::v1::dto::routing::StartPointResponse> =
-            start_points
-                .iter()
-                .map(
-                    |(name, coord)| crate::http::v1::dto::routing::StartPointResponse {
-                        name: name.clone(),
-                        lat: coord.latitude(),
-                        lon: coord.longitude(),
-                    },
-                )
-                .collect();
         let services = Services::build(
             &repos,
             event_bus,
             route_optimizer,
             settings.routing.tree_demand_liters,
-            start_points,
+            repos.start_point_reader.clone(),
+            repos.start_point_writer.clone(),
         );
 
         let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
@@ -172,7 +150,7 @@ impl Application {
                 max_limit: settings.map.nearest_tree_max_limit,
             },
             frontend_config_js: crate::http::render_frontend_config_js(&settings.auth).into(),
-            routing_start_points,
+            start_point_service: services.start_point,
         });
 
         let listener = TcpListener::bind(address).await?;
@@ -276,6 +254,8 @@ struct Repositories {
     watering_plan_writer: Arc<dyn domain::watering_plan::WateringPlanWriter>,
     evaluation: Arc<dyn domain::evaluation::EvaluationRepository>,
     statistics: Arc<dyn StatisticsReader>,
+    start_point_reader: Arc<dyn domain::start_point::StartPointReader>,
+    start_point_writer: Arc<dyn domain::start_point::StartPointWriter>,
 }
 
 impl Repositories {
@@ -286,6 +266,7 @@ impl Repositories {
         let vehicle_repo = Arc::new(PgVehicleRepository::new(pool.clone()));
         let cluster_repo = Arc::new(PgTreeClusterRepository::new(pool.clone()));
         let watering_plan_repo = Arc::new(PgWateringPlanRepository::new(pool.clone()));
+        let start_point_repo = Arc::new(PgStartPointRepository::new(pool.clone()));
 
         Self {
             region_reader: region_repo.clone(),
@@ -305,6 +286,8 @@ impl Repositories {
             watering_plan_writer: watering_plan_repo,
             evaluation: Arc::new(PgEvaluationRepository::new(pool.clone())),
             statistics: Arc::new(PgStatisticsRepo::new(pool.clone())),
+            start_point_reader: start_point_repo.clone(),
+            start_point_writer: start_point_repo,
         }
     }
 }
@@ -318,6 +301,7 @@ struct Services {
     watering_plan: Arc<WateringPlanService>,
     watering_execution: Arc<WateringExecutionService>,
     evaluation: Arc<EvaluationService>,
+    start_point: Arc<StartPointService>,
 }
 
 impl Services {
@@ -326,7 +310,8 @@ impl Services {
         event_bus: Arc<dyn EventBus>,
         route_optimizer: Option<Arc<dyn domain::routing::RouteOptimizer>>,
         tree_demand_liters: f64,
-        start_points: Vec<(String, domain::shared::coordinates::Coordinate)>,
+        start_point_reader: Arc<dyn domain::start_point::StartPointReader>,
+        start_point_writer: Arc<dyn domain::start_point::StartPointWriter>,
     ) -> Self {
         Self {
             region: Arc::new(RegionService::new(
@@ -367,7 +352,7 @@ impl Services {
                 event_bus.clone(),
                 route_optimizer,
                 tree_demand_liters,
-                start_points,
+                start_point_reader.clone(),
             )),
             watering_execution: Arc::new(WateringExecutionService::new(
                 repos.watering_plan_reader.clone(),
@@ -375,6 +360,10 @@ impl Services {
                 event_bus,
             )),
             evaluation: Arc::new(EvaluationService::new(repos.evaluation.clone())),
+            start_point: Arc::new(StartPointService::new(
+                start_point_reader.clone(),
+                start_point_writer,
+            )),
         }
     }
 }
