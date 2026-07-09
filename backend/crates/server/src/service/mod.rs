@@ -4,6 +4,7 @@ pub mod event_bus;
 pub mod handlers;
 pub mod region_service;
 pub mod sensor_service;
+pub mod start_point_service;
 pub mod tree_service;
 pub mod user_service;
 pub mod vehicle_service;
