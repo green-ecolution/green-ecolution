@@ -80,6 +80,26 @@ pub struct RefillPoint {
     pub coordinate: Coordinate,
 }
 
+/// Result of a route computation applied to a plan via
+/// [`WateringPlan::set_metrics`]; [`RouteMetrics::cleared`] resets a plan to
+/// the "no route" state.
+#[derive(Debug, Clone, Default)]
+pub struct RouteMetrics {
+    pub distance: Option<Distance>,
+    pub total_water_required: Option<f64>,
+    pub refill_count: u32,
+    pub duration: Duration,
+    pub gpx_url: Option<Url>,
+    pub route_geometry: Option<Vec<Coordinate>>,
+    pub refill_points: Vec<RefillPoint>,
+}
+
+impl RouteMetrics {
+    pub fn cleared() -> Self {
+        Self::default()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct WateringPlan {
     pub id: Id<WateringPlan>,
@@ -329,24 +349,14 @@ impl WateringPlan {
         }])
     }
 
-    #[allow(clippy::too_many_arguments)]
-    pub fn set_metrics(
-        &mut self,
-        distance: Option<Distance>,
-        total_water_required: Option<f64>,
-        refill_count: u32,
-        duration: Duration,
-        gpx_url: Option<Url>,
-        route_geometry: Option<Vec<Coordinate>>,
-        refill_points: Vec<RefillPoint>,
-    ) {
-        self.distance = distance;
-        self.total_water_required = total_water_required;
-        self.refill_count = refill_count;
-        self.duration = duration;
-        self.gpx_url = gpx_url;
-        self.route_geometry = route_geometry;
-        self.refill_points = refill_points;
+    pub fn set_metrics(&mut self, metrics: RouteMetrics) {
+        self.distance = metrics.distance;
+        self.total_water_required = metrics.total_water_required;
+        self.refill_count = metrics.refill_count;
+        self.duration = metrics.duration;
+        self.gpx_url = metrics.gpx_url;
+        self.route_geometry = metrics.route_geometry;
+        self.refill_points = metrics.refill_points;
     }
 }
 
@@ -596,15 +606,15 @@ mod tests {
             Coordinate::new(54.76, 9.43).unwrap(),
             Coordinate::new(54.80, 9.44).unwrap(),
         ];
-        p.set_metrics(
-            Some(dist),
-            Some(99.5),
-            3,
-            Duration::from_secs(60 * 45),
-            Some(url.clone()),
-            Some(geometry.clone()),
-            Vec::new(),
-        );
+        p.set_metrics(RouteMetrics {
+            distance: Some(dist),
+            total_water_required: Some(99.5),
+            refill_count: 3,
+            duration: Duration::from_secs(60 * 45),
+            gpx_url: Some(url.clone()),
+            route_geometry: Some(geometry.clone()),
+            refill_points: Vec::new(),
+        });
         assert_eq!(p.distance, Some(dist));
         assert_eq!(p.total_water_required, Some(99.5));
         assert_eq!(p.refill_count, 3);
@@ -620,18 +630,15 @@ mod tests {
             name: crate::start_point::StartPointName::new("Klärwerk Kielseng".to_string()).unwrap(),
             coordinate: Coordinate::new(54.8052, 9.4471).unwrap(),
         };
-        p.set_metrics(
-            None,
-            None,
-            1,
-            Duration::from_secs(60),
-            None,
-            None,
-            vec![refill.clone()],
-        );
+        p.set_metrics(RouteMetrics {
+            refill_count: 1,
+            duration: Duration::from_secs(60),
+            refill_points: vec![refill.clone()],
+            ..RouteMetrics::default()
+        });
         assert_eq!(p.refill_points(), &[refill]);
 
-        p.set_metrics(None, None, 0, Duration::ZERO, None, None, Vec::new());
+        p.set_metrics(RouteMetrics::cleared());
         assert_eq!(p.refill_points(), &[]);
     }
 
