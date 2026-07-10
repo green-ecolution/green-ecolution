@@ -29,7 +29,6 @@ pub mod view;
 use std::time::Duration;
 
 use chrono::{DateTime, Utc};
-use url::Url;
 
 use crate::{
     Id,
@@ -89,7 +88,6 @@ pub struct RouteMetrics {
     pub total_water_required: Option<f64>,
     pub refill_count: u32,
     pub duration: Duration,
-    pub gpx_url: Option<Url>,
     pub route_geometry: Option<Vec<Coordinate>>,
     pub refill_points: Vec<RefillPoint>,
 }
@@ -108,7 +106,6 @@ pub struct WateringPlan {
     pub start_point_name: Option<String>,
     pub distance: Option<Distance>,
     pub total_water_required: Option<f64>,
-    pub gpx_url: Option<Url>,
     pub refill_count: u32,
     pub duration: Duration,
 
@@ -166,7 +163,6 @@ impl WateringPlan {
             start_point_name: snap.start_point_name,
             distance: snap.distance.and_then(|m| Distance::new(m).ok()),
             total_water_required: snap.total_water_required,
-            gpx_url: snap.gpx_url,
             refill_count: snap.refill_count.max(0) as u32,
             duration: snap.duration,
             status: snap.status,
@@ -354,7 +350,6 @@ impl WateringPlan {
         self.total_water_required = metrics.total_water_required;
         self.refill_count = metrics.refill_count;
         self.duration = metrics.duration;
-        self.gpx_url = metrics.gpx_url;
         self.route_geometry = metrics.route_geometry;
         self.refill_points = metrics.refill_points;
     }
@@ -377,7 +372,6 @@ mod tests {
             start_point_name: None,
             distance: None,
             total_water_required: None,
-            gpx_url: None,
             refill_count: 0,
             duration: Duration::default(),
             status: WateringPlanStatus::Planned,
@@ -601,7 +595,6 @@ mod tests {
     fn set_metrics_overwrites_run_results() {
         let (mut p, _) = fixed_plan();
         let dist = crate::shared::distance::Distance::new(1234.0).unwrap();
-        let url: Url = "https://example.com/run.gpx".parse().unwrap();
         let geometry = vec![
             Coordinate::new(54.76, 9.43).unwrap(),
             Coordinate::new(54.80, 9.44).unwrap(),
@@ -611,7 +604,6 @@ mod tests {
             total_water_required: Some(99.5),
             refill_count: 3,
             duration: Duration::from_secs(60 * 45),
-            gpx_url: Some(url.clone()),
             route_geometry: Some(geometry.clone()),
             refill_points: Vec::new(),
         });
@@ -619,7 +611,6 @@ mod tests {
         assert_eq!(p.total_water_required, Some(99.5));
         assert_eq!(p.refill_count, 3);
         assert_eq!(p.duration, Duration::from_secs(60 * 45));
-        assert_eq!(p.gpx_url, Some(url));
         assert_eq!(p.route_geometry(), Some(geometry.as_slice()));
     }
 

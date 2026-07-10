@@ -177,7 +177,6 @@ impl WateringPlanService {
                     total_water_required: Some(computed.total_water_liters),
                     refill_count: computed.route.refill_count,
                     duration: computed.route.duration,
-                    gpx_url: None,
                     route_geometry: Some(computed.route.geometry),
                     refill_points: computed.refill_points,
                 });

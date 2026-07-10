@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT wp.id, wp.date, wp.description, wp.start_point_name,\n                      wp.status AS \"status: WateringPlanStatus\",\n                      wp.distance, wp.total_water_required, wp.cancellation_note,\n                      wp.gpx_url, wp.refill_count, wp.duration,\n                      wp.provider, wp.additional_informations, wp.route_geometry,\n                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS \"transporter_id: RawId\",\n                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS \"trailer_id: RawId\",\n                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS \"cluster_ids!: Vec<RawId>\",\n                      COALESCE(ARRAY_AGG(DISTINCT uwp.user_id) FILTER (WHERE uwp.user_id IS NOT NULL), ARRAY[]::uuid[]) AS \"user_ids!: Vec<RawId>\"\n            FROM watering_plans wp\n            LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id\n            LEFT JOIN tree_cluster_watering_plans twp ON twp.watering_plan_id = wp.id\n            LEFT JOIN user_watering_plans uwp ON uwp.watering_plan_id = wp.id\n            WHERE wp.id = $1\n            GROUP BY wp.id",
+  "query": "SELECT wp.id, wp.date, wp.description, wp.start_point_name,\n                      wp.status AS \"status: WateringPlanStatus\",\n                      wp.distance, wp.total_water_required, wp.cancellation_note,\n                      wp.refill_count, wp.duration,\n                      wp.provider, wp.additional_informations, wp.route_geometry,\n                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS \"transporter_id: RawId\",\n                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS \"trailer_id: RawId\",\n                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS \"cluster_ids!: Vec<RawId>\",\n                      COALESCE(ARRAY_AGG(DISTINCT uwp.user_id) FILTER (WHERE uwp.user_id IS NOT NULL), ARRAY[]::uuid[]) AS \"user_ids!: Vec<RawId>\"\n            FROM watering_plans wp\n            LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id\n            LEFT JOIN tree_cluster_watering_plans twp ON twp.watering_plan_id = wp.id\n            LEFT JOIN user_watering_plans uwp ON uwp.watering_plan_id = wp.id\n            WHERE wp.id = $1\n            GROUP BY wp.id",
   "describe": {
     "columns": [
       {
@@ -59,51 +59,46 @@
       },
       {
         "ordinal": 8,
-        "name": "gpx_url",
-        "type_info": "Text"
-      },
-      {
-        "ordinal": 9,
         "name": "refill_count",
         "type_info": "Int4"
       },
       {
-        "ordinal": 10,
+        "ordinal": 9,
         "name": "duration",
         "type_info": "Float8"
       },
       {
-        "ordinal": 11,
+        "ordinal": 10,
         "name": "provider",
         "type_info": "Text"
       },
       {
-        "ordinal": 12,
+        "ordinal": 11,
         "name": "additional_informations",
         "type_info": "Jsonb"
       },
       {
-        "ordinal": 13,
+        "ordinal": 12,
         "name": "route_geometry",
         "type_info": "Jsonb"
       },
       {
-        "ordinal": 14,
+        "ordinal": 13,
         "name": "transporter_id: RawId",
         "type_info": "Uuid"
       },
       {
-        "ordinal": 15,
+        "ordinal": 14,
         "name": "trailer_id: RawId",
         "type_info": "Uuid"
       },
       {
-        "ordinal": 16,
+        "ordinal": 15,
         "name": "cluster_ids!: Vec<RawId>",
         "type_info": "UuidArray"
       },
       {
-        "ordinal": 17,
+        "ordinal": 16,
         "name": "user_ids!: Vec<RawId>",
         "type_info": "UuidArray"
       }
@@ -122,7 +117,6 @@
       true,
       true,
       false,
-      true,
       false,
       false,
       true,
@@ -134,5 +128,5 @@
       null
     ]
   },
-  "hash": "9d70b5b470e445afa1dd6023bbe13028f226e6efef7c655c0f8aa056a3dca747"
+  "hash": "60dc6575bdbc6fde099acc972d84dac97d9a2c9871b96e8af8733cb8ee12912c"
 }

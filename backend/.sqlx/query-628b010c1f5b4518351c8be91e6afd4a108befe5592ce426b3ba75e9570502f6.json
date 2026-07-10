@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE watering_plans SET\n            date = $2,\n            description = $3,\n            status = $4,\n            cancellation_note = $5,\n            distance = $6,\n            total_water_required = $7,\n            refill_count = $8,\n            duration = $9,\n            gpx_url = $10,\n            provider = $11,\n            additional_informations = $12,\n            route_geometry = $13,\n            start_point_name = $14\n        WHERE id = $1",
+  "query": "UPDATE watering_plans SET\n            date = $2,\n            description = $3,\n            status = $4,\n            cancellation_note = $5,\n            distance = $6,\n            total_water_required = $7,\n            refill_count = $8,\n            duration = $9,\n            provider = $10,\n            additional_informations = $11,\n            route_geometry = $12,\n            start_point_name = $13\n        WHERE id = $1",
   "describe": {
     "columns": [],
     "parameters": {
@@ -29,7 +29,6 @@
         "Int4",
         "Float8",
         "Text",
-        "Text",
         "Jsonb",
         "Jsonb",
         "Text"
@@ -37,5 +36,5 @@
     },
     "nullable": []
   },
-  "hash": "77acfeb6afe36baa6b6f431f088a786ae16f88ce483b73dfcc4ab9d88981d767"
+  "hash": "628b010c1f5b4518351c8be91e6afd4a108befe5592ce426b3ba75e9570502f6"
 }

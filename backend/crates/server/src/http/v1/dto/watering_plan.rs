@@ -132,8 +132,8 @@ impl From<WateringPlanDetailView> for WateringPlanResponse {
             distance: v.distance.unwrap_or_default(),
             total_water_required: v.total_water_required.unwrap_or_default(),
             cancellation_note: v.cancellation_note.clone().unwrap_or_default(),
-            // Path is relative to the frontend's API basePath; the stored
-            // gpx_url column is unused since GPX is rendered on the fly.
+            // Path is relative to the frontend's API basePath; GPX is
+            // rendered on the fly from the stored route geometry.
             gpx_url: if v.distance.is_some() {
                 format!("/v1/watering-plans/{}/route/gpx", v.id)
             } else {
