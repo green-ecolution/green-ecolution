@@ -8,7 +8,7 @@ use domain::{
         coordinates::Coordinate,
         provenance::{Provenance, ProviderId},
     },
-    watering_plan::{WateringPlanDraft, WateringPlanEvaluation, WateringPlanView},
+    watering_plan::{RefillPoint, WateringPlanDraft, WateringPlanEvaluation, WateringPlanView},
 };
 
 use super::{WateringPlanStatus, cluster::TreeClusterInListResponse, vehicle::VehicleResponse};
@@ -388,6 +388,30 @@ impl RouteGeometry {
     }
 }
 
+/// Water refill station an optimized route visits.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct RefillPointResponse {
+    /// Name of the refill station at route computation time.
+    #[schema(example = "Klärwerk Kielseng")]
+    pub name: String,
+    /// Latitude of the station (WGS84).
+    #[schema(example = 54.8052)]
+    pub lat: f64,
+    /// Longitude of the station (WGS84).
+    #[schema(example = 9.4471)]
+    pub lon: f64,
+}
+
+impl From<&RefillPoint> for RefillPointResponse {
+    fn from(p: &RefillPoint) -> Self {
+        Self {
+            name: p.name.as_str().to_owned(),
+            lat: p.coordinate.latitude(),
+            lon: p.coordinate.longitude(),
+        }
+    }
+}
+
 /// Optimized watering route (persisted for a plan, or a preview).
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct RouteResponse {
@@ -400,6 +424,8 @@ pub struct RouteResponse {
     /// Number of water refill stops on the route.
     #[schema(example = 2, minimum = 0)]
     pub refill_count: u32,
+    /// Water refill stations the route actually visits, in visit order.
+    pub refill_points: Vec<RefillPointResponse>,
     /// Total water demand of all routed clusters in liters.
     #[schema(example = 24000.0, minimum = 0.0)]
     pub total_water_required: f64,
