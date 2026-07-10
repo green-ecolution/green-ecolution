@@ -34,7 +34,7 @@ const renderGps = () => {
 }
 
 describe('GpsButton', () => {
-  it('starts a geolocation watch, draws the position and centers once', async () => {
+  it('starts a geolocation watch, draws the position and follows updates', async () => {
     const { map } = renderGps()
     await userEvent.click(screen.getByRole('button', { name: 'Eigenen Standort anzeigen' }))
     expect(watchPosition).toHaveBeenCalledOnce()
@@ -47,7 +47,23 @@ describe('GpsButton', () => {
     expect(map.easeTo).toHaveBeenCalledWith({ center: [9.43, 54.79], zoom: 16 })
 
     act(() => onPosition(position(9.44, 54.8)))
+    expect(map.easeTo).toHaveBeenCalledWith({ center: [9.44, 54.8] })
+    expect(map.easeTo).toHaveBeenCalledTimes(2)
+  })
+
+  it('stops following when the user drags the map but keeps the dot updated', async () => {
+    const { map } = renderGps()
+    await userEvent.click(screen.getByRole('button', { name: 'Eigenen Standort anzeigen' }))
+
+    const onPosition = watchPosition.mock.calls[0][0] as (p: GeolocationPosition) => void
+    act(() => onPosition(position(9.43, 54.79)))
     expect(map.easeTo).toHaveBeenCalledOnce()
+
+    act(() => map.fire('dragstart'))
+    act(() => onPosition(position(9.44, 54.8)))
+
+    expect(map.easeTo).toHaveBeenCalledOnce()
+    expect(map.getSource('gps-dot')?.setData).toHaveBeenCalledTimes(2)
   })
 
   it('stops and hints when the position is outside the map bounds', async () => {

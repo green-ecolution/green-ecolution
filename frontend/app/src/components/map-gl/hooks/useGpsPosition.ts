@@ -52,13 +52,20 @@ export const useGpsPosition = () => {
   const map = useMaplibreMap()
   const [active, setActive] = useState(false)
   const watchId = useRef<number | null>(null)
+  const following = useRef(false)
   const centered = useRef(false)
+
+  const cancelFollow = useCallback(() => {
+    following.current = false
+  }, [])
 
   const stop = useCallback(() => {
     if (watchId.current !== null) {
       navigator.geolocation.clearWatch(watchId.current)
       watchId.current = null
     }
+    map.off('dragstart', cancelFollow)
+    following.current = false
     centered.current = false
     if (isMapAlive(map)) {
       for (const id of [DOT_LAYER, ACCURACY_LINE, ACCURACY_FILL]) {
@@ -69,7 +76,7 @@ export const useGpsPosition = () => {
       }
     }
     setActive(false)
-  }, [map])
+  }, [map, cancelFollow])
 
   const handlePosition = useCallback(
     (pos: GeolocationPosition) => {
@@ -96,12 +103,18 @@ export const useGpsPosition = () => {
           },
         ],
       })
-      if (!centered.current) {
-        centered.current = true
-        map.easeTo({
-          center: [longitude, latitude],
-          zoom: Math.max(map.getZoom(), CENTER_ZOOM),
-        })
+      // Desktop geolocation often sends a coarse fix first; keep following
+      // updates until the user pans away so the camera lands on the refined one.
+      if (following.current) {
+        if (centered.current) {
+          map.easeTo({ center: [longitude, latitude] })
+        } else {
+          centered.current = true
+          map.easeTo({
+            center: [longitude, latitude],
+            zoom: Math.max(map.getZoom(), CENTER_ZOOM),
+          })
+        }
       }
     },
     [map, stop],
@@ -113,6 +126,8 @@ export const useGpsPosition = () => {
       return
     }
     setActive(true)
+    following.current = true
+    map.on('dragstart', cancelFollow)
     watchId.current = navigator.geolocation.watchPosition(
       handlePosition,
       (err) => {
@@ -125,7 +140,7 @@ export const useGpsPosition = () => {
       },
       { enableHighAccuracy: true },
     )
-  }, [handlePosition, stop])
+  }, [map, cancelFollow, handlePosition, stop])
 
   useEffect(() => stop, [stop])
 
