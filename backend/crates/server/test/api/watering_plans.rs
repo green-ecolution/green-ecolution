@@ -821,6 +821,7 @@ async fn route_geometry_round_trips_through_repository() {
         std::time::Duration::from_secs(900),
         None,
         Some(geometry.clone()),
+        Vec::new(),
     );
     plan.start_point_name = Some("Depot Nord".to_string());
     repo.save(&plan).await.unwrap();

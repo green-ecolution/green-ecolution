@@ -153,6 +153,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             provider: row.provider,
             additional_info: row.additional_informations,
             route_geometry: json_to_geometry(row.route_geometry)?,
+            refill_points: Vec::new(),
         }))
     }
 

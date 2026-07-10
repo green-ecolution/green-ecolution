@@ -72,6 +72,14 @@ pub enum WateringPlanStatus {
     Unknown,
 }
 
+/// Water refill station a computed route visits, captured by name and
+/// location at computation time so later depot edits don't rewrite history.
+#[derive(Debug, Clone, PartialEq)]
+pub struct RefillPoint {
+    pub name: crate::start_point::StartPointName,
+    pub coordinate: Coordinate,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct WateringPlan {
     pub id: Id<WateringPlan>,
@@ -91,6 +99,7 @@ pub struct WateringPlan {
     cancellation_note: Option<String>,
     provenance: Provenance,
     route_geometry: Option<Vec<Coordinate>>,
+    refill_points: Vec<RefillPoint>,
     user_ids: Vec<uuid::Uuid>,
 }
 
@@ -147,6 +156,7 @@ impl WateringPlan {
             cancellation_note: snap.cancellation_note,
             provenance: Provenance::reconstitute(snap.provider, snap.additional_info),
             route_geometry: snap.route_geometry,
+            refill_points: snap.refill_points,
             user_ids: snap.user_ids,
         }
     }
@@ -181,6 +191,10 @@ impl WateringPlan {
 
     pub fn route_geometry(&self) -> Option<&[Coordinate]> {
         self.route_geometry.as_deref()
+    }
+
+    pub fn refill_points(&self) -> &[RefillPoint] {
+        &self.refill_points
     }
 
     fn ensure_planned(&self) -> Result<(), WateringPlanError> {
@@ -315,6 +329,7 @@ impl WateringPlan {
         }])
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn set_metrics(
         &mut self,
         distance: Option<Distance>,
@@ -323,6 +338,7 @@ impl WateringPlan {
         duration: Duration,
         gpx_url: Option<Url>,
         route_geometry: Option<Vec<Coordinate>>,
+        refill_points: Vec<RefillPoint>,
     ) {
         self.distance = distance;
         self.total_water_required = total_water_required;
@@ -330,6 +346,7 @@ impl WateringPlan {
         self.duration = duration;
         self.gpx_url = gpx_url;
         self.route_geometry = route_geometry;
+        self.refill_points = refill_points;
     }
 }
 
@@ -360,6 +377,7 @@ mod tests {
             cancellation_note: None,
             provenance: Provenance::default(),
             route_geometry: None,
+            refill_points: Vec::new(),
             user_ids: vec![],
         };
         (plan, [c1, c2])
@@ -585,6 +603,7 @@ mod tests {
             Duration::from_secs(60 * 45),
             Some(url.clone()),
             Some(geometry.clone()),
+            Vec::new(),
         );
         assert_eq!(p.distance, Some(dist));
         assert_eq!(p.total_water_required, Some(99.5));
@@ -592,6 +611,28 @@ mod tests {
         assert_eq!(p.duration, Duration::from_secs(60 * 45));
         assert_eq!(p.gpx_url, Some(url));
         assert_eq!(p.route_geometry(), Some(geometry.as_slice()));
+    }
+
+    #[test]
+    fn set_metrics_records_and_clears_visited_refill_points() {
+        let (mut p, _) = fixed_plan();
+        let refill = RefillPoint {
+            name: crate::start_point::StartPointName::new("Klärwerk Kielseng".to_string()).unwrap(),
+            coordinate: Coordinate::new(54.8052, 9.4471).unwrap(),
+        };
+        p.set_metrics(
+            None,
+            None,
+            1,
+            Duration::from_secs(60),
+            None,
+            None,
+            vec![refill.clone()],
+        );
+        assert_eq!(p.refill_points(), &[refill]);
+
+        p.set_metrics(None, None, 0, Duration::ZERO, None, None, Vec::new());
+        assert_eq!(p.refill_points(), &[]);
     }
 
     #[test]
