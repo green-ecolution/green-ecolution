@@ -10,7 +10,6 @@
     nixpkgs,
     ...
   }: let
-    goVersion = 25;
     nodeVersion = 24;
 
     supportedSystems = [
@@ -30,12 +29,13 @@
         });
   in {
     overlays.default = final: prev: {
-      go = final."go_1_${toString goVersion}";
       nodejs = final."nodejs_${toString nodeVersion}";
     };
 
     packages = forEachSupportedSystem ({pkgs}: let
       lib = pkgs.lib;
+
+      version = (lib.importTOML ./backend/Cargo.toml).workspace.package.version;
 
       meta = {
         description = "Green Ecolution – Smart irrigation system to optimize water use, reduce operational workload, and lower costs.";
@@ -64,13 +64,48 @@
 
       buildDate =
         if si ? lastModifiedDate
-        then builtins.substring 2 6 si.lastModifiedDate
-        else "000000";
+        then let
+          d = si.lastModifiedDate;
+          sub = builtins.substring;
+        in "${sub 0 4 d}-${sub 4 2 d}-${sub 6 2 d}T${sub 8 2 d}:${sub 10 2 d}:${sub 12 2 d}Z"
+        else "unknown";
     in rec {
+      domain-wasm = pkgs.rustPlatform.buildRustPackage {
+        inherit meta version;
+        pname = "domain-wasm";
+        src = lib.cleanSource ./backend;
+
+        cargoLock = {
+          lockFile = ./backend/Cargo.lock;
+        };
+
+        # clang/lld: host artifacts (proc-macros) pick up the linker
+        # override in backend/.cargo/config.toml
+        nativeBuildInputs = with pkgs; [wasm-bindgen-cli clang lld];
+
+        auditable = false;
+        doCheck = false;
+
+        # custom buildPhase: cargoBuildHook pins --target to the host
+        # triple and cannot cross-build to wasm32
+        buildPhase = ''
+          runHook preBuild
+          cargo build --release --offline -j $NIX_BUILD_CORES \
+            -p domain-wasm --target wasm32-unknown-unknown
+          runHook postBuild
+        '';
+
+        installPhase = ''
+          runHook preInstall
+          wasm-bindgen --target bundler --out-dir $out \
+            target/wasm32-unknown-unknown/release/domain_wasm.wasm
+          runHook postInstall
+        '';
+      };
+
       frontend = pkgs.stdenv.mkDerivation rec {
-        inherit meta;
+        inherit meta version;
         pname = "frontend";
-        version = "0.3.0"; # x-release-please-version
         src = lib.cleanSource ./frontend;
 
         nativeBuildInputs = with pkgs; [nodejs pnpm pnpmConfigHook];
@@ -79,9 +114,16 @@
 
         pnpmDeps = pkgs.fetchPnpmDeps {
           inherit pname version src;
-          fetcherVersion = 2;
-          hash = "sha256-kcfQjIFZNY30x6E1PawwrtbWxmjyoYFxS24tTx/aHik=";
+          fetcherVersion = 4;
+          hash = "sha256-kS1e1pHrrlkcKh2y+L9XRITqzo5YJ1PFta6JqYuFGU8=";
         };
+
+        # domain-wasm/pkg is wasm-pack output, gitignored and thus absent
+        # from the flake source; inject the Nix-built bindings instead.
+        preBuild = ''
+          mkdir -p packages/domain-wasm/pkg
+          cp -r ${domain-wasm}/. packages/domain-wasm/pkg/
+        '';
 
         buildPhase = ''
           runHook preBuild
@@ -97,10 +139,9 @@
         dontFixup = true;
       };
 
-      backend = pkgs.rustPlatform.buildRustPackage rec {
-        inherit meta;
+      backend = pkgs.rustPlatform.buildRustPackage {
+        inherit meta version;
         pname = "green-ecolution";
-        version = "0.3.0"; # x-release-please-version
         src = lib.cleanSource ./backend;
 
         cargoLock = {
@@ -130,13 +171,7 @@
         name = "dev-shell";
         packages = with pkgs; [
           git
-          # Backend/Go
-          go
-          gotools
-          golangci-lint
-          gnumake
-          yq-go
-          delve
+          just
           # Frontend/Node
           nodejs
           pnpm
@@ -146,6 +181,7 @@
           rustfmt
           clippy
           rust-analyzer
+          cargo-deny
           sqlx-cli
           clang
           lld
@@ -162,7 +198,7 @@
     formatter = forEachSupportedSystem ({pkgs}: pkgs.alejandra);
 
     checks = forEachSupportedSystem ({pkgs}: {
-      inherit (self.packages.${pkgs.system}) frontend backend default;
+      inherit (self.packages.${pkgs.system}) domain-wasm frontend backend default;
     });
   };
 }
