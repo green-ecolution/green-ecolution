@@ -51,7 +51,7 @@ describe('GpsButton', () => {
     expect(map.easeTo).toHaveBeenCalledTimes(2)
   })
 
-  it('stops following when the user drags the map but keeps the dot updated', async () => {
+  it('stops following when the user moves the map but keeps the dot updated', async () => {
     const { map } = renderGps()
     await userEvent.click(screen.getByRole('button', { name: 'Eigenen Standort anzeigen' }))
 
@@ -59,11 +59,48 @@ describe('GpsButton', () => {
     act(() => onPosition(position(9.43, 54.79)))
     expect(map.easeTo).toHaveBeenCalledOnce()
 
-    act(() => map.fire('dragstart'))
+    act(() => map.fire('movestart', {}))
     act(() => onPosition(position(9.44, 54.8)))
+    expect(map.easeTo).toHaveBeenCalledTimes(2)
 
+    act(() => map.fire('movestart', { originalEvent: new MouseEvent('mousedown') }))
+    act(() => onPosition(position(9.45, 54.81)))
+
+    expect(map.easeTo).toHaveBeenCalledTimes(2)
+    expect(map.getSource('gps-dot')?.setData).toHaveBeenCalledTimes(3)
+  })
+
+  it('follows again after re-activation once the user moved away', async () => {
+    const { map } = renderGps()
+    await userEvent.click(screen.getByRole('button', { name: 'Eigenen Standort anzeigen' }))
+
+    let onPosition = watchPosition.mock.calls[0][0] as (p: GeolocationPosition) => void
+    act(() => onPosition(position(9.43, 54.79)))
+    act(() => map.fire('movestart', { originalEvent: new MouseEvent('mousedown') }))
+    act(() => onPosition(position(9.44, 54.8)))
     expect(map.easeTo).toHaveBeenCalledOnce()
-    expect(map.getSource('gps-dot')?.setData).toHaveBeenCalledTimes(2)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Standortanzeige beenden' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Eigenen Standort anzeigen' }))
+
+    onPosition = watchPosition.mock.calls[1][0] as (p: GeolocationPosition) => void
+    act(() => onPosition(position(9.45, 54.81)))
+    expect(map.easeTo).toHaveBeenCalledTimes(2)
+    expect(map.easeTo).toHaveBeenLastCalledWith({ center: [9.45, 54.81], zoom: 16 })
+  })
+
+  it('shows a toast when geolocation is unsupported and never activates', async () => {
+    const errorSpy = vi.spyOn(toast, 'error').mockImplementation(() => '')
+    delete (globalThis.navigator as { geolocation?: unknown }).geolocation
+    renderGps()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Eigenen Standort anzeigen' }))
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      'Standortbestimmung wird von diesem Browser nicht unterstützt',
+    )
+    expect(watchPosition).not.toHaveBeenCalled()
+    expect(screen.getByRole('button')).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('stops and hints when the position is outside the map bounds', async () => {

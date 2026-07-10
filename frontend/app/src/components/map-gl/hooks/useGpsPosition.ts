@@ -10,7 +10,7 @@ const ACCURACY_FILL = 'gps-accuracy-fill'
 const ACCURACY_LINE = 'gps-accuracy-line'
 const DOT_SOURCE = 'gps-dot'
 const DOT_LAYER = 'gps-dot-layer'
-const GPS_BLUE = '#2563EB'
+export const GPS_BLUE = '#2563EB'
 const CENTER_ZOOM = 16
 
 const ensureLayers = (map: MaplibreMap) => {
@@ -55,8 +55,10 @@ export const useGpsPosition = () => {
   const following = useRef(false)
   const centered = useRef(false)
 
-  const cancelFollow = useCallback(() => {
-    following.current = false
+  // movestart instead of dragstart so keyboard panning cancels too; our own
+  // easeTo moves carry no originalEvent and must not cancel the follow.
+  const cancelFollow = useCallback((e: { originalEvent?: unknown }) => {
+    if (e.originalEvent) following.current = false
   }, [])
 
   const stop = useCallback(() => {
@@ -64,7 +66,7 @@ export const useGpsPosition = () => {
       navigator.geolocation.clearWatch(watchId.current)
       watchId.current = null
     }
-    map.off('dragstart', cancelFollow)
+    map.off('movestart', cancelFollow)
     following.current = false
     centered.current = false
     if (isMapAlive(map)) {
@@ -127,7 +129,7 @@ export const useGpsPosition = () => {
     }
     setActive(true)
     following.current = true
-    map.on('dragstart', cancelFollow)
+    map.on('movestart', cancelFollow)
     watchId.current = navigator.geolocation.watchPosition(
       handlePosition,
       (err) => {

@@ -1,6 +1,6 @@
 import { LocateFixed } from 'lucide-react'
 import MapControlButton from './MapControlButton'
-import { useGpsPosition } from './hooks/useGpsPosition'
+import { GPS_BLUE, useGpsPosition } from './hooks/useGpsPosition'
 
 const GpsButton = () => {
   const { active, toggle } = useGpsPosition()
@@ -9,7 +9,7 @@ const GpsButton = () => {
       aria-pressed={active}
       aria-label={active ? 'Standortanzeige beenden' : 'Eigenen Standort anzeigen'}
       onClick={toggle}
-      className={active ? 'text-[#2563EB]' : undefined}
+      style={active ? { color: GPS_BLUE } : undefined}
     >
       <LocateFixed className="!size-6" />
     </MapControlButton>

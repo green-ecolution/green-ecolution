@@ -10,8 +10,8 @@ export const createFakeMap = () => {
   let pitch = 0
   let boundsContains = true
 
-  const fire = (event: string) => {
-    handlers.get(event)?.forEach((cb) => cb())
+  const fire = (event: string, ...args: unknown[]) => {
+    handlers.get(event)?.forEach((cb) => cb(...args))
   }
 
   const map = {
