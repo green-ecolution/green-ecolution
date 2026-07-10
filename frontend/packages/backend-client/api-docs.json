@@ -905,7 +905,7 @@
           "Routing"
         ],
         "summary": "List routing start points",
-        "description": "Returns the configured named start/return points for watering routes. The first entry is the default.",
+        "description": "Returns the persisted named start/return points for watering routes.",
         "operationId": "listRoutingStartPoints",
         "responses": {
           "200": {
@@ -920,6 +920,155 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "Routing feature is disabled"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Routing"
+        ],
+        "summary": "Create a start point",
+        "operationId": "createStartPoint",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartPointRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Start point created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartPointResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "503": {
+            "description": "Routing feature is disabled"
+          }
+        }
+      }
+    },
+    "/v1/routing/start-points/{start_point_id}": {
+      "put": {
+        "tags": [
+          "Routing"
+        ],
+        "summary": "Update a start point",
+        "operationId": "updateStartPoint",
+        "parameters": [
+          {
+            "name": "start_point_id",
+            "in": "path",
+            "description": "Start point ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartPointRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Start point updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartPointResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Start point not found"
+          },
+          "503": {
+            "description": "Routing feature is disabled"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Routing"
+        ],
+        "summary": "Delete a start point",
+        "operationId": "deleteStartPoint",
+        "parameters": [
+          {
+            "name": "start_point_id",
+            "in": "path",
+            "description": "Start point ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Start point deleted"
+          },
+          "400": {
+            "description": "Cannot delete the default start point"
+          },
+          "404": {
+            "description": "Start point not found"
+          },
+          "503": {
+            "description": "Routing feature is disabled"
+          }
+        }
+      }
+    },
+    "/v1/routing/start-points/{start_point_id}/default": {
+      "post": {
+        "tags": [
+          "Routing"
+        ],
+        "summary": "Set the default start point",
+        "operationId": "setDefaultStartPoint",
+        "parameters": [
+          {
+            "name": "start_point_id",
+            "in": "path",
+            "description": "Start point ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default set"
+          },
+          "404": {
+            "description": "Start point not found"
           },
           "503": {
             "description": "Routing feature is disabled"
@@ -4971,15 +5120,53 @@
         ],
         "example": "Lu"
       },
-      "StartPointResponse": {
+      "StartPointRequest": {
         "type": "object",
-        "description": "Named departure/return point for watering routes. The first entry is the default.",
+        "description": "Create/replace payload for a start point.",
         "required": [
           "name",
           "lat",
           "lon"
         ],
         "properties": {
+          "lat": {
+            "type": "number",
+            "format": "double",
+            "example": 54.76879146396569
+          },
+          "lon": {
+            "type": "number",
+            "format": "double",
+            "example": 9.434803531218018
+          },
+          "name": {
+            "type": "string",
+            "example": "Betriebshof Schleswiger Straße"
+          },
+          "watering_point": {
+            "type": "boolean"
+          }
+        }
+      },
+      "StartPointResponse": {
+        "type": "object",
+        "description": "Named departure/return point for watering routes. `watering_point` marks it\nas a water refill station.",
+        "required": [
+          "id",
+          "name",
+          "lat",
+          "lon",
+          "is_default",
+          "watering_point"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
           "lat": {
             "type": "number",
             "format": "double"
@@ -4990,6 +5177,9 @@
           },
           "name": {
             "type": "string"
+          },
+          "watering_point": {
+            "type": "boolean"
           }
         }
       },
