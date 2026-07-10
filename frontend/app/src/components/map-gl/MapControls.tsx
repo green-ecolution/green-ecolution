@@ -1,4 +1,5 @@
 import CompassButton from './CompassButton'
+import GpsButton from './GpsButton'
 import Map3DToggle from './Map3DToggle'
 import useMapResize from './useMapResize'
 import useMapStoreSync from './useMapStoreSync'
@@ -12,6 +13,7 @@ const MapControls = () => {
       <div className="flex flex-col gap-2">
         <CompassButton />
         <Map3DToggle />
+        <GpsButton />
       </div>
       <div className="flex flex-col gap-2">
         <ZoomControls />
