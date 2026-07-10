@@ -6,10 +6,10 @@ use domain::{
     events::DomainEvent,
     routing::{OptimizedRoute, RouteOptimizer, RouteStop},
     shared::pagination::{Page, Pagination},
-    start_point::StartPointReader,
+    start_point::{StartPoint, StartPointReader},
     vehicle::{Vehicle, VehicleReader},
     watering_plan::{
-        WateringPlan, WateringPlanDraft, WateringPlanError, WateringPlanEvaluation,
+        RefillPoint, WateringPlan, WateringPlanDraft, WateringPlanError, WateringPlanEvaluation,
         WateringPlanReader, WateringPlanSearchQuery, WateringPlanUpdate, WateringPlanView,
         WateringPlanWriter,
     },
@@ -33,6 +33,7 @@ pub struct WateringPlanService {
 pub struct ComputedRoute {
     pub route: OptimizedRoute,
     pub total_water_liters: f64,
+    pub refill_points: Vec<RefillPoint>,
 }
 
 impl WateringPlanService {
@@ -186,7 +187,7 @@ impl WateringPlanService {
                     computed.route.duration,
                     None,
                     Some(computed.route.geometry),
-                    Vec::new(),
+                    computed.refill_points,
                 );
                 if let Err(e) = self.writer.save(plan).await {
                     tracing::warn!(error = %e, "failed to persist route metrics");
@@ -241,11 +242,10 @@ impl WateringPlanService {
         .map(|p| p.coordinate)
         .ok_or_else(|| ServiceError::InvalidInput("no start point configured".into()))?;
 
-        let refill_stations: Vec<domain::shared::coordinates::Coordinate> = start_points
-            .iter()
-            .filter(|p| p.watering_point())
-            .map(|p| p.coordinate)
-            .collect();
+        let refill_start_points: Vec<&StartPoint> =
+            start_points.iter().filter(|p| p.watering_point()).collect();
+        let refill_stations: Vec<domain::shared::coordinates::Coordinate> =
+            refill_start_points.iter().map(|p| p.coordinate).collect();
 
         let route = optimizer
             .optimize(
@@ -262,10 +262,20 @@ impl WateringPlanService {
                 "route leaves clusters unserved"
             );
         }
+        let refill_points: Vec<RefillPoint> = route
+            .refill_station_indices
+            .iter()
+            .filter_map(|&i| refill_start_points.get(i))
+            .map(|p| RefillPoint {
+                name: p.name.clone(),
+                coordinate: p.coordinate,
+            })
+            .collect();
         let total_water_liters = stops.iter().map(|s| s.demand_liters).sum();
         Ok(ComputedRoute {
             route,
             total_water_liters,
+            refill_points,
         })
     }
 
