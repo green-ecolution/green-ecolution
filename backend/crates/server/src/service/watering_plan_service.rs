@@ -6,12 +6,12 @@ use domain::{
     events::DomainEvent,
     routing::{OptimizedRoute, RouteOptimizer, RouteStop},
     shared::pagination::{Page, Pagination},
-    start_point::StartPointReader,
+    start_point::{StartPoint, StartPointReader},
     vehicle::{Vehicle, VehicleReader},
     watering_plan::{
-        WateringPlan, WateringPlanDraft, WateringPlanError, WateringPlanEvaluation,
-        WateringPlanReader, WateringPlanSearchQuery, WateringPlanUpdate, WateringPlanView,
-        WateringPlanWriter,
+        RefillPoint, RouteMetrics, WateringPlan, WateringPlanDraft, WateringPlanError,
+        WateringPlanEvaluation, WateringPlanReader, WateringPlanSearchQuery, WateringPlanUpdate,
+        WateringPlanView, WateringPlanWriter,
     },
 };
 
@@ -33,6 +33,7 @@ pub struct WateringPlanService {
 pub struct ComputedRoute {
     pub route: OptimizedRoute,
     pub total_water_liters: f64,
+    pub refill_points: Vec<RefillPoint>,
 }
 
 impl WateringPlanService {
@@ -106,7 +107,7 @@ impl WateringPlanService {
         if self.route_optimizer.is_some() {
             // Edited cluster/vehicle set invalidates the old route; a failed
             // recompute must leave the "no route" state, not a stale track.
-            plan.set_metrics(None, None, 0, std::time::Duration::ZERO, None, None);
+            plan.set_metrics(RouteMetrics::cleared());
         }
         self.writer.save(&plan).await?;
         if self.route_optimizer.is_some() {
@@ -171,14 +172,14 @@ impl WateringPlanService {
             .await
         {
             Ok(computed) => {
-                plan.set_metrics(
-                    Some(computed.route.distance),
-                    Some(computed.total_water_liters),
-                    computed.route.refill_count,
-                    computed.route.duration,
-                    None,
-                    Some(computed.route.geometry),
-                );
+                plan.set_metrics(RouteMetrics {
+                    distance: Some(computed.route.distance),
+                    total_water_required: Some(computed.total_water_liters),
+                    refill_count: computed.route.refill_count,
+                    duration: computed.route.duration,
+                    route_geometry: Some(computed.route.geometry),
+                    refill_points: computed.refill_points,
+                });
                 if let Err(e) = self.writer.save(plan).await {
                     tracing::warn!(error = %e, "failed to persist route metrics");
                 }
@@ -232,11 +233,10 @@ impl WateringPlanService {
         .map(|p| p.coordinate)
         .ok_or_else(|| ServiceError::InvalidInput("no start point configured".into()))?;
 
-        let refill_stations: Vec<domain::shared::coordinates::Coordinate> = start_points
-            .iter()
-            .filter(|p| p.watering_point())
-            .map(|p| p.coordinate)
-            .collect();
+        let refill_start_points: Vec<&StartPoint> =
+            start_points.iter().filter(|p| p.watering_point()).collect();
+        let refill_stations: Vec<domain::shared::coordinates::Coordinate> =
+            refill_start_points.iter().map(|p| p.coordinate).collect();
 
         let route = optimizer
             .optimize(
@@ -253,10 +253,20 @@ impl WateringPlanService {
                 "route leaves clusters unserved"
             );
         }
+        let refill_points: Vec<RefillPoint> = route
+            .refill_station_indices
+            .iter()
+            .filter_map(|&i| refill_start_points.get(i))
+            .map(|p| RefillPoint {
+                name: p.name.clone(),
+                coordinate: p.coordinate,
+            })
+            .collect();
         let total_water_liters = stops.iter().map(|s| s.demand_liters).sum();
         Ok(ComputedRoute {
             route,
             total_water_liters,
+            refill_points,
         })
     }
 

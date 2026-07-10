@@ -416,6 +416,7 @@ fn route_response_from_plan(
         distance: plan.distance.map(|d| d.meters()).unwrap_or_default(),
         duration: plan.duration.as_secs_f64(),
         refill_count: plan.refill_count,
+        refill_points: plan.refill_points().iter().map(Into::into).collect(),
         total_water_required: plan.total_water_required.unwrap_or_default(),
         geometry: RouteGeometry::from_coordinates(geometry),
     })
@@ -479,6 +480,7 @@ pub async fn preview_route(
         distance: computed.route.distance.meters(),
         duration: computed.route.duration.as_secs_f64(),
         refill_count: computed.route.refill_count,
+        refill_points: computed.refill_points.iter().map(Into::into).collect(),
         total_water_required: computed.total_water_liters,
         geometry: RouteGeometry::from_coordinates(&computed.route.geometry),
     }))

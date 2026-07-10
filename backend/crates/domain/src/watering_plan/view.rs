@@ -2,7 +2,6 @@ use std::time::Duration;
 
 use chrono::{DateTime, Utc};
 use serde_json::Value;
-use url::Url;
 use uuid::Uuid;
 
 use crate::watering_plan::WateringPlanStatus;
@@ -26,7 +25,6 @@ pub struct WateringPlanView {
     pub transporter_id: Option<Uuid>,
     pub trailer_id: Option<Uuid>,
     pub cancellation_note: Option<String>,
-    pub gpx_url: Option<Url>,
     pub refill_count: i32,
     pub duration: Duration,
     pub provider: Option<String>,

@@ -796,7 +796,7 @@ async fn revert_started_watering_plan_returns_to_planned() {
 #[tokio::test]
 async fn route_geometry_round_trips_through_repository() {
     use domain::shared::{coordinates::Coordinate, distance::Distance};
-    use domain::watering_plan::{WateringPlanReader, WateringPlanWriter};
+    use domain::watering_plan::{RouteMetrics, WateringPlanReader, WateringPlanWriter};
     use server::infra::pg_watering_plan::PgWateringPlanRepository;
 
     let app = spawn_app().await;
@@ -814,14 +814,14 @@ async fn route_geometry_round_trips_through_repository() {
         Coordinate::new(54.76, 9.43).unwrap(),
         Coordinate::new(54.80, 9.44).unwrap(),
     ];
-    plan.set_metrics(
-        Some(Distance::new(1234.0).unwrap()),
-        Some(160.0),
-        1,
-        std::time::Duration::from_secs(900),
-        None,
-        Some(geometry.clone()),
-    );
+    plan.set_metrics(RouteMetrics {
+        distance: Some(Distance::new(1234.0).unwrap()),
+        total_water_required: Some(160.0),
+        refill_count: 1,
+        duration: std::time::Duration::from_secs(900),
+        route_geometry: Some(geometry.clone()),
+        ..RouteMetrics::default()
+    });
     plan.start_point_name = Some("Depot Nord".to_string());
     repo.save(&plan).await.unwrap();
 

@@ -39,6 +39,7 @@ export * from './PluginListResponse';
 export * from './PluginRegisterRequest';
 export * from './PluginResponse';
 export * from './ReadinessResponse';
+export * from './RefillPointResponse';
 export * from './RegionEvaluationResponse';
 export * from './RegionResponse';
 export * from './RouteGeometry';

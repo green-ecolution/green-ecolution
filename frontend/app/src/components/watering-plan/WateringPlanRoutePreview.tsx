@@ -1,9 +1,13 @@
-import { Suspense, useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, Suspense } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Loading } from '@green-ecolution/ui'
 import type { WateringPlan } from '@/api/backendApi'
-import { clusterMarkersQuery, wateringPlanRouteQuery } from '@/api/queries'
+import { clusterMarkersQuery, routingStartPointsQuery, wateringPlanRouteQuery } from '@/api/queries'
+import RoutePointMarkers, {
+  buildRoutePoints,
+  type RoutePointMarkerData,
+} from '@/components/map-gl/RoutePointMarkers'
 import useStore from '@/store/store'
 import MapPreview from '@/components/map-gl/MapPreview'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
@@ -20,15 +24,22 @@ interface WateringPlanPreviewRouteProps {
 const RoutePreviewLayers = ({
   planId,
   clusterIds,
+  startPointName,
   onSelectCluster,
 }: {
   planId: string
   clusterIds: string[]
+  startPointName?: string | null
   onSelectCluster: (id: string) => void
 }) => {
   const map = useMaplibreMap()
   const { data: markers } = useSuspenseQuery(clusterMarkersQuery())
   const { data: route } = useSuspenseQuery(wateringPlanRouteQuery(planId))
+  const { data: startPoints } = useSuspenseQuery(routingStartPointsQuery())
+  const routePoints = useMemo<RoutePointMarkerData[]>(
+    () => buildRoutePoints(startPoints, startPointName, route?.refillPoints),
+    [startPoints, startPointName, route],
+  )
 
   const routeCoordinates = route?.geometry.coordinates as [number, number][] | undefined
 
@@ -67,7 +78,7 @@ const RoutePreviewLayers = ({
     )
   }, [map, markers, clusterIds, routeCoordinates])
 
-  return null
+  return <RoutePointMarkers points={routePoints} />
 }
 
 const WateringPlanPreviewRoute = ({ wateringPlan }: WateringPlanPreviewRouteProps) => {
@@ -104,6 +115,7 @@ const WateringPlanPreviewRoute = ({ wateringPlan }: WateringPlanPreviewRouteProp
         <RoutePreviewLayers
           planId={wateringPlan.id}
           clusterIds={clusterIds}
+          startPointName={wateringPlan.startPointName}
           onSelectCluster={handleSelectCluster}
         />
       </Suspense>
