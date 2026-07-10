@@ -39,17 +39,23 @@ export const buildRoutePoints = (
   return points
 }
 
+// Collapsed to an icon circle (sized like SensorMarker); the depot name
+// slides out on hover/tap so the busy map stays quiet by default.
 const buildPointElement = ({ name, kind }: RoutePointMarkerData) => {
+  const roleLabel = kind === 'start' ? 'Startpunkt' : 'Nachfüllpunkt'
   const el = document.createElement('div')
-  el.className = `flex items-center gap-1 rounded-full border-2 border-white py-0.5 pl-1 pr-2.5 text-white shadow-[0_2px_6px_rgba(0,0,0,0.35)] ${
+  el.className = `group flex h-8 items-center rounded-full border-2 border-white text-white shadow-[0_2px_6px_rgba(0,0,0,0.35)] hover:z-10 ${
     kind === 'start' ? 'bg-green-dark' : 'bg-blue-600'
   }`
+  el.title = `${roleLabel} · ${name}`
+  el.setAttribute('aria-label', `${roleLabel}: ${name}`)
   const icon = document.createElement('span')
-  icon.className = 'grid size-5 place-items-center'
+  icon.className = 'grid size-7 shrink-0 place-items-center'
   icon.innerHTML = kind === 'start' ? HOUSE_ICON_SVG : DROPLET_ICON_SVG
   const label = document.createElement('span')
-  label.className = 'whitespace-nowrap text-xs font-semibold'
-  label.textContent = `${kind === 'start' ? 'Startpunkt' : 'Nachfüllpunkt'} · ${name}`
+  label.className =
+    'max-w-0 overflow-hidden whitespace-nowrap text-xs font-semibold opacity-0 transition-all duration-200 group-hover:max-w-72 group-hover:pr-2.5 group-hover:opacity-100 motion-reduce:transition-none'
+  label.textContent = name
   el.append(icon, label)
   return el
 }
