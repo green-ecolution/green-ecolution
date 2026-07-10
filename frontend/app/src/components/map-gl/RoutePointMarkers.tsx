@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import { useEffect, useRef } from 'react'
 import { Marker } from 'maplibre-gl'
 import type { RefillPointResponse, StartPointResponse } from '@green-ecolution/backend-client'
@@ -21,6 +20,7 @@ const DROPLET_ICON_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="
 
 // Resolves the depot the same way the backend does: by name, falling back to
 // the default depot; a refill entry matching the start point is shown as start only.
+/* eslint-disable-next-line react-refresh/only-export-components */
 export const buildRoutePoints = (
   startPoints: StartPointResponse[] | null | undefined,
   startPointName: string | null | undefined,
