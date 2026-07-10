@@ -5,7 +5,12 @@ import { MoveRight } from 'lucide-react'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
-import { routePreviewQuery, treeClusterQuery, vehicleIdQuery } from '@/api/queries'
+import {
+  routePreviewQuery,
+  routingStartPointsQuery,
+  treeClusterQuery,
+  vehicleIdQuery,
+} from '@/api/queries'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import { useFormNavigationBlocker } from '@/hooks/form/useFormNavigationBlocker'
 import SelectEntities from '@/components/general/form/types/SelectEntities'
@@ -13,6 +18,10 @@ import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog
 import MapPanel from '@/components/map-gl/MapPanel'
 import useSelectableClusterLayer from '@/components/map-gl/layers/useSelectableClusterLayer'
 import useRouteLayer from '@/components/map-gl/layers/useRouteLayer'
+import RoutePointMarkers, {
+  buildRoutePoints,
+  type RoutePointMarkerData,
+} from '@/components/map-gl/RoutePointMarkers'
 
 const mapSelectClusterSchema = z.object({
   transporterId: z.string().optional(),
@@ -69,6 +78,18 @@ function SelectCluster() {
     ? (previewRoute?.geometry?.coordinates as [number, number][] | undefined)
     : undefined
   useRouteLayer({ coordinates: routeCoordinates })
+
+  const { data: startPoints } = useQuery(routingStartPointsQuery())
+  const startPointName = draft.data?.startPointName
+  const routePoints = useMemo<RoutePointMarkerData[]>(
+    () =>
+      buildRoutePoints(
+        startPoints,
+        startPointName,
+        previewEnabled ? (previewRoute?.refillPoints ?? undefined) : undefined,
+      ),
+    [startPoints, startPointName, previewRoute, previewEnabled],
+  )
 
   const { allowNavigation } = navigationBlocker
 
@@ -152,6 +173,7 @@ function SelectCluster() {
 
   return (
     <>
+      <RoutePointMarkers points={routePoints} />
       <MapPanel title="Bewässerungsgruppen auswählen" onClose={() => void handleNavigateBack()}>
         <p className="mb-5 shrink-0 text-sm text-dark-600">
           Klicke die Gruppen auf der Karte an, die in diesen Bewässerungsplan aufgenommen werden
