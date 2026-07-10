@@ -103,7 +103,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             trailer_id: Option<RawId>,
             cluster_ids: Vec<RawId>,
             user_ids: Vec<RawId>,
-            route_geometry: Option<Value>,
+            route_geometry: Option<String>,
         }
 
         let row = sqlx::query_as!(
@@ -112,7 +112,8 @@ impl WateringPlanReader for PgWateringPlanRepository {
                       wp.status AS "status: WateringPlanStatus",
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.refill_count, wp.duration,
-                      wp.provider, wp.additional_informations, wp.route_geometry,
+                      wp.provider, wp.additional_informations,
+                      ST_AsGeoJSON(wp.route_geometry) AS route_geometry,
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS "transporter_id: RawId",
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS "trailer_id: RawId",
                       COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS "cluster_ids!: Vec<RawId>",
@@ -173,7 +174,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             duration: std::time::Duration::from_secs_f64(row.duration),
             provider: row.provider,
             additional_info: row.additional_informations,
-            route_geometry: json_to_geometry(row.route_geometry)?,
+            route_geometry: geojson_to_geometry(row.route_geometry)?,
             refill_points,
         }))
     }
@@ -291,24 +292,30 @@ impl WateringPlanReader for PgWateringPlanRepository {
     }
 }
 
-fn geometry_to_json(geometry: Option<&[Coordinate]>) -> Option<Value> {
-    geometry.map(|coords| {
-        Value::Array(
-            coords
-                .iter()
-                .map(|c| serde_json::json!([c.latitude(), c.longitude()]))
-                .collect(),
-        )
-    })
+/// GeoJSON positions are (lon, lat); a LineString needs at least two points,
+/// so shorter tracks collapse to None ("no route").
+fn geometry_to_geojson(geometry: Option<&[Coordinate]>) -> Option<String> {
+    let coords = geometry.filter(|c| c.len() >= 2)?;
+    let coordinates: Vec<[f64; 2]> = coords
+        .iter()
+        .map(|c| [c.longitude(), c.latitude()])
+        .collect();
+    Some(serde_json::json!({"type": "LineString", "coordinates": coordinates}).to_string())
 }
 
-fn json_to_geometry(value: Option<Value>) -> Result<Option<Vec<Coordinate>>, RepositoryError> {
+fn geojson_to_geometry(value: Option<String>) -> Result<Option<Vec<Coordinate>>, RepositoryError> {
+    #[derive(serde::Deserialize)]
+    struct LineString {
+        coordinates: Vec<[f64; 2]>,
+    }
+
     let Some(value) = value else { return Ok(None) };
-    let pairs: Vec<(f64, f64)> = serde_json::from_value(value)
+    let line: LineString = serde_json::from_str(&value)
         .map_err(|e| RepositoryError::DataIntegrity(format!("invalid route_geometry: {e}")))?;
-    let coords = pairs
+    let coords = line
+        .coordinates
         .into_iter()
-        .map(|(lat, lon)| {
+        .map(|[lon, lat]| {
             Coordinate::new(lat, lon)
                 .map_err(|e| RepositoryError::DataIntegrity(format!("invalid route_geometry: {e}")))
         })
@@ -341,7 +348,7 @@ async fn persist_plan(
             duration = $9,
             provider = $10,
             additional_informations = $11,
-            route_geometry = $12,
+            route_geometry = ST_GeomFromGeoJSON($12::text),
             start_point_name = $13
         WHERE id = $1"#,
         plan.id.value(),
@@ -355,7 +362,7 @@ async fn persist_plan(
         plan.duration.as_secs_f64(),
         plan.provenance().provider().map(|p| p.as_str()),
         plan.provenance().additional_info(),
-        geometry_to_json(plan.route_geometry()) as Option<Value>,
+        geometry_to_geojson(plan.route_geometry()) as Option<String>,
         plan.start_point_name.as_deref(),
     )
     .execute(&mut **tx)
@@ -642,30 +649,48 @@ mod tests {
     use super::*;
 
     #[test]
-    fn json_to_geometry_none_and_empty_collapse_to_none() {
-        assert_eq!(json_to_geometry(None).unwrap(), None);
-        assert_eq!(json_to_geometry(Some(serde_json::json!([]))).unwrap(), None);
+    fn geojson_to_geometry_none_and_empty_collapse_to_none() {
+        assert_eq!(geojson_to_geometry(None).unwrap(), None);
+        assert_eq!(
+            geojson_to_geometry(Some(
+                r#"{"type":"LineString","coordinates":[]}"#.to_string()
+            ))
+            .unwrap(),
+            None
+        );
     }
 
     #[test]
-    fn json_to_geometry_round_trips_pairs() {
+    fn geojson_round_trips_coordinates() {
         let coords = vec![
             Coordinate::new(54.76, 9.43).unwrap(),
             Coordinate::new(54.80, 9.44).unwrap(),
         ];
-        let json = geometry_to_json(Some(&coords)).unwrap();
-        assert_eq!(json_to_geometry(Some(json)).unwrap(), Some(coords));
+        let geojson = geometry_to_geojson(Some(&coords)).unwrap();
+        assert_eq!(geojson_to_geometry(Some(geojson)).unwrap(), Some(coords));
     }
 
     #[test]
-    fn json_to_geometry_rejects_malformed_json() {
-        let err = json_to_geometry(Some(serde_json::json!({"lat": 1.0}))).unwrap_err();
+    fn geometry_to_geojson_collapses_degenerate_lines_to_none() {
+        assert_eq!(geometry_to_geojson(None), None);
+        assert_eq!(geometry_to_geojson(Some(&[])), None);
+        let single = [Coordinate::new(54.76, 9.43).unwrap()];
+        assert_eq!(geometry_to_geojson(Some(&single)), None);
+    }
+
+    #[test]
+    fn geojson_to_geometry_rejects_malformed_json() {
+        let err = geojson_to_geometry(Some(r#"{"lat": 1.0}"#.to_string())).unwrap_err();
         assert!(matches!(err, RepositoryError::DataIntegrity(_)));
     }
 
     #[test]
-    fn json_to_geometry_rejects_out_of_range_coordinates() {
-        let err = json_to_geometry(Some(serde_json::json!([[999.0, 9.43]]))).unwrap_err();
+    fn geojson_to_geometry_rejects_out_of_range_coordinates() {
+        // GeoJSON position order is (lon, lat); lat 999 is out of range.
+        let err = geojson_to_geometry(Some(
+            r#"{"type":"LineString","coordinates":[[9.43,999.0],[9.44,54.8]]}"#.to_string(),
+        ))
+        .unwrap_err();
         assert!(matches!(err, RepositoryError::DataIntegrity(_)));
     }
 }
