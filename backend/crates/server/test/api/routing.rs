@@ -119,6 +119,12 @@ async fn create_plan_computes_route_metrics_and_geometry() {
     // GeoJSON position order: [lon, lat]
     assert!((coords[0][0].as_f64().unwrap() - 9.4347).abs() < 1e-4);
     assert!((coords[0][1].as_f64().unwrap() - 54.7687).abs() < 1e-4);
+
+    let refill_points = route["refill_points"].as_array().unwrap();
+    assert_eq!(refill_points.len(), 1);
+    assert_eq!(refill_points[0]["name"], "Betriebshof Schleswiger Straße");
+    assert!((refill_points[0]["lat"].as_f64().unwrap() - 54.76879146396569).abs() < 1e-9);
+    assert!((refill_points[0]["lon"].as_f64().unwrap() - 9.434803531218018).abs() < 1e-9);
 }
 
 #[tokio::test]
@@ -177,6 +183,37 @@ async fn preview_route_returns_route_response() {
     let route: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(route["distance"], 12500.0);
     assert_eq!(route["geometry"]["type"], "LineString");
+
+    let refill_points = route["refill_points"].as_array().unwrap();
+    assert_eq!(refill_points.len(), 1);
+    assert_eq!(refill_points[0]["name"], "Betriebshof Schleswiger Straße");
+}
+
+#[tokio::test]
+async fn route_without_refill_stops_has_empty_refill_points() {
+    let mut body = streamlet_ok();
+    body["routes"][0]["stops"] = serde_json::json!([
+        {"VehicleStart": 1}, {"Customer": 1}, {"Depot": 1}
+    ]);
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(body)).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+    let transporter = create_transporter(&app).await;
+    let tid = transporter["id"].as_str().unwrap();
+    let cid = create_cluster_with_tree(&app).await;
+
+    let resp = app
+        .post_json("/api/v1/watering-plans", &plan_body(tid, &cid))
+        .await;
+    assert_eq!(resp.status().as_u16(), 201);
+    let plan: serde_json::Value = resp.json().await.unwrap();
+    let plan_id = plan["id"].as_str().unwrap();
+
+    let route_resp = app
+        .get(&format!("/api/v1/watering-plans/{plan_id}/route"))
+        .await;
+    assert_eq!(route_resp.status().as_u16(), 200);
+    let route: serde_json::Value = route_resp.json().await.unwrap();
+    assert_eq!(route["refill_points"].as_array().unwrap().len(), 0);
 }
 
 #[tokio::test]
