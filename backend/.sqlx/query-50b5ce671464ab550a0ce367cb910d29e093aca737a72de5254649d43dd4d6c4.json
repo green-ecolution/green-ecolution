@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM watering_plan_refill_points WHERE watering_plan_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "50b5ce671464ab550a0ce367cb910d29e093aca737a72de5254649d43dd4d6c4"
+}

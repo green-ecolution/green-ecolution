@@ -10,8 +10,9 @@ use domain::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
     },
+    start_point::StartPointName,
     watering_plan::{
-        WateringPlan, WateringPlanDraft, WateringPlanEvaluation, WateringPlanReader,
+        RefillPoint, WateringPlan, WateringPlanDraft, WateringPlanEvaluation, WateringPlanReader,
         WateringPlanSearchQuery, WateringPlanSnapshot, WateringPlanStatus, WateringPlanView,
         WateringPlanWriter,
     },
@@ -134,6 +135,30 @@ impl WateringPlanReader for PgWateringPlanRepository {
         let transporter_id = row.transporter_id;
         let trailer_id = row.trailer_id;
 
+        struct RefillRow {
+            name: String,
+            latitude: f64,
+            longitude: f64,
+        }
+        let refill_points = sqlx::query_as!(
+            RefillRow,
+            r#"SELECT name, latitude, longitude FROM watering_plan_refill_points
+               WHERE watering_plan_id = $1 ORDER BY position"#,
+            id.value()
+        )
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(|r| {
+            Ok(RefillPoint {
+                name: StartPointName::reconstitute(r.name),
+                coordinate: Coordinate::new(r.latitude, r.longitude).map_err(|e| {
+                    RepositoryError::DataIntegrity(format!("invalid refill point: {e}"))
+                })?,
+            })
+        })
+        .collect::<Result<Vec<_>, RepositoryError>>()?;
+
         Ok(WateringPlan::reconstitute(WateringPlanSnapshot {
             id: row.id,
             date: row.date.and_time(NaiveTime::MIN).and_utc(),
@@ -153,7 +178,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             provider: row.provider,
             additional_info: row.additional_informations,
             route_geometry: json_to_geometry(row.route_geometry)?,
-            refill_points: Vec::new(),
+            refill_points,
         }))
     }
 
@@ -344,6 +369,43 @@ async fn persist_plan(
 
     if result.rows_affected() == 0 {
         return Err(RepositoryError::NotFound);
+    }
+
+    sqlx::query!(
+        "DELETE FROM watering_plan_refill_points WHERE watering_plan_id = $1",
+        plan.id.value()
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    let refill_points = plan.refill_points();
+    if !refill_points.is_empty() {
+        let names: Vec<String> = refill_points
+            .iter()
+            .map(|p| p.name.as_str().to_owned())
+            .collect();
+        let lats: Vec<f64> = refill_points
+            .iter()
+            .map(|p| p.coordinate.latitude())
+            .collect();
+        let lons: Vec<f64> = refill_points
+            .iter()
+            .map(|p| p.coordinate.longitude())
+            .collect();
+        sqlx::query!(
+            r#"INSERT INTO watering_plan_refill_points
+               (watering_plan_id, position, name, latitude, longitude, geometry)
+               SELECT $1, (ord - 1)::int, name, lat, lon,
+                      ST_SetSRID(ST_MakePoint(lon, lat), 4326)
+               FROM UNNEST($2::text[], $3::float8[], $4::float8[])
+                    WITH ORDINALITY AS t(name, lat, lon, ord)"#,
+            plan.id.value(),
+            &names,
+            &lats,
+            &lons,
+        )
+        .execute(&mut **tx)
+        .await?;
     }
 
     sqlx::query!(
