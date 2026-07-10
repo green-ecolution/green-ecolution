@@ -33,6 +33,9 @@ pub struct OptimizedRoute {
     pub distance: Distance,
     pub duration: std::time::Duration,
     pub refill_count: u32,
+    /// Indices into the caller-supplied refill station list of the stations
+    /// the route actually visits, deduplicated in first-visit order.
+    pub refill_station_indices: Vec<usize>,
     pub geometry: Vec<Coordinate>,
     /// Clusters the solver could not fit into the route (logged, not fatal).
     pub unserved: Vec<Id<TreeCluster>>,

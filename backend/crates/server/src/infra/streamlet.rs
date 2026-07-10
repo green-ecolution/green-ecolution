@@ -293,6 +293,19 @@ impl RouteOptimizer for StreamletRouteOptimizer {
             .count() as u32;
         let geometry = decode_geometry(&solve.routes)?;
 
+        let mut refill_station_indices: Vec<usize> = Vec::new();
+        for stop in solve.routes.iter().flat_map(|r| &r.stops) {
+            if let StopDto::Refill(id) = stop {
+                // streamlet refill ids are 1-based request indices
+                let Some(idx) = (*id as usize).checked_sub(1) else {
+                    continue;
+                };
+                if idx < refill_stations.len() && !refill_station_indices.contains(&idx) {
+                    refill_station_indices.push(idx);
+                }
+            }
+        }
+
         let id_by_customer: HashMap<u32, Id<TreeCluster>> = stops
             .iter()
             .enumerate()
@@ -308,6 +321,7 @@ impl RouteOptimizer for StreamletRouteOptimizer {
             distance,
             duration: Duration::from_secs_f64(duration_secs.max(0.0)),
             refill_count,
+            refill_station_indices,
             geometry,
             unserved,
         })
@@ -427,6 +441,7 @@ mod tests {
         assert_eq!(route.distance.meters(), 12500.0);
         assert_eq!(route.duration.as_secs_f64(), 3600.0); // travel_time + wait_time
         assert_eq!(route.refill_count, 1);
+        assert_eq!(route.refill_station_indices, vec![0]);
         assert_eq!(route.geometry.len(), 2);
         assert!((route.geometry[0].latitude() - 54.7687).abs() < 1e-4);
         assert!((route.geometry[0].longitude() - 9.4347).abs() < 1e-4);
@@ -562,6 +577,37 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(route.unserved, vec![stops[1].cluster_id]);
+    }
+
+    #[tokio::test]
+    async fn optimize_returns_visited_refill_station_indices_deduped() {
+        let server = MockServer::start().await;
+        let mut body = ok_body(&encoded_line());
+        body["routes"][0]["stops"] = serde_json::json!([
+            {"VehicleStart": 1},
+            {"Refill": 2},
+            {"Customer": 1},
+            {"Refill": 1},
+            {"Refill": 2},
+            {"Refill": 9},
+            {"Customer": 2},
+            {"Depot": 1}
+        ]);
+        Mock::given(method("POST"))
+            .and(path("/v1/solve"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(body))
+            .mount(&server)
+            .await;
+
+        let transporter = vehicle(VehicleType::Transporter, 2000.0);
+        let route = optimizer(&server.uri())
+            .optimize(&transporter, None, &stops(), depot(), &refills())
+            .await
+            .unwrap();
+
+        // ids are 1-based; unknown id 9 is dropped, repeat visits dedupe
+        assert_eq!(route.refill_station_indices, vec![1, 0]);
+        assert_eq!(route.refill_count, 4);
     }
 
     #[tokio::test]
