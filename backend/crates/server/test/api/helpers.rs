@@ -268,16 +268,23 @@ pub async fn spawn_app_with_routing(streamlet_url: &str) -> TestApp {
     settings.info.update_check_repo = None;
     settings.routing.enabled = true;
     settings.routing.streamlet_url = streamlet_url.to_string();
-    settings
-        .routing
-        .depots
-        .push(server::configuration::NamedGeoPoint {
-            name: "Depot Nord".to_string(),
-            lat: 54.81,
-            lon: 9.45,
-            watering_point: false,
-        });
-    spawn_with_settings(settings).await
+    let app = spawn_with_settings(settings).await;
+    seed_routing_depots(&app.db_pool).await;
+    app
+}
+
+/// Seeds the same start points the production seed file provides, plus a
+/// "Depot Nord" the routing tests select by name (lat≈54.81).
+async fn seed_routing_depots(pool: &sqlx::PgPool) {
+    sqlx::query(
+        r#"INSERT INTO depots (id, name, latitude, longitude, geometry, watering_point, is_default) VALUES
+           (gen_random_uuid(), 'Betriebshof Schleswiger Straße', 54.76879146396569, 9.434803531218018, ST_SetSRID(ST_MakePoint(9.434803531218018, 54.76879146396569), 4326), TRUE, TRUE),
+           (gen_random_uuid(), 'Klärwerk Kielseng', 54.80518123149477, 9.447145106541388, ST_SetSRID(ST_MakePoint(9.447145106541388, 54.80518123149477), 4326), TRUE, FALSE),
+           (gen_random_uuid(), 'Depot Nord', 54.81, 9.45, ST_SetSRID(ST_MakePoint(9.45, 54.81), 4326), FALSE, FALSE)"#,
+    )
+    .execute(pool)
+    .await
+    .expect("failed to seed depots");
 }
 
 async fn spawn_with_settings(settings: Settings) -> TestApp {

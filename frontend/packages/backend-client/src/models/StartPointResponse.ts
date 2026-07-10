@@ -14,11 +14,24 @@
 
 import { mapValues } from '../runtime';
 /**
- * Named departure/return point for watering routes. The first entry is the default.
+ * Named departure/return point for watering routes. `watering_point` marks it
+ * as a water refill station.
  * @export
  * @interface StartPointResponse
  */
 export interface StartPointResponse {
+    /**
+     * 
+     * @type {string}
+     * @memberof StartPointResponse
+     */
+    id: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof StartPointResponse
+     */
+    isDefault: boolean;
     /**
      * 
      * @type {number}
@@ -37,15 +50,24 @@ export interface StartPointResponse {
      * @memberof StartPointResponse
      */
     name: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof StartPointResponse
+     */
+    wateringPoint: boolean;
 }
 
 /**
  * Check if a given object implements the StartPointResponse interface.
  */
 export function instanceOfStartPointResponse(value: object): value is StartPointResponse {
+    if (!('id' in value) || value['id'] === undefined) return false;
+    if (!('isDefault' in value) || value['isDefault'] === undefined) return false;
     if (!('lat' in value) || value['lat'] === undefined) return false;
     if (!('lon' in value) || value['lon'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
+    if (!('wateringPoint' in value) || value['wateringPoint'] === undefined) return false;
     return true;
 }
 
@@ -59,9 +81,12 @@ export function StartPointResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
+        'id': json['id'],
+        'isDefault': json['is_default'],
         'lat': json['lat'],
         'lon': json['lon'],
         'name': json['name'],
+        'wateringPoint': json['watering_point'],
     };
 }
 
@@ -76,9 +101,12 @@ export function StartPointResponseToJSONTyped(value?: StartPointResponse | null,
 
     return {
         
+        'id': value['id'],
+        'is_default': value['isDefault'],
         'lat': value['lat'],
         'lon': value['lon'],
         'name': value['name'],
+        'watering_point': value['wateringPoint'],
     };
 }
 

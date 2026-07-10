@@ -19,7 +19,8 @@ use crate::{
     },
     service::{
         cluster_service::ClusterService, evaluation_service::EvaluationService,
-        region_service::RegionService, sensor_service::SensorService, tree_service::TreeService,
+        region_service::RegionService, sensor_service::SensorService,
+        start_point_service::StartPointService, tree_service::TreeService,
         user_service::UserService, vehicle_service::VehicleService,
         watering_execution_service::WateringExecutionService,
         watering_plan_service::WateringPlanService,
@@ -64,7 +65,7 @@ pub struct AppState {
     pub feature_flags: FeatureFlags,
     pub nearest_tree_limits: NearestTreeLimits,
     pub frontend_config_js: std::sync::Arc<str>,
-    pub routing_start_points: Vec<crate::http::v1::dto::routing::StartPointResponse>,
+    pub start_point_service: Arc<StartPointService>,
 }
 
 #[derive(OpenApi)]

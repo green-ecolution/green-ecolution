@@ -1,0 +1,144 @@
+//! StartPoint aggregate — a named routing location a watering route starts and
+//! returns from; some are also water refill points (`watering_point`).
+//!
+//! Follows the `Region` pattern: aggregate + `StartPointDraft` for creation, a
+//! `pub(crate)` snapshot for DB rehydration, and a `StartPointReader` /
+//! `StartPointWriter` trait split. No view type — the aggregate is small enough
+//! to serve as its own read model.
+//!
+//! The "exactly one default" rule spans rows and therefore lives at the
+//! service/DB level (a partial unique index plus a single-statement update in
+//! the writer), not inside this aggregate.
+
+pub mod error;
+pub mod repository;
+pub mod snapshot;
+
+use crate::{Id, shared::coordinates::Coordinate};
+
+pub use error::StartPointError;
+pub use repository::{StartPointReader, StartPointWriter};
+#[doc(hidden)]
+pub use snapshot::StartPointSnapshot;
+
+crate::newtype_nonempty! {
+    /// Start point name, 1–255 characters after trimming.
+    StartPointName, "start_point.name", 1, 255
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct StartPoint {
+    pub id: Id<StartPoint>,
+    pub name: StartPointName,
+    pub coordinate: Coordinate,
+    is_default: bool,
+    watering_point: bool,
+}
+
+/// Input for creating a new [`StartPoint`]. New points are never default;
+/// promotion happens through [`StartPointWriter::set_default`].
+#[derive(Debug, Clone)]
+pub struct StartPointDraft {
+    pub name: StartPointName,
+    pub coordinate: Coordinate,
+    pub watering_point: bool,
+}
+
+/// Replacement input for editing a [`StartPoint`]. Does not touch `is_default`.
+#[derive(Debug, Clone)]
+pub struct StartPointUpdate {
+    pub name: StartPointName,
+    pub coordinate: Coordinate,
+    pub watering_point: bool,
+}
+
+impl StartPoint {
+    #[doc(hidden)]
+    pub fn reconstitute(snap: StartPointSnapshot) -> Self {
+        Self {
+            id: Id::new(snap.id),
+            name: StartPointName::reconstitute(snap.name),
+            coordinate: Coordinate::new(snap.latitude, snap.longitude)
+                .expect("persisted start point coordinate must be valid"),
+            is_default: snap.is_default,
+            watering_point: snap.watering_point,
+        }
+    }
+
+    pub fn is_default(&self) -> bool {
+        self.is_default
+    }
+
+    pub fn watering_point(&self) -> bool {
+        self.watering_point
+    }
+
+    pub fn rename(&mut self, new_name: StartPointName) {
+        if self.name == new_name {
+            return;
+        }
+        self.name = new_name;
+    }
+
+    pub fn relocate(&mut self, coordinate: Coordinate) {
+        self.coordinate = coordinate;
+    }
+
+    pub fn set_watering_point(&mut self, value: bool) {
+        self.watering_point = value;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use claims::{assert_err, assert_ok};
+
+    fn fixed() -> StartPoint {
+        StartPoint {
+            id: Id::new_v7(),
+            name: StartPointName::new("Betriebshof").unwrap(),
+            coordinate: Coordinate::new(54.768, 9.434).unwrap(),
+            is_default: true,
+            watering_point: true,
+        }
+    }
+
+    #[test]
+    fn name_rejects_empty() {
+        assert_err!(StartPointName::new(""));
+    }
+
+    #[test]
+    fn name_accepts_valid() {
+        assert_ok!(StartPointName::new("Klärwerk Kielseng"));
+    }
+
+    #[test]
+    fn rename_to_same_is_noop() {
+        let mut sp = fixed();
+        sp.rename(StartPointName::new("Betriebshof").unwrap());
+        assert_eq!(sp.name.as_str(), "Betriebshof");
+    }
+
+    #[test]
+    fn rename_changes_name() {
+        let mut sp = fixed();
+        sp.rename(StartPointName::new("Nord").unwrap());
+        assert_eq!(sp.name.as_str(), "Nord");
+    }
+
+    #[test]
+    fn relocate_changes_coordinate() {
+        let mut sp = fixed();
+        sp.relocate(Coordinate::new(54.805, 9.447).unwrap());
+        assert!((sp.coordinate.latitude() - 54.805).abs() < 1e-9);
+    }
+
+    #[test]
+    fn set_watering_point_toggles() {
+        let mut sp = fixed();
+        sp.set_watering_point(false);
+        assert!(!sp.watering_point());
+    }
+}

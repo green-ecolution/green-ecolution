@@ -34,6 +34,7 @@ pub mod routing;
 pub mod sensor;
 pub mod sensor_model;
 pub mod shared;
+pub mod start_point;
 pub mod tree;
 pub mod user;
 pub mod vehicle;

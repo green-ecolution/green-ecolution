@@ -6,6 +6,7 @@ use domain::{
     events::DomainEvent,
     routing::{OptimizedRoute, RouteOptimizer, RouteStop},
     shared::pagination::{Page, Pagination},
+    start_point::StartPointReader,
     vehicle::{Vehicle, VehicleReader},
     watering_plan::{
         WateringPlan, WateringPlanDraft, WateringPlanError, WateringPlanEvaluation,
@@ -24,7 +25,7 @@ pub struct WateringPlanService {
     event_bus: Arc<dyn EventBus>,
     route_optimizer: Option<Arc<dyn RouteOptimizer>>,
     tree_demand_liters: f64,
-    start_points: Vec<(String, domain::shared::coordinates::Coordinate)>,
+    start_point_reader: Arc<dyn StartPointReader>,
 }
 
 /// Result of a route computation: the optimized route plus the summed
@@ -44,7 +45,7 @@ impl WateringPlanService {
         event_bus: Arc<dyn EventBus>,
         route_optimizer: Option<Arc<dyn RouteOptimizer>>,
         tree_demand_liters: f64,
-        start_points: Vec<(String, domain::shared::coordinates::Coordinate)>,
+        start_point_reader: Arc<dyn StartPointReader>,
     ) -> Self {
         Self {
             reader,
@@ -54,21 +55,7 @@ impl WateringPlanService {
             event_bus,
             route_optimizer,
             tree_demand_liters,
-            start_points,
-        }
-    }
-
-    fn resolve_start_point(
-        &self,
-        name: Option<&str>,
-    ) -> Option<domain::shared::coordinates::Coordinate> {
-        let name = name?;
-        match self.start_points.iter().find(|(n, _)| n == name) {
-            Some((_, coord)) => Some(*coord),
-            None => {
-                tracing::warn!(start_point_name = %name, "unknown start point name; using default depot");
-                None
-            }
+            start_point_reader,
         }
     }
 
@@ -234,9 +221,31 @@ impl WateringPlanService {
                 "no cluster with coordinates to route".into(),
             ));
         }
-        let depot = self.resolve_start_point(start_point_name.as_deref());
+        let start_points = self.start_point_reader.all().await?;
+        let depot = match start_point_name.as_deref() {
+            Some(name) => start_points
+                .iter()
+                .find(|p| p.name.as_str() == name)
+                .or_else(|| start_points.iter().find(|p| p.is_default())),
+            None => start_points.iter().find(|p| p.is_default()),
+        }
+        .map(|p| p.coordinate)
+        .ok_or_else(|| ServiceError::InvalidInput("no start point configured".into()))?;
+
+        let refill_stations: Vec<domain::shared::coordinates::Coordinate> = start_points
+            .iter()
+            .filter(|p| p.watering_point())
+            .map(|p| p.coordinate)
+            .collect();
+
         let route = optimizer
-            .optimize(&transporter, trailer.as_ref(), &stops, depot)
+            .optimize(
+                &transporter,
+                trailer.as_ref(),
+                &stops,
+                depot,
+                &refill_stations,
+            )
             .await?;
         if !route.unserved.is_empty() {
             tracing::warn!(

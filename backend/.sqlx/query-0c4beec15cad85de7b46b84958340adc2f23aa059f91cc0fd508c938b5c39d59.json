@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE depots SET is_default = FALSE WHERE is_default",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "0c4beec15cad85de7b46b84958340adc2f23aa059f91cc0fd508c938b5c39d59"
+}

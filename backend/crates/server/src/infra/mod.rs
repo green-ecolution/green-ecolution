@@ -6,6 +6,7 @@ pub mod pg_evaluation;
 pub mod pg_region;
 pub mod pg_sensor;
 pub mod pg_sensor_model;
+pub mod pg_start_point;
 pub mod pg_tree;
 pub mod pg_vehicle;
 pub mod pg_watering_plan;
