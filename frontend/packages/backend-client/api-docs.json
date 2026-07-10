@@ -4491,6 +4491,34 @@
           }
         }
       },
+      "RefillPointResponse": {
+        "type": "object",
+        "description": "Water refill station an optimized route visits.",
+        "required": [
+          "name",
+          "lat",
+          "lon"
+        ],
+        "properties": {
+          "lat": {
+            "type": "number",
+            "format": "double",
+            "description": "Latitude of the station (WGS84).",
+            "example": 54.8052
+          },
+          "lon": {
+            "type": "number",
+            "format": "double",
+            "description": "Longitude of the station (WGS84).",
+            "example": 9.4471
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the refill station at route computation time.",
+            "example": "Klärwerk Kielseng"
+          }
+        }
+      },
       "RegionEvaluationResponse": {
         "type": "object",
         "description": "Evaluation metrics for a single region.",
@@ -4625,6 +4653,7 @@
           "distance",
           "duration",
           "refill_count",
+          "refill_points",
           "total_water_required",
           "geometry"
         ],
@@ -4653,6 +4682,13 @@
             "description": "Number of water refill stops on the route.",
             "example": 2,
             "minimum": 0
+          },
+          "refill_points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RefillPointResponse"
+            },
+            "description": "Water refill stations the route actually visits, in visit order."
           },
           "total_water_required": {
             "type": "number",

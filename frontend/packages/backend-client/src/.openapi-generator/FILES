@@ -51,6 +51,7 @@ models/PluginListResponse.ts
 models/PluginRegisterRequest.ts
 models/PluginResponse.ts
 models/ReadinessResponse.ts
+models/RefillPointResponse.ts
 models/RegionEvaluationResponse.ts
 models/RegionResponse.ts
 models/RouteGeometry.ts

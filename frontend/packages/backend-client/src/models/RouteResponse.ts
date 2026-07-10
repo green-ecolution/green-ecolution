@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { RefillPointResponse } from './RefillPointResponse';
+import {
+    RefillPointResponseFromJSON,
+    RefillPointResponseFromJSONTyped,
+    RefillPointResponseToJSON,
+    RefillPointResponseToJSONTyped,
+} from './RefillPointResponse';
 import type { RouteGeometry } from './RouteGeometry';
 import {
     RouteGeometryFromJSON,
@@ -52,6 +59,12 @@ export interface RouteResponse {
      */
     refillCount: number;
     /**
+     * Water refill stations the route actually visits, in visit order.
+     * @type {Array<RefillPointResponse>}
+     * @memberof RouteResponse
+     */
+    refillPoints: Array<RefillPointResponse>;
+    /**
      * Total water demand of all routed clusters in liters.
      * @type {number}
      * @memberof RouteResponse
@@ -67,6 +80,7 @@ export function instanceOfRouteResponse(value: object): value is RouteResponse {
     if (!('duration' in value) || value['duration'] === undefined) return false;
     if (!('geometry' in value) || value['geometry'] === undefined) return false;
     if (!('refillCount' in value) || value['refillCount'] === undefined) return false;
+    if (!('refillPoints' in value) || value['refillPoints'] === undefined) return false;
     if (!('totalWaterRequired' in value) || value['totalWaterRequired'] === undefined) return false;
     return true;
 }
@@ -85,6 +99,7 @@ export function RouteResponseFromJSONTyped(json: any, ignoreDiscriminator: boole
         'duration': json['duration'],
         'geometry': RouteGeometryFromJSON(json['geometry']),
         'refillCount': json['refill_count'],
+        'refillPoints': ((json['refill_points'] as Array<any>).map(RefillPointResponseFromJSON)),
         'totalWaterRequired': json['total_water_required'],
     };
 }
@@ -104,6 +119,7 @@ export function RouteResponseToJSONTyped(value?: RouteResponse | null, ignoreDis
         'duration': value['duration'],
         'geometry': RouteGeometryToJSON(value['geometry']),
         'refill_count': value['refillCount'],
+        'refill_points': ((value['refillPoints'] as Array<any>).map(RefillPointResponseToJSON)),
         'total_water_required': value['totalWaterRequired'],
     };
 }
