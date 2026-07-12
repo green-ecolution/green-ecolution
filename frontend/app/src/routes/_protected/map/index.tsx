@@ -6,6 +6,7 @@ import { filterSearchSchema } from '@/lib/filterSearchSchema'
 import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
 import useClusterMarkerLayer from '@/components/map-gl/layers/useClusterMarkerLayer'
 import useTreeLayers from '@/components/map-gl/layers/useTreeLayers'
+import MapStatusLegend from '@/components/map/MapStatusLegend'
 
 const mapFilterSchema = filterSearchSchema.pick({ wateringStatuses: true }).extend({
   tree: z.string().optional(),
@@ -48,7 +49,7 @@ function MapView() {
   })
   useTreeLayers({ onTreeClick: handleTreeClick, wateringStatuses: search.wateringStatuses })
 
-  return null
+  return <MapStatusLegend />
 }
 
 export const Route = createFileRoute('/_protected/map/')({
