@@ -44,7 +44,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
     if (!getValues('startPointName')) {
       const defaultPoint = startPoints.find((sp) => sp.isDefault) ?? startPoints[0]
       // Untouched select must submit the default depot, not undefined.
-      setValue('startPointName', defaultPoint.name)
+      setValue('startPointName', defaultPoint.name, { shouldValidate: true })
     }
   }, [startPoints, getValues, setValue])
 
@@ -128,7 +128,12 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
                   placeholder="Startpunkt auswählen"
                   required
                   value={field.value ?? ''}
-                  onValueChange={(val) => field.onChange(val)}
+                  // Radix echoes a spurious onValueChange('') from its hidden
+                  // native form select when the value is set programmatically;
+                  // '' is never a real choice here, so ignore it.
+                  onValueChange={(val) => {
+                    if (val) field.onChange(val)
+                  }}
                   error={errors.startPointName?.message}
                   options={startPoints.map((sp) => ({
                     value: sp.name,

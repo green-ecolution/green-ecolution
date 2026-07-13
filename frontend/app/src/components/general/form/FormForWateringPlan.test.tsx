@@ -14,7 +14,16 @@ import {
   VehicleType,
   DrivingLicense,
   VehicleStatus,
+  type StartPointResponse,
 } from '@green-ecolution/backend-client'
+
+vi.mock('@/api/backendApi', () => ({
+  routingApi: {
+    listRoutingStartPoints: vi.fn().mockResolvedValue([]),
+  },
+}))
+
+import { routingApi } from '@/api/backendApi'
 
 function TestWrapper({
   children,
@@ -322,5 +331,32 @@ describe('FormForWateringPlan', () => {
         /HH-AB-1234/i,
       )
     })
+  })
+
+  it('preselects the default start point, not the first one', async () => {
+    vi.mocked(routingApi).listRoutingStartPoints.mockResolvedValue([
+      { id: 'sp-a', name: 'A', isDefault: false, lat: 0, lon: 0, wateringPoint: false },
+      { id: 'sp-b', name: 'B', isDefault: true, lat: 0, lon: 0, wateringPoint: false },
+    ] as StartPointResponse[])
+
+    render(
+      <TestWrapper defaultValues={defaultFormValues}>
+        <FormForWateringPlan
+          displayError={false}
+          transporters={mockTransporters}
+          trailers={mockTrailers}
+          users={mockUsers}
+          onAddCluster={mockOnAddCluster}
+          onSubmit={mockOnSubmit}
+        />
+      </TestWrapper>,
+    )
+
+    const startPointSelect = await screen.findByRole('combobox', { name: /startpunkt/i })
+
+    await waitFor(() => {
+      expect(startPointSelect).toHaveTextContent('B')
+    })
+    expect(startPointSelect).not.toHaveTextContent('A')
   })
 })
