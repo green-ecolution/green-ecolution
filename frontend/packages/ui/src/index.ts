@@ -72,6 +72,14 @@ export {
 export { Button, buttonVariants } from './components/ui/button'
 export type { ButtonProps } from './components/ui/button'
 
+// ButtonGroup
+export {
+  ButtonGroup,
+  ButtonGroupSeparator,
+  ButtonGroupText,
+  buttonGroupVariants,
+} from './components/ui/button-group'
+
 // Calendar
 export { Calendar } from './components/ui/calendar'
 export type { CalendarProps } from './components/ui/calendar'

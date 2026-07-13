@@ -9,7 +9,17 @@ const meta: Meta<typeof Button> = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['default', 'destructive', 'outline', 'secondary', 'ghost', 'link', 'nav'],
+      options: [
+        'default',
+        'destructive',
+        'outline',
+        'secondary',
+        'ghost',
+        'ghost-destructive',
+        'link',
+        'link-destructive',
+        'nav',
+      ],
       description: 'The visual style of the button',
     },
     size: {
@@ -132,6 +142,7 @@ export const AllVariants: Story = {
       <Button variant="destructive">Destruktiv</Button>
       <Button variant="outline">Umrandet</Button>
       <Button variant="ghost">Ghost</Button>
+      <Button variant="ghost-destructive">Ghost destruktiv</Button>
       <Button variant="link">Link</Button>
       <Button variant="nav">Navigation</Button>
     </div>
