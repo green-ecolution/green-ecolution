@@ -37,13 +37,14 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
     useFormContext<WateringPlanForm>()
   const { isValid, errors } = useFormState({ control })
 
-  const { data: startPoints } = useQuery(routingStartPointsQuery())
+  const { data: startPoints, isPending } = useQuery(routingStartPointsQuery())
 
   useEffect(() => {
     if (!startPoints?.length) return
     if (!getValues('startPointName')) {
+      const defaultPoint = startPoints.find((sp) => sp.isDefault) ?? startPoints[0]
       // Untouched select must submit the default depot, not undefined.
-      setValue('startPointName', startPoints[0].name)
+      setValue('startPointName', defaultPoint.name)
     }
   }, [startPoints, getValues, setValue])
 
@@ -115,26 +116,39 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
             />
           )}
         />
-        {startPoints != null && startPoints.length > 0 && (
-          <Controller
-            name="startPointName"
-            control={control}
-            render={({ field }) => (
-              <SelectField
-                id="startPointName"
-                label="Startpunkt"
-                placeholder="Startpunkt auswählen"
-                value={field.value ?? ''}
-                onValueChange={(val) => field.onChange(val)}
-                error={errors.startPointName?.message}
-                options={startPoints.map((sp) => ({
-                  value: sp.name,
-                  label: sp.name,
-                }))}
-              />
-            )}
-          />
-        )}
+        {!isPending &&
+          (startPoints?.length ? (
+            <Controller
+              name="startPointName"
+              control={control}
+              render={({ field }) => (
+                <SelectField
+                  id="startPointName"
+                  label="Startpunkt"
+                  placeholder="Startpunkt auswählen"
+                  required
+                  value={field.value ?? ''}
+                  onValueChange={(val) => field.onChange(val)}
+                  error={errors.startPointName?.message}
+                  options={startPoints.map((sp) => ({
+                    value: sp.name,
+                    label: sp.name,
+                  }))}
+                />
+              )}
+            />
+          ) : (
+            <div className="flex flex-col gap-y-2">
+              <Label>
+                Startpunkt
+                <span className="text-destructive ml-1">*</span>
+              </Label>
+              <p className="text-sm text-destructive">
+                Es sind keine Startpunkte verfügbar. Ohne Startpunkt kann kein Einsatzplan erstellt
+                werden.
+              </p>
+            </div>
+          ))}
         <Controller
           name="trailerId"
           control={control}
