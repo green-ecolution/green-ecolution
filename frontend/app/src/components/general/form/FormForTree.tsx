@@ -71,7 +71,6 @@ const FormForTree = (props: FormForTreeProps) => {
                 id="treeClusterId"
                 label="Bewässerungsgruppe"
                 placeholder="Wählen Sie eine Bewässerungsgruppe aus"
-                contentClassName="z-[2000]"
                 value={field.value ?? '-1'}
                 onValueChange={(val) => field.onChange(val === '-1' ? null : val)}
                 error={errors.treeClusterId?.message}
@@ -94,7 +93,6 @@ const FormForTree = (props: FormForTreeProps) => {
               id="sensorId"
               label="Verknüpfter Sensor"
               placeholder="Wählen Sie einen Sensor aus, sofern vorhanden"
-              contentClassName="z-[2000]"
               value={field.value ?? '-1'}
               onValueChange={(val) => field.onChange(val === '-1' ? null : val)}
               error={errors.sensorId?.message}

@@ -76,7 +76,7 @@ const MapPanel = ({
   return (
     <div
       className={cn(
-        'absolute top-4 right-4 z-[1030] flex max-h-[calc(100%-2rem)] w-[30rem] max-w-[calc(100%-2rem)] flex-col rounded-xl bg-white p-5 font-nunito-sans shadow-xl',
+        'absolute top-4 right-4 z-20 flex max-h-[calc(100%-2rem)] w-[30rem] max-w-[calc(100%-2rem)] flex-col rounded-xl bg-white p-5 font-nunito-sans shadow-xl',
         className,
       )}
     >

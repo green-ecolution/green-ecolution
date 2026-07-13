@@ -55,7 +55,6 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
                 onChange={field.onChange}
                 placeholder="Wähle eine Bodenbeschaffenheit aus"
                 searchPlaceholder="Code oder Bezeichnung suchen…"
-                contentClassName="z-[2000]"
               />
               {errors.soilCondition?.message && (
                 <p className="text-sm text-destructive">{errors.soilCondition.message}</p>
