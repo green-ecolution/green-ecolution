@@ -47,5 +47,5 @@ export interface WateringPlanForm {
   driverIds: string[]
   clusterIds: string[]
   description: string
-  startPointName?: string
+  startPointName: string
 }

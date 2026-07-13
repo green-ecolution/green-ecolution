@@ -23,7 +23,7 @@ const defaultForm: DefaultValues<WateringPlanForm> = {
   clusterIds: [],
   status: WateringPlanStatus.Planned,
   driverIds: [],
-  startPointName: undefined,
+  startPointName: '',
 }
 
 function NewWateringPlan() {

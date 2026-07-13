@@ -52,6 +52,7 @@ const defaultFormValues: WateringPlanForm = {
   driverIds: [],
   clusterIds: [],
   description: '',
+  startPointName: '',
 }
 
 const mockTransporters = [
