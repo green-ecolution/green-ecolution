@@ -1,16 +1,21 @@
-import { AlignJustifyIcon } from 'lucide-react'
+import { AlignJustifyIcon, ChevronDown } from 'lucide-react'
 import { useState, useCallback } from 'react'
 import Navigation from './Navigation'
 import Breadcrumb from './Breadcrumb'
+import NavUserMenu from '../navigation/NavUserMenu'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed'
-import { Button } from '@green-ecolution/ui'
+import { useAuthSession } from '@/lib/auth/authSessionContext'
+import { useCurrentUser } from '@/lib/auth/useCurrentUser'
+import { Avatar, AvatarFallback, Button } from '@green-ecolution/ui'
 
 function Header() {
   const [open, setOpen] = useState(false)
   const isStartPage = location.pathname === '/'
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
   const collapsed = useSidebarCollapsed()
+  const { isAuthenticated } = useAuthSession()
+  const { firstName, lastName, email } = useCurrentUser()
 
   const closeSidebar = useCallback(() => {
     setOpen(false)
@@ -29,9 +34,12 @@ function Header() {
     })
   }, [isLargeScreen])
 
+  // z-50: the fullscreen mobile nav overlay lives inside this stacking
+  // context, so it must sit on the overlay layer or page content (e.g.
+  // map controls) paints above it
   return (
     <header
-      className={`relative z-10 bg-white transition-[padding] ease-in-out duration-300 ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-[16rem]'}`}
+      className={`relative z-50 bg-white transition-[padding] ease-in-out duration-300 ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-[16rem]'}`}
     >
       {/* min-h keeps the pre-NavUser header height (40px avatar + py-4 + border);
           the map height calc (100dvh - 4.563rem) depends on it */}
@@ -52,6 +60,24 @@ function Header() {
           </Button>
         )}
         {!isStartPage && <Breadcrumb />}
+        {!isLargeScreen && isAuthenticated && (
+          <div className="ml-auto">
+            <NavUserMenu email={email} side="bottom" onNavigate={closeSidebar}>
+              <button
+                type="button"
+                aria-label="Benutzermenü öffnen"
+                className="group flex cursor-pointer items-center gap-x-1"
+              >
+                <Avatar>
+                  <AvatarFallback variant="user">
+                    {`${firstName.charAt(0)}${lastName.charAt(0)}`}
+                  </AvatarFallback>
+                </Avatar>
+                <ChevronDown className="size-5 text-dark transition-transform duration-300 ease-in-out group-data-[state=open]:rotate-180" />
+              </button>
+            </NavUserMenu>
+          </div>
+        )}
       </div>
 
       <Navigation isOpen={open} closeSidebar={closeSidebar} />

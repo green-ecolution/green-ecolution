@@ -223,8 +223,9 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
                 />
               ))}
           </ul>
+          {/* On mobile the user menu lives in the header instead */}
           {isLoggedIn && (
-            <div className="mt-2">
+            <div className="mt-2 hidden lg:block">
               <NavUser
                 firstName={firstName}
                 lastName={lastName}
