@@ -1,8 +1,13 @@
+import { useState } from 'react'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { ChevronDown, Pencil, Trash2 } from 'lucide-react'
 import TreeCard from '@/components/general/cards/TreeCard'
 import ClusterSignalCard from './ClusterSignalCard'
 import EntityDetailHeader from '@/components/general/EntityDetailHeader'
+import DeleteConfirmDialog from '@/components/general/DeleteConfirmDialog'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import GeneralLink from '../general/links/GeneralLink'
+import createToast from '@/hooks/createToast'
 import { format } from 'date-fns'
 import {
   Alert,
@@ -10,32 +15,79 @@ import {
   AlertContent,
   AlertTitle,
   AlertDescription,
+  Button,
+  ButtonGroup,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   StatusCard,
 } from '@green-ecolution/ui'
-import type { TreeCluster, Tree } from '@/api/backendApi'
+import { clusterApi, type TreeCluster, type Tree } from '@/api/backendApi'
 
 interface TreeClusterDashboardProps {
   treecluster: TreeCluster
 }
 
 const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
+  const navigate = useNavigate()
+  const showToast = createToast()
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const wateringStatus = getWateringStatusDetails(treecluster.wateringStatus)
   const lastWateredDate = treecluster.lastWatered
     ? format(new Date(treecluster.lastWatered), 'dd.MM.yyyy')
     : 'Keine Angabe'
+
+  const handleDelete = () => {
+    clusterApi
+      .deleteCluster({ clusterId: treecluster.id.toString() })
+      .then(() => navigate({ to: '/treecluster', search: { page: 1 } }))
+      .then(() => showToast('Die Bewässerungsgruppe wurde gelöscht.'))
+      .catch((error) => {
+        console.error('Delete failed:', error)
+        showToast('Die Bewässerungsgruppe konnte nicht gelöscht werden.', 'error')
+      })
+  }
 
   return (
     <>
       <EntityDetailHeader
         backLink={{ link: { to: '/treecluster' }, label: 'Zu allen Bewässerungsgruppen' }}
         title={<>Bewässerungsgruppe: {treecluster.name}</>}
-        editLink={{
-          label: 'Gruppe bearbeiten',
-          link: {
-            to: '/map/treecluster/edit/$treeclusterId',
-            params: { treeclusterId: treecluster.id.toString() },
-          },
-        }}
+        actions={
+          <ButtonGroup>
+            <Button variant="outline" asChild>
+              <Link
+                to="/map/treecluster/edit/$treeclusterId"
+                params={{ treeclusterId: treecluster.id.toString() }}
+              >
+                Gruppe bearbeiten
+                <Pencil className="stroke-1" />
+              </Link>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Weitere Aktionen"
+                  className="[&_svg]:size-4 [&_svg]:transition-transform [&_svg]:duration-300 data-[state=open]:[&_svg]:rotate-180"
+                >
+                  <ChevronDown />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[12rem]">
+                <DropdownMenuItem
+                  className="gap-2 px-3 py-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
+                  onSelect={() => setConfirmDelete(true)}
+                >
+                  <Trash2 />
+                  Gruppe löschen
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </ButtonGroup>
+        }
       >
         {treecluster.description && <p className="mb-4">{treecluster.description}</p>}
         {treecluster.trees?.length === 0 ? (
@@ -127,6 +179,14 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
           )}
         </ul>
       </section>
+
+      <DeleteConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title="Bewässerungsgruppe löschen?"
+        description="Möchtest du die Bewässerungsgruppe wirklich löschen? Die zugehörigen Bäume bleiben erhalten."
+        onConfirm={handleDelete}
+      />
     </>
   )
 }

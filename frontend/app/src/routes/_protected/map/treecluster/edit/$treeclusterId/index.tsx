@@ -1,19 +1,14 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { FormProvider, useWatch, type DefaultValues, type SubmitHandler } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { Button } from '@green-ecolution/ui'
-import { Trash2 } from 'lucide-react'
 import type { TreeResponse } from '@green-ecolution/backend-client'
-import { clusterApi } from '@/api/backendApi'
 import { treeClusterIdQuery } from '@/api/queries'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
 import { entityNotFound } from '@/lib/router'
 import FormForTreecluster from '@/components/general/form/FormForTreecluster'
-import DeleteConfirmDialog from '@/components/general/DeleteConfirmDialog'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import { useTreeClusterForm } from '@/hooks/form/useTreeClusterForm'
-import createToast from '@/hooks/createToast'
 import MapPanel from '@/components/map-gl/MapPanel'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
 import { isMapAlive } from '@/components/map-gl/mapReady'
@@ -34,10 +29,8 @@ export const Route = createFileRoute('/_protected/map/treecluster/edit/$treeclus
 function EditClusterOnMap() {
   const { treeclusterId } = Route.useParams()
   const navigate = useNavigate({ from: Route.fullPath })
-  const showToast = createToast()
   const map = useMaplibreMap()
   const { data: cluster } = useSuspenseQuery(treeClusterIdQuery(treeclusterId))
-  const [confirmDelete, setConfirmDelete] = useState(false)
 
   // Frame the group once when the panel opens.
   const initialCluster = useRef(cluster)
@@ -99,18 +92,6 @@ function EditClusterOnMap() {
     )
   }
 
-  const handleDelete = () => {
-    navigationBlocker.allowNavigation()
-    clusterApi
-      .deleteCluster({ clusterId: treeclusterId })
-      .then(() => navigate({ to: '/treecluster', search: { page: 1 } }))
-      .then(() => showToast('Die Bewässerungsgruppe wurde gelöscht.'))
-      .catch((error) => {
-        console.error('Delete failed:', error)
-        showToast('Die Bewässerungsgruppe konnte nicht gelöscht werden.', 'error')
-      })
-  }
-
   return (
     <>
       <MapPanel title="Bewässerungsgruppe bearbeiten" onClose={handleCancel}>
@@ -127,24 +108,7 @@ function EditClusterOnMap() {
             emptyHint="Klicke einen Baum auf der Karte an, um ihn zur Liste hinzuzufügen."
           />
         </FormProvider>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => setConfirmDelete(true)}
-          className="mt-3 shrink-0 self-start text-destructive hover:text-destructive"
-        >
-          <Trash2 className="size-4" />
-          Gruppe löschen
-        </Button>
       </MapPanel>
-
-      <DeleteConfirmDialog
-        open={confirmDelete}
-        onOpenChange={setConfirmDelete}
-        title="Bewässerungsgruppe löschen?"
-        description="Möchtest du die Bewässerungsgruppe wirklich löschen? Die zugehörigen Bäume bleiben erhalten."
-        onConfirm={handleDelete}
-      />
 
       <UnsavedChangesDialog blocker={navigationBlocker} />
     </>

@@ -10,11 +10,13 @@ interface EntityDetailHeaderProps {
   title: ReactNode
   badge?: ReactNode
   editLink?: { link: LinkProps; label: string }
+  /** Rendered below the edit button, e.g. a destructive delete action. */
+  actions?: ReactNode
   /**
-   * Breakpoint at which the header switches to a row layout. Also switches the
-   * row alignment: '2xl' centers items, 'xl' aligns them to the start. This
-   * difference is inherited from the original call sites and must be kept for
-   * visual parity.
+   * Controls the row alignment on large screens: '2xl' vertically centers
+   * title and actions from 2xl upwards, 'xl' keeps them top-aligned. The
+   * difference is inherited from the original call sites and must be kept
+   * for visual parity.
    */
   breakpoint?: '2xl' | 'xl'
   children?: ReactNode
@@ -25,6 +27,7 @@ const EntityDetailHeader = ({
   title,
   badge,
   editLink,
+  actions,
   breakpoint = '2xl',
   children,
 }: EntityDetailHeaderProps) => (
@@ -32,10 +35,8 @@ const EntityDetailHeader = ({
     <BackLink link={backLink.link} label={backLink.label} />
     <article
       className={cn(
-        'flex flex-col gap-y-6',
-        breakpoint === 'xl'
-          ? 'xl:flex-row xl:items-start xl:gap-x-10'
-          : '2xl:flex-row 2xl:items-center 2xl:gap-x-10',
+        'flex flex-col gap-y-6 md:flex-row md:items-start md:justify-between md:gap-x-10',
+        breakpoint === '2xl' && '2xl:items-center',
       )}
     >
       <div className={breakpoint === 'xl' ? 'xl:w-4/5' : '2xl:w-4/5'}>
@@ -50,14 +51,19 @@ const EntityDetailHeader = ({
         </h1>
         {children}
       </div>
-      {editLink && (
-        <ButtonLink
-          icon={Pencil}
-          iconClassName="stroke-1"
-          label={editLink.label}
-          color="grey"
-          link={editLink.link}
-        />
+      {(editLink ?? actions) && (
+        <div className="flex shrink-0 flex-col gap-2">
+          {editLink && (
+            <ButtonLink
+              icon={Pencil}
+              iconClassName="stroke-1"
+              label={editLink.label}
+              color="grey"
+              link={editLink.link}
+            />
+          )}
+          {actions}
+        </div>
       )}
     </article>
   </>
