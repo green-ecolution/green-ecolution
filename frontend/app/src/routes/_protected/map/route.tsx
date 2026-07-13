@@ -71,7 +71,14 @@ function MapRoot() {
     )
   }, [navigate])
 
-  const handleExpandPanel = useCallback(() => setSnapPoint(1), [])
+  const handleEditCluster = useCallback(() => {
+    if (!panelClusterId) return
+    navigate({
+      to: '/map/treecluster/edit/$treeclusterId',
+      params: { treeclusterId: panelClusterId },
+      search: (prev) => prev,
+    }).catch((error) => console.error('Navigation failed:', error))
+  }, [navigate, panelClusterId])
 
   const handleOpenDashboard = useCallback(() => {
     if (!panelClusterId) return
@@ -103,7 +110,7 @@ function MapRoot() {
               clusterId={panelClusterId}
               onClose={handleClosePanel}
               onOpenDashboard={handleOpenDashboard}
-              onExpand={handleExpandPanel}
+              onEdit={handleEditCluster}
               activeSnapPoint={snapPoint}
               setActiveSnapPoint={setSnapPoint}
             />

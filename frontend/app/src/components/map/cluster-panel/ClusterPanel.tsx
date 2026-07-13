@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Button, Loading } from '@green-ecolution/ui'
 import { Pencil } from 'lucide-react'
@@ -6,13 +5,12 @@ import { isValidUuid, treeClusterIdQuery } from '@/api/queries'
 import MapPanel from '@/components/map-gl/MapPanel'
 import ClusterPanelShell from './ClusterPanelShell'
 import ClusterPanelView from './ClusterPanelView'
-import ClusterPanelEdit from './ClusterPanelEdit'
 
 interface ClusterPanelProps {
   clusterId: string
   onClose: () => void
   onOpenDashboard: () => void
-  onExpand?: () => void
+  onEdit: () => void
   activeSnapPoint?: number | string | null
   setActiveSnapPoint?: (snap: number | string | null) => void
 }
@@ -21,31 +19,22 @@ const ClusterPanel = ({
   clusterId,
   onClose,
   onOpenDashboard,
-  onExpand,
+  onEdit,
   activeSnapPoint,
   setActiveSnapPoint,
 }: ClusterPanelProps) => {
-  const [mode, setMode] = useState<'view' | 'edit'>('view')
   const { data, isError } = useQuery(treeClusterIdQuery(clusterId))
   const failed = !isValidUuid(clusterId) || isError
 
-  const startEdit = () => {
-    setMode('edit')
-    onExpand?.()
-  }
-
-  const title = mode === 'edit' ? 'Gruppe bearbeiten' : (data?.name ?? 'Baumgruppe')
-
-  const headerAction =
-    data && mode === 'view' ? (
-      <Button variant="ghost" size="icon" aria-label="Gruppe bearbeiten" onClick={startEdit}>
-        <Pencil />
-      </Button>
-    ) : undefined
+  const headerAction = data ? (
+    <Button variant="ghost" size="icon" aria-label="Gruppe bearbeiten" onClick={onEdit}>
+      <Pencil />
+    </Button>
+  ) : undefined
 
   return (
     <MapPanel
-      title={title}
+      title={data?.name ?? 'Baumgruppe'}
       headerAction={headerAction}
       onClose={onClose}
       closeLabel="Seitenansicht schließen"
@@ -55,15 +44,7 @@ const ClusterPanel = ({
     >
       <ClusterPanelShell onClose={onClose}>
         {data ? (
-          mode === 'view' ? (
-            <ClusterPanelView treecluster={data} onOpenDashboard={onOpenDashboard} />
-          ) : (
-            <ClusterPanelEdit
-              treecluster={data}
-              onCancel={() => setMode('view')}
-              onSaved={() => setMode('view')}
-            />
-          )
+          <ClusterPanelView treecluster={data} onOpenDashboard={onOpenDashboard} />
         ) : failed ? (
           <p className="py-10 text-center text-dark-600">
             Die Baumgruppe konnte nicht geladen werden.

@@ -27,19 +27,34 @@ beforeEach(() => vi.clearAllMocks())
 afterEach(cleanup)
 
 describe('ClusterPanel', () => {
-  it('shows the view for a loaded cluster, then switches to edit on pencil', async () => {
+  it('shows the view for a loaded cluster and calls onEdit from the pencil', async () => {
     getCluster.mockResolvedValue(cluster)
-    render(<ClusterPanel clusterId={VALID_ID} onClose={vi.fn()} onOpenDashboard={vi.fn()} />)
+    const onEdit = vi.fn()
+    render(
+      <ClusterPanel
+        clusterId={VALID_ID}
+        onClose={vi.fn()}
+        onOpenDashboard={vi.fn()}
+        onEdit={onEdit}
+      />,
+    )
 
     await waitFor(() =>
       expect(screen.getByRole('heading', { name: 'Hafenspitze' })).toBeInTheDocument(),
     )
     await userEvent.click(screen.getByRole('button', { name: 'Gruppe bearbeiten' }))
-    expect(screen.getByRole('button', { name: 'Speichern' })).toBeInTheDocument()
+    expect(onEdit).toHaveBeenCalledTimes(1)
   })
 
   it('shows an error state for an invalid (non-uuid) id without hanging on the spinner', () => {
-    render(<ClusterPanel clusterId="not-a-uuid" onClose={vi.fn()} onOpenDashboard={vi.fn()} />)
+    render(
+      <ClusterPanel
+        clusterId="not-a-uuid"
+        onClose={vi.fn()}
+        onOpenDashboard={vi.fn()}
+        onEdit={vi.fn()}
+      />,
+    )
     expect(screen.getByText(/konnte nicht geladen werden/)).toBeInTheDocument()
     expect(screen.queryByText(/Lade Baumgruppe/)).not.toBeInTheDocument()
     expect(getCluster).not.toHaveBeenCalled()
@@ -48,7 +63,14 @@ describe('ClusterPanel', () => {
   it('calls onClose from the close button', async () => {
     getCluster.mockResolvedValue(cluster)
     const onClose = vi.fn()
-    render(<ClusterPanel clusterId={VALID_ID} onClose={onClose} onOpenDashboard={vi.fn()} />)
+    render(
+      <ClusterPanel
+        clusterId={VALID_ID}
+        onClose={onClose}
+        onOpenDashboard={vi.fn()}
+        onEdit={vi.fn()}
+      />,
+    )
     await waitFor(() =>
       expect(screen.getByRole('heading', { name: 'Hafenspitze' })).toBeInTheDocument(),
     )
