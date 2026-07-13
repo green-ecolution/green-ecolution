@@ -48,7 +48,12 @@ describe('ClusterPanel', () => {
 
   it('shows an error state for an invalid (non-uuid) id without hanging on the spinner', () => {
     render(
-      <ClusterPanel clusterId="not-a-uuid" onClose={vi.fn()} onOpenDashboard={vi.fn()} onEdit={vi.fn()} />,
+      <ClusterPanel
+        clusterId="not-a-uuid"
+        onClose={vi.fn()}
+        onOpenDashboard={vi.fn()}
+        onEdit={vi.fn()}
+      />,
     )
     expect(screen.getByText(/konnte nicht geladen werden/)).toBeInTheDocument()
     expect(screen.queryByText(/Lade Baumgruppe/)).not.toBeInTheDocument()

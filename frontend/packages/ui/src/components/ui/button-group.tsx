@@ -36,19 +36,18 @@ const ButtonGroup = React.forwardRef<
 ))
 ButtonGroup.displayName = 'ButtonGroup'
 
-const ButtonGroupText = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      'flex items-center gap-2 rounded-lg border border-dark-600 bg-muted px-4 text-base font-medium [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
-      className,
-    )}
-    {...props}
-  />
-))
+const ButtonGroupText = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        'flex items-center gap-2 rounded-lg border border-dark-600 bg-muted px-4 text-base font-medium [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+        className,
+      )}
+      {...props}
+    />
+  ),
+)
 ButtonGroupText.displayName = 'ButtonGroupText'
 
 const ButtonGroupSeparator = React.forwardRef<
