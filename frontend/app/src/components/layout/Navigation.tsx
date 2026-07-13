@@ -4,7 +4,6 @@ import {
   Car,
   FolderClosed,
   LogIn,
-  LogOut,
   Map,
   PieChart,
   Settings,
@@ -17,7 +16,9 @@ import NavLink from '../navigation/NavLink'
 import NavHeadline from '../navigation/NavHeadline'
 import NavHeader from '../navigation/NavHeader'
 import SidebarToggle from '../navigation/SidebarToggle'
+import NavUser from '../navigation/NavUser'
 import { useAuthSession } from '@/lib/auth/authSessionContext'
+import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 import Tree from '../icons/Tree'
 import SensorIcon from '../icons/Sensor'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -57,21 +58,14 @@ const publicNavData: NavSectionData[] = [
   },
 ]
 
-// Settings and logout are pinned to the bottom of the sidebar, separate from
-// the navigation sections.
+// Settings and the user entry are pinned to the bottom of the sidebar,
+// separate from the navigation sections.
 const footerNavData: NavLinkData[] = [
   {
     key: 'nav-settings',
     label: 'Einstellungen',
     icon: <Settings className="w-5 h-5" />,
     to: '/settings',
-  },
-  {
-    key: 'nav-logout',
-    label: 'Abmelden',
-    icon: <LogOut className="w-5 h-5" />,
-    to: '/logout',
-    preload: false,
   },
 ]
 
@@ -162,6 +156,8 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
   const collapsed = useSidebarCollapsed()
   const setSidebarCollapsed = useStore((s) => s.setSidebarCollapsed)
 
+  const { firstName, lastName, email } = useCurrentUser()
+
   const handleNavLinkClick = useCallback(() => {
     if (!isLargeScreen) closeSidebar()
   }, [isLargeScreen, closeSidebar])
@@ -201,7 +197,7 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
           </React.Fragment>
         ))}
 
-        {/* Settings + logout: pinned to the bottom on desktop (lg:mt-auto),
+        {/* Settings + user entry: pinned to the bottom on desktop (lg:mt-auto),
             inline at the end of the scrollable list on the mobile overlay.
             The collapse toggle only exists from lg up; logged-out users still
             get it, so the block hides on mobile when logged out. */}
@@ -227,6 +223,17 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
                 />
               ))}
           </ul>
+          {isLoggedIn && (
+            <div className="mt-2">
+              <NavUser
+                firstName={firstName}
+                lastName={lastName}
+                email={email}
+                collapsed={collapsed}
+                closeSidebar={handleNavLinkClick}
+              />
+            </div>
+          )}
         </div>
       </div>
     </nav>

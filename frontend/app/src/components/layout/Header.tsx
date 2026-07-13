@@ -2,7 +2,6 @@ import { AlignJustifyIcon } from 'lucide-react'
 import { useState, useCallback } from 'react'
 import Navigation from './Navigation'
 import Breadcrumb from './Breadcrumb'
-import ProfileButton from './ProfileButton'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed'
 import { Button } from '@green-ecolution/ui'
@@ -34,7 +33,9 @@ function Header() {
     <header
       className={`relative z-10 bg-white transition-[padding] ease-in-out duration-300 ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-[16rem]'}`}
     >
-      <div className="container text-sm border-b border-dark-50 py-4 flex justify-between items-center">
+      {/* min-h keeps the pre-NavUser header height (40px avatar + py-4 + border);
+          the map height calc (100dvh - 4.563rem) depends on it */}
+      <div className="container min-h-[4.563rem] text-sm border-b border-dark-50 py-4 flex justify-between items-center">
         {!isLargeScreen && (
           <Button
             id="main-navigation-toggle"
@@ -51,7 +52,6 @@ function Header() {
           </Button>
         )}
         {!isStartPage && <Breadcrumb />}
-        <ProfileButton />
       </div>
 
       <Navigation isOpen={open} closeSidebar={closeSidebar} />
