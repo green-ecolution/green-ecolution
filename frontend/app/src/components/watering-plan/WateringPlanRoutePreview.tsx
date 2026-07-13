@@ -103,6 +103,14 @@ const WateringPlanPreviewRoute = ({ wateringPlan }: WateringPlanPreviewRouteProp
     }).catch((error) => console.error('Navigation failed:', error))
   }, [navigate, selectedClusterId])
 
+  const handleEditCluster = useCallback(() => {
+    if (!selectedClusterId) return
+    navigate({
+      to: '/map/treecluster/edit/$treeclusterId',
+      params: { treeclusterId: selectedClusterId },
+    }).catch((error) => console.error('Navigation failed:', error))
+  }, [navigate, selectedClusterId])
+
   return (
     <MapPreview
       center={[centerLng, centerLat]}
@@ -126,6 +134,7 @@ const WateringPlanPreviewRoute = ({ wateringPlan }: WateringPlanPreviewRouteProp
             clusterId={selectedClusterId}
             onClose={handleClosePanel}
             onOpenDashboard={handleOpenDashboard}
+            onEdit={handleEditCluster}
           />
         </Suspense>
       )}
