@@ -1366,7 +1366,7 @@
           "Sensors"
         ],
         "summary": "List sensor data",
-        "description": "Returns all historical data readings for a sensor.",
+        "description": "Returns a paginated list of historical data readings for a sensor, optionally restricted to a time range.",
         "operationId": "listSensorData",
         "parameters": [
           {
@@ -1377,18 +1377,70 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number to retrieve (1-based).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1,
+              "minimum": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "Number of readings per page.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 500,
+              "maximum": 5000,
+              "minimum": 1
+            },
+            "example": 500
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Only readings recorded at or after this timestamp (RFC 3339).",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date-time"
+            },
+            "example": "2026-07-06T00:00:00Z"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Only readings recorded at or before this timestamp (RFC 3339).",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date-time"
+            },
+            "example": "2026-07-13T00:00:00Z"
           }
         ],
         "responses": {
           "200": {
-            "description": "Sensor data list",
+            "description": "Paginated sensor data",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SensorDataResponse"
-                  }
+                  "$ref": "#/components/schemas/ListResponse_SensorDataResponse"
                 }
               }
             }
@@ -3359,6 +3411,64 @@
               "example": {
                 "id": "0190a8e9-7c4f-7000-8000-000000000000",
                 "name": "Stadtpark Flensburg"
+              }
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResponse"
+          }
+        }
+      },
+      "ListResponse_SensorDataResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "pagination"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "A single data payload received from a LoRaWAN sensor.",
+              "required": [
+                "id",
+                "created_at",
+                "updated_at",
+                "data"
+              ],
+              "properties": {
+                "created_at": {
+                  "type": "string",
+                  "description": "Timestamp when the data was first recorded (RFC 3339).",
+                  "example": "2025-06-01T08:00:00+00:00"
+                },
+                "data": {
+                  "type": "object",
+                  "description": "Raw sensor payload as a JSON object (structure depends on the sensor type)."
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Unique identifier of the reading.",
+                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
+                },
+                "signal": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SignalResponse",
+                      "description": "LoRaWAN radio quality of the strongest gateway for this reading, if present."
+                    }
+                  ]
+                },
+                "updated_at": {
+                  "type": "string",
+                  "description": "Timestamp when the data was last modified (RFC 3339).",
+                  "example": "2025-06-01T08:05:00+00:00"
+                }
               }
             }
           },

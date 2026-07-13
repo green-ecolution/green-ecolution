@@ -23,11 +23,11 @@ interface ChartSignalDataProps {
 }
 
 const ChartSignalData: React.FC<ChartSignalDataProps> = ({ sensorId }) => {
-  const { data: sensorDataRes } = useSuspenseQuery(sensorDataQuery(sensorId))
+  const { data: sensorDataRes } = useSuspenseQuery(sensorDataQuery(sensorId, { perPage: 5000 }))
   // Plot against the reading timestamp (numeric X axis) rather than a formatted
   // date string: same-day readings would otherwise collapse to one category and
   // the tooltip would stick to the first point.
-  const signalData = sensorDataRes
+  const signalData = sensorDataRes.data
     .filter((entry) => typeof entry.signal?.rssiDbm === 'number')
     .map((entry) => ({
       ts: new Date(entry.updatedAt).getTime(),

@@ -17,15 +17,16 @@ interface ChartSensorDataProps {
 }
 
 const ChartSensorData: React.FC<ChartSensorDataProps> = ({ sensorId }) => {
-  const { data: sensorDataRes } = useSuspenseQuery(sensorDataQuery(sensorId))
-  const batteryData = sensorDataRes
+  const { data: sensorDataRes } = useSuspenseQuery(sensorDataQuery(sensorId, { perPage: 5000 }))
+  const readings = sensorDataRes.data
+  const batteryData = readings
     .map((entry) => ({
       name: format(new Date(entry.updatedAt), 'dd.MM.yyyy'),
       battery: (entry.data as Record<string, unknown>).battery,
     }))
     .reverse()
 
-  if (sensorDataRes.length <= 1) return null
+  if (readings.length <= 1) return null
 
   return (
     <section className="mt-16">

@@ -9,6 +9,7 @@ import {
   EvaluationResponse,
   infoApi,
   ListClustersRequest,
+  ListResponseSensorDataResponse,
   ListResponseSensorResponse,
   ListResponseTreeClusterInListResponse,
   ListResponseTreeResponse,
@@ -28,7 +29,6 @@ import {
   ResponseError,
   RouteResponse,
   routingApi,
-  SensorDataResponse,
   SensorModelResponse,
   SensorResponse,
   sensorApi,
@@ -91,12 +91,19 @@ export const sensorQuery = (params?: ListSensorsRequest) =>
 
 // Sensor ids are LoRaWAN EUIs (e.g. "eui-a81758fffe0c3b52"), not UUIDs,
 // so these queries only guard against empty ids.
-export const sensorDataQuery = (id: string) =>
-  queryOptions<SensorDataResponse[]>({
-    queryKey: ['sensor data', id],
+export const sensorDataQuery = (id: string, params?: { from?: Date; perPage?: number }) =>
+  queryOptions<ListResponseSensorDataResponse>({
+    queryKey: [
+      'sensor data',
+      id,
+      params?.perPage ?? 'default',
+      params?.from?.toISOString() ?? 'all',
+    ],
     queryFn: () =>
       sensorApi.listSensorData({
         sensorId: id,
+        from: params?.from,
+        perPage: params?.perPage,
       }),
     enabled: id !== '',
   })
