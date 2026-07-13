@@ -26,6 +26,8 @@ pub(crate) struct WateringPlanDraftInput {
     #[serde(default)]
     pub driver_ids: Vec<String>,
     #[serde(default)]
+    pub start_point_name: Option<String>,
+    #[serde(default)]
     pub status: Option<String>,
 }
 
@@ -79,6 +81,15 @@ pub(crate) fn collect_plan_issues(input: &WateringPlanDraftInput) -> Vec<Validat
     }
     // trailer_id is optional; nothing to do when None or empty.
 
+    if non_empty(input.start_point_name.as_deref()).is_none() {
+        issues.push(ValidationIssue::from_error(
+            &ValidationError::EmptyString {
+                field: "watering_plan.start_point_name",
+            },
+            "startPointName",
+        ));
+    }
+
     if let Some(status) = input.status.as_deref()
         && let Some(issue) =
             validate_enum::<WateringPlanStatus>(status, "watering_plan.status", "status")
@@ -131,6 +142,7 @@ mod tests {
             transporter_id: Some("vehicle-1".into()),
             trailer_id: None,
             driver_ids: vec!["00000000-0000-0000-0000-000000000001".into()],
+            start_point_name: Some("Betriebshof".into()),
             status: Some("planned".into()),
         }
     }
@@ -222,5 +234,25 @@ mod tests {
         input.date = Utc::now() - Duration::days(2);
         let issues = collect_plan_issues(&input);
         assert!(issues.iter().any(|i| i.path == "date"));
+    }
+
+    #[test]
+    fn missing_start_point_yields_issue() {
+        let mut input = valid();
+        input.start_point_name = None;
+        let issues = collect_plan_issues(&input);
+        let issue = issues
+            .iter()
+            .find(|i| i.path == "startPointName")
+            .expect("startPointName issue");
+        assert_eq!(issue.key, "watering_plan.start_point_name.empty");
+    }
+
+    #[test]
+    fn empty_start_point_yields_issue() {
+        let mut input = valid();
+        input.start_point_name = Some("".into());
+        let issues = collect_plan_issues(&input);
+        assert!(issues.iter().any(|i| i.path == "startPointName"));
     }
 }
