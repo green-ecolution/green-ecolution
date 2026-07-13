@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 
 use crate::{
     RepositoryError,
@@ -53,8 +54,10 @@ pub trait SensorReadingReader: Send + Sync {
     async fn view_history(
         &self,
         sensor_id: &SensorId,
-        limit: i64,
-    ) -> Result<Vec<SensorReadingView>, RepositoryError>;
+        pagination: Pagination,
+        since: Option<DateTime<Utc>>,
+        until: Option<DateTime<Utc>>,
+    ) -> Result<Page<SensorReadingView>, RepositoryError>;
 
     /// Per-depth `soil_moisture` values of the sensor's most recent reading.
     async fn latest_volumetric_moisture(

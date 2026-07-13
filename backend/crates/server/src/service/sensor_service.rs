@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use chrono::{DateTime, Utc};
 use domain::{
     Id,
     events::{DomainEvent, SensorDataReceivedPayload, SensorReadings},
@@ -220,9 +221,14 @@ impl SensorService {
     pub async fn view_history(
         &self,
         sensor_id: &SensorId,
-        limit: i64,
-    ) -> Result<Vec<SensorReadingView>, ServiceError> {
-        Ok(self.reading_reader.view_history(sensor_id, limit).await?)
+        pagination: Pagination,
+        since: Option<DateTime<Utc>>,
+        until: Option<DateTime<Utc>>,
+    ) -> Result<Page<SensorReadingView>, ServiceError> {
+        Ok(self
+            .reading_reader
+            .view_history(sensor_id, pagination, since, until)
+            .await?)
     }
 
     /// Atomically persists a raw reading + its normalized per-ability values

@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -554,19 +554,45 @@ impl SensorReadingReader for PgSensorRepository {
     async fn view_history(
         &self,
         sensor_id: &SensorId,
-        limit: i64,
-    ) -> Result<Vec<SensorReadingView>, RepositoryError> {
+        pagination: Pagination,
+        since: Option<DateTime<Utc>>,
+        until: Option<DateTime<Utc>>,
+    ) -> Result<Page<SensorReadingView>, RepositoryError> {
+        let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
+        let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
+        let since = since.map(|t| t.naive_utc());
+        let until = until.map(|t| t.naive_utc());
+
+        let total = sqlx::query_scalar!(
+            r#"SELECT COUNT(*) AS "count!: i64" FROM sensor_data
+            WHERE sensor_id = $1
+              AND ($2::timestamp IS NULL OR updated_at >= $2)
+              AND ($3::timestamp IS NULL OR updated_at <= $3)"#,
+            sensor_id.as_str(),
+            since,
+            until,
+        )
+        .fetch_one(&self.pool)
+        .await? as u64;
+
         let rows = sqlx::query!(
             r#"SELECT id, sensor_id, updated_at, data
-            FROM sensor_data WHERE sensor_id = $1
-            ORDER BY id DESC LIMIT $2"#,
+            FROM sensor_data
+            WHERE sensor_id = $1
+              AND ($2::timestamp IS NULL OR updated_at >= $2)
+              AND ($3::timestamp IS NULL OR updated_at <= $3)
+            ORDER BY id DESC
+            LIMIT $4 OFFSET $5"#,
             sensor_id.as_str(),
+            since,
+            until,
             limit,
+            offset,
         )
         .fetch_all(&self.pool)
         .await?;
 
-        Ok(rows
+        let items = rows
             .into_iter()
             .map(|r| SensorReadingView {
                 created_at: uuid_v7_timestamp(&r.id).expect("sensor_data.id is minted as uuid v7"),
@@ -575,7 +601,9 @@ impl SensorReadingReader for PgSensorRepository {
                 updated_at: r.updated_at.and_utc(),
                 data: r.data,
             })
-            .collect())
+            .collect();
+
+        Ok(Page { items, total })
     }
 }
 

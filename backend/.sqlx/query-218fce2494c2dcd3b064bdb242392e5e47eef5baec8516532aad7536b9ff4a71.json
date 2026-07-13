@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO sensor_data (id, sensor_id, data, updated_at) VALUES ($1, $2, $3, $4)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Jsonb",
+        "Timestamp"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "218fce2494c2dcd3b064bdb242392e5e47eef5baec8516532aad7536b9ff4a71"
+}
