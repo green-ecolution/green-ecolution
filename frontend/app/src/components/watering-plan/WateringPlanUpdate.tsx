@@ -36,7 +36,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         clusterIds: data.treeclusters.map((cluster) => cluster.id),
         status: data.status,
         driverIds: data.userIds,
-        startPointName: data.startPointName ?? undefined,
+        startPointName: data.startPointName ?? '',
       },
   )
   const { mutate, isError, error, form, navigationBlocker, saveDraft } = useWateringPlanForm(

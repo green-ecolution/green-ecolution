@@ -63,6 +63,7 @@ const messages: Record<string, Renderer> = {
     'Eine Mitarbeiter-ID hat kein gültiges UUID-Format.',
   'watering_plan.status.invalidFormat': () => 'Kein korrekter Status.',
   'watering_plan.date.outOfRange': () => 'Datum muss heute oder in der Zukunft liegen.',
+  'watering_plan.start_point_name.empty': () => 'Es muss ein Startpunkt ausgewählt werden.',
 
   // User
   'user.email.empty': () => 'E-Mail ist erforderlich.',

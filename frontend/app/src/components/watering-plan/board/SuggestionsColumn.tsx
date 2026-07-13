@@ -33,7 +33,7 @@ const SuggestionsColumn = () => {
       clusterIds: selected,
       status: WateringPlanStatus.Planned,
       driverIds: [],
-      startPointName: undefined,
+      startPointName: '',
     })
     navigate({ to: '/watering-plans/new' }).catch((error) =>
       console.error('Navigation failed:', error),
