@@ -1,4 +1,3 @@
-import { Suspense } from 'react'
 import { Badge, Card, CardContent, CardHeader, CardTitle, SignalBars } from '@green-ecolution/ui'
 import { Signal } from 'lucide-react'
 import type { Sensor } from '@/api/backendApi'
@@ -64,9 +63,7 @@ const SensorSignalCard = ({ sensor }: SensorSignalCardProps) => {
                 <Stat label="Gateways" value={String(signal.gatewayCount)} />
               </dl>
             </div>
-            <Suspense fallback={null}>
-              <ChartSignalData sensorId={sensor.id} />
-            </Suspense>
+            <ChartSignalData sensorId={sensor.id} />
           </>
         )}
       </CardContent>
