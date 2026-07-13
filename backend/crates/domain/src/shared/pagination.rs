@@ -25,9 +25,16 @@ pub struct Pagination {
 
 impl Pagination {
     pub fn new(page: u64, per_page: u64) -> Self {
+        Self::with_max_per_page(page, per_page, MAX_PER_PAGE)
+    }
+
+    /// Like [`Self::new`] but with a caller-chosen `per_page` ceiling, for
+    /// endpoints whose consumers legitimately need large pages (e.g.
+    /// time-series readings feeding a chart).
+    pub fn with_max_per_page(page: u64, per_page: u64, max_per_page: u64) -> Self {
         Self {
             page: page.max(1),
-            per_page: per_page.clamp(1, MAX_PER_PAGE),
+            per_page: per_page.clamp(1, max_per_page.max(1)),
         }
     }
 
@@ -81,5 +88,24 @@ mod tests {
     fn computes_offset() {
         let p = Pagination::new(3, 25);
         assert_eq!(p.offset(), 50);
+    }
+
+    #[test]
+    fn with_max_per_page_allows_larger_page_sizes() {
+        let p = Pagination::with_max_per_page(1, 2_000, 5_000);
+        assert_eq!(p.per_page(), 2_000);
+    }
+
+    #[test]
+    fn with_max_per_page_clamps_to_custom_max() {
+        let p = Pagination::with_max_per_page(1, 10_000, 5_000);
+        assert_eq!(p.per_page(), 5_000);
+    }
+
+    #[test]
+    fn with_max_per_page_clamps_zero_values() {
+        let p = Pagination::with_max_per_page(0, 0, 5_000);
+        assert_eq!(p.page(), 1);
+        assert_eq!(p.per_page(), 1);
     }
 }
