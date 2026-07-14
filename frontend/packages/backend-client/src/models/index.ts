@@ -17,6 +17,8 @@ export * from './EvaluationValueResponse';
 export * from './GitInfoResponse';
 export * from './ListResponseRegionResponse';
 export * from './ListResponseRegionResponseDataInner';
+export * from './ListResponseSensorDataResponse';
+export * from './ListResponseSensorDataResponseDataInner';
 export * from './ListResponseSensorResponse';
 export * from './ListResponseSensorResponseDataInner';
 export * from './ListResponseTreeClusterInListResponse';

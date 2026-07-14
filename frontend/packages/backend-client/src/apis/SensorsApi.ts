@@ -17,8 +17,8 @@ import * as runtime from '../runtime';
 import type {
   ActivateSensorRequest,
   CreateSensorRequest,
+  ListResponseSensorDataResponse,
   ListResponseSensorResponse,
-  SensorDataResponse,
   SensorModelResponse,
   SensorResponse,
   SetSensorTreeRequest,
@@ -28,10 +28,10 @@ import {
     ActivateSensorRequestToJSON,
     CreateSensorRequestFromJSON,
     CreateSensorRequestToJSON,
+    ListResponseSensorDataResponseFromJSON,
+    ListResponseSensorDataResponseToJSON,
     ListResponseSensorResponseFromJSON,
     ListResponseSensorResponseToJSON,
-    SensorDataResponseFromJSON,
-    SensorDataResponseToJSON,
     SensorModelResponseFromJSON,
     SensorModelResponseToJSON,
     SensorResponseFromJSON,
@@ -63,6 +63,10 @@ export interface GetSensorModelRequest {
 
 export interface ListSensorDataRequest {
     sensorId: string;
+    page?: number;
+    perPage?: number;
+    from?: Date | null;
+    to?: Date | null;
 }
 
 export interface ListSensorsRequest {
@@ -289,10 +293,10 @@ export class SensorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns all historical data readings for a sensor.
+     * Returns a paginated list of historical data readings for a sensor, optionally restricted to a time range.
      * List sensor data
      */
-    async listSensorDataRaw(requestParameters: ListSensorDataRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<SensorDataResponse>>> {
+    async listSensorDataRaw(requestParameters: ListSensorDataRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseSensorDataResponse>> {
         if (requestParameters['sensorId'] == null) {
             throw new runtime.RequiredError(
                 'sensorId',
@@ -301,6 +305,22 @@ export class SensorsApi extends runtime.BaseAPI {
         }
 
         const queryParameters: any = {};
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['perPage'] != null) {
+            queryParameters['per_page'] = requestParameters['perPage'];
+        }
+
+        if (requestParameters['from'] != null) {
+            queryParameters['from'] = (requestParameters['from'] as any).toISOString();
+        }
+
+        if (requestParameters['to'] != null) {
+            queryParameters['to'] = (requestParameters['to'] as any).toISOString();
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -315,14 +335,14 @@ export class SensorsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(SensorDataResponseFromJSON));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListResponseSensorDataResponseFromJSON(jsonValue));
     }
 
     /**
-     * Returns all historical data readings for a sensor.
+     * Returns a paginated list of historical data readings for a sensor, optionally restricted to a time range.
      * List sensor data
      */
-    async listSensorData(requestParameters: ListSensorDataRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<SensorDataResponse>> {
+    async listSensorData(requestParameters: ListSensorDataRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseSensorDataResponse> {
         const response = await this.listSensorDataRaw(requestParameters, initOverrides);
         return await response.value();
     }

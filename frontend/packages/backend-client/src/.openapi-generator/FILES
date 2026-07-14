@@ -29,6 +29,8 @@ models/EvaluationValueResponse.ts
 models/GitInfoResponse.ts
 models/ListResponseRegionResponse.ts
 models/ListResponseRegionResponseDataInner.ts
+models/ListResponseSensorDataResponse.ts
+models/ListResponseSensorDataResponseDataInner.ts
 models/ListResponseSensorResponse.ts
 models/ListResponseSensorResponseDataInner.ts
 models/ListResponseTreeClusterInListResponse.ts

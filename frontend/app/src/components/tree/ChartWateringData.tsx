@@ -41,8 +41,9 @@ interface ChartWateringDataProps {
 }
 
 const ChartWateringData: React.FC<ChartWateringDataProps> = ({ sensorId }) => {
-  const { data: sensorDataRes } = useSuspenseQuery(sensorDataQuery(sensorId))
-  const transformedDataForTemperature = sensorDataRes
+  const { data: sensorDataRes } = useSuspenseQuery(sensorDataQuery(sensorId, { perPage: 5000 }))
+  const readings = sensorDataRes.data
+  const transformedDataForTemperature = readings
     .map((entry) => {
       const payload = entry.data as Record<string, unknown>
       return {
@@ -53,7 +54,7 @@ const ChartWateringData: React.FC<ChartWateringDataProps> = ({ sensorId }) => {
     })
     .reverse()
 
-  const transformedDataForWatermarks = sensorDataRes
+  const transformedDataForWatermarks = readings
     .map((entry) => {
       const payload = entry.data as Record<string, unknown>
       const formattedEntry: Record<string, number | string> = {
@@ -69,7 +70,7 @@ const ChartWateringData: React.FC<ChartWateringDataProps> = ({ sensorId }) => {
     })
     .reverse()
 
-  if (sensorDataRes.length <= 1) return null
+  if (readings.length <= 1) return null
 
   return (
     <>

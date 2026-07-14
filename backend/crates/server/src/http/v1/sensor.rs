@@ -5,6 +5,7 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
 };
+use chrono::{DateTime, Utc};
 use secrecy::SecretString;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -21,7 +22,7 @@ use crate::{
                 },
                 tree::TreeResponse,
             },
-            pagination::PaginationParams,
+            pagination::{PaginationParams, default_page},
         },
     },
     service::ServiceError,
@@ -116,13 +117,45 @@ pub async fn delete_sensor(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// Charts need whole time windows, so the readings page-size ceiling is far
+/// above the list default of 100.
+const SENSOR_DATA_DEFAULT_PER_PAGE: u64 = 500;
+const SENSOR_DATA_MAX_PER_PAGE: u64 = 5_000;
+
+fn default_sensor_data_per_page() -> u64 {
+    SENSOR_DATA_DEFAULT_PER_PAGE
+}
+
+/// Query parameters for the sensor readings endpoint.
+#[derive(Debug, serde::Deserialize, utoipa::IntoParams)]
+pub struct SensorDataParams {
+    /// Page number to retrieve (1-based).
+    #[param(default = 1, minimum = 1, example = 1)]
+    #[serde(default = "default_page")]
+    pub page: u64,
+
+    /// Number of readings per page.
+    #[param(default = 500, minimum = 1, maximum = 5000, example = 500)]
+    #[serde(default = "default_sensor_data_per_page")]
+    pub per_page: u64,
+
+    /// Only readings recorded at or after this timestamp (RFC 3339).
+    #[param(value_type = Option<String>, format = DateTime, example = "2026-07-06T00:00:00Z")]
+    pub from: Option<DateTime<Utc>>,
+
+    /// Only readings recorded at or before this timestamp (RFC 3339).
+    #[param(value_type = Option<String>, format = DateTime, example = "2026-07-13T00:00:00Z")]
+    pub to: Option<DateTime<Utc>>,
+}
+
 #[utoipa::path(get, path = "/sensors/{sensor_id}/data", tag = "Sensors",
     operation_id = "listSensorData",
     summary = "List sensor data",
-    description = "Returns all historical data readings for a sensor.",
-    params(("sensor_id" = String, Path, description = "Sensor ID")),
+    description = "Returns a paginated list of historical data readings for a sensor, \
+        optionally restricted to a time range.",
+    params(("sensor_id" = String, Path, description = "Sensor ID"), SensorDataParams),
     responses(
-        (status = 200, description = "Sensor data list", body = Vec<SensorDataResponse>),
+        (status = 200, description = "Paginated sensor data", body = ListResponse<SensorDataResponse>),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -130,13 +163,15 @@ pub async fn delete_sensor(
 pub async fn list_sensor_data(
     State(state): State<Arc<AppState>>,
     SensorIdPath(sensor_id): SensorIdPath,
-) -> Result<Json<Vec<SensorDataResponse>>, ServiceError> {
-    let readings = state
+    Query(params): Query<SensorDataParams>,
+) -> Result<Json<ListResponse<SensorDataResponse>>, ServiceError> {
+    let pagination =
+        Pagination::with_max_per_page(params.page, params.per_page, SENSOR_DATA_MAX_PER_PAGE);
+    let page = state
         .sensor_service
-        .view_history(&sensor_id, 10_000)
+        .view_history(&sensor_id, pagination, params.from, params.to)
         .await?;
-    let response: Vec<SensorDataResponse> = readings.iter().map(SensorDataResponse::from).collect();
-    Ok(Json(response))
+    Ok(Json(ListResponse::from_page(page, &pagination)))
 }
 
 #[utoipa::path(get, path = "/sensors/{sensor_id}/tree", tag = "Trees",

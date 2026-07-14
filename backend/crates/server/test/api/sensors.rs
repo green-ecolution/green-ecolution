@@ -33,6 +33,24 @@ async fn insert_reading(app: &crate::helpers::TestApp, sensor_id: &str, data: se
     .unwrap();
 }
 
+async fn insert_reading_at(
+    app: &crate::helpers::TestApp,
+    sensor_id: &str,
+    data: serde_json::Value,
+    updated_at: chrono::NaiveDateTime,
+) {
+    sqlx::query!(
+        r#"INSERT INTO sensor_data (id, sensor_id, data, updated_at) VALUES ($1, $2, $3, $4)"#,
+        uuid::Uuid::now_v7(),
+        sensor_id,
+        data,
+        updated_at,
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+}
+
 #[tokio::test]
 async fn list_sensors_returns_200() {
     let app = spawn_app().await;
@@ -120,8 +138,9 @@ async fn list_sensor_data_returns_empty_for_sensor_without_data() {
 
     assert_eq!(response.status().as_u16(), 200);
 
-    let data: Vec<serde_json::Value> = response.json().await.unwrap();
-    assert!(data.is_empty());
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 0);
+    assert_eq!(body["pagination"]["total_records"], 0);
 }
 
 #[tokio::test]
@@ -144,9 +163,86 @@ async fn list_sensor_data_returns_inserted_data() {
 
     assert_eq!(response.status().as_u16(), 200);
 
-    let data: Vec<serde_json::Value> = response.json().await.unwrap();
-    assert_eq!(data.len(), 1);
-    assert_eq!(data[0]["data"]["temperature"], 22.5);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 1);
+    assert_eq!(body["data"][0]["data"]["temperature"], 22.5);
+    assert_eq!(body["pagination"]["total_records"], 1);
+}
+
+#[tokio::test]
+async fn list_sensor_data_respects_pagination() {
+    let app = spawn_app().await;
+
+    insert_sensor(&app, "sensor-001").await;
+    for i in 0..3 {
+        insert_reading(
+            &app,
+            "sensor-001",
+            serde_json::json!({ "battery": 3.6, "n": i }),
+        )
+        .await;
+    }
+
+    let response = app
+        .get("/api/v1/sensors/sensor-001/data?page=1&per_page=2")
+        .await;
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+
+    assert_eq!(body["data"].as_array().unwrap().len(), 2);
+    assert_eq!(body["pagination"]["total_records"], 3);
+    assert_eq!(body["pagination"]["total_pages"], 2);
+    assert_eq!(body["pagination"]["next_page"], 2);
+
+    let response = app
+        .get("/api/v1/sensors/sensor-001/data?page=2&per_page=2")
+        .await;
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 1);
+}
+
+#[tokio::test]
+async fn list_sensor_data_filters_by_time_range() {
+    let app = spawn_app().await;
+
+    insert_sensor(&app, "sensor-001").await;
+    let old = chrono::NaiveDate::from_ymd_opt(2026, 6, 1)
+        .unwrap()
+        .and_hms_opt(12, 0, 0)
+        .unwrap();
+    let recent = chrono::NaiveDate::from_ymd_opt(2026, 7, 10)
+        .unwrap()
+        .and_hms_opt(12, 0, 0)
+        .unwrap();
+    insert_reading_at(
+        &app,
+        "sensor-001",
+        serde_json::json!({ "battery": 3.2 }),
+        old,
+    )
+    .await;
+    insert_reading_at(
+        &app,
+        "sensor-001",
+        serde_json::json!({ "battery": 3.6 }),
+        recent,
+    )
+    .await;
+
+    let response = app
+        .get("/api/v1/sensors/sensor-001/data?from=2026-07-01T00:00:00Z")
+        .await;
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 1);
+    assert_eq!(body["data"][0]["data"]["battery"], 3.6);
+    assert_eq!(body["pagination"]["total_records"], 1);
+
+    let response = app
+        .get("/api/v1/sensors/sensor-001/data?to=2026-07-01T00:00:00Z")
+        .await;
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 1);
+    assert_eq!(body["data"][0]["data"]["battery"], 3.2);
 }
 
 #[tokio::test]
