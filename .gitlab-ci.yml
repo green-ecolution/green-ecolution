@@ -1,0 +1,28 @@
+# Pull mirroring of the GitHub repository to gitlab.opencode.de
+
+stages:
+  - mirroring
+
+variables:
+  GIT_DEPTH: 0
+  TARGET_BRANCH: main
+  TARGET_REPO: https://github.com/green-ecolution/green-ecolution.git
+
+mirror_github_main:
+  stage: mirroring
+  image: alpine/git
+
+  before_script:
+    - git config --global user.name "${GITLAB_USER_NAME}"
+    - git config --global user.email "${GITLAB_USER_EMAIL}"
+    - git clone --branch ${TARGET_BRANCH} --single-branch ${TARGET_REPO} target_repo
+    - cd target_repo
+    - git remote add target "https://${GITLAB_PAT_NAME}:${GITLAB_PAT}@${CI_SERVER_FQDN}/${CI_PROJECT_PATH}.git"
+
+  script:
+    - echo "Pushing GitHub ${TARGET_BRANCH} -> GitLab ${TARGET_BRANCH}"
+    - git push target ${TARGET_BRANCH}:${TARGET_BRANCH} --force
+    - git push target --tags --force
+
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "schedule"'
