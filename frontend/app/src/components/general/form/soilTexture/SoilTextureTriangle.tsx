@@ -39,7 +39,7 @@ const Region = ({ region, active }: { region: SoilRegion; active: boolean }) => 
         fill={GROUP_FILL[region.group]}
         fillOpacity={active ? 1 : 0.55}
         strokeWidth={active ? 0.8 : 0.3}
-        className={active ? 'stroke-ring' : 'stroke-border'}
+        className="stroke-border"
       />
       <text
         x={toX(centroid.silt)}

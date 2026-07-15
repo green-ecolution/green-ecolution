@@ -14,6 +14,9 @@ describe('SoilTextureTriangle', () => {
     expect(screen.getByTestId('soil-marker')).toBeInTheDocument()
     expect(screen.getByTestId('region-Sl3')).toHaveAttribute('data-active', 'true')
     expect(screen.getByTestId('region-Tt')).toHaveAttribute('data-active', 'false')
+    expect(screen.getByTestId('region-Sl3')).toHaveClass('stroke-border')
+    expect(screen.getByTestId('region-Tt')).toHaveClass('stroke-border')
+    expect(screen.getByTestId('soil-marker')).toHaveClass('fill-ring')
   })
 
   it('positions the marker at the silt/clay coordinates', () => {
