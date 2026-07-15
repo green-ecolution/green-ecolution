@@ -342,12 +342,7 @@ export { Tabs, TabsList, TabsTrigger, TabsContent } from './components/ui/tabs'
 export { Textarea } from './components/ui/textarea'
 
 // Tooltip
-export {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
-} from './components/ui/tooltip'
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './components/ui/tooltip'
 
 // Sonner/Toast
 export { Toaster, toast } from './components/ui/sonner'
