@@ -171,12 +171,11 @@ describe('regionPolygon / polygonCentroid', () => {
 
   it('clips regions at the hypotenuse', () => {
     const tt = SOIL_REGIONS.find((r) => r.condition === SoilCondition.Tt)!
-    const polygon = regionPolygon(tt)
-    for (const point of polygon) {
-      expect(point.silt + point.clay).toBeLessThanOrEqual(100)
-    }
-    expect(polygon).toContainEqual({ silt: 0, clay: 100 })
-    expect(polygon).toContainEqual({ silt: 35, clay: 65 })
+    expect(regionPolygon(tt)).toEqual([
+      { silt: 0, clay: 65 },
+      { silt: 35, clay: 65 },
+      { silt: 0, clay: 100 },
+    ])
   })
 
   it('keeps every region polygon inside the triangle', () => {
@@ -186,6 +185,10 @@ describe('regionPolygon / polygonCentroid', () => {
       for (const point of polygon) {
         expect(point.silt + point.clay).toBeLessThanOrEqual(100.000001)
       }
+      polygon.forEach((point, i) => {
+        const prev = polygon[(i + polygon.length - 1) % polygon.length]
+        expect(point.silt !== prev.silt || point.clay !== prev.clay).toBe(true)
+      })
     }
   })
 

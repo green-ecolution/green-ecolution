@@ -130,7 +130,10 @@ export function regionPolygon(region: SoilRegion): SoilPoint[] {
       clipped.push(intersect(prev, corner))
     }
   })
-  return clipped
+  return clipped.filter((point, i) => {
+    const prev = clipped[(i + clipped.length - 1) % clipped.length]
+    return point.silt !== prev.silt || point.clay !== prev.clay
+  })
 }
 
 export function polygonCentroid(points: SoilPoint[]): SoilPoint {
