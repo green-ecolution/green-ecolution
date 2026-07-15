@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Triangle } from 'lucide-react'
 import { Button, FormField, TextareaField, Label, Combobox } from '@green-ecolution/ui'
 import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-hook-form'
 import { SoilConditionOptions } from '@/hooks/details/useDetailsForSoilCondition'
@@ -8,6 +7,7 @@ import FormError from './FormError'
 import FormSubmitButton from './FormSubmitButton'
 import SelectEntities from './types/SelectEntities'
 import SoilTextureDialog from './soilTexture/SoilTextureDialog'
+import SoilTriangleIcon from './soilTexture/SoilTriangleIcon'
 
 interface FormForTreeClusterProps {
   onAddTrees?: () => void
@@ -70,7 +70,7 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
                   aria-label="Bodenart aus Korngrößen bestimmen"
                   onClick={() => setSoilDialogOpen(true)}
                 >
-                  <Triangle />
+                  <SoilTriangleIcon />
                 </Button>
               </div>
               {errors.soilCondition?.message && (
