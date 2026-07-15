@@ -53,6 +53,11 @@
     },
     {
       "type": "generic",
+      "path": "publiccode.yml",
+      "glob": "publiccode.yml"
+    },
+    {
+      "type": "generic",
       "path": "backend/Cargo.toml",
       "glob": "backend/Cargo.toml"
     }

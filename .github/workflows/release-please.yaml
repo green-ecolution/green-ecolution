@@ -61,6 +61,24 @@ jobs:
           ref: ${{ steps.pr-branch.outputs.branch }}
           fetch-depth: 0
 
+      # release-please bumps versions but does not touch date fields. Keep
+      # them in sync so the release PR carries the (approximate) release date.
+      - name: Update release date fields
+        if: ${{ steps.release.outputs.pr }}
+        run: |
+          set -euo pipefail
+          TODAY=$(date -u +%F)
+          sed -i "s/^releaseDate: .*/releaseDate: ${TODAY}/" publiccode.yml
+          sed -i "s/^date-released: .*/date-released: \"${TODAY}\"/" CITATION.cff
+          if git diff --quiet publiccode.yml CITATION.cff; then
+            echo "Release date fields already in sync"
+            exit 0
+          fi
+          git config user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
+          git add publiccode.yml CITATION.cff
+          git commit -m "chore: update release date fields after release-please version bump"
+
       - name: Setup Rust toolchain
         if: ${{ steps.release.outputs.pr }}
         uses: ./.github/actions/setup-backend
