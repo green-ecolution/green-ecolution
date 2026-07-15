@@ -44,15 +44,13 @@ const SoilTextureForm = ({ initialCondition, onApply, onCancel }: SoilTextureFor
   const lastChanged = useRef<keyof SoilFractions | null>(null)
 
   const handleChange = (field: keyof SoilFractions) => (event: ChangeEvent<HTMLInputElement>) => {
-    setFractions((current) => {
-      const previous = lastChanged.current
-      const hold =
-        previous && previous !== field
-          ? previous
-          : FRACTION_FIELDS.find(({ key }) => key !== field)!.key
-      return balanceFractions(current, field, event.target.valueAsNumber, hold)
-    })
+    const previous = lastChanged.current
+    const hold =
+      previous && previous !== field
+        ? previous
+        : FRACTION_FIELDS.find(({ key }) => key !== field)!.key
     lastChanged.current = field
+    setFractions((current) => balanceFractions(current, field, event.target.valueAsNumber, hold))
   }
 
   return (

@@ -70,4 +70,13 @@ describe('SoilTextureDialog', () => {
     expect(mockOnApply).not.toHaveBeenCalled()
     expect(mockOnOpenChange).toHaveBeenCalledWith(false)
   })
+
+  it('holds the previously edited field across a clay-then-sand sequence', () => {
+    renderDialog(SoilCondition.Unknown)
+    fireEvent.change(screen.getByRole('spinbutton', { name: /^ton/i }), { target: { value: '20' } })
+    fireEvent.change(screen.getByRole('spinbutton', { name: /sand/i }), { target: { value: '50' } })
+    expect(screen.getByRole('spinbutton', { name: /sand/i })).toHaveValue(50)
+    expect(screen.getByRole('spinbutton', { name: /schluff/i })).toHaveValue(30)
+    expect(screen.getByRole('spinbutton', { name: /^ton/i })).toHaveValue(20)
+  })
 })
