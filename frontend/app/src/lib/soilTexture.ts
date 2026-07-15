@@ -79,17 +79,15 @@ export function balanceFractions(
   current: SoilFractions,
   changed: keyof SoilFractions,
   value: number,
+  hold: keyof SoilFractions,
 ): SoilFractions {
   const clamped = Math.min(100, Math.max(0, Math.round(Number.isFinite(value) ? value : 0)))
-  const rest = 100 - clamped
-  const [first, second] = FRACTION_ORDER.filter((field) => field !== changed)
-  const oldSum = current[first] + current[second]
-  const firstShare =
-    oldSum > 0 ? Math.floor((rest * current[first]) / oldSum) : Math.floor(rest / 2)
+  const residual = FRACTION_ORDER.find((field) => field !== changed && field !== hold)!
+  const held = Math.min(current[hold], 100 - clamped)
   const next: SoilFractions = { ...current }
   next[changed] = clamped
-  next[first] = firstShare
-  next[second] = rest - firstShare
+  next[hold] = held
+  next[residual] = 100 - clamped - held
   return next
 }
 

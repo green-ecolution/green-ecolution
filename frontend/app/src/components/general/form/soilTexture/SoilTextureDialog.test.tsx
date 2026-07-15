@@ -37,12 +37,23 @@ describe('SoilTextureDialog', () => {
     expect(screen.getByRole('spinbutton', { name: /ton/i })).toHaveValue(33)
   })
 
-  it('rebalances the other fields and updates the result on change', () => {
+  it('adjusts only the least recently edited field on change', () => {
     renderDialog(SoilCondition.Sl3)
     fireEvent.change(screen.getByRole('spinbutton', { name: /ton/i }), { target: { value: '80' } })
-    expect(screen.getByRole('spinbutton', { name: /sand/i })).toHaveValue(14)
-    expect(screen.getByRole('spinbutton', { name: /schluff/i })).toHaveValue(6)
+    expect(screen.getByRole('spinbutton', { name: /sand/i })).toHaveValue(20)
+    expect(screen.getByRole('spinbutton', { name: /schluff/i })).toHaveValue(0)
     expect(screen.getByText(/Tt – reiner Ton/)).toBeInTheDocument()
+  })
+
+  it('keeps the previously edited field when entering two values', () => {
+    renderDialog(SoilCondition.Unknown)
+    fireEvent.change(screen.getByRole('spinbutton', { name: /sand/i }), { target: { value: '60' } })
+    fireEvent.change(screen.getByRole('spinbutton', { name: /schluff/i }), {
+      target: { value: '40' },
+    })
+    expect(screen.getByRole('spinbutton', { name: /sand/i })).toHaveValue(60)
+    expect(screen.getByRole('spinbutton', { name: /schluff/i })).toHaveValue(40)
+    expect(screen.getByRole('spinbutton', { name: /ton/i })).toHaveValue(0)
   })
 
   it('applies the determined condition and closes', async () => {

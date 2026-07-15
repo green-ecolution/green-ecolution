@@ -1,4 +1,4 @@
-import { ChangeEvent, useState } from 'react'
+import { ChangeEvent, useRef, useState } from 'react'
 import {
   Button,
   Dialog,
@@ -41,8 +41,18 @@ const SoilTextureForm = ({ initialCondition, onApply, onCancel }: SoilTextureFor
 
   const condition = classifySoilTexture(fractions.silt, fractions.clay)
 
+  const lastChanged = useRef<keyof SoilFractions | null>(null)
+
   const handleChange = (field: keyof SoilFractions) => (event: ChangeEvent<HTMLInputElement>) => {
-    setFractions((current) => balanceFractions(current, field, event.target.valueAsNumber))
+    setFractions((current) => {
+      const previous = lastChanged.current
+      const hold =
+        previous && previous !== field
+          ? previous
+          : FRACTION_FIELDS.find(({ key }) => key !== field)!.key
+      return balanceFractions(current, field, event.target.valueAsNumber, hold)
+    })
+    lastChanged.current = field
   }
 
   return (

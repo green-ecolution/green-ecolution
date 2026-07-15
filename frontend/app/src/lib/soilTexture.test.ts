@@ -92,39 +92,41 @@ describe('classifySoilTexture', () => {
 })
 
 describe('balanceFractions', () => {
-  it('keeps the changed field and distributes the rest proportionally', () => {
-    expect(balanceFractions({ sand: 65, silt: 25, clay: 10 }, 'clay', 80)).toEqual({
-      sand: 14,
-      silt: 6,
+  it('keeps the changed and held fields and adjusts the residual', () => {
+    expect(balanceFractions({ sand: 60, silt: 34, clay: 6 }, 'silt', 40, 'sand')).toEqual({
+      sand: 60,
+      silt: 40,
+      clay: 0,
+    })
+  })
+
+  it('reduces the held field when changed plus held exceed 100', () => {
+    expect(balanceFractions({ sand: 65, silt: 25, clay: 10 }, 'clay', 80, 'sand')).toEqual({
+      sand: 20,
+      silt: 0,
       clay: 80,
     })
   })
 
-  it('splits evenly when the other two fields are zero', () => {
-    expect(balanceFractions({ sand: 0, silt: 0, clay: 100 }, 'clay', 40)).toEqual({
-      sand: 30,
-      silt: 30,
-      clay: 40,
-    })
-  })
-
   it('clamps the changed value to 0..100 and rounds to integers', () => {
-    expect(balanceFractions({ sand: 33, silt: 34, clay: 33 }, 'sand', 150)).toEqual({
+    expect(balanceFractions({ sand: 33, silt: 34, clay: 33 }, 'sand', 150, 'silt')).toEqual({
       sand: 100,
       silt: 0,
       clay: 0,
     })
-    expect(balanceFractions({ sand: 33, silt: 34, clay: 33 }, 'sand', -5).sand).toBe(0)
-    expect(balanceFractions({ sand: 33, silt: 34, clay: 33 }, 'sand', 40.6).sand).toBe(41)
+    expect(balanceFractions({ sand: 33, silt: 34, clay: 33 }, 'sand', -5, 'silt').sand).toBe(0)
+    expect(balanceFractions({ sand: 33, silt: 34, clay: 33 }, 'sand', 40.6, 'silt').sand).toBe(41)
   })
 
   it('treats NaN (empty input) as 0', () => {
-    expect(balanceFractions({ sand: 33, silt: 34, clay: 33 }, 'silt', Number.NaN).silt).toBe(0)
+    expect(
+      balanceFractions({ sand: 33, silt: 34, clay: 33 }, 'silt', Number.NaN, 'sand').silt,
+    ).toBe(0)
   })
 
   it('always sums to exactly 100', () => {
     for (let value = 0; value <= 100; value++) {
-      const result = balanceFractions({ sand: 61, silt: 22, clay: 17 }, 'silt', value)
+      const result = balanceFractions({ sand: 61, silt: 22, clay: 17 }, 'silt', value, 'clay')
       expect(result.sand + result.silt + result.clay).toBe(100)
     }
   })
