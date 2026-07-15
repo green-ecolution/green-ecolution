@@ -5,24 +5,26 @@ url: "https://github.com/green-ecolution/green-ecolution"
 landingURL: "https://green-ecolution.de"
 softwareVersion: "0.4.0" # x-release-please-version
 releaseDate: 2026-07-15
-logo: frontend/app/public/images/logo/logo-large-color.svg
+logo: logo.svg
 
 platforms:
   - web
+
+usedBy:
+  - TBZ Flensburg
 
 categories:
   - geographic-information-systems
   - fleet-management
   - data-collection
   - resource-management
-  - smart-city
 
 developmentStatus: beta
 softwareType: standalone/web
 
 intendedAudience:
   countries:
-    - de
+    - DE
   scope:
     - local-authorities
     - environment
@@ -70,7 +72,13 @@ description:
       - Flottenmanagement mit Fahrzeugen, Fahrern und Einsatzplänen
       - Auswertungen zu Wasserverbrauch und Einsätzen
     screenshots:
-      - assets/dashboard-preview.png
+      - assets/dashboard.png
+      - assets/map-overview.png
+      - assets/map-3d-view.png
+      - assets/map-cluster-details.png
+      - assets/watering-plans.png
+      - assets/route-planning.png
+      - assets/sensor-details.png
   en:
     genericName: Green space management
     shortDescription: >-
@@ -114,7 +122,13 @@ description:
       - Fleet management with vehicles, drivers, and watering plans
       - Analytics on water consumption and watering runs
     screenshots:
-      - assets/dashboard-preview.png
+      - assets/dashboard.png
+      - assets/map-overview.png
+      - assets/map-3d-view.png
+      - assets/map-cluster-details.png
+      - assets/watering-plans.png
+      - assets/route-planning.png
+      - assets/sensor-details.png
 
 legal:
   license: AGPL-3.0-only
