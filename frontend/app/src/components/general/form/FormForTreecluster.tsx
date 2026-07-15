@@ -1,5 +1,15 @@
 import { useState } from 'react'
-import { Button, FormField, TextareaField, Label, Combobox } from '@green-ecolution/ui'
+import {
+  Button,
+  FormField,
+  TextareaField,
+  Label,
+  Combobox,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@green-ecolution/ui'
 import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-hook-form'
 import { SoilConditionOptions } from '@/hooks/details/useDetailsForSoilCondition'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
@@ -63,15 +73,22 @@ const FormForTreecluster = (props: FormForTreeClusterProps) => {
                     searchPlaceholder="Code oder Bezeichnung suchen…"
                   />
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label="Bodenart aus Korngrößen bestimmen"
-                  onClick={() => setSoilDialogOpen(true)}
-                >
-                  <SoilTriangleIcon />
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        aria-label="Bodenbeschaffenheit bestimmen"
+                        onClick={() => setSoilDialogOpen(true)}
+                      >
+                        <SoilTriangleIcon />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Bodenbeschaffenheit bestimmen</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               {errors.soilCondition?.message && (
                 <p className="text-sm text-destructive">{errors.soilCondition.message}</p>

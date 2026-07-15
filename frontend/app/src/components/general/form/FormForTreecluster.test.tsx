@@ -64,7 +64,7 @@ describe('FormForTreecluster', () => {
 
     expect(screen.getByLabelText(/name/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/adresse/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/bodenbeschaffenheit/i)).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: /bodenbeschaffenheit/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/kurze beschreibung/i)).toBeInTheDocument()
   })
 
@@ -263,9 +263,7 @@ describe('soil texture dialog integration', () => {
       </TestWrapper>,
     )
 
-    await userEvent.click(
-      screen.getByRole('button', { name: /bodenart aus korngrößen bestimmen/i }),
-    )
+    await userEvent.click(screen.getByRole('button', { name: /bodenbeschaffenheit bestimmen/i }))
     expect(screen.getByRole('dialog', { name: /bodenart bestimmen/i })).toBeInTheDocument()
 
     // Unknown has no region → neutral 33/34/33 → classify(34, 33) = Lt2
