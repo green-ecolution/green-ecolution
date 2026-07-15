@@ -18,7 +18,8 @@ function buildSettings(): UserManagerSettings {
     redirect_uri: `${origin}/auth/callback`,
     post_logout_redirect_uri: `${origin}/`,
     response_type: 'code',
-    scope: 'openid profile email',
+    // offline_access keeps suspended PWAs renewable beyond the SSO idle timeout
+    scope: 'openid profile email offline_access',
     userStore: new WebStorageStateStore({ store: window.localStorage }),
     automaticSilentRenew: true,
     // Cross-domain iframe silent renew is blocked by third-party cookie rules;

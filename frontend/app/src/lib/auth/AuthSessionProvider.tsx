@@ -1,12 +1,25 @@
-import { type ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { AuthProvider, useAuth } from 'react-oidc-context'
 import { getUserManager, isAuthBypass } from './userManager'
 import { DEMO_ACCESS_TOKEN } from './demoUser'
 import { getAuthSession } from './session'
+import { isSessionDeadError } from './renewError'
 import { AuthSessionContext, type AuthSessionContextValue } from './authSessionContext'
 
 function RealBridge({ children }: { children: ReactNode }) {
   const auth = useAuth()
+  useEffect(
+    () =>
+      auth.events.addSilentRenewError((err) => {
+        if (!isSessionDeadError(err)) return
+        void auth.removeUser().then(() =>
+          getAuthSession().signinRedirect({
+            returnTo: window.location.pathname + window.location.search,
+          }),
+        )
+      }),
+    [auth],
+  )
   const value: AuthSessionContextValue = {
     isAuthenticated: auth.isAuthenticated,
     accessToken: auth.user?.access_token ?? null,
@@ -30,10 +43,8 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
     return <AuthSessionContext value={demo}>{children}</AuthSessionContext>
   }
   return (
-    <AuthProvider
-      userManager={getUserManager()}
-      onSigninCallback={() => window.history.replaceState({}, '', window.location.pathname)}
-    >
+    // /auth/callback owns signinCallback; without skip the provider races it on the one-shot state
+    <AuthProvider userManager={getUserManager()} skipSigninCallback>
       <RealBridge>{children}</RealBridge>
     </AuthProvider>
   )
