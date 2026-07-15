@@ -12,10 +12,9 @@ runs:
         cache: "pnpm"
         cache-dependency-path: "./frontend/pnpm-lock.yaml"
     - name: Install just
-      shell: bash
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends just
+      uses: taiki-e/install-action@v2
+      with:
+        tool: just
     - name: Setup Rust toolchain
       uses: dtolnay/rust-toolchain@stable
       with:

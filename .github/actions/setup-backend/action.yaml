@@ -3,11 +3,10 @@ description: "Shared setup for backend CI jobs: system deps + Rust toolchain"
 runs:
   using: "composite"
   steps:
-    - name: Install system dependencies
-      shell: bash
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends just
+    - name: Install just
+      uses: taiki-e/install-action@v2
+      with:
+        tool: just
     - name: Setup Rust toolchain
       uses: dtolnay/rust-toolchain@stable
       with:
