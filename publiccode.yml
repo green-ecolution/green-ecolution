@@ -1,0 +1,132 @@
+publiccodeYmlVersion: "0.4"
+
+name: Green Ecolution
+url: "https://github.com/green-ecolution/green-ecolution"
+landingURL: "https://green-ecolution.de"
+softwareVersion: "0.4.0" # x-release-please-version
+releaseDate: 2026-07-15
+logo: frontend/app/public/images/logo/logo-large-color.svg
+
+platforms:
+  - web
+
+categories:
+  - geographic-information-systems
+  - fleet-management
+  - data-collection
+  - resource-management
+  - smart-city
+
+developmentStatus: beta
+softwareType: standalone/web
+
+intendedAudience:
+  countries:
+    - de
+  scope:
+    - local-authorities
+    - environment
+
+description:
+  de:
+    genericName: Grünflächenmanagement
+    shortDescription: >-
+      Plattform für smarte Bewässerung und Grünflächenmanagement in
+      Kommunen auf Basis von LoRaWAN-Sensordaten und Routenoptimierung.
+    longDescription: >-
+      Städtische Grünflächen brauchen Wasser, doch wie viel und wann?
+      Kommunale Pflegeteams fahren häufig feste Routen und bewässern
+      Bäume nach Zeitplan statt nach tatsächlichem Bedarf. Das
+      verschwendet Wasser, Kraftstoff und Arbeitszeit.
+
+
+      Green Ecolution setzt hier an: Bodenfeuchtesensoren (LoRaWAN)
+      melden ihre Messwerte in Echtzeit an die Plattform, die daraus den
+      Bewässerungsbedarf einzelner Bäume und Baumgruppen ableitet und
+      optimierte Bewässerungsrouten berechnet. Die Teams sehen genau,
+      welche Bäume Aufmerksamkeit benötigen, planen effiziente
+      Einsatzfahrten und verwalten ihre Fahrzeugflotte an einem Ort.
+
+
+      Die Software umfasst die Verwaltung von Bäumen und Baumgruppen
+      inklusive Bewässerungsstatus, die Anbindung von Sensoren über
+      LoRaWAN/MQTT, die Berechnung effizienter Bewässerungsrouten mit
+      der Routing-Engine Valhalla, die Verwaltung von Fahrzeugen und
+      Einsatzplänen sowie Auswertungen zu Wasserverbrauch und
+      durchgeführten Einsätzen.
+
+
+      Green Ecolution ist ursprünglich als Forschungsprojekt im
+      Masterstudiengang Angewandte Informatik der Hochschule Flensburg
+      entstanden und wurde in Zusammenarbeit mit dem örtlichen
+      Grünflächenmanagement (TBZ Flensburg) entwickelt. Das System ist
+      so gestaltet, dass es auf andere Städte und Kommunen übertragbar
+      ist und eine skalierbare, datengetriebene Bewässerung urbaner
+      Grünflächen ermöglicht.
+    features:
+      - Baumverwaltung mit Bäumen, Baumgruppen und Bewässerungsstatus
+      - Sensoranbindung über LoRaWAN/MQTT in Echtzeit
+      - Routenoptimierung für effiziente Bewässerungsfahrten
+      - Flottenmanagement mit Fahrzeugen, Fahrern und Einsatzplänen
+      - Auswertungen zu Wasserverbrauch und Einsätzen
+    screenshots:
+      - assets/dashboard-preview.png
+  en:
+    genericName: Green space management
+    shortDescription: >-
+      Smart irrigation and green-space management platform for
+      municipalities based on LoRaWAN sensor data and route
+      optimization.
+    longDescription: >-
+      Urban green spaces need water, but how much, and when? City
+      maintenance teams often drive fixed routes, watering trees on a
+      schedule rather than based on actual need. This wastes water,
+      fuel, and staff time.
+
+
+      Green Ecolution changes that: soil moisture sensors (LoRaWAN)
+      report real-time data to the platform, which derives the watering
+      needs of individual trees and tree clusters and calculates
+      optimized watering routes. Teams see exactly which trees need
+      attention, plan efficient routes, and manage their fleet, all in
+      one place.
+
+
+      The software covers the management of trees and tree clusters
+      including their watering status, sensor integration via
+      LoRaWAN/MQTT, the calculation of efficient watering routes using
+      the Valhalla routing engine, the management of vehicles and
+      watering plans, and analytics on water consumption and completed
+      watering runs.
+
+
+      Green Ecolution was initially developed as a research project
+      within the Applied Computer Science master's program at the
+      Flensburg University of Applied Sciences, in collaboration with
+      the local green space management authority (TBZ Flensburg). While
+      tailored to the specific needs of Flensburg, the system is
+      designed to be adaptable to other cities, enabling scalable and
+      data-driven irrigation of urban greenery.
+    features:
+      - Tree management with trees, tree clusters, and watering status
+      - Real-time sensor integration via LoRaWAN/MQTT
+      - Route optimization for efficient watering runs
+      - Fleet management with vehicles, drivers, and watering plans
+      - Analytics on water consumption and watering runs
+    screenshots:
+      - assets/dashboard-preview.png
+
+legal:
+  license: AGPL-3.0-only
+
+maintenance:
+  type: internal
+  contacts:
+    - name: Cedrik Hoffmann
+      email: choffmann@progeek.de
+      affiliation: PROGEEK GmbH
+
+localisation:
+  localisationReady: false
+  availableLanguages:
+    - de
