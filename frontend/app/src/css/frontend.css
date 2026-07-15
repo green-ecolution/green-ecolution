@@ -1,2 +1,17 @@
 @import './components/general.css';
 @import './components/splide.css';
+
+/* KA5 soil texture diagram group fills (SoilTextureTriangle) */
+:root {
+  --soil-sand: oklch(0.92 0.035 85);
+  --soil-silt: oklch(0.94 0.02 100);
+  --soil-loam: oklch(0.87 0.055 70);
+  --soil-clay: oklch(0.84 0.06 45);
+}
+
+.dark {
+  --soil-sand: oklch(0.42 0.03 85);
+  --soil-silt: oklch(0.44 0.018 100);
+  --soil-loam: oklch(0.4 0.045 70);
+  --soil-clay: oklch(0.38 0.05 45);
+}
