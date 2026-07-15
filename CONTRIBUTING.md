@@ -33,21 +33,21 @@ Be respectful and constructive in all interactions. We welcome contributors of a
 - Docker + Docker Compose
 - `just` — command runner (`cargo install just`)
 - `wasm-pack` (`cargo install wasm-pack`) — builds the domain WASM bindings, required by `just build`
-- `bacon` (`cargo install bacon`) — live reload, required by `just run-dev` / `just run-live`
+- `bacon` (`cargo install bacon`) — live reload, required by `just run-dev`
 - `sqlx-cli` (`cargo install sqlx-cli --no-default-features --features rustls,postgres`) for migrations and offline-cache regeneration
 
 ### Installation
 
 ```bash
-just setup       # cargo fetch + pnpm install
+just setup       # cargo fetch + pnpm install + build frontend workspace packages + domain WASM
 just infra-up    # Start infrastructure (Postgres, Keycloak, MinIO, etc.)
-just run-live    # Run backend with bacon hot reload
+just run-dev     # Backend + frontend dev via Traefik (bacon live reload)
 ```
 
-Frontend dev server (separate terminal):
+Frontend dev server only (backend must run separately):
 
 ```bash
-just fe-dev
+just frontend-dev    # alias: fe-dev
 ```
 
 For a reproducible environment, use `nix develop`.

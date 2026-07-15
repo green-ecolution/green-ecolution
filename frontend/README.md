@@ -128,7 +128,7 @@ pnpm install
 Start the development server:
 
 ```bash
-just fe-dev
+just frontend-dev
 ```
 
 Or directly with pnpm:

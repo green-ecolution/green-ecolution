@@ -59,13 +59,13 @@ Open `https://<your-ip>.green-ecolution.dev:3443` (or your custom domain).
 - Docker + Docker Compose
 - [`just`](https://github.com/casey/just) — command runner (`cargo install just`)
 - [`wasm-pack`](https://github.com/rustwasm/wasm-pack) (`cargo install wasm-pack`) — builds the domain WASM bindings, required by `just build`
-- [`bacon`](https://github.com/Canop/bacon) (`cargo install bacon`) — live reload, required by `just run-dev` / `just run-live`
+- [`bacon`](https://github.com/Canop/bacon) (`cargo install bacon`) — live reload, required by `just run-dev`
 - [`sqlx-cli`](https://crates.io/crates/sqlx-cli) (`cargo install sqlx-cli --no-default-features --features rustls,postgres`) for migrations and offline-cache regeneration
 
 ### Installation
 
 ```bash
-just setup       # cargo fetch + pnpm install
+just setup       # cargo fetch + pnpm install + build frontend workspace packages + domain WASM
 just build       # Build frontend + backend
 ```
 
@@ -73,8 +73,7 @@ just build       # Build frontend + backend
 
 | Command | Description |
 |---------|-------------|
-| `just run-dev` | Backend + frontend dev via Traefik |
-| `just run-live` | Backend with bacon hot reload |
+| `just run-dev` | Backend + frontend dev via Traefik (bacon live reload) |
 | `just run-docker` | Full stack via Docker Compose |
 | `just infra-up` | Start infrastructure only |
 | `just test` | Run all tests (Rust workspace + frontend) |

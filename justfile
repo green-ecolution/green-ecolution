@@ -39,18 +39,40 @@ db_url := "postgres://" + postgres_user + ":" + postgres_password + "@" + postgr
 sqlx_prepare_db := "sqlx_prepare"
 sqlx_prepare_db_url := "postgres://" + postgres_user + ":" + postgres_password + "@" + postgres_host + ":" + postgres_port + "/" + sqlx_prepare_db
 
+alias fe-dev := frontend-dev
+alias fe-preview := frontend-preview
+
 # Show available recipes
 default:
     @just --list
 
-# Install Rust toolchain components + pnpm dependencies
-setup:
+# Install toolchains + deps, build frontend workspace packages (ui, backend-client, plugin-interface) and domain WASM
+[group('setup')]
+setup: build-domain-wasm
     @echo "Checking Rust toolchain..."
     @command -v cargo >/dev/null 2>&1 || { echo "cargo missing (install rustup)"; exit 1; }
     cd {{ backend_dir }} && cargo fetch --locked
     @echo "Installing frontend deps..."
     @command -v pnpm >/dev/null 2>&1 || { echo "pnpm missing (hint: corepack enable)"; exit 1; }
     cd {{ frontend_dir }} && pnpm install
+    @echo "Building frontend workspace packages..."
+    cd {{ frontend_dir }} && pnpm --filter=!frontend -r build
+
+# Clean build artifacts
+[group('setup')]
+clean:
+    @echo "Cleaning..."
+    cd {{ backend_dir }} && cargo clean
+    rm -rf bin
+    rm -rf .docker/infra/valhalla/custom_files
+    rm -rf {{ frontend_dist }}
+
+# Update Nix hashes (frontend + backend)
+[group('setup')]
+nix-update-hashes:
+    @echo "Updating Nix hashes (frontend + backend)..."
+    nix-shell -p nix-update --run "nix-update --flake --version=skip frontend"
+    nix-shell -p nix-update --run "nix-update --flake --version=skip backend"
 
 # Compile the Rust binary
 _compile-backend:
@@ -60,12 +82,14 @@ _compile-backend:
     cp {{ backend_dir }}/target/release/{{ binary_name }} bin/{{ binary_name }}
 
 # Build the domain WASM bindings into frontend/packages/domain-wasm/pkg
+[group('build')]
 build-domain-wasm:
     @echo "Building domain WASM bindings..."
     @command -v wasm-pack >/dev/null 2>&1 || { echo "wasm-pack missing (cargo install wasm-pack)"; exit 1; }
     cd {{ backend_dir }} && wasm-pack build crates/domain-wasm --target bundler --out-dir ../../../{{ frontend_dir }}/packages/domain-wasm/pkg --release
 
 # Build frontend (pnpm)
+[group('build')]
 build-frontend: build-domain-wasm
     @echo "Building frontend..."
     @command -v pnpm >/dev/null 2>&1 || { echo "pnpm missing"; exit 1; }
@@ -74,61 +98,56 @@ build-frontend: build-domain-wasm
     @echo "Frontend build done."
 
 # Build the Rust backend
+[group('build')]
 build-backend: _compile-backend
     @echo "Backend build done."
 
 # Full build: frontend + backend
+[group('build')]
 build: build-frontend _compile-backend
     @echo "Build done."
 
+# Cross-compile the backend for a target triple and copy it to bin/
+_build-target triple suffix ext="":
+    @echo "Building backend for {{ suffix }} ({{ triple }})..."
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --release --locked --target {{ triple }} --bin {{ binary_name }}
+    mkdir -p bin
+    cp {{ backend_dir }}/target/{{ triple }}/release/{{ binary_name }}{{ ext }} bin/{{ binary_name }}-{{ suffix }}{{ ext }}
+
 # Build for all platforms
-build-all: build-frontend
-    @echo "Building backend for all platforms..."
-    @just build-linux
-    @just build-darwin
-    @just build-windows
+[group('build')]
+build-all: build-frontend build-linux build-darwin build-windows
 
 # Build for darwin (requires `rustup target add x86_64-apple-darwin` and a cross linker)
-build-darwin:
-    @echo "Building backend for darwin (x86_64)..."
-    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --release --locked --target x86_64-apple-darwin --bin {{ binary_name }}
-    mkdir -p bin
-    cp {{ backend_dir }}/target/x86_64-apple-darwin/release/{{ binary_name }} bin/{{ binary_name }}-darwin
+[group('build')]
+build-darwin: (_build-target "x86_64-apple-darwin" "darwin")
 
 # Build for linux (musl static binary; requires `rustup target add x86_64-unknown-linux-musl`)
-build-linux:
-    @echo "Building backend for linux (x86_64-musl)..."
-    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --release --locked --target x86_64-unknown-linux-musl --bin {{ binary_name }}
-    mkdir -p bin
-    cp {{ backend_dir }}/target/x86_64-unknown-linux-musl/release/{{ binary_name }} bin/{{ binary_name }}-linux
+[group('build')]
+build-linux: (_build-target "x86_64-unknown-linux-musl" "linux")
 
 # Build for windows (requires `rustup target add x86_64-pc-windows-gnu` and mingw-w64)
-build-windows:
-    @echo "Building backend for windows (x86_64-gnu)..."
-    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --release --locked --target x86_64-pc-windows-gnu --bin {{ binary_name }}
-    mkdir -p bin
-    cp {{ backend_dir }}/target/x86_64-pc-windows-gnu/release/{{ binary_name }}.exe bin/{{ binary_name }}-windows.exe
+[group('build')]
+build-windows: (_build-target "x86_64-pc-windows-gnu" "windows" ".exe")
 
 # Run backend binary
+[group('run')]
 run: build
     @echo "Running backend..."
     cd {{ backend_dir }} && APP_ENVIRONMENT=local ../bin/{{ binary_name }}
 
-# Run backend with live reload (bacon)
-run-live:
-    @echo "Running backend live (bacon)..."
-    @command -v bacon >/dev/null 2>&1 || { echo "bacon missing — run: cargo install bacon"; exit 1; }
-    cd {{ backend_dir }} && SQLX_OFFLINE=true APP_ENVIRONMENT=local bacon --headless --job run -- --bin {{ binary_name }}
-
 # Run frontend dev server
-fe-dev:
+[group('run')]
+frontend-dev:
     cd {{ frontend_dir }} && pnpm run dev
 
 # Preview frontend build
-fe-preview:
+[group('run')]
+frontend-preview:
     cd {{ frontend_dir }} && pnpm run preview
 
 # Backend + frontend dev via Traefik
+[group('run')]
 run-dev:
     @command -v bacon >/dev/null 2>&1 || { echo "bacon missing — run: cargo install bacon"; exit 1; }
     @echo "Starting dev environment ({{ app_host }})..."
@@ -160,6 +179,7 @@ run-dev:
       wait
 
 # Backend + frontend locally in production mode via Traefik (release binary + prod frontend build; no devtools/debug)
+[group('run')]
 run-prod: build-domain-wasm _compile-backend
     @echo "Building frontend (production)..."
     cd {{ frontend_dir }} && pnpm install --frozen-lockfile
@@ -183,6 +203,46 @@ run-prod: build-domain-wasm _compile-backend
         ../bin/{{ binary_name }} ) & \
       ( cd {{ frontend_dir }} && USE_TRAEFIK=1 pnpm run preview ) & \
       wait
+
+# Build + run app + infra via Docker Compose
+[group('run')]
+run-docker: _acme-init _ensure-valhalla build-domain-wasm
+    @echo "Running compose (infra + app)..."
+    @just _compose -f compose.yaml -f compose.app.yaml up -d --build
+
+# Run docker compose with the shared Traefik/Porkbun/version env
+_compose *ARGS:
+    APP_HOST="{{ app_host }}" \
+    BIND_ADDR="{{ bind_addr }}" \
+    TRAEFIK_CONFIG="{{ traefik_config }}" \
+    TRAEFIK_ENTRYPOINT="{{ traefik_entrypoint }}" \
+    APP_PROTO="{{ app_proto }}" \
+    APP_PORT="{{ app_port }}" \
+    PORKBUN_API_KEY="{{ porkbun_api_key }}" \
+    PORKBUN_SECRET_API_KEY="{{ porkbun_secret_api_key }}" \
+    APP_VERSION="{{ app_version }}" \
+    APP_GIT_COMMIT="{{ app_git_commit }}" \
+    APP_GIT_BRANCH="{{ app_git_branch }}" \
+    APP_BUILD_TIME="{{ app_build_time }}" \
+    docker compose {{ ARGS }}
+
+# Start infrastructure services
+[group('infra')]
+infra-up: _acme-init _ensure-valhalla
+    @echo "Infra up..."
+    @just _compose up -d
+
+# Stop infrastructure services
+[group('infra')]
+infra-stop:
+    @echo "Infra stop..."
+    docker compose -f compose.yaml stop
+
+# Stop infrastructure and delete volumes
+[group('infra')]
+infra-down:
+    @echo "Infra down (delete volumes)..."
+    docker compose -f compose.yaml down -v
 
 # Set up ACME storage for Let's Encrypt
 _acme-init:
@@ -234,6 +294,7 @@ _ensure-valhalla:
     fi
 
 # (Re)build patched Valhalla tiles from scratch (CONSTRUCTION=1 for TBZ roadworks)
+[group('infra')]
 valhalla-tiles:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -249,6 +310,7 @@ valhalla-tiles:
     just _build-valhalla-tiles
 
 # Create Porkbun DNS records for local dev
+[group('infra')]
 dns-setup:
     @echo "Setting up DNS records for {{ app_host }} -> {{ local_ip }}..."
     @test -n "{{ porkbun_api_key }}" || { echo "error: PORKBUN_API_KEY not set"; exit 1; }
@@ -266,6 +328,7 @@ dns-setup:
     @echo "DNS records created/updated."
 
 # Remove Porkbun DNS records
+[group('infra')]
 dns-cleanup:
     @echo "Removing DNS records for {{ app_host }}..."
     @test -n "{{ porkbun_api_key }}" || { echo "error: PORKBUN_API_KEY not set"; exit 1; }
@@ -278,47 +341,61 @@ dns-cleanup:
       -d '{"apikey":"{{ porkbun_api_key }}","secretapikey":"{{ porkbun_secret_api_key }}"}' || true
     @echo "DNS records removed."
 
-# Build + run app + infra via Docker Compose
-run-docker: _acme-init _ensure-valhalla build-domain-wasm
-    @echo "Running compose (infra + app)..."
-    APP_HOST="{{ app_host }}" \
-    BIND_ADDR="{{ bind_addr }}" \
-    TRAEFIK_CONFIG="{{ traefik_config }}" \
-    TRAEFIK_ENTRYPOINT="{{ traefik_entrypoint }}" \
-    APP_PROTO="{{ app_proto }}" \
-    APP_PORT="{{ app_port }}" \
-    PORKBUN_API_KEY="{{ porkbun_api_key }}" \
-    PORKBUN_SECRET_API_KEY="{{ porkbun_secret_api_key }}" \
-    APP_VERSION="{{ app_version }}" \
-    APP_GIT_COMMIT="{{ app_git_commit }}" \
-    APP_GIT_BRANCH="{{ app_git_branch }}" \
-    APP_BUILD_TIME="{{ app_build_time }}" \
-    docker compose -f compose.yaml -f compose.app.yaml up -d --build
+# Build the in-tree `migrate` binary
+_migrate-build:
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --bin migrate
 
-# Start infrastructure services
-infra-up: _acme-init _ensure-valhalla
-    @echo "Infra up..."
-    APP_HOST="{{ app_host }}" \
-    BIND_ADDR="{{ bind_addr }}" \
-    TRAEFIK_CONFIG="{{ traefik_config }}" \
-    TRAEFIK_ENTRYPOINT="{{ traefik_entrypoint }}" \
-    APP_PROTO="{{ app_proto }}" \
-    APP_PORT="{{ app_port }}" \
-    PORKBUN_API_KEY="{{ porkbun_api_key }}" \
-    PORKBUN_SECRET_API_KEY="{{ porkbun_secret_api_key }}" \
-    docker compose up -d
+# Create a new migration file (requires sqlx-cli for scaffolding)
+[group('db')]
+migrate-new name:
+    @echo "Create new migration..."
+    @command -v cargo-sqlx >/dev/null 2>&1 || { echo "sqlx-cli missing (cargo install sqlx-cli --no-default-features --features rustls,postgres)"; exit 1; }
+    cd {{ backend_dir }} && cargo sqlx migrate add {{ name }}
 
-# Stop infrastructure services
-infra-stop:
-    @echo "Infra stop..."
-    docker compose -f compose.yaml stop
+# Apply all pending migrations
+[group('db')]
+migrate-up: _migrate-build
+    @echo "Migrating up..."
+    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate up
 
-# Stop infrastructure and delete volumes
-infra-down:
-    @echo "Infra down (delete volumes)..."
-    docker compose -f compose.yaml down -v
+# Drop and recreate the database, then migrate
+[group('db')]
+migrate-reset: _migrate-build
+    @echo "Resetting database..."
+    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate reset
+
+# Show migration status
+[group('db')]
+migrate-status: _migrate-build
+    @echo "Migration status..."
+    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate info
+
+# Apply seeds on top of the current DB (assumes empty/migrated schema)
+[group('db')]
+seed-up: _migrate-build
+    @echo "Applying seeds..."
+    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate seed
+
+# Remove all seed data (runs *.down.sql files in reverse order)
+[group('db')]
+seed-down: _migrate-build
+    @echo "Removing seed data..."
+    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate seed-down
+
+# Reset DB, migrate, then apply seeds
+[group('db')]
+seed-reset: _migrate-build
+    @echo "Resetting DB and applying seeds..."
+    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate reset --with-seed
+
+# Import the Flensburg tree cadastre into Green Ecolution.
+# Requires KATASTER_SOURCE_URL. Pass flags via ARGS, e.g. `just import-kataster-fl --dry-run`.
+[group('db')]
+import-kataster-fl *ARGS:
+    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo run --bin import-kataster-fl -- {{ ARGS }}
 
 # Refresh sqlx offline query cache (.sqlx/) — requires running DB and sqlx-cli
+[group('codegen')]
 generate-sqlx: _migrate-build
     @echo "Refreshing sqlx offline cache against a clean migrated DB ({{ sqlx_prepare_db }})..."
     @command -v cargo-sqlx >/dev/null 2>&1 || { echo "sqlx-cli missing (cargo install sqlx-cli --no-default-features --features rustls,postgres)"; exit 1; }
@@ -328,11 +405,13 @@ generate-sqlx: _migrate-build
     cd {{ backend_dir }} && DATABASE_URL="{{ sqlx_prepare_db_url }}" cargo sqlx prepare --workspace -- --all-targets
 
 # Dump the OpenAPI spec from the Rust backend into the frontend client package
+[group('codegen')]
 dump-openapi:
     @echo "Dumping OpenAPI spec from Rust backend..."
     cd {{ backend_dir }} && SQLX_OFFLINE=true cargo run --quiet --locked --bin dump-openapi > ../{{ frontend_dir }}/packages/backend-client/api-docs.json
 
 # Run frontend code generation (refreshes api-docs.json from Rust backend, then runs pnpm generate:local)
+[group('codegen')]
 generate-frontend: dump-openapi
     @echo "Generating frontend..."
     @command -v pnpm >/dev/null 2>&1 || { echo "pnpm missing (hint: corepack enable)"; exit 1; }
@@ -340,69 +419,23 @@ generate-frontend: dump-openapi
     cd {{ frontend_dir }} && pnpm generate:local
 
 # Run all backend code generation (sqlx prepare)
+[group('codegen')]
 generate-backend: generate-sqlx
     @echo "Backend generation done."
 
 # Run all code generation (backend + frontend)
+[group('codegen')]
 generate: generate-backend generate-frontend
     @echo "All code generation done."
 
-# Generate backend client from OpenAPI spec
-generate-client:
-    @echo "Generating backend client (openapi)..."
-    @echo "TODO: implement OpenAPI client generation for Rust backend (utoipa exposes /api-docs)"
-
-# Create a new migration file (requires sqlx-cli for scaffolding)
-migrate-new name:
-    @echo "Create new migration..."
-    @command -v cargo-sqlx >/dev/null 2>&1 || { echo "sqlx-cli missing (cargo install sqlx-cli --no-default-features --features rustls,postgres)"; exit 1; }
-    cd {{ backend_dir }} && cargo sqlx migrate add {{ name }}
-
-# Build the in-tree `migrate` binary
-_migrate-build:
-    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo build --bin migrate
-
-# Apply all pending migrations
-migrate-up: _migrate-build
-    @echo "Migrating up..."
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate up
-
-# Drop and recreate the database, then migrate
-migrate-reset: _migrate-build
-    @echo "Resetting database..."
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate reset
-
-# Show migration status
-migrate-status: _migrate-build
-    @echo "Migration status..."
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate info
-
-# Import the Flensburg tree cadastre into Green Ecolution.
-# Requires KATASTER_SOURCE_URL. Pass flags via ARGS, e.g. `just import-kataster-fl --dry-run`.
-import-kataster-fl *ARGS:
-    cd {{ backend_dir }} && SQLX_OFFLINE=true cargo run --bin import-kataster-fl -- {{ ARGS }}
-
-# Apply seeds on top of the current DB (assumes empty/migrated schema)
-seed-up: _migrate-build
-    @echo "Applying seeds..."
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate seed
-
-# Remove all seed data (runs *.down.sql files in reverse order)
-seed-down: _migrate-build
-    @echo "Removing seed data..."
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate seed-down
-
-# Reset DB, migrate, then apply seeds
-seed-reset: _migrate-build
-    @echo "Resetting DB and applying seeds..."
-    cd {{ backend_dir }} && DATABASE_URL="{{ db_url }}" ./target/debug/migrate reset --with-seed
-
 # Format Rust code
+[group('check')]
 tidy:
     @echo "cargo fmt..."
     cd {{ backend_dir }} && cargo fmt --all
 
 # Lint Rust + frontend
+[group('check')]
 lint:
     @echo "cargo fmt --check + clippy + Frontend lint..."
     cd {{ backend_dir }} && cargo fmt --all -- --check
@@ -410,6 +443,7 @@ lint:
     cd {{ frontend_dir }} && pnpm run lint
 
 # Run Rust + frontend tests
+[group('check')]
 test:
     @echo "Rust tests..."
     cd {{ backend_dir }} && SQLX_OFFLINE=true cargo test --workspace --locked
@@ -417,25 +451,13 @@ test:
     cd {{ frontend_dir }} && pnpm run test
 
 # Run Rust tests with verbose output
+[group('check')]
 test-verbose:
     @echo "Rust tests (verbose)..."
     cd {{ backend_dir }} && SQLX_OFFLINE=true cargo test --workspace --locked -- --nocapture
 
 # Build and open the Rust API docs in the browser (includes the logging field convention from telemetry.rs)
+[group('check')]
 docs:
     @echo "Building Rust docs..."
     cd {{ backend_dir }} && SQLX_OFFLINE=true cargo doc --workspace --no-deps --locked --open
-
-# Clean build artifacts
-clean:
-    @echo "Cleaning..."
-    cd {{ backend_dir }} && cargo clean
-    rm -rf bin
-    rm -rf .docker/infra/valhalla/custom_files
-    rm -rf {{ frontend_dist }}
-
-# Update Nix hashes (frontend + backend)
-nix-update-hashes:
-    @echo "Updating Nix hashes (frontend + backend)..."
-    nix-shell -p nix-update --run "nix-update --flake --version=skip frontend"
-    nix-shell -p nix-update --run "nix-update --flake --version=skip backend"
