@@ -11,6 +11,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.4.0](https://github.com/green-ecolution/green-ecolution/compare/v0.3.0...v0.4.0) (2026-07-15)
+
+
+### Features
+
+* **backend:** serve liveness and readiness probes under /api ([#876](https://github.com/green-ecolution/green-ecolution/issues/876)) ([5e2a8a9](https://github.com/green-ecolution/green-ecolution/commit/5e2a8a97b345df5e792d0c2ddb8dd4111b4ab083))
+* **frontend:** add compass, 3D tilt and GPS map controls with watering status legend ([#889](https://github.com/green-ecolution/green-ecolution/issues/889)) ([5379229](https://github.com/green-ecolution/green-ecolution/commit/53792297d3871c8012d1f8efb9ed49d4ef1f98d6))
+* **frontend:** add debug button to clear service worker and cache ([4cec8c0](https://github.com/green-ecolution/green-ecolution/commit/4cec8c0d4459d953176d131ef85a9ddc06d05e08))
+* **frontend:** replace sidebar logout link with user profile dropdown ([#891](https://github.com/green-ecolution/green-ecolution/issues/891)) ([836a2e0](https://github.com/green-ecolution/green-ecolution/commit/836a2e0c783fb5fa95bb8afdba6956a44dcde800))
+* **frontend:** show watering status instead of soil moisture in cluster map panel ([#870](https://github.com/green-ecolution/green-ecolution/issues/870)) ([ce08d13](https://github.com/green-ecolution/green-ecolution/commit/ce08d13ee627a77e5a717299337a2adeed128723))
+* **frontend:** unify treecluster edit flow and move delete into dashboard split button ([#890](https://github.com/green-ecolution/green-ecolution/issues/890)) ([2bd2769](https://github.com/green-ecolution/green-ecolution/commit/2bd2769e4df24b0f9cfa21302443f5c963c48ad6))
+* **layout:** add collapsible sidebar with persisted state ([#886](https://github.com/green-ecolution/green-ecolution/issues/886)) ([74a65c5](https://github.com/green-ecolution/green-ecolution/commit/74a65c5ea76c1f9d9c716e4f2cabeecd093ccc44))
+* **routing:** persist start points as a database entity with CRUD API ([#887](https://github.com/green-ecolution/green-ecolution/issues/887)) ([930271a](https://github.com/green-ecolution/green-ecolution/commit/930271ab03aad59471092730defb85a5c3af2a1e))
+* **routing:** reactivate watering plan route optimization via streamlet (GECO-127) ([#883](https://github.com/green-ecolution/green-ecolution/issues/883)) ([31b6c17](https://github.com/green-ecolution/green-ecolution/commit/31b6c172886c06b90f62e7fc76d50a88327850e7))
+* **routing:** show start and refill point markers on watering plan maps ([#888](https://github.com/green-ecolution/green-ecolution/issues/888)) ([c863c19](https://github.com/green-ecolution/green-ecolution/commit/c863c19f14b6019665db3e3048dbb2496dffae44))
+* **sensor:** paginate sensor readings endpoint with time filter ([#900](https://github.com/green-ecolution/green-ecolution/issues/900)) ([441f81b](https://github.com/green-ecolution/green-ecolution/commit/441f81bd70307d042d4c1f25b1718b99ee6e0700))
+* **sensor:** show LoRaWAN send interval on "Letztes Signal" card (GECO-264) ([#862](https://github.com/green-ecolution/green-ecolution/issues/862)) ([55ee510](https://github.com/green-ecolution/green-ecolution/commit/55ee510b4246a57fff9b345db2cdd8943e6882b0))
+* **watering-plans:** replace list view with drag-and-drop kanban board (GECO-190) ([#885](https://github.com/green-ecolution/green-ecolution/issues/885)) ([fe0ad58](https://github.com/green-ecolution/green-ecolution/commit/fe0ad580bc85030d9a00baec312c374e239dd73e))
+
+
+### Bug Fixes
+
+* **auth:** stabilize session handling in PWA and desktop ([#901](https://github.com/green-ecolution/green-ecolution/issues/901)) ([ce7b548](https://github.com/green-ecolution/green-ecolution/commit/ce7b548bf847767de407786a6c3fb78ffb063376))
+* **backend:** harden MQTT ingest, vehicle roles, cluster events and API error responses ([#865](https://github.com/green-ecolution/green-ecolution/issues/865)) ([602a395](https://github.com/green-ecolution/green-ecolution/commit/602a39561af090c13a8d823591e2cfb455fe14d5))
+* **backend:** watering-plan data integrity, list resilience and cluster search hardening ([#866](https://github.com/green-ecolution/green-ecolution/issues/866)) ([ce6e6ab](https://github.com/green-ecolution/green-ecolution/commit/ce6e6ab674f78ebf33c506abf63eaa707c90b9f9))
+* **frontend:** center watering plan board columns on wide screens (GECO-190) ([fe84316](https://github.com/green-ecolution/green-ecolution/commit/fe84316d6d7fd11666954546688e1b94a0e906b8))
+* **frontend:** pin lottie-react to its ESM build under vite 8 ([a02e13a](https://github.com/green-ecolution/green-ecolution/commit/a02e13af1ddadafc29678276a9744eaa29e0ebd9))
+* **frontend:** require start point and preselect default depot in watering plans ([#892](https://github.com/green-ecolution/green-ecolution/issues/892)) ([5896240](https://github.com/green-ecolution/green-ecolution/commit/58962406e8a33fe29dfb1a2f355314c4efb94f6d))
+* **migrate:** make reset managed-DB compatible and support optional schema ([#867](https://github.com/green-ecolution/green-ecolution/issues/867)) ([f9ac38c](https://github.com/green-ecolution/green-ecolution/commit/f9ac38ce04d97ae5967dffade65b93031a8f00af))
+
 ## [0.3.0](https://github.com/green-ecolution/green-ecolution/compare/v0.2.1...v0.3.0) (2026-07-01)
 
 
