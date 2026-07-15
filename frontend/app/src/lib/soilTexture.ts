@@ -100,3 +100,49 @@ export function regionMidpoint(condition: SoilCondition): SoilFractions | null {
   const silt = Math.min(Math.round((region.silt[0] + region.silt[1]) / 2), 100 - clay)
   return { sand: 100 - silt - clay, silt, clay }
 }
+
+export interface SoilPoint {
+  silt: number
+  clay: number
+}
+
+export function regionPolygon(region: SoilRegion): SoilPoint[] {
+  const [clayMin, clayMax] = region.clay
+  const [siltMin, siltMax] = region.silt
+  const corners: SoilPoint[] = [
+    { silt: siltMin, clay: clayMin },
+    { silt: siltMax, clay: clayMin },
+    { silt: siltMax, clay: clayMax },
+    { silt: siltMin, clay: clayMax },
+  ]
+  const inside = (p: SoilPoint) => p.silt + p.clay <= 100
+  const intersect = (a: SoilPoint, b: SoilPoint): SoilPoint => {
+    const t = (100 - a.silt - a.clay) / (b.silt - a.silt + (b.clay - a.clay))
+    return { silt: a.silt + t * (b.silt - a.silt), clay: a.clay + t * (b.clay - a.clay) }
+  }
+  const clipped: SoilPoint[] = []
+  corners.forEach((corner, i) => {
+    const prev = corners[(i + corners.length - 1) % corners.length]
+    if (inside(corner)) {
+      if (!inside(prev)) clipped.push(intersect(prev, corner))
+      clipped.push(corner)
+    } else if (inside(prev)) {
+      clipped.push(intersect(prev, corner))
+    }
+  })
+  return clipped
+}
+
+export function polygonCentroid(points: SoilPoint[]): SoilPoint {
+  let doubleArea = 0
+  let siltSum = 0
+  let claySum = 0
+  points.forEach((a, i) => {
+    const b = points[(i + 1) % points.length]
+    const cross = a.silt * b.clay - b.silt * a.clay
+    doubleArea += cross
+    siltSum += (a.silt + b.silt) * cross
+    claySum += (a.clay + b.clay) * cross
+  })
+  return { silt: siltSum / (3 * doubleArea), clay: claySum / (3 * doubleArea) }
+}

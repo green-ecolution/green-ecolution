@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { SoilCondition } from '@green-ecolution/backend-client'
-import { SOIL_REGIONS, classifySoilTexture, balanceFractions, regionMidpoint } from './soilTexture'
+import {
+  SOIL_REGIONS,
+  classifySoilTexture,
+  balanceFractions,
+  regionMidpoint,
+  regionPolygon,
+  polygonCentroid,
+} from './soilTexture'
 
 // One interior point per KA5 class: [silt, clay, expected]
 const INTERIOR_POINTS: [number, number, SoilCondition][] = [
@@ -148,5 +155,48 @@ describe('regionMidpoint', () => {
       expect(sand + silt + clay).toBe(100)
       expect(classifySoilTexture(silt, clay)).toBe(region.condition)
     }
+  })
+})
+
+describe('regionPolygon / polygonCentroid', () => {
+  it('returns the plain rectangle for unclipped regions', () => {
+    const sl3 = SOIL_REGIONS.find((r) => r.condition === SoilCondition.Sl3)!
+    expect(regionPolygon(sl3)).toEqual([
+      { silt: 10, clay: 8 },
+      { silt: 40, clay: 8 },
+      { silt: 40, clay: 12 },
+      { silt: 10, clay: 12 },
+    ])
+  })
+
+  it('clips regions at the hypotenuse', () => {
+    const tt = SOIL_REGIONS.find((r) => r.condition === SoilCondition.Tt)!
+    const polygon = regionPolygon(tt)
+    for (const point of polygon) {
+      expect(point.silt + point.clay).toBeLessThanOrEqual(100)
+    }
+    expect(polygon).toContainEqual({ silt: 0, clay: 100 })
+    expect(polygon).toContainEqual({ silt: 35, clay: 65 })
+  })
+
+  it('keeps every region polygon inside the triangle', () => {
+    for (const region of SOIL_REGIONS) {
+      const polygon = regionPolygon(region)
+      expect(polygon.length).toBeGreaterThanOrEqual(3)
+      for (const point of polygon) {
+        expect(point.silt + point.clay).toBeLessThanOrEqual(100.000001)
+      }
+    }
+  })
+
+  it('computes the centroid of a square', () => {
+    const centroid = polygonCentroid([
+      { silt: 0, clay: 0 },
+      { silt: 10, clay: 0 },
+      { silt: 10, clay: 10 },
+      { silt: 0, clay: 10 },
+    ])
+    expect(centroid.silt).toBeCloseTo(5)
+    expect(centroid.clay).toBeCloseTo(5)
   })
 })
