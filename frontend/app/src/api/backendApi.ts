@@ -33,15 +33,23 @@ const withAuthHeader = async (
     : config
 }
 
+let signinRedirectInFlight = false
+
 const backendFetch: FetchAPI = async (resource, config) => {
   const response = await fetch(resource, await withAuthHeader(config))
 
   // axum's Json extractor rejects malformed bodies with 422 before our handlers run,
   // so treat it like 401 and force a fresh sign-in.
-  if (response.status === 401 || response.status === 422) {
-    await getAuthSession().signinRedirect({
-      returnTo: window.location.pathname + window.location.search,
-    })
+  if ((response.status === 401 || response.status === 422) && !signinRedirectInFlight) {
+    signinRedirectInFlight = true
+    try {
+      await getAuthSession().signinRedirect({
+        returnTo: window.location.pathname + window.location.search,
+      })
+    } catch (err) {
+      signinRedirectInFlight = false
+      throw err
+    }
   }
   return response
 }
