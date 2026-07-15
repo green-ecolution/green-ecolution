@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { SoilCondition } from '@green-ecolution/backend-client'
-import { SOIL_REGIONS, classifySoilTexture } from './soilTexture'
+import { SOIL_REGIONS, classifySoilTexture, balanceFractions, regionMidpoint } from './soilTexture'
 
 // One interior point per KA5 class: [silt, clay, expected]
 const INTERIOR_POINTS: [number, number, SoilCondition][] = [
@@ -80,6 +80,73 @@ describe('classifySoilTexture', () => {
         }
         expect(() => classifySoilTexture(silt, clay)).not.toThrow()
       }
+    }
+  })
+})
+
+describe('balanceFractions', () => {
+  it('keeps the changed field and distributes the rest proportionally', () => {
+    expect(balanceFractions({ sand: 65, silt: 25, clay: 10 }, 'clay', 80)).toEqual({
+      sand: 14,
+      silt: 6,
+      clay: 80,
+    })
+  })
+
+  it('splits evenly when the other two fields are zero', () => {
+    expect(balanceFractions({ sand: 0, silt: 0, clay: 100 }, 'clay', 40)).toEqual({
+      sand: 30,
+      silt: 30,
+      clay: 40,
+    })
+  })
+
+  it('clamps the changed value to 0..100 and rounds to integers', () => {
+    expect(balanceFractions({ sand: 33, silt: 34, clay: 33 }, 'sand', 150)).toEqual({
+      sand: 100,
+      silt: 0,
+      clay: 0,
+    })
+    expect(balanceFractions({ sand: 33, silt: 34, clay: 33 }, 'sand', -5).sand).toBe(0)
+    expect(balanceFractions({ sand: 33, silt: 34, clay: 33 }, 'sand', 40.6).sand).toBe(41)
+  })
+
+  it('treats NaN (empty input) as 0', () => {
+    expect(balanceFractions({ sand: 33, silt: 34, clay: 33 }, 'silt', Number.NaN).silt).toBe(0)
+  })
+
+  it('always sums to exactly 100', () => {
+    for (let value = 0; value <= 100; value++) {
+      const result = balanceFractions({ sand: 61, silt: 22, clay: 17 }, 'silt', value)
+      expect(result.sand + result.silt + result.clay).toBe(100)
+    }
+  })
+})
+
+describe('regionMidpoint', () => {
+  it('returns the integer midpoint of the region', () => {
+    expect(regionMidpoint(SoilCondition.Sl3)).toEqual({ sand: 65, silt: 25, clay: 10 })
+  })
+
+  it('clamps hypotenuse-clipped regions into the triangle', () => {
+    expect(regionMidpoint(SoilCondition.Tt)).toEqual({ sand: 0, silt: 17, clay: 83 })
+  })
+
+  it('returns null for conditions without a triangle region', () => {
+    expect(regionMidpoint(SoilCondition.FS)).toBeNull()
+    expect(regionMidpoint(SoilCondition.MS)).toBeNull()
+    expect(regionMidpoint(SoilCondition.GS)).toBeNull()
+    expect(regionMidpoint(SoilCondition.Unknown)).toBeNull()
+  })
+
+  it('classifies every region midpoint back to its own condition', () => {
+    for (const region of SOIL_REGIONS) {
+      const midpoint = regionMidpoint(region.condition)
+      expect(midpoint).not.toBeNull()
+      const { sand, silt, clay } = midpoint!
+      expect(sand).toBeGreaterThanOrEqual(0)
+      expect(sand + silt + clay).toBe(100)
+      expect(classifySoilTexture(silt, clay)).toBe(region.condition)
     }
   })
 })

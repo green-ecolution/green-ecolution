@@ -72,3 +72,31 @@ export function classifySoilTexture(silt: number, clay: number): SoilCondition {
   }
   return region.condition
 }
+
+const FRACTION_ORDER: (keyof SoilFractions)[] = ['sand', 'silt', 'clay']
+
+export function balanceFractions(
+  current: SoilFractions,
+  changed: keyof SoilFractions,
+  value: number,
+): SoilFractions {
+  const clamped = Math.min(100, Math.max(0, Math.round(Number.isFinite(value) ? value : 0)))
+  const rest = 100 - clamped
+  const [first, second] = FRACTION_ORDER.filter((field) => field !== changed)
+  const oldSum = current[first] + current[second]
+  const firstShare =
+    oldSum > 0 ? Math.floor((rest * current[first]) / oldSum) : Math.floor(rest / 2)
+  const next: SoilFractions = { ...current }
+  next[changed] = clamped
+  next[first] = firstShare
+  next[second] = rest - firstShare
+  return next
+}
+
+export function regionMidpoint(condition: SoilCondition): SoilFractions | null {
+  const region = SOIL_REGIONS.find((r) => r.condition === condition)
+  if (!region) return null
+  const clay = Math.round((region.clay[0] + region.clay[1]) / 2)
+  const silt = Math.min(Math.round((region.silt[0] + region.silt[1]) / 2), 100 - clay)
+  return { sand: 100 - silt - clay, silt, clay }
+}
