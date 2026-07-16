@@ -64,7 +64,7 @@ describe('FormForTreecluster', () => {
 
     expect(screen.getByLabelText(/name/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/adresse/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/bodenbeschaffenheit/i)).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: /bodenbeschaffenheit/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/kurze beschreibung/i)).toBeInTheDocument()
   })
 
@@ -245,5 +245,37 @@ describe('FormForTreecluster', () => {
     )
 
     expect(screen.getByText(/noch keine bäume ausgewählt/i)).toBeInTheDocument()
+  })
+})
+
+describe('soil texture dialog integration', () => {
+  const mockOnSubmit = vi.fn()
+  const mockOnAddTrees = vi.fn()
+
+  it('opens the dialog via the icon button and applies the determined condition', async () => {
+    render(
+      <TestWrapper defaultValues={defaultFormValues}>
+        <FormForTreecluster
+          displayError={false}
+          onAddTrees={mockOnAddTrees}
+          onSubmit={mockOnSubmit}
+        />
+      </TestWrapper>,
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: /bodenbeschaffenheit bestimmen/i }))
+    expect(screen.getByRole('dialog', { name: /bodenart bestimmen/i })).toBeInTheDocument()
+
+    // Unknown has no region → neutral 33/34/33 → classify(34, 33) = Lt2
+    await userEvent.click(screen.getByRole('button', { name: /übernehmen/i }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: /bodenart bestimmen/i })).not.toBeInTheDocument()
+    })
+    expect(
+      within(screen.getByRole('combobox', { name: /bodenbeschaffenheit/i })).getByText(
+        /Lt2 – schwach toniger Lehm/,
+      ),
+    ).toBeInTheDocument()
   })
 })
