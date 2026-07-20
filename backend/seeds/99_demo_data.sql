@@ -341,6 +341,14 @@ INSERT INTO vehicle_watering_plans (vehicle_id, watering_plan_id, role) VALUES
   ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, '019e3fcb-2a5d-7e0d-840e-fe831360cfdb'::uuid, 'transporter');
 
 
+-- Profile data for the Keycloak demo users (tbz1, tbz2, ttester). Ids are the
+-- Keycloak user ids from the imported realm; roles stay in Keycloak.
+INSERT INTO user_profiles (id, status, driving_licenses) VALUES
+  ('8e1a16e9-19b6-4bcc-a5a3-3e6fa7518865'::uuid, 'available', ARRAY['B']::driving_license[]),
+  ('6a1078e8-80fd-458f-b74e-e388fe2dd6ab'::uuid, 'available', ARRAY['C']::driving_license[]),
+  ('b5afc591-ee33-4df8-af75-265265f05882'::uuid, 'available', ARRAY['B']::driving_license[]);
+
+
 INSERT INTO user_watering_plans (user_id, watering_plan_id) VALUES
   ('6a1078e8-80fd-458f-b74e-e388fe2dd6ab', '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid),
   ('6a1078e8-80fd-458f-b74e-e388fe2dd6ab', '019e3fcb-2a5d-7e82-afe5-626abd96274d'::uuid),

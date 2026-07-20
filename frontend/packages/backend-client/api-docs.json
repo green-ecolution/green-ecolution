@@ -2174,6 +2174,65 @@
         }
       }
     },
+    "/v1/users/{user_id}": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Replace a user's profile data",
+        "description": "Admin-only replace-style update of the app-owned user profile.",
+        "operationId": "updateUser",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/v1/vehicles": {
       "get": {
         "tags": [
@@ -6019,6 +6078,13 @@
             "description": "Optional URL to the user's avatar image.",
             "example": "https://example.com/avatar.jpg"
           },
+          "driving_licenses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DrivingLicense"
+            },
+            "description": "Initial driving licenses."
+          },
           "email": {
             "type": "string",
             "description": "Email address.",
@@ -6062,6 +6128,17 @@
             },
             "description": "Roles to assign to the user."
           },
+          "status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/UserStatus",
+                "description": "Initial availability status (defaults to Available)."
+              }
+            ]
+          },
           "username": {
             "type": "string",
             "description": "Desired login username.",
@@ -6070,6 +6147,9 @@
         },
         "example": {
           "avatar_url": "https://example.com/avatar.jpg",
+          "driving_licenses": [
+            "B"
+          ],
           "email": "john.doe@tbz-flensburg.de",
           "employee_id": "EMP-042",
           "first_name": "John",
@@ -6079,6 +6159,7 @@
           "roles": [
             "Tbz"
           ],
+          "status": "available",
           "username": "jdoe"
         }
       },
@@ -6208,6 +6289,61 @@
           "absent"
         ],
         "example": "available"
+      },
+      "UserUpdateRequest": {
+        "type": "object",
+        "description": "Request body for replacing a user's profile data.",
+        "required": [
+          "status",
+          "driving_licenses"
+        ],
+        "properties": {
+          "avatar_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Avatar URL; empty or absent clears the value.",
+            "example": "https://example.com/avatar.jpg"
+          },
+          "driving_licenses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DrivingLicense"
+            },
+            "description": "Full replacement set of driving licenses."
+          },
+          "employee_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Internal employee identifier; empty or absent clears the value.",
+            "example": "EMP-042"
+          },
+          "phone_number": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Contact phone number; empty or absent clears the value.",
+            "example": "+49 461 123456"
+          },
+          "status": {
+            "$ref": "#/components/schemas/UserStatus",
+            "description": "New availability status."
+          }
+        },
+        "example": {
+          "avatar_url": "https://example.com/avatar.jpg",
+          "driving_licenses": [
+            "B",
+            "CE"
+          ],
+          "employee_id": "EMP-042",
+          "phone_number": "+49 461 123456",
+          "status": "available"
+        }
       },
       "VehicleCreateRequest": {
         "type": "object",

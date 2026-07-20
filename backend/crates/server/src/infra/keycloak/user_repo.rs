@@ -14,7 +14,7 @@ use uuid::Uuid;
 use domain::{
     RepositoryError,
     shared::pagination::{Page, Pagination},
-    user::{UserCreate, UserRepository, UserRole, UserView},
+    user::{UserCreate, UserIdentity, UserRepository, UserRole},
 };
 
 use super::{
@@ -92,19 +92,10 @@ impl KeycloakUserRepository {
 
 #[async_trait::async_trait]
 impl UserRepository for KeycloakUserRepository {
-    async fn create(&self, entity: UserCreate) -> Result<UserView, RepositoryError> {
+    async fn create(&self, entity: UserCreate) -> Result<UserIdentity, RepositoryError> {
         let token = self.service_account_token().await?;
 
         let mut attributes: HashMap<String, Vec<String>> = HashMap::new();
-        if let Some(phone) = entity.phone_number.as_deref() {
-            attributes.insert("phone_number".into(), vec![phone.into()]);
-        }
-        if let Some(emp) = entity.employee_id.as_deref() {
-            attributes.insert("employee_id".into(), vec![emp.into()]);
-        }
-        if let Some(avatar) = entity.avatar_url.as_ref() {
-            attributes.insert("avatar_url".into(), vec![avatar.to_string()]);
-        }
         if !entity.roles.is_empty() {
             let roles_str = entity
                 .roles
@@ -202,10 +193,10 @@ impl UserRepository for KeycloakUserRepository {
             .json()
             .await
             .map_err(|e| RepositoryError::Internal(format!("read-back parse: {e}")))?;
-        kc_user.try_into_domain()
+        kc_user.try_into_identity()
     }
 
-    async fn all(&self, pagination: Pagination) -> Result<Page<UserView>, RepositoryError> {
+    async fn all(&self, pagination: Pagination) -> Result<Page<UserIdentity>, RepositoryError> {
         self.list_users(&[], pagination).await
     }
 
@@ -213,14 +204,14 @@ impl UserRepository for KeycloakUserRepository {
         &self,
         role: UserRole,
         pagination: Pagination,
-    ) -> Result<Page<UserView>, RepositoryError> {
+    ) -> Result<Page<UserIdentity>, RepositoryError> {
         // Roles live in the `user_roles` custom attribute (not realm roles), so
         // we filter via the `q` param which Keycloak matches against attributes.
         let q = format!("user_roles:{}", role.as_str());
         self.list_users(&[("q", q.as_str())], pagination).await
     }
 
-    async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserView>, RepositoryError> {
+    async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserIdentity>, RepositoryError> {
         let token = self.service_account_token().await?;
         let mut out = Vec::with_capacity(ids.len());
         for id in ids {
@@ -238,7 +229,7 @@ impl UserRepository for KeycloakUserRepository {
                         .json()
                         .await
                         .map_err(|e| RepositoryError::Internal(format!("by_ids parse: {e}")))?;
-                    out.push(kc.try_into_domain()?);
+                    out.push(kc.try_into_identity()?);
                 }
                 StatusCode::NOT_FOUND => continue,
                 status => {
@@ -257,7 +248,7 @@ impl KeycloakUserRepository {
         &self,
         extra_query: &[(&str, &str)],
         pagination: Pagination,
-    ) -> Result<Page<UserView>, RepositoryError> {
+    ) -> Result<Page<UserIdentity>, RepositoryError> {
         let token = self.service_account_token().await?;
         let total = self.count_users(&token, extra_query).await?;
 
@@ -291,7 +282,7 @@ impl KeycloakUserRepository {
             .map_err(|e| RepositoryError::Internal(format!("list users parse: {e}")))?;
         let items = kc_users
             .into_iter()
-            .map(KcUser::try_into_domain)
+            .map(KcUser::try_into_identity)
             .collect::<Result<Vec<_>, _>>()?;
         Ok(Page { items, total })
     }

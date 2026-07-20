@@ -78,6 +78,7 @@ export * from './UserRegisterRequest';
 export * from './UserResponse';
 export * from './UserRole';
 export * from './UserStatus';
+export * from './UserUpdateRequest';
 export * from './VehicleCreateRequest';
 export * from './VehicleEvaluationResponse';
 export * from './VehicleResponse';

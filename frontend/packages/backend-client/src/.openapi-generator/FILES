@@ -90,6 +90,7 @@ models/UserRegisterRequest.ts
 models/UserResponse.ts
 models/UserRole.ts
 models/UserStatus.ts
+models/UserUpdateRequest.ts
 models/VehicleCreateRequest.ts
 models/VehicleEvaluationResponse.ts
 models/VehicleResponse.ts

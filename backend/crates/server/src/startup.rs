@@ -41,6 +41,7 @@ use crate::{
         sensor_service::SensorService,
         start_point_service::StartPointService,
         tree_service::TreeService,
+        user_service::UserService,
         vehicle_service::VehicleService,
         watering_execution_service::WateringExecutionService,
         watering_plan_service::WateringPlanService,
@@ -77,7 +78,7 @@ impl Application {
         settings: Settings,
     ) -> Result<Self, std::io::Error> {
         let AuthStack {
-            user_service,
+            user_repo,
             auth_layer,
             jwks,
         } = infra::keycloak::build(&settings.auth).await?;
@@ -98,6 +99,15 @@ impl Application {
             i64::try_from(settings.sensor.offline_after_secs).unwrap_or(i64::MAX),
         );
         let repos = Repositories::build(&pool, sensor_offline_after);
+        let profile_repo = Arc::new(infra::pg_user_profile::PgUserProfileRepository::new(
+            pool.clone(),
+        ));
+        let user_service = Arc::new(UserService::new(
+            user_repo.clone(),
+            profile_repo.clone(),
+            profile_repo,
+            settings.auth.enabled,
+        ));
         let event_bus = build_event_bus(&repos);
         let route_optimizer: Option<Arc<dyn domain::routing::RouteOptimizer>> =
             settings.routing.enabled.then(|| {

@@ -1,10 +1,19 @@
-//! User read model — Keycloak-managed identities surfaced to the domain layer.
+//! User read model — identity and profile merged into one view.
 //!
-//! There is no User aggregate: lifecycle and invariants live entirely in
-//! Keycloak. [`UserView`] is a flat read model carrying `created_at` and the
-//! attributes the API needs. [`UserRepository`] is a single unified trait
-//! (no reader/writer split) because there is no local DB snapshot to rehydrate.
-//! The `id` is a [`Uuid`] (Keycloak's own identifier) rather than an `Id<…>`.
+//! There is no User aggregate: identity lifecycle and invariants (username,
+//! email, roles) live entirely with the IdP and are surfaced as
+//! [`UserIdentity`]. Application-owned facts (contact details, status,
+//! driving licenses) live separately as [`UserProfile`]. [`UserView`] is the
+//! flat, merged read model the API returns; it carries `created_at` from the
+//! identity side. [`UserRepository`] covers identity access only (no
+//! reader/writer split, since identities have no local snapshot to
+//! rehydrate); [`UserProfileReader`]/[`UserProfileWriter`] cover the profile
+//! side. The `id` is a [`Uuid`] (the IdP's own identifier) rather than an
+//! `Id<…>`.
+
+pub mod profile;
+
+pub use profile::UserProfile;
 
 use std::str::FromStr;
 
@@ -58,33 +67,14 @@ impl FromStr for UserRole {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "sqlx", derive(sqlx::Type))]
+#[cfg_attr(
+    feature = "sqlx",
+    sqlx(type_name = "user_status", rename_all = "lowercase")
+)]
 pub enum UserStatus {
     Available,
     Absent,
-}
-
-impl UserStatus {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            UserStatus::Available => "available",
-            UserStatus::Absent => "absent",
-        }
-    }
-}
-
-impl FromStr for UserStatus {
-    type Err = ValidationError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "available" => Ok(Self::Available),
-            "absent" => Ok(Self::Absent),
-            other => Err(ValidationError::InvalidFormat {
-                field: "user.status",
-                reason: format!("unknown status '{other}'"),
-            }),
-        }
-    }
 }
 
 crate::newtype_nonempty! {
@@ -126,20 +116,45 @@ pub struct UserCreate {
     pub employee_id: Option<String>,
     pub phone_number: Option<String>,
     pub avatar_url: Option<Url>,
+    pub status: UserStatus,
+    pub driving_licenses: Vec<DrivingLicense>,
 }
 
-/// Unified access to Keycloak-managed users.
+/// Identity facts owned by the IdP; merged with `UserProfile` into `UserView`.
+#[derive(Debug, Clone)]
+pub struct UserIdentity {
+    pub id: Uuid,
+    pub created_at: DateTime<Utc>,
+    pub username: Username,
+    pub first_name: String,
+    pub last_name: String,
+    pub email: Email,
+    pub email_verified: bool,
+    pub roles: Vec<UserRole>,
+}
+
+/// Unified access to IdP-managed user identities.
 ///
-/// Not split into reader/writer because user management is entirely delegated
-/// to Keycloak — there is no local DB snapshot to rehydrate.
+/// Not split into reader/writer because identity management is entirely
+/// delegated to the IdP — there is no local snapshot to rehydrate.
 #[async_trait::async_trait]
 pub trait UserRepository: Send + Sync {
-    async fn create(&self, entity: UserCreate) -> Result<UserView, RepositoryError>;
-    async fn all(&self, pagination: Pagination) -> Result<Page<UserView>, RepositoryError>;
+    async fn create(&self, entity: UserCreate) -> Result<UserIdentity, RepositoryError>;
+    async fn all(&self, pagination: Pagination) -> Result<Page<UserIdentity>, RepositoryError>;
     async fn by_role(
         &self,
         role: UserRole,
         pagination: Pagination,
-    ) -> Result<Page<UserView>, RepositoryError>;
-    async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserView>, RepositoryError>;
+    ) -> Result<Page<UserIdentity>, RepositoryError>;
+    async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserIdentity>, RepositoryError>;
+}
+
+#[async_trait::async_trait]
+pub trait UserProfileReader: Send + Sync {
+    async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserProfile>, RepositoryError>;
+}
+
+#[async_trait::async_trait]
+pub trait UserProfileWriter: Send + Sync {
+    async fn upsert(&self, profile: &UserProfile) -> Result<(), RepositoryError>;
 }

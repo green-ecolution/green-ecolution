@@ -6,6 +6,7 @@ use axum::{
     http::StatusCode,
 };
 use utoipa_axum::{router::OpenApiRouter, routes};
+use uuid::Uuid;
 
 use crate::{
     http::{
@@ -14,7 +15,7 @@ use crate::{
         v1::{
             dto::{
                 ListResponse,
-                user::{UserRegisterRequest, UserResponse},
+                user::{UserRegisterRequest, UserResponse, UserUpdateRequest},
             },
             pagination::PaginationParams,
         },
@@ -31,6 +32,7 @@ pub fn protected_routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .routes(routes!(list_users, create_user))
         .routes(routes!(list_users_by_role))
+        .routes(routes!(update_user))
 }
 
 #[utoipa::path(get, path = "/users", tag = "Users",
@@ -107,4 +109,32 @@ pub async fn list_users_by_role(
     let pagination = Pagination::from(&params);
     let page = state.user_service.by_role(role, pagination).await?;
     Ok(Json(ListResponse::from_page(page, &pagination)))
+}
+
+#[utoipa::path(put, path = "/users/{user_id}", tag = "Users",
+    operation_id = "updateUser",
+    summary = "Replace a user's profile data",
+    description = "Admin-only replace-style update of the app-owned user profile.",
+    params(("user_id" = Uuid, Path, description = "User id")),
+    request_body = UserUpdateRequest,
+    responses(
+        (status = 200, description = "Updated user", body = UserResponse),
+        (status = 400, description = "Invalid input"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "User not found"),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn update_user(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    Path(user_id): Path<Uuid>,
+    Json(req): Json<UserUpdateRequest>,
+) -> Result<Json<UserResponse>, ServiceError> {
+    require_role!(user, DomainUserRole::Tbz, DomainUserRole::GreenEcolution);
+    let profile = req.try_into_profile(user_id)?;
+    let updated = state.user_service.update_profile(profile).await?;
+    Ok(Json((&updated).into()))
 }
