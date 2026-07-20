@@ -3,19 +3,20 @@
 
 use std::sync::Arc;
 
-use crate::{
-    configuration::AuthSettings, http::auth::AuthLayer, service::user_service::UserService,
-};
+use domain::user::UserRepository;
+
+use crate::{configuration::AuthSettings, http::auth::AuthLayer};
 
 use super::{JwksProvider, KeycloakClient, KeycloakUserRepository};
 
 /// Composed auth dependencies returned by [`build`].
 ///
 /// The HTTP layer takes [`AuthLayer`]; [`AppState`](crate::http::AppState)
-/// takes the service. `_jwks` is held by `Application` purely for
-/// ownership: dropping it would stop the background refresh loop.
+/// consumes services built on top of `user_repo`. `_jwks` is held by
+/// `Application` purely for ownership: dropping it would stop the background
+/// refresh loop.
 pub struct AuthStack {
-    pub user_service: Arc<UserService>,
+    pub user_repo: Arc<dyn UserRepository>,
     pub auth_layer: AuthLayer,
     pub jwks: Arc<JwksProvider>,
 }
@@ -43,12 +44,11 @@ pub async fn build(settings: &AuthSettings) -> Result<AuthStack, std::io::Error>
         );
     }
 
-    let user_repo = Arc::new(KeycloakUserRepository::new(kc_client));
-    let user_service = Arc::new(UserService::new(user_repo, settings.enabled));
+    let user_repo: Arc<dyn UserRepository> = Arc::new(KeycloakUserRepository::new(kc_client));
     let auth_layer = AuthLayer::new(jwks.clone(), settings);
 
     Ok(AuthStack {
-        user_service,
+        user_repo,
         auth_layer,
         jwks,
     })

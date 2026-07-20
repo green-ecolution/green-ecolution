@@ -228,6 +228,8 @@ impl TryFrom<UserRegisterRequest> for DomainUserCreate {
             employee_id: value.employee_id.filter(|s| !s.is_empty()),
             phone_number: value.phone_number.filter(|s| !s.is_empty()),
             avatar_url,
+            status: DomainUserStatus::Available,
+            driving_licenses: Vec::new(),
         })
     }
 }
