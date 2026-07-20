@@ -18,5 +18,5 @@ export const windowStart = (key: TimeWindowKey, now: number): Date | undefined =
   return new Date(Math.floor(now / HOUR_MS) * HOUR_MS - days * DAY_MS)
 }
 
-export const timeWindowOptions = (keys: TimeWindowKey[]) =>
+export const timeWindowOptions = <K extends TimeWindowKey>(keys: K[]) =>
   keys.map((key) => ({ value: key, label: TIME_WINDOWS[key].label }))
