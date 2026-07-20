@@ -81,14 +81,9 @@ const ClusterSoilMoistureChart = ({ clusterId, hasSensors }: ClusterSoilMoisture
       ts: Math.min(event.ts, rows[rows.length - 1].ts),
     }))
 
-  // Depths often share one calibration value (e.g. Uu: 18 % at 40 and 80 cm);
-  // merged lines avoid stacked identical dashes with colliding labels.
-  const thresholdLines = new Map<number, number[]>()
-  for (const threshold of data?.thresholds ?? []) {
-    const depthsAtValue = thresholdLines.get(threshold.critical) ?? []
-    depthsAtValue.push(threshold.depthCm)
-    thresholdLines.set(threshold.critical, depthsAtValue)
-  }
+  const thresholds = data?.thresholds ?? []
+  const strictestCritical =
+    thresholds.length > 0 ? Math.max(...thresholds.map((t) => t.critical)) : null
 
   return (
     <Card variant="outlined">
@@ -153,19 +148,14 @@ const ClusterSoilMoistureChart = ({ clusterId, hasSensors }: ClusterSoilMoisture
                   connectNulls
                 />
               ))}
-              {[...thresholdLines].map(([critical, depthsAtValue]) => (
+              {strictestCritical != null && (
                 <ReferenceLine
-                  key={`crit_${critical}`}
-                  y={critical}
-                  stroke={
-                    depthsAtValue.length === 1
-                      ? depthColor(depthsAtValue[0], depths.indexOf(depthsAtValue[0]))
-                      : '#747474'
-                  }
+                  y={strictestCritical}
+                  stroke="#747474"
                   strokeDasharray="4 4"
                   ifOverflow="extendDomain"
                 />
-              ))}
+              )}
               {eventMarkers.map((event) => (
                 <ReferenceLine
                   key={event.wateringPlanId}
