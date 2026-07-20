@@ -5,8 +5,9 @@ use crate::service::ServiceError;
 use domain::{
     shared::email::Email,
     user::{
-        UserCreate as DomainUserCreate, UserRole as DomainUserRole, UserStatus as DomainUserStatus,
-        UserView as DomainUserView, Username,
+        UserCreate as DomainUserCreate, UserProfile as DomainUserProfile,
+        UserRole as DomainUserRole, UserStatus as DomainUserStatus, UserView as DomainUserView,
+        Username,
     },
 };
 
@@ -111,6 +112,70 @@ pub struct UserRegisterRequest {
     #[serde(default)]
     #[schema(example = "https://example.com/avatar.jpg", nullable)]
     pub avatar_url: Option<String>,
+    /// Initial availability status (defaults to Available).
+    #[serde(default)]
+    #[schema(nullable)]
+    pub status: Option<UserStatus>,
+    /// Initial driving licenses.
+    #[serde(default)]
+    pub driving_licenses: Vec<DrivingLicense>,
+}
+
+/// Request body for replacing a user's profile data.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+#[schema(example = json!({
+    "employee_id": "EMP-042",
+    "phone_number": "+49 461 123456",
+    "avatar_url": "https://example.com/avatar.jpg",
+    "status": "Available",
+    "driving_licenses": ["B", "CE"]
+}))]
+pub struct UserUpdateRequest {
+    /// Internal employee identifier; empty or absent clears the value.
+    #[serde(default)]
+    #[schema(example = "EMP-042", nullable)]
+    pub employee_id: Option<String>,
+    /// Contact phone number; empty or absent clears the value.
+    #[serde(default)]
+    #[schema(example = "+49 461 123456", nullable)]
+    pub phone_number: Option<String>,
+    /// Avatar URL; empty or absent clears the value.
+    #[serde(default)]
+    #[schema(example = "https://example.com/avatar.jpg", nullable)]
+    pub avatar_url: Option<String>,
+    /// New availability status.
+    pub status: UserStatus,
+    /// Full replacement set of driving licenses.
+    pub driving_licenses: Vec<DrivingLicense>,
+}
+
+impl From<UserStatus> for DomainUserStatus {
+    fn from(value: UserStatus) -> Self {
+        match value {
+            UserStatus::Available => Self::Available,
+            UserStatus::Absent => Self::Absent,
+        }
+    }
+}
+
+impl UserUpdateRequest {
+    pub fn try_into_profile(self, id: uuid::Uuid) -> Result<DomainUserProfile, ServiceError> {
+        let avatar_url = self
+            .avatar_url
+            .as_deref()
+            .filter(|s| !s.is_empty())
+            .map(url::Url::parse)
+            .transpose()
+            .map_err(|e| ServiceError::InvalidInput(format!("avatar_url: {e}")))?;
+        Ok(DomainUserProfile {
+            id,
+            employee_id: self.employee_id.filter(|s| !s.is_empty()),
+            phone_number: self.phone_number.filter(|s| !s.is_empty()),
+            avatar_url,
+            status: self.status.into(),
+            driving_licenses: self.driving_licenses.into_iter().map(Into::into).collect(),
+        })
+    }
 }
 
 impl From<DomainUserRole> for UserRole {
@@ -228,8 +293,11 @@ impl TryFrom<UserRegisterRequest> for DomainUserCreate {
             employee_id: value.employee_id.filter(|s| !s.is_empty()),
             phone_number: value.phone_number.filter(|s| !s.is_empty()),
             avatar_url,
-            status: DomainUserStatus::Available,
-            driving_licenses: Vec::new(),
+            status: value
+                .status
+                .map(DomainUserStatus::from)
+                .unwrap_or(DomainUserStatus::Available),
+            driving_licenses: value.driving_licenses.into_iter().map(Into::into).collect(),
         })
     }
 }
