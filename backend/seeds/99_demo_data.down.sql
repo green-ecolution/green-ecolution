@@ -1,3 +1,8 @@
+DELETE FROM user_profiles WHERE id IN (
+    '8e1a16e9-19b6-4bcc-a5a3-3e6fa7518865',
+    '6a1078e8-80fd-458f-b74e-e388fe2dd6ab',
+    'b5afc591-ee33-4df8-af75-265265f05882'
+);
 DELETE FROM vehicles;
 DELETE FROM trees;
 DELETE FROM tree_clusters;

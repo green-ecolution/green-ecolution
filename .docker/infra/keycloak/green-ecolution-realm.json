@@ -464,9 +464,7 @@
     "email" : "tbz1@green-ecolution.de",
     "emailVerified" : true,
     "attributes" : {
-      "driving_licenses" : [ "B" ],
-      "user_roles" : [ "tbz" ],
-      "status" : [ "available" ]
+      "user_roles" : [ "tbz" ]
     },
     "createdTimestamp" : 1746975388053,
     "enabled" : true,
@@ -492,9 +490,7 @@
     "email" : "tbz2@green-ecolution.de",
     "emailVerified" : true,
     "attributes" : {
-      "driving_licenses" : [ "C" ],
-      "user_roles" : [ "tbz" ],
-      "status" : [ "available" ]
+      "user_roles" : [ "tbz" ]
     },
     "createdTimestamp" : 1746975469747,
     "enabled" : true,
@@ -520,9 +516,7 @@
     "email" : "dev@green-ecolution.de",
     "emailVerified" : true,
     "attributes" : {
-      "driving_licenses" : [ "B" ],
-      "user_roles" : [ "green-ecolution" ],
-      "status" : [ "available" ]
+      "user_roles" : [ "green-ecolution" ]
     },
     "createdTimestamp" : 1746975340763,
     "enabled" : true,
@@ -1229,22 +1223,6 @@
         "jsonType.label" : "String"
       }
     }, {
-      "id" : "aaeacf9d-33da-42a8-b211-bd1270ae96f9",
-      "name" : "status",
-      "protocol" : "openid-connect",
-      "protocolMapper" : "oidc-usermodel-attribute-mapper",
-      "consentRequired" : false,
-      "config" : {
-        "introspection.token.claim" : "true",
-        "userinfo.token.claim" : "true",
-        "user.attribute" : "status",
-        "id.token.claim" : "true",
-        "lightweight.claim" : "false",
-        "access.token.claim" : "true",
-        "claim.name" : "status",
-        "jsonType.label" : "String"
-      }
-    }, {
       "id" : "af102237-67ef-47cd-b61a-766dfdeb0d4f",
       "name" : "full name",
       "protocol" : "openid-connect",
@@ -1269,24 +1247,6 @@
         "id.token.claim" : "true",
         "access.token.claim" : "true",
         "claim.name" : "profile",
-        "jsonType.label" : "String"
-      }
-    }, {
-      "id" : "12d4701e-99f8-4189-8c2f-ba428dd9bc72",
-      "name" : "driving_licenses",
-      "protocol" : "openid-connect",
-      "protocolMapper" : "oidc-usermodel-attribute-mapper",
-      "consentRequired" : false,
-      "config" : {
-        "aggregate.attrs" : "false",
-        "introspection.token.claim" : "true",
-        "multivalued" : "true",
-        "userinfo.token.claim" : "true",
-        "user.attribute" : "driving_licenses",
-        "id.token.claim" : "true",
-        "lightweight.claim" : "false",
-        "access.token.claim" : "true",
-        "claim.name" : "driving_licenses",
         "jsonType.label" : "String"
       }
     }, {
