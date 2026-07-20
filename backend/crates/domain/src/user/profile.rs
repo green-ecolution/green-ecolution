@@ -1,12 +1,14 @@
 use url::Url;
 use uuid::Uuid;
 
-use crate::{user::UserStatus, vehicle::DrivingLicense};
+use crate::vehicle::DrivingLicense;
+
+use super::UserStatus;
 
 /// App-owned user facts, merged with the IdP identity into `UserView`.
 ///
 /// Deliberately not an aggregate: there are no invariants between the fields
-/// and no events to emit. The struct doubles as the replace-style upsert
+/// and no events to emit. The struct doubles as the replace-style write
 /// input since it carries its own id.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UserProfile {

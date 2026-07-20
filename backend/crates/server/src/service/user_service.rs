@@ -116,6 +116,7 @@ impl UserService {
         self.attach_profiles(identities).await
     }
 
+    /// In demo mode (auth disabled) the write is a no-op: the static demo user is returned unchanged.
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn update_profile(&self, profile: UserProfile) -> Result<UserView, ServiceError> {
         if !self.enabled {
@@ -140,6 +141,9 @@ impl UserService {
         &self,
         identities: Vec<UserIdentity>,
     ) -> Result<Vec<UserView>, ServiceError> {
+        if identities.is_empty() {
+            return Ok(Vec::new());
+        }
         let ids: Vec<Uuid> = identities.iter().map(|i| i.id).collect();
         let mut profiles: HashMap<Uuid, UserProfile> = self
             .profile_reader

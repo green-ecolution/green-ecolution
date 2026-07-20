@@ -77,30 +77,6 @@ pub enum UserStatus {
     Absent,
 }
 
-impl UserStatus {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            UserStatus::Available => "available",
-            UserStatus::Absent => "absent",
-        }
-    }
-}
-
-impl FromStr for UserStatus {
-    type Err = ValidationError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "available" => Ok(Self::Available),
-            "absent" => Ok(Self::Absent),
-            other => Err(ValidationError::InvalidFormat {
-                field: "user.status",
-                reason: format!("unknown status '{other}'"),
-            }),
-        }
-    }
-}
-
 crate::newtype_nonempty! {
     /// Keycloak username, 1–64 characters after trimming.
     Username, "user.username", 1, 64
