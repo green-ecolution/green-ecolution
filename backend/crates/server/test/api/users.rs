@@ -39,3 +39,19 @@ async fn update_user_returns_404_for_unknown_user() {
 
     assert_eq!(response.status().as_u16(), 404);
 }
+
+#[tokio::test]
+async fn update_user_returns_400_for_invalid_avatar_url() {
+    let app = spawn_app().await;
+
+    let body = serde_json::json!({
+        "avatar_url": "not a url",
+        "status": "absent",
+        "driving_licenses": []
+    });
+    let response = app
+        .put_json("/api/v1/users/00000000-0000-0000-0000-000000000000", &body)
+        .await;
+
+    assert_eq!(response.status().as_u16(), 400);
+}

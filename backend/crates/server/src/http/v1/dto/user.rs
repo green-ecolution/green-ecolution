@@ -80,7 +80,9 @@ pub struct UserResponse {
     "roles": ["Tbz"],
     "employee_id": "EMP-042",
     "phone_number": "+49 461 123456",
-    "avatar_url": "https://example.com/avatar.jpg"
+    "avatar_url": "https://example.com/avatar.jpg",
+    "status": "available",
+    "driving_licenses": ["B"]
 }))]
 pub struct UserRegisterRequest {
     /// Desired login username.
@@ -127,7 +129,7 @@ pub struct UserRegisterRequest {
     "employee_id": "EMP-042",
     "phone_number": "+49 461 123456",
     "avatar_url": "https://example.com/avatar.jpg",
-    "status": "Available",
+    "status": "available",
     "driving_licenses": ["B", "CE"]
 }))]
 pub struct UserUpdateRequest {
