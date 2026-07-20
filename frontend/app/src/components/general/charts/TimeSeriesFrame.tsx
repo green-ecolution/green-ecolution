@@ -11,11 +11,13 @@ import {
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
+type YDomainBound = string | number | ((value: number) => number)
+
 interface TimeSeriesFrameProps {
   config: ChartConfig
   /** Rows must carry `ts` (epoch ms). */
   data: Record<string, unknown>[]
-  yDomain?: [string | number, string | number]
+  yDomain?: [YDomainBound, YDomainBound]
   className?: string
   legend?: boolean
   children: React.ReactNode

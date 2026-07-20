@@ -30,8 +30,8 @@ const BUCKET_BY_RANGE: Record<RangeKey, 'hour' | 'day'> = {
 }
 
 const BUCKET_SUBTITLE: Record<'hour' | 'day', string> = {
-  hour: 'Stundenmittel · Band = Min–Max',
-  day: 'Tagesmittel · Band = Min–Max',
+  hour: 'Stundenmittel · Band = Min–Max · Gestrichelt = kritische Schwelle',
+  day: 'Tagesmittel · Band = Min–Max · Gestrichelt = kritische Schwelle',
 }
 
 interface ClusterSoilMoistureChartProps {
@@ -125,7 +125,7 @@ const ClusterSoilMoistureChart = ({ clusterId, hasSensors }: ClusterSoilMoisture
               config={config}
               data={rows}
               className="h-[260px] w-full"
-              yDomain={[0, 'auto']}
+              yDomain={[(min: number) => Math.floor(min - 1), (max: number) => Math.ceil(max + 1)]}
               legend
             >
               {depths.map((depth, index) => (
@@ -163,11 +163,7 @@ const ClusterSoilMoistureChart = ({ clusterId, hasSensors }: ClusterSoilMoisture
                       : '#747474'
                   }
                   strokeDasharray="4 4"
-                  label={{
-                    value: `Kritisch ${depthsAtValue.join('/')} cm`,
-                    position: 'insideBottomLeft',
-                    fontSize: 11,
-                  }}
+                  ifOverflow="extendDomain"
                 />
               ))}
               {eventMarkers.map((event) => (
