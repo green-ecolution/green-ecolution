@@ -341,6 +341,10 @@ export { Tabs, TabsList, TabsTrigger, TabsContent } from './components/ui/tabs'
 // Textarea
 export { Textarea } from './components/ui/textarea'
 
+// TimeRangeToggle
+export { TimeRangeToggle } from './components/ui/time-range-toggle'
+export type { TimeRangeToggleProps, TimeRangeToggleOption } from './components/ui/time-range-toggle'
+
 // Tooltip
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './components/ui/tooltip'
 
