@@ -23,4 +23,11 @@ describe('TimeRangeToggle', () => {
     await userEvent.click(screen.getByRole('button', { name: '24 h' }))
     expect(onChange).toHaveBeenCalledWith('24h')
   })
+
+  it('renders buttons with type="button" so they never trigger a form submit', () => {
+    render(<TimeRangeToggle options={options} value="7d" onChange={() => {}} />)
+    for (const button of screen.getAllByRole('button')) {
+      expect(button).toHaveAttribute('type', 'button')
+    }
+  })
 })

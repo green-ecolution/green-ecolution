@@ -25,6 +25,7 @@ export const TimeRangeToggle = <T extends string>({
     {options.map((option) => (
       <Button
         key={option.value}
+        type="button"
         size="sm"
         variant={option.value === value ? 'default' : 'ghost'}
         aria-pressed={option.value === value}

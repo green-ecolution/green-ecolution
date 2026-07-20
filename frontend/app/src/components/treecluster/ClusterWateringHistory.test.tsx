@@ -153,4 +153,31 @@ describe('ClusterWateringHistory', () => {
       ).toBeInTheDocument()
     })
   })
+
+  it('shows a loading indicator while the query is pending', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function -- never-resolving promise to keep the query pending
+    getClusterSoilMoisture.mockReturnValue(new Promise(() => {}))
+
+    renderWithProviders()
+
+    await waitFor(() => {
+      expect(screen.getByText('Einsätze werden geladen')).toBeInTheDocument()
+    })
+    expect(
+      screen.queryByText('Für diese Gruppe wurden noch keine Einsätze abgeschlossen.'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows a failure hint instead of the empty state when the query errors', async () => {
+    getClusterSoilMoisture.mockRejectedValue(new Error('network error'))
+
+    renderWithProviders()
+
+    await waitFor(() => {
+      expect(screen.getByText('Die Einsätze konnten nicht geladen werden.')).toBeInTheDocument()
+    })
+    expect(
+      screen.queryByText('Für diese Gruppe wurden noch keine Einsätze abgeschlossen.'),
+    ).not.toBeInTheDocument()
+  })
 })

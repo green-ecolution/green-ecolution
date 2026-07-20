@@ -81,7 +81,8 @@ const ClusterSensorCard = ({ trees }: ClusterSensorCardProps) => {
               ))}
             </div>
             <p className="mt-4 text-right text-sm text-muted-foreground tabular-nums">
-              {treesWithSensor.length} von {trees.length} Bäumen mit Sensor
+              {treesWithSensor.length} von {trees.length} {trees.length === 1 ? 'Baum' : 'Bäumen'}{' '}
+              mit Sensor
             </p>
           </>
         )}

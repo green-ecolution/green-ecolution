@@ -64,11 +64,22 @@ const ClusterSoilMoistureChart = ({ clusterId, hasSensors }: ClusterSoilMoisture
   // inside the day bucket instead of on its edge. `event.date` is already a
   // Date (midnight UTC from the "YYYY-MM-DD" wire value), so shift by 12h
   // instead of round-tripping through a string.
+  // The last row's ts is the start of today's bucket, so a same-day event's
+  // noon timestamp can fall past it; widen the upper bound by one bucket width.
+  const bucketWidthMs = bucket === 'hour' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000
   const eventMarkers = (data?.wateringEvents ?? [])
     .map((event) => ({ ...event, ts: event.date.getTime() + 12 * 60 * 60 * 1000 }))
     .filter(
-      (event) => rows.length > 1 && event.ts >= rows[0].ts && event.ts <= rows[rows.length - 1].ts,
+      (event) =>
+        rows.length > 1 &&
+        event.ts >= rows[0].ts &&
+        event.ts <= rows[rows.length - 1].ts + bucketWidthMs,
     )
+    // Recharts drops ReferenceLines beyond the data max, so clamp after widening the filter.
+    .map((event) => ({
+      ...event,
+      ts: Math.min(event.ts, rows[rows.length - 1].ts),
+    }))
 
   // Depths often share one calibration value (e.g. Uu: 18 % at 40 and 80 cm);
   // merged lines avoid stacked identical dashes with colliding labels.
@@ -166,7 +177,7 @@ const ClusterSoilMoistureChart = ({ clusterId, hasSensors }: ClusterSoilMoisture
                   stroke="#747474"
                   strokeDasharray="4 4"
                   label={{
-                    value: `Bewässert am ${format(new Date(event.ts), 'dd.MM.')}`,
+                    value: `Bewässert am ${format(event.date, 'dd.MM.')}`,
                     angle: -90,
                     position: 'insideTopRight',
                     fontSize: 11,
