@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import { CartesianGrid, ComposedChart, XAxis, YAxis } from 'recharts'
+import { CartesianGrid, ComposedChart, XAxis, YAxis, type LegendPayload } from 'recharts'
 import {
   ChartContainer,
   ChartLegend,
@@ -61,7 +61,18 @@ const TimeSeriesFrame = ({
             />
           }
         />
-        {legend && <ChartLegend content={<ChartLegendContent />} />}
+        {legend && (
+          <ChartLegend
+            content={({ payload }: { payload?: readonly LegendPayload[] }) => (
+              // Recharts still hands legendType="none" series (e.g. min-max
+              // bands) to custom content; only config-labelled series belong
+              // in the legend.
+              <ChartLegendContent
+                payload={payload?.filter((item) => String(item.dataKey) in config)}
+              />
+            )}
+          />
+        )}
         {children}
       </ComposedChart>
     </ChartContainer>
