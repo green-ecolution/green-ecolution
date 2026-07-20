@@ -6,6 +6,10 @@
 //! (no reader/writer split) because there is no local DB snapshot to rehydrate.
 //! The `id` is a [`Uuid`] (Keycloak's own identifier) rather than an `Id<…>`.
 
+pub mod profile;
+
+pub use profile::UserProfile;
+
 use std::str::FromStr;
 
 use chrono::{DateTime, Utc};
@@ -58,6 +62,11 @@ impl FromStr for UserRole {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "sqlx", derive(sqlx::Type))]
+#[cfg_attr(
+    feature = "sqlx",
+    sqlx(type_name = "user_status", rename_all = "lowercase")
+)]
 pub enum UserStatus {
     Available,
     Absent,
@@ -142,4 +151,14 @@ pub trait UserRepository: Send + Sync {
         pagination: Pagination,
     ) -> Result<Page<UserView>, RepositoryError>;
     async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserView>, RepositoryError>;
+}
+
+#[async_trait::async_trait]
+pub trait UserProfileReader: Send + Sync {
+    async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserProfile>, RepositoryError>;
+}
+
+#[async_trait::async_trait]
+pub trait UserProfileWriter: Send + Sync {
+    async fn upsert(&self, profile: &UserProfile) -> Result<(), RepositoryError>;
 }
