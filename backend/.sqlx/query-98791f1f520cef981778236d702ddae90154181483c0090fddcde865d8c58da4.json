@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO sensor_data (id, sensor_id, data, updated_at)\n           VALUES ($1, $2, '{}'::jsonb, $3::timestamp)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Timestamp"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "98791f1f520cef981778236d702ddae90154181483c0090fddcde865d8c58da4"
+}
