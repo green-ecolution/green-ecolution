@@ -424,6 +424,88 @@
         }
       }
     },
+    "/v1/clusters/{cluster_id}/soil-moisture": {
+      "get": {
+        "tags": [
+          "Tree Clusters"
+        ],
+        "summary": "Bucketed soil-moisture series for a cluster",
+        "description": "Aggregates volumetric soil-moisture readings (mean/min/max per probe depth and time bucket) across all sensors of the cluster, with per-depth stress thresholds derived from the cluster's soil condition and the cluster's finished watering runs.",
+        "operationId": "getClusterSoilMoisture",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "description": "Cluster ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Window start (RFC 3339). Defaults to 7 days before `to`.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Window end (RFC 3339). Defaults to now.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "bucket",
+            "in": "query",
+            "description": "Aggregation bucket. Allowed: `hour|day`. Defaults to `day`.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "example": "day"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aggregated soil-moisture series",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoilMoistureSeriesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameter"
+          },
+          "404": {
+            "description": "Cluster not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/v1/evaluation": {
       "get": {
         "tags": [
@@ -3187,6 +3269,30 @@
           }
         }
       },
+      "ClusterWateringEventResponse": {
+        "type": "object",
+        "description": "A finished watering-plan run that included this cluster.",
+        "required": [
+          "watering_plan_id",
+          "date",
+          "consumed_water_liters"
+        ],
+        "properties": {
+          "consumed_water_liters": {
+            "type": "number",
+            "format": "double",
+            "example": 1800.0
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "watering_plan_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
       "CreateSensorRequest": {
         "type": "object",
         "description": "Request body for `POST /sensors` - registers a prepared sensor unit.",
@@ -5324,6 +5430,125 @@
           "unknown"
         ],
         "example": "Lu"
+      },
+      "SoilMoistureDepthSeriesResponse": {
+        "type": "object",
+        "required": [
+          "depth_cm",
+          "points"
+        ],
+        "properties": {
+          "depth_cm": {
+            "type": "integer",
+            "format": "int32",
+            "example": 40
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SoilMoisturePointResponse"
+            }
+          }
+        }
+      },
+      "SoilMoisturePointResponse": {
+        "type": "object",
+        "required": [
+          "timestamp",
+          "mean",
+          "min",
+          "max",
+          "sample_count"
+        ],
+        "properties": {
+          "max": {
+            "type": "number",
+            "format": "double",
+            "example": 25.1
+          },
+          "mean": {
+            "type": "number",
+            "format": "double",
+            "example": 23.4
+          },
+          "min": {
+            "type": "number",
+            "format": "double",
+            "example": 21.0
+          },
+          "sample_count": {
+            "type": "integer",
+            "format": "int64",
+            "example": 12
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Bucket start (RFC 3339)."
+          }
+        }
+      },
+      "SoilMoistureSeriesResponse": {
+        "type": "object",
+        "required": [
+          "bucket",
+          "series",
+          "thresholds",
+          "watering_events"
+        ],
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "description": "Effective bucket: `hour` or `day`.",
+            "example": "day"
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SoilMoistureDepthSeriesResponse"
+            }
+          },
+          "thresholds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SoilMoistureThresholdResponse"
+            },
+            "description": "Empty when the cluster's soil condition is unknown."
+          },
+          "watering_events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClusterWateringEventResponse"
+            },
+            "description": "All finished runs, newest first (not limited to the query window)."
+          }
+        }
+      },
+      "SoilMoistureThresholdResponse": {
+        "type": "object",
+        "description": "Volumetric thresholds (Vol.-%) below which a depth counts as stressed.",
+        "required": [
+          "depth_cm",
+          "moderate",
+          "critical"
+        ],
+        "properties": {
+          "critical": {
+            "type": "number",
+            "format": "double",
+            "example": 10.9
+          },
+          "depth_cm": {
+            "type": "integer",
+            "format": "int32",
+            "example": 40
+          },
+          "moderate": {
+            "type": "number",
+            "format": "double",
+            "example": 12.4
+          }
+        }
       },
       "StartPointRequest": {
         "type": "object",

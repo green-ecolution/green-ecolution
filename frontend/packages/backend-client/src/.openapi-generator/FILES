@@ -20,6 +20,7 @@ models/ClusterBoundaryResponse.ts
 models/ClusterMarkerListResponse.ts
 models/ClusterMarkerResponse.ts
 models/ClusterStatisticsResponse.ts
+models/ClusterWateringEventResponse.ts
 models/CreateSensorRequest.ts
 models/DataStatisticsResponse.ts
 models/DrivingLicense.ts
@@ -74,6 +75,10 @@ models/ServicesInfoResponse.ts
 models/SetSensorTreeRequest.ts
 models/SignalResponse.ts
 models/SoilCondition.ts
+models/SoilMoistureDepthSeriesResponse.ts
+models/SoilMoisturePointResponse.ts
+models/SoilMoistureSeriesResponse.ts
+models/SoilMoistureThresholdResponse.ts
 models/StartPointRequest.ts
 models/StartPointResponse.ts
 models/TreeClusterCreateRequest.ts
