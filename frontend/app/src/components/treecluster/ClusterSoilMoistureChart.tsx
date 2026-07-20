@@ -127,6 +127,7 @@ const ClusterSoilMoistureChart = ({ clusterId, hasSensors }: ClusterSoilMoisture
                   connectNulls
                   activeDot={false}
                   tooltipType="none"
+                  legendType="none"
                 />
               ))}
               {depths.map((depth, index) => (
