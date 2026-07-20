@@ -16,7 +16,7 @@ export interface KeycloakJWT {
   given_name: string
   family_name: string
   email: string
-  driving_licenses: string[]
+  driving_licenses?: string[]
   user_roles: string[]
-  status: string
+  status?: string
 }

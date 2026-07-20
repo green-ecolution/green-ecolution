@@ -19,3 +19,27 @@ describe('useCurrentUser (bypass)', () => {
     expect(result.current.userRoles.length).toBeGreaterThan(0)
   })
 })
+
+describe('useCurrentUser (token without profile attributes)', () => {
+  it('falls back to unknown status when the JWT carries no status claim', async () => {
+    const payload = {
+      preferred_username: 'tbz1',
+      email: 'tbz1@example.com',
+      given_name: 'T',
+      family_name: 'BZ',
+      user_roles: ['tbz'],
+    }
+    const token = `x.${btoa(JSON.stringify(payload))}.y`
+    vi.doMock('./authSessionContext', () => ({
+      // eslint-disable-next-line react-x/no-unnecessary-use-prefix -- mock must keep the real hook's exported name
+      useAuthSession: () => ({ accessToken: token }),
+    }))
+    const { useCurrentUser } = await import('./useCurrentUser')
+    const { UNKNOWN_USER_STATUS } = await import('@/hooks/details/useDetailsForUserStatus')
+    const { result } = renderHook(() => useCurrentUser())
+    expect(result.current.username).toBe('tbz1')
+    expect(result.current.userStatus).toBe(UNKNOWN_USER_STATUS)
+    expect(result.current.drivingLicenses).toEqual([])
+    vi.doUnmock('./authSessionContext')
+  })
+})
