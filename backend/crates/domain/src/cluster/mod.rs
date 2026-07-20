@@ -40,7 +40,8 @@ pub use repository::{TreeClusterReader, TreeClusterWriter};
 pub use snapshot::TreeClusterSnapshot;
 pub use soil_condition::SoilCondition;
 pub use soil_moisture::{
-    ClusterWateringEvent, SoilMoistureBucket, SoilMoistureDepthSeries, SoilMoisturePoint,
+    ClusterWateringEvent, SoilMoistureBucket, SoilMoistureDepthSeries, SoilMoistureOverview,
+    SoilMoisturePoint,
 };
 pub use view::{ClusterBoundaryView, TreeClusterView};
 

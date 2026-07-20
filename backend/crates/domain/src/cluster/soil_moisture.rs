@@ -4,6 +4,8 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use uuid::Uuid;
 
+use crate::tree::VolumetricThresholds;
+
 /// Aggregation bucket for the soil-moisture time series.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SoilMoistureBucket {
@@ -34,4 +36,13 @@ pub struct ClusterWateringEvent {
     pub watering_plan_id: Uuid,
     pub date: NaiveDate,
     pub consumed_water_liters: f64,
+}
+
+/// Everything the cluster dashboard chart needs in one read.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SoilMoistureOverview {
+    pub bucket: SoilMoistureBucket,
+    pub series: Vec<SoilMoistureDepthSeries>,
+    pub thresholds: Vec<VolumetricThresholds>,
+    pub watering_events: Vec<ClusterWateringEvent>,
 }

@@ -1,18 +1,19 @@
 use std::sync::Arc;
 
+use chrono::{DateTime, Utc};
 use domain::{
     Id,
     cluster::{
-        ClusterBoundaryView, ClusterMarker, ClusterStatistics, TreeCluster, TreeClusterDraft,
-        TreeClusterReader, TreeClusterSearchQuery, TreeClusterUpdate, TreeClusterView,
-        TreeClusterWriter,
+        ClusterBoundaryView, ClusterMarker, ClusterStatistics, SoilMoistureBucket,
+        SoilMoistureOverview, TreeCluster, TreeClusterDraft, TreeClusterReader,
+        TreeClusterSearchQuery, TreeClusterUpdate, TreeClusterView, TreeClusterWriter,
     },
     events::DomainEvent,
     shared::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
     },
-    tree::{Tree, TreeReader, TreeWriter},
+    tree::{Tree, TreeReader, TreeWriter, volumetric_thresholds},
 };
 
 use super::{ServiceError, event_bus::EventBus};
@@ -165,5 +166,38 @@ impl ClusterService {
         id: Id<TreeCluster>,
     ) -> Result<Option<Coordinate>, ServiceError> {
         Ok(self.reader.center_point(id).await?)
+    }
+
+    /// Thresholds are derived from the cluster's KA5 soil type; an unknown or
+    /// unset soil yields an empty threshold list, not an error.
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn soil_moisture_overview(
+        &self,
+        id: Id<TreeCluster>,
+        from: DateTime<Utc>,
+        to: DateTime<Utc>,
+        bucket: SoilMoistureBucket,
+    ) -> Result<SoilMoistureOverview, ServiceError> {
+        let view = self.reader.view_by_id(id).await?;
+        let series = self
+            .reader
+            .soil_moisture_series(id, from, to, bucket)
+            .await?;
+        let thresholds = view
+            .soil_condition
+            .map(|soil| {
+                series
+                    .iter()
+                    .filter_map(|s| volumetric_thresholds(soil, s.depth_cm))
+                    .collect()
+            })
+            .unwrap_or_default();
+        let watering_events = self.reader.watering_events(id).await?;
+        Ok(SoilMoistureOverview {
+            bucket,
+            series,
+            thresholds,
+            watering_events,
+        })
     }
 }

@@ -16,8 +16,8 @@ use crate::{
             cluster::{
                 ClusterBoundaryListResponse, ClusterBoundaryResponse, ClusterListParams,
                 ClusterMarkerListResponse, ClusterMarkerResponse, ClusterStatisticsResponse,
-                TreeClusterCreateRequest, TreeClusterInListResponse, TreeClusterResponse,
-                TreeClusterUpdateRequest,
+                SoilMoistureParams, SoilMoistureSeriesResponse, TreeClusterCreateRequest,
+                TreeClusterInListResponse, TreeClusterResponse, TreeClusterUpdateRequest,
             },
             sensor::resolve_sensors_by_str_ids,
             tree::TreeResponse,
@@ -45,6 +45,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(list_cluster_markers))
         .routes(routes!(list_cluster_boundaries))
         .routes(routes!(get_cluster, update_cluster, delete_cluster))
+        .routes(routes!(get_cluster_soil_moisture))
 }
 
 async fn build_cluster_response(
@@ -333,4 +334,52 @@ pub async fn cluster_statistics(
 ) -> Result<Json<ClusterStatisticsResponse>, ServiceError> {
     let stats = state.cluster_service.statistics().await?;
     Ok(Json(ClusterStatisticsResponse::from(stats)))
+}
+
+#[utoipa::path(
+    get,
+    path = "/clusters/{cluster_id}/soil-moisture",
+    tag = "Tree Clusters",
+    operation_id = "getClusterSoilMoisture",
+    summary = "Bucketed soil-moisture series for a cluster",
+    description = "Aggregates volumetric soil-moisture readings (mean/min/max per probe depth and time bucket) \
+                   across all sensors of the cluster, with per-depth stress thresholds derived from the \
+                   cluster's soil condition and the cluster's finished watering runs.",
+    params(("cluster_id" = uuid::Uuid, Path, description = "Cluster ID"), SoilMoistureParams),
+    responses(
+        (status = 200, description = "Aggregated soil-moisture series", body = SoilMoistureSeriesResponse),
+        (status = 400, description = "Invalid query parameter"),
+        (status = 404, description = "Cluster not found"),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]
+pub async fn get_cluster_soil_moisture(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<uuid::Uuid>,
+    Query(params): Query<SoilMoistureParams>,
+) -> Result<Json<SoilMoistureSeriesResponse>, ServiceError> {
+    let to = params.to.unwrap_or_else(chrono::Utc::now);
+    let from = params
+        .from
+        .unwrap_or_else(|| to - chrono::Duration::days(7));
+    if from >= to {
+        return Err(ServiceError::InvalidInput(
+            "`from` must be before `to`".into(),
+        ));
+    }
+    let bucket = match params.bucket.as_deref() {
+        None | Some("day") => domain::cluster::SoilMoistureBucket::Day,
+        Some("hour") => domain::cluster::SoilMoistureBucket::Hour,
+        Some(other) => {
+            return Err(ServiceError::InvalidInput(format!(
+                "unknown bucket '{other}' (use hour or day)"
+            )));
+        }
+    };
+    let overview = state
+        .cluster_service
+        .soil_moisture_overview(Id::new(id), from, to, bucket)
+        .await?;
+    Ok(Json(SoilMoistureSeriesResponse::from(overview)))
 }
