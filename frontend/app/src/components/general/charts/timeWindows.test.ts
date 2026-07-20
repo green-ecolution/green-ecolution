@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SIGNAL_WINDOWS, windowStart, type SignalWindowKey } from './signalWindows'
+import { TIME_WINDOWS, timeWindowOptions, windowStart, type TimeWindowKey } from './timeWindows'
 
 describe('windowStart', () => {
   const now = new Date('2026-07-13T14:37:22.123Z').getTime()
@@ -15,8 +15,17 @@ describe('windowStart', () => {
   })
 
   it('defines a label for every window', () => {
-    for (const key of Object.keys(SIGNAL_WINDOWS) as SignalWindowKey[]) {
-      expect(SIGNAL_WINDOWS[key].label).toBeTruthy()
+    for (const key of Object.keys(TIME_WINDOWS) as TimeWindowKey[]) {
+      expect(TIME_WINDOWS[key].label).toBeTruthy()
     }
+  })
+})
+
+describe('timeWindowOptions', () => {
+  it('maps keys to value/label pairs', () => {
+    expect(timeWindowOptions(['24h', '7d'])).toEqual([
+      { value: '24h', label: '24 h' },
+      { value: '7d', label: '7 Tage' },
+    ])
   })
 })
