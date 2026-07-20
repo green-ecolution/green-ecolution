@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT wp.id AS \"watering_plan_id!\",\n                      wp.date AS \"date!\",\n                      tcwp.consumed_water AS \"consumed_water!\"\n               FROM tree_cluster_watering_plans tcwp\n               JOIN watering_plans wp ON wp.id = tcwp.watering_plan_id\n               WHERE tcwp.tree_cluster_id = $1\n                 AND wp.status = 'finished'\n               ORDER BY wp.date DESC",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "watering_plan_id!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "date!",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 2,
+        "name": "consumed_water!",
+        "type_info": "Float8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "d34badcd747401ae59780281f75cf218865ed6002599bd0359e084575fdf5180"
+}

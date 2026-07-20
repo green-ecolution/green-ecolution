@@ -1,9 +1,11 @@
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 
 use crate::{
     Id, RepositoryError,
     cluster::{
-        ClusterBoundaryView, ClusterMarker, ClusterStatistics, TreeCluster, TreeClusterDraft,
+        ClusterBoundaryView, ClusterMarker, ClusterStatistics, ClusterWateringEvent,
+        SoilMoistureBucket, SoilMoistureDepthSeries, TreeCluster, TreeClusterDraft,
         TreeClusterSearchQuery, TreeClusterView,
     },
     shared::{
@@ -47,6 +49,23 @@ pub trait TreeClusterReader: Send + Sync {
     ) -> Result<Option<Coordinate>, RepositoryError>;
 
     async fn statistics(&self) -> Result<ClusterStatistics, RepositoryError>;
+
+    /// Bucketed volumetric soil-moisture readings (mean/min/max per depth)
+    /// from all sensors currently linked to the cluster's trees. Readings
+    /// outside 0–100 % are sensor sentinels and are excluded.
+    async fn soil_moisture_series(
+        &self,
+        id: Id<TreeCluster>,
+        from: DateTime<Utc>,
+        to: DateTime<Utc>,
+        bucket: SoilMoistureBucket,
+    ) -> Result<Vec<SoilMoistureDepthSeries>, RepositoryError>;
+
+    /// Finished watering-plan runs that included this cluster, newest first.
+    async fn watering_events(
+        &self,
+        id: Id<TreeCluster>,
+    ) -> Result<Vec<ClusterWateringEvent>, RepositoryError>;
 }
 
 /// Write-side access to tree clusters.

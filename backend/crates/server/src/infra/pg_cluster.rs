@@ -8,7 +8,8 @@ use domain::cluster::snapshot::TreeClusterSnapshot;
 use domain::{
     Id, RepositoryError,
     cluster::{
-        ClusterBoundaryView, ClusterMarker, ClusterStatistics, SoilCondition, TreeCluster,
+        ClusterBoundaryView, ClusterMarker, ClusterStatistics, ClusterWateringEvent, SoilCondition,
+        SoilMoistureBucket, SoilMoistureDepthSeries, SoilMoisturePoint, TreeCluster,
         TreeClusterDraft, TreeClusterReader, TreeClusterSearchQuery, TreeClusterView,
         TreeClusterWriter,
     },
@@ -398,6 +399,96 @@ impl TreeClusterReader for PgTreeClusterRepository {
             just_watered: row.just_watered,
             unknown: row.unknown,
         })
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn soil_moisture_series(
+        &self,
+        id: Id<TreeCluster>,
+        from: DateTime<Utc>,
+        to: DateTime<Utc>,
+        bucket: SoilMoistureBucket,
+    ) -> Result<Vec<SoilMoistureDepthSeries>, RepositoryError> {
+        let bucket_kind = match bucket {
+            SoilMoistureBucket::Hour => "hour",
+            SoilMoistureBucket::Day => "day",
+        };
+        // Sentinel guard: disconnected Dragino probes report ~6553.5, so
+        // anything outside 0–100 Vol.-% is a sensor error, not a reading.
+        let rows = sqlx::query!(
+            r#"SELECT sma.depth_cm AS "depth_cm!",
+                      date_trunc($4, sd.updated_at) AS "bucket_start!",
+                      AVG(dav.value)::float8 AS "mean!",
+                      MIN(dav.value)::float8 AS "min!",
+                      MAX(dav.value)::float8 AS "max!",
+                      COUNT(*) AS "sample_count!"
+               FROM trees t
+               JOIN sensor_data sd ON sd.sensor_id = t.sensor_id
+               JOIN sensor_data_ability_values dav ON dav.sensor_data_id = sd.id
+               JOIN sensor_model_abilities sma ON sma.id = dav.sensor_model_ability_id
+               JOIN sensor_abilities sa ON sa.id = sma.sensor_ability_id
+               WHERE t.tree_cluster_id = $1
+                 AND sa.ability = 'soil_moisture'
+                 AND dav.value >= 0 AND dav.value <= 100
+                 AND sd.updated_at >= $2
+                 AND sd.updated_at <= $3
+               GROUP BY sma.depth_cm, date_trunc($4, sd.updated_at)
+               ORDER BY sma.depth_cm, date_trunc($4, sd.updated_at)"#,
+            id.value(),
+            from.naive_utc(),
+            to.naive_utc(),
+            bucket_kind,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut series: Vec<SoilMoistureDepthSeries> = Vec::new();
+        for r in rows {
+            let point = SoilMoisturePoint {
+                bucket_start: r.bucket_start.and_utc(),
+                mean: r.mean,
+                min: r.min,
+                max: r.max,
+                sample_count: r.sample_count,
+            };
+            match series.last_mut() {
+                Some(s) if s.depth_cm == r.depth_cm => s.points.push(point),
+                _ => series.push(SoilMoistureDepthSeries {
+                    depth_cm: r.depth_cm,
+                    points: vec![point],
+                }),
+            }
+        }
+        Ok(series)
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn watering_events(
+        &self,
+        id: Id<TreeCluster>,
+    ) -> Result<Vec<ClusterWateringEvent>, RepositoryError> {
+        let rows = sqlx::query!(
+            r#"SELECT wp.id AS "watering_plan_id!",
+                      wp.date AS "date!",
+                      tcwp.consumed_water AS "consumed_water!"
+               FROM tree_cluster_watering_plans tcwp
+               JOIN watering_plans wp ON wp.id = tcwp.watering_plan_id
+               WHERE tcwp.tree_cluster_id = $1
+                 AND wp.status = 'finished'
+               ORDER BY wp.date DESC"#,
+            id.value(),
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|r| ClusterWateringEvent {
+                watering_plan_id: r.watering_plan_id,
+                date: r.date,
+                consumed_water_liters: r.consumed_water,
+            })
+            .collect())
     }
 }
 
