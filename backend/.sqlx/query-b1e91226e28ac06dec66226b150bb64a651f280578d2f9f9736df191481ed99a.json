@@ -1,0 +1,81 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, employee_id, phone_number, avatar_url,\n                      status AS \"status: UserStatus\",\n                      driving_licenses AS \"driving_licenses: Vec<DrivingLicense>\"\n               FROM user_profiles\n               WHERE id = ANY($1)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "employee_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "phone_number",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "avatar_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "status: UserStatus",
+        "type_info": {
+          "Custom": {
+            "name": "user_status",
+            "kind": {
+              "Enum": [
+                "available",
+                "absent"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "driving_licenses: Vec<DrivingLicense>",
+        "type_info": {
+          "Custom": {
+            "name": "driving_license[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "driving_license",
+                  "kind": {
+                    "Enum": [
+                      "B",
+                      "BE",
+                      "C",
+                      "CE"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "b1e91226e28ac06dec66226b150bb64a651f280578d2f9f9736df191481ed99a"
+}

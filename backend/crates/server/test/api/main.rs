@@ -21,5 +21,6 @@ pub mod sensors;
 pub mod statistics;
 pub mod trees;
 pub mod update_checker;
+pub mod user_profiles;
 pub mod vehicle;
 pub mod watering_plans;

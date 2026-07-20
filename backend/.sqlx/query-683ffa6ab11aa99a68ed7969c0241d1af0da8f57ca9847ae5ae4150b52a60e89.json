@@ -1,0 +1,48 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO user_profiles\n                   (id, employee_id, phone_number, avatar_url, status, driving_licenses)\n               VALUES ($1, $2, $3, $4, $5, $6)\n               ON CONFLICT (id) DO UPDATE SET\n                   employee_id      = EXCLUDED.employee_id,\n                   phone_number     = EXCLUDED.phone_number,\n                   avatar_url       = EXCLUDED.avatar_url,\n                   status           = EXCLUDED.status,\n                   driving_licenses = EXCLUDED.driving_licenses",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "user_status",
+            "kind": {
+              "Enum": [
+                "available",
+                "absent"
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "driving_license[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "driving_license",
+                  "kind": {
+                    "Enum": [
+                      "B",
+                      "BE",
+                      "C",
+                      "CE"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "683ffa6ab11aa99a68ed7969c0241d1af0da8f57ca9847ae5ae4150b52a60e89"
+}
