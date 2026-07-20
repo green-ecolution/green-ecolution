@@ -1,29 +1,32 @@
 import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronDown, Pencil, Trash2 } from 'lucide-react'
-import TreeCard from '@/components/general/cards/TreeCard'
-import ClusterSignalCard from './ClusterSignalCard'
+import ClusterKpiRow from './ClusterKpiRow'
+import ClusterSoilMoistureChart from './ClusterSoilMoistureChart'
+import ClusterWateringHistory from './ClusterWateringHistory'
+import ClusterLocationCard from './ClusterLocationCard'
+import ClusterSensorCard from './ClusterSensorCard'
+import ClusterTreeList from './ClusterTreeList'
+import ClusterMasterDataCard from './ClusterMasterDataCard'
 import EntityDetailHeader from '@/components/general/EntityDetailHeader'
 import DeleteConfirmDialog from '@/components/general/DeleteConfirmDialog'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
-import GeneralLink from '../general/links/GeneralLink'
 import createToast from '@/hooks/createToast'
-import { format } from 'date-fns'
 import {
   Alert,
   AlertIcon,
   AlertContent,
   AlertTitle,
   AlertDescription,
+  Badge,
   Button,
   ButtonGroup,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  StatusCard,
 } from '@green-ecolution/ui'
-import { clusterApi, type TreeCluster, type Tree } from '@/api/backendApi'
+import { clusterApi, type TreeCluster } from '@/api/backendApi'
 
 interface TreeClusterDashboardProps {
   treecluster: TreeCluster
@@ -34,9 +37,8 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
   const showToast = createToast()
   const [confirmDelete, setConfirmDelete] = useState(false)
   const wateringStatus = getWateringStatusDetails(treecluster.wateringStatus)
-  const lastWateredDate = treecluster.lastWatered
-    ? format(new Date(treecluster.lastWatered), 'dd.MM.yyyy')
-    : 'Keine Angabe'
+  const trees = treecluster.trees ?? []
+  const hasSensors = trees.some((tree) => tree.sensor)
 
   const handleDelete = () => {
     clusterApi
@@ -54,6 +56,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
       <EntityDetailHeader
         backLink={{ link: { to: '/treecluster' }, label: 'Zu allen Bewässerungsgruppen' }}
         title={<>Bewässerungsgruppe: {treecluster.name}</>}
+        badge={<Badge variant={wateringStatus.color}>{wateringStatus.label}</Badge>}
         actions={
           <ButtonGroup>
             <Button variant="outline" asChild>
@@ -89,8 +92,11 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
           </ButtonGroup>
         }
       >
+        <p className="mb-4 text-dark-600">
+          {treecluster.address} · {treecluster.region?.name ?? '—'} · {trees.length} Bäume
+        </p>
         {treecluster.description && <p className="mb-4">{treecluster.description}</p>}
-        {treecluster.trees?.length === 0 ? (
+        {trees.length === 0 && (
           <Alert variant="destructive" className="flex gap-4">
             <AlertIcon variant="destructive" />
             <AlertContent>
@@ -100,85 +106,22 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
               </AlertDescription>
             </AlertContent>
           </Alert>
-        ) : (
-          <GeneralLink
-            link={{
-              to: '/map',
-              search: {
-                lat: treecluster.latitude,
-                lng: treecluster.longitude,
-                zoom: 16,
-                cluster: treecluster.id,
-              },
-            }}
-            label="Auf der Karte anzeigen"
-          />
         )}
       </EntityDetailHeader>
 
-      <section className="mt-10">
-        <ul className="flex flex-col gap-y-5 md:grid md:gap-5 md:grid-cols-2 xl:grid-cols-4">
-          <li className="h-full">
-            <StatusCard
-              status={wateringStatus.color}
-              indicator="dot"
-              label="Bewässerungszustand (ø)"
-              value={wateringStatus.label}
-              description={wateringStatus.description}
-            />
-          </li>
-          <li className="h-full">
-            <StatusCard
-              label="Baumanzahl in der Gruppe"
-              value={
-                treecluster.trees?.length
-                  ? `${treecluster.trees.length} ${treecluster.trees.length > 1 ? 'Bäume' : 'Baum'}`
-                  : 'Keine Bäume'
-              }
-              description="Nicht alle Bäume haben Sensoren, da Rückschlüsse möglich sind."
-            />
-          </li>
-          <li className="h-full">
-            <StatusCard
-              label="Standort der Gruppe"
-              value={`${treecluster.address}, ${treecluster.region?.name ?? '-'}`}
-            />
-          </li>
-          <li className="h-full">
-            <StatusCard
-              label="Datum der letzten Bewässerung"
-              value={lastWateredDate}
-              description="Wird aktualisiert, sobald ein Einsatzplan mit dieser Gruppe als »Beendet« markiert wird."
-            />
-          </li>
-        </ul>
-      </section>
-
-      <ClusterSignalCard treecluster={treecluster} />
-
-      <section className="mt-16">
-        <h2 className="text-xl font-bold font-lato mb-10">Alle zugehörigen Bäume</h2>
-
-        <header className="hidden border-b pb-2 text-sm text-dark-800 px-6 border-b-dark-200 mb-5 lg:grid lg:grid-cols-[1.5fr_2fr_1fr] lg:gap-5">
-          <p>Status</p>
-          <p>Baumart</p>
-          <p>Baumnummer</p>
-        </header>
-
-        <ul className="flex flex-col gap-y-5">
-          {treecluster.trees?.length === 0 ? (
-            <li className="text-center text-dark-600 mt-4">
-              <p>Der Bewässerungsgruppe wurden keine Bäume hinzugefügt.</p>
-            </li>
-          ) : (
-            treecluster.trees?.map((tree: Tree) => (
-              <li key={tree.id}>
-                <TreeCard tree={tree} showTreeClusterInfo={false} />
-              </li>
-            ))
-          )}
-        </ul>
-      </section>
+      <div className="mt-10 grid gap-6 xl:grid-cols-[2fr_1fr]">
+        <div className="flex flex-col gap-6">
+          <ClusterKpiRow treecluster={treecluster} />
+          <ClusterSoilMoistureChart clusterId={treecluster.id} hasSensors={hasSensors} />
+          <ClusterWateringHistory clusterId={treecluster.id} />
+        </div>
+        <div className="flex flex-col gap-6">
+          <ClusterLocationCard treecluster={treecluster} />
+          <ClusterSensorCard trees={trees} />
+          <ClusterTreeList trees={trees} />
+          <ClusterMasterDataCard treecluster={treecluster} />
+        </div>
+      </div>
 
       <DeleteConfirmDialog
         open={confirmDelete}
