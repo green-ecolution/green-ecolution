@@ -93,7 +93,8 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
         }
       >
         <p className="mb-4 text-dark-600">
-          {treecluster.address} · {treecluster.region?.name ?? '—'} · {trees.length} Bäume
+          {treecluster.address} · {treecluster.region?.name ?? '—'} · {trees.length}{' '}
+          {trees.length === 1 ? 'Baum' : 'Bäume'}
         </p>
         {treecluster.description && <p className="mb-4">{treecluster.description}</p>}
         {trees.length === 0 && (

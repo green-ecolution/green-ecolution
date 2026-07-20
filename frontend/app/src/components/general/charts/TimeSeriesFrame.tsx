@@ -2,6 +2,8 @@ import { format } from 'date-fns'
 import { CartesianGrid, ComposedChart, XAxis, YAxis } from 'recharts'
 import {
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
@@ -15,6 +17,7 @@ interface TimeSeriesFrameProps {
   data: Record<string, unknown>[]
   yDomain?: [string | number, string | number]
   className?: string
+  legend?: boolean
   children: React.ReactNode
 }
 
@@ -24,6 +27,7 @@ const TimeSeriesFrame = ({
   data,
   yDomain = ['auto', 'auto'],
   className = 'h-[220px] w-full',
+  legend = false,
   children,
 }: TimeSeriesFrameProps) => {
   const ts = data.map((row) => row.ts as number)
@@ -57,6 +61,7 @@ const TimeSeriesFrame = ({
             />
           }
         />
+        {legend && <ChartLegend content={<ChartLegendContent />} />}
         {children}
       </ComposedChart>
     </ChartContainer>

@@ -70,8 +70,17 @@ const ClusterSoilMoistureChart = ({ clusterId, hasSensors }: ClusterSoilMoisture
       (event) => rows.length > 1 && event.ts >= rows[0].ts && event.ts <= rows[rows.length - 1].ts,
     )
 
+  // Depths often share one calibration value (e.g. Uu: 18 % at 40 and 80 cm);
+  // merged lines avoid stacked identical dashes with colliding labels.
+  const thresholdLines = new Map<number, number[]>()
+  for (const threshold of data?.thresholds ?? []) {
+    const depthsAtValue = thresholdLines.get(threshold.critical) ?? []
+    depthsAtValue.push(threshold.depthCm)
+    thresholdLines.set(threshold.critical, depthsAtValue)
+  }
+
   return (
-    <Card>
+    <Card variant="outlined">
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2">
         <div>
           <CardTitle>Bodenfeuchte-Verlauf</CardTitle>
@@ -106,6 +115,7 @@ const ClusterSoilMoistureChart = ({ clusterId, hasSensors }: ClusterSoilMoisture
               data={rows}
               className="h-[260px] w-full"
               yDomain={[0, 'auto']}
+              legend
             >
               {depths.map((depth, index) => (
                 <Area
@@ -131,14 +141,18 @@ const ClusterSoilMoistureChart = ({ clusterId, hasSensors }: ClusterSoilMoisture
                   connectNulls
                 />
               ))}
-              {(data.thresholds ?? []).map((threshold, index) => (
+              {[...thresholdLines].map(([critical, depthsAtValue]) => (
                 <ReferenceLine
-                  key={`crit_${threshold.depthCm}`}
-                  y={threshold.critical}
-                  stroke={depthColor(threshold.depthCm, index)}
+                  key={`crit_${critical}`}
+                  y={critical}
+                  stroke={
+                    depthsAtValue.length === 1
+                      ? depthColor(depthsAtValue[0], depths.indexOf(depthsAtValue[0]))
+                      : '#747474'
+                  }
                   strokeDasharray="4 4"
                   label={{
-                    value: `Kritisch ${threshold.depthCm} cm`,
+                    value: `Kritisch ${depthsAtValue.join('/')} cm`,
                     position: 'insideBottomLeft',
                     fontSize: 11,
                   }}
