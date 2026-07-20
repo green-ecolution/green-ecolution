@@ -18,6 +18,7 @@ import type {
   ListResponseUserResponse,
   UserRegisterRequest,
   UserResponse,
+  UserUpdateRequest,
 } from '../models/index';
 import {
     ListResponseUserResponseFromJSON,
@@ -26,6 +27,8 @@ import {
     UserRegisterRequestToJSON,
     UserResponseFromJSON,
     UserResponseToJSON,
+    UserUpdateRequestFromJSON,
+    UserUpdateRequestToJSON,
 } from '../models/index';
 
 export interface CreateUserRequest {
@@ -41,6 +44,11 @@ export interface ListUsersByRoleRequest {
     roleId: string;
     page?: number;
     perPage?: number;
+}
+
+export interface UpdateUserRequest {
+    userId: string;
+    userUpdateRequest: UserUpdateRequest;
 }
 
 /**
@@ -172,6 +180,55 @@ export class UsersApi extends runtime.BaseAPI {
      */
     async listUsersByRole(requestParameters: ListUsersByRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseUserResponse> {
         const response = await this.listUsersByRoleRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Admin-only replace-style update of the app-owned user profile.
+     * Replace a user\'s profile data
+     */
+    async updateUserRaw(requestParameters: UpdateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserResponse>> {
+        if (requestParameters['userId'] == null) {
+            throw new runtime.RequiredError(
+                'userId',
+                'Required parameter "userId" was null or undefined when calling updateUser().'
+            );
+        }
+
+        if (requestParameters['userUpdateRequest'] == null) {
+            throw new runtime.RequiredError(
+                'userUpdateRequest',
+                'Required parameter "userUpdateRequest" was null or undefined when calling updateUser().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/users/{user_id}`;
+        urlPath = urlPath.replace(`{${"user_id"}}`, encodeURIComponent(String(requestParameters['userId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UserUpdateRequestToJSON(requestParameters['userUpdateRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UserResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Admin-only replace-style update of the app-owned user profile.
+     * Replace a user\'s profile data
+     */
+    async updateUser(requestParameters: UpdateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserResponse> {
+        const response = await this.updateUserRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

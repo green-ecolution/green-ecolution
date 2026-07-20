@@ -13,6 +13,21 @@
  */
 
 import { mapValues } from '../runtime';
+import type { DrivingLicense } from './DrivingLicense';
+import {
+    DrivingLicenseFromJSON,
+    DrivingLicenseFromJSONTyped,
+    DrivingLicenseToJSON,
+    DrivingLicenseToJSONTyped,
+} from './DrivingLicense';
+import type { UserStatus } from './UserStatus';
+import {
+    UserStatusFromJSON,
+    UserStatusFromJSONTyped,
+    UserStatusToJSON,
+    UserStatusToJSONTyped,
+} from './UserStatus';
+
 /**
  * Request body for registering a new user.
  * @export
@@ -25,6 +40,12 @@ export interface UserRegisterRequest {
      * @memberof UserRegisterRequest
      */
     avatarUrl?: string | null;
+    /**
+     * Initial driving licenses.
+     * @type {Array<DrivingLicense>}
+     * @memberof UserRegisterRequest
+     */
+    drivingLicenses?: Array<DrivingLicense>;
     /**
      * Email address.
      * @type {string}
@@ -68,12 +89,20 @@ export interface UserRegisterRequest {
      */
     roles: Array<string>;
     /**
+     * Initial availability status (defaults to Available).
+     * @type {UserStatus}
+     * @memberof UserRegisterRequest
+     */
+    status?: UserStatus | null;
+    /**
      * Desired login username.
      * @type {string}
      * @memberof UserRegisterRequest
      */
     username: string;
 }
+
+
 
 /**
  * Check if a given object implements the UserRegisterRequest interface.
@@ -99,6 +128,7 @@ export function UserRegisterRequestFromJSONTyped(json: any, ignoreDiscriminator:
     return {
         
         'avatarUrl': json['avatar_url'] == null ? undefined : json['avatar_url'],
+        'drivingLicenses': json['driving_licenses'] == null ? undefined : ((json['driving_licenses'] as Array<any>).map(DrivingLicenseFromJSON)),
         'email': json['email'],
         'employeeId': json['employee_id'] == null ? undefined : json['employee_id'],
         'firstName': json['first_name'],
@@ -106,6 +136,7 @@ export function UserRegisterRequestFromJSONTyped(json: any, ignoreDiscriminator:
         'password': json['password'],
         'phoneNumber': json['phone_number'] == null ? undefined : json['phone_number'],
         'roles': json['roles'],
+        'status': json['status'] == null ? undefined : UserStatusFromJSON(json['status']),
         'username': json['username'],
     };
 }
@@ -122,6 +153,7 @@ export function UserRegisterRequestToJSONTyped(value?: UserRegisterRequest | nul
     return {
         
         'avatar_url': value['avatarUrl'],
+        'driving_licenses': value['drivingLicenses'] == null ? undefined : ((value['drivingLicenses'] as Array<any>).map(DrivingLicenseToJSON)),
         'email': value['email'],
         'employee_id': value['employeeId'],
         'first_name': value['firstName'],
@@ -129,6 +161,7 @@ export function UserRegisterRequestToJSONTyped(value?: UserRegisterRequest | nul
         'password': value['password'],
         'phone_number': value['phoneNumber'],
         'roles': value['roles'],
+        'status': UserStatusToJSON(value['status']),
         'username': value['username'],
     };
 }
