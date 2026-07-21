@@ -318,3 +318,28 @@ async fn condition_takes_worst_depth_and_maps_to_percent() {
     assert_eq!(body["condition_thresholds"]["moderate"], 40.0);
     assert_eq!(body["condition_thresholds"]["critical"], 30.0);
 }
+
+#[tokio::test]
+async fn condition_is_clamped_to_percent_range() {
+    let app = spawn_app().await;
+    let cluster_id = create_cluster(&app, "Uu").await;
+    insert_sensor_tree(&app, cluster_id, "eui-sm-clamp").await;
+    // Uu @ 40 cm: PWP = 12, nFK_eff = 20 → REW(38.0) = 1.3, REW(5.0) = -0.35.
+    insert_reading(&app, "eui-sm-clamp", "2026-07-02 08:00:00", 40, 38.0).await;
+    insert_reading(&app, "eui-sm-clamp", "2026-07-03 08:00:00", 40, 5.0).await;
+
+    let r = app
+        .get(&format!(
+            "/api/v1/clusters/{cluster_id}/soil-moisture?{WINDOW}&bucket=day"
+        ))
+        .await;
+    assert_eq!(r.status().as_u16(), 200);
+    let body: serde_json::Value = r.json().await.unwrap();
+
+    let condition = body["condition"].as_array().unwrap();
+    assert_eq!(condition.len(), 2);
+    assert_eq!(condition[0]["mean"], 100.0);
+    assert_eq!(condition[0]["max"], 100.0);
+    assert_eq!(condition[1]["mean"], 0.0);
+    assert_eq!(condition[1]["min"], 0.0);
+}

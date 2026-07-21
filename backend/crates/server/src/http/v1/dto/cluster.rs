@@ -443,7 +443,9 @@ pub struct SoilMoistureThresholdResponse {
 }
 
 /// One bucket of the tree-condition series, as % plant-available water
-/// (REW × 100). The depth with the lowest mean REW wins per bucket.
+/// (REW × 100), clamped to 0–100: wetter than field capacity or drier than
+/// the wilting point carries no extra meaning for the dashboard and reads
+/// as a bug ("129 %"). The depth with the lowest mean REW wins per bucket.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SoilMoistureConditionPointResponse {
     /// Bucket start (RFC 3339).
@@ -531,9 +533,9 @@ impl From<domain::cluster::SoilMoistureOverview> for SoilMoistureSeriesResponse 
                 .into_iter()
                 .map(|c| SoilMoistureConditionPointResponse {
                     timestamp: c.bucket_start,
-                    mean: c.rew_mean * 100.0,
-                    min: c.rew_min * 100.0,
-                    max: c.rew_max * 100.0,
+                    mean: (c.rew_mean * 100.0).clamp(0.0, 100.0),
+                    min: (c.rew_min * 100.0).clamp(0.0, 100.0),
+                    max: (c.rew_max * 100.0).clamp(0.0, 100.0),
                     worst_depth_cm: c.worst_depth_cm,
                 })
                 .collect(),
