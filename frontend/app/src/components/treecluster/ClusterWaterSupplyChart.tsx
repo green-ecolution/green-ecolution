@@ -33,8 +33,8 @@ const BUCKET_BY_RANGE: Record<RangeKey, 'hour' | 'day'> = {
 }
 
 const BUCKET_SUBTITLE: Record<'hour' | 'day', string> = {
-  hour: 'Pflanzenverfügbares Wasser (Stundenmittel), schlechteste Messtiefe · Gestrichelt = Schwellen',
-  day: 'Pflanzenverfügbares Wasser (Tagesmittel), schlechteste Messtiefe · Gestrichelt = Schwellen',
+  hour: 'Pflanzenverfügbares Wasser (Stundenmittel) · Gestrichelt = Schwellen',
+  day: 'Pflanzenverfügbares Wasser (Tagesmittel) · Gestrichelt = Schwellen',
 }
 
 const SUPPLY_COLOR = '#0072B2'
