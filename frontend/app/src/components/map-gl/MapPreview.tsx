@@ -61,6 +61,11 @@ const MapPreviewCanvas = ({
     m.on('load', () => {
       m.resize()
       m.triggerRepaint()
+      // MapLibre's compact attribution starts expanded and only collapses on
+      // map interaction; start collapsed the same way its minimize handler does.
+      m.getContainer()
+        .querySelector('.maplibregl-ctrl-attrib')
+        ?.classList.remove('maplibregl-compact-show')
       setMap(m)
     })
     return () => {
