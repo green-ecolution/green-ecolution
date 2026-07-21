@@ -1,10 +1,16 @@
 import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
+import { Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge, type BadgeProps } from './badge'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip'
 
-const statusCardVariants = cva('h-full flex flex-col gap-y-3 rounded-xl p-6', {
+const statusCardVariants = cva('h-full flex flex-col rounded-xl', {
   variants: {
+    size: {
+      default: 'gap-y-3 p-6',
+      compact: 'gap-y-1.5 p-4',
+    },
     status: {
       // Base variants
       default: 'bg-dark-50',
@@ -29,6 +35,7 @@ const statusCardVariants = cva('h-full flex flex-col gap-y-3 rounded-xl p-6', {
     },
   },
   defaultVariants: {
+    size: 'default',
     status: 'default',
   },
 })
@@ -122,12 +129,15 @@ interface StatusCardProps
   icon?: React.ReactNode
   /** Renders a progress bar (0–100) below the value, colored to match `status`. */
   progress?: number
+  /** Renders an info icon next to the label that reveals this text in a tooltip. */
+  info?: React.ReactNode
 }
 
 const StatusCard = React.forwardRef<HTMLDivElement, StatusCardProps>(
   (
     {
       className,
+      size = 'default',
       status = 'default',
       label,
       value,
@@ -136,6 +146,7 @@ const StatusCard = React.forwardRef<HTMLDivElement, StatusCardProps>(
       isLarge = false,
       icon,
       progress,
+      info,
       ...props
     },
     ref,
@@ -146,8 +157,26 @@ const StatusCard = React.forwardRef<HTMLDivElement, StatusCardProps>(
     const badgeVariant = statusToBadgeVariant[status ?? 'default']
 
     return (
-      <div ref={ref} className={cn(statusCardVariants({ status }), className)} {...props}>
-        <p className="text-sm text-dark-700 font-medium">{label}</p>
+      <div ref={ref} className={cn(statusCardVariants({ size, status }), className)} {...props}>
+        <p className="text-sm text-dark-700 font-medium">
+          {label}
+          {info && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Weitere Informationen"
+                    className="ml-1.5 inline-flex translate-y-0.5 text-dark-500 hover:text-dark-700 focus-visible:outline-2 focus-visible:outline-offset-2"
+                  >
+                    <Info className="size-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-64">{info}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </p>
         <div className={cn('font-bold flex items-start gap-2', isLarge ? 'text-3xl' : 'text-xl')}>
           {showDot && <span className={cn(dotVariants({ status }), 'mt-1.5 shrink-0')} />}
           {showIcon && <span className="mt-0.5 shrink-0 [&>svg]:size-5">{icon}</span>}

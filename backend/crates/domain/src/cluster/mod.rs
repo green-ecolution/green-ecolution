@@ -16,6 +16,7 @@ pub mod marker;
 pub mod repository;
 pub mod snapshot;
 pub mod soil_condition;
+pub mod soil_moisture;
 pub mod view;
 
 use chrono::{DateTime, Utc};
@@ -38,6 +39,10 @@ pub use repository::{TreeClusterReader, TreeClusterWriter};
 #[doc(hidden)]
 pub use snapshot::TreeClusterSnapshot;
 pub use soil_condition::SoilCondition;
+pub use soil_moisture::{
+    ClusterWateringEvent, SoilMoistureBucket, SoilMoistureDepthSeries, SoilMoistureOverview,
+    SoilMoisturePoint,
+};
 pub use view::{ClusterBoundaryView, TreeClusterView};
 
 #[derive(Debug, Clone, Default)]

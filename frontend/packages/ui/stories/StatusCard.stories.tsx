@@ -12,6 +12,11 @@ const meta: Meta<typeof StatusCard> = {
       options: ['default', 'red', 'yellow', 'green-dark', 'green-light'],
       description: 'Background color status',
     },
+    size: {
+      control: 'select',
+      options: ['default', 'compact'],
+      description: 'Compact reduziert Padding und Abstände für dichte Dashboards',
+    },
     indicator: {
       control: 'select',
       options: ['none', 'dot', 'badge'],
@@ -181,6 +186,29 @@ export const SensorData: Story = {
         label="Datum der letzten Bewässerung"
         value="15.01.2025"
         description="Wird aktualisiert, sobald ein Einsatzplan als »Beendet« markiert wird."
+      />
+    </div>
+  ),
+}
+
+export const CompactKpiRow: Story = {
+  render: () => (
+    <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+      <StatusCard
+        size="compact"
+        status="yellow"
+        indicator="dot"
+        label="Bewässerungszustand (ø)"
+        value="Leicht trocken"
+        info="Die Bäume sind leicht trocken und benötigen etwas Wasser."
+      />
+      <StatusCard size="compact" label="Bodentemperatur" value="19.4 °C" />
+      <StatusCard size="compact" label="Letzte Messung" value="vor 30 Minuten" />
+      <StatusCard
+        size="compact"
+        label="Letzte Bewässerung"
+        value="—"
+        info="Wird aktualisiert, sobald ein Einsatzplan mit dieser Gruppe als »Beendet« markiert wird."
       />
     </div>
   ),

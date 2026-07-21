@@ -20,6 +20,7 @@ import type {
   ClusterStatisticsResponse,
   ListResponseTreeClusterInListResponse,
   SoilCondition,
+  SoilMoistureSeriesResponse,
   TreeClusterCreateRequest,
   TreeClusterResponse,
   TreeClusterUpdateRequest,
@@ -36,6 +37,8 @@ import {
     ListResponseTreeClusterInListResponseToJSON,
     SoilConditionFromJSON,
     SoilConditionToJSON,
+    SoilMoistureSeriesResponseFromJSON,
+    SoilMoistureSeriesResponseToJSON,
     TreeClusterCreateRequestFromJSON,
     TreeClusterCreateRequestToJSON,
     TreeClusterResponseFromJSON,
@@ -56,6 +59,13 @@ export interface DeleteClusterRequest {
 
 export interface GetClusterRequest {
     clusterId: string;
+}
+
+export interface GetClusterSoilMoistureRequest {
+    clusterId: string;
+    from?: Date | null;
+    to?: Date | null;
+    bucket?: string | null;
 }
 
 export interface ListClustersRequest {
@@ -194,6 +204,57 @@ export class TreeClustersApi extends runtime.BaseAPI {
      */
     async getCluster(requestParameters: GetClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TreeClusterResponse> {
         const response = await this.getClusterRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Aggregates volumetric soil-moisture readings (mean/min/max per probe depth and time bucket) across all sensors of the cluster, with per-depth stress thresholds derived from the cluster\'s soil condition and the cluster\'s finished watering runs.
+     * Bucketed soil-moisture series for a cluster
+     */
+    async getClusterSoilMoistureRaw(requestParameters: GetClusterSoilMoistureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SoilMoistureSeriesResponse>> {
+        if (requestParameters['clusterId'] == null) {
+            throw new runtime.RequiredError(
+                'clusterId',
+                'Required parameter "clusterId" was null or undefined when calling getClusterSoilMoisture().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['from'] != null) {
+            queryParameters['from'] = (requestParameters['from'] as any).toISOString();
+        }
+
+        if (requestParameters['to'] != null) {
+            queryParameters['to'] = (requestParameters['to'] as any).toISOString();
+        }
+
+        if (requestParameters['bucket'] != null) {
+            queryParameters['bucket'] = requestParameters['bucket'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/clusters/{cluster_id}/soil-moisture`;
+        urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SoilMoistureSeriesResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Aggregates volumetric soil-moisture readings (mean/min/max per probe depth and time bucket) across all sensors of the cluster, with per-depth stress thresholds derived from the cluster\'s soil condition and the cluster\'s finished watering runs.
+     * Bucketed soil-moisture series for a cluster
+     */
+    async getClusterSoilMoisture(requestParameters: GetClusterSoilMoistureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SoilMoistureSeriesResponse> {
+        const response = await this.getClusterSoilMoistureRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

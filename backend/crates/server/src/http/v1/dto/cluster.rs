@@ -1,3 +1,4 @@
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 
 use domain::{
@@ -359,6 +360,118 @@ impl From<ClusterStatistics> for ClusterStatisticsResponse {
             good: v.good,
             just_watered: v.just_watered,
             unknown: v.unknown,
+        }
+    }
+}
+
+/// Query parameters for the cluster soil-moisture series.
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+pub struct SoilMoistureParams {
+    /// Window start (RFC 3339). Defaults to 7 days before `to`.
+    pub from: Option<DateTime<Utc>>,
+    /// Window end (RFC 3339). Defaults to now.
+    pub to: Option<DateTime<Utc>>,
+    /// Aggregation bucket. Allowed: `hour|day`. Defaults to `day`.
+    #[param(example = "day")]
+    pub bucket: Option<String>,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct SoilMoisturePointResponse {
+    /// Bucket start (RFC 3339).
+    pub timestamp: DateTime<Utc>,
+    #[schema(example = 23.4)]
+    pub mean: f64,
+    #[schema(example = 21.0)]
+    pub min: f64,
+    #[schema(example = 25.1)]
+    pub max: f64,
+    #[schema(example = 12)]
+    pub sample_count: i64,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct SoilMoistureDepthSeriesResponse {
+    #[schema(example = 40)]
+    pub depth_cm: i32,
+    pub points: Vec<SoilMoisturePointResponse>,
+}
+
+/// Volumetric thresholds (Vol.-%) below which a depth counts as stressed.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct SoilMoistureThresholdResponse {
+    #[schema(example = 40)]
+    pub depth_cm: i32,
+    #[schema(example = 12.4)]
+    pub moderate: f64,
+    #[schema(example = 10.9)]
+    pub critical: f64,
+}
+
+/// A finished watering-plan run that included this cluster.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct ClusterWateringEventResponse {
+    pub watering_plan_id: uuid::Uuid,
+    pub date: NaiveDate,
+    #[schema(example = 1800.0)]
+    pub consumed_water_liters: f64,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct SoilMoistureSeriesResponse {
+    /// Effective bucket: `hour` or `day`.
+    #[schema(example = "day")]
+    pub bucket: String,
+    pub series: Vec<SoilMoistureDepthSeriesResponse>,
+    /// Empty when the cluster's soil condition is unknown.
+    pub thresholds: Vec<SoilMoistureThresholdResponse>,
+    /// All finished runs, newest first (not limited to the query window).
+    pub watering_events: Vec<ClusterWateringEventResponse>,
+}
+
+impl From<domain::cluster::SoilMoistureOverview> for SoilMoistureSeriesResponse {
+    fn from(v: domain::cluster::SoilMoistureOverview) -> Self {
+        Self {
+            bucket: match v.bucket {
+                domain::cluster::SoilMoistureBucket::Hour => "hour".into(),
+                domain::cluster::SoilMoistureBucket::Day => "day".into(),
+            },
+            series: v
+                .series
+                .into_iter()
+                .map(|s| SoilMoistureDepthSeriesResponse {
+                    depth_cm: s.depth_cm,
+                    points: s
+                        .points
+                        .into_iter()
+                        .map(|p| SoilMoisturePointResponse {
+                            timestamp: p.bucket_start,
+                            mean: p.mean,
+                            min: p.min,
+                            max: p.max,
+                            sample_count: p.sample_count,
+                        })
+                        .collect(),
+                })
+                .collect(),
+            thresholds: v
+                .thresholds
+                .into_iter()
+                .map(|t| SoilMoistureThresholdResponse {
+                    depth_cm: t.depth_cm,
+                    moderate: t.moderate,
+                    critical: t.critical,
+                })
+                .collect(),
+            watering_events: v
+                .watering_events
+                .into_iter()
+                .map(|e| ClusterWateringEventResponse {
+                    watering_plan_id: e.watering_plan_id,
+                    date: e.date,
+                    consumed_water_liters: e.consumed_water_liters,
+                })
+                .collect(),
         }
     }
 }

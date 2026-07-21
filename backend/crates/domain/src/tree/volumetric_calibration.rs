@@ -30,6 +30,28 @@ impl DepthParams {
     }
 }
 
+/// Volumetric soil-moisture thresholds in Vol.-% for one probe depth.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct VolumetricThresholds {
+    pub depth_cm: i32,
+    /// Below this the tree counts as moderately stressed (`REW_MIN`).
+    pub moderate: f64,
+    /// Below this the tree counts as acutely stressed (`REW_CRIT`).
+    pub critical: f64,
+}
+
+/// Thresholds for `soil` at `depth_cm`; `None` for `Unknown` soil or a depth
+/// without calibration data (only 40 cm and 80 cm are defined).
+pub fn volumetric_thresholds(soil: SoilCondition, depth_cm: i32) -> Option<VolumetricThresholds> {
+    let params = depth_params(soil, depth_cm)?;
+    let (moderate, critical) = params.thresholds();
+    Some(VolumetricThresholds {
+        depth_cm,
+        moderate,
+        critical,
+    })
+}
+
 /// Lookup of `(FK, nFK, eGp)` for `soil` at `depth_cm` (only 40 cm and 80 cm defined).
 fn depth_params(soil: SoilCondition, depth_cm: i32) -> Option<DepthParams> {
     // (fk40, nfk40, egp40, fk80, nfk80, egp80)
@@ -234,5 +256,24 @@ mod tests {
             classify(&[r(40, f64::NAN)], SoilCondition::Uu, 5),
             Err(TreeError::MalformedVolumetric)
         ));
+    }
+
+    // Uu @ 40 cm: nFK_eff = 26-6 = 20, PWP = 38-26 = 12 → min 20.0, crit 18.0.
+    #[test]
+    fn thresholds_for_known_soil_and_depth() {
+        let t = volumetric_thresholds(SoilCondition::Uu, 40).unwrap();
+        assert_eq!(t.depth_cm, 40);
+        assert!((t.moderate - 20.0).abs() < 1e-9);
+        assert!((t.critical - 18.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn thresholds_none_for_unknown_soil() {
+        assert!(volumetric_thresholds(SoilCondition::Unknown, 40).is_none());
+    }
+
+    #[test]
+    fn thresholds_none_for_unsupported_depth() {
+        assert!(volumetric_thresholds(SoilCondition::Uu, 50).is_none());
     }
 }

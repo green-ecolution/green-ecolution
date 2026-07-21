@@ -1,17 +1,14 @@
 import { useState } from 'react'
 import { sensorDataQuery } from '@/api/queries'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { format } from 'date-fns'
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+import { Area } from 'recharts'
+import { Loading, TimeRangeToggle, type ChartConfig } from '@green-ecolution/ui'
+import TimeSeriesFrame from '@/components/general/charts/TimeSeriesFrame'
 import {
-  Button,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  Loading,
-  type ChartConfig,
-} from '@green-ecolution/ui'
-import { SIGNAL_WINDOWS, windowStart, type SignalWindowKey } from './signalWindows'
+  timeWindowOptions,
+  windowStart,
+  type TimeWindowKey,
+} from '@/components/general/charts/timeWindows'
 
 const chartConfig = {
   rssi: {
@@ -20,7 +17,6 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-const DAY_MS = 24 * 60 * 60 * 1000
 const PER_PAGE = 5000
 
 interface ChartSignalDataProps {
@@ -28,7 +24,7 @@ interface ChartSignalDataProps {
 }
 
 const ChartSignalData: React.FC<ChartSignalDataProps> = ({ sensorId }) => {
-  const [selectedWindow, setSelectedWindow] = useState<SignalWindowKey>('7d')
+  const [selectedWindow, setSelectedWindow] = useState<TimeWindowKey>('7d')
   // eslint-disable-next-line react-hooks/purity, react-x/purity -- windowStart truncates to the hour, keeping the query key stable
   const from = windowStart(selectedWindow, Date.now())
   const {
@@ -52,9 +48,6 @@ const ChartSignalData: React.FC<ChartSignalDataProps> = ({ sensorId }) => {
     }))
     .sort((a, b) => a.ts - b.ts)
 
-  const spanMs = signalData.length > 1 ? signalData[signalData.length - 1].ts - signalData[0].ts : 0
-  const tickPattern = spanMs > 2 * DAY_MS ? 'dd.MM.' : 'HH:mm'
-
   return (
     <div className="mt-6 border-t border-dark-100 pt-5">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -64,19 +57,11 @@ const ChartSignalData: React.FC<ChartSignalDataProps> = ({ sensorId }) => {
             Höher (weniger negativ) = besserer Empfang
           </p>
         </div>
-        <div role="group" aria-label="Zeitraum" className="flex items-center gap-1">
-          {(Object.keys(SIGNAL_WINDOWS) as SignalWindowKey[]).map((key) => (
-            <Button
-              key={key}
-              size="sm"
-              variant={key === selectedWindow ? 'default' : 'ghost'}
-              aria-pressed={key === selectedWindow}
-              onClick={() => setSelectedWindow(key)}
-            >
-              {SIGNAL_WINDOWS[key].label}
-            </Button>
-          ))}
-        </div>
+        <TimeRangeToggle
+          options={timeWindowOptions(['24h', '7d', '30d', 'all'])}
+          value={selectedWindow}
+          onChange={setSelectedWindow}
+        />
       </div>
       {!sensorDataRes ? (
         <Loading className="h-[220px] justify-center" label="Signaldaten werden geladen" />
@@ -90,55 +75,27 @@ const ChartSignalData: React.FC<ChartSignalDataProps> = ({ sensorId }) => {
           style={{ opacity: isPlaceholderData ? 0.6 : 1 }}
           aria-busy={isPlaceholderData}
         >
-          <ChartContainer config={chartConfig} className="h-[220px] w-full">
-            <AreaChart data={signalData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="fillRssi" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--color-rssi)" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="var(--color-rssi)" stopOpacity={0.03} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid vertical={false} strokeDasharray="3 3" />
-              <XAxis
-                dataKey="ts"
-                type="number"
-                scale="time"
-                domain={['dataMin', 'dataMax']}
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                minTickGap={40}
-                tickFormatter={(value) => format(new Date(value as number), tickPattern)}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                width={40}
-                tickMargin={4}
-                domain={['dataMin - 2', 'dataMax + 2']}
-              />
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent
-                    labelFormatter={(_, payload) => {
-                      const point = payload?.[0] as { payload?: { ts?: number } } | undefined
-                      const ts = point?.payload?.ts
-                      return ts ? format(new Date(ts), 'dd.MM.yyyy HH:mm') : ''
-                    }}
-                  />
-                }
-              />
-              <Area
-                type="monotone"
-                dataKey="rssi"
-                stroke="var(--color-rssi)"
-                strokeWidth={2}
-                fill="url(#fillRssi)"
-                dot={false}
-                activeDot={{ r: 4 }}
-              />
-            </AreaChart>
-          </ChartContainer>
+          <TimeSeriesFrame
+            config={chartConfig}
+            data={signalData}
+            yDomain={['dataMin - 2', 'dataMax + 2']}
+          >
+            <defs>
+              <linearGradient id="fillRssi" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-rssi)" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="var(--color-rssi)" stopOpacity={0.03} />
+              </linearGradient>
+            </defs>
+            <Area
+              type="monotone"
+              dataKey="rssi"
+              stroke="var(--color-rssi)"
+              strokeWidth={2}
+              fill="url(#fillRssi)"
+              dot={false}
+              activeDot={{ r: 4 }}
+            />
+          </TimeSeriesFrame>
         </div>
       )}
     </div>

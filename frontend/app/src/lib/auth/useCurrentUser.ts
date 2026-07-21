@@ -48,7 +48,7 @@ export function useCurrentUser(): CurrentUser {
       lastName: jwt.family_name,
       drivingLicenses: jwt.driving_licenses ? jwt.driving_licenses.map(parseDrivingLicense) : [],
       userRoles: jwt.user_roles ? jwt.user_roles.map(parseUserRole) : [],
-      userStatus: parseUserStatus(jwt.status),
+      userStatus: jwt.status ? parseUserStatus(jwt.status) : UNKNOWN_USER_STATUS,
     }
   }, [accessToken])
 }

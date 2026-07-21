@@ -34,6 +34,7 @@ import {
   sensorApi,
   ServerInfoResponse,
   ServicesInfoResponse,
+  SoilMoistureSeriesResponse,
   StartPointResponse,
   TreeClusterResponse,
   TreeMarkerListResponse,
@@ -364,4 +365,25 @@ export const suggestedClustersQuery = () =>
     queryKey: ['treeclusters', 'list', { wateringStatus: [WateringStatus.Bad] }],
     queryFn: () =>
       clusterApi.listClusters({ wateringStatus: [WateringStatus.Bad], page: 1, perPage: 50 }),
+  })
+
+export const clusterSoilMoistureQuery = (
+  id: string,
+  params: { from?: Date; bucket: 'hour' | 'day' },
+) =>
+  queryOptions<SoilMoistureSeriesResponse>({
+    queryKey: [
+      'treecluster',
+      id,
+      'soil-moisture',
+      params.bucket,
+      params.from?.toISOString() ?? 'default',
+    ],
+    queryFn: () =>
+      clusterApi.getClusterSoilMoisture({
+        clusterId: id,
+        from: params.from,
+        bucket: params.bucket,
+      }),
+    enabled: isValidUuid(id),
   })
