@@ -8,9 +8,9 @@ use crate::shared::watering_status::WateringStatus;
 use crate::tree::TreeError;
 
 /// REW coefficient for the onset of moderate stress.
-const REW_MIN: f64 = 0.40;
+pub const REW_MIN: f64 = 0.40;
 /// REW coefficient for acute stress.
-const REW_CRIT: f64 = 0.30;
+pub const REW_CRIT: f64 = 0.30;
 /// Below this lifetime the 80 cm probe is ignored.
 const YOUNG_TREE_YEARS: i64 = 3;
 
@@ -50,6 +50,21 @@ pub fn volumetric_thresholds(soil: SoilCondition, depth_cm: i32) -> Option<Volum
         moderate,
         critical,
     })
+}
+
+/// Fraction of plant-available water (REW) for a volumetric reading:
+/// `(vwc − PWP) / nFK_eff`. 0.0 = permanent wilting point, 1.0 = full
+/// effective capacity; values above 1.0 (wetter than field capacity) are
+/// not clamped. `None` for unknown soil, an uncalibrated depth, or a
+/// non-finite reading.
+pub fn rew_fraction(soil: SoilCondition, depth_cm: i32, vwc: f64) -> Option<f64> {
+    if !vwc.is_finite() {
+        return None;
+    }
+    let params = depth_params(soil, depth_cm)?;
+    let nfk_eff = (params.nfk - params.egp) as f64;
+    let pwp = (params.fk - params.nfk) as f64;
+    Some((vwc - pwp) / nfk_eff)
 }
 
 /// Lookup of `(FK, nFK, eGp)` for `soil` at `depth_cm` (only 40 cm and 80 cm defined).
@@ -256,6 +271,24 @@ mod tests {
             classify(&[r(40, f64::NAN)], SoilCondition::Uu, 5),
             Err(TreeError::MalformedVolumetric)
         ));
+    }
+
+    // Uu @ 40 cm: PWP = 12, nFK_eff = 20.
+    #[test]
+    fn rew_fraction_maps_vwc_linearly() {
+        let rew = |vwc| rew_fraction(SoilCondition::Uu, 40, vwc).unwrap();
+        assert!((rew(12.0) - 0.0).abs() < 1e-9);
+        assert!((rew(20.0) - 0.4).abs() < 1e-9);
+        assert!((rew(32.0) - 1.0).abs() < 1e-9);
+        // Wetter than field capacity is not clamped.
+        assert!((rew(42.0) - 1.5).abs() < 1e-9);
+    }
+
+    #[test]
+    fn rew_fraction_none_for_unknown_soil_depth_or_nan() {
+        assert!(rew_fraction(SoilCondition::Unknown, 40, 20.0).is_none());
+        assert!(rew_fraction(SoilCondition::Uu, 50, 20.0).is_none());
+        assert!(rew_fraction(SoilCondition::Uu, 40, f64::NAN).is_none());
     }
 
     // Uu @ 40 cm: nFK_eff = 26-6 = 20, PWP = 38-26 = 12 → min 20.0, crit 18.0.
