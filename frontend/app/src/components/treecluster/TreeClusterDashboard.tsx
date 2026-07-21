@@ -110,13 +110,15 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
         )}
       </EntityDetailHeader>
 
+      {/* min-w-0: grid items must shrink below the chart svg's explicit width,
+          otherwise Recharts locks the page wider than small viewports. */}
       <div className="mt-10 grid gap-6 xl:grid-cols-[2fr_1fr]">
-        <div className="flex flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-6">
           <ClusterKpiRow treecluster={treecluster} />
           <ClusterSoilMoistureChart clusterId={treecluster.id} hasSensors={hasSensors} />
           <ClusterWateringHistory clusterId={treecluster.id} />
         </div>
-        <div className="flex flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-6">
           <ClusterLocationCard treecluster={treecluster} />
           <ClusterSensorCard trees={trees} />
           <ClusterTreeList trees={trees} />
