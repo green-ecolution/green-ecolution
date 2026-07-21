@@ -18,7 +18,10 @@ import {
   windowStart,
   type TimeWindowKey,
 } from '@/components/general/charts/timeWindows'
-import { depthColor, toChartRows } from '@/components/general/charts/soilMoistureChart'
+import {
+  toConditionRows,
+  wateringEventMarkers,
+} from '@/components/general/charts/soilMoistureChart'
 
 const RANGE_KEYS = ['24h', '7d', '30d'] satisfies TimeWindowKey[]
 type RangeKey = (typeof RANGE_KEYS)[number]
@@ -30,16 +33,22 @@ const BUCKET_BY_RANGE: Record<RangeKey, 'hour' | 'day'> = {
 }
 
 const BUCKET_SUBTITLE: Record<'hour' | 'day', string> = {
-  hour: 'Stundenmittel · Band = Min–Max · Gestrichelt = kritische Schwelle',
-  day: 'Tagesmittel · Band = Min–Max · Gestrichelt = kritische Schwelle',
+  hour: 'Pflanzenverfügbares Wasser (Stundenmittel), schlechteste Messtiefe · Gestrichelt = Schwellen',
+  day: 'Pflanzenverfügbares Wasser (Tagesmittel), schlechteste Messtiefe · Gestrichelt = Schwellen',
 }
 
-interface ClusterSoilMoistureChartProps {
+const SUPPLY_COLOR = '#0072B2'
+
+const config = {
+  supply: { label: 'Verfügbares Wasser (%)', color: SUPPLY_COLOR },
+} satisfies ChartConfig
+
+interface ClusterWaterSupplyChartProps {
   clusterId: string
   hasSensors: boolean
 }
 
-const ClusterSoilMoistureChart = ({ clusterId, hasSensors }: ClusterSoilMoistureChartProps) => {
+const ClusterWaterSupplyChart = ({ clusterId, hasSensors }: ClusterWaterSupplyChartProps) => {
   const [rangeKey, setRangeKey] = useState<RangeKey>('7d')
   const bucket = BUCKET_BY_RANGE[rangeKey]
   // eslint-disable-next-line react-hooks/purity, react-x/purity -- windowStart truncates to the hour, keeping the query key stable
@@ -51,45 +60,16 @@ const ClusterSoilMoistureChart = ({ clusterId, hasSensors }: ClusterSoilMoisture
   })
   if (error) throw error
 
-  const rows = toChartRows(data?.series ?? [])
-  const depths = (data?.series ?? []).map((s) => s.depthCm)
-  const config = Object.fromEntries(
-    depths.map((depth, index) => [
-      `mean_${depth}`,
-      { label: `${depth} cm Tiefe`, color: depthColor(depth, index) },
-    ]),
-  ) satisfies ChartConfig
-
-  // Watering events land mid-day like in the R analysis, so the marker sits
-  // inside the day bucket instead of on its edge. `event.date` is already a
-  // Date (midnight UTC from the "YYYY-MM-DD" wire value), so shift by 12h
-  // instead of round-tripping through a string.
-  // The last row's ts is the start of today's bucket, so a same-day event's
-  // noon timestamp can fall past it; widen the upper bound by one bucket width.
-  const bucketWidthMs = bucket === 'hour' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000
-  const eventMarkers = (data?.wateringEvents ?? [])
-    .map((event) => ({ ...event, ts: event.date.getTime() + 12 * 60 * 60 * 1000 }))
-    .filter(
-      (event) =>
-        rows.length > 1 &&
-        event.ts >= rows[0].ts &&
-        event.ts <= rows[rows.length - 1].ts + bucketWidthMs,
-    )
-    // Recharts drops ReferenceLines beyond the data max, so clamp after widening the filter.
-    .map((event) => ({
-      ...event,
-      ts: Math.min(event.ts, rows[rows.length - 1].ts),
-    }))
-
-  const thresholds = data?.thresholds ?? []
-  const strictestCritical =
-    thresholds.length > 0 ? Math.max(...thresholds.map((t) => t.critical)) : null
+  const rows = toConditionRows(data?.condition ?? [])
+  const soilUnknown = (data?.series.length ?? 0) > 0 && data?.condition.length === 0
+  const markers = wateringEventMarkers(data?.wateringEvents ?? [], rows, bucket)
+  const thresholds = data?.conditionThresholds
 
   return (
     <Card variant="outlined">
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2">
         <div>
-          <CardTitle>Bodenfeuchte-Verlauf</CardTitle>
+          <CardTitle>Wasserversorgung</CardTitle>
           <p className="text-xs text-muted-foreground">{BUCKET_SUBTITLE[bucket]}</p>
         </div>
         <TimeRangeToggle
@@ -106,6 +86,11 @@ const ClusterSoilMoistureChart = ({ clusterId, hasSensors }: ClusterSoilMoisture
           </p>
         ) : !data ? (
           <Loading className="h-[260px] justify-center" label="Messwerte werden geladen" />
+        ) : soilUnknown ? (
+          <p className="flex h-[260px] items-center justify-center text-center text-sm text-muted-foreground">
+            Für diese Gruppe ist keine Bodenart hinterlegt — die Wasserversorgung kann nicht
+            berechnet werden.
+          </p>
         ) : rows.length <= 1 ? (
           <p className="flex h-[260px] items-center justify-center text-sm text-muted-foreground">
             Zu wenige Datenpunkte im gewählten Zeitraum.
@@ -120,43 +105,50 @@ const ClusterSoilMoistureChart = ({ clusterId, hasSensors }: ClusterSoilMoisture
               config={config}
               data={rows}
               className="h-[260px] w-full"
-              yDomain={[(min: number) => Math.floor(min - 1), (max: number) => Math.ceil(max + 1)]}
-              legend
+              yDomain={[
+                (min: number) => Math.max(0, Math.floor(min - 5)),
+                (max: number) => Math.ceil(max + 5),
+              ]}
             >
-              {depths.map((depth, index) => (
-                <Area
-                  key={`range_${depth}`}
-                  dataKey={`range_${depth}`}
-                  stroke="none"
-                  fill={depthColor(depth, index)}
-                  fillOpacity={0.15}
-                  connectNulls
-                  activeDot={false}
-                  tooltipType="none"
-                  legendType="none"
-                />
-              ))}
-              {depths.map((depth, index) => (
-                <Line
-                  key={`mean_${depth}`}
-                  type="monotone"
-                  dataKey={`mean_${depth}`}
-                  stroke={depthColor(depth, index)}
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                  connectNulls
-                />
-              ))}
-              {strictestCritical != null && (
+              <Area
+                dataKey="supplyRange"
+                stroke="none"
+                fill={SUPPLY_COLOR}
+                fillOpacity={0.15}
+                connectNulls
+                activeDot={false}
+                tooltipType="none"
+                legendType="none"
+              />
+              <Line
+                type="monotone"
+                dataKey="supply"
+                stroke={SUPPLY_COLOR}
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4 }}
+                connectNulls
+              />
+              {/* Two separate conditionals on purpose: Recharts does not reliably render children wrapped in a Fragment. */}
+              {thresholds && (
                 <ReferenceLine
-                  y={strictestCritical}
+                  y={thresholds.moderate}
                   stroke="#747474"
                   strokeDasharray="4 4"
                   ifOverflow="extendDomain"
+                  label={{ value: 'mäßig', position: 'insideBottomLeft', fontSize: 11 }}
                 />
               )}
-              {eventMarkers.map((event) => (
+              {thresholds && (
+                <ReferenceLine
+                  y={thresholds.critical}
+                  stroke="#747474"
+                  strokeDasharray="4 4"
+                  ifOverflow="extendDomain"
+                  label={{ value: 'kritisch', position: 'insideBottomLeft', fontSize: 11 }}
+                />
+              )}
+              {markers.map((event) => (
                 <ReferenceLine
                   key={event.wateringPlanId}
                   x={event.ts}
@@ -178,4 +170,4 @@ const ClusterSoilMoistureChart = ({ clusterId, hasSensors }: ClusterSoilMoisture
   )
 }
 
-export default ClusterSoilMoistureChart
+export default ClusterWaterSupplyChart

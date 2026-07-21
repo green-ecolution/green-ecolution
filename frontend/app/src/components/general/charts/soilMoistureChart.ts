@@ -37,6 +37,7 @@ export interface ConditionChartRow {
   ts: number
   supply?: number
   supplyRange?: [number, number]
+  [key: string]: unknown
 }
 
 export const toConditionRows = (
