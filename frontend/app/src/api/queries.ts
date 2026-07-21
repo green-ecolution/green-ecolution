@@ -41,6 +41,7 @@ import {
   TreeResponse,
   treeApi,
   userApi,
+  UserResponse,
   vehicleApi,
   VehicleResponse,
   WateringPlanResponse,
@@ -240,6 +241,12 @@ export const routePreviewQuery = (
       }
     },
     retry: false,
+  })
+
+export const currentUserQuery = () =>
+  queryOptions<UserResponse>({
+    queryKey: ['users', 'me'],
+    queryFn: () => userApi.getMe(),
   })
 
 export const userQuery = (params?: ListUsersRequest) => {

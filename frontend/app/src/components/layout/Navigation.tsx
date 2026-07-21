@@ -19,6 +19,7 @@ import SidebarToggle from '../navigation/SidebarToggle'
 import NavUser from '../navigation/NavUser'
 import { useAuthSession } from '@/lib/auth/authSessionContext'
 import { useCurrentUser } from '@/lib/auth/useCurrentUser'
+import { useCurrentUserAvatar } from '@/lib/auth/useCurrentUserAvatar'
 import Tree from '../icons/Tree'
 import SensorIcon from '../icons/Sensor'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -157,6 +158,7 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
   const setSidebarCollapsed = useStore((s) => s.setSidebarCollapsed)
 
   const { firstName, lastName, email } = useCurrentUser()
+  const avatarUrl = useCurrentUserAvatar()
 
   const handleNavLinkClick = useCallback(() => {
     if (!isLargeScreen) closeSidebar()
@@ -230,6 +232,7 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
                 firstName={firstName}
                 lastName={lastName}
                 email={email}
+                avatarUrl={avatarUrl}
                 collapsed={collapsed}
                 closeSidebar={handleNavLinkClick}
               />
