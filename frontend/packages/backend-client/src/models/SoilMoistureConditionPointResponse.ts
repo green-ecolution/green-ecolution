@@ -15,7 +15,9 @@
 import { mapValues } from '../runtime';
 /**
  * One bucket of the tree-condition series, as % plant-available water
- * (REW × 100). The depth with the lowest mean REW wins per bucket.
+ * (REW × 100), clamped to 0–100: wetter than field capacity or drier than
+ * the wilting point carries no extra meaning for the dashboard and reads
+ * as a bug ("129 %"). The depth with the lowest mean REW wins per bucket.
  * @export
  * @interface SoilMoistureConditionPointResponse
  */

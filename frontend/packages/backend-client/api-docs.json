@@ -5545,7 +5545,7 @@
       },
       "SoilMoistureConditionPointResponse": {
         "type": "object",
-        "description": "One bucket of the tree-condition series, as % plant-available water\n(REW × 100). The depth with the lowest mean REW wins per bucket.",
+        "description": "One bucket of the tree-condition series, as % plant-available water\n(REW × 100), clamped to 0–100: wetter than field capacity or drier than\nthe wilting point carries no extra meaning for the dashboard and reads\nas a bug (\"129 %\"). The depth with the lowest mean REW wins per bucket.",
         "required": [
           "timestamp",
           "mean",
