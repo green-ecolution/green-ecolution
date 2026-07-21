@@ -18,7 +18,7 @@ import {
   windowStart,
   type TimeWindowKey,
 } from '@/components/general/charts/timeWindows'
-import { depthColor, toChartRows } from './soilMoistureChart'
+import { depthColor, toChartRows } from '@/components/general/charts/soilMoistureChart'
 
 const RANGE_KEYS = ['24h', '7d', '30d'] satisfies TimeWindowKey[]
 type RangeKey = (typeof RANGE_KEYS)[number]
