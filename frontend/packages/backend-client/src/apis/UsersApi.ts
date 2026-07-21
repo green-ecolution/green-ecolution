@@ -98,6 +98,37 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns the profile of the currently authenticated user.
+     * Get the authenticated user
+     */
+    async getMeRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/users/me`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UserResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the profile of the currently authenticated user.
+     * Get the authenticated user
+     */
+    async getMe(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserResponse> {
+        const response = await this.getMeRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Returns a paginated list of registered users.
      * List all users
      */

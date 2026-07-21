@@ -5,7 +5,8 @@ import { getUserRoleDetails, UserRoleOrUnknown } from '@/hooks/details/useDetail
 import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
 import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
 import { DrivingLicense } from '@green-ecolution/backend-client'
-import { Avatar, AvatarFallback, Badge, DetailedList } from '@green-ecolution/ui'
+import { useCurrentUserAvatar } from '@/lib/auth/useCurrentUserAvatar'
+import { Avatar, AvatarFallback, AvatarImage, Badge, DetailedList } from '@green-ecolution/ui'
 
 export const Route = createFileRoute('/_protected/profile/')({
   component: Profile,
@@ -13,6 +14,7 @@ export const Route = createFileRoute('/_protected/profile/')({
 
 function Profile() {
   const user = useCurrentUser()
+  const avatarUrl = useCurrentUserAvatar()
 
   return (
     <div className="container mt-6">
@@ -29,6 +31,9 @@ function Profile() {
       <section className="mt-16 grid grid-cols-1 gap-y-10 lg:grid-cols-2 lg:gap-x-11">
         <div className="flex items-center gap-x-6">
           <Avatar size="2xl" className="2xl:size-48">
+            {avatarUrl && (
+              <AvatarImage src={avatarUrl} alt={`${user.firstName} ${user.lastName}`} />
+            )}
             <AvatarFallback variant="guest" className="2xl:text-4xl">
               <UserRound className="w-12 h-12 2xl:w-16 2xl:h-16 text-white" />
             </AvatarFallback>
