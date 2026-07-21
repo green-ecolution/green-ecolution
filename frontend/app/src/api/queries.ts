@@ -394,3 +394,23 @@ export const clusterSoilMoistureQuery = (
       }),
     enabled: isValidUuid(id),
   })
+
+export const sensorSoilMoistureQuery = (
+  id: string,
+  params: { from?: Date; bucket: 'hour' | 'day' },
+) =>
+  queryOptions<SoilMoistureSeriesResponse>({
+    queryKey: [
+      'sensor',
+      id,
+      'soil-moisture',
+      params.bucket,
+      params.from?.toISOString() ?? 'default',
+    ],
+    queryFn: () =>
+      sensorApi.getSensorSoilMoisture({
+        sensorId: id,
+        from: params.from,
+        bucket: params.bucket,
+      }),
+  })
