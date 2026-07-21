@@ -63,6 +63,8 @@ export * from './ServicesInfoResponse';
 export * from './SetSensorTreeRequest';
 export * from './SignalResponse';
 export * from './SoilCondition';
+export * from './SoilMoistureConditionPointResponse';
+export * from './SoilMoistureConditionThresholdsResponse';
 export * from './SoilMoistureDepthSeriesResponse';
 export * from './SoilMoisturePointResponse';
 export * from './SoilMoistureSeriesResponse';

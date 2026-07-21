@@ -22,6 +22,7 @@ import type {
   SensorModelResponse,
   SensorResponse,
   SetSensorTreeRequest,
+  SoilMoistureSeriesResponse,
 } from '../models/index';
 import {
     ActivateSensorRequestFromJSON,
@@ -38,6 +39,8 @@ import {
     SensorResponseToJSON,
     SetSensorTreeRequestFromJSON,
     SetSensorTreeRequestToJSON,
+    SoilMoistureSeriesResponseFromJSON,
+    SoilMoistureSeriesResponseToJSON,
 } from '../models/index';
 
 export interface ActivateSensorOperationRequest {
@@ -59,6 +62,13 @@ export interface GetSensorRequest {
 
 export interface GetSensorModelRequest {
     id: string;
+}
+
+export interface GetSensorSoilMoistureRequest {
+    sensorId: string;
+    from?: Date | null;
+    to?: Date | null;
+    bucket?: string | null;
 }
 
 export interface ListSensorDataRequest {
@@ -289,6 +299,57 @@ export class SensorsApi extends runtime.BaseAPI {
      */
     async getSensorModel(requestParameters: GetSensorModelRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorModelResponse> {
         const response = await this.getSensorModelRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Aggregates the sensor\'s volumetric soil-moisture readings (mean/min/max per probe depth and time bucket). Stress thresholds and the REW condition series are derived from the soil condition of the linked tree\'s cluster and are empty when the sensor is not linked or the soil is unknown.
+     * Bucketed soil-moisture series for a sensor
+     */
+    async getSensorSoilMoistureRaw(requestParameters: GetSensorSoilMoistureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SoilMoistureSeriesResponse>> {
+        if (requestParameters['sensorId'] == null) {
+            throw new runtime.RequiredError(
+                'sensorId',
+                'Required parameter "sensorId" was null or undefined when calling getSensorSoilMoisture().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['from'] != null) {
+            queryParameters['from'] = (requestParameters['from'] as any).toISOString();
+        }
+
+        if (requestParameters['to'] != null) {
+            queryParameters['to'] = (requestParameters['to'] as any).toISOString();
+        }
+
+        if (requestParameters['bucket'] != null) {
+            queryParameters['bucket'] = requestParameters['bucket'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/sensors/{sensor_id}/soil-moisture`;
+        urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SoilMoistureSeriesResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Aggregates the sensor\'s volumetric soil-moisture readings (mean/min/max per probe depth and time bucket). Stress thresholds and the REW condition series are derived from the soil condition of the linked tree\'s cluster and are empty when the sensor is not linked or the soil is unknown.
+     * Bucketed soil-moisture series for a sensor
+     */
+    async getSensorSoilMoisture(requestParameters: GetSensorSoilMoistureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SoilMoistureSeriesResponse> {
+        const response = await this.getSensorSoilMoistureRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
