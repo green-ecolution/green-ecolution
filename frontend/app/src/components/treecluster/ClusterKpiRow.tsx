@@ -19,21 +19,24 @@ const ClusterKpiRow = ({ treecluster }: ClusterKpiRowProps) => {
     <StatusCardGrid columns={4}>
       <li className="h-full">
         <StatusCard
+          size="compact"
           status={wateringStatus.color}
           indicator="dot"
           label="Bewässerungszustand (ø)"
           value={wateringStatus.label}
-          description={wateringStatus.description}
+          info={wateringStatus.description}
         />
       </li>
       <li className="h-full">
         <StatusCard
+          size="compact"
           label="Bodentemperatur"
           value={temperature != null ? `${roundTo(temperature, 1)} °C` : 'Keine Daten'}
         />
       </li>
       <li className="h-full">
         <StatusCard
+          size="compact"
           label="Letzte Messung"
           value={
             measuredAt
@@ -44,13 +47,12 @@ const ClusterKpiRow = ({ treecluster }: ClusterKpiRowProps) => {
       </li>
       <li className="h-full">
         <StatusCard
+          size="compact"
           label="Letzte Bewässerung"
           value={
-            treecluster.lastWatered
-              ? format(new Date(treecluster.lastWatered), 'dd.MM.yyyy')
-              : 'Keine Angabe'
+            treecluster.lastWatered ? format(new Date(treecluster.lastWatered), 'dd.MM.yyyy') : '—'
           }
-          description="Wird aktualisiert, sobald ein Einsatzplan mit dieser Gruppe als »Beendet« markiert wird."
+          info="Wird aktualisiert, sobald ein Einsatzplan mit dieser Gruppe als »Beendet« markiert wird."
         />
       </li>
     </StatusCardGrid>
