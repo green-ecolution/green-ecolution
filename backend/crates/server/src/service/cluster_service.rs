@@ -7,6 +7,7 @@ use domain::{
         ClusterBoundaryView, ClusterMarker, ClusterStatistics, SoilMoistureBucket,
         SoilMoistureOverview, TreeCluster, TreeClusterDraft, TreeClusterReader,
         TreeClusterSearchQuery, TreeClusterUpdate, TreeClusterView, TreeClusterWriter,
+        condition_series,
     },
     events::DomainEvent,
     shared::{
@@ -192,11 +193,16 @@ impl ClusterService {
                     .collect()
             })
             .unwrap_or_default();
+        let condition = view
+            .soil_condition
+            .map(|soil| condition_series(&series, soil))
+            .unwrap_or_default();
         let watering_events = self.reader.watering_events(id).await?;
         Ok(SoilMoistureOverview {
             bucket,
             series,
             thresholds,
+            condition,
             watering_events,
         })
     }
