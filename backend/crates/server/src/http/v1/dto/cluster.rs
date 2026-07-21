@@ -14,6 +14,8 @@ use domain::{
     },
 };
 
+use crate::service::ServiceError;
+
 use super::{SoilCondition, WateringStatus, region::RegionResponse, tree::TreeResponse};
 
 /// Full representation of a tree cluster including its resolved tree relations.
@@ -374,6 +376,38 @@ pub struct SoilMoistureParams {
     /// Aggregation bucket. Allowed: `hour|day`. Defaults to `day`.
     #[param(example = "day")]
     pub bucket: Option<String>,
+}
+
+impl SoilMoistureParams {
+    /// Applies the documented defaults and validates window and bucket.
+    pub fn resolve(
+        &self,
+    ) -> Result<
+        (
+            DateTime<Utc>,
+            DateTime<Utc>,
+            domain::cluster::SoilMoistureBucket,
+        ),
+        ServiceError,
+    > {
+        let to = self.to.unwrap_or_else(chrono::Utc::now);
+        let from = self.from.unwrap_or_else(|| to - chrono::Duration::days(7));
+        if from >= to {
+            return Err(ServiceError::InvalidInput(
+                "`from` must be before `to`".into(),
+            ));
+        }
+        let bucket = match self.bucket.as_deref() {
+            None | Some("day") => domain::cluster::SoilMoistureBucket::Day,
+            Some("hour") => domain::cluster::SoilMoistureBucket::Hour,
+            Some(other) => {
+                return Err(ServiceError::InvalidInput(format!(
+                    "unknown bucket '{other}' (use hour or day)"
+                )));
+            }
+        };
+        Ok((from, to, bucket))
+    }
 }
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]

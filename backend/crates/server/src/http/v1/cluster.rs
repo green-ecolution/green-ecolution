@@ -359,24 +359,7 @@ pub async fn get_cluster_soil_moisture(
     Path(id): Path<uuid::Uuid>,
     Query(params): Query<SoilMoistureParams>,
 ) -> Result<Json<SoilMoistureSeriesResponse>, ServiceError> {
-    let to = params.to.unwrap_or_else(chrono::Utc::now);
-    let from = params
-        .from
-        .unwrap_or_else(|| to - chrono::Duration::days(7));
-    if from >= to {
-        return Err(ServiceError::InvalidInput(
-            "`from` must be before `to`".into(),
-        ));
-    }
-    let bucket = match params.bucket.as_deref() {
-        None | Some("day") => domain::cluster::SoilMoistureBucket::Day,
-        Some("hour") => domain::cluster::SoilMoistureBucket::Hour,
-        Some(other) => {
-            return Err(ServiceError::InvalidInput(format!(
-                "unknown bucket '{other}' (use hour or day)"
-            )));
-        }
-    };
+    let (from, to, bucket) = params.resolve()?;
     let overview = state
         .cluster_service
         .soil_moisture_overview(Id::new(id), from, to, bucket)

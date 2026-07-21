@@ -16,6 +16,7 @@ use crate::{
         v1::{
             dto::{
                 ListResponse,
+                cluster::{SoilMoistureParams, SoilMoistureSeriesResponse},
                 sensor::{
                     ActivateSensorRequest, CreateSensorRequest, LorawanCredentialsRequest,
                     SensorDataResponse, SensorModelResponse, SensorResponse, SetSensorTreeRequest,
@@ -44,6 +45,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(get_sensor, delete_sensor))
         .routes(routes!(activate_sensor))
         .routes(routes!(list_sensor_data))
+        .routes(routes!(get_sensor_soil_moisture))
         .routes(routes!(
             get_tree_by_sensor,
             set_sensor_tree,
@@ -172,6 +174,35 @@ pub async fn list_sensor_data(
         .view_history(&sensor_id, pagination, params.from, params.to)
         .await?;
     Ok(Json(ListResponse::from_page(page, &pagination)))
+}
+
+#[utoipa::path(get, path = "/sensors/{sensor_id}/soil-moisture", tag = "Sensors",
+    operation_id = "getSensorSoilMoisture",
+    summary = "Bucketed soil-moisture series for a sensor",
+    description = "Aggregates the sensor's volumetric soil-moisture readings (mean/min/max per probe \
+        depth and time bucket). Stress thresholds and the REW condition series are derived from the \
+        soil condition of the linked tree's cluster and are empty when the sensor is not linked or \
+        the soil is unknown.",
+    params(("sensor_id" = String, Path, description = "Sensor ID"), SoilMoistureParams),
+    responses(
+        (status = 200, description = "Aggregated soil-moisture series", body = SoilMoistureSeriesResponse),
+        (status = 400, description = "Invalid query parameter"),
+        (status = 404, description = "Sensor not found"),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
+pub async fn get_sensor_soil_moisture(
+    State(state): State<Arc<AppState>>,
+    SensorIdPath(sensor_id): SensorIdPath,
+    Query(params): Query<SoilMoistureParams>,
+) -> Result<Json<SoilMoistureSeriesResponse>, ServiceError> {
+    let (from, to, bucket) = params.resolve()?;
+    let overview = state
+        .sensor_service
+        .soil_moisture_overview(&sensor_id, from, to, bucket)
+        .await?;
+    Ok(Json(SoilMoistureSeriesResponse::from(overview)))
 }
 
 #[utoipa::path(get, path = "/sensors/{sensor_id}/tree", tag = "Trees",
