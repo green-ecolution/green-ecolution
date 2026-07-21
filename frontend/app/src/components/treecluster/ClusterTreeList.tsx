@@ -25,7 +25,7 @@ const ClusterTreeList = ({ trees }: ClusterTreeListProps) => {
       </CardHeader>
       <CardContent>
         {trees.length === 0 ? (
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Der Bewässerungsgruppe wurden keine Bäume hinzugefügt.
           </p>
         ) : (

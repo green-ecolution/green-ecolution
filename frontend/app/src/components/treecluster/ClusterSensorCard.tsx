@@ -33,7 +33,7 @@ const SensorTreeRow = ({ tree }: { tree: Tree }) => {
       params={{ sensorId: sensor.id }}
       className="block rounded-lg border border-dark-50 bg-white p-4 transition-colors hover:border-green-dark"
     >
-      <p className="mb-2 font-bold">
+      <p className="mb-2 font-lato text-lg font-bold">
         Sensor-Baum: {tree.species} · {tree.number}
       </p>
       <DetailedList
@@ -70,7 +70,7 @@ const ClusterSensorCard = ({ trees }: ClusterSensorCardProps) => {
       </CardHeader>
       <CardContent>
         {treesWithSensor.length === 0 ? (
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Kein Baum dieser Gruppe ist mit einem Sensor ausgestattet.
           </p>
         ) : (

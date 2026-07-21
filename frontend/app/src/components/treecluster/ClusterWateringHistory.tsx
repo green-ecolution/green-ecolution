@@ -32,9 +32,11 @@ const ClusterWateringHistory = ({ clusterId }: ClusterWateringHistoryProps) => {
         {isPending ? (
           <Loading className="justify-center py-6" label="Einsätze werden geladen" />
         ) : error ? (
-          <p className="text-muted-foreground">Die Einsätze konnten nicht geladen werden.</p>
+          <p className="text-sm text-muted-foreground">
+            Die Einsätze konnten nicht geladen werden.
+          </p>
         ) : events.length === 0 ? (
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Für diese Gruppe wurden noch keine Einsätze abgeschlossen.
           </p>
         ) : (
