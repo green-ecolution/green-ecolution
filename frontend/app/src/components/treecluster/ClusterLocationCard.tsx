@@ -1,12 +1,19 @@
+import { Suspense } from 'react'
 import type { LngLatBoundsLike } from 'maplibre-gl'
 import { Card, CardContent, CardHeader, CardTitle } from '@green-ecolution/ui'
 import MapPreview from '@/components/map-gl/MapPreview'
+import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
 import useTreeMarkerLayer from '@/components/map-gl/layers/useTreeMarkerLayer'
 import GeneralLink from '@/components/general/links/GeneralLink'
 import type { Tree, TreeCluster } from '@/api/backendApi'
 
 interface ClusterLocationCardProps {
   treecluster: TreeCluster
+}
+
+const ClusterBoundaryLayer = ({ clusterId }: { clusterId: string }) => {
+  useClusterBoundaryLayer({ clusterIds: [clusterId], interactive: false })
+  return null
 }
 
 const ClusterTreesLayer = ({ trees }: { trees: Tree[] }) => {
@@ -50,10 +57,14 @@ const ClusterLocationCard = ({ treecluster }: ClusterLocationCardProps) => {
           <MapPreview
             center={bounds ? undefined : [treecluster.longitude, treecluster.latitude]}
             bounds={bounds}
-            ariaLabel="Karte mit den Bäumen der Bewässerungsgruppe"
+            ariaLabel="Karte mit den Bäumen und der Umrandung der Bewässerungsgruppe"
             className="h-56"
           >
-            <ClusterTreesLayer trees={trees} />
+            {/* Boundary before markers: mount order controls layer stacking. */}
+            <Suspense fallback={null}>
+              <ClusterBoundaryLayer clusterId={treecluster.id} />
+              <ClusterTreesLayer trees={trees} />
+            </Suspense>
           </MapPreview>
         ) : (
           <p className="flex h-56 items-center justify-center rounded-2xl border border-dark-100 bg-dark-50/40 text-center text-sm text-muted-foreground">
