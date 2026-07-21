@@ -1,5 +1,5 @@
 import { ChevronsUpDown } from 'lucide-react'
-import { Avatar, AvatarFallback } from '@green-ecolution/ui'
+import { Avatar, AvatarFallback, AvatarImage } from '@green-ecolution/ui'
 import NavUserMenu from './NavUserMenu'
 import { navItemClasses } from './navItemStyles'
 
@@ -7,11 +7,19 @@ interface NavUserProps {
   firstName: string
   lastName: string
   email: string
+  avatarUrl?: string
   collapsed: boolean
   closeSidebar: () => void
 }
 
-const NavUser = ({ firstName, lastName, email, collapsed, closeSidebar }: NavUserProps) => {
+const NavUser = ({
+  firstName,
+  lastName,
+  email,
+  avatarUrl,
+  collapsed,
+  closeSidebar,
+}: NavUserProps) => {
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`
   const fullName = `${firstName} ${lastName}`.trim()
 
@@ -23,6 +31,7 @@ const NavUser = ({ firstName, lastName, email, collapsed, closeSidebar }: NavUse
         className={`${navItemClasses} w-full border-transparent ${collapsed ? 'px-3 lg:justify-center lg:px-2' : 'px-2'}`}
       >
         <Avatar size="sm">
+          {avatarUrl && <AvatarImage src={avatarUrl} alt="" />}
           <AvatarFallback variant="user">{initials}</AvatarFallback>
         </Avatar>
         <span className={`min-w-0 flex-1 text-left leading-tight ${collapsed ? 'lg:hidden' : ''}`}>

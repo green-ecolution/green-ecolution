@@ -7,7 +7,8 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed'
 import { useAuthSession } from '@/lib/auth/authSessionContext'
 import { useCurrentUser } from '@/lib/auth/useCurrentUser'
-import { Avatar, AvatarFallback, Button } from '@green-ecolution/ui'
+import { useCurrentUserAvatar } from '@/lib/auth/useCurrentUserAvatar'
+import { Avatar, AvatarFallback, AvatarImage, Button } from '@green-ecolution/ui'
 
 function Header() {
   const [open, setOpen] = useState(false)
@@ -16,6 +17,7 @@ function Header() {
   const collapsed = useSidebarCollapsed()
   const { isAuthenticated } = useAuthSession()
   const { firstName, lastName, email } = useCurrentUser()
+  const avatarUrl = useCurrentUserAvatar()
 
   const closeSidebar = useCallback(() => {
     setOpen(false)
@@ -69,6 +71,7 @@ function Header() {
                 className="group flex cursor-pointer items-center gap-x-1"
               >
                 <Avatar>
+                  {avatarUrl && <AvatarImage src={avatarUrl} alt={`${firstName} ${lastName}`} />}
                   <AvatarFallback variant="user">
                     {`${firstName.charAt(0)}${lastName.charAt(0)}`}
                   </AvatarFallback>

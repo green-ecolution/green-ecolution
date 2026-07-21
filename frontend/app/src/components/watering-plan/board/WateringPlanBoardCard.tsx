@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { Avatar, AvatarFallback, Badge, KanbanCard } from '@green-ecolution/ui'
+import { Avatar, AvatarFallback, AvatarImage, Badge, KanbanCard } from '@green-ecolution/ui'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { User, WateringPlanInList } from '@/api/backendApi'
 import { getWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
@@ -81,6 +81,7 @@ const WateringPlanBoardCard = ({
               <div className="flex -space-x-1.5">
                 {assigned.map((user) => (
                   <Avatar key={user.id} size="xs" className="ring-2 ring-white">
+                    {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt="" />}
                     <AvatarFallback variant="user">{userInitials(user)}</AvatarFallback>
                   </Avatar>
                 ))}

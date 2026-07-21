@@ -31,8 +31,35 @@ use domain::{
 pub fn protected_routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
         .routes(routes!(list_users, create_user))
+        .routes(routes!(get_me))
         .routes(routes!(list_users_by_role))
         .routes(routes!(update_user))
+}
+
+#[utoipa::path(get, path = "/users/me", tag = "Users",
+    operation_id = "getMe",
+    summary = "Get the authenticated user",
+    description = "Returns the profile of the currently authenticated user.",
+    responses(
+        (status = 200, description = "The authenticated user", body = UserResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "User not found"),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn get_me(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+) -> Result<Json<UserResponse>, ServiceError> {
+    let view = state
+        .user_service
+        .by_ids(&[user.id])
+        .await?
+        .into_iter()
+        .next()
+        .ok_or(ServiceError::Repository(domain::RepositoryError::NotFound))?;
+    Ok(Json((&view).into()))
 }
 
 #[utoipa::path(get, path = "/users", tag = "Users",

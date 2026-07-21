@@ -11,6 +11,18 @@ fn valid_body() -> serde_json::Value {
 }
 
 #[tokio::test]
+async fn get_me_returns_the_authenticated_user() {
+    let app = spawn_app().await;
+
+    let response = app.get("/api/v1/users/me").await;
+
+    assert_eq!(response.status().as_u16(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert_eq!(body["username"], "ttester");
+    assert_eq!(body["id"], "00000000-0000-0000-0000-000000000000");
+}
+
+#[tokio::test]
 async fn update_user_returns_200_for_demo_user() {
     let app = spawn_app().await;
 
