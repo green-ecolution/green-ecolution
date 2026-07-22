@@ -112,6 +112,14 @@ pub async fn create_role(
     Json(req): Json<RoleCreateRequest>,
 ) -> Result<(StatusCode, Json<RoleResponse>), ServiceError> {
     let org = Id::new(org_id);
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Role, Action::Create),
+            org,
+        )
+        .await?;
     let view = match req.copy_from_role_id {
         Some(source) => {
             let source_view = state.role_service.by_id(Id::new(source)).await?;
