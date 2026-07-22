@@ -151,6 +151,15 @@ async fn assign_and_revoke_role_via_api() {
 }
 
 #[tokio::test]
+async fn list_users_accepts_pagination_query_params() {
+    let app = spawn_app().await;
+    // Regression: serde(flatten) over PaginationParams rejected numeric query
+    // values ("invalid type: string \"1\", expected u64").
+    let resp = app.get("/api/v1/users?page=1&per_page=100").await;
+    assert_eq!(resp.status(), 200);
+}
+
+#[tokio::test]
 async fn assigning_a_template_role_returns_409() {
     let app = spawn_app().await;
     let user_id = Uuid::new_v4();

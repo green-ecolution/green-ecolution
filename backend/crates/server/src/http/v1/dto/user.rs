@@ -15,7 +15,7 @@ use domain::{
 };
 
 use super::{DrivingLicense, UserStatus, organization::OrganizationResponse, role::RoleResponse};
-use crate::http::v1::pagination::PaginationParams;
+use crate::http::v1::pagination::{default_page, default_per_page};
 
 /// Represents a user account in the system.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -164,10 +164,16 @@ pub struct UserUpdateRequest {
 
 /// Query parameters for the user list endpoint: pagination plus optional
 /// organization/role filters resolved against the local database.
+///
+/// Pagination fields are inlined instead of `#[serde(flatten)]`-ing
+/// `PaginationParams`: flatten buffers query values as strings, which makes
+/// serde reject numeric fields ("invalid type: string \"1\", expected u64").
 #[derive(Debug, Deserialize)]
 pub struct UserListParams {
-    #[serde(flatten)]
-    pub pagination: PaginationParams,
+    #[serde(default = "default_page")]
+    pub page: u64,
+    #[serde(default = "default_per_page")]
+    pub per_page: u64,
     #[serde(default)]
     pub organization_id: Option<Uuid>,
     #[serde(default)]

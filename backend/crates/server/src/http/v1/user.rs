@@ -88,7 +88,7 @@ pub async fn list_users(
     _user: AuthUserExtractor,
     Query(params): Query<UserListParams>,
 ) -> Result<Json<ListResponse<UserResponse>>, ServiceError> {
-    let pagination = Pagination::from(&params.pagination);
+    let pagination = Pagination::new(params.page, params.per_page);
     let filter = UserListFilter {
         organization_id: params.organization_id.map(Id::new),
         role_id: params.role_id.map(Id::new),
