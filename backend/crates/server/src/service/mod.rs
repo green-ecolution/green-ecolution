@@ -58,7 +58,7 @@ pub enum AuthError {
     InvalidToken(String),
     #[error("token expired")]
     TokenExpired,
-    #[error("forbidden: missing required role")]
+    #[error("forbidden: missing required permission")]
     Forbidden,
     #[error("identity provider unavailable: {0}")]
     IdpUnavailable(String),

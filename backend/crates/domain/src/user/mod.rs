@@ -15,8 +15,6 @@ pub mod profile;
 
 pub use profile::UserProfile;
 
-use std::str::FromStr;
-
 use chrono::{DateTime, Utc};
 use secrecy::SecretString;
 use url::Url;
@@ -28,45 +26,10 @@ use crate::{
     role::{Role, RoleView},
     shared::{
         email::Email,
-        error::ValidationError,
         pagination::{Page, Pagination},
     },
     vehicle::DrivingLicense,
 };
-
-/// Application role assigned to a user in Keycloak.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum UserRole {
-    Tbz,
-    GreenEcolution,
-    SmarteGrenzregion,
-}
-
-impl UserRole {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            UserRole::Tbz => "tbz",
-            UserRole::GreenEcolution => "green-ecolution",
-            UserRole::SmarteGrenzregion => "smarte-grenzregion",
-        }
-    }
-}
-
-impl FromStr for UserRole {
-    type Err = ValidationError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "tbz" => Ok(Self::Tbz),
-            "green-ecolution" => Ok(Self::GreenEcolution),
-            "smarte-grenzregion" => Ok(Self::SmarteGrenzregion),
-            other => Err(ValidationError::InvalidFormat {
-                field: "user.role",
-                reason: format!("unknown role '{other}'"),
-            }),
-        }
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "sqlx", derive(sqlx::Type))]

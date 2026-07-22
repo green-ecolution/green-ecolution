@@ -214,19 +214,6 @@ pub enum WateringPlanStatus {
     Unknown,
 }
 
-/// Role assigned to a user within the system.
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
-#[serde(rename_all = "kebab-case")]
-#[schema(example = "tbz")]
-pub enum UserRole {
-    /// Technisches Betriebszentrum — primary operator role.
-    Tbz,
-    /// Green Ecolution project team member.
-    GreenEcolution,
-    /// Smarte Grenzregion project team member.
-    SmarteGrenzregion,
-}
-
 /// Availability status of a user.
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
