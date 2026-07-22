@@ -16,6 +16,10 @@ export interface AuthSession {
 
 export class OidcAuthSession implements AuthSession {
   private mgr = getUserManager()
+  // Auth codes are single-use; a double callback (StrictMode re-mount, router
+  // re-running beforeLoad) exchanges the same code twice and Keycloak rejects
+  // the second with invalid_code. Memoize so the exchange runs at most once.
+  private callback: Promise<string> | null = null
 
   async getAccessToken(): Promise<string | null> {
     const user = await this.mgr.getUser()
@@ -32,7 +36,11 @@ export class OidcAuthSession implements AuthSession {
     await this.mgr.signinRedirect({ state: { returnTo: opts?.returnTo } })
   }
 
-  async signinCallback(): Promise<string> {
+  signinCallback(): Promise<string> {
+    return (this.callback ??= this.exchangeCode())
+  }
+
+  private async exchangeCode(): Promise<string> {
     const user = await this.mgr.signinCallback()
     // state is the opaque payload we passed to signinRedirect; its shape is our own convention
     const returnTo = (user?.state as { returnTo?: string } | undefined)?.returnTo
