@@ -256,15 +256,6 @@ export const userQuery = (params?: ListUsersRequest) => {
   })
 }
 
-export const userRoleQuery = (role: string) =>
-  queryOptions<ListResponseUserResponse>({
-    queryKey: ['user', role],
-    queryFn: () =>
-      userApi.listUsersByRole({
-        roleId: role,
-      }),
-  })
-
 export const pluginsQuery = () =>
   queryOptions({
     queryKey: ['plugins'],

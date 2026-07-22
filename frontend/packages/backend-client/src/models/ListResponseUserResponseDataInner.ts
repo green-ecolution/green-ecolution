@@ -13,13 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
-import type { UserRole } from './UserRole';
+import type { OrganizationResponse } from './OrganizationResponse';
 import {
-    UserRoleFromJSON,
-    UserRoleFromJSONTyped,
-    UserRoleToJSON,
-    UserRoleToJSONTyped,
-} from './UserRole';
+    OrganizationResponseFromJSON,
+    OrganizationResponseFromJSONTyped,
+    OrganizationResponseToJSON,
+    OrganizationResponseToJSONTyped,
+} from './OrganizationResponse';
 import type { DrivingLicense } from './DrivingLicense';
 import {
     DrivingLicenseFromJSON,
@@ -27,6 +27,13 @@ import {
     DrivingLicenseToJSON,
     DrivingLicenseToJSONTyped,
 } from './DrivingLicense';
+import type { RoleResponse } from './RoleResponse';
+import {
+    RoleResponseFromJSON,
+    RoleResponseFromJSONTyped,
+    RoleResponseToJSON,
+    RoleResponseToJSONTyped,
+} from './RoleResponse';
 import type { UserStatus } from './UserStatus';
 import {
     UserStatusFromJSON,
@@ -96,17 +103,23 @@ export interface ListResponseUserResponseDataInner {
      */
     lastName: string;
     /**
+     * Organization the user belongs to; null for legacy users without one.
+     * @type {OrganizationResponse}
+     * @memberof ListResponseUserResponseDataInner
+     */
+    organization?: OrganizationResponse | null;
+    /**
      * Contact phone number.
      * @type {string}
      * @memberof ListResponseUserResponseDataInner
      */
     phoneNumber: string;
     /**
-     * Assigned roles.
-     * @type {Array<UserRole>}
+     * Roles assigned to the user (org-scoped permission sets).
+     * @type {Array<RoleResponse>}
      * @memberof ListResponseUserResponseDataInner
      */
-    roles: Array<UserRole>;
+    roles: Array<RoleResponse>;
     /**
      * Current availability status.
      * @type {UserStatus}
@@ -162,8 +175,9 @@ export function ListResponseUserResponseDataInnerFromJSONTyped(json: any, ignore
         'firstName': json['first_name'],
         'id': json['id'],
         'lastName': json['last_name'],
+        'organization': json['organization'] == null ? undefined : OrganizationResponseFromJSON(json['organization']),
         'phoneNumber': json['phone_number'],
-        'roles': ((json['roles'] as Array<any>).map(UserRoleFromJSON)),
+        'roles': ((json['roles'] as Array<any>).map(RoleResponseFromJSON)),
         'status': UserStatusFromJSON(json['status']),
         'username': json['username'],
     };
@@ -189,8 +203,9 @@ export function ListResponseUserResponseDataInnerToJSONTyped(value?: ListRespons
         'first_name': value['firstName'],
         'id': value['id'],
         'last_name': value['lastName'],
+        'organization': OrganizationResponseToJSON(value['organization']),
         'phone_number': value['phoneNumber'],
-        'roles': ((value['roles'] as Array<any>).map(UserRoleToJSON)),
+        'roles': ((value['roles'] as Array<any>).map(RoleResponseToJSON)),
         'status': UserStatusToJSON(value['status']),
         'username': value['username'],
     };

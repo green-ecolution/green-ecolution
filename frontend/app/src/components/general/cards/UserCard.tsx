@@ -1,9 +1,8 @@
 import React from 'react'
 import type { User } from '@/api/backendApi'
-import type { UserRole, DrivingLicense } from '@green-ecolution/backend-client'
+import type { DrivingLicense } from '@green-ecolution/backend-client'
 import { Badge, ListCard, ListCardTitle, ListCardDescription } from '@green-ecolution/ui'
 import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
-import { getUserRoleDetails } from '@/hooks/details/useDetailsForUserRole'
 import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
 
 interface UserCard {
@@ -27,9 +26,9 @@ const UserCard: React.FC<UserCard> = ({ user }) => {
 
       <ListCardDescription>
         <span className="lg:sr-only">Organisation:&nbsp;</span>
-        {user.roles.map((role: UserRole, index: number) => (
-          <span key={getUserRoleDetails(role).label}>
-            {getUserRoleDetails(role).label}
+        {user.roles.map((role, index) => (
+          <span key={role.id}>
+            {role.name}
             {index < user.roles.length - 1 ? ', ' : ''}
           </span>
         ))}

@@ -16,7 +16,6 @@ describe('useCurrentUser (bypass)', () => {
     expect(result.current.username).toBe('ttester')
     expect(result.current.email).toBe('toni.tester@green-ecolution.de')
     expect(result.current.firstName).toBe('Toni')
-    expect(result.current.userRoles.length).toBeGreaterThan(0)
   })
 })
 
@@ -27,7 +26,6 @@ describe('useCurrentUser (token without profile attributes)', () => {
       email: 'tbz1@example.com',
       given_name: 'T',
       family_name: 'BZ',
-      user_roles: ['tbz'],
     }
     const token = `x.${btoa(JSON.stringify(payload))}.y`
     vi.doMock('./authSessionContext', () => ({

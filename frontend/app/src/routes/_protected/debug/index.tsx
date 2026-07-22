@@ -208,21 +208,6 @@ function Debug() {
                   value: <Badge variant="muted">{userStore.userStatus}</Badge>,
                 },
                 {
-                  label: 'Rollen',
-                  value:
-                    userStore.userRoles.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {userStore.userRoles.map((role) => (
-                          <Badge key={role} variant="outline">
-                            {role}
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      '—'
-                    ),
-                },
-                {
                   label: 'Führerscheine',
                   value:
                     userStore.drivingLicenses.length > 0 ? (

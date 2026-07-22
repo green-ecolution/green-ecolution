@@ -12,16 +12,13 @@ use crate::{
     http::{
         AppState,
         auth::extractor::AuthUserExtractor,
-        v1::{
-            dto::{
-                ListResponse,
-                role::RoleResponse,
-                user::{
-                    AssignRoleRequest, SetOrganizationRequest, UserListParams, UserRegisterRequest,
-                    UserResponse, UserUpdateRequest,
-                },
+        v1::dto::{
+            ListResponse,
+            role::RoleResponse,
+            user::{
+                AssignRoleRequest, SetOrganizationRequest, UserListParams, UserRegisterRequest,
+                UserResponse, UserUpdateRequest,
             },
-            pagination::PaginationParams,
         },
     },
     service::{AuthError, ServiceError, user_service::UserListFilter},
@@ -74,7 +71,8 @@ pub async fn get_me(
     summary = "List all users",
     description = "Returns a paginated list of registered users, optionally filtered by organization or role.",
     params(
-        PaginationParams,
+        ("page" = Option<u64>, Query, description = "Page number to retrieve (1-based)", minimum = 1),
+        ("per_page" = Option<u64>, Query, description = "Number of items per page", minimum = 1, maximum = 100),
         ("organization_id" = Option<Uuid>, Query, description = "Filter by organization membership"),
         ("role_id" = Option<Uuid>, Query, description = "Filter by assigned role"),
     ),

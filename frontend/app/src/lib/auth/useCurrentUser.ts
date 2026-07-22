@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { decodeJWT } from '@/lib/utils'
 import { KeycloakJWT } from '@/lib/types/keycloak'
-import { parseUserRole, UserRoleOrUnknown } from '@/hooks/details/useDetailsForUserRole'
 import {
   parseUserStatus,
   UNKNOWN_USER_STATUS,
@@ -17,7 +16,6 @@ export interface CurrentUser {
   firstName: string
   lastName: string
   drivingLicenses: DrivingLicense[]
-  userRoles: UserRoleOrUnknown[]
   userStatus: UserStatusOrUnknown
 }
 
@@ -27,7 +25,6 @@ const EMPTY: CurrentUser = {
   firstName: '',
   lastName: '',
   drivingLicenses: [],
-  userRoles: [],
   userStatus: UNKNOWN_USER_STATUS,
 }
 
@@ -47,7 +44,6 @@ export function useCurrentUser(): CurrentUser {
       firstName: jwt.given_name,
       lastName: jwt.family_name,
       drivingLicenses: jwt.driving_licenses ? jwt.driving_licenses.map(parseDrivingLicense) : [],
-      userRoles: jwt.user_roles ? jwt.user_roles.map(parseUserRole) : [],
       userStatus: jwt.status ? parseUserStatus(jwt.status) : UNKNOWN_USER_STATUS,
     }
   }, [accessToken])
