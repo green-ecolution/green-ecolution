@@ -26,12 +26,7 @@ const UserCard: React.FC<UserCard> = ({ user }) => {
 
       <ListCardDescription>
         <span className="lg:sr-only">Organisation:&nbsp;</span>
-        {user.roles.map((role, index) => (
-          <span key={role.id}>
-            {role.name}
-            {index < user.roles.length - 1 ? ', ' : ''}
-          </span>
-        ))}
+        {user.organization?.name ?? 'Keine Angabe'}
       </ListCardDescription>
 
       <ListCardDescription>

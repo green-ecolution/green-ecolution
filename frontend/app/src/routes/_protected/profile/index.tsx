@@ -45,15 +45,13 @@ function Profile() {
             <h2 className="text-xl font-bold font-lato xl:text-2xl">
               {user.firstName} {user.lastName}
             </h2>
-            <ul className="mt-2 flex flex-col gap-2 xl:mt-4">
-              {roles.map((role) => (
-                <li key={role.id}>
-                  <Badge variant="outline-green-light" size="lg">
-                    {role.name}
-                  </Badge>
-                </li>
-              ))}
-            </ul>
+            {me?.organization && (
+              <div className="mt-2 xl:mt-4">
+                <Badge variant="outline-green-light" size="lg">
+                  {me.organization.name}
+                </Badge>
+              </div>
+            )}
           </div>
         </div>
       </section>
