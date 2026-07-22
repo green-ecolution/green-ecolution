@@ -18,8 +18,9 @@ use crate::{
         tracing::{MakeRequestUuid, REQUEST_ID_HEADER, make_span, on_response},
     },
     service::{
-        cluster_service::ClusterService, evaluation_service::EvaluationService,
-        region_service::RegionService, sensor_service::SensorService,
+        authorization::AuthorizationService, cluster_service::ClusterService,
+        evaluation_service::EvaluationService, organization_service::OrganizationService,
+        region_service::RegionService, role_service::RoleService, sensor_service::SensorService,
         start_point_service::StartPointService, tree_service::TreeService,
         user_service::UserService, vehicle_service::VehicleService,
         watering_execution_service::WateringExecutionService,
@@ -66,6 +67,9 @@ pub struct AppState {
     pub nearest_tree_limits: NearestTreeLimits,
     pub frontend_config_js: std::sync::Arc<str>,
     pub start_point_service: Arc<StartPointService>,
+    pub organization_service: Arc<OrganizationService>,
+    pub role_service: Arc<RoleService>,
+    pub authorization_service: Arc<AuthorizationService>,
 }
 
 #[derive(OpenApi)]
@@ -92,6 +96,8 @@ pub struct AppState {
         (name = "Users", description = "User registration and role management. Authentication is handled directly against Keycloak."),
         (name = "Plugins", description = "Plugin registration and lifecycle management. External plugins can register, authenticate, and maintain heartbeat connections."),
         (name = "Routing", description = "Routing configuration and start point management. Exposes the named depot locations available for watering route optimization."),
+        (name = "Organizations", description = "Manage the organization tree used for RBAC scoping and multi-tenancy."),
+        (name = "Roles", description = "Manage roles (named permission sets) and their assignment to users."),
     ),
 )]
 struct ApiDoc;

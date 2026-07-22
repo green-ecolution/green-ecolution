@@ -18,7 +18,9 @@ use crate::{
         mqtt::MqttHealthState,
         pg_cluster::PgTreeClusterRepository,
         pg_evaluation::PgEvaluationRepository,
+        pg_organization::PgOrganizationRepository,
         pg_region::PgRegionRepository,
+        pg_role::PgRoleRepository,
         pg_sensor::PgSensorRepository,
         pg_sensor_model::PgSensorModelRepository,
         pg_start_point::PgStartPointRepository,
@@ -30,6 +32,7 @@ use crate::{
         update_checker::UpdateChecker,
     },
     service::{
+        authorization::AuthorizationService,
         cluster_service::ClusterService,
         evaluation_service::EvaluationService,
         event_bus::{EventBus, EventHandler, InMemoryEventBus},
@@ -37,7 +40,9 @@ use crate::{
         handlers::cluster_soil_recalc::ClusterSoilRecalcHandler,
         handlers::cluster_status::ClusterStatusAggregatorHandler,
         handlers::tree_watering::TreeWateringFromSensorHandler,
+        organization_service::OrganizationService,
         region_service::RegionService,
+        role_service::RoleService,
         sensor_service::SensorService,
         start_point_service::StartPointService,
         tree_service::TreeService,
@@ -105,7 +110,7 @@ impl Application {
         let user_service = Arc::new(UserService::new(
             user_repo.clone(),
             profile_repo.clone(),
-            profile_repo,
+            profile_repo.clone(),
             settings.auth.enabled,
         ));
         let event_bus = build_event_bus(&repos);
@@ -122,6 +127,9 @@ impl Application {
             settings.routing.tree_demand_liters,
             repos.start_point_reader.clone(),
             repos.start_point_writer.clone(),
+            profile_repo.clone(),
+            profile_repo,
+            settings.auth.enabled,
         );
 
         let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
@@ -161,6 +169,9 @@ impl Application {
             },
             frontend_config_js: crate::http::render_frontend_config_js(&settings.auth).into(),
             start_point_service: services.start_point,
+            organization_service: services.organization,
+            role_service: services.role,
+            authorization_service: services.authorization,
         });
 
         let listener = TcpListener::bind(address).await?;
@@ -247,6 +258,10 @@ pub async fn get_connection_pool(config: &DatabaseSettings) -> Result<PgPool, sq
 }
 
 struct Repositories {
+    organization_reader: Arc<dyn domain::organization::OrganizationReader>,
+    organization_writer: Arc<dyn domain::organization::OrganizationWriter>,
+    role_reader: Arc<dyn domain::role::RoleReader>,
+    role_writer: Arc<dyn domain::role::RoleWriter>,
     region_reader: Arc<dyn domain::region::RegionReader>,
     region_writer: Arc<dyn domain::region::RegionWriter>,
     tree_reader: Arc<dyn domain::tree::TreeReader>,
@@ -270,6 +285,8 @@ struct Repositories {
 
 impl Repositories {
     fn build(pool: &PgPool, sensor_offline_after: chrono::Duration) -> Self {
+        let organization_repo = Arc::new(PgOrganizationRepository::new(pool.clone()));
+        let role_repo = Arc::new(PgRoleRepository::new(pool.clone()));
         let region_repo = Arc::new(PgRegionRepository::new(pool.clone()));
         let tree_repo = Arc::new(PgTreeRepository::new(pool.clone()));
         let sensor_repo = Arc::new(PgSensorRepository::new(pool.clone(), sensor_offline_after));
@@ -279,6 +296,10 @@ impl Repositories {
         let start_point_repo = Arc::new(PgStartPointRepository::new(pool.clone()));
 
         Self {
+            organization_reader: organization_repo.clone(),
+            organization_writer: organization_repo,
+            role_reader: role_repo.clone(),
+            role_writer: role_repo,
             region_reader: region_repo.clone(),
             region_writer: region_repo,
             tree_reader: tree_repo.clone(),
@@ -312,9 +333,13 @@ struct Services {
     watering_execution: Arc<WateringExecutionService>,
     evaluation: Arc<EvaluationService>,
     start_point: Arc<StartPointService>,
+    organization: Arc<OrganizationService>,
+    role: Arc<RoleService>,
+    authorization: Arc<AuthorizationService>,
 }
 
 impl Services {
+    #[allow(clippy::too_many_arguments)]
     fn build(
         repos: &Repositories,
         event_bus: Arc<dyn EventBus>,
@@ -322,6 +347,9 @@ impl Services {
         tree_demand_liters: f64,
         start_point_reader: Arc<dyn domain::start_point::StartPointReader>,
         start_point_writer: Arc<dyn domain::start_point::StartPointWriter>,
+        profile_reader: Arc<dyn domain::user::UserProfileReader>,
+        profile_writer: Arc<dyn domain::user::UserProfileWriter>,
+        auth_enabled: bool,
     ) -> Self {
         Self {
             region: Arc::new(RegionService::new(
@@ -368,12 +396,31 @@ impl Services {
             watering_execution: Arc::new(WateringExecutionService::new(
                 repos.watering_plan_reader.clone(),
                 repos.watering_plan_writer.clone(),
-                event_bus,
+                event_bus.clone(),
             )),
             evaluation: Arc::new(EvaluationService::new(repos.evaluation.clone())),
             start_point: Arc::new(StartPointService::new(
                 start_point_reader.clone(),
                 start_point_writer,
+            )),
+            organization: Arc::new(OrganizationService::new(
+                repos.organization_reader.clone(),
+                repos.organization_writer.clone(),
+                repos.role_reader.clone(),
+                repos.role_writer.clone(),
+                profile_reader,
+                event_bus.clone(),
+            )),
+            role: Arc::new(RoleService::new(
+                repos.role_reader.clone(),
+                repos.role_writer.clone(),
+                profile_writer,
+                event_bus,
+            )),
+            authorization: Arc::new(AuthorizationService::new(
+                repos.organization_reader.clone(),
+                repos.role_reader.clone(),
+                auth_enabled,
             )),
         }
     }

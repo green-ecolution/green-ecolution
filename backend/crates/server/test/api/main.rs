@@ -8,6 +8,7 @@ pub mod health;
 pub mod health_probes;
 pub mod helpers;
 pub mod info;
+pub mod organizations;
 pub mod plugins;
 pub mod regions;
 pub mod request_id;

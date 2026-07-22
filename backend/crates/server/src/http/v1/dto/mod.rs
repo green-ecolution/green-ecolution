@@ -1,8 +1,10 @@
 pub mod cluster;
 pub mod evaluation;
 pub mod info;
+pub mod organization;
 pub mod plugin;
 pub mod region;
+pub mod role;
 pub mod routing;
 pub mod sensor;
 pub mod tree;
