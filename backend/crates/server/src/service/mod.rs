@@ -3,6 +3,7 @@ pub mod cluster_service;
 pub mod evaluation_service;
 pub mod event_bus;
 pub mod handlers;
+pub mod organization_service;
 pub mod region_service;
 pub mod sensor_service;
 pub mod start_point_service;
@@ -34,6 +35,12 @@ pub enum ServiceError {
     FeatureDisabled { feature: &'static str },
     #[error(transparent)]
     Routing(#[from] RoutingError),
+    #[error(transparent)]
+    Organization(#[from] domain::organization::OrganizationError),
+    #[error(transparent)]
+    Role(#[from] domain::role::RoleError),
+    #[error("organization still has sub-organizations or users")]
+    OrganizationNotEmpty,
 }
 
 impl From<ValidationError> for ServiceError {

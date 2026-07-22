@@ -61,7 +61,12 @@ impl IntoResponse for ServiceError {
             e @ (ServiceError::TreeAlreadyHasSensor
             | ServiceError::SensorAlreadyAssigned
             | ServiceError::AlreadyActivated
-            | ServiceError::NotActivated) => (StatusCode::CONFLICT, e.to_string()).into_response(),
+            | ServiceError::NotActivated
+            | ServiceError::Organization(_)
+            | ServiceError::Role(_)
+            | ServiceError::OrganizationNotEmpty) => {
+                (StatusCode::CONFLICT, e.to_string()).into_response()
+            }
             ServiceError::Routing(e) => {
                 let (status, message) = match &e {
                     RoutingError::Unavailable(_) => (
