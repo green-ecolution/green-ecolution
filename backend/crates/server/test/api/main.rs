@@ -12,6 +12,7 @@ pub mod organizations;
 pub mod plugins;
 pub mod regions;
 pub mod request_id;
+pub mod roles;
 pub mod routing;
 pub mod sensor_activate;
 pub mod sensor_create;

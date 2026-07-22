@@ -1,6 +1,11 @@
-use serde::Serialize;
+use std::collections::BTreeSet;
+
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use domain::role::RoleView;
+
+use crate::service::ServiceError;
 
 /// A role (named permission set), either a global template or bound to an organization.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -41,4 +46,35 @@ impl From<&RoleView> for RoleResponse {
             created_at: value.created_at.map(|t| t.to_rfc3339()),
         }
     }
+}
+
+/// Request body for creating a role, either from scratch or as a copy of an existing role/template.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+#[schema(example = json!({ "name": "Gießtrupp", "permissions": ["tree:read", "tree:update"] }))]
+pub struct RoleCreateRequest {
+    /// Required unless `copy_from_role_id` is set (in which case it renames the copy).
+    pub name: Option<String>,
+    pub description: Option<String>,
+    /// Required unless `copy_from_role_id` is set.
+    pub permissions: Option<Vec<String>>,
+    /// Source role or template to copy the permission set from.
+    pub copy_from_role_id: Option<Uuid>,
+}
+
+/// Request body for replacing a role's name, description and permission set.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+#[schema(example = json!({ "name": "Gießtrupp Nord", "description": "Bewässerung Nordbezirk", "permissions": ["tree:read", "sensor:read"] }))]
+pub struct RoleUpdateRequest {
+    pub name: String,
+    pub description: Option<String>,
+    pub permissions: Vec<String>,
+}
+
+pub fn parse_permissions(
+    raw: &[String],
+) -> Result<BTreeSet<domain::authorization::Permission>, ServiceError> {
+    raw.iter()
+        .map(|s| s.parse::<domain::authorization::Permission>())
+        .collect::<Result<_, _>>()
+        .map_err(|e| ServiceError::InvalidInput(e.to_string()))
 }
