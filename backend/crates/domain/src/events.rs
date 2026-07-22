@@ -11,6 +11,7 @@ use crate::{
     Id,
     cluster::TreeCluster,
     organization::Organization,
+    role::Role,
     sensor::{
         SensorId,
         data::{VolumetricReading, Watermark},
@@ -125,5 +126,18 @@ pub enum DomainEvent {
     },
     OrganizationDeleted {
         organization_id: Id<Organization>,
+    },
+    RoleCreated {
+        role_id: Id<Role>,
+        organization_id: Id<Organization>,
+    },
+    RoleRenamed {
+        role_id: Id<Role>,
+    },
+    RolePermissionsChanged {
+        role_id: Id<Role>,
+    },
+    RoleDeleted {
+        role_id: Id<Role>,
     },
 }
