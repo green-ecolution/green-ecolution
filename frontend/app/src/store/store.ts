@@ -1,15 +1,16 @@
 import { create, StateCreator } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
-import { useShallow } from 'zustand/react/shallow'
+import { MAP_DEFAULT_CENTER, MAP_MIN_ZOOM } from '@/lib/mapConfig'
 import { FormDraftSlice } from './form/formDraftSlice'
 import { emptyFilters, FilterDraftSlice } from './filter/filterDraftSlice'
 
+// Live map viewport, mirrored from MapLibre on every move/zoom end. On /map the
+// URL search params are the deep-link source of truth (synced debounced in
+// useMapStoreSync); embedded maps elsewhere read this as their initial position.
 interface MapSlice {
   mapCenter: [number, number]
   mapZoom: number
-  mapMinZoom: number
-  mapMaxZoom: number
   mapSearchTerm: string
   setMapCenter: (center: [number, number]) => void
   setMapZoom: (zoom: number) => void
@@ -29,10 +30,8 @@ type Mutators = [
 ]
 
 const createMapSlice: StateCreator<Store, Mutators, [], MapSlice> = (set) => ({
-  mapCenter: [54.792277136221905, 9.43580607453268],
-  mapZoom: 13,
-  mapMinZoom: 13,
-  mapMaxZoom: 18,
+  mapCenter: MAP_DEFAULT_CENTER,
+  mapZoom: MAP_MIN_ZOOM,
   mapSearchTerm: '',
   setMapCenter: (center) =>
     set((state) => {
@@ -147,16 +146,5 @@ const useStore = create<Store>()(
     ),
   ),
 )
-
-const mapSelector = (s: Store) => ({
-  mapCenter: s.mapCenter,
-  mapZoom: s.mapZoom,
-  mapMinZoom: s.mapMinZoom,
-  mapMaxZoom: s.mapMaxZoom,
-  setMapCenter: s.setMapCenter,
-  setMapZoom: s.setMapZoom,
-})
-
-export const useMapStore = () => useStore(useShallow(mapSelector))
 
 export default useStore
