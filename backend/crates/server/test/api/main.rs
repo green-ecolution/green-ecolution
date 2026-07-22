@@ -17,6 +17,7 @@ pub mod sensor_create;
 pub mod sensor_models;
 pub mod sensor_mqtt;
 pub mod sensor_relink;
+pub mod sensor_soil_moisture;
 pub mod sensor_status;
 pub mod sensors;
 pub mod statistics;

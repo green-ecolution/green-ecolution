@@ -1,0 +1,55 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT sma.depth_cm AS \"depth_cm!\",\n                      date_trunc($4, sd.updated_at) AS \"bucket_start!\",\n                      AVG(dav.value)::float8 AS \"mean!\",\n                      MIN(dav.value)::float8 AS \"min!\",\n                      MAX(dav.value)::float8 AS \"max!\",\n                      COUNT(*) AS \"sample_count!\"\n               FROM sensor_data sd\n               JOIN sensor_data_ability_values dav ON dav.sensor_data_id = sd.id\n               JOIN sensor_model_abilities sma ON sma.id = dav.sensor_model_ability_id\n               JOIN sensor_abilities sa ON sa.id = sma.sensor_ability_id\n               WHERE sd.sensor_id = $1\n                 AND sa.ability = 'soil_moisture'\n                 AND dav.value >= 0 AND dav.value <= 100\n                 AND sd.updated_at >= $2\n                 AND sd.updated_at <= $3\n               GROUP BY sma.depth_cm, date_trunc($4, sd.updated_at)\n               ORDER BY sma.depth_cm, date_trunc($4, sd.updated_at)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "depth_cm!",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "bucket_start!",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 2,
+        "name": "mean!",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 3,
+        "name": "min!",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 4,
+        "name": "max!",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 5,
+        "name": "sample_count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Timestamp",
+        "Timestamp",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "92548a40a47d4fcac156ec2dd2678f4f01a193ae0bc2abcbd940483e97db0b61"
+}

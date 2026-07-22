@@ -13,6 +13,20 @@
  */
 
 import { mapValues } from '../runtime';
+import type { SoilMoistureConditionPointResponse } from './SoilMoistureConditionPointResponse';
+import {
+    SoilMoistureConditionPointResponseFromJSON,
+    SoilMoistureConditionPointResponseFromJSONTyped,
+    SoilMoistureConditionPointResponseToJSON,
+    SoilMoistureConditionPointResponseToJSONTyped,
+} from './SoilMoistureConditionPointResponse';
+import type { SoilMoistureConditionThresholdsResponse } from './SoilMoistureConditionThresholdsResponse';
+import {
+    SoilMoistureConditionThresholdsResponseFromJSON,
+    SoilMoistureConditionThresholdsResponseFromJSONTyped,
+    SoilMoistureConditionThresholdsResponseToJSON,
+    SoilMoistureConditionThresholdsResponseToJSONTyped,
+} from './SoilMoistureConditionThresholdsResponse';
 import type { SoilMoistureThresholdResponse } from './SoilMoistureThresholdResponse';
 import {
     SoilMoistureThresholdResponseFromJSON,
@@ -48,6 +62,18 @@ export interface SoilMoistureSeriesResponse {
      */
     bucket: string;
     /**
+     * Worst-case condition series; empty when the soil condition is unknown.
+     * @type {Array<SoilMoistureConditionPointResponse>}
+     * @memberof SoilMoistureSeriesResponse
+     */
+    condition: Array<SoilMoistureConditionPointResponse>;
+    /**
+     * 
+     * @type {SoilMoistureConditionThresholdsResponse}
+     * @memberof SoilMoistureSeriesResponse
+     */
+    conditionThresholds: SoilMoistureConditionThresholdsResponse;
+    /**
      * 
      * @type {Array<SoilMoistureDepthSeriesResponse>}
      * @memberof SoilMoistureSeriesResponse
@@ -72,6 +98,8 @@ export interface SoilMoistureSeriesResponse {
  */
 export function instanceOfSoilMoistureSeriesResponse(value: object): value is SoilMoistureSeriesResponse {
     if (!('bucket' in value) || value['bucket'] === undefined) return false;
+    if (!('condition' in value) || value['condition'] === undefined) return false;
+    if (!('conditionThresholds' in value) || value['conditionThresholds'] === undefined) return false;
     if (!('series' in value) || value['series'] === undefined) return false;
     if (!('thresholds' in value) || value['thresholds'] === undefined) return false;
     if (!('wateringEvents' in value) || value['wateringEvents'] === undefined) return false;
@@ -89,6 +117,8 @@ export function SoilMoistureSeriesResponseFromJSONTyped(json: any, ignoreDiscrim
     return {
         
         'bucket': json['bucket'],
+        'condition': ((json['condition'] as Array<any>).map(SoilMoistureConditionPointResponseFromJSON)),
+        'conditionThresholds': SoilMoistureConditionThresholdsResponseFromJSON(json['condition_thresholds']),
         'series': ((json['series'] as Array<any>).map(SoilMoistureDepthSeriesResponseFromJSON)),
         'thresholds': ((json['thresholds'] as Array<any>).map(SoilMoistureThresholdResponseFromJSON)),
         'wateringEvents': ((json['watering_events'] as Array<any>).map(ClusterWateringEventResponseFromJSON)),
@@ -107,6 +137,8 @@ export function SoilMoistureSeriesResponseToJSONTyped(value?: SoilMoistureSeries
     return {
         
         'bucket': value['bucket'],
+        'condition': ((value['condition'] as Array<any>).map(SoilMoistureConditionPointResponseToJSON)),
+        'condition_thresholds': SoilMoistureConditionThresholdsResponseToJSON(value['conditionThresholds']),
         'series': ((value['series'] as Array<any>).map(SoilMoistureDepthSeriesResponseToJSON)),
         'thresholds': ((value['thresholds'] as Array<any>).map(SoilMoistureThresholdResponseToJSON)),
         'watering_events': ((value['wateringEvents'] as Array<any>).map(ClusterWateringEventResponseToJSON)),

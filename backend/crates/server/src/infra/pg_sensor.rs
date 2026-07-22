@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 use domain::{
     RepositoryError,
+    cluster::{SoilMoistureBucket, SoilMoistureDepthSeries, SoilMoisturePoint},
     sensor::{
         LorawanCredentials, Sensor, SensorDraft, SensorId, SensorReader, SensorReadingReader,
         SensorReadingWriter, SensorSearchQuery, SensorSnapshot, SensorType, SensorView,
@@ -548,6 +549,66 @@ impl SensorReadingReader for PgSensorRepository {
                 moisture_percent: r.moisture_percent,
             })
             .collect())
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn soil_moisture_series(
+        &self,
+        sensor_id: &SensorId,
+        from: DateTime<Utc>,
+        to: DateTime<Utc>,
+        bucket: SoilMoistureBucket,
+    ) -> Result<Vec<SoilMoistureDepthSeries>, RepositoryError> {
+        let bucket_kind = match bucket {
+            SoilMoistureBucket::Hour => "hour",
+            SoilMoistureBucket::Day => "day",
+        };
+        // Sentinel guard: disconnected Dragino probes report ~6553.5, so
+        // anything outside 0–100 Vol.-% is a sensor error, not a reading.
+        let rows = sqlx::query!(
+            r#"SELECT sma.depth_cm AS "depth_cm!",
+                      date_trunc($4, sd.updated_at) AS "bucket_start!",
+                      AVG(dav.value)::float8 AS "mean!",
+                      MIN(dav.value)::float8 AS "min!",
+                      MAX(dav.value)::float8 AS "max!",
+                      COUNT(*) AS "sample_count!"
+               FROM sensor_data sd
+               JOIN sensor_data_ability_values dav ON dav.sensor_data_id = sd.id
+               JOIN sensor_model_abilities sma ON sma.id = dav.sensor_model_ability_id
+               JOIN sensor_abilities sa ON sa.id = sma.sensor_ability_id
+               WHERE sd.sensor_id = $1
+                 AND sa.ability = 'soil_moisture'
+                 AND dav.value >= 0 AND dav.value <= 100
+                 AND sd.updated_at >= $2
+                 AND sd.updated_at <= $3
+               GROUP BY sma.depth_cm, date_trunc($4, sd.updated_at)
+               ORDER BY sma.depth_cm, date_trunc($4, sd.updated_at)"#,
+            sensor_id.as_str(),
+            from.naive_utc(),
+            to.naive_utc(),
+            bucket_kind,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut series: Vec<SoilMoistureDepthSeries> = Vec::new();
+        for r in rows {
+            let point = SoilMoisturePoint {
+                bucket_start: r.bucket_start.and_utc(),
+                mean: r.mean,
+                min: r.min,
+                max: r.max,
+                sample_count: r.sample_count,
+            };
+            match series.last_mut() {
+                Some(s) if s.depth_cm == r.depth_cm => s.points.push(point),
+                _ => series.push(SoilMoistureDepthSeries {
+                    depth_cm: r.depth_cm,
+                    points: vec![point],
+                }),
+            }
+        }
+        Ok(series)
     }
 
     #[tracing::instrument(level = "trace", skip_all)]

@@ -341,6 +341,7 @@ impl Services {
                 repos.sensor_model_reader.clone(),
                 repos.tree_reader.clone(),
                 repos.tree_writer.clone(),
+                repos.cluster_reader.clone(),
                 event_bus.clone(),
             )),
             vehicle: Arc::new(VehicleService::new(

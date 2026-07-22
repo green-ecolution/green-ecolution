@@ -14,6 +14,8 @@ use domain::{
     },
 };
 
+use crate::service::ServiceError;
+
 use super::{SoilCondition, WateringStatus, region::RegionResponse, tree::TreeResponse};
 
 /// Full representation of a tree cluster including its resolved tree relations.
@@ -376,6 +378,38 @@ pub struct SoilMoistureParams {
     pub bucket: Option<String>,
 }
 
+impl SoilMoistureParams {
+    /// Applies the documented defaults and validates window and bucket.
+    pub fn resolve(
+        &self,
+    ) -> Result<
+        (
+            DateTime<Utc>,
+            DateTime<Utc>,
+            domain::cluster::SoilMoistureBucket,
+        ),
+        ServiceError,
+    > {
+        let to = self.to.unwrap_or_else(chrono::Utc::now);
+        let from = self.from.unwrap_or_else(|| to - chrono::Duration::days(7));
+        if from >= to {
+            return Err(ServiceError::InvalidInput(
+                "`from` must be before `to`".into(),
+            ));
+        }
+        let bucket = match self.bucket.as_deref() {
+            None | Some("day") => domain::cluster::SoilMoistureBucket::Day,
+            Some("hour") => domain::cluster::SoilMoistureBucket::Hour,
+            Some(other) => {
+                return Err(ServiceError::InvalidInput(format!(
+                    "unknown bucket '{other}' (use hour or day)"
+                )));
+            }
+        };
+        Ok((from, to, bucket))
+    }
+}
+
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SoilMoisturePointResponse {
     /// Bucket start (RFC 3339).
@@ -408,6 +442,34 @@ pub struct SoilMoistureThresholdResponse {
     pub critical: f64,
 }
 
+/// One bucket of the tree-condition series, as % plant-available water
+/// (REW × 100), clamped to 0–100: wetter than field capacity or drier than
+/// the wilting point carries no extra meaning for the dashboard and reads
+/// as a bug ("129 %"). The depth with the lowest mean REW wins per bucket.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct SoilMoistureConditionPointResponse {
+    /// Bucket start (RFC 3339).
+    pub timestamp: DateTime<Utc>,
+    #[schema(example = 46.5)]
+    pub mean: f64,
+    #[schema(example = 40.0)]
+    pub min: f64,
+    #[schema(example = 55.0)]
+    pub max: f64,
+    /// Depth whose mean REW was lowest in this bucket.
+    #[schema(example = 80)]
+    pub worst_depth_cm: i32,
+}
+
+/// Universal REW thresholds in % — identical for every soil type and depth.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct SoilMoistureConditionThresholdsResponse {
+    #[schema(example = 40.0)]
+    pub moderate: f64,
+    #[schema(example = 30.0)]
+    pub critical: f64,
+}
+
 /// A finished watering-plan run that included this cluster.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct ClusterWateringEventResponse {
@@ -425,6 +487,9 @@ pub struct SoilMoistureSeriesResponse {
     pub series: Vec<SoilMoistureDepthSeriesResponse>,
     /// Empty when the cluster's soil condition is unknown.
     pub thresholds: Vec<SoilMoistureThresholdResponse>,
+    /// Worst-case condition series; empty when the soil condition is unknown.
+    pub condition: Vec<SoilMoistureConditionPointResponse>,
+    pub condition_thresholds: SoilMoistureConditionThresholdsResponse,
     /// All finished runs, newest first (not limited to the query window).
     pub watering_events: Vec<ClusterWateringEventResponse>,
 }
@@ -463,6 +528,21 @@ impl From<domain::cluster::SoilMoistureOverview> for SoilMoistureSeriesResponse 
                     critical: t.critical,
                 })
                 .collect(),
+            condition: v
+                .condition
+                .into_iter()
+                .map(|c| SoilMoistureConditionPointResponse {
+                    timestamp: c.bucket_start,
+                    mean: (c.rew_mean * 100.0).clamp(0.0, 100.0),
+                    min: (c.rew_min * 100.0).clamp(0.0, 100.0),
+                    max: (c.rew_max * 100.0).clamp(0.0, 100.0),
+                    worst_depth_cm: c.worst_depth_cm,
+                })
+                .collect(),
+            condition_thresholds: SoilMoistureConditionThresholdsResponse {
+                moderate: domain::tree::REW_MIN * 100.0,
+                critical: domain::tree::REW_CRIT * 100.0,
+            },
             watering_events: v
                 .watering_events
                 .into_iter()

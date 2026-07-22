@@ -6,6 +6,7 @@ import SensorIdentitySection from './detail/SensorIdentitySection'
 import SensorLinkedTreeSection from './detail/SensorLinkedTreeSection'
 import SensorLocationSection from './detail/SensorLocationSection'
 import SensorLorawanConfigSection from './detail/SensorLorawanConfigSection'
+import SensorSoilMoistureChart from './detail/SensorSoilMoistureChart'
 import SensorStatusGrid from './detail/SensorStatusGrid'
 import SensorSignalSection from './detail/SensorSignalSection'
 import type { Sensor } from '@/api/backendApi'
@@ -22,6 +23,7 @@ const SensorDashboard = ({ sensor }: SensorDashboardProps) => {
         <SensorHero sensor={sensor} />
         <SensorStatusGrid sensor={sensor} />
         <SensorSignalSection sensor={sensor} />
+        <SensorSoilMoistureChart sensor={sensor} />
         <SensorIdentitySection sensor={sensor} />
         <SensorAbilitiesSection sensor={sensor} />
         <SensorLocationSection sensor={sensor} />

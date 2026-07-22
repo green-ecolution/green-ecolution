@@ -41,7 +41,9 @@ pub use repository::{TreeReader, TreeWriter};
 #[doc(hidden)]
 pub use snapshot::TreeSnapshot;
 pub use view::{TreeView, TreeViewWithDistance};
-pub use volumetric_calibration::{VolumetricThresholds, volumetric_thresholds};
+pub use volumetric_calibration::{
+    REW_CRIT, REW_MIN, VolumetricThresholds, rew_fraction, volumetric_thresholds,
+};
 
 crate::newtype_nonempty! {
     /// Botanical or common species name, 1–255 characters after trimming.

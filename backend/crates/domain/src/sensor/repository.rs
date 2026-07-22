@@ -3,6 +3,7 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     RepositoryError,
+    cluster::{SoilMoistureBucket, SoilMoistureDepthSeries},
     sensor::{
         Sensor, SensorDraft, SensorId, SensorSearchQuery, SensorView,
         data::{SensorReading, SensorReadingDraft, SensorReadingView},
@@ -64,6 +65,17 @@ pub trait SensorReadingReader: Send + Sync {
         &self,
         sensor_id: &SensorId,
     ) -> Result<Vec<crate::sensor::data::VolumetricReading>, RepositoryError>;
+
+    /// Bucketed volumetric soil-moisture readings (mean/min/max per depth)
+    /// of this sensor. Readings outside 0–100 % are sensor sentinels and are
+    /// excluded.
+    async fn soil_moisture_series(
+        &self,
+        sensor_id: &SensorId,
+        from: DateTime<Utc>,
+        to: DateTime<Utc>,
+        bucket: SoilMoistureBucket,
+    ) -> Result<Vec<SoilMoistureDepthSeries>, RepositoryError>;
 }
 
 /// Write-side access to sensor readings.

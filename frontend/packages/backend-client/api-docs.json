@@ -1533,6 +1533,87 @@
         }
       }
     },
+    "/v1/sensors/{sensor_id}/soil-moisture": {
+      "get": {
+        "tags": [
+          "Sensors"
+        ],
+        "summary": "Bucketed soil-moisture series for a sensor",
+        "description": "Aggregates the sensor's volumetric soil-moisture readings (mean/min/max per probe depth and time bucket). Stress thresholds and the REW condition series are derived from the soil condition of the linked tree's cluster and are empty when the sensor is not linked or the soil is unknown.",
+        "operationId": "getSensorSoilMoisture",
+        "parameters": [
+          {
+            "name": "sensor_id",
+            "in": "path",
+            "description": "Sensor ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Window start (RFC 3339). Defaults to 7 days before `to`.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Window end (RFC 3339). Defaults to now.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "bucket",
+            "in": "query",
+            "description": "Aggregation bucket. Allowed: `hour|day`. Defaults to `day`.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "example": "day"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aggregated soil-moisture series",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoilMoistureSeriesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameter"
+          },
+          "404": {
+            "description": "Sensor not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/v1/sensors/{sensor_id}/tree": {
       "get": {
         "tags": [
@@ -5462,6 +5543,65 @@
         ],
         "example": "Lu"
       },
+      "SoilMoistureConditionPointResponse": {
+        "type": "object",
+        "description": "One bucket of the tree-condition series, as % plant-available water\n(REW × 100), clamped to 0–100: wetter than field capacity or drier than\nthe wilting point carries no extra meaning for the dashboard and reads\nas a bug (\"129 %\"). The depth with the lowest mean REW wins per bucket.",
+        "required": [
+          "timestamp",
+          "mean",
+          "min",
+          "max",
+          "worst_depth_cm"
+        ],
+        "properties": {
+          "max": {
+            "type": "number",
+            "format": "double",
+            "example": 55.0
+          },
+          "mean": {
+            "type": "number",
+            "format": "double",
+            "example": 46.5
+          },
+          "min": {
+            "type": "number",
+            "format": "double",
+            "example": 40.0
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Bucket start (RFC 3339)."
+          },
+          "worst_depth_cm": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Depth whose mean REW was lowest in this bucket.",
+            "example": 80
+          }
+        }
+      },
+      "SoilMoistureConditionThresholdsResponse": {
+        "type": "object",
+        "description": "Universal REW thresholds in % — identical for every soil type and depth.",
+        "required": [
+          "moderate",
+          "critical"
+        ],
+        "properties": {
+          "critical": {
+            "type": "number",
+            "format": "double",
+            "example": 30.0
+          },
+          "moderate": {
+            "type": "number",
+            "format": "double",
+            "example": 40.0
+          }
+        }
+      },
       "SoilMoistureDepthSeriesResponse": {
         "type": "object",
         "required": [
@@ -5525,6 +5665,8 @@
           "bucket",
           "series",
           "thresholds",
+          "condition",
+          "condition_thresholds",
           "watering_events"
         ],
         "properties": {
@@ -5532,6 +5674,16 @@
             "type": "string",
             "description": "Effective bucket: `hour` or `day`.",
             "example": "day"
+          },
+          "condition": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SoilMoistureConditionPointResponse"
+            },
+            "description": "Worst-case condition series; empty when the soil condition is unknown."
+          },
+          "condition_thresholds": {
+            "$ref": "#/components/schemas/SoilMoistureConditionThresholdsResponse"
           },
           "series": {
             "type": "array",

@@ -75,6 +75,8 @@ models/ServicesInfoResponse.ts
 models/SetSensorTreeRequest.ts
 models/SignalResponse.ts
 models/SoilCondition.ts
+models/SoilMoistureConditionPointResponse.ts
+models/SoilMoistureConditionThresholdsResponse.ts
 models/SoilMoistureDepthSeriesResponse.ts
 models/SoilMoisturePointResponse.ts
 models/SoilMoistureSeriesResponse.ts

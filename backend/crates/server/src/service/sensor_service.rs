@@ -3,6 +3,7 @@ use std::sync::Arc;
 use chrono::{DateTime, Utc};
 use domain::{
     Id,
+    cluster::{SoilMoistureBucket, SoilMoistureOverview, TreeClusterReader, condition_series},
     events::{DomainEvent, SensorDataReceivedPayload, SensorReadings},
     sensor::{
         Sensor, SensorDraft, SensorError, SensorId, SensorReader, SensorReadingReader,
@@ -11,7 +12,7 @@ use domain::{
     },
     sensor_model::{SensorModel, SensorModelReader},
     shared::pagination::{Page, Pagination},
-    tree::{Tree, TreeReader, TreeWriter},
+    tree::{Tree, TreeReader, TreeWriter, volumetric_thresholds},
 };
 
 use super::{ServiceError, event_bus::EventBus};
@@ -24,6 +25,7 @@ pub struct SensorService {
     model_reader: Arc<dyn SensorModelReader>,
     tree_reader: Arc<dyn TreeReader>,
     tree_writer: Arc<dyn TreeWriter>,
+    cluster_reader: Arc<dyn TreeClusterReader>,
     event_bus: Arc<dyn EventBus>,
 }
 
@@ -48,6 +50,7 @@ impl SensorService {
         model_reader: Arc<dyn SensorModelReader>,
         tree_reader: Arc<dyn TreeReader>,
         tree_writer: Arc<dyn TreeWriter>,
+        cluster_reader: Arc<dyn TreeClusterReader>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
         Self {
@@ -58,6 +61,7 @@ impl SensorService {
             model_reader,
             tree_reader,
             tree_writer,
+            cluster_reader,
             event_bus,
         }
     }
@@ -246,6 +250,53 @@ impl SensorService {
             }))
             .await;
         Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
+    pub async fn soil_moisture_overview(
+        &self,
+        id: &SensorId,
+        from: DateTime<Utc>,
+        to: DateTime<Utc>,
+        bucket: SoilMoistureBucket,
+    ) -> Result<SoilMoistureOverview, ServiceError> {
+        // Distinguish "unknown sensor" (404) from "sensor without readings".
+        self.reader.by_id(id).await?;
+        let series = self
+            .reading_reader
+            .soil_moisture_series(id, from, to, bucket)
+            .await?;
+        let cluster_id = self
+            .tree_reader
+            .by_sensor_id(id)
+            .await?
+            .and_then(|tree| tree.cluster_id());
+        let (soil, watering_events) = match cluster_id {
+            Some(cluster_id) => {
+                let view = self.cluster_reader.view_by_id(cluster_id).await?;
+                let events = self.cluster_reader.watering_events(cluster_id).await?;
+                (view.soil_condition, events)
+            }
+            None => (None, Vec::new()),
+        };
+        let thresholds = soil
+            .map(|s| {
+                series
+                    .iter()
+                    .filter_map(|d| volumetric_thresholds(s, d.depth_cm))
+                    .collect()
+            })
+            .unwrap_or_default();
+        let condition = soil
+            .map(|s| condition_series(&series, s))
+            .unwrap_or_default();
+        Ok(SoilMoistureOverview {
+            bucket,
+            series,
+            thresholds,
+            condition,
+            watering_events,
+        })
     }
 }
 

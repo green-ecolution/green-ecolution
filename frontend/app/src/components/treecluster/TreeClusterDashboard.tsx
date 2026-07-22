@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronDown, Pencil, Trash2 } from 'lucide-react'
 import ClusterKpiRow from './ClusterKpiRow'
-import ClusterSoilMoistureChart from './ClusterSoilMoistureChart'
+import ClusterWaterSupplyChart from './ClusterWaterSupplyChart'
 import ClusterWateringHistory from './ClusterWateringHistory'
 import ClusterLocationCard from './ClusterLocationCard'
 import ClusterSensorCard from './ClusterSensorCard'
@@ -115,7 +115,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
       <div className="mt-10 grid gap-6 xl:grid-cols-[2fr_1fr]">
         <div className="flex min-w-0 flex-col gap-6">
           <ClusterKpiRow treecluster={treecluster} />
-          <ClusterSoilMoistureChart clusterId={treecluster.id} hasSensors={hasSensors} />
+          <ClusterWaterSupplyChart clusterId={treecluster.id} hasSensors={hasSensors} />
           <ClusterWateringHistory clusterId={treecluster.id} />
         </div>
         <div className="flex min-w-0 flex-col gap-6">
