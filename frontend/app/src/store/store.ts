@@ -20,7 +20,12 @@ interface SidebarSlice {
   setSidebarCollapsed: (collapsed: boolean) => void
 }
 
-type Store = MapSlice & SidebarSlice & FormDraftSlice & FilterDraftSlice
+interface PwaSlice {
+  pwaHintDismissedAt: number | null
+  dismissPwaHint: () => void
+}
+
+type Store = MapSlice & SidebarSlice & PwaSlice & FormDraftSlice & FilterDraftSlice
 type Mutators = [
   ['zustand/devtools', never],
   ['zustand/persist', unknown],
@@ -45,6 +50,14 @@ const createSidebarSlice: StateCreator<Store, Mutators, [], SidebarSlice> = (set
   setSidebarCollapsed: (collapsed) =>
     set((state) => {
       state.sidebarCollapsed = collapsed
+    }),
+})
+
+const createPwaSlice: StateCreator<Store, Mutators, [], PwaSlice> = (set) => ({
+  pwaHintDismissedAt: null,
+  dismissPwaHint: () =>
+    set((state) => {
+      state.pwaHintDismissedAt = Date.now()
     }),
 })
 
@@ -123,18 +136,24 @@ const createFilterDraftSlice: StateCreator<Store, Mutators, [], FilterDraftSlice
     }),
 })
 
+export const STORE_PERSIST_KEY = 'green-ecolution-preferences'
+
 const useStore = create<Store>()(
   devtools(
     persist(
       immer((...a) => ({
         ...createMapSlice(...a),
         ...createSidebarSlice(...a),
+        ...createPwaSlice(...a),
         ...createFormDraftSlice(...a),
         ...createFilterDraftSlice(...a),
       })),
       {
-        name: 'green-ecolution-preferences',
-        partialize: (s) => ({ sidebarCollapsed: s.sidebarCollapsed }),
+        name: STORE_PERSIST_KEY,
+        partialize: (s) => ({
+          sidebarCollapsed: s.sidebarCollapsed,
+          pwaHintDismissedAt: s.pwaHintDismissedAt,
+        }),
       },
     ),
   ),

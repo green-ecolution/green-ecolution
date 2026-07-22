@@ -1,4 +1,5 @@
 import usePWAInstall from '@/hooks/usePWAInstall'
+import useStore, { STORE_PERSIST_KEY } from '@/store/store'
 import {
   Alert,
   AlertContent,
@@ -8,32 +9,19 @@ import {
   Button,
 } from '@green-ecolution/ui'
 import { Download, Share, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
-const DISMISS_KEY = 'ge.pwa-install-hint.scanner.dismissed-at'
 const RESHOW_AFTER_MS = 30 * 24 * 60 * 60 * 1000
-
-const readDismissed = (): boolean => {
-  if (typeof localStorage === 'undefined') return false
-  try {
-    const raw = localStorage.getItem(DISMISS_KEY)
-    if (!raw) return false
-    const dismissedAt = Number(raw)
-    if (!Number.isFinite(dismissedAt)) return false
-    return Date.now() - dismissedAt < RESHOW_AFTER_MS
-  } catch {
-    return false
-  }
-}
 
 const PWAInstallHint = () => {
   const { isStandalone, platform, canPromptInstall, promptInstall } = usePWAInstall()
-  const [dismissed, setDismissed] = useState(readDismissed)
+  const dismissedAt = useStore((s) => s.pwaHintDismissedAt)
+  const dismissPwaHint = useStore((s) => s.dismissPwaHint)
 
-  // Cross-tab dismissal sync
+  // Cross-tab dismissal sync: another tab writing the persisted store re-hydrates this one
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === DISMISS_KEY) setDismissed(readDismissed())
+      if (e.key === STORE_PERSIST_KEY) void useStore.persist.rehydrate()
     }
     window.addEventListener('storage', onStorage)
     return () => {
@@ -41,15 +29,12 @@ const PWAInstallHint = () => {
     }
   }, [])
 
+  // eslint-disable-next-line react-hooks/purity, react-x/purity -- clock read decides hint expiry; staleness until the next render is harmless
+  const dismissed = dismissedAt !== null && Date.now() - dismissedAt < RESHOW_AFTER_MS
   if (isStandalone || dismissed) return null
 
   const handleDismiss = () => {
-    try {
-      localStorage.setItem(DISMISS_KEY, String(Date.now()))
-    } catch {
-      /* ignore */
-    }
-    setDismissed(true)
+    dismissPwaHint()
   }
 
   const handleInstall = async () => {

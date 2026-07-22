@@ -19,13 +19,13 @@ describe('sidebarSlice', () => {
     expect(useStore.getState().sidebarCollapsed).toBe(false)
   })
 
-  it('persists only sidebarCollapsed to localStorage', () => {
+  it('persists only preferences to localStorage', () => {
     useStore.getState().setSidebarCollapsed(true)
 
     const raw = localStorage.getItem('green-ecolution-preferences')
     expect(raw).not.toBeNull()
 
     const persisted = JSON.parse(raw!) as { state: Record<string, unknown> }
-    expect(persisted.state).toEqual({ sidebarCollapsed: true })
+    expect(persisted.state).toEqual({ sidebarCollapsed: true, pwaHintDismissedAt: null })
   })
 })
