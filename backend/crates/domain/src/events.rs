@@ -10,6 +10,7 @@ use chrono::{DateTime, Utc};
 use crate::{
     Id,
     cluster::TreeCluster,
+    organization::Organization,
     sensor::{
         SensorId,
         data::{VolumetricReading, Watermark},
@@ -70,18 +71,26 @@ pub enum DomainEvent {
     },
     /// Emitted when a cluster's tree list changes so that centroid,
     /// watering status, and region can be recalculated.
-    ClusterTreesChanged { cluster_id: Id<TreeCluster> },
+    ClusterTreesChanged {
+        cluster_id: Id<TreeCluster>,
+    },
     /// Emitted when a cluster's `soil_condition` changes so that the
     /// volumetric watering status of member trees can be recomputed.
-    ClusterSoilConditionChanged { cluster_id: Id<TreeCluster> },
+    ClusterSoilConditionChanged {
+        cluster_id: Id<TreeCluster>,
+    },
     /// Emitted after a sensor reading is persisted. Carries the parsed
     /// readings so subscribers don't have to re-parse the raw JSON payload.
     SensorDataReceived(SensorDataReceivedPayload),
     /// Emitted when a sensor transitions from `Prepared` to `Offline`.
-    SensorActivated { sensor_id: SensorId },
+    SensorActivated {
+        sensor_id: SensorId,
+    },
     /// Emitted when an activated sensor is reset back to `Prepared`,
     /// dropping its tree link. Inverse of `SensorActivated`.
-    SensorDeactivated { sensor_id: SensorId },
+    SensorDeactivated {
+        sensor_id: SensorId,
+    },
     WateringPlanStarted {
         plan_id: Id<WateringPlan>,
         cluster_ids: Vec<Id<TreeCluster>>,
@@ -107,5 +116,14 @@ pub enum DomainEvent {
     WateringPlanDeleted {
         plan_id: Id<WateringPlan>,
         cluster_ids: Vec<Id<TreeCluster>>,
+    },
+    OrganizationCreated {
+        organization_id: Id<Organization>,
+    },
+    OrganizationRenamed {
+        organization_id: Id<Organization>,
+    },
+    OrganizationDeleted {
+        organization_id: Id<Organization>,
     },
 }

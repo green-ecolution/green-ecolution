@@ -29,6 +29,7 @@ pub mod evaluation;
 pub mod event_bus;
 pub mod events;
 pub mod info;
+pub mod organization;
 pub mod plugin;
 pub mod region;
 pub mod routing;
