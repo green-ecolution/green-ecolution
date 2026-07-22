@@ -342,11 +342,20 @@ INSERT INTO vehicle_watering_plans (vehicle_id, watering_plan_id, role) VALUES
 
 
 -- Profile data for the Keycloak demo users (tbz1, tbz2, ttester). Ids are the
--- Keycloak user ids from the imported realm; roles stay in Keycloak.
-INSERT INTO user_profiles (id, status, driving_licenses) VALUES
-  ('8e1a16e9-19b6-4bcc-a5a3-3e6fa7518865'::uuid, 'available', ARRAY['B']::driving_license[]),
-  ('6a1078e8-80fd-458f-b74e-e388fe2dd6ab'::uuid, 'available', ARRAY['C']::driving_license[]),
-  ('b5afc591-ee33-4df8-af75-265265f05882'::uuid, 'available', ARRAY['B']::driving_license[]);
+-- Keycloak user ids from the imported realm. tbz1/tbz2 belong to the TBZ
+-- organization, ttester to the root org (both seeded in 04_organizations.sql).
+INSERT INTO user_profiles (id, status, driving_licenses, organization_id) VALUES
+  ('8e1a16e9-19b6-4bcc-a5a3-3e6fa7518865'::uuid, 'available', ARRAY['B']::driving_license[], '01980000-0000-7000-8000-000000000002'),
+  ('6a1078e8-80fd-458f-b74e-e388fe2dd6ab'::uuid, 'available', ARRAY['C']::driving_license[], '01980000-0000-7000-8000-000000000002'),
+  ('b5afc591-ee33-4df8-af75-265265f05882'::uuid, 'available', ARRAY['B']::driving_license[], '01980000-0000-7000-8000-000000000001');
+
+-- tbz1 = Administrator@TBZ, tbz2 = Baumpflege@TBZ, ttester = Administrator@root
+-- (root role copy ..b1 comes from the RBAC migration, TBZ copies ..c1/..c2
+-- from 04_organizations.sql).
+INSERT INTO role_assignments (user_id, role_id) VALUES
+  ('8e1a16e9-19b6-4bcc-a5a3-3e6fa7518865'::uuid, '01980000-0000-7000-8000-0000000000c1'::uuid),
+  ('6a1078e8-80fd-458f-b74e-e388fe2dd6ab'::uuid, '01980000-0000-7000-8000-0000000000c2'::uuid),
+  ('b5afc591-ee33-4df8-af75-265265f05882'::uuid, '01980000-0000-7000-8000-0000000000b1'::uuid);
 
 
 INSERT INTO user_watering_plans (user_id, watering_plan_id) VALUES
