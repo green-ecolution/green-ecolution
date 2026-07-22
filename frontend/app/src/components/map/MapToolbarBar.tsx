@@ -1,9 +1,8 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { WateringStatus } from '@green-ecolution/backend-client'
 import { Button } from '@green-ecolution/ui'
-import useStore from '@/store/store'
 import Dialog from '@/components/general/filter/Dialog'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
 import MapFilterToolbar from './MapFilterToolbar'
@@ -12,8 +11,21 @@ import MapButtons from './MapButtons'
 const MapToolbarBar = () => {
   const navigate = useNavigate()
   const search = useSearch({ strict: false })
-  const searchTerm = useStore((state) => state.mapSearchTerm)
-  const setSearchTerm = useStore((state) => state.setMapSearchTerm)
+  // Local input state so typing stays responsive; router navigations are
+  // transitions and would lag a purely URL-controlled input.
+  const [searchTerm, setSearchTerm] = useState(search.q ?? '')
+
+  const handleSearchTermChange = useCallback(
+    (value: string) => {
+      setSearchTerm(value)
+      navigate({
+        to: '/map',
+        search: (prev) => ({ ...prev, q: value || undefined }),
+        replace: true,
+      }).catch((error) => console.error('Navigation failed:', error))
+    },
+    [navigate],
+  )
 
   const handleToggleStatus = useCallback(
     (status: WateringStatus) => {
@@ -33,7 +45,7 @@ const MapToolbarBar = () => {
     <div className="flex shrink-0 items-center gap-2 border-b border-dark-100 bg-[#FCFCFC] px-4 py-3">
       <MapFilterToolbar
         searchTerm={searchTerm}
-        onSearchTermChange={setSearchTerm}
+        onSearchTermChange={handleSearchTermChange}
         statuses={search.wateringStatuses ?? []}
         onToggleStatus={handleToggleStatus}
         filterSlot={

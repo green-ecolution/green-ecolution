@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback } from 'react'
 import { z } from 'zod'
-import useStore from '@/store/store'
 import { filterSearchSchema } from '@/lib/filterSearchSchema'
 import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
 import useClusterMarkerLayer from '@/components/map-gl/layers/useClusterMarkerLayer'
@@ -11,12 +10,13 @@ import MapStatusLegend from '@/components/map/MapStatusLegend'
 const mapFilterSchema = filterSearchSchema.pick({ wateringStatuses: true }).extend({
   tree: z.string().optional(),
   cluster: z.string().optional(),
+  q: z.string().optional().catch(undefined),
 })
 
 function MapView() {
   const navigate = useNavigate({ from: '/map' })
   const search = Route.useSearch()
-  const searchTerm = useStore((s) => s.mapSearchTerm)
+  const searchTerm = search.q ?? ''
 
   const handleTreeClick = useCallback(
     (treeId: string) => {

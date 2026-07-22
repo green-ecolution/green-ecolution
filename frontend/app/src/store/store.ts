@@ -11,10 +11,8 @@ import { emptyFilters, FilterDraftSlice } from './filter/filterDraftSlice'
 interface MapSlice {
   mapCenter: [number, number]
   mapZoom: number
-  mapSearchTerm: string
   setMapCenter: (center: [number, number]) => void
   setMapZoom: (zoom: number) => void
-  setMapSearchTerm: (term: string) => void
 }
 
 interface SidebarSlice {
@@ -32,7 +30,6 @@ type Mutators = [
 const createMapSlice: StateCreator<Store, Mutators, [], MapSlice> = (set) => ({
   mapCenter: MAP_DEFAULT_CENTER,
   mapZoom: MAP_MIN_ZOOM,
-  mapSearchTerm: '',
   setMapCenter: (center) =>
     set((state) => {
       state.mapCenter = center
@@ -40,10 +37,6 @@ const createMapSlice: StateCreator<Store, Mutators, [], MapSlice> = (set) => ({
   setMapZoom: (zoom) =>
     set((state) => {
       state.mapZoom = zoom
-    }),
-  setMapSearchTerm: (term) =>
-    set((state) => {
-      state.mapSearchTerm = term
     }),
 })
 
