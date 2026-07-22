@@ -2,6 +2,7 @@ use async_trait::async_trait;
 
 use crate::{
     Id, RepositoryError,
+    authorization::OrgHierarchy,
     organization::{Organization, OrganizationDraft},
 };
 
@@ -9,6 +10,8 @@ use crate::{
 pub trait OrganizationReader: Send + Sync {
     async fn all(&self) -> Result<Vec<Organization>, RepositoryError>;
     async fn by_id(&self, id: Id<Organization>) -> Result<Organization, RepositoryError>;
+    /// Loads the full parent map in one query; the tree is small by design.
+    async fn hierarchy(&self) -> Result<OrgHierarchy, RepositoryError>;
 }
 
 #[async_trait]
