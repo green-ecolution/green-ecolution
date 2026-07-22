@@ -164,6 +164,29 @@ async fn assigning_a_template_role_returns_409() {
 }
 
 #[tokio::test]
+async fn create_user_with_template_role_returns_409() {
+    let app = spawn_app().await;
+    let org = create_org(&app, "TBZ").await;
+    let org_uuid = Uuid::parse_str(&org).unwrap();
+
+    let resp = app
+        .post_json(
+            "/api/v1/users",
+            &json!({
+                "username": "newuser",
+                "first_name": "New",
+                "last_name": "User",
+                "email": "newuser@example.com",
+                "password": "SecurePass123!",
+                "organization_id": org_uuid,
+                "role_ids": ["01980000-0000-7000-8000-0000000000a1"]
+            }),
+        )
+        .await;
+    assert_eq!(resp.status(), 409);
+}
+
+#[tokio::test]
 async fn set_organization_persists() {
     let app = spawn_app().await;
     let org = create_org(&app, "TBZ").await;

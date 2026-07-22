@@ -131,6 +131,9 @@ pub async fn create_user(
         .await?;
     for role_id in &entity.role_ids {
         let role = state.role_service.by_id(*role_id).await?;
+        if role.is_template {
+            return Err(domain::role::RoleError::CannotAssignTemplate.into());
+        }
         if let Some(role_org) = role.organization_id {
             let perms: BTreeSet<Permission> = role.permissions.iter().copied().collect();
             state
