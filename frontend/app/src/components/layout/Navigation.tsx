@@ -170,7 +170,7 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
     <nav
       id="main-navigation"
       aria-label="Hauptnavigation"
-      className={`fixed inset-0 z-50 bg-dark w-screen h-screen flex flex-col ease-in-out duration-300 transition-[left,width,visibility]
+      className={`fixed inset-0 z-50 bg-dark w-screen h-dvh flex flex-col ease-in-out duration-300 transition-[left,width,visibility]
         lg:left-0 lg:visible ${collapsed ? 'lg:w-[4.5rem]' : 'lg:w-[16rem]'}
         ${isOpen ? 'visible left-0' : 'invisible -left-full'}`}
     >
@@ -198,47 +198,44 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
             </ul>
           </React.Fragment>
         ))}
+      </div>
 
-        {/* Settings + user entry: pinned to the bottom on desktop (lg:mt-auto),
-            inline at the end of the scrollable list on the mobile overlay.
-            The collapse toggle only exists from lg up; logged-out users still
-            get it, so the block hides on mobile when logged out. */}
-        <div
-          className={`pb-4 lg:mt-auto lg:border-t lg:border-dark-400/30 lg:pt-4 ${isLoggedIn ? '' : 'hidden lg:block'}`}
-        >
-          <ul className="space-y-1">
-            <li className="relative hidden lg:block">
-              <SidebarToggle
-                collapsed={collapsed}
-                onToggle={() => setSidebarCollapsed(!collapsed)}
-              />
-            </li>
-            {isLoggedIn &&
-              footerNavData.map(({ key, label, icon, ...linkProps }) => (
-                <NavLink
-                  key={key}
-                  label={label}
-                  icon={icon}
-                  collapsed={collapsed}
-                  closeSidebar={handleNavLinkClick}
-                  {...linkProps}
-                />
-              ))}
-          </ul>
-          {/* On mobile the user menu lives in the header instead */}
-          {isLoggedIn && (
-            <div className="mt-2 hidden lg:block">
-              <NavUser
-                firstName={firstName}
-                lastName={lastName}
-                email={email}
-                avatarUrl={avatarUrl}
+      {/* Collapse toggle, settings and user entry are pinned below the
+          scrollable section list. The collapse toggle only exists from lg up;
+          logged-out users still get it, so the block hides on mobile when
+          logged out. */}
+      <div
+        className={`shrink-0 border-t border-dark-400/30 px-4 pb-4 pt-4 ${collapsed ? 'lg:px-2' : ''} ${isLoggedIn ? '' : 'hidden lg:block'}`}
+      >
+        <ul className="space-y-1">
+          <li className="relative hidden lg:block">
+            <SidebarToggle collapsed={collapsed} onToggle={() => setSidebarCollapsed(!collapsed)} />
+          </li>
+          {isLoggedIn &&
+            footerNavData.map(({ key, label, icon, ...linkProps }) => (
+              <NavLink
+                key={key}
+                label={label}
+                icon={icon}
                 collapsed={collapsed}
                 closeSidebar={handleNavLinkClick}
+                {...linkProps}
               />
-            </div>
-          )}
-        </div>
+            ))}
+        </ul>
+        {/* On mobile the user menu lives in the header instead */}
+        {isLoggedIn && (
+          <div className="mt-2 hidden lg:block">
+            <NavUser
+              firstName={firstName}
+              lastName={lastName}
+              email={email}
+              avatarUrl={avatarUrl}
+              collapsed={collapsed}
+              closeSidebar={handleNavLinkClick}
+            />
+          </div>
+        )}
       </div>
     </nav>
   )
