@@ -10,7 +10,7 @@ import {
 } from '@green-ecolution/ui'
 import { MoveRight, X } from 'lucide-react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { useFilter } from '@/context/FilterContext'
+import useStore from '@/store/store'
 import { filtersFromSearch, searchFromFilters } from '@/lib/filterSearchSchema'
 
 interface DialogProps {
@@ -32,7 +32,8 @@ const Dialog = ({
   const [isOpen, setIsOpen] = useState(false)
   const navigate = useNavigate()
   const search = useSearch({ strict: false })
-  const { filters, resetFilters, applyOldStateToTags } = useFilter()
+  const seedFilterDraft = useStore((s) => s.seedFilterDraft)
+  const resetFilterDraft = useStore((s) => s.resetFilterDraft)
 
   const appliedFilters = useMemo(() => filtersFromSearch(search), [search])
 
@@ -42,14 +43,14 @@ const Dialog = ({
       to: fullUrlPath,
       search: (prev: Record<string, unknown>) => ({
         ...prev,
-        ...searchFromFilters(filters),
+        ...searchFromFilters(useStore.getState().filterDraft),
         page: undefined,
       }),
     }).catch((error) => console.error('Navigation failed:', error))
   }
 
   const handleReset = () => {
-    resetFilters()
+    resetFilterDraft()
     setIsOpen(false)
     navigate({
       to: fullUrlPath,
@@ -70,7 +71,7 @@ const Dialog = ({
   }
 
   const handleOpen = () => {
-    applyOldStateToTags(appliedFilters)
+    seedFilterDraft(appliedFilters)
     setIsOpen(true)
   }
 

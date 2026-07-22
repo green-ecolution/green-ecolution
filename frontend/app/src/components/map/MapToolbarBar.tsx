@@ -4,7 +4,6 @@ import { Plus } from 'lucide-react'
 import { WateringStatus } from '@green-ecolution/backend-client'
 import { Button } from '@green-ecolution/ui'
 import useStore from '@/store/store'
-import FilterProvider from '@/context/FilterContext'
 import Dialog from '@/components/general/filter/Dialog'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
 import MapFilterToolbar from './MapFilterToolbar'
@@ -32,30 +31,28 @@ const MapToolbarBar = () => {
 
   return (
     <div className="flex shrink-0 items-center gap-2 border-b border-dark-100 bg-[#FCFCFC] px-4 py-3">
-      <FilterProvider>
-        <MapFilterToolbar
-          searchTerm={searchTerm}
-          onSearchTermChange={setSearchTerm}
-          statuses={search.wateringStatuses ?? []}
-          onToggleStatus={handleToggleStatus}
-          filterSlot={
-            <Dialog headline="Baumgruppen filtern" isOnMap fullUrlPath="/map">
-              <StatusFieldset />
-            </Dialog>
-          }
-          createSlot={
-            <div className="flex items-center gap-2 lg:ml-auto">
-              <MapButtons />
-              <Button asChild>
-                <Link to="/map/treecluster/new" search={(prev) => prev}>
-                  <span className="hidden sm:inline">Gruppe anlegen</span>
-                  <Plus />
-                </Link>
-              </Button>
-            </div>
-          }
-        />
-      </FilterProvider>
+      <MapFilterToolbar
+        searchTerm={searchTerm}
+        onSearchTermChange={setSearchTerm}
+        statuses={search.wateringStatuses ?? []}
+        onToggleStatus={handleToggleStatus}
+        filterSlot={
+          <Dialog headline="Baumgruppen filtern" isOnMap fullUrlPath="/map">
+            <StatusFieldset />
+          </Dialog>
+        }
+        createSlot={
+          <div className="flex items-center gap-2 lg:ml-auto">
+            <MapButtons />
+            <Button asChild>
+              <Link to="/map/treecluster/new" search={(prev) => prev}>
+                <span className="hidden sm:inline">Gruppe anlegen</span>
+                <Plus />
+              </Link>
+            </Button>
+          </div>
+        }
+      />
     </div>
   )
 }

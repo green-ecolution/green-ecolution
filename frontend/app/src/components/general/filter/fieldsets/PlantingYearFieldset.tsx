@@ -1,11 +1,12 @@
-import { useFilter } from '@/context/FilterContext'
+import useStore from '@/store/store'
 import { Slider } from '@green-ecolution/ui'
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { plantingYearsQuery } from '@/api/queries'
 
 const PlantingYearFieldset = () => {
-  const { filters, handlePlantingYearRangeChange } = useFilter()
+  const plantingYears = useStore((s) => s.filterDraft.plantingYears)
+  const setPlantingYearRange = useStore((s) => s.setFilterPlantingYearRange)
   const { data: availableYears, isLoading } = useQuery(plantingYearsQuery())
 
   const { minYear, maxYear } = useMemo(() => {
@@ -20,12 +21,12 @@ const PlantingYearFieldset = () => {
   }, [availableYears])
 
   const range = useMemo(() => {
-    if (filters.plantingYears.length === 0) {
+    if (plantingYears.length === 0) {
       return [minYear, maxYear]
     }
-    const sortedYears = [...filters.plantingYears].sort((a, b) => a - b)
+    const sortedYears = [...plantingYears].sort((a, b) => a - b)
     return [sortedYears[0], sortedYears[sortedYears.length - 1]]
-  }, [filters.plantingYears, minYear, maxYear])
+  }, [plantingYears, minYear, maxYear])
 
   if (isLoading) {
     return (
@@ -48,7 +49,7 @@ const PlantingYearFieldset = () => {
       <div className="px-1">
         <Slider
           value={range}
-          onValueChange={handlePlantingYearRangeChange}
+          onValueChange={setPlantingYearRange}
           min={minYear}
           max={maxYear}
           step={1}

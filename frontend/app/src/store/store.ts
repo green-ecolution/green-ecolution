@@ -3,6 +3,7 @@ import { devtools, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import { useShallow } from 'zustand/react/shallow'
 import { FormDraftSlice } from './form/formDraftSlice'
+import { emptyFilters, FilterDraftSlice } from './filter/filterDraftSlice'
 
 interface MapSlice {
   mapCenter: [number, number]
@@ -20,7 +21,7 @@ interface SidebarSlice {
   setSidebarCollapsed: (collapsed: boolean) => void
 }
 
-type Store = MapSlice & SidebarSlice & FormDraftSlice
+type Store = MapSlice & SidebarSlice & FormDraftSlice & FilterDraftSlice
 type Mutators = [
   ['zustand/devtools', never],
   ['zustand/persist', unknown],
@@ -89,6 +90,47 @@ const createFormDraftSlice: StateCreator<Store, Mutators, [], FormDraftSlice> = 
     }),
 })
 
+const createFilterDraftSlice: StateCreator<Store, Mutators, [], FilterDraftSlice> = (set) => ({
+  filterDraft: emptyFilters(),
+
+  setFilterStatusTags: (value) =>
+    set((state) => {
+      state.filterDraft.statusTags = value
+    }),
+
+  setFilterRegionTags: (value) =>
+    set((state) => {
+      state.filterDraft.regionTags = value
+    }),
+
+  setFilterSoilTags: (value) =>
+    set((state) => {
+      state.filterDraft.soilTags = value
+    }),
+
+  setFilterHasCluster: (value) =>
+    set((state) => {
+      state.filterDraft.hasCluster = value
+    }),
+
+  setFilterPlantingYearRange: (range) =>
+    set((state) => {
+      if (range.length !== 2) return
+      const [min, max] = range
+      state.filterDraft.plantingYears = Array.from({ length: max - min + 1 }, (_, i) => min + i)
+    }),
+
+  seedFilterDraft: (filters) =>
+    set((state) => {
+      state.filterDraft = filters
+    }),
+
+  resetFilterDraft: () =>
+    set((state) => {
+      state.filterDraft = emptyFilters()
+    }),
+})
+
 const useStore = create<Store>()(
   devtools(
     persist(
@@ -96,6 +138,7 @@ const useStore = create<Store>()(
         ...createMapSlice(...a),
         ...createSidebarSlice(...a),
         ...createFormDraftSlice(...a),
+        ...createFilterDraftSlice(...a),
       })),
       {
         name: 'green-ecolution-preferences',

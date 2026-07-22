@@ -1,4 +1,4 @@
-import { useFilter } from '@/context/FilterContext'
+import useStore from '@/store/store'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { WateringStatus } from '@green-ecolution/backend-client'
 import { MultiSelectCombobox } from '@green-ecolution/ui'
@@ -10,7 +10,8 @@ const STATUS_OPTIONS = Object.values(WateringStatus).map((value) => ({
 }))
 
 const StatusFieldset = () => {
-  const { filters, setStatusTags } = useFilter()
+  const statusTags = useStore((s) => s.filterDraft.statusTags)
+  const setStatusTags = useStore((s) => s.setFilterStatusTags)
 
   return (
     <fieldset>
@@ -19,7 +20,7 @@ const StatusFieldset = () => {
       </legend>
       <MultiSelectCombobox
         options={STATUS_OPTIONS}
-        value={filters.statusTags}
+        value={statusTags}
         onChange={setStatusTags}
         searchable={false}
         placeholder="Alle Zustände"
@@ -27,8 +28,8 @@ const StatusFieldset = () => {
       />
       <SelectedTagList
         options={STATUS_OPTIONS}
-        value={filters.statusTags}
-        onRemove={(v) => setStatusTags(filters.statusTags.filter((tag) => tag !== v))}
+        value={statusTags}
+        onRemove={(v) => setStatusTags(statusTags.filter((tag) => tag !== v))}
       />
     </fieldset>
   )

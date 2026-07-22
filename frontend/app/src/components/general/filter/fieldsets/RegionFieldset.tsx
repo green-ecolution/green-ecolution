@@ -1,11 +1,12 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { regionsQuery } from '@/api/queries'
-import { useFilter } from '@/context/FilterContext'
+import useStore from '@/store/store'
 import { MultiSelectCombobox } from '@green-ecolution/ui'
 import SelectedTagList from '../SelectedTagList'
 
 const RegionFieldset = () => {
-  const { filters, setRegionTags } = useFilter()
+  const regionTags = useStore((s) => s.filterDraft.regionTags)
+  const setRegionTags = useStore((s) => s.setFilterRegionTags)
   const { data: regionRes } = useSuspenseQuery(regionsQuery())
 
   const options = regionRes.data.map((region) => ({ value: region.id, label: region.name }))
@@ -17,15 +18,15 @@ const RegionFieldset = () => {
       </legend>
       <MultiSelectCombobox
         options={options}
-        value={filters.regionTags}
+        value={regionTags}
         onChange={setRegionTags}
         placeholder="Alle Bezirke"
         searchPlaceholder="Bezirk suchen"
       />
       <SelectedTagList
         options={options}
-        value={filters.regionTags}
-        onRemove={(v) => setRegionTags(filters.regionTags.filter((tag) => tag !== v))}
+        value={regionTags}
+        onRemove={(v) => setRegionTags(regionTags.filter((tag) => tag !== v))}
       />
     </fieldset>
   )

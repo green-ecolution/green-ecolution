@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { WateringStatus } from '@green-ecolution/backend-client'
-import type { Filters } from '@/context/FilterContext'
+import type { Filters } from '@/store/filter/filterDraftSlice'
 
 export const filterSearchSchema = z.object({
   wateringStatuses: z.array(z.enum(WateringStatus)).optional().catch(undefined),
