@@ -7,7 +7,7 @@ use domain::{
         Organization, OrganizationDraft, OrganizationError, OrganizationName, OrganizationReader,
         OrganizationView, OrganizationWriter,
     },
-    role::{RoleReader, RoleWriter},
+    role::RoleReader,
     user::UserProfileReader,
 };
 
@@ -17,7 +17,6 @@ pub struct OrganizationService {
     org_reader: Arc<dyn OrganizationReader>,
     org_writer: Arc<dyn OrganizationWriter>,
     role_reader: Arc<dyn RoleReader>,
-    role_writer: Arc<dyn RoleWriter>,
     profile_reader: Arc<dyn UserProfileReader>,
     event_bus: Arc<dyn EventBus>,
 }
@@ -27,7 +26,6 @@ impl OrganizationService {
         org_reader: Arc<dyn OrganizationReader>,
         org_writer: Arc<dyn OrganizationWriter>,
         role_reader: Arc<dyn RoleReader>,
-        role_writer: Arc<dyn RoleWriter>,
         profile_reader: Arc<dyn UserProfileReader>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
@@ -35,7 +33,6 @@ impl OrganizationService {
             org_reader,
             org_writer,
             role_reader,
-            role_writer,
             profile_reader,
             event_bus,
         }
@@ -62,10 +59,8 @@ impl OrganizationService {
     /// its default roles (hence no event handler for this).
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn create(&self, draft: OrganizationDraft) -> Result<OrganizationView, ServiceError> {
-        let org = self.org_writer.save_new(draft).await?;
-        for template in self.role_reader.templates().await? {
-            self.role_writer.save_new(template.copy_for(org.id)).await?;
-        }
+        let templates = self.role_reader.templates().await?;
+        let org = self.org_writer.save_new(draft, templates).await?;
         self.event_bus
             .publish_all(vec![DomainEvent::OrganizationCreated {
                 organization_id: org.id,
@@ -129,18 +124,20 @@ mod tests {
         RepositoryError,
         authorization::OrgHierarchy,
         organization::OrganizationSnapshot,
-        role::{Role, RoleDraft, RoleSnapshot},
+        role::{Role, RoleDraft, RoleSnapshot, RoleWriter},
         user::UserProfile,
     };
 
     struct InMemoryOrgs {
         rows: Mutex<Vec<Organization>>,
+        saved_role_copies: Mutex<Vec<RoleDraft>>,
     }
 
     impl InMemoryOrgs {
         fn new(rows: Vec<Organization>) -> Self {
             Self {
                 rows: Mutex::new(rows),
+                saved_role_copies: Mutex::new(Vec::new()),
             }
         }
     }
@@ -169,6 +166,7 @@ mod tests {
         async fn save_new(
             &self,
             draft: OrganizationDraft,
+            templates: Vec<Role>,
         ) -> Result<Organization, RepositoryError> {
             let org = Organization::reconstitute(OrganizationSnapshot {
                 id: Uuid::now_v7(),
@@ -176,6 +174,8 @@ mod tests {
                 name: draft.name.as_str().to_string(),
             });
             self.rows.lock().unwrap().push(org.clone());
+            let mut copies = self.saved_role_copies.lock().unwrap();
+            copies.extend(templates.iter().map(|t| t.copy_for(org.id)));
             Ok(org)
         }
         async fn save(&self, org: &Organization) -> Result<(), RepositoryError> {
@@ -342,7 +342,7 @@ mod tests {
         profiles: Arc<StubProfiles>,
         bus: Arc<RecordingEventBus>,
     ) -> OrganizationService {
-        OrganizationService::new(orgs.clone(), orgs, roles.clone(), roles, profiles, bus)
+        OrganizationService::new(orgs.clone(), orgs, roles, profiles, bus)
     }
 
     #[tokio::test]
@@ -354,8 +354,8 @@ mod tests {
             template_role("Fuhrpark"),
         ]));
         let svc = service(
-            orgs,
-            roles.clone(),
+            orgs.clone(),
+            roles,
             Arc::new(StubProfiles::default()),
             Arc::new(RecordingEventBus::default()),
         );
@@ -368,7 +368,7 @@ mod tests {
             .await
             .unwrap();
 
-        let saved = roles.saved.lock().unwrap();
+        let saved = orgs.saved_role_copies.lock().unwrap();
         assert_eq!(saved.len(), 2);
         assert!(saved.iter().all(|d| d.organization_id == view.id));
     }

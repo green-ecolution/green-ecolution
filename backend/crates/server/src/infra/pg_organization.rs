@@ -5,6 +5,7 @@ use domain::{
     Id, RepositoryError,
     authorization::OrgHierarchy,
     organization::{Organization, OrganizationDraft, OrganizationReader, OrganizationWriter},
+    role::Role,
 };
 
 pub struct PgOrganizationRepository {
@@ -63,7 +64,13 @@ impl OrganizationReader for PgOrganizationRepository {
 #[async_trait::async_trait]
 impl OrganizationWriter for PgOrganizationRepository {
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn save_new(&self, draft: OrganizationDraft) -> Result<Organization, RepositoryError> {
+    async fn save_new(
+        &self,
+        draft: OrganizationDraft,
+        templates: Vec<Role>,
+    ) -> Result<Organization, RepositoryError> {
+        let mut tx = self.pool.begin().await?;
+
         let id = Id::<Organization>::new_v7();
         sqlx::query!(
             r#"INSERT INTO organizations (id, parent_id, name) VALUES ($1, $2, $3)"#,
@@ -71,8 +78,32 @@ impl OrganizationWriter for PgOrganizationRepository {
             draft.parent_id.value(),
             draft.name.as_str(),
         )
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
+
+        for template in &templates {
+            let role_draft = template.copy_for(id);
+            let role_id = Id::<Role>::new_v7();
+            let permissions: Vec<String> = role_draft
+                .permissions
+                .iter()
+                .map(|p| p.to_string())
+                .collect();
+            sqlx::query!(
+                r#"INSERT INTO roles (id, organization_id, name, description, permissions)
+                   VALUES ($1, $2, $3, $4, $5)"#,
+                role_id.value(),
+                role_draft.organization_id.value(),
+                role_draft.name.as_str(),
+                role_draft.description.as_ref().map(|d| d.as_str()),
+                &permissions,
+            )
+            .execute(&mut *tx)
+            .await?;
+        }
+
+        tx.commit().await?;
+
         Ok(Organization::reconstitute(OrganizationSnapshot {
             id: id.value(),
             parent_id: Some(draft.parent_id.value()),

@@ -4,6 +4,7 @@ use crate::{
     Id, RepositoryError,
     authorization::OrgHierarchy,
     organization::{Organization, OrganizationDraft},
+    role::Role,
 };
 
 #[async_trait]
@@ -16,7 +17,14 @@ pub trait OrganizationReader: Send + Sync {
 
 #[async_trait]
 pub trait OrganizationWriter: Send + Sync {
-    async fn save_new(&self, draft: OrganizationDraft) -> Result<Organization, RepositoryError>;
+    /// Persists the organization and org-owned copies of the given template
+    /// roles in one transaction — a new org must never be observable without
+    /// its default roles.
+    async fn save_new(
+        &self,
+        draft: OrganizationDraft,
+        templates: Vec<Role>,
+    ) -> Result<Organization, RepositoryError>;
     async fn save(&self, org: &Organization) -> Result<(), RepositoryError>;
     async fn delete(&self, id: Id<Organization>) -> Result<(), RepositoryError>;
 }

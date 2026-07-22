@@ -410,7 +410,6 @@ impl Services {
                 repos.organization_reader.clone(),
                 repos.organization_writer.clone(),
                 repos.role_reader.clone(),
-                repos.role_writer.clone(),
                 profile_reader,
                 event_bus.clone(),
             )),
