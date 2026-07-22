@@ -1,15 +1,16 @@
 //! User read model — identity and profile merged into one view.
 //!
 //! There is no User aggregate: identity lifecycle and invariants (username,
-//! email, roles) live entirely with the IdP and are surfaced as
-//! [`UserIdentity`]. Application-owned facts (contact details, status,
-//! driving licenses) live separately as [`UserProfile`]. [`UserView`] is the
-//! flat, merged read model the API returns; it carries `created_at` from the
-//! identity side. [`UserRepository`] covers identity access only (no
-//! reader/writer split, since identities have no local snapshot to
-//! rehydrate); [`UserProfileReader`]/[`UserProfileWriter`] cover the profile
-//! side. The `id` is a [`Uuid`] (the IdP's own identifier) rather than an
-//! `Id<…>`.
+//! email) live entirely with the IdP and are surfaced as [`UserIdentity`].
+//! Roles and organization membership are application-owned role assignments,
+//! resolved per request rather than carried by the IdP. Application-owned
+//! facts (contact details, status, driving licenses) live separately as
+//! [`UserProfile`]. [`UserView`] is the flat, merged read model the API
+//! returns; it carries `created_at` from the identity side. [`UserRepository`]
+//! covers identity access only (no reader/writer split, since identities have
+//! no local snapshot to rehydrate); [`UserProfileReader`]/[`UserProfileWriter`]
+//! cover the profile side. The `id` is a [`Uuid`] (the IdP's own identifier)
+//! rather than an `Id<…>`.
 
 pub mod profile;
 
