@@ -22,6 +22,7 @@ use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 pub mod auth;
+pub mod authorization;
 pub mod cluster;
 pub mod error;
 pub mod evaluation;
