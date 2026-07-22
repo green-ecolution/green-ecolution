@@ -241,7 +241,8 @@ fn synthesize_registered_user(entity: UserCreate) -> UserView {
 mod tests {
     use super::*;
     use domain::{
-        RepositoryError,
+        Id, RepositoryError,
+        organization::Organization,
         user::{UserIdentity, UserProfile, UserProfileReader, UserProfileWriter},
     };
     use secrecy::SecretString;
@@ -290,6 +291,18 @@ mod tests {
             let rows = self.rows.lock().unwrap();
             Ok(ids.iter().filter_map(|id| rows.get(id).cloned()).collect())
         }
+        async fn ids_in_organization(
+            &self,
+            _org: Id<Organization>,
+        ) -> Result<Vec<Uuid>, RepositoryError> {
+            Ok(Vec::new())
+        }
+        async fn organizations_for(
+            &self,
+            _ids: &[Uuid],
+        ) -> Result<Vec<(Uuid, Id<Organization>)>, RepositoryError> {
+            Ok(Vec::new())
+        }
     }
 
     #[async_trait::async_trait]
@@ -299,6 +312,21 @@ mod tests {
                 .lock()
                 .unwrap()
                 .insert(profile.id, profile.clone());
+            Ok(())
+        }
+        async fn ensure_exists(&self, id: Uuid) -> Result<(), RepositoryError> {
+            self.rows
+                .lock()
+                .unwrap()
+                .entry(id)
+                .or_insert_with(|| UserProfile::empty(id));
+            Ok(())
+        }
+        async fn set_organization(
+            &self,
+            _id: Uuid,
+            _org: Id<Organization>,
+        ) -> Result<(), RepositoryError> {
             Ok(())
         }
     }

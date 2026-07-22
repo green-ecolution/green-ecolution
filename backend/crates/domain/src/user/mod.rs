@@ -23,7 +23,8 @@ use url::Url;
 use uuid::Uuid;
 
 use crate::{
-    RepositoryError,
+    Id, RepositoryError,
+    organization::Organization,
     shared::{
         email::Email,
         error::ValidationError,
@@ -152,9 +153,24 @@ pub trait UserRepository: Send + Sync {
 #[async_trait::async_trait]
 pub trait UserProfileReader: Send + Sync {
     async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserProfile>, RepositoryError>;
+    async fn ids_in_organization(
+        &self,
+        org: Id<Organization>,
+    ) -> Result<Vec<Uuid>, RepositoryError>;
+    async fn organizations_for(
+        &self,
+        ids: &[Uuid],
+    ) -> Result<Vec<(Uuid, Id<Organization>)>, RepositoryError>;
 }
 
 #[async_trait::async_trait]
 pub trait UserProfileWriter: Send + Sync {
     async fn upsert(&self, profile: &UserProfile) -> Result<(), RepositoryError>;
+    /// Creates an empty profile row if none exists — never touches existing data.
+    async fn ensure_exists(&self, id: Uuid) -> Result<(), RepositoryError>;
+    async fn set_organization(
+        &self,
+        id: Uuid,
+        org: Id<Organization>,
+    ) -> Result<(), RepositoryError>;
 }
