@@ -1,12 +1,11 @@
 use std::{
-    collections::HashMap,
     sync::Arc,
     time::{Duration, Instant},
 };
 
 use reqwest::StatusCode;
 use secrecy::ExposeSecret;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::json;
 use tokio::sync::Mutex;
 use uuid::Uuid;
@@ -14,15 +13,13 @@ use uuid::Uuid;
 use domain::{
     RepositoryError,
     shared::pagination::{Page, Pagination},
-    user::{UserCreate, UserIdentity, UserRepository, UserRole},
+    user::{UserIdentity, UserIdentityCreate, UserRepository},
 };
 
 use super::{
     client::KeycloakClient,
-    mapping::{KcCredential, KcRoleRepresentation, KcUser},
+    mapping::{KcCredential, KcUser},
 };
-
-const ATTR_USER_ROLES: &str = "user_roles";
 
 pub struct KeycloakUserRepository {
     client: Arc<KeycloakClient>,
@@ -92,19 +89,8 @@ impl KeycloakUserRepository {
 
 #[async_trait::async_trait]
 impl UserRepository for KeycloakUserRepository {
-    async fn create(&self, entity: UserCreate) -> Result<UserIdentity, RepositoryError> {
+    async fn create(&self, entity: UserIdentityCreate) -> Result<UserIdentity, RepositoryError> {
         let token = self.service_account_token().await?;
-
-        let mut attributes: HashMap<String, Vec<String>> = HashMap::new();
-        if !entity.roles.is_empty() {
-            let roles_str = entity
-                .roles
-                .iter()
-                .map(UserRole::as_str)
-                .collect::<Vec<_>>()
-                .join(",");
-            attributes.insert(ATTR_USER_ROLES.into(), vec![roles_str]);
-        }
 
         let body = json!({
             "username": entity.username.as_str(),
@@ -113,7 +99,6 @@ impl UserRepository for KeycloakUserRepository {
             "email": entity.email.as_str(),
             "enabled": true,
             "emailVerified": false,
-            "attributes": attributes,
         });
 
         let create_resp = self
@@ -170,11 +155,6 @@ impl UserRepository for KeycloakUserRepository {
             )));
         }
 
-        if !entity.roles.is_empty() {
-            self.assign_realm_roles(&token, &user_id, &entity.roles)
-                .await?;
-        }
-
         let read_resp = self
             .client
             .http()
@@ -198,17 +178,6 @@ impl UserRepository for KeycloakUserRepository {
 
     async fn all(&self, pagination: Pagination) -> Result<Page<UserIdentity>, RepositoryError> {
         self.list_users(&[], pagination).await
-    }
-
-    async fn by_role(
-        &self,
-        role: UserRole,
-        pagination: Pagination,
-    ) -> Result<Page<UserIdentity>, RepositoryError> {
-        // Roles live in the `user_roles` custom attribute (not realm roles), so
-        // we filter via the `q` param which Keycloak matches against attributes.
-        let q = format!("user_roles:{}", role.as_str());
-        self.list_users(&[("q", q.as_str())], pagination).await
     }
 
     async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserIdentity>, RepositoryError> {
@@ -319,71 +288,4 @@ impl KeycloakUserRepository {
             .map_err(|e| RepositoryError::Internal(format!("count users parse: {e}")))?;
         Ok(count)
     }
-
-    async fn assign_realm_roles(
-        &self,
-        token: &str,
-        user_id: &str,
-        roles: &[UserRole],
-    ) -> Result<(), RepositoryError> {
-        let mut wanted_roles: Vec<KcRole> = Vec::with_capacity(roles.len());
-        for role in roles {
-            let mut url = self.client.admin_realm_roles_url();
-            url.path_segments_mut()
-                .map_err(|_| RepositoryError::Internal("invalid roles url".into()))?
-                .push(role.as_str());
-            let resp = self
-                .client
-                .http()
-                .get(url)
-                .bearer_auth(token)
-                .send()
-                .await
-                .map_err(|e| RepositoryError::Internal(format!("role lookup transport: {e}")))?;
-            if !resp.status().is_success() {
-                tracing::warn!(keycloak.role = role.as_str(), keycloak.status = %resp.status(), "role lookup failed; skipping");
-                continue;
-            }
-            let role: KcRole = resp
-                .json()
-                .await
-                .map_err(|e| RepositoryError::Internal(format!("role lookup parse: {e}")))?;
-            wanted_roles.push(role);
-        }
-
-        if wanted_roles.is_empty() {
-            return Ok(());
-        }
-
-        let payload: Vec<KcRoleRepresentation> = wanted_roles
-            .iter()
-            .map(|r| KcRoleRepresentation {
-                id: r.id.as_str(),
-                name: r.name.as_str(),
-            })
-            .collect();
-
-        let resp = self
-            .client
-            .http()
-            .post(self.client.admin_user_realm_role_mappings_url(user_id))
-            .bearer_auth(token)
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| RepositoryError::Internal(format!("role assign transport: {e}")))?;
-        if !resp.status().is_success() {
-            let status = resp.status();
-            return Err(RepositoryError::Internal(format!(
-                "role assign failed ({status})"
-            )));
-        }
-        Ok(())
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct KcRole {
-    pub id: String,
-    pub name: String,
 }

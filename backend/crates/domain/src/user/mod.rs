@@ -24,7 +24,8 @@ use uuid::Uuid;
 
 use crate::{
     Id, RepositoryError,
-    organization::Organization,
+    organization::{Organization, OrganizationView},
+    role::{Role, RoleView},
     shared::{
         email::Email,
         error::ValidationError,
@@ -100,12 +101,14 @@ pub struct UserView {
     pub employee_id: Option<String>,
     pub phone_number: Option<String>,
     pub avatar_url: Option<Url>,
-    pub roles: Vec<UserRole>,
+    pub organization: Option<OrganizationView>,
+    pub roles: Vec<RoleView>,
     pub driving_licenses: Vec<DrivingLicense>,
     pub status: UserStatus,
 }
 
-/// Input for creating a new user in Keycloak.
+/// Input for creating a new user: identity fields plus the DB-owned
+/// organization membership and role assignments applied after the IdP create.
 #[derive(Debug, Clone)]
 pub struct UserCreate {
     pub username: Username,
@@ -113,12 +116,24 @@ pub struct UserCreate {
     pub last_name: String,
     pub email: Email,
     pub password: SecretString,
-    pub roles: Vec<UserRole>,
+    pub organization_id: Id<Organization>,
+    pub role_ids: Vec<Id<Role>>,
     pub employee_id: Option<String>,
     pub phone_number: Option<String>,
     pub avatar_url: Option<Url>,
     pub status: UserStatus,
     pub driving_licenses: Vec<DrivingLicense>,
+}
+
+/// Input for creating the identity in the IdP. Organization membership and
+/// roles are persisted separately in the application database.
+#[derive(Debug, Clone)]
+pub struct UserIdentityCreate {
+    pub username: Username,
+    pub first_name: String,
+    pub last_name: String,
+    pub email: Email,
+    pub password: SecretString,
 }
 
 /// Identity facts owned by the IdP; merged with `UserProfile` into `UserView`.
@@ -131,7 +146,6 @@ pub struct UserIdentity {
     pub last_name: String,
     pub email: Email,
     pub email_verified: bool,
-    pub roles: Vec<UserRole>,
 }
 
 /// Unified access to IdP-managed user identities.
@@ -140,13 +154,8 @@ pub struct UserIdentity {
 /// delegated to the IdP — there is no local snapshot to rehydrate.
 #[async_trait::async_trait]
 pub trait UserRepository: Send + Sync {
-    async fn create(&self, entity: UserCreate) -> Result<UserIdentity, RepositoryError>;
+    async fn create(&self, entity: UserIdentityCreate) -> Result<UserIdentity, RepositoryError>;
     async fn all(&self, pagination: Pagination) -> Result<Page<UserIdentity>, RepositoryError>;
-    async fn by_role(
-        &self,
-        role: UserRole,
-        pagination: Pagination,
-    ) -> Result<Page<UserIdentity>, RepositoryError>;
     async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserIdentity>, RepositoryError>;
 }
 

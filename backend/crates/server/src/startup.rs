@@ -111,6 +111,9 @@ impl Application {
             user_repo.clone(),
             profile_repo.clone(),
             profile_repo.clone(),
+            repos.role_reader.clone(),
+            repos.role_writer.clone(),
+            repos.organization_reader.clone(),
             settings.auth.enabled,
         ));
         let event_bus = build_event_bus(&repos);

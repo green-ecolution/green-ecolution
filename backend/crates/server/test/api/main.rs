@@ -1,5 +1,6 @@
 pub mod auth;
 pub mod auth_helpers;
+pub mod authorization;
 pub mod cluster_soil_moisture;
 pub mod clusters;
 pub mod config_js;

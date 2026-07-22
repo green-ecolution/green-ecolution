@@ -119,21 +119,6 @@ impl KeycloakClient {
         url
     }
 
-    pub fn admin_user_realm_role_mappings_url(&self, id: &str) -> Url {
-        let mut url = self.server_root.clone();
-        url.set_path(&format!(
-            "/admin/realms/{}/users/{}/role-mappings/realm",
-            self.realm, id
-        ));
-        url
-    }
-
-    pub fn admin_realm_roles_url(&self) -> Url {
-        let mut url = self.server_root.clone();
-        url.set_path(&format!("/admin/realms/{}/roles", self.realm));
-        url
-    }
-
     pub fn backend_client_secret(&self) -> &str {
         self.backend_client_secret.expose_secret()
     }

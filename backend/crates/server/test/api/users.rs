@@ -1,4 +1,34 @@
-use crate::helpers::spawn_app;
+use crate::{helpers::spawn_app, organizations::ROOT_ORG_ID};
+use serde_json::json;
+use uuid::Uuid;
+
+async fn create_org(app: &crate::helpers::TestApp, name: &str) -> String {
+    let resp = app
+        .post_json(
+            "/api/v1/organizations",
+            &json!({ "name": name, "parent_id": ROOT_ORG_ID }),
+        )
+        .await;
+    assert_eq!(resp.status(), 201);
+    resp.json::<serde_json::Value>().await.unwrap()["id"]
+        .as_str()
+        .unwrap()
+        .to_string()
+}
+
+async fn create_role(app: &crate::helpers::TestApp, org: &str, name: &str) -> String {
+    let resp = app
+        .post_json(
+            &format!("/api/v1/organizations/{org}/roles"),
+            &json!({ "name": name, "permissions": ["tree:read"] }),
+        )
+        .await;
+    assert_eq!(resp.status(), 201);
+    resp.json::<serde_json::Value>().await.unwrap()["id"]
+        .as_str()
+        .unwrap()
+        .to_string()
+}
 
 fn valid_body() -> serde_json::Value {
     serde_json::json!({
@@ -66,4 +96,126 @@ async fn update_user_returns_400_for_invalid_avatar_url() {
         .await;
 
     assert_eq!(response.status().as_u16(), 400);
+}
+
+#[tokio::test]
+async fn assign_and_revoke_role_via_api() {
+    let app = spawn_app().await;
+    let org = create_org(&app, "TBZ").await;
+    let role_id = create_role(&app, &org, "Gießtrupp").await;
+    let user_id = Uuid::new_v4();
+
+    // Creating the organization membership implicitly creates the user_profiles row.
+    let resp = app
+        .patch_json(
+            &format!("/api/v1/users/{user_id}/organization"),
+            &json!({ "organization_id": org }),
+        )
+        .await;
+    assert_eq!(resp.status(), 200);
+
+    let resp = app
+        .post_json(
+            &format!("/api/v1/users/{user_id}/roles"),
+            &json!({ "role_id": role_id }),
+        )
+        .await;
+    assert_eq!(resp.status(), 201);
+
+    let roles: serde_json::Value = app
+        .get(&format!("/api/v1/users/{user_id}/roles"))
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert!(
+        roles
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|r| r["id"] == role_id.as_str())
+    );
+
+    let resp = app
+        .delete(&format!("/api/v1/users/{user_id}/roles/{role_id}"))
+        .await;
+    assert_eq!(resp.status(), 204);
+
+    let roles: serde_json::Value = app
+        .get(&format!("/api/v1/users/{user_id}/roles"))
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert!(roles.as_array().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn assigning_a_template_role_returns_409() {
+    let app = spawn_app().await;
+    let user_id = Uuid::new_v4();
+    let resp = app
+        .post_json(
+            &format!("/api/v1/users/{user_id}/roles"),
+            &json!({ "role_id": "01980000-0000-7000-8000-0000000000a1" }),
+        )
+        .await;
+    assert_eq!(resp.status(), 409);
+}
+
+#[tokio::test]
+async fn set_organization_persists() {
+    let app = spawn_app().await;
+    let org = create_org(&app, "TBZ").await;
+    let user_id = Uuid::new_v4();
+
+    let resp = app
+        .patch_json(
+            &format!("/api/v1/users/{user_id}/organization"),
+            &json!({ "organization_id": org }),
+        )
+        .await;
+    assert_eq!(resp.status(), 200);
+
+    let stored = sqlx::query_scalar!(
+        r#"SELECT organization_id FROM user_profiles WHERE id = $1"#,
+        user_id
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(stored, Some(Uuid::parse_str(&org).unwrap()));
+}
+
+#[tokio::test]
+async fn list_users_filtered_by_role_uses_db_assignments() {
+    let app = spawn_app().await;
+    let org = create_org(&app, "TBZ").await;
+    let org_uuid = Uuid::parse_str(&org).unwrap();
+    let role_id = Uuid::parse_str(&create_role(&app, &org, "Gießtrupp").await).unwrap();
+    let user_id = Uuid::new_v4();
+
+    sqlx::query!(
+        r#"INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)"#,
+        user_id,
+        org_uuid
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    sqlx::query!(
+        r#"INSERT INTO role_assignments (user_id, role_id) VALUES ($1, $2)"#,
+        user_id,
+        role_id
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+
+    let resp = app.get(&format!("/api/v1/users?role_id={role_id}")).await;
+    assert_eq!(resp.status(), 200);
+    // In demo mode the Keycloak path resolves no identities, so the DB-derived
+    // id set yields an empty page (deterministic).
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert!(body["data"].as_array().unwrap().is_empty());
 }
