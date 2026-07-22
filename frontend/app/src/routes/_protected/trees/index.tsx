@@ -12,7 +12,6 @@ import Dialog from '@/components/general/filter/Dialog'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
 import ClusterFieldset from '@/components/general/filter/fieldsets/ClusterFieldset'
 import PlantingYearFieldset from '@/components/general/filter/fieldsets/PlantingYearFieldset'
-import FilterProvider from '@/context/FilterContext'
 import { treeQuery } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
 import { filterSearchSchema } from '@/lib/filterSearchSchema'
@@ -100,14 +99,8 @@ function Trees() {
   )
 }
 
-const TreesWithProvider = () => (
-  <FilterProvider>
-    <Trees />
-  </FilterProvider>
-)
-
 export const Route = createFileRoute('/_protected/trees/')({
-  component: TreesWithProvider,
+  component: Trees,
   validateSearch: treeFilterSchema,
   pendingComponent: pendingLoading('Daten werden geladen'),
   loaderDeps: ({ search }) => ({

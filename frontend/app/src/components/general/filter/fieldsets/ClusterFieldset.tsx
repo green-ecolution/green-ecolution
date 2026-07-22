@@ -1,8 +1,9 @@
-import { useFilter } from '@/context/FilterContext'
+import useStore from '@/store/store'
 import Option from '../Option'
 
 const ClusterFieldset = () => {
-  const { filters, handleClusterChange } = useFilter()
+  const hasCluster = useStore((s) => s.filterDraft.hasCluster)
+  const setHasCluster = useStore((s) => s.setFilterHasCluster)
   const treeClusterOptions = [
     {
       label: 'Gruppe zugehörig',
@@ -24,8 +25,10 @@ const ClusterFieldset = () => {
           label={type.label}
           name={type.value.toString()}
           value={String(type.value)}
-          checked={filters.hasCluster === type.value}
-          onChange={handleClusterChange}
+          checked={hasCluster === type.value}
+          onChange={(event) =>
+            setHasCluster(event.target.checked ? event.target.value === 'true' : undefined)
+          }
         />
       ))}
     </fieldset>

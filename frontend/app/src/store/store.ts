@@ -1,18 +1,18 @@
 import { create, StateCreator } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
-import { useShallow } from 'zustand/react/shallow'
+import { MAP_DEFAULT_CENTER, MAP_MIN_ZOOM } from '@/lib/mapConfig'
 import { FormDraftSlice } from './form/formDraftSlice'
+import { emptyFilters, FilterDraftSlice } from './filter/filterDraftSlice'
 
+// Live map viewport, mirrored from MapLibre on every move/zoom end. On /map the
+// URL search params are the deep-link source of truth (synced debounced in
+// useMapStoreSync); embedded maps elsewhere read this as their initial position.
 interface MapSlice {
   mapCenter: [number, number]
   mapZoom: number
-  mapMinZoom: number
-  mapMaxZoom: number
-  mapSearchTerm: string
   setMapCenter: (center: [number, number]) => void
   setMapZoom: (zoom: number) => void
-  setMapSearchTerm: (term: string) => void
 }
 
 interface SidebarSlice {
@@ -20,7 +20,12 @@ interface SidebarSlice {
   setSidebarCollapsed: (collapsed: boolean) => void
 }
 
-type Store = MapSlice & SidebarSlice & FormDraftSlice
+interface PwaSlice {
+  pwaHintDismissedAt: number | null
+  dismissPwaHint: () => void
+}
+
+type Store = MapSlice & SidebarSlice & PwaSlice & FormDraftSlice & FilterDraftSlice
 type Mutators = [
   ['zustand/devtools', never],
   ['zustand/persist', unknown],
@@ -28,11 +33,8 @@ type Mutators = [
 ]
 
 const createMapSlice: StateCreator<Store, Mutators, [], MapSlice> = (set) => ({
-  mapCenter: [54.792277136221905, 9.43580607453268],
-  mapZoom: 13,
-  mapMinZoom: 13,
-  mapMaxZoom: 18,
-  mapSearchTerm: '',
+  mapCenter: MAP_DEFAULT_CENTER,
+  mapZoom: MAP_MIN_ZOOM,
   setMapCenter: (center) =>
     set((state) => {
       state.mapCenter = center
@@ -41,10 +43,6 @@ const createMapSlice: StateCreator<Store, Mutators, [], MapSlice> = (set) => ({
     set((state) => {
       state.mapZoom = zoom
     }),
-  setMapSearchTerm: (term) =>
-    set((state) => {
-      state.mapSearchTerm = term
-    }),
 })
 
 const createSidebarSlice: StateCreator<Store, Mutators, [], SidebarSlice> = (set) => ({
@@ -52,6 +50,14 @@ const createSidebarSlice: StateCreator<Store, Mutators, [], SidebarSlice> = (set
   setSidebarCollapsed: (collapsed) =>
     set((state) => {
       state.sidebarCollapsed = collapsed
+    }),
+})
+
+const createPwaSlice: StateCreator<Store, Mutators, [], PwaSlice> = (set) => ({
+  pwaHintDismissedAt: null,
+  dismissPwaHint: () =>
+    set((state) => {
+      state.pwaHintDismissedAt = Date.now()
     }),
 })
 
@@ -89,31 +95,68 @@ const createFormDraftSlice: StateCreator<Store, Mutators, [], FormDraftSlice> = 
     }),
 })
 
+const createFilterDraftSlice: StateCreator<Store, Mutators, [], FilterDraftSlice> = (set) => ({
+  filterDraft: emptyFilters(),
+
+  setFilterStatusTags: (value) =>
+    set((state) => {
+      state.filterDraft.statusTags = value
+    }),
+
+  setFilterRegionTags: (value) =>
+    set((state) => {
+      state.filterDraft.regionTags = value
+    }),
+
+  setFilterSoilTags: (value) =>
+    set((state) => {
+      state.filterDraft.soilTags = value
+    }),
+
+  setFilterHasCluster: (value) =>
+    set((state) => {
+      state.filterDraft.hasCluster = value
+    }),
+
+  setFilterPlantingYearRange: (range) =>
+    set((state) => {
+      if (range.length !== 2) return
+      const [min, max] = range
+      state.filterDraft.plantingYears = Array.from({ length: max - min + 1 }, (_, i) => min + i)
+    }),
+
+  seedFilterDraft: (filters) =>
+    set((state) => {
+      state.filterDraft = filters
+    }),
+
+  resetFilterDraft: () =>
+    set((state) => {
+      state.filterDraft = emptyFilters()
+    }),
+})
+
+export const STORE_PERSIST_KEY = 'green-ecolution-preferences'
+
 const useStore = create<Store>()(
   devtools(
     persist(
       immer((...a) => ({
         ...createMapSlice(...a),
         ...createSidebarSlice(...a),
+        ...createPwaSlice(...a),
         ...createFormDraftSlice(...a),
+        ...createFilterDraftSlice(...a),
       })),
       {
-        name: 'green-ecolution-preferences',
-        partialize: (s) => ({ sidebarCollapsed: s.sidebarCollapsed }),
+        name: STORE_PERSIST_KEY,
+        partialize: (s) => ({
+          sidebarCollapsed: s.sidebarCollapsed,
+          pwaHintDismissedAt: s.pwaHintDismissedAt,
+        }),
       },
     ),
   ),
 )
-
-const mapSelector = (s: Store) => ({
-  mapCenter: s.mapCenter,
-  mapZoom: s.mapZoom,
-  mapMinZoom: s.mapMinZoom,
-  mapMaxZoom: s.mapMaxZoom,
-  setMapCenter: s.setMapCenter,
-  setMapZoom: s.setMapZoom,
-})
-
-export const useMapStore = () => useStore(useShallow(mapSelector))
 
 export default useStore

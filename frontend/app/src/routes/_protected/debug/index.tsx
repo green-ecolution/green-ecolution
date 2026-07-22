@@ -1,6 +1,7 @@
 import KV from '@/components/debug/KV'
 import { boolBadge } from '@/components/debug/debugHelpers'
-import useStore, { useMapStore } from '@/store/store'
+import useStore from '@/store/store'
+import { MAP_MAX_ZOOM, MAP_MIN_ZOOM } from '@/lib/mapConfig'
 import { useAuthSession } from '@/lib/auth/authSessionContext'
 import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 import {
@@ -62,7 +63,8 @@ const clearServiceWorkerAndCache = async () => {
 
 function Debug() {
   const auth = useAuthSession()
-  const mapStore = useMapStore()
+  const mapCenter = useStore((s) => s.mapCenter)
+  const mapZoom = useStore((s) => s.mapZoom)
   const userStore = useCurrentUser()
   const formDrafts = useStore((s) => s.formDrafts)
 
@@ -249,13 +251,11 @@ function Debug() {
             <KV label="Mittelpunkt">
               <span className="inline-flex items-center gap-1.5">
                 <span className="font-mono text-xs">
-                  {mapStore.mapCenter[0].toFixed(6)}, {mapStore.mapCenter[1].toFixed(6)}
+                  {mapCenter[0].toFixed(6)}, {mapCenter[1].toFixed(6)}
                 </span>
                 <button
                   onClick={() =>
-                    void copyToClipboard(
-                      `${mapStore.mapCenter[0].toFixed(6)}, ${mapStore.mapCenter[1].toFixed(6)}`,
-                    )
+                    void copyToClipboard(`${mapCenter[0].toFixed(6)}, ${mapCenter[1].toFixed(6)}`)
                   }
                   className="p-1 hover:bg-dark-200 rounded transition-colors shrink-0 cursor-pointer"
                   title="Mittelpunkt kopieren"
@@ -265,13 +265,13 @@ function Debug() {
               </span>
             </KV>
             <KV label="Zoom">
-              <span className="font-mono">{mapStore.mapZoom}</span>
+              <span className="font-mono">{mapZoom}</span>
             </KV>
             <KV label="Min-Zoom">
-              <span className="font-mono">{mapStore.mapMinZoom}</span>
+              <span className="font-mono">{MAP_MIN_ZOOM}</span>
             </KV>
             <KV label="Max-Zoom">
-              <span className="font-mono">{mapStore.mapMaxZoom}</span>
+              <span className="font-mono">{MAP_MAX_ZOOM}</span>
             </KV>
           </CardContent>
         </Card>

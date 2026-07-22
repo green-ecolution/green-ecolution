@@ -3,7 +3,6 @@ import { useQuery, useSuspenseQuery, keepPreviousData } from '@tanstack/react-qu
 import ButtonLink from '@/components/general/links/ButtonLink'
 import { Plus } from 'lucide-react'
 import { Loading } from '@green-ecolution/ui'
-import FilterProvider from '@/context/FilterContext'
 import EntityList from '@/components/general/EntityList'
 import TreeclusterCard from '@/components/general/cards/TreeclusterCard'
 import ClusterCard from '@/components/treecluster/ClusterCard'
@@ -145,14 +144,8 @@ function Treecluster() {
   )
 }
 
-const TreeclusterWithProvider = () => (
-  <FilterProvider>
-    <Treecluster />
-  </FilterProvider>
-)
-
 export const Route = createFileRoute('/_protected/treecluster/')({
-  component: TreeclusterWithProvider,
+  component: Treecluster,
   validateSearch: treeclusterFilterSchema,
   pendingComponent: pendingLoading('Daten werden geladen'),
   loaderDeps: ({ search }) => ({

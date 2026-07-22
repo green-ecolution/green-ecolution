@@ -1,4 +1,5 @@
 import useStore from '@/store/store'
+import { MAP_DEFAULT_CENTER, MAP_MAX_ZOOM, MAP_MIN_ZOOM } from '@/lib/mapConfig'
 import {
   createFileRoute,
   Outlet,
@@ -19,17 +20,17 @@ import { Suspense, useCallback, useState } from 'react'
 
 const mapSearchParamsSchema = z.object({
   selected: z.string().optional(),
-  lat: z.number().default(useStore.getState().mapCenter[0]).catch(useStore.getState().mapCenter[0]),
-  lng: z.number().default(useStore.getState().mapCenter[1]).catch(useStore.getState().mapCenter[1]),
+  lat: z.number().default(MAP_DEFAULT_CENTER[0]).catch(MAP_DEFAULT_CENTER[0]),
+  lng: z.number().default(MAP_DEFAULT_CENTER[1]).catch(MAP_DEFAULT_CENTER[1]),
   clusterId: z.string().optional(),
   sensorId: z.string().optional(),
   zoom: z
     .number()
     .int()
-    .max(useStore.getState().mapMaxZoom)
-    .min(useStore.getState().mapMinZoom)
-    .default(useStore.getState().mapMinZoom)
-    .catch(useStore.getState().mapMinZoom),
+    .max(MAP_MAX_ZOOM)
+    .min(MAP_MIN_ZOOM)
+    .default(MAP_MIN_ZOOM)
+    .catch(MAP_MIN_ZOOM),
 })
 
 export const Route = createFileRoute('/_protected/map')({

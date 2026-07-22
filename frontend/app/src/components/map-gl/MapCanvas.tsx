@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { mapInfoQuery } from '@/api/queries'
 import useStore from '@/store/store'
+import { MAP_MAX_ZOOM, MAP_MIN_ZOOM } from '@/lib/mapConfig'
 import { MapContext } from './MapContext'
 import { OPENFREEMAP_STYLE_URL } from './mapStyle'
 
@@ -16,14 +17,14 @@ const MapCanvas = ({ children }: React.PropsWithChildren) => {
 
   useEffect(() => {
     if (!containerRef.current) return
-    const { mapCenter, mapZoom, mapMinZoom, mapMaxZoom } = useStore.getState()
+    const { mapCenter, mapZoom } = useStore.getState()
     const m = new maplibregl.Map({
       container: containerRef.current,
       style: OPENFREEMAP_STYLE_URL,
       center: [mapCenter[1], mapCenter[0]],
       zoom: mapZoom,
-      minZoom: mapMinZoom,
-      maxZoom: mapMaxZoom,
+      minZoom: MAP_MIN_ZOOM,
+      maxZoom: MAP_MAX_ZOOM,
       maxBounds: [
         [swLng, swLat],
         [neLng, neLat],
