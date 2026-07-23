@@ -56,6 +56,10 @@ pub struct TreeClusterResponse {
     pub trees: Vec<TreeResponse>,
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
     pub organization_id: String,
+    /// Organizations this cluster is shared with, in addition to its owning
+    /// organization.
+    #[schema(example = json!(["0190a8e9-7c4f-7000-8000-000000000000"]))]
+    pub shared_with: Vec<String>,
 }
 
 impl TreeClusterResponse {
@@ -86,6 +90,7 @@ impl TreeClusterResponse {
             last_watered: view.last_watered.map(|dt| dt.to_rfc3339()),
             trees,
             organization_id: view.organization_id.to_string(),
+            shared_with: view.shared_with.iter().map(ToString::to_string).collect(),
         }
     }
 }

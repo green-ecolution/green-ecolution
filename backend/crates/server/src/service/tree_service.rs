@@ -4,7 +4,7 @@ use domain::{
     Id,
     cluster::{TreeCluster, TreeClusterReader},
     events::DomainEvent,
-    organization::Organization,
+    organization::{Organization, OrganizationReader},
     sensor::{SensorId, SensorReader},
     shared::{
         coordinates::Coordinate,
@@ -25,15 +25,18 @@ pub struct TreeService {
     writer: Arc<dyn TreeWriter>,
     cluster_reader: Arc<dyn TreeClusterReader>,
     sensor_reader: Arc<dyn SensorReader>,
+    org_reader: Arc<dyn OrganizationReader>,
     event_bus: Arc<dyn EventBus>,
 }
 
 impl TreeService {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         reader: Arc<dyn TreeReader>,
         writer: Arc<dyn TreeWriter>,
         cluster_reader: Arc<dyn TreeClusterReader>,
         sensor_reader: Arc<dyn SensorReader>,
+        org_reader: Arc<dyn OrganizationReader>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
         Self {
@@ -41,6 +44,7 @@ impl TreeService {
             writer,
             cluster_reader,
             sensor_reader,
+            org_reader,
             event_bus,
         }
     }
@@ -270,5 +274,54 @@ impl TreeService {
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn distinct_planting_years(&self) -> Result<Vec<PlantingYear>, ServiceError> {
         Ok(self.reader.distinct_planting_years().await?)
+    }
+
+    /// Only clusterless trees can be shared — a tree in a cluster is shared
+    /// via the cluster instead (see the cascade in the view queries).
+    #[tracing::instrument(level = "debug", skip_all, fields(tree.id = %id))]
+    pub async fn share_with(
+        &self,
+        id: Id<Tree>,
+        target: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        let mut tree = self.reader.by_id(id).await?;
+        if tree.cluster_id().is_some() {
+            return Err(ServiceError::TreeInCluster);
+        }
+        self.ensure_proper_descendant(target, tree.organization_id())
+            .await?;
+        let events = tree.share_with(target);
+        self.writer.save(&tree).await?;
+        self.event_bus.publish_all(events).await;
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(tree.id = %id))]
+    pub async fn revoke_share(
+        &self,
+        id: Id<Tree>,
+        target: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        let mut tree = self.reader.by_id(id).await?;
+        let events = tree.revoke_share(target);
+        self.writer.save(&tree).await?;
+        self.event_bus.publish_all(events).await;
+        Ok(())
+    }
+
+    /// A share target must exist and be a real descendant of the owning
+    /// organization — sharing with the owner itself or with a sibling/
+    /// ancestor org is rejected.
+    async fn ensure_proper_descendant(
+        &self,
+        target: Id<Organization>,
+        owner: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        self.org_reader.by_id(target).await?;
+        let hierarchy = self.org_reader.hierarchy().await?;
+        if target == owner || !hierarchy.is_descendant_or_self(target, owner) {
+            return Err(ServiceError::ShareTargetNotDescendant);
+        }
+        Ok(())
     }
 }

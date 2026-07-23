@@ -64,8 +64,9 @@ impl WateringPlanService {
         }
     }
 
-    /// Every referenced cluster must be reachable for the plan's org: owned
-    /// inside its subtree (shares extend this in the sharing feature).
+    /// Every referenced cluster must be reachable for the plan's org: either
+    /// owned inside its subtree, or explicitly shared with an org in that
+    /// subtree.
     async fn ensure_clusters_accessible(
         &self,
         cluster_ids: &[Id<TreeCluster>],
@@ -76,10 +77,12 @@ impl WateringPlanService {
         }
         let hierarchy = self.org_reader.hierarchy().await?;
         let clusters = self.cluster_reader.by_ids(cluster_ids).await?;
-        if clusters
-            .iter()
-            .all(|c| hierarchy.is_descendant_or_self(c.organization_id(), plan_org))
-        {
+        if clusters.iter().all(|c| {
+            hierarchy.is_descendant_or_self(c.organization_id(), plan_org)
+                || c.shared_with()
+                    .iter()
+                    .any(|s| hierarchy.is_descendant_or_self(*s, plan_org))
+        }) {
             Ok(())
         } else {
             Err(ServiceError::OrganizationMismatch)

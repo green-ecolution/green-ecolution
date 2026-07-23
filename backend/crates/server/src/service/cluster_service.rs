@@ -10,7 +10,7 @@ use domain::{
         condition_series,
     },
     events::DomainEvent,
-    organization::Organization,
+    organization::{Organization, OrganizationReader},
     shared::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
@@ -25,15 +25,18 @@ pub struct ClusterService {
     writer: Arc<dyn TreeClusterWriter>,
     tree_reader: Arc<dyn TreeReader>,
     tree_writer: Arc<dyn TreeWriter>,
+    org_reader: Arc<dyn OrganizationReader>,
     event_bus: Arc<dyn EventBus>,
 }
 
 impl ClusterService {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         reader: Arc<dyn TreeClusterReader>,
         writer: Arc<dyn TreeClusterWriter>,
         tree_reader: Arc<dyn TreeReader>,
         tree_writer: Arc<dyn TreeWriter>,
+        org_reader: Arc<dyn OrganizationReader>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
         Self {
@@ -41,6 +44,7 @@ impl ClusterService {
             writer,
             tree_reader,
             tree_writer,
+            org_reader,
             event_bus,
         }
     }
@@ -228,5 +232,49 @@ impl ClusterService {
             condition,
             watering_events,
         })
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
+    pub async fn share_with(
+        &self,
+        id: Id<TreeCluster>,
+        target: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        let mut cluster = self.reader.by_id(id).await?;
+        self.ensure_proper_descendant(target, cluster.organization_id())
+            .await?;
+        let events = cluster.share_with(target);
+        self.writer.save(&cluster).await?;
+        self.event_bus.publish_all(events).await;
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
+    pub async fn revoke_share(
+        &self,
+        id: Id<TreeCluster>,
+        target: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        let mut cluster = self.reader.by_id(id).await?;
+        let events = cluster.revoke_share(target);
+        self.writer.save(&cluster).await?;
+        self.event_bus.publish_all(events).await;
+        Ok(())
+    }
+
+    /// A share target must exist and be a real descendant of the owning
+    /// organization — sharing with the owner itself or with a sibling/
+    /// ancestor org is rejected.
+    async fn ensure_proper_descendant(
+        &self,
+        target: Id<Organization>,
+        owner: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        self.org_reader.by_id(target).await?;
+        let hierarchy = self.org_reader.hierarchy().await?;
+        if target == owner || !hierarchy.is_descendant_or_self(target, owner) {
+            return Err(ServiceError::ShareTargetNotDescendant);
+        }
+        Ok(())
     }
 }

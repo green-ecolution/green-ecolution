@@ -17,9 +17,9 @@ use crate::{
                 ListResponse,
                 sensor::resolve_sensors_by_str_ids,
                 tree::{
-                    NearestTreeListResponse, NearestTreeParams, TreeCreateRequest, TreeListParams,
-                    TreeMarkerListResponse, TreeMarkerQueryParams, TreeMarkerResponse,
-                    TreeResponse, TreeUpdateRequest, TreeWithDistanceResponse,
+                    NearestTreeListResponse, NearestTreeParams, ShareRequest, TreeCreateRequest,
+                    TreeListParams, TreeMarkerListResponse, TreeMarkerQueryParams,
+                    TreeMarkerResponse, TreeResponse, TreeUpdateRequest, TreeWithDistanceResponse,
                 },
             },
             scope,
@@ -42,6 +42,8 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(list_tree_markers))
         .routes(routes!(get_nearest_trees))
         .routes(routes!(get_tree, update_tree, delete_tree))
+        .routes(routes!(share_tree))
+        .routes(routes!(revoke_share_tree))
 }
 
 const TREE_LIST_Q_MAX_LEN: usize = 100;
@@ -368,4 +370,73 @@ pub async fn list_tree_markers(
     let markers: Vec<TreeMarker> = state.tree_service.view_markers(query).await?;
     let data = markers.iter().map(TreeMarkerResponse::from).collect();
     Ok(Json(TreeMarkerListResponse { data }))
+}
+
+#[utoipa::path(post, path = "/trees/{tree_id}/shares", tag = "Trees",
+    operation_id = "shareTree", summary = "Share a tree with a descendant organization",
+    params(("tree_id" = uuid::Uuid, Path, description = "Tree ID")),
+    request_body = ShareRequest,
+    responses(
+        (status = 204, description = "Share granted"),
+        (status = 403, description = "Missing tree:update in owning organization"),
+        (status = 404, description = "Tree or organization not found"),
+        (status = 409, description = "Tree is part of a cluster"),
+        (status = 422, description = "Target is not a proper descendant"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
+pub async fn share_tree(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    Path(id): Path<uuid::Uuid>,
+    Json(req): Json<ShareRequest>,
+) -> Result<StatusCode, ServiceError> {
+    let current = state.tree_service.view_by_id(Id::new(id)).await?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Tree, Action::Update),
+            Id::new(current.organization_id),
+        )
+        .await?;
+    state
+        .tree_service
+        .share_with(Id::new(id), Id::new(req.organization_id))
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(delete, path = "/trees/{tree_id}/shares/{org_id}", tag = "Trees",
+    operation_id = "revokeShareTree", summary = "Revoke a tree share",
+    params(
+        ("tree_id" = uuid::Uuid, Path, description = "Tree ID"),
+        ("org_id" = uuid::Uuid, Path, description = "Organization ID to revoke the share from"),
+    ),
+    responses(
+        (status = 204, description = "Share revoked"),
+        (status = 403, description = "Missing tree:update in owning organization"),
+        (status = 404, description = "Tree not found"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
+pub async fn revoke_share_tree(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    Path((id, org_id)): Path<(uuid::Uuid, uuid::Uuid)>,
+) -> Result<StatusCode, ServiceError> {
+    let current = state.tree_service.view_by_id(Id::new(id)).await?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Tree, Action::Update),
+            Id::new(current.organization_id),
+        )
+        .await?;
+    state
+        .tree_service
+        .revoke_share(Id::new(id), Id::new(org_id))
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
 }

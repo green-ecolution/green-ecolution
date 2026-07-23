@@ -29,6 +29,7 @@ pub mod sensor_relink;
 pub mod sensor_soil_moisture;
 pub mod sensor_status;
 pub mod sensors;
+pub mod sharing;
 pub mod statistics;
 pub mod trees;
 pub mod update_checker;

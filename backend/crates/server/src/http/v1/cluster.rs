@@ -22,7 +22,7 @@ use crate::{
                     TreeClusterInListResponse, TreeClusterResponse, TreeClusterUpdateRequest,
                 },
                 sensor::resolve_sensors_by_str_ids,
-                tree::TreeResponse,
+                tree::{ShareRequest, TreeResponse},
             },
             scope,
         },
@@ -51,6 +51,8 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(list_cluster_boundaries))
         .routes(routes!(get_cluster, update_cluster, delete_cluster))
         .routes(routes!(get_cluster_soil_moisture))
+        .routes(routes!(share_cluster))
+        .routes(routes!(revoke_share_cluster))
 }
 
 async fn build_cluster_response(
@@ -380,4 +382,80 @@ pub async fn get_cluster_soil_moisture(
         .soil_moisture_overview(Id::new(id), from, to, bucket)
         .await?;
     Ok(Json(SoilMoistureSeriesResponse::from(overview)))
+}
+
+#[utoipa::path(
+    post,
+    path = "/clusters/{cluster_id}/shares",
+    tag = "Tree Clusters",
+    operation_id = "shareCluster",
+    summary = "Share a tree cluster with a descendant organization",
+    params(("cluster_id" = uuid::Uuid, Path, description = "Cluster ID")),
+    request_body = ShareRequest,
+    responses(
+        (status = 204, description = "Share granted"),
+        (status = 403, description = "Missing tree_cluster:update in owning organization"),
+        (status = 404, description = "Cluster or organization not found"),
+        (status = 422, description = "Target is not a proper descendant"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]
+pub async fn share_cluster(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    Path(id): Path<uuid::Uuid>,
+    Json(req): Json<ShareRequest>,
+) -> Result<StatusCode, ServiceError> {
+    let current = state.cluster_service.view_by_id(Id::new(id)).await?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::TreeCluster, Action::Update),
+            Id::new(current.organization_id),
+        )
+        .await?;
+    state
+        .cluster_service
+        .share_with(Id::new(id), Id::new(req.organization_id))
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    delete,
+    path = "/clusters/{cluster_id}/shares/{org_id}",
+    tag = "Tree Clusters",
+    operation_id = "revokeShareCluster",
+    summary = "Revoke a tree cluster share",
+    params(
+        ("cluster_id" = uuid::Uuid, Path, description = "Cluster ID"),
+        ("org_id" = uuid::Uuid, Path, description = "Organization ID to revoke the share from"),
+    ),
+    responses(
+        (status = 204, description = "Share revoked"),
+        (status = 403, description = "Missing tree_cluster:update in owning organization"),
+        (status = 404, description = "Cluster not found"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]
+pub async fn revoke_share_cluster(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    Path((id, org_id)): Path<(uuid::Uuid, uuid::Uuid)>,
+) -> Result<StatusCode, ServiceError> {
+    let current = state.cluster_service.view_by_id(Id::new(id)).await?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::TreeCluster, Action::Update),
+            Id::new(current.organization_id),
+        )
+        .await?;
+    state
+        .cluster_service
+        .revoke_share(Id::new(id), Id::new(org_id))
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
 }
