@@ -248,7 +248,10 @@ mod tests {
         let (root, tbz, sub) = ids();
         let h = OrgHierarchy::from_pairs([(root, None), (tbz, Some(root)), (sub, Some(tbz))]);
         let eff = EffectivePermissions::from_grants(vec![(tbz, BTreeSet::from([tree_read()]))]);
-        let ctx = AccessContext { permissions: eff, hierarchy: h };
+        let ctx = AccessContext {
+            permissions: eff,
+            hierarchy: h,
+        };
         match ctx.visible_orgs(tree_read()) {
             Visibility::Only(orgs) => {
                 assert!(orgs.contains(&tbz) && orgs.contains(&sub));
@@ -274,7 +277,10 @@ mod tests {
         let (root, tbz, sub) = ids();
         let h = OrgHierarchy::from_pairs([(root, None), (tbz, Some(root)), (sub, Some(tbz))]);
         let eff = EffectivePermissions::from_grants(vec![(sub, BTreeSet::from([tree_read()]))]);
-        let ctx = AccessContext { permissions: eff, hierarchy: h };
+        let ctx = AccessContext {
+            permissions: eff,
+            hierarchy: h,
+        };
         // resource owned by root but shared to sub -> effective orgs {root, sub}
         assert!(ctx.allows_in_any(tree_read(), &BTreeSet::from([root, sub])));
         assert!(!ctx.allows_in_any(tree_read(), &BTreeSet::from([root, tbz])));

@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use domain::{
     Id,
-    authorization::{AccessContext, EffectivePermissions, Permission},
+    authorization::{AccessContext, EffectivePermissions, Permission, Visibility},
     organization::{Organization, OrganizationReader},
     role::RoleReader,
 };
@@ -76,6 +76,33 @@ impl AuthorizationService {
     ) -> Result<(), ServiceError> {
         let ctx = self.context_for(user_id).await?;
         if ctx.superset_of(required, org) {
+            Ok(())
+        } else {
+            Err(AuthError::Forbidden.into())
+        }
+    }
+
+    pub fn enforced(&self) -> bool {
+        self.enforced
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(user.id = %user_id))]
+    pub async fn visible_orgs_for(
+        &self,
+        user_id: Uuid,
+        permission: Permission,
+    ) -> Result<Visibility, ServiceError> {
+        Ok(self.context_for(user_id).await?.visible_orgs(permission))
+    }
+
+    pub async fn require_any_of(
+        &self,
+        user_id: Uuid,
+        permission: Permission,
+        orgs: &BTreeSet<Id<Organization>>,
+    ) -> Result<(), ServiceError> {
+        let ctx = self.context_for(user_id).await?;
+        if ctx.allows_in_any(permission, orgs) {
             Ok(())
         } else {
             Err(AuthError::Forbidden.into())
@@ -218,6 +245,62 @@ mod tests {
             svc.require(Uuid::nil(), tree_read(), Id::new_v7())
                 .await
                 .is_ok()
+        );
+    }
+
+    #[tokio::test]
+    async fn require_any_of_grants_via_shared_org() {
+        let (root, tbz) = (Id::new_v7(), Id::new_v7());
+        let user = Uuid::now_v7();
+        let svc = AuthorizationService::new(
+            Arc::new(StubOrgs {
+                pairs: vec![(root, None), (tbz, Some(root))],
+            }),
+            Arc::new(StubRoles {
+                by_user: vec![(user, role_in(tbz, &[tree_read()]))],
+            }),
+            true,
+        );
+        // owner org root (no grant) plus share to tbz (grant) -> ok
+        let orgs = BTreeSet::from([root, tbz]);
+        assert!(svc.require_any_of(user, tree_read(), &orgs).await.is_ok());
+        // owner-only set without grant -> forbidden
+        assert!(matches!(
+            svc.require_any_of(user, tree_read(), &BTreeSet::from([root]))
+                .await,
+            Err(ServiceError::Auth(AuthError::Forbidden))
+        ));
+    }
+
+    #[tokio::test]
+    async fn visible_orgs_for_returns_subtree_or_unrestricted() {
+        let (root, tbz) = (Id::new_v7(), Id::new_v7());
+        let user = Uuid::now_v7();
+        let svc = AuthorizationService::new(
+            Arc::new(StubOrgs {
+                pairs: vec![(root, None), (tbz, Some(root))],
+            }),
+            Arc::new(StubRoles {
+                by_user: vec![(user, role_in(tbz, &[tree_read()]))],
+            }),
+            true,
+        );
+        match svc.visible_orgs_for(user, tree_read()).await.unwrap() {
+            domain::authorization::Visibility::Only(orgs) => {
+                assert!(orgs.contains(&tbz) && !orgs.contains(&root))
+            }
+            v => panic!("expected Only, got {v:?}"),
+        }
+        let demo = AuthorizationService::new(
+            Arc::new(StubOrgs { pairs: vec![] }),
+            Arc::new(StubRoles { by_user: vec![] }),
+            false,
+        );
+        assert_eq!(
+            demo.visible_orgs_for(Uuid::nil(), tree_read())
+                .await
+                .unwrap(),
+            domain::authorization::Visibility::Unrestricted
         );
     }
 }

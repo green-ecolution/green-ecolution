@@ -27,7 +27,9 @@ crate::newtype_nonempty! {
 
 /// Well-known id of the root organization; identical in every environment.
 pub fn root_organization_id() -> Id<Organization> {
-    Id::new(crate::RawId::from_u128(0x0198_0000_0000_7000_8000_0000_0000_0001))
+    Id::new(crate::RawId::from_u128(
+        0x0198_0000_0000_7000_8000_0000_0000_0001,
+    ))
 }
 
 #[derive(Debug, Clone, PartialEq)]
