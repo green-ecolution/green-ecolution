@@ -615,7 +615,8 @@ impl TreeWriter for PgTreeRepository {
                 longitude = $11,
                 geometry = ST_SetSRID(ST_MakePoint($11, $10), 4326),
                 provider = $12,
-                additional_informations = $13
+                additional_informations = $13,
+                organization_id = $14
             WHERE id = $1"#,
             tree.id.value(),
             tree.cluster_id().map(|id| id.value()),
@@ -630,6 +631,7 @@ impl TreeWriter for PgTreeRepository {
             lng,
             tree.provenance().provider().map(|p| p.as_str().to_string()),
             tree.provenance().additional_info().cloned(),
+            tree.organization_id().value(),
         )
         .execute(&mut *tx)
         .await?;

@@ -313,6 +313,23 @@ impl Tree {
         })
     }
 
+    /// Reassigns the tree to `target`'s organization. No-op (and no event)
+    /// if it already belongs there. Callers must ensure the tree is
+    /// clusterless and that any attached sensor is transferred alongside it
+    /// (see `TreeService::transfer`).
+    pub fn transfer_to(&mut self, target: Id<Organization>) -> Vec<DomainEvent> {
+        if self.organization_id == target {
+            return vec![];
+        }
+        let from = self.organization_id;
+        self.organization_id = target;
+        vec![DomainEvent::TreeResponsibilityTransferred {
+            tree_id: self.id,
+            from,
+            to: target,
+        }]
+    }
+
     /// Derives a [`WateringStatus`] from volumetric soil-moisture readings,
     /// the cluster's KA5 `soil` type, and the tree's age.
     pub fn calculate_watering_status_from_volumetric(
@@ -580,6 +597,37 @@ mod tests {
         let events = t.revoke_share(org);
         assert!(!t.shared_with().contains(&org));
         assert!(matches!(events[0], DomainEvent::TreeShareRevoked { .. }));
+    }
+
+    #[test]
+    fn transfer_to_same_org_is_noop() {
+        let mut t = fixed_tree();
+        let same = t.organization_id();
+        let events = t.transfer_to(same);
+        assert_eq!(t.organization_id(), same);
+        assert!(events.is_empty());
+    }
+
+    #[test]
+    fn transfer_to_new_org_emits_event_and_updates_field() {
+        let mut t = fixed_tree();
+        let from = t.organization_id();
+        let target: Id<Organization> = Id::new_v7();
+        let events = t.transfer_to(target);
+        assert_eq!(t.organization_id(), target);
+        assert_eq!(events.len(), 1);
+        match &events[0] {
+            DomainEvent::TreeResponsibilityTransferred {
+                tree_id,
+                from: ev_from,
+                to,
+            } => {
+                assert_eq!(*tree_id, t.id);
+                assert_eq!(*ev_from, from);
+                assert_eq!(*to, target);
+            }
+            other => panic!("expected TreeResponsibilityTransferred, got {other:?}"),
+        }
     }
 
     fn wm(depth: i32, centibar: i32) -> Watermark {

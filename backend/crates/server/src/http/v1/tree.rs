@@ -17,9 +17,10 @@ use crate::{
                 ListResponse,
                 sensor::resolve_sensors_by_str_ids,
                 tree::{
-                    NearestTreeListResponse, NearestTreeParams, ShareRequest, TreeCreateRequest,
-                    TreeListParams, TreeMarkerListResponse, TreeMarkerQueryParams,
-                    TreeMarkerResponse, TreeResponse, TreeUpdateRequest, TreeWithDistanceResponse,
+                    NearestTreeListResponse, NearestTreeParams, ShareRequest, TransferRequest,
+                    TreeCreateRequest, TreeListParams, TreeMarkerListResponse,
+                    TreeMarkerQueryParams, TreeMarkerResponse, TreeResponse, TreeUpdateRequest,
+                    TreeWithDistanceResponse,
                 },
             },
             scope,
@@ -44,6 +45,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(get_tree, update_tree, delete_tree))
         .routes(routes!(share_tree))
         .routes(routes!(revoke_share_tree))
+        .routes(routes!(transfer_tree))
 }
 
 const TREE_LIST_Q_MAX_LEN: usize = 100;
@@ -437,6 +439,43 @@ pub async fn revoke_share_tree(
     state
         .tree_service
         .revoke_share(Id::new(id), Id::new(org_id))
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(patch, path = "/trees/{tree_id}/organization", tag = "Trees",
+    operation_id = "transferTree", summary = "Transfer a tree's ownership to another organization",
+    description = "Moves a clusterless tree (and any attached sensor) to a different owning \
+                   organization. Requires `tree:update` in both the source and target organization.",
+    params(("tree_id" = uuid::Uuid, Path, description = "Tree ID")),
+    request_body = TransferRequest,
+    responses(
+        (status = 204, description = "Tree transferred"),
+        (status = 403, description = "Missing tree:update in source or target organization"),
+        (status = 404, description = "Tree or organization not found"),
+        (status = 409, description = "Tree is part of a cluster"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
+pub async fn transfer_tree(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    Path(id): Path<uuid::Uuid>,
+    Json(req): Json<TransferRequest>,
+) -> Result<StatusCode, ServiceError> {
+    let current = state.tree_service.view_by_id(Id::new(id)).await?;
+    let perm = Permission::new(Resource::Tree, Action::Update);
+    state
+        .authorization_service
+        .require(user.id, perm, Id::new(current.organization_id))
+        .await?;
+    state
+        .authorization_service
+        .require(user.id, perm, Id::new(req.organization_id))
+        .await?;
+    state
+        .tree_service
+        .transfer(Id::new(id), Id::new(req.organization_id))
         .await?;
     Ok(StatusCode::NO_CONTENT)
 }

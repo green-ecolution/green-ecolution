@@ -96,6 +96,16 @@ pub enum DomainEvent {
         cluster_id: Id<TreeCluster>,
         organization_id: Id<Organization>,
     },
+    TreeResponsibilityTransferred {
+        tree_id: Id<Tree>,
+        from: Id<Organization>,
+        to: Id<Organization>,
+    },
+    SensorResponsibilityTransferred {
+        sensor_id: SensorId,
+        from: Id<Organization>,
+        to: Id<Organization>,
+    },
     /// Emitted after a sensor reading is persisted. Carries the parsed
     /// readings so subscribers don't have to re-parse the raw JSON payload.
     SensorDataReceived(SensorDataReceivedPayload),

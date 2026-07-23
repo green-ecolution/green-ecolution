@@ -93,6 +93,14 @@ pub struct ShareRequest {
     pub organization_id: uuid::Uuid,
 }
 
+/// Request body for transferring a resource's ownership to another
+/// organization.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct TransferRequest {
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub organization_id: uuid::Uuid,
+}
+
 /// A tree with its distance from a reference point.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct TreeWithDistanceResponse {

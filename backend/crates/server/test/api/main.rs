@@ -31,6 +31,7 @@ pub mod sensor_status;
 pub mod sensors;
 pub mod sharing;
 pub mod statistics;
+pub mod transfer;
 pub mod trees;
 pub mod update_checker;
 pub mod user_profiles;

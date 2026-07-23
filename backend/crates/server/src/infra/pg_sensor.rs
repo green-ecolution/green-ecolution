@@ -460,12 +460,14 @@ impl SensorWriter for PgSensorRepository {
             r#"UPDATE sensors SET
                 activated_at = $2,
                 provider = $3,
-                additional_informations = $4
+                additional_informations = $4,
+                organization_id = $5
             WHERE id = $1"#,
             sensor.id.as_str(),
             sensor.activated_at().map(|t| t.naive_utc()),
             sensor.provenance.provider().map(|p| p.as_str()),
             sensor.provenance.additional_info().cloned(),
+            sensor.organization_id().value(),
         )
         .execute(&self.pool)
         .await?;

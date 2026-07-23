@@ -21,7 +21,7 @@ use crate::{
                     ActivateSensorRequest, CreateSensorRequest, SensorDataResponse,
                     SensorModelResponse, SensorResponse, SetSensorTreeRequest,
                 },
-                tree::TreeResponse,
+                tree::{TransferRequest, TreeResponse},
             },
             pagination::{PaginationParams, default_page},
             scope,
@@ -51,6 +51,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         ))
         .routes(routes!(list_sensor_models))
         .routes(routes!(get_sensor_model))
+        .routes(routes!(transfer_sensor))
 }
 
 #[utoipa::path(get, path = "/sensors", tag = "Sensors",
@@ -378,4 +379,42 @@ pub async fn get_sensor_model(
         .model_by_id(Id::<SensorModel>::new(id))
         .await?;
     Ok(Json(SensorModelResponse::from(&model)))
+}
+
+#[utoipa::path(patch, path = "/sensors/{sensor_id}/organization", tag = "Sensors",
+    operation_id = "transferSensor", summary = "Transfer a sensor's ownership to another organization",
+    description = "Moves an unbound sensor to a different owning organization. Requires \
+                   `sensor:update` in both the source and target organization. A sensor bound \
+                   to a tree must be transferred via its tree instead.",
+    params(("sensor_id" = String, Path, description = "Sensor ID (EUI)")),
+    request_body = TransferRequest,
+    responses(
+        (status = 204, description = "Sensor transferred"),
+        (status = 403, description = "Missing sensor:update in source or target organization"),
+        (status = 404, description = "Sensor or organization not found"),
+        (status = 409, description = "Sensor is bound to a tree"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
+pub async fn transfer_sensor(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    SensorIdPath(sensor_id): SensorIdPath,
+    Json(req): Json<TransferRequest>,
+) -> Result<StatusCode, ServiceError> {
+    let current = state.sensor_service.view_by_id(&sensor_id).await?;
+    let perm = Permission::new(Resource::Sensor, Action::Update);
+    state
+        .authorization_service
+        .require(user.id, perm, Id::new(current.organization_id))
+        .await?;
+    state
+        .authorization_service
+        .require(user.id, perm, Id::new(req.organization_id))
+        .await?;
+    state
+        .sensor_service
+        .transfer(&sensor_id, Id::new(req.organization_id))
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
 }

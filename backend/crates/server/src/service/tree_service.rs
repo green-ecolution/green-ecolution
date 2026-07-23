@@ -5,7 +5,7 @@ use domain::{
     cluster::{TreeCluster, TreeClusterReader},
     events::DomainEvent,
     organization::{Organization, OrganizationReader},
-    sensor::{SensorId, SensorReader},
+    sensor::{SensorId, SensorReader, SensorWriter},
     shared::{
         coordinates::Coordinate,
         distance::Distance,
@@ -25,6 +25,7 @@ pub struct TreeService {
     writer: Arc<dyn TreeWriter>,
     cluster_reader: Arc<dyn TreeClusterReader>,
     sensor_reader: Arc<dyn SensorReader>,
+    sensor_writer: Arc<dyn SensorWriter>,
     org_reader: Arc<dyn OrganizationReader>,
     event_bus: Arc<dyn EventBus>,
 }
@@ -36,6 +37,7 @@ impl TreeService {
         writer: Arc<dyn TreeWriter>,
         cluster_reader: Arc<dyn TreeClusterReader>,
         sensor_reader: Arc<dyn SensorReader>,
+        sensor_writer: Arc<dyn SensorWriter>,
         org_reader: Arc<dyn OrganizationReader>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
@@ -44,6 +46,7 @@ impl TreeService {
             writer,
             cluster_reader,
             sensor_reader,
+            sensor_writer,
             org_reader,
             event_bus,
         }
@@ -305,6 +308,31 @@ impl TreeService {
         let mut tree = self.reader.by_id(id).await?;
         let events = tree.revoke_share(target);
         self.writer.save(&tree).await?;
+        self.event_bus.publish_all(events).await;
+        Ok(())
+    }
+
+    /// Transfers ownership of a clusterless tree to `target`. An attached
+    /// sensor is carried along in the same operation (its own organization
+    /// coupling would otherwise be violated) — a directly bound sensor must
+    /// instead move via its tree, see `SensorService::transfer`.
+    #[tracing::instrument(level = "debug", skip_all, fields(tree.id = %id))]
+    pub async fn transfer(
+        &self,
+        id: Id<Tree>,
+        target: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        let mut tree = self.reader.by_id(id).await?;
+        if tree.cluster_id().is_some() {
+            return Err(ServiceError::TreeInCluster);
+        }
+        let mut events = tree.transfer_to(target);
+        self.writer.save(&tree).await?;
+        if let Some(sensor_id) = tree.sensor_id().cloned() {
+            let mut sensor = self.sensor_reader.by_id(&sensor_id).await?;
+            events.extend(sensor.transfer_to(target));
+            self.sensor_writer.save(&sensor).await?;
+        }
         self.event_bus.publish_all(events).await;
         Ok(())
     }
