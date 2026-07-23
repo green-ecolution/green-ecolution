@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, name, latitude, longitude, watering_point, is_default\n               FROM depots WHERE id = $1",
+  "query": "SELECT id, name, latitude, longitude, watering_point, is_default, organization_id\n               FROM depots ORDER BY name ASC, id ASC",
   "describe": {
     "columns": [
       {
@@ -32,14 +32,18 @@
         "ordinal": 5,
         "name": "is_default",
         "type_info": "Bool"
+      },
+      {
+        "ordinal": 6,
+        "name": "organization_id",
+        "type_info": "Uuid"
       }
     ],
     "parameters": {
-      "Left": [
-        "Uuid"
-      ]
+      "Left": []
     },
     "nullable": [
+      false,
       false,
       false,
       false,
@@ -48,5 +52,5 @@
       false
     ]
   },
-  "hash": "f9a33679898745927cd270094f85c4afd88138e24e3d8f4f96acc6a59ec18b93"
+  "hash": "4957b67a4d0ac1bedca7ec9d666d6790dc3d8b2837d98a93c1030f232ddfd66c"
 }

@@ -272,7 +272,11 @@ pub async fn spawn_app_with_auth(auth: AuthSettings) -> TestApp {
 }
 
 pub async fn spawn_app_with_routing(streamlet_url: &str) -> TestApp {
-    let mut settings = Settings::for_test(disabled_auth_settings());
+    spawn_app_with_routing_and_auth(streamlet_url, disabled_auth_settings()).await
+}
+
+pub async fn spawn_app_with_routing_and_auth(streamlet_url: &str, auth: AuthSettings) -> TestApp {
+    let mut settings = Settings::for_test(auth);
     settings.info.health_check_interval_secs = 1;
     settings.info.update_check_repo = None;
     settings.routing.enabled = true;

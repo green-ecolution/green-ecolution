@@ -14,7 +14,7 @@ pub mod error;
 pub mod repository;
 pub mod snapshot;
 
-use crate::{Id, shared::coordinates::Coordinate};
+use crate::{Id, organization::Organization, shared::coordinates::Coordinate};
 
 pub use error::StartPointError;
 pub use repository::{StartPointReader, StartPointWriter};
@@ -33,6 +33,7 @@ pub struct StartPoint {
     pub coordinate: Coordinate,
     is_default: bool,
     watering_point: bool,
+    organization_id: Id<Organization>,
 }
 
 /// Input for creating a new [`StartPoint`]. New points are never default;
@@ -42,6 +43,7 @@ pub struct StartPointDraft {
     pub name: StartPointName,
     pub coordinate: Coordinate,
     pub watering_point: bool,
+    pub organization_id: Id<Organization>,
 }
 
 /// Replacement input for editing a [`StartPoint`]. Does not touch `is_default`.
@@ -62,6 +64,7 @@ impl StartPoint {
                 .expect("persisted start point coordinate must be valid"),
             is_default: snap.is_default,
             watering_point: snap.watering_point,
+            organization_id: Id::new(snap.organization_id),
         }
     }
 
@@ -71,6 +74,10 @@ impl StartPoint {
 
     pub fn watering_point(&self) -> bool {
         self.watering_point
+    }
+
+    pub fn organization_id(&self) -> Id<Organization> {
+        self.organization_id
     }
 
     pub fn rename(&mut self, new_name: StartPointName) {
@@ -101,6 +108,7 @@ mod tests {
             coordinate: Coordinate::new(54.768, 9.434).unwrap(),
             is_default: true,
             watering_point: true,
+            organization_id: Id::new_v7(),
         }
     }
 

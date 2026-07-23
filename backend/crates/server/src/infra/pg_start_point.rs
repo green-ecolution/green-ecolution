@@ -22,7 +22,7 @@ impl StartPointReader for PgStartPointRepository {
     async fn all(&self) -> Result<Vec<StartPoint>, RepositoryError> {
         let points = sqlx::query_as!(
             StartPointSnapshot,
-            r#"SELECT id, name, latitude, longitude, watering_point, is_default
+            r#"SELECT id, name, latitude, longitude, watering_point, is_default, organization_id
                FROM depots ORDER BY name ASC, id ASC"#
         )
         .fetch_all(&self.pool)
@@ -38,7 +38,7 @@ impl StartPointReader for PgStartPointRepository {
     async fn by_id(&self, id: Id<StartPoint>) -> Result<StartPoint, RepositoryError> {
         sqlx::query_as!(
             StartPointSnapshot,
-            r#"SELECT id, name, latitude, longitude, watering_point, is_default
+            r#"SELECT id, name, latitude, longitude, watering_point, is_default, organization_id
                FROM depots WHERE id = $1"#,
             id.value()
         )
@@ -55,13 +55,14 @@ impl StartPointWriter for PgStartPointRepository {
     async fn save_new(&self, draft: StartPointDraft) -> Result<StartPoint, RepositoryError> {
         let id = Id::<StartPoint>::new_v7();
         sqlx::query!(
-            r#"INSERT INTO depots (id, name, latitude, longitude, geometry, watering_point, is_default)
-               VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint($4, $3), 4326), $5, FALSE)"#,
+            r#"INSERT INTO depots (id, name, latitude, longitude, geometry, watering_point, is_default, organization_id)
+               VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint($4, $3), 4326), $5, FALSE, $6)"#,
             id.value(),
             draft.name.as_str(),
             draft.coordinate.latitude(),
             draft.coordinate.longitude(),
             draft.watering_point,
+            draft.organization_id.value(),
         )
         .execute(&self.pool)
         .await?;
@@ -73,6 +74,7 @@ impl StartPointWriter for PgStartPointRepository {
             longitude: draft.coordinate.longitude(),
             watering_point: draft.watering_point,
             is_default: false,
+            organization_id: draft.organization_id.value(),
         }))
     }
 
@@ -124,13 +126,19 @@ impl StartPointWriter for PgStartPointRepository {
             return Err(RepositoryError::NotFound);
         }
 
-        // Two statements in one transaction: clearing all defaults completes
-        // (emptying the partial unique index) before the target is set, so no
-        // transient two-defaults state can violate depots_single_default —
-        // unlike a single UPDATE, which the index checks per row mid-statement.
-        sqlx::query!(r#"UPDATE depots SET is_default = FALSE WHERE is_default"#)
-            .execute(&mut *tx)
-            .await?;
+        // Two statements in one transaction: clearing the target's org's
+        // defaults completes (emptying the partial unique index for that org)
+        // before the target is set, so no transient two-defaults state can
+        // violate depots_single_default_per_org — unlike a single UPDATE,
+        // which the index checks per row mid-statement. Scoped to the
+        // target's own organization_id, so other orgs' defaults are untouched.
+        sqlx::query!(
+            r#"UPDATE depots SET is_default = FALSE
+               WHERE is_default AND organization_id = (SELECT organization_id FROM depots WHERE id = $1)"#,
+            id.value()
+        )
+        .execute(&mut *tx)
+        .await?;
         sqlx::query!(
             r#"UPDATE depots SET is_default = TRUE WHERE id = $1"#,
             id.value()

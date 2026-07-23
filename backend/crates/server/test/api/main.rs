@@ -17,6 +17,7 @@ pub mod roles;
 pub mod routing;
 pub mod scoping_cluster;
 pub mod scoping_sensor;
+pub mod scoping_start_point;
 pub mod scoping_tree;
 pub mod scoping_vehicle;
 pub mod sensor_activate;

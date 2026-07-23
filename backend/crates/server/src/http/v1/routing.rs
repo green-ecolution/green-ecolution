@@ -7,10 +7,19 @@ use axum::{
 };
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::{http::AppState, service::ServiceError};
-use domain::Id;
+use crate::{
+    http::{AppState, auth::extractor::AuthUserExtractor},
+    service::ServiceError,
+};
+use domain::{
+    Id,
+    authorization::{Action, Permission, Resource},
+};
 
-use super::dto::routing::{StartPointRequest, StartPointResponse};
+use super::{
+    dto::routing::{StartPointRequest, StartPointResponse},
+    scope,
+};
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
@@ -57,10 +66,20 @@ pub async fn list_routing_start_points(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn create_start_point(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Json(req): Json<StartPointRequest>,
 ) -> Result<(StatusCode, Json<StartPointResponse>), ServiceError> {
     ensure_routing(&state)?;
-    let draft = req.into_draft()?;
+    let org = scope::resolve_target_org(&state, user.id, req.organization_id).await?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::WateringPlan, Action::Create),
+            org,
+        )
+        .await?;
+    let draft = req.into_draft(org)?;
     let sp = state.start_point_service.create(draft).await?;
     Ok((StatusCode::CREATED, Json(StartPointResponse::from(&sp))))
 }
