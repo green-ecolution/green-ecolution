@@ -4,5 +4,5 @@
 pub mod effective;
 pub mod permission;
 
-pub use effective::{AccessContext, EffectivePermissions, OrgHierarchy};
+pub use effective::{AccessContext, EffectivePermissions, OrgHierarchy, Visibility};
 pub use permission::{Action, Permission, Resource};
