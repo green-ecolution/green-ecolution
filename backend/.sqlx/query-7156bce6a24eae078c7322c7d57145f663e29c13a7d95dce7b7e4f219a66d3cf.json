@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT tc.id, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: Option<SoilCondition>\",\n                      tc.latitude, tc.longitude,\n                      tc.last_watered AS \"last_watered: DateTime<Utc>\",\n                      tc.provider,\n                      tc.additional_informations AS additional_info,\n                      tc.organization_id,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS \"tree_ids!: Vec<RawId>\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.id = $1\n            GROUP BY tc.id",
+  "query": "SELECT tc.id, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: Option<SoilCondition>\",\n                      tc.latitude, tc.longitude,\n                      tc.last_watered AS \"last_watered: DateTime<Utc>\",\n                      tc.provider,\n                      tc.additional_informations AS additional_info,\n                      tc.organization_id,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS \"tree_ids!: Vec<RawId>\",\n                      COALESCE((SELECT array_agg(tcs.organization_id) FROM tree_cluster_shares tcs WHERE tcs.tree_cluster_id = tc.id), '{}') AS \"shared_with!: Vec<RawId>\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.id = $1\n            GROUP BY tc.id",
   "describe": {
     "columns": [
       {
@@ -138,6 +138,11 @@
         "ordinal": 15,
         "name": "tree_ids!: Vec<RawId>",
         "type_info": "UuidArray"
+      },
+      {
+        "ordinal": 16,
+        "name": "shared_with!: Vec<RawId>",
+        "type_info": "UuidArray"
       }
     ],
     "parameters": {
@@ -161,8 +166,9 @@
       true,
       true,
       false,
+      null,
       null
     ]
   },
-  "hash": "51d461e807031fa5b4a128f515f3deb6d65629ab257e3963ea8b24fa77609119"
+  "hash": "7156bce6a24eae078c7322c7d57145f663e29c13a7d95dce7b7e4f219a66d3cf"
 }

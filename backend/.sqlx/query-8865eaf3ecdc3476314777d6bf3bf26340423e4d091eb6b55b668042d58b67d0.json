@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id\n            FROM trees WHERE id = ANY($1::uuid[])",
+  "query": "SELECT id, tree_cluster_id AS cluster_id, sensor_id,\n                      planting_year, species, number AS tree_number,\n                      latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id,\n                      COALESCE((SELECT array_agg(ts.organization_id) FROM tree_shares ts WHERE ts.tree_id = trees.id), '{}') AS \"shared_with!: Vec<RawId>\"\n            FROM trees WHERE sensor_id = $1 LIMIT 1",
   "describe": {
     "columns": [
       {
@@ -10,46 +10,41 @@
       },
       {
         "ordinal": 1,
-        "name": "updated_at",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 2,
-        "name": "tree_cluster_id",
+        "name": "cluster_id",
         "type_info": "Uuid"
       },
       {
-        "ordinal": 3,
+        "ordinal": 2,
         "name": "sensor_id",
         "type_info": "Varchar"
       },
       {
-        "ordinal": 4,
+        "ordinal": 3,
         "name": "planting_year",
         "type_info": "Int4"
       },
       {
-        "ordinal": 5,
+        "ordinal": 4,
         "name": "species",
         "type_info": "Text"
       },
       {
-        "ordinal": 6,
-        "name": "number",
+        "ordinal": 5,
+        "name": "tree_number",
         "type_info": "Text"
       },
       {
-        "ordinal": 7,
+        "ordinal": 6,
         "name": "latitude",
         "type_info": "Float8"
       },
       {
-        "ordinal": 8,
+        "ordinal": 7,
         "name": "longitude",
         "type_info": "Float8"
       },
       {
-        "ordinal": 9,
+        "ordinal": 8,
         "name": "watering_status: WateringStatus",
         "type_info": {
           "Custom": {
@@ -67,39 +62,43 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 9,
         "name": "description",
         "type_info": "Text"
       },
       {
-        "ordinal": 11,
+        "ordinal": 10,
         "name": "last_watered: DateTime<Utc>",
         "type_info": "Timestamp"
       },
       {
-        "ordinal": 12,
+        "ordinal": 11,
         "name": "provider",
         "type_info": "Text"
       },
       {
-        "ordinal": 13,
+        "ordinal": 12,
         "name": "additional_info",
         "type_info": "Jsonb"
       },
       {
-        "ordinal": 14,
+        "ordinal": 13,
         "name": "organization_id",
         "type_info": "Uuid"
+      },
+      {
+        "ordinal": 14,
+        "name": "shared_with!: Vec<RawId>",
+        "type_info": "UuidArray"
       }
     ],
     "parameters": {
       "Left": [
-        "UuidArray"
+        "Text"
       ]
     },
     "nullable": [
       false,
-      false,
       true,
       true,
       false,
@@ -112,8 +111,9 @@
       true,
       true,
       true,
-      false
+      false,
+      null
     ]
   },
-  "hash": "c713fafdfc9856ca8f395cf34c0f08b8c8c43c7915a6f66847627a5e3c420c0e"
+  "hash": "8865eaf3ecdc3476314777d6bf3bf26340423e4d091eb6b55b668042d58b67d0"
 }

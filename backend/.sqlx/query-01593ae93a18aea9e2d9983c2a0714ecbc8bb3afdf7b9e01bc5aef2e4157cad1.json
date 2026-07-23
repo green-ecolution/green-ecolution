@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "WITH distances AS (\n                SELECT *,\n                    ST_Distance(\n                        geometry::geography,\n                        ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography\n                    )::float8 AS dist\n                FROM trees\n                WHERE ST_DWithin(\n                    geometry::geography,\n                    ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,\n                    $3\n                )\n            )\n            SELECT id, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id,\n                      dist AS \"distance!: f64\"\n            FROM distances\n            ORDER BY dist ASC\n            LIMIT $4",
+  "query": "SELECT id, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id,\n                      COALESCE((\n                        SELECT array_agg(DISTINCT s.org) FROM (\n                          SELECT ts.organization_id AS org FROM tree_shares ts WHERE ts.tree_id = trees.id\n                          UNION\n                          SELECT tcs.organization_id FROM tree_cluster_shares tcs\n                          WHERE tcs.tree_cluster_id = trees.tree_cluster_id\n                        ) s\n                      ), '{}') AS \"shared_with!: Vec<RawId>\"\n            FROM trees WHERE sensor_id = $1",
   "describe": {
     "columns": [
       {
@@ -93,16 +93,13 @@
       },
       {
         "ordinal": 15,
-        "name": "distance!: f64",
-        "type_info": "Float8"
+        "name": "shared_with!: Vec<RawId>",
+        "type_info": "UuidArray"
       }
     ],
     "parameters": {
       "Left": [
-        "Float8",
-        "Float8",
-        "Float8",
-        "Int8"
+        "Text"
       ]
     },
     "nullable": [
@@ -124,5 +121,5 @@
       null
     ]
   },
-  "hash": "b31870cfb5136cb1912e74db9665ca239b7160522b60c0eebedc3832c8b5b956"
+  "hash": "01593ae93a18aea9e2d9983c2a0714ecbc8bb3afdf7b9e01bc5aef2e4157cad1"
 }

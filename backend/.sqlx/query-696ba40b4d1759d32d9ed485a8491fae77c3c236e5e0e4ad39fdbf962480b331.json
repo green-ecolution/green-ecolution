@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, tree_cluster_id AS cluster_id, sensor_id,\n                      planting_year, species, number AS tree_number,\n                      latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id\n            FROM trees\n            WHERE ST_DWithin(\n                geometry::geography,\n                ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,\n                $3\n            )\n            ORDER BY ST_Distance(\n                geometry::geography,\n                ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography\n            ) ASC\n            LIMIT 1",
+  "query": "SELECT id, tree_cluster_id AS cluster_id, sensor_id,\n                      planting_year, species, number AS tree_number,\n                      latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id,\n                      COALESCE((SELECT array_agg(ts.organization_id) FROM tree_shares ts WHERE ts.tree_id = trees.id), '{}') AS \"shared_with!: Vec<RawId>\"\n            FROM trees WHERE id = ANY($1::uuid[])",
   "describe": {
     "columns": [
       {
@@ -85,13 +85,16 @@
         "ordinal": 13,
         "name": "organization_id",
         "type_info": "Uuid"
+      },
+      {
+        "ordinal": 14,
+        "name": "shared_with!: Vec<RawId>",
+        "type_info": "UuidArray"
       }
     ],
     "parameters": {
       "Left": [
-        "Float8",
-        "Float8",
-        "Float8"
+        "UuidArray"
       ]
     },
     "nullable": [
@@ -108,8 +111,9 @@
       true,
       true,
       true,
-      false
+      false,
+      null
     ]
   },
-  "hash": "1e295758be18f0c73d658b238517929d9d3ab556c7c6bc344f98762b800c31e0"
+  "hash": "696ba40b4d1759d32d9ed485a8491fae77c3c236e5e0e4ad39fdbf962480b331"
 }

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id\n            FROM trees WHERE id = $1",
+  "query": "SELECT id, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id,\n                      COALESCE((\n                        SELECT array_agg(DISTINCT s.org) FROM (\n                          SELECT ts.organization_id AS org FROM tree_shares ts WHERE ts.tree_id = trees.id\n                          UNION\n                          SELECT tcs.organization_id FROM tree_cluster_shares tcs\n                          WHERE tcs.tree_cluster_id = trees.tree_cluster_id\n                        ) s\n                      ), '{}') AS \"shared_with!: Vec<RawId>\"\n            FROM trees WHERE id = $1",
   "describe": {
     "columns": [
       {
@@ -90,6 +90,11 @@
         "ordinal": 14,
         "name": "organization_id",
         "type_info": "Uuid"
+      },
+      {
+        "ordinal": 15,
+        "name": "shared_with!: Vec<RawId>",
+        "type_info": "UuidArray"
       }
     ],
     "parameters": {
@@ -112,8 +117,9 @@
       true,
       true,
       true,
-      false
+      false,
+      null
     ]
   },
-  "hash": "4d8a088af55a00837f9cb5bc82c2ac10e9ccc706ae8c1f2eed6aad1d567f7b94"
+  "hash": "5137a76961ef8e10cf6ee4ce00d10c6e276917575a5b5b637be08f7c65323ee1"
 }

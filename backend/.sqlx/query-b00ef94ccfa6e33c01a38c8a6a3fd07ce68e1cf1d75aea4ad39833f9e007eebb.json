@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT tc.id, tc.updated_at, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: Option<SoilCondition>\",\n                      tc.latitude, tc.longitude,\n                      tc.last_watered AS \"last_watered: DateTime<Utc>\",\n                      tc.provider,\n                      tc.additional_informations AS additional_info,\n                      tc.organization_id,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS \"tree_ids!: Vec<RawId>\",\n                      COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS \"sensor_count!: i64\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.id = ANY($1::uuid[])\n            GROUP BY tc.id",
+  "query": "SELECT tc.id, tc.updated_at, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: Option<SoilCondition>\",\n                      tc.latitude, tc.longitude,\n                      tc.last_watered AS \"last_watered: DateTime<Utc>\",\n                      tc.provider,\n                      tc.additional_informations AS additional_info,\n                      tc.organization_id,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS \"tree_ids!: Vec<RawId>\",\n                      COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS \"sensor_count!: i64\",\n                      COALESCE((SELECT array_agg(tcs.organization_id) FROM tree_cluster_shares tcs WHERE tcs.tree_cluster_id = tc.id), '{}') AS \"shared_with!: Vec<RawId>\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.id = $1\n            GROUP BY tc.id",
   "describe": {
     "columns": [
       {
@@ -148,11 +148,16 @@
         "ordinal": 17,
         "name": "sensor_count!: i64",
         "type_info": "Int8"
+      },
+      {
+        "ordinal": 18,
+        "name": "shared_with!: Vec<RawId>",
+        "type_info": "UuidArray"
       }
     ],
     "parameters": {
       "Left": [
-        "UuidArray"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -173,8 +178,9 @@
       true,
       false,
       null,
+      null,
       null
     ]
   },
-  "hash": "60bf372c9f4855419e9cf870a8be5e01a97fd518d65a51c87bf995cfc557d3d5"
+  "hash": "b00ef94ccfa6e33c01a38c8a6a3fd07ce68e1cf1d75aea4ad39833f9e007eebb"
 }

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM tree_cluster_shares WHERE tree_cluster_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1004fde466bd5e2150fc824089cd177a8f05d3d739ea57ef2518bd622fbe126c"
+}

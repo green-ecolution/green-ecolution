@@ -80,6 +80,22 @@ pub enum DomainEvent {
     ClusterSoilConditionChanged {
         cluster_id: Id<TreeCluster>,
     },
+    TreeSharedWithOrganization {
+        tree_id: Id<Tree>,
+        organization_id: Id<Organization>,
+    },
+    TreeShareRevoked {
+        tree_id: Id<Tree>,
+        organization_id: Id<Organization>,
+    },
+    ClusterSharedWithOrganization {
+        cluster_id: Id<TreeCluster>,
+        organization_id: Id<Organization>,
+    },
+    ClusterShareRevoked {
+        cluster_id: Id<TreeCluster>,
+        organization_id: Id<Organization>,
+    },
     /// Emitted after a sensor reading is persisted. Carries the parsed
     /// readings so subscribers don't have to re-parse the raw JSON payload.
     SensorDataReceived(SensorDataReceivedPayload),

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, tree_cluster_id AS cluster_id, sensor_id,\n                      planting_year, species, number AS tree_number,\n                      latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id\n            FROM trees WHERE id = ANY($1::uuid[])",
+  "query": "SELECT id, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id,\n                      COALESCE((\n                        SELECT array_agg(DISTINCT s.org) FROM (\n                          SELECT ts.organization_id AS org FROM tree_shares ts WHERE ts.tree_id = trees.id\n                          UNION\n                          SELECT tcs.organization_id FROM tree_cluster_shares tcs\n                          WHERE tcs.tree_cluster_id = trees.tree_cluster_id\n                        ) s\n                      ), '{}') AS \"shared_with!: Vec<RawId>\"\n            FROM trees WHERE id = ANY($1::uuid[])",
   "describe": {
     "columns": [
       {
@@ -10,41 +10,46 @@
       },
       {
         "ordinal": 1,
-        "name": "cluster_id",
-        "type_info": "Uuid"
+        "name": "updated_at",
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 2,
+        "name": "tree_cluster_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
         "name": "sensor_id",
         "type_info": "Varchar"
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "planting_year",
         "type_info": "Int4"
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "species",
         "type_info": "Text"
       },
       {
-        "ordinal": 5,
-        "name": "tree_number",
+        "ordinal": 6,
+        "name": "number",
         "type_info": "Text"
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "latitude",
         "type_info": "Float8"
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "longitude",
         "type_info": "Float8"
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "watering_status: WateringStatus",
         "type_info": {
           "Custom": {
@@ -62,29 +67,34 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "description",
         "type_info": "Text"
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "last_watered: DateTime<Utc>",
         "type_info": "Timestamp"
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "provider",
         "type_info": "Text"
       },
       {
-        "ordinal": 12,
+        "ordinal": 13,
         "name": "additional_info",
         "type_info": "Jsonb"
       },
       {
-        "ordinal": 13,
+        "ordinal": 14,
         "name": "organization_id",
         "type_info": "Uuid"
+      },
+      {
+        "ordinal": 15,
+        "name": "shared_with!: Vec<RawId>",
+        "type_info": "UuidArray"
       }
     ],
     "parameters": {
@@ -94,6 +104,7 @@
     },
     "nullable": [
       false,
+      false,
       true,
       true,
       false,
@@ -106,8 +117,9 @@
       true,
       true,
       true,
-      false
+      false,
+      null
     ]
   },
-  "hash": "f0f7c70398e0dc564800dda7eb6f54a92474528aca055e52be4217f3f639fef1"
+  "hash": "73cd113064e78b370e03e6febdb2d0cb5053ea290ab783cad802059c5caf1161"
 }

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO tree_cluster_shares (tree_cluster_id, organization_id)\n            SELECT $1, unnest($2::uuid[]) WHERE cardinality($2::uuid[]) > 0",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a5b7f85b70ac42673ee05e1b07a5a688f3062db8b0dc8aee7233b06ae871482c"
+}
