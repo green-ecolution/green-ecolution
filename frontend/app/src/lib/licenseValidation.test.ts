@@ -4,7 +4,6 @@ import {
   VehicleStatus,
   VehicleType,
   UserStatus,
-  UserRole,
 } from '@green-ecolution/backend-client'
 import type { User, Vehicle } from '@/api/backendApi'
 import { licenseSatisfies, validateDriverLicenses } from './licenseValidation'
@@ -51,7 +50,7 @@ const makeUser = (id: string, licenses: DrivingLicense[]): User => ({
   avatarUrl: '',
   createdAt: '',
   drivingLicenses: licenses,
-  roles: [UserRole.Tbz],
+  roles: [],
   status: UserStatus.Available,
 })
 

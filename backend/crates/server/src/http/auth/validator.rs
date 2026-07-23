@@ -5,7 +5,7 @@ use serde_json::Value;
 use uuid::Uuid;
 
 use crate::{configuration::AuthSettings, infra::keycloak::JwksProvider, service::AuthError};
-use domain::{auth::AuthUser, user::UserRole};
+use domain::auth::AuthUser;
 
 pub struct TokenValidator {
     jwks: Arc<JwksProvider>,
@@ -43,11 +43,6 @@ impl TokenValidator {
             id: Uuid::nil(),
             username: Some("ttester".into()),
             email: Some("toni.tester@green-ecolution.de".into()),
-            roles: vec![
-                UserRole::Tbz,
-                UserRole::GreenEcolution,
-                UserRole::SmarteGrenzregion,
-            ],
             raw_claims: Value::Null,
         }
     }
@@ -94,103 +89,10 @@ fn claims_to_auth_user(claims: Value) -> Result<AuthUser, AuthError> {
         .and_then(Value::as_str)
         .map(str::to_string);
 
-    let roles = extract_roles(&claims);
-
     Ok(AuthUser {
         id,
         username,
         email,
-        roles,
         raw_claims: claims,
     })
-}
-
-// Roles can live in `realm_access.roles`, `resource_access.<client>.roles`, or a custom
-// `user_roles` claim depending on the Keycloak client mapper config — collect from all three.
-fn extract_roles(claims: &Value) -> Vec<UserRole> {
-    use std::str::FromStr;
-
-    let mut out: Vec<UserRole> = Vec::new();
-    let mut push_role = |s: &str| {
-        if let Ok(role) = UserRole::from_str(s)
-            && !out.contains(&role)
-        {
-            out.push(role);
-        }
-    };
-
-    if let Some(arr) = claims
-        .get("realm_access")
-        .and_then(|v| v.get("roles"))
-        .and_then(Value::as_array)
-    {
-        for v in arr {
-            if let Some(s) = v.as_str() {
-                push_role(s);
-            }
-        }
-    }
-
-    if let Some(obj) = claims.get("resource_access").and_then(Value::as_object) {
-        for client in obj.values() {
-            if let Some(arr) = client.get("roles").and_then(Value::as_array) {
-                for v in arr {
-                    if let Some(s) = v.as_str() {
-                        push_role(s);
-                    }
-                }
-            }
-        }
-    }
-
-    if let Some(arr) = claims.get("user_roles").and_then(Value::as_array) {
-        for v in arr {
-            if let Some(s) = v.as_str() {
-                push_role(s);
-            }
-        }
-    } else if let Some(s) = claims.get("user_roles").and_then(Value::as_str) {
-        for piece in s.split(',') {
-            push_role(piece.trim());
-        }
-    }
-
-    out
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use serde_json::json;
-
-    #[test]
-    fn extracts_roles_from_realm_access() {
-        let claims = json!({
-            "sub": "11111111-2222-3333-4444-555555555555",
-            "realm_access": { "roles": ["tbz", "offline_access"] }
-        });
-        let roles = extract_roles(&claims);
-        assert_eq!(roles, vec![UserRole::Tbz]);
-    }
-
-    #[test]
-    fn extracts_roles_from_user_roles_array() {
-        let claims = json!({
-            "sub": "11111111-2222-3333-4444-555555555555",
-            "user_roles": ["green-ecolution", "tbz"]
-        });
-        let roles = extract_roles(&claims);
-        assert!(roles.contains(&UserRole::GreenEcolution));
-        assert!(roles.contains(&UserRole::Tbz));
-    }
-
-    #[test]
-    fn extracts_roles_from_user_roles_csv_string() {
-        let claims = json!({
-            "user_roles": "tbz,smarte-grenzregion"
-        });
-        let roles = extract_roles(&claims);
-        assert!(roles.contains(&UserRole::Tbz));
-        assert!(roles.contains(&UserRole::SmarteGrenzregion));
-    }
 }

@@ -1,17 +1,21 @@
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::service::ServiceError;
 use domain::{
+    Id,
+    organization::Organization,
+    role::Role,
     shared::email::Email,
     user::{
         UserCreate as DomainUserCreate, UserProfile as DomainUserProfile,
-        UserRole as DomainUserRole, UserStatus as DomainUserStatus, UserView as DomainUserView,
-        Username,
+        UserStatus as DomainUserStatus, UserView as DomainUserView, Username,
     },
 };
 
-use super::{DrivingLicense, UserRole, UserStatus};
+use super::{DrivingLicense, UserStatus, organization::OrganizationResponse, role::RoleResponse};
+use crate::http::v1::pagination::{default_page, default_per_page};
 
 /// Represents a user account in the system.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -27,7 +31,8 @@ use super::{DrivingLicense, UserRole, UserStatus};
     "phone_number": "+49 461 123456",
     "avatar_url": "https://example.com/avatar.jpg",
     "status": "Available",
-    "roles": ["Tbz"],
+    "organization": null,
+    "roles": [],
     "driving_licenses": ["B"]
 }))]
 pub struct UserResponse {
@@ -63,8 +68,10 @@ pub struct UserResponse {
     pub avatar_url: String,
     /// Current availability status.
     pub status: UserStatus,
-    /// Assigned roles.
-    pub roles: Vec<UserRole>,
+    /// Organization the user belongs to; null for legacy users without one.
+    pub organization: Option<OrganizationResponse>,
+    /// Roles assigned to the user (org-scoped permission sets).
+    pub roles: Vec<RoleResponse>,
     /// Driving licenses held by the user.
     pub driving_licenses: Vec<DrivingLicense>,
 }
@@ -77,7 +84,8 @@ pub struct UserResponse {
     "last_name": "Doe",
     "email": "john.doe@tbz-flensburg.de",
     "password": "s3cur3P@ss!",
-    "roles": ["Tbz"],
+    "organization_id": "01980000-0000-7000-8000-000000000001",
+    "role_ids": [],
     "employee_id": "EMP-042",
     "phone_number": "+49 461 123456",
     "avatar_url": "https://example.com/avatar.jpg",
@@ -100,8 +108,11 @@ pub struct UserRegisterRequest {
     /// Password for the new account.
     #[schema(example = "s3cur3P@ss!")]
     pub password: String,
-    /// Roles to assign to the user.
-    pub roles: Vec<String>,
+    /// Organization the new user belongs to.
+    pub organization_id: Uuid,
+    /// Roles to assign to the user (must be org-owned, not templates).
+    #[serde(default)]
+    pub role_ids: Vec<Uuid>,
     /// Optional internal employee identifier.
     #[serde(default)]
     #[schema(example = "EMP-042", nullable)]
@@ -151,6 +162,38 @@ pub struct UserUpdateRequest {
     pub driving_licenses: Vec<DrivingLicense>,
 }
 
+/// Query parameters for the user list endpoint: pagination plus optional
+/// organization/role filters resolved against the local database.
+///
+/// Pagination fields are inlined instead of `#[serde(flatten)]`-ing
+/// `PaginationParams`: flatten buffers query values as strings, which makes
+/// serde reject numeric fields ("invalid type: string \"1\", expected u64").
+#[derive(Debug, Deserialize)]
+pub struct UserListParams {
+    #[serde(default = "default_page")]
+    pub page: u64,
+    #[serde(default = "default_per_page")]
+    pub per_page: u64,
+    #[serde(default)]
+    pub organization_id: Option<Uuid>,
+    #[serde(default)]
+    pub role_id: Option<Uuid>,
+}
+
+/// Request body for assigning a role to a user.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+#[schema(example = json!({ "role_id": "01980000-0000-7000-8000-0000000000b2" }))]
+pub struct AssignRoleRequest {
+    pub role_id: Uuid,
+}
+
+/// Request body for changing a user's organization.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+#[schema(example = json!({ "organization_id": "01980000-0000-7000-8000-000000000001" }))]
+pub struct SetOrganizationRequest {
+    pub organization_id: Uuid,
+}
+
 impl From<UserStatus> for DomainUserStatus {
     fn from(value: UserStatus) -> Self {
         match value {
@@ -177,26 +220,6 @@ impl UserUpdateRequest {
             status: self.status.into(),
             driving_licenses: self.driving_licenses.into_iter().map(Into::into).collect(),
         })
-    }
-}
-
-impl From<DomainUserRole> for UserRole {
-    fn from(value: DomainUserRole) -> Self {
-        match value {
-            DomainUserRole::Tbz => UserRole::Tbz,
-            DomainUserRole::GreenEcolution => UserRole::GreenEcolution,
-            DomainUserRole::SmarteGrenzregion => UserRole::SmarteGrenzregion,
-        }
-    }
-}
-
-impl From<UserRole> for DomainUserRole {
-    fn from(value: UserRole) -> Self {
-        match value {
-            UserRole::Tbz => DomainUserRole::Tbz,
-            UserRole::GreenEcolution => DomainUserRole::GreenEcolution,
-            UserRole::SmarteGrenzregion => DomainUserRole::SmarteGrenzregion,
-        }
     }
 }
 
@@ -227,7 +250,8 @@ impl From<&DomainUserView> for UserResponse {
                 .map(|u| u.to_string())
                 .unwrap_or_default(),
             status: value.status.into(),
-            roles: value.roles.iter().copied().map(Into::into).collect(),
+            organization: value.organization.as_ref().map(OrganizationResponse::from),
+            roles: value.roles.iter().map(RoleResponse::from).collect(),
             driving_licenses: value
                 .driving_licenses
                 .iter()
@@ -271,12 +295,7 @@ impl TryFrom<UserRegisterRequest> for DomainUserCreate {
     fn try_from(value: UserRegisterRequest) -> Result<Self, Self::Error> {
         let username = Username::new(value.username)?;
         let email = Email::new(value.email)?;
-        let roles = value
-            .roles
-            .iter()
-            .map(|s| s.parse::<DomainUserRole>())
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| ServiceError::InvalidInput(e.to_string()))?;
+        let role_ids: Vec<Id<Role>> = value.role_ids.into_iter().map(Id::new).collect();
         let avatar_url = value
             .avatar_url
             .as_deref()
@@ -291,7 +310,8 @@ impl TryFrom<UserRegisterRequest> for DomainUserCreate {
             last_name: value.last_name,
             email,
             password: SecretString::from(value.password),
-            roles,
+            organization_id: Id::<Organization>::new(value.organization_id),
+            role_ids,
             employee_id: value.employee_id.filter(|s| !s.is_empty()),
             phone_number: value.phone_number.filter(|s| !s.is_empty()),
             avatar_url,

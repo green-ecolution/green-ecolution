@@ -1,5 +1,6 @@
 pub mod auth;
 pub mod auth_helpers;
+pub mod authorization;
 pub mod cluster_soil_moisture;
 pub mod clusters;
 pub mod config_js;
@@ -8,9 +9,11 @@ pub mod health;
 pub mod health_probes;
 pub mod helpers;
 pub mod info;
+pub mod organizations;
 pub mod plugins;
 pub mod regions;
 pub mod request_id;
+pub mod roles;
 pub mod routing;
 pub mod sensor_activate;
 pub mod sensor_create;

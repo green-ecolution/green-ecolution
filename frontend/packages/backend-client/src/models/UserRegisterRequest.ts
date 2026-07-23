@@ -71,6 +71,12 @@ export interface UserRegisterRequest {
      */
     lastName: string;
     /**
+     * Organization the new user belongs to.
+     * @type {string}
+     * @memberof UserRegisterRequest
+     */
+    organizationId: string;
+    /**
      * Password for the new account.
      * @type {string}
      * @memberof UserRegisterRequest
@@ -83,11 +89,11 @@ export interface UserRegisterRequest {
      */
     phoneNumber?: string | null;
     /**
-     * Roles to assign to the user.
+     * Roles to assign to the user (must be org-owned, not templates).
      * @type {Array<string>}
      * @memberof UserRegisterRequest
      */
-    roles: Array<string>;
+    roleIds?: Array<string>;
     /**
      * Initial availability status (defaults to Available).
      * @type {UserStatus}
@@ -111,8 +117,8 @@ export function instanceOfUserRegisterRequest(value: object): value is UserRegis
     if (!('email' in value) || value['email'] === undefined) return false;
     if (!('firstName' in value) || value['firstName'] === undefined) return false;
     if (!('lastName' in value) || value['lastName'] === undefined) return false;
+    if (!('organizationId' in value) || value['organizationId'] === undefined) return false;
     if (!('password' in value) || value['password'] === undefined) return false;
-    if (!('roles' in value) || value['roles'] === undefined) return false;
     if (!('username' in value) || value['username'] === undefined) return false;
     return true;
 }
@@ -133,9 +139,10 @@ export function UserRegisterRequestFromJSONTyped(json: any, ignoreDiscriminator:
         'employeeId': json['employee_id'] == null ? undefined : json['employee_id'],
         'firstName': json['first_name'],
         'lastName': json['last_name'],
+        'organizationId': json['organization_id'],
         'password': json['password'],
         'phoneNumber': json['phone_number'] == null ? undefined : json['phone_number'],
-        'roles': json['roles'],
+        'roleIds': json['role_ids'] == null ? undefined : json['role_ids'],
         'status': json['status'] == null ? undefined : UserStatusFromJSON(json['status']),
         'username': json['username'],
     };
@@ -158,9 +165,10 @@ export function UserRegisterRequestToJSONTyped(value?: UserRegisterRequest | nul
         'employee_id': value['employeeId'],
         'first_name': value['firstName'],
         'last_name': value['lastName'],
+        'organization_id': value['organizationId'],
         'password': value['password'],
         'phone_number': value['phoneNumber'],
-        'roles': value['roles'],
+        'role_ids': value['roleIds'],
         'status': UserStatusToJSON(value['status']),
         'username': value['username'],
     };

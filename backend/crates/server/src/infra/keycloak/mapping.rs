@@ -1,4 +1,4 @@
-use std::{collections::HashMap, str::FromStr};
+use std::collections::HashMap;
 
 use chrono::{TimeZone, Utc};
 use serde::{Deserialize, Serialize};
@@ -7,10 +7,8 @@ use uuid::Uuid;
 use domain::{
     RepositoryError,
     shared::email::Email,
-    user::{UserIdentity, UserRole, Username},
+    user::{UserIdentity, Username},
 };
-
-const ATTR_USER_ROLES: &str = "user_roles";
 
 // Custom user metadata lives in `attributes` as `Vec<String>` per key (Keycloak quirk).
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -49,9 +47,6 @@ impl KcUser {
             .and_then(|ts| Utc.timestamp_millis_opt(ts).single())
             .unwrap_or_else(Utc::now);
 
-        let attributes = self.attributes.unwrap_or_default();
-        let roles = parse_attr_list::<UserRole, _>(&attributes, ATTR_USER_ROLES)?;
-
         Ok(UserIdentity {
             id,
             created_at,
@@ -60,33 +55,8 @@ impl KcUser {
             last_name: self.last_name.unwrap_or_default(),
             email: Email::reconstitute(self.email.unwrap_or_default()),
             email_verified: self.email_verified.unwrap_or(false),
-            roles,
         })
     }
-}
-
-fn parse_attr_list<T, E>(
-    attrs: &HashMap<String, Vec<String>>,
-    key: &str,
-) -> Result<Vec<T>, RepositoryError>
-where
-    T: FromStr<Err = E>,
-    E: Into<RepositoryError>,
-{
-    let Some(values) = attrs.get(key) else {
-        return Ok(Vec::new());
-    };
-    let mut out = Vec::new();
-    for value in values {
-        for piece in value.split(',') {
-            let trimmed = piece.trim();
-            if trimmed.is_empty() {
-                continue;
-            }
-            out.push(T::from_str(trimmed).map_err(|e| e.into())?);
-        }
-    }
-    Ok(out)
 }
 
 #[derive(Debug, Serialize)]
@@ -97,18 +67,13 @@ pub struct KcCredential<'a> {
     pub temporary: bool,
 }
 
-#[derive(Debug, Serialize)]
-pub struct KcRoleRepresentation<'a> {
-    pub id: &'a str,
-    pub name: &'a str,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn kc_user_with_attrs(attrs: HashMap<String, Vec<String>>) -> KcUser {
-        KcUser {
+    #[test]
+    fn maps_identity_fields_without_roles() {
+        let kc = KcUser {
             id: Some("11111111-2222-3333-4444-555555555555".into()),
             created_timestamp: Some(1_700_000_000_000),
             username: Some("jdoe".into()),
@@ -117,25 +82,17 @@ mod tests {
             email: Some("j@d.de".into()),
             email_verified: Some(true),
             enabled: Some(true),
-            attributes: Some(attrs),
-        }
-    }
+            attributes: None,
+        };
 
-    #[test]
-    fn maps_user_attributes() {
-        let mut attrs = HashMap::new();
-        attrs.insert("user_roles".into(), vec!["tbz,green-ecolution".into()]);
+        let user = kc.try_into_identity().unwrap();
 
-        let user = kc_user_with_attrs(attrs).try_into_identity().unwrap();
+        assert_eq!(
+            user.id,
+            Uuid::parse_str("11111111-2222-3333-4444-555555555555").unwrap()
+        );
         assert_eq!(user.username.as_str(), "jdoe");
-        assert_eq!(user.roles, vec![UserRole::Tbz, UserRole::GreenEcolution]);
-    }
-
-    #[test]
-    fn missing_attributes_are_optional() {
-        let user = kc_user_with_attrs(HashMap::new())
-            .try_into_identity()
-            .unwrap();
-        assert!(user.roles.is_empty());
+        assert_eq!(user.email.as_str(), "j@d.de");
+        assert!(user.email_verified);
     }
 }

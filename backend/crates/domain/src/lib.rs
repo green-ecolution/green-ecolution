@@ -22,14 +22,17 @@ use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 pub mod auth;
+pub mod authorization;
 pub mod cluster;
 pub mod error;
 pub mod evaluation;
 pub mod event_bus;
 pub mod events;
 pub mod info;
+pub mod organization;
 pub mod plugin;
 pub mod region;
+pub mod role;
 pub mod routing;
 pub mod sensor;
 pub mod sensor_model;

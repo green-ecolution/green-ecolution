@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
 import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 import { UserRound } from 'lucide-react'
-import { getUserRoleDetails, UserRoleOrUnknown } from '@/hooks/details/useDetailsForUserRole'
+import { currentUserQuery } from '@/api/queries'
 import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
 import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
 import { DrivingLicense } from '@green-ecolution/backend-client'
@@ -15,6 +16,8 @@ export const Route = createFileRoute('/_protected/profile/')({
 function Profile() {
   const user = useCurrentUser()
   const avatarUrl = useCurrentUserAvatar()
+  const { data: me } = useQuery(currentUserQuery())
+  const roles = me?.roles ?? []
 
   return (
     <div className="container mt-6">
@@ -42,16 +45,13 @@ function Profile() {
             <h2 className="text-xl font-bold font-lato xl:text-2xl">
               {user.firstName} {user.lastName}
             </h2>
-            <ul className="mt-2 flex flex-col gap-2 xl:mt-4">
-              {user.userRoles?.length > 0 &&
-                user.userRoles.map((role: UserRoleOrUnknown) => (
-                  <li key={getUserRoleDetails(role).label}>
-                    <Badge variant="outline-green-light" size="lg">
-                      {getUserRoleDetails(role).label}
-                    </Badge>
-                  </li>
-                ))}
-            </ul>
+            {me?.organization && (
+              <div className="mt-2 xl:mt-4">
+                <Badge variant="outline-green-light" size="lg">
+                  {me.organization.name}
+                </Badge>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -78,9 +78,7 @@ function Profile() {
           { label: 'Nachname:', value: user.lastName ?? 'Keine Angabe' },
           {
             label: 'Rollen:',
-            value: user.userRoles
-              .map((role: UserRoleOrUnknown) => getUserRoleDetails(role).label)
-              .join(', '),
+            value: roles.length > 0 ? roles.map((role) => role.name).join(', ') : 'Keine Angabe',
           },
           { label: 'E-Mail:', value: user.email ?? 'Keine Angabe' },
         ]}

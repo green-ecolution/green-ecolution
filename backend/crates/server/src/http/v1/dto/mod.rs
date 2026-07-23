@@ -1,8 +1,10 @@
 pub mod cluster;
 pub mod evaluation;
 pub mod info;
+pub mod organization;
 pub mod plugin;
 pub mod region;
+pub mod role;
 pub mod routing;
 pub mod sensor;
 pub mod tree;
@@ -210,19 +212,6 @@ pub enum WateringPlanStatus {
     NotCompleted,
     /// Plan status could not be determined.
     Unknown,
-}
-
-/// Role assigned to a user within the system.
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
-#[serde(rename_all = "kebab-case")]
-#[schema(example = "tbz")]
-pub enum UserRole {
-    /// Technisches Betriebszentrum — primary operator role.
-    Tbz,
-    /// Green Ecolution project team member.
-    GreenEcolution,
-    /// Smarte Grenzregion project team member.
-    SmarteGrenzregion,
 }
 
 /// Availability status of a user.

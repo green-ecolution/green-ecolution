@@ -656,6 +656,356 @@
         }
       }
     },
+    "/v1/organizations": {
+      "get": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "List all organizations",
+        "description": "Returns the full organization tree as a flat list; clients rebuild the tree via parent_id.",
+        "operationId": "listOrganizations",
+        "responses": {
+          "200": {
+            "description": "All organizations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganizationResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Create an organization",
+        "description": "Creates a sub-organization under parent_id and instantiates copies of all role templates. Requires organization:create in the parent organization.",
+        "operationId": "createOrganization",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "409": {
+            "description": "Sibling name conflict"
+          },
+          "422": {
+            "description": "Parent does not exist"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}": {
+      "get": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Get a single organization",
+        "operationId": "getOrganization",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Organization id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The organization",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Delete an empty organization",
+        "operationId": "deleteOrganization",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Organization id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "409": {
+            "description": "Organization still has children or users"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Rename an organization",
+        "operationId": "renameOrganization",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Organization id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationRenameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Renamed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "409": {
+            "description": "Name conflict or root"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/roles": {
+      "get": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "List roles owned by an organization",
+        "description": "Returns every role instantiated for the given organization, including the copies of the five templates created alongside it.",
+        "operationId": "listOrgRoles",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Organization id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Roles owned by the organization",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoleResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Create a role, from scratch or as a copy",
+        "description": "Either provide `name` + `permissions` to create a role from scratch, or `copy_from_role_id` to copy an existing role/template into this organization (optionally renaming it). Requires role:create in the organization, plus a permission set that does not exceed the caller's own grants.",
+        "operationId": "createRole",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Organization id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input (missing fields or unknown permission)"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Source role/template not found"
+          },
+          "409": {
+            "description": "Name conflict"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v1/permissions": {
+      "get": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "List the permission catalog",
+        "description": "Returns every grantable permission as `<resource>:<action>`, e.g. `tree:read`.",
+        "operationId": "listPermissions",
+        "responses": {
+          "200": {
+            "description": "The permission catalog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
     "/v1/plugins": {
       "get": {
         "tags": [
@@ -974,6 +1324,179 @@
           },
           "404": {
             "description": "Region not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v1/roles/templates": {
+      "get": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "List the global role templates",
+        "description": "Returns the five seeded templates (organization_id = null). Templates are immutable and not assignable.",
+        "operationId": "listRoleTemplates",
+        "responses": {
+          "200": {
+            "description": "The role templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoleResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v1/roles/{role_id}": {
+      "get": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Get a single role",
+        "operationId": "getRole",
+        "parameters": [
+          {
+            "name": "role_id",
+            "in": "path",
+            "description": "Role id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Delete a role",
+        "description": "Templates cannot be deleted (409). Requires role:delete in the role's organization.",
+        "operationId": "deleteRole",
+        "parameters": [
+          {
+            "name": "role_id",
+            "in": "path",
+            "description": "Role id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "409": {
+            "description": "Templates are immutable"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Replace a role's name, description and permissions",
+        "description": "Templates cannot be modified (409). Requires role:update in the role's organization, plus a permission set that does not exceed the caller's own grants.",
+        "operationId": "updateRole",
+        "parameters": [
+          {
+            "name": "role_id",
+            "in": "path",
+            "description": "Role id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input (unknown permission)"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "409": {
+            "description": "Templates are immutable, or name conflicts"
           },
           "500": {
             "description": "Internal server error"
@@ -2175,35 +2698,51 @@
           "Users"
         ],
         "summary": "List all users",
-        "description": "Returns a paginated list of registered users.",
+        "description": "Returns a paginated list of registered users, optionally filtered by organization or role.",
         "operationId": "listUsers",
         "parameters": [
           {
             "name": "page",
             "in": "query",
-            "description": "Page number to retrieve (1-based).",
+            "description": "Page number to retrieve (1-based)",
             "required": false,
             "schema": {
               "type": "integer",
               "format": "int64",
-              "default": 1,
               "minimum": 1
-            },
-            "example": 1
+            }
           },
           {
             "name": "per_page",
             "in": "query",
-            "description": "Number of items per page.",
+            "description": "Number of items per page",
             "required": false,
             "schema": {
               "type": "integer",
               "format": "int64",
-              "default": 25,
               "maximum": 100,
               "minimum": 1
-            },
-            "example": 25
+            }
+          },
+          {
+            "name": "organization_id",
+            "in": "query",
+            "description": "Filter by organization membership",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "role_id",
+            "in": "query",
+            "description": "Filter by assigned role",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -2230,7 +2769,7 @@
           "Users"
         ],
         "summary": "Register a new user",
-        "description": "Admin-only user registration.",
+        "description": "Registers a user in the given organization and assigns the requested roles. Requires user:create in the organization, plus each role's permissions must not exceed the caller's own grants.",
         "operationId": "createUser",
         "requestBody": {
           "content": {
@@ -2261,6 +2800,12 @@
           },
           "403": {
             "description": "Forbidden"
+          },
+          "404": {
+            "description": "Role not found"
+          },
+          "409": {
+            "description": "Role is a template and cannot be assigned"
           },
           "500": {
             "description": "Internal server error"
@@ -2299,82 +2844,13 @@
         }
       }
     },
-    "/v1/users/role/{role_id}": {
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "List users by role",
-        "description": "Returns a filtered list of users with a specific role.",
-        "operationId": "listUsersByRole",
-        "parameters": [
-          {
-            "name": "role_id",
-            "in": "path",
-            "description": "User role",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Page number to retrieve (1-based).",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64",
-              "default": 1,
-              "minimum": 1
-            },
-            "example": 1
-          },
-          {
-            "name": "per_page",
-            "in": "query",
-            "description": "Number of items per page.",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64",
-              "default": 25,
-              "maximum": 100,
-              "minimum": 1
-            },
-            "example": 25
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Users with role",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListResponse_UserResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Unknown role"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      }
-    },
     "/v1/users/{user_id}": {
       "put": {
         "tags": [
           "Users"
         ],
         "summary": "Replace a user's profile data",
-        "description": "Admin-only replace-style update of the app-owned user profile.",
+        "description": "Replace-style update of the app-owned user profile. Requires user:update in the target user's organization.",
         "operationId": "updateUser",
         "parameters": [
           {
@@ -2420,6 +2896,207 @@
           },
           "404": {
             "description": "User not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v1/users/{user_id}/organization": {
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Set a user's organization",
+        "description": "Moves the user into the given organization. Requires user:update in the target organization.",
+        "operationId": "setUserOrganization",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetOrganizationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v1/users/{user_id}/roles": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "List a user's assigned roles",
+        "operationId": "listUserRoles",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The user's roles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoleResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Assign a role to a user",
+        "description": "Requires user:update in the role's organization, plus a permission set that does not exceed the caller's own grants.",
+        "operationId": "assignUserRole",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Role assigned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Role not found"
+          },
+          "409": {
+            "description": "Role is a template and cannot be assigned"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v1/users/{user_id}/roles/{role_id}": {
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Revoke a role from a user",
+        "description": "Requires user:update in the role's organization.",
+        "operationId": "revokeUserRole",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "role_id",
+            "in": "path",
+            "description": "Role id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Role revoked"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Role not found"
           },
           "500": {
             "description": "Internal server error"
@@ -3171,6 +3848,22 @@
           "versionInfo": {
             "$ref": "#/components/schemas/VersionInfoResponse"
           }
+        }
+      },
+      "AssignRoleRequest": {
+        "type": "object",
+        "description": "Request body for assigning a role to a user.",
+        "required": [
+          "role_id"
+        ],
+        "properties": {
+          "role_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "example": {
+          "role_id": "01980000-0000-7000-8000-0000000000b2"
         }
       },
       "ClientTokenResponse": {
@@ -4201,6 +4894,17 @@
                   "description": "User's last name.",
                   "example": "Doe"
                 },
+                "organization": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "$ref": "#/components/schemas/OrganizationResponse",
+                      "description": "Organization the user belongs to; null for legacy users without one."
+                    }
+                  ]
+                },
                 "phone_number": {
                   "type": "string",
                   "description": "Contact phone number.",
@@ -4209,9 +4913,9 @@
                 "roles": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/UserRole"
+                    "$ref": "#/components/schemas/RoleResponse"
                   },
-                  "description": "Assigned roles."
+                  "description": "Roles assigned to the user (org-scoped permission sets)."
                 },
                 "status": {
                   "$ref": "#/components/schemas/UserStatus",
@@ -4235,10 +4939,9 @@
                 "first_name": "John",
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "last_name": "Doe",
+                "organization": null,
                 "phone_number": "+49 461 123456",
-                "roles": [
-                  "Tbz"
-                ],
+                "roles": [],
                 "status": "Available",
                 "username": "jdoe"
               }
@@ -4656,6 +5359,80 @@
           }
         }
       },
+      "OrganizationCreateRequest": {
+        "type": "object",
+        "description": "Request body for creating an organization.",
+        "required": [
+          "name",
+          "parent_id"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "example": {
+          "name": "TBZ Flensburg",
+          "parent_id": "01980000-0000-7000-8000-000000000001"
+        }
+      },
+      "OrganizationRenameRequest": {
+        "type": "object",
+        "description": "Request body for renaming an organization.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "name": "TBZ Flensburg"
+        }
+      },
+      "OrganizationResponse": {
+        "type": "object",
+        "description": "A node in the organization tree.",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Creation time derived from the UUID v7 id (null for seeded ids without a real timestamp)."
+          },
+          "id": {
+            "type": "string",
+            "description": "Unique organization identifier (UUID v7)."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name, unique among siblings."
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Parent organization; null only for the single root."
+          }
+        },
+        "example": {
+          "created_at": "2024-06-15T10:30:00+00:00",
+          "id": "01980000-0000-7000-8000-000000000001",
+          "name": "Green Ecolution",
+          "parent_id": null
+        }
+      },
       "PaginationResponse": {
         "type": "object",
         "description": "Pagination metadata returned in list responses.",
@@ -4951,6 +5728,146 @@
         "example": {
           "id": "0190a8e9-7c4f-7000-8000-000000000000",
           "name": "Stadtpark Flensburg"
+        }
+      },
+      "RoleCreateRequest": {
+        "type": "object",
+        "description": "Request body for creating a role, either from scratch or as a copy of an existing role/template.",
+        "properties": {
+          "copy_from_role_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Source role or template to copy the permission set from."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Required unless `copy_from_role_id` is set (in which case it renames the copy)."
+          },
+          "permissions": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Required unless `copy_from_role_id` is set."
+          }
+        },
+        "example": {
+          "name": "Gießtrupp",
+          "permissions": [
+            "tree:read",
+            "tree:update"
+          ]
+        }
+      },
+      "RoleResponse": {
+        "type": "object",
+        "description": "A role (named permission set), either a global template or bound to an organization.",
+        "required": [
+          "id",
+          "name",
+          "permissions",
+          "is_template"
+        ],
+        "properties": {
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Creation time derived from the UUID v7 id (null for seeded ids without a real timestamp)."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": "Unique role identifier (UUID v7)."
+          },
+          "is_template": {
+            "type": "boolean",
+            "description": "Whether this role is a global template (immutable, not assignable)."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name, unique per organization (or among templates)."
+          },
+          "organization_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Owning organization; null for templates."
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Grantable capabilities, formatted as `<resource>:<action>`."
+          }
+        },
+        "example": {
+          "created_at": "2024-06-15T10:30:00+00:00",
+          "description": "Voller Zugriff auf alle Ressourcen",
+          "id": "01980000-0000-7000-8000-0000000000b1",
+          "is_template": false,
+          "name": "Administrator",
+          "organization_id": "01980000-0000-7000-8000-000000000001",
+          "permissions": [
+            "tree:read",
+            "tree:create"
+          ]
+        }
+      },
+      "RoleUpdateRequest": {
+        "type": "object",
+        "description": "Request body for replacing a role's name, description and permission set.",
+        "required": [
+          "name",
+          "permissions"
+        ],
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "example": {
+          "description": "Bewässerung Nordbezirk",
+          "name": "Gießtrupp Nord",
+          "permissions": [
+            "tree:read",
+            "sensor:read"
+          ]
         }
       },
       "RouteGeometry": {
@@ -5455,6 +6372,22 @@
               "$ref": "#/components/schemas/ServiceStatusResponse"
             }
           }
+        }
+      },
+      "SetOrganizationRequest": {
+        "type": "object",
+        "description": "Request body for changing a user's organization.",
+        "required": [
+          "organization_id"
+        ],
+        "properties": {
+          "organization_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "example": {
+          "organization_id": "01980000-0000-7000-8000-000000000001"
         }
       },
       "SetSensorTreeRequest": {
@@ -6475,7 +7408,7 @@
           "last_name",
           "email",
           "password",
-          "roles"
+          "organization_id"
         ],
         "properties": {
           "avatar_url": {
@@ -6516,6 +7449,11 @@
             "description": "User's last name.",
             "example": "Doe"
           },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Organization the new user belongs to."
+          },
           "password": {
             "type": "string",
             "description": "Password for the new account.",
@@ -6529,12 +7467,13 @@
             "description": "Optional contact phone number.",
             "example": "+49 461 123456"
           },
-          "roles": {
+          "role_ids": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             },
-            "description": "Roles to assign to the user."
+            "description": "Roles to assign to the user (must be org-owned, not templates)."
           },
           "status": {
             "oneOf": [
@@ -6562,11 +7501,10 @@
           "employee_id": "EMP-042",
           "first_name": "John",
           "last_name": "Doe",
+          "organization_id": "01980000-0000-7000-8000-000000000001",
           "password": "s3cur3P@ss!",
           "phone_number": "+49 461 123456",
-          "roles": [
-            "Tbz"
-          ],
+          "role_ids": [],
           "status": "available",
           "username": "jdoe"
         }
@@ -6637,6 +7575,17 @@
             "description": "User's last name.",
             "example": "Doe"
           },
+          "organization": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OrganizationResponse",
+                "description": "Organization the user belongs to; null for legacy users without one."
+              }
+            ]
+          },
           "phone_number": {
             "type": "string",
             "description": "Contact phone number.",
@@ -6645,9 +7594,9 @@
           "roles": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/UserRole"
+              "$ref": "#/components/schemas/RoleResponse"
             },
-            "description": "Assigned roles."
+            "description": "Roles assigned to the user (org-scoped permission sets)."
           },
           "status": {
             "$ref": "#/components/schemas/UserStatus",
@@ -6671,23 +7620,12 @@
           "first_name": "John",
           "id": "550e8400-e29b-41d4-a716-446655440000",
           "last_name": "Doe",
+          "organization": null,
           "phone_number": "+49 461 123456",
-          "roles": [
-            "Tbz"
-          ],
+          "roles": [],
           "status": "Available",
           "username": "jdoe"
         }
-      },
-      "UserRole": {
-        "type": "string",
-        "description": "Role assigned to a user within the system.",
-        "enum": [
-          "tbz",
-          "green-ecolution",
-          "smarte-grenzregion"
-        ],
-        "example": "tbz"
       },
       "UserStatus": {
         "type": "string",
@@ -7677,6 +8615,14 @@
     {
       "name": "Routing",
       "description": "Routing configuration and start point management. Exposes the named depot locations available for watering route optimization."
+    },
+    {
+      "name": "Organizations",
+      "description": "Manage the organization tree used for RBAC scoping and multi-tenancy."
+    },
+    {
+      "name": "Roles",
+      "description": "Manage roles (named permission sets) and their assignment to users."
     }
   ]
 }

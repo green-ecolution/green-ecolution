@@ -1,6 +1,7 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde_json::{Value, json};
+use uuid::Uuid;
 
 use crate::auth_helpers::{AuthHarness, spawn_with_auth};
 use crate::helpers::spawn_app_with_auth;
@@ -83,11 +84,9 @@ async fn protected_route_accepts_valid_token() {
 }
 
 #[tokio::test]
-async fn role_gated_create_user_returns_403_without_required_role() {
+async fn create_user_without_any_granted_role_returns_403() {
     let (harness, app) = spawn_with_auth().await;
-    let token = harness.sign_token(json!({
-        "realm_access": { "roles": ["smarte-grenzregion"] },
-    }));
+    let token = harness.sign_token(Value::Null);
 
     let response = reqwest::Client::new()
         .post(format!("{}/api/v1/users", app.address))
@@ -98,7 +97,7 @@ async fn role_gated_create_user_returns_403_without_required_role() {
             "last_name": "User",
             "email": "new@example.com",
             "password": "S3cret!",
-            "roles": ["tbz"],
+            "organization_id": Uuid::new_v4(),
         }))
         .send()
         .await

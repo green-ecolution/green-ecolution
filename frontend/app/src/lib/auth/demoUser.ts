@@ -4,7 +4,6 @@ interface DemoProfile {
   given_name: string
   family_name: string
   driving_licenses: string[]
-  user_roles: string[]
   status: string
 }
 
@@ -14,7 +13,6 @@ const DEMO_PROFILE: DemoProfile = {
   given_name: 'Toni',
   family_name: 'Tester',
   driving_licenses: ['B', 'BE', 'C', 'CE'],
-  user_roles: ['green-ecolution'],
   status: 'available',
 }
 

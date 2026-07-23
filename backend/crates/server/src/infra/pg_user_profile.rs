@@ -3,7 +3,8 @@ use url::Url;
 use uuid::Uuid;
 
 use domain::{
-    RepositoryError,
+    Id, RepositoryError,
+    organization::Organization,
     user::{UserProfile, UserProfileReader, UserProfileWriter, UserStatus},
     vehicle::DrivingLicense,
 };
@@ -65,6 +66,38 @@ impl UserProfileReader for PgUserProfileRepository {
         .map(UserProfileRow::try_into_domain)
         .collect()
     }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn ids_in_organization(
+        &self,
+        org: Id<Organization>,
+    ) -> Result<Vec<Uuid>, RepositoryError> {
+        let ids = sqlx::query_scalar!(
+            r#"SELECT id FROM user_profiles WHERE organization_id = $1"#,
+            org.value()
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(ids)
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn organizations_for(
+        &self,
+        ids: &[Uuid],
+    ) -> Result<Vec<(Uuid, Id<Organization>)>, RepositoryError> {
+        let rows = sqlx::query!(
+            r#"SELECT id, organization_id AS "organization_id!" FROM user_profiles
+               WHERE id = ANY($1) AND organization_id IS NOT NULL"#,
+            ids
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(rows
+            .into_iter()
+            .map(|r| (r.id, Id::new(r.organization_id)))
+            .collect())
+    }
 }
 
 #[async_trait::async_trait]
@@ -88,6 +121,34 @@ impl UserProfileWriter for PgUserProfileRepository {
             avatar_url.as_deref(),
             profile.status as UserStatus,
             profile.driving_licenses.as_slice() as &[DrivingLicense],
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn ensure_exists(&self, id: Uuid) -> Result<(), RepositoryError> {
+        sqlx::query!(
+            r#"INSERT INTO user_profiles (id) VALUES ($1) ON CONFLICT (id) DO NOTHING"#,
+            id
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn set_organization(
+        &self,
+        id: Uuid,
+        org: Id<Organization>,
+    ) -> Result<(), RepositoryError> {
+        sqlx::query!(
+            r#"INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)
+               ON CONFLICT (id) DO UPDATE SET organization_id = EXCLUDED.organization_id"#,
+            id,
+            org.value()
         )
         .execute(&self.pool)
         .await?;

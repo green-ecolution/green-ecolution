@@ -3,7 +3,7 @@ import { WateringPlanStatus } from '@/api/backendApi'
 import { DefaultValues, FormProvider, SubmitHandler } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import BackLink from '@/components/general/links/BackLink'
-import { userRoleQuery, vehicleQuery } from '@/api/queries'
+import { userQuery, vehicleQuery } from '@/api/queries'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import FormForWateringPlan from '@/components/general/form/FormForWateringPlan'
 import useStore from '@/store/store'
@@ -32,7 +32,7 @@ function NewWateringPlan() {
   const formKey = draft.data?.clusterIds?.join(',') ?? 'initial'
 
   const navigate = useNavigate({ from: Route.fullPath })
-  const { data: users } = useSuspenseQuery(userRoleQuery('tbz'))
+  const { data: users } = useSuspenseQuery(userQuery({ page: 1, perPage: 100 }))
   const { data: trailers } = useSuspenseQuery(vehicleQuery())
   const { data: transporters } = useSuspenseQuery(vehicleQuery())
   const { mutate, isError, error, form, navigationBlocker, saveDraft } = useWateringPlanForm(
