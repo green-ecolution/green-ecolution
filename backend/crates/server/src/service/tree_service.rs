@@ -5,7 +5,7 @@ use domain::{
     cluster::{TreeCluster, TreeClusterReader},
     events::DomainEvent,
     organization::Organization,
-    sensor::SensorId,
+    sensor::{SensorId, SensorReader},
     shared::{
         coordinates::Coordinate,
         distance::Distance,
@@ -24,6 +24,7 @@ pub struct TreeService {
     reader: Arc<dyn TreeReader>,
     writer: Arc<dyn TreeWriter>,
     cluster_reader: Arc<dyn TreeClusterReader>,
+    sensor_reader: Arc<dyn SensorReader>,
     event_bus: Arc<dyn EventBus>,
 }
 
@@ -32,12 +33,14 @@ impl TreeService {
         reader: Arc<dyn TreeReader>,
         writer: Arc<dyn TreeWriter>,
         cluster_reader: Arc<dyn TreeClusterReader>,
+        sensor_reader: Arc<dyn SensorReader>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
         Self {
             reader,
             writer,
             cluster_reader,
+            sensor_reader,
             event_bus,
         }
     }
@@ -55,6 +58,20 @@ impl TreeService {
             if cluster.organization_id() != org {
                 return Err(ServiceError::OrganizationMismatch);
             }
+        }
+        Ok(())
+    }
+
+    /// Rejects attaching a sensor owned by a different organization than the
+    /// tree it would be bound to.
+    async fn ensure_sensor_matches_org(
+        &self,
+        sensor_id: &SensorId,
+        org: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        let sensor = self.sensor_reader.by_id(sensor_id).await?;
+        if sensor.organization_id() != org {
+            return Err(ServiceError::OrganizationMismatch);
         }
         Ok(())
     }
@@ -124,6 +141,8 @@ impl TreeService {
     pub async fn create(&self, draft: TreeDraft) -> Result<Tree, ServiceError> {
         if let Some(ref sid) = draft.sensor_id {
             self.ensure_sensor_unassigned(sid, None).await?;
+            self.ensure_sensor_matches_org(sid, draft.organization_id)
+                .await?;
         }
         self.ensure_cluster_matches_org(draft.cluster_id, draft.organization_id)
             .await?;
@@ -144,6 +163,10 @@ impl TreeService {
             self.ensure_sensor_unassigned(sid, Some(id)).await?;
         }
         let mut tree = self.reader.by_id(id).await?;
+        if let Some(ref sid) = draft.sensor_id {
+            self.ensure_sensor_matches_org(sid, tree.organization_id())
+                .await?;
+        }
         self.ensure_cluster_matches_org(draft.cluster_id, tree.organization_id())
             .await?;
         let mut events = Vec::new();
@@ -188,6 +211,8 @@ impl TreeService {
     ) -> Result<Tree, ServiceError> {
         self.ensure_sensor_unassigned(&sensor_id, Some(id)).await?;
         let mut tree = self.reader.by_id(id).await?;
+        self.ensure_sensor_matches_org(&sensor_id, tree.organization_id())
+            .await?;
         let events = tree.attach_sensor(sensor_id);
         self.writer.save(&tree).await?;
         self.event_bus.publish_all(events).await;

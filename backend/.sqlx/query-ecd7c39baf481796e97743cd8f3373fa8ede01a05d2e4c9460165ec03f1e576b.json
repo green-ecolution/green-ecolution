@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT s.id,\n                      s.activated_at,\n                      s.type          AS \"sensor_type: SensorType\",\n                      s.model_id,\n                      s.provider,\n                      s.additional_informations AS \"additional_info: serde_json::Value\",\n                      sl.serial_number AS \"serial_number?\",\n                      sl.dev_eui       AS \"dev_eui?\",\n                      sl.app_eui       AS \"app_eui?\",\n                      sl.app_key       AS \"app_key?\",\n                      sl.at_pin,\n                      sl.ota_pin,\n                      sl.config        AS \"config: serde_json::Value\"\n            FROM sensors s\n            LEFT JOIN sensor_lorawan sl ON sl.id = s.id\n            WHERE s.id = $1",
+  "query": "SELECT s.id,\n                      s.activated_at,\n                      s.type          AS \"sensor_type: SensorType\",\n                      s.model_id,\n                      s.provider,\n                      s.additional_informations AS \"additional_info: serde_json::Value\",\n                      s.organization_id,\n                      sl.serial_number AS \"serial_number?\",\n                      sl.dev_eui       AS \"dev_eui?\",\n                      sl.app_eui       AS \"app_eui?\",\n                      sl.app_key       AS \"app_key?\",\n                      sl.at_pin,\n                      sl.ota_pin,\n                      sl.config        AS \"config: serde_json::Value\"\n            FROM sensors s\n            LEFT JOIN sensor_lorawan sl ON sl.id = s.id\n            WHERE s.id = ANY($1::text[])",
   "describe": {
     "columns": [
       {
@@ -44,43 +44,48 @@
       },
       {
         "ordinal": 6,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 7,
         "name": "serial_number?",
         "type_info": "Text"
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "dev_eui?",
         "type_info": "Varchar"
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "app_eui?",
         "type_info": "Varchar"
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "app_key?",
         "type_info": "Varchar"
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "at_pin",
         "type_info": "Text"
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "ota_pin",
         "type_info": "Text"
       },
       {
-        "ordinal": 12,
+        "ordinal": 13,
         "name": "config: serde_json::Value",
         "type_info": "Jsonb"
       }
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "TextArray"
       ]
     },
     "nullable": [
@@ -91,13 +96,14 @@
       true,
       true,
       false,
-      false,
-      false,
-      false,
+      true,
+      true,
+      true,
+      true,
       true,
       true,
       true
     ]
   },
-  "hash": "588a8105868f39edccd1b4f905d2af6d8d3bee1896a9279baf4f7fc9c769fe46"
+  "hash": "ecd7c39baf481796e97743cd8f3373fa8ede01a05d2e4c9460165ec03f1e576b"
 }

@@ -50,6 +50,7 @@ impl SensorReader for PgSensorRepository {
                       s.model_id,
                       s.provider,
                       s.additional_informations AS "additional_info: serde_json::Value",
+                      s.organization_id,
                       sl.serial_number AS "serial_number?",
                       sl.dev_eui       AS "dev_eui?",
                       sl.app_eui       AS "app_eui?",
@@ -83,6 +84,7 @@ impl SensorReader for PgSensorRepository {
             provider: row.provider,
             additional_info: row.additional_info,
             lorawan,
+            organization_id: row.organization_id,
         }))
     }
 
@@ -97,6 +99,7 @@ impl SensorReader for PgSensorRepository {
                       s.model_id,
                       s.provider,
                       s.additional_informations AS "additional_info: serde_json::Value",
+                      s.organization_id,
                       sl.serial_number AS "serial_number?",
                       sl.dev_eui       AS "dev_eui?",
                       sl.app_eui       AS "app_eui?",
@@ -131,6 +134,7 @@ impl SensorReader for PgSensorRepository {
                     provider: r.provider,
                     additional_info: r.additional_info,
                     lorawan,
+                    organization_id: r.organization_id,
                 }))
             })
             .collect()
@@ -144,6 +148,7 @@ impl SensorReader for PgSensorRepository {
                       s.type          AS "sensor_type: SensorType",
                       s.provider,
                       s.additional_informations AS "additional_info: serde_json::Value",
+                      s.organization_id,
                       sm.id           AS model_id,
                       sm.name         AS model_name,
                       t.id            AS "linked_tree_id?",
@@ -212,6 +217,7 @@ impl SensorReader for PgSensorRepository {
                 row.config,
             ),
             latest_reading,
+            organization_id: row.organization_id,
         })
     }
 
@@ -238,7 +244,8 @@ impl SensorReader for PgSensorRepository {
                       sl.config        AS "config: serde_json::Value",
                       lr.id            AS "last_reading_id?: Uuid",
                       lr.updated_at    AS "last_reading_updated_at?",
-                      lr.data          AS "last_reading_data?"
+                      lr.data          AS "last_reading_data?",
+                      s.organization_id
             FROM sensors s
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
@@ -293,6 +300,7 @@ impl SensorReader for PgSensorRepository {
                         r.config,
                     ),
                     latest_reading,
+                    organization_id: r.organization_id,
                 })
             })
             .collect()
@@ -335,7 +343,8 @@ impl SensorReader for PgSensorRepository {
                       sl.config        AS "config: serde_json::Value",
                       lr.id            AS "last_reading_id?: Uuid",
                       lr.updated_at    AS "last_reading_updated_at?",
-                      lr.data          AS "last_reading_data?"
+                      lr.data          AS "last_reading_data?",
+                      s.organization_id
             FROM sensors s
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
@@ -395,6 +404,7 @@ impl SensorReader for PgSensorRepository {
                         r.config,
                     ),
                     latest_reading,
+                    organization_id: r.organization_id,
                 })
             })
             .collect::<Result<Vec<_>, RepositoryError>>()?;
@@ -410,13 +420,14 @@ impl SensorWriter for PgSensorRepository {
         let mut tx = self.pool.begin().await?;
 
         sqlx::query!(
-            r#"INSERT INTO sensors (id, type, model_id, provider, additional_informations)
-            VALUES ($1, $2, $3, $4, $5)"#,
+            r#"INSERT INTO sensors (id, type, model_id, provider, additional_informations, organization_id)
+            VALUES ($1, $2, $3, $4, $5, $6)"#,
             draft.id.as_str(),
             draft.sensor_type as SensorType,
             draft.model_id.value(),
             draft.provenance.provider().map(|p| p.as_str()),
             draft.provenance.additional_info().cloned(),
+            draft.organization_id.value(),
         )
         .execute(&mut *tx)
         .await?;

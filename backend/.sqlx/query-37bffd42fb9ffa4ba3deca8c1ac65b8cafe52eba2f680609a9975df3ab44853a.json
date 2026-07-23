@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO sensors (id, type, model_id, provider, additional_informations)\n            VALUES ($1, $2, $3, $4, $5)",
+  "query": "INSERT INTO sensors (id, type, model_id, provider, additional_informations, organization_id)\n            VALUES ($1, $2, $3, $4, $5, $6)",
   "describe": {
     "columns": [],
     "parameters": {
@@ -18,10 +18,11 @@
         },
         "Uuid",
         "Text",
-        "Jsonb"
+        "Jsonb",
+        "Uuid"
       ]
     },
     "nullable": []
   },
-  "hash": "39fde679b885b644109c3934bac064b41f52a46f6759c507a06dd9641f3675a0"
+  "hash": "37bffd42fb9ffa4ba3deca8c1ac65b8cafe52eba2f680609a9975df3ab44853a"
 }

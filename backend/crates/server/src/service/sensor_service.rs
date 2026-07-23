@@ -128,6 +128,10 @@ impl SensorService {
         let mut sensor = self.reader.by_id(id).await?;
         let mut tree = self.tree_reader.by_id(tree_id).await?;
 
+        if sensor.organization_id() != tree.organization_id() {
+            return Err(ServiceError::OrganizationMismatch);
+        }
+
         let already_bound_here = tree.sensor_id() == Some(id);
         let activated = sensor.is_activated();
 
@@ -180,6 +184,9 @@ impl SensorService {
         }
 
         let mut target = self.tree_reader.by_id(new_tree_id).await?;
+        if sensor.organization_id() != target.organization_id() {
+            return Err(ServiceError::OrganizationMismatch);
+        }
         if target.sensor_id() == Some(id) {
             return Ok(self.reader.view_by_id(id).await?);
         }

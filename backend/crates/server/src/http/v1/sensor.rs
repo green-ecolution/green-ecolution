@@ -6,37 +6,35 @@ use axum::{
     http::StatusCode,
 };
 use chrono::{DateTime, Utc};
-use secrecy::SecretString;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     http::{
         AppState,
+        auth::extractor::AuthUserExtractor,
         extractors::SensorIdPath,
         v1::{
             dto::{
                 ListResponse,
                 cluster::{SoilMoistureParams, SoilMoistureSeriesResponse},
                 sensor::{
-                    ActivateSensorRequest, CreateSensorRequest, LorawanCredentialsRequest,
-                    SensorDataResponse, SensorModelResponse, SensorResponse, SetSensorTreeRequest,
+                    ActivateSensorRequest, CreateSensorRequest, SensorDataResponse,
+                    SensorModelResponse, SensorResponse, SetSensorTreeRequest,
                 },
                 tree::TreeResponse,
             },
             pagination::{PaginationParams, default_page},
+            scope,
         },
     },
     service::ServiceError,
 };
 use domain::{
     Id, RepositoryError,
-    sensor::{LorawanCredentials, SensorDraft, SensorId, SensorSearchQuery, SensorType},
+    authorization::{Action, Permission, Resource},
+    sensor::SensorSearchQuery,
     sensor_model::SensorModel,
-    shared::{
-        pagination::Pagination,
-        provenance::{Provenance, ProviderId},
-        string_value::NonEmptyString,
-    },
+    shared::pagination::Pagination,
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -248,28 +246,19 @@ pub async fn get_tree_by_sensor(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn create_sensor(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Json(body): Json<CreateSensorRequest>,
 ) -> Result<(StatusCode, Json<SensorResponse>), ServiceError> {
-    let sensor_type: SensorType = body.sensor_type.into();
-    let lorawan = match (sensor_type, body.lorawan) {
-        (SensorType::Lorawan, Some(l)) => parse_lorawan(l)?,
-        (SensorType::Lorawan, None) => {
-            return Err(ServiceError::InvalidInput(
-                "lorawan block required for sensor_type=lorawan".into(),
-            ));
-        }
-    };
-
-    let draft = SensorDraft {
-        id: SensorId::new(body.id)?,
-        sensor_type,
-        model_id: Id::new(body.model_id),
-        provenance: Provenance::new(
-            body.provider.map(ProviderId::new).transpose()?,
-            body.additional_information,
-        ),
-        lorawan,
-    };
+    let org = scope::resolve_target_org(&state, user.id, body.organization_id).await?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Sensor, Action::Create),
+            org,
+        )
+        .await?;
+    let draft = body.into_draft(org)?;
     let view = state.sensor_service.create(draft).await?;
     Ok((StatusCode::CREATED, Json(SensorResponse::from(&view))))
 }
@@ -389,29 +378,4 @@ pub async fn get_sensor_model(
         .model_by_id(Id::<SensorModel>::new(id))
         .await?;
     Ok(Json(SensorModelResponse::from(&model)))
-}
-
-fn parse_lorawan(l: LorawanCredentialsRequest) -> Result<LorawanCredentials, ServiceError> {
-    hex_field("dev_eui", &l.dev_eui, 16)?;
-    hex_field("app_eui", &l.app_eui, 16)?;
-    hex_field("app_key", &l.app_key, 32)?;
-
-    Ok(LorawanCredentials {
-        serial_number: NonEmptyString::new(l.serial_number, "sensor.lorawan.serial_number", 1, 64)?,
-        dev_eui: NonEmptyString::new(l.dev_eui, "sensor.lorawan.dev_eui", 16, 16)?,
-        app_eui: NonEmptyString::new(l.app_eui, "sensor.lorawan.app_eui", 16, 16)?,
-        app_key: SecretString::from(l.app_key),
-        at_pin: l.at_pin,
-        ota_pin: l.ota_pin,
-        config: l.config,
-    })
-}
-
-fn hex_field(label: &'static str, s: &str, len: usize) -> Result<(), ServiceError> {
-    if s.len() != len || !s.chars().all(|c| c.is_ascii_hexdigit()) {
-        return Err(ServiceError::InvalidInput(format!(
-            "{label} must be {len} hex characters"
-        )));
-    }
-    Ok(())
 }

@@ -24,6 +24,7 @@ use chrono::{DateTime, Duration, Utc};
 
 use crate::{
     Id,
+    organization::Organization,
     sensor_model::SensorModel,
     shared::provenance::{Provenance, ProviderId},
 };
@@ -98,6 +99,7 @@ pub struct Sensor {
     sensor_type: SensorType,
     model_id: Id<SensorModel>,
     lorawan: Option<LorawanCredentials>,
+    organization_id: Id<Organization>,
 }
 
 /// Input for creating a new [`Sensor`].
@@ -108,6 +110,7 @@ pub struct SensorDraft {
     pub model_id: Id<SensorModel>,
     pub provenance: Provenance,
     pub lorawan: LorawanCredentials,
+    pub organization_id: Id<Organization>,
 }
 
 impl Sensor {
@@ -120,7 +123,12 @@ impl Sensor {
             sensor_type: snap.sensor_type,
             model_id: Id::new(snap.model_id),
             lorawan: snap.lorawan,
+            organization_id: Id::new(snap.organization_id),
         }
+    }
+
+    pub fn organization_id(&self) -> Id<Organization> {
+        self.organization_id
     }
 
     pub fn activated_at(&self) -> Option<DateTime<Utc>> {
@@ -193,6 +201,7 @@ mod tests {
             sensor_type: SensorType::Lorawan,
             model_id: Id::new_v7(),
             lorawan: None,
+            organization_id: Id::new_v7(),
         }
     }
 
