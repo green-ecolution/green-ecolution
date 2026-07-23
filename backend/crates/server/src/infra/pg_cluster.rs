@@ -574,7 +574,7 @@ impl TreeClusterWriter for PgTreeClusterRepository {
                 geometry = ST_SetSRID(ST_MakePoint($9, $8), 4326),
                 region_id = $10,
                 watering_status = $11, last_watered = $12, archived = $13,
-                moisture_level = $14
+                moisture_level = $14, organization_id = $15
             WHERE id = $1"#,
             cluster.id.value(),
             cluster.name.as_str(),
@@ -590,6 +590,7 @@ impl TreeClusterWriter for PgTreeClusterRepository {
             last_watered,
             cluster.archived(),
             cluster.moisture_level,
+            cluster.organization_id().value(),
         )
         .execute(&mut *tx)
         .await?;

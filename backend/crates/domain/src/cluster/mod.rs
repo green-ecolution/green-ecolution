@@ -352,6 +352,23 @@ impl TreeCluster {
     pub fn mark_watered_at(&mut self, ts: DateTime<Utc>) {
         self.last_watered = Some(ts);
     }
+
+    /// Reassigns the cluster to `target`'s organization. No-op (and no event)
+    /// if it already belongs there. Callers must cascade the transfer to
+    /// member trees (and their attached sensors) and revoke shares that no
+    /// longer point below the new owner (see `ClusterService::transfer`).
+    pub fn transfer_to(&mut self, target: Id<Organization>) -> Vec<DomainEvent> {
+        if self.organization_id == target {
+            return vec![];
+        }
+        let from = self.organization_id;
+        self.organization_id = target;
+        vec![DomainEvent::ClusterResponsibilityTransferred {
+            cluster_id: self.id,
+            from,
+            to: target,
+        }]
+    }
 }
 
 fn severity(s: WateringStatus) -> u8 {
@@ -589,5 +606,36 @@ mod tests {
         let events = c.revoke_share(org);
         assert!(!c.shared_with().contains(&org));
         assert!(matches!(events[0], DomainEvent::ClusterShareRevoked { .. }));
+    }
+
+    #[test]
+    fn transfer_to_same_org_is_noop() {
+        let mut c = fixed_cluster();
+        let same = c.organization_id();
+        let events = c.transfer_to(same);
+        assert_eq!(c.organization_id(), same);
+        assert!(events.is_empty());
+    }
+
+    #[test]
+    fn transfer_to_new_org_emits_event_and_updates_field() {
+        let mut c = fixed_cluster();
+        let from = c.organization_id();
+        let target: Id<Organization> = Id::new_v7();
+        let events = c.transfer_to(target);
+        assert_eq!(c.organization_id(), target);
+        assert_eq!(events.len(), 1);
+        match &events[0] {
+            DomainEvent::ClusterResponsibilityTransferred {
+                cluster_id,
+                from: ev_from,
+                to,
+            } => {
+                assert_eq!(*cluster_id, c.id);
+                assert_eq!(*ev_from, from);
+                assert_eq!(*to, target);
+            }
+            other => panic!("expected ClusterResponsibilityTransferred, got {other:?}"),
+        }
     }
 }

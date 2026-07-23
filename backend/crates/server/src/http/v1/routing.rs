@@ -17,7 +17,10 @@ use domain::{
 };
 
 use super::{
-    dto::routing::{StartPointRequest, StartPointResponse},
+    dto::{
+        routing::{StartPointRequest, StartPointResponse},
+        tree::TransferRequest,
+    },
     scope,
 };
 
@@ -26,6 +29,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(list_routing_start_points, create_start_point))
         .routes(routes!(update_start_point, delete_start_point))
         .routes(routes!(set_default_start_point))
+        .routes(routes!(transfer_start_point))
 }
 
 fn ensure_routing(state: &AppState) -> Result<(), ServiceError> {
@@ -148,5 +152,46 @@ pub async fn set_default_start_point(
 ) -> Result<StatusCode, ServiceError> {
     ensure_routing(&state)?;
     state.start_point_service.set_default(Id::new(id)).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(patch, path = "/routing/start-points/{start_point_id}/organization", tag = "Routing",
+    operation_id = "transferStartPoint",
+    summary = "Transfer a start point's ownership to another organization",
+    description = "Moves a start point to a different owning organization. If it was the \
+                   default for its organization, it loses that status (the target \
+                   organization's own default, if any, is left untouched). Requires \
+                   `watering_plan:update` in both the source and target organization.",
+    params(("start_point_id" = uuid::Uuid, Path, description = "Start point ID")),
+    request_body = TransferRequest,
+    responses(
+        (status = 204, description = "Start point transferred"),
+        (status = 403, description = "Missing watering_plan:update in source or target organization"),
+        (status = 404, description = "Start point or organization not found"),
+        (status = 503, description = "Routing feature is disabled"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(start_point.id = %id))]
+pub async fn transfer_start_point(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    Path(id): Path<uuid::Uuid>,
+    Json(req): Json<TransferRequest>,
+) -> Result<StatusCode, ServiceError> {
+    ensure_routing(&state)?;
+    let current = state.start_point_service.by_id(Id::new(id)).await?;
+    let perm = Permission::new(Resource::WateringPlan, Action::Update);
+    state
+        .authorization_service
+        .require(user.id, perm, current.organization_id())
+        .await?;
+    state
+        .authorization_service
+        .require(user.id, perm, Id::new(req.organization_id))
+        .await?;
+    state
+        .start_point_service
+        .transfer(Id::new(id), Id::new(req.organization_id))
+        .await?;
     Ok(StatusCode::NO_CONTENT)
 }

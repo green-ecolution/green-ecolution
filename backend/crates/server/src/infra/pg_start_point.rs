@@ -83,13 +83,16 @@ impl StartPointWriter for PgStartPointRepository {
         let result = sqlx::query!(
             r#"UPDATE depots
                SET name = $2, latitude = $3, longitude = $4,
-                   geometry = ST_SetSRID(ST_MakePoint($4, $3), 4326), watering_point = $5
+                   geometry = ST_SetSRID(ST_MakePoint($4, $3), 4326), watering_point = $5,
+                   organization_id = $6, is_default = $7
                WHERE id = $1"#,
             start_point.id.value(),
             start_point.name.as_str(),
             start_point.coordinate.latitude(),
             start_point.coordinate.longitude(),
             start_point.watering_point(),
+            start_point.organization_id().value(),
+            start_point.is_default(),
         )
         .execute(&self.pool)
         .await?;

@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use domain::{
     Id,
+    organization::Organization,
     start_point::{
         StartPoint, StartPointDraft, StartPointReader, StartPointUpdate, StartPointWriter,
     },
@@ -66,5 +67,17 @@ impl StartPointService {
             ));
         }
         Ok(self.writer.delete(id).await?)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(start_point.id = %id))]
+    pub async fn transfer(
+        &self,
+        id: Id<StartPoint>,
+        target: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        let mut sp = self.reader.by_id(id).await?;
+        sp.transfer_to(target);
+        self.writer.save(&sp).await?;
+        Ok(())
     }
 }

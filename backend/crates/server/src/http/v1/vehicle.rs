@@ -14,6 +14,7 @@ use crate::{
         v1::{
             dto::{
                 ListResponse,
+                tree::TransferRequest,
                 vehicle::{VehicleCreateRequest, VehicleResponse, VehicleUpdateRequest},
             },
             pagination::PaginationParams,
@@ -36,6 +37,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(archive_vehicle))
         .routes(routes!(get_vehicle_by_plate))
         .routes(routes!(get_vehicle, update_vehicle, delete_vehicle))
+        .routes(routes!(transfer_vehicle))
 }
 
 #[utoipa::path(get, path = "/vehicles", tag = "Vehicles",
@@ -229,4 +231,40 @@ pub async fn get_vehicle_by_plate(
         .ok_or(ServiceError::Repository(domain::RepositoryError::NotFound))?;
     let view = state.vehicle_service.view_by_id(vehicle.id).await?;
     Ok(Json(VehicleResponse::from(&view)))
+}
+
+#[utoipa::path(patch, path = "/vehicles/{vehicle_id}/organization", tag = "Vehicles",
+    operation_id = "transferVehicle", summary = "Transfer a vehicle's ownership to another organization",
+    description = "Moves a vehicle to a different owning organization. Requires `vehicle:update` \
+                   in both the source and target organization.",
+    params(("vehicle_id" = uuid::Uuid, Path, description = "Vehicle ID")),
+    request_body = TransferRequest,
+    responses(
+        (status = 204, description = "Vehicle transferred"),
+        (status = 403, description = "Missing vehicle:update in source or target organization"),
+        (status = 404, description = "Vehicle or organization not found"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(vehicle.id = %id))]
+pub async fn transfer_vehicle(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    Path(id): Path<uuid::Uuid>,
+    Json(req): Json<TransferRequest>,
+) -> Result<StatusCode, ServiceError> {
+    let current = state.vehicle_service.view_by_id(Id::new(id)).await?;
+    let perm = Permission::new(Resource::Vehicle, Action::Update);
+    state
+        .authorization_service
+        .require(user.id, perm, Id::new(current.organization_id))
+        .await?;
+    state
+        .authorization_service
+        .require(user.id, perm, Id::new(req.organization_id))
+        .await?;
+    state
+        .vehicle_service
+        .transfer(Id::new(id), Id::new(req.organization_id))
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
 }

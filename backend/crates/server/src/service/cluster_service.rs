@@ -11,6 +11,7 @@ use domain::{
     },
     events::DomainEvent,
     organization::{Organization, OrganizationReader},
+    sensor::{SensorReader, SensorWriter},
     shared::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
@@ -25,6 +26,8 @@ pub struct ClusterService {
     writer: Arc<dyn TreeClusterWriter>,
     tree_reader: Arc<dyn TreeReader>,
     tree_writer: Arc<dyn TreeWriter>,
+    sensor_reader: Arc<dyn SensorReader>,
+    sensor_writer: Arc<dyn SensorWriter>,
     org_reader: Arc<dyn OrganizationReader>,
     event_bus: Arc<dyn EventBus>,
 }
@@ -36,6 +39,8 @@ impl ClusterService {
         writer: Arc<dyn TreeClusterWriter>,
         tree_reader: Arc<dyn TreeReader>,
         tree_writer: Arc<dyn TreeWriter>,
+        sensor_reader: Arc<dyn SensorReader>,
+        sensor_writer: Arc<dyn SensorWriter>,
         org_reader: Arc<dyn OrganizationReader>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
@@ -44,6 +49,8 @@ impl ClusterService {
             writer,
             tree_reader,
             tree_writer,
+            sensor_reader,
+            sensor_writer,
             org_reader,
             event_bus,
         }
@@ -258,6 +265,57 @@ impl ClusterService {
         let mut cluster = self.reader.by_id(id).await?;
         let events = cluster.revoke_share(target);
         self.writer.save(&cluster).await?;
+        self.event_bus.publish_all(events).await;
+        Ok(())
+    }
+
+    /// Transfers ownership of the cluster, its member trees, and their
+    /// attached sensors to `target` in one operation. Shares that no longer
+    /// point below the new owner are revoked on the cluster and on every
+    /// member tree (a share pointing at a descendant of the old owner is
+    /// meaningless once the resource has moved elsewhere).
+    ///
+    /// No distributed rollback: saves happen sequentially, so an error midway
+    /// through the tree loop leaves a partially transferred cluster. Accepted
+    /// for v1 — transfer is an admin operation and idempotent to retry.
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
+    pub async fn transfer(
+        &self,
+        id: Id<TreeCluster>,
+        target: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        let mut cluster = self.reader.by_id(id).await?;
+        let hierarchy = self.org_reader.hierarchy().await?;
+        let mut events = cluster.transfer_to(target);
+        for stale in cluster
+            .shared_with()
+            .iter()
+            .copied()
+            .filter(|s| !hierarchy.is_descendant_or_self(*s, target))
+            .collect::<Vec<_>>()
+        {
+            events.extend(cluster.revoke_share(stale));
+        }
+        self.writer.save(&cluster).await?;
+        for tree_id in cluster.tree_ids.clone() {
+            let mut tree = self.tree_reader.by_id(tree_id).await?;
+            events.extend(tree.transfer_to(target));
+            for stale in tree
+                .shared_with()
+                .iter()
+                .copied()
+                .filter(|s| !hierarchy.is_descendant_or_self(*s, target))
+                .collect::<Vec<_>>()
+            {
+                events.extend(tree.revoke_share(stale));
+            }
+            self.tree_writer.save(&tree).await?;
+            if let Some(sensor_id) = tree.sensor_id().cloned() {
+                let mut sensor = self.sensor_reader.by_id(&sensor_id).await?;
+                events.extend(sensor.transfer_to(target));
+                self.sensor_writer.save(&sensor).await?;
+            }
+        }
         self.event_bus.publish_all(events).await;
         Ok(())
     }

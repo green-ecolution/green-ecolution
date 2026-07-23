@@ -347,7 +347,8 @@ impl VehicleWriter for PgVehicleRepository {
                 weight = $12,
                 provider = $13,
                 additional_informations = $14,
-                archived_at = $15
+                archived_at = $15,
+                organization_id = $16
             WHERE id = $1"#,
             vehicle.id.value(),
             vehicle.number_plate.as_str(),
@@ -364,6 +365,7 @@ impl VehicleWriter for PgVehicleRepository {
             vehicle.provenance().provider().map(|p| p.as_str()),
             vehicle.provenance().additional_info(),
             vehicle.archived_at().map(|dt| dt.naive_utc()),
+            vehicle.organization_id().value(),
         )
         .execute(&self.pool)
         .await?;

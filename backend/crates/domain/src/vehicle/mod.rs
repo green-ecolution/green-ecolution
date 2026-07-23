@@ -18,6 +18,7 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     Id,
+    events::DomainEvent,
     organization::Organization,
     shared::{
         error::ValidationError,
@@ -245,6 +246,18 @@ impl Vehicle {
     pub fn unarchive(&mut self) {
         self.archived_at = None;
     }
+
+    /// Reassigns the vehicle to `target`'s organization. No-op if it already
+    /// belongs there. Vehicle has no domain-event subscribers, so this never
+    /// emits — the `Vec<DomainEvent>` return type only mirrors the shared
+    /// `transfer_to` shape used by other aggregates.
+    pub fn transfer_to(&mut self, target: Id<Organization>) -> Vec<DomainEvent> {
+        if self.organization_id == target {
+            return vec![];
+        }
+        self.organization_id = target;
+        vec![]
+    }
 }
 
 #[cfg(test)]
@@ -356,5 +369,23 @@ mod tests {
             original_archived,
             "replace_details must not touch archived_at"
         );
+    }
+
+    #[test]
+    fn transfer_to_same_org_is_noop() {
+        let mut v = fixed_vehicle();
+        let same = v.organization_id();
+        let events = v.transfer_to(same);
+        assert_eq!(v.organization_id(), same);
+        assert!(events.is_empty());
+    }
+
+    #[test]
+    fn transfer_to_new_org_updates_field_without_events() {
+        let mut v = fixed_vehicle();
+        let target: Id<Organization> = Id::new_v7();
+        let events = v.transfer_to(target);
+        assert_eq!(v.organization_id(), target);
+        assert!(events.is_empty(), "Vehicle has no domain-event subscribers");
     }
 }

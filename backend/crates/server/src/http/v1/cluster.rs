@@ -22,7 +22,7 @@ use crate::{
                     TreeClusterInListResponse, TreeClusterResponse, TreeClusterUpdateRequest,
                 },
                 sensor::resolve_sensors_by_str_ids,
-                tree::{ShareRequest, TreeResponse},
+                tree::{ShareRequest, TransferRequest, TreeResponse},
             },
             scope,
         },
@@ -53,6 +53,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(get_cluster_soil_moisture))
         .routes(routes!(share_cluster))
         .routes(routes!(revoke_share_cluster))
+        .routes(routes!(transfer_cluster))
 }
 
 async fn build_cluster_response(
@@ -456,6 +457,48 @@ pub async fn revoke_share_cluster(
     state
         .cluster_service
         .revoke_share(Id::new(id), Id::new(org_id))
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    patch,
+    path = "/clusters/{cluster_id}/organization",
+    tag = "Tree Clusters",
+    operation_id = "transferCluster",
+    summary = "Transfer a cluster's ownership to another organization",
+    description = "Moves the cluster, its member trees, and their attached sensors to a \
+                   different owning organization in one operation. Shares that no longer \
+                   point below the new owner are revoked. Requires `tree_cluster:update` in \
+                   both the source and target organization.",
+    params(("cluster_id" = uuid::Uuid, Path, description = "Cluster ID")),
+    request_body = TransferRequest,
+    responses(
+        (status = 204, description = "Cluster transferred"),
+        (status = 403, description = "Missing tree_cluster:update in source or target organization"),
+        (status = 404, description = "Cluster or organization not found"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]
+pub async fn transfer_cluster(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    Path(id): Path<uuid::Uuid>,
+    Json(req): Json<TransferRequest>,
+) -> Result<StatusCode, ServiceError> {
+    let current = state.cluster_service.view_by_id(Id::new(id)).await?;
+    let perm = Permission::new(Resource::TreeCluster, Action::Update);
+    state
+        .authorization_service
+        .require(user.id, perm, Id::new(current.organization_id))
+        .await?;
+    state
+        .authorization_service
+        .require(user.id, perm, Id::new(req.organization_id))
+        .await?;
+    state
+        .cluster_service
+        .transfer(Id::new(id), Id::new(req.organization_id))
         .await?;
     Ok(StatusCode::NO_CONTENT)
 }

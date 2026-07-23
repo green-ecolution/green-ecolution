@@ -1,8 +1,9 @@
 use serde_json::json;
 use uuid::Uuid;
+use wiremock::{Mock, MockServer, ResponseTemplate, matchers::method, matchers::path};
 
 use crate::auth_helpers::spawn_with_auth;
-use crate::helpers::{TestApp, spawn_app};
+use crate::helpers::{TestApp, spawn_app, spawn_app_with_routing};
 
 const ROOT_ORG: &str = "01980000-0000-7000-8000-000000000001";
 const TBZ_ORG: &str = "01980000-0000-7000-8000-000000000002";
@@ -34,6 +35,30 @@ async fn insert_org_tree(app: &TestApp) -> Uuid {
     .fetch_one(&app.db_pool)
     .await
     .unwrap()
+}
+
+/// Inserts a second child of TBZ, sibling to `SUB_ORG` — a valid share
+/// target for TBZ-owned resources that stops being a descendant once the
+/// resource moves to `SUB_ORG`.
+async fn insert_tbz_sibling_org(app: &TestApp) -> Uuid {
+    sqlx::query_scalar!(
+        r#"INSERT INTO organizations (id, parent_id, name) VALUES (gen_random_uuid(), $1::uuid, $2) RETURNING id"#,
+        Uuid::parse_str(TBZ_ORG).unwrap(),
+        "TBZ Schwester-Org",
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap()
+}
+
+async fn mock_streamlet() -> MockServer {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/v1/solve"))
+        .respond_with(ResponseTemplate::new(500))
+        .mount(&server)
+        .await;
+    server
 }
 
 fn tree_payload(number: &str, org: &str) -> serde_json::Value {
@@ -188,6 +213,221 @@ async fn transfer_unbound_sensor_returns_204() {
     let sensor_resp = app.get(&format!("/api/v1/sensors/{sensor_id}")).await;
     let sensor: serde_json::Value = sensor_resp.json().await.unwrap();
     assert_eq!(sensor["organization_id"], SUB_ORG);
+}
+
+#[tokio::test]
+async fn transfer_cluster_cascades_to_trees_and_sensors() {
+    let app = spawn_app().await;
+    insert_org_tree(&app).await;
+
+    let sensor_id = "eui-transfer-cluster-a";
+    create_sensor(&app, sensor_id, TBZ_ORG).await;
+    let tree_id = create_tree(&app, "TRANSFER-CLUSTER-A-001", TBZ_ORG).await;
+    activate_sensor(&app, sensor_id, &tree_id).await;
+    let cluster_id = create_cluster(&app, &[&tree_id], TBZ_ORG).await;
+
+    let resp = app
+        .patch_json(
+            &format!("/api/v1/clusters/{cluster_id}/organization"),
+            &json!({ "organization_id": SUB_ORG }),
+        )
+        .await;
+    assert_eq!(resp.status(), 204);
+
+    let cluster_resp = app.get(&format!("/api/v1/clusters/{cluster_id}")).await;
+    let cluster: serde_json::Value = cluster_resp.json().await.unwrap();
+    assert_eq!(cluster["organization_id"], SUB_ORG);
+
+    let tree_resp = app.get(&format!("/api/v1/trees/{tree_id}")).await;
+    let tree: serde_json::Value = tree_resp.json().await.unwrap();
+    assert_eq!(tree["organization_id"], SUB_ORG);
+
+    let sensor_resp = app.get(&format!("/api/v1/sensors/{sensor_id}")).await;
+    let sensor: serde_json::Value = sensor_resp.json().await.unwrap();
+    assert_eq!(sensor["organization_id"], SUB_ORG);
+}
+
+#[tokio::test]
+async fn transfer_cluster_revokes_stale_shares_on_cluster_and_trees() {
+    let app = spawn_app().await;
+    insert_org_tree(&app).await;
+    let tbz_sibling_org = insert_tbz_sibling_org(&app).await;
+
+    // Shared while still clusterless (sharing a clustered tree is rejected),
+    // then pulled into a cluster — the share row survives that move because
+    // cluster creation updates `trees.tree_cluster_id` directly.
+    let tree_id = create_tree(&app, "TRANSFER-CLUSTER-B-001", TBZ_ORG).await;
+    let tree_share_resp = app
+        .post_json(
+            &format!("/api/v1/trees/{tree_id}/shares"),
+            &json!({ "organization_id": tbz_sibling_org }),
+        )
+        .await;
+    assert_eq!(tree_share_resp.status(), 204);
+
+    let cluster_id = create_cluster(&app, &[&tree_id], TBZ_ORG).await;
+    let cluster_share_resp = app
+        .post_json(
+            &format!("/api/v1/clusters/{cluster_id}/shares"),
+            &json!({ "organization_id": tbz_sibling_org }),
+        )
+        .await;
+    assert_eq!(cluster_share_resp.status(), 204);
+
+    let resp = app
+        .patch_json(
+            &format!("/api/v1/clusters/{cluster_id}/organization"),
+            &json!({ "organization_id": SUB_ORG }),
+        )
+        .await;
+    assert_eq!(resp.status(), 204);
+
+    let cluster_shares: Vec<Uuid> = sqlx::query_scalar!(
+        "SELECT organization_id FROM tree_cluster_shares WHERE tree_cluster_id = $1",
+        Uuid::parse_str(&cluster_id).unwrap()
+    )
+    .fetch_all(&app.db_pool)
+    .await
+    .unwrap();
+    assert!(
+        cluster_shares.is_empty(),
+        "cluster share pointing outside the new owner's subtree must be revoked"
+    );
+
+    let tree_shares: Vec<Uuid> = sqlx::query_scalar!(
+        "SELECT organization_id FROM tree_shares WHERE tree_id = $1",
+        Uuid::parse_str(&tree_id).unwrap()
+    )
+    .fetch_all(&app.db_pool)
+    .await
+    .unwrap();
+    assert!(
+        tree_shares.is_empty(),
+        "tree share pointing outside the new owner's subtree must be revoked"
+    );
+}
+
+fn vehicle_payload(plate: &str, org: &str) -> serde_json::Value {
+    json!({
+        "number_plate": plate,
+        "description": "Testfahrzeug",
+        "water_capacity": 5000.0,
+        "model": "MAN TGS",
+        "status": "available",
+        "type": "transporter",
+        "driving_license": "C",
+        "height": 3.2,
+        "width": 2.5,
+        "length": 8.0,
+        "weight": 12000.0,
+        "organization_id": org,
+    })
+}
+
+#[tokio::test]
+async fn transfer_vehicle_returns_204_and_changes_organization() {
+    let app = spawn_app().await;
+    insert_org_tree(&app).await;
+
+    let resp = app
+        .post_json(
+            "/api/v1/vehicles",
+            &vehicle_payload("FL-TRANSFER 1", TBZ_ORG),
+        )
+        .await;
+    assert_eq!(resp.status(), 201);
+    let vehicle: serde_json::Value = resp.json().await.unwrap();
+    let vehicle_id = vehicle["id"].as_str().unwrap();
+
+    let resp = app
+        .patch_json(
+            &format!("/api/v1/vehicles/{vehicle_id}/organization"),
+            &json!({ "organization_id": SUB_ORG }),
+        )
+        .await;
+    assert_eq!(resp.status(), 204);
+
+    let vehicle_resp = app.get(&format!("/api/v1/vehicles/{vehicle_id}")).await;
+    let vehicle: serde_json::Value = vehicle_resp.json().await.unwrap();
+    assert_eq!(vehicle["organization_id"], SUB_ORG);
+}
+
+fn start_point_payload(name: &str, lat: f64, lon: f64, org: &str) -> serde_json::Value {
+    json!({ "name": name, "lat": lat, "lon": lon, "watering_point": false, "organization_id": org })
+}
+
+#[tokio::test]
+async fn transfer_default_start_point_clears_default_and_leaves_target_default_untouched() {
+    let streamlet = mock_streamlet().await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+    insert_org_tree(&app).await;
+
+    let source: serde_json::Value = app
+        .post_json(
+            "/api/v1/routing/start-points",
+            &start_point_payload("Depot TBZ", 54.7, 9.4, TBZ_ORG),
+        )
+        .await
+        .json()
+        .await
+        .unwrap();
+    let source_id = source["id"].as_str().unwrap();
+    let resp = app
+        .post_json(
+            &format!("/api/v1/routing/start-points/{source_id}/default"),
+            &json!({}),
+        )
+        .await;
+    assert_eq!(resp.status(), 204);
+
+    let target_default: serde_json::Value = app
+        .post_json(
+            "/api/v1/routing/start-points",
+            &start_point_payload("Depot Unter-Org", 54.75, 9.42, SUB_ORG),
+        )
+        .await
+        .json()
+        .await
+        .unwrap();
+    let target_default_id = target_default["id"].as_str().unwrap();
+    let resp = app
+        .post_json(
+            &format!("/api/v1/routing/start-points/{target_default_id}/default"),
+            &json!({}),
+        )
+        .await;
+    assert_eq!(resp.status(), 204);
+
+    let resp = app
+        .patch_json(
+            &format!("/api/v1/routing/start-points/{source_id}/organization"),
+            &json!({ "organization_id": SUB_ORG }),
+        )
+        .await;
+    assert_eq!(resp.status(), 204);
+
+    let (source_org, source_default): (Uuid, bool) =
+        sqlx::query_as("SELECT organization_id, is_default FROM depots WHERE id = $1")
+            .bind(Uuid::parse_str(source_id).unwrap())
+            .fetch_one(&app.db_pool)
+            .await
+            .unwrap();
+    assert_eq!(source_org, Uuid::parse_str(SUB_ORG).unwrap());
+    assert!(
+        !source_default,
+        "transferred depot must lose its default status"
+    );
+
+    let target_default_still: bool =
+        sqlx::query_scalar("SELECT is_default FROM depots WHERE id = $1")
+            .bind(Uuid::parse_str(target_default_id).unwrap())
+            .fetch_one(&app.db_pool)
+            .await
+            .unwrap();
+    assert!(
+        target_default_still,
+        "the target org's own default must remain untouched"
+    );
 }
 
 /// Seeds an admin-copy role (full permission set) in `org_id` and a user

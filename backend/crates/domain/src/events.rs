@@ -101,6 +101,11 @@ pub enum DomainEvent {
         from: Id<Organization>,
         to: Id<Organization>,
     },
+    ClusterResponsibilityTransferred {
+        cluster_id: Id<TreeCluster>,
+        from: Id<Organization>,
+        to: Id<Organization>,
+    },
     SensorResponsibilityTransferred {
         sensor_id: SensorId,
         from: Id<Organization>,

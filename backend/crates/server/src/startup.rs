@@ -397,6 +397,8 @@ impl Services {
                 repos.cluster_writer.clone(),
                 repos.tree_reader.clone(),
                 repos.tree_writer.clone(),
+                repos.sensor_reader.clone(),
+                repos.sensor_writer.clone(),
                 repos.organization_reader.clone(),
                 event_bus.clone(),
             )),
