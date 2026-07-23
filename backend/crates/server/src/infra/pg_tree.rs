@@ -51,6 +51,7 @@ struct TreeViewRow {
     last_watered: Option<DateTime<Utc>>,
     provider: Option<String>,
     additional_info: Option<Value>,
+    organization_id: RawId,
 }
 
 impl From<TreeViewRow> for TreeView {
@@ -74,6 +75,7 @@ impl From<TreeViewRow> for TreeView {
             last_watered: row.last_watered,
             provider: row.provider,
             additional_info: row.additional_info,
+            organization_id: row.organization_id,
         }
     }
 }
@@ -95,6 +97,7 @@ struct TreeViewWithDistanceRow {
     last_watered: Option<DateTime<Utc>>,
     provider: Option<String>,
     additional_info: Option<Value>,
+    organization_id: RawId,
     distance: f64,
 }
 
@@ -118,6 +121,7 @@ impl TryFrom<TreeViewWithDistanceRow> for TreeViewWithDistance {
             last_watered: row.last_watered,
             provider: row.provider,
             additional_info: row.additional_info,
+            organization_id: row.organization_id,
         });
         Ok(Self { tree, distance })
     }
@@ -136,7 +140,8 @@ impl TreeReader for PgTreeRepository {
                       description,
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
-                      additional_informations AS additional_info
+                      additional_informations AS additional_info,
+                      organization_id
             FROM trees WHERE id = $1"#,
             id.value()
         )
@@ -159,7 +164,8 @@ impl TreeReader for PgTreeRepository {
                       description,
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
-                      additional_informations AS additional_info
+                      additional_informations AS additional_info,
+                      organization_id
             FROM trees WHERE id = ANY($1::uuid[])"#,
             &id_values
         )
@@ -180,7 +186,8 @@ impl TreeReader for PgTreeRepository {
                       description,
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
-                      additional_informations AS additional_info
+                      additional_informations AS additional_info,
+                      organization_id
             FROM trees WHERE sensor_id = $1 LIMIT 1"#,
             sensor_id.as_str()
         )
@@ -204,7 +211,8 @@ impl TreeReader for PgTreeRepository {
                       description,
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
-                      additional_informations AS additional_info
+                      additional_informations AS additional_info,
+                      organization_id
             FROM trees WHERE tree_cluster_id = $1"#,
             cluster_id.value()
         )
@@ -224,7 +232,8 @@ impl TreeReader for PgTreeRepository {
                       description,
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
-                      additional_informations AS additional_info
+                      additional_informations AS additional_info,
+                      organization_id
             FROM trees WHERE id = $1"#,
             id.value()
         )
@@ -248,7 +257,8 @@ impl TreeReader for PgTreeRepository {
                       description,
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
-                      additional_informations AS additional_info
+                      additional_informations AS additional_info,
+                      organization_id
             FROM trees WHERE sensor_id = $1"#,
             sensor_id.as_str()
         )
@@ -269,7 +279,8 @@ impl TreeReader for PgTreeRepository {
                       description,
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
-                      additional_informations AS additional_info
+                      additional_informations AS additional_info,
+                      organization_id
             FROM trees WHERE id = ANY($1::uuid[])"#,
             &id_values
         )
@@ -320,7 +331,8 @@ impl TreeReader for PgTreeRepository {
                       description,
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
-                      additional_informations AS additional_info
+                      additional_informations AS additional_info,
+                      organization_id
             FROM trees
             WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))
               AND ($2::int[] = '{}' OR planting_year = ANY($2))
@@ -431,6 +443,7 @@ impl TreeReader for PgTreeRepository {
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
                       additional_informations AS additional_info,
+                      organization_id,
                       dist AS "distance!: f64"
             FROM distances
             ORDER BY dist ASC
@@ -461,7 +474,8 @@ impl TreeReader for PgTreeRepository {
                       description,
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
-                      additional_informations AS additional_info
+                      additional_informations AS additional_info,
+                      organization_id
             FROM trees
             WHERE ST_DWithin(
                 geometry::geography,
@@ -509,9 +523,9 @@ impl TreeWriter for PgTreeRepository {
         sqlx::query!(
             r#"INSERT INTO trees (id, tree_cluster_id, sensor_id, planting_year, species, number,
                                   description, watering_status, latitude, longitude,
-                                  geometry, provider, additional_informations)
+                                  geometry, provider, additional_informations, organization_id)
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'unknown', $8, $9,
-                    ST_SetSRID(ST_MakePoint($9, $8), 4326), $10, $11)"#,
+                    ST_SetSRID(ST_MakePoint($9, $8), 4326), $10, $11, $12)"#,
             id.value(),
             draft.cluster_id.map(|id| id.value()),
             draft.sensor_id.as_ref().map(|s| s.as_str().to_string()),
@@ -523,6 +537,7 @@ impl TreeWriter for PgTreeRepository {
             lng,
             draft.provenance.provider().map(|p| p.as_str().to_string()),
             draft.provenance.additional_info().cloned(),
+            draft.organization_id.value(),
         )
         .execute(&self.pool)
         .await?;

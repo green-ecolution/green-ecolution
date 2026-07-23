@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info\n            FROM trees WHERE id = $1",
+  "query": "SELECT id, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id\n            FROM trees WHERE sensor_id = $1",
   "describe": {
     "columns": [
       {
@@ -85,11 +85,16 @@
         "ordinal": 13,
         "name": "additional_info",
         "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 14,
+        "name": "organization_id",
+        "type_info": "Uuid"
       }
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "Text"
       ]
     },
     "nullable": [
@@ -106,8 +111,9 @@
       true,
       true,
       true,
-      true
+      true,
+      false
     ]
   },
-  "hash": "57d178e3fc15ec50ab7a53aa1c6fde2e7a89277d128d075d7d019d29946215b4"
+  "hash": "79ceee6004446688aa09751f16dcff63f8d12a9478102f4fff23ca7416e895be"
 }

@@ -25,6 +25,7 @@ use crate::{
     Id,
     cluster::TreeCluster,
     events::DomainEvent,
+    organization::Organization,
     sensor::{SensorId, data::Watermark},
     shared::{
         coordinates::Coordinate,
@@ -69,6 +70,7 @@ pub struct Tree {
     sensor_id: Option<SensorId>,
     watering_status: WateringStatus,
     provenance: Provenance,
+    organization_id: Id<Organization>,
 }
 
 /// Input for creating a new [`Tree`].
@@ -82,6 +84,7 @@ pub struct TreeDraft {
     pub cluster_id: Option<Id<TreeCluster>>,
     pub sensor_id: Option<SensorId>,
     pub provenance: Provenance,
+    pub organization_id: Id<Organization>,
 }
 
 /// Filter inputs for tree list queries.
@@ -115,11 +118,16 @@ impl Tree {
             sensor_id: snap.sensor_id.map(SensorId::reconstitute),
             watering_status: snap.watering_status,
             provenance: Provenance::reconstitute(snap.provider, snap.additional_info),
+            organization_id: Id::new(snap.organization_id),
         }
     }
 
     pub fn cluster_id(&self) -> Option<Id<TreeCluster>> {
         self.cluster_id
+    }
+
+    pub fn organization_id(&self) -> Id<Organization> {
+        self.organization_id
     }
 
     pub fn sensor_id(&self) -> Option<&SensorId> {
@@ -304,6 +312,7 @@ mod tests {
             sensor_id: None,
             watering_status: WateringStatus::Unknown,
             provenance: Provenance::default(),
+            organization_id: Id::new_v7(),
         }
     }
 

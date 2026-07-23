@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "WITH distances AS (\n                SELECT *,\n                    ST_Distance(\n                        geometry::geography,\n                        ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography\n                    )::float8 AS dist\n                FROM trees\n                WHERE ST_DWithin(\n                    geometry::geography,\n                    ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,\n                    $3\n                )\n            )\n            SELECT id, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      dist AS \"distance!: f64\"\n            FROM distances\n            ORDER BY dist ASC\n            LIMIT $4",
+  "query": "WITH distances AS (\n                SELECT *,\n                    ST_Distance(\n                        geometry::geography,\n                        ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography\n                    )::float8 AS dist\n                FROM trees\n                WHERE ST_DWithin(\n                    geometry::geography,\n                    ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,\n                    $3\n                )\n            )\n            SELECT id, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id,\n                      dist AS \"distance!: f64\"\n            FROM distances\n            ORDER BY dist ASC\n            LIMIT $4",
   "describe": {
     "columns": [
       {
@@ -88,6 +88,11 @@
       },
       {
         "ordinal": 14,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 15,
         "name": "distance!: f64",
         "type_info": "Float8"
       }
@@ -115,8 +120,9 @@
       true,
       true,
       true,
+      false,
       null
     ]
   },
-  "hash": "89d3e25a454a743e0ad2b4ab0517e35fd9a030435102a2b297bf7083264aa842"
+  "hash": "b31870cfb5136cb1912e74db9665ca239b7160522b60c0eebedc3832c8b5b956"
 }

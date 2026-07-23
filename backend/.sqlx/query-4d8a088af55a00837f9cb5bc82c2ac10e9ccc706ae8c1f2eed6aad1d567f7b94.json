@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, tree_cluster_id AS cluster_id, sensor_id,\n                      planting_year, species, number AS tree_number,\n                      latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info\n            FROM trees WHERE sensor_id = $1 LIMIT 1",
+  "query": "SELECT id, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id\n            FROM trees WHERE id = $1",
   "describe": {
     "columns": [
       {
@@ -10,41 +10,46 @@
       },
       {
         "ordinal": 1,
-        "name": "cluster_id",
-        "type_info": "Uuid"
+        "name": "updated_at",
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 2,
+        "name": "tree_cluster_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
         "name": "sensor_id",
         "type_info": "Varchar"
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "planting_year",
         "type_info": "Int4"
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "species",
         "type_info": "Text"
       },
       {
-        "ordinal": 5,
-        "name": "tree_number",
+        "ordinal": 6,
+        "name": "number",
         "type_info": "Text"
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "latitude",
         "type_info": "Float8"
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "longitude",
         "type_info": "Float8"
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "watering_status: WateringStatus",
         "type_info": {
           "Custom": {
@@ -62,46 +67,53 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "description",
         "type_info": "Text"
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "last_watered: DateTime<Utc>",
         "type_info": "Timestamp"
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "provider",
         "type_info": "Text"
       },
       {
-        "ordinal": 12,
+        "ordinal": 13,
         "name": "additional_info",
         "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 14,
+        "name": "organization_id",
+        "type_info": "Uuid"
       }
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "Uuid"
       ]
     },
     "nullable": [
       false,
-      true,
-      true,
-      false,
-      false,
-      false,
-      false,
-      false,
       false,
       true,
       true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
       true,
-      true
+      true,
+      true,
+      true,
+      false
     ]
   },
-  "hash": "65321c1c3b8ac90dab09a26ced0b60df0e7c4286933104d0043fab8138fa6deb"
+  "hash": "4d8a088af55a00837f9cb5bc82c2ac10e9ccc706ae8c1f2eed6aad1d567f7b94"
 }

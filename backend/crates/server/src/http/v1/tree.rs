@@ -11,23 +11,28 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     http::{
         AppState,
-        v1::dto::{
-            ListResponse,
-            sensor::resolve_sensors_by_str_ids,
-            tree::{
-                NearestTreeListResponse, NearestTreeParams, TreeCreateRequest, TreeListParams,
-                TreeMarkerListResponse, TreeMarkerQueryParams, TreeMarkerResponse, TreeResponse,
-                TreeUpdateRequest, TreeWithDistanceResponse,
+        auth::extractor::AuthUserExtractor,
+        v1::{
+            dto::{
+                ListResponse,
+                sensor::resolve_sensors_by_str_ids,
+                tree::{
+                    NearestTreeListResponse, NearestTreeParams, TreeCreateRequest, TreeListParams,
+                    TreeMarkerListResponse, TreeMarkerQueryParams, TreeMarkerResponse,
+                    TreeResponse, TreeUpdateRequest, TreeWithDistanceResponse,
+                },
             },
+            scope,
         },
     },
     service::ServiceError,
 };
 use domain::{
     Id,
+    authorization::{Action, Permission, Resource},
     sensor::SensorId,
     shared::{coordinates::Coordinate, distance::Distance, pagination::Pagination},
-    tree::{PlantingYear, TreeDraft, TreeMarker, TreeSearchQuery, TreeView},
+    tree::{PlantingYear, TreeMarker, TreeSearchQuery, TreeView},
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -156,9 +161,19 @@ pub async fn get_tree(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn create_tree(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Json(entity): Json<TreeCreateRequest>,
 ) -> Result<(StatusCode, Json<TreeResponse>), ServiceError> {
-    let draft: TreeDraft = entity.try_into()?;
+    let org = scope::resolve_target_org(&state, user.id, entity.organization_id).await?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Tree, Action::Create),
+            org,
+        )
+        .await?;
+    let draft = entity.into_draft(org)?;
     let tree = state.tree_service.create(draft).await?;
     let view = state.tree_service.view_by_id(tree.id).await?;
     let sensor = match view.sensor_id.as_deref() {
@@ -192,6 +207,7 @@ pub async fn update_tree(
     Path(id): Path<uuid::Uuid>,
     Json(entity): Json<TreeUpdateRequest>,
 ) -> Result<Json<TreeResponse>, ServiceError> {
+    let current = state.tree_service.view_by_id(Id::new(id)).await?;
     let create = TreeCreateRequest {
         species: entity.species,
         number: entity.number,
@@ -203,8 +219,9 @@ pub async fn update_tree(
         sensor_id: entity.sensor_id,
         provider: entity.provider,
         additional_information: entity.additional_information,
+        organization_id: None,
     };
-    let draft: TreeDraft = create.try_into()?;
+    let draft = create.into_draft(Id::new(current.organization_id))?;
     let tree = state.tree_service.replace(Id::new(id), draft).await?;
     let view = state.tree_service.view_by_id(tree.id).await?;
     let sensor = match view.sensor_id.as_deref() {
