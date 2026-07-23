@@ -29,4 +29,5 @@ pub struct WateringPlanView {
     pub duration: Duration,
     pub provider: Option<String>,
     pub additional_info: Option<Value>,
+    pub organization_id: Uuid,
 }

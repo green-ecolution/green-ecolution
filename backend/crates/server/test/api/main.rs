@@ -20,6 +20,7 @@ pub mod scoping_sensor;
 pub mod scoping_start_point;
 pub mod scoping_tree;
 pub mod scoping_vehicle;
+pub mod scoping_watering_plan;
 pub mod sensor_activate;
 pub mod sensor_create;
 pub mod sensor_models;

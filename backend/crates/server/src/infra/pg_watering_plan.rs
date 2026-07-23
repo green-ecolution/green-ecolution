@@ -50,6 +50,7 @@ struct WateringPlanViewRow {
     trailer_id: Option<RawId>,
     cluster_ids: Vec<RawId>,
     user_ids: Vec<RawId>,
+    organization_id: RawId,
 }
 
 impl From<WateringPlanViewRow> for WateringPlanView {
@@ -78,6 +79,7 @@ impl From<WateringPlanViewRow> for WateringPlanView {
             duration: std::time::Duration::from_secs_f64(row.duration),
             provider: row.provider,
             additional_info: row.additional_informations,
+            organization_id: row.organization_id,
         }
     }
 }
@@ -104,6 +106,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             cluster_ids: Vec<RawId>,
             user_ids: Vec<RawId>,
             route_geometry: Option<String>,
+            organization_id: RawId,
         }
 
         let row = sqlx::query_as!(
@@ -113,6 +116,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.refill_count, wp.duration,
                       wp.provider, wp.additional_informations,
+                      wp.organization_id,
                       ST_AsGeoJSON(wp.route_geometry) AS route_geometry,
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS "transporter_id: RawId",
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS "trailer_id: RawId",
@@ -176,6 +180,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             additional_info: row.additional_informations,
             route_geometry: geojson_to_geometry(row.route_geometry)?,
             refill_points,
+            organization_id: row.organization_id,
         }))
     }
 
@@ -188,6 +193,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.refill_count, wp.duration,
                       wp.provider, wp.additional_informations,
+                      wp.organization_id,
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS "transporter_id: RawId",
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS "trailer_id: RawId",
                       COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS "cluster_ids!: Vec<RawId>",
@@ -235,6 +241,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
                       wp.distance, wp.total_water_required, wp.cancellation_note,
                       wp.refill_count, wp.duration,
                       wp.provider, wp.additional_informations,
+                      wp.organization_id,
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS "transporter_id: RawId",
                       (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS "trailer_id: RawId",
                       COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS "cluster_ids!: Vec<RawId>",
@@ -503,14 +510,15 @@ impl WateringPlanWriter for PgWateringPlanRepository {
 
         let plan_id = Id::<WateringPlan>::new_v7();
         sqlx::query!(
-            r#"INSERT INTO watering_plans (id, date, description, status, provider, additional_informations, start_point_name)
-            VALUES ($1, $2, $3, 'planned', $4, $5, $6)"#,
+            r#"INSERT INTO watering_plans (id, date, description, status, provider, additional_informations, start_point_name, organization_id)
+            VALUES ($1, $2, $3, 'planned', $4, $5, $6, $7)"#,
             plan_id.value(),
             draft.date.date_naive(),
             draft.description.as_deref().unwrap_or(""),
             draft.provenance.provider().map(|p| p.as_str()),
             draft.provenance.additional_info(),
             draft.start_point_name.as_deref(),
+            draft.organization_id.value(),
         )
         .execute(&mut *tx)
         .await?;

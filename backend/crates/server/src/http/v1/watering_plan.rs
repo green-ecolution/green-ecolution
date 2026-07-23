@@ -12,6 +12,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     http::{
         AppState,
+        auth::extractor::AuthUserExtractor,
         v1::{
             dto::{
                 ListResponse,
@@ -25,13 +26,14 @@ use crate::{
                     parse_user_ids,
                 },
             },
-            gpx,
+            gpx, scope,
         },
     },
     service::ServiceError,
 };
 use domain::{
     Id,
+    authorization::{Action, Permission, Resource},
     shared::{
         pagination::Pagination,
         provenance::{Provenance, ProviderId},
@@ -250,9 +252,19 @@ pub async fn get_watering_plan(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn create_watering_plan(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Json(entity): Json<WateringPlanCreateRequest>,
 ) -> Result<(StatusCode, Json<WateringPlanResponse>), ServiceError> {
-    let draft = entity.try_into()?;
+    let org = scope::resolve_target_org(&state, user.id, entity.organization_id).await?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::WateringPlan, Action::Create),
+            org,
+        )
+        .await?;
+    let draft = entity.into_draft(org)?;
     let plan = state.watering_plan_service.create(draft).await?;
     let view = state.watering_plan_service.view_by_id(plan.id).await?;
     let (transporter, trailer, clusters, evaluation) =

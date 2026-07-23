@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT wp.id, wp.updated_at, wp.date, wp.description, wp.start_point_name,\n                      wp.status AS \"status: WateringPlanStatus\",\n                      wp.distance, wp.total_water_required, wp.cancellation_note,\n                      wp.refill_count, wp.duration,\n                      wp.provider, wp.additional_informations,\n                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS \"transporter_id: RawId\",\n                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS \"trailer_id: RawId\",\n                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS \"cluster_ids!: Vec<RawId>\",\n                      COALESCE(ARRAY_AGG(DISTINCT uwp.user_id) FILTER (WHERE uwp.user_id IS NOT NULL), ARRAY[]::uuid[]) AS \"user_ids!: Vec<RawId>\"\n            FROM watering_plans wp\n            LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id\n            LEFT JOIN tree_cluster_watering_plans twp ON twp.watering_plan_id = wp.id\n            LEFT JOIN user_watering_plans uwp ON uwp.watering_plan_id = wp.id\n            WHERE wp.id = $1\n            GROUP BY wp.id",
+  "query": "SELECT wp.id, wp.updated_at, wp.date, wp.description, wp.start_point_name,\n                      wp.status AS \"status: WateringPlanStatus\",\n                      wp.distance, wp.total_water_required, wp.cancellation_note,\n                      wp.refill_count, wp.duration,\n                      wp.provider, wp.additional_informations,\n                      wp.organization_id,\n                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'transporter'))[1] AS \"transporter_id: RawId\",\n                      (ARRAY_AGG(vwp.vehicle_id) FILTER (WHERE vwp.role = 'trailer'))[1] AS \"trailer_id: RawId\",\n                      COALESCE(ARRAY_AGG(DISTINCT twp.tree_cluster_id) FILTER (WHERE twp.tree_cluster_id IS NOT NULL), ARRAY[]::uuid[]) AS \"cluster_ids!: Vec<RawId>\",\n                      COALESCE(ARRAY_AGG(DISTINCT uwp.user_id) FILTER (WHERE uwp.user_id IS NOT NULL), ARRAY[]::uuid[]) AS \"user_ids!: Vec<RawId>\"\n            FROM watering_plans wp\n            LEFT JOIN vehicle_watering_plans vwp ON vwp.watering_plan_id = wp.id\n            LEFT JOIN tree_cluster_watering_plans twp ON twp.watering_plan_id = wp.id\n            LEFT JOIN user_watering_plans uwp ON uwp.watering_plan_id = wp.id\n            WHERE wp.id = $1\n            GROUP BY wp.id",
   "describe": {
     "columns": [
       {
@@ -84,21 +84,26 @@
       },
       {
         "ordinal": 13,
-        "name": "transporter_id: RawId",
+        "name": "organization_id",
         "type_info": "Uuid"
       },
       {
         "ordinal": 14,
-        "name": "trailer_id: RawId",
+        "name": "transporter_id: RawId",
         "type_info": "Uuid"
       },
       {
         "ordinal": 15,
+        "name": "trailer_id: RawId",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 16,
         "name": "cluster_ids!: Vec<RawId>",
         "type_info": "UuidArray"
       },
       {
-        "ordinal": 16,
+        "ordinal": 17,
         "name": "user_ids!: Vec<RawId>",
         "type_info": "UuidArray"
       }
@@ -122,11 +127,12 @@
       false,
       true,
       true,
+      false,
       null,
       null,
       null,
       null
     ]
   },
-  "hash": "9f81b4b86cf0ccbdad7fcd25d03537bc6236b774d475056fe5bc80a4c3920077"
+  "hash": "b236f642ab4296a2d51f1314ab37a3fe83d6607e95607d304e06ea9ef5166679"
 }

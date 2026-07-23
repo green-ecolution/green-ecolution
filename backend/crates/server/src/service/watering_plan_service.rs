@@ -4,6 +4,7 @@ use domain::{
     Id,
     cluster::{TreeCluster, TreeClusterReader},
     events::DomainEvent,
+    organization::{Organization, OrganizationReader},
     routing::{OptimizedRoute, RouteOptimizer, RouteStop},
     shared::pagination::{Page, Pagination},
     start_point::{StartPoint, StartPointReader},
@@ -26,6 +27,7 @@ pub struct WateringPlanService {
     route_optimizer: Option<Arc<dyn RouteOptimizer>>,
     tree_demand_liters: f64,
     start_point_reader: Arc<dyn StartPointReader>,
+    org_reader: Arc<dyn OrganizationReader>,
 }
 
 /// Result of a route computation: the optimized route plus the summed
@@ -47,6 +49,7 @@ impl WateringPlanService {
         route_optimizer: Option<Arc<dyn RouteOptimizer>>,
         tree_demand_liters: f64,
         start_point_reader: Arc<dyn StartPointReader>,
+        org_reader: Arc<dyn OrganizationReader>,
     ) -> Self {
         Self {
             reader,
@@ -57,6 +60,29 @@ impl WateringPlanService {
             route_optimizer,
             tree_demand_liters,
             start_point_reader,
+            org_reader,
+        }
+    }
+
+    /// Every referenced cluster must be reachable for the plan's org: owned
+    /// inside its subtree (shares extend this in the sharing feature).
+    async fn ensure_clusters_accessible(
+        &self,
+        cluster_ids: &[Id<TreeCluster>],
+        plan_org: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        if cluster_ids.is_empty() {
+            return Ok(());
+        }
+        let hierarchy = self.org_reader.hierarchy().await?;
+        let clusters = self.cluster_reader.by_ids(cluster_ids).await?;
+        if clusters
+            .iter()
+            .all(|c| hierarchy.is_descendant_or_self(c.organization_id(), plan_org))
+        {
+            Ok(())
+        } else {
+            Err(ServiceError::OrganizationMismatch)
         }
     }
 
@@ -89,6 +115,8 @@ impl WateringPlanService {
 
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn create(&self, draft: WateringPlanDraft) -> Result<WateringPlan, ServiceError> {
+        self.ensure_clusters_accessible(&draft.cluster_ids, draft.organization_id)
+            .await?;
         let mut plan = self.writer.save_new(draft).await?;
         if self.route_optimizer.is_some() {
             self.apply_route(&mut plan).await;
@@ -103,6 +131,8 @@ impl WateringPlanService {
         update: WateringPlanUpdate,
     ) -> Result<WateringPlan, ServiceError> {
         let mut plan = self.reader.by_id(id).await?;
+        self.ensure_clusters_accessible(&update.cluster_ids, plan.organization_id())
+            .await?;
         plan.replace_details(update).map_err(map_plan_error)?;
         if self.route_optimizer.is_some() {
             // Edited cluster/vehicle set invalidates the old route; a failed

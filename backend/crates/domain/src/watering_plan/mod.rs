@@ -34,6 +34,7 @@ use crate::{
     Id,
     cluster::TreeCluster,
     events::DomainEvent,
+    organization::Organization,
     shared::{
         coordinates::Coordinate,
         distance::Distance,
@@ -118,6 +119,7 @@ pub struct WateringPlan {
     route_geometry: Option<Vec<Coordinate>>,
     refill_points: Vec<RefillPoint>,
     user_ids: Vec<uuid::Uuid>,
+    organization_id: Id<Organization>,
 }
 
 /// Input for creating a new [`WateringPlan`].
@@ -131,6 +133,7 @@ pub struct WateringPlanDraft {
     pub trailer_id: Option<Id<Vehicle>>,
     pub provenance: Provenance,
     pub user_ids: Vec<uuid::Uuid>,
+    pub organization_id: Id<Organization>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -174,11 +177,16 @@ impl WateringPlan {
             route_geometry: snap.route_geometry,
             refill_points: snap.refill_points,
             user_ids: snap.user_ids,
+            organization_id: Id::new(snap.organization_id),
         }
     }
 
     pub fn status(&self) -> WateringPlanStatus {
         self.status
+    }
+
+    pub fn organization_id(&self) -> Id<Organization> {
+        self.organization_id
     }
 
     pub fn cluster_ids(&self) -> &[Id<TreeCluster>] {
@@ -383,6 +391,7 @@ mod tests {
             route_geometry: None,
             refill_points: Vec::new(),
             user_ids: vec![],
+            organization_id: Id::new_v7(),
         };
         (plan, [c1, c2])
     }

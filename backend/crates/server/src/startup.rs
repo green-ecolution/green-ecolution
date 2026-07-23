@@ -406,6 +406,7 @@ impl Services {
                 route_optimizer,
                 tree_demand_liters,
                 start_point_reader.clone(),
+                repos.organization_reader.clone(),
             )),
             watering_execution: Arc::new(WateringExecutionService::new(
                 repos.watering_plan_reader.clone(),

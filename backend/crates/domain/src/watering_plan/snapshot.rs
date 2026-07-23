@@ -31,4 +31,5 @@ pub struct WateringPlanSnapshot {
     pub additional_info: Option<Value>,
     pub route_geometry: Option<Vec<Coordinate>>,
     pub refill_points: Vec<RefillPoint>,
+    pub organization_id: Uuid,
 }
