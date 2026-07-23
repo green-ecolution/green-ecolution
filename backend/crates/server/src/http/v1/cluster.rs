@@ -11,25 +11,30 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     http::{
         AppState,
-        v1::dto::{
-            ListResponse,
-            cluster::{
-                ClusterBoundaryListResponse, ClusterBoundaryResponse, ClusterListParams,
-                ClusterMarkerListResponse, ClusterMarkerResponse, ClusterStatisticsResponse,
-                SoilMoistureParams, SoilMoistureSeriesResponse, TreeClusterCreateRequest,
-                TreeClusterInListResponse, TreeClusterResponse, TreeClusterUpdateRequest,
+        auth::extractor::AuthUserExtractor,
+        v1::{
+            dto::{
+                ListResponse,
+                cluster::{
+                    ClusterBoundaryListResponse, ClusterBoundaryResponse, ClusterListParams,
+                    ClusterMarkerListResponse, ClusterMarkerResponse, ClusterStatisticsResponse,
+                    SoilMoistureParams, SoilMoistureSeriesResponse, TreeClusterCreateRequest,
+                    TreeClusterInListResponse, TreeClusterResponse, TreeClusterUpdateRequest,
+                },
+                sensor::resolve_sensors_by_str_ids,
+                tree::TreeResponse,
             },
-            sensor::resolve_sensors_by_str_ids,
-            tree::TreeResponse,
+            scope,
         },
     },
     service::ServiceError,
 };
 use domain::{
     Id,
+    authorization::{Action, Permission, Resource},
     cluster::{
-        ClusterAddress, ClusterName, ClusterSort, SortOrder, TreeClusterDraft,
-        TreeClusterSearchQuery, TreeClusterUpdate, TreeClusterView,
+        ClusterAddress, ClusterName, ClusterSort, SortOrder, TreeClusterSearchQuery,
+        TreeClusterUpdate, TreeClusterView,
     },
     region::Region,
     shared::{
@@ -198,9 +203,19 @@ pub async fn get_cluster(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn create_cluster(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Json(entity): Json<TreeClusterCreateRequest>,
 ) -> Result<(StatusCode, Json<TreeClusterResponse>), ServiceError> {
-    let draft: TreeClusterDraft = entity.try_into()?;
+    let org = scope::resolve_target_org(&state, user.id, entity.organization_id).await?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::TreeCluster, Action::Create),
+            org,
+        )
+        .await?;
+    let draft = entity.into_draft(org)?;
     let cluster = state.cluster_service.create(draft).await?;
     let view = state.cluster_service.view_by_id(cluster.id).await?;
     let response = build_cluster_response(&state, &view).await?;

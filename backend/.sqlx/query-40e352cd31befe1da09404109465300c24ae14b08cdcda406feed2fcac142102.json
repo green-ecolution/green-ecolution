@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT tc.id, tc.updated_at, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: Option<SoilCondition>\",\n                      tc.latitude, tc.longitude,\n                      tc.last_watered AS \"last_watered: DateTime<Utc>\",\n                      tc.provider,\n                      tc.additional_informations AS additional_info,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS \"tree_ids!: Vec<RawId>\",\n                      COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS \"sensor_count!: i64\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE ($1::watering_status[] = '{}' OR tc.watering_status = ANY($1))\n              AND ($2::uuid[] = '{}' OR tc.region_id = ANY($2))\n              AND ($3::text IS NULL OR tc.provider = $3)\n              AND ($4::text IS NULL OR tc.name ILIKE $4 ESCAPE '\\')\n              AND ($5::tree_soil_condition[] = '{}' OR tc.soil_condition = ANY($5))\n            GROUP BY tc.id\n            ORDER BY\n              CASE WHEN $6 = 'moisture' AND $7 = 'asc'  THEN tc.moisture_level END ASC NULLS LAST,\n              CASE WHEN $6 = 'moisture' AND $7 = 'desc' THEN tc.moisture_level END DESC NULLS LAST,\n              CASE WHEN $6 = 'trees'    AND $7 = 'asc'  THEN COUNT(t.id) END ASC,\n              CASE WHEN $6 = 'trees'    AND $7 = 'desc' THEN COUNT(t.id) END DESC,\n              CASE WHEN $6 = 'name'     AND $7 = 'desc' THEN tc.name END DESC,\n              tc.name ASC, tc.id ASC\n            LIMIT $8 OFFSET $9",
+  "query": "SELECT tc.id, tc.updated_at, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: Option<SoilCondition>\",\n                      tc.latitude, tc.longitude,\n                      tc.last_watered AS \"last_watered: DateTime<Utc>\",\n                      tc.provider,\n                      tc.additional_informations AS additional_info,\n                      tc.organization_id,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS \"tree_ids!: Vec<RawId>\",\n                      COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS \"sensor_count!: i64\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE ($1::watering_status[] = '{}' OR tc.watering_status = ANY($1))\n              AND ($2::uuid[] = '{}' OR tc.region_id = ANY($2))\n              AND ($3::text IS NULL OR tc.provider = $3)\n              AND ($4::text IS NULL OR tc.name ILIKE $4 ESCAPE '\\')\n              AND ($5::tree_soil_condition[] = '{}' OR tc.soil_condition = ANY($5))\n            GROUP BY tc.id\n            ORDER BY\n              CASE WHEN $6 = 'moisture' AND $7 = 'asc'  THEN tc.moisture_level END ASC NULLS LAST,\n              CASE WHEN $6 = 'moisture' AND $7 = 'desc' THEN tc.moisture_level END DESC NULLS LAST,\n              CASE WHEN $6 = 'trees'    AND $7 = 'asc'  THEN COUNT(t.id) END ASC,\n              CASE WHEN $6 = 'trees'    AND $7 = 'desc' THEN COUNT(t.id) END DESC,\n              CASE WHEN $6 = 'name'     AND $7 = 'desc' THEN tc.name END DESC,\n              tc.name ASC, tc.id ASC\n            LIMIT $8 OFFSET $9",
   "describe": {
     "columns": [
       {
@@ -136,11 +136,16 @@
       },
       {
         "ordinal": 15,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 16,
         "name": "tree_ids!: Vec<RawId>",
         "type_info": "UuidArray"
       },
       {
-        "ordinal": 16,
+        "ordinal": 17,
         "name": "sensor_count!: i64",
         "type_info": "Int8"
       }
@@ -244,9 +249,10 @@
       true,
       true,
       true,
+      false,
       null,
       null
     ]
   },
-  "hash": "4b0b1ae66913f18fde43e09a2c29f23d34ec2ba181d076410df24017102cbbde"
+  "hash": "40e352cd31befe1da09404109465300c24ae14b08cdcda406feed2fcac142102"
 }

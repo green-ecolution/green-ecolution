@@ -7,11 +7,9 @@ use domain::{
         ClusterAddress, ClusterBoundaryView, ClusterMarker, ClusterName, ClusterStatistics,
         TreeCluster, TreeClusterDraft, TreeClusterView,
     },
+    organization::Organization,
     region::Region,
-    shared::{
-        error::ValidationError,
-        provenance::{Provenance, ProviderId},
-    },
+    shared::provenance::{Provenance, ProviderId},
 };
 
 use crate::service::ServiceError;
@@ -56,6 +54,8 @@ pub struct TreeClusterResponse {
     #[schema(example = "2024-07-10T08:00:00+00:00", nullable)]
     pub last_watered: Option<String>,
     pub trees: Vec<TreeResponse>,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub organization_id: String,
 }
 
 impl TreeClusterResponse {
@@ -85,6 +85,7 @@ impl TreeClusterResponse {
             additional_information: view.additional_info.clone(),
             last_watered: view.last_watered.map(|dt| dt.to_rfc3339()),
             trees,
+            organization_id: view.organization_id.to_string(),
         }
     }
 }
@@ -238,6 +239,9 @@ pub struct TreeClusterCreateRequest {
     #[serde(default)]
     #[schema(value_type = Object, nullable)]
     pub additional_information: Option<serde_json::Value>,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
+    #[serde(default)]
+    pub organization_id: Option<uuid::Uuid>,
 }
 
 /// Request body for updating an existing tree cluster.
@@ -260,21 +264,23 @@ pub struct TreeClusterUpdateRequest {
     pub additional_information: Option<serde_json::Value>,
 }
 
-impl TryFrom<TreeClusterCreateRequest> for TreeClusterDraft {
-    type Error = ValidationError;
-
-    fn try_from(req: TreeClusterCreateRequest) -> Result<Self, Self::Error> {
-        Ok(Self {
-            name: ClusterName::new(req.name)?,
-            address: ClusterAddress::new(req.address)?,
-            description: req.description,
+impl TreeClusterCreateRequest {
+    pub fn into_draft(
+        self,
+        organization_id: Id<Organization>,
+    ) -> Result<TreeClusterDraft, ServiceError> {
+        Ok(TreeClusterDraft {
+            name: ClusterName::new(self.name)?,
+            address: ClusterAddress::new(self.address)?,
+            description: self.description,
             moisture_level: 0.0,
-            soil_condition: Some(req.soil_condition.into()),
-            tree_ids: req.tree_ids.into_iter().map(Id::new).collect(),
+            soil_condition: Some(self.soil_condition.into()),
+            tree_ids: self.tree_ids.into_iter().map(Id::new).collect(),
             provenance: Provenance::new(
-                req.provider.map(ProviderId::new).transpose()?,
-                req.additional_information,
+                self.provider.map(ProviderId::new).transpose()?,
+                self.additional_information,
             ),
+            organization_id,
         })
     }
 }

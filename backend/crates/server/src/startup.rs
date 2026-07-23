@@ -371,6 +371,7 @@ impl Services {
             tree: Arc::new(TreeService::new(
                 repos.tree_reader.clone(),
                 repos.tree_writer.clone(),
+                repos.cluster_reader.clone(),
                 event_bus.clone(),
             )),
             sensor: Arc::new(SensorService::new(

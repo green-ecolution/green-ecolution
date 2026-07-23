@@ -24,6 +24,7 @@ use chrono::{DateTime, Utc};
 use crate::{
     Id,
     events::DomainEvent,
+    organization::Organization,
     region::Region,
     shared::{
         coordinates::Coordinate,
@@ -82,6 +83,7 @@ pub struct TreeCluster {
     region_id: Option<Id<Region>>,
     archived: bool,
     provenance: Provenance,
+    organization_id: Id<Organization>,
 }
 
 /// Input for creating a new [`TreeCluster`].
@@ -94,6 +96,7 @@ pub struct TreeClusterDraft {
     pub soil_condition: Option<SoilCondition>,
     pub tree_ids: Vec<Id<Tree>>,
     pub provenance: Provenance,
+    pub organization_id: Id<Organization>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -199,11 +202,16 @@ impl TreeCluster {
             region_id: snap.region_id.map(Id::new),
             archived: snap.archived,
             provenance: Provenance::reconstitute(snap.provider, snap.additional_info),
+            organization_id: Id::new(snap.organization_id),
         }
     }
 
     pub fn watering_status(&self) -> WateringStatus {
         self.watering_status
+    }
+
+    pub fn organization_id(&self) -> Id<Organization> {
+        self.organization_id
     }
 
     pub fn coordinates(&self) -> Option<Coordinate> {
@@ -344,6 +352,7 @@ mod tests {
             region_id: None,
             archived: false,
             provenance: Provenance::default(),
+            organization_id: Id::new_v7(),
         }
     }
 

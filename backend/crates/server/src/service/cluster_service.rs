@@ -10,6 +10,7 @@ use domain::{
         condition_series,
     },
     events::DomainEvent,
+    organization::Organization,
     shared::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
@@ -78,8 +79,28 @@ impl ClusterService {
         Ok(self.reader.view_by_id(id).await?)
     }
 
+    /// Rejects a cluster whose tree membership crosses an organization
+    /// boundary — every member tree must belong to the same org as the
+    /// cluster itself.
+    async fn ensure_trees_match_org(
+        &self,
+        tree_ids: &[Id<Tree>],
+        org: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        if tree_ids.is_empty() {
+            return Ok(());
+        }
+        let trees = self.tree_reader.by_ids(tree_ids).await?;
+        if trees.iter().any(|t| t.organization_id() != org) {
+            return Err(ServiceError::OrganizationMismatch);
+        }
+        Ok(())
+    }
+
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn create(&self, draft: TreeClusterDraft) -> Result<TreeCluster, ServiceError> {
+        self.ensure_trees_match_org(&draft.tree_ids, draft.organization_id)
+            .await?;
         let source_events = self.source_cluster_events(&draft.tree_ids, None).await?;
         let cluster = self.writer.save_new(draft).await?;
         let mut events = vec![DomainEvent::ClusterTreesChanged {
@@ -97,6 +118,8 @@ impl ClusterService {
         update: TreeClusterUpdate,
     ) -> Result<TreeCluster, ServiceError> {
         let mut cluster = self.reader.by_id(id).await?;
+        self.ensure_trees_match_org(&update.tree_ids, cluster.organization_id())
+            .await?;
         let source_events = self
             .source_cluster_events(&update.tree_ids, Some(id))
             .await?;

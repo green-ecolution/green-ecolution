@@ -59,6 +59,7 @@ struct TreeClusterViewRow {
     additional_info: Option<Value>,
     tree_ids: Vec<RawId>,
     sensor_count: i64,
+    organization_id: RawId,
 }
 
 impl From<TreeClusterViewRow> for TreeClusterView {
@@ -85,6 +86,7 @@ impl From<TreeClusterViewRow> for TreeClusterView {
             sensor_count: row.sensor_count,
             provider: row.provider,
             additional_info: row.additional_info,
+            organization_id: row.organization_id,
         }
     }
 }
@@ -103,6 +105,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
+                      tc.organization_id,
                       COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
@@ -130,6 +133,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
+                      tc.organization_id,
                       COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
@@ -155,6 +159,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
+                      tc.organization_id,
                       COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>",
                       COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS "sensor_count!: i64"
             FROM tree_clusters tc
@@ -186,6 +191,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
+                      tc.organization_id,
                       COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>",
                       COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS "sensor_count!: i64"
             FROM tree_clusters tc
@@ -246,6 +252,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
+                      tc.organization_id,
                       COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>",
                       COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS "sensor_count!: i64"
             FROM tree_clusters tc
@@ -506,8 +513,8 @@ impl TreeClusterWriter for PgTreeClusterRepository {
         sqlx::query!(
             r#"INSERT INTO tree_clusters (id, name, address, description, moisture_level,
                                           watering_status, soil_condition,
-                                          provider, additional_informations)
-            VALUES ($1, $2, $3, $4, $5, 'unknown', $6, $7, $8)"#,
+                                          provider, additional_informations, organization_id)
+            VALUES ($1, $2, $3, $4, $5, 'unknown', $6, $7, $8, $9)"#,
             id.value(),
             draft.name.as_str(),
             draft.address.as_str(),
@@ -516,6 +523,7 @@ impl TreeClusterWriter for PgTreeClusterRepository {
             soil as SoilCondition,
             provider,
             additional_info,
+            draft.organization_id.value(),
         )
         .execute(&mut *tx)
         .await?;

@@ -2,8 +2,9 @@ use std::sync::Arc;
 
 use domain::{
     Id,
-    cluster::TreeCluster,
+    cluster::{TreeCluster, TreeClusterReader},
     events::DomainEvent,
+    organization::Organization,
     sensor::SensorId,
     shared::{
         coordinates::Coordinate,
@@ -22,6 +23,7 @@ use super::{ServiceError, event_bus::EventBus};
 pub struct TreeService {
     reader: Arc<dyn TreeReader>,
     writer: Arc<dyn TreeWriter>,
+    cluster_reader: Arc<dyn TreeClusterReader>,
     event_bus: Arc<dyn EventBus>,
 }
 
@@ -29,13 +31,32 @@ impl TreeService {
     pub fn new(
         reader: Arc<dyn TreeReader>,
         writer: Arc<dyn TreeWriter>,
+        cluster_reader: Arc<dyn TreeClusterReader>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
         Self {
             reader,
             writer,
+            cluster_reader,
             event_bus,
         }
+    }
+
+    /// Rejects moving a tree into a cluster owned by a different
+    /// organization. `cluster_id = None` (leaving/staying out of a cluster)
+    /// is always allowed.
+    async fn ensure_cluster_matches_org(
+        &self,
+        cluster_id: Option<Id<TreeCluster>>,
+        org: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        if let Some(cid) = cluster_id {
+            let cluster = self.cluster_reader.by_id(cid).await?;
+            if cluster.organization_id() != org {
+                return Err(ServiceError::OrganizationMismatch);
+            }
+        }
+        Ok(())
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -104,6 +125,8 @@ impl TreeService {
         if let Some(ref sid) = draft.sensor_id {
             self.ensure_sensor_unassigned(sid, None).await?;
         }
+        self.ensure_cluster_matches_org(draft.cluster_id, draft.organization_id)
+            .await?;
         let tree = self.writer.save_new(draft).await?;
         self.event_bus
             .publish(DomainEvent::TreeCreated {
@@ -121,6 +144,8 @@ impl TreeService {
             self.ensure_sensor_unassigned(sid, Some(id)).await?;
         }
         let mut tree = self.reader.by_id(id).await?;
+        self.ensure_cluster_matches_org(draft.cluster_id, tree.organization_id())
+            .await?;
         let mut events = Vec::new();
         events.extend(tree.replace_details(
             draft.species,
@@ -147,6 +172,8 @@ impl TreeService {
         target: Option<Id<TreeCluster>>,
     ) -> Result<Tree, ServiceError> {
         let mut tree = self.reader.by_id(id).await?;
+        self.ensure_cluster_matches_org(target, tree.organization_id())
+            .await?;
         let events = tree.move_to_cluster(target);
         self.writer.save(&tree).await?;
         self.event_bus.publish_all(events).await;

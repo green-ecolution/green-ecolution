@@ -23,4 +23,5 @@ pub struct TreeClusterSnapshot {
     pub tree_ids: Vec<Uuid>,
     pub provider: Option<String>,
     pub additional_info: Option<Value>,
+    pub organization_id: Uuid,
 }
