@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO vehicles (id, number_plate, description, water_capacity, type, status,\n                                     model, driving_license, height, length, width, weight,\n                                     provider, additional_informations)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)\n            RETURNING id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS additional_info",
+  "query": "SELECT id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id\n            FROM vehicles WHERE id = $1",
   "describe": {
     "columns": [
       {
@@ -111,58 +111,16 @@
         "ordinal": 14,
         "name": "additional_info",
         "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 15,
+        "name": "organization_id",
+        "type_info": "Uuid"
       }
     ],
     "parameters": {
       "Left": [
-        "Uuid",
-        "Text",
-        "Text",
-        "Float8",
-        {
-          "Custom": {
-            "name": "vehicle_type",
-            "kind": {
-              "Enum": [
-                "transporter",
-                "trailer"
-              ]
-            }
-          }
-        },
-        {
-          "Custom": {
-            "name": "vehicle_status",
-            "kind": {
-              "Enum": [
-                "active",
-                "available",
-                "not available",
-                "unknown"
-              ]
-            }
-          }
-        },
-        "Text",
-        {
-          "Custom": {
-            "name": "driving_license",
-            "kind": {
-              "Enum": [
-                "B",
-                "BE",
-                "C",
-                "CE"
-              ]
-            }
-          }
-        },
-        "Float8",
-        "Float8",
-        "Float8",
-        "Float8",
-        "Text",
-        "Jsonb"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -180,8 +138,9 @@
       false,
       false,
       true,
-      true
+      true,
+      false
     ]
   },
-  "hash": "0813765584e79f00e8fe1d8cb55a743538c85f388e8111536cda6e14576e0f26"
+  "hash": "0004f2d254e30e14259ad80a3e875ff24f17635d350768cd5931799da4101eef"
 }

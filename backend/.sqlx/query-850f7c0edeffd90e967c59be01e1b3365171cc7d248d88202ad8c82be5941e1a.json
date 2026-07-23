@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS additional_info\n            FROM vehicles WHERE id = ANY($1::uuid[])",
+  "query": "SELECT id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id\n            FROM vehicles WHERE number_plate = $1",
   "describe": {
     "columns": [
       {
@@ -111,11 +111,16 @@
         "ordinal": 14,
         "name": "additional_info",
         "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 15,
+        "name": "organization_id",
+        "type_info": "Uuid"
       }
     ],
     "parameters": {
       "Left": [
-        "UuidArray"
+        "Text"
       ]
     },
     "nullable": [
@@ -133,8 +138,9 @@
       false,
       false,
       true,
-      true
+      true,
+      false
     ]
   },
-  "hash": "2c3ad4287878f8efd9e8d01f8fe6449031b97f210921af489f04cff620d1db9d"
+  "hash": "850f7c0edeffd90e967c59be01e1b3365171cc7d248d88202ad8c82be5941e1a"
 }

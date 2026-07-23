@@ -354,6 +354,7 @@ mod tests {
             weight: 3500.0,
             provider: None,
             additional_info: None,
+            organization_id: uuid::Uuid::now_v7(),
         })
     }
 

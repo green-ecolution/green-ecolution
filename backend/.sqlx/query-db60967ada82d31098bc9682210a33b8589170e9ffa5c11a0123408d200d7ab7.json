@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS additional_info\n            FROM vehicles WHERE number_plate = $1",
+  "query": "SELECT id, updated_at,\n                      archived_at,\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS \"additional_info: Value\",\n                      organization_id\n            FROM vehicles WHERE id = $1",
   "describe": {
     "columns": [
       {
@@ -10,26 +10,31 @@
       },
       {
         "ordinal": 1,
-        "name": "archived_at: DateTime<chrono::Utc>",
+        "name": "updated_at",
         "type_info": "Timestamp"
       },
       {
         "ordinal": 2,
+        "name": "archived_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 3,
         "name": "number_plate",
         "type_info": "Text"
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "description",
         "type_info": "Text"
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "water_capacity",
         "type_info": "Float8"
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "vehicle_type: VehicleType",
         "type_info": {
           "Custom": {
@@ -44,7 +49,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "status: VehicleStatus",
         "type_info": {
           "Custom": {
@@ -61,12 +66,12 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "model",
         "type_info": "Text"
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "driving_license: DrivingLicense",
         "type_info": {
           "Custom": {
@@ -83,58 +88,65 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "height",
         "type_info": "Float8"
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "width",
         "type_info": "Float8"
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "length",
         "type_info": "Float8"
       },
       {
-        "ordinal": 12,
+        "ordinal": 13,
         "name": "weight",
         "type_info": "Float8"
       },
       {
-        "ordinal": 13,
+        "ordinal": 14,
         "name": "provider",
         "type_info": "Text"
       },
       {
-        "ordinal": 14,
-        "name": "additional_info",
+        "ordinal": 15,
+        "name": "additional_info: Value",
         "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 16,
+        "name": "organization_id",
+        "type_info": "Uuid"
       }
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "Uuid"
       ]
     },
     "nullable": [
       false,
-      true,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
       false,
       true,
-      true
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
     ]
   },
-  "hash": "e38ba66288135f3d658e5df05e14540734e8a1852333b93d92f473f46ce9268a"
+  "hash": "db60967ada82d31098bc9682210a33b8589170e9ffa5c11a0123408d200d7ab7"
 }

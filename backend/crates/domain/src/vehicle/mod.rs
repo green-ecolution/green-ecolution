@@ -18,6 +18,7 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     Id,
+    organization::Organization,
     shared::{
         error::ValidationError,
         provenance::{Provenance, ProviderId},
@@ -133,6 +134,7 @@ pub struct Vehicle {
 
     archived_at: Option<DateTime<Utc>>,
     provenance: Provenance,
+    organization_id: Id<Organization>,
 }
 
 /// Input for creating a new [`Vehicle`].
@@ -147,6 +149,7 @@ pub struct VehicleDraft {
     pub driving_license: DrivingLicense,
     pub dimension: VehicleDimension,
     pub provenance: Provenance,
+    pub organization_id: Id<Organization>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -192,6 +195,7 @@ impl Vehicle {
             ),
             archived_at: snap.archived_at,
             provenance: Provenance::reconstitute(snap.provider, snap.additional_info),
+            organization_id: Id::new(snap.organization_id),
         }
     }
 
@@ -205,6 +209,10 @@ impl Vehicle {
 
     pub fn provenance(&self) -> &Provenance {
         &self.provenance
+    }
+
+    pub fn organization_id(&self) -> Id<Organization> {
+        self.organization_id
     }
 
     /// Replaces every editable field at once. Vehicle is a passive tracking
@@ -257,6 +265,7 @@ mod tests {
             dimension: VehicleDimension::new(2.0, 2.0, 5.0, 3500.0).unwrap(),
             archived_at: None,
             provenance: Provenance::default(),
+            organization_id: Id::new_v7(),
         }
     }
 

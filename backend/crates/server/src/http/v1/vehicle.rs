@@ -10,17 +10,24 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     http::{
         AppState,
+        auth::extractor::AuthUserExtractor,
         v1::{
             dto::{
                 ListResponse,
                 vehicle::{VehicleCreateRequest, VehicleResponse, VehicleUpdateRequest},
             },
             pagination::PaginationParams,
+            scope,
         },
     },
     service::ServiceError,
 };
-use domain::{Id, shared::pagination::Pagination, vehicle::VehicleSearchQuery};
+use domain::{
+    Id,
+    authorization::{Action, Permission, Resource},
+    shared::pagination::Pagination,
+    vehicle::VehicleSearchQuery,
+};
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
@@ -90,9 +97,19 @@ pub async fn get_vehicle(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn create_vehicle(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Json(entity): Json<VehicleCreateRequest>,
 ) -> Result<(StatusCode, Json<VehicleResponse>), ServiceError> {
-    let draft = entity.into_draft()?;
+    let org = scope::resolve_target_org(&state, user.id, entity.organization_id).await?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Vehicle, Action::Create),
+            org,
+        )
+        .await?;
+    let draft = entity.into_draft(org)?;
     let vehicle = state.vehicle_service.create(draft).await?;
     let view = state.vehicle_service.view_by_id(vehicle.id).await?;
     Ok((StatusCode::CREATED, Json(VehicleResponse::from(&view))))

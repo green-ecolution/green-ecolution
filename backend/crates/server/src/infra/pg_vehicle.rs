@@ -42,6 +42,7 @@ struct VehicleViewRow {
     weight: f64,
     provider: Option<String>,
     additional_info: Option<Value>,
+    organization_id: RawId,
 }
 
 impl From<VehicleViewRow> for VehicleView {
@@ -67,6 +68,7 @@ impl From<VehicleViewRow> for VehicleView {
             weight: row.weight,
             provider: row.provider,
             additional_info: row.additional_info,
+            organization_id: row.organization_id,
         }
     }
 }
@@ -88,7 +90,8 @@ impl VehicleReader for PgVehicleRepository {
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
                       provider,
-                      additional_informations AS additional_info
+                      additional_informations AS additional_info,
+                      organization_id
             FROM vehicles WHERE id = $1"#,
             id.value()
         )
@@ -115,7 +118,8 @@ impl VehicleReader for PgVehicleRepository {
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
                       provider,
-                      additional_informations AS additional_info
+                      additional_informations AS additional_info,
+                      organization_id
             FROM vehicles WHERE id = ANY($1::uuid[])"#,
             &id_values
         )
@@ -140,7 +144,8 @@ impl VehicleReader for PgVehicleRepository {
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
                       provider,
-                      additional_informations AS additional_info
+                      additional_informations AS additional_info,
+                      organization_id
             FROM vehicles WHERE number_plate = $1"#,
             plate.as_str()
         )
@@ -165,7 +170,8 @@ impl VehicleReader for PgVehicleRepository {
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
                       provider,
-                      additional_informations AS "additional_info: Value"
+                      additional_informations AS "additional_info: Value",
+                      organization_id
             FROM vehicles WHERE id = $1"#,
             id.value()
         )
@@ -192,7 +198,8 @@ impl VehicleReader for PgVehicleRepository {
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
                       provider,
-                      additional_informations AS "additional_info: Value"
+                      additional_informations AS "additional_info: Value",
+                      organization_id
             FROM vehicles WHERE id = ANY($1::uuid[])"#,
             &id_values
         )
@@ -239,7 +246,8 @@ impl VehicleReader for PgVehicleRepository {
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
                       provider,
-                      additional_informations AS "additional_info: Value"
+                      additional_informations AS "additional_info: Value",
+                      organization_id
             FROM vehicles
             WHERE ($1::text IS NULL OR provider = $1)
               AND ($2::vehicle_type IS NULL OR type = $2)
@@ -285,8 +293,8 @@ impl VehicleWriter for PgVehicleRepository {
             VehicleSnapshot,
             r#"INSERT INTO vehicles (id, number_plate, description, water_capacity, type, status,
                                      model, driving_license, height, length, width, weight,
-                                     provider, additional_informations)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                                     provider, additional_informations, organization_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
             RETURNING id,
                       archived_at AS "archived_at: DateTime<chrono::Utc>",
                       number_plate,
@@ -298,7 +306,8 @@ impl VehicleWriter for PgVehicleRepository {
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
                       provider,
-                      additional_informations AS additional_info"#,
+                      additional_informations AS additional_info,
+                      organization_id"#,
             id.value(),
             draft.number_plate.as_str(),
             draft.description,
@@ -313,6 +322,7 @@ impl VehicleWriter for PgVehicleRepository {
             draft.dimension.weight,
             draft.provenance.provider().map(|p| p.as_str()),
             draft.provenance.additional_info(),
+            draft.organization_id.value(),
         )
         .fetch_one(&self.pool)
         .await?;
