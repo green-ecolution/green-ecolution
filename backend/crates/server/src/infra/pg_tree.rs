@@ -7,6 +7,7 @@ use crate::infra::sql::like_escape;
 use domain::tree::snapshot::TreeSnapshot;
 use domain::{
     Id, RepositoryError,
+    authorization::Visibility,
     cluster::TreeCluster,
     sensor::SensorId,
     shared::{
@@ -338,6 +339,7 @@ impl TreeReader for PgTreeRepository {
         let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
         let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
         let q_pattern: Option<String> = query.q.as_deref().map(|s| format!("%{}%", like_escape(s)));
+        let visible_ids = query.visible.clone().into_raw_ids();
 
         let total = sqlx::query_scalar!(
             r#"SELECT COUNT(*) AS "count!: i64" FROM trees
@@ -345,12 +347,17 @@ impl TreeReader for PgTreeRepository {
               AND ($2::int[] = '{}' OR planting_year = ANY($2))
               AND ($3::text IS NULL OR provider = $3)
               AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))
-              AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\' OR species ILIKE $5 ESCAPE '\')"#,
+              AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\' OR species ILIKE $5 ESCAPE '\')
+              AND ($6::uuid[] IS NULL
+                   OR organization_id = ANY($6)
+                   OR id IN (SELECT tree_id FROM tree_shares WHERE organization_id = ANY($6))
+                   OR tree_cluster_id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($6)))"#,
             &watering_statuses as &[WateringStatus],
             &planting_years,
             provider.as_deref(),
             query.has_cluster,
             q_pattern.as_deref(),
+            visible_ids.as_deref(),
         )
         .fetch_one(&self.pool)
         .await? as u64;
@@ -379,13 +386,18 @@ impl TreeReader for PgTreeRepository {
               AND ($3::text IS NULL OR provider = $3)
               AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))
               AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\' OR species ILIKE $5 ESCAPE '\')
+              AND ($6::uuid[] IS NULL
+                   OR organization_id = ANY($6)
+                   OR id IN (SELECT tree_id FROM tree_shares WHERE organization_id = ANY($6))
+                   OR tree_cluster_id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($6)))
             ORDER BY number ASC
-            LIMIT $6 OFFSET $7"#,
+            LIMIT $7 OFFSET $8"#,
             &watering_statuses as &[WateringStatus],
             &planting_years,
             provider.as_deref(),
             query.has_cluster,
             q_pattern.as_deref(),
+            visible_ids.as_deref(),
             limit,
             offset,
         )
@@ -410,6 +422,7 @@ impl TreeReader for PgTreeRepository {
             .collect();
         let provider = query.provider.as_ref().map(|p| p.as_str().to_string());
         let bbox = query.bbox;
+        let visible_ids = query.visible.into_raw_ids();
 
         let rows = sqlx::query!(
             r#"SELECT id, latitude, longitude, number,
@@ -427,6 +440,10 @@ impl TreeReader for PgTreeRepository {
                        geometry,
                        ST_MakeEnvelope($6, $7, $8, $9, 4326)
                    ))
+              AND ($10::uuid[] IS NULL
+                   OR organization_id = ANY($10)
+                   OR id IN (SELECT tree_id FROM tree_shares WHERE organization_id = ANY($10))
+                   OR tree_cluster_id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($10)))
             ORDER BY id"#,
             &watering_statuses as &[WateringStatus],
             &planting_years,
@@ -437,6 +454,7 @@ impl TreeReader for PgTreeRepository {
             bbox.map(|b| b.sw_lat()),
             bbox.map(|b| b.ne_lng()),
             bbox.map(|b| b.ne_lat()),
+            visible_ids.as_deref(),
         )
         .fetch_all(&self.pool)
         .await?;
@@ -460,7 +478,9 @@ impl TreeReader for PgTreeRepository {
         coord: Coordinate,
         radius: Distance,
         limit: u32,
+        visible: Visibility,
     ) -> Result<Vec<TreeViewWithDistance>, RepositoryError> {
+        let visible_ids = visible.into_raw_ids();
         let rows = sqlx::query_as!(
             TreeViewWithDistanceRow,
             r#"WITH distances AS (
@@ -475,6 +495,10 @@ impl TreeReader for PgTreeRepository {
                     ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,
                     $3
                 )
+                AND ($5::uuid[] IS NULL
+                     OR organization_id = ANY($5)
+                     OR id IN (SELECT tree_id FROM tree_shares WHERE organization_id = ANY($5))
+                     OR tree_cluster_id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($5)))
             )
             SELECT id, updated_at, tree_cluster_id, sensor_id,
                       planting_year, species, number, latitude, longitude,
@@ -500,6 +524,7 @@ impl TreeReader for PgTreeRepository {
             coord.longitude(),
             radius.meters(),
             limit as i64,
+            visible_ids.as_deref(),
         )
         .fetch_all(&self.pool)
         .await?;
@@ -547,9 +572,19 @@ impl TreeReader for PgTreeRepository {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn distinct_planting_years(&self) -> Result<Vec<PlantingYear>, RepositoryError> {
+    async fn distinct_planting_years(
+        &self,
+        visible: Visibility,
+    ) -> Result<Vec<PlantingYear>, RepositoryError> {
+        let visible_ids = visible.into_raw_ids();
         let rows = sqlx::query_scalar!(
-            "SELECT DISTINCT planting_year FROM trees ORDER BY planting_year ASC"
+            r#"SELECT DISTINCT planting_year FROM trees
+            WHERE ($1::uuid[] IS NULL
+                   OR organization_id = ANY($1)
+                   OR id IN (SELECT tree_id FROM tree_shares WHERE organization_id = ANY($1))
+                   OR tree_cluster_id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($1)))
+            ORDER BY planting_year ASC"#,
+            visible_ids.as_deref(),
         )
         .fetch_all(&self.pool)
         .await?;

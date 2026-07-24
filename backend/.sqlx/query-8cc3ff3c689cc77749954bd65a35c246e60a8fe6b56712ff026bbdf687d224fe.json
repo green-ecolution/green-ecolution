@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id,\n                      COALESCE((\n                        SELECT array_agg(DISTINCT s.org) FROM (\n                          SELECT ts.organization_id AS org FROM tree_shares ts WHERE ts.tree_id = trees.id\n                          UNION\n                          SELECT tcs.organization_id FROM tree_cluster_shares tcs\n                          WHERE tcs.tree_cluster_id = trees.tree_cluster_id\n                        ) s\n                      ), '{}') AS \"shared_with!: Vec<RawId>\"\n            FROM trees\n            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))\n              AND ($2::int[] = '{}' OR planting_year = ANY($2))\n              AND ($3::text IS NULL OR provider = $3)\n              AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))\n              AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\\' OR species ILIKE $5 ESCAPE '\\')\n            ORDER BY number ASC\n            LIMIT $6 OFFSET $7",
+  "query": "SELECT id, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id,\n                      COALESCE((\n                        SELECT array_agg(DISTINCT s.org) FROM (\n                          SELECT ts.organization_id AS org FROM tree_shares ts WHERE ts.tree_id = trees.id\n                          UNION\n                          SELECT tcs.organization_id FROM tree_cluster_shares tcs\n                          WHERE tcs.tree_cluster_id = trees.tree_cluster_id\n                        ) s\n                      ), '{}') AS \"shared_with!: Vec<RawId>\"\n            FROM trees\n            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))\n              AND ($2::int[] = '{}' OR planting_year = ANY($2))\n              AND ($3::text IS NULL OR provider = $3)\n              AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))\n              AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\\' OR species ILIKE $5 ESCAPE '\\')\n              AND ($6::uuid[] IS NULL\n                   OR organization_id = ANY($6)\n                   OR id IN (SELECT tree_id FROM tree_shares WHERE organization_id = ANY($6))\n                   OR tree_cluster_id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($6)))\n            ORDER BY number ASC\n            LIMIT $7 OFFSET $8",
   "describe": {
     "columns": [
       {
@@ -124,6 +124,7 @@
         "Text",
         "Bool",
         "Text",
+        "UuidArray",
         "Int8",
         "Int8"
       ]
@@ -147,5 +148,5 @@
       null
     ]
   },
-  "hash": "aa61d263c2c7766f3451f01ad2a0a76594f29d2171eca8c8a0a45272b4d03d21"
+  "hash": "8cc3ff3c689cc77749954bd65a35c246e60a8fe6b56712ff026bbdf687d224fe"
 }

@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use domain::{
     Id,
+    authorization::Visibility,
     cluster::{TreeCluster, TreeClusterReader},
     events::DomainEvent,
     organization::{Organization, OrganizationReader},
@@ -270,13 +271,20 @@ impl TreeService {
         coord: Coordinate,
         radius: Distance,
         limit: u32,
+        visible: Visibility,
     ) -> Result<Vec<TreeViewWithDistance>, ServiceError> {
-        Ok(self.reader.view_nearest(coord, radius, limit).await?)
+        Ok(self
+            .reader
+            .view_nearest(coord, radius, limit, visible)
+            .await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn distinct_planting_years(&self) -> Result<Vec<PlantingYear>, ServiceError> {
-        Ok(self.reader.distinct_planting_years().await?)
+    pub async fn distinct_planting_years(
+        &self,
+        visible: Visibility,
+    ) -> Result<Vec<PlantingYear>, ServiceError> {
+        Ok(self.reader.distinct_planting_years(visible).await?)
     }
 
     /// Only clusterless trees can be shared — a tree in a cluster is shared

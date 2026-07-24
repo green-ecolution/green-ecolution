@@ -7,6 +7,7 @@ use domain::{
 };
 use rust_decimal::Decimal;
 use secrecy::SecretString;
+use serde_json::json;
 use server::{
     configuration::{AuthSettings, Settings},
     http::AppState,
@@ -17,6 +18,8 @@ use sqlx::{Connection, Executor, PgConnection, PgPool, postgres::PgPoolOptions};
 use testcontainers::{ContainerAsync, GenericImage, ImageExt, runners::AsyncRunner};
 use tokio::sync::OnceCell;
 use uuid::Uuid;
+
+use crate::{auth_helpers::AuthHarness, organizations::ROOT_ORG_ID};
 
 pub struct TestApp {
     pub address: String,
@@ -298,6 +301,56 @@ async fn seed_routing_depots(pool: &sqlx::PgPool) {
     .execute(pool)
     .await
     .expect("failed to seed depots");
+}
+
+/// Seeds an org below ROOT, a role with exactly `permissions`, and a user
+/// holding it. Generalizes `authorization.rs::seed_admin_in_new_org` (which
+/// always copies the full admin template) with an explicit permission set.
+/// Returns (org_id, bearer token).
+pub async fn seed_user_with_permissions(
+    harness: &AuthHarness,
+    app: &TestApp,
+    org_name: &str,
+    permissions: &[&str],
+) -> (Uuid, String) {
+    let org_id: Uuid = sqlx::query_scalar!(
+        r#"INSERT INTO organizations (id, parent_id, name) VALUES (gen_random_uuid(), $1::uuid, $2) RETURNING id"#,
+        Uuid::parse_str(ROOT_ORG_ID).unwrap(),
+        org_name
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    let permissions: Vec<String> = permissions.iter().map(|p| p.to_string()).collect();
+    let role_id: Uuid = sqlx::query_scalar!(
+        r#"INSERT INTO roles (id, organization_id, name, permissions)
+           VALUES (gen_random_uuid(), $1, 'Test-Rolle', $2)
+           RETURNING id"#,
+        org_id,
+        &permissions,
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    let user_id = Uuid::new_v4();
+    sqlx::query!(
+        r#"INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)"#,
+        user_id,
+        org_id
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    sqlx::query!(
+        r#"INSERT INTO role_assignments (user_id, role_id) VALUES ($1, $2)"#,
+        user_id,
+        role_id
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    let token = harness.sign_token(json!({ "sub": user_id.to_string() }));
+    (org_id, token)
 }
 
 async fn spawn_with_settings(settings: Settings) -> TestApp {
