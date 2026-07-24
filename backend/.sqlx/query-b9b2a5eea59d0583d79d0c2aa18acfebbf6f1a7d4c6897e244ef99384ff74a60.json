@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO trees (id, sensor_id, planting_year, species, number, latitude, longitude,\n                              geometry, description, organization_id)\n        VALUES ($1, 'sensor-unlink', 2020, 'Eiche', 'T-UNL', 53.55, 9.99,\n                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', '01980000-0000-7000-8000-000000000001')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b9b2a5eea59d0583d79d0c2aa18acfebbf6f1a7d4c6897e244ef99384ff74a60"
+}

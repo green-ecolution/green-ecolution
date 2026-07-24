@@ -22,6 +22,7 @@ pub mod request_id;
 pub mod roles;
 pub mod routing;
 pub mod scoping_cluster;
+pub mod scoping_migration;
 pub mod scoping_sensor;
 pub mod scoping_start_point;
 pub mod scoping_tree;

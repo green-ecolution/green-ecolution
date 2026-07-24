@@ -21,7 +21,8 @@ async fn create_cluster(app: &TestApp, soil: &str) -> Uuid {
 async fn insert_sensor(app: &TestApp, cluster_id: Option<Uuid>, sensor_id: &str) {
     let model_id = app.ges_1000_model_id().await;
     sqlx::query!(
-        r#"INSERT INTO sensors (id, activated_at, type, model_id) VALUES ($1, NOW(), 'lorawan', $2)"#,
+        r#"INSERT INTO sensors (id, activated_at, type, model_id, organization_id)
+           VALUES ($1, NOW(), 'lorawan', $2, '01980000-0000-7000-8000-000000000001')"#,
         sensor_id,
         model_id,
     )
@@ -39,9 +40,9 @@ async fn insert_sensor(app: &TestApp, cluster_id: Option<Uuid>, sensor_id: &str)
     if let Some(cluster_id) = cluster_id {
         sqlx::query!(
             r#"INSERT INTO trees (id, tree_cluster_id, sensor_id, planting_year, species, number,
-                              latitude, longitude, geometry)
+                              latitude, longitude, geometry, organization_id)
            VALUES ($1, $2, $3, 2020, 'Stieleiche', $4, 54.79, 9.43,
-                   ST_SetSRID(ST_MakePoint(9.43, 54.79), 4326))"#,
+                   ST_SetSRID(ST_MakePoint(9.43, 54.79), 4326), '01980000-0000-7000-8000-000000000001')"#,
             Uuid::now_v7(),
             cluster_id,
             sensor_id,

@@ -103,7 +103,14 @@ impl OrganizationService {
         {
             return Err(ServiceError::OrganizationNotEmpty);
         }
-        self.org_writer.delete(id).await?;
+        match self.org_writer.delete(id).await {
+            // Resources still reference this org (trees, sensors, ...): the
+            // pre-checks above only cover children and users.
+            Err(domain::RepositoryError::ForeignKeyViolation(_)) => {
+                return Err(ServiceError::OrganizationNotEmpty);
+            }
+            other => other?,
+        }
         self.event_bus
             .publish_all(vec![DomainEvent::OrganizationDeleted {
                 organization_id: id,
@@ -131,6 +138,7 @@ mod tests {
     struct InMemoryOrgs {
         rows: Mutex<Vec<Organization>>,
         saved_role_copies: Mutex<Vec<RoleDraft>>,
+        fk_violation_on_delete: bool,
     }
 
     impl InMemoryOrgs {
@@ -138,6 +146,14 @@ mod tests {
             Self {
                 rows: Mutex::new(rows),
                 saved_role_copies: Mutex::new(Vec::new()),
+                fk_violation_on_delete: false,
+            }
+        }
+
+        fn with_fk_violation_on_delete(rows: Vec<Organization>) -> Self {
+            Self {
+                fk_violation_on_delete: true,
+                ..Self::new(rows)
             }
         }
     }
@@ -186,6 +202,12 @@ mod tests {
             Ok(())
         }
         async fn delete(&self, id: Id<Organization>) -> Result<(), RepositoryError> {
+            if self.fk_violation_on_delete {
+                return Err(RepositoryError::ForeignKeyViolation(
+                    "insert or update on table \"trees\" violates foreign key constraint \"trees_organization_id_fkey\""
+                        .into(),
+                ));
+            }
             self.rows.lock().unwrap().retain(|o| o.id != id);
             Ok(())
         }
@@ -493,6 +515,26 @@ mod tests {
             orgs,
             Arc::new(InMemoryRoles::new(Vec::new())),
             profiles,
+            Arc::new(RecordingEventBus::default()),
+        );
+
+        let result = svc.delete(target).await;
+
+        assert!(matches!(result, Err(ServiceError::OrganizationNotEmpty)));
+    }
+
+    #[tokio::test]
+    async fn delete_with_resources_still_referencing_it_is_rejected() {
+        let root = Id::new_v7();
+        let target = Id::new_v7();
+        let orgs = Arc::new(InMemoryOrgs::with_fk_violation_on_delete(vec![
+            org(root, None),
+            org(target, Some(root)),
+        ]));
+        let svc = service(
+            orgs,
+            Arc::new(InMemoryRoles::new(Vec::new())),
+            Arc::new(StubProfiles::default()),
             Arc::new(RecordingEventBus::default()),
         );
 
