@@ -6,7 +6,9 @@ use tokio::net::TcpListener;
 
 use crate::{
     configuration::{CorsSettings, DatabaseSettings, Settings},
-    http::{AppState, FeatureFlags, NearestTreeLimits, auth::AuthLayer, router},
+    http::{
+        AppState, FeatureFlags, NearestTreeLimits, OidcSwaggerSettings, auth::AuthLayer, router,
+    },
     infra::{
         self,
         health::{
@@ -63,6 +65,7 @@ pub struct Application {
     base_url: url::Url,
     cors: CorsSettings,
     auth_layer: AuthLayer,
+    oidc_swagger: OidcSwaggerSettings,
     _jwks: Arc<JwksProvider>,
     shutdown_tx: tokio::sync::watch::Sender<bool>,
     mqtt_handle: Option<tokio::task::JoinHandle<()>>,
@@ -186,6 +189,11 @@ impl Application {
             base_url: settings.application.base_url,
             cors: settings.cors,
             auth_layer,
+            oidc_swagger: OidcSwaggerSettings {
+                enabled: settings.auth.enabled,
+                issuer_url: settings.auth.issuer_url,
+                client_id: settings.auth.frontend_client_id,
+            },
             _jwks: jwks,
             shutdown_tx,
             mqtt_handle,
@@ -212,6 +220,7 @@ impl Application {
             self.base_url.as_str(),
             &self.cors,
             self.auth_layer,
+            &self.oidc_swagger,
         );
         tracing::info!("listening on {}", self.listener.local_addr()?);
         axum::serve(self.listener, app)

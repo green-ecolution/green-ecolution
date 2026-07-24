@@ -8,8 +8,11 @@ use tower_http::{
 };
 use utoipa::OpenApi;
 use utoipa::openapi::Server;
+use utoipa::openapi::security::{
+    AuthorizationCode, Flow, OAuth2, Scopes, SecurityRequirement, SecurityScheme,
+};
 use utoipa_axum::router::OpenApiRouter;
-use utoipa_swagger_ui::SwaggerUi;
+use utoipa_swagger_ui::{SwaggerUi, oauth};
 
 use crate::{
     configuration::{AuthSettings, CorsSettings},
@@ -39,6 +42,15 @@ pub mod v1;
 pub struct FeatureFlags {
     pub routing_enabled: bool,
     pub plugins_enabled: bool,
+}
+
+/// OIDC parameters Swagger UI needs to run the PKCE login flow against
+/// Keycloak. Secret-free by design — the browser uses the public client.
+#[derive(Debug, Clone)]
+pub struct OidcSwaggerSettings {
+    pub enabled: bool,
+    pub issuer_url: String,
+    pub client_id: String,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -138,6 +150,7 @@ pub fn router(
     base_url: &str,
     cors: &CorsSettings,
     auth_layer: AuthLayer,
+    oidc: &OidcSwaggerSettings,
 ) -> Router {
     let (router, mut api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .nest("/api", health::routes())
@@ -153,12 +166,60 @@ pub fn router(
 
     router
         .route("/api/config.js", axum::routing::get(frontend_config_js))
-        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api))
+        .merge(swagger_ui(api, oidc))
         .layer(cors_layer(cors))
         .layer(PropagateRequestIdLayer::new(REQUEST_ID_HEADER))
         .layer(trace_layer)
         .layer(SetRequestIdLayer::new(REQUEST_ID_HEADER, MakeRequestUuid))
         .with_state(state)
+}
+
+const OIDC_SECURITY_SCHEME: &str = "keycloak";
+
+/// Builds the Swagger UI, adding an OAuth2 authorization-code security scheme
+/// plus a global requirement so every endpoint offers login and sends the
+/// bearer token. Skipped entirely when auth is disabled (demo bypass).
+///
+/// We pin the explicit authorization-code flow (not an OpenID Connect discovery
+/// scheme) so Swagger only ever offers PKCE login. A discovery scheme would let
+/// Swagger present Keycloak's `password` grant, which the public frontend client
+/// rejects (Direct Access Grants disabled → 400 unauthorized_client).
+fn swagger_ui(mut api: utoipa::openapi::OpenApi, oidc: &OidcSwaggerSettings) -> SwaggerUi {
+    if !oidc.enabled {
+        return SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api);
+    }
+
+    let issuer = oidc.issuer_url.trim_end_matches('/');
+    let scheme = SecurityScheme::OAuth2(OAuth2::new([Flow::AuthorizationCode(
+        AuthorizationCode::new(
+            format!("{issuer}/protocol/openid-connect/auth"),
+            format!("{issuer}/protocol/openid-connect/token"),
+            Scopes::from_iter([
+                ("openid", "OpenID Connect"),
+                ("profile", "User profile"),
+                ("email", "User email"),
+            ]),
+        ),
+    )]));
+    let components = api.components.get_or_insert_with(Default::default);
+    components.add_security_scheme(OIDC_SECURITY_SCHEME, scheme);
+    api.security = Some(vec![SecurityRequirement::new(
+        OIDC_SECURITY_SCHEME,
+        Vec::<String>::new(),
+    )]);
+
+    SwaggerUi::new("/swagger-ui")
+        .url("/api-docs/openapi.json", api)
+        .oauth(
+            oauth::Config::new()
+                .client_id(&oidc.client_id)
+                .use_pkce_with_authorization_code_grant(true)
+                .scopes(vec![
+                    "openid".to_owned(),
+                    "profile".to_owned(),
+                    "email".to_owned(),
+                ]),
+        )
 }
 
 fn rewrite_paths_for_client(api: &mut utoipa::openapi::OpenApi, base_url: &str) {
