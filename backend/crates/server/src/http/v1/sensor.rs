@@ -6,37 +6,35 @@ use axum::{
     http::StatusCode,
 };
 use chrono::{DateTime, Utc};
-use secrecy::SecretString;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     http::{
         AppState,
+        auth::extractor::AuthUserExtractor,
         extractors::SensorIdPath,
         v1::{
             dto::{
                 ListResponse,
                 cluster::{SoilMoistureParams, SoilMoistureSeriesResponse},
                 sensor::{
-                    ActivateSensorRequest, CreateSensorRequest, LorawanCredentialsRequest,
-                    SensorDataResponse, SensorModelResponse, SensorResponse, SetSensorTreeRequest,
+                    ActivateSensorRequest, CreateSensorRequest, SensorDataResponse,
+                    SensorModelResponse, SensorResponse, SetSensorTreeRequest,
                 },
-                tree::TreeResponse,
+                tree::{TransferRequest, TreeResponse},
             },
             pagination::{PaginationParams, default_page},
+            scope,
         },
     },
     service::ServiceError,
 };
 use domain::{
     Id, RepositoryError,
-    sensor::{LorawanCredentials, SensorDraft, SensorId, SensorSearchQuery, SensorType},
+    authorization::{Action, Permission, Resource},
+    sensor::SensorSearchQuery,
     sensor_model::SensorModel,
-    shared::{
-        pagination::Pagination,
-        provenance::{Provenance, ProviderId},
-        string_value::NonEmptyString,
-    },
+    shared::pagination::Pagination,
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -53,6 +51,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         ))
         .routes(routes!(list_sensor_models))
         .routes(routes!(get_sensor_model))
+        .routes(routes!(transfer_sensor))
 }
 
 #[utoipa::path(get, path = "/sensors", tag = "Sensors",
@@ -68,13 +67,19 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_sensors(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<SensorResponse>>, ServiceError> {
     let pagination = Pagination::from(&params);
-    let page = state
-        .sensor_service
-        .search_view(SensorSearchQuery::default(), pagination)
+    let visible = state
+        .authorization_service
+        .visible_orgs_for(user.id, Permission::new(Resource::Sensor, Action::Read))
         .await?;
+    let query = SensorSearchQuery {
+        visible,
+        ..SensorSearchQuery::default()
+    };
+    let page = state.sensor_service.search_view(query, pagination).await?;
     let response = ListResponse::<SensorResponse>::from_page(page, &pagination);
     Ok(Json(response))
 }
@@ -93,9 +98,16 @@ pub async fn list_sensors(
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
 pub async fn get_sensor(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     SensorIdPath(sensor_id): SensorIdPath,
 ) -> Result<Json<SensorResponse>, ServiceError> {
     let view = state.sensor_service.view_by_id(&sensor_id).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Sensor, Action::Read),
+        view.organization_id,
+    )?;
     Ok(Json(SensorResponse::from(&view)))
 }
 
@@ -106,6 +118,7 @@ pub async fn get_sensor(
     params(("sensor_id" = String, Path, description = "Sensor ID")),
     responses(
         (status = 204, description = "Sensor deleted"),
+        (status = 403, description = "Missing sensor:delete in the owning organization"),
         (status = 404, description = "Sensor not found"),
         (status = 500, description = "Internal server error"),
     )
@@ -113,8 +126,24 @@ pub async fn get_sensor(
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
 pub async fn delete_sensor(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     SensorIdPath(sensor_id): SensorIdPath,
 ) -> Result<StatusCode, ServiceError> {
+    let current = state.sensor_service.view_by_id(&sensor_id).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Sensor, Action::Read),
+        current.organization_id,
+    )?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Sensor, Action::Delete),
+            Id::new(current.organization_id),
+        )
+        .await?;
     state.sensor_service.delete(&sensor_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -164,9 +193,17 @@ pub struct SensorDataParams {
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
 pub async fn list_sensor_data(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     SensorIdPath(sensor_id): SensorIdPath,
     Query(params): Query<SensorDataParams>,
 ) -> Result<Json<ListResponse<SensorDataResponse>>, ServiceError> {
+    let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Sensor, Action::Read),
+        sensor.organization_id,
+    )?;
     let pagination =
         Pagination::with_max_per_page(params.page, params.per_page, SENSOR_DATA_MAX_PER_PAGE);
     let page = state
@@ -194,9 +231,17 @@ pub async fn list_sensor_data(
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
 pub async fn get_sensor_soil_moisture(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     SensorIdPath(sensor_id): SensorIdPath,
     Query(params): Query<SoilMoistureParams>,
 ) -> Result<Json<SoilMoistureSeriesResponse>, ServiceError> {
+    let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Sensor, Action::Read),
+        sensor.organization_id,
+    )?;
     let (from, to, bucket) = params.resolve()?;
     let overview = state
         .sensor_service
@@ -219,9 +264,16 @@ pub async fn get_sensor_soil_moisture(
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
 pub async fn get_tree_by_sensor(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     SensorIdPath(sensor_id): SensorIdPath,
 ) -> Result<Json<TreeResponse>, ServiceError> {
     let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Sensor, Action::Read),
+        sensor.organization_id,
+    )?;
     let tree = state
         .tree_service
         .view_by_sensor_id(&sensor_id)
@@ -248,28 +300,19 @@ pub async fn get_tree_by_sensor(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn create_sensor(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Json(body): Json<CreateSensorRequest>,
 ) -> Result<(StatusCode, Json<SensorResponse>), ServiceError> {
-    let sensor_type: SensorType = body.sensor_type.into();
-    let lorawan = match (sensor_type, body.lorawan) {
-        (SensorType::Lorawan, Some(l)) => parse_lorawan(l)?,
-        (SensorType::Lorawan, None) => {
-            return Err(ServiceError::InvalidInput(
-                "lorawan block required for sensor_type=lorawan".into(),
-            ));
-        }
-    };
-
-    let draft = SensorDraft {
-        id: SensorId::new(body.id)?,
-        sensor_type,
-        model_id: Id::new(body.model_id),
-        provenance: Provenance::new(
-            body.provider.map(ProviderId::new).transpose()?,
-            body.additional_information,
-        ),
-        lorawan,
-    };
+    let org = scope::resolve_target_org(&state, user.id, body.organization_id).await?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Sensor, Action::Create),
+            org,
+        )
+        .await?;
+    let draft = body.into_draft(org)?;
     let view = state.sensor_service.create(draft).await?;
     Ok((StatusCode::CREATED, Json(SensorResponse::from(&view))))
 }
@@ -283,6 +326,7 @@ pub async fn create_sensor(
     request_body = ActivateSensorRequest,
     responses(
         (status = 200, description = "Sensor activated", body = SensorResponse),
+        (status = 403, description = "Missing sensor:update or tree:update in the owning organization"),
         (status = 404, description = "Sensor or tree not found"),
         (status = 409, description = "Conflict: sensor or tree already linked"),
         (status = 500, description = "Internal server error"),
@@ -291,9 +335,36 @@ pub async fn create_sensor(
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
 pub async fn activate_sensor(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     SensorIdPath(sensor_id): SensorIdPath,
     Json(body): Json<ActivateSensorRequest>,
 ) -> Result<Json<SensorResponse>, ServiceError> {
+    let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Sensor, Action::Read),
+        sensor.organization_id,
+    )?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Sensor, Action::Update),
+            Id::new(sensor.organization_id),
+        )
+        .await?;
+
+    let tree = state.tree_service.view_by_id(Id::new(body.tree_id)).await?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Tree, Action::Update),
+            Id::new(tree.organization_id),
+        )
+        .await?;
+
     let view = state
         .sensor_service
         .activate(&sensor_id, Id::new(body.tree_id))
@@ -311,6 +382,7 @@ pub async fn activate_sensor(
     request_body = SetSensorTreeRequest,
     responses(
         (status = 200, description = "Sensor re-linked", body = SensorResponse),
+        (status = 403, description = "Missing sensor:update or tree:update in the owning organization"),
         (status = 404, description = "Sensor or tree not found"),
         (status = 409, description = "Conflict: sensor not activated or tree already linked"),
         (status = 500, description = "Internal server error"),
@@ -319,9 +391,36 @@ pub async fn activate_sensor(
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
 pub async fn set_sensor_tree(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     SensorIdPath(sensor_id): SensorIdPath,
     Json(body): Json<SetSensorTreeRequest>,
 ) -> Result<Json<SensorResponse>, ServiceError> {
+    let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Sensor, Action::Read),
+        sensor.organization_id,
+    )?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Sensor, Action::Update),
+            Id::new(sensor.organization_id),
+        )
+        .await?;
+
+    let tree = state.tree_service.view_by_id(Id::new(body.tree_id)).await?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Tree, Action::Update),
+            Id::new(tree.organization_id),
+        )
+        .await?;
+
     let view = state
         .sensor_service
         .reassign_tree(&sensor_id, Id::new(body.tree_id))
@@ -338,6 +437,7 @@ pub async fn set_sensor_tree(
     params(("sensor_id" = String, Path, description = "Sensor ID (EUI)")),
     responses(
         (status = 200, description = "Sensor reset to prepared", body = SensorResponse),
+        (status = 403, description = "Missing sensor:update or tree:update in the owning organization"),
         (status = 404, description = "Sensor not found"),
         (status = 500, description = "Internal server error"),
     )
@@ -345,8 +445,36 @@ pub async fn set_sensor_tree(
 #[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
 pub async fn remove_sensor_tree(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     SensorIdPath(sensor_id): SensorIdPath,
 ) -> Result<Json<SensorResponse>, ServiceError> {
+    let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Sensor, Action::Read),
+        sensor.organization_id,
+    )?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Sensor, Action::Update),
+            Id::new(sensor.organization_id),
+        )
+        .await?;
+
+    if let Some(tree) = state.tree_service.view_by_sensor_id(&sensor_id).await? {
+        state
+            .authorization_service
+            .require(
+                user.id,
+                Permission::new(Resource::Tree, Action::Update),
+                Id::new(tree.organization_id),
+            )
+            .await?;
+    }
+
     let view = state.sensor_service.deactivate(&sensor_id).await?;
     Ok(Json(SensorResponse::from(&view)))
 }
@@ -391,27 +519,46 @@ pub async fn get_sensor_model(
     Ok(Json(SensorModelResponse::from(&model)))
 }
 
-fn parse_lorawan(l: LorawanCredentialsRequest) -> Result<LorawanCredentials, ServiceError> {
-    hex_field("dev_eui", &l.dev_eui, 16)?;
-    hex_field("app_eui", &l.app_eui, 16)?;
-    hex_field("app_key", &l.app_key, 32)?;
-
-    Ok(LorawanCredentials {
-        serial_number: NonEmptyString::new(l.serial_number, "sensor.lorawan.serial_number", 1, 64)?,
-        dev_eui: NonEmptyString::new(l.dev_eui, "sensor.lorawan.dev_eui", 16, 16)?,
-        app_eui: NonEmptyString::new(l.app_eui, "sensor.lorawan.app_eui", 16, 16)?,
-        app_key: SecretString::from(l.app_key),
-        at_pin: l.at_pin,
-        ota_pin: l.ota_pin,
-        config: l.config,
-    })
-}
-
-fn hex_field(label: &'static str, s: &str, len: usize) -> Result<(), ServiceError> {
-    if s.len() != len || !s.chars().all(|c| c.is_ascii_hexdigit()) {
-        return Err(ServiceError::InvalidInput(format!(
-            "{label} must be {len} hex characters"
-        )));
-    }
-    Ok(())
+#[utoipa::path(patch, path = "/sensors/{sensor_id}/organization", tag = "Sensors",
+    operation_id = "transferSensor", summary = "Transfer a sensor's ownership to another organization",
+    description = "Moves an unbound sensor to a different owning organization. Requires \
+                   `sensor:update` in both the source and target organization. A sensor bound \
+                   to a tree must be transferred via its tree instead.",
+    params(("sensor_id" = String, Path, description = "Sensor ID (EUI)")),
+    request_body = TransferRequest,
+    responses(
+        (status = 204, description = "Sensor transferred"),
+        (status = 403, description = "Missing sensor:update in source or target organization"),
+        (status = 404, description = "Sensor or organization not found"),
+        (status = 409, description = "Sensor is bound to a tree"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(sensor.id = %sensor_id))]
+pub async fn transfer_sensor(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    SensorIdPath(sensor_id): SensorIdPath,
+    Json(req): Json<TransferRequest>,
+) -> Result<StatusCode, ServiceError> {
+    let current = state.sensor_service.view_by_id(&sensor_id).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Sensor, Action::Read),
+        current.organization_id,
+    )?;
+    let perm = Permission::new(Resource::Sensor, Action::Update);
+    state
+        .authorization_service
+        .require(user.id, perm, Id::new(current.organization_id))
+        .await?;
+    state
+        .authorization_service
+        .require(user.id, perm, Id::new(req.organization_id))
+        .await?;
+    state
+        .sensor_service
+        .transfer(&sensor_id, Id::new(req.organization_id))
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
 }

@@ -60,8 +60,8 @@ async fn create_cluster_with_trees_links_them() {
 
     let tree_id = uuid::Uuid::now_v7();
     sqlx::query!(
-        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description)
-        VALUES ($1, 2020, 'Eiche', 'T-001', 53.55, 9.99, ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test')"#,
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description, organization_id)
+        VALUES ($1, 2020, 'Eiche', 'T-001', 53.55, 9.99, ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', '01980000-0000-7000-8000-000000000001')"#,
         tree_id,
     )
     .execute(&app.db_pool)
@@ -174,10 +174,10 @@ async fn delete_cluster_unlinks_trees_and_keeps_them_alive() {
     let tree_1 = uuid::Uuid::now_v7();
     let tree_2 = uuid::Uuid::now_v7();
     sqlx::query!(
-        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description)
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description, organization_id)
         VALUES
-            ($1, 2020, 'Eiche', 'T-DEL-1', 53.55, 9.99, ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'A'),
-            ($2, 2021, 'Linde', 'T-DEL-2', 53.56, 9.98, ST_SetSRID(ST_MakePoint(9.98, 53.56), 4326), 'B')"#,
+            ($1, 2020, 'Eiche', 'T-DEL-1', 53.55, 9.99, ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'A', '01980000-0000-7000-8000-000000000001'),
+            ($2, 2021, 'Linde', 'T-DEL-2', 53.56, 9.98, ST_SetSRID(ST_MakePoint(9.98, 53.56), 4326), 'B', '01980000-0000-7000-8000-000000000001')"#,
         tree_1,
         tree_2,
     )
@@ -256,8 +256,8 @@ async fn list_clusters_respects_pagination() {
 async fn insert_tree_at(app: &helpers::TestApp, lat: f64, lng: f64, number: &str) -> uuid::Uuid {
     let id = uuid::Uuid::now_v7();
     sqlx::query!(
-        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description)
-        VALUES ($1, 2020, 'Eiche', $2, $3, $4, ST_SetSRID(ST_MakePoint($4, $3), 4326), 'Test')"#,
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description, organization_id)
+        VALUES ($1, 2020, 'Eiche', $2, $3, $4, ST_SetSRID(ST_MakePoint($4, $3), 4326), 'Test', '01980000-0000-7000-8000-000000000001')"#,
         id,
         number,
         lat,
@@ -777,8 +777,8 @@ async fn cluster_create_stealing_tree_recalculates_source_cluster() {
 async fn insert_sensor(app: &helpers::TestApp, id: &str) {
     let model_id = app.ecodrizzler_model_id().await;
     sqlx::query!(
-        r#"INSERT INTO sensors (id, activated_at, type, model_id)
-        VALUES ($1, NOW(), 'lorawan', $2)"#,
+        r#"INSERT INTO sensors (id, activated_at, type, model_id, organization_id)
+        VALUES ($1, NOW(), 'lorawan', $2, '01980000-0000-7000-8000-000000000001')"#,
         id,
         model_id,
     )
@@ -804,10 +804,10 @@ async fn insert_tree_with(
     let id = uuid::Uuid::now_v7();
     sqlx::query!(
         r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude,
-                              geometry, description, sensor_id, watering_status)
+                              geometry, description, sensor_id, watering_status, organization_id)
         VALUES ($1, 2020, 'Eiche', $2, 53.55, 9.99,
                 ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', $3,
-                $4::text::watering_status)"#,
+                $4::text::watering_status, '01980000-0000-7000-8000-000000000001')"#,
         id,
         number,
         sensor_id,

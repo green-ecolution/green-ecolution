@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO roles (id, organization_id, name, permissions)\n           VALUES (gen_random_uuid(), $1, 'Reader', $2)\n           RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "dd9524a14f0cdc58da33f8033b7268b22c257a3b33bf27583ebb710b5007bf85"
+}

@@ -14,7 +14,7 @@ pub mod error;
 pub mod repository;
 pub mod snapshot;
 
-use crate::{Id, shared::coordinates::Coordinate};
+use crate::{Id, events::DomainEvent, organization::Organization, shared::coordinates::Coordinate};
 
 pub use error::StartPointError;
 pub use repository::{StartPointReader, StartPointWriter};
@@ -33,6 +33,7 @@ pub struct StartPoint {
     pub coordinate: Coordinate,
     is_default: bool,
     watering_point: bool,
+    organization_id: Id<Organization>,
 }
 
 /// Input for creating a new [`StartPoint`]. New points are never default;
@@ -42,6 +43,7 @@ pub struct StartPointDraft {
     pub name: StartPointName,
     pub coordinate: Coordinate,
     pub watering_point: bool,
+    pub organization_id: Id<Organization>,
 }
 
 /// Replacement input for editing a [`StartPoint`]. Does not touch `is_default`.
@@ -62,6 +64,7 @@ impl StartPoint {
                 .expect("persisted start point coordinate must be valid"),
             is_default: snap.is_default,
             watering_point: snap.watering_point,
+            organization_id: Id::new(snap.organization_id),
         }
     }
 
@@ -71,6 +74,10 @@ impl StartPoint {
 
     pub fn watering_point(&self) -> bool {
         self.watering_point
+    }
+
+    pub fn organization_id(&self) -> Id<Organization> {
+        self.organization_id
     }
 
     pub fn rename(&mut self, new_name: StartPointName) {
@@ -87,6 +94,24 @@ impl StartPoint {
     pub fn set_watering_point(&mut self, value: bool) {
         self.watering_point = value;
     }
+
+    /// Reassigns the start point to `target`'s organization. No-op if it
+    /// already belongs there. Also clears `is_default`: the target org's own
+    /// default (if any) must stay untouched, and carrying `is_default = true`
+    /// across the transfer could otherwise collide with it under
+    /// `depots_single_default_per_org`. Promotion in the new organization is
+    /// a separate, explicit call to `StartPointWriter::set_default`. No
+    /// domain-event subscribers exist for this aggregate, so the
+    /// `Vec<DomainEvent>` return type only mirrors the shared `transfer_to`
+    /// shape used by other aggregates.
+    pub fn transfer_to(&mut self, target: Id<Organization>) -> Vec<DomainEvent> {
+        if self.organization_id == target {
+            return vec![];
+        }
+        self.organization_id = target;
+        self.is_default = false;
+        vec![]
+    }
 }
 
 #[cfg(test)]
@@ -101,6 +126,7 @@ mod tests {
             coordinate: Coordinate::new(54.768, 9.434).unwrap(),
             is_default: true,
             watering_point: true,
+            organization_id: Id::new_v7(),
         }
     }
 
@@ -140,5 +166,36 @@ mod tests {
         let mut sp = fixed();
         sp.set_watering_point(false);
         assert!(!sp.watering_point());
+    }
+
+    #[test]
+    fn transfer_to_same_org_is_noop() {
+        let mut sp = fixed();
+        let same = sp.organization_id();
+        let was_default = sp.is_default();
+        let events = sp.transfer_to(same);
+        assert_eq!(sp.organization_id(), same);
+        assert_eq!(
+            sp.is_default(),
+            was_default,
+            "no-op must not reset is_default"
+        );
+        assert!(events.is_empty());
+    }
+
+    #[test]
+    fn transfer_to_new_org_updates_field_and_resets_default() {
+        let mut sp = fixed(); // is_default: true
+        let target: Id<Organization> = Id::new_v7();
+        let events = sp.transfer_to(target);
+        assert_eq!(sp.organization_id(), target);
+        assert!(
+            !sp.is_default(),
+            "transfer must clear is_default to avoid a collision with the target org's own default"
+        );
+        assert!(
+            events.is_empty(),
+            "StartPoint has no domain-event subscribers"
+        );
     }
 }

@@ -21,4 +21,5 @@ pub struct TreeSnapshot {
     pub last_watered: Option<DateTime<Utc>>,
     pub provider: Option<String>,
     pub additional_info: Option<Value>,
+    pub organization_id: Uuid,
 }

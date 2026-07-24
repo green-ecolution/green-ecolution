@@ -111,6 +111,12 @@ export interface SensorResponse {
      */
     model: SensorModelSummaryResponse;
     /**
+     * 
+     * @type {string}
+     * @memberof SensorResponse
+     */
+    organizationId: string;
+    /**
      * Name of the data provider or integration (e.g. "ttn", "chirpstack").
      * @type {string}
      * @memberof SensorResponse
@@ -145,6 +151,7 @@ export function instanceOfSensorResponse(value: object): value is SensorResponse
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('model' in value) || value['model'] === undefined) return false;
+    if (!('organizationId' in value) || value['organizationId'] === undefined) return false;
     if (!('sensorType' in value) || value['sensorType'] === undefined) return false;
     if (!('status' in value) || value['status'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
@@ -169,6 +176,7 @@ export function SensorResponseFromJSONTyped(json: any, ignoreDiscriminator: bool
         'linkedTreeId': json['linked_tree_id'] == null ? undefined : json['linked_tree_id'],
         'lorawan': json['lorawan'] == null ? undefined : LorawanInfoResponseFromJSON(json['lorawan']),
         'model': SensorModelSummaryResponseFromJSON(json['model']),
+        'organizationId': json['organization_id'],
         'provider': json['provider'] == null ? undefined : json['provider'],
         'sensorType': SensorTypeResponseFromJSON(json['sensor_type']),
         'status': SensorStatusFromJSON(json['status']),
@@ -195,6 +203,7 @@ export function SensorResponseToJSONTyped(value?: SensorResponse | null, ignoreD
         'linked_tree_id': value['linkedTreeId'],
         'lorawan': LorawanInfoResponseToJSON(value['lorawan']),
         'model': SensorModelSummaryResponseToJSON(value['model']),
+        'organization_id': value['organizationId'],
         'provider': value['provider'],
         'sensor_type': SensorTypeResponseToJSON(value['sensorType']),
         'status': SensorStatusToJSON(value['status']),

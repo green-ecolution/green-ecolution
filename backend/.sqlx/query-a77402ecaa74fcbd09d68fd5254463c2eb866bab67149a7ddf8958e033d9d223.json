@@ -1,0 +1,65 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT tc.id, tc.name,\n                      tc.latitude AS \"latitude!: f64\",\n                      tc.longitude AS \"longitude!: f64\",\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      COUNT(t.id) AS \"tree_count!: i64\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.archived = false\n              AND tc.latitude IS NOT NULL\n              AND tc.longitude IS NOT NULL\n              AND ($1::uuid[] IS NULL OR tc.organization_id = ANY($1))\n            GROUP BY tc.id\n            ORDER BY tc.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "latitude!: f64",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 3,
+        "name": "longitude!: f64",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 4,
+        "name": "watering_status: WateringStatus",
+        "type_info": {
+          "Custom": {
+            "name": "watering_status",
+            "kind": {
+              "Enum": [
+                "good",
+                "moderate",
+                "bad",
+                "unknown",
+                "just watered"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "tree_count!: i64",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      false,
+      null
+    ]
+  },
+  "hash": "a77402ecaa74fcbd09d68fd5254463c2eb866bab67149a7ddf8958e033d9d223"
+}

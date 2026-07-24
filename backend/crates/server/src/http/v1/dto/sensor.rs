@@ -2,12 +2,18 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use domain::sensor::{
-    SensorId, SensorType, SensorView,
-    data::{SensorReadingView, SignalQuality},
-    view::{LorawanInfo, SensorModelSummary},
-};
 use domain::sensor_model::{SensorAbilityUnit, SensorModel};
+use domain::shared::string_value::NonEmptyString;
+use domain::{
+    Id,
+    organization::Organization,
+    sensor::{
+        LorawanCredentials, SensorDraft, SensorId, SensorType, SensorView,
+        data::{SensorReadingView, SignalQuality},
+        view::{LorawanInfo, SensorModelSummary},
+    },
+    shared::provenance::{Provenance, ProviderId},
+};
 
 use crate::service::{ServiceError, sensor_service::SensorService};
 
@@ -255,6 +261,9 @@ pub struct SensorResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<Object>, nullable, example = json!({"app_id": "green-ecolution"}))]
     pub additional_information: Option<serde_json::Value>,
+
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub organization_id: String,
 }
 
 impl From<&SensorView> for SensorResponse {
@@ -275,6 +284,7 @@ impl From<&SensorView> for SensorResponse {
             latest_data: value.latest_reading.as_ref().map(SensorDataResponse::from),
             provider: value.provider.as_ref().map(|p| p.as_str().to_owned()),
             additional_information: value.additional_info.clone(),
+            organization_id: value.organization_id.to_string(),
         }
     }
 }
@@ -326,6 +336,63 @@ pub struct CreateSensorRequest {
     #[serde(default)]
     #[schema(nullable)]
     pub lorawan: Option<LorawanCredentialsRequest>,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
+    #[serde(default)]
+    pub organization_id: Option<uuid::Uuid>,
+}
+
+impl CreateSensorRequest {
+    pub fn into_draft(
+        self,
+        organization_id: Id<Organization>,
+    ) -> Result<SensorDraft, ServiceError> {
+        let sensor_type: SensorType = self.sensor_type.into();
+        let lorawan = match (sensor_type, self.lorawan) {
+            (SensorType::Lorawan, Some(l)) => parse_lorawan(l)?,
+            (SensorType::Lorawan, None) => {
+                return Err(ServiceError::InvalidInput(
+                    "lorawan block required for sensor_type=lorawan".into(),
+                ));
+            }
+        };
+
+        Ok(SensorDraft {
+            id: SensorId::new(self.id)?,
+            sensor_type,
+            model_id: Id::new(self.model_id),
+            provenance: Provenance::new(
+                self.provider.map(ProviderId::new).transpose()?,
+                self.additional_information,
+            ),
+            lorawan,
+            organization_id,
+        })
+    }
+}
+
+fn parse_lorawan(l: LorawanCredentialsRequest) -> Result<LorawanCredentials, ServiceError> {
+    hex_field("dev_eui", &l.dev_eui, 16)?;
+    hex_field("app_eui", &l.app_eui, 16)?;
+    hex_field("app_key", &l.app_key, 32)?;
+
+    Ok(LorawanCredentials {
+        serial_number: NonEmptyString::new(l.serial_number, "sensor.lorawan.serial_number", 1, 64)?,
+        dev_eui: NonEmptyString::new(l.dev_eui, "sensor.lorawan.dev_eui", 16, 16)?,
+        app_eui: NonEmptyString::new(l.app_eui, "sensor.lorawan.app_eui", 16, 16)?,
+        app_key: secrecy::SecretString::from(l.app_key),
+        at_pin: l.at_pin,
+        ota_pin: l.ota_pin,
+        config: l.config,
+    })
+}
+
+fn hex_field(label: &'static str, s: &str, len: usize) -> Result<(), ServiceError> {
+    if s.len() != len || !s.chars().all(|c| c.is_ascii_hexdigit()) {
+        return Err(ServiceError::InvalidInput(format!(
+            "{label} must be {len} hex characters"
+        )));
+    }
+    Ok(())
 }
 
 /// Request body for `POST /sensors/{sensor_id}/activate` - binds a prepared

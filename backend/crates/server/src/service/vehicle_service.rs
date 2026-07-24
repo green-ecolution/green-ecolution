@@ -2,6 +2,8 @@ use std::sync::Arc;
 
 use domain::{
     Id,
+    authorization::Visibility,
+    organization::Organization,
     shared::pagination::{Page, Pagination},
     vehicle::{
         NumberPlate, Vehicle, VehicleDraft, VehicleReader, VehicleSearchQuery, VehicleType,
@@ -35,8 +37,12 @@ impl VehicleService {
         &self,
         vehicle_type: VehicleType,
         pagination: Pagination,
+        visible: Visibility,
     ) -> Result<Page<VehicleView>, ServiceError> {
-        Ok(self.reader.view_by_type(vehicle_type, pagination).await?)
+        Ok(self
+            .reader
+            .view_by_type(vehicle_type, pagination, visible)
+            .await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(vehicle.id = %id))]
@@ -92,5 +98,17 @@ impl VehicleService {
     #[tracing::instrument(level = "debug", skip_all, fields(vehicle.id = %id))]
     pub async fn delete(&self, id: Id<Vehicle>) -> Result<(), ServiceError> {
         Ok(self.writer.delete(id).await?)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(vehicle.id = %id))]
+    pub async fn transfer(
+        &self,
+        id: Id<Vehicle>,
+        target: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        let mut vehicle = self.reader.by_id(id).await?;
+        vehicle.transfer_to(target);
+        self.writer.save(&vehicle).await?;
+        Ok(())
     }
 }

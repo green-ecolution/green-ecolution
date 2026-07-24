@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE depots SET is_default = FALSE\n               WHERE is_default AND organization_id = (SELECT organization_id FROM depots WHERE id = $1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "85762f15be53dd8cfa66c54bd85b1353be6c37c8f04654e5d047d038ae2be6ad"
+}

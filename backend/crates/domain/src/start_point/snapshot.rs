@@ -10,4 +10,5 @@ pub struct StartPointSnapshot {
     pub longitude: f64,
     pub watering_point: bool,
     pub is_default: bool,
+    pub organization_id: Uuid,
 }

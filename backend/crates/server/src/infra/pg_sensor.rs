@@ -50,6 +50,7 @@ impl SensorReader for PgSensorRepository {
                       s.model_id,
                       s.provider,
                       s.additional_informations AS "additional_info: serde_json::Value",
+                      s.organization_id,
                       sl.serial_number AS "serial_number?",
                       sl.dev_eui       AS "dev_eui?",
                       sl.app_eui       AS "app_eui?",
@@ -83,6 +84,7 @@ impl SensorReader for PgSensorRepository {
             provider: row.provider,
             additional_info: row.additional_info,
             lorawan,
+            organization_id: row.organization_id,
         }))
     }
 
@@ -97,6 +99,7 @@ impl SensorReader for PgSensorRepository {
                       s.model_id,
                       s.provider,
                       s.additional_informations AS "additional_info: serde_json::Value",
+                      s.organization_id,
                       sl.serial_number AS "serial_number?",
                       sl.dev_eui       AS "dev_eui?",
                       sl.app_eui       AS "app_eui?",
@@ -131,6 +134,7 @@ impl SensorReader for PgSensorRepository {
                     provider: r.provider,
                     additional_info: r.additional_info,
                     lorawan,
+                    organization_id: r.organization_id,
                 }))
             })
             .collect()
@@ -144,6 +148,7 @@ impl SensorReader for PgSensorRepository {
                       s.type          AS "sensor_type: SensorType",
                       s.provider,
                       s.additional_informations AS "additional_info: serde_json::Value",
+                      s.organization_id,
                       sm.id           AS model_id,
                       sm.name         AS model_name,
                       t.id            AS "linked_tree_id?",
@@ -212,6 +217,7 @@ impl SensorReader for PgSensorRepository {
                 row.config,
             ),
             latest_reading,
+            organization_id: row.organization_id,
         })
     }
 
@@ -238,7 +244,8 @@ impl SensorReader for PgSensorRepository {
                       sl.config        AS "config: serde_json::Value",
                       lr.id            AS "last_reading_id?: Uuid",
                       lr.updated_at    AS "last_reading_updated_at?",
-                      lr.data          AS "last_reading_data?"
+                      lr.data          AS "last_reading_data?",
+                      s.organization_id
             FROM sensors s
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
@@ -293,6 +300,7 @@ impl SensorReader for PgSensorRepository {
                         r.config,
                     ),
                     latest_reading,
+                    organization_id: r.organization_id,
                 })
             })
             .collect()
@@ -305,13 +313,16 @@ impl SensorReader for PgSensorRepository {
         pagination: Pagination,
     ) -> Result<Page<SensorView>, RepositoryError> {
         let provider = query.provider.as_ref().map(|p| p.as_str().to_owned());
+        let visible_ids = query.visible.into_raw_ids();
         let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
         let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
 
         let total = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) AS "count!: i64" FROM sensors
-            WHERE ($1::text IS NULL OR provider = $1)"#,
-            provider
+            r#"SELECT COUNT(*) AS "count!: i64" FROM sensors s
+            WHERE ($1::text IS NULL OR s.provider = $1)
+              AND ($2::uuid[] IS NULL OR s.organization_id = ANY($2))"#,
+            provider,
+            visible_ids.as_deref(),
         )
         .fetch_one(&self.pool)
         .await? as u64;
@@ -335,7 +346,8 @@ impl SensorReader for PgSensorRepository {
                       sl.config        AS "config: serde_json::Value",
                       lr.id            AS "last_reading_id?: Uuid",
                       lr.updated_at    AS "last_reading_updated_at?",
-                      lr.data          AS "last_reading_data?"
+                      lr.data          AS "last_reading_data?",
+                      s.organization_id
             FROM sensors s
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
@@ -348,11 +360,13 @@ impl SensorReader for PgSensorRepository {
                 LIMIT 1
             ) lr ON true
             WHERE ($1::text IS NULL OR s.provider = $1)
+              AND ($4::uuid[] IS NULL OR s.organization_id = ANY($4))
             ORDER BY s.id
             LIMIT $2 OFFSET $3"#,
             provider,
             limit,
             offset,
+            visible_ids.as_deref(),
         )
         .fetch_all(&self.pool)
         .await?;
@@ -395,6 +409,7 @@ impl SensorReader for PgSensorRepository {
                         r.config,
                     ),
                     latest_reading,
+                    organization_id: r.organization_id,
                 })
             })
             .collect::<Result<Vec<_>, RepositoryError>>()?;
@@ -410,13 +425,14 @@ impl SensorWriter for PgSensorRepository {
         let mut tx = self.pool.begin().await?;
 
         sqlx::query!(
-            r#"INSERT INTO sensors (id, type, model_id, provider, additional_informations)
-            VALUES ($1, $2, $3, $4, $5)"#,
+            r#"INSERT INTO sensors (id, type, model_id, provider, additional_informations, organization_id)
+            VALUES ($1, $2, $3, $4, $5, $6)"#,
             draft.id.as_str(),
             draft.sensor_type as SensorType,
             draft.model_id.value(),
             draft.provenance.provider().map(|p| p.as_str()),
             draft.provenance.additional_info().cloned(),
+            draft.organization_id.value(),
         )
         .execute(&mut *tx)
         .await?;
@@ -449,12 +465,14 @@ impl SensorWriter for PgSensorRepository {
             r#"UPDATE sensors SET
                 activated_at = $2,
                 provider = $3,
-                additional_informations = $4
+                additional_informations = $4,
+                organization_id = $5
             WHERE id = $1"#,
             sensor.id.as_str(),
             sensor.activated_at().map(|t| t.naive_utc()),
             sensor.provenance.provider().map(|p| p.as_str()),
             sensor.provenance.additional_info().cloned(),
+            sensor.organization_id().value(),
         )
         .execute(&self.pool)
         .await?;

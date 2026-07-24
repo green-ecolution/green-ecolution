@@ -38,6 +38,13 @@ export interface WateringPlanCreateRequest {
      */
     description: string;
     /**
+     * Organization this watering plan belongs to. Defaults to the acting
+     * user's own organization when omitted.
+     * @type {string}
+     * @memberof WateringPlanCreateRequest
+     */
+    organizationId?: string | null;
+    /**
      * Name of the external data provider that supplied this record.
      * @type {string}
      * @memberof WateringPlanCreateRequest
@@ -100,6 +107,7 @@ export function WateringPlanCreateRequestFromJSONTyped(json: any, ignoreDiscrimi
         'additionalInformation': json['additional_information'] == null ? undefined : json['additional_information'],
         'date': json['date'],
         'description': json['description'],
+        'organizationId': json['organization_id'] == null ? undefined : json['organization_id'],
         'provider': json['provider'] == null ? undefined : json['provider'],
         'startPointName': json['start_point_name'] == null ? undefined : json['start_point_name'],
         'trailerId': json['trailer_id'] == null ? undefined : json['trailer_id'],
@@ -123,6 +131,7 @@ export function WateringPlanCreateRequestToJSONTyped(value?: WateringPlanCreateR
         'additional_information': value['additionalInformation'],
         'date': value['date'],
         'description': value['description'],
+        'organization_id': value['organizationId'],
         'provider': value['provider'],
         'start_point_name': value['startPointName'],
         'trailer_id': value['trailerId'],

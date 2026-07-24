@@ -1,0 +1,168 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, updated_at,\n                      archived_at,\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS \"additional_info: Value\",\n                      organization_id\n            FROM vehicles\n            WHERE ($1::text IS NULL OR provider = $1)\n              AND ($2::vehicle_type IS NULL OR type = $2)\n              AND ($3::bool OR archived_at IS NULL)\n              AND (NOT $4::bool OR archived_at IS NOT NULL)\n              AND ($7::uuid[] IS NULL OR organization_id = ANY($7))\n            ORDER BY water_capacity DESC\n            LIMIT $5 OFFSET $6",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 2,
+        "name": "archived_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 3,
+        "name": "number_plate",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "water_capacity",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 6,
+        "name": "vehicle_type: VehicleType",
+        "type_info": {
+          "Custom": {
+            "name": "vehicle_type",
+            "kind": {
+              "Enum": [
+                "transporter",
+                "trailer"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "status: VehicleStatus",
+        "type_info": {
+          "Custom": {
+            "name": "vehicle_status",
+            "kind": {
+              "Enum": [
+                "active",
+                "available",
+                "not available",
+                "unknown"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "model",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "driving_license: DrivingLicense",
+        "type_info": {
+          "Custom": {
+            "name": "driving_license",
+            "kind": {
+              "Enum": [
+                "B",
+                "BE",
+                "C",
+                "CE"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "height",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 11,
+        "name": "width",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 12,
+        "name": "length",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 13,
+        "name": "weight",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 14,
+        "name": "provider",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 15,
+        "name": "additional_info: Value",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 16,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        {
+          "Custom": {
+            "name": "vehicle_type",
+            "kind": {
+              "Enum": [
+                "transporter",
+                "trailer"
+              ]
+            }
+          }
+        },
+        "Bool",
+        "Bool",
+        "Int8",
+        "Int8",
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "35f23994b8e4e1dc78de3bb4cbb56632ec9d588426d543e975b33a6dbbc287bf"
+}

@@ -79,6 +79,7 @@ export * from './SoilMoistureSeriesResponse';
 export * from './SoilMoistureThresholdResponse';
 export * from './StartPointRequest';
 export * from './StartPointResponse';
+export * from './TransferRequest';
 export * from './TreeClusterCreateRequest';
 export * from './TreeClusterInListResponse';
 export * from './TreeClusterResponse';

@@ -15,4 +15,5 @@ pub struct SensorSnapshot {
     pub provider: Option<String>,
     pub additional_info: Option<Value>,
     pub lorawan: Option<LorawanCredentials>,
+    pub organization_id: Uuid,
 }

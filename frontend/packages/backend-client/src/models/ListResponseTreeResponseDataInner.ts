@@ -84,6 +84,12 @@ export interface ListResponseTreeResponseDataInner {
     number: string;
     /**
      * 
+     * @type {string}
+     * @memberof ListResponseTreeResponseDataInner
+     */
+    organizationId: string;
+    /**
+     * 
      * @type {number}
      * @memberof ListResponseTreeResponseDataInner
      */
@@ -138,6 +144,7 @@ export function instanceOfListResponseTreeResponseDataInner(value: object): valu
     if (!('latitude' in value) || value['latitude'] === undefined) return false;
     if (!('longitude' in value) || value['longitude'] === undefined) return false;
     if (!('number' in value) || value['number'] === undefined) return false;
+    if (!('organizationId' in value) || value['organizationId'] === undefined) return false;
     if (!('plantingYear' in value) || value['plantingYear'] === undefined) return false;
     if (!('species' in value) || value['species'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
@@ -163,6 +170,7 @@ export function ListResponseTreeResponseDataInnerFromJSONTyped(json: any, ignore
         'latitude': json['latitude'],
         'longitude': json['longitude'],
         'number': json['number'],
+        'organizationId': json['organization_id'],
         'plantingYear': json['planting_year'],
         'provider': json['provider'] == null ? undefined : json['provider'],
         'sensor': json['sensor'] == null ? undefined : SensorResponseFromJSON(json['sensor']),
@@ -192,6 +200,7 @@ export function ListResponseTreeResponseDataInnerToJSONTyped(value?: ListRespons
         'latitude': value['latitude'],
         'longitude': value['longitude'],
         'number': value['number'],
+        'organization_id': value['organizationId'],
         'planting_year': value['plantingYear'],
         'provider': value['provider'],
         'sensor': SensorResponseToJSON(value['sensor']),

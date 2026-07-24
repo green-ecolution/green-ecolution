@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO organizations (id, parent_id, name) VALUES ($1, '01980000-0000-7000-8000-000000000001', 'TBZ')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "944a3fb10e3dbf9dad13306ec4d603d0e3b2849f4b2dd56579540f82e97c178c"
+}

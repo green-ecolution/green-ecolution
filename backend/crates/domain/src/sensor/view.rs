@@ -26,6 +26,7 @@ pub struct SensorView {
     pub model: SensorModelSummary,
     pub lorawan: Option<LorawanInfo>,
     pub latest_reading: Option<SensorReadingView>,
+    pub organization_id: Uuid,
 }
 
 #[derive(Debug, Clone)]

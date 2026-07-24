@@ -1,0 +1,47 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT COUNT(*) AS \"count!: i64\" FROM trees\n            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))\n              AND ($2::int[] = '{}' OR planting_year = ANY($2))\n              AND ($3::text IS NULL OR provider = $3)\n              AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))\n              AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\\' OR species ILIKE $5 ESCAPE '\\')\n              AND ($6::uuid[] IS NULL OR organization_id = ANY($6))",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!: i64",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "watering_status[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "watering_status",
+                  "kind": {
+                    "Enum": [
+                      "good",
+                      "moderate",
+                      "bad",
+                      "unknown",
+                      "just watered"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "Int4Array",
+        "Text",
+        "Bool",
+        "Text",
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "d0b45d1ed165f6048d37c64c78cfc5078df7cb439d0ed017fd07adb1bfac8c3e"
+}

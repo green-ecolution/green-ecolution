@@ -5,8 +5,8 @@ async fn insert_sensor(app: &TestApp, id: &str, activated: bool) {
     let model_id = app.ecodrizzler_model_id().await;
     let activated_at = activated.then(|| chrono::Utc::now().naive_utc());
     sqlx::query!(
-        r#"INSERT INTO sensors (id, activated_at, type, model_id)
-        VALUES ($1, $2, 'lorawan', $3)"#,
+        r#"INSERT INTO sensors (id, activated_at, type, model_id, organization_id)
+        VALUES ($1, $2, 'lorawan', $3, '01980000-0000-7000-8000-000000000001')"#,
         id,
         activated_at,
         model_id,

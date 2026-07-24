@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT COUNT(*) AS \"count!: i64\"\n            FROM user_watering_plans uwp\n            INNER JOIN watering_plans wp ON wp.id = uwp.watering_plan_id\n            WHERE ($1::uuid[] IS NULL OR wp.organization_id = ANY($1))",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!: i64",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "eda0f60fda11ee44918602dd8cf9c7c201ae90fb59ffdbf7296515d982cc499b"
+}

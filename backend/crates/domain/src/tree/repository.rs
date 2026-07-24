@@ -2,6 +2,7 @@ use async_trait::async_trait;
 
 use crate::{
     Id, RepositoryError,
+    authorization::Visibility,
     cluster::TreeCluster,
     sensor::SensorId,
     shared::{
@@ -51,6 +52,7 @@ pub trait TreeReader: Send + Sync {
         coord: Coordinate,
         radius: Distance,
         limit: u32,
+        visible: Visibility,
     ) -> Result<Vec<TreeViewWithDistance>, RepositoryError>;
 
     /// Returns the [`Tree`] aggregate closest to `coord` within `radius`, or
@@ -72,7 +74,10 @@ pub trait TreeReader: Send + Sync {
         query: TreeSearchQuery,
     ) -> Result<Vec<TreeMarker>, RepositoryError>;
 
-    async fn distinct_planting_years(&self) -> Result<Vec<PlantingYear>, RepositoryError>;
+    async fn distinct_planting_years(
+        &self,
+        visible: Visibility,
+    ) -> Result<Vec<PlantingYear>, RepositoryError>;
 }
 
 /// Write-side access to trees.

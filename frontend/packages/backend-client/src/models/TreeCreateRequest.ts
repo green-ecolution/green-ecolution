@@ -51,6 +51,12 @@ export interface TreeCreateRequest {
     number: string;
     /**
      * 
+     * @type {string}
+     * @memberof TreeCreateRequest
+     */
+    organizationId?: string | null;
+    /**
+     * 
      * @type {number}
      * @memberof TreeCreateRequest
      */
@@ -109,6 +115,7 @@ export function TreeCreateRequestFromJSONTyped(json: any, ignoreDiscriminator: b
         'latitude': json['latitude'],
         'longitude': json['longitude'],
         'number': json['number'],
+        'organizationId': json['organization_id'] == null ? undefined : json['organization_id'],
         'plantingYear': json['planting_year'],
         'provider': json['provider'] == null ? undefined : json['provider'],
         'sensorId': json['sensor_id'] == null ? undefined : json['sensor_id'],
@@ -133,6 +140,7 @@ export function TreeCreateRequestToJSONTyped(value?: TreeCreateRequest | null, i
         'latitude': value['latitude'],
         'longitude': value['longitude'],
         'number': value['number'],
+        'organization_id': value['organizationId'],
         'planting_year': value['plantingYear'],
         'provider': value['provider'],
         'sensor_id': value['sensorId'],

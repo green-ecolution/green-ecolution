@@ -17,6 +17,7 @@ pub mod plugin;
 pub mod region;
 pub mod role;
 pub mod routing;
+pub mod scope;
 pub mod sensor;
 pub mod tree;
 pub mod user;

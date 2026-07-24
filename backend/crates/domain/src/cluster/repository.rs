@@ -3,6 +3,7 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     Id, RepositoryError,
+    authorization::Visibility,
     cluster::{
         ClusterBoundaryView, ClusterMarker, ClusterStatistics, ClusterWateringEvent,
         SoilMoistureBucket, SoilMoistureDepthSeries, TreeCluster, TreeClusterDraft,
@@ -34,12 +35,18 @@ pub trait TreeClusterReader: Send + Sync {
 
     /// Returns marker-projected clusters that have a centroid.
     /// Archived clusters and clusters without trees are excluded.
-    async fn view_markers(&self) -> Result<Vec<ClusterMarker>, RepositoryError>;
+    async fn view_markers(
+        &self,
+        visible: Visibility,
+    ) -> Result<Vec<ClusterMarker>, RepositoryError>;
 
     /// Returns one convex-hull boundary polygon (GeoJSON, buffered in meters)
     /// per non-archived cluster that has at least one geo-located tree.
     /// Clusters without trees are omitted.
-    async fn boundaries(&self) -> Result<Vec<ClusterBoundaryView>, RepositoryError>;
+    async fn boundaries(
+        &self,
+        visible: Visibility,
+    ) -> Result<Vec<ClusterBoundaryView>, RepositoryError>;
 
     /// Returns the DB-persisted centroid for a cluster, or `None` if the
     /// cluster currently has no trees.
@@ -48,7 +55,7 @@ pub trait TreeClusterReader: Send + Sync {
         id: Id<TreeCluster>,
     ) -> Result<Option<Coordinate>, RepositoryError>;
 
-    async fn statistics(&self) -> Result<ClusterStatistics, RepositoryError>;
+    async fn statistics(&self, visible: Visibility) -> Result<ClusterStatistics, RepositoryError>;
 
     /// Bucketed volumetric soil-moisture readings (mean/min/max per depth)
     /// from all sensors currently linked to the cluster's trees. Readings

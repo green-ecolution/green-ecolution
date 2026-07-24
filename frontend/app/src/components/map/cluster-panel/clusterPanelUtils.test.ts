@@ -17,6 +17,7 @@ const tree = (over: Partial<TreeResponse>): TreeResponse => ({
   latitude: 0,
   longitude: 0,
   number: over.number ?? '0001',
+  organizationId: '',
   plantingYear: 2000,
   species: over.species ?? 'Stieleiche',
   wateringStatus: 'unknown',

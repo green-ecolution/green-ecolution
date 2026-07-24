@@ -371,6 +371,9 @@ impl Services {
             tree: Arc::new(TreeService::new(
                 repos.tree_reader.clone(),
                 repos.tree_writer.clone(),
+                repos.cluster_reader.clone(),
+                repos.sensor_reader.clone(),
+                repos.sensor_writer.clone(),
                 event_bus.clone(),
             )),
             sensor: Arc::new(SensorService::new(
@@ -393,6 +396,8 @@ impl Services {
                 repos.cluster_writer.clone(),
                 repos.tree_reader.clone(),
                 repos.tree_writer.clone(),
+                repos.sensor_reader.clone(),
+                repos.sensor_writer.clone(),
                 event_bus.clone(),
             )),
             watering_plan: Arc::new(WateringPlanService::new(
@@ -404,6 +409,7 @@ impl Services {
                 route_optimizer,
                 tree_demand_liters,
                 start_point_reader.clone(),
+                repos.organization_reader.clone(),
             )),
             watering_execution: Arc::new(WateringExecutionService::new(
                 repos.watering_plan_reader.clone(),

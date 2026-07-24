@@ -5,6 +5,7 @@ use sqlx::PgPool;
 
 use domain::{
     Id, IdSliceExt, RawId, RepositoryError,
+    authorization::Visibility,
     shared::pagination::{Page, Pagination},
     vehicle::{
         DrivingLicense, NumberPlate, Vehicle, VehicleDraft, VehicleReader, VehicleSearchQuery,
@@ -42,6 +43,7 @@ struct VehicleViewRow {
     weight: f64,
     provider: Option<String>,
     additional_info: Option<Value>,
+    organization_id: RawId,
 }
 
 impl From<VehicleViewRow> for VehicleView {
@@ -67,6 +69,7 @@ impl From<VehicleViewRow> for VehicleView {
             weight: row.weight,
             provider: row.provider,
             additional_info: row.additional_info,
+            organization_id: row.organization_id,
         }
     }
 }
@@ -88,7 +91,8 @@ impl VehicleReader for PgVehicleRepository {
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
                       provider,
-                      additional_informations AS additional_info
+                      additional_informations AS additional_info,
+                      organization_id
             FROM vehicles WHERE id = $1"#,
             id.value()
         )
@@ -115,7 +119,8 @@ impl VehicleReader for PgVehicleRepository {
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
                       provider,
-                      additional_informations AS additional_info
+                      additional_informations AS additional_info,
+                      organization_id
             FROM vehicles WHERE id = ANY($1::uuid[])"#,
             &id_values
         )
@@ -140,7 +145,8 @@ impl VehicleReader for PgVehicleRepository {
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
                       provider,
-                      additional_informations AS additional_info
+                      additional_informations AS additional_info,
+                      organization_id
             FROM vehicles WHERE number_plate = $1"#,
             plate.as_str()
         )
@@ -165,7 +171,8 @@ impl VehicleReader for PgVehicleRepository {
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
                       provider,
-                      additional_informations AS "additional_info: Value"
+                      additional_informations AS "additional_info: Value",
+                      organization_id
             FROM vehicles WHERE id = $1"#,
             id.value()
         )
@@ -192,7 +199,8 @@ impl VehicleReader for PgVehicleRepository {
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
                       provider,
-                      additional_informations AS "additional_info: Value"
+                      additional_informations AS "additional_info: Value",
+                      organization_id
             FROM vehicles WHERE id = ANY($1::uuid[])"#,
             &id_values
         )
@@ -211,17 +219,20 @@ impl VehicleReader for PgVehicleRepository {
         let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
         let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
         let provider = query.provider.as_ref().map(|p| p.as_str().to_owned());
+        let visible_ids = query.visible.into_raw_ids();
 
         let total = sqlx::query_scalar!(
             r#"SELECT COUNT(*) AS "count!: i64" FROM vehicles
             WHERE ($1::text IS NULL OR provider = $1)
               AND ($2::vehicle_type IS NULL OR type = $2)
               AND ($3::bool OR archived_at IS NULL)
-              AND (NOT $4::bool OR archived_at IS NOT NULL)"#,
+              AND (NOT $4::bool OR archived_at IS NOT NULL)
+              AND ($5::uuid[] IS NULL OR organization_id = ANY($5))"#,
             provider,
             query.vehicle_type as Option<VehicleType>,
             query.with_archived,
             query.only_archived,
+            visible_ids.as_deref(),
         )
         .fetch_one(&self.pool)
         .await? as u64;
@@ -239,12 +250,14 @@ impl VehicleReader for PgVehicleRepository {
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
                       provider,
-                      additional_informations AS "additional_info: Value"
+                      additional_informations AS "additional_info: Value",
+                      organization_id
             FROM vehicles
             WHERE ($1::text IS NULL OR provider = $1)
               AND ($2::vehicle_type IS NULL OR type = $2)
               AND ($3::bool OR archived_at IS NULL)
               AND (NOT $4::bool OR archived_at IS NOT NULL)
+              AND ($7::uuid[] IS NULL OR organization_id = ANY($7))
             ORDER BY water_capacity DESC
             LIMIT $5 OFFSET $6"#,
             provider,
@@ -253,6 +266,7 @@ impl VehicleReader for PgVehicleRepository {
             query.only_archived,
             limit,
             offset,
+            visible_ids.as_deref(),
         )
         .fetch_all(&self.pool)
         .await?;
@@ -267,9 +281,11 @@ impl VehicleReader for PgVehicleRepository {
         &self,
         vehicle_type: VehicleType,
         pagination: Pagination,
+        visible: Visibility,
     ) -> Result<Page<VehicleView>, RepositoryError> {
         let query = VehicleSearchQuery {
             vehicle_type: Some(vehicle_type),
+            visible,
             ..Default::default()
         };
         self.view_search(query, pagination).await
@@ -285,8 +301,8 @@ impl VehicleWriter for PgVehicleRepository {
             VehicleSnapshot,
             r#"INSERT INTO vehicles (id, number_plate, description, water_capacity, type, status,
                                      model, driving_license, height, length, width, weight,
-                                     provider, additional_informations)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                                     provider, additional_informations, organization_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
             RETURNING id,
                       archived_at AS "archived_at: DateTime<chrono::Utc>",
                       number_plate,
@@ -298,7 +314,8 @@ impl VehicleWriter for PgVehicleRepository {
                       driving_license AS "driving_license: DrivingLicense",
                       height, width, length, weight,
                       provider,
-                      additional_informations AS additional_info"#,
+                      additional_informations AS additional_info,
+                      organization_id"#,
             id.value(),
             draft.number_plate.as_str(),
             draft.description,
@@ -313,6 +330,7 @@ impl VehicleWriter for PgVehicleRepository {
             draft.dimension.weight,
             draft.provenance.provider().map(|p| p.as_str()),
             draft.provenance.additional_info(),
+            draft.organization_id.value(),
         )
         .fetch_one(&self.pool)
         .await?;
@@ -337,7 +355,8 @@ impl VehicleWriter for PgVehicleRepository {
                 weight = $12,
                 provider = $13,
                 additional_informations = $14,
-                archived_at = $15
+                archived_at = $15,
+                organization_id = $16
             WHERE id = $1"#,
             vehicle.id.value(),
             vehicle.number_plate.as_str(),
@@ -354,6 +373,7 @@ impl VehicleWriter for PgVehicleRepository {
             vehicle.provenance().provider().map(|p| p.as_str()),
             vehicle.provenance().additional_info(),
             vehicle.archived_at().map(|dt| dt.naive_utc()),
+            vehicle.organization_id().value(),
         )
         .execute(&self.pool)
         .await?;

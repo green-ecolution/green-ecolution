@@ -65,7 +65,8 @@ export interface EvaluationResponse {
      */
     treeclusterCount: number;
     /**
-     * Number of watering plans created by the current user.
+     * Number of user-to-watering-plan assignments across all watering plans
+     * visible to the caller.
      * @type {number}
      * @memberof EvaluationResponse
      */

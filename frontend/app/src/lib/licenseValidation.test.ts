@@ -67,6 +67,7 @@ const makeVehicle = (id: string, license: DrivingLicense, type: VehicleType): Ve
   weight: 0,
   waterCapacity: 0,
   status: VehicleStatus.Active,
+  organizationId: '',
   createdAt: '',
   updatedAt: '',
 })

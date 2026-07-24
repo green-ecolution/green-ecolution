@@ -93,6 +93,7 @@ models/SoilMoistureSeriesResponse.ts
 models/SoilMoistureThresholdResponse.ts
 models/StartPointRequest.ts
 models/StartPointResponse.ts
+models/TransferRequest.ts
 models/TreeClusterCreateRequest.ts
 models/TreeClusterInListResponse.ts
 models/TreeClusterResponse.ts
