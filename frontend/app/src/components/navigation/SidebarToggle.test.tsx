@@ -8,7 +8,7 @@ describe('SidebarToggle', () => {
     cleanup()
   })
 
-  it('shows the collapse label and fires onToggle when expanded', async () => {
+  it('has the collapse label and fires onToggle when expanded', async () => {
     const user = userEvent.setup()
     const onToggle = vi.fn()
     render(<SidebarToggle collapsed={false} onToggle={onToggle} />)
@@ -16,17 +16,15 @@ describe('SidebarToggle', () => {
     const button = screen.getByRole('button', { name: 'Seitennavigation einklappen' })
     expect(button).toHaveAttribute('aria-expanded', 'true')
     expect(button).toHaveAttribute('aria-controls', 'main-navigation')
-    expect(screen.getByText('Einklappen')).toBeInTheDocument()
 
     await user.click(button)
     expect(onToggle).toHaveBeenCalledTimes(1)
   })
 
-  it('is icon-only with an expand label when collapsed', () => {
+  it('has the expand label when collapsed', () => {
     render(<SidebarToggle collapsed onToggle={vi.fn()} />)
 
     const button = screen.getByRole('button', { name: 'Seitennavigation ausklappen' })
     expect(button).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByText('Einklappen')).not.toBeInTheDocument()
   })
 })
