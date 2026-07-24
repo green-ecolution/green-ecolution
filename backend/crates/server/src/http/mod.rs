@@ -8,7 +8,9 @@ use tower_http::{
 };
 use utoipa::OpenApi;
 use utoipa::openapi::Server;
-use utoipa::openapi::security::{OpenIdConnect, SecurityRequirement, SecurityScheme};
+use utoipa::openapi::security::{
+    AuthorizationCode, Flow, OAuth2, Scopes, SecurityRequirement, SecurityScheme,
+};
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::{SwaggerUi, oauth};
 
@@ -174,23 +176,33 @@ pub fn router(
 
 const OIDC_SECURITY_SCHEME: &str = "keycloak";
 
-/// Builds the Swagger UI, adding an OpenID Connect security scheme plus a
-/// global requirement so every endpoint offers login and sends the bearer
-/// token. Skipped entirely when auth is disabled (demo bypass).
+/// Builds the Swagger UI, adding an OAuth2 authorization-code security scheme
+/// plus a global requirement so every endpoint offers login and sends the
+/// bearer token. Skipped entirely when auth is disabled (demo bypass).
+///
+/// We pin the explicit authorization-code flow (not an OpenID Connect discovery
+/// scheme) so Swagger only ever offers PKCE login. A discovery scheme would let
+/// Swagger present Keycloak's `password` grant, which the public frontend client
+/// rejects (Direct Access Grants disabled → 400 unauthorized_client).
 fn swagger_ui(mut api: utoipa::openapi::OpenApi, oidc: &OidcSwaggerSettings) -> SwaggerUi {
     if !oidc.enabled {
         return SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api);
     }
 
-    let discovery_url = format!(
-        "{}/.well-known/openid-configuration",
-        oidc.issuer_url.trim_end_matches('/')
-    );
+    let issuer = oidc.issuer_url.trim_end_matches('/');
+    let scheme = SecurityScheme::OAuth2(OAuth2::new([Flow::AuthorizationCode(
+        AuthorizationCode::new(
+            format!("{issuer}/protocol/openid-connect/auth"),
+            format!("{issuer}/protocol/openid-connect/token"),
+            Scopes::from_iter([
+                ("openid", "OpenID Connect"),
+                ("profile", "User profile"),
+                ("email", "User email"),
+            ]),
+        ),
+    )]));
     let components = api.components.get_or_insert_with(Default::default);
-    components.add_security_scheme(
-        OIDC_SECURITY_SCHEME,
-        SecurityScheme::OpenIdConnect(OpenIdConnect::new(discovery_url)),
-    );
+    components.add_security_scheme(OIDC_SECURITY_SCHEME, scheme);
     api.security = Some(vec![SecurityRequirement::new(
         OIDC_SECURITY_SCHEME,
         Vec::<String>::new(),
