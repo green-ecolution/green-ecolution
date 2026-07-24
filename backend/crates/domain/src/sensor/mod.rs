@@ -24,6 +24,7 @@ use chrono::{DateTime, Duration, Utc};
 
 use crate::{
     Id,
+    authorization::Visibility,
     organization::Organization,
     sensor_model::SensorModel,
     shared::provenance::{Provenance, ProviderId},
@@ -201,6 +202,10 @@ impl Sensor {
 #[derive(Debug, Default, Clone)]
 pub struct SensorSearchQuery {
     pub provider: Option<ProviderId>,
+    /// Which organizations may see the result. Defaults to `Unrestricted` so
+    /// internal callers stay unfiltered; HTTP handlers must set this from
+    /// `AuthorizationService::visible_orgs_for`.
+    pub visible: Visibility,
 }
 
 #[cfg(test)]

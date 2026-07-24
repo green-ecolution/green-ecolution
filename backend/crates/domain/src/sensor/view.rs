@@ -27,6 +27,9 @@ pub struct SensorView {
     pub lorawan: Option<LorawanInfo>,
     pub latest_reading: Option<SensorReadingView>,
     pub organization_id: Uuid,
+    /// Effective shares of the linked tree (own shares ∪ its cluster's
+    /// shares); empty for an unlinked sensor.
+    pub shared_with: Vec<Uuid>,
 }
 
 #[derive(Debug, Clone)]

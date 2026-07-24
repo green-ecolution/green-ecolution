@@ -264,6 +264,10 @@ pub struct SensorResponse {
 
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
     pub organization_id: String,
+
+    /// Organizations the linked tree (or its cluster) is shared with. Empty
+    /// for a sensor that isn't currently linked to a tree.
+    pub shared_with: Vec<String>,
 }
 
 impl From<&SensorView> for SensorResponse {
@@ -285,6 +289,7 @@ impl From<&SensorView> for SensorResponse {
             provider: value.provider.as_ref().map(|p| p.as_str().to_owned()),
             additional_information: value.additional_info.clone(),
             organization_id: value.organization_id.to_string(),
+            shared_with: value.shared_with.iter().map(ToString::to_string).collect(),
         }
     }
 }

@@ -5,6 +5,7 @@ pub mod cluster_soil_moisture;
 pub mod clusters;
 pub mod config_js;
 pub mod enforcement_cluster;
+pub mod enforcement_sensor;
 pub mod enforcement_tree;
 pub mod evaluation;
 pub mod health;

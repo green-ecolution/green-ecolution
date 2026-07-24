@@ -159,7 +159,15 @@ impl SensorReader for PgSensorRepository {
                       sl.app_eui       AS "app_eui?",
                       sl.at_pin,
                       sl.ota_pin,
-                      sl.config        AS "config: serde_json::Value"
+                      sl.config        AS "config: serde_json::Value",
+                      COALESCE((
+                        SELECT array_agg(DISTINCT sh.org) FROM (
+                          SELECT ts.organization_id AS org FROM tree_shares ts WHERE ts.tree_id = t.id
+                          UNION
+                          SELECT tcs.organization_id FROM tree_cluster_shares tcs
+                          WHERE tcs.tree_cluster_id = t.tree_cluster_id
+                        ) sh
+                      ), '{}') AS "shared_with!: Vec<Uuid>"
             FROM sensors s
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
@@ -218,6 +226,7 @@ impl SensorReader for PgSensorRepository {
             ),
             latest_reading,
             organization_id: row.organization_id,
+            shared_with: row.shared_with,
         })
     }
 
@@ -245,7 +254,15 @@ impl SensorReader for PgSensorRepository {
                       lr.id            AS "last_reading_id?: Uuid",
                       lr.updated_at    AS "last_reading_updated_at?",
                       lr.data          AS "last_reading_data?",
-                      s.organization_id
+                      s.organization_id,
+                      COALESCE((
+                        SELECT array_agg(DISTINCT sh.org) FROM (
+                          SELECT ts.organization_id AS org FROM tree_shares ts WHERE ts.tree_id = t.id
+                          UNION
+                          SELECT tcs.organization_id FROM tree_cluster_shares tcs
+                          WHERE tcs.tree_cluster_id = t.tree_cluster_id
+                        ) sh
+                      ), '{}') AS "shared_with!: Vec<Uuid>"
             FROM sensors s
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
@@ -301,6 +318,7 @@ impl SensorReader for PgSensorRepository {
                     ),
                     latest_reading,
                     organization_id: r.organization_id,
+                    shared_with: r.shared_with,
                 })
             })
             .collect()
@@ -313,13 +331,20 @@ impl SensorReader for PgSensorRepository {
         pagination: Pagination,
     ) -> Result<Page<SensorView>, RepositoryError> {
         let provider = query.provider.as_ref().map(|p| p.as_str().to_owned());
+        let visible_ids = query.visible.into_raw_ids();
         let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
         let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
 
         let total = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) AS "count!: i64" FROM sensors
-            WHERE ($1::text IS NULL OR provider = $1)"#,
-            provider
+            r#"SELECT COUNT(*) AS "count!: i64" FROM sensors s
+            LEFT JOIN trees t ON t.sensor_id = s.id
+            WHERE ($1::text IS NULL OR s.provider = $1)
+              AND ($2::uuid[] IS NULL
+                   OR s.organization_id = ANY($2)
+                   OR t.id IN (SELECT tree_id FROM tree_shares WHERE organization_id = ANY($2))
+                   OR t.tree_cluster_id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($2)))"#,
+            provider,
+            visible_ids.as_deref(),
         )
         .fetch_one(&self.pool)
         .await? as u64;
@@ -344,7 +369,15 @@ impl SensorReader for PgSensorRepository {
                       lr.id            AS "last_reading_id?: Uuid",
                       lr.updated_at    AS "last_reading_updated_at?",
                       lr.data          AS "last_reading_data?",
-                      s.organization_id
+                      s.organization_id,
+                      COALESCE((
+                        SELECT array_agg(DISTINCT sh.org) FROM (
+                          SELECT ts.organization_id AS org FROM tree_shares ts WHERE ts.tree_id = t.id
+                          UNION
+                          SELECT tcs.organization_id FROM tree_cluster_shares tcs
+                          WHERE tcs.tree_cluster_id = t.tree_cluster_id
+                        ) sh
+                      ), '{}') AS "shared_with!: Vec<Uuid>"
             FROM sensors s
             INNER JOIN sensor_models sm ON sm.id = s.model_id
             LEFT JOIN sensor_lorawan sl ON sl.id = s.id
@@ -357,11 +390,16 @@ impl SensorReader for PgSensorRepository {
                 LIMIT 1
             ) lr ON true
             WHERE ($1::text IS NULL OR s.provider = $1)
+              AND ($4::uuid[] IS NULL
+                   OR s.organization_id = ANY($4)
+                   OR t.id IN (SELECT tree_id FROM tree_shares WHERE organization_id = ANY($4))
+                   OR t.tree_cluster_id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($4)))
             ORDER BY s.id
             LIMIT $2 OFFSET $3"#,
             provider,
             limit,
             offset,
+            visible_ids.as_deref(),
         )
         .fetch_all(&self.pool)
         .await?;
@@ -405,6 +443,7 @@ impl SensorReader for PgSensorRepository {
                     ),
                     latest_reading,
                     organization_id: r.organization_id,
+                    shared_with: r.shared_with,
                 })
             })
             .collect::<Result<Vec<_>, RepositoryError>>()?;
