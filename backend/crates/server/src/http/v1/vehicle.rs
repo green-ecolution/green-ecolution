@@ -332,6 +332,12 @@ pub async fn transfer_vehicle(
     Json(req): Json<TransferRequest>,
 ) -> Result<StatusCode, ServiceError> {
     let current = state.vehicle_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Vehicle, Action::Read),
+        &scope::effective_orgs(current.organization_id, &[]),
+    )?;
     let perm = Permission::new(Resource::Vehicle, Action::Update);
     state
         .authorization_service

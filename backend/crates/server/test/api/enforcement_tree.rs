@@ -99,6 +99,126 @@ async fn seed_reader_in_org(
     )
 }
 
+/// Seeds a user in an already-existing org with exactly `permissions`
+/// (unlike `seed_reader_in_org`, the permission set is caller-chosen).
+async fn seed_user_with_role_in_org(
+    harness: &crate::auth_helpers::AuthHarness,
+    app: &crate::helpers::TestApp,
+    org: Uuid,
+    permissions: &[&str],
+) -> String {
+    let permissions: Vec<String> = permissions.iter().map(|p| p.to_string()).collect();
+    let role_id: Uuid = sqlx::query_scalar!(
+        r#"INSERT INTO roles (id, organization_id, name, permissions)
+           VALUES (gen_random_uuid(), $1, 'Second-Rolle', $2)
+           RETURNING id"#,
+        org,
+        &permissions,
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    let user_id = Uuid::new_v4();
+    sqlx::query!(
+        r#"INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)"#,
+        user_id,
+        org
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    sqlx::query!(
+        r#"INSERT INTO role_assignments (user_id, role_id) VALUES ($1, $2)"#,
+        user_id,
+        role_id
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    harness.sign_token(json!({ "sub": user_id.to_string() }))
+}
+
+#[tokio::test]
+async fn update_tree_with_sensor_id_requires_sensor_update_permission() {
+    let (harness, app) = spawn_with_auth().await;
+    let model_id = app.ecodrizzler_model_id().await;
+    let (org, token_admin) = seed_user_with_permissions(
+        &harness,
+        &app,
+        "Org",
+        &[
+            "tree:read",
+            "tree:create",
+            "tree:update",
+            "sensor:read",
+            "sensor:create",
+            "sensor:update",
+        ],
+    )
+    .await;
+    let client = reqwest::Client::new();
+
+    let sensor: serde_json::Value = client
+        .post(format!("{}/api/v1/sensors", app.address))
+        .bearer_auth(&token_admin)
+        .json(&json!({
+            "id": "eui-enforce-tree-001",
+            "sensor_type": "lorawan",
+            "model_id": model_id,
+            "organization_id": org,
+            "lorawan": {
+                "serial_number": "SN-ENFORCE-TREE",
+                "dev_eui": "a81758fffe0c3b52",
+                "app_eui": "70b3d57ed00abcd1",
+                "app_key": "00112233445566778899aabbccddeeff"
+            }
+        }))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let sensor_id = sensor["id"].as_str().unwrap().to_owned();
+
+    let created: serde_json::Value = client
+        .post(format!("{}/api/v1/trees", app.address))
+        .bearer_auth(&token_admin)
+        .json(
+            &json!({ "species": "Tilia", "number": "E-SENSOR-1", "planting_year": 2024,
+                        "latitude": 54.79, "longitude": 9.44, "description": "",
+                        "organization_id": org }),
+        )
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let tree_id = created["id"].as_str().unwrap().to_owned();
+
+    // Holds tree:update but no sensor:update in the same org.
+    let token_tree_only =
+        seed_user_with_role_in_org(&harness, &app, org, &["tree:read", "tree:update"]).await;
+
+    let resp = client
+        .put(format!("{}/api/v1/trees/{tree_id}", app.address))
+        .bearer_auth(&token_tree_only)
+        .json(
+            &json!({ "species": "Tilia", "number": "E-SENSOR-1", "planting_year": 2024,
+                        "latitude": 54.79, "longitude": 9.44, "description": "",
+                        "sensor_id": sensor_id }),
+        )
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(
+        resp.status(),
+        403,
+        "coupling a sensor to a tree must also require sensor:update"
+    );
+}
+
 #[tokio::test]
 async fn visible_without_update_permission_yields_403() {
     let (harness, app) = spawn_with_auth().await;

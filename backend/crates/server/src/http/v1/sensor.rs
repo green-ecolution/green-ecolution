@@ -544,6 +544,12 @@ pub async fn transfer_sensor(
     Json(req): Json<TransferRequest>,
 ) -> Result<StatusCode, ServiceError> {
     let current = state.sensor_service.view_by_id(&sensor_id).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Sensor, Action::Read),
+        &scope::effective_orgs(current.organization_id, &current.shared_with),
+    )?;
     let perm = Permission::new(Resource::Sensor, Action::Update);
     state
         .authorization_service

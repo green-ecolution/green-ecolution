@@ -160,6 +160,8 @@ pub struct VehicleSearchQuery {
     pub with_archived: bool,
     pub only_archived: bool,
     pub provider: Option<ProviderId>,
+    /// Which organizations may see the result. Callers must set this per
+    /// request; defaults to unrestricted for internal consumers.
     pub visible: Visibility,
 }
 

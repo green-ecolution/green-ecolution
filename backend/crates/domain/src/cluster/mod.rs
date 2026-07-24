@@ -170,9 +170,9 @@ pub struct TreeClusterSearchQuery {
     pub soil_conditions: Vec<SoilCondition>,
     pub sort: ClusterSort,
     pub order: SortOrder,
-    /// Which organizations may see the result. Defaults to `Unrestricted` so
-    /// internal callers (event handlers) stay unfiltered; HTTP handlers must
-    /// set this from `AuthorizationService::visible_orgs_for`.
+    /// Which organizations may see the result. Callers must set this per
+    /// request; defaults to unrestricted for internal consumers (e.g. event
+    /// handlers).
     pub visible: Visibility,
 }
 

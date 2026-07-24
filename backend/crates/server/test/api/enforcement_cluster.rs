@@ -124,6 +124,52 @@ async fn foreign_org_sees_no_clusters_and_gets_404_on_detail() {
 }
 
 #[tokio::test]
+async fn share_cluster_by_foreign_org_user_returns_404() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org_a, token_a) = seed_user_with_permissions(
+        &harness,
+        &app,
+        "Owner Org",
+        &[
+            "tree_cluster:read",
+            "tree_cluster:create",
+            "tree_cluster:update",
+        ],
+    )
+    .await;
+    // Org B holds tree_cluster:update, just not in org A's subtree — it must
+    // not be able to tell an existing-but-invisible cluster apart from a
+    // missing one.
+    let (_org_b, token_b) =
+        seed_user_with_permissions(&harness, &app, "Org B", &["tree_cluster:update"]).await;
+    let client = reqwest::Client::new();
+
+    let created: serde_json::Value = client
+        .post(format!("{}/api/v1/clusters", app.address))
+        .bearer_auth(&token_a)
+        .json(&cluster_payload(org_a))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let cluster_id = created["id"].as_str().unwrap();
+
+    let resp = client
+        .post(format!(
+            "{}/api/v1/clusters/{cluster_id}/shares",
+            app.address
+        ))
+        .bearer_auth(&token_b)
+        .json(&json!({ "organization_id": Uuid::new_v4() }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), 404, "invisible cluster must read as 404");
+}
+
+#[tokio::test]
 async fn shared_cluster_is_listed_and_updatable_by_target_org() {
     let (harness, app) = spawn_with_auth().await;
     let (org_a, token_a) = seed_user_with_permissions(

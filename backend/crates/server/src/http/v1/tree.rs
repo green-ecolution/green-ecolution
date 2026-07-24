@@ -191,6 +191,18 @@ pub async fn create_tree(
             org,
         )
         .await?;
+    if let Some(sid) = entity.sensor_id.as_deref() {
+        let sensor_id = SensorId::new(sid)?;
+        let sensor_view = state.sensor_service.view_by_id(&sensor_id).await?;
+        state
+            .authorization_service
+            .require_any_of(
+                user.id,
+                Permission::new(Resource::Sensor, Action::Update),
+                &scope::effective_orgs(sensor_view.organization_id, &sensor_view.shared_with),
+            )
+            .await?;
+    }
     let draft = entity.into_draft(org)?;
     let tree = state.tree_service.create(draft).await?;
     let view = state.tree_service.view_by_id(tree.id).await?;
@@ -243,6 +255,23 @@ pub async fn update_tree(
             &effective_orgs,
         )
         .await?;
+    if entity.sensor_id != current.sensor_id {
+        for sid in [entity.sensor_id.as_deref(), current.sensor_id.as_deref()]
+            .into_iter()
+            .flatten()
+        {
+            let sensor_id = SensorId::new(sid)?;
+            let sensor_view = state.sensor_service.view_by_id(&sensor_id).await?;
+            state
+                .authorization_service
+                .require_any_of(
+                    user.id,
+                    Permission::new(Resource::Sensor, Action::Update),
+                    &scope::effective_orgs(sensor_view.organization_id, &sensor_view.shared_with),
+                )
+                .await?;
+        }
+    }
     let create = TreeCreateRequest {
         species: entity.species,
         number: entity.number,
@@ -460,6 +489,12 @@ pub async fn share_tree(
     Json(req): Json<ShareRequest>,
 ) -> Result<StatusCode, ServiceError> {
     let current = state.tree_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Tree, Action::Read),
+        &scope::effective_orgs(current.organization_id, &current.shared_with),
+    )?;
     state
         .authorization_service
         .require(
@@ -494,6 +529,12 @@ pub async fn revoke_share_tree(
     Path((id, org_id)): Path<(uuid::Uuid, uuid::Uuid)>,
 ) -> Result<StatusCode, ServiceError> {
     let current = state.tree_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Tree, Action::Read),
+        &scope::effective_orgs(current.organization_id, &current.shared_with),
+    )?;
     state
         .authorization_service
         .require(
@@ -530,6 +571,12 @@ pub async fn transfer_tree(
     Json(req): Json<TransferRequest>,
 ) -> Result<StatusCode, ServiceError> {
     let current = state.tree_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Tree, Action::Read),
+        &scope::effective_orgs(current.organization_id, &current.shared_with),
+    )?;
     let perm = Permission::new(Resource::Tree, Action::Update);
     state
         .authorization_service

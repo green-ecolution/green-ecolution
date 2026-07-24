@@ -104,9 +104,9 @@ pub struct TreeSearchQuery {
     pub bbox: Option<BoundingBox>,
     /// Case-insensitive text filter on tree number or species.
     pub q: Option<String>,
-    /// Which organizations may see the result. Defaults to `Unrestricted` so
-    /// internal callers (event handlers) stay unfiltered; HTTP handlers must
-    /// set this from `AuthorizationService::visible_orgs_for`.
+    /// Which organizations may see the result. Callers must set this per
+    /// request; defaults to unrestricted for internal consumers (e.g. event
+    /// handlers).
     pub visible: Visibility,
 }
 

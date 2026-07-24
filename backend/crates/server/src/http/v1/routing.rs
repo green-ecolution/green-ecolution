@@ -241,6 +241,12 @@ pub async fn transfer_start_point(
 ) -> Result<StatusCode, ServiceError> {
     ensure_routing(&state)?;
     let current = state.start_point_service.by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::WateringPlan, Action::Read),
+        &scope::effective_orgs(current.organization_id().value(), &[]),
+    )?;
     let perm = Permission::new(Resource::WateringPlan, Action::Update);
     state
         .authorization_service

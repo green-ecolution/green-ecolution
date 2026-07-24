@@ -141,9 +141,8 @@ pub struct WateringPlanDraft {
 pub struct WateringPlanSearchQuery {
     pub provider: Option<ProviderId>,
     pub statuses: Vec<WateringPlanStatus>,
-    /// Which organizations may see the result. Defaults to `Unrestricted` so
-    /// internal callers stay unfiltered; HTTP handlers must set this from
-    /// `AuthorizationService::visible_orgs_for`.
+    /// Which organizations may see the result. Callers must set this per
+    /// request; defaults to unrestricted for internal consumers.
     pub visible: Visibility,
 }
 

@@ -498,3 +498,36 @@ async fn transfer_requires_update_permission_in_the_target_organization() {
         .unwrap();
     assert_eq!(resp.status(), 403);
 }
+
+#[tokio::test]
+async fn transfer_tree_invisible_to_foreign_org_returns_404() {
+    let (harness, app) = spawn_with_auth().await;
+    let sibling_org = insert_org_tree(&app).await;
+
+    let admin_token = seed_admin(&harness, &app, Uuid::parse_str(TBZ_ORG).unwrap()).await;
+    let tree_resp = reqwest::Client::new()
+        .post(format!("{}/api/v1/trees", app.address))
+        .bearer_auth(&admin_token)
+        .json(&tree_payload("TRANSFER-F-001", TBZ_ORG))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(tree_resp.status(), 201);
+    let tree: serde_json::Value = tree_resp.json().await.unwrap();
+    let tree_id = tree["id"].as_str().unwrap();
+
+    // The sibling org's admin has tree:update, just not over TBZ_ORG's
+    // subtree — the tree must be indistinguishable from a missing one.
+    let foreign_admin_token = seed_admin(&harness, &app, sibling_org).await;
+    let resp = reqwest::Client::new()
+        .patch(format!(
+            "{}/api/v1/trees/{tree_id}/organization",
+            app.address
+        ))
+        .bearer_auth(&foreign_admin_token)
+        .json(&json!({ "organization_id": sibling_org }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), 404, "invisible tree must read as 404");
+}

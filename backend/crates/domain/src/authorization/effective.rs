@@ -60,6 +60,9 @@ impl OrgHierarchy {
         false
     }
 
+    /// `parents` holds every org in the tree, so scanning its keys and testing each
+    /// against `is_descendant_or_self` (itself cycle-safe) covers the whole subtree
+    /// without a second, separately-maintained traversal.
     pub fn descendants_or_self(&self, ancestor: Id<Organization>) -> BTreeSet<Id<Organization>> {
         self.parents
             .keys()

@@ -492,6 +492,12 @@ pub async fn share_cluster(
     Json(req): Json<ShareRequest>,
 ) -> Result<StatusCode, ServiceError> {
     let current = state.cluster_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::TreeCluster, Action::Read),
+        &scope::effective_orgs(current.organization_id, &current.shared_with),
+    )?;
     state
         .authorization_service
         .require(
@@ -530,6 +536,12 @@ pub async fn revoke_share_cluster(
     Path((id, org_id)): Path<(uuid::Uuid, uuid::Uuid)>,
 ) -> Result<StatusCode, ServiceError> {
     let current = state.cluster_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::TreeCluster, Action::Read),
+        &scope::effective_orgs(current.organization_id, &current.shared_with),
+    )?;
     state
         .authorization_service
         .require(
@@ -571,6 +583,12 @@ pub async fn transfer_cluster(
     Json(req): Json<TransferRequest>,
 ) -> Result<StatusCode, ServiceError> {
     let current = state.cluster_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::TreeCluster, Action::Read),
+        &scope::effective_orgs(current.organization_id, &current.shared_with),
+    )?;
     let perm = Permission::new(Resource::TreeCluster, Action::Update);
     state
         .authorization_service

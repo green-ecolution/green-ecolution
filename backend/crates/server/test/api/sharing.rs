@@ -265,7 +265,7 @@ async fn seed_admin(
 }
 
 #[tokio::test]
-async fn sharing_a_cluster_requires_update_permission_in_the_owning_org() {
+async fn sharing_a_cluster_invisible_to_the_caller_returns_404() {
     let (harness, app) = spawn_with_auth().await;
     let _ = insert_org_tree(&app).await;
 
@@ -281,7 +281,8 @@ async fn sharing_a_cluster_requires_update_permission_in_the_owning_org() {
     let cluster: serde_json::Value = cluster_resp.json().await.unwrap();
     let cluster_id = cluster["id"].as_str().unwrap();
 
-    // user without any grants
+    // user without any grants: cannot see the cluster at all, so the share
+    // attempt must read as 404, not 403 (no existence oracle).
     let token = harness.sign_token(json!({ "sub": Uuid::now_v7().to_string() }));
     let resp = reqwest::Client::new()
         .post(format!(
@@ -293,5 +294,5 @@ async fn sharing_a_cluster_requires_update_permission_in_the_owning_org() {
         .send()
         .await
         .unwrap();
-    assert_eq!(resp.status(), 403);
+    assert_eq!(resp.status(), 404);
 }
