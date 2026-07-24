@@ -83,6 +83,7 @@ models/ServiceStatusResponse.ts
 models/ServicesInfoResponse.ts
 models/SetOrganizationRequest.ts
 models/SetSensorTreeRequest.ts
+models/ShareRequest.ts
 models/SignalResponse.ts
 models/SoilCondition.ts
 models/SoilMoistureConditionPointResponse.ts
@@ -93,6 +94,7 @@ models/SoilMoistureSeriesResponse.ts
 models/SoilMoistureThresholdResponse.ts
 models/StartPointRequest.ts
 models/StartPointResponse.ts
+models/TransferRequest.ts
 models/TreeClusterCreateRequest.ts
 models/TreeClusterInListResponse.ts
 models/TreeClusterResponse.ts

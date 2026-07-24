@@ -16,6 +16,7 @@
 import * as runtime from '../runtime';
 import type {
   ListResponseVehicleResponse,
+  TransferRequest,
   VehicleCreateRequest,
   VehicleResponse,
   VehicleUpdateRequest,
@@ -23,6 +24,8 @@ import type {
 import {
     ListResponseVehicleResponseFromJSON,
     ListResponseVehicleResponseToJSON,
+    TransferRequestFromJSON,
+    TransferRequestToJSON,
     VehicleCreateRequestFromJSON,
     VehicleCreateRequestToJSON,
     VehicleResponseFromJSON,
@@ -59,6 +62,11 @@ export interface ListArchivedVehiclesRequest {
 export interface ListVehiclesRequest {
     page?: number;
     perPage?: number;
+}
+
+export interface TransferVehicleRequest {
+    vehicleId: string;
+    transferRequest: TransferRequest;
 }
 
 export interface UpdateVehicleRequest {
@@ -342,6 +350,54 @@ export class VehiclesApi extends runtime.BaseAPI {
     async listVehicles(requestParameters: ListVehiclesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseVehicleResponse> {
         const response = await this.listVehiclesRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Moves a vehicle to a different owning organization. Requires `vehicle:update` in both the source and target organization.
+     * Transfer a vehicle\'s ownership to another organization
+     */
+    async transferVehicleRaw(requestParameters: TransferVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['vehicleId'] == null) {
+            throw new runtime.RequiredError(
+                'vehicleId',
+                'Required parameter "vehicleId" was null or undefined when calling transferVehicle().'
+            );
+        }
+
+        if (requestParameters['transferRequest'] == null) {
+            throw new runtime.RequiredError(
+                'transferRequest',
+                'Required parameter "transferRequest" was null or undefined when calling transferVehicle().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/vehicles/{vehicle_id}/organization`;
+        urlPath = urlPath.replace(`{${"vehicle_id"}}`, encodeURIComponent(String(requestParameters['vehicleId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: TransferRequestToJSON(requestParameters['transferRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Moves a vehicle to a different owning organization. Requires `vehicle:update` in both the source and target organization.
+     * Transfer a vehicle\'s ownership to another organization
+     */
+    async transferVehicle(requestParameters: TransferVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.transferVehicleRaw(requestParameters, initOverrides);
     }
 
     /**

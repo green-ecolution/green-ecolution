@@ -19,8 +19,10 @@ import type {
   ClusterMarkerListResponse,
   ClusterStatisticsResponse,
   ListResponseTreeClusterInListResponse,
+  ShareRequest,
   SoilCondition,
   SoilMoistureSeriesResponse,
+  TransferRequest,
   TreeClusterCreateRequest,
   TreeClusterResponse,
   TreeClusterUpdateRequest,
@@ -35,10 +37,14 @@ import {
     ClusterStatisticsResponseToJSON,
     ListResponseTreeClusterInListResponseFromJSON,
     ListResponseTreeClusterInListResponseToJSON,
+    ShareRequestFromJSON,
+    ShareRequestToJSON,
     SoilConditionFromJSON,
     SoilConditionToJSON,
     SoilMoistureSeriesResponseFromJSON,
     SoilMoistureSeriesResponseToJSON,
+    TransferRequestFromJSON,
+    TransferRequestToJSON,
     TreeClusterCreateRequestFromJSON,
     TreeClusterCreateRequestToJSON,
     TreeClusterResponseFromJSON,
@@ -77,6 +83,21 @@ export interface ListClustersRequest {
     query?: string | null;
     sort?: string | null;
     order?: string | null;
+}
+
+export interface RevokeShareClusterRequest {
+    clusterId: string;
+    orgId: string;
+}
+
+export interface ShareClusterRequest {
+    clusterId: string;
+    shareRequest: ShareRequest;
+}
+
+export interface TransferClusterRequest {
+    clusterId: string;
+    transferRequest: TransferRequest;
 }
 
 export interface UpdateClusterRequest {
@@ -412,6 +433,144 @@ export class TreeClustersApi extends runtime.BaseAPI {
     async listClusters(requestParameters: ListClustersRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseTreeClusterInListResponse> {
         const response = await this.listClustersRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Revoke a tree cluster share
+     */
+    async revokeShareClusterRaw(requestParameters: RevokeShareClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['clusterId'] == null) {
+            throw new runtime.RequiredError(
+                'clusterId',
+                'Required parameter "clusterId" was null or undefined when calling revokeShareCluster().'
+            );
+        }
+
+        if (requestParameters['orgId'] == null) {
+            throw new runtime.RequiredError(
+                'orgId',
+                'Required parameter "orgId" was null or undefined when calling revokeShareCluster().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/clusters/{cluster_id}/shares/{org_id}`;
+        urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
+        urlPath = urlPath.replace(`{${"org_id"}}`, encodeURIComponent(String(requestParameters['orgId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Revoke a tree cluster share
+     */
+    async revokeShareCluster(requestParameters: RevokeShareClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.revokeShareClusterRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Share a tree cluster with a descendant organization
+     */
+    async shareClusterRaw(requestParameters: ShareClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['clusterId'] == null) {
+            throw new runtime.RequiredError(
+                'clusterId',
+                'Required parameter "clusterId" was null or undefined when calling shareCluster().'
+            );
+        }
+
+        if (requestParameters['shareRequest'] == null) {
+            throw new runtime.RequiredError(
+                'shareRequest',
+                'Required parameter "shareRequest" was null or undefined when calling shareCluster().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/clusters/{cluster_id}/shares`;
+        urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ShareRequestToJSON(requestParameters['shareRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Share a tree cluster with a descendant organization
+     */
+    async shareCluster(requestParameters: ShareClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.shareClusterRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Moves the cluster, its member trees, and their attached sensors to a different owning organization in one operation. Shares that no longer point below the new owner are revoked. Requires `tree_cluster:update` in both the source and target organization.
+     * Transfer a cluster\'s ownership to another organization
+     */
+    async transferClusterRaw(requestParameters: TransferClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['clusterId'] == null) {
+            throw new runtime.RequiredError(
+                'clusterId',
+                'Required parameter "clusterId" was null or undefined when calling transferCluster().'
+            );
+        }
+
+        if (requestParameters['transferRequest'] == null) {
+            throw new runtime.RequiredError(
+                'transferRequest',
+                'Required parameter "transferRequest" was null or undefined when calling transferCluster().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/clusters/{cluster_id}/organization`;
+        urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: TransferRequestToJSON(requestParameters['transferRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Moves the cluster, its member trees, and their attached sensors to a different owning organization in one operation. Shares that no longer point below the new owner are revoked. Requires `tree_cluster:update` in both the source and target organization.
+     * Transfer a cluster\'s ownership to another organization
+     */
+    async transferCluster(requestParameters: TransferClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.transferClusterRaw(requestParameters, initOverrides);
     }
 
     /**

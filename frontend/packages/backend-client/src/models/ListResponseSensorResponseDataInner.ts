@@ -111,6 +111,12 @@ export interface ListResponseSensorResponseDataInner {
      */
     model: SensorModelSummaryResponse;
     /**
+     * 
+     * @type {string}
+     * @memberof ListResponseSensorResponseDataInner
+     */
+    organizationId: string;
+    /**
      * Name of the data provider or integration (e.g. "ttn", "chirpstack").
      * @type {string}
      * @memberof ListResponseSensorResponseDataInner
@@ -122,6 +128,13 @@ export interface ListResponseSensorResponseDataInner {
      * @memberof ListResponseSensorResponseDataInner
      */
     sensorType: SensorTypeResponse;
+    /**
+     * Organizations the linked tree (or its cluster) is shared with. Empty
+     * for a sensor that isn't currently linked to a tree.
+     * @type {Array<string>}
+     * @memberof ListResponseSensorResponseDataInner
+     */
+    sharedWith: Array<string>;
     /**
      * Current connectivity status of the sensor.
      * @type {SensorStatus}
@@ -145,7 +158,9 @@ export function instanceOfListResponseSensorResponseDataInner(value: object): va
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('model' in value) || value['model'] === undefined) return false;
+    if (!('organizationId' in value) || value['organizationId'] === undefined) return false;
     if (!('sensorType' in value) || value['sensorType'] === undefined) return false;
+    if (!('sharedWith' in value) || value['sharedWith'] === undefined) return false;
     if (!('status' in value) || value['status'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
     return true;
@@ -169,8 +184,10 @@ export function ListResponseSensorResponseDataInnerFromJSONTyped(json: any, igno
         'linkedTreeId': json['linked_tree_id'] == null ? undefined : json['linked_tree_id'],
         'lorawan': json['lorawan'] == null ? undefined : LorawanInfoResponseFromJSON(json['lorawan']),
         'model': SensorModelSummaryResponseFromJSON(json['model']),
+        'organizationId': json['organization_id'],
         'provider': json['provider'] == null ? undefined : json['provider'],
         'sensorType': SensorTypeResponseFromJSON(json['sensor_type']),
+        'sharedWith': json['shared_with'],
         'status': SensorStatusFromJSON(json['status']),
         'updatedAt': json['updated_at'],
     };
@@ -195,8 +212,10 @@ export function ListResponseSensorResponseDataInnerToJSONTyped(value?: ListRespo
         'linked_tree_id': value['linkedTreeId'],
         'lorawan': LorawanInfoResponseToJSON(value['lorawan']),
         'model': SensorModelSummaryResponseToJSON(value['model']),
+        'organization_id': value['organizationId'],
         'provider': value['provider'],
         'sensor_type': SensorTypeResponseToJSON(value['sensorType']),
+        'shared_with': value['sharedWith'],
         'status': SensorStatusToJSON(value['status']),
         'updated_at': value['updatedAt'],
     };
