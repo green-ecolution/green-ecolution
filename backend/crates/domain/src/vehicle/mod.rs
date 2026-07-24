@@ -18,6 +18,7 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     Id,
+    authorization::Visibility,
     events::DomainEvent,
     organization::Organization,
     shared::{
@@ -159,6 +160,7 @@ pub struct VehicleSearchQuery {
     pub with_archived: bool,
     pub only_archived: bool,
     pub provider: Option<ProviderId>,
+    pub visible: Visibility,
 }
 
 /// Replacement input for [`Vehicle`] updates.

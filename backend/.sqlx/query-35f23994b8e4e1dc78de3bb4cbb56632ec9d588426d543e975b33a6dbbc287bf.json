@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, updated_at,\n                      archived_at,\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS \"additional_info: Value\",\n                      organization_id\n            FROM vehicles\n            WHERE ($1::text IS NULL OR provider = $1)\n              AND ($2::vehicle_type IS NULL OR type = $2)\n              AND ($3::bool OR archived_at IS NULL)\n              AND (NOT $4::bool OR archived_at IS NOT NULL)\n            ORDER BY water_capacity DESC\n            LIMIT $5 OFFSET $6",
+  "query": "SELECT id, updated_at,\n                      archived_at,\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS \"additional_info: Value\",\n                      organization_id\n            FROM vehicles\n            WHERE ($1::text IS NULL OR provider = $1)\n              AND ($2::vehicle_type IS NULL OR type = $2)\n              AND ($3::bool OR archived_at IS NULL)\n              AND (NOT $4::bool OR archived_at IS NOT NULL)\n              AND ($7::uuid[] IS NULL OR organization_id = ANY($7))\n            ORDER BY water_capacity DESC\n            LIMIT $5 OFFSET $6",
   "describe": {
     "columns": [
       {
@@ -140,7 +140,8 @@
         "Bool",
         "Bool",
         "Int8",
-        "Int8"
+        "Int8",
+        "UuidArray"
       ]
     },
     "nullable": [
@@ -163,5 +164,5 @@
       false
     ]
   },
-  "hash": "5c7608e79845f57ec72c65dae84a905ceab494e3a21961242a03a869d609704d"
+  "hash": "35f23994b8e4e1dc78de3bb4cbb56632ec9d588426d543e975b33a6dbbc287bf"
 }

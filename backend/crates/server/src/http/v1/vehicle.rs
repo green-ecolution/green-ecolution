@@ -53,13 +53,19 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_vehicles(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<VehicleResponse>>, ServiceError> {
     let pagination = Pagination::from(&params);
-    let page = state
-        .vehicle_service
-        .search_view(VehicleSearchQuery::default(), pagination)
+    let visible = state
+        .authorization_service
+        .visible_orgs_for(user.id, Permission::new(Resource::Vehicle, Action::Read))
         .await?;
+    let query = VehicleSearchQuery {
+        visible,
+        ..VehicleSearchQuery::default()
+    };
+    let page = state.vehicle_service.search_view(query, pagination).await?;
     let response = ListResponse::<VehicleResponse>::from_page(page, &pagination);
     Ok(Json(response))
 }
@@ -78,9 +84,16 @@ pub async fn list_vehicles(
 #[tracing::instrument(level = "info", skip_all, fields(vehicle.id = %id))]
 pub async fn get_vehicle(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<VehicleResponse>, ServiceError> {
     let view = state.vehicle_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Vehicle, Action::Read),
+        &scope::effective_orgs(view.organization_id, &[]),
+    )?;
     Ok(Json(VehicleResponse::from(&view)))
 }
 
@@ -125,6 +138,7 @@ pub async fn create_vehicle(
     request_body = VehicleUpdateRequest,
     responses(
         (status = 200, description = "Vehicle updated", body = VehicleResponse),
+        (status = 403, description = "Missing vehicle:update in the owning organization"),
         (status = 404, description = "Vehicle not found"),
         (status = 500, description = "Internal server error"),
     )
@@ -132,9 +146,26 @@ pub async fn create_vehicle(
 #[tracing::instrument(level = "info", skip_all, fields(vehicle.id = %id))]
 pub async fn update_vehicle(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
     Json(entity): Json<VehicleUpdateRequest>,
 ) -> Result<Json<VehicleResponse>, ServiceError> {
+    let current = state.vehicle_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    let effective_orgs = scope::effective_orgs(current.organization_id, &[]);
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Vehicle, Action::Read),
+        &effective_orgs,
+    )?;
+    state
+        .authorization_service
+        .require_any_of(
+            user.id,
+            Permission::new(Resource::Vehicle, Action::Update),
+            &effective_orgs,
+        )
+        .await?;
     let update = entity.into_update()?;
     let vehicle = state.vehicle_service.replace(Id::new(id), update).await?;
     let view = state.vehicle_service.view_by_id(vehicle.id).await?;
@@ -148,6 +179,7 @@ pub async fn update_vehicle(
     params(("vehicle_id" = uuid::Uuid, Path, description = "Vehicle ID")),
     responses(
         (status = 204, description = "Vehicle deleted"),
+        (status = 403, description = "Missing vehicle:delete in the owning organization"),
         (status = 404, description = "Vehicle not found"),
         (status = 500, description = "Internal server error"),
     )
@@ -155,8 +187,24 @@ pub async fn update_vehicle(
 #[tracing::instrument(level = "info", skip_all, fields(vehicle.id = %id))]
 pub async fn delete_vehicle(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
+    let current = state.vehicle_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Vehicle, Action::Read),
+        &scope::effective_orgs(current.organization_id, &[]),
+    )?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Vehicle, Action::Delete),
+            Id::new(current.organization_id),
+        )
+        .await?;
     state.vehicle_service.delete(Id::new(id)).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -174,12 +222,18 @@ pub async fn delete_vehicle(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_archived_vehicles(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<ListResponse<VehicleResponse>>, ServiceError> {
     let pagination = Pagination::from(&params);
+    let visible = state
+        .authorization_service
+        .visible_orgs_for(user.id, Permission::new(Resource::Vehicle, Action::Read))
+        .await?;
     let query = VehicleSearchQuery {
         only_archived: true,
         with_archived: true,
+        visible,
         ..Default::default()
     };
     let page = state.vehicle_service.search_view(query, pagination).await?;
@@ -194,6 +248,7 @@ pub async fn list_archived_vehicles(
     params(("vehicle_id" = uuid::Uuid, Path, description = "Vehicle ID")),
     responses(
         (status = 204, description = "Vehicle archived"),
+        (status = 403, description = "Missing vehicle:update in the owning organization"),
         (status = 404, description = "Vehicle not found"),
         (status = 500, description = "Internal server error"),
     )
@@ -201,8 +256,25 @@ pub async fn list_archived_vehicles(
 #[tracing::instrument(level = "info", skip_all, fields(vehicle.id = %id))]
 pub async fn archive_vehicle(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
+    let current = state.vehicle_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    let effective_orgs = scope::effective_orgs(current.organization_id, &[]);
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Vehicle, Action::Read),
+        &effective_orgs,
+    )?;
+    state
+        .authorization_service
+        .require_any_of(
+            user.id,
+            Permission::new(Resource::Vehicle, Action::Update),
+            &effective_orgs,
+        )
+        .await?;
     state.vehicle_service.archive(Id::new(id)).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -221,6 +293,7 @@ pub async fn archive_vehicle(
 #[tracing::instrument(level = "info", skip_all, fields(vehicle.plate = %plate))]
 pub async fn get_vehicle_by_plate(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(plate): Path<String>,
 ) -> Result<Json<VehicleResponse>, ServiceError> {
     let number_plate = domain::vehicle::NumberPlate::new(plate)?;
@@ -230,6 +303,12 @@ pub async fn get_vehicle_by_plate(
         .await?
         .ok_or(ServiceError::Repository(domain::RepositoryError::NotFound))?;
     let view = state.vehicle_service.view_by_id(vehicle.id).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Vehicle, Action::Read),
+        &scope::effective_orgs(view.organization_id, &[]),
+    )?;
     Ok(Json(VehicleResponse::from(&view)))
 }
 

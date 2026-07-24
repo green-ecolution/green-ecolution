@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use domain::{
     Id,
+    authorization::Visibility,
     cluster::{TreeCluster, TreeClusterReader},
     events::DomainEvent,
     organization::{Organization, OrganizationReader},
@@ -257,7 +258,12 @@ impl WateringPlanService {
                 "no cluster with coordinates to route".into(),
             ));
         }
-        let start_points = self.start_point_reader.all().await?;
+        // Internal lookup for the plan's own depot selection, not a user-facing
+        // listing — access to the plan itself is already gated by the caller.
+        let start_points = self
+            .start_point_reader
+            .all(Visibility::Unrestricted)
+            .await?;
         let depot = match start_point_name.as_deref() {
             Some(name) => start_points
                 .iter()

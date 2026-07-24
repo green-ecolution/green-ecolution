@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use domain::{
     Id,
+    authorization::Visibility,
     organization::Organization,
     start_point::{
         StartPoint, StartPointDraft, StartPointReader, StartPointUpdate, StartPointWriter,
@@ -21,8 +22,8 @@ impl StartPointService {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn list(&self) -> Result<Vec<StartPoint>, ServiceError> {
-        Ok(self.reader.all().await?)
+    pub async fn list(&self, visible: Visibility) -> Result<Vec<StartPoint>, ServiceError> {
+        Ok(self.reader.all(visible).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(start_point.id = %id))]

@@ -5,6 +5,7 @@ use sqlx::PgPool;
 
 use domain::{
     Id, IdSliceExt, RawId, RepositoryError,
+    authorization::Visibility,
     shared::pagination::{Page, Pagination},
     vehicle::{
         DrivingLicense, NumberPlate, Vehicle, VehicleDraft, VehicleReader, VehicleSearchQuery,
@@ -218,17 +219,20 @@ impl VehicleReader for PgVehicleRepository {
         let limit = i64::try_from(pagination.limit()).unwrap_or(i64::MAX);
         let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
         let provider = query.provider.as_ref().map(|p| p.as_str().to_owned());
+        let visible_ids = query.visible.into_raw_ids();
 
         let total = sqlx::query_scalar!(
             r#"SELECT COUNT(*) AS "count!: i64" FROM vehicles
             WHERE ($1::text IS NULL OR provider = $1)
               AND ($2::vehicle_type IS NULL OR type = $2)
               AND ($3::bool OR archived_at IS NULL)
-              AND (NOT $4::bool OR archived_at IS NOT NULL)"#,
+              AND (NOT $4::bool OR archived_at IS NOT NULL)
+              AND ($5::uuid[] IS NULL OR organization_id = ANY($5))"#,
             provider,
             query.vehicle_type as Option<VehicleType>,
             query.with_archived,
             query.only_archived,
+            visible_ids.as_deref(),
         )
         .fetch_one(&self.pool)
         .await? as u64;
@@ -253,6 +257,7 @@ impl VehicleReader for PgVehicleRepository {
               AND ($2::vehicle_type IS NULL OR type = $2)
               AND ($3::bool OR archived_at IS NULL)
               AND (NOT $4::bool OR archived_at IS NOT NULL)
+              AND ($7::uuid[] IS NULL OR organization_id = ANY($7))
             ORDER BY water_capacity DESC
             LIMIT $5 OFFSET $6"#,
             provider,
@@ -261,6 +266,7 @@ impl VehicleReader for PgVehicleRepository {
             query.only_archived,
             limit,
             offset,
+            visible_ids.as_deref(),
         )
         .fetch_all(&self.pool)
         .await?;
@@ -275,9 +281,11 @@ impl VehicleReader for PgVehicleRepository {
         &self,
         vehicle_type: VehicleType,
         pagination: Pagination,
+        visible: Visibility,
     ) -> Result<Page<VehicleView>, RepositoryError> {
         let query = VehicleSearchQuery {
             vehicle_type: Some(vehicle_type),
+            visible,
             ..Default::default()
         };
         self.view_search(query, pagination).await

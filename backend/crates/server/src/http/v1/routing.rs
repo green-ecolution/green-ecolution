@@ -51,9 +51,17 @@ fn ensure_routing(state: &AppState) -> Result<(), ServiceError> {
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_routing_start_points(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
 ) -> Result<Json<Vec<StartPointResponse>>, ServiceError> {
     ensure_routing(&state)?;
-    let points = state.start_point_service.list().await?;
+    let visible = state
+        .authorization_service
+        .visible_orgs_for(
+            user.id,
+            Permission::new(Resource::WateringPlan, Action::Read),
+        )
+        .await?;
+    let points = state.start_point_service.list(visible).await?;
     Ok(Json(points.iter().map(StartPointResponse::from).collect()))
 }
 
@@ -95,6 +103,7 @@ pub async fn create_start_point(
     request_body = StartPointRequest,
     responses(
         (status = 200, description = "Start point updated", body = StartPointResponse),
+        (status = 403, description = "Missing watering_plan:update in the owning organization"),
         (status = 404, description = "Start point not found"),
         (status = 503, description = "Routing feature is disabled"),
     )
@@ -102,10 +111,27 @@ pub async fn create_start_point(
 #[tracing::instrument(level = "info", skip_all, fields(start_point.id = %id))]
 pub async fn update_start_point(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
     Json(req): Json<StartPointRequest>,
 ) -> Result<Json<StartPointResponse>, ServiceError> {
     ensure_routing(&state)?;
+    let current = state.start_point_service.by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    let effective_orgs = scope::effective_orgs(current.organization_id().value(), &[]);
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::WateringPlan, Action::Read),
+        &effective_orgs,
+    )?;
+    state
+        .authorization_service
+        .require_any_of(
+            user.id,
+            Permission::new(Resource::WateringPlan, Action::Update),
+            &effective_orgs,
+        )
+        .await?;
     let update = req.into_update()?;
     let sp = state
         .start_point_service
@@ -121,6 +147,7 @@ pub async fn update_start_point(
     responses(
         (status = 204, description = "Start point deleted"),
         (status = 400, description = "Cannot delete the default start point"),
+        (status = 403, description = "Missing watering_plan:delete in the owning organization"),
         (status = 404, description = "Start point not found"),
         (status = 503, description = "Routing feature is disabled"),
     )
@@ -128,9 +155,25 @@ pub async fn update_start_point(
 #[tracing::instrument(level = "info", skip_all, fields(start_point.id = %id))]
 pub async fn delete_start_point(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
     ensure_routing(&state)?;
+    let current = state.start_point_service.by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::WateringPlan, Action::Read),
+        &scope::effective_orgs(current.organization_id().value(), &[]),
+    )?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::WateringPlan, Action::Delete),
+            current.organization_id(),
+        )
+        .await?;
     state.start_point_service.delete(Id::new(id)).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -141,6 +184,7 @@ pub async fn delete_start_point(
     params(("start_point_id" = uuid::Uuid, Path, description = "Start point ID")),
     responses(
         (status = 204, description = "Default set"),
+        (status = 403, description = "Missing watering_plan:update in the owning organization"),
         (status = 404, description = "Start point not found"),
         (status = 503, description = "Routing feature is disabled"),
     )
@@ -148,9 +192,26 @@ pub async fn delete_start_point(
 #[tracing::instrument(level = "info", skip_all, fields(start_point.id = %id))]
 pub async fn set_default_start_point(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
     ensure_routing(&state)?;
+    let current = state.start_point_service.by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    let effective_orgs = scope::effective_orgs(current.organization_id().value(), &[]);
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::WateringPlan, Action::Read),
+        &effective_orgs,
+    )?;
+    state
+        .authorization_service
+        .require_any_of(
+            user.id,
+            Permission::new(Resource::WateringPlan, Action::Update),
+            &effective_orgs,
+        )
+        .await?;
     state.start_point_service.set_default(Id::new(id)).await?;
     Ok(StatusCode::NO_CONTENT)
 }

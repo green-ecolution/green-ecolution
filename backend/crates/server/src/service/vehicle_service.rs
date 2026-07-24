@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use domain::{
     Id,
+    authorization::Visibility,
     organization::Organization,
     shared::pagination::{Page, Pagination},
     vehicle::{
@@ -36,8 +37,12 @@ impl VehicleService {
         &self,
         vehicle_type: VehicleType,
         pagination: Pagination,
+        visible: Visibility,
     ) -> Result<Page<VehicleView>, ServiceError> {
-        Ok(self.reader.view_by_type(vehicle_type, pagination).await?)
+        Ok(self
+            .reader
+            .view_by_type(vehicle_type, pagination, visible)
+            .await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(vehicle.id = %id))]

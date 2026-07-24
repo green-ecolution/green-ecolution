@@ -3,6 +3,7 @@ use sqlx::PgPool;
 use domain::start_point::StartPointSnapshot;
 use domain::{
     Id, RepositoryError,
+    authorization::Visibility,
     start_point::{StartPoint, StartPointDraft, StartPointReader, StartPointWriter},
 };
 
@@ -19,11 +20,15 @@ impl PgStartPointRepository {
 #[async_trait::async_trait]
 impl StartPointReader for PgStartPointRepository {
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn all(&self) -> Result<Vec<StartPoint>, RepositoryError> {
+    async fn all(&self, visible: Visibility) -> Result<Vec<StartPoint>, RepositoryError> {
+        let visible_ids = visible.into_raw_ids();
         let points = sqlx::query_as!(
             StartPointSnapshot,
             r#"SELECT id, name, latitude, longitude, watering_point, is_default, organization_id
-               FROM depots ORDER BY name ASC, id ASC"#
+               FROM depots
+               WHERE ($1::uuid[] IS NULL OR organization_id = ANY($1))
+               ORDER BY name ASC, id ASC"#,
+            visible_ids.as_deref(),
         )
         .fetch_all(&self.pool)
         .await?
