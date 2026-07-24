@@ -15,19 +15,6 @@ CREATE INDEX watering_plans_organization_id_idx ON watering_plans (organization_
 CREATE INDEX vehicles_organization_id_idx       ON vehicles (organization_id);
 CREATE INDEX depots_organization_id_idx         ON depots (organization_id);
 
-CREATE TABLE tree_shares (
-  tree_id         UUID NOT NULL REFERENCES trees(id) ON DELETE CASCADE,
-  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  PRIMARY KEY (tree_id, organization_id)
-);
-CREATE TABLE tree_cluster_shares (
-  tree_cluster_id UUID NOT NULL REFERENCES tree_clusters(id) ON DELETE CASCADE,
-  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  PRIMARY KEY (tree_cluster_id, organization_id)
-);
-CREATE INDEX tree_shares_org_idx         ON tree_shares (organization_id);
-CREATE INDEX tree_cluster_shares_org_idx ON tree_cluster_shares (organization_id);
-
 -- one default depot per organization instead of one global default
 DROP INDEX depots_single_default;
 CREATE UNIQUE INDEX depots_single_default_per_org ON depots (organization_id) WHERE is_default;

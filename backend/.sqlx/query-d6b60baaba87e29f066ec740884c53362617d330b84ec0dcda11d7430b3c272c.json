@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id,\n                      COALESCE((\n                        SELECT array_agg(DISTINCT s.org) FROM (\n                          SELECT ts.organization_id AS org FROM tree_shares ts WHERE ts.tree_id = trees.id\n                          UNION\n                          SELECT tcs.organization_id FROM tree_cluster_shares tcs\n                          WHERE tcs.tree_cluster_id = trees.tree_cluster_id\n                        ) s\n                      ), '{}') AS \"shared_with!: Vec<RawId>\"\n            FROM trees WHERE sensor_id = $1",
+  "query": "SELECT id, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id\n            FROM trees\n            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))\n              AND ($2::int[] = '{}' OR planting_year = ANY($2))\n              AND ($3::text IS NULL OR provider = $3)\n              AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))\n              AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\\' OR species ILIKE $5 ESCAPE '\\')\n              AND ($6::uuid[] IS NULL OR organization_id = ANY($6))\n            ORDER BY number ASC\n            LIMIT $7 OFFSET $8",
   "describe": {
     "columns": [
       {
@@ -90,16 +90,38 @@
         "ordinal": 14,
         "name": "organization_id",
         "type_info": "Uuid"
-      },
-      {
-        "ordinal": 15,
-        "name": "shared_with!: Vec<RawId>",
-        "type_info": "UuidArray"
       }
     ],
     "parameters": {
       "Left": [
-        "Text"
+        {
+          "Custom": {
+            "name": "watering_status[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "watering_status",
+                  "kind": {
+                    "Enum": [
+                      "good",
+                      "moderate",
+                      "bad",
+                      "unknown",
+                      "just watered"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "Int4Array",
+        "Text",
+        "Bool",
+        "Text",
+        "UuidArray",
+        "Int8",
+        "Int8"
       ]
     },
     "nullable": [
@@ -117,9 +139,8 @@
       true,
       true,
       true,
-      false,
-      null
+      false
     ]
   },
-  "hash": "01593ae93a18aea9e2d9983c2a0714ecbc8bb3afdf7b9e01bc5aef2e4157cad1"
+  "hash": "d6b60baaba87e29f066ec740884c53362617d330b84ec0dcda11d7430b3c272c"
 }

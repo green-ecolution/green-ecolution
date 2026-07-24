@@ -237,7 +237,7 @@ pub async fn get_watering_plan(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::WateringPlan, Action::Read),
-        &scope::effective_orgs(view.organization_id, &[]),
+        view.organization_id,
     )?;
     let (transporter, trailer, clusters, evaluation) =
         resolve_view_relations(&state, &view).await?;
@@ -289,7 +289,7 @@ pub async fn create_watering_plan(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Vehicle, Action::Read),
-        &scope::effective_orgs(transporter.organization_id, &[]),
+        transporter.organization_id,
     )?;
     if let Some(trailer_id) = entity.trailer_id {
         let trailer = state
@@ -299,7 +299,7 @@ pub async fn create_watering_plan(
         scope::ensure_visible(
             &ctx,
             Permission::new(Resource::Vehicle, Action::Read),
-            &scope::effective_orgs(trailer.organization_id, &[]),
+            trailer.organization_id,
         )?;
     }
 
@@ -345,18 +345,17 @@ pub async fn update_watering_plan(
     let new_status: DomainStatus = entity.status.into();
 
     let ctx = state.authorization_service.context_for(user.id).await?;
-    let plan_orgs = scope::effective_orgs(current.organization_id().value(), &[]);
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::WateringPlan, Action::Read),
-        &plan_orgs,
+        current.organization_id().value(),
     )?;
     state
         .authorization_service
-        .require_any_of(
+        .require(
             user.id,
             Permission::new(Resource::WateringPlan, Action::Update),
-            &plan_orgs,
+            current.organization_id(),
         )
         .await?;
 
@@ -368,7 +367,7 @@ pub async fn update_watering_plan(
         scope::ensure_visible(
             &ctx,
             Permission::new(Resource::Vehicle, Action::Read),
-            &scope::effective_orgs(transporter.organization_id, &[]),
+            transporter.organization_id,
         )?;
         if let Some(trailer_id) = entity.trailer_id {
             let trailer = state
@@ -378,7 +377,7 @@ pub async fn update_watering_plan(
             scope::ensure_visible(
                 &ctx,
                 Permission::new(Resource::Vehicle, Action::Read),
-                &scope::effective_orgs(trailer.organization_id, &[]),
+                trailer.organization_id,
             )?;
         }
 
@@ -498,7 +497,7 @@ pub async fn delete_watering_plan(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::WateringPlan, Action::Read),
-        &scope::effective_orgs(current.organization_id().value(), &[]),
+        current.organization_id().value(),
     )?;
     state
         .authorization_service
@@ -554,7 +553,7 @@ pub async fn get_watering_plan_route(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::WateringPlan, Action::Read),
-        &scope::effective_orgs(view.organization_id, &[]),
+        view.organization_id,
     )?;
     let plan = state.watering_plan_service.by_id(Id::new(id)).await?;
     Ok(Json(route_response_from_plan(&plan)?))
@@ -637,7 +636,7 @@ pub async fn get_gpx_file(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::WateringPlan, Action::Read),
-        &scope::effective_orgs(view.organization_id, &[]),
+        view.organization_id,
     )?;
     let plan = state.watering_plan_service.by_id(Id::new(id)).await?;
     let geometry = plan

@@ -26,8 +26,6 @@ pub struct TreeView {
     pub provider: Option<String>,
     pub additional_info: Option<Value>,
     pub organization_id: Uuid,
-    /// Effective shares: this tree's own shares union its cluster's shares.
-    pub shared_with: Vec<Uuid>,
 }
 
 /// A [`TreeView`] annotated with the distance from the query point.

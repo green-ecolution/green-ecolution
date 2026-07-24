@@ -162,12 +162,6 @@ impl AccessContext {
         }
         Visibility::Only(orgs)
     }
-
-    /// Write-side check against a resource's effective org set
-    /// (owner ∪ shares): any single allowed org grants the action.
-    pub fn allows_in_any(&self, p: Permission, orgs: &BTreeSet<Id<Organization>>) -> bool {
-        orgs.iter().any(|org| self.allows_in(p, *org))
-    }
 }
 
 #[cfg(test)]
@@ -273,19 +267,5 @@ mod tests {
             AccessContext::unrestricted().visible_orgs(tree_read()),
             Visibility::Unrestricted
         );
-    }
-
-    #[test]
-    fn allows_in_any_checks_every_effective_org() {
-        let (root, tbz, sub) = ids();
-        let h = OrgHierarchy::from_pairs([(root, None), (tbz, Some(root)), (sub, Some(tbz))]);
-        let eff = EffectivePermissions::from_grants(vec![(sub, BTreeSet::from([tree_read()]))]);
-        let ctx = AccessContext {
-            permissions: eff,
-            hierarchy: h,
-        };
-        // resource owned by root but shared to sub -> effective orgs {root, sub}
-        assert!(ctx.allows_in_any(tree_read(), &BTreeSet::from([root, sub])));
-        assert!(!ctx.allows_in_any(tree_read(), &BTreeSet::from([root, tbz])));
     }
 }

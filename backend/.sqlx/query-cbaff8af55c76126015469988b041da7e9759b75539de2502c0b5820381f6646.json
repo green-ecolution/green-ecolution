@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, latitude, longitude, number,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      (sensor_id IS NOT NULL) AS \"has_sensor!: bool\"\n            FROM trees\n            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))\n              AND ($2::int[] = '{}' OR planting_year = ANY($2))\n              AND ($3::text IS NULL OR provider = $3)\n              AND ($4::bool IS NULL\n                   OR ($4 = true AND tree_cluster_id IS NOT NULL)\n                   OR ($4 = false AND tree_cluster_id IS NULL))\n              AND ($5::bool IS FALSE\n                   OR ST_Intersects(\n                       geometry,\n                       ST_MakeEnvelope($6, $7, $8, $9, 4326)\n                   ))\n              AND ($10::uuid[] IS NULL\n                   OR organization_id = ANY($10)\n                   OR id IN (SELECT tree_id FROM tree_shares WHERE organization_id = ANY($10))\n                   OR tree_cluster_id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($10)))\n            ORDER BY id",
+  "query": "SELECT id, latitude, longitude, number,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      (sensor_id IS NOT NULL) AS \"has_sensor!: bool\"\n            FROM trees\n            WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))\n              AND ($2::int[] = '{}' OR planting_year = ANY($2))\n              AND ($3::text IS NULL OR provider = $3)\n              AND ($4::bool IS NULL\n                   OR ($4 = true AND tree_cluster_id IS NOT NULL)\n                   OR ($4 = false AND tree_cluster_id IS NULL))\n              AND ($5::bool IS FALSE\n                   OR ST_Intersects(\n                       geometry,\n                       ST_MakeEnvelope($6, $7, $8, $9, 4326)\n                   ))\n              AND ($10::uuid[] IS NULL OR organization_id = ANY($10))\n            ORDER BY id",
   "describe": {
     "columns": [
       {
@@ -90,5 +90,5 @@
       null
     ]
   },
-  "hash": "f0333bb8f081edf8bf5b161c6073fb345a2c622037ec902464792e23969b53c7"
+  "hash": "cbaff8af55c76126015469988b041da7e9759b75539de2502c0b5820381f6646"
 }

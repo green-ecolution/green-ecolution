@@ -374,7 +374,6 @@ impl Services {
                 repos.cluster_reader.clone(),
                 repos.sensor_reader.clone(),
                 repos.sensor_writer.clone(),
-                repos.organization_reader.clone(),
                 event_bus.clone(),
             )),
             sensor: Arc::new(SensorService::new(
@@ -399,7 +398,6 @@ impl Services {
                 repos.tree_writer.clone(),
                 repos.sensor_reader.clone(),
                 repos.sensor_writer.clone(),
-                repos.organization_reader.clone(),
                 event_bus.clone(),
             )),
             watering_plan: Arc::new(WateringPlanService::new(

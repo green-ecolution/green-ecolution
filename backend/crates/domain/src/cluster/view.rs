@@ -28,8 +28,6 @@ pub struct TreeClusterView {
     pub provider: Option<String>,
     pub additional_info: Option<Value>,
     pub organization_id: Uuid,
-    /// This cluster's own shares (a cluster has no parent to inherit from).
-    pub shared_with: Vec<Uuid>,
 }
 
 /// Read model for a cluster's map boundary: a GeoJSON polygon (convex hull of

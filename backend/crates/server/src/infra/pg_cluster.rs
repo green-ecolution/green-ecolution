@@ -61,7 +61,6 @@ struct TreeClusterViewRow {
     tree_ids: Vec<RawId>,
     sensor_count: i64,
     organization_id: RawId,
-    shared_with: Vec<RawId>,
 }
 
 impl From<TreeClusterViewRow> for TreeClusterView {
@@ -89,7 +88,6 @@ impl From<TreeClusterViewRow> for TreeClusterView {
             provider: row.provider,
             additional_info: row.additional_info,
             organization_id: row.organization_id,
-            shared_with: row.shared_with,
         }
     }
 }
@@ -109,8 +107,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.provider,
                       tc.additional_informations AS additional_info,
                       tc.organization_id,
-                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>",
-                      COALESCE((SELECT array_agg(tcs.organization_id) FROM tree_cluster_shares tcs WHERE tcs.tree_cluster_id = tc.id), '{}') AS "shared_with!: Vec<RawId>"
+                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
             WHERE tc.id = $1
@@ -138,8 +135,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.provider,
                       tc.additional_informations AS additional_info,
                       tc.organization_id,
-                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>",
-                      COALESCE((SELECT array_agg(tcs.organization_id) FROM tree_cluster_shares tcs WHERE tcs.tree_cluster_id = tc.id), '{}') AS "shared_with!: Vec<RawId>"
+                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
             WHERE tc.id = ANY($1::uuid[])
@@ -166,8 +162,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.additional_informations AS additional_info,
                       tc.organization_id,
                       COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>",
-                      COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS "sensor_count!: i64",
-                      COALESCE((SELECT array_agg(tcs.organization_id) FROM tree_cluster_shares tcs WHERE tcs.tree_cluster_id = tc.id), '{}') AS "shared_with!: Vec<RawId>"
+                      COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS "sensor_count!: i64"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
             WHERE tc.id = $1
@@ -199,8 +194,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.additional_informations AS additional_info,
                       tc.organization_id,
                       COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>",
-                      COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS "sensor_count!: i64",
-                      COALESCE((SELECT array_agg(tcs.organization_id) FROM tree_cluster_shares tcs WHERE tcs.tree_cluster_id = tc.id), '{}') AS "shared_with!: Vec<RawId>"
+                      COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS "sensor_count!: i64"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
             WHERE tc.id = ANY($1::uuid[])
@@ -241,9 +235,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
               AND ($3::text IS NULL OR tc.provider = $3)
               AND ($4::text IS NULL OR tc.name ILIKE $4 ESCAPE '\')
               AND ($5::tree_soil_condition[] = '{}' OR tc.soil_condition = ANY($5))
-              AND ($6::uuid[] IS NULL
-                   OR tc.organization_id = ANY($6)
-                   OR tc.id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($6)))"#,
+              AND ($6::uuid[] IS NULL OR tc.organization_id = ANY($6))"#,
             &watering_statuses as &[WateringStatus],
             &query.regions,
             provider,
@@ -267,8 +259,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.additional_informations AS additional_info,
                       tc.organization_id,
                       COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>",
-                      COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS "sensor_count!: i64",
-                      COALESCE((SELECT array_agg(tcs.organization_id) FROM tree_cluster_shares tcs WHERE tcs.tree_cluster_id = tc.id), '{}') AS "shared_with!: Vec<RawId>"
+                      COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS "sensor_count!: i64"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
             WHERE ($1::watering_status[] = '{}' OR tc.watering_status = ANY($1))
@@ -276,9 +267,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
               AND ($3::text IS NULL OR tc.provider = $3)
               AND ($4::text IS NULL OR tc.name ILIKE $4 ESCAPE '\')
               AND ($5::tree_soil_condition[] = '{}' OR tc.soil_condition = ANY($5))
-              AND ($6::uuid[] IS NULL
-                   OR tc.organization_id = ANY($6)
-                   OR tc.id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($6)))
+              AND ($6::uuid[] IS NULL OR tc.organization_id = ANY($6))
             GROUP BY tc.id
             ORDER BY
               CASE WHEN $7 = 'moisture' AND $8 = 'asc'  THEN tc.moisture_level END ASC NULLS LAST,
@@ -324,9 +313,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
             WHERE tc.archived = false
               AND tc.latitude IS NOT NULL
               AND tc.longitude IS NOT NULL
-              AND ($1::uuid[] IS NULL
-                   OR tc.organization_id = ANY($1)
-                   OR tc.id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($1)))
+              AND ($1::uuid[] IS NULL OR tc.organization_id = ANY($1))
             GROUP BY tc.id
             ORDER BY tc.id"#,
             visible_ids.as_deref(),
@@ -389,9 +376,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
             JOIN tree_clusters tc ON tc.id = t.tree_cluster_id
             WHERE t.geometry IS NOT NULL
               AND tc.archived = false
-              AND ($2::uuid[] IS NULL
-                   OR tc.organization_id = ANY($2)
-                   OR tc.id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($2)))
+              AND ($2::uuid[] IS NULL OR tc.organization_id = ANY($2))
             GROUP BY tc.id, tc.name, tc.watering_status"#,
             CLUSTER_BOUNDARY_BUFFER_METERS,
             visible_ids.as_deref(),
@@ -425,15 +410,11 @@ impl TreeClusterReader for PgTreeClusterRepository {
                     SELECT COUNT(*) FROM trees t
                     JOIN tree_clusters c ON t.tree_cluster_id = c.id
                     WHERE c.archived = false
-                      AND ($1::uuid[] IS NULL
-                           OR c.organization_id = ANY($1)
-                           OR c.id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($1)))
+                      AND ($1::uuid[] IS NULL OR c.organization_id = ANY($1))
                 ), 0)                                                     AS "trees!: i64"
             FROM tree_clusters tc
             WHERE tc.archived = false
-              AND ($1::uuid[] IS NULL
-                   OR tc.organization_id = ANY($1)
-                   OR tc.id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($1)))"#,
+              AND ($1::uuid[] IS NULL OR tc.organization_id = ANY($1))"#,
             visible_ids.as_deref(),
         )
         .fetch_one(&self.pool)
@@ -643,22 +624,6 @@ impl TreeClusterWriter for PgTreeClusterRepository {
             WHERE tree_cluster_id = $1 OR id = ANY($2::uuid[])"#,
             cluster.id.value(),
             &tree_id_values,
-        )
-        .execute(&mut *tx)
-        .await?;
-
-        let shared_with: Vec<RawId> = cluster.shared_with().iter().map(|o| o.value()).collect();
-        sqlx::query!(
-            "DELETE FROM tree_cluster_shares WHERE tree_cluster_id = $1",
-            cluster.id.value()
-        )
-        .execute(&mut *tx)
-        .await?;
-        sqlx::query!(
-            r#"INSERT INTO tree_cluster_shares (tree_cluster_id, organization_id)
-            SELECT $1, unnest($2::uuid[]) WHERE cardinality($2::uuid[]) > 0"#,
-            cluster.id.value(),
-            &shared_with,
         )
         .execute(&mut *tx)
         .await?;

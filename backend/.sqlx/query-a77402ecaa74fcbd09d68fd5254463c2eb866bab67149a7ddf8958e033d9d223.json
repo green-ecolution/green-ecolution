@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT tc.id, tc.name,\n                      tc.latitude AS \"latitude!: f64\",\n                      tc.longitude AS \"longitude!: f64\",\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      COUNT(t.id) AS \"tree_count!: i64\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.archived = false\n              AND tc.latitude IS NOT NULL\n              AND tc.longitude IS NOT NULL\n              AND ($1::uuid[] IS NULL\n                   OR tc.organization_id = ANY($1)\n                   OR tc.id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($1)))\n            GROUP BY tc.id\n            ORDER BY tc.id",
+  "query": "SELECT tc.id, tc.name,\n                      tc.latitude AS \"latitude!: f64\",\n                      tc.longitude AS \"longitude!: f64\",\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      COUNT(t.id) AS \"tree_count!: i64\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.archived = false\n              AND tc.latitude IS NOT NULL\n              AND tc.longitude IS NOT NULL\n              AND ($1::uuid[] IS NULL OR tc.organization_id = ANY($1))\n            GROUP BY tc.id\n            ORDER BY tc.id",
   "describe": {
     "columns": [
       {
@@ -61,5 +61,5 @@
       null
     ]
   },
-  "hash": "bdff16a942e632cd8318d24321780d7b35c55c08f21f4e28f2f653c8b0167c5e"
+  "hash": "a77402ecaa74fcbd09d68fd5254463c2eb866bab67149a7ddf8958e033d9d223"
 }

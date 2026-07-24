@@ -17,10 +17,9 @@ use crate::{
                 ListResponse,
                 sensor::resolve_sensors_by_str_ids,
                 tree::{
-                    NearestTreeListResponse, NearestTreeParams, ShareRequest, TransferRequest,
-                    TreeCreateRequest, TreeListParams, TreeMarkerListResponse,
-                    TreeMarkerQueryParams, TreeMarkerResponse, TreeResponse, TreeUpdateRequest,
-                    TreeWithDistanceResponse,
+                    NearestTreeListResponse, NearestTreeParams, TransferRequest, TreeCreateRequest,
+                    TreeListParams, TreeMarkerListResponse, TreeMarkerQueryParams,
+                    TreeMarkerResponse, TreeResponse, TreeUpdateRequest, TreeWithDistanceResponse,
                 },
             },
             scope,
@@ -43,8 +42,6 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(list_tree_markers))
         .routes(routes!(get_nearest_trees))
         .routes(routes!(get_tree, update_tree, delete_tree))
-        .routes(routes!(share_tree))
-        .routes(routes!(revoke_share_tree))
         .routes(routes!(transfer_tree))
 }
 
@@ -153,7 +150,7 @@ pub async fn get_tree(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Tree, Action::Read),
-        &scope::effective_orgs(tree.organization_id, &tree.shared_with),
+        tree.organization_id,
     )?;
     let sensor = match &tree.sensor_id {
         Some(sid) => {
@@ -196,10 +193,10 @@ pub async fn create_tree(
         let sensor_view = state.sensor_service.view_by_id(&sensor_id).await?;
         state
             .authorization_service
-            .require_any_of(
+            .require(
                 user.id,
                 Permission::new(Resource::Sensor, Action::Update),
-                &scope::effective_orgs(sensor_view.organization_id, &sensor_view.shared_with),
+                Id::new(sensor_view.organization_id),
             )
             .await?;
     }
@@ -227,7 +224,7 @@ pub async fn create_tree(
     request_body = TreeUpdateRequest,
     responses(
         (status = 200, description = "Tree updated", body = TreeResponse),
-        (status = 403, description = "Missing tree:update in the owning organization or its shares"),
+        (status = 403, description = "Missing tree:update in the owning organization"),
         (status = 404, description = "Tree not found"),
         (status = 500, description = "Internal server error"),
     )
@@ -241,18 +238,17 @@ pub async fn update_tree(
 ) -> Result<Json<TreeResponse>, ServiceError> {
     let current = state.tree_service.view_by_id(Id::new(id)).await?;
     let ctx = state.authorization_service.context_for(user.id).await?;
-    let effective_orgs = scope::effective_orgs(current.organization_id, &current.shared_with);
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Tree, Action::Read),
-        &effective_orgs,
+        current.organization_id,
     )?;
     state
         .authorization_service
-        .require_any_of(
+        .require(
             user.id,
             Permission::new(Resource::Tree, Action::Update),
-            &effective_orgs,
+            Id::new(current.organization_id),
         )
         .await?;
     if entity.sensor_id != current.sensor_id {
@@ -264,10 +260,10 @@ pub async fn update_tree(
             let sensor_view = state.sensor_service.view_by_id(&sensor_id).await?;
             state
                 .authorization_service
-                .require_any_of(
+                .require(
                     user.id,
                     Permission::new(Resource::Sensor, Action::Update),
-                    &scope::effective_orgs(sensor_view.organization_id, &sensor_view.shared_with),
+                    Id::new(sensor_view.organization_id),
                 )
                 .await?;
         }
@@ -321,7 +317,7 @@ pub async fn delete_tree(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Tree, Action::Read),
-        &scope::effective_orgs(current.organization_id, &current.shared_with),
+        current.organization_id,
     )?;
     state
         .authorization_service
@@ -469,87 +465,6 @@ pub async fn list_tree_markers(
     Ok(Json(TreeMarkerListResponse { data }))
 }
 
-#[utoipa::path(post, path = "/trees/{tree_id}/shares", tag = "Trees",
-    operation_id = "shareTree", summary = "Share a tree with a descendant organization",
-    params(("tree_id" = uuid::Uuid, Path, description = "Tree ID")),
-    request_body = ShareRequest,
-    responses(
-        (status = 204, description = "Share granted"),
-        (status = 403, description = "Missing tree:update in owning organization"),
-        (status = 404, description = "Tree or organization not found"),
-        (status = 409, description = "Tree is part of a cluster"),
-        (status = 422, description = "Target is not a proper descendant"),
-    )
-)]
-#[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
-pub async fn share_tree(
-    State(state): State<Arc<AppState>>,
-    user: AuthUserExtractor,
-    Path(id): Path<uuid::Uuid>,
-    Json(req): Json<ShareRequest>,
-) -> Result<StatusCode, ServiceError> {
-    let current = state.tree_service.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
-    scope::ensure_visible(
-        &ctx,
-        Permission::new(Resource::Tree, Action::Read),
-        &scope::effective_orgs(current.organization_id, &current.shared_with),
-    )?;
-    state
-        .authorization_service
-        .require(
-            user.id,
-            Permission::new(Resource::Tree, Action::Update),
-            Id::new(current.organization_id),
-        )
-        .await?;
-    state
-        .tree_service
-        .share_with(Id::new(id), Id::new(req.organization_id))
-        .await?;
-    Ok(StatusCode::NO_CONTENT)
-}
-
-#[utoipa::path(delete, path = "/trees/{tree_id}/shares/{org_id}", tag = "Trees",
-    operation_id = "revokeShareTree", summary = "Revoke a tree share",
-    params(
-        ("tree_id" = uuid::Uuid, Path, description = "Tree ID"),
-        ("org_id" = uuid::Uuid, Path, description = "Organization ID to revoke the share from"),
-    ),
-    responses(
-        (status = 204, description = "Share revoked"),
-        (status = 403, description = "Missing tree:update in owning organization"),
-        (status = 404, description = "Tree not found"),
-    )
-)]
-#[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
-pub async fn revoke_share_tree(
-    State(state): State<Arc<AppState>>,
-    user: AuthUserExtractor,
-    Path((id, org_id)): Path<(uuid::Uuid, uuid::Uuid)>,
-) -> Result<StatusCode, ServiceError> {
-    let current = state.tree_service.view_by_id(Id::new(id)).await?;
-    let ctx = state.authorization_service.context_for(user.id).await?;
-    scope::ensure_visible(
-        &ctx,
-        Permission::new(Resource::Tree, Action::Read),
-        &scope::effective_orgs(current.organization_id, &current.shared_with),
-    )?;
-    state
-        .authorization_service
-        .require(
-            user.id,
-            Permission::new(Resource::Tree, Action::Update),
-            Id::new(current.organization_id),
-        )
-        .await?;
-    state
-        .tree_service
-        .revoke_share(Id::new(id), Id::new(org_id))
-        .await?;
-    Ok(StatusCode::NO_CONTENT)
-}
-
 #[utoipa::path(patch, path = "/trees/{tree_id}/organization", tag = "Trees",
     operation_id = "transferTree", summary = "Transfer a tree's ownership to another organization",
     description = "Moves a clusterless tree (and any attached sensor) to a different owning \
@@ -575,7 +490,7 @@ pub async fn transfer_tree(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Tree, Action::Read),
-        &scope::effective_orgs(current.organization_id, &current.shared_with),
+        current.organization_id,
     )?;
     let perm = Permission::new(Resource::Tree, Action::Update);
     state

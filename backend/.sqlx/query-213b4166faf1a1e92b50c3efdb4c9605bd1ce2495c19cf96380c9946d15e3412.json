@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT tc.id, tc.updated_at, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: Option<SoilCondition>\",\n                      tc.latitude, tc.longitude,\n                      tc.last_watered AS \"last_watered: DateTime<Utc>\",\n                      tc.provider,\n                      tc.additional_informations AS additional_info,\n                      tc.organization_id,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS \"tree_ids!: Vec<RawId>\",\n                      COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS \"sensor_count!: i64\",\n                      COALESCE((SELECT array_agg(tcs.organization_id) FROM tree_cluster_shares tcs WHERE tcs.tree_cluster_id = tc.id), '{}') AS \"shared_with!: Vec<RawId>\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.id = ANY($1::uuid[])\n            GROUP BY tc.id",
+  "query": "SELECT tc.id, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: Option<SoilCondition>\",\n                      tc.latitude, tc.longitude,\n                      tc.last_watered AS \"last_watered: DateTime<Utc>\",\n                      tc.provider,\n                      tc.additional_informations AS additional_info,\n                      tc.organization_id,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS \"tree_ids!: Vec<RawId>\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.id = ANY($1::uuid[])\n            GROUP BY tc.id",
   "describe": {
     "columns": [
       {
@@ -10,41 +10,36 @@
       },
       {
         "ordinal": 1,
-        "name": "updated_at",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 2,
         "name": "name",
         "type_info": "Text"
       },
       {
-        "ordinal": 3,
+        "ordinal": 2,
         "name": "address",
         "type_info": "Text"
       },
       {
-        "ordinal": 4,
+        "ordinal": 3,
         "name": "description",
         "type_info": "Text"
       },
       {
-        "ordinal": 5,
+        "ordinal": 4,
         "name": "archived",
         "type_info": "Bool"
       },
       {
-        "ordinal": 6,
+        "ordinal": 5,
         "name": "moisture_level",
         "type_info": "Float8"
       },
       {
-        "ordinal": 7,
+        "ordinal": 6,
         "name": "region_id",
         "type_info": "Uuid"
       },
       {
-        "ordinal": 8,
+        "ordinal": 7,
         "name": "watering_status: WateringStatus",
         "type_info": {
           "Custom": {
@@ -62,7 +57,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 8,
         "name": "soil_condition: Option<SoilCondition>",
         "type_info": {
           "Custom": {
@@ -110,48 +105,38 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 9,
         "name": "latitude",
         "type_info": "Float8"
       },
       {
-        "ordinal": 11,
+        "ordinal": 10,
         "name": "longitude",
         "type_info": "Float8"
       },
       {
-        "ordinal": 12,
+        "ordinal": 11,
         "name": "last_watered: DateTime<Utc>",
         "type_info": "Timestamp"
       },
       {
-        "ordinal": 13,
+        "ordinal": 12,
         "name": "provider",
         "type_info": "Text"
       },
       {
-        "ordinal": 14,
+        "ordinal": 13,
         "name": "additional_info",
         "type_info": "Jsonb"
       },
       {
-        "ordinal": 15,
+        "ordinal": 14,
         "name": "organization_id",
         "type_info": "Uuid"
       },
       {
-        "ordinal": 16,
+        "ordinal": 15,
         "name": "tree_ids!: Vec<RawId>",
-        "type_info": "UuidArray"
-      },
-      {
-        "ordinal": 17,
-        "name": "sensor_count!: i64",
-        "type_info": "Int8"
-      },
-      {
-        "ordinal": 18,
-        "name": "shared_with!: Vec<RawId>",
         "type_info": "UuidArray"
       }
     ],
@@ -167,7 +152,6 @@
       false,
       false,
       false,
-      false,
       true,
       false,
       false,
@@ -177,10 +161,8 @@
       true,
       true,
       false,
-      null,
-      null,
       null
     ]
   },
-  "hash": "ec4097720c024d0b9a3c327bdf814062ac64d94ddba3a7893f6243f097af236f"
+  "hash": "213b4166faf1a1e92b50c3efdb4c9605bd1ce2495c19cf96380c9946d15e3412"
 }

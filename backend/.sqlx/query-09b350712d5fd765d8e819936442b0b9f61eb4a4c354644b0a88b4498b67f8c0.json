@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "WITH distances AS (\n                SELECT *,\n                    ST_Distance(\n                        geometry::geography,\n                        ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography\n                    )::float8 AS dist\n                FROM trees\n                WHERE ST_DWithin(\n                    geometry::geography,\n                    ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,\n                    $3\n                )\n                AND ($5::uuid[] IS NULL\n                     OR organization_id = ANY($5)\n                     OR id IN (SELECT tree_id FROM tree_shares WHERE organization_id = ANY($5))\n                     OR tree_cluster_id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($5)))\n            )\n            SELECT id, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id,\n                      COALESCE((\n                        SELECT array_agg(DISTINCT s.org) FROM (\n                          SELECT ts.organization_id AS org FROM tree_shares ts WHERE ts.tree_id = distances.id\n                          UNION\n                          SELECT tcs.organization_id FROM tree_cluster_shares tcs\n                          WHERE tcs.tree_cluster_id = distances.tree_cluster_id\n                        ) s\n                      ), '{}') AS \"shared_with!: Vec<RawId>\",\n                      dist AS \"distance!: f64\"\n            FROM distances\n            ORDER BY dist ASC\n            LIMIT $4",
+  "query": "WITH distances AS (\n                SELECT *,\n                    ST_Distance(\n                        geometry::geography,\n                        ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography\n                    )::float8 AS dist\n                FROM trees\n                WHERE ST_DWithin(\n                    geometry::geography,\n                    ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,\n                    $3\n                )\n                AND ($5::uuid[] IS NULL OR organization_id = ANY($5))\n            )\n            SELECT id, updated_at, tree_cluster_id, sensor_id,\n                      planting_year, species, number, latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id,\n                      dist AS \"distance!: f64\"\n            FROM distances\n            ORDER BY dist ASC\n            LIMIT $4",
   "describe": {
     "columns": [
       {
@@ -93,11 +93,6 @@
       },
       {
         "ordinal": 15,
-        "name": "shared_with!: Vec<RawId>",
-        "type_info": "UuidArray"
-      },
-      {
-        "ordinal": 16,
         "name": "distance!: f64",
         "type_info": "Float8"
       }
@@ -127,9 +122,8 @@
       true,
       true,
       false,
-      null,
       null
     ]
   },
-  "hash": "b3e21cff2a2421f922043f6cc95ee71fc16c614a20bd77b37a398ae9c5c74da5"
+  "hash": "09b350712d5fd765d8e819936442b0b9f61eb4a4c354644b0a88b4498b67f8c0"
 }

@@ -106,7 +106,7 @@ pub async fn get_sensor(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Sensor, Action::Read),
-        &scope::effective_orgs(view.organization_id, &view.shared_with),
+        view.organization_id,
     )?;
     Ok(Json(SensorResponse::from(&view)))
 }
@@ -134,7 +134,7 @@ pub async fn delete_sensor(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Sensor, Action::Read),
-        &scope::effective_orgs(current.organization_id, &current.shared_with),
+        current.organization_id,
     )?;
     state
         .authorization_service
@@ -202,7 +202,7 @@ pub async fn list_sensor_data(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Sensor, Action::Read),
-        &scope::effective_orgs(sensor.organization_id, &sensor.shared_with),
+        sensor.organization_id,
     )?;
     let pagination =
         Pagination::with_max_per_page(params.page, params.per_page, SENSOR_DATA_MAX_PER_PAGE);
@@ -240,7 +240,7 @@ pub async fn get_sensor_soil_moisture(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Sensor, Action::Read),
-        &scope::effective_orgs(sensor.organization_id, &sensor.shared_with),
+        sensor.organization_id,
     )?;
     let (from, to, bucket) = params.resolve()?;
     let overview = state
@@ -272,7 +272,7 @@ pub async fn get_tree_by_sensor(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Sensor, Action::Read),
-        &scope::effective_orgs(sensor.organization_id, &sensor.shared_with),
+        sensor.organization_id,
     )?;
     let tree = state
         .tree_service
@@ -326,7 +326,7 @@ pub async fn create_sensor(
     request_body = ActivateSensorRequest,
     responses(
         (status = 200, description = "Sensor activated", body = SensorResponse),
-        (status = 403, description = "Missing sensor:update or tree:update in the effective organizations"),
+        (status = 403, description = "Missing sensor:update or tree:update in the owning organization"),
         (status = 404, description = "Sensor or tree not found"),
         (status = 409, description = "Conflict: sensor or tree already linked"),
         (status = 500, description = "Internal server error"),
@@ -341,28 +341,27 @@ pub async fn activate_sensor(
 ) -> Result<Json<SensorResponse>, ServiceError> {
     let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
     let ctx = state.authorization_service.context_for(user.id).await?;
-    let sensor_orgs = scope::effective_orgs(sensor.organization_id, &sensor.shared_with);
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Sensor, Action::Read),
-        &sensor_orgs,
+        sensor.organization_id,
     )?;
     state
         .authorization_service
-        .require_any_of(
+        .require(
             user.id,
             Permission::new(Resource::Sensor, Action::Update),
-            &sensor_orgs,
+            Id::new(sensor.organization_id),
         )
         .await?;
 
     let tree = state.tree_service.view_by_id(Id::new(body.tree_id)).await?;
     state
         .authorization_service
-        .require_any_of(
+        .require(
             user.id,
             Permission::new(Resource::Tree, Action::Update),
-            &scope::effective_orgs(tree.organization_id, &tree.shared_with),
+            Id::new(tree.organization_id),
         )
         .await?;
 
@@ -383,7 +382,7 @@ pub async fn activate_sensor(
     request_body = SetSensorTreeRequest,
     responses(
         (status = 200, description = "Sensor re-linked", body = SensorResponse),
-        (status = 403, description = "Missing sensor:update or tree:update in the effective organizations"),
+        (status = 403, description = "Missing sensor:update or tree:update in the owning organization"),
         (status = 404, description = "Sensor or tree not found"),
         (status = 409, description = "Conflict: sensor not activated or tree already linked"),
         (status = 500, description = "Internal server error"),
@@ -398,28 +397,27 @@ pub async fn set_sensor_tree(
 ) -> Result<Json<SensorResponse>, ServiceError> {
     let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
     let ctx = state.authorization_service.context_for(user.id).await?;
-    let sensor_orgs = scope::effective_orgs(sensor.organization_id, &sensor.shared_with);
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Sensor, Action::Read),
-        &sensor_orgs,
+        sensor.organization_id,
     )?;
     state
         .authorization_service
-        .require_any_of(
+        .require(
             user.id,
             Permission::new(Resource::Sensor, Action::Update),
-            &sensor_orgs,
+            Id::new(sensor.organization_id),
         )
         .await?;
 
     let tree = state.tree_service.view_by_id(Id::new(body.tree_id)).await?;
     state
         .authorization_service
-        .require_any_of(
+        .require(
             user.id,
             Permission::new(Resource::Tree, Action::Update),
-            &scope::effective_orgs(tree.organization_id, &tree.shared_with),
+            Id::new(tree.organization_id),
         )
         .await?;
 
@@ -439,7 +437,7 @@ pub async fn set_sensor_tree(
     params(("sensor_id" = String, Path, description = "Sensor ID (EUI)")),
     responses(
         (status = 200, description = "Sensor reset to prepared", body = SensorResponse),
-        (status = 403, description = "Missing sensor:update or tree:update in the effective organizations"),
+        (status = 403, description = "Missing sensor:update or tree:update in the owning organization"),
         (status = 404, description = "Sensor not found"),
         (status = 500, description = "Internal server error"),
     )
@@ -452,28 +450,27 @@ pub async fn remove_sensor_tree(
 ) -> Result<Json<SensorResponse>, ServiceError> {
     let sensor = state.sensor_service.view_by_id(&sensor_id).await?;
     let ctx = state.authorization_service.context_for(user.id).await?;
-    let sensor_orgs = scope::effective_orgs(sensor.organization_id, &sensor.shared_with);
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Sensor, Action::Read),
-        &sensor_orgs,
+        sensor.organization_id,
     )?;
     state
         .authorization_service
-        .require_any_of(
+        .require(
             user.id,
             Permission::new(Resource::Sensor, Action::Update),
-            &sensor_orgs,
+            Id::new(sensor.organization_id),
         )
         .await?;
 
     if let Some(tree) = state.tree_service.view_by_sensor_id(&sensor_id).await? {
         state
             .authorization_service
-            .require_any_of(
+            .require(
                 user.id,
                 Permission::new(Resource::Tree, Action::Update),
-                &scope::effective_orgs(tree.organization_id, &tree.shared_with),
+                Id::new(tree.organization_id),
             )
             .await?;
     }
@@ -548,7 +545,7 @@ pub async fn transfer_sensor(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Sensor, Action::Read),
-        &scope::effective_orgs(current.organization_id, &current.shared_with),
+        current.organization_id,
     )?;
     let perm = Permission::new(Resource::Sensor, Action::Update);
     state

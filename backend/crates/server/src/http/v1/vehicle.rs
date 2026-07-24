@@ -92,7 +92,7 @@ pub async fn get_vehicle(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Vehicle, Action::Read),
-        &scope::effective_orgs(view.organization_id, &[]),
+        view.organization_id,
     )?;
     Ok(Json(VehicleResponse::from(&view)))
 }
@@ -152,18 +152,17 @@ pub async fn update_vehicle(
 ) -> Result<Json<VehicleResponse>, ServiceError> {
     let current = state.vehicle_service.view_by_id(Id::new(id)).await?;
     let ctx = state.authorization_service.context_for(user.id).await?;
-    let effective_orgs = scope::effective_orgs(current.organization_id, &[]);
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Vehicle, Action::Read),
-        &effective_orgs,
+        current.organization_id,
     )?;
     state
         .authorization_service
-        .require_any_of(
+        .require(
             user.id,
             Permission::new(Resource::Vehicle, Action::Update),
-            &effective_orgs,
+            Id::new(current.organization_id),
         )
         .await?;
     let update = entity.into_update()?;
@@ -195,7 +194,7 @@ pub async fn delete_vehicle(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Vehicle, Action::Read),
-        &scope::effective_orgs(current.organization_id, &[]),
+        current.organization_id,
     )?;
     state
         .authorization_service
@@ -261,18 +260,17 @@ pub async fn archive_vehicle(
 ) -> Result<StatusCode, ServiceError> {
     let current = state.vehicle_service.view_by_id(Id::new(id)).await?;
     let ctx = state.authorization_service.context_for(user.id).await?;
-    let effective_orgs = scope::effective_orgs(current.organization_id, &[]);
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Vehicle, Action::Read),
-        &effective_orgs,
+        current.organization_id,
     )?;
     state
         .authorization_service
-        .require_any_of(
+        .require(
             user.id,
             Permission::new(Resource::Vehicle, Action::Update),
-            &effective_orgs,
+            Id::new(current.organization_id),
         )
         .await?;
     state.vehicle_service.archive(Id::new(id)).await?;
@@ -307,7 +305,7 @@ pub async fn get_vehicle_by_plate(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Vehicle, Action::Read),
-        &scope::effective_orgs(view.organization_id, &[]),
+        view.organization_id,
     )?;
     Ok(Json(VehicleResponse::from(&view)))
 }
@@ -336,7 +334,7 @@ pub async fn transfer_vehicle(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::Vehicle, Action::Read),
-        &scope::effective_orgs(current.organization_id, &[]),
+        current.organization_id,
     )?;
     let perm = Permission::new(Resource::Vehicle, Action::Update);
     state

@@ -30,9 +30,7 @@ impl EvaluationRepository for PgEvaluationRepository {
             FROM regions r
             INNER JOIN tree_clusters tc ON r.id = tc.region_id
             INNER JOIN tree_cluster_watering_plans twp ON tc.id = twp.tree_cluster_id
-            WHERE ($1::uuid[] IS NULL
-                   OR tc.organization_id = ANY($1)
-                   OR tc.id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($1)))
+            WHERE ($1::uuid[] IS NULL OR tc.organization_id = ANY($1))
             GROUP BY r.name
             ORDER BY COUNT(DISTINCT twp.watering_plan_id) DESC"#,
             visible_ids.as_deref(),
@@ -77,9 +75,7 @@ impl EvaluationRepository for PgEvaluationRepository {
             r#"SELECT COALESCE(SUM(tcwp.consumed_water), 0)::float8 AS "total!"
             FROM tree_cluster_watering_plans tcwp
             INNER JOIN tree_clusters tc ON tc.id = tcwp.tree_cluster_id
-            WHERE ($1::uuid[] IS NULL
-                   OR tc.organization_id = ANY($1)
-                   OR tc.id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($1)))"#,
+            WHERE ($1::uuid[] IS NULL OR tc.organization_id = ANY($1))"#,
             visible_ids.as_deref(),
         )
         .fetch_one(&self.pool)

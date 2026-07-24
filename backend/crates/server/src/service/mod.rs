@@ -46,8 +46,6 @@ pub enum ServiceError {
     OrganizationMismatch,
     #[error("tree is part of a cluster")]
     TreeInCluster,
-    #[error("share target must be a proper descendant of the owning organization")]
-    ShareTargetNotDescendant,
     #[error("no organization given and the acting user has none")]
     MissingOrganization,
 }

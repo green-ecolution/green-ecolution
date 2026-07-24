@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, tree_cluster_id AS cluster_id, sensor_id,\n                      planting_year, species, number AS tree_number,\n                      latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id,\n                      COALESCE((SELECT array_agg(ts.organization_id) FROM tree_shares ts WHERE ts.tree_id = trees.id), '{}') AS \"shared_with!: Vec<RawId>\"\n            FROM trees\n            WHERE ST_DWithin(\n                geometry::geography,\n                ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,\n                $3\n            )\n            ORDER BY ST_Distance(\n                geometry::geography,\n                ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography\n            ) ASC\n            LIMIT 1",
+  "query": "SELECT id, tree_cluster_id AS cluster_id, sensor_id,\n                      planting_year, species, number AS tree_number,\n                      latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id\n            FROM trees WHERE id = $1",
   "describe": {
     "columns": [
       {
@@ -85,18 +85,11 @@
         "ordinal": 13,
         "name": "organization_id",
         "type_info": "Uuid"
-      },
-      {
-        "ordinal": 14,
-        "name": "shared_with!: Vec<RawId>",
-        "type_info": "UuidArray"
       }
     ],
     "parameters": {
       "Left": [
-        "Float8",
-        "Float8",
-        "Float8"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -113,9 +106,8 @@
       true,
       true,
       true,
-      false,
-      null
+      false
     ]
   },
-  "hash": "6f2bf7fbbfaf9e2ab36d5fd44be9a4106e14bbfc3fbf5d9675fb8529bd32470a"
+  "hash": "3b9d24b19ac351aa81b707cff60592f13b9dab081744d188c51a3506c68bcd3c"
 }

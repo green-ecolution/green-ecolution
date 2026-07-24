@@ -22,5 +22,4 @@ pub struct TreeSnapshot {
     pub provider: Option<String>,
     pub additional_info: Option<Value>,
     pub organization_id: Uuid,
-    pub shared_with: Vec<Uuid>,
 }

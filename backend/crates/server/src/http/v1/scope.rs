@@ -1,5 +1,3 @@
-use std::collections::BTreeSet;
-
 use uuid::Uuid;
 
 use crate::{http::AppState, service::ServiceError};
@@ -28,22 +26,14 @@ pub async fn resolve_target_org(
     Err(ServiceError::MissingOrganization)
 }
 
-/// Owner org plus every org the resource is shared with.
-pub fn effective_orgs(owner: Uuid, shared_with: &[Uuid]) -> BTreeSet<Id<Organization>> {
-    std::iter::once(owner)
-        .chain(shared_with.iter().copied())
-        .map(Id::new)
-        .collect()
-}
-
 /// Detail-endpoint gate: an invisible resource reads as 404, never 403,
 /// so callers cannot probe for existence.
 pub fn ensure_visible(
     ctx: &AccessContext,
     read: Permission,
-    orgs: &BTreeSet<Id<Organization>>,
+    owner: Uuid,
 ) -> Result<(), ServiceError> {
-    if ctx.allows_in_any(read, orgs) {
+    if ctx.allows_in(read, Id::new(owner)) {
         Ok(())
     } else {
         Err(RepositoryError::NotFound.into())

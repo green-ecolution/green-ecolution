@@ -19,8 +19,6 @@ pub mod view;
 mod volumetric_calibration;
 mod watermark_calibration;
 
-use std::collections::BTreeSet;
-
 use chrono::{DateTime, Datelike, Utc};
 
 use crate::{
@@ -74,7 +72,6 @@ pub struct Tree {
     watering_status: WateringStatus,
     provenance: Provenance,
     organization_id: Id<Organization>,
-    shared_with: BTreeSet<Id<Organization>>,
 }
 
 /// Input for creating a new [`Tree`].
@@ -127,7 +124,6 @@ impl Tree {
             watering_status: snap.watering_status,
             provenance: Provenance::reconstitute(snap.provider, snap.additional_info),
             organization_id: Id::new(snap.organization_id),
-            shared_with: snap.shared_with.into_iter().map(Id::new).collect(),
         }
     }
 
@@ -157,34 +153,6 @@ impl Tree {
 
     pub fn provenance(&self) -> &Provenance {
         &self.provenance
-    }
-
-    pub fn shared_with(&self) -> &BTreeSet<Id<Organization>> {
-        &self.shared_with
-    }
-
-    /// Grants access to `org` as if the tree were its own. No-op (and no
-    /// event) if the share already exists.
-    pub fn share_with(&mut self, org: Id<Organization>) -> Vec<DomainEvent> {
-        if !self.shared_with.insert(org) {
-            return vec![];
-        }
-        vec![DomainEvent::TreeSharedWithOrganization {
-            tree_id: self.id,
-            organization_id: org,
-        }]
-    }
-
-    /// Revokes a previously granted share. No-op (and no event) if `org`
-    /// was never shared with.
-    pub fn revoke_share(&mut self, org: Id<Organization>) -> Vec<DomainEvent> {
-        if !self.shared_with.remove(&org) {
-            return vec![];
-        }
-        vec![DomainEvent::TreeShareRevoked {
-            tree_id: self.id,
-            organization_id: org,
-        }]
     }
 
     /// Replaces all freely editable fields. `cluster_id` and `sensor_id` are
@@ -367,7 +335,6 @@ mod tests {
             watering_status: WateringStatus::Unknown,
             provenance: Provenance::default(),
             organization_id: Id::new_v7(),
-            shared_with: BTreeSet::new(),
         }
     }
 
@@ -577,31 +544,6 @@ mod tests {
         let ts = Utc::now();
         t.mark_watered_at(ts);
         assert_eq!(t.last_watered, Some(ts));
-    }
-
-    #[test]
-    fn share_with_emits_event_and_is_idempotent() {
-        let mut t = fixed_tree();
-        let org: Id<Organization> = Id::new_v7();
-        let events = t.share_with(org);
-        assert!(t.shared_with().contains(&org));
-        assert_eq!(events.len(), 1);
-        assert!(matches!(
-            events[0],
-            DomainEvent::TreeSharedWithOrganization { .. }
-        ));
-        assert!(t.share_with(org).is_empty(), "second share is a no-op");
-    }
-
-    #[test]
-    fn revoke_share_emits_event_only_when_present() {
-        let mut t = fixed_tree();
-        let org: Id<Organization> = Id::new_v7();
-        assert!(t.revoke_share(org).is_empty());
-        let _ = t.share_with(org);
-        let events = t.revoke_share(org);
-        assert!(!t.shared_with().contains(&org));
-        assert!(matches!(events[0], DomainEvent::TreeShareRevoked { .. }));
     }
 
     #[test]

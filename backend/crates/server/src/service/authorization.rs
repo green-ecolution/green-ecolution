@@ -94,20 +94,6 @@ impl AuthorizationService {
     ) -> Result<Visibility, ServiceError> {
         Ok(self.context_for(user_id).await?.visible_orgs(permission))
     }
-
-    pub async fn require_any_of(
-        &self,
-        user_id: Uuid,
-        permission: Permission,
-        orgs: &BTreeSet<Id<Organization>>,
-    ) -> Result<(), ServiceError> {
-        let ctx = self.context_for(user_id).await?;
-        if ctx.allows_in_any(permission, orgs) {
-            Ok(())
-        } else {
-            Err(AuthError::Forbidden.into())
-        }
-    }
 }
 
 #[cfg(test)]
@@ -246,30 +232,6 @@ mod tests {
                 .await
                 .is_ok()
         );
-    }
-
-    #[tokio::test]
-    async fn require_any_of_grants_via_shared_org() {
-        let (root, tbz) = (Id::new_v7(), Id::new_v7());
-        let user = Uuid::now_v7();
-        let svc = AuthorizationService::new(
-            Arc::new(StubOrgs {
-                pairs: vec![(root, None), (tbz, Some(root))],
-            }),
-            Arc::new(StubRoles {
-                by_user: vec![(user, role_in(tbz, &[tree_read()]))],
-            }),
-            true,
-        );
-        // owner org root (no grant) plus share to tbz (grant) -> ok
-        let orgs = BTreeSet::from([root, tbz]);
-        assert!(svc.require_any_of(user, tree_read(), &orgs).await.is_ok());
-        // owner-only set without grant -> forbidden
-        assert!(matches!(
-            svc.require_any_of(user, tree_read(), &BTreeSet::from([root]))
-                .await,
-            Err(ServiceError::Auth(AuthError::Forbidden))
-        ));
     }
 
     #[tokio::test]

@@ -53,7 +53,6 @@ struct TreeViewRow {
     provider: Option<String>,
     additional_info: Option<Value>,
     organization_id: RawId,
-    shared_with: Vec<RawId>,
 }
 
 impl From<TreeViewRow> for TreeView {
@@ -78,7 +77,6 @@ impl From<TreeViewRow> for TreeView {
             provider: row.provider,
             additional_info: row.additional_info,
             organization_id: row.organization_id,
-            shared_with: row.shared_with,
         }
     }
 }
@@ -101,7 +99,6 @@ struct TreeViewWithDistanceRow {
     provider: Option<String>,
     additional_info: Option<Value>,
     organization_id: RawId,
-    shared_with: Vec<RawId>,
     distance: f64,
 }
 
@@ -126,7 +123,6 @@ impl TryFrom<TreeViewWithDistanceRow> for TreeViewWithDistance {
             provider: row.provider,
             additional_info: row.additional_info,
             organization_id: row.organization_id,
-            shared_with: row.shared_with,
         });
         Ok(Self { tree, distance })
     }
@@ -146,8 +142,7 @@ impl TreeReader for PgTreeRepository {
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
                       additional_informations AS additional_info,
-                      organization_id,
-                      COALESCE((SELECT array_agg(ts.organization_id) FROM tree_shares ts WHERE ts.tree_id = trees.id), '{}') AS "shared_with!: Vec<RawId>"
+                      organization_id
             FROM trees WHERE id = $1"#,
             id.value()
         )
@@ -171,8 +166,7 @@ impl TreeReader for PgTreeRepository {
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
                       additional_informations AS additional_info,
-                      organization_id,
-                      COALESCE((SELECT array_agg(ts.organization_id) FROM tree_shares ts WHERE ts.tree_id = trees.id), '{}') AS "shared_with!: Vec<RawId>"
+                      organization_id
             FROM trees WHERE id = ANY($1::uuid[])"#,
             &id_values
         )
@@ -194,8 +188,7 @@ impl TreeReader for PgTreeRepository {
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
                       additional_informations AS additional_info,
-                      organization_id,
-                      COALESCE((SELECT array_agg(ts.organization_id) FROM tree_shares ts WHERE ts.tree_id = trees.id), '{}') AS "shared_with!: Vec<RawId>"
+                      organization_id
             FROM trees WHERE sensor_id = $1 LIMIT 1"#,
             sensor_id.as_str()
         )
@@ -220,8 +213,7 @@ impl TreeReader for PgTreeRepository {
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
                       additional_informations AS additional_info,
-                      organization_id,
-                      COALESCE((SELECT array_agg(ts.organization_id) FROM tree_shares ts WHERE ts.tree_id = trees.id), '{}') AS "shared_with!: Vec<RawId>"
+                      organization_id
             FROM trees WHERE tree_cluster_id = $1"#,
             cluster_id.value()
         )
@@ -242,15 +234,7 @@ impl TreeReader for PgTreeRepository {
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
                       additional_informations AS additional_info,
-                      organization_id,
-                      COALESCE((
-                        SELECT array_agg(DISTINCT s.org) FROM (
-                          SELECT ts.organization_id AS org FROM tree_shares ts WHERE ts.tree_id = trees.id
-                          UNION
-                          SELECT tcs.organization_id FROM tree_cluster_shares tcs
-                          WHERE tcs.tree_cluster_id = trees.tree_cluster_id
-                        ) s
-                      ), '{}') AS "shared_with!: Vec<RawId>"
+                      organization_id
             FROM trees WHERE id = $1"#,
             id.value()
         )
@@ -275,15 +259,7 @@ impl TreeReader for PgTreeRepository {
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
                       additional_informations AS additional_info,
-                      organization_id,
-                      COALESCE((
-                        SELECT array_agg(DISTINCT s.org) FROM (
-                          SELECT ts.organization_id AS org FROM tree_shares ts WHERE ts.tree_id = trees.id
-                          UNION
-                          SELECT tcs.organization_id FROM tree_cluster_shares tcs
-                          WHERE tcs.tree_cluster_id = trees.tree_cluster_id
-                        ) s
-                      ), '{}') AS "shared_with!: Vec<RawId>"
+                      organization_id
             FROM trees WHERE sensor_id = $1"#,
             sensor_id.as_str()
         )
@@ -305,15 +281,7 @@ impl TreeReader for PgTreeRepository {
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
                       additional_informations AS additional_info,
-                      organization_id,
-                      COALESCE((
-                        SELECT array_agg(DISTINCT s.org) FROM (
-                          SELECT ts.organization_id AS org FROM tree_shares ts WHERE ts.tree_id = trees.id
-                          UNION
-                          SELECT tcs.organization_id FROM tree_cluster_shares tcs
-                          WHERE tcs.tree_cluster_id = trees.tree_cluster_id
-                        ) s
-                      ), '{}') AS "shared_with!: Vec<RawId>"
+                      organization_id
             FROM trees WHERE id = ANY($1::uuid[])"#,
             &id_values
         )
@@ -348,10 +316,7 @@ impl TreeReader for PgTreeRepository {
               AND ($3::text IS NULL OR provider = $3)
               AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))
               AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\' OR species ILIKE $5 ESCAPE '\')
-              AND ($6::uuid[] IS NULL
-                   OR organization_id = ANY($6)
-                   OR id IN (SELECT tree_id FROM tree_shares WHERE organization_id = ANY($6))
-                   OR tree_cluster_id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($6)))"#,
+              AND ($6::uuid[] IS NULL OR organization_id = ANY($6))"#,
             &watering_statuses as &[WateringStatus],
             &planting_years,
             provider.as_deref(),
@@ -371,25 +336,14 @@ impl TreeReader for PgTreeRepository {
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
                       additional_informations AS additional_info,
-                      organization_id,
-                      COALESCE((
-                        SELECT array_agg(DISTINCT s.org) FROM (
-                          SELECT ts.organization_id AS org FROM tree_shares ts WHERE ts.tree_id = trees.id
-                          UNION
-                          SELECT tcs.organization_id FROM tree_cluster_shares tcs
-                          WHERE tcs.tree_cluster_id = trees.tree_cluster_id
-                        ) s
-                      ), '{}') AS "shared_with!: Vec<RawId>"
+                      organization_id
             FROM trees
             WHERE ($1::watering_status[] = '{}' OR watering_status = ANY($1))
               AND ($2::int[] = '{}' OR planting_year = ANY($2))
               AND ($3::text IS NULL OR provider = $3)
               AND ($4::bool IS NULL OR ($4 = true AND tree_cluster_id IS NOT NULL) OR ($4 = false AND tree_cluster_id IS NULL))
               AND ($5::text IS NULL OR number ILIKE $5 ESCAPE '\' OR species ILIKE $5 ESCAPE '\')
-              AND ($6::uuid[] IS NULL
-                   OR organization_id = ANY($6)
-                   OR id IN (SELECT tree_id FROM tree_shares WHERE organization_id = ANY($6))
-                   OR tree_cluster_id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($6)))
+              AND ($6::uuid[] IS NULL OR organization_id = ANY($6))
             ORDER BY number ASC
             LIMIT $7 OFFSET $8"#,
             &watering_statuses as &[WateringStatus],
@@ -440,10 +394,7 @@ impl TreeReader for PgTreeRepository {
                        geometry,
                        ST_MakeEnvelope($6, $7, $8, $9, 4326)
                    ))
-              AND ($10::uuid[] IS NULL
-                   OR organization_id = ANY($10)
-                   OR id IN (SELECT tree_id FROM tree_shares WHERE organization_id = ANY($10))
-                   OR tree_cluster_id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($10)))
+              AND ($10::uuid[] IS NULL OR organization_id = ANY($10))
             ORDER BY id"#,
             &watering_statuses as &[WateringStatus],
             &planting_years,
@@ -495,10 +446,7 @@ impl TreeReader for PgTreeRepository {
                     ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,
                     $3
                 )
-                AND ($5::uuid[] IS NULL
-                     OR organization_id = ANY($5)
-                     OR id IN (SELECT tree_id FROM tree_shares WHERE organization_id = ANY($5))
-                     OR tree_cluster_id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($5)))
+                AND ($5::uuid[] IS NULL OR organization_id = ANY($5))
             )
             SELECT id, updated_at, tree_cluster_id, sensor_id,
                       planting_year, species, number, latitude, longitude,
@@ -508,14 +456,6 @@ impl TreeReader for PgTreeRepository {
                       provider,
                       additional_informations AS additional_info,
                       organization_id,
-                      COALESCE((
-                        SELECT array_agg(DISTINCT s.org) FROM (
-                          SELECT ts.organization_id AS org FROM tree_shares ts WHERE ts.tree_id = distances.id
-                          UNION
-                          SELECT tcs.organization_id FROM tree_cluster_shares tcs
-                          WHERE tcs.tree_cluster_id = distances.tree_cluster_id
-                        ) s
-                      ), '{}') AS "shared_with!: Vec<RawId>",
                       dist AS "distance!: f64"
             FROM distances
             ORDER BY dist ASC
@@ -548,8 +488,7 @@ impl TreeReader for PgTreeRepository {
                       last_watered AS "last_watered: DateTime<Utc>",
                       provider,
                       additional_informations AS additional_info,
-                      organization_id,
-                      COALESCE((SELECT array_agg(ts.organization_id) FROM tree_shares ts WHERE ts.tree_id = trees.id), '{}') AS "shared_with!: Vec<RawId>"
+                      organization_id
             FROM trees
             WHERE ST_DWithin(
                 geometry::geography,
@@ -579,10 +518,7 @@ impl TreeReader for PgTreeRepository {
         let visible_ids = visible.into_raw_ids();
         let rows = sqlx::query_scalar!(
             r#"SELECT DISTINCT planting_year FROM trees
-            WHERE ($1::uuid[] IS NULL
-                   OR organization_id = ANY($1)
-                   OR id IN (SELECT tree_id FROM tree_shares WHERE organization_id = ANY($1))
-                   OR tree_cluster_id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($1)))
+            WHERE ($1::uuid[] IS NULL OR organization_id = ANY($1))
             ORDER BY planting_year ASC"#,
             visible_ids.as_deref(),
         )
@@ -674,22 +610,6 @@ impl TreeWriter for PgTreeRepository {
         if result.rows_affected() == 0 {
             return Err(RepositoryError::NotFound);
         }
-
-        let shared_with: Vec<RawId> = tree.shared_with().iter().map(|o| o.value()).collect();
-        sqlx::query!(
-            "DELETE FROM tree_shares WHERE tree_id = $1",
-            tree.id.value()
-        )
-        .execute(&mut *tx)
-        .await?;
-        sqlx::query!(
-            r#"INSERT INTO tree_shares (tree_id, organization_id)
-            SELECT $1, unnest($2::uuid[]) WHERE cardinality($2::uuid[]) > 0"#,
-            tree.id.value(),
-            &shared_with,
-        )
-        .execute(&mut *tx)
-        .await?;
 
         tx.commit().await?;
 

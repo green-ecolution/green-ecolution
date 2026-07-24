@@ -118,18 +118,17 @@ pub async fn update_start_point(
     ensure_routing(&state)?;
     let current = state.start_point_service.by_id(Id::new(id)).await?;
     let ctx = state.authorization_service.context_for(user.id).await?;
-    let effective_orgs = scope::effective_orgs(current.organization_id().value(), &[]);
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::WateringPlan, Action::Read),
-        &effective_orgs,
+        current.organization_id().value(),
     )?;
     state
         .authorization_service
-        .require_any_of(
+        .require(
             user.id,
             Permission::new(Resource::WateringPlan, Action::Update),
-            &effective_orgs,
+            current.organization_id(),
         )
         .await?;
     let update = req.into_update()?;
@@ -164,7 +163,7 @@ pub async fn delete_start_point(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::WateringPlan, Action::Read),
-        &scope::effective_orgs(current.organization_id().value(), &[]),
+        current.organization_id().value(),
     )?;
     state
         .authorization_service
@@ -198,18 +197,17 @@ pub async fn set_default_start_point(
     ensure_routing(&state)?;
     let current = state.start_point_service.by_id(Id::new(id)).await?;
     let ctx = state.authorization_service.context_for(user.id).await?;
-    let effective_orgs = scope::effective_orgs(current.organization_id().value(), &[]);
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::WateringPlan, Action::Read),
-        &effective_orgs,
+        current.organization_id().value(),
     )?;
     state
         .authorization_service
-        .require_any_of(
+        .require(
             user.id,
             Permission::new(Resource::WateringPlan, Action::Update),
-            &effective_orgs,
+            current.organization_id(),
         )
         .await?;
     state.start_point_service.set_default(Id::new(id)).await?;
@@ -245,7 +243,7 @@ pub async fn transfer_start_point(
     scope::ensure_visible(
         &ctx,
         Permission::new(Resource::WateringPlan, Action::Read),
-        &scope::effective_orgs(current.organization_id().value(), &[]),
+        current.organization_id().value(),
     )?;
     let perm = Permission::new(Resource::WateringPlan, Action::Update);
     state

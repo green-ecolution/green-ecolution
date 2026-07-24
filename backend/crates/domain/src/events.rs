@@ -80,22 +80,6 @@ pub enum DomainEvent {
     ClusterSoilConditionChanged {
         cluster_id: Id<TreeCluster>,
     },
-    TreeSharedWithOrganization {
-        tree_id: Id<Tree>,
-        organization_id: Id<Organization>,
-    },
-    TreeShareRevoked {
-        tree_id: Id<Tree>,
-        organization_id: Id<Organization>,
-    },
-    ClusterSharedWithOrganization {
-        cluster_id: Id<TreeCluster>,
-        organization_id: Id<Organization>,
-    },
-    ClusterShareRevoked {
-        cluster_id: Id<TreeCluster>,
-        organization_id: Id<Organization>,
-    },
     TreeResponsibilityTransferred {
         tree_id: Id<Tree>,
         from: Id<Organization>,

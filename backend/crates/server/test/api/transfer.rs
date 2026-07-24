@@ -37,20 +37,6 @@ async fn insert_org_tree(app: &TestApp) -> Uuid {
     .unwrap()
 }
 
-/// Inserts a second child of TBZ, sibling to `SUB_ORG` — a valid share
-/// target for TBZ-owned resources that stops being a descendant once the
-/// resource moves to `SUB_ORG`.
-async fn insert_tbz_sibling_org(app: &TestApp) -> Uuid {
-    sqlx::query_scalar!(
-        r#"INSERT INTO organizations (id, parent_id, name) VALUES (gen_random_uuid(), $1::uuid, $2) RETURNING id"#,
-        Uuid::parse_str(TBZ_ORG).unwrap(),
-        "TBZ Schwester-Org",
-    )
-    .fetch_one(&app.db_pool)
-    .await
-    .unwrap()
-}
-
 async fn mock_streamlet() -> MockServer {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
@@ -247,66 +233,6 @@ async fn transfer_cluster_cascades_to_trees_and_sensors() {
     assert_eq!(sensor["organization_id"], SUB_ORG);
 }
 
-#[tokio::test]
-async fn transfer_cluster_revokes_stale_shares_on_cluster_and_trees() {
-    let app = spawn_app().await;
-    insert_org_tree(&app).await;
-    let tbz_sibling_org = insert_tbz_sibling_org(&app).await;
-
-    // Shared while still clusterless (sharing a clustered tree is rejected),
-    // then pulled into a cluster — the share row survives that move because
-    // cluster creation updates `trees.tree_cluster_id` directly.
-    let tree_id = create_tree(&app, "TRANSFER-CLUSTER-B-001", TBZ_ORG).await;
-    let tree_share_resp = app
-        .post_json(
-            &format!("/api/v1/trees/{tree_id}/shares"),
-            &json!({ "organization_id": tbz_sibling_org }),
-        )
-        .await;
-    assert_eq!(tree_share_resp.status(), 204);
-
-    let cluster_id = create_cluster(&app, &[&tree_id], TBZ_ORG).await;
-    let cluster_share_resp = app
-        .post_json(
-            &format!("/api/v1/clusters/{cluster_id}/shares"),
-            &json!({ "organization_id": tbz_sibling_org }),
-        )
-        .await;
-    assert_eq!(cluster_share_resp.status(), 204);
-
-    let resp = app
-        .patch_json(
-            &format!("/api/v1/clusters/{cluster_id}/organization"),
-            &json!({ "organization_id": SUB_ORG }),
-        )
-        .await;
-    assert_eq!(resp.status(), 204);
-
-    let cluster_shares: Vec<Uuid> = sqlx::query_scalar!(
-        "SELECT organization_id FROM tree_cluster_shares WHERE tree_cluster_id = $1",
-        Uuid::parse_str(&cluster_id).unwrap()
-    )
-    .fetch_all(&app.db_pool)
-    .await
-    .unwrap();
-    assert!(
-        cluster_shares.is_empty(),
-        "cluster share pointing outside the new owner's subtree must be revoked"
-    );
-
-    let tree_shares: Vec<Uuid> = sqlx::query_scalar!(
-        "SELECT organization_id FROM tree_shares WHERE tree_id = $1",
-        Uuid::parse_str(&tree_id).unwrap()
-    )
-    .fetch_all(&app.db_pool)
-    .await
-    .unwrap();
-    assert!(
-        tree_shares.is_empty(),
-        "tree share pointing outside the new owner's subtree must be revoked"
-    );
-}
-
 fn vehicle_payload(plate: &str, org: &str) -> serde_json::Value {
     json!({
         "number_plate": plate,
@@ -431,7 +357,7 @@ async fn transfer_default_start_point_clears_default_and_leaves_target_default_u
 }
 
 /// Seeds an admin-copy role (full permission set) in `org_id` and a user
-/// holding it, mirroring `sharing.rs::seed_admin`.
+/// holding it.
 async fn seed_admin(
     harness: &crate::auth_helpers::AuthHarness,
     app: &TestApp,
@@ -530,4 +456,108 @@ async fn transfer_tree_invisible_to_foreign_org_returns_404() {
         .await
         .unwrap();
     assert_eq!(resp.status(), 404, "invisible tree must read as 404");
+}
+
+/// Delegation-via-transfer acceptance test: the parent org (TBZ) keeps
+/// unrestricted read/write/transfer control over resources owned by a child
+/// org (the contracted company) purely through its subtree-scoped grant —
+/// no share of any kind is involved.
+#[tokio::test]
+async fn tbz_admin_manages_and_transfers_child_org_trees_via_subtree_grant() {
+    let (harness, app) = spawn_with_auth().await;
+    insert_org_tree(&app).await;
+
+    let admin_token = seed_admin(&harness, &app, Uuid::parse_str(TBZ_ORG).unwrap()).await;
+    let client = reqwest::Client::new();
+
+    // A tree owned by the child org — the TBZ admin's grant is rooted at
+    // TBZ_ORG but reaches SUB_ORG as its subtree.
+    let owned_by_child: serde_json::Value = client
+        .post(format!("{}/api/v1/trees", app.address))
+        .bearer_auth(&admin_token)
+        .json(&tree_payload("DELEGATION-A-001", SUB_ORG))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let child_tree_id = owned_by_child["id"].as_str().unwrap();
+
+    let get_resp = client
+        .get(format!("{}/api/v1/trees/{child_tree_id}", app.address))
+        .bearer_auth(&admin_token)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(get_resp.status(), 200, "TBZ admin must read the child tree");
+
+    let update_resp = client
+        .put(format!("{}/api/v1/trees/{child_tree_id}", app.address))
+        .bearer_auth(&admin_token)
+        .json(&json!({
+            "species": "Quercus robur", "number": "DELEGATION-A-001-RENAMED",
+            "planting_year": 2024, "latitude": 54.79, "longitude": 9.44,
+            "description": "Verwaltet durch TBZ",
+        }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(
+        update_resp.status(),
+        200,
+        "TBZ admin must update the child tree"
+    );
+
+    let delete_resp = client
+        .delete(format!("{}/api/v1/trees/{child_tree_id}", app.address))
+        .bearer_auth(&admin_token)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(
+        delete_resp.status(),
+        204,
+        "TBZ admin must delete the child tree"
+    );
+
+    // A second child-org tree, transferred unilaterally back to TBZ.
+    let to_transfer_back: serde_json::Value = client
+        .post(format!("{}/api/v1/trees", app.address))
+        .bearer_auth(&admin_token)
+        .json(&tree_payload("DELEGATION-A-002", SUB_ORG))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let tree_id = to_transfer_back["id"].as_str().unwrap();
+
+    let transfer_resp = client
+        .patch(format!(
+            "{}/api/v1/trees/{tree_id}/organization",
+            app.address
+        ))
+        .bearer_auth(&admin_token)
+        .json(&json!({ "organization_id": TBZ_ORG }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(
+        transfer_resp.status(),
+        204,
+        "TBZ admin must transfer the child tree back unilaterally"
+    );
+
+    let after_transfer: serde_json::Value = client
+        .get(format!("{}/api/v1/trees/{tree_id}", app.address))
+        .bearer_auth(&admin_token)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(after_transfer["organization_id"], TBZ_ORG);
 }

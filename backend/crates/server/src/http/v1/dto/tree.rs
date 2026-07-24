@@ -55,11 +55,6 @@ pub struct TreeResponse {
     pub additional_information: Option<serde_json::Value>,
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
     pub organization_id: String,
-    /// Organizations this tree is shared with, in addition to its owning
-    /// organization. If the tree belongs to a cluster, this also includes
-    /// organizations the cluster itself is shared with.
-    #[schema(example = json!(["0190a8e9-7c4f-7000-8000-000000000000"]))]
-    pub shared_with: Vec<String>,
 }
 
 impl From<(&TreeView, Option<&SensorView>)> for TreeResponse {
@@ -81,16 +76,8 @@ impl From<(&TreeView, Option<&SensorView>)> for TreeResponse {
             provider: tree.provider.clone(),
             additional_information: tree.additional_info.clone(),
             organization_id: tree.organization_id.to_string(),
-            shared_with: tree.shared_with.iter().map(ToString::to_string).collect(),
         }
     }
-}
-
-/// Request body for sharing a resource with a descendant organization.
-#[derive(Debug, Deserialize, utoipa::ToSchema)]
-pub struct ShareRequest {
-    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
-    pub organization_id: uuid::Uuid,
 }
 
 /// Request body for transferring a resource's ownership to another
