@@ -223,13 +223,16 @@ impl WateringPlanReader for PgWateringPlanRepository {
         let offset = i64::try_from(pagination.offset()).unwrap_or(i64::MAX);
         let provider = query.provider.as_ref().map(|p| p.as_str().to_owned());
         let statuses: Vec<WateringPlanStatus> = query.statuses;
+        let visible_ids = query.visible.into_raw_ids();
 
         let total = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) AS "count!: i64" FROM watering_plans
-            WHERE ($1::text IS NULL OR provider = $1)
-              AND ($2::watering_plan_status[] = '{}' OR status = ANY($2))"#,
+            r#"SELECT COUNT(*) AS "count!: i64" FROM watering_plans wp
+            WHERE ($1::text IS NULL OR wp.provider = $1)
+              AND ($2::watering_plan_status[] = '{}' OR wp.status = ANY($2))
+              AND ($3::uuid[] IS NULL OR wp.organization_id = ANY($3))"#,
             provider,
             &statuses as &[WateringPlanStatus],
+            visible_ids.as_deref(),
         )
         .fetch_one(&self.pool)
         .await? as u64;
@@ -252,6 +255,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             LEFT JOIN user_watering_plans uwp ON uwp.watering_plan_id = wp.id
             WHERE ($1::text IS NULL OR wp.provider = $1)
               AND ($2::watering_plan_status[] = '{}' OR wp.status = ANY($2))
+              AND ($5::uuid[] IS NULL OR wp.organization_id = ANY($5))
             GROUP BY wp.id
             ORDER BY wp.date DESC
             LIMIT $3 OFFSET $4"#,
@@ -259,6 +263,7 @@ impl WateringPlanReader for PgWateringPlanRepository {
             &statuses as &[WateringPlanStatus],
             limit,
             offset,
+            visible_ids.as_deref(),
         )
         .fetch_all(&self.pool)
         .await?;

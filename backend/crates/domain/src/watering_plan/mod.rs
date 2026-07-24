@@ -32,6 +32,7 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     Id,
+    authorization::Visibility,
     cluster::TreeCluster,
     events::DomainEvent,
     organization::Organization,
@@ -140,6 +141,10 @@ pub struct WateringPlanDraft {
 pub struct WateringPlanSearchQuery {
     pub provider: Option<ProviderId>,
     pub statuses: Vec<WateringPlanStatus>,
+    /// Which organizations may see the result. Defaults to `Unrestricted` so
+    /// internal callers stay unfiltered; HTTP handlers must set this from
+    /// `AuthorizationService::visible_orgs_for`.
+    pub visible: Visibility,
 }
 
 /// Replacement input for [`WateringPlan`] field edits while still

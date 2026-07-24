@@ -7,6 +7,7 @@ pub mod config_js;
 pub mod enforcement_cluster;
 pub mod enforcement_sensor;
 pub mod enforcement_tree;
+pub mod enforcement_watering_plan;
 pub mod evaluation;
 pub mod health;
 pub mod health_probes;

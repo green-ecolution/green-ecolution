@@ -129,11 +129,20 @@ async fn resolve_view_relations(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_watering_plans(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Query(params): Query<WateringPlanListParams>,
 ) -> Result<Json<ListResponse<WateringPlanInListResponse>>, ServiceError> {
     let pagination = Pagination::new(params.page, params.per_page);
+    let visible = state
+        .authorization_service
+        .visible_orgs_for(
+            user.id,
+            Permission::new(Resource::WateringPlan, Action::Read),
+        )
+        .await?;
     let query = WateringPlanSearchQuery {
         statuses: params.status.into_iter().map(Into::into).collect(),
+        visible,
         ..Default::default()
     };
     let page = state
@@ -220,9 +229,16 @@ pub async fn list_watering_plans(
 #[tracing::instrument(level = "info", skip_all, fields(plan.id = %id))]
 pub async fn get_watering_plan(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<WateringPlanResponse>, ServiceError> {
     let view = state.watering_plan_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::WateringPlan, Action::Read),
+        &scope::effective_orgs(view.organization_id, &[]),
+    )?;
     let (transporter, trailer, clusters, evaluation) =
         resolve_view_relations(&state, &view).await?;
 
@@ -264,6 +280,29 @@ pub async fn create_watering_plan(
             org,
         )
         .await?;
+
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    let transporter = state
+        .vehicle_service
+        .view_by_id(Id::new(entity.transporter_id))
+        .await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Vehicle, Action::Read),
+        &scope::effective_orgs(transporter.organization_id, &[]),
+    )?;
+    if let Some(trailer_id) = entity.trailer_id {
+        let trailer = state
+            .vehicle_service
+            .view_by_id(Id::new(trailer_id))
+            .await?;
+        scope::ensure_visible(
+            &ctx,
+            Permission::new(Resource::Vehicle, Action::Read),
+            &scope::effective_orgs(trailer.organization_id, &[]),
+        )?;
+    }
+
     let draft = entity.into_draft(org)?;
     let plan = state.watering_plan_service.create(draft).await?;
     let view = state.watering_plan_service.view_by_id(plan.id).await?;
@@ -297,6 +336,7 @@ pub async fn create_watering_plan(
 #[tracing::instrument(level = "info", skip_all, fields(plan.id = %id))]
 pub async fn update_watering_plan(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
     Json(entity): Json<WateringPlanUpdateRequest>,
 ) -> Result<Json<WateringPlanResponse>, ServiceError> {
@@ -304,7 +344,44 @@ pub async fn update_watering_plan(
     let current = state.watering_plan_service.by_id(plan_id).await?;
     let new_status: DomainStatus = entity.status.into();
 
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    let plan_orgs = scope::effective_orgs(current.organization_id().value(), &[]);
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::WateringPlan, Action::Read),
+        &plan_orgs,
+    )?;
+    state
+        .authorization_service
+        .require_any_of(
+            user.id,
+            Permission::new(Resource::WateringPlan, Action::Update),
+            &plan_orgs,
+        )
+        .await?;
+
     if current.status() == DomainStatus::Planned {
+        let transporter = state
+            .vehicle_service
+            .view_by_id(Id::new(entity.transporter_id))
+            .await?;
+        scope::ensure_visible(
+            &ctx,
+            Permission::new(Resource::Vehicle, Action::Read),
+            &scope::effective_orgs(transporter.organization_id, &[]),
+        )?;
+        if let Some(trailer_id) = entity.trailer_id {
+            let trailer = state
+                .vehicle_service
+                .view_by_id(Id::new(trailer_id))
+                .await?;
+            scope::ensure_visible(
+                &ctx,
+                Permission::new(Resource::Vehicle, Action::Read),
+                &scope::effective_orgs(trailer.organization_id, &[]),
+            )?;
+        }
+
         let update = WateringPlanUpdate {
             date: parse_date(&entity.date)?,
             description: if entity.description.is_empty() {
@@ -412,9 +489,26 @@ pub async fn update_watering_plan(
 #[tracing::instrument(level = "info", skip_all, fields(plan.id = %id))]
 pub async fn delete_watering_plan(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
-    state.watering_plan_service.delete(Id::new(id)).await?;
+    let plan_id = Id::new(id);
+    let current = state.watering_plan_service.by_id(plan_id).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::WateringPlan, Action::Read),
+        &scope::effective_orgs(current.organization_id().value(), &[]),
+    )?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::WateringPlan, Action::Delete),
+            current.organization_id(),
+        )
+        .await?;
+    state.watering_plan_service.delete(plan_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -449,11 +543,19 @@ fn route_response_from_plan(
 #[tracing::instrument(level = "info", skip_all, fields(plan.id = %id))]
 pub async fn get_watering_plan_route(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<RouteResponse>, ServiceError> {
     if !state.feature_flags.routing_enabled {
         return Err(ServiceError::FeatureDisabled { feature: "routing" });
     }
+    let view = state.watering_plan_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::WateringPlan, Action::Read),
+        &scope::effective_orgs(view.organization_id, &[]),
+    )?;
     let plan = state.watering_plan_service.by_id(Id::new(id)).await?;
     Ok(Json(route_response_from_plan(&plan)?))
 }
@@ -474,11 +576,21 @@ pub async fn get_watering_plan_route(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn preview_route(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Json(req): Json<RouteRequest>,
 ) -> Result<Json<RouteResponse>, ServiceError> {
     if !state.feature_flags.routing_enabled {
         return Err(ServiceError::FeatureDisabled { feature: "routing" });
     }
+    let org = scope::resolve_target_org(&state, user.id, None).await?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::WateringPlan, Action::Create),
+            org,
+        )
+        .await?;
     let computed = state
         .watering_plan_service
         .preview_route(
@@ -486,6 +598,7 @@ pub async fn preview_route(
             Id::new(req.transporter_id),
             req.trailer_id.map(Id::new),
             req.start_point_name,
+            org,
         )
         .await?;
     Ok(Json(RouteResponse {
@@ -513,11 +626,19 @@ pub async fn preview_route(
 #[tracing::instrument(level = "info", skip_all, fields(plan.id = %id))]
 pub async fn get_gpx_file(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<impl IntoResponse, ServiceError> {
     if !state.feature_flags.routing_enabled {
         return Err(ServiceError::FeatureDisabled { feature: "routing" });
     }
+    let view = state.watering_plan_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::WateringPlan, Action::Read),
+        &scope::effective_orgs(view.organization_id, &[]),
+    )?;
     let plan = state.watering_plan_service.by_id(Id::new(id)).await?;
     let geometry = plan
         .route_geometry()

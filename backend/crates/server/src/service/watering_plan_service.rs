@@ -184,7 +184,9 @@ impl WateringPlanService {
         transporter_id: Id<Vehicle>,
         trailer_id: Option<Id<Vehicle>>,
         start_point_name: Option<String>,
+        org: Id<Organization>,
     ) -> Result<ComputedRoute, ServiceError> {
+        self.ensure_clusters_accessible(&cluster_ids, org).await?;
         self.compute_route(&cluster_ids, transporter_id, trailer_id, start_point_name)
             .await
     }
