@@ -4,7 +4,7 @@ name: Green Ecolution
 url: "https://github.com/green-ecolution/green-ecolution"
 landingURL: "https://green-ecolution.de"
 softwareVersion: "0.5.0" # x-release-please-version
-releaseDate: 2026-07-15
+releaseDate: 2026-07-24
 logo: logo.svg
 
 platforms:
