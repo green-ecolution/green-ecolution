@@ -26,29 +26,32 @@ INSERT INTO tree_clusters (id, name, watering_status, moisture_level, region_id,
   ('019e3fcb-2a53-7fc1-bc32-9c8885df5027'::uuid, 'Lautrupsbach', 'moderate', 0.45, (SELECT id FROM regions WHERE name = 'Nordstadt'), 'An der Nordstraße', 'Sehr viel versiegelter Boden.', 'Ss', 54.79265065021804, 9.454269041383837, ST_SetSRID(ST_MakePoint(9.454269041383837, 54.76671656688957), 4326), '01980000-0000-7000-8000-000000000002');
 
 
+-- All seeded sensors use the GES-1000 model. sensor-4 belongs to Extern A,
+-- sensor-5 and sensor-7 to Extern B (matching the clusters/trees moved below);
+-- the rest stay with TBZ.
 INSERT INTO sensors (id, activated_at, type, model_id, organization_id)
-SELECT v.id, CURRENT_TIMESTAMP, v.type::sensor_type, (SELECT id FROM sensor_models WHERE name = 'EcoDrizzler'), '01980000-0000-7000-8000-000000000002'
+SELECT v.id, CURRENT_TIMESTAMP, v.type::sensor_type, (SELECT id FROM sensor_models WHERE name = 'GES-1000'), v.org_id::uuid
 FROM (VALUES
-    ('sensor-1', 'lorawan'),
-    ('sensor-2', 'lorawan'),
-    ('sensor-3', 'lorawan'),
-    ('sensor-4', 'lorawan'),
-    ('sensor-5', 'lorawan'),
-    ('sensor-6', 'lorawan'),
-    ('sensor-7', 'lorawan'),
-    ('sensor-8', 'lorawan')
-) AS v(id, type);
+    ('sensor-1', 'lorawan', '01980000-0000-7000-8000-000000000002'),
+    ('sensor-2', 'lorawan', '01980000-0000-7000-8000-000000000002'),
+    ('sensor-3', 'lorawan', '01980000-0000-7000-8000-000000000002'),
+    ('sensor-4', 'lorawan', '01980000-0000-7000-8000-000000000003'),
+    ('sensor-5', 'lorawan', '01980000-0000-7000-8000-000000000004'),
+    ('sensor-6', 'lorawan', '01980000-0000-7000-8000-000000000002'),
+    ('sensor-7', 'lorawan', '01980000-0000-7000-8000-000000000004'),
+    ('sensor-8', 'lorawan', '01980000-0000-7000-8000-000000000002')
+) AS v(id, type, org_id);
 
 INSERT INTO sensor_lorawan (id, serial_number, dev_eui, app_eui, app_key)
 VALUES
-    ('sensor-1', 'ECO-DRZ-2024-0001', '70B3D57ED0060001', '70B3D57ED0030000', '2B7E151628AED2A6ABF7158809CF4F3C'),
-    ('sensor-2', 'ECO-DRZ-2024-0002', '70B3D57ED0060002', '70B3D57ED0030000', 'A0B1C2D3E4F506172839405162738495'),
-    ('sensor-3', 'ECO-DRZ-2024-0003', '70B3D57ED0060003', '70B3D57ED0030000', 'F1E2D3C4B5A697887766554433221100'),
-    ('sensor-4', 'ECO-DRZ-2024-0004', '70B3D57ED0060004', '70B3D57ED0030000', '0123456789ABCDEFFEDCBA9876543210'),
-    ('sensor-5', 'ECO-DRZ-2024-0005', '70B3D57ED0060005', '70B3D57ED0030000', 'CAFEBABEDEADBEEF0BADF00DBAADC0DE'),
-    ('sensor-6', 'ECO-DRZ-2024-0006', '70B3D57ED0060006', '70B3D57ED0030000', '1A2B3C4D5E6F70819203040506070809'),
-    ('sensor-7', 'ECO-DRZ-2024-0007', '70B3D57ED0060007', '70B3D57ED0030000', '9F8E7D6C5B4A39281706050403020100'),
-    ('sensor-8', 'ECO-DRZ-2024-0008', '70B3D57ED0060008', '70B3D57ED0030000', '00112233445566778899AABBCCDDEEFF');
+    ('sensor-1', 'GES-2024-0001', '0004A30B00AA0001', '0004A30B00AA0000', '2B7E151628AED2A6ABF7158809CF4F3C'),
+    ('sensor-2', 'GES-2024-0002', '0004A30B00AA0002', '0004A30B00AA0000', 'A0B1C2D3E4F506172839405162738495'),
+    ('sensor-3', 'GES-2024-0003', '0004A30B00AA0003', '0004A30B00AA0000', 'F1E2D3C4B5A697887766554433221100'),
+    ('sensor-4', 'GES-2024-0004', '0004A30B00AA0004', '0004A30B00AA0000', '0123456789ABCDEFFEDCBA9876543210'),
+    ('sensor-5', 'GES-2024-0005', '0004A30B00AA0005', '0004A30B00AA0000', 'CAFEBABEDEADBEEF0BADF00DBAADC0DE'),
+    ('sensor-6', 'GES-2024-0006', '0004A30B00AA0006', '0004A30B00AA0000', '1A2B3C4D5E6F70819203040506070809'),
+    ('sensor-7', 'GES-2024-0007', '0004A30B00AA0007', '0004A30B00AA0000', '9F8E7D6C5B4A39281706050403020100'),
+    ('sensor-8', 'GES-2024-0008', '0004A30B00AA0008', '0004A30B00AA0000', '00112233445566778899AABBCCDDEEFF');
 
 INSERT INTO trees (id, tree_cluster_id, sensor_id, planting_year, species, number, latitude, longitude, geometry, watering_status, description, organization_id) VALUES
   (uuidv7_from_timestamp(now()::timestamp), '019e3fcb-2a53-7fbf-948d-36836e4f42d1'::uuid, 'sensor-1', 2023, 'Quercus robur', 1005, 54.82124518093376, 9.485702120628517, ST_SetSRID(ST_MakePoint(9.485702120628517, 54.82124518093376), 4326), 'good', 'Dieser Baum wurde im August das letzte mal gestuzt', '01980000-0000-7000-8000-000000000002'),
@@ -341,29 +344,60 @@ INSERT INTO vehicle_watering_plans (vehicle_id, watering_plan_id, role) VALUES
   ('019e3fcb-2a51-75fd-818b-913a7cd9cec1'::uuid, '019e3fcb-2a5d-7e0d-840e-fe831360cfdb'::uuid, 'transporter');
 
 
--- Profile data for the Keycloak demo users (tbz1, tbz2, ttester). Ids are the
--- Keycloak user ids from the imported realm. tbz1/tbz2 belong to the TBZ
--- organization, ttester to the root org (both seeded in 01_organizations.sql).
+-- Profile data for the Keycloak demo users. Ids match the user ids in the
+-- imported realm (green-ecolution-realm.json). One user per role per org:
+-- root (ge.admin), TBZ, Extern A and Extern B. Username = password.
 INSERT INTO user_profiles (id, status, driving_licenses, organization_id) VALUES
-  ('8e1a16e9-19b6-4bcc-a5a3-3e6fa7518865'::uuid, 'available', ARRAY['B']::driving_license[], '01980000-0000-7000-8000-000000000002'),
-  ('6a1078e8-80fd-458f-b74e-e388fe2dd6ab'::uuid, 'available', ARRAY['C']::driving_license[], '01980000-0000-7000-8000-000000000002'),
-  ('b5afc591-ee33-4df8-af75-265265f05882'::uuid, 'available', ARRAY['B']::driving_license[], '01980000-0000-7000-8000-000000000001');
+  -- Root
+  ('01980000-0000-7000-8001-000000000001'::uuid, 'available', ARRAY['B','C']::driving_license[],           '01980000-0000-7000-8000-000000000001'),
+  -- TBZ
+  ('01980000-0000-7000-8001-000000000011'::uuid, 'available', ARRAY['B','C']::driving_license[],           '01980000-0000-7000-8000-000000000002'),
+  ('01980000-0000-7000-8001-000000000012'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000002'),
+  ('01980000-0000-7000-8001-000000000013'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000002'),
+  ('01980000-0000-7000-8001-000000000014'::uuid, 'available', ARRAY['B','BE','C','CE']::driving_license[],  '01980000-0000-7000-8000-000000000002'),
+  ('01980000-0000-7000-8001-000000000015'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000002'),
+  -- Extern A
+  ('01980000-0000-7000-8001-000000000021'::uuid, 'available', ARRAY['B','C']::driving_license[],           '01980000-0000-7000-8000-000000000003'),
+  ('01980000-0000-7000-8001-000000000022'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000003'),
+  ('01980000-0000-7000-8001-000000000023'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000003'),
+  ('01980000-0000-7000-8001-000000000024'::uuid, 'available', ARRAY['B','BE','C','CE']::driving_license[],  '01980000-0000-7000-8000-000000000003'),
+  ('01980000-0000-7000-8001-000000000025'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000003'),
+  -- Extern B
+  ('01980000-0000-7000-8001-000000000031'::uuid, 'available', ARRAY['B','C']::driving_license[],           '01980000-0000-7000-8000-000000000004'),
+  ('01980000-0000-7000-8001-000000000032'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000004'),
+  ('01980000-0000-7000-8001-000000000033'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000004'),
+  ('01980000-0000-7000-8001-000000000034'::uuid, 'available', ARRAY['B','BE','C','CE']::driving_license[],  '01980000-0000-7000-8000-000000000004'),
+  ('01980000-0000-7000-8001-000000000035'::uuid, 'available', ARRAY['B']::driving_license[],               '01980000-0000-7000-8000-000000000004');
 
--- tbz1 = Administrator@TBZ, tbz2 = Baumpflege@TBZ, ttester = Administrator@root
--- (root role copy ..b1 comes from the RBAC migration, TBZ copies ..c1/..c2
--- from 01_organizations.sql).
+-- Each user is assigned its org's copy of the matching role template:
+-- Administrator/Baumpflege/Sensorik/Routenplanung/Beobachter.
+-- Root copies b*, TBZ copies c*, Extern A copies d*, Extern B copies e*.
 INSERT INTO role_assignments (user_id, role_id) VALUES
-  ('8e1a16e9-19b6-4bcc-a5a3-3e6fa7518865'::uuid, '01980000-0000-7000-8000-0000000000c1'::uuid),
-  ('6a1078e8-80fd-458f-b74e-e388fe2dd6ab'::uuid, '01980000-0000-7000-8000-0000000000c2'::uuid),
-  ('b5afc591-ee33-4df8-af75-265265f05882'::uuid, '01980000-0000-7000-8000-0000000000b1'::uuid);
+  ('01980000-0000-7000-8001-000000000001'::uuid, '01980000-0000-7000-8000-0000000000b1'::uuid),
+  ('01980000-0000-7000-8001-000000000011'::uuid, '01980000-0000-7000-8000-0000000000c1'::uuid),
+  ('01980000-0000-7000-8001-000000000012'::uuid, '01980000-0000-7000-8000-0000000000c2'::uuid),
+  ('01980000-0000-7000-8001-000000000013'::uuid, '01980000-0000-7000-8000-0000000000c3'::uuid),
+  ('01980000-0000-7000-8001-000000000014'::uuid, '01980000-0000-7000-8000-0000000000c4'::uuid),
+  ('01980000-0000-7000-8001-000000000015'::uuid, '01980000-0000-7000-8000-0000000000c5'::uuid),
+  ('01980000-0000-7000-8001-000000000021'::uuid, '01980000-0000-7000-8000-0000000000d1'::uuid),
+  ('01980000-0000-7000-8001-000000000022'::uuid, '01980000-0000-7000-8000-0000000000d2'::uuid),
+  ('01980000-0000-7000-8001-000000000023'::uuid, '01980000-0000-7000-8000-0000000000d3'::uuid),
+  ('01980000-0000-7000-8001-000000000024'::uuid, '01980000-0000-7000-8000-0000000000d4'::uuid),
+  ('01980000-0000-7000-8001-000000000025'::uuid, '01980000-0000-7000-8000-0000000000d5'::uuid),
+  ('01980000-0000-7000-8001-000000000031'::uuid, '01980000-0000-7000-8000-0000000000e1'::uuid),
+  ('01980000-0000-7000-8001-000000000032'::uuid, '01980000-0000-7000-8000-0000000000e2'::uuid),
+  ('01980000-0000-7000-8001-000000000033'::uuid, '01980000-0000-7000-8000-0000000000e3'::uuid),
+  ('01980000-0000-7000-8001-000000000034'::uuid, '01980000-0000-7000-8000-0000000000e4'::uuid),
+  ('01980000-0000-7000-8001-000000000035'::uuid, '01980000-0000-7000-8000-0000000000e5'::uuid);
 
 
+-- tbz.routen owns the TBZ watering plans.
 INSERT INTO user_watering_plans (user_id, watering_plan_id) VALUES
-  ('6a1078e8-80fd-458f-b74e-e388fe2dd6ab', '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid),
-  ('6a1078e8-80fd-458f-b74e-e388fe2dd6ab', '019e3fcb-2a5d-7e82-afe5-626abd96274d'::uuid),
-  ('6a1078e8-80fd-458f-b74e-e388fe2dd6ab', '019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid),
-  ('6a1078e8-80fd-458f-b74e-e388fe2dd6ab', '019e3fcb-2a5d-7e3b-a202-44acf2ffcb71'::uuid),
-  ('6a1078e8-80fd-458f-b74e-e388fe2dd6ab', '019e3fcb-2a5d-7e0d-840e-fe831360cfdb'::uuid);
+  ('01980000-0000-7000-8001-000000000014', '019e3fcb-2a5c-70b8-b5c4-fb729bd9c877'::uuid),
+  ('01980000-0000-7000-8001-000000000014', '019e3fcb-2a5d-7e82-afe5-626abd96274d'::uuid),
+  ('01980000-0000-7000-8001-000000000014', '019e3fcb-2a5d-7c0d-bbd9-7b3d84f5c5f3'::uuid),
+  ('01980000-0000-7000-8001-000000000014', '019e3fcb-2a5d-7e3b-a202-44acf2ffcb71'::uuid),
+  ('01980000-0000-7000-8001-000000000014', '019e3fcb-2a5d-7e0d-840e-fe831360cfdb'::uuid);
 
 
 INSERT INTO tree_cluster_watering_plans (tree_cluster_id, watering_plan_id, consumed_water) VALUES
@@ -386,6 +420,22 @@ UPDATE tree_clusters
 UPDATE trees
    SET geometry = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)
  WHERE longitude IS NOT NULL AND latitude IS NOT NULL;
+
+
+-- Move a few plan-free demo clusters (with their trees) to the external
+-- sub-orgs so resource scoping is demonstrable. The matching sensors are
+-- already assigned to these orgs in the sensors INSERT above.
+--   Extern A (…0003): Campus Hochschule (sensor-4), Peelwatt
+--   Extern B (…0004): Mathildenstraße (sensor-5), Seniorenanlage (sensor-7)
+UPDATE tree_clusters SET organization_id = '01980000-0000-7000-8000-000000000003'
+ WHERE id IN ('019e3fcb-2a53-7493-a7a1-b194faa409d7', '019e3fcb-2a53-7433-8d57-6258f9688c82');
+UPDATE tree_clusters SET organization_id = '01980000-0000-7000-8000-000000000004'
+ WHERE id IN ('019e3fcb-2a53-713d-8cae-4a52d3fd2967', '019e3fcb-2a53-7be5-9a56-e2260bb1c9fb');
+
+UPDATE trees SET organization_id = '01980000-0000-7000-8000-000000000003'
+ WHERE tree_cluster_id IN ('019e3fcb-2a53-7493-a7a1-b194faa409d7', '019e3fcb-2a53-7433-8d57-6258f9688c82');
+UPDATE trees SET organization_id = '01980000-0000-7000-8000-000000000004'
+ WHERE tree_cluster_id IN ('019e3fcb-2a53-713d-8cae-4a52d3fd2967', '019e3fcb-2a53-7be5-9a56-e2260bb1c9fb');
 
 
 -- Prepared sensors (GES-1000) to exercise the activate flow during demos.
