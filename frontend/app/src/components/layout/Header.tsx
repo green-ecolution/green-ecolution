@@ -9,6 +9,8 @@ import { useAuthSession } from '@/lib/auth/authSessionContext'
 import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 import { useCurrentUserAvatar } from '@/lib/auth/useCurrentUserAvatar'
 import { Avatar, AvatarFallback, AvatarImage, Button } from '@green-ecolution/ui'
+import SidebarToggle from '../navigation/SidebarToggle'
+import useStore from '@/store/store'
 
 function Header() {
   const [open, setOpen] = useState(false)
@@ -18,6 +20,7 @@ function Header() {
   const { isAuthenticated } = useAuthSession()
   const { firstName, lastName, email } = useCurrentUser()
   const avatarUrl = useCurrentUserAvatar()
+  const setSidebarCollapsed = useStore((s) => s.setSidebarCollapsed)
 
   const closeSidebar = useCallback(() => {
     setOpen(false)
@@ -45,7 +48,12 @@ function Header() {
     >
       {/* min-h keeps the pre-NavUser header height (40px avatar + py-4 + border);
           the map height calc (100dvh - 4.563rem) depends on it */}
-      <div className="container min-h-[4.563rem] text-sm border-b border-dark-50 py-4 flex justify-between items-center">
+      <div className="container min-h-[4.563rem] text-sm border-b border-dark-50 py-4 flex justify-start items-center">
+        {isLargeScreen && (
+          <div className="mr-4 flex items-center">
+            <SidebarToggle collapsed={collapsed} onToggle={() => setSidebarCollapsed(!collapsed)} />
+          </div>
+        )}
         {!isLargeScreen && (
           <Button
             id="main-navigation-toggle"
@@ -58,7 +66,7 @@ function Header() {
             className="size-8 rounded-full bg-dark hover:bg-dark-600"
             onClick={toggleSidebar}
           >
-            <AlignJustifyIcon className="!size-5 text-light" />
+            <AlignJustifyIcon className="size-5! text-light" />
           </Button>
         )}
         {!isStartPage && <Breadcrumb />}

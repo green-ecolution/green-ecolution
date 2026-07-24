@@ -15,7 +15,6 @@ import { LinkProps } from '@tanstack/react-router'
 import NavLink from '../navigation/NavLink'
 import NavHeadline from '../navigation/NavHeadline'
 import NavHeader from '../navigation/NavHeader'
-import SidebarToggle from '../navigation/SidebarToggle'
 import NavUser from '../navigation/NavUser'
 import { useAuthSession } from '@/lib/auth/authSessionContext'
 import { useCurrentUser } from '@/lib/auth/useCurrentUser'
@@ -24,7 +23,6 @@ import Tree from '../icons/Tree'
 import SensorIcon from '../icons/Sensor'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed'
-import useStore from '@/store/store'
 
 interface NavigationProps {
   isOpen: boolean
@@ -155,7 +153,6 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
   const { isAuthenticated: isLoggedIn } = useAuthSession()
   const collapsed = useSidebarCollapsed()
-  const setSidebarCollapsed = useStore((s) => s.setSidebarCollapsed)
 
   const { firstName, lastName, email } = useCurrentUser()
   const avatarUrl = useCurrentUserAvatar()
@@ -208,9 +205,6 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
         className={`shrink-0 border-t border-dark-400/30 px-4 pb-4 pt-4 ${collapsed ? 'lg:px-2' : ''} ${isLoggedIn ? '' : 'hidden lg:block'}`}
       >
         <ul className="space-y-1">
-          <li className="relative hidden lg:block">
-            <SidebarToggle collapsed={collapsed} onToggle={() => setSidebarCollapsed(!collapsed)} />
-          </li>
           {isLoggedIn &&
             footerNavData.map(({ key, label, icon, ...linkProps }) => (
               <NavLink
