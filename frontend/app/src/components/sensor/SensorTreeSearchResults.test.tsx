@@ -24,7 +24,6 @@ function makeTree(overrides: Partial<TreeResponse> = {}): TreeResponse {
     description: '',
     organizationId: '',
     plantingYear: 2000,
-    sharedWith: [],
     sensor: null,
     ...overrides,
   }
@@ -110,7 +109,6 @@ describe('SensorTreeSearchResults', () => {
             createdAt: '',
             updatedAt: '',
             organizationId: '',
-            sharedWith: [],
             model: { id: 'model-1', name: 'EcoDrizzler' },
             sensorType: 'lorawan',
           },

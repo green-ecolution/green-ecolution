@@ -19,7 +19,6 @@ const tree = (over: Partial<TreeResponse>): TreeResponse => ({
   number: over.number ?? '0001',
   organizationId: '',
   plantingYear: 2000,
-  sharedWith: [],
   species: over.species ?? 'Stieleiche',
   wateringStatus: 'unknown',
   sensor: over.sensor ?? null,
