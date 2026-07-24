@@ -133,13 +133,6 @@ export interface TreeClusterResponse {
      */
     region?: RegionResponse | null;
     /**
-     * Organizations this cluster is shared with, in addition to its owning
-     * organization.
-     * @type {Array<string>}
-     * @memberof TreeClusterResponse
-     */
-    sharedWith: Array<string>;
-    /**
      * 
      * @type {SoilCondition}
      * @memberof TreeClusterResponse
@@ -181,7 +174,6 @@ export function instanceOfTreeClusterResponse(value: object): value is TreeClust
     if (!('moistureLevel' in value) || value['moistureLevel'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('organizationId' in value) || value['organizationId'] === undefined) return false;
-    if (!('sharedWith' in value) || value['sharedWith'] === undefined) return false;
     if (!('soilCondition' in value) || value['soilCondition'] === undefined) return false;
     if (!('trees' in value) || value['trees'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
@@ -213,7 +205,6 @@ export function TreeClusterResponseFromJSONTyped(json: any, ignoreDiscriminator:
         'organizationId': json['organization_id'],
         'provider': json['provider'] == null ? undefined : json['provider'],
         'region': json['region'] == null ? undefined : RegionResponseFromJSON(json['region']),
-        'sharedWith': json['shared_with'],
         'soilCondition': SoilConditionFromJSON(json['soil_condition']),
         'trees': ((json['trees'] as Array<any>).map(TreeResponseFromJSON)),
         'updatedAt': json['updated_at'],
@@ -246,7 +237,6 @@ export function TreeClusterResponseToJSONTyped(value?: TreeClusterResponse | nul
         'organization_id': value['organizationId'],
         'provider': value['provider'],
         'region': RegionResponseToJSON(value['region']),
-        'shared_with': value['sharedWith'],
         'soil_condition': SoilConditionToJSON(value['soilCondition']),
         'trees': ((value['trees'] as Array<any>).map(TreeResponseToJSON)),
         'updated_at': value['updatedAt'],

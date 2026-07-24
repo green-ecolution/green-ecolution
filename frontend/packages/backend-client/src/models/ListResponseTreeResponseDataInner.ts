@@ -107,14 +107,6 @@ export interface ListResponseTreeResponseDataInner {
      */
     sensor?: SensorResponse | null;
     /**
-     * Organizations this tree is shared with, in addition to its owning
-     * organization. If the tree belongs to a cluster, this also includes
-     * organizations the cluster itself is shared with.
-     * @type {Array<string>}
-     * @memberof ListResponseTreeResponseDataInner
-     */
-    sharedWith: Array<string>;
-    /**
      * 
      * @type {string}
      * @memberof ListResponseTreeResponseDataInner
@@ -154,7 +146,6 @@ export function instanceOfListResponseTreeResponseDataInner(value: object): valu
     if (!('number' in value) || value['number'] === undefined) return false;
     if (!('organizationId' in value) || value['organizationId'] === undefined) return false;
     if (!('plantingYear' in value) || value['plantingYear'] === undefined) return false;
-    if (!('sharedWith' in value) || value['sharedWith'] === undefined) return false;
     if (!('species' in value) || value['species'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
     if (!('wateringStatus' in value) || value['wateringStatus'] === undefined) return false;
@@ -183,7 +174,6 @@ export function ListResponseTreeResponseDataInnerFromJSONTyped(json: any, ignore
         'plantingYear': json['planting_year'],
         'provider': json['provider'] == null ? undefined : json['provider'],
         'sensor': json['sensor'] == null ? undefined : SensorResponseFromJSON(json['sensor']),
-        'sharedWith': json['shared_with'],
         'species': json['species'],
         'treeClusterId': json['tree_cluster_id'] == null ? undefined : json['tree_cluster_id'],
         'updatedAt': json['updated_at'],
@@ -214,7 +204,6 @@ export function ListResponseTreeResponseDataInnerToJSONTyped(value?: ListRespons
         'planting_year': value['plantingYear'],
         'provider': value['provider'],
         'sensor': SensorResponseToJSON(value['sensor']),
-        'shared_with': value['sharedWith'],
         'species': value['species'],
         'tree_cluster_id': value['treeClusterId'],
         'updated_at': value['updatedAt'],

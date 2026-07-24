@@ -17,7 +17,6 @@ import * as runtime from '../runtime';
 import type {
   ListResponseTreeResponse,
   NearestTreeListResponse,
-  ShareRequest,
   TransferRequest,
   TreeCreateRequest,
   TreeMarkerListResponse,
@@ -30,8 +29,6 @@ import {
     ListResponseTreeResponseToJSON,
     NearestTreeListResponseFromJSON,
     NearestTreeListResponseToJSON,
-    ShareRequestFromJSON,
-    ShareRequestToJSON,
     TransferRequestFromJSON,
     TransferRequestToJSON,
     TreeCreateRequestFromJSON,
@@ -82,16 +79,6 @@ export interface ListTreesRequest {
     wateringStatus?: Array<WateringStatus>;
     hasCluster?: boolean | null;
     plantingYear?: Array<number>;
-}
-
-export interface RevokeShareTreeRequest {
-    treeId: string;
-    orgId: string;
-}
-
-export interface ShareTreeRequest {
-    treeId: string;
-    shareRequest: ShareRequest;
 }
 
 export interface TransferTreeRequest {
@@ -461,96 +448,6 @@ export class TreesApi extends runtime.BaseAPI {
     async listTrees(requestParameters: ListTreesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseTreeResponse> {
         const response = await this.listTreesRaw(requestParameters, initOverrides);
         return await response.value();
-    }
-
-    /**
-     * Revoke a tree share
-     */
-    async revokeShareTreeRaw(requestParameters: RevokeShareTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['treeId'] == null) {
-            throw new runtime.RequiredError(
-                'treeId',
-                'Required parameter "treeId" was null or undefined when calling revokeShareTree().'
-            );
-        }
-
-        if (requestParameters['orgId'] == null) {
-            throw new runtime.RequiredError(
-                'orgId',
-                'Required parameter "orgId" was null or undefined when calling revokeShareTree().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-
-        let urlPath = `/v1/trees/{tree_id}/shares/{org_id}`;
-        urlPath = urlPath.replace(`{${"tree_id"}}`, encodeURIComponent(String(requestParameters['treeId'])));
-        urlPath = urlPath.replace(`{${"org_id"}}`, encodeURIComponent(String(requestParameters['orgId'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Revoke a tree share
-     */
-    async revokeShareTree(requestParameters: RevokeShareTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.revokeShareTreeRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     * Share a tree with a descendant organization
-     */
-    async shareTreeRaw(requestParameters: ShareTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['treeId'] == null) {
-            throw new runtime.RequiredError(
-                'treeId',
-                'Required parameter "treeId" was null or undefined when calling shareTree().'
-            );
-        }
-
-        if (requestParameters['shareRequest'] == null) {
-            throw new runtime.RequiredError(
-                'shareRequest',
-                'Required parameter "shareRequest" was null or undefined when calling shareTree().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-
-        let urlPath = `/v1/trees/{tree_id}/shares`;
-        urlPath = urlPath.replace(`{${"tree_id"}}`, encodeURIComponent(String(requestParameters['treeId'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: ShareRequestToJSON(requestParameters['shareRequest']),
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Share a tree with a descendant organization
-     */
-    async shareTree(requestParameters: ShareTreeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.shareTreeRaw(requestParameters, initOverrides);
     }
 
     /**

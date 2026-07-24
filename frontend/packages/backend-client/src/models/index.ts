@@ -69,7 +69,6 @@ export * from './ServiceStatusResponse';
 export * from './ServicesInfoResponse';
 export * from './SetOrganizationRequest';
 export * from './SetSensorTreeRequest';
-export * from './ShareRequest';
 export * from './SignalResponse';
 export * from './SoilCondition';
 export * from './SoilMoistureConditionPointResponse';

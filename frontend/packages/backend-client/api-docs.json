@@ -385,7 +385,7 @@
             }
           },
           "403": {
-            "description": "Missing tree_cluster:update in the owning organization or its shares"
+            "description": "Missing tree_cluster:update in the owning organization"
           },
           "404": {
             "description": "Cluster not found"
@@ -436,7 +436,7 @@
           "Tree Clusters"
         ],
         "summary": "Transfer a cluster's ownership to another organization",
-        "description": "Moves the cluster, its member trees, and their attached sensors to a different owning organization in one operation. Shares that no longer point below the new owner are revoked. Requires `tree_cluster:update` in both the source and target organization.",
+        "description": "Moves the cluster, its member trees, and their attached sensors to a different owning organization in one operation. Requires `tree_cluster:update` in both the source and target organization.",
         "operationId": "transferCluster",
         "parameters": [
           {
@@ -469,93 +469,6 @@
           },
           "404": {
             "description": "Cluster or organization not found"
-          }
-        }
-      }
-    },
-    "/v1/clusters/{cluster_id}/shares": {
-      "post": {
-        "tags": [
-          "Tree Clusters"
-        ],
-        "summary": "Share a tree cluster with a descendant organization",
-        "operationId": "shareCluster",
-        "parameters": [
-          {
-            "name": "cluster_id",
-            "in": "path",
-            "description": "Cluster ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ShareRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "Share granted"
-          },
-          "403": {
-            "description": "Missing tree_cluster:update in owning organization"
-          },
-          "404": {
-            "description": "Cluster or organization not found"
-          },
-          "422": {
-            "description": "Target is not a proper descendant"
-          }
-        }
-      }
-    },
-    "/v1/clusters/{cluster_id}/shares/{org_id}": {
-      "delete": {
-        "tags": [
-          "Tree Clusters"
-        ],
-        "summary": "Revoke a tree cluster share",
-        "operationId": "revokeShareCluster",
-        "parameters": [
-          {
-            "name": "cluster_id",
-            "in": "path",
-            "description": "Cluster ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "org_id",
-            "in": "path",
-            "description": "Organization ID to revoke the share from",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Share revoked"
-          },
-          "403": {
-            "description": "Missing tree_cluster:update in owning organization"
-          },
-          "404": {
-            "description": "Cluster not found"
           }
         }
       }
@@ -2148,7 +2061,7 @@
             }
           },
           "403": {
-            "description": "Missing sensor:update or tree:update in the effective organizations"
+            "description": "Missing sensor:update or tree:update in the owning organization"
           },
           "404": {
             "description": "Sensor or tree not found"
@@ -2457,7 +2370,7 @@
             }
           },
           "403": {
-            "description": "Missing sensor:update or tree:update in the effective organizations"
+            "description": "Missing sensor:update or tree:update in the owning organization"
           },
           "404": {
             "description": "Sensor or tree not found"
@@ -2500,7 +2413,7 @@
             }
           },
           "403": {
-            "description": "Missing sensor:update or tree:update in the effective organizations"
+            "description": "Missing sensor:update or tree:update in the owning organization"
           },
           "404": {
             "description": "Sensor not found"
@@ -2901,7 +2814,7 @@
             }
           },
           "403": {
-            "description": "Missing tree:update in the owning organization or its shares"
+            "description": "Missing tree:update in the owning organization"
           },
           "404": {
             "description": "Tree not found"
@@ -2988,96 +2901,6 @@
           },
           "409": {
             "description": "Tree is part of a cluster"
-          }
-        }
-      }
-    },
-    "/v1/trees/{tree_id}/shares": {
-      "post": {
-        "tags": [
-          "Trees"
-        ],
-        "summary": "Share a tree with a descendant organization",
-        "operationId": "shareTree",
-        "parameters": [
-          {
-            "name": "tree_id",
-            "in": "path",
-            "description": "Tree ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ShareRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "Share granted"
-          },
-          "403": {
-            "description": "Missing tree:update in owning organization"
-          },
-          "404": {
-            "description": "Tree or organization not found"
-          },
-          "409": {
-            "description": "Tree is part of a cluster"
-          },
-          "422": {
-            "description": "Target is not a proper descendant"
-          }
-        }
-      }
-    },
-    "/v1/trees/{tree_id}/shares/{org_id}": {
-      "delete": {
-        "tags": [
-          "Trees"
-        ],
-        "summary": "Revoke a tree share",
-        "operationId": "revokeShareTree",
-        "parameters": [
-          {
-            "name": "tree_id",
-            "in": "path",
-            "description": "Tree ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "org_id",
-            "in": "path",
-            "description": "Organization ID to revoke the share from",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Share revoked"
-          },
-          "403": {
-            "description": "Missing tree:update in owning organization"
-          },
-          "404": {
-            "description": "Tree not found"
           }
         }
       }
@@ -4916,8 +4739,7 @@
                 "status",
                 "sensor_type",
                 "model",
-                "organization_id",
-                "shared_with"
+                "organization_id"
               ],
               "properties": {
                 "additional_information": {
@@ -4998,13 +4820,6 @@
                 "sensor_type": {
                   "$ref": "#/components/schemas/SensorTypeResponse",
                   "description": "Bus/protocol class of the sensor."
-                },
-                "shared_with": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "description": "Organizations the linked tree (or its cluster) is shared with. Empty\nfor a sensor that isn't currently linked to a tree."
                 },
                 "status": {
                   "$ref": "#/components/schemas/SensorStatus",
@@ -5185,8 +5000,7 @@
                 "longitude",
                 "watering_status",
                 "description",
-                "organization_id",
-                "shared_with"
+                "organization_id"
               ],
               "properties": {
                 "additional_information": {
@@ -5259,16 +5073,6 @@
                     {
                       "$ref": "#/components/schemas/SensorResponse"
                     }
-                  ]
-                },
-                "shared_with": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "description": "Organizations this tree is shared with, in addition to its owning\norganization. If the tree belongs to a cluster, this also includes\norganizations the cluster itself is shared with.",
-                  "example": [
-                    "0190a8e9-7c4f-7000-8000-000000000000"
                   ]
                 },
                 "species": {
@@ -6656,8 +6460,7 @@
           "status",
           "sensor_type",
           "model",
-          "organization_id",
-          "shared_with"
+          "organization_id"
         ],
         "properties": {
           "additional_information": {
@@ -6738,13 +6541,6 @@
           "sensor_type": {
             "$ref": "#/components/schemas/SensorTypeResponse",
             "description": "Bus/protocol class of the sensor."
-          },
-          "shared_with": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Organizations the linked tree (or its cluster) is shared with. Empty\nfor a sensor that isn't currently linked to a tree."
           },
           "status": {
             "$ref": "#/components/schemas/SensorStatus",
@@ -6896,20 +6692,6 @@
         ],
         "properties": {
           "tree_id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "0190a8e9-7c4f-7000-8000-000000000000"
-          }
-        }
-      },
-      "ShareRequest": {
-        "type": "object",
-        "description": "Request body for sharing a resource with a descendant organization.",
-        "required": [
-          "organization_id"
-        ],
-        "properties": {
-          "organization_id": {
             "type": "string",
             "format": "uuid",
             "example": "0190a8e9-7c4f-7000-8000-000000000000"
@@ -7470,8 +7252,7 @@
           "longitude",
           "archived",
           "trees",
-          "organization_id",
-          "shared_with"
+          "organization_id"
         ],
         "properties": {
           "additional_information": {
@@ -7552,16 +7333,6 @@
               {
                 "$ref": "#/components/schemas/RegionResponse"
               }
-            ]
-          },
-          "shared_with": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Organizations this cluster is shared with, in addition to its owning\norganization.",
-            "example": [
-              "0190a8e9-7c4f-7000-8000-000000000000"
             ]
           },
           "soil_condition": {
@@ -7787,8 +7558,7 @@
           "longitude",
           "watering_status",
           "description",
-          "organization_id",
-          "shared_with"
+          "organization_id"
         ],
         "properties": {
           "additional_information": {
@@ -7861,16 +7631,6 @@
               {
                 "$ref": "#/components/schemas/SensorResponse"
               }
-            ]
-          },
-          "shared_with": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Organizations this tree is shared with, in addition to its owning\norganization. If the tree belongs to a cluster, this also includes\norganizations the cluster itself is shared with.",
-            "example": [
-              "0190a8e9-7c4f-7000-8000-000000000000"
             ]
           },
           "species": {

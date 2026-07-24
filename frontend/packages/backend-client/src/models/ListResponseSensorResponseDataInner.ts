@@ -129,13 +129,6 @@ export interface ListResponseSensorResponseDataInner {
      */
     sensorType: SensorTypeResponse;
     /**
-     * Organizations the linked tree (or its cluster) is shared with. Empty
-     * for a sensor that isn't currently linked to a tree.
-     * @type {Array<string>}
-     * @memberof ListResponseSensorResponseDataInner
-     */
-    sharedWith: Array<string>;
-    /**
      * Current connectivity status of the sensor.
      * @type {SensorStatus}
      * @memberof ListResponseSensorResponseDataInner
@@ -160,7 +153,6 @@ export function instanceOfListResponseSensorResponseDataInner(value: object): va
     if (!('model' in value) || value['model'] === undefined) return false;
     if (!('organizationId' in value) || value['organizationId'] === undefined) return false;
     if (!('sensorType' in value) || value['sensorType'] === undefined) return false;
-    if (!('sharedWith' in value) || value['sharedWith'] === undefined) return false;
     if (!('status' in value) || value['status'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
     return true;
@@ -187,7 +179,6 @@ export function ListResponseSensorResponseDataInnerFromJSONTyped(json: any, igno
         'organizationId': json['organization_id'],
         'provider': json['provider'] == null ? undefined : json['provider'],
         'sensorType': SensorTypeResponseFromJSON(json['sensor_type']),
-        'sharedWith': json['shared_with'],
         'status': SensorStatusFromJSON(json['status']),
         'updatedAt': json['updated_at'],
     };
@@ -215,7 +206,6 @@ export function ListResponseSensorResponseDataInnerToJSONTyped(value?: ListRespo
         'organization_id': value['organizationId'],
         'provider': value['provider'],
         'sensor_type': SensorTypeResponseToJSON(value['sensorType']),
-        'shared_with': value['sharedWith'],
         'status': SensorStatusToJSON(value['status']),
         'updated_at': value['updatedAt'],
     };
