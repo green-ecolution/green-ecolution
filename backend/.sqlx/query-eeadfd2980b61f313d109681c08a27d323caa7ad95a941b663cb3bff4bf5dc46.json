@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT COUNT(*) AS \"count!: i64\" FROM tree_clusters tc\n            WHERE ($1::watering_status[] = '{}' OR tc.watering_status = ANY($1))\n              AND ($2::uuid[] = '{}' OR tc.region_id = ANY($2))\n              AND ($3::text IS NULL OR tc.provider = $3)\n              AND ($4::text IS NULL OR tc.name ILIKE $4 ESCAPE '\\')\n              AND ($5::tree_soil_condition[] = '{}' OR tc.soil_condition = ANY($5))",
+  "query": "SELECT COUNT(*) AS \"count!: i64\" FROM tree_clusters tc\n            WHERE ($1::watering_status[] = '{}' OR tc.watering_status = ANY($1))\n              AND ($2::uuid[] = '{}' OR tc.region_id = ANY($2))\n              AND ($3::text IS NULL OR tc.provider = $3)\n              AND ($4::text IS NULL OR tc.name ILIKE $4 ESCAPE '\\')\n              AND ($5::tree_soil_condition[] = '{}' OR tc.soil_condition = ANY($5))\n              AND ($6::uuid[] IS NULL\n                   OR tc.organization_id = ANY($6)\n                   OR tc.id IN (SELECT tree_cluster_id FROM tree_cluster_shares WHERE organization_id = ANY($6)))",
   "describe": {
     "columns": [
       {
@@ -85,12 +85,13 @@
               }
             }
           }
-        }
+        },
+        "UuidArray"
       ]
     },
     "nullable": [
       null
     ]
   },
-  "hash": "42328eafbf9e3aedac0bbe33b189a49f58f905148c72fd13d5e9d34f3884fccc"
+  "hash": "eeadfd2980b61f313d109681c08a27d323caa7ad95a941b663cb3bff4bf5dc46"
 }

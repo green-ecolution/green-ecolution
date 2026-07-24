@@ -3,6 +3,7 @@ use std::sync::Arc;
 use chrono::{DateTime, Utc};
 use domain::{
     Id,
+    authorization::Visibility,
     cluster::{
         ClusterBoundaryView, ClusterMarker, ClusterStatistics, SoilMoistureBucket,
         SoilMoistureOverview, TreeCluster, TreeClusterDraft, TreeClusterReader,
@@ -66,13 +67,19 @@ impl ClusterService {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn view_markers(&self) -> Result<Vec<ClusterMarker>, ServiceError> {
-        Ok(self.reader.view_markers().await?)
+    pub async fn view_markers(
+        &self,
+        visible: Visibility,
+    ) -> Result<Vec<ClusterMarker>, ServiceError> {
+        Ok(self.reader.view_markers(visible).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn boundaries(&self) -> Result<Vec<ClusterBoundaryView>, ServiceError> {
-        Ok(self.reader.boundaries().await?)
+    pub async fn boundaries(
+        &self,
+        visible: Visibility,
+    ) -> Result<Vec<ClusterBoundaryView>, ServiceError> {
+        Ok(self.reader.boundaries(visible).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
@@ -191,8 +198,8 @@ impl ClusterService {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn statistics(&self) -> Result<ClusterStatistics, ServiceError> {
-        Ok(self.reader.statistics().await?)
+    pub async fn statistics(&self, visible: Visibility) -> Result<ClusterStatistics, ServiceError> {
+        Ok(self.reader.statistics(visible).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]

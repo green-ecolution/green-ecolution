@@ -25,6 +25,7 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     Id,
+    authorization::Visibility,
     events::DomainEvent,
     organization::Organization,
     region::Region,
@@ -169,6 +170,10 @@ pub struct TreeClusterSearchQuery {
     pub soil_conditions: Vec<SoilCondition>,
     pub sort: ClusterSort,
     pub order: SortOrder,
+    /// Which organizations may see the result. Defaults to `Unrestricted` so
+    /// internal callers (event handlers) stay unfiltered; HTTP handlers must
+    /// set this from `AuthorizationService::visible_orgs_for`.
+    pub visible: Visibility,
 }
 
 /// Replacement input for [`TreeCluster`] updates.
