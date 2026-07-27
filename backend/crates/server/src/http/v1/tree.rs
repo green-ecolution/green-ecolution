@@ -11,23 +11,28 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     http::{
         AppState,
-        v1::dto::{
-            ListResponse,
-            sensor::resolve_sensors_by_str_ids,
-            tree::{
-                NearestTreeListResponse, NearestTreeParams, TreeCreateRequest, TreeListParams,
-                TreeMarkerListResponse, TreeMarkerQueryParams, TreeMarkerResponse, TreeResponse,
-                TreeUpdateRequest, TreeWithDistanceResponse,
+        auth::extractor::AuthUserExtractor,
+        v1::{
+            dto::{
+                ListResponse,
+                sensor::resolve_sensors_by_str_ids,
+                tree::{
+                    NearestTreeListResponse, NearestTreeParams, TransferRequest, TreeCreateRequest,
+                    TreeListParams, TreeMarkerListResponse, TreeMarkerQueryParams,
+                    TreeMarkerResponse, TreeResponse, TreeUpdateRequest, TreeWithDistanceResponse,
+                },
             },
+            scope,
         },
     },
     service::ServiceError,
 };
 use domain::{
     Id,
+    authorization::{Action, Permission, Resource},
     sensor::SensorId,
     shared::{coordinates::Coordinate, distance::Distance, pagination::Pagination},
-    tree::{PlantingYear, TreeDraft, TreeMarker, TreeSearchQuery, TreeView},
+    tree::{PlantingYear, TreeMarker, TreeSearchQuery, TreeView},
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -37,6 +42,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(list_tree_markers))
         .routes(routes!(get_nearest_trees))
         .routes(routes!(get_tree, update_tree, delete_tree))
+        .routes(routes!(transfer_tree))
 }
 
 const TREE_LIST_Q_MAX_LEN: usize = 100;
@@ -57,6 +63,7 @@ const TREE_LIST_Q_MAX_LEN: usize = 100;
 #[tracing::instrument(level = "info", skip_all, fields(query.len = tracing::field::Empty))]
 pub async fn list_trees(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Query(params): Query<TreeListParams>,
 ) -> Result<Json<ListResponse<TreeResponse>>, ServiceError> {
     let pagination = Pagination::new(params.page, params.per_page);
@@ -92,11 +99,17 @@ pub async fn list_trees(
         .map(|y| PlantingYear::new(y as u32))
         .collect::<Result<Vec<_>, _>>()?;
 
+    let visible = state
+        .authorization_service
+        .visible_orgs_for(user.id, Permission::new(Resource::Tree, Action::Read))
+        .await?;
+
     let query = TreeSearchQuery {
         q,
         watering_statuses,
         has_cluster: params.has_cluster,
         planting_years,
+        visible,
         ..TreeSearchQuery::default()
     };
 
@@ -129,9 +142,16 @@ pub async fn list_trees(
 #[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
 pub async fn get_tree(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<TreeResponse>, ServiceError> {
     let tree = state.tree_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Tree, Action::Read),
+        tree.organization_id,
+    )?;
     let sensor = match &tree.sensor_id {
         Some(sid) => {
             let sensor_id = SensorId::new(sid)?;
@@ -156,9 +176,31 @@ pub async fn get_tree(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn create_tree(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Json(entity): Json<TreeCreateRequest>,
 ) -> Result<(StatusCode, Json<TreeResponse>), ServiceError> {
-    let draft: TreeDraft = entity.try_into()?;
+    let org = scope::resolve_target_org(&state, user.id, entity.organization_id).await?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Tree, Action::Create),
+            org,
+        )
+        .await?;
+    if let Some(sid) = entity.sensor_id.as_deref() {
+        let sensor_id = SensorId::new(sid)?;
+        let sensor_view = state.sensor_service.view_by_id(&sensor_id).await?;
+        state
+            .authorization_service
+            .require(
+                user.id,
+                Permission::new(Resource::Sensor, Action::Update),
+                Id::new(sensor_view.organization_id),
+            )
+            .await?;
+    }
+    let draft = entity.into_draft(org)?;
     let tree = state.tree_service.create(draft).await?;
     let view = state.tree_service.view_by_id(tree.id).await?;
     let sensor = match view.sensor_id.as_deref() {
@@ -182,6 +224,7 @@ pub async fn create_tree(
     request_body = TreeUpdateRequest,
     responses(
         (status = 200, description = "Tree updated", body = TreeResponse),
+        (status = 403, description = "Missing tree:update in the owning organization"),
         (status = 404, description = "Tree not found"),
         (status = 500, description = "Internal server error"),
     )
@@ -189,9 +232,42 @@ pub async fn create_tree(
 #[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
 pub async fn update_tree(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
     Json(entity): Json<TreeUpdateRequest>,
 ) -> Result<Json<TreeResponse>, ServiceError> {
+    let current = state.tree_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Tree, Action::Read),
+        current.organization_id,
+    )?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Tree, Action::Update),
+            Id::new(current.organization_id),
+        )
+        .await?;
+    if entity.sensor_id != current.sensor_id {
+        for sid in [entity.sensor_id.as_deref(), current.sensor_id.as_deref()]
+            .into_iter()
+            .flatten()
+        {
+            let sensor_id = SensorId::new(sid)?;
+            let sensor_view = state.sensor_service.view_by_id(&sensor_id).await?;
+            state
+                .authorization_service
+                .require(
+                    user.id,
+                    Permission::new(Resource::Sensor, Action::Update),
+                    Id::new(sensor_view.organization_id),
+                )
+                .await?;
+        }
+    }
     let create = TreeCreateRequest {
         species: entity.species,
         number: entity.number,
@@ -203,8 +279,9 @@ pub async fn update_tree(
         sensor_id: entity.sensor_id,
         provider: entity.provider,
         additional_information: entity.additional_information,
+        organization_id: None,
     };
-    let draft: TreeDraft = create.try_into()?;
+    let draft = create.into_draft(Id::new(current.organization_id))?;
     let tree = state.tree_service.replace(Id::new(id), draft).await?;
     let view = state.tree_service.view_by_id(tree.id).await?;
     let sensor = match view.sensor_id.as_deref() {
@@ -224,6 +301,7 @@ pub async fn update_tree(
     params(("tree_id" = uuid::Uuid, Path, description = "Tree ID")),
     responses(
         (status = 204, description = "Tree deleted"),
+        (status = 403, description = "Missing tree:delete in the owning organization"),
         (status = 404, description = "Tree not found"),
         (status = 500, description = "Internal server error"),
     )
@@ -231,8 +309,24 @@ pub async fn update_tree(
 #[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
 pub async fn delete_tree(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
+    let current = state.tree_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Tree, Action::Read),
+        current.organization_id,
+    )?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Tree, Action::Delete),
+            Id::new(current.organization_id),
+        )
+        .await?;
     state.tree_service.delete(Id::new(id)).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -249,8 +343,13 @@ pub async fn delete_tree(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_planting_years(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
 ) -> Result<Json<Vec<i32>>, ServiceError> {
-    let years = state.tree_service.distinct_planting_years().await?;
+    let visible = state
+        .authorization_service
+        .visible_orgs_for(user.id, Permission::new(Resource::Tree, Action::Read))
+        .await?;
+    let years = state.tree_service.distinct_planting_years(visible).await?;
     Ok(Json(years.into_iter().map(|y| y.year() as i32).collect()))
 }
 
@@ -267,6 +366,7 @@ pub async fn list_planting_years(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn get_nearest_trees(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Query(params): Query<NearestTreeParams>,
 ) -> Result<Json<NearestTreeListResponse>, ServiceError> {
     let limits = state.nearest_tree_limits;
@@ -279,9 +379,14 @@ pub async fn get_nearest_trees(
         .unwrap_or(limits.default_limit)
         .min(limits.max_limit);
 
+    let visible = state
+        .authorization_service
+        .visible_orgs_for(user.id, Permission::new(Resource::Tree, Action::Read))
+        .await?;
+
     let results = state
         .tree_service
-        .view_nearest(coord, radius, limit)
+        .view_nearest(coord, radius, limit, visible)
         .await?;
 
     let sensor_map = resolve_sensors_by_str_ids(
@@ -324,6 +429,7 @@ pub async fn get_nearest_trees(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_tree_markers(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Query(params): Query<TreeMarkerQueryParams>,
 ) -> Result<Json<TreeMarkerListResponse>, ServiceError> {
     let bbox = params.parse_bbox().map_err(ServiceError::InvalidInput)?;
@@ -340,15 +446,64 @@ pub async fn list_tree_markers(
         .map(domain::shared::watering_status::WateringStatus::from)
         .collect();
 
+    let visible = state
+        .authorization_service
+        .visible_orgs_for(user.id, Permission::new(Resource::Tree, Action::Read))
+        .await?;
+
     let query = TreeSearchQuery {
         watering_statuses,
         has_cluster: params.has_cluster,
         planting_years,
         bbox: Some(bbox),
+        visible,
         ..Default::default()
     };
 
     let markers: Vec<TreeMarker> = state.tree_service.view_markers(query).await?;
     let data = markers.iter().map(TreeMarkerResponse::from).collect();
     Ok(Json(TreeMarkerListResponse { data }))
+}
+
+#[utoipa::path(patch, path = "/trees/{tree_id}/organization", tag = "Trees",
+    operation_id = "transferTree", summary = "Transfer a tree's ownership to another organization",
+    description = "Moves a clusterless tree (and any attached sensor) to a different owning \
+                   organization. Requires `tree:update` in both the source and target organization.",
+    params(("tree_id" = uuid::Uuid, Path, description = "Tree ID")),
+    request_body = TransferRequest,
+    responses(
+        (status = 204, description = "Tree transferred"),
+        (status = 403, description = "Missing tree:update in source or target organization"),
+        (status = 404, description = "Tree or organization not found"),
+        (status = 409, description = "Tree is part of a cluster"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(tree.id = %id))]
+pub async fn transfer_tree(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    Path(id): Path<uuid::Uuid>,
+    Json(req): Json<TransferRequest>,
+) -> Result<StatusCode, ServiceError> {
+    let current = state.tree_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::Tree, Action::Read),
+        current.organization_id,
+    )?;
+    let perm = Permission::new(Resource::Tree, Action::Update);
+    state
+        .authorization_service
+        .require(user.id, perm, Id::new(current.organization_id))
+        .await?;
+    state
+        .authorization_service
+        .require(user.id, perm, Id::new(req.organization_id))
+        .await?;
+    state
+        .tree_service
+        .transfer(Id::new(id), Id::new(req.organization_id))
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
 }

@@ -63,6 +63,12 @@ export interface CreateSensorRequest {
      * @type {string}
      * @memberof CreateSensorRequest
      */
+    organizationId?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateSensorRequest
+     */
     provider?: string | null;
     /**
      * 
@@ -98,6 +104,7 @@ export function CreateSensorRequestFromJSONTyped(json: any, ignoreDiscriminator:
         'id': json['id'],
         'lorawan': json['lorawan'] == null ? undefined : LorawanCredentialsRequestFromJSON(json['lorawan']),
         'modelId': json['model_id'],
+        'organizationId': json['organization_id'] == null ? undefined : json['organization_id'],
         'provider': json['provider'] == null ? undefined : json['provider'],
         'sensorType': SensorTypeResponseFromJSON(json['sensor_type']),
     };
@@ -118,6 +125,7 @@ export function CreateSensorRequestToJSONTyped(value?: CreateSensorRequest | nul
         'id': value['id'],
         'lorawan': LorawanCredentialsRequestToJSON(value['lorawan']),
         'model_id': value['modelId'],
+        'organization_id': value['organizationId'],
         'provider': value['provider'],
         'sensor_type': SensorTypeResponseToJSON(value['sensorType']),
     };

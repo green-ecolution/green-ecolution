@@ -55,8 +55,8 @@ async fn create_transporter(app: &crate::helpers::TestApp) -> serde_json::Value 
 async fn create_cluster_with_tree(app: &crate::helpers::TestApp) -> String {
     let tree_id = uuid::Uuid::now_v7();
     sqlx::query(
-        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description)
-        VALUES ($1, 2020, 'Eiche', 'RT-001', 54.79, 9.44, ST_SetSRID(ST_MakePoint(9.44, 54.79), 4326), 'Routing')"#,
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description, organization_id)
+        VALUES ($1, 2020, 'Eiche', 'RT-001', 54.79, 9.44, ST_SetSRID(ST_MakePoint(9.44, 54.79), 4326), 'Routing', '01980000-0000-7000-8000-000000000001')"#,
     )
     .bind(tree_id)
     .execute(&app.db_pool)

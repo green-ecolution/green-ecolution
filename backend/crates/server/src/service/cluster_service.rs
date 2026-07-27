@@ -3,6 +3,7 @@ use std::sync::Arc;
 use chrono::{DateTime, Utc};
 use domain::{
     Id,
+    authorization::Visibility,
     cluster::{
         ClusterBoundaryView, ClusterMarker, ClusterStatistics, SoilMoistureBucket,
         SoilMoistureOverview, TreeCluster, TreeClusterDraft, TreeClusterReader,
@@ -10,6 +11,8 @@ use domain::{
         condition_series,
     },
     events::DomainEvent,
+    organization::Organization,
+    sensor::{SensorReader, SensorWriter},
     shared::{
         coordinates::Coordinate,
         pagination::{Page, Pagination},
@@ -24,15 +27,20 @@ pub struct ClusterService {
     writer: Arc<dyn TreeClusterWriter>,
     tree_reader: Arc<dyn TreeReader>,
     tree_writer: Arc<dyn TreeWriter>,
+    sensor_reader: Arc<dyn SensorReader>,
+    sensor_writer: Arc<dyn SensorWriter>,
     event_bus: Arc<dyn EventBus>,
 }
 
 impl ClusterService {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         reader: Arc<dyn TreeClusterReader>,
         writer: Arc<dyn TreeClusterWriter>,
         tree_reader: Arc<dyn TreeReader>,
         tree_writer: Arc<dyn TreeWriter>,
+        sensor_reader: Arc<dyn SensorReader>,
+        sensor_writer: Arc<dyn SensorWriter>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
         Self {
@@ -40,6 +48,8 @@ impl ClusterService {
             writer,
             tree_reader,
             tree_writer,
+            sensor_reader,
+            sensor_writer,
             event_bus,
         }
     }
@@ -54,13 +64,19 @@ impl ClusterService {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn view_markers(&self) -> Result<Vec<ClusterMarker>, ServiceError> {
-        Ok(self.reader.view_markers().await?)
+    pub async fn view_markers(
+        &self,
+        visible: Visibility,
+    ) -> Result<Vec<ClusterMarker>, ServiceError> {
+        Ok(self.reader.view_markers(visible).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn boundaries(&self) -> Result<Vec<ClusterBoundaryView>, ServiceError> {
-        Ok(self.reader.boundaries().await?)
+    pub async fn boundaries(
+        &self,
+        visible: Visibility,
+    ) -> Result<Vec<ClusterBoundaryView>, ServiceError> {
+        Ok(self.reader.boundaries(visible).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
@@ -78,8 +94,28 @@ impl ClusterService {
         Ok(self.reader.view_by_id(id).await?)
     }
 
+    /// Rejects a cluster whose tree membership crosses an organization
+    /// boundary — every member tree must belong to the same org as the
+    /// cluster itself.
+    async fn ensure_trees_match_org(
+        &self,
+        tree_ids: &[Id<Tree>],
+        org: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        if tree_ids.is_empty() {
+            return Ok(());
+        }
+        let trees = self.tree_reader.by_ids(tree_ids).await?;
+        if trees.iter().any(|t| t.organization_id() != org) {
+            return Err(ServiceError::OrganizationMismatch);
+        }
+        Ok(())
+    }
+
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn create(&self, draft: TreeClusterDraft) -> Result<TreeCluster, ServiceError> {
+        self.ensure_trees_match_org(&draft.tree_ids, draft.organization_id)
+            .await?;
         let source_events = self.source_cluster_events(&draft.tree_ids, None).await?;
         let cluster = self.writer.save_new(draft).await?;
         let mut events = vec![DomainEvent::ClusterTreesChanged {
@@ -97,6 +133,8 @@ impl ClusterService {
         update: TreeClusterUpdate,
     ) -> Result<TreeCluster, ServiceError> {
         let mut cluster = self.reader.by_id(id).await?;
+        self.ensure_trees_match_org(&update.tree_ids, cluster.organization_id())
+            .await?;
         let source_events = self
             .source_cluster_events(&update.tree_ids, Some(id))
             .await?;
@@ -157,8 +195,8 @@ impl ClusterService {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn statistics(&self) -> Result<ClusterStatistics, ServiceError> {
-        Ok(self.reader.statistics().await?)
+    pub async fn statistics(&self, visible: Visibility) -> Result<ClusterStatistics, ServiceError> {
+        Ok(self.reader.statistics(visible).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
@@ -205,5 +243,34 @@ impl ClusterService {
             condition,
             watering_events,
         })
+    }
+
+    /// Transfers ownership of the cluster, its member trees, and their
+    /// attached sensors to `target` in one operation.
+    ///
+    /// No distributed rollback: saves happen sequentially, so an error midway
+    /// through the tree loop leaves a partially transferred cluster. Accepted
+    /// for v1 — transfer is an admin operation and idempotent to retry.
+    #[tracing::instrument(level = "debug", skip_all, fields(cluster.id = %id))]
+    pub async fn transfer(
+        &self,
+        id: Id<TreeCluster>,
+        target: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        let mut cluster = self.reader.by_id(id).await?;
+        let mut events = cluster.transfer_to(target);
+        self.writer.save(&cluster).await?;
+        for tree_id in cluster.tree_ids.clone() {
+            let mut tree = self.tree_reader.by_id(tree_id).await?;
+            events.extend(tree.transfer_to(target));
+            self.tree_writer.save(&tree).await?;
+            if let Some(sensor_id) = tree.sensor_id().cloned() {
+                let mut sensor = self.sensor_reader.by_id(&sensor_id).await?;
+                events.extend(sensor.transfer_to(target));
+                self.sensor_writer.save(&sensor).await?;
+            }
+        }
+        self.event_bus.publish_all(events).await;
+        Ok(())
     }
 }

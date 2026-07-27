@@ -23,7 +23,9 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     Id,
+    authorization::Visibility,
     events::DomainEvent,
+    organization::Organization,
     region::Region,
     shared::{
         coordinates::Coordinate,
@@ -82,6 +84,7 @@ pub struct TreeCluster {
     region_id: Option<Id<Region>>,
     archived: bool,
     provenance: Provenance,
+    organization_id: Id<Organization>,
 }
 
 /// Input for creating a new [`TreeCluster`].
@@ -94,6 +97,7 @@ pub struct TreeClusterDraft {
     pub soil_condition: Option<SoilCondition>,
     pub tree_ids: Vec<Id<Tree>>,
     pub provenance: Provenance,
+    pub organization_id: Id<Organization>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -163,6 +167,10 @@ pub struct TreeClusterSearchQuery {
     pub soil_conditions: Vec<SoilCondition>,
     pub sort: ClusterSort,
     pub order: SortOrder,
+    /// Which organizations may see the result. Callers must set this per
+    /// request; defaults to unrestricted for internal consumers (e.g. event
+    /// handlers).
+    pub visible: Visibility,
 }
 
 /// Replacement input for [`TreeCluster`] updates.
@@ -199,11 +207,16 @@ impl TreeCluster {
             region_id: snap.region_id.map(Id::new),
             archived: snap.archived,
             provenance: Provenance::reconstitute(snap.provider, snap.additional_info),
+            organization_id: Id::new(snap.organization_id),
         }
     }
 
     pub fn watering_status(&self) -> WateringStatus {
         self.watering_status
+    }
+
+    pub fn organization_id(&self) -> Id<Organization> {
+        self.organization_id
     }
 
     pub fn coordinates(&self) -> Option<Coordinate> {
@@ -312,6 +325,22 @@ impl TreeCluster {
     pub fn mark_watered_at(&mut self, ts: DateTime<Utc>) {
         self.last_watered = Some(ts);
     }
+
+    /// Reassigns the cluster to `target`'s organization. No-op (and no event)
+    /// if it already belongs there. Callers must cascade the transfer to
+    /// member trees and their attached sensors (see `ClusterService::transfer`).
+    pub fn transfer_to(&mut self, target: Id<Organization>) -> Vec<DomainEvent> {
+        if self.organization_id == target {
+            return vec![];
+        }
+        let from = self.organization_id;
+        self.organization_id = target;
+        vec![DomainEvent::ClusterResponsibilityTransferred {
+            cluster_id: self.id,
+            from,
+            to: target,
+        }]
+    }
 }
 
 fn severity(s: WateringStatus) -> u8 {
@@ -344,6 +373,7 @@ mod tests {
             region_id: None,
             archived: false,
             provenance: Provenance::default(),
+            organization_id: Id::new_v7(),
         }
     }
 
@@ -522,5 +552,36 @@ mod tests {
         let ts = Utc::now();
         c.mark_watered_at(ts);
         assert_eq!(c.last_watered, Some(ts));
+    }
+
+    #[test]
+    fn transfer_to_same_org_is_noop() {
+        let mut c = fixed_cluster();
+        let same = c.organization_id();
+        let events = c.transfer_to(same);
+        assert_eq!(c.organization_id(), same);
+        assert!(events.is_empty());
+    }
+
+    #[test]
+    fn transfer_to_new_org_emits_event_and_updates_field() {
+        let mut c = fixed_cluster();
+        let from = c.organization_id();
+        let target: Id<Organization> = Id::new_v7();
+        let events = c.transfer_to(target);
+        assert_eq!(c.organization_id(), target);
+        assert_eq!(events.len(), 1);
+        match &events[0] {
+            DomainEvent::ClusterResponsibilityTransferred {
+                cluster_id,
+                from: ev_from,
+                to,
+            } => {
+                assert_eq!(*cluster_id, c.id);
+                assert_eq!(*ev_from, from);
+                assert_eq!(*to, target);
+            }
+            other => panic!("expected ClusterResponsibilityTransferred, got {other:?}"),
+        }
     }
 }

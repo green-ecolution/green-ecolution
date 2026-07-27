@@ -64,8 +64,11 @@ impl IntoResponse for ServiceError {
             | ServiceError::NotActivated
             | ServiceError::Organization(_)
             | ServiceError::Role(_)
-            | ServiceError::OrganizationNotEmpty) => {
-                (StatusCode::CONFLICT, e.to_string()).into_response()
+            | ServiceError::OrganizationNotEmpty
+            | ServiceError::OrganizationMismatch
+            | ServiceError::TreeInCluster) => (StatusCode::CONFLICT, e.to_string()).into_response(),
+            e @ ServiceError::MissingOrganization => {
+                (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()).into_response()
             }
             ServiceError::Routing(e) => {
                 let (status, message) = match &e {

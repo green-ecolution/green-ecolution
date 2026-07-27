@@ -7,6 +7,7 @@ use domain::{
 };
 use rust_decimal::Decimal;
 use secrecy::SecretString;
+use serde_json::json;
 use server::{
     configuration::{AuthSettings, Settings},
     http::AppState,
@@ -17,6 +18,8 @@ use sqlx::{Connection, Executor, PgConnection, PgPool, postgres::PgPoolOptions};
 use testcontainers::{ContainerAsync, GenericImage, ImageExt, runners::AsyncRunner};
 use tokio::sync::OnceCell;
 use uuid::Uuid;
+
+use crate::{auth_helpers::AuthHarness, organizations::ROOT_ORG_ID};
 
 pub struct TestApp {
     pub address: String,
@@ -272,7 +275,11 @@ pub async fn spawn_app_with_auth(auth: AuthSettings) -> TestApp {
 }
 
 pub async fn spawn_app_with_routing(streamlet_url: &str) -> TestApp {
-    let mut settings = Settings::for_test(disabled_auth_settings());
+    spawn_app_with_routing_and_auth(streamlet_url, disabled_auth_settings()).await
+}
+
+pub async fn spawn_app_with_routing_and_auth(streamlet_url: &str, auth: AuthSettings) -> TestApp {
+    let mut settings = Settings::for_test(auth);
     settings.info.health_check_interval_secs = 1;
     settings.info.update_check_repo = None;
     settings.routing.enabled = true;
@@ -286,14 +293,64 @@ pub async fn spawn_app_with_routing(streamlet_url: &str) -> TestApp {
 /// "Depot Nord" the routing tests select by name (lat≈54.81).
 async fn seed_routing_depots(pool: &sqlx::PgPool) {
     sqlx::query(
-        r#"INSERT INTO depots (id, name, latitude, longitude, geometry, watering_point, is_default) VALUES
-           (gen_random_uuid(), 'Betriebshof Schleswiger Straße', 54.76879146396569, 9.434803531218018, ST_SetSRID(ST_MakePoint(9.434803531218018, 54.76879146396569), 4326), TRUE, TRUE),
-           (gen_random_uuid(), 'Klärwerk Kielseng', 54.80518123149477, 9.447145106541388, ST_SetSRID(ST_MakePoint(9.447145106541388, 54.80518123149477), 4326), TRUE, FALSE),
-           (gen_random_uuid(), 'Depot Nord', 54.81, 9.45, ST_SetSRID(ST_MakePoint(9.45, 54.81), 4326), FALSE, FALSE)"#,
+        r#"INSERT INTO depots (id, name, latitude, longitude, geometry, watering_point, is_default, organization_id) VALUES
+           (gen_random_uuid(), 'Betriebshof Schleswiger Straße', 54.76879146396569, 9.434803531218018, ST_SetSRID(ST_MakePoint(9.434803531218018, 54.76879146396569), 4326), TRUE, TRUE, '01980000-0000-7000-8000-000000000001'),
+           (gen_random_uuid(), 'Klärwerk Kielseng', 54.80518123149477, 9.447145106541388, ST_SetSRID(ST_MakePoint(9.447145106541388, 54.80518123149477), 4326), TRUE, FALSE, '01980000-0000-7000-8000-000000000001'),
+           (gen_random_uuid(), 'Depot Nord', 54.81, 9.45, ST_SetSRID(ST_MakePoint(9.45, 54.81), 4326), FALSE, FALSE, '01980000-0000-7000-8000-000000000001')"#,
     )
     .execute(pool)
     .await
     .expect("failed to seed depots");
+}
+
+/// Seeds an org below ROOT, a role with exactly `permissions`, and a user
+/// holding it. Generalizes `authorization.rs::seed_admin_in_new_org` (which
+/// always copies the full admin template) with an explicit permission set.
+/// Returns (org_id, bearer token).
+pub async fn seed_user_with_permissions(
+    harness: &AuthHarness,
+    app: &TestApp,
+    org_name: &str,
+    permissions: &[&str],
+) -> (Uuid, String) {
+    let org_id: Uuid = sqlx::query_scalar!(
+        r#"INSERT INTO organizations (id, parent_id, name) VALUES (gen_random_uuid(), $1::uuid, $2) RETURNING id"#,
+        Uuid::parse_str(ROOT_ORG_ID).unwrap(),
+        org_name
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    let permissions: Vec<String> = permissions.iter().map(|p| p.to_string()).collect();
+    let role_id: Uuid = sqlx::query_scalar!(
+        r#"INSERT INTO roles (id, organization_id, name, permissions)
+           VALUES (gen_random_uuid(), $1, 'Test-Rolle', $2)
+           RETURNING id"#,
+        org_id,
+        &permissions,
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    let user_id = Uuid::new_v4();
+    sqlx::query!(
+        r#"INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)"#,
+        user_id,
+        org_id
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    sqlx::query!(
+        r#"INSERT INTO role_assignments (user_id, role_id) VALUES ($1, $2)"#,
+        user_id,
+        role_id
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    let token = harness.sign_token(json!({ "sub": user_id.to_string() }));
+    (org_id, token)
 }
 
 async fn spawn_with_settings(settings: Settings) -> TestApp {

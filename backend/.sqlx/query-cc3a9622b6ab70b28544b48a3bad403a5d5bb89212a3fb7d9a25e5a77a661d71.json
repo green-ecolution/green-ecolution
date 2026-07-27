@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO trees (id, number, species, planting_year, latitude, longitude)\n        VALUES ($1, 'NO-ORG-001', 'Quercus robur', 2024, 54.79, 9.44)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "cc3a9622b6ab70b28544b48a3bad403a5d5bb89212a3fb7d9a25e5a77a661d71"
+}

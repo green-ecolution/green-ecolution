@@ -2,6 +2,8 @@ use std::sync::Arc;
 
 use domain::{
     Id,
+    authorization::Visibility,
+    organization::Organization,
     start_point::{
         StartPoint, StartPointDraft, StartPointReader, StartPointUpdate, StartPointWriter,
     },
@@ -20,8 +22,8 @@ impl StartPointService {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn list(&self) -> Result<Vec<StartPoint>, ServiceError> {
-        Ok(self.reader.all().await?)
+    pub async fn list(&self, visible: Visibility) -> Result<Vec<StartPoint>, ServiceError> {
+        Ok(self.reader.all(visible).await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all, fields(start_point.id = %id))]
@@ -66,5 +68,17 @@ impl StartPointService {
             ));
         }
         Ok(self.writer.delete(id).await?)
+    }
+
+    #[tracing::instrument(level = "debug", skip_all, fields(start_point.id = %id))]
+    pub async fn transfer(
+        &self,
+        id: Id<StartPoint>,
+        target: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        let mut sp = self.reader.by_id(id).await?;
+        sp.transfer_to(target);
+        self.writer.save(&sp).await?;
+        Ok(())
     }
 }

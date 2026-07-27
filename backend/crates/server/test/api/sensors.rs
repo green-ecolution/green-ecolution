@@ -3,8 +3,8 @@ use crate::helpers::spawn_app;
 async fn insert_sensor(app: &crate::helpers::TestApp, id: &str) {
     let model_id = app.ecodrizzler_model_id().await;
     sqlx::query!(
-        r#"INSERT INTO sensors (id, activated_at, type, model_id)
-        VALUES ($1, NOW(), 'lorawan', $2)"#,
+        r#"INSERT INTO sensors (id, activated_at, type, model_id, organization_id)
+        VALUES ($1, NOW(), 'lorawan', $2, '01980000-0000-7000-8000-000000000001')"#,
         id,
         model_id,
     )
@@ -270,9 +270,9 @@ async fn delete_sensor_unlinks_from_tree() {
 
     sqlx::query!(
         r#"INSERT INTO trees (id, sensor_id, planting_year, species, number, latitude, longitude,
-                              geometry, description)
+                              geometry, description, organization_id)
         VALUES ($1, 'sensor-unlink', 2020, 'Eiche', 'T-UNL', 53.55, 9.99,
-                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test')"#,
+                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', '01980000-0000-7000-8000-000000000001')"#,
         uuid::Uuid::now_v7(),
     )
     .execute(&app.db_pool)
@@ -297,9 +297,9 @@ async fn get_tree_by_sensor_returns_linked_tree() {
     insert_sensor(&app, "sensor-tree").await;
     sqlx::query!(
         r#"INSERT INTO trees (id, sensor_id, planting_year, species, number, latitude, longitude,
-                              geometry, description)
+                              geometry, description, organization_id)
         VALUES ($1, 'sensor-tree', 2020, 'Eiche', 'T-LINK', 53.55, 9.99,
-                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test')"#,
+                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', '01980000-0000-7000-8000-000000000001')"#,
         uuid::Uuid::now_v7(),
     )
     .execute(&app.db_pool)
@@ -362,9 +362,9 @@ async fn ingest_via_create_and_activate_updates_watering_status() {
         .unwrap();
     let tree_id = uuid::Uuid::now_v7();
     sqlx::query!(
-        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description)
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description, organization_id)
         VALUES ($1, $2, 'Eiche', 'T-MQ-1', 53.55, 9.99,
-                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test')"#,
+                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', '01980000-0000-7000-8000-000000000001')"#,
         tree_id,
         planting_year,
     )
@@ -436,9 +436,9 @@ async fn list_trees_embeds_sensor_latest_reading() {
     insert_sensor(&app, "sensor-tree-data").await;
     sqlx::query!(
         r#"INSERT INTO trees (id, sensor_id, planting_year, species, number, latitude, longitude,
-                              geometry, description)
+                              geometry, description, organization_id)
         VALUES ($1, 'sensor-tree-data', 2020, 'Eiche', 'T-DATA', 53.55, 9.99,
-                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test')"#,
+                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', '01980000-0000-7000-8000-000000000001')"#,
         uuid::Uuid::now_v7(),
     )
     .execute(&app.db_pool)
@@ -473,9 +473,9 @@ async fn ingest_for_known_sensor_updates_tree_watering_status() {
     insert_sensor(&app, "sensor-known").await;
     sqlx::query!(
         r#"INSERT INTO trees (id, sensor_id, planting_year, species, number, latitude, longitude,
-                              geometry, description, watering_status)
+                              geometry, description, watering_status, organization_id)
         VALUES ($1, 'sensor-known', $2, 'Eiche', 'T-KN', 53.55, 9.99,
-                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', 'unknown')"#,
+                ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', 'unknown', '01980000-0000-7000-8000-000000000001')"#,
         uuid::Uuid::now_v7(),
         chrono::Utc::now()
             .date_naive()

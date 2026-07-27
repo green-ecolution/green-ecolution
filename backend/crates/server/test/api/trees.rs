@@ -570,11 +570,11 @@ async fn get_nearest_trees_excludes_trees_outside_radius() {
 
 async fn insert_q_seed(app: &TestApp) {
     sqlx::query!(
-        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description)
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description, organization_id)
         VALUES
-            ($1, 2020, 'Eiche',  'T-001',    54.79, 9.44, ST_SetSRID(ST_MakePoint(9.44, 54.79), 4326), 'a'),
-            ($2, 2021, 'Buche',  'T-50%STR', 54.79, 9.44, ST_SetSRID(ST_MakePoint(9.44, 54.79), 4326), 'b'),
-            ($3, 2022, 'Ahorn',  'T-1000',   54.79, 9.44, ST_SetSRID(ST_MakePoint(9.44, 54.79), 4326), 'c')"#,
+            ($1, 2020, 'Eiche',  'T-001',    54.79, 9.44, ST_SetSRID(ST_MakePoint(9.44, 54.79), 4326), 'a', '01980000-0000-7000-8000-000000000001'),
+            ($2, 2021, 'Buche',  'T-50%STR', 54.79, 9.44, ST_SetSRID(ST_MakePoint(9.44, 54.79), 4326), 'b', '01980000-0000-7000-8000-000000000001'),
+            ($3, 2022, 'Ahorn',  'T-1000',   54.79, 9.44, ST_SetSRID(ST_MakePoint(9.44, 54.79), 4326), 'c', '01980000-0000-7000-8000-000000000001')"#,
         uuid::Uuid::now_v7(),
         uuid::Uuid::now_v7(),
         uuid::Uuid::now_v7(),
@@ -819,8 +819,8 @@ async fn list_trees_accepts_url_encoded_just_watered_status() {
 async fn insert_sensor(app: &TestApp, id: &str) {
     let model_id = app.ecodrizzler_model_id().await;
     sqlx::query!(
-        r#"INSERT INTO sensors (id, activated_at, type, model_id)
-        VALUES ($1, NOW(), 'lorawan', $2)"#,
+        r#"INSERT INTO sensors (id, activated_at, type, model_id, organization_id)
+        VALUES ($1, NOW(), 'lorawan', $2, '01980000-0000-7000-8000-000000000001')"#,
         id,
         model_id,
     )
@@ -841,10 +841,10 @@ async fn insert_tree_with_sensor(app: &TestApp, number: &str, sensor_id: &str) -
     let id = uuid::Uuid::now_v7();
     sqlx::query!(
         r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude,
-                              geometry, description, sensor_id, watering_status)
+                              geometry, description, sensor_id, watering_status, organization_id)
         VALUES ($1, 2020, 'Eiche', $2, 53.55, 9.99,
                 ST_SetSRID(ST_MakePoint(9.99, 53.55), 4326), 'Test', $3,
-                $4::text::watering_status)"#,
+                $4::text::watering_status, '01980000-0000-7000-8000-000000000001')"#,
         id,
         number,
         Some(sensor_id),

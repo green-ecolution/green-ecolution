@@ -501,7 +501,7 @@ async fn list_watering_plans_skips_plan_without_transporter() {
 
     // Data-integrity edge case: a plan without any vehicle join rows must not
     // take down the whole list endpoint.
-    sqlx::query("INSERT INTO watering_plans (id, date, description, status) VALUES ($1, '2026-05-01', 'kaputt', 'planned')")
+    sqlx::query("INSERT INTO watering_plans (id, date, description, status, organization_id) VALUES ($1, '2026-05-01', 'kaputt', 'planned', '01980000-0000-7000-8000-000000000001')")
         .bind(uuid::Uuid::now_v7())
         .execute(&app.db_pool)
         .await

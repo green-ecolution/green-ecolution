@@ -109,6 +109,12 @@ export interface WateringPlanResponse {
      */
     id: string;
     /**
+     * Identifier of the organization this watering plan belongs to.
+     * @type {string}
+     * @memberof WateringPlanResponse
+     */
+    organizationId: string;
+    /**
      * Name of the external data provider that supplied this record.
      * @type {string}
      * @memberof WateringPlanResponse
@@ -185,6 +191,7 @@ export function instanceOfWateringPlanResponse(value: object): value is Watering
     if (!('evaluation' in value) || value['evaluation'] === undefined) return false;
     if (!('gpxUrl' in value) || value['gpxUrl'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
+    if (!('organizationId' in value) || value['organizationId'] === undefined) return false;
     if (!('refillCount' in value) || value['refillCount'] === undefined) return false;
     if (!('status' in value) || value['status'] === undefined) return false;
     if (!('totalWaterRequired' in value) || value['totalWaterRequired'] === undefined) return false;
@@ -215,6 +222,7 @@ export function WateringPlanResponseFromJSONTyped(json: any, ignoreDiscriminator
         'evaluation': ((json['evaluation'] as Array<any>).map(EvaluationValueResponseFromJSON)),
         'gpxUrl': json['gpx_url'],
         'id': json['id'],
+        'organizationId': json['organization_id'],
         'provider': json['provider'] == null ? undefined : json['provider'],
         'refillCount': json['refill_count'],
         'startPointName': json['start_point_name'] == null ? undefined : json['start_point_name'],
@@ -249,6 +257,7 @@ export function WateringPlanResponseToJSONTyped(value?: WateringPlanResponse | n
         'evaluation': ((value['evaluation'] as Array<any>).map(EvaluationValueResponseToJSON)),
         'gpx_url': value['gpxUrl'],
         'id': value['id'],
+        'organization_id': value['organizationId'],
         'provider': value['provider'],
         'refill_count': value['refillCount'],
         'start_point_name': value['startPointName'],

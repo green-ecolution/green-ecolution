@@ -38,6 +38,13 @@ export interface StartPointRequest {
      */
     name: string;
     /**
+     * Organization this start point belongs to. Defaults to the acting
+     * user's own organization (or the root organization in the demo bypass).
+     * @type {string}
+     * @memberof StartPointRequest
+     */
+    organizationId?: string | null;
+    /**
      * 
      * @type {boolean}
      * @memberof StartPointRequest
@@ -68,6 +75,7 @@ export function StartPointRequestFromJSONTyped(json: any, ignoreDiscriminator: b
         'lat': json['lat'],
         'lon': json['lon'],
         'name': json['name'],
+        'organizationId': json['organization_id'] == null ? undefined : json['organization_id'],
         'wateringPoint': json['watering_point'] == null ? undefined : json['watering_point'],
     };
 }
@@ -86,6 +94,7 @@ export function StartPointRequestToJSONTyped(value?: StartPointRequest | null, i
         'lat': value['lat'],
         'lon': value['lon'],
         'name': value['name'],
+        'organization_id': value['organizationId'],
         'watering_point': value['wateringPoint'],
     };
 }

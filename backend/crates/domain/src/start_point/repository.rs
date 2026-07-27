@@ -2,13 +2,14 @@ use async_trait::async_trait;
 
 use crate::{
     Id, RepositoryError,
+    authorization::Visibility,
     start_point::{StartPoint, StartPointDraft},
 };
 
 /// Read-side access to start points.
 #[async_trait]
 pub trait StartPointReader: Send + Sync {
-    async fn all(&self) -> Result<Vec<StartPoint>, RepositoryError>;
+    async fn all(&self, visible: Visibility) -> Result<Vec<StartPoint>, RepositoryError>;
     async fn by_id(&self, id: Id<StartPoint>) -> Result<StartPoint, RepositoryError>;
 }
 

@@ -51,6 +51,12 @@ export interface StartPointResponse {
      */
     name: string;
     /**
+     * Organization this start point belongs to.
+     * @type {string}
+     * @memberof StartPointResponse
+     */
+    organizationId: string;
+    /**
      * 
      * @type {boolean}
      * @memberof StartPointResponse
@@ -67,6 +73,7 @@ export function instanceOfStartPointResponse(value: object): value is StartPoint
     if (!('lat' in value) || value['lat'] === undefined) return false;
     if (!('lon' in value) || value['lon'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
+    if (!('organizationId' in value) || value['organizationId'] === undefined) return false;
     if (!('wateringPoint' in value) || value['wateringPoint'] === undefined) return false;
     return true;
 }
@@ -86,6 +93,7 @@ export function StartPointResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'lat': json['lat'],
         'lon': json['lon'],
         'name': json['name'],
+        'organizationId': json['organization_id'],
         'wateringPoint': json['watering_point'],
     };
 }
@@ -106,6 +114,7 @@ export function StartPointResponseToJSONTyped(value?: StartPointResponse | null,
         'lat': value['lat'],
         'lon': value['lon'],
         'name': value['name'],
+        'organization_id': value['organizationId'],
         'watering_point': value['wateringPoint'],
     };
 }

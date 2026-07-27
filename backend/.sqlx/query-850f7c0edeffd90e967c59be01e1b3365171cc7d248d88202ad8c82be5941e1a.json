@@ -1,0 +1,146 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id\n            FROM vehicles WHERE number_plate = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "archived_at: DateTime<chrono::Utc>",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 2,
+        "name": "number_plate",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "water_capacity",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 5,
+        "name": "vehicle_type: VehicleType",
+        "type_info": {
+          "Custom": {
+            "name": "vehicle_type",
+            "kind": {
+              "Enum": [
+                "transporter",
+                "trailer"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "status: VehicleStatus",
+        "type_info": {
+          "Custom": {
+            "name": "vehicle_status",
+            "kind": {
+              "Enum": [
+                "active",
+                "available",
+                "not available",
+                "unknown"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "model",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "driving_license: DrivingLicense",
+        "type_info": {
+          "Custom": {
+            "name": "driving_license",
+            "kind": {
+              "Enum": [
+                "B",
+                "BE",
+                "C",
+                "CE"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "height",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 10,
+        "name": "width",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 11,
+        "name": "length",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 12,
+        "name": "weight",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 13,
+        "name": "provider",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 14,
+        "name": "additional_info",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 15,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "850f7c0edeffd90e967c59be01e1b3365171cc7d248d88202ad8c82be5941e1a"
+}

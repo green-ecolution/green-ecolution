@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE sensors SET\n                activated_at = $2,\n                provider = $3,\n                additional_informations = $4,\n                organization_id = $5\n            WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Timestamp",
+        "Text",
+        "Jsonb",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f8d778b54404a3923db5fcccd8aac502b785152c1c956533c1b18451829d9c02"
+}

@@ -7,6 +7,7 @@ use crate::infra::sql::like_escape;
 use domain::cluster::snapshot::TreeClusterSnapshot;
 use domain::{
     Id, RepositoryError,
+    authorization::Visibility,
     cluster::{
         ClusterBoundaryView, ClusterMarker, ClusterStatistics, ClusterWateringEvent, SoilCondition,
         SoilMoistureBucket, SoilMoistureDepthSeries, SoilMoisturePoint, TreeCluster,
@@ -59,6 +60,7 @@ struct TreeClusterViewRow {
     additional_info: Option<Value>,
     tree_ids: Vec<RawId>,
     sensor_count: i64,
+    organization_id: RawId,
 }
 
 impl From<TreeClusterViewRow> for TreeClusterView {
@@ -85,6 +87,7 @@ impl From<TreeClusterViewRow> for TreeClusterView {
             sensor_count: row.sensor_count,
             provider: row.provider,
             additional_info: row.additional_info,
+            organization_id: row.organization_id,
         }
     }
 }
@@ -103,6 +106,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
+                      tc.organization_id,
                       COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
@@ -130,6 +134,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
+                      tc.organization_id,
                       COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>"
             FROM tree_clusters tc
             LEFT JOIN trees t ON t.tree_cluster_id = tc.id
@@ -155,6 +160,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
+                      tc.organization_id,
                       COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>",
                       COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS "sensor_count!: i64"
             FROM tree_clusters tc
@@ -186,6 +192,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
+                      tc.organization_id,
                       COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>",
                       COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS "sensor_count!: i64"
             FROM tree_clusters tc
@@ -219,6 +226,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
         let search = search.as_deref();
         let sort = query.sort.as_str();
         let order = query.order.as_str();
+        let visible_ids = query.visible.clone().into_raw_ids();
 
         let total = sqlx::query_scalar!(
             r#"SELECT COUNT(*) AS "count!: i64" FROM tree_clusters tc
@@ -226,16 +234,19 @@ impl TreeClusterReader for PgTreeClusterRepository {
               AND ($2::uuid[] = '{}' OR tc.region_id = ANY($2))
               AND ($3::text IS NULL OR tc.provider = $3)
               AND ($4::text IS NULL OR tc.name ILIKE $4 ESCAPE '\')
-              AND ($5::tree_soil_condition[] = '{}' OR tc.soil_condition = ANY($5))"#,
+              AND ($5::tree_soil_condition[] = '{}' OR tc.soil_condition = ANY($5))
+              AND ($6::uuid[] IS NULL OR tc.organization_id = ANY($6))"#,
             &watering_statuses as &[WateringStatus],
             &query.regions,
             provider,
             search,
             &query.soil_conditions as &[SoilCondition],
+            visible_ids.as_deref(),
         )
         .fetch_one(&self.pool)
         .await? as u64;
 
+        let visible_ids = query.visible.into_raw_ids();
         let rows = sqlx::query_as!(
             TreeClusterViewRow,
             r#"SELECT tc.id, tc.updated_at, tc.name, tc.address, tc.description,
@@ -246,6 +257,7 @@ impl TreeClusterReader for PgTreeClusterRepository {
                       tc.last_watered AS "last_watered: DateTime<Utc>",
                       tc.provider,
                       tc.additional_informations AS additional_info,
+                      tc.organization_id,
                       COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS "tree_ids!: Vec<RawId>",
                       COUNT(t.id) FILTER (WHERE t.sensor_id IS NOT NULL AND t.sensor_id <> '') AS "sensor_count!: i64"
             FROM tree_clusters tc
@@ -255,20 +267,22 @@ impl TreeClusterReader for PgTreeClusterRepository {
               AND ($3::text IS NULL OR tc.provider = $3)
               AND ($4::text IS NULL OR tc.name ILIKE $4 ESCAPE '\')
               AND ($5::tree_soil_condition[] = '{}' OR tc.soil_condition = ANY($5))
+              AND ($6::uuid[] IS NULL OR tc.organization_id = ANY($6))
             GROUP BY tc.id
             ORDER BY
-              CASE WHEN $6 = 'moisture' AND $7 = 'asc'  THEN tc.moisture_level END ASC NULLS LAST,
-              CASE WHEN $6 = 'moisture' AND $7 = 'desc' THEN tc.moisture_level END DESC NULLS LAST,
-              CASE WHEN $6 = 'trees'    AND $7 = 'asc'  THEN COUNT(t.id) END ASC,
-              CASE WHEN $6 = 'trees'    AND $7 = 'desc' THEN COUNT(t.id) END DESC,
-              CASE WHEN $6 = 'name'     AND $7 = 'desc' THEN tc.name END DESC,
+              CASE WHEN $7 = 'moisture' AND $8 = 'asc'  THEN tc.moisture_level END ASC NULLS LAST,
+              CASE WHEN $7 = 'moisture' AND $8 = 'desc' THEN tc.moisture_level END DESC NULLS LAST,
+              CASE WHEN $7 = 'trees'    AND $8 = 'asc'  THEN COUNT(t.id) END ASC,
+              CASE WHEN $7 = 'trees'    AND $8 = 'desc' THEN COUNT(t.id) END DESC,
+              CASE WHEN $7 = 'name'     AND $8 = 'desc' THEN tc.name END DESC,
               tc.name ASC, tc.id ASC
-            LIMIT $8 OFFSET $9"#,
+            LIMIT $9 OFFSET $10"#,
             &watering_statuses as &[WateringStatus],
             &query.regions,
             provider,
             search,
             &query.soil_conditions as &[SoilCondition],
+            visible_ids.as_deref(),
             sort,
             order,
             limit,
@@ -283,7 +297,11 @@ impl TreeClusterReader for PgTreeClusterRepository {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn view_markers(&self) -> Result<Vec<ClusterMarker>, RepositoryError> {
+    async fn view_markers(
+        &self,
+        visible: Visibility,
+    ) -> Result<Vec<ClusterMarker>, RepositoryError> {
+        let visible_ids = visible.into_raw_ids();
         let rows = sqlx::query!(
             r#"SELECT tc.id, tc.name,
                       tc.latitude AS "latitude!: f64",
@@ -295,8 +313,10 @@ impl TreeClusterReader for PgTreeClusterRepository {
             WHERE tc.archived = false
               AND tc.latitude IS NOT NULL
               AND tc.longitude IS NOT NULL
+              AND ($1::uuid[] IS NULL OR tc.organization_id = ANY($1))
             GROUP BY tc.id
-            ORDER BY tc.id"#
+            ORDER BY tc.id"#,
+            visible_ids.as_deref(),
         )
         .fetch_all(&self.pool)
         .await?;
@@ -336,7 +356,11 @@ impl TreeClusterReader for PgTreeClusterRepository {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn boundaries(&self) -> Result<Vec<ClusterBoundaryView>, RepositoryError> {
+    async fn boundaries(
+        &self,
+        visible: Visibility,
+    ) -> Result<Vec<ClusterBoundaryView>, RepositoryError> {
+        let visible_ids = visible.into_raw_ids();
         let rows = sqlx::query!(
             r#"SELECT
                 tc.id                                            AS "cluster_id!",
@@ -352,8 +376,10 @@ impl TreeClusterReader for PgTreeClusterRepository {
             JOIN tree_clusters tc ON tc.id = t.tree_cluster_id
             WHERE t.geometry IS NOT NULL
               AND tc.archived = false
+              AND ($2::uuid[] IS NULL OR tc.organization_id = ANY($2))
             GROUP BY tc.id, tc.name, tc.watering_status"#,
             CLUSTER_BOUNDARY_BUFFER_METERS,
+            visible_ids.as_deref(),
         )
         .fetch_all(&self.pool)
         .await?;
@@ -370,7 +396,8 @@ impl TreeClusterReader for PgTreeClusterRepository {
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    async fn statistics(&self) -> Result<ClusterStatistics, RepositoryError> {
+    async fn statistics(&self, visible: Visibility) -> Result<ClusterStatistics, RepositoryError> {
+        let visible_ids = visible.into_raw_ids();
         let row = sqlx::query!(
             r#"SELECT
                 COUNT(*)                                                  AS "total!: i64",
@@ -383,9 +410,12 @@ impl TreeClusterReader for PgTreeClusterRepository {
                     SELECT COUNT(*) FROM trees t
                     JOIN tree_clusters c ON t.tree_cluster_id = c.id
                     WHERE c.archived = false
+                      AND ($1::uuid[] IS NULL OR c.organization_id = ANY($1))
                 ), 0)                                                     AS "trees!: i64"
-            FROM tree_clusters
-            WHERE archived = false"#
+            FROM tree_clusters tc
+            WHERE tc.archived = false
+              AND ($1::uuid[] IS NULL OR tc.organization_id = ANY($1))"#,
+            visible_ids.as_deref(),
         )
         .fetch_one(&self.pool)
         .await?;
@@ -506,8 +536,8 @@ impl TreeClusterWriter for PgTreeClusterRepository {
         sqlx::query!(
             r#"INSERT INTO tree_clusters (id, name, address, description, moisture_level,
                                           watering_status, soil_condition,
-                                          provider, additional_informations)
-            VALUES ($1, $2, $3, $4, $5, 'unknown', $6, $7, $8)"#,
+                                          provider, additional_informations, organization_id)
+            VALUES ($1, $2, $3, $4, $5, 'unknown', $6, $7, $8, $9)"#,
             id.value(),
             draft.name.as_str(),
             draft.address.as_str(),
@@ -516,6 +546,7 @@ impl TreeClusterWriter for PgTreeClusterRepository {
             soil as SoilCondition,
             provider,
             additional_info,
+            draft.organization_id.value(),
         )
         .execute(&mut *tx)
         .await?;
@@ -559,7 +590,7 @@ impl TreeClusterWriter for PgTreeClusterRepository {
                 geometry = ST_SetSRID(ST_MakePoint($9, $8), 4326),
                 region_id = $10,
                 watering_status = $11, last_watered = $12, archived = $13,
-                moisture_level = $14
+                moisture_level = $14, organization_id = $15
             WHERE id = $1"#,
             cluster.id.value(),
             cluster.name.as_str(),
@@ -575,6 +606,7 @@ impl TreeClusterWriter for PgTreeClusterRepository {
             last_watered,
             cluster.archived(),
             cluster.moisture_level,
+            cluster.organization_id().value(),
         )
         .execute(&mut *tx)
         .await?;

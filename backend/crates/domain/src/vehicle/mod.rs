@@ -18,6 +18,9 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     Id,
+    authorization::Visibility,
+    events::DomainEvent,
+    organization::Organization,
     shared::{
         error::ValidationError,
         provenance::{Provenance, ProviderId},
@@ -133,6 +136,7 @@ pub struct Vehicle {
 
     archived_at: Option<DateTime<Utc>>,
     provenance: Provenance,
+    organization_id: Id<Organization>,
 }
 
 /// Input for creating a new [`Vehicle`].
@@ -147,6 +151,7 @@ pub struct VehicleDraft {
     pub driving_license: DrivingLicense,
     pub dimension: VehicleDimension,
     pub provenance: Provenance,
+    pub organization_id: Id<Organization>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -155,6 +160,9 @@ pub struct VehicleSearchQuery {
     pub with_archived: bool,
     pub only_archived: bool,
     pub provider: Option<ProviderId>,
+    /// Which organizations may see the result. Callers must set this per
+    /// request; defaults to unrestricted for internal consumers.
+    pub visible: Visibility,
 }
 
 /// Replacement input for [`Vehicle`] updates.
@@ -192,6 +200,7 @@ impl Vehicle {
             ),
             archived_at: snap.archived_at,
             provenance: Provenance::reconstitute(snap.provider, snap.additional_info),
+            organization_id: Id::new(snap.organization_id),
         }
     }
 
@@ -205,6 +214,10 @@ impl Vehicle {
 
     pub fn provenance(&self) -> &Provenance {
         &self.provenance
+    }
+
+    pub fn organization_id(&self) -> Id<Organization> {
+        self.organization_id
     }
 
     /// Replaces every editable field at once. Vehicle is a passive tracking
@@ -237,6 +250,18 @@ impl Vehicle {
     pub fn unarchive(&mut self) {
         self.archived_at = None;
     }
+
+    /// Reassigns the vehicle to `target`'s organization. No-op if it already
+    /// belongs there. Vehicle has no domain-event subscribers, so this never
+    /// emits — the `Vec<DomainEvent>` return type only mirrors the shared
+    /// `transfer_to` shape used by other aggregates.
+    pub fn transfer_to(&mut self, target: Id<Organization>) -> Vec<DomainEvent> {
+        if self.organization_id == target {
+            return vec![];
+        }
+        self.organization_id = target;
+        vec![]
+    }
 }
 
 #[cfg(test)]
@@ -257,6 +282,7 @@ mod tests {
             dimension: VehicleDimension::new(2.0, 2.0, 5.0, 3500.0).unwrap(),
             archived_at: None,
             provenance: Provenance::default(),
+            organization_id: Id::new_v7(),
         }
     }
 
@@ -347,5 +373,23 @@ mod tests {
             original_archived,
             "replace_details must not touch archived_at"
         );
+    }
+
+    #[test]
+    fn transfer_to_same_org_is_noop() {
+        let mut v = fixed_vehicle();
+        let same = v.organization_id();
+        let events = v.transfer_to(same);
+        assert_eq!(v.organization_id(), same);
+        assert!(events.is_empty());
+    }
+
+    #[test]
+    fn transfer_to_new_org_updates_field_without_events() {
+        let mut v = fixed_vehicle();
+        let target: Id<Organization> = Id::new_v7();
+        let events = v.transfer_to(target);
+        assert_eq!(v.organization_id(), target);
+        assert!(events.is_empty(), "Vehicle has no domain-event subscribers");
     }
 }

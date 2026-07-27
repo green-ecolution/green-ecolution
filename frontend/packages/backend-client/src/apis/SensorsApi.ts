@@ -23,6 +23,7 @@ import type {
   SensorResponse,
   SetSensorTreeRequest,
   SoilMoistureSeriesResponse,
+  TransferRequest,
 } from '../models/index';
 import {
     ActivateSensorRequestFromJSON,
@@ -41,6 +42,8 @@ import {
     SetSensorTreeRequestToJSON,
     SoilMoistureSeriesResponseFromJSON,
     SoilMoistureSeriesResponseToJSON,
+    TransferRequestFromJSON,
+    TransferRequestToJSON,
 } from '../models/index';
 
 export interface ActivateSensorOperationRequest {
@@ -91,6 +94,11 @@ export interface RemoveSensorTreeRequest {
 export interface SetSensorTreeOperationRequest {
     sensorId: string;
     setSensorTreeRequest: SetSensorTreeRequest;
+}
+
+export interface TransferSensorRequest {
+    sensorId: string;
+    transferRequest: TransferRequest;
 }
 
 /**
@@ -564,6 +572,54 @@ export class SensorsApi extends runtime.BaseAPI {
     async setSensorTree(requestParameters: SetSensorTreeOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SensorResponse> {
         const response = await this.setSensorTreeRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Moves an unbound sensor to a different owning organization. Requires `sensor:update` in both the source and target organization. A sensor bound to a tree must be transferred via its tree instead.
+     * Transfer a sensor\'s ownership to another organization
+     */
+    async transferSensorRaw(requestParameters: TransferSensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['sensorId'] == null) {
+            throw new runtime.RequiredError(
+                'sensorId',
+                'Required parameter "sensorId" was null or undefined when calling transferSensor().'
+            );
+        }
+
+        if (requestParameters['transferRequest'] == null) {
+            throw new runtime.RequiredError(
+                'transferRequest',
+                'Required parameter "transferRequest" was null or undefined when calling transferSensor().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/sensors/{sensor_id}/organization`;
+        urlPath = urlPath.replace(`{${"sensor_id"}}`, encodeURIComponent(String(requestParameters['sensorId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: TransferRequestToJSON(requestParameters['transferRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Moves an unbound sensor to a different owning organization. Requires `sensor:update` in both the source and target organization. A sensor bound to a tree must be transferred via its tree instead.
+     * Transfer a sensor\'s ownership to another organization
+     */
+    async transferSensor(requestParameters: TransferSensorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.transferSensorRaw(requestParameters, initOverrides);
     }
 
 }

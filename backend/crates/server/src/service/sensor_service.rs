@@ -5,6 +5,7 @@ use domain::{
     Id,
     cluster::{SoilMoistureBucket, SoilMoistureOverview, TreeClusterReader, condition_series},
     events::{DomainEvent, SensorDataReceivedPayload, SensorReadings},
+    organization::Organization,
     sensor::{
         Sensor, SensorDraft, SensorError, SensorId, SensorReader, SensorReadingReader,
         SensorReadingWriter, SensorSearchQuery, SensorView, SensorWriter, data::SensorReadingView,
@@ -128,6 +129,10 @@ impl SensorService {
         let mut sensor = self.reader.by_id(id).await?;
         let mut tree = self.tree_reader.by_id(tree_id).await?;
 
+        if sensor.organization_id() != tree.organization_id() {
+            return Err(ServiceError::OrganizationMismatch);
+        }
+
         let already_bound_here = tree.sensor_id() == Some(id);
         let activated = sensor.is_activated();
 
@@ -180,6 +185,9 @@ impl SensorService {
         }
 
         let mut target = self.tree_reader.by_id(new_tree_id).await?;
+        if sensor.organization_id() != target.organization_id() {
+            return Err(ServiceError::OrganizationMismatch);
+        }
         if target.sensor_id() == Some(id) {
             return Ok(self.reader.view_by_id(id).await?);
         }
@@ -249,6 +257,26 @@ impl SensorService {
                 readings: ingest.typed,
             }))
             .await;
+        Ok(())
+    }
+
+    /// Transfers ownership of an unbound sensor to `target`. A sensor bound
+    /// to a tree must transfer via that tree instead (`TreeService::transfer`
+    /// cascades it), so this rejects with `OrganizationMismatch` when a tree
+    /// link exists.
+    #[tracing::instrument(level = "debug", skip_all, fields(sensor.id = %id))]
+    pub async fn transfer(
+        &self,
+        id: &SensorId,
+        target: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        if self.tree_reader.by_sensor_id(id).await?.is_some() {
+            return Err(ServiceError::OrganizationMismatch);
+        }
+        let mut sensor = self.reader.by_id(id).await?;
+        let events = sensor.transfer_to(target);
+        self.writer.save(&sensor).await?;
+        self.event_bus.publish_all(events).await;
         Ok(())
     }
 

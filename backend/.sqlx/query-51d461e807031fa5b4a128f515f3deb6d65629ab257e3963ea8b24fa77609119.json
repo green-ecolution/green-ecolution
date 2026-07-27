@@ -1,0 +1,168 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT tc.id, tc.name, tc.address, tc.description,\n                      tc.archived, tc.moisture_level, tc.region_id,\n                      tc.watering_status AS \"watering_status: WateringStatus\",\n                      tc.soil_condition AS \"soil_condition: Option<SoilCondition>\",\n                      tc.latitude, tc.longitude,\n                      tc.last_watered AS \"last_watered: DateTime<Utc>\",\n                      tc.provider,\n                      tc.additional_informations AS additional_info,\n                      tc.organization_id,\n                      COALESCE(ARRAY_AGG(t.id ORDER BY t.number) FILTER (WHERE t.id IS NOT NULL), ARRAY[]::uuid[]) AS \"tree_ids!: Vec<RawId>\"\n            FROM tree_clusters tc\n            LEFT JOIN trees t ON t.tree_cluster_id = tc.id\n            WHERE tc.id = $1\n            GROUP BY tc.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "address",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "archived",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 5,
+        "name": "moisture_level",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 6,
+        "name": "region_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 7,
+        "name": "watering_status: WateringStatus",
+        "type_info": {
+          "Custom": {
+            "name": "watering_status",
+            "kind": {
+              "Enum": [
+                "good",
+                "moderate",
+                "bad",
+                "unknown",
+                "just watered"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "soil_condition: Option<SoilCondition>",
+        "type_info": {
+          "Custom": {
+            "name": "tree_soil_condition",
+            "kind": {
+              "Enum": [
+                "Ss",
+                "Sl2",
+                "Sl3",
+                "Sl4",
+                "Slu",
+                "St2",
+                "St3",
+                "Su2",
+                "Su3",
+                "Su4",
+                "Ls2",
+                "Ls3",
+                "Ls4",
+                "Lt2",
+                "Lt3",
+                "Lts",
+                "Lu",
+                "Uu",
+                "Uls",
+                "Us",
+                "Ut2",
+                "Ut3",
+                "Ut4",
+                "Tt",
+                "Tl",
+                "Tu2",
+                "Tu3",
+                "Tu4",
+                "Ts2",
+                "Ts3",
+                "Ts4",
+                "fS",
+                "mS",
+                "gS",
+                "unknown"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "latitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 10,
+        "name": "longitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 11,
+        "name": "last_watered: DateTime<Utc>",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 12,
+        "name": "provider",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 13,
+        "name": "additional_info",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 14,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 15,
+        "name": "tree_ids!: Vec<RawId>",
+        "type_info": "UuidArray"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      null
+    ]
+  },
+  "hash": "51d461e807031fa5b4a128f515f3deb6d65629ab257e3963ea8b24fa77609119"
+}

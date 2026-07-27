@@ -23,8 +23,10 @@ use chrono::{DateTime, Datelike, Utc};
 
 use crate::{
     Id,
+    authorization::Visibility,
     cluster::TreeCluster,
     events::DomainEvent,
+    organization::Organization,
     sensor::{SensorId, data::Watermark},
     shared::{
         coordinates::Coordinate,
@@ -69,6 +71,7 @@ pub struct Tree {
     sensor_id: Option<SensorId>,
     watering_status: WateringStatus,
     provenance: Provenance,
+    organization_id: Id<Organization>,
 }
 
 /// Input for creating a new [`Tree`].
@@ -82,6 +85,7 @@ pub struct TreeDraft {
     pub cluster_id: Option<Id<TreeCluster>>,
     pub sensor_id: Option<SensorId>,
     pub provenance: Provenance,
+    pub organization_id: Id<Organization>,
 }
 
 /// Filter inputs for tree list queries.
@@ -97,6 +101,10 @@ pub struct TreeSearchQuery {
     pub bbox: Option<BoundingBox>,
     /// Case-insensitive text filter on tree number or species.
     pub q: Option<String>,
+    /// Which organizations may see the result. Callers must set this per
+    /// request; defaults to unrestricted for internal consumers (e.g. event
+    /// handlers).
+    pub visible: Visibility,
 }
 
 impl Tree {
@@ -115,11 +123,16 @@ impl Tree {
             sensor_id: snap.sensor_id.map(SensorId::reconstitute),
             watering_status: snap.watering_status,
             provenance: Provenance::reconstitute(snap.provider, snap.additional_info),
+            organization_id: Id::new(snap.organization_id),
         }
     }
 
     pub fn cluster_id(&self) -> Option<Id<TreeCluster>> {
         self.cluster_id
+    }
+
+    pub fn organization_id(&self) -> Id<Organization> {
+        self.organization_id
     }
 
     pub fn sensor_id(&self) -> Option<&SensorId> {
@@ -273,6 +286,23 @@ impl Tree {
         })
     }
 
+    /// Reassigns the tree to `target`'s organization. No-op (and no event)
+    /// if it already belongs there. Callers must ensure the tree is
+    /// clusterless and that any attached sensor is transferred alongside it
+    /// (see `TreeService::transfer`).
+    pub fn transfer_to(&mut self, target: Id<Organization>) -> Vec<DomainEvent> {
+        if self.organization_id == target {
+            return vec![];
+        }
+        let from = self.organization_id;
+        self.organization_id = target;
+        vec![DomainEvent::TreeResponsibilityTransferred {
+            tree_id: self.id,
+            from,
+            to: target,
+        }]
+    }
+
     /// Derives a [`WateringStatus`] from volumetric soil-moisture readings,
     /// the cluster's KA5 `soil` type, and the tree's age.
     pub fn calculate_watering_status_from_volumetric(
@@ -304,6 +334,7 @@ mod tests {
             sensor_id: None,
             watering_status: WateringStatus::Unknown,
             provenance: Provenance::default(),
+            organization_id: Id::new_v7(),
         }
     }
 
@@ -513,6 +544,37 @@ mod tests {
         let ts = Utc::now();
         t.mark_watered_at(ts);
         assert_eq!(t.last_watered, Some(ts));
+    }
+
+    #[test]
+    fn transfer_to_same_org_is_noop() {
+        let mut t = fixed_tree();
+        let same = t.organization_id();
+        let events = t.transfer_to(same);
+        assert_eq!(t.organization_id(), same);
+        assert!(events.is_empty());
+    }
+
+    #[test]
+    fn transfer_to_new_org_emits_event_and_updates_field() {
+        let mut t = fixed_tree();
+        let from = t.organization_id();
+        let target: Id<Organization> = Id::new_v7();
+        let events = t.transfer_to(target);
+        assert_eq!(t.organization_id(), target);
+        assert_eq!(events.len(), 1);
+        match &events[0] {
+            DomainEvent::TreeResponsibilityTransferred {
+                tree_id,
+                from: ev_from,
+                to,
+            } => {
+                assert_eq!(*tree_id, t.id);
+                assert_eq!(*ev_from, from);
+                assert_eq!(*to, target);
+            }
+            other => panic!("expected TreeResponsibilityTransferred, got {other:?}"),
+        }
     }
 
     fn wm(depth: i32, centibar: i32) -> Watermark {

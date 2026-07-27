@@ -17,12 +17,15 @@ import * as runtime from '../runtime';
 import type {
   StartPointRequest,
   StartPointResponse,
+  TransferRequest,
 } from '../models/index';
 import {
     StartPointRequestFromJSON,
     StartPointRequestToJSON,
     StartPointResponseFromJSON,
     StartPointResponseToJSON,
+    TransferRequestFromJSON,
+    TransferRequestToJSON,
 } from '../models/index';
 
 export interface CreateStartPointRequest {
@@ -35,6 +38,11 @@ export interface DeleteStartPointRequest {
 
 export interface SetDefaultStartPointRequest {
     startPointId: string;
+}
+
+export interface TransferStartPointRequest {
+    startPointId: string;
+    transferRequest: TransferRequest;
 }
 
 export interface UpdateStartPointRequest {
@@ -187,6 +195,54 @@ export class RoutingApi extends runtime.BaseAPI {
      */
     async setDefaultStartPoint(requestParameters: SetDefaultStartPointRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.setDefaultStartPointRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Moves a start point to a different owning organization. If it was the default for its organization, it loses that status (the target organization\'s own default, if any, is left untouched). Requires `watering_plan:update` in both the source and target organization.
+     * Transfer a start point\'s ownership to another organization
+     */
+    async transferStartPointRaw(requestParameters: TransferStartPointRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['startPointId'] == null) {
+            throw new runtime.RequiredError(
+                'startPointId',
+                'Required parameter "startPointId" was null or undefined when calling transferStartPoint().'
+            );
+        }
+
+        if (requestParameters['transferRequest'] == null) {
+            throw new runtime.RequiredError(
+                'transferRequest',
+                'Required parameter "transferRequest" was null or undefined when calling transferStartPoint().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/routing/start-points/{start_point_id}/organization`;
+        urlPath = urlPath.replace(`{${"start_point_id"}}`, encodeURIComponent(String(requestParameters['startPointId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: TransferRequestToJSON(requestParameters['transferRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Moves a start point to a different owning organization. If it was the default for its organization, it loses that status (the target organization\'s own default, if any, is left untouched). Requires `watering_plan:update` in both the source and target organization.
+     * Transfer a start point\'s ownership to another organization
+     */
+    async transferStartPoint(requestParameters: TransferStartPointRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.transferStartPointRaw(requestParameters, initOverrides);
     }
 
     /**

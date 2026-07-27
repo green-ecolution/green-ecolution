@@ -42,6 +42,12 @@ pub enum ServiceError {
     Role(#[from] domain::role::RoleError),
     #[error("organization still has sub-organizations or users")]
     OrganizationNotEmpty,
+    #[error("resource and organization do not match")]
+    OrganizationMismatch,
+    #[error("tree is part of a cluster")]
+    TreeInCluster,
+    #[error("no organization given and the acting user has none")]
+    MissingOrganization,
 }
 
 impl From<ValidationError> for ServiceError {

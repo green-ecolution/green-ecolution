@@ -84,6 +84,13 @@ export interface VehicleCreateRequest {
      */
     numberPlate: string;
     /**
+     * Organization this vehicle belongs to. Defaults to the acting user's
+     * own organization (or the root organization in the demo bypass).
+     * @type {string}
+     * @memberof VehicleCreateRequest
+     */
+    organizationId?: string | null;
+    /**
      * Name of the external data provider that supplied this vehicle record.
      * @type {string}
      * @memberof VehicleCreateRequest
@@ -157,6 +164,7 @@ export function VehicleCreateRequestFromJSONTyped(json: any, ignoreDiscriminator
         'length': json['length'],
         'model': json['model'],
         'numberPlate': json['number_plate'],
+        'organizationId': json['organization_id'] == null ? undefined : json['organization_id'],
         'provider': json['provider'] == null ? undefined : json['provider'],
         'status': VehicleStatusFromJSON(json['status']),
         'type': VehicleTypeFromJSON(json['type']),
@@ -184,6 +192,7 @@ export function VehicleCreateRequestToJSONTyped(value?: VehicleCreateRequest | n
         'length': value['length'],
         'model': value['model'],
         'number_plate': value['numberPlate'],
+        'organization_id': value['organizationId'],
         'provider': value['provider'],
         'status': VehicleStatusToJSON(value['status']),
         'type': VehicleTypeToJSON(value['type']),

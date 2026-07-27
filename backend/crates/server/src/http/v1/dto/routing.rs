@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use domain::{
+    Id,
+    organization::Organization,
     shared::coordinates::Coordinate,
     start_point::{StartPoint, StartPointDraft, StartPointName, StartPointUpdate},
 };
@@ -17,6 +19,9 @@ pub struct StartPointResponse {
     pub lon: f64,
     pub is_default: bool,
     pub watering_point: bool,
+    /// Organization this start point belongs to.
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub organization_id: String,
 }
 
 impl From<&StartPoint> for StartPointResponse {
@@ -28,6 +33,7 @@ impl From<&StartPoint> for StartPointResponse {
             lon: value.coordinate.longitude(),
             is_default: value.is_default(),
             watering_point: value.watering_point(),
+            organization_id: value.organization_id().to_string(),
         }
     }
 }
@@ -43,6 +49,11 @@ pub struct StartPointRequest {
     pub lon: f64,
     #[serde(default)]
     pub watering_point: bool,
+    /// Organization this start point belongs to. Defaults to the acting
+    /// user's own organization (or the root organization in the demo bypass).
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
+    #[serde(default)]
+    pub organization_id: Option<uuid::Uuid>,
 }
 
 impl StartPointRequest {
@@ -55,11 +66,15 @@ impl StartPointRequest {
             .map_err(|e| ServiceError::InvalidInput(e.to_string()))
     }
 
-    pub fn into_draft(self) -> Result<StartPointDraft, ServiceError> {
+    pub fn into_draft(
+        self,
+        organization_id: Id<Organization>,
+    ) -> Result<StartPointDraft, ServiceError> {
         Ok(StartPointDraft {
             name: self.name()?,
             coordinate: self.coordinate()?,
             watering_point: self.watering_point,
+            organization_id,
         })
     }
 

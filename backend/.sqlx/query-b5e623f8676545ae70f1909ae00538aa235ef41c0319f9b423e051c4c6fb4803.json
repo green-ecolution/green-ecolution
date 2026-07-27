@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO sensors (id, activated_at, type, model_id, organization_id)\n            VALUES ($1, NOW(), 'lorawan', $2, '01980000-0000-7000-8000-000000000001')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b5e623f8676545ae70f1909ae00538aa235ef41c0319f9b423e051c4c6fb4803"
+}

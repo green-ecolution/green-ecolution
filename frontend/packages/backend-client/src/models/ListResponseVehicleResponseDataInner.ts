@@ -102,6 +102,12 @@ export interface ListResponseVehicleResponseDataInner {
      */
     numberPlate: string;
     /**
+     * Organization this vehicle belongs to.
+     * @type {string}
+     * @memberof ListResponseVehicleResponseDataInner
+     */
+    organizationId: string;
+    /**
      * Name of the external data provider that supplied this vehicle record.
      * @type {string}
      * @memberof ListResponseVehicleResponseDataInner
@@ -159,6 +165,7 @@ export function instanceOfListResponseVehicleResponseDataInner(value: object): v
     if (!('length' in value) || value['length'] === undefined) return false;
     if (!('model' in value) || value['model'] === undefined) return false;
     if (!('numberPlate' in value) || value['numberPlate'] === undefined) return false;
+    if (!('organizationId' in value) || value['organizationId'] === undefined) return false;
     if (!('status' in value) || value['status'] === undefined) return false;
     if (!('type' in value) || value['type'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
@@ -188,6 +195,7 @@ export function ListResponseVehicleResponseDataInnerFromJSONTyped(json: any, ign
         'length': json['length'],
         'model': json['model'],
         'numberPlate': json['number_plate'],
+        'organizationId': json['organization_id'],
         'provider': json['provider'] == null ? undefined : json['provider'],
         'status': VehicleStatusFromJSON(json['status']),
         'type': VehicleTypeFromJSON(json['type']),
@@ -219,6 +227,7 @@ export function ListResponseVehicleResponseDataInnerToJSONTyped(value?: ListResp
         'length': value['length'],
         'model': value['model'],
         'number_plate': value['numberPlate'],
+        'organization_id': value['organizationId'],
         'provider': value['provider'],
         'status': VehicleStatusToJSON(value['status']),
         'type': VehicleTypeToJSON(value['type']),

@@ -2,15 +2,17 @@ use serde::{Deserialize, Serialize};
 
 use domain::{
     Id,
+    organization::Organization,
     sensor::{SensorId, SensorView},
     shared::{
         coordinates::Coordinate,
-        error::ValidationError,
         geo::BoundingBox,
         provenance::{Provenance, ProviderId},
     },
     tree::{PlantingYear, Species, TreeDraft, TreeMarker, TreeNumber, TreeView},
 };
+
+use crate::service::ServiceError;
 
 use super::{WateringStatus, sensor::SensorResponse};
 
@@ -51,6 +53,8 @@ pub struct TreeResponse {
     #[schema(value_type = Object, nullable)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub additional_information: Option<serde_json::Value>,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub organization_id: String,
 }
 
 impl From<(&TreeView, Option<&SensorView>)> for TreeResponse {
@@ -71,8 +75,17 @@ impl From<(&TreeView, Option<&SensorView>)> for TreeResponse {
             last_watered: tree.last_watered.map(|dt| dt.to_rfc3339()),
             provider: tree.provider.clone(),
             additional_information: tree.additional_info.clone(),
+            organization_id: tree.organization_id.to_string(),
         }
     }
+}
+
+/// Request body for transferring a resource's ownership to another
+/// organization.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct TransferRequest {
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub organization_id: uuid::Uuid,
 }
 
 /// A tree with its distance from a reference point.
@@ -150,28 +163,30 @@ pub struct TreeCreateRequest {
     #[schema(value_type = Object, nullable)]
     #[serde(default)]
     pub additional_information: Option<serde_json::Value>,
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
+    #[serde(default)]
+    pub organization_id: Option<uuid::Uuid>,
 }
 
-impl TryFrom<TreeCreateRequest> for TreeDraft {
-    type Error = ValidationError;
-
-    fn try_from(req: TreeCreateRequest) -> Result<Self, Self::Error> {
-        Ok(Self {
-            cluster_id: req.tree_cluster_id.map(Id::new),
-            sensor_id: req.sensor_id.map(SensorId::new).transpose()?,
-            planting_year: PlantingYear::new(req.planting_year as u32)?,
-            species: Species::new(req.species)?,
-            tree_number: TreeNumber::new(req.number)?,
-            coordinate: Coordinate::new(req.latitude, req.longitude)?,
-            description: if req.description.is_empty() {
+impl TreeCreateRequest {
+    pub fn into_draft(self, organization_id: Id<Organization>) -> Result<TreeDraft, ServiceError> {
+        Ok(TreeDraft {
+            cluster_id: self.tree_cluster_id.map(Id::new),
+            sensor_id: self.sensor_id.map(SensorId::new).transpose()?,
+            planting_year: PlantingYear::new(self.planting_year as u32)?,
+            species: Species::new(self.species)?,
+            tree_number: TreeNumber::new(self.number)?,
+            coordinate: Coordinate::new(self.latitude, self.longitude)?,
+            description: if self.description.is_empty() {
                 None
             } else {
-                Some(req.description)
+                Some(self.description)
             },
             provenance: Provenance::new(
-                req.provider.map(ProviderId::new).transpose()?,
-                req.additional_information,
+                self.provider.map(ProviderId::new).transpose()?,
+                self.additional_information,
             ),
+            organization_id,
         })
     }
 }

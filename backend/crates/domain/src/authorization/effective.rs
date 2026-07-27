@@ -4,6 +4,25 @@ use crate::{Id, organization::Organization};
 
 use super::Permission;
 
+/// Which organizations a read path may show. `Unrestricted` skips filtering
+/// entirely (demo bypass, internal non-user callers such as event handlers).
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub enum Visibility {
+    #[default]
+    Unrestricted,
+    Only(BTreeSet<Id<Organization>>),
+}
+
+impl Visibility {
+    /// `None` disables filtering entirely; `Some` restricts to these orgs.
+    pub fn into_raw_ids(self) -> Option<Vec<crate::RawId>> {
+        match self {
+            Visibility::Unrestricted => None,
+            Visibility::Only(ids) => Some(ids.into_iter().map(|id| id.value()).collect()),
+        }
+    }
+}
+
 /// Parent map of the whole organization tree, loaded once per request.
 /// Org trees have dozens of nodes, so an in-memory walk beats SQL round trips.
 #[derive(Debug, Clone, Default)]
@@ -39,6 +58,18 @@ impl OrgHierarchy {
             current = self.parents.get(&id).copied().flatten();
         }
         false
+    }
+
+    /// `parents` holds every org in the tree, so scanning its keys and testing each
+    /// against `is_descendant_or_self` (itself cycle-safe) covers the whole subtree
+    /// without a second, separately-maintained traversal.
+    pub fn descendants_or_self(&self, ancestor: Id<Organization>) -> BTreeSet<Id<Organization>> {
+        self.parents
+            .keys()
+            .copied()
+            .filter(|node| self.is_descendant_or_self(*node, ancestor))
+            .chain(std::iter::once(ancestor))
+            .collect()
     }
 }
 
@@ -86,6 +117,14 @@ impl EffectivePermissions {
     ) -> bool {
         required.iter().all(|p| self.allows_in(*p, org, tree))
     }
+
+    pub fn is_unrestricted(&self) -> bool {
+        self.unrestricted
+    }
+
+    pub fn grants(&self) -> &[(Id<Organization>, BTreeSet<Permission>)] {
+        &self.grants
+    }
 }
 
 /// Everything needed to answer authorization questions for one request.
@@ -109,6 +148,19 @@ impl AccessContext {
 
     pub fn superset_of(&self, required: &BTreeSet<Permission>, org: Id<Organization>) -> bool {
         self.permissions.superset_of(required, org, &self.hierarchy)
+    }
+
+    pub fn visible_orgs(&self, p: Permission) -> Visibility {
+        if self.permissions.is_unrestricted() {
+            return Visibility::Unrestricted;
+        }
+        let mut orgs = BTreeSet::new();
+        for (granted, perms) in self.permissions.grants() {
+            if perms.contains(&p) {
+                orgs.extend(self.hierarchy.descendants_or_self(*granted));
+            }
+        }
+        Visibility::Only(orgs)
     }
 }
 
@@ -186,5 +238,34 @@ mod tests {
         let ctx = AccessContext::unrestricted();
         assert!(ctx.allows_in(tree_read(), root));
         assert!(ctx.superset_of(&BTreeSet::from_iter(Permission::catalog()), root));
+    }
+
+    #[test]
+    fn visible_orgs_unions_subtrees_never_upwards() {
+        let (root, tbz, sub) = ids();
+        let h = OrgHierarchy::from_pairs([(root, None), (tbz, Some(root)), (sub, Some(tbz))]);
+        let eff = EffectivePermissions::from_grants(vec![(tbz, BTreeSet::from([tree_read()]))]);
+        let ctx = AccessContext {
+            permissions: eff,
+            hierarchy: h,
+        };
+        match ctx.visible_orgs(tree_read()) {
+            Visibility::Only(orgs) => {
+                assert!(orgs.contains(&tbz) && orgs.contains(&sub));
+                assert!(!orgs.contains(&root));
+            }
+            Visibility::Unrestricted => panic!("expected Only"),
+        }
+        // permission not granted anywhere -> empty set, not unrestricted
+        let del = Permission::new(Resource::Tree, Action::Delete);
+        assert_eq!(ctx.visible_orgs(del), Visibility::Only(BTreeSet::new()));
+    }
+
+    #[test]
+    fn visible_orgs_unrestricted_for_demo_context() {
+        assert_eq!(
+            AccessContext::unrestricted().visible_orgs(tree_read()),
+            Visibility::Unrestricted
+        );
     }
 }

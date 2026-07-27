@@ -1,0 +1,113 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, tree_cluster_id AS cluster_id, sensor_id,\n                      planting_year, species, number AS tree_number,\n                      latitude, longitude,\n                      watering_status AS \"watering_status: WateringStatus\",\n                      description,\n                      last_watered AS \"last_watered: DateTime<Utc>\",\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id\n            FROM trees WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "cluster_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "sensor_id",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "planting_year",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "species",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "tree_number",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "latitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 7,
+        "name": "longitude",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 8,
+        "name": "watering_status: WateringStatus",
+        "type_info": {
+          "Custom": {
+            "name": "watering_status",
+            "kind": {
+              "Enum": [
+                "good",
+                "moderate",
+                "bad",
+                "unknown",
+                "just watered"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "last_watered: DateTime<Utc>",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 11,
+        "name": "provider",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 12,
+        "name": "additional_info",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 13,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "3b9d24b19ac351aa81b707cff60592f13b9dab081744d188c51a3506c68bcd3c"
+}

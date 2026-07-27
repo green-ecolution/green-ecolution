@@ -2,9 +2,11 @@ use std::sync::Arc;
 
 use domain::{
     Id,
-    cluster::TreeCluster,
+    authorization::Visibility,
+    cluster::{TreeCluster, TreeClusterReader},
     events::DomainEvent,
-    sensor::SensorId,
+    organization::Organization,
+    sensor::{SensorId, SensorReader, SensorWriter},
     shared::{
         coordinates::Coordinate,
         distance::Distance,
@@ -22,6 +24,9 @@ use super::{ServiceError, event_bus::EventBus};
 pub struct TreeService {
     reader: Arc<dyn TreeReader>,
     writer: Arc<dyn TreeWriter>,
+    cluster_reader: Arc<dyn TreeClusterReader>,
+    sensor_reader: Arc<dyn SensorReader>,
+    sensor_writer: Arc<dyn SensorWriter>,
     event_bus: Arc<dyn EventBus>,
 }
 
@@ -29,13 +34,50 @@ impl TreeService {
     pub fn new(
         reader: Arc<dyn TreeReader>,
         writer: Arc<dyn TreeWriter>,
+        cluster_reader: Arc<dyn TreeClusterReader>,
+        sensor_reader: Arc<dyn SensorReader>,
+        sensor_writer: Arc<dyn SensorWriter>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
         Self {
             reader,
             writer,
+            cluster_reader,
+            sensor_reader,
+            sensor_writer,
             event_bus,
         }
+    }
+
+    /// Rejects moving a tree into a cluster owned by a different
+    /// organization. `cluster_id = None` (leaving/staying out of a cluster)
+    /// is always allowed.
+    async fn ensure_cluster_matches_org(
+        &self,
+        cluster_id: Option<Id<TreeCluster>>,
+        org: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        if let Some(cid) = cluster_id {
+            let cluster = self.cluster_reader.by_id(cid).await?;
+            if cluster.organization_id() != org {
+                return Err(ServiceError::OrganizationMismatch);
+            }
+        }
+        Ok(())
+    }
+
+    /// Rejects attaching a sensor owned by a different organization than the
+    /// tree it would be bound to.
+    async fn ensure_sensor_matches_org(
+        &self,
+        sensor_id: &SensorId,
+        org: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        let sensor = self.sensor_reader.by_id(sensor_id).await?;
+        if sensor.organization_id() != org {
+            return Err(ServiceError::OrganizationMismatch);
+        }
+        Ok(())
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -103,7 +145,11 @@ impl TreeService {
     pub async fn create(&self, draft: TreeDraft) -> Result<Tree, ServiceError> {
         if let Some(ref sid) = draft.sensor_id {
             self.ensure_sensor_unassigned(sid, None).await?;
+            self.ensure_sensor_matches_org(sid, draft.organization_id)
+                .await?;
         }
+        self.ensure_cluster_matches_org(draft.cluster_id, draft.organization_id)
+            .await?;
         let tree = self.writer.save_new(draft).await?;
         self.event_bus
             .publish(DomainEvent::TreeCreated {
@@ -121,6 +167,12 @@ impl TreeService {
             self.ensure_sensor_unassigned(sid, Some(id)).await?;
         }
         let mut tree = self.reader.by_id(id).await?;
+        if let Some(ref sid) = draft.sensor_id {
+            self.ensure_sensor_matches_org(sid, tree.organization_id())
+                .await?;
+        }
+        self.ensure_cluster_matches_org(draft.cluster_id, tree.organization_id())
+            .await?;
         let mut events = Vec::new();
         events.extend(tree.replace_details(
             draft.species,
@@ -147,6 +199,8 @@ impl TreeService {
         target: Option<Id<TreeCluster>>,
     ) -> Result<Tree, ServiceError> {
         let mut tree = self.reader.by_id(id).await?;
+        self.ensure_cluster_matches_org(target, tree.organization_id())
+            .await?;
         let events = tree.move_to_cluster(target);
         self.writer.save(&tree).await?;
         self.event_bus.publish_all(events).await;
@@ -161,6 +215,8 @@ impl TreeService {
     ) -> Result<Tree, ServiceError> {
         self.ensure_sensor_unassigned(&sensor_id, Some(id)).await?;
         let mut tree = self.reader.by_id(id).await?;
+        self.ensure_sensor_matches_org(&sensor_id, tree.organization_id())
+            .await?;
         let events = tree.attach_sensor(sensor_id);
         self.writer.save(&tree).await?;
         self.event_bus.publish_all(events).await;
@@ -211,12 +267,44 @@ impl TreeService {
         coord: Coordinate,
         radius: Distance,
         limit: u32,
+        visible: Visibility,
     ) -> Result<Vec<TreeViewWithDistance>, ServiceError> {
-        Ok(self.reader.view_nearest(coord, radius, limit).await?)
+        Ok(self
+            .reader
+            .view_nearest(coord, radius, limit, visible)
+            .await?)
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn distinct_planting_years(&self) -> Result<Vec<PlantingYear>, ServiceError> {
-        Ok(self.reader.distinct_planting_years().await?)
+    pub async fn distinct_planting_years(
+        &self,
+        visible: Visibility,
+    ) -> Result<Vec<PlantingYear>, ServiceError> {
+        Ok(self.reader.distinct_planting_years(visible).await?)
+    }
+
+    /// Transfers ownership of a clusterless tree to `target`. An attached
+    /// sensor is carried along in the same operation (its own organization
+    /// coupling would otherwise be violated) — a directly bound sensor must
+    /// instead move via its tree, see `SensorService::transfer`.
+    #[tracing::instrument(level = "debug", skip_all, fields(tree.id = %id))]
+    pub async fn transfer(
+        &self,
+        id: Id<Tree>,
+        target: Id<Organization>,
+    ) -> Result<(), ServiceError> {
+        let mut tree = self.reader.by_id(id).await?;
+        if tree.cluster_id().is_some() {
+            return Err(ServiceError::TreeInCluster);
+        }
+        let mut events = tree.transfer_to(target);
+        self.writer.save(&tree).await?;
+        if let Some(sensor_id) = tree.sensor_id().cloned() {
+            let mut sensor = self.sensor_reader.by_id(&sensor_id).await?;
+            events.extend(sensor.transfer_to(target));
+            self.sensor_writer.save(&sensor).await?;
+        }
+        self.event_bus.publish_all(events).await;
+        Ok(())
     }
 }

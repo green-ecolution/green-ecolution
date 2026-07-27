@@ -1,0 +1,194 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO vehicles (id, number_plate, description, water_capacity, type, status,\n                                     model, driving_license, height, length, width, weight,\n                                     provider, additional_informations, organization_id)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)\n            RETURNING id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      water_capacity,\n                      type AS \"vehicle_type: VehicleType\",\n                      status AS \"status: VehicleStatus\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS additional_info,\n                      organization_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "archived_at: DateTime<chrono::Utc>",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 2,
+        "name": "number_plate",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "water_capacity",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 5,
+        "name": "vehicle_type: VehicleType",
+        "type_info": {
+          "Custom": {
+            "name": "vehicle_type",
+            "kind": {
+              "Enum": [
+                "transporter",
+                "trailer"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "status: VehicleStatus",
+        "type_info": {
+          "Custom": {
+            "name": "vehicle_status",
+            "kind": {
+              "Enum": [
+                "active",
+                "available",
+                "not available",
+                "unknown"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "model",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "driving_license: DrivingLicense",
+        "type_info": {
+          "Custom": {
+            "name": "driving_license",
+            "kind": {
+              "Enum": [
+                "B",
+                "BE",
+                "C",
+                "CE"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "height",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 10,
+        "name": "width",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 11,
+        "name": "length",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 12,
+        "name": "weight",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 13,
+        "name": "provider",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 14,
+        "name": "additional_info",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 15,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Float8",
+        {
+          "Custom": {
+            "name": "vehicle_type",
+            "kind": {
+              "Enum": [
+                "transporter",
+                "trailer"
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "vehicle_status",
+            "kind": {
+              "Enum": [
+                "active",
+                "available",
+                "not available",
+                "unknown"
+              ]
+            }
+          }
+        },
+        "Text",
+        {
+          "Custom": {
+            "name": "driving_license",
+            "kind": {
+              "Enum": [
+                "B",
+                "BE",
+                "C",
+                "CE"
+              ]
+            }
+          }
+        },
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Text",
+        "Jsonb",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "ea0911192b48070465a65eb6eccc89912fba88a2f84d1fcda691d0169eb3b1e6"
+}

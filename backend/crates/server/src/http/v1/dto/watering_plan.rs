@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::service::ServiceError;
 use domain::{
     Id,
+    organization::Organization,
     shared::{
         coordinates::Coordinate,
         provenance::{Provenance, ProviderId},
@@ -108,6 +109,9 @@ pub struct WateringPlanResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Object, nullable)]
     pub additional_information: Option<serde_json::Value>,
+    /// Identifier of the organization this watering plan belongs to.
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub organization_id: String,
 }
 
 pub struct WateringPlanDetailView {
@@ -149,6 +153,7 @@ impl From<WateringPlanDetailView> for WateringPlanResponse {
             start_point_name: v.start_point_name.clone(),
             provider: v.provider.clone(),
             additional_information: v.additional_info.clone(),
+            organization_id: v.organization_id.to_string(),
         }
     }
 }
@@ -272,6 +277,11 @@ pub struct WateringPlanCreateRequest {
     #[serde(default)]
     #[schema(value_type = Object, nullable)]
     pub additional_information: Option<serde_json::Value>,
+    /// Organization this watering plan belongs to. Defaults to the acting
+    /// user's own organization when omitted.
+    #[serde(default)]
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
+    pub organization_id: Option<uuid::Uuid>,
 }
 
 /// Request body for updating an existing watering plan.
@@ -448,29 +458,31 @@ pub(crate) fn parse_user_ids(ids: &[String]) -> Result<Vec<uuid::Uuid>, ServiceE
         .collect()
 }
 
-impl TryFrom<WateringPlanCreateRequest> for WateringPlanDraft {
-    type Error = ServiceError;
-
-    fn try_from(req: WateringPlanCreateRequest) -> Result<Self, Self::Error> {
-        let date = parse_date(&req.date)?;
+impl WateringPlanCreateRequest {
+    pub fn into_draft(
+        self,
+        organization_id: Id<Organization>,
+    ) -> Result<WateringPlanDraft, ServiceError> {
+        let date = parse_date(&self.date)?;
         let provenance = Provenance::new(
-            req.provider.map(ProviderId::new).transpose()?,
-            req.additional_information,
+            self.provider.map(ProviderId::new).transpose()?,
+            self.additional_information,
         );
-        let description = if req.description.is_empty() {
+        let description = if self.description.is_empty() {
             None
         } else {
-            Some(req.description)
+            Some(self.description)
         };
-        Ok(Self {
+        Ok(WateringPlanDraft {
             date,
             description,
-            start_point_name: req.start_point_name,
-            cluster_ids: req.tree_cluster_ids.into_iter().map(Id::new).collect(),
-            transporter_id: Some(Id::new(req.transporter_id)),
-            trailer_id: req.trailer_id.map(Id::new),
+            start_point_name: self.start_point_name,
+            cluster_ids: self.tree_cluster_ids.into_iter().map(Id::new).collect(),
+            transporter_id: Some(Id::new(self.transporter_id)),
+            trailer_id: self.trailer_id.map(Id::new),
             provenance,
-            user_ids: parse_user_ids(&req.user_ids)?,
+            user_ids: parse_user_ids(&self.user_ids)?,
+            organization_id,
         })
     }
 }

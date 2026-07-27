@@ -31,8 +31,8 @@ async fn create_prepared_sensor(app: &TestApp, id: &str) {
 async fn insert_tree(app: &TestApp, number: &str) -> Uuid {
     let id = Uuid::now_v7();
     sqlx::query!(
-        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description)
-        VALUES ($1, 2020, 'Eiche', $2, $3, $4, ST_SetSRID(ST_MakePoint($4, $3), 4326), 'Test')"#,
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description, organization_id)
+        VALUES ($1, 2020, 'Eiche', $2, $3, $4, ST_SetSRID(ST_MakePoint($4, $3), 4326), 'Test', '01980000-0000-7000-8000-000000000001')"#,
         id,
         number,
         54.79_f64,

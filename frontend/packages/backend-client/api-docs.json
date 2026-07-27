@@ -384,6 +384,9 @@
               }
             }
           },
+          "403": {
+            "description": "Missing tree_cluster:update in the owning organization"
+          },
           "404": {
             "description": "Cluster not found"
           },
@@ -415,11 +418,57 @@
           "204": {
             "description": "Cluster deleted"
           },
+          "403": {
+            "description": "Missing tree_cluster:delete in the owning organization"
+          },
           "404": {
             "description": "Cluster not found"
           },
           "500": {
             "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v1/clusters/{cluster_id}/organization": {
+      "patch": {
+        "tags": [
+          "Tree Clusters"
+        ],
+        "summary": "Transfer a cluster's ownership to another organization",
+        "description": "Moves the cluster, its member trees, and their attached sensors to a different owning organization in one operation. Requires `tree_cluster:update` in both the source and target organization.",
+        "operationId": "transferCluster",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "description": "Cluster ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Cluster transferred"
+          },
+          "403": {
+            "description": "Missing tree_cluster:update in source or target organization"
+          },
+          "404": {
+            "description": "Cluster or organization not found"
           }
         }
       }
@@ -1607,6 +1656,9 @@
               }
             }
           },
+          "403": {
+            "description": "Missing watering_plan:update in the owning organization"
+          },
           "404": {
             "description": "Start point not found"
           },
@@ -1640,6 +1692,9 @@
           "400": {
             "description": "Cannot delete the default start point"
           },
+          "403": {
+            "description": "Missing watering_plan:delete in the owning organization"
+          },
           "404": {
             "description": "Start point not found"
           },
@@ -1672,8 +1727,57 @@
           "204": {
             "description": "Default set"
           },
+          "403": {
+            "description": "Missing watering_plan:update in the owning organization"
+          },
           "404": {
             "description": "Start point not found"
+          },
+          "503": {
+            "description": "Routing feature is disabled"
+          }
+        }
+      }
+    },
+    "/v1/routing/start-points/{start_point_id}/organization": {
+      "patch": {
+        "tags": [
+          "Routing"
+        ],
+        "summary": "Transfer a start point's ownership to another organization",
+        "description": "Moves a start point to a different owning organization. If it was the default for its organization, it loses that status (the target organization's own default, if any, is left untouched). Requires `watering_plan:update` in both the source and target organization.",
+        "operationId": "transferStartPoint",
+        "parameters": [
+          {
+            "name": "start_point_id",
+            "in": "path",
+            "description": "Start point ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Start point transferred"
+          },
+          "403": {
+            "description": "Missing watering_plan:update in source or target organization"
+          },
+          "404": {
+            "description": "Start point or organization not found"
           },
           "503": {
             "description": "Routing feature is disabled"
@@ -1904,6 +2008,9 @@
           "204": {
             "description": "Sensor deleted"
           },
+          "403": {
+            "description": "Missing sensor:delete in the owning organization"
+          },
           "404": {
             "description": "Sensor not found"
           },
@@ -1952,6 +2059,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "Missing sensor:update or tree:update in the owning organization"
           },
           "404": {
             "description": "Sensor or tree not found"
@@ -2052,6 +2162,51 @@
           },
           "500": {
             "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v1/sensors/{sensor_id}/organization": {
+      "patch": {
+        "tags": [
+          "Sensors"
+        ],
+        "summary": "Transfer a sensor's ownership to another organization",
+        "description": "Moves an unbound sensor to a different owning organization. Requires `sensor:update` in both the source and target organization. A sensor bound to a tree must be transferred via its tree instead.",
+        "operationId": "transferSensor",
+        "parameters": [
+          {
+            "name": "sensor_id",
+            "in": "path",
+            "description": "Sensor ID (EUI)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Sensor transferred"
+          },
+          "403": {
+            "description": "Missing sensor:update in source or target organization"
+          },
+          "404": {
+            "description": "Sensor or organization not found"
+          },
+          "409": {
+            "description": "Sensor is bound to a tree"
           }
         }
       }
@@ -2214,6 +2369,9 @@
               }
             }
           },
+          "403": {
+            "description": "Missing sensor:update or tree:update in the owning organization"
+          },
           "404": {
             "description": "Sensor or tree not found"
           },
@@ -2253,6 +2411,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "Missing sensor:update or tree:update in the owning organization"
           },
           "404": {
             "description": "Sensor not found"
@@ -2652,6 +2813,9 @@
               }
             }
           },
+          "403": {
+            "description": "Missing tree:update in the owning organization"
+          },
           "404": {
             "description": "Tree not found"
           },
@@ -2683,11 +2847,60 @@
           "204": {
             "description": "Tree deleted"
           },
+          "403": {
+            "description": "Missing tree:delete in the owning organization"
+          },
           "404": {
             "description": "Tree not found"
           },
           "500": {
             "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v1/trees/{tree_id}/organization": {
+      "patch": {
+        "tags": [
+          "Trees"
+        ],
+        "summary": "Transfer a tree's ownership to another organization",
+        "description": "Moves a clusterless tree (and any attached sensor) to a different owning organization. Requires `tree:update` in both the source and target organization.",
+        "operationId": "transferTree",
+        "parameters": [
+          {
+            "name": "tree_id",
+            "in": "path",
+            "description": "Tree ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Tree transferred"
+          },
+          "403": {
+            "description": "Missing tree:update in source or target organization"
+          },
+          "404": {
+            "description": "Tree or organization not found"
+          },
+          "409": {
+            "description": "Tree is part of a cluster"
           }
         }
       }
@@ -3275,6 +3488,9 @@
           "204": {
             "description": "Vehicle archived"
           },
+          "403": {
+            "description": "Missing vehicle:update in the owning organization"
+          },
           "404": {
             "description": "Vehicle not found"
           },
@@ -3402,6 +3618,9 @@
               }
             }
           },
+          "403": {
+            "description": "Missing vehicle:update in the owning organization"
+          },
           "404": {
             "description": "Vehicle not found"
           },
@@ -3433,11 +3652,57 @@
           "204": {
             "description": "Vehicle deleted"
           },
+          "403": {
+            "description": "Missing vehicle:delete in the owning organization"
+          },
           "404": {
             "description": "Vehicle not found"
           },
           "500": {
             "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v1/vehicles/{vehicle_id}/organization": {
+      "patch": {
+        "tags": [
+          "Vehicles"
+        ],
+        "summary": "Transfer a vehicle's ownership to another organization",
+        "description": "Moves a vehicle to a different owning organization. Requires `vehicle:update` in both the source and target organization.",
+        "operationId": "transferVehicle",
+        "parameters": [
+          {
+            "name": "vehicle_id",
+            "in": "path",
+            "description": "Vehicle ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Vehicle transferred"
+          },
+          "403": {
+            "description": "Missing vehicle:update in source or target organization"
+          },
+          "404": {
+            "description": "Vehicle or organization not found"
           }
         }
       }
@@ -4135,6 +4400,14 @@
             "description": "`SensorModel` id; must reference an existing model.",
             "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
+          "organization_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
           "provider": {
             "type": [
               "string",
@@ -4247,7 +4520,7 @@
           "user_watering_plan_count": {
             "type": "integer",
             "format": "int32",
-            "description": "Number of watering plans created by the current user.",
+            "description": "Number of user-to-watering-plan assignments across all watering plans\nvisible to the caller.",
             "example": 8,
             "minimum": 0
           },
@@ -4465,7 +4738,8 @@
                 "updated_at",
                 "status",
                 "sensor_type",
-                "model"
+                "model",
+                "organization_id"
               ],
               "properties": {
                 "additional_information": {
@@ -4530,6 +4804,10 @@
                 "model": {
                   "$ref": "#/components/schemas/SensorModelSummaryResponse",
                   "description": "Sensor model summary (id + display name)."
+                },
+                "organization_id": {
+                  "type": "string",
+                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
                 },
                 "provider": {
                   "type": [
@@ -4721,7 +4999,8 @@
                 "latitude",
                 "longitude",
                 "watering_status",
-                "description"
+                "description",
+                "organization_id"
               ],
               "properties": {
                 "additional_information": {
@@ -4767,6 +5046,10 @@
                 "number": {
                   "type": "string",
                   "example": "T-2024-0042"
+                },
+                "organization_id": {
+                  "type": "string",
+                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
                 },
                 "planting_year": {
                   "type": "integer",
@@ -4978,7 +5261,8 @@
                 "height",
                 "width",
                 "length",
-                "weight"
+                "weight",
+                "organization_id"
               ],
               "properties": {
                 "additional_information": {
@@ -5039,6 +5323,11 @@
                   "type": "string",
                   "description": "Official license plate number of the vehicle.",
                   "example": "FL-GE 123"
+                },
+                "organization_id": {
+                  "type": "string",
+                  "description": "Organization this vehicle belongs to.",
+                  "example": "0190a8e9-7c4f-7000-8000-000000000000"
                 },
                 "provider": {
                   "type": [
@@ -6170,7 +6459,8 @@
           "updated_at",
           "status",
           "sensor_type",
-          "model"
+          "model",
+          "organization_id"
         ],
         "properties": {
           "additional_information": {
@@ -6235,6 +6525,10 @@
           "model": {
             "$ref": "#/components/schemas/SensorModelSummaryResponse",
             "description": "Sensor model summary (id + display name)."
+          },
+          "organization_id": {
+            "type": "string",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "provider": {
             "type": [
@@ -6689,6 +6983,15 @@
             "type": "string",
             "example": "Betriebshof Schleswiger Straße"
           },
+          "organization_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Organization this start point belongs to. Defaults to the acting\nuser's own organization (or the root organization in the demo bypass).",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
           "watering_point": {
             "type": "boolean"
           }
@@ -6703,7 +7006,8 @@
           "lat",
           "lon",
           "is_default",
-          "watering_point"
+          "watering_point",
+          "organization_id"
         ],
         "properties": {
           "id": {
@@ -6724,8 +7028,27 @@
           "name": {
             "type": "string"
           },
+          "organization_id": {
+            "type": "string",
+            "description": "Organization this start point belongs to.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
           "watering_point": {
             "type": "boolean"
+          }
+        }
+      },
+      "TransferRequest": {
+        "type": "object",
+        "description": "Request body for transferring a resource's ownership to another\norganization.",
+        "required": [
+          "organization_id"
+        ],
+        "properties": {
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           }
         }
       },
@@ -6757,6 +7080,14 @@
           "name": {
             "type": "string",
             "example": "Cluster Stadtpark Nord"
+          },
+          "organization_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "provider": {
             "type": [
@@ -6920,7 +7251,8 @@
           "latitude",
           "longitude",
           "archived",
-          "trees"
+          "trees",
+          "organization_id"
         ],
         "properties": {
           "additional_information": {
@@ -6981,6 +7313,10 @@
           "name": {
             "type": "string",
             "example": "Cluster Stadtpark Nord"
+          },
+          "organization_id": {
+            "type": "string",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "provider": {
             "type": [
@@ -7108,6 +7444,14 @@
             "type": "string",
             "example": "T-2024-0042"
           },
+          "organization_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
           "planting_year": {
             "type": "integer",
             "format": "int32",
@@ -7213,7 +7557,8 @@
           "latitude",
           "longitude",
           "watering_status",
-          "description"
+          "description",
+          "organization_id"
         ],
         "properties": {
           "additional_information": {
@@ -7259,6 +7604,10 @@
           "number": {
             "type": "string",
             "example": "T-2024-0042"
+          },
+          "organization_id": {
+            "type": "string",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "planting_year": {
             "type": "integer",
@@ -7750,6 +8099,15 @@
             "description": "Official license plate number of the vehicle.",
             "example": "FL-GE 123"
           },
+          "organization_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Organization this vehicle belongs to. Defaults to the acting user's\nown organization (or the root organization in the demo bypass).",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
           "provider": {
             "type": [
               "string",
@@ -7828,7 +8186,8 @@
           "height",
           "width",
           "length",
-          "weight"
+          "weight",
+          "organization_id"
         ],
         "properties": {
           "additional_information": {
@@ -7889,6 +8248,11 @@
             "type": "string",
             "description": "Official license plate number of the vehicle.",
             "example": "FL-GE 123"
+          },
+          "organization_id": {
+            "type": "string",
+            "description": "Organization this vehicle belongs to.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "provider": {
             "type": [
@@ -8117,6 +8481,15 @@
             "description": "Human-readable description of the watering plan.",
             "example": "Bewässerungsplan Stadtpark Nord"
           },
+          "organization_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Organization this watering plan belongs to. Defaults to the acting\nuser's own organization when omitted.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
           "provider": {
             "type": [
               "string",
@@ -8306,7 +8679,8 @@
           "transporter",
           "treeclusters",
           "user_ids",
-          "evaluation"
+          "evaluation",
+          "organization_id"
         ],
         "properties": {
           "additional_information": {
@@ -8366,6 +8740,11 @@
             "type": "string",
             "format": "uuid",
             "description": "Unique identifier of the watering plan.",
+            "example": "0190a8e9-7c4f-7000-8000-000000000000"
+          },
+          "organization_id": {
+            "type": "string",
+            "description": "Identifier of the organization this watering plan belongs to.",
             "example": "0190a8e9-7c4f-7000-8000-000000000000"
           },
           "provider": {

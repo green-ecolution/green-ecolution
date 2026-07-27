@@ -56,6 +56,12 @@ export interface TreeClusterCreateRequest {
      * @type {string}
      * @memberof TreeClusterCreateRequest
      */
+    organizationId?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof TreeClusterCreateRequest
+     */
     provider?: string | null;
     /**
      * 
@@ -99,6 +105,7 @@ export function TreeClusterCreateRequestFromJSONTyped(json: any, ignoreDiscrimin
         'address': json['address'],
         'description': json['description'],
         'name': json['name'],
+        'organizationId': json['organization_id'] == null ? undefined : json['organization_id'],
         'provider': json['provider'] == null ? undefined : json['provider'],
         'soilCondition': SoilConditionFromJSON(json['soil_condition']),
         'treeIds': json['tree_ids'],
@@ -120,6 +127,7 @@ export function TreeClusterCreateRequestToJSONTyped(value?: TreeClusterCreateReq
         'address': value['address'],
         'description': value['description'],
         'name': value['name'],
+        'organization_id': value['organizationId'],
         'provider': value['provider'],
         'soil_condition': SoilConditionToJSON(value['soilCondition']),
         'tree_ids': value['treeIds'],

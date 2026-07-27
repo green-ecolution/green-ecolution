@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT\n                COUNT(*)                                                  AS \"total!: i64\",\n                COUNT(*) FILTER (WHERE watering_status = 'bad')           AS \"bad!: i64\",\n                COUNT(*) FILTER (WHERE watering_status = 'moderate')      AS \"moderate!: i64\",\n                COUNT(*) FILTER (WHERE watering_status = 'good')          AS \"good!: i64\",\n                COUNT(*) FILTER (WHERE watering_status = 'just watered')  AS \"just_watered!: i64\",\n                COUNT(*) FILTER (WHERE watering_status = 'unknown')       AS \"unknown!: i64\",\n                COALESCE((\n                    SELECT COUNT(*) FROM trees t\n                    JOIN tree_clusters c ON t.tree_cluster_id = c.id\n                    WHERE c.archived = false\n                      AND ($1::uuid[] IS NULL OR c.organization_id = ANY($1))\n                ), 0)                                                     AS \"trees!: i64\"\n            FROM tree_clusters tc\n            WHERE tc.archived = false\n              AND ($1::uuid[] IS NULL OR tc.organization_id = ANY($1))",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "total!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "bad!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "moderate!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "good!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "just_watered!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "unknown!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 6,
+        "name": "trees!: i64",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "578a7918a5677f56f99cdcaff2da6fb704c7e48707219756d79073a118897915"
+}

@@ -21,6 +21,7 @@ import type {
   ListResponseTreeClusterInListResponse,
   SoilCondition,
   SoilMoistureSeriesResponse,
+  TransferRequest,
   TreeClusterCreateRequest,
   TreeClusterResponse,
   TreeClusterUpdateRequest,
@@ -39,6 +40,8 @@ import {
     SoilConditionToJSON,
     SoilMoistureSeriesResponseFromJSON,
     SoilMoistureSeriesResponseToJSON,
+    TransferRequestFromJSON,
+    TransferRequestToJSON,
     TreeClusterCreateRequestFromJSON,
     TreeClusterCreateRequestToJSON,
     TreeClusterResponseFromJSON,
@@ -77,6 +80,11 @@ export interface ListClustersRequest {
     query?: string | null;
     sort?: string | null;
     order?: string | null;
+}
+
+export interface TransferClusterRequest {
+    clusterId: string;
+    transferRequest: TransferRequest;
 }
 
 export interface UpdateClusterRequest {
@@ -412,6 +420,54 @@ export class TreeClustersApi extends runtime.BaseAPI {
     async listClusters(requestParameters: ListClustersRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseTreeClusterInListResponse> {
         const response = await this.listClustersRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Moves the cluster, its member trees, and their attached sensors to a different owning organization in one operation. Requires `tree_cluster:update` in both the source and target organization.
+     * Transfer a cluster\'s ownership to another organization
+     */
+    async transferClusterRaw(requestParameters: TransferClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['clusterId'] == null) {
+            throw new runtime.RequiredError(
+                'clusterId',
+                'Required parameter "clusterId" was null or undefined when calling transferCluster().'
+            );
+        }
+
+        if (requestParameters['transferRequest'] == null) {
+            throw new runtime.RequiredError(
+                'transferRequest',
+                'Required parameter "transferRequest" was null or undefined when calling transferCluster().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/clusters/{cluster_id}/organization`;
+        urlPath = urlPath.replace(`{${"cluster_id"}}`, encodeURIComponent(String(requestParameters['clusterId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: TransferRequestToJSON(requestParameters['transferRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Moves the cluster, its member trees, and their attached sensors to a different owning organization in one operation. Requires `tree_cluster:update` in both the source and target organization.
+     * Transfer a cluster\'s ownership to another organization
+     */
+    async transferCluster(requestParameters: TransferClusterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.transferClusterRaw(requestParameters, initOverrides);
     }
 
     /**

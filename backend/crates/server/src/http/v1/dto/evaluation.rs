@@ -63,7 +63,8 @@ pub struct EvaluationResponse {
     #[schema(example = 15, minimum = 0)]
     pub watering_plan_count: i32,
 
-    /// Number of watering plans created by the current user.
+    /// Number of user-to-watering-plan assignments across all watering plans
+    /// visible to the caller.
     #[schema(example = 8, minimum = 0)]
     pub user_watering_plan_count: u32,
 

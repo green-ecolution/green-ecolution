@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE tree_cluster_watering_plans SET consumed_water = 250.0 WHERE watering_plan_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e1ccff5f6353e7583f6565144fc03fa11ce2a80fe7e8170ca10b4255979b021d"
+}

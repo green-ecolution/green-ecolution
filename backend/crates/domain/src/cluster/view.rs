@@ -27,6 +27,7 @@ pub struct TreeClusterView {
     pub sensor_count: i64,
     pub provider: Option<String>,
     pub additional_info: Option<Value>,
+    pub organization_id: Uuid,
 }
 
 /// Read model for a cluster's map boundary: a GeoJSON polygon (convex hull of

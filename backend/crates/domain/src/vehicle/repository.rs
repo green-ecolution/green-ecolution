@@ -2,6 +2,7 @@ use async_trait::async_trait;
 
 use crate::{
     Id, RepositoryError,
+    authorization::Visibility,
     shared::pagination::{Page, Pagination},
     vehicle::{NumberPlate, Vehicle, VehicleDraft, VehicleSearchQuery, VehicleType, VehicleView},
 };
@@ -25,6 +26,7 @@ pub trait VehicleReader: Send + Sync {
         &self,
         vehicle_type: VehicleType,
         pagination: Pagination,
+        visible: Visibility,
     ) -> Result<Page<VehicleView>, RepositoryError>;
 }
 

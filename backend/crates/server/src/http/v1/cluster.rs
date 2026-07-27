@@ -11,25 +11,30 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     http::{
         AppState,
-        v1::dto::{
-            ListResponse,
-            cluster::{
-                ClusterBoundaryListResponse, ClusterBoundaryResponse, ClusterListParams,
-                ClusterMarkerListResponse, ClusterMarkerResponse, ClusterStatisticsResponse,
-                SoilMoistureParams, SoilMoistureSeriesResponse, TreeClusterCreateRequest,
-                TreeClusterInListResponse, TreeClusterResponse, TreeClusterUpdateRequest,
+        auth::extractor::AuthUserExtractor,
+        v1::{
+            dto::{
+                ListResponse,
+                cluster::{
+                    ClusterBoundaryListResponse, ClusterBoundaryResponse, ClusterListParams,
+                    ClusterMarkerListResponse, ClusterMarkerResponse, ClusterStatisticsResponse,
+                    SoilMoistureParams, SoilMoistureSeriesResponse, TreeClusterCreateRequest,
+                    TreeClusterInListResponse, TreeClusterResponse, TreeClusterUpdateRequest,
+                },
+                sensor::resolve_sensors_by_str_ids,
+                tree::{TransferRequest, TreeResponse},
             },
-            sensor::resolve_sensors_by_str_ids,
-            tree::TreeResponse,
+            scope,
         },
     },
     service::ServiceError,
 };
 use domain::{
     Id,
+    authorization::{Action, Permission, Resource},
     cluster::{
-        ClusterAddress, ClusterName, ClusterSort, SortOrder, TreeClusterDraft,
-        TreeClusterSearchQuery, TreeClusterUpdate, TreeClusterView,
+        ClusterAddress, ClusterName, ClusterSort, SortOrder, TreeClusterSearchQuery,
+        TreeClusterUpdate, TreeClusterView,
     },
     region::Region,
     shared::{
@@ -46,6 +51,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(list_cluster_boundaries))
         .routes(routes!(get_cluster, update_cluster, delete_cluster))
         .routes(routes!(get_cluster_soil_moisture))
+        .routes(routes!(transfer_cluster))
 }
 
 async fn build_cluster_response(
@@ -102,6 +108,7 @@ const CLUSTER_LIST_QUERY_MAX_LEN: usize = 100;
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_clusters(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Query(params): Query<ClusterListParams>,
 ) -> Result<Json<ListResponse<TreeClusterInListResponse>>, ServiceError> {
     let pagination = Pagination::new(params.page, params.per_page);
@@ -113,6 +120,13 @@ pub async fn list_clusters(
             "query must be at most {CLUSTER_LIST_QUERY_MAX_LEN} characters"
         )));
     }
+    let visible = state
+        .authorization_service
+        .visible_orgs_for(
+            user.id,
+            Permission::new(Resource::TreeCluster, Action::Read),
+        )
+        .await?;
     let query = TreeClusterSearchQuery {
         watering_statuses: params
             .watering_status
@@ -136,6 +150,7 @@ pub async fn list_clusters(
             .as_deref()
             .and_then(|s| s.parse::<SortOrder>().ok())
             .unwrap_or_default(),
+        visible,
         ..TreeClusterSearchQuery::default()
     };
     let page = state.cluster_service.search_view(query, pagination).await?;
@@ -175,9 +190,16 @@ pub async fn list_clusters(
 #[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]
 pub async fn get_cluster(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<Json<TreeClusterResponse>, ServiceError> {
     let view = state.cluster_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::TreeCluster, Action::Read),
+        view.organization_id,
+    )?;
     let response = build_cluster_response(&state, &view).await?;
     Ok(Json(response))
 }
@@ -198,9 +220,19 @@ pub async fn get_cluster(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn create_cluster(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Json(entity): Json<TreeClusterCreateRequest>,
 ) -> Result<(StatusCode, Json<TreeClusterResponse>), ServiceError> {
-    let draft: TreeClusterDraft = entity.try_into()?;
+    let org = scope::resolve_target_org(&state, user.id, entity.organization_id).await?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::TreeCluster, Action::Create),
+            org,
+        )
+        .await?;
+    let draft = entity.into_draft(org)?;
     let cluster = state.cluster_service.create(draft).await?;
     let view = state.cluster_service.view_by_id(cluster.id).await?;
     let response = build_cluster_response(&state, &view).await?;
@@ -218,6 +250,7 @@ pub async fn create_cluster(
     request_body = TreeClusterUpdateRequest,
     responses(
         (status = 200, description = "Cluster updated", body = TreeClusterResponse),
+        (status = 403, description = "Missing tree_cluster:update in the owning organization"),
         (status = 404, description = "Cluster not found"),
         (status = 500, description = "Internal server error"),
     )
@@ -225,10 +258,26 @@ pub async fn create_cluster(
 #[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]
 pub async fn update_cluster(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
     Json(entity): Json<TreeClusterUpdateRequest>,
 ) -> Result<Json<TreeClusterResponse>, ServiceError> {
     let cluster_id = Id::new(id);
+    let current = state.cluster_service.view_by_id(cluster_id).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::TreeCluster, Action::Read),
+        current.organization_id,
+    )?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::TreeCluster, Action::Update),
+            Id::new(current.organization_id),
+        )
+        .await?;
     let update = TreeClusterUpdate {
         name: ClusterName::new(entity.name)?,
         address: ClusterAddress::new(entity.address)?,
@@ -256,6 +305,7 @@ pub async fn update_cluster(
     params(("cluster_id" = uuid::Uuid, Path, description = "Cluster ID")),
     responses(
         (status = 204, description = "Cluster deleted"),
+        (status = 403, description = "Missing tree_cluster:delete in the owning organization"),
         (status = 404, description = "Cluster not found"),
         (status = 500, description = "Internal server error"),
     )
@@ -263,8 +313,24 @@ pub async fn update_cluster(
 #[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]
 pub async fn delete_cluster(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, ServiceError> {
+    let current = state.cluster_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::TreeCluster, Action::Read),
+        current.organization_id,
+    )?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::TreeCluster, Action::Delete),
+            Id::new(current.organization_id),
+        )
+        .await?;
     state.cluster_service.delete(Id::new(id)).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -285,8 +351,16 @@ pub async fn delete_cluster(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_cluster_markers(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
 ) -> Result<Json<ClusterMarkerListResponse>, ServiceError> {
-    let markers = state.cluster_service.view_markers().await?;
+    let visible = state
+        .authorization_service
+        .visible_orgs_for(
+            user.id,
+            Permission::new(Resource::TreeCluster, Action::Read),
+        )
+        .await?;
+    let markers = state.cluster_service.view_markers(visible).await?;
     let data = markers.iter().map(ClusterMarkerResponse::from).collect();
     Ok(Json(ClusterMarkerListResponse { data }))
 }
@@ -307,8 +381,16 @@ pub async fn list_cluster_markers(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_cluster_boundaries(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
 ) -> Result<Json<ClusterBoundaryListResponse>, ServiceError> {
-    let boundaries = state.cluster_service.boundaries().await?;
+    let visible = state
+        .authorization_service
+        .visible_orgs_for(
+            user.id,
+            Permission::new(Resource::TreeCluster, Action::Read),
+        )
+        .await?;
+    let boundaries = state.cluster_service.boundaries(visible).await?;
     let data = boundaries
         .iter()
         .map(ClusterBoundaryResponse::from)
@@ -331,8 +413,16 @@ pub async fn list_cluster_boundaries(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn cluster_statistics(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
 ) -> Result<Json<ClusterStatisticsResponse>, ServiceError> {
-    let stats = state.cluster_service.statistics().await?;
+    let visible = state
+        .authorization_service
+        .visible_orgs_for(
+            user.id,
+            Permission::new(Resource::TreeCluster, Action::Read),
+        )
+        .await?;
+    let stats = state.cluster_service.statistics(visible).await?;
     Ok(Json(ClusterStatisticsResponse::from(stats)))
 }
 
@@ -356,13 +446,69 @@ pub async fn cluster_statistics(
 #[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]
 pub async fn get_cluster_soil_moisture(
     State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
     Path(id): Path<uuid::Uuid>,
     Query(params): Query<SoilMoistureParams>,
 ) -> Result<Json<SoilMoistureSeriesResponse>, ServiceError> {
+    let cluster_id = Id::new(id);
+    let view = state.cluster_service.view_by_id(cluster_id).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::TreeCluster, Action::Read),
+        view.organization_id,
+    )?;
     let (from, to, bucket) = params.resolve()?;
     let overview = state
         .cluster_service
-        .soil_moisture_overview(Id::new(id), from, to, bucket)
+        .soil_moisture_overview(cluster_id, from, to, bucket)
         .await?;
     Ok(Json(SoilMoistureSeriesResponse::from(overview)))
+}
+
+#[utoipa::path(
+    patch,
+    path = "/clusters/{cluster_id}/organization",
+    tag = "Tree Clusters",
+    operation_id = "transferCluster",
+    summary = "Transfer a cluster's ownership to another organization",
+    description = "Moves the cluster, its member trees, and their attached sensors to a \
+                   different owning organization in one operation. Requires `tree_cluster:update` \
+                   in both the source and target organization.",
+    params(("cluster_id" = uuid::Uuid, Path, description = "Cluster ID")),
+    request_body = TransferRequest,
+    responses(
+        (status = 204, description = "Cluster transferred"),
+        (status = 403, description = "Missing tree_cluster:update in source or target organization"),
+        (status = 404, description = "Cluster or organization not found"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all, fields(cluster.id = %id))]
+pub async fn transfer_cluster(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+    Path(id): Path<uuid::Uuid>,
+    Json(req): Json<TransferRequest>,
+) -> Result<StatusCode, ServiceError> {
+    let current = state.cluster_service.view_by_id(Id::new(id)).await?;
+    let ctx = state.authorization_service.context_for(user.id).await?;
+    scope::ensure_visible(
+        &ctx,
+        Permission::new(Resource::TreeCluster, Action::Read),
+        current.organization_id,
+    )?;
+    let perm = Permission::new(Resource::TreeCluster, Action::Update);
+    state
+        .authorization_service
+        .require(user.id, perm, Id::new(current.organization_id))
+        .await?;
+    state
+        .authorization_service
+        .require(user.id, perm, Id::new(req.organization_id))
+        .await?;
+    state
+        .cluster_service
+        .transfer(Id::new(id), Id::new(req.organization_id))
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
 }

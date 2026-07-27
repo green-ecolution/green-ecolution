@@ -56,8 +56,8 @@ async fn insert_tree(app: &TestApp, number: &str) -> Uuid {
         .unwrap();
     let id = Uuid::now_v7();
     sqlx::query!(
-        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description)
-        VALUES ($1, $2, 'Eiche', $3, $4, $5, ST_SetSRID(ST_MakePoint($5, $4), 4326), 'Test')"#,
+        r#"INSERT INTO trees (id, planting_year, species, number, latitude, longitude, geometry, description, organization_id)
+        VALUES ($1, $2, 'Eiche', $3, $4, $5, ST_SetSRID(ST_MakePoint($5, $4), 4326), 'Test', '01980000-0000-7000-8000-000000000001')"#,
         id,
         planting_year,
         number,
@@ -242,8 +242,8 @@ async fn insert_cluster_with_soil(app: &TestApp, soil: &str) -> Uuid {
     let id = Uuid::now_v7();
     sqlx::query(
         r#"INSERT INTO tree_clusters
-             (id, name, address, description, moisture_level, soil_condition, watering_status)
-           VALUES ($1, 'C', 'A', 'D', 0.5, $2::tree_soil_condition, 'unknown')"#,
+             (id, name, address, description, moisture_level, soil_condition, watering_status, organization_id)
+           VALUES ($1, 'C', 'A', 'D', 0.5, $2::tree_soil_condition, 'unknown', '01980000-0000-7000-8000-000000000001')"#,
     )
     .bind(id)
     .bind(soil)
@@ -270,8 +270,8 @@ async fn insert_tree_in_cluster(
     let id = Uuid::now_v7();
     sqlx::query(
         r#"INSERT INTO trees
-             (id, tree_cluster_id, planting_year, species, number, latitude, longitude, geometry, description)
-           VALUES ($1, $2, $3, 'Eiche', $4, $5, $6, ST_SetSRID(ST_MakePoint($6, $5), 4326), 'T')"#,
+             (id, tree_cluster_id, planting_year, species, number, latitude, longitude, geometry, description, organization_id)
+           VALUES ($1, $2, $3, 'Eiche', $4, $5, $6, ST_SetSRID(ST_MakePoint($6, $5), 4326), 'T', '01980000-0000-7000-8000-000000000001')"#,
     )
     .bind(id)
     .bind(cluster_id)

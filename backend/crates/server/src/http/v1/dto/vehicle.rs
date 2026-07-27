@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use domain::{
+    Id,
+    organization::Organization,
     shared::{
         provenance::{Provenance, ProviderId},
         water_capacity::WaterCapacity,
@@ -65,6 +67,9 @@ pub struct VehicleResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Object, nullable)]
     pub additional_information: Option<serde_json::Value>,
+    /// Organization this vehicle belongs to.
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
+    pub organization_id: String,
 }
 
 impl From<&VehicleView> for VehicleResponse {
@@ -87,6 +92,7 @@ impl From<&VehicleView> for VehicleResponse {
             archived_at: value.archived_at.map(|dt| dt.to_rfc3339()),
             provider: value.provider.clone(),
             additional_information: value.additional_info.clone(),
+            organization_id: value.organization_id.to_string(),
         }
     }
 }
@@ -133,6 +139,11 @@ pub struct VehicleCreateRequest {
     #[serde(default)]
     #[schema(value_type = Object, nullable)]
     pub additional_information: Option<serde_json::Value>,
+    /// Organization this vehicle belongs to. Defaults to the acting user's
+    /// own organization (or the root organization in the demo bypass).
+    #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
+    #[serde(default)]
+    pub organization_id: Option<uuid::Uuid>,
 }
 
 /// Request body for updating an existing watering vehicle.
@@ -191,7 +202,10 @@ fn parse_provenance(
 }
 
 impl VehicleCreateRequest {
-    pub fn into_draft(self) -> Result<VehicleDraft, crate::service::ServiceError> {
+    pub fn into_draft(
+        self,
+        organization_id: Id<Organization>,
+    ) -> Result<VehicleDraft, crate::service::ServiceError> {
         let number_plate = NumberPlate::new(self.number_plate)
             .map_err(|e| crate::service::ServiceError::InvalidInput(e.to_string()))?;
         let model = VehicleModel::new(self.model)
@@ -212,6 +226,7 @@ impl VehicleCreateRequest {
             driving_license: self.driving_license.into(),
             dimension,
             provenance,
+            organization_id,
         })
     }
 }
