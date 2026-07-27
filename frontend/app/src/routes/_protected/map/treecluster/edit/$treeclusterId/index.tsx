@@ -5,7 +5,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import type { TreeResponse } from '@green-ecolution/backend-client'
 import { treeClusterIdQuery } from '@/api/queries'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
-import { entityNotFound } from '@/lib/router'
+import { entityNotFound, forbiddenErrorComponent, requirePermission } from '@/lib/router'
 import FormForTreecluster from '@/components/general/form/FormForTreecluster'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import { useTreeClusterForm } from '@/hooks/form/useTreeClusterForm'
@@ -17,13 +17,16 @@ import useSelectableTreeLayer from '@/components/map-gl/layers/useSelectableTree
 
 export const Route = createFileRoute('/_protected/map/treecluster/edit/$treeclusterId/')({
   component: EditClusterOnMap,
+  beforeLoad: requirePermission(['tree_cluster:update']),
   loader: ({ context: { queryClient }, params: { treeclusterId } }) =>
     queryClient.prefetchQuery(treeClusterIdQuery(treeclusterId)),
-  errorComponent: entityNotFound({
-    entityName: 'Bewässerungsgruppe',
-    backTo: '/treecluster',
-    backLabel: 'Zur Gruppenliste',
-  }),
+  errorComponent: forbiddenErrorComponent(
+    entityNotFound({
+      entityName: 'Bewässerungsgruppe',
+      backTo: '/treecluster',
+      backLabel: 'Zur Gruppenliste',
+    }),
+  ),
 })
 
 function EditClusterOnMap() {

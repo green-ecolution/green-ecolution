@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { crumbRoute } from '@/lib/router'
+import { crumbRoute, guardedRoute } from '@/lib/router'
 
 export const Route = createFileRoute(
   '/_protected/watering-plans/_formular/$wateringPlanId/status/edit',
-)(crumbRoute('Status des Einsatzplans ändern'))
+)(guardedRoute(['watering_plan:update'], crumbRoute('Status des Einsatzplans ändern')))
