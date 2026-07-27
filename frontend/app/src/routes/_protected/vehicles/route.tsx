@@ -1,4 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { crumbRoute } from '@/lib/router'
+import { crumbRoute, guardedRoute } from '@/lib/router'
 
-export const Route = createFileRoute('/_protected/vehicles')(crumbRoute('Fahrzeuge'))
+export const Route = createFileRoute('/_protected/vehicles')(
+  guardedRoute(['vehicle:read'], crumbRoute('Fahrzeuge')),
+)
