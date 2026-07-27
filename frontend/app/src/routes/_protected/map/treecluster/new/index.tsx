@@ -6,12 +6,15 @@ import { TreeclusterForm } from '@/schema/treeclusterSchema'
 import FormForTreecluster from '@/components/general/form/FormForTreecluster'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
 import { useTreeClusterForm } from '@/hooks/form/useTreeClusterForm'
+import { forbiddenErrorComponent, requirePermission } from '@/lib/router'
 import MapPanel from '@/components/map-gl/MapPanel'
 import useClusterBoundaryLayer from '@/components/map-gl/layers/useClusterBoundaryLayer'
 import useSelectableTreeLayer from '@/components/map-gl/layers/useSelectableTreeLayer'
 
 export const Route = createFileRoute('/_protected/map/treecluster/new/')({
   component: NewClusterOnMap,
+  beforeLoad: requirePermission(['tree_cluster:create']),
+  errorComponent: forbiddenErrorComponent(),
 })
 
 const defaultForm: DefaultValues<TreeclusterForm> = {

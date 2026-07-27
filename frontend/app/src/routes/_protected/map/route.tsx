@@ -14,7 +14,7 @@ import MapBackgroundClick from '@/components/map-gl/MapBackgroundClick'
 import MapToolbarBar from '@/components/map/MapToolbarBar'
 import ClusterPanel from '@/components/map/cluster-panel/ClusterPanel'
 import { clusterBoundariesQuery, clusterMarkersQuery } from '@/api/queries'
-import { pendingLoading, prefetch } from '@/lib/router'
+import { forbiddenErrorComponent, pendingLoading, prefetch, requirePermission } from '@/lib/router'
 import { Loading } from '@green-ecolution/ui'
 import { Suspense, useCallback, useState } from 'react'
 
@@ -36,6 +36,8 @@ const mapSearchParamsSchema = z.object({
 export const Route = createFileRoute('/_protected/map')({
   component: MapRoot,
   validateSearch: mapSearchParamsSchema,
+  beforeLoad: requirePermission(['tree:read', 'tree_cluster:read']),
+  errorComponent: forbiddenErrorComponent(),
   loaderDeps: ({ search: { lat, lng, zoom } }) => ({
     lat,
     lng,

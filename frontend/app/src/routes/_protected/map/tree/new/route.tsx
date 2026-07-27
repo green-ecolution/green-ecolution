@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { crumbRoute } from '@/lib/router'
+import { crumbRoute, guardedRoute } from '@/lib/router'
 
 export const Route = createFileRoute('/_protected/map/tree/new')(
-  crumbRoute('Baum Standort erfassen'),
+  guardedRoute(['tree:create'], crumbRoute('Baum Standort erfassen')),
 )

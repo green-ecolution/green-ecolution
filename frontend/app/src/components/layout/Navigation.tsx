@@ -23,6 +23,8 @@ import Tree from '../icons/Tree'
 import SensorIcon from '../icons/Sensor'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed'
+import { visibleNavSections } from '@/lib/auth/routePermissions'
+import { usePermissions } from '@/lib/auth/usePermissions'
 
 interface NavigationProps {
   isOpen: boolean
@@ -161,7 +163,8 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
     if (!isLargeScreen) closeSidebar()
   }, [isLargeScreen, closeSidebar])
 
-  const navigationData = isLoggedIn ? protectedNavData : publicNavData
+  const perms = usePermissions()
+  const navigationData = isLoggedIn ? visibleNavSections(protectedNavData, perms) : publicNavData
 
   return (
     <nav

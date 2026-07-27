@@ -3,6 +3,9 @@ import { cleanup } from '@testing-library/react'
 import { afterEach, beforeAll, afterAll, vi } from 'vitest'
 import { server } from './mocks/server'
 
+// The lottie player touches a real canvas on import, which jsdom does not provide
+vi.mock('lottie-react', () => ({ default: () => null }))
+
 // Mock PointerEvent methods for Radix UI components (not available in jsdom)
 Element.prototype.hasPointerCapture = vi.fn(() => false)
 Element.prototype.setPointerCapture = vi.fn()

@@ -9,7 +9,7 @@ import { treeApi } from '@/api/backendApi'
 import { TreeForm } from '@/schema/treeSchema'
 import { useTreeForm } from '@/hooks/form/useTreeForm'
 import createToast from '@/hooks/createToast'
-import { entityNotFound, prefetch } from '@/lib/router'
+import { entityNotFound, forbiddenErrorComponent, prefetch, requirePermission } from '@/lib/router'
 import FormForTree from '@/components/general/form/FormForTree'
 import DeleteConfirmDialog from '@/components/general/DeleteConfirmDialog'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
@@ -23,16 +23,19 @@ import useTreeLayers from '@/components/map-gl/layers/useTreeLayers'
 
 export const Route = createFileRoute('/_protected/map/tree/edit/$treeId/')({
   component: EditTreeOnMap,
+  beforeLoad: requirePermission(['tree:update']),
   loader: ({ context: { queryClient }, params: { treeId } }) => {
     prefetch(queryClient, treeIdQuery(treeId), 'treeIdQuery')
     prefetch(queryClient, sensorQuery(), 'sensorQuery')
     prefetch(queryClient, treeClusterQuery(), 'treeClusterQuery')
   },
-  errorComponent: entityNotFound({
-    entityName: 'Baum',
-    backTo: '/trees',
-    backLabel: 'Zur Baumliste',
-  }),
+  errorComponent: forbiddenErrorComponent(
+    entityNotFound({
+      entityName: 'Baum',
+      backTo: '/trees',
+      backLabel: 'Zur Baumliste',
+    }),
+  ),
 })
 
 function EditTreeOnMap() {
