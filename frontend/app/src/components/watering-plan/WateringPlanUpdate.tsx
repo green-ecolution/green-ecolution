@@ -12,6 +12,7 @@ import { showWateringPlanStatusButton } from '@/hooks/details/useDetailsForWater
 import { Loading } from '@green-ecolution/ui'
 import { Suspense } from 'react'
 import DeleteSection from '../treecluster/DeleteSection'
+import { Can } from '@/lib/auth/Can'
 import { wateringPlanApi } from '@/api/backendApi'
 import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
@@ -141,17 +142,19 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         </FormProvider>
       </section>
 
-      <Suspense
-        fallback={
-          <Loading className="mt-20 justify-center" label="Der Einsatzplan wird gelöscht" />
-        }
-      >
-        <DeleteSection
-          mutationFn={handleDeleteWateringPlan}
-          entityName="der Einsatzplan"
-          redirectUrl={{ to: '/watering-plans' }}
-        />
-      </Suspense>
+      <Can permission={['watering_plan:delete']}>
+        <Suspense
+          fallback={
+            <Loading className="mt-20 justify-center" label="Der Einsatzplan wird gelöscht" />
+          }
+        >
+          <DeleteSection
+            mutationFn={handleDeleteWateringPlan}
+            entityName="der Einsatzplan"
+            redirectUrl={{ to: '/watering-plans' }}
+          />
+        </Suspense>
+      </Can>
 
       <UnsavedChangesDialog blocker={navigationBlocker} />
     </>
