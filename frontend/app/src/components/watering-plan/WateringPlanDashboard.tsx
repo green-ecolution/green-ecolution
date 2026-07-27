@@ -65,7 +65,7 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
       >
         {wateringPlan.description && <p className="mb-4">{wateringPlan.description}</p>}
         <div className="flex flex-wrap gap-4 items-center">
-          {showWateringPlanStatusButton(wateringPlan) && (
+          {canEdit && showWateringPlanStatusButton(wateringPlan) && (
             <ButtonLink
               link={{
                 to: '/watering-plans/$wateringPlanId/status/edit',

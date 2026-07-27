@@ -13,6 +13,7 @@ import { Loading } from '@green-ecolution/ui'
 import { Suspense } from 'react'
 import DeleteSection from '../treecluster/DeleteSection'
 import { Can } from '@/lib/auth/Can'
+import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { wateringPlanApi } from '@/api/backendApi'
 import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
@@ -25,6 +26,7 @@ interface WateringPlanUpdateProps {
 }
 
 const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
+  const canUpdateStatus = useHasPermission(['watering_plan:update'])
   const draft = useWateringPlanDraft<WateringPlanForm>('update')
   const { initForm, loadedData } = useInitFormQuery(
     wateringPlanIdQuery(wateringPlanId),
@@ -113,7 +115,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
           und mindestens eine:n Mitarbeiter:in, die den Einatz durchführen soll. Zudem muss ein
           Fahrzeug hinterlegt werden.
         </p>
-        {showWateringPlanStatusButton(loadedData) && (
+        {canUpdateStatus && showWateringPlanStatusButton(loadedData) && (
           <p className="mt-5 flex flex-wrap gap-x-4">
             Der Status eines Einsatzes kann seperat editiert werden.
             <GeneralLink
