@@ -7,6 +7,7 @@ import Dialog from '@/components/general/filter/Dialog'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
 import MapFilterToolbar from './MapFilterToolbar'
 import MapButtons from './MapButtons'
+import { Can } from '@/lib/auth/Can'
 
 const MapToolbarBar = () => {
   const navigate = useNavigate()
@@ -56,12 +57,14 @@ const MapToolbarBar = () => {
         createSlot={
           <div className="flex items-center gap-2 lg:ml-auto">
             <MapButtons />
-            <Button asChild>
-              <Link to="/map/treecluster/new" search={(prev) => prev}>
-                <span className="hidden sm:inline">Gruppe anlegen</span>
-                <Plus />
-              </Link>
-            </Button>
+            <Can permission={['tree_cluster:create']}>
+              <Button asChild>
+                <Link to="/map/treecluster/new" search={(prev) => prev}>
+                  <span className="hidden sm:inline">Gruppe anlegen</span>
+                  <Plus />
+                </Link>
+              </Button>
+            </Can>
           </div>
         }
       />

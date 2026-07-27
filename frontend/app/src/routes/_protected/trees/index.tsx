@@ -16,6 +16,7 @@ import { treeQuery } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
 import { filterSearchSchema } from '@/lib/filterSearchSchema'
 import { pendingLoading, prefetch } from '@/lib/router'
+import { Can } from '@/lib/auth/Can'
 
 const treeFilterSchema = filterSearchSchema
   .pick({ wateringStatuses: true, hasCluster: true, plantingYears: true })
@@ -57,7 +58,9 @@ function Trees() {
           </>
         }
         action={
-          <ButtonLink icon={Plus} label="Neuen Baum erstellen" link={{ to: '/map/tree/new' }} />
+          <Can permission={['tree:create']}>
+            <ButtonLink icon={Plus} label="Neuen Baum erstellen" link={{ to: '/map/tree/new' }} />
+          </Can>
         }
       />
 

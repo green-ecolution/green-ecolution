@@ -11,6 +11,7 @@ import { z } from 'zod'
 import { vehicleQuery } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
 import { pendingLoading, prefetch } from '@/lib/router'
+import { Can } from '@/lib/auth/Can'
 
 export const Route = createFileRoute('/_protected/vehicles/')({
   component: Vehicles,
@@ -44,7 +45,13 @@ function Vehicles() {
         title="Alle Fahrzeuge"
         description="Hier finden Sie eine Übersicht aller Fahrzeuge, welche für Einsätze verwendet werden können."
         action={
-          <ButtonLink icon={Plus} label="Neues Fahrzeug erstellen" link={{ to: '/vehicles/new' }} />
+          <Can permission={['vehicle:create']}>
+            <ButtonLink
+              icon={Plus}
+              label="Neues Fahrzeug erstellen"
+              link={{ to: '/vehicles/new' }}
+            />
+          </Can>
         }
       />
 
