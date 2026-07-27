@@ -9,9 +9,8 @@ vi.mock('@/lib/auth/runtimeConfig', () => ({
   readAuthBypass: () => readAuthBypass(),
 }))
 
-const { ForbiddenError, forbiddenErrorComponent, guardedRoute, requirePermission } = await import(
-  './router'
-)
+const { ForbiddenError, forbiddenErrorComponent, guardedRoute, requirePermission } =
+  await import('./router')
 const { default: Forbidden } = await import('@/components/layout/Forbidden')
 
 const me = (permissions: string[]): UserResponse =>
