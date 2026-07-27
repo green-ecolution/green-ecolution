@@ -1,8 +1,19 @@
-import type { ComponentProps } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import { Outlet } from '@tanstack/react-router'
+import type { ErrorComponentProps } from '@tanstack/react-router'
 import type { FetchQueryOptions, QueryClient, QueryKey } from '@tanstack/react-query'
 import { Loading } from '@green-ecolution/ui'
 import EntityNotFound from '@/components/layout/EntityNotFound'
+import ErrorFallback from '@/components/layout/ErrorFallback'
+import Forbidden from '@/components/layout/Forbidden'
+import { currentUserQuery } from '@/api/queries'
+import { readAuthBypass } from '@/lib/auth/runtimeConfig'
+import {
+  permissionsOf,
+  satisfies,
+  UNRESTRICTED,
+  type PermissionRequirement,
+} from '@/lib/auth/permissions'
 
 /** Options for layout routes that only render an Outlet and contribute a breadcrumb. */
 export const crumbRoute = (title: string) => ({
@@ -64,4 +75,50 @@ export const entityRoute = <TEntity, TKey extends string>({
     } as Record<TKey, TEntity> & { crumb: { title: string } }
   },
   errorComponent: () => <EntityNotFound {...notFound} />,
+})
+
+export class ForbiddenError extends Error {
+  constructor() {
+    super('Forbidden')
+    this.name = 'ForbiddenError'
+  }
+}
+
+/**
+ * beforeLoad guard. Throwing here keeps the child route's loader from running,
+ * so a denied route issues no API requests and shows no content first.
+ */
+export const requirePermission =
+  (required: PermissionRequirement) =>
+  async ({ context }: { context: { queryClient: QueryClient } }): Promise<void> => {
+    const perms = readAuthBypass()
+      ? UNRESTRICTED
+      : permissionsOf(await context.queryClient.ensureQueryData(currentUserQuery()))
+
+    if (!satisfies(perms, required)) throw new ForbiddenError()
+  }
+
+export const forbiddenErrorComponent =
+  (fallback?: (props: ErrorComponentProps) => ReactNode) =>
+  (props: ErrorComponentProps): ReactNode => {
+    if (props.error instanceof ForbiddenError) return <Forbidden />
+    if (fallback) return fallback(props)
+    return <ErrorFallback error={props.error} resetErrorBoundary={props.reset} />
+  }
+
+/**
+ * Sugar for the crumbRoute-shaped cases; richer routes use the two primitives
+ * directly. `beforeLoad?: undefined` rejects options carrying their own
+ * beforeLoad, which the guard would otherwise drop silently.
+ */
+export const guardedRoute = <T extends object>(
+  required: PermissionRequirement,
+  options: T & {
+    beforeLoad?: undefined
+    errorComponent?: (props: ErrorComponentProps) => ReactNode
+  },
+) => ({
+  ...options,
+  beforeLoad: requirePermission(required),
+  errorComponent: forbiddenErrorComponent(options.errorComponent),
 })
