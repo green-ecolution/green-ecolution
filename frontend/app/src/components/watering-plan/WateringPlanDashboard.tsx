@@ -24,6 +24,7 @@ import ButtonLink from '../general/links/ButtonLink'
 import { WateringPlan } from '@/api/backendApi'
 import { useDownloadGpx } from '@/hooks/useDownloadGpx'
 import WateringPlanPreviewRoute from './WateringPlanRoutePreview'
+import { useHasPermission } from '@/lib/auth/useHasPermission'
 
 interface WateringPlanDashboardProps {
   wateringPlan: WateringPlan
@@ -31,6 +32,7 @@ interface WateringPlanDashboardProps {
 
 const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => {
   const statusDetails = getWateringPlanStatusDetails(wateringPlan.status)
+  const canEdit = useHasPermission(['watering_plan:update'])
 
   const date = wateringPlan?.date
     ? format(new Date(wateringPlan?.date), 'dd.MM.yyyy')
@@ -49,13 +51,17 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
             {statusDetails?.label ?? 'Keine Angabe'}
           </Badge>
         }
-        editLink={{
-          label: 'Einsatz bearbeiten',
-          link: {
-            to: `/watering-plans/$wateringPlanId/edit`,
-            params: { wateringPlanId: String(wateringPlan.id) },
-          },
-        }}
+        editLink={
+          canEdit
+            ? {
+                label: 'Einsatz bearbeiten',
+                link: {
+                  to: `/watering-plans/$wateringPlanId/edit`,
+                  params: { wateringPlanId: String(wateringPlan.id) },
+                },
+              }
+            : undefined
+        }
       >
         {wateringPlan.description && <p className="mb-4">{wateringPlan.description}</p>}
         <div className="flex flex-wrap gap-4 items-center">

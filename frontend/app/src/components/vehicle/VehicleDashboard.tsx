@@ -6,6 +6,7 @@ import type { Vehicle } from '@/api/backendApi'
 import { VehicleStatus } from '@green-ecolution/backend-client'
 import { getVehicleType } from '@/hooks/details/useDetailsForVehicleType'
 import { DetailedList } from '@green-ecolution/ui'
+import { useHasPermission } from '@/lib/auth/useHasPermission'
 
 interface VehicleDashboardProps {
   vehicle: Vehicle
@@ -14,6 +15,7 @@ interface VehicleDashboardProps {
 const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
   const statusDetails = getVehicleStatusDetails(vehicle.status)
   const vehicleType = getVehicleType(vehicle.type)
+  const canEdit = useHasPermission(['vehicle:update'])
 
   const vehicleData = [
     {
@@ -64,13 +66,17 @@ const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
             {statusDetails?.label ?? 'Keine Angabe'}
           </Badge>
         }
-        editLink={{
-          label: 'Fahrzeug bearbeiten',
-          link: {
-            to: `/vehicles/$vehicleId/edit`,
-            params: { vehicleId: String(vehicle.id) },
-          },
-        }}
+        editLink={
+          canEdit
+            ? {
+                label: 'Fahrzeug bearbeiten',
+                link: {
+                  to: `/vehicles/$vehicleId/edit`,
+                  params: { vehicleId: String(vehicle.id) },
+                },
+              }
+            : undefined
+        }
       >
         {vehicle.description && <p className="mb-4">{vehicle.description}</p>}
       </EntityDetailHeader>

@@ -19,6 +19,7 @@ import TabWateringStatus from './TabWateringStatus'
 import TabGeneralData from './TabGeneralData'
 import TabSensorData from './TabSensorData'
 import type { Tree, TreeCluster } from '@/api/backendApi'
+import { useHasPermission } from '@/lib/auth/useHasPermission'
 
 interface TreeDashboardProps {
   tree: Tree
@@ -26,6 +27,7 @@ interface TreeDashboardProps {
 }
 
 const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
+  const canEdit = useHasPermission(['tree:update'])
   return (
     <>
       <EntityDetailHeader
@@ -36,13 +38,17 @@ const TreeDashboard = ({ tree, treeCluster }: TreeDashboardProps) => {
             {tree.provider ?? 'manuell erstellt'}
           </Badge>
         }
-        editLink={{
-          label: 'Baum bearbeiten',
-          link: {
-            to: `/map/tree/edit/$treeId`,
-            params: { treeId: String(tree.id) },
-          },
-        }}
+        editLink={
+          canEdit
+            ? {
+                label: 'Baum bearbeiten',
+                link: {
+                  to: `/map/tree/edit/$treeId`,
+                  params: { treeId: String(tree.id) },
+                },
+              }
+            : undefined
+        }
       >
         {tree.treeClusterId && treeCluster ? (
           <p className="text-dark-600 text-lg">
