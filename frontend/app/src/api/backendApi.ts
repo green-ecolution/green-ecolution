@@ -5,8 +5,10 @@ import {
   FetchAPI,
   HTTPHeaders,
   InfoApi,
+  OrganizationsApi,
   PluginsApi,
   RegionsApi,
+  RolesApi,
   RoutingApi,
   SensorsApi,
   TreesApi,
@@ -84,6 +86,8 @@ export const pluginApi = new PluginsApi(config)
 export const wateringPlanApi = new WateringPlansApi(config)
 export const wateringPlanPreviewApi = new WateringPlansApi(silentConfig)
 export const routingApi = new RoutingApi(config)
+export const roleApi = new RolesApi(config)
+export const organizationApi = new OrganizationsApi(config)
 
 export * from '@green-ecolution/backend-client'
 
@@ -117,6 +121,10 @@ export type { NearestTreeListResponse as NearestTreeList } from '@green-ecolutio
 export type { TreeWithDistanceResponse as TreeWithDistance } from '@green-ecolution/backend-client'
 export type { EvaluationValueResponse as EvaluationValue } from '@green-ecolution/backend-client'
 export type { PaginationResponse as Pagination } from '@green-ecolution/backend-client'
+export type { RoleResponse as Role } from '@green-ecolution/backend-client'
+export type { RoleCreateRequest as RoleCreate } from '@green-ecolution/backend-client'
+export type { RoleUpdateRequest as RoleUpdate } from '@green-ecolution/backend-client'
+export type { OrganizationResponse as Organization } from '@green-ecolution/backend-client'
 
 export interface SensorPayloadWatermark {
   depth: number
