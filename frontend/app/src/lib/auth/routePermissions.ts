@@ -2,7 +2,7 @@ import { ANY_READ, satisfies, type PermissionRequirement, type Permissions } fro
 
 /**
  * Single source of truth for nav filtering and route guards. Paths without an
- * entry are open, which covers /dashboard, /settings, /profile, /info and /debug.
+ * entry are open, which covers /dashboard, /settings, /settings/profile, /info and /debug.
  */
 export const ROUTE_PERMISSIONS: Record<string, PermissionRequirement> = {
   '/trees': ['tree:read'],
@@ -10,7 +10,8 @@ export const ROUTE_PERMISSIONS: Record<string, PermissionRequirement> = {
   '/sensors': ['sensor:read'],
   '/watering-plans': ['watering_plan:read'],
   '/vehicles': ['vehicle:read'],
-  '/team': ['user:read'],
+  '/settings/team/members': ['user:read'],
+  '/settings/team/roles': ['role:read'],
   '/map': ['tree:read', 'tree_cluster:read'],
   '/evaluations': ANY_READ,
 }

@@ -116,7 +116,7 @@ const protectedNavData: NavSectionData[] = [
         key: 'nav-more-team',
         label: 'Mitarbeitende',
         icon: <Users className="w-5 h-5" />,
-        to: '/team',
+        to: '/settings/team/members',
       },
     ],
   },

@@ -9,7 +9,7 @@ import { pendingLoading } from '@/lib/router'
 
 const TEAM_USERS_PARAMS = { page: 1, perPage: 100 }
 
-export const Route = createFileRoute('/_protected/team/')({
+export const Route = createFileRoute('/_protected/settings/team/members/')({
   component: Team,
   pendingComponent: pendingLoading('Daten werden geladen'),
   loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(userQuery(TEAM_USERS_PARAMS)),
@@ -22,7 +22,7 @@ function Team() {
     <div className="container mt-6">
       <ListPageHeader
         title="Alle Mitarbeitenden"
-        description="Hier finden Sie eine Übersicht aller Mitarbeitenden und weitere Informationen zu deren Rollen und welche Führerscheinklasse sie besitzen. Diese Informationen sind wichtig, wenn Personen zu einem Einsatzplan eingeteilt werden sollen."
+        description="Hier findest du eine Übersicht aller Mitarbeitenden und weitere Informationen zu deren Rollen und welche Führerscheinklasse sie besitzen. Diese Informationen sind wichtig, wenn Personen zu einem Einsatzplan eingeteilt werden sollen."
       />
 
       <section className="mt-10">
