@@ -35,10 +35,11 @@ const permissions = vi.fn((): Permissions => UNRESTRICTED)
 vi.mock('@/lib/auth/usePermissions', () => ({ usePermissions: () => permissions() }))
 
 // jsdom's matchMedia mock always reports non-desktop, which would wrap the
-// detail panel in a Drawer and hide the list behind it (aria-hidden). Force
-// the desktop two-pane layout so both panes stay queryable, per the existing
-// pattern in ClusterPanel.test.tsx.
-vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => true }))
+// detail panel in a Drawer and hide the list behind it (aria-hidden). Default
+// to the desktop two-pane layout so both panes stay queryable; a single test
+// flips this to false to exercise the mobile Drawer branch.
+const isDesktop = vi.fn((): boolean => true)
+vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => isDesktop() }))
 
 const createMutate = vi.fn()
 const updateMutate = vi.fn()
@@ -128,5 +129,26 @@ describe('RolesPage', () => {
     permissions.mockReturnValue(new Set(['role:read']))
     render(<RolesPage />)
     expect(screen.queryByRole('button', { name: 'Neu' })).not.toBeInTheDocument()
+  })
+
+  it('guards the mobile drawer close when the draft is dirty', async () => {
+    permissions.mockReturnValue(UNRESTRICTED)
+    isDesktop.mockReturnValue(false)
+    render(<RolesPage />)
+
+    const name = screen.getByRole('textbox', { name: 'Name der Rolle' })
+    await userEvent.type(name, ' Ost')
+    await userEvent.keyboard('{Escape}')
+
+    // Dismissing a dirty drawer must ask before discarding, not drop edits.
+    // The modal marks the drawer aria-hidden, so probe the still-mounted draft
+    // by its value rather than its role.
+    expect(await screen.findByText('Änderungen verwerfen?')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Bezirksleiter Nord Ost')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Verwerfen' }))
+    await waitFor(() =>
+      expect(screen.queryByDisplayValue('Bezirksleiter Nord Ost')).not.toBeInTheDocument(),
+    )
   })
 })

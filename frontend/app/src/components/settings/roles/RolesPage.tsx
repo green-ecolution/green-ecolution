@@ -59,6 +59,7 @@ const RolesPage = () => {
 
   const [selected, setSelected] = useState<Role | null>(null)
   const [pendingSelection, setPendingSelection] = useState<Role | null | undefined>(undefined)
+  const [pendingClose, setPendingClose] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const blocker = useBlocker({ shouldBlockFn: () => dirty, withResolver: true })
@@ -107,6 +108,24 @@ const RolesPage = () => {
     }
     setSelected(next)
     editExisting(next)
+  }
+
+  const requestClose = (open: boolean) => {
+    if (open) return
+    if (dirty) {
+      setPendingClose(true)
+      return
+    }
+    discard()
+  }
+
+  const confirmDiscard = () => {
+    if (pendingClose) {
+      setPendingClose(false)
+      discard()
+      return
+    }
+    applyPendingSelection()
   }
 
   const requestNew = () => {
@@ -226,15 +245,19 @@ const RolesPage = () => {
       ) : (
         <>
           {list}
-          <Drawer open={draft !== null} onOpenChange={(open) => !open && discard()}>
+          <Drawer open={draft !== null} onOpenChange={requestClose}>
             <DrawerContent className="max-h-[90vh] overflow-y-auto p-4">{detail}</DrawerContent>
           </Drawer>
         </>
       )}
 
       <AlertDialog
-        open={pendingSelection !== undefined}
-        onOpenChange={(open) => !open && setPendingSelection(undefined)}
+        open={pendingSelection !== undefined || pendingClose}
+        onOpenChange={(open) => {
+          if (open) return
+          setPendingSelection(undefined)
+          setPendingClose(false)
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -245,7 +268,7 @@ const RolesPage = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Weiter bearbeiten</AlertDialogCancel>
-            <AlertDialogAction onClick={applyPendingSelection}>Verwerfen</AlertDialogAction>
+            <AlertDialogAction onClick={confirmDiscard}>Verwerfen</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
