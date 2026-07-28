@@ -47,7 +47,7 @@ function Dashboard() {
     },
     {
       id: 6,
-      url: '/profile',
+      url: '/settings/profile',
       description: 'Hier können persönliche Informationen hinterlegt und angepasst werden.',
       headline: 'Eigenes Profil',
       linkLabel: 'Zum Profil',

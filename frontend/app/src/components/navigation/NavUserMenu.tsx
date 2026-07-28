@@ -37,7 +37,7 @@ const NavUserMenu = ({ email, side, onNavigate, children }: NavUserMenuProps) =>
       <DropdownMenuSeparator className="mx-3 bg-dark-800" />
       <div className="pt-2">
         <DropdownMenuItem asChild className={menuItemClasses}>
-          <Link to="/profile" onClick={onNavigate}>
+          <Link to="/settings/profile" onClick={onNavigate}>
             <UserRound />
             Ihr Profil
           </Link>

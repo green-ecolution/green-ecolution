@@ -18,7 +18,6 @@ import { Route as ProtectedDebugRouteRouteImport } from './routes/_protected/deb
 import { Route as ProtectedEvaluationsRouteRouteImport } from './routes/_protected/evaluations/route'
 import { Route as ProtectedInfoRouteImport } from './routes/_protected/info'
 import { Route as ProtectedMapRouteRouteImport } from './routes/_protected/map/route'
-import { Route as ProtectedProfileRouteRouteImport } from './routes/_protected/profile/route'
 import { Route as ProtectedSensorsRouteRouteImport } from './routes/_protected/sensors/route'
 import { Route as ProtectedSettingsRouteRouteImport } from './routes/_protected/settings/route'
 import { Route as ProtectedTeamRouteRouteImport } from './routes/_protected/team/route'
@@ -30,7 +29,6 @@ import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as ProtectedDebugIndexRouteImport } from './routes/_protected/debug/index'
 import { Route as ProtectedEvaluationsIndexRouteImport } from './routes/_protected/evaluations/index'
 import { Route as ProtectedMapIndexRouteImport } from './routes/_protected/map/index'
-import { Route as ProtectedProfileIndexRouteImport } from './routes/_protected/profile/index'
 import { Route as ProtectedSensorsIndexRouteImport } from './routes/_protected/sensors/index'
 import { Route as ProtectedSensorsSensorIdRouteRouteImport } from './routes/_protected/sensors/$sensorId/route'
 import { Route as ProtectedSensorsNewRouteRouteImport } from './routes/_protected/sensors/new/route'
@@ -56,6 +54,7 @@ import { Route as ProtectedSettingsNotificationsIndexRouteImport } from './route
 import { Route as ProtectedSettingsOrganizationIndexRouteImport } from './routes/_protected/settings/organization/index'
 import { Route as ProtectedSettingsPluginIndexRouteImport } from './routes/_protected/settings/plugin/index'
 import { Route as ProtectedSettingsPluginPluginNameRouteRouteImport } from './routes/_protected/settings/plugin/$pluginName/route'
+import { Route as ProtectedSettingsProfileIndexRouteImport } from './routes/_protected/settings/profile/index'
 import { Route as ProtectedSettingsSensorsIndexRouteImport } from './routes/_protected/settings/sensors/index'
 import { Route as ProtectedTreeclusterTreeclusterIdIndexRouteImport } from './routes/_protected/treecluster/$treeclusterId/index'
 import { Route as ProtectedTreesTreeIdIndexRouteImport } from './routes/_protected/trees/$treeId/index'
@@ -126,11 +125,6 @@ const ProtectedMapRouteRoute = ProtectedMapRouteRouteImport.update({
   path: '/map',
   getParentRoute: () => ProtectedRoute,
 } as any)
-const ProtectedProfileRouteRoute = ProtectedProfileRouteRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => ProtectedRoute,
-} as any)
 const ProtectedSensorsRouteRoute = ProtectedSensorsRouteRouteImport.update({
   id: '/sensors',
   path: '/sensors',
@@ -188,11 +182,6 @@ const ProtectedMapIndexRoute = ProtectedMapIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProtectedMapRouteRoute,
-} as any)
-const ProtectedProfileIndexRoute = ProtectedProfileIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProtectedProfileRouteRoute,
 } as any)
 const ProtectedSensorsIndexRoute = ProtectedSensorsIndexRouteImport.update({
   id: '/',
@@ -338,6 +327,12 @@ const ProtectedSettingsPluginPluginNameRouteRoute =
     id: '/$pluginName',
     path: '/$pluginName',
     getParentRoute: () => ProtectedSettingsPluginRouteRoute,
+  } as any)
+const ProtectedSettingsProfileIndexRoute =
+  ProtectedSettingsProfileIndexRouteImport.update({
+    id: '/profile/',
+    path: '/profile/',
+    getParentRoute: () => ProtectedSettingsRouteRoute,
   } as any)
 const ProtectedSettingsSensorsIndexRoute =
   ProtectedSettingsSensorsIndexRouteImport.update({
@@ -499,7 +494,6 @@ export interface FileRoutesByFullPath {
   '/debug': typeof ProtectedDebugRouteRouteWithChildren
   '/evaluations': typeof ProtectedEvaluationsRouteRouteWithChildren
   '/map': typeof ProtectedMapRouteRouteWithChildren
-  '/profile': typeof ProtectedProfileRouteRouteWithChildren
   '/sensors': typeof ProtectedSensorsRouteRouteWithChildren
   '/settings': typeof ProtectedSettingsRouteRouteWithChildren
   '/team': typeof ProtectedTeamRouteRouteWithChildren
@@ -520,7 +514,6 @@ export interface FileRoutesByFullPath {
   '/debug/': typeof ProtectedDebugIndexRoute
   '/evaluations/': typeof ProtectedEvaluationsIndexRoute
   '/map/': typeof ProtectedMapIndexRoute
-  '/profile/': typeof ProtectedProfileIndexRoute
   '/sensors/': typeof ProtectedSensorsIndexRoute
   '/settings/': typeof ProtectedSettingsIndexRoute
   '/team/': typeof ProtectedTeamIndexRoute
@@ -541,6 +534,7 @@ export interface FileRoutesByFullPath {
   '/settings/notifications/': typeof ProtectedSettingsNotificationsIndexRoute
   '/settings/organization/': typeof ProtectedSettingsOrganizationIndexRoute
   '/settings/plugin/': typeof ProtectedSettingsPluginIndexRoute
+  '/settings/profile/': typeof ProtectedSettingsProfileIndexRoute
   '/settings/sensors/': typeof ProtectedSettingsSensorsIndexRoute
   '/treecluster/$treeclusterId/': typeof ProtectedTreeclusterTreeclusterIdIndexRoute
   '/trees/$treeId/': typeof ProtectedTreesTreeIdIndexRoute
@@ -572,7 +566,6 @@ export interface FileRoutesByTo {
   '/debug': typeof ProtectedDebugIndexRoute
   '/evaluations': typeof ProtectedEvaluationsIndexRoute
   '/map': typeof ProtectedMapIndexRoute
-  '/profile': typeof ProtectedProfileIndexRoute
   '/sensors': typeof ProtectedSensorsIndexRoute
   '/settings': typeof ProtectedSettingsIndexRoute
   '/team': typeof ProtectedTeamIndexRoute
@@ -591,6 +584,7 @@ export interface FileRoutesByTo {
   '/settings/notifications': typeof ProtectedSettingsNotificationsIndexRoute
   '/settings/organization': typeof ProtectedSettingsOrganizationIndexRoute
   '/settings/plugin': typeof ProtectedSettingsPluginIndexRoute
+  '/settings/profile': typeof ProtectedSettingsProfileIndexRoute
   '/settings/sensors': typeof ProtectedSettingsSensorsIndexRoute
   '/treecluster/$treeclusterId': typeof ProtectedTreeclusterTreeclusterIdIndexRoute
   '/trees/$treeId': typeof ProtectedTreesTreeIdIndexRoute
@@ -615,7 +609,6 @@ export interface FileRoutesById {
   '/_protected/debug': typeof ProtectedDebugRouteRouteWithChildren
   '/_protected/evaluations': typeof ProtectedEvaluationsRouteRouteWithChildren
   '/_protected/map': typeof ProtectedMapRouteRouteWithChildren
-  '/_protected/profile': typeof ProtectedProfileRouteRouteWithChildren
   '/_protected/sensors': typeof ProtectedSensorsRouteRouteWithChildren
   '/_protected/settings': typeof ProtectedSettingsRouteRouteWithChildren
   '/_protected/team': typeof ProtectedTeamRouteRouteWithChildren
@@ -636,7 +629,6 @@ export interface FileRoutesById {
   '/_protected/debug/': typeof ProtectedDebugIndexRoute
   '/_protected/evaluations/': typeof ProtectedEvaluationsIndexRoute
   '/_protected/map/': typeof ProtectedMapIndexRoute
-  '/_protected/profile/': typeof ProtectedProfileIndexRoute
   '/_protected/sensors/': typeof ProtectedSensorsIndexRoute
   '/_protected/settings/': typeof ProtectedSettingsIndexRoute
   '/_protected/team/': typeof ProtectedTeamIndexRoute
@@ -659,6 +651,7 @@ export interface FileRoutesById {
   '/_protected/settings/notifications/': typeof ProtectedSettingsNotificationsIndexRoute
   '/_protected/settings/organization/': typeof ProtectedSettingsOrganizationIndexRoute
   '/_protected/settings/plugin/': typeof ProtectedSettingsPluginIndexRoute
+  '/_protected/settings/profile/': typeof ProtectedSettingsProfileIndexRoute
   '/_protected/settings/sensors/': typeof ProtectedSettingsSensorsIndexRoute
   '/_protected/treecluster/$treeclusterId/': typeof ProtectedTreeclusterTreeclusterIdIndexRoute
   '/_protected/trees/$treeId/': typeof ProtectedTreesTreeIdIndexRoute
@@ -689,7 +682,6 @@ export interface FileRouteTypes {
     | '/debug'
     | '/evaluations'
     | '/map'
-    | '/profile'
     | '/sensors'
     | '/settings'
     | '/team'
@@ -710,7 +702,6 @@ export interface FileRouteTypes {
     | '/debug/'
     | '/evaluations/'
     | '/map/'
-    | '/profile/'
     | '/sensors/'
     | '/settings/'
     | '/team/'
@@ -731,6 +722,7 @@ export interface FileRouteTypes {
     | '/settings/notifications/'
     | '/settings/organization/'
     | '/settings/plugin/'
+    | '/settings/profile/'
     | '/settings/sensors/'
     | '/treecluster/$treeclusterId/'
     | '/trees/$treeId/'
@@ -762,7 +754,6 @@ export interface FileRouteTypes {
     | '/debug'
     | '/evaluations'
     | '/map'
-    | '/profile'
     | '/sensors'
     | '/settings'
     | '/team'
@@ -781,6 +772,7 @@ export interface FileRouteTypes {
     | '/settings/notifications'
     | '/settings/organization'
     | '/settings/plugin'
+    | '/settings/profile'
     | '/settings/sensors'
     | '/treecluster/$treeclusterId'
     | '/trees/$treeId'
@@ -804,7 +796,6 @@ export interface FileRouteTypes {
     | '/_protected/debug'
     | '/_protected/evaluations'
     | '/_protected/map'
-    | '/_protected/profile'
     | '/_protected/sensors'
     | '/_protected/settings'
     | '/_protected/team'
@@ -825,7 +816,6 @@ export interface FileRouteTypes {
     | '/_protected/debug/'
     | '/_protected/evaluations/'
     | '/_protected/map/'
-    | '/_protected/profile/'
     | '/_protected/sensors/'
     | '/_protected/settings/'
     | '/_protected/team/'
@@ -848,6 +838,7 @@ export interface FileRouteTypes {
     | '/_protected/settings/notifications/'
     | '/_protected/settings/organization/'
     | '/_protected/settings/plugin/'
+    | '/_protected/settings/profile/'
     | '/_protected/settings/sensors/'
     | '/_protected/treecluster/$treeclusterId/'
     | '/_protected/trees/$treeId/'
@@ -943,13 +934,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedMapRouteRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/profile': {
-      id: '/_protected/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProtectedProfileRouteRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
     '/_protected/sensors': {
       id: '/_protected/sensors'
       path: '/sensors'
@@ -1026,13 +1010,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/map/'
       preLoaderRoute: typeof ProtectedMapIndexRouteImport
       parentRoute: typeof ProtectedMapRouteRoute
-    }
-    '/_protected/profile/': {
-      id: '/_protected/profile/'
-      path: '/'
-      fullPath: '/profile/'
-      preLoaderRoute: typeof ProtectedProfileIndexRouteImport
-      parentRoute: typeof ProtectedProfileRouteRoute
     }
     '/_protected/sensors/': {
       id: '/_protected/sensors/'
@@ -1208,6 +1185,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/plugin/$pluginName'
       preLoaderRoute: typeof ProtectedSettingsPluginPluginNameRouteRouteImport
       parentRoute: typeof ProtectedSettingsPluginRouteRoute
+    }
+    '/_protected/settings/profile/': {
+      id: '/_protected/settings/profile/'
+      path: '/profile'
+      fullPath: '/settings/profile/'
+      preLoaderRoute: typeof ProtectedSettingsProfileIndexRouteImport
+      parentRoute: typeof ProtectedSettingsRouteRoute
     }
     '/_protected/settings/sensors/': {
       id: '/_protected/settings/sensors/'
@@ -1461,19 +1445,6 @@ const ProtectedMapRouteRouteChildren: ProtectedMapRouteRouteChildren = {
 const ProtectedMapRouteRouteWithChildren =
   ProtectedMapRouteRoute._addFileChildren(ProtectedMapRouteRouteChildren)
 
-interface ProtectedProfileRouteRouteChildren {
-  ProtectedProfileIndexRoute: typeof ProtectedProfileIndexRoute
-}
-
-const ProtectedProfileRouteRouteChildren: ProtectedProfileRouteRouteChildren = {
-  ProtectedProfileIndexRoute: ProtectedProfileIndexRoute,
-}
-
-const ProtectedProfileRouteRouteWithChildren =
-  ProtectedProfileRouteRoute._addFileChildren(
-    ProtectedProfileRouteRouteChildren,
-  )
-
 interface ProtectedSensorsSensorIdRouteRouteChildren {
   ProtectedSensorsSensorIdIndexRoute: typeof ProtectedSensorsSensorIdIndexRoute
 }
@@ -1559,6 +1530,7 @@ interface ProtectedSettingsRouteRouteChildren {
   ProtectedSettingsMapIndexRoute: typeof ProtectedSettingsMapIndexRoute
   ProtectedSettingsNotificationsIndexRoute: typeof ProtectedSettingsNotificationsIndexRoute
   ProtectedSettingsOrganizationIndexRoute: typeof ProtectedSettingsOrganizationIndexRoute
+  ProtectedSettingsProfileIndexRoute: typeof ProtectedSettingsProfileIndexRoute
   ProtectedSettingsSensorsIndexRoute: typeof ProtectedSettingsSensorsIndexRoute
 }
 
@@ -1574,6 +1546,7 @@ const ProtectedSettingsRouteRouteChildren: ProtectedSettingsRouteRouteChildren =
       ProtectedSettingsNotificationsIndexRoute,
     ProtectedSettingsOrganizationIndexRoute:
       ProtectedSettingsOrganizationIndexRoute,
+    ProtectedSettingsProfileIndexRoute: ProtectedSettingsProfileIndexRoute,
     ProtectedSettingsSensorsIndexRoute: ProtectedSettingsSensorsIndexRoute,
   }
 
@@ -1839,7 +1812,6 @@ interface ProtectedRouteChildren {
   ProtectedDebugRouteRoute: typeof ProtectedDebugRouteRouteWithChildren
   ProtectedEvaluationsRouteRoute: typeof ProtectedEvaluationsRouteRouteWithChildren
   ProtectedMapRouteRoute: typeof ProtectedMapRouteRouteWithChildren
-  ProtectedProfileRouteRoute: typeof ProtectedProfileRouteRouteWithChildren
   ProtectedSensorsRouteRoute: typeof ProtectedSensorsRouteRouteWithChildren
   ProtectedSettingsRouteRoute: typeof ProtectedSettingsRouteRouteWithChildren
   ProtectedTeamRouteRoute: typeof ProtectedTeamRouteRouteWithChildren
@@ -1855,7 +1827,6 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedDebugRouteRoute: ProtectedDebugRouteRouteWithChildren,
   ProtectedEvaluationsRouteRoute: ProtectedEvaluationsRouteRouteWithChildren,
   ProtectedMapRouteRoute: ProtectedMapRouteRouteWithChildren,
-  ProtectedProfileRouteRoute: ProtectedProfileRouteRouteWithChildren,
   ProtectedSensorsRouteRoute: ProtectedSensorsRouteRouteWithChildren,
   ProtectedSettingsRouteRoute: ProtectedSettingsRouteRouteWithChildren,
   ProtectedTeamRouteRoute: ProtectedTeamRouteRouteWithChildren,
