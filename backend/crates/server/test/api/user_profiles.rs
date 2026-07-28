@@ -1,10 +1,19 @@
 use crate::helpers::spawn_app;
 use domain::{
+    Id,
     user::{UserProfile, UserProfileReader, UserProfileWriter, UserStatus},
     vehicle::DrivingLicense,
 };
 use server::infra::pg_user_profile::PgUserProfileRepository;
 use uuid::Uuid;
+
+const ROOT_ORG: &str = "01980000-0000-7000-8000-000000000001";
+
+async fn seed_profile_row(repo: &PgUserProfileRepository, id: Uuid) {
+    repo.set_organization(id, Id::new(Uuid::parse_str(ROOT_ORG).unwrap()))
+        .await
+        .unwrap();
+}
 
 fn sample_profile(id: Uuid) -> UserProfile {
     UserProfile {
@@ -23,7 +32,8 @@ async fn upsert_and_read_back_roundtrip() {
     let repo = PgUserProfileRepository::new(app.db_pool.clone());
     let id = Uuid::now_v7();
 
-    repo.upsert(&sample_profile(id)).await.unwrap();
+    seed_profile_row(&repo, id).await;
+    repo.update(&sample_profile(id)).await.unwrap();
 
     let loaded = repo.by_ids(&[id]).await.unwrap();
     assert_eq!(loaded, vec![sample_profile(id)]);
@@ -34,7 +44,8 @@ async fn upsert_replaces_existing_row() {
     let app = spawn_app().await;
     let repo = PgUserProfileRepository::new(app.db_pool.clone());
     let id = Uuid::now_v7();
-    repo.upsert(&sample_profile(id)).await.unwrap();
+    seed_profile_row(&repo, id).await;
+    repo.update(&sample_profile(id)).await.unwrap();
 
     let replacement = UserProfile {
         status: UserStatus::Available,
@@ -42,7 +53,7 @@ async fn upsert_replaces_existing_row() {
         employee_id: None,
         ..sample_profile(id)
     };
-    repo.upsert(&replacement).await.unwrap();
+    repo.update(&replacement).await.unwrap();
 
     let loaded = repo.by_ids(&[id]).await.unwrap();
     assert_eq!(loaded, vec![replacement]);
@@ -53,7 +64,8 @@ async fn by_ids_skips_missing_rows() {
     let app = spawn_app().await;
     let repo = PgUserProfileRepository::new(app.db_pool.clone());
     let existing = Uuid::now_v7();
-    repo.upsert(&sample_profile(existing)).await.unwrap();
+    seed_profile_row(&repo, existing).await;
+    repo.update(&sample_profile(existing)).await.unwrap();
 
     let loaded = repo.by_ids(&[existing, Uuid::now_v7()]).await.unwrap();
     assert_eq!(loaded.len(), 1);

@@ -11,7 +11,7 @@ use domain::{
     role::{
         Role, RoleDescription, RoleDraft, RoleError, RoleName, RoleReader, RoleView, RoleWriter,
     },
-    user::UserProfileWriter,
+    user::UserProfileReader,
 };
 
 use super::{ServiceError, event_bus::EventBus};
@@ -19,7 +19,7 @@ use super::{ServiceError, event_bus::EventBus};
 pub struct RoleService {
     role_reader: Arc<dyn RoleReader>,
     role_writer: Arc<dyn RoleWriter>,
-    profile_writer: Arc<dyn UserProfileWriter>,
+    profile_reader: Arc<dyn UserProfileReader>,
     event_bus: Arc<dyn EventBus>,
 }
 
@@ -27,13 +27,13 @@ impl RoleService {
     pub fn new(
         role_reader: Arc<dyn RoleReader>,
         role_writer: Arc<dyn RoleWriter>,
-        profile_writer: Arc<dyn UserProfileWriter>,
+        profile_reader: Arc<dyn UserProfileReader>,
         event_bus: Arc<dyn EventBus>,
     ) -> Self {
         Self {
             role_reader,
             role_writer,
-            profile_writer,
+            profile_reader,
             event_bus,
         }
     }
@@ -127,7 +127,12 @@ impl RoleService {
         if role.is_template() {
             return Err(RoleError::CannotAssignTemplate.into());
         }
-        self.profile_writer.ensure_exists(user_id).await?;
+        // A role can only be assigned to a user who belongs to an organization.
+        if self.profile_reader.by_ids(&[user_id]).await?.is_empty() {
+            return Err(ServiceError::InvalidInput(
+                "user has no organization membership".into(),
+            ));
+        }
         self.role_writer.assign_to_user(user_id, role_id).await?;
         Ok(())
     }
@@ -289,24 +294,38 @@ mod tests {
 
     #[derive(Default)]
     struct InMemoryProfiles {
-        ensured: Mutex<Vec<Uuid>>,
+        known: Mutex<Vec<Uuid>>,
+    }
+
+    impl InMemoryProfiles {
+        fn with(ids: impl IntoIterator<Item = Uuid>) -> Self {
+            Self {
+                known: Mutex::new(ids.into_iter().collect()),
+            }
+        }
     }
 
     #[async_trait::async_trait]
-    impl domain::user::UserProfileWriter for InMemoryProfiles {
-        async fn upsert(&self, _profile: &UserProfile) -> Result<(), RepositoryError> {
-            Ok(())
+    impl domain::user::UserProfileReader for InMemoryProfiles {
+        async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserProfile>, RepositoryError> {
+            let known = self.known.lock().unwrap();
+            Ok(ids
+                .iter()
+                .filter(|id| known.contains(id))
+                .map(|id| UserProfile::empty(*id))
+                .collect())
         }
-        async fn ensure_exists(&self, id: Uuid) -> Result<(), RepositoryError> {
-            self.ensured.lock().unwrap().push(id);
-            Ok(())
-        }
-        async fn set_organization(
+        async fn ids_in_organization(
             &self,
-            _id: Uuid,
             _org: Id<Organization>,
-        ) -> Result<(), RepositoryError> {
-            Ok(())
+        ) -> Result<Vec<Uuid>, RepositoryError> {
+            Ok(Vec::new())
+        }
+        async fn organizations_for(
+            &self,
+            _ids: &[Uuid],
+        ) -> Result<Vec<(Uuid, Id<Organization>)>, RepositoryError> {
+            Ok(Vec::new())
         }
     }
 
@@ -492,7 +511,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn assign_rejects_templates_and_ensures_profile_row() {
+    async fn assign_rejects_templates_and_users_without_organization() {
         let template_id = Id::new_v7();
         let org_role_id = Id::new_v7();
         let org = Id::new_v7();
@@ -500,27 +519,32 @@ mod tests {
             role(template_id, None),
             role(org_role_id, Some(org)),
         ]));
-        let profiles = Arc::new(InMemoryProfiles::default());
+        let member = Uuid::now_v7();
+        let outsider = Uuid::now_v7();
         let svc = service(
             roles.clone(),
-            profiles.clone(),
+            Arc::new(InMemoryProfiles::with([member])),
             Arc::new(RecordingEventBus::default()),
         );
-        let user_id = Uuid::now_v7();
 
-        let template_result = svc.assign(user_id, template_id).await;
+        let template_result = svc.assign(member, template_id).await;
         assert!(matches!(
             template_result,
             Err(ServiceError::Role(RoleError::CannotAssignTemplate))
         ));
-        assert!(profiles.ensured.lock().unwrap().is_empty());
         assert!(roles.assigned.lock().unwrap().is_empty());
 
-        svc.assign(user_id, org_role_id).await.unwrap();
-        assert_eq!(profiles.ensured.lock().unwrap().as_slice(), [user_id]);
+        let outsider_result = svc.assign(outsider, org_role_id).await;
+        assert!(matches!(
+            outsider_result,
+            Err(ServiceError::InvalidInput(_))
+        ));
+        assert!(roles.assigned.lock().unwrap().is_empty());
+
+        svc.assign(member, org_role_id).await.unwrap();
         assert_eq!(
             roles.assigned.lock().unwrap().as_slice(),
-            [(user_id, org_role_id)]
+            [(member, org_role_id)]
         );
     }
 }

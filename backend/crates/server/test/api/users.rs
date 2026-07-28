@@ -216,7 +216,7 @@ async fn set_organization_persists() {
     .fetch_one(&app.db_pool)
     .await
     .unwrap();
-    assert_eq!(stored, Some(Uuid::parse_str(&org).unwrap()));
+    assert_eq!(stored, Uuid::parse_str(&org).unwrap());
 }
 
 #[tokio::test]

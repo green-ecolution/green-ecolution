@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO user_profiles\n                   (id, employee_id, phone_number, avatar_url, status, driving_licenses)\n               VALUES ($1, $2, $3, $4, $5, $6)\n               ON CONFLICT (id) DO UPDATE SET\n                   employee_id      = EXCLUDED.employee_id,\n                   phone_number     = EXCLUDED.phone_number,\n                   avatar_url       = EXCLUDED.avatar_url,\n                   status           = EXCLUDED.status,\n                   driving_licenses = EXCLUDED.driving_licenses",
+  "query": "UPDATE user_profiles SET\n                   employee_id      = $2,\n                   phone_number     = $3,\n                   avatar_url       = $4,\n                   status           = $5,\n                   driving_licenses = $6\n               WHERE id = $1",
   "describe": {
     "columns": [],
     "parameters": {
@@ -44,5 +44,5 @@
     },
     "nullable": []
   },
-  "hash": "683ffa6ab11aa99a68ed7969c0241d1af0da8f57ca9847ae5ae4150b52a60e89"
+  "hash": "f28d1609447a44f276879486006c0a79d655c6d94af4013ef12ee5203435f27f"
 }
