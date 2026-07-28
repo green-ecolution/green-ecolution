@@ -31,6 +31,7 @@ import {
   type DropAction,
 } from '@/lib/wateringPlanBoard'
 import { useWateringPlanBoardMutations } from '@/hooks/useWateringPlanBoardMutations'
+import { useHasPermission } from '@/lib/auth/useHasPermission'
 import WateringPlanBoardCard from './WateringPlanBoardCard'
 import AssignUsersPopover from './AssignUsersPopover'
 import CancelPlanDialog from './CancelPlanDialog'
@@ -46,14 +47,17 @@ const DraggablePlanCard = ({
   plan,
   column,
   users,
+  canModify,
 }: {
   plan: WateringPlanInList
   column: BoardColumnId
   users: User[]
+  canModify: boolean
 }) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: plan.id,
     data: { plan, column } satisfies DragData,
+    disabled: !canModify,
   })
 
   return (
@@ -63,7 +67,9 @@ const DraggablePlanCard = ({
         users={users}
         cardState={isDragging ? 'ghost' : 'idle'}
         assignSlot={
-          column === 'planned' ? <AssignUsersPopover plan={plan} users={users} /> : undefined
+          column === 'planned' && canModify ? (
+            <AssignUsersPopover plan={plan} users={users} />
+          ) : undefined
         }
       />
     </div>
@@ -123,6 +129,7 @@ const WateringPlanBoard = () => {
   const { data: activeRes } = activeQuery
 
   const { startPlan } = useWateringPlanBoardMutations()
+  const canModify = useHasPermission(['watering_plan:update'])
   const [activeDrag, setActiveDrag] = useState<DragData | null>(null)
   const [planToCancel, setPlanToCancel] = useState<WateringPlanInList | null>(null)
   const [planToComplete, setPlanToComplete] = useState<WateringPlanInList | null>(null)
@@ -186,7 +193,13 @@ const WateringPlanBoard = () => {
             </KanbanColumnEmpty>
           )}
           {planned.map((plan) => (
-            <DraggablePlanCard key={plan.id} plan={plan} column="planned" users={users} />
+            <DraggablePlanCard
+              key={plan.id}
+              plan={plan}
+              column="planned"
+              users={users}
+              canModify={canModify}
+            />
           ))}
         </DroppableColumn>
         <DroppableColumn
@@ -204,7 +217,13 @@ const WateringPlanBoard = () => {
             </KanbanColumnEmpty>
           )}
           {active.map((plan) => (
-            <DraggablePlanCard key={plan.id} plan={plan} column="active" users={users} />
+            <DraggablePlanCard
+              key={plan.id}
+              plan={plan}
+              column="active"
+              users={users}
+              canModify={canModify}
+            />
           ))}
         </DroppableColumn>
         <DroppableColumn

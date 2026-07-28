@@ -22,6 +22,7 @@ import {
 import type { Sensor } from '@/api/backendApi'
 import { sensorApi } from '@/api/backendApi'
 import { sensorsKey } from '@/api/queries'
+import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { useSensorActions } from './SensorActionsContext'
 
 interface SensorActionsMenuProps {
@@ -35,6 +36,8 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
   const [dialogOpen, setDialogOpen] = useState(false)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const canUpdate = useHasPermission(['sensor:update'])
+  const canDelete = useHasPermission(['sensor:delete'])
 
   const deleteMutation = useMutation({
     mutationFn: () => sensorApi.deleteSensor({ sensorId }),
@@ -48,6 +51,8 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
     },
   })
 
+  if (!canUpdate && !canDelete) return null
+
   return (
     <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DropdownMenu>
@@ -58,36 +63,45 @@ const SensorActionsMenu = ({ sensor }: SensorActionsMenuProps) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-56">
-          {isPrepared ? (
-            <DropdownMenuItem className="cursor-pointer" onSelect={() => actions.requestActivate()}>
-              <Link2 className="mr-2 size-4" />
-              Aktivieren & Baum zuweisen
-            </DropdownMenuItem>
-          ) : (
-            <>
+          {canUpdate &&
+            (isPrepared ? (
               <DropdownMenuItem
                 className="cursor-pointer"
-                onSelect={() => actions.requestReassign()}
+                onSelect={() => actions.requestActivate()}
               >
-                <Replace className="mr-2 size-4" />
-                Anderen Baum zuweisen
+                <Link2 className="mr-2 size-4" />
+                Aktivieren & Baum zuweisen
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onSelect={() => actions.requestRemove()}>
-                <Link2Off className="mr-2 size-4" />
-                Baumverknüpfung aufheben
-              </DropdownMenuItem>
-            </>
+            ) : (
+              <>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onSelect={() => actions.requestReassign()}
+                >
+                  <Replace className="mr-2 size-4" />
+                  Anderen Baum zuweisen
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onSelect={() => actions.requestRemove()}
+                >
+                  <Link2Off className="mr-2 size-4" />
+                  Baumverknüpfung aufheben
+                </DropdownMenuItem>
+              </>
+            ))}
+          {canDelete && (
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive cursor-pointer"
+              onSelect={(e) => {
+                e.preventDefault()
+                setDialogOpen(true)
+              }}
+            >
+              <Trash2 className="mr-2 size-4" />
+              Sensor löschen
+            </DropdownMenuItem>
           )}
-          <DropdownMenuItem
-            className="text-destructive focus:text-destructive cursor-pointer"
-            onSelect={(e) => {
-              e.preventDefault()
-              setDialogOpen(true)
-            }}
-          >
-            <Trash2 className="mr-2 size-4" />
-            Sensor löschen
-          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 

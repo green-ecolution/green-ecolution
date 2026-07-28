@@ -20,6 +20,7 @@ import { ListCardHeader } from '@green-ecolution/ui'
 import { filterSearchSchema } from '@/lib/filterSearchSchema'
 import { pendingLoading, prefetch } from '@/lib/router'
 import { SoilCondition } from '@/api/backendApi'
+import { Can } from '@/lib/auth/Can'
 
 const treeclusterFilterSchema = filterSearchSchema
   .pick({ wateringStatuses: true, regions: true })
@@ -82,7 +83,9 @@ function Treecluster() {
         </article>
         <div className="flex shrink-0 flex-wrap items-center gap-3">
           <ClusterViewToggle />
-          <ButtonLink icon={Plus} label="Gruppe anlegen" link={{ to: '/map/treecluster/new' }} />
+          <Can permission={['tree_cluster:create']}>
+            <ButtonLink icon={Plus} label="Gruppe anlegen" link={{ to: '/map/treecluster/new' }} />
+          </Can>
         </div>
       </header>
 

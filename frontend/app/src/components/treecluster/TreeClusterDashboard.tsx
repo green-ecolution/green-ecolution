@@ -12,6 +12,8 @@ import EntityDetailHeader from '@/components/general/EntityDetailHeader'
 import DeleteConfirmDialog from '@/components/general/DeleteConfirmDialog'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import createToast from '@/hooks/createToast'
+import { Can } from '@/lib/auth/Can'
+import { useHasPermission } from '@/lib/auth/useHasPermission'
 import {
   Alert,
   AlertIcon,
@@ -36,6 +38,8 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
   const navigate = useNavigate()
   const showToast = createToast()
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const canEdit = useHasPermission(['tree_cluster:update'])
+  const canDelete = useHasPermission(['tree_cluster:delete'])
   const wateringStatus = getWateringStatusDetails(treecluster.wateringStatus)
   const trees = treecluster.trees ?? []
   const hasSensors = trees.some((tree) => tree.sensor)
@@ -58,38 +62,44 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
         title={<>Bewässerungsgruppe: {treecluster.name}</>}
         badge={<Badge variant={wateringStatus.color}>{wateringStatus.label}</Badge>}
         actions={
-          <ButtonGroup>
-            <Button variant="outline" asChild>
-              <Link
-                to="/map/treecluster/edit/$treeclusterId"
-                params={{ treeclusterId: treecluster.id.toString() }}
-              >
-                Gruppe bearbeiten
-                <Pencil className="stroke-1" />
-              </Link>
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label="Weitere Aktionen"
-                  className="[&_svg]:size-4 [&_svg]:transition-transform [&_svg]:duration-300 data-[state=open]:[&_svg]:rotate-180"
-                >
-                  <ChevronDown />
+          (canEdit || canDelete) && (
+            <ButtonGroup>
+              {canEdit && (
+                <Button variant="outline" asChild>
+                  <Link
+                    to="/map/treecluster/edit/$treeclusterId"
+                    params={{ treeclusterId: treecluster.id.toString() }}
+                  >
+                    Gruppe bearbeiten
+                    <Pencil className="stroke-1" />
+                  </Link>
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[12rem]">
-                <DropdownMenuItem
-                  className="gap-2 px-3 py-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
-                  onSelect={() => setConfirmDelete(true)}
-                >
-                  <Trash2 />
-                  Gruppe löschen
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </ButtonGroup>
+              )}
+              <Can permission={['tree_cluster:delete']}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      aria-label="Weitere Aktionen"
+                      className="[&_svg]:size-4 [&_svg]:transition-transform [&_svg]:duration-300 data-[state=open]:[&_svg]:rotate-180"
+                    >
+                      <ChevronDown />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="min-w-[12rem]">
+                    <DropdownMenuItem
+                      className="gap-2 px-3 py-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
+                      onSelect={() => setConfirmDelete(true)}
+                    >
+                      <Trash2 />
+                      Gruppe löschen
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </Can>
+            </ButtonGroup>
+          )
         }
       >
         <p className="mb-4 text-dark-600">

@@ -1,5 +1,6 @@
 import FormPageHeader from '../general/FormPageHeader'
 import DeleteSection from '../treecluster/DeleteSection'
+import { Can } from '@/lib/auth/Can'
 import type { Vehicle } from '@/api/backendApi'
 import { useInitFormQuery } from '@/hooks/form/useInitForm'
 import { vehicleIdQuery } from '@/api/queries'
@@ -72,16 +73,18 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
         </FormProvider>
       </section>
 
-      <Suspense
-        fallback={<Loading className="mt-20 justify-center" label="Das Fahrzeug wird gelöscht" />}
-      >
-        <DeleteSection
-          mutationFn={handleArchiveVehicle}
-          type="archive"
-          entityName="das Fahrzeug"
-          redirectUrl={{ to: '/vehicles' }}
-        />
-      </Suspense>
+      <Can permission={['vehicle:delete']}>
+        <Suspense
+          fallback={<Loading className="mt-20 justify-center" label="Das Fahrzeug wird gelöscht" />}
+        >
+          <DeleteSection
+            mutationFn={handleArchiveVehicle}
+            type="archive"
+            entityName="das Fahrzeug"
+            redirectUrl={{ to: '/vehicles' }}
+          />
+        </Suspense>
+      </Can>
 
       <UnsavedChangesDialog blocker={navigationBlocker} />
     </>

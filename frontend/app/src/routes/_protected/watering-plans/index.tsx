@@ -6,6 +6,7 @@ import ButtonLink from '@/components/general/links/ButtonLink'
 import ListPageHeader from '@/components/general/ListPageHeader'
 import WateringPlanBoard from '@/components/watering-plan/board/WateringPlanBoard'
 import { pendingLoading, prefetch } from '@/lib/router'
+import { Can } from '@/lib/auth/Can'
 
 export const Route = createFileRoute('/_protected/watering-plans/')({
   component: WateringPlans,
@@ -34,11 +35,13 @@ function WateringPlans() {
           title="Einsatzpläne"
           description="Planen, starten und dokumentieren Sie Bewässerungsfahrten. Ziehen Sie einen Einsatz in die nächste Spalte, um seinen Status zu ändern."
           action={
-            <ButtonLink
-              icon={Plus}
-              label="Neuen Einsatzplan erstellen"
-              link={{ to: '/watering-plans/new' }}
-            />
+            <Can permission={['watering_plan:create']}>
+              <ButtonLink
+                icon={Plus}
+                label="Neuen Einsatzplan erstellen"
+                link={{ to: '/watering-plans/new' }}
+              />
+            </Can>
           }
         />
       </div>

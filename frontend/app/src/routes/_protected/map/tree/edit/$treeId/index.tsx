@@ -10,6 +10,7 @@ import { TreeForm } from '@/schema/treeSchema'
 import { useTreeForm } from '@/hooks/form/useTreeForm'
 import createToast from '@/hooks/createToast'
 import { entityNotFound, forbiddenErrorComponent, prefetch, requirePermission } from '@/lib/router'
+import { useHasPermission } from '@/lib/auth/useHasPermission'
 import FormForTree from '@/components/general/form/FormForTree'
 import DeleteConfirmDialog from '@/components/general/DeleteConfirmDialog'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
@@ -50,6 +51,7 @@ function EditTreeOnMap() {
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const isProvider = !!tree.provider
+  const canDelete = useHasPermission(['tree:delete'])
 
   const initForm: DefaultValues<TreeForm> = {
     latitude: tree.latitude,
@@ -138,7 +140,7 @@ function EditTreeOnMap() {
             fullWidth
           />
         </FormProvider>
-        {!isProvider && (
+        {!isProvider && canDelete && (
           <Button
             type="button"
             variant="ghost"

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, cleanup, userEvent, waitFor } from '@/test/utils'
+import { NO_PERMISSIONS, UNRESTRICTED, type Permissions } from '@/lib/auth/permissions'
 
 const getCluster = vi.fn()
 vi.mock('@/api/backendApi', async (importOriginal) => {
@@ -7,6 +8,11 @@ vi.mock('@/api/backendApi', async (importOriginal) => {
   return { ...actual, clusterApi: { getCluster: (...a: unknown[]) => getCluster(...a) as unknown } }
 })
 vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => true }))
+
+const permissions = vi.fn((): Permissions => UNRESTRICTED)
+vi.mock('@/lib/auth/usePermissions', () => ({
+  usePermissions: () => permissions(),
+}))
 
 import ClusterPanel from './ClusterPanel'
 
@@ -23,7 +29,10 @@ const cluster = {
   trees: [],
 }
 
-beforeEach(() => vi.clearAllMocks())
+beforeEach(() => {
+  vi.clearAllMocks()
+  permissions.mockReturnValue(UNRESTRICTED)
+})
 afterEach(cleanup)
 
 describe('ClusterPanel', () => {
@@ -76,5 +85,22 @@ describe('ClusterPanel', () => {
     )
     await userEvent.click(screen.getByRole('button', { name: 'Seitenansicht schließen' }))
     expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('hides the edit pencil without tree_cluster:update permission', async () => {
+    permissions.mockReturnValue(NO_PERMISSIONS)
+    getCluster.mockResolvedValue(cluster)
+    render(
+      <ClusterPanel
+        clusterId={VALID_ID}
+        onClose={vi.fn()}
+        onOpenDashboard={vi.fn()}
+        onEdit={vi.fn()}
+      />,
+    )
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Hafenspitze' })).toBeInTheDocument(),
+    )
+    expect(screen.queryByRole('button', { name: 'Gruppe bearbeiten' })).not.toBeInTheDocument()
   })
 })

@@ -9,11 +9,12 @@ import {
   DialogDescription,
 } from '@green-ecolution/ui'
 import { useState } from 'react'
+import { Can } from '@/lib/auth/Can'
 
 const MapButtons = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   return (
-    <>
+    <Can permission={['tree:create']}>
       <Button
         variant="outline"
         size="icon"
@@ -44,7 +45,7 @@ const MapButtons = () => {
           </Link>
         </DialogContent>
       </Dialog>
-    </>
+    </Can>
   )
 }
 

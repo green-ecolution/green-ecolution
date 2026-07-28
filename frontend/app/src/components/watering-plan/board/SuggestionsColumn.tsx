@@ -8,6 +8,7 @@ import { suggestedClustersQuery } from '@/api/queries'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import type { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import ClusterSuggestionCard from './ClusterSuggestionCard'
+import { Can } from '@/lib/auth/Can'
 
 const SuggestionsColumn = () => {
   const clustersQuery = useQuery(suggestedClustersQuery())
@@ -69,18 +70,20 @@ const SuggestionsColumn = () => {
         />
       ))}
       {clusters.length > 0 && (
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={selected.length === 0}
-          onClick={bundleIntoPlan}
-          className="bg-white"
-        >
-          <FolderPlus className="size-4" />
-          Zu Einsatzplan bündeln
-          {selected.length > 0 && <span className="tabular-nums">({selected.length})</span>}
-        </Button>
+        <Can permission={['watering_plan:create']}>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={selected.length === 0}
+            onClick={bundleIntoPlan}
+            className="bg-white"
+          >
+            <FolderPlus className="size-4" />
+            Zu Einsatzplan bündeln
+            {selected.length > 0 && <span className="tabular-nums">({selected.length})</span>}
+          </Button>
+        </Can>
       )}
     </KanbanColumn>
   )

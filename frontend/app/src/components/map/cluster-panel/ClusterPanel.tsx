@@ -3,6 +3,7 @@ import { Button, Loading } from '@green-ecolution/ui'
 import { Pencil } from 'lucide-react'
 import { isValidUuid, treeClusterIdQuery } from '@/api/queries'
 import MapPanel from '@/components/map-gl/MapPanel'
+import { useHasPermission } from '@/lib/auth/useHasPermission'
 import ClusterPanelShell from './ClusterPanelShell'
 import ClusterPanelView from './ClusterPanelView'
 
@@ -25,12 +26,14 @@ const ClusterPanel = ({
 }: ClusterPanelProps) => {
   const { data, isError } = useQuery(treeClusterIdQuery(clusterId))
   const failed = !isValidUuid(clusterId) || isError
+  const canEdit = useHasPermission(['tree_cluster:update'])
 
-  const headerAction = data ? (
-    <Button variant="ghost" size="icon" aria-label="Gruppe bearbeiten" onClick={onEdit}>
-      <Pencil />
-    </Button>
-  ) : undefined
+  const headerAction =
+    data && canEdit ? (
+      <Button variant="ghost" size="icon" aria-label="Gruppe bearbeiten" onClick={onEdit}>
+        <Pencil />
+      </Button>
+    ) : undefined
 
   return (
     <MapPanel

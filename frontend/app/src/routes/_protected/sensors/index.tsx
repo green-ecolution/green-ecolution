@@ -8,6 +8,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { Zap } from 'lucide-react'
 import { z } from 'zod'
 import { pendingLoading, prefetch } from '@/lib/router'
+import { Can } from '@/lib/auth/Can'
 
 export const Route = createFileRoute('/_protected/sensors/')({
   component: Sensors,
@@ -45,12 +46,14 @@ function Sensors() {
             des QR-Codes auf der Sensoreinheit hinzufügen.
           </p>
         </article>
-        <Button asChild size="sm" className="w-full sm:w-auto sm:shrink-0">
-          <Link to="/sensors/new">
-            <Zap />
-            Sensor aktivieren
-          </Link>
-        </Button>
+        <Can permission={['sensor:create']}>
+          <Button asChild size="sm" className="w-full sm:w-auto sm:shrink-0">
+            <Link to="/sensors/new">
+              <Zap />
+              Sensor aktivieren
+            </Link>
+          </Button>
+        </Can>
       </div>
 
       <section className="mt-8">
