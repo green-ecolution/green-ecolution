@@ -50,8 +50,13 @@ import { Route as ProtectedDebugQrScannerIndexRouteImport } from './routes/_prot
 import { Route as ProtectedMapTreeNewRouteRouteImport } from './routes/_protected/map/tree/new/route'
 import { Route as ProtectedSensorsSensorIdIndexRouteImport } from './routes/_protected/sensors/$sensorId/index'
 import { Route as ProtectedSensorsNewIndexRouteImport } from './routes/_protected/sensors/new/index'
+import { Route as ProtectedSettingsIrrigationIndexRouteImport } from './routes/_protected/settings/irrigation/index'
+import { Route as ProtectedSettingsMapIndexRouteImport } from './routes/_protected/settings/map/index'
+import { Route as ProtectedSettingsNotificationsIndexRouteImport } from './routes/_protected/settings/notifications/index'
+import { Route as ProtectedSettingsOrganizationIndexRouteImport } from './routes/_protected/settings/organization/index'
 import { Route as ProtectedSettingsPluginIndexRouteImport } from './routes/_protected/settings/plugin/index'
 import { Route as ProtectedSettingsPluginPluginNameRouteRouteImport } from './routes/_protected/settings/plugin/$pluginName/route'
+import { Route as ProtectedSettingsSensorsIndexRouteImport } from './routes/_protected/settings/sensors/index'
 import { Route as ProtectedTreeclusterTreeclusterIdIndexRouteImport } from './routes/_protected/treecluster/$treeclusterId/index'
 import { Route as ProtectedTreesTreeIdIndexRouteImport } from './routes/_protected/trees/$treeId/index'
 import { Route as ProtectedVehiclesVehicleIdIndexRouteImport } from './routes/_protected/vehicles/$vehicleId/index'
@@ -298,6 +303,30 @@ const ProtectedSensorsNewIndexRoute =
     path: '/',
     getParentRoute: () => ProtectedSensorsNewRouteRoute,
   } as any)
+const ProtectedSettingsIrrigationIndexRoute =
+  ProtectedSettingsIrrigationIndexRouteImport.update({
+    id: '/irrigation/',
+    path: '/irrigation/',
+    getParentRoute: () => ProtectedSettingsRouteRoute,
+  } as any)
+const ProtectedSettingsMapIndexRoute =
+  ProtectedSettingsMapIndexRouteImport.update({
+    id: '/map/',
+    path: '/map/',
+    getParentRoute: () => ProtectedSettingsRouteRoute,
+  } as any)
+const ProtectedSettingsNotificationsIndexRoute =
+  ProtectedSettingsNotificationsIndexRouteImport.update({
+    id: '/notifications/',
+    path: '/notifications/',
+    getParentRoute: () => ProtectedSettingsRouteRoute,
+  } as any)
+const ProtectedSettingsOrganizationIndexRoute =
+  ProtectedSettingsOrganizationIndexRouteImport.update({
+    id: '/organization/',
+    path: '/organization/',
+    getParentRoute: () => ProtectedSettingsRouteRoute,
+  } as any)
 const ProtectedSettingsPluginIndexRoute =
   ProtectedSettingsPluginIndexRouteImport.update({
     id: '/',
@@ -309,6 +338,12 @@ const ProtectedSettingsPluginPluginNameRouteRoute =
     id: '/$pluginName',
     path: '/$pluginName',
     getParentRoute: () => ProtectedSettingsPluginRouteRoute,
+  } as any)
+const ProtectedSettingsSensorsIndexRoute =
+  ProtectedSettingsSensorsIndexRouteImport.update({
+    id: '/sensors/',
+    path: '/sensors/',
+    getParentRoute: () => ProtectedSettingsRouteRoute,
   } as any)
 const ProtectedTreeclusterTreeclusterIdIndexRoute =
   ProtectedTreeclusterTreeclusterIdIndexRouteImport.update({
@@ -501,7 +536,12 @@ export interface FileRoutesByFullPath {
   '/debug/qr-scanner/': typeof ProtectedDebugQrScannerIndexRoute
   '/sensors/$sensorId/': typeof ProtectedSensorsSensorIdIndexRoute
   '/sensors/new/': typeof ProtectedSensorsNewIndexRoute
+  '/settings/irrigation/': typeof ProtectedSettingsIrrigationIndexRoute
+  '/settings/map/': typeof ProtectedSettingsMapIndexRoute
+  '/settings/notifications/': typeof ProtectedSettingsNotificationsIndexRoute
+  '/settings/organization/': typeof ProtectedSettingsOrganizationIndexRoute
   '/settings/plugin/': typeof ProtectedSettingsPluginIndexRoute
+  '/settings/sensors/': typeof ProtectedSettingsSensorsIndexRoute
   '/treecluster/$treeclusterId/': typeof ProtectedTreeclusterTreeclusterIdIndexRoute
   '/trees/$treeId/': typeof ProtectedTreesTreeIdIndexRoute
   '/vehicles/$vehicleId/': typeof ProtectedVehiclesVehicleIdIndexRoute
@@ -546,7 +586,12 @@ export interface FileRoutesByTo {
   '/debug/qr-scanner': typeof ProtectedDebugQrScannerIndexRoute
   '/sensors/$sensorId': typeof ProtectedSensorsSensorIdIndexRoute
   '/sensors/new': typeof ProtectedSensorsNewIndexRoute
+  '/settings/irrigation': typeof ProtectedSettingsIrrigationIndexRoute
+  '/settings/map': typeof ProtectedSettingsMapIndexRoute
+  '/settings/notifications': typeof ProtectedSettingsNotificationsIndexRoute
+  '/settings/organization': typeof ProtectedSettingsOrganizationIndexRoute
   '/settings/plugin': typeof ProtectedSettingsPluginIndexRoute
+  '/settings/sensors': typeof ProtectedSettingsSensorsIndexRoute
   '/treecluster/$treeclusterId': typeof ProtectedTreeclusterTreeclusterIdIndexRoute
   '/trees/$treeId': typeof ProtectedTreesTreeIdIndexRoute
   '/map/tree/new': typeof ProtectedMapTreeNewIndexRoute
@@ -609,7 +654,12 @@ export interface FileRoutesById {
   '/_protected/debug/qr-scanner/': typeof ProtectedDebugQrScannerIndexRoute
   '/_protected/sensors/$sensorId/': typeof ProtectedSensorsSensorIdIndexRoute
   '/_protected/sensors/new/': typeof ProtectedSensorsNewIndexRoute
+  '/_protected/settings/irrigation/': typeof ProtectedSettingsIrrigationIndexRoute
+  '/_protected/settings/map/': typeof ProtectedSettingsMapIndexRoute
+  '/_protected/settings/notifications/': typeof ProtectedSettingsNotificationsIndexRoute
+  '/_protected/settings/organization/': typeof ProtectedSettingsOrganizationIndexRoute
   '/_protected/settings/plugin/': typeof ProtectedSettingsPluginIndexRoute
+  '/_protected/settings/sensors/': typeof ProtectedSettingsSensorsIndexRoute
   '/_protected/treecluster/$treeclusterId/': typeof ProtectedTreeclusterTreeclusterIdIndexRoute
   '/_protected/trees/$treeId/': typeof ProtectedTreesTreeIdIndexRoute
   '/_protected/vehicles/$vehicleId/': typeof ProtectedVehiclesVehicleIdIndexRoute
@@ -676,7 +726,12 @@ export interface FileRouteTypes {
     | '/debug/qr-scanner/'
     | '/sensors/$sensorId/'
     | '/sensors/new/'
+    | '/settings/irrigation/'
+    | '/settings/map/'
+    | '/settings/notifications/'
+    | '/settings/organization/'
     | '/settings/plugin/'
+    | '/settings/sensors/'
     | '/treecluster/$treeclusterId/'
     | '/trees/$treeId/'
     | '/vehicles/$vehicleId/'
@@ -721,7 +776,12 @@ export interface FileRouteTypes {
     | '/debug/qr-scanner'
     | '/sensors/$sensorId'
     | '/sensors/new'
+    | '/settings/irrigation'
+    | '/settings/map'
+    | '/settings/notifications'
+    | '/settings/organization'
     | '/settings/plugin'
+    | '/settings/sensors'
     | '/treecluster/$treeclusterId'
     | '/trees/$treeId'
     | '/map/tree/new'
@@ -783,7 +843,12 @@ export interface FileRouteTypes {
     | '/_protected/debug/qr-scanner/'
     | '/_protected/sensors/$sensorId/'
     | '/_protected/sensors/new/'
+    | '/_protected/settings/irrigation/'
+    | '/_protected/settings/map/'
+    | '/_protected/settings/notifications/'
+    | '/_protected/settings/organization/'
     | '/_protected/settings/plugin/'
+    | '/_protected/settings/sensors/'
     | '/_protected/treecluster/$treeclusterId/'
     | '/_protected/trees/$treeId/'
     | '/_protected/vehicles/$vehicleId/'
@@ -1102,6 +1167,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedSensorsNewIndexRouteImport
       parentRoute: typeof ProtectedSensorsNewRouteRoute
     }
+    '/_protected/settings/irrigation/': {
+      id: '/_protected/settings/irrigation/'
+      path: '/irrigation'
+      fullPath: '/settings/irrigation/'
+      preLoaderRoute: typeof ProtectedSettingsIrrigationIndexRouteImport
+      parentRoute: typeof ProtectedSettingsRouteRoute
+    }
+    '/_protected/settings/map/': {
+      id: '/_protected/settings/map/'
+      path: '/map'
+      fullPath: '/settings/map/'
+      preLoaderRoute: typeof ProtectedSettingsMapIndexRouteImport
+      parentRoute: typeof ProtectedSettingsRouteRoute
+    }
+    '/_protected/settings/notifications/': {
+      id: '/_protected/settings/notifications/'
+      path: '/notifications'
+      fullPath: '/settings/notifications/'
+      preLoaderRoute: typeof ProtectedSettingsNotificationsIndexRouteImport
+      parentRoute: typeof ProtectedSettingsRouteRoute
+    }
+    '/_protected/settings/organization/': {
+      id: '/_protected/settings/organization/'
+      path: '/organization'
+      fullPath: '/settings/organization/'
+      preLoaderRoute: typeof ProtectedSettingsOrganizationIndexRouteImport
+      parentRoute: typeof ProtectedSettingsRouteRoute
+    }
     '/_protected/settings/plugin/': {
       id: '/_protected/settings/plugin/'
       path: '/'
@@ -1115,6 +1208,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/plugin/$pluginName'
       preLoaderRoute: typeof ProtectedSettingsPluginPluginNameRouteRouteImport
       parentRoute: typeof ProtectedSettingsPluginRouteRoute
+    }
+    '/_protected/settings/sensors/': {
+      id: '/_protected/settings/sensors/'
+      path: '/sensors'
+      fullPath: '/settings/sensors/'
+      preLoaderRoute: typeof ProtectedSettingsSensorsIndexRouteImport
+      parentRoute: typeof ProtectedSettingsRouteRoute
     }
     '/_protected/treecluster/$treeclusterId/': {
       id: '/_protected/treecluster/$treeclusterId/'
@@ -1455,6 +1555,11 @@ const ProtectedSettingsPluginRouteRouteWithChildren =
 interface ProtectedSettingsRouteRouteChildren {
   ProtectedSettingsPluginRouteRoute: typeof ProtectedSettingsPluginRouteRouteWithChildren
   ProtectedSettingsIndexRoute: typeof ProtectedSettingsIndexRoute
+  ProtectedSettingsIrrigationIndexRoute: typeof ProtectedSettingsIrrigationIndexRoute
+  ProtectedSettingsMapIndexRoute: typeof ProtectedSettingsMapIndexRoute
+  ProtectedSettingsNotificationsIndexRoute: typeof ProtectedSettingsNotificationsIndexRoute
+  ProtectedSettingsOrganizationIndexRoute: typeof ProtectedSettingsOrganizationIndexRoute
+  ProtectedSettingsSensorsIndexRoute: typeof ProtectedSettingsSensorsIndexRoute
 }
 
 const ProtectedSettingsRouteRouteChildren: ProtectedSettingsRouteRouteChildren =
@@ -1462,6 +1567,14 @@ const ProtectedSettingsRouteRouteChildren: ProtectedSettingsRouteRouteChildren =
     ProtectedSettingsPluginRouteRoute:
       ProtectedSettingsPluginRouteRouteWithChildren,
     ProtectedSettingsIndexRoute: ProtectedSettingsIndexRoute,
+    ProtectedSettingsIrrigationIndexRoute:
+      ProtectedSettingsIrrigationIndexRoute,
+    ProtectedSettingsMapIndexRoute: ProtectedSettingsMapIndexRoute,
+    ProtectedSettingsNotificationsIndexRoute:
+      ProtectedSettingsNotificationsIndexRoute,
+    ProtectedSettingsOrganizationIndexRoute:
+      ProtectedSettingsOrganizationIndexRoute,
+    ProtectedSettingsSensorsIndexRoute: ProtectedSettingsSensorsIndexRoute,
   }
 
 const ProtectedSettingsRouteRouteWithChildren =
