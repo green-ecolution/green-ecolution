@@ -90,10 +90,12 @@ impl UserService {
             status: entity.status,
             driving_licenses: entity.driving_licenses,
         };
-        self.profile_writer.upsert(&profile).await?;
+        // Org first: its INSERT satisfies the NOT NULL constraint, then upsert's
+        // ON CONFLICT DO UPDATE only touches profile fields, leaving the org intact.
         self.profile_writer
             .set_organization(identity.id, entity.organization_id)
             .await?;
+        self.profile_writer.update(&profile).await?;
         let mut assigned = Vec::new();
         for role_id in &entity.role_ids {
             let role = self.role_reader.by_id(*role_id).await?;
@@ -201,7 +203,7 @@ impl UserService {
             .into_iter()
             .next()
             .ok_or(RepositoryError::NotFound)?;
-        self.profile_writer.upsert(&profile).await?;
+        self.profile_writer.update(&profile).await?;
         self.attach_views(vec![identity])
             .await?
             .into_iter()
@@ -464,19 +466,11 @@ mod tests {
 
     #[async_trait::async_trait]
     impl UserProfileWriter for InMemoryProfiles {
-        async fn upsert(&self, profile: &UserProfile) -> Result<(), RepositoryError> {
+        async fn update(&self, profile: &UserProfile) -> Result<(), RepositoryError> {
             self.rows
                 .lock()
                 .unwrap()
                 .insert(profile.id, profile.clone());
-            Ok(())
-        }
-        async fn ensure_exists(&self, id: Uuid) -> Result<(), RepositoryError> {
-            self.rows
-                .lock()
-                .unwrap()
-                .entry(id)
-                .or_insert_with(|| UserProfile::empty(id));
             Ok(())
         }
         async fn set_organization(
@@ -598,7 +592,7 @@ mod tests {
         let id = Uuid::now_v7();
         let profiles = Arc::new(InMemoryProfiles::default());
         profiles
-            .upsert(&UserProfile {
+            .update(&UserProfile {
                 id,
                 employee_id: Some("EMP-1".into()),
                 phone_number: None,

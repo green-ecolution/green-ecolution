@@ -103,18 +103,16 @@ impl UserProfileReader for PgUserProfileRepository {
 #[async_trait::async_trait]
 impl UserProfileWriter for PgUserProfileRepository {
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn upsert(&self, profile: &UserProfile) -> Result<(), RepositoryError> {
+    async fn update(&self, profile: &UserProfile) -> Result<(), RepositoryError> {
         let avatar_url = profile.avatar_url.as_ref().map(Url::to_string);
-        sqlx::query!(
-            r#"INSERT INTO user_profiles
-                   (id, employee_id, phone_number, avatar_url, status, driving_licenses)
-               VALUES ($1, $2, $3, $4, $5, $6)
-               ON CONFLICT (id) DO UPDATE SET
-                   employee_id      = EXCLUDED.employee_id,
-                   phone_number     = EXCLUDED.phone_number,
-                   avatar_url       = EXCLUDED.avatar_url,
-                   status           = EXCLUDED.status,
-                   driving_licenses = EXCLUDED.driving_licenses"#,
+        let result = sqlx::query!(
+            r#"UPDATE user_profiles SET
+                   employee_id      = $2,
+                   phone_number     = $3,
+                   avatar_url       = $4,
+                   status           = $5,
+                   driving_licenses = $6
+               WHERE id = $1"#,
             profile.id,
             profile.employee_id.as_deref(),
             profile.phone_number.as_deref(),
@@ -124,17 +122,9 @@ impl UserProfileWriter for PgUserProfileRepository {
         )
         .execute(&self.pool)
         .await?;
-        Ok(())
-    }
-
-    #[tracing::instrument(level = "trace", skip_all)]
-    async fn ensure_exists(&self, id: Uuid) -> Result<(), RepositoryError> {
-        sqlx::query!(
-            r#"INSERT INTO user_profiles (id) VALUES ($1) ON CONFLICT (id) DO NOTHING"#,
-            id
-        )
-        .execute(&self.pool)
-        .await?;
+        if result.rows_affected() == 0 {
+            return Err(RepositoryError::NotFound);
+        }
         Ok(())
     }
 

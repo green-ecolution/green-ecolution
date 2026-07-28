@@ -133,7 +133,6 @@ impl Application {
             settings.routing.tree_demand_liters,
             repos.start_point_reader.clone(),
             repos.start_point_writer.clone(),
-            profile_repo.clone(),
             profile_repo,
             settings.auth.enabled,
         );
@@ -360,7 +359,6 @@ impl Services {
         start_point_reader: Arc<dyn domain::start_point::StartPointReader>,
         start_point_writer: Arc<dyn domain::start_point::StartPointWriter>,
         profile_reader: Arc<dyn domain::user::UserProfileReader>,
-        profile_writer: Arc<dyn domain::user::UserProfileWriter>,
         auth_enabled: bool,
     ) -> Self {
         Self {
@@ -425,13 +423,13 @@ impl Services {
                 repos.organization_reader.clone(),
                 repos.organization_writer.clone(),
                 repos.role_reader.clone(),
-                profile_reader,
+                profile_reader.clone(),
                 event_bus.clone(),
             )),
             role: Arc::new(RoleService::new(
                 repos.role_reader.clone(),
                 repos.role_writer.clone(),
-                profile_writer,
+                profile_reader,
                 event_bus,
             )),
             authorization: Arc::new(AuthorizationService::new(

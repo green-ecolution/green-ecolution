@@ -138,9 +138,9 @@ pub trait UserProfileReader: Send + Sync {
 
 #[async_trait::async_trait]
 pub trait UserProfileWriter: Send + Sync {
-    async fn upsert(&self, profile: &UserProfile) -> Result<(), RepositoryError>;
-    /// Creates an empty profile row if none exists — never touches existing data.
-    async fn ensure_exists(&self, id: Uuid) -> Result<(), RepositoryError>;
+    /// Updates the profile facts of an existing row. The row itself is created
+    /// by `set_organization`, since a profile cannot exist without an organization.
+    async fn update(&self, profile: &UserProfile) -> Result<(), RepositoryError>;
     async fn set_organization(
         &self,
         id: Uuid,
