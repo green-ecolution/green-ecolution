@@ -32,7 +32,8 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
     ...actual,
     useQuery: (opts: { queryKey: unknown[] }) => {
       const key = JSON.stringify(opts.queryKey)
-      if (key.includes('planned')) return { data: { data: [plan] }, isError: false, refetch: vi.fn() }
+      if (key.includes('planned'))
+        return { data: { data: [plan] }, isError: false, refetch: vi.fn() }
       return { data: { data: [] }, isError: false, refetch: vi.fn() }
     },
     useInfiniteQuery: () => ({

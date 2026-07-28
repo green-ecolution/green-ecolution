@@ -28,11 +28,12 @@ const ClusterPanel = ({
   const failed = !isValidUuid(clusterId) || isError
   const canEdit = useHasPermission(['tree_cluster:update'])
 
-  const headerAction = data && canEdit ? (
-    <Button variant="ghost" size="icon" aria-label="Gruppe bearbeiten" onClick={onEdit}>
-      <Pencil />
-    </Button>
-  ) : undefined
+  const headerAction =
+    data && canEdit ? (
+      <Button variant="ghost" size="icon" aria-label="Gruppe bearbeiten" onClick={onEdit}>
+        <Pencil />
+      </Button>
+    ) : undefined
 
   return (
     <MapPanel
