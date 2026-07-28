@@ -311,6 +311,10 @@ export { Separator } from './components/ui/separator'
 export { Slider } from './components/ui/slider'
 export type { SliderProps } from './components/ui/slider'
 
+// Switch
+export { Switch } from './components/ui/switch'
+export type { SwitchProps } from './components/ui/switch'
+
 // StatusCard
 export { StatusCard, statusCardVariants } from './components/ui/status-card'
 export type { StatusCardProps, StatusVariant } from './components/ui/status-card'
