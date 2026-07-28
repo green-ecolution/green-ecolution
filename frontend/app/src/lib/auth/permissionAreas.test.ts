@@ -3,6 +3,7 @@ import { UNRESTRICTED } from './permissions'
 import {
   activeActionCount,
   applyLevel,
+  applyLevelWithinGrantable,
   clampToGrantable,
   isGrantable,
   levelOf,
@@ -77,6 +78,40 @@ describe('applyLevel', () => {
   it('does not mutate the input', () => {
     const before = new Set(['tree:read'])
     applyLevel(before, 'tree', 'manage')
+    expect([...before]).toEqual(['tree:read'])
+  })
+})
+
+describe('applyLevelWithinGrantable', () => {
+  it('does not add a non-grantable action from a preset', () => {
+    const after = applyLevelWithinGrantable(new Set(), 'tree', 'manage', new Set(['tree:read']))
+    expect([...after].sort()).toEqual(['tree:read'])
+  })
+
+  it('preserves a pre-existing non-grantable action across a preset click', () => {
+    const before = new Set(['tree:delete'])
+    const after = applyLevelWithinGrantable(before, 'tree', 'view', new Set(['tree:read']))
+    expect([...after].sort()).toEqual(['tree:delete', 'tree:read'])
+  })
+
+  it('equals plain applyLevel when unrestricted', () => {
+    const before = new Set(['tree:read', 'tree:delete', 'sensor:read'])
+    expect([...applyLevelWithinGrantable(before, 'tree', 'edit', UNRESTRICTED)].sort()).toEqual(
+      [...applyLevel(before, 'tree', 'edit')].sort(),
+    )
+  })
+
+  it('moves grantable actions per preset', () => {
+    const grantable = new Set(['tree:read', 'tree:create', 'tree:update'])
+    const after = applyLevelWithinGrantable(new Set(['tree:read']), 'tree', 'edit', grantable)
+    expect([...after].sort()).toEqual(['tree:create', 'tree:read', 'tree:update'])
+    const back = applyLevelWithinGrantable(after, 'tree', 'view', grantable)
+    expect([...back].sort()).toEqual(['tree:read'])
+  })
+
+  it('does not mutate the input', () => {
+    const before = new Set(['tree:read'])
+    applyLevelWithinGrantable(before, 'tree', 'manage', UNRESTRICTED)
     expect([...before]).toEqual(['tree:read'])
   })
 })

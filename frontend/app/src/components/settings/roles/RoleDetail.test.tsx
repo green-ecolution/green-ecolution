@@ -74,6 +74,24 @@ describe('RoleDetail', () => {
     expect(onCopy).toHaveBeenCalledTimes(2)
   })
 
+  it('offers no actionable copy affordance on a system role without create rights', () => {
+    const onCopy = vi.fn()
+    render(
+      <RoleDetail
+        {...baseProps}
+        canCreate={false}
+        onCopy={onCopy}
+        role={template}
+        draft={draftFor(template)}
+        dirty={false}
+      />,
+    )
+    expect(screen.queryByRole('button', { name: 'Kopieren & bearbeiten' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Kopiere' })).not.toBeInTheDocument()
+    expect(screen.getByText(/Kopiere die Rolle/)).toBeInTheDocument()
+    expect(onCopy).not.toHaveBeenCalled()
+  })
+
   it('renders the name as read-only text for a system role', () => {
     render(<RoleDetail {...baseProps} role={template} draft={draftFor(template)} dirty={false} />)
     expect(screen.queryByRole('textbox', { name: 'Name der Rolle' })).not.toBeInTheDocument()

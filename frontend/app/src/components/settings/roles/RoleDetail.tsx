@@ -160,13 +160,17 @@ const RoleDetail = ({
           <AlertContent>
             <AlertDescription>
               Systemrollen sind schreibgeschützt.{' '}
-              <button
-                type="button"
-                onClick={onCopy}
-                className="font-semibold text-green-dark underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                Kopiere
-              </button>{' '}
+              {canCreate ? (
+                <button
+                  type="button"
+                  onClick={onCopy}
+                  className="font-semibold text-green-dark underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  Kopiere
+                </button>
+              ) : (
+                'Kopiere'
+              )}{' '}
               die Rolle, um Berechtigungen anzupassen oder eine eigene Rolle zu erstellen.
             </AlertDescription>
           </AlertContent>

@@ -225,6 +225,28 @@ export const applyLevel = (
   return next
 }
 
+/**
+ * Applies a preset but only touches actions the caller may grant. Non-grantable
+ * actions are left exactly as they were, so a preset can neither add a right the
+ * caller lacks nor silently strip a pre-existing frozen one.
+ */
+export const applyLevelWithinGrantable = (
+  perms: ReadonlySet<string>,
+  resource: Resource,
+  level: AccessLevel,
+  grantable: Permissions,
+): Set<string> => {
+  const next = new Set(perms)
+  const preset = new Set(LEVEL_ACTIONS[level])
+  ACTIONS.forEach((action) => {
+    const permission = permissionFor(resource, action)
+    if (!isGrantable(permission, grantable)) return
+    if (preset.has(action)) next.add(permission)
+    else next.delete(permission)
+  })
+  return next
+}
+
 export const toggleAction = (perms: ReadonlySet<string>, permission: Permission): Set<string> => {
   const next = new Set(perms)
   if (!next.delete(permission)) next.add(permission)

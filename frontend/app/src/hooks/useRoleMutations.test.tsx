@@ -82,4 +82,46 @@ describe('useRoleMutations', () => {
     await waitFor(() => expect(deleteRole).toHaveBeenCalledWith({ roleId: 'role-1' }))
     expect(showToast).toHaveBeenCalledWith('Rolle gelöscht')
   })
+
+  it('toasts an error for a non-409 create failure', async () => {
+    createRole.mockRejectedValue({ response: { status: 403 } })
+    const { result } = renderMutations()
+
+    result.current.createRole.mutate({
+      orgId: 'org-1',
+      name: 'Bezirksleiter Nord',
+      description: null,
+      permissions: ['tree:delete'],
+    })
+
+    await waitFor(() =>
+      expect(showToast).toHaveBeenCalledWith('Die Rolle konnte nicht gespeichert werden.', 'error'),
+    )
+  })
+
+  it('does not toast on a 409 create conflict', async () => {
+    createRole.mockRejectedValue({ response: { status: 409 } })
+    const { result } = renderMutations()
+
+    result.current.createRole.mutate({
+      orgId: 'org-1',
+      name: 'Bezirksleiter Nord',
+      description: null,
+      permissions: ['tree:read'],
+    })
+
+    await waitFor(() => expect(createRole).toHaveBeenCalled())
+    expect(showToast).not.toHaveBeenCalled()
+  })
+
+  it('toasts an error when deletion fails', async () => {
+    deleteRole.mockRejectedValue({ response: { status: 500 } })
+    const { result } = renderMutations()
+
+    result.current.deleteRole.mutate({ roleId: 'role-1' })
+
+    await waitFor(() =>
+      expect(showToast).toHaveBeenCalledWith('Die Rolle konnte nicht gelöscht werden.', 'error'),
+    )
+  })
 })

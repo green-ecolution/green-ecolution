@@ -31,6 +31,10 @@ export const useRoleMutations = () => {
     void queryClient.invalidateQueries({ queryKey: ['users', 'me'] })
   }
 
+  // A 409 is a name conflict already surfaced at the field, so it must not toast.
+  const isNameConflict = (error: unknown): boolean =>
+    (error as { response?: { status?: number } }).response?.status === 409
+
   const createRole = useMutation({
     mutationFn: ({ orgId, name, description, permissions }: CreateRoleVariables) =>
       roleApi.createRole({
@@ -40,6 +44,9 @@ export const useRoleMutations = () => {
     onSuccess: () => {
       invalidate()
       showToast('Rolle angelegt')
+    },
+    onError: (error) => {
+      if (!isNameConflict(error)) showToast('Die Rolle konnte nicht gespeichert werden.', 'error')
     },
   })
 
@@ -53,6 +60,9 @@ export const useRoleMutations = () => {
       invalidate()
       showToast('Gespeichert')
     },
+    onError: (error) => {
+      if (!isNameConflict(error)) showToast('Die Rolle konnte nicht gespeichert werden.', 'error')
+    },
   })
 
   const deleteRole = useMutation({
@@ -61,6 +71,7 @@ export const useRoleMutations = () => {
       invalidate()
       showToast('Rolle gelöscht')
     },
+    onError: () => showToast('Die Rolle konnte nicht gelöscht werden.', 'error'),
   })
 
   return { createRole, updateRole, deleteRole }

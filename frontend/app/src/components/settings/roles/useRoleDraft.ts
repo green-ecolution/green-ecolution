@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import type { Role } from '@/api/backendApi'
 import type { Permission, Permissions, Resource } from '@/lib/auth/permissions'
 import {
-  applyLevel,
+  applyLevelWithinGrantable,
   clampToGrantable,
   toggleAction,
   type AccessLevel,
@@ -81,11 +81,19 @@ export const useRoleDraft = (grantable: Permissions) => {
     setDraft((current) => (current ? { ...current, description } : current))
   }, [])
 
-  const setLevel = useCallback((resource: Resource, level: AccessLevel) => {
-    setDraft((current) =>
-      current ? { ...current, permissions: applyLevel(current.permissions, resource, level) } : current,
-    )
-  }, [])
+  const setLevel = useCallback(
+    (resource: Resource, level: AccessLevel) => {
+      setDraft((current) =>
+        current
+          ? {
+              ...current,
+              permissions: applyLevelWithinGrantable(current.permissions, resource, level, grantable),
+            }
+          : current,
+      )
+    },
+    [grantable],
+  )
 
   const toggle = useCallback((permission: Permission) => {
     setDraft((current) =>
