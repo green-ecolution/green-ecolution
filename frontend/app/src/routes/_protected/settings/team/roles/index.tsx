@@ -1,8 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
+import RolesPage from '@/components/settings/roles/RolesPage'
 import { guardedRoute } from '@/lib/router'
 
-const Roles = () => <p className="text-sm text-dark-600">Rollen</p>
-
 export const Route = createFileRoute('/_protected/settings/team/roles/')(
-  guardedRoute(['role:read'], { component: Roles }),
+  guardedRoute(['role:read'], { component: RolesPage }),
 )
