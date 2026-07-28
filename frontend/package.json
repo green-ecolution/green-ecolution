@@ -26,7 +26,7 @@
     "build-storybook": "pnpm --filter @green-ecolution/ui build-storybook"
   },
   "devDependencies": {
-    "prettier": "^3.9.5"
+    "prettier": "^3.9.6"
   },
   "packageManager": "pnpm@10.20.0"
 }
