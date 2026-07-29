@@ -2,14 +2,14 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import maplibregl, { type Map as MaplibreMap } from 'maplibre-gl'
 import React, { useEffect, useRef, useState } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { mapInfoQuery } from '@/api/queries'
+import { infoQueries } from '@/api/queries'
 import useStore from '@/store/store'
 import { MAP_MAX_ZOOM, MAP_MIN_ZOOM } from '@/lib/mapConfig'
 import { MapContext } from './MapContext'
 import { OPENFREEMAP_STYLE_URL } from './mapStyle'
 
 const MapCanvas = ({ children }: React.PropsWithChildren) => {
-  const { data: mapInfo } = useSuspenseQuery(mapInfoQuery())
+  const { data: mapInfo } = useSuspenseQuery(infoQueries.map())
   const containerRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<MaplibreMap | null>(null)
 

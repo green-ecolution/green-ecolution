@@ -1,11 +1,11 @@
-import { treeClusterIdQuery } from '@/api/queries'
+import { clusterQueries } from '@/api/queries'
 import { entityRoute } from '@/lib/router'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_protected/treecluster/$treeclusterId')(
   entityRoute({
     key: 'treecluster',
-    query: treeClusterIdQuery,
+    query: clusterQueries.detail,
     idParam: 'treeclusterId',
     title: (treecluster) => treecluster.name,
     notFound: {

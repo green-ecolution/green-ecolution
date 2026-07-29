@@ -16,7 +16,7 @@ import {
   Loading,
 } from '@green-ecolution/ui'
 import type { Role } from '@/api/backendApi'
-import { currentUserQuery, orgRolesQuery, roleTemplatesQuery, userQuery } from '@/api/queries'
+import { userQueries, roleQueries } from '@/api/queries'
 import { useRoleMutations } from '@/hooks/useRoleMutations'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { usePermissions } from '@/lib/auth/usePermissions'
@@ -45,15 +45,18 @@ const RolesPage = () => {
   const canReadUsers = useHasPermission(['user:read'])
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 
-  const { data: me } = useQuery(currentUserQuery())
+  const { data: me } = useQuery(userQueries.me())
   const orgId = me?.organization?.id ?? null
 
-  const { data: templates, isLoading: templatesLoading } = useQuery(roleTemplatesQuery())
+  const { data: templates, isLoading: templatesLoading } = useQuery(roleQueries.templates())
   const { data: orgRoles, isLoading: orgRolesLoading } = useQuery({
-    ...orgRolesQuery(orgId ?? ''),
+    ...roleQueries.org(orgId ?? ''),
     enabled: orgId !== null,
   })
-  const { data: users } = useQuery({ ...userQuery(TEAM_USERS_PARAMS), enabled: canReadUsers })
+  const { data: users } = useQuery({
+    ...userQueries.list(TEAM_USERS_PARAMS),
+    enabled: canReadUsers,
+  })
 
   const { createRole, updateRole, deleteRole } = useRoleMutations()
   const draftState = useRoleDraft(grantable)

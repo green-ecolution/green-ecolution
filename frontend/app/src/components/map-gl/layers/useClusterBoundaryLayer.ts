@@ -3,7 +3,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import type { GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl'
 import type { FeatureCollection, Polygon } from 'geojson'
 import type { WateringStatus } from '@green-ecolution/backend-client'
-import { clusterBoundariesQuery } from '@/api/queries'
+import { clusterQueries } from '@/api/queries'
 import { useMaplibreMap } from '../MapContext'
 import { LAYERS, SOURCES, STATUS_COLOR_EXPRESSION } from '../mapStyle'
 import { isMapAlive } from '../mapReady'
@@ -27,7 +27,7 @@ const useClusterBoundaryLayer = ({
   clusterIds,
 }: UseClusterBoundaryLayerOptions = {}) => {
   const map = useMaplibreMap()
-  const { data } = useSuspenseQuery(clusterBoundariesQuery())
+  const { data } = useSuspenseQuery(clusterQueries.boundaries())
 
   useEffect(() => {
     if (!map.getSource(SOURCES.clusterBoundaries)) {

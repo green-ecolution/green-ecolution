@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { currentUserQuery } from '@/api/queries'
+import { userQueries } from '@/api/queries'
 import { useAuthSession } from './authSessionContext'
 import { readAuthBypass } from './runtimeConfig'
 import { permissionsOf, UNRESTRICTED, type Permissions } from './permissions'
@@ -11,7 +11,7 @@ import { permissionsOf, UNRESTRICTED, type Permissions } from './permissions'
 export function usePermissions(): Permissions {
   const { isAuthenticated } = useAuthSession()
   const bypass = readAuthBypass()
-  const { data } = useQuery({ ...currentUserQuery(), enabled: isAuthenticated && !bypass })
+  const { data } = useQuery({ ...userQueries.me(), enabled: isAuthenticated && !bypass })
 
   return bypass ? UNRESTRICTED : permissionsOf(data)
 }

@@ -1,4 +1,4 @@
-import { treeClusterIdQuery } from '@/api/queries'
+import { clusterQueries } from '@/api/queries'
 import { SelectedCardProps } from '../SelectedCard'
 import { useQuery } from '@tanstack/react-query'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
@@ -14,7 +14,7 @@ import {
 interface SelectedCardClusterProps extends Omit<SelectedCardProps, 'type'> {}
 
 const SelectedCardCluster = ({ onClick, id }: SelectedCardClusterProps) => {
-  const { data } = useQuery(treeClusterIdQuery(String(id)))
+  const { data } = useQuery(clusterQueries.detail(String(id)))
   const statusDetails = getWateringStatusDetails(data?.wateringStatus ?? 'unknown')
 
   return (

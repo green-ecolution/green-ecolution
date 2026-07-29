@@ -1,13 +1,13 @@
 import { useLocation } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { infoQuery } from '@/api/queries'
+import { infoQueries } from '@/api/queries'
 import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed'
 
 function Footer() {
   const location = useLocation()
   const isMapPage = location.pathname.includes('/map')
   const collapsed = useSidebarCollapsed()
-  const { data: appInfo } = useQuery(infoQuery())
+  const { data: appInfo } = useQuery(infoQueries.app())
 
   const version = appInfo?.version?.startsWith('v')
     ? appInfo.version

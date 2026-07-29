@@ -8,7 +8,7 @@ import EntityList from '@/components/general/EntityList'
 import ListPageHeader from '@/components/general/ListPageHeader'
 import Pagination from '@/components/general/Pagination'
 import { z } from 'zod'
-import { vehicleQuery } from '@/api/queries'
+import { vehicleQueries } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
 import { pendingLoading, prefetch } from '@/lib/router'
 import { Can } from '@/lib/auth/Can'
@@ -23,7 +23,7 @@ export const Route = createFileRoute('/_protected/vehicles/')({
     page,
   }),
   loader: ({ context: { queryClient }, deps: { page } }) => {
-    prefetch(queryClient, vehicleQuery({ page, perPage: 5 }), 'vehicleQuery')
+    prefetch(queryClient, vehicleQueries.list({ page, perPage: 5 }), 'vehicleQueries.list')
   },
 })
 
@@ -34,7 +34,7 @@ function Vehicles() {
     isPlaceholderData,
     error,
   } = useQuery({
-    ...vehicleQuery({ page, perPage: 5 }),
+    ...vehicleQueries.list({ page, perPage: 5 }),
     placeholderData: keepPreviousData,
   })
   if (error) throw error

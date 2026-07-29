@@ -3,7 +3,7 @@ import EntityList from '@/components/general/EntityList'
 import ListPageHeader from '@/components/general/ListPageHeader'
 import { createFileRoute } from '@tanstack/react-router'
 import { useSuspenseQuery, type QueryClient } from '@tanstack/react-query'
-import { userQuery } from '@/api/queries'
+import { userQueries } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
 import { guardedRoute, pendingLoading } from '@/lib/router'
 
@@ -14,12 +14,12 @@ export const Route = createFileRoute('/_protected/settings/team/members/')(
     component: Team,
     pendingComponent: pendingLoading('Daten werden geladen'),
     loader: ({ context: { queryClient } }: { context: { queryClient: QueryClient } }) =>
-      queryClient.prefetchQuery(userQuery(TEAM_USERS_PARAMS)),
+      queryClient.prefetchQuery(userQueries.list(TEAM_USERS_PARAMS)),
   }),
 )
 
 function Team() {
-  const { data: userRes } = useSuspenseQuery(userQuery(TEAM_USERS_PARAMS))
+  const { data: userRes } = useSuspenseQuery(userQueries.list(TEAM_USERS_PARAMS))
 
   return (
     <div className="container mt-6">

@@ -6,10 +6,10 @@ import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import {
-  routePreviewQuery,
+  clusterQueries,
   routingStartPointsQuery,
-  treeClusterQuery,
-  vehicleIdQuery,
+  vehicleQueries,
+  wateringPlanQueries,
 } from '@/api/queries'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import { useFormNavigationBlocker } from '@/hooks/form/useFormNavigationBlocker'
@@ -34,7 +34,7 @@ const mapSelectClusterSchema = z.object({
 export const Route = createFileRoute('/_protected/map/watering-plan/select/cluster/')({
   component: SelectCluster,
   validateSearch: mapSelectClusterSchema,
-  loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(treeClusterQuery()),
+  loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(clusterQueries.list()),
 })
 
 function SelectCluster() {
@@ -53,13 +53,13 @@ function SelectCluster() {
       'Möchtest du die Seite wirklich verlassen? Deine Eingaben gehen verloren, wenn du jetzt gehst.',
   })
 
-  const { data: clusters } = useSuspenseQuery(treeClusterQuery())
+  const { data: clusters } = useSuspenseQuery(clusterQueries.list())
   const { data: transporter } = useQuery({
-    ...vehicleIdQuery(transporterId?.toString() ?? '-1'),
+    ...vehicleQueries.detail(transporterId?.toString() ?? '-1'),
     enabled: !!transporterId && transporterId !== '-1',
   })
   const { data: trailer } = useQuery({
-    ...vehicleIdQuery(trailerId?.toString() ?? '-1'),
+    ...vehicleQueries.detail(trailerId?.toString() ?? '-1'),
     enabled: !!trailerId && trailerId !== '-1',
   })
 
@@ -71,7 +71,11 @@ function SelectCluster() {
 
   const previewEnabled = debouncedClusterIds.length > 0 && !!transporterId && transporterId !== '-1'
   const { data: previewRoute } = useQuery({
-    ...routePreviewQuery(debouncedClusterIds, transporterId ?? '', draft.data?.startPointName),
+    ...wateringPlanQueries.routePreview(
+      debouncedClusterIds,
+      transporterId ?? '',
+      draft.data?.startPointName,
+    ),
     enabled: previewEnabled,
   })
   const routeCoordinates = previewEnabled

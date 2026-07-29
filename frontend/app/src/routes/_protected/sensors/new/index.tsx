@@ -1,5 +1,5 @@
 import { sensorApi } from '@/api/backendApi'
-import { sensorIdQuery, sensorsKey, treeIdQuery } from '@/api/queries'
+import { sensorQueries, treeQueries } from '@/api/queries'
 import { mapActivateError, resolveResponseStatus } from '@/api/sensorErrors'
 import SensorReviewStep from '@/components/sensor/wizard/SensorReviewStep'
 import SensorScanStep from '@/components/sensor/wizard/SensorScanStep'
@@ -44,7 +44,7 @@ function NewSensor() {
   }, [state.sensorId, state.frozenFix, position, stop])
 
   const sensorLookup = useQuery({
-    ...sensorIdQuery(state.sensorId ?? ''),
+    ...sensorQueries.detail(state.sensorId ?? ''),
     enabled: !!state.sensorId,
     retry: false,
   })
@@ -65,15 +65,19 @@ function NewSensor() {
     onMutate: () => dispatch({ type: 'submissionStart' }),
     onSuccess: async () => {
       dispatch({ type: 'submissionSuccess' })
-      const invalidations = [queryClient.invalidateQueries({ queryKey: sensorsKey })]
+      const invalidations = [queryClient.invalidateQueries({ queryKey: sensorQueries.key })]
       if (state.sensorId) {
         invalidations.push(
-          queryClient.invalidateQueries({ queryKey: sensorIdQuery(state.sensorId).queryKey }),
+          queryClient.invalidateQueries({
+            queryKey: sensorQueries.detail(state.sensorId).queryKey,
+          }),
         )
       }
       if (state.selectedTreeId) {
         invalidations.push(
-          queryClient.invalidateQueries({ queryKey: treeIdQuery(state.selectedTreeId).queryKey }),
+          queryClient.invalidateQueries({
+            queryKey: treeQueries.detail(state.selectedTreeId).queryKey,
+          }),
         )
       }
       await Promise.all(invalidations)

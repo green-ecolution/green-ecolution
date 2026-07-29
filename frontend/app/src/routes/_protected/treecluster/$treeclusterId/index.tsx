@@ -1,5 +1,5 @@
 import TreeClusterDashboard from '@/components/treecluster/TreeClusterDashboard'
-import { treeClusterIdQuery } from '@/api/queries'
+import { clusterQueries } from '@/api/queries'
 import { pendingLoading } from '@/lib/router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
@@ -16,7 +16,7 @@ function SingleTreecluster() {
   // Live query instead of loader data: cluster status changes via MQTT-driven
   // sensor readings and must keep polling.
   const { data: treecluster } = useSuspenseQuery({
-    ...treeClusterIdQuery(treeclusterId),
+    ...clusterQueries.detail(treeclusterId),
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,
   })

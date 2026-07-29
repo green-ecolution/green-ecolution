@@ -1,5 +1,5 @@
 import { sensorApi } from '@/api/backendApi'
-import { sensorIdQuery, sensorsKey, treeIdQuery } from '@/api/queries'
+import { sensorQueries, treeQueries } from '@/api/queries'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import type { RegisteredRouter } from '@tanstack/react-router'
@@ -11,11 +11,11 @@ const invalidateSensorAndTrees = async (
   treeIds: (string | null | undefined)[],
 ) => {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: sensorsKey }),
-    queryClient.invalidateQueries({ queryKey: sensorIdQuery(sensorId).queryKey }),
+    queryClient.invalidateQueries({ queryKey: sensorQueries.key }),
+    queryClient.invalidateQueries({ queryKey: sensorQueries.detail(sensorId).queryKey }),
     ...treeIds
       .filter((id): id is string => !!id)
-      .map((id) => queryClient.invalidateQueries({ queryKey: treeIdQuery(id).queryKey })),
+      .map((id) => queryClient.invalidateQueries({ queryKey: treeQueries.detail(id).queryKey })),
   ])
   // Detail routes read the sensor/tree from loader data; re-run their loaders.
   await router.invalidate()

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { currentUserQuery } from '@/api/queries'
+import { userQueries } from '@/api/queries'
 import { useAuthSession } from './authSessionContext'
 
 /**
@@ -9,7 +9,7 @@ import { useAuthSession } from './authSessionContext'
  */
 export function useCurrentUserAvatar(): string | undefined {
   const { isAuthenticated } = useAuthSession()
-  const { data } = useQuery({ ...currentUserQuery(), enabled: isAuthenticated })
+  const { data } = useQuery({ ...userQueries.me(), enabled: isAuthenticated })
   // the API sends an empty string when no avatar is set
   const url = data?.avatarUrl
   return url === '' ? undefined : url

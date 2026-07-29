@@ -1,4 +1,4 @@
-import { infoQuery, serverInfoQuery, servicesInfoQuery, statisticsQuery } from '@/api/queries'
+import { infoQueries } from '@/api/queries'
 import { pendingLoading, prefetch } from '@/lib/router'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@green-ecolution/ui'
 import { useSuspenseQuery, useQuery } from '@tanstack/react-query'
@@ -19,8 +19,8 @@ export const Route = createFileRoute('/_protected/info')({
     tab: tabSchema.default('system'),
   }),
   loader: ({ context: { queryClient } }) => {
-    prefetch(queryClient, infoQuery(), 'infoQuery')
-    prefetch(queryClient, servicesInfoQuery(), 'servicesInfoQuery')
+    prefetch(queryClient, infoQueries.app(), 'infoQueries.app')
+    prefetch(queryClient, infoQueries.services(), 'infoQueries.services')
     return {
       crumb: {
         title: 'Systeminformationen',
@@ -31,10 +31,10 @@ export const Route = createFileRoute('/_protected/info')({
 
 function Info() {
   const { tab } = useSearch({ from: '/_protected/info' })
-  const { data } = useSuspenseQuery(infoQuery())
-  const { data: servicesData, isLoading: servicesLoading } = useQuery(servicesInfoQuery())
-  const { data: serverData } = useQuery(serverInfoQuery())
-  const { data: statsData } = useQuery(statisticsQuery())
+  const { data } = useSuspenseQuery(infoQueries.app())
+  const { data: servicesData, isLoading: servicesLoading } = useQuery(infoQueries.services())
+  const { data: serverData } = useQuery(infoQueries.server())
+  const { data: statsData } = useQuery(infoQueries.statistics())
 
   const totalServices = servicesData?.items.length ?? 0
   const hasServerInfo = serverData?.hostname

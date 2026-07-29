@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { FormProvider } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { MapPin } from 'lucide-react'
-import { sensorQuery, treeClusterQuery } from '@/api/queries'
+import { clusterQueries, sensorQueries } from '@/api/queries'
 import { prefetch } from '@/lib/router'
 import { useTreeForm } from '@/hooks/form/useTreeForm'
 import { TreeForm } from '@/schema/treeSchema'
@@ -19,8 +19,8 @@ import useTreeLayers from '@/components/map-gl/layers/useTreeLayers'
 export const Route = createFileRoute('/_protected/map/tree/new/')({
   component: NewTree,
   loader: ({ context: { queryClient } }) => {
-    prefetch(queryClient, sensorQuery(), 'sensorQuery')
-    prefetch(queryClient, treeClusterQuery(), 'treeClusterQuery')
+    prefetch(queryClient, sensorQueries.list(), 'sensorQueries.list')
+    prefetch(queryClient, clusterQueries.list(), 'clusterQueries.list')
   },
 })
 
@@ -33,8 +33,8 @@ const defaultForm = () => ({
 function NewTree() {
   const navigate = useNavigate({ from: Route.fullPath })
   const [pos, setPos] = useState<MapClickLngLat>()
-  const { data: sensors } = useSuspenseQuery(sensorQuery())
-  const { data: treeClusters } = useSuspenseQuery(treeClusterQuery())
+  const { data: sensors } = useSuspenseQuery(sensorQueries.list())
+  const { data: treeClusters } = useSuspenseQuery(clusterQueries.list())
 
   useClusterBoundaryLayer({ interactive: false })
   useClusterMarkerLayer({ interactive: false })

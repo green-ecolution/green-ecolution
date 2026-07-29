@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
-import { treeClusterIdQuery, treeClusterQuery } from '@/api/queries'
+import { clusterQueries } from '@/api/queries'
 import type { TreeCluster, TreeClusterCreate, TreeClusterUpdate } from '@/api/backendApi'
 import { clusterApi } from '@/api/backendApi'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
@@ -22,11 +22,11 @@ const treeClusterConfig: EntityFormConfig<
 
   invalidateQueries: (data, queryClient: QueryClient) => {
     queryClient
-      .invalidateQueries(treeClusterIdQuery(String(data.id)))
-      .catch((error) => console.error('Invalidate "treeClusterIdQuery" failed:', error))
+      .invalidateQueries(clusterQueries.detail(String(data.id)))
+      .catch((error) => console.error('Invalidate "clusterQueries.detail" failed:', error))
     queryClient
-      .invalidateQueries(treeClusterQuery())
-      .catch((error) => console.error('Invalidate "treeClusterQuery" failed:', error))
+      .invalidateQueries(clusterQueries.list())
+      .catch((error) => console.error('Invalidate "clusterQueries.list" failed:', error))
   },
 
   successRoute: (id) => ({

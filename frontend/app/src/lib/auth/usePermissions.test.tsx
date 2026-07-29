@@ -19,7 +19,9 @@ vi.mock('./authSessionContext', () => ({
 
 // Mocking the query keeps react-query real while avoiding network and auth headers.
 vi.mock('@/api/queries', () => ({
-  currentUserQuery: () => ({ queryKey: ['users', 'me'], queryFn: () => queryFn() }),
+  userQueries: {
+    me: () => ({ queryKey: ['users', 'me'], queryFn: () => queryFn() }),
+  },
 }))
 
 const { usePermissions } = await import('./usePermissions')

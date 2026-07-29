@@ -5,7 +5,7 @@ import StatusCardGrid from '../general/StatusCardGrid'
 import { format, formatDuration, intervalToDuration } from 'date-fns'
 import { getWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
 import { useSuspenseQuery, useQuery } from '@tanstack/react-query'
-import { userQuery, routingStartPointsQuery } from '@/api/queries'
+import { userQueries, routingStartPointsQuery } from '@/api/queries'
 import { de } from 'date-fns/locale'
 import { formatKm } from '@/lib/utils'
 
@@ -14,7 +14,7 @@ interface TabGeneralDataProps {
 }
 
 const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan }) => {
-  const { data: userRes } = useSuspenseQuery(userQuery())
+  const { data: userRes } = useSuspenseQuery(userQueries.list())
   const { data: startPoints } = useQuery(routingStartPointsQuery())
   const defaultStartPointName = startPoints?.[0]?.name
 

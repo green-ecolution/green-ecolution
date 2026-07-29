@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { sensorDataQuery } from '@/api/queries'
+import { sensorQueries } from '@/api/queries'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Area } from 'recharts'
 import { Loading, TimeRangeToggle, type ChartConfig } from '@green-ecolution/ui'
@@ -32,7 +32,7 @@ const ChartSignalData: React.FC<ChartSignalDataProps> = ({ sensorId }) => {
     isPlaceholderData,
     error,
   } = useQuery({
-    ...sensorDataQuery(sensorId, { from, perPage: PER_PAGE }),
+    ...sensorQueries.data(sensorId, { from, perPage: PER_PAGE }),
     placeholderData: keepPreviousData,
   })
   if (error) throw error

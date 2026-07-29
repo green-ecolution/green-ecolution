@@ -1,4 +1,4 @@
-import { treeClusterIdQuery } from '@/api/queries'
+import { clusterQueries } from '@/api/queries'
 import type { TreeWithDistance } from '@/api/backendApi'
 import { Badge, cn } from '@green-ecolution/ui'
 import { useQuery } from '@tanstack/react-query'
@@ -35,7 +35,7 @@ const NearestTreeListItem = ({
 
   const clusterId = tree.treeClusterId ? String(tree.treeClusterId) : null
   const { data: clusterRes } = useQuery({
-    ...treeClusterIdQuery(clusterId!),
+    ...clusterQueries.detail(clusterId!),
     enabled: clusterId !== null,
   })
 

@@ -2,12 +2,12 @@ import useStore from '@/store/store'
 import { Slider } from '@green-ecolution/ui'
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { plantingYearsQuery } from '@/api/queries'
+import { treeQueries } from '@/api/queries'
 
 const PlantingYearFieldset = () => {
   const plantingYears = useStore((s) => s.filterDraft.plantingYears)
   const setPlantingYearRange = useStore((s) => s.setFilterPlantingYearRange)
-  const { data: availableYears, isLoading } = useQuery(plantingYearsQuery())
+  const { data: availableYears, isLoading } = useQuery(treeQueries.plantingYears())
 
   const { minYear, maxYear } = useMemo(() => {
     if (!availableYears || availableYears.length === 0) {

@@ -13,7 +13,7 @@ import MapControls from '@/components/map-gl/MapControls'
 import MapBackgroundClick from '@/components/map-gl/MapBackgroundClick'
 import MapToolbarBar from '@/components/map/MapToolbarBar'
 import ClusterPanel from '@/components/map/cluster-panel/ClusterPanel'
-import { clusterBoundariesQuery, clusterMarkersQuery } from '@/api/queries'
+import { clusterQueries } from '@/api/queries'
 import { forbiddenErrorComponent, pendingLoading, prefetch, requirePermission } from '@/lib/router'
 import { Loading } from '@green-ecolution/ui'
 import { Suspense, useCallback, useState } from 'react'
@@ -44,8 +44,8 @@ export const Route = createFileRoute('/_protected/map')({
     zoom,
   }),
   loader: ({ context: { queryClient }, deps: { lat, lng, zoom } }) => {
-    prefetch(queryClient, clusterMarkersQuery(), 'clusterMarkersQuery')
-    prefetch(queryClient, clusterBoundariesQuery(), 'clusterBoundariesQuery')
+    prefetch(queryClient, clusterQueries.markers(), 'clusterQueries.markers')
+    prefetch(queryClient, clusterQueries.boundaries(), 'clusterQueries.boundaries')
 
     useStore.setState({ mapCenter: [lat, lng], mapZoom: zoom })
 

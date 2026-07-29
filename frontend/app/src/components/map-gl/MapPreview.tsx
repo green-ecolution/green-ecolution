@@ -3,7 +3,7 @@ import maplibregl, { type LngLatBoundsLike, type Map as MaplibreMap } from 'mapl
 import { type PropsWithChildren, useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { cn } from '@green-ecolution/ui'
-import { mapInfoQuery } from '@/api/queries'
+import { infoQueries } from '@/api/queries'
 import { MapContext } from './MapContext'
 import { OPENFREEMAP_STYLE_URL } from './mapStyle'
 
@@ -115,7 +115,7 @@ const MapPreviewCanvas = ({
 // frames the municipality center from the /info/map endpoint, like the main map.
 const MapPreview = (props: MapPreviewProps) => {
   const { data: mapInfo, isError } = useQuery({
-    ...mapInfoQuery(),
+    ...infoQueries.map(),
     enabled: !props.center && !props.bounds,
   })
   const needsFallback = !props.center && !props.bounds

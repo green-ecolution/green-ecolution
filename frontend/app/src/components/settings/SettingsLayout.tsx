@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Bell, Building2, Droplet, Map, Puzzle, RadioTower, UserRound, Users } from 'lucide-react'
 import { Badge } from '@green-ecolution/ui'
-import { servicesInfoQuery } from '@/api/queries'
+import { infoQueries } from '@/api/queries'
 import { usePermissions } from '@/lib/auth/usePermissions'
 import { SETTINGS_NAV, visibleSettingsNav } from './settingsNav'
 
@@ -15,7 +15,7 @@ interface SettingsLayoutProps {
 
 const SettingsLayout = ({ children }: SettingsLayoutProps) => {
   const perms = usePermissions()
-  const { data: services } = useQuery(servicesInfoQuery())
+  const { data: services } = useQuery(infoQueries.services())
   const enabledFeatures = new Set(
     (services?.items ?? []).filter((item) => item.enabled).map((item) => item.name),
   )

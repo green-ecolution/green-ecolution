@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl'
 import type { FeatureCollection, Point } from 'geojson'
 import type { TreeMarkerResponse } from '@green-ecolution/backend-client'
-import { treeMarkersQuery } from '@/api/queries'
+import { treeQueries } from '@/api/queries'
 import { useMaplibreMap } from '../MapContext'
 import {
   CHECK_ICON_IMAGE,
@@ -35,7 +35,7 @@ const toFC = (trees: TreeMarkerResponse[], selected: Set<string>): FeatureCollec
 const useSelectableTreeLayer = ({ selectedIds, onToggle }: UseSelectableTreeLayerOptions) => {
   const map = useMaplibreMap()
   const bbox = useViewportBBox()
-  const { data } = useQuery(treeMarkersQuery({ bbox }))
+  const { data } = useQuery(treeQueries.markers({ bbox }))
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
 
   useEffect(() => {

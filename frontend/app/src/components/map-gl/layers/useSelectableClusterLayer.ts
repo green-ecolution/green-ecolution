@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import type { GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl'
 import type { FeatureCollection, Point } from 'geojson'
-import { clusterMarkersQuery } from '@/api/queries'
+import { clusterQueries } from '@/api/queries'
 import { useMaplibreMap } from '../MapContext'
 import { LAYERS, SOURCES, STATUS_COLOR_EXPRESSION } from '../mapStyle'
 import { isMapAlive } from '../mapReady'
@@ -20,7 +20,7 @@ const useSelectableClusterLayer = ({
   onToggle,
 }: UseSelectableClusterLayerOptions) => {
   const map = useMaplibreMap()
-  const { data } = useSuspenseQuery(clusterMarkersQuery())
+  const { data } = useSuspenseQuery(clusterQueries.markers())
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
   const disabledSet = useMemo(() => new Set(disabledIds ?? []), [disabledIds])
 

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { FormProvider, useWatch, type DefaultValues, type SubmitHandler } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import type { TreeResponse } from '@green-ecolution/backend-client'
-import { treeClusterIdQuery } from '@/api/queries'
+import { clusterQueries } from '@/api/queries'
 import { TreeclusterForm } from '@/schema/treeclusterSchema'
 import { entityNotFound, forbiddenErrorComponent, requirePermission } from '@/lib/router'
 import FormForTreecluster from '@/components/general/form/FormForTreecluster'
@@ -19,7 +19,7 @@ export const Route = createFileRoute('/_protected/map/treecluster/edit/$treeclus
   component: EditClusterOnMap,
   beforeLoad: requirePermission(['tree_cluster:update']),
   loader: ({ context: { queryClient }, params: { treeclusterId } }) =>
-    queryClient.prefetchQuery(treeClusterIdQuery(treeclusterId)),
+    queryClient.prefetchQuery(clusterQueries.detail(treeclusterId)),
   errorComponent: forbiddenErrorComponent(
     entityNotFound({
       entityName: 'Bewässerungsgruppe',
@@ -33,7 +33,7 @@ function EditClusterOnMap() {
   const { treeclusterId } = Route.useParams()
   const navigate = useNavigate({ from: Route.fullPath })
   const map = useMaplibreMap()
-  const { data: cluster } = useSuspenseQuery(treeClusterIdQuery(treeclusterId))
+  const { data: cluster } = useSuspenseQuery(clusterQueries.detail(treeclusterId))
 
   // Frame the group once when the panel opens.
   const initialCluster = useRef(cluster)
