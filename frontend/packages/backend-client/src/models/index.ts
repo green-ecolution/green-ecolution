@@ -1,6 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export * from './ActivateSensorRequest';
+export * from './AddressDto';
 export * from './AppInfoResponse';
 export * from './AssignRoleRequest';
 export * from './ClientTokenResponse';
@@ -10,6 +11,7 @@ export * from './ClusterMarkerListResponse';
 export * from './ClusterMarkerResponse';
 export * from './ClusterStatisticsResponse';
 export * from './ClusterWateringEventResponse';
+export * from './ContactPersonDto';
 export * from './CreateSensorRequest';
 export * from './DataStatisticsResponse';
 export * from './DrivingLicense';
@@ -38,8 +40,9 @@ export * from './LorawanInfoResponse';
 export * from './MapInfoResponse';
 export * from './NearestTreeListResponse';
 export * from './OrganizationCreateRequest';
-export * from './OrganizationRenameRequest';
+export * from './OrganizationDetailResponse';
 export * from './OrganizationResponse';
+export * from './OrganizationUpdateRequest';
 export * from './PaginationResponse';
 export * from './PluginAuthRequest';
 export * from './PluginListResponse';

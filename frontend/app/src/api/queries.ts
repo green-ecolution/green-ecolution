@@ -24,6 +24,9 @@ import {
   ListWateringPlansRequest,
   MapInfoResponse,
   NearestTreeListResponse,
+  organizationApi,
+  OrganizationDetailResponse,
+  OrganizationResponse,
   pluginApi,
   regionApi,
   ResponseError,
@@ -393,6 +396,20 @@ export const roleQueries = {
     queryOptions<RoleResponse[]>({
       queryKey: ['roles', 'org', orgId],
       queryFn: () => roleApi.listOrgRoles({ orgId }),
+    }),
+}
+
+export const organizationQueries = {
+  list: () =>
+    queryOptions<OrganizationResponse[]>({
+      queryKey: ['organizations'],
+      queryFn: () => organizationApi.listOrganizations(),
+    }),
+
+  byId: (orgId: string) =>
+    queryOptions<OrganizationDetailResponse>({
+      queryKey: ['organizations', orgId],
+      queryFn: () => organizationApi.getOrganization({ orgId }),
     }),
 }
 

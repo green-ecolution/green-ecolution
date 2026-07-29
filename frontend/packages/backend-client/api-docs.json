@@ -711,7 +711,7 @@
           "Organizations"
         ],
         "summary": "List all organizations",
-        "description": "Returns the full organization tree as a flat list; clients rebuild the tree via parent_id.",
+        "description": "Returns the full organization tree as a flat list; clients rebuild the tree via parent_id. Requires organization:read.",
         "operationId": "listOrganizations",
         "responses": {
           "200": {
@@ -729,6 +729,12 @@
           },
           "401": {
             "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Acting user has no organization and none was given"
           },
           "500": {
             "description": "Internal server error"
@@ -790,6 +796,7 @@
           "Organizations"
         ],
         "summary": "Get a single organization",
+        "description": "Includes the resolved contact person. Requires organization:read.",
         "operationId": "getOrganization",
         "parameters": [
           {
@@ -809,7 +816,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationResponse"
+                  "$ref": "#/components/schemas/OrganizationDetailResponse"
                 }
               }
             }
@@ -817,8 +824,74 @@
           "401": {
             "description": "Unauthorized"
           },
+          "403": {
+            "description": "Forbidden"
+          },
           "404": {
             "description": "Not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Update an organization",
+        "description": "Replaces name, address and contact person. An omitted field clears the stored value. The contact person must be a member of this organization.",
+        "operationId": "updateOrganization",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "description": "Organization id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "409": {
+            "description": "Name conflict or root organization"
+          },
+          "422": {
+            "description": "Contact person is not a member of this organization"
           },
           "500": {
             "description": "Internal server error"
@@ -858,65 +931,6 @@
           },
           "409": {
             "description": "Organization still has children or users"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Organizations"
-        ],
-        "summary": "Rename an organization",
-        "operationId": "renameOrganization",
-        "parameters": [
-          {
-            "name": "org_id",
-            "in": "path",
-            "description": "Organization id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/OrganizationRenameRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Renamed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganizationResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not found"
-          },
-          "409": {
-            "description": "Name conflict or root"
           },
           "500": {
             "description": "Internal server error"
@@ -4071,6 +4085,31 @@
           }
         }
       },
+      "AddressDto": {
+        "type": "object",
+        "description": "A postal address. All three parts are required together.",
+        "required": [
+          "street",
+          "postal_code",
+          "city"
+        ],
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "postal_code": {
+            "type": "string"
+          },
+          "street": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "city": "Flensburg",
+          "postal_code": "24937",
+          "street": "Nordergraben 12"
+        }
+      },
       "AppInfoResponse": {
         "type": "object",
         "required": [
@@ -4360,6 +4399,30 @@
           "watering_plan_id": {
             "type": "string",
             "format": "uuid"
+          }
+        }
+      },
+      "ContactPersonDto": {
+        "type": "object",
+        "description": "The organization's contact person, resolved from the identity provider.",
+        "required": [
+          "id",
+          "first_name",
+          "last_name",
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
           }
         }
       },
@@ -5669,19 +5732,57 @@
           "parent_id": "01980000-0000-7000-8000-000000000001"
         }
       },
-      "OrganizationRenameRequest": {
+      "OrganizationDetailResponse": {
         "type": "object",
-        "description": "Request body for renaming an organization.",
+        "description": "A single organization with its contact person resolved.",
         "required": [
-          "name"
+          "id",
+          "name",
+          "member_count"
         ],
         "properties": {
+          "address": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AddressDto"
+              }
+            ]
+          },
+          "contact_person": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ContactPersonDto"
+              }
+            ]
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "member_count": {
+            "type": "integer",
+            "format": "int64"
+          },
           "name": {
             "type": "string"
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
-        },
-        "example": {
-          "name": "TBZ Flensburg"
         }
       },
       "OrganizationResponse": {
@@ -5689,9 +5790,28 @@
         "description": "A node in the organization tree.",
         "required": [
           "id",
-          "name"
+          "name",
+          "member_count"
         ],
         "properties": {
+          "address": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AddressDto",
+                "description": "Postal address; null when the organization has none."
+              }
+            ]
+          },
+          "contact_person_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Contact person id; resolve via the detail endpoint for name and email."
+          },
           "created_at": {
             "type": [
               "string",
@@ -5702,6 +5822,11 @@
           "id": {
             "type": "string",
             "description": "Unique organization identifier (UUID v7)."
+          },
+          "member_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Directly assigned users, excluding sub-organizations."
           },
           "name": {
             "type": "string",
@@ -5716,10 +5841,51 @@
           }
         },
         "example": {
+          "address": null,
+          "contact_person_id": null,
           "created_at": "2024-06-15T10:30:00+00:00",
           "id": "01980000-0000-7000-8000-000000000001",
+          "member_count": 14,
           "name": "Green Ecolution",
           "parent_id": null
+        }
+      },
+      "OrganizationUpdateRequest": {
+        "type": "object",
+        "description": "Request body for updating an organization. Replaces the whole editable set —\nan omitted field clears the stored value.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "address": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AddressDto"
+              }
+            ]
+          },
+          "contact_person_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "address": {
+            "city": "Flensburg",
+            "postal_code": "24937",
+            "street": "Nordergraben 12"
+          },
+          "contact_person_id": null,
+          "name": "Stadtgärtnerei Nord"
         }
       },
       "PaginationResponse": {

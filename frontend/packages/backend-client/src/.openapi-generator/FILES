@@ -15,6 +15,7 @@ apis/WateringPlansApi.ts
 apis/index.ts
 index.ts
 models/ActivateSensorRequest.ts
+models/AddressDto.ts
 models/AppInfoResponse.ts
 models/AssignRoleRequest.ts
 models/ClientTokenResponse.ts
@@ -24,6 +25,7 @@ models/ClusterMarkerListResponse.ts
 models/ClusterMarkerResponse.ts
 models/ClusterStatisticsResponse.ts
 models/ClusterWateringEventResponse.ts
+models/ContactPersonDto.ts
 models/CreateSensorRequest.ts
 models/DataStatisticsResponse.ts
 models/DrivingLicense.ts
@@ -52,8 +54,9 @@ models/LorawanInfoResponse.ts
 models/MapInfoResponse.ts
 models/NearestTreeListResponse.ts
 models/OrganizationCreateRequest.ts
-models/OrganizationRenameRequest.ts
+models/OrganizationDetailResponse.ts
 models/OrganizationResponse.ts
+models/OrganizationUpdateRequest.ts
 models/PaginationResponse.ts
 models/PluginAuthRequest.ts
 models/PluginListResponse.ts
