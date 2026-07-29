@@ -4,8 +4,7 @@ import {
   AlertContent,
   AlertDescription,
   AlertIcon,
-  Avatar,
-  AvatarFallback,
+  AvatarStack,
   Badge,
   Button,
   Input,
@@ -131,20 +130,7 @@ const RoleDetail = ({
               )}
             </Badge>
 
-            {assignees.length > 0 && (
-              <span className="flex -space-x-2">
-                {assignees.slice(0, 3).map((initials) => (
-                  <Avatar key={initials} size="sm" className="ring-2 ring-white">
-                    <AvatarFallback variant="user">{initials}</AvatarFallback>
-                  </Avatar>
-                ))}
-                {assignees.length > 3 && (
-                  <span className="flex size-8 items-center justify-center rounded-full bg-dark-100 text-xs font-semibold text-dark-600 ring-2 ring-white">
-                    +{assignees.length - 3}
-                  </span>
-                )}
-              </span>
-            )}
+            <AvatarStack items={assignees} />
 
             {!isNew && canCreate && (
               <Button type="button" variant="outline" size="sm" onClick={onCopy}>

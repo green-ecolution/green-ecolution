@@ -35,6 +35,9 @@ export {
   avatarFallbackVariants,
 } from './components/ui/avatar'
 
+// AvatarStack
+export { AvatarStack, type AvatarStackProps } from './components/ui/avatar-stack'
+
 // AlertDialog
 export {
   AlertDialog,
