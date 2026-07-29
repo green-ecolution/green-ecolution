@@ -23,12 +23,19 @@ export const buildTree = (orgs: OrganizationResponse[], rootId: string): OrgNode
     childrenOf.set(org.parentId, siblings)
   }
 
-  const build = (org: OrganizationResponse): OrgNode => ({
-    org,
-    children: (childrenOf.get(org.id) ?? []).map(build).sort(byName),
-  })
+  const build = (org: OrganizationResponse, visited: Set<string>): OrgNode => {
+    const nextVisited = new Set(visited)
+    nextVisited.add(org.id)
+    return {
+      org,
+      children: (childrenOf.get(org.id) ?? [])
+        .filter((child) => !visited.has(child.id))
+        .map((child) => build(child, nextVisited))
+        .sort(byName),
+    }
+  }
 
-  return build(root)
+  return build(root, new Set())
 }
 
 export const subtreeMemberCount = (node: OrgNode): number =>

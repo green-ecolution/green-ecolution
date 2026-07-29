@@ -4,7 +4,7 @@ import { buildTree, flatten, pathTo, subtreeMemberCount } from './organizationTr
 
 const org = (
   id: string,
-  parentId: string | null,
+  parentId: string | null | undefined,
   name: string,
   memberCount = 0,
 ): OrganizationResponse => ({
@@ -18,7 +18,7 @@ const org = (
 })
 
 const orgs = [
-  org('root', null, 'Green Ecolution'),
+  org('root', undefined, 'Green Ecolution'),
   org('amt', 'root', 'Grünflächenamt', 2),
   org('nord', 'amt', 'Stadtgärtnerei Nord', 4),
   org('duburg', 'nord', 'Team Duburg', 6),
@@ -51,6 +51,43 @@ describe('buildTree', () => {
   it('drops nodes whose parent is missing', () => {
     const tree = buildTree(orgs, 'root')
     expect(flatten(tree!).map((o) => o.id)).not.toContain('orphan')
+  })
+
+  it('handles null parentId (production API case)', () => {
+    const withNull = [org('root', null, 'Green Ecolution'), org('child', 'root', 'Child')]
+    const tree = buildTree(withNull, 'root')
+    expect(tree?.org.id).toBe('root')
+    expect(tree?.children.map((c) => c.org.id)).toEqual(['child'])
+  })
+
+  it('handles self-referential cycle without hanging', () => {
+    const selfRef = [org('root', undefined, 'Root'), org('self', 'self', 'Self Reference')]
+    const tree = buildTree(selfRef, 'root')
+    expect(tree?.org.id).toBe('root')
+    expect(tree?.children).toEqual([])
+  })
+
+  it('handles mutual cycle without hanging', () => {
+    const mutual = [
+      org('root', undefined, 'Root'),
+      org('a', 'b', 'Node A'),
+      org('b', 'a', 'Node B'),
+    ]
+    const tree = buildTree(mutual, 'root')
+    expect(tree?.org.id).toBe('root')
+    expect(tree?.children).toEqual([])
+  })
+
+  it('sorts siblings by German collation', () => {
+    const deCollation = [
+      org('root', undefined, 'Root'),
+      org('p', 'root', 'Pfirsich'),
+      org('o', 'root', 'Öl'),
+      org('n', 'root', 'Nuss'),
+    ]
+    const tree = buildTree(deCollation, 'root')
+    const sorted = tree?.children.map((c) => c.org.name)
+    expect(sorted).toEqual(['Nuss', 'Öl', 'Pfirsich'])
   })
 })
 
