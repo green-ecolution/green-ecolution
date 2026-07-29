@@ -99,16 +99,19 @@ vi.mock('@/api/queries', async () => {
         queryFn: () => Promise.resolve({ id: 'cluster-1', name: 'Test Cluster' }),
       }),
     },
-    sensorIdQuery: (id: string) => ({
-      queryKey: ['sensor', id],
-      queryFn: () =>
-        Promise.resolve({
-          id,
-          status: 'prepared' as const,
-          latestData: null,
-          linkedTreeId: null,
-        }),
-    }),
+    sensorQueries: {
+      ...actual.sensorQueries,
+      detail: (id: string) => ({
+        queryKey: ['sensor', id],
+        queryFn: () =>
+          Promise.resolve({
+            id,
+            status: 'prepared' as const,
+            latestData: null,
+            linkedTreeId: null,
+          }),
+      }),
+    },
   }
 })
 

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle } from '@green-ecolution/ui'
 import { Activity } from 'lucide-react'
 import type { SensorModelAbilityResponse } from '@green-ecolution/backend-client'
-import { sensorModelIdQuery } from '@/api/queries'
+import { sensorQueries } from '@/api/queries'
 import { getAbilityMeta, getUnitSymbol } from './abilityMapping'
 import type { Sensor } from '@/api/backendApi'
 
@@ -33,7 +33,7 @@ const groupAbilities = (abilities: SensorModelAbilityResponse[]): GroupedAbility
 }
 
 const SensorAbilitiesSection = ({ sensor }: SensorAbilitiesSectionProps) => {
-  const { data: model, isLoading, isError } = useQuery(sensorModelIdQuery(sensor.model.id))
+  const { data: model, isLoading, isError } = useQuery(sensorQueries.model(sensor.model.id))
 
   if (isError) return null
 

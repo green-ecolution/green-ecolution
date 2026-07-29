@@ -1,4 +1,4 @@
-import { sensorDataQuery } from '@/api/queries'
+import { sensorQueries } from '@/api/queries'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { Area } from 'recharts'
@@ -17,7 +17,7 @@ interface ChartSensorDataProps {
 }
 
 const ChartSensorData: React.FC<ChartSensorDataProps> = ({ sensorId }) => {
-  const { data: sensorDataRes } = useSuspenseQuery(sensorDataQuery(sensorId, { perPage: 5000 }))
+  const { data: sensorDataRes } = useSuspenseQuery(sensorQueries.data(sensorId, { perPage: 5000 }))
   const readings = sensorDataRes.data
   const batteryData = readings
     .map((entry) => ({

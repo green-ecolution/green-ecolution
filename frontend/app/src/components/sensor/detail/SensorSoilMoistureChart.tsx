@@ -11,7 +11,7 @@ import {
   TimeRangeToggle,
   type ChartConfig,
 } from '@green-ecolution/ui'
-import { sensorModelIdQuery, sensorSoilMoistureQuery } from '@/api/queries'
+import { sensorQueries } from '@/api/queries'
 import TimeSeriesFrame from '@/components/general/charts/TimeSeriesFrame'
 import {
   timeWindowOptions,
@@ -48,10 +48,10 @@ const SensorSoilMoistureChart = ({ sensor }: SensorSoilMoistureChartProps) => {
   const bucket = BUCKET_BY_RANGE[rangeKey]
   // eslint-disable-next-line react-hooks/purity, react-x/purity -- windowStart truncates to the hour, keeping the query key stable
   const from = windowStart(rangeKey, Date.now())
-  const { data: model } = useQuery(sensorModelIdQuery(sensor.model.id))
+  const { data: model } = useQuery(sensorQueries.model(sensor.model.id))
   const hasSoilMoisture = (model?.abilities ?? []).some((a) => a.ability === 'soil_moisture')
   const { data, isPlaceholderData, error } = useQuery({
-    ...sensorSoilMoistureQuery(sensor.id, { from, bucket }),
+    ...sensorQueries.soilMoisture(sensor.id, { from, bucket }),
     placeholderData: keepPreviousData,
     enabled: hasSoilMoisture,
   })

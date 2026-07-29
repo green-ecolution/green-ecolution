@@ -1,4 +1,4 @@
-import { sensorQuery } from '@/api/queries'
+import { sensorQueries } from '@/api/queries'
 import { Button, ListCardHeader, Loading } from '@green-ecolution/ui'
 import Pagination from '@/components/general/Pagination'
 import EntityList from '@/components/general/EntityList'
@@ -20,7 +20,7 @@ export const Route = createFileRoute('/_protected/sensors/')({
     page,
   }),
   loader: ({ context: { queryClient }, deps: { page } }) => {
-    prefetch(queryClient, sensorQuery({ page, perPage: 5 }), 'sensorQuery')
+    prefetch(queryClient, sensorQueries.list({ page, perPage: 5 }), 'sensorQuery')
   },
 })
 
@@ -31,7 +31,7 @@ function Sensors() {
     isPlaceholderData,
     error,
   } = useQuery({
-    ...sensorQuery({ page, perPage: 5 }),
+    ...sensorQueries.list({ page, perPage: 5 }),
     placeholderData: keepPreviousData,
   })
   if (error) throw error

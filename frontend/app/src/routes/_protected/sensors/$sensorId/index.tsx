@@ -1,4 +1,4 @@
-import { sensorIdQuery } from '@/api/queries'
+import { sensorQueries } from '@/api/queries'
 import SensorDashboard from '@/components/sensor/SensorDashboard'
 import { pendingLoading } from '@/lib/router'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -15,7 +15,7 @@ function SingleSensor() {
   const { sensorId } = sensorRoute.useParams()
   // Live query instead of loader data: sensor status changes via MQTT and
   // must refresh on invalidation/window focus, like the treecluster dashboard.
-  const { data: sensor } = useSuspenseQuery(sensorIdQuery(sensorId))
+  const { data: sensor } = useSuspenseQuery(sensorQueries.detail(sensorId))
 
   return (
     <div className="container mt-6">

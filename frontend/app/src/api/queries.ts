@@ -435,12 +435,6 @@ export const routingStartPointsQuery = () =>
 // --- temporary aliases: removed per domain during call-site migration ---
 export const vehicleQuery = vehicleQueries.list
 export const vehicleIdQuery = vehicleQueries.detail
-export const sensorsKey = sensorQueries.key
-export const sensorQuery = sensorQueries.list
-export const sensorDataQuery = sensorQueries.data
-export const sensorIdQuery = sensorQueries.detail
-export const sensorModelIdQuery = sensorQueries.model
-export const sensorSoilMoistureQuery = sensorQueries.soilMoisture
 export const wateringPlanQuery = wateringPlanQueries.list
 export const wateringPlanIdQuery = wateringPlanQueries.detail
 export const wateringPlanRouteQuery = wateringPlanQueries.route
