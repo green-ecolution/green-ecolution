@@ -45,6 +45,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         (status = 200, description = "All organizations", body = Vec<OrganizationResponse>),
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
+        (status = 422, description = "Acting user has no organization and none was given"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -148,7 +149,8 @@ pub async fn create_organization(
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "Not found"),
-        (status = 409, description = "Name conflict, root organization, or contact person outside the organization"),
+        (status = 409, description = "Name conflict or root organization"),
+        (status = 422, description = "Contact person is not a member of this organization"),
         (status = 500, description = "Internal server error"),
     )
 )]

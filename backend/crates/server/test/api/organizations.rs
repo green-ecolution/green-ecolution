@@ -240,7 +240,7 @@ async fn update_rejects_a_partial_address() {
 }
 
 #[tokio::test]
-async fn update_rejects_a_contact_person_from_another_organization() {
+async fn update_rejects_a_contact_person_from_outside_the_organization() {
     let app = spawn_app().await;
     let created: serde_json::Value = app
         .post_json(
@@ -262,7 +262,7 @@ async fn update_rejects_a_contact_person_from_another_organization() {
             }),
         )
         .await;
-    assert_eq!(resp.status(), 409);
+    assert_eq!(resp.status(), 422);
 }
 
 #[tokio::test]

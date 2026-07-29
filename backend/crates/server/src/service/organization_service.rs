@@ -26,7 +26,6 @@ pub struct OrganizationService {
 }
 
 impl OrganizationService {
-    #[allow(clippy::too_many_arguments)] // reason: composition root wiring, one arg per collaborator
     pub fn new(
         org_reader: Arc<dyn OrganizationReader>,
         org_writer: Arc<dyn OrganizationWriter>,
@@ -55,12 +54,6 @@ impl OrganizationService {
             .iter()
             .map(|org| OrganizationView::new(org, counts.get(&org.id).copied().unwrap_or(0)))
             .collect())
-    }
-
-    #[tracing::instrument(level = "debug", skip_all, fields(organization.id = %id))]
-    pub async fn by_id(&self, id: Id<Organization>) -> Result<OrganizationView, ServiceError> {
-        let org = self.org_reader.by_id(id).await?;
-        self.view_of(&org).await
     }
 
     /// Loads the whole count map for a single organization. The tree is small
@@ -125,10 +118,12 @@ impl OrganizationService {
         contact_person: Option<Uuid>,
     ) -> Result<OrganizationView, ServiceError> {
         let mut org = self.org_reader.by_id(id).await?;
+        // replace_details rejects the root before we touch the contact person,
+        // so RootImmutable outranks a membership mismatch.
+        let events = org.replace_details(name, address, contact_person)?;
         if let Some(person) = contact_person {
             self.ensure_member(id, person).await?;
         }
-        let events = org.replace_details(name, address, contact_person)?;
         self.org_writer.save(&org).await?;
         self.event_bus.publish_all(events).await;
         self.view_of(&org).await
@@ -146,7 +141,7 @@ impl OrganizationService {
         if belongs {
             Ok(())
         } else {
-            Err(ServiceError::OrganizationMismatch)
+            Err(ServiceError::ContactPersonNotAMember)
         }
     }
 
@@ -652,21 +647,43 @@ mod tests {
         assert_eq!(view.contact_person_id, Some(person));
     }
 
+    /// The outsider genuinely belongs to a *different* org, proving `ensure_member`
+    /// compares organizations rather than merely finding no membership at all.
     #[tokio::test]
     async fn update_rejects_a_contact_person_from_another_organization() {
-        let fixture = fixture_with_child();
+        let root_id = Id::new_v7();
+        let child_id = Id::new_v7();
+        let other_org_id = Id::new_v7();
         let outsider = Uuid::now_v7();
-        let err = fixture
-            .service
+
+        let orgs = Arc::new(InMemoryOrgs::new(vec![
+            org(root_id, None),
+            org(child_id, Some(root_id)),
+            org(other_org_id, Some(root_id)),
+        ]));
+        let profiles = Arc::new(StubProfiles {
+            ids_in_org: Vec::new(),
+            memberships: vec![(outsider, other_org_id)],
+        });
+        let svc = OrganizationService::new(
+            orgs.clone(),
+            orgs,
+            Arc::new(InMemoryRoles::new(Vec::new())),
+            profiles,
+            no_users(),
+            Arc::new(RecordingEventBus::default()),
+        );
+
+        let err = svc
             .update(
-                fixture.child_id,
+                child_id,
                 OrganizationName::new("Stadtgärtnerei Nord").unwrap(),
                 None,
                 Some(outsider),
             )
             .await
             .unwrap_err();
-        assert!(matches!(err, ServiceError::OrganizationMismatch));
+        assert!(matches!(err, ServiceError::ContactPersonNotAMember));
     }
 
     #[tokio::test]
@@ -685,6 +702,74 @@ mod tests {
         assert!(matches!(
             err,
             ServiceError::Organization(OrganizationError::RootImmutable)
+        ));
+    }
+
+    /// RootImmutable must win even when a contact person is also given —
+    /// replace_details runs before ensure_member.
+    #[tokio::test]
+    async fn update_root_with_contact_person_reports_root_immutable() {
+        let fixture = fixture_with_child();
+        let outsider = Uuid::now_v7();
+        let err = fixture
+            .service
+            .update(
+                fixture.root_id,
+                OrganizationName::new("Anders").unwrap(),
+                None,
+                Some(outsider),
+            )
+            .await
+            .unwrap_err();
+        assert!(matches!(
+            err,
+            ServiceError::Organization(OrganizationError::RootImmutable)
+        ));
+    }
+
+    #[tokio::test]
+    async fn update_persists_and_publishes() {
+        let root_id = Id::new_v7();
+        let child_id = Id::new_v7();
+        let orgs = Arc::new(InMemoryOrgs::new(vec![
+            org(root_id, None),
+            org(child_id, Some(root_id)),
+        ]));
+        let bus = Arc::new(RecordingEventBus::default());
+        let svc = OrganizationService::new(
+            orgs.clone(),
+            orgs.clone(),
+            Arc::new(InMemoryRoles::new(Vec::new())),
+            Arc::new(StubProfiles::default()),
+            no_users(),
+            bus.clone(),
+        );
+
+        svc.update(
+            child_id,
+            OrganizationName::new("Stadtgärtnerei Nord").unwrap(),
+            Some(test_address()),
+            None,
+        )
+        .await
+        .unwrap();
+
+        let stored = orgs
+            .rows
+            .lock()
+            .unwrap()
+            .iter()
+            .find(|o| o.id == child_id)
+            .cloned()
+            .unwrap();
+        assert_eq!(stored.name.as_str(), "Stadtgärtnerei Nord");
+        assert_eq!(stored.address(), Some(&test_address()));
+
+        let events = bus.events.lock().unwrap();
+        assert_eq!(events.len(), 1);
+        assert!(matches!(
+            events[0],
+            DomainEvent::OrganizationRenamed { organization_id } if organization_id == child_id
         ));
     }
 
