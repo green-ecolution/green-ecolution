@@ -23,14 +23,13 @@ export const buildTree = (orgs: OrganizationResponse[], rootId: string): OrgNode
     childrenOf.set(org.parentId, siblings)
   }
 
-  const build = (org: OrganizationResponse, visited: Set<string>): OrgNode => {
-    const nextVisited = new Set(visited)
-    nextVisited.add(org.id)
+  const build = (org: OrganizationResponse, visited: ReadonlySet<string>): OrgNode => {
+    const seen = new Set(visited).add(org.id)
     return {
       org,
       children: (childrenOf.get(org.id) ?? [])
-        .filter((child) => !visited.has(child.id))
-        .map((child) => build(child, nextVisited))
+        .filter((child) => !seen.has(child.id))
+        .map((child) => build(child, seen))
         .sort(byName),
     }
   }

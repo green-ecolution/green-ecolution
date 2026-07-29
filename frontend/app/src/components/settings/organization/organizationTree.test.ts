@@ -61,21 +61,22 @@ describe('buildTree', () => {
   })
 
   it('handles self-referential cycle without hanging', () => {
-    const selfRef = [org('root', undefined, 'Root'), org('self', 'self', 'Self Reference')]
-    const tree = buildTree(selfRef, 'root')
-    expect(tree?.org.id).toBe('root')
+    const selfRef = [org('self', 'self', 'Self Reference')]
+    const tree = buildTree(selfRef, 'self')
+    expect(tree?.org.id).toBe('self')
     expect(tree?.children).toEqual([])
+    expect(flatten(tree!).map((o) => o.id)).toEqual(['self'])
   })
 
   it('handles mutual cycle without hanging', () => {
-    const mutual = [
-      org('root', undefined, 'Root'),
-      org('a', 'b', 'Node A'),
-      org('b', 'a', 'Node B'),
-    ]
-    const tree = buildTree(mutual, 'root')
-    expect(tree?.org.id).toBe('root')
-    expect(tree?.children).toEqual([])
+    const mutual = [org('a', 'b', 'Node A'), org('b', 'a', 'Node B')]
+    const tree = buildTree(mutual, 'a')
+    expect(tree?.org.id).toBe('a')
+    expect(tree?.children.map((c) => c.org.id)).toEqual(['b'])
+    expect(tree?.children[0].children).toEqual([])
+    const flattened = flatten(tree!)
+    expect(flattened).toHaveLength(2)
+    expect(new Set(flattened.map((o) => o.id))).toEqual(new Set(['a', 'b']))
   })
 
   it('sorts siblings by German collation', () => {
