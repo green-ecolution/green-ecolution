@@ -7,7 +7,6 @@ import {
   Map,
   PieChart,
   Settings,
-  Users,
 } from 'lucide-react'
 import * as React from 'react'
 import { useCallback } from 'react'
@@ -111,12 +110,6 @@ const protectedNavData: NavSectionData[] = [
         label: 'Fahrzeuge',
         icon: <Car className="w-5 h-5" />,
         to: '/vehicles',
-      },
-      {
-        key: 'nav-more-team',
-        label: 'Mitarbeitende',
-        icon: <Users className="w-5 h-5" />,
-        to: '/settings/team/members',
       },
     ],
   },
