@@ -60,7 +60,7 @@ impl OrganizationService {
     #[tracing::instrument(level = "debug", skip_all, fields(organization.id = %id))]
     pub async fn by_id(&self, id: Id<Organization>) -> Result<OrganizationView, ServiceError> {
         let org = self.org_reader.by_id(id).await?;
-        Ok(self.view_of(&org).await?)
+        self.view_of(&org).await
     }
 
     /// Loads the whole count map for a single organization. The tree is small

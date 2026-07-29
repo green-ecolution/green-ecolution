@@ -182,7 +182,7 @@ async fn organization_mutations_are_forbidden_without_grants() {
     let token = zero_grant_token(&harness);
 
     let resp = reqwest::Client::new()
-        .patch(format!("{}/api/v1/organizations/{org_id}", app.address))
+        .put(format!("{}/api/v1/organizations/{org_id}", app.address))
         .bearer_auth(&token)
         .json(&json!({ "name": "Umbenannt" }))
         .send()

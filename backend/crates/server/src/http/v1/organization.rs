@@ -13,8 +13,10 @@ use crate::{
         AppState,
         auth::extractor::AuthUserExtractor,
         v1::dto::organization::{
-            OrganizationCreateRequest, OrganizationRenameRequest, OrganizationResponse,
+            OrganizationCreateRequest, OrganizationDetailResponse, OrganizationResponse,
+            OrganizationUpdateRequest,
         },
+        v1::scope::resolve_target_org,
     },
     service::ServiceError,
 };
@@ -22,6 +24,7 @@ use domain::{
     Id,
     authorization::{Action, Permission, Resource},
     organization::{OrganizationDraft, OrganizationName},
+    shared::address::Address,
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -29,7 +32,7 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(list_organizations, create_organization))
         .routes(routes!(
             get_organization,
-            rename_organization,
+            update_organization,
             delete_organization
         ))
 }
@@ -37,18 +40,28 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
 #[utoipa::path(get, path = "/organizations", tag = "Organizations",
     operation_id = "listOrganizations",
     summary = "List all organizations",
-    description = "Returns the full organization tree as a flat list; clients rebuild the tree via parent_id.",
+    description = "Returns the full organization tree as a flat list; clients rebuild the tree via parent_id. Requires organization:read.",
     responses(
         (status = 200, description = "All organizations", body = Vec<OrganizationResponse>),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_organizations(
     State(state): State<Arc<AppState>>,
-    _user: AuthUserExtractor,
+    user: AuthUserExtractor,
 ) -> Result<Json<Vec<OrganizationResponse>>, ServiceError> {
+    let scope = resolve_target_org(&state, user.id, None).await?;
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Organization, Action::Read),
+            scope,
+        )
+        .await?;
     let views = state.organization_service.list().await?;
     Ok(Json(views.iter().map(Into::into).collect()))
 }
@@ -56,10 +69,12 @@ pub async fn list_organizations(
 #[utoipa::path(get, path = "/organizations/{org_id}", tag = "Organizations",
     operation_id = "getOrganization",
     summary = "Get a single organization",
+    description = "Includes the resolved contact person. Requires organization:read.",
     params(("org_id" = Uuid, Path, description = "Organization id")),
     responses(
-        (status = 200, description = "The organization", body = OrganizationResponse),
+        (status = 200, description = "The organization", body = OrganizationDetailResponse),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
         (status = 404, description = "Not found"),
         (status = 500, description = "Internal server error"),
     )
@@ -67,10 +82,19 @@ pub async fn list_organizations(
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn get_organization(
     State(state): State<Arc<AppState>>,
-    _user: AuthUserExtractor,
+    user: AuthUserExtractor,
     Path(org_id): Path<Uuid>,
-) -> Result<Json<OrganizationResponse>, ServiceError> {
-    let view = state.organization_service.by_id(Id::new(org_id)).await?;
+) -> Result<Json<OrganizationDetailResponse>, ServiceError> {
+    let id = Id::new(org_id);
+    state
+        .authorization_service
+        .require(
+            user.id,
+            Permission::new(Resource::Organization, Action::Read),
+            id,
+        )
+        .await?;
+    let view = state.organization_service.detail(id).await?;
     Ok(Json((&view).into()))
 }
 
@@ -112,27 +136,28 @@ pub async fn create_organization(
     Ok((StatusCode::CREATED, Json((&view).into())))
 }
 
-#[utoipa::path(patch, path = "/organizations/{org_id}", tag = "Organizations",
-    operation_id = "renameOrganization",
-    summary = "Rename an organization",
+#[utoipa::path(put, path = "/organizations/{org_id}", tag = "Organizations",
+    operation_id = "updateOrganization",
+    summary = "Update an organization",
+    description = "Replaces name, address and contact person. An omitted field clears the stored value. The contact person must be a member of this organization.",
     params(("org_id" = Uuid, Path, description = "Organization id")),
-    request_body = OrganizationRenameRequest,
+    request_body = OrganizationUpdateRequest,
     responses(
-        (status = 200, description = "Renamed", body = OrganizationResponse),
+        (status = 200, description = "Updated", body = OrganizationResponse),
         (status = 400, description = "Invalid input"),
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "Not found"),
-        (status = 409, description = "Name conflict or root"),
+        (status = 409, description = "Name conflict, root organization, or contact person outside the organization"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
-pub async fn rename_organization(
+pub async fn update_organization(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
     Path(org_id): Path<Uuid>,
-    Json(req): Json<OrganizationRenameRequest>,
+    Json(req): Json<OrganizationUpdateRequest>,
 ) -> Result<Json<OrganizationResponse>, ServiceError> {
     let id = Id::new(org_id);
     state
@@ -143,9 +168,15 @@ pub async fn rename_organization(
             id,
         )
         .await?;
+    let address = req.address.map(Address::try_from).transpose()?;
     let view = state
         .organization_service
-        .rename(id, OrganizationName::new(req.name)?)
+        .update(
+            id,
+            OrganizationName::new(req.name)?,
+            address,
+            req.contact_person_id,
+        )
         .await?;
     Ok(Json((&view).into()))
 }
