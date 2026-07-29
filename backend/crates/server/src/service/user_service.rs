@@ -107,7 +107,12 @@ impl UserService {
                 .await?;
             assigned.push(RoleView::from(&role));
         }
-        let organization = Some((&self.org_reader.by_id(entity.organization_id).await?).into());
+        let org = self.org_reader.by_id(entity.organization_id).await?;
+        let counts = self.org_reader.member_counts().await?;
+        let organization = Some(OrganizationView::new(
+            &org,
+            counts.get(&org.id).copied().unwrap_or(0),
+        ));
         Ok(merge(identity, Some(profile), organization, assigned))
     }
 
@@ -288,10 +293,13 @@ impl UserService {
             .await?
             .into_iter()
             .collect();
+        let counts = self.org_reader.member_counts().await?;
         let mut orgs: HashMap<Id<Organization>, OrganizationView> = HashMap::new();
         for org_id in org_ids.values() {
             if !orgs.contains_key(org_id) {
-                orgs.insert(*org_id, (&self.org_reader.by_id(*org_id).await?).into());
+                let org = self.org_reader.by_id(*org_id).await?;
+                let count = counts.get(org_id).copied().unwrap_or(0);
+                orgs.insert(*org_id, OrganizationView::new(&org, count));
             }
         }
         Ok(identities
@@ -555,10 +563,17 @@ mod tests {
                 id: id.value(),
                 parent_id: None,
                 name: "Testorg".into(),
+                street: None,
+                postal_code: None,
+                city: None,
+                contact_person_id: None,
             }))
         }
         async fn hierarchy(&self) -> Result<OrgHierarchy, RepositoryError> {
             Ok(OrgHierarchy::default())
+        }
+        async fn member_counts(&self) -> Result<HashMap<Id<Organization>, i64>, RepositoryError> {
+            Ok(HashMap::new())
         }
     }
 

@@ -121,6 +121,11 @@ mod tests {
         async fn hierarchy(&self) -> Result<OrgHierarchy, RepositoryError> {
             Ok(OrgHierarchy::from_pairs(self.pairs.clone()))
         }
+        async fn member_counts(
+            &self,
+        ) -> Result<std::collections::HashMap<Id<Organization>, i64>, RepositoryError> {
+            Ok(std::collections::HashMap::new())
+        }
     }
 
     struct StubRoles {

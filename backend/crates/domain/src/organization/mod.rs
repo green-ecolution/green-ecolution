@@ -6,6 +6,7 @@
 //! address is all-or-nothing: an organization either has a complete address or
 //! none. There is deliberately no move operation.
 
+pub mod detail_view;
 pub mod error;
 pub mod repository;
 pub mod snapshot;
@@ -15,6 +16,7 @@ use uuid::Uuid;
 
 use crate::{Id, events::DomainEvent, shared::address::Address};
 
+pub use detail_view::{ContactPersonView, OrganizationDetailView};
 pub use error::OrganizationError;
 pub use repository::{OrganizationReader, OrganizationWriter};
 #[doc(hidden)]
