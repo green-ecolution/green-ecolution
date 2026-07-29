@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Bell, Building2, Droplet, Map, Puzzle, RadioTower, UserRound, Users } from 'lucide-react'
@@ -22,11 +22,24 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
   const items = visibleSettingsNav(SETTINGS_NAV, perms, enabledFeatures)
 
   return (
-    <div className="container mt-6 pb-16">
-      <h1 className="mb-6 font-lato text-3xl font-bold lg:text-4xl">Einstellungen</h1>
+    <div
+      className="container mt-6 pb-16"
+      style={
+        {
+          '--app-header-h': '4.5625rem',
+          '--settings-header-top': 'calc(4.5625rem + 3.5rem)',
+        } as CSSProperties
+      }
+    >
+      <div className="sticky top-[var(--app-header-h)] z-30 mb-6 flex h-14 items-center bg-white">
+        <h1 className="font-lato text-3xl font-bold lg:text-4xl">Einstellungen</h1>
+      </div>
 
       <div className="lg:grid lg:grid-cols-[240px_1fr] lg:gap-8">
-        <nav aria-label="Einstellungsbereiche" className="lg:sticky lg:top-6 lg:self-start">
+        <nav
+          aria-label="Einstellungsbereiche"
+          className="z-20 lg:sticky lg:top-[var(--settings-header-top)] lg:self-start"
+        >
           <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0">
             {items.map((item) => {
               const Icon = ICONS[item.icon as keyof typeof ICONS]

@@ -75,82 +75,86 @@ const RoleDetail = ({
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-wrap items-start gap-4">
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-green-dark text-white">
-          <Shield className="size-6" aria-hidden />
-        </span>
-
-        <div className="min-w-0 flex-1">
-          {readOnly ? (
-            <h2 className="font-lato text-2xl font-bold text-dark">{draft.name}</h2>
-          ) : (
-            <>
-              <Input
-                aria-label="Name der Rolle"
-                value={draft.name}
-                onChange={(event) => onNameChange(event.target.value)}
-                aria-invalid={nameError !== null || nameEmpty}
-                className="max-w-md font-lato text-2xl font-bold"
-              />
-              {nameError && <p className="mt-1 text-sm text-red">{nameError}</p>}
-              {!nameError && nameEmpty && (
-                <p className="mt-1 text-sm text-dark-600">Gib der Rolle einen Namen.</p>
-              )}
-              <Input
-                aria-label="Beschreibung der Rolle"
-                value={draft.description}
-                onChange={(event) => onDescriptionChange(event.target.value)}
-                placeholder="Kurze Beschreibung"
-                className="mt-2 max-w-md text-sm"
-              />
-            </>
-          )}
-
-          {readOnly && draft.description && (
-            <p className="mt-1 max-w-prose text-sm text-dark-600">{draft.description}</p>
-          )}
-        </div>
-
-        <div className="flex shrink-0 items-center gap-3">
-          <Badge variant={isSystemRole ? 'muted' : 'outline-green-dark'}>
-            {isSystemRole ? (
-              <>
-                <Lock className="mr-1 size-3" aria-hidden />
-                Systemrolle
-              </>
-            ) : (
-              'Eigene Rolle'
-            )}
-          </Badge>
-
-          {assignees.length > 0 && (
-            <span className="flex -space-x-2">
-              {assignees.slice(0, 3).map((initials) => (
-                <Avatar key={initials} size="sm" className="ring-2 ring-white">
-                  <AvatarFallback variant="user">{initials}</AvatarFallback>
-                </Avatar>
-              ))}
-              {assignees.length > 3 && (
-                <span className="flex size-8 items-center justify-center rounded-full bg-dark-100 text-xs font-semibold text-dark-600 ring-2 ring-white">
-                  +{assignees.length - 3}
-                </span>
-              )}
+      <header className="@container">
+        <div className="flex flex-col gap-4 @min-[40rem]:flex-row @min-[40rem]:items-start">
+          <div className="flex min-w-0 flex-1 items-start gap-4">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-green-dark text-white">
+              <Shield className="size-6" aria-hidden />
             </span>
-          )}
 
-          {!isNew && canCreate && (
-            <Button type="button" variant="outline" size="sm" onClick={onCopy}>
-              <Copy className="size-4" aria-hidden />
-              Kopieren & bearbeiten
-            </Button>
-          )}
+            <div className="min-w-0 flex-1">
+              {readOnly ? (
+                <h2 className="font-lato text-2xl font-bold text-dark break-words">{draft.name}</h2>
+              ) : (
+                <>
+                  <Input
+                    aria-label="Name der Rolle"
+                    value={draft.name}
+                    onChange={(event) => onNameChange(event.target.value)}
+                    aria-invalid={nameError !== null || nameEmpty}
+                    className="max-w-md font-lato text-2xl font-bold"
+                  />
+                  {nameError && <p className="mt-1 text-sm text-red">{nameError}</p>}
+                  {!nameError && nameEmpty && (
+                    <p className="mt-1 text-sm text-dark-600">Gib der Rolle einen Namen.</p>
+                  )}
+                  <Input
+                    aria-label="Beschreibung der Rolle"
+                    value={draft.description}
+                    onChange={(event) => onDescriptionChange(event.target.value)}
+                    placeholder="Kurze Beschreibung"
+                    className="mt-2 max-w-md text-sm"
+                  />
+                </>
+              )}
 
-          {!isNew && !isSystemRole && canDelete && (
-            <Button type="button" variant="outline" size="sm" onClick={onDelete}>
-              <Trash2 className="size-4" aria-hidden />
-              Löschen
-            </Button>
-          )}
+              {readOnly && draft.description && (
+                <p className="mt-1 max-w-prose text-sm text-dark-600">{draft.description}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 @min-[40rem]:shrink-0 @min-[40rem]:justify-end">
+            <Badge variant={isSystemRole ? 'muted' : 'outline-green-dark'}>
+              {isSystemRole ? (
+                <>
+                  <Lock className="mr-1 size-3" aria-hidden />
+                  Systemrolle
+                </>
+              ) : (
+                'Eigene Rolle'
+              )}
+            </Badge>
+
+            {assignees.length > 0 && (
+              <span className="flex -space-x-2">
+                {assignees.slice(0, 3).map((initials) => (
+                  <Avatar key={initials} size="sm" className="ring-2 ring-white">
+                    <AvatarFallback variant="user">{initials}</AvatarFallback>
+                  </Avatar>
+                ))}
+                {assignees.length > 3 && (
+                  <span className="flex size-8 items-center justify-center rounded-full bg-dark-100 text-xs font-semibold text-dark-600 ring-2 ring-white">
+                    +{assignees.length - 3}
+                  </span>
+                )}
+              </span>
+            )}
+
+            {!isNew && canCreate && (
+              <Button type="button" variant="outline" size="sm" onClick={onCopy}>
+                <Copy className="size-4" aria-hidden />
+                Kopieren & bearbeiten
+              </Button>
+            )}
+
+            {!isNew && !isSystemRole && canDelete && (
+              <Button type="button" variant="outline" size="sm" onClick={onDelete}>
+                <Trash2 className="size-4" aria-hidden />
+                Löschen
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 

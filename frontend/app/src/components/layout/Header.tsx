@@ -44,7 +44,7 @@ function Header() {
   // map controls) paints above it
   return (
     <header
-      className={`relative z-50 bg-white transition-[padding] ease-in-out duration-300 ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-[16rem]'}`}
+      className={`sticky top-0 z-50 bg-white transition-[padding] ease-in-out duration-300 ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-[16rem]'}`}
     >
       {/* min-h keeps the pre-NavUser header height (40px avatar + py-4 + border);
           the map height calc (100dvh - 4.563rem) depends on it */}

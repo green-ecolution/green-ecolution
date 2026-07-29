@@ -14,7 +14,10 @@ const TeamTabs = () => {
 
   return (
     <>
-      <nav aria-label="Team und Rollen" className="mb-6 flex gap-1 border-b border-dark-200">
+      <nav
+        aria-label="Team und Rollen"
+        className="sticky top-[var(--settings-header-top)] z-10 mb-6 flex gap-1 border-b border-dark-200 bg-dark-50"
+      >
         {TABS.filter((tab) => allowed[tab.to as keyof typeof allowed]).map((tab) => (
           <Link
             key={tab.to}

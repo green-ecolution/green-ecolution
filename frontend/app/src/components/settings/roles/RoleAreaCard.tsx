@@ -41,29 +41,13 @@ const RoleAreaCard = ({
   const count = activeActionCount(area.resource, permissions)
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-dark-50 bg-white shadow-cards">
-      {/* Permission spine: fills with the active action count so a role's shape
-          is readable down the column before any label is read. */}
-      <span
-        aria-hidden
-        className="absolute bottom-3 left-0 top-3 w-[3px] overflow-hidden rounded-full bg-dark-100"
-      >
-        <span
-          className={
-            level === 'custom'
-              ? 'absolute bottom-0 left-0 w-full bg-[repeating-linear-gradient(to_top,var(--green-dark)_0_4px,transparent_4px_8px)] transition-[height] duration-200 motion-reduce:transition-none'
-              : 'absolute bottom-0 left-0 w-full bg-green-dark transition-[height] duration-200 motion-reduce:transition-none'
-          }
-          style={{ height: `${(count / area.actions.length) * 100}%` }}
-        />
-      </span>
-
-      <div className="flex flex-wrap items-center gap-4 px-5 py-4">
-        <div className="min-w-0 flex-1">
+    <div className="@container overflow-hidden rounded-xl border border-dark-50 bg-white shadow-cards">
+      <div className="flex flex-col gap-3 px-5 py-4 @min-[30rem]:flex-row @min-[30rem]:flex-wrap @min-[30rem]:items-center @min-[30rem]:gap-4">
+        <div className="min-w-0 @min-[30rem]:flex-1">
           <p className="font-lato text-base font-semibold text-dark">{area.label}</p>
           <p className="mt-0.5 text-sm text-dark-600">{area.description}</p>
-          <p className="mt-1 flex items-center gap-2 text-xs text-dark-500">
-            <span>
+          <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-dark-500">
+            <span className="whitespace-nowrap">
               {count} von {area.actions.length} Aktionen aktiv
             </span>
             {level === 'custom' && (
@@ -74,29 +58,33 @@ const RoleAreaCard = ({
           </p>
         </div>
 
-        <SegmentedControl
-          options={LEVEL_OPTIONS}
-          value={level === 'custom' ? null : level}
-          onChange={onLevelChange}
-          ariaLabel={`Zugriffsstufe für ${area.label}`}
-          disabled={readOnly}
-        />
-
-        <button
-          type="button"
-          aria-expanded={expanded}
-          aria-controls={panelId}
-          onClick={() => setExpanded((open) => !open)}
-          className="rounded-lg p-1.5 text-dark-500 transition-colors hover:bg-dark-50 hover:text-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <span className="sr-only">
-            {expanded ? `Aktionen für ${area.label} verbergen` : `Aktionen für ${area.label} anzeigen`}
-          </span>
-          <ChevronDown
-            aria-hidden
-            className={`size-5 transition-transform duration-200 motion-reduce:transition-none ${expanded ? 'rotate-180' : ''}`}
+        <div className="flex items-center justify-between gap-2 @min-[30rem]:justify-end">
+          <SegmentedControl
+            options={LEVEL_OPTIONS}
+            value={level === 'custom' ? null : level}
+            onChange={onLevelChange}
+            ariaLabel={`Zugriffsstufe für ${area.label}`}
+            disabled={readOnly}
           />
-        </button>
+
+          <button
+            type="button"
+            aria-expanded={expanded}
+            aria-controls={panelId}
+            onClick={() => setExpanded((open) => !open)}
+            className="shrink-0 rounded-lg p-1.5 text-dark-500 transition-colors hover:bg-dark-50 hover:text-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <span className="sr-only">
+              {expanded
+                ? `Aktionen für ${area.label} verbergen`
+                : `Aktionen für ${area.label} anzeigen`}
+            </span>
+            <ChevronDown
+              aria-hidden
+              className={`size-5 transition-transform duration-200 motion-reduce:transition-none ${expanded ? 'rotate-180' : ''}`}
+            />
+          </button>
+        </div>
       </div>
 
       <div
