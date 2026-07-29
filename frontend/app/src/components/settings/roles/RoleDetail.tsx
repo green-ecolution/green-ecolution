@@ -1,4 +1,4 @@
-import { Copy, Lock, Shield, Trash2 } from 'lucide-react'
+import { Copy, Lock, Trash2 } from 'lucide-react'
 import {
   Alert,
   AlertContent,
@@ -21,6 +21,7 @@ import {
 } from '@/lib/auth/permissionAreas'
 import RoleActionButtons from './RoleActionButtons'
 import RoleAreaCard from './RoleAreaCard'
+import RoleIcon from './roleIcon'
 import type { RoleDraft } from './useRoleDraft'
 
 interface RoleDetailProps {
@@ -82,7 +83,7 @@ const RoleDetail = ({
         <div className="flex flex-col gap-4 @min-[40rem]:flex-row @min-[40rem]:items-start">
           <div className="flex min-w-0 flex-1 items-start gap-4">
             <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-green-dark text-white">
-              <Shield className="size-6" aria-hidden />
+              <RoleIcon role={role} className="size-6" />
             </span>
 
             <div className="min-w-0 flex-1">

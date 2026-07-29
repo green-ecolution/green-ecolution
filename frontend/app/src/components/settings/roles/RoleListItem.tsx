@@ -1,6 +1,7 @@
-import { Lock, Pencil, Shield } from 'lucide-react'
+import { Lock, Pencil } from 'lucide-react'
 import { Avatar, AvatarFallback, ListCard } from '@green-ecolution/ui'
 import type { Role } from '@/api/backendApi'
+import RoleIcon from './roleIcon'
 
 interface RoleListItemProps {
   role: Role
@@ -24,7 +25,7 @@ const RoleListItem = ({ role, selected, locked, assignees, onSelect }: RoleListI
           selected ? 'bg-green-dark text-white' : 'bg-green-light-100 text-green-dark'
         }`}
       >
-        <Shield className="size-5" aria-hidden />
+        <RoleIcon role={role} className="size-5" />
       </span>
 
       <span className="min-w-0 flex-1">
