@@ -9,7 +9,7 @@ export type PlanEvaluation = NonNullable<WateringPlanUpdateRequest['evaluation']
 
 import { wateringPlanApi } from '@/api/backendApi'
 import type { WateringPlanInList } from '@/api/backendApi'
-import { wateringPlanBoardColumnQuery } from '@/api/queries'
+import { wateringPlanQueries } from '@/api/queries'
 import createToast from '@/hooks/createToast'
 
 export const toUpdateRequest = (
@@ -29,8 +29,8 @@ export const toUpdateRequest = (
   ...overrides,
 })
 
-const plannedKey = wateringPlanBoardColumnQuery([WateringPlanStatus.Planned]).queryKey
-const activeKey = wateringPlanBoardColumnQuery([WateringPlanStatus.Active]).queryKey
+const plannedKey = wateringPlanQueries.boardColumn([WateringPlanStatus.Planned]).queryKey
+const activeKey = wateringPlanQueries.boardColumn([WateringPlanStatus.Active]).queryKey
 
 export const useWateringPlanBoardMutations = () => {
   const queryClient = useQueryClient()

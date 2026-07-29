@@ -435,12 +435,6 @@ export const routingStartPointsQuery = () =>
 // --- temporary aliases: removed per domain during call-site migration ---
 export const vehicleQuery = vehicleQueries.list
 export const vehicleIdQuery = vehicleQueries.detail
-export const wateringPlanQuery = wateringPlanQueries.list
-export const wateringPlanIdQuery = wateringPlanQueries.detail
-export const wateringPlanRouteQuery = wateringPlanQueries.route
-export const wateringPlanBoardColumnQuery = wateringPlanQueries.boardColumn
-export const wateringPlanBoardDoneQuery = wateringPlanQueries.boardDone
-export const routePreviewQuery = wateringPlanQueries.routePreview
 export const infoQuery = infoQueries.app
 export const mapInfoQuery = infoQueries.map
 export const serverInfoQuery = infoQueries.server

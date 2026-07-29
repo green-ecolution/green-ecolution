@@ -23,7 +23,7 @@ import {
 } from '@green-ecolution/ui'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { User, WateringPlanInList } from '@/api/backendApi'
-import { userQuery, wateringPlanBoardColumnQuery, wateringPlanBoardDoneQuery } from '@/api/queries'
+import { userQuery, wateringPlanQueries } from '@/api/queries'
 import {
   dropActionFor,
   dropHintFor,
@@ -121,9 +121,9 @@ const ColumnError = ({ onRetry }: { onRetry: () => void }) => (
 )
 
 const WateringPlanBoard = () => {
-  const plannedQuery = useQuery(wateringPlanBoardColumnQuery([WateringPlanStatus.Planned]))
-  const activeQuery = useQuery(wateringPlanBoardColumnQuery([WateringPlanStatus.Active]))
-  const doneQuery = useInfiniteQuery(wateringPlanBoardDoneQuery())
+  const plannedQuery = useQuery(wateringPlanQueries.boardColumn([WateringPlanStatus.Planned]))
+  const activeQuery = useQuery(wateringPlanQueries.boardColumn([WateringPlanStatus.Active]))
+  const doneQuery = useInfiniteQuery(wateringPlanQueries.boardDone())
   const { data: usersRes } = useQuery(userQuery({ page: 1, perPage: 100 }))
   const { data: plannedRes } = plannedQuery
   const { data: activeRes } = activeQuery

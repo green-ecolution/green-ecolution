@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
-import { clusterQueries, userQuery, wateringPlanBoardColumnQuery } from '@/api/queries'
+import { clusterQueries, userQuery, wateringPlanQueries } from '@/api/queries'
 import ButtonLink from '@/components/general/links/ButtonLink'
 import ListPageHeader from '@/components/general/ListPageHeader'
 import WateringPlanBoard from '@/components/watering-plan/board/WateringPlanBoard'
@@ -14,12 +14,12 @@ export const Route = createFileRoute('/_protected/watering-plans/')({
   loader: ({ context: { queryClient } }) => {
     prefetch(
       queryClient,
-      wateringPlanBoardColumnQuery([WateringPlanStatus.Planned]),
+      wateringPlanQueries.boardColumn([WateringPlanStatus.Planned]),
       'wateringPlanBoardColumnQuery(planned)',
     )
     prefetch(
       queryClient,
-      wateringPlanBoardColumnQuery([WateringPlanStatus.Active]),
+      wateringPlanQueries.boardColumn([WateringPlanStatus.Active]),
       'wateringPlanBoardColumnQuery(active)',
     )
     prefetch(queryClient, clusterQueries.suggested(), 'suggestedClustersQuery')

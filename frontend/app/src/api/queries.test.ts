@@ -4,9 +4,7 @@ import {
   vehicleQuery,
   vehicleIdQuery,
   clusterQueries,
-  wateringPlanQuery,
-  wateringPlanIdQuery,
-  routePreviewQuery,
+  wateringPlanQueries,
 } from './queries'
 import type { Tree, Vehicle, TreeCluster, WateringPlan } from '@/api/backendApi'
 import type {
@@ -281,20 +279,20 @@ describe('Query Functions', () => {
   describe('WateringPlan Queries', () => {
     describe('wateringPlanQuery', () => {
       it('returns correct query options for fetching all watering plans', () => {
-        const options = wateringPlanQuery()
+        const options = wateringPlanQueries.list()
 
         expect(options.queryKey).toContain('watering-plans')
         expect(options.queryFn).toBeDefined()
       })
 
       it('includes default page in query key', () => {
-        const options = wateringPlanQuery()
+        const options = wateringPlanQueries.list()
 
         expect(options.queryKey).toContain('1')
       })
 
       it('includes custom page in query key', () => {
-        const options = wateringPlanQuery({ page: 3 })
+        const options = wateringPlanQueries.list({ page: 3 })
 
         expect(options.queryKey).toContain(3)
       })
@@ -304,7 +302,7 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(wateringPlanApi.listWateringPlans).mockResolvedValueOnce(mockResponse)
 
-        const options = wateringPlanQuery()
+        const options = wateringPlanQueries.list()
         const result = await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -315,7 +313,7 @@ describe('Query Functions', () => {
 
     describe('wateringPlanIdQuery', () => {
       it('returns correct query options for fetching single watering plan', () => {
-        const options = wateringPlanIdQuery('55')
+        const options = wateringPlanQueries.detail('55')
 
         expect(options.queryKey).toEqual(['watering-plan', '55'])
         expect(options.queryFn).toBeDefined()
@@ -329,7 +327,7 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(wateringPlanApi.getWateringPlan).mockResolvedValueOnce(mockPlan)
 
-        const options = wateringPlanIdQuery('plan-uuid-1')
+        const options = wateringPlanQueries.detail('plan-uuid-1')
         const result = await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -346,7 +344,7 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(wateringPlanPreviewApi.previewRoute).mockResolvedValueOnce(mockRoute)
 
-        const options = routePreviewQuery(['cluster-1'], 'vehicle-1')
+        const options = wateringPlanQueries.routePreview(['cluster-1'], 'vehicle-1')
         const result = await options.queryFn!({} as never)
 
         expect(result).toEqual(mockRoute)
@@ -356,7 +354,7 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(wateringPlanPreviewApi.previewRoute).mockRejectedValueOnce(new Error('422'))
 
-        const options = routePreviewQuery(['cluster-1'], 'vehicle-1')
+        const options = wateringPlanQueries.routePreview(['cluster-1'], 'vehicle-1')
         const result = await options.queryFn!({} as never)
 
         expect(result).toBeNull()
@@ -366,7 +364,7 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(wateringPlanPreviewApi.previewRoute).mockResolvedValueOnce({} as RouteResponse)
 
-        const options = routePreviewQuery(['cluster-1'], 'vehicle-1')
+        const options = wateringPlanQueries.routePreview(['cluster-1'], 'vehicle-1')
         await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method

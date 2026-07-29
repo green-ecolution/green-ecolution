@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Loading } from '@green-ecolution/ui'
 import type { WateringPlan } from '@/api/backendApi'
-import { clusterQueries, routingStartPointsQuery, wateringPlanRouteQuery } from '@/api/queries'
+import { clusterQueries, routingStartPointsQuery, wateringPlanQueries } from '@/api/queries'
 import RoutePointMarkers, {
   buildRoutePoints,
   type RoutePointMarkerData,
@@ -34,7 +34,7 @@ const RoutePreviewLayers = ({
 }) => {
   const map = useMaplibreMap()
   const { data: markers } = useSuspenseQuery(clusterQueries.markers())
-  const { data: route } = useSuspenseQuery(wateringPlanRouteQuery(planId))
+  const { data: route } = useSuspenseQuery(wateringPlanQueries.route(planId))
   const { data: startPoints } = useSuspenseQuery(routingStartPointsQuery())
   const routePoints = useMemo<RoutePointMarkerData[]>(
     () => buildRoutePoints(startPoints, startPointName, route?.refillPoints),

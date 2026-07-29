@@ -1,4 +1,4 @@
-import { wateringPlanIdQuery } from '@/api/queries'
+import { wateringPlanQueries } from '@/api/queries'
 import { entityRoute } from '@/lib/router'
 import { createFileRoute } from '@tanstack/react-router'
 import { format } from 'date-fns'
@@ -6,7 +6,7 @@ import { format } from 'date-fns'
 /** Shared by the detail and _formular layout routes; spread it — the router mutates route options on update. */
 export const wateringPlanEntityRoute = entityRoute({
   key: 'wateringPlan',
-  query: wateringPlanIdQuery,
+  query: wateringPlanQueries.detail,
   idParam: 'wateringPlanId',
   title: (wateringPlan) =>
     wateringPlan.date

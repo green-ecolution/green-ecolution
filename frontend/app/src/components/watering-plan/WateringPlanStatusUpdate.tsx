@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import FormPageHeader from '../general/FormPageHeader'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
 import type { WateringPlan, WateringPlanUpdate } from '@/api/backendApi'
-import { wateringPlanIdQuery } from '@/api/queries'
+import { wateringPlanQueries } from '@/api/queries'
 import { format } from 'date-fns'
 import { Droplet, MoveRight } from 'lucide-react'
 import FormError from '../general/form/FormError'
@@ -29,7 +29,7 @@ interface WateringPlanStatusUpdateProps {
 }
 
 const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdateProps) => {
-  const { data: loadedData } = useSuspenseQuery(wateringPlanIdQuery(wateringPlanId))
+  const { data: loadedData } = useSuspenseQuery(wateringPlanQueries.detail(wateringPlanId))
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const showToast = createToast()
@@ -45,7 +45,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
 
     onSuccess: (data: WateringPlan) => {
       queryClient
-        .invalidateQueries(wateringPlanIdQuery(String(data.id)))
+        .invalidateQueries(wateringPlanQueries.detail(String(data.id)))
         .catch((error) => console.error('Invalidate "waterinPlanIdQuery" failed', error))
       queryClient
         .invalidateQueries({ queryKey: ['watering-plans'] })

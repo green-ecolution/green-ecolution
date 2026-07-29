@@ -7,9 +7,9 @@ import { z } from 'zod'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import {
   clusterQueries,
-  routePreviewQuery,
   routingStartPointsQuery,
   vehicleIdQuery,
+  wateringPlanQueries,
 } from '@/api/queries'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import { useFormNavigationBlocker } from '@/hooks/form/useFormNavigationBlocker'
@@ -71,7 +71,11 @@ function SelectCluster() {
 
   const previewEnabled = debouncedClusterIds.length > 0 && !!transporterId && transporterId !== '-1'
   const { data: previewRoute } = useQuery({
-    ...routePreviewQuery(debouncedClusterIds, transporterId ?? '', draft.data?.startPointName),
+    ...wateringPlanQueries.routePreview(
+      debouncedClusterIds,
+      transporterId ?? '',
+      draft.data?.startPointName,
+    ),
     enabled: previewEnabled,
   })
   const routeCoordinates = previewEnabled
