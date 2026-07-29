@@ -74,11 +74,14 @@ const variantIcons = {
 } as const
 
 export interface AlertIconProps
-  extends Omit<LucideProps, 'ref'>, VariantProps<typeof alertIconVariants> {}
+  extends Omit<LucideProps, 'ref'>, VariantProps<typeof alertIconVariants> {
+  /** Overrides the variant glyph when the variant's tone fits but its symbol does not. */
+  icon?: React.ComponentType<LucideProps>
+}
 
 const AlertIcon = React.forwardRef<SVGSVGElement, AlertIconProps>(
-  ({ className, variant = 'default', ...props }, ref) => {
-    const IconComponent = variantIcons[variant ?? 'default']
+  ({ className, variant = 'default', icon, ...props }, ref) => {
+    const IconComponent = icon ?? variantIcons[variant ?? 'default']
     return (
       <IconComponent
         ref={ref}

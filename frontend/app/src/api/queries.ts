@@ -27,6 +27,8 @@ import {
   pluginApi,
   regionApi,
   ResponseError,
+  RoleResponse,
+  roleApi,
   RouteResponse,
   routingApi,
   SensorModelResponse,
@@ -260,6 +262,18 @@ export const pluginsQuery = () =>
   queryOptions({
     queryKey: ['plugins'],
     queryFn: () => pluginApi.listPlugins(),
+  })
+
+export const roleTemplatesQuery = () =>
+  queryOptions<RoleResponse[]>({
+    queryKey: ['roles', 'templates'],
+    queryFn: () => roleApi.listRoleTemplates(),
+  })
+
+export const orgRolesQuery = (orgId: string) =>
+  queryOptions<RoleResponse[]>({
+    queryKey: ['roles', 'org', orgId],
+    queryFn: () => roleApi.listOrgRoles({ orgId }),
   })
 
 export const plantingYearsQuery = () =>

@@ -10,7 +10,8 @@ describe('ROUTE_PERMISSIONS', () => {
       '/evaluations',
       '/map',
       '/sensors',
-      '/team',
+      '/settings/team/members',
+      '/settings/team/roles',
       '/treecluster',
       '/trees',
       '/vehicles',
@@ -51,7 +52,12 @@ describe('canAccessRoute', () => {
   })
 
   it('allows everything for unrestricted access', () => {
-    expect(canAccessRoute('/team', UNRESTRICTED)).toBe(true)
+    expect(canAccessRoute('/settings/team/members', UNRESTRICTED)).toBe(true)
+  })
+
+  it('guards the roles tab with role:read', () => {
+    expect(canAccessRoute('/settings/team/roles', new Set(['user:read']))).toBe(false)
+    expect(canAccessRoute('/settings/team/roles', new Set(['role:read']))).toBe(true)
   })
 })
 

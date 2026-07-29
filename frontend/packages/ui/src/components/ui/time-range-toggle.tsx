@@ -1,10 +1,6 @@
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { SegmentedControl, type SegmentedControlOption } from '@/components/ui/segmented-control'
 
-export interface TimeRangeToggleOption<T extends string> {
-  value: T
-  label: string
-}
+export type TimeRangeToggleOption<T extends string> = SegmentedControlOption<T>
 
 export interface TimeRangeToggleProps<T extends string> {
   options: TimeRangeToggleOption<T>[]
@@ -21,18 +17,12 @@ export const TimeRangeToggle = <T extends string>({
   ariaLabel = 'Zeitraum',
   className,
 }: TimeRangeToggleProps<T>) => (
-  <div role="group" aria-label={ariaLabel} className={cn('flex items-center gap-1', className)}>
-    {options.map((option) => (
-      <Button
-        key={option.value}
-        type="button"
-        size="sm"
-        variant={option.value === value ? 'default' : 'ghost'}
-        aria-pressed={option.value === value}
-        onClick={() => onChange(option.value)}
-      >
-        {option.label}
-      </Button>
-    ))}
-  </div>
+  <SegmentedControl
+    options={options}
+    value={value}
+    onChange={onChange}
+    ariaLabel={ariaLabel}
+    size="sm"
+    className={className}
+  />
 )

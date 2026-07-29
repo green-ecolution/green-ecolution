@@ -40,7 +40,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary
   }, [checkResponseErrorMessage])
 
   return (
-    <>
+    <div className="relative">
       <figure aria-hidden="true" className="absolute top-0 inset-x-0 z-0">
         <Lottie className="h-[50vh]" animationData={cableAnimation} />
       </figure>
@@ -64,7 +64,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary
           </div>
         </section>
       </div>
-    </>
+    </div>
   )
 }
 

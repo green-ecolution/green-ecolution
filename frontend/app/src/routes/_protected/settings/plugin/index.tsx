@@ -17,9 +17,9 @@ function PluginView() {
           Übersicht der Plugins
         </h1>
         <p>
-          Hier finden Sie eine Übersicht aller installierten Plugins. Diese Plugins erweitern die
-          Funktionalität der Anwendung und können eine Vielzahl nützlicher Features bieten. Klicken
-          Sie auf eines der Plugins, um mehr darüber zu erfahren.
+          Hier findest du eine Übersicht aller installierten Plugins. Diese Plugins erweitern die
+          Funktionalität der Anwendung und können eine Vielzahl nützlicher Features bieten. Klicke
+          auf eines der Plugins, um mehr darüber zu erfahren.
         </p>
       </article>
 

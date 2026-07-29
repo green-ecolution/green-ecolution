@@ -11,23 +11,23 @@ const options = [
 afterEach(cleanup)
 
 describe('TimeRangeToggle', () => {
-  it('marks the active option with aria-pressed', () => {
+  it('marks the active option as the checked radio', () => {
     render(<TimeRangeToggle options={options} value="7d" onChange={() => {}} />)
-    expect(screen.getByRole('button', { name: '7 Tage' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: '24 h' })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('radio', { name: '7 Tage' })).toBeChecked()
+    expect(screen.getByRole('radio', { name: '24 h' })).not.toBeChecked()
   })
 
   it('reports the clicked option', async () => {
     const onChange = vi.fn()
     render(<TimeRangeToggle options={options} value="7d" onChange={onChange} />)
-    await userEvent.click(screen.getByRole('button', { name: '24 h' }))
+    await userEvent.click(screen.getByRole('radio', { name: '24 h' }))
     expect(onChange).toHaveBeenCalledWith('24h')
   })
 
   it('renders buttons with type="button" so they never trigger a form submit', () => {
     render(<TimeRangeToggle options={options} value="7d" onChange={() => {}} />)
-    for (const button of screen.getAllByRole('button')) {
-      expect(button).toHaveAttribute('type', 'button')
+    for (const radio of screen.getAllByRole('radio')) {
+      expect(radio).toHaveAttribute('type', 'button')
     }
   })
 })

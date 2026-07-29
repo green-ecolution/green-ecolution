@@ -38,7 +38,7 @@ const renderNavUser = (props: Partial<React.ComponentProps<typeof NavUser>> = {}
 
   const profileRoute = createRoute({
     getParentRoute: () => rootRoute,
-    path: '/profile',
+    path: '/settings/profile',
     component: () => <div data-testid="profile-page">Profil</div>,
   })
 

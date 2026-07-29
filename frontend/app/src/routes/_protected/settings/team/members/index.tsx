@@ -2,18 +2,21 @@ import UserCard from '@/components/general/cards/UserCard'
 import EntityList from '@/components/general/EntityList'
 import ListPageHeader from '@/components/general/ListPageHeader'
 import { createFileRoute } from '@tanstack/react-router'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useSuspenseQuery, type QueryClient } from '@tanstack/react-query'
 import { userQuery } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
-import { pendingLoading } from '@/lib/router'
+import { guardedRoute, pendingLoading } from '@/lib/router'
 
 const TEAM_USERS_PARAMS = { page: 1, perPage: 100 }
 
-export const Route = createFileRoute('/_protected/team/')({
-  component: Team,
-  pendingComponent: pendingLoading('Daten werden geladen'),
-  loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(userQuery(TEAM_USERS_PARAMS)),
-})
+export const Route = createFileRoute('/_protected/settings/team/members/')(
+  guardedRoute(['user:read'], {
+    component: Team,
+    pendingComponent: pendingLoading('Daten werden geladen'),
+    loader: ({ context: { queryClient } }: { context: { queryClient: QueryClient } }) =>
+      queryClient.prefetchQuery(userQuery(TEAM_USERS_PARAMS)),
+  }),
+)
 
 function Team() {
   const { data: userRes } = useSuspenseQuery(userQuery(TEAM_USERS_PARAMS))
@@ -22,7 +25,7 @@ function Team() {
     <div className="container mt-6">
       <ListPageHeader
         title="Alle Mitarbeitenden"
-        description="Hier finden Sie eine Übersicht aller Mitarbeitenden und weitere Informationen zu deren Rollen und welche Führerscheinklasse sie besitzen. Diese Informationen sind wichtig, wenn Personen zu einem Einsatzplan eingeteilt werden sollen."
+        description="Hier findest du eine Übersicht aller Mitarbeitenden und weitere Informationen zu deren Rollen und welche Führerscheinklasse sie besitzen. Diese Informationen sind wichtig, wenn Personen zu einem Einsatzplan eingeteilt werden sollen."
       />
 
       <section className="mt-10">
