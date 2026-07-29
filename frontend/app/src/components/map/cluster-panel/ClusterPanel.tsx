@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Button, Loading } from '@green-ecolution/ui'
 import { Pencil } from 'lucide-react'
-import { isValidUuid, treeClusterIdQuery } from '@/api/queries'
+import { clusterQueries, isValidUuid } from '@/api/queries'
 import MapPanel from '@/components/map-gl/MapPanel'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 import ClusterPanelShell from './ClusterPanelShell'
@@ -24,7 +24,7 @@ const ClusterPanel = ({
   activeSnapPoint,
   setActiveSnapPoint,
 }: ClusterPanelProps) => {
-  const { data, isError } = useQuery(treeClusterIdQuery(clusterId))
+  const { data, isError } = useQuery(clusterQueries.detail(clusterId))
   const failed = !isValidUuid(clusterId) || isError
   const canEdit = useHasPermission(['tree_cluster:update'])
 

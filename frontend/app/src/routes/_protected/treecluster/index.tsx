@@ -15,7 +15,7 @@ import ClusterToolbar from '@/components/treecluster/ClusterToolbar'
 import ClusterStatusChips from '@/components/treecluster/ClusterStatusChips'
 import ClusterViewToggle from '@/components/treecluster/ClusterViewToggle'
 import { z } from 'zod'
-import { treeClusterQuery, clusterStatisticsQuery, regionsQuery } from '@/api/queries'
+import { clusterQueries, regionsQuery } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
 import { filterSearchSchema } from '@/lib/filterSearchSchema'
 import { pendingLoading, prefetch } from '@/lib/router'
@@ -49,7 +49,7 @@ function Treecluster() {
     isPlaceholderData,
     error,
   } = useQuery({
-    ...treeClusterQuery({
+    ...clusterQueries.list({
       page,
       perPage: 12,
       wateringStatus: wateringStatuses,
@@ -61,7 +61,7 @@ function Treecluster() {
     }),
     placeholderData: keepPreviousData,
   })
-  const { data: stats } = useSuspenseQuery(clusterStatisticsQuery())
+  const { data: stats } = useSuspenseQuery(clusterQueries.statistics())
   if (error) throw error
 
   return (
@@ -166,7 +166,7 @@ export const Route = createFileRoute('/_protected/treecluster/')({
   }) => {
     prefetch(
       queryClient,
-      treeClusterQuery({
+      clusterQueries.list({
         page,
         perPage: 12,
         wateringStatus: wateringStatuses,
@@ -178,7 +178,7 @@ export const Route = createFileRoute('/_protected/treecluster/')({
       }),
       'treeClusterQuery',
     )
-    prefetch(queryClient, clusterStatisticsQuery(), 'clusterStatisticsQuery')
+    prefetch(queryClient, clusterQueries.statistics(), 'clusterStatisticsQuery')
     prefetch(queryClient, regionsQuery(), 'regionsQuery')
   },
 })

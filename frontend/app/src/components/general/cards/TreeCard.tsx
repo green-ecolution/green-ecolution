@@ -1,4 +1,4 @@
-import { treeClusterIdQuery } from '@/api/queries'
+import { clusterQueries } from '@/api/queries'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { WateringStatus } from '@green-ecolution/backend-client'
 import type { Tree } from '@/api/backendApi'
@@ -15,7 +15,7 @@ interface TreeCardProps {
 const TreeCard: React.FC<TreeCardProps> = ({ tree, showTreeClusterInfo = true }) => {
   const clusterId = tree.treeClusterId ? String(tree.treeClusterId) : null
   const { data: clusterRes } = useQuery({
-    ...treeClusterIdQuery(clusterId!),
+    ...clusterQueries.detail(clusterId!),
     enabled: clusterId !== null,
   })
   const statusDetails = getWateringStatusDetails(tree.wateringStatus ?? WateringStatus.Unknown)

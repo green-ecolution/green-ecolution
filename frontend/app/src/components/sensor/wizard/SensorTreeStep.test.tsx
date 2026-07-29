@@ -38,10 +38,13 @@ vi.mock('@/api/queries', async () => {
         }),
     }),
     treeIdQuery: () => ({ queryKey: ['tree-test'], queryFn: () => Promise.resolve(null) }),
-    treeClusterIdQuery: () => ({
-      queryKey: ['cluster-test'],
-      queryFn: () => Promise.resolve(null),
-    }),
+    clusterQueries: {
+      ...actual.clusterQueries,
+      detail: () => ({
+        queryKey: ['cluster-test'],
+        queryFn: () => Promise.resolve(null),
+      }),
+    },
   }
 })
 

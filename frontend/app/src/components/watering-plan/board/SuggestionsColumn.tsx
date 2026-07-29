@@ -4,14 +4,14 @@ import { useNavigate } from '@tanstack/react-router'
 import { FolderPlus, Sprout } from 'lucide-react'
 import { Button, KanbanColumn, KanbanColumnEmpty, KanbanColumnHeader } from '@green-ecolution/ui'
 import { WateringPlanStatus } from '@green-ecolution/backend-client'
-import { suggestedClustersQuery } from '@/api/queries'
+import { clusterQueries } from '@/api/queries'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
 import type { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import ClusterSuggestionCard from './ClusterSuggestionCard'
 import { Can } from '@/lib/auth/Can'
 
 const SuggestionsColumn = () => {
-  const clustersQuery = useQuery(suggestedClustersQuery())
+  const clustersQuery = useQuery(clusterQueries.suggested())
   const { data: clustersRes } = clustersQuery
   const [selected, setSelected] = useState<string[]>([])
   const draft = useWateringPlanDraft<WateringPlanForm>('create')

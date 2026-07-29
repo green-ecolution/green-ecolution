@@ -2,7 +2,7 @@ import React from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { X } from 'lucide-react'
-import { clusterStatisticsQuery } from '@/api/queries'
+import { clusterQueries } from '@/api/queries'
 import { WateringStatus } from '@/api/backendApi'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 
@@ -21,7 +21,7 @@ const ALWAYS_SHOWN: WateringStatus[] = [
 ]
 
 const ClusterStatusChips: React.FC<{ className?: string }> = ({ className }) => {
-  const { data: stats } = useSuspenseQuery(clusterStatisticsQuery())
+  const { data: stats } = useSuspenseQuery(clusterQueries.statistics())
   const search = useSearch({ strict: false })
   const navigate = useNavigate()
 

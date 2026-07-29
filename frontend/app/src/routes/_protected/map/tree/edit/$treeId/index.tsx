@@ -4,7 +4,7 @@ import { FormProvider, type DefaultValues } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Button } from '@green-ecolution/ui'
 import { Trash2 } from 'lucide-react'
-import { sensorQuery, treeClusterQuery, treeIdQuery } from '@/api/queries'
+import { clusterQueries, sensorQuery, treeIdQuery } from '@/api/queries'
 import { treeApi } from '@/api/backendApi'
 import { TreeForm } from '@/schema/treeSchema'
 import { useTreeForm } from '@/hooks/form/useTreeForm'
@@ -28,7 +28,7 @@ export const Route = createFileRoute('/_protected/map/tree/edit/$treeId/')({
   loader: ({ context: { queryClient }, params: { treeId } }) => {
     prefetch(queryClient, treeIdQuery(treeId), 'treeIdQuery')
     prefetch(queryClient, sensorQuery(), 'sensorQuery')
-    prefetch(queryClient, treeClusterQuery(), 'treeClusterQuery')
+    prefetch(queryClient, clusterQueries.list(), 'treeClusterQuery')
   },
   errorComponent: forbiddenErrorComponent(
     entityNotFound({
@@ -46,7 +46,7 @@ function EditTreeOnMap() {
   const map = useMaplibreMap()
   const { data: tree } = useSuspenseQuery(treeIdQuery(treeId))
   const { data: sensors } = useSuspenseQuery(sensorQuery())
-  const { data: treeClusters } = useSuspenseQuery(treeClusterQuery())
+  const { data: treeClusters } = useSuspenseQuery(clusterQueries.list())
   const [pos, setPos] = useState<DraggableMarkerLngLat>({ lng: tree.longitude, lat: tree.latitude })
   const [confirmDelete, setConfirmDelete] = useState(false)
 

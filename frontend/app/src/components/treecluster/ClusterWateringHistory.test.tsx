@@ -23,7 +23,7 @@ vi.mock('@/api/backendApi', async (importOriginal) => {
 })
 
 // Mocking clusterApi rather than pre-seeding the QueryClient cache: it exercises
-// the real clusterSoilMoistureQuery/useQuery wiring instead of relying on an
+// the real clusterQueries.soilMoisture/useQuery wiring instead of relying on an
 // exact hand-built query key that could silently drift from the real one.
 import ClusterWateringHistory from './ClusterWateringHistory'
 

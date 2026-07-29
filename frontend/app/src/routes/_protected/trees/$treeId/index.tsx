@@ -1,4 +1,4 @@
-import { treeClusterIdQuery } from '@/api/queries'
+import { clusterQueries } from '@/api/queries'
 import TreeDashboard from '@/components/tree/TreeDashboard'
 import { pendingLoading } from '@/lib/router'
 import { useQuery } from '@tanstack/react-query'
@@ -14,7 +14,7 @@ export const Route = createFileRoute('/_protected/trees/$treeId/')({
 function SingleTree() {
   const { tree } = treeRoute.useLoaderData()
   const { data: treeCluster } = useQuery({
-    ...treeClusterIdQuery(tree.treeClusterId?.toString() ?? ''),
+    ...clusterQueries.detail(tree.treeClusterId?.toString() ?? ''),
     enabled: tree.treeClusterId !== undefined,
   })
 

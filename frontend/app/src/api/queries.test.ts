@@ -4,8 +4,7 @@ import {
   treeIdQuery,
   vehicleQuery,
   vehicleIdQuery,
-  treeClusterQuery,
-  treeClusterIdQuery,
+  clusterQueries,
   wateringPlanQuery,
   wateringPlanIdQuery,
   routePreviewQuery,
@@ -234,7 +233,7 @@ describe('Query Functions', () => {
   describe('TreeCluster Queries', () => {
     describe('treeClusterQuery', () => {
       it('returns correct query options for fetching all clusters', () => {
-        const options = treeClusterQuery()
+        const options = clusterQueries.list()
 
         expect(options.queryKey).toContain('treeclusters')
         expect(options.queryFn).toBeDefined()
@@ -245,7 +244,7 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(clusterApi.listClusters).mockResolvedValueOnce(mockResponse)
 
-        const options = treeClusterQuery()
+        const options = clusterQueries.list()
         const result = await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -256,7 +255,7 @@ describe('Query Functions', () => {
 
     describe('treeClusterIdQuery', () => {
       it('returns correct query options for fetching single cluster', () => {
-        const options = treeClusterIdQuery('99')
+        const options = clusterQueries.detail('99')
 
         expect(options.queryKey).toEqual(['treecluster', '99'])
         expect(options.queryFn).toBeDefined()
@@ -270,7 +269,7 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(clusterApi.getCluster).mockResolvedValueOnce(mockCluster)
 
-        const options = treeClusterIdQuery('cluster-uuid-1')
+        const options = clusterQueries.detail('cluster-uuid-1')
         const result = await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method

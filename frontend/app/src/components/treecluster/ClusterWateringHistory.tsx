@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { format } from 'date-fns'
 import { Card, CardContent, CardHeader, CardTitle, Loading } from '@green-ecolution/ui'
-import { clusterSoilMoistureQuery } from '@/api/queries'
+import { clusterQueries } from '@/api/queries'
 import { windowStart } from '@/components/general/charts/timeWindows'
 
 const MAX_EVENTS = 6
@@ -17,7 +17,7 @@ const ClusterWateringHistory = ({ clusterId }: ClusterWateringHistoryProps) => {
   // eslint-disable-next-line react-hooks/purity, react-x/purity -- windowStart truncates to the hour, keeping the query key stable
   const from = windowStart('7d', Date.now())
   const { data, isPending, error } = useQuery(
-    clusterSoilMoistureQuery(clusterId, { from, bucket: 'day' }),
+    clusterQueries.soilMoisture(clusterId, { from, bucket: 'day' }),
   )
 
   // Backend guarantees newest-first order (ORDER BY wp.date DESC), so no client-side sort is needed.

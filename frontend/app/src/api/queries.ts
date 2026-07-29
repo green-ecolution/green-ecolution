@@ -433,13 +433,6 @@ export const routingStartPointsQuery = () =>
   })
 
 // --- temporary aliases: removed per domain during call-site migration ---
-export const treeClusterQuery = clusterQueries.list
-export const clusterStatisticsQuery = clusterQueries.statistics
-export const treeClusterIdQuery = clusterQueries.detail
-export const clusterMarkersQuery = clusterQueries.markers
-export const clusterBoundariesQuery = clusterQueries.boundaries
-export const clusterSoilMoistureQuery = clusterQueries.soilMoisture
-export const suggestedClustersQuery = clusterQueries.suggested
 export const treeQuery = treeQueries.list
 export const treeIdQuery = treeQueries.detail
 export const treeMarkersQuery = treeQueries.markers

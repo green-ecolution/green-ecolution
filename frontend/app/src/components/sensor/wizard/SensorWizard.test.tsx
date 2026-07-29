@@ -89,10 +89,13 @@ vi.mock('@/api/queries', async () => {
           species: 'Tilia cordata',
         }),
     }),
-    treeClusterIdQuery: () => ({
-      queryKey: ['cluster-test'],
-      queryFn: () => Promise.resolve({ id: 'cluster-1', name: 'Test Cluster' }),
-    }),
+    clusterQueries: {
+      ...actual.clusterQueries,
+      detail: () => ({
+        queryKey: ['cluster-test'],
+        queryFn: () => Promise.resolve({ id: 'cluster-1', name: 'Test Cluster' }),
+      }),
+    },
     sensorIdQuery: (id: string) => ({
       queryKey: ['sensor', id],
       queryFn: () =>

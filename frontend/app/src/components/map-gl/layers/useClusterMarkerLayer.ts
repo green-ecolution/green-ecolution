@@ -3,7 +3,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import type { GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl'
 import type { FeatureCollection, Point } from 'geojson'
 import type { WateringStatus } from '@green-ecolution/backend-client'
-import { clusterMarkersQuery } from '@/api/queries'
+import { clusterQueries } from '@/api/queries'
 import { useMaplibreMap } from '../MapContext'
 import { LAYERS, SOURCES, STATUS_COLOR_EXPRESSION, TREE_ZOOM_THRESHOLD } from '../mapStyle'
 import { isMapAlive } from '../mapReady'
@@ -27,7 +27,7 @@ const useClusterMarkerLayer = ({
   clusterIds,
 }: UseClusterMarkerLayerOptions = {}) => {
   const map = useMaplibreMap()
-  const { data } = useSuspenseQuery(clusterMarkersQuery())
+  const { data } = useSuspenseQuery(clusterQueries.markers())
 
   useEffect(() => {
     if (!map.getSource(SOURCES.clusterMarkers)) {

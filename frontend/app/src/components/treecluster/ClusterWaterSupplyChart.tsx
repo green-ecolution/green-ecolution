@@ -11,7 +11,7 @@ import {
   TimeRangeToggle,
   type ChartConfig,
 } from '@green-ecolution/ui'
-import { clusterSoilMoistureQuery } from '@/api/queries'
+import { clusterQueries } from '@/api/queries'
 import TimeSeriesFrame from '@/components/general/charts/TimeSeriesFrame'
 import {
   timeWindowOptions,
@@ -54,7 +54,7 @@ const ClusterWaterSupplyChart = ({ clusterId, hasSensors }: ClusterWaterSupplyCh
   // eslint-disable-next-line react-hooks/purity, react-x/purity -- windowStart truncates to the hour, keeping the query key stable
   const from = windowStart(rangeKey, Date.now())
   const { data, isPlaceholderData, error } = useQuery({
-    ...clusterSoilMoistureQuery(clusterId, { from, bucket }),
+    ...clusterQueries.soilMoisture(clusterId, { from, bucket }),
     placeholderData: keepPreviousData,
     enabled: hasSensors,
   })

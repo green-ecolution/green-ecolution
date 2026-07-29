@@ -6,9 +6,9 @@ import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import {
+  clusterQueries,
   routePreviewQuery,
   routingStartPointsQuery,
-  treeClusterQuery,
   vehicleIdQuery,
 } from '@/api/queries'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
@@ -34,7 +34,7 @@ const mapSelectClusterSchema = z.object({
 export const Route = createFileRoute('/_protected/map/watering-plan/select/cluster/')({
   component: SelectCluster,
   validateSearch: mapSelectClusterSchema,
-  loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(treeClusterQuery()),
+  loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(clusterQueries.list()),
 })
 
 function SelectCluster() {
@@ -53,7 +53,7 @@ function SelectCluster() {
       'Möchtest du die Seite wirklich verlassen? Deine Eingaben gehen verloren, wenn du jetzt gehst.',
   })
 
-  const { data: clusters } = useSuspenseQuery(treeClusterQuery())
+  const { data: clusters } = useSuspenseQuery(clusterQueries.list())
   const { data: transporter } = useQuery({
     ...vehicleIdQuery(transporterId?.toString() ?? '-1'),
     enabled: !!transporterId && transporterId !== '-1',
