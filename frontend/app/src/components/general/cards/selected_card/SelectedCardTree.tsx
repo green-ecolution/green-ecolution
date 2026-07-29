@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { SelectedCardProps } from '../SelectedCard'
-import { treeIdQuery } from '@/api/queries'
+import { treeQueries } from '@/api/queries'
 import { getWateringStatusDetails } from '@/hooks/details/useDetailsForWateringStatus'
 import { Trash2 } from 'lucide-react'
 import {
@@ -15,7 +15,7 @@ interface SelectedCardTreeProps extends Omit<SelectedCardProps, 'type'> {}
 
 const SelectedCardTree = ({ onClick, id }: SelectedCardTreeProps) => {
   // useQuery (not suspense) so adding a card doesn't suspend and flicker the panel.
-  const { data } = useQuery(treeIdQuery(String(id)))
+  const { data } = useQuery(treeQueries.detail(String(id)))
   const statusDetails = getWateringStatusDetails(data?.wateringStatus ?? 'unknown')
 
   return (

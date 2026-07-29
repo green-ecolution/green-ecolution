@@ -4,7 +4,7 @@ import { FormProvider, type DefaultValues } from 'react-hook-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Button } from '@green-ecolution/ui'
 import { Trash2 } from 'lucide-react'
-import { clusterQueries, sensorQuery, treeIdQuery } from '@/api/queries'
+import { clusterQueries, sensorQuery, treeQueries } from '@/api/queries'
 import { treeApi } from '@/api/backendApi'
 import { TreeForm } from '@/schema/treeSchema'
 import { useTreeForm } from '@/hooks/form/useTreeForm'
@@ -26,7 +26,7 @@ export const Route = createFileRoute('/_protected/map/tree/edit/$treeId/')({
   component: EditTreeOnMap,
   beforeLoad: requirePermission(['tree:update']),
   loader: ({ context: { queryClient }, params: { treeId } }) => {
-    prefetch(queryClient, treeIdQuery(treeId), 'treeIdQuery')
+    prefetch(queryClient, treeQueries.detail(treeId), 'treeIdQuery')
     prefetch(queryClient, sensorQuery(), 'sensorQuery')
     prefetch(queryClient, clusterQueries.list(), 'treeClusterQuery')
   },
@@ -44,7 +44,7 @@ function EditTreeOnMap() {
   const navigate = useNavigate({ from: Route.fullPath })
   const showToast = createToast()
   const map = useMaplibreMap()
-  const { data: tree } = useSuspenseQuery(treeIdQuery(treeId))
+  const { data: tree } = useSuspenseQuery(treeQueries.detail(treeId))
   const { data: sensors } = useSuspenseQuery(sensorQuery())
   const { data: treeClusters } = useSuspenseQuery(clusterQueries.list())
   const [pos, setPos] = useState<DraggableMarkerLngLat>({ lng: tree.longitude, lat: tree.latitude })

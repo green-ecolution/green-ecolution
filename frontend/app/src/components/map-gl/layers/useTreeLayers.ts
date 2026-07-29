@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { TreeMarkerResponse, WateringStatus } from '@green-ecolution/backend-client'
-import { treeMarkersQuery } from '@/api/queries'
+import { treeQueries } from '@/api/queries'
 import useStore from '@/store/store'
 import { LAYERS, SOURCES, TREE_ZOOM_THRESHOLD } from '../mapStyle'
 import useViewportBBox from '../hooks/useViewportBBox'
@@ -30,7 +30,7 @@ const useTreeLayers = ({
   const zoom = useStore((s) => s.mapZoom)
   // Only the detailed zoom levels show individual trees, so skip the fetch below it.
   const { data } = useQuery({
-    ...treeMarkersQuery({ bbox, wateringStatuses }),
+    ...treeQueries.markers({ bbox, wateringStatuses }),
     enabled: zoom >= TREE_ZOOM_THRESHOLD,
   })
   const trees = useMemo(() => toPoints(data?.data ?? []), [data])

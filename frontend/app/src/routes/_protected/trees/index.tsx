@@ -12,7 +12,7 @@ import Dialog from '@/components/general/filter/Dialog'
 import StatusFieldset from '@/components/general/filter/fieldsets/StatusFieldset'
 import ClusterFieldset from '@/components/general/filter/fieldsets/ClusterFieldset'
 import PlantingYearFieldset from '@/components/general/filter/fieldsets/PlantingYearFieldset'
-import { treeQuery } from '@/api/queries'
+import { treeQueries } from '@/api/queries'
 import { ListCardHeader } from '@green-ecolution/ui'
 import { filterSearchSchema } from '@/lib/filterSearchSchema'
 import { pendingLoading, prefetch } from '@/lib/router'
@@ -29,7 +29,7 @@ function Trees() {
     isPlaceholderData,
     error,
   } = useQuery({
-    ...treeQuery({
+    ...treeQueries.list({
       page,
       perPage: 10,
       wateringStatus: wateringStatuses,
@@ -118,7 +118,7 @@ export const Route = createFileRoute('/_protected/trees/')({
   }) => {
     prefetch(
       queryClient,
-      treeQuery({
+      treeQueries.list({
         page,
         perPage: 10,
         wateringStatus: wateringStatuses,

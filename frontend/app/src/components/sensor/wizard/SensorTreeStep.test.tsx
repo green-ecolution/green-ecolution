@@ -17,27 +17,30 @@ vi.mock('@/api/queries', async () => {
   const actual = await vi.importActual<typeof import('@/api/queries')>('@/api/queries')
   return {
     ...actual,
-    nearestTreeQuery: () => ({
-      queryKey: ['nearest-test'],
-      queryFn: () =>
-        Promise.resolve({
-          data: [
-            {
-              distanceMeters: 4,
-              tree: {
-                id: 'tree-1',
-                number: '0815',
-                species: 'Tilia cordata',
-                latitude: 54.79,
-                longitude: 9.43,
-                sensor: null,
-                treeClusterId: null,
+    treeQueries: {
+      ...actual.treeQueries,
+      nearest: () => ({
+        queryKey: ['nearest-test'],
+        queryFn: () =>
+          Promise.resolve({
+            data: [
+              {
+                distanceMeters: 4,
+                tree: {
+                  id: 'tree-1',
+                  number: '0815',
+                  species: 'Tilia cordata',
+                  latitude: 54.79,
+                  longitude: 9.43,
+                  sensor: null,
+                  treeClusterId: null,
+                },
               },
-            },
-          ],
-        }),
-    }),
-    treeIdQuery: () => ({ queryKey: ['tree-test'], queryFn: () => Promise.resolve(null) }),
+            ],
+          }),
+      }),
+      detail: () => ({ queryKey: ['tree-test'], queryFn: () => Promise.resolve(null) }),
+    },
     clusterQueries: {
       ...actual.clusterQueries,
       detail: () => ({

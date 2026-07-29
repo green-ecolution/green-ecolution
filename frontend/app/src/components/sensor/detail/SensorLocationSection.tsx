@@ -13,7 +13,7 @@ import {
   cn,
 } from '@green-ecolution/ui'
 import { ChevronDown, MapPin, MapPinOff } from 'lucide-react'
-import { treeMarkersQuery } from '@/api/queries'
+import { treeQueries } from '@/api/queries'
 import MapPreview from '@/components/map-gl/MapPreview'
 import SensorMarker from '@/components/map-gl/SensorMarker'
 import useViewportBBox from '@/components/map-gl/hooks/useViewportBBox'
@@ -29,7 +29,7 @@ interface SensorLocationSectionProps {
 
 const LocationTreeLayer = () => {
   const bbox = useViewportBBox()
-  const { data } = useQuery(treeMarkersQuery({ bbox }))
+  const { data } = useQuery(treeQueries.markers({ bbox }))
   const trees = useMemo<TreeMarkerPoint[]>(
     () =>
       (data?.data ?? []).map((t) => ({

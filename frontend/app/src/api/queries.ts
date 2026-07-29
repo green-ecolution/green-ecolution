@@ -433,11 +433,6 @@ export const routingStartPointsQuery = () =>
   })
 
 // --- temporary aliases: removed per domain during call-site migration ---
-export const treeQuery = treeQueries.list
-export const treeIdQuery = treeQueries.detail
-export const treeMarkersQuery = treeQueries.markers
-export const plantingYearsQuery = treeQueries.plantingYears
-export const nearestTreeQuery = treeQueries.nearest
 export const vehicleQuery = vehicleQueries.list
 export const vehicleIdQuery = vehicleQueries.detail
 export const sensorsKey = sensorQueries.key

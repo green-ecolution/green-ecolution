@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
-  treeQuery,
-  treeIdQuery,
+  treeQueries,
   vehicleQuery,
   vehicleIdQuery,
   clusterQueries,
@@ -56,14 +55,14 @@ describe('Query Functions', () => {
   describe('Tree Queries', () => {
     describe('treeQuery', () => {
       it('returns correct query options for fetching all trees', () => {
-        const options = treeQuery()
+        const options = treeQueries.list()
 
         expect(options.queryKey).toContain('trees')
         expect(options.queryFn).toBeDefined()
       })
 
       it('includes pagination params in query key', () => {
-        const options = treeQuery({ page: 2 })
+        const options = treeQueries.list({ page: 2 })
 
         expect(options.queryKey).toEqual(['trees', 'list', { page: 2 }])
       })
@@ -73,7 +72,7 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(treeApi.listTrees).mockResolvedValueOnce(mockResponse)
 
-        const options = treeQuery()
+        const options = treeQueries.list()
         const result = await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -87,7 +86,7 @@ describe('Query Functions', () => {
         vi.mocked(treeApi.listTrees).mockResolvedValueOnce(mockResponse)
 
         const params = { page: 2 }
-        const options = treeQuery(params)
+        const options = treeQueries.list(params)
         await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -95,12 +94,12 @@ describe('Query Functions', () => {
       })
 
       it('includes q in the query key when provided', () => {
-        const options = treeQuery({ page: 1, perPage: 10, q: 'Eiche' })
+        const options = treeQueries.list({ page: 1, perPage: 10, q: 'Eiche' })
         expect(options.queryKey).toEqual(['trees', 'list', { page: 1, perPage: 10, q: 'Eiche' }])
       })
 
       it('includes filter params in the query key', () => {
-        const options = treeQuery({ page: 1, perPage: 10, wateringStatus: ['good'] })
+        const options = treeQueries.list({ page: 1, perPage: 10, wateringStatus: ['good'] })
         expect(options.queryKey).toEqual([
           'trees',
           'list',
@@ -113,7 +112,7 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(treeApi.listTrees).mockResolvedValueOnce(mockResponse)
 
-        const options = treeQuery({ page: 1, perPage: 10, q: 'Eiche' })
+        const options = treeQueries.list({ page: 1, perPage: 10, q: 'Eiche' })
         await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -123,7 +122,7 @@ describe('Query Functions', () => {
 
     describe('treeIdQuery', () => {
       it('returns correct query options for fetching single tree', () => {
-        const options = treeIdQuery('123')
+        const options = treeQueries.detail('123')
 
         expect(options.queryKey).toEqual(['tree', '123'])
         expect(options.queryFn).toBeDefined()
@@ -134,7 +133,7 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(treeApi.getTree).mockResolvedValueOnce(mockTree)
 
-        const options = treeIdQuery('tree-uuid-1')
+        const options = treeQueries.detail('tree-uuid-1')
         const result = await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -146,7 +145,7 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(treeApi.getTree).mockResolvedValueOnce({} as Tree)
 
-        const options = treeIdQuery('tree-uuid-2')
+        const options = treeQueries.detail('tree-uuid-2')
         await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method

@@ -1,4 +1,4 @@
-import { nearestTreeQuery, treeIdQuery } from '@/api/queries'
+import { treeQueries } from '@/api/queries'
 import GeolocationPermissionNotice from '@/components/geolocation/GeolocationPermissionNotice'
 import LocationMapPreview from '@/components/geolocation/LocationMapPreview'
 import NearestTreeMapPreview from '@/components/geolocation/NearestTreeMapPreview'
@@ -44,7 +44,7 @@ const SensorTreeStep = ({
     isError: treesError,
     refetch: refetchTrees,
   } = useQuery({
-    ...nearestTreeQuery({ lat: position?.latitude ?? 0, lng: position?.longitude ?? 0 }),
+    ...treeQueries.nearest({ lat: position?.latitude ?? 0, lng: position?.longitude ?? 0 }),
     enabled: !!position,
   })
 
@@ -53,7 +53,7 @@ const SensorTreeStep = ({
   const isSelectionInNearest = selectedTreeId !== null && Boolean(selectedNearest)
 
   const { data: outsideTree } = useQuery({
-    ...treeIdQuery(selectedTreeId ?? ''),
+    ...treeQueries.detail(selectedTreeId ?? ''),
     enabled: selectedTreeId !== null && !isSelectionInNearest,
   })
 

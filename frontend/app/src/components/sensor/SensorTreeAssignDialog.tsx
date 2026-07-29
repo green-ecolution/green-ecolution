@@ -15,7 +15,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { ExpressionSpecification, LngLatBoundsLike } from 'maplibre-gl'
 import { WateringStatus } from '@/api/backendApi'
 import type { Sensor, TreeResponse } from '@/api/backendApi'
-import { treeIdQuery } from '@/api/queries'
+import { treeQueries } from '@/api/queries'
 import useStore from '@/store/store'
 import { useTreeSearch } from '@/hooks/useTreeSearch'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
@@ -137,7 +137,7 @@ const DialogBody = ({
 }) => {
   const linkedTreeId = sensor.linkedTreeId
   const { data: currentTree } = useQuery({
-    ...treeIdQuery(linkedTreeId != null ? String(linkedTreeId) : ''),
+    ...treeQueries.detail(linkedTreeId != null ? String(linkedTreeId) : ''),
     enabled: mode === 'reassign' && linkedTreeId != null,
   })
 

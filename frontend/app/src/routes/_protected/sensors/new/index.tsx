@@ -1,5 +1,5 @@
 import { sensorApi } from '@/api/backendApi'
-import { sensorIdQuery, sensorsKey, treeIdQuery } from '@/api/queries'
+import { sensorIdQuery, sensorsKey, treeQueries } from '@/api/queries'
 import { mapActivateError, resolveResponseStatus } from '@/api/sensorErrors'
 import SensorReviewStep from '@/components/sensor/wizard/SensorReviewStep'
 import SensorScanStep from '@/components/sensor/wizard/SensorScanStep'
@@ -73,7 +73,7 @@ function NewSensor() {
       }
       if (state.selectedTreeId) {
         invalidations.push(
-          queryClient.invalidateQueries({ queryKey: treeIdQuery(state.selectedTreeId).queryKey }),
+          queryClient.invalidateQueries({ queryKey: treeQueries.detail(state.selectedTreeId).queryKey }),
         )
       }
       await Promise.all(invalidations)

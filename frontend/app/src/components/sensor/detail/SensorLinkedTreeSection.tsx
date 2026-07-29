@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from '@green-ecolution/ui'
 import { ArrowUpRight, Link2, Link2Off, TreeDeciduous } from 'lucide-react'
-import { treeIdQuery } from '@/api/queries'
+import { treeQueries } from '@/api/queries'
 import type { Sensor } from '@/api/backendApi'
 import { useSensorActions } from './SensorActionsContext'
 
@@ -24,7 +24,7 @@ interface SensorLinkedTreeSectionProps {
 const SensorLinkedTreeSection = ({ sensor }: SensorLinkedTreeSectionProps) => {
   const hasLink = sensor.linkedTreeId != null
   const treeIdStr = hasLink ? String(sensor.linkedTreeId) : ''
-  const { data: tree, isLoading, isError } = useQuery(treeIdQuery(treeIdStr))
+  const { data: tree, isLoading, isError } = useQuery(treeQueries.detail(treeIdStr))
   const actions = useSensorActions()
 
   return (
