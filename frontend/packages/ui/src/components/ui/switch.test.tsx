@@ -21,7 +21,12 @@ describe('Switch', () => {
   it('does not report changes while disabled', async () => {
     const onCheckedChange = vi.fn()
     render(
-      <Switch checked={false} disabled aria-label="Baum löschen" onCheckedChange={onCheckedChange} />,
+      <Switch
+        checked={false}
+        disabled
+        aria-label="Baum löschen"
+        onCheckedChange={onCheckedChange}
+      />,
     )
     await userEvent.click(screen.getByRole('switch', { name: 'Baum löschen' }))
     expect(onCheckedChange).not.toHaveBeenCalled()

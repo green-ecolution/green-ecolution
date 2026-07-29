@@ -347,7 +347,10 @@ export { Textarea } from './components/ui/textarea'
 
 // SegmentedControl
 export { SegmentedControl } from './components/ui/segmented-control'
-export type { SegmentedControlProps, SegmentedControlOption } from './components/ui/segmented-control'
+export type {
+  SegmentedControlProps,
+  SegmentedControlOption,
+} from './components/ui/segmented-control'
 
 // TimeRangeToggle
 export { TimeRangeToggle } from './components/ui/time-range-toggle'

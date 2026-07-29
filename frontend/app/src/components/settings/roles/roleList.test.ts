@@ -11,7 +11,12 @@ const role = (overrides: Partial<Role>): Role => ({
 })
 
 const templates: Role[] = [
-  role({ id: 't1', name: 'Baumpflege', isTemplate: true, permissions: ['tree:read', 'tree:create'] }),
+  role({
+    id: 't1',
+    name: 'Baumpflege',
+    isTemplate: true,
+    permissions: ['tree:read', 'tree:create'],
+  }),
   role({ id: 't2', name: 'Beobachter', isTemplate: true, permissions: ['tree:read'] }),
 ]
 

@@ -74,8 +74,7 @@ const variantIcons = {
 } as const
 
 export interface AlertIconProps
-  extends Omit<LucideProps, 'ref'>,
-    VariantProps<typeof alertIconVariants> {
+  extends Omit<LucideProps, 'ref'>, VariantProps<typeof alertIconVariants> {
   /** Overrides the variant glyph when the variant's tone fits but its symbol does not. */
   icon?: React.ComponentType<LucideProps>
 }

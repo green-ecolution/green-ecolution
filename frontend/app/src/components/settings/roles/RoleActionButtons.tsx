@@ -8,7 +8,13 @@ interface RoleActionButtonsProps {
   onCancel: () => void
 }
 
-const RoleActionButtons = ({ isNew, saving, nameEmpty, onSave, onCancel }: RoleActionButtonsProps) => (
+const RoleActionButtons = ({
+  isNew,
+  saving,
+  nameEmpty,
+  onSave,
+  onCancel,
+}: RoleActionButtonsProps) => (
   <>
     <Button
       type="button"

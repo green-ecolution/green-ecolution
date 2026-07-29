@@ -67,10 +67,7 @@ const RolesPage = () => {
   const blocker = useBlocker({ shouldBlockFn: () => dirty, withResolver: true })
 
   const templateList = useMemo(() => templates ?? [], [templates])
-  const ownRoles = useMemo(
-    () => ownRolesOf(orgRoles ?? [], templateList),
-    [orgRoles, templateList],
-  )
+  const ownRoles = useMemo(() => ownRolesOf(orgRoles ?? [], templateList), [orgRoles, templateList])
 
   useEffect(() => {
     // Only on desktop, where the detail pane is always visible. On mobile the
@@ -302,8 +299,8 @@ const RolesPage = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Rolle löschen?</AlertDialogTitle>
             <AlertDialogDescription>
-              {draft?.name} wird entfernt. Personen mit dieser Rolle verlieren die darin
-              enthaltenen Rechte.
+              {draft?.name} wird entfernt. Personen mit dieser Rolle verlieren die darin enthaltenen
+              Rechte.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

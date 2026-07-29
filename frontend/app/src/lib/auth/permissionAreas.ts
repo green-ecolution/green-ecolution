@@ -179,8 +179,7 @@ const AREA_DEFINITIONS: readonly AreaDefinition[] = [
   },
 ]
 
-const permissionFor = (resource: Resource, action: Action): Permission =>
-  `${resource}:${action}`
+const permissionFor = (resource: Resource, action: Action): Permission => `${resource}:${action}`
 
 export const PERMISSION_AREAS: PermissionArea[] = AREA_DEFINITIONS.map((definition) => ({
   resource: definition.resource,
@@ -201,10 +200,7 @@ export const activeActionsOf = (resource: Resource, perms: ReadonlySet<string>):
 export const activeActionCount = (resource: Resource, perms: ReadonlySet<string>): number =>
   activeActionsOf(resource, perms).length
 
-export const levelOf = (
-  resource: Resource,
-  perms: ReadonlySet<string>,
-): AccessLevel | 'custom' => {
+export const levelOf = (resource: Resource, perms: ReadonlySet<string>): AccessLevel | 'custom' => {
   const active = activeActionsOf(resource, perms)
   const match = ACCESS_LEVELS.find(
     (level) =>

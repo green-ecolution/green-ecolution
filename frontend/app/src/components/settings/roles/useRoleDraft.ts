@@ -87,7 +87,12 @@ export const useRoleDraft = (grantable: Permissions) => {
         current
           ? {
               ...current,
-              permissions: applyLevelWithinGrantable(current.permissions, resource, level, grantable),
+              permissions: applyLevelWithinGrantable(
+                current.permissions,
+                resource,
+                level,
+                grantable,
+              ),
             }
           : current,
       )
@@ -97,7 +102,9 @@ export const useRoleDraft = (grantable: Permissions) => {
 
   const toggle = useCallback((permission: Permission) => {
     setDraft((current) =>
-      current ? { ...current, permissions: toggleAction(current.permissions, permission) } : current,
+      current
+        ? { ...current, permissions: toggleAction(current.permissions, permission) }
+        : current,
     )
   }, [])
 

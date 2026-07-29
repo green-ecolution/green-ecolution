@@ -49,7 +49,13 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     permission: ['user:read', 'role:read'],
   },
   { key: 'map', label: 'Karte & Einheiten', icon: 'Map', to: '/settings/map', comingSoon: true },
-  { key: 'plugin', label: 'Plugins', icon: 'Puzzle', to: '/settings/plugin', featureKey: 'plugins' },
+  {
+    key: 'plugin',
+    label: 'Plugins',
+    icon: 'Puzzle',
+    to: '/settings/plugin',
+    featureKey: 'plugins',
+  },
 ]
 
 export const visibleSettingsNav = (

@@ -81,7 +81,9 @@ describe('SegmentedControl', () => {
   })
 
   it('renders buttons with type="button" so they never submit a form', () => {
-    render(<SegmentedControl options={options} value="view" onChange={() => {}} ariaLabel="Stufe" />)
+    render(
+      <SegmentedControl options={options} value="view" onChange={() => {}} ariaLabel="Stufe" />,
+    )
     for (const radio of screen.getAllByRole('radio')) {
       expect(radio).toHaveAttribute('type', 'button')
     }

@@ -50,9 +50,7 @@ const draftFor = (role: Role, kind: 'new' | 'existing' = 'existing') => ({
 
 describe('RoleDetail', () => {
   it('shows the lock notice for a system role and no save bar', () => {
-    render(
-      <RoleDetail {...baseProps} role={template} draft={draftFor(template)} dirty={false} />,
-    )
+    render(<RoleDetail {...baseProps} role={template} draft={draftFor(template)} dirty={false} />)
     expect(screen.getByText(/Systemrollen sind schreibgeschützt/)).toBeInTheDocument()
     expect(screen.getByText('Systemrolle')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Speichern' })).not.toBeInTheDocument()
@@ -115,9 +113,7 @@ describe('RoleDetail', () => {
   })
 
   it('labels the primary action Rolle anlegen for a new draft', () => {
-    render(
-      <RoleDetail {...baseProps} role={null} draft={draftFor(ownRole, 'new')} dirty />,
-    )
+    render(<RoleDetail {...baseProps} role={null} draft={draftFor(ownRole, 'new')} dirty />)
     expect(screen.getByRole('button', { name: 'Rolle anlegen' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Speichern' })).not.toBeInTheDocument()
   })
@@ -144,9 +140,7 @@ describe('RoleDetail', () => {
         dirty
       />,
     )
-    expect(
-      screen.getByText('Eine Rolle mit diesem Namen existiert bereits.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Eine Rolle mit diesem Namen existiert bereits.')).toBeInTheDocument()
   })
 
   it('reports how many permissions the copy dropped', () => {
