@@ -3,7 +3,7 @@ import DeleteSection from '../treecluster/DeleteSection'
 import { Can } from '@/lib/auth/Can'
 import type { Vehicle } from '@/api/backendApi'
 import { useInitFormQuery } from '@/hooks/form/useInitForm'
-import { vehicleIdQuery } from '@/api/queries'
+import { vehicleQueries } from '@/api/queries'
 import { vehicleApi } from '@/api/backendApi'
 import { FormProvider, SubmitHandler } from 'react-hook-form'
 import { Suspense } from 'react'
@@ -19,7 +19,7 @@ interface VehicleUpdateProps {
 
 const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
   const { initForm, loadedData } = useInitFormQuery<Vehicle, VehicleForm>(
-    vehicleIdQuery(vehicleId),
+    vehicleQueries.detail(vehicleId),
     (data) => ({
       numberPlate: data.numberPlate,
       type: data.type,

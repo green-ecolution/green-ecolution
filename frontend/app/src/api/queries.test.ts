@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   treeQueries,
-  vehicleQuery,
-  vehicleIdQuery,
+  vehicleQueries,
   clusterQueries,
   wateringPlanQueries,
 } from './queries'
@@ -155,21 +154,21 @@ describe('Query Functions', () => {
   describe('Vehicle Queries', () => {
     describe('vehicleQuery', () => {
       it('returns correct query options for fetching all vehicles', () => {
-        const options = vehicleQuery()
+        const options = vehicleQueries.list()
 
         expect(options.queryKey).toEqual(['vehicles', 'list', {}])
         expect(options.queryFn).toBeDefined()
       })
 
       it('does not collide with vehicleIdQuery keys', () => {
-        const listOptions = vehicleQuery({ page: 1 })
-        const detailOptions = vehicleIdQuery('1')
+        const listOptions = vehicleQueries.list({ page: 1 })
+        const detailOptions = vehicleQueries.detail('1')
 
         expect(listOptions.queryKey[0]).not.toBe(detailOptions.queryKey[0])
       })
 
       it('includes pagination params in query key', () => {
-        const options = vehicleQuery({ page: 2 })
+        const options = vehicleQueries.list({ page: 2 })
 
         expect(options.queryKey).toEqual(['vehicles', 'list', { page: 2 }])
       })
@@ -179,7 +178,7 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(vehicleApi.listVehicles).mockResolvedValueOnce(mockResponse)
 
-        const options = vehicleQuery()
+        const options = vehicleQueries.list()
         const result = await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -193,7 +192,7 @@ describe('Query Functions', () => {
         vi.mocked(vehicleApi.listVehicles).mockResolvedValueOnce(mockResponse)
 
         const params = { page: 1 }
-        const options = vehicleQuery(params)
+        const options = vehicleQueries.list(params)
         await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -203,7 +202,7 @@ describe('Query Functions', () => {
 
     describe('vehicleIdQuery', () => {
       it('returns correct query options for fetching single vehicle', () => {
-        const options = vehicleIdQuery('42')
+        const options = vehicleQueries.detail('42')
 
         expect(options.queryKey).toEqual(['vehicle', '42'])
         expect(options.queryFn).toBeDefined()
@@ -217,7 +216,7 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(vehicleApi.getVehicle).mockResolvedValueOnce(mockVehicle)
 
-        const options = vehicleIdQuery('vehicle-uuid-1')
+        const options = vehicleQueries.detail('vehicle-uuid-1')
         const result = await options.queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method

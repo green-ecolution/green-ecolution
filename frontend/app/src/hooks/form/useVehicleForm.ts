@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
-import { vehicleIdQuery, vehicleQuery } from '@/api/queries'
+import { vehicleQueries } from '@/api/queries'
 import type { Vehicle, VehicleCreate, VehicleUpdate } from '@/api/backendApi'
 import { vehicleApi } from '@/api/backendApi'
 import { VehicleForm } from '@/schema/vehicleSchema'
@@ -16,10 +16,10 @@ const vehicleConfig: EntityFormConfig<VehicleForm, VehicleCreate, VehicleUpdate,
 
   invalidateQueries: (data, queryClient: QueryClient) => {
     queryClient
-      .invalidateQueries(vehicleIdQuery(String(data.id)))
+      .invalidateQueries(vehicleQueries.detail(String(data.id)))
       .catch((error) => console.error('Invalidate "vehicleIdQuery" failed:', error))
     queryClient
-      .invalidateQueries(vehicleQuery())
+      .invalidateQueries(vehicleQueries.list())
       .catch((error) => console.error('Invalidate "vehicleQuery" failed:', error))
   },
 

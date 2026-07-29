@@ -431,7 +431,3 @@ export const routingStartPointsQuery = () =>
     },
     staleTime: Infinity,
   })
-
-// --- temporary aliases: removed per domain during call-site migration ---
-export const vehicleQuery = vehicleQueries.list
-export const vehicleIdQuery = vehicleQueries.detail

@@ -8,7 +8,7 @@ import { WateringPlanForm } from '@/schema/wateringPlanSchema'
 import {
   clusterQueries,
   routingStartPointsQuery,
-  vehicleIdQuery,
+  vehicleQueries,
   wateringPlanQueries,
 } from '@/api/queries'
 import { useWateringPlanDraft } from '@/store/form/useFormDraft'
@@ -55,11 +55,11 @@ function SelectCluster() {
 
   const { data: clusters } = useSuspenseQuery(clusterQueries.list())
   const { data: transporter } = useQuery({
-    ...vehicleIdQuery(transporterId?.toString() ?? '-1'),
+    ...vehicleQueries.detail(transporterId?.toString() ?? '-1'),
     enabled: !!transporterId && transporterId !== '-1',
   })
   const { data: trailer } = useQuery({
-    ...vehicleIdQuery(trailerId?.toString() ?? '-1'),
+    ...vehicleQueries.detail(trailerId?.toString() ?? '-1'),
     enabled: !!trailerId && trailerId !== '-1',
   })
 
