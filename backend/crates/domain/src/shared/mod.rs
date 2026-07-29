@@ -1,10 +1,11 @@
 //! Shared kernel — value objects and cross-cutting types used by every
 //! aggregate.
 //!
-//! Provides: `ValidationError`, `NonEmptyString`, `Email`, `Coordinate`,
-//! `BoundingBox`, `Distance`, `WaterCapacity`, `Provenance`, `Pagination`,
-//! `WateringStatus`, and the helper types in `string_value`.
+//! Provides: `ValidationError`, `NonEmptyString`, `Address`, `Email`,
+//! `Coordinate`, `BoundingBox`, `Distance`, `WaterCapacity`, `Provenance`,
+//! `Pagination`, `WateringStatus`, and the helper types in `string_value`.
 
+pub mod address;
 pub mod coordinates;
 pub mod distance;
 pub mod email;
