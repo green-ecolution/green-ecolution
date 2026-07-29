@@ -68,12 +68,16 @@ function NewSensor() {
       const invalidations = [queryClient.invalidateQueries({ queryKey: sensorQueries.key })]
       if (state.sensorId) {
         invalidations.push(
-          queryClient.invalidateQueries({ queryKey: sensorQueries.detail(state.sensorId).queryKey }),
+          queryClient.invalidateQueries({
+            queryKey: sensorQueries.detail(state.sensorId).queryKey,
+          }),
         )
       }
       if (state.selectedTreeId) {
         invalidations.push(
-          queryClient.invalidateQueries({ queryKey: treeQueries.detail(state.selectedTreeId).queryKey }),
+          queryClient.invalidateQueries({
+            queryKey: treeQueries.detail(state.selectedTreeId).queryKey,
+          }),
         )
       }
       await Promise.all(invalidations)

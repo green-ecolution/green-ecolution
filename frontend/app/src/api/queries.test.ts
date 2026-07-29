@@ -1,10 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import {
-  treeQueries,
-  vehicleQueries,
-  clusterQueries,
-  wateringPlanQueries,
-} from './queries'
+import { treeQueries, vehicleQueries, clusterQueries, wateringPlanQueries } from './queries'
 import type { Tree, Vehicle, TreeCluster, WateringPlan } from '@/api/backendApi'
 import type {
   ListResponseTreeResponse,

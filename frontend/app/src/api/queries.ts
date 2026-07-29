@@ -320,11 +320,7 @@ export const wateringPlanQueries = {
         lastPage.pagination?.nextPage ? lastPage.pagination.currentPage + 1 : undefined,
     }),
 
-  routePreview: (
-    clusterIds: string[],
-    transporterId: string,
-    startPointName?: string | null,
-  ) =>
+  routePreview: (clusterIds: string[], transporterId: string, startPointName?: string | null) =>
     queryOptions<RouteResponse | null>({
       queryKey: ['route-preview', clusterIds.slice().sort(), transporterId, startPointName ?? null],
       queryFn: async () => {
