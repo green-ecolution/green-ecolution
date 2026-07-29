@@ -9,7 +9,6 @@ import {
   Badge,
   Button,
   Input,
-  Spinner,
 } from '@green-ecolution/ui'
 import type { Role } from '@/api/backendApi'
 import type { Permission, Permissions, Resource } from '@/lib/auth/permissions'
@@ -20,6 +19,7 @@ import {
   unknownPermissions,
   type AccessLevel,
 } from '@/lib/auth/permissionAreas'
+import RoleActionButtons from './RoleActionButtons'
 import RoleAreaCard from './RoleAreaCard'
 import type { RoleDraft } from './useRoleDraft'
 
@@ -43,6 +43,8 @@ interface RoleDetailProps {
   onSave: () => void
   onCancel: () => void
   onDelete: () => void
+  /** Desktop renders the save bar inline; the mobile drawer renders it in a footer instead. */
+  renderActionBar?: boolean
 }
 
 const SECTION_LABEL = 'text-xs font-semibold uppercase tracking-wider text-dark-500'
@@ -66,6 +68,7 @@ const RoleDetail = ({
   onSave,
   onCancel,
   onDelete,
+  renderActionBar = true,
 }: RoleDetailProps) => {
   const isSystemRole = role?.isTemplate === true
   const isNew = draft.kind === 'new'
@@ -230,26 +233,15 @@ const RoleDetail = ({
         </section>
       )}
 
-      {!readOnly && dirty && (
-        <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-dark-200 bg-[var(--role-panel-bg)] py-3 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={saving}
-            className="w-full sm:w-auto"
-          >
-            Abbrechen
-          </Button>
-          <Button
-            type="button"
-            onClick={onSave}
-            disabled={saving || nameEmpty}
-            className="w-full sm:w-auto"
-          >
-            {saving && <Spinner className="size-4" />}
-            {isNew ? 'Rolle anlegen' : 'Speichern'}
-          </Button>
+      {renderActionBar && !readOnly && dirty && (
+        <div className="sticky bottom-0 -mt-6 flex flex-col-reverse gap-2 border-t border-dark-200 bg-[var(--role-panel-bg)] pb-3 pt-6 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+          <RoleActionButtons
+            isNew={isNew}
+            saving={saving}
+            nameEmpty={nameEmpty}
+            onSave={onSave}
+            onCancel={onCancel}
+          />
         </div>
       )}
     </div>

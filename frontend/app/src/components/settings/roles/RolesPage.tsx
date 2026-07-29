@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
   Drawer,
   DrawerContent,
+  DrawerFooter,
   Loading,
 } from '@green-ecolution/ui'
 import type { Role } from '@/api/backendApi'
@@ -20,6 +21,7 @@ import { useRoleMutations } from '@/hooks/useRoleMutations'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { usePermissions } from '@/lib/auth/usePermissions'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import RoleActionButtons from './RoleActionButtons'
 import RoleDetail from './RoleDetail'
 import RoleList from './RoleList'
 import { ownRolesOf } from './roleList'
@@ -214,28 +216,30 @@ const RolesPage = () => {
     />
   )
 
-  const detail = draft && (
-    <RoleDetail
-      role={draft.kind === 'new' ? null : selected}
-      draft={draft}
-      dirty={dirty}
-      grantable={grantable}
-      canUpdate={canUpdate}
-      canDelete={canDelete}
-      canCreate={canCreate}
-      assignees={draft.kind === 'new' || !selected ? [] : assigneesOf(selected.id)}
-      nameError={nameConflictMessage(createRole.error ?? updateRole.error)}
-      saving={createRole.isPending || updateRole.isPending}
-      onNameChange={draftState.setName}
-      onDescriptionChange={draftState.setDescription}
-      onLevelChange={draftState.setLevel}
-      onActionToggle={draftState.toggle}
-      onCopy={() => selected && startCopy(selected)}
-      onSave={save}
-      onCancel={cancel}
-      onDelete={() => setConfirmDelete(true)}
-    />
-  )
+  const renderDetail = (renderActionBar: boolean) =>
+    draft && (
+      <RoleDetail
+        role={draft.kind === 'new' ? null : selected}
+        draft={draft}
+        dirty={dirty}
+        grantable={grantable}
+        canUpdate={canUpdate}
+        canDelete={canDelete}
+        canCreate={canCreate}
+        assignees={draft.kind === 'new' || !selected ? [] : assigneesOf(selected.id)}
+        nameError={nameConflictMessage(createRole.error ?? updateRole.error)}
+        saving={createRole.isPending || updateRole.isPending}
+        onNameChange={draftState.setName}
+        onDescriptionChange={draftState.setDescription}
+        onLevelChange={draftState.setLevel}
+        onActionToggle={draftState.toggle}
+        onCopy={() => selected && startCopy(selected)}
+        onSave={save}
+        onCancel={cancel}
+        onDelete={() => setConfirmDelete(true)}
+        renderActionBar={renderActionBar}
+      />
+    )
 
   return (
     <>
@@ -243,21 +247,29 @@ const RolesPage = () => {
         <div className="grid grid-cols-[280px_1fr] gap-6">
           {list}
           {/* --role-panel-bg lets the sticky action bar blend into its surface. */}
-          <div style={{ '--role-panel-bg': 'var(--color-dark-50)' } as CSSProperties}>{detail}</div>
+          <div style={{ '--role-panel-bg': 'var(--color-dark-50)' } as CSSProperties}>
+            {renderDetail(true)}
+          </div>
         </div>
       ) : (
         <>
           {list}
           <Drawer open={draft !== null} onOpenChange={requestClose}>
             <DrawerContent className="max-h-[90vh]">
-              {/* vaul drags on the content root, so the scroll region must be a
-                  nested element or touch scrolling is swallowed by the drag. */}
-              <div
-                className="min-h-0 flex-1 overflow-y-auto p-4"
-                style={{ '--role-panel-bg': '#fff' } as CSSProperties}
-              >
-                {detail}
-              </div>
+              {/* Content scrolls in its own region; the actions live in a fixed
+                  footer below so they stay anchored to the drawer bottom. */}
+              <div className="min-h-0 flex-1 overflow-y-auto p-4">{renderDetail(false)}</div>
+              {draft && dirty && (
+                <DrawerFooter className="flex-col-reverse gap-2 border-t border-dark-200 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+                  <RoleActionButtons
+                    isNew={draft.kind === 'new'}
+                    saving={createRole.isPending || updateRole.isPending}
+                    nameEmpty={draft.name.trim() === ''}
+                    onSave={save}
+                    onCancel={cancel}
+                  />
+                </DrawerFooter>
+              )}
             </DrawerContent>
           </Drawer>
         </>
