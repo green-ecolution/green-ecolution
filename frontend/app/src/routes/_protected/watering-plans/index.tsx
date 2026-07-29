@@ -15,15 +15,15 @@ export const Route = createFileRoute('/_protected/watering-plans/')({
     prefetch(
       queryClient,
       wateringPlanQueries.boardColumn([WateringPlanStatus.Planned]),
-      'wateringPlanBoardColumnQuery(planned)',
+      'wateringPlanQueries.boardColumn(planned)',
     )
     prefetch(
       queryClient,
       wateringPlanQueries.boardColumn([WateringPlanStatus.Active]),
-      'wateringPlanBoardColumnQuery(active)',
+      'wateringPlanQueries.boardColumn(active)',
     )
-    prefetch(queryClient, clusterQueries.suggested(), 'suggestedClustersQuery')
-    prefetch(queryClient, userQueries.list({ page: 1, perPage: 100 }), 'userQuery')
+    prefetch(queryClient, clusterQueries.suggested(), 'clusterQueries.suggested')
+    prefetch(queryClient, userQueries.list({ page: 1, perPage: 100 }), 'userQueries.list')
   },
 })
 

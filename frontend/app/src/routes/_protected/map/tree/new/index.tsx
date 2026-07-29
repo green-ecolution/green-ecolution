@@ -19,8 +19,8 @@ import useTreeLayers from '@/components/map-gl/layers/useTreeLayers'
 export const Route = createFileRoute('/_protected/map/tree/new/')({
   component: NewTree,
   loader: ({ context: { queryClient } }) => {
-    prefetch(queryClient, sensorQueries.list(), 'sensorQuery')
-    prefetch(queryClient, clusterQueries.list(), 'treeClusterQuery')
+    prefetch(queryClient, sensorQueries.list(), 'sensorQueries.list')
+    prefetch(queryClient, clusterQueries.list(), 'clusterQueries.list')
   },
 })
 

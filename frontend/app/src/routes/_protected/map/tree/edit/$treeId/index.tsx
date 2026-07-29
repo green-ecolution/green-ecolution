@@ -26,9 +26,9 @@ export const Route = createFileRoute('/_protected/map/tree/edit/$treeId/')({
   component: EditTreeOnMap,
   beforeLoad: requirePermission(['tree:update']),
   loader: ({ context: { queryClient }, params: { treeId } }) => {
-    prefetch(queryClient, treeQueries.detail(treeId), 'treeIdQuery')
-    prefetch(queryClient, sensorQueries.list(), 'sensorQuery')
-    prefetch(queryClient, clusterQueries.list(), 'treeClusterQuery')
+    prefetch(queryClient, treeQueries.detail(treeId), 'treeQueries.detail')
+    prefetch(queryClient, sensorQueries.list(), 'sensorQueries.list')
+    prefetch(queryClient, clusterQueries.list(), 'clusterQueries.list')
   },
   errorComponent: forbiddenErrorComponent(
     entityNotFound({

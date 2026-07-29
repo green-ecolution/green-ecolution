@@ -26,7 +26,7 @@ const wateringPlanConfig: EntityFormConfig<
   invalidateQueries: (data, queryClient: QueryClient) => {
     queryClient
       .invalidateQueries(wateringPlanQueries.detail(String(data.id)))
-      .catch((error) => console.error('Invalidate "wateringPlanIdQuery" failed', error))
+      .catch((error) => console.error('Invalidate "wateringPlanQueries.detail" failed', error))
     queryClient
       .invalidateQueries({ queryKey: ['watering-plans'] })
       .catch((error) => console.error('Invalidate "watering-plans" failed:', error))

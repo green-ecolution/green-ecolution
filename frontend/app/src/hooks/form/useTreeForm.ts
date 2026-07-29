@@ -17,14 +17,14 @@ const treeConfig: EntityFormConfig<TreeForm, TreeCreate, TreeUpdate, Tree> = {
   invalidateQueries: (data, queryClient: QueryClient) => {
     queryClient
       .invalidateQueries(treeQueries.detail(String(data.id)))
-      .catch((error) => console.error('Invalidate "treeIdQuery" failed:', error))
+      .catch((error) => console.error('Invalidate "treeQueries.detail" failed:', error))
     queryClient
       .invalidateQueries(treeQueries.list())
-      .catch((error) => console.error('Invalidate "treeQuery" failed:', error))
+      .catch((error) => console.error('Invalidate "treeQueries.list" failed:', error))
     if (data.treeClusterId) {
       queryClient
         .invalidateQueries(clusterQueries.detail(String(data.treeClusterId)))
-        .catch((error) => console.error('Invalidate "treeClusterIdQuery" failed:', error))
+        .catch((error) => console.error('Invalidate "clusterQueries.detail" failed:', error))
     }
   },
 

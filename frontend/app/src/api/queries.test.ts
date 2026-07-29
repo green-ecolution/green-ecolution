@@ -45,7 +45,7 @@ describe('Query Functions', () => {
   })
 
   describe('Tree Queries', () => {
-    describe('treeQuery', () => {
+    describe('treeQueries.list', () => {
       it('returns correct query options for fetching all trees', () => {
         const options = treeQueries.list()
 
@@ -112,7 +112,7 @@ describe('Query Functions', () => {
       })
     })
 
-    describe('treeIdQuery', () => {
+    describe('treeQueries.detail', () => {
       it('returns correct query options for fetching single tree', () => {
         const options = treeQueries.detail('123')
 
@@ -147,7 +147,7 @@ describe('Query Functions', () => {
   })
 
   describe('Vehicle Queries', () => {
-    describe('vehicleQuery', () => {
+    describe('vehicleQueries.list', () => {
       it('returns correct query options for fetching all vehicles', () => {
         const options = vehicleQueries.list()
 
@@ -155,7 +155,7 @@ describe('Query Functions', () => {
         expect(options.queryFn).toBeDefined()
       })
 
-      it('does not collide with vehicleIdQuery keys', () => {
+      it('does not collide with vehicleQueries.detail keys', () => {
         const listOptions = vehicleQueries.list({ page: 1 })
         const detailOptions = vehicleQueries.detail('1')
 
@@ -195,7 +195,7 @@ describe('Query Functions', () => {
       })
     })
 
-    describe('vehicleIdQuery', () => {
+    describe('vehicleQueries.detail', () => {
       it('returns correct query options for fetching single vehicle', () => {
         const options = vehicleQueries.detail('42')
 
@@ -222,7 +222,7 @@ describe('Query Functions', () => {
   })
 
   describe('TreeCluster Queries', () => {
-    describe('treeClusterQuery', () => {
+    describe('clusterQueries.list', () => {
       it('returns correct query options for fetching all clusters', () => {
         const options = clusterQueries.list()
 
@@ -244,7 +244,7 @@ describe('Query Functions', () => {
       })
     })
 
-    describe('treeClusterIdQuery', () => {
+    describe('clusterQueries.detail', () => {
       it('returns correct query options for fetching single cluster', () => {
         const options = clusterQueries.detail('99')
 
@@ -271,7 +271,7 @@ describe('Query Functions', () => {
   })
 
   describe('WateringPlan Queries', () => {
-    describe('wateringPlanQuery', () => {
+    describe('wateringPlanQueries.list', () => {
       it('returns correct query options for fetching all watering plans', () => {
         const options = wateringPlanQueries.list()
 
@@ -305,7 +305,7 @@ describe('Query Functions', () => {
       })
     })
 
-    describe('wateringPlanIdQuery', () => {
+    describe('wateringPlanQueries.detail', () => {
       it('returns correct query options for fetching single watering plan', () => {
         const options = wateringPlanQueries.detail('55')
 
@@ -332,7 +332,7 @@ describe('Query Functions', () => {
       })
     })
 
-    describe('routePreviewQuery', () => {
+    describe('wateringPlanQueries.routePreview', () => {
       it('returns route on success', async () => {
         const mockRoute = { routes: [] } as unknown as RouteResponse
         // eslint-disable-next-line @typescript-eslint/unbound-method

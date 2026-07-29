@@ -23,10 +23,10 @@ const treeClusterConfig: EntityFormConfig<
   invalidateQueries: (data, queryClient: QueryClient) => {
     queryClient
       .invalidateQueries(clusterQueries.detail(String(data.id)))
-      .catch((error) => console.error('Invalidate "treeClusterIdQuery" failed:', error))
+      .catch((error) => console.error('Invalidate "clusterQueries.detail" failed:', error))
     queryClient
       .invalidateQueries(clusterQueries.list())
-      .catch((error) => console.error('Invalidate "treeClusterQuery" failed:', error))
+      .catch((error) => console.error('Invalidate "clusterQueries.list" failed:', error))
   },
 
   successRoute: (id) => ({

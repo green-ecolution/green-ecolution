@@ -17,10 +17,10 @@ const vehicleConfig: EntityFormConfig<VehicleForm, VehicleCreate, VehicleUpdate,
   invalidateQueries: (data, queryClient: QueryClient) => {
     queryClient
       .invalidateQueries(vehicleQueries.detail(String(data.id)))
-      .catch((error) => console.error('Invalidate "vehicleIdQuery" failed:', error))
+      .catch((error) => console.error('Invalidate "vehicleQueries.detail" failed:', error))
     queryClient
       .invalidateQueries(vehicleQueries.list())
-      .catch((error) => console.error('Invalidate "vehicleQuery" failed:', error))
+      .catch((error) => console.error('Invalidate "vehicleQueries.list" failed:', error))
   },
 
   successRoute: (id) => ({

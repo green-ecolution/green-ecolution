@@ -20,7 +20,7 @@ export const Route = createFileRoute('/_protected/sensors/')({
     page,
   }),
   loader: ({ context: { queryClient }, deps: { page } }) => {
-    prefetch(queryClient, sensorQueries.list({ page, perPage: 5 }), 'sensorQuery')
+    prefetch(queryClient, sensorQueries.list({ page, perPage: 5 }), 'sensorQueries.list')
   },
 })
 

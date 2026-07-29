@@ -23,7 +23,7 @@ export const Route = createFileRoute('/_protected/vehicles/')({
     page,
   }),
   loader: ({ context: { queryClient }, deps: { page } }) => {
-    prefetch(queryClient, vehicleQueries.list({ page, perPage: 5 }), 'vehicleQuery')
+    prefetch(queryClient, vehicleQueries.list({ page, perPage: 5 }), 'vehicleQueries.list')
   },
 })
 

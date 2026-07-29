@@ -179,7 +179,7 @@ const SensorTreeStep = ({
           const inNearest = trees.find((t) => t.tree.id === id)?.tree
           if (inNearest) onSelect(inNearest.id, inNearest.number, inNearest.species)
           else
-            // Placeholder until treeIdQuery resolves and the effect re-dispatches with the full record.
+            // Placeholder until treeQueries.detail resolves and the effect re-dispatches with the full record.
             onSelect(id, '', '')
         }}
       />

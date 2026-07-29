@@ -125,7 +125,7 @@ export const Route = createFileRoute('/_protected/trees/')({
         hasCluster,
         plantingYear: plantingYears,
       }),
-      'treeQuery',
+      'treeQueries.list',
     )
   },
 })

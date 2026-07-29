@@ -44,8 +44,8 @@ export const Route = createFileRoute('/_protected/map')({
     zoom,
   }),
   loader: ({ context: { queryClient }, deps: { lat, lng, zoom } }) => {
-    prefetch(queryClient, clusterQueries.markers(), 'clusterMarkersQuery')
-    prefetch(queryClient, clusterQueries.boundaries(), 'clusterBoundariesQuery')
+    prefetch(queryClient, clusterQueries.markers(), 'clusterQueries.markers')
+    prefetch(queryClient, clusterQueries.boundaries(), 'clusterQueries.boundaries')
 
     useStore.setState({ mapCenter: [lat, lng], mapZoom: zoom })
 

@@ -19,8 +19,8 @@ export const Route = createFileRoute('/_protected/info')({
     tab: tabSchema.default('system'),
   }),
   loader: ({ context: { queryClient } }) => {
-    prefetch(queryClient, infoQueries.app(), 'infoQuery')
-    prefetch(queryClient, infoQueries.services(), 'servicesInfoQuery')
+    prefetch(queryClient, infoQueries.app(), 'infoQueries.app')
+    prefetch(queryClient, infoQueries.services(), 'infoQueries.services')
     return {
       crumb: {
         title: 'Systeminformationen',

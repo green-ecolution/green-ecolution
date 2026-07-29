@@ -176,9 +176,9 @@ export const Route = createFileRoute('/_protected/treecluster/')({
         order,
         soilCondition: soil as SoilCondition[] | undefined,
       }),
-      'treeClusterQuery',
+      'clusterQueries.list',
     )
-    prefetch(queryClient, clusterQueries.statistics(), 'clusterStatisticsQuery')
+    prefetch(queryClient, clusterQueries.statistics(), 'clusterQueries.statistics')
     prefetch(queryClient, regionsQuery(), 'regionsQuery')
   },
 })
