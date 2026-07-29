@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useBlocker } from '@tanstack/react-router'
 import {
@@ -242,7 +242,8 @@ const RolesPage = () => {
       {isDesktop ? (
         <div className="grid grid-cols-[280px_1fr] gap-6">
           {list}
-          <div>{detail}</div>
+          {/* --role-panel-bg lets the sticky action bar blend into its surface. */}
+          <div style={{ '--role-panel-bg': 'var(--color-dark-50)' } as CSSProperties}>{detail}</div>
         </div>
       ) : (
         <>
@@ -251,7 +252,12 @@ const RolesPage = () => {
             <DrawerContent className="max-h-[90vh]">
               {/* vaul drags on the content root, so the scroll region must be a
                   nested element or touch scrolling is swallowed by the drag. */}
-              <div className="min-h-0 flex-1 overflow-y-auto p-4">{detail}</div>
+              <div
+                className="min-h-0 flex-1 overflow-y-auto p-4"
+                style={{ '--role-panel-bg': '#fff' } as CSSProperties}
+              >
+                {detail}
+              </div>
             </DrawerContent>
           </Drawer>
         </>

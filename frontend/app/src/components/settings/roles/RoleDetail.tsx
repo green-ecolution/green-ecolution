@@ -231,11 +231,22 @@ const RoleDetail = ({
       )}
 
       {!readOnly && dirty && (
-        <div className="sticky bottom-0 -mx-4 flex items-center justify-end gap-3 border-t border-dark-200 bg-white/95 px-4 py-3 backdrop-blur lg:-mx-6 lg:px-6">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
+        <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-dark-200 bg-[var(--role-panel-bg)] py-3 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={saving}
+            className="w-full sm:w-auto"
+          >
             Abbrechen
           </Button>
-          <Button type="button" onClick={onSave} disabled={saving || nameEmpty}>
+          <Button
+            type="button"
+            onClick={onSave}
+            disabled={saving || nameEmpty}
+            className="w-full sm:w-auto"
+          >
             {saving && <Spinner className="size-4" />}
             {isNew ? 'Rolle anlegen' : 'Speichern'}
           </Button>
