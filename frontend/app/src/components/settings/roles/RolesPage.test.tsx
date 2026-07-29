@@ -131,10 +131,23 @@ describe('RolesPage', () => {
     expect(screen.queryByRole('button', { name: 'Neu' })).not.toBeInTheDocument()
   })
 
+  it('does not open the detail drawer on load on mobile', () => {
+    permissions.mockReturnValue(UNRESTRICTED)
+    isDesktop.mockReturnValue(false)
+    render(<RolesPage />)
+
+    // The list is shown, but nothing is auto-selected into the drawer.
+    expect(screen.getByText('System · nicht editierbar')).toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: 'Name der Rolle' })).not.toBeInTheDocument()
+  })
+
   it('guards the mobile drawer close when the draft is dirty', async () => {
     permissions.mockReturnValue(UNRESTRICTED)
     isDesktop.mockReturnValue(false)
     render(<RolesPage />)
+
+    // Mobile shows the list first; tap a role to open the detail drawer.
+    await userEvent.click(screen.getByRole('button', { name: /Bezirksleiter Nord/ }))
 
     const name = screen.getByRole('textbox', { name: 'Name der Rolle' })
     await userEvent.type(name, ' Ost')

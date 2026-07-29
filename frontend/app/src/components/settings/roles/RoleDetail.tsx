@@ -89,10 +89,11 @@ const RoleDetail = ({
                 <>
                   <Input
                     aria-label="Name der Rolle"
+                    placeholder="Name der Rolle"
                     value={draft.name}
                     onChange={(event) => onNameChange(event.target.value)}
                     aria-invalid={nameError !== null || nameEmpty}
-                    className="max-w-md font-lato text-2xl font-bold"
+                    className="w-full max-w-md font-lato text-2xl font-bold"
                   />
                   {nameError && <p className="mt-1 text-sm text-red">{nameError}</p>}
                   {!nameError && nameEmpty && (

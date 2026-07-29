@@ -31,7 +31,7 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
         } as CSSProperties
       }
     >
-      <div className="sticky top-[var(--app-header-h)] z-30 mb-6 flex h-14 items-center bg-white">
+      <div className="sticky top-[var(--app-header-h)] z-30 -mx-4 mb-6 flex h-14 items-center bg-white px-4 lg:mx-0 lg:px-0">
         <h1 className="font-lato text-3xl font-bold lg:text-4xl">Einstellungen</h1>
       </div>
 

@@ -71,14 +71,16 @@ const RolesPage = () => {
   )
 
   useEffect(() => {
-    if (selected !== null || draft !== null) return
+    // Only on desktop, where the detail pane is always visible. On mobile the
+    // detail is a drawer, so auto-selecting would pop it open on page load.
+    if (!isDesktop || selected !== null || draft !== null) return
     const first = ownRoles[0] ?? templateList[0] ?? null
     if (first) {
       // eslint-disable-next-line react-hooks/set-state-in-effect, react-x/set-state-in-effect -- picks a default once query data loads, so the detail pane isn't empty
       setSelected(first)
       editExisting(first)
     }
-  }, [selected, draft, ownRoles, templateList, editExisting])
+  }, [isDesktop, selected, draft, ownRoles, templateList, editExisting])
 
   const assigneesOf = (roleId: string): string[] =>
     (users?.data ?? [])
@@ -246,7 +248,11 @@ const RolesPage = () => {
         <>
           {list}
           <Drawer open={draft !== null} onOpenChange={requestClose}>
-            <DrawerContent className="max-h-[90vh] overflow-y-auto p-4">{detail}</DrawerContent>
+            <DrawerContent className="max-h-[90vh]">
+              {/* vaul drags on the content root, so the scroll region must be a
+                  nested element or touch scrolling is swallowed by the drag. */}
+              <div className="min-h-0 flex-1 overflow-y-auto p-4">{detail}</div>
+            </DrawerContent>
           </Drawer>
         </>
       )}
