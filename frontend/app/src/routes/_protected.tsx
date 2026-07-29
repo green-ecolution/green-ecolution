@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { currentUserQuery } from '@/api/queries'
+import { userQueries } from '@/api/queries'
 import { readAuthBypass } from '@/lib/auth/runtimeConfig'
 
 export const Route = createFileRoute('/_protected')({
@@ -10,7 +10,7 @@ export const Route = createFileRoute('/_protected')({
     // Nav entries and child guards read permissions synchronously from the
     // cache, so the user has to be resolved before anything inside renders.
     if (!readAuthBypass()) {
-      await context.queryClient.ensureQueryData(currentUserQuery())
+      await context.queryClient.ensureQueryData(userQueries.me())
     }
   },
 })

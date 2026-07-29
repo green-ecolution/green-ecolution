@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useCurrentUser } from '@/lib/auth/useCurrentUser'
 import { UserRound } from 'lucide-react'
-import { currentUserQuery } from '@/api/queries'
+import { userQueries } from '@/api/queries'
 import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
 import { getDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
 import { DrivingLicense } from '@green-ecolution/backend-client'
@@ -16,7 +16,7 @@ export const Route = createFileRoute('/_protected/settings/profile/')({
 function Profile() {
   const user = useCurrentUser()
   const avatarUrl = useCurrentUserAvatar()
-  const { data: me } = useQuery(currentUserQuery())
+  const { data: me } = useQuery(userQueries.me())
   const roles = me?.roles ?? []
 
   return (

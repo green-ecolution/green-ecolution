@@ -435,7 +435,3 @@ export const routingStartPointsQuery = () =>
 // --- temporary aliases: removed per domain during call-site migration ---
 export const vehicleQuery = vehicleQueries.list
 export const vehicleIdQuery = vehicleQueries.detail
-export const currentUserQuery = userQueries.me
-export const userQuery = userQueries.list
-export const roleTemplatesQuery = roleQueries.templates
-export const orgRolesQuery = roleQueries.org
