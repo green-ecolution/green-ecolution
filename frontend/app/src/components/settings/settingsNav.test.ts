@@ -18,9 +18,9 @@ describe('SETTINGS_NAV', () => {
     ])
   })
 
-  it('marks the five unbuilt pages as coming soon', () => {
+  it('marks the four unbuilt pages as coming soon', () => {
     const comingSoon = SETTINGS_NAV.filter((item) => item.comingSoon).map((item) => item.key)
-    expect(comingSoon).toEqual(['organization', 'irrigation', 'notifications', 'sensors', 'map'])
+    expect(comingSoon).toEqual(['irrigation', 'notifications', 'sensors', 'map'])
   })
 })
 
@@ -33,6 +33,11 @@ describe('visibleSettingsNav', () => {
   it('shows the team entry with role read alone', () => {
     const visible = visibleSettingsNav(SETTINGS_NAV, new Set(['role:read']), new Set())
     expect(keysOf(visible)).toContain('team')
+  })
+
+  it('hides the organization entry without organization read', () => {
+    const visible = visibleSettingsNav(SETTINGS_NAV, new Set(['tree:read']), new Set())
+    expect(keysOf(visible)).not.toContain('organization')
   })
 
   it('hides plugins when the feature is disabled', () => {

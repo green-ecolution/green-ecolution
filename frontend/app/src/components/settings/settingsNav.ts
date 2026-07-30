@@ -18,7 +18,7 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     label: 'Organisation',
     icon: 'Building2',
     to: '/settings/organization',
-    comingSoon: true,
+    permission: ['organization:read'],
   },
   {
     key: 'irrigation',
