@@ -170,8 +170,8 @@ export class OrganizationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the full organization tree as a flat list; clients rebuild the tree via parent_id. Requires organization:read.
-     * List all organizations
+     * Returns the caller\'s organization subtree as a flat list; clients rebuild the tree via parent_id. Requires organization:read.
+     * List visible organizations
      */
     async listOrganizationsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<OrganizationResponse>>> {
         const queryParameters: any = {};
@@ -192,8 +192,8 @@ export class OrganizationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the full organization tree as a flat list; clients rebuild the tree via parent_id. Requires organization:read.
-     * List all organizations
+     * Returns the caller\'s organization subtree as a flat list; clients rebuild the tree via parent_id. Requires organization:read.
+     * List visible organizations
      */
     async listOrganizations(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<OrganizationResponse>> {
         const response = await this.listOrganizationsRaw(initOverrides);

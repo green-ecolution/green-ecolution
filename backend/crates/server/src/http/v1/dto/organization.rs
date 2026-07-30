@@ -99,6 +99,12 @@ pub struct OrganizationDetailResponse {
     pub parent_id: Option<String>,
     pub name: String,
     pub address: Option<AddressDto>,
+    /// The stored reference, present even when the identity provider cannot
+    /// resolve it. Clients must round-trip this on update instead of deriving
+    /// it from `contact_person`, which would silently clear the reference.
+    pub contact_person_id: Option<String>,
+    /// Null when no contact person is stored *or* when the stored id could not
+    /// be resolved; `contact_person_id` distinguishes the two.
     pub contact_person: Option<ContactPersonDto>,
     pub member_count: i64,
     pub created_at: Option<String>,
@@ -112,6 +118,7 @@ impl From<&OrganizationDetailView> for OrganizationDetailResponse {
             parent_id: org.parent_id.map(|p| p.to_string()),
             name: org.name.as_str().to_string(),
             address: org.address.as_ref().map(AddressDto::from),
+            contact_person_id: org.contact_person_id.map(|p| p.to_string()),
             contact_person: value.contact_person.as_ref().map(|p| ContactPersonDto {
                 id: p.id.to_string(),
                 first_name: p.first_name.clone(),

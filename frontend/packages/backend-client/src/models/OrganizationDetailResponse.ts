@@ -41,11 +41,20 @@ export interface OrganizationDetailResponse {
      */
     address?: AddressDto | null;
     /**
-     * 
+     * Null when no contact person is stored *or* when the stored id could not
+     * be resolved; `contact_person_id` distinguishes the two.
      * @type {ContactPersonDto}
      * @memberof OrganizationDetailResponse
      */
     contactPerson?: ContactPersonDto | null;
+    /**
+     * The stored reference, present even when the identity provider cannot
+     * resolve it. Clients must round-trip this on update instead of deriving
+     * it from `contact_person`, which would silently clear the reference.
+     * @type {string}
+     * @memberof OrganizationDetailResponse
+     */
+    contactPersonId?: string | null;
     /**
      * 
      * @type {string}
@@ -100,6 +109,7 @@ export function OrganizationDetailResponseFromJSONTyped(json: any, ignoreDiscrim
         
         'address': json['address'] == null ? undefined : AddressDtoFromJSON(json['address']),
         'contactPerson': json['contact_person'] == null ? undefined : ContactPersonDtoFromJSON(json['contact_person']),
+        'contactPersonId': json['contact_person_id'] == null ? undefined : json['contact_person_id'],
         'createdAt': json['created_at'] == null ? undefined : json['created_at'],
         'id': json['id'],
         'memberCount': json['member_count'],
@@ -121,6 +131,7 @@ export function OrganizationDetailResponseToJSONTyped(value?: OrganizationDetail
         
         'address': AddressDtoToJSON(value['address']),
         'contact_person': ContactPersonDtoToJSON(value['contactPerson']),
+        'contact_person_id': value['contactPersonId'],
         'created_at': value['createdAt'],
         'id': value['id'],
         'member_count': value['memberCount'],

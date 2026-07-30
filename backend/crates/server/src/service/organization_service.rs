@@ -801,6 +801,41 @@ mod tests {
         assert_eq!(person.last_name, "Kruse");
     }
 
+    /// The identity provider may not resolve a stored person (deleted there, or
+    /// unreachable). The organization must still report the id it holds so a
+    /// client can round-trip it instead of clearing the reference.
+    #[tokio::test]
+    async fn detail_keeps_the_stored_id_when_the_person_cannot_be_resolved() {
+        let root_id = Id::new_v7();
+        let child_id = Id::new_v7();
+        let member_id = Uuid::now_v7();
+        let orgs = Arc::new(InMemoryOrgs::new(vec![
+            org(root_id, None),
+            org(child_id, Some(root_id)),
+        ]));
+        let svc = OrganizationService::new(
+            orgs.clone(),
+            orgs,
+            Arc::new(InMemoryRoles::new(Vec::new())),
+            Arc::new(StubProfiles::with_membership(member_id, child_id)),
+            no_users(),
+            Arc::new(RecordingEventBus::default()),
+        );
+
+        svc.update(
+            child_id,
+            OrganizationName::new("Stadtgärtnerei Nord").unwrap(),
+            None,
+            Some(member_id),
+        )
+        .await
+        .unwrap();
+
+        let detail = svc.detail(child_id).await.unwrap();
+        assert!(detail.contact_person.is_none());
+        assert_eq!(detail.organization.contact_person_id, Some(member_id));
+    }
+
     #[tokio::test]
     async fn detail_without_contact_person_returns_none() {
         let fixture = fixture_with_child();

@@ -710,12 +710,12 @@
         "tags": [
           "Organizations"
         ],
-        "summary": "List all organizations",
-        "description": "Returns the full organization tree as a flat list; clients rebuild the tree via parent_id. Requires organization:read.",
+        "summary": "List visible organizations",
+        "description": "Returns the caller's organization subtree as a flat list; clients rebuild the tree via parent_id. Requires organization:read.",
         "operationId": "listOrganizations",
         "responses": {
           "200": {
-            "description": "All organizations",
+            "description": "The organizations visible to the caller",
             "content": {
               "application/json": {
                 "schema": {
@@ -5757,9 +5757,17 @@
                 "type": "null"
               },
               {
-                "$ref": "#/components/schemas/ContactPersonDto"
+                "$ref": "#/components/schemas/ContactPersonDto",
+                "description": "Null when no contact person is stored *or* when the stored id could not\nbe resolved; `contact_person_id` distinguishes the two."
               }
             ]
+          },
+          "contact_person_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The stored reference, present even when the identity provider cannot\nresolve it. Clients must round-trip this on update instead of deriving\nit from `contact_person`, which would silently clear the reference."
           },
           "created_at": {
             "type": [
