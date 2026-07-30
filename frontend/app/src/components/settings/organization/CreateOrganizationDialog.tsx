@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import {
   Button,
   Dialog,
@@ -37,6 +37,13 @@ const CreateOrganizationDialog = ({
     onOpenChange(next)
   }
 
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    // Disabling the button alone doesn't stop Enter-to-submit in every browser.
+    if (trimmed === '' || saving) return
+    onSubmit(trimmed)
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
@@ -47,29 +54,27 @@ const CreateOrganizationDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="new-organization-name">Name der Organisation</Label>
-          <Input
-            id="new-organization-name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            autoFocus
-          />
-          {nameError && <p className="text-sm text-destructive">{nameError}</p>}
-        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="new-organization-name">Name der Organisation</Label>
+            <Input
+              id="new-organization-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoFocus
+            />
+            {nameError && <p className="text-sm text-destructive">{nameError}</p>}
+          </div>
 
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-            Abbrechen
-          </Button>
-          <Button
-            type="button"
-            disabled={trimmed === '' || saving}
-            onClick={() => onSubmit(trimmed)}
-          >
-            Anlegen
-          </Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+              Abbrechen
+            </Button>
+            <Button type="submit" disabled={trimmed === '' || saving}>
+              Anlegen
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   )

@@ -45,6 +45,8 @@ const ContactPersonPicker = ({
       <Command>
         <CommandInput placeholder="Person suchen" />
         <CommandList>
+          {/* cmdk 1.x renders CommandEmpty for a zero-item list even without typed
+              input; the "explains the empty case" test pins this behaviour. */}
           <CommandEmpty>{EMPTY_TEXT}</CommandEmpty>
           {members.map((member) => (
             <CommandItem
