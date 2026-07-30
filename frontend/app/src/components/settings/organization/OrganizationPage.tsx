@@ -77,7 +77,7 @@ const OrganizationPage = () => {
   const [expandedOverride, setExpandedOverride] = useState<ReadonlySet<string> | null>(null)
   const [loadedDetail, setLoadedDetail] = useState<OrganizationDetailResponse | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
-  const [pendingSelection, setPendingSelection] = useState<string | undefined>(undefined)
+  const [pendingSelection, setPendingSelection] = useState<string | null | undefined>(undefined)
   const [pendingClose, setPendingClose] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
@@ -178,10 +178,27 @@ const OrganizationPage = () => {
     if (detail) edit(detail)
   }
 
+  // null stands for "open the create dialog", mirroring how RolesPage encodes
+  // "start a new role" in the same pending-intent state.
+  const requestCreate = () => {
+    if (dirty) {
+      setPendingSelection(null)
+      return
+    }
+    createOrganization.reset()
+    setCreateOpen(true)
+  }
+
   const applyPendingSelection = () => {
     const next = pendingSelection
     setPendingSelection(undefined)
     if (next === undefined) return
+    if (next === null) {
+      resetDraft()
+      createOrganization.reset()
+      setCreateOpen(true)
+      return
+    }
     goTo(next)
   }
 
@@ -209,15 +226,17 @@ const OrganizationPage = () => {
     const street = draft.street.trim()
     const postalCode = draft.postalCode.trim()
     const city = draft.city.trim()
+    const name = draft.name.trim()
     const filled = [street, postalCode, city].filter((value) => value.length > 0)
-    // An address is stored whole or not at all; a partial one is rejected here too
-    // because Enter in a field can bypass the disabled save button.
+    // Repeats what the disabled action bar already prevents: neither an empty name
+    // nor half an address may reach the backend, whoever calls this.
+    if (name.length === 0) return
     if (filled.length !== 0 && filled.length !== 3) return
     const address: AddressDto | null = filled.length === 3 ? { street, postalCode, city } : null
 
     updateOrganization.mutate({
       orgId: detail.id,
-      name: draft.name.trim(),
+      name,
       address,
       contactPersonId: draft.contactPersonId,
     })
@@ -260,10 +279,7 @@ const OrganizationPage = () => {
       canCreate={canCreate}
       onSelect={select}
       onToggle={toggle}
-      onCreate={() => {
-        createOrganization.reset()
-        setCreateOpen(true)
-      }}
+      onCreate={requestCreate}
     />
   )
 
@@ -293,10 +309,7 @@ const OrganizationPage = () => {
         onPostalCodeChange={draftState.setPostalCode}
         onCityChange={draftState.setCity}
         onContactPersonRequest={() => setPickerOpen(true)}
-        onSubOrganizationCreate={() => {
-          createOrganization.reset()
-          setCreateOpen(true)
-        }}
+        onSubOrganizationCreate={requestCreate}
         onSelectChild={select}
         onSave={save}
         onCancel={resetDraft}

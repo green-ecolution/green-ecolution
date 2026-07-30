@@ -20,8 +20,10 @@ const INDENT_STEP_REM = 1.25
 const subtitleOf = (node: OrgNode): string | null => {
   const memberCount = subtreeMemberCount(node)
   if (memberCount === 0) return null
-  const teams = node.children.length > 0 ? ` · ${node.children.length} Teams` : ''
-  return `${memberCount} Personen${teams}`
+  const teamCount = node.children.length
+  const people = `${memberCount} ${memberCount === 1 ? 'Person' : 'Personen'}`
+  const teams = teamCount > 0 ? ` · ${teamCount} ${teamCount === 1 ? 'Team' : 'Teams'}` : ''
+  return `${people}${teams}`
 }
 
 const OrganizationTreeItem = ({

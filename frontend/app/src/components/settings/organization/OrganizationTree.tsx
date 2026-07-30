@@ -34,7 +34,7 @@ const OrganizationTree = ({
       )}
     </div>
 
-    <ul className="flex list-none flex-col gap-1">
+    <ul aria-label="Organisationsstruktur" className="flex list-none flex-col gap-1">
       <OrganizationTreeItem
         node={root}
         depth={0}
