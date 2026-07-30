@@ -46,9 +46,13 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
           </p>
         )}
         {error && (
+          // Announced immediately: an error may appear from a rejected submit,
+          // far from where the user is looking.
           <p
             id={`${inputId}-error`}
             data-slot="form-field-error"
+            role="alert"
+            aria-live="assertive"
             className="text-sm text-destructive"
           >
             {error}
@@ -104,6 +108,8 @@ const TextareaField = React.forwardRef<HTMLTextAreaElement, TextareaFieldProps>(
           <p
             id={`${inputId}-error`}
             data-slot="textarea-field-error"
+            role="alert"
+            aria-live="assertive"
             className="text-sm text-destructive"
           >
             {error}
