@@ -76,6 +76,14 @@ describe('useOrganizationDraft', () => {
     expect(result.current.dirty).toBe(false)
   })
 
+  it('baselines the contact person from the raw id, not the resolved person', () => {
+    const { result } = renderHook(() => useOrganizationDraft())
+    // contactPerson absent means the identity provider could not resolve the id.
+    act(() => result.current.edit(detail({ contactPersonId: 'user-1', contactPerson: null })))
+    expect(result.current.draft?.contactPersonId).toBe('user-1')
+    expect(result.current.dirty).toBe(false)
+  })
+
   it('discard clears the draft', () => {
     const { result } = renderHook(() => useOrganizationDraft())
     act(() => result.current.edit(detail()))

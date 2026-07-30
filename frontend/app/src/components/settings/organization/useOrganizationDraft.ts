@@ -26,7 +26,9 @@ const draftOf = (org: OrganizationDetailResponse): OrganizationDraft => ({
   street: org.address?.street ?? '',
   postalCode: org.address?.postalCode ?? '',
   city: org.address?.city ?? '',
-  contactPersonId: org.contactPerson?.id ?? null,
+  // The raw id, never the resolved person: an unresolvable id still has to be
+  // round-tripped, otherwise saving anything else would clear the reference.
+  contactPersonId: org.contactPersonId ?? null,
 })
 
 const sameField = (a: string, b: string): boolean => a.trim() === b.trim()
