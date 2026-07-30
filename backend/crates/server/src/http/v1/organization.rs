@@ -39,10 +39,10 @@ pub fn routes() -> OpenApiRouter<Arc<AppState>> {
 
 #[utoipa::path(get, path = "/organizations", tag = "Organizations",
     operation_id = "listOrganizations",
-    summary = "List all organizations",
-    description = "Returns the full organization tree as a flat list; clients rebuild the tree via parent_id. Requires organization:read.",
+    summary = "List visible organizations",
+    description = "Returns the caller's organization subtree as a flat list; clients rebuild the tree via parent_id. Requires organization:read.",
     responses(
-        (status = 200, description = "All organizations", body = Vec<OrganizationResponse>),
+        (status = 200, description = "The organizations visible to the caller", body = Vec<OrganizationResponse>),
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 422, description = "Acting user has no organization and none was given"),
@@ -54,17 +54,26 @@ pub async fn list_organizations(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
 ) -> Result<Json<Vec<OrganizationResponse>>, ServiceError> {
+    let read = Permission::new(Resource::Organization, Action::Read);
     let scope = resolve_target_org(&state, user.id, None).await?;
     state
         .authorization_service
-        .require(
-            user.id,
-            Permission::new(Resource::Organization, Action::Read),
-            scope,
-        )
+        .require(user.id, read, scope)
+        .await?;
+    // The gate only proves the caller may read *somewhere*; a tenant must not
+    // see the addresses and contact people of sibling tenants.
+    let visible = state
+        .authorization_service
+        .visible_orgs_for(user.id, read)
         .await?;
     let views = state.organization_service.list().await?;
-    Ok(Json(views.iter().map(Into::into).collect()))
+    Ok(Json(
+        views
+            .iter()
+            .filter(|view| visible.allows(view.id))
+            .map(Into::into)
+            .collect(),
+    ))
 }
 
 #[utoipa::path(get, path = "/organizations/{org_id}", tag = "Organizations",

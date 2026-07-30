@@ -21,6 +21,15 @@ impl Visibility {
             Visibility::Only(ids) => Some(ids.into_iter().map(|id| id.value()).collect()),
         }
     }
+
+    /// For read paths that filter an already-loaded set in memory instead of
+    /// pushing the org ids into a query.
+    pub fn allows(&self, org: Id<Organization>) -> bool {
+        match self {
+            Visibility::Unrestricted => true,
+            Visibility::Only(ids) => ids.contains(&org),
+        }
+    }
 }
 
 /// Parent map of the whole organization tree, loaded once per request.
@@ -259,6 +268,15 @@ mod tests {
         // permission not granted anywhere -> empty set, not unrestricted
         let del = Permission::new(Resource::Tree, Action::Delete);
         assert_eq!(ctx.visible_orgs(del), Visibility::Only(BTreeSet::new()));
+    }
+
+    #[test]
+    fn allows_passes_everything_when_unrestricted_and_filters_otherwise() {
+        let (root, tbz, _) = ids();
+        assert!(Visibility::Unrestricted.allows(root));
+        let only = Visibility::Only(BTreeSet::from([tbz]));
+        assert!(only.allows(tbz));
+        assert!(!only.allows(root));
     }
 
     #[test]
