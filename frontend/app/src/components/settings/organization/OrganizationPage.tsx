@@ -28,13 +28,20 @@ import OrganizationTree from './OrganizationTree'
 import { buildTree, pathTo, type OrgNode } from './organizationTree'
 import { useOrganizationDraft } from './useOrganizationDraft'
 
-const MEMBER_USERS_PARAMS = { page: 1, perPage: 100 }
+const MEMBERS_PER_PAGE = 100
 
 const memberInitialsOf = (firstName?: string | null, lastName?: string | null): string =>
   `${firstName?.charAt(0) ?? ''}${lastName?.charAt(0) ?? ''}`.toUpperCase()
 
 const statusOf = (error: unknown): number | undefined =>
   (error as { response?: { status?: number } } | null)?.response?.status
+
+// Frontend permission gating is scope-blind, so a user whose role is owned by a
+// child organization reaches this page and then gets a 403 from the backend.
+const loadErrorMessage = (error: unknown): string =>
+  statusOf(error) === 403
+    ? 'Du darfst diese Organisation nicht einsehen. Vermutlich gilt deine Rolle nur für eine untergeordnete Organisation.'
+    : 'Die Organisationsstruktur konnte nicht geladen werden. Bitte versuche es später erneut.'
 
 const nameConflictMessage = (error: unknown): string | null =>
   statusOf(error) === 409 ? 'Eine Organisation mit diesem Namen existiert bereits.' : null
@@ -63,11 +70,11 @@ const OrganizationPage = () => {
   const { data: me } = useQuery(userQueries.me())
   const rootId = me?.organization?.id ?? null
 
-  const { data: orgs, isLoading: orgsLoading } = useQuery(organizationQueries.list())
-  const { data: users } = useQuery({
-    ...userQueries.list(MEMBER_USERS_PARAMS),
-    enabled: canReadUsers,
-  })
+  const {
+    data: orgs,
+    isLoading: orgsLoading,
+    error: orgsError,
+  } = useQuery(organizationQueries.list())
 
   const { createOrganization, updateOrganization, deleteOrganization } = useOrganizationMutations()
   const draftState = useOrganizationDraft()
@@ -85,9 +92,20 @@ const OrganizationPage = () => {
 
   const selectedId = selection ?? rootId
 
-  const { data: detail } = useQuery({
+  const { data: detail, error: detailError } = useQuery({
     ...organizationQueries.byId(selectedId ?? ''),
     enabled: selectedId !== null,
+  })
+
+  // Asking the backend for exactly this organization's members: filtering a
+  // truncated first page client-side hides anyone beyond it.
+  const { data: memberPage } = useQuery({
+    ...userQueries.list({
+      page: 1,
+      perPage: MEMBERS_PER_PAGE,
+      organizationId: selectedId ?? undefined,
+    }),
+    enabled: canReadUsers && selectedId !== null,
   })
 
   const blocker = useBlocker({ shouldBlockFn: () => dirty, withResolver: true })
@@ -103,7 +121,7 @@ const OrganizationPage = () => {
     edit(detail)
   }, [detail, loadedDetail, edit])
 
-  const members = (users?.data ?? []).filter((user) => user.organization?.id === selectedId)
+  const members = memberPage?.data ?? []
   const memberInitials = members
     .map((user) => memberInitialsOf(user.firstName, user.lastName))
     .filter((initials) => initials.length > 0)
@@ -119,6 +137,16 @@ const OrganizationPage = () => {
 
   if (orgsLoading) {
     return <Loading className="mt-10 justify-center" label="Organisationen werden geladen" />
+  }
+
+  // A failed load must not be reported as absence — the data may exist and just
+  // be unreachable for this account.
+  if (orgsError) {
+    return (
+      <p role="alert" className="text-sm text-dark-600">
+        {loadErrorMessage(orgsError)}
+      </p>
+    )
   }
 
   const root = buildTree(orgs ?? [], rootId)
@@ -267,6 +295,8 @@ const OrganizationPage = () => {
           setDetailOpen(false)
           setSelection(detail.parentId ?? rootId)
         },
+        // A 409 explains itself in a toast, which the open dialog would cover.
+        onError: () => setConfirmDelete(false),
       },
     )
   }
@@ -283,40 +313,50 @@ const OrganizationPage = () => {
     />
   )
 
-  const renderDetail = (renderActionBar: boolean) =>
-    detail &&
-    draft &&
-    selectedNode && (
-      <OrganizationDetail
-        node={selectedNode}
-        root={root}
-        detail={detail}
-        draft={draft}
-        dirty={dirty}
-        addressErrors={addressErrors}
-        addressComplete={addressComplete}
-        readOnly={readOnly}
-        canUpdate={canUpdate}
-        canCreate={canCreate}
-        canDelete={canDelete}
-        canReadUsers={canReadUsers}
-        memberInitials={memberInitials}
-        saving={updateOrganization.isPending}
-        nameError={nameConflictMessage(updateOrganization.error)}
-        contactPersonError={contactPersonMessage(updateOrganization.error)}
-        onNameChange={draftState.setName}
-        onStreetChange={draftState.setStreet}
-        onPostalCodeChange={draftState.setPostalCode}
-        onCityChange={draftState.setCity}
-        onContactPersonRequest={() => setPickerOpen(true)}
-        onSubOrganizationCreate={requestCreate}
-        onSelectChild={select}
-        onSave={save}
-        onCancel={resetDraft}
-        onDelete={() => setConfirmDelete(true)}
-        renderActionBar={renderActionBar}
-      />
+  const renderDetail = (renderActionBar: boolean) => {
+    if (detailError) {
+      return (
+        <p role="alert" className="text-sm text-dark-600">
+          {loadErrorMessage(detailError)}
+        </p>
+      )
+    }
+    return (
+      detail &&
+      draft &&
+      selectedNode && (
+        <OrganizationDetail
+          node={selectedNode}
+          root={root}
+          detail={detail}
+          draft={draft}
+          dirty={dirty}
+          addressErrors={addressErrors}
+          addressComplete={addressComplete}
+          readOnly={readOnly}
+          canUpdate={canUpdate}
+          canCreate={canCreate}
+          canDelete={canDelete}
+          canReadUsers={canReadUsers}
+          memberInitials={memberInitials}
+          saving={updateOrganization.isPending}
+          nameError={nameConflictMessage(updateOrganization.error)}
+          contactPersonError={contactPersonMessage(updateOrganization.error)}
+          onNameChange={draftState.setName}
+          onStreetChange={draftState.setStreet}
+          onPostalCodeChange={draftState.setPostalCode}
+          onCityChange={draftState.setCity}
+          onContactPersonRequest={() => setPickerOpen(true)}
+          onSubOrganizationCreate={requestCreate}
+          onSelectChild={select}
+          onSave={save}
+          onCancel={resetDraft}
+          onDelete={() => setConfirmDelete(true)}
+          renderActionBar={renderActionBar}
+        />
+      )
     )
+  }
 
   return (
     <>

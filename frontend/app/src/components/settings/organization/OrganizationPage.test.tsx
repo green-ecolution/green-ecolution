@@ -99,6 +99,8 @@ vi.mock('@tanstack/react-router', () => ({
 }))
 
 const ownOrgId = vi.fn((): string => 'amt')
+const listError = vi.fn((): unknown => null)
+const detailError = vi.fn((): unknown => null)
 
 vi.mock('@tanstack/react-query', async () => {
   const actual =
@@ -117,12 +119,20 @@ vi.mock('@tanstack/react-query', async () => {
           isLoading: false,
         }
       }
-      if (scope === 'users') return { data: { data: users }, isLoading: false }
+      if (scope === 'users') {
+        // The page must ask the backend for one organization's members instead
+        // of filtering a truncated page client-side.
+        const { organizationId } = (second ?? {}) as { organizationId?: string }
+        return {
+          data: { data: users.filter((user) => user.organization?.id === organizationId) },
+          isLoading: false,
+        }
+      }
       if (scope === 'organizations' && second === undefined) {
-        return { data: orgList, isLoading: false }
+        return { data: orgList, isLoading: false, error: listError() }
       }
       if (scope === 'organizations') {
-        return { data: detailMap[second as string], isLoading: false }
+        return { data: detailMap[second as string], isLoading: false, error: detailError() }
       }
       return { data: undefined, isLoading: false }
     },
@@ -159,6 +169,8 @@ describe('OrganizationPage', () => {
     blockerStatus.mockReturnValue('idle')
     createError.mockReturnValue(null)
     updateError.mockReturnValue(null)
+    listError.mockReturnValue(null)
+    detailError.mockReturnValue(null)
     updateMutate.mockReset()
     createMutate.mockImplementation(
       (
@@ -263,6 +275,25 @@ describe('OrganizationPage', () => {
     })
   })
 
+  // The detail response carries the raw id even when the identity provider
+  // cannot resolve it; saving anything else must not clear the reference.
+  it('keeps an unresolved contact person id when saving another field', async () => {
+    detailMap.nord = { ...BASE_DETAILS.nord, contactPersonId: 'u-bo' }
+    render(<OrganizationPage />)
+    await selectNord()
+
+    await userEvent.type(screen.getByRole('textbox', { name: 'Name' }), ' Ost')
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+
+    await waitFor(() => expect(updateMutate).toHaveBeenCalled())
+    expect(updateMutate.mock.calls[0][0] as UpdateOrganizationVariables).toEqual({
+      orgId: 'nord',
+      name: 'Stadtgärtnerei Nord Ost',
+      address: null,
+      contactPersonId: 'u-bo',
+    })
+  })
+
   it('sends no address at all when all three address fields are empty', async () => {
     render(<OrganizationPage />)
     await selectNord()
@@ -277,6 +308,34 @@ describe('OrganizationPage', () => {
       address: null,
       contactPersonId: null,
     })
+  })
+
+  it('reports a failed list load without claiming the organization is missing', () => {
+    listError.mockReturnValue({ response: { status: 403 } })
+    render(<OrganizationPage />)
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/Du darfst diese Organisation nicht/)
+    expect(screen.queryByText(/wurde nicht gefunden/)).not.toBeInTheDocument()
+  })
+
+  it('reports a failed detail load instead of leaving the pane blank', () => {
+    detailError.mockReturnValue({ response: { status: 500 } })
+    render(<OrganizationPage />)
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/konnte nicht geladen werden/)
+    // The tree still renders from the list query.
+    expect(tree().getByRole('button', { name: /Grünflächenamt/ })).toBeInTheDocument()
+  })
+
+  it('associates the empty-name hint with the name field', async () => {
+    render(<OrganizationPage />)
+    await selectNord()
+
+    const name = screen.getByRole('textbox', { name: 'Name' })
+    await userEvent.clear(name)
+
+    expect(name).toHaveAttribute('aria-invalid', 'true')
+    expect(name).toHaveAccessibleDescription('Gib der Organisation einen Namen.')
   })
 
   it('renders the own organization read-only when it is the instance root', () => {
@@ -436,6 +495,23 @@ describe('OrganizationPage', () => {
       'aria-current',
       'true',
     )
+  })
+
+  it('closes the delete dialog when the deletion is rejected', async () => {
+    deleteMutate.mockImplementation(
+      (_vars: DeleteOrganizationVariables, opts?: { onError?: (error: unknown) => void }) => {
+        opts?.onError?.({ response: { status: 409 } })
+      },
+    )
+    render(<OrganizationPage />)
+    await selectNord()
+
+    await userEvent.click(screen.getByRole('button', { name: /Organisation löschen/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Löschen' }))
+
+    // The explaining toast lives behind the dialog, so the dialog must go.
+    await waitFor(() => expect(screen.queryByText('Organisation löschen?')).not.toBeInTheDocument())
+    expect(tree().getByRole('button', { name: /Stadtgärtnerei Nord/ })).toBeInTheDocument()
   })
 
   it('asks before discarding unsaved changes when selecting another node', async () => {
