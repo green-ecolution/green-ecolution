@@ -7,8 +7,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Input,
-  Label,
+  FormField,
 } from '@green-ecolution/ui'
 
 interface CreateOrganizationDialogProps {
@@ -55,16 +54,14 @@ const CreateOrganizationDialog = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="new-organization-name">Name der Organisation</Label>
-            <Input
-              id="new-organization-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoFocus
-            />
-            {nameError && <p className="text-sm text-destructive">{nameError}</p>}
-          </div>
+          <FormField
+            id="new-organization-name"
+            label="Name der Organisation"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            error={nameError ?? undefined}
+            autoFocus
+          />
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>

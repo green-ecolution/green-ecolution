@@ -1,4 +1,4 @@
-import { Fragment } from 'react'
+import { Fragment, useEffect, useRef } from 'react'
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, ChevronRight, Lock, Plus, Trash2, UserPlus } from 'lucide-react'
 import {
@@ -110,6 +110,16 @@ const OrganizationDetail = ({
   onDelete,
   renderActionBar,
 }: OrganizationDetailProps) => {
+  const nameRef = useRef<HTMLInputElement>(null)
+  const contactRef = useRef<HTMLButtonElement>(null)
+
+  // On mobile the save button sits in the drawer footer, so a rejected save
+  // would otherwise leave its only explanation scrolled out of view.
+  useEffect(() => {
+    if (nameError) nameRef.current?.focus()
+    else if (contactPersonError) contactRef.current?.focus()
+  }, [nameError, contactPersonError])
+
   const path = pathTo(root, detail.id)
   const trail = path.slice(0, -1)
   const locked = readOnly || !canUpdate
@@ -176,17 +186,16 @@ const OrganizationDetail = ({
               {locked ? (
                 <StaticField label="Name" value={draft.name} />
               ) : (
+                // FormField owns aria-invalid and aria-describedby; passing
+                // aria-invalid in would set it without an associated reason.
                 <FormField
+                  ref={nameRef}
                   label="Name"
                   value={draft.name}
                   onChange={(event) => onNameChange(event.target.value)}
-                  error={nameError ?? undefined}
+                  error={nameError ?? (nameEmpty ? 'Gib der Organisation einen Namen.' : undefined)}
                   placeholder="Name der Organisation"
-                  aria-invalid={nameError !== null || nameEmpty}
                 />
-              )}
-              {!locked && !nameError && nameEmpty && (
-                <p className="mt-2 text-sm text-dark-600">Gib der Organisation einen Namen.</p>
               )}
             </div>
           </section>
@@ -255,6 +264,7 @@ const OrganizationDetail = ({
                   </div>
                   {!locked && (
                     <Button
+                      ref={contactRef}
                       type="button"
                       variant="outline"
                       size="sm"
@@ -265,7 +275,13 @@ const OrganizationDetail = ({
                   )}
                 </>
               ) : !locked ? (
-                <Button type="button" variant="outline" size="sm" onClick={onContactPersonRequest}>
+                <Button
+                  ref={contactRef}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={onContactPersonRequest}
+                >
                   <UserPlus className="size-4" aria-hidden />
                   Kontaktperson festlegen
                 </Button>
@@ -273,7 +289,11 @@ const OrganizationDetail = ({
                 <p className="text-sm text-dark-600">Keine Kontaktperson festgelegt.</p>
               )}
             </div>
-            {contactPersonError && <p className="mt-2 text-sm text-red">{contactPersonError}</p>}
+            {contactPersonError && (
+              <p role="alert" aria-live="assertive" className="mt-2 text-sm text-red">
+                {contactPersonError}
+              </p>
+            )}
           </section>
 
           {canReadUsers && (

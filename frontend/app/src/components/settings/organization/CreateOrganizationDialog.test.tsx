@@ -22,6 +22,24 @@ describe('CreateOrganizationDialog', () => {
     expect(onSubmit).toHaveBeenCalledWith('Grünflächenamt')
   })
 
+  it('associates the name error with the input', () => {
+    render(
+      <CreateOrganizationDialog
+        open
+        parentName="Stadt Flensburg"
+        saving={false}
+        nameError="Eine Organisation mit diesem Namen existiert bereits."
+        onOpenChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    )
+    const input = screen.getByLabelText('Name der Organisation')
+    expect(input).toHaveAccessibleDescription(
+      'Eine Organisation mit diesem Namen existiert bereits.',
+    )
+    expect(input).toHaveAttribute('aria-invalid', 'true')
+  })
+
   it('does nothing on Enter when the field is only whitespace', async () => {
     const onSubmit = vi.fn()
     render(
