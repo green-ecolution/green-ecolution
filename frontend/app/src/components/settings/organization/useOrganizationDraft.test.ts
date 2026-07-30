@@ -45,8 +45,8 @@ describe('useOrganizationDraft', () => {
     act(() => result.current.edit(detail({ address: null })))
     act(() => result.current.setCity('Flensburg'))
     expect(result.current.addressComplete).toBe(false)
-    expect(result.current.addressErrors.street).toBeDefined()
-    expect(result.current.addressErrors.postalCode).toBeDefined()
+    expect(result.current.addressErrors.street).toBe('Straße fehlt')
+    expect(result.current.addressErrors.postalCode).toBe('PLZ fehlt')
     expect(result.current.addressErrors.city).toBeUndefined()
   })
 
@@ -55,6 +55,25 @@ describe('useOrganizationDraft', () => {
     act(() => result.current.edit(detail({ address: null })))
     act(() => result.current.setStreet('   '))
     expect(result.current.addressComplete).toBe(true)
+  })
+
+  it('treats a fully filled address as complete', () => {
+    const { result } = renderHook(() => useOrganizationDraft())
+    act(() => result.current.edit(detail({ address: null })))
+    act(() => result.current.setStreet('Nordergraben 12'))
+    act(() => result.current.setPostalCode('24937'))
+    act(() => result.current.setCity('Flensburg'))
+    expect(result.current.addressComplete).toBe(true)
+    expect(result.current.addressErrors).toEqual({})
+  })
+
+  it('becomes dirty on a contact person change and clean again on revert', () => {
+    const { result } = renderHook(() => useOrganizationDraft())
+    act(() => result.current.edit(detail({ contactPerson: null })))
+    act(() => result.current.setContactPersonId('user-1'))
+    expect(result.current.dirty).toBe(true)
+    act(() => result.current.setContactPersonId(null))
+    expect(result.current.dirty).toBe(false)
   })
 
   it('discard clears the draft', () => {

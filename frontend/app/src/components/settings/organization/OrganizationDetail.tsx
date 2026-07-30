@@ -68,8 +68,11 @@ const sinceLabel = (createdAt?: string | null): string | null => {
 
 const peopleLine = (people: number, teams: number): string => {
   const persons = `${people} ${people === 1 ? 'Person' : 'Personen'}`
-  return `${persons} in ${teams} ${teams === 1 ? 'Team' : 'Teams'}`
+  return teams > 0 ? `${persons} in ${teams} ${teams === 1 ? 'Team' : 'Teams'}` : persons
 }
+
+const directChildrenLine = (count: number): string =>
+  `${count} direkte ${count === 1 ? 'Untereinheit' : 'Untereinheiten'}`
 
 const StaticField = ({ label, value }: { label: string; value: string }) => (
   <div className="flex flex-col gap-y-1">
@@ -250,7 +253,7 @@ const OrganizationDetail = ({
                     </p>
                     <p className="truncate text-sm text-dark-600">{contact.email}</p>
                   </div>
-                  {canUpdate && (
+                  {!locked && (
                     <Button
                       type="button"
                       variant="outline"
@@ -261,7 +264,7 @@ const OrganizationDetail = ({
                     </Button>
                   )}
                 </>
-              ) : canUpdate ? (
+              ) : !locked ? (
                 <Button type="button" variant="outline" size="sm" onClick={onContactPersonRequest}>
                   <UserPlus className="size-4" aria-hidden />
                   Kontaktperson festlegen
@@ -299,10 +302,7 @@ const OrganizationDetail = ({
                 <p className="mt-0.5 text-sm text-dark-600">
                   {children.length === 0
                     ? 'Diese Organisation hat keine Unterorganisationen.'
-                    : peopleLine(
-                        children.reduce((sum, child) => sum + subtreeMemberCount(child), 0),
-                        children.length,
-                      )}
+                    : directChildrenLine(children.length)}
                 </p>
               </div>
               {canCreate && (
@@ -365,8 +365,8 @@ const OrganizationDetail = ({
       )}
 
       {/* --org-panel-bg lets the sticky action bar blend into its surface; the page sets it. */}
-      {renderActionBar && dirty && (
-        <div className="sticky bottom-0 -mt-6 flex flex-col-reverse gap-2 border-t border-dark-200 bg-[var(--org-panel-bg,#fff)] pb-3 pt-6 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+      {renderActionBar && !readOnly && dirty && (
+        <div className="sticky bottom-0 -mt-6 flex flex-col-reverse gap-2 border-t border-dark-200 bg-[var(--org-panel-bg,var(--color-dark-50))] pb-3 pt-6 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
           <OrganizationActionButtons
             saving={saving}
             nameEmpty={nameEmpty}
