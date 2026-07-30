@@ -7,6 +7,15 @@ export interface OrgNode {
 
 const byName = (a: OrgNode, b: OrgNode): number => a.org.name.localeCompare(b.org.name, 'de')
 
+/** The tile glyph shared by the tree rows and the detail header. */
+export const initialsOf = (name: string): string =>
+  name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase() ?? '')
+    .join('')
+
 /**
  * Builds the subtree below `rootId`. Nodes whose parent is not in `orgs` are
  * unreachable and therefore dropped rather than silently re-parented.

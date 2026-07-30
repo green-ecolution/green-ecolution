@@ -2,7 +2,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react'
 import { ListCard } from '@green-ecolution/ui'
 import type { OrganizationResponse } from '@/api/backendApi'
 import type { OrgNode } from './organizationTree'
-import { subtreeMemberCount } from './organizationTree'
+import { initialsOf, subtreeMemberCount } from './organizationTree'
 
 interface OrganizationTreeItemProps {
   node: OrgNode
@@ -16,14 +16,6 @@ interface OrganizationTreeItemProps {
 // One step matches the disclosure control's own width, so a child's chevron
 // lines up directly under its parent's tile.
 const INDENT_STEP_REM = 1.25
-
-const initialsOf = (name: string): string =>
-  name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((word) => word[0]?.toUpperCase() ?? '')
-    .join('')
 
 const subtitleOf = (node: OrgNode): string | null => {
   const memberCount = subtreeMemberCount(node)

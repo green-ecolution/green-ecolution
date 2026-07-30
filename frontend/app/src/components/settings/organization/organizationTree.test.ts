@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { OrganizationResponse } from '@/api/backendApi'
-import { buildTree, flatten, pathTo, subtreeMemberCount } from './organizationTree'
+import { buildTree, flatten, initialsOf, pathTo, subtreeMemberCount } from './organizationTree'
 
 const org = (
   id: string,
@@ -99,6 +99,24 @@ describe('subtreeMemberCount', () => {
 
   it('returns the own count for a leaf', () => {
     expect(subtreeMemberCount(buildTree(orgs, 'duburg')!)).toBe(6)
+  })
+})
+
+describe('initialsOf', () => {
+  it('takes the single initial of a one-word name', () => {
+    expect(initialsOf('Grünflächenamt')).toBe('G')
+  })
+
+  it('ignores leading and repeated internal spaces', () => {
+    expect(initialsOf('  Team   Duburg  Nord')).toBe('TD')
+  })
+
+  it('handles a non-ASCII first letter', () => {
+    expect(initialsOf('Ökologie Nord')).toBe('ÖN')
+  })
+
+  it('does not throw on a whitespace-only name', () => {
+    expect(initialsOf('   ')).toBe('')
   })
 })
 
