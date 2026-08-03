@@ -11,6 +11,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > single repository. For legacy releases, see the
 > [GitHub Releases](https://github.com/green-ecolution/green-ecolution/releases) page.
 
+## [0.5.0](https://github.com/green-ecolution/green-ecolution/compare/v0.4.0...v0.5.0) (2026-08-03)
+
+
+### Features
+
+* **backend:** add RBAC foundation with organization tree and db-backed roles ([#921](https://github.com/green-ecolution/green-ecolution/issues/921)) ([4534d10](https://github.com/green-ecolution/green-ecolution/commit/4534d104bd24dade2f248828eed54d7405e43801))
+* **backend:** require organization membership for user profiles ([#938](https://github.com/green-ecolution/green-ecolution/issues/938)) ([7673cee](https://github.com/green-ecolution/green-ecolution/commit/7673cee5fb1ce75ca352157617c8ce078e0e9f82))
+* **backend:** scope resources to organizations with transfer-based delegation and endpoint enforcement ([#923](https://github.com/green-ecolution/green-ecolution/issues/923)) ([30639af](https://github.com/green-ecolution/green-ecolution/commit/30639af64600549a4e49fac09da5eb4509a6a125))
+* **dashboard:** replace raw soil-moisture chart with REW-based water supply view ([#918](https://github.com/green-ecolution/green-ecolution/issues/918)) ([30d6b61](https://github.com/green-ecolution/green-ecolution/commit/30d6b61ee6dab144f76e4a1bfd62b1a987847433))
+* **frontend:** add KA5 soil texture triangle dialog for cluster soil condition ([#904](https://github.com/green-ecolution/green-ecolution/issues/904)) ([2cb4e8b](https://github.com/green-ecolution/green-ecolution/commit/2cb4e8b144e94e5151015c59a519320081ada30f))
+* **frontend:** app-wide settings area with role management ([#939](https://github.com/green-ecolution/green-ecolution/issues/939)) ([9c7f115](https://github.com/green-ecolution/green-ecolution/commit/9c7f11584f81373ddea02312726a67955e210795))
+* **frontend:** gate in-page actions by RBAC permission ([#937](https://github.com/green-ecolution/green-ecolution/issues/937)) ([827c10b](https://github.com/green-ecolution/green-ecolution/commit/827c10b50f5d2dd7d15a8c0d23c8dcce40a7c9e1))
+* **frontend:** gate routes and nav entries by permission ([#925](https://github.com/green-ecolution/green-ecolution/issues/925)) ([54e1d15](https://github.com/green-ecolution/green-ecolution/commit/54e1d158267d46bdf3cef3505a0a9db3a57d11c8))
+* **swagger:** enable OIDC login with access token forwarding ([#922](https://github.com/green-ecolution/green-ecolution/issues/922)) ([f7e4870](https://github.com/green-ecolution/green-ecolution/commit/f7e487001929eb14e12b0e3c5b1c5ca3bb335ff9))
+* **treecluster:** rebuild detail page as monitoring dashboard with soil-moisture history ([#915](https://github.com/green-ecolution/green-ecolution/issues/915)) ([a81f949](https://github.com/green-ecolution/green-ecolution/commit/a81f94931554d6abdf0545a2aaea2621086bdf25))
+* **user:** display avatar from user profile via new GET /users/me endpoint ([#917](https://github.com/green-ecolution/green-ecolution/issues/917)) ([a7bb4f9](https://github.com/green-ecolution/green-ecolution/commit/a7bb4f9b92f0abf17fbb3beed771ead39a1562b3))
+
+
+### Bug Fixes
+
+* **frontend:** dedupe OIDC callback to avoid invalid_code on double exchange ([4108e47](https://github.com/green-ecolution/green-ecolution/commit/4108e47a242ee0185d6a5416f45aa40c752f57e7))
+* **frontend:** keep sidebar footer always visible ([#919](https://github.com/green-ecolution/green-ecolution/issues/919)) ([b7fa5b8](https://github.com/green-ecolution/green-ecolution/commit/b7fa5b8b0012fb0fb1786c13bc837056ed4db89b))
+
 ## [0.4.0](https://github.com/green-ecolution/green-ecolution/compare/v0.3.0...v0.4.0) (2026-07-15)
 
 
