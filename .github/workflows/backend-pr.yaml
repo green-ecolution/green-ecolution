@@ -136,7 +136,7 @@ jobs:
       - uses: ./.github/actions/setup-backend
 
       - name: Install sqlx-cli
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@v2.85.5
         with:
           tool: sqlx-cli
 
