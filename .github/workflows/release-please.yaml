@@ -101,7 +101,7 @@ jobs:
 
       - name: Setup pnpm
         if: ${{ steps.release.outputs.pr }}
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@v6.0.9
         with:
           package_json_file: "./frontend/package.json"
 
