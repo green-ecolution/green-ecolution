@@ -267,9 +267,9 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
 name = "base64"
-version = "0.23.0"
+version = "0.23.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b25655df2c3cdd83c5e5b293b88acd880332b2ddadd7c30ac43144fdc0033da9"
+checksum = "ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5"
 
 [[package]]
 name = "base64ct"
@@ -1145,13 +1145,14 @@ dependencies = [
 
 [[package]]
 name = "geo-types"
-version = "0.7.19"
+version = "0.7.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94776032c45f950d30a13af6113c2ad5625316c9abfbccee4dd5a6695f8fe0f5"
+checksum = "777d18aa0f12f8b285331cd867133ee14422b3f023f6d388034c47d43e28786a"
 dependencies = [
  "approx",
  "num-traits",
  "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -3189,7 +3190,7 @@ dependencies = [
  "async-trait",
  "axum",
  "axum-extra",
- "base64 0.23.0",
+ "base64 0.23.1",
  "chrono",
  "claims",
  "config",
