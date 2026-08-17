@@ -49,12 +49,19 @@ const MemberOrganizationCard = ({
           placeholder="Organisation wechseln"
           searchPlaceholder="Organisation suchen"
           emptyText="Keine passende Organisation"
+          aria-describedby={error ? 'member-organization-error' : undefined}
+          aria-invalid={!!error}
         />
       </div>
     )}
 
     {error && (
-      <p role="alert" aria-live="assertive" className="mt-2 text-sm text-red">
+      <p
+        id="member-organization-error"
+        role="alert"
+        aria-live="assertive"
+        className="mt-2 text-sm text-red"
+      >
         {error}
       </p>
     )}

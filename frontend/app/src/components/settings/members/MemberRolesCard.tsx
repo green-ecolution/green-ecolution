@@ -88,12 +88,19 @@ const MemberRolesCard = ({
           placeholder="Rolle zuweisen"
           searchPlaceholder="Rolle suchen"
           emptyText="Keine weitere Rolle verfügbar"
+          aria-describedby={error ? 'member-roles-error' : undefined}
+          aria-invalid={!!error}
         />
       </div>
     )}
 
     {error && (
-      <p role="alert" aria-live="assertive" className="mt-2 text-sm text-red">
+      <p
+        id="member-roles-error"
+        role="alert"
+        aria-live="assertive"
+        className="mt-2 text-sm text-red"
+      >
         {error}
       </p>
     )}

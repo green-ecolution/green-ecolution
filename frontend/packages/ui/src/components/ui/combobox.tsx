@@ -30,6 +30,8 @@ export interface ComboboxProps {
   disabled?: boolean
   className?: string
   contentClassName?: string
+  'aria-describedby'?: string
+  'aria-invalid'?: boolean
 }
 
 const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
@@ -45,6 +47,8 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
       disabled,
       className,
       contentClassName,
+      'aria-describedby': ariaDescribedBy,
+      'aria-invalid': ariaInvalid,
     },
     ref,
   ) => {
@@ -71,6 +75,8 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
             type="button"
             role="combobox"
             aria-expanded={open}
+            aria-describedby={ariaDescribedBy}
+            aria-invalid={ariaInvalid}
             disabled={disabled}
             data-slot="combobox-trigger"
             className={cn(
