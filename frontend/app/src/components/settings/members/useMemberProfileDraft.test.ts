@@ -79,4 +79,28 @@ describe('useMemberProfileDraft', () => {
     expect(result.current.draft).toBeNull()
     expect(result.current.dirty).toBe(false)
   })
+
+  it('carries avatarUrl passively without marking dirty', () => {
+    const { result } = renderHook(() => useMemberProfileDraft())
+    const withAvatar = { ...anna, avatarUrl: 'https://example.com/avatar.png' }
+
+    // Load user with avatar
+    act(() => result.current.edit(withAvatar))
+
+    expect(result.current.draft?.avatarUrl).toBe('https://example.com/avatar.png')
+    expect(result.current.dirty).toBe(false)
+
+    // Edit a form field
+    act(() => result.current.setPhoneNumber('+49 461 2'))
+
+    expect(result.current.draft?.avatarUrl).toBe('https://example.com/avatar.png')
+    expect(result.current.dirty).toBe(true)
+
+    // Type back to original value
+    act(() => result.current.setPhoneNumber('+49 461 1'))
+
+    // Only avatarUrl differs from baseline, but it never triggers dirty since it's not in canonical
+    expect(result.current.draft?.avatarUrl).toBe('https://example.com/avatar.png')
+    expect(result.current.dirty).toBe(false)
+  })
 })

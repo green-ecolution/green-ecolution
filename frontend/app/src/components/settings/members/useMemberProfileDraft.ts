@@ -8,6 +8,9 @@ export interface MemberProfileDraft {
   drivingLicenses: DrivingLicense[]
   phoneNumber: string
   employeeId: string
+  // The endpoint replaces the whole profile; an omitted avatarUrl clears the stored value.
+  // This field is carried passively to avoid data loss on save.
+  avatarUrl: string | null
 }
 
 const canonical = (draft: MemberProfileDraft): string =>
@@ -24,6 +27,7 @@ const draftOf = (user: UserResponse): MemberProfileDraft => ({
   drivingLicenses: [...user.drivingLicenses],
   phoneNumber: user.phoneNumber ?? '',
   employeeId: user.employeeId ?? '',
+  avatarUrl: user.avatarUrl ?? null,
 })
 
 export const useMemberProfileDraft = () => {
