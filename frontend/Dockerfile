@@ -4,7 +4,7 @@
 FROM node:26-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.20.0
 COPY . /app
 WORKDIR /app
 
