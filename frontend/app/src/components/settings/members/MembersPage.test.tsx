@@ -18,6 +18,13 @@ const role = (id: string, name: string): RoleResponse => ({
 
 const ROLES: RoleResponse[] = [role('r-lead', 'Einsatzleitung'), role('r-garden', 'Gärtner')]
 
+// Keyed by org so the picker's org-scoping (a role only grants rights over its
+// own organization's subtree) can be told apart from "returns some roles".
+const ROLES_BY_ORG: Record<string, RoleResponse[]> = {
+  amt: ROLES,
+  nord: [role('r-driver', 'Fahrerin')],
+}
+
 const avatarOf = (id: string) => `https://cdn.example/${id}.png`
 
 const member = (
@@ -92,7 +99,7 @@ vi.mock('@tanstack/react-query', async () => {
   return {
     ...actual,
     useQuery: (options: { queryKey: unknown[] }) => {
-      const [scope, second] = options.queryKey
+      const [scope, second, third] = options.queryKey
       if (scope === 'users' && second === 'me') {
         return { data: { id: meId(), roles: [], organization: ORGS[0] }, isLoading: false }
       }
@@ -127,7 +134,10 @@ vi.mock('@tanstack/react-query', async () => {
         }
       }
       if (scope === 'organizations') return { data: ORGS, isLoading: false }
-      if (scope === 'roles') return { data: ROLES, isLoading: false }
+      if (scope === 'roles' && second === 'org') {
+        const orgId = third as string
+        return { data: ROLES_BY_ORG[orgId] ?? [], isLoading: false }
+      }
       return { data: undefined, isLoading: false }
     },
   }
@@ -192,6 +202,20 @@ describe('MembersPage', () => {
     expect(screen.queryByRole('option', { name: 'Einsatzleitung' })).not.toBeInTheDocument()
   })
 
+  it("offers only the selected person's own organization roles, not another organization's", async () => {
+    render(<MembersPage />)
+    // Bo belongs to "nord", not the default org used everywhere else, so the
+    // picker's role set can only come from the selected person's org, not a
+    // hardcoded or own-org fallback.
+    await select(/Bo Boysen/)
+
+    await openCombobox('Rolle zuweisen')
+
+    expect(screen.getByRole('option', { name: 'Fahrerin' })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Einsatzleitung' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Gärtner' })).not.toBeInTheDocument()
+  })
+
   it('revokes a role immediately', async () => {
     render(<MembersPage />)
     await select(/Anna Ahlmann/)
@@ -218,7 +242,6 @@ describe('MembersPage', () => {
 
     expect(setOrgMutate).toHaveBeenCalledWith(
       expect.objectContaining({ userId: 'u-anna', organizationId: 'nord' }),
-      expect.anything(),
     )
   })
 
@@ -312,12 +335,57 @@ describe('MembersPage', () => {
     expect(list().getByRole('button', { name: /Bo Boysen/ })).toBeInTheDocument()
   })
 
+  it('offers a way back once the selected person falls out of the filter', async () => {
+    render(<MembersPage />)
+    await select(/Anna Ahlmann/)
+    expect(screen.getByRole('heading', { name: 'Anna Ahlmann' })).toBeInTheDocument()
+
+    await userEvent.type(screen.getByRole('searchbox', { name: /suchen/i }), 'Boysen')
+
+    await waitFor(() =>
+      expect(
+        screen.getByText('Die ausgewählte Person passt nicht zu Suche und Filter.'),
+      ).toBeInTheDocument(),
+    )
+    expect(screen.queryByRole('heading', { name: 'Anna Ahlmann' })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Suche und Filter zurücksetzen' }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Anna Ahlmann' })).toBeInTheDocument(),
+    )
+  })
+
   it('shows the 403 of a too-powerful role at the roles card', async () => {
     assignError.mockReturnValue({ response: { status: 403 } })
     render(<MembersPage />)
     await select(/Anna Ahlmann/)
 
     expect(screen.getByRole('alert')).toHaveTextContent(/Rechte/)
+  })
+
+  it('shows the 409 of an own-account role change at the roles card, not a toast', async () => {
+    assignError.mockReturnValue({ response: { status: 409 } })
+    render(<MembersPage />)
+    await select(/Anna Ahlmann/)
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Am eigenen Konto lassen sich Rollen nicht ändern.',
+    )
+    expect(screen.queryByText('Die Rolle konnte nicht zugewiesen werden.')).not.toBeInTheDocument()
+  })
+
+  it('shows the 409 of an own-account organization change at the organization card, not a toast', async () => {
+    setOrgError.mockReturnValue({ response: { status: 409 } })
+    render(<MembersPage />)
+    await select(/Anna Ahlmann/)
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Die eigene Organisation lässt sich hier nicht ändern.',
+    )
+    expect(
+      screen.queryByText('Die Organisation konnte nicht geändert werden.'),
+    ).not.toBeInTheDocument()
   })
 
   it('renders the detail in a drawer on narrow screens', async () => {
