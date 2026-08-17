@@ -276,10 +276,22 @@ async fn list_users_search_without_hits_returns_an_empty_page() {
 }
 
 #[tokio::test]
-async fn list_users_blank_search_behaves_like_no_search() {
+async fn list_users_empty_string_search_behaves_like_no_search() {
     let app = spawn_app().await;
 
-    // A cleared search field must not filter everything away.
+    // A cleared search field arrives as an empty string.
+    let resp = app.get("/api/v1/users?query=").await;
+
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 1);
+}
+
+#[tokio::test]
+async fn list_users_whitespace_search_is_trimmed() {
+    let app = spawn_app().await;
+
+    // Whitespace-only must not filter either.
     let resp = app.get("/api/v1/users?query=%20%20").await;
 
     assert_eq!(resp.status(), 200);
