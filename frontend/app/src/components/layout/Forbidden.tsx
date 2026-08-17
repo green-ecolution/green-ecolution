@@ -32,7 +32,7 @@ function Forbidden() {
             <Button asChild variant="outline" className="group gap-2 px-6">
               <Link to="/dashboard">
                 Zum Dashboard
-                <MoveRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                <MoveRight className="w-4 h-4 transition-transform duration-base ease-emphasized group-hover:translate-x-1 motion-reduce:transition-none" />
               </Link>
             </Button>
           </div>

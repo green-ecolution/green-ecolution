@@ -78,7 +78,10 @@ const SensorLocationSection = ({ sensor }: SensorLocationSectionProps) => {
             >
               Koordinaten
               <ChevronDown
-                className={cn('size-4 transition-transform', showDetails && 'rotate-180')}
+                className={cn(
+                  'size-4 transition-transform duration-base ease-out motion-reduce:transition-none',
+                  showDetails && 'rotate-180',
+                )}
               />
             </button>
           )}

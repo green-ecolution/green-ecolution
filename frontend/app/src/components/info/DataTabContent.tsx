@@ -240,7 +240,7 @@ function DataStatCard({ icon, label, value, subtitle, color, href }: DataStatCar
           </div>
           <div className="mt-3 flex items-center gap-1.5 text-xs font-medium text-dark-500 group-hover:text-green-dark transition-colors">
             Ansehen
-            <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
+            <ArrowRight className="size-3 transition-transform duration-base ease-emphasized group-hover:translate-x-0.5 motion-reduce:transition-none" />
           </div>
         </CardContent>
       </Card>

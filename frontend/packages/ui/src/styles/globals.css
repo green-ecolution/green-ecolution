@@ -374,3 +374,32 @@
     @apply bg-green-light-300 text-dark;
   }
 }
+
+/* Reduced motion keeps the cross-fade and drops the travel: neutralising the
+   enter/exit transforms leaves tw-animate-css's opacity keyframe intact, so
+   overlays still read as arriving. Spinners and pulses have their own
+   keyframes and stay untouched, since they carry status. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    --tw-enter-translate-x: 0;
+    --tw-enter-translate-y: 0;
+    --tw-enter-scale: 1;
+    --tw-enter-rotate: 0;
+    --tw-enter-blur: 0;
+    --tw-exit-translate-x: 0;
+    --tw-exit-translate-y: 0;
+    --tw-exit-scale: 1;
+    --tw-exit-rotate: 0;
+    --tw-exit-blur: 0;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  [data-slot='dialog-overlay'],
+  [data-slot='alert-dialog-overlay'] {
+    backdrop-filter: none;
+    background-color: color-mix(in oklab, var(--dark) 92%, transparent);
+  }
+}

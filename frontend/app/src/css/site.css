@@ -20,8 +20,12 @@
 
 @utility icon-arrow-animate {
   transition-property: transform;
-  transition-timing-function: ease-in-out;
-  transition-duration: 300ms;
+  transition-timing-function: var(--ease-emphasized);
+  transition-duration: var(--transition-duration-base);
+
+  @media (prefers-reduced-motion: reduce) {
+    transition-property: none;
+  }
 
   .group:hover & {
     transform: translateX(0.5rem);
@@ -34,8 +38,12 @@
 
 @utility icon-arrow-back-animate {
   transition-property: transform;
-  transition-timing-function: ease-in-out;
-  transition-duration: 300ms;
+  transition-timing-function: var(--ease-emphasized);
+  transition-duration: var(--transition-duration-base);
+
+  @media (prefers-reduced-motion: reduce) {
+    transition-property: none;
+  }
 
   .group:hover & {
     transform: translateX(-0.25rem);

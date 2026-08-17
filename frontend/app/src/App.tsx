@@ -14,7 +14,7 @@ function App() {
     <>
       <Header />
       <main
-        className={`flex-1 transition-[padding] ease-in-out duration-300 ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-[16rem]'}`}
+        className={`flex-1 transition-[padding] ease-in-out duration-300 motion-reduce:transition-none ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-[16rem]'}`}
       >
         <Outlet />
       </main>

@@ -111,7 +111,7 @@ const ClusterCard: React.FC<ClusterCardProps> = ({ treecluster }) => {
           <span className="flex shrink-0 items-center gap-1 font-semibold text-green-dark">
             Details
             <ArrowRight
-              className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+              className="h-4 w-4 transition-transform duration-base ease-emphasized group-hover:translate-x-1 motion-reduce:transition-none"
               aria-hidden
             />
           </span>
