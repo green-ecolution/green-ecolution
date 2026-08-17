@@ -20,6 +20,7 @@ import { organizationQueries, userQueries } from '@/api/queries'
 import { useOrganizationMutations } from '@/hooks/useOrganizationMutations'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
+import { initialsOf } from '@/lib/initials'
 import ContactPersonPicker from './ContactPersonPicker'
 import CreateOrganizationDialog from './CreateOrganizationDialog'
 import OrganizationActionButtons from './OrganizationActionButtons'
@@ -29,9 +30,6 @@ import { buildTree, pathTo, type OrgNode } from './organizationTree'
 import { useOrganizationDraft } from './useOrganizationDraft'
 
 const MEMBERS_PER_PAGE = 100
-
-const memberInitialsOf = (firstName?: string | null, lastName?: string | null): string =>
-  `${firstName?.charAt(0) ?? ''}${lastName?.charAt(0) ?? ''}`.toUpperCase()
 
 const statusOf = (error: unknown): number | undefined =>
   (error as { response?: { status?: number } } | null)?.response?.status
@@ -123,7 +121,7 @@ const OrganizationPage = () => {
 
   const members = memberPage?.data ?? []
   const memberInitials = members
-    .map((user) => memberInitialsOf(user.firstName, user.lastName))
+    .map((user) => initialsOf(user.firstName, user.lastName))
     .filter((initials) => initials.length > 0)
 
   if (rootId === null) {

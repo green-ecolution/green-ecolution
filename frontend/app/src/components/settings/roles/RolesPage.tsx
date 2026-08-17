@@ -21,6 +21,7 @@ import { useRoleMutations } from '@/hooks/useRoleMutations'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { usePermissions } from '@/lib/auth/usePermissions'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { initialsOf } from '@/lib/initials'
 import RoleActionButtons from './RoleActionButtons'
 import RoleDetail from './RoleDetail'
 import RoleList from './RoleList'
@@ -28,9 +29,6 @@ import { ownRolesOf } from './roleList'
 import { useRoleDraft } from './useRoleDraft'
 
 const TEAM_USERS_PARAMS = { page: 1, perPage: 100 }
-
-const initialsOf = (firstName?: string | null, lastName?: string | null): string =>
-  `${firstName?.charAt(0) ?? ''}${lastName?.charAt(0) ?? ''}`.toUpperCase()
 
 const nameConflictMessage = (error: unknown): string | null => {
   const status = (error as { response?: { status?: number } } | null)?.response?.status
