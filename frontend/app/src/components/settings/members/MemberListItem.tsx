@@ -43,7 +43,7 @@ const MemberListItem = ({ user, selected, onSelect }: MemberListItemProps) => {
           <span className="block truncate text-xs text-dark-600">{metaLineOf(user)}</span>
         </span>
 
-        <Badge variant={status?.color ?? 'outline-dark'}>{status?.label ?? 'Keine Angabe'}</Badge>
+        <Badge variant={status.color}>{status.label}</Badge>
       </button>
     </ListCard>
   )

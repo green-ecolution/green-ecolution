@@ -252,10 +252,7 @@ const MembersPage = () => {
 
   const moveToOrganization = () => {
     if (!selected || confirmOrgChange === null) return
-    setOrganization.mutate(
-      { userId: selected.id, organizationId: confirmOrgChange },
-      { onSuccess: () => setConfirmOrgChange(null) },
-    )
+    setOrganization.mutate({ userId: selected.id, organizationId: confirmOrgChange })
   }
 
   const save = () => {

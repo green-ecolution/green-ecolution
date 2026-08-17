@@ -1,21 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import type { RoleResponse, UserResponse } from '@/api/backendApi'
+import type { UserResponse } from '@/api/backendApi'
 import { initialsOf } from '@/lib/initials'
-import {
-  emptyMessageOf,
-  fullNameOf,
-  isFiltered,
-  memberCountLabel,
-  roleOverflow,
-  sinceLabel,
-} from './memberList'
-
-const role = (id: string, name: string): RoleResponse => ({
-  id,
-  name,
-  permissions: [],
-  isTemplate: false,
-})
+import { emptyMessageOf, fullNameOf, isFiltered, memberCountLabel, sinceLabel } from './memberList'
 
 const user = (firstName: string, lastName: string): UserResponse =>
   ({ firstName, lastName }) as UserResponse
@@ -41,20 +27,6 @@ describe('fullNameOf', () => {
 
   it('does not leave a stray space when a part is missing', () => {
     expect(fullNameOf(user('Anna', ''))).toBe('Anna')
-  })
-})
-
-describe('roleOverflow', () => {
-  it('shows everything below the limit', () => {
-    const { visible, overflow } = roleOverflow([role('a', 'A'), role('b', 'B')], 2)
-    expect(visible).toHaveLength(2)
-    expect(overflow).toBe(0)
-  })
-
-  it('counts the remainder above the limit', () => {
-    const { visible, overflow } = roleOverflow([role('a', 'A'), role('b', 'B'), role('c', 'C')], 2)
-    expect(visible).toHaveLength(2)
-    expect(overflow).toBe(1)
   })
 })
 

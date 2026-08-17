@@ -42,11 +42,8 @@ export const useUserMutations = () => {
   const queryClient = useQueryClient()
   const showToast = createToast()
 
-  // A role or organization change can alter the signed-in user's own grants,
-  // so nav and gating must refetch alongside the user list.
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: ['users'] })
-    void queryClient.invalidateQueries({ queryKey: ['users', 'me'] })
   }
 
   const assignRole = useMutation({

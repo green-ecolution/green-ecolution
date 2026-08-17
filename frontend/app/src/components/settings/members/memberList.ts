@@ -1,17 +1,7 @@
-import type { RoleResponse, UserResponse } from '@/api/backendApi'
-
-const DEFAULT_VISIBLE_ROLES = 2
+import type { UserResponse } from '@/api/backendApi'
 
 export const fullNameOf = (user: UserResponse): string =>
   [user.firstName, user.lastName].filter((part) => (part ?? '').trim().length > 0).join(' ')
-
-export const roleOverflow = (
-  roles: RoleResponse[],
-  max: number = DEFAULT_VISIBLE_ROLES,
-): { visible: RoleResponse[]; overflow: number } => ({
-  visible: roles.slice(0, max),
-  overflow: Math.max(0, roles.length - max),
-})
 
 const personNoun = (count: number): string => (count === 1 ? 'Person' : 'Personen')
 
