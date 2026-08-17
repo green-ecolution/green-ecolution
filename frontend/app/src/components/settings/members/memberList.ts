@@ -28,3 +28,10 @@ export const isFiltered = (
   organizationId: string | null,
   roleId: string | null,
 ): boolean => search.trim().length > 0 || organizationId !== null || roleId !== null
+
+export const sinceLabel = (createdAt?: string | null): string | null => {
+  if (createdAt == null) return null
+  const date = new Date(createdAt)
+  if (Number.isNaN(date.getTime())) return null
+  return `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`
+}

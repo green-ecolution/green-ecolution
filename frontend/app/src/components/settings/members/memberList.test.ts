@@ -7,8 +7,8 @@ import {
   isFiltered,
   memberCountLabel,
   roleOverflow,
+  sinceLabel,
 } from './memberList'
-import { sinceLabel } from './cardChrome'
 
 const role = (id: string, name: string): RoleResponse => ({
   id,
@@ -17,10 +17,8 @@ const role = (id: string, name: string): RoleResponse => ({
   isTemplate: false,
 })
 
-const user = (firstName: string, lastName: string): UserResponse => ({
-  firstName,
-  lastName,
-})
+const user = (firstName: string, lastName: string): UserResponse =>
+  ({ firstName, lastName }) as UserResponse
 
 describe('initialsOf', () => {
   it('takes the first letter of each name', () => {
@@ -75,8 +73,12 @@ describe('memberCountLabel', () => {
 })
 
 describe('emptyMessageOf', () => {
-  it('distinguishes no hits from no members at all', () => {
-    expect(emptyMessageOf(true)).not.toBe(emptyMessageOf(false))
+  it('says "no search hits" when filtered', () => {
+    expect(emptyMessageOf(true)).toBe('Keine Person passt zu Suche und Filter.')
+  })
+
+  it('says "no members yet" when not filtered', () => {
+    expect(emptyMessageOf(false)).toBe('Es sind noch keine Mitarbeitenden hinterlegt.')
   })
 })
 
