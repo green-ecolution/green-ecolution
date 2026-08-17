@@ -531,6 +531,18 @@ mod tests {
 
     struct StubIdentityRepo {
         identities: Vec<UserIdentity>,
+        seen: Mutex<Vec<Pagination>>,
+        total_override: Option<u64>,
+    }
+
+    impl StubIdentityRepo {
+        fn new(identities: Vec<UserIdentity>) -> Self {
+            Self {
+                identities,
+                seen: Mutex::new(Vec::new()),
+                total_override: None,
+            }
+        }
     }
 
     #[async_trait::async_trait]
@@ -550,8 +562,9 @@ mod tests {
         async fn search(
             &self,
             query: &str,
-            _p: Pagination,
+            pagination: Pagination,
         ) -> Result<Page<UserIdentity>, RepositoryError> {
+            self.seen.lock().unwrap().push(pagination);
             let needle = query.to_lowercase();
             let items: Vec<UserIdentity> = self
                 .identities
@@ -565,7 +578,7 @@ mod tests {
                 .cloned()
                 .collect();
             Ok(Page {
-                total: items.len() as u64,
+                total: self.total_override.unwrap_or(items.len() as u64),
                 items,
             })
         }
@@ -722,10 +735,13 @@ mod tests {
         }
     }
 
-    fn service(identities: Vec<UserIdentity>, profiles: Arc<InMemoryProfiles>) -> UserService {
+    fn service_with_repo(
+        repo: Arc<StubIdentityRepo>,
+        profiles: Arc<InMemoryProfiles>,
+    ) -> UserService {
         let roles = Arc::new(StubRoles);
         UserService::new(
-            Arc::new(StubIdentityRepo { identities }),
+            repo,
             profiles.clone(),
             profiles,
             roles.clone(),
@@ -733,6 +749,10 @@ mod tests {
             Arc::new(StubOrgs),
             true,
         )
+    }
+
+    fn service(identities: Vec<UserIdentity>, profiles: Arc<InMemoryProfiles>) -> UserService {
+        service_with_repo(Arc::new(StubIdentityRepo::new(identities)), profiles)
     }
 
     #[tokio::test]
@@ -872,10 +892,11 @@ mod tests {
         let outside = Uuid::now_v7();
         let profiles = Arc::new(InMemoryProfiles::default());
         profiles.org_members.lock().unwrap().push(inside);
-        let svc = service(
-            vec![identity(inside, "jdoe"), identity(outside, "jdoe2")],
-            profiles,
-        );
+        let repo = Arc::new(StubIdentityRepo::new(vec![
+            identity(inside, "jdoe"),
+            identity(outside, "jdoe2"),
+        ]));
+        let svc = service_with_repo(repo.clone(), profiles);
 
         let page = svc
             .list(
@@ -890,6 +911,37 @@ mod tests {
             .unwrap();
 
         // Both identities match the query, only one is a member of the organization.
+        assert_eq!(page.total, 1);
+        assert_eq!(page.items[0].id, inside);
+
+        let seen = repo.seen.lock().unwrap();
+        assert_eq!(seen.len(), 1);
+        assert_eq!(seen[0].per_page(), SEARCH_INTERSECTION_CAP);
+    }
+
+    #[tokio::test]
+    async fn search_intersection_is_correct_even_when_the_idp_total_is_truncated() {
+        let inside = Uuid::now_v7();
+        let profiles = Arc::new(InMemoryProfiles::default());
+        profiles.org_members.lock().unwrap().push(inside);
+        let mut repo = StubIdentityRepo::new(vec![identity(inside, "jdoe")]);
+        repo.total_override = Some(SEARCH_INTERSECTION_CAP + 1);
+        let svc = service_with_repo(Arc::new(repo), profiles);
+
+        let page = svc
+            .list(
+                Pagination::default(),
+                UserListFilter {
+                    organization_id: Some(Id::new_v7()),
+                    query: Some("jdoe".into()),
+                    ..UserListFilter::default()
+                },
+            )
+            .await
+            .unwrap();
+
+        // hits.total (truncated, > SEARCH_INTERSECTION_CAP) must not leak into the
+        // reported page total; the service reports the intersected count instead.
         assert_eq!(page.total, 1);
         assert_eq!(page.items[0].id, inside);
     }
