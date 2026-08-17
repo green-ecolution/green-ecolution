@@ -333,7 +333,30 @@ async fn assigning_a_role_to_yourself_returns_409() {
 async fn revoking_a_role_from_yourself_returns_409() {
     let app = spawn_app().await;
     let org = create_org(&app, "TBZ").await;
+    let org_uuid = Uuid::parse_str(&org).unwrap();
     let role_id = create_role(&app, &org, "Gießtrupp").await;
+    let role_uuid = Uuid::parse_str(&role_id).unwrap();
+    let self_uuid = Uuid::nil();
+
+    // Seed a real assignment so the 409 has something to leave alone.
+    // role_assignments.user_id references user_profiles(id), so the profile
+    // row must exist first.
+    sqlx::query!(
+        r#"INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)"#,
+        self_uuid,
+        org_uuid
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    sqlx::query!(
+        r#"INSERT INTO role_assignments (user_id, role_id) VALUES ($1, $2)"#,
+        self_uuid,
+        role_uuid
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
 
     let resp = app
         .delete(&format!("/api/v1/users/{SELF_ID}/roles/{role_id}"))
@@ -341,8 +364,7 @@ async fn revoking_a_role_from_yourself_returns_409() {
 
     assert_eq!(resp.status(), 409);
 
-    // Side-effect assertion: no role assignments should exist for self.
-    let self_uuid = Uuid::nil();
+    // Side-effect assertion: the seeded assignment must still be there.
     let assigned_roles: Vec<Uuid> = sqlx::query_scalar!(
         r#"SELECT role_id FROM role_assignments WHERE user_id = $1"#,
         self_uuid
@@ -350,7 +372,7 @@ async fn revoking_a_role_from_yourself_returns_409() {
     .fetch_all(&app.db_pool)
     .await
     .unwrap();
-    assert!(assigned_roles.is_empty());
+    assert!(assigned_roles.contains(&role_uuid));
 }
 
 #[tokio::test]
