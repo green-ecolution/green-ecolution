@@ -5,20 +5,25 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  'group inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-base font-medium cursor-pointer transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-6 [&_svg]:shrink-0',
+  'group inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-base font-medium cursor-pointer transition-[color,background-color,border-color,box-shadow,opacity,scale] duration-quick ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-6 [&_svg]:shrink-0',
   {
     variants: {
+      // Surface variants take the press scale; text-only variants dim instead,
+      // since scaling a bare label reads as a rendering glitch.
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-secondary',
-        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+        default: 'bg-primary text-primary-foreground hover:bg-secondary active:scale-[0.97]',
+        destructive:
+          'bg-destructive text-destructive-foreground hover:bg-destructive/90 active:scale-[0.97]',
         outline:
-          'border border-dark-600 bg-background text-dark-600 hover:border-dark hover:text-dark',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
-        'ghost-destructive': 'text-destructive hover:bg-destructive/10 hover:text-destructive',
-        link: 'text-primary underline-offset-4 hover:underline',
-        'link-destructive': 'text-destructive underline-offset-4 hover:underline',
-        nav: 'text-primary',
+          'border border-dark-600 bg-background text-dark-600 hover:border-dark hover:text-dark active:scale-[0.97]',
+        secondary:
+          'bg-secondary text-secondary-foreground hover:bg-secondary/80 active:scale-[0.97]',
+        ghost: 'hover:bg-accent hover:text-accent-foreground active:scale-[0.97]',
+        'ghost-destructive':
+          'text-destructive hover:bg-destructive/10 hover:text-destructive active:scale-[0.97]',
+        link: 'text-primary underline-offset-4 hover:underline active:opacity-70',
+        'link-destructive': 'text-destructive underline-offset-4 hover:underline active:opacity-70',
+        nav: 'text-primary active:opacity-70',
       },
       size: {
         default: 'h-10 px-4 py-2',

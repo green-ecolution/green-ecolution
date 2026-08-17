@@ -107,13 +107,13 @@ const SoilTextureTriangle = ({ silt, clay, activeCondition }: SoilTextureTriangl
         cx={toX(silt)}
         cy={toY(clay)}
         r={2}
-        className="fill-ring transition-all duration-150 motion-reduce:transition-none"
+        className="fill-ring transition-[cx,cy] duration-quick ease-out motion-reduce:transition-none"
       />
       <circle
         cx={toX(silt)}
         cy={toY(clay)}
         r={0.7}
-        className="fill-background transition-all duration-150 motion-reduce:transition-none"
+        className="fill-background transition-[cx,cy] duration-quick ease-out motion-reduce:transition-none"
       />
     </svg>
   )

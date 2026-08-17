@@ -226,7 +226,7 @@ function DataStatCard({ icon, label, value, subtitle, color, href }: DataStatCar
 
   return (
     <Link to={href} className="block group">
-      <Card className="h-full transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
+      <Card className="h-full transition-[box-shadow,translate] duration-base ease-out hover:shadow-md hover:-translate-y-0.5 motion-reduce:transition-none">
         <CardContent className="pt-5 pb-4">
           <div className="flex items-start gap-3">
             <div className={`p-2.5 rounded-lg ${styles.bg}`}>
@@ -240,7 +240,7 @@ function DataStatCard({ icon, label, value, subtitle, color, href }: DataStatCar
           </div>
           <div className="mt-3 flex items-center gap-1.5 text-xs font-medium text-dark-500 group-hover:text-green-dark transition-colors">
             Ansehen
-            <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
+            <ArrowRight className="size-3 transition-transform duration-base ease-emphasized group-hover:translate-x-0.5 motion-reduce:transition-none" />
           </div>
         </CardContent>
       </Card>

@@ -163,7 +163,7 @@ const Navigation: React.FC<NavigationProps> = ({ isOpen, closeSidebar }) => {
     <nav
       id="main-navigation"
       aria-label="Hauptnavigation"
-      className={`fixed inset-0 z-50 bg-dark w-screen h-dvh flex flex-col ease-in-out duration-300 transition-[left,width,visibility]
+      className={`fixed inset-0 z-50 bg-dark w-screen h-dvh flex flex-col ease-in-out duration-300 transition-[left,width,visibility] motion-reduce:transition-none
         lg:left-0 lg:visible ${collapsed ? 'lg:w-[4.5rem]' : 'lg:w-[16rem]'}
         ${isOpen ? 'visible left-0' : 'invisible -left-full'}`}
     >

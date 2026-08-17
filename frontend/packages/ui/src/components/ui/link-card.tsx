@@ -6,7 +6,7 @@ import { MoveRight } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 const linkCardVariants = cva(
-  'shadow-cards border h-full p-6 rounded-xl group flex flex-col gap-4 transition-all ease-in-out duration-300',
+  'shadow-cards border h-full p-6 rounded-xl group flex flex-col gap-4 transition-colors duration-quick ease-out',
   {
     variants: {
       variant: {
@@ -72,7 +72,7 @@ const LinkCardFooter = React.forwardRef<HTMLParagraphElement, LinkCardFooterProp
     >
       <span>{children}</span>
       {showArrow && (
-        <MoveRight className="transition-all ease-in-out duration-300 group-hover:translate-x-2" />
+        <MoveRight className="transition-transform duration-base ease-emphasized group-hover:translate-x-2 motion-reduce:transition-none" />
       )}
     </p>
   ),

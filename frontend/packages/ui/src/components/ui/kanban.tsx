@@ -17,7 +17,9 @@ const KanbanBoard = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDi
 KanbanBoard.displayName = 'KanbanBoard'
 
 const kanbanColumnVariants = cva(
-  'flex w-[300px] shrink-0 snap-start flex-col gap-3 rounded-xl p-3 transition-[background-color,opacity] duration-200 motion-reduce:transition-none',
+  // No motion-reduce guard: the dim/highlight tells the user whether a column is
+  // a valid drop target, and a colour fade is not a vestibular trigger.
+  'flex w-[300px] shrink-0 snap-start flex-col gap-3 rounded-xl p-3 transition-[background-color,opacity] duration-base ease-out',
   {
     variants: {
       tone: {
@@ -77,7 +79,9 @@ const KanbanColumnHeader = ({
 )
 
 const kanbanCardVariants = cva(
-  'rounded-xl border border-dark-100 bg-white p-4 shadow-cards transition-[box-shadow,transform] duration-200 motion-reduce:transition-none motion-reduce:transform-none',
+  // The drag tilt is rotate-2, which v4 emits as the standalone rotate property:
+  // it has to be named here, and reset with rotate-none rather than transform-none.
+  'rounded-xl border border-dark-100 bg-white p-4 shadow-cards transition-[box-shadow,rotate] duration-base ease-out motion-reduce:transition-none motion-reduce:rotate-none',
   {
     variants: {
       state: {

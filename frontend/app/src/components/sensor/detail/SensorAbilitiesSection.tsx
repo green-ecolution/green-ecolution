@@ -76,7 +76,7 @@ const SensorAbilitiesSection = ({ sensor }: SensorAbilitiesSectionProps) => {
                 >
                   <div
                     aria-hidden
-                    className="absolute -right-8 -top-8 size-28 rounded-full bg-green-light-50/70 transition-transform group-hover:scale-110"
+                    className="absolute -right-8 -top-8 size-28 rounded-full bg-green-light-50/70 transition-transform duration-base ease-out group-hover:scale-110 motion-reduce:transition-none"
                   />
                   <div className="relative flex flex-col gap-3">
                     <div className="grid place-items-center size-12 rounded-xl bg-green-dark text-white shadow-sm">

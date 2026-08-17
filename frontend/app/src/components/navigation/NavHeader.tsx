@@ -18,7 +18,7 @@ const NavHeader: React.FC<NavHeader> = ({ closeSidebar, collapsed = false }) => 
     >
       <Link
         to="/dashboard"
-        className="block transition-all ease-in-out duration-300 hover:opacity-75"
+        className="block transition-opacity duration-quick ease-out hover:opacity-75"
         aria-label="Zurück zum persönlichen Dashboard"
         onClick={closeSidebar}
       >

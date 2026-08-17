@@ -25,7 +25,7 @@ const Option: React.FC<OptionProps> = ({ name, label, value, children, checked, 
 
   return (
     <label
-      className={`cursor-pointer mr-2 mb-2 inline-flex items-center gap-x-2 border w-max pr-5 pl-3 py-2 rounded-full border-green-light transition-all ease-in-out duration-300 hover:border-green-dark focus-within:border-green-dark focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-green-dark
+      className={`cursor-pointer mr-2 mb-2 inline-flex items-center gap-x-2 border w-max pr-5 pl-3 py-2 rounded-full border-green-light transition-[background-color,border-color,box-shadow] duration-quick ease-out hover:border-green-dark focus-within:border-green-dark focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-green-dark
         ${checked ? 'bg-green-light-200' : ''}`}
     >
       <input

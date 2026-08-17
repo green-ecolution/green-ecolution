@@ -54,7 +54,7 @@ const buildPointElement = ({ name, kind }: RoutePointMarkerData) => {
   icon.innerHTML = kind === 'start' ? HOUSE_ICON_SVG : DROPLET_ICON_SVG
   const label = document.createElement('span')
   label.className =
-    'max-w-0 overflow-hidden whitespace-nowrap text-xs font-semibold opacity-0 transition-all duration-200 group-hover:max-w-72 group-hover:pr-2.5 group-hover:opacity-100 motion-reduce:transition-none'
+    'max-w-0 overflow-hidden whitespace-nowrap text-xs font-semibold opacity-0 transition-[max-width,padding-right,opacity] duration-base ease-emphasized group-hover:max-w-72 group-hover:pr-2.5 group-hover:opacity-100 motion-reduce:transition-none'
   label.textContent = name
   el.append(icon, label)
   return el

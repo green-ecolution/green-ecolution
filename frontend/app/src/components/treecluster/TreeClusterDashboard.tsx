@@ -82,7 +82,7 @@ const TreeClusterDashboard = ({ treecluster }: TreeClusterDashboardProps) => {
                       variant="outline"
                       size="icon"
                       aria-label="Weitere Aktionen"
-                      className="[&_svg]:size-4 [&_svg]:transition-transform [&_svg]:duration-300 data-[state=open]:[&_svg]:rotate-180"
+                      className="[&_svg]:size-4 [&_svg]:transition-transform [&_svg]:duration-base data-[state=open]:[&_svg]:rotate-180 motion-reduce:[&_svg]:transition-none"
                     >
                       <ChevronDown />
                     </Button>

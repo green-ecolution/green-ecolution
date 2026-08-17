@@ -4,28 +4,25 @@ import { cva, type VariantProps } from 'class-variance-authority'
 
 import { cn } from '@/lib/utils'
 
-const avatarVariants = cva(
-  'relative flex shrink-0 overflow-hidden rounded-full transition-all duration-300',
-  {
-    variants: {
-      size: {
-        xs: 'size-6 text-[0.5rem]',
-        sm: 'size-8 text-xs',
-        default: 'size-10 text-sm',
-        lg: 'size-12 text-base',
-        xl: 'size-16 text-lg',
-        '2xl': 'size-32 text-3xl',
-        '3xl': 'size-48 text-4xl',
-      },
-    },
-    defaultVariants: {
-      size: 'default',
+const avatarVariants = cva('relative flex shrink-0 overflow-hidden rounded-full', {
+  variants: {
+    size: {
+      xs: 'size-6 text-[0.5rem]',
+      sm: 'size-8 text-xs',
+      default: 'size-10 text-sm',
+      lg: 'size-12 text-base',
+      xl: 'size-16 text-lg',
+      '2xl': 'size-32 text-3xl',
+      '3xl': 'size-48 text-4xl',
     },
   },
-)
+  defaultVariants: {
+    size: 'default',
+  },
+})
 
 const avatarFallbackVariants = cva(
-  'flex size-full items-center justify-center rounded-full font-semibold leading-none transition-colors duration-300 ease-in-out',
+  'flex size-full items-center justify-center rounded-full font-semibold leading-none transition-colors duration-quick ease-out',
   {
     variants: {
       variant: {

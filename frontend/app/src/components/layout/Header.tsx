@@ -44,7 +44,7 @@ function Header() {
   // map controls) paints above it
   return (
     <header
-      className={`sticky top-0 z-50 bg-white transition-[padding] ease-in-out duration-300 ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-[16rem]'}`}
+      className={`sticky top-0 z-50 bg-white transition-[padding] ease-in-out duration-300 motion-reduce:transition-none ${collapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-[16rem]'}`}
     >
       {/* min-h keeps the pre-NavUser header height (40px avatar + py-4 + border);
           the map height calc (100dvh - 4.563rem) depends on it */}
@@ -84,7 +84,7 @@ function Header() {
                     {`${firstName.charAt(0)}${lastName.charAt(0)}`}
                   </AvatarFallback>
                 </Avatar>
-                <ChevronDown className="size-5 text-dark transition-transform duration-300 ease-in-out group-data-[state=open]:rotate-180" />
+                <ChevronDown className="size-5 text-dark transition-transform duration-base ease-out group-data-[state=open]:rotate-180 motion-reduce:transition-none" />
               </button>
             </NavUserMenu>
           </div>
