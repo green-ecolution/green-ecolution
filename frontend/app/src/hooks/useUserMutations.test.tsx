@@ -74,11 +74,35 @@ describe('useUserMutations', () => {
       userId: 'u-1',
       employeeId: null,
       phoneNumber: null,
+      avatarUrl: 'https://example.com/avatar.png',
       status: 'available',
       drivingLicenses: [],
     })
 
     await waitFor(() => expect(result.current.updateProfile.isError).toBe(true))
     expect(showToast).toHaveBeenCalledWith(expect.any(String), 'error')
+  })
+
+  it('passes the current avatarUrl through, since updateUser replaces the whole profile', async () => {
+    updateUser.mockResolvedValue({ id: 'u-1' })
+    const { result } = setup()
+
+    result.current.updateProfile.mutate({
+      userId: 'u-1',
+      employeeId: null,
+      phoneNumber: null,
+      avatarUrl: 'https://example.com/avatar.png',
+      status: 'available',
+      drivingLicenses: [],
+    })
+
+    await waitFor(() => expect(result.current.updateProfile.isSuccess).toBe(true))
+    expect(updateUser).toHaveBeenCalledWith({
+      userId: 'u-1',
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      userUpdateRequest: expect.objectContaining({
+        avatarUrl: 'https://example.com/avatar.png',
+      }),
+    })
   })
 })

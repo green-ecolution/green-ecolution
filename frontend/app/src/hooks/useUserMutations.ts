@@ -22,6 +22,9 @@ export interface UpdateProfileVariables {
   userId: string
   employeeId: string | null
   phoneNumber: string | null
+  // updateUser replaces the whole profile; an omitted avatarUrl clears it,
+  // so callers must always pass the person's current value.
+  avatarUrl: string | null
   status: UserStatus
   drivingLicenses: DrivingLicense[]
 }
@@ -89,12 +92,13 @@ export const useUserMutations = () => {
       userId,
       employeeId,
       phoneNumber,
+      avatarUrl,
       status,
       drivingLicenses,
     }: UpdateProfileVariables) =>
       userApi.updateUser({
         userId,
-        userUpdateRequest: { employeeId, phoneNumber, status, drivingLicenses },
+        userUpdateRequest: { employeeId, phoneNumber, avatarUrl, status, drivingLicenses },
       }),
     onSuccess: () => {
       invalidate()
