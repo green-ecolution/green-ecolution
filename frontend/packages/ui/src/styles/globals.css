@@ -270,18 +270,44 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* Font Sizes (matching original Tailwind v3 config) */
+  /* Font Sizes (matching original Tailwind v3 config).
+     Leading and tracking belong to the size, not to the call site: type wants
+     tighter lines and tighter letters as it grows, and the reverse when small.
+     Every size sets both, because an unset sub-key silently inherits
+     Tailwind's default, which was computed for a different size. */
   --text-2xs: 0.625rem;
+  --text-2xs--line-height: 1.4;
+  --text-2xs--letter-spacing: 0.01em;
   --text-xs: 0.75rem;
+  --text-xs--line-height: 1.4;
+  --text-xs--letter-spacing: 0.01em;
   --text-sm: 0.875rem;
+  --text-sm--line-height: 1.5;
+  --text-sm--letter-spacing: 0em;
   --text-base: 1rem;
+  --text-base--line-height: 1.5;
+  --text-base--letter-spacing: 0em;
   --text-lg: 1.125rem;
+  --text-lg--line-height: 1.4;
+  --text-lg--letter-spacing: -0.005em;
   --text-xl: 1.25rem;
+  --text-xl--line-height: 1.4;
+  --text-xl--letter-spacing: -0.005em;
   --text-2xl: 1.5rem;
+  --text-2xl--line-height: 1.25;
+  --text-2xl--letter-spacing: -0.015em;
   --text-3xl: 1.75rem;
+  --text-3xl--line-height: 1.25;
+  --text-3xl--letter-spacing: -0.015em;
   --text-4xl: 2rem;
+  --text-4xl--line-height: 1.1;
+  --text-4xl--letter-spacing: -0.02em;
   --text-5xl: 2.25rem;
+  --text-5xl--line-height: 1.1;
+  --text-5xl--letter-spacing: -0.02em;
   --text-6xl: 3rem;
+  --text-6xl--line-height: 1.1;
+  --text-6xl--letter-spacing: -0.02em;
 
   /* Shadows */
   --shadow-cards: 0px 5px 10px 0px rgba(23, 23, 23, 5%);
