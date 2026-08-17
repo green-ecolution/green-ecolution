@@ -17,13 +17,12 @@ interface OrganizationTreeItemProps {
 // lines up directly under its parent's tile.
 const INDENT_STEP_REM = 1.25
 
+// Only the headcount: the row is narrow, and the disclosure chevron already
+// signals that a node has children.
 const subtitleOf = (node: OrgNode): string | null => {
   const memberCount = subtreeMemberCount(node)
   if (memberCount === 0) return null
-  const teamCount = node.children.length
-  const people = `${memberCount} ${memberCount === 1 ? 'Person' : 'Personen'}`
-  const teams = teamCount > 0 ? ` · ${teamCount} ${teamCount === 1 ? 'Team' : 'Teams'}` : ''
-  return `${people}${teams}`
+  return `${memberCount} ${memberCount === 1 ? 'Person' : 'Personen'}`
 }
 
 const OrganizationTreeItem = ({

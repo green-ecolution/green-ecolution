@@ -66,13 +66,15 @@ const sinceLabel = (createdAt?: string | null): string | null => {
   return `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`
 }
 
-const peopleLine = (people: number, teams: number): string => {
+const subOrgNoun = (count: number): string =>
+  count === 1 ? 'Unterorganisation' : 'Unterorganisationen'
+
+const peopleLine = (people: number, children: number): string => {
   const persons = `${people} ${people === 1 ? 'Person' : 'Personen'}`
-  return teams > 0 ? `${persons} in ${teams} ${teams === 1 ? 'Team' : 'Teams'}` : persons
+  return children > 0 ? `${persons} in ${children} ${subOrgNoun(children)}` : persons
 }
 
-const directChildrenLine = (count: number): string =>
-  `${count} direkte ${count === 1 ? 'Untereinheit' : 'Untereinheiten'}`
+const directChildrenLine = (count: number): string => `${count} direkte ${subOrgNoun(count)}`
 
 const StaticField = ({ label, value }: { label: string; value: string }) => (
   <div className="flex flex-col gap-y-1">
@@ -203,7 +205,7 @@ const OrganizationDetail = ({
           <section className={CARD}>
             <h3 className={CARD_TITLE}>Standort</h3>
             <p className="mt-0.5 text-sm text-dark-600">
-              Entweder vollständig oder gar nicht hinterlegt.
+              Die Adresse ist optional, lässt sich aber nur vollständig speichern.
             </p>
             <div className="mt-4 flex flex-col gap-4">
               {locked ? (

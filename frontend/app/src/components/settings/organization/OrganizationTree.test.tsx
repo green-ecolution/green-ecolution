@@ -37,21 +37,31 @@ const renderTree = (orgs: OrganizationResponse[], expanded: string[] = ['amt']) 
 const list = () => within(screen.getByRole('list', { name: 'Organisationsstruktur' }))
 
 describe('OrganizationTree', () => {
-  it('pluralises people and teams in a node subtitle', () => {
+  it('sums the whole subtree into the node subtitle', () => {
     renderTree([
       org('amt', 'Grünflächenamt', 2),
       org('nord', 'Nord', 3, 'amt'),
       org('sued', 'Süd', 4, 'amt'),
     ])
 
-    // 2 own + 3 + 4, below it two child organizations
-    expect(list().getByText('9 Personen · 2 Teams')).toBeInTheDocument()
+    expect(list().getByText('9 Personen')).toBeInTheDocument()
   })
 
-  it('uses the singular for a single person and a single team', () => {
-    renderTree([org('amt', 'Grünflächenamt', 0), org('nord', 'Nord', 1, 'amt')])
+  it('uses the singular for a single person', () => {
+    renderTree([org('amt', 'Grünflächenamt', 1)])
 
-    expect(list().getByText('1 Person · 1 Team')).toBeInTheDocument()
+    expect(list().getByText('1 Person')).toBeInTheDocument()
+  })
+
+  it('leaves the child count out of the subtitle', () => {
+    renderTree([
+      org('amt', 'Grünflächenamt', 2),
+      org('nord', 'Nord', 3, 'amt'),
+      org('sued', 'Süd', 4, 'amt'),
+    ])
+
+    expect(list().queryByText(/Unterorganisation/)).not.toBeInTheDocument()
+    expect(list().queryByText(/Team/)).not.toBeInTheDocument()
   })
 
   it('omits the subtitle for a node whose subtree has no members', () => {
