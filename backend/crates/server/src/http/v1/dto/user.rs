@@ -178,6 +178,8 @@ pub struct UserListParams {
     pub organization_id: Option<Uuid>,
     #[serde(default)]
     pub role_id: Option<Uuid>,
+    #[serde(default)]
+    pub query: Option<String>,
 }
 
 /// Request body for assigning a role to a user.

@@ -75,6 +75,7 @@ pub async fn get_me(
         ("per_page" = Option<u64>, Query, description = "Number of items per page", minimum = 1, maximum = 100),
         ("organization_id" = Option<Uuid>, Query, description = "Filter by organization membership"),
         ("role_id" = Option<Uuid>, Query, description = "Filter by assigned role"),
+        ("query" = Option<String>, Query, description = "Free-text filter over username, first name, last name and email"),
     ),
     responses(
         (status = 200, description = "Paginated list of users", body = ListResponse<UserResponse>),
@@ -92,7 +93,12 @@ pub async fn list_users(
     let filter = UserListFilter {
         organization_id: params.organization_id.map(Id::new),
         role_id: params.role_id.map(Id::new),
-        query: None,
+        // A cleared search field arrives as an empty string; treating it as a
+        // filter would match nothing at all.
+        query: params
+            .query
+            .map(|q| q.trim().to_string())
+            .filter(|q| !q.is_empty()),
     };
     let page = state.user_service.list(pagination, filter).await?;
     Ok(Json(ListResponse::from_page(page, &pagination)))

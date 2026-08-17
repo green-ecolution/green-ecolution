@@ -251,3 +251,38 @@ async fn list_users_filtered_by_role_uses_db_assignments() {
     let body: serde_json::Value = resp.json().await.unwrap();
     assert!(body["data"].as_array().unwrap().is_empty());
 }
+
+#[tokio::test]
+async fn list_users_search_matches_the_demo_user() {
+    let app = spawn_app().await;
+
+    let resp = app.get("/api/v1/users?query=tester").await;
+
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 1);
+    assert_eq!(body["data"][0]["username"], "ttester");
+}
+
+#[tokio::test]
+async fn list_users_search_without_hits_returns_an_empty_page() {
+    let app = spawn_app().await;
+
+    let resp = app.get("/api/v1/users?query=zzzznobody").await;
+
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert!(body["data"].as_array().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn list_users_blank_search_behaves_like_no_search() {
+    let app = spawn_app().await;
+
+    // A cleared search field must not filter everything away.
+    let resp = app.get("/api/v1/users?query=%20%20").await;
+
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["data"].as_array().unwrap().len(), 1);
+}
