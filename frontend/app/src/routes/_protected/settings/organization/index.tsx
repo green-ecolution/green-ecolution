@@ -1,11 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
-import SettingsComingSoon from '@/components/settings/SettingsComingSoon'
+import OrganizationPage from '@/components/settings/organization/OrganizationPage'
+import { guardedRoute } from '@/lib/router'
 
-export const Route = createFileRoute('/_protected/settings/organization/')({
-  component: () => (
-    <SettingsComingSoon
-      title="Organisation"
-      description="Hier verwaltest du künftig die Struktur deiner Organisation und ihre Untereinheiten."
-    />
-  ),
-})
+export const Route = createFileRoute('/_protected/settings/organization/')(
+  guardedRoute(['organization:read'], { component: OrganizationPage }),
+)

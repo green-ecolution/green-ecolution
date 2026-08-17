@@ -44,6 +44,8 @@ pub enum ServiceError {
     OrganizationNotEmpty,
     #[error("resource and organization do not match")]
     OrganizationMismatch,
+    #[error("contact person is not a member of this organization")]
+    ContactPersonNotAMember,
     #[error("tree is part of a cluster")]
     TreeInCluster,
     #[error("no organization given and the acting user has none")]

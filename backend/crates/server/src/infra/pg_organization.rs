@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use sqlx::PgPool;
 
 use domain::organization::OrganizationSnapshot;
@@ -24,7 +26,8 @@ impl OrganizationReader for PgOrganizationRepository {
     async fn all(&self) -> Result<Vec<Organization>, RepositoryError> {
         let orgs = sqlx::query_as!(
             OrganizationSnapshot,
-            r#"SELECT id, parent_id, name FROM organizations ORDER BY name ASC, id ASC"#
+            r#"SELECT id, parent_id, name, street, postal_code, city, contact_person_id
+               FROM organizations ORDER BY name ASC, id ASC"#
         )
         .fetch_all(&self.pool)
         .await?
@@ -38,7 +41,8 @@ impl OrganizationReader for PgOrganizationRepository {
     async fn by_id(&self, id: Id<Organization>) -> Result<Organization, RepositoryError> {
         sqlx::query_as!(
             OrganizationSnapshot,
-            r#"SELECT id, parent_id, name FROM organizations WHERE id = $1"#,
+            r#"SELECT id, parent_id, name, street, postal_code, city, contact_person_id
+               FROM organizations WHERE id = $1"#,
             id.value()
         )
         .fetch_optional(&self.pool)
@@ -58,6 +62,20 @@ impl OrganizationReader for PgOrganizationRepository {
                 r.parent_id.map(Id::<Organization>::new),
             )
         })))
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn member_counts(&self) -> Result<HashMap<Id<Organization>, i64>, RepositoryError> {
+        let rows = sqlx::query!(
+            r#"SELECT organization_id, COUNT(*) AS "count!"
+               FROM user_profiles GROUP BY organization_id"#
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(rows
+            .into_iter()
+            .map(|r| (Id::<Organization>::new(r.organization_id), r.count))
+            .collect())
     }
 }
 
@@ -108,15 +126,26 @@ impl OrganizationWriter for PgOrganizationRepository {
             id: id.value(),
             parent_id: Some(draft.parent_id.value()),
             name: draft.name.as_str().to_string(),
+            street: None,
+            postal_code: None,
+            city: None,
+            contact_person_id: None,
         }))
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
     async fn save(&self, org: &Organization) -> Result<(), RepositoryError> {
+        let address = org.address();
         let result = sqlx::query!(
-            r#"UPDATE organizations SET name = $2 WHERE id = $1"#,
+            r#"UPDATE organizations
+               SET name = $2, street = $3, postal_code = $4, city = $5, contact_person_id = $6
+               WHERE id = $1"#,
             org.id.value(),
             org.name.as_str(),
+            address.map(|a| a.street().as_str()),
+            address.map(|a| a.postal_code().as_str()),
+            address.map(|a| a.city().as_str()),
+            org.contact_person(),
         )
         .execute(&self.pool)
         .await?;

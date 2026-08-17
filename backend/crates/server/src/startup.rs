@@ -134,6 +134,7 @@ impl Application {
             repos.start_point_reader.clone(),
             repos.start_point_writer.clone(),
             profile_repo,
+            user_repo.clone(),
             settings.auth.enabled,
         );
 
@@ -359,6 +360,7 @@ impl Services {
         start_point_reader: Arc<dyn domain::start_point::StartPointReader>,
         start_point_writer: Arc<dyn domain::start_point::StartPointWriter>,
         profile_reader: Arc<dyn domain::user::UserProfileReader>,
+        user_repo: Arc<dyn domain::user::UserRepository>,
         auth_enabled: bool,
     ) -> Self {
         Self {
@@ -424,6 +426,7 @@ impl Services {
                 repos.organization_writer.clone(),
                 repos.role_reader.clone(),
                 profile_reader.clone(),
+                user_repo,
                 event_bus.clone(),
             )),
             role: Arc::new(RoleService::new(

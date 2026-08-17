@@ -16,16 +16,19 @@
 import * as runtime from '../runtime';
 import type {
   OrganizationCreateRequest,
-  OrganizationRenameRequest,
+  OrganizationDetailResponse,
   OrganizationResponse,
+  OrganizationUpdateRequest,
 } from '../models/index';
 import {
     OrganizationCreateRequestFromJSON,
     OrganizationCreateRequestToJSON,
-    OrganizationRenameRequestFromJSON,
-    OrganizationRenameRequestToJSON,
+    OrganizationDetailResponseFromJSON,
+    OrganizationDetailResponseToJSON,
     OrganizationResponseFromJSON,
     OrganizationResponseToJSON,
+    OrganizationUpdateRequestFromJSON,
+    OrganizationUpdateRequestToJSON,
 } from '../models/index';
 
 export interface CreateOrganizationRequest {
@@ -40,9 +43,9 @@ export interface GetOrganizationRequest {
     orgId: string;
 }
 
-export interface RenameOrganizationRequest {
+export interface UpdateOrganizationRequest {
     orgId: string;
-    organizationRenameRequest: OrganizationRenameRequest;
+    organizationUpdateRequest: OrganizationUpdateRequest;
 }
 
 /**
@@ -128,9 +131,10 @@ export class OrganizationsApi extends runtime.BaseAPI {
     }
 
     /**
+     * Includes the resolved contact person. Requires organization:read.
      * Get a single organization
      */
-    async getOrganizationRaw(requestParameters: GetOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrganizationResponse>> {
+    async getOrganizationRaw(requestParameters: GetOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrganizationDetailResponse>> {
         if (requestParameters['orgId'] == null) {
             throw new runtime.RequiredError(
                 'orgId',
@@ -153,20 +157,21 @@ export class OrganizationsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => OrganizationResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => OrganizationDetailResponseFromJSON(jsonValue));
     }
 
     /**
+     * Includes the resolved contact person. Requires organization:read.
      * Get a single organization
      */
-    async getOrganization(requestParameters: GetOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OrganizationResponse> {
+    async getOrganization(requestParameters: GetOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OrganizationDetailResponse> {
         const response = await this.getOrganizationRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns the full organization tree as a flat list; clients rebuild the tree via parent_id.
-     * List all organizations
+     * Returns the caller\'s organization subtree as a flat list; clients rebuild the tree via parent_id. Requires organization:read.
+     * List visible organizations
      */
     async listOrganizationsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<OrganizationResponse>>> {
         const queryParameters: any = {};
@@ -187,8 +192,8 @@ export class OrganizationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the full organization tree as a flat list; clients rebuild the tree via parent_id.
-     * List all organizations
+     * Returns the caller\'s organization subtree as a flat list; clients rebuild the tree via parent_id. Requires organization:read.
+     * List visible organizations
      */
     async listOrganizations(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<OrganizationResponse>> {
         const response = await this.listOrganizationsRaw(initOverrides);
@@ -196,20 +201,21 @@ export class OrganizationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Rename an organization
+     * Replaces name, address and contact person. An omitted field clears the stored value. The contact person must be a member of this organization.
+     * Update an organization
      */
-    async renameOrganizationRaw(requestParameters: RenameOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrganizationResponse>> {
+    async updateOrganizationRaw(requestParameters: UpdateOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrganizationResponse>> {
         if (requestParameters['orgId'] == null) {
             throw new runtime.RequiredError(
                 'orgId',
-                'Required parameter "orgId" was null or undefined when calling renameOrganization().'
+                'Required parameter "orgId" was null or undefined when calling updateOrganization().'
             );
         }
 
-        if (requestParameters['organizationRenameRequest'] == null) {
+        if (requestParameters['organizationUpdateRequest'] == null) {
             throw new runtime.RequiredError(
-                'organizationRenameRequest',
-                'Required parameter "organizationRenameRequest" was null or undefined when calling renameOrganization().'
+                'organizationUpdateRequest',
+                'Required parameter "organizationUpdateRequest" was null or undefined when calling updateOrganization().'
             );
         }
 
@@ -225,20 +231,21 @@ export class OrganizationsApi extends runtime.BaseAPI {
 
         const response = await this.request({
             path: urlPath,
-            method: 'PATCH',
+            method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: OrganizationRenameRequestToJSON(requestParameters['organizationRenameRequest']),
+            body: OrganizationUpdateRequestToJSON(requestParameters['organizationUpdateRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => OrganizationResponseFromJSON(jsonValue));
     }
 
     /**
-     * Rename an organization
+     * Replaces name, address and contact person. An omitted field clears the stored value. The contact person must be a member of this organization.
+     * Update an organization
      */
-    async renameOrganization(requestParameters: RenameOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OrganizationResponse> {
-        const response = await this.renameOrganizationRaw(requestParameters, initOverrides);
+    async updateOrganization(requestParameters: UpdateOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OrganizationResponse> {
+        const response = await this.updateOrganizationRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

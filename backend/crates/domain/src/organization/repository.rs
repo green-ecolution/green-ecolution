@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 
 use crate::{
@@ -13,6 +15,9 @@ pub trait OrganizationReader: Send + Sync {
     async fn by_id(&self, id: Id<Organization>) -> Result<Organization, RepositoryError>;
     /// Loads the full parent map in one query; the tree is small by design.
     async fn hierarchy(&self) -> Result<OrgHierarchy, RepositoryError>;
+    /// Directly assigned user count per organization, in one query. Organizations
+    /// without users are absent from the map.
+    async fn member_counts(&self) -> Result<HashMap<Id<Organization>, i64>, RepositoryError>;
 }
 
 #[async_trait]

@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { ContactPersonDto } from './ContactPersonDto';
+import {
+    ContactPersonDtoFromJSON,
+    ContactPersonDtoFromJSONTyped,
+    ContactPersonDtoToJSON,
+    ContactPersonDtoToJSONTyped,
+} from './ContactPersonDto';
 import type { AddressDto } from './AddressDto';
 import {
     AddressDtoFromJSON,
@@ -22,76 +29,86 @@ import {
 } from './AddressDto';
 
 /**
- * A node in the organization tree.
+ * A single organization with its contact person resolved.
  * @export
- * @interface OrganizationResponse
+ * @interface OrganizationDetailResponse
  */
-export interface OrganizationResponse {
+export interface OrganizationDetailResponse {
     /**
-     * Postal address; null when the organization has none.
+     * 
      * @type {AddressDto}
-     * @memberof OrganizationResponse
+     * @memberof OrganizationDetailResponse
      */
     address?: AddressDto | null;
     /**
-     * Contact person id; resolve via the detail endpoint for name and email.
+     * Null when no contact person is stored *or* when the stored id could not
+     * be resolved; `contact_person_id` distinguishes the two.
+     * @type {ContactPersonDto}
+     * @memberof OrganizationDetailResponse
+     */
+    contactPerson?: ContactPersonDto | null;
+    /**
+     * The stored reference, present even when the identity provider cannot
+     * resolve it. Clients must round-trip this on update instead of deriving
+     * it from `contact_person`, which would silently clear the reference.
      * @type {string}
-     * @memberof OrganizationResponse
+     * @memberof OrganizationDetailResponse
      */
     contactPersonId?: string | null;
     /**
-     * Creation time derived from the UUID v7 id (null for seeded ids without a real timestamp).
+     * 
      * @type {string}
-     * @memberof OrganizationResponse
+     * @memberof OrganizationDetailResponse
      */
     createdAt?: string | null;
     /**
-     * Unique organization identifier (UUID v7).
+     * 
      * @type {string}
-     * @memberof OrganizationResponse
+     * @memberof OrganizationDetailResponse
      */
     id: string;
     /**
-     * Directly assigned users, excluding sub-organizations.
+     * 
      * @type {number}
-     * @memberof OrganizationResponse
+     * @memberof OrganizationDetailResponse
      */
     memberCount: number;
     /**
-     * Display name, unique among siblings.
+     * 
      * @type {string}
-     * @memberof OrganizationResponse
+     * @memberof OrganizationDetailResponse
      */
     name: string;
     /**
-     * Parent organization; null only for the single root.
+     * 
      * @type {string}
-     * @memberof OrganizationResponse
+     * @memberof OrganizationDetailResponse
      */
     parentId?: string | null;
 }
 
 /**
- * Check if a given object implements the OrganizationResponse interface.
+ * Check if a given object implements the OrganizationDetailResponse interface.
  */
-export function instanceOfOrganizationResponse(value: object): value is OrganizationResponse {
+export function instanceOfOrganizationDetailResponse(value: object): value is OrganizationDetailResponse {
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('memberCount' in value) || value['memberCount'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     return true;
 }
 
-export function OrganizationResponseFromJSON(json: any): OrganizationResponse {
-    return OrganizationResponseFromJSONTyped(json, false);
+export function OrganizationDetailResponseFromJSON(json: any): OrganizationDetailResponse {
+    return OrganizationDetailResponseFromJSONTyped(json, false);
 }
 
-export function OrganizationResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): OrganizationResponse {
+export function OrganizationDetailResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): OrganizationDetailResponse {
     if (json == null) {
         return json;
     }
     return {
         
         'address': json['address'] == null ? undefined : AddressDtoFromJSON(json['address']),
+        'contactPerson': json['contact_person'] == null ? undefined : ContactPersonDtoFromJSON(json['contact_person']),
         'contactPersonId': json['contact_person_id'] == null ? undefined : json['contact_person_id'],
         'createdAt': json['created_at'] == null ? undefined : json['created_at'],
         'id': json['id'],
@@ -101,11 +118,11 @@ export function OrganizationResponseFromJSONTyped(json: any, ignoreDiscriminator
     };
 }
 
-export function OrganizationResponseToJSON(json: any): OrganizationResponse {
-    return OrganizationResponseToJSONTyped(json, false);
+export function OrganizationDetailResponseToJSON(json: any): OrganizationDetailResponse {
+    return OrganizationDetailResponseToJSONTyped(json, false);
 }
 
-export function OrganizationResponseToJSONTyped(value?: OrganizationResponse | null, ignoreDiscriminator: boolean = false): any {
+export function OrganizationDetailResponseToJSONTyped(value?: OrganizationDetailResponse | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
@@ -113,6 +130,7 @@ export function OrganizationResponseToJSONTyped(value?: OrganizationResponse | n
     return {
         
         'address': AddressDtoToJSON(value['address']),
+        'contact_person': ContactPersonDtoToJSON(value['contactPerson']),
         'contact_person_id': value['contactPersonId'],
         'created_at': value['createdAt'],
         'id': value['id'],
