@@ -92,6 +92,7 @@ pub async fn list_users(
     let filter = UserListFilter {
         organization_id: params.organization_id.map(Id::new),
         role_id: params.role_id.map(Id::new),
+        query: None,
     };
     let page = state.user_service.list(pagination, filter).await?;
     Ok(Json(ListResponse::from_page(page, &pagination)))

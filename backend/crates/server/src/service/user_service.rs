@@ -21,19 +21,27 @@ use domain::{
 
 use super::ServiceError;
 
-/// Optional list filters resolved against the local database (organization
-/// membership and role assignments live in Postgres, not the IdP).
+/// Optional list filters. Organization membership and role assignments are
+/// resolved against Postgres; the free-text query is resolved by the IdP,
+/// which owns names and email addresses.
 #[derive(Debug, Clone, Default)]
 pub struct UserListFilter {
     pub organization_id: Option<Id<Organization>>,
     pub role_id: Option<Id<Role>>,
+    pub query: Option<String>,
 }
 
 impl UserListFilter {
-    fn is_empty(&self) -> bool {
-        self.organization_id.is_none() && self.role_id.is_none()
+    fn has_id_filters(&self) -> bool {
+        self.organization_id.is_some() || self.role_id.is_some()
     }
 }
+
+/// How many IdP search hits are intersected against the locally filtered id
+/// set at most. The two conditions live in different systems, so an exact
+/// pagination across both is impossible. Reaching the cap truncates the
+/// result, which the service logs rather than hiding.
+pub const SEARCH_INTERSECTION_CAP: u64 = 500;
 
 pub struct UserService {
     user_repo: Arc<dyn UserRepository>,
@@ -122,19 +130,43 @@ impl UserService {
         pagination: Pagination,
         filter: UserListFilter,
     ) -> Result<Page<UserView>, ServiceError> {
-        if filter.is_empty() {
-            if !self.enabled {
-                return Ok(demo_user_page(pagination));
+        match (filter.query.as_deref(), filter.has_id_filters()) {
+            (None, false) => {
+                if !self.enabled {
+                    return Ok(demo_user_page(pagination, None));
+                }
+                let page = self.user_repo.all(pagination).await?;
+                let items = self.attach_views(page.items).await?;
+                Ok(Page {
+                    items,
+                    total: page.total,
+                })
             }
-            let page = self.user_repo.all(pagination).await?;
-            let items = self.attach_views(page.items).await?;
-            return Ok(Page {
-                items,
-                total: page.total,
-            });
+            (None, true) => self.list_by_ids(pagination, &filter).await,
+            (Some(query), false) => {
+                if !self.enabled {
+                    return Ok(demo_user_page(pagination, Some(query)));
+                }
+                let page = self.user_repo.search(query, pagination).await?;
+                let items = self.attach_views(page.items).await?;
+                Ok(Page {
+                    items,
+                    total: page.total,
+                })
+            }
+            (Some(query), true) => {
+                self.list_searched_and_filtered(pagination, query, &filter)
+                    .await
+            }
         }
+    }
 
-        let ids = self.filtered_ids(&filter).await?;
+    async fn list_by_ids(
+        &self,
+        pagination: Pagination,
+        filter: &UserListFilter,
+    ) -> Result<Page<UserView>, ServiceError> {
+        let ids = self.filtered_ids(filter).await?;
         let total = ids.len() as u64;
         let start = pagination.offset() as usize;
         let end = start
@@ -143,6 +175,65 @@ impl UserService {
         let slice = ids.get(start..end).unwrap_or(&[]);
         let identities = self.identities_for(slice).await?;
         let items = self.attach_views(identities).await?;
+        Ok(Page { items, total })
+    }
+
+    async fn list_searched_and_filtered(
+        &self,
+        pagination: Pagination,
+        query: &str,
+        filter: &UserListFilter,
+    ) -> Result<Page<UserView>, ServiceError> {
+        let allowed: HashSet<Uuid> = self.filtered_ids(filter).await?.into_iter().collect();
+        if allowed.is_empty() {
+            return Ok(Page {
+                items: Vec::new(),
+                total: 0,
+            });
+        }
+
+        let hits = if self.enabled {
+            self.user_repo
+                .search(
+                    query,
+                    Pagination::with_max_per_page(
+                        1,
+                        SEARCH_INTERSECTION_CAP,
+                        SEARCH_INTERSECTION_CAP,
+                    ),
+                )
+                .await?
+        } else {
+            let page = demo_user_page(Pagination::default(), Some(query));
+            Page {
+                items: page
+                    .items
+                    .iter()
+                    .map(|view| demo_identity(view.id))
+                    .collect(),
+                total: page.total,
+            }
+        };
+
+        if hits.total > SEARCH_INTERSECTION_CAP {
+            tracing::warn!(
+                cap = SEARCH_INTERSECTION_CAP,
+                total = hits.total,
+                "user search truncated before intersecting with the local filter"
+            );
+        }
+
+        let matched: Vec<UserIdentity> = hits
+            .items
+            .into_iter()
+            .filter(|identity| allowed.contains(&identity.id))
+            .collect();
+        let total = matched.len() as u64;
+        let start = (pagination.offset() as usize).min(matched.len());
+        let end = start
+            .saturating_add(pagination.limit() as usize)
+            .min(matched.len());
+        let items = self.attach_views(matched[start..end].to_vec()).await?;
         Ok(Page { items, total })
     }
 
@@ -378,9 +469,28 @@ fn demo_identity(id: Uuid) -> UserIdentity {
     }
 }
 
-fn demo_user_page(pagination: Pagination) -> Page<UserView> {
+/// In demo mode the single static user is the whole population, so a search
+/// either matches it or yields nothing.
+fn demo_user_page(pagination: Pagination, query: Option<&str>) -> Page<UserView> {
+    let user = demo_user();
+    let matches = match query {
+        None => true,
+        Some(q) => {
+            let needle = q.to_lowercase();
+            user.username.as_str().to_lowercase().contains(&needle)
+                || user.first_name.to_lowercase().contains(&needle)
+                || user.last_name.to_lowercase().contains(&needle)
+                || user.email.as_str().to_lowercase().contains(&needle)
+        }
+    };
+    if !matches {
+        return Page {
+            items: Vec::new(),
+            total: 0,
+        };
+    }
     let items = if pagination.page() == 1 {
-        vec![demo_user()]
+        vec![user]
     } else {
         Vec::new()
     };
@@ -472,6 +582,7 @@ mod tests {
     #[derive(Default)]
     struct InMemoryProfiles {
         rows: Mutex<HashMap<Uuid, UserProfile>>,
+        org_members: Mutex<Vec<Uuid>>,
     }
 
     #[async_trait::async_trait]
@@ -484,7 +595,7 @@ mod tests {
             &self,
             _org: Id<Organization>,
         ) -> Result<Vec<Uuid>, RepositoryError> {
-            Ok(Vec::new())
+            Ok(self.org_members.lock().unwrap().clone())
         }
         async fn organizations_for(
             &self,
@@ -729,5 +840,79 @@ mod tests {
 
         assert_eq!(view.status, UserStatus::Absent);
         assert_eq!(profiles.by_ids(&[id]).await.unwrap().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn search_matches_last_name_and_ignores_the_rest() {
+        let anna = Uuid::now_v7();
+        let bo = Uuid::now_v7();
+        let svc = service(
+            vec![identity(anna, "aahlmann"), identity(bo, "bboysen")],
+            Arc::new(InMemoryProfiles::default()),
+        );
+
+        let page = svc
+            .list(
+                Pagination::default(),
+                UserListFilter {
+                    query: Some("bboysen".into()),
+                    ..UserListFilter::default()
+                },
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(page.total, 1);
+        assert_eq!(page.items[0].username.as_str(), "bboysen");
+    }
+
+    #[tokio::test]
+    async fn search_combined_with_organization_filter_yields_the_intersection() {
+        let inside = Uuid::now_v7();
+        let outside = Uuid::now_v7();
+        let profiles = Arc::new(InMemoryProfiles::default());
+        profiles.org_members.lock().unwrap().push(inside);
+        let svc = service(
+            vec![identity(inside, "jdoe"), identity(outside, "jdoe2")],
+            profiles,
+        );
+
+        let page = svc
+            .list(
+                Pagination::default(),
+                UserListFilter {
+                    organization_id: Some(Id::new_v7()),
+                    query: Some("jdoe".into()),
+                    ..UserListFilter::default()
+                },
+            )
+            .await
+            .unwrap();
+
+        // Both identities match the query, only one is a member of the organization.
+        assert_eq!(page.total, 1);
+        assert_eq!(page.items[0].id, inside);
+    }
+
+    #[tokio::test]
+    async fn search_without_hits_yields_an_empty_page() {
+        let svc = service(
+            vec![identity(Uuid::now_v7(), "jdoe")],
+            Arc::new(InMemoryProfiles::default()),
+        );
+
+        let page = svc
+            .list(
+                Pagination::default(),
+                UserListFilter {
+                    query: Some("zzz".into()),
+                    ..UserListFilter::default()
+                },
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(page.total, 0);
+        assert!(page.items.is_empty());
     }
 }
