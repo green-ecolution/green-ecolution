@@ -26,7 +26,7 @@ const TabsTrigger = React.forwardRef<
     ref={ref}
     data-slot="tabs-trigger"
     className={cn(
-      'group flex items-center gap-x-2 pb-2 border-b-2 -mb-px transition-all ease-in-out duration-300 cursor-pointer',
+      'group flex items-center gap-x-2 pb-2 border-b-2 -mb-px transition-colors duration-quick ease-out cursor-pointer',
       'text-dark-600 border-b-transparent',
       'hover:text-dark-800',
       'data-[state=active]:text-green-dark data-[state=active]:border-b-green-dark',

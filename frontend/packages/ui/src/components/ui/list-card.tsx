@@ -4,7 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const listCardVariants = cva(
-  'bg-white border border-dark-50 shadow-cards flex transition-all ease-in-out duration-300',
+  'bg-white border border-dark-50 shadow-cards flex transition-colors duration-quick ease-out',
   {
     variants: {
       hoverable: {

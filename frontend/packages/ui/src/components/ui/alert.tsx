@@ -7,7 +7,9 @@ import { cn } from '@/lib/utils'
 const alertVariants = cva(
   [
     'relative rounded-2xl border shadow-cards',
-    'transition-all duration-200 ease-out',
+    'transition-colors duration-base ease-out',
+    // duration/ease above also drive the enter animation: animate-in reads
+    // --tw-duration and --tw-ease, which the duration-*/ease-* utilities set.
     'animate-in fade-in-0 slide-in-from-top-1',
   ],
   {
