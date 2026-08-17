@@ -462,6 +462,13 @@ mod tests {
         ) -> Result<Page<UserIdentity>, RepositoryError> {
             unimplemented!("identity listing is not exercised by organization tests")
         }
+        async fn search(
+            &self,
+            _query: &str,
+            _pagination: Pagination,
+        ) -> Result<Page<UserIdentity>, RepositoryError> {
+            unimplemented!("identity search is not exercised by organization tests")
+        }
         async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserIdentity>, RepositoryError> {
             Ok(self
                 .identities

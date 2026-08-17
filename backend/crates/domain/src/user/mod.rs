@@ -120,6 +120,13 @@ pub struct UserIdentity {
 pub trait UserRepository: Send + Sync {
     async fn create(&self, entity: UserIdentityCreate) -> Result<UserIdentity, RepositoryError>;
     async fn all(&self, pagination: Pagination) -> Result<Page<UserIdentity>, RepositoryError>;
+    /// Free-text lookup over username, first name, last name and email.
+    /// Separate from `all` because the IdP resolves the match, not us.
+    async fn search(
+        &self,
+        query: &str,
+        pagination: Pagination,
+    ) -> Result<Page<UserIdentity>, RepositoryError>;
     async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserIdentity>, RepositoryError>;
 }
 

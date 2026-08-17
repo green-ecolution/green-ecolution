@@ -180,6 +180,14 @@ impl UserRepository for KeycloakUserRepository {
         self.list_users(&[], pagination).await
     }
 
+    async fn search(
+        &self,
+        query: &str,
+        pagination: Pagination,
+    ) -> Result<Page<UserIdentity>, RepositoryError> {
+        self.list_users(&[("search", query)], pagination).await
+    }
+
     async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserIdentity>, RepositoryError> {
         let token = self.service_account_token().await?;
         let mut out = Vec::with_capacity(ids.len());

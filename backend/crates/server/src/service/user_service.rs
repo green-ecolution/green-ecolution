@@ -437,6 +437,28 @@ mod tests {
                 total: self.identities.len() as u64,
             })
         }
+        async fn search(
+            &self,
+            query: &str,
+            _p: Pagination,
+        ) -> Result<Page<UserIdentity>, RepositoryError> {
+            let needle = query.to_lowercase();
+            let items: Vec<UserIdentity> = self
+                .identities
+                .iter()
+                .filter(|i| {
+                    i.username.as_str().to_lowercase().contains(&needle)
+                        || i.first_name.to_lowercase().contains(&needle)
+                        || i.last_name.to_lowercase().contains(&needle)
+                        || i.email.as_str().to_lowercase().contains(&needle)
+                })
+                .cloned()
+                .collect();
+            Ok(Page {
+                total: items.len() as u64,
+                items,
+            })
+        }
         async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserIdentity>, RepositoryError> {
             Ok(self
                 .identities
