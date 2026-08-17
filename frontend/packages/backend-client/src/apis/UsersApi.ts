@@ -58,6 +58,7 @@ export interface ListUsersRequest {
     perPage?: number;
     organizationId?: string;
     roleId?: string;
+    query?: string;
 }
 
 export interface RevokeUserRoleRequest {
@@ -81,7 +82,7 @@ export interface UpdateUserRequest {
 export class UsersApi extends runtime.BaseAPI {
 
     /**
-     * Requires user:update in the role\'s organization, plus a permission set that does not exceed the caller\'s own grants.
+     * Assigns a role to a user. Requires user:update in the role\'s organization, plus a permission set that does not exceed the caller\'s own grants. Changes to one\'s own roles are rejected.
      * Assign a role to a user
      */
     async assignUserRoleRaw(requestParameters: AssignUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleResponse>> {
@@ -121,7 +122,7 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Requires user:update in the role\'s organization, plus a permission set that does not exceed the caller\'s own grants.
+     * Assigns a role to a user. Requires user:update in the role\'s organization, plus a permission set that does not exceed the caller\'s own grants. Changes to one\'s own roles are rejected.
      * Assign a role to a user
      */
     async assignUserRole(requestParameters: AssignUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleResponse> {
@@ -261,6 +262,10 @@ export class UsersApi extends runtime.BaseAPI {
             queryParameters['role_id'] = requestParameters['roleId'];
         }
 
+        if (requestParameters['query'] != null) {
+            queryParameters['query'] = requestParameters['query'];
+        }
+
         const headerParameters: runtime.HTTPHeaders = {};
 
 
@@ -286,7 +291,7 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Requires user:update in the role\'s organization.
+     * Revokes a role from a user. Requires user:update in the role\'s organization. Changes to one\'s own roles are rejected.
      * Revoke a role from a user
      */
     async revokeUserRoleRaw(requestParameters: RevokeUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -324,7 +329,7 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Requires user:update in the role\'s organization.
+     * Revokes a role from a user. Requires user:update in the role\'s organization. Changes to one\'s own roles are rejected.
      * Revoke a role from a user
      */
     async revokeUserRole(requestParameters: RevokeUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -332,7 +337,7 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Moves the user into the given organization. Requires user:update in the target organization.
+     * Moves the user into the given organization. Requires user:update in the target organization. Changes to one\'s own organization membership are rejected.
      * Set a user\'s organization
      */
     async setUserOrganizationRaw(requestParameters: SetUserOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserResponse>> {
@@ -372,7 +377,7 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Moves the user into the given organization. Requires user:update in the target organization.
+     * Moves the user into the given organization. Requires user:update in the target organization. Changes to one\'s own organization membership are rejected.
      * Set a user\'s organization
      */
     async setUserOrganization(requestParameters: SetUserOrganizationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserResponse> {

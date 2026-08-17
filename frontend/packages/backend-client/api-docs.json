@@ -2970,6 +2970,15 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "description": "Free-text filter over username, first name, last name and email",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -3136,7 +3145,7 @@
           "Users"
         ],
         "summary": "Set a user's organization",
-        "description": "Moves the user into the given organization. Requires user:update in the target organization.",
+        "description": "Moves the user into the given organization. Requires user:update in the target organization. Changes to one's own organization membership are rejected.",
         "operationId": "setUserOrganization",
         "parameters": [
           {
@@ -3176,6 +3185,9 @@
           },
           "403": {
             "description": "Forbidden"
+          },
+          "409": {
+            "description": "Attempting to change your own organization"
           },
           "500": {
             "description": "Internal server error"
@@ -3229,7 +3241,7 @@
           "Users"
         ],
         "summary": "Assign a role to a user",
-        "description": "Requires user:update in the role's organization, plus a permission set that does not exceed the caller's own grants.",
+        "description": "Assigns a role to a user. Requires user:update in the role's organization, plus a permission set that does not exceed the caller's own grants. Changes to one's own roles are rejected.",
         "operationId": "assignUserRole",
         "parameters": [
           {
@@ -3274,7 +3286,7 @@
             "description": "Role not found"
           },
           "409": {
-            "description": "Role is a template and cannot be assigned"
+            "description": "Role is a template and cannot be assigned, or attempting to change your own roles"
           },
           "500": {
             "description": "Internal server error"
@@ -3288,7 +3300,7 @@
           "Users"
         ],
         "summary": "Revoke a role from a user",
-        "description": "Requires user:update in the role's organization.",
+        "description": "Revokes a role from a user. Requires user:update in the role's organization. Changes to one's own roles are rejected.",
         "operationId": "revokeUserRole",
         "parameters": [
           {
@@ -3324,6 +3336,9 @@
           },
           "404": {
             "description": "Role not found"
+          },
+          "409": {
+            "description": "Attempting to change your own roles"
           },
           "500": {
             "description": "Internal server error"
