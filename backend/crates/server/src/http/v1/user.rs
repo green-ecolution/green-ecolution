@@ -40,6 +40,16 @@ pub fn protected_routes() -> OpenApiRouter<Arc<AppState>> {
         .routes(routes!(set_user_organization))
 }
 
+/// Self-lockout guard: an account may not change its own access path,
+/// only its own profile. Callers enforce this; the service methods
+/// carry no actor identity.
+fn ensure_not_self(actor: Uuid, target: Uuid) -> Result<(), ServiceError> {
+    if actor == target {
+        return Err(ServiceError::CannotChangeOwnAccess);
+    }
+    Ok(())
+}
+
 #[utoipa::path(get, path = "/users/me", tag = "Users",
     operation_id = "getMe",
     summary = "Get the authenticated user",
@@ -218,7 +228,7 @@ pub async fn list_user_roles(
 #[utoipa::path(post, path = "/users/{user_id}/roles", tag = "Users",
     operation_id = "assignUserRole",
     summary = "Assign a role to a user",
-    description = "Requires user:update in the role's organization, plus a permission set that does not exceed the caller's own grants.",
+    description = "Assigns a role to a user. Requires user:update in the role's organization, plus a permission set that does not exceed the caller's own grants. Changes to one's own roles are rejected.",
     params(("user_id" = Uuid, Path, description = "User id")),
     request_body = AssignRoleRequest,
     responses(
@@ -226,7 +236,7 @@ pub async fn list_user_roles(
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "Role not found"),
-        (status = 409, description = "Role is a template and cannot be assigned"),
+        (status = 409, description = "Role is a template and cannot be assigned, or attempting to change your own roles"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -254,9 +264,9 @@ pub async fn assign_user_role(
             .require_superset(user.id, &perms, role_org)
             .await?;
     }
-    if user.id == user_id {
-        return Err(ServiceError::CannotChangeOwnAccess);
-    }
+    // Template roles skip the permission checks above, so the authorization
+    // guard is not guaranteed to have run — do not assume 403 is returned before 409.
+    ensure_not_self(user.id, user_id)?;
     state.role_service.assign(user_id, role_id).await?;
     Ok((StatusCode::CREATED, Json((&role).into())))
 }
@@ -264,7 +274,7 @@ pub async fn assign_user_role(
 #[utoipa::path(delete, path = "/users/{user_id}/roles/{role_id}", tag = "Users",
     operation_id = "revokeUserRole",
     summary = "Revoke a role from a user",
-    description = "Requires user:update in the role's organization.",
+    description = "Revokes a role from a user. Requires user:update in the role's organization. Changes to one's own roles are rejected.",
     params(
         ("user_id" = Uuid, Path, description = "User id"),
         ("role_id" = Uuid, Path, description = "Role id"),
@@ -274,6 +284,7 @@ pub async fn assign_user_role(
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "Role not found"),
+        (status = 409, description = "Attempting to change your own roles"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -295,9 +306,9 @@ pub async fn revoke_user_role(
             )
             .await?;
     }
-    if user.id == user_id {
-        return Err(ServiceError::CannotChangeOwnAccess);
-    }
+    // Template roles skip the permission checks above, so the authorization
+    // guard is not guaranteed to have run — do not assume 403 is returned before 409.
+    ensure_not_self(user.id, user_id)?;
     state.role_service.revoke(user_id, role_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -305,13 +316,14 @@ pub async fn revoke_user_role(
 #[utoipa::path(patch, path = "/users/{user_id}/organization", tag = "Users",
     operation_id = "setUserOrganization",
     summary = "Set a user's organization",
-    description = "Moves the user into the given organization. Requires user:update in the target organization.",
+    description = "Moves the user into the given organization. Requires user:update in the target organization. Changes to one's own organization membership are rejected.",
     params(("user_id" = Uuid, Path, description = "User id")),
     request_body = SetOrganizationRequest,
     responses(
         (status = 200, description = "Updated user", body = UserResponse),
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
+        (status = 409, description = "Attempting to change your own organization"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -331,9 +343,7 @@ pub async fn set_user_organization(
             org,
         )
         .await?;
-    if user.id == user_id {
-        return Err(ServiceError::CannotChangeOwnAccess);
-    }
+    ensure_not_self(user.id, user_id)?;
     let updated = state.user_service.set_organization(user_id, org).await?;
     Ok(Json((&updated).into()))
 }

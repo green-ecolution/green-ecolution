@@ -147,6 +147,13 @@ fn zero_grant_token(harness: &crate::auth_helpers::AuthHarness) -> String {
     harness.sign_token(json!({ "sub": Uuid::new_v4().to_string() }))
 }
 
+/// Creates a zero-grant user and returns both its UUID and a signed token.
+fn zero_grant_user(harness: &crate::auth_helpers::AuthHarness) -> (Uuid, String) {
+    let user_id = Uuid::new_v4();
+    let token = harness.sign_token(json!({ "sub": user_id.to_string() }));
+    (user_id, token)
+}
+
 /// Seeds an org (child of root) and an org-owned role within it (not a
 /// template, since templates 409 before authz is ever reached).
 async fn seed_org_and_role(
@@ -272,4 +279,69 @@ async fn user_organization_change_is_forbidden_without_grants() {
         .await
         .unwrap();
     assert_eq!(resp.status(), 403);
+}
+
+#[tokio::test]
+async fn role_assignment_on_self_with_zero_grants_returns_403_not_409() {
+    let (harness, app) = spawn_with_auth().await;
+    let (_org_id, role_id) = seed_org_and_role(&app, "Self-Assign-Org", "Self-Assign-Role").await;
+    let (user_id, token) = zero_grant_user(&harness);
+
+    let resp = reqwest::Client::new()
+        .post(format!("{}/api/v1/users/{user_id}/roles", app.address))
+        .bearer_auth(&token)
+        .json(&json!({ "role_id": role_id }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(
+        resp.status(),
+        403,
+        "403 (permission denied) must come before 409 (self-target)"
+    );
+}
+
+#[tokio::test]
+async fn role_revocation_on_self_with_zero_grants_returns_403_not_409() {
+    let (harness, app) = spawn_with_auth().await;
+    let (_org_id, role_id) = seed_org_and_role(&app, "Self-Revoke-Org", "Self-Revoke-Role").await;
+    let (user_id, token) = zero_grant_user(&harness);
+
+    let resp = reqwest::Client::new()
+        .delete(format!(
+            "{}/api/v1/users/{user_id}/roles/{role_id}",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(
+        resp.status(),
+        403,
+        "403 (permission denied) must come before 409 (self-target)"
+    );
+}
+
+#[tokio::test]
+async fn organization_change_on_self_with_zero_grants_returns_403_not_409() {
+    let (harness, app) = spawn_with_auth().await;
+    let (org_id, _role_id) = seed_org_and_role(&app, "Self-Move-Org", "Self-Move-Role").await;
+    let (user_id, token) = zero_grant_user(&harness);
+
+    let resp = reqwest::Client::new()
+        .patch(format!(
+            "{}/api/v1/users/{user_id}/organization",
+            app.address
+        ))
+        .bearer_auth(&token)
+        .json(&json!({ "organization_id": org_id }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(
+        resp.status(),
+        403,
+        "403 (permission denied) must come before 409 (self-target)"
+    );
 }

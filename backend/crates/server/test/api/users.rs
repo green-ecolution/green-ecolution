@@ -315,6 +315,18 @@ async fn assigning_a_role_to_yourself_returns_409() {
         .await;
 
     assert_eq!(resp.status(), 409);
+
+    // Side-effect assertion: role must not have been assigned.
+    let self_uuid = Uuid::nil();
+    let assigned_roles: Vec<Uuid> = sqlx::query_scalar!(
+        r#"SELECT role_id FROM role_assignments WHERE user_id = $1"#,
+        self_uuid
+    )
+    .fetch_all(&app.db_pool)
+    .await
+    .unwrap();
+    let role_uuid = Uuid::parse_str(&role_id).unwrap();
+    assert!(!assigned_roles.contains(&role_uuid));
 }
 
 #[tokio::test]
@@ -328,6 +340,17 @@ async fn revoking_a_role_from_yourself_returns_409() {
         .await;
 
     assert_eq!(resp.status(), 409);
+
+    // Side-effect assertion: no role assignments should exist for self.
+    let self_uuid = Uuid::nil();
+    let assigned_roles: Vec<Uuid> = sqlx::query_scalar!(
+        r#"SELECT role_id FROM role_assignments WHERE user_id = $1"#,
+        self_uuid
+    )
+    .fetch_all(&app.db_pool)
+    .await
+    .unwrap();
+    assert!(assigned_roles.is_empty());
 }
 
 #[tokio::test]
@@ -343,6 +366,23 @@ async fn moving_yourself_to_another_organization_returns_409() {
         .await;
 
     assert_eq!(resp.status(), 409);
+
+    // Side-effect assertion: organization assignment must not have succeeded.
+    let self_uuid = Uuid::nil();
+    let target_org = Uuid::parse_str(&org).unwrap();
+    let count: Option<i64> = sqlx::query_scalar!(
+        r#"SELECT COUNT(*) FROM user_profiles WHERE id = $1 AND organization_id = $2"#,
+        self_uuid,
+        target_org
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        count,
+        Some(0),
+        "user should not be assigned to target organization"
+    );
 }
 
 #[tokio::test]
