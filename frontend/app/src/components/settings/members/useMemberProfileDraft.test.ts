@@ -99,7 +99,8 @@ describe('useMemberProfileDraft', () => {
     // Type back to original value
     act(() => result.current.setPhoneNumber('+49 461 1'))
 
-    // Only avatarUrl differs from baseline, but it never triggers dirty since it's not in canonical
+    // avatarUrl cannot be made to differ from baseline through this API (no setter),
+    // so its exclusion from canonical() is guaranteed by construction, not by assertion.
     expect(result.current.draft?.avatarUrl).toBe('https://example.com/avatar.png')
     expect(result.current.dirty).toBe(false)
   })
