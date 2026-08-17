@@ -286,6 +286,16 @@
   /* Shadows */
   --shadow-cards: 0px 5px 10px 0px rgba(23, 23, 23, 5%);
 
+  /* Motion */
+  --transition-duration-press: 100ms;
+  --transition-duration-quick: 150ms;
+  --transition-duration-base: 200ms;
+
+  /* Mirrored pair: use -emphasized entering, -emphasized-reverse leaving, so a
+     reversible transition retraces its own path. */
+  --ease-emphasized: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-emphasized-reverse: cubic-bezier(1, 0, 0.68, 0.28);
+
   /* Animations */
   --animate-scan-line: scan-line 2.4s ease-in-out infinite alternate;
   --animate-scan-pulse: scan-pulse 1.5s ease-in-out infinite;
