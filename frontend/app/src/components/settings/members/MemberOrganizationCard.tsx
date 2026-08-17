@@ -49,6 +49,7 @@ const MemberOrganizationCard = ({
           placeholder="Organisation wechseln"
           searchPlaceholder="Organisation suchen"
           emptyText="Keine passende Organisation"
+          aria-label="Organisation wechseln"
           aria-describedby={error ? 'member-organization-error' : undefined}
           aria-invalid={!!error}
         />

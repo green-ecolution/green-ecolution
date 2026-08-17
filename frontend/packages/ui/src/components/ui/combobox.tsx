@@ -30,6 +30,9 @@ export interface ComboboxProps {
   disabled?: boolean
   className?: string
   contentClassName?: string
+  // role="combobox" takes no accessible name from its contents, so a trigger
+  // without an associated Label needs one supplied here.
+  'aria-label'?: string
   'aria-describedby'?: string
   'aria-invalid'?: boolean
 }
@@ -47,6 +50,7 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
       disabled,
       className,
       contentClassName,
+      'aria-label': ariaLabel,
       'aria-describedby': ariaDescribedBy,
       'aria-invalid': ariaInvalid,
     },
@@ -75,6 +79,7 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
             type="button"
             role="combobox"
             aria-expanded={open}
+            aria-label={ariaLabel}
             aria-describedby={ariaDescribedBy}
             aria-invalid={ariaInvalid}
             disabled={disabled}

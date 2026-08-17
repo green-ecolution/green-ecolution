@@ -88,6 +88,7 @@ const MemberRolesCard = ({
           placeholder="Rolle zuweisen"
           searchPlaceholder="Rolle suchen"
           emptyText="Keine weitere Rolle verfügbar"
+          aria-label="Rolle zuweisen"
           aria-describedby={error ? 'member-roles-error' : undefined}
           aria-invalid={!!error}
         />

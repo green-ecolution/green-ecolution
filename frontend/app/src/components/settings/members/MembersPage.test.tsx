@@ -146,11 +146,8 @@ const editEmployeeId = async (value: string) => {
   await userEvent.type(screen.getByLabelText('Personalnummer'), value)
 }
 
-// Combobox renders role="combobox", which takes no accessible name from its
-// contents and accepts no aria-label, so its trigger is addressed by the
-// visible placeholder instead.
-const openCombobox = async (placeholder: string) => {
-  await userEvent.click(screen.getByText(placeholder))
+const openCombobox = async (name: string) => {
+  await userEvent.click(screen.getByRole('combobox', { name }))
 }
 
 describe('MembersPage', () => {
@@ -233,7 +230,9 @@ describe('MembersPage', () => {
     expect(
       screen.queryByRole('button', { name: /Rolle Einsatzleitung entziehen/ }),
     ).not.toBeInTheDocument()
-    expect(screen.queryByText('Organisation wechseln')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('combobox', { name: 'Organisation wechseln' }),
+    ).not.toBeInTheDocument()
     // The own profile stays editable.
     expect(screen.getByLabelText('Telefonnummer')).toBeEnabled()
   })
@@ -243,7 +242,7 @@ describe('MembersPage', () => {
     await select(/Cem Demir/)
 
     expect(screen.getByText(/Ohne Organisation/)).toBeInTheDocument()
-    expect(screen.queryByText('Rolle zuweisen')).not.toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Rolle zuweisen' })).not.toBeInTheDocument()
   })
 
   it('hides every write action without user:update', async () => {
@@ -254,8 +253,10 @@ describe('MembersPage', () => {
     expect(
       screen.queryByRole('button', { name: /Rolle Einsatzleitung entziehen/ }),
     ).not.toBeInTheDocument()
-    expect(screen.queryByText('Rolle zuweisen')).not.toBeInTheDocument()
-    expect(screen.queryByText('Organisation wechseln')).not.toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Rolle zuweisen' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('combobox', { name: 'Organisation wechseln' }),
+    ).not.toBeInTheDocument()
   })
 
   it('saves the profile only after the save button', async () => {

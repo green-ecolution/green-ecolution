@@ -36,6 +36,7 @@ export const Default: Story = {
           onChange={setValue}
           placeholder="Bodenart auswählen"
           searchPlaceholder="Code oder Bezeichnung suchen…"
+          aria-label="Bodenart auswählen"
         />
       </div>
     )
@@ -63,7 +64,12 @@ export const WithLabel: Story = {
 export const Disabled: Story = {
   render: () => (
     <div className="w-[320px]">
-      <Combobox options={soilOptions} disabled placeholder="Bodenart auswählen" />
+      <Combobox
+        options={soilOptions}
+        disabled
+        placeholder="Bodenart auswählen"
+        aria-label="Bodenart auswählen"
+      />
     </div>
   ),
 }
