@@ -43,7 +43,7 @@ function Footer() {
                 <a
                   href={navItem.url}
                   target="_blank"
-                  className="text-dark-600 transition-all ease-in-out hover:text-dark-800"
+                  className="text-dark-600 transition-colors duration-quick ease-out hover:text-dark-800"
                 >
                   {navItem.label}
                 </a>

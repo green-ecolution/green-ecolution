@@ -70,7 +70,7 @@ const DeleteSection: React.FC<DeleteSectionProps> = ({
         className="mt-10 mb-4 px-0 group"
       >
         {type === 'archive' ? 'Archivieren' : 'Löschen'}
-        <MoveRight className="transition-all duration-300 group-hover:translate-x-1" />
+        <MoveRight className="transition-transform duration-base ease-emphasized group-hover:translate-x-1 motion-reduce:transition-none" />
       </Button>
 
       <AlertDialog open={isModalOpen} onOpenChange={setIsModalOpen}>

@@ -52,7 +52,7 @@ const ClusterCard: React.FC<ClusterCardProps> = ({ treecluster }) => {
   return (
     <Card
       variant="outlined"
-      className="group flex h-full flex-col transition-shadow duration-300 hover:shadow-md focus-within:shadow-md"
+      className="group flex h-full flex-col transition-shadow duration-base ease-out hover:shadow-md focus-within:shadow-md"
     >
       <Link
         to="/treecluster/$treeclusterId"

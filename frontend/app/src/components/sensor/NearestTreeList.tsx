@@ -48,7 +48,7 @@ const NearestTreeListItem = ({
       disabled={isAssigned}
       className={cn(
         'relative w-full text-left rounded-xl border bg-white p-4 shadow-cards',
-        'transition-all duration-200 ease-in-out',
+        'transition-[color,background-color,border-color,box-shadow,opacity] duration-quick ease-out',
         !isAssigned && 'hover:bg-green-dark-50/50',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-dark focus-visible:ring-offset-2',
         isAssigned && 'opacity-70 cursor-not-allowed',
