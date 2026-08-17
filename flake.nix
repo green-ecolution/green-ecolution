@@ -115,7 +115,7 @@
         pnpmDeps = pkgs.fetchPnpmDeps {
           inherit pname version src;
           fetcherVersion = 4;
-          hash = "sha256-GQfpJePuOB86I9ZqkHSdCTaTtzU4Sxw5TXXW4obtBhE=";
+          hash = "sha256-FoSjMrGMSw+frmd2cejWQsawoMDLQIwN8rqWoC6B7Yw=";
         };
 
         # domain-wasm/pkg is wasm-pack output, gitignored and thus absent
