@@ -72,6 +72,9 @@
 }
 
 @import 'tailwindcss';
+/* Supplies the enter/exit keyframes the animate-in/animate-out utilities
+   compose against; without it every data-[state] animation is a no-op. */
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
