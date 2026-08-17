@@ -68,6 +68,7 @@ const ClusterToolbar: React.FC = () => {
           onChange={handleSortChange}
           placeholder="Sortieren"
           searchPlaceholder="Sortierung suchen"
+          aria-label="Gruppen sortieren"
           className="min-w-0 flex-1 sm:w-48 sm:flex-none"
         />
       </div>
