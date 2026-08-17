@@ -50,6 +50,8 @@ pub enum ServiceError {
     TreeInCluster,
     #[error("no organization given and the acting user has none")]
     MissingOrganization,
+    #[error("a user cannot change their own roles or organization")]
+    CannotChangeOwnAccess,
 }
 
 impl From<ValidationError> for ServiceError {

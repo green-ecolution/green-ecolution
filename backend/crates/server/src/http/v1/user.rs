@@ -254,6 +254,9 @@ pub async fn assign_user_role(
             .require_superset(user.id, &perms, role_org)
             .await?;
     }
+    if user.id == user_id {
+        return Err(ServiceError::CannotChangeOwnAccess);
+    }
     state.role_service.assign(user_id, role_id).await?;
     Ok((StatusCode::CREATED, Json((&role).into())))
 }
@@ -292,6 +295,9 @@ pub async fn revoke_user_role(
             )
             .await?;
     }
+    if user.id == user_id {
+        return Err(ServiceError::CannotChangeOwnAccess);
+    }
     state.role_service.revoke(user_id, role_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -325,6 +331,9 @@ pub async fn set_user_organization(
             org,
         )
         .await?;
+    if user.id == user_id {
+        return Err(ServiceError::CannotChangeOwnAccess);
+    }
     let updated = state.user_service.set_organization(user_id, org).await?;
     Ok(Json((&updated).into()))
 }

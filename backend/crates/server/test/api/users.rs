@@ -298,3 +298,61 @@ async fn list_users_whitespace_search_is_trimmed() {
     let body: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(body["data"].as_array().unwrap().len(), 1);
 }
+
+const SELF_ID: &str = "00000000-0000-0000-0000-000000000000";
+
+#[tokio::test]
+async fn assigning_a_role_to_yourself_returns_409() {
+    let app = spawn_app().await;
+    let org = create_org(&app, "TBZ").await;
+    let role_id = create_role(&app, &org, "Gießtrupp").await;
+
+    let resp = app
+        .post_json(
+            &format!("/api/v1/users/{SELF_ID}/roles"),
+            &json!({ "role_id": role_id }),
+        )
+        .await;
+
+    assert_eq!(resp.status(), 409);
+}
+
+#[tokio::test]
+async fn revoking_a_role_from_yourself_returns_409() {
+    let app = spawn_app().await;
+    let org = create_org(&app, "TBZ").await;
+    let role_id = create_role(&app, &org, "Gießtrupp").await;
+
+    let resp = app
+        .delete(&format!("/api/v1/users/{SELF_ID}/roles/{role_id}"))
+        .await;
+
+    assert_eq!(resp.status(), 409);
+}
+
+#[tokio::test]
+async fn moving_yourself_to_another_organization_returns_409() {
+    let app = spawn_app().await;
+    let org = create_org(&app, "TBZ").await;
+
+    let resp = app
+        .patch_json(
+            &format!("/api/v1/users/{SELF_ID}/organization"),
+            &json!({ "organization_id": org }),
+        )
+        .await;
+
+    assert_eq!(resp.status(), 409);
+}
+
+#[tokio::test]
+async fn updating_your_own_profile_stays_allowed() {
+    let app = spawn_app().await;
+
+    // Only the access path is locked; availability and licenses stay editable.
+    let resp = app
+        .put_json(&format!("/api/v1/users/{SELF_ID}"), &valid_body())
+        .await;
+
+    assert_eq!(resp.status(), 200);
+}
