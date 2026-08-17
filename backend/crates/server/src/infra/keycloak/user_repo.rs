@@ -185,7 +185,11 @@ impl UserRepository for KeycloakUserRepository {
         query: &str,
         pagination: Pagination,
     ) -> Result<Page<UserIdentity>, RepositoryError> {
-        self.list_users(&[("search", query)], pagination).await
+        // Keycloak's `search` param is prefix-based by default ("foo" only matches
+        // names/emails starting with "foo"); wrapping in `*` forces infix matching so
+        // this actually delivers the containment search the rest of the system promises.
+        let wrapped = format!("*{query}*");
+        self.list_users(&[("search", &wrapped)], pagination).await
     }
 
     async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserIdentity>, RepositoryError> {
