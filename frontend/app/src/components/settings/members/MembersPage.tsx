@@ -102,20 +102,24 @@ const MembersPage = () => {
   const members = useMemo(() => userPage?.data ?? [], [userPage])
   const selected = members.find((user) => user.id === selectedId) ?? null
   const selectedOrgId = selected?.organization?.id ?? null
-  const ownOrgId = me?.organization?.id ?? null
 
-  // Assignable roles come from the selected person's own organization: a role
-  // grants its permissions for the owning organization and its subtree, so a
-  // parent organization's role would over-grant.
+  // Assignable roles come from the selected person's own organization, never
+  // from the caller's wider visible subtree: a role grants its permissions
+  // for the owning organization and its whole subtree, so offering a parent
+  // organization's role here would let the caller hand out rights over that
+  // parent's entire subtree (the backend rejects the mismatch with 409 as a
+  // second line of defense). Do not swap this for `roleQueries.visible()` —
+  // that query is for the list filter below only.
   const { data: assignableOrgRoles } = useQuery({
     ...roleQueries.org(selectedOrgId ?? ''),
     enabled: canReadRoles && selectedOrgId !== null,
   })
 
-  // The list filter offers the signed-in user's own roles, as RolesPage does.
-  const { data: filterOrgRoles } = useQuery({
-    ...roleQueries.org(ownOrgId ?? ''),
-    enabled: canReadRoles && ownOrgId !== null,
+  // The list filter covers every organization the caller can see, unlike the
+  // assignment picker above.
+  const { data: filterVisibleRoles } = useQuery({
+    ...roleQueries.visible(),
+    enabled: canReadRoles,
   })
 
   const { assignRole, revokeRole, setOrganization, updateProfile } = useUserMutations()
@@ -131,7 +135,7 @@ const MembersPage = () => {
   const assignableRoles = (assignableOrgRoles ?? []).filter(
     (role) => !role.isTemplate && !(selected?.roles ?? []).some((held) => held.id === role.id),
   )
-  const filterRoles = (filterOrgRoles ?? []).filter((role) => !role.isTemplate)
+  const filterRoles = (filterVisibleRoles ?? []).filter((role) => !role.isTemplate)
   const organizationList = organizations ?? []
   const isSelf = selected !== null && selected.id === me?.id
 

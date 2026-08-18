@@ -25,6 +25,11 @@ const ROLES_BY_ORG: Record<string, RoleResponse[]> = {
   nord: [role('r-driver', 'Fahrerin')],
 }
 
+// The list filter's endpoint spans the caller's whole visible subtree, so it
+// includes "nord"'s role even though the signed-in caller belongs to "amt" —
+// unlike ROLES_BY_ORG.amt, which only the assignment picker ever reads.
+const VISIBLE_ROLES: RoleResponse[] = [...ROLES_BY_ORG.amt, ...ROLES_BY_ORG.nord]
+
 const avatarOf = (id: string) => `https://cdn.example/${id}.png`
 
 const member = (
@@ -138,6 +143,9 @@ vi.mock('@tanstack/react-query', async () => {
         const orgId = third as string
         return { data: ROLES_BY_ORG[orgId] ?? [], isLoading: false }
       }
+      if (scope === 'roles' && second === 'visible') {
+        return { data: VISIBLE_ROLES, isLoading: false }
+      }
       return { data: undefined, isLoading: false }
     },
   }
@@ -214,6 +222,17 @@ describe('MembersPage', () => {
     expect(screen.getByRole('option', { name: 'Fahrerin' })).toBeInTheDocument()
     expect(screen.queryByRole('option', { name: 'Einsatzleitung' })).not.toBeInTheDocument()
     expect(screen.queryByRole('option', { name: 'Gärtner' })).not.toBeInTheDocument()
+  })
+
+  it("offers roles from the caller's whole visible subtree in the list filter, unlike the assignment picker", async () => {
+    render(<MembersPage />)
+
+    await openCombobox('Rolle')
+
+    // "Fahrerin" belongs to "nord", not the caller's own "amt" — proving the
+    // filter is not limited to the caller's own organization.
+    expect(screen.getByRole('option', { name: 'Fahrerin' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Einsatzleitung' })).toBeInTheDocument()
   })
 
   it('revokes a role immediately', async () => {

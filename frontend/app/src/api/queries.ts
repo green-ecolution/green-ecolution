@@ -397,6 +397,15 @@ export const roleQueries = {
       queryKey: ['roles', 'org', orgId],
       queryFn: () => roleApi.listOrgRoles({ orgId }),
     }),
+
+  // Every role across the caller's visible organization subtree. Only for the
+  // members-list role filter; the assignment picker must stay on `org` (see
+  // its call site in MembersPage).
+  visible: () =>
+    queryOptions<RoleResponse[]>({
+      queryKey: ['roles', 'visible'],
+      queryFn: () => roleApi.listRoles(),
+    }),
 }
 
 export const organizationQueries = {
