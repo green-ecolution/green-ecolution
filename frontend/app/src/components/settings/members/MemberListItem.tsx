@@ -10,15 +10,6 @@ interface MemberListItemProps {
   onSelect: () => void
 }
 
-const roleNoun = (count: number): string => (count === 1 ? 'Rolle' : 'Rollen')
-
-const metaLineOf = (user: UserResponse): string => {
-  const organization = user.organization?.name ?? 'Keine Organisation'
-  return user.roles.length > 0
-    ? `${organization} · ${user.roles.length} ${roleNoun(user.roles.length)}`
-    : organization
-}
-
 const MemberListItem = ({ user, selected, onSelect }: MemberListItemProps) => {
   const status = getUserStatusDetails(user.status)
 
@@ -40,7 +31,9 @@ const MemberListItem = ({ user, selected, onSelect }: MemberListItemProps) => {
           <span className="block truncate font-lato text-sm font-semibold text-dark">
             {fullNameOf(user)}
           </span>
-          <span className="block truncate text-xs text-dark-600">{metaLineOf(user)}</span>
+          <span className="block truncate text-xs text-dark-600">
+            {user.organization?.name ?? 'Keine Organisation'}
+          </span>
         </span>
 
         <Badge variant={status.color}>{status.label}</Badge>
