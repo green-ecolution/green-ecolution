@@ -20,6 +20,7 @@ use crate::{
                 UserResponse, UserUpdateRequest,
             },
         },
+        v1::scope::resolve_target_org,
     },
     service::{AuthError, ServiceError, user_service::UserListFilter},
 };
@@ -78,8 +79,8 @@ pub async fn get_me(
 
 #[utoipa::path(get, path = "/users", tag = "Users",
     operation_id = "listUsers",
-    summary = "List all users",
-    description = "Returns a paginated list of registered users, optionally filtered by organization or role.",
+    summary = "List visible users",
+    description = "Returns a paginated list of users from the caller's organization subtree, optionally filtered by organization or role. Requires user:read.",
     params(
         ("page" = Option<u64>, Query, description = "Page number to retrieve (1-based)", minimum = 1),
         ("per_page" = Option<u64>, Query, description = "Number of items per page", minimum = 1, maximum = 100),
@@ -90,15 +91,29 @@ pub async fn get_me(
     responses(
         (status = 200, description = "Paginated list of users", body = ListResponse<UserResponse>),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 422, description = "Acting user has no organization"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all)]
 pub async fn list_users(
     State(state): State<Arc<AppState>>,
-    _user: AuthUserExtractor,
+    user: AuthUserExtractor,
     Query(params): Query<UserListParams>,
 ) -> Result<Json<ListResponse<UserResponse>>, ServiceError> {
+    let read = Permission::new(Resource::User, Action::Read);
+    let scope = resolve_target_org(&state, user.id, None).await?;
+    state
+        .authorization_service
+        .require(user.id, read, scope)
+        .await?;
+    // The gate only proves the caller may read *somewhere*; a tenant must not
+    // see the members of sibling tenants or of the organization above it.
+    let visibility = state
+        .authorization_service
+        .visible_orgs_for(user.id, read)
+        .await?;
     let pagination = Pagination::new(params.page, params.per_page);
     let filter = UserListFilter {
         organization_id: params.organization_id.map(Id::new),
@@ -109,6 +124,7 @@ pub async fn list_users(
             .query
             .map(|q| q.trim().to_string())
             .filter(|q| !q.is_empty()),
+        visibility,
     };
     let page = state.user_service.list(pagination, filter).await?;
     Ok(Json(ListResponse::from_page(page, &pagination)))

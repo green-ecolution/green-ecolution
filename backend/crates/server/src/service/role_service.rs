@@ -315,9 +315,9 @@ mod tests {
                 .map(|id| UserProfile::empty(*id))
                 .collect())
         }
-        async fn ids_in_organization(
+        async fn ids_in_organizations(
             &self,
-            _org: Id<Organization>,
+            _orgs: &[Id<Organization>],
         ) -> Result<Vec<Uuid>, RepositoryError> {
             Ok(Vec::new())
         }

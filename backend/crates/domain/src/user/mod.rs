@@ -133,9 +133,11 @@ pub trait UserRepository: Send + Sync {
 #[async_trait::async_trait]
 pub trait UserProfileReader: Send + Sync {
     async fn by_ids(&self, ids: &[Uuid]) -> Result<Vec<UserProfile>, RepositoryError>;
-    async fn ids_in_organization(
+    /// Members of any of the given organizations. Bulk by design: read paths
+    /// scope against a whole subtree, which must stay a single query.
+    async fn ids_in_organizations(
         &self,
-        org: Id<Organization>,
+        orgs: &[Id<Organization>],
     ) -> Result<Vec<Uuid>, RepositoryError>;
     async fn organizations_for(
         &self,

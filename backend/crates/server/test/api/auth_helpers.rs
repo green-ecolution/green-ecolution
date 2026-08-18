@@ -18,6 +18,19 @@ use wiremock::{
 use crate::helpers::{TestApp, spawn_app_with_auth};
 
 const KID: &str = "test-key-1";
+const REALM: &str = "green-ecolution";
+
+fn kc_user_json(id: Uuid, username: &str) -> Value {
+    json!({
+        "id": id.to_string(),
+        "username": username,
+        "firstName": "Test",
+        "lastName": username,
+        "email": format!("{username}@example.com"),
+        "emailVerified": true,
+        "enabled": true,
+    })
+}
 
 pub struct AuthHarness {
     pub server: MockServer,
@@ -40,8 +53,7 @@ impl AuthHarness {
         let e = URL_SAFE_NO_PAD.encode(public.e().to_bytes_be());
 
         let server = MockServer::start().await;
-        let realm = "green-ecolution";
-        let issuer_url = format!("{}/realms/{realm}", server.uri());
+        let issuer_url = format!("{}/realms/{REALM}", server.uri());
 
         let jwks = json!({
             "keys": [{
@@ -56,7 +68,7 @@ impl AuthHarness {
 
         Mock::given(method("GET"))
             .and(path(format!(
-                "/realms/{realm}/protocol/openid-connect/certs"
+                "/realms/{REALM}/protocol/openid-connect/certs"
             )))
             .respond_with(ResponseTemplate::new(200).set_body_json(jwks))
             .mount(&server)
@@ -81,6 +93,54 @@ impl AuthHarness {
             default_redirect_url: "http://127.0.0.1/cb".to_string(),
             expected_audience: None,
         }
+    }
+
+    /// Mocks the Keycloak admin endpoints the user service consults to turn
+    /// locally known ids into identities: the service-account token plus one
+    /// lookup per user. Ids left unmocked answer 404, which the repository
+    /// skips — so mock every seeded user, otherwise a leak looks like a pass.
+    pub async fn mock_identity_lookups(&self, users: &[(Uuid, &str)]) {
+        self.mock_service_account_token().await;
+        for (id, username) in users {
+            Mock::given(method("GET"))
+                .and(path(format!("/admin/realms/{REALM}/users/{id}")))
+                .respond_with(ResponseTemplate::new(200).set_body_json(kc_user_json(*id, username)))
+                .mount(&self.server)
+                .await;
+        }
+    }
+
+    /// Mocks the admin list/count endpoints backing `UserRepository::search`,
+    /// answering with `users` regardless of the query.
+    pub async fn mock_identity_search(&self, users: &[(Uuid, &str)]) {
+        self.mock_service_account_token().await;
+        let body: Vec<Value> = users
+            .iter()
+            .map(|(id, username)| kc_user_json(*id, username))
+            .collect();
+        Mock::given(method("GET"))
+            .and(path(format!("/admin/realms/{REALM}/users/count")))
+            .respond_with(ResponseTemplate::new(200).set_body_json(users.len()))
+            .mount(&self.server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path(format!("/admin/realms/{REALM}/users")))
+            .respond_with(ResponseTemplate::new(200).set_body_json(body))
+            .mount(&self.server)
+            .await;
+    }
+
+    async fn mock_service_account_token(&self) {
+        Mock::given(method("POST"))
+            .and(path(format!(
+                "/realms/{REALM}/protocol/openid-connect/token"
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "access_token": "service-account-token",
+                "expires_in": 300,
+            })))
+            .mount(&self.server)
+            .await;
     }
 
     pub fn sign_token(&self, claim_overrides: Value) -> String {

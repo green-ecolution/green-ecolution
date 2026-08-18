@@ -281,6 +281,199 @@ async fn user_organization_change_is_forbidden_without_grants() {
     assert_eq!(resp.status(), 403);
 }
 
+async fn seed_child_org(app: &crate::helpers::TestApp, parent: Uuid, name: &str) -> Uuid {
+    sqlx::query_scalar!(
+        r#"INSERT INTO organizations (id, parent_id, name) VALUES (gen_random_uuid(), $1, $2) RETURNING id"#,
+        parent,
+        name
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap()
+}
+
+/// A member of `org` without any role assignment.
+async fn seed_member(app: &crate::helpers::TestApp, org: Uuid) -> Uuid {
+    let user_id = Uuid::new_v4();
+    sqlx::query!(
+        r#"INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)"#,
+        user_id,
+        org
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    user_id
+}
+
+async fn grant_in(app: &crate::helpers::TestApp, user: Uuid, org: Uuid, permissions: &[&str]) {
+    let permissions: Vec<String> = permissions.iter().map(|p| p.to_string()).collect();
+    let role_id: Uuid = sqlx::query_scalar!(
+        r#"INSERT INTO roles (id, organization_id, name, permissions)
+           VALUES (gen_random_uuid(), $1, 'Scoping-Rolle', $2)
+           RETURNING id"#,
+        org,
+        &permissions
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap();
+    sqlx::query!(
+        r#"INSERT INTO role_assignments (user_id, role_id) VALUES ($1, $2)"#,
+        user,
+        role_id
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+}
+
+struct UserListFixture {
+    caller_token: String,
+    caller: Uuid,
+    in_own_org: Uuid,
+    in_sub_org: Uuid,
+    in_parent_org: Uuid,
+    in_sibling_org: Uuid,
+    sibling_org: Uuid,
+}
+
+impl UserListFixture {
+    /// Every seeded user, for mocking the IdP side.
+    fn everyone(&self) -> Vec<(Uuid, &'static str)> {
+        vec![
+            (self.caller, "caller"),
+            (self.in_own_org, "own"),
+            (self.in_sub_org, "sub"),
+            (self.in_parent_org, "parent"),
+            (self.in_sibling_org, "sibling"),
+        ]
+    }
+
+    fn visible_ids(&self) -> std::collections::BTreeSet<Uuid> {
+        [self.caller, self.in_own_org, self.in_sub_org]
+            .into_iter()
+            .collect()
+    }
+}
+
+/// ```text
+/// root
+/// └── Dach ............... in_parent_org
+///     ├── Eigene ........ caller, in_own_org   <- caller holds user:read here
+///     │   └── Unter ..... in_sub_org
+///     └── Schwester ..... in_sibling_org
+/// ```
+async fn seed_user_list_tree(
+    harness: &crate::auth_helpers::AuthHarness,
+    app: &crate::helpers::TestApp,
+) -> UserListFixture {
+    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
+    let parent_org = seed_child_org(app, root, "Dach").await;
+    let own_org = seed_child_org(app, parent_org, "Eigene").await;
+    let sub_org = seed_child_org(app, own_org, "Unter").await;
+    let sibling_org = seed_child_org(app, parent_org, "Schwester").await;
+
+    let caller = seed_member(app, own_org).await;
+    grant_in(app, caller, own_org, &["user:read"]).await;
+
+    UserListFixture {
+        caller_token: harness.sign_token(json!({ "sub": caller.to_string() })),
+        caller,
+        in_own_org: seed_member(app, own_org).await,
+        in_sub_org: seed_member(app, sub_org).await,
+        in_parent_org: seed_member(app, parent_org).await,
+        in_sibling_org: seed_member(app, sibling_org).await,
+        sibling_org,
+    }
+}
+
+async fn get_users(app: &crate::helpers::TestApp, token: &str, query: &str) -> reqwest::Response {
+    reqwest::Client::new()
+        .get(format!("{}/api/v1/users{query}", app.address))
+        .bearer_auth(token)
+        .send()
+        .await
+        .unwrap()
+}
+
+fn returned_ids(body: &serde_json::Value) -> std::collections::BTreeSet<Uuid> {
+    body["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|u| Uuid::parse_str(u["id"].as_str().unwrap()).unwrap())
+        .collect()
+}
+
+#[tokio::test]
+async fn user_list_is_forbidden_without_user_read() {
+    let (harness, app) = spawn_with_auth().await;
+    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
+    let org = seed_child_org(&app, root, "Ohne-User-Read").await;
+    let caller = seed_member(&app, org).await;
+    grant_in(&app, caller, org, &["tree:read"]).await;
+    let token = harness.sign_token(json!({ "sub": caller.to_string() }));
+
+    let resp = get_users(&app, &token, "").await;
+
+    assert_eq!(resp.status(), 403);
+}
+
+#[tokio::test]
+async fn user_list_shows_the_visible_subtree_only() {
+    let (harness, app) = spawn_with_auth().await;
+    let fixture = seed_user_list_tree(&harness, &app).await;
+    harness.mock_identity_lookups(&fixture.everyone()).await;
+    // The unscoped listing endpoint answers with everyone as well, so an
+    // unscoped implementation fails on the returned ids instead of erroring
+    // out on a missing mock.
+    harness.mock_identity_search(&fixture.everyone()).await;
+
+    let resp = get_users(&app, &fixture.caller_token, "?per_page=100").await;
+
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(returned_ids(&body), fixture.visible_ids());
+    assert_eq!(body["pagination"]["total_records"], 3);
+}
+
+#[tokio::test]
+async fn user_search_is_intersected_with_the_visible_subtree() {
+    let (harness, app) = spawn_with_auth().await;
+    let fixture = seed_user_list_tree(&harness, &app).await;
+    // The IdP answers with everyone regardless of the query — it knows no
+    // organizations, so the scoping must happen on our side.
+    harness.mock_identity_search(&fixture.everyone()).await;
+
+    let resp = get_users(&app, &fixture.caller_token, "?query=test&per_page=100").await;
+
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(returned_ids(&body), fixture.visible_ids());
+    assert_eq!(body["pagination"]["total_records"], 3);
+}
+
+#[tokio::test]
+async fn user_list_filtered_by_an_invisible_organization_is_empty() {
+    let (harness, app) = spawn_with_auth().await;
+    let fixture = seed_user_list_tree(&harness, &app).await;
+    harness.mock_identity_lookups(&fixture.everyone()).await;
+
+    let resp = get_users(
+        &app,
+        &fixture.caller_token,
+        &format!("?organization_id={}", fixture.sibling_org),
+    )
+    .await;
+
+    // Nothing visible there rather than a 403: the filter narrows, it never widens.
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert!(returned_ids(&body).is_empty());
+    assert_eq!(body["pagination"]["total_records"], 0);
+}
+
 #[tokio::test]
 async fn role_assignment_on_self_with_zero_grants_returns_403_not_409() {
     let (harness, app) = spawn_with_auth().await;

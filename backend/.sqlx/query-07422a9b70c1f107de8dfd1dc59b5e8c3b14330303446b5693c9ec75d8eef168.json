@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id FROM user_profiles WHERE organization_id = $1",
+  "query": "SELECT id FROM user_profiles WHERE organization_id = ANY($1)",
   "describe": {
     "columns": [
       {
@@ -11,12 +11,12 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "UuidArray"
       ]
     },
     "nullable": [
       false
     ]
   },
-  "hash": "f9d668938b6fa17146e075e3fa9ce1171a38d5b9ba70858ceedef7ea827ee672"
+  "hash": "07422a9b70c1f107de8dfd1dc59b5e8c3b14330303446b5693c9ec75d8eef168"
 }

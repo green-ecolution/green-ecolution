@@ -160,7 +160,7 @@ impl OrganizationService {
         if has_children
             || !self
                 .profile_reader
-                .ids_in_organization(id)
+                .ids_in_organizations(&[id])
                 .await?
                 .is_empty()
         {
@@ -403,9 +403,9 @@ mod tests {
         async fn by_ids(&self, _ids: &[Uuid]) -> Result<Vec<UserProfile>, RepositoryError> {
             Ok(Vec::new())
         }
-        async fn ids_in_organization(
+        async fn ids_in_organizations(
             &self,
-            _org: Id<Organization>,
+            _orgs: &[Id<Organization>],
         ) -> Result<Vec<Uuid>, RepositoryError> {
             Ok(self.ids_in_org.clone())
         }

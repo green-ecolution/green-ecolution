@@ -68,13 +68,14 @@ impl UserProfileReader for PgUserProfileRepository {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn ids_in_organization(
+    async fn ids_in_organizations(
         &self,
-        org: Id<Organization>,
+        orgs: &[Id<Organization>],
     ) -> Result<Vec<Uuid>, RepositoryError> {
+        let orgs: Vec<Uuid> = orgs.iter().map(|org| org.value()).collect();
         let ids = sqlx::query_scalar!(
-            r#"SELECT id FROM user_profiles WHERE organization_id = $1"#,
-            org.value()
+            r#"SELECT id FROM user_profiles WHERE organization_id = ANY($1)"#,
+            &orgs
         )
         .fetch_all(&self.pool)
         .await?;
