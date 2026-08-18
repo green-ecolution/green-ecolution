@@ -263,7 +263,7 @@ pub async fn list_user_roles(
 #[utoipa::path(post, path = "/users/{user_id}/roles", tag = "Users",
     operation_id = "assignUserRole",
     summary = "Assign a role to a user",
-    description = "Assigns a role to a user. Requires user:update in the role's organization, plus a permission set that does not exceed the caller's own grants. Changes to one's own roles are rejected.",
+    description = "Assigns a role to a user. Requires user:update in the role's organization, plus a permission set that does not exceed the caller's own grants. The role's organization must match the target user's organization. Changes to one's own roles are rejected.",
     params(("user_id" = Uuid, Path, description = "User id")),
     request_body = AssignRoleRequest,
     responses(
@@ -271,7 +271,7 @@ pub async fn list_user_roles(
         (status = 401, description = "Unauthorized"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "Role not found"),
-        (status = 409, description = "Role is a template and cannot be assigned, or attempting to change your own roles"),
+        (status = 409, description = "Role is a template and cannot be assigned, the role's organization does not match the target user's organization, or attempting to change your own roles"),
         (status = 500, description = "Internal server error"),
     )
 )]
@@ -298,6 +298,14 @@ pub async fn assign_user_role(
             .authorization_service
             .require_superset(user.id, &perms, role_org)
             .await?;
+        // A role grants its permissions for its owning organization plus that
+        // organization's whole subtree. Assigning a role owned by a different
+        // (e.g. parent) organization would hand the target rights over that
+        // organization's entire subtree, so the role's org and the target's
+        // org must match; a target with no organization has nothing to match.
+        if state.user_service.organization_of(user_id).await? != Some(role_org) {
+            return Err(ServiceError::OrganizationMismatch);
+        }
     }
     // Template roles skip the permission checks above, so the authorization
     // guard is not guaranteed to have run — do not assume 403 is returned before 409.

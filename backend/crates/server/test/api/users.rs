@@ -151,6 +151,68 @@ async fn assign_and_revoke_role_via_api() {
 }
 
 #[tokio::test]
+async fn assigning_a_role_from_a_different_organization_returns_409() {
+    let app = spawn_app().await;
+    let role_org = create_org(&app, "Rollen-Org").await;
+    let target_org = create_org(&app, "Ziel-Org").await;
+    let role_id = create_role(&app, &role_org, "Gießtrupp").await;
+    let user_id = Uuid::new_v4();
+
+    let resp = app
+        .patch_json(
+            &format!("/api/v1/users/{user_id}/organization"),
+            &json!({ "organization_id": target_org }),
+        )
+        .await;
+    assert_eq!(resp.status(), 200);
+
+    let resp = app
+        .post_json(
+            &format!("/api/v1/users/{user_id}/roles"),
+            &json!({ "role_id": role_id }),
+        )
+        .await;
+    assert_eq!(resp.status(), 409);
+
+    // Side-effect assertion: role must not have been assigned.
+    let assigned_roles: Vec<Uuid> = sqlx::query_scalar!(
+        r#"SELECT role_id FROM role_assignments WHERE user_id = $1"#,
+        user_id
+    )
+    .fetch_all(&app.db_pool)
+    .await
+    .unwrap();
+    let role_uuid = Uuid::parse_str(&role_id).unwrap();
+    assert!(!assigned_roles.contains(&role_uuid));
+}
+
+#[tokio::test]
+async fn assigning_an_org_scoped_role_to_a_user_without_an_organization_returns_409() {
+    let app = spawn_app().await;
+    let org = create_org(&app, "TBZ").await;
+    let role_id = create_role(&app, &org, "Gießtrupp").await;
+    // Never given an organization via PATCH .../organization.
+    let user_id = Uuid::new_v4();
+
+    let resp = app
+        .post_json(
+            &format!("/api/v1/users/{user_id}/roles"),
+            &json!({ "role_id": role_id }),
+        )
+        .await;
+    assert_eq!(resp.status(), 409);
+
+    let assigned_roles: Vec<Uuid> = sqlx::query_scalar!(
+        r#"SELECT role_id FROM role_assignments WHERE user_id = $1"#,
+        user_id
+    )
+    .fetch_all(&app.db_pool)
+    .await
+    .unwrap();
+    assert!(assigned_roles.is_empty());
+}
+
+#[tokio::test]
 async fn list_users_accepts_pagination_query_params() {
     let app = spawn_app().await;
     // Regression: serde(flatten) over PaginationParams rejected numeric query
