@@ -61,11 +61,14 @@ let detailMap: Record<string, OrganizationDetailResponse> = {}
 const permissions = vi.fn((): Permissions => UNRESTRICTED)
 vi.mock('@/lib/auth/usePermissions', () => ({ usePermissions: () => permissions() }))
 
-// jsdom's matchMedia mock always reports non-desktop, which would wrap the detail
-// panel in a Drawer and leave both panes unqueryable. Default to the desktop
+// jsdom never runs layout (getBoundingClientRect always reports 0 width), so an
+// unmocked useContainerWiderThan would report `false` forever and wrap the detail
+// panel in a Drawer, leaving both panes unqueryable. Default to the desktop
 // two-pane layout; one test flips this to exercise the Drawer branch.
-const isDesktop = vi.fn((): boolean => true)
-vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => isDesktop() }))
+const isWide = vi.fn((): boolean => true)
+vi.mock('@/hooks/useContainerWiderThan', () => ({
+  useContainerWiderThan: () => ({ ref: { current: null }, isWide: isWide() }),
+}))
 
 const createMutate = vi.fn()
 const updateMutate = vi.fn()
@@ -164,7 +167,7 @@ describe('OrganizationPage', () => {
     orgList = [...BASE_ORGS]
     detailMap = { ...BASE_DETAILS }
     permissions.mockReturnValue(UNRESTRICTED)
-    isDesktop.mockReturnValue(true)
+    isWide.mockReturnValue(true)
     ownOrgId.mockReturnValue('amt')
     blockerStatus.mockReturnValue('idle')
     createError.mockReturnValue(null)
@@ -563,7 +566,7 @@ describe('OrganizationPage', () => {
   })
 
   it('renders the detail in a drawer on mobile', async () => {
-    isDesktop.mockReturnValue(false)
+    isWide.mockReturnValue(false)
     render(<OrganizationPage />)
 
     // Nothing is auto-opened; the tree is what the user sees first.
