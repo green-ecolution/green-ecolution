@@ -46,6 +46,14 @@ const MemberList = ({
 }: MemberListProps) => {
   const filtered = isFiltered(search, organizationFilter, roleFilter)
 
+  // With an organization picked, only its own roles can ever match: the backend
+  // requires a role's organization to equal its holder's. Offering the rest
+  // would let the user build a combination that is empty by construction.
+  const selectableRoles =
+    organizationFilter === null
+      ? roles
+      : roles.filter((role) => role.organizationId === organizationFilter)
+
   return (
     <div className="flex flex-col gap-4">
       <h2 className="font-lato text-base font-semibold">Mitarbeitende</h2>
@@ -86,7 +94,7 @@ const MemberList = ({
         onChange={(value) => onRoleFilterChange(value === ALL ? null : value)}
         options={[
           { value: ALL, label: 'Alle Rollen' },
-          ...roleFilterOptions(roles, organizations),
+          ...roleFilterOptions(selectableRoles, organizations),
         ]}
       />
 

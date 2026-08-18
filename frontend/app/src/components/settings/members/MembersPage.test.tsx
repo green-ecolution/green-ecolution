@@ -9,20 +9,24 @@ const ORGS: OrganizationResponse[] = [
   { id: 'nord', name: 'Stadtgärtnerei Nord', memberCount: 4, parentId: 'amt' },
 ]
 
-const role = (id: string, name: string): RoleResponse => ({
+const role = (id: string, name: string, organizationId: string): RoleResponse => ({
   id,
   name,
+  organizationId,
   permissions: [],
   isTemplate: false,
 })
 
-const ROLES: RoleResponse[] = [role('r-lead', 'Einsatzleitung'), role('r-garden', 'Gärtner')]
+const ROLES: RoleResponse[] = [
+  role('r-lead', 'Einsatzleitung', 'amt'),
+  role('r-garden', 'Gärtner', 'amt'),
+]
 
 // Keyed by org so the picker's org-scoping (a role only grants rights over its
 // own organization's subtree) can be told apart from "returns some roles".
 const ROLES_BY_ORG: Record<string, RoleResponse[]> = {
   amt: ROLES,
-  nord: [role('r-driver', 'Fahrerin')],
+  nord: [role('r-driver', 'Fahrerin', 'nord')],
 }
 
 // The list filter's endpoint spans the caller's whole visible subtree, so it
@@ -233,6 +237,32 @@ describe('MembersPage', () => {
     // filter is not limited to the caller's own organization.
     expect(screen.getByRole('option', { name: 'Fahrerin' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Einsatzleitung' })).toBeInTheDocument()
+  })
+
+  it('drops a role filter that the newly picked organization cannot own', async () => {
+    render(<MembersPage />)
+
+    await openCombobox('Rolle')
+    await userEvent.click(screen.getByRole('option', { name: 'Fahrerin' }))
+    expect(screen.getByRole('combobox', { name: 'Rolle' })).toHaveTextContent('Fahrerin')
+
+    // "Fahrerin" belongs to "nord"; picking "amt" makes the pair unsatisfiable,
+    // because the backend requires a holder's organization to match the role's.
+    await openCombobox('Organisation')
+    await userEvent.click(screen.getByRole('option', { name: 'Grünflächenamt' }))
+
+    expect(screen.getByRole('combobox', { name: 'Rolle' })).toHaveTextContent('Alle Rollen')
+  })
+
+  it("offers only the picked organization's roles in the role filter", async () => {
+    render(<MembersPage />)
+
+    await openCombobox('Organisation')
+    await userEvent.click(screen.getByRole('option', { name: 'Grünflächenamt' }))
+    await openCombobox('Rolle')
+
+    expect(screen.getByRole('option', { name: 'Einsatzleitung' })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Fahrerin' })).not.toBeInTheDocument()
   })
 
   it('revokes a role immediately', async () => {

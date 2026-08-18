@@ -23,6 +23,7 @@ import { useHasPermission } from '@/lib/auth/useHasPermission'
 import MemberActionButtons from './MemberActionButtons'
 import MemberDetail from './MemberDetail'
 import MemberList from './MemberList'
+import { buildTree, flatten } from '../organization/organizationTree'
 import { fullNameOf, isFiltered } from './memberList'
 import { useMemberProfileDraft } from './useMemberProfileDraft'
 
@@ -136,7 +137,12 @@ const MembersPage = () => {
     (role) => !role.isTemplate && !(selected?.roles ?? []).some((held) => held.id === role.id),
   )
   const filterRoles = (filterVisibleRoles ?? []).filter((role) => !role.isTemplate)
-  const organizationList = organizations ?? []
+  // Tree order instead of the API's alphabetical order, so both filters read like
+  // the organization structure they describe.
+  const visibleOrganizations = organizations ?? []
+  const ownOrgId = me?.organization?.id
+  const orgRoot = ownOrgId ? buildTree(visibleOrganizations, ownOrgId) : null
+  const organizationList = orgRoot ? flatten(orgRoot) : visibleOrganizations
   const isSelf = selected !== null && selected.id === me?.id
 
   useEffect(() => {
@@ -224,6 +230,14 @@ const MembersPage = () => {
   const changeOrganizationFilter = (orgId: string | null) => {
     setOrganizationFilter(orgId)
     setPage(1)
+    // A role belongs to exactly one organization, and the backend requires a
+    // holder's organization to match the role's. A role from elsewhere can
+    // therefore never match, and leaving it selected strands the list on an
+    // empty result the user cannot explain.
+    if (orgId !== null && roleFilter !== null) {
+      const role = filterRoles.find((candidate) => candidate.id === roleFilter)
+      if (role?.organizationId !== orgId) setRoleFilter(null)
+    }
   }
 
   const changeRoleFilter = (roleId: string | null) => {

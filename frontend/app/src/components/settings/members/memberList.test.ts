@@ -113,10 +113,7 @@ describe('roleFilterOptions', () => {
       orgs,
     )
 
-    expect(options.map((option) => option.group)).toEqual([
-      'Grünflächenamt',
-      'Stadtgärtnerei Nord',
-    ])
+    expect(options.map((option) => option.group)).toEqual(['Grünflächenamt', 'Stadtgärtnerei Nord'])
   })
 
   it('still lists a role whose organization is not visible instead of dropping it', () => {
