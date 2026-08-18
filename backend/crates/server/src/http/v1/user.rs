@@ -207,8 +207,10 @@ pub async fn update_user(
                 .require(user.id, permission, org)
                 .await?
         }
-        // Legacy users predate organization membership and have no org to scope
-        // against; fall back to requiring user:update anywhere in the caller's scope.
+        // organization_id is NOT NULL once a profile row exists, so this is not
+        // a "legacy null org" case; it's a target with no user_profiles row at
+        // all (e.g. never given an organization). Nothing to scope against, so
+        // fall back to requiring user:update anywhere in the caller's scope.
         None => {
             let ctx = state.authorization_service.context_for(user.id).await?;
             if !ctx.permissions.allows(permission) {
@@ -247,8 +249,10 @@ pub async fn list_user_roles(
                 .require(user.id, permission, org)
                 .await?
         }
-        // Legacy users predate organization membership and have no org to scope
-        // against; fall back to requiring user:read anywhere in the caller's scope.
+        // organization_id is NOT NULL once a profile row exists, so this is not
+        // a "legacy null org" case; it's a target with no user_profiles row at
+        // all (e.g. never given an organization). Nothing to scope against, so
+        // fall back to requiring user:read anywhere in the caller's scope.
         None => {
             let ctx = state.authorization_service.context_for(user.id).await?;
             if !ctx.permissions.allows(permission) {

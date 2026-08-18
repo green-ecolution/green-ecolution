@@ -367,7 +367,22 @@ const SELF_ID: &str = "00000000-0000-0000-0000-000000000000";
 async fn assigning_a_role_to_yourself_returns_409() {
     let app = spawn_app().await;
     let org = create_org(&app, "TBZ").await;
+    let org_uuid = Uuid::parse_str(&org).unwrap();
     let role_id = create_role(&app, &org, "Gießtrupp").await;
+    let self_uuid = Uuid::nil();
+
+    // PATCH .../organization is itself blocked by the self-lock guard, so the
+    // profile row is seeded directly, in the role's own organization — that
+    // makes the org-match check pass, so the self-lock guard is what actually
+    // fires and the 409 below is not a false positive from OrganizationMismatch.
+    sqlx::query!(
+        r#"INSERT INTO user_profiles (id, organization_id) VALUES ($1, $2)"#,
+        self_uuid,
+        org_uuid
+    )
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
 
     let resp = app
         .post_json(
@@ -377,9 +392,12 @@ async fn assigning_a_role_to_yourself_returns_409() {
         .await;
 
     assert_eq!(resp.status(), 409);
+    assert_eq!(
+        resp.text().await.unwrap(),
+        "a user cannot change their own roles or organization"
+    );
 
     // Side-effect assertion: role must not have been assigned.
-    let self_uuid = Uuid::nil();
     let assigned_roles: Vec<Uuid> = sqlx::query_scalar!(
         r#"SELECT role_id FROM role_assignments WHERE user_id = $1"#,
         self_uuid
