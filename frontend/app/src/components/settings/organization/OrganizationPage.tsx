@@ -19,6 +19,7 @@ import type { AddressDto, OrganizationDetailResponse, OrganizationResponse } fro
 import { organizationQueries, userQueries } from '@/api/queries'
 import { useOrganizationMutations } from '@/hooks/useOrganizationMutations'
 import { useContainerWiderThan } from '@/hooks/useContainerWiderThan'
+import { TWO_PANE_MIN_WIDTH } from '../twoPaneWidth'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { initialsOf } from '@/lib/initials'
 import ContactPersonPicker from './ContactPersonPicker'
@@ -30,15 +31,6 @@ import { buildTree, pathTo, type OrgNode } from './organizationTree'
 import { useOrganizationDraft } from './useOrganizationDraft'
 
 const MEMBERS_PER_PAGE = 100
-
-// The switch must react to the space this page's own grid actually has, not the
-// viewport: the app sidebar is collapsible and shifts available width by ~260px
-// independently of window size, so no viewport breakpoint works for both sidebar
-// states. Threshold: tree column (280-300px across the three settings pages) + gap
-// (24px) + narrowest useful detail pane (~576px, where MemberDetail/MemberProfileCard's
-// own two-column breakpoints start paying off) ~= 900px, applied uniformly to all
-// three settings pages so they switch at the same felt width.
-const TWO_PANE_MIN_WIDTH = 900
 
 const statusOf = (error: unknown): number | undefined =>
   (error as { response?: { status?: number } } | null)?.response?.status
