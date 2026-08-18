@@ -1,7 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import type { UserResponse } from '@/api/backendApi'
+import type { OrganizationResponse, RoleResponse, UserResponse } from '@/api/backendApi'
 import { initialsOf } from '@/lib/initials'
-import { emptyMessageOf, fullNameOf, isFiltered, memberCountLabel, sinceLabel } from './memberList'
+import {
+  emptyMessageOf,
+  fullNameOf,
+  isFiltered,
+  memberCountLabel,
+  roleFilterOptions,
+  sinceLabel,
+} from './memberList'
 
 const user = (firstName: string, lastName: string): UserResponse =>
   ({ firstName, lastName }) as UserResponse
@@ -77,5 +84,48 @@ describe('sinceLabel', () => {
 
   it('returns null for an unparseable value', () => {
     expect(sinceLabel('not a date')).toBe(null)
+  })
+})
+
+describe('roleFilterOptions', () => {
+  const org = (id: string, name: string): OrganizationResponse =>
+    ({ id, name }) as OrganizationResponse
+  const role = (id: string, name: string, organizationId: string | null): RoleResponse =>
+    ({ id, name, organizationId }) as RoleResponse
+
+  const orgs = [org('amt', 'Grünflächenamt'), org('nord', 'Stadtgärtnerei Nord')]
+
+  it('keeps same-named roles apart by grouping them under their organization', () => {
+    const options = roleFilterOptions(
+      [role('r1', 'Administrator', 'amt'), role('r2', 'Administrator', 'nord')],
+      orgs,
+    )
+
+    expect(options).toEqual([
+      { value: 'r1', label: 'Administrator', group: 'Grünflächenamt' },
+      { value: 'r2', label: 'Administrator', group: 'Stadtgärtnerei Nord' },
+    ])
+  })
+
+  it('emits groups in the order the organizations were given', () => {
+    const options = roleFilterOptions(
+      [role('r2', 'Gärtner', 'nord'), role('r1', 'Gärtner', 'amt')],
+      orgs,
+    )
+
+    expect(options.map((option) => option.group)).toEqual([
+      'Grünflächenamt',
+      'Stadtgärtnerei Nord',
+    ])
+  })
+
+  it('still lists a role whose organization is not visible instead of dropping it', () => {
+    const options = roleFilterOptions([role('r9', 'Fremd', 'unbekannt')], orgs)
+
+    expect(options).toEqual([{ value: 'r9', label: 'Fremd', group: 'Ohne Organisation' }])
+  })
+
+  it('yields nothing when there are no roles', () => {
+    expect(roleFilterOptions([], orgs)).toEqual([])
   })
 })

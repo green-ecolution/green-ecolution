@@ -1,8 +1,8 @@
 import { Search } from 'lucide-react'
-import { Input, Loading, SelectField, SimplePagination } from '@green-ecolution/ui'
+import { Combobox, Input, Loading, SelectField, SimplePagination } from '@green-ecolution/ui'
 import type { OrganizationResponse, RoleResponse, UserResponse } from '@/api/backendApi'
 import MemberListItem from './MemberListItem'
-import { emptyMessageOf, isFiltered, memberCountLabel } from './memberList'
+import { emptyMessageOf, isFiltered, memberCountLabel, roleFilterOptions } from './memberList'
 
 const ALL = '__all__'
 
@@ -77,15 +77,16 @@ const MemberList = ({
         ]}
       />
 
-      <SelectField
-        label="Rolle"
-        hideLabel
+      <Combobox
+        aria-label="Rolle"
         placeholder="Alle Rollen"
+        searchPlaceholder="Rolle suchen"
+        emptyText="Keine passende Rolle"
         value={roleFilter ?? ALL}
-        onValueChange={(value) => onRoleFilterChange(value === ALL ? null : value)}
+        onChange={(value) => onRoleFilterChange(value === ALL ? null : value)}
         options={[
           { value: ALL, label: 'Alle Rollen' },
-          ...roles.map((role) => ({ value: role.id, label: role.name })),
+          ...roleFilterOptions(roles, organizations),
         ]}
       />
 

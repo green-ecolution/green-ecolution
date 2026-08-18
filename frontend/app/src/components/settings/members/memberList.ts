@@ -1,4 +1,5 @@
-import type { UserResponse } from '@/api/backendApi'
+import type { ComboboxOption } from '@green-ecolution/ui'
+import type { OrganizationResponse, RoleResponse, UserResponse } from '@/api/backendApi'
 
 export const fullNameOf = (user: UserResponse): string =>
   [user.firstName, user.lastName].filter((part) => (part ?? '').trim().length > 0).join(' ')
@@ -24,4 +25,27 @@ export const sinceLabel = (createdAt?: string | null): string | null => {
   const date = new Date(createdAt)
   if (Number.isNaN(date.getTime())) return null
   return `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`
+}
+
+/**
+ * Creating an organization instantiates org-owned copies of every role template,
+ * so role names repeat across a subtree. Grouping by organization is what makes
+ * four roles called "Administrator" tellable apart.
+ */
+export const roleFilterOptions = (
+  roles: RoleResponse[],
+  organizations: OrganizationResponse[],
+): ComboboxOption[] => {
+  const known = new Set(organizations.map((org) => org.id))
+  const grouped = organizations.flatMap((org) =>
+    roles
+      .filter((role) => role.organizationId === org.id)
+      .map((role) => ({ value: role.id, label: role.name, group: org.name })),
+  )
+  // Without this a role whose organization is not in the visible list would
+  // disappear from the filter with no trace.
+  const orphans = roles
+    .filter((role) => role.organizationId == null || !known.has(role.organizationId))
+    .map((role) => ({ value: role.id, label: role.name, group: 'Ohne Organisation' }))
+  return [...grouped, ...orphans]
 }
