@@ -281,6 +281,37 @@ export class RolesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns every non-template role owned by an organization in the caller\'s visible subtree. Templates (organization_id = null) are excluded, since they cannot be assigned. Requires role:read.
+     * List roles visible to the caller
+     */
+    async listRolesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleResponse>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/roles`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(RoleResponseFromJSON));
+    }
+
+    /**
+     * Returns every non-template role owned by an organization in the caller\'s visible subtree. Templates (organization_id = null) are excluded, since they cannot be assigned. Requires role:read.
+     * List roles visible to the caller
+     */
+    async listRoles(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RoleResponse>> {
+        const response = await this.listRolesRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Templates cannot be modified (409). Requires role:update in the role\'s organization, plus a permission set that does not exceed the caller\'s own grants.
      * Replace a role\'s name, description and permissions
      */

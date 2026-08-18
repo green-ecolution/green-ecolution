@@ -82,7 +82,7 @@ export interface UpdateUserRequest {
 export class UsersApi extends runtime.BaseAPI {
 
     /**
-     * Assigns a role to a user. Requires user:update in the role\'s organization, plus a permission set that does not exceed the caller\'s own grants. Changes to one\'s own roles are rejected.
+     * Assigns a role to a user. Requires user:update in the role\'s organization, plus a permission set that does not exceed the caller\'s own grants. The role\'s organization must match the target user\'s organization. Changes to one\'s own roles are rejected.
      * Assign a role to a user
      */
     async assignUserRoleRaw(requestParameters: AssignUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleResponse>> {
@@ -122,7 +122,7 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Assigns a role to a user. Requires user:update in the role\'s organization, plus a permission set that does not exceed the caller\'s own grants. Changes to one\'s own roles are rejected.
+     * Assigns a role to a user. Requires user:update in the role\'s organization, plus a permission set that does not exceed the caller\'s own grants. The role\'s organization must match the target user\'s organization. Changes to one\'s own roles are rejected.
      * Assign a role to a user
      */
     async assignUserRole(requestParameters: AssignUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleResponse> {
@@ -203,6 +203,7 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Requires user:read in the target user\'s organization.
      * List a user\'s assigned roles
      */
     async listUserRolesRaw(requestParameters: ListUserRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleResponse>>> {
@@ -232,6 +233,7 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Requires user:read in the target user\'s organization.
      * List a user\'s assigned roles
      */
     async listUserRoles(requestParameters: ListUserRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RoleResponse>> {
