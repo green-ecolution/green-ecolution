@@ -10,12 +10,13 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
 
 use crate::{
-    http::{AppState, auth::extractor::AuthUserExtractor},
+    http::{AppState, auth::extractor::AuthUserExtractor, v1::scope::resolve_target_org},
     service::ServiceError,
 };
 use domain::{
     Id,
-    authorization::{Action, Permission, Resource},
+    authorization::{Action, Permission, Resource, Visibility},
+    organization::Organization,
     role::{RoleDescription, RoleDraft, RoleName},
 };
 
@@ -23,10 +24,54 @@ use super::dto::role::{RoleCreateRequest, RoleResponse, RoleUpdateRequest, parse
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::new()
+        .routes(routes!(list_roles))
         .routes(routes!(list_templates))
         .routes(routes!(list_permissions))
         .routes(routes!(list_org_roles, create_role))
         .routes(routes!(get_role, update_role, delete_role))
+}
+
+#[utoipa::path(get, path = "/roles", tag = "Roles",
+    operation_id = "listRoles",
+    summary = "List roles visible to the caller",
+    description = "Returns every non-template role owned by an organization in the caller's visible subtree. Templates (organization_id = null) are excluded, since they cannot be assigned. Requires role:read.",
+    responses(
+        (status = 200, description = "Roles visible to the caller", body = Vec<RoleResponse>),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 422, description = "Acting user has no organization and none was given"),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+#[tracing::instrument(level = "info", skip_all)]
+pub async fn list_roles(
+    State(state): State<Arc<AppState>>,
+    user: AuthUserExtractor,
+) -> Result<Json<Vec<RoleResponse>>, ServiceError> {
+    let read = Permission::new(Resource::Role, Action::Read);
+    let scope = resolve_target_org(&state, user.id, None).await?;
+    state
+        .authorization_service
+        .require(user.id, read, scope)
+        .await?;
+    let visible = state
+        .authorization_service
+        .visible_orgs_for(user.id, read)
+        .await?;
+    let org_ids: Vec<Id<Organization>> = match visible {
+        // Demo bypass: no orgs are actually excluded, so every organization
+        // stands in for "the caller's visible subtree".
+        Visibility::Unrestricted => state
+            .organization_service
+            .list()
+            .await?
+            .iter()
+            .map(|org| org.id)
+            .collect(),
+        Visibility::Only(orgs) => orgs.into_iter().collect(),
+    };
+    let views = state.role_service.by_organizations(&org_ids).await?;
+    Ok(Json(views.iter().map(Into::into).collect()))
 }
 
 #[utoipa::path(get, path = "/roles/templates", tag = "Roles",

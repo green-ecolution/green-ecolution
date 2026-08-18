@@ -58,6 +58,25 @@ impl RoleReader for PgRoleRepository {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
+    async fn by_organizations(
+        &self,
+        orgs: &[Id<Organization>],
+    ) -> Result<Vec<Role>, RepositoryError> {
+        let orgs: Vec<Uuid> = orgs.iter().map(|o| o.value()).collect();
+        sqlx::query_as!(
+            RoleSnapshot,
+            r#"SELECT id, organization_id, name, description, permissions
+               FROM roles WHERE organization_id = ANY($1) ORDER BY name ASC"#,
+            &orgs
+        )
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(|s| Role::reconstitute(s).map_err(Into::into))
+        .collect()
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
     async fn templates(&self) -> Result<Vec<Role>, RepositoryError> {
         sqlx::query_as!(
             RoleSnapshot,

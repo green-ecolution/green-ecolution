@@ -63,6 +63,20 @@ impl RoleService {
             .collect())
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn by_organizations(
+        &self,
+        orgs: &[Id<Organization>],
+    ) -> Result<Vec<RoleView>, ServiceError> {
+        Ok(self
+            .role_reader
+            .by_organizations(orgs)
+            .await?
+            .iter()
+            .map(RoleView::from)
+            .collect())
+    }
+
     #[tracing::instrument(level = "debug", skip_all, fields(role.id = %id))]
     pub async fn by_id(&self, id: Id<Role>) -> Result<RoleView, ServiceError> {
         Ok((&self.role_reader.by_id(id).await?).into())
@@ -217,6 +231,19 @@ mod tests {
                 .unwrap()
                 .iter()
                 .filter(|r| r.organization_id() == Some(org))
+                .cloned()
+                .collect())
+        }
+        async fn by_organizations(
+            &self,
+            orgs: &[Id<Organization>],
+        ) -> Result<Vec<Role>, RepositoryError> {
+            Ok(self
+                .rows
+                .lock()
+                .unwrap()
+                .iter()
+                .filter(|r| r.organization_id().is_some_and(|o| orgs.contains(&o)))
                 .cloned()
                 .collect())
         }

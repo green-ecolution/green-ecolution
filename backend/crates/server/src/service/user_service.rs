@@ -686,6 +686,12 @@ mod tests {
         ) -> Result<Vec<Role>, RepositoryError> {
             Ok(Vec::new())
         }
+        async fn by_organizations(
+            &self,
+            _orgs: &[Id<Organization>],
+        ) -> Result<Vec<Role>, RepositoryError> {
+            Ok(Vec::new())
+        }
         async fn templates(&self) -> Result<Vec<Role>, RepositoryError> {
             Ok(Vec::new())
         }

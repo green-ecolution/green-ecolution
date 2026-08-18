@@ -306,7 +306,12 @@ async fn seed_member(app: &crate::helpers::TestApp, org: Uuid) -> Uuid {
     user_id
 }
 
-async fn grant_in(app: &crate::helpers::TestApp, user: Uuid, org: Uuid, permissions: &[&str]) {
+async fn grant_in(
+    app: &crate::helpers::TestApp,
+    user: Uuid,
+    org: Uuid,
+    permissions: &[&str],
+) -> Uuid {
     let permissions: Vec<String> = permissions.iter().map(|p| p.to_string()).collect();
     let role_id: Uuid = sqlx::query_scalar!(
         r#"INSERT INTO roles (id, organization_id, name, permissions)
@@ -326,6 +331,7 @@ async fn grant_in(app: &crate::helpers::TestApp, user: Uuid, org: Uuid, permissi
     .execute(&app.db_pool)
     .await
     .unwrap();
+    role_id
 }
 
 struct UserListFixture {
@@ -561,4 +567,111 @@ async fn organization_change_on_self_with_zero_grants_returns_403_not_409() {
         403,
         "403 (permission denied) must come before 409 (self-target)"
     );
+}
+
+async fn seed_role(app: &crate::helpers::TestApp, org: Uuid, name: &str) -> Uuid {
+    sqlx::query_scalar!(
+        r#"INSERT INTO roles (id, organization_id, name, permissions)
+           VALUES (gen_random_uuid(), $1, $2, ARRAY['tree:read'])
+           RETURNING id"#,
+        org,
+        name
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .unwrap()
+}
+
+struct RoleListFixture {
+    caller_token: String,
+    // The role `grant_in` creates to carry the caller's own grant; it lives
+    // in own_org, so it is itself part of the expected result.
+    callers_own_role: Uuid,
+    in_own_org: Uuid,
+    in_sub_org: Uuid,
+    in_parent_org: Uuid,
+    in_sibling_org: Uuid,
+}
+
+impl RoleListFixture {
+    fn visible_ids(&self) -> std::collections::BTreeSet<Uuid> {
+        [self.callers_own_role, self.in_own_org, self.in_sub_org]
+            .into_iter()
+            .collect()
+    }
+}
+
+/// Same tree shape as `seed_user_list_tree`, but each org owns one role
+/// instead of a member.
+async fn seed_role_list_tree(
+    harness: &crate::auth_helpers::AuthHarness,
+    app: &crate::helpers::TestApp,
+) -> RoleListFixture {
+    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
+    let parent_org = seed_child_org(app, root, "Rollen-Dach").await;
+    let own_org = seed_child_org(app, parent_org, "Rollen-Eigene").await;
+    let sub_org = seed_child_org(app, own_org, "Rollen-Unter").await;
+    let sibling_org = seed_child_org(app, parent_org, "Rollen-Schwester").await;
+
+    let caller = seed_member(app, own_org).await;
+    let callers_own_role = grant_in(app, caller, own_org, &["role:read"]).await;
+
+    RoleListFixture {
+        caller_token: harness.sign_token(json!({ "sub": caller.to_string() })),
+        callers_own_role,
+        in_own_org: seed_role(app, own_org, "Rolle-Eigene").await,
+        in_sub_org: seed_role(app, sub_org, "Rolle-Unter").await,
+        in_parent_org: seed_role(app, parent_org, "Rolle-Dach").await,
+        in_sibling_org: seed_role(app, sibling_org, "Rolle-Schwester").await,
+    }
+}
+
+fn returned_role_ids(body: &serde_json::Value) -> std::collections::BTreeSet<Uuid> {
+    body.as_array()
+        .unwrap()
+        .iter()
+        .map(|r| Uuid::parse_str(r["id"].as_str().unwrap()).unwrap())
+        .collect()
+}
+
+#[tokio::test]
+async fn role_list_shows_the_visible_subtree_only_and_excludes_templates() {
+    let (harness, app) = spawn_with_auth().await;
+    let fixture = seed_role_list_tree(&harness, &app).await;
+    // A seeded global template; must never appear regardless of scope.
+    let admin_template_id = Uuid::parse_str("01980000-0000-7000-8000-0000000000a1").unwrap();
+
+    let resp = reqwest::Client::new()
+        .get(format!("{}/api/v1/roles", app.address))
+        .bearer_auth(&fixture.caller_token)
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(resp.status(), 200);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    let ids = returned_role_ids(&body);
+    assert_eq!(ids, fixture.visible_ids());
+    assert!(!ids.contains(&fixture.in_parent_org));
+    assert!(!ids.contains(&fixture.in_sibling_org));
+    assert!(!ids.contains(&admin_template_id));
+}
+
+#[tokio::test]
+async fn role_list_is_forbidden_without_role_read() {
+    let (harness, app) = spawn_with_auth().await;
+    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
+    let org = seed_child_org(&app, root, "Ohne-Role-Read").await;
+    let caller = seed_member(&app, org).await;
+    grant_in(&app, caller, org, &["tree:read"]).await;
+    let token = harness.sign_token(json!({ "sub": caller.to_string() }));
+
+    let resp = reqwest::Client::new()
+        .get(format!("{}/api/v1/roles", app.address))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(resp.status(), 403);
 }
