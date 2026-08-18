@@ -6,6 +6,7 @@ import {
   fullNameOf,
   isFiltered,
   memberCountLabel,
+  phoneNumberError,
   roleFilterOptions,
   sinceLabel,
 } from './memberList'
@@ -84,6 +85,35 @@ describe('sinceLabel', () => {
 
   it('returns null for an unparseable value', () => {
     expect(sinceLabel('not a date')).toBe(null)
+  })
+})
+
+describe('phoneNumberError', () => {
+  it('accepts an empty value, since the field is optional', () => {
+    expect(phoneNumberError('')).toBe(null)
+    expect(phoneNumberError('   ')).toBe(null)
+  })
+
+  it.each([
+    '+49 461 123456',
+    '0461 123-456',
+    '0461/123456',
+    '(0461) 123 456',
+    '+49 (0) 461 123456',
+  ])('accepts %s', (value) => {
+    expect(phoneNumberError(value)).toBe(null)
+  })
+
+  it.each(['lkjlkjdfs', '0461 abc', '12345', '+'])('rejects %s', (value) => {
+    expect(phoneNumberError(value)).not.toBe(null)
+  })
+
+  it('rejects a + that is not the first character', () => {
+    expect(phoneNumberError('49+461123456')).not.toBe(null)
+  })
+
+  it('trims leading and trailing whitespace instead of rejecting it', () => {
+    expect(phoneNumberError('  0461 123456  ')).toBe(null)
   })
 })
 

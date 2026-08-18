@@ -24,7 +24,7 @@ import MemberActionButtons from './MemberActionButtons'
 import MemberDetail from './MemberDetail'
 import MemberList from './MemberList'
 import { buildTree, flatten } from '../organization/organizationTree'
-import { fullNameOf, isFiltered } from './memberList'
+import { fullNameOf, isFiltered, phoneNumberError } from './memberList'
 import { useMemberProfileDraft } from './useMemberProfileDraft'
 
 const PER_PAGE = 50
@@ -387,6 +387,7 @@ const MembersPage = () => {
                 <DrawerFooter className="flex-col-reverse gap-2 border-t border-dark-200 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
                   <MemberActionButtons
                     saving={updateProfile.isPending}
+                    phoneNumberInvalid={phoneNumberError(draft.phoneNumber) !== null}
                     onSave={save}
                     onCancel={resetDraft}
                   />

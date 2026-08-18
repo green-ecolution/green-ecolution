@@ -20,6 +20,33 @@ export const isFiltered = (
   roleId: string | null,
 ): boolean => search.trim().length > 0 || organizationId !== null || roleId !== null
 
+/**
+ * Mirrors the backend's `PhoneNumber` value object exactly (allowed: digits,
+ * space, `-`, `/`, `(`, `)`, plus a leading `+`; at least 6 digits). If the two
+ * ever drift apart, a person could pass this check and still get a 400 from
+ * the server with no way to tell why.
+ */
+export const phoneNumberError = (value: string): string | null => {
+  const trimmed = value.trim()
+  if (trimmed.length === 0) return null
+
+  let digitCount = 0
+  for (let i = 0; i < trimmed.length; i += 1) {
+    const char = trimmed[i]
+    if (char >= '0' && char <= '9') {
+      digitCount += 1
+    } else if (char === ' ' || char === '-' || char === '/' || char === '(' || char === ')') {
+      continue
+    } else if (char === '+' && i === 0) {
+      continue
+    } else {
+      return 'Enthält Zeichen, die in einer Telefonnummer nicht vorkommen.'
+    }
+  }
+
+  return digitCount >= 6 ? null : 'Das sind zu wenige Ziffern für eine Telefonnummer.'
+}
+
 export const sinceLabel = (createdAt?: string | null): string | null => {
   if (createdAt == null) return null
   const date = new Date(createdAt)

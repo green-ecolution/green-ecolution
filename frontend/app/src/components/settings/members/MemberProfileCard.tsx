@@ -6,6 +6,7 @@ import {
 } from '@/hooks/details/useDetailsForDrivingLicense'
 import { getUserStatusDetails, UserStatusOptions } from '@/hooks/details/useDetailsForUserStatus'
 import { CARD, CARD_TITLE } from './cardChrome'
+import { phoneNumberError } from './memberList'
 import type { MemberProfileDraft } from './useMemberProfileDraft'
 
 interface MemberProfileCardProps {
@@ -70,6 +71,7 @@ const MemberProfileCard = ({
               label="Telefonnummer"
               value={draft.phoneNumber}
               onChange={(event) => onPhoneNumberChange(event.target.value)}
+              error={phoneNumberError(draft.phoneNumber) ?? undefined}
               placeholder="z. B. +49 461 123456"
               inputMode="tel"
             />

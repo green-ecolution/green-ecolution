@@ -5,7 +5,7 @@ import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
 import { initialsOf } from '@/lib/initials'
 import { TILE } from './cardChrome'
 import MemberActionButtons from './MemberActionButtons'
-import { fullNameOf, sinceLabel } from './memberList'
+import { fullNameOf, phoneNumberError, sinceLabel } from './memberList'
 import MemberOrganizationCard from './MemberOrganizationCard'
 import MemberProfileCard from './MemberProfileCard'
 import MemberRolesCard from './MemberRolesCard'
@@ -71,6 +71,7 @@ const MemberDetail = ({
   const since = sinceLabel(user.createdAt)
   const organization = user.organization ?? undefined
 
+  const phoneNumberInvalid = phoneNumberError(draft.phoneNumber) !== null
   const organizationLockedReason = isSelf ? SELF_ORGANIZATION_LOCKED : null
   const rolesLockedReason = isSelf
     ? SELF_ROLES_LOCKED
@@ -131,7 +132,12 @@ const MemberDetail = ({
 
       {renderActionBar && dirty && canUpdate && (
         <div className="sticky bottom-0 -mt-6 flex flex-col-reverse gap-2 border-t border-dark-200 bg-[var(--member-panel-bg,var(--color-dark-50))] pb-3 pt-6 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-          <MemberActionButtons saving={saving} onSave={onSave} onCancel={onCancel} />
+          <MemberActionButtons
+            saving={saving}
+            phoneNumberInvalid={phoneNumberInvalid}
+            onSave={onSave}
+            onCancel={onCancel}
+          />
         </div>
       )}
     </div>

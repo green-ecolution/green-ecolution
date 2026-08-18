@@ -2,11 +2,17 @@ import { Button, Spinner } from '@green-ecolution/ui'
 
 interface MemberActionButtonsProps {
   saving: boolean
+  phoneNumberInvalid: boolean
   onSave: () => void
   onCancel: () => void
 }
 
-const MemberActionButtons = ({ saving, onSave, onCancel }: MemberActionButtonsProps) => (
+const MemberActionButtons = ({
+  saving,
+  phoneNumberInvalid,
+  onSave,
+  onCancel,
+}: MemberActionButtonsProps) => (
   <>
     <Button
       type="button"
@@ -17,7 +23,12 @@ const MemberActionButtons = ({ saving, onSave, onCancel }: MemberActionButtonsPr
     >
       Abbrechen
     </Button>
-    <Button type="button" onClick={onSave} disabled={saving} className="w-full sm:w-auto">
+    <Button
+      type="button"
+      onClick={onSave}
+      disabled={saving || phoneNumberInvalid}
+      className="w-full sm:w-auto"
+    >
       {saving && <Spinner className="size-4" />}
       Speichern
     </Button>
