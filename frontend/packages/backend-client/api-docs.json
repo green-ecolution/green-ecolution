@@ -2924,8 +2924,8 @@
         "tags": [
           "Users"
         ],
-        "summary": "List all users",
-        "description": "Returns a paginated list of registered users, optionally filtered by organization or role.",
+        "summary": "List visible users",
+        "description": "Returns a paginated list of users from the caller's organization subtree, optionally filtered by organization or role. Requires user:read.",
         "operationId": "listUsers",
         "parameters": [
           {
@@ -2994,6 +2994,12 @@
           },
           "401": {
             "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Acting user has no organization"
           },
           "500": {
             "description": "Internal server error"

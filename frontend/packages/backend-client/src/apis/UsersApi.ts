@@ -240,8 +240,8 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of registered users, optionally filtered by organization or role.
-     * List all users
+     * Returns a paginated list of users from the caller\'s organization subtree, optionally filtered by organization or role. Requires user:read.
+     * List visible users
      */
     async listUsersRaw(requestParameters: ListUsersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseUserResponse>> {
         const queryParameters: any = {};
@@ -282,8 +282,8 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of registered users, optionally filtered by organization or role.
-     * List all users
+     * Returns a paginated list of users from the caller\'s organization subtree, optionally filtered by organization or role. Requires user:read.
+     * List visible users
      */
     async listUsers(requestParameters: ListUsersRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseUserResponse> {
         const response = await this.listUsersRaw(requestParameters, initOverrides);
