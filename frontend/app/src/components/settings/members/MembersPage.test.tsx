@@ -60,10 +60,18 @@ const member = (
   organization: ORGS.find((org) => org.id === orgId),
 })
 
+// Stored before the phone-number rule existed, so it predates validation
+// rather than being typed against it.
+const badPhoneUser: UserResponse = {
+  ...member('u-badphone', 'Dana', 'Eriksen', 'amt', []),
+  phoneNumber: '123',
+}
+
 const users: UserResponse[] = [
   member('u-anna', 'Anna', 'Ahlmann', 'amt', [ROLES[0]]),
   member('u-bo', 'Bo', 'Boysen', 'nord', []),
   member('u-legacy', 'Cem', 'Demir', null, []),
+  badPhoneUser,
 ]
 
 const permissions = vi.fn((): Permissions => UNRESTRICTED)
@@ -371,6 +379,66 @@ describe('MembersPage', () => {
       expect.objectContaining({ userId: 'u-anna', employeeId: null }),
       expect.anything(),
     )
+  })
+
+  it('blocks saving and shows a German message for an invalid phone number', async () => {
+    render(<MembersPage />)
+    await select(/Anna Ahlmann/)
+
+    const phoneField = screen.getByLabelText('Telefonnummer')
+    await userEvent.clear(phoneField)
+    await userEvent.type(phoneField, 'lkjlkjdfs')
+
+    expect(
+      screen.getByText(
+        'Telefonnummer ist ungültig. Erlaubt sind Ziffern, Leerzeichen sowie -, /, ( ) und ein führendes +, mit mindestens 6 Ziffern.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Speichern' })).toBeDisabled()
+
+    await userEvent.clear(phoneField)
+    await userEvent.type(phoneField, '+49 461 123456')
+
+    expect(
+      screen.queryByText(
+        'Telefonnummer ist ungültig. Erlaubt sind Ziffern, Leerzeichen sowie -, /, ( ) und ein führendes +, mit mindestens 6 Ziffern.',
+      ),
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Speichern' })).toBeEnabled()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    expect(updateMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'u-anna', phoneNumber: '+49 461 123456' }),
+      expect.anything(),
+    )
+  })
+
+  it('accepts an empty phone number without blocking saving, since the field is optional', async () => {
+    render(<MembersPage />)
+    await select(/Anna Ahlmann/)
+
+    await userEvent.clear(screen.getByLabelText('Telefonnummer'))
+
+    expect(screen.queryByText(/Telefonnummer ist ungültig/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Speichern' })).toBeEnabled()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    expect(updateMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'u-anna', phoneNumber: null }),
+      expect.anything(),
+    )
+  })
+
+  it('explains an invalid stored phone number the moment the form opens, without editing it', async () => {
+    render(<MembersPage />)
+
+    await select(/Dana Eriksen/)
+
+    expect(
+      screen.getByText(
+        'Telefonnummer ist ungültig. Erlaubt sind Ziffern, Leerzeichen sowie -, /, ( ) und ein führendes +, mit mindestens 6 Ziffern.',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('narrows the list by search', async () => {

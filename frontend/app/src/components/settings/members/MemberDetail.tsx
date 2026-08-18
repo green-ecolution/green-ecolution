@@ -5,7 +5,7 @@ import { getUserStatusDetails } from '@/hooks/details/useDetailsForUserStatus'
 import { initialsOf } from '@/lib/initials'
 import { TILE } from './cardChrome'
 import MemberActionButtons from './MemberActionButtons'
-import { fullNameOf, phoneNumberError, sinceLabel } from './memberList'
+import { fullNameOf, phoneNumberIssue, sinceLabel } from './memberList'
 import MemberOrganizationCard from './MemberOrganizationCard'
 import MemberProfileCard from './MemberProfileCard'
 import MemberRolesCard from './MemberRolesCard'
@@ -71,7 +71,7 @@ const MemberDetail = ({
   const since = sinceLabel(user.createdAt)
   const organization = user.organization ?? undefined
 
-  const phoneNumberInvalid = phoneNumberError(draft.phoneNumber) !== null
+  const phoneNumberInvalid = phoneNumberIssue(draft.phoneNumber) !== null
   const organizationLockedReason = isSelf ? SELF_ORGANIZATION_LOCKED : null
   const rolesLockedReason = isSelf
     ? SELF_ROLES_LOCKED

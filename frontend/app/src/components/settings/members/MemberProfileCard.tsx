@@ -1,4 +1,5 @@
 import { FormField, Label, MultiSelect, SelectField } from '@green-ecolution/ui'
+import { translateIssue } from '@green-ecolution/domain-wasm'
 import type { DrivingLicense, UserStatus } from '@green-ecolution/backend-client'
 import {
   DrivingLicenseOptions,
@@ -6,7 +7,7 @@ import {
 } from '@/hooks/details/useDetailsForDrivingLicense'
 import { getUserStatusDetails, UserStatusOptions } from '@/hooks/details/useDetailsForUserStatus'
 import { CARD, CARD_TITLE } from './cardChrome'
-import { phoneNumberError } from './memberList'
+import { phoneNumberIssue } from './memberList'
 import type { MemberProfileDraft } from './useMemberProfileDraft'
 
 interface MemberProfileCardProps {
@@ -36,6 +37,7 @@ const MemberProfileCard = ({
   const licenseLabels = draft.drivingLicenses
     .map((license) => getDrivingLicenseDetails(license).label)
     .join(', ')
+  const phoneIssue = phoneNumberIssue(draft.phoneNumber)
 
   return (
     <section className={`${CARD} @min-[48rem]:col-span-2`}>
@@ -71,7 +73,7 @@ const MemberProfileCard = ({
               label="Telefonnummer"
               value={draft.phoneNumber}
               onChange={(event) => onPhoneNumberChange(event.target.value)}
-              error={phoneNumberError(draft.phoneNumber) ?? undefined}
+              error={phoneIssue ? translateIssue(phoneIssue) : undefined}
               placeholder="z. B. +49 461 123456"
               inputMode="tel"
             />

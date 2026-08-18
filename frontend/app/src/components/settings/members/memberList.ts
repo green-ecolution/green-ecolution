@@ -1,4 +1,5 @@
 import type { ComboboxOption } from '@green-ecolution/ui'
+import { validatePhoneNumber, type ValidationIssue } from '@green-ecolution/domain-wasm'
 import type { OrganizationResponse, RoleResponse, UserResponse } from '@/api/backendApi'
 
 export const fullNameOf = (user: UserResponse): string =>
@@ -21,31 +22,12 @@ export const isFiltered = (
 ): boolean => search.trim().length > 0 || organizationId !== null || roleId !== null
 
 /**
- * Mirrors the backend's `PhoneNumber` value object exactly (allowed: digits,
- * space, `-`, `/`, `(`, `)`, plus a leading `+`; at least 6 digits). If the two
- * ever drift apart, a person could pass this check and still get a 400 from
- * the server with no way to tell why.
+ * The phone number field is optional, but `PhoneNumber::new("")` is an error —
+ * emptiness is a property of this field, not of the value object — so an
+ * empty value skips validation here rather than in the domain rule.
  */
-export const phoneNumberError = (value: string): string | null => {
-  const trimmed = value.trim()
-  if (trimmed.length === 0) return null
-
-  let digitCount = 0
-  for (let i = 0; i < trimmed.length; i += 1) {
-    const char = trimmed[i]
-    if (char >= '0' && char <= '9') {
-      digitCount += 1
-    } else if (char === ' ' || char === '-' || char === '/' || char === '(' || char === ')') {
-      continue
-    } else if (char === '+' && i === 0) {
-      continue
-    } else {
-      return 'Enthält Zeichen, die in einer Telefonnummer nicht vorkommen.'
-    }
-  }
-
-  return digitCount >= 6 ? null : 'Das sind zu wenige Ziffern für eine Telefonnummer.'
-}
+export const phoneNumberIssue = (value: string): ValidationIssue | null =>
+  value.trim().length === 0 ? null : (validatePhoneNumber(value) as ValidationIssue | null)
 
 export const sinceLabel = (createdAt?: string | null): string | null => {
   if (createdAt == null) return null
