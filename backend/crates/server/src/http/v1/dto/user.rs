@@ -7,7 +7,7 @@ use domain::{
     Id,
     organization::Organization,
     role::Role,
-    shared::email::Email,
+    shared::{email::Email, phone_number::PhoneNumber},
     user::{
         UserCreate as DomainUserCreate, UserProfile as DomainUserProfile,
         UserStatus as DomainUserStatus, UserView as DomainUserView, Username,
@@ -214,10 +214,16 @@ impl UserUpdateRequest {
             .map(url::Url::parse)
             .transpose()
             .map_err(|e| ServiceError::InvalidInput(format!("avatar_url: {e}")))?;
+        let phone_number = self
+            .phone_number
+            .filter(|s| !s.is_empty())
+            .map(PhoneNumber::new)
+            .transpose()
+            .map_err(|e| ServiceError::InvalidInput(format!("phone_number: {e}")))?;
         Ok(DomainUserProfile {
             id,
             employee_id: self.employee_id.filter(|s| !s.is_empty()),
-            phone_number: self.phone_number.filter(|s| !s.is_empty()),
+            phone_number,
             avatar_url,
             status: self.status.into(),
             driving_licenses: self.driving_licenses.into_iter().map(Into::into).collect(),
@@ -245,7 +251,11 @@ impl From<&DomainUserView> for UserResponse {
             email: value.email.as_str().to_string(),
             email_verified: value.email_verified,
             employee_id: value.employee_id.clone().unwrap_or_default(),
-            phone_number: value.phone_number.clone().unwrap_or_default(),
+            phone_number: value
+                .phone_number
+                .as_ref()
+                .map(|p| p.to_string())
+                .unwrap_or_default(),
             avatar_url: value
                 .avatar_url
                 .as_ref()
@@ -305,6 +315,12 @@ impl TryFrom<UserRegisterRequest> for DomainUserCreate {
             .map(url::Url::parse)
             .transpose()
             .map_err(|e| ServiceError::InvalidInput(format!("avatar_url: {e}")))?;
+        let phone_number = value
+            .phone_number
+            .filter(|s| !s.is_empty())
+            .map(PhoneNumber::new)
+            .transpose()
+            .map_err(|e| ServiceError::InvalidInput(format!("phone_number: {e}")))?;
 
         Ok(Self {
             username,
@@ -315,7 +331,7 @@ impl TryFrom<UserRegisterRequest> for DomainUserCreate {
             organization_id: Id::<Organization>::new(value.organization_id),
             role_ids,
             employee_id: value.employee_id.filter(|s| !s.is_empty()),
-            phone_number: value.phone_number.filter(|s| !s.is_empty()),
+            phone_number,
             avatar_url,
             status: value
                 .status

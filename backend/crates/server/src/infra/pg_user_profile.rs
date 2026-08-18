@@ -5,6 +5,7 @@ use uuid::Uuid;
 use domain::{
     Id, RepositoryError,
     organization::Organization,
+    shared::phone_number::PhoneNumber,
     user::{UserProfile, UserProfileReader, UserProfileWriter, UserStatus},
     vehicle::DrivingLicense,
 };
@@ -39,7 +40,7 @@ impl UserProfileRow {
         Ok(UserProfile {
             id: self.id,
             employee_id: self.employee_id,
-            phone_number: self.phone_number,
+            phone_number: self.phone_number.map(PhoneNumber::reconstitute),
             avatar_url,
             status: self.status,
             driving_licenses: self.driving_licenses,
@@ -116,7 +117,7 @@ impl UserProfileWriter for PgUserProfileRepository {
                WHERE id = $1"#,
             profile.id,
             profile.employee_id.as_deref(),
-            profile.phone_number.as_deref(),
+            profile.phone_number.as_ref().map(PhoneNumber::as_str),
             avatar_url.as_deref(),
             profile.status as UserStatus,
             profile.driving_licenses.as_slice() as &[DrivingLicense],

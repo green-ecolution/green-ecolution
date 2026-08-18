@@ -1,6 +1,7 @@
 use crate::helpers::spawn_app;
 use domain::{
     Id,
+    shared::phone_number::PhoneNumber,
     user::{UserProfile, UserProfileReader, UserProfileWriter, UserStatus},
     vehicle::DrivingLicense,
 };
@@ -19,7 +20,7 @@ fn sample_profile(id: Uuid) -> UserProfile {
     UserProfile {
         id,
         employee_id: Some("EMP-42".into()),
-        phone_number: Some("+49 461 123456".into()),
+        phone_number: Some(PhoneNumber::new("+49 461 123456").unwrap()),
         avatar_url: Some(url::Url::parse("https://example.com/a.png").unwrap()),
         status: UserStatus::Absent,
         driving_licenses: vec![DrivingLicense::B, DrivingLicense::CE],

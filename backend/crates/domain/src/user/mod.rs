@@ -28,6 +28,7 @@ use crate::{
     shared::{
         email::Email,
         pagination::{Page, Pagination},
+        phone_number::PhoneNumber,
     },
     vehicle::DrivingLicense,
 };
@@ -63,7 +64,7 @@ pub struct UserView {
     pub email: Email,
     pub email_verified: bool,
     pub employee_id: Option<String>,
-    pub phone_number: Option<String>,
+    pub phone_number: Option<PhoneNumber>,
     pub avatar_url: Option<Url>,
     pub organization: Option<OrganizationView>,
     pub roles: Vec<RoleView>,
@@ -83,7 +84,7 @@ pub struct UserCreate {
     pub organization_id: Id<Organization>,
     pub role_ids: Vec<Id<Role>>,
     pub employee_id: Option<String>,
-    pub phone_number: Option<String>,
+    pub phone_number: Option<PhoneNumber>,
     pub avatar_url: Option<Url>,
     pub status: UserStatus,
     pub driving_licenses: Vec<DrivingLicense>,

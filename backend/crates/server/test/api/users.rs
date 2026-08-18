@@ -99,6 +99,22 @@ async fn update_user_returns_400_for_invalid_avatar_url() {
 }
 
 #[tokio::test]
+async fn update_user_returns_400_for_lettered_phone_number() {
+    let app = spawn_app().await;
+
+    let body = serde_json::json!({
+        "phone_number": "0461 abc",
+        "status": "absent",
+        "driving_licenses": []
+    });
+    let response = app
+        .put_json("/api/v1/users/00000000-0000-0000-0000-000000000000", &body)
+        .await;
+
+    assert_eq!(response.status().as_u16(), 400);
+}
+
+#[tokio::test]
 async fn assign_and_revoke_role_via_api() {
     let app = spawn_app().await;
     let org = create_org(&app, "TBZ").await;
