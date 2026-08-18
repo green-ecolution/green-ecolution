@@ -224,19 +224,38 @@ pub async fn update_user(
 #[utoipa::path(get, path = "/users/{user_id}/roles", tag = "Users",
     operation_id = "listUserRoles",
     summary = "List a user's assigned roles",
+    description = "Requires user:read in the target user's organization.",
     params(("user_id" = Uuid, Path, description = "User id")),
     responses(
         (status = 200, description = "The user's roles", body = Vec<RoleResponse>),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
         (status = 500, description = "Internal server error"),
     )
 )]
 #[tracing::instrument(level = "info", skip_all, fields(user.id = %user_id))]
 pub async fn list_user_roles(
     State(state): State<Arc<AppState>>,
-    _user: AuthUserExtractor,
+    user: AuthUserExtractor,
     Path(user_id): Path<Uuid>,
 ) -> Result<Json<Vec<RoleResponse>>, ServiceError> {
+    let permission = Permission::new(Resource::User, Action::Read);
+    match state.user_service.organization_of(user_id).await? {
+        Some(org) => {
+            state
+                .authorization_service
+                .require(user.id, permission, org)
+                .await?
+        }
+        // Legacy users predate organization membership and have no org to scope
+        // against; fall back to requiring user:read anywhere in the caller's scope.
+        None => {
+            let ctx = state.authorization_service.context_for(user.id).await?;
+            if !ctx.permissions.allows(permission) {
+                return Err(AuthError::Forbidden.into());
+            }
+        }
+    }
     let views = state.role_service.roles_of_user(user_id).await?;
     Ok(Json(views.iter().map(Into::into).collect()))
 }

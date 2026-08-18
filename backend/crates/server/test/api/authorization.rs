@@ -475,6 +475,30 @@ async fn user_list_filtered_by_an_invisible_organization_is_empty() {
 }
 
 #[tokio::test]
+async fn listing_roles_of_a_user_outside_the_caller_scope_is_forbidden() {
+    let (harness, app) = spawn_with_auth().await;
+    let root = Uuid::parse_str(ROOT_ORG_ID).unwrap();
+    let caller_org = seed_child_org(&app, root, "Rollen-Lese-Org").await;
+    let other_org = seed_child_org(&app, root, "Andere-Org").await;
+
+    let caller = seed_member(&app, caller_org).await;
+    grant_in(&app, caller, caller_org, &["user:read"]).await;
+    let token = harness.sign_token(json!({ "sub": caller.to_string() }));
+
+    // A sibling org, not a descendant of caller_org — outside the grant's subtree.
+    let target = seed_member(&app, other_org).await;
+
+    let resp = reqwest::Client::new()
+        .get(format!("{}/api/v1/users/{target}/roles", app.address))
+        .bearer_auth(&token)
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(resp.status(), 403);
+}
+
+#[tokio::test]
 async fn role_assignment_on_self_with_zero_grants_returns_403_not_409() {
     let (harness, app) = spawn_with_auth().await;
     let (_org_id, role_id) = seed_org_and_role(&app, "Self-Assign-Org", "Self-Assign-Role").await;
